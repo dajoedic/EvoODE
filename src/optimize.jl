@@ -3,74 +3,127 @@
 using DifferentialEquations
 using SciMLBase
 using Optimization, OptimizationOptimJL
-using Zygote
-using SciMLSensitivity
+using Logging
+using Statistics: mean
 
 """
-    fit_parameters(f!, traj::Trajectory; maxiters=300)
+    fit_parameters(f!, traj::Trajectory, n_params; maxiters=300)
 
-Fit von Parametern p für ein gegebenes 2D-Modell `f!`
+Fit von `n_params` Parametern p für ein gegebenes Modell `f!`
 auf die Trajektorie `traj`.
+
+Nutzt:
+- DifferentialEquations.jl zum Lösen
+- Optimization.jl mit AutoFiniteDiff für Gradienten
+- BFGS als Optimierer
 """
-function fit_parameters(f!, traj::Trajectory; maxiters::Int = 300)
-    t = traj.t                 # Vector{Float64}, Länge T
-    X = traj.x                 # Matrix (T × dim), hier dim = 2
 
-    @assert size(X, 1) == length(t) "X muss Größe (T × dim) haben, T = length(t)"
-
+function fit_parameters(f!::Function, traj::Trajectory, n_params::Int; maxiters::Int = 300)
+    t = traj.t
+    X = traj.x
     dim = size(X, 2)
 
-    # Anfangszustand: erster Zeitschritt als Vector
-    u0 = collect(X[1, :])      # Vector{Float64} der Länge dim
-
+    u0    = collect(X[1, :])
     tspan = (t[1], t[end])
 
-    # 4 Parameter für unser lineares Modell, klein starten
-    p0 = 0.1 .* randn(4)
+    # Startwerte für die Parameter
+    p0 = 0.1 .* randn(n_params)
 
     prob = ODEProblem(f!, u0, tspan, p0)
 
-    # Vorhersage: gib Matrix (T × dim) zurück
+    # --- Vorhersagefunktion: ODE-Solve mit Fehler-Handling ---
     function predict(p)
-        # Parameter begrenzen, damit der Solver nicht komplett explodiert
+        # Parameter clampen, um völlig wahnsinnige Werte zu vermeiden
         p_clamped = clamp.(p, -10.0, 10.0)
 
-        _prob = remake(prob; p = p_clamped)
-
-        sol = solve(
-            _prob,
-            Tsit5();
-            saveat = t,
-            abstol = 1e-8,
-            reltol = 1e-6,
-            maxiters = 10^6,
-        )
-
-        # Wenn der Solver nicht sauber durchläuft:
-        if sol.retcode != SciMLBase.ReturnCode.Success || length(sol.t) != length(t)
-            # Matrix voller NaN in korrekter Größe zurückgeben
+        local sol
+        try
+            prob_p = remake(prob; p = p_clamped)
+            sol = with_logger(SimpleLogger(stderr, Logging.Error)) do
+				solve(
+					prob_p,
+					Tsit5();
+					saveat   = t,
+					maxiters = 10^6,
+					abstol   = 1e-6,
+					reltol   = 1e-6,
+					verbose  = false
+				)
+			end
+        catch	
+            # Solver völlig eskaliert → NaNs zurückgeben
+			@debug "Simulation failed for candidate" exception = (e, catch_backtrace())
             return fill(NaN, size(X))
         end
 
-        Y = Array(sol)          # (dim × T)
-        return permutedims(Y)   # (T × dim)
+        # Wenn Solver nicht erfolgreich oder falsche Länge → auch NaNs
+        if sol.retcode != SciMLBase.ReturnCode.Success || length(sol.t) != length(t)
+            return fill(NaN, size(X))
+        end
+
+        # Trajektorie als (T × dim)-Array zurückgeben
+        # (das hat vorher ja schon funktioniert – also nicht dran rütteln)
+        return Array(sol)'
     end
 
+    # --- Loss-Funktion auf Basis von predict + mse_loss ---
     function loss(p)
-        pred = predict(p)
+        Y = predict(p)
 
-        # Wenn Solver gescheitert / NaNs erzeugt hat → hoher Penalty-Loss
-        if any(!isfinite, pred)
+        # mse_loss kümmert sich schon um NaNs / falsche Größe, aber doppelt hält besser
+        if any(!isfinite, Y) || size(Y) != size(X)
             return 1e6
         end
 
-        mse_loss(pred, X)
+        l = mse_loss(Y, X)
+        return isfinite(l) ? l : 1e6
     end
 
-    loss_fun = OptimizationFunction((p, _) -> loss(p), Optimization.AutoZygote())
+    # --- Optimization-Problem mit AutoFiniteDiff (numerische Gradienten) ---
+    loss_fun = OptimizationFunction((p, _) -> loss(p),
+                                    Optimization.AutoFiniteDiff())
     optprob  = OptimizationProblem(loss_fun, p0)
 
-    res = Optimization.solve(optprob, OptimizationOptimJL.BFGS(); maxiters = maxiters)
+    # Default-Fallback
+    p_best = p0
+    l_best = 1e6
 
-    return (p = res.u, loss = res.minimum)
+    try
+        # BFGS behalten – jetzt mit robuster loss-Funktion
+        res = Optimization.solve(optprob, OptimizationOptimJL.BFGS();
+                                 maxiters = maxiters)
+
+        if isfinite(res.minimum)
+            p_best = res.u
+            l_best = res.minimum
+        end
+    catch e
+        @warn "Parameteroptimierung mit BFGS fehlgeschlagen, verwende Fallback." e
+
+        # Optional: als Fallback z.B. Nelder-Mead ohne Gradient
+        try
+            res_nm = Optimization.solve(optprob, OptimizationOptimJL.NelderMead();
+                                        maxiters = maxiters)
+            if isfinite(res_nm.minimum)
+                p_best = res_nm.u
+                l_best = res_nm.minimum
+            end
+        catch e2
+            @warn "Fallback (NelderMead) ebenfalls fehlgeschlagen, behalte Startparameter." e2
+        end
+    end
+
+    return (p = p_best, loss = l_best)
+end
+
+
+
+"""
+    fit_parameters(f!, traj; maxiters=300)
+
+Kompatibilitäts-Wrapper:
+nutzt automatisch `n_params = 4` (z.B. für dein aktuelles lineares 2D-Modell).
+"""
+function fit_parameters(f!, traj::Trajectory; maxiters::Int = 300)
+    return fit_parameters(f!, traj, 4; maxiters = maxiters)
 end
