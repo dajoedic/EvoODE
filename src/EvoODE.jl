@@ -30,7 +30,7 @@ export Trajectory, SystemData, load_2d_systems
 # Simple ODE model constructor and parameter fitting:
 # - `make_model`: build an ODE RHS function from a basis and parameters
 # - `fit_parameters`: fit parameters for a *given* structure to a trajectory
-export make_model, fit_parameters
+export fit_parameters
 
 #########################################
 # Public API – Structure search / grammar
@@ -53,6 +53,14 @@ export default_basis_library, build_model
 # - `search_structure`: run the search given data and a basis library
 export EvoGrow, search_structure
 
+#########################################
+# Public API – Evaluation & Plotting
+#########################################
+
+# Evaluation and visualization helpers:
+# - `solve_and_save_plot`: simulate a discovered ODE and
+#   compare it to the observed trajectory
+export solve_and_save_plot
 
 ########################
 # Internal implementation
@@ -61,9 +69,9 @@ export EvoGrow, search_structure
 # They are kept small and focused to make it easier to navigate the codebase.
 
 include("data.jl")       # Trajectory, SystemData, loaders
-include("model.jl")      # ODE model construction and evaluation
 include("loss.jl")       # loss functions and evaluation helpers
 include("optimize.jl")   # parameter fitting / optimization wrappers
 include("structure.jl")  # structure search, EvoGrow, basis handling
+include("plotting.jl")   # plotting + re-simulation helpers
 
 end # module EvoODE

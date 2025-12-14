@@ -1,47 +1,69 @@
 # main_evogrow.jl
 #
-# Demo für EvoGrow:
-# - nimmt System 24 (harmonic oscillator ohne Dämpfung)
-# - führt EvoGrow-Struktursuche durch
-# - zeigt beste Struktur + Parameter
+# Demo script for evaluating the EvoGrow structural search algorithm.
+# Steps:
+#   1. Load a 2D benchmark system (Strogatz extended dataset)
+#   2. Construct a basis library
+#   3. Run EvoGrow across several growth levels
+#   4. Print the best discovered structure and parameter vector
 
+# Make the local package available
 push!(LOAD_PATH, joinpath(@__DIR__, "src"))
 using EvoODE
 
+# ---------------------------------------
+# 1) Load system data
+# ---------------------------------------
+
 data_path = joinpath(@__DIR__, "data", "strogatz_extended.json")
 
-println("Lade Systeme...")
-systems = load_2d_systems(data_path; n = 1)
+println("Loading systems...")
+systems = load_2d_systems(data_path; n = 5)
 
-sys = systems[1]
+sys = systems[3]
+
 println("System: id=$(sys.id), dim=$(sys.dim)")
-println("Beschreibung: $(sys.eq_description)")
-println("Roh-Gleichung: $(sys.eq)")
+println("Description: $(sys.eq_description)")
+println("Raw equation: $(sys.eq)")
 println()
 
-# Basisbibliothek für dieses System
+# ---------------------------------------
+# 2) Build basis library
+# ---------------------------------------
+
 basis = default_basis_library(sys.dim)
 
-# EvoGrow-Strategie definieren
+# ---------------------------------------
+# 3) Configure EvoGrow strategy
+# ---------------------------------------
+
 strategy = EvoGrow(
-    20,     # pop_size
-    5,      # n_levels (Wachstumsstufen)
-    2,      # children_per_parent
-    5,      # max_terms_per_eq
-    1e-3,   # λ (Komplexitätsstrafe)
+    20,     # pop_size: number of individuals in the population
+    5,      # n_levels: number of structural growth levels
+    2,      # children_per_parent: structural expansions per parent
+    5,      # max_terms_per_eq: max active basis terms per equation
+    1e-3,   # λ: complexity penalty (objective = loss + λ * num_params)
 )
 
-println("Starte EvoGrow-Struktursuche...")
+# ---------------------------------------
+# 4) Run the structural search
+# ---------------------------------------
+
+println("Starting EvoGrow structure search...")
 result = search_structure(strategy, sys.traj, basis; maxiters = 200)
 
-println("\nBeste gefundene Struktur:")
+# ---------------------------------------
+# 5) Pretty-print the resulting model
+# ---------------------------------------
+
+println("\nBest discovered structure:")
 for (k, idxs) in enumerate(result.structure.active_idxs)
     names = [result.basis[j].name for j in idxs]
     println("  du_$k = Σ p * {", join(names, ", "), "}")
 end
 
-println("\nBeste Parameter p*: ", result.params)
+println("\nBest parameter vector p* = ", result.params)
 println("Loss:      ", result.loss)
-println("J (Loss + λ * n_params): ", result.objective)
+println("Objective: ", result.objective)
 
-println("\nFertig 🎯")
+println("\nDone 🎯")

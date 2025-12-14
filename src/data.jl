@@ -2,10 +2,16 @@
 
 using JSON3
 
+# ----------------------------------------------------------------------
+# Data structures
+# ----------------------------------------------------------------------
+
 """
-Zeitreihe eines Systems.
-t :: Vector{Float64}   – Zeitpunkte (Länge T)
-x :: Matrix{Float64}   – Werte (T × dim)
+Trajectory of a dynamical system.
+
+Fields:
+- `t::Vector{Float64}`: time points (length T)
+- `x::Matrix{Float64}`: states of size (T × dim)
 """
 struct Trajectory
     t::Vector{Float64}
@@ -13,7 +19,14 @@ struct Trajectory
 end
 
 """
-Metadaten + eine Beispiel-Trajektorie.
+Metadata and one sample trajectory of a system.
+
+Fields:
+- `id::Int`: system identifier
+- `eq::String`: symbolic equation (human-readable)
+- `eq_description::String`: textual description
+- `dim::Int`: state dimension
+- `traj::Trajectory`: one simulated trajectory
 """
 struct SystemData
     id::Int
@@ -23,37 +36,49 @@ struct SystemData
     traj::Trajectory
 end
 
-# gesamtes JSON laden
+
+# ----------------------------------------------------------------------
+# Internal helper functions for JSON loading
+# ----------------------------------------------------------------------
+
+# Load full JSON file (returns JSON3.Array or JSON3.Object)
 function _load_all(path::String)
     open(path, "r") do io
         JSON3.read(io)
     end
 end
 
-# erste Trajektorie aus einem System-Objekt
+# Extract first available trajectory from a JSON system object
 function _first_trajectory(obj)
     sols = obj["solutions"]
     first_set = sols[1]
     sol = first_set[1]
 
     t = Vector{Float64}(sol["t"])
-    y = sol["y"]  # Liste von Zustands-Zeitreihen
+    y = sol["y"]  # list of per-state time series
 
+    # convert each dimension into Float64 vector
     ys = [Vector{Float64}(yi) for yi in y]
 
-    # Matrix: Zeilen = Zeit, Spalten = Dimension -> (T × dim)
+    # assemble matrix: (T × dim)
     x_mat = reduce(hcat, ys)
 
     return Trajectory(t, x_mat)
 end
 
+
+# ----------------------------------------------------------------------
+# Public API
+# ----------------------------------------------------------------------
+
 """
     load_2d_systems(path; n=5)
 
-Lädt die ersten `n` Systeme mit dim == 2.
+Load up to `n` systems with state dimension `dim == 2`.
+Returns a vector of `SystemData` entries.
 """
 function load_2d_systems(path::String; n::Int = 5)
-    raw = _load_all(path)  # JSON3.Array
+    raw = _load_all(path)
     systems = SystemData[]
 
     for obj in raw

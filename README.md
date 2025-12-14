@@ -32,7 +32,6 @@ EvoODE/
 │   ├─ loss.jl           # Loss-Funktionen (z.B. MSE)
 │   ├─ optimize.jl       # Parameterfit (BFGS + FiniteDiff, SciML-Stack)
 │   └─ structure.jl      # Struktursuche-Strategien (RandomSearch, EvoGrow)
-├─ main_mvp.jl           # MVP-Skript: 5 Systeme laden & nur Parameter fitten
 ├─ main_structure.jl     # Struktursuche mit RandomSearch (Baseline)
 └─ main_evogrow.jl       # Struktursuche mit EvoGrow (wachstumsbasiert)
 ```
@@ -265,61 +264,7 @@ Danach kannst du die Skripte direkt mit `include` starten.
 
 ---
 
-### 2. MVP: Nur Parameterfit auf festen Strukturen
-
-`main_mvp.jl`:
-
-- Lädt mehrere 2D-Systeme aus `data/strogatz_extended.json` (z.B. Oszillator, Lotka–Volterra, Pendel),
-- verwendet die **wahren Strukturen** aus den Metadaten,
-- fitted nur die Parameter,
-- gibt pro System:
-  - System-ID & Beschreibung,
-  - „Roh-Gleichung“ (symbolisch),
-  - gefittete Parameter,
-  - finalen Loss aus.
-
-Ausführung:
-
-**Variante A – direkt per Julia-CLI:**
-
-```bash
-julia --project=. main_mvp.jl
-```
-
-**Variante B – in der REPL im Projekt:**
-
-```julia
-julia> include("main_mvp.jl")
-```
-
----
-
-### 3. Struktursuche Baseline: RandomSearch
-
-`main_structure.jl`:
-
-- Lädt ein ausgewähltes System aus `strogatz_extended.json`, z.B. den harmonischen Oszillator,
-- baut eine Basisbibliothek `default_basis_library(dim)`,
-- führt eine einfache **RandomSearch**-Struktursuche aus:
-  - mehrere zufällige Modelle generieren,
-  - Struktur + Parameter fitten,
-  - bestes Modell nach Objective \(J\) wählen.
-
-Ausführung:
-
-```bash
-julia --project=. main_structure.jl
-```
-
-oder in der REPL:
-
-```julia
-julia> include("main_structure.jl")
-```
-
----
-
-### 4. Struktursuche EvoGrow: Wachstumsbasierter Ansatz
+### 2. Struktursuche EvoGrow: Wachstumsbasierter Ansatz
 
 `main_evogrow.jl`:
 
