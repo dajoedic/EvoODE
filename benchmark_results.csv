@@ -1,9 +1,0 @@
-sys_id,dim,eq,eq_description,noise,stride,n_points,loss,objective,n_params,elapsed_sec,structure
-24,2,"x_1 | - c_0 * x_0","Harmonic oscillator without damping",0.0000,1,512,2.9380288e-12,0.003,3,17.237,"du_1 = (-0.0000)*u1 + (1.0000)*u2 du_2 = (-2.1000)*u1 "
-24,2,"x_1 | - c_0 * x_0","Harmonic oscillator without damping",0.0000,2,256,4.3406003e-12,0.002,2,82.030,"du_1 = (1.0000)*u2 du_2 = (-2.1000)*u1 "
-24,2,"x_1 | - c_0 * x_0","Harmonic oscillator without damping",0.0000,4,128,2.9278114e-12,0.003,3,13.984,"du_1 = (-0.0000)*u1 + (1.0000)*u2 du_2 = (-2.1000)*u1 "
-24,2,"x_1 | - c_0 * x_0","Harmonic oscillator without damping",0.0100,1,512,1.6931395e-05,0.0020169314,2,375.486,"du_1 = (1.0080)*u2 du_2 = (-2.0802)*u1 "
-24,2,"x_1 | - c_0 * x_0","Harmonic oscillator without damping",0.0100,2,256,1.440839e-05,0.0030144084,3,277.982,"du_1 = (-0.0012)*u1 + (1.0013)*u2 du_2 = (-2.1008)*u1 "
-24,2,"x_1 | - c_0 * x_0","Harmonic oscillator without damping",0.0100,4,128,0.091013594,0.094013594,3,232.582,"du_1 = (1.0520)*u2 du_2 = (-10.0002)*u1^2 + (2.6677)*u1 "
-24,2,"x_1 | - c_0 * x_0","Harmonic oscillator without damping",0.0500,1,512,0.00031998764,0.0033199876,3,1024.799,"du_1 = (-0.0044)*u1 + (1.0136)*u2 du_2 = (-2.0671)*u1 "
-24,2,"x_1 | - c_0 * x_0","Harmonic oscillator without damping",0.0500,2,256,0.00031908991,0.0033190899,3,546.910,"du_1 = (0.0244)*u2^2 + (0.9756)*u2 du_2 = (-2.1448)*u1 "
