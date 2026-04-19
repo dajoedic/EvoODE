@@ -26,11 +26,11 @@ X = hcat(u1, u2)
 # -----------------------
 res = discover(
     t, X;
-    structure = EvoGrow(20, 5, 2, 5, 1e-3),
+    structure = GPStructureSearch(pop_size=60, n_generations=10, p_mutation=0.4),
     optimizer = BFGSOptimizer(maxiters=200),
     basis = PolynomialBasis(),   # dim=0 -> will be replaced automatically
     loss = MSELoss(),
-    options = DiscoveryOptions(verbose=2)
+    options = DiscoveryOptions(verbose=3)
 )
 
 # -----------------------

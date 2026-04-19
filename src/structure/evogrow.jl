@@ -10,12 +10,12 @@ EvoGrow structure search strategy.
 - max_terms_per_eq: maximum number of active terms per equation
 - λ: complexity penalty (objective = loss + λ * n_params)
 """
-struct EvoGrow <: AbstractStructureSearch
-    pop_size::Int
-    n_levels::Int
-    children_per_parent::Int
-    max_terms_per_eq::Int
-    λ::Float64
+Base.@kwdef struct EvoGrow <: AbstractStructureSearch
+    pop_size::Int = 20
+    n_levels::Int = 5
+    children_per_parent::Int = 2
+    max_terms_per_eq::Int = 5
+    λ::Float64 = 1e-3
 end
 
 mutable struct Individual
@@ -75,22 +75,6 @@ function _evaluate!(ind::Individual,
     return ind
 end
 
-function _structure_with_params_string(structure::StructureSpec, basis::AbstractBasis, params::Vector{Float64})
-    buf = IOBuffer()
-    idx = 1
-    for eq_index in 1:length(structure.active_idxs)
-        active_terms = structure.active_idxs[eq_index]
-        parts = String[]
-        for term_idx in active_terms
-            coef = params[idx]
-            name = basis_term_name(basis, term_idx)
-            push!(parts, @sprintf("(%0.4f)*%s", coef, name))
-            idx += 1
-        end
-        println(buf, "du_$eq_index = " * join(parts, " + "))
-    end
-    return String(take!(buf))
-end
 
 """
     search_structure(strategy::EvoGrow, traj, basis, loss, optimizer, options)
@@ -111,7 +95,8 @@ function search_structure(strategy::EvoGrow,
     n_basis = basis_num_terms(basis)
 
     pop = _init_population(strategy, dim, n_basis)
-    prev_best_J = Inf
+	
+	best_J_hist = Float64[]
 
     for level in 1:strategy.n_levels
         options.verbose >= 1 && println("\nLevel $level")
@@ -143,6 +128,21 @@ function search_structure(strategy::EvoGrow,
         pop = all_inds[1:strategy.pop_size]
 
         best = pop[1]
+		
+		push!(best_J_hist, best.objective)
+
+		stop, reason = should_stop(
+			best_J_hist,
+			best.loss,
+			level,
+			options
+		)
+
+		if stop
+			options.verbose >= 1 && println("  -> stopping: ", reason)
+			break
+		end
+
 
         if options.verbose >= 1
             println("  Best J: ", best.objective,
@@ -152,7 +152,7 @@ function search_structure(strategy::EvoGrow,
 
         if options.verbose >= 2
             println("  Best structure:")
-            println(replace(_structure_with_params_string(best.structure, basis, best.params), '\n' => ' '))
+            println(replace(structure_with_params_string(best.structure, basis, best.params), '\n' => ' '))
         end
 
         if options.verbose >= 3
@@ -162,19 +162,6 @@ function search_structure(strategy::EvoGrow,
             end
         end
 
-        # Early stopping rules (Phase 1)
-        if best.loss < 1e-8
-            options.verbose >= 1 && println("  -> Loss < 1e-8, stopping at level $level.")
-            break
-        end
-
-        improvement = prev_best_J - best.objective
-        if prev_best_J < Inf && improvement < 1e-4
-            options.verbose >= 1 && println("  -> No significant improvement (ΔJ=$(round(improvement, digits=6))). Stop at level $level.")
-            break
-        end
-
-        prev_best_J = best.objective
     end
 
 	best = pop[1]
@@ -184,7 +171,7 @@ function search_structure(strategy::EvoGrow,
 		loss      = best.loss,
 		objective = best.objective,
 		meta      = (
-			best_structure_pretty = _structure_with_params_string(best.structure, basis, best.params),
+			best_structure_pretty = structure_with_params_string(best.structure, basis, best.params),
 		)
 	)
 

@@ -12,16 +12,32 @@ struct Trajectory
 end
 
 """
-    DiscoveryOptions(; rng_seed=42, verbose=1)
+    DiscoveryOptions(; rng_seed=42, verbose=1, ...)
 
 Generic options for `discover`.
-- `rng_seed`: RNG seed for reproducibility
-- `verbose`: 0=silent, 1=level logs, 2=more details, 3=population snapshots
+
+Stopping criteria are algorithm-agnostic and apply to *all*
+structure search strategies (EvoGrow, GP, ...).
 """
 Base.@kwdef struct DiscoveryOptions
+    # reproducibility / logging
     rng_seed::Int = 42
     verbose::Int = 1
+
+    # --- stopping: safety ---
+    min_levels::Int = 2          # never stop before this many generations
+    max_levels::Int = 50         # hard cap (used by GP as well)
+
+    # --- stopping: loss ---
+    loss_tol::Float64 = 1e-8     # absolute loss threshold
+
+    # --- stopping: plateau detection ---
+    plateau_window::Int = 3      # n generations
+    plateau_tol::Float64 = 1e-4  # absolute ΔJ threshold
+    plateau_relative::Bool = false
+    plateau_rtol::Float64 = 1e-3
 end
+
 
 """
     DiscoveryResult

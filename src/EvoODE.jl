@@ -35,6 +35,7 @@ export BFGSOptimizer
 export simulate
 export solve_and_save_plot
 export build_rhs
+export GPStructureSearch
 
 
 # --- Core types first ---
@@ -52,7 +53,9 @@ include("loss/mse.jl")
 include("optimize/bfgs.jl")
 include("simulate/solve.jl")
 include("plotting/plot_solution.jl")
+include("structure/utils.jl")
 include("structure/evogrow.jl")
+include("structure/gp.jl")
 
 # --- Orchestration last ---
 include("core/discover.jl")
