@@ -350,6 +350,7 @@ Target: ICML, NeurIPS, or JMLR (quality over prestige, but no low-tier venues).
 
 ## Coding Conventions
 
+- **Language: Julia only.** All code in this project must be written in Julia 1.11.5. No Python, R, shell scripts, or other languages. No exceptions.
 - Julia 1.11.5
 - Module: `module EvoODE`
 - All public API exported from `EvoODE.jl` — if it's not exported there, it's internal
