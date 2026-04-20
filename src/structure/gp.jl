@@ -163,27 +163,68 @@ function search_structure(strategy::GPStructureSearch,
 
     pop = _init_population(strategy, dim, n_basis)
 
+    if options.verbose >= 1
+        log_info(
+            "GP search start",
+            context = Dict(
+                :dim => dim,
+                :pop_size => strategy.pop_size,
+                :n_generations => strategy.n_generations,
+                :tournament_k => strategy.tournament_k,
+                :p_crossover => strategy.p_crossover,
+                :p_mutation => strategy.p_mutation,
+                :n_basis => n_basis
+            )
+        )
+    end
+
     # ---------------- INITIAL EVAL ----------------
     if options.verbose >= 2
-        println("Evaluating initial population...")
+        log_info("Evaluating initial population")
     end
 
     for (i, ind) in enumerate(pop)
+        ind_ctx = Dict(:phase => "init", :individual => i, :pop_size => length(pop))
+
+        done = options.verbose >= 2 ? time_block("initial individual $i", level=INFO, context=ind_ctx) : nothing
+
         if options.verbose >= 2
-            println("  individual $i / $(length(pop))")
+            log_info("Initial population evaluation", context=ind_ctx)
         end
+
         _evaluate!(ind, traj, basis, loss, optimizer, strategy.λ, options)
+
+        if options.verbose >= 3
+            log_debug(
+                "Initial individual result",
+                context = merge(
+                    ind_ctx,
+                    Dict(
+                        :structure => replace(structure_with_params_string(ind.structure, basis, ind.params), '\n' => ' '),
+                        :loss => ind.loss,
+                        :objective => ind.objective
+                    )
+                )
+            )
+        end
+
+        if done !== nothing
+            done()
+        end
     end
 
     sort!(pop, by = x -> x.objective)
     best = pop[1]
 
     best_J_hist = Float64[best.objective]
-
     n_steps = min(strategy.n_generations, options.max_levels)
 
     for gen in 1:n_steps
-        options.verbose >= 1 && println("\nGen $gen")
+        gen_ctx = Dict(:generation => gen)
+
+        if options.verbose >= 1
+            log_info("Generation start", context=gen_ctx)
+        end
 
         new_pop = GPIndividual[]
 
@@ -191,8 +232,10 @@ function search_structure(strategy::GPStructureSearch,
         push!(new_pop, GPIndividual(best.structure, best.params, best.loss, best.objective))
 
         # ---------------- CHILD GENERATION ----------------
+        gen_done = options.verbose >= 2 ? time_block("generation $gen child generation", level=INFO, context=gen_ctx) : nothing
+
         if options.verbose >= 2
-            println("  Generating children...")
+            log_info("Generating children", context=gen_ctx)
         end
 
         while length(new_pop) < strategy.pop_size
@@ -209,21 +252,48 @@ function search_structure(strategy::GPStructureSearch,
             push!(new_pop, GPIndividual(child_struct, Float64[], Inf, Inf))
         end
 
+        if gen_done !== nothing
+            gen_done()
+        end
+
         if options.verbose >= 2
-            println("  Generated $(length(new_pop)) individuals.")
+            log_info("Generated individuals", context=merge(gen_ctx, Dict(:n_generated => length(new_pop))))
         end
 
         # ---------------- EVALUATION ----------------
         if options.verbose >= 2
-            println("  Evaluating population...")
+            log_info("Evaluating generation population", context=gen_ctx)
         end
 
         for (i, ind) in enumerate(new_pop)
             if !isfinite(ind.objective)
+                ind_ctx = merge(gen_ctx, Dict(:individual => i, :pop_size => length(new_pop)))
+
+                done = options.verbose >= 2 ? time_block("generation $gen individual $i", level=INFO, context=ind_ctx) : nothing
+
                 if options.verbose >= 2
-                    println("    individual $i / $(length(new_pop))")
+                    log_info("Generation individual evaluation", context=ind_ctx)
                 end
+
                 _evaluate!(ind, traj, basis, loss, optimizer, strategy.λ, options)
+
+                if options.verbose >= 3
+                    log_debug(
+                        "Generation individual result",
+                        context = merge(
+                            ind_ctx,
+                            Dict(
+                                :structure => replace(structure_with_params_string(ind.structure, basis, ind.params), '\n' => ' '),
+                                :loss => ind.loss,
+                                :objective => ind.objective
+                            )
+                        )
+                    )
+                end
+
+                if done !== nothing
+                    done()
+                end
             end
         end
 
@@ -235,20 +305,47 @@ function search_structure(strategy::GPStructureSearch,
 
         # ---------------- LOGGING ----------------
         if options.verbose >= 1
-            println("  Best J: ", best.objective,
-                    " | loss=", best.loss,
-                    " | n_params=", length(best.params))
+            log_info(
+                "Best individual",
+                context = merge(
+                    gen_ctx,
+                    Dict(
+                        :best_objective => best.objective,
+                        :best_loss => best.loss,
+                        :n_params => length(best.params)
+                    )
+                )
+            )
         end
 
         if options.verbose >= 2
-            println("  Best structure:")
-            println(replace(structure_with_params_string(best.structure, basis, best.params), '\n' => ' '))
+            log_info(
+                "Best structure",
+                context = merge(
+                    gen_ctx,
+                    Dict(
+                        :structure => replace(structure_with_params_string(best.structure, basis, best.params), '\n' => ' ')
+                    )
+                )
+            )
         end
 
         if options.verbose >= 3
-            println("  Population snapshot (top 5):")
+            log_debug("Population snapshot", context=gen_ctx)
             for (i, ind) in enumerate(pop[1:min(5, length(pop))])
-                println("    #$i  J=$(ind.objective)  loss=$(ind.loss)  n_params=$(length(ind.params))")
+                log_debug(
+                    "Top individual",
+                    context = merge(
+                        gen_ctx,
+                        Dict(
+                            :rank => i,
+                            :objective => ind.objective,
+                            :loss => ind.loss,
+                            :n_params => length(ind.params),
+                            :structure => replace(structure_with_params_string(ind.structure, basis, ind.params), '\n' => ' ')
+                        )
+                    )
+                )
             end
         end
 
@@ -256,10 +353,21 @@ function search_structure(strategy::GPStructureSearch,
         stop, reason = should_stop(best_J_hist, best.loss, gen, options)
         if stop
             if options.verbose >= 1
-                println("  -> stopping at generation $gen (", reason, ")")
+                log_info("Stopping", context=merge(gen_ctx, Dict(:reason => reason)))
             end
             break
         end
+    end
+
+    if options.verbose >= 1
+        log_info(
+            "GP search finished",
+            context = Dict(
+                :best_loss => best.loss,
+                :best_objective => best.objective,
+                :n_params => length(best.params)
+            )
+        )
     end
 
     return (

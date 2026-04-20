@@ -27,13 +27,17 @@ X = hcat(u1, u2)
 
 
 # structure = GPStructureSearch(pop_size = 10, n_generations = 3, tournament_k = 2, p_crossover = 0.7, p_mutation = 0.4, max_terms_per_eq = 5, λ = 1e-3)
-structure = EvoGrow(pop_size = 20, n_levels = 5, children_per_parent = 2, max_terms_per_eq = 5, λ = 1e-3)
+structure = EvoGrow(pop_size=10, n_levels=8, children_per_parent=2, max_terms_per_eq=5, λ=1e-3)
+
+basis = PolynomialBasis() # dim=0 placeholder
+# basis = default_staged_polynomial_basis(size(X, 2))
+
 
 res = discover(
     t, X;
     structure = structure,
     optimizer = BFGSOptimizer(maxiters = 200),
-    basis = PolynomialBasis(),   # dim=0 -> will be replaced automatically
+    basis = basis,   # dim=0 -> will be replaced automatically
     loss = MSELoss(),
     options = DiscoveryOptions(verbose = 2)
 )

@@ -35,12 +35,21 @@ export GPStructureSearch
 
 export PolynomialBasis, default_polynomial_basis
 export TrigonometricBasis, default_trigonometric_basis
+export StagedPolynomialBasis, default_staged_polynomial_basis
 
 export MSELoss
 
 export BFGSOptimizer
 export AdamOptimizer
 export DummyOptimizer
+
+# ------------------------
+# Public API – Logging
+# ------------------------
+export DEBUG, INFO, WARN, ERROR
+export set_level, current_level, level_name, reset_timer
+export log_debug, log_info, log_warn, log_error, log_exception
+export time_block
 
 # ------------------------
 # Public API – Stopping / Simulation / Plotting
@@ -53,6 +62,12 @@ export solve_and_save_plot
 # Core types first
 # ============================================================
 include("core/types.jl")
+
+# ============================================================
+# Logging utilities
+# ============================================================
+include("utils/logging.jl")
+using .EvoLogger
 
 # ============================================================
 # Interfaces
@@ -77,6 +92,7 @@ include("structure/utils.jl")
 # ============================================================
 include("basis/polynomial.jl")
 include("basis/trigonometric.jl")
+include("basis/staged_polynomial.jl")
 
 # ============================================================
 # Losses

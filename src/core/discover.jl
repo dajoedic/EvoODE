@@ -38,7 +38,18 @@ function discover(traj::Trajectory;
     dim = size(traj.x, 2)
 
     if options.verbose >= 1
-        println("EvoODE.discover: starting (T=$T, dim=$dim)")
+        log_info(
+            "EvoODE.discover start",
+            context = Dict(
+                :T => T,
+                :dim => dim,
+                :structure => nameof(typeof(structure)),
+                :optimizer => nameof(typeof(optimizer)),
+                :basis => nameof(typeof(basis)),
+                :loss => nameof(typeof(loss)),
+                :rng_seed => options.rng_seed
+            )
+        )
     end
 
     # ------------------------------------------------------------
@@ -47,14 +58,35 @@ function discover(traj::Trajectory;
     if hasproperty(basis, :dim) && getproperty(basis, :dim) == 0
         basis = default_polynomial_basis(dim)
         if options.verbose >= 1
-            println("  basis was dim=0 -> using default_polynomial_basis(dim=$dim)")
+            log_info(
+                "Basis fallback applied",
+                context = Dict(
+                    :new_basis => nameof(typeof(basis)),
+                    :dim => dim
+                )
+            )
         end
     end
 
     # ------------------------------------------------------------
     # 1) Structure search
     # ------------------------------------------------------------
+    search_done = nothing
+    if options.verbose >= 1
+        search_done = time_block(
+            "structure search",
+            level = INFO,
+            context = Dict(
+                :structure => nameof(typeof(structure))
+            )
+        )
+    end
+
     sres = search_structure(structure, traj, basis, loss, optimizer, options)
+
+    if options.verbose >= 1 && search_done !== nothing
+        search_done()
+    end
 
     discovered_structure = sres.structure
     params               = sres.params
@@ -62,21 +94,54 @@ function discover(traj::Trajectory;
     search_objective     = sres.objective
     struct_meta          = haskey(sres, :meta) ? sres.meta : (;)
 
+    if options.verbose >= 1
+        log_info(
+            "Structure search finished",
+            context = Dict(
+                :search_loss => search_loss,
+                :search_objective => search_objective,
+                :n_params => length(params)
+            )
+        )
+    end
+
     # ------------------------------------------------------------
     # 2) Build RHS from structure + basis
     # ------------------------------------------------------------
+    build_done = nothing
+    if options.verbose >= 2
+        build_done = time_block("build_rhs", level = INFO)
+    end
+
     f!, n_params, build_meta = build_rhs(discovered_structure, basis)
+
+    if options.verbose >= 2 && build_done !== nothing
+        build_done()
+    end
 
     # Guard against inconsistent structure search output
     if length(params) != n_params
         if options.verbose >= 1
-            println("  WARNING: parameter count mismatch after structure search.")
-            println("           expected $n_params but got $(length(params)).")
-            println("           Re-fitting parameters once for consistency.")
+            log_warn(
+                "Parameter count mismatch after structure search; refitting once",
+                context = Dict(
+                    :expected => n_params,
+                    :got => length(params)
+                )
+            )
+        end
+
+        refit_done = nothing
+        if options.verbose >= 1
+            refit_done = time_block("parameter refit", level = INFO)
         end
 
         params, search_loss, opt_meta =
             fit_parameters(optimizer, f!, traj, n_params, loss, options)
+
+        if options.verbose >= 1 && refit_done !== nothing
+            refit_done()
+        end
     else
         opt_meta = (method = "from_structure_search",)
     end
@@ -85,6 +150,11 @@ function discover(traj::Trajectory;
     # 3) Final simulation
     # Use optimizer-specific settings if available
     # ------------------------------------------------------------
+    sim_done = nothing
+    if options.verbose >= 1
+        sim_done = time_block("final simulation", level = INFO)
+    end
+
     if optimizer isa BFGSOptimizer
         Yhat = simulate(
             f!,
@@ -100,20 +170,40 @@ function discover(traj::Trajectory;
         Yhat = simulate(f!, params, traj; options=options)
     end
 
+    if options.verbose >= 1 && sim_done !== nothing
+        sim_done()
+    end
+
     # ------------------------------------------------------------
     # 4) Sanity check: validated final loss
     # ------------------------------------------------------------
     loss_sanity = evaluate_loss(loss, Yhat, traj.x)
 
     if options.verbose >= 1
-        println("Sanity: loss(search)=", search_loss,
-                "  loss(simulate)=", loss_sanity,
-                "  Δ=", (loss_sanity - search_loss))
+        log_info(
+            "Sanity check",
+            context = Dict(
+                :loss_search => search_loss,
+                :loss_simulate => loss_sanity,
+                :delta => loss_sanity - search_loss
+            )
+        )
     end
 
     # ------------------------------------------------------------
     # Return unified result object
     # ------------------------------------------------------------
+    if options.verbose >= 1
+        log_info(
+            "EvoODE.discover finished",
+            context = Dict(
+                :final_loss => loss_sanity,
+                :final_objective => search_objective,
+                :n_params => length(params)
+            )
+        )
+    end
+
     return DiscoveryResult(
         discovered_structure,
         params,
