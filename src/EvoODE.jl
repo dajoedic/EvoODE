@@ -34,13 +34,11 @@ export EvoGrow
 export GPStructureSearch
 
 export PolynomialBasis, default_polynomial_basis
-export TrigonometricBasis, default_trigonometric_basis
 export StagedPolynomialBasis, default_staged_polynomial_basis
 
 export MSELoss
 
 export BFGSOptimizer
-export AdamOptimizer
 export DummyOptimizer
 
 # ------------------------
@@ -56,6 +54,7 @@ export time_block
 # ------------------------
 export should_stop
 export simulate
+export save_comparison_csv
 export solve_and_save_plot
 
 # ============================================================
@@ -91,7 +90,6 @@ include("structure/utils.jl")
 # Basis libraries
 # ============================================================
 include("basis/polynomial.jl")
-include("basis/trigonometric.jl")
 include("basis/staged_polynomial.jl")
 
 # ============================================================
@@ -103,13 +101,13 @@ include("loss/mse.jl")
 # Optimizers
 # ============================================================
 include("optimize/bfgs.jl")
-include("optimize/adam.jl")
 include("optimize/dummy.jl")
 
 # ============================================================
 # Simulation / Plotting
 # ============================================================
 include("simulate/solve.jl")
+include("simulate/export.jl")
 include("plotting/plot_solution.jl")
 
 # ============================================================

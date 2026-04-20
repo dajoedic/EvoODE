@@ -1,0 +1,4 @@
+.claude/
+fit*.csv
+fit*.png
+benchmarks/results/

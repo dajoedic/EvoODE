@@ -53,15 +53,13 @@ EvoODE/                          ← project root (CLAUDE.md lives here)
 │   ├── basis/
 │   │   ├── interface.jl         ← AbstractBasis (extendable!)
 │   │   ├── polynomial.jl        ← PolynomialBasis (flat, all terms at once)
-│   │   ├── staged_polynomial.jl ← StagedPolynomialBasis (5 complexity stages)
-│   │   └── trigonometric.jl     ← TrigonometricBasis (stub, to be implemented)
+│   │   └── staged_polynomial.jl ← StagedPolynomialBasis (5 complexity stages)
 │   ├── loss/
 │   │   ├── interface.jl         ← AbstractLoss (extendable!)
 │   │   └── mse.jl               ← MSELoss (state MSE on simulated trajectory)
 │   ├── optimize/
 │   │   ├── interface.jl         ← AbstractOptimizer (extendable!)
 │   │   ├── bfgs.jl              ← BFGSOptimizer (primary, via Optimization.jl)
-│   │   ├── adam.jl              ← AdamOptimizer (stub — NOT implemented yet)
 │   │   └── dummy.jl             ← DummyOptimizer (returns zeros, for testing)
 │   ├── simulate/
 │   │   ├── solve.jl             ← simulate() function
@@ -265,18 +263,15 @@ Source: ODEFormer paper (extended Strogatz benchmark)
 - Plotting and CSV export
 
 ### Stubs / Not Yet Implemented
-- `AdamOptimizer` — interface exists, body is empty
-- `TrigonometricBasis` — file exists, empty
 - `utils/checks.jl` — empty
-- `utils/logging.jl` — empty
 - No train/validation split — currently evaluates on training data only
 - No noise injection for robustness testing
-- No benchmarking pipeline (loading/running strogatz_extended.json)
+- Benchmark scripts exist, but benchmarking is not yet systematic or unified
 - No systematic comparison against GP or SINDy
 - Expression Trees — not implemented (planned for Phase 5)
 
 ### Known Issues / Architectural Gaps
-- `Manifest.toml` has no deps listed — packages must be installed manually
+- Julia environment/test execution still needs cleanup and faster verification
 - No parameter count sanity check before optimization (mismatch guard is a workaround)
 - `simulate()` can fail silently on stiff/diverging cases — needs better error handling
 
@@ -288,7 +283,6 @@ Source: ODEFormer paper (extended Strogatz benchmark)
 Goal: EvoGrow works reliably on standard benchmark systems, GP baseline works, pipeline is stable
 
 Missing for Phase 1 completion:
-- [ ] `AdamOptimizer` implementation
 - [ ] Train/validation split in evaluation
 - [ ] Benchmarking pipeline for `strogatz_extended.json`
 - [ ] Proper `Manifest.toml` / `Project.toml`
