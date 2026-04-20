@@ -1,14 +1,38 @@
-# CLAUDE.md – EvoODE
+# CLAUDE.md - EvoODE
+
+This file is the single source of truth for the EvoODE project.
+All project vision, architecture, roadmap, status, and research priorities live here.
+Do not maintain a second planning document elsewhere.
 
 ## What This Project Is
 
-EvoODE is a Julia research framework for **data-driven discovery of interpretable ODE systems from time-series data**. The framework supports both scalar (1D) and coupled (multi-dimensional) systems, with a research focus on coupled systems.
+EvoODE is a Julia research framework for data-driven discovery of interpretable ODE systems from time-series data.
+It supports both scalar (1D) and coupled multi-dimensional systems, with a research focus on coupled systems.
 
-The core idea: instead of fitting a fixed library (SINDy) or searching globally from large structures (GP), EvoODE starts with minimal structures and grows them **incrementally and intelligently** — only increasing complexity when simpler structures are demonstrably insufficient.
+The core idea is simple:
+instead of fitting a fixed library like SINDy or searching globally from large random structures like GP,
+EvoODE starts small and grows model structure incrementally, only increasing complexity when simpler structures are not sufficient.
 
-This is a **PhD research project**. Code quality and scientific correctness matter more than speed. Every architectural decision must be justifiable as a research contribution.
+This is a PhD research project.
+Scientific correctness, reproducibility, and research clarity matter more than speed or feature volume.
+Every architectural decision must be defensible as part of a research contribution.
 
----
+## Vision
+
+EvoODE is a research platform for discovering interpretable, coupled dynamical systems from data through structured, iterative growth.
+
+The goal is not merely to fit ODEs, but to study how model structures should be constructed, expanded, validated, and controlled.
+
+## Core Idea
+
+Data -> Structure -> Parameters -> Simulation -> Evaluation -> Iteration
+
+Key principle:
+structured, iterative growth instead of global search.
+
+## PhD Focus
+
+Efficient and robust search strategies for interpretable discovery of coupled ODE systems.
 
 ## Scientific Position and Contribution
 
@@ -18,345 +42,487 @@ This is a **PhD research project**. Code quality and scientific correctness matt
 |--------|-------------|-----------------|-------------------|
 | SINDy | Restricted: fixed linear library | None (direct regression) | L1 sparsity |
 | GP | Unrestricted | Global: starts large, random | Parsimony pressure |
-| **EvoODE** | **Unrestricted** | **Incremental: starts minimal, grows** | **Staged grammar + stopping criterion** |
+| EvoODE | Unrestricted | Incremental: starts minimal, grows | Staged grammar + stopping criterion |
 
-### Core Scientific Claims (to be validated)
-1. Starting small and growing incrementally is more efficient than global search
-2. Grammar-staged complexity unlocking reduces wasted computation
-3. The stopping/promotion criterion is a principled way to control complexity
+### Core Scientific Claims
 
-### Open Research Questions (PhD core)
-- What is the optimal stopping/promotion criterion? (stagnation vs. validation-based vs. information-theoretic)
-- How should structure grow? (term-wise, equation-wise, coupling-aware)
-- How to handle coupled systems specifically?
+1. Starting small and growing incrementally can be more efficient than global search.
+2. Grammar-staged complexity unlocking can reduce wasted computation.
+3. The stopping and promotion criterion can serve as a principled complexity-control mechanism.
+
+### Core Research Questions
+
+- What is the best stopping and promotion criterion?
+- How should structure grow: term-wise, equation-wise, staged, coupling-aware, or error-guided?
+- How should structure search and parameter optimization be coupled?
+- How should coupled systems be handled specifically?
+- How should discovered models be evaluated?
 - How does performance scale with noise, sample size, coupling strength, and dimensionality?
-
----
 
 ## Project Structure
 
-```
-EvoODE/                          ← project root (CLAUDE.md lives here)
-├── CLAUDE.md
-├── src/                         ← the EvoODE Julia package
-│   ├── EvoODE.jl                ← module entry point, all exports
-│   ├── core/
-│   │   ├── types.jl             ← Trajectory, DiscoveryOptions, DiscoveryResult
-│   │   ├── discover.jl          ← main discover() pipeline
-│   │   └── stopping.jl          ← shared stopping logic (all algorithms)
-│   ├── structure/
-│   │   ├── interface.jl         ← AbstractStructureSearch, StructureSpec
-│   │   ├── evogrow.jl           ← EvoGrow (main algorithm, v2.1)
-│   │   ├── gp.jl                ← GPStructureSearch (baseline)
-│   │   ├── null.jl              ← NullStructureSearch (stub)
-│   │   └── utils.jl             ← pretty-printing helpers
-│   ├── basis/
-│   │   ├── interface.jl         ← AbstractBasis (extendable!)
-│   │   ├── polynomial.jl        ← PolynomialBasis (flat, all terms at once)
-│   │   └── staged_polynomial.jl ← StagedPolynomialBasis (5 complexity stages)
-│   ├── loss/
-│   │   ├── interface.jl         ← AbstractLoss (extendable!)
-│   │   └── mse.jl               ← MSELoss (state MSE on simulated trajectory)
-│   ├── optimize/
-│   │   ├── interface.jl         ← AbstractOptimizer (extendable!)
-│   │   ├── bfgs.jl              ← BFGSOptimizer (primary, via Optimization.jl)
-│   │   └── dummy.jl             ← DummyOptimizer (returns zeros, for testing)
-│   ├── simulate/
-│   │   ├── solve.jl             ← simulate() function
-│   │   └── export.jl            ← CSV export helpers
-│   ├── plotting/
-│   │   └── plot_solution.jl     ← solve_and_save_plot()
-│   └── utils/
-│       ├── checks.jl            ← (stub, empty)
-│       └── logging.jl           ← (stub, empty)
-├── benchmarks/
-│   └── strogatz_extended.json   ← ODEbench from ODEFormer paper (63 systems)
-├── examples/                    ← example scripts (to be added)
-└── test_evogrow_v2_lotka.jl     ← current integration test (Lotka-Volterra)
+```text
+EvoODE/
+|-- CLAUDE.md
+|-- Project.toml
+|-- Manifest.toml
+|-- src/
+|   |-- EvoODE.jl
+|   |-- core/
+|   |   |-- types.jl
+|   |   |-- discover.jl
+|   |   `-- stopping.jl
+|   |-- structure/
+|   |   |-- interface.jl
+|   |   |-- evogrow.jl
+|   |   |-- gp.jl
+|   |   |-- null.jl
+|   |   `-- utils.jl
+|   |-- basis/
+|   |   |-- interface.jl
+|   |   |-- polynomial.jl
+|   |   `-- staged_polynomial.jl
+|   |-- loss/
+|   |   |-- interface.jl
+|   |   `-- mse.jl
+|   |-- optimize/
+|   |   |-- interface.jl
+|   |   |-- bfgs.jl
+|   |   `-- dummy.jl
+|   |-- simulate/
+|   |   |-- solve.jl
+|   |   `-- export.jl
+|   |-- plotting/
+|   |   `-- plot_solution.jl
+|   `-- utils/
+|       |-- checks.jl
+|       `-- logging.jl
+|-- benchmarks/
+|   |-- benchmark_evogrow.jl
+|   |-- odeformer/
+|   |   `-- strogatz_extended.json
+|   `-- results/
+|-- run_odebench.jl
+|-- test.jl
+`-- test_evogrow_v2_lotka.jl
 ```
 
-**The module structure is intentionally extensible.** New structure search algorithms, bases, losses, and optimizers are added by implementing the abstract interface and registering in `EvoODE.jl`. Do not hardcode algorithm-specific logic in `discover()`.
-
----
+The module structure is intentionally extensible.
+New structure search algorithms, bases, losses, and optimizers should be added through the relevant interface layer and registered in `src/EvoODE.jl`.
+Do not hardcode algorithm-specific logic into `discover()`.
 
 ## Key Types
 
 ### `Trajectory`
+
 ```julia
 struct Trajectory
-    t::Vector{Float64}   # time points, length T
-    x::Matrix{Float64}   # states, shape (T × dim)
+    t::Vector{Float64}
+    x::Matrix{Float64}   # shape: T x dim
 end
 ```
-- `dim = 1` for scalar ODEs, `dim > 1` for coupled systems
-- Supports both coupled and uncoupled systems
+
+- `dim = 1` for scalar ODEs and `dim > 1` for coupled systems.
+- This is the standard dataset container used throughout the pipeline.
 
 ### `StructureSpec`
+
 ```julia
 struct StructureSpec
-    active_idxs::Vector{Vector{Int}}  # length dim, each entry = active basis indices for that eq
+    active_idxs::Vector{Vector{Int}}
 end
 ```
-- Index-based representation: each equation is a linear combination of selected basis terms
-- Example for 2D Lotka-Volterra: `[[1,3,5], [3,4]]` means eq1 uses basis terms 1,3,5; eq2 uses 3,4
-- **NOTE**: Expression Trees (nested terms like `sin(x*y)`) are planned for later phases but NOT implemented. The current index-based representation is a deliberate Phase 1 simplification.
+
+- `active_idxs[k]` contains the active basis term indices for equation `k`.
+- The current representation is index-based and linear in basis terms.
+- Expression trees are a later-phase extension and are not implemented yet.
 
 ### `DiscoveryOptions`
-Controls stopping behavior (algorithm-agnostic):
-- `verbose`: 0=silent, 1=basic, 2=detailed, 3=debug
-- `min_levels`, `max_levels`: safety bounds
-- `loss_tol`: absolute convergence threshold
-- `plateau_window`, `plateau_tol`, `plateau_relative`, `plateau_rtol`: stagnation detection
+
+Controls shared, algorithm-agnostic search behavior:
+
+- RNG seed and verbosity
+- minimum and maximum levels
+- absolute loss threshold
+- plateau detection and relative plateau settings
 
 ### `DiscoveryResult`
+
 ```julia
 struct DiscoveryResult
-    structure::Any              # discovered StructureSpec (or algorithm-specific)
-    params::Vector{Float64}     # fitted parameters
-    loss::Float64               # validated loss (on simulated trajectory)
-    objective::Float64          # search objective (loss + λ * complexity)
-    meta::NamedTuple            # diagnostics: structure, build, optimize, search, prediction, sanity
+    structure::Any
+    params::Vector{Float64}
+    loss::Float64
+    objective::Float64
+    meta::NamedTuple
 end
 ```
 
----
+- `loss` is the validated loss on the final simulated trajectory.
+- `objective` is the search objective returned by structure search.
+- `meta` contains diagnostics from structure search, building, optimization, prediction, and sanity checks.
 
 ## Core Pipeline
 
-```
+```text
 discover(traj; structure, optimizer, basis, loss, options)
-    │
-    ├── 1. search_structure(strategy, traj, basis, loss, optimizer, options)
-    │       → returns (structure, params, loss, objective, meta)
-    │
-    ├── 2. build_rhs(structure, basis)
-    │       → returns (f!, n_params, build_meta)
-    │       → f! has signature f!(du, u, params, t)
-    │
-    ├── 3. simulate(f!, params, traj; ...)
-    │       → solves ODE, returns Yhat (T × dim)
-    │
-    └── 4. validate: evaluate_loss(loss, Yhat, traj.x)
-            → DiscoveryResult
+    |
+    |-- 1. search_structure(strategy, traj, basis, loss, optimizer, options)
+    |       -> returns structure, params, loss, objective, meta
+    |
+    |-- 2. build_rhs(structure, basis)
+    |       -> returns f!, n_params, build_meta
+    |
+    |-- 3. simulate(f!, params, traj; ...)
+    |       -> returns Yhat with shape T x dim
+    |
+    `-- 4. evaluate_loss(loss, Yhat, traj.x)
+            -> DiscoveryResult
 ```
 
-**Important**: `discover()` does NOT re-fit parameters after structure search. It only re-fits if `length(params) != n_params` (parameter count mismatch guard).
+Important:
+`discover()` does not blindly refit parameters after structure search.
+It only refits if the returned parameter count does not match the built RHS parameter count.
 
----
+## Search Algorithms
 
-## Algorithm: EvoGrow
+### EvoGrow
 
-### Key Parameters
+Main research algorithm.
+
 ```julia
 Base.@kwdef struct EvoGrow <: AbstractStructureSearch
-    pop_size::Int = 20                # population size
-    n_levels::Int = 5                 # max growth levels (also capped by options.max_levels)
-    children_per_parent::Int = 2      # children generated per parent per level
-    max_terms_per_eq::Int = 5         # hard cap on terms per equation
-    λ::Float64 = 1e-3                 # complexity penalty: objective = loss + λ * n_params
+    pop_size::Int = 20
+    n_levels::Int = 5
+    children_per_parent::Int = 2
+    max_terms_per_eq::Int = 5
+    λ::Float64 = 1e-3
 end
 ```
 
-### Growth Loop
-1. Initialize population: each individual has 1 random term per equation
-2. Per level: evaluate parents → generate children → evaluate children → select top `pop_size` by objective
-3. Objective = loss + λ * n_params (penalizes complexity)
-4. Stopping check via `should_stop()` → if plateau AND more stages available → unlock next stage
-5. Stage-aware child generation: when a new stage is unlocked, children preferentially include terms from the new stage
+Behavior:
 
-### Staged Complexity (StagedPolynomialBasis, default 5 stages)
-Stage progression is triggered by plateau detection in `should_stop()`:
-- **Stage 1**: Linear terms: `u1, u2, ..., udim`
-- **Stage 2**: Self-quadratic: `u1^2, u2^2, ..., udim^2`
-- **Stage 3**: Cross terms: `u1*u2, u1*u3, ..., u(dim-1)*udim`
-- **Stage 4**: Cubic (self only): `u1^3, u2^3, ..., udim^3`
-- **Stage 5**: Trigonometric: `sin(u1), cos(u1), ..., sin(udim), cos(udim)`
+1. Start with minimal structures.
+2. Evaluate the current population.
+3. Generate children by structure growth.
+4. Fit parameters and score loss plus complexity penalty.
+5. Select the best population.
+6. Use shared stopping logic to stop or, for staged bases, unlock more complexity.
 
-For non-staged bases (e.g. `PolynomialBasis`), all terms are available from the start (fallback behavior).
+#### EvoGrow variants
 
----
+- v1: flat growth over all available basis terms
+- v2: staged complexity release
+- v2.1: stage-aware child generation after stage unlock
+- v2.2: planned refinement of stage progression policy
+- v3: planned equation-wise growth
+- v4: planned coupling-aware growth
 
-## Algorithm: GPStructureSearch (Baseline)
+#### Current findings
 
-Standard genetic programming over the full basis. Used as comparison baseline only.
-- Tournament selection (configurable k)
-- Crossover: per-equation swap between parents
-- Mutation: add/remove/replace a random term
-- No staged complexity — full basis available from start
+- On simple linear systems, EvoGrow v2 stays in Stage 1 as desired.
+- On Lotka-Volterra, EvoGrow v2 improves significantly after Stage 2.
+- Current stage progression still does not reliably recover the mechanistically correct cross-term structure.
+- This is now a core research question, not just an implementation detail.
 
----
+### GPStructureSearch
 
-## Stopping Logic (`should_stop`)
+Baseline genetic programming search over the full basis.
 
-Shared across all algorithms:
-1. **Hard limit**: stop if `level >= max_levels`
-2. **Min levels**: never stop before `min_levels`
-3. **Loss tolerance**: stop if `best_loss < loss_tol`
-4. **Plateau (absolute)**: stop if improvement over `plateau_window` steps < `plateau_tol`
-5. **Plateau (relative)**: stop if relative improvement < `plateau_rtol`
+- tournament selection
+- per-equation crossover
+- add/remove/replace mutation
+- no staged complexity release
 
-For EvoGrow specifically: plateau triggers stage promotion (not termination) if more stages are available.
+This is a comparison baseline, not the central contribution.
 
-**This stopping/promotion criterion is a core research contribution — treat it carefully. Do not simplify or remove nuance here.**
+## Basis Libraries
 
----
+### `PolynomialBasis`
 
-## Dependencies (Julia 1.11.5)
+Flat basis with all supported polynomial terms available immediately.
 
-| Package | Role |
-|---------|------|
-| `DifferentialEquations.jl` | ODE solving in `simulate()` |
-| `SciMLBase.jl` | SciML interface types |
-| `Optimization.jl` + `OptimizationOptimJL.jl` | BFGS parameter optimization |
-| `Plots.jl` | Plotting |
-| `Statistics` (stdlib) | `mean()` in MSELoss |
-| `Random` (stdlib) | RNG seeding |
-| `Printf` (stdlib) | Formatted output |
-| `Logging` (stdlib) | Log suppression |
+### `StagedPolynomialBasis`
 
----
+Default staged basis with five complexity levels:
 
-## Benchmark Dataset: ODEbench / strogatz_extended.json
+1. linear terms
+2. self-quadratic terms
+3. pairwise cross terms
+4. self-cubic terms
+5. trigonometric terms
 
-Location: `benchmarks/strogatz_extended.json`
-Source: ODEFormer paper (extended Strogatz benchmark)
+For non-staged bases, all terms are available from the start.
 
-**Dataset statistics:**
+## Losses and Evaluation
+
+### Implemented loss
+
+- `MSELoss`: state MSE on simulated trajectories
+
+### Evaluation axes used or planned
+
+- state MSE
+- derivative loss
+- simulation loss
+- complexity penalty
+- validation splits
+
+## Optimizers
+
+### Implemented
+
+- `BFGSOptimizer`: primary parameter fitting backend
+- `DummyOptimizer`: testing and pipeline smoke-check placeholder
+
+### Removed for now
+
+- There is currently no public Adam optimizer in the package API.
+- Do not reintroduce one unless it is actually implemented and research-motivated.
+
+## Stopping Logic
+
+Shared across all structure search algorithms through `should_stop()`:
+
+1. hard maximum level limit
+2. minimum level guard
+3. absolute loss threshold
+4. absolute plateau detection
+5. relative plateau detection
+
+For EvoGrow specifically, plateau can trigger stage promotion instead of termination if more stages remain.
+
+This stopping and promotion logic is part of the core research contribution and must be treated carefully.
+
+## Benchmark Data and Scripts
+
+### Main dataset
+
+Location:
+`benchmarks/odeformer/strogatz_extended.json`
+
+Source:
+extended Strogatz benchmark used in the ODEFormer context.
+
+Dataset summary:
+
 - 63 total systems
-- 23 scalar (dim=1), 28 coupled 2D (dim=2), 10 coupled 3D (dim=3), 2 coupled 4D (dim=4)
-- 40 systems have dim > 1 (coupled)
+- 23 scalar systems
+- 28 coupled 2D systems
+- 10 coupled 3D systems
+- 2 coupled 4D systems
 
-**JSON format per entry:**
-```json
-{
-  "id": 24,
-  "eq": "x_1 | - c_0 * x_0",         // pipe-separated equations (one per dimension)
-  "dim": 2,
-  "consts": [[1.5, 1.0, 1.0, 3.0]],  // parameter sets
-  "init": [[1.2, 1.1]],               // initial conditions
-  "init_constraints": "...",
-  "const_constraints": "...",
-  "eq_description": "Harmonic oscillator without damping",
-  "const_description": "...",
-  "var_description": "...",
-  "source": "strogatz p.XX",
-  "substituted": [["expr_with_substituted_consts"]],
-  "solutions": [...]                  // pre-computed solutions
-}
-```
+### Benchmark scripts
 
-**Usage**: The benchmark will be used to evaluate EvoGrow vs GP vs SINDy across varied system complexity, dimension, and coupling strength.
-
----
+- `benchmarks/benchmark_evogrow.jl`: curated benchmark pack for EvoGrow
+- `run_odebench.jl`: ODEBench-style runner over JSON-loaded systems
 
 ## Current Status
 
-### Implemented and Working
-- `discover()` pipeline (end-to-end)
-- `EvoGrow` v2.1 with staged complexity and stage-aware child generation
-- `GPStructureSearch` baseline
-- `StagedPolynomialBasis` (5 stages) and `PolynomialBasis` (flat)
-- `BFGSOptimizer` (primary optimizer)
-- `MSELoss` (state MSE on simulated trajectory)
-- `DummyOptimizer` (for testing pipeline without optimization)
-- Lotka-Volterra integration test (`test_evogrow_v2_lotka.jl`)
-- Plotting and CSV export
+### Phase 1 - Stable Core
 
-### Stubs / Not Yet Implemented
-- `utils/checks.jl` — empty
-- No train/validation split — currently evaluates on training data only
-- No noise injection for robustness testing
-- Benchmark scripts exist, but benchmarking is not yet systematic or unified
-- No systematic comparison against GP or SINDy
-- Expression Trees — not implemented (planned for Phase 5)
+Status: DONE
+Completed on: 2026-04-20
 
-### Known Issues / Architectural Gaps
-- Julia environment/test execution still needs cleanup and faster verification
-- No parameter count sanity check before optimization (mismatch guard is a workaround)
-- `simulate()` can fail silently on stiff/diverging cases — needs better error handling
+Completed work:
 
----
+- fixed the inconsistency between optimization loss and final simulation loss
+- verified `loss(search) == loss(simulate)` on stable synthetic tests
+- implemented stable `discover()` orchestration
+- implemented and validated `GPStructureSearch`
+- implemented and validated EvoGrow baseline behavior
+- added shared stopping logic through `should_stop()`
+- added sanity-check reporting and final simulation validation
+- stabilized module include order and method registration
+- added structured logging with timestamps and elapsed time
+- golden harmonic-oscillator test works
 
-## Roadmap
+Notes:
 
-### Phase 1 — Stable Core (current)
-Goal: EvoGrow works reliably on standard benchmark systems, GP baseline works, pipeline is stable
+- Phase 1 is complete enough for research work.
+- Further refinements are still allowed, but Phase 1 is no longer the main focus.
 
-Missing for Phase 1 completion:
-- [ ] Train/validation split in evaluation
-- [ ] Benchmarking pipeline for `strogatz_extended.json`
-- [ ] Proper `Manifest.toml` / `Project.toml`
-- [ ] Noise injection utilities
-- [ ] Stabilize `simulate()` for stiff/diverging cases
+### Phase 2 - EvoGrow Variants
 
-### Phase 2 — EvoGrow Variants
-- v1: flat growth (already exists as PolynomialBasis fallback)
-- v2: staged complexity tiers (current, v2.1)
-- v3: equation-wise growth (grow one equation at a time)
-- v4: coupling-aware growth (bias toward cross terms when coupling is suspected)
+Status: IN PROGRESS
 
-### Phase 3 — Systematic Benchmarking
-Benchmark dimensions:
-- Noise level (σ = 0, 0.01, 0.05, 0.1)
-- Sampling density (T = 50, 100, 200, 500)
-- Coupling strength (from strogatz dataset: varies naturally)
-- Dimensionality (dim = 1, 2, 3, 4 from strogatz dataset)
+#### v1: simple growth
 
-### Phase 4 — Paper 1
-Compare EvoGrow (v1, v2) vs GPStructureSearch vs SINDy on strogatz_extended benchmark.
-Target: ICML, NeurIPS, or JMLR (quality over prestige, but no low-tier venues).
+Status: DONE
+Completed on: 2026-04-20
 
-### Phase 5 — Advanced Methods
-- Expression Trees (nested/composite terms)
-- Error-guided growth
-- Backtracking
-- Hybrid search
-- Validation-based stage promotion
-- Multi-hypothesis models
+- flat term-wise growth over the available basis
+- serves as the first EvoGrow baseline
 
----
+#### v2: complexity tiers
+
+Status: IN PROGRESS
+Started on: 2026-04-21
+
+Current state:
+
+- `StagedPolynomialBasis` with 5 stages is implemented
+- EvoGrow v2 staged basis release is implemented
+- EvoGrow v2.1 stage-aware child generation is implemented
+
+#### v2.2: stage progression policy
+
+Status: NEXT
+
+Planned focus:
+
+- refine when stages are opened
+- ensure newly opened stages are actually exploited
+- prevent premature convergence to surrogate structures
+- define explicit per-stage search behavior
+
+#### v3: equation-wise
+
+Status: NOT STARTED
+
+Planned direction:
+
+- discover equations separately or semi-separately
+- compare against full-system discovery
+- possibly use teacher forcing or hybrid simulation
+
+#### v4: coupling-aware
+
+Status: NOT STARTED
+
+Planned direction:
+
+- prioritize discovery of coupling terms explicitly
+- bias search using system-level structural information
+
+### Phase 3 - Benchmarking
+
+Status: STARTING NOW
+
+Planned benchmark axes:
+
+- noise
+- sampling density
+- coupling strength
+- dimensionality
+
+Immediate benchmark pack:
+
+1. Harmonic oscillator
+   Purpose: stable linear sanity test
+   Expected useful stage: Stage 1
+2. Lotka-Volterra
+   Purpose: essential cross-coupling benchmark
+   Expected useful stage: Stage 3
+3. Van der Pol oscillator
+   Purpose: nonlinear self-interaction benchmark
+   Expected useful stage: Stage 2 and/or Stage 4
+4. Duffing oscillator
+   Purpose: cubic nonlinearity benchmark
+   Expected useful stage: Stage 4
+
+Benchmark goal:
+
+- compare GP baseline, EvoGrow v1, and EvoGrow v2.x
+- track final loss, recovered structure, stage reached, runtime, and invalid or unstable evaluations
+
+### Phase 4 - Paper 1
+
+Status: NOT STARTED
+
+Target:
+EvoGrow baseline vs GP and SINDy
+
+Likely scope:
+
+- simple systems
+- staged growth concept
+- first systematic benchmark comparison
+
+### Phase 5 - Advanced Methods
+
+Status: NOT STARTED
+
+- expression trees
+- error-guided growth
+- backtracking
+- hybrid search
+- validation-based stage promotion
+- multi-hypothesis models
+
+## Current Priorities
+
+Current priorities as of 2026-04-21:
+
+1. Define EvoGrow v2.2 formally.
+2. Build the first 3 to 4 ODE benchmark pack.
+3. Compare GP vs EvoGrow v1 vs EvoGrow v2.x.
+4. Analyze when staged growth finds the structurally correct model versus a surrogate approximation.
+
+## Implemented and Working
+
+- `discover()` end-to-end pipeline
+- `EvoGrow` v2.1
+- `GPStructureSearch`
+- `PolynomialBasis`
+- `StagedPolynomialBasis`
+- `MSELoss`
+- `BFGSOptimizer`
+- `DummyOptimizer`
+- plotting and CSV export
+- benchmark scripts and benchmark result generation
+
+## Known Gaps
+
+- `utils/checks.jl` is still effectively a placeholder
+- no train/validation split in discovery yet
+- no noise injection utilities yet
+- benchmarking exists, but is not yet systematic or unified
+- no systematic comparison against GP and SINDy yet
+- expression trees are not implemented
+- environment and test execution still need cleanup and faster verification
+- no strong parameter-count validation before optimization beyond mismatch guard
+- `simulate()` still returns NaNs on failed solves and needs stronger failure handling
 
 ## Design Principles
 
-1. **Modular**: every component is swappable via abstract interface (`AbstractStructureSearch`, `AbstractBasis`, `AbstractLoss`, `AbstractOptimizer`). New implementations go in the appropriate subfolder and are exported from `EvoODE.jl`.
+1. Modular: every component is swappable behind an abstract interface.
+2. Reproducible: seed all stochastic behavior through `DiscoveryOptions.rng_seed`.
+3. Interpretable: always preserve a human-readable structure description.
+4. Minimal: do not add features without direct research motivation.
+5. Consistent logging: route diagnostics through the common verbosity and logging pattern.
+6. Preserve metadata: do not silently discard search or fit diagnostics.
 
-2. **Reproducible**: always seed RNG via `DiscoveryOptions.rng_seed`. Results must be exactly reproducible.
+## System Handling Directions
 
-3. **Interpretable output**: `DiscoveryResult` always contains a human-readable equation string. The `structure_with_params_string()` utility in `structure/utils.jl` handles this.
+- full-system discovery
+- equation-wise discovery
+- equation-wise discovery with teacher forcing
+- sequential discovery
+- hybrid approaches
 
-4. **Minimal complexity**: do not add features without a direct research motivation. Complexity is the enemy.
-
-5. **Verbosity levels**: all logging goes through `options.verbose` (0=silent, 1=basic, 2=detailed, 3=debug). No hardcoded `println` statements outside this pattern.
-
-6. **Metadata**: all algorithms return a `meta::NamedTuple` with diagnostics. Never discard intermediate results silently.
-
----
+These are research directions, not all implemented features.
 
 ## Non-Goals
 
-- **No GPU work** (Phase 1-4 scope)
-- **No UI** (ever, unless explicitly decided)
-- **No PDE expansion** (out of scope for this PhD)
-- **No premature optimization** (correctness first)
-- **No unnecessary dependencies** (keep the package minimal)
-
----
+- no GPU work in the current research phases
+- no UI
+- no PDE expansion
+- no premature optimization
+- no unnecessary dependencies
 
 ## Coding Conventions
 
-- **Language: Julia only.** All code in this project must be written in Julia 1.11.5. No Python, R, shell scripts, or other languages. No exceptions.
-- Julia 1.11.5
-- Module: `module EvoODE`
-- All public API exported from `EvoODE.jl` — if it's not exported there, it's internal
-- Keyword constructors via `Base.@kwdef` for all structs with defaults
-- Interface functions (e.g. `search_structure`, `build_rhs`) defined in `interface.jl` files using `error("not implemented")` as default
-- Mutable structs (`mutable struct`) only for population individuals that are updated in-place during search
-- Parameter vectors are always `Vector{Float64}`
-- ODE RHS always has signature `f!(du, u, params, t)` (in-place, SciML convention)
-- `meta` fields use `NamedTuple` syntax: `(key = value, key2 = value2)`
-
----
+- Julia only
+- target Julia 1.11.5
+- public API is exported from `src/EvoODE.jl`
+- use `Base.@kwdef` for defaulted configuration structs
+- keep ODE RHS functions in-place with signature `f!(du, u, params, t)`
+- keep parameter vectors as `Vector{Float64}`
+- use `NamedTuple` metadata consistently
+- prefer modular interfaces over special-casing in orchestration
 
 ## Guiding Rule
 
-**Every change must support a research hypothesis. If you cannot state which research question a change addresses, do not make it.**
+Every change must support a research hypothesis.
+If you cannot state which research question a change addresses, do not make it.
