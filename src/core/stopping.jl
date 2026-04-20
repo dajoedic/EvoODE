@@ -1,3 +1,5 @@
+# src/core/stopping.jl
+
 """
     should_stop(best_J_hist, best_loss, level, options)
 

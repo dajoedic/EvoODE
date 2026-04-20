@@ -3,14 +3,11 @@ module EvoODE
 """
     module EvoODE
 
-Lightweight framework for data-driven ODE discovery.
-
-Core entry point:
-- `discover(...)`: run structure search + parameter fitting to identify an ODE model from time series data.
+Lightweight research framework for data-driven discovery of interpretable ODEs.
 """
 
 # ------------------------
-# Public API – Types / I/O
+# Public API – Core types
 # ------------------------
 export Trajectory, DiscoveryOptions, DiscoveryResult
 
@@ -24,40 +21,90 @@ export discover
 # ------------------------
 export AbstractStructureSearch, AbstractBasis, AbstractLoss, AbstractOptimizer
 export StructureSpec
+export search_structure
+export build_rhs
+export basis_num_terms, basis_term_name, basis_term_func
+export evaluate_loss
+export fit_parameters
 
 # ------------------------
-# Public API – Implementations (Phase 1)
+# Public API – Implementations
 # ------------------------
 export EvoGrow
-export PolynomialBasis, default_polynomial_basis
-export MSELoss
-export BFGSOptimizer
-export simulate
-export solve_and_save_plot
-export build_rhs
 export GPStructureSearch
 
+export PolynomialBasis, default_polynomial_basis
+export TrigonometricBasis, default_trigonometric_basis
 
-# --- Core types first ---
+export MSELoss
+
+export BFGSOptimizer
+export AdamOptimizer
+export DummyOptimizer
+
+# ------------------------
+# Public API – Stopping / Simulation / Plotting
+# ------------------------
+export should_stop
+export simulate
+export solve_and_save_plot
+
+# ============================================================
+# Core types first
+# ============================================================
 include("core/types.jl")
 
-# --- Interfaces (must be loaded before implementations) ---
+# ============================================================
+# Interfaces
+# ============================================================
 include("structure/interface.jl")
 include("basis/interface.jl")
 include("loss/interface.jl")
 include("optimize/interface.jl")
 
-# --- Implementations ---
+# ============================================================
+# Core logic that depends on types/options
+# ============================================================
+include("core/stopping.jl")
+
+# ============================================================
+# Shared utilities
+# ============================================================
+include("structure/utils.jl")
+
+# ============================================================
+# Basis libraries
+# ============================================================
 include("basis/polynomial.jl")
+include("basis/trigonometric.jl")
+
+# ============================================================
+# Losses
+# ============================================================
 include("loss/mse.jl")
+
+# ============================================================
+# Optimizers
+# ============================================================
 include("optimize/bfgs.jl")
+include("optimize/adam.jl")
+include("optimize/dummy.jl")
+
+# ============================================================
+# Simulation / Plotting
+# ============================================================
 include("simulate/solve.jl")
 include("plotting/plot_solution.jl")
-include("structure/utils.jl")
+
+# ============================================================
+# Structure search algorithms
+# ============================================================
 include("structure/evogrow.jl")
 include("structure/gp.jl")
 
-# --- Orchestration last ---
+# ============================================================
+# Orchestration
+# ============================================================
 include("core/discover.jl")
 
 end # module EvoODE

@@ -1,3 +1,5 @@
+# src/structure/evogrow.jl
+
 using Random
 using Printf
 
@@ -25,6 +27,10 @@ mutable struct Individual
     objective::Float64
 end
 
+# ----------------------------
+# Initialization
+# ----------------------------
+
 function _init_population(strategy::EvoGrow, dim::Int, n_basis::Int)
     pop = Individual[]
     for _ in 1:strategy.pop_size
@@ -37,8 +43,18 @@ function _init_population(strategy::EvoGrow, dim::Int, n_basis::Int)
     return pop
 end
 
-function _expand(ind::Individual, dim::Int, n_basis::Int; n_children::Int, max_terms_per_eq::Int)
+# ----------------------------
+# Expansion
+# ----------------------------
+
+function _expand(ind::Individual,
+                 dim::Int,
+                 n_basis::Int;
+                 n_children::Int,
+                 max_terms_per_eq::Int)
+
     children = Individual[]
+
     for _ in 1:n_children
         new_idxs = [copy(v) for v in ind.structure.active_idxs]
         k = rand(1:dim)
@@ -48,12 +64,18 @@ function _expand(ind::Individual, dim::Int, n_basis::Int; n_children::Int, max_t
 
         if !isempty(candidates) && length(existing) < max_terms_per_eq
             push!(new_idxs[k], rand(candidates))
+            new_idxs[k] = sort!(unique(new_idxs[k]))
         end
 
         push!(children, Individual(StructureSpec(new_idxs), Float64[], Inf, Inf))
     end
+
     return children
 end
+
+# ----------------------------
+# Evaluation
+# ----------------------------
 
 function _evaluate!(ind::Individual,
                     traj::Trajectory,
@@ -63,10 +85,7 @@ function _evaluate!(ind::Individual,
                     λ::Float64,
                     options::DiscoveryOptions)
 
-    # Build model for this structure
     f!, n_params, _ = build_rhs(ind.structure, basis)
-
-    # Fit parameters
     params, lval, _ = fit_parameters(optimizer, f!, traj, n_params, loss, options)
 
     ind.params = params
@@ -75,6 +94,9 @@ function _evaluate!(ind::Individual,
     return ind
 end
 
+# ----------------------------
+# Main loop
+# ----------------------------
 
 """
     search_structure(strategy::EvoGrow, traj, basis, loss, optimizer, options)
@@ -83,6 +105,13 @@ Incremental evolutionary growth:
 - start with 1-term-per-equation models
 - each level: evaluate parents, generate children by adding one term, evaluate children
 - select best `pop_size` by objective
+
+Returns:
+- `structure`: best found `StructureSpec`
+- `params`: best fitted parameters
+- `loss`: best loss
+- `objective`: best objective
+- `meta`: diagnostics and pretty-print string
 """
 function search_structure(strategy::EvoGrow,
                           traj::Trajectory,
@@ -95,20 +124,42 @@ function search_structure(strategy::EvoGrow,
     n_basis = basis_num_terms(basis)
 
     pop = _init_population(strategy, dim, n_basis)
-	
-	best_J_hist = Float64[]
+    best_J_hist = Float64[]
 
-    for level in 1:strategy.n_levels
+    # Respect both strategy cap and global cap
+    n_steps = min(strategy.n_levels, options.max_levels)
+
+    for level in 1:n_steps
         options.verbose >= 1 && println("\nLevel $level")
 
-        # Evaluate parents (lazy)
-        for ind in pop
+        # -----------------------------------
+        # Evaluate current population lazily
+        # -----------------------------------
+        if options.verbose >= 2
+            println("  Evaluating parents...")
+        end
+
+        n_parents = length(pop)
+        for (i, ind) in enumerate(pop)
             if !isfinite(ind.objective)
+                if options.verbose >= 2
+                    println("    parent $i / $n_parents")
+                end
                 _evaluate!(ind, traj, basis, loss, optimizer, strategy.λ, options)
+            else
+                if options.verbose >= 3
+                    println("    parent $i / $n_parents already evaluated")
+                end
             end
         end
 
+        # -----------------------------------
         # Generate children
+        # -----------------------------------
+        if options.verbose >= 2
+            println("  Generating children...")
+        end
+
         children = Individual[]
         for ind in pop
             append!(children,
@@ -117,33 +168,42 @@ function search_structure(strategy::EvoGrow,
                             max_terms_per_eq = strategy.max_terms_per_eq))
         end
 
+        if options.verbose >= 2
+            println("  Generated $(length(children)) children.")
+        end
+
+        # -----------------------------------
         # Evaluate children
-        for child in children
+        # -----------------------------------
+        if options.verbose >= 2
+            println("  Evaluating children...")
+        end
+
+        n_children = length(children)
+        for (i, child) in enumerate(children)
+            if options.verbose >= 2
+                println("    child $i / $n_children")
+            end
             _evaluate!(child, traj, basis, loss, optimizer, strategy.λ, options)
         end
 
-        # Select best
+        # -----------------------------------
+        # Selection
+        # -----------------------------------
+        if options.verbose >= 2
+            println("  Selecting best survivors...")
+        end
+
         all_inds = vcat(pop, children)
         sort!(all_inds, by = x -> x.objective)
         pop = all_inds[1:strategy.pop_size]
 
         best = pop[1]
-		
-		push!(best_J_hist, best.objective)
+        push!(best_J_hist, best.objective)
 
-		stop, reason = should_stop(
-			best_J_hist,
-			best.loss,
-			level,
-			options
-		)
-
-		if stop
-			options.verbose >= 1 && println("  -> stopping: ", reason)
-			break
-		end
-
-
+        # -----------------------------------
+        # Logging
+        # -----------------------------------
         if options.verbose >= 1
             println("  Best J: ", best.objective,
                     " | loss=", best.loss,
@@ -162,17 +222,30 @@ function search_structure(strategy::EvoGrow,
             end
         end
 
+        # -----------------------------------
+        # Shared stopping
+        # -----------------------------------
+        stop, reason = should_stop(best_J_hist, best.loss, level, options)
+        if stop
+            if options.verbose >= 1
+                println("  -> stopping at level $level (", reason, ")")
+            end
+            break
+        end
     end
 
-	best = pop[1]
-	return (
-		structure = best.structure,
-		params    = best.params,
-		loss      = best.loss,
-		objective = best.objective,
-		meta      = (
-			best_structure_pretty = structure_with_params_string(best.structure, basis, best.params),
-		)
-	)
+    best = pop[1]
 
+    return (
+        structure = best.structure,
+        params = best.params,
+        loss = best.loss,
+        objective = best.objective,
+        meta = (
+            best_loss = best.loss,
+            best_objective = best.objective,
+            best_structure_pretty = structure_with_params_string(best.structure, basis, best.params),
+            best_J_hist = best_J_hist
+        )
+    )
 end

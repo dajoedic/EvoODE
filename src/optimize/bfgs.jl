@@ -1,3 +1,5 @@
+# src/optimize/bfgs.jl
+
 using DifferentialEquations
 using SciMLBase
 using Optimization, OptimizationOptimJL
@@ -22,13 +24,17 @@ Base.@kwdef struct BFGSOptimizer <: AbstractOptimizer
     clamp_val::Float64 = 10.0
 end
 
-function _predict_traj(f!, traj::Trajectory, p::Vector{Float64}, opt::BFGSOptimizer)
+function _predict_traj(f!,
+                       traj::Trajectory,
+                       p::Vector{Float64},
+                       opt::BFGSOptimizer)
+
     t = traj.t
     X = traj.x
     u0 = collect(X[1, :])
     tspan = (t[1], t[end])
 
-    # clamp parameters for numerical stability
+    # Clamp parameters for numerical stability
     p_clamped = Base.clamp.(p, -opt.clamp_val, opt.clamp_val)
 
     prob = ODEProblem(f!, u0, tspan, p_clamped)
@@ -37,11 +43,11 @@ function _predict_traj(f!, traj::Trajectory, p::Vector{Float64}, opt::BFGSOptimi
     try
         sol = with_logger(SimpleLogger(stderr, Logging.Error)) do
             solve(prob, Tsit5();
-                  saveat=t,
-                  abstol=opt.abstol,
-                  reltol=opt.reltol,
-                  maxiters=opt.maxiters_solve,
-                  verbose=false)
+                  saveat   = t,
+                  abstol   = opt.abstol,
+                  reltol   = opt.reltol,
+                  maxiters = opt.maxiters_solve,
+                  verbose  = false)
         end
     catch
         return fill(NaN, size(X))
@@ -77,7 +83,7 @@ function fit_parameters(opt::BFGSOptimizer,
     method_used = "none"
 
     try
-        res = Optimization.solve(optprob, OptimizationOptimJL.BFGS(); maxiters=opt.maxiters)
+        res = Optimization.solve(optprob, OptimizationOptimJL.BFGS(); maxiters = opt.maxiters)
         if isfinite(res.minimum)
             p_best = res.u
             l_best = res.minimum
@@ -89,7 +95,7 @@ function fit_parameters(opt::BFGSOptimizer,
 
     if method_used == "none"
         try
-            res2 = Optimization.solve(optprob, OptimizationOptimJL.NelderMead(); maxiters=opt.maxiters)
+            res2 = Optimization.solve(optprob, OptimizationOptimJL.NelderMead(); maxiters = opt.maxiters)
             if isfinite(res2.minimum)
                 p_best = res2.u
                 l_best = res2.minimum
@@ -100,9 +106,8 @@ function fit_parameters(opt::BFGSOptimizer,
         end
     end
 
-	# Ensure the returned params are consistent with what was evaluated in the loss
-	p_best = clamp.(p_best, -opt.clamp_val, opt.clamp_val)
+    # Ensure returned params match the ones actually evaluated in the loss
+    p_best = Base.clamp.(p_best, -opt.clamp_val, opt.clamp_val)
 
-	return p_best, l_best, (method = method_used,)
-
+    return p_best, l_best, (method = method_used,)
 end

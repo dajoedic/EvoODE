@@ -3,35 +3,6 @@
 using Random
 using Printf
 
-"""
-    GPStructureSearch(; pop_size=50,
-                       n_generations=20,
-                       tournament_k=3,
-                       p_crossover=0.7,
-                       p_mutation=0.3,
-                       max_terms_per_eq=5,
-                       init_min_terms=1,
-                       init_max_terms=2,
-                       λ=1e-3)
-
-Genetic-programming-like structure search over discrete StructureSpec models.
-
-Representation:
-- One individual encodes a `StructureSpec` via `active_idxs::Vector{Vector{Int}}`,
-  i.e. a set of basis term indices per equation.
-
-Operators:
-- Tournament selection
-- Crossover: swap term-sets between parents (per equation)
-- Mutation: add/remove/replace one term in one equation
-
-Objective:
-- `J = loss + λ * n_params`
-
-Notes:
-- This is Phase-1 pragmatic GP: it keeps your current `build_rhs(...)` pipeline intact.
-- Later you can introduce real expression trees without changing the public API.
-"""
 Base.@kwdef struct GPStructureSearch <: AbstractStructureSearch
     pop_size::Int = 50
     n_generations::Int = 20
@@ -60,7 +31,11 @@ function _rand_terms(n_basis::Int, n_terms::Int)
     return sort!(unique(rand(1:n_basis, n_terms)))
 end
 
-function _random_structure(dim::Int, n_basis::Int; min_terms::Int, max_terms::Int, max_terms_per_eq::Int)
+function _random_structure(dim::Int,
+                           n_basis::Int;
+                           min_terms::Int,
+                           max_terms::Int,
+                           max_terms_per_eq::Int)
     active = Vector{Vector{Int}}(undef, dim)
     for k in 1:dim
         nt = rand(min_terms:max_terms)
@@ -74,9 +49,9 @@ function _init_population(strategy::GPStructureSearch, dim::Int, n_basis::Int)
     pop = GPIndividual[]
     for _ in 1:strategy.pop_size
         s = _random_structure(dim, n_basis;
-                              min_terms=strategy.init_min_terms,
-                              max_terms=strategy.init_max_terms,
-                              max_terms_per_eq=strategy.max_terms_per_eq)
+                              min_terms = strategy.init_min_terms,
+                              max_terms = strategy.init_max_terms,
+                              max_terms_per_eq = strategy.max_terms_per_eq)
         push!(pop, GPIndividual(s, Float64[], Inf, Inf))
     end
     return pop
@@ -94,10 +69,7 @@ function _evaluate!(ind::GPIndividual,
                     λ::Float64,
                     options::DiscoveryOptions)
 
-    # build_rhs must be provided by the basis module
     f!, n_params, _ = build_rhs(ind.structure, basis)
-
-    # parameter fitting must be provided by the optimizer module
     params, lval, _ = fit_parameters(optimizer, f!, traj, n_params, loss, options)
 
     ind.params = params
@@ -127,26 +99,23 @@ end
 # ----------------------------
 
 function _crossover(p1::GPIndividual, p2::GPIndividual, dim::Int)
-    # Equation-wise swap: for each equation choose term list from one of parents
     active = Vector{Vector{Int}}(undef, dim)
     for k in 1:dim
-        if rand() < 0.5
-            active[k] = copy(p1.structure.active_idxs[k])
-        else
-            active[k] = copy(p2.structure.active_idxs[k])
-        end
+        active[k] = (rand() < 0.5) ? copy(p1.structure.active_idxs[k]) : copy(p2.structure.active_idxs[k])
     end
     return StructureSpec(active)
 end
 
-function _mutate!(structure::StructureSpec, dim::Int, n_basis::Int; max_terms_per_eq::Int)
-    # pick equation
+function _mutate(structure::StructureSpec,
+                 dim::Int,
+                 n_basis::Int;
+                 max_terms_per_eq::Int)
+
     k = rand(1:dim)
     terms = copy(structure.active_idxs[k])
 
     op = rand()
     if op < 0.34
-        # ADD term
         if length(terms) < max_terms_per_eq
             candidates = setdiff(1:n_basis, terms)
             if !isempty(candidates)
@@ -155,12 +124,10 @@ function _mutate!(structure::StructureSpec, dim::Int, n_basis::Int; max_terms_pe
             end
         end
     elseif op < 0.67
-        # REMOVE term (keep at least 1)
         if length(terms) > 1
             deleteat!(terms, rand(1:length(terms)))
         end
     else
-        # REPLACE term
         candidates = setdiff(1:n_basis, terms)
         if !isempty(candidates)
             if isempty(terms)
@@ -170,7 +137,6 @@ function _mutate!(structure::StructureSpec, dim::Int, n_basis::Int; max_terms_pe
             end
             terms = sort!(unique(terms))
             if isempty(terms)
-                # Safety: never allow empty equation
                 push!(terms, rand(1:n_basis))
             end
         end
@@ -185,14 +151,6 @@ end
 # Main loop
 # ----------------------------
 
-"""
-    search_structure(strategy::GPStructureSearch, traj, basis, loss, optimizer, options)
-
-Runs GP-style structure search and returns:
-
-- `structure`: best found `StructureSpec`
-- `meta`: NamedTuple with diagnostics and pretty-print string
-"""
 function search_structure(strategy::GPStructureSearch,
                           traj::Trajectory,
                           basis::AbstractBasis,
@@ -203,62 +161,90 @@ function search_structure(strategy::GPStructureSearch,
     dim = size(traj.x, 2)
     n_basis = basis_num_terms(basis)
 
-    # Initial population
     pop = _init_population(strategy, dim, n_basis)
 
-    # Evaluate initial population
-    for ind in pop
+    # ---------------- INITIAL EVAL ----------------
+    if options.verbose >= 2
+        println("Evaluating initial population...")
+    end
+
+    for (i, ind) in enumerate(pop)
+        if options.verbose >= 2
+            println("  individual $i / $(length(pop))")
+        end
         _evaluate!(ind, traj, basis, loss, optimizer, strategy.λ, options)
     end
+
     sort!(pop, by = x -> x.objective)
-
     best = pop[1]
-    best_J_prev = best.objective
 
-    for gen in 1:strategy.n_generations
+    best_J_hist = Float64[best.objective]
+
+    n_steps = min(strategy.n_generations, options.max_levels)
+
+    for gen in 1:n_steps
         options.verbose >= 1 && println("\nGen $gen")
 
         new_pop = GPIndividual[]
-        # Elitism: keep best
+
+        # Elitism
         push!(new_pop, GPIndividual(best.structure, best.params, best.loss, best.objective))
 
+        # ---------------- CHILD GENERATION ----------------
+        if options.verbose >= 2
+            println("  Generating children...")
+        end
+
         while length(new_pop) < strategy.pop_size
-            # Parent selection
             p1 = _tournament_select(pop, strategy.tournament_k)
             p2 = _tournament_select(pop, strategy.tournament_k)
 
-            # Recombine
             child_struct = (rand() < strategy.p_crossover) ? _crossover(p1, p2, dim) : p1.structure
 
-            # Mutate
             if rand() < strategy.p_mutation
-                child_struct = _mutate!(child_struct, dim, n_basis; max_terms_per_eq=strategy.max_terms_per_eq)
+                child_struct = _mutate(child_struct, dim, n_basis;
+                                       max_terms_per_eq = strategy.max_terms_per_eq)
             end
 
             push!(new_pop, GPIndividual(child_struct, Float64[], Inf, Inf))
         end
 
-        # Evaluate new population
-        for ind in new_pop
+        if options.verbose >= 2
+            println("  Generated $(length(new_pop)) individuals.")
+        end
+
+        # ---------------- EVALUATION ----------------
+        if options.verbose >= 2
+            println("  Evaluating population...")
+        end
+
+        for (i, ind) in enumerate(new_pop)
             if !isfinite(ind.objective)
+                if options.verbose >= 2
+                    println("    individual $i / $(length(new_pop))")
+                end
                 _evaluate!(ind, traj, basis, loss, optimizer, strategy.λ, options)
             end
         end
 
         sort!(new_pop, by = x -> x.objective)
         pop = new_pop
-
         best = pop[1]
 
+        push!(best_J_hist, best.objective)
+
+        # ---------------- LOGGING ----------------
         if options.verbose >= 1
             println("  Best J: ", best.objective,
                     " | loss=", best.loss,
                     " | n_params=", length(best.params))
         end
+
         if options.verbose >= 2
             println("  Best structure:")
             println(replace(structure_with_params_string(best.structure, basis, best.params), '\n' => ' '))
         end
+
         if options.verbose >= 3
             println("  Population snapshot (top 5):")
             for (i, ind) in enumerate(pop[1:min(5, length(pop))])
@@ -266,22 +252,26 @@ function search_structure(strategy::GPStructureSearch,
             end
         end
 
-        # Early stopping (simple, consistent with EvoGrow Phase-1)
-        if best.loss < 1e-8
-            options.verbose >= 1 && println("  -> Loss < 1e-8, stopping at generation $gen.")
+        # ---------------- STOPPING ----------------
+        stop, reason = should_stop(best_J_hist, best.loss, gen, options)
+        if stop
+            if options.verbose >= 1
+                println("  -> stopping at generation $gen (", reason, ")")
+            end
             break
         end
-
-        improvement = best_J_prev - best.objective
-        if improvement < 1e-4
-            options.verbose >= 1 && println("  -> No significant improvement (ΔJ=$(round(improvement, digits=6))). Stop at generation $gen.")
-            break
-        end
-        best_J_prev = best.objective
     end
 
-    return (structure = best.structure,
-            meta = (best_loss = best.loss,
-                    best_objective = best.objective,
-                    best_structure_pretty = structure_with_params_string(best.structure, basis, best.params)))
+    return (
+        structure = best.structure,
+        params = best.params,
+        loss = best.loss,
+        objective = best.objective,
+        meta = (
+            best_loss = best.loss,
+            best_objective = best.objective,
+            best_structure_pretty = structure_with_params_string(best.structure, basis, best.params),
+            best_J_hist = best_J_hist
+        )
+    )
 end
