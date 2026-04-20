@@ -25,6 +25,9 @@ Base.@kwdef struct EvoGrow <: AbstractStructureSearch
     λ::Float64 = 1e-3
 end
 
+"""
+Individual in the EvoGrow population.
+"""
 mutable struct Individual
     structure::StructureSpec
     params::Vector{Float64}
@@ -65,11 +68,11 @@ _max_stage(basis::StagedPolynomialBasis) = length(basis.term_groups)
 Fallback for non-staged bases: all terms are available immediately.
 This keeps EvoGrow v1-compatible.
 """
-function _allowed_terms(basis::AbstractBasis, stage::Int)
+function _allowed_terms(basis::AbstractBasis, _::Int)
     return collect(1:basis_num_terms(basis))
 end
 
-function _current_stage_terms(basis::AbstractBasis, stage::Int)
+function _current_stage_terms(basis::AbstractBasis, _::Int)
     return collect(1:basis_num_terms(basis))
 end
 

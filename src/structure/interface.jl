@@ -16,9 +16,11 @@ end
 """
     search_structure(strategy, traj, basis, loss, optimizer, options) -> NamedTuple
 
-Must return at least:
-- `structure`
-Optionally:
-- `meta`
+Run structure search and return a NamedTuple with:
+- `structure`: discovered `StructureSpec`
+- `params::Vector{Float64}`: fitted parameters for the best structure
+- `loss::Float64`: best loss value
+- `objective::Float64`: best penalized objective (loss + λ * n_params)
+- `meta`: algorithm-specific diagnostics (optional but encouraged)
 """
 function search_structure end

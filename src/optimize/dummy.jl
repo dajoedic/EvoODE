@@ -3,30 +3,29 @@
 """
     DummyOptimizer()
 
-Placeholder optimizer.
-Does not optimize – returns zero parameters.
+Placeholder optimizer for pipeline testing.
+
+Does not optimize — returns zero parameters and evaluates the resulting loss.
+Useful for smoke-testing the full `discover()` pipeline without running BFGS.
 """
 struct DummyOptimizer <: AbstractOptimizer end
 
 """
-    fit_parameters(::DummyOptimizer, model_builder, traj; loss, options, init_params)
+    fit_parameters(::DummyOptimizer, f!, traj, n_params, loss, options)
+
+Returns zero-initialized parameters of length `n_params` and evaluates the loss
+on the resulting (typically constant) trajectory.
 """
 function fit_parameters(::DummyOptimizer,
-                        model_builder,
-                        traj::Trajectory;
-                        loss,
-                        options,
-                        init_params = nothing)
+                        f!::Function,
+                        traj::Trajectory,
+                        n_params::Int,
+                        loss::AbstractLoss,
+                        options::DiscoveryOptions)
 
-    # One dummy parameter
-    p = zeros(1)
+    params = zeros(n_params)
+    Ŷ = simulate(f!, params, traj; options=options)
+    l = evaluate_loss(loss, Ŷ, traj.x)
 
-    Ŷ = model_builder(p, traj)
-    l = evaluate_loss(loss, Ŷ, traj.x)
-
-    return FitResult(
-        p,
-        l,
-        (optimizer = :dummy,)
-    )
+    return params, l, (optimizer = :dummy,)
 end

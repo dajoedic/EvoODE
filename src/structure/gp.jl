@@ -3,6 +3,24 @@
 using Random
 using Printf
 
+"""
+    GPStructureSearch(; pop_size=50, n_generations=20, ...)
+
+Standard genetic programming baseline for structure search.
+
+Full basis is available from generation 1 (no staged complexity).
+Used as comparison baseline against EvoGrow.
+
+# Fields
+- `pop_size`: population size
+- `n_generations`: number of generations (also bounded by `options.max_levels`)
+- `tournament_k`: tournament selection size
+- `p_crossover`: probability of crossover per child
+- `p_mutation`: probability of mutation per child
+- `max_terms_per_eq`: hard cap on active terms per equation
+- `init_min_terms`, `init_max_terms`: term count range for random initialization
+- `λ`: complexity penalty weight (objective = loss + λ * n_params)
+"""
 Base.@kwdef struct GPStructureSearch <: AbstractStructureSearch
     pop_size::Int = 50
     n_generations::Int = 20
@@ -15,6 +33,9 @@ Base.@kwdef struct GPStructureSearch <: AbstractStructureSearch
     λ::Float64 = 1e-3
 end
 
+"""
+Individual in the GP population.
+"""
 mutable struct GPIndividual
     structure::StructureSpec
     params::Vector{Float64}
@@ -26,11 +47,13 @@ end
 # Initialization
 # ----------------------------
 
+"Sample `n_terms` distinct indices from `1:n_basis`, sorted."
 function _rand_terms(n_basis::Int, n_terms::Int)
     n_terms = max(1, min(n_terms, n_basis))
     return sort!(unique(rand(1:n_basis, n_terms)))
 end
 
+"Create one random `StructureSpec` with term counts drawn uniformly from `[min_terms, max_terms]`."
 function _random_structure(dim::Int,
                            n_basis::Int;
                            min_terms::Int,
@@ -45,6 +68,7 @@ function _random_structure(dim::Int,
     return StructureSpec(active)
 end
 
+"Initialize `strategy.pop_size` random individuals using the full basis."
 function _init_population(strategy::GPStructureSearch, dim::Int, n_basis::Int)
     pop = GPIndividual[]
     for _ in 1:strategy.pop_size
@@ -61,6 +85,7 @@ end
 # Evaluation
 # ----------------------------
 
+"Fit parameters for `ind` in-place and compute loss and penalized objective."
 function _evaluate!(ind::GPIndividual,
                     traj::Trajectory,
                     basis::AbstractBasis,
@@ -82,6 +107,7 @@ end
 # Selection (Tournament)
 # ----------------------------
 
+"Select the best individual from a random tournament of size `k`."
 function _tournament_select(pop::Vector{GPIndividual}, k::Int)
     k = max(1, min(k, length(pop)))
     best = pop[rand(1:length(pop))]
@@ -98,6 +124,7 @@ end
 # Genetic operators
 # ----------------------------
 
+"Per-equation crossover: independently select each equation from `p1` or `p2` with equal probability."
 function _crossover(p1::GPIndividual, p2::GPIndividual, dim::Int)
     active = Vector{Vector{Int}}(undef, dim)
     for k in 1:dim
@@ -106,6 +133,14 @@ function _crossover(p1::GPIndividual, p2::GPIndividual, dim::Int)
     return StructureSpec(active)
 end
 
+"""
+    _mutate(structure, dim, n_basis; max_terms_per_eq)
+
+Apply one of three mutation operators with equal probability:
+- add a random term to a random equation
+- remove a random term from a random equation (if more than one remains)
+- replace a random term with a different one
+"""
 function _mutate(structure::StructureSpec,
                  dim::Int,
                  n_basis::Int;
@@ -151,6 +186,18 @@ end
 # Main loop
 # ----------------------------
 
+"""
+    search_structure(strategy::GPStructureSearch, traj, basis, loss, optimizer, options)
+
+Standard GP search over `StructureSpec` individuals.
+
+Uses tournament selection, per-equation crossover, and three-way mutation.
+Elitism preserves the best individual each generation.
+Stopping is handled by the shared `should_stop` criterion.
+Full basis available from generation 1 (no staged complexity).
+
+Returns a NamedTuple with: `structure`, `params`, `loss`, `objective`, `meta`.
+"""
 function search_structure(strategy::GPStructureSearch,
                           traj::Trajectory,
                           basis::AbstractBasis,
