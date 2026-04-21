@@ -235,6 +235,23 @@ The v2.2 method direction is fixed:
 - promotion requires sufficient stage exploration plus plateau plus loss still above target
 - global loss tolerance remains a hard stop
 
+#### Population behavior on stage promotion
+
+When EvoGrow promotes from one stage to the next, the current population is carried
+over without modification. Individuals discovered in earlier stages continue into the
+new stage and are expanded using the newly unlocked basis terms.
+
+This is intentional. The warm-start effect preserves good structures found so far
+and avoids restarting from scratch at each stage boundary.
+
+The accepted risk is anchoring: the population may remain biased toward structures
+built from lower-stage terms, reducing exploration pressure on newly unlocked terms.
+The stage usage policy (hard / soft / passive) is the mechanism designed to
+counteract this.
+
+A population reset on promotion is a planned variant for future work.
+It must not be implemented in the current phase.
+
 Two design axes must be kept separate:
 
 1. Stage progression policy
@@ -358,6 +375,27 @@ Dataset summary:
 - `benchmarks/benchmark_evogrow.jl`: curated benchmark pack for EvoGrow
 - `run_odebench.jl`: ODEBench-style runner over JSON-loaded systems
 
+### Benchmark parameter rationale
+
+The following parameter interaction governs when EvoGrow can promote stages:
+
+effective minimum levels per stage = max(min_levels_per_stage, plateau_window + 1)
+
+With min_levels_per_stage = 2 and plateau_window = 3:
+  effective minimum = max(2, 4) = 4 levels per stage
+
+Minimum levels required to reach each stage:
+  Stage 2: 4 levels
+  Stage 3: 8 levels
+  Stage 4: 12 levels
+  Stage 5: 16 levels
+
+The benchmark contains systems requiring up to Stage 4 (IDs 11, 37).
+EVO_LEVELS = 20 provides sufficient budget for all systems in the benchmark.
+EVO_LEVELS = 8 (QUICK mode) is sufficient only for systems requiring Stage 1 or 2.
+
+GP_GENERATIONS is set equal to EVO_LEVELS to ensure comparable search budgets.
+
 ### Benchmark evaluation split
 
 The full benchmark set remains in scope for method development.
@@ -424,21 +462,17 @@ Current state:
 
 #### v2.2: stage progression policy
 
-Status: NEXT
+Status: DONE
+Completed on: 2026-04-21
 
-Planned focus:
+Implemented:
 
-- refine when stages are opened
-- ensure newly opened stages are actually exploited
-- prevent premature convergence to surrogate structures
-- define explicit per-stage search behavior
-
-Phase 1 implementation target:
-
-- minimum stage budget in levels
-- stage-local plateau detection
-- global loss-tolerance hard stop
-- comparison of hard, passive, and soft stage-usage policies
+- `StageProgressionPolicy`: configurable mode (`:global_plateau` or `:stage_local`) with `min_levels_per_stage`
+- `StageUsagePolicy`: configurable mode (`:hard`, `:passive`, `:soft`) with `new_term_bias_prob`
+- `_stage_progression_decision`: stage-local plateau detection with minimum stage budget
+- `_expand_with_usage_policy`: dispatches child generation based on usage policy
+- all wired into `search_structure` main loop
+- benchmark covers all four comparison variants plus GP baseline
 
 #### v3: equation-wise
 
@@ -461,34 +495,23 @@ Planned direction:
 
 ### Phase 3 - Benchmarking
 
-Status: STARTING NOW
+Status: IN PROGRESS
+Started on: 2026-04-21
 
-Planned benchmark axes:
+Benchmark infrastructure complete:
+
+- 10 systems (dim 1–4, exact and surrogate split)
+- 6 variants: EvoGrow v1, v2.1, v2.2 progression-only, v2.2 passive, v2.2 soft, GP baseline
+- 5 seeds per (variant, system) combination
+- metrics: loss, exact_support_match, final_stage, stage_overshoot, wasted_levels, elapsed_s
+- output: per-run CSV + aggregate CSV with mean/std
+
+Planned next benchmark axes:
 
 - noise
 - sampling density
 - coupling strength
 - dimensionality
-
-Immediate benchmark pack:
-
-1. Harmonic oscillator
-   Purpose: stable linear sanity test
-   Expected useful stage: Stage 1
-2. Lotka-Volterra
-   Purpose: essential cross-coupling benchmark
-   Expected useful stage: Stage 3
-3. Van der Pol oscillator
-   Purpose: nonlinear self-interaction benchmark
-   Expected useful stage: Stage 2 and/or Stage 4
-4. Duffing oscillator
-   Purpose: cubic nonlinearity benchmark
-   Expected useful stage: Stage 4
-
-Benchmark goal:
-
-- compare GP baseline, EvoGrow v1, and EvoGrow v2.x
-- track final loss, recovered structure, stage reached, runtime, and invalid or unstable evaluations
 
 ### Phase 4 - Paper 1
 
@@ -518,22 +541,16 @@ Status: NOT STARTED
 
 Current priorities as of 2026-04-21:
 
-1. Define EvoGrow v2.2 formally.
-2. Build the first 3 to 4 ODE benchmark pack.
-3. Compare GP vs EvoGrow v1 vs EvoGrow v2.x.
-4. Analyze when staged growth finds the structurally correct model versus a surrogate approximation.
-
-Current implementation priority order for v2.2:
-
-1. Separate stage progression from stage usage in EvoGrow.
-2. Implement stage-local progression with minimum per-stage level budget.
-3. Benchmark the full 10-system set with exact vs surrogate evaluation split.
-4. Compare v2.1, v2.2 progression-only, v2.2 passive, v2.2 soft, and GP baseline.
+1. Run full benchmark (6 variants × 10 systems × 5 seeds) and collect results.
+2. Analyze summary_aggregate.csv: exact recovery rates, stage progression, wasted levels.
+3. Identify failure cases and determine whether they are algorithmic or parametric.
+4. Plan Paper 1 experiment section based on first real results.
 
 ## Implemented and Working
 
 - `discover()` end-to-end pipeline
-- `EvoGrow` v2.1
+- `EvoGrow` v1, v2.1, v2.2
+- `StageProgressionPolicy`, `StageUsagePolicy`
 - `GPStructureSearch`
 - `PolynomialBasis`
 - `StagedPolynomialBasis`
@@ -541,14 +558,15 @@ Current implementation priority order for v2.2:
 - `BFGSOptimizer`
 - `DummyOptimizer`
 - plotting and CSV export
-- benchmark scripts and benchmark result generation
+- 10-system benchmark with 6 variants, 5 seeds, exact/surrogate split
+- aggregate statistics (mean/std loss, exact_match_rate, wasted_levels)
 
 ## Known Gaps
 
 - `utils/checks.jl` is still effectively a placeholder
 - no train/validation split in discovery yet
 - no noise injection utilities yet
-- benchmarking exists, but is not yet systematic or unified
+- first benchmark results not yet analyzed (full run pending)
 - no systematic comparison against GP and SINDy yet
 - expression trees are not implemented
 - environment and test execution still need cleanup and faster verification

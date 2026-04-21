@@ -18,6 +18,7 @@ Pkg.activate(joinpath(@__DIR__, ".."))
 using DifferentialEquations
 using Plots
 using Printf
+using Statistics
 
 include(joinpath(@__DIR__, "..", "src", "EvoODE.jl"))
 using .EvoODE
@@ -30,13 +31,13 @@ const QUICK = get(ENV, "QUICK", "false") == "true" ||
               any(arg -> arg == "QUICK=true", ARGS)
 
 const POP_SIZE = QUICK ? 5 : 10
-const EVO_LEVELS = QUICK ? 5 : 10
-const GP_GENERATIONS = QUICK ? 5 : 10
+const EVO_LEVELS = QUICK ? 8 : 20
+const GP_GENERATIONS = QUICK ? 8 : 20
 const BFGS_MAXITERS = QUICK ? 50 : 200
 const VERBOSE = 1
 const STAGE_MIN_LEVELS = 2
 const SOFT_BIAS = 0.75
-const RNG_SEED = 42
+const SEEDS = QUICK ? [42, 123] : [42, 123, 7, 99, 17]
 
 const OUT_DIR = joinpath(@__DIR__, "results")
 mkpath(OUT_DIR)
@@ -259,6 +260,21 @@ const BENCHMARKS = BenchmarkSystem[
 
 const VARIANTS = BenchmarkVariant[
     BenchmarkVariant(
+        "EvoGrow v1 (flat)",
+        "evogrow_v1",
+        :evogrow,
+        dim -> EvoGrow(
+            pop_size = POP_SIZE,
+            n_levels = EVO_LEVELS,
+            children_per_parent = 2,
+            max_terms_per_eq = 6,
+            λ = 1e-3,
+            progression = StageProgressionPolicy(mode = :global_plateau, min_levels_per_stage = STAGE_MIN_LEVELS),
+            usage = StageUsagePolicy(mode = :hard, new_term_bias_prob = SOFT_BIAS)
+        ),
+        dim -> default_polynomial_basis(dim)
+    ),
+    BenchmarkVariant(
         "EvoGrow v2.1 baseline",
         "evogrow_v2_1",
         :evogrow,
@@ -447,6 +463,8 @@ function assess_result(sys::BenchmarkSystem,
     stage_overshoot = final_stage >= 0 ? final_stage - sys.expected_stage : -999
     expected_stage_first_use = (!isempty(stage_first_use_level) && sys.expected_stage <= length(stage_first_use_level)) ? stage_first_use_level[sys.expected_stage] : -1
     stage_budget_string = isempty(stage_level_counts) ? "NA" : join(stage_level_counts, "|")
+    wasted_levels = isempty(stage_level_counts) ? 0 :
+                    sum(stage_level_counts[sys.expected_stage + 1:end]; init = 0)
 
     return (
         representability = sys.representability,
@@ -461,12 +479,13 @@ function assess_result(sys::BenchmarkSystem,
         total_invalid_evals = total_invalid_evals,
         total_loss_evals = total_loss_evals,
         stage_budget_string = stage_budget_string,
+        wasted_levels = wasted_levels,
         expected_stage_first_use = expected_stage_first_use,
         termination_reason = termination_reason
     )
 end
 
-function run_one(sys::BenchmarkSystem, variant::BenchmarkVariant; seed::Int = RNG_SEED)
+function run_one(sys::BenchmarkSystem, variant::BenchmarkVariant; seed::Int = SEEDS[1])
     sep = "=" ^ 84
     @printf("\n%s\n", sep)
     @printf("  [%s] ID %-3d | %s (dim=%d)\n", variant.slug, sys.id, sys.name, sys.dim)
@@ -562,6 +581,7 @@ function run_one(sys::BenchmarkSystem, variant::BenchmarkVariant; seed::Int = RN
         total_invalid_evals = assessment.total_invalid_evals,
         total_loss_evals = assessment.total_loss_evals,
         stage_budget_string = assessment.stage_budget_string,
+        wasted_levels = assessment.wasted_levels,
         expected_stage_first_use = assessment.expected_stage_first_use,
         termination_reason = string(assessment.termination_reason),
         discovered_structure = discovered_str,
@@ -572,18 +592,18 @@ function run_one(sys::BenchmarkSystem, variant::BenchmarkVariant; seed::Int = RN
 end
 
 function print_summary(records)
-    @printf("\n\n%s\n", "=" ^ 120)
+    @printf("\n\n%s\n", "=" ^ 130)
     @printf("  BENCHMARK SUMMARY - PHASE 1 METHOD DEVELOPMENT\n")
-    @printf("%s\n", "=" ^ 120)
-    @printf("  %-22s  %-3s  %-10s  %-11s  %-10s  %-6s  %-5s  %-6s  %-10s\n",
-            "Variant", "ID", "Category", "Recovery", "Loss", "Param", "Stage", "Time", "Invalid")
-    @printf("%s\n", "-" ^ 120)
+    @printf("%s\n", "=" ^ 130)
+    @printf("  %-22s  %-3s  %-10s  %-11s  %-10s  %-6s  %-5s  %-8s  %-6s  %-10s\n",
+            "Variant", "ID", "Category", "Recovery", "Loss", "Param", "Stage", "Wasted", "Time", "Invalid")
+    @printf("%s\n", "-" ^ 130)
 
     for r in records
         loss_str = isnan(r.loss) ? "ERROR" : @sprintf("%.3e", r.loss)
         stage_str = r.final_stage < 0 ? "NA" : string(r.final_stage)
         time_str = isnan(r.elapsed_s) ? "ERR" : @sprintf("%.1f", r.elapsed_s)
-        @printf("  %-22s  %-3d  %-10s  %-11s  %-10s  %-6d  %-5s  %-6s  %-10d\n",
+        @printf("  %-22s  %-3d  %-10s  %-11s  %-10s  %-6d  %-5s  %-8d  %-6s  %-10d\n",
                 r.variant_slug,
                 r.id,
                 string(r.representability),
@@ -591,11 +611,12 @@ function print_summary(records)
                 loss_str,
                 r.n_params,
                 stage_str,
+                r.wasted_levels,
                 time_str,
                 r.total_invalid_evals)
     end
 
-    @printf("%s\n", "=" ^ 120)
+    @printf("%s\n", "=" ^ 130)
 end
 
 function write_summary_csv(records)
@@ -624,6 +645,7 @@ function write_summary_csv(records)
             "total_invalid_evals",
             "total_loss_evals",
             "stage_budget_string",
+            "wasted_levels",
             "expected_stage_first_use",
             "termination_reason",
             "discovered_structure",
@@ -656,6 +678,7 @@ function write_summary_csv(records)
                 string(r.total_invalid_evals),
                 string(r.total_loss_evals),
                 "\"$(r.stage_budget_string)\"",
+                string(r.wasted_levels),
                 string(r.expected_stage_first_use),
                 "\"$(r.termination_reason)\"",
                 "\"$(r.discovered_structure)\"",
@@ -668,59 +691,172 @@ function write_summary_csv(records)
     return summary_file
 end
 
+function aggregate_records(records)
+    groups = Dict{Tuple{String,Int}, Vector{NamedTuple}}()
+    for r in records
+        key = (r.variant_slug, r.id)
+        if !haskey(groups, key)
+            groups[key] = NamedTuple[]
+        end
+        push!(groups[key], r)
+    end
+
+    agg = NamedTuple[]
+    for ((vs, sid), group) in sort(collect(groups), by = x -> (x[1][1], x[1][2]))
+        valid = filter(r -> !isnan(r.loss), group)
+        n_total = length(group)
+        n_valid = length(valid)
+
+        mean_loss           = n_valid > 0 ? mean(r.loss for r in valid) : NaN
+        std_loss            = n_valid > 1 ? std(r.loss for r in valid) : NaN
+        exact_match_rate    = n_valid > 0 ? mean(Float64(r.exact_support_match) for r in valid) : NaN
+        mean_final_stage    = n_valid > 0 ? mean(Float64(r.final_stage) for r in valid) : NaN
+        mean_wasted_levels  = n_valid > 0 ? mean(Float64(r.wasted_levels) for r in valid) : NaN
+        mean_elapsed_s      = n_valid > 0 ? mean(r.elapsed_s for r in valid) : NaN
+        mean_invalid_evals  = n_valid > 0 ? mean(Float64(r.total_invalid_evals) for r in valid) : NaN
+
+        first_r = group[1]
+        push!(agg, (
+            variant             = first_r.variant,
+            variant_slug        = first_r.variant_slug,
+            method_family       = first_r.method_family,
+            id                  = first_r.id,
+            name                = first_r.name,
+            dim                 = first_r.dim,
+            representability    = first_r.representability,
+            expected_stage      = first_r.expected_stage,
+            n_seeds             = n_total,
+            n_valid             = n_valid,
+            mean_loss           = mean_loss,
+            std_loss            = std_loss,
+            exact_match_rate    = exact_match_rate,
+            mean_final_stage    = mean_final_stage,
+            mean_wasted_levels  = mean_wasted_levels,
+            mean_elapsed_s      = mean_elapsed_s,
+            mean_invalid_evals  = mean_invalid_evals
+        ))
+    end
+    return agg
+end
+
+function print_aggregate_summary(agg)
+    @printf("\n\n%s\n", "=" ^ 130)
+    @printf("  AGGREGATE SUMMARY (%d seeds per cell)\n", length(SEEDS))
+    @printf("%s\n", "=" ^ 130)
+    @printf("  %-22s  %-3s  %-10s  %-11s  %-12s  %-12s  %-6s  %-5s  %-8s  %-8s\n",
+            "Variant", "ID", "Category", "ExactRate", "MeanLoss", "StdLoss",
+            "Params", "Stage", "Wasted", "Time(s)")
+    @printf("%s\n", "-" ^ 130)
+    for r in agg
+        loss_str  = isnan(r.mean_loss)        ? "ERROR" : @sprintf("%.3e", r.mean_loss)
+        std_str   = isnan(r.std_loss)         ? "NA"    : @sprintf("%.3e", r.std_loss)
+        rate_str  = isnan(r.exact_match_rate) ? "NA"    : @sprintf("%.2f", r.exact_match_rate)
+        stage_str = isnan(r.mean_final_stage) ? "NA"    : @sprintf("%.1f", r.mean_final_stage)
+        waste_str = isnan(r.mean_wasted_levels) ? "NA"  : @sprintf("%.1f", r.mean_wasted_levels)
+        time_str  = isnan(r.mean_elapsed_s)   ? "ERR"   : @sprintf("%.1f", r.mean_elapsed_s)
+        @printf("  %-22s  %-3d  %-10s  %-11s  %-12s  %-12s  %-6s  %-5s  %-8s  %-8s\n",
+                r.variant_slug, r.id, string(r.representability),
+                rate_str, loss_str, std_str, "$(r.n_valid)/$(r.n_seeds)",
+                stage_str, waste_str, time_str)
+    end
+    @printf("%s\n", "=" ^ 130)
+end
+
+function write_aggregate_csv(agg)
+    agg_file = joinpath(OUT_DIR, "summary_aggregate.csv")
+    open(agg_file, "w") do io
+        println(io, join([
+            "variant", "variant_slug", "method_family",
+            "id", "name", "dim", "representability", "expected_stage",
+            "n_seeds", "n_valid",
+            "mean_loss", "std_loss", "exact_match_rate",
+            "mean_final_stage", "mean_wasted_levels",
+            "mean_elapsed_s", "mean_invalid_evals"
+        ], ";"))
+        for r in agg
+            println(io, join([
+                "\"$(r.variant)\"",
+                "\"$(r.variant_slug)\"",
+                string(r.method_family),
+                string(r.id),
+                "\"$(r.name)\"",
+                string(r.dim),
+                string(r.representability),
+                string(r.expected_stage),
+                string(r.n_seeds),
+                string(r.n_valid),
+                isnan(r.mean_loss)          ? "NA" : @sprintf("%.6e", r.mean_loss),
+                isnan(r.std_loss)           ? "NA" : @sprintf("%.6e", r.std_loss),
+                isnan(r.exact_match_rate)   ? "NA" : @sprintf("%.4f", r.exact_match_rate),
+                isnan(r.mean_final_stage)   ? "NA" : @sprintf("%.2f", r.mean_final_stage),
+                isnan(r.mean_wasted_levels) ? "NA" : @sprintf("%.2f", r.mean_wasted_levels),
+                isnan(r.mean_elapsed_s)     ? "NA" : @sprintf("%.2f", r.mean_elapsed_s),
+                isnan(r.mean_invalid_evals) ? "NA" : @sprintf("%.2f", r.mean_invalid_evals)
+            ], ";"))
+        end
+    end
+    return agg_file
+end
+
 # ============================================================
 # Main
 # ============================================================
 
 @printf("\nPhase 1 benchmark matrix\n")
-@printf("Systems: %d | Variants: %d | quick=%s | seed=%d\n",
-        length(BENCHMARKS), length(VARIANTS), QUICK, RNG_SEED)
+@printf("Systems: %d | Variants: %d | quick=%s | seeds=%d\n",
+        length(BENCHMARKS), length(VARIANTS), QUICK, length(SEEDS))
 @printf("Output: %s\n", OUT_DIR)
 
 records = NamedTuple[]
 
 for variant in VARIANTS
     for sys in BENCHMARKS
-        try
-            push!(records, run_one(sys, variant; seed = RNG_SEED))
-        catch e
-            @printf("\nERROR on variant=%s system=%d (%s): %s\n",
-                    variant.slug, sys.id, sys.name, sprint(showerror, e))
-            push!(records, (
-                variant = variant.name,
-                variant_slug = variant.slug,
-                method_family = variant.method_family,
-                id = sys.id,
-                name = sys.name,
-                dim = sys.dim,
-                representability = sys.representability,
-                expected_stage = sys.expected_stage,
-                final_stage = -1,
-                stage_overshoot = -999,
-                exact_support_match = false,
-                reached_expected_stage = false,
-                used_expected_stage_terms = false,
-                used_target_terms = false,
-                recovery_label = "error",
-                loss = NaN,
-                objective = NaN,
-                n_params = -1,
-                elapsed_s = NaN,
-                total_invalid_evals = -1,
-                total_loss_evals = -1,
-                stage_budget_string = "NA",
-                expected_stage_first_use = -1,
-                termination_reason = "error",
-                discovered_structure = "ERROR",
-                plot_file = "",
-                history_file = "",
-                csv_file = ""
-            ))
+        for seed in SEEDS
+            try
+                push!(records, run_one(sys, variant; seed = seed))
+            catch e
+                @printf("\nERROR on variant=%s system=%d seed=%d (%s): %s\n",
+                        variant.slug, sys.id, seed, sys.name, sprint(showerror, e))
+                push!(records, (
+                    variant = variant.name,
+                    variant_slug = variant.slug,
+                    method_family = variant.method_family,
+                    id = sys.id,
+                    name = sys.name,
+                    dim = sys.dim,
+                    representability = sys.representability,
+                    expected_stage = sys.expected_stage,
+                    final_stage = -1,
+                    stage_overshoot = -999,
+                    exact_support_match = false,
+                    reached_expected_stage = false,
+                    used_expected_stage_terms = false,
+                    used_target_terms = false,
+                    recovery_label = "error",
+                    loss = NaN,
+                    objective = NaN,
+                    n_params = -1,
+                    elapsed_s = NaN,
+                    total_invalid_evals = -1,
+                    total_loss_evals = -1,
+                    stage_budget_string = "NA",
+                    wasted_levels = 0,
+                    expected_stage_first_use = -1,
+                    termination_reason = "error",
+                    discovered_structure = "ERROR",
+                    plot_file = "",
+                    history_file = "",
+                    csv_file = ""
+                ))
+            end
         end
     end
 end
 
-print_summary(records)
+agg_records  = aggregate_records(records)
+print_aggregate_summary(agg_records)
 summary_file = write_summary_csv(records)
-@printf("\nSummary -> %s\n", summary_file)
+agg_file     = write_aggregate_csv(agg_records)
+@printf("\nIndividual runs -> %s\n", summary_file)
+@printf("Aggregate       -> %s\n", agg_file)
 @printf("Done.\n")
