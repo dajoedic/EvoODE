@@ -32,6 +32,7 @@ export fit_parameters
 # ------------------------
 export EvoGrow
 export GPStructureSearch
+export StageProgressionPolicy, StageUsagePolicy
 
 export PolynomialBasis, default_polynomial_basis
 export StagedPolynomialBasis, default_staged_polynomial_basis

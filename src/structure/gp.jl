@@ -95,12 +95,12 @@ function _evaluate!(ind::GPIndividual,
                     options::DiscoveryOptions)
 
     f!, n_params, _ = build_rhs(ind.structure, basis)
-    params, lval, _ = fit_parameters(optimizer, f!, traj, n_params, loss, options)
+    params, lval, fit_meta = fit_parameters(optimizer, f!, traj, n_params, loss, options)
 
     ind.params = params
     ind.loss = lval
     ind.objective = lval + λ * length(params)
-    return ind
+    return ind, fit_meta
 end
 
 # ----------------------------
@@ -209,6 +209,8 @@ function search_structure(strategy::GPStructureSearch,
     n_basis = basis_num_terms(basis)
 
     pop = _init_population(strategy, dim, n_basis)
+    total_loss_evals = 0
+    total_invalid_evals = 0
 
     if options.verbose >= 1
         log_info(
@@ -239,7 +241,9 @@ function search_structure(strategy::GPStructureSearch,
             log_info("Initial population evaluation", context=ind_ctx)
         end
 
-        _evaluate!(ind, traj, basis, loss, optimizer, strategy.λ, options)
+        _, fit_meta = _evaluate!(ind, traj, basis, loss, optimizer, strategy.λ, options)
+        total_loss_evals += haskey(fit_meta, :loss_evals) ? fit_meta.loss_evals : 0
+        total_invalid_evals += haskey(fit_meta, :invalid_evals) ? fit_meta.invalid_evals : 0
 
         if options.verbose >= 3
             log_debug(
@@ -322,7 +326,9 @@ function search_structure(strategy::GPStructureSearch,
                     log_info("Generation individual evaluation", context=ind_ctx)
                 end
 
-                _evaluate!(ind, traj, basis, loss, optimizer, strategy.λ, options)
+                _, fit_meta = _evaluate!(ind, traj, basis, loss, optimizer, strategy.λ, options)
+                total_loss_evals += haskey(fit_meta, :loss_evals) ? fit_meta.loss_evals : 0
+                total_invalid_evals += haskey(fit_meta, :invalid_evals) ? fit_meta.invalid_evals : 0
 
                 if options.verbose >= 3
                     log_debug(
@@ -426,7 +432,9 @@ function search_structure(strategy::GPStructureSearch,
             best_loss = best.loss,
             best_objective = best.objective,
             best_structure_pretty = structure_with_params_string(best.structure, basis, best.params),
-            best_J_hist = best_J_hist
+            best_J_hist = best_J_hist,
+            total_loss_evals = total_loss_evals,
+            total_invalid_evals = total_invalid_evals
         )
     )
 end

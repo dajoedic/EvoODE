@@ -4,18 +4,45 @@ using Random
 using Printf
 
 """
+Controls how EvoGrow decides when to remain in a stage, promote, or stop.
+
+Modes:
+- `:global_plateau`: current v2.1 behavior using global objective history
+- `:stage_local`: v2.2 behavior with per-stage history and minimum stage budget
+"""
+Base.@kwdef struct StageProgressionPolicy
+    mode::Symbol = :global_plateau
+    min_levels_per_stage::Int = 2
+end
+
+"""
+Controls how EvoGrow encourages usage of newly unlocked stage terms.
+
+Modes:
+- `:hard`: always try to insert a current-stage term when possible
+- `:passive`: no special treatment after stage unlock
+- `:soft`: probabilistic bias toward current-stage terms
+"""
+Base.@kwdef struct StageUsagePolicy
+    mode::Symbol = :hard
+    new_term_bias_prob::Float64 = 0.75
+end
+
+"""
 EvoGrow structure search strategy.
 
 - pop_size: population size
-- n_levels: number of growth levels
+- n_levels: maximum total search levels
 - children_per_parent: number of children sampled per parent per level
 - max_terms_per_eq: maximum number of active terms per equation
 - λ: complexity penalty (objective = loss + λ * n_params)
+- progression: stage progression policy
+- usage: stage usage policy
 
 Version note:
 - v1: flat growth over all terms
-- v2: staged growth over predefined basis groups
-- v2.1: stage-aware child generation
+- v2.1: global plateau + hard stage-aware child generation
+- v2.2: stage-local plateau + configurable usage policy
 """
 Base.@kwdef struct EvoGrow <: AbstractStructureSearch
     pop_size::Int = 20
@@ -23,6 +50,8 @@ Base.@kwdef struct EvoGrow <: AbstractStructureSearch
     children_per_parent::Int = 2
     max_terms_per_eq::Int = 5
     λ::Float64 = 1e-3
+    progression::StageProgressionPolicy = StageProgressionPolicy()
+    usage::StageUsagePolicy = StageUsagePolicy()
 end
 
 """
@@ -38,6 +67,22 @@ end
 # ------------------------------------------------------------
 # Helpers
 # ------------------------------------------------------------
+
+function _validate_policy(strategy::EvoGrow)
+    if !(strategy.progression.mode in (:global_plateau, :stage_local))
+        error("Unsupported StageProgressionPolicy.mode=$(strategy.progression.mode)")
+    end
+    if strategy.progression.min_levels_per_stage < 1
+        error("StageProgressionPolicy.min_levels_per_stage must be >= 1")
+    end
+    if !(strategy.usage.mode in (:hard, :passive, :soft))
+        error("Unsupported StageUsagePolicy.mode=$(strategy.usage.mode)")
+    end
+    if !(0.0 <= strategy.usage.new_term_bias_prob <= 1.0)
+        error("StageUsagePolicy.new_term_bias_prob must lie in [0, 1]")
+    end
+    return nothing
+end
 
 """
     _allowed_terms(basis::StagedPolynomialBasis, stage::Int)
@@ -85,6 +130,87 @@ Pretty names for currently unlocked basis terms.
 """
 function _allowed_term_names(basis::AbstractBasis, allowed_terms::Vector{Int})
     return [basis_term_name(basis, i) for i in allowed_terms]
+end
+
+function _structure_uses_terms(structure::StructureSpec, term_idxs::Vector{Int})
+    term_set = Set(term_idxs)
+    for eq_terms in structure.active_idxs
+        for term_idx in eq_terms
+            if term_idx in term_set
+                return true
+            end
+        end
+    end
+    return false
+end
+
+function _plateau_reached(best_J_hist::Vector{Float64},
+                          plateau_window::Int,
+                          plateau_tol::Float64,
+                          plateau_relative::Bool,
+                          plateau_rtol::Float64)
+
+    if length(best_J_hist) < plateau_window + 1
+        return false, :insufficient_history
+    end
+
+    J_old = best_J_hist[end - plateau_window]
+    J_new = best_J_hist[end]
+    delta = J_old - J_new
+
+    if plateau_relative
+        denom = max(abs(J_old), eps())
+        if delta / denom < plateau_rtol
+            return true, :plateau_relative
+        end
+    else
+        if delta < plateau_tol
+            return true, :plateau_absolute
+        end
+    end
+
+    return false, :continue
+end
+
+function _stage_progression_decision(strategy::EvoGrow,
+                                     stage_best_J_hist::Vector{Float64},
+                                     stage_level_count::Int,
+                                     best_loss::Float64,
+                                     current_stage::Int,
+                                     max_stage::Int,
+                                     level::Int,
+                                     n_steps::Int,
+                                     options::DiscoveryOptions)
+
+    if level >= n_steps
+        return true, :max_levels, :stop
+    end
+
+    if best_loss < options.loss_tol
+        return true, :loss_tol, :stop
+    end
+
+    if stage_level_count < strategy.progression.min_levels_per_stage
+        return false, :stage_budget, :stay
+    end
+
+    plateau, reason = _plateau_reached(
+        stage_best_J_hist,
+        options.plateau_window,
+        options.plateau_tol,
+        options.plateau_relative,
+        options.plateau_rtol
+    )
+
+    if !plateau
+        return false, reason, :stay
+    end
+
+    if current_stage < max_stage
+        return true, reason, :promote
+    end
+
+    return true, reason, :stop
 end
 
 # ------------------------------------------------------------
@@ -142,7 +268,7 @@ end
 """
     _expand_stage_aware(ind, dim, allowed_terms, new_stage_terms; ...)
 
-Stage-aware growth:
+Hard stage-aware growth:
 - tries to add at least one term from `new_stage_terms`
 - if impossible, falls back to standard allowed-term expansion
 """
@@ -198,6 +324,109 @@ function _expand_stage_aware(ind::Individual,
     return children
 end
 
+"""
+    _expand_stage_soft(ind, dim, allowed_terms, new_stage_terms; ...)
+
+Soft stage-aware growth:
+- biases child generation toward current-stage terms with probability `bias_prob`
+- otherwise falls back to passive expansion
+"""
+function _expand_stage_soft(ind::Individual,
+                            dim::Int,
+                            allowed_terms::Vector{Int},
+                            new_stage_terms::Vector{Int};
+                            n_children::Int,
+                            max_terms_per_eq::Int,
+                            bias_prob::Float64)
+
+    children = Individual[]
+
+    for _ in 1:n_children
+        new_idxs = [copy(v) for v in ind.structure.active_idxs]
+
+        growable_eqs = [k for k in 1:dim if length(new_idxs[k]) < max_terms_per_eq]
+        if isempty(growable_eqs)
+            push!(children, Individual(StructureSpec(new_idxs), Float64[], Inf, Inf))
+            continue
+        end
+
+        try_new_stage = rand() < bias_prob
+
+        if try_new_stage
+            eqs_with_new_terms = Int[]
+            for k in growable_eqs
+                existing = new_idxs[k]
+                candidates_new = setdiff(new_stage_terms, existing)
+                if !isempty(candidates_new)
+                    push!(eqs_with_new_terms, k)
+                end
+            end
+
+            if !isempty(eqs_with_new_terms)
+                k = rand(eqs_with_new_terms)
+                existing = new_idxs[k]
+                candidates_new = setdiff(new_stage_terms, existing)
+                push!(new_idxs[k], rand(candidates_new))
+                new_idxs[k] = sort!(unique(new_idxs[k]))
+
+                push!(children, Individual(StructureSpec(new_idxs), Float64[], Inf, Inf))
+                continue
+            end
+        end
+
+        k = rand(growable_eqs)
+        existing = new_idxs[k]
+        candidates = setdiff(allowed_terms, existing)
+
+        if !isempty(candidates)
+            push!(new_idxs[k], rand(candidates))
+            new_idxs[k] = sort!(unique(new_idxs[k]))
+        end
+
+        push!(children, Individual(StructureSpec(new_idxs), Float64[], Inf, Inf))
+    end
+
+    return children
+end
+
+function _expand_with_usage_policy(ind::Individual,
+                                   dim::Int,
+                                   allowed_terms::Vector{Int},
+                                   current_stage_terms::Vector{Int},
+                                   usage::StageUsagePolicy;
+                                   n_children::Int,
+                                   max_terms_per_eq::Int)
+
+    if usage.mode == :passive || current_stage_terms == allowed_terms
+        return _expand(
+            ind,
+            dim,
+            allowed_terms;
+            n_children = n_children,
+            max_terms_per_eq = max_terms_per_eq
+        )
+    elseif usage.mode == :hard
+        return _expand_stage_aware(
+            ind,
+            dim,
+            allowed_terms,
+            current_stage_terms;
+            n_children = n_children,
+            max_terms_per_eq = max_terms_per_eq
+        )
+    else
+        return _expand_stage_soft(
+            ind,
+            dim,
+            allowed_terms,
+            current_stage_terms;
+            n_children = n_children,
+            max_terms_per_eq = max_terms_per_eq,
+            bias_prob = usage.new_term_bias_prob
+        )
+    end
+end
+
 # ------------------------------------------------------------
 # Evaluation
 # ------------------------------------------------------------
@@ -211,12 +440,12 @@ function _evaluate!(ind::Individual,
                     options::DiscoveryOptions)
 
     f!, n_params, _ = build_rhs(ind.structure, basis)
-    params, lval, _ = fit_parameters(optimizer, f!, traj, n_params, loss, options)
+    params, lval, fit_meta = fit_parameters(optimizer, f!, traj, n_params, loss, options)
 
     ind.params = params
     ind.loss = lval
     ind.objective = lval + λ * length(params)
-    return ind
+    return ind, fit_meta
 end
 
 # ------------------------------------------------------------
@@ -226,16 +455,8 @@ end
 """
     search_structure(strategy::EvoGrow, traj, basis, loss, optimizer, options)
 
-Incremental evolutionary growth.
-
-v2/v2.1 behavior:
-- if `basis` is staged, only terms up to `current_stage` are allowed
-- on plateau, the next stage is unlocked
-- once a new stage is unlocked, child generation becomes stage-aware:
-  newly generated children preferentially include at least one term from the
-  currently unlocked stage
-- on sufficiently low loss, the search stops
-- current best population is preserved when stage increases
+Incremental evolutionary growth with configurable stage progression and
+stage usage policies.
 
 Returns:
 - `structure`: best found `StructureSpec`
@@ -251,6 +472,8 @@ function search_structure(strategy::EvoGrow,
                           optimizer::AbstractOptimizer,
                           options::DiscoveryOptions)
 
+    _validate_policy(strategy)
+
     dim = size(traj.x, 2)
 
     current_stage = 1
@@ -259,7 +482,16 @@ function search_structure(strategy::EvoGrow,
     allowed_terms = _allowed_terms(basis, current_stage)
     pop = _init_population(strategy, dim, allowed_terms)
 
-    best_J_hist = Float64[]
+    global_best_J_hist = Float64[]
+    stage_level_count = 0
+    stage_level_counts = zeros(Int, max_stage)
+    stage_histories = [Float64[] for _ in 1:max_stage]
+    stage_first_use_level = fill(-1, max_stage)
+    promotion_log = NamedTuple[]
+    level_log = NamedTuple[]
+    total_loss_evals = 0
+    total_invalid_evals = 0
+    termination_reason = :max_levels
 
     n_steps = min(strategy.n_levels, options.max_levels)
 
@@ -271,7 +503,9 @@ function search_structure(strategy::EvoGrow,
                 :pop_size => strategy.pop_size,
                 :n_levels => n_steps,
                 :children_per_parent => strategy.children_per_parent,
-                :max_stage => max_stage
+                :max_stage => max_stage,
+                :progression_mode => strategy.progression.mode,
+                :usage_mode => strategy.usage.mode
             )
         )
     end
@@ -311,7 +545,9 @@ function search_structure(strategy::EvoGrow,
                     log_info("Parent evaluation", context=parent_ctx)
                 end
 
-                _evaluate!(ind, traj, basis, loss, optimizer, strategy.λ, options)
+                _, fit_meta = _evaluate!(ind, traj, basis, loss, optimizer, strategy.λ, options)
+                total_loss_evals += haskey(fit_meta, :loss_evals) ? fit_meta.loss_evals : 0
+                total_invalid_evals += haskey(fit_meta, :invalid_evals) ? fit_meta.invalid_evals : 0
 
                 if options.verbose >= 3
                     log_debug(
@@ -330,20 +566,18 @@ function search_structure(strategy::EvoGrow,
                 if done !== nothing
                     done()
                 end
-            else
-                if options.verbose >= 3
-                    log_debug(
-                        "Parent already evaluated",
-                        context = merge(
-                            parent_ctx,
-                            Dict(
-                                :structure => replace(structure_with_params_string(ind.structure, basis, ind.params), '\n' => ' '),
-                                :loss => ind.loss,
-                                :objective => ind.objective
-                            )
+            elseif options.verbose >= 3
+                log_debug(
+                    "Parent already evaluated",
+                    context = merge(
+                        parent_ctx,
+                        Dict(
+                            :structure => replace(structure_with_params_string(ind.structure, basis, ind.params), '\n' => ' '),
+                            :loss => ind.loss,
+                            :objective => ind.objective
                         )
                     )
-                end
+                )
             end
         end
 
@@ -357,21 +591,19 @@ function search_structure(strategy::EvoGrow,
         gen_done = options.verbose >= 2 ? time_block("child generation", level=INFO, context=level_ctx) : nothing
 
         children = Individual[]
-
-        if current_stage == 1
-            for ind in pop
-                append!(children,
-                        _expand(ind, dim, allowed_terms;
-                                n_children = strategy.children_per_parent,
-                                max_terms_per_eq = strategy.max_terms_per_eq))
-            end
-        else
-            for ind in pop
-                append!(children,
-                        _expand_stage_aware(ind, dim, allowed_terms, current_stage_terms;
-                                            n_children = strategy.children_per_parent,
-                                            max_terms_per_eq = strategy.max_terms_per_eq))
-            end
+        for ind in pop
+            append!(
+                children,
+                _expand_with_usage_policy(
+                    ind,
+                    dim,
+                    allowed_terms,
+                    current_stage_terms,
+                    strategy.usage;
+                    n_children = strategy.children_per_parent,
+                    max_terms_per_eq = strategy.max_terms_per_eq
+                )
+            )
         end
 
         if gen_done !== nothing
@@ -399,7 +631,9 @@ function search_structure(strategy::EvoGrow,
                 log_info("Child evaluation", context=child_ctx)
             end
 
-            _evaluate!(child, traj, basis, loss, optimizer, strategy.λ, options)
+            _, fit_meta = _evaluate!(child, traj, basis, loss, optimizer, strategy.λ, options)
+            total_loss_evals += haskey(fit_meta, :loss_evals) ? fit_meta.loss_evals : 0
+            total_invalid_evals += haskey(fit_meta, :invalid_evals) ? fit_meta.invalid_evals : 0
 
             if options.verbose >= 3
                 log_debug(
@@ -434,7 +668,27 @@ function search_structure(strategy::EvoGrow,
         end
 
         best = pop[1]
-        push!(best_J_hist, best.objective)
+        push!(global_best_J_hist, best.objective)
+        push!(stage_histories[current_stage], best.objective)
+        stage_level_count += 1
+        stage_level_counts[current_stage] += 1
+
+        uses_current_stage_terms = _structure_uses_terms(best.structure, current_stage_terms)
+        if uses_current_stage_terms && stage_first_use_level[current_stage] == -1
+            stage_first_use_level[current_stage] = level
+        end
+
+        push!(
+            level_log,
+            (
+                level = level,
+                stage = current_stage,
+                best_loss = best.loss,
+                best_objective = best.objective,
+                n_params = length(best.params),
+                uses_current_stage_terms = uses_current_stage_terms
+            )
+        )
 
         # -----------------------------------
         # Logging
@@ -447,7 +701,8 @@ function search_structure(strategy::EvoGrow,
                     Dict(
                         :best_objective => best.objective,
                         :best_loss => best.loss,
-                        :n_params => length(best.params)
+                        :n_params => length(best.params),
+                        :uses_current_stage_terms => uses_current_stage_terms
                     )
                 )
             )
@@ -487,33 +742,94 @@ function search_structure(strategy::EvoGrow,
         # -----------------------------------
         # Shared stopping / stage progression
         # -----------------------------------
-        stop, reason = should_stop(best_J_hist, best.loss, level, options)
+        if strategy.progression.mode == :global_plateau
+            stop, reason = should_stop(global_best_J_hist, best.loss, level, options)
 
-        if stop
-            if reason == :loss_tol
+            if stop
+                if reason == :loss_tol
+                    termination_reason = :loss_tol
+                    if options.verbose >= 1
+                        log_info("Stopping due to loss tolerance", context=merge(level_ctx, Dict(:reason => reason)))
+                    end
+                    break
+                end
+
+                if (reason == :plateau_absolute || reason == :plateau_relative) && current_stage < max_stage
+                    push!(
+                        promotion_log,
+                        (
+                            from_stage = current_stage,
+                            to_stage = current_stage + 1,
+                            level = level,
+                            reason = reason,
+                            stage_levels = stage_level_count
+                        )
+                    )
+
+                    current_stage += 1
+                    stage_level_count = 0
+
+                    if options.verbose >= 1
+                        log_info(
+                            "Plateau reached, increasing complexity",
+                            context = merge(level_ctx, Dict(:reason => reason, :new_stage => current_stage))
+                        )
+                    end
+
+                    continue
+                end
+
+                termination_reason = reason
                 if options.verbose >= 1
-                    log_info("Stopping due to loss tolerance", context=merge(level_ctx, Dict(:reason => reason)))
+                    log_info("Stopping", context=merge(level_ctx, Dict(:reason => reason)))
                 end
                 break
             end
+        else
+            stop, reason, action = _stage_progression_decision(
+                strategy,
+                stage_histories[current_stage],
+                stage_level_count,
+                best.loss,
+                current_stage,
+                max_stage,
+                level,
+                n_steps,
+                options
+            )
 
-            if (reason == :plateau_absolute || reason == :plateau_relative) && current_stage < max_stage
-                current_stage += 1
-
-                if options.verbose >= 1
-                    log_info(
-                        "Plateau reached, increasing complexity",
-                        context = merge(level_ctx, Dict(:reason => reason, :new_stage => current_stage))
+            if stop
+                if action == :promote
+                    push!(
+                        promotion_log,
+                        (
+                            from_stage = current_stage,
+                            to_stage = current_stage + 1,
+                            level = level,
+                            reason = reason,
+                            stage_levels = stage_level_count
+                        )
                     )
+
+                    current_stage += 1
+                    stage_level_count = 0
+
+                    if options.verbose >= 1
+                        log_info(
+                            "Stage-local plateau reached, increasing complexity",
+                            context = merge(level_ctx, Dict(:reason => reason, :new_stage => current_stage))
+                        )
+                    end
+
+                    continue
                 end
 
-                continue
+                termination_reason = reason
+                if options.verbose >= 1
+                    log_info("Stopping", context=merge(level_ctx, Dict(:reason => reason)))
+                end
+                break
             end
-
-            if options.verbose >= 1
-                log_info("Stopping", context=merge(level_ctx, Dict(:reason => reason)))
-            end
-            break
         end
     end
 
@@ -526,7 +842,8 @@ function search_structure(strategy::EvoGrow,
                 :final_stage => current_stage,
                 :best_loss => best.loss,
                 :best_objective => best.objective,
-                :n_params => length(best.params)
+                :n_params => length(best.params),
+                :termination_reason => termination_reason
             )
         )
     end
@@ -540,8 +857,18 @@ function search_structure(strategy::EvoGrow,
             best_loss = best.loss,
             best_objective = best.objective,
             best_structure_pretty = structure_with_params_string(best.structure, basis, best.params),
-            best_J_hist = best_J_hist,
-            final_stage = current_stage
+            best_J_hist = global_best_J_hist,
+            stage_histories = stage_histories,
+            stage_level_counts = stage_level_counts,
+            stage_first_use_level = stage_first_use_level,
+            promotion_log = promotion_log,
+            level_log = level_log,
+            total_loss_evals = total_loss_evals,
+            total_invalid_evals = total_invalid_evals,
+            final_stage = current_stage,
+            termination_reason = termination_reason,
+            progression_mode = strategy.progression.mode,
+            usage_mode = strategy.usage.mode
         )
     )
 end

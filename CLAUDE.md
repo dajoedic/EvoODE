@@ -4,6 +4,12 @@ This file is the single source of truth for the EvoODE project.
 All project vision, architecture, roadmap, status, and research priorities live here.
 Do not maintain a second planning document elsewhere.
 
+## Collaboration
+
+All communication with the user happens in **German**.
+Code, comments, docstrings, and commit messages remain in **English**.
+This applies to all responses, reviews, and planning discussions.
+
 ## What This Project Is
 
 EvoODE is a Julia research framework for data-driven discovery of interpretable ODE systems from time-series data.
@@ -214,9 +220,44 @@ Behavior:
 - v1: flat growth over all available basis terms
 - v2: staged complexity release
 - v2.1: stage-aware child generation after stage unlock
-- v2.2: planned refinement of stage progression policy
+- v2.2: stage-local progression with minimum stage budget and configurable stage usage policy
 - v3: planned equation-wise growth
 - v4: planned coupling-aware growth
+
+#### EvoGrow v2.2 design freeze
+
+Paper 1 focuses on staged growth as a complexity-control mechanism.
+
+The v2.2 method direction is fixed:
+
+- each stage gets a minimum search budget measured in levels
+- plateau detection is stage-local, not global
+- promotion requires sufficient stage exploration plus plateau plus loss still above target
+- global loss tolerance remains a hard stop
+
+Two design axes must be kept separate:
+
+1. Stage progression policy
+   Controls when a stage is kept, promoted, or terminated.
+2. Stage usage policy
+   Controls how strongly newly introduced terms are encouraged after unlock.
+
+The current v2.1 baseline is the existing code behavior:
+
+- staged term unlocking
+- global plateau-driven promotion
+- hard stage-aware child generation after unlock
+
+The passive unlock-only behavior is not the baseline.
+It is a separate control variant for benchmarking.
+
+The current v2.2 usage-policy comparison is:
+
+- `:hard`
+- `:passive`
+- `:soft`
+
+Do not collapse stage progression and stage usage into a single mechanism again.
 
 #### Current findings
 
@@ -317,6 +358,22 @@ Dataset summary:
 - `benchmarks/benchmark_evogrow.jl`: curated benchmark pack for EvoGrow
 - `run_odebench.jl`: ODEBench-style runner over JSON-loaded systems
 
+### Benchmark evaluation split
+
+The full benchmark set remains in scope for method development.
+
+Systems must be split into two evaluation categories:
+
+1. Exact structural recovery
+   For systems exactly representable in the current basis.
+   Evaluate exact support recovery and fit quality separately.
+2. Surrogate structural recovery
+   For systems not exactly representable in the current basis.
+   Do not score them as exact recovery.
+   Evaluate stage reached, relevant term-class usage, fit quality, and stability instead.
+
+These two categories must never be mixed into one structure-correctness metric.
+
 ## Current Status
 
 ### Phase 1 - Stable Core
@@ -375,6 +432,13 @@ Planned focus:
 - ensure newly opened stages are actually exploited
 - prevent premature convergence to surrogate structures
 - define explicit per-stage search behavior
+
+Phase 1 implementation target:
+
+- minimum stage budget in levels
+- stage-local plateau detection
+- global loss-tolerance hard stop
+- comparison of hard, passive, and soft stage-usage policies
 
 #### v3: equation-wise
 
@@ -458,6 +522,13 @@ Current priorities as of 2026-04-21:
 2. Build the first 3 to 4 ODE benchmark pack.
 3. Compare GP vs EvoGrow v1 vs EvoGrow v2.x.
 4. Analyze when staged growth finds the structurally correct model versus a surrogate approximation.
+
+Current implementation priority order for v2.2:
+
+1. Separate stage progression from stage usage in EvoGrow.
+2. Implement stage-local progression with minimum per-stage level budget.
+3. Benchmark the full 10-system set with exact vs surrogate evaluation split.
+4. Compare v2.1, v2.2 progression-only, v2.2 passive, v2.2 soft, and GP baseline.
 
 ## Implemented and Working
 
