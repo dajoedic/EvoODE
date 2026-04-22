@@ -95,10 +95,24 @@ function fit_parameters(opt::BFGSOptimizer,
                         traj::Trajectory,
                         n_params::Int,
                         loss::AbstractLoss,
-                        options::DiscoveryOptions)
+                        options::DiscoveryOptions;
+                        p0=nothing)
 
     X = traj.x
-    p0 = 0.1 .* randn(n_params)
+    p0_use = if p0 === nothing
+        0.1 .* randn(n_params)
+    elseif length(p0) == n_params
+        Vector{Float64}(p0)
+    else
+        log_warn(
+            "Ignoring warm-start parameter vector due to size mismatch",
+            context = Dict(
+                :expected => n_params,
+                :got => length(p0)
+            )
+        )
+        0.1 .* randn(n_params)
+    end
 
     # aggregated diagnostics for this fit
     loss_eval_count = Ref(0)
@@ -131,9 +145,9 @@ function fit_parameters(opt::BFGSOptimizer,
     end
 
     loss_fun = OptimizationFunction((p, _) -> loss_only(p), Optimization.AutoFiniteDiff())
-    optprob = OptimizationProblem(loss_fun, p0)
+    optprob = OptimizationProblem(loss_fun, p0_use)
 
-    p_best = copy(p0)
+    p_best = copy(p0_use)
     l_best = 1e6
     method_used = "none"
 

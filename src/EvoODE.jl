@@ -47,6 +47,7 @@ export DummyOptimizer
 # ------------------------
 export DEBUG, INFO, WARN, ERROR
 export set_level, current_level, level_name, reset_timer
+export set_log_file, close_log_file
 export log_debug, log_info, log_warn, log_error, log_exception
 export time_block
 
@@ -103,6 +104,7 @@ include("loss/mse.jl")
 # ============================================================
 include("optimize/bfgs.jl")
 include("optimize/dummy.jl")
+include("optimize/pretune.jl")
 
 # ============================================================
 # Simulation / Plotting

@@ -619,73 +619,81 @@ function print_summary(records)
     @printf("%s\n", "=" ^ 130)
 end
 
+function _summary_csv_header_line()
+    return join([
+        "variant",
+        "variant_slug",
+        "method_family",
+        "id",
+        "name",
+        "dim",
+        "representability",
+        "expected_stage",
+        "final_stage",
+        "stage_overshoot",
+        "exact_support_match",
+        "reached_expected_stage",
+        "used_expected_stage_terms",
+        "used_target_terms",
+        "recovery_label",
+        "loss",
+        "objective",
+        "n_params",
+        "elapsed_s",
+        "total_invalid_evals",
+        "total_loss_evals",
+        "stage_budget_string",
+        "wasted_levels",
+        "expected_stage_first_use",
+        "termination_reason",
+        "discovered_structure",
+        "plot_file",
+        "history_file",
+        "csv_file"
+    ], ";")
+end
+
+function _summary_csv_row_line(r)
+    return join([
+        "\"$(r.variant)\"",
+        "\"$(r.variant_slug)\"",
+        string(r.method_family),
+        string(r.id),
+        "\"$(r.name)\"",
+        string(r.dim),
+        string(r.representability),
+        string(r.expected_stage),
+        string(r.final_stage),
+        string(r.stage_overshoot),
+        string(r.exact_support_match),
+        string(r.reached_expected_stage),
+        string(r.used_expected_stage_terms),
+        string(r.used_target_terms),
+        "\"$(r.recovery_label)\"",
+        @sprintf("%.6e", r.loss),
+        @sprintf("%.6e", r.objective),
+        string(r.n_params),
+        @sprintf("%.2f", r.elapsed_s),
+        string(r.total_invalid_evals),
+        string(r.total_loss_evals),
+        "\"$(r.stage_budget_string)\"",
+        string(r.wasted_levels),
+        string(r.expected_stage_first_use),
+        "\"$(r.termination_reason)\"",
+        "\"$(r.discovered_structure)\"",
+        "\"$(r.plot_file)\"",
+        "\"$(r.history_file)\"",
+        "\"$(r.csv_file)\""
+    ], ";")
+end
+
 function write_summary_csv(records)
     summary_file = joinpath(OUT_DIR, "summary.csv")
     open(summary_file, "w") do io
-        println(io, join([
-            "variant",
-            "variant_slug",
-            "method_family",
-            "id",
-            "name",
-            "dim",
-            "representability",
-            "expected_stage",
-            "final_stage",
-            "stage_overshoot",
-            "exact_support_match",
-            "reached_expected_stage",
-            "used_expected_stage_terms",
-            "used_target_terms",
-            "recovery_label",
-            "loss",
-            "objective",
-            "n_params",
-            "elapsed_s",
-            "total_invalid_evals",
-            "total_loss_evals",
-            "stage_budget_string",
-            "wasted_levels",
-            "expected_stage_first_use",
-            "termination_reason",
-            "discovered_structure",
-            "plot_file",
-            "history_file",
-            "csv_file"
-        ], ";"))
+        println(io, _summary_csv_header_line())
 
         for r in records
-            println(io, join([
-                "\"$(r.variant)\"",
-                "\"$(r.variant_slug)\"",
-                string(r.method_family),
-                string(r.id),
-                "\"$(r.name)\"",
-                string(r.dim),
-                string(r.representability),
-                string(r.expected_stage),
-                string(r.final_stage),
-                string(r.stage_overshoot),
-                string(r.exact_support_match),
-                string(r.reached_expected_stage),
-                string(r.used_expected_stage_terms),
-                string(r.used_target_terms),
-                "\"$(r.recovery_label)\"",
-                @sprintf("%.6e", r.loss),
-                @sprintf("%.6e", r.objective),
-                string(r.n_params),
-                @sprintf("%.2f", r.elapsed_s),
-                string(r.total_invalid_evals),
-                string(r.total_loss_evals),
-                "\"$(r.stage_budget_string)\"",
-                string(r.wasted_levels),
-                string(r.expected_stage_first_use),
-                "\"$(r.termination_reason)\"",
-                "\"$(r.discovered_structure)\"",
-                "\"$(r.plot_file)\"",
-                "\"$(r.history_file)\"",
-                "\"$(r.csv_file)\""
-            ], ";"))
+            println(io, _summary_csv_row_line(r))
         end
     end
     return summary_file
@@ -808,16 +816,23 @@ end
 @printf("Output: %s\n", OUT_DIR)
 
 records = NamedTuple[]
+summary_file = joinpath(OUT_DIR, "summary.csv")
+summary_io = open(summary_file, "w")
+println(summary_io, _summary_csv_header_line())
+flush(summary_io)
 
 for variant in VARIANTS
     for sys in BENCHMARKS
         for seed in SEEDS
             try
-                push!(records, run_one(sys, variant; seed = seed))
+                record = run_one(sys, variant; seed = seed)
+                push!(records, record)
+                println(summary_io, _summary_csv_row_line(record))
+                flush(summary_io)
             catch e
                 @printf("\nERROR on variant=%s system=%d seed=%d (%s): %s\n",
                         variant.slug, sys.id, seed, sys.name, sprint(showerror, e))
-                push!(records, (
+                record = (
                     variant = variant.name,
                     variant_slug = variant.slug,
                     method_family = variant.method_family,
@@ -847,16 +862,19 @@ for variant in VARIANTS
                     plot_file = "",
                     history_file = "",
                     csv_file = ""
-                ))
+                )
+                push!(records, record)
+                println(summary_io, _summary_csv_row_line(record))
+                flush(summary_io)
             end
         end
     end
 end
+close(summary_io)
 
 agg_records  = aggregate_records(records)
 print_aggregate_summary(agg_records)
-summary_file = write_summary_csv(records)
 agg_file     = write_aggregate_csv(agg_records)
-@printf("\nIndividual runs -> %s\n", summary_file)
+@printf("\nIndividual runs -> %s\n", joinpath(OUT_DIR, "summary.csv"))
 @printf("Aggregate       -> %s\n", agg_file)
 @printf("Done.\n")

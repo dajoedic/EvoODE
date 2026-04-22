@@ -95,7 +95,8 @@ function _evaluate!(ind::GPIndividual,
                     options::DiscoveryOptions)
 
     f!, n_params, _ = build_rhs(ind.structure, basis)
-    params, lval, fit_meta = fit_parameters(optimizer, f!, traj, n_params, loss, options)
+    p0 = pretune_parameters(ind.structure, basis, traj)
+    params, lval, fit_meta = fit_parameters(optimizer, f!, traj, n_params, loss, options; p0 = p0)
 
     ind.params = params
     ind.loss = lval

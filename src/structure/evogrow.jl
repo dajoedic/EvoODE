@@ -52,6 +52,7 @@ Base.@kwdef struct EvoGrow <: AbstractStructureSearch
     λ::Float64 = 1e-3
     progression::StageProgressionPolicy = StageProgressionPolicy()
     usage::StageUsagePolicy = StageUsagePolicy()
+    use_pretuning::Bool = true
 end
 
 """
@@ -437,10 +438,12 @@ function _evaluate!(ind::Individual,
                     loss::AbstractLoss,
                     optimizer::AbstractOptimizer,
                     λ::Float64,
-                    options::DiscoveryOptions)
+                    options::DiscoveryOptions,
+                    use_pretuning::Bool)
 
     f!, n_params, _ = build_rhs(ind.structure, basis)
-    params, lval, fit_meta = fit_parameters(optimizer, f!, traj, n_params, loss, options)
+    p0 = use_pretuning ? pretune_parameters(ind.structure, basis, traj) : nothing
+    params, lval, fit_meta = fit_parameters(optimizer, f!, traj, n_params, loss, options; p0 = p0)
 
     ind.params = params
     ind.loss = lval
@@ -511,6 +514,7 @@ function search_structure(strategy::EvoGrow,
     end
 
     for level in 1:n_steps
+        level_t0 = time()
         level_ctx = Dict(:level => level, :stage => current_stage)
 
         if options.verbose >= 1
@@ -545,7 +549,7 @@ function search_structure(strategy::EvoGrow,
                     log_info("Parent evaluation", context=parent_ctx)
                 end
 
-                _, fit_meta = _evaluate!(ind, traj, basis, loss, optimizer, strategy.λ, options)
+                _, fit_meta = _evaluate!(ind, traj, basis, loss, optimizer, strategy.λ, options, strategy.use_pretuning)
                 total_loss_evals += haskey(fit_meta, :loss_evals) ? fit_meta.loss_evals : 0
                 total_invalid_evals += haskey(fit_meta, :invalid_evals) ? fit_meta.invalid_evals : 0
 
@@ -631,7 +635,7 @@ function search_structure(strategy::EvoGrow,
                 log_info("Child evaluation", context=child_ctx)
             end
 
-            _, fit_meta = _evaluate!(child, traj, basis, loss, optimizer, strategy.λ, options)
+            _, fit_meta = _evaluate!(child, traj, basis, loss, optimizer, strategy.λ, options, strategy.use_pretuning)
             total_loss_evals += haskey(fit_meta, :loss_evals) ? fit_meta.loss_evals : 0
             total_invalid_evals += haskey(fit_meta, :invalid_evals) ? fit_meta.invalid_evals : 0
 
@@ -677,6 +681,7 @@ function search_structure(strategy::EvoGrow,
         if uses_current_stage_terms && stage_first_use_level[current_stage] == -1
             stage_first_use_level[current_stage] = level
         end
+        level_elapsed_s = time() - level_t0
 
         push!(
             level_log,
@@ -686,7 +691,8 @@ function search_structure(strategy::EvoGrow,
                 best_loss = best.loss,
                 best_objective = best.objective,
                 n_params = length(best.params),
-                uses_current_stage_terms = uses_current_stage_terms
+                uses_current_stage_terms = uses_current_stage_terms,
+                elapsed_s = level_elapsed_s
             )
         )
 

@@ -4,6 +4,7 @@ using Dates
 
 export DEBUG, INFO, WARN, ERROR
 export set_level, current_level, level_name, reset_timer
+export set_log_file, close_log_file
 export log_debug, log_info, log_warn, log_error, log_exception
 export time_block
 
@@ -28,9 +29,10 @@ const LEVEL_NAMES = Dict(
 mutable struct LoggerState
     level::Int
     start_time::Float64
+    log_io::Union{IO, Nothing}
 end
 
-const LOGGER = LoggerState(INFO, time())
+const LOGGER = LoggerState(INFO, time(), nothing)
 
 # -----------------------
 # Utilities
@@ -89,6 +91,20 @@ function reset_timer(; log_reset::Bool=false)
     end
 end
 
+function set_log_file(path::String)
+    close_log_file()
+    LOGGER.log_io = open(path, "w")
+    return nothing
+end
+
+function close_log_file()
+    if LOGGER.log_io !== nothing
+        close(LOGGER.log_io)
+        LOGGER.log_io = nothing
+    end
+    return nothing
+end
+
 # -----------------------
 # Core Logging
 # -----------------------
@@ -102,7 +118,12 @@ function _log(level::Int, msg::AbstractString; context=Dict())
     timestamp = Dates.format(now(), "HH:MM:SS")
     ctx_str = _format_context(context)
 
-    println("[$timestamp | $(round(elapsed, digits=1))s | $(level_name(level))] $msg$ctx_str")
+    line = "[$timestamp | $(round(elapsed, digits=1))s | $(level_name(level))] $msg$ctx_str"
+    println(line)
+    if LOGGER.log_io !== nothing
+        println(LOGGER.log_io, line)
+        flush(LOGGER.log_io)
+    end
 end
 
 # -----------------------
