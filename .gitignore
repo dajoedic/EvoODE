@@ -2,3 +2,6 @@
 fit*.csv
 fit*.png
 benchmarks/results/
+debug_results/
+experiments/*/runs/
+experiments/*/run_registry.csv
