@@ -89,4 +89,21 @@ Bisher abgeschlossen: System 2 (Population growth) und System 3 (Logistic growth
   - Alle v2.2-Varianten (stage_local): Overshoot 0 — bleiben korrekt in Stage 2
   - Direkte Bestätigung der Kernhypothese: stage-lokale Progression verhindert unnötiges Weitersuchen
 
+### WP-G1 implementiert
+
+`generalization_study.jl` von Codex umgesetzt:
+- 3 Systeme × 5 Parametersätze × 2 Varianten × 3 Seeds
+- Refit fixierter Strukturen auf ungesehene Parametrisierungen
+- Baseline: frischer Discovery direkt auf Testtrajektorie
+- Output: `debug_results/generalization_summary.csv`, `debug_results/generalization_detail.csv`
+
+### Tagesabschluss — laufende Experimente
+
+Vier Skripte laufen parallel über Nacht:
+- `experiments/run_experiment.jl paper1_phaseA_v1` — 300 Runs, Hauptexperiment Paper 1
+- `generalization_study.jl` — Strukturgeneralisierungs-Studie
+- sowie weitere laufende Profiling-Skripte
+
+Codebase ist sauber committed. Nächster Schritt: Ergebnisse analysieren wenn Runs durch sind.
+
 ---
