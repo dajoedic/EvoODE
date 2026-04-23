@@ -262,11 +262,7 @@ function build_strategy_basis_optimizer(cfg)
             Symbol("\u03bb") => Float64(cfg.lambda)
         )
         structure = EvoGrow(; kwargs...)
-        if String(cfg.variant) == "evogrow_v1"
-            basis = default_polynomial_basis(dim)
-        else
-            basis = default_staged_polynomial_basis(dim)
-        end
+        basis = default_staged_polynomial_basis(dim)
     end
 
     optimizer = BFGSOptimizer(maxiters = Int(cfg.bfgs_maxiters))

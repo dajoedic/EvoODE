@@ -272,7 +272,7 @@ const VARIANTS = BenchmarkVariant[
             progression = StageProgressionPolicy(mode = :global_plateau, min_levels_per_stage = STAGE_MIN_LEVELS),
             usage = StageUsagePolicy(mode = :hard, new_term_bias_prob = SOFT_BIAS)
         ),
-        dim -> default_polynomial_basis(dim)
+        dim -> default_staged_polynomial_basis(dim)
     ),
     BenchmarkVariant(
         "EvoGrow v2.1 baseline",

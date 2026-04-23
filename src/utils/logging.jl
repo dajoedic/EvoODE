@@ -136,7 +136,7 @@ log_error(msg; context=Dict()) = _log(ERROR, msg; context=context)
 
 function log_exception(msg, err; context=Dict())
     merged = Dict(context)
-    merged[:exception_type] = typeof(err)
+    merged[:exception_type] = string(typeof(err))
     merged[:exception] = sprint(showerror, err)
     _log(ERROR, msg; context=merged)
 end
