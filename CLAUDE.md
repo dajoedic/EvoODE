@@ -287,12 +287,11 @@ The current v2.2 usage-policy comparison is:
 
 Do not collapse stage progression and stage usage into a single mechanism again.
 
-#### Current findings
+#### Current findings (preliminary, paper1_phaseA_v1, 40/300 runs)
 
-- On simple linear systems, EvoGrow v2 stays in Stage 1 as desired.
-- On Lotka-Volterra, EvoGrow v2 improves significantly after Stage 2.
-- Current stage progression still does not reliably recover the mechanistically correct cross-term structure.
-- This is now a core research question, not just an implementation detail.
+- On System 2 (linear): all variants find exact structure, loss deterministic across seeds — pretuning+BFGS always converges to same minimum.
+- On System 3 (logistic, expected_stage=2): `evogrow_v2_1` (global plateau) overshoots by mean 1.5 stages; all `v2.2` stage_local variants show 0 overshoot. First direct confirmation of core hypothesis.
+- Higher-dimensional systems (Lorenz, SEIR, Lotka-Volterra) not yet completed.
 
 ### GPStructureSearch
 
@@ -493,23 +492,8 @@ These two categories must never be mixed into one structure-correctness metric.
 Status: DONE
 Completed on: 2026-04-20
 
-Completed work:
-
-- fixed the inconsistency between optimization loss and final simulation loss
-- verified `loss(search) == loss(simulate)` on stable synthetic tests
-- implemented stable `discover()` orchestration
-- implemented and validated `GPStructureSearch`
-- implemented and validated EvoGrow baseline behavior
-- added shared stopping logic through `should_stop()`
-- added sanity-check reporting and final simulation validation
-- stabilized module include order and method registration
-- added structured logging with timestamps and elapsed time
-- golden harmonic-oscillator test works
-
-Notes:
-
-- Phase 1 is complete enough for research work.
-- Further refinements are still allowed, but Phase 1 is no longer the main focus.
+Core pipeline, `discover()`, `GPStructureSearch`, `EvoGrow` baseline, shared stopping logic, structured logging, and sanity checks are all stable and validated.
+Details in `DIARY.md` (2026-04-20).
 
 ### Phase 2 - EvoGrow Variants
 
@@ -525,14 +509,10 @@ Completed on: 2026-04-20
 
 #### v2: complexity tiers
 
-Status: IN PROGRESS
-Started on: 2026-04-21
+Status: DONE
+Completed on: 2026-04-21
 
-Current state:
-
-- `StagedPolynomialBasis` with 5 stages is implemented
-- EvoGrow v2 staged basis release is implemented
-- EvoGrow v2.1 stage-aware child generation is implemented
+`StagedPolynomialBasis` with 5 stages, staged basis release, and stage-aware child generation (v2.1) all implemented.
 
 #### v2.2: stage progression policy
 
@@ -600,7 +580,7 @@ Experiment infrastructure complete (WP-E1 through WP-E3):
 
 Active experiment:
 
-- `paper1_phaseA_v1`: 300 runs queued (10 systems × 6 variants × 5 seeds), exploratory
+- `paper1_phaseA_v1`: 300 runs total (10 systems × 6 variants × 5 seeds), exploratory — 40 finished, remainder running as of 2026-04-23
 
 Target:
 EvoGrow baseline vs GP and SINDy
@@ -622,15 +602,27 @@ Status: NOT STARTED
 - validation-based stage promotion
 - multi-hypothesis models
 
+## Active Studies (as of 2026-04-23)
+
+Four scripts are currently running. Each tests a distinct research question.
+
+| Script | Thesis |
+|--------|--------|
+| `experiments/run_experiment.jl paper1_phaseA_v1` | Staged growth (v2.x) is more efficient than flat growth (v1) and GP — measured by exact support recovery, stage overshoot, and wasted levels across 10 systems × 6 variants × 5 seeds. |
+| `benchmarks/benchmark_evogrow.jl` | Exploratory cross-system benchmark: can EvoGrow reliably find correct structures across all 10 benchmark systems, and how do the variants compare qualitatively? |
+| `profile_init.jl` | OLS warm-start (pretuning) leads to faster convergence and lower final loss than random initialization, across seeds and systems. |
+| `generalization_study.jl` | A structurally correct discovery generalizes across parameter regimes: fixing the discovered structure and refitting only parameters on unseen trajectories of the same ODE family yields low loss. |
+
 ## Current Priorities
 
-Current priorities as of 2026-04-22:
+Current priorities as of 2026-04-23:
 
-1. Run `paper1_phaseA_v1` experiment (`julia experiments/run_experiment.jl paper1_phaseA_v1`).
-2. Aggregate results (`julia experiments/aggregate.jl paper1_phaseA_v1`).
+1. Let all four active studies finish running.
+2. Aggregate `paper1_phaseA_v1` results: `julia experiments/aggregate.jl paper1_phaseA_v1`.
 3. Analyze `run_registry.csv`: exact recovery rates, stage progression, wasted levels per variant.
-4. Identify failure cases and determine whether they are algorithmic or parametric.
-5. Plan Paper 1 experiment section based on first real results.
+4. Analyze `generalization_study` and `profile_init` outputs.
+5. Identify failure cases and determine whether they are algorithmic or parametric.
+6. Plan Paper 1 experiment section based on first real results.
 
 ## Implemented and Working
 
@@ -654,7 +646,7 @@ Current priorities as of 2026-04-22:
 - `utils/checks.jl` is still effectively a placeholder
 - no train/validation split in discovery yet
 - no noise injection utilities yet
-- first benchmark results not yet analyzed (full run pending)
+- `paper1_phaseA_v1` still running (40/300 done as of 2026-04-23); full analysis pending
 - no systematic comparison against GP and SINDy yet
 - expression trees are not implemented
 - environment and test execution still need cleanup and faster verification
@@ -722,7 +714,7 @@ Each is defined by its implementation mapping in `benchmarks/benchmark_evogrow.j
 
 | Label | Slug | Basis | Progression mode | Usage mode |
 |-------|------|-------|------------------|------------|
-| EvoGrow v1 (flat) | `evogrow_v1` | `PolynomialBasis` (flat) | `:global_plateau` | `:hard` |
+| EvoGrow v1 (flat) | `evogrow_v1` | `StagedPolynomialBasis` (all terms) | `:global_plateau` | `:hard` |
 | EvoGrow v2.1 baseline | `evogrow_v2_1` | `StagedPolynomialBasis` | `:global_plateau` | `:hard` |
 | EvoGrow v2.2 progression-only | `evogrow_v2_2_progression` | `StagedPolynomialBasis` | `:stage_local` | `:hard` |
 | EvoGrow v2.2 passive usage | `evogrow_v2_2_passive` | `StagedPolynomialBasis` | `:stage_local` | `:passive` |
@@ -730,8 +722,8 @@ Each is defined by its implementation mapping in `benchmarks/benchmark_evogrow.j
 | GP baseline | `gp_baseline` | `StagedPolynomialBasis` (all terms) | N/A | N/A |
 
 Notes:
-- EvoGrow v1 uses `default_polynomial_basis(dim)` — all terms available from the start, no staged release.
-- EvoGrow v2.1 differs from v1 only in the basis: staged release with global plateau progression.
+- EvoGrow v1 uses `default_staged_polynomial_basis(dim)` with all terms available from the start (no staged release). This matches the GP baseline's term set and ensures a fair comparison — same search space, different strategy.
+- EvoGrow v2.1 differs from v1 only in the staged release: same basis, global plateau progression.
 - EvoGrow v2.2 progression-only differs from v2.1 only in the progression mode (`:stage_local`).
 - EvoGrow v2.2 passive and soft share the same `:stage_local` progression as progression-only, but differ in usage mode.
 - The GP baseline uses `default_staged_polynomial_basis(dim)` but ignores staging — all terms are available from initialization.
