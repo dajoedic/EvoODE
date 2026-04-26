@@ -1,0 +1,5 @@
+{
+  "experiment_id": "paper1_phaseA_v1",
+  "run_registry_path": "../../experiments/paper1_phaseA_v1/run_registry.csv",
+  "output_dir": "data/paper1_phaseA_v1"
+}
