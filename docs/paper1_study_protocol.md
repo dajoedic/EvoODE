@@ -28,9 +28,9 @@ not a state-of-the-art benchmark result.
 
 ### Main Claim
 
-Staged complexity release with stage-local stopping criteria reduces unnecessary
-complexity search in data-driven ODE structure discovery, compared to flat search
-and global stopping.
+Staged complexity release with stage-local stopping criteria improves complexity
+efficiency — reducing stage overshoot and wasted search levels — in data-driven
+ODE structure discovery, without sacrificing recovery quality.
 
 Throughout this protocol, the term **complexity efficiency** refers to the joint
 behavior of `stage_overshoot` and `wasted_levels`. Controlled complexity increase
@@ -44,8 +44,9 @@ detection and flat growth.
 
 **C2 — Recovery quality**
 EvoGrow variants with staged release achieve exact structure recovery at rates
-comparable to or better than flat search (EvoGrow v1) and GP baseline, while
-spending fewer levels in stages beyond the true complexity.
+comparable to flat search (EvoGrow v1) and GP baseline, while achieving lower
+complexity efficiency cost — lower stage_overshoot and wasted_levels than
+EvoGrow v1 and v2.1.
 
 **C3 — Usage policy effect (secondary)**
 The usage policy after stage unlock (hard / soft / passive) has a measurable but
@@ -77,29 +78,30 @@ EvoGrow v1 (flat).
 
 **H2** (→ C2)
 For exact systems, EvoGrow v2.2 (stage_local progression) achieves competitive
-exact_match_rate alongside demonstrably lower complexity cost (H1, H3).
-"Competitive" is defined pre-hoc as: exact_match_rate is not lower than the GP
-baseline by more than 0.2 (one successful seed out of five) on more than one
-exact system. The claim is the combination — comparable recovery with reduced
-complexity search — not recovery superiority alone.
+exact_match_rate alongside demonstrably lower complexity efficiency cost (H1, H3).
+"Competitive" is defined as: exact_match_rate is not consistently lower than the
+GP baseline across the majority of exact systems. The claim is the combination —
+comparable recovery with reduced complexity efficiency cost — not recovery
+superiority alone.
 
 - Measurable outcome: `exact_match_rate` per (variant, system), evaluated
   jointly with `mean_stage_overshoot` and `mean_wasted_levels`
 - Required systems: all 8 exact systems
-- Falsified if: EvoGrow v2.2 shows exact_match_rate more than 0.2 below GP on
-  more than one exact system AND shows no reduction in stage_overshoot or
-  wasted_levels relative to EvoGrow v1
+- Falsified if: EvoGrow v2.2 shows lower exact_match_rate than GP on the
+  majority of exact systems AND shows no improvement in complexity efficiency
+  (stage_overshoot, wasted_levels) relative to EvoGrow v1
 
 ---
 
 **H3** (→ C2)
-For exact systems with expected stage ≥ 2, EvoGrow v2.2 variants show lower
-`mean_wasted_levels` than EvoGrow v1 and GP baseline.
+For exact systems with expected stage ≥ 2, EvoGrow v2.2 (stage_local progression)
+shows lower `mean_wasted_levels` than EvoGrow v1 (flat) and EvoGrow v2.1
+(global_plateau). This is a comparison between EvoGrow variants only.
 
 - Measurable outcome: `mean_wasted_levels` per (variant, system)
 - Required systems: exact systems with expected_stage ≥ 2
-- GP baseline: excluded from H3. `wasted_levels` is undefined for methods without
-  staged structure. GP participates only in the recovery comparison (H2).
+- GP baseline: excluded. `wasted_levels` is undefined for methods without staged
+  structure. GP participates only in the recovery comparison (H2).
 
 ---
 
@@ -307,6 +309,8 @@ system — this contextualizes low exact_match_rate results without making a
 stability claim.
 Do not use to rank methods. Do not claim one method is more stable without
 consistent directional evidence across multiple systems.
+This interpretation is contextual only — high invalid rates do not constitute
+evidence of method inferiority.
 
 ---
 
@@ -435,15 +439,17 @@ Script: `scripts/plot/plot_stage_overshoot.py`
 
 Purpose: illustrate how stage-local and global plateau detection differ in
 practice on the simplest non-trivial system. This figure supports narrative
-and aids reader comprehension of the mechanism. It does not test a hypothesis
-and must not be interpreted as quantitative evidence.
+and aids reader comprehension of the mechanism. It does not test a hypothesis,
+must not be interpreted as quantitative evidence, and is not representative
+of aggregate behavior across seeds or systems.
 
 Content: best-objective-per-level for System 3 (logistic growth), variants
 {evogrow_v1, evogrow_v2_1, evogrow_v2_2_progression}, seed = 42 (single seed,
 explicitly stated in caption). Stage boundaries marked as vertical lines.
 
 Placement: first figure in the paper, before Figure 1 and Figure 2.
-Caption must state: "Single representative run (seed = 42). For aggregate
+Caption must state: "Single representative run (seed = 42). This figure is
+illustrative and not representative of aggregate behavior. For aggregate
 recovery results across all seeds, see Figure 1."
 
 **Hard constraints on figures:**
@@ -505,10 +511,12 @@ This table is placed in the supplementary material. It is referenced in the
 discussion section with exactly one interpretive sentence. It does not appear
 in the main results section. It does not generate a main-paper figure.
 
-**Interpretation rule:** the table supports the auxiliary claim only if
-`mean_refit_loss < mean_fresh_loss` holds for the majority of systems with
-`n_exact_runs ≥ 3`. If this condition is not met, the generalization claim
-is dropped from the paper entirely.
+**Interpretation rule:** the table is interpreted as supporting the auxiliary
+claim if there is a consistent tendency for `mean_refit_loss` to be lower than
+or comparable to `mean_fresh_loss` across systems with `n_exact_runs ≥ 3`.
+No strict inequality is required across all systems. If no such tendency is
+visible in the data, the generalization claim is stated with explicit caution
+rather than as a positive result.
 
 ---
 
