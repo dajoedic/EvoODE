@@ -2,6 +2,7 @@
 fit*.csv
 fit*.png
 benchmarks/results/
+benchmarks/odeformer/results/
 debug_results/
 experiments/*/runs/
 experiments/*/run_registry.csv
