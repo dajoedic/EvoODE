@@ -6,3 +6,6 @@ benchmarks/odeformer/results/
 debug_results/
 experiments/*/runs/
 experiments/*/run_registry.csv
+analysis/.venv/
+analysis/__pycache__/
+**/*.pyc
