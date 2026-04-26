@@ -4,6 +4,187 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ---
 
+## 2026-04-26
+
+### Repository-Housekeeping und Ordnerstruktur
+
+**Alte ODEFormer-Run-Artefakte entfernt**
+- `benchmarks/odeformer/results/` aus dem Repository entfernt: alte uncommitted Ergebnisdateien ohne reproduzierbaren Kontext
+- `.gitignore` um `benchmarks/odeformer/results/` ergänzt, damit diese generierten Dateien nicht wieder versehentlich committed werden
+- Ergebnis: Benchmark-Daten (`strogatz_extended.json`) bleiben versioniert, alte Output-Artefakte sind raus
+
+**Neue Struktur für Analyse und Paper-Artefakte**
+- `analysis/` als dedizierter Bereich für Python-Auswertung angelegt
+- `paper/` als dedizierter Bereich für eingefrorene Paper-Artefakte angelegt
+- Initiale Skeletons:
+  - `analysis/requirements.txt`
+  - `analysis/paper1/.gitkeep`
+  - `analysis/exploratory/.gitkeep`
+  - `paper/figures/.gitkeep`
+  - `paper/tables/.gitkeep`
+  - `paper/snapshots/.gitkeep`
+- Danach Analyse-Struktur erweitert:
+  - `analysis/configs/`
+  - `analysis/data/`
+  - `analysis/figures/`
+  - `analysis/notebooks/`
+  - `analysis/scripts/aggregate/`
+  - `analysis/scripts/plot/`
+  - `analysis/tables/`
+  - `analysis/utils/`
+- `.gitignore` um Python- und Analyse-Artefakte ergänzt:
+  - `analysis/.venv/`
+  - `analysis/__pycache__/`
+  - `**/*.pyc`
+  - `analysis/data/`
+  - `analysis/figures/`
+  - `analysis/tables/`
+  - `analysis/notebooks/.ipynb_checkpoints/`
+
+### Analyse-Pipeline für Paper 1 angelegt
+
+**Konventionen und Aufgabenstruktur**
+- `analysis/CONVENTIONS.md` als zentrale Architektur- und Regeldatei für die Python-Analyse angelegt
+- Trennung festgelegt:
+  - Julia schreibt Rohdaten in `experiments/`
+  - Python liest Rohdaten und erzeugt abgeleitete Daten, Figuren und Tabellen
+  - generierte Analyse-Artefakte bleiben aus Git raus
+- `codex/CURRENT_TASK_ANALYSIS.md` als separate Task-Datei für Python-/Analyse-Arbeiten etabliert
+- `codex/PENDING_REPO_MIGRATION.md` angelegt: spätere Repo-Migrationen (u.a. `studies/`) dokumentiert, aber blockiert bis laufende Runs fertig sind
+
+**Shared Python Utilities**
+- `analysis/utils/io.py`: gemeinsames Laden von CSV-Dateien
+- `analysis/utils/metrics.py`: Validitätsfilter (`loss` nicht NaN) und Pflichtspaltenprüfung
+- `analysis/utils/style.py`: feste Variant-Reihenfolge, Labels und Farben für Paper-1-Plots
+- `analysis/utils/__init__.py` ergänzt
+
+**Aggregation**
+- `analysis/configs/paper1_phaseA_v1.json` angelegt
+- `analysis/scripts/aggregate/aggregate_run_registry.py` implementiert
+- Aggregation liest `experiments/paper1_phaseA_v1/run_registry.csv` und schreibt:
+  - `analysis/data/paper1_phaseA_v1/aggregate_by_variant_system.csv`
+- Aggregierte Kennzahlen pro `(variant_slug, system_id)`:
+  - `n_seeds`
+  - `n_valid`
+  - `mean_loss`
+  - `std_loss`
+  - `exact_match_rate`
+  - `mean_final_stage`
+  - `mean_stage_overshoot`
+  - `mean_wasted_levels`
+  - `mean_elapsed_s`
+  - `mean_invalid_evals`
+- Wichtig: gültige Runs sind Analyse-seitig definiert als Runs mit nicht-NaN `loss`
+
+**Plot- und Tabellen-Skripte**
+- `analysis/scripts/plot/plot_exact_match_rates.py`
+  - erzeugt Exact-Match-Rate-Plot für `paper1_phaseA_v1`
+  - nutzt feste Variant-Reihenfolge und konsistente Farben
+- `analysis/scripts/plot/plot_stage_overshoot.py`
+  - erzeugt Stage-Overshoot-Plot
+  - GP wird aus Stage-Metriken ausgeschlossen, weil GP keine Stage-Struktur hat
+- `analysis/scripts/plot/table_main_results.py`
+  - erzeugt LaTeX-Tabelle für die Main Results
+  - nutzt aggregierte Paper-1-Daten statt manuell bearbeiteter CSVs
+
+### Paper-1-Protokoll eingefroren
+
+**`docs/paper1_study_protocol.md` angelegt und gehärtet**
+- Standalone-Protokoll für Paper 1 erstellt; bewusst redundant zu `CLAUDE.md`, damit Paper-Ergebnisse eigenständig nachvollziehbar sind
+- Core Goal festgelegt:
+  - Paper 1 ist nicht "best ODE discovery system"
+  - Paper 1 untersucht staged growth als Mechanismus zur kontrollierten Komplexitätssteigerung
+- Hauptclaim definiert:
+  - stage-local stopping reduziert Stage-Overshoot und wasted search levels, ohne Recovery-Qualität systematisch zu opfern
+- Begriff **complexity efficiency** präzisiert:
+  - gemeinsame Betrachtung von `stage_overshoot` und `wasted_levels`
+  - niedrigere Werte bedeuten effizientere Nutzung des Suchbudgets
+
+**Hypothesen und Claims geschärft**
+- H1: Stage-local v2.2 soll niedrigeren `mean_stage_overshoot` zeigen als v2.1 und v1
+- H2: v2.2 soll kompetitive `exact_match_rate` liefern, aber gemeinsam mit niedrigerem Complexity-Efficiency-Cost bewertet werden
+- H3: `mean_wasted_levels` nur zwischen EvoGrow-Varianten vergleichen; GP explizit ausgeschlossen
+- H4: usage-policy comparison (`hard`, `soft`, `passive`) als sekundäre Hypothese markiert
+- GP aus allen Stage-Metriken entfernt, weil `final_stage`, `stage_overshoot` und `wasted_levels` für GP methodisch nicht definiert sind
+
+**System- und Evidenzregeln festgelegt**
+- 10 Systeme in zwei Kategorien getrennt:
+  - 8 exakt darstellbare Systeme
+  - 2 Surrogate-Systeme (`Overdamped pendulum`, `Van der Pol`)
+- Surrogate-Systeme dürfen nicht für `exact_support_match` oder H1-H4-Strukturaussagen verwendet werden
+- Systeme 2 und 24 bleiben Sanity Checks und werden aus H1/H3/H4 ausgeschlossen, weil `expected_stage = 1`
+- No post-hoc cherry-picking:
+  - keine manuell editierten CSVs
+  - keine neuen Paper-1-Experimente nach Ergebnisinspektion
+  - keine Resultate ohne Trace auf Hypothese, Experiment und definierte Metrik
+
+**Figures und Tables formalisiert**
+- Maximal 3 Main-Paper-Figures:
+  - Figure 1: Exact Match Rate
+  - Figure 2: Stage Overshoot
+  - Figure 3: qualitative Stage-Progression-Trace für System 3, Seed 42
+- Figure 3 ausdrücklich als illustrative Einzelfallgrafik definiert, nicht als quantitative Evidenz
+- Main-Paper-Tabellen begrenzt auf:
+  - Table 1: Main results / exact systems
+  - Table 2: Stage overshoot + wasted levels
+- Generalization Study als auxiliary evidence eingeordnet:
+  - nur Runs mit `exact_support_match = true`
+  - eine supplementary table
+  - keine Hauptclaim-Stütze, keine Behauptung "besser als GP/SINDy"
+
+### Projekt-Dokumentation aktualisiert
+
+**`CLAUDE.md` erweitert**
+- Projektstruktur auf den neuen Stand gebracht:
+  - `docs/`
+  - `analysis/`
+  - getrennte Codex-Task-Dateien
+  - geplantes `studies/` als noch nicht existierender Migrationszielordner
+- `docs/paper1_study_protocol.md` als bewusst eigenständiges Companion-Dokument dokumentiert
+- `analysis/CONVENTIONS.md` als Source of Truth für Python-Analyse verlinkt
+- `benchmarks/` vs. `experiments/` klarer abgegrenzt
+- aktuelle Paper-1-Analyse-Skripte in der Projektstruktur ergänzt
+
+**`SCRIPTS.md` ergänzt**
+- Pfade für Debug-/Profiling-Outputs aktualisiert
+- `generalization_study.jl` als eigenes Skript mit Zweck und Output-Artefakten dokumentiert
+
+**Variant-Slug vereinheitlicht**
+- Der Slug `evogrow_v2_2_stage_local` wurde überall standardisiert
+- Betroffene Stellen:
+  - `CLAUDE.md`
+  - `docs/paper1_study_protocol.md`
+  - `benchmarks/benchmark_evogrow.jl`
+  - Analyse-Plot- und Tabellen-Skripte
+  - `analysis/utils/style.py`
+- Ziel: keine Vermischung mehr zwischen "progression-only" als Label und `stage_local` als maschinenlesbarem Slug
+
+### Logging verbessert
+
+**WP-LOG1: Datum im Logging-Timestamp ergänzt**
+- `src/utils/logging.jl`: zentraler Logger schreibt Timestamp nun mit Datum und Uhrzeit
+- Vorher: `HH:MM:SS`
+- Nachher: `yyyy-mm-dd HH:MM:SS`
+- Grund: über Nacht laufende Skripte erzeugen sonst Logs, bei denen ältere Einträge keinem Datum zugeordnet werden können
+- Testaufruf von `log_info("test")` erzeugte z.B.:
+  - `[2026-04-26 20:34:24 | 0.2s | INFO ] test`
+
+### Tagesabschluss
+
+- Alle heutigen Implementierungs- und Dokumentationsänderungen vor diesem Diary-Nachtrag sind committed
+- Paper-1-Protokoll ist als Arbeitsgrundlage eingefroren
+- Python-Analysepipeline ist vorbereitet:
+  - Aggregation
+  - Exact-Match-Plot
+  - Stage-Overshoot-Plot
+  - Main-Results-LaTeX-Tabelle
+- Nächster sinnvoller Schritt:
+  - Phase-A-Ergebnisse vollständig aggregieren
+  - `aggregate_by_variant_system.csv` prüfen
+  - H1-H3 direkt aus den aggregierten Daten bewerten, bevor finale Figuren/Tables als Paper-Artefakte eingefroren werden
+
+---
+
 ## 2026-04-23
 
 ### Bugs gefunden und gefixt
