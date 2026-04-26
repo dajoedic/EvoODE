@@ -28,16 +28,13 @@ REQUIRED_COLUMNS = [
 VARIANT_ORDER = [
     "evogrow_v1",
     "evogrow_v2_1",
-    "evogrow_v2_2_progression",
+    "evogrow_v2_2_stage_local",
     "evogrow_v2_2_passive",
     "evogrow_v2_2_soft",
     "gp_baseline",
 ]
 
 SURROGATE_SYSTEM_IDS = {23, 37}
-VARIANT_ALIASES = {
-    "evogrow_v2_2_stage_local": "evogrow_v2_2_progression",
-}
 
 
 def parse_args() -> argparse.Namespace:
@@ -53,7 +50,6 @@ def load_config(path: Path) -> dict[str, Any]:
 
 def prepare_plot_data(df: pd.DataFrame) -> tuple[pd.DataFrame, list[tuple[int, str]]]:
     exact_df = df.loc[~df["system_id"].isin(SURROGATE_SYSTEM_IDS)].copy()
-    exact_df["variant_slug"] = exact_df["variant_slug"].replace(VARIANT_ALIASES)
     systems = (
         exact_df.loc[:, ["system_id", "system_name"]]
         .drop_duplicates()

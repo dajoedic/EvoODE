@@ -291,7 +291,7 @@ const VARIANTS = BenchmarkVariant[
     ),
     BenchmarkVariant(
         "EvoGrow v2.2 progression-only",
-        "evogrow_v2_2_progression",
+        "evogrow_v2_2_stage_local",
         :evogrow,
         dim -> EvoGrow(
             pop_size = POP_SIZE,

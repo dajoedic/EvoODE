@@ -29,7 +29,7 @@ REQUIRED_COLUMNS = [
 VARIANT_ORDER = [
     "evogrow_v1",
     "evogrow_v2_1",
-    "evogrow_v2_2_progression",
+    "evogrow_v2_2_stage_local",
     "evogrow_v2_2_passive",
     "evogrow_v2_2_soft",
     "gp_baseline",
@@ -37,9 +37,6 @@ VARIANT_ORDER = [
 
 EXACT_SYSTEM_IDS = [2, 3, 11, 24, 26, 31, 54, 63]
 SURROGATE_SYSTEM_IDS = [23, 37]
-VARIANT_ALIASES = {
-    "evogrow_v2_2_stage_local": "evogrow_v2_2_progression",
-}
 
 CSV_COLUMNS = [
     "variant_slug",
@@ -74,12 +71,6 @@ def format_scientific(value: float, significant_digits: int = 2) -> str:
     decimals = max(significant_digits - 1, 0)
     mantissa_text = f"{mantissa:.{decimals}f}"
     return rf"{mantissa_text} \times 10^{{{exponent}}}"
-
-
-def normalize_variants(df: pd.DataFrame) -> pd.DataFrame:
-    normalized = df.copy()
-    normalized["variant_slug"] = normalized["variant_slug"].replace(VARIANT_ALIASES)
-    return normalized
 
 
 def ordered_systems(df: pd.DataFrame, system_ids: list[int]) -> list[tuple[int, str]]:
@@ -213,7 +204,7 @@ def main() -> int:
         aggregate_path = analysis_root / config["output_dir"] / "aggregate_by_variant_system.csv"
         output_dir = analysis_root / "tables" / experiment_id
 
-        aggregate = normalize_variants(load_aggregate(aggregate_path))
+        aggregate = load_aggregate(aggregate_path)
         check_required_columns(aggregate, REQUIRED_COLUMNS)
 
         output_dir.mkdir(parents=True, exist_ok=True)

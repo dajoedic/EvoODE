@@ -170,13 +170,13 @@ Six variants are included. All are already implemented and present in Phase A.
 |-------|------|-------------|-------|
 | EvoGrow v1 (flat) | `evogrow_v1` | H2, H3 | Flat baseline |
 | EvoGrow v2.1 | `evogrow_v2_1` | H1, H2, H3 | Global plateau baseline |
-| EvoGrow v2.2 progression | `evogrow_v2_2_progression` | H1, H2, H3, H4 | Primary variant |
+| EvoGrow v2.2 progression | `evogrow_v2_2_stage_local` | H1, H2, H3, H4 | Primary variant |
 | EvoGrow v2.2 passive | `evogrow_v2_2_passive` | H4 | Usage policy comparison |
 | EvoGrow v2.2 soft | `evogrow_v2_2_soft` | H4 | Usage policy comparison |
 | GP baseline | `gp_baseline` | H2 (recovery comparison only) | External baseline; excluded from H3 |
 
 Minimum viable set for the main claims (H1–H3):
-`evogrow_v1`, `evogrow_v2_1`, `evogrow_v2_2_progression`, `gp_baseline`
+`evogrow_v1`, `evogrow_v2_1`, `evogrow_v2_2_stage_local`, `gp_baseline`
 
 The three v2.2 usage-policy variants are required only for H4.
 If H4 results are ambiguous, they may be moved to supplementary material.
@@ -446,7 +446,7 @@ must not be interpreted as quantitative evidence, and is not representative
 of aggregate behavior across seeds or systems.
 
 Content: best-objective-per-level for System 3 (logistic growth), variants
-{evogrow_v1, evogrow_v2_1, evogrow_v2_2_progression}, seed = 42 (single seed,
+{evogrow_v1, evogrow_v2_1, evogrow_v2_2_stage_local}, seed = 42 (single seed,
 explicitly stated in caption). Stage boundaries marked as vertical lines.
 
 Placement: first figure in the paper, before Figure 1 and Figure 2.

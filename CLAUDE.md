@@ -716,7 +716,7 @@ Each is defined by its implementation mapping in `benchmarks/benchmark_evogrow.j
 |-------|------|-------|------------------|------------|
 | EvoGrow v1 (flat) | `evogrow_v1` | `StagedPolynomialBasis` (all terms) | `:global_plateau` | `:hard` |
 | EvoGrow v2.1 baseline | `evogrow_v2_1` | `StagedPolynomialBasis` | `:global_plateau` | `:hard` |
-| EvoGrow v2.2 progression-only | `evogrow_v2_2_progression` | `StagedPolynomialBasis` | `:stage_local` | `:hard` |
+| EvoGrow v2.2 progression-only | `evogrow_v2_2_stage_local` | `StagedPolynomialBasis` | `:stage_local` | `:hard` |
 | EvoGrow v2.2 passive usage | `evogrow_v2_2_passive` | `StagedPolynomialBasis` | `:stage_local` | `:passive` |
 | EvoGrow v2.2 soft usage | `evogrow_v2_2_soft` | `StagedPolynomialBasis` | `:stage_local` | `:soft` |
 | GP baseline | `gp_baseline` | `StagedPolynomialBasis` (all terms) | N/A | N/A |
