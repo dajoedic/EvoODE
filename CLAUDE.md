@@ -4,6 +4,11 @@ This file is the single source of truth for the EvoODE project.
 All project vision, architecture, roadmap, status, and research priorities live here.
 Do not maintain a second planning document elsewhere.
 
+Exception: `docs/paper1_study_protocol.md` is an intentionally standalone companion document
+for Paper 1 that duplicates some configurations from this file (system list, hyperparameters,
+variant definitions). It exists as a self-contained supplementary artifact. Both documents must
+be kept in sync manually whenever a configuration changes.
+
 ## Collaboration
 
 All communication with the user happens in **German**.
@@ -69,7 +74,9 @@ Efficient and robust search strategies for interpretable discovery of coupled OD
 
 ```text
 EvoODE/
-|-- CLAUDE.md
+|-- CLAUDE.md                              (project master document — this file)
+|-- DIARY.md                               (chronological project log; design decisions, bug history)
+|-- SCRIPTS.md                             (execution runbook for all scripts)
 |-- Project.toml
 |-- Manifest.toml
 |-- src/
@@ -104,22 +111,76 @@ EvoODE/
 |   `-- utils/
 |       |-- checks.jl
 |       `-- logging.jl
-|-- benchmarks/
+|-- benchmarks/                            (exploratory, direct-execution scripts — see note below)
 |   |-- benchmark_evogrow.jl
 |   |-- run_odebench.jl
-|   |-- odeformer/
+|   |-- odeformer/                         (to be moved to benchmarks/data/ — WP-R1)
 |   |   `-- strogatz_extended.json
-|   `-- results/
-|-- experiments/
+|   `-- results/                           (gitignored; to be replaced by outputs/ — WP-R3)
+|-- experiments/                           (formal, manifest-based Paper 1 runs — see note below)
 |   |-- generate_manifest.jl
 |   |-- run_experiment.jl
 |   |-- aggregate.jl
 |   `-- paper1_phaseA_v1/
-|-- codex/
-|   `-- CURRENT_TASK.md
-|-- debug_single.jl
-`-- profile_init.jl
+|-- docs/
+|   `-- paper1_study_protocol.md          (standalone Paper 1 protocol; intentionally duplicates some config from CLAUDE.md)
+|-- analysis/                              (Python analysis pipeline — see analysis/CONVENTIONS.md)
+|   |-- CONVENTIONS.md                     (pipeline rules, naming, anti-patterns)
+|   |-- requirements.txt
+|   |-- configs/
+|   |   `-- paper1_phaseA_v1.json         (experiment config driving all analysis scripts)
+|   |-- scripts/
+|   |   |-- aggregate/
+|   |   |   `-- aggregate_run_registry.py (WP-A2/A3: run_registry.csv -> aggregate CSV)
+|   |   `-- plot/
+|   |       |-- plot_exact_match_rates.py (WP-A4)
+|   |       |-- plot_stage_overshoot.py   (WP-A5)
+|   |       `-- table_main_results.py     (WP-A6)
+|   |-- utils/
+|   |   |-- io.py
+|   |   |-- metrics.py
+|   |   `-- style.py                      (VARIANT_COLORS, VARIANT_LABELS)
+|   |-- data/                             (gitignored; derived CSVs from run_registry)
+|   |-- figures/                          (gitignored; generated plots)
+|   |-- tables/                           (gitignored; generated LaTeX + CSV)
+|   |-- notebooks/                        (gitignored; exploratory)
+|   `-- paper1/                           (frozen submission artifacts)
+|-- codex/                                (task management for AI-assisted development)
+|   |-- CURRENT_TASK.md                   (active Julia/algorithm task)
+|   |-- CURRENT_TASK_ANALYSIS.md          (active Python analysis task)
+|   `-- PENDING_REPO_MIGRATION.md         (deferred WP-R1/R2/R3; blocked until runs finish)
+|-- debug_single.jl                       (to be moved to studies/debug/ — WP-R2)
+|-- profile_init.jl                       (to be moved to studies/profiling/ — WP-R2)
+`-- generalization_study.jl               (to be moved to studies/generalization/ — WP-R2)
 ```
+
+Note: `studies/` does not exist yet. It will be created by WP-R2 (see `codex/PENDING_REPO_MIGRATION.md`).
+
+### benchmarks/ vs experiments/
+
+These two directories serve distinct purposes and must not be conflated.
+
+| | `benchmarks/` | `experiments/` |
+|---|---|---|
+| Execution | direct `julia script.jl` | manifest-based runner |
+| Purpose | exploratory, qualitative | formal, paper-grade |
+| Reproducibility | best-effort | atomic writes, full status tracking |
+| Failure handling | per-run catch, logs to stdout | per-run status.json, metrics.json |
+| Output | `benchmarks/results/` (gitignored) | `experiments/<id>/runs/` (per-run folders) |
+
+### codex/ convention
+
+Two separate task files serve the Julia/Python split:
+- `CURRENT_TASK.md` — active task for Julia algorithm/infrastructure work
+- `CURRENT_TASK_ANALYSIS.md` — active task for Python analysis pipeline work
+
+Both contain "Kein aktiver Task" when no work is pending.
+Write the next task spec into the appropriate file before handing off to an AI coding assistant.
+
+### See also
+
+`SCRIPTS.md` — runbook with exact commands for all scripts and typical workflows.
+`DIARY.md` — chronological log of design decisions, bug fixes, and implementation notes.
 
 The module structure is intentionally extensible.
 New structure search algorithms, bases, losses, and optimizers should be added through the relevant interface layer and registered in `src/EvoODE.jl`.

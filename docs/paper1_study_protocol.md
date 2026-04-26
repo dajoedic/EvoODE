@@ -1,7 +1,9 @@
 # Paper 1 — Study Protocol
 
-This document is the single source of truth for all experiments, analysis, and
-evidence related to Paper 1.
+This document is the standalone protocol for Paper 1.
+It intentionally duplicates some configuration from `CLAUDE.md` (system list,
+hyperparameters, variant definitions) to serve as a self-contained supplementary
+artifact. If a configuration changes, both this file and `CLAUDE.md` must be updated.
 
 Every result that appears in the paper must be traceable to a hypothesis defined
 here, an experiment defined here, and a metric defined here.
