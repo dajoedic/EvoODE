@@ -96,7 +96,7 @@ Use this to inspect algorithm behavior on a known system.
 julia debug_single.jl
 ```
 
-Output: `debug_results/debug_lotka.log`, `debug_results/debug_lotka.png`
+Output: `debug_results/debug_single/debug_lotka.log`, `debug_results/debug_single/debug_lotka.png`
 
 Key constants at top of file:
 
@@ -121,9 +121,27 @@ julia profile_init.jl
 ```
 
 Output:
-- `debug_results/profile_init_summary.csv` — one row per run
-- `debug_results/profile_init_levels.csv` — one row per level per run
-- `debug_results/profile_<system>_seed<N>_<mode>.log` — one log per run
+- `debug_results/profile_init/profile_init_summary.csv` — one row per run
+- `debug_results/profile_init/profile_init_levels.csv` — one row per level per run
+- `debug_results/profile_init/profile_<system>_seed<N>_<mode>.log` — one log per run
+
+---
+
+### `generalization_study.jl`
+
+Tests whether a structure discovered on one parameter set generalizes to unseen parameter sets
+of the same ODE family after parameter refit only.
+Covers 3 systems (Logistic growth, Lotka-Volterra, SIR), 2 variants, 3 seeds.
+
+```
+julia generalization_study.jl
+```
+
+Output:
+- `debug_results/generalization_study/generalization_summary.csv` — one row per (system, variant, seed)
+- `debug_results/generalization_study/generalization_detail.csv` — one row per (system, variant, seed, test param set)
+- `debug_results/generalization_study/gen_<system>_<variant>_seed<N>_train.log` — discovery log per training run
+- `debug_results/generalization_study/gen_<system>_<variant>_seed<N>_test<M>.log` — discovery log per fresh baseline run
 
 ---
 

@@ -115,7 +115,7 @@ function _log(level::Int, msg::AbstractString; context=Dict())
 
     t = time()
     elapsed = t - LOGGER.start_time
-    timestamp = Dates.format(now(), "HH:MM:SS")
+    timestamp = Dates.format(now(), "yyyy-mm-dd HH:MM:SS")
     ctx_str = _format_context(context)
 
     line = "[$timestamp | $(round(elapsed, digits=1))s | $(level_name(level))] $msg$ctx_str"
