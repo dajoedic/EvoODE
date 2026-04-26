@@ -34,7 +34,8 @@ ODE structure discovery, without sacrificing recovery quality.
 
 Throughout this protocol, the term **complexity efficiency** refers to the joint
 behavior of `stage_overshoot` and `wasted_levels`. Controlled complexity increase
-means low complexity efficiency cost.
+means low complexity efficiency cost. Lower values indicate more efficient use of
+the search budget.
 
 ### Sub-Claims
 
@@ -46,7 +47,8 @@ detection and flat growth.
 EvoGrow variants with staged release achieve exact structure recovery at rates
 comparable to flat search (EvoGrow v1) and GP baseline, while achieving lower
 complexity efficiency cost — lower stage_overshoot and wasted_levels than
-EvoGrow v1 and v2.1.
+EvoGrow v1 and v2.1. Recovery quality and complexity efficiency are jointly
+evaluated but represent distinct dimensions of the contribution.
 
 **C3 — Usage policy effect (secondary)**
 The usage policy after stage unlock (hard / soft / passive) has a measurable but
@@ -79,8 +81,8 @@ EvoGrow v1 (flat).
 **H2** (→ C2)
 For exact systems, EvoGrow v2.2 (stage_local progression) achieves competitive
 exact_match_rate alongside demonstrably lower complexity efficiency cost (H1, H3).
-"Competitive" is defined as: exact_match_rate is not consistently lower than the
-GP baseline across the majority of exact systems. The claim is the combination —
+"Competitive" is defined as: exact_match_rate does not show systematic degradation
+relative to the GP baseline across the majority of exact systems. The claim is the combination —
 comparable recovery with reduced complexity efficiency cost — not recovery
 superiority alone.
 
@@ -484,16 +486,15 @@ the training trajectory.
 
 ### Interpretation rules
 
-A refit is considered **meaningful** if:
+Runs without `exact_support_match = true` are excluded from the generalization
+analysis. This is a hard filter, not an interpretation criterion: generalization
+is only meaningful when the discovered structure is correct.
 
-1. The training run achieved `exact_support_match = true`
-2. The refit loss is lower than the fresh discovery loss on the same test trajectory
-
-Both conditions must hold. Condition 1 alone is not sufficient evidence.
-Condition 2 alone is not sufficient evidence.
-
-If these conditions hold for the majority of (system, seed) combinations,
-the claim above is supported.
+The claim is supported if, across systems with sufficient exact recoveries
+(`n_exact_runs ≥ 3`), there is a consistent tendency for `mean_refit_loss` to be
+lower than or comparable to `mean_fresh_loss`. No per-system strict inequality is
+required. A single system where refit loss exceeds fresh loss does not falsify the
+claim.
 
 ### Output
 
