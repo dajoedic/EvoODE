@@ -9,3 +9,7 @@ experiments/*/run_registry.csv
 analysis/.venv/
 analysis/__pycache__/
 **/*.pyc
+analysis/data/
+analysis/figures/
+analysis/tables/
+analysis/notebooks/.ipynb_checkpoints/
