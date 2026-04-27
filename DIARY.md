@@ -4,6 +4,70 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ---
 
+## 2026-04-27
+
+### CLAUDE.md — Cross-Check und Reproducibility Protocol
+
+**Vollständiger Abgleich CLAUDE.md gegen Codebasis**
+
+Fünf konkrete Diskrepanzen gefunden und behoben:
+
+1. `EvoGrow`-Struct-Definition veraltet: fehlte `progression`, `usage`, `use_pretuning` — alle drei ergänzt
+2. `test.jl` und `test_evogrow_v2_lotka.jl` im Dateibaum gelistet, existieren nicht mehr — entfernt
+3. `run_odebench.jl` als Root-Datei angegeben, liegt tatsächlich in `benchmarks/` — Pfad korrigiert
+4. `src/optimize/pretune.jl` existiert, wird inkludiert und genutzt, war nirgendwo dokumentiert — Abschnitt und Dateibaum-Eintrag ergänzt
+5. `experiments/` mit gesamter Experiment-Infrastruktur nicht im Dateibaum — nachgetragen
+
+**Paper 1 Reproducibility Protocol ergänzt**
+
+Neuer Abschnitt `## Paper 1 – Reproducibility Protocol` an das Ende von `CLAUDE.md` angehängt. Enthält vollständige, codebasierte Dokumentation der Paper-1-Konfiguration:
+- alle 6 Varianten mit Slug, Basis, Progressions- und Usage-Mode
+- alle 10 Benchmark-Systeme (exakt/Surrogate) mit IDs und True-Struktur
+- sämtliche Hyperparameter explizit (keine impliziten Defaults)
+- Seeds: `[42, 123, 7, 99, 17]`
+- Metriken mit Definitionen
+- Execution-Loop
+- Output-Artefakte
+- Aggregationsregeln und Exact/Surrogate-Trennung
+- Paper-1-Freeze-Klausel
+
+### Status-Check laufende Experimente
+
+Vier Studien geprüft:
+
+| Skript | Status | Details |
+|--------|--------|---------|
+| `experiments/run_experiment.jl paper1_phaseA_v1` | läuft | 234/300 finished, 65 queued, 1 interrupted |
+| `benchmarks/benchmark_evogrow.jl` | läuft | 93/300 Runs (~31%) |
+| `generalization_study.jl` | **fertig** | Output-CSVs vorhanden (24.04.) |
+| `profile_init.jl` | **hängt seit 2 Tagen** | feststeckend auf Level 11, Stage 2, Lorenz 3D, Seed 42 |
+
+Zeitschätzungen Restlaufzeit:
+- Experiment-Runner: ~6–7 Stunden (Median-basiert; Avg durch Hochdimensional-Runs verzerrt)
+- Benchmark: ~27–40 Stunden
+
+### BFGS-Timeout implementiert
+
+**Motivation**: `profile_init.jl` hängt seit 48+ Stunden auf einem einzelnen BFGS-Call (Lorenz 3D, Stage 2). `maxiters` begrenzt nur Iterationen, nicht Wall-Clock-Zeit.
+
+**Umsetzung** (`src/optimize/bfgs.jl`):
+- `time_limit_s::Float64 = 300.0` zu `BFGSOptimizer` ergänzt
+- `time_limit = opt.time_limit_s` an beide `Optimization.solve`-Aufrufe (BFGS + Nelder-Mead Fallback) übergeben
+- Bei Timeout gibt Optim.jl das beste bisher gefundene Ergebnis zurück — kein Absturz, kein NaN
+- Logging: `log_warn("BFGS hit time_limit", ...)` wenn `retcode != Success`
+
+**Parameterwahl**: 300s ist ~100× der medianen per-Call-Zeit (ca. 2–3s), greift bei normalen Runs nie.
+
+Committed als `59d6c16`.
+
+### Tagesabschluss
+
+- `profile_init.jl` bleibt vorerst hängen; wird gekillt sobald die anderen Runs durch sind
+- Plan: Neustart von `profile_init.jl` mit Timeout — ohne von vorne anfangen zu müssen (Details noch offen)
+- CLAUDE.md hat uncommitted Änderungen (Reproducibility Protocol + Cross-Check-Fixes)
+
+---
+
 ## 2026-04-26
 
 ### Repository-Housekeeping und Ordnerstruktur

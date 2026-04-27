@@ -868,7 +868,7 @@ plateau_rtol     = 1e-3
 #### Optimizer
 
 ```
-BFGSOptimizer(maxiters = 200)
+BFGSOptimizer(maxiters = 200, time_limit_s = 300.0)
 ```
 
 #### Trajectory generation
