@@ -7,7 +7,7 @@ using Logging
 using Random
 
 """
-    BFGSOptimizer(; maxiters=300, abstol=1e-6, reltol=1e-6, maxiters_solve=10^6, clamp_val=10.0)
+    BFGSOptimizer(; maxiters=300, abstol=1e-6, reltol=1e-6, maxiters_solve=10^6, clamp_val=10.0, time_limit_s=300.0)
 
 Parameter optimizer for fixed-structure models.
 
@@ -15,6 +15,10 @@ Uses:
   - DifferentialEquations.jl to simulate the ODE
   - Optimization.jl (with AutoFiniteDiff) for gradients
   - BFGS (and NelderMead as fallback) for optimization
+
+`time_limit_s` sets a wall-clock ceiling per `fit_parameters` call (passed to Optim.jl).
+When the limit is hit, Optim returns the best result found so far rather than throwing.
+The default (300s) is ~100× the median per-call time and only fires on runaway solves.
 """
 Base.@kwdef struct BFGSOptimizer <: AbstractOptimizer
     maxiters::Int = 300
@@ -22,6 +26,7 @@ Base.@kwdef struct BFGSOptimizer <: AbstractOptimizer
     reltol::Float64 = 1e-6
     maxiters_solve::Int = 10^6
     clamp_val::Float64 = 10.0
+    time_limit_s::Float64 = 300.0
 end
 
 """
@@ -164,23 +169,39 @@ function fit_parameters(opt::BFGSOptimizer,
     end
 
     try
-        res = Optimization.solve(optprob, OptimizationOptimJL.BFGS(); maxiters = opt.maxiters)
+        res = Optimization.solve(optprob, OptimizationOptimJL.BFGS();
+                                 maxiters = opt.maxiters,
+                                 time_limit = opt.time_limit_s)
         if isfinite(res.minimum)
             p_best = res.u
             l_best = res.minimum
             method_used = "BFGS"
 
+            timed_out = (res.retcode != SciMLBase.ReturnCode.Success)
             if options.verbose >= 2
-                log_info(
-                    "BFGS finished",
-                    context = Dict(
-                        :n_params => n_params,
-                        :minimum => res.minimum,
-                        :method => method_used,
-                        :loss_evals => loss_eval_count[],
-                        :invalid_evals => invalid_eval_count[]
+                if timed_out
+                    log_warn(
+                        "BFGS hit time_limit",
+                        context = Dict(
+                            :n_params => n_params,
+                            :time_limit_s => opt.time_limit_s,
+                            :minimum => res.minimum,
+                            :loss_evals => loss_eval_count[],
+                            :invalid_evals => invalid_eval_count[]
+                        )
                     )
-                )
+                else
+                    log_info(
+                        "BFGS finished",
+                        context = Dict(
+                            :n_params => n_params,
+                            :minimum => res.minimum,
+                            :method => method_used,
+                            :loss_evals => loss_eval_count[],
+                            :invalid_evals => invalid_eval_count[]
+                        )
+                    )
+                end
             end
         else
             if options.verbose >= 2
@@ -227,23 +248,39 @@ function fit_parameters(opt::BFGSOptimizer,
         end
 
         try
-            res2 = Optimization.solve(optprob, OptimizationOptimJL.NelderMead(); maxiters = opt.maxiters)
+            res2 = Optimization.solve(optprob, OptimizationOptimJL.NelderMead();
+                                      maxiters = opt.maxiters,
+                                      time_limit = opt.time_limit_s)
             if isfinite(res2.minimum)
                 p_best = res2.u
                 l_best = res2.minimum
                 method_used = "NelderMead"
 
                 if options.verbose >= 2
-                    log_info(
-                        "Nelder-Mead finished",
-                        context = Dict(
-                            :n_params => n_params,
-                            :minimum => res2.minimum,
-                            :method => method_used,
-                            :loss_evals => loss_eval_count[],
-                            :invalid_evals => invalid_eval_count[]
+                    timed_out2 = (res2.retcode != SciMLBase.ReturnCode.Success)
+                    if timed_out2
+                        log_warn(
+                            "Nelder-Mead hit time_limit",
+                            context = Dict(
+                                :n_params => n_params,
+                                :time_limit_s => opt.time_limit_s,
+                                :minimum => res2.minimum,
+                                :loss_evals => loss_eval_count[],
+                                :invalid_evals => invalid_eval_count[]
+                            )
                         )
-                    )
+                    else
+                        log_info(
+                            "Nelder-Mead finished",
+                            context = Dict(
+                                :n_params => n_params,
+                                :minimum => res2.minimum,
+                                :method => method_used,
+                                :loss_evals => loss_eval_count[],
+                                :invalid_evals => invalid_eval_count[]
+                            )
+                        )
+                    end
                 end
             else
                 if options.verbose >= 2
