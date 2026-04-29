@@ -4,6 +4,43 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ---
 
+## 2026-04-29
+
+### CLAUDE.md und DIARY.md aktualisiert
+
+- Active Studies: Statusspalte ergänzt, `generalization_study` als fertig, `profile_init` als hängend markiert
+- Current Priorities: auf 2026-04-29 aktualisiert, stuck run als Entscheidungspunkt aufgenommen
+- April-28-Eintrag in DIARY.md ergänzt
+- Committed und gepusht als `57c4ff3`
+
+### Codex-Task: `analysis/status.py` — Study Status Checker
+
+Ziel: Skript, das aus SCRIPTS.md alle bekannten Scripts extrahiert und prüft, welche davon gerade laufen.
+
+**Technische Analyse (Windows/WMI):**
+
+- `julia.exe`-Prozesse per PowerShell + WMI abfragbar
+- Problem: Command Line von `julia.exe` enthält auf Windows oft keine Script-Argumente
+- Wenn Parent-Prozess `julialauncher.exe` ist: Argumente im Parent sichtbar → Script identifizierbar
+- Wenn Parent `cmd.exe` ist (auch wenn cmd noch offen): Argumente gehen verloren — gilt für alle über cmd gestarteten Skripte
+- Ausnahme: `profile_init.jl` (PID 73100) via julialauncher gestartet → korrekt erkannt
+
+**Lösung: Hybrid-Ansatz**
+
+1. Prozessbaum: julialauncher.exe-Parent → Script-Name direkt lesbar
+2. Output-File-Timestamp: wenn Output-Datei < 90 min alt und orphan-Prozess läuft → `[LÄUFT?]`
+
+**ETA-Schätzung** ebenfalls in Spec aufgenommen:
+
+- Rate über letzte 20 Runs (nicht Gesamtlaufzeit) — robust gegen stuck runs
+- Für Experiment-Runner: Rate aus `finished_at`-Timestamps der status.json-Dateien
+- Für Benchmark: Rate aus `elapsed_s`-Spalte in summary.csv
+- Stuck-Run-Erkennung und -Warnung wenn Run seit >2h im Status `running`
+
+Codex-Task vollständig in `codex/CURRENT_TASK.md` geschrieben.
+
+---
+
 ## 2026-04-28
 
 ### Wartetag — keine Code-Änderungen

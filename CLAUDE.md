@@ -676,7 +676,7 @@ Status: NOT STARTED
 
 Current priorities as of 2026-04-29:
 
-1. Warten bis `benchmark_evogrow.jl` fertig ist (läuft noch, ~128/300).
+1. Warten bis `benchmark_evogrow.jl` fertig ist (läuft noch, ~135/300).
 2. Stuck run `54_evogrow_v1_seed7` entscheiden: warten, killen, oder neu starten mit BFGS-Timeout.
 3. Aggregate `paper1_phaseA_v1` results: `julia experiments/aggregate.jl paper1_phaseA_v1`.
 4. Analyze `run_registry.csv`: exact recovery rates, stage progression, wasted levels per variant.
