@@ -348,11 +348,11 @@ The current v2.2 usage-policy comparison is:
 
 Do not collapse stage progression and stage usage into a single mechanism again.
 
-#### Current findings (preliminary, paper1_phaseA_v1, 40/300 runs)
+#### Current findings (preliminary, paper1_phaseA_v1, 242/300 runs)
 
 - On System 2 (linear): all variants find exact structure, loss deterministic across seeds — pretuning+BFGS always converges to same minimum.
 - On System 3 (logistic, expected_stage=2): `evogrow_v2_1` (global plateau) overshoots by mean 1.5 stages; all `v2.2` stage_local variants show 0 overshoot. First direct confirmation of core hypothesis.
-- Higher-dimensional systems (Lorenz, SEIR, Lotka-Volterra) not yet completed.
+- Higher-dimensional systems (Lorenz, SEIR, Lotka-Volterra) mostly completed; one run stuck (System 54: Lorenz 3D, EvoGrow v1, Seed 7 — started 2026-04-28, no BFGS timeout, pre-`59d6c16` config).
 
 ### GPStructureSearch
 
@@ -641,7 +641,7 @@ Experiment infrastructure complete (WP-E1 through WP-E3):
 
 Active experiment:
 
-- `paper1_phaseA_v1`: 300 runs total (10 systems × 6 variants × 5 seeds), exploratory — 40 finished, remainder running as of 2026-04-23
+- `paper1_phaseA_v1`: 300 runs total (10 systems × 6 variants × 5 seeds), exploratory — 242 finished as of 2026-04-29; 1 run stuck (System 54, EvoGrow v1, Seed 7, Lorenz 3D, no BFGS timeout)
 
 Target:
 EvoGrow baseline vs GP and SINDy
@@ -663,27 +663,26 @@ Status: NOT STARTED
 - validation-based stage promotion
 - multi-hypothesis models
 
-## Active Studies (as of 2026-04-23)
+## Active Studies (as of 2026-04-29)
 
-Four scripts are currently running. Each tests a distinct research question.
-
-| Script | Thesis |
-|--------|--------|
-| `experiments/run_experiment.jl paper1_phaseA_v1` | Staged growth (v2.x) is more efficient than flat growth (v1) and GP — measured by exact support recovery, stage overshoot, and wasted levels across 10 systems × 6 variants × 5 seeds. |
-| `benchmarks/benchmark_evogrow.jl` | Exploratory cross-system benchmark: can EvoGrow reliably find correct structures across all 10 benchmark systems, and how do the variants compare qualitatively? |
-| `profile_init.jl` | OLS warm-start (pretuning) leads to faster convergence and lower final loss than random initialization, across seeds and systems. |
-| `generalization_study.jl` | A structurally correct discovery generalizes across parameter regimes: fixing the discovered structure and refitting only parameters on unseen trajectories of the same ODE family yields low loss. |
+| Script | Status | Thesis |
+|--------|--------|--------|
+| `experiments/run_experiment.jl paper1_phaseA_v1` | 242/300, 1 stuck | Staged growth (v2.x) is more efficient than flat growth (v1) and GP — measured by exact support recovery, stage overshoot, and wasted levels across 10 systems × 6 variants × 5 seeds. |
+| `benchmarks/benchmark_evogrow.jl` | ~128/300, läuft | Exploratory cross-system benchmark: can EvoGrow reliably find correct structures across all 10 benchmark systems, and how do the variants compare qualitatively? |
+| `profile_init.jl` | **hängt** (Daten vorhanden) | OLS warm-start (pretuning) leads to faster convergence and lower final loss than random initialization, across seeds and systems. |
+| `generalization_study.jl` | **fertig** (24.04.) | A structurally correct discovery generalizes across parameter regimes: fixing the discovered structure and refitting only parameters on unseen trajectories of the same ODE family yields low loss. |
 
 ## Current Priorities
 
-Current priorities as of 2026-04-23:
+Current priorities as of 2026-04-29:
 
-1. Let all four active studies finish running.
-2. Aggregate `paper1_phaseA_v1` results: `julia experiments/aggregate.jl paper1_phaseA_v1`.
-3. Analyze `run_registry.csv`: exact recovery rates, stage progression, wasted levels per variant.
-4. Analyze `generalization_study` and `profile_init` outputs.
-5. Identify failure cases and determine whether they are algorithmic or parametric.
-6. Plan Paper 1 experiment section based on first real results.
+1. Warten bis `benchmark_evogrow.jl` fertig ist (läuft noch, ~128/300).
+2. Stuck run `54_evogrow_v1_seed7` entscheiden: warten, killen, oder neu starten mit BFGS-Timeout.
+3. Aggregate `paper1_phaseA_v1` results: `julia experiments/aggregate.jl paper1_phaseA_v1`.
+4. Analyze `run_registry.csv`: exact recovery rates, stage progression, wasted levels per variant.
+5. Analyze `generalization_study` and `profile_init` outputs.
+6. Identify failure cases and determine whether they are algorithmic or parametric.
+7. Plan Paper 1 experiment section based on first real results.
 
 ## Implemented and Working
 

@@ -4,6 +4,36 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ---
 
+## 2026-04-28
+
+### Wartetag — keine Code-Änderungen
+
+Keine Commits, keine Algorithmus-Änderungen. Alle vier laufenden Skripte weiter beobachtet.
+
+**Experiment-Runner `paper1_phaseA_v1`**
+
+Fortschritt von 234 → 242/300 Runs. Ein weiterer Lorenz-3D-Run hängt:
+
+- Run `54_evogrow_v1_seed7` (System 54: Lorenz periodic, EvoGrow v1, Seed 7)
+- Gestartet: 2026-04-28T07:46 — läuft seit >24 Stunden
+- Ursache: Run wurde mit Git-Hash `04f458a7` generiert, also **vor** der BFGS-Timeout-Implementierung (`59d6c16` vom 27.04.)
+- Verhalten identisch zur `profile_init.jl`-Situation: kein Wall-Clock-Limit, BFGS kann unbegrenzt laufen
+
+**Benchmark `benchmark_evogrow.jl`**
+
+Von ~93 auf ~128 Runs (~43% von 300). Laut Schätzung noch 1–2 Tage Restlaufzeit.
+
+**`profile_init.jl`**
+
+Weiterhin hängend auf Level 11, Stage 2, Lorenz 3D, Seed 42. Kein Handlungsbedarf — Daten sind bereits vorhanden.
+
+### Erkenntnisse
+
+- Der neue BFGS-Timeout greift nicht rückwirkend: Runs, die mit altem Config-Hash gestartet wurden, laufen weiterhin unbegrenzt.
+- Nächste Aktion nach Abschluss der laufenden Runs: Aggregation `paper1_phaseA_v1`, Analyse `run_registry.csv`, Planung Neustart `profile_init.jl` mit Timeout.
+
+---
+
 ## 2026-04-27
 
 ### CLAUDE.md — Cross-Check und Reproducibility Protocol
