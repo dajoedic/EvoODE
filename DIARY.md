@@ -5,6 +5,7 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 ---
 
 ## 2026-04-29
+<!-- Commits: 756b512 (status.py Codex spec), edf0678 (DIARY cleanup) -->
 
 ### `analysis/status.py` — Study Status Checker (Codex-Task)
 
@@ -32,6 +33,7 @@ Ziel: Skript, das aus SCRIPTS.md alle bekannten Scripts extrahiert und prüft, w
 ---
 
 ## 2026-04-28
+<!-- Commits: 57c4ff3 (CLAUDE.md + DIARY update) -->
 
 ### Experiment-Runner: zweiter Lorenz-3D-Run hängt
 
@@ -46,6 +48,7 @@ Benchmark `benchmark_evogrow.jl`: ~93 → ~128/300 Runs (~43%).
 ---
 
 ## 2026-04-27
+<!-- Commits: 59d6c16 (BFGS time_limit), 844bbe4 (Paper-1-Protokoll + CLAUDE.md) -->
 
 ### BFGS-Timeout implementiert (`src/optimize/bfgs.jl`)
 
@@ -86,6 +89,7 @@ Dabei 5 Diskrepanzen zwischen Dokumentation und Codebasis gefunden und behoben:
 ---
 
 ## 2026-04-26
+<!-- Commits: 1f9c643 (remove odeformer/results), 6eab0cf–ea3cc44 (analysis/ skeleton + utils), 053d717 (conventions + housekeeping), 9d25f44 (slug standardization), 035e354 (CLAUDE.md structure), 8f4aa6c (DIARY update) -->
 
 ### Repository-Housekeeping
 
@@ -129,6 +133,7 @@ Grund: über Nacht laufende Skripte erzeugen sonst Logs ohne Datumszuordnung.
 ---
 
 ## 2026-04-23
+<!-- Commits: d27b697 (Bug-Fixes evogrow_v1 basis + log_exception), c4fad8a (experiment infrastructure + pretuning), f30af7c (generalization_study.jl), e47c3a9 (DIARY update) -->
 
 ### Bugs gefunden und gefixt
 
@@ -163,6 +168,7 @@ Bisher abgeschlossen: System 2 (Population growth) und System 3 (Logistic growth
 ---
 
 ## 2026-04-22
+<!-- Commits: c4fad8a (pretuning + experiment infrastructure + debug scripts) -->
 
 ### Pretuning (OLS Warm-Start)
 
@@ -189,6 +195,7 @@ Bisher abgeschlossen: System 2 (Population growth) und System 3 (Logistic growth
 ---
 
 ## 2026-04-21
+<!-- Commits: 224714d (EvoGrow v2.2 + benchmark matrix) -->
 
 ### EvoGrow v2.2 (stage_local)
 
@@ -200,6 +207,7 @@ Bisher abgeschlossen: System 2 (Population growth) und System 3 (Logistic growth
 ---
 
 ## 2026-04-20
+<!-- Commits: 84f94e8 (core stabilization), 4d8bd2e (housekeeping + docstrings), f5e1d9c (benchmark infrastructure), a811927 (dead file cleanup) -->
 
 ### Projekt-Fundament
 
