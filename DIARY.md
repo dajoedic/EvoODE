@@ -5,9 +5,9 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 ---
 
 ## 2026-04-29
-<!-- Commits: 756b512 (status.py Codex spec), edf0678 (DIARY cleanup) -->
 
 ### `analysis/status.py` — Study Status Checker (Codex-Task)
+`756b512`
 
 Ziel: Skript, das aus SCRIPTS.md alle bekannten Scripts extrahiert und prüft, welche davon gerade laufen.
 
@@ -33,9 +33,9 @@ Ziel: Skript, das aus SCRIPTS.md alle bekannten Scripts extrahiert und prüft, w
 ---
 
 ## 2026-04-28
-<!-- Commits: 57c4ff3 (CLAUDE.md + DIARY update) -->
 
 ### Experiment-Runner: zweiter Lorenz-3D-Run hängt
+`57c4ff3`
 
 Run `54_evogrow_v1_seed7` (Lorenz periodic, EvoGrow v1, Seed 7) läuft seit 2026-04-28T07:46 ohne Fortschritt.
 Ursache: Run wurde mit Git-Hash `04f458a7` generiert — **vor** der BFGS-Timeout-Implementierung.
@@ -48,9 +48,9 @@ Benchmark `benchmark_evogrow.jl`: ~93 → ~128/300 Runs (~43%).
 ---
 
 ## 2026-04-27
-<!-- Commits: 59d6c16 (BFGS time_limit), 844bbe4 (Paper-1-Protokoll + CLAUDE.md) -->
 
 ### BFGS-Timeout implementiert (`src/optimize/bfgs.jl`)
+`59d6c16`
 
 **Motivation**: `profile_init.jl` hängt seit 48+ Stunden auf einem einzelnen BFGS-Call (Lorenz 3D, Stage 2). `maxiters` begrenzt nur Iterationen, nicht Wall-Clock-Zeit.
 
@@ -63,6 +63,7 @@ Benchmark `benchmark_evogrow.jl`: ~93 → ~128/300 Runs (~43%).
 **Parameterwahl**: 300s ist ~100× der medianen per-Call-Zeit (ca. 2–3s), greift bei normalen Runs nie.
 
 ### Paper 1 Reproducibility Protocol dokumentiert
+`844bbe4`
 
 Vollständige Dokumentation der Paper-1-Konfiguration direkt aus dem Code abgeleitet:
 - alle 6 Varianten mit Slug, Basis, Progressions- und Usage-Mode
@@ -89,14 +90,15 @@ Dabei 5 Diskrepanzen zwischen Dokumentation und Codebasis gefunden und behoben:
 ---
 
 ## 2026-04-26
-<!-- Commits: 1f9c643 (remove odeformer/results), 6eab0cf–ea3cc44 (analysis/ skeleton + utils), 053d717 (conventions + housekeeping), 9d25f44 (slug standardization), 035e354 (CLAUDE.md structure), 8f4aa6c (DIARY update) -->
 
 ### Repository-Housekeeping
+`1f9c643`
 
 - `benchmarks/odeformer/results/` entfernt: alte Ergebnisdateien ohne reproduzierbaren Kontext
 - `.gitignore` um `benchmarks/odeformer/results/` ergänzt
 
 ### Analyse-Pipeline für Paper 1 angelegt
+`6eab0cf`, `ea3cc44`, `053d717`, `c1f51ef`, `0f8e677`, `8c1152d`, `d983abf`
 
 - `analysis/` als dedizierter Bereich für Python-Auswertung angelegt
 - `analysis/CONVENTIONS.md`: Architektur- und Regelwerk für die Python-Analyse
@@ -107,6 +109,7 @@ Dabei 5 Diskrepanzen zwischen Dokumentation und Codebasis gefunden und behoben:
 - `analysis/scripts/plot/table_main_results.py`: LaTeX-Tabelle Main Results
 
 ### Paper-1-Protokoll eingefroren (`docs/paper1_study_protocol.md`)
+`2e65d57`, `9ca633a`, `c810703`
 
 Core Goal: Paper 1 untersucht staged growth als Mechanismus zur kontrollierten Komplexitätssteigerung — nicht "bestes ODE-Discovery-System".
 
@@ -122,10 +125,12 @@ Evidenzregeln:
 - No post-hoc cherry-picking; keine neuen Runs nach Ergebnisinspektion
 
 ### Variant-Slug vereinheitlicht
+`9d25f44`
 
 `evogrow_v2_2_stage_local` überall standardisiert: `benchmark_evogrow.jl`, Analyse-Skripte, `style.py`, Dokumentation.
 
 ### Logging: Datum im Timestamp ergänzt
+`035e354`
 
 `src/utils/logging.jl`: Timestamp-Format von `HH:MM:SS` auf `yyyy-mm-dd HH:MM:SS` erweitert.
 Grund: über Nacht laufende Skripte erzeugen sonst Logs ohne Datumszuordnung.
@@ -133,9 +138,9 @@ Grund: über Nacht laufende Skripte erzeugen sonst Logs ohne Datumszuordnung.
 ---
 
 ## 2026-04-23
-<!-- Commits: d27b697 (Bug-Fixes evogrow_v1 basis + log_exception), c4fad8a (experiment infrastructure + pretuning), f30af7c (generalization_study.jl), e47c3a9 (DIARY update) -->
 
 ### Bugs gefunden und gefixt
+`d27b697`
 
 **Bug 1: `PolynomialBasis` fehlte kubischer Term für System 11**
 - `evogrow_v1` nutzte `PolynomialBasis` (nur bis Grad 2), System 11 (Critical slowing down) erwartet `u1^3`
@@ -146,6 +151,7 @@ Grund: über Nacht laufende Skripte erzeugen sonst Logs ohne Datumszuordnung.
 - Fix: `string(typeof(err))` in `src/utils/logging.jl`
 
 ### Generalisierungsstudie geplant und implementiert (`generalization_study.jl`)
+`f30af7c`
 
 Frage: Wenn EvoODE auf Parametersatz A die korrekte Struktur findet — passt diese Struktur nach reinem Parameter-Refit auch auf ungesehene Parametersätze B–E derselben ODE-Familie?
 
@@ -168,15 +174,16 @@ Bisher abgeschlossen: System 2 (Population growth) und System 3 (Logistic growth
 ---
 
 ## 2026-04-22
-<!-- Commits: c4fad8a (pretuning + experiment infrastructure + debug scripts) -->
 
 ### Pretuning (OLS Warm-Start)
+`c4fad8a`
 
 - `src/optimize/pretune.jl`: Ableitung per finite Differenzen, Design-Matrix aus Basistermen, OLS-Lösung als BFGS-Startwert
 - `use_pretuning::Bool`-Flag in `EvoGrow`
 - `level_log` um `elapsed_s`-Feld erweitert
 
 ### Experiment-Infrastruktur (WP-E1 bis WP-E3)
+`c4fad8a`
 
 - `experiments/generate_manifest.jl`: erzeugt Experiment-Verzeichnis, `manifest.json`, alle per-Run `config.json` + `status.json`
 - `experiments/run_experiment.jl`: sequentieller Runner mit robustem Fehlerhandling, atomaren Writes, restart-fähig
@@ -184,6 +191,7 @@ Bisher abgeschlossen: System 2 (Population growth) und System 3 (Logistic growth
 - Per-Run-Dateiprotokoll: `config.json` (immutable), `status.json` (non-atomic), `result.json` + `metrics.json` (atomar via tmp→rename)
 
 ### Debug- und Profiling-Skripte
+`c4fad8a`
 
 - `debug_single.jl`: Einzelrun auf Lotka-Volterra mit verbose Logging und PNG-Output
 - `profile_init.jl`: Vergleich random vs. pretune Initialisierung auf Lotka-Volterra + Lorenz, 3 Seeds
@@ -195,9 +203,9 @@ Bisher abgeschlossen: System 2 (Population growth) und System 3 (Logistic growth
 ---
 
 ## 2026-04-21
-<!-- Commits: 224714d (EvoGrow v2.2 + benchmark matrix) -->
 
 ### EvoGrow v2.2 (stage_local)
+`224714d`
 
 - `StageProgressionPolicy` mit Modus `:stage_local` und `min_levels_per_stage`
 - `StageUsagePolicy` mit Modi `:hard`, `:soft`, `:passive` und `new_term_bias_prob`
@@ -207,9 +215,9 @@ Bisher abgeschlossen: System 2 (Population growth) und System 3 (Logistic growth
 ---
 
 ## 2026-04-20
-<!-- Commits: 84f94e8 (core stabilization), 4d8bd2e (housekeeping + docstrings), f5e1d9c (benchmark infrastructure), a811927 (dead file cleanup) -->
 
 ### Projekt-Fundament
+`84f94e8`, `4d8bd2e`, `f5e1d9c`, `a811927`
 
 - Core stabilisiert: EvoGrow und GP laufen sauber mit konsistentem Loss (`discover()` end-to-end)
 - Benchmark-Infrastruktur angelegt: 10-System-Suite, erste Varianten
