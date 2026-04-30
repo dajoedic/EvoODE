@@ -7,7 +7,7 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 ## 2026-04-30
 
 ### `analysis/status.py` — Logdatei-Auswertung (WP4)
-`<!-- hash folgt -->`
+`90e70f5`
 
 `status.py` um Auswertung der neuen `run.log`-Dateien (aus WP2) erweitert:
 
