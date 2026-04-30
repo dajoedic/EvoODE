@@ -467,7 +467,7 @@ recovery results across all seeds, see Figure 1."
 
 ## 7. Generalization Study Role
 
-The generalization study (`generalization_study.jl`) is **auxiliary evidence**.
+The generalization study (`studies/generalization/generalization_study.jl`) is **auxiliary evidence**.
 It is not part of the main contribution.
 
 ### What it is allowed to claim
@@ -634,7 +634,7 @@ Inspect outputs. Verify against the aggregate CSV.
 No manual editing of figures or tables.
 
 **Step 6 — Generalization study analysis**
-Run `generalization_study.jl` if not already complete.
+Run `studies/generalization/generalization_study.jl` if not already complete.
 Evaluate refit vs fresh results for valid runs with exact_support_match = true.
 Write the auxiliary discussion paragraph.
 

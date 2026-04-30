@@ -114,9 +114,8 @@ EvoODE/
 |-- benchmarks/                            (exploratory, direct-execution scripts — see note below)
 |   |-- benchmark_evogrow.jl
 |   |-- run_odebench.jl
-|   |-- odeformer/                         (to be moved to benchmarks/data/ — WP-R1)
+|   |-- data/
 |   |   `-- strogatz_extended.json
-|   `-- results/                           (gitignored; to be replaced by outputs/ — WP-R3)
 |-- experiments/                           (formal, manifest-based Paper 1 runs — see note below)
 |   |-- generate_manifest.jl
 |   |-- run_experiment.jl
@@ -127,6 +126,7 @@ EvoODE/
 |-- analysis/                              (Python analysis pipeline — see analysis/CONVENTIONS.md)
 |   |-- CONVENTIONS.md                     (pipeline rules, naming, anti-patterns)
 |   |-- requirements.txt
+|   |-- status.py                         (study/process status checker)
 |   |-- configs/
 |   |   `-- paper1_phaseA_v1.json         (experiment config driving all analysis scripts)
 |   |-- scripts/
@@ -145,16 +145,23 @@ EvoODE/
 |   |-- tables/                           (gitignored; generated LaTeX + CSV)
 |   |-- notebooks/                        (gitignored; exploratory)
 |   `-- paper1/                           (frozen submission artifacts)
+|-- outputs/                               (gitignored; unified generated-output root)
+|   |-- benchmarks/
+|   `-- studies/
+|       |-- debug/
+|       |-- generalization/
+|       `-- profiling/
+|-- studies/                               (direct-execution study scripts)
+|   |-- debug/
+|   |   `-- debug_single.jl
+|   |-- generalization/
+|   |   `-- generalization_study.jl
+|   `-- profiling/
+|       `-- profile_init.jl
 |-- codex/                                (task management for AI-assisted development)
 |   |-- CURRENT_TASK.md                   (active Julia/algorithm task)
-|   |-- CURRENT_TASK_ANALYSIS.md          (active Python analysis task)
-|   `-- PENDING_REPO_MIGRATION.md         (deferred WP-R1/R2/R3; blocked until runs finish)
-|-- debug_single.jl                       (to be moved to studies/debug/ — WP-R2)
-|-- profile_init.jl                       (to be moved to studies/profiling/ — WP-R2)
-`-- generalization_study.jl               (to be moved to studies/generalization/ — WP-R2)
+|   `-- CURRENT_TASK_ANALYSIS.md          (active Python analysis task)
 ```
-
-Note: `studies/` does not exist yet. It will be created by WP-R2 (see `codex/PENDING_REPO_MIGRATION.md`).
 
 ### benchmarks/ vs experiments/
 
@@ -166,7 +173,7 @@ These two directories serve distinct purposes and must not be conflated.
 | Purpose | exploratory, qualitative | formal, paper-grade |
 | Reproducibility | best-effort | atomic writes, full status tracking |
 | Failure handling | per-run catch, logs to stdout | per-run status.json, metrics.json |
-| Output | `benchmarks/results/` (gitignored) | `experiments/<id>/runs/` (per-run folders) |
+| Output | `outputs/benchmarks/` (gitignored) | `experiments/<id>/runs/` (per-run folders) |
 
 ### codex/ convention
 
@@ -491,7 +498,7 @@ julia experiments/aggregate.jl <experiment_id>
 ### Main dataset
 
 Location:
-`benchmarks/odeformer/strogatz_extended.json`
+`benchmarks/data/strogatz_extended.json`
 
 Source:
 extended Strogatz benchmark used in the ODEFormer context.
@@ -669,8 +676,8 @@ Status: NOT STARTED
 |--------|--------|--------|
 | `experiments/run_experiment.jl paper1_phaseA_v1` | 242/300, 1 stuck | Staged growth (v2.x) is more efficient than flat growth (v1) and GP — measured by exact support recovery, stage overshoot, and wasted levels across 10 systems × 6 variants × 5 seeds. |
 | `benchmarks/benchmark_evogrow.jl` | ~128/300, läuft | Exploratory cross-system benchmark: can EvoGrow reliably find correct structures across all 10 benchmark systems, and how do the variants compare qualitatively? |
-| `profile_init.jl` | **hängt** (Daten vorhanden) | OLS warm-start (pretuning) leads to faster convergence and lower final loss than random initialization, across seeds and systems. |
-| `generalization_study.jl` | **fertig** (24.04.) | A structurally correct discovery generalizes across parameter regimes: fixing the discovered structure and refitting only parameters on unseen trajectories of the same ODE family yields low loss. |
+| `studies/profiling/profile_init.jl` | **hängt** (Daten vorhanden) | OLS warm-start (pretuning) leads to faster convergence and lower final loss than random initialization, across seeds and systems. |
+| `studies/generalization/generalization_study.jl` | **fertig** (24.04.) | A structurally correct discovery generalizes across parameter regimes: fixing the discovered structure and refitting only parameters on unseen trajectories of the same ODE family yields low loss. |
 
 ## Current Priorities
 
@@ -793,7 +800,7 @@ Notes:
 
 ### 3. Benchmark Dataset
 
-The benchmark consists of exactly 10 systems drawn from `benchmarks/odeformer/strogatz_extended.json`.
+The benchmark consists of exactly 10 systems drawn from `benchmarks/data/strogatz_extended.json`.
 
 #### Exact systems (8 systems)
 
@@ -967,11 +974,11 @@ Per-run results are written to `summary.csv` incrementally (flush after each run
 
 | Artifact | Location | Description |
 |----------|----------|-------------|
-| Per-run CSV | `benchmarks/results/summary.csv` | One row per (variant, system, seed). Semicolon-separated. |
-| Aggregate CSV | `benchmarks/results/summary_aggregate.csv` | One row per (variant, system). Mean/std over seeds. Semicolon-separated. |
-| Per-run trajectory plot | `benchmarks/results/<slug>/<slug>_<id>_<name>.png` | Predicted vs ground-truth trajectories. |
-| Per-run convergence plot | `benchmarks/results/<slug>/<slug>_<id>_<name>_history.png` | Best objective per level (EvoGrow only). |
-| Per-run prediction CSV | `benchmarks/results/<slug>/<slug>_<id>_<name>.csv` | Time, ground-truth, prediction columns. |
+| Per-run CSV | `outputs/benchmarks/summary.csv` | One row per (variant, system, seed). Semicolon-separated. |
+| Aggregate CSV | `outputs/benchmarks/summary_aggregate.csv` | One row per (variant, system). Mean/std over seeds. Semicolon-separated. |
+| Per-run trajectory plot | `outputs/benchmarks/<slug>/<slug>_<id>_<name>.png` | Predicted vs ground-truth trajectories. |
+| Per-run convergence plot | `outputs/benchmarks/<slug>/<slug>_<id>_<name>_history.png` | Best objective per level (EvoGrow only). |
+| Per-run prediction CSV | `outputs/benchmarks/<slug>/<slug>_<id>_<name>.csv` | Time, ground-truth, prediction columns. |
 
 `summary.csv` and `summary_aggregate.csv` are the primary analysis artifacts.
 All other files are diagnostic.

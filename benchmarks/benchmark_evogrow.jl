@@ -39,7 +39,7 @@ const STAGE_MIN_LEVELS = 2
 const SOFT_BIAS = 0.75
 const SEEDS = QUICK ? [42, 123] : [42, 123, 7, 99, 17]
 
-const OUT_DIR = joinpath(@__DIR__, "results")
+const OUT_DIR = joinpath(dirname(@__DIR__), "outputs", "benchmarks")
 mkpath(OUT_DIR)
 
 # ============================================================
@@ -563,6 +563,7 @@ function run_one(sys::BenchmarkSystem, variant::BenchmarkVariant; seed::Int = SE
         variant_slug = variant.slug,
         method_family = variant.method_family,
         id = sys.id,
+        seed = seed,
         name = sys.name,
         dim = sys.dim,
         representability = assessment.representability,
@@ -625,6 +626,7 @@ function _summary_csv_header_line()
         "variant_slug",
         "method_family",
         "id",
+        "seed",
         "name",
         "dim",
         "representability",
@@ -659,6 +661,7 @@ function _summary_csv_row_line(r)
         "\"$(r.variant_slug)\"",
         string(r.method_family),
         string(r.id),
+        string(r.seed),
         "\"$(r.name)\"",
         string(r.dim),
         string(r.representability),
@@ -697,6 +700,170 @@ function write_summary_csv(records)
         end
     end
     return summary_file
+end
+
+function parse_csv_fields(line::AbstractString)
+    fields = String[]
+    buf = IOBuffer()
+    in_quotes = false
+    field_was_quoted = false
+    i = firstindex(line)
+
+    while i <= lastindex(line)
+        c = line[i]
+        if in_quotes
+            if c == '"'
+                next_i = nextind(line, i)
+                if next_i <= lastindex(line) && line[next_i] == '"'
+                    write(buf, '"')
+                    i = next_i
+                else
+                    in_quotes = false
+                end
+            else
+                write(buf, c)
+            end
+        else
+            if c == ';'
+                push!(fields, String(take!(buf)))
+                field_was_quoted = false
+            elseif c == '"' && position(buf) == 0 && !field_was_quoted
+                in_quotes = true
+                field_was_quoted = true
+            else
+                write(buf, c)
+            end
+        end
+        i = nextind(line, i)
+    end
+
+    in_quotes && error("unterminated quoted CSV field")
+    push!(fields, String(take!(buf)))
+    return fields
+end
+
+function _parse_bool_field(s::AbstractString)
+    return lowercase(strip(s)) == "true"
+end
+
+function _legacy_fields_with_seed(fields::Vector{String}, row_counts::Dict{Tuple{String,Int},Int})
+    length(fields) != 29 && return fields
+    key = (fields[2], parse(Int, fields[4]))
+    idx = get(row_counts, key, 0) + 1
+    row_counts[key] = idx
+    inferred_seed = SEEDS[((idx - 1) % length(SEEDS)) + 1]
+    return vcat(fields[1:4], [string(inferred_seed)], fields[5:end])
+end
+
+function _parse_record_fields(fields::Vector{String})
+    length(fields) < 30 && error("expected 30 columns, got $(length(fields))")
+    return (
+        variant = fields[1],
+        variant_slug = fields[2],
+        method_family = Symbol(fields[3]),
+        id = parse(Int, fields[4]),
+        seed = parse(Int, fields[5]),
+        name = fields[6],
+        dim = parse(Int, fields[7]),
+        representability = Symbol(fields[8]),
+        expected_stage = parse(Int, fields[9]),
+        final_stage = parse(Int, fields[10]),
+        stage_overshoot = parse(Int, fields[11]),
+        exact_support_match = _parse_bool_field(fields[12]),
+        reached_expected_stage = _parse_bool_field(fields[13]),
+        used_expected_stage_terms = _parse_bool_field(fields[14]),
+        used_target_terms = _parse_bool_field(fields[15]),
+        recovery_label = Symbol(fields[16]),
+        loss = parse(Float64, fields[17]),
+        objective = parse(Float64, fields[18]),
+        n_params = parse(Int, fields[19]),
+        elapsed_s = parse(Float64, fields[20]),
+        total_invalid_evals = parse(Int, fields[21]),
+        total_loss_evals = parse(Int, fields[22]),
+        stage_budget_string = fields[23],
+        wasted_levels = parse(Int, fields[24]),
+        expected_stage_first_use = parse(Int, fields[25]),
+        termination_reason = Symbol(fields[26]),
+        discovered_structure = fields[27],
+        plot_file = fields[28],
+        history_file = fields[29],
+        csv_file = fields[30]
+    )
+end
+
+function ensure_summary_csv_has_seed!(path::AbstractString)
+    isfile(path) || return
+    lines = collect(eachline(path))
+    isempty(lines) && return
+
+    header = parse_csv_fields(lines[1])
+    "seed" in header && return
+
+    row_counts = Dict{Tuple{String,Int},Int}()
+    tmp_path = path * ".tmp"
+    open(tmp_path, "w") do io
+        println(io, _summary_csv_header_line())
+        for (line_no, line) in enumerate(lines[2:end])
+            isempty(strip(line)) && continue
+            try
+                fields = _legacy_fields_with_seed(parse_csv_fields(line), row_counts)
+                length(fields) == 30 || error("expected 30 columns after seed inference, got $(length(fields))")
+                println(io, join([_summary_csv_field_for_rewrite(f, i) for (i, f) in enumerate(fields)], ";"))
+            catch e
+                @printf("WARN: skipping malformed legacy summary row %d in %s: %s\n",
+                        line_no + 1, path, sprint(showerror, e))
+            end
+        end
+    end
+    mv(tmp_path, path; force = true)
+    @printf("Migrated legacy summary.csv to include seed column: %s\n", path)
+end
+
+function _summary_csv_field_for_rewrite(value::String, idx::Int)
+    quote_idxs = Set([1, 2, 6, 16, 23, 26, 27, 28, 29, 30])
+    if idx in quote_idxs
+        return "\"" * replace(value, "\"" => "\"\"") * "\""
+    end
+    return value
+end
+
+function load_done_set(path::AbstractString)
+    done = Set{Tuple{String,Int,Int}}()
+    isfile(path) || return done
+
+    row_counts = Dict{Tuple{String,Int},Int}()
+    for (line_no, line) in enumerate(eachline(path))
+        line_no == 1 && continue
+        isempty(strip(line)) && continue
+        try
+            fields = _legacy_fields_with_seed(parse_csv_fields(line), row_counts)
+            length(fields) < 5 && error("too few columns")
+            push!(done, (fields[2], parse(Int, fields[4]), parse(Int, fields[5])))
+        catch e
+            @printf("WARN: skipping malformed summary row %d in %s: %s\n",
+                    line_no, path, sprint(showerror, e))
+        end
+    end
+    return done
+end
+
+function load_records_from_csv(path::AbstractString)
+    records = NamedTuple[]
+    isfile(path) || return records
+
+    row_counts = Dict{Tuple{String,Int},Int}()
+    for (line_no, line) in enumerate(eachline(path))
+        line_no == 1 && continue
+        isempty(strip(line)) && continue
+        try
+            fields = _legacy_fields_with_seed(parse_csv_fields(line), row_counts)
+            push!(records, _parse_record_fields(fields))
+        catch e
+            @printf("WARN: skipping malformed summary row %d in %s: %s\n",
+                    line_no, path, sprint(showerror, e))
+        end
+    end
+    return records
 end
 
 function aggregate_records(records)
@@ -817,13 +984,28 @@ end
 
 records = NamedTuple[]
 summary_file = joinpath(OUT_DIR, "summary.csv")
-summary_io = open(summary_file, "w")
-println(summary_io, _summary_csv_header_line())
-flush(summary_io)
+
+if isfile(summary_file)
+    ensure_summary_csv_has_seed!(summary_file)
+    done_set = load_done_set(summary_file)
+    summary_io = open(summary_file, "a")
+    @printf("Resuming: %d runs already completed, appending to %s\n",
+            length(done_set), summary_file)
+else
+    done_set = Set{Tuple{String,Int,Int}}()
+    summary_io = open(summary_file, "w")
+    println(summary_io, _summary_csv_header_line())
+    flush(summary_io)
+end
 
 for variant in VARIANTS
     for sys in BENCHMARKS
         for seed in SEEDS
+            if (variant.slug, sys.id, seed) in done_set
+                @printf("  SKIP  variant=%-30s  system=%-3d  seed=%d\n",
+                        variant.slug, sys.id, seed)
+                continue
+            end
             try
                 record = run_one(sys, variant; seed = seed)
                 push!(records, record)
@@ -837,6 +1019,7 @@ for variant in VARIANTS
                     variant_slug = variant.slug,
                     method_family = variant.method_family,
                     id = sys.id,
+                    seed = seed,
                     name = sys.name,
                     dim = sys.dim,
                     representability = sys.representability,
@@ -872,7 +1055,8 @@ for variant in VARIANTS
 end
 close(summary_io)
 
-agg_records  = aggregate_records(records)
+all_records  = load_records_from_csv(summary_file)
+agg_records  = aggregate_records(all_records)
 print_aggregate_summary(agg_records)
 agg_file     = write_aggregate_csv(agg_records)
 @printf("\nIndividual runs -> %s\n", joinpath(OUT_DIR, "summary.csv"))

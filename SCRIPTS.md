@@ -87,16 +87,16 @@ Total runs in manifest: 300
 
 ## Debugging and Profiling
 
-### `debug_single.jl`
+### `studies/debug/debug_single.jl`
 
 Runs a single EvoGrow discovery on Lotka-Volterra competition with verbose logging.
 Use this to inspect algorithm behavior on a known system.
 
 ```
-julia debug_single.jl
+julia studies/debug/debug_single.jl
 ```
 
-Output: `debug_results/debug_single/debug_lotka.log`, `debug_results/debug_single/debug_lotka.png`
+Output: `outputs/studies/debug/debug_lotka.log`, `outputs/studies/debug/debug_lotka.png`
 
 Key constants at top of file:
 
@@ -111,37 +111,37 @@ Key constants at top of file:
 
 ---
 
-### `profile_init.jl`
+### `studies/profiling/profile_init.jl`
 
 Compares random initialization vs. pretuned (OLS warm-start) initialization
 on Lotka-Volterra and Lorenz, across 3 seeds.
 
 ```
-julia profile_init.jl
+julia studies/profiling/profile_init.jl
 ```
 
 Output:
-- `debug_results/profile_init/profile_init_summary.csv` — one row per run
-- `debug_results/profile_init/profile_init_levels.csv` — one row per level per run
-- `debug_results/profile_init/profile_<system>_seed<N>_<mode>.log` — one log per run
+- `outputs/studies/profiling/profile_init_summary.csv` — one row per run
+- `outputs/studies/profiling/profile_init_levels.csv` — one row per level per run
+- `outputs/studies/profiling/profile_<system>_seed<N>_<mode>.log` — one log per run
 
 ---
 
-### `generalization_study.jl`
+### `studies/generalization/generalization_study.jl`
 
 Tests whether a structure discovered on one parameter set generalizes to unseen parameter sets
 of the same ODE family after parameter refit only.
 Covers 3 systems (Logistic growth, Lotka-Volterra, SIR), 2 variants, 3 seeds.
 
 ```
-julia generalization_study.jl
+julia studies/generalization/generalization_study.jl
 ```
 
 Output:
-- `debug_results/generalization_study/generalization_summary.csv` — one row per (system, variant, seed)
-- `debug_results/generalization_study/generalization_detail.csv` — one row per (system, variant, seed, test param set)
-- `debug_results/generalization_study/gen_<system>_<variant>_seed<N>_train.log` — discovery log per training run
-- `debug_results/generalization_study/gen_<system>_<variant>_seed<N>_test<M>.log` — discovery log per fresh baseline run
+- `outputs/studies/generalization/generalization_summary.csv` — one row per (system, variant, seed)
+- `outputs/studies/generalization/generalization_detail.csv` — one row per (system, variant, seed, test param set)
+- `outputs/studies/generalization/gen_<system>_<variant>_seed<N>_train.log` — discovery log per training run
+- `outputs/studies/generalization/gen_<system>_<variant>_seed<N>_test<M>.log` — discovery log per fresh baseline run
 
 ---
 
@@ -166,7 +166,7 @@ Key constants:
 | `BFGS_MAXITERS` | 200 | 50 |
 | `SEEDS` | 5 seeds | 2 seeds |
 
-Output: `benchmarks/results/summary.csv`, `benchmarks/results/summary_aggregate.csv`
+Output: `outputs/benchmarks/summary.csv`, `outputs/benchmarks/summary_aggregate.csv`
 
 ---
 
@@ -199,9 +199,9 @@ julia experiments/aggregate.jl <experiment_id>
 ### Debug a specific system
 
 ```
-# Edit system/settings in debug_single.jl
-julia debug_single.jl
-# Check debug_results/debug_lotka.log
+# Edit system/settings in studies/debug/debug_single.jl
+julia studies/debug/debug_single.jl
+# Check outputs/studies/debug/debug_lotka.log
 ```
 
 ### Quick algorithm sanity check

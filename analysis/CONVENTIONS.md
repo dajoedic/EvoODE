@@ -75,7 +75,7 @@ Script → produces → Figure / Table
 Every figure must be fully reconstructable from:
 
 1. The generating script (in `scripts/`)
-2. The raw data (in `experiments/<experiment_id>/runs/` or `benchmarks/results/`)
+2. The raw data (in `experiments/<experiment_id>/runs/` or `outputs/benchmarks/`)
 3. The configuration file (in `configs/<experiment_id>.json`)
 4. `requirements.txt` (pinned versions)
 

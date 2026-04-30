@@ -6,7 +6,7 @@
 # - optionally saves plots + per-case CSV with t, X, Xhat
 
 using Pkg
-Pkg.activate(@__DIR__)
+Pkg.activate(joinpath(@__DIR__, ".."))
 
 using EvoODE
 using Random
@@ -27,8 +27,9 @@ end
 # -----------------------------
 # Config
 # -----------------------------
-data_path = joinpath(@__DIR__, "benchmarks", "odeformer", "strogatz_extended.json")
-out_path  = joinpath(@__DIR__, "benchmarks", "odeformer", "results", "evoode_results.csv")
+data_path = joinpath(@__DIR__, "data", "strogatz_extended.json")
+out_root  = joinpath(dirname(@__DIR__), "outputs", "benchmarks", "odebench")
+out_path  = joinpath(out_root, "evoode_results.csv")
 
 # Discovery config
 structure = EvoGrow(pop_size=20, n_levels=5, children_per_parent=2, max_terms_per_eq=5, λ=1e-3)
@@ -207,8 +208,8 @@ for sys in systems
     case_csv = ""
 
     if save_plots || save_case_csv
-        mkpath(joinpath(@__DIR__, "benchmarks", "odeformer", "results", "sys_$(sys.id)"))
-        base = joinpath(@__DIR__, "benchmarks", "odeformer", "results", "sys_$(sys.id)", "fit_sys$(sys.id)")
+        mkpath(joinpath(out_root, "sys_$(sys.id)"))
+        base = joinpath(out_root, "sys_$(sys.id)", "fit_sys$(sys.id)")
         if save_plots
             plot_file = base * ".png"
         end

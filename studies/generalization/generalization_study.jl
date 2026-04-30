@@ -1,5 +1,5 @@
 import Pkg
-Pkg.activate(@__DIR__)
+Pkg.activate(dirname(dirname(@__DIR__)))
 
 using DifferentialEquations
 using Optimization
@@ -7,7 +7,7 @@ using OptimizationOptimJL
 using Printf
 using Statistics
 
-include(joinpath(@__DIR__, "src", "EvoODE.jl"))
+include(joinpath(dirname(dirname(@__DIR__)), "src", "EvoODE.jl"))
 using .EvoODE
 
 # ============================================================
@@ -22,7 +22,7 @@ const BFGS_MAXITERS = 200
 const REFIT_MAXITERS = 500
 const SEEDS = [42, 123, 7]
 const VARIANTS = ["evogrow_v2_2_stage_local", "gp_baseline"]
-const OUT_DIR = joinpath(@__DIR__, "debug_results")
+const OUT_DIR = joinpath(dirname(dirname(@__DIR__)), "outputs", "studies", "generalization")
 
 # ============================================================
 # System families

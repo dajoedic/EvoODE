@@ -1,10 +1,10 @@
 import Pkg
-Pkg.activate(@__DIR__)
+Pkg.activate(dirname(dirname(@__DIR__)))
 
 using DifferentialEquations
 using Printf
 
-include(joinpath(@__DIR__, "src", "EvoODE.jl"))
+include(joinpath(dirname(dirname(@__DIR__)), "src", "EvoODE.jl"))
 using .EvoODE
 
 # ============================================================
@@ -18,7 +18,7 @@ const MAX_TERMS_PER_EQ = 5
 const BFGS_MAXITERS = 100
 const SEEDS = [42, 123, 7]
 const INIT_MODES = [:random, :pretune]
-const OUT_DIR = joinpath(@__DIR__, "debug_results")
+const OUT_DIR = joinpath(dirname(dirname(@__DIR__)), "outputs", "studies", "profiling")
 
 # ============================================================
 # Local system definitions

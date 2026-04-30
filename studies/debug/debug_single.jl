@@ -1,11 +1,11 @@
 import Pkg
-Pkg.activate(@__DIR__)
+Pkg.activate(dirname(dirname(@__DIR__)))
 
 using DifferentialEquations
 using Plots
 using Printf
 
-include(joinpath(@__DIR__, "src", "EvoODE.jl"))
+include(joinpath(dirname(dirname(@__DIR__)), "src", "EvoODE.jl"))
 using .EvoODE
 
 # ============================================================
@@ -83,7 +83,7 @@ options = DiscoveryOptions(
 println("Running single-system debug experiment on Lotka-Volterra competition...")
 println("progression=$(PROGRESSION_MODE) | usage=$(USAGE_MODE) | seed=$(SEED)")
 
-out_dir = joinpath(@__DIR__, "debug_results")
+out_dir = joinpath(dirname(dirname(@__DIR__)), "outputs", "studies", "debug")
 mkpath(out_dir)
 log_file = joinpath(out_dir, "debug_lotka.log")
 set_log_file(log_file)

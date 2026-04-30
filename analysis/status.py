@@ -15,13 +15,15 @@ OUTPUT_PATTERNS = {
     "experiments/run_experiment.jl": ["experiments/*/runs/*/status.json"],
     "experiments/generate_manifest.jl": ["experiments/*/manifest.json"],
     "experiments/aggregate.jl": ["experiments/*/run_registry.csv"],
-    "benchmarks/benchmark_evogrow.jl": ["benchmarks/results/summary.csv"],
-    "benchmarks/run_odebench.jl": ["benchmarks/results/**/*.csv"],
-    "profile_init.jl": ["debug_results/profile_init/profile_init_summary.csv"],
-    "generalization_study.jl": [
-        "debug_results/generalization_study/generalization_summary.csv"
+    "benchmarks/benchmark_evogrow.jl": ["outputs/benchmarks/summary.csv"],
+    "benchmarks/run_odebench.jl": ["outputs/benchmarks/odebench/**/*.csv"],
+    "studies/profiling/profile_init.jl": [
+        "outputs/studies/profiling/profile_init_summary.csv"
     ],
-    "debug_single.jl": ["debug_results/debug_single/debug_lotka.log"],
+    "studies/generalization/generalization_study.jl": [
+        "outputs/studies/generalization/generalization_summary.csv"
+    ],
+    "studies/debug/debug_single.jl": ["outputs/studies/debug/debug_lotka.log"],
 }
 
 PARENT_CMDLINE_NAMES = {"julialauncher.exe", "bash.exe", "sh.exe"}
@@ -418,9 +420,9 @@ def build_progress_info(scripts, output_info, now):
             progress[script] = experiment_progress(now)
         elif script == "benchmarks/benchmark_evogrow.jl":
             progress[script] = csv_progress(path, 300)
-        elif script == "profile_init.jl":
+        elif script == "studies/profiling/profile_init.jl":
             progress[script] = csv_progress(path, 18)
-        elif script == "generalization_study.jl":
+        elif script == "studies/generalization/generalization_study.jl":
             progress[script] = csv_progress(path, 18)
     return progress
 
