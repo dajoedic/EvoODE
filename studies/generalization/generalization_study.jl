@@ -4,6 +4,7 @@ Pkg.activate(dirname(dirname(@__DIR__)))
 using DifferentialEquations
 using Optimization
 using OptimizationOptimJL
+using Dates
 using Printf
 using Statistics
 
@@ -324,6 +325,22 @@ end
 # ============================================================
 
 mkpath(OUT_DIR)
+_log_io = open(joinpath(OUT_DIR, "run.log"), "a")
+
+function log_println(msg::String)
+    println(msg)
+    println(_log_io, msg)
+    flush(_log_io)
+end
+
+macro logf(fmt, args...)
+    return esc(:(log_println(@sprintf($fmt, $(args...)))))
+end
+
+log_println("=== Started at $(Dates.format(now(), "yyyy-mm-dd HH:MM:SS")) ===")
+log_println("=== Generalization Study ===")
+@logf("Systems=%d | Variants=%d | Seeds=%d", length(SYSTEMS), length(VARIANTS), length(SEEDS))
+log_println("Output directory: $OUT_DIR")
 
 summary_rows = Tuple[]
 detail_rows = Tuple[]
@@ -334,6 +351,8 @@ for sys in SYSTEMS
 
     for variant in VARIANTS
         for seed in SEEDS
+            @logf("[%s] variant=%s | seed=%d", sys.name, variant, seed)
+
             train_log = joinpath(OUT_DIR, @sprintf("gen_%s_%s_seed%d_train.log", sys.slug, variant, seed))
             train_result, train_elapsed_s, basis = run_discovery(train_traj, sys, variant, seed, train_log)
 
@@ -420,6 +439,8 @@ for sys in SYSTEMS
                     refit_success_count = refit_success_count
                 )
             )
+
+            log_println("  train_loss=$(train_loss === nothing ? "" : train_loss) | mean_refit_loss=$(mean_refit_loss === nothing ? "" : mean_refit_loss) | mean_fresh_loss=$(mean_fresh_loss === nothing ? "" : mean_fresh_loss) | refit_success=$(refit_success_count)/4")
         end
     end
 end
@@ -453,12 +474,17 @@ detail_path = joinpath(OUT_DIR, "generalization_detail.csv")
 write_csv(summary_path, summary_header, summary_rows)
 write_csv(detail_path, detail_header, detail_rows)
 
-println("=== Generalization Study ===")
+log_println("=== Generalization Study ===")
 for row in report_rows
-    println("System: $(row.system_name)")
-    println("  Variant: $(row.variant) | Seed: $(row.seed)")
-    println("    train_loss:       $(row.train_loss === nothing ? "" : row.train_loss)")
-    println("    mean_refit_loss:  $(row.mean_refit_loss === nothing ? "" : row.mean_refit_loss)")
-    println("    mean_fresh_loss:  $(row.mean_fresh_loss === nothing ? "" : row.mean_fresh_loss)")
-    println("    refit_success:    $(row.refit_success_count)/4")
+    log_println("System: $(row.system_name)")
+    log_println("  Variant: $(row.variant) | Seed: $(row.seed)")
+    log_println("    train_loss:       $(row.train_loss === nothing ? "" : row.train_loss)")
+    log_println("    mean_refit_loss:  $(row.mean_refit_loss === nothing ? "" : row.mean_refit_loss)")
+    log_println("    mean_fresh_loss:  $(row.mean_fresh_loss === nothing ? "" : row.mean_fresh_loss)")
+    log_println("    refit_success:    $(row.refit_success_count)/4")
 end
+
+log_println("Summary CSV: $summary_path")
+log_println("Detail CSV:  $detail_path")
+log_println("=== Finished at $(Dates.format(now(), "yyyy-mm-dd HH:MM:SS")) ===")
+close(_log_io)

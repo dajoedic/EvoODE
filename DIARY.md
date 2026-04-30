@@ -4,10 +4,54 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ---
 
+## 2026-04-30
+
+### Resume-Logik für `benchmark_evogrow.jl` (WP1)
+`<!-- hash folgt -->`
+
+Benchmark konnte bisher nicht sicher gestoppt werden: `open(summary_file, "w")` überschrieb
+die CSV bei jedem Start. Lösung:
+
+- `seed`-Spalte in CSV eingeführt (Header + Row + Fehler-Record)
+- `parse_csv_fields()`: korrekter CSV-Parser für Semikolon-Trenner mit Quote-Handling
+- `load_done_set()`: liest existierende CSV und baut `Set{Tuple{String,Int,Int}}` aus `(variant_slug, id, seed)`
+- `load_records_from_csv()`: lädt alle Rows für Aggregate nach Resume
+- Hauptloop: Skip-Check vor jedem Run, Append-Mode wenn CSV existiert
+- Einmalige Migration der bestehenden 140-Row-CSV: `seed`-Spalte per Positionszählung
+  nachträglich eingetragen (Seeds-Reihenfolge ist deterministisch → sicher ableitbar)
+
+### Repository-Strukturmigration (WP-R)
+`706549f`
+
+Alle drei laufenden Skripte gestoppt. Migration durchgeführt:
+
+- `benchmarks/odeformer/` → `benchmarks/data/` (Datenpfade in beiden Benchmark-Skripten aktualisiert)
+- `benchmarks/results/` → `outputs/benchmarks/` (OUT_DIR in `benchmark_evogrow.jl`)
+- `generalization_study.jl` → `studies/generalization/`, OUT_DIR → `outputs/studies/generalization/`
+- `profile_init.jl` → `studies/profiling/`, OUT_DIR → `outputs/studies/profiling/`
+- `debug_single.jl` → `studies/debug/`, OUT_DIR → `outputs/studies/debug/`
+- `.gitignore`: `outputs/` eingetragen
+- Vorhandene Output-Daten nach `outputs/` kopiert (Resume-Kontinuität)
+- `SCRIPTS.md` + `CLAUDE.md` aktualisiert
+
+### Stdout-Logging in alle Skripte (WP2)
+`<!-- hash folgt -->`
+
+Alle fünf Skripte schreiben jetzt `run.log` im jeweiligen OUT_DIR (Append-Modus):
+
+- `=== Started at <ts> ===` / `=== Finished at <ts> ===` als Marker
+- `log_println()` + `@logf`-Makro für formatierte Ausgaben
+- Betrifft: `benchmark_evogrow.jl`, `studies/profiling/profile_init.jl`,
+  `studies/generalization/generalization_study.jl`, `studies/debug/debug_single.jl`,
+  `experiments/run_experiment.jl`
+- Bestehender per-Run-Log-Mechanismus in `profile_init.jl` bleibt erhalten
+
+---
+
 ## 2026-04-29
 
 ### `analysis/status.py` — Study Status Checker (Codex-Task)
-`756b512`
+`756b512`, `b94601f`
 
 Ziel: Skript, das aus SCRIPTS.md alle bekannten Scripts extrahiert und prüft, welche davon gerade laufen.
 
@@ -29,6 +73,20 @@ Ziel: Skript, das aus SCRIPTS.md alle bekannten Scripts extrahiert und prüft, w
 - Für Experiment-Runner: Rate aus `finished_at`-Timestamps der status.json-Dateien
 - Für Benchmark: Rate aus `elapsed_s`-Spalte in summary.csv
 - Stuck-Run-Erkennung wenn Run seit >2h im Status `running`
+
+**Implementierung und Nachtrag:**
+
+- `analysis/status.py` als standalone Python-Skript mit Standard Library umgesetzt
+- `SCRIPTS.md` wird per Regex auf `julia <path>.jl`-Aufrufe in Codeblöcken geparst
+- Output-Mapping hart codiert, aber ohne Experiment-ID-Hardcoding (`glob`-Patterns)
+- Fortschritt/ETA implementiert für:
+  - `experiments/run_experiment.jl`
+  - `benchmarks/benchmark_evogrow.jl`
+  - `profile_init.jl`
+  - `generalization_study.jl`
+- Stuck-Run-Warnung erkennt aktuell hängende `status.json`-Runs, z.B. alte Lorenz-Runs mit `status="running"`
+- Fehler passiert: Datei war zunächst nur untracked und wurde dadurch bei Workspace-Cleanup/Refresh entfernt
+- Fix: `analysis/status.py` aus der implementierten Version wiederhergestellt und mit `b94601f` committed, damit sie nicht erneut verloren geht
 
 ---
 

@@ -16,6 +16,7 @@ import Pkg
 Pkg.activate(joinpath(@__DIR__, ".."))
 
 using DifferentialEquations
+using Dates
 using Plots
 using Printf
 using Statistics
@@ -41,6 +42,20 @@ const SEEDS = QUICK ? [42, 123] : [42, 123, 7, 99, 17]
 
 const OUT_DIR = joinpath(dirname(@__DIR__), "outputs", "benchmarks")
 mkpath(OUT_DIR)
+
+_log_io = open(joinpath(OUT_DIR, "run.log"), "a")
+
+function log_println(msg::String)
+    println(msg)
+    println(_log_io, msg)
+    flush(_log_io)
+end
+
+macro logf(fmt, args...)
+    return esc(:(log_println(@sprintf($fmt, $(args...)))))
+end
+
+log_println("=== Started at $(Dates.format(now(), "yyyy-mm-dd HH:MM:SS")) ===")
 
 # ============================================================
 # Ground-truth ODE right-hand sides
@@ -816,7 +831,7 @@ function ensure_summary_csv_has_seed!(path::AbstractString)
         end
     end
     mv(tmp_path, path; force = true)
-    @printf("Migrated legacy summary.csv to include seed column: %s\n", path)
+    @logf("Migrated legacy summary.csv to include seed column: %s", path)
 end
 
 function _summary_csv_field_for_rewrite(value::String, idx::Int)
@@ -977,10 +992,11 @@ end
 # Main
 # ============================================================
 
-@printf("\nPhase 1 benchmark matrix\n")
-@printf("Systems: %d | Variants: %d | quick=%s | seeds=%d\n",
+log_println("")
+log_println("Phase 1 benchmark matrix")
+@logf("Systems: %d | Variants: %d | quick=%s | seeds=%d",
         length(BENCHMARKS), length(VARIANTS), QUICK, length(SEEDS))
-@printf("Output: %s\n", OUT_DIR)
+@logf("Output: %s", OUT_DIR)
 
 records = NamedTuple[]
 summary_file = joinpath(OUT_DIR, "summary.csv")
@@ -989,7 +1005,7 @@ if isfile(summary_file)
     ensure_summary_csv_has_seed!(summary_file)
     done_set = load_done_set(summary_file)
     summary_io = open(summary_file, "a")
-    @printf("Resuming: %d runs already completed, appending to %s\n",
+    @logf("Resuming: %d runs already completed, appending to %s",
             length(done_set), summary_file)
 else
     done_set = Set{Tuple{String,Int,Int}}()
@@ -1002,7 +1018,7 @@ for variant in VARIANTS
     for sys in BENCHMARKS
         for seed in SEEDS
             if (variant.slug, sys.id, seed) in done_set
-                @printf("  SKIP  variant=%-30s  system=%-3d  seed=%d\n",
+                @logf("  SKIP  variant=%-30s  system=%-3d  seed=%d",
                         variant.slug, sys.id, seed)
                 continue
             end
@@ -1012,7 +1028,7 @@ for variant in VARIANTS
                 println(summary_io, _summary_csv_row_line(record))
                 flush(summary_io)
             catch e
-                @printf("\nERROR on variant=%s system=%d seed=%d (%s): %s\n",
+                @logf("\nERROR on variant=%s system=%d seed=%d (%s): %s",
                         variant.slug, sys.id, seed, sys.name, sprint(showerror, e))
                 record = (
                     variant = variant.name,
@@ -1059,6 +1075,8 @@ all_records  = load_records_from_csv(summary_file)
 agg_records  = aggregate_records(all_records)
 print_aggregate_summary(agg_records)
 agg_file     = write_aggregate_csv(agg_records)
-@printf("\nIndividual runs -> %s\n", joinpath(OUT_DIR, "summary.csv"))
-@printf("Aggregate       -> %s\n", agg_file)
-@printf("Done.\n")
+@logf("\nIndividual runs -> %s", joinpath(OUT_DIR, "summary.csv"))
+@logf("Aggregate       -> %s", agg_file)
+log_println("Done.")
+log_println("=== Finished at $(Dates.format(now(), "yyyy-mm-dd HH:MM:SS")) ===")
+close(_log_io)

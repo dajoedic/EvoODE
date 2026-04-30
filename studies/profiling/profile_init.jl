@@ -2,6 +2,7 @@ import Pkg
 Pkg.activate(dirname(dirname(@__DIR__)))
 
 using DifferentialEquations
+using Dates
 using Printf
 
 include(joinpath(dirname(dirname(@__DIR__)), "src", "EvoODE.jl"))
@@ -156,6 +157,19 @@ end
 # ============================================================
 
 mkpath(OUT_DIR)
+_log_io = open(joinpath(OUT_DIR, "run.log"), "a")
+
+function log_println(msg::String)
+    println(msg)
+    println(_log_io, msg)
+    flush(_log_io)
+end
+
+macro logf(fmt, args...)
+    return esc(:(log_println(@sprintf($fmt, $(args...)))))
+end
+
+log_println("=== Started at $(Dates.format(now(), "yyyy-mm-dd HH:MM:SS")) ===")
 set_level(INFO)
 
 summary_path = joinpath(OUT_DIR, "profile_init_summary.csv")
@@ -173,9 +187,9 @@ levels_io = open_csv_append(
 
 trajectories = Dict(sys.slug => generate_trajectory(sys) for sys in SYSTEMS)
 
-println("Running pretuning profiling experiment...")
-println("Systems=$(length(SYSTEMS)) | Seeds=$(length(SEEDS)) | Init modes=$(length(INIT_MODES))")
-println("Output directory: $OUT_DIR")
+log_println("Running pretuning profiling experiment...")
+log_println("Systems=$(length(SYSTEMS)) | Seeds=$(length(SEEDS)) | Init modes=$(length(INIT_MODES))")
+log_println("Output directory: $OUT_DIR")
 
 try
     for sys in SYSTEMS
@@ -187,8 +201,8 @@ try
                 use_pretuning = init_mode == :pretune
                 log_file = joinpath(OUT_DIR, @sprintf("profile_%s_seed%d_%s.log", sys.slug, seed, String(init_mode)))
 
-                println()
-                @printf("[%s] seed=%d | init=%s\n", sys.name, seed, String(init_mode))
+                log_println("")
+                @logf("[%s] seed=%d | init=%s", sys.name, seed, String(init_mode))
 
                 set_log_file(log_file)
                 reset_timer()
@@ -237,11 +251,11 @@ try
                 end
                 flush(levels_io)
 
-                @printf("  final_loss=%.4e | final_stage=%d | elapsed=%.2fs\n",
+                @logf("  final_loss=%.4e | final_stage=%d | elapsed=%.2fs",
                         result.loss,
                         result.meta.structure.final_stage,
                         elapsed_s)
-                println("  log=$(log_file)")
+                log_println("  log=$(log_file)")
             end
         end
     end
@@ -250,7 +264,9 @@ finally
     close(levels_io)
 end
 
-println()
-println("Pretuning profiling experiment finished.")
-println("Summary CSV: $summary_path")
-println("Levels CSV:  $levels_path")
+log_println("")
+log_println("Pretuning profiling experiment finished.")
+log_println("Summary CSV: $summary_path")
+log_println("Levels CSV:  $levels_path")
+log_println("=== Finished at $(Dates.format(now(), "yyyy-mm-dd HH:MM:SS")) ===")
+close(_log_io)

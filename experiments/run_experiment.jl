@@ -36,6 +36,19 @@ catch err
 end
 
 set_level(INFO)
+_log_io = open(joinpath(EXPERIMENT_DIR, "run.log"), "a")
+
+function log_println(msg::String)
+    println(msg)
+    println(_log_io, msg)
+    flush(_log_io)
+end
+
+macro logf(fmt, args...)
+    return esc(:(log_println(@sprintf($fmt, $(args...)))))
+end
+
+log_println("=== Started at $(Dates.format(now(), "yyyy-mm-dd HH:MM:SS")) ===")
 
 # ============================================================
 # Hardcoded benchmark systems / helpers
@@ -425,11 +438,11 @@ function run_one(run_id::String, run_index::Int, total_runs::Int)
     git_hash = current_git_hash()
     started_at = iso_timestamp()
 
-    @printf("\n[%d/%d] Starting %s | remaining=%d\n",
-            run_index,
-            total_runs,
-            run_id,
-            total_runs - run_index + 1)
+    @logf("\n[%d/%d] Starting %s | remaining=%d",
+          run_index,
+          total_runs,
+          run_id,
+          total_runs - run_index + 1)
 
     write_status(
         status_path;
@@ -492,10 +505,10 @@ function run_one(run_id::String, run_index::Int, total_runs::Int)
         )
 
         success = true
-        @printf("Completed %s | loss=%.6e | elapsed=%.2fs | success=true\n",
-                run_id,
-                result.loss,
-                elapsed_s)
+        @logf("Completed %s | loss=%.6e | elapsed=%.2fs | success=true",
+              run_id,
+              result.loss,
+              elapsed_s)
     catch err
         elapsed_s = time() - run_t0
         failure_reason = failure_reason === nothing ? "exception" : failure_reason
@@ -517,9 +530,9 @@ function run_one(run_id::String, run_index::Int, total_runs::Int)
             git_hash = git_hash
         )
 
-        @printf("Completed %s | loss=NA | elapsed=%.2fs | success=false\n",
-                run_id,
-                elapsed_s)
+        @logf("Completed %s | loss=NA | elapsed=%.2fs | success=false",
+              run_id,
+              elapsed_s)
     finally
         close_log_file()
     end
@@ -539,15 +552,19 @@ for run_id_any in MANIFEST.run_ids
     status = String(status_obj.status)
 
     if status == "finished"
+        @logf("SKIP %s | status=finished", run_id)
         continue
     elseif status in ("queued", "running", "interrupted")
         push!(runnable, run_id)
     end
 end
 
-@printf("Experiment: %s\n", EXPERIMENT_ID)
-@printf("Runnable runs: %d\n", length(runnable))
+@logf("Experiment: %s", EXPERIMENT_ID)
+@logf("Runnable runs: %d", length(runnable))
 
 for (idx, run_id) in enumerate(runnable)
     run_one(run_id, idx, length(runnable))
 end
+
+log_println("=== Finished at $(Dates.format(now(), "yyyy-mm-dd HH:MM:SS")) ===")
+close(_log_io)

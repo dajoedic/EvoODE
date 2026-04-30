@@ -3,6 +3,7 @@ Pkg.activate(dirname(dirname(@__DIR__)))
 
 using DifferentialEquations
 using Plots
+using Dates
 using Printf
 
 include(joinpath(dirname(dirname(@__DIR__)), "src", "EvoODE.jl"))
@@ -80,11 +81,24 @@ options = DiscoveryOptions(
     plateau_rtol = 1e-3
 )
 
-println("Running single-system debug experiment on Lotka-Volterra competition...")
-println("progression=$(PROGRESSION_MODE) | usage=$(USAGE_MODE) | seed=$(SEED)")
-
 out_dir = joinpath(dirname(dirname(@__DIR__)), "outputs", "studies", "debug")
 mkpath(out_dir)
+_log_io = open(joinpath(out_dir, "run.log"), "a")
+
+function log_println(msg::String)
+    println(msg)
+    println(_log_io, msg)
+    flush(_log_io)
+end
+
+macro logf(fmt, args...)
+    return esc(:(log_println(@sprintf($fmt, $(args...)))))
+end
+
+log_println("=== Started at $(Dates.format(now(), "yyyy-mm-dd HH:MM:SS")) ===")
+log_println("Running single-system debug experiment on Lotka-Volterra competition...")
+log_println("progression=$(PROGRESSION_MODE) | usage=$(USAGE_MODE) | seed=$(SEED)")
+
 log_file = joinpath(out_dir, "debug_lotka.log")
 set_log_file(log_file)
 
@@ -146,23 +160,23 @@ summary_lines = [
     "=" ^ 72
 ]
 
-println()
-println("=" ^ 72)
-println("DEBUG SUMMARY -- LOTKA-VOLTERRA COMPETITION")
-println("=" ^ 72)
-@printf("Final loss:              %.6e\n", result.loss)
-@printf("Final objective:         %.6e\n", result.objective)
-@printf("Number of parameters:    %d\n", length(result.params))
-println("Final stage reached:     $final_stage")
-println("Termination reason:      $termination_reason")
-println("Stage budget:            $stage_budget")
-println("Exact support recovered: $(recovered_exact_support ? "YES" : "NO")")
-println("Discovered structure:")
-println(pretty_structure)
-println("Convergence history:     $history")
-println("Total loss evaluations:  $total_loss_evals")
-println("Total invalid evals:     $total_invalid_evals")
-println("=" ^ 72)
+log_println("")
+log_println("=" ^ 72)
+log_println("DEBUG SUMMARY -- LOTKA-VOLTERRA COMPETITION")
+log_println("=" ^ 72)
+@logf("Final loss:              %.6e", result.loss)
+@logf("Final objective:         %.6e", result.objective)
+@logf("Number of parameters:    %d", length(result.params))
+log_println("Final stage reached:     $final_stage")
+log_println("Termination reason:      $termination_reason")
+log_println("Stage budget:            $stage_budget")
+log_println("Exact support recovered: $(recovered_exact_support ? "YES" : "NO")")
+log_println("Discovered structure:")
+log_println(pretty_structure)
+log_println("Convergence history:     $history")
+log_println("Total loss evaluations:  $total_loss_evals")
+log_println("Total invalid evals:     $total_invalid_evals")
+log_println("=" ^ 72)
 
 open(log_file, "a") do io
     println(io)
@@ -187,5 +201,7 @@ solve_and_save_plot(
 )
 
 close_log_file()
-println("Saved plot to: $plot_file")
-println("Saved log to:  $log_file")
+log_println("Saved plot to: $plot_file")
+log_println("Saved log to:  $log_file")
+log_println("=== Finished at $(Dates.format(now(), "yyyy-mm-dd HH:MM:SS")) ===")
+close(_log_io)
