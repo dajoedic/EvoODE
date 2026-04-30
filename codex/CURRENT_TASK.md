@@ -1,134 +1,137 @@
 # Current Task
 
-## Task: WP2 — Stdout-Logging in alle Skripte einbauen
+## Task: WP4 — `analysis/status.py` um Logdatei-Auswertung erweitern
+
+### Kontext
+
+`analysis/status.py` existiert bereits und funktioniert (WMI + Output-Datei-Timestamps).
+Nach WP2 schreiben alle Skripte jetzt `run.log` in ihr jeweiliges `OUT_DIR`.
+Die Logdatei enthält Marker:
+
+```
+=== Started at 2026-04-30 09:15:42 ===
+...
+=== Finished at 2026-04-30 11:30:17 ===
+```
+
+Dieser WP erweitert `status.py` um die Auswertung dieser Marker.
+
+---
 
 ### Ziel
 
-Alle fünf Skripte schreiben ihre wichtigsten Stdout-Ausgaben zusätzlich in eine
-Logdatei im jeweiligen Output-Verzeichnis. So kann der Fortschritt auch dann
-nachvollzogen werden, wenn kein Terminal offen ist.
+Für jedes bekannte Skript anzeigen:
+- Wann es zuletzt gestartet wurde (aus `run.log`)
+- Ob der letzte Start sauber abgeschlossen wurde (Finished-Marker nach dem letzten Started-Marker)
+- Warnung wenn ein Skript unterbrochen wurde (Started ohne nachfolgendes Finished)
 
 ---
 
-### Betroffene Skripte
+### Änderungen an `analysis/status.py`
 
-| Skript | OUT_DIR (nach WP-R) |
-|--------|---------------------|
-| `benchmarks/benchmark_evogrow.jl` | `outputs/benchmarks/` |
-| `studies/profiling/profile_init.jl` | `outputs/studies/profiling/` |
-| `studies/generalization/generalization_study.jl` | `outputs/studies/generalization/` |
-| `studies/debug/debug_single.jl` | `outputs/studies/debug/` |
-| `experiments/run_experiment.jl` | `experiments/<experiment_id>/` |
+#### 1. `LOG_PATHS` dict ergänzen (nach `OUTPUT_PATTERNS`)
 
----
-
-### Implementierung (gleiche Logik für alle Skripte)
-
-#### 1. Log-Datei öffnen
-
-Am Anfang des Skripts, **nach** dem `mkpath(OUT_DIR)`-Aufruf, eine Logdatei öffnen:
-
-```julia
-_log_io = open(joinpath(OUT_DIR, "run.log"), "a")
+```python
+LOG_PATHS = {
+    "experiments/run_experiment.jl":
+        "experiments/paper1_phaseA_v1/run.log",
+    "benchmarks/benchmark_evogrow.jl":
+        "outputs/benchmarks/run.log",
+    "studies/profiling/profile_init.jl":
+        "outputs/studies/profiling/run.log",
+    "studies/generalization/generalization_study.jl":
+        "outputs/studies/generalization/run.log",
+    "studies/debug/debug_single.jl":
+        "outputs/studies/debug/run.log",
+}
 ```
 
-Append-Modus (`"a"`), damit mehrere Starts in dieselbe Datei schreiben und
-der Verlauf erhalten bleibt.
+Hinweis: `experiments/run_experiment.jl` hat keine feste Experiment-ID im Pfad.
+Für den Anfang den Pfad für `paper1_phaseA_v1` hardcoden — das ist das einzige
+laufende Experiment. Später kann das dynamisch gemacht werden.
 
-**Ausnahme `run_experiment.jl`:** Das OUT_DIR ist dort dynamisch
-(`experiments/<experiment_id>/`). Die Logdatei liegt dort ebenfalls:
-`joinpath(EXPERIMENT_DIR, "run.log")`. `EXPERIMENT_DIR` ist bereits im Skript
-definiert — nach dessen Initialisierung die Datei öffnen.
+#### 2. Funktion `read_log_markers(script)` hinzufügen
 
-#### 2. Hilfsfunktion definieren
-
-```julia
-function log_println(msg::String)
-    println(msg)
-    println(_log_io, msg)
-    flush(_log_io)
-end
+```python
+def read_log_markers(script):
+    """
+    Returns (last_started: datetime|None, last_finished: datetime|None).
+    Reads the run.log for the given script and finds the timestamps of the
+    last '=== Started at ...' and '=== Finished at ...' markers.
+    """
 ```
 
-Und für formatierte Ausgaben:
+Implementierung:
+- Pfad aus `LOG_PATHS.get(script)` → `ROOT / path`
+- Falls Datei nicht existiert: `(None, None)` zurückgeben
+- Datei zeilenweise lesen (letzte 500 Zeilen reichen — tail-Logik mit `deque(maxlen=500)`)
+- Regex: `r"=== (Started|Finished) at (\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}) ==="` 
+- Letztes `Started`-Match → `last_started`
+- Letztes `Finished`-Match → `last_finished`
+- Timestamps mit `datetime.strptime(ts, "%Y-%m-%d %H:%M:%S")` parsen
+- Bei Fehler: `(None, None)` zurückgeben
 
-```julia
-macro logf(fmt, args...)
-    :(log_println(@sprintf($(fmt), $(args...))))
-end
+#### 3. Funktion `build_log_info(scripts)` hinzufügen
+
+```python
+def build_log_info(scripts):
+    """Returns dict: script -> {'last_started': dt|None, 'last_finished': dt|None, 'clean': bool|None}"""
 ```
 
-#### 3. Start- und End-Marker schreiben
+`clean` ist:
+- `True`  wenn `last_finished` nicht None und `last_finished >= last_started`
+- `False` wenn `last_started` nicht None und (`last_finished` ist None oder `last_started > last_finished`)
+- `None`  wenn weder Started noch Finished vorhanden
 
-Direkt nach dem Öffnen der Logdatei:
+#### 4. `print_known_scripts()` anpassen
 
-```julia
-log_println("=== Started at $(Dates.format(now(), "yyyy-mm-dd HH:MM:SS")) ===")
+In der bestehenden Funktion: nach der Output-Zeile für jedes Skript eine Log-Zeile einfügen.
+
+**Format:**
+
+Für `[LAEUFT]`-Skripte (via WMI bestätigt): keine Log-Zeile nötig (WMI-Info reicht).
+
+Für `[LAEUFT?]`-Skripte (inferred):
+```
+           Log: gestartet 2026-04-30 09:15  (vor 2h 14m)  — läuft noch
+```
+(`clean=False` → "läuft noch"; `clean=True` → "sauber beendet — evtl. anderer Prozess aktiv")
+
+Für `[idle]`-Skripte:
+```
+           Log: gestartet 2026-04-29 22:48  |  beendet 2026-04-30 06:41  (sauber)
+```
+oder wenn unterbrochen:
+```
+           Log: gestartet 2026-04-30 09:15  |  kein Finished-Marker  (! unterbrochen)
+```
+oder wenn keine Log-Datei:
+```
+           Log: (keine run.log gefunden)
 ```
 
-Am Ende des Skripts (vor dem letzten `close`-Aufruf):
+#### 5. `main()` anpassen
 
-```julia
-log_println("=== Finished at $(Dates.format(now(), "yyyy-mm-dd HH:MM:SS")) ===")
-close(_log_io)
-```
-
-`using Dates` muss importiert sein (in den meisten Skripten bereits vorhanden).
-
-#### 4. Wichtige Ausgaben auf `log_println` / `@logf` umstellen
-
-Nicht ALLE Ausgaben müssen umgestellt werden — nur die inhaltlich wichtigen
-Fortschritts- und Statusmeldungen. Komplett ersetzen:
-
-- Alle `println("...")` auf Toplevel (außerhalb von Hilfsfunktionen)
-- Alle `@printf(...)` auf Toplevel, die Fortschritt oder Ergebnisse melden
-
-Nicht umstellen (bleibt als normales `println`/`@printf`):
-- Ausgaben in `run_one()` und anderen Hilfsfunktionen (würde zu viel Umfang erzeugen)
-- Julia-interne Warnings
-
-**Konkret pro Skript:**
-
-**`benchmark_evogrow.jl`** — folgende Toplevel-Blöcke umstellen:
-- Startmeldung (`Systems: ... Variants: ...`)
-- SKIP-Zeilen (`SKIP variant=...`)
-- ERROR-Zeilen (`ERROR on variant=...`)
-- Abschlussmeldung (`Individual runs -> ...`, `Aggregate -> ...`, `Done.`)
-- `Resuming: N runs already completed` Zeile
-
-**`profile_init.jl`** — folgende Toplevel-Blöcke umstellen:
-- Startmeldung (`Running pretuning profiling experiment...`)
-- Pro-Run-Fortschrittszeilen (`println(summary_io, ...)` bleibt; nur stdout-Zeilen)
-- Abschlussmeldung (`Pretuning profiling experiment finished.`)
-
-**`generalization_study.jl`** — analog: Start, Pro-Run-Zeilen, Abschluss
-
-**`debug_single.jl`** — analog: alle Toplevel-Ausgaben
-
-**`run_experiment.jl`** — folgende Toplevel-Blöcke umstellen:
-- Startmeldung (Experiment-ID, Anzahl Runs)
-- Pro-Run-Statuszeilen (`Running run_id ...`, `Finished`, `SKIP`)
-- Abschlussmeldung
+`build_log_info(scripts)` aufrufen und das Ergebnis an `print_known_scripts()` übergeben.
+Signatur von `print_known_scripts()` entsprechend erweitern.
 
 ---
 
 ### Was sich NICHT ändern darf
 
-- Keine Änderung an Ausgabeformat der CSV-Dateien
-- Keine Änderung an der Skript-Logik
-- Keine neuen Dependencies
-- `run_one()` und andere Hilfsfunktionen bleiben unverändert
-- Der bestehende per-Run-Log-Mechanismus in `profile_init.jl`
-  (`set_log_file` / `close_log_file`) bleibt erhalten — `run.log` ist
-  zusätzlich dazu, nicht ein Ersatz
+- WMI-Logik bleibt vollständig erhalten (kein Entfernen)
+- Output-Datei-Timestamps bleiben vollständig erhalten
+- Fortschritts-/ETA-Logik bleibt vollständig erhalten
+- Keine neuen externen Dependencies
+- Falls Logdatei nicht lesbar: graceful fallback (kein Crash), Zeile weglassen oder `(keine run.log gefunden)` anzeigen
 
 ---
 
 ### Verifikation
 
-Nach der Implementierung:
+```
+python analysis/status.py
+```
 
-1. Ein Skript kurz starten und stoppen (z.B. `QUICK=true julia benchmarks/benchmark_evogrow.jl`).
-2. `outputs/benchmarks/run.log` öffnen — muss `=== Started at ... ===` enthalten
-   sowie die Startmeldung.
-3. Gleiches für `studies/profiling/profile_init.jl` prüfen.
+Für jedes Skript mit vorhandener `run.log` muss eine Log-Zeile erscheinen.
+Für Skripte ohne `run.log` muss `(keine run.log gefunden)` erscheinen, kein Fehler.

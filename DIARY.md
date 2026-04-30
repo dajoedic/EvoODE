@@ -6,6 +6,17 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ## 2026-04-30
 
+### `analysis/status.py` — Logdatei-Auswertung (WP4)
+`<!-- hash folgt -->`
+
+`status.py` um Auswertung der neuen `run.log`-Dateien (aus WP2) erweitert:
+
+- `LOG_PATHS`-Dict: Skript → `run.log`-Pfad im jeweiligen OUT_DIR
+- `read_log_markers()`: liest `=== Started/Finished at ===`-Marker aus Logdatei (letzte 500 Zeilen)
+- `build_log_info()`: leitet ab ob letzter Run sauber beendet (`clean=True/False/None`)
+- `print_known_scripts()`: zeigt Log-Zeile pro Skript (Start-/Endzeit, sauber/unterbrochen)
+- WMI-Logik, Output-Timestamps und ETA-Berechnung vollständig erhalten
+
 ### Resume-Logik für `benchmark_evogrow.jl` (WP1) + Stdout-Logging (WP2)
 `0c74f2d`
 

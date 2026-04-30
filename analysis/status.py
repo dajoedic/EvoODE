@@ -4,6 +4,7 @@ import json
 import re
 import subprocess
 import sys
+from collections import deque
 from datetime import datetime, timedelta
 from pathlib import Path
 
@@ -26,9 +27,22 @@ OUTPUT_PATTERNS = {
     "studies/debug/debug_single.jl": ["outputs/studies/debug/debug_lotka.log"],
 }
 
+LOG_PATHS = {
+    "experiments/run_experiment.jl": "experiments/paper1_phaseA_v1/run.log",
+    "benchmarks/benchmark_evogrow.jl": "outputs/benchmarks/run.log",
+    "studies/profiling/profile_init.jl": "outputs/studies/profiling/run.log",
+    "studies/generalization/generalization_study.jl": (
+        "outputs/studies/generalization/run.log"
+    ),
+    "studies/debug/debug_single.jl": "outputs/studies/debug/run.log",
+}
+
 PARENT_CMDLINE_NAMES = {"julialauncher.exe", "bash.exe", "sh.exe"}
 ACTIVE_OUTPUT_WINDOW = timedelta(minutes=90)
 STUCK_RUN_WINDOW = timedelta(hours=2)
+LOG_MARKER_RE = re.compile(
+    r"=== (Started|Finished) at (\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}) ==="
+)
 
 
 def parse_scripts_md():
@@ -240,6 +254,59 @@ def build_output_info(scripts):
     return output_info
 
 
+def read_log_markers(script):
+    """
+    Returns (last_started, last_finished) from the script's run.log markers.
+    """
+    relative_path = LOG_PATHS.get(script)
+    if relative_path is None:
+        return None, None
+
+    path = ROOT / relative_path
+    if not path.exists():
+        return None, None
+
+    try:
+        with path.open("r", encoding="utf-8", errors="replace") as handle:
+            lines = deque(handle, maxlen=500)
+    except OSError:
+        return None, None
+
+    last_started = None
+    last_finished = None
+    try:
+        for line in lines:
+            match = LOG_MARKER_RE.search(line)
+            if not match:
+                continue
+
+            marker, timestamp = match.groups()
+            parsed = datetime.strptime(timestamp, "%Y-%m-%d %H:%M:%S")
+            if marker == "Started":
+                last_started = parsed
+            else:
+                last_finished = parsed
+    except ValueError:
+        return None, None
+
+    return last_started, last_finished
+
+
+def build_log_info(scripts):
+    log_info = {}
+    for script in scripts:
+        last_started, last_finished = read_log_markers(script)
+        clean = None
+        if last_started is not None:
+            clean = last_finished is not None and last_finished >= last_started
+        log_info[script] = {
+            "last_started": last_started,
+            "last_finished": last_finished,
+            "clean": clean,
+        }
+    return log_info
+
+
 def display_path(path):
     try:
         return path.resolve().relative_to(ROOT).as_posix()
@@ -258,6 +325,33 @@ def output_status(script, output_info, now, active=False):
         f"{label}: {display_path(path)}"
         f"  ({format_timestamp(modified)}; vor {format_age(modified, now)})"
     )
+
+
+def log_status_line(script, log_info, now, inferred=False):
+    info = log_info.get(script, {})
+    last_started = info.get("last_started")
+    last_finished = info.get("last_finished")
+    clean = info.get("clean")
+
+    if last_started is None:
+        return "Log: (keine run.log gefunden)"
+
+    started = format_timestamp(last_started)
+    started_age = format_age(last_started, now)
+
+    if inferred:
+        suffix = "laeuft noch"
+        if clean is True:
+            suffix = "sauber beendet - evtl. anderer Prozess aktiv"
+        return f"Log: gestartet {started}  (vor {started_age})  - {suffix}"
+
+    if clean is True:
+        return (
+            f"Log: gestartet {started}  |  beendet {format_timestamp(last_finished)}"
+            "  (sauber)"
+        )
+
+    return f"Log: gestartet {started}  |  kein Finished-Marker  (! unterbrochen)"
 
 
 def is_unidentifiable_orphan(proc):
@@ -463,7 +557,9 @@ def script_sort_key(script, running_by_script, inferred):
     return 2
 
 
-def print_known_scripts(scripts, running_by_script, inferred, output_info, progress_info, now):
+def print_known_scripts(
+    scripts, running_by_script, inferred, output_info, log_info, progress_info, now
+):
     print("  Bekannte Skripte")
     print("  " + "-" * 54)
     ordered_scripts = sorted(
@@ -488,9 +584,11 @@ def print_known_scripts(scripts, running_by_script, inferred, output_info, progr
         elif script in inferred:
             print(f"  [LAEUFT?] {script}")
             print(f"           {output_status(script, output_info, now, active=True)}")
+            print(f"           {log_status_line(script, log_info, now, inferred=True)}")
         else:
             print(f"  [idle]    {script}")
             print(f"           {output_status(script, output_info, now)}")
+            print(f"           {log_status_line(script, log_info, now)}")
 
         for line in progress_lines(script, progress_info):
             print(f"           {line}")
@@ -531,6 +629,7 @@ def main():
     processes, warning = get_julia_processes()
     running_by_script, unmatched = match_processes(processes, scripts)
     output_info = build_output_info(scripts)
+    log_info = build_log_info(scripts)
     inferred = infer_active_scripts(scripts, running_by_script, unmatched, output_info, now)
     progress_info = build_progress_info(scripts, output_info, now)
 
@@ -540,7 +639,9 @@ def main():
         print(file=sys.stderr)
 
     print_header(now, scripts, processes, running_by_script, unmatched)
-    print_known_scripts(scripts, running_by_script, inferred, output_info, progress_info, now)
+    print_known_scripts(
+        scripts, running_by_script, inferred, output_info, log_info, progress_info, now
+    )
     print_unmatched(unmatched, now)
     return 0
 
