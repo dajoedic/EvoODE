@@ -6,8 +6,8 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ## 2026-04-30
 
-### Resume-Logik für `benchmark_evogrow.jl` (WP1)
-`<!-- hash folgt -->`
+### Resume-Logik für `benchmark_evogrow.jl` (WP1) + Stdout-Logging (WP2)
+`0c74f2d`
 
 Benchmark konnte bisher nicht sicher gestoppt werden: `open(summary_file, "w")` überschrieb
 die CSV bei jedem Start. Lösung:
@@ -35,7 +35,7 @@ Alle drei laufenden Skripte gestoppt. Migration durchgeführt:
 - `SCRIPTS.md` + `CLAUDE.md` aktualisiert
 
 ### Stdout-Logging in alle Skripte (WP2)
-`<!-- hash folgt -->`
+`0c74f2d`
 
 Alle fünf Skripte schreiben jetzt `run.log` im jeweiligen OUT_DIR (Append-Modus):
 
