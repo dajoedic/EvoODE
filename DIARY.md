@@ -6,6 +6,14 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ## 2026-04-30
 
+### `profile_init` — Ergebnisse ausgewertet
+`72629a3`
+
+- `docs/profile_init_results.md` + `docs/profile_init_convergence.png` angelegt
+- Lorenz: Pretune klar besser auf allen 3 Seeds (~4× niedrigerer Loss, erreicht Stage 3 statt Stage 2)
+- Lotka-Volterra: Pretune auf Mittelwert besser, auf Seed-Ebene gemischt — treibt Algorithmus in Stage 5 (Overshoot)
+- Kritisch: alle 12 Runs enden mit `max_levels`, kein Run konvergiert → Level-Budget zu gering für belastbare Aussagen
+
 ### `analysis/status.py` — Logdatei-Auswertung (WP4)
 `90e70f5`
 
