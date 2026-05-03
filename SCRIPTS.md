@@ -145,6 +145,42 @@ Output:
 
 ---
 
+## Visualization
+
+### `studies/visualization/animate_search.jl`
+
+Runs EvoGrow on a demo system and renders the search progress as a sequence of PNG frames.
+Each frame shows ground-truth trajectories, accumulated search history (grey),
+current-level candidates (orange), and the current best solution (blue),
+plus an info panel with level, loss, discovered equations, and true equations.
+Optionally assembles frames into an MP4 via ffmpeg.
+
+```
+julia studies/visualization/animate_search.jl
+```
+
+Key constants at top of file:
+
+| Constant | Default | Meaning |
+|----------|---------|---------|
+| `DEMO_SYSTEM` | `:lorenz_3d` | Which demo system to run (`:logistic`, `:sir_2d`, `:lotka_volterra`, `:lorenz_3d`) |
+| `RUN_ID` | `"lorenz_stage_animation"` | Output subfolder name |
+| `FPS` | `10` | Frames per second for MP4 export |
+| `FRAME_WIDTH` | `1920` | PNG width in pixels |
+| `FRAME_HEIGHT` | `1080` | PNG height in pixels |
+| `MAX_CANDIDATES_PER_LEVEL` | `nothing` | Cap on candidates rendered per level (`nothing` = all) |
+| `CLEAR_ON_STAGE_TRANSITION` | `true` | Clear grey history on stage promotion |
+
+Output:
+- `outputs/studies/visualization/<RUN_ID>/frames/frame_NNNN.png` — one PNG per search level
+- `outputs/studies/visualization/<RUN_ID>/search_animation.mp4` — MP4 (only if ffmpeg available)
+- `outputs/studies/visualization/<RUN_ID>/summary.txt` — run summary
+
+**Note:** Rendering starts only after `discover()` completes. Each frame is written immediately
+as it is rendered, so progress is visible in the output directory during the rendering phase.
+
+---
+
 ## Benchmarks
 
 ### `benchmarks/benchmark_evogrow.jl`
