@@ -58,6 +58,7 @@ export should_stop
 export simulate
 export save_comparison_csv
 export solve_and_save_plot
+export render_all_frames, render_frame, structure_to_string
 
 # ============================================================
 # Core types first
@@ -112,6 +113,7 @@ include("optimize/pretune.jl")
 include("simulate/solve.jl")
 include("simulate/export.jl")
 include("plotting/plot_solution.jl")
+include("plotting/search_animation.jl")
 
 # ============================================================
 # Structure search algorithms

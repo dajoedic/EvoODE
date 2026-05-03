@@ -495,6 +495,7 @@ function search_structure(strategy::EvoGrow,
     total_loss_evals = 0
     total_invalid_evals = 0
     termination_reason = :max_levels
+    vis_history = NamedTuple[]
 
     n_steps = min(strategy.n_levels, options.max_levels)
 
@@ -515,6 +516,8 @@ function search_structure(strategy::EvoGrow,
 
     for level in 1:n_steps
         level_t0 = time()
+        level_prev_best_objective = isempty(global_best_J_hist) ? Inf : global_best_J_hist[end]
+        level_stage_at_start = current_stage
         level_ctx = Dict(:level => level, :stage => current_stage)
 
         if options.verbose >= 1
@@ -696,6 +699,34 @@ function search_structure(strategy::EvoGrow,
             )
         )
 
+        _vis_candidates_structures = [c.structure for c in children]
+        _vis_candidates_params = [copy(c.params) for c in children]
+        _vis_candidates_loss = [c.loss for c in children]
+        _vis_candidates_objective = [c.objective for c in children]
+        _vis_accepted_new_best = best.objective < level_prev_best_objective
+
+        function _push_vis_snapshot!(stage_trans, prev_s, new_s)
+            push!(
+                vis_history,
+                (
+                    level = level,
+                    stage = level_stage_at_start,
+                    candidates_structures = _vis_candidates_structures,
+                    candidates_params = _vis_candidates_params,
+                    candidates_loss = _vis_candidates_loss,
+                    candidates_objective = _vis_candidates_objective,
+                    best_structure = best.structure,
+                    best_params = copy(best.params),
+                    best_loss = best.loss,
+                    best_objective = best.objective,
+                    accepted_new_best = _vis_accepted_new_best,
+                    stage_transition = stage_trans,
+                    previous_stage = prev_s,
+                    new_stage = new_s
+                )
+            )
+        end
+
         # -----------------------------------
         # Logging
         # -----------------------------------
@@ -757,6 +788,7 @@ function search_structure(strategy::EvoGrow,
                     if options.verbose >= 1
                         log_info("Stopping due to loss tolerance", context=merge(level_ctx, Dict(:reason => reason)))
                     end
+                    _push_vis_snapshot!(false, nothing, nothing)
                     break
                 end
 
@@ -782,6 +814,7 @@ function search_structure(strategy::EvoGrow,
                         )
                     end
 
+                    _push_vis_snapshot!(true, level_stage_at_start, current_stage)
                     continue
                 end
 
@@ -789,6 +822,7 @@ function search_structure(strategy::EvoGrow,
                 if options.verbose >= 1
                     log_info("Stopping", context=merge(level_ctx, Dict(:reason => reason)))
                 end
+                _push_vis_snapshot!(false, nothing, nothing)
                 break
             end
         else
@@ -827,6 +861,7 @@ function search_structure(strategy::EvoGrow,
                         )
                     end
 
+                    _push_vis_snapshot!(true, level_stage_at_start, current_stage)
                     continue
                 end
 
@@ -834,9 +869,12 @@ function search_structure(strategy::EvoGrow,
                 if options.verbose >= 1
                     log_info("Stopping", context=merge(level_ctx, Dict(:reason => reason)))
                 end
+                _push_vis_snapshot!(false, nothing, nothing)
                 break
             end
         end
+
+        _push_vis_snapshot!(false, nothing, nothing)
     end
 
     best = pop[1]
@@ -869,6 +907,7 @@ function search_structure(strategy::EvoGrow,
             stage_first_use_level = stage_first_use_level,
             promotion_log = promotion_log,
             level_log = level_log,
+            vis_history = vis_history,
             total_loss_evals = total_loss_evals,
             total_invalid_evals = total_invalid_evals,
             final_stage = current_stage,
