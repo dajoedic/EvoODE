@@ -73,6 +73,57 @@ function _simulate_candidate(
     end
 end
 
+function _format_elapsed(elapsed_s::Float64)
+    total_sec = floor(Int, elapsed_s)
+    h = div(total_sec, 3600)
+    m = div(total_sec % 3600, 60)
+    s = total_sec % 60
+    if h > 0
+        return @sprintf("%02d:%02d:%02d", h, m, s)
+    else
+        return @sprintf("%02d:%02d", m, s)
+    end
+end
+
+function _stage_description(basis::AbstractBasis, stage::Int, var_names::Union{Nothing, Vector{String}})
+    if !(basis isa StagedPolynomialBasis)
+        return "stage $stage terms"
+    end
+    if stage < 1 || stage > length(basis.term_groups)
+        return "stage $stage terms"
+    end
+
+    semantic = if stage == 1
+        "linear"
+    elseif stage == 2
+        "quadratic"
+    elseif stage == 3
+        "cross"
+    elseif stage == 4
+        "cubic"
+    elseif stage == 5
+        "trigonometric"
+    else
+        "stage $stage"
+    end
+
+    idxs = basis.term_groups[stage]
+    names = [basis.term_names[i] for i in idxs]
+    if var_names !== nothing
+        names = map(names) do n
+            for i in length(var_names):-1:1
+                n = replace(n, "u$i" => var_names[i])
+            end
+            n
+        end
+    end
+    n_show = min(3, length(names))
+    example = join(names[1:n_show], ",  ")
+    length(names) > 3 && (example *= ",  ...")
+
+    return "$semantic terms  ($example)"
+end
+
 function render_frame(
     frame_idx::Int,
     snapshot::NamedTuple,
@@ -129,7 +180,8 @@ function render_frame(
         "$(snapshot.stage)"
     loss_str = @sprintf("%.6f", snapshot.best_loss)
     n_terms = length(snapshot.best_params)
-    status_text = "Stage $stage_str   |   Level $(snapshot.level)   |   Loss $loss_str   |   Terms $n_terms"
+    time_str = _format_elapsed(elapsed_s)
+    status_text = "Stage $stage_str   |   Level $(snapshot.level)   |   Loss $loss_str   |   Active terms $n_terms   |   Time $time_str"
 
     annotate!(plt[1], 0.03, 0.5, Plots.text(status_text, :left, :vcenter, 13, :black))
 
@@ -156,6 +208,14 @@ function render_frame(
     true_lines = true_equations !== nothing ? split(true_equations, "\n") : String[]
 
     items = Tuple{String, Int, Symbol}[]
+
+    if snapshot.stage_transition
+        new_stage = snapshot.new_stage
+        push!(items, ("=== STAGE $new_stage UNLOCKED ===", 13, :darkorange))
+        push!(items, ("New terms: $(_stage_description(basis, new_stage, var_names))", 11, :darkorange))
+        push!(items, ("", 10, :white))
+    end
+
     push!(items, ("DISCOVERED MODEL", 12, :black))
     for eq in disc_lines
         push!(items, (eq, 11, :steelblue))
@@ -167,6 +227,9 @@ function render_frame(
             push!(items, (eq, 11, :black))
         end
     end
+
+    push!(items, ("", 10, :white))
+    push!(items, ("Stage $(snapshot.stage) allows:  $(_stage_description(basis, snapshot.stage, var_names))", 10, :gray40))
 
     n_items = length(items)
     y_top = 0.93
