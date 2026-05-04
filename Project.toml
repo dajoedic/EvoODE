@@ -3,6 +3,7 @@ uuid = "76fee1ed-e581-49f8-b1d2-7537def3f7d8"
 version = "0.1.0"
 
 [deps]
+CairoMakie = "13f3f980-e62b-5c42-98c6-ff1f3baf88f0"
 Dates = "ade2ca70-3891-5945-98fb-dc099432e06a"
 DifferentialEquations = "0c46a032-eb83-5123-abaf-570d42b7fbaa"
 JSON3 = "0f8b85d8-7281-11e9-16c2-39a750bddbf1"
@@ -17,6 +18,7 @@ SciMLBase = "0bca4576-84f4-4d90-8ffe-ffa030f20462"
 Statistics = "10745b16-79ce-11e8-11f9-7d13ad32a3b2"
 
 [compat]
+CairoMakie = "0.15.10"
 DifferentialEquations = "7.17.0"
 JSON3 = "1.14.3"
 LinearAlgebra = "1.12.0"
