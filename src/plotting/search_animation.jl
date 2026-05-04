@@ -94,7 +94,7 @@ function render_frame(
 
     l = @layout [
         a{0.05h}
-        b{0.09h}
+        b{0.16h}
         grid(dim, 1)
         c{0.05h}
     ]
@@ -161,9 +161,44 @@ function render_frame(
     disc_inline = join(split(discovered_str, "\n"), "   |   ")
     true_inline = true_equations === nothing ? "" : join(split(true_equations, "\n"), "   |   ")
 
-    annotate!(plt[2], 0.03, 0.72, Plots.text("DISC:  $disc_inline", :left, :vcenter, 12, :steelblue))
+    annotate!(plt[2], 0.03, 0.85, Plots.text("DISC:  $disc_inline", :left, :vcenter, 12, :steelblue))
     if true_equations !== nothing
-        annotate!(plt[2], 0.03, 0.28, Plots.text("TRUE:  $true_inline", :left, :vcenter, 12, :black))
+        annotate!(plt[2], 0.03, 0.62, Plots.text("TRUE:  $true_inline", :left, :vcenter, 12, :black))
+    end
+
+    if basis isa StagedPolynomialBasis
+        stage = snapshot.stage
+        if stage >= 1 && stage <= length(basis.term_groups)
+            function _subst_varnames(name)
+                if var_names !== nothing
+                    for i in length(var_names):-1:1
+                        name = replace(name, "u$i" => var_names[i])
+                    end
+                end
+                return name
+            end
+
+            available_idxs = vcat(basis.term_groups[1:stage]...)
+            available_names = [_subst_varnames(basis.term_names[i]) for i in available_idxs]
+            available_str = join(available_names, ",  ")
+
+            unlock_idxs = basis.term_groups[stage]
+            unlock_names = [_subst_varnames(basis.term_names[i]) for i in unlock_idxs]
+            unlock_str = join(unlock_names, ",  ")
+
+            annotate!(
+                plt[2],
+                0.03,
+                0.38,
+                Plots.text("Available:  $available_str", :left, :vcenter, 11, :gray30),
+            )
+            annotate!(
+                plt[2],
+                0.03,
+                0.14,
+                Plots.text("Stage $stage unlocks:  $unlock_str", :left, :vcenter, 11, :gray30),
+            )
+        end
     end
 
     Yhat_best = _simulate_candidate(snapshot.best_structure, snapshot.best_params, basis, traj_truth)
