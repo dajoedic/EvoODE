@@ -1,6 +1,7 @@
 using Pkg
 Pkg.activate(joinpath(@__DIR__, "..", ".."))
 using EvoODE
+import EvoODE: _simulate_candidate
 using DifferentialEquations
 using Printf
 
@@ -98,6 +99,65 @@ mkpath(frames_dir)
 demo = make_demo_system(DEMO_SYSTEM)
 basis, strategy, optimizer, loss_fn, options = make_demo_config(demo.dim)
 
+accumulated_candidates = Matrix{Float64}[]
+frame_count = Ref(0)
+n_skipped_live = Ref(0)
+
+function on_level(snapshot)
+    if CLEAR_ON_STAGE_TRANSITION && snapshot.stage_transition
+        empty!(accumulated_candidates)
+    end
+
+    current_level_candidates = Matrix{Float64}[]
+    limit = MAX_CANDIDATES_PER_LEVEL === nothing ?
+        length(snapshot.candidates_structures) :
+        min(MAX_CANDIDATES_PER_LEVEL, length(snapshot.candidates_structures))
+
+    for i in 1:limit
+        Yhat = _simulate_candidate(
+            snapshot.candidates_structures[i],
+            snapshot.candidates_params[i],
+            basis,
+            demo.traj,
+        )
+        if Yhat === nothing
+            n_skipped_live[] += 1
+        else
+            push!(current_level_candidates, Yhat)
+        end
+    end
+
+    frame_count[] += 1
+    render_frame(
+        frame_count[],
+        snapshot,
+        accumulated_candidates,
+        current_level_candidates,
+        demo.traj,
+        basis;
+        output_dir = frames_dir,
+        var_names = demo.var_names,
+        true_equations = demo.true_equations,
+        frame_width = FRAME_WIDTH,
+        frame_height = FRAME_HEIGHT,
+    )
+    println("  Frame $(frame_count[]) - Level $(snapshot.level), Stage $(snapshot.stage), Loss $(@sprintf("%.3g", snapshot.best_loss))")
+
+    append!(accumulated_candidates, current_level_candidates)
+end
+
+strategy = EvoGrow(
+    pop_size = strategy.pop_size,
+    n_levels = strategy.n_levels,
+    children_per_parent = strategy.children_per_parent,
+    max_terms_per_eq = strategy.max_terms_per_eq,
+    λ = strategy.λ,
+    progression = strategy.progression,
+    usage = strategy.usage,
+    use_pretuning = strategy.use_pretuning,
+    level_callback = on_level,
+)
+
 println("Running EvoGrow on $DEMO_SYSTEM ...")
 result = discover(
     demo.traj;
@@ -111,20 +171,7 @@ result = discover(
 vis_history = result.meta.structure.vis_history
 println("Search done. Levels: $(length(vis_history)), final loss: $(result.loss)")
 
-println("Rendering frames to $frames_dir ...")
-stats = render_all_frames(
-    vis_history,
-    demo.traj,
-    basis;
-    output_dir = frames_dir,
-    var_names = demo.var_names,
-    true_equations = demo.true_equations,
-    frame_width = FRAME_WIDTH,
-    frame_height = FRAME_HEIGHT,
-    max_candidates_per_level = MAX_CANDIDATES_PER_LEVEL,
-    clear_on_stage_transition = CLEAR_ON_STAGE_TRANSITION,
-)
-println("Rendered $(stats.n_frames) frames. Skipped simulations: $(stats.n_skipped_simulations)")
+println("Frames live gerendert: $(frame_count[]) Frames. Skipped simulations: $(n_skipped_live[])")
 
 mp4_path = joinpath(out_root, "search_animation.mp4")
 mp4_created = false
@@ -155,13 +202,13 @@ open(summary_path, "w") do io
     println(io, "Demo system:           $DEMO_SYSTEM")
     println(io, "Run ID:                $RUN_ID")
     println(io, "Seed:                  $(options.rng_seed)")
-    println(io, "Levels rendered:       $(stats.n_frames)")
+    println(io, "Levels rendered:       $(frame_count[])")
     println(io, "Stages reached:        $n_stages")
     println(io, "Stage transitions:     $n_transitions")
     println(io, "Final loss:            $(result.loss)")
     println(io, "Frames directory:      $frames_dir")
     println(io, "MP4 created:           $mp4_created")
-    println(io, "Skipped simulations:   $(stats.n_skipped_simulations)")
+    println(io, "Skipped simulations:   $(n_skipped_live[])")
     println(io, "")
     println(io, "Final structure:")
     println(io, final_struct)

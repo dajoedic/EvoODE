@@ -53,6 +53,7 @@ Base.@kwdef struct EvoGrow <: AbstractStructureSearch
     progression::StageProgressionPolicy = StageProgressionPolicy()
     usage::StageUsagePolicy = StageUsagePolicy()
     use_pretuning::Bool = true
+    level_callback::Union{Nothing, Function} = nothing
 end
 
 """
@@ -725,6 +726,9 @@ function search_structure(strategy::EvoGrow,
                     new_stage = new_s
                 )
             )
+            if strategy.level_callback !== nothing
+                strategy.level_callback(vis_history[end])
+            end
         end
 
         # -----------------------------------
