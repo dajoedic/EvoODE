@@ -83,6 +83,8 @@ function render_frame(
     output_dir::String,
     var_names::Union{Nothing, Vector{String}} = nothing,
     true_equations::Union{Nothing, String} = nothing,
+    title::String = "EvoGrow Search",
+    elapsed_s::Float64 = 0.0,
     frame_width::Int = 1920,
     frame_height::Int = 1080,
 )::String
@@ -90,95 +92,55 @@ function render_frame(
     t = traj_truth.t
     X = traj_truth.x
 
-    l = @layout [grid(dim, 1){0.68w} a{0.32w}]
+    l = @layout [
+        a{0.05h}
+        b{0.09h}
+        grid(dim, 1)
+        c{0.05h}
+    ]
     plt = plot(
         layout = l,
         size = (frame_width, frame_height),
         background_color = :white,
         foreground_color = :black,
-        left_margin = 10Plots.mm,
-        bottom_margin = 5Plots.mm,
-        right_margin = 2Plots.mm,
+        left_margin = 8Plots.mm,
+        bottom_margin = 3Plots.mm,
+        right_margin = 8Plots.mm,
+        top_margin = 2Plots.mm,
     )
 
-    stage_label = if snapshot.stage_transition
-        "Stage $(snapshot.previous_stage) -> $(snapshot.new_stage)"
-    else
-        "Stage $(snapshot.stage)"
-    end
+    plot!(plt; plot_title = title, plot_titlefontsize = 15)
+
     plot!(
-        plt;
-        plot_title = "EvoGrow Search  |  Level $(snapshot.level)  |  $stage_label",
-        plot_titlefontsize = 13,
+        plt[1];
+        framestyle = :none,
+        background_color_inside = :white,
+        xlims = (0.0, 1.0),
+        ylims = (0.0, 1.0),
+        xaxis = false,
+        yaxis = false,
+        xticks = nothing,
+        yticks = nothing,
+        legend = false,
     )
 
-    ylims_k_1 = (0.0, 1.0)
-    Yhat_best = _simulate_candidate(snapshot.best_structure, snapshot.best_params, basis, traj_truth)
+    elapsed_h = div(floor(Int, elapsed_s), 3600)
+    elapsed_m = div(floor(Int, elapsed_s) % 3600, 60)
+    elapsed_sec = floor(Int, elapsed_s) % 60
+    elapsed_str = @sprintf("%02d:%02d:%02d", elapsed_h, elapsed_m, elapsed_sec)
+    stage_str = snapshot.stage_transition ?
+        "Stage: $(snapshot.previous_stage) -> $(snapshot.new_stage)" :
+        "Stage: $(snapshot.stage)"
+    n_terms = length(snapshot.best_params)
 
-    for k in 1:dim
-        y_lo = minimum(X[:, k])
-        y_hi = maximum(X[:, k])
-        pad = max(0.3 * abs(y_hi - y_lo), 0.1)
-        ylims_k = (y_lo - pad, y_hi + pad)
-
-        if k == 1
-            ylims_k_1 = ylims_k
-        end
-
-        plot!(
-            plt[k],
-            t,
-            X[:, k];
-            color = :black,
-            linewidth = 2.5,
-            label = false,
-            ylims = ylims_k,
-        )
-
-        for Yhat in accumulated_candidates
-            plot!(
-                plt[k],
-                t,
-                Yhat[:, k];
-                color = :gray,
-                linewidth = 0.5,
-                alpha = 0.08,
-                label = false,
-            )
-        end
-
-        for Yhat in current_level_candidates
-            plot!(
-                plt[k],
-                t,
-                Yhat[:, k];
-                color = :darkorange,
-                linewidth = 0.6,
-                alpha = 0.25,
-                label = false,
-            )
-        end
-
-        if Yhat_best !== nothing
-            plot!(
-                plt[k],
-                t,
-                Yhat_best[:, k];
-                color = :steelblue,
-                linewidth = 2.5,
-                label = false,
-            )
-        end
-
-        ylabel!(plt[k], var_names === nothing ? "u$k" : var_names[k])
-
-        if k == dim
-            xlabel!(plt[k], "t")
-        end
-    end
+    annotate!(plt[1], 0.03, 0.5, Plots.text("Level: $(snapshot.level)", :left, :vcenter, 13, :black))
+    annotate!(plt[1], 0.18, 0.5, Plots.text(stage_str, :left, :vcenter, 13, :black))
+    annotate!(plt[1], 0.38, 0.5, Plots.text(elapsed_str, :left, :vcenter, 13, :black))
+    annotate!(plt[1], 0.52, 0.5, Plots.text("Loss: $(@sprintf("%.6f", snapshot.best_loss))", :left, :vcenter, 13, :black))
+    annotate!(plt[1], 0.74, 0.5, Plots.text("Terms: $n_terms", :left, :vcenter, 13, :black))
 
     plot!(
-        plt[dim + 1];
+        plt[2];
         framestyle = :none,
         background_color_inside = :white,
         xlims = (0.0, 1.0),
@@ -196,38 +158,106 @@ function render_frame(
         snapshot.best_params;
         var_names = var_names,
     )
-    loss_str = @sprintf("%.6f", snapshot.best_loss)
+    disc_inline = join(split(discovered_str, "\n"), "   |   ")
+    true_inline = true_equations === nothing ? "" : join(split(true_equations, "\n"), "   |   ")
 
-    panel_text = "Level: $(snapshot.level)  Stage: $(snapshot.stage)\n"
-    panel_text *= "Loss:  $loss_str\n"
-    panel_text *= "\nDISCOVERED:\n$discovered_str"
+    annotate!(plt[2], 0.03, 0.72, Plots.text("DISC:  $disc_inline", :left, :vcenter, 12, :steelblue))
     if true_equations !== nothing
-        panel_text *= "\n\nTRUE SYSTEM:\n$true_equations"
+        annotate!(plt[2], 0.03, 0.28, Plots.text("TRUE:  $true_inline", :left, :vcenter, 12, :black))
     end
 
-    annotate!(plt[dim + 1], 0.05, 0.97, Plots.text(panel_text, :left, :top, 10, :black))
+    Yhat_best = _simulate_candidate(snapshot.best_structure, snapshot.best_params, basis, traj_truth)
+
+    for k in 1:dim
+        panel_idx = k + 2
+        y_lo = minimum(X[:, k])
+        y_hi = maximum(X[:, k])
+        pad = max(0.3 * abs(y_hi - y_lo), 0.1)
+        ylims_k = (y_lo - pad, y_hi + pad)
+
+        plot!(
+            plt[panel_idx],
+            t,
+            X[:, k];
+            color = :black,
+            linewidth = 2.5,
+            label = false,
+            ylims = ylims_k,
+        )
+
+        for Yhat in accumulated_candidates
+            plot!(
+                plt[panel_idx],
+                t,
+                Yhat[:, k];
+                color = :gray,
+                linewidth = 0.5,
+                alpha = 0.08,
+                label = false,
+            )
+        end
+
+        for Yhat in current_level_candidates
+            plot!(
+                plt[panel_idx],
+                t,
+                Yhat[:, k];
+                color = :darkorange,
+                linewidth = 0.6,
+                alpha = 1.0,
+                label = false,
+            )
+        end
+
+        if Yhat_best !== nothing
+            plot!(
+                plt[panel_idx],
+                t,
+                Yhat_best[:, k];
+                color = :steelblue,
+                linewidth = 2.5,
+                label = false,
+            )
+        end
+
+        ylabel!(plt[panel_idx], var_names === nothing ? "u$k" : var_names[k])
+
+        if k == dim
+            xlabel!(plt[panel_idx], "t")
+        end
+    end
+
+    plot!(
+        plt[dim + 3];
+        framestyle = :none,
+        background_color_inside = :white,
+        xlims = (0.0, 1.0),
+        ylims = (0.0, 1.0),
+        xaxis = false,
+        yaxis = false,
+        xticks = nothing,
+        yticks = nothing,
+        legend = false,
+    )
 
     legend_items = [
-        (:black, 2.5, 1.0, "Data"),
-        (:steelblue, 2.5, 1.0, "Best (current)"),
-        (:gray, 0.8, 0.4, "Search history"),
-        (:darkorange, 0.8, 0.4, "Current level"),
+        (0.03, :black, 2.5, 1.0, "Data"),
+        (0.27, :steelblue, 2.5, 1.0, "Best (current)"),
+        (0.52, :gray, 0.8, 0.4, "Search history"),
+        (0.76, :darkorange, 0.8, 1.0, "Current level"),
     ]
-    y_start = 0.18
-    y_step = 0.055
 
-    for (i, (col, lw, al, lbl)) in enumerate(legend_items)
-        y = y_start - (i - 1) * y_step
+    for (x0, col, lw, al, lbl) in legend_items
         plot!(
-            plt[dim + 1],
-            [0.05, 0.22],
-            [y, y];
+            plt[dim + 3],
+            [x0, x0 + 0.08],
+            [0.5, 0.5];
             color = col,
             linewidth = lw,
             alpha = al,
             label = false,
         )
-        annotate!(plt[dim + 1], 0.26, y, Plots.text(lbl, :left, :vcenter, 10, :black))
+        annotate!(plt[dim + 3], x0 + 0.10, 0.5, Plots.text(lbl, :left, :vcenter, 12, :black))
     end
 
     filename = @sprintf("frame_%04d.png", frame_idx)
@@ -243,6 +273,7 @@ function render_all_frames(
     output_dir::String,
     var_names::Union{Nothing, Vector{String}} = nothing,
     true_equations::Union{Nothing, String} = nothing,
+    title::String = "EvoGrow Search",
     frame_width::Int = 1920,
     frame_height::Int = 1080,
     max_candidates_per_level::Union{Nothing, Int} = nothing,
@@ -289,6 +320,8 @@ function render_all_frames(
             output_dir = output_dir,
             var_names = var_names,
             true_equations = true_equations,
+            title = title,
+            elapsed_s = 0.0,
             frame_width = frame_width,
             frame_height = frame_height,
         )

@@ -15,6 +15,7 @@ const FRAME_WIDTH = 1920
 const FRAME_HEIGHT = 1080
 const MAX_CANDIDATES_PER_LEVEL = nothing
 const CLEAR_ON_STAGE_TRANSITION = true
+const QUICK_TEST = false
 
 function make_demo_system(name::Symbol)
     if name == :logistic
@@ -22,6 +23,7 @@ function make_demo_system(name::Symbol)
         var_names = ["u"]
         u0 = [0.1]
         t_grid = range(0.0, 10.0, length = 100)
+        system_label = "Logistic Growth"
         true_equations = "du/dt = 0.79*u - 0.0106*u^2"
         ode! = (du, u, p, t) -> (du[1] = 0.79 * u[1] - 0.0106 * u[1]^2; nothing)
     elseif name == :sir_2d
@@ -29,6 +31,7 @@ function make_demo_system(name::Symbol)
         var_names = ["S", "I"]
         u0 = [0.99, 0.01]
         t_grid = range(0.0, 30.0, length = 150)
+        system_label = "SIR Model"
         true_equations = "dS/dt = -0.4*S*I\ndI/dt =  0.4*S*I - 0.314*I"
         ode! = (du, u, p, t) -> (du[1] = -0.4 * u[1] * u[2];
                                   du[2] =  0.4 * u[1] * u[2] - 0.314 * u[2]; nothing)
@@ -37,6 +40,7 @@ function make_demo_system(name::Symbol)
         var_names = ["x", "y"]
         u0 = [0.9, 0.9]
         t_grid = range(0.0, 10.0, length = 100)
+        system_label = "Lotka-Volterra"
         true_equations = "dx/dt = 3*x - x^2 - 2*x*y\ndy/dt = 2*y - x*y - y^2"
         ode! = (du, u, p, t) -> (du[1] = 3.0 * u[1] - u[1]^2 - 2.0 * u[1] * u[2];
                                   du[2] = 2.0 * u[2] - u[1] * u[2] - u[2]^2; nothing)
@@ -45,6 +49,7 @@ function make_demo_system(name::Symbol)
         var_names = ["x", "y", "z"]
         u0 = [2.3, 8.1, 12.4]
         t_grid = range(0.0, 15.0, length = 300)
+        system_label = "Lorenz 3D"
         true_equations = "dx/dt =  5.1*(y - x)\ndy/dt = 12*x - y - x*z\ndz/dt =  x*y - 1.67*z"
         ode! = (du, u, p, t) -> (du[1] =  5.1 * (u[2] - u[1]);
                                   du[2] = 12.0 * u[1] - u[2] - u[1] * u[3];
@@ -57,7 +62,13 @@ function make_demo_system(name::Symbol)
     sol = solve(prob, Tsit5(); saveat = collect(t_grid), abstol = 1e-9, reltol = 1e-9)
     traj = Trajectory(collect(t_grid), Array(sol)')
 
-    return (traj = traj, dim = dim, var_names = var_names, true_equations = true_equations)
+    return (
+        traj = traj,
+        dim = dim,
+        var_names = var_names,
+        true_equations = true_equations,
+        system_label = system_label,
+    )
 end
 
 # ============================================================
@@ -65,20 +76,37 @@ end
 # ============================================================
 function make_demo_config(dim::Int)
     basis = default_staged_polynomial_basis(dim)
-    strategy = EvoGrow(
-        pop_size = 10,
-        n_levels = 30,
-        children_per_parent = 3,
-        max_terms_per_eq = 5,
-        λ = 1e-3,
-        progression = StageProgressionPolicy(
-            mode = :stage_local,
-            min_levels_per_stage = 3,
-        ),
-        usage = StageUsagePolicy(mode = :hard),
-        use_pretuning = true,
-    )
-    optimizer = BFGSOptimizer(maxiters = 200, time_limit_s = 120.0)
+    if QUICK_TEST
+        strategy = EvoGrow(
+            pop_size = 5,
+            n_levels = 5,
+            children_per_parent = 2,
+            max_terms_per_eq = 3,
+            λ = 1e-3,
+            progression = StageProgressionPolicy(
+                mode = :stage_local,
+                min_levels_per_stage = 2,
+            ),
+            usage = StageUsagePolicy(mode = :hard),
+            use_pretuning = true,
+        )
+        optimizer = BFGSOptimizer(maxiters = 50, time_limit_s = 10.0)
+    else
+        strategy = EvoGrow(
+            pop_size = 10,
+            n_levels = 30,
+            children_per_parent = 3,
+            max_terms_per_eq = 5,
+            λ = 1e-3,
+            progression = StageProgressionPolicy(
+                mode = :stage_local,
+                min_levels_per_stage = 3,
+            ),
+            usage = StageUsagePolicy(mode = :hard),
+            use_pretuning = true,
+        )
+        optimizer = BFGSOptimizer(maxiters = 200, time_limit_s = 120.0)
+    end
     loss_fn = MSELoss()
     options = DiscoveryOptions(
         rng_seed = 42,
@@ -97,6 +125,8 @@ frames_dir = joinpath(out_root, "frames")
 mkpath(frames_dir)
 
 demo = make_demo_system(DEMO_SYSTEM)
+t_start = time()
+frame_title = "EvoGrow - $(demo.system_label)"
 basis, strategy, optimizer, loss_fn, options = make_demo_config(demo.dim)
 
 accumulated_candidates = Matrix{Float64}[]
@@ -138,6 +168,8 @@ function on_level(snapshot)
         output_dir = frames_dir,
         var_names = demo.var_names,
         true_equations = demo.true_equations,
+        title = frame_title,
+        elapsed_s = time() - t_start,
         frame_width = FRAME_WIDTH,
         frame_height = FRAME_HEIGHT,
     )
