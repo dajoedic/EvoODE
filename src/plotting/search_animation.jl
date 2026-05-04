@@ -94,7 +94,7 @@ function render_frame(
 
     l = @layout [
         a{0.05h}
-        b{0.16h}
+        b{0.22h}
         grid(dim, 1)
         c{0.05h}
     ]
@@ -109,7 +109,7 @@ function render_frame(
         top_margin = 2Plots.mm,
     )
 
-    plot!(plt; plot_title = title, plot_titlefontsize = 15)
+    plot!(plt; plot_title = title, plot_titlefontsize = 16)
 
     plot!(
         plt[1];
@@ -124,20 +124,14 @@ function render_frame(
         legend = false,
     )
 
-    elapsed_h = div(floor(Int, elapsed_s), 3600)
-    elapsed_m = div(floor(Int, elapsed_s) % 3600, 60)
-    elapsed_sec = floor(Int, elapsed_s) % 60
-    elapsed_str = @sprintf("%02d:%02d:%02d", elapsed_h, elapsed_m, elapsed_sec)
     stage_str = snapshot.stage_transition ?
-        "Stage: $(snapshot.previous_stage) -> $(snapshot.new_stage)" :
-        "Stage: $(snapshot.stage)"
+        "$(snapshot.previous_stage) → $(snapshot.new_stage)" :
+        "$(snapshot.stage)"
+    loss_str = @sprintf("%.6f", snapshot.best_loss)
     n_terms = length(snapshot.best_params)
+    status_text = "Stage $stage_str   |   Level $(snapshot.level)   |   Loss $loss_str   |   Terms $n_terms"
 
-    annotate!(plt[1], 0.03, 0.5, Plots.text("Level: $(snapshot.level)", :left, :vcenter, 13, :black))
-    annotate!(plt[1], 0.18, 0.5, Plots.text(stage_str, :left, :vcenter, 13, :black))
-    annotate!(plt[1], 0.38, 0.5, Plots.text(elapsed_str, :left, :vcenter, 13, :black))
-    annotate!(plt[1], 0.52, 0.5, Plots.text("Loss: $(@sprintf("%.6f", snapshot.best_loss))", :left, :vcenter, 13, :black))
-    annotate!(plt[1], 0.74, 0.5, Plots.text("Terms: $n_terms", :left, :vcenter, 13, :black))
+    annotate!(plt[1], 0.03, 0.5, Plots.text(status_text, :left, :vcenter, 13, :black))
 
     plot!(
         plt[2];
@@ -158,47 +152,30 @@ function render_frame(
         snapshot.best_params;
         var_names = var_names,
     )
-    disc_inline = join(split(discovered_str, "\n"), "   |   ")
-    true_inline = true_equations === nothing ? "" : join(split(true_equations, "\n"), "   |   ")
+    disc_lines = split(discovered_str, "\n")
+    true_lines = true_equations !== nothing ? split(true_equations, "\n") : String[]
 
-    annotate!(plt[2], 0.03, 0.85, Plots.text("DISC:  $disc_inline", :left, :vcenter, 12, :steelblue))
-    if true_equations !== nothing
-        annotate!(plt[2], 0.03, 0.62, Plots.text("TRUE:  $true_inline", :left, :vcenter, 12, :black))
+    items = Tuple{String, Int, Symbol}[]
+    push!(items, ("DISCOVERED MODEL", 12, :black))
+    for eq in disc_lines
+        push!(items, (eq, 11, :steelblue))
+    end
+    if !isempty(true_lines)
+        push!(items, ("", 10, :white))
+        push!(items, ("GROUND TRUTH", 12, :black))
+        for eq in true_lines
+            push!(items, (eq, 11, :black))
+        end
     end
 
-    if basis isa StagedPolynomialBasis
-        stage = snapshot.stage
-        if stage >= 1 && stage <= length(basis.term_groups)
-            function _subst_varnames(name)
-                if var_names !== nothing
-                    for i in length(var_names):-1:1
-                        name = replace(name, "u$i" => var_names[i])
-                    end
-                end
-                return name
-            end
+    n_items = length(items)
+    y_top = 0.93
+    y_step = 0.88 / max(n_items - 1, 1)
 
-            available_idxs = vcat(basis.term_groups[1:stage]...)
-            available_names = [_subst_varnames(basis.term_names[i]) for i in available_idxs]
-            available_str = join(available_names, ",  ")
-
-            unlock_idxs = basis.term_groups[stage]
-            unlock_names = [_subst_varnames(basis.term_names[i]) for i in unlock_idxs]
-            unlock_str = join(unlock_names, ",  ")
-
-            annotate!(
-                plt[2],
-                0.03,
-                0.38,
-                Plots.text("Available:  $available_str", :left, :vcenter, 11, :gray30),
-            )
-            annotate!(
-                plt[2],
-                0.03,
-                0.14,
-                Plots.text("Stage $stage unlocks:  $unlock_str", :left, :vcenter, 11, :gray30),
-            )
-        end
+    for (i, (text, fsize, color)) in enumerate(items)
+        isempty(text) && continue
+        y = y_top - (i - 1) * y_step
+        annotate!(plt[2], 0.03, y, Plots.text(text, :left, :vcenter, fsize, color))
     end
 
     Yhat_best = _simulate_candidate(snapshot.best_structure, snapshot.best_params, basis, traj_truth)

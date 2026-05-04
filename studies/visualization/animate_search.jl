@@ -126,7 +126,7 @@ mkpath(frames_dir)
 
 demo = make_demo_system(DEMO_SYSTEM)
 t_start = time()
-frame_title = "EvoGrow - $(demo.system_label)"
+frame_title = "EvoGrow – $(demo.system_label)"
 basis, strategy, optimizer, loss_fn, options = make_demo_config(demo.dim)
 
 accumulated_candidates = Matrix{Float64}[]
