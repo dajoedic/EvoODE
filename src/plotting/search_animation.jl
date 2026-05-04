@@ -192,7 +192,7 @@ function render_frame(
                 Yhat[:, k];
                 color = :gray,
                 linewidth = 0.5,
-                alpha = 0.08,
+                alpha = 0.18,
                 label = false,
             )
         end
