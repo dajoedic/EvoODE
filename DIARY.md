@@ -4,6 +4,73 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ---
 
+## 2026-05-08
+
+### paper1_phaseA_v1 vollständig abgeschlossen
+
+`experiments/run_experiment.jl paper1_phaseA_v1` hat alle 300 Runs durchlaufen (300/300, alle `success=true`, 0 failed, 0 interrupted). Laufzeit ca. 4.5 Tage.
+
+Aggregation: `julia experiments/aggregate.jl paper1_phaseA_v1` → `run_registry.csv` (300 Zeilen).
+Python-Pipeline: `aggregate_run_registry.py` → `data/paper1_phaseA_v1/aggregate_by_variant_system.csv` (60 Zeilen, 6 Varianten × 10 Systeme, alle Zellen vollständig).
+
+### Erste vollständige Auswertung: paper1_phaseA_v1
+
+**Exact Match (Kernbefunde):**
+
+- Systeme 2, 3, 24: alle EvoGrow-Varianten `exact_match=1.0`, GP auf System 24 `exact_match=0` (loss ~4.5e-3 vs. EvoGrow 5.4e-14 — dramatischer Unterschied auf simpelstem 2D-linearem System)
+- System 11 (cubic, `du=-u³`): alle EvoGrow `exact_match=0` trotz loss ~4.4e-15 — Bug in `exact_support_match` vermutet; GP `exact_match=1.0`
+- Systeme 26, 31, 54, 63: `exact_match=0` für alle Varianten — kein exakter Strukturfund auf Stage-3-Systemen
+
+**Loss EvoGrow vs. GP (höherdimensionale Systeme):**
+
+| System | Beste EvoGrow | GP | Faktor |
+|--------|--------------|-----|--------|
+| 31 SIR | 7.0e-05 | 0.314 | ~4.500× |
+| 54 Lorenz | 7.4e-04 | 0.921 | ~1.200× |
+| 26 Lotka-Volterra | 2.5e-04 | 2.98e-03 | ~12× |
+
+GP versagt auf gekoppelten Systemen deutlich — stärkstes Argument für EvoGrow.
+
+**Stage Overshoot (Kernhypothese):**
+
+- **System 54 (Lorenz):** v1=+2, v2.1=+1.6, alle v2.2=0 Overshoot, 0 Wasted Levels → sauberste Bestätigung der Kernhypothese
+- **System 3 (Logistic):** v1=0 (flache Basis, keine Stage-Promotions), alle v2.x=+3 Overshoot — v2.2_stage_local verschärft wasted_levels auf 12 durch Mindestbudget
+- **Systeme 26, 31, 63:** alle Varianten +2 Overshoot — kein Differenzierungssignal
+
+**Offene Fragen:**
+- `exact_support_match`-Bug bei System 11 untersuchen (loss ~0 aber kein Match)
+- Warum GP auf System 24 (harmonic oscillator) so schlecht?
+- Für keine Stage-3-Systeme exact match → algorithmisches Problem oder Loss-Tol-Problem?
+- Kein Run konvergiert auf `loss_tol=1e-8` außer System 2/24 → Stopp-Mechanismus greift nie als Loss-Stopp
+
+### WP3: Frame Layout Redesign (search_animation.jl)
+
+Zweispalten-Layout für `render_frame`: linke Spalte = Trajektorien-Subplots, rechte Spalte = Info-Panel (Loss, entdeckte Gleichungen, wahre Gleichungen, farbige Legende). Aktuelle Level-Kandidaten in Orange, Historie in Grau. `plot_title` über allen Subplots. `structure_to_string` Koeffizientenformat auf `%.3f` geändert.
+
+---
+
+## 2026-05-03
+
+### Animationspipeline für EvoGrow-Suchverlauf (WP1–WP3)
+`2fa3e18`
+
+Visualisierung des stufenweisen EvoGrow-Suchprozesses als animiertes Video:
+
+**WP1 — Snapshot-Sammlung in `src/structure/evogrow.jl`:**
+- `vis_history`-Feld in EvoGrow; sammelt Snapshots am Ende jedes Levels
+- Jeder Snapshot enthält aktuelle Population (Kandidaten + Scores) und Stage-Info
+
+**WP2 — Rendering in `src/plotting/search_animation.jl` + `studies/visualization/animate_search.jl`:**
+- `search_animation.jl`: rendert pro Level ein PNG-Frame
+- `animate_search.jl`: orchestriert Discovery → Frame-Rendering → optionaler ffmpeg-Export (MP4)
+
+**WP3 — Frame-Layout:**
+- Zweispaltig: links Trajektorie-Subplots (Ground Truth vs. Kandidaten), rechts Info-Panel
+- Aktuelle Level-Kandidaten: orange; akkumulierte History: grau
+- Info-Panel: Stage, Level, Loss, true Gleichungen, farbige Legende
+
+---
+
 ## 2026-05-02
 
 ### `profile_init` — Ergebnisse ausgewertet
