@@ -101,7 +101,10 @@ generalization data location. Verify the OMIT verdict is reproduced correctly af
 
 Define exactly what "best EvoODE" means for Paper 1.
 This phase produces a written specification — not code.
-No runs, no implementation. Only decisions, documented here.
+
+Phase 1 freezes the final EvoODE variant specification. If implementation or validation work
+is required for a candidate final variant, it must happen through explicit WPs before Phase 1
+can close. Phase 1 itself does not contain uncontrolled implementation work.
 
 The variant defined in this phase is the only EvoODE variant in the final experiment.
 It must be fully specified before Phase 2 begins.
@@ -224,7 +227,7 @@ All metrics below must be defined, implemented, and verified before Phase 3.
 | Metric | Definition |
 |--------|-----------|
 | `loss` | Simulation MSE: `mean((Yhat - Ytrue)^2)` over all timesteps and dimensions |
-| `r2` | R² coefficient of determination: `1 - SS_res / SS_tot`, computed per dimension, averaged |
+| `r2` | R² coefficient of determination: `1 - SS_res / SS_tot`, computed per dimension, averaged. If `SS_tot` is below a numerical tolerance for a dimension, that dimension is marked as non-evaluable for R² or handled according to the ODEBench protocol alignment audit (WP-2.4). The chosen rule must be documented before Phase 3. |
 | `r2_above_threshold` | Boolean: `r2 > 0.9` (ODEBench accuracy criterion) |
 | `exact_support_match` | True iff discovered term indices match ground truth exactly (exact systems only) |
 | `final_stage` | Last stage active at termination |
@@ -267,6 +270,8 @@ Aggregation rules for timeout runs:
 - Not counted in `n_valid`
 - Included in failure-rate and robustness analyses
 - Not silently re-run or deleted — must remain in the registry
+- `elapsed_s` must record either the configured timeout limit or the observed wall time until
+  termination, so that timeout runs contribute to runtime and failure-mode analysis
 
 ### Output Artifacts
 
@@ -607,6 +612,10 @@ derivative residual plateau  AND  trajectory residual above tolerance
 Parameter magnitude change (Option B) or coefficient variance (Option C) may only be
 used as fallback proxies if the residual-based approach fails in practice.
 If a fallback is used, the reason must be explicitly justified in the WP-v3.1 design note.
+
+Derivative estimation used for v3 progression should be consistent with the derivative
+estimation used in pretuning (`src/optimize/pretune.jl`: central finite differences,
+forward/backward at boundaries), unless a deviation is explicitly justified in WP-v3.1.
 
 **This design question must be resolved and documented in WP-v3.1 before any implementation begins.**
 
