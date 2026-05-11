@@ -181,7 +181,6 @@ max_terms_per_eq:       [TBD]
 λ:                      [TBD]
 min_levels_per_stage:   [TBD]
 BFGSOptimizer maxiters: [TBD]
-BFGSOptimizer time_limit_s: [TBD]
 run_timeout_s:          [TBD]
 loss_tol:               [TBD]
 plateau_window:         [TBD]
@@ -189,6 +188,10 @@ plateau_tol:            [TBD]
 Seeds:                  [TBD]
 Conditions:             pretuning=true | pretuning=false
 ```
+
+`run_timeout_s` is the authoritative run-level timeout (one run = system × condition × seed).
+`BFGSOptimizer time_limit_s` is an internal per-call parameter and is not a Paper 1 hyperparameter.
+If it is set at all, it must be set larger than `run_timeout_s` so the run-level timeout fires first.
 
 ---
 
