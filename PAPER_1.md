@@ -588,7 +588,7 @@ The paper's secondary contribution is a systematic analysis of pretuning in simu
    - **ODEFormer** (neural transformer, data-hungry, not comparable directly)
    - **GODE** and related staged/grammar-based ODE discovery approaches
    - **Prior symbolic-regression-based dynamical-system identification**, including
-     Kronberger et al. and related work identifying ODEs via GP/SR over libraries
+     Kronberger et al. and related GP/SR-based approaches for identifying ODEs over term libraries
    - EvoODE must be positioned as: staged, equation-wise complexity allocation as a
      principled search strategy — not as the first SR-based ODE discovery method
 3. Method: final EvoODE variant, staged basis, pretuning mechanism
