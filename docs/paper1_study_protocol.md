@@ -236,6 +236,32 @@ Valid: exact systems only (IDs 2, 3, 11, 24, 26, 31, 54, 63).
 Must NOT be used: surrogate systems.
 Aggregation: mean over valid runs. Report `n_valid` alongside.
 
+**Design decision — strict vs. effective structural recovery (resolved 2026-05-08):**
+
+`exact_match_rate` uses the strict definition: the set of active term indices must
+match the ground-truth set exactly. Coefficient magnitudes are not considered.
+
+An alternative definition (effective structural recovery) would threshold near-zero
+coefficients post-hoc and remove the corresponding terms before comparison. This
+was explicitly rejected for the following reason:
+
+EvoGrow's growth-without-pruning strategy makes it structurally impossible to
+discover a late-stage term (e.g. `u1^3`) in isolation. By the time stage 4 is
+reached, terms from stages 1 and 2 (`u1`, `u1^2`) are already in the active set
+and cannot be removed. Applying a post-hoc threshold would mask this genuine
+algorithmic limitation by retroactively attributing a capability the method does
+not possess.
+
+The strict metric correctly distinguishes:
+- methods that recover the minimal structure directly (GP on System 11)
+- methods that recover a functionally correct but structurally redundant solution
+  (EvoGrow on System 11: loss ~4e-15 with zero-coefficient spurious terms)
+
+This is a genuine scientific finding: EvoGrow achieves competitive loss quality
+without guaranteeing minimal exact structural recovery on systems where the true
+structure is first reachable in a late basis stage. This limitation must be stated
+explicitly in the paper.
+
 ---
 
 The following two metrics jointly operationalize **complexity efficiency** —
