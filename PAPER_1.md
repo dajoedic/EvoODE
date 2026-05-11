@@ -162,7 +162,7 @@ Roles:
 
 - All 8 decisions above answered and written into the "Phase 1 Specification" section below
 - If v3 is chosen: v3 has been implemented by Codex and passed its validation gate (WP-v3.6) before Phase 1 closes
-- If v2.2 is chosen (default): current implementation confirmed to run correctly on at least 3 systems
+- If v2.2 is chosen as fallback: current implementation confirmed to run correctly on at least 3 systems
 - No hyperparameter is left as "TBD"
 
 ### Phase 1 Specification (to be filled in)
@@ -582,7 +582,15 @@ The paper's secondary contribution is a systematic analysis of pretuning in simu
 ### Planned Paper Structure
 
 1. Introduction: ODE discovery, the role of initialization, staged complexity control
-2. Related Work: SINDy, GP/PySR, ODEFormer — positioned honestly; no unfair comparisons
+2. Related Work: must explicitly cover and position against:
+   - **SINDy** and its variants (library-based regression, no structure search)
+   - **PySR / GP-based symbolic regression** (global unstructured search)
+   - **ODEFormer** (neural transformer, data-hungry, not comparable directly)
+   - **GODE** and related staged/grammar-based ODE discovery approaches
+   - **Prior symbolic-regression-based dynamical-system identification**, including
+     Kronberger et al. and related work identifying ODEs via GP/SR over libraries
+   - EvoODE must be positioned as: staged, equation-wise complexity allocation as a
+     principled search strategy — not as the first SR-based ODE discovery method
 3. Method: final EvoODE variant, staged basis, pretuning mechanism
 4. Experiments: ODEBench evaluation — full 63 systems, exact + surrogate split
 5. Analysis: pretuning effect, staged complexity allocation, failure modes
@@ -693,7 +701,7 @@ This is not a replacement for `EvoGrow`. v2.2 code paths are untouched.
 | Cluster runner: race condition on run acquisition | Low | Existing tmp→rename protocol is atomic; validate in WP-4.1 before full run |
 | Julia version / package drift on cluster | Medium | `Manifest.toml` frozen; Julia version logged in `config.json` |
 | ODE solve failures on high-dimensional or stiff systems | Medium | Record as `solver_failures` metric; failed runs retained, not deleted |
-| BFGS time limit insufficient for large systems | Medium | Validate runtime in Phase 3; adjust `time_limit_s` before Phase 4 |
+| Run-level timeout insufficient for large systems | Medium | Validate runtime in Phase 3; adjust `run_timeout_s` before Phase 4 |
 | pretuning OLS unstable on short trajectories | Medium | Existing NaN/norm fallback in `pretune.jl`; record failure rate in Phase 3 |
 | R² computation requires re-simulating ground truth | Low | Ground truth reproducible from ICs/tspan in system JSON; ICs verified |
 | v3 per-equation loss proxy not well-defined | High | Resolve in WP-v3.1 before any implementation; if unresolvable, fall back to v2.2 |
