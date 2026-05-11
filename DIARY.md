@@ -31,7 +31,11 @@ Vollständiges Repo-Review vor nächster Implementierungsphase. Alle gefundenen 
 - `docs/paper1_study_protocol.md`: als Phase-A-Archivdokument markiert, nicht mehr aktives Protokoll
 - `analysis/configs/paper1_phaseA_v1.json`: Generalisierungspfad von `outputs/studies/generalization/` → `debug_results/` korrigiert (WP-0.2)
 
-<!-- b4c1cce -->
+Abschließende Verifikation: `debug_results/generalization_summary.csv` und `generalization_detail.csv` existieren — WP-0.2 damit vollständig erledigt.
+
+Offener Rest: WP-0.1 (H4-Claim-Korrektur in `evaluate_hypotheses.py`) — wird morgen als Codex-Task formuliert. Das ist der einzige noch ausstehende Punkt vor dem endgültigen Abschluss von Phase A.
+
+<!-- b4c1cce, 5f5fc43 -->
 
 ### Strategische Neuausrichtung: Paper 1 Roadmap
 
