@@ -767,28 +767,27 @@ If you cannot state which research question a change addresses, do not make it.
 ## Paper 1 — Execution Roadmap
 
 The full execution plan lives in `PAPER_1.md`. That document contains:
-- All phases with Go/No-Go criteria
-- Work package breakdown (current phase in detail, future phases high-level)
-- EvoGrow v3 design specification (equation-wise staged progression)
+- All phases (0–5) with Go/No-Go criteria
+- Work package breakdown
+- EvoGrow v3 design specification (conditional on Phase 1 decision)
 - Implementation and scientific risk register
-- Frozen elements that must not change
+- Frozen elements
 
-**Current phase:** Phase 0 (Baseline Freeze) + Phase 1 (ODEBench Evaluation)
+**Current phase:** Phase 0 (Archive Phase A, correct diagnostics)
 
 **Active WPs:**
 - WP-0.1: Fix H4 claim in freeze memo (C3 cannot be evaluated — vacuous result)
 - WP-0.2: Fix generalization data path in evaluate_hypotheses.py
-- WP-1.1: R² metric from existing paper1_phaseA_v1 run results
-- WP-1.2: ODEBench comparison table (EvoGrow vs. SINDy vs. PySR, published numbers)
 
-**Frozen baseline:** `paper1_phaseA_v1` — 300/300 runs, all success=true.
-Evidence scope frozen. H1–H4 verdicts in `docs/paper1_freeze_memo_phaseA.md`.
+**Final experiment scope:**
+- All 63 ODEBench systems (`benchmarks/data/strogatz_extended.json`)
+- Two conditions only: final EvoODE variant with pretuning=true vs. pretuning=false
+- No GP baseline, no v1, no v2.1 in final experiment
+- All results from new runs (experiment ID `paper1_phaseB_v1`)
 
-**Permanent baseline variant:** `evogrow_v2_2_stage_local` (EvoGrow v2.2 stage-local, hard usage).
-All future variants (EvoGrow v3) are compared against this baseline, never replacing it.
-
-Exception: `docs/paper1_study_protocol.md` remains the standalone protocol document
-for Paper 1 metrics, hypotheses, and system definitions.
+**Archived baseline:** `paper1_phaseA_v1` — 300/300 runs, all success=true.
+Evidence frozen. H1–H4 verdicts in `docs/paper1_freeze_memo_phaseA.md`.
+Phase A results are not used for final paper claims.
 
 ---
 
