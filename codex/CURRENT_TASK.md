@@ -1,348 +1,363 @@
-# CURRENT TASK: WP11 — CairoMakie-basierter Rebuild von `render_frame`
+# CURRENT TASK: Step 2 — Primary Metric Analysis + Freeze Memo
 
-## Ziel
+## Context
 
-`src/plotting/search_animation.jl` wird auf CairoMakie umgebaut.
-Nur `render_frame` und dessen Hilfsfunktionen werden geändert.
-Alle anderen Funktionen (`structure_to_string`, `_simulate_candidate`,
-`_format_elapsed`, `_stage_description`) bleiben **vollständig unverändert**.
+All 300 runs of `paper1_phaseA_v1` are complete. Aggregation is done.
+This task evaluates hypotheses H1–H4 against the frozen study protocol
+and writes the formal Freeze Memo to `docs/paper1_freeze_memo_phaseA.md`.
 
-Geänderte Dateien: **nur** `src/plotting/search_animation.jl`.
+Reference documents (read before implementing):
+- `docs/paper1_study_protocol.md` — metric definitions, hypothesis specifications, exclusion rules
+- `PAPER_1.md` — freeze memo structure (three-block format), exact_match=0 collapse scenario
+- `analysis/CONVENTIONS.md` — script architecture, naming, anti-patterns
 
----
-
-## Namespace-Regel (zwingend)
-
-```julia
-import CairoMakie as CM
-```
-
-Alle CairoMakie-Aufrufe werden mit `CM.`-Präfix geschrieben (`CM.Figure`,
-`CM.Axis`, `CM.text!`, `CM.lines!`, `CM.poly!`, `CM.save`, etc.).
-Kein `using CairoMakie`. Das verhindert Konflikte mit Plots.jl im Modul-Scope.
+**No figures. No paper tables. Claim evaluation and memo only.**
 
 ---
 
-## Hilfsfunktionen
+## Deliverables
 
-Die folgenden drei Hilfsfunktionen ersetzen die alten (`_frameless_panel!`,
-`_format_equation`, `_render_eq_line!`).
-
-### `_format_equation(eq)`
-
-Unverändert übernehmen — Signatur und Body bleiben wie heute:
-
-```julia
-function _format_equation(eq::AbstractString)
-    return replace(eq, "*" => " ")
-end
-```
-
-### `_render_eq_line!(ax, eq, y, color, fontsize)`
-
-Neu: nimmt eine CairoMakie-`Axis` statt einen Plots-`Subplot`.
-
-```julia
-function _render_eq_line!(ax::CM.Axis, eq::AbstractString, y::Float64, color, fontsize::Int)
-    parts = split(eq, " = ", limit = 2)
-    if length(parts) == 2
-        CM.text!(ax, 0.05, y; text = strip(parts[1]),
-            align = (:left, :center), fontsize = fontsize, color = color)
-        CM.text!(ax, 0.40, y; text = "= " * strip(parts[2]),
-            align = (:left, :center), fontsize = fontsize, color = color)
-    else
-        CM.text!(ax, 0.05, y; text = eq,
-            align = (:left, :center), fontsize = fontsize, color = color)
-    end
-end
-```
-
-Die alte `_frameless_panel!` entfällt. Axis-Cleanup erfolgt direkt via
-`CM.hidedecorations!` + `CM.hidespines!` (siehe unten).
+| File | Description |
+|------|-------------|
+| `analysis/scripts/aggregate/evaluate_hypotheses.py` | Main analysis script |
+| `analysis/data/paper1_phaseA_v1/h1_h4_diagnostics.json` | Machine-readable hypothesis diagnostics |
+| `docs/paper1_freeze_memo_phaseA.md` | Human-readable Freeze Memo (three-block format) |
 
 ---
 
-## `render_frame` — Vollständige neue Implementierung
+## Input Files
 
-Signatur bleibt **unverändert**:
-
-```julia
-function render_frame(
-    frame_idx::Int,
-    snapshot::NamedTuple,
-    accumulated_candidates::Vector{Matrix{Float64}},
-    current_level_candidates::Vector{Matrix{Float64}},
-    traj_truth::Trajectory,
-    basis::AbstractBasis;
-    output_dir::String,
-    var_names::Union{Nothing, Vector{String}} = nothing,
-    true_equations::Union{Nothing, String} = nothing,
-    title::String = "EvoGrow Search",
-    elapsed_s::Float64 = 0.0,
-    frame_width::Int = 1920,
-    frame_height::Int = 1080,
-)::String
-```
-
-### Lokale Variablen
-
-```julia
-dim = size(traj_truth.x, 2)
-t   = traj_truth.t
-X   = traj_truth.x
-```
-
-### Figure und GridLayout
-
-```julia
-fig = CM.Figure(
-    size            = (frame_width, frame_height),
-    backgroundcolor = :white,
-)
-
-CM.rowsize!(fig.layout, 1, CM.Fixed(round(Int, frame_height * 0.08)))   # Header
-CM.rowsize!(fig.layout, 3, CM.Fixed(round(Int, frame_height * 0.045)))  # Legende
-CM.colsize!(fig.layout, 1, CM.Relative(0.28))                            # Info-Panel
-```
+| File | Role |
+|------|------|
+| `analysis/data/paper1_phaseA_v1/aggregate_by_variant_system.csv` | Primary input: per-(variant, system) aggregated metrics |
+| `experiments/paper1_phaseA_v1/run_registry.csv` | Secondary input: per-run detail if per-seed breakdowns needed |
+| `outputs/studies/generalization/generalization_summary.csv` | Auxiliary: generalization study (Block 3 only) |
+| `outputs/studies/generalization/generalization_detail.csv` | Auxiliary: per-test-set detail (Block 3 only) |
+| `analysis/configs/paper1_phaseA_v1.json` | Config: paths and experiment metadata |
 
 ---
 
-### Header (`fig[1, 1:2]`)
+## Script: `evaluate_hypotheses.py`
 
-```julia
-ax_header = CM.Axis(fig[1, 1:2];
-    backgroundcolor = :white,
-    limits = ((0.0, 1.0), (0.0, 1.0)),
-)
-CM.hidedecorations!(ax_header)
-CM.hidespines!(ax_header)
+### CLI
 
-title_parts = split(title, " – ", limit = 2)
-main_title  = title_parts[1]
-sub_title   = length(title_parts) > 1 ? title_parts[2] : ""
-
-CM.text!(ax_header, 0.02, 0.72;
-    text = main_title, align = (:left, :center),
-    fontsize = 26, color = CM.RGBf(0.10, 0.18, 0.36))
-if !isempty(sub_title)
-    CM.text!(ax_header, 0.02, 0.28;
-        text = sub_title, align = (:left, :center),
-        fontsize = 16, color = CM.RGBf(0.30, 0.38, 0.56))
-end
-
-# Vertikaler Trenner
-CM.lines!(ax_header, [0.295, 0.295], [0.08, 0.92];
-    color = CM.RGBf(0.80, 0.84, 0.90), linewidth = 1.0)
-
-# Status-Zeile
-stage_str   = snapshot.stage_transition ?
-    "$(snapshot.previous_stage) → $(snapshot.new_stage)" :
-    "$(snapshot.stage)"
-loss_str    = @sprintf("%.6f", snapshot.best_loss)
-n_terms     = length(snapshot.best_params)
-time_str    = _format_elapsed(elapsed_s)
-status_text = "Stage $stage_str     |     Level $(snapshot.level)     |     Loss $loss_str     |     Active terms $n_terms     |     Time $time_str"
-
-CM.text!(ax_header, 0.31, 0.50;
-    text = status_text, align = (:left, :center),
-    fontsize = 13, color = CM.RGBf(0.05, 0.08, 0.20))
 ```
+python analysis/scripts/aggregate/evaluate_hypotheses.py --config analysis/configs/paper1_phaseA_v1.json
+```
+
+### Structure
+
+The script has four independent sections executed in order:
+
+1. Load and validate inputs
+2. Evaluate H1, H2, H3 (primary claims)
+3. Evaluate H4 (secondary claim)
+4. Evaluate auxiliary evidence (generalization_study, profile_init context)
+5. Write machine-readable diagnostics JSON
+6. Write Freeze Memo markdown
+
+No section may influence a prior section's verdict.
 
 ---
 
-### Info-Panel (`fig[2, 1]`)
+## Section 1 — Input Validation
 
-```julia
-ax_info = CM.Axis(fig[2, 1];
-    backgroundcolor = :white,
-    limits = ((0.0, 1.0), (0.0, 1.0)),
-)
-CM.hidedecorations!(ax_info)
-CM.hidespines!(ax_info)
-```
+Load `aggregate_by_variant_system.csv`.
 
-#### Equations-Sektion
+Verify:
+- Expected variants present: `evogrow_v1`, `evogrow_v2_1`, `evogrow_v2_2_stage_local`, `evogrow_v2_2_passive`, `evogrow_v2_2_soft`, `gp_baseline`
+- Expected system IDs present: 2, 3, 11, 23, 24, 26, 31, 37, 54, 63
+- All (variant, system) cells have `n_valid` > 0 (report any with n_valid = 0 as a warning)
 
-```julia
-disc_str   = structure_to_string(
-    snapshot.best_structure, basis, snapshot.best_params; var_names = var_names)
-disc_lines = split(disc_str, "\n")
-true_lines = true_equations !== nothing ? split(true_equations, "\n") : String[]
-
-# eq_items: (text, color, fontsize, is_equation)
-eq_items = Tuple{String, Any, Int, Bool}[]
-
-if snapshot.stage_transition
-    new_stage = snapshot.new_stage
-    push!(eq_items, ("STAGE $new_stage UNLOCKED", :darkorange, 13, false))
-    push!(eq_items, ("New terms: $(_stage_description(basis, new_stage, var_names))", :darkorange, 11, false))
-    push!(eq_items, ("", :white, 10, false))   # spacer
-end
-
-push!(eq_items, ("DISCOVERED MODEL", CM.RGBf(0.00, 0.32, 0.80), 12, false))
-for eq in disc_lines
-    push!(eq_items, (_format_equation(eq), CM.RGBf(0.00, 0.32, 0.80), 11, true))
-end
-
-if !isempty(true_lines)
-    push!(eq_items, ("", :white, 10, false))   # spacer
-    push!(eq_items, ("GROUND TRUTH", :black, 12, false))
-    for eq in true_lines
-        push!(eq_items, (_format_equation(eq), CM.RGBf(0.05, 0.05, 0.05), 11, true))
-    end
-end
-
-# Y-Positionen dynamisch (oben = 0.96, unten = 0.42)
-n_eq      = length(eq_items)
-y_top     = 0.96
-y_bot     = 0.42
-y_step    = (y_top - y_bot) / max(n_eq - 1, 1)
-
-for (i, (text, color, fsize, is_eq)) in enumerate(eq_items)
-    isempty(text) && continue
-    y = y_top - (i - 1) * y_step
-    if is_eq
-        _render_eq_line!(ax_info, text, Float64(y), color, fsize)
-    else
-        CM.text!(ax_info, 0.05, y;
-            text = text, align = (:left, :center),
-            fontsize = fsize, color = color)
-    end
-end
-```
-
-#### Trennlinie
-
-```julia
-CM.lines!(ax_info, [0.04, 0.96], [0.40, 0.40];
-    color = CM.RGBf(0.78, 0.82, 0.88), linewidth = 0.8)
-```
-
-#### Stage-Box (untere ~38% des Panels)
-
-```julia
-CM.poly!(ax_info,
-    CM.Point2f[(0.04, 0.01), (0.96, 0.01), (0.96, 0.37), (0.04, 0.37)];
-    color       = CM.RGBAf(0.94, 0.97, 1.00, 0.8),
-    strokecolor = CM.RGBf(0.78, 0.82, 0.88),
-    strokewidth = 0.8)
-
-stage_desc = _stage_description(basis, snapshot.stage, var_names)
-var_text   = var_names === nothing ? join(["u$i" for i in 1:dim], ", ") : join(var_names, ", ")
-n_available = if basis isa StagedPolynomialBasis &&
-                 snapshot.stage >= 1 &&
-                 snapshot.stage <= length(basis.term_groups)
-    length(vcat(basis.term_groups[1:snapshot.stage]...))
-else
-    basis_num_terms(basis)
-end
-
-CM.text!(ax_info, 0.07, 0.31;
-    text = "Stage $(snapshot.stage) allows:", align = (:left, :center),
-    fontsize = 11, color = :black)
-CM.text!(ax_info, 0.19, 0.24;
-    text = stage_desc, align = (:left, :center),
-    fontsize = 10, color = CM.RGBf(0.00, 0.32, 0.80))
-CM.text!(ax_info, 0.07, 0.16;
-    text = "Variables:  $var_text", align = (:left, :center),
-    fontsize = 10, color = :black)
-CM.text!(ax_info, 0.07, 0.08;
-    text = "Search space:  $n_available terms per equation", align = (:left, :center),
-    fontsize = 10, color = :black)
-```
+If any critical input is missing: print error and exit with code 1.
 
 ---
 
-### Trajektorien-Panels (`fig[2, 2]` als nested GridLayout)
+## Section 2 — H1, H2, H3 Evaluation
 
-```julia
-plot_grid = CM.GridLayout(fig[2, 2])
+### H1 — Stage Overshoot Reduction
 
-Yhat_best = _simulate_candidate(snapshot.best_structure, snapshot.best_params, basis, traj_truth)
+**Metric:** `mean_stage_overshoot`
 
-for k in 1:dim
-    ax_k = CM.Axis(plot_grid[k, 1];
-        backgroundcolor = :white,
-        ylabel = var_names === nothing ? "u$k" : var_names[k],
-    )
+**Filter:**
+- Systems: exact systems with expected_stage ≥ 2 → IDs: 3, 11, 26, 31, 54, 63
+- Variants: `evogrow_v1`, `evogrow_v2_1`, `evogrow_v2_2_stage_local` only
+- GP excluded (no stage structure)
 
-    y_lo  = minimum(X[:, k])
-    y_hi  = maximum(X[:, k])
-    pad   = max(0.3 * abs(y_hi - y_lo), 0.1)
-    CM.ylims!(ax_k, y_lo - pad, y_hi + pad)
+**Computation per system:**
+- Compare `mean_stage_overshoot` of `evogrow_v2_2_stage_local` vs `evogrow_v2_1` and vs `evogrow_v1`
+- Record: direction correct (v2.2 < v2.1 AND v2.2 < v1), direction partial, or direction wrong
 
-    if k < dim
-        CM.hidexdecorations!(ax_k; grid = false)
-    else
-        ax_k.xlabel = "t"
-    end
+**Verdict:**
+- SUPPORTED: correct direction on majority (≥ 4 of 6) systems
+- PARTIAL: correct direction on ≥ 1 but < 4 systems
+- FALSIFIED: correct direction on 0 systems
 
-    # Search history (grey)
-    for Yhat in accumulated_candidates
-        CM.lines!(ax_k, t, Yhat[:, k]; color = (:gray, 0.18), linewidth = 0.5)
-    end
+---
 
-    # Current level candidates (orange)
-    for Yhat in current_level_candidates
-        CM.lines!(ax_k, t, Yhat[:, k]; color = :darkorange, linewidth = 0.6)
-    end
+### H2 — Competitive Recovery Quality
 
-    # Ground truth (black)
-    CM.lines!(ax_k, t, X[:, k]; color = :black, linewidth = 2.5)
+**Metric:** `exact_match_rate` (primary); `mean_loss` (fallback for collapsed systems)
 
-    # Best fit (blue)
-    if Yhat_best !== nothing
-        CM.lines!(ax_k, t, Yhat_best[:, k]; color = :steelblue, linewidth = 2.5)
-    end
-end
+**Filter:** all 8 exact systems (IDs: 2, 3, 11, 24, 26, 31, 54, 63)
+
+**Computation per system:**
+
+Step A — detect exact_match=0 collapse:
+A system is collapsed if `exact_match_rate = 0` for ALL variants (including GP).
+
+Step B — for non-collapsed systems:
+Compare `exact_match_rate` of `evogrow_v2_2_stage_local` vs `gp_baseline`.
+Record: v2.2 ≥ GP (competitive), v2.2 < GP (degraded).
+
+Step C — for collapsed systems:
+Compare `mean_loss` of best EvoGrow variant vs `gp_baseline`.
+Record: EvoGrow loss ≤ GP loss (competitive on loss), EvoGrow loss > GP loss (degraded).
+Flag these systems with: `"recovery_metric_used": "mean_loss (exact_match_rate collapsed)"`.
+
+**Verdict:**
+- SUPPORTED: v2.2 competitive (exact_match or loss) on majority (≥ 5 of 8) exact systems
+- PARTIAL: competitive on ≥ 2 but < 5 systems
+- FALSIFIED: competitive on < 2 systems
+
+---
+
+### H3 — Wasted Levels Reduction
+
+**Metric:** `mean_wasted_levels`
+
+**Filter:**
+- Systems: exact systems with expected_stage ≥ 2 → IDs: 3, 11, 26, 31, 54, 63
+- Variants: `evogrow_v1`, `evogrow_v2_1`, `evogrow_v2_2_stage_local` only
+- GP excluded
+
+**Computation per system:**
+- Compare `mean_wasted_levels` of `evogrow_v2_2_stage_local` vs `evogrow_v2_1` and vs `evogrow_v1`
+- Record: direction correct (v2.2 ≤ v2.1 AND v2.2 ≤ v1), direction partial, or direction wrong
+
+Note: ties (equal wasted_levels) count as non-degraded, not as improvement.
+Record ties separately from directional wins.
+
+**Verdict:**
+- SUPPORTED: correct direction on majority (≥ 4 of 6) systems
+- PARTIAL: correct direction on ≥ 1 but < 4 systems
+- FALSIFIED: correct direction on 0 systems
+
+---
+
+## Section 3 — H4 Evaluation (Secondary)
+
+**Metric:** `exact_match_rate`
+
+**Filter:**
+- Systems: exact systems with expected_stage ≥ 3 → IDs: 11, 26, 31, 54, 63
+- Variants: `evogrow_v2_2_stage_local` (hard), `evogrow_v2_2_passive`, `evogrow_v2_2_soft`
+
+**Computation per system:**
+- Compare exact_match_rate across the three usage-policy variants
+- Record: hard ≥ soft ≥ passive (expected order), any other ordering
+
+**Verdict:**
+- SUPPORTED: expected ordering holds on majority (≥ 3 of 5) systems
+- AMBIGUOUS: mixed results, no clear pattern
+- FALSIFIED: reverse ordering on majority of systems
+
+H4 verdict does not affect H1–H3. State this explicitly in the diagnostics JSON.
+
+---
+
+## Section 4 — Auxiliary Evidence
+
+### Generalization Study
+
+Load `outputs/studies/generalization/generalization_summary.csv`.
+
+Print the column names first (they may differ from assumptions).
+
+From the data, for each (system, variant) cell with `exact_support_match = true`
+on the training run:
+- Extract `mean_refit_loss` (loss after refitting structure to test trajectories)
+- Extract `mean_fresh_loss` (loss of fresh discovery on same test trajectories)
+- Count `n_exact_runs` per (system, variant) cell
+
+Only include cells with `n_exact_runs ≥ 3` in the verdict.
+
+**Verdict:**
+- INCLUDE IN SUPPLEMENTARY: consistent tendency for refit_loss ≤ fresh_loss across systems with n_exact_runs ≥ 3
+- INCLUDE WITH CAUTION: mixed results
+- OMIT: insufficient data (all cells have n_exact_runs < 3)
+
+### profile_init
+
+Do not load any data. Record only:
+> "profile_init.jl results are available (docs/profile_init_results.md). Role: Methods section or short Discussion paragraph only. Not used as evidence for H1–H4."
+
+---
+
+## Section 5 — Machine-Readable Output
+
+Write `analysis/data/paper1_phaseA_v1/h1_h4_diagnostics.json`.
+
+Structure:
+
+```json
+{
+  "experiment_id": "paper1_phaseA_v1",
+  "generated_at": "<ISO timestamp>",
+  "h1": {
+    "metric": "mean_stage_overshoot",
+    "systems_evaluated": [...],
+    "per_system": {
+      "<system_id>": {
+        "v2_2_vs_v2_1": "<lower|equal|higher>",
+        "v2_2_vs_v1": "<lower|equal|higher>",
+        "direction_correct": true/false
+      }
+    },
+    "n_correct": <int>,
+    "n_systems": <int>,
+    "verdict": "<SUPPORTED|PARTIAL|FALSIFIED>"
+  },
+  "h2": {
+    "metric": "exact_match_rate (with mean_loss fallback for collapsed systems)",
+    "systems_evaluated": [...],
+    "per_system": {
+      "<system_id>": {
+        "recovery_metric_used": "<exact_match_rate|mean_loss>",
+        "exact_match_collapsed": true/false,
+        "v2_2_competitive": true/false
+      }
+    },
+    "n_competitive": <int>,
+    "n_systems": <int>,
+    "verdict": "<SUPPORTED|PARTIAL|FALSIFIED>"
+  },
+  "h3": {
+    "metric": "mean_wasted_levels",
+    "systems_evaluated": [...],
+    "per_system": { ... },
+    "n_correct": <int>,
+    "n_systems": <int>,
+    "verdict": "<SUPPORTED|PARTIAL|FALSIFIED>"
+  },
+  "h4": {
+    "secondary": true,
+    "metric": "exact_match_rate by usage policy",
+    "systems_evaluated": [...],
+    "per_system": { ... },
+    "verdict": "<SUPPORTED|AMBIGUOUS|FALSIFIED>",
+    "note": "H4 verdict does not affect H1-H3."
+  },
+  "auxiliary": {
+    "generalization_study": {
+      "verdict": "<INCLUDE_SUPPLEMENTARY|INCLUDE_WITH_CAUTION|OMIT>",
+      "n_cells_with_sufficient_data": <int>,
+      "summary": "<one sentence>"
+    },
+    "profile_init": {
+      "verdict": "METHODS_ONLY",
+      "note": "Not used as evidence for H1-H4."
+    }
+  }
+}
 ```
 
 ---
 
-### Legend-Panel (`fig[3, 1:2]`)
+## Section 6 — Freeze Memo
 
-```julia
-ax_legend = CM.Axis(fig[3, 1:2];
-    backgroundcolor = :white,
-    limits = ((0.0, 1.0), (0.0, 1.0)),
-)
-CM.hidedecorations!(ax_legend)
-CM.hidespines!(ax_legend)
+Write `docs/paper1_freeze_memo_phaseA.md`.
 
-legend_items = [
-    (0.05, :black,      2.5, 1.0, "Data (Ground Truth)"),
-    (0.30, :steelblue,  2.5, 1.0, "Best (Current)"),
-    (0.55, (:gray, 0.4), 0.8, 1.0, "Search History"),
-    (0.75, :darkorange, 0.8, 1.0, "Current Level (Candidates)"),
-]
+### Required structure
 
-for (x0, col, lw, _, lbl) in legend_items
-    CM.lines!(ax_legend, [x0, x0 + 0.06], [0.5, 0.5]; color = col, linewidth = lw)
-    CM.text!(ax_legend, x0 + 0.07, 0.5;
-        text = lbl, align = (:left, :center), fontsize = 11, color = :black)
-end
-```
+```markdown
+# Paper 1 — Freeze Memo: Phase A Results
+Generated: <ISO timestamp>
+Experiment: paper1_phaseA_v1 (300/300 runs, all success=true)
+
+This memo defines what Paper 1 is allowed to claim.
+Nothing beyond this memo may appear in the paper.
 
 ---
 
-### Speichern und Rückgabe
+## Block 1 — Primary Claims (H1, H2, H3)
 
-```julia
-filename = @sprintf("frame_%04d.png", frame_idx)
-filepath = joinpath(output_dir, filename)
-CM.save(filepath, fig; px_per_unit = 1)
-return filepath
+### H1 — Stage Overshoot Reduction
+Verdict: <SUPPORTED | PARTIAL | FALSIFIED>
+Evidence: [per-system table: system | v1 overshoot | v2.1 overshoot | v2.2 overshoot | direction]
+Boundary conditions: [which systems support, which do not]
+Allowed paper claim: [exact wording, or "claim removed" if FALSIFIED]
+
+### H2 — Competitive Recovery Quality
+Verdict: <SUPPORTED | PARTIAL | FALSIFIED>
+Evidence: [per-system table: system | GP exact_match | v2.2 exact_match | metric used | competitive?]
+Collapse note: [list of systems where exact_match=0 for all methods and mean_loss was used instead]
+Allowed paper claim: [exact wording]
+
+### H3 — Wasted Levels Reduction
+Verdict: <SUPPORTED | PARTIAL | FALSIFIED>
+Evidence: [per-system table: system | v1 wasted | v2.1 wasted | v2.2 wasted | direction]
+Boundary conditions: [which systems support, which do not]
+Allowed paper claim: [exact wording, or "claim removed" if FALSIFIED]
+
+---
+
+## Block 2 — Secondary Claim (H4)
+
+H4 is secondary. Its verdict does not affect H1–H3.
+
+### H4 — Usage Policy Effect
+Verdict: <SUPPORTED | AMBIGUOUS | FALSIFIED>
+Evidence: [per-system table: system | hard exact_match | soft exact_match | passive exact_match | ordering]
+Allowed paper claim: [exact wording, or "C3 weakened, not reportable as positive result" if AMBIGUOUS/FALSIFIED]
+
+---
+
+## Block 3 — Auxiliary Evidence
+
+### Generalization Study
+Verdict: <INCLUDE_SUPPLEMENTARY | INCLUDE_WITH_CAUTION | OMIT>
+Evidence: [table: system | n_exact_runs | mean_refit_loss | mean_fresh_loss]
+Allowed use: supplementary material only, one interpretive sentence in discussion.
+
+### profile_init
+Role: Methods section or short Discussion paragraph.
+Not used as evidence for H1–H4. No figures or tables generated.
+
+---
+
+## Known Limitations
+
+- System 11: EvoGrow achieves loss ~4e-15 but exact_match=0 due to growth-without-pruning
+  accumulating zero-coefficient terms. This is a genuine algorithmic limitation, not a
+  metric error. Must be stated explicitly in the paper.
+- [any other limitations identified during analysis]
+
+---
+
+## Freeze Status
+
+Evidence scope is frozen after this memo.
+No new experiments may be added to Paper 1.
 ```
 
 ---
 
 ## Constraints
 
-- `render_frame`-Signatur unverändert (kein Breaking Change).
-- `render_all_frames` bleibt unverändert.
-- `studies/visualization/animate_search.jl` wird nicht geändert.
-- `structure_to_string`, `_simulate_candidate`, `_format_elapsed`, `_stage_description` bleiben vollständig unverändert.
-- `import CairoMakie as CM` am Anfang der Datei einfügen (nicht `using`).
-- Die alte `_frameless_panel!`-Funktion wird entfernt (nicht mehr benötigt).
-- `_format_equation` bleibt erhalten (gleiche Signatur und Body).
-- `_render_eq_line!` wird so angepasst, dass sie eine `CM.Axis` statt eines Plots-Subplots nimmt.
+- No figures generated
+- No paper tables generated
+- Script exits with error if aggregate CSV is missing
+- Script prints a summary to stdout on completion
+- All paths come from config, none hardcoded
+- The freeze memo is the authoritative output; the diagnostics JSON is machine-readable support
+
+---
+
+## Verification
+
+After running the script, verify:
+1. `h1_h4_diagnostics.json` exists and is valid JSON
+2. `docs/paper1_freeze_memo_phaseA.md` exists and contains all three blocks
+3. Every verdict is one of the defined values (not free text)
+4. Per-system tables in the memo match the aggregate CSV values exactly

@@ -159,8 +159,7 @@ EvoODE/
 |   `-- profiling/
 |       `-- profile_init.jl
 |-- codex/                                (task management for AI-assisted development)
-|   |-- CURRENT_TASK.md                   (active Julia/algorithm task)
-|   `-- CURRENT_TASK_ANALYSIS.md          (active Python analysis task)
+|   `-- CURRENT_TASK.md                   (active task — Julia or Python)
 ```
 
 ### benchmarks/ vs experiments/
@@ -177,12 +176,11 @@ These two directories serve distinct purposes and must not be conflated.
 
 ### codex/ convention
 
-Two separate task files serve the Julia/Python split:
-- `CURRENT_TASK.md` — active task for Julia algorithm/infrastructure work
-- `CURRENT_TASK_ANALYSIS.md` — active task for Python analysis pipeline work
+One single task file for all work:
+- `CURRENT_TASK.md` — active task (Julia algorithm, Python analysis, or infrastructure)
 
-Both contain "Kein aktiver Task" when no work is pending.
-Write the next task spec into the appropriate file before handing off to an AI coding assistant.
+Contains "Kein aktiver Task" when no work is pending.
+Write the next task spec into this file before handing off to an AI coding assistant.
 
 ### See also
 
