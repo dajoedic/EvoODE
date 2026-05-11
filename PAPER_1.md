@@ -462,7 +462,7 @@ Seed count fixed in Phase 1.
 - System classification from WP-2.1 committed
 - Experiment manifest generated (`generate_manifest.jl` output verified)
 - Cluster runner tested: ≥ 10 parallel runs without race conditions or file corruption
-- All runs either `status=finished` or `status=failed` after completion (no `status=running` remainders)
+- All runs either `status=finished`, `status=failed`, or `status=timeout` after completion (no `status=running` remainders)
 
 ### Work Packages
 
