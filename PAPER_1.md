@@ -141,11 +141,24 @@ They must not change after Phase 1 is closed.
 At minimum 3 seeds per (system, condition) cell. 5 seeds preferred.
 Seeds must be fixed before Phase 2 begins.
 
+### v3 Selection Rule
+
+EvoGrow v3 can only be selected as the final Paper 1 variant if it has already passed its
+validation gate before Phase 1 closes. If v3 is not implemented and validated at Phase 1
+closure, the final variant defaults to the best available v2.2 configuration.
+
+Roles:
+- **Claude** designs the architecture and defines work packages for v3.
+- **Codex** implements individual WPs.
+- Phase 1 closes only after the final variant is technically available and validated.
+- Phase 1 itself must not contain uncontrolled implementation work — all implementation
+  happens through explicit WPs executed by Codex before Phase 1 closure.
+
 ### Go Criteria
 
 - All 8 decisions above answered and written into the "Phase 1 Specification" section below
-- If v3 is chosen: implementation exists and passes validation run (v3 validation is a precondition, not part of Phase 1)
-- If v2.2 is chosen: current implementation confirmed to run correctly on at least 3 systems
+- If v3 is chosen: v3 has been implemented by Codex and passed its validation gate (WP-v3.6) before Phase 1 closes
+- If v2.2 is chosen (default): current implementation confirmed to run correctly on at least 3 systems
 - No hyperparameter is left as "TBD"
 
 ### Phase 1 Specification (to be filled in)
@@ -223,8 +236,8 @@ All metrics below must be defined, implemented, and verified before Phase 3.
 | `system_id` | ODEBench system ID |
 | `seed` | RNG seed |
 | `git_hash` | Git commit hash at time of execution |
-| `status` | queued / running / finished / failed / interrupted |
-| `failure_reason` | exception / all_invalid / write_failure / unknown (only for failed runs) |
+| `status` | queued / running / finished / failed / timeout / interrupted |
+| `failure_reason` | exception / all_invalid / write_failure / timeout / unknown (only for non-finished runs) |
 
 **Aggregate metrics (per system × condition cell, across seeds):**
 
@@ -244,6 +257,16 @@ All metrics below must be defined, implemented, and verified before Phase 3.
 | `n_seeds` | Total run attempts |
 
 A run is valid if `loss` is not NaN.
+
+**Timeout handling:**
+A timed-out run (BFGS time limit exceeded without result, or cluster wall-time exceeded) is recorded as:
+- `status = timeout`, `failure_reason = timeout`, `loss = NaN`, `r2 = NaN`
+
+Aggregation rules for timeout runs:
+- Counted in `n_seeds`
+- Not counted in `n_valid`
+- Included in failure-rate and robustness analyses
+- Not silently re-run or deleted — must remain in the registry
 
 ### Output Artifacts
 
@@ -299,9 +322,38 @@ Validate on at least 3 Phase A result.json files (Phase A data available as test
 
 **What:** Confirm that `experiments/run_experiment.jl` correctly writes `use_pretuning` to
 both `config.json` and `metrics.json`. Add a schema check script that validates a completed
-run folder against the required fields listed in the metric table above.
+run folder against the required fields listed in the metric table above. Timeout handling
+must be part of the schema: a timed-out run must write `status = timeout`,
+`failure_reason = timeout`, `loss = NaN`, `r2 = NaN` before the process exits.
 
 **Scope:** Schema check script. Minor additions to run infrastructure if fields are missing.
+
+#### WP-2.4 — ODEBench protocol alignment audit
+
+**Language:** Python / analysis (no experiments)
+
+**What:** Audit and document how closely EvoODE's evaluation protocol matches the ODEFormer /
+ODEBench protocol (d'Ascoli et al. 2023). For each of the following dimensions, record
+whether EvoODE matches ODEBench exactly, approximately, or diverges, and document the reason:
+
+| Dimension | ODEBench | EvoODE | Match? | Notes |
+|-----------|----------|--------|--------|-------|
+| R² definition | per-dimension, averaged | [TBD in WP] | [TBD] | |
+| Initial conditions | from `strogatz_extended.json` `init` field | same JSON source | [TBD] | |
+| tspan | from system JSON | same JSON source | [TBD] | |
+| Sampling grid | [from paper] | [TBD] | [TBD] | |
+| Trajectories per system | [from paper] | 1 per run | [TBD] | |
+| Noise setting | σ=0 for clean comparison | σ=0 | match | |
+| Aggregation | % accuracy across systems | [TBD] | [TBD] | |
+
+Output: `docs/paper1_odebench_protocol_alignment.md` — a table with all dimensions,
+match status, and a concluding statement on whether published baseline numbers
+(SINDy, PySR, ODEFormer) are directly comparable or contextual only.
+
+This document must be committed before Phase 3 begins. It determines how the published
+ODEBench numbers may be cited in the paper.
+
+**Scope:** Document only. No experiments, no code.
 
 ---
 
@@ -499,6 +551,10 @@ supported by Phase 4 evidence may appear in the paper:
 - **Complexity control claim:** "Stage-local progression restricts wasted complexity to [metric]
   on systems where the expected stage is known."
 - **Robustness claim:** "EvoODE completes successfully (non-NaN result) on N of 63 ODEBench systems."
+- **Failure-mode claim:** "EvoODE failure modes across the full ODEBench suite are dominated by
+  [solver instability / optimization failure / basis mismatch / stage escalation], as quantified
+  by solver failures, invalid runs, timeout rates, and surrogate-system behavior."
+  This claim may only be used if supported by Phase 4 results.
 
 No claim may be made from Phase A results. Phase A results may appear as supplementary material
 or a brief historical footnote only.
@@ -531,15 +587,28 @@ Each equation independently tracks:
 - `stage_history[k]` — plateau-detection history for equation k
 - Promotion decision for equation k, independent of all other equations
 
-#### Per-equation loss proxy (open design question)
-Equation-wise promotion requires a per-equation progress signal.
-The system is optimized jointly (single loss function), so no exact per-equation loss decomposition exists.
-**This must be resolved before any v3 implementation begins:**
-- Option A: per-equation residual MSE (requires per-equation simulation, expensive)
-- Option B: proxy from per-equation parameter magnitude change across levels
-- Option C: per-equation term coefficient variance as a proxy for plateau
+#### Per-equation loss proxy
 
-Document the chosen option here as a design note before WP-v3.1 begins.
+Equation-wise promotion requires a per-equation progress signal.
+The system is optimized jointly (single loss function), so no clean per-equation loss decomposition
+is available. The preferred signal is an equation-local derivative residual:
+
+```text
+mean_t ( dx_k/dt - f_k(x(t)) )²
+```
+
+computed on the observed trajectory, with derivatives estimated by finite differences.
+This is the primary criterion. A hybrid may also be considered:
+
+```text
+derivative residual plateau  AND  trajectory residual above tolerance
+```
+
+Parameter magnitude change (Option B) or coefficient variance (Option C) may only be
+used as fallback proxies if the residual-based approach fails in practice.
+If a fallback is used, the reason must be explicitly justified in the WP-v3.1 design note.
+
+**This design question must be resolved and documented in WP-v3.1 before any implementation begins.**
 
 #### New struct
 `EvoGrowV3` in `src/structure/evogrow_v3.jl`.
@@ -587,7 +656,7 @@ This is not a replacement for `EvoGrow`. v2.2 code paths are untouched.
 | EvoODE accuracy on full ODEBench suite too low to support any positive claim | Medium | Surrogate analysis + failure analysis still contribute; robustness is reportable |
 | v3 (if selected) not measurably better than v2.2 | Medium | Frame as "precision allocation" — different behavior is the contribution, not necessarily better numbers |
 | Protocol differences vs. published ODEBench numbers invalidate comparison | Medium | Do not frame as a direct comparison; cite published numbers for context only, with explicit caveats |
-| 63 systems exceed available cluster budget | Low | Reduce seeds to 3 per cell; prioritize exact systems if budget is tight |
+| 63 systems exceed available cluster budget | Low | If runtime becomes excessive: reduce seeds only if absolutely necessary, split the experiment into batches, increase cluster parallelism, or adjust per-run timeout policy. Do not remove ODEBench systems. Exact and surrogate systems are equally mandatory. Failed or timed-out systems are reported as such. |
 
 ---
 
