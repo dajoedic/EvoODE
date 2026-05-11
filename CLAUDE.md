@@ -179,6 +179,9 @@ These two directories serve distinct purposes and must not be conflated.
 One single task file for all work:
 - `CURRENT_TASK.md` — active task (Julia algorithm, Python analysis, or infrastructure)
 
+The second line of every task spec must declare the language:
+`**Language: Python**` or `**Language: Julia**`
+
 Contains "Kein aktiver Task" when no work is pending.
 Write the next task spec into this file before handing off to an AI coding assistant.
 

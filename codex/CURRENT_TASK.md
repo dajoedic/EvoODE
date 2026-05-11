@@ -1,5 +1,7 @@
 # CURRENT TASK: Step 2 — Primary Metric Analysis + Freeze Memo
 
+**Language: Python**
+
 ## Context
 
 All 300 runs of `paper1_phaseA_v1` are complete. Aggregation is done.
