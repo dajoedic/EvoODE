@@ -1,5 +1,10 @@
 {
   "experiment_id": "paper1_phaseA_v1",
   "run_registry_path": "../../experiments/paper1_phaseA_v1/run_registry.csv",
-  "output_dir": "data/paper1_phaseA_v1"
+  "output_dir": "data/paper1_phaseA_v1",
+  "aggregate_path": "../data/paper1_phaseA_v1/aggregate_by_variant_system.csv",
+  "diagnostics_path": "../data/paper1_phaseA_v1/h1_h4_diagnostics.json",
+  "freeze_memo_path": "../../docs/paper1_freeze_memo_phaseA.md",
+  "generalization_summary_path": "../../outputs/studies/generalization/generalization_summary.csv",
+  "generalization_detail_path": "../../outputs/studies/generalization/generalization_detail.csv"
 }
