@@ -356,11 +356,16 @@ The current v2.2 usage-policy comparison is:
 
 Do not collapse stage progression and stage usage into a single mechanism again.
 
-#### Current findings (preliminary, paper1_phaseA_v1, 242/300 runs)
+#### Phase A findings (paper1_phaseA_v1, 300/300 runs, frozen 2026-05-11)
 
-- On System 2 (linear): all variants find exact structure, loss deterministic across seeds — pretuning+BFGS always converges to same minimum.
-- On System 3 (logistic, expected_stage=2): `evogrow_v2_1` (global plateau) overshoots by mean 1.5 stages; all `v2.2` stage_local variants show 0 overshoot. First direct confirmation of core hypothesis.
-- Higher-dimensional systems (Lorenz, SEIR, Lotka-Volterra) mostly completed; one run stuck (System 54: Lorenz 3D, EvoGrow v1, Seed 7 — started 2026-04-28, no BFGS timeout, pre-`59d6c16` config).
+Results are frozen. Full verdicts in `docs/paper1_freeze_memo_phaseA.md`.
+
+- H1 (stage overshoot reduction): PARTIAL — supported only on System 54.
+- H2 (competitive recovery quality): SUPPORTED — v2.2 competitive on majority of exact systems.
+- H3 (wasted levels reduction): PARTIAL — supported on Systems 11 and 54.
+- H4 (usage policy ordering): vacuous — all exact_match_rate values are 0 for the H4 systems; the ordering claim cannot be meaningfully evaluated.
+
+Key limitation: growth-without-pruning causes exact_match=0 on System 11 despite loss ~4e-15. Genuine algorithmic limitation; stated in the paper.
 
 ### GPStructureSearch
 
@@ -671,26 +676,23 @@ Status: NOT STARTED
 - validation-based stage promotion
 - multi-hypothesis models
 
-## Active Studies (as of 2026-04-29)
+## Active Studies (as of 2026-05-11)
 
-| Script | Status | Thesis |
-|--------|--------|--------|
-| `experiments/run_experiment.jl paper1_phaseA_v1` | 242/300, 1 stuck | Staged growth (v2.x) is more efficient than flat growth (v1) and GP — measured by exact support recovery, stage overshoot, and wasted levels across 10 systems × 6 variants × 5 seeds. |
-| `benchmarks/benchmark_evogrow.jl` | ~128/300, läuft | Exploratory cross-system benchmark: can EvoGrow reliably find correct structures across all 10 benchmark systems, and how do the variants compare qualitatively? |
-| `studies/profiling/profile_init.jl` | **hängt** (Daten vorhanden) | OLS warm-start (pretuning) leads to faster convergence and lower final loss than random initialization, across seeds and systems. |
-| `studies/generalization/generalization_study.jl` | **fertig** (24.04.) | A structurally correct discovery generalizes across parameter regimes: fixing the discovered structure and refitting only parameters on unseen trajectories of the same ODE family yields low loss. |
+| Artifact | Status | Note |
+|----------|--------|------|
+| `paper1_phaseA_v1` | **frozen** (300/300) | H1–H4 verdicts in freeze memo; evidence scope closed |
+| `studies/generalization/` | fertig | Auxiliary only; insufficient cells for supplementary inclusion |
+| `studies/profiling/profile_init.jl` | Daten vorhanden | Methods section / Discussion only; not evidence for H1–H4 |
 
 ## Current Priorities
 
-Current priorities as of 2026-04-29:
+Current priorities as of 2026-05-11:
 
-1. Warten bis `benchmark_evogrow.jl` fertig ist (läuft noch, ~135/300).
-2. Stuck run `54_evogrow_v1_seed7` entscheiden: warten, killen, oder neu starten mit BFGS-Timeout.
-3. Aggregate `paper1_phaseA_v1` results: `julia experiments/aggregate.jl paper1_phaseA_v1`.
-4. Analyze `run_registry.csv`: exact recovery rates, stage progression, wasted levels per variant.
-5. Analyze `generalization_study` and `profile_init` outputs.
-6. Identify failure cases and determine whether they are algorithmic or parametric.
-7. Plan Paper 1 experiment section based on first real results.
+1. WP-0.1: Fix H4 claim in `evaluate_hypotheses.py` (vacuous result, ordering is trivially satisfied at 0/0/0).
+2. WP-0.2: Verify corrected generalization path resolves correctly in `evaluate_hypotheses.py`.
+3. WP-v3.1 through WP-v3.6: Implement EvoGrow v3 (equation-wise staged progression).
+4. After v3 validated: design Phase B experiment (`paper1_phaseB_v1`) — 63 systems × 2 conditions × 3 seeds.
+5. Phase 2: system classification, R² metric, timeout handling, protocol audit (WP-2.1 through WP-2.4).
 
 ## Implemented and Working
 
@@ -714,8 +716,8 @@ Current priorities as of 2026-04-29:
 - `utils/checks.jl` is still effectively a placeholder
 - no train/validation split in discovery yet
 - no noise injection utilities yet
-- `paper1_phaseA_v1` still running (40/300 done as of 2026-04-23); full analysis pending
-- no systematic comparison against GP and SINDy yet
+- no systematic comparison against ODEBench baselines (SINDy, PySR) yet — planned for Phase 5
+- `paper1_phaseA_v1` analysis complete; Phase B experiment not yet started
 - expression trees are not implemented
 - environment and test execution still need cleanup and faster verification
 - no strong parameter-count validation before optimization beyond mismatch guard

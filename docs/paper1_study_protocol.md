@@ -1,9 +1,16 @@
-# Paper 1 — Study Protocol
+# Paper 1 — Study Protocol (Phase A — Historical)
 
-This document is the standalone protocol for Paper 1.
+> **This document describes the Phase A experiment (`paper1_phaseA_v1`, 300/300 runs, frozen).**
+> It is a historical record of the H1–H4 evaluation on 10 systems × 6 variants × 5 seeds.
+> The current Paper 1 scope and protocol are defined in `PAPER_1.md`.
+> Do not use this document to guide new experiments or analysis.
+
+---
+
+This document is the standalone protocol for Paper 1, Phase A.
 It intentionally duplicates some configuration from `CLAUDE.md` (system list,
 hyperparameters, variant definitions) to serve as a self-contained supplementary
-artifact. If a configuration changes, both this file and `CLAUDE.md` must be updated.
+artifact.
 
 Every result that appears in the paper must be traceable to a hypothesis defined
 here, an experiment defined here, and a metric defined here.

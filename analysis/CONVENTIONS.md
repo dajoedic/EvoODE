@@ -3,7 +3,7 @@
 This file is the single source of truth for the structure, rules, and conventions
 of the `analysis/` directory.
 
-All Codex tasks for analysis work are written to `codex/CURRENT_TASK_ANALYSIS.md`.
+All Codex tasks for analysis work are written to `codex/CURRENT_TASK.md`.
 Read this file before implementing any analysis task.
 
 ---
