@@ -182,6 +182,7 @@ max_terms_per_eq:       [TBD]
 min_levels_per_stage:   [TBD]
 BFGSOptimizer maxiters: [TBD]
 BFGSOptimizer time_limit_s: [TBD]
+run_timeout_s:          [TBD]
 loss_tol:               [TBD]
 plateau_window:         [TBD]
 plateau_tol:            [TBD]
@@ -262,16 +263,21 @@ All metrics below must be defined, implemented, and verified before Phase 3.
 A run is valid if `loss` is not NaN.
 
 **Timeout handling:**
-A timed-out run (BFGS time limit exceeded without result, or cluster wall-time exceeded) is recorded as:
-- `status = timeout`, `failure_reason = timeout`, `loss = NaN`, `r2 = NaN`
+The timeout policy applies at the run level only. One run is one (system × condition × seed) cell.
+Do not introduce candidate-level or optimizer-call-level timeouts at this stage.
+
+If the run-level timeout (`run_timeout_s`, fixed in Phase 1) is reached, record:
+- `status = timeout`
+- `failure_reason = timeout`
+- `loss = NaN`
+- `r2 = NaN`
+- `elapsed_s = observed wall time or configured timeout limit`
 
 Aggregation rules for timeout runs:
 - Counted in `n_seeds`
 - Not counted in `n_valid`
 - Included in failure-rate and robustness analyses
 - Not silently re-run or deleted — must remain in the registry
-- `elapsed_s` must record either the configured timeout limit or the observed wall time until
-  termination, so that timeout runs contribute to runtime and failure-mode analysis
 
 ### Output Artifacts
 
