@@ -35,7 +35,7 @@ They are analyzed separately and not scored on exact structural recovery.
 | Final EvoODE variant | Not yet defined — Phase 1 pending |
 | ODEBench protocol | Not yet implemented — Phase 2 pending |
 | Cluster runner | Not yet implemented — Phase 4 |
-| EvoGrow v3 | Optional — see Phase 1 decision |
+| EvoGrow v3 | Intended final variant — implementation and validation pending |
 
 **Active phase: Phase 0 (Archive and correct Phase A)**
 
@@ -114,9 +114,10 @@ It must be fully specified before Phase 2 begins.
 The following must be decided and written into this document before Phase 1 is closed:
 
 **1. Structure search algorithm:**
-Choose one: EvoGrow v2.2 (stage_local, hard usage) or EvoGrow v3 (equation-wise staged, if implemented).
-If v3 is chosen, it must already be implemented and validated before Phase 2 begins.
-If v2.2 is chosen, it is taken as-is from the current codebase.
+**Intended target: EvoGrow v3 (equation-wise staged progression).**
+Phase 1 cannot close until v3 has been implemented by Codex and passed its validation gate (WP-v3.6).
+If v3 fails validation, the fallback is the best available v2.2 configuration.
+The current intended target is v3; v2.2 is the fallback only.
 
 **2. Stage progression policy:**
 `:stage_local` or `:global_plateau`. Carried over from chosen algorithm.
@@ -141,14 +142,14 @@ All hyperparameters must be written here before Phase 2 begins.
 They must not change after Phase 1 is closed.
 
 **8. Seed list:**
-At minimum 3 seeds per (system, condition) cell. 5 seeds preferred.
+Default: 3 seeds per (system, condition) cell. Additional seeds may be added later as an extension only.
 Seeds must be fixed before Phase 2 begins.
 
 ### v3 Selection Rule
 
-EvoGrow v3 can only be selected as the final Paper 1 variant if it has already passed its
-validation gate before Phase 1 closes. If v3 is not implemented and validated at Phase 1
-closure, the final variant defaults to the best available v2.2 configuration.
+EvoGrow v3 is the intended final Paper 1 variant.
+Phase 1 cannot close until v3 has been implemented by Codex and passed its validation gate (WP-v3.6).
+If v3 fails validation, the final variant defaults to the best available v2.2 configuration.
 
 Roles:
 - **Claude** designs the architecture and defines work packages for v3.
@@ -170,8 +171,8 @@ Roles:
 > No runs may begin before this section is complete.
 
 ```
-Final variant:          [TBD]
-Stage progression:      [TBD]
+Final variant:          EvoGrow v3 (intended) / EvoGrow v2.2 stage_local (fallback)
+Stage progression:      [TBD — eq-wise for v3 / stage_local for v2.2]
 Stage usage policy:     [TBD]
 Basis:                  StagedPolynomialBasis (5 stages)
 pop_size:               [TBD]
@@ -185,7 +186,7 @@ run_timeout_s:          [TBD]
 loss_tol:               [TBD]
 plateau_window:         [TBD]
 plateau_tol:            [TBD]
-Seeds:                  [TBD]
+Seeds:                  3 per (system × condition) cell — may be extended later only
 Conditions:             pretuning=true | pretuning=false
 ```
 
@@ -263,7 +264,15 @@ All metrics below must be defined, implemented, and verified before Phase 3.
 | `n_valid` | Count of valid runs (non-NaN loss) |
 | `n_seeds` | Total run attempts |
 
-A run is valid if `loss` is not NaN.
+**Valid-run rule:** A run is valid if `status = finished`, `loss` is finite and non-NaN, and a predicted
+trajectory exists. Valid runs are not filtered by performance quality. The following are valid:
+- very large loss
+- negative R²
+- structurally incorrect discovered term set
+- unstable-looking but numerically completed trajectories
+
+Invalid runs are exclusively: NaN loss, missing prediction, timeout, or crash/failed run.
+Do not filter or exclude valid runs based on result quality.
 
 **Timeout handling:**
 The timeout policy applies at the run level only. One run is one (system × condition × seed) cell.
@@ -281,6 +290,32 @@ Aggregation rules for timeout runs:
 - Not counted in `n_valid`
 - Included in failure-rate and robustness analyses
 - Not silently re-run or deleted — must remain in the registry
+
+### Logging Policy
+
+Store more rather than less. Every completed run must preserve enough information to be fully
+reconstructed and analyzed after cluster execution, without access to the original process.
+
+Each run folder must contain:
+
+| File | Contents |
+|------|---------|
+| `config.json` | All algorithm parameters, system definition, seed, conditions, git hash, Julia version, hostname |
+| `metrics.json` | All per-run metrics listed above; written atomically |
+| `result.json` | Final structure, final parameters, predicted trajectory (time + Yhat), loss, r2 |
+| `log.txt` | Append-only run log; restart marker on re-run |
+| `status.json` | Current status; overwritten on each transition |
+
+Additional fields to include where available:
+- `stage_history`: best objective per level per global stage (all variants)
+- `eq_stage_history`: best objective per level per equation per stage (v3 only)
+- `solver_failures`: count of NaN-producing ODE solves during search
+- `elapsed_s`: wall time for the full discover() call
+- `git_hash`, `julia_version`, `hostname`: recorded at run start in `config.json`
+
+Missing fields are acceptable for failed/timeout runs, but must not be silently omitted for
+finished runs. If a field cannot be computed for a finished run, record `null` or `NaN`
+with an explanation in `log.txt`.
 
 ### Output Artifacts
 
