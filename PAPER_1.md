@@ -176,7 +176,7 @@ Stage progression:      [TBD — eq-wise for v3 / stage_local for v2.2]
 Stage usage policy:     [TBD]
 Basis:                  StagedPolynomialBasis (5 stages)
 pop_size:               [TBD]
-n_levels:               [TBD]
+n_levels:               30
 children_per_parent:    [TBD]
 max_terms_per_eq:       [TBD]
 λ:                      [TBD]
@@ -234,7 +234,7 @@ All metrics below must be defined, implemented, and verified before Phase 3.
 | `loss` | Simulation MSE: `mean((Yhat - Ytrue)^2)` over all timesteps and dimensions |
 | `r2` | R² coefficient of determination: `1 - SS_res / SS_tot`, computed per dimension, averaged. If `SS_tot` is below a numerical tolerance for a dimension, that dimension is marked as non-evaluable for R² or handled according to the ODEBench protocol alignment audit (WP-2.4). The chosen rule must be documented before Phase 3. |
 | `r2_above_threshold` | Boolean: `r2 > 0.9` (ODEBench accuracy criterion) |
-| `exact_support_match` | True iff discovered term indices match ground truth exactly (exact systems only) |
+| `exact_support_match` | True iff discovered term indices match ground truth exactly, after pruning terms with near-zero coefficients (exact systems only). A term is pruned if `|coeff| < ε` where ε is defined relative to the maximum absolute coefficient in the same equation (`ε = 1e-3 × max|coeff|`, or an absolute floor of `1e-6`). The exact threshold must be documented in WP-2.1 before Phase 3. |
 | `final_stage` | Last stage active at termination |
 | `stage_overshoot` | `final_stage - expected_stage` (exact systems only; expected_stage from classification) |
 | `wasted_levels` | Levels spent in stages above `expected_stage` (exact systems only) |
@@ -424,6 +424,7 @@ Suggested systems (to be confirmed in Phase 1):
 - 1 exact 1D system
 - 1 exact 2D system
 - 1 exact 3D system (e.g., System 54 Lorenz)
+- 1 exact 4D system (e.g., System 63 SEIR) — required for cluster runtime estimation
 - 1 surrogate system
 
 ### Go Criteria
