@@ -21,7 +21,7 @@ Dieses Dokument ist die schnell lesbare Übersicht für die tägliche Arbeit.
 | WP | Was | Sprache | Wer | Output |
 |----|-----|---------|-----|--------|
 | WP-1.1 | Coefficient-threshold Pruning für `exact_support_match` implementieren — nur für Evaluation, nicht im Search | Julia | Codex | `exact_support_match_raw` + `exact_support_match_pruned` in metrics | **erledigt** ✓ |
-| WP-1.2 | Phase-A-Daten mit geprunter Metrik neu auswerten — war System 11 ein Metrik-Fehler? | Python | Codex | Diagnostic-Report (md oder JSON) |
+| WP-1.2 | Phase-A-Daten mit geprunter Metrik neu auswerten — war System 11 ein Metrik-Fehler? | Python | Codex | Diagnostic-Report (md oder JSON) | **erledigt** ✓ |
 | WP-1.3 | v2.2 Diagnose-Run auf Problem-Systemen 26, 31, 63 + Kontrollsystem | Julia | Codex | Kleine Run-Serie, Stage-Histories, Loss-Kurven |
 | WP-1.4 | Diagnose-Bericht: Was schlägt fehl und warum? (Metrik-Artefakt / Fitting / Basis / System-weites Staging?) | — | Claude + du | Schriftliche Gate-1-Entscheidung in `PAPER_1.md` |
 
