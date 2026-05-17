@@ -201,6 +201,33 @@ function support_match(structure::StructureSpec, expected_idxs::Vector{Vector{In
     return true
 end
 
+function support_match_pruned(
+    structure::StructureSpec,
+    params::Vector{Float64},
+    expected_idxs::Vector{Vector{Int}}
+)
+    if length(structure.active_idxs) != length(expected_idxs)
+        return false
+    end
+
+    offset = 0
+    for (got_idxs, exp_idxs) in zip(structure.active_idxs, expected_idxs)
+        n_terms = length(got_idxs)
+        eq_params = params[(offset + 1):(offset + n_terms)]
+        offset += n_terms
+
+        max_abs = isempty(eq_params) ? 0.0 : maximum(abs, eq_params)
+        threshold = max(1e-6, 1e-3 * max_abs)
+
+        pruned_idxs = sort([got_idxs[i] for i in 1:n_terms if abs(eq_params[i]) >= threshold])
+
+        if pruned_idxs != sort(unique(exp_idxs))
+            return false
+        end
+    end
+    return true
+end
+
 function prepare_log_file(log_path::String, timestamp::String)
     previous_content = isfile(log_path) ? read(log_path, String) : ""
     restart = isfile(log_path)
@@ -315,13 +342,24 @@ function compute_metrics(result::DiscoveryResult, cfg, basis::AbstractBasis, ela
     representability = String(cfg.system_representability)
     expected_stage = Int(cfg.system_expected_stage)
 
-    exact_support_match = nothing
+    exact_support_match_raw = nothing
+    exact_support_match_pruned = nothing
     stage_overshoot = nothing
     wasted_levels = nothing
 
     if representability == "exact"
         expected_idxs = expected_active_idxs(Int(cfg.system_id), basis)
-        exact_support_match = expected_idxs === nothing ? false : support_match(result.structure, expected_idxs)
+        if expected_idxs !== nothing
+            exact_support_match_raw = support_match(result.structure, expected_idxs)
+            exact_support_match_pruned = support_match_pruned(
+                result.structure,
+                result.params,
+                expected_idxs
+            )
+        else
+            exact_support_match_raw = false
+            exact_support_match_pruned = false
+        end
         stage_overshoot = final_stage === nothing ? nothing : max(0, final_stage - expected_stage)
         wasted_levels = isempty(stage_level_counts) ? 0 : sum(stage_level_counts[(expected_stage + 1):end]; init = 0)
     end
@@ -329,7 +367,9 @@ function compute_metrics(result::DiscoveryResult, cfg, basis::AbstractBasis, ela
     return Dict(
         "loss" => result.loss,
         "objective" => result.objective,
-        "exact_support_match" => exact_support_match,
+        "exact_support_match" => exact_support_match_raw,
+        "exact_support_match_raw" => exact_support_match_raw,
+        "exact_support_match_pruned" => exact_support_match_pruned,
         "final_stage" => final_stage,
         "stage_overshoot" => stage_overshoot,
         "wasted_levels" => wasted_levels,
@@ -345,6 +385,8 @@ function partial_metrics(elapsed_s::Float64)
         "loss" => nothing,
         "objective" => nothing,
         "exact_support_match" => nothing,
+        "exact_support_match_raw" => nothing,
+        "exact_support_match_pruned" => nothing,
         "final_stage" => nothing,
         "stage_overshoot" => nothing,
         "wasted_levels" => nothing,
@@ -379,6 +421,8 @@ function build_result_payload(result::DiscoveryResult, cfg, metrics::Dict)
         "structure_pretty" => haskey(meta, :best_structure_pretty) ? String(meta.best_structure_pretty) : "",
         "params_length" => length(result.params),
         "exact_support_match" => metrics["exact_support_match"],
+        "exact_support_match_raw" => metrics["exact_support_match_raw"],
+        "exact_support_match_pruned" => metrics["exact_support_match_pruned"],
         "stage_overshoot" => metrics["stage_overshoot"],
         "wasted_levels" => metrics["wasted_levels"],
         "stage_level_counts" => haskey(meta, :stage_level_counts) ? collect(meta.stage_level_counts) : Int[],
@@ -396,6 +440,7 @@ function write_summary(path::String, cfg, metrics::Dict, termination_reason)
         println(io, "seed: $(cfg.seed)")
         println(io, "loss: $(metrics["loss"])")
         println(io, "exact_support_match: $(metrics["exact_support_match"])")
+        println(io, "exact_support_match_pruned: $(metrics["exact_support_match_pruned"])")
         println(io, "final_stage: $(metrics["final_stage"])")
         println(io, "wasted_levels: $(metrics["wasted_levels"])")
         println(io, "elapsed_s: $(metrics["elapsed_s"])")
