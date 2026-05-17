@@ -4,6 +4,27 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ---
 
+## 2026-05-17
+
+### Strategischer Pivot: Paper 1 Neufokus
+
+Paper 1 wird kein Pretuning-Vergleichspaper. Pretuning wird für Paper 1 vollständig deaktiviert und als mögliches Follow-up-Paper zurückgestellt.
+
+**Neue wissenschaftliche Kernfrage:**
+> Ist inkrementelles, gestuftes Wachstum ein effektiver Suchmechanismus für interpretierbare ODE-Entdeckung — und wo hilft es, wo versagt es?
+
+**Phase A Neubewertung:** H1/H3 PARTIAL war kein schlechtes Ergebnis, sondern ein diagnostisches Signal. System-weites Staging ist möglicherweise zu grob für mehrdimensionale Systeme (26, 31, 63). Das ist der algorithmische Befund, dem das Paper nachgehen muss.
+
+**Neues Experiment-Design:** 63 ODEBench-Systeme × 1 finaler EvoGrow-Variant × 3 Seeds = 189 Runs. Keine externen Baselines in-house; publizierte ODEBench-Zahlen als Referenzkontext.
+
+**Gate-Struktur eingeführt:**
+- Gate 1: Ist v2.2 nach Metric-Repair paper-ready? (Phase 1 Diagnose)
+- Gate 2 (nur falls nötig): Ist v3 (gleichungsweises Staging) paper-ready?
+
+`PAPER_1.md` vollständig neu geschrieben. WP-0.2 als erledigt markiert.
+
+<!-- fb549af -->
+
 ## 2026-05-11
 
 ### H1–H4 Auswertung und Freeze Memo (Step 2)
