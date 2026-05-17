@@ -150,13 +150,15 @@ Phase A remains exploratory. It is used to guide algorithmic diagnosis, not to s
 
 ### Work Packages
 
-#### WP-0.1 — Correct H4 claim in freeze memo
+#### WP-0.1 — Correct H4 claim in freeze memo ✓ 2026-05-17
 
 **Language:** Python
 
 **What:** Change the H4 “Allowed paper claim” in `evaluate_hypotheses.py` to reflect that H4 is vacuous: all usage-policy variants achieved `exact_match_rate = 0` on high-stage systems, so the expected ordering holds only through ties.
 
 **Output:** Regenerated `docs/paper1_freeze_memo_phaseA.md` and `analysis/data/paper1_phaseA_v1/h1_h4_diagnostics.json`.
+
+**Done:** H4 verdict corrected to `VACUOUS`, `”vacuous”: true` in diagnostics JSON, claim text updated. H1/H2/H3 unchanged.
 
 #### WP-0.2 — Fix generalization data path ✓ 2026-05-17
 

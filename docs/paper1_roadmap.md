@@ -9,10 +9,10 @@ Dieses Dokument ist die schnell lesbare Übersicht für die tägliche Arbeit.
 
 | WP | Was | Sprache | Wer | Output | Status |
 |----|-----|---------|-----|--------|--------|
-| WP-0.1 | H4-Claim in `evaluate_hypotheses.py` korrigieren, Freeze Memo + Diagnostics JSON neu generieren | Python | Codex | Korrigiertes `paper1_freeze_memo_phaseA.md` + `h1_h4_diagnostics.json` | **offen** |
+| WP-0.1 | H4-Claim in `evaluate_hypotheses.py` korrigieren, Freeze Memo + Diagnostics JSON neu generieren | Python | Codex | Korrigiertes `paper1_freeze_memo_phaseA.md` + `h1_h4_diagnostics.json` | **erledigt** ✓ |
 | WP-0.2 | Generalisierungspfad in Config korrigieren | Python/Config | Claude | `paper1_phaseA_v1.json` mit korrektem Pfad | **erledigt** ✓ |
 
-**Freigabe für Block 2:** WP-0.1 done.
+**Phase 0 abgeschlossen** ✓ — Freigabe für Block 2 erteilt.
 
 ---
 

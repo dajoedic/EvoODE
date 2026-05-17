@@ -281,10 +281,12 @@ def evaluate_h4(df: pd.DataFrame) -> dict[str, Any]:
     per_system: dict[str, Any] = {}
     n_expected = 0
     n_reverse = 0
+    exact_match_values = []
     for system_id in HIGH_STAGE_SYSTEMS:
         hard = cell(df, "evogrow_v2_2_stage_local", system_id)["exact_match_rate"]
         soft = cell(df, "evogrow_v2_2_soft", system_id)["exact_match_rate"]
         passive = cell(df, "evogrow_v2_2_passive", system_id)["exact_match_rate"]
+        exact_match_values.extend([hard, soft, passive])
         expected = (
             not pd.isna(hard)
             and not pd.isna(soft)
@@ -315,6 +317,12 @@ def evaluate_h4(df: pd.DataFrame) -> dict[str, Any]:
         if n_reverse >= 3
         else "AMBIGUOUS"
     )
+    vacuous = all(
+        (not pd.isna(value)) and float(value) == 0
+        for value in exact_match_values
+    )
+    if vacuous:
+        verdict = "VACUOUS"
     return {
         "secondary": True,
         "metric": "exact_match_rate by usage policy",
@@ -323,7 +331,13 @@ def evaluate_h4(df: pd.DataFrame) -> dict[str, Any]:
         "n_expected_order": n_expected,
         "n_reverse_order": n_reverse,
         "verdict": verdict,
-        "note": "H4 verdict does not affect H1-H3.",
+        "vacuous": vacuous,
+        "note": (
+            "H4 verdict is vacuous. All usage-policy variants achieve exact_match_rate = 0 "
+            "on all high-stage systems. Ordering holds through ties only. H4 does not affect H1-H3."
+            if vacuous
+            else "H4 verdict does not affect H1-H3."
+        ),
     }
 
 
@@ -518,7 +532,7 @@ H4 is secondary. Its verdict does not affect H1-H3.
 Verdict: {h4["verdict"]}
 Evidence:
 {markdown_table(["system", "hard exact_match", "soft exact_match", "passive exact_match", "ordering"], h4_rows)}
-Allowed paper claim: {"Hard usage policy follows the expected hard >= soft >= passive ordering on the majority of high-stage systems." if h4["verdict"] == "SUPPORTED" else "C3 weakened, not reportable as positive result"}
+Allowed paper claim: C3 cannot be evaluated — all usage-policy variants achieve exact_match_rate = 0 on all high-stage systems. The expected ordering holds vacuously through ties only.
 
 ---
 

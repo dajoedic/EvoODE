@@ -1,5 +1,5 @@
 # Paper 1 - Freeze Memo: Phase A Results
-Generated: 2026-05-11T14:48:48.582394+00:00
+Generated: 2026-05-17T17:44:03.778186+00:00
 Experiment: paper1_phaseA_v1 (300/300 runs, all success=true)
 
 This memo defines what Paper 1 is allowed to claim.
@@ -60,7 +60,7 @@ Allowed paper claim: Stage-local stopping reduces wasted levels only under the l
 H4 is secondary. Its verdict does not affect H1-H3.
 
 ### H4 - Usage Policy Effect
-Verdict: SUPPORTED
+Verdict: VACUOUS
 Evidence:
 | system | hard exact_match | soft exact_match | passive exact_match | ordering |
 | --- | --- | --- | --- | --- |
@@ -69,7 +69,7 @@ Evidence:
 | 31 | 0 | 0 | 0 | hard >= soft >= passive |
 | 54 | 0 | 0 | 0 | hard >= soft >= passive |
 | 63 | 0 | 0 | 0 | hard >= soft >= passive |
-Allowed paper claim: Hard usage policy follows the expected hard >= soft >= passive ordering on the majority of high-stage systems.
+Allowed paper claim: C3 cannot be evaluated — all usage-policy variants achieve exact_match_rate = 0 on all high-stage systems. The expected ordering holds vacuously through ties only.
 
 ---
 
