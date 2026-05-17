@@ -57,12 +57,23 @@ Dieses Dokument ist die schnell lesbare Übersicht für die tägliche Arbeit.
 
 ## Block 4 — Phase 3: ODEBench-Protokoll + Systemklassifikation
 
+**Primäres Ziel:** EvoGrow auf dem ODEBench-Standard-Metric P(R²>0.9) vergleichbar machen.
+Alle anderen Metriken (support match, stage overshoot, wasted levels) sind Diagnostik — kein direkter Literaturvergleich.
+
 | WP | Was | Sprache | Wer | Output |
 |----|-----|---------|-----|--------|
 | WP-3.1 | Alle 63 Systeme klassifizieren: exact vs. surrogate, expected_stage | Python | Codex | `system_classification.csv` |
-| WP-3.2 | R²-Metrik implementieren + Test auf Phase-A-Daten | Python | Codex | `analysis/utils/r2.py` |
-| WP-3.3 | Run-Schema validieren: `use_pretuning=false` fix, Timeout-Handling, alle Pflichtfelder | Julia | Codex | Schema-Check-Skript, ggf. Runner-Erweiterung |
-| WP-3.4 | ODEBench-Protokoll-Alignment-Audit: EvoGrow vs. publizierte Methoden | Python/Docs | Codex + Claude | `docs/paper1_odebench_protocol_alignment.md` |
+| WP-3.2 | R²-Metrik implementieren (per dimension, mean, NaN-safe) + `r2_above_threshold` | Python | Codex | `analysis/utils/r2.py` + Unittest |
+| WP-3.3 | Run-Schema: Output-Felder `r2`, `r2_above_threshold`, `status`, `failure_reason` | Julia | Codex | Erweiterter Runner / Schema-Check |
+| WP-3.4 | ODEBench-Protokoll-Alignment-Audit: ICs, tspan, sampling, R²-Definition, train/test-Split | Python/Docs | Codex + Claude | `docs/paper1_odebench_protocol_alignment.md` |
+
+### Bekannte Protokoll-Befunde (vorab geklärt, 2026-05-17)
+
+- **63 Systeme** ✓ — `strogatz_extended.json` hat exakt 63
+- **ICs** ✓ — `init[0]` im JSON stimmt mit unseren u0-Werten überein
+- **tspan-Abweichung** ⚠ — JSON: `[0,10], T=512` einheitlich für alle Systeme; unser Runner nutzt system-spezifische tspan — muss für finalen Run auf JSON-Trajektorien umgestellt werden
+- **2 Trajektorien pro System** — `solutions[0][0]` = Training (IC 0), `solutions[0][1]` = Evaluation (IC 1)
+- **Literaturvergleich** — ODEFormer/PySR/SINDy/FIM/DDOT-Zahlen sind nur kontextuell vergleichbar (andere Hardware, anderes Jahr, anderes Modell); kein direkter Vergleich ohne eigene Baseline-Runs
 
 **Freigabe für Block 5:** Alle WPs aus Block 4 done, finaler Variant aus Gate 1/2 bekannt.
 
