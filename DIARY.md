@@ -31,6 +31,8 @@ Begründung: Der Failure-Mode auf Systems 26 und 63 ist klar auf systemweites St
 
 WP-v3.1 (Design Note) als nächsten Codex-Task formuliert.
 
+<!-- f5e7033 -->
+
 ---
 
 ## 2026-05-17
