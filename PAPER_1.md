@@ -241,6 +241,30 @@ Questions to answer:
 4. Do systems 26, 31, and 63 indicate a real algorithmic failure?
 5. Is the failure caused by system-wide staged progression, parameter fitting, basis mismatch, or something else?
 
+### Phase 1 Work Packages
+
+#### WP-1.1 — Add exact_support_match_raw and exact_support_match_pruned metrics ✓ 2026-05-11
+
+**Language:** Julia
+
+**What:** Implement coefficient-threshold pruning rule in `experiments/run_experiment.jl` and store both raw and pruned support-match metrics per run.
+
+#### WP-1.2 — Phase A metric artifact vs. structural failure diagnostic ✓ 2026-05-11
+
+**Language:** Python / analysis
+
+**What:** Classify each Phase A failure as metric artifact or genuine structural failure. Identified System 11 as metric artifact (loss ~4e-15 but raw match = 0), confirmed genuine failures on Systems 26, 31, 63.
+
+#### WP-1.3 — Phase 1 diagnostic run on problem systems ✓ 2026-05-30
+
+**Language:** Julia
+
+**What:** Run EvoGrow v2.2 stage_local with Paper 1 configuration (pretuning=false, n_levels=30) on Systems 3, 11, 26, 31, 63 with 3 seeds each.
+
+**Result:** 15/15 runs completed. System 11 pruning fix confirmed. Systems 26 and 63 show genuine algorithmic failure (system-wide staging escalates to Stage 5 without finding correct cross-terms). System 31 seed 42 achieves near-perfect fit but spurious term survives pruning threshold.
+
+---
+
 ### Phase 1 Hyperparameter Defaults for Diagnosis
 
 The diagnostic configuration should include:
@@ -274,6 +298,26 @@ If v2.2 passes Gate 1:
 If v2.2 fails Gate 1:
 
 > Proceed to Phase 2 and develop EvoGrow v3 only if the diagnosis indicates that system-wide staged progression is the relevant failure mode.
+
+### Gate 1 Decision — 2026-05-30
+
+**Decision: v2.2 fails Gate 1. Phase 2 (EvoGrow v3) is triggered.**
+
+Evidence from `studies/phase1_diag/` (15 runs, EvoGrow v2.2 stage_local, pretuning=false, n_levels=30, seeds 42/123/7):
+
+| System | pruned_match | Final stage | Loss | Verdict |
+|--------|-------------|-------------|------|---------|
+| 3 (Logistic) | all true ✓ | 2–5 / 2 | ~7e-10 | Fit good, minor overshoot |
+| 11 (Cubic) | all true ✓ | 4/4 | ~4e-15 | Metric artifact healed |
+| 26 (Lotka-Volterra) | all false ✗ | 5/3 | ~5e-4–1.4e-3 | Genuine structural failure |
+| 31 (SIR) | all false ✗ | 3–5 / 3 | ~7e-11 – 1e-4 | Seed 42 near-perfect fit but spurious term; seeds 123/7 fail |
+| 63 (SEIR) | all false ✗ | 5/3 | ~9e-4–1.8e-3 | Consistent failure, 11000–31000s |
+
+**Diagnosed failure mode:** On Systems 26 and 63, loss stagnates in Stage 3 above target. The system-wide plateau trigger then promotes all equations to Stage 4 (cubic) and Stage 5 (trig), none of which are structurally needed. The correct cross-terms (Stage 3) are never found because the global promotion removes search pressure rather than concentrating it on the failing equations.
+
+This failure mode is consistent with the v3 hypothesis: per-equation staged progression would allow each equation to promote only when its own residual stagnates, preventing unnecessary escalation in equations that are already explained.
+
+**Triggering condition met:** the diagnosed failure mode is system-wide staged progression. Phase 2 is triggered.
 
 ---
 
@@ -772,5 +816,5 @@ This document is updated at each phase transition:
 - update protocol-audit status,
 - add final claim decisions after Phase 5 results.
 
-Last updated: 2026-05-17
-Current phase: Phase 0 + Phase 1 diagnostic preparation
+Last updated: 2026-05-30
+Current phase: Phase 2 — EvoGrow v3 design and implementation
