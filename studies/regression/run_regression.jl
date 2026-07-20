@@ -183,6 +183,40 @@ function history_line_count()
     return count
 end
 
+function fresh_requested()
+    flag = lowercase(strip(get(ENV, "FRESH", "")))
+    return flag in ("1", "true", "yes")
+end
+
+function completed_key(variant, system, seed::Int)
+    return (String(variant.label), Int(system[:system_id]), seed)
+end
+
+function load_completed_cells(fingerprint::String)
+    completed = Set{Tuple{String, Int, Int}}()
+    isfile(HISTORY_PATH) || return completed
+
+    open(HISTORY_PATH, "r") do io
+        for line in eachline(io)
+            isempty(strip(line)) && continue
+            try
+                record = JSON3.read(line)
+                if getproperty(record, :config_fingerprint) == fingerprint &&
+                   getproperty(record, :error) === nothing
+                    variant = String(getproperty(record, :variant))
+                    system_id = Int(getproperty(record, :system_id))
+                    seed = Int(getproperty(record, :seed))
+                    push!(completed, (variant, system_id, seed))
+                end
+            catch
+                continue
+            end
+        end
+    end
+
+    return completed
+end
+
 function iso_timestamp()
     return Dates.format(now(UTC), dateformat"yyyy-mm-ddTHH:MM:SS.sssZ")
 end
@@ -380,9 +414,12 @@ function main()
     fingerprint = config_fingerprint()
     provenance = git_provenance()
     appended = 0
+    skipped = 0
+    completed = fresh_requested() ? Set{Tuple{String, Int, Int}}() : load_completed_cells(fingerprint)
 
     println("Regression history fingerprint: $(fingerprint)")
     println("Git: $(provenance.git_hash), dirty=$(provenance.git_dirty)")
+    println("Resume: completed=$(length(completed)), fresh=$(fresh_requested())")
 
     total_runs = length(VARIANTS) * length(REGRESSION_SYSTEMS) * length(REGRESSION_SEEDS)
     run_index = 0
@@ -403,6 +440,30 @@ function main()
             for system in REGRESSION_SYSTEMS
                 for seed in REGRESSION_SEEDS
                     run_index += 1
+                    key = completed_key(variant, system, seed)
+                    if key in completed
+                        skipped += 1
+                        append_run_log_line!(
+                            @sprintf(
+                                "[%d/%d] variant=%s sys=%d seed=%d - skipped (already in history)",
+                                run_index,
+                                total_runs,
+                                variant.label,
+                                Int(system[:system_id]),
+                                seed,
+                            )
+                        )
+                        next!(
+                            progress;
+                            showvalues = [
+                                (:variant, variant.label),
+                                (:system_id, Int(system[:system_id])),
+                                (:seed, seed),
+                            ],
+                        )
+                        continue
+                    end
+
                     append_run_log_line!(
                         @sprintf(
                             "[%d/%d] variant=%s sys=%d seed=%d - start %s",
@@ -441,6 +502,9 @@ function main()
     end
 
     total_lines = history_line_count()
+    println("Total cells: $(total_runs)")
+    println("Skipped completed: $(skipped)")
+    println("Run this invocation: $(appended)")
     println("Appended $(appended) records to $(HISTORY_PATH)")
     println("History line count: $(total_lines)")
 end
