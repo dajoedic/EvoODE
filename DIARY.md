@@ -12,7 +12,7 @@ Codex hat **WP-v3.1** umgesetzt: `docs/evogrow_v3_design.md` friert das v3-Desig
 
 **WP-v3.2 als nächsten Codex-Task formuliert** (`codex/CURRENT_TASK.md`): neuer `EvoGrowV3`-Struct + gleichungsweiser Stage-State als lauffähiges Refactor. Bewusst enger Scope — Promotion bleibt vorerst Lockstep (alle Gleichungen gemeinsam), sodass `EvoGrowV3` v2.2 (`:stage_local`) exakt reproduziert. Das dient als **Regressions-Anker**: spätere Divergenz ist dann eindeutig den gleichungs-lokalen Mechanismen (WP-v3.3 Child-Generation, WP-v3.4 Residuum-Signal + pro-Gleichung-Promotion) zuzuordnen, nicht dem Refactor. Verifikation: Struktur-/Loss-Identität v3 vs. v2.2 auf System 3 und 26.
 
-<!-- f9567b5, 10ef90f -->
+<!-- f9567b5, 10ef90f, 4f78d20 -->
 
 ### Status-Abgleich und Housekeeping
 
