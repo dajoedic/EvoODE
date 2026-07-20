@@ -686,13 +686,23 @@ Status: NOT STARTED
 
 ## Current Priorities
 
-Current priorities as of 2026-05-11:
+Current priorities as of 2026-07-20:
 
-1. WP-0.1: Fix H4 claim in `evaluate_hypotheses.py` (vacuous result, ordering is trivially satisfied at 0/0/0).
-2. WP-0.2: Verify corrected generalization path resolves correctly in `evaluate_hypotheses.py`.
-3. WP-v3.1 through WP-v3.6: Implement EvoGrow v3 (equation-wise staged progression).
-4. After v3 validated: design Phase B experiment (`paper1_phaseB_v1`) — 63 systems × 2 conditions × 3 seeds.
-5. Phase 2: system classification, R² metric, timeout handling, protocol audit (WP-2.1 through WP-2.4).
+Done (do not re-open):
+- WP-0.1 (H4 claim → VACUOUS in `evaluate_hypotheses.py`) — done 2026-05-17.
+- WP-0.2 (generalization data path in `evaluate_hypotheses.py`) — done 2026-05-17.
+- WP-1.3 (Phase 1 diagnostic run) and Gate 1 — done 2026-05-30; v2.2 fails Gate 1, Phase 2 (EvoGrow v3) triggered.
+
+Active (Phase 2 — EvoGrow v3):
+1. WP-v3.1: Design note `docs/evogrow_v3_design.md` (per-equation progress signal and promotion rule) — active Codex task in `codex/CURRENT_TASK.md`; deliverable not yet written.
+2. WP-v3.2 through WP-v3.6: implement `EvoGrowV3` (equation-wise stage state, equation-aware child generation, per-equation plateau/promotion, v3 metrics, validation run vs. v2.2).
+3. Gate 2: decide whether v3 is paper-ready.
+
+After Gate 2:
+4. Phase 3 (PAPER_1.md): ODEBench protocol alignment — system classification, R² metric, protocol-audit document.
+5. Phase B experiment (`paper1_phaseB_v1`) — 63 systems × 2 conditions × 3 seeds.
+
+`PAPER_1.md` is the authoritative execution plan and takes precedence if this list drifts.
 
 ## Implemented and Working
 
@@ -775,11 +785,11 @@ The full execution plan lives in `PAPER_1.md`. That document contains:
 - Implementation and scientific risk register
 - Frozen elements
 
-**Current phase:** Phase 0 (Archive Phase A, correct diagnostics)
+**Current phase:** Phase 2 — EvoGrow v3 design and implementation (Phase 0 and Phase 1 complete; Gate 1 decided 2026-05-30, v2.2 fails, v3 triggered)
 
 **Active WPs:**
-- WP-0.1: Fix H4 claim in freeze memo (C3 cannot be evaluated — vacuous result)
-- WP-0.2: Fix generalization data path in evaluate_hypotheses.py
+- WP-v3.1: Design note `docs/evogrow_v3_design.md` (per-equation progress signal and promotion rule) — active Codex task, not yet delivered
+- WP-v3.2 through WP-v3.6: EvoGrow v3 implementation and validation run vs. v2.2
 
 **Final experiment scope:**
 - All 63 ODEBench systems (`benchmarks/data/strogatz_extended.json`)
