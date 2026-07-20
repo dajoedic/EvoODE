@@ -1,0 +1,320 @@
+import Pkg
+Pkg.activate(joinpath(@__DIR__, "..", ".."))
+
+using Dates
+using DifferentialEquations
+using JSON3
+using Printf
+using SHA
+
+include(joinpath(@__DIR__, "..", "..", "src", "EvoODE.jl"))
+using .EvoODE
+include(joinpath(@__DIR__, "diagnostic_systems.jl"))
+
+const HISTORY_PATH = joinpath(@__DIR__, "history.jsonl")
+const OUTPUT_DIR = joinpath(@__DIR__, "..", "..", "outputs", "studies", "regression")
+
+const POP_SIZE = 10
+const N_LEVELS = 30
+const CHILDREN_PER_PARENT = 2
+const MAX_TERMS = 6
+const LAMBDA = 1e-3
+const STAGE_MIN = 2
+const SOFT_BIAS = 0.75
+const USE_PRETUNING = false
+const BFGS_MAXITERS = 200
+
+const OPTIONS_CONFIG = (
+    verbose = 1,
+    min_levels = 2,
+    max_levels = 50,
+    loss_tol = 1e-8,
+    plateau_window = 3,
+    plateau_tol = 1e-4,
+    plateau_relative = false,
+    plateau_rtol = 1e-3,
+)
+
+const VARIANTS = [
+    (
+        label = "evogrow_v2_2_stage_local",
+        constructor = () -> EvoGrow(
+            pop_size = POP_SIZE,
+            n_levels = N_LEVELS,
+            children_per_parent = CHILDREN_PER_PARENT,
+            max_terms_per_eq = MAX_TERMS,
+            λ = LAMBDA,
+            progression = StageProgressionPolicy(
+                mode = :stage_local,
+                min_levels_per_stage = STAGE_MIN,
+            ),
+            usage = StageUsagePolicy(
+                mode = :hard,
+                new_term_bias_prob = SOFT_BIAS,
+            ),
+            use_pretuning = USE_PRETUNING,
+        ),
+    ),
+    (
+        label = "evogrow_v3",
+        constructor = () -> EvoGrowV3(
+            pop_size = POP_SIZE,
+            n_levels = N_LEVELS,
+            children_per_parent = CHILDREN_PER_PARENT,
+            max_terms_per_eq = MAX_TERMS,
+            λ = LAMBDA,
+            progression = StageProgressionPolicy(
+                mode = :stage_local,
+                min_levels_per_stage = STAGE_MIN,
+            ),
+            usage = StageUsagePolicy(
+                mode = :hard,
+                new_term_bias_prob = SOFT_BIAS,
+            ),
+            use_pretuning = USE_PRETUNING,
+        ),
+    ),
+]
+
+function build_options(seed::Int)
+    return DiscoveryOptions(
+        rng_seed = seed,
+        verbose = OPTIONS_CONFIG.verbose,
+        min_levels = OPTIONS_CONFIG.min_levels,
+        max_levels = OPTIONS_CONFIG.max_levels,
+        loss_tol = OPTIONS_CONFIG.loss_tol,
+        plateau_window = OPTIONS_CONFIG.plateau_window,
+        plateau_tol = OPTIONS_CONFIG.plateau_tol,
+        plateau_relative = OPTIONS_CONFIG.plateau_relative,
+        plateau_rtol = OPTIONS_CONFIG.plateau_rtol,
+    )
+end
+
+function canonical_value(x)
+    if x isa NamedTuple
+        parts = String[]
+        for key in sort(collect(keys(x)); by = string)
+            push!(parts, string(key, "=", canonical_value(getfield(x, key))))
+        end
+        return "{" * join(parts, ",") * "}"
+    elseif x isa AbstractDict
+        parts = String[]
+        for key in sort(collect(keys(x)); by = string)
+            push!(parts, string(key, "=", canonical_value(x[key])))
+        end
+        return "{" * join(parts, ",") * "}"
+    elseif x isa Tuple
+        return "(" * join(canonical_value.(collect(x)), ",") * ")"
+    elseif x isa AbstractVector
+        return "[" * join(canonical_value.(x), ",") * "]"
+    else
+        return repr(x)
+    end
+end
+
+function config_fingerprint()
+    system_payload = [
+        (
+            system_id = Int(system[:system_id]),
+            dim = Int(system[:dim]),
+            u0 = Float64[x for x in system[:u0]],
+            tspan = system[:tspan],
+            T = Int(system[:T]),
+            expected_stage = Int(system[:expected_stage]),
+        )
+        for system in sort(REGRESSION_SYSTEMS; by = s -> Int(s[:system_id]))
+    ]
+    payload = (
+        system_ids = sort([Int(system[:system_id]) for system in REGRESSION_SYSTEMS]),
+        systems = system_payload,
+        seeds = REGRESSION_SEEDS,
+        pop_size = POP_SIZE,
+        n_levels = N_LEVELS,
+        children_per_parent = CHILDREN_PER_PARENT,
+        max_terms_per_eq = MAX_TERMS,
+        lambda = LAMBDA,
+        min_levels_per_stage = STAGE_MIN,
+        new_term_bias_prob = SOFT_BIAS,
+        use_pretuning = USE_PRETUNING,
+        bfgs_maxiters = BFGS_MAXITERS,
+        discovery_options = OPTIONS_CONFIG,
+        trajectory_solver = (
+            algorithm = "Tsit5",
+            saveat = "range(tspan[1], tspan[2]; length=T)",
+            abstol = 1e-9,
+            reltol = 1e-9,
+        ),
+        basis = "default_staged_polynomial_basis(dim)",
+        loss = "MSELoss",
+    )
+    bytes = sha256(codeunits(canonical_value(payload)))
+    return bytes2hex(bytes)[1:16]
+end
+
+function git_output(args::Vector{String})
+    try
+        return chomp(read(`git $args`, String))
+    catch
+        return nothing
+    end
+end
+
+function git_provenance()
+    hash = git_output(["rev-parse", "--short", "HEAD"])
+    dirty = git_output(["status", "--porcelain"])
+    return (
+        git_hash = hash === nothing || isempty(hash) ? "unknown" : hash,
+        git_dirty = dirty === nothing ? nothing : !isempty(dirty),
+    )
+end
+
+function history_line_count()
+    isfile(HISTORY_PATH) || return 0
+    count = 0
+    open(HISTORY_PATH, "r") do io
+        for _ in eachline(io)
+            count += 1
+        end
+    end
+    return count
+end
+
+function build_trajectory(system)
+    system_id = Int(system[:system_id])
+    tspan = system[:tspan]
+    t_grid = collect(range(tspan[1], tspan[2]; length = Int(system[:T])))
+    u0 = Float64[x for x in system[:u0]]
+    prob = ODEProblem(rhs_for_system(system_id), copy(u0), tspan, nothing)
+    sol = solve(prob, Tsit5(); saveat = t_grid, abstol = 1e-9, reltol = 1e-9)
+    return Trajectory(t_grid, Array(sol)')
+end
+
+function run_one(variant, system, seed::Int, fingerprint::String, provenance)
+    timestamp = Dates.format(now(UTC), dateformat"yyyy-mm-ddTHH:MM:SS.sssZ")
+    system_id = Int(system[:system_id])
+    system_name = String(system[:system_name])
+    dim = Int(system[:dim])
+    expected_stage = Int(system[:expected_stage])
+
+    base_record = Dict{String, Any}(
+        "timestamp" => timestamp,
+        "git_hash" => provenance.git_hash,
+        "git_dirty" => provenance.git_dirty,
+        "variant" => String(variant.label),
+        "config_fingerprint" => fingerprint,
+        "system_id" => system_id,
+        "system_name" => system_name,
+        "seed" => seed,
+        "loss" => nothing,
+        "pruned_match" => nothing,
+        "final_stage" => nothing,
+        "expected_stage" => expected_stage,
+        "stage_overshoot" => nothing,
+        "wasted_levels" => nothing,
+        "elapsed_s" => nothing,
+        "eq_final_stages" => nothing,
+        "n_levels" => N_LEVELS,
+        "use_pretuning" => USE_PRETUNING,
+        "error" => nothing,
+    )
+
+    try
+        traj = build_trajectory(system)
+        strategy = variant.constructor()
+        basis = default_staged_polynomial_basis(dim)
+        optimizer = BFGSOptimizer(maxiters = BFGS_MAXITERS)
+        options = build_options(seed)
+
+        result = nothing
+        elapsed = @elapsed result = discover(
+            traj;
+            structure = strategy,
+            optimizer = optimizer,
+            basis = basis,
+            loss = MSELoss(),
+            options = options,
+        )
+
+        meta = result.meta.structure
+        final_stage = haskey(meta, :final_stage) ? Int(meta.final_stage) : nothing
+        stage_level_counts = haskey(meta, :stage_level_counts) ? collect(meta.stage_level_counts) : Int[]
+        stage_overshoot = final_stage === nothing ? nothing : max(0, final_stage - expected_stage)
+        wasted_levels = isempty(stage_level_counts) ? 0 : sum(stage_level_counts[(expected_stage + 1):end]; init = 0)
+        expected_idxs = expected_active_idxs(system_id, basis)
+        pruned_match = expected_idxs === nothing ? false : support_match_pruned(result.structure, result.params, expected_idxs)
+        eq_final_stages = haskey(meta, :eq_final_stages) ? collect(meta.eq_final_stages) : nothing
+
+        base_record["loss"] = result.loss
+        base_record["pruned_match"] = pruned_match
+        base_record["final_stage"] = final_stage
+        base_record["stage_overshoot"] = stage_overshoot
+        base_record["wasted_levels"] = wasted_levels
+        base_record["elapsed_s"] = elapsed
+        base_record["eq_final_stages"] = eq_final_stages
+    catch err
+        base_record["error"] = sprint(showerror, err)
+    end
+
+    return base_record
+end
+
+function append_record!(record)
+    mkpath(dirname(HISTORY_PATH))
+    open(HISTORY_PATH, "a") do io
+        JSON3.write(io, record)
+        write(io, '\n')
+    end
+end
+
+function summary_line(record)
+    if record["error"] !== nothing
+        return @sprintf(
+            "variant=%s sys=%d seed=%d loss=null stage=null/%d pruned=null elapsed=nulls error=%s",
+            record["variant"],
+            record["system_id"],
+            record["seed"],
+            record["expected_stage"],
+            record["error"],
+        )
+    end
+    return @sprintf(
+        "variant=%s sys=%d seed=%d loss=%.3e stage=%s/%d pruned=%s elapsed=%.1fs",
+        record["variant"],
+        record["system_id"],
+        record["seed"],
+        record["loss"],
+        string(record["final_stage"]),
+        record["expected_stage"],
+        string(record["pruned_match"]),
+        record["elapsed_s"],
+    )
+end
+
+function main()
+    mkpath(OUTPUT_DIR)
+    set_level(INFO)
+
+    fingerprint = config_fingerprint()
+    provenance = git_provenance()
+    appended = 0
+
+    println("Regression history fingerprint: $(fingerprint)")
+    println("Git: $(provenance.git_hash), dirty=$(provenance.git_dirty)")
+
+    for variant in VARIANTS
+        for system in REGRESSION_SYSTEMS
+            for seed in REGRESSION_SEEDS
+                record = run_one(variant, system, seed, fingerprint, provenance)
+                append_record!(record)
+                appended += 1
+                println(summary_line(record))
+            end
+        end
+    end
+
+    total_lines = history_line_count()
+    println("Appended $(appended) records to $(HISTORY_PATH)")
+    println("History line count: $(total_lines)")
+end
+
+main()
