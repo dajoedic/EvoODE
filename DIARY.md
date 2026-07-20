@@ -12,7 +12,7 @@ Codex hat den inneren Live-Balken verdrahtet: VARIANTS-Konstruktoren nehmen `lev
 
 **Review:** Korrekt und spec-konform; `next!` kann total nie überschreiten (max 30 Level = total). Ein rein kosmetischer Vorbehalt, den ich nicht ohne Julia verifizieren kann: die pro-Lauf-Zusammenfassungszeile (`println(summary_line)`) wird zwischen zwei gestapelten ProgressMeter-Balken ausgegeben — das kann visuell holprig sein. Beim ersten externen Kurzlauf begutachten; falls unsauber, ist der Fix eine Zeile (auf `ProgressMeter.println` umstellen oder die Zeile weglassen, da `run.log` die Done-Zeile ohnehin hat).
 
-<!-- 9cd66e7 -->
+<!-- 9cd66e7, 7e07cc6 -->
 
 ### WP-H1c beauftragt: innerer Live-Balken pro Lauf
 
