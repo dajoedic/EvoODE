@@ -5,6 +5,7 @@ using Dates
 using DifferentialEquations
 using JSON3
 using Printf
+using ProgressMeter
 using SHA
 
 include(joinpath(@__DIR__, "..", "..", "src", "EvoODE.jl"))
@@ -13,6 +14,7 @@ include(joinpath(@__DIR__, "diagnostic_systems.jl"))
 
 const HISTORY_PATH = joinpath(@__DIR__, "history.jsonl")
 const OUTPUT_DIR = joinpath(@__DIR__, "..", "..", "outputs", "studies", "regression")
+const RUN_LOG_PATH = joinpath(OUTPUT_DIR, "run.log")
 
 const POP_SIZE = 10
 const N_LEVELS = 30
@@ -179,6 +181,30 @@ function history_line_count()
     return count
 end
 
+function iso_timestamp()
+    return Dates.format(now(UTC), dateformat"yyyy-mm-ddTHH:MM:SS.sssZ")
+end
+
+function append_run_log_line!(line::AbstractString)
+    mkpath(dirname(RUN_LOG_PATH))
+    open(RUN_LOG_PATH, "a") do io
+        println(io, line)
+        flush(io)
+    end
+end
+
+function open_evo_logger_append!(path::String)
+    mkpath(dirname(path))
+    close_log_file()
+    EvoODE.EvoLogger.LOGGER.log_io = open(path, "a")
+    return nothing
+end
+
+function close_evo_logger!()
+    close_log_file()
+    return nothing
+end
+
 function build_trajectory(system)
     system_id = Int(system[:system_id])
     tspan = system[:tspan]
@@ -190,7 +216,7 @@ function build_trajectory(system)
 end
 
 function run_one(variant, system, seed::Int, fingerprint::String, provenance)
-    timestamp = Dates.format(now(UTC), dateformat"yyyy-mm-ddTHH:MM:SS.sssZ")
+    timestamp = iso_timestamp()
     system_id = Int(system[:system_id])
     system_name = String(system[:system_name])
     dim = Int(system[:dim])
@@ -226,14 +252,16 @@ function run_one(variant, system, seed::Int, fingerprint::String, provenance)
         options = build_options(seed)
 
         result = nothing
-        elapsed = @elapsed result = discover(
-            traj;
-            structure = strategy,
-            optimizer = optimizer,
-            basis = basis,
-            loss = MSELoss(),
-            options = options,
-        )
+        elapsed = @elapsed redirect_stdout(devnull) do
+            result = discover(
+                traj;
+                structure = strategy,
+                optimizer = optimizer,
+                basis = basis,
+                loss = MSELoss(),
+                options = options,
+            )
+        end
 
         meta = result.meta.structure
         final_stage = haskey(meta, :final_stage) ? Int(meta.final_stage) : nothing
@@ -264,6 +292,34 @@ function append_record!(record)
         JSON3.write(io, record)
         write(io, '\n')
     end
+end
+
+function done_log_line(record, index::Int, total::Int)
+    if record["error"] !== nothing
+        return @sprintf(
+            "[%d/%d] variant=%s sys=%d seed=%d - done loss=null stage=null/%d pruned=null elapsed=nulls error=%s",
+            index,
+            total,
+            record["variant"],
+            record["system_id"],
+            record["seed"],
+            record["expected_stage"],
+            record["error"],
+        )
+    end
+    return @sprintf(
+        "[%d/%d] variant=%s sys=%d seed=%d - done loss=%.3e stage=%s/%d pruned=%s elapsed=%.1fs",
+        index,
+        total,
+        record["variant"],
+        record["system_id"],
+        record["seed"],
+        record["loss"],
+        string(record["final_stage"]),
+        record["expected_stage"],
+        string(record["pruned_match"]),
+        record["elapsed_s"],
+    )
 end
 
 function summary_line(record)
@@ -301,15 +357,59 @@ function main()
     println("Regression history fingerprint: $(fingerprint)")
     println("Git: $(provenance.git_hash), dirty=$(provenance.git_dirty)")
 
-    for variant in VARIANTS
-        for system in REGRESSION_SYSTEMS
-            for seed in REGRESSION_SEEDS
-                record = run_one(variant, system, seed, fingerprint, provenance)
-                append_record!(record)
-                appended += 1
-                println(summary_line(record))
+    total_runs = length(VARIANTS) * length(REGRESSION_SYSTEMS) * length(REGRESSION_SEEDS)
+    run_index = 0
+
+    append_run_log_line!("=== Started at $(iso_timestamp()) ===")
+    open_evo_logger_append!(RUN_LOG_PATH)
+    try
+        # The progress bar ticks once per completed run. A single run can take
+        # minutes to hours; within-run liveness is written to run.log by EvoGrow.
+        progress = Progress(
+            total_runs;
+            desc = "Regression",
+            showspeed = true,
+        )
+
+        for variant in VARIANTS
+            for system in REGRESSION_SYSTEMS
+                for seed in REGRESSION_SEEDS
+                    run_index += 1
+                    append_run_log_line!(
+                        @sprintf(
+                            "[%d/%d] variant=%s sys=%d seed=%d - start %s",
+                            run_index,
+                            total_runs,
+                            variant.label,
+                            Int(system[:system_id]),
+                            seed,
+                            iso_timestamp(),
+                        )
+                    )
+
+                    record = run_one(variant, system, seed, fingerprint, provenance)
+                    append_record!(record)
+                    appended += 1
+
+                    done_line = done_log_line(record, run_index, total_runs)
+                    append_run_log_line!(done_line)
+                    next!(
+                        progress;
+                        showvalues = [
+                            (:variant, variant.label),
+                            (:system_id, Int(system[:system_id])),
+                            (:seed, seed),
+                        ],
+                    )
+                    println(summary_line(record))
+                end
             end
         end
+
+        finish!(progress)
+    finally
+        close_evo_logger!()
+        append_run_log_line!("=== Finished at $(iso_timestamp()) ===")
     end
 
     total_lines = history_line_count()
