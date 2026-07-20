@@ -6,6 +6,12 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ## 2026-07-20
 
+### WP-H1b beauftragt: Fortschritts-Logging (tqdm-Stil)
+
+Zweischichtiges Logging für `run_regression.jl`, damit der User externe Läufe live in der cmd verfolgen kann: **Bildschirm** = `ProgressMeter`-Balken (tqdm-Äquivalent) über N = Varianten×Systeme×Seeds mit ETA + aktuellem Item + eine Zusammenfassungszeile pro Lauf; **Datei** = `outputs/studies/regression/run.log` mit Start/Finish-Markern, `[i/N]`-Per-Run-Zeilen und EvoGrows Per-Level-Heartbeat (via `set_log_file`). Balken terminal-only (kein `\r` in die Logdatei). Prinzip „so wenig wie möglich auf dem Schirm, so viel wie nötig in der Datei". Optional: BFGS-Zeitlimit-Treffer pro Lauf als additives Feld (erklärt die Slowness). Nur Observability — Metriken/Records/Fingerprint/Config unverändert. `ProgressMeter` neu in `Project.toml`. Committet `476e192`.
+
+<!-- 476e192 -->
+
 ### WP-H1 umgesetzt und verifiziert; Julia-Läufe künftig extern
 
 Codex hat WP-H1 geliefert: `studies/regression/{diagnostic_systems.jl, run_regression.jl, history.jsonl}`. Runner rechnet das feste Set (Systeme 3/11/26/31/63) für v2.2 und v3, hängt ein JSONL-Record pro (variant, system, seed) an `history.jsonl` an (git-Provenienz + `config_fingerprint`). Verifiziert über den echten Runner auf dem schnellen Subset (Systeme 3, 11): valides JSONL, stabiler Fingerprint, **Anker-Äquivalenz v2.2==v3 bit-genau** (System 3: identischer Loss/final_stage je Seed; v3 `eq_final_stages` gesetzt). `history.jsonl` leer committet. Committet `99393bb`.
