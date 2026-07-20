@@ -6,6 +6,16 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ## 2026-07-20
 
+### Regressions-Historie beschlossen, WP-H1 beauftragt
+
+Neue Anforderung: longitudinales Logging, um zu verfolgen, wie sich Metriken über Algorithmus-Versionen/Commits entwickeln (besser/schlechter pro System). Fehlende Achse gegenüber den bestehenden Snapshot-Logs (`run_registry.csv`, Aggregate) und dem narrativen DIARY. Scope-Entscheidung: **Medium**.
+
+Design: festes Diagnostik-Set (Systeme 3/11/26/31/63, feste Seeds/Hyperparameter, wie `phase1_diag`) → append-only `studies/regression/history.jsonl`, ein Record pro (git_hash, variant, system, seed) mit `config_fingerprint` (Hash über metrik-relevante Config; nur innerhalb gleichem Fingerprint vergleichen) + `git_dirty`-Flag. Python-Delta-Report separat.
+
+Aufgeteilt wegen Sprach-Deklaration pro Task: **WP-H1 (Julia)** = Runner + append-only Store (jetzt in `codex/CURRENT_TASK.md`); **WP-H2 (Python)** = Delta-Report (letzter vs. vorheriger Commit, ↑/↓/=, DIARY-fertiger Markdown-Block) als Folge-Task. Erste Baseline-Einträge: v2.2 + v3.2 (müssen laut Anker gleich sein). Bewusst *vor* WP-v3.3/v3.4 gezogen, damit jeder echte v3-Schritt ab Beginn in die Historie geloggt wird. Trigger manuell, nicht als Git-Hook (Läufe dauern Minuten bis Stunden).
+
+<!-- a5ef98a -->
+
 ### WP-v3.2 umgesetzt und verifiziert
 
 Codex hat `EvoGrowV3` implementiert (`src/structure/evogrow_v3.jl`, registriert/exportiert in `src/EvoODE.jl`). Pro-Gleichung-Stage-State (`eq_stages`, `eq_levels_in_stage`, `eq_plateau_histories`, `eq_stage_histories`), Promotion aber noch Lockstep-global über einen internen `EvoGrow`-Bridge, der die v2.2-Helfer (`_validate_policy`, `_init_population`, `_stage_progression_decision`) wiederverwendet. Meta ergänzt `eq_final_stages` + `eq_stage_histories` mit `final_stage = maximum(eq_stages)`. Saubere Seams (`_lockstep_stage_progression_decision`, `_apply_lockstep_stage_update!`) für WP-v3.4.
