@@ -1,102 +1,95 @@
-# CURRENT TASK: WP-H1b — Progress logging for the regression runner
+# CURRENT TASK: WP-H1c — Within-run live progress bar for the regression runner
 
 **Language: Julia**
 
 ## Context
 
-The regression runner (`studies/regression/run_regression.jl`, WP-H1) is executed externally
-by the user, and the runs are long (even 1D System 3 took 218-1217 s per run; Systems 26/63
-take hours). The user needs to see progress **live in the terminal (cmd)** and have a
-persistent log. This task adds observability only — it must not change any metric, record,
-fingerprint, or the fixed configuration, so results stay comparable across the history.
+WP-H1b added an outer `ProgressMeter` bar over all runs plus a `run.log`. But that outer bar
+only advances at the END of each run (`next!` after `discover`), so during a single long run
+(System 3: minutes; System 63: hours) the terminal shows a static bar and no on-screen sign of
+life. The within-run heartbeat currently goes only to `run.log`.
 
-Guiding principle (user's words): logging should be **as little as possible, as much as
-necessary**. Keep the screen minimal; put the detail in a file.
+This task adds a **second, inner progress bar per run**, driven live from within `discover`, so
+the user sees per-level progress in the terminal without a second `tail -f` window. EvoGrow and
+EvoGrowV3 already expose the `level_callback` hook (a `Union{Nothing,Function}` field) that is
+invoked at the end of every level with a snapshot NamedTuple — no `src/` change is needed.
+
+This is observability only: metrics, record schema, `config_fingerprint`, and the fixed
+configuration must not change.
 
 ## Goal
 
-Add two-layer progress logging to `run_regression.jl`:
-- **Terminal (cmd):** a tqdm-style progress bar over all runs, with ETA and the current item,
-  plus one concise summary line per finished run.
-- **File (`run.log`):** timestamped per-run start/finish lines and the per-level heartbeat from
-  EvoGrow, so a long single run is visibly alive.
+In `studies/regression/run_regression.jl`, show a live inner progress bar per run that ticks
+once per level (Level x/n, current stage, current best loss), stacked below the existing outer
+per-run bar. Keep `run.log` and the minimal-screen behavior from WP-H1b.
 
 ## Files
 
-- **Modify:** `studies/regression/run_regression.jl`.
-- **Modify:** `Project.toml` (and `Manifest.toml`) — add `ProgressMeter` as a dependency.
-- **Log file:** `outputs/studies/regression/run.log` (append), consistent with the existing
-  run.log convention used by other scripts.
-- **Must not change:** `history.jsonl` record schema and values (except the one optional
-  additive field in section 4), the metric computation, `config_fingerprint`, and the fixed
-  suite/hyperparameters. This is observability only.
+- **Modify only:** `studies/regression/run_regression.jl`.
+- **Do not modify `src/`.** EvoGrow and EvoGrowV3 already call
+  `strategy.level_callback(snapshot)` at the end of each level. The snapshot is a NamedTuple
+  whose fields include at least `level::Int`, `stage::Int`, `best_loss::Float64`, and
+  `best_objective::Float64`. Read those fields; do not assume others.
 
 ## Required Content
 
-### 1. Terminal progress bar (tqdm-style)
+### 1. Let variants accept a per-run level callback
 
-Use `ProgressMeter.jl`. Create one `Progress` over the total number of runs
-`N = length(VARIANTS) * length(REGRESSION_SYSTEMS) * length(REGRESSION_SEEDS)`. Advance it once
-after each completed run. Show ETA and the current item (variant, system_id, seed) beside the
-bar (e.g. via `showvalues`). This bar is **terminal-only**: its in-place `\r` updates must not
-be written into `run.log`.
+Change the `VARIANTS` constructors so each takes a `level_callback` argument and passes it into
+the strategy via the existing `level_callback` keyword (both `EvoGrow` and `EvoGrowV3` support
+it). `run_one` then builds the strategy with the inner-bar callback it created for that run.
+Everything else about the variant configuration stays identical (so results are unchanged).
 
-Note in a comment that the bar ticks once per run and a single run can take minutes to hours,
-so the bar will appear to pause during a run — within-run liveness comes from the run.log
-per-level lines (section 2), not the bar.
+### 2. Inner progress bar per run
 
-### 2. run.log with per-run lines and per-level heartbeat
+In `run_one`, before calling `discover`:
+- Create an inner `Progress` whose total is the effective level cap
+  `min(N_LEVELS, OPTIONS_CONFIG.max_levels)`.
+- Build a `level_callback` closure that, on each call, advances the inner bar and shows the
+  current run's `system_id`, `seed`, `snapshot.level`, `snapshot.stage`, and `snapshot.best_loss`
+  via `showvalues`.
+- After `discover` returns (or errors), `finish!` the inner bar. Put the `finish!` in a
+  `try/finally` so an errored run still closes its inner bar cleanly.
 
-Append to `outputs/studies/regression/run.log`:
-- `=== Started at <ISO ts> ===` at start, `=== Finished at <ISO ts> ===` at end.
-- One line when each run starts: `[i/N] variant=… sys=… seed=… — start <ts>`.
-- One line when each run finishes: `[i/N] variant=… sys=… seed=… — done loss=… stage=…/… pruned=… elapsed=…s`.
-- Route the EvoODE logger to this same file (via the exported `set_log_file` / `close_log_file`)
-  so EvoGrow's `verbose=1` per-level output ("Level start", "Best individual", stage
-  promotions) is captured in run.log as the within-run heartbeat. Close/restore the log file at
-  the end.
+The inner bar ticks once per level. Note in a comment that a single level can still pause for up
+to the BFGS time limit (~300 s) if that call is slow — this is expected and far better than the
+per-run granularity of the outer bar.
 
-Flush after each per-run line so external `tail -f` shows it immediately.
+### 3. Stack the two bars without clobbering
 
-### 3. Keep the screen minimal
+The outer (per-run) bar and the inner (per-level) bar are shown at the same time. Use
+`ProgressMeter`'s multi-bar mechanism: give each bar a distinct `offset` so they occupy separate
+terminal lines and do not overwrite each other (e.g. outer `offset = 0`, inner `offset = 1`).
+Verify the two bars render cleanly together and that the inner bar is recreated per run.
 
-On stdout, show only the progress bar plus the concise per-run summary line (same content as
-the run.log "done" line). Do **not** also print EvoGrow's full per-level detail to stdout —
-that verbose stream goes to run.log only. This is the "as little as possible on screen, as much
-as necessary in the file" split. Ensure the per-run summary prints cleanly above/around the
-ProgressMeter bar rather than corrupting it (ProgressMeter supports printing without breaking
-the bar).
+Keep both bars on `ProgressMeter`'s default stream (stderr). Keep the existing
+`redirect_stdout(devnull)` around `discover` so EvoGrow's per-level `stdout` text stays off the
+screen (it continues to go to `run.log` through the logger). The result: screen shows only the
+two bars; `run.log` keeps the full per-level detail.
 
-### 4. Optional: surface BFGS time-limit hits
+### 4. Unchanged behavior
 
-The long runs are caused by BFGS hitting its time limit. If it can be obtained cleanly from the
-existing fit metadata / logs without new algorithm code, count the number of BFGS time-limit
-hits per run and add it to the per-run "done" line (e.g. `bfgs_timeouts=…`) and as an additive,
-null-safe field `bfgs_timeout_hits` in the history record. This field must be additive only and
-must **not** enter `config_fingerprint`. If obtaining it cleanly is not straightforward, skip
-this section entirely — it is a nice-to-have, not a requirement.
+`run.log` content/format, the history record schema and values, `config_fingerprint`, and the
+fixed suite/hyperparameters must be identical to WP-H1b. The only changes are the `VARIANTS`
+constructor signature and the inner-bar wiring in `run_one`/`main`.
 
 ## Verification
 
-Run only a small subset for verification (do NOT run the full suite; Systems 26/63 take hours).
-Temporarily reduce the loop to a fast subset (Systems 3 and/or 11), confirm, then restore the
-full suite before finishing. State which subset was run.
+Run only a small, fast subset (Systems 3 and/or 11); do not run the full suite (26/63 take
+hours). Temporarily reduce the loop, confirm, then restore the full suite before finishing, and
+state which subset was run. Confirm:
 
-Confirm:
-1. In an interactive terminal, a live progress bar with ETA and the current (variant, system,
-   seed) is visible and advances once per completed run.
-2. `outputs/studies/regression/run.log` contains the start/finish markers, the `[i/N]` per-run
-   start and done lines, and EvoGrow per-level lines between them.
-3. `history.jsonl` records are unchanged in schema and values relative to WP-H1 (plus the
-   optional additive `bfgs_timeout_hits` field if section 4 was implemented). `config_fingerprint`
-   is identical to before.
-4. The progress bar does not appear in `run.log` (no `\r` garbage in the file).
+1. During a run, the inner bar updates live per level (level number and best loss change while
+   the run is in progress), stacked below the outer bar which advances once per completed run.
+2. Both bars render without overwriting each other; the inner bar resets for each new run.
+3. `run.log` still contains the start/finish markers, `[i/N]` lines, and the per-level heartbeat.
+4. `history.jsonl` records and `config_fingerprint` are unchanged relative to WP-H1b.
 
 ## Constraints
 
-- Observability only. Do not change the algorithm, metric computations, record values,
-  `config_fingerprint`, or the fixed suite/hyperparameters.
-- Add `ProgressMeter` to `Project.toml`/`Manifest.toml`; do not add other dependencies.
-- The progress bar is terminal-only; the run.log gets plain timestamped lines.
+- Observability only: do not change the algorithm, metrics, record values, `config_fingerprint`,
+  or the fixed configuration.
+- Modify only `studies/regression/run_regression.jl`; do not touch `src/` or add dependencies
+  (`ProgressMeter` is already present).
+- Keep `redirect_stdout(devnull)` around `discover` so the screen stays minimal (bars only).
 - Do not implement the Python delta report (WP-H2) or any plotting.
-- Keep the fixed config block and the history append path exactly as in WP-H1.
