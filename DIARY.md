@@ -6,6 +6,12 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ## 2026-07-20
 
+### WP-H1d umgesetzt und reviewt — Resume grün
+
+Codex hat Resume umgesetzt: `load_completed_cells(fingerprint)` liest `history.jsonl` (try/catch pro Zeile), sammelt erfolgreiche `(variant, system_id, seed)`-Zellen bei passendem `config_fingerprint` und `error===nothing`; Skip in der Schleife (äußerer Balken tickt, Skip-Zeile in `run.log`, kein Record). `FRESH=1`-Override, End-Report. Fingerprint/Schema/Metriken unverändert. Committet `488fa1d`. Review: korrekt und spec-konform. Da die 7 geretteten Records `config_fingerprint=0c739d4e36ee6498` tragen und die Config unverändert ist, überspringt der Neustart sie und macht bei System 26 Seed 123 weiter. Grünes Licht für den Neustart erteilt.
+
+<!-- 488fa1d -->
+
 ### Volllauf durch Rechner-Neustart abgebrochen (7/30 gerettet); WP-H1d Resume beauftragt
 
 Der externe Volllauf (Commit 776d2f0) wurde durch einen unerwarteten Rechner-Neustart abgebrochen. Dank append-only `history.jsonl` **7 von 30 Records gerettet** (alle v2.2: System 3 alle Seeds, System 11 alle Seeds, System 26 Seed 42 — der ~3-h-Lauf). In Git gesichert (`6420953`). Verloren: v2.2 System 26 Seeds 123/7, System 31, System 63, sowie ganz v3.
