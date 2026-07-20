@@ -14,7 +14,7 @@ Design: festes Diagnostik-Set (Systeme 3/11/26/31/63, feste Seeds/Hyperparameter
 
 Aufgeteilt wegen Sprach-Deklaration pro Task: **WP-H1 (Julia)** = Runner + append-only Store (jetzt in `codex/CURRENT_TASK.md`); **WP-H2 (Python)** = Delta-Report (letzter vs. vorheriger Commit, ↑/↓/=, DIARY-fertiger Markdown-Block) als Folge-Task. Erste Baseline-Einträge: v2.2 + v3.2 (müssen laut Anker gleich sein). Bewusst *vor* WP-v3.3/v3.4 gezogen, damit jeder echte v3-Schritt ab Beginn in die Historie geloggt wird. Trigger manuell, nicht als Git-Hook (Läufe dauern Minuten bis Stunden).
 
-<!-- a5ef98a -->
+<!-- a5ef98a, 1e58fd5 -->
 
 ### WP-v3.2 umgesetzt und verifiziert
 
