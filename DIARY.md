@@ -14,7 +14,7 @@ Codex hat `EvoGrowV3` implementiert (`src/structure/evogrow_v3.jl`, registriert/
 
 Anmerkung Tech-Debt: Die ~350-Zeilen-Hauptschleife ist eine Kopie des v2.2-Loops (unvermeidbar unter „evogrow.jl nicht anfassen"). Nach Gate 2 faktorisieren oder v2.2-Loop stilllegen.
 
-<!-- 559d3b7 -->
+<!-- 559d3b7, f9802b3 -->
 
 ### WP-v3.1 geliefert, WP-v3.2 beauftragt
 
