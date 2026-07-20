@@ -1,95 +1,94 @@
-# CURRENT TASK: WP-H1c — Within-run live progress bar for the regression runner
+# CURRENT TASK: WP-H1d — Resume support (skip already-completed cells)
 
 **Language: Julia**
 
 ## Context
 
-WP-H1b added an outer `ProgressMeter` bar over all runs plus a `run.log`. But that outer bar
-only advances at the END of each run (`next!` after `discover`), so during a single long run
-(System 3: minutes; System 63: hours) the terminal shows a static bar and no on-screen sign of
-life. The within-run heartbeat currently goes only to `run.log`.
+The external full run of `studies/regression/run_regression.jl` was interrupted by a machine
+restart after 7 of 30 records. Thanks to the append-only `history.jsonl`, those 7 records
+survived (and are committed). But re-running currently redoes the entire suite, including a
+single System-26 run that took ~3 hours.
 
-This task adds a **second, inner progress bar per run**, driven live from within `discover`, so
-the user sees per-level progress in the terminal without a second `tail -f` window. EvoGrow and
-EvoGrowV3 already expose the `level_callback` hook (a `Union{Nothing,Function}` field) that is
-invoked at the end of every level with a snapshot NamedTuple — no `src/` change is needed.
+This task makes the runner **resumable**: on start it skips any (variant, system, seed) cell
+that already has a successful record in `history.jsonl` for the current `config_fingerprint`,
+so a re-run continues from where it stopped instead of recomputing finished work. This also
+hardens the runner against the next interruption.
 
-This is observability only: metrics, record schema, `config_fingerprint`, and the fixed
-configuration must not change.
+This is resilience/observability only. It must NOT change `config_fingerprint`, the record
+schema/values, the metric computations, or the fixed suite/hyperparameters.
 
 ## Goal
 
-In `studies/regression/run_regression.jl`, show a live inner progress bar per run that ticks
-once per level (Level x/n, current stage, current best loss), stacked below the existing outer
-per-run bar. Keep `run.log` and the minimal-screen behavior from WP-H1b.
+Before the run loop, load existing history and build the set of already-completed cells; skip
+those cells in the loop (advancing the outer progress bar and logging a skip line), and run only
+the remaining cells. Report skipped/run/total counts at the end.
 
 ## Files
 
 - **Modify only:** `studies/regression/run_regression.jl`.
-- **Do not modify `src/`.** EvoGrow and EvoGrowV3 already call
-  `strategy.level_callback(snapshot)` at the end of each level. The snapshot is a NamedTuple
-  whose fields include at least `level::Int`, `stage::Int`, `best_loss::Float64`, and
-  `best_objective::Float64`. Read those fields; do not assume others.
+- Do not touch `src/`, `Project.toml`, or the fixed config.
 
 ## Required Content
 
-### 1. Let variants accept a per-run level callback
+### 1. Load completed cells at startup
 
-Change the `VARIANTS` constructors so each takes a `level_callback` argument and passes it into
-the strategy via the existing `level_callback` keyword (both `EvoGrow` and `EvoGrowV3` support
-it). `run_one` then builds the strategy with the inner-bar callback it created for that run.
-Everything else about the variant configuration stays identical (so results are unchanged).
+After computing `fingerprint = config_fingerprint()` and before the run loop, read
+`history.jsonl` (if it exists) line by line and build a set of "completed keys". A record counts
+as completed iff:
+- its `config_fingerprint` equals the current `fingerprint`, AND
+- its `error` field is `null` (successful run only — errored/failed cells must be retried).
 
-### 2. Inner progress bar per run
+The completed key is the tuple `(variant, system_id, seed)`. Parse each line as JSON; ignore any
+malformed line defensively (do not crash the run on a bad line).
 
-In `run_one`, before calling `discover`:
-- Create an inner `Progress` whose total is the effective level cap
-  `min(N_LEVELS, OPTIONS_CONFIG.max_levels)`.
-- Build a `level_callback` closure that, on each call, advances the inner bar and shows the
-  current run's `system_id`, `seed`, `snapshot.level`, `snapshot.stage`, and `snapshot.best_loss`
-  via `showvalues`.
-- After `discover` returns (or errors), `finish!` the inner bar. Put the `finish!` in a
-  `try/finally` so an errored run still closes its inner bar cleanly.
+Rationale for keying on `config_fingerprint` and NOT `git_hash`: the interrupted records were
+produced at an earlier commit, and this task will itself be a new commit. Because the config
+(and therefore the fingerprint) is unchanged and this task does not alter algorithm behavior,
+records from the interrupted run must still be recognized and skipped. A resumed baseline may
+therefore span more than one `git_hash`; that is acceptable and expected.
 
-The inner bar ticks once per level. Note in a comment that a single level can still pause for up
-to the BFGS time limit (~300 s) if that call is slow — this is expected and far better than the
-per-run granularity of the outer bar.
+### 2. Skip completed cells in the loop
 
-### 3. Stack the two bars without clobbering
+In the `main` run loop, for each `(variant, system, seed)`:
+- If its key is in the completed set: **skip it** — do not build a trajectory, do not run
+  `discover`, do not append a record. Advance the outer progress bar by one and append a skip
+  line to `run.log`, e.g. `[i/N] variant=… sys=… seed=… — skipped (already in history)`.
+  Do not create an inner progress bar for skipped cells.
+- Otherwise: run it exactly as today (append record, inner bar, done line, etc.).
 
-The outer (per-run) bar and the inner (per-level) bar are shown at the same time. Use
-`ProgressMeter`'s multi-bar mechanism: give each bar a distinct `offset` so they occupy separate
-terminal lines and do not overwrite each other (e.g. outer `offset = 0`, inner `offset = 1`).
-Verify the two bars render cleanly together and that the inner bar is recreated per run.
+Keep the outer progress bar total at the full `N = variants × systems × seeds`, so the bar
+reflects true overall completion (skipped cells count as done).
 
-Keep both bars on `ProgressMeter`'s default stream (stderr). Keep the existing
-`redirect_stdout(devnull)` around `discover` so EvoGrow's per-level `stdout` text stays off the
-screen (it continues to go to `run.log` through the logger). The result: screen shows only the
-two bars; `run.log` keeps the full per-level detail.
+### 3. Optional fresh-run override
 
-### 4. Unchanged behavior
+Support an optional environment flag to force a full re-run that ignores existing history
+(e.g. `FRESH=1` / `FRESH=true`): when set, the completed set is treated as empty so every cell
+runs. Keep this minimal; default behavior (no flag) is resume.
 
-`run.log` content/format, the history record schema and values, `config_fingerprint`, and the
-fixed suite/hyperparameters must be identical to WP-H1b. The only changes are the `VARIANTS`
-constructor signature and the inner-bar wiring in `run_one`/`main`.
+### 4. End-of-run reporting
+
+At the end, print counts: total cells, number skipped (already completed), number run this
+invocation, and the resulting `history.jsonl` line count.
 
 ## Verification
 
-Run only a small, fast subset (Systems 3 and/or 11); do not run the full suite (26/63 take
-hours). Temporarily reduce the loop, confirm, then restore the full suite before finishing, and
-state which subset was run. Confirm:
+Run only a small, fast subset (Systems 3 and/or 11); do not run the full suite. Temporarily
+reduce the loop for verification, then restore the full suite before finishing, and state which
+subset was run. Confirm:
 
-1. During a run, the inner bar updates live per level (level number and best loss change while
-   the run is in progress), stacked below the outer bar which advances once per completed run.
-2. Both bars render without overwriting each other; the inner bar resets for each new run.
-3. `run.log` still contains the start/finish markers, `[i/N]` lines, and the per-level heartbeat.
-4. `history.jsonl` records and `config_fingerprint` are unchanged relative to WP-H1b.
+1. First invocation on a fresh (empty) history runs all subset cells and appends their records.
+2. Second invocation with the same history **skips all** already-completed cells (appends no new
+   records; `run.log` shows skip lines; the end report shows skipped==subset size, run==0).
+3. A cell whose only record has a non-null `error` is **not** skipped (it is retried).
+4. `FRESH=1` (if implemented) forces all cells to run again.
+5. `config_fingerprint`, the record schema, and existing record values are unchanged.
 
 ## Constraints
 
-- Observability only: do not change the algorithm, metrics, record values, `config_fingerprint`,
-  or the fixed configuration.
-- Modify only `studies/regression/run_regression.jl`; do not touch `src/` or add dependencies
-  (`ProgressMeter` is already present).
-- Keep `redirect_stdout(devnull)` around `discover` so the screen stays minimal (bars only).
+- Resilience/observability only: do not change the algorithm, metrics, record values,
+  `config_fingerprint`, or the fixed configuration.
+- Skip is keyed on `(config_fingerprint, variant, system_id, seed)` with `error == null`; do not
+  key on `git_hash`.
+- Modify only `studies/regression/run_regression.jl`; add no dependencies.
+- Malformed history lines must not crash the run.
 - Do not implement the Python delta report (WP-H2) or any plotting.
