@@ -10,7 +10,7 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 Fix für die WP-H1b-Lücke (statischer Balken während eines langen Laufs). User hat „innerer Balken" gewählt. WP-H1c verdrahtet EvoGrows/EvoGrowV3s bestehenden `level_callback` (feuert pro Level mit Snapshot `level`/`stage`/`best_loss`) mit einem inneren `ProgressMeter`-Balken pro Lauf, gestapelt unter dem äußeren Balken (via `offset`). Kein src-Eingriff nötig. VARIANTS-Konstruktoren nehmen künftig ein `level_callback`-Argument. `redirect_stdout(devnull)` bleibt (Balken auf stderr, Per-Level-Detail weiter nur in `run.log`). Metriken/Records/Fingerprint/Config unverändert. Committet `429b645`.
 
-<!-- 429b645 -->
+<!-- 429b645, caa4c76 -->
 
 ### WP-H1b umgesetzt und reviewt
 
