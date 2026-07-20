@@ -10,7 +10,7 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 Codex hat Resume umgesetzt: `load_completed_cells(fingerprint)` liest `history.jsonl` (try/catch pro Zeile), sammelt erfolgreiche `(variant, system_id, seed)`-Zellen bei passendem `config_fingerprint` und `error===nothing`; Skip in der Schleife (äußerer Balken tickt, Skip-Zeile in `run.log`, kein Record). `FRESH=1`-Override, End-Report. Fingerprint/Schema/Metriken unverändert. Committet `488fa1d`. Review: korrekt und spec-konform. Da die 7 geretteten Records `config_fingerprint=0c739d4e36ee6498` tragen und die Config unverändert ist, überspringt der Neustart sie und macht bei System 26 Seed 123 weiter. Grünes Licht für den Neustart erteilt.
 
-<!-- 488fa1d -->
+<!-- 488fa1d, a298329 -->
 
 ### Volllauf durch Rechner-Neustart abgebrochen (7/30 gerettet); WP-H1d Resume beauftragt
 
