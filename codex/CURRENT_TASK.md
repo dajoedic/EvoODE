@@ -1,218 +1,153 @@
-# CURRENT TASK: WP-v3.1 — Design Note: Per-Equation Progress Signal and Promotion Rule
+# CURRENT TASK: WP-v3.2 — EvoGrowV3 struct and equation-wise stage state
 
 **Language: Julia**
 
 ## Context
 
 Gate 1 (2026-05-30) decided that EvoGrow v2.2 is not paper-ready for coupled systems.
-Diagnosed failure mode: system-wide staged progression forces all equations to escalate together
-when one equation's progress stalls, wasting search budget on higher-stage terms irrelevant to
-other equations (confirmed on Systems 26 and 63).
+The diagnosed failure mode is system-wide staged progression: all equations share one
+global stage, so when one equation stalls the whole system is promoted, wasting budget on
+higher-stage terms that other equations do not need.
 
-EvoGrow v3 replaces the global stage state with per-equation stage states so that each equation
-can promote independently based on its own residual signal.
+EvoGrow v3 replaces the global stage state with a per-equation stage state. The full v3
+design is frozen in `docs/evogrow_v3_design.md` (WP-v3.1). This task implements the first
+slice of that design: the new strategy type and the per-equation stage-state scaffolding.
 
-This task produces a design document that freezes all key decisions for the v3 implementation
-before any code is written.
+This task does **not** implement equation-local promotion, the derivative-residual signal,
+or equation-aware child generation. Those are WP-v3.3, WP-v3.4, WP-v3.5. See "Scope
+boundary" below — respecting it is the central requirement of this task.
 
 ## Goal
 
-Write `docs/evogrow_v3_design.md` — a complete design specification for EvoGrow v3.
-No Julia code is produced in this task. The document is the deliverable.
+Introduce a new structure-search strategy `EvoGrowV3` that carries per-equation stage state
+through the search loop, while reproducing EvoGrow v2.2 (`:stage_local`) behavior exactly.
 
-## Output
+The value of this slice is twofold:
+- it establishes the per-equation state representation that WP-v3.3/v3.4/v3.5 build on, and
+- it is a **regression anchor**: because promotion still happens in lockstep across all
+  equations, `EvoGrowV3` must produce results identical to the equivalent `EvoGrow` v2.2
+  configuration. Any later divergence is then attributable to the equation-local mechanisms,
+  not to the refactor.
 
-**File:** `docs/evogrow_v3_design.md`
+## Files
 
-The document must contain exactly the sections described below.
+- **New file:** `src/structure/evogrow_v3.jl`, holding `EvoGrowV3` and its
+  `search_structure` method.
+- **Modify:** `src/EvoODE.jl` — add `include("structure/evogrow_v3.jl")` after the existing
+  `include("structure/evogrow.jl")`, and add `EvoGrowV3` to the public exports next to
+  `EvoGrow`.
+- **Do not modify** `src/structure/evogrow.jl` other than what is unavoidable to share
+  helpers (see Constraints). `EvoGrow`, `StageProgressionPolicy`, and `StageUsagePolicy`
+  behavior must remain byte-for-byte unchanged.
 
----
+## Required Content
 
-## Required Sections and Content
+### 1. `EvoGrowV3` strategy struct
 
-### 1. Motivation
+A `Base.@kwdef struct EvoGrowV3 <: AbstractStructureSearch` mirroring the `EvoGrow` fields
+one-to-one (`pop_size`, `n_levels`, `children_per_parent`, `max_terms_per_eq`, `λ`,
+`progression`, `usage`, `use_pretuning`, `level_callback`) with the same defaults. Reuse the
+existing `StageProgressionPolicy` and `StageUsagePolicy` types unchanged.
 
-Two paragraphs:
+Rationale: keeping the field set identical lets a v2.2 configuration be lifted to v3 by only
+changing the constructor name, which is what the regression check below relies on.
 
-- Paragraph 1: Describe the v2.2 failure mode (system-wide staging, escalation without
-  targeted improvement, confirmed on Systems 26 and 63 in Gate 1 diagnostic).
-- Paragraph 2: State the v3 hypothesis: per-equation staged progression allows each equation
-  to promote only when its own residual stagnates, concentrating search budget where it is
-  needed and preventing unnecessary escalation in already-explained equations.
+### 2. Per-equation stage state
 
-### 2. State Representation
+The `search_structure(::EvoGrowV3, ...)` method must represent the stage state per equation
+`k = 1..dim` instead of as a single global scalar:
 
-Describe the change from v2.2 to v3.
-
-v2.2 global stage state (to be replaced):
-```
-current_stage::Int
-levels_in_current_stage::Int
-plateau_history::Vector{Float64}
-```
-
-v3 per-equation stage state (one entry per equation k = 1..dim):
-```
-eq_stages::Vector{Int}              # current stage per equation
-eq_levels_in_stage::Vector{Int}     # levels spent in current stage per equation
-eq_plateau_histories::Vector{Vector{Float64}}  # plateau window per equation
-```
-
-Each equation independently tracks its own stage, budget, and plateau history.
-
-The single global `current_stage` is still tracked as `maximum(eq_stages)` for compatibility
-with the basis: an equation can only use terms up to its own `eq_stages[k]`, but cross-terms
-between equations i and j require `min(eq_stages[i], eq_stages[j]) >= required_stage`.
-
-### 3. Per-Equation Progress Signal
-
-#### Signal definition
-
-For equation k, the progress signal is the derivative residual:
-
-```
-r_k = mean_t ( dx_k/dt_estimated - f_k(x(t); params) )²
+```text
+eq_stages::Vector{Int}                         # current stage per equation, init all 1
+eq_levels_in_stage::Vector{Int}                # levels spent in current stage per equation
+eq_plateau_histories::Vector{Vector{Float64}}  # per-equation plateau/objective window
 ```
 
-where:
-- `dx_k/dt_estimated` is obtained by finite differences on the observed trajectory,
-  consistent with the derivative estimation already used in `src/optimize/pretune.jl`,
-- `f_k(x(t); params)` is evaluated on the observed trajectory (not the simulated one),
-- the mean is taken over all time points.
+These vectors are initialized (length `dim`) and updated at each level. The single global
+stage used for basis queries and aggregate reporting is defined as
+`current_stage = maximum(eq_stages)` (locked decision from the design note §2).
 
-This signal measures how well the current best individual explains equation k on the
-observed data, independent of ODE solve quality.
+### 3. Lockstep bridge behavior (this WP only)
 
-#### Why derivative residual
+Because equation-local promotion is out of scope here, all equations must move together:
 
-The derivative residual is more sensitive to structural misfit than trajectory MSE:
-trajectory MSE accumulates simulation error which can obscure per-equation structural
-information, especially in coupled systems where one equation's error propagates to others.
-The derivative residual isolates each equation's fit quality at the data level.
+- Promotion decision reuses the existing v2.2 stage-local logic
+  (`_stage_progression_decision`) computed on the aggregate/global history, exactly as
+  `EvoGrow` does in its `:stage_local` branch.
+- When the decision is `:promote`, advance **every** equation's stage by one
+  (`eq_stages[k] += 1` for all `k`), reset every `eq_levels_in_stage[k]` to 0, and reset the
+  per-equation plateau histories consistently with how v2.2 resets its per-stage history.
+- Child generation, term availability, evaluation, selection, and stopping remain identical
+  to the current `EvoGrow` `:stage_local` path. Reuse the shared helpers
+  (`_allowed_terms`, `_current_stage_terms`, `_expand_with_usage_policy`, `_evaluate!`,
+  `_init_population`, `should_stop` is not used on this path, etc.) via `current_stage`.
 
-#### Fallback
+The net effect is that `EvoGrowV3` and `EvoGrow` (`:stage_local`, same usage policy) run the
+identical algorithm; the only difference is that v3 additionally tracks `eq_stages` and
+friends as vectors that happen to hold identical values across equations.
 
-If derivative estimation fails numerically (e.g. insufficient time resolution), fall back
-to the per-dimension trajectory residual:
+### 4. Meta output
 
-```
-r_k = mean_t ( x_k(t)_simulated - x_k(t)_observed )²
-```
-
-This fallback must be flagged in the result metadata.
-
-### 4. Per-Equation Promotion Rule
-
-Equation k promotes from stage s to s+1 when all three conditions hold:
-
-1. **Minimum stage budget:** `eq_levels_in_stage[k] >= effective_min_per_stage`
-   where `effective_min_per_stage = max(min_levels_per_stage, plateau_window + 1)`
-
-2. **Per-equation plateau:** the last `plateau_window` values of `r_k` satisfy
-   `max(r_k_window) - min(r_k_window) < plateau_tol`
-   (same absolute plateau criterion as in v2.2, applied per-equation)
-
-3. **Per-equation residual above target:** `r_k > loss_tol`
-   (equation-local tolerance; if r_k is already near zero, no promotion needed)
-
-When condition 3 is false (equation k already well-explained), equation k stays at its
-current stage even if conditions 1 and 2 hold.
-
-**Who triggers promotion:** At the end of each level, each equation evaluates its own
-promotion condition independently. Multiple equations can promote in the same level.
-
-### 5. Global Termination
-
-Global termination conditions (unchanged from v2.2):
-
-1. `global_loss < loss_tol` — hard stop, evaluated on simulated trajectory
-2. `total_levels >= max_levels` — hard level cap
-3. All equations at maximum stage AND all equations have plateau — no further
-   promotion possible
-
-Condition 3 replaces the v2.2 "no more stages available" termination path.
-
-### 6. Equation-Aware Child Generation
-
-For individual i in the population, equation k may use basis terms up to stage `eq_stages[k]`.
-
-Cross-term availability rule:
-- A cross-term involving variables from equations i and j is available to equation k
-  if `min(eq_stages[i], eq_stages[j]) >= required_stage_for_cross_term`
-- The required stage for cross-terms is determined by the `StagedPolynomialBasis` stage
-  assignment (unchanged)
-
-After equation k promotes, child generation for equation k preferentially samples from
-the newly unlocked terms, using the existing `StageUsagePolicy` logic applied per-equation.
-The usage policy (`:hard`, `:soft`, `:passive`) is applied independently for each equation
-that promoted in the current level.
-
-### 7. Population Behavior on Promotion
-
-When one or more equations promote, the current population is carried over without
-modification (warm-start, same policy as v2.2). Individuals retain their full structure;
-equation-specific expansion is driven by the child generation step in the next level.
-
-A per-equation population reset is explicitly out of scope for v3 (same rationale as
-for v2.2: reserved for a dedicated future variant).
-
-### 8. New Metrics
-
-The following metrics must be stored in `result.meta.structure` and written to per-run
-output files:
+The returned `meta` NamedTuple must keep **all** fields the current `EvoGrow` returns
+(so existing analysis code and `discover()` keep working unchanged), and additionally expose
+the per-equation state foundation:
 
 | Field | Type | Definition |
 |-------|------|------------|
 | `eq_final_stages` | `Vector{Int}` | Final stage per equation at termination |
-| `eq_stage_histories` | `Vector{Vector{Int}}` | Per-equation stage at each level |
-| `eq_overshoot` | `Vector{Int}` | `max(0, eq_final_stages[k] - expected_stage)` per equation (requires expected_stage input) |
-| `eq_wasted_levels` | `Vector{Int}` | Levels spent above expected_stage per equation |
-| `eq_residual_log` | `Vector{Vector{Float64}}` | Per-equation derivative residual `r_k` at each level |
-| `eq_promotion_levels` | `Vector{Vector{Int}}` | Level indices at which each equation promoted |
+| `eq_stage_histories` | `Vector{Vector{Int}}` | Per-equation stage at each completed level |
 
-The existing global metrics (`final_stage`, `stage_overshoot`, `wasted_levels`) remain
-defined as aggregates: `final_stage = maximum(eq_final_stages)`,
-`stage_overshoot = maximum(eq_overshoot)` for compatible use in existing analysis code.
+The existing aggregate fields must stay consistent: `final_stage == maximum(eq_final_stages)`.
 
-### 9. Open Questions (to resolve before WP-v3.2)
+The remaining v3 metrics from the design note (`eq_overshoot`, `eq_wasted_levels`,
+`eq_residual_log`, `eq_promotion_levels`) are **out of scope** here and belong to WP-v3.5.
+Do not add placeholder residual logs, since the residual signal itself arrives in WP-v3.4.
 
-The following questions are not resolved by this design note and must be decided before
-implementation begins. Annotate each with a recommended resolution:
+### 5. Registration and export
 
-1. **Derivative estimation granularity:** Should `r_k` be re-evaluated once per level
-   (using the best individual) or once per candidate evaluation?
-   *Recommended: once per level on the best individual — cheaper and sufficient for
-   plateau detection.*
+Register the new file and export `EvoGrowV3` as described under "Files".
 
-2. **Cross-term stage assignment when equations are at different stages:** If equation 1
-   is at Stage 2 and equation 2 is at Stage 3, is the cross-term `u1*u2` (Stage 3)
-   available to equation 1? Recommended: yes, cross-terms follow
-   `min(eq_stages[i], eq_stages[j]) >= required_stage`.
+## Scope boundary (do not cross in this WP)
 
-3. **Basis stage query interface:** Does `StagedPolynomialBasis` need a new method
-   `available_terms(basis, eq_stages::Vector{Int}, eq_idx::Int)` or is it sufficient
-   to call the existing `available_terms(basis, stage)` with `eq_stages[eq_idx]`?
-   *Recommended: the existing per-stage interface is sufficient; cross-term filtering
-   is handled in child generation, not in the basis.*
+- No derivative-residual progress signal `r_k` (WP-v3.4).
+- No per-equation / independent promotion — promotion stays lockstep-global (WP-v3.4).
+- No equation-aware child generation that reads `eq_stages[k]` per equation (WP-v3.3).
+- No new metrics beyond `eq_final_stages` / `eq_stage_histories` (WP-v3.5).
 
-4. **Gradient of r_k w.r.t. eq_stages:** r_k is a discrete signal evaluated at
-   parameter-optimal structures; there is no gradient. Plateau detection is purely
-   value-based. Confirm this is the intended design. *Confirmed: same as v2.2.*
-
----
+Leave clear seams where these plug in later: isolate the promotion decision and the
+per-equation state update into their own small functions so WP-v3.4 can replace the lockstep
+body without touching the main loop.
 
 ## Verification
 
-After writing the document, verify:
-1. All 9 sections are present with the content described above.
-2. Open Questions section contains at least the 4 questions above with recommended resolutions.
-3. No Julia code appears in the document (this is a design note, not an implementation spec).
-4. The document is self-contained: a reader who has not seen PAPER_1.md or CLAUDE.md
-   can understand the v3 design from this document alone.
+1. The package loads with `using EvoODE` and `EvoGrowV3` is exported and constructible with
+   default keyword arguments.
+2. **Regression equivalence.** For at least System 3 (1D, `expected_stage=2`) and System 26
+   (2D, `expected_stage=3`) — reuse the ground-truth RHS and trajectory setup from
+   `studies/phase1_diag/run_phase1_diag.jl` — run both:
+   - `EvoGrow` with `progression=:stage_local`, `usage=:hard`, `use_pretuning=false`, and
+   - `EvoGrowV3` with the same configuration,
+   using the same seed and the same `DiscoveryOptions`. The final `structure.active_idxs`
+   must be identical and the final `loss` must match to within `1e-9` relative. Keep
+   `n_levels` small (e.g. 8–12) so the check runs quickly.
+3. `result.meta.structure.eq_final_stages` is a `Vector{Int}` of length `dim`, all entries
+   equal (lockstep), and `maximum(eq_final_stages) == result.meta.structure.final_stage`.
+4. `EvoGrow` results are unchanged: a quick before/after run of one existing benchmark or
+   diagnostic system with `EvoGrow` gives the same loss as before this change.
+
+Report the regression-equivalence outcome (identical / diverged, with the compared values)
+explicitly when the task is done.
 
 ## Constraints
 
-- Write only `docs/evogrow_v3_design.md` — do not modify `src/`, `experiments/`, or
-  any existing file.
-- The document is a design freeze artifact. Phrase all decisions as fixed, not tentative.
-- Do not add Julia code blocks for implementation — pseudocode is allowed where helpful.
+- Do not change `EvoGrow`, `StageProgressionPolicy`, `StageUsagePolicy`, or any existing
+  behavior in `src/structure/evogrow.jl`. Shared helpers may be reused as-is; if a helper
+  must be made accessible or slightly generalized, do it without altering the existing
+  `EvoGrow` call path or its results.
+- Reuse existing helpers (`Individual`, `_init_population`, `_allowed_terms`,
+  `_current_stage_terms`, `_expand_with_usage_policy`, `_evaluate!`, `_plateau_reached`,
+  `_stage_progression_decision`, `_validate_policy`) rather than duplicating them.
+- Follow existing conventions: `Base.@kwdef` for the struct, in-place RHS untouched,
+  `NamedTuple` meta, the existing logging pattern and verbosity levels.
+- Keep the lockstep promotion faithful to v2.2 so the regression check in Verification 2
+  actually passes; a divergence here means the refactor is wrong, not that v3 "works".
