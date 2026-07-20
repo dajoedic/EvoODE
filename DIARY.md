@@ -6,6 +6,14 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ## 2026-07-20
 
+### WP-H1c umgesetzt und reviewt
+
+Codex hat den inneren Live-Balken verdrahtet: VARIANTS-Konstruktoren nehmen `level_callback`, `run_one` erzeugt einen inneren `Progress` (offset 1, total = min(N_LEVELS, max_levels)) + Callback, der pro Level `system/seed/level/stage/best_loss` zeigt; `finish!` im `finally`. Äußerer Balken offset 0. Beide auf stderr → `redirect_stdout(devnull)` hält Per-Level-Text weiter vom Schirm (nur in `run.log`). Metriken/Records/Fingerprint unverändert. Committet `9cd66e7`.
+
+**Review:** Korrekt und spec-konform; `next!` kann total nie überschreiten (max 30 Level = total). Ein rein kosmetischer Vorbehalt, den ich nicht ohne Julia verifizieren kann: die pro-Lauf-Zusammenfassungszeile (`println(summary_line)`) wird zwischen zwei gestapelten ProgressMeter-Balken ausgegeben — das kann visuell holprig sein. Beim ersten externen Kurzlauf begutachten; falls unsauber, ist der Fix eine Zeile (auf `ProgressMeter.println` umstellen oder die Zeile weglassen, da `run.log` die Done-Zeile ohnehin hat).
+
+<!-- 9cd66e7 -->
+
 ### WP-H1c beauftragt: innerer Live-Balken pro Lauf
 
 Fix für die WP-H1b-Lücke (statischer Balken während eines langen Laufs). User hat „innerer Balken" gewählt. WP-H1c verdrahtet EvoGrows/EvoGrowV3s bestehenden `level_callback` (feuert pro Level mit Snapshot `level`/`stage`/`best_loss`) mit einem inneren `ProgressMeter`-Balken pro Lauf, gestapelt unter dem äußeren Balken (via `offset`). Kein src-Eingriff nötig. VARIANTS-Konstruktoren nehmen künftig ein `level_callback`-Argument. `redirect_stdout(devnull)` bleibt (Balken auf stderr, Per-Level-Detail weiter nur in `run.log`). Metriken/Records/Fingerprint/Config unverändert. Committet `429b645`.
