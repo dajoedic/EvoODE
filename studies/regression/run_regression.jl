@@ -40,7 +40,7 @@ const OPTIONS_CONFIG = (
 const VARIANTS = [
     (
         label = "evogrow_v2_2_stage_local",
-        constructor = () -> EvoGrow(
+        constructor = level_callback -> EvoGrow(
             pop_size = POP_SIZE,
             n_levels = N_LEVELS,
             children_per_parent = CHILDREN_PER_PARENT,
@@ -55,11 +55,12 @@ const VARIANTS = [
                 new_term_bias_prob = SOFT_BIAS,
             ),
             use_pretuning = USE_PRETUNING,
+            level_callback = level_callback,
         ),
     ),
     (
         label = "evogrow_v3",
-        constructor = () -> EvoGrowV3(
+        constructor = level_callback -> EvoGrowV3(
             pop_size = POP_SIZE,
             n_levels = N_LEVELS,
             children_per_parent = CHILDREN_PER_PARENT,
@@ -74,6 +75,7 @@ const VARIANTS = [
                 new_term_bias_prob = SOFT_BIAS,
             ),
             use_pretuning = USE_PRETUNING,
+            level_callback = level_callback,
         ),
     ),
 ]
@@ -244,9 +246,32 @@ function run_one(variant, system, seed::Int, fingerprint::String, provenance)
         "error" => nothing,
     )
 
+    level_cap = min(N_LEVELS, OPTIONS_CONFIG.max_levels)
+    # The inner bar ticks once per completed EvoGrow level. One level can still
+    # pause for the BFGS time limit if fitting is slow, but this is much finer
+    # than the outer per-run progress bar.
+    inner_progress = Progress(
+        level_cap;
+        desc = "Levels",
+        showspeed = true,
+        offset = 1,
+    )
+    level_callback = snapshot -> begin
+        next!(
+            inner_progress;
+            showvalues = [
+                (:system_id, system_id),
+                (:seed, seed),
+                (:level, snapshot.level),
+                (:stage, snapshot.stage),
+                (:best_loss, @sprintf("%.3e", snapshot.best_loss)),
+            ],
+        )
+    end
+
     try
         traj = build_trajectory(system)
-        strategy = variant.constructor()
+        strategy = variant.constructor(level_callback)
         basis = default_staged_polynomial_basis(dim)
         optimizer = BFGSOptimizer(maxiters = BFGS_MAXITERS)
         options = build_options(seed)
@@ -281,6 +306,8 @@ function run_one(variant, system, seed::Int, fingerprint::String, provenance)
         base_record["eq_final_stages"] = eq_final_stages
     catch err
         base_record["error"] = sprint(showerror, err)
+    finally
+        finish!(inner_progress)
     end
 
     return base_record
@@ -369,6 +396,7 @@ function main()
             total_runs;
             desc = "Regression",
             showspeed = true,
+            offset = 0,
         )
 
         for variant in VARIANTS
