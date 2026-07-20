@@ -14,7 +14,7 @@ Codex hat WP-H1 geliefert: `studies/regression/{diagnostic_systems.jl, run_regre
 
 **Workflow-Entscheidung:** Julia-Läufe führt künftig der User extern durch; Claude startet in seiner Umgebung kein Julia mehr (Kompilierzeit blockiert). Konsequenz: Julia-Runner brauchen reichhaltiges, geflushtes, dateibasiertes Fortschritts-Logging (per-Run [i/N] + Timestamp + elapsed, per-Level-Heartbeat, run.log), damit externe Läufe live beobachtbar sind. Als nächste Verbesserung vor dem Volllauf. Siehe Memory `feedback_full_runs`.
 
-<!-- 99393bb -->
+<!-- 99393bb, 80cc96a -->
 
 ### Regressions-Historie beschlossen, WP-H1 beauftragt
 
