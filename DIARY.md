@@ -10,7 +10,7 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 Zweischichtiges Logging für `run_regression.jl`, damit der User externe Läufe live in der cmd verfolgen kann: **Bildschirm** = `ProgressMeter`-Balken (tqdm-Äquivalent) über N = Varianten×Systeme×Seeds mit ETA + aktuellem Item + eine Zusammenfassungszeile pro Lauf; **Datei** = `outputs/studies/regression/run.log` mit Start/Finish-Markern, `[i/N]`-Per-Run-Zeilen und EvoGrows Per-Level-Heartbeat (via `set_log_file`). Balken terminal-only (kein `\r` in die Logdatei). Prinzip „so wenig wie möglich auf dem Schirm, so viel wie nötig in der Datei". Optional: BFGS-Zeitlimit-Treffer pro Lauf als additives Feld (erklärt die Slowness). Nur Observability — Metriken/Records/Fingerprint/Config unverändert. `ProgressMeter` neu in `Project.toml`. Committet `476e192`.
 
-<!-- 476e192 -->
+<!-- 476e192, a29fdb6 -->
 
 ### WP-H1 umgesetzt und verifiziert; Julia-Läufe künftig extern
 
