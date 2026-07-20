@@ -12,7 +12,7 @@ Codex hat das Logging umgesetzt: `ProgressMeter`-Balken (ETA + variant/system/se
 
 **Review-Befund (Lücke):** Innerhalb eines einzelnen Laufs geht der Heartbeat nur in `run.log`, nicht auf den Schirm — der Balken tickt erst am Lauf-Ende (`next!`). Bei einem langen Lauf (System 63: Stunden) sieht der User in der cmd also einen statischen Balken — genau das „wirkt gehängt"-Problem, das er vermeiden wollte. Fix-Vorschlag WP-H1c: EvoGrows bestehenden `level_callback` nutzen, um einen inneren Per-Level-Balken/Heartbeat live im Terminal zu zeigen (run.log-Detail bleibt). Nebenpunkt: `open_evo_logger_append!` greift direkt in `EvoODE.EvoLogger.LOGGER.log_io`, weil `set_log_file` im `"w"`-Modus truncaten würde — funktioniert, aber fragil; sauberer wäre ein `append`-Flag an `set_log_file`.
 
-<!-- af6cc6d -->
+<!-- af6cc6d, 3c0b68f -->
 
 ### WP-H1b beauftragt: Fortschritts-Logging (tqdm-Stil)
 
