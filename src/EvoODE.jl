@@ -30,7 +30,7 @@ export fit_parameters
 # ------------------------
 # Public API – Implementations
 # ------------------------
-export EvoGrow
+export EvoGrow, EvoGrowV3
 export GPStructureSearch
 export StageProgressionPolicy, StageUsagePolicy
 
@@ -119,6 +119,7 @@ include("plotting/search_animation.jl")
 # Structure search algorithms
 # ============================================================
 include("structure/evogrow.jl")
+include("structure/evogrow_v3.jl")
 include("structure/gp.jl")
 
 # ============================================================
