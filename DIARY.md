@@ -14,7 +14,7 @@ Nebenbefund aus den geretteten Daten: System 26 v2.2 Seed 42 → `pruned_match=f
 
 **WP-H1d (Resume) beauftragt** (`5ea632c`): Runner überspringt beim Neustart alle erfolgreichen (variant, system, seed)-Zellen desselben `config_fingerprint` (Skip keyed auf Fingerprint+Zelle+`error==null`, NICHT git_hash — sonst würden die 776d2f0-Records nicht erkannt). Fingerprint bleibt über volle Config berechnet; manuelles Kürzen der Systemliste ginge nicht (würde Fingerprint entwerten). Resume auch als Härtung gegen künftige Abbrüche. Ein resumeter Baseline-Lauf darf mehrere git_hashes umfassen (Config identisch, akzeptiert).
 
-<!-- 6420953, 5ea632c -->
+<!-- 6420953, 5ea632c, 55a6670 -->
 
 ### WP-H1c umgesetzt und reviewt
 
