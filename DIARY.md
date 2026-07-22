@@ -39,6 +39,8 @@ Referenzpfad reproduziert in beiden Zellen exakt Baseline v0 (Loss und `final_st
 
 **WP-P2.3 beauftragt als letzter Versuch, mit Abbruchregel:** komplexitaetsbewusster Screening-Score (skalenfreies Informationskriterium; ein Uebernehmen von `λ` waere falsch, weil dort ein Simulations-MSE und hier ein Ableitungsresiduum bestraft wird), Untersuchung des wirkungslosen finalen Refits, und Wiederholung der Messung mit drei Bedingungen je System (Referenz, alter Score als Kontrolle, neuer Score). Bleibt die Rangeuebereinstimmung auf System 3 negativ, gilt das Kriterium als falsifiziert und die Arbeit daran wird eingestellt; es bleiben die 2,71x aus WP-P1b.
 
+<!-- 2eb7202, 61e6459 -->
+
 ### WP-P2.2b reviewt — Code korrekt, aber nie ausgefuehrt; WP-P2.2c beauftragt
 
 Committet `7f52676`. Alle sechs Punkte korrekt behoben: `screening_budgets_active` behaelt seine urspruengliche Bedeutung und wird aus der Strategie abgeleitet, `derivative_screening_active` als eigenes Feld ergaenzt und im Record gefuehrt; der Runner reicht den `screening_optimizer` jetzt durch. Erschoepfung wird am Iterationslimit gemessen, Konvergenzfehler getrennt gezaehlt. Diagnose-Stichprobe abgelehnter Kandidaten implementiert — geprueft: sie wird nur gemessen, nie nach `polished` geschrieben, beeinflusst die Suche also nicht; `rejected_beats_best_selected` zaehlt die relevanten Faelle. `screen_k < pop_size` wird abgelehnt statt still zu schrumpfen. Struct-Defaults auf `EvoGrow` angeglichen. Finaler Refit ueber `_add_fit_stats!` in den Summen. Monotonie-Abweichung und leere `vis_history` im Docstring dokumentiert. Keine doppelten Funktionsdefinitionen; Include-Reihenfolge stimmt.
