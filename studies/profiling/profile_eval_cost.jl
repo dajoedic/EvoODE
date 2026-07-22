@@ -18,16 +18,18 @@ include(joinpath(dirname(@__DIR__), "regression", "diagnostic_systems.jl"))
 # screening budgets: the optimizer iteration count is unchanged, solver
 # tolerances are loosened by one order of magnitude, ODE steps are capped at
 # 20_000, and non-finite or very large states are rejected early. The benchmark
-# uses 12 levels instead of the regression's 30 because it measures evaluation
-# cost per level, not convergence. B runs first and is flushed to disk before A
-# starts, so an expensive reference run cannot erase the screening result.
+# uses 18 levels instead of the regression's 30: levels 13-17 contain the first
+# expensive evaluations in the baseline-v0 log, and level 18 reaches Stage 3.
+# Baseline-v0 puts A at about 40 minutes, so this remains bounded while hitting
+# the relevant cost regime. B runs first and is flushed to disk before A starts,
+# so an expensive reference run cannot erase the screening result.
 
 const OUT_DIR = joinpath(dirname(dirname(@__DIR__)), "outputs", "studies", "profiling", "profile_eval_cost")
 
 const SYSTEM_ID = parse(Int, get(ENV, "PROFILE_SYSTEM_ID", "26"))
 const SEED = 42
 const POP_SIZE = 10
-const BENCHMARK_LEVELS = 12
+const BENCHMARK_LEVELS = 18
 const CHILDREN_PER_PARENT = 2
 const MAX_TERMS = 6
 const LAMBDA = 1e-3
@@ -117,6 +119,65 @@ function metric(meta, key::Symbol, default = 0)
     return haskey(meta, key) ? getfield(meta, key) : default
 end
 
+function median_value(values::Vector{Float64})
+    isempty(values) && return NaN
+    sorted = sort(values)
+    n = length(sorted)
+    mid = fld(n + 1, 2)
+    if isodd(n)
+        return sorted[mid]
+    end
+    return 0.5 * (sorted[mid] + sorted[mid + 1])
+end
+
+function level_rows(level_log)
+    rows = Dict{String, Any}[]
+    for entry in level_log
+        push!(rows, Dict(
+            "level" => entry.level,
+            "stage" => entry.stage,
+            "elapsed_s" => entry.elapsed_s,
+            "parameter_fits" => getfield(entry, :parameter_fits),
+            "ode_solves" => getfield(entry, :ode_solves),
+            "invalid_solves" => getfield(entry, :invalid_solves),
+            "diverged_solves" => getfield(entry, :diverged_solves),
+            "nonfinite_solves" => getfield(entry, :nonfinite_solves),
+            "step_limit_solves" => getfield(entry, :step_limit_solves),
+            "solver_unstable_solves" => getfield(entry, :solver_unstable_solves),
+        ))
+    end
+    return rows
+end
+
+function level_cost_stats(level_log)
+    timed_levels = [Float64(entry.elapsed_s) for entry in level_log if entry.level != 1]
+    total = sum(timed_levels; init = 0.0)
+    n = length(timed_levels)
+    return (
+        mean = n == 0 ? NaN : total / n,
+        median = median_value(timed_levels),
+        sum = total,
+        n = n,
+    )
+end
+
+function stage_rows(level_log)
+    stages = sort(unique([entry.stage for entry in level_log]))
+    rows = Dict{String, Any}[]
+    for stage in stages
+        entries = [entry for entry in level_log if entry.stage == stage]
+        elapsed = sum(Float64(entry.elapsed_s) for entry in entries; init = 0.0)
+        n = length(entries)
+        push!(rows, Dict(
+            "stage" => stage,
+            "n_levels" => n,
+            "elapsed_s" => elapsed,
+            "seconds_per_level" => n == 0 ? NaN : elapsed / n,
+        ))
+    end
+    return rows
+end
+
 function run_case(label::String, traj::Trajectory, basis::AbstractBasis; screening_optimizer = nothing)
     result = nothing
     elapsed_s = @elapsed begin
@@ -131,6 +192,8 @@ function run_case(label::String, traj::Trajectory, basis::AbstractBasis; screeni
     end
 
     meta = result.meta.structure
+    levels = collect(metric(meta, :level_log, NamedTuple[]))
+    level_stats = level_cost_stats(levels)
     expected_idxs = expected_active_idxs(SYSTEM_ID, basis)
     pruned_match = expected_idxs === nothing ? false : support_match_pruned(result.structure, result.params, expected_idxs)
 
@@ -142,8 +205,13 @@ function run_case(label::String, traj::Trajectory, basis::AbstractBasis; screeni
         pruned_match = pruned_match,
         structure_idxs = result.structure.active_idxs,
         structure_pretty = metric(meta, :best_structure_pretty, ""),
-        n_levels_completed = length(metric(meta, :level_log, NamedTuple[])),
-        cost_per_level_s = elapsed_s / max(1, length(metric(meta, :level_log, NamedTuple[]))),
+        n_levels_completed = length(levels),
+        n_level_costs_excluding_first = level_stats.n,
+        mean_level_cost_excl_first_s = level_stats.mean,
+        median_level_cost_excl_first_s = level_stats.median,
+        sum_level_cost_excl_first_s = level_stats.sum,
+        level_log = level_rows(levels),
+        stage_summary = stage_rows(levels),
         total_parameter_fits = metric(meta, :total_parameter_fits),
         total_ode_solves = metric(meta, :total_ode_solves),
         total_invalid_solves = metric(meta, :total_invalid_solves),
@@ -173,7 +241,12 @@ function row_dict(row)
         "structure_idxs" => row.structure_idxs,
         "structure_pretty" => row.structure_pretty,
         "n_levels_completed" => row.n_levels_completed,
-        "cost_per_level_s" => row.cost_per_level_s,
+        "n_level_costs_excluding_first" => row.n_level_costs_excluding_first,
+        "mean_level_cost_excl_first_s" => row.mean_level_cost_excl_first_s,
+        "median_level_cost_excl_first_s" => row.median_level_cost_excl_first_s,
+        "sum_level_cost_excl_first_s" => row.sum_level_cost_excl_first_s,
+        "level_log" => row.level_log,
+        "stage_summary" => row.stage_summary,
         "total_parameter_fits" => row.total_parameter_fits,
         "total_ode_solves" => row.total_ode_solves,
         "total_invalid_solves" => row.total_invalid_solves,
@@ -201,7 +274,10 @@ function csv_line(row)
         string(row.final_stage),
         string(row.pruned_match),
         string(row.n_levels_completed),
-        @sprintf("%.6f", row.cost_per_level_s),
+        string(row.n_level_costs_excluding_first),
+        @sprintf("%.6f", row.mean_level_cost_excl_first_s),
+        @sprintf("%.6f", row.median_level_cost_excl_first_s),
+        @sprintf("%.6f", row.sum_level_cost_excl_first_s),
         string(row.total_parameter_fits),
         string(row.total_ode_solves),
         string(row.total_invalid_solves),
@@ -223,7 +299,7 @@ end
 
 function write_outputs!(rows, csv_path::String, json_path::String, txt_path::String)
     open(csv_path, "w") do io
-        println(io, "label;elapsed_s;loss;final_stage;pruned_match;n_levels_completed;cost_per_level_s;total_parameter_fits;total_ode_solves;total_invalid_solves;total_diverged_solves;total_nonfinite_solves;total_step_limit_solves;total_solver_unstable_solves;total_optimizer_limit_hits;total_optimizer_iteration_limit_hits;total_optimizer_safety_limit_hits;total_optimizer_failure_hits;total_optimizer_unknown_retcode_hits;total_parameter_optimization_time_s;total_simulation_time_s;solver_retcodes;optimizer_retcodes")
+        println(io, "label;elapsed_s;loss;final_stage;pruned_match;n_levels_completed;n_level_costs_excluding_first;mean_level_cost_excl_first_s;median_level_cost_excl_first_s;sum_level_cost_excl_first_s;total_parameter_fits;total_ode_solves;total_invalid_solves;total_diverged_solves;total_nonfinite_solves;total_step_limit_solves;total_solver_unstable_solves;total_optimizer_limit_hits;total_optimizer_iteration_limit_hits;total_optimizer_safety_limit_hits;total_optimizer_failure_hits;total_optimizer_unknown_retcode_hits;total_parameter_optimization_time_s;total_simulation_time_s;solver_retcodes;optimizer_retcodes")
         for row in rows
             println(io, csv_line(row))
         end
@@ -259,10 +335,28 @@ function write_outputs!(rows, csv_path::String, json_path::String, txt_path::Str
         println(io, "profile_eval_cost")
         println(io, "System $(SYSTEM_ID), seed $(SEED), variant evogrow_v2_2_stage_local, levels $(BENCHMARK_LEVELS)")
         for row in rows
-            println(io, @sprintf("%s elapsed %.2fs, cost_per_level %.2fs, loss %.6e, final_stage %s, pruned_match %s",
-                row.label, row.elapsed_s, row.cost_per_level_s, row.loss, string(row.final_stage), string(row.pruned_match)))
+            println(io, @sprintf("%s elapsed %.2fs, mean_level_cost_excl_first %.2fs, median_level_cost_excl_first %.2fs, loss %.6e, final_stage %s, pruned_match %s",
+                row.label,
+                row.elapsed_s,
+                row.mean_level_cost_excl_first_s,
+                row.median_level_cost_excl_first_s,
+                row.loss,
+                string(row.final_stage),
+                string(row.pruned_match)))
+            println(io, @sprintf("  level_cost_basis: sum(level elapsed excluding level 1)=%.2fs over %d levels",
+                row.sum_level_cost_excl_first_s,
+                row.n_level_costs_excluding_first))
             println(io, "  solver_retcodes: $(join(row.solver_retcodes, ","))")
             println(io, "  optimizer_retcodes: $(join(row.optimizer_retcodes, ","))")
+            println(io, "  stage summary:")
+            println(io, "    stage;n_levels;elapsed_s;seconds_per_level")
+            for stage_row in row.stage_summary
+                println(io, @sprintf("    %s;%s;%.2f;%.2f",
+                    string(stage_row["stage"]),
+                    string(stage_row["n_levels"]),
+                    Float64(stage_row["elapsed_s"]),
+                    Float64(stage_row["seconds_per_level"])))
+            end
         end
         if length(rows) == 2
             ref = only([row for row in rows if row.label == "A_reference"])
