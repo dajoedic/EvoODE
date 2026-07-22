@@ -13,6 +13,34 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 - Profiling-Benchmark wird auf 12 Level begrenzt, rechnet Screening vor Referenz und schreibt Zwischenergebnisse nach jedem Fall.
 - Offener Reproduzierbarkeitszustand: ausserhalb des Regression-Runners konstruieren Benchmarks, Experimente und alte Studies `BFGSOptimizer` weiterhin ohne explizites `time_limit_s`; der Struct-Default bleibt `300.0` und muss vor Phase B bewusst entschieden werden.
 
+### Mikro-Benchmark System 26 gelaufen — Kostentreiber quantifiziert, Obergrenze bei 21x
+
+Externer Lauf `studies/profiling/profile_eval_cost.jl` auf System 26, Seed 42, v2.2, 18 Level. Beide Faelle mit **identisch 370 Parameter-Fits** — damit ist der Vergleich normiert.
+
+| | A (Referenz) | B (Screening) | Faktor |
+|---|---|---|---|
+| Laufzeit | 3222,6 s (53,7 min) | 1189,8 s (19,8 min) | **2,71x** |
+| Kosten pro Fit | 8,71 s | 3,22 s | 2,71x |
+| ODE-Solves | 1.741.484 | 2.488.973 | 0,70x |
+| Kosten pro Solve | 1,763 ms | 0,409 ms | **4,31x** |
+| Solve-Anteil an Laufzeit | **95 %** | 86 % | |
+| Overhead ohne Solve | 153 s | 166 s | |
+| Loss | 1,391623e-3 | 2,653197e-4 | B 5,2x besser |
+| erreichte Stage | 3 | 4 | |
+| `pruned_match` | false | false | |
+
+B rechnet **mehr** Integrationen (2,49 Mio. vs 1,74 Mio.), aber jede einzelne ist 4,3x billiger — der Deckel `maxiters_solve = 20.000` und die Divergenzschwelle 1e6 greifen genau bei den Ausreissern. Sichtbar im Log: Level 16 von A kostete 1054 s, davon 1045 s (99 %) im Solver, mit 112 Solves im Millionen-Schritt-Limit.
+
+**Sauberster Einzelvergleich:** Stage 2, in beiden Faellen exakt 8 Level — A 2937,9 s, B 297,1 s, **Faktor 9,9x**. Stage 2 sind die selbst-quadratischen Terme; die erzeugen Blow-up-Dynamik, und genau dort zahlt der ungedeckelte Referenzpfad.
+
+**Regressionsnachweis, mit Nebenbefund:** A liefert Loss `0.001391623174905009` — **bit-identisch zu Baseline v0**. v0 brauchte dafuer 30 Level und 3,0 h und lief bis Stage 5; A erreicht denselben Loss in 18 Leveln und 53,7 min bei Stage 3. **Die Level 19–30 in v0 haben rund 2,1 h gekostet und den Loss um exakt null verbessert.** Die Overshoot-Diagnose vom Vormittag ist damit an einer Einzelzelle direkt belegt.
+
+**Determinismus bestaetigt:** `optimizer_safety_limit_hits = 0` in beiden Faellen, die Wall-Clock-Notbremse hat nie gegriffen. Beobachtete Retcodes: Solver `{Success, Unstable, MaxIters}`, Optimierer `{Success, Failure}`.
+
+**Entscheidende Zahl fuer die naechste Stufe:** 95 % der Laufzeit von A liegen in der ODE-Integration, der Overhead ausserhalb betraegt 153 s. Ein Screening ohne Integration in der Suchschleife (ableitungsbasiertes Kriterium, Maschinerie in `pretune.jl` vorhanden) hat auf dieser Zelle eine Obergrenze von **~21x** gegenueber A — gegenueber den 2,71x, die Solver-Tuning gebracht hat. Solver-Tuning ist damit ausgereizt; der Groessenordnungssprung liegt allein in der Reduktion der Anzahl Integrationen.
+
+**Vorbehalte:** n = 1 Zelle, 1 Seed. B ist kein freier Speedup, sondern eine andere Suche (`structure_changed = true`, abweichende Stage-Trajektorie: A 9/8/1 Level in Stage 1/2/3, B 4/8/4/2). Keiner der beiden Faelle findet die korrekte Struktur.
+
 ### WP-P1c umgesetzt und reviewt — erste Messdaten, Kostentreiber identifiziert
 
 Committet `434a8a7`. Umsetzung korrekt: Level-Budget 18, Kosten pro Level aus dem `level_log` statt aus der Gesamtzeit, erstes Level ausgeschlossen, Mittelwert **und** Median, Per-Level- und Per-Stage-Aufschlüsselung in JSON und Textausgabe. Verifikationslauf auf System 3 durchgeführt.
