@@ -12,10 +12,23 @@ baseline population size, while `polish_maxiters = 20` reflects the WP-P2.2 cost
 model: about one tenth of the reference BFGS budget keeps losses on the
 simulation scale without spending full fits on every candidate.
 
-Rank agreement is reported as Spearman's rho between derivative residual and
-simulated loss among selected, polished candidates. Spearman is used because the
+`screen_k < pop_size` is rejected rather than silently shrinking the population;
+callers that want a smaller polished set should reduce `pop_size` as well.
+If `screening_optimizer` is supplied, it is used for bounded polish and rejected
+diagnostic fits, preserving the existing `screening_budgets_active` meaning:
+reduced solver budgets are active. The final refit always uses the full
+optimizer and is included in aggregate fit/solve cost totals as well as reported
+separately.
+
+Rank agreement is reported as Spearman's rho over selected candidates plus a
+small deterministic sample of rejected candidates. Spearman is used because the
 screening score and simulation loss have different units; only monotonic
-ordering matters for judging whether screening preserves good candidates.
+ordering matters for judging whether screening preserves good candidates. The
+rejected sample is diagnostic only and never enters the population. Parent
+incumbents keep their previous simulated value if bounded polishing makes them
+worse, intentionally preserving the search anchor; this makes best-objective
+history monotone and can affect plateau timing relative to EvoGrow. `vis_history`
+is returned for schema compatibility but is not populated by this variant.
 """
 Base.@kwdef struct EvoGrowScreening <: AbstractStructureSearch
     pop_size::Int = 20
@@ -23,10 +36,12 @@ Base.@kwdef struct EvoGrowScreening <: AbstractStructureSearch
     children_per_parent::Int = 2
     max_terms_per_eq::Int = 5
     λ::Float64 = 1e-3
-    progression::StageProgressionPolicy = StageProgressionPolicy(mode = :stage_local)
-    usage::StageUsagePolicy = StageUsagePolicy(mode = :soft)
+    progression::StageProgressionPolicy = StageProgressionPolicy()
+    usage::StageUsagePolicy = StageUsagePolicy()
     screen_k::Int = 0
     polish_maxiters::Int = 20
+    rejected_diagnostic_samples::Int = 2
+    screening_optimizer::Union{Nothing, AbstractOptimizer} = nothing
     level_callback::Union{Nothing, Function} = nothing
 end
 
@@ -43,8 +58,14 @@ function _validate_policy(strategy::EvoGrowScreening)
     if strategy.screen_k < 0
         error("EvoGrowScreening.screen_k must be >= 0; use 0 for pop_size")
     end
+    if strategy.screen_k > 0 && strategy.screen_k < strategy.pop_size
+        error("EvoGrowScreening.screen_k must be >= pop_size to avoid silent population shrinkage; reduce pop_size for smaller selected sets")
+    end
     if strategy.polish_maxiters < 1
         error("EvoGrowScreening.polish_maxiters must be >= 1")
+    end
+    if strategy.rejected_diagnostic_samples < 0
+        error("EvoGrowScreening.rejected_diagnostic_samples must be >= 0")
     end
     return nothing
 end
@@ -183,7 +204,8 @@ function search_structure(strategy::EvoGrowScreening,
         allowed_terms,
     )
 
-    polish_optimizer = _polish_optimizer(strategy, optimizer)
+    eval_optimizer = strategy.screening_optimizer === nothing ? optimizer : strategy.screening_optimizer
+    polish_optimizer = _polish_optimizer(strategy, eval_optimizer)
     screen_k = strategy.screen_k == 0 ? strategy.pop_size : strategy.screen_k
     screen_k = min(max(screen_k, 1), strategy.pop_size)
 
@@ -202,8 +224,14 @@ function search_structure(strategy::EvoGrowScreening,
     total_invalid_screening_evals = 0
     total_polished_candidates = 0
     total_polish_budget_exhausted = 0
+    total_polish_convergence_failures = 0
+    total_rejected_diagnostic_candidates = 0
+    total_rejected_diagnostic_budget_exhausted = 0
+    total_rejected_diagnostic_convergence_failures = 0
+    total_rejected_beats_best_selected = 0
     total_screening_time_s = 0.0
     total_polish_time_s = 0.0
+    total_rejected_diagnostic_time_s = 0.0
     level_rank_agreements = Float64[]
 
     n_steps = min(strategy.n_levels, options.max_levels)
@@ -217,6 +245,7 @@ function search_structure(strategy::EvoGrowScreening,
                 :n_levels => n_steps,
                 :screen_k => screen_k,
                 :polish_maxiters => strategy.polish_maxiters,
+                :rejected_diagnostic_samples => strategy.rejected_diagnostic_samples,
                 :max_stage => max_stage,
                 :progression_mode => strategy.progression.mode,
                 :usage_mode => strategy.usage.mode
@@ -275,12 +304,18 @@ function search_structure(strategy::EvoGrowScreening,
         if isempty(selected_idxs)
             selected_idxs = collect(1:min(screen_k, length(candidates)))
         end
+        selected_set = Set(selected_idxs)
+        rejected_ranked_idxs = [idx for idx in sortperm(scores) if !(idx in selected_set) && isfinite(scores[idx])]
+        diagnostic_idxs = rejected_ranked_idxs[1:min(strategy.rejected_diagnostic_samples, length(rejected_ranked_idxs))]
 
         level_totals = _empty_fit_totals()
         level_polish_budget_exhausted = 0
+        level_polish_convergence_failures = 0
+        level_rejected_diagnostic_budget_exhausted = 0
+        level_rejected_diagnostic_convergence_failures = 0
         polished = Individual[]
-        selected_screen_residuals = Float64[]
-        selected_sim_losses = Float64[]
+        measured_screen_residuals = Float64[]
+        measured_sim_losses = Float64[]
 
         polish_t0 = time()
         for idx in selected_idxs
@@ -290,18 +325,44 @@ function search_structure(strategy::EvoGrowScreening,
             candidate = Individual(ind.structure, copy(ind.params), ind.loss, ind.objective)
             _, fit_meta = _evaluate_with_p0!(candidate, traj, basis, loss, polish_optimizer, strategy.λ, options, p0)
             _add_fit_stats!(level_totals, fit_meta)
-            if _fit_stat(fit_meta, :optimizer_limit_hits) > 0
+            if _fit_stat(fit_meta, :optimizer_iteration_limit_hits) > 0
                 level_polish_budget_exhausted += 1
+            end
+            if _fit_stat(fit_meta, :optimizer_failure_hits) > 0
+                level_polish_convergence_failures += 1
             end
             if isfinite(ind.objective) && ind.objective <= candidate.objective
                 candidate = Individual(ind.structure, copy(ind.params), ind.loss, ind.objective)
             end
             push!(polished, candidate)
-            push!(selected_screen_residuals, screen.residual)
-            push!(selected_sim_losses, candidate.loss)
+            push!(measured_screen_residuals, screen.residual)
+            push!(measured_sim_losses, candidate.loss)
         end
         level_polish_time_s = time() - polish_t0
-        level_rank_agreement = _spearman_rho(selected_screen_residuals, selected_sim_losses)
+
+        best_selected_loss = isempty(polished) ? Inf : minimum(ind.loss for ind in polished)
+        level_rejected_beats_best_selected = 0
+        rejected_t0 = time()
+        for idx in diagnostic_idxs
+            ind = candidates[idx]
+            screen = screening[idx]
+            candidate = Individual(ind.structure, copy(ind.params), ind.loss, ind.objective)
+            _, fit_meta = _evaluate_with_p0!(candidate, traj, basis, loss, polish_optimizer, strategy.λ, options, screen.params)
+            _add_fit_stats!(level_totals, fit_meta)
+            if _fit_stat(fit_meta, :optimizer_iteration_limit_hits) > 0
+                level_rejected_diagnostic_budget_exhausted += 1
+            end
+            if _fit_stat(fit_meta, :optimizer_failure_hits) > 0
+                level_rejected_diagnostic_convergence_failures += 1
+            end
+            if candidate.loss < best_selected_loss
+                level_rejected_beats_best_selected += 1
+            end
+            push!(measured_screen_residuals, screen.residual)
+            push!(measured_sim_losses, candidate.loss)
+        end
+        level_rejected_diagnostic_time_s = time() - rejected_t0
+        level_rank_agreement = _spearman_rho(measured_screen_residuals, measured_sim_losses)
         push!(level_rank_agreements, level_rank_agreement)
 
         sort!(polished, by = x -> x.objective)
@@ -332,8 +393,14 @@ function search_structure(strategy::EvoGrowScreening,
         total_invalid_screening_evals += level_invalid_screening_evals
         total_polished_candidates += length(selected_idxs)
         total_polish_budget_exhausted += level_polish_budget_exhausted
+        total_polish_convergence_failures += level_polish_convergence_failures
+        total_rejected_diagnostic_candidates += length(diagnostic_idxs)
+        total_rejected_diagnostic_budget_exhausted += level_rejected_diagnostic_budget_exhausted
+        total_rejected_diagnostic_convergence_failures += level_rejected_diagnostic_convergence_failures
+        total_rejected_beats_best_selected += level_rejected_beats_best_selected
         total_screening_time_s += level_screening_time_s
         total_polish_time_s += level_polish_time_s
+        total_rejected_diagnostic_time_s += level_rejected_diagnostic_time_s
 
         push!(
             level_log,
@@ -365,8 +432,14 @@ function search_structure(strategy::EvoGrowScreening,
                 invalid_screening_evals = level_invalid_screening_evals,
                 polished_candidates = length(selected_idxs),
                 polish_budget_exhausted = level_polish_budget_exhausted,
+                polish_convergence_failures = level_polish_convergence_failures,
+                rejected_diagnostic_candidates = length(diagnostic_idxs),
+                rejected_diagnostic_budget_exhausted = level_rejected_diagnostic_budget_exhausted,
+                rejected_diagnostic_convergence_failures = level_rejected_diagnostic_convergence_failures,
+                rejected_beats_best_selected = level_rejected_beats_best_selected,
                 screening_time_s = level_screening_time_s,
                 polish_time_s = level_polish_time_s,
+                rejected_diagnostic_time_s = level_rejected_diagnostic_time_s,
                 rank_agreement_spearman = level_rank_agreement,
                 screening_score_best = minimum(scores),
                 selected_screening_score_best = minimum(scores[selected_idxs]),
@@ -425,6 +498,7 @@ function search_structure(strategy::EvoGrowScreening,
         final_t0 = time()
         _, final_refit_meta = _evaluate_with_p0!(best, traj, basis, loss, optimizer, strategy.λ, options, best.params)
         final_refit_time_s = time() - final_t0
+        _add_fit_stats!(totals, final_refit_meta)
     end
 
     rank_values = [rho for rho in level_rank_agreements if isfinite(rho)]
@@ -441,6 +515,7 @@ function search_structure(strategy::EvoGrowScreening,
                 :termination_reason => termination_reason,
                 :total_screening_evals => total_screening_evals,
                 :total_polished_candidates => total_polished_candidates,
+                :total_rejected_diagnostic_candidates => total_rejected_diagnostic_candidates,
             )
         )
     end
@@ -479,7 +554,8 @@ function search_structure(strategy::EvoGrowScreening,
             total_simulation_time_s = totals[:solve_time_s],
             solver_retcodes = copy(totals[:solver_retcodes]),
             optimizer_retcodes = copy(totals[:optimizer_retcodes]),
-            screening_budgets_active = true,
+            screening_budgets_active = strategy.screening_optimizer !== nothing,
+            derivative_screening_active = true,
             final_stage = current_stage,
             termination_reason = termination_reason,
             progression_mode = strategy.progression.mode,
@@ -488,12 +564,19 @@ function search_structure(strategy::EvoGrowScreening,
             invalid_screening_evals = total_invalid_screening_evals,
             polished_candidates = total_polished_candidates,
             polish_budget_exhausted = total_polish_budget_exhausted,
+            polish_convergence_failures = total_polish_convergence_failures,
+            rejected_diagnostic_candidates = total_rejected_diagnostic_candidates,
+            rejected_diagnostic_budget_exhausted = total_rejected_diagnostic_budget_exhausted,
+            rejected_diagnostic_convergence_failures = total_rejected_diagnostic_convergence_failures,
+            rejected_beats_best_selected = total_rejected_beats_best_selected,
             screening_time_s = total_screening_time_s,
             polish_time_s = total_polish_time_s,
+            rejected_diagnostic_time_s = total_rejected_diagnostic_time_s,
             rank_agreement_spearman = mean_rank_agreement,
             level_rank_agreements_spearman = level_rank_agreements,
             screen_k = screen_k,
             polish_maxiters = strategy.polish_maxiters,
+            rejected_diagnostic_samples = strategy.rejected_diagnostic_samples,
             final_refit_meta = final_refit_meta,
             final_refit_time_s = final_refit_time_s
         )

@@ -37,6 +37,7 @@ const SCREENING_BFGS_MAXITERS_SOLVE = 20_000
 const SCREENING_DIVERGENCE_LIMIT = 1e6
 const DERIVATIVE_SCREEN_K = POP_SIZE
 const DERIVATIVE_POLISH_MAXITERS = 20
+const DERIVATIVE_REJECTED_DIAGNOSTIC_SAMPLES = 2
 
 const OPTIONS_CONFIG = (
     verbose = 1,
@@ -89,6 +90,8 @@ const VARIANTS = [
             ),
             screen_k = DERIVATIVE_SCREEN_K,
             polish_maxiters = DERIVATIVE_POLISH_MAXITERS,
+            rejected_diagnostic_samples = DERIVATIVE_REJECTED_DIAGNOSTIC_SAMPLES,
+            screening_optimizer = screening_optimizer,
             level_callback = level_callback,
         ),
     ),
@@ -212,6 +215,7 @@ function config_fingerprint()
         variants = [String(variant.label) for variant in VARIANTS],
         derivative_screen_k = DERIVATIVE_SCREEN_K,
         derivative_polish_maxiters = DERIVATIVE_POLISH_MAXITERS,
+        derivative_rejected_diagnostic_samples = DERIVATIVE_REJECTED_DIAGNOSTIC_SAMPLES,
         discovery_options = OPTIONS_CONFIG,
         trajectory_solver = (
             algorithm = "Tsit5",
@@ -349,6 +353,7 @@ function run_one(variant, system, seed::Int, fingerprint::String, provenance)
         "n_levels" => N_LEVELS,
         "use_pretuning" => USE_PRETUNING,
         "screening_budgets_active" => nothing,
+        "derivative_screening_active" => nothing,
         "total_parameter_fits" => nothing,
         "total_ode_solves" => nothing,
         "total_invalid_solves" => nothing,
@@ -367,11 +372,18 @@ function run_one(variant, system, seed::Int, fingerprint::String, provenance)
         "invalid_screening_evals" => nothing,
         "polished_candidates" => nothing,
         "polish_budget_exhausted" => nothing,
+        "polish_convergence_failures" => nothing,
+        "rejected_diagnostic_candidates" => nothing,
+        "rejected_diagnostic_budget_exhausted" => nothing,
+        "rejected_diagnostic_convergence_failures" => nothing,
+        "rejected_beats_best_selected" => nothing,
         "screening_time_s" => nothing,
         "polish_time_s" => nothing,
+        "rejected_diagnostic_time_s" => nothing,
         "rank_agreement_spearman" => nothing,
         "screen_k" => nothing,
         "polish_maxiters" => nothing,
+        "rejected_diagnostic_samples" => nothing,
         "solver_retcodes" => nothing,
         "optimizer_retcodes" => nothing,
         "error" => nothing,
@@ -450,6 +462,7 @@ function run_one(variant, system, seed::Int, fingerprint::String, provenance)
         base_record["elapsed_s"] = elapsed
         base_record["eq_final_stages"] = eq_final_stages
         base_record["screening_budgets_active"] = meta.screening_budgets_active
+        base_record["derivative_screening_active"] = haskey(meta, :derivative_screening_active) ? meta.derivative_screening_active : false
         base_record["total_parameter_fits"] = haskey(meta, :total_parameter_fits) ? meta.total_parameter_fits : nothing
         base_record["total_ode_solves"] = haskey(meta, :total_ode_solves) ? meta.total_ode_solves : nothing
         base_record["total_invalid_solves"] = haskey(meta, :total_invalid_solves) ? meta.total_invalid_solves : nothing
@@ -468,11 +481,18 @@ function run_one(variant, system, seed::Int, fingerprint::String, provenance)
         base_record["invalid_screening_evals"] = haskey(meta, :invalid_screening_evals) ? meta.invalid_screening_evals : nothing
         base_record["polished_candidates"] = haskey(meta, :polished_candidates) ? meta.polished_candidates : nothing
         base_record["polish_budget_exhausted"] = haskey(meta, :polish_budget_exhausted) ? meta.polish_budget_exhausted : nothing
+        base_record["polish_convergence_failures"] = haskey(meta, :polish_convergence_failures) ? meta.polish_convergence_failures : nothing
+        base_record["rejected_diagnostic_candidates"] = haskey(meta, :rejected_diagnostic_candidates) ? meta.rejected_diagnostic_candidates : nothing
+        base_record["rejected_diagnostic_budget_exhausted"] = haskey(meta, :rejected_diagnostic_budget_exhausted) ? meta.rejected_diagnostic_budget_exhausted : nothing
+        base_record["rejected_diagnostic_convergence_failures"] = haskey(meta, :rejected_diagnostic_convergence_failures) ? meta.rejected_diagnostic_convergence_failures : nothing
+        base_record["rejected_beats_best_selected"] = haskey(meta, :rejected_beats_best_selected) ? meta.rejected_beats_best_selected : nothing
         base_record["screening_time_s"] = haskey(meta, :screening_time_s) ? meta.screening_time_s : nothing
         base_record["polish_time_s"] = haskey(meta, :polish_time_s) ? meta.polish_time_s : nothing
+        base_record["rejected_diagnostic_time_s"] = haskey(meta, :rejected_diagnostic_time_s) ? meta.rejected_diagnostic_time_s : nothing
         base_record["rank_agreement_spearman"] = haskey(meta, :rank_agreement_spearman) ? meta.rank_agreement_spearman : nothing
         base_record["screen_k"] = haskey(meta, :screen_k) ? meta.screen_k : nothing
         base_record["polish_maxiters"] = haskey(meta, :polish_maxiters) ? meta.polish_maxiters : nothing
+        base_record["rejected_diagnostic_samples"] = haskey(meta, :rejected_diagnostic_samples) ? meta.rejected_diagnostic_samples : nothing
         base_record["solver_retcodes"] = haskey(meta, :solver_retcodes) ? collect(meta.solver_retcodes) : nothing
         base_record["optimizer_retcodes"] = haskey(meta, :optimizer_retcodes) ? collect(meta.optimizer_retcodes) : nothing
     catch err
