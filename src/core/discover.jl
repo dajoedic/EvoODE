@@ -164,6 +164,8 @@ function discover(traj::Trajectory;
             reltol    = optimizer.reltol,
             maxiters  = optimizer.maxiters_solve,
             clamp_val = optimizer.clamp_val,
+            reject_nonfinite = optimizer.reject_nonfinite,
+            divergence_limit = optimizer.divergence_limit,
             options   = options
         )
     else

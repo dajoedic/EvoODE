@@ -25,6 +25,16 @@ const STAGE_MIN = 2
 const SOFT_BIAS = 0.75
 const USE_PRETUNING = false
 const BFGS_MAXITERS = 200
+const BFGS_ABSTOL = 1e-6
+const BFGS_RELTOL = 1e-6
+const BFGS_MAXITERS_SOLVE = 10^6
+const BFGS_TIME_LIMIT_S = 86_400.0
+
+const SCREENING_BUDGETS_ENABLED = lowercase(strip(get(ENV, "EVO_SCREENING_BUDGETS", ""))) in ("1", "true", "yes")
+const SCREENING_BFGS_ABSTOL = 1e-5
+const SCREENING_BFGS_RELTOL = 1e-5
+const SCREENING_BFGS_MAXITERS_SOLVE = 20_000
+const SCREENING_DIVERGENCE_LIMIT = 1e6
 
 const OPTIONS_CONFIG = (
     verbose = 1,
@@ -40,7 +50,7 @@ const OPTIONS_CONFIG = (
 const VARIANTS = [
     (
         label = "evogrow_v2_2_stage_local",
-        constructor = level_callback -> EvoGrow(
+        constructor = (level_callback, screening_optimizer) -> EvoGrow(
             pop_size = POP_SIZE,
             n_levels = N_LEVELS,
             children_per_parent = CHILDREN_PER_PARENT,
@@ -55,12 +65,13 @@ const VARIANTS = [
                 new_term_bias_prob = SOFT_BIAS,
             ),
             use_pretuning = USE_PRETUNING,
+            screening_optimizer = screening_optimizer,
             level_callback = level_callback,
         ),
     ),
     (
         label = "evogrow_v3",
-        constructor = level_callback -> EvoGrowV3(
+        constructor = (level_callback, _screening_optimizer) -> EvoGrowV3(
             pop_size = POP_SIZE,
             n_levels = N_LEVELS,
             children_per_parent = CHILDREN_PER_PARENT,
@@ -91,6 +102,30 @@ function build_options(seed::Int)
         plateau_tol = OPTIONS_CONFIG.plateau_tol,
         plateau_relative = OPTIONS_CONFIG.plateau_relative,
         plateau_rtol = OPTIONS_CONFIG.plateau_rtol,
+    )
+end
+
+function build_reference_optimizer()
+    return BFGSOptimizer(
+        maxiters = BFGS_MAXITERS,
+        abstol = BFGS_ABSTOL,
+        reltol = BFGS_RELTOL,
+        maxiters_solve = BFGS_MAXITERS_SOLVE,
+        time_limit_s = BFGS_TIME_LIMIT_S,
+        reject_nonfinite = false,
+        divergence_limit = Inf,
+    )
+end
+
+function build_screening_optimizer()
+    return BFGSOptimizer(
+        maxiters = BFGS_MAXITERS,
+        abstol = SCREENING_BFGS_ABSTOL,
+        reltol = SCREENING_BFGS_RELTOL,
+        maxiters_solve = SCREENING_BFGS_MAXITERS_SOLVE,
+        time_limit_s = BFGS_TIME_LIMIT_S,
+        reject_nonfinite = true,
+        divergence_limit = SCREENING_DIVERGENCE_LIMIT,
     )
 end
 
@@ -141,6 +176,15 @@ function config_fingerprint()
         new_term_bias_prob = SOFT_BIAS,
         use_pretuning = USE_PRETUNING,
         bfgs_maxiters = BFGS_MAXITERS,
+        bfgs_abstol = BFGS_ABSTOL,
+        bfgs_reltol = BFGS_RELTOL,
+        bfgs_maxiters_solve = BFGS_MAXITERS_SOLVE,
+        bfgs_time_limit_s = BFGS_TIME_LIMIT_S,
+        screening_budgets_enabled = SCREENING_BUDGETS_ENABLED,
+        screening_bfgs_abstol = SCREENING_BFGS_ABSTOL,
+        screening_bfgs_reltol = SCREENING_BFGS_RELTOL,
+        screening_bfgs_maxiters_solve = SCREENING_BFGS_MAXITERS_SOLVE,
+        screening_divergence_limit = SCREENING_DIVERGENCE_LIMIT,
         discovery_options = OPTIONS_CONFIG,
         trajectory_solver = (
             algorithm = "Tsit5",
@@ -277,6 +321,18 @@ function run_one(variant, system, seed::Int, fingerprint::String, provenance)
         "eq_final_stages" => nothing,
         "n_levels" => N_LEVELS,
         "use_pretuning" => USE_PRETUNING,
+        "screening_budgets_active" => SCREENING_BUDGETS_ENABLED,
+        "total_parameter_fits" => nothing,
+        "total_ode_solves" => nothing,
+        "total_invalid_solves" => nothing,
+        "total_diverged_solves" => nothing,
+        "total_nonfinite_solves" => nothing,
+        "total_step_limit_solves" => nothing,
+        "total_optimizer_limit_hits" => nothing,
+        "total_optimizer_iteration_limit_hits" => nothing,
+        "total_optimizer_safety_limit_hits" => nothing,
+        "total_parameter_optimization_time_s" => nothing,
+        "total_simulation_time_s" => nothing,
         "error" => nothing,
     )
 
@@ -305,9 +361,10 @@ function run_one(variant, system, seed::Int, fingerprint::String, provenance)
 
     try
         traj = build_trajectory(system)
-        strategy = variant.constructor(level_callback)
+        optimizer = build_reference_optimizer()
+        screening_optimizer = SCREENING_BUDGETS_ENABLED ? build_screening_optimizer() : nothing
+        strategy = variant.constructor(level_callback, screening_optimizer)
         basis = default_staged_polynomial_basis(dim)
-        optimizer = BFGSOptimizer(maxiters = BFGS_MAXITERS)
         options = build_options(seed)
 
         result = nothing
@@ -338,6 +395,17 @@ function run_one(variant, system, seed::Int, fingerprint::String, provenance)
         base_record["wasted_levels"] = wasted_levels
         base_record["elapsed_s"] = elapsed
         base_record["eq_final_stages"] = eq_final_stages
+        base_record["total_parameter_fits"] = haskey(meta, :total_parameter_fits) ? meta.total_parameter_fits : nothing
+        base_record["total_ode_solves"] = haskey(meta, :total_ode_solves) ? meta.total_ode_solves : nothing
+        base_record["total_invalid_solves"] = haskey(meta, :total_invalid_solves) ? meta.total_invalid_solves : nothing
+        base_record["total_diverged_solves"] = haskey(meta, :total_diverged_solves) ? meta.total_diverged_solves : nothing
+        base_record["total_nonfinite_solves"] = haskey(meta, :total_nonfinite_solves) ? meta.total_nonfinite_solves : nothing
+        base_record["total_step_limit_solves"] = haskey(meta, :total_step_limit_solves) ? meta.total_step_limit_solves : nothing
+        base_record["total_optimizer_limit_hits"] = haskey(meta, :total_optimizer_limit_hits) ? meta.total_optimizer_limit_hits : nothing
+        base_record["total_optimizer_iteration_limit_hits"] = haskey(meta, :total_optimizer_iteration_limit_hits) ? meta.total_optimizer_iteration_limit_hits : nothing
+        base_record["total_optimizer_safety_limit_hits"] = haskey(meta, :total_optimizer_safety_limit_hits) ? meta.total_optimizer_safety_limit_hits : nothing
+        base_record["total_parameter_optimization_time_s"] = haskey(meta, :total_parameter_optimization_time_s) ? meta.total_parameter_optimization_time_s : nothing
+        base_record["total_simulation_time_s"] = haskey(meta, :total_simulation_time_s) ? meta.total_simulation_time_s : nothing
     catch err
         base_record["error"] = sprint(showerror, err)
     finally

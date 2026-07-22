@@ -53,6 +53,7 @@ Base.@kwdef struct EvoGrow <: AbstractStructureSearch
     progression::StageProgressionPolicy = StageProgressionPolicy()
     usage::StageUsagePolicy = StageUsagePolicy()
     use_pretuning::Bool = true
+    screening_optimizer::Union{Nothing, AbstractOptimizer} = nothing
     level_callback::Union{Nothing, Function} = nothing
 end
 
@@ -452,6 +453,14 @@ function _evaluate!(ind::Individual,
     return ind, fit_meta
 end
 
+function _fit_stat(fit_meta, key::Symbol)
+    return haskey(fit_meta, key) ? getfield(fit_meta, key) : 0
+end
+
+function _fit_time_stat(fit_meta, key::Symbol)
+    return Float64(haskey(fit_meta, key) ? getfield(fit_meta, key) : 0.0)
+end
+
 # ------------------------------------------------------------
 # Main loop
 # ------------------------------------------------------------
@@ -495,10 +504,22 @@ function search_structure(strategy::EvoGrow,
     level_log = NamedTuple[]
     total_loss_evals = 0
     total_invalid_evals = 0
+    total_parameter_fits = 0
+    total_ode_solves = 0
+    total_invalid_solves = 0
+    total_diverged_solves = 0
+    total_nonfinite_solves = 0
+    total_step_limit_solves = 0
+    total_optimizer_limit_hits = 0
+    total_optimizer_iteration_limit_hits = 0
+    total_optimizer_safety_limit_hits = 0
+    total_fit_time_s = 0.0
+    total_solve_time_s = 0.0
     termination_reason = :max_levels
     vis_history = NamedTuple[]
 
     n_steps = min(strategy.n_levels, options.max_levels)
+    eval_optimizer = strategy.screening_optimizer === nothing ? optimizer : strategy.screening_optimizer
 
     if options.verbose >= 1
         log_info(
@@ -520,6 +541,17 @@ function search_structure(strategy::EvoGrow,
         level_prev_best_objective = isempty(global_best_J_hist) ? Inf : global_best_J_hist[end]
         level_stage_at_start = current_stage
         level_ctx = Dict(:level => level, :stage => current_stage)
+        level_parameter_fits = 0
+        level_ode_solves = 0
+        level_invalid_solves = 0
+        level_diverged_solves = 0
+        level_nonfinite_solves = 0
+        level_step_limit_solves = 0
+        level_optimizer_limit_hits = 0
+        level_optimizer_iteration_limit_hits = 0
+        level_optimizer_safety_limit_hits = 0
+        level_fit_time_s = 0.0
+        level_solve_time_s = 0.0
 
         if options.verbose >= 1
             log_info("Level start", context=level_ctx)
@@ -553,9 +585,20 @@ function search_structure(strategy::EvoGrow,
                     log_info("Parent evaluation", context=parent_ctx)
                 end
 
-                _, fit_meta = _evaluate!(ind, traj, basis, loss, optimizer, strategy.λ, options, strategy.use_pretuning)
+                _, fit_meta = _evaluate!(ind, traj, basis, loss, eval_optimizer, strategy.λ, options, strategy.use_pretuning)
                 total_loss_evals += haskey(fit_meta, :loss_evals) ? fit_meta.loss_evals : 0
                 total_invalid_evals += haskey(fit_meta, :invalid_evals) ? fit_meta.invalid_evals : 0
+                level_parameter_fits += 1
+                level_ode_solves += _fit_stat(fit_meta, :ode_solves)
+                level_invalid_solves += _fit_stat(fit_meta, :invalid_solves)
+                level_diverged_solves += _fit_stat(fit_meta, :diverged_solves)
+                level_nonfinite_solves += _fit_stat(fit_meta, :nonfinite_solves)
+                level_step_limit_solves += _fit_stat(fit_meta, :step_limit_solves)
+                level_optimizer_limit_hits += _fit_stat(fit_meta, :optimizer_limit_hits)
+                level_optimizer_iteration_limit_hits += _fit_stat(fit_meta, :optimizer_iteration_limit_hits)
+                level_optimizer_safety_limit_hits += _fit_stat(fit_meta, :optimizer_safety_limit_hits)
+                level_fit_time_s += _fit_time_stat(fit_meta, :fit_time_s)
+                level_solve_time_s += _fit_time_stat(fit_meta, :solve_time_s)
 
                 if options.verbose >= 3
                     log_debug(
@@ -639,9 +682,20 @@ function search_structure(strategy::EvoGrow,
                 log_info("Child evaluation", context=child_ctx)
             end
 
-            _, fit_meta = _evaluate!(child, traj, basis, loss, optimizer, strategy.λ, options, strategy.use_pretuning)
+            _, fit_meta = _evaluate!(child, traj, basis, loss, eval_optimizer, strategy.λ, options, strategy.use_pretuning)
             total_loss_evals += haskey(fit_meta, :loss_evals) ? fit_meta.loss_evals : 0
             total_invalid_evals += haskey(fit_meta, :invalid_evals) ? fit_meta.invalid_evals : 0
+            level_parameter_fits += 1
+            level_ode_solves += _fit_stat(fit_meta, :ode_solves)
+            level_invalid_solves += _fit_stat(fit_meta, :invalid_solves)
+            level_diverged_solves += _fit_stat(fit_meta, :diverged_solves)
+            level_nonfinite_solves += _fit_stat(fit_meta, :nonfinite_solves)
+            level_step_limit_solves += _fit_stat(fit_meta, :step_limit_solves)
+            level_optimizer_limit_hits += _fit_stat(fit_meta, :optimizer_limit_hits)
+            level_optimizer_iteration_limit_hits += _fit_stat(fit_meta, :optimizer_iteration_limit_hits)
+            level_optimizer_safety_limit_hits += _fit_stat(fit_meta, :optimizer_safety_limit_hits)
+            level_fit_time_s += _fit_time_stat(fit_meta, :fit_time_s)
+            level_solve_time_s += _fit_time_stat(fit_meta, :solve_time_s)
 
             if options.verbose >= 3
                 log_debug(
@@ -686,6 +740,19 @@ function search_structure(strategy::EvoGrow,
             stage_first_use_level[current_stage] = level
         end
         level_elapsed_s = time() - level_t0
+        level_parameter_overhead_s = max(0.0, level_fit_time_s - level_solve_time_s)
+
+        total_parameter_fits += level_parameter_fits
+        total_ode_solves += level_ode_solves
+        total_invalid_solves += level_invalid_solves
+        total_diverged_solves += level_diverged_solves
+        total_nonfinite_solves += level_nonfinite_solves
+        total_step_limit_solves += level_step_limit_solves
+        total_optimizer_limit_hits += level_optimizer_limit_hits
+        total_optimizer_iteration_limit_hits += level_optimizer_iteration_limit_hits
+        total_optimizer_safety_limit_hits += level_optimizer_safety_limit_hits
+        total_fit_time_s += level_fit_time_s
+        total_solve_time_s += level_solve_time_s
 
         push!(
             level_log,
@@ -696,7 +763,18 @@ function search_structure(strategy::EvoGrow,
                 best_objective = best.objective,
                 n_params = length(best.params),
                 uses_current_stage_terms = uses_current_stage_terms,
-                elapsed_s = level_elapsed_s
+                elapsed_s = level_elapsed_s,
+                parameter_fits = level_parameter_fits,
+                ode_solves = level_ode_solves,
+                invalid_solves = level_invalid_solves,
+                diverged_solves = level_diverged_solves,
+                nonfinite_solves = level_nonfinite_solves,
+                step_limit_solves = level_step_limit_solves,
+                optimizer_limit_hits = level_optimizer_limit_hits,
+                optimizer_iteration_limit_hits = level_optimizer_iteration_limit_hits,
+                optimizer_safety_limit_hits = level_optimizer_safety_limit_hits,
+                parameter_optimization_time_s = level_parameter_overhead_s,
+                simulation_time_s = level_solve_time_s
             )
         )
 
@@ -744,6 +822,26 @@ function search_structure(strategy::EvoGrow,
                         :best_loss => best.loss,
                         :n_params => length(best.params),
                         :uses_current_stage_terms => uses_current_stage_terms
+                    )
+                )
+            )
+            log_info(
+                "Level cost summary",
+                context = merge(
+                    level_ctx,
+                    Dict(
+                        :elapsed_s => level_elapsed_s,
+                        :parameter_fits => level_parameter_fits,
+                        :ode_solves => level_ode_solves,
+                        :invalid_solves => level_invalid_solves,
+                        :diverged_solves => level_diverged_solves,
+                        :nonfinite_solves => level_nonfinite_solves,
+                        :step_limit_solves => level_step_limit_solves,
+                        :optimizer_limit_hits => level_optimizer_limit_hits,
+                        :optimizer_iteration_limit_hits => level_optimizer_iteration_limit_hits,
+                        :optimizer_safety_limit_hits => level_optimizer_safety_limit_hits,
+                        :parameter_optimization_time_s => level_parameter_overhead_s,
+                        :simulation_time_s => level_solve_time_s
                     )
                 )
             )
@@ -914,6 +1012,18 @@ function search_structure(strategy::EvoGrow,
             vis_history = vis_history,
             total_loss_evals = total_loss_evals,
             total_invalid_evals = total_invalid_evals,
+            total_parameter_fits = total_parameter_fits,
+            total_ode_solves = total_ode_solves,
+            total_invalid_solves = total_invalid_solves,
+            total_diverged_solves = total_diverged_solves,
+            total_nonfinite_solves = total_nonfinite_solves,
+            total_step_limit_solves = total_step_limit_solves,
+            total_optimizer_limit_hits = total_optimizer_limit_hits,
+            total_optimizer_iteration_limit_hits = total_optimizer_iteration_limit_hits,
+            total_optimizer_safety_limit_hits = total_optimizer_safety_limit_hits,
+            total_parameter_optimization_time_s = max(0.0, total_fit_time_s - total_solve_time_s),
+            total_simulation_time_s = total_solve_time_s,
+            screening_budgets_active = strategy.screening_optimizer !== nothing,
             final_stage = current_stage,
             termination_reason = termination_reason,
             progression_mode = strategy.progression.mode,

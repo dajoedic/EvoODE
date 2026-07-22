@@ -7,18 +7,23 @@ using Logging
 using Random
 
 """
-    BFGSOptimizer(; maxiters=300, abstol=1e-6, reltol=1e-6, maxiters_solve=10^6, clamp_val=10.0, time_limit_s=300.0)
+    BFGSOptimizer(; maxiters=300, abstol=1e-6, reltol=1e-6, maxiters_solve=10^6,
+                  clamp_val=10.0, time_limit_s=300.0,
+                  reject_nonfinite=false, divergence_limit=Inf)
 
 Parameter optimizer for fixed-structure models.
 
-Uses:
-  - DifferentialEquations.jl to simulate the ODE
-  - Optimization.jl (with AutoFiniteDiff) for gradients
-  - BFGS (and NelderMead as fallback) for optimization
+Deterministic budget parameters:
+- `maxiters`: optimizer iteration limit.
+- `abstol`, `reltol`, `maxiters_solve`: ODE solver tolerances and step limit.
+- `clamp_val`: deterministic parameter clamp before simulation.
+- `reject_nonfinite`, `divergence_limit`: deterministic early-rejection rules.
 
-`time_limit_s` sets a wall-clock ceiling per `fit_parameters` call (passed to Optim.jl).
-When the limit is hit, Optim returns the best result found so far rather than throwing.
-The default (300s) is ~100× the median per-call time and only fires on runaway solves.
+Non-deterministic safety parameter:
+- `time_limit_s`: wall-clock safety brake passed to Optim.jl. If it fires,
+  `fit_parameters` marks `optimizer_safety_limit_hits` in the returned metadata.
+  Reproducible result paths should set this high enough that normal fits stop
+  by deterministic budgets instead.
 """
 Base.@kwdef struct BFGSOptimizer <: AbstractOptimizer
     maxiters::Int = 300
@@ -27,10 +32,32 @@ Base.@kwdef struct BFGSOptimizer <: AbstractOptimizer
     maxiters_solve::Int = 10^6
     clamp_val::Float64 = 10.0
     time_limit_s::Float64 = 300.0
+    reject_nonfinite::Bool = false
+    divergence_limit::Float64 = Inf
+end
+
+function _empty_solve_stats()
+    return Dict{Symbol, Any}(
+        :ode_solves => 0,
+        :invalid_solves => 0,
+        :diverged_solves => 0,
+        :nonfinite_solves => 0,
+        :step_limit_solves => 0,
+        :solve_time_s => 0.0,
+    )
+end
+
+function _retcode_string(retcode)
+    return string(retcode)
+end
+
+function _retcode_is_step_limit(retcode)
+    text = lowercase(_retcode_string(retcode))
+    return occursin("maxiter", text) || occursin("dtless", text)
 end
 
 """
-    _predict_traj(f!, traj, p, opt)
+    _predict_traj(f!, traj, p, opt; stats = solve_stats)
 
 Returns:
 - Ŷ :: Matrix{Float64} with shape (T × dim) on success
@@ -42,7 +69,8 @@ Detailed solve timing is only logged in DEBUG mode.
 function _predict_traj(f!,
                        traj::Trajectory,
                        p::Vector{Float64},
-                       opt::BFGSOptimizer)
+                       opt::BFGSOptimizer;
+                       stats::Union{Nothing, Dict{Symbol, Any}} = nothing)
 
     t = traj.t
     X = traj.x
@@ -55,6 +83,10 @@ function _predict_traj(f!,
     prob = ODEProblem(f!, u0, tspan, p_clamped)
 
     local sol
+    if stats !== nothing
+        stats[:ode_solves] += 1
+    end
+    solve_t0 = time()
     solve_done = nothing
     if current_level() <= DEBUG
         solve_done = time_block(
@@ -70,29 +102,73 @@ function _predict_traj(f!,
 
     try
         sol = with_logger(SimpleLogger(stderr, Logging.Error)) do
+            out_of_domain = opt.reject_nonfinite ?
+                ((u, _, _) -> any(!isfinite, u) || any(abs.(u) .> opt.divergence_limit)) :
+                ((_, _, _) -> false)
             solve(prob, Tsit5();
                   saveat   = t,
                   abstol   = opt.abstol,
                   reltol   = opt.reltol,
                   maxiters = opt.maxiters_solve,
+                  isoutofdomain = out_of_domain,
                   verbose  = false)
         end
     catch
+        if stats !== nothing
+            stats[:invalid_solves] += 1
+            stats[:solve_time_s] += time() - solve_t0
+        end
         if solve_done !== nothing
             solve_done()
         end
         return fill(NaN, size(X))
     end
 
+    if stats !== nothing
+        stats[:solve_time_s] += time() - solve_t0
+    end
+
     if solve_done !== nothing
         solve_done()
     end
 
-    if sol.retcode != SciMLBase.ReturnCode.Success || length(sol.t) != length(t)
+    if sol.retcode != SciMLBase.ReturnCode.Success
+        if stats !== nothing
+            stats[:invalid_solves] += 1
+            if _retcode_is_step_limit(sol.retcode)
+                stats[:step_limit_solves] += 1
+            else
+                stats[:diverged_solves] += 1
+            end
+        end
         return fill(NaN, size(X))
     end
 
-    return Array(sol)'  # (T × dim)
+    if length(sol.t) != length(t)
+        if stats !== nothing
+            stats[:invalid_solves] += 1
+            stats[:step_limit_solves] += 1
+        end
+        return fill(NaN, size(X))
+    end
+
+    Yhat = Array(sol)'  # (T x dim)
+    if any(!isfinite, Yhat)
+        if stats !== nothing
+            stats[:invalid_solves] += 1
+            stats[:nonfinite_solves] += 1
+        end
+        return fill(NaN, size(X))
+    end
+    if isfinite(opt.divergence_limit) && any(abs.(Yhat) .> opt.divergence_limit)
+        if stats !== nothing
+            stats[:invalid_solves] += 1
+            stats[:diverged_solves] += 1
+        end
+        return fill(NaN, size(X))
+    end
+
+    return Yhat
 end
 
 function fit_parameters(opt::BFGSOptimizer,
@@ -103,6 +179,7 @@ function fit_parameters(opt::BFGSOptimizer,
                         options::DiscoveryOptions;
                         p0=nothing)
 
+    fit_t0 = time()
     X = traj.x
     p0_use = if p0 === nothing
         0.1 .* randn(n_params)
@@ -122,6 +199,10 @@ function fit_parameters(opt::BFGSOptimizer,
     # aggregated diagnostics for this fit
     loss_eval_count = Ref(0)
     invalid_eval_count = Ref(0)
+    solve_stats = _empty_solve_stats()
+    optimizer_limit_hits = Ref(0)
+    optimizer_safety_limit_hits = Ref(0)
+    optimizer_iteration_limit_hits = Ref(0)
 
     if options.verbose >= 3
         log_debug(
@@ -140,7 +221,7 @@ function fit_parameters(opt::BFGSOptimizer,
 
     function loss_only(p)
         loss_eval_count[] += 1
-        Ŷ = _predict_traj(f!, traj, p, opt)
+        Ŷ = _predict_traj(f!, traj, p, opt; stats = solve_stats)
 
         if any(isnan, Ŷ)
             invalid_eval_count[] += 1
@@ -155,6 +236,7 @@ function fit_parameters(opt::BFGSOptimizer,
     p_best = copy(p0_use)
     l_best = 1e6
     method_used = "none"
+    retcode_used = "none"
 
     # -----------------------
     # BFGS attempt
@@ -172,19 +254,30 @@ function fit_parameters(opt::BFGSOptimizer,
         res = Optimization.solve(optprob, OptimizationOptimJL.BFGS();
                                  maxiters = opt.maxiters,
                                  time_limit = opt.time_limit_s)
+        retcode_text = _retcode_string(res.retcode)
+        if res.retcode != SciMLBase.ReturnCode.Success
+            optimizer_limit_hits[] += 1
+            if occursin("time", lowercase(retcode_text))
+                optimizer_safety_limit_hits[] += 1
+            else
+                optimizer_iteration_limit_hits[] += 1
+            end
+        end
         if isfinite(res.minimum)
             p_best = res.u
             l_best = res.minimum
             method_used = "BFGS"
+            retcode_used = retcode_text
 
             timed_out = (res.retcode != SciMLBase.ReturnCode.Success)
             if options.verbose >= 2
                 if timed_out
                     log_warn(
-                        "BFGS hit time_limit",
+                        "BFGS hit optimizer limit",
                         context = Dict(
                             :n_params => n_params,
                             :time_limit_s => opt.time_limit_s,
+                            :retcode => retcode_text,
                             :minimum => res.minimum,
                             :loss_evals => loss_eval_count[],
                             :invalid_evals => invalid_eval_count[]
@@ -197,6 +290,7 @@ function fit_parameters(opt::BFGSOptimizer,
                             :n_params => n_params,
                             :minimum => res.minimum,
                             :method => method_used,
+                            :retcode => retcode_text,
                             :loss_evals => loss_eval_count[],
                             :invalid_evals => invalid_eval_count[]
                         )
@@ -251,19 +345,30 @@ function fit_parameters(opt::BFGSOptimizer,
             res2 = Optimization.solve(optprob, OptimizationOptimJL.NelderMead();
                                       maxiters = opt.maxiters,
                                       time_limit = opt.time_limit_s)
+            retcode_text2 = _retcode_string(res2.retcode)
+            if res2.retcode != SciMLBase.ReturnCode.Success
+                optimizer_limit_hits[] += 1
+                if occursin("time", lowercase(retcode_text2))
+                    optimizer_safety_limit_hits[] += 1
+                else
+                    optimizer_iteration_limit_hits[] += 1
+                end
+            end
             if isfinite(res2.minimum)
                 p_best = res2.u
                 l_best = res2.minimum
                 method_used = "NelderMead"
+                retcode_used = retcode_text2
 
                 if options.verbose >= 2
                     timed_out2 = (res2.retcode != SciMLBase.ReturnCode.Success)
                     if timed_out2
                         log_warn(
-                            "Nelder-Mead hit time_limit",
+                            "Nelder-Mead hit optimizer limit",
                             context = Dict(
                                 :n_params => n_params,
                                 :time_limit_s => opt.time_limit_s,
+                                :retcode => retcode_text2,
                                 :minimum => res2.minimum,
                                 :loss_evals => loss_eval_count[],
                                 :invalid_evals => invalid_eval_count[]
@@ -276,6 +381,7 @@ function fit_parameters(opt::BFGSOptimizer,
                                 :n_params => n_params,
                                 :minimum => res2.minimum,
                                 :method => method_used,
+                                :retcode => retcode_text2,
                                 :loss_evals => loss_eval_count[],
                                 :invalid_evals => invalid_eval_count[]
                             )
@@ -347,7 +453,18 @@ function fit_parameters(opt::BFGSOptimizer,
 
     return p_best, l_best, (
         method = method_used,
+        retcode = retcode_used,
         loss_evals = loss_eval_count[],
-        invalid_evals = invalid_eval_count[]
+        invalid_evals = invalid_eval_count[],
+        ode_solves = Int(solve_stats[:ode_solves]),
+        invalid_solves = Int(solve_stats[:invalid_solves]),
+        diverged_solves = Int(solve_stats[:diverged_solves]),
+        nonfinite_solves = Int(solve_stats[:nonfinite_solves]),
+        step_limit_solves = Int(solve_stats[:step_limit_solves]),
+        optimizer_limit_hits = optimizer_limit_hits[],
+        optimizer_iteration_limit_hits = optimizer_iteration_limit_hits[],
+        optimizer_safety_limit_hits = optimizer_safety_limit_hits[],
+        solve_time_s = Float64(solve_stats[:solve_time_s]),
+        fit_time_s = time() - fit_t0
     )
 end

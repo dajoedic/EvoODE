@@ -10,6 +10,8 @@ Returns Ŷ with shape (T × dim). On failure returns NaNs.
 
 Important:
 - `param_clamp` clamps parameters using `Base.clamp` (does NOT shadow the function).
+- `reject_nonfinite` and `divergence_limit` are deterministic early-rejection
+  controls; defaults preserve previous behavior.
 """
 function simulate(f!::Function,
                   params::Vector{Float64},
@@ -18,6 +20,8 @@ function simulate(f!::Function,
                   reltol::Float64 = 1e-6,
                   maxiters::Int = 10^6,
                   clamp_val::Union{Nothing,Float64} = nothing,
+                  reject_nonfinite::Bool = false,
+                  divergence_limit::Float64 = Inf,
                   options::DiscoveryOptions = DiscoveryOptions())
     t = traj.t
     X = traj.x
@@ -30,7 +34,10 @@ function simulate(f!::Function,
     local sol
     try
         sol = with_logger(SimpleLogger(stderr, Logging.Error)) do
-            solve(prob, Tsit5(); saveat=t, abstol=abstol, reltol=reltol, maxiters=maxiters, verbose=false)
+            out_of_domain = reject_nonfinite ?
+                ((u, _, _) -> any(!isfinite, u) || any(abs.(u) .> divergence_limit)) :
+                ((_, _, _) -> false)
+            solve(prob, Tsit5(); saveat=t, abstol=abstol, reltol=reltol, maxiters=maxiters, isoutofdomain=out_of_domain, verbose=false)
         end
     catch
         return fill(NaN, size(X))
@@ -39,5 +46,9 @@ function simulate(f!::Function,
     if sol.retcode != SciMLBase.ReturnCode.Success || length(sol.t) != length(t)
         return fill(NaN, size(X))
     end
-    return Array(sol)'  # (T × dim)
+    Yhat = Array(sol)'  # (T x dim)
+    if any(!isfinite, Yhat) || (isfinite(divergence_limit) && any(abs.(Yhat) .> divergence_limit))
+        return fill(NaN, size(X))
+    end
+    return Yhat
 end
