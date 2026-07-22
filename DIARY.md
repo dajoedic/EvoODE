@@ -23,6 +23,8 @@ Committet `268dc41`. Alle fünf Review-Punkte aus WP-P1b sind sauber umgesetzt: 
 
 **WP-P1c beauftragt:** Level-Budget 18, Kosten pro Level aus dem `level_log` inkl. Median, Per-Level- und Per-Stage-Aufschlüsselung in die Ausgabe (damit das Ergebnis mit der Baseline-Tabelle vergleichbar ist). Verifikation nur auf System 3; System 26 bleibt dem externen Lauf vorbehalten.
 
+<!-- 268dc41, 864c9d3 -->
+
 ### WP-P1 umgesetzt und reviewt — drei Blocker, WP-P1b beauftragt
 
 Codex hat WP-P1 umgesetzt (`911a567`, enthält versehentlich auch die WP-P1b-Spec): `BFGSOptimizer` um deterministische Budget-Parameter und `reject_nonfinite`/`divergence_limit` erweitert, Zähler pro Level (Fits, Solves, invalid/diverged/nonfinite, Optimizer-Limit-Treffer, Solve- vs. Overhead-Zeit) über EvoGrow-Meta bis in den Record durchgereicht, expliziter Referenz-Optimizer im Regression-Runner (`time_limit_s = 86_400`), Mikro-Benchmark `studies/profiling/profile_eval_cost.jl`. Instrumentierung sauber und vollständig verdrahtet; Fingerprint korrekt erweitert; Profiling-Skript verschmutzt `history.jsonl` nicht.
