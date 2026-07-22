@@ -35,6 +35,8 @@ const SCREENING_BFGS_ABSTOL = 1e-5
 const SCREENING_BFGS_RELTOL = 1e-5
 const SCREENING_BFGS_MAXITERS_SOLVE = 20_000
 const SCREENING_DIVERGENCE_LIMIT = 1e6
+const DERIVATIVE_SCREEN_K = POP_SIZE
+const DERIVATIVE_POLISH_MAXITERS = 20
 
 const OPTIONS_CONFIG = (
     verbose = 1,
@@ -66,6 +68,27 @@ const VARIANTS = [
             ),
             use_pretuning = USE_PRETUNING,
             screening_optimizer = screening_optimizer,
+            level_callback = level_callback,
+        ),
+    ),
+    (
+        label = "evogrow_screening_derivative",
+        constructor = (level_callback, screening_optimizer) -> EvoGrowScreening(
+            pop_size = POP_SIZE,
+            n_levels = N_LEVELS,
+            children_per_parent = CHILDREN_PER_PARENT,
+            max_terms_per_eq = MAX_TERMS,
+            λ = LAMBDA,
+            progression = StageProgressionPolicy(
+                mode = :stage_local,
+                min_levels_per_stage = STAGE_MIN,
+            ),
+            usage = StageUsagePolicy(
+                mode = :hard,
+                new_term_bias_prob = SOFT_BIAS,
+            ),
+            screen_k = DERIVATIVE_SCREEN_K,
+            polish_maxiters = DERIVATIVE_POLISH_MAXITERS,
             level_callback = level_callback,
         ),
     ),
@@ -186,6 +209,9 @@ function config_fingerprint()
         screening_bfgs_reltol = SCREENING_BFGS_RELTOL,
         screening_bfgs_maxiters_solve = SCREENING_BFGS_MAXITERS_SOLVE,
         screening_divergence_limit = SCREENING_DIVERGENCE_LIMIT,
+        variants = [String(variant.label) for variant in VARIANTS],
+        derivative_screen_k = DERIVATIVE_SCREEN_K,
+        derivative_polish_maxiters = DERIVATIVE_POLISH_MAXITERS,
         discovery_options = OPTIONS_CONFIG,
         trajectory_solver = (
             algorithm = "Tsit5",
@@ -337,6 +363,15 @@ function run_one(variant, system, seed::Int, fingerprint::String, provenance)
         "total_optimizer_unknown_retcode_hits" => nothing,
         "total_parameter_optimization_time_s" => nothing,
         "total_simulation_time_s" => nothing,
+        "screening_evals" => nothing,
+        "invalid_screening_evals" => nothing,
+        "polished_candidates" => nothing,
+        "polish_budget_exhausted" => nothing,
+        "screening_time_s" => nothing,
+        "polish_time_s" => nothing,
+        "rank_agreement_spearman" => nothing,
+        "screen_k" => nothing,
+        "polish_maxiters" => nothing,
         "solver_retcodes" => nothing,
         "optimizer_retcodes" => nothing,
         "error" => nothing,
@@ -429,6 +464,15 @@ function run_one(variant, system, seed::Int, fingerprint::String, provenance)
         base_record["total_optimizer_unknown_retcode_hits"] = haskey(meta, :total_optimizer_unknown_retcode_hits) ? meta.total_optimizer_unknown_retcode_hits : nothing
         base_record["total_parameter_optimization_time_s"] = haskey(meta, :total_parameter_optimization_time_s) ? meta.total_parameter_optimization_time_s : nothing
         base_record["total_simulation_time_s"] = haskey(meta, :total_simulation_time_s) ? meta.total_simulation_time_s : nothing
+        base_record["screening_evals"] = haskey(meta, :screening_evals) ? meta.screening_evals : nothing
+        base_record["invalid_screening_evals"] = haskey(meta, :invalid_screening_evals) ? meta.invalid_screening_evals : nothing
+        base_record["polished_candidates"] = haskey(meta, :polished_candidates) ? meta.polished_candidates : nothing
+        base_record["polish_budget_exhausted"] = haskey(meta, :polish_budget_exhausted) ? meta.polish_budget_exhausted : nothing
+        base_record["screening_time_s"] = haskey(meta, :screening_time_s) ? meta.screening_time_s : nothing
+        base_record["polish_time_s"] = haskey(meta, :polish_time_s) ? meta.polish_time_s : nothing
+        base_record["rank_agreement_spearman"] = haskey(meta, :rank_agreement_spearman) ? meta.rank_agreement_spearman : nothing
+        base_record["screen_k"] = haskey(meta, :screen_k) ? meta.screen_k : nothing
+        base_record["polish_maxiters"] = haskey(meta, :polish_maxiters) ? meta.polish_maxiters : nothing
         base_record["solver_retcodes"] = haskey(meta, :solver_retcodes) ? collect(meta.solver_retcodes) : nothing
         base_record["optimizer_retcodes"] = haskey(meta, :optimizer_retcodes) ? collect(meta.optimizer_retcodes) : nothing
     catch err
