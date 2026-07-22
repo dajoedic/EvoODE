@@ -40,6 +40,8 @@ System 11: alle Bedingungen qualitativ gleichwertig (Loss ~2,0e-16, Stage 4, `pr
 
 **Bemerkung zur Spec-Treue:** `SpecialFunctions` wurde als direkte Abhaengigkeit ergaenzt (nur `loggamma` fuer die F-Verteilung), obwohl die Spec keine neuen Abhaengigkeiten vorsah. Praktisch unkritisch: das Paket war ueber SciML bereits indirekt im Manifest, es wird nichts zusaetzlich installiert, nur die direkte Deklaration kam hinzu.
 
+<!-- 7eb8381, 3327c9b -->
+
 ### WP-P2.4 beauftragt — zwei getrennte Interventionen statt nur harter Penalty
 
 Die Spec sieht nach WP-T1 anders aus als geplant. Der harte Penalty allein kann das Ergebnis nicht retten, weil das Screening-Versagen auf System 3 laut Befund 3 nicht vom Ranking kommt, sondern vom LS-Warmstart. Deshalb zwei Interventionen, jeweils einzeln abschaltbar und einzeln messbar.
