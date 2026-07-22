@@ -13,6 +13,28 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 - Profiling-Benchmark wird auf 12 Level begrenzt, rechnet Screening vor Referenz und schreibt Zwischenergebnisse nach jedem Fall.
 - Offener Reproduzierbarkeitszustand: ausserhalb des Regression-Runners konstruieren Benchmarks, Experimente und alte Studies `BFGSOptimizer` weiterhin ohne explizites `time_limit_s`; der Struct-Default bleibt `300.0` und muss vor Phase B bewusst entschieden werden.
 
+### WP-P1c umgesetzt und reviewt — erste Messdaten, Kostentreiber identifiziert
+
+Committet `434a8a7`. Umsetzung korrekt: Level-Budget 18, Kosten pro Level aus dem `level_log` statt aus der Gesamtzeit, erstes Level ausgeschlossen, Mittelwert **und** Median, Per-Level- und Per-Stage-Aufschlüsselung in JSON und Textausgabe. Verifikationslauf auf System 3 durchgeführt.
+
+**Regressionsnachweis:** Fall A liefert auf System 3 Seed 42 Loss `2.663641831768419e-10` — **bit-identisch zu Baseline v0**, bei gleicher `final_stage` 3. Der Referenzpfad ist nach WP-P1/P1b/P1c unverändert.
+
+**Determinismus empirisch bestätigt:** `total_optimizer_safety_limit_hits = 0` und `total_step_limit_solves = 0` in beiden Fällen. Die Wall-Clock-Notbremse hat nie gegriffen, das Solver-Schrittlimit ebenfalls nicht. Beobachtete Retcodes: Solver `{Success, Unstable}`, Optimierer `{Success, Failure}`. `Failure` trat bei 95 von 210 Fits auf — unter der alten Teilstring-Logik wären das alles fälschlich „Iterationslimit"-Treffer gewesen; M1 war ein realer Defekt.
+
+**Befund — die Kopfzahl „Speedup 1,032x" ist strukturell irreführend.** A und B terminieren bei unterschiedlicher Levelzahl (A: 10, B: 12), weil die gröberen Screening-Fits die Plateau-Erkennung verschieben. Das Verhältnis der Gesamtlaufzeiten ist damit kein Kostenverhältnis. Level für Level bei gleicher Stage:
+
+| Level | Stage | A | B | Faktor |
+|---|---|---|---|---|
+| 2–4 | 1 | 3,5–4,2 s | 1,6–2,2 s | 1,6–2,6× |
+| 5–8 | 2 | 44–77 s | 11–48 s | 1,4–4,2× |
+| 9–10 | 3 | 16–19 s | 32–35 s | nicht vergleichbar (Läufe divergiert) |
+
+Auf den vergleichbaren Leveln ist B also **1,4–4,2× schneller**. Mechanismus sichtbar: in A sind die Level 1–4 mit null verworfenen Solves durchgelaufen, in B wurden dort je 780–1260 Solves über `unstable_check` früh abgebrochen (Schwelle `divergence_limit = 1e6`). Die Kopfzahl im `summary.txt` sollte künftig auf Per-Level-Basis stehen; da Per-Level- und Per-Stage-Daten in der JSON liegen, ist der Vergleich nachträglich rekonstruierbar — kein Blocker für den System-26-Lauf.
+
+**Wichtigster Befund — der eigentliche Kostentreiber ist die Zahl der Integrationen, nicht die Stage.** Für 210 Parameter-Fits fielen **1,53 Mio. ODE-Solves** an, also **~7.300 Solves pro Fit** (B: ~5.500). Erwartbar wären bei `maxiters = 200` und Finite-Differenzen über 3–6 Parameter etwa 800–1.400; der Rest geht auf Gradientenauswertung und Line-Search. Anteil der Solve-Zeit an der Gesamtlaufzeit: A 74 %, B 66 %.
+
+**Konsequenz:** Solver-Tuning allein kann höchstens den Faktor ~3,4 heben (mehr ist der Solve-Anteil nicht). Der Sprung um Größenordnungen ist nur über eine Reduktion der *Anzahl* Integrationen erreichbar — also über das ableitungsbasierte Screening-Kriterium (bisher als WP-P2 zurückgestellt), das die Integration in der Suchschleife ganz ersetzt. Das ist nach dem System-26-Lauf zu entscheiden.
+
 ### WP-P1b reviewt — Code korrekt, Messaufbau greift zu kurz; WP-P1c beauftragt
 
 Committet `268dc41`. Alle fünf Review-Punkte aus WP-P1b sind sauber umgesetzt: `screening_optimizer` in `EvoGrowV3` inkl. Brücke, eigener Suchschleife und vollständig gespiegelter Instrumentierung; `screening_budgets_active` kommt jetzt aus dem Meta, mit hartem Fehler bei fehlendem Feld statt stillem Default. Frühe Verwerfung über `unstable_check` (Abbruch) statt `isoutofdomain` (Schritt-Ablehnung), Prädikat `_state_exceeds_limit` allokationsfrei elementweise. Nicht-endlich-Verwerfung hinter `reject_nonfinite` gelegt, Zähler bleibt unbedingt — Default-Pfad damit wieder verhaltensgleich. Retcode-Kategorien über Enum-Vergleich mit eigener `:unknown`-Kategorie; alle 14 referenzierten `SciMLBase.ReturnCode`-Member gegen die aufgelöste Version 2.128.0 geprüft, alle vorhanden.
