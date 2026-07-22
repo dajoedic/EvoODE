@@ -13,6 +13,25 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 - Profiling-Benchmark wird auf 12 Level begrenzt, rechnet Screening vor Referenz und schreibt Zwischenergebnisse nach jedem Fall.
 - Offener Reproduzierbarkeitszustand: ausserhalb des Regression-Runners konstruieren Benchmarks, Experimente und alte Studies `BFGSOptimizer` weiterhin ohne explizites `time_limit_s`; der Struct-Default bleibt `300.0` und muss vor Phase B bewusst entschieden werden.
 
+### WP-P2.1 Design-Notiz reviewt — tragfaehig, aber ohne Kostenmodell; Faktor 10 haengt an einem Wort
+
+`docs/evogrow_screening_design.md` committet (`97e0dbe`). Alle neun Pflichtabschnitte vorhanden. Saemtliche Zahlen gegen `summary.json` geprueft und korrekt, inklusive der 21x als `3222,6 / 153,0`. API-Referenzen auf `pretune.jl` stimmen (Signaturen von `estimate_derivatives`, `build_design_matrix`, Per-Gleichungs-LS geprueft). Abschnitt 4 und 7 beziehen klare Position: Stage-Promotion bleibt am simulierten Loss verankert, und der Beitrag bleibt nur dann von SINDy unterscheidbar, wenn staged incremental growth Untersuchungsgegenstand bleibt und der simulierte Loss die berichtete Metrik.
+
+**Luecke: kein Kostenmodell fuer den vorgeschlagenen Entwurf.** Die Notiz begruendet sich mit der 21x-Obergrenze, schaetzt aber nie, was ihr eigener Vorschlag kostet. Abschnitt 3 empfiehlt „alle Kandidaten screenen, die besten k pro Level simulieren" mit `k = pop_size` als Kandidatenregel — laesst aber offen, was „simulieren" fuer diese k bedeutet. Aus den gemessenen Groessen (Fall A: 370 Fits ueber 18 Level, 4.707 Solves pro Fit, 1,763 ms pro Solve, 8,30 s Solve-Zeit pro Fit, 0,41 s Overhead pro Fit):
+
+| Variante pro Level (20,6 Kandidaten) | Kosten | Faktor |
+|---|---|---|
+| heute: alle per BFGS mit Simulation | 170,5 s | 1,0x |
+| (b) Top k=10 per BFGS mit Simulation | 83,0 s | 2,1x |
+| (b) Top k=5 per BFGS mit Simulation | 41,5 s | 4,1x |
+| (a) Top k=10 je **eine** Simulation der LS-Parameter | 0,018 s | Solve-Kosten praktisch null |
+
+Hochrechnung auf den ganzen Lauf: heute 3223 s, Variante (b) mit k=10 rund 1646 s (**2,0x**), Variante (a) rund 153 s (**21,1x**, Untergrenze Overhead + LS). **Der Unterschied zwischen 2x und 21x steckt in einem einzigen unausgesprochenen Wort.** Die Quelle des Speedups ist nicht das Screening an sich, sondern dass die geschlossene LS-Loesung die rund 200 BFGS-Iterationen mit je ~25 Solves pro Kandidat ersetzt. Die Notiz impliziert das, sagt es aber nirgends.
+
+**Synthese, die die Notiz nicht zieht:** Variante (a) erfuellt die Forderung aus Abschnitt 4 mit. Eine Simulation pro ausgewaehltem Kandidaten kostet 1,763 ms; damit bleibt ein simulierter Loss-Anker fuer Plateau-Erkennung und Stage-Promotion pro Level erhalten, ohne die Kosten messbar zu erhoehen. Die 21x und die Anforderung „Promotion bleibt am simulierten Loss verankert" stehen also **nicht** im Konflikt. Offene Entscheidungen 1–3 sind damit auf Evidenzbasis beantwortbar.
+
+**Kleinere Befunde:** (i) Abschnitt 6 nennt als Falsifikation „ein wiederholtes Muster" ohne Schwelle und ohne benannten Test; ist als offene Entscheidung 7 deklariert und damit spec-konform, fuer ein Abbruchkriterium aber zu weich. (ii) `USE_PRETUNING = false` im Regression-Config wird nicht erwaehnt — der gesamte Entwurf ruht auf Maschinerie, die in genau der Konfiguration abgeschaltet ist, die die Messung erzeugt hat. (iii) `pretune_parameters` liefert `zeros(n)`, sobald eine Gleichung nicht-endliche Werte oder `norm > 1e6` ergibt. Als Warmstart harmlos, als Screening-Score faellt ein entarteter Kandidat damit still auf „alle Parameter null" statt als ungueltig markiert zu werden. Die Notiz nennt fehlende Failure-Flags korrekt, aber nicht diese konkrete Falle im wiederverwendeten Code.
+
 ### Loss konvergiert in allen Zellen bis Level 18 — Level-Cap trotzdem abgelehnt; WP-P2.1 beauftragt
 
 Rekonstruktion aus dem v0-`run.log` (`best_loss` pro Level, alle 23 Zellen, keine neuen Laeufe noetig): **13 Zellen liefen ueber Level 18 hinaus, und in allen 13 war der Loss bei Level 18 bereits identisch zum Endergebnis.** Kein Level nach 18 hat je etwas verbessert. Kosten dieser Level: **15,8 von 40,5 h = 39 % der gesamten Rechenzeit**.
