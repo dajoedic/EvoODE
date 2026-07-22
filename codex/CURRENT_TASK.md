@@ -1,94 +1,108 @@
-# CURRENT TASK: WP-P2.2c — Wiederverwendbarer Smoke-Test für die Screening-Variante, ausführen und berichten
+# CURRENT TASK: WP-P2.3 — Screening-Score komplexitätsbewusst machen; letzter Versuch vor Abbruch
 
 **Language: Julia**
 
 ## Context
 
-WP-P2.2b ist umgesetzt und reviewt (`7f52676`). Alle sechs Punkte sind korrekt behoben:
-Feldkollision aufgelöst, Erschöpfung am Iterationslimit gemessen, Diagnose-Stichprobe abgelehnter
-Kandidaten ohne Einfluss auf die Suche, `screen_k < pop_size` wird abgelehnt, Struct-Defaults
-angeglichen, finaler Refit in den Summen, Abweichungen dokumentiert.
+WP-P2.2c ist gelaufen (`2eb7202`). Zum ersten Mal liegen echte Zahlen vor. Ergebnis gemischt, mit
+einem klaren Befund:
 
-Offen ist etwas anderes: **Die Variante ist nie ausgeführt worden.** Die in WP-P2.2 und WP-P2.2b
-geforderten Messzahlen wurden beide Male nicht geliefert, und im Repository liegen keine Artefakte
-eines Verifikationslaufs. Statisch sieht der Code korrekt aus — ob er läuft und ob das Kriterium
-taugt, ist unbekannt.
+**System 11** (`-u1^3`): Screening findet die korrekte Struktur, ist mit 2,36 s gegen 3,63 s um
+Faktor 1,53 schneller, Rangübereinstimmung **+1,0**, kein erschöpftes Polish-Budget, kein
+abgelehnter Kandidat hätte gewonnen. Funktioniert.
 
-Dieses WP schließt die Lücke, und zwar so, dass die Prüfung **wiederholbar** wird statt einmalig.
-Sie wird bei WP-v3.3 und bei jeder weiteren Änderung am Bewertungspfad erneut gebraucht.
+**System 3** (Logistic): Rangübereinstimmung **−0,78**. Der Screening-Score ordnet Kandidaten also
+nahezu **umgekehrt** zum simulierten Loss. Weitere Folgen: Loss 3,24e-8 statt 2,66e-10,
+`final_stage` 5 statt 3, Laufzeit 400,9 s statt 357,6 s — die Variante ist dort **langsamer** als
+der Simulationspfad, obwohl sie nur 711.757 statt 1.529.009 Integrationen rechnet.
+
+Der Referenzpfad reproduziert in beiden Fällen exakt Baseline v0.
+
+### Ursachenkette, soweit belegt
+
+1. Der Loss bleibt bei 3,24e-8 und damit **über** `loss_tol = 1e-8`. Die absolute Loss-Abbruch-
+   bedingung feuert deshalb nie. Der Referenzlauf erreicht 2,66e-10, bricht ab und bleibt auf
+   Stage 3. Die Screening-Variante läuft weiter und eskaliert bis Stage 5.
+2. Stage 5 bedeutet trigonometrische Terme, also steifere Kandidaten-ODEs. Kosten pro Integration:
+   0,490 ms gegen 0,172 ms im Referenzlauf, Faktor 2,85. Die eingesparten Integrationen werden
+   dadurch mehr als aufgefressen.
+3. Der finale Refit auf vollem Budget dauert **0,001 s** und bewirkt damit praktisch nichts,
+   obwohl die Struktur identisch zur Referenz ist (beide `du1/dt = 0.790*u1 + -0.011*u1^2`,
+   beide `pruned_match = true`). Der Loss-Unterschied stammt also allein aus den Parametern.
+
+### Vermutete Ursache der negativen Rangübereinstimmung
+
+Kinder entstehen durch Hinzufügen von Termen, sind also **geschachtelte Obermengen** ihrer Eltern.
+Für geschachtelte Least-Squares-Probleme ist das Residuum monoton nicht-steigend in der Zahl der
+Terme — ein größeres Modell kann nie ein schlechteres LS-Residuum haben. Der Screening-Score
+enthält aber nur einen Tiebreak von `1e-12 * n_params`, während das Suchziel mit `λ = 1e-3`
+bestraft. **Der Score bevorzugt damit systematisch die größten Kandidaten.** Das erklärt sowohl die
+negative Rangübereinstimmung als auch die Stage-Eskalation.
 
 ## Goal
 
-Ein Vergleichsskript unter `studies/debug/`, das auf billigen Systemen den bestehenden
-Simulationspfad und die Screening-Variante gegeneinander laufen lässt und die entscheidenden
-Kennzahlen ausgibt — plus die tatsächliche Ausführung und ein Bericht mit den gemessenen Zahlen.
+Den Screening-Score komplexitätsbewusst machen und die Messung wiederholen. Dies ist der letzte
+Versuch: bleibt die Rangübereinstimmung auf System 3 negativ, gilt das Kriterium als falsifiziert
+(Abschnitt 6 der Design-Notiz) und die Arbeit daran wird eingestellt.
 
 ## Required Content
 
-### 1. Vergleichsskript
+### 1. Komplexitätsbewusster Screening-Score
 
-Ein neues Skript unter `studies/debug/`, das für jede Kombination aus
+Der Score darf rohe LS-Residuen unterschiedlich großer Strukturen nicht mehr direkt vergleichen.
 
-- System 3 (`Logistic growth`, 1D) und System 11 (`Critical slowing down`, 1D, `-u1^3`),
-- Seed 42,
-- Variante `evogrow_v2_2_stage_local` (Referenz) und der Screening-Variante,
+Zu tun: den Score um einen Komplexitätsterm ergänzen. Beachte dabei, dass ein einfaches Übernehmen
+von `λ` aus dem Suchziel **nicht** korrekt ist — dort wird ein Simulations-MSE bestraft, hier ein
+Ableitungs-Residuum; die Skalen sind verschieden. Ein skalenfreies Informationskriterium ist die
+naheliegende Wahl. Wähle eines, begründe die Wahl im Docstring und mache die Variante
+konfigurierbar, sodass der bisherige Score als Vergleichsoption erhalten bleibt.
 
-einen Lauf ausführt. Systemdefinitionen aus `studies/regression/diagnostic_systems.jl`
-wiederverwenden, nicht neu schreiben. Hyperparameter und `DiscoveryOptions` identisch zur
-Regression-Konfiguration wählen, damit die Ergebnisse mit `history.jsonl` vergleichbar sind;
-Abweichungen davon sind zu begründen.
+Der bisherige, rein residuenbasierte Score muss weiterhin auswählbar sein — er ist die
+Kontrollbedingung für die Messung in Punkt 3.
 
-Beide Systeme sind billig (Baseline v0: System 3 rund 5 Minuten bei 30 Leveln, System 11 unter
-2 Sekunden). Das Skript darf **keine** anderen Systeme rechnen.
+### 2. Wirkungslosen finalen Refit untersuchen
 
-### 2. Auszugebende Kennzahlen
+Der finale Refit läuft in 0,001 s durch und verbessert nichts, obwohl bei identischer Struktur ein
+um Faktor 121 besserer Loss erreichbar ist. Kläre, warum der Optimierer sofort zurückkehrt
+(Konvergenzkriterium bereits erfüllt, Line-Search-Fehler, oder Warmstart in einem Punkt, aus dem
+BFGS nicht herausfindet) und berichte den Befund. Eine Behebung ist zulässig, wenn sie den
+bestehenden Simulationspfad nicht berührt; andernfalls genügt der dokumentierte Befund.
 
-Pro Lauf mindestens: Laufzeit, simulierter Loss, `final_stage`, `pruned_match`,
-`total_parameter_fits`, `total_ode_solves`, `total_simulation_time_s`.
+Beachte den Zusammenhang: solange der Loss über `loss_tol` bleibt, terminiert die Suche nicht und
+eskaliert Stages. Der wirkungslose Refit ist damit nicht kosmetisch, sondern Teil der Ursachenkette.
 
-Für die Screening-Variante zusätzlich: `screening_evals`, `invalid_screening_evals`,
-`polished_candidates`, `polish_budget_exhausted`, `polish_convergence_failures`,
-`rank_agreement_spearman`, `rejected_diagnostic_candidates`, `rejected_beats_best_selected`,
-`screening_time_s`, `polish_time_s`, `rejected_diagnostic_time_s`, `final_refit_time_s`.
+### 3. Messung wiederholen
 
-Als Gegenüberstellung je System: Laufzeitverhältnis Referenz zu Screening, und ob beide dieselbe
-Struktur gefunden haben.
+`studies/debug/compare_screening_variant.jl` erneut ausführen, jetzt mit **drei** Bedingungen je
+System: Referenzpfad, Screening mit altem Score, Screening mit neuem Score. Gleiche Systeme (3 und
+11), gleicher Seed, gleiche Hyperparameter, Level-Budget 30.
 
-Ausgabe nach `outputs/studies/debug/<skript_slug>/` (eigener Unterordner, nicht direkt in den
-Elternordner), zusätzlich lesbar auf die Konsole.
+Zu berichten, mit Zahlen: Rangübereinstimmung, `final_stage`, Loss, Laufzeit, Integrationen und
+Kosten pro Integration je Bedingung. Ausgabe wie bisher nach
+`outputs/studies/debug/compare_screening_variant/`.
 
-### 3. Ausführen und berichten
+### 4. Klare Aussage zum Ausgang
 
-Das Skript ausführen und die Ergebnisse im Abschlussbericht **als Zahlen** wiedergeben. Der
-Bericht muss diese vier Fragen ausdrücklich beantworten:
+Der Abschlussbericht muss ausdrücklich feststellen, ob die Rangübereinstimmung auf System 3 mit dem
+neuen Score positiv geworden ist und ob die Stage-Eskalation verschwunden ist. Kein Beschönigen:
+bleibt sie negativ, ist das das Ergebnis und ist so zu benennen.
 
-1. Läuft die Screening-Variante ohne Fehler durch?
-2. Findet sie auf System 11 die korrekte Struktur (`-u1^3`)? Der Referenzpfad schafft das in
-   1,7 Sekunden. Falls nein, ist das ein zentrales Ergebnis und ausführlich zu berichten — es
-   würde bedeuten, dass das Ableitungsresiduum als Auswahlsignal nicht taugt.
-3. Wie hoch ist der Anteil erschöpfter Polish-Budgets? Wird das Budget durchgängig ausgeschöpft,
-   sind die Losses nicht mit dem Simulationspfad vergleichbar und die Kennzahl ist wertlos.
-4. Wie fällt die Rangübereinstimmung aus, und wie oft hätte ein abgelehnter Kandidat den besten
-   ausgewählten geschlagen?
+## Verification
 
-Bleibt eine dieser Fragen unbeantwortet, gilt das WP als nicht erfüllt.
+Nur System 3 und System 11, Seed 42. **Nicht** System 26, 31 oder 63. Beide Systeme zusammen kosten
+grob 12 Minuten je Bedingung.
 
-### 4. Bestehenden Pfad gegenprüfen
-
-Zusätzlich bestätigen, dass der Referenzlauf auf System 3 Seed 42 weiterhin den Loss
-`2.663641831768419e-10` bei `final_stage = 3` liefert und System 11 Seed 42 den Loss
-`4.402192340718147e-15` bei `final_stage = 4` — beides aus Baseline v0
-(`studies/regression/history.jsonl`, Fingerprint `0c739d4e36ee6498`). Abweichungen sind zu melden,
-nicht zu glätten.
-
-Hinweis: Baseline v0 lief mit 30 Leveln. Wähle im Skript dasselbe Level-Budget, sonst ist der
-Vergleich nicht gültig.
+Zusätzlich bestätigen, dass der Referenzpfad weiterhin Baseline v0 reproduziert: System 3 Loss
+`2.663641831768419e-10` bei `final_stage = 3`, System 11 Loss `4.402192340718147e-15` bei
+`final_stage = 4`.
 
 ## Constraints
 
-- Nur System 3 und System 11. **Nicht** System 26, 31 oder 63.
-- Keine Änderung an `src/`, an der Regression-Konfiguration oder am `config_fingerprint`.
-- Kein Schreiben in `studies/regression/history.jsonl`.
+- `evogrow.jl`, `evogrow_v3.jl`, `gp.jl`, `stopping.jl` bleiben unangetastet.
+- Der bestehende Simulationspfad bleibt verhaltensgleich; die Baseline-v0-Gegenprobe ist Teil der
+  Verifikation.
+- Plateau, Stopplogik und Promotion laufen weiterhin ausschließlich auf simuliertem Loss.
+- Der bisherige Screening-Score bleibt als Kontrollbedingung erhalten.
+- Keine Änderung an `config_fingerprint`-relevanter Regression-Konfiguration in diesem WP.
 - Keine neuen Abhängigkeiten.
-- Nicht Teil dieses WP: WP-v3.3, WP-H2, Anpassungen am Screening-Kriterium selbst. Falls der Lauf
-  ein Problem im Kriterium zeigt, ist es zu **berichten**, nicht zu beheben.
+- Nicht Teil dieses WP: WP-v3.3, WP-H2, Läufe auf gekoppelten Systemen.

@@ -13,6 +13,32 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 - Profiling-Benchmark wird auf 12 Level begrenzt, rechnet Screening vor Referenz und schreibt Zwischenergebnisse nach jedem Fall.
 - Offener Reproduzierbarkeitszustand: ausserhalb des Regression-Runners konstruieren Benchmarks, Experimente und alte Studies `BFGSOptimizer` weiterhin ohne explizites `time_limit_s`; der Struct-Default bleibt `300.0` und muss vor Phase B bewusst entschieden werden.
 
+### WP-P2.2c gelaufen — erste echte Zahlen: System 11 funktioniert, System 3 falsifiziert das Kriterium
+
+Vergleichsskript `studies/debug/compare_screening_variant.jl` committet (`2eb7202`) und ausgefuehrt. Konfiguration identisch zur Regression-Suite (30 Level, pop 10, λ=1e-3, BFGS 200, Seed 42).
+
+| | System 3 Referenz | System 3 Screening | System 11 Referenz | System 11 Screening |
+|---|---|---|---|---|
+| Laufzeit | 357,6 s | **400,9 s** | 3,63 s | **2,36 s** |
+| Loss | 2,66e-10 | **3,24e-8** | 4,402e-15 | 4,407e-15 |
+| `final_stage` | 3 | **5** | 4 | 4 |
+| `pruned_match` | true | true | true | true |
+| Integrationen | 1.529.009 | 711.757 | 8.942 | 10.599 |
+| Kosten/Integration | 0,172 ms | **0,490 ms** | — | — |
+| Rangeuebereinstimmung | — | **−0,78** | — | **+1,00** |
+
+Referenzpfad reproduziert in beiden Zellen exakt Baseline v0 (Loss und `final_stage` geprueft).
+
+**System 11 funktioniert:** korrekte Struktur `-u1^3` gefunden, Faktor 1,53 schneller, Rangeuebereinstimmung +1,0, kein erschoepftes Polish-Budget, kein abgelehnter Kandidat haette gewonnen.
+
+**System 3 falsifiziert das Kriterium in seiner jetzigen Form.** Rangeuebereinstimmung −0,78: der Screening-Score ordnet nahezu **umgekehrt** zum simulierten Loss. Belegte Ursachenkette: (1) der Loss bleibt bei 3,24e-8 und damit ueber `loss_tol = 1e-8`, die absolute Abbruchbedingung feuert nie, waehrend der Referenzlauf bei 2,66e-10 abbricht und auf Stage 3 bleibt; (2) die Suche eskaliert bis Stage 5, also trigonometrische Terme und steifere Kandidaten-ODEs — Kosten pro Integration 0,490 ms gegen 0,172 ms, Faktor 2,85, womit die eingesparten Integrationen mehr als aufgefressen werden; (3) der finale Refit auf vollem Budget dauert **0,001 s** und bewirkt nichts, obwohl beide Varianten dieselbe Struktur finden (`du1/dt = 0.790*u1 + -0.011*u1^2`, beide `pruned_match = true`) — der Loss-Unterschied stammt allein aus den Parametern.
+
+**Vermutete Ursache der negativen Rangeuebereinstimmung:** Kinder entstehen durch Hinzufuegen von Termen, sind also geschachtelte Obermengen ihrer Eltern. Fuer geschachtelte Least-Squares-Probleme ist das Residuum monoton nicht-steigend in der Termzahl — ein groesseres Modell kann nie ein schlechteres LS-Residuum haben. Der Screening-Score enthaelt aber nur einen Tiebreak von `1e-12 * n_params`, waehrend das Suchziel mit `λ = 1e-3` bestraft. Der Score bevorzugt damit systematisch die groessten Kandidaten, was sowohl die negative Rangeuebereinstimmung als auch die Stage-Eskalation erklaert.
+
+**Befund gegen die Praemisse des Kostenmodells:** `polish_budget_exhausted = 0` in **allen** Laeufen. Das 20-Iterationen-Budget wurde nie ausgeschoepft; BFGS terminiert vorher, in 106 von 200 Faellen mit Konvergenzfehler. Die Einsparung von 200 auf 20 Iterationen existiert also gar nicht, weil der Referenzpfad die 200 ebenfalls nie erreicht. Passend dazu sinken die Integrationen pro Fit nur von 7.281 auf 2.953 (Faktor 2,5) trotz zehnfach kleinerem Iterationsbudget — die Zahl der Integrationen wird offenbar nicht vom Iterationslimit getrieben.
+
+**WP-P2.3 beauftragt als letzter Versuch, mit Abbruchregel:** komplexitaetsbewusster Screening-Score (skalenfreies Informationskriterium; ein Uebernehmen von `λ` waere falsch, weil dort ein Simulations-MSE und hier ein Ableitungsresiduum bestraft wird), Untersuchung des wirkungslosen finalen Refits, und Wiederholung der Messung mit drei Bedingungen je System (Referenz, alter Score als Kontrolle, neuer Score). Bleibt die Rangeuebereinstimmung auf System 3 negativ, gilt das Kriterium als falsifiziert und die Arbeit daran wird eingestellt; es bleiben die 2,71x aus WP-P1b.
+
 ### WP-P2.2b reviewt — Code korrekt, aber nie ausgefuehrt; WP-P2.2c beauftragt
 
 Committet `7f52676`. Alle sechs Punkte korrekt behoben: `screening_budgets_active` behaelt seine urspruengliche Bedeutung und wird aus der Strategie abgeleitet, `derivative_screening_active` als eigenes Feld ergaenzt und im Record gefuehrt; der Runner reicht den `screening_optimizer` jetzt durch. Erschoepfung wird am Iterationslimit gemessen, Konvergenzfehler getrennt gezaehlt. Diagnose-Stichprobe abgelehnter Kandidaten implementiert — geprueft: sie wird nur gemessen, nie nach `polished` geschrieben, beeinflusst die Suche also nicht; `rejected_beats_best_selected` zaehlt die relevanten Faelle. `screen_k < pop_size` wird abgelehnt statt still zu schrumpfen. Struct-Defaults auf `EvoGrow` angeglichen. Finaler Refit ueber `_add_fit_stats!` in den Summen. Monotonie-Abweichung und leere `vis_history` im Docstring dokumentiert. Keine doppelten Funktionsdefinitionen; Include-Reihenfolge stimmt.
