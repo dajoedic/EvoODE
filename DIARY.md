@@ -23,6 +23,8 @@ Committet `7f52676`. Alle sechs Punkte korrekt behoben: `screening_budgets_activ
 
 **WP-P2.2c beauftragt:** wiederverwendbares Vergleichsskript unter `studies/debug/` (Systeme 3 und 11, Seed 42, Referenzpfad gegen Screening-Variante, Level-Budget 30 wie Baseline v0), ausfuehren, und vier Fragen mit Zahlen beantworten: laeuft es durch, findet es `-u1^3` auf System 11, wie hoch ist der Anteil erschoepfter Polish-Budgets, wie faellt die Rangeuebereinstimmung aus. Zusaetzlich Gegenprobe, dass der Referenzpfad weiterhin die Baseline-v0-Werte liefert. Wiederverwendbar statt einmalig, weil dieselbe Pruefung bei WP-v3.3 erneut gebraucht wird.
 
+<!-- 7f52676, ee74602 -->
+
 ### WP-P2.2 umgesetzt und reviewt — drei Blocker, WP-P2.2b beauftragt
 
 `src/structure/evogrow_screening.jl` committet (`07aee5e`). Kern korrekt: finaler Refit auf vollem Budget vorhanden, Stopplogik und Promotion bekommen `best.loss` (simulierter Loss), Incumbent wird immer mitgezogen, ungueltige Screening-Faelle explizit markiert und gezaehlt, `pretune_parameters` verhaltensgleich, `evogrow.jl` / `evogrow_v3.jl` / `discover.jl` / `stopping.jl` unangetastet. Kinder werden mit `objective = Inf` initialisiert — geprueft, damit kann der Revert-Schutz keine unbewerteten Kinder in die Population heben. Spearman mit Ties-Korrektur ueber Durchschnittsraenge korrekt implementiert.
