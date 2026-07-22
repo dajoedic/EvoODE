@@ -31,6 +31,8 @@ User hat die Abbruchregel wie vereinbart gezogen. Die Screening-Spur (WP-P2.1 bi
 
 Nebenbefund beim Lesen der Designnotiz: Abschnitt 9 fuehrt die Kreuzterm-Frage als offen, obwohl Abschnitt 6 sie bereits beantwortet. In der Spec als entschieden festgehalten, mit der Konsequenz im Docstring: ein Kreuzterm haengt an den Stages der Gleichungen seiner **Variablen**, nicht an der Stage der verwendenden Gleichung — die einzige Stelle, an der die Gleichungen gekoppelt bleiben.
 
+<!-- afbc065 -->
+
 ### WP-P2.3 gelaufen — Abbruchregel ausgeloest, aber der Test war zu schwach, um die Hypothese zu pruefen
 
 Committet `9ca9127`. Codex hat `screening_score = :residual | :aic` eingebaut und — besser als von mir spezifiziert — die Rangeuebereinstimmung auf den **tatsaechlich verwendeten Score** umgestellt statt weiter das rohe Residuum zu vergleichen.
