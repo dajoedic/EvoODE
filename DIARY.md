@@ -13,7 +13,15 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 - Profiling-Benchmark wird auf 12 Level begrenzt, rechnet Screening vor Referenz und schreibt Zwischenergebnisse nach jedem Fall.
 - Offener Reproduzierbarkeitszustand: ausserhalb des Regression-Runners konstruieren Benchmarks, Experimente und alte Studies `BFGSOptimizer` weiterhin ohne explizites `time_limit_s`; der Struct-Default bleibt `300.0` und muss vor Phase B bewusst entschieden werden.
 
----
+### WP-P1b reviewt — Code korrekt, Messaufbau greift zu kurz; WP-P1c beauftragt
+
+Committet `268dc41`. Alle fünf Review-Punkte aus WP-P1b sind sauber umgesetzt: `screening_optimizer` in `EvoGrowV3` inkl. Brücke, eigener Suchschleife und vollständig gespiegelter Instrumentierung; `screening_budgets_active` kommt jetzt aus dem Meta, mit hartem Fehler bei fehlendem Feld statt stillem Default. Frühe Verwerfung über `unstable_check` (Abbruch) statt `isoutofdomain` (Schritt-Ablehnung), Prädikat `_state_exceeds_limit` allokationsfrei elementweise. Nicht-endlich-Verwerfung hinter `reject_nonfinite` gelegt, Zähler bleibt unbedingt — Default-Pfad damit wieder verhaltensgleich. Retcode-Kategorien über Enum-Vergleich mit eigener `:unknown`-Kategorie; alle 14 referenzierten `SciMLBase.ReturnCode`-Member gegen die aufgelöste Version 2.128.0 geprüft, alle vorhanden.
+
+**Neuer Befund — 12 Level messen am Problem vorbei.** Level-aufgelöste Nachrechnung des v0-Logs für System 26 Seed 42: bis Level 12 kostet die Zelle **1,6 min**. Der Ausbruch beginnt danach — Level 13: 147 s, Level 14: 878 s, Level 16: 611 s, Level 19: 1484 s; bis Level 18 kumuliert 39,7 min (Stage 3 beginnt), bis Level 20 66,2 min. Der Benchmark hätte also ausschließlich den billigen Bereich vermessen und zwischen A und B praktisch keinen Unterschied gezeigt. Der Richtwert „12" stammt aus meiner WP-P1b-Spec und war ohne diese Auflösung gewählt. Korrektur auf **18 Level** (≈ 40 min für Fall A, erfasst Level 13–17 und erreicht Stage 3).
+
+**Zweiter Befund — JIT-Warmup verzerrt gegen B.** `cost_per_level_s` wird aus der Gesamtlaufzeit geteilt durch Levelzahl gebildet. Seit WP-P1b läuft Fall B zuerst und trägt damit die gesamte Kompilierzeit des `discover`/BFGS/Solver-Pfads — also ausgerechnet der Fall, der schneller sein soll. Die Per-Level-Zeiten liegen im `level_log` bereits vor; die Kennzahl muss von dort kommen, erstes Level ausgeschlossen, zusätzlich Median (Verteilung stark rechtsschief).
+
+**WP-P1c beauftragt:** Level-Budget 18, Kosten pro Level aus dem `level_log` inkl. Median, Per-Level- und Per-Stage-Aufschlüsselung in die Ausgabe (damit das Ergebnis mit der Baseline-Tabelle vergleichbar ist). Verifikation nur auf System 3; System 26 bleibt dem externen Lauf vorbehalten.
 
 ### WP-P1 umgesetzt und reviewt — drei Blocker, WP-P1b beauftragt
 
