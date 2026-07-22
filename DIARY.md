@@ -27,6 +27,8 @@ Falsifizierbare Vorhersage in der Spec: bei 1e-6 bleibt der Warmstart stehen und
 
 **Danach WP-P2.4:** harter Penalty statt AIC. Richtung: kein Informationskriterium — bei n = 200 ist jedes vom Fit-Term dominiert —, sondern ein Nested-Model-Test, bei dem ein Kind seinen Elternteil nur schlaegt, wenn die Residuenverbesserung groesser ist, als ein zusaetzlicher Parameter zufaellig liefern wuerde. Das adressiert die Monotonie-Falle direkt statt sie mit einer Konstanten zu ueberstimmen. Plus Reparatur der rho-Kennzahl. WP-v3.3 bleibt bis dahin liegen.
 
+<!-- b37e457 -->
+
 ### Entscheidung: Screening-Spur eingestellt; zurueck zu WP-v3.3
 
 User hat die Abbruchregel wie vereinbart gezogen. Die Screening-Spur (WP-P2.1 bis WP-P2.3) wird eingestellt.
