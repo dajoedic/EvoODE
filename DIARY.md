@@ -31,6 +31,8 @@ Drei Fragen sind im Bericht ausdruecklich zu beantworten: veraendert der Test di
 
 Aus WP-T1 vermerkt, aber ausdruecklich **nicht** Teil dieses WP: der Sentinel-Loss `1e6` mit Retcode `Success` bei vollstaendig gescheitertem Fit, die pathologische Line-Search mit bis zu 39.933 Auswertungen bei zwei Parametern, und die Frage, ob die Bewertungstoleranz im Regression-Runner dauerhaft auf 1e-8 gehen soll.
 
+<!-- 9db9741 -->
+
 ### WP-T1 gelaufen — Toleranz-Hypothese fuer System 11 bestaetigt, fuer System 3 widerlegt; vier Befunde
 
 Committet `a6919ca`. Diagnose auf Systemen 3 und 11 bei fester bekannt-korrekter Struktur, Toleranzraster {1e-5, 1e-6, 1e-8, 1e-10, 1e-12} im Bewertungspfad, Trajektorienerzeugung unveraendert 1e-9.
