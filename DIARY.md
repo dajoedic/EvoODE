@@ -22,7 +22,7 @@ Codex hat WP-P1 umgesetzt (`911a567`, enthält versehentlich auch die WP-P1b-Spe
 
 **WP-P1b beauftragt:** Punkte 1–3 plus S1, M1; S2 nur dokumentieren, nicht umstellen. Benchmark erst danach starten.
 
-<!-- 911a567 -->
+<!-- 911a567, 4fb4508 -->
 
 ### Volllauf abgebrochen — Kostendiagnose: 62 % der Rechenzeit oberhalb der nötigen Stage
 
