@@ -13,6 +13,30 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 - Profiling-Benchmark wird auf 12 Level begrenzt, rechnet Screening vor Referenz und schreibt Zwischenergebnisse nach jedem Fall.
 - Offener Reproduzierbarkeitszustand: ausserhalb des Regression-Runners konstruieren Benchmarks, Experimente und alte Studies `BFGSOptimizer` weiterhin ohne explizites `time_limit_s`; der Struct-Default bleibt `300.0` und muss vor Phase B bewusst entschieden werden.
 
+### WP-P2.3 gelaufen — Abbruchregel ausgeloest, aber der Test war zu schwach, um die Hypothese zu pruefen
+
+Committet `9ca9127`. Codex hat `screening_score = :residual | :aic` eingebaut und — besser als von mir spezifiziert — die Rangeuebereinstimmung auf den **tatsaechlich verwendeten Score** umgestellt statt weiter das rohe Residuum zu vergleichen.
+
+| System 3 | Referenz | Screening residual | Screening AIC |
+|---|---|---|---|
+| Laufzeit | 370,8 s | 460,1 s | **239,0 s** |
+| Loss | 2,66e-10 | 3,2363742537347274e-8 | **3,2363742537347274e-8** |
+| `final_stage` | 3 | 5 | **5** |
+| Integrationen | 1.529.009 | 711.757 | 510.539 |
+| Rangeuebereinstimmung | — | −0,7777777777777778 | **−0,7777777777777778** |
+
+System 11: beide Screening-Bedingungen identisch zum vorigen Lauf, rho +1,0, korrekte Struktur, 1,37–1,47x schneller.
+
+**Die Abbruchregel ist ausgeloest** — rho auf System 3 bleibt negativ. Der Test taugt aber nicht als Falsifikation, und zwar aus einem Grund, den ich in der Spec haette vorhersehen muessen:
+
+**AIC ist hier faktisch eine monotone Transformation des Residuums.** `AIC = n*log(mse) + 2p` mit `n = 200` Beobachtungen: der Fit-Term aendert sich um 19 Einheiten schon bei 10 % Residuenunterschied und um 139 bei Faktor 2, waehrend die Komplexitaetsstrafe ueber den gesamten Bereich `p = 1..6` hoechstens **10** Einheiten betraegt. Spearman ist gegen monotone Transformationen invariant — die Rangfolge kann sich also praktisch nicht aendern. Belegt durch die Daten: Loss bit-identisch, `final_stage` identisch, `total_parameter_fits` identisch, rho bit-identisch. Die Intervention hat die Auswahl nicht bewegt. BIC waere mit `p*log(n) <= 26,5` ebenfalls zu schwach. Bei n = 200 Datenpunkten ist **jedes** Standard-Informationskriterium vom Fit-Term dominiert.
+
+**Zweiter Zweifel an der Messgroesse:** rho betraegt in beiden Bedingungen exakt −7/9, obwohl sich Laufzeit (460 vs 239 s), Integrationen (711.757 vs 510.539) und Konvergenzfehler (106 vs 79) deutlich unterscheiden. Das passt schlecht zu einer stabilen Kennzahl und gut zu der Vermutung, dass rho auf den meisten Leveln `NaN` ist (alle simulierten Losses gleich -> `denom == 0`) und der berichtete Mittelwert von sehr wenigen Leveln getragen wird. Ungeprueft, aber die Kennzahl ist damit als Entscheidungsgrundlage fragwuerdig.
+
+**Neuer Befund zum wirkungslosen finalen Refit:** Die Diagnostik zeigt `final_refit_method = BFGS`, `final_refit_retcode = Success`, `final_refit_loss_evals = 5`, keine Failure-Hits. BFGS kehrt also nach fuenf Auswertungen als *konvergiert* zurueck. Der Verdacht: die ODE-Solver-Toleranz im Bewertungspfad betraegt `abstol = reltol = 1e-6`, waehrend der Loss bei ~3e-8 liegt. Finite-Differenzen-Gradienten einer Groesse, die nur auf 1e-6 genau berechnet wird, sind in diesem Bereich Rauschen — der Optimierer sieht keinen Abstieg mehr. Das waere kein Screening-Problem, sondern eine Eigenschaft des gesamten Bewertungspfads und beruehrt auch Pretuning-Warmstarts und die Frage, ob `loss_tol = 1e-8` ueberhaupt zuverlaessig erreichbar ist. Als Hypothese notiert, nicht als Befund.
+
+**Bilanz der Screening-Spur:** AIC-Screening ist auf beiden Systemen schneller als der Referenzpfad (1,55x auf System 3, 1,37x auf System 11), liefert aber auf System 3 einen um Faktor 121 schlechteren Loss und eskaliert auf Stage 5 statt 3. In dieser Form nicht verwendbar.
+
 ### WP-P2.2c gelaufen — erste echte Zahlen: System 11 funktioniert, System 3 falsifiziert das Kriterium
 
 Vergleichsskript `studies/debug/compare_screening_variant.jl` committet (`2eb7202`) und ausgefuehrt. Konfiguration identisch zur Regression-Suite (30 Level, pop 10, λ=1e-3, BFGS 200, Seed 42).
