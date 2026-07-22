@@ -71,7 +71,7 @@ const VARIANTS = [
     ),
     (
         label = "evogrow_v3",
-        constructor = (level_callback, _screening_optimizer) -> EvoGrowV3(
+        constructor = (level_callback, screening_optimizer) -> EvoGrowV3(
             pop_size = POP_SIZE,
             n_levels = N_LEVELS,
             children_per_parent = CHILDREN_PER_PARENT,
@@ -86,6 +86,7 @@ const VARIANTS = [
                 new_term_bias_prob = SOFT_BIAS,
             ),
             use_pretuning = USE_PRETUNING,
+            screening_optimizer = screening_optimizer,
             level_callback = level_callback,
         ),
     ),
@@ -321,18 +322,23 @@ function run_one(variant, system, seed::Int, fingerprint::String, provenance)
         "eq_final_stages" => nothing,
         "n_levels" => N_LEVELS,
         "use_pretuning" => USE_PRETUNING,
-        "screening_budgets_active" => SCREENING_BUDGETS_ENABLED,
+        "screening_budgets_active" => nothing,
         "total_parameter_fits" => nothing,
         "total_ode_solves" => nothing,
         "total_invalid_solves" => nothing,
         "total_diverged_solves" => nothing,
         "total_nonfinite_solves" => nothing,
         "total_step_limit_solves" => nothing,
+        "total_solver_unstable_solves" => nothing,
         "total_optimizer_limit_hits" => nothing,
         "total_optimizer_iteration_limit_hits" => nothing,
         "total_optimizer_safety_limit_hits" => nothing,
+        "total_optimizer_failure_hits" => nothing,
+        "total_optimizer_unknown_retcode_hits" => nothing,
         "total_parameter_optimization_time_s" => nothing,
         "total_simulation_time_s" => nothing,
+        "solver_retcodes" => nothing,
+        "optimizer_retcodes" => nothing,
         "error" => nothing,
     )
 
@@ -380,6 +386,19 @@ function run_one(variant, system, seed::Int, fingerprint::String, provenance)
         end
 
         meta = result.meta.structure
+        required_meta_fields = (
+            :screening_budgets_active,
+            :total_parameter_fits,
+            :total_ode_solves,
+            :total_invalid_solves,
+            :solver_retcodes,
+            :optimizer_retcodes,
+        )
+        for field in required_meta_fields
+            if !haskey(meta, field)
+                error("Structure search meta is missing $(field)")
+            end
+        end
         final_stage = haskey(meta, :final_stage) ? Int(meta.final_stage) : nothing
         stage_level_counts = haskey(meta, :stage_level_counts) ? collect(meta.stage_level_counts) : Int[]
         stage_overshoot = final_stage === nothing ? nothing : max(0, final_stage - expected_stage)
@@ -395,17 +414,23 @@ function run_one(variant, system, seed::Int, fingerprint::String, provenance)
         base_record["wasted_levels"] = wasted_levels
         base_record["elapsed_s"] = elapsed
         base_record["eq_final_stages"] = eq_final_stages
+        base_record["screening_budgets_active"] = meta.screening_budgets_active
         base_record["total_parameter_fits"] = haskey(meta, :total_parameter_fits) ? meta.total_parameter_fits : nothing
         base_record["total_ode_solves"] = haskey(meta, :total_ode_solves) ? meta.total_ode_solves : nothing
         base_record["total_invalid_solves"] = haskey(meta, :total_invalid_solves) ? meta.total_invalid_solves : nothing
         base_record["total_diverged_solves"] = haskey(meta, :total_diverged_solves) ? meta.total_diverged_solves : nothing
         base_record["total_nonfinite_solves"] = haskey(meta, :total_nonfinite_solves) ? meta.total_nonfinite_solves : nothing
         base_record["total_step_limit_solves"] = haskey(meta, :total_step_limit_solves) ? meta.total_step_limit_solves : nothing
+        base_record["total_solver_unstable_solves"] = haskey(meta, :total_solver_unstable_solves) ? meta.total_solver_unstable_solves : nothing
         base_record["total_optimizer_limit_hits"] = haskey(meta, :total_optimizer_limit_hits) ? meta.total_optimizer_limit_hits : nothing
         base_record["total_optimizer_iteration_limit_hits"] = haskey(meta, :total_optimizer_iteration_limit_hits) ? meta.total_optimizer_iteration_limit_hits : nothing
         base_record["total_optimizer_safety_limit_hits"] = haskey(meta, :total_optimizer_safety_limit_hits) ? meta.total_optimizer_safety_limit_hits : nothing
+        base_record["total_optimizer_failure_hits"] = haskey(meta, :total_optimizer_failure_hits) ? meta.total_optimizer_failure_hits : nothing
+        base_record["total_optimizer_unknown_retcode_hits"] = haskey(meta, :total_optimizer_unknown_retcode_hits) ? meta.total_optimizer_unknown_retcode_hits : nothing
         base_record["total_parameter_optimization_time_s"] = haskey(meta, :total_parameter_optimization_time_s) ? meta.total_parameter_optimization_time_s : nothing
         base_record["total_simulation_time_s"] = haskey(meta, :total_simulation_time_s) ? meta.total_simulation_time_s : nothing
+        base_record["solver_retcodes"] = haskey(meta, :solver_retcodes) ? collect(meta.solver_retcodes) : nothing
+        base_record["optimizer_retcodes"] = haskey(meta, :optimizer_retcodes) ? collect(meta.optimizer_retcodes) : nothing
     catch err
         base_record["error"] = sprint(showerror, err)
     finally

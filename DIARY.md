@@ -6,6 +6,15 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ## 2026-07-22
 
+### WP-P1b Korrekturen vor Benchmark-Lauf
+
+- `EvoGrowV3` bekommt denselben `screening_optimizer`-Durchreichpfad und dieselben Kosten-Meta-Felder wie `EvoGrow`; ohne gesetzten Screening-Optimizer bleibt die Lockstep-Bruecke im Referenzpfad unveraendert.
+- Fruehe Verwerfung divergierender Screening-Solves nutzt `unstable_check` statt `isoutofdomain`; die zusaetzliche Pruefung gegen `divergence_limit` ist elementweise formuliert.
+- Profiling-Benchmark wird auf 12 Level begrenzt, rechnet Screening vor Referenz und schreibt Zwischenergebnisse nach jedem Fall.
+- Offener Reproduzierbarkeitszustand: ausserhalb des Regression-Runners konstruieren Benchmarks, Experimente und alte Studies `BFGSOptimizer` weiterhin ohne explizites `time_limit_s`; der Struct-Default bleibt `300.0` und muss vor Phase B bewusst entschieden werden.
+
+---
+
 ### WP-P1 umgesetzt und reviewt — drei Blocker, WP-P1b beauftragt
 
 Codex hat WP-P1 umgesetzt (`911a567`, enthält versehentlich auch die WP-P1b-Spec): `BFGSOptimizer` um deterministische Budget-Parameter und `reject_nonfinite`/`divergence_limit` erweitert, Zähler pro Level (Fits, Solves, invalid/diverged/nonfinite, Optimizer-Limit-Treffer, Solve- vs. Overhead-Zeit) über EvoGrow-Meta bis in den Record durchgereicht, expliziter Referenz-Optimizer im Regression-Runner (`time_limit_s = 86_400`), Mikro-Benchmark `studies/profiling/profile_eval_cost.jl`. Instrumentierung sauber und vollständig verdrahtet; Fingerprint korrekt erweitert; Profiling-Skript verschmutzt `history.jsonl` nicht.

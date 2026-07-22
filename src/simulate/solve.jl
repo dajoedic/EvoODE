@@ -10,8 +10,9 @@ Returns Ŷ with shape (T × dim). On failure returns NaNs.
 
 Important:
 - `param_clamp` clamps parameters using `Base.clamp` (does NOT shadow the function).
-- `reject_nonfinite` and `divergence_limit` are deterministic early-rejection
-  controls; defaults preserve previous behavior.
+- `reject_nonfinite` enables an `unstable_check`. Relative to the solver default,
+  the added condition is the finite `divergence_limit`; defaults preserve
+  previous post-processing behavior.
 """
 function simulate(f!::Function,
                   params::Vector{Float64},
@@ -34,10 +35,20 @@ function simulate(f!::Function,
     local sol
     try
         sol = with_logger(SimpleLogger(stderr, Logging.Error)) do
-            out_of_domain = reject_nonfinite ?
-                ((u, _, _) -> any(!isfinite, u) || any(abs.(u) .> divergence_limit)) :
-                ((_, _, _) -> false)
-            solve(prob, Tsit5(); saveat=t, abstol=abstol, reltol=reltol, maxiters=maxiters, isoutofdomain=out_of_domain, verbose=false)
+            solve_kwargs = (
+                saveat = t,
+                abstol = abstol,
+                reltol = reltol,
+                maxiters = maxiters,
+                verbose = false,
+            )
+            if reject_nonfinite
+                solve(prob, Tsit5();
+                      solve_kwargs...,
+                      unstable_check = (_, u, _, _) -> _state_exceeds_limit(u, divergence_limit))
+            else
+                solve(prob, Tsit5(); solve_kwargs...)
+            end
         end
     catch
         return fill(NaN, size(X))
@@ -47,7 +58,7 @@ function simulate(f!::Function,
         return fill(NaN, size(X))
     end
     Yhat = Array(sol)'  # (T x dim)
-    if any(!isfinite, Yhat) || (isfinite(divergence_limit) && any(abs.(Yhat) .> divergence_limit))
+    if reject_nonfinite && _state_exceeds_limit(Yhat, divergence_limit)
         return fill(NaN, size(X))
     end
     return Yhat

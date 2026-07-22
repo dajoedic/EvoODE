@@ -461,6 +461,16 @@ function _fit_time_stat(fit_meta, key::Symbol)
     return Float64(haskey(fit_meta, key) ? getfield(fit_meta, key) : 0.0)
 end
 
+function _append_unique_strings!(target::Vector{String}, values)
+    for value in values
+        text = String(value)
+        if !(text in target)
+            push!(target, text)
+        end
+    end
+    return nothing
+end
+
 # ------------------------------------------------------------
 # Main loop
 # ------------------------------------------------------------
@@ -510,11 +520,16 @@ function search_structure(strategy::EvoGrow,
     total_diverged_solves = 0
     total_nonfinite_solves = 0
     total_step_limit_solves = 0
+    total_solver_unstable_solves = 0
     total_optimizer_limit_hits = 0
     total_optimizer_iteration_limit_hits = 0
     total_optimizer_safety_limit_hits = 0
+    total_optimizer_failure_hits = 0
+    total_optimizer_unknown_retcode_hits = 0
     total_fit_time_s = 0.0
     total_solve_time_s = 0.0
+    observed_solver_retcodes = String[]
+    observed_optimizer_retcodes = String[]
     termination_reason = :max_levels
     vis_history = NamedTuple[]
 
@@ -547,11 +562,16 @@ function search_structure(strategy::EvoGrow,
         level_diverged_solves = 0
         level_nonfinite_solves = 0
         level_step_limit_solves = 0
+        level_solver_unstable_solves = 0
         level_optimizer_limit_hits = 0
         level_optimizer_iteration_limit_hits = 0
         level_optimizer_safety_limit_hits = 0
+        level_optimizer_failure_hits = 0
+        level_optimizer_unknown_retcode_hits = 0
         level_fit_time_s = 0.0
         level_solve_time_s = 0.0
+        level_solver_retcodes = String[]
+        level_optimizer_retcodes = String[]
 
         if options.verbose >= 1
             log_info("Level start", context=level_ctx)
@@ -594,11 +614,16 @@ function search_structure(strategy::EvoGrow,
                 level_diverged_solves += _fit_stat(fit_meta, :diverged_solves)
                 level_nonfinite_solves += _fit_stat(fit_meta, :nonfinite_solves)
                 level_step_limit_solves += _fit_stat(fit_meta, :step_limit_solves)
+                level_solver_unstable_solves += _fit_stat(fit_meta, :solver_unstable_solves)
                 level_optimizer_limit_hits += _fit_stat(fit_meta, :optimizer_limit_hits)
                 level_optimizer_iteration_limit_hits += _fit_stat(fit_meta, :optimizer_iteration_limit_hits)
                 level_optimizer_safety_limit_hits += _fit_stat(fit_meta, :optimizer_safety_limit_hits)
+                level_optimizer_failure_hits += _fit_stat(fit_meta, :optimizer_failure_hits)
+                level_optimizer_unknown_retcode_hits += _fit_stat(fit_meta, :optimizer_unknown_retcode_hits)
                 level_fit_time_s += _fit_time_stat(fit_meta, :fit_time_s)
                 level_solve_time_s += _fit_time_stat(fit_meta, :solve_time_s)
+                _append_unique_strings!(level_solver_retcodes, haskey(fit_meta, :solver_retcodes) ? fit_meta.solver_retcodes : String[])
+                _append_unique_strings!(level_optimizer_retcodes, haskey(fit_meta, :optimizer_retcodes) ? fit_meta.optimizer_retcodes : String[])
 
                 if options.verbose >= 3
                     log_debug(
@@ -691,11 +716,16 @@ function search_structure(strategy::EvoGrow,
             level_diverged_solves += _fit_stat(fit_meta, :diverged_solves)
             level_nonfinite_solves += _fit_stat(fit_meta, :nonfinite_solves)
             level_step_limit_solves += _fit_stat(fit_meta, :step_limit_solves)
+            level_solver_unstable_solves += _fit_stat(fit_meta, :solver_unstable_solves)
             level_optimizer_limit_hits += _fit_stat(fit_meta, :optimizer_limit_hits)
             level_optimizer_iteration_limit_hits += _fit_stat(fit_meta, :optimizer_iteration_limit_hits)
             level_optimizer_safety_limit_hits += _fit_stat(fit_meta, :optimizer_safety_limit_hits)
+            level_optimizer_failure_hits += _fit_stat(fit_meta, :optimizer_failure_hits)
+            level_optimizer_unknown_retcode_hits += _fit_stat(fit_meta, :optimizer_unknown_retcode_hits)
             level_fit_time_s += _fit_time_stat(fit_meta, :fit_time_s)
             level_solve_time_s += _fit_time_stat(fit_meta, :solve_time_s)
+            _append_unique_strings!(level_solver_retcodes, haskey(fit_meta, :solver_retcodes) ? fit_meta.solver_retcodes : String[])
+            _append_unique_strings!(level_optimizer_retcodes, haskey(fit_meta, :optimizer_retcodes) ? fit_meta.optimizer_retcodes : String[])
 
             if options.verbose >= 3
                 log_debug(
@@ -748,11 +778,16 @@ function search_structure(strategy::EvoGrow,
         total_diverged_solves += level_diverged_solves
         total_nonfinite_solves += level_nonfinite_solves
         total_step_limit_solves += level_step_limit_solves
+        total_solver_unstable_solves += level_solver_unstable_solves
         total_optimizer_limit_hits += level_optimizer_limit_hits
         total_optimizer_iteration_limit_hits += level_optimizer_iteration_limit_hits
         total_optimizer_safety_limit_hits += level_optimizer_safety_limit_hits
+        total_optimizer_failure_hits += level_optimizer_failure_hits
+        total_optimizer_unknown_retcode_hits += level_optimizer_unknown_retcode_hits
         total_fit_time_s += level_fit_time_s
         total_solve_time_s += level_solve_time_s
+        _append_unique_strings!(observed_solver_retcodes, level_solver_retcodes)
+        _append_unique_strings!(observed_optimizer_retcodes, level_optimizer_retcodes)
 
         push!(
             level_log,
@@ -770,11 +805,16 @@ function search_structure(strategy::EvoGrow,
                 diverged_solves = level_diverged_solves,
                 nonfinite_solves = level_nonfinite_solves,
                 step_limit_solves = level_step_limit_solves,
+                solver_unstable_solves = level_solver_unstable_solves,
                 optimizer_limit_hits = level_optimizer_limit_hits,
                 optimizer_iteration_limit_hits = level_optimizer_iteration_limit_hits,
                 optimizer_safety_limit_hits = level_optimizer_safety_limit_hits,
+                optimizer_failure_hits = level_optimizer_failure_hits,
+                optimizer_unknown_retcode_hits = level_optimizer_unknown_retcode_hits,
                 parameter_optimization_time_s = level_parameter_overhead_s,
-                simulation_time_s = level_solve_time_s
+                simulation_time_s = level_solve_time_s,
+                solver_retcodes = copy(level_solver_retcodes),
+                optimizer_retcodes = copy(level_optimizer_retcodes)
             )
         )
 
@@ -837,11 +877,16 @@ function search_structure(strategy::EvoGrow,
                         :diverged_solves => level_diverged_solves,
                         :nonfinite_solves => level_nonfinite_solves,
                         :step_limit_solves => level_step_limit_solves,
+                        :solver_unstable_solves => level_solver_unstable_solves,
                         :optimizer_limit_hits => level_optimizer_limit_hits,
                         :optimizer_iteration_limit_hits => level_optimizer_iteration_limit_hits,
                         :optimizer_safety_limit_hits => level_optimizer_safety_limit_hits,
+                        :optimizer_failure_hits => level_optimizer_failure_hits,
+                        :optimizer_unknown_retcode_hits => level_optimizer_unknown_retcode_hits,
                         :parameter_optimization_time_s => level_parameter_overhead_s,
-                        :simulation_time_s => level_solve_time_s
+                        :simulation_time_s => level_solve_time_s,
+                        :solver_retcodes => level_solver_retcodes,
+                        :optimizer_retcodes => level_optimizer_retcodes
                     )
                 )
             )
@@ -1018,11 +1063,16 @@ function search_structure(strategy::EvoGrow,
             total_diverged_solves = total_diverged_solves,
             total_nonfinite_solves = total_nonfinite_solves,
             total_step_limit_solves = total_step_limit_solves,
+            total_solver_unstable_solves = total_solver_unstable_solves,
             total_optimizer_limit_hits = total_optimizer_limit_hits,
             total_optimizer_iteration_limit_hits = total_optimizer_iteration_limit_hits,
             total_optimizer_safety_limit_hits = total_optimizer_safety_limit_hits,
+            total_optimizer_failure_hits = total_optimizer_failure_hits,
+            total_optimizer_unknown_retcode_hits = total_optimizer_unknown_retcode_hits,
             total_parameter_optimization_time_s = max(0.0, total_fit_time_s - total_solve_time_s),
             total_simulation_time_s = total_solve_time_s,
+            solver_retcodes = copy(observed_solver_retcodes),
+            optimizer_retcodes = copy(observed_optimizer_retcodes),
             screening_budgets_active = strategy.screening_optimizer !== nothing,
             final_stage = current_stage,
             termination_reason = termination_reason,

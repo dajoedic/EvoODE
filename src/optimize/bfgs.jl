@@ -18,6 +18,8 @@ Deterministic budget parameters:
 - `abstol`, `reltol`, `maxiters_solve`: ODE solver tolerances and step limit.
 - `clamp_val`: deterministic parameter clamp before simulation.
 - `reject_nonfinite`, `divergence_limit`: deterministic early-rejection rules.
+  When enabled, these are passed through `unstable_check`; relative to the
+  solver default, the added condition is the finite `divergence_limit`.
 
 Non-deterministic safety parameter:
 - `time_limit_s`: wall-clock safety brake passed to Optim.jl. If it fires,
@@ -43,7 +45,9 @@ function _empty_solve_stats()
         :diverged_solves => 0,
         :nonfinite_solves => 0,
         :step_limit_solves => 0,
+        :solver_unstable_solves => 0,
         :solve_time_s => 0.0,
+        :solver_retcodes => String[],
     )
 end
 
@@ -51,9 +55,58 @@ function _retcode_string(retcode)
     return string(retcode)
 end
 
+function _record_retcode!(stats::Dict{Symbol, Any}, retcode)
+    text = _retcode_string(retcode)
+    retcodes = stats[:solver_retcodes]
+    if !(text in retcodes)
+        push!(retcodes, text)
+    end
+    return nothing
+end
+
 function _retcode_is_step_limit(retcode)
-    text = lowercase(_retcode_string(retcode))
-    return occursin("maxiter", text) || occursin("dtless", text)
+    return retcode == SciMLBase.ReturnCode.MaxIters ||
+           retcode == SciMLBase.ReturnCode.DtLessThanMin ||
+           retcode == SciMLBase.ReturnCode.DtNaN
+end
+
+function _retcode_is_unstable(retcode)
+    return retcode == SciMLBase.ReturnCode.Unstable ||
+           retcode == SciMLBase.ReturnCode.FloatingPointLimit
+end
+
+function _state_exceeds_limit(u, divergence_limit::Float64)
+    for value in u
+        if !isfinite(value)
+            return true
+        end
+        if isfinite(divergence_limit) && abs(value) > divergence_limit
+            return true
+        end
+    end
+    return false
+end
+
+function _optimizer_retcode_category(retcode)
+    if retcode == SciMLBase.ReturnCode.Success ||
+       retcode == SciMLBase.ReturnCode.StalledSuccess
+        return :success
+    elseif retcode == SciMLBase.ReturnCode.MaxTime
+        return :safety_limit
+    elseif retcode == SciMLBase.ReturnCode.MaxIters
+        return :iteration_limit
+    elseif retcode in (
+        SciMLBase.ReturnCode.ConvergenceFailure,
+        SciMLBase.ReturnCode.Failure,
+        SciMLBase.ReturnCode.InitialFailure,
+        SciMLBase.ReturnCode.InternalLineSearchFailed,
+        SciMLBase.ReturnCode.InternalLinearSolveFailed,
+        SciMLBase.ReturnCode.Stalled,
+    )
+        return :failure
+    else
+        return :unknown
+    end
 end
 
 """
@@ -102,16 +155,20 @@ function _predict_traj(f!,
 
     try
         sol = with_logger(SimpleLogger(stderr, Logging.Error)) do
-            out_of_domain = opt.reject_nonfinite ?
-                ((u, _, _) -> any(!isfinite, u) || any(abs.(u) .> opt.divergence_limit)) :
-                ((_, _, _) -> false)
-            solve(prob, Tsit5();
-                  saveat   = t,
-                  abstol   = opt.abstol,
-                  reltol   = opt.reltol,
-                  maxiters = opt.maxiters_solve,
-                  isoutofdomain = out_of_domain,
-                  verbose  = false)
+            solve_kwargs = (
+                saveat = t,
+                abstol = opt.abstol,
+                reltol = opt.reltol,
+                maxiters = opt.maxiters_solve,
+                verbose = false,
+            )
+            if opt.reject_nonfinite
+                solve(prob, Tsit5();
+                      solve_kwargs...,
+                      unstable_check = (_, u, _, _) -> _state_exceeds_limit(u, opt.divergence_limit))
+            else
+                solve(prob, Tsit5(); solve_kwargs...)
+            end
         end
     catch
         if stats !== nothing
@@ -132,10 +189,17 @@ function _predict_traj(f!,
         solve_done()
     end
 
+    if stats !== nothing
+        _record_retcode!(stats, sol.retcode)
+    end
+
     if sol.retcode != SciMLBase.ReturnCode.Success
         if stats !== nothing
             stats[:invalid_solves] += 1
-            if _retcode_is_step_limit(sol.retcode)
+            if _retcode_is_unstable(sol.retcode)
+                stats[:solver_unstable_solves] += 1
+                stats[:diverged_solves] += 1
+            elseif _retcode_is_step_limit(sol.retcode)
                 stats[:step_limit_solves] += 1
             else
                 stats[:diverged_solves] += 1
@@ -155,12 +219,16 @@ function _predict_traj(f!,
     Yhat = Array(sol)'  # (T x dim)
     if any(!isfinite, Yhat)
         if stats !== nothing
-            stats[:invalid_solves] += 1
             stats[:nonfinite_solves] += 1
         end
-        return fill(NaN, size(X))
+        if opt.reject_nonfinite
+            if stats !== nothing
+                stats[:invalid_solves] += 1
+            end
+            return fill(NaN, size(X))
+        end
     end
-    if isfinite(opt.divergence_limit) && any(abs.(Yhat) .> opt.divergence_limit)
+    if opt.reject_nonfinite && _state_exceeds_limit(Yhat, opt.divergence_limit)
         if stats !== nothing
             stats[:invalid_solves] += 1
             stats[:diverged_solves] += 1
@@ -203,6 +271,9 @@ function fit_parameters(opt::BFGSOptimizer,
     optimizer_limit_hits = Ref(0)
     optimizer_safety_limit_hits = Ref(0)
     optimizer_iteration_limit_hits = Ref(0)
+    optimizer_failure_hits = Ref(0)
+    optimizer_unknown_retcode_hits = Ref(0)
+    optimizer_retcodes = String[]
 
     if options.verbose >= 3
         log_debug(
@@ -255,12 +326,20 @@ function fit_parameters(opt::BFGSOptimizer,
                                  maxiters = opt.maxiters,
                                  time_limit = opt.time_limit_s)
         retcode_text = _retcode_string(res.retcode)
-        if res.retcode != SciMLBase.ReturnCode.Success
+        if !(retcode_text in optimizer_retcodes)
+            push!(optimizer_retcodes, retcode_text)
+        end
+        retcode_category = _optimizer_retcode_category(res.retcode)
+        if retcode_category != :success
             optimizer_limit_hits[] += 1
-            if occursin("time", lowercase(retcode_text))
+            if retcode_category == :safety_limit
                 optimizer_safety_limit_hits[] += 1
-            else
+            elseif retcode_category == :iteration_limit
                 optimizer_iteration_limit_hits[] += 1
+            elseif retcode_category == :failure
+                optimizer_failure_hits[] += 1
+            else
+                optimizer_unknown_retcode_hits[] += 1
             end
         end
         if isfinite(res.minimum)
@@ -346,12 +425,20 @@ function fit_parameters(opt::BFGSOptimizer,
                                       maxiters = opt.maxiters,
                                       time_limit = opt.time_limit_s)
             retcode_text2 = _retcode_string(res2.retcode)
-            if res2.retcode != SciMLBase.ReturnCode.Success
+            if !(retcode_text2 in optimizer_retcodes)
+                push!(optimizer_retcodes, retcode_text2)
+            end
+            retcode_category2 = _optimizer_retcode_category(res2.retcode)
+            if retcode_category2 != :success
                 optimizer_limit_hits[] += 1
-                if occursin("time", lowercase(retcode_text2))
+                if retcode_category2 == :safety_limit
                     optimizer_safety_limit_hits[] += 1
-                else
+                elseif retcode_category2 == :iteration_limit
                     optimizer_iteration_limit_hits[] += 1
+                elseif retcode_category2 == :failure
+                    optimizer_failure_hits[] += 1
+                else
+                    optimizer_unknown_retcode_hits[] += 1
                 end
             end
             if isfinite(res2.minimum)
@@ -461,9 +548,14 @@ function fit_parameters(opt::BFGSOptimizer,
         diverged_solves = Int(solve_stats[:diverged_solves]),
         nonfinite_solves = Int(solve_stats[:nonfinite_solves]),
         step_limit_solves = Int(solve_stats[:step_limit_solves]),
+        solver_unstable_solves = Int(solve_stats[:solver_unstable_solves]),
         optimizer_limit_hits = optimizer_limit_hits[],
         optimizer_iteration_limit_hits = optimizer_iteration_limit_hits[],
         optimizer_safety_limit_hits = optimizer_safety_limit_hits[],
+        optimizer_failure_hits = optimizer_failure_hits[],
+        optimizer_unknown_retcode_hits = optimizer_unknown_retcode_hits[],
+        solver_retcodes = copy(solve_stats[:solver_retcodes]),
+        optimizer_retcodes = copy(optimizer_retcodes),
         solve_time_s = Float64(solve_stats[:solve_time_s]),
         fit_time_s = time() - fit_t0
     )
