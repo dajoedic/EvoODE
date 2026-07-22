@@ -686,21 +686,42 @@ Status: NOT STARTED
 
 ## Current Priorities
 
-Current priorities as of 2026-07-20:
+Current priorities as of 2026-07-22:
 
 Done (do not re-open):
 - WP-0.1 (H4 claim → VACUOUS in `evaluate_hypotheses.py`) — done 2026-05-17.
 - WP-0.2 (generalization data path in `evaluate_hypotheses.py`) — done 2026-05-17.
 - WP-1.3 (Phase 1 diagnostic run) and Gate 1 — done 2026-05-30; v2.2 fails Gate 1, Phase 2 (EvoGrow v3) triggered.
+- WP-v3.1 (design note `docs/evogrow_v3_design.md`) — done 2026-07-20.
+- WP-v3.2 (`EvoGrowV3` lockstep bridge) — done 2026-07-20; regression equivalence to v2.2 confirmed.
+- WP-H1 through WP-H1d (regression history, `studies/regression/`) — done 2026-07-20.
+- WP-P1 / WP-P1b / WP-P1c (evaluation cost: determinism, separate screening budgets, per-level
+  instrumentation, micro-benchmark) — done 2026-07-22. Measured 2.71x on System 26; wall-clock
+  dependence removed from the regression result path.
+- WP-P2.1 through WP-P2.3 (derivative-based screening) — **discontinued 2026-07-22** by stop rule.
+  Artifacts kept: `docs/evogrow_screening_design.md`, `src/structure/evogrow_screening.jl`,
+  `studies/debug/compare_screening_variant.jl`. Do not resume without new evidence.
 
 Active (Phase 2 — EvoGrow v3):
-1. WP-v3.1: Design note `docs/evogrow_v3_design.md` (per-equation progress signal and promotion rule) — active Codex task in `codex/CURRENT_TASK.md`; deliverable not yet written.
-2. WP-v3.2 through WP-v3.6: implement `EvoGrowV3` (equation-wise stage state, equation-aware child generation, per-equation plateau/promotion, v3 metrics, validation run vs. v2.2).
+1. WP-v3.3: equation-aware child generation (design note section 6).
+2. WP-v3.4 through WP-v3.6: per-equation residual signal and promotion rule, v3 metrics,
+   validation run vs. v2.2.
 3. Gate 2: decide whether v3 is paper-ready.
+
+Pending before the next regression baseline:
+- The regression configuration has changed since Baseline v0 (`config_fingerprint`
+  `0c739d4e36ee6498`): `time_limit_s` is now explicit, and additional config fields entered the
+  fingerprint. Baseline v0 stays valid as a historical record, but a new baseline must be run
+  under the current configuration before v3.3 results can be regression-checked.
 
 After Gate 2:
 4. Phase 3 (PAPER_1.md): ODEBench protocol alignment — system classification, R² metric, protocol-audit document.
 5. Phase B experiment (`paper1_phaseB_v1`) — 63 systems × 2 conditions × 3 seeds.
+
+Open, not scheduled:
+- Hypothesis from WP-P2.3: the ODE solver tolerance in the evaluation path (`abstol = reltol = 1e-6`)
+  may make finite-difference gradients meaningless once the loss falls below roughly that scale,
+  which would affect every warm-started fit and the attainability of `loss_tol = 1e-8`. Unverified.
 
 `PAPER_1.md` is the authoritative execution plan and takes precedence if this list drifts.
 

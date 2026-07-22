@@ -13,6 +13,24 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 - Profiling-Benchmark wird auf 12 Level begrenzt, rechnet Screening vor Referenz und schreibt Zwischenergebnisse nach jedem Fall.
 - Offener Reproduzierbarkeitszustand: ausserhalb des Regression-Runners konstruieren Benchmarks, Experimente und alte Studies `BFGSOptimizer` weiterhin ohne explizites `time_limit_s`; der Struct-Default bleibt `300.0` und muss vor Phase B bewusst entschieden werden.
 
+### Entscheidung: Screening-Spur eingestellt; zurueck zu WP-v3.3
+
+User hat die Abbruchregel wie vereinbart gezogen. Die Screening-Spur (WP-P2.1 bis WP-P2.3) wird eingestellt.
+
+**Was bleibt:** `docs/evogrow_screening_design.md`, `src/structure/evogrow_screening.jl`, `studies/debug/compare_screening_variant.jl` und die Messdaten bleiben im Repository als dokumentierte Zwischenablage. Nicht ohne neue Evidenz wieder aufnehmen.
+
+**Was gesichert ist:** 2,71x aus WP-P1b (Solver-Budgets, System 26), Determinismus im Regression-Ergebnispfad, vollstaendige Kosteninstrumentierung pro Level, und ein quantifiziertes Kostenprofil des Bewertungspfads.
+
+**Ehrliche Einordnung der Falsifikation:** Sie ist weich. Die AIC-Intervention war mathematisch zu schwach, um die Rangfolge ueberhaupt zu bewegen, und die rho-Kennzahl ist fragwuerdig. Die Hypothese „ableitungsbasiertes Screening taugt als Auswahlsignal" ist damit nicht widerlegt, sondern ungeprueft. Eingestellt wurde aus Aufwandsgruenden, nicht aus wissenschaftlicher Klaerung — das gehoert so in eine spaetere Diskussion, falls die Spur wieder aufgenommen wird.
+
+**CLAUDE.md aktualisiert:** Prioritaeten auf Stand 2026-07-22, WP-P1.x als erledigt und WP-P2.x als eingestellt vermerkt, offene Toleranz-Hypothese als ungeplanter Punkt festgehalten.
+
+**Offener Punkt vor der naechsten Baseline:** Die Regression-Konfiguration hat sich seit Baseline v0 geaendert (expliziter `time_limit_s`, zusaetzliche Fingerprint-Felder). Baseline v0 bleibt als historischer Datensatz gueltig, aber vor einer Regressionspruefung von v3.3-Ergebnissen muss eine neue Baseline unter der aktuellen Konfiguration gerechnet werden.
+
+**WP-v3.3 beauftragt** (Designnotiz Abschnitt 6): gleichungsweise Kindergenerierung, zulaessige Terme aus `eq_stages[k]` statt aus einer globalen Stage, Kreuzterm-Regel `min(eq_stages[i], eq_stages[j])`, `StageUsagePolicy` pro Gleichung. Zentraler Punkt der Spec: da WP-v3.4 (gleichungsweise Promotion) noch aussteht, sind alle `eq_stages` weiterhin gleichgeschaltet — der Umbau muss daher **bit-identische** Ergebnisse liefern und ist ein verhaltensneutraler Refactor, dessen Wirkung erst mit v3.4 sichtbar wird. Ausdruecklich mitspezifiziert: die RNG-Ziehreihenfolge darf sich nicht aendern, sonst ist das Kriterium nicht pruefbar. Zusaetzlich wird die Screening-Variante aus `VARIANTS` im Regression-Runner entfernt.
+
+Nebenbefund beim Lesen der Designnotiz: Abschnitt 9 fuehrt die Kreuzterm-Frage als offen, obwohl Abschnitt 6 sie bereits beantwortet. In der Spec als entschieden festgehalten, mit der Konsequenz im Docstring: ein Kreuzterm haengt an den Stages der Gleichungen seiner **Variablen**, nicht an der Stage der verwendenden Gleichung — die einzige Stelle, an der die Gleichungen gekoppelt bleiben.
+
 ### WP-P2.3 gelaufen — Abbruchregel ausgeloest, aber der Test war zu schwach, um die Hypothese zu pruefen
 
 Committet `9ca9127`. Codex hat `screening_score = :residual | :aic` eingebaut und — besser als von mir spezifiziert — die Rangeuebereinstimmung auf den **tatsaechlich verwendeten Score** umgestellt statt weiter das rohe Residuum zu vergleichen.
