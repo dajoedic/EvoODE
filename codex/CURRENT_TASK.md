@@ -1,94 +1,139 @@
-# CURRENT TASK: WP-H1d — Resume support (skip already-completed cells)
+# CURRENT TASK: WP-P1 — Auswertungskosten messbar und begrenzbar machen
 
 **Language: Julia**
 
 ## Context
 
-The external full run of `studies/regression/run_regression.jl` was interrupted by a machine
-restart after 7 of 30 records. Thanks to the append-only `history.jsonl`, those 7 records
-survived (and are committed). But re-running currently redoes the entire suite, including a
-single System-26 run that took ~3 hours.
+Der Regression-Volllauf wurde nach 40,5 Compute-Stunden bei 23/30 Zellen abgebrochen.
+Eine Kostenanalyse aus `outputs/studies/regression/run.log` (alle 23 Zellen) ergab:
 
-This task makes the runner **resumable**: on start it skips any (variant, system, seed) cell
-that already has a successful record in `history.jsonl` for the current `config_fingerprint`,
-so a re-run continues from where it stopped instead of recomputing finished work. This also
-hardens the runner against the next interruption.
+- Kosten pro Level explodieren mit der Stage: 21 s (Stage 1) → 170 → 443 → 482 → 878 s (Stage 5).
+- **62 % der gesamten Rechenzeit (24,9 von 40,5 h) wurde in Stages oberhalb der jeweils
+  erwarteten Stage verbracht** — also in Komplexität, die die Systeme nie gebraucht haben.
+- Auf den teuersten Levels kostet ein einzelner Kandidat im Mittel ~619 s. Das liegt über dem
+  Default-Wall-Clock-Limit des Optimierers (300 s), d. h. einzelne Fits laufen sicher ins Limit.
+- Ein einzelnes Level (System 63, Level 16, Stage 4) kostete 3,4 h.
 
-This is resilience/observability only. It must NOT change `config_fingerprint`, the record
-schema/values, the metric computations, or the fixed suite/hyperparameters.
+Zusätzlich wurde ein Reproduzierbarkeitsleck gefunden: `run_regression.jl` konstruiert den
+`BFGSOptimizer` ohne `time_limit_s`, der Default ist ein **Wall-Clock-Limit**. Damit hängt die
+Zahl der Optimierer-Iterationen von der Maschinenlast ab. Beleg: dieselbe Zelle
+(System 26, Seed 123) lieferte unter v2.2 und unter der verhaltensgleichen v3.2-Brücke
+unterschiedliche Losses (1.3916e-3 vs. 1.3713e-3), bei Laufzeiten von 13.352 s vs. 20.158 s.
+Alle anderen 7 überlappenden Zellen sind bit-identisch.
+
+Ziel dieses Work Packages ist **nicht**, den Suchalgorithmus zu ändern. Ziel ist, die Kosten
+einer Kandidaten-Auswertung (a) reproduzierbar, (b) messbar und (c) nach oben begrenzbar zu
+machen — als Grundlage für die eigentliche Entscheidung über das Bewertungsverfahren.
 
 ## Goal
 
-Before the run loop, load existing history and build the set of already-completed cells; skip
-those cells in the loop (advancing the outer progress bar and logging a skip line), and run only
-the remaining cells. Report skipped/run/total counts at the end.
+1. Wall-Clock-Abhängigkeit aus dem Ergebnispfad entfernen (Determinismus).
+2. Getrennte, explizit konfigurierbare Solver-/Optimierer-Budgets für *Bewertung während der
+   Suche* vs. *finale Validierung* einführen — mit den heutigen Werten als Default, damit ohne
+   ausdrückliche Aktivierung **kein** Verhalten sich ändert.
+3. Instrumentierung: pro Level messen und protokollieren, wohin die Zeit geht.
+4. Ein Mikro-Benchmark-Skript, das genau eine Zelle unter altem und neuem Budget vergleicht und
+   Speedup sowie Ergebnisgleichheit berichtet.
 
 ## Files
 
-- **Modify only:** `studies/regression/run_regression.jl`.
-- Do not touch `src/`, `Project.toml`, or the fixed config.
+- **Ändern:** `src/optimize/bfgs.jl`, `src/simulate/solve.jl`, `src/structure/evogrow.jl`,
+  `studies/regression/run_regression.jl` (nur soweit für die Punkte unten nötig).
+- **Neu:** ein Mikro-Benchmark-Skript unter `studies/profiling/`.
+- **Nicht anfassen:** `src/structure/evogrow_v3.jl` (Verhalten der Lockstep-Brücke muss identisch
+  bleiben), Systemliste, Seeds, Hyperparameter der Suche.
 
 ## Required Content
 
-### 1. Load completed cells at startup
+### 1. Determinismus: kein Wall-Clock im Ergebnispfad
 
-After computing `fingerprint = config_fingerprint()` and before the run loop, read
-`history.jsonl` (if it exists) line by line and build a set of "completed keys". A record counts
-as completed iff:
-- its `config_fingerprint` equals the current `fingerprint`, AND
-- its `error` field is `null` (successful run only — errored/failed cells must be retried).
+Es darf kein Abbruchkriterium geben, dessen Auslösen von der Maschinenlast abhängt und das
+das Ergebnis beeinflusst. Der Optimierer muss so konfigurierbar sein, dass sein Budget rein
+deterministisch ist (Iterationszahl / Toleranzen), und `run_regression.jl` muss ihn genau so
+konstruieren — explizit, nicht über Defaults.
 
-The completed key is the tuple `(variant, system_id, seed)`. Parse each line as JSON; ignore any
-malformed line defensively (do not crash the run on a bad line).
+Ein Wall-Clock-Limit darf weiterhin existieren, aber nur als **Notbremse**: wenn es greift, muss
+das erkennbar sein (Zählung, Logeintrag, Kennzeichnung im Ergebnis), damit ein solcher Lauf nicht
+stillschweigend als reguläres Ergebnis durchgeht. Wähle die Notbremse so, dass sie im
+regulären Betrieb nicht greift.
 
-Rationale for keying on `config_fingerprint` and NOT `git_hash`: the interrupted records were
-produced at an earlier commit, and this task will itself be a new commit. Because the config
-(and therefore the fingerprint) is unchanged and this task does not alter algorithm behavior,
-records from the interrupted run must still be recognized and skipped. A resumed baseline may
-therefore span more than one `git_hash`; that is acceptable and expected.
+Dokumentiere im Docstring, welche Parameter deterministisch sind und welche nicht.
 
-### 2. Skip completed cells in the loop
+### 2. Getrennte Budgets: Suche vs. finale Validierung
 
-In the `main` run loop, for each `(variant, system, seed)`:
-- If its key is in the completed set: **skip it** — do not build a trajectory, do not run
-  `discover`, do not append a record. Advance the outer progress bar by one and append a skip
-  line to `run.log`, e.g. `[i/N] variant=… sys=… seed=… — skipped (already in history)`.
-  Do not create an inner progress bar for skipped cells.
-- Otherwise: run it exactly as today (append record, inner bar, done line, etc.).
+Heute wird während der Suche mit denselben Solver-Toleranzen und demselben Schritt-Limit
+gerechnet wie bei der Endauswertung (`abstol/reltol = 1e-9`, `maxiters_solve = 10^6`). Eine
+divergierende Kandidatenstruktur darf damit bis zu einer Million Solver-Schritte verbrennen.
 
-Keep the outer progress bar total at the full `N = variants × systems × seeds`, so the bar
-reflects true overall completion (skipped cells count as done).
+Führe getrennte, explizit übergebbare Budgets ein für:
+- **Screening/Bewertung während der Strukturmutation** (lose Toleranz, hartes Schritt-Limit,
+  frühe Verwerfung divergierender oder nicht-endlicher Lösungen),
+- **finale Validierung** (heutige Werte, unverändert).
 
-### 3. Optional fresh-run override
+Harte Anforderungen:
+- Die neuen Parameter erhalten als **Default exakt die heutigen Werte**. Ohne ausdrückliche
+  Aktivierung durch den Aufrufer darf sich kein einziges Ergebnis ändern.
+- Eine Kandidatenstruktur, deren Simulation fehlschlägt, divergiert oder nicht-endliche Werte
+  liefert, muss **billig** verworfen werden (früher Abbruch), nicht durchgerechnet.
+- Verworfene Kandidaten müssen als solche gezählt werden (siehe Punkt 3), nicht stillschweigend
+  als schlechter Loss durchlaufen.
 
-Support an optional environment flag to force a full re-run that ignores existing history
-(e.g. `FRESH=1` / `FRESH=true`): when set, the completed set is treated as empty so every cell
-runs. Keep this minimal; default behavior (no flag) is resume.
+### 3. Instrumentierung: wohin geht die Zeit
 
-### 4. End-of-run reporting
+Pro Level messen und in `run.log` protokollieren (eine kompakte Zeile pro Level, keine Flut):
+- Wall-Zeit des Levels und aktive Stage,
+- Anzahl Parameter-Fits,
+- Anzahl ODE-Solves,
+- Anzahl verworfener/ungültiger Solves (divergiert, nicht-endlich, Schritt-Limit erreicht),
+- Anzahl Fits, die in ein Iterations- oder Notbrems-Limit gelaufen sind,
+- Zeitanteil Parameteroptimierung vs. Simulation.
 
-At the end, print counts: total cells, number skipped (already completed), number run this
-invocation, and the resulting `history.jsonl` line count.
+Dieselben Größen pro Lauf aufsummiert in den Record von `history.jsonl` aufnehmen. Bestehende
+Feldnamen und Werte dürfen sich **nicht** ändern; nur neue Felder ergänzen.
+
+Beachte: neue Felder im Record sind unkritisch, eine Änderung metrik-relevanter Konfiguration
+ändert dagegen den `config_fingerprint`. Das ist beabsichtigt und erwünscht — die bestehenden
+23 Records unter Fingerprint `0c739d4e36ee6498` bleiben als Baseline v0 gültig und dürfen nicht
+nachträglich umgeschrieben werden. Umgehe den Fingerprint-Wechsel nicht.
+
+### 4. Mikro-Benchmark (Pflicht-Deliverable)
+
+Ein Skript unter `studies/profiling/`, das **genau eine** Zelle rechnet — System 26, Seed 42,
+Variante v2.2 — und zwar zweimal:
+
+- **A:** heutige Budgets (Referenz),
+- **B:** eingeschaltete Screening-Budgets aus Punkt 2.
+
+Berichtet werden müssen für A und B jeweils: Wall-Zeit, Loss, `final_stage`, `pruned_match`,
+sowie alle Zähler aus Punkt 3 — plus der Speedup B/A und eine klare Aussage, ob sich die
+gefundene Struktur geändert hat.
+
+Ausgabe nach `outputs/studies/profiling/profile_eval_cost/` (eigener Unterordner, nicht direkt
+in den Elternordner). Das Skript darf **nicht** die volle Suite starten.
+
+Wähle für B einen konservativen ersten Parametersatz und begründe die Wahl kurz im Skript-Header.
+Falls B die Struktur verändert, ist das ein Ergebnis, kein Fehler — berichte es.
 
 ## Verification
 
-Run only a small, fast subset (Systems 3 and/or 11); do not run the full suite. Temporarily
-reduce the loop for verification, then restore the full suite before finishing, and state which
-subset was run. Confirm:
+1. Ohne Aktivierung der neuen Budgets ist eine schnelle Zelle (System 11, alle Seeds) **bit-identisch**
+   zur Baseline v0 (Loss, `final_stage`, `pruned_match` gegen `history.jsonl` prüfen).
+2. Das Wall-Clock-Limit beeinflusst das Ergebnis im Default-Pfad nicht mehr.
+3. Der Mikro-Benchmark aus Punkt 4 läuft durch und liefert die geforderte A/B-Tabelle.
+4. Die Zähler aus Punkt 3 sind plausibel (Anzahl Fits pro Level passt zu `pop_size` und
+   `children_per_parent`).
+5. Keine Änderung an Systemliste, Seeds, Suchhyperparametern oder an `evogrow_v3.jl`.
 
-1. First invocation on a fresh (empty) history runs all subset cells and appends their records.
-2. Second invocation with the same history **skips all** already-completed cells (appends no new
-   records; `run.log` shows skip lines; the end report shows skipped==subset size, run==0).
-3. A cell whose only record has a non-null `error` is **not** skipped (it is retried).
-4. `FRESH=1` (if implemented) forces all cells to run again.
-5. `config_fingerprint`, the record schema, and existing record values are unchanged.
+Führe **keine** vollständige Regression-Suite aus. Nenne im Abschlussbericht, welche Zellen du
+tatsächlich gerechnet hast.
 
 ## Constraints
 
-- Resilience/observability only: do not change the algorithm, metrics, record values,
-  `config_fingerprint`, or the fixed configuration.
-- Skip is keyed on `(config_fingerprint, variant, system_id, seed)` with `error == null`; do not
-  key on `git_hash`.
-- Modify only `studies/regression/run_regression.jl`; add no dependencies.
-- Malformed history lines must not crash the run.
-- Do not implement the Python delta report (WP-H2) or any plotting.
+- Kein Eingriff in Wachstum, Selektion, Promotion oder Stopplogik. Dieses WP ändert nur, wie
+  teuer und wie reproduzierbar eine Auswertung ist.
+- Alle neuen Parameter defaulten auf heutiges Verhalten. Kein stilles Verhaltens-Delta.
+- Bestehende Record-Felder, Metrikdefinitionen und die 23 Baseline-v0-Records bleiben unangetastet.
+- Keine neuen Abhängigkeiten.
+- **Ausdrücklich nicht Teil dieses WP** (nicht vorwegnehmen): ein ableitungsbasiertes
+  Screening-Kriterium anstelle der Simulation, das Einschalten von `use_pretuning`,
+  Parallelisierung, WP-v3.3, und der Python-Delta-Report WP-H2.

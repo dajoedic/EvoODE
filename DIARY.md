@@ -4,6 +4,42 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ---
 
+## 2026-07-22
+
+### Volllauf abgebrochen — Kostendiagnose: 62 % der Rechenzeit oberhalb der nötigen Stage
+
+Der Volllauf wurde bei 23/30 Zellen abgebrochen (v2.2 komplett 15/15, v3.2 bei 8/15), nach **40,5 Compute-Stunden**. Daten gesichert (`a69637a`). Grund: Laufzeit inakzeptabel (mehrere Tage), Restlaufzeit ~26–30 h für Zellen mit nahezu null Informationswert (v3.2 ist die Lockstep-Brücke; Äquivalenz war bereits beantwortet).
+
+**Befund 1 — Anker bestätigt, mit einer Ausnahme.** v2.2 == v3.2 bit-identisch in 7 von 8 überlappenden Zellen. Abweichung nur System 26 Seed 123 (1.3916e-3 vs. 1.3713e-3).
+
+**Befund 2 — Ursache ist ein Reproduzierbarkeitsleck, kein v3-Bug.** `run_regression.jl` baut `BFGSOptimizer(maxiters=BFGS_MAXITERS)`; `time_limit_s` bleibt beim Default **300 s Wall-Clock** (`bfgs.jl:29`) und wird an Optim.jl durchgereicht. Damit hängt die Zahl der BFGS-Iterationen von der Maschinenlast ab → Ergebnisse sind nicht reproduzierbar. Dieselbe Zelle brauchte 13.352 s (v2.2) vs. 20.158 s (v3.2). Muss für Paper 1 ohnehin weg.
+
+**Befund 3 — Kostenprofil (aus `run.log` rekonstruiert, alle 23 Zellen).** Kosten pro Level explodieren mit der Stage:
+
+| Stage | Level | Zeit | Anteil | s/Level |
+|---|---|---|---|---|
+| 1 | 124 | 0,7 h | 1,9 % | 21 |
+| 2 | 129 | 6,1 h | 16,3 % | 170 |
+| 3 | 94 | 11,6 h | 30,9 % | 443 |
+| 4 | 55 | 7,4 h | 19,7 % | 482 |
+| 5 | 48 | 11,7 h | 31,3 % | 878 |
+
+Ein Stage-5-Level kostet das **42-fache** eines Stage-1-Levels. Pro Zelle oberhalb der erwarteten Stage aufsummiert: **24,9 von 40,5 h = 62 % der gesamten Rechenzeit wurden in Komplexität investiert, die die Systeme nie gebraucht haben.** Auf gekoppelten Systemen liegt der Anteil bei 38–80 %. Extremfall System 63 Seed 123: 8,4 h, davon 6,7 h verschwendet; ein einzelnes Level (16, Stage 4) kostete 3,4 h.
+
+**Konsequenz:** Laufzeitproblem und Gate-1-Failure-Mode sind **dasselbe Problem**. Die Suche läuft über die nötige Stage hinaus, und jede zusätzliche Stage ist überproportional teurer (Stage 4/5 = kubisch/trigonometrisch → steife und divergierende Kandidaten-ODEs → Solver kriecht bis ins 300-s-Limit). Bei ~619 s pro Kandidat auf den teuersten Levels laufen einzelne Fits sicher ins Wall-Clock-Limit.
+
+**Blocker für Phase B:** 63 Systeme × 2 Bedingungen × 3 Seeds = 378 Runs, davon 240 gekoppelt. Bei ~3,5 h pro gekoppelter Zelle > 800 h ≈ 5 Wochen durchgehend — und das Set enthält mehr 3D/4D als das Testset. **Phase B ist mit dem aktuellen Kostenprofil nicht durchführbar.** Muss vor WP-v3.3 gelöst werden.
+
+Zwei getrennte Hebel, multiplikativ:
+- **A (Overshoot, 62 %):** Promotionsdisziplin — genau das, was v3 leisten soll. Forschungsarbeit, bereits geplant.
+- **B (Kosten pro Auswertung):** EvoODE bewertet jeden Kandidaten per voller Trajektorien-Simulation (bis 200 BFGS-Iterationen × ODE-Solve mit `maxiters_solve=10^6`, Toleranz 1e-9). SINDy/GP scoren auf Ableitungsresiduen statt zu integrieren — daher der Kostenunterschied. `pretune.jl` enthält die Maschinerie (finite Differenzen → Design-Matrix → lineares LS) bereits, nutzt sie aber nur als Warmstart, und im Regression-Config ist sie mit `USE_PRETUNING=false` ganz abgeschaltet.
+
+Reihenfolge geändert: **WP-P1 vor WP-v3.3.**
+
+<!-- a69637a -->
+
+---
+
 ## 2026-07-20
 
 ### WP-H1d umgesetzt und reviewt — Resume grün
