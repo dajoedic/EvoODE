@@ -13,6 +13,28 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 - Profiling-Benchmark wird auf 12 Level begrenzt, rechnet Screening vor Referenz und schreibt Zwischenergebnisse nach jedem Fall.
 - Offener Reproduzierbarkeitszustand: ausserhalb des Regression-Runners konstruieren Benchmarks, Experimente und alte Studies `BFGSOptimizer` weiterhin ohne explizites `time_limit_s`; der Struct-Default bleibt `300.0` und muss vor Phase B bewusst entschieden werden.
 
+### WP-P2.2 beauftragt — Screening-Variante mit begrenztem Nachpolieren
+
+Architektur festgelegt. Reines Screening ohne Simulation waere am billigsten, macht aber die Stopplogik unbrauchbar: Parameter aus dem Ableitungs-LS sind nicht fuer das Simulationsziel optimiert, und `plateau_tol = 1e-4` sowie `loss_tol = 1e-8` sind auf BFGS-optimierte Losses kalibriert. Loesung ist ein **begrenztes Nachpolieren** der ausgewaehlten Kandidaten, ausgehend von den LS-Parametern.
+
+Kostenmodell aus den Messwerten (4.707 Solves pro Fit bei 200 Iterationen -> 23,5 Solves/Iteration -> 41,5 ms/Iteration; heute 170,9 s pro Level):
+
+| k | Polish-Iterationen | Kosten/Level | Solve-Faktor |
+|---|---|---|---|
+| 10 | 0 | 0,02 s | Stopplogik kaputt |
+| 10 | 10 | 4,2 s | 41x |
+| 10 | 20 | 8,3 s | 21x |
+| 5 | 20 | 4,2 s | 41x |
+| 10 | 50 | 20,8 s | 8x |
+
+Nach Abzug des Overhead-Bodens von 153 s realistische Gesamterwartung **10–15x** auf dieser Zelle, nicht die 21x der theoretischen Untergrenze. Das ist die Zahl, an der die Umsetzung zu messen ist.
+
+Ablauf pro Level: alle Kandidaten per Screening-Score bewerten (kein BFGS, keine Simulation), die besten k plus den Incumbent auswaehlen, nur diese mit begrenztem Budget nachpolieren und simulieren, nur simulierte Kandidaten duerfen in die Population. Plateau, Stopplogik und Promotion laufen **ausschliesslich** auf simuliertem Loss — die Trennung aus Abschnitt 4 der Design-Notiz. Der berichtete `loss` bleibt ein simulierter Loss auf voller Genauigkeit, die Endstruktur wird einmal mit vollem Budget nachgefittet.
+
+Zwei Messgroessen als Pflicht: (i) wie viele ausgewaehlte Kandidaten ihr Polish-Budget ausschoepfen — durchgaengiges Ausschoepfen bedeutet, die Losses sind nicht mit dem Simulationspfad vergleichbar; (ii) **Rangeuebereinstimmung** zwischen Screening-Score und simuliertem Loss unter den simulierten Kandidaten — die Messgroesse fuer das zentrale Methodenrisiko (Zielkonflikt), ohne die sich nicht beurteilen laesst, ob die Vorauswahl gute Kandidaten verwirft.
+
+Neue Variante neben dem bestehenden Pfad, kein Ersatz. `pretune.jl` wird um eine Score-Funktion mit Gueltigkeitsflag erweitert; `pretune_parameters` selbst bleibt verhaltensgleich. Verifikation nur auf System 3 und 11.
+
 ### WP-P2.1 Design-Notiz reviewt — tragfaehig, aber ohne Kostenmodell; Faktor 10 haengt an einem Wort
 
 `docs/evogrow_screening_design.md` committet (`97e0dbe`). Alle neun Pflichtabschnitte vorhanden. Saemtliche Zahlen gegen `summary.json` geprueft und korrekt, inklusive der 21x als `3222,6 / 153,0`. API-Referenzen auf `pretune.jl` stimmen (Signaturen von `estimate_derivatives`, `build_design_matrix`, Per-Gleichungs-LS geprueft). Abschnitt 4 und 7 beziehen klare Position: Stage-Promotion bleibt am simulierten Loss verankert, und der Beitrag bleibt nur dann von SINDy unterscheidbar, wenn staged incremental growth Untersuchungsgegenstand bleibt und der simulierte Loss die berichtete Metrik.
