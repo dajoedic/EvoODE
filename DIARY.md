@@ -36,7 +36,9 @@ Zwei getrennte Hebel, multiplikativ:
 
 Reihenfolge geändert: **WP-P1 vor WP-v3.3.**
 
-<!-- a69637a -->
+**WP-P1 beauftragt** (`2bd9463`): Determinismus (kein Wall-Clock im Ergebnispfad), getrennte Budgets für Screening während der Suche vs. finale Validierung (Defaults = heutige Werte, kein stilles Verhaltens-Delta), Instrumentierung pro Level (Fits, Solves, verworfene Solves, Zeitanteil Optimierung vs. Simulation), sowie ein Pflicht-Mikro-Benchmark über genau eine Zelle (System 26, Seed 42) mit A/B-Vergleich. Ausdrücklich nicht in WP-P1: ableitungsbasiertes Screening-Kriterium, `use_pretuning`, Parallelisierung, WP-v3.3, WP-H2.
+
+<!-- a69637a, 2bd9463 -->
 
 ---
 
