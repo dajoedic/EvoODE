@@ -94,7 +94,7 @@ function build_strategy(label::String)
             nothing,
             nothing,
         )
-    elseif label == "evogrow_screening_derivative"
+    elseif label == "evogrow_screening_derivative_residual"
         return EvoGrowScreening(
             POP_SIZE,
             N_LEVELS,
@@ -108,6 +108,23 @@ function build_strategy(label::String)
             DERIVATIVE_REJECTED_DIAGNOSTIC_SAMPLES,
             nothing,
             nothing,
+            :residual,
+        )
+    elseif label == "evogrow_screening_derivative_aic"
+        return EvoGrowScreening(
+            POP_SIZE,
+            N_LEVELS,
+            CHILDREN_PER_PARENT,
+            MAX_TERMS,
+            LAMBDA,
+            progression,
+            usage,
+            DERIVATIVE_SCREEN_K,
+            DERIVATIVE_POLISH_MAXITERS,
+            DERIVATIVE_REJECTED_DIAGNOSTIC_SAMPLES,
+            nothing,
+            nothing,
+            :aic,
         )
     end
     error("Unsupported variant label: $(label)")
@@ -115,6 +132,15 @@ end
 
 function get_meta(meta, key::Symbol, default = nothing)
     return haskey(meta, key) ? getfield(meta, key) : default
+end
+
+function simulation_ms_per_solve(meta)
+    solves = get_meta(meta, :total_ode_solves)
+    sim_time = get_meta(meta, :total_simulation_time_s)
+    if solves === nothing || sim_time === nothing || solves == 0
+        return nothing
+    end
+    return 1000.0 * sim_time / solves
 end
 
 function pruned_support(structure::StructureSpec, params::Vector{Float64})
@@ -148,6 +174,7 @@ function run_cell(label::String, system_id::Int, seed::Int)
     end
 
     meta = result.meta.structure
+    final_refit_meta = get_meta(meta, :final_refit_meta, (;))
     expected_idxs = expected_active_idxs(system_id, basis)
     baseline = label == "evogrow_v2_2_stage_local" ? BASELINE_V0[system_id] : nothing
 
@@ -165,6 +192,8 @@ function run_cell(label::String, system_id::Int, seed::Int)
         "total_parameter_fits" => get_meta(meta, :total_parameter_fits),
         "total_ode_solves" => get_meta(meta, :total_ode_solves),
         "total_simulation_time_s" => get_meta(meta, :total_simulation_time_s),
+        "simulation_ms_per_ode_solve" => simulation_ms_per_solve(meta),
+        "screening_score_mode" => get_meta(meta, :screening_score_mode),
         "screening_evals" => get_meta(meta, :screening_evals),
         "invalid_screening_evals" => get_meta(meta, :invalid_screening_evals),
         "polished_candidates" => get_meta(meta, :polished_candidates),
@@ -177,6 +206,13 @@ function run_cell(label::String, system_id::Int, seed::Int)
         "polish_time_s" => get_meta(meta, :polish_time_s),
         "rejected_diagnostic_time_s" => get_meta(meta, :rejected_diagnostic_time_s),
         "final_refit_time_s" => get_meta(meta, :final_refit_time_s),
+        "final_refit_method" => get_meta(final_refit_meta, :method),
+        "final_refit_retcode" => get_meta(final_refit_meta, :retcode),
+        "final_refit_loss_evals" => get_meta(final_refit_meta, :loss_evals),
+        "final_refit_invalid_evals" => get_meta(final_refit_meta, :invalid_evals),
+        "final_refit_optimizer_retcodes" => get_meta(final_refit_meta, :optimizer_retcodes),
+        "final_refit_optimizer_failure_hits" => get_meta(final_refit_meta, :optimizer_failure_hits),
+        "final_refit_optimizer_iteration_limit_hits" => get_meta(final_refit_meta, :optimizer_iteration_limit_hits),
         "baseline_v0_loss" => baseline === nothing ? nothing : baseline.loss,
         "baseline_v0_final_stage" => baseline === nothing ? nothing : baseline.final_stage,
         "baseline_v0_loss_equal" => baseline === nothing ? nothing : result.loss == baseline.loss,
@@ -214,10 +250,14 @@ function write_csv(path::String, records)
     columns = [
         "variant", "system_id", "system_name", "seed", "elapsed_s", "loss", "final_stage",
         "pruned_match", "total_parameter_fits", "total_ode_solves", "total_simulation_time_s",
-        "screening_evals", "invalid_screening_evals", "polished_candidates",
+        "simulation_ms_per_ode_solve", "screening_score_mode", "screening_evals",
+        "invalid_screening_evals", "polished_candidates",
         "polish_budget_exhausted", "polish_convergence_failures", "rank_agreement_spearman",
         "rejected_diagnostic_candidates", "rejected_beats_best_selected", "screening_time_s",
         "polish_time_s", "rejected_diagnostic_time_s", "final_refit_time_s",
+        "final_refit_method", "final_refit_retcode", "final_refit_loss_evals",
+        "final_refit_invalid_evals", "final_refit_optimizer_retcodes",
+        "final_refit_optimizer_failure_hits", "final_refit_optimizer_iteration_limit_hits",
         "baseline_v0_loss_equal", "baseline_v0_final_stage_equal",
     ]
     open(path, "w") do io
@@ -230,7 +270,7 @@ end
 
 function print_record(record)
     @printf(
-        "%s system=%d seed=%d elapsed=%.3fs loss=%.16e stage=%d pruned=%s fits=%s solves=%s sim_time=%s\n",
+        "%s system=%d seed=%d elapsed=%.3fs loss=%.16e stage=%d pruned=%s fits=%s solves=%s sim_time=%s ms_per_solve=%s\n",
         record["variant"],
         record["system_id"],
         record["seed"],
@@ -241,10 +281,12 @@ function print_record(record)
         string(record["total_parameter_fits"]),
         string(record["total_ode_solves"]),
         string(record["total_simulation_time_s"]),
+        string(record["simulation_ms_per_ode_solve"]),
     )
-    if record["variant"] == "evogrow_screening_derivative"
+    if startswith(record["variant"], "evogrow_screening_derivative")
         @printf(
-            "  screening_evals=%s invalid=%s polished=%s exhausted=%s failures=%s rho=%s rejected_diag=%s rejected_beats=%s screen_time=%s polish_time=%s rejected_time=%s final_refit=%s\n",
+            "  score=%s screening_evals=%s invalid=%s polished=%s exhausted=%s failures=%s rho=%s rejected_diag=%s rejected_beats=%s screen_time=%s polish_time=%s rejected_time=%s final_refit=%s final_refit_method=%s final_refit_retcode=%s final_refit_loss_evals=%s final_refit_optimizer_retcodes=%s\n",
+            string(record["screening_score_mode"]),
             string(record["screening_evals"]),
             string(record["invalid_screening_evals"]),
             string(record["polished_candidates"]),
@@ -257,13 +299,21 @@ function print_record(record)
             string(record["polish_time_s"]),
             string(record["rejected_diagnostic_time_s"]),
             string(record["final_refit_time_s"]),
+            string(record["final_refit_method"]),
+            string(record["final_refit_retcode"]),
+            string(record["final_refit_loss_evals"]),
+            string(record["final_refit_optimizer_retcodes"]),
         )
     end
 end
 
 function main()
     mkpath(OUTPUT_DIR)
-    variants = ("evogrow_v2_2_stage_local", "evogrow_screening_derivative")
+    variants = (
+        "evogrow_v2_2_stage_local",
+        "evogrow_screening_derivative_residual",
+        "evogrow_screening_derivative_aic",
+    )
     records = Dict{String, Any}[]
     comparisons = Dict{String, Any}[]
 
@@ -277,18 +327,18 @@ function main()
             system_records[variant] = record
             print_record(record)
         end
-        comparison = system_comparison(
-            system_id,
-            system_records["evogrow_v2_2_stage_local"],
-            system_records["evogrow_screening_derivative"],
-        )
-        push!(comparisons, comparison)
-        @printf(
-            "COMPARISON system=%d runtime_ratio_reference_to_screening=%.6f same_pruned_support=%s\n",
-            system_id,
-            comparison["runtime_ratio_reference_to_screening"],
-            string(comparison["same_pruned_support"]),
-        )
+        reference = system_records["evogrow_v2_2_stage_local"]
+        for variant in variants[2:end]
+            comparison = system_comparison(system_id, reference, system_records[variant])
+            push!(comparisons, comparison)
+            @printf(
+                "COMPARISON system=%d screening=%s runtime_ratio_reference_to_screening=%.6f same_pruned_support=%s\n",
+                system_id,
+                variant,
+                comparison["runtime_ratio_reference_to_screening"],
+                string(comparison["same_pruned_support"]),
+            )
+        end
     end
 
     summary = Dict{String, Any}(

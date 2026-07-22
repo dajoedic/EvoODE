@@ -12,6 +12,16 @@ baseline population size, while `polish_maxiters = 20` reflects the WP-P2.2 cost
 model: about one tenth of the reference BFGS budget keeps losses on the
 simulation scale without spending full fits on every candidate.
 
+`screening_score = :aic` uses the Gaussian least-squares Akaike information
+criterion, `n * log(RSS / n) + 2p`, where `RSS / n` is the derivative residual
+and `p` is the active parameter count. AIC is scale-invariant for ranking
+structures on the same trajectory because any constant rescaling of the
+derivative residual adds the same offset to every candidate, while the `2p`
+penalty counters the nested-LS bias toward larger structures. The raw residual
+score remains available, and is still the default, with
+`screening_score = :residual`; comparison scripts should set the intended mode
+explicitly.
+
 `screen_k < pop_size` is rejected rather than silently shrinking the population;
 callers that want a smaller polished set should reduce `pop_size` as well.
 If `screening_optimizer` is supplied, it is used for bounded polish and rejected
@@ -43,6 +53,7 @@ Base.@kwdef struct EvoGrowScreening <: AbstractStructureSearch
     rejected_diagnostic_samples::Int = 2
     screening_optimizer::Union{Nothing, AbstractOptimizer} = nothing
     level_callback::Union{Nothing, Function} = nothing
+    screening_score::Symbol = :residual
 end
 
 function _validate_policy(strategy::EvoGrowScreening)
@@ -66,6 +77,9 @@ function _validate_policy(strategy::EvoGrowScreening)
     end
     if strategy.rejected_diagnostic_samples < 0
         error("EvoGrowScreening.rejected_diagnostic_samples must be >= 0")
+    end
+    if !(strategy.screening_score in (:residual, :aic))
+        error("EvoGrowScreening.screening_score must be :residual or :aic")
     end
     return nothing
 end
@@ -137,8 +151,18 @@ function _spearman_rho(xs::Vector{Float64}, ys::Vector{Float64})
     return denom == 0.0 ? NaN : sum(dx .* dy) / denom
 end
 
-function _screening_score(screen)
-    return screen.valid ? screen.residual + 1e-12 * screen.n_params : Inf
+function _screening_score(screen, mode::Symbol)
+    if !screen.valid
+        return Inf
+    end
+    if mode == :residual
+        return screen.residual + 1e-12 * screen.n_params
+    elseif mode == :aic
+        n_obs = max(screen.n_timepoints * screen.dim, 1)
+        mse = max(screen.residual, eps(Float64))
+        return n_obs * log(mse) + 2.0 * screen.n_params
+    end
+    error("Unsupported screening score mode: $(mode)")
 end
 
 function _add_fit_stats!(totals::Dict{Symbol, Any}, fit_meta)
@@ -246,6 +270,7 @@ function search_structure(strategy::EvoGrowScreening,
                 :screen_k => screen_k,
                 :polish_maxiters => strategy.polish_maxiters,
                 :rejected_diagnostic_samples => strategy.rejected_diagnostic_samples,
+                :screening_score => strategy.screening_score,
                 :max_stage => max_stage,
                 :progression_mode => strategy.progression.mode,
                 :usage_mode => strategy.usage.mode
@@ -285,7 +310,7 @@ function search_structure(strategy::EvoGrowScreening,
         level_screening_evals = length(screening)
         level_invalid_screening_evals = count(s -> !s.valid, screening)
 
-        scores = [_screening_score(s) for s in screening]
+        scores = [_screening_score(s, strategy.screening_score) for s in screening]
         selected_idxs = Int[]
         if incumbent !== nothing
             incumbent_idx = findfirst(ind -> ind === incumbent, candidates)
@@ -314,7 +339,7 @@ function search_structure(strategy::EvoGrowScreening,
         level_rejected_diagnostic_budget_exhausted = 0
         level_rejected_diagnostic_convergence_failures = 0
         polished = Individual[]
-        measured_screen_residuals = Float64[]
+        measured_screen_scores = Float64[]
         measured_sim_losses = Float64[]
 
         polish_t0 = time()
@@ -335,7 +360,7 @@ function search_structure(strategy::EvoGrowScreening,
                 candidate = Individual(ind.structure, copy(ind.params), ind.loss, ind.objective)
             end
             push!(polished, candidate)
-            push!(measured_screen_residuals, screen.residual)
+            push!(measured_screen_scores, scores[idx])
             push!(measured_sim_losses, candidate.loss)
         end
         level_polish_time_s = time() - polish_t0
@@ -358,11 +383,11 @@ function search_structure(strategy::EvoGrowScreening,
             if candidate.loss < best_selected_loss
                 level_rejected_beats_best_selected += 1
             end
-            push!(measured_screen_residuals, screen.residual)
+            push!(measured_screen_scores, scores[idx])
             push!(measured_sim_losses, candidate.loss)
         end
         level_rejected_diagnostic_time_s = time() - rejected_t0
-        level_rank_agreement = _spearman_rho(measured_screen_residuals, measured_sim_losses)
+        level_rank_agreement = _spearman_rho(measured_screen_scores, measured_sim_losses)
         push!(level_rank_agreements, level_rank_agreement)
 
         sort!(polished, by = x -> x.objective)
@@ -441,6 +466,7 @@ function search_structure(strategy::EvoGrowScreening,
                 polish_time_s = level_polish_time_s,
                 rejected_diagnostic_time_s = level_rejected_diagnostic_time_s,
                 rank_agreement_spearman = level_rank_agreement,
+                screening_score_mode = strategy.screening_score,
                 screening_score_best = minimum(scores),
                 selected_screening_score_best = minimum(scores[selected_idxs]),
                 improvement = isfinite(level_prev_best_objective) ? level_prev_best_objective - best.objective : Inf
@@ -577,6 +603,7 @@ function search_structure(strategy::EvoGrowScreening,
             screen_k = screen_k,
             polish_maxiters = strategy.polish_maxiters,
             rejected_diagnostic_samples = strategy.rejected_diagnostic_samples,
+            screening_score_mode = strategy.screening_score,
             final_refit_meta = final_refit_meta,
             final_refit_time_s = final_refit_time_s
         )
