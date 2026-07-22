@@ -27,6 +27,8 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 **Nicht berichtet:** die in WP-P2.2 geforderten Verifikationszahlen (Laufzeit, Polish-Erschoepfung, Rangeuebereinstimmung, System 11 exakt gefunden?) liegen nicht vor, und im Repo sind keine Artefakte eines Verifikationslaufs. In WP-P2.2b sind die gemessenen Zahlen ausdruecklich Teil des Deliverables.
 
+<!-- 07aee5e, f5f4e4e -->
+
 ### WP-P2.2 beauftragt — Screening-Variante mit begrenztem Nachpolieren
 
 Architektur festgelegt. Reines Screening ohne Simulation waere am billigsten, macht aber die Stopplogik unbrauchbar: Parameter aus dem Ableitungs-LS sind nicht fuer das Simulationsziel optimiert, und `plateau_tol = 1e-4` sowie `loss_tol = 1e-8` sind auf BFGS-optimierte Losses kalibriert. Loesung ist ein **begrenztes Nachpolieren** der ausgewaehlten Kandidaten, ausgehend von den LS-Parametern.
