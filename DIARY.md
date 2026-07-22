@@ -13,6 +13,16 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 - Profiling-Benchmark wird auf 12 Level begrenzt, rechnet Screening vor Referenz und schreibt Zwischenergebnisse nach jedem Fall.
 - Offener Reproduzierbarkeitszustand: ausserhalb des Regression-Runners konstruieren Benchmarks, Experimente und alte Studies `BFGSOptimizer` weiterhin ohne explizites `time_limit_s`; der Struct-Default bleibt `300.0` und muss vor Phase B bewusst entschieden werden.
 
+### Loss konvergiert in allen Zellen bis Level 18 — Level-Cap trotzdem abgelehnt; WP-P2.1 beauftragt
+
+Rekonstruktion aus dem v0-`run.log` (`best_loss` pro Level, alle 23 Zellen, keine neuen Laeufe noetig): **13 Zellen liefen ueber Level 18 hinaus, und in allen 13 war der Loss bei Level 18 bereits identisch zum Endergebnis.** Kein Level nach 18 hat je etwas verbessert. Kosten dieser Level: **15,8 von 40,5 h = 39 % der gesamten Rechenzeit**.
+
+**Entscheidung: Level-Budget bleibt bei 30.** Der User hatte einer Kuerzung auf 18 zugestimmt, ich habe die Empfehlung zurueckgezogen. Grund: der Loss bliebe identisch, `final_stage`, `stage_overshoot` und `wasted_levels` aber nicht. System 26 Seed 42 bei 30 Leveln Stage 5 / Overshoot 2 / 8 wasted; bei 18 Leveln Stage 3 / Overshoot 0. Das sind die H1- und H3-Metriken. Ein Level-Cap wuerde das Overshoot-Phaenomen wegschneiden statt es zu messen — also genau das, was v3 beheben soll. Meine urspruengliche Optionsbeschreibung hatte diese Konsequenz nicht genannt.
+
+**Der Befund gehoert stattdessen in den v3-Entwurf.** Der Loss konvergiert in jeder Zelle bis Level 18, die Suche laeuft aber bis Level 26–29 weiter, weil Plateau-Erkennung Stage-Promotion ausloest statt Terminierung. Die Suche kann nicht aufhoeren, solange Stages uebrig sind — sie eskaliert stattdessen. Das ist ein Befund ueber die Stopp- und Promotionsregel, kein Konfigurationsproblem: die Promotionsregel braucht ein Kriterium, das erkennt, wann zusaetzliche Komplexitaet nichts mehr bringt, nicht nur wann der Fortschritt stockt.
+
+**WP-P2.1 beauftragt:** Design-Notiz `docs/evogrow_screening_design.md` fuer ein ableitungsbasiertes Screening-Kriterium, analog zum Vorgehen bei WP-v3.1 (erst Entwurf, dann Code). Neun Pflichtabschnitte; kritisch sind Abschnitt 4 (Stopplogik, Plateau-Erkennung und Stage-Promotion arbeiten heute auf dem Simulations-Loss — welches Signal traegt sie kuenftig?) und Abschnitt 7 (Verhaeltnis zum wissenschaftlichen Beitrag: ableitungsbasierte Bewertung rueckt naeher an SINDy, die Abgrenzung muss explizit begruendet werden). Kein Code, keine Laeufe.
+
 ### Mikro-Benchmark System 26 gelaufen — Kostentreiber quantifiziert, Obergrenze bei 21x
 
 Externer Lauf `studies/profiling/profile_eval_cost.jl` auf System 26, Seed 42, v2.2, 18 Level. Beide Faelle mit **identisch 370 Parameter-Fits** — damit ist der Vergleich normiert.

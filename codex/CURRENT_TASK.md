@@ -1,89 +1,119 @@
-# CURRENT TASK: WP-P1c — Benchmark so einstellen, dass er das Kostenproblem trifft
+# CURRENT TASK: WP-P2.1 — Design-Notiz „Ableitungsbasiertes Screening"
 
-**Language: Julia**
+**Language: Julia** (Deliverable ist ein Dokument, kein Code — siehe Constraints)
 
 ## Context
 
-WP-P1b ist umgesetzt und korrekt: Screening-Budgets greifen jetzt auch für `EvoGrowV3`, die frühe
-Verwerfung läuft über `unstable_check` statt `isoutofdomain`, der Default-Pfad ist wieder
-verhaltensgleich, und die Retcode-Kategorien sind über Enum-Vergleich abgesichert.
+Der Mikro-Benchmark auf System 26 (Seed 42, v2.2, 18 Level, je 370 Parameter-Fits) hat den
+Kostentreiber quantifiziert:
 
-Offen sind nur noch zwei Punkte am **Messaufbau** des Mikro-Benchmarks. Beide stammen aus der
-Nachrechnung des Baseline-v0-Logs, level-aufgelöst für System 26, Seed 42:
+| | Referenz | Screening-Budgets |
+|---|---|---|
+| Laufzeit | 3222,6 s | 1189,8 s |
+| ODE-Solves | 1.741.484 | 2.488.973 |
+| Kosten pro Solve | 1,763 ms | 0,409 ms |
+| **Solve-Anteil an Laufzeit** | **95 %** | 86 % |
+| Overhead ohne Solve | 153 s | 166 s |
 
-```
-bis Level 12:   1,6 min      <- aktuelle Benchmark-Grenze
-Level 13:     147 s
-Level 14:     878 s
-Level 16:     611 s
-bis Level 18:  39,7 min      <- Stage 3 beginnt
-Level 19:    1484 s
-bis Level 20:  66,2 min
-```
+Solver-Tuning hat 2,71x gebracht und ist damit ausgereizt — mehr als den Solve-Anteil kann es
+nicht heben. Der gesamte Overhead außerhalb der Integration beträgt 153 s bei 3222 s Laufzeit.
+**Ein Screening ohne Integration in der Suchschleife hat auf dieser Zelle eine Obergrenze von
+~21x.** Pro Parameter-Fit fallen derzeit rund 4.700 bis 7.300 vollständige Integrationen an.
 
-Der Kostenausbruch beginnt bei Level 13. **Mit 12 Leveln misst der Benchmark ausschließlich den
-billigen Bereich und würde zwischen A und B praktisch keinen Unterschied zeigen** — er kann die
-Frage, für die er gebaut wurde, nicht beantworten. Der Richtwert „12 Level" stammt aus der
-WP-P1b-Spec und war ohne diese level-aufgelöste Nachrechnung gewählt; er wird hiermit korrigiert.
+Die Maschinerie existiert bereits: `src/optimize/pretune.jl` schätzt Ableitungen per finiter
+Differenzen, baut eine Design-Matrix aus den aktiven Basistermen und löst das lineare System.
+Sie wird bisher ausschließlich als Warmstart benutzt — und im Regression-Config über
+`USE_PRETUNING = false` gar nicht.
+
+Das ist **keine** Performance-Optimierung. Es ändert das Kriterium, nach dem Strukturen bewertet
+und ausgewählt werden, und damit den Suchprozess selbst. Deshalb zuerst eine Design-Notiz, analog
+zu WP-v3.1, bevor eine Zeile Code entsteht.
+
+## Goal
+
+Eine Design-Notiz `docs/evogrow_screening_design.md`, die festlegt, wie ein ableitungsbasiertes
+Screening-Kriterium in EvoODE aussehen soll, welche Teile der Pipeline weiterhin simulieren
+müssen, und welche wissenschaftlichen Konsequenzen das hat.
+
+Das Deliverable ist das Dokument. Es wird **nichts implementiert**.
 
 ## Required Content
 
-### 1. Level-Budget so wählen, dass der teure Bereich erfasst wird
+Die Notiz muss folgende Abschnitte enthalten. Wo eine Frage nicht entscheidbar ist, muss sie als
+offene Entscheidung benannt werden — nicht stillschweigend beantwortet.
 
-Das Benchmark-Level-Budget auf **18** setzen. Begründung im Skript-Header festhalten: Level 13–17
-enthalten die teuren Auswertungen, Level 18 erreicht Stage 3; laut Baseline v0 liegt Fall A damit
-bei etwa 40 Minuten, also klar begrenzt und trotzdem im relevanten Regime. Der Wert bleibt eine
-benannte Konstante, getrennt von der Regression-Konfiguration.
+### 1. Motivation und Messlage
+Die Zahlen oben, korrekt eingeordnet: was gemessen wurde (eine Zelle, ein Seed), was daraus folgt
+und was nicht.
 
-### 2. Kosten pro Level aus dem Level-Log statt aus der Gesamtzeit
+### 2. Das Kriterium
+Was genau als Screening-Score berechnet wird. Wie die Ableitungen aus den Daten geschätzt werden,
+wie die Design-Matrix aus den aktiven Basistermen entsteht, und warum das Problem für eine in den
+Parametern lineare Basis in geschlossener Form lösbar ist. Verhältnis zum bestehenden
+`pretune.jl`: was wiederverwendbar ist und was fehlt.
 
-`cost_per_level_s` wird derzeit als Gesamtlaufzeit geteilt durch Levelzahl berechnet. Der zuerst
-laufende Fall trägt dabei die gesamte Julia-Kompilierzeit des `discover`/BFGS/Solver-Pfads — und
-das ist seit WP-P1b bewusst Fall B, also genau der Fall, der gut aussehen soll. Die Messung ist
-damit systematisch gegen B verzerrt.
+### 3. Zweistufige Auswertung
+Welcher Teil der Suche mit dem billigen Kriterium arbeitet und welcher weiterhin simuliert.
+Mindestens zu klären:
+- Werden alle Kandidaten gescreent und nur die besten k simuliert, oder wird gar nicht mehr
+  simuliert außer am Ende?
+- Nach welchem Kriterium wird k gewählt?
+- Werden die Parameter des Endkandidaten auf voller Genauigkeit nachgefittet? (Heute geschieht das
+  nicht: `discover()` refittet nur bei Parameteranzahl-Mismatch.)
 
-Zu tun:
-- Die Kosten pro Level aus den bereits vorhandenen Per-Level-Zeiten im `level_log` ableiten, nicht
-  aus der Gesamtlaufzeit.
-- Das erste Level aus dieser Kennzahl ausschließen (Kompilierungseffekt) und das im Ausgabefeld
-  bzw. Header klar benennen.
-- Zusätzlich zum Mittelwert den **Median** pro Level ausgeben. Die Verteilung ist stark
-  rechtsschief (einzelne Level dominieren), der Mittelwert allein ist irreführend.
-- Die Gesamtlaufzeit weiterhin ausweisen; sie bleibt die ehrliche Zahl für „was kostet ein Lauf".
+### 4. Konsequenzen für Stopplogik, Plateau-Erkennung und Stage-Promotion
+Das ist der kritische Abschnitt. Plateau-Erkennung, Loss-Toleranz und Stage-Promotion arbeiten
+heute alle auf dem **Simulations-Loss**. Wenn die Suchschleife auf einem Ableitungsresiduum
+bewertet, muss festgelegt werden, welches Signal diese Entscheidungen künftig trägt — und was
+das für die Vergleichbarkeit mit der bisherigen Stopplogik bedeutet.
 
-### 3. Per-Level- und Per-Stage-Aufschlüsselung ausgeben
+Relevanter Befund aus dem v0-Log, der hier einzuarbeiten ist: in **allen 13 Zellen, die über
+Level 18 hinausliefen, war der Loss bei Level 18 bereits identisch zum Endergebnis**. Die Suche
+lief dennoch bis Level 26–29 weiter, weil Plateau-Erkennung Stage-Promotion auslöst statt
+Terminierung. 15,8 von 40,5 Stunden wurden nach Level 18 ohne jede Loss-Verbesserung verbraucht.
+Die Notiz muss adressieren, ob und wie ein Screening-Kriterium diese Situation verändert.
 
-Der Bericht enthält bisher nur Summen über den ganzen Lauf. Die Diagnose, die dieses WP ausgelöst
-hat, war aber pro Stage aufgeschlüsselt — ohne dieselbe Auflösung ist das Ergebnis nicht mit der
-Baseline vergleichbar.
+### 5. Wo Simulation unverzichtbar bleibt
+Begründung, an welchen Stellen ein Ableitungsresiduum das Simulationsverhalten nicht ersetzen
+kann (u. a. Stabilität über die Trajektorie, Fehlerakkumulation, Divergenz), und wie die Notiz
+sicherstellt, dass das Endergebnis weiterhin auf simuliertem Loss bewertet wird.
 
-Zu tun:
-- Die Per-Level-Zeilen aus dem `level_log` (mindestens: Level, Stage, Zeit, Parameter-Fits,
-  ODE-Solves, verworfene Solves) für beide Fälle in die JSON-Ausgabe schreiben.
-- Eine Aufschlüsselung nach Stage (Levelzahl, Zeit, Zeit pro Level) für beide Fälle in die
-  Textausgabe schreiben, im selben Zuschnitt wie die Baseline-Tabelle im `DIARY.md`-Eintrag vom
-  2026-07-22.
+### 6. Schwächen und Risiken
+Insbesondere Rauschempfindlichkeit finiter Differenzen, Abhängigkeit von der Abtastdichte, und
+der Fall, dass Ableitungsresiduum und Simulations-Loss unterschiedliche Strukturen bevorzugen.
+Benenne konkret, welche Beobachtung den Ansatz **falsifizieren** würde.
+
+### 7. Verhältnis zum wissenschaftlichen Beitrag
+CLAUDE.md positioniert EvoODE gegen SINDy (feste Bibliothek, Ableitungs-Regression) und GP
+(globale Suche). Ein ableitungsbasiertes Screening rückt die Bewertung näher an SINDy. Die Notiz
+muss explizit adressieren, ob und warum der Beitrag — strukturiertes inkrementelles Wachstum mit
+Stage-Kontrolle — davon unberührt bleibt, und wie das in Paper 1 dargestellt würde.
+
+### 8. Vergleichbarkeit und Migrationspfad
+Was mit Baseline v0 (`studies/regression/history.jsonl`, Fingerprint `0c739d4e36ee6498`) und den
+bestehenden Ergebnissen passiert. Welche Läufe neu gerechnet werden müssten und in welcher
+Reihenfolge. Ob das Screening als Variante neben dem Simulationspfad bestehen bleibt oder ihn
+ersetzt.
+
+### 9. Offene Entscheidungen
+Nummerierte Liste dessen, was diese Notiz **nicht** entscheidet und wer bzw. welche Messung es
+entscheiden muss.
 
 ## Verification
 
-Nur ein billiges System rechnen: `PROFILE_SYSTEM_ID=3`. **Nicht** System 26 — der bleibt dem
-externen Lauf vorbehalten.
-
-1. Der Lauf erzeugt vollständige CSV-, JSON- und Textausgaben inklusive Per-Level-Zeilen und
-   Per-Stage-Aufschlüsselung für beide Fälle.
-2. Die neue Kennzahl für Kosten pro Level stimmt mit der Summe der Per-Level-Zeiten überein
-   (abzüglich des ausgeschlossenen ersten Levels) und ist nicht aus der Gesamtzeit abgeleitet.
-3. Die Zwischenausgabe nach Fall B ist weiterhin vollständig auf der Platte, bevor Fall A startet.
-4. Die beobachteten Retcode-Strings stehen in der Ausgabe.
-
-Nenne im Abschlussbericht die tatsächlich gemessenen Zahlen für System 3 (Laufzeit A, Laufzeit B,
-Kosten pro Level, Retcodes) — nicht nur „läuft durch".
+Kein Code, keine Läufe. Prüfe stattdessen:
+1. Alle neun Abschnitte sind vorhanden und inhaltlich gefüllt.
+2. Die zitierten Zahlen stimmen mit `outputs/studies/profiling/profile_eval_cost/summary.json`
+   und dem DIARY-Eintrag vom 2026-07-22 überein.
+3. Abschnitt 4 und Abschnitt 7 nehmen jeweils eine klare Position ein oder benennen die
+   Entscheidung ausdrücklich als offen — kein Ausweichen.
 
 ## Constraints
 
-- Nur `studies/profiling/profile_eval_cost.jl` ändern. Kein Eingriff in `src/`, nicht in
-  `run_regression.jl`, nicht in die Regression-Konfiguration.
-- Keine Änderung an Suchverhalten, Metrikdefinitionen oder `config_fingerprint`.
-- Keine neuen Abhängigkeiten.
-- Weiterhin nicht Teil dieses WP: ableitungsbasiertes Screening-Kriterium, `use_pretuning`,
-  finaler Refit auf Referenz-Fidelity, Parallelisierung, WP-v3.3, WP-H2.
+- **Kein Code.** Keine Änderung an `src/`, `studies/`, `benchmarks/`, `experiments/`. Einziges
+  Artefakt ist `docs/evogrow_screening_design.md`.
+- Keine Änderung an Konfiguration, Metriken oder `config_fingerprint`.
+- Das Level-Budget der Regression-Suite bleibt bei 30. Eine Kürzung würde `final_stage`,
+  `stage_overshoot` und `wasted_levels` verändern und damit genau das Overshoot-Phänomen
+  wegschneiden, das v3 beheben soll. Nicht anfassen.
+- Keine Vorwegnahme von WP-v3.3, WP-H2 oder der Implementierung selbst.
