@@ -6,6 +6,24 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ## 2026-07-22
 
+### WP-P1 umgesetzt und reviewt — drei Blocker, WP-P1b beauftragt
+
+Codex hat WP-P1 umgesetzt (`911a567`, enthält versehentlich auch die WP-P1b-Spec): `BFGSOptimizer` um deterministische Budget-Parameter und `reject_nonfinite`/`divergence_limit` erweitert, Zähler pro Level (Fits, Solves, invalid/diverged/nonfinite, Optimizer-Limit-Treffer, Solve- vs. Overhead-Zeit) über EvoGrow-Meta bis in den Record durchgereicht, expliziter Referenz-Optimizer im Regression-Runner (`time_limit_s = 86_400`), Mikro-Benchmark `studies/profiling/profile_eval_cost.jl`. Instrumentierung sauber und vollständig verdrahtet; Fingerprint korrekt erweitert; Profiling-Skript verschmutzt `history.jsonl` nicht.
+
+**Review — drei Blocker:**
+
+1. **v3 ignoriert die Screening-Budgets, Records sind falsch etikettiert.** `EvoGrowV3` hat kein `screening_optimizer`-Feld (der Runner übergibt ihn an einen ungenutzten Parameter) und wertet in seiner eigenen Suchschleife immer mit dem Referenz-Optimizer aus. Bei aktivierten Budgets liefen v2.2 und v3 damit unter verschiedenen Budgets → Anker-Vergleich wertlos. `screening_budgets_active` wird zudem aus dem ENV-Flag statt aus dem Meta geschrieben, und die 11 Instrumentierungsfelder sind bei v3 alle `nothing`. Ursache war meine eigene Spec-Formulierung („evogrow_v3.jl nicht anfassen") — gemeint war das Lockstep-Verhalten, nicht ein Durchreich-Parameter.
+
+2. **`isoutofdomain` ist das falsche Primitiv.** Belegt in `OrdinaryDiffEqCore/.../integrator_utils.jl:268-286`: `isoutofdomain == true` setzt `accept_step = false` → Schritt verwerfen, `dt` verkleinern, erneut versuchen, bis `maxiters`/`dtmin`. Kein Abbruch. Das Abbruch-Primitiv ist `unstable_check`, dessen Default (`DiffEqBase/common_defaults.jl:110-120`, `INFINITE_OR_GIANT`) bereits `any(!isfinite, u)` prüft — die Nicht-endlich-Erkennung war also ohnehin aktiv, über den richtigen Mechanismus. Neu ist allein die endliche Schranke. Netto verteuert die Änderung genau die divergierenden Kandidaten, die sie billiger machen sollte. Zusätzlich alloziert die Prüf-Closure zwei temporäre Arrays pro Schritt im Hot Path.
+
+3. **Der „Mikro"-Benchmark ist nicht mikro.** Fall A ist System 26 / Seed 42 / 30 Level — die 3-h-Zelle aus Baseline v0, damals *mit* der 300-s-Bremse, die laut v0-Log regelmäßig griff (~400 s/Fit auf teuren Leveln). Mit `maxiters = 200` und `maxiters_solve = 10^6` gibt es keine deterministische Obergrenze für einen einzelnen Fit.
+
+**Weitere Befunde:** (S1) `_predict_traj` und `simulate` verwerfen nicht-endliche Lösungen jetzt unbedingt, auch bei `reject_nonfinite = false` — vorher lief eine Success-Lösung mit `Inf` durch (die Prüfung greift nur bei NaN) und ergab Loss `Inf`; stilles Verhaltens-Delta im Default-Pfad. (S2) Der Determinismus-Fix ist lokal: Struct-Default `time_limit_s = 300.0` unverändert, `benchmark_evogrow.jl`, `experiments/run_experiment.jl` und die übrigen Studies konstruieren weiter ohne expliziten Wert — **der in CLAUDE.md eingefrorene Paper-1-Pfad bleibt wall-clock-abhängig und muss vor Phase B entschieden werden.** (M1) Die Notbremse wird per Teilstring `"time"` im Retcode erkannt; ein abweichender Retcode würde einen ausgelösten Bremseingriff still als Iterationslimit verbuchen. (M2) In Fall B werden die Parameter nie auf Referenz-Fidelity nachgefittet (`discover()` refittet nur bei Parameteranzahl-Mismatch) — Interpretationsvorbehalt.
+
+**WP-P1b beauftragt:** Punkte 1–3 plus S1, M1; S2 nur dokumentieren, nicht umstellen. Benchmark erst danach starten.
+
+<!-- 911a567 -->
+
 ### Volllauf abgebrochen — Kostendiagnose: 62 % der Rechenzeit oberhalb der nötigen Stage
 
 Der Volllauf wurde bei 23/30 Zellen abgebrochen (v2.2 komplett 15/15, v3.2 bei 8/15), nach **40,5 Compute-Stunden**. Daten gesichert (`a69637a`). Grund: Laufzeit inakzeptabel (mehrere Tage), Restlaufzeit ~26–30 h für Zellen mit nahezu null Informationswert (v3.2 ist die Lockstep-Brücke; Äquivalenz war bereits beantwortet).
