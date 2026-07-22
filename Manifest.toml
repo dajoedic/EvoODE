@@ -2,7 +2,7 @@
 
 julia_version = "1.12.6"
 manifest_format = "2.0"
-project_hash = "029c37dbb76b264ec503a6205fd46fb83b44e233"
+project_hash = "e4e3bee844f56630dbf0d938a43b6980267eb707"
 
 [[deps.ADTypes]]
 git-tree-sha1 = "8b2b045b22740e4be20654175cc38291d48539db"
@@ -706,7 +706,7 @@ uuid = "2702e6a9-849d-5ed8-8c21-79e8b8f9ee43"
 version = "0.0.20230411+1"
 
 [[deps.EvoODE]]
-deps = ["CairoMakie", "Dates", "DifferentialEquations", "JSON3", "LinearAlgebra", "Logging", "Optimization", "OptimizationOptimJL", "Plots", "Printf", "ProgressMeter", "Random", "SciMLBase", "Statistics"]
+deps = ["CairoMakie", "Dates", "DifferentialEquations", "JSON3", "LinearAlgebra", "Logging", "Optimization", "OptimizationOptimJL", "Plots", "Printf", "ProgressMeter", "Random", "SciMLBase", "SpecialFunctions", "Statistics"]
 path = "."
 uuid = "76fee1ed-e581-49f8-b1d2-7537def3f7d8"
 version = "0.1.0"

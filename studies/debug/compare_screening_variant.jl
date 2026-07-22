@@ -14,6 +14,8 @@ const SCRIPT_SLUG = "compare_screening_variant"
 const OUTPUT_DIR = joinpath(@__DIR__, "..", "..", "outputs", "studies", "debug", SCRIPT_SLUG)
 const SEED = 42
 const SYSTEM_IDS = (3, 11)
+const MAIN_EVAL_TOL = 1e-8
+const ANCHOR_EVAL_TOL = 1e-6
 
 # Matches studies/regression/run_regression.jl without importing it, because that
 # script executes main() on include.
@@ -53,11 +55,11 @@ function build_options(seed::Int)
     )
 end
 
-function build_reference_optimizer()
+function build_reference_optimizer(eval_tol::Float64)
     return BFGSOptimizer(
         maxiters = BFGS_MAXITERS,
-        abstol = BFGS_ABSTOL,
-        reltol = BFGS_RELTOL,
+        abstol = eval_tol,
+        reltol = eval_tol,
         maxiters_solve = BFGS_MAXITERS_SOLVE,
         time_limit_s = BFGS_TIME_LIMIT_S,
         reject_nonfinite = false,
@@ -81,50 +83,69 @@ end
 function build_strategy(label::String)
     progression = StageProgressionPolicy(:stage_local, STAGE_MIN)
     usage = StageUsagePolicy(:hard, SOFT_BIAS)
-    if label == "evogrow_v2_2_stage_local"
+    if label in ("A_reference", "anchor_reference_1e-6")
         return EvoGrow(
-            POP_SIZE,
-            N_LEVELS,
-            CHILDREN_PER_PARENT,
-            MAX_TERMS,
-            LAMBDA,
-            progression,
-            usage,
-            USE_PRETUNING,
-            nothing,
-            nothing,
+            pop_size = POP_SIZE,
+            n_levels = N_LEVELS,
+            children_per_parent = CHILDREN_PER_PARENT,
+            max_terms_per_eq = MAX_TERMS,
+            λ = LAMBDA,
+            progression = progression,
+            usage = usage,
+            use_pretuning = USE_PRETUNING,
+            screening_optimizer = nothing,
+            level_callback = nothing,
         )
-    elseif label == "evogrow_screening_derivative_residual"
+    elseif label == "B_screening_residual_ls"
         return EvoGrowScreening(
-            POP_SIZE,
-            N_LEVELS,
-            CHILDREN_PER_PARENT,
-            MAX_TERMS,
-            LAMBDA,
-            progression,
-            usage,
-            DERIVATIVE_SCREEN_K,
-            DERIVATIVE_POLISH_MAXITERS,
-            DERIVATIVE_REJECTED_DIAGNOSTIC_SAMPLES,
-            nothing,
-            nothing,
-            :residual,
+            pop_size = POP_SIZE,
+            n_levels = N_LEVELS,
+            children_per_parent = CHILDREN_PER_PARENT,
+            max_terms_per_eq = MAX_TERMS,
+            λ = LAMBDA,
+            progression = progression,
+            usage = usage,
+            screen_k = DERIVATIVE_SCREEN_K,
+            polish_maxiters = DERIVATIVE_POLISH_MAXITERS,
+            rejected_diagnostic_samples = DERIVATIVE_REJECTED_DIAGNOSTIC_SAMPLES,
+            screening_optimizer = nothing,
+            level_callback = nothing,
+            screening_score = :residual,
+            polish_start = :ls,
         )
-    elseif label == "evogrow_screening_derivative_aic"
+    elseif label == "C_screening_nested_ls"
         return EvoGrowScreening(
-            POP_SIZE,
-            N_LEVELS,
-            CHILDREN_PER_PARENT,
-            MAX_TERMS,
-            LAMBDA,
-            progression,
-            usage,
-            DERIVATIVE_SCREEN_K,
-            DERIVATIVE_POLISH_MAXITERS,
-            DERIVATIVE_REJECTED_DIAGNOSTIC_SAMPLES,
-            nothing,
-            nothing,
-            :aic,
+            pop_size = POP_SIZE,
+            n_levels = N_LEVELS,
+            children_per_parent = CHILDREN_PER_PARENT,
+            max_terms_per_eq = MAX_TERMS,
+            λ = LAMBDA,
+            progression = progression,
+            usage = usage,
+            screen_k = DERIVATIVE_SCREEN_K,
+            polish_maxiters = DERIVATIVE_POLISH_MAXITERS,
+            rejected_diagnostic_samples = DERIVATIVE_REJECTED_DIAGNOSTIC_SAMPLES,
+            screening_optimizer = nothing,
+            level_callback = nothing,
+            screening_score = :nested_f,
+            polish_start = :ls,
+        )
+    elseif label == "D_screening_nested_reference_start"
+        return EvoGrowScreening(
+            pop_size = POP_SIZE,
+            n_levels = N_LEVELS,
+            children_per_parent = CHILDREN_PER_PARENT,
+            max_terms_per_eq = MAX_TERMS,
+            λ = LAMBDA,
+            progression = progression,
+            usage = usage,
+            screen_k = DERIVATIVE_SCREEN_K,
+            polish_maxiters = DERIVATIVE_POLISH_MAXITERS,
+            rejected_diagnostic_samples = DERIVATIVE_REJECTED_DIAGNOSTIC_SAMPLES,
+            screening_optimizer = nothing,
+            level_callback = nothing,
+            screening_score = :nested_f,
+            polish_start = :reference,
         )
     end
     error("Unsupported variant label: $(label)")
@@ -157,7 +178,7 @@ function pruned_support(structure::StructureSpec, params::Vector{Float64})
     return support
 end
 
-function run_cell(label::String, system_id::Int, seed::Int)
+function run_cell(label::String, system_id::Int, seed::Int, eval_tol::Float64)
     system = system_by_id(system_id)
     traj = build_trajectory(system)
     basis = default_staged_polynomial_basis(Int(system[:dim]))
@@ -166,7 +187,7 @@ function run_cell(label::String, system_id::Int, seed::Int)
         result = discover(
             traj;
             structure = build_strategy(label),
-            optimizer = build_reference_optimizer(),
+            optimizer = build_reference_optimizer(eval_tol),
             basis = basis,
             loss = MSELoss(),
             options = build_options(seed),
@@ -176,10 +197,11 @@ function run_cell(label::String, system_id::Int, seed::Int)
     meta = result.meta.structure
     final_refit_meta = get_meta(meta, :final_refit_meta, (;))
     expected_idxs = expected_active_idxs(system_id, basis)
-    baseline = label == "evogrow_v2_2_stage_local" ? BASELINE_V0[system_id] : nothing
+    baseline = label == "anchor_reference_1e-6" ? BASELINE_V0[system_id] : nothing
 
     return Dict{String, Any}(
         "variant" => label,
+        "eval_tol" => eval_tol,
         "system_id" => system_id,
         "system_name" => String(system[:system_name]),
         "seed" => seed,
@@ -194,12 +216,23 @@ function run_cell(label::String, system_id::Int, seed::Int)
         "total_simulation_time_s" => get_meta(meta, :total_simulation_time_s),
         "simulation_ms_per_ode_solve" => simulation_ms_per_solve(meta),
         "screening_score_mode" => get_meta(meta, :screening_score_mode),
+        "polish_start" => get_meta(meta, :polish_start),
+        "nested_test_alpha" => get_meta(meta, :nested_test_alpha),
+        "nested_gate_children" => get_meta(meta, :nested_gate_children),
+        "nested_gate_failed_children" => get_meta(meta, :nested_gate_failed_children),
+        "selection_diff_from_residual" => get_meta(meta, :selection_diff_from_residual),
+        "levels_with_selection_diff_from_residual" => get_meta(meta, :levels_with_selection_diff_from_residual),
         "screening_evals" => get_meta(meta, :screening_evals),
         "invalid_screening_evals" => get_meta(meta, :invalid_screening_evals),
         "polished_candidates" => get_meta(meta, :polished_candidates),
         "polish_budget_exhausted" => get_meta(meta, :polish_budget_exhausted),
         "polish_convergence_failures" => get_meta(meta, :polish_convergence_failures),
         "rank_agreement_spearman" => get_meta(meta, :rank_agreement_spearman),
+        "rank_agreement_spearman_median" => get_meta(meta, :rank_agreement_spearman_median),
+        "rank_agreement_spearman_min" => get_meta(meta, :rank_agreement_spearman_min),
+        "rank_agreement_spearman_max" => get_meta(meta, :rank_agreement_spearman_max),
+        "rank_agreement_finite_levels" => get_meta(meta, :rank_agreement_finite_levels),
+        "rank_agreement_total_levels" => get_meta(meta, :rank_agreement_total_levels),
         "rejected_diagnostic_candidates" => get_meta(meta, :rejected_diagnostic_candidates),
         "rejected_beats_best_selected" => get_meta(meta, :rejected_beats_best_selected),
         "screening_time_s" => get_meta(meta, :screening_time_s),
@@ -248,11 +281,16 @@ end
 
 function write_csv(path::String, records)
     columns = [
-        "variant", "system_id", "system_name", "seed", "elapsed_s", "loss", "final_stage",
+        "variant", "eval_tol", "system_id", "system_name", "seed", "elapsed_s", "loss", "final_stage",
         "pruned_match", "total_parameter_fits", "total_ode_solves", "total_simulation_time_s",
         "simulation_ms_per_ode_solve", "screening_score_mode", "screening_evals",
+        "polish_start", "nested_test_alpha", "nested_gate_children", "nested_gate_failed_children",
+        "selection_diff_from_residual", "levels_with_selection_diff_from_residual",
         "invalid_screening_evals", "polished_candidates",
         "polish_budget_exhausted", "polish_convergence_failures", "rank_agreement_spearman",
+        "rank_agreement_spearman_median", "rank_agreement_spearman_min",
+        "rank_agreement_spearman_max", "rank_agreement_finite_levels",
+        "rank_agreement_total_levels",
         "rejected_diagnostic_candidates", "rejected_beats_best_selected", "screening_time_s",
         "polish_time_s", "rejected_diagnostic_time_s", "final_refit_time_s",
         "final_refit_method", "final_refit_retcode", "final_refit_loss_evals",
@@ -270,8 +308,9 @@ end
 
 function print_record(record)
     @printf(
-        "%s system=%d seed=%d elapsed=%.3fs loss=%.16e stage=%d pruned=%s fits=%s solves=%s sim_time=%s ms_per_solve=%s\n",
+        "%s tol=%.0e system=%d seed=%d elapsed=%.3fs loss=%.16e stage=%d pruned=%s fits=%s solves=%s sim_time=%s ms_per_solve=%s\n",
         record["variant"],
+        record["eval_tol"],
         record["system_id"],
         record["seed"],
         record["elapsed_s"],
@@ -283,18 +322,25 @@ function print_record(record)
         string(record["total_simulation_time_s"]),
         string(record["simulation_ms_per_ode_solve"]),
     )
-    if startswith(record["variant"], "evogrow_screening_derivative")
+    if startswith(record["variant"], "B_") || startswith(record["variant"], "C_") || startswith(record["variant"], "D_")
         @printf(
-            "  score=%s screening_evals=%s invalid=%s polished=%s exhausted=%s failures=%s rho=%s rejected_diag=%s rejected_beats=%s screen_time=%s polish_time=%s rejected_time=%s final_refit=%s final_refit_method=%s final_refit_retcode=%s final_refit_loss_evals=%s final_refit_optimizer_retcodes=%s\n",
+            "  score=%s polish_start=%s gate_failed=%s/%s selection_diff=%s levels_diff=%s rho_mean=%s rho_median=%s rho_range=[%s,%s] rho_levels=%s/%s rejected_diag=%s rejected_beats=%s exhausted=%s failures=%s screen_time=%s polish_time=%s rejected_time=%s final_refit=%s final_refit_method=%s final_refit_retcode=%s final_refit_loss_evals=%s final_refit_optimizer_retcodes=%s\n",
             string(record["screening_score_mode"]),
-            string(record["screening_evals"]),
-            string(record["invalid_screening_evals"]),
-            string(record["polished_candidates"]),
-            string(record["polish_budget_exhausted"]),
-            string(record["polish_convergence_failures"]),
+            string(record["polish_start"]),
+            string(record["nested_gate_failed_children"]),
+            string(record["nested_gate_children"]),
+            string(record["selection_diff_from_residual"]),
+            string(record["levels_with_selection_diff_from_residual"]),
             string(record["rank_agreement_spearman"]),
+            string(record["rank_agreement_spearman_median"]),
+            string(record["rank_agreement_spearman_min"]),
+            string(record["rank_agreement_spearman_max"]),
+            string(record["rank_agreement_finite_levels"]),
+            string(record["rank_agreement_total_levels"]),
             string(record["rejected_diagnostic_candidates"]),
             string(record["rejected_beats_best_selected"]),
+            string(record["polish_budget_exhausted"]),
+            string(record["polish_convergence_failures"]),
             string(record["screening_time_s"]),
             string(record["polish_time_s"]),
             string(record["rejected_diagnostic_time_s"]),
@@ -310,24 +356,31 @@ end
 function main()
     mkpath(OUTPUT_DIR)
     variants = (
-        "evogrow_v2_2_stage_local",
-        "evogrow_screening_derivative_residual",
-        "evogrow_screening_derivative_aic",
+        "A_reference",
+        "B_screening_residual_ls",
+        "C_screening_nested_ls",
+        "D_screening_nested_reference_start",
     )
     records = Dict{String, Any}[]
+    anchor_records = Dict{String, Any}[]
     comparisons = Dict{String, Any}[]
 
     println("Writing outputs to $(OUTPUT_DIR)")
     for system_id in SYSTEM_IDS
+        println("Running anchor_reference_1e-6, system $(system_id), seed $(SEED)")
+        anchor = run_cell("anchor_reference_1e-6", system_id, SEED, ANCHOR_EVAL_TOL)
+        push!(anchor_records, anchor)
+        print_record(anchor)
+
         system_records = Dict{String, Any}()
         for variant in variants
             println("Running $(variant), system $(system_id), seed $(SEED)")
-            record = run_cell(variant, system_id, SEED)
+            record = run_cell(variant, system_id, SEED, MAIN_EVAL_TOL)
             push!(records, record)
             system_records[variant] = record
             print_record(record)
         end
-        reference = system_records["evogrow_v2_2_stage_local"]
+        reference = system_records["A_reference"]
         for variant in variants[2:end]
             comparison = system_comparison(system_id, reference, system_records[variant])
             push!(comparisons, comparison)
@@ -346,10 +399,14 @@ function main()
         "timestamp" => Dates.format(now(UTC), dateformat"yyyy-mm-ddTHH:MM:SS.sssZ"),
         "seed" => SEED,
         "systems" => collect(SYSTEM_IDS),
+        "main_eval_tol" => MAIN_EVAL_TOL,
+        "anchor_eval_tol" => ANCHOR_EVAL_TOL,
         "records" => records,
+        "anchor_records" => anchor_records,
         "comparisons" => comparisons,
         "notes" => [
-            "Hyperparameters and DiscoveryOptions match studies/regression/run_regression.jl.",
+            "Hyperparameters and DiscoveryOptions match studies/regression/run_regression.jl except main evaluation tolerance is 1e-8 for WP-P2.4.",
+            "anchor_reference_1e-6 checks the unchanged reference path against Baseline v0.",
             "Only systems 3 and 11 are run.",
             "No records are written to studies/regression/history.jsonl.",
         ],
@@ -357,8 +414,9 @@ function main()
 
     write_json(joinpath(OUTPUT_DIR, "summary.json"), summary)
     write_csv(joinpath(OUTPUT_DIR, "records.csv"), records)
+    write_csv(joinpath(OUTPUT_DIR, "anchor_records.csv"), anchor_records)
     write_json(joinpath(OUTPUT_DIR, "comparisons.json"), comparisons)
-    println("Wrote summary.json, records.csv, comparisons.json")
+    println("Wrote summary.json, records.csv, anchor_records.csv, comparisons.json")
 end
 
 main()
