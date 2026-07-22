@@ -90,8 +90,8 @@ function perturbed_params(params::Vector{Float64})
     return [p * (1.0 + (isodd(i) ? 0.01 : -0.01)) for (i, p) in enumerate(params)]
 end
 
-function default_start_params(n_params::Int, system_id::Int, tol_index::Int)
-    Random.seed!(SEED + 10_000 * system_id + tol_index)
+function default_start_params(n_params::Int)
+    Random.seed!(SEED)
     return 0.1 .* randn(n_params)
 end
 
@@ -160,7 +160,7 @@ function start_params_for(start_kind::String,
                           traj::Trajectory,
                           true_params::Vector{Float64})
     if start_kind == "default"
-        return default_start_params(n_params, system_id, tol_index)
+        return default_start_params(n_params)
     elseif start_kind == "pretune"
         return EvoODE.pretune_parameters(structure, basis, traj)
     elseif start_kind == "true_perturbed_1pct"
@@ -182,8 +182,14 @@ function run_fit_cell(system_id::Int, tol::Float64, tol_index::Int, start_kind::
     local final_loss
     local meta
     elapsed_s = @elapsed begin
-        params, final_loss, meta =
-            fit_parameters(build_optimizer(tol), f!, traj, n_params, MSELoss(), build_options(SEED); p0 = p0)
+        if start_kind == "default"
+            Random.seed!(SEED)
+            params, final_loss, meta =
+                fit_parameters(build_optimizer(tol), f!, traj, n_params, MSELoss(), build_options(SEED))
+        else
+            params, final_loss, meta =
+                fit_parameters(build_optimizer(tol), f!, traj, n_params, MSELoss(), build_options(SEED); p0 = p0)
+        end
     end
 
     ode_solves = Int(meta.ode_solves)

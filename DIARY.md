@@ -13,6 +13,24 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 - Profiling-Benchmark wird auf 12 Level begrenzt, rechnet Screening vor Referenz und schreibt Zwischenergebnisse nach jedem Fall.
 - Offener Reproduzierbarkeitszustand: ausserhalb des Regression-Runners konstruieren Benchmarks, Experimente und alte Studies `BFGSOptimizer` weiterhin ohne explizites `time_limit_s`; der Struct-Default bleibt `300.0` und muss vor Phase B bewusst entschieden werden.
 
+### WP-P2.4 beauftragt — zwei getrennte Interventionen statt nur harter Penalty
+
+Die Spec sieht nach WP-T1 anders aus als geplant. Der harte Penalty allein kann das Ergebnis nicht retten, weil das Screening-Versagen auf System 3 laut Befund 3 nicht vom Ranking kommt, sondern vom LS-Warmstart. Deshalb zwei Interventionen, jeweils einzeln abschaltbar und einzeln messbar.
+
+**Intervention 1 — geschachtelter Modellvergleich als Gate.** Kein additiver Strafterm mehr: bei n = 200 ist jedes Informationskriterium vom Fit-Term dominiert (AIC-Strafe hoechstens 10 Einheiten ueber p = 1..6, Fit-Term aendert sich um 19 schon bei 10 % Residuenunterschied; BIC mit `p*log(n) <= 26,5` ebenfalls zu schwach). Stattdessen darf ein Kind seinen Elternteil nur ueberholen, wenn die Residuenverbesserung groesser ist, als ein zusaetzlicher Parameter zufaellig liefern wuerde. Umsetzung als Gate mit zwei Raengen, innerhalb der Gruppen weiter nach Residuum. Erfordert, dass die Kindergenerierung die Herkunft eines Kandidaten bis zur Bewertung mitfuehrt.
+
+**Pflicht-Nachweis der Wirksamkeit.** Die AIC-Runde ist daran gescheitert, dass die Intervention die Rangfolge nicht bewegt hat und das erst hinterher auffiel. Diesmal muss der Lauf selbst protokollieren, in wie vielen Faellen sich die ausgewaehlte Kandidatenmenge von der des reinen Residuen-Scores unterscheidet. Ist der Wert null, ist die Intervention wirkungslos und das ist sofort erkennbar.
+
+**Intervention 2 — Polish-Start entkoppeln.** Der LS-Fit erfuellt heute zwei Rollen: Screening-Score und Startpunkt fuers Nachpolieren. Die zweite ist nach WP-T1 schaedlich. Kuenftig konfigurierbar, mit dem Startpunkt des Referenzpfads als Alternative; der LS-Fit dient dann nur noch der Bewertung.
+
+**Rangeuebereinstimmung repariert:** ausweisen, auf wie vielen Leveln ueberhaupt ein endlicher Wert zustande kam, Mittelwert nur ueber diese, dazu Median und Spannweite. Der Verdacht aus WP-P2.3 (rho auf den meisten Leveln `NaN`, Mittelwert von wenigen Leveln getragen) wird damit pruefbar.
+
+**Vergleichslauf mit vier Bedingungen** je System (3 und 11, Seed 42, 30 Level, Bewertungstoleranz **1e-8**, damit System 11 ueberhaupt oberhalb der Rauschgrenze liegt): A Referenz, B Screening mit Residuen-Score und LS-Start (heutiges Verhalten als Kontrolle), C geschachtelter Test mit LS-Start, D geschachtelter Test mit entkoppeltem Start. C gegen B zeigt den Penalty, D gegen C den Startpunkt. Dazu eine Ankerpruefung des Referenzpfads bei 1e-6 gegen Baseline v0.
+
+Drei Fragen sind im Bericht ausdruecklich zu beantworten: veraendert der Test die Auswahl ueberhaupt, verschwindet die Stage-Eskalation auf System 3, und entkommt Bedingung D dem Becken bei 3,236e-08.
+
+Aus WP-T1 vermerkt, aber ausdruecklich **nicht** Teil dieses WP: der Sentinel-Loss `1e6` mit Retcode `Success` bei vollstaendig gescheitertem Fit, die pathologische Line-Search mit bis zu 39.933 Auswertungen bei zwei Parametern, und die Frage, ob die Bewertungstoleranz im Regression-Runner dauerhaft auf 1e-8 gehen soll.
+
 ### WP-T1 gelaufen — Toleranz-Hypothese fuer System 11 bestaetigt, fuer System 3 widerlegt; vier Befunde
 
 Committet `a6919ca`. Diagnose auf Systemen 3 und 11 bei fester bekannt-korrekter Struktur, Toleranzraster {1e-5, 1e-6, 1e-8, 1e-10, 1e-12} im Bewertungspfad, Trajektorienerzeugung unveraendert 1e-9.

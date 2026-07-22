@@ -1,127 +1,154 @@
-# CURRENT TASK: WP-T1 — Rauschgrenze der Solver-Toleranz im Bewertungspfad
+# CURRENT TASK: WP-P2.4 — Screening: harter Penalty und entkoppelter Polish-Start
 
 **Language: Julia**
 
 ## Context
 
-Aus WP-P2.3 stammt ein unaufgeklärter Befund: Der finale Refit der Screening-Variante auf System 3
-kehrte nach **5 Loss-Auswertungen** mit `retcode = Success` zurück, ohne den Loss von 3,24e-8 zu
-verbessern — obwohl bei identischer Struktur nachweislich 2,66e-10 erreichbar ist.
+WP-T1 (`a6919ca`) hat die Ursache des Screening-Versagens auf System 3 aufgeklärt, und sie ist eine
+andere als angenommen.
 
-Vermutung: Der Bewertungspfad simuliert mit `abstol = reltol = 1e-6`
-(`BFGSOptimizer`-Default, so auch im Regression-Runner gesetzt). Finite-Differenzen-Gradienten
-einer Größe, die nur auf etwa 1e-6 genau berechnet wird, sind Rauschen, sobald die Größe selbst in
-der Nähe dieser Schranke liegt. Der Optimierer sähe dann keinen Abstieg mehr und meldete
-Konvergenz.
+**Nicht die Toleranz:** Aus dem Least-Squares-Warmstart landet der Fit bei **3,236e-08 bei jeder
+Toleranz von 1e-6 bis 1e-12** — völlig flach über sechs Größenordnungen. Der numerische Boden liegt
+bei 4,40e-12, das Ergebnis also rund 7.000-fach darüber.
 
-Die Frage reicht weit über die Screening-Spur hinaus. System 11 meldet in Baseline v0 einen Loss
-von **4,402192340718147e-15**. Das entspricht einem mittleren Fehler von rund 6,6e-8 pro Punkt —
-deutlich unterhalb der Genauigkeit, mit der der Solver diese Trajektorie überhaupt berechnet.
-Diese Zahl steht in Baseline v0, in der Phase-A-Auswertung und in jeder heutigen
-Regressionsprüfung. Ist sie numerisches Rauschen, betrifft das die Belastbarkeit der berichteten
-Losses im gesamten Projekt sowie die Frage, ob `loss_tol = 1e-8` als Abbruchkriterium überhaupt
-sinnvoll definiert ist.
+**Sondern der Warmstart selbst:** 3,236e-08 ist exakt der Wert, bei dem die Screening-Variante
+hängenblieb. Der Referenzlauf erreicht 2,66e-10 und benutzt **keinen** Warmstart
+(`USE_PRETUNING = false`). Der ableitungsbasierte LS-Warmstart führt auf System 3 also in ein
+Becken, aus dem BFGS nicht herausfindet — die Screening-Variante führt damit genau das wieder ein,
+was die Regression-Konfiguration bewusst abgeschaltet hat.
 
-Dieses WP klärt das, bevor die Screening-Spur weiter getestet wird (WP-P2.4). Grund: Wenn die
-Vermutung zutrifft, könnte das gesamte beobachtete Versagen der Screening-Variante auf System 3 ein
-Toleranz-Artefakt sein — und ein Test des Auswahlkriteriums unter unkontrolliertem Confounder wäre
-wertlos.
+Daraus folgt: Ein harter Penalty auf das Ranking allein kann das Ergebnis nicht retten. Es braucht
+zwei Änderungen, und sie müssen getrennt messbar sein.
+
+Zweiter Befund aus WP-T1, der den Testaufbau betrifft: Auf System 11 ist der berichtete Loss bei
+Toleranz 1e-6 numerisches Rauschen (erreichter Loss skaliert direkt mit der Toleranz; mit den
+wahren Parametern sind bei 1e-6 nur 1,859e-14 erreichbar, gefittet werden 4,6e-15). Bei 1e-8 liegt
+der Boden bei 1,36e-17, die Kosten steigen nur um Faktor rund 1,3. Der Vergleich in diesem WP läuft
+deshalb bei **1e-8**.
 
 ## Goal
 
-Ein Diagnose-Experiment, das drei Fragen mit Zahlen beantwortet:
-
-- **F1:** Setzt die Solver-Toleranz eine Rauschgrenze, unterhalb derer der Parameter-Optimierer
-  nicht mehr verbessern kann?
-- **F2:** Sind berichtete Losses unterhalb der Solver-Genauigkeit belastbar?
-- **F3:** Was kostet höhere Genauigkeit an Laufzeit und Integrationen?
-
-## Files
-
-- **Neu:** ein Skript unter `studies/numerics/` (neues Themenverzeichnis).
-- Ausgabe nach `outputs/studies/numerics/<skript_slug>/` (eigener Unterordner).
-- **Nicht ändern:** `src/`, `studies/regression/run_regression.jl`, die Regression-Konfiguration.
-  Es wird nichts repariert, nur gemessen.
-- Nicht in `studies/regression/history.jsonl` schreiben.
+Zwei getrennte Interventionen an der Screening-Variante, jeweils einzeln abschaltbar, plus ein
+Vergleichslauf, der ihre Wirkung einzeln und gemeinsam ausweist.
 
 ## Required Content
 
-### Systeme und Strukturen
+### 1. Harter Penalty: geschachtelter Modellvergleich statt Informationskriterium
 
-System 3 (`Logistic growth`) und System 11 (`Critical slowing down`), Definitionen aus
-`studies/regression/diagnostic_systems.jl`. Trajektorien wie dort erzeugt.
+AIC war wirkungslos, und zwar nachweisbar: Bei `n = 200` beträgt die Strafe über den gesamten
+Bereich `p = 1..6` höchstens 10 Einheiten, während der Fit-Term sich schon bei 10 % Residuen-
+unterschied um 19 Einheiten ändert. Jedes Standard-Informationskriterium ist hier vom Fit-Term
+dominiert; BIC wäre mit `p*log(n) <= 26,5` ebenfalls zu schwach.
 
-Verwendet wird jeweils die **bekannte korrekte Struktur** (aus `expected_active_idxs`), nicht eine
-gesuchte. Es geht um numerisches Verhalten bei fester Struktur, nicht um Strukturfindung.
+Das Problem ist struktureller Natur: Kinder entstehen durch Hinzufügen von Termen, sind also
+geschachtelte Obermengen ihrer Eltern, und für geschachtelte Least-Squares-Probleme ist das
+Residuum monoton nicht-steigend in der Termzahl. Ein größeres Modell kann nie schlechter
+abschneiden.
 
-### Toleranzraster
+Die angemessene Antwort ist kein additiver Strafterm, sondern ein **geschachtelter Modellvergleich**:
+Ein Kind darf seinen Elternteil nur dann überholen, wenn die Residuenverbesserung größer ist, als
+ein zusätzlicher Parameter zufällig liefern würde. Setze das als **Gate** um, nicht als
+Rangkorrektur:
 
-`abstol = reltol` ∈ {1e-5, 1e-6, 1e-8, 1e-10, 1e-12}.
+- Kandidaten, die den Test gegen ihren Elternteil bestehen, werden bevorzugt.
+- Kandidaten, die ihn nicht bestehen, werden dahinter einsortiert.
+- Innerhalb jeder Gruppe wird weiterhin nach Residuum sortiert.
+- Elternteile selbst haben keinen Elternteil und werden nach Residuum eingeordnet.
 
-1e-6 ist der heutige Default des Bewertungspfads. 1e-5 ist der Wert, den die
-WP-P1b-Screening-Budgets setzen — er gehört ins Raster, damit wir wissen, was diese Wahl gekostet
-hat. Die Trajektorienerzeugung selbst bleibt unverändert bei 1e-9.
+Wähle einen geeigneten Test für geschachtelte Least-Squares-Modelle, begründe die Wahl im
+Docstring, und mache das Signifikanzniveau konfigurierbar mit einem benannten Default. Dafür muss
+die Kindergenerierung die Herkunft eines Kandidaten (Elternteil) bis zur Bewertung mitführen.
 
-### Teil A — Belastbarkeit der berichteten Losses (F2)
+Der bisherige `screening_score = :residual` und `:aic` bleiben als Vergleichsbedingungen erhalten.
 
-Ohne Optimierer. Für jede Toleranz die Struktur mit den **wahren** Parametern simulieren und den
-Loss gegen die Referenztrajektorie berechnen (System 3: `0.79*u1 - 0.0106*u1^2`; System 11:
-`-u1^3`; wahre Werte aus `diagnostic_systems.jl` ableiten, nicht raten).
+### 2. Pflicht-Nachweis, dass der Penalty überhaupt wirkt
 
-Dieser Wert ist der bestmögliche erreichbare Loss bei dieser Toleranz. Liegt er bei 1e-6 zum
-Beispiel bei 1e-10, dann ist jeder berichtete Loss unterhalb von 1e-10 bei dieser Toleranz nicht
-interpretierbar.
+Die AIC-Runde ist daran gescheitert, dass die Intervention die Rangfolge nicht bewegt hat und das
+erst hinterher auffiel. Diesmal muss das im Lauf selbst sichtbar sein.
 
-Zusätzlich ausweisen: den in Baseline v0 berichteten Loss (System 3: `2.663641831768419e-10`,
-System 11: `4.402192340718147e-15`) neben dem so bestimmten Boden, damit die Einordnung unmittelbar
-ablesbar ist.
+Protokolliere pro Level und aggregiert pro Lauf: **in wie vielen Fällen sich die ausgewählte
+Kandidatenmenge von der unterscheidet, die der reine Residuen-Score ausgewählt hätte**, und wie
+viele Kinder das Gate nicht bestanden haben.
 
-### Teil B — Rauschgrenze des Optimierers (F1)
+Ist dieser Wert null, ist die Intervention wirkungslos — das ist dann sofort erkennbar und im
+Bericht ausdrücklich festzustellen.
 
-Für jede Toleranz `fit_parameters` mit der Regression-Konfiguration (`maxiters = 200`) auf der
-festen korrekten Struktur laufen lassen, ausgehend von **drei** Startpunkten:
+### 3. Polish-Start vom Screening entkoppeln
 
-1. dem heutigen Standardstart des Bewertungspfads,
-2. dem Least-Squares-Warmstart aus `pretune_parameters`,
-3. den wahren Parametern, leicht gestört (Größenordnung 1 % relativ).
+Der LS-Fit erfüllt derzeit zwei Rollen: er liefert den Screening-Score **und** den Startpunkt für
+das Nachpolieren. Nach dem WP-T1-Befund ist die zweite Rolle schädlich.
 
-Startpunkt 3 ist der schärfste Test: von dort aus muss ein funktionierender Optimierer den Loss
-messbar senken. Tut er es bei 1e-6 nicht und bei 1e-10 doch, ist die Vermutung bestätigt.
+Führe eine konfigurierbare Wahl des Polish-Startpunkts ein, mit mindestens zwei Möglichkeiten:
 
-Je Kombination protokollieren: erreichter Loss, Zahl der Loss-Auswertungen, Retcode, Laufzeit,
-Zahl der Integrationen. Alle Zähler existieren bereits im Rückgabe-Meta von `fit_parameters`.
+- die LS-Parameter (heutiges Verhalten),
+- derselbe Startpunkt, den der Referenzpfad verwendet — der LS-Fit dient dann ausschließlich der
+  Bewertung.
 
-**Falsifizierbare Vorhersage:** Bei 1e-6 bleibt der Warmstart nahe seinem Ausgangswert stehen und
-meldet `Success` nach wenigen Auswertungen; bei 1e-10 verbessert er sich deutlich. Tritt das nicht
-ein, ist die Vermutung widerlegt — dann ist das das Ergebnis und so zu berichten.
+Die Diagnose-Fits abgelehnter Kandidaten verwenden denselben Startpunkt wie die ausgewählten, damit
+der Vergleich fair bleibt.
 
-### Teil C — Preis der Genauigkeit (F3)
+### 4. Rangübereinstimmung reparieren
 
-Je Toleranz Laufzeit und Zahl der Integrationen ausweisen, sowohl für einen einzelnen Fit als auch
-hochgerechnet auf einen typischen Suchlauf (Größenordnung genügt: Baseline v0 rechnete rund 20
-Parameter-Fits pro Level).
+Die Kennzahl ist fragwürdig: In beiden WP-P2.3-Bedingungen betrug sie exakt −7/9, obwohl sich
+Laufzeit, Integrationen und Konvergenzfehler deutlich unterschieden. Verdacht: Auf den meisten
+Leveln ist rho `NaN`, weil alle simulierten Losses gleich sind und der Nenner null wird, sodass der
+berichtete Mittelwert von sehr wenigen Leveln getragen wird.
 
-### Bericht
+Zu tun: Ausweisen, auf wie vielen Leveln überhaupt ein endlicher Wert zustande kam, und den
+Mittelwert nur über diese bilden — zusammen mit dieser Anzahl, damit er einordenbar ist. Zusätzlich
+Median und Spannweite. Bleibt die Zahl der auswertbaren Level klein, ist die Kennzahl als
+Entscheidungsgrundlage zu kennzeichnen und nicht stillschweigend zu mitteln.
 
-Der Abschlussbericht muss F1, F2 und F3 ausdrücklich und mit Zahlen beantworten, und zusätzlich
-eine klare Aussage dazu enthalten, ob die in Baseline v0 berichteten Losses für System 3 und
-System 11 belastbar sind. Kein Beschönigen in beide Richtungen: Bestätigung der Vermutung ist
-ebenso ein Ergebnis wie ihre Widerlegung.
+### 5. Vergleichslauf
+
+`studies/debug/compare_screening_variant.jl` erweitern. Systeme 3 und 11, Seed 42, Level-Budget 30,
+Bewertungstoleranz **1e-8** für alle Bedingungen:
+
+- **A** Referenzpfad (Simulation)
+- **B** Screening, Residuen-Score, LS-Polish-Start (heutiges Verhalten, Kontrolle)
+- **C** Screening, geschachtelter Test, LS-Polish-Start
+- **D** Screening, geschachtelter Test, entkoppelter Polish-Start
+
+Damit ist die Wirkung beider Interventionen einzeln ablesbar: C gegen B zeigt den Penalty, D gegen
+C den Startpunkt.
+
+Zusätzlich **eine** Ankerprüfung: Referenzpfad bei Toleranz 1e-6 gegen Baseline v0 (System 3 Loss
+`2.663641831768419e-10`, `final_stage = 3`; System 11 Loss `4.402192340718147e-15`,
+`final_stage = 4`). Nur zur Bestätigung, dass der Referenzpfad unverändert ist — bei 1e-8 gelten
+diese Werte naturgemäß nicht mehr.
+
+### 6. Bericht
+
+Mit Zahlen, je Bedingung: Loss, `final_stage`, `pruned_match`, Laufzeit, Integrationen,
+Kosten pro Integration, Rangübereinstimmung samt Zahl auswertbarer Level, Zahl der vom Gate
+abgelehnten Kinder, und die Abweichung der Auswahl gegenüber dem reinen Residuen-Score.
+
+Drei Fragen sind ausdrücklich zu beantworten:
+
+1. Verändert der geschachtelte Test die Auswahl überhaupt (Punkt 2)?
+2. Verschwindet die Stage-Eskalation auf System 3 (Referenz: Stage 3, bisher Screening: Stage 5)?
+3. Entkommt Bedingung D dem Becken bei 3,236e-08?
 
 ## Verification
 
-Nur System 3 und System 11. **Nicht** System 26, 31 oder 63. Es werden keine Struktursuchen
-gerechnet, nur einzelne Fits bei fester Struktur — die Laufzeit liegt damit im Minutenbereich, auch
-bei den engsten Toleranzen.
-
-Das Skript ausführen und die Ergebnisse als Zahlen berichten, nicht als „läuft durch".
+Nur System 3 und System 11. **Nicht** System 26, 31 oder 63. Grobe Kostenschätzung: System 3 rund
+sechs Minuten je Bedingung, System 11 Sekunden.
 
 ## Constraints
 
-- Reine Messung. Es wird nichts repariert und keine Konfiguration umgestellt; Konsequenzen werden
-  danach getrennt entschieden.
-- Kein Eingriff in `src/`, keine Änderung an `config_fingerprint`-relevanter Konfiguration.
-- Trajektorienerzeugung bleibt bei `abstol = reltol = 1e-9`; variiert wird ausschließlich die
-  Toleranz im Bewertungspfad.
+- `evogrow.jl`, `evogrow_v3.jl`, `gp.jl`, `stopping.jl`, `discover.jl` bleiben unangetastet.
+- Der Referenzpfad bleibt verhaltensgleich; die Ankerprüfung bei 1e-6 ist Teil der Verifikation.
+- Beide Interventionen sind einzeln abschaltbar; das heutige Verhalten bleibt als Bedingung B
+  reproduzierbar.
+- Plateau, Stopplogik und Promotion laufen weiterhin ausschließlich auf simuliertem Loss.
+- `pretune_parameters` bleibt verhaltensgleich.
+- Keine Änderung an der Regression-Konfiguration oder am `config_fingerprint` in diesem WP.
 - Keine neuen Abhängigkeiten.
-- Nicht Teil dieses WP: WP-P2.4 (harter Penalty), WP-v3.3, Änderungen an der Screening-Variante.
+
+Nicht Teil dieses WP, aber aus WP-T1 vermerkt und nicht zu beheben:
+- Ein vollständig gescheiterter Fit meldet `final_loss = 1.000e+06` (Initialwert `l_best`) mit
+  Retcode `Success` und ist von einem echten schlechten Fit nicht unterscheidbar.
+- Einzelne Fits verbrauchen bei zwei Parametern bis zu 39.933 Loss-Auswertungen mit Retcode
+  `Failure` — die Line-Search verhält sich pathologisch.
+- Die Umstellung der Bewertungstoleranz auf 1e-8 im Regression-Runner ist eine eigene Entscheidung
+  und gehört nicht in dieses WP.
