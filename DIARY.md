@@ -13,6 +13,33 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 - Profiling-Benchmark wird auf 12 Level begrenzt, rechnet Screening vor Referenz und schreibt Zwischenergebnisse nach jedem Fall.
 - Offener Reproduzierbarkeitszustand: ausserhalb des Regression-Runners konstruieren Benchmarks, Experimente und alte Studies `BFGSOptimizer` weiterhin ohne explizites `time_limit_s`; der Struct-Default bleibt `300.0` und muss vor Phase B bewusst entschieden werden.
 
+### WP-P2.4 gelaufen — beide Interventionen wirken; Bedingung D schlaegt den Referenzpfad um Faktor 6,2
+
+Committet `7eb8381`. Ankerpruefung bestanden: Referenzpfad bei 1e-6 liefert auf beiden Systemen bit-identisch die Baseline-v0-Werte.
+
+**System 3, Bewertungstoleranz 1e-8:**
+
+| Bedingung | Zeit | Loss | Stage | Fits | Integrationen |
+|---|---|---|---|---|---|
+| A Referenz | 78,6 s | 6,25e-9 | 2 | 110 | 275.098 |
+| B Residuum + LS-Start (heute) | 353,2 s | 3,236e-8 | 5 | 241 | 761.581 |
+| C Nested-Gate + LS-Start | 49,2 s | 3,236e-8 | 5 | 241 | 232.224 |
+| **D Nested-Gate + entkoppelter Start** | **12,6 s** | **2,558e-9** | **2** | 61 | 73.680 |
+
+System 11: alle Bedingungen qualitativ gleichwertig (Loss ~2,0e-16, Stage 4, `pruned_match` true), D mit 0,6 s gegen 1,1 s am schnellsten.
+
+**Antwort auf die drei Pflichtfragen:**
+
+1. **Der geschachtelte Test veraendert die Auswahl** — anders als AIC. System 3, Bedingung C: 147 von 400 Kindern scheitern am Gate, die Auswahl weicht in 126 Faellen auf 7 von 20 Leveln vom reinen Residuen-Score ab. Wirkung auf die Rangeuebereinstimmung: von **−0,78 (Median −1,0)** unter B auf **+0,26 (Median +0,48)** unter C. Der Test behebt also genau das, wofuer er gebaut wurde.
+2. **Die Stage-Eskalation verschwindet — aber erst durch den Startpunkt.** C bleibt trotz wirksamem Gate bei Stage 5; D erreicht Stage 2, also die erwartete Stage, ohne Overshoot.
+3. **Bedingung D entkommt dem Becken bei 3,236e-08** und erreicht 2,558e-9 — besser als der Referenzpfad mit 6,25e-9.
+
+**Arbeitsteilung der beiden Interventionen sauber getrennt:** Das Gate senkt die Kosten (B nach C: 7,2x bei identischem Ergebnis) und repariert das Ranking. Der entkoppelte Startpunkt repariert Qualitaet und Eskalation (C nach D). Beide waren noetig, keine allein haette gereicht — genau die Aufteilung, die WP-T1 vorhergesagt hat.
+
+**Nebenbefund mit potenziell groesserer Tragweite als das Screening selbst:** Der **Referenzpfad** profitiert schon allein von der engeren Toleranz. Bei 1e-6 braucht er auf System 3 279,3 s und endet auf Stage 3 (erwartete Stage: 2, also Overshoot 1); bei 1e-8 braucht er 78,6 s und endet auf Stage 2, also **ohne Overshoot** — 3,6x schneller bei korrekter Stage. Erklaerung: bei 1e-6 erreicht der Optimierer auf Stage 2 die Schwelle `loss_tol = 1e-8` nicht zuverlaessig, die Suche eskaliert deshalb weiter. **Ein Teil des beobachteten Stage-Overshoots waere damit ein numerisches Artefakt und keine Eigenschaft der Promotionsregel.** Das beruehrt unmittelbar die Begruendung fuer v3 und die 62-Prozent-Rechnung vom 2026-07-22. Bisher eine Zelle, ein Seed — muss auf einem gekoppelten System geprueft werden, und zwar auf System 26, wo Gate 1 gescheitert ist.
+
+**Bemerkung zur Spec-Treue:** `SpecialFunctions` wurde als direkte Abhaengigkeit ergaenzt (nur `loggamma` fuer die F-Verteilung), obwohl die Spec keine neuen Abhaengigkeiten vorsah. Praktisch unkritisch: das Paket war ueber SciML bereits indirekt im Manifest, es wird nichts zusaetzlich installiert, nur die direkte Deklaration kam hinzu.
+
 ### WP-P2.4 beauftragt — zwei getrennte Interventionen statt nur harter Penalty
 
 Die Spec sieht nach WP-T1 anders aus als geplant. Der harte Penalty allein kann das Ergebnis nicht retten, weil das Screening-Versagen auf System 3 laut Befund 3 nicht vom Ranking kommt, sondern vom LS-Warmstart. Deshalb zwei Interventionen, jeweils einzeln abschaltbar und einzeln messbar.
