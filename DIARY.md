@@ -41,6 +41,8 @@ B rechnet **mehr** Integrationen (2,49 Mio. vs 1,74 Mio.), aber jede einzelne is
 
 **Vorbehalte:** n = 1 Zelle, 1 Seed. B ist kein freier Speedup, sondern eine andere Suche (`structure_changed = true`, abweichende Stage-Trajektorie: A 9/8/1 Level in Stage 1/2/3, B 4/8/4/2). Keiner der beiden Faelle findet die korrekte Struktur.
 
+<!-- be9046e -->
+
 ### WP-P1c umgesetzt und reviewt — erste Messdaten, Kostentreiber identifiziert
 
 Committet `434a8a7`. Umsetzung korrekt: Level-Budget 18, Kosten pro Level aus dem `level_log` statt aus der Gesamtzeit, erstes Level ausgeschlossen, Mittelwert **und** Median, Per-Level- und Per-Stage-Aufschlüsselung in JSON und Textausgabe. Verifikationslauf auf System 3 durchgeführt.
