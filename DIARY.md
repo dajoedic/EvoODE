@@ -35,6 +35,8 @@ Zwei Messgroessen als Pflicht: (i) wie viele ausgewaehlte Kandidaten ihr Polish-
 
 Neue Variante neben dem bestehenden Pfad, kein Ersatz. `pretune.jl` wird um eine Score-Funktion mit Gueltigkeitsflag erweitert; `pretune_parameters` selbst bleibt verhaltensgleich. Verifikation nur auf System 3 und 11.
 
+<!-- 64d9e3d -->
+
 ### WP-P2.1 Design-Notiz reviewt — tragfaehig, aber ohne Kostenmodell; Faktor 10 haengt an einem Wort
 
 `docs/evogrow_screening_design.md` committet (`97e0dbe`). Alle neun Pflichtabschnitte vorhanden. Saemtliche Zahlen gegen `summary.json` geprueft und korrekt, inklusive der 21x als `3222,6 / 153,0`. API-Referenzen auf `pretune.jl` stimmen (Signaturen von `estimate_derivatives`, `build_design_matrix`, Per-Gleichungs-LS geprueft). Abschnitt 4 und 7 beziehen klare Position: Stage-Promotion bleibt am simulierten Loss verankert, und der Beitrag bleibt nur dann von SINDy unterscheidbar, wenn staged incremental growth Untersuchungsgegenstand bleibt und der simulierte Loss die berichtete Metrik.
