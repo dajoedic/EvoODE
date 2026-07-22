@@ -13,6 +13,22 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 - Profiling-Benchmark wird auf 12 Level begrenzt, rechnet Screening vor Referenz und schreibt Zwischenergebnisse nach jedem Fall.
 - Offener Reproduzierbarkeitszustand: ausserhalb des Regression-Runners konstruieren Benchmarks, Experimente und alte Studies `BFGSOptimizer` weiterhin ohne explizites `time_limit_s`; der Struct-Default bleibt `300.0` und muss vor Phase B bewusst entschieden werden.
 
+### WP-T1 gelaufen — Toleranz-Hypothese fuer System 11 bestaetigt, fuer System 3 widerlegt; vier Befunde
+
+Committet `a6919ca`. Diagnose auf Systemen 3 und 11 bei fester bekannt-korrekter Struktur, Toleranzraster {1e-5, 1e-6, 1e-8, 1e-10, 1e-12} im Bewertungspfad, Trajektorienerzeugung unveraendert 1e-9.
+
+**Befund 1 — System 11: berichteter Loss ist numerisches Rauschen.** Erreichter Loss aus dem LS-Warmstart je Toleranz: 8,435e-14 (1e-5), 4,606e-15 (1e-6), 1,669e-17 (1e-8), 4,860e-18 (1e-10), 4,856e-18 (1e-12). Der Wert skaliert also unmittelbar mit der Solver-Toleranz und saettigt erst bei ~5e-18. Baseline v0 meldet **4,402192340718147e-15** — genau das Niveau der 1e-6-Toleranz. Teil A verschaerft das: mit den **wahren** Parametern erreicht man bei 1e-6 nur 1,859e-14, der Fit liefert also 4,6e-15 und damit ein *besseres* Ergebnis als die Wahrheit. Das ist nur moeglich, wenn numerisches Rauschen gefittet wird. Der in Baseline v0, in Phase A und in allen heutigen Regressionspruefungen gefuehrte System-11-Loss ist nicht interpretierbar.
+
+**Befund 2 — System 3: Hypothese widerlegt.** Aus dem LS-Warmstart landet der Fit bei **3,236e-08 bei jeder Toleranz von 1e-6 bis 1e-12**, voellig flach. Sechs Groessenordnungen engere Toleranz aendern nichts. Der Boden aus Teil A liegt bei 1e-6 bei 4,401e-12, das Ergebnis also rund 7.000-fach darueber. Hier ist nicht die Numerik die Grenze, sondern der Optimierer bzw. die Landschaft.
+
+**Befund 3 — die eigentliche Ursache des Screening-Versagens auf System 3.** Der LS-Warmstart konvergiert auf 3,236e-08 — exakt der Wert, bei dem die Screening-Variante haengenblieb (3,2363742537347274e-8). Der Referenzlauf erreicht dagegen 2,66e-10, und er benutzt **keinen** Warmstart (`USE_PRETUNING = false`). Das Screening-Versagen ist damit kein Toleranz- und kein Ranking-Problem, sondern: **der ableitungsbasierte Least-Squares-Warmstart fuehrt auf System 3 in ein Becken, aus dem BFGS nicht herausfindet.** Die Screening-Variante fuehrt damit genau das wieder ein, was die Regression-Konfiguration bewusst abgeschaltet hat.
+
+**Befund 4 — pathologische Line-Search.** Auf System 3 verbrauchen einzelne Fits bei zwei Parametern **39.933 / 37.933 / 39.065** Loss-Auswertungen (jede eine vollstaendige Integration) mit Retcode `Failure`, Laufzeiten 3,2 / 10,4 / 23,6 s — bei `maxiters = 200`, also rund 200 Auswertungen pro Iteration fuer ein Zweiparameterproblem. Erratisch: bei 1e-6 und 1e-8 braucht derselbe Startpunkt nur 585 bzw. 257 Auswertungen. Das erklaert die 7.281 Integrationen pro Fit aus der Regressionsmessung.
+
+**Nebenbefund:** Der Standardstart liefert auf System 3 bei mehreren Toleranzen `final_loss = 1.000e+06` nach 5 Auswertungen mit Retcode **`Success`**. 1e6 ist der Initialwert `l_best` in `fit_parameters` — ein vollstaendig gescheiterter Fit wird also als Erfolg mit Sentinel-Loss gemeldet und ist von einem echten schlechten Fit nicht unterscheidbar.
+
+**Kosten (Teil C, pretune-Start, hochgerechnet auf 20 Fits pro Level):** System 3 — 0,48 s bei 1e-6, 0,64 s bei 1e-8, 1,38 s bei 1e-10, 6,00 s bei 1e-12. System 11 — 0,06 / 0,12 / 0,08 / 0,22 s. **Die Verschaerfung von 1e-6 auf 1e-8 kostet also rund Faktor 1,3 und hebt den System-11-Boden von 1,86e-14 auf 1,36e-17**, womit alle berichteten Losses wieder oberhalb der Rauschgrenze liegen. Empfehlung: Bewertungstoleranz auf 1e-8. Zur Einordnung: die WP-P1b-Screening-Budgets setzen 1e-5 und druecken den System-3-Boden auf 2,06e-10, also auf Faktor 1,29 an den dort berichteten Loss heran — fuer billige Systeme zu grob, fuer System 26 (Loss ~1,4e-3) unkritisch.
+
 ### Screening-Spur wieder aufgenommen; WP-T1 (Toleranz-Rauschgrenze) vorgezogen
 
 User hat die Abbruchentscheidung revidiert: Zeit ist doch da, und im Projekt geht es um wissenschaftliche Fundierung, nicht um Schnelligkeit. Gewuenscht sind beide offenen Faeden — harter Penalty **und** Toleranzanalyse.
