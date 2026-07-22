@@ -29,6 +29,8 @@ Committet `a6919ca`. Diagnose auf Systemen 3 und 11 bei fester bekannt-korrekter
 
 **Kosten (Teil C, pretune-Start, hochgerechnet auf 20 Fits pro Level):** System 3 — 0,48 s bei 1e-6, 0,64 s bei 1e-8, 1,38 s bei 1e-10, 6,00 s bei 1e-12. System 11 — 0,06 / 0,12 / 0,08 / 0,22 s. **Die Verschaerfung von 1e-6 auf 1e-8 kostet also rund Faktor 1,3 und hebt den System-11-Boden von 1,86e-14 auf 1,36e-17**, womit alle berichteten Losses wieder oberhalb der Rauschgrenze liegen. Empfehlung: Bewertungstoleranz auf 1e-8. Zur Einordnung: die WP-P1b-Screening-Budgets setzen 1e-5 und druecken den System-3-Boden auf 2,06e-10, also auf Faktor 1,29 an den dort berichteten Loss heran — fuer billige Systeme zu grob, fuer System 26 (Loss ~1,4e-3) unkritisch.
 
+<!-- a6919ca, f327de6 -->
+
 ### Screening-Spur wieder aufgenommen; WP-T1 (Toleranz-Rauschgrenze) vorgezogen
 
 User hat die Abbruchentscheidung revidiert: Zeit ist doch da, und im Projekt geht es um wissenschaftliche Fundierung, nicht um Schnelligkeit. Gewuenscht sind beide offenen Faeden — harter Penalty **und** Toleranzanalyse.
