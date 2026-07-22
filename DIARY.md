@@ -37,6 +37,8 @@ System 11: beide Screening-Bedingungen identisch zum vorigen Lauf, rho +1,0, kor
 
 **Bilanz der Screening-Spur:** AIC-Screening ist auf beiden Systemen schneller als der Referenzpfad (1,55x auf System 3, 1,37x auf System 11), liefert aber auf System 3 einen um Faktor 121 schlechteren Loss und eskaliert auf Stage 5 statt 3. In dieser Form nicht verwendbar.
 
+<!-- 9ca9127, 96ac621 -->
+
 ### WP-P2.2c gelaufen — erste echte Zahlen: System 11 funktioniert, System 3 falsifiziert das Kriterium
 
 Vergleichsskript `studies/debug/compare_screening_variant.jl` committet (`2eb7202`) und ausgefuehrt. Konfiguration identisch zur Regression-Suite (30 Level, pop 10, λ=1e-3, BFGS 200, Seed 42).
