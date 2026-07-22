@@ -13,6 +13,20 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 - Profiling-Benchmark wird auf 12 Level begrenzt, rechnet Screening vor Referenz und schreibt Zwischenergebnisse nach jedem Fall.
 - Offener Reproduzierbarkeitszustand: ausserhalb des Regression-Runners konstruieren Benchmarks, Experimente und alte Studies `BFGSOptimizer` weiterhin ohne explizites `time_limit_s`; der Struct-Default bleibt `300.0` und muss vor Phase B bewusst entschieden werden.
 
+### Screening-Spur wieder aufgenommen; WP-T1 (Toleranz-Rauschgrenze) vorgezogen
+
+User hat die Abbruchentscheidung revidiert: Zeit ist doch da, und im Projekt geht es um wissenschaftliche Fundierung, nicht um Schnelligkeit. Gewuenscht sind beide offenen Faeden — harter Penalty **und** Toleranzanalyse.
+
+**Reihenfolge festgelegt: Toleranz zuerst.** Begruendung: Die beiden Faeden sind nicht unabhaengig. Die Ursachenkette auf System 3 lautete „Loss bleibt bei 3,24e-8 -> ueber `loss_tol = 1e-8` -> kein Abbruch -> Eskalation auf Stage 5 -> teurere Kandidaten -> netto langsamer". Wenn der Loss dort nicht wegen schlechter Kandidatenauswahl haengenblieb, sondern weil der Optimierer im Bereich unter der Solver-Toleranz blind ist, dann ist **das gesamte beobachtete Versagen der Screening-Variante ein Toleranz-Artefakt**. Ein Test des Auswahlkriteriums unter unkontrolliertem Confounder waere wertlos.
+
+**Die Frage ist groesser als die Screening-Spur.** System 11 meldet in Baseline v0 einen Loss von 4,402192340718147e-15, also rund 6,6e-8 mittleren Fehler pro Punkt — deutlich unterhalb der Genauigkeit, mit der der Bewertungspfad (`abstol = reltol = 1e-6`) diese Trajektorie berechnet. Die Zahl steht in Baseline v0, in der Phase-A-Auswertung und in jeder heutigen Regressionspruefung. Ist sie numerisches Rauschen, betrifft das die Belastbarkeit der berichteten Losses im gesamten Projekt und die Frage, ob `loss_tol = 1e-8` als Abbruchkriterium sinnvoll definiert ist.
+
+**WP-T1 beauftragt:** Diagnose-Experiment unter `studies/numerics/`, Systeme 3 und 11, feste bekannt-korrekte Struktur, Toleranzraster {1e-5, 1e-6, 1e-8, 1e-10, 1e-12} im Bewertungspfad bei unveraenderter Trajektorienerzeugung (1e-9). Teil A misst ohne Optimierer den bestmoeglich erreichbaren Loss je Toleranz (Belastbarkeitsgrenze der berichteten Werte), Teil B laesst `fit_parameters` je Toleranz aus drei Startpunkten laufen — Standardstart, LS-Warmstart, und wahre Parameter mit 1 % Stoerung als schaerfsten Test —, Teil C beziffert den Preis der Genauigkeit. 1e-5 ist im Raster, weil die WP-P1b-Screening-Budgets diesen Wert setzen.
+
+Falsifizierbare Vorhersage in der Spec: bei 1e-6 bleibt der Warmstart stehen und meldet `Success` nach wenigen Auswertungen, bei 1e-10 verbessert er sich. Tritt das nicht ein, ist die Vermutung widerlegt und wir gehen direkt zum Screening-Test.
+
+**Danach WP-P2.4:** harter Penalty statt AIC. Richtung: kein Informationskriterium — bei n = 200 ist jedes vom Fit-Term dominiert —, sondern ein Nested-Model-Test, bei dem ein Kind seinen Elternteil nur schlaegt, wenn die Residuenverbesserung groesser ist, als ein zusaetzlicher Parameter zufaellig liefern wuerde. Das adressiert die Monotonie-Falle direkt statt sie mit einer Konstanten zu ueberstimmen. Plus Reparatur der rho-Kennzahl. WP-v3.3 bleibt bis dahin liegen.
+
 ### Entscheidung: Screening-Spur eingestellt; zurueck zu WP-v3.3
 
 User hat die Abbruchregel wie vereinbart gezogen. Die Screening-Spur (WP-P2.1 bis WP-P2.3) wird eingestellt.
