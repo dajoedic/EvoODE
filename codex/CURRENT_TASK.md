@@ -1,126 +1,94 @@
-# CURRENT TASK: WP-P2.2b — Korrekturen an der Screening-Variante vor dem Vergleichslauf
+# CURRENT TASK: WP-P2.2c — Wiederverwendbarer Smoke-Test für die Screening-Variante, ausführen und berichten
 
 **Language: Julia**
 
 ## Context
 
-WP-P2.2 ist umgesetzt (`07aee5e`). Der Kern stimmt: finaler Refit auf vollem Budget vorhanden,
-Stopplogik und Promotion arbeiten auf dem simulierten Loss, der Incumbent wird immer mitgezogen,
-ungültige Screening-Fälle werden explizit markiert und gezählt, `pretune_parameters` bleibt
-verhaltensgleich, und `evogrow.jl`, `evogrow_v3.jl`, `discover.jl` sowie `stopping.jl` sind
-unangetastet.
+WP-P2.2b ist umgesetzt und reviewt (`7f52676`). Alle sechs Punkte sind korrekt behoben:
+Feldkollision aufgelöst, Erschöpfung am Iterationslimit gemessen, Diagnose-Stichprobe abgelehnter
+Kandidaten ohne Einfluss auf die Suche, `screen_k < pop_size` wird abgelehnt, Struct-Defaults
+angeglichen, finaler Refit in den Summen, Abweichungen dokumentiert.
 
-Das Review hat drei Punkte gefunden, die vor einem Vergleichslauf behoben werden müssen, plus
-vier kleinere.
+Offen ist etwas anderes: **Die Variante ist nie ausgeführt worden.** Die in WP-P2.2 und WP-P2.2b
+geforderten Messzahlen wurden beide Male nicht geliefert, und im Repository liegen keine Artefakte
+eines Verifikationslaufs. Statisch sieht der Code korrekt aus — ob er läuft und ob das Kriterium
+taugt, ist unbekannt.
+
+Dieses WP schließt die Lücke, und zwar so, dass die Prüfung **wiederholbar** wird statt einmalig.
+Sie wird bei WP-v3.3 und bei jeder weiteren Änderung am Bewertungspfad erneut gebraucht.
+
+## Goal
+
+Ein Vergleichsskript unter `studies/debug/`, das auf billigen Systemen den bestehenden
+Simulationspfad und die Screening-Variante gegeneinander laufen lässt und die entscheidenden
+Kennzahlen ausgibt — plus die tatsächliche Ausführung und ein Bericht mit den gemessenen Zahlen.
 
 ## Required Content
 
-### 1. Feldkollision bei `screening_budgets_active` (blockierend)
+### 1. Vergleichsskript
 
-`EvoGrowScreening` gibt im Meta `screening_budgets_active = true` fest zurück. Dieses Feld wurde in
-WP-P1b mit einer **anderen** Bedeutung eingeführt: „die reduzierten Solver-Budgets aus WP-P1 sind
-aktiv" (`strategy.screening_optimizer !== nothing`). Der Regression-Record liest es aus dem Meta.
+Ein neues Skript unter `studies/debug/`, das für jede Kombination aus
 
-Folge: In `history.jsonl` lässt sich künftig nicht mehr unterscheiden, ob ein Record mit reduzierten
-Solver-Budgets oder mit ableitungsbasiertem Screening gelaufen ist — beide melden `true`. Das ist
-dieselbe Klasse von Defekt wie in WP-P1b (falsch etikettierte Records), nur unter anderem Namen.
+- System 3 (`Logistic growth`, 1D) und System 11 (`Critical slowing down`, 1D, `-u1^3`),
+- Seed 42,
+- Variante `evogrow_v2_2_stage_local` (Referenz) und der Screening-Variante,
 
-Verschärfend: der Runner-Konstruktor der neuen Variante nimmt `screening_optimizer` entgegen und
-verwirft ihn. Die Variante nutzt die Solver-Screening-Budgets also gar nicht — der korrekte Wert
-für `screening_budgets_active` wäre `false`.
+einen Lauf ausführt. Systemdefinitionen aus `studies/regression/diagnostic_systems.jl`
+wiederverwenden, nicht neu schreiben. Hyperparameter und `DiscoveryOptions` identisch zur
+Regression-Konfiguration wählen, damit die Ergebnisse mit `history.jsonl` vergleichbar sind;
+Abweichungen davon sind zu begründen.
 
-Zu tun:
-- `screening_budgets_active` behält seine ursprüngliche Bedeutung und muss für diese Variante
-  wahrheitsgemäß gesetzt werden.
-- Ob die Variante ableitungsbasiertes Screening verwendet, gehört in ein **eigenes**, klar
-  benanntes Feld, das ebenfalls in den Record wandert.
-- Entscheide und dokumentiere, ob `EvoGrowScreening` die Solver-Screening-Budgets zusätzlich
-  unterstützen soll (analog zu `EvoGrow`/`EvoGrowV3`). Falls ja: durchreichen und wahrheitsgemäß
-  melden. Falls nein: der Runner-Konstruktor darf das Argument nicht stillschweigend
-  entgegennehmen und verwerfen.
+Beide Systeme sind billig (Baseline v0: System 3 rund 5 Minuten bei 30 Leveln, System 11 unter
+2 Sekunden). Das Skript darf **keine** anderen Systeme rechnen.
 
-### 2. Polish-Budget-Erschöpfung wird mit dem falschen Zähler gemessen (blockierend)
+### 2. Auszugebende Kennzahlen
 
-Die Erkennung nutzt `optimizer_limit_hits > 0`. Dieser Zähler wird bei **jedem** Nicht-Success-
-Retcode erhöht, also auch bei echten Konvergenzfehlern. Belegt am Benchmark-Lauf System 3:
-`optimizer_failure_hits = 95` bei 210 Fits, `optimizer_iteration_limit_hits = 0`. Die Erkennung
-würde also nahezu durchgängig „Budget erschöpft" melden, unabhängig vom tatsächlichen Budget.
+Pro Lauf mindestens: Laufzeit, simulierter Loss, `final_stage`, `pruned_match`,
+`total_parameter_fits`, `total_ode_solves`, `total_simulation_time_s`.
 
-Das ist genau die Kennzahl, die laut WP-P2.2 entscheidet, ob die Losses überhaupt mit dem
-Simulationspfad vergleichbar sind. Sie muss auf den Zähler umgestellt werden, der das
-Iterationslimit abbildet (`ReturnCode.MaxIters`). Echte Konvergenzfehler sind getrennt zu zählen
-und getrennt zu berichten.
+Für die Screening-Variante zusätzlich: `screening_evals`, `invalid_screening_evals`,
+`polished_candidates`, `polish_budget_exhausted`, `polish_convergence_failures`,
+`rank_agreement_spearman`, `rejected_diagnostic_candidates`, `rejected_beats_best_selected`,
+`screening_time_s`, `polish_time_s`, `rejected_diagnostic_time_s`, `final_refit_time_s`.
 
-### 3. Die Rangübereinstimmung kann ihre Frage nicht beantworten (blockierend)
+Als Gegenüberstellung je System: Laufzeitverhältnis Referenz zu Screening, und ob beide dieselbe
+Struktur gefunden haben.
 
-Spearman's rho wird ausschließlich über die **ausgewählten** Kandidaten berechnet. Diese Menge ist
-per Konstruktion auf gute Screening-Scores eingeschränkt. Der Wert misst damit die Übereinstimmung
-unter den Überlebenden — nicht das, wofür die Kennzahl gedacht war: **ob die Vorauswahl gute
-Kandidaten verwirft.** Genau das ist das zentrale Methodenrisiko aus Abschnitt 6 der Design-Notiz.
-So wie gebaut, könnte der Vergleichslauf durchlaufen und die Frage bliebe unbeantwortet.
+Ausgabe nach `outputs/studies/debug/<skript_slug>/` (eigener Unterordner, nicht direkt in den
+Elternordner), zusätzlich lesbar auf die Konsole.
 
-Zu tun: eine Stichprobe **abgelehnter** Kandidaten muss ebenfalls poliert und simuliert werden,
-damit messbar wird, wie oft ein verworfener Kandidat einen besseren simulierten Loss erreicht
-hätte als der beste ausgewählte. Zahl der Stichproben pro Level konfigurierbar, Default klein
-(Richtwert 2), Kosten im Kostenmodell entsprechend gering. Berichte pro Lauf, wie oft ein
-abgelehnter Kandidat den besten ausgewählten geschlagen hätte.
+### 3. Ausführen und berichten
 
-Die Stichprobe darf die Suche **nicht** beeinflussen: abgelehnte Kandidaten werden nur gemessen,
-nie in die Population übernommen. Andernfalls wäre es keine Diagnose mehr, sondern ein anderer
-Algorithmus.
+Das Skript ausführen und die Ergebnisse im Abschlussbericht **als Zahlen** wiedergeben. Der
+Bericht muss diese vier Fragen ausdrücklich beantworten:
 
-### 4. Population schrumpft still auf `screen_k`
+1. Läuft die Screening-Variante ohne Fehler durch?
+2. Findet sie auf System 11 die korrekte Struktur (`-u1^3`)? Der Referenzpfad schafft das in
+   1,7 Sekunden. Falls nein, ist das ein zentrales Ergebnis und ausführlich zu berichten — es
+   würde bedeuten, dass das Ableitungsresiduum als Auswahlsignal nicht taugt.
+3. Wie hoch ist der Anteil erschöpfter Polish-Budgets? Wird das Budget durchgängig ausgeschöpft,
+   sind die Losses nicht mit dem Simulationspfad vergleichbar und die Kennzahl ist wertlos.
+4. Wie fällt die Rangübereinstimmung aus, und wie oft hätte ein abgelehnter Kandidat den besten
+   ausgewählten geschlagen?
 
-`pop` wird aus `polished` gebildet, und `polished` hat höchstens `screen_k` Einträge. Mit dem
-Default `screen_k = pop_size` unauffällig — bei jedem `screen_k < pop_size` kollabiert die
-Population dauerhaft auf `screen_k`, und `pop_size` hat keine Wirkung mehr. Entweder absichern
-oder die Population wieder auffüllen; stillschweigendes Schrumpfen ist nicht akzeptabel.
+Bleibt eine dieser Fragen unbeantwortet, gilt das WP als nicht erfüllt.
 
-### 5. Struct-Defaults weichen von allen anderen Varianten ab
+### 4. Bestehenden Pfad gegenprüfen
 
-`EvoGrowScreening` hat `usage = StageUsagePolicy(mode = :soft)` als Default. `EvoGrow` und
-`EvoGrowV3` verwenden den Struct-Default, und alle drei Varianten im Regression-Runner setzen
-`:hard`. Ein abweichender Default ist eine Falle für andere Aufrufer (Benchmarks, Debug-Skripte).
-Angleichen oder im Docstring ausdrücklich begründen.
+Zusätzlich bestätigen, dass der Referenzlauf auf System 3 Seed 42 weiterhin den Loss
+`2.663641831768419e-10` bei `final_stage = 3` liefert und System 11 Seed 42 den Loss
+`4.402192340718147e-15` bei `final_stage = 4` — beides aus Baseline v0
+(`studies/regression/history.jsonl`, Fingerprint `0c739d4e36ee6498`). Abweichungen sind zu melden,
+nicht zu glätten.
 
-### 6. Finaler Refit fehlt in den Kostensummen
-
-Der abschließende Refit auf vollem Budget wird nicht über die Fit-Statistik verbucht;
-`total_ode_solves` und `total_simulation_time_s` enthalten ihn nicht. `final_refit_time_s` wird
-separat gemeldet, was in Ordnung ist — aber jeder Laufzeitvergleich muss ihn addieren. Entweder
-mitzählen oder im Docstring unmissverständlich festhalten, dass die Summen ihn ausschließen.
-
-### 7. Abweichendes Selektionsverhalten dokumentieren
-
-Wird ein Elternteil durch das Nachpolieren schlechter, behält die Variante den vorherigen Wert.
-`EvoGrow` kennt diesen Schutz nicht — dort überschreibt `_evaluate!` in place, auch nach unten.
-Dadurch ist die Folge der besten Objectives hier monoton, bei `EvoGrow` nicht. Das wirkt sich auf
-Plateau-Erkennung und damit auf Promotion aus. Die Abweichung ist vertretbar, muss aber im
-Docstring als bewusste Entscheidung benannt werden, weil sie stromabwärts die Stopplogik berührt.
-
-Ebenfalls festhalten: `vis_history` wird angelegt und zurückgegeben, aber nie gefüllt.
-
-## Verification
-
-Nur billige Zellen. **Kein** Volllauf, **nicht** System 26, 31 oder 63.
-
-1. Der bestehende Simulationspfad bleibt bit-identisch zu Baseline v0: System 11, alle drei Seeds,
-   v2.2 **und** v3 (Loss, `final_stage`, `pruned_match`).
-2. Die neue Variante läuft auf System 3 und System 11 durch.
-3. Auf System 11 (`-u1^3`, exakt darstellbar): findet die Variante die korrekte Struktur?
-4. Berichte mit Zahlen: Laufzeit neue Variante vs. Simulationspfad auf denselben Zellen, Anteil
-   erschöpfter Polish-Budgets nach dem **korrigierten** Zähler, Rangübereinstimmung, und wie oft
-   ein abgelehnter Kandidat den besten ausgewählten geschlagen hätte.
-
-Der letzte Punkt aus WP-P2.2 wurde nicht berichtet. Diesmal sind die gemessenen Zahlen Teil des
-Deliverables, nicht „läuft durch".
+Hinweis: Baseline v0 lief mit 30 Leveln. Wähle im Skript dasselbe Level-Budget, sonst ist der
+Vergleich nicht gültig.
 
 ## Constraints
 
-- `evogrow.jl`, `evogrow_v3.jl`, `gp.jl`, `discover.jl`, `stopping.jl` bleiben unangetastet.
-- Der bestehende Simulationspfad bleibt verhaltensgleich.
-- Plateau, Stopplogik und Promotion laufen ausschließlich auf simuliertem Loss.
-- Die Diagnose-Stichprobe abgelehnter Kandidaten darf die Suche nicht beeinflussen.
-- Bestehende Record-Felder, Metrikdefinitionen und Baseline v0 bleiben unangetastet.
-- Level-Budget der Regression-Suite bleibt bei 30.
+- Nur System 3 und System 11. **Nicht** System 26, 31 oder 63.
+- Keine Änderung an `src/`, an der Regression-Konfiguration oder am `config_fingerprint`.
+- Kein Schreiben in `studies/regression/history.jsonl`.
 - Keine neuen Abhängigkeiten.
+- Nicht Teil dieses WP: WP-v3.3, WP-H2, Anpassungen am Screening-Kriterium selbst. Falls der Lauf
+  ein Problem im Kriterium zeigt, ist es zu **berichten**, nicht zu beheben.
