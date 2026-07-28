@@ -16,6 +16,16 @@ Damit trennt die Messung im Bestaetigungsfall sauber: auf einfachen Systemen num
 
 Ankerpflicht in der Spec: R6 muss Baseline v0 reproduzieren (System 26 Seed 42, 30 Level, 1e-6: Loss `0.001391623174905009`, `final_stage = 5`, Overshoot 2, `pruned_match = false`). Ohne bestaetigten Anker ist nichts interpretierbar. Reihenfolge nach steigender Laufzeit (D8, R8, R6), nach jeder Bedingung sofort schreiben.
 
+### WP-T2 und WP-T2b geliefert — Lauf startklar
+
+WP-T2 (`78124f0`): `studies/numerics/system26_tolerance_screening.jl`, drei Bedingungen D8/R8/R6, Anker gegen Baseline v0, inkrementelles Flush, Antwortblatt fuer die vier Fragen. Beim Spec-Schreiben Fast-Fehler korrigiert: die urspruengliche Verification-Zeile „Skript ausfuehren und berichten" haette Codex den 5-8h-Lauf starten lassen — durch No-Execute-Riegel plus billigen System-3-Smoke-Test ersetzt. Als Gedaechtnisnotiz festgehalten ([[feedback_long_run_no_execute]]).
+
+WP-T2b (`4dead22`): rein additive Beobachtbarkeit. Statischer Review bestaetigt: nebenwirkungsfreier `level_callback` (liest nur den Snapshot, kein RNG, `verbose` bleibt 0), robust gegen beide Snapshot-Formen (EvoGrow `vis_history` ohne `elapsed_s`/`n_params` via hasproperty-Fallback, EvoGrowScreening `level_log` mit beiden), eine Live-Zeile pro Level plus `run.log`. Ergebnisse bit-identisch by construction.
+
+Ausgeführter Lauf steht aus — wird extern gestartet. Ablauf: erst Sekunden-Preflight `EVO_T2_SYSTEM_ID=11` (bestaetigt Anker-Reproduktion und End-to-End-Lauf), dann System 26.
+
+<!-- 78124f0, 2ee1b5a, 4dead22 -->
+
 ### Projektjournal erstellt
 
 Auf Wunsch ein ausfuehrliches Projektjournal als roter Faden erstellt: `docs/projektjournal.md` (Narrativ) und `docs/projektjournal.pdf` (13 Seiten, gesetzt). Zeitraum 2026-04-20 bis 2026-07-23, mit allen Entscheidungen, verworfenen Ansaetzen samt Begruendung und Beleg, und den Messzahlen. Ergaenzt CLAUDE.md (Zustand), DIARY.md (Chronologie), PAPER_1.md (Plan). Committet `fa25253`.
