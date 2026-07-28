@@ -12,6 +12,11 @@
 # written and flushed to disk immediately after it finishes, so an abort costs at most the
 # condition currently running.
 #
+# The run is watched externally over several hours, so every level prints one compact live line
+# to the terminal and to `run.log` in the output directory. That output is purely additive: the
+# level callback only reads the level snapshot, never touches the RNG or search state, and
+# `verbose` stays at 0, so results are bit-identical to a run without it.
+#
 # Prediction under test (WP-T2): on System 26 the loss floor is ~1.4e-3, three orders of
 # magnitude above even the 1e-6 tolerance, so `loss_tol = 1e-8` can never fire and the stage
 # escalation is driven by plateau detection, not by the loss threshold. Predicted: the tighter
@@ -122,7 +127,33 @@ function build_optimizer(eval_tol::Float64)
     )
 end
 
-function build_strategy(kind::Symbol)
+"""
+One compact live line per level, so a multi-hour condition is distinguishable from a hang.
+
+The callback only reads the level snapshot and prints; it never touches the RNG or any search
+state, which is what keeps results bit-identical to a run without it. `EvoGrow` passes a
+`vis_history` snapshot without per-level timing, `EvoGrowScreening` passes its `level_log`
+entry which carries `elapsed_s`; the wall time between callbacks covers the first case.
+"""
+function make_level_callback(label::String)
+    last_tick = Ref(time())
+    return snapshot -> begin
+        now_t = time()
+        level_elapsed_s = hasproperty(snapshot, :elapsed_s) ?
+            Float64(snapshot.elapsed_s) : now_t - last_tick[]
+        last_tick[] = now_t
+        n_params = hasproperty(snapshot, :n_params) ?
+            Int(snapshot.n_params) : length(snapshot.best_params)
+        log_info(@sprintf(
+            "[%s] level %d/%d stage=%d best_loss=%.6e n_params=%d level_elapsed=%.1fs",
+            label, Int(snapshot.level), N_LEVELS, Int(snapshot.stage),
+            Float64(snapshot.best_loss), n_params, level_elapsed_s,
+        ))
+        flush(stdout)
+    end
+end
+
+function build_strategy(kind::Symbol, level_callback)
     progression = StageProgressionPolicy(mode = :stage_local, min_levels_per_stage = STAGE_MIN)
     usage = StageUsagePolicy(mode = :hard, new_term_bias_prob = SOFT_BIAS)
     if kind === :reference
@@ -136,7 +167,7 @@ function build_strategy(kind::Symbol)
             usage = usage,
             use_pretuning = USE_PRETUNING,
             screening_optimizer = nothing,
-            level_callback = nothing,
+            level_callback = level_callback,
         )
     elseif kind === :screening
         return EvoGrowScreening(
@@ -151,7 +182,7 @@ function build_strategy(kind::Symbol)
             polish_maxiters = DERIVATIVE_POLISH_MAXITERS,
             rejected_diagnostic_samples = DERIVATIVE_REJECTED_DIAGNOSTIC_SAMPLES,
             screening_optimizer = nothing,
-            level_callback = nothing,
+            level_callback = level_callback,
             screening_score = :nested_f,
             polish_start = :reference,
         )
@@ -330,7 +361,7 @@ function run_condition(condition)
         elapsed_s = @elapsed begin
             result = discover(
                 traj;
-                structure = build_strategy(condition.kind),
+                structure = build_strategy(condition.kind, make_level_callback(condition.label)),
                 optimizer = build_optimizer(condition.eval_tol),
                 basis = basis,
                 loss = MSELoss(),
@@ -678,42 +709,63 @@ function main()
     records_path = joinpath(OUTPUT_DIR, "records.jsonl")
     isfile(records_path) && rm(records_path)
 
-    println("WP-T2: system $(SYSTEM_ID), seed $(SEED), $(N_LEVELS) levels")
-    if !(SYSTEM_ID == 26 && N_LEVELS == 30)
-        println("WARNING: not the target configuration (system 26, 30 levels) - smoke-test mode.")
-    end
-    println("Writing outputs to $(OUTPUT_DIR)")
+    # Live progress goes through the shared logger, so every level line lands on the terminal
+    # and persistently in run.log at the same time.
+    set_level(INFO)
+    set_log_file(joinpath(OUTPUT_DIR, "run.log"))
 
     records = Dict{String, Any}[]
     stage_rows = Dict{String, Any}[]
     level_rows = Dict{String, Any}[]
     anchor = nothing
 
-    for condition in CONDITIONS
-        println("Running condition $(condition.label): $(condition.description)")
-        record, condition_stage_rows, condition_level_rows = run_condition(condition)
-        push!(records, record)
-        append!(stage_rows, condition_stage_rows)
-        append!(level_rows, condition_level_rows)
-        print_record(record)
+    try
+        log_info("WP-T2: system $(SYSTEM_ID), seed $(SEED), $(N_LEVELS) levels")
+        if !(SYSTEM_ID == 26 && N_LEVELS == 30)
+            log_info("WARNING: not the target configuration (system 26, 30 levels) - smoke-test mode.")
+        end
+        log_info("Writing outputs to $(OUTPUT_DIR)")
+        flush(stdout)
 
-        if condition.label == ANCHOR_LABEL && record["error"] === nothing
-            anchor = anchor_check(condition.label, record)
-            print_anchor(anchor)
-            write_json(joinpath(OUTPUT_DIR, "anchor_check.json"), anchor)
+        for condition in CONDITIONS
+            log_info(@sprintf(
+                "Running condition %s (eval_tol=%.0e): %s",
+                condition.label, condition.eval_tol, condition.description,
+            ))
+            flush(stdout)
+
+            record, condition_stage_rows, condition_level_rows = run_condition(condition)
+            push!(records, record)
+            append!(stage_rows, condition_stage_rows)
+            append!(level_rows, condition_level_rows)
+
+            duration_text = record["error"] === nothing ?
+                @sprintf("%.1fs (%.2f h)", record["elapsed_s"], record["elapsed_h"]) : "an error"
+            log_info("Finished condition $(condition.label) after $(duration_text)")
+            print_record(record)
+
+            if condition.label == ANCHOR_LABEL && record["error"] === nothing
+                anchor = anchor_check(condition.label, record)
+                print_anchor(anchor)
+                write_json(joinpath(OUTPUT_DIR, "anchor_check.json"), anchor)
+            end
+
+            # Flush everything after each condition: an abort costs at most the running condition.
+            append_jsonl(records_path, record)
+            write_csv(joinpath(OUTPUT_DIR, "records.csv"), records, RECORD_COLUMNS)
+            write_csv(joinpath(OUTPUT_DIR, "stage_costs.csv"), stage_rows, STAGE_COLUMNS)
+            write_csv(joinpath(OUTPUT_DIR, "level_costs.csv"), level_rows, LEVEL_COLUMNS)
+            write_json(joinpath(OUTPUT_DIR, "summary.json"), build_summary(records, stage_rows, anchor))
+            write_questions(joinpath(OUTPUT_DIR, "questions.txt"), records, stage_rows, anchor)
+            log_info("Flushed outputs after condition $(condition.label)")
+            flush(stdout)
         end
 
-        # Flush everything after each condition: an abort costs at most the running condition.
-        append_jsonl(records_path, record)
-        write_csv(joinpath(OUTPUT_DIR, "records.csv"), records, RECORD_COLUMNS)
-        write_csv(joinpath(OUTPUT_DIR, "stage_costs.csv"), stage_rows, STAGE_COLUMNS)
-        write_csv(joinpath(OUTPUT_DIR, "level_costs.csv"), level_rows, LEVEL_COLUMNS)
-        write_json(joinpath(OUTPUT_DIR, "summary.json"), build_summary(records, stage_rows, anchor))
-        write_questions(joinpath(OUTPUT_DIR, "questions.txt"), records, stage_rows, anchor)
-        println("Flushed outputs after condition $(condition.label)")
+        log_info("Wrote records.jsonl, records.csv, stage_costs.csv, level_costs.csv, summary.json, questions.txt, anchor_check.json, run.log")
+    finally
+        close_log_file()
+        flush(stdout)
     end
-
-    println("Wrote records.jsonl, records.csv, stage_costs.csv, level_costs.csv, summary.json, questions.txt, anchor_check.json")
 end
 
 main()
