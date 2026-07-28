@@ -20,6 +20,8 @@ Ankerpflicht in der Spec: R6 muss Baseline v0 reproduzieren (System 26 Seed 42, 
 
 Auf Wunsch ein ausfuehrliches Projektjournal als roter Faden erstellt: `docs/projektjournal.md` (Narrativ) und `docs/projektjournal.pdf` (13 Seiten, gesetzt). Zeitraum 2026-04-20 bis 2026-07-23, mit allen Entscheidungen, verworfenen Ansaetzen samt Begruendung und Beleg, und den Messzahlen. Ergaenzt CLAUDE.md (Zustand), DIARY.md (Chronologie), PAPER_1.md (Plan). Committet `fa25253`.
 
+<!-- 713d85f -->
+
 ## 2026-07-22
 
 ### WP-P1b Korrekturen vor Benchmark-Lauf
