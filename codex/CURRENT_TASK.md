@@ -31,7 +31,10 @@ Stage-Zahlen, nicht mit einer Interpretation.
 
 ## Goal
 
-Ein Experiment auf System 26, Seed 42, das drei Bedingungen misst und die Vorhersage prüft.
+Ein **lauffertiges** Skript, das ein Experiment auf System 26, Seed 42, mit drei Bedingungen
+definiert und die zur Prüfung der Vorhersage nötigen Zahlen ausgibt. Den mehrstündigen
+System-26-Lauf startet ausschließlich der Betreiber extern — dieses WP liefert das Skript, führt es
+aber nicht auf System 26 aus (siehe Verification).
 
 ## Files
 
@@ -86,26 +89,38 @@ pro Stage), im selben Zuschnitt wie die Baseline-Tabelle im Journal (`docs/proje
 Abschnitt 3.8). Damit ist ablesbar, wo die Zeit hingeht und ob sich das Kostenprofil zwischen den
 Toleranzen verschiebt.
 
-### 5. Bericht — vier Fragen mit Zahlen
+### 5. Ausgaben, aus denen später vier Fragen beantwortet werden
 
-1. **Reproduziert R6 den Baseline-v0-Anker?** (Ja/Nein mit den vier Werten.)
+Das Skript muss so schreiben, dass **nach dem externen Lauf** diese vier Fragen aus den
+Ausgabedateien beantwortbar sind. Das Beantworten selbst ist nicht Teil dieses WP (siehe
+Verification) — das Skript muss die nötigen Zahlen nur vollständig ablegen:
+
+1. **Reproduziert R6 den Baseline-v0-Anker?** (Die vier Werte neben den Baseline-v0-Werten.)
 2. **Verändert die engere Toleranz den Overshoot?** R6 gegen R8: `final_stage`, `stage_overshoot`,
-   `wasted_levels`, Laufzeit. Ausdrücklich gegen die Vorhersage aus dem Context prüfen.
+   `wasted_levels`, Laufzeit.
 3. **Trägt Bedingung D auf einem gekoppelten System?** D8 gegen R8: Loss, `final_stage`,
-   `pruned_match`, Laufzeit, Speedup. Findet D eine bessere Struktur als der Referenzpfad, der hier
-   nachweislich falsch liegt?
-4. **Wo geht die Zeit hin?** Per-Stage-Aufschlüsselung, und ob 1e-8 gegenüber 1e-6 die Kosten pro
-   Integration verschiebt.
-
-Kein Beschönigen in eine Richtung. Bestätigung der Vorhersage ist ein ebenso gutes Ergebnis wie
-ihre Widerlegung.
+   `pruned_match`, Laufzeit, Speedup, gefundene Struktur.
+4. **Wo geht die Zeit hin?** Per-Stage-Aufschlüsselung, und die Kosten pro Integration je Toleranz.
 
 ## Verification
 
-Nur System 26, Seed 42. **Nicht** die Systeme 31 oder 63 (mehrtägig). **Nicht** die volle Suite.
-Grobe Kostenerwartung: D8 unter einer Stunde, R8 offen (Teil der Messung), R6 rund 3 Stunden.
+**Wichtig: Den eigentlichen System-26-Lauf NICHT selbst starten.** Dieser Lauf dauert Stunden und
+wird ausschließlich extern vom Betreiber gestartet. Aufgabe dieses WP ist, das Skript
+**lauffertig zu liefern**, nicht es auszuführen.
 
-Das Skript ausführen und die vier Fragen mit den gemessenen Zahlen beantworten.
+Zur Absicherung der Lauffähigkeit ist ausschließlich ein **billiger Smoke-Test** erlaubt: dasselbe
+Skript einmal auf **System 3** (nicht 26) mit stark reduziertem Level-Budget (Richtwert 4 Level)
+durchlaufen lassen, nur um zu bestätigen, dass alle drei Bedingungen ohne Fehler starten, die
+Ausgabedateien korrekt geschrieben werden und die Anker-Logik greift. Diesen Smoke-Test-Zustand
+danach wieder auf die Zielkonfiguration (System 26, Seed 42, 30 Level) zurückstellen und im
+Abschlussbericht angeben, dass das geschehen ist.
+
+Der Abschlussbericht nennt: dass das Skript lauffertig ist, was der Smoke-Test auf System 3 ergeben
+hat, und den exakten Befehl, mit dem der Betreiber den System-26-Lauf startet. **Keine gemessenen
+System-26-Zahlen** — die entstehen erst beim externen Lauf.
+
+Grobe Kostenerwartung des späteren externen Laufs zur Einordnung im Skript-Header: D8 unter einer
+Stunde, R8 offen (Teil der Messung), R6 rund 3 Stunden.
 
 ## Constraints
 
