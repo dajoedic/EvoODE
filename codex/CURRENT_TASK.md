@@ -1,133 +1,106 @@
-# CURRENT TASK: WP-T2 — Toleranz und Screening auf System 26 (dem Gate-1-System)
+# CURRENT TASK: WP-T2b — Live-Beobachtbarkeit für den WP-T2-Lauf
 
 **Language: Julia**
 
 ## Context
 
-Alle bisherigen Befunde zu Toleranz und Screening stammen von System 3 und System 11 — beide
-eindimensional und exakt darstellbar. Die wissenschaftlich relevanten Systeme sind die gekoppelten.
-System 26 (Lotka-Volterra, 2D) ist das System, an dem Gate 1 gescheitert ist: v2.2 fand
-`du1 = 5,05·u1 − 3,87·u1·u2`, `du2 = 1,13·u1 − 1,80·u1²` — Terme komplett falsch, Loss ~1,4e-3,
-Eskalation auf Stage 5 statt der erwarteten Stage 3.
+Das WP-T2-Skript `studies/numerics/system26_tolerance_screening.jl` ist inhaltlich fertig und
+korrekt: drei Bedingungen (D8, R8, R6), Anker gegen Baseline v0, inkrementelles Flush. Ein
+einziger Mangel bleibt vor dem externen Lauf: Es hat **keine Live-Ausgabe**. `verbose = 0`, kein
+`level_callback`, kein `run.log`. Während der teuersten Bedingung (R6, rund 3 Stunden) sieht der
+Betreiber im Terminal nichts, bis die Bedingung fertig ist.
 
-Dieses WP prüft drei Dinge auf genau diesem System, mit einer scharfen, falsifizierbaren
-Vorhersage.
+Der Lauf dauert 5–8 Stunden und wird extern verfolgt. Ohne Live-Fortschritt ist ein Hänger nicht
+von normalem Rechnen zu unterscheiden. Genau dafür wurde im Regression-Runner der
+`level_callback` mit Fortschrittsanzeige gebaut; dieselbe Beobachtbarkeit fehlt hier.
 
-### Die Vorhersage (Prüfstein für den Bericht)
-
-Auf System 3 half die engere Toleranz (1e-6 → 1e-8), weil der Loss dort nahe der Schwelle
-`loss_tol = 1e-8` operiert: Bei 1e-6 erreicht der Optimierer diese Schwelle nicht zuverlässig, es
-gibt keinen Abbruch, die Suche eskaliert.
-
-Auf System 26 liegt der Loss-Boden bei ~1,4e-3 — rund drei Größenordnungen **über** selbst der
-1e-6-Toleranz. `loss_tol = 1e-8` kann dort nie feuern, unabhängig von der Toleranz, und die
-Eskalation wird von der Plateau-Erkennung getrieben, nicht von der Loss-Schwelle.
-
-**Vorhergesagt wird daher: Die engere Toleranz ändert `final_stage` und `stage_overshoot` auf
-System 26 nicht (oder kaum). Der Overshoot ist hier algorithmisch, nicht numerisch.**
-
-Der Bericht muss diese Vorhersage ausdrücklich bestätigen oder widerlegen — mit den gemessenen
-Stage-Zahlen, nicht mit einer Interpretation.
+Dies ist ein **rein additiver** Beobachtbarkeits-Fix. Er darf am Experiment nichts ändern: nicht an
+den Bedingungen, Toleranzen, Hyperparametern, Ankerwerten, an der RNG-Nutzung, den Metriken oder
+den Ausgabedateien-Inhalten. Nur zusätzliche Ausgabe zur Laufzeit kommt hinzu.
 
 ## Goal
 
-Ein **lauffertiges** Skript, das ein Experiment auf System 26, Seed 42, mit drei Bedingungen
-definiert und die zur Prüfung der Vorhersage nötigen Zahlen ausgibt. Den mehrstündigen
-System-26-Lauf startet ausschließlich der Betreiber extern — dieses WP liefert das Skript, führt es
-aber nicht auf System 26 aus (siehe Verification).
+Der WP-T2-Lauf gibt pro Level eine kompakte Live-Zeile aus, sodass der Fortschritt im Terminal
+sichtbar ist, und schreibt zusätzlich ein persistentes `run.log`. Die Ergebnisse bleiben
+bit-identisch zu einem Lauf ohne diesen Fix.
 
 ## Files
 
-- **Neu oder erweitern:** Ein Skript, das die drei Bedingungen rechnet. `studies/numerics/` ist der
-  passende Ort; die Bedingungsdefinitionen und das Anker-Muster aus
-  `studies/debug/compare_screening_variant.jl` sollen wiederverwendet werden, nicht neu geschrieben.
-- **Nicht ändern:** `src/`, die Regression-Konfiguration, `config_fingerprint`.
-- Nicht in `studies/regression/history.jsonl` schreiben. Ausgabe nach
-  `outputs/studies/numerics/<skript_slug>/`.
+- **Nur ändern:** `studies/numerics/system26_tolerance_screening.jl`.
+- **Nicht anfassen:** `src/`, alle anderen Skripte, die Regression-Konfiguration.
 
 ## Required Content
 
-### 1. Drei Bedingungen, System 26, Seed 42, 30 Level
+### 1. `level_callback` für beide Bedingungstypen
 
-- **R6** Referenzpfad (EvoGrow v2.2 stage_local, `use_pretuning = false`), Bewertungstoleranz
-  **1e-6**.
-- **R8** Referenzpfad, identisch, Bewertungstoleranz **1e-8**.
-- **D8** Screening-Variante mit `screening_score = :nested_f` und `polish_start = :reference`
-  (Bedingung D aus WP-P2.4), Bewertungstoleranz **1e-8**.
+Beide Bedingungen konstruieren ihre Strategie in `build_strategy(kind)` derzeit mit
+`level_callback = nothing`. Statt `nothing` wird eine Callback-Funktion übergeben, die pro Level
+**eine** kompakte, sofort geflushte Zeile ausgibt. Sie erhält den Level-Snapshot (das
+`level_log`-NamedTuple mit u. a. `level`, `stage`, `best_loss`, `best_objective`, `n_params`,
+`elapsed_s`).
 
-Level-Budget **30** — nicht 18. Der Overshoot ist der Untersuchungsgegenstand und muss sich
-entfalten können; ein kleineres Budget würde ihn abschneiden. Alle übrigen Hyperparameter identisch
-zur Regression-Konfiguration.
+Die Zeile muss enthalten: Bedingungslabel, `level`/Gesamtzahl, `stage`, `best_loss`, Level-Laufzeit.
+Beispiel-Format (Wortlaut frei, Inhalt verbindlich):
+`[R6] level 14/30 stage=2 best_loss=3.51e-03 level_elapsed=224.9s`
 
-Erwartete Stage für System 26: **3**. `stage_overshoot = max(0, final_stage − 3)`.
+Der Callback ist **nebenwirkungsfrei bezüglich der Suche**: Er liest nur den Snapshot und gibt aus.
+Er darf den RNG nicht berühren und keine Zustandsvariable der Suche verändern. Das ist die
+Bedingung dafür, dass die Ergebnisse unverändert bleiben.
 
-### 2. Reihenfolge und Robustheit
+### 2. `run.log` je Lauf
 
-Der Lauf dauert Stunden und wird extern gestartet. Reihenfolge nach steigender erwarteter Laufzeit:
-**D8 zuerst** (billigste, laut WP-P2.4 auf System 3 rund Faktor 6 schneller), dann **R8**, dann
-**R6** (laut Baseline v0 rund 3 Stunden). Nach **jeder** Bedingung sofort schreiben und flushen,
-damit ein Abbruch höchstens die gerade laufende Bedingung kostet.
+Zu Beginn von `main()` ein `run.log` im Ausgabeordner öffnen (`set_log_file`), am Ende schließen
+(`close_log_file`). Damit landet die Level-Ausgabe zusätzlich persistent auf der Platte, nicht nur
+flüchtig im Terminal. Falls die Live-Zeile aus Punkt 1 über den regulären Logger läuft, erfüllt das
+beide Zwecke zugleich; andernfalls die Zeile zusätzlich in das Log schreiben.
 
-### 3. Ankerprüfung
+### 3. Bedingungswechsel sichtbar machen
 
-**R6 muss Baseline v0 reproduzieren.** System 26, Seed 42, 30 Level, Toleranz 1e-6:
-`loss = 0.001391623174905009`, `final_stage = 5`, `stage_overshoot = 2`, `pruned_match = false`
-(aus `studies/regression/history.jsonl`, `config_fingerprint 0c739d4e36ee6498`). Weicht R6 davon
-ab, ist der Aufbau fehlerhaft — melden, nicht glätten. Diese Prüfung ist wichtiger als die anderen
-beiden Bedingungen: ohne bestätigten Anker ist nichts interpretierbar.
+Beim Start jeder Bedingung eine Zeile ausgeben, welche Bedingung mit welcher Toleranz nun läuft
+(die vorhandene `println("Running condition ...")` genügt, sofern sie geflusht wird). Nach jeder
+Bedingung eine Abschlusszeile mit Gesamtlaufzeit der Bedingung.
 
-### 4. Metriken je Bedingung
+### 4. Keine semantische Änderung
 
-`loss`, `final_stage`, `stage_overshoot`, `wasted_levels`, `pruned_match`, Laufzeit,
-`total_parameter_fits`, `total_ode_solves`, Kosten pro Integration, sowie die gefundene Struktur
-in lesbarer Form. Für D8 zusätzlich die Screening-Diagnostik (Rangübereinstimmung samt Zahl
-auswertbarer Level, vom Gate abgelehnte Kinder, Abweichung der Auswahl vom reinen Residuen-Score,
-Anteil erschöpfter Polish-Budgets).
+`verbose` in `build_options` darf angehoben werden, **falls** das nötig ist, damit der
+`level_callback` feuert — aber nur, wenn das die numerischen Ergebnisse nachweislich nicht
+verändert. Falls eine `verbose`-Anhebung die interne Logmenge oder das Verhalten beeinflusst, statt
+dessen den `level_callback` unabhängig von `verbose` wirken lassen. Im Zweifel: `verbose` so
+lassen, wie es ist, und die Sichtbarkeit allein über den `level_callback` herstellen.
 
-Zusätzlich eine **Per-Stage-Kostenaufschlüsselung** je Bedingung (Levelzahl, Zeit, Zeit pro Level
-pro Stage), im selben Zuschnitt wie die Baseline-Tabelle im Journal (`docs/projektjournal.md`,
-Abschnitt 3.8). Damit ist ablesbar, wo die Zeit hingeht und ob sich das Kostenprofil zwischen den
-Toleranzen verschiebt.
-
-### 5. Ausgaben, aus denen später vier Fragen beantwortet werden
-
-Das Skript muss so schreiben, dass **nach dem externen Lauf** diese vier Fragen aus den
-Ausgabedateien beantwortbar sind. Das Beantworten selbst ist nicht Teil dieses WP (siehe
-Verification) — das Skript muss die nötigen Zahlen nur vollständig ablegen:
-
-1. **Reproduziert R6 den Baseline-v0-Anker?** (Die vier Werte neben den Baseline-v0-Werten.)
-2. **Verändert die engere Toleranz den Overshoot?** R6 gegen R8: `final_stage`, `stage_overshoot`,
-   `wasted_levels`, Laufzeit.
-3. **Trägt Bedingung D auf einem gekoppelten System?** D8 gegen R8: Loss, `final_stage`,
-   `pruned_match`, Laufzeit, Speedup, gefundene Struktur.
-4. **Wo geht die Zeit hin?** Per-Stage-Aufschlüsselung, und die Kosten pro Integration je Toleranz.
+Anker, Bedingungen, Toleranzen (1e-6 / 1e-8), Hyperparameter, RNG-Seed und alle Ausgabedatei-
+Schemata bleiben unverändert.
 
 ## Verification
 
-**Wichtig: Den eigentlichen System-26-Lauf NICHT selbst starten.** Dieser Lauf dauert Stunden und
-wird ausschließlich extern vom Betreiber gestartet. Aufgabe dieses WP ist, das Skript
-**lauffertig zu liefern**, nicht es auszuführen.
+**Den System-26-Lauf NICHT starten.** Er dauert Stunden und wird ausschließlich extern gestartet.
 
-Zur Absicherung der Lauffähigkeit ist ausschließlich ein **billiger Smoke-Test** erlaubt: dasselbe
-Skript einmal auf **System 3** (nicht 26) mit stark reduziertem Level-Budget (Richtwert 4 Level)
-durchlaufen lassen, nur um zu bestätigen, dass alle drei Bedingungen ohne Fehler starten, die
-Ausgabedateien korrekt geschrieben werden und die Anker-Logik greift. Diesen Smoke-Test-Zustand
-danach wieder auf die Zielkonfiguration (System 26, Seed 42, 30 Level) zurückstellen und im
-Abschlussbericht angeben, dass das geschehen ist.
+Erlaubt ist nur der billige Smoke-Test auf **System 3** mit reduziertem Budget:
 
-Der Abschlussbericht nennt: dass das Skript lauffertig ist, was der Smoke-Test auf System 3 ergeben
-hat, und den exakten Befehl, mit dem der Betreiber den System-26-Lauf startet. **Keine gemessenen
-System-26-Zahlen** — die entstehen erst beim externen Lauf.
+```
+EVO_T2_SYSTEM_ID=3 EVO_T2_N_LEVELS=4 julia studies/numerics/system26_tolerance_screening.jl
+```
 
-Grobe Kostenerwartung des späteren externen Laufs zur Einordnung im Skript-Header: D8 unter einer
-Stunde, R8 offen (Teil der Messung), R6 rund 3 Stunden.
+Damit bestätigen:
+1. Pro Level erscheint eine Live-Zeile im Terminal, für alle drei Bedingungen.
+2. `run.log` wird geschrieben und enthält die Level-Zeilen.
+3. Die numerischen Ergebnisse des Smoke-Tests (Loss, `final_stage`, `pruned_match` je Bedingung)
+   sind **identisch** zu einem Lauf ohne den Fix. Prüfe das, indem du vor und nach der Änderung
+   denselben Smoke-Test rechnest und die Werte vergleichst — sie müssen übereinstimmen, sonst ist
+   der Fix nicht rein additiv.
+
+Der Smoke-Test läuft auf System 3 in Sekunden. Nach dem Smoke-Test die Ausgabedateien im
+Zielordner nicht als Ergebnis missverstehen; sie stammen vom Testsystem.
+
+Im Abschlussbericht: dass der Fix rein additiv ist (Ergebnisvergleich bestanden), wie die
+Live-Zeile aussieht, und der Startbefehl für den externen System-26-Lauf.
 
 ## Constraints
 
-- Reine Messung. Kein Eingriff in `src/`, keine Konfigurationsumstellung, keine Fingerprint-Änderung.
-- Der Referenzpfad bleibt verhaltensgleich; die R6-Ankerprüfung ist Teil der Verifikation.
-- Trajektorienerzeugung bleibt bei `abstol = reltol = 1e-9`; variiert wird nur die
-  Bewertungstoleranz.
-- Keine neuen Abhängigkeiten.
-- Nicht Teil dieses WP: dauerhafte Umstellung der Bewertungstoleranz im Regression-Runner, neue
-  Baseline, WP-v3.3, Systeme 31/63.
+- Reiner Beobachtbarkeits-Fix. Keine Änderung an Bedingungen, Toleranzen, Hyperparametern,
+  Ankerwerten, RNG-Nutzung, Metriken oder Ausgabedatei-Inhalten.
+- Der `level_callback` ist nebenwirkungsfrei bezüglich der Suche.
+- `src/` bleibt unangetastet.
+- Den System-26-Lauf nicht ausführen; nur der System-3-Smoke-Test ist erlaubt.
+- Keine neuen Abhängigkeiten (`ProgressMeter` ist bereits vorhanden, falls ein Balken statt einer
+  Zeile gewünscht ist — beides ist akzeptabel).
