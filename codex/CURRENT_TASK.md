@@ -1,154 +1,118 @@
-# CURRENT TASK: WP-P2.4 — Screening: harter Penalty und entkoppelter Polish-Start
+# CURRENT TASK: WP-T2 — Toleranz und Screening auf System 26 (dem Gate-1-System)
 
 **Language: Julia**
 
 ## Context
 
-WP-T1 (`a6919ca`) hat die Ursache des Screening-Versagens auf System 3 aufgeklärt, und sie ist eine
-andere als angenommen.
+Alle bisherigen Befunde zu Toleranz und Screening stammen von System 3 und System 11 — beide
+eindimensional und exakt darstellbar. Die wissenschaftlich relevanten Systeme sind die gekoppelten.
+System 26 (Lotka-Volterra, 2D) ist das System, an dem Gate 1 gescheitert ist: v2.2 fand
+`du1 = 5,05·u1 − 3,87·u1·u2`, `du2 = 1,13·u1 − 1,80·u1²` — Terme komplett falsch, Loss ~1,4e-3,
+Eskalation auf Stage 5 statt der erwarteten Stage 3.
 
-**Nicht die Toleranz:** Aus dem Least-Squares-Warmstart landet der Fit bei **3,236e-08 bei jeder
-Toleranz von 1e-6 bis 1e-12** — völlig flach über sechs Größenordnungen. Der numerische Boden liegt
-bei 4,40e-12, das Ergebnis also rund 7.000-fach darüber.
+Dieses WP prüft drei Dinge auf genau diesem System, mit einer scharfen, falsifizierbaren
+Vorhersage.
 
-**Sondern der Warmstart selbst:** 3,236e-08 ist exakt der Wert, bei dem die Screening-Variante
-hängenblieb. Der Referenzlauf erreicht 2,66e-10 und benutzt **keinen** Warmstart
-(`USE_PRETUNING = false`). Der ableitungsbasierte LS-Warmstart führt auf System 3 also in ein
-Becken, aus dem BFGS nicht herausfindet — die Screening-Variante führt damit genau das wieder ein,
-was die Regression-Konfiguration bewusst abgeschaltet hat.
+### Die Vorhersage (Prüfstein für den Bericht)
 
-Daraus folgt: Ein harter Penalty auf das Ranking allein kann das Ergebnis nicht retten. Es braucht
-zwei Änderungen, und sie müssen getrennt messbar sein.
+Auf System 3 half die engere Toleranz (1e-6 → 1e-8), weil der Loss dort nahe der Schwelle
+`loss_tol = 1e-8` operiert: Bei 1e-6 erreicht der Optimierer diese Schwelle nicht zuverlässig, es
+gibt keinen Abbruch, die Suche eskaliert.
 
-Zweiter Befund aus WP-T1, der den Testaufbau betrifft: Auf System 11 ist der berichtete Loss bei
-Toleranz 1e-6 numerisches Rauschen (erreichter Loss skaliert direkt mit der Toleranz; mit den
-wahren Parametern sind bei 1e-6 nur 1,859e-14 erreichbar, gefittet werden 4,6e-15). Bei 1e-8 liegt
-der Boden bei 1,36e-17, die Kosten steigen nur um Faktor rund 1,3. Der Vergleich in diesem WP läuft
-deshalb bei **1e-8**.
+Auf System 26 liegt der Loss-Boden bei ~1,4e-3 — rund drei Größenordnungen **über** selbst der
+1e-6-Toleranz. `loss_tol = 1e-8` kann dort nie feuern, unabhängig von der Toleranz, und die
+Eskalation wird von der Plateau-Erkennung getrieben, nicht von der Loss-Schwelle.
+
+**Vorhergesagt wird daher: Die engere Toleranz ändert `final_stage` und `stage_overshoot` auf
+System 26 nicht (oder kaum). Der Overshoot ist hier algorithmisch, nicht numerisch.**
+
+Der Bericht muss diese Vorhersage ausdrücklich bestätigen oder widerlegen — mit den gemessenen
+Stage-Zahlen, nicht mit einer Interpretation.
 
 ## Goal
 
-Zwei getrennte Interventionen an der Screening-Variante, jeweils einzeln abschaltbar, plus ein
-Vergleichslauf, der ihre Wirkung einzeln und gemeinsam ausweist.
+Ein Experiment auf System 26, Seed 42, das drei Bedingungen misst und die Vorhersage prüft.
+
+## Files
+
+- **Neu oder erweitern:** Ein Skript, das die drei Bedingungen rechnet. `studies/numerics/` ist der
+  passende Ort; die Bedingungsdefinitionen und das Anker-Muster aus
+  `studies/debug/compare_screening_variant.jl` sollen wiederverwendet werden, nicht neu geschrieben.
+- **Nicht ändern:** `src/`, die Regression-Konfiguration, `config_fingerprint`.
+- Nicht in `studies/regression/history.jsonl` schreiben. Ausgabe nach
+  `outputs/studies/numerics/<skript_slug>/`.
 
 ## Required Content
 
-### 1. Harter Penalty: geschachtelter Modellvergleich statt Informationskriterium
+### 1. Drei Bedingungen, System 26, Seed 42, 30 Level
 
-AIC war wirkungslos, und zwar nachweisbar: Bei `n = 200` beträgt die Strafe über den gesamten
-Bereich `p = 1..6` höchstens 10 Einheiten, während der Fit-Term sich schon bei 10 % Residuen-
-unterschied um 19 Einheiten ändert. Jedes Standard-Informationskriterium ist hier vom Fit-Term
-dominiert; BIC wäre mit `p*log(n) <= 26,5` ebenfalls zu schwach.
+- **R6** Referenzpfad (EvoGrow v2.2 stage_local, `use_pretuning = false`), Bewertungstoleranz
+  **1e-6**.
+- **R8** Referenzpfad, identisch, Bewertungstoleranz **1e-8**.
+- **D8** Screening-Variante mit `screening_score = :nested_f` und `polish_start = :reference`
+  (Bedingung D aus WP-P2.4), Bewertungstoleranz **1e-8**.
 
-Das Problem ist struktureller Natur: Kinder entstehen durch Hinzufügen von Termen, sind also
-geschachtelte Obermengen ihrer Eltern, und für geschachtelte Least-Squares-Probleme ist das
-Residuum monoton nicht-steigend in der Termzahl. Ein größeres Modell kann nie schlechter
-abschneiden.
+Level-Budget **30** — nicht 18. Der Overshoot ist der Untersuchungsgegenstand und muss sich
+entfalten können; ein kleineres Budget würde ihn abschneiden. Alle übrigen Hyperparameter identisch
+zur Regression-Konfiguration.
 
-Die angemessene Antwort ist kein additiver Strafterm, sondern ein **geschachtelter Modellvergleich**:
-Ein Kind darf seinen Elternteil nur dann überholen, wenn die Residuenverbesserung größer ist, als
-ein zusätzlicher Parameter zufällig liefern würde. Setze das als **Gate** um, nicht als
-Rangkorrektur:
+Erwartete Stage für System 26: **3**. `stage_overshoot = max(0, final_stage − 3)`.
 
-- Kandidaten, die den Test gegen ihren Elternteil bestehen, werden bevorzugt.
-- Kandidaten, die ihn nicht bestehen, werden dahinter einsortiert.
-- Innerhalb jeder Gruppe wird weiterhin nach Residuum sortiert.
-- Elternteile selbst haben keinen Elternteil und werden nach Residuum eingeordnet.
+### 2. Reihenfolge und Robustheit
 
-Wähle einen geeigneten Test für geschachtelte Least-Squares-Modelle, begründe die Wahl im
-Docstring, und mache das Signifikanzniveau konfigurierbar mit einem benannten Default. Dafür muss
-die Kindergenerierung die Herkunft eines Kandidaten (Elternteil) bis zur Bewertung mitführen.
+Der Lauf dauert Stunden und wird extern gestartet. Reihenfolge nach steigender erwarteter Laufzeit:
+**D8 zuerst** (billigste, laut WP-P2.4 auf System 3 rund Faktor 6 schneller), dann **R8**, dann
+**R6** (laut Baseline v0 rund 3 Stunden). Nach **jeder** Bedingung sofort schreiben und flushen,
+damit ein Abbruch höchstens die gerade laufende Bedingung kostet.
 
-Der bisherige `screening_score = :residual` und `:aic` bleiben als Vergleichsbedingungen erhalten.
+### 3. Ankerprüfung
 
-### 2. Pflicht-Nachweis, dass der Penalty überhaupt wirkt
+**R6 muss Baseline v0 reproduzieren.** System 26, Seed 42, 30 Level, Toleranz 1e-6:
+`loss = 0.001391623174905009`, `final_stage = 5`, `stage_overshoot = 2`, `pruned_match = false`
+(aus `studies/regression/history.jsonl`, `config_fingerprint 0c739d4e36ee6498`). Weicht R6 davon
+ab, ist der Aufbau fehlerhaft — melden, nicht glätten. Diese Prüfung ist wichtiger als die anderen
+beiden Bedingungen: ohne bestätigten Anker ist nichts interpretierbar.
 
-Die AIC-Runde ist daran gescheitert, dass die Intervention die Rangfolge nicht bewegt hat und das
-erst hinterher auffiel. Diesmal muss das im Lauf selbst sichtbar sein.
+### 4. Metriken je Bedingung
 
-Protokolliere pro Level und aggregiert pro Lauf: **in wie vielen Fällen sich die ausgewählte
-Kandidatenmenge von der unterscheidet, die der reine Residuen-Score ausgewählt hätte**, und wie
-viele Kinder das Gate nicht bestanden haben.
+`loss`, `final_stage`, `stage_overshoot`, `wasted_levels`, `pruned_match`, Laufzeit,
+`total_parameter_fits`, `total_ode_solves`, Kosten pro Integration, sowie die gefundene Struktur
+in lesbarer Form. Für D8 zusätzlich die Screening-Diagnostik (Rangübereinstimmung samt Zahl
+auswertbarer Level, vom Gate abgelehnte Kinder, Abweichung der Auswahl vom reinen Residuen-Score,
+Anteil erschöpfter Polish-Budgets).
 
-Ist dieser Wert null, ist die Intervention wirkungslos — das ist dann sofort erkennbar und im
-Bericht ausdrücklich festzustellen.
+Zusätzlich eine **Per-Stage-Kostenaufschlüsselung** je Bedingung (Levelzahl, Zeit, Zeit pro Level
+pro Stage), im selben Zuschnitt wie die Baseline-Tabelle im Journal (`docs/projektjournal.md`,
+Abschnitt 3.8). Damit ist ablesbar, wo die Zeit hingeht und ob sich das Kostenprofil zwischen den
+Toleranzen verschiebt.
 
-### 3. Polish-Start vom Screening entkoppeln
+### 5. Bericht — vier Fragen mit Zahlen
 
-Der LS-Fit erfüllt derzeit zwei Rollen: er liefert den Screening-Score **und** den Startpunkt für
-das Nachpolieren. Nach dem WP-T1-Befund ist die zweite Rolle schädlich.
+1. **Reproduziert R6 den Baseline-v0-Anker?** (Ja/Nein mit den vier Werten.)
+2. **Verändert die engere Toleranz den Overshoot?** R6 gegen R8: `final_stage`, `stage_overshoot`,
+   `wasted_levels`, Laufzeit. Ausdrücklich gegen die Vorhersage aus dem Context prüfen.
+3. **Trägt Bedingung D auf einem gekoppelten System?** D8 gegen R8: Loss, `final_stage`,
+   `pruned_match`, Laufzeit, Speedup. Findet D eine bessere Struktur als der Referenzpfad, der hier
+   nachweislich falsch liegt?
+4. **Wo geht die Zeit hin?** Per-Stage-Aufschlüsselung, und ob 1e-8 gegenüber 1e-6 die Kosten pro
+   Integration verschiebt.
 
-Führe eine konfigurierbare Wahl des Polish-Startpunkts ein, mit mindestens zwei Möglichkeiten:
-
-- die LS-Parameter (heutiges Verhalten),
-- derselbe Startpunkt, den der Referenzpfad verwendet — der LS-Fit dient dann ausschließlich der
-  Bewertung.
-
-Die Diagnose-Fits abgelehnter Kandidaten verwenden denselben Startpunkt wie die ausgewählten, damit
-der Vergleich fair bleibt.
-
-### 4. Rangübereinstimmung reparieren
-
-Die Kennzahl ist fragwürdig: In beiden WP-P2.3-Bedingungen betrug sie exakt −7/9, obwohl sich
-Laufzeit, Integrationen und Konvergenzfehler deutlich unterschieden. Verdacht: Auf den meisten
-Leveln ist rho `NaN`, weil alle simulierten Losses gleich sind und der Nenner null wird, sodass der
-berichtete Mittelwert von sehr wenigen Leveln getragen wird.
-
-Zu tun: Ausweisen, auf wie vielen Leveln überhaupt ein endlicher Wert zustande kam, und den
-Mittelwert nur über diese bilden — zusammen mit dieser Anzahl, damit er einordenbar ist. Zusätzlich
-Median und Spannweite. Bleibt die Zahl der auswertbaren Level klein, ist die Kennzahl als
-Entscheidungsgrundlage zu kennzeichnen und nicht stillschweigend zu mitteln.
-
-### 5. Vergleichslauf
-
-`studies/debug/compare_screening_variant.jl` erweitern. Systeme 3 und 11, Seed 42, Level-Budget 30,
-Bewertungstoleranz **1e-8** für alle Bedingungen:
-
-- **A** Referenzpfad (Simulation)
-- **B** Screening, Residuen-Score, LS-Polish-Start (heutiges Verhalten, Kontrolle)
-- **C** Screening, geschachtelter Test, LS-Polish-Start
-- **D** Screening, geschachtelter Test, entkoppelter Polish-Start
-
-Damit ist die Wirkung beider Interventionen einzeln ablesbar: C gegen B zeigt den Penalty, D gegen
-C den Startpunkt.
-
-Zusätzlich **eine** Ankerprüfung: Referenzpfad bei Toleranz 1e-6 gegen Baseline v0 (System 3 Loss
-`2.663641831768419e-10`, `final_stage = 3`; System 11 Loss `4.402192340718147e-15`,
-`final_stage = 4`). Nur zur Bestätigung, dass der Referenzpfad unverändert ist — bei 1e-8 gelten
-diese Werte naturgemäß nicht mehr.
-
-### 6. Bericht
-
-Mit Zahlen, je Bedingung: Loss, `final_stage`, `pruned_match`, Laufzeit, Integrationen,
-Kosten pro Integration, Rangübereinstimmung samt Zahl auswertbarer Level, Zahl der vom Gate
-abgelehnten Kinder, und die Abweichung der Auswahl gegenüber dem reinen Residuen-Score.
-
-Drei Fragen sind ausdrücklich zu beantworten:
-
-1. Verändert der geschachtelte Test die Auswahl überhaupt (Punkt 2)?
-2. Verschwindet die Stage-Eskalation auf System 3 (Referenz: Stage 3, bisher Screening: Stage 5)?
-3. Entkommt Bedingung D dem Becken bei 3,236e-08?
+Kein Beschönigen in eine Richtung. Bestätigung der Vorhersage ist ein ebenso gutes Ergebnis wie
+ihre Widerlegung.
 
 ## Verification
 
-Nur System 3 und System 11. **Nicht** System 26, 31 oder 63. Grobe Kostenschätzung: System 3 rund
-sechs Minuten je Bedingung, System 11 Sekunden.
+Nur System 26, Seed 42. **Nicht** die Systeme 31 oder 63 (mehrtägig). **Nicht** die volle Suite.
+Grobe Kostenerwartung: D8 unter einer Stunde, R8 offen (Teil der Messung), R6 rund 3 Stunden.
+
+Das Skript ausführen und die vier Fragen mit den gemessenen Zahlen beantworten.
 
 ## Constraints
 
-- `evogrow.jl`, `evogrow_v3.jl`, `gp.jl`, `stopping.jl`, `discover.jl` bleiben unangetastet.
-- Der Referenzpfad bleibt verhaltensgleich; die Ankerprüfung bei 1e-6 ist Teil der Verifikation.
-- Beide Interventionen sind einzeln abschaltbar; das heutige Verhalten bleibt als Bedingung B
-  reproduzierbar.
-- Plateau, Stopplogik und Promotion laufen weiterhin ausschließlich auf simuliertem Loss.
-- `pretune_parameters` bleibt verhaltensgleich.
-- Keine Änderung an der Regression-Konfiguration oder am `config_fingerprint` in diesem WP.
+- Reine Messung. Kein Eingriff in `src/`, keine Konfigurationsumstellung, keine Fingerprint-Änderung.
+- Der Referenzpfad bleibt verhaltensgleich; die R6-Ankerprüfung ist Teil der Verifikation.
+- Trajektorienerzeugung bleibt bei `abstol = reltol = 1e-9`; variiert wird nur die
+  Bewertungstoleranz.
 - Keine neuen Abhängigkeiten.
-
-Nicht Teil dieses WP, aber aus WP-T1 vermerkt und nicht zu beheben:
-- Ein vollständig gescheiterter Fit meldet `final_loss = 1.000e+06` (Initialwert `l_best`) mit
-  Retcode `Success` und ist von einem echten schlechten Fit nicht unterscheidbar.
-- Einzelne Fits verbrauchen bei zwei Parametern bis zu 39.933 Loss-Auswertungen mit Retcode
-  `Failure` — die Line-Search verhält sich pathologisch.
-- Die Umstellung der Bewertungstoleranz auf 1e-8 im Regression-Runner ist eine eigene Entscheidung
-  und gehört nicht in dieses WP.
+- Nicht Teil dieses WP: dauerhafte Umstellung der Bewertungstoleranz im Regression-Runner, neue
+  Baseline, WP-v3.3, Systeme 31/63.

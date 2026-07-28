@@ -4,6 +4,22 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ---
 
+## 2026-07-23
+
+### WP-T2 beauftragt — Toleranz und Screening auf System 26, mit geschaerfter Vorhersage
+
+Naechster Schritt festgelegt: die entscheidende Messung auf System 26, dem Gate-1-System. Drei Bedingungen, Seed 42, 30 Level: R6 (Referenz, Toleranz 1e-6), R8 (Referenz, 1e-8), D8 (Screening Nested-Gate + entkoppelter Start, 1e-8). User hat die kombinierte Ein-Seed-Variante gewaehlt.
+
+**Geschaerfte Vorhersage, die den Wert der Messung erhoeht.** Beim Durchdenken des Mechanismus zeigt sich, dass mein urspruengliches „Overshoot koennte numerisch sein" zu breit war. Der numerische Kanal auf System 3 war spezifisch: der Loss operiert dort nahe `loss_tol = 1e-8`, und bei 1e-6 erreicht der Optimierer die Schwelle nicht → kein Abbruch → Eskalation. Auf System 26 liegt der Loss-Boden bei ~1,4e-3, also drei Groessenordnungen **ueber** selbst der 1e-6-Toleranz. `loss_tol` kann dort nie feuern, unabhaengig von der Toleranz, und die Eskalation ist plateau-getrieben. **Vorhersage: die engere Toleranz aendert den Overshoot auf System 26 nicht — der Overshoot ist hier algorithmisch, was die v3-Begruendung bestaetigt statt bedroht.** Falsifizierbar an den gemessenen Stage-Zahlen.
+
+Damit trennt die Messung im Bestaetigungsfall sauber: auf einfachen Systemen numerisch, auf gekoppelten algorithmisch — eine staerkere Paper-Aussage als „Overshoot ist numerisch". Im Widerlegungsfall verstehe ich den Mechanismus nicht und muss das vor v3.3 klaeren. Unabhaengig davon wird D zum ersten Mal auf einem gekoppelten System getestet, dem, wo v2.2 die Struktur komplett falsch fand.
+
+Ankerpflicht in der Spec: R6 muss Baseline v0 reproduzieren (System 26 Seed 42, 30 Level, 1e-6: Loss `0.001391623174905009`, `final_stage = 5`, Overshoot 2, `pruned_match = false`). Ohne bestaetigten Anker ist nichts interpretierbar. Reihenfolge nach steigender Laufzeit (D8, R8, R6), nach jeder Bedingung sofort schreiben.
+
+### Projektjournal erstellt
+
+Auf Wunsch ein ausfuehrliches Projektjournal als roter Faden erstellt: `docs/projektjournal.md` (Narrativ) und `docs/projektjournal.pdf` (13 Seiten, gesetzt). Zeitraum 2026-04-20 bis 2026-07-23, mit allen Entscheidungen, verworfenen Ansaetzen samt Begruendung und Beleg, und den Messzahlen. Ergaenzt CLAUDE.md (Zustand), DIARY.md (Chronologie), PAPER_1.md (Plan). Committet `fa25253`.
+
 ## 2026-07-22
 
 ### WP-P1b Korrekturen vor Benchmark-Lauf
