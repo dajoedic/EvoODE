@@ -35,6 +35,8 @@ Der PC wurde waehrend des Laufs 2x zugeklappt (Weg zur Arbeit und zurueck, je ~4
 
 Konsequenz fuer das Paper: Kosten ueber Integrationszaehlungen berichten, nicht ueber Wall-Clock. Fuer eine belastbare Zeitmessung braeuchte es einen ungestoerten Lauf ohne Suspend/Nebenlast; das ist aber fuer die v3-Begruendung nicht noetig, weil diese auf den deterministischen Achsen ruht.
 
+<!-- e8f12f4 -->
+
 ## 2026-07-23
 
 ### WP-T2 beauftragt — Toleranz und Screening auf System 26, mit geschaerfter Vorhersage
