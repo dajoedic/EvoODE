@@ -4,6 +4,37 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ---
 
+## 2026-07-29
+
+### WP-T2 gelaufen — Vorhersage bestaetigt, Overshoot algorithmisch, v3 validiert
+
+Der externe System-26-Lauf ist durch (16,8 h Wall-Clock, Seed 42, 30 Level, drei Bedingungen D8/R8/R6). Ausgaben in `outputs/studies/numerics/system26_tolerance_screening/`. **Anker bit-exakt reproduziert:** R6 (1e-6) liefert `0.001391623174905009`, `final_stage = 5`, Overshoot 2, wasted 8, `pruned_match = false` — identisch zu Baseline v0 (`0c739d4e36ee6498`). Damit ist die Messung interpretierbar.
+
+**Q2 — Toleranz aendert den Overshoot nicht (Vorhersage bestaetigt).** R6 (1e-6) und R8 (1e-8) haben bit-identisch `final_stage = 5`, `stage_overshoot = 2`, `wasted_levels = 8`. Die engere Toleranz senkt nur den Loss (1,39e-3 → 2,52e-4), nicht das Stopp-Verhalten. Beide terminieren via `plateau_absolute`, keiner naehert sich je `loss_tol = 1e-8` (haengt bei 1e-4 bzw. 1e-3). **Der Overshoot auf System 26 ist algorithmisch, nicht numerisch** — genau die geschaerfte Prognose vom 2026-07-23. Damit trennt die Messung sauber: auf System 3 numerisch (siehe 2026-07-22), auf gekoppelten Systemen algorithmisch. Die v3-Begruendung ist bestaetigt, nicht bedroht.
+
+**Q3 — Screening auf gekoppeltem System: schnell, aber kein Discovery-Gewinn.** D8 (Screening) gegen R8 (Referenz), beide 1e-8:
+- Deterministisch, tragend: D8 braucht **98.253 Integrationen gegen R8s 3.348.287** (34x weniger). Beide `pruned_match = false`, beide Overshoot 2. D8 nutzt 9 Terme (5+4), R8 nur 6 (4+2) — D8s niedrigerer Loss (1,01e-4 vs 2,52e-4) ist Ueberparametrisierung, kein Strukturgewinn.
+- Ranking-Kollaps: `rank_agreement_spearman` Median **−0,014** (Mittel 0,12, Min −0,64, Max 0,998). Das FD-Ableitungs-Screening rankt Kandidaten auf dem gekoppelten System praktisch nicht wie der echte Loss. Der 34x-Vorteil kommt aus wenig-integrieren, nicht aus gutem Diskriminieren.
+- Nested-F-Gate hier **inert**: `selection_diff_from_residual = 0` ueber alle Level. Der WP-P2.4-Durchbruchmechanismus aendert auf System 26 keine einzige Auswahl gegenueber purem Residual. Er half auf System 3, tut hier nichts — der Gate-Nutzen ist systemabhaengig.
+
+Fazit: Screening ist eine Performance-Optimierung (mit `polish_start=reference` sicher), kein Discovery-Qualitaets-Hebel. Gehoert als optionale Beschleunigung dokumentiert, nicht in den Kern-Claim; der Ranking-Kollaps muss in die Discussion.
+
+**Q4 — der v3-Beleg steckt in der Struktur.** Wahrheit: `du1 = 3·u1 − u1² − 2·u1·u2 | du2 = 2·u2 − u1·u2 − u2²`. R8 nach Pruning: `du1`-Support `{u1, u1², u1·u2}` = **exakt Gleichung 1** (`3.03·u1 − 1.07·u1² − 1.99·u1·u2`), aber `du2` = `{u1, u1²}` — **komplett falsch.** Eine Gleichung geloest, die andere im Blindflug; der globale Plateau-Mechanismus eskaliert Stages 4/5 fuer beide, obwohl Gleichung 1 laengst fertig ist. **Das ist die Signatur, die v3 (gleichungsweise Promotion) aufloest:** geloeste Gleichung einfrieren, nur die offene weiterwachsen. Robust (suspend-fest): 8 von 25 Leveln (R8) liegen jenseits der erwarteten Stage 3, das sind ~25 % der Integrationen (Stages 4+5: 832.350 von 3.348.287 Solves).
+
+**Korrektur meiner eigenen „63 %"-Aussage.** Die 63 % Overshoot-Kosten waren die *Wall-Clock*-Sicht (Zeitanteil der Stages 4+5 bei R8). Nach deterministischer Integrationszaehlung sind es ~25 %. Die Differenz kommt daher, dass die spaeten Integrationen einzeln teurer sind (bei 1e-8 kostet ein Stage-5-Solve 35 ms) — das ist zum Teil eine echte numerische Eigenschaft, aber die Wall-Clock-Achse ist genau die vom Suspend kontaminierte. Load-bearing bleibt: 8 verschwendete Level, ~25 % der Integrationen, eine Gleichung exakt, die andere blind.
+
+**Nebenbefund Toleranz.** 1e-8 senkt den Loss, aendert aber kein Stopp-Verhalten auf plateauenden Systemen und verteuert ausgerechnet die verschwendeten Spaeten-Stages. Fuer den Suchpfad auf gekoppelten Systemen ist 1e-6 die guenstigere, verhaltensgleiche Wahl. Der WP-T1-Rauschgrenzen-Aspekt bleibt nur fuer exakt loesbare Systeme relevant, die die Toleranz tatsaechlich erreichen (z. B. System 11) — separate, kleinere Frage.
+
+### Messvorbehalt — Wall-Clock kontaminiert, deterministische Schluesse unberuehrt
+
+Der PC wurde waehrend des Laufs 2x zugeklappt (Weg zur Arbeit und zurueck, je ~45 min, ~90 min gesamt), und es lief Nebenlast durch paralleles Arbeiten. **Das kontaminiert ausschliesslich die Wall-Clock-Achse:** `elapsed_s`, `s_per_level`, `ms_per_ode_solve`, Zeitanteile und der 6,35x-Speedup sind aufgeblaeht und verrauscht und duerfen nicht als praezise Messwerte zitiert werden. Warum die wissenschaftlichen Schluesse trotzdem stehen:
+
+1. **Anker bit-exakt** → die Berechnung selbst ist unkorrumpiert; Suspend hat den Determinismus nicht gebrochen.
+2. **`time_limit_s = 86400` war nie bindend** (max R8: 31.413 s ≪ 86.400 s) → keine Iteration wurde zeitlich abgeschnitten → Iterationszahlen und Ergebnisse deterministisch, unabhaengig von Suspend-Luecken.
+3. **Alle tragenden Zahlen sind Zaehlungen, keine Zeiten:** Stage, Overshoot, wasted_levels, Struktur/Support, Integrationszaehlungen (98.253 vs 3.348.287), Rank-Agreement, Gate-Diagnostik. Genau dafuer hat WP-P1 die Wall-Clock aus dem Ergebnispfad entfernt und das Skript die Solve-Zaehlungen praezise protokolliert.
+
+Konsequenz fuer das Paper: Kosten ueber Integrationszaehlungen berichten, nicht ueber Wall-Clock. Fuer eine belastbare Zeitmessung braeuchte es einen ungestoerten Lauf ohne Suspend/Nebenlast; das ist aber fuer die v3-Begruendung nicht noetig, weil diese auf den deterministischen Achsen ruht.
+
 ## 2026-07-23
 
 ### WP-T2 beauftragt — Toleranz und Screening auf System 26, mit geschaerfter Vorhersage
