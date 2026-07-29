@@ -20,7 +20,7 @@ Codex hat die Pro-Gleichungs-Promotionsregel umgesetzt: `src/structure/evogrow_v
 
 Zwei kleine, nicht-blockierende Punkte fuer spaeter: `stage_level_count` ist jetzt toter Code (wird inkrementiert, nie gelesen); der Trajektorien-Fallback ist ungetestet (nur bei nicht-finiter FD aktiv). Naechster Schritt: WP-v3.5 (expected-stage-Metriken `eq_overshoot`/`eq_wasted_levels`), dann WP-v3.6 (Validierung gegen Baseline v1: Overshoot-Rueckgang auf 26/31/63, extern nach der laufenden Baseline).
 
-<!-- WP-v3.4 delivery -->
+<!-- a334256 -->
 
 ### WP-v3.3 geliefert — gleichungs-bewusste Child-Generation, unter Lockstep bit-identisch
 
