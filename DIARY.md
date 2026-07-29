@@ -16,7 +16,7 @@ Codex hat WP-v3.3 umgesetzt: `src/structure/evogrow_v3_childgen.jl` (neu), `evog
 
 Promotion (`_lockstep_stage_progression_decision`, `_apply_lockstep_stage_update!`), Metriken und `EvoGrow`/v2.2 unangetastet. `history.jsonl` bewusst nicht committet — die Baseline v1 schreibt dort gerade live. Naechster Schritt: WP-v3.4 (Pro-Gleichungs-Promotionsregel), die die Stufen erst divergieren laesst — regressionsgeprueft gegen Baseline v1.
 
-<!-- WP-v3.3 delivery -->
+<!-- f6261a0 -->
 
 ### WP-T2 gelaufen — Vorhersage bestaetigt, Overshoot algorithmisch, v3 validiert
 
