@@ -292,9 +292,11 @@ function search_structure(strategy::EvoGrowV3,
         for ind in pop
             append!(
                 children,
-                _expand_with_usage_policy(
+                _expand_equation_aware_with_usage_policy(
                     ind,
                     dim,
+                    basis,
+                    eq_stages,
                     allowed_terms,
                     current_stage_terms,
                     strategy.usage;

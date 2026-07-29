@@ -6,6 +6,18 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ## 2026-07-29
 
+### WP-v3.3 geliefert — gleichungs-bewusste Child-Generation, unter Lockstep bit-identisch
+
+Codex hat WP-v3.3 umgesetzt: `src/structure/evogrow_v3_childgen.jl` (neu), `evogrow_v3.jl` ruft im Level-Loop jetzt `_expand_equation_aware_with_usage_policy` statt `_expand_with_usage_policy`, `EvoODE.jl` bindet die neue Datei ein. Verifikation **statisch** geprueft (Julia nicht gestartet, um die parallel laufende Baseline v1 nicht um CPU zu bringen; Ausfuehrungs-Evidenz liefert Codex' eigener Testlauf):
+
+- **Strukturelle Bit-Identitaet korrekt.** Bei uniformen `eq_stages` — dem Lockstep-Zustand — delegiert `_expand_equation_aware_with_usage_policy` an den unveraenderten `_expand_with_usage_policy` mit denselben `allowed_terms`/`current_stage_terms`: derselbe Code, dieselbe RNG-Reihenfolge. Der Pro-Gleichungs-Pfad wird nur bei divergierenden Stufen betreten und ist bis WP-v3.4 (Promotion) im echten Lauf tot.
+- **Verfuegbarkeits-Praedikat korrekt.** `stage(t)` aus `term_groups`, `vars(t)` per Regex `u(\d+)` aus `basis_term_name`. Namensformat bestaetigt (`u1`, `u1^2`, `u1*u2`, `u1^3`, `sin(u1)`, `cos(u1)`) — nur echte Cross-Terme haben zwei Variablen, dort greift die Paarregel `min(eq_stages[v] for v in vars(t)) >= stage(t)`.
+- **Tests stark.** `test/test_evogrow_v3_childgen.jl`: divergente Stufen `[1,3]` (Gleichung 1 nur Stage-1-Terme, `u1*u2` fuer keine Gleichung verfuegbar) und — der harte Teil — die Delegation bei `[3,3]` erzeugt byte-identische Kinder wie der Direktaufruf (gleicher Seed, Vergleich aller `active_idxs`). `test/smoke_evogrow_v3_bit_identity.jl`: EvoGrowV3 gegen EvoGrow(v2.2) end-to-end auf analytischer System-11-Trajektorie; bricht bei jeder Abweichung in loss/objective/final_stage/Struktur ab. Transitiv: WP-v3.2 hatte EvoGrowV3 ≡ v2.2 etabliert, dieser Smoke bestaetigt es nach v3.3, also v3.3 unveraendert.
+
+Promotion (`_lockstep_stage_progression_decision`, `_apply_lockstep_stage_update!`), Metriken und `EvoGrow`/v2.2 unangetastet. `history.jsonl` bewusst nicht committet — die Baseline v1 schreibt dort gerade live. Naechster Schritt: WP-v3.4 (Pro-Gleichungs-Promotionsregel), die die Stufen erst divergieren laesst — regressionsgeprueft gegen Baseline v1.
+
+<!-- WP-v3.3 delivery -->
+
 ### WP-T2 gelaufen — Vorhersage bestaetigt, Overshoot algorithmisch, v3 validiert
 
 Der externe System-26-Lauf ist durch (16,8 h Wall-Clock, Seed 42, 30 Level, drei Bedingungen D8/R8/R6). Ausgaben in `outputs/studies/numerics/system26_tolerance_screening/`. **Anker bit-exakt reproduziert:** R6 (1e-6) liefert `0.001391623174905009`, `final_stage = 5`, Overshoot 2, wasted 8, `pruned_match = false` — identisch zu Baseline v0 (`0c739d4e36ee6498`). Damit ist die Messung interpretierbar.
