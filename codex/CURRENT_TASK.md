@@ -1,179 +1,203 @@
-# CURRENT TASK: WP-v3.3 — Gleichungs-bewusste Child-Generation (EvoGrowV3)
+# CURRENT TASK: WP-v3.4 — Pro-Gleichungs-Promotionsregel (EvoGrowV3)
 
 **Language: Julia**
 
 ## Context
 
-WP-T2 (System 26, Seed 42, 30 Level) hat den v3-Ansatz empirisch bestaetigt: Der
-Referenzpfad findet Gleichung 1 nach Pruning exakt (`du1`-Support `{u1, u1^2, u1*u2}`),
-laesst Gleichung 2 aber vollstaendig falsch (`{u1, u1^2}`), und der globale Plateau-Mechanismus
-eskaliert trotzdem beide Gleichungen bis Stage 5 (Overshoot 2, `pruned_match = false`). Genau
-dieses Gleichungs-Ungleichgewicht adressiert EvoGrow v3: jede Gleichung soll nur wachsen, wenn
-ihr eigenes Residuum stagniert.
+WP-v3.3 hat die gleichungs-bewusste Child-Generation geliefert
+(`src/structure/evogrow_v3_childgen.jl`), die aber unter Lockstep ein bewiesenes No-Op ist: Solange
+alle `eq_stages` gleich sind, delegiert sie an den v2.2-Pfad. WP-v3.4 ist der Schritt, der die
+Stufen erst **divergieren** laesst und damit den v3-Mechanismus scharf schaltet.
 
-Der aktuelle Stand (`EvoGrowV3`, WP-v3.2, `src/structure/evogrow_v3.jl`) traegt bereits
-Pro-Gleichungs-**State** (`eq_stages`, `eq_levels_in_stage`, `eq_plateau_histories`,
-`eq_stage_histories`), promotet aber noch **synchron**: `_apply_lockstep_stage_update!` erhoeht
-alle Gleichungen gleichzeitig, getrieben von der globalen `_stage_progression_decision`. Damit
-sind alle `eq_stages` in jedem Level identisch, und die Child-Generation nutzt den aggregierten
-`current_stage` ueber `_expand_with_usage_policy(ind, dim, allowed_terms, current_stage_terms, ...)`.
+Motivation aus WP-T2 (System 26): der Referenzpfad findet Gleichung 1 exakt, laesst Gleichung 2
+falsch, und der **globale** Plateau-Mechanismus eskaliert trotzdem beide bis Stage 5 (8 verschwendete
+Level, ~25 % der Integrationen). EvoGrow v3 ersetzt die globale Promotion durch eine
+**pro-gleichungs-lokale**: jede Gleichung steigt nur, wenn ihr eigenes Residuum stagniert.
 
-Diese Aufgabe ist der **erste** von zwei Schritten, die die Pro-Gleichungs-Semantik einschalten:
+Umzusetzen ist die Designnotiz `docs/evogrow_v3_design.md`, Abschnitte 3 (Signal), 4 (Promotionsregel)
+und 5 (globale Termination). Der aktuelle `EvoGrowV3` (`src/structure/evogrow_v3.jl`) traegt bereits
+den Pro-Gleichungs-State (`eq_stages`, `eq_levels_in_stage`, `eq_plateau_histories`,
+`eq_stage_histories`), promotet ihn aber synchron ueber `_lockstep_stage_progression_decision` +
+`_apply_lockstep_stage_update!`. Diese Lockstep-Promotion wird durch die Pro-Gleichungs-Logik ersetzt.
 
-- **WP-v3.3 (diese Aufgabe):** Child-Generation gleichungs-stufen-bewusst machen — die Designnotiz
-  `docs/evogrow_v3_design.md`, Abschnitt 6. Solange alle `eq_stages` gleich sind (der jetzige
-  Lockstep-Zustand), muss sich **exakt nichts** aendern; die Ergebnisse bleiben bit-identisch zum
-  heutigen `EvoGrowV3` und damit zu v2.2. Die neue Logik greift ausschliesslich, sobald Gleichungen
-  auf **verschiedenen** Stufen stehen.
-- **WP-v3.4 (spaeter, NICHT Teil dieser Aufgabe):** die Pro-Gleichungs-Promotionsregel
-  (Designnotiz Abschnitt 3–4), die die Stufen erst divergieren laesst. Erst dann wird die hier
-  gebaute Child-Generation im echten Lauf wirksam.
-
-Diese Trennung ist bewusst: WP-v3.3 fuegt einen Mechanismus hinzu, der unter uniformen Stufen
-beweisbar ein No-Op ist, und ist deshalb regressionssicher gegen Baseline v0/v1 pruefbar, ohne dass
-sich eine einzige Zahl aendert.
+**Wichtiger Verhaltenshinweis (kein No-Op, anders als WP-v3.3):** v3.4 wechselt das Plateau-Signal
+von `best.objective` auf das Ableitungsresiduum `r_k`. Das aendert das Verhalten **auch auf skalaren
+Systemen** (dim = 1, eine Gleichung), weil dort weiterhin ein anderes Signal plateaut. Bit-Identitaet
+zu v2.2/Baseline v1 ist daher **nicht** das Pruefkriterium. Die Verifikation ist deterministische
+Unit-Test-Logik plus ein billiger Lauf-Smoke, **nicht** ein Baseline-Vergleich (der braucht den
+externen langen Lauf, siehe unten).
 
 ## Goal
 
-`EvoGrowV3` erzeugt Kinder **pro Gleichung** aus einer gleichungs-eigenen Term-Menge, die durch
-`eq_stages[k]` und eine Cross-Term-Paarregel bestimmt ist (Designnotiz Abschnitt 6). Bei uniformen
-`eq_stages` faellt dieser Pfad strukturell auf den bestehenden `_expand_with_usage_policy`-Aufruf
-zurueck, sodass die Resultate bit-identisch zum heutigen `EvoGrowV3` bleiben. Die Promotionslogik,
-die Metriken und `EvoGrow`/v2.2 bleiben unveraendert.
+`EvoGrowV3` promotet jede Gleichung unabhaengig anhand ihres eigenen Ableitungsresiduums `r_k`, sodass
+Gleichungen auf verschiedenen Stufen stehen koennen. Die globale Termination folgt den drei
+v3-Bedingungen (§5). Die gleichungs-bewusste Child-Generation aus WP-v3.3 wird dadurch im echten Lauf
+erstmals wirksam. `EvoGrow`/v2.2 und die Child-Generation-Logik selbst bleiben unveraendert.
 
 ## Files
 
-- **Aendern:** `src/structure/evogrow_v3.jl` (Child-Generation-Aufruf im Level-Loop).
-- **Ergaenzen erlaubt:** eine neue Datei im Structure-Layer (z. B. `src/structure/evogrow_v3_childgen.jl`)
-  fuer die gleichungs-bewusste Expansion und die Verfuegbarkeits-Helfer, in `src/EvoODE.jl` an der
-  passenden Stelle eingebunden. Alternativ die Helfer in `evogrow_v3.jl` selbst — Codex entscheidet,
-  aber ohne bestehende Funktionen umzuschreiben.
-- **Nicht anfassen (Verhalten):** `src/structure/evogrow.jl` (insb. `_expand_with_usage_policy`,
-  `_expand`, `_expand_stage_aware`, `_expand_stage_soft`, `_allowed_terms`, `_current_stage_terms`),
-  `src/structure/evogrow_screening.jl`, die Basis-Term-Reihenfolge und Stufenzuordnung in
-  `StagedPolynomialBasis`, die Promotionslogik, die Regressions-Konfiguration.
-- **Neuer Test:** eine fokussierte Testdatei unter `test/` (bestehendes Testschema folgen).
+- **Aendern:** `src/structure/evogrow_v3.jl` (Promotions-/Terminationsblock im Level-Loop,
+  Signal-Aufzeichnung, Rueckgabe-Metadaten).
+- **Ergaenzen erlaubt:** eine neue Datei im Structure-Layer (z. B. `src/structure/evogrow_v3_promote.jl`)
+  fuer das Residuum `r_k`, die Pro-Gleichungs-Promotionsentscheidung und die Termination; in
+  `src/EvoODE.jl` **vor** `evogrow_v3.jl` einbinden.
+- **Nicht anfassen (Verhalten):** `src/structure/evogrow.jl`, `src/structure/evogrow_v3_childgen.jl`,
+  `src/structure/evogrow_screening.jl`, die Basis, `EvoGrow`/v2.2, die Regressions-Konfiguration.
+- **Neue Tests:** unter `test/` (bestehendes Schema).
 
 ## Required Content
 
-### 1. Verfuegbarkeits-Praedikat pro Gleichung
+### 1. Pro-Gleichungs-Signal `r_k` (Designnotiz §3)
 
-Fuer Gleichung `k` und Term-Index `t` seien definiert:
+Fuer Gleichung `k` ist das Fortschrittssignal das **Ableitungsresiduum** auf der **beobachteten**
+Trajektorie:
 
-- `stage(t)`: die Stufe von `t`, also der Index der Gruppe in `basis.term_groups`, die `t` enthaelt.
-- `vars(t)`: die Menge der Variablenindizes, die in `t` vorkommen (z. B. `u1*u2` -> `{1, 2}`,
-  `u1^2` -> `{1}`).
+    r_k = mean_t ( dxk_dt_fd(t) - f_k(x_obs(t); params) )^2
 
-Term `t` ist fuer Gleichung `k` verfuegbar (Menge `A_k`) genau dann, wenn **beide** Bedingungen gelten:
+- `dxk_dt_fd` ist die Finite-Differenzen-Schaetzung der Ableitung der beobachteten Trajektorie,
+  konsistent mit der bereits in `src/optimize/pretune.jl` genutzten Ableitungsschaetzung. Diese
+  Schaetzung soll wiederverwendet werden, nicht neu erfunden.
+- `f_k(x_obs(t); params)` ist die `k`-te Komponente der gebauten RHS (`build_rhs(best.structure, basis)`),
+  ausgewertet an den **beobachteten** Zustaenden `x_obs(t)` mit den Parametern des besten Individuums —
+  **nicht** an der simulierten Trajektorie. Es ist keine ODE-Integration noetig.
+- Der Mittelwert laeuft ueber alle Zeitpunkte.
 
-1. **Basisregel:** `stage(t) <= eq_stages[k]`.
-2. **Cross-Term-Regel:** falls `t` mehrere Variablen koppelt (`length(vars(t)) >= 2`), zusaetzlich
-   `minimum(eq_stages[v] for v in vars(t)) >= stage(t)`. Fuer Ein-Variablen-Terme entfaellt diese
-   zweite Bedingung.
+`r_k` wird **einmal pro Level** auf dem besten Individuum berechnet (Designnotiz §9, offene Frage 1:
+Level-Ende genuegt fuer Plateau-Detektion).
 
-Die aktuelle-Stufe-Menge pro Gleichung (fuer die Usage-Policy) ist
-`C_k = { t in A_k : stage(t) == eq_stages[k] }`.
+**Fallback (§3):** Falls die FD-Ableitungsschaetzung numerisch scheitert (nicht-finite Werte), auf das
+pro-Dimension-**Trajektorienresiduum** ausweichen:
 
-Diese Formulierung ist die woertliche Umsetzung der Designnotiz Abschnitt 6 und der dort
-empfohlenen Aufloesung der offenen Fragen 2 und 3 (Cross-Term nur verfuegbar, wenn **beide**
-beteiligten Gleichungen die erforderliche Stufe erreicht haben; die Filterung passiert in der
-Child-Generation, nicht in der Basis). `stage(t)` und `vars(t)` werden aus der vorhandenen
-Basis-Term-Repraesentation abgeleitet; falls die Basis die Variablen-Zugehoerigkeit eines Terms
-nicht bereits abfragbar macht, darf ein **lesender** Helfer ergaenzt werden, der die vorhandenen
-Term-Metadaten introspektiert — ohne die Term-Reihenfolge oder Stufenzuordnung zu veraendern.
+    r_k = mean_t ( xk_sim(t) - xk_obs(t) )^2
 
-### 2. Gleichungs-bewusste Expansion in EvoGrowV3
+Da die FD-Schaetzung einmal auf der beobachteten Trajektorie erfolgt, ist der Fallback lauf-global.
+Ein Boolean `derivative_residual_fallback` wird in den Rueckgabe-Metadaten gesetzt, damit die
+Auswertung Ableitungs- von Trajektorien-getriebener Promotion unterscheiden kann.
 
-Im Level-Loop von `search_structure(::EvoGrowV3, ...)` wird der heutige einzelne Aufruf
+### 2. Pro-Gleichungs-Promotionsregel (Designnotiz §4)
 
-    _expand_with_usage_policy(ind, dim, allowed_terms, current_stage_terms, strategy.usage; ...)
+Am Ende jedes Levels prueft **jede** Gleichung ihre eigene Promotionsbedingung unabhaengig. Mehrere
+Gleichungen koennen im selben Level promoten; nicht qualifizierte bleiben auf ihrer Stufe.
 
-durch eine gleichungs-bewusste Variante ersetzt, die fuer jede Gleichung `k` ihre eigene Menge
-`A_k` (und `C_k`) verwendet statt der global aus `current_stage` abgeleiteten Mengen. Das Wachstum
-einer Gleichung `k` darf nur Terme aus `A_k` hinzufuegen; die Usage-Policy (`:hard`/`:soft`/`:passive`)
-wird pro Gleichung anhand von `C_k` angewandt (siehe Punkt 4).
+Gleichung `k` promotet von Stufe `s` auf `s + 1` **genau dann, wenn alle drei** gelten:
 
-Der `max_terms_per_eq`-Deckel und die uebrige Semantik der Expansion (wie viele Kinder pro Elter,
-Add-Term-Verhalten) bleiben unveraendert. Es aendert sich ausschliesslich die **pro Gleichung
-zulaessige Term-Menge**.
+1. **Mindestbudget:** `eq_levels_in_stage[k] >= effective_min_per_stage`, mit
+   `effective_min_per_stage = max(min_levels_per_stage, plateau_window + 1)`.
+   `min_levels_per_stage` stammt aus `strategy.progression.min_levels_per_stage`, `plateau_window`
+   aus `options.plateau_window`.
+2. **Pro-Gleichungs-Plateau:** die letzten `plateau_window` Werte von `r_k` erfuellen
+   `maximum(window) - minimum(window) < plateau_tol` (`options.plateau_tol`). Dasselbe absolute
+   Plateau-Kriterium wie v2.2, aber pro Gleichung auf `r_k` statt global auf `best.objective`.
+3. **Residuum ueber Ziel:** `r_k > loss_tol` (`options.loss_tol`). Ist `r_k` bereits nahe null,
+   ist zusaetzliche Strukturkapazitaet unnoetig; die Gleichung promotet dann **nicht**, auch wenn
+   Budget und Plateau erfuellt sind.
 
-### 3. Uniform-Stufen-Delegation (strukturelle Bit-Identitaet)
+Zusaetzliche Grenzen: eine Gleichung, die bereits auf der maximalen Stufe des Basis (`_max_stage(basis)`)
+steht, promotet nicht weiter.
 
-Dies ist die zentrale Sicherheitsgarantie. Wenn alle Eintraege von `eq_stages` gleich sind (Wert `s`),
-gilt per Konstruktion `A_k == _allowed_terms(basis, s)` und `C_k == _current_stage_terms(basis, s)`
-fuer **jede** Gleichung. In diesem Fall MUSS die gleichungs-bewusste Expansion auf den **bestehenden**
-`_expand_with_usage_policy`-Aufruf mit genau diesen globalen Mengen zurueckfallen — derselbe Code,
-dieselbe RNG-Zieh-Reihenfolge. Damit ist bit-identisches Verhalten zum heutigen `EvoGrowV3` nicht nur
-empirisch, sondern strukturell garantiert.
+**State-Update bei Promotion von Gleichung `k`:** `eq_stages[k] += 1`, `eq_levels_in_stage[k] = 0`,
+`empty!(eq_plateau_histories[k])`. Der aggregierte `current_stage` bleibt als
+`maximum(eq_stages)` definiert (fuer Logging, `_allowed_terms`-Abfragen und die aggregierten Metriken).
 
-Der neue Pro-Gleichungs-Pfad wird ausschliesslich betreten, wenn `eq_stages` **nicht** ueberall
-gleich sind. Da WP-v3.3 die Promotion nicht anfasst (weiterhin Lockstep, also immer uniform), wird
-dieser Pfad im echten Lauf noch nie ausgefuehrt — er wird allein durch den Unit-Test aus
-Verification A mit kuenstlich divergierenden Stufen geprueft.
+### 3. Globale Termination (Designnotiz §5)
 
-Falls sich diese strukturelle Delegation nicht ohne Verrenkung erreichen laesst (z. B. weil die
-RNG-Reihenfolge sonst kippt): NICHT still eine schwaechere Loesung waehlen, sondern anhalten und den
-Konflikt im Abschlussbericht beschreiben.
+Die harte Stopp-Semantik von v2.2 bleibt, nur die Stage-Erschoepfungsbedingung wird pro-gleichungs:
 
-### 4. Usage-Policy pro Gleichung
+1. `global_loss < loss_tol`: harter Stopp, ausgewertet auf der **simulierten** Trajektorie (wie v2.2;
+   nutze die bestehende `should_stop`-Logik / `options.loss_tol`, nicht `r_k`).
+2. `total_levels >= max_levels`: harte Level-Obergrenze (`options.max_levels`), zusaetzlich zur
+   `n_levels`-Schleifengrenze.
+3. **Alle** Gleichungen auf maximaler Stufe **und alle** plateaut: keine Promotion mehr moeglich → Stopp.
 
-Die bestehende `StageUsagePolicy`-Bedeutung (`:hard`, `:soft`, `:passive`) bleibt erhalten, wird aber
-pro Gleichung anhand von `C_k` ausgewertet. Eine Gleichung, deren neue-Stufen-Menge `C_k` leer ist
-oder mit `A_k` uebereinstimmt, verhaelt sich wie im heutigen `:passive`/uneingeschraenkten Fall (vgl.
-die Kurzschluss-Bedingung `current_stage_terms == allowed_terms` in `_expand_with_usage_policy`). Unter
-uniformen Stufen ergibt sich dadurch exakt das heutige Verhalten (Punkt 3).
+Der Lauf laeuft weiter, solange mindestens eine Gleichung noch promoten oder sich auf ihrer Stufe noch
+verbessern kann. Bedingung 3 ersetzt den v2.2-Pfad „keine weiteren Stufen verfuegbar". Die
+`min_levels`-Untergrenze (`options.min_levels`) bleibt als Schutz vor zu fruehem Stopp erhalten.
 
-### 5. Keine Promotion-Aenderung, keine neuen Metriken
+### 4. Bookkeeping-Aenderungen im Level-Loop
 
-WP-v3.3 aendert **nicht** die Promotionsregel (`_lockstep_stage_progression_decision`,
-`_apply_lockstep_stage_update!` bleiben wie sie sind) und fuegt **keine** neuen Metadaten-Felder
-hinzu. Die Metrik-Erweiterung (Designnotiz Abschnitt 8: `eq_residual_log`, `eq_promotion_levels`
-usw.) gehoert zu spaeteren WPs. Diese Aufgabe ist rein die Term-Mengen-Logik der Child-Generation.
+- `_record_eq_stage_level!` (oder sein Ersatz) schreibt jetzt **`r_k[k]`** in `eq_plateau_histories[k]`,
+  **nicht** mehr `best.objective`. `eq_levels_in_stage[k]` inkrementiert wie bisher pro Level;
+  `eq_stage_histories[k]` protokolliert weiterhin die Stufe pro Level.
+- Der bisherige globale `stage_histories[current_stage]`-Verlauf (auf `best.objective`) darf fuer die
+  aggregierte Visualisierung erhalten bleiben; er treibt die Promotion nicht mehr.
+- Der Aufruf von `_lockstep_stage_progression_decision` + `_apply_lockstep_stage_update!` wird durch
+  die Pro-Gleichungs-Entscheidung (Punkt 2) und die globale Termination (Punkt 3) ersetzt.
+- Nach der Promotionsphase wird `current_stage = maximum(eq_stages)` neu gesetzt; die
+  `_push_vis_snapshot!`-Aufrufe mit `stage_transition = true` sollen feuern, wenn **irgendeine**
+  Gleichung in diesem Level promotet hat (fuer die vorhandene Live-Beobachtbarkeit).
+
+### 5. Minimale Beobachtbarkeits-Metadaten (Teil von v3.4)
+
+In die Rueckgabe-`meta` aufnehmen (die restlichen §8-Metriken kommen in WP-v3.5):
+
+- `eq_residual_log :: Vector{Vector{Float64}}` — `r_k` pro Gleichung und Level.
+- `eq_promotion_levels :: Vector{Vector{Int}}` — Levelindizes, in denen jede Gleichung promotet hat.
+- `derivative_residual_fallback :: Bool` — ob der Trajektorien-Fallback aus Punkt 1 aktiv war.
+
+`eq_final_stages` und `eq_stage_histories` sind bereits vorhanden und bleiben. `final_stage` bleibt
+`maximum(eq_stages)`. Die expected-stage-abhaengigen Felder (`eq_overshoot`, `eq_wasted_levels`)
+gehoeren zu **WP-v3.5** und sind hier **nicht** umzusetzen.
+
+### 6. Was unveraendert bleibt
+
+Child-Generation-Logik (`evogrow_v3_childgen.jl`), `EvoGrow`/v2.2, die Basis, die
+Kosten-Instrumentierung (Fits, Solves, Retcodes), das RNG-Seeding und alle bestehenden
+Metadaten-Felder ausser den in Punkt 4/5 genannten.
 
 ## Verification
 
-**Keinen langen Lauf und nicht die Regressions-Baseline starten.** Die Baseline (Systeme 26/31/63,
-mehrere Tage) wird ausschliesslich extern gestartet. Codex fuehrt nur die folgenden billigen Checks aus.
+**Keinen langen Lauf und nicht die Regressions-Baseline starten.** Die Baseline v1 laeuft extern und
+liefert spaeter die Referenz fuer die eigentliche Validierung (WP-v3.6). Codex fuehrt nur die folgenden
+billigen, deterministischen Checks aus.
 
-### A. Unit-Test: divergierende Stufen (der Kern von WP-v3.3)
+### A. Unit-Test: Promotionsentscheidung (Kern von §4)
 
-Neuer Test, der die gleichungs-bewusste Expansion direkt mit **kuenstlich gesetzten** `eq_stages`
-aufruft (dim = 2, `StagedPolynomialBasis`), ohne einen vollen Suchlauf. Zu pruefen:
+Die Pro-Gleichungs-Promotionsentscheidung direkt mit **gebauten** `r_k`-Verlaeufen und State aufrufen
+(kein Suchlauf), dim = 2. Faelle:
 
-1. Bei `eq_stages = [1, 3]`: Kinder von Gleichung 1 enthalten **nur** Stage-1-Terme; kein Term mit
-   `stage(t) > 1` erscheint je in Gleichung 1. Gleichung 2 darf Terme bis Stage 3 erhalten.
-2. Ein Cross-Term `u1*u2` (Paarregel, erforderliche Stufe = seine `stage(t)`) ist bei `eq_stages = [1, 3]`
-   fuer **keine** Gleichung verfuegbar, weil `min(eq_stages[1], eq_stages[2]) = 1 < stage(u1*u2)` —
-   auch nicht fuer Gleichung 2, obwohl diese auf Stage 3 steht.
-3. Bei uniformen `eq_stages = [3, 3]` stimmt `A_k` fuer beide Gleichungen exakt mit
-   `_allowed_terms(basis, 3)` und `C_k` mit `_current_stage_terms(basis, 3)` ueberein.
+1. Gleichung 1 erfuellt alle drei Bedingungen (genug Budget, `r_1`-Fenster flach unter `plateau_tol`,
+   `r_1 > loss_tol`), Gleichung 2 hat ein **nicht** flaches `r_2`-Fenster → **nur** Gleichung 1
+   promotet, Gleichung 2 bleibt.
+2. Gleichung 1 plateaut, aber `r_1 < loss_tol` (Bedingung 3 falsch) → Gleichung 1 promotet **nicht**.
+3. Budget noch nicht erreicht (`eq_levels_in_stage[k] < effective_min_per_stage`) → keine Promotion,
+   auch bei flachem Fenster.
+4. Gleichung auf maximaler Stufe → keine Promotion.
 
-### B. Bit-Identitaets-Smoke auf kleinem System
+### B. Unit-Test: Signal `r_k`
 
-`EvoGrowV3` end-to-end auf einem **kleinen** System (System 3 oder 11, wenige Sekunden) vor und nach
-der Aenderung rechnen und `loss`, `final_stage`, `eq_final_stages`, `stage_overshoot` sowie die
-gefundene Struktur vergleichen. Diese muessen **identisch** sein — unter Lockstep sind alle Stufen
-uniform, also greift die Delegation aus Punkt 3. Ein einfacher Weg: ein kurzes Skript, das
-`discover(...)` mit `EvoGrowV3` auf System 3 mit festem Seed laeuft; Werte notieren, Aenderung
-anwenden, erneut laufen, vergleichen. Bei jeder Abweichung ist die Delegation verletzt.
+Auf einer kleinen konstruierten 2-D-Trajektorie und einer Struktur, die **eine** Gleichung exakt
+trifft: `r_k` der getroffenen Gleichung ist nahe null, das der anderen deutlich groesser. Bestaetigt,
+dass `r_k` pro Gleichung korrekt und auf den **beobachteten** Zustaenden ausgewertet wird.
 
-Der bestehende Regressions-Runner (`studies/regression/run_regression.jl`) darf **nicht** vollstaendig
-gestartet werden. Wenn ein Smoke gewuenscht ist, nur ein einzelnes kleines System per direktem
-`discover`-Aufruf, nicht die Matrix.
+### C. Skalar-Smoke (Sekunden)
 
-### C. Abschlussbericht
+`EvoGrowV3` end-to-end auf System 3 **und** 11 (dim = 1, wenige Sekunden). Bestaetigen, dass der Lauf
+terminiert, eine gueltige Struktur liefert, und `eq_residual_log` / `eq_promotion_levels` gefuellt sind.
+`final_stage` und `loss` protokollieren — sie duerfen von v2.2 **abweichen** (das Signal hat sich
+geaendert); das ist erwartet und wird im Bericht notiert, **nicht** als Fehler gewertet.
 
-Im Bericht: dass Unit-Test A und Bit-Identitaets-Smoke B bestanden sind (mit den verglichenen Werten
-aus B), wie das Verfuegbarkeits-Praedikat implementiert wurde, und die Bestaetigung, dass `EvoGrow`
-und die Promotionslogik unveraendert sind.
+### D. Optionaler Divergenz-Check nur, falls billig
+
+Ein end-to-end-Nachweis divergierender Stufen auf einem gekoppelten System ist **nicht** verpflichtend
+und darf **nicht** ueber ein teures System (26/31/63) laufen. Der deterministische Unit-Test A ist die
+maszgebliche Evidenz, dass die Pro-Gleichungs-Promotion feuert.
+
+### E. Abschlussbericht
+
+Unit-Tests A und B bestanden (mit den geprueften Faellen), Skalar-Smoke C terminiert mit gefuellten
+Pro-Gleichungs-Metadaten (Werte nennen), und Bestaetigung, dass `EvoGrow`/v2.2 und die
+Child-Generation unveraendert sind. Zusaetzlich: den genauen Startbefehl fuer den spaeteren externen
+Kopplungs-Validierungslauf **nicht** ausfuehren, aber im Bericht nennen, damit der Betreiber ihn
+extern starten kann.
 
 ## Constraints
 
-- Reiner Child-Generation-Mechanismus. Keine Aenderung an Promotion, Metriken, `EvoGrow`/v2.2 oder
-  der Basis-Term-Reihenfolge/Stufenzuordnung.
-- Unter uniformen `eq_stages` strukturelle Delegation auf den bestehenden Pfad — Bit-Identitaet
-  garantiert, nicht nur gemessen. Bei Zielkonflikt anhalten und berichten.
-- `src/structure/evogrow.jl` bleibt im Verhalten unangetastet; neue Helfer additiv.
+- Pro-Gleichungs-Promotion ersetzt die Lockstep-Promotion; `EvoGrow`/v2.2 und die Child-Generation
+  bleiben unveraendert.
+- Plateau-Signal ist `r_k` (Ableitungsresiduum, beobachtete Trajektorie), nicht `best.objective`.
+- Kein neuer ODE-Solve fuer `r_k` im Normalpfad (nur RHS-Auswertung auf beobachteten Zustaenden);
+  Integration nur im Fallback.
+- Keine expected-stage-abhaengigen Metriken (gehoeren zu WP-v3.5).
 - Keine neuen Abhaengigkeiten.
-- Keinen langen Lauf und nicht die Regressions-Baseline ausfuehren; nur Unit-Test A und der
-  Sekunden-Smoke B auf einem kleinen System sind erlaubt.
+- Keinen langen Lauf und nicht die Regressions-Baseline ausfuehren; nur Unit-Tests A/B und der
+  Sekunden-Smoke C auf skalaren Systemen sind erlaubt.

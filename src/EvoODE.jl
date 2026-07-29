@@ -121,6 +121,7 @@ include("plotting/search_animation.jl")
 include("structure/evogrow.jl")
 include("structure/evogrow_screening.jl")
 include("structure/evogrow_v3_childgen.jl")
+include("structure/evogrow_v3_promote.jl")
 include("structure/evogrow_v3.jl")
 include("structure/gp.jl")
 

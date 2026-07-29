@@ -3,8 +3,8 @@
 """
 EvoGrow v3 structure search strategy.
 
-This first v3 slice carries per-equation stage state while preserving the
-EvoGrow v2.2 `:stage_local` algorithm in lockstep form.
+This v3 variant carries per-equation stage state and promotes equations from
+their own derivative-residual plateau signals.
 """
 Base.@kwdef struct EvoGrowV3 <: AbstractStructureSearch
     pop_size::Int = 20
@@ -51,64 +51,11 @@ function _init_eq_stage_state(dim::Int)
     )
 end
 
-function _record_eq_stage_level!(
-    eq_levels_in_stage::Vector{Int},
-    eq_plateau_histories::Vector{Vector{Float64}},
-    eq_stage_histories::Vector{Vector{Int}},
-    eq_stages::Vector{Int},
-    objective::Float64
-)
-    for k in eachindex(eq_stages)
-        eq_levels_in_stage[k] += 1
-        push!(eq_plateau_histories[k], objective)
-        push!(eq_stage_histories[k], eq_stages[k])
-    end
-    return nothing
-end
-
-function _lockstep_stage_progression_decision(
-    strategy::EvoGrowV3,
-    stage_best_J_hist::Vector{Float64},
-    stage_level_count::Int,
-    best_loss::Float64,
-    current_stage::Int,
-    max_stage::Int,
-    level::Int,
-    n_steps::Int,
-    options::DiscoveryOptions
-)
-    return _stage_progression_decision(
-        _evogrow_v2_bridge(strategy),
-        stage_best_J_hist,
-        stage_level_count,
-        best_loss,
-        current_stage,
-        max_stage,
-        level,
-        n_steps,
-        options
-    )
-end
-
-function _apply_lockstep_stage_update!(
-    eq_stages::Vector{Int},
-    eq_levels_in_stage::Vector{Int},
-    eq_plateau_histories::Vector{Vector{Float64}}
-)
-    for k in eachindex(eq_stages)
-        eq_stages[k] += 1
-        eq_levels_in_stage[k] = 0
-        empty!(eq_plateau_histories[k])
-    end
-    return maximum(eq_stages)
-end
-
 """
     search_structure(strategy::EvoGrowV3, traj, basis, loss, optimizer, options)
 
-Incremental evolutionary growth with v3 per-equation stage-state scaffolding.
-In WP-v3.2, promotion remains lockstep-global and reproduces EvoGrow v2.2
-`:stage_local` behavior.
+Incremental evolutionary growth with v3 per-equation promotion driven by
+derivative residual plateaus.
 """
 function search_structure(strategy::EvoGrowV3,
                           traj::Trajectory,
@@ -125,6 +72,9 @@ function search_structure(strategy::EvoGrowV3,
     eq_levels_in_stage = eq_state.eq_levels_in_stage
     eq_plateau_histories = eq_state.eq_plateau_histories
     eq_stage_histories = eq_state.eq_stage_histories
+    eq_residual_log = [Float64[] for _ in 1:dim]
+    eq_promotion_levels = [Int[] for _ in 1:dim]
+    derivative_residual_fallback = false
 
     current_stage = maximum(eq_stages)
     max_stage = _max_stage(basis)
@@ -382,12 +332,23 @@ function search_structure(strategy::EvoGrowV3,
         push!(stage_histories[current_stage], best.objective)
         stage_level_count += 1
         stage_level_counts[current_stage] += 1
+
+        eq_residuals, used_residual_fallback = _evogrow_v3_equation_residuals(
+            best.structure,
+            best.params,
+            basis,
+            traj,
+            options
+        )
+        derivative_residual_fallback |= used_residual_fallback
+
         _record_eq_stage_level!(
             eq_levels_in_stage,
             eq_plateau_histories,
             eq_stage_histories,
+            eq_residual_log,
             eq_stages,
-            best.objective
+            eq_residuals
         )
 
         uses_current_stage_terms = _structure_uses_terms(best.structure, current_stage_terms)
@@ -545,55 +506,77 @@ function search_structure(strategy::EvoGrowV3,
             end
         end
 
-        stop, reason, action = _lockstep_stage_progression_decision(
-            strategy,
-            stage_histories[current_stage],
-            stage_level_count,
+        stop, reason = _evogrow_v3_termination_decision(
             best.loss,
-            current_stage,
-            max_stage,
             level,
-            n_steps,
+            eq_stages,
+            eq_plateau_histories,
+            max_stage,
             options
         )
 
         if stop
-            if action == :promote
-                push!(
-                    promotion_log,
-                    (
-                        from_stage = current_stage,
-                        to_stage = current_stage + 1,
-                        level = level,
-                        reason = reason,
-                        stage_levels = stage_level_count
-                    )
-                )
-
-                current_stage = _apply_lockstep_stage_update!(
-                    eq_stages,
-                    eq_levels_in_stage,
-                    eq_plateau_histories
-                )
-                stage_level_count = 0
-
-                if options.verbose >= 1
-                    log_info(
-                        "Stage-local plateau reached, increasing complexity",
-                        context = merge(level_ctx, Dict(:reason => reason, :new_stage => current_stage))
-                    )
-                end
-
-                _push_vis_snapshot!(true, level_stage_at_start, current_stage)
-                continue
-            end
-
             termination_reason = reason
             if options.verbose >= 1
                 log_info("Stopping", context=merge(level_ctx, Dict(:reason => reason)))
             end
             _push_vis_snapshot!(false, nothing, nothing)
             break
+        end
+
+        promote = _evogrow_v3_promotion_decisions(
+            eq_stages,
+            eq_levels_in_stage,
+            eq_plateau_histories,
+            max_stage,
+            strategy,
+            options
+        )
+
+        if any(promote)
+            for k in eachindex(promote)
+                if promote[k]
+                    push!(
+                        promotion_log,
+                        (
+                            equation = k,
+                            from_stage = eq_stages[k],
+                            to_stage = eq_stages[k] + 1,
+                            level = level,
+                            reason = :equation_residual_plateau,
+                            stage_levels = eq_levels_in_stage[k],
+                            residual = eq_residuals[k]
+                        )
+                    )
+                end
+            end
+
+            _apply_eq_stage_update!(
+                eq_stages,
+                eq_levels_in_stage,
+                eq_plateau_histories,
+                eq_promotion_levels,
+                promote,
+                level
+            )
+            current_stage = maximum(eq_stages)
+
+            if options.verbose >= 1
+                log_info(
+                    "Equation-local plateau reached, increasing complexity",
+                    context = merge(
+                        level_ctx,
+                        Dict(
+                            :promoted_equations => findall(promote),
+                            :eq_stages => copy(eq_stages),
+                            :new_stage => current_stage
+                        )
+                    )
+                )
+            end
+
+            _push_vis_snapshot!(true, level_stage_at_start, current_stage)
+            continue
         end
 
         _push_vis_snapshot!(false, nothing, nothing)
@@ -652,6 +635,9 @@ function search_structure(strategy::EvoGrowV3,
             final_stage = maximum(eq_stages),
             eq_final_stages = copy(eq_stages),
             eq_stage_histories = [copy(hist) for hist in eq_stage_histories],
+            eq_residual_log = [copy(hist) for hist in eq_residual_log],
+            eq_promotion_levels = [copy(levels) for levels in eq_promotion_levels],
+            derivative_residual_fallback = derivative_residual_fallback,
             termination_reason = termination_reason,
             progression_mode = strategy.progression.mode,
             usage_mode = strategy.usage.mode

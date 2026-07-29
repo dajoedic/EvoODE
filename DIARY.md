@@ -6,6 +6,22 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ## 2026-07-29
 
+### WP-v3.4 geliefert — Pro-Gleichungs-Promotion scharf geschaltet
+
+Codex hat die Pro-Gleichungs-Promotionsregel umgesetzt: `src/structure/evogrow_v3_promote.jl` (neu); `evogrow_v3.jl` ersetzt die Lockstep-Promotion durch pro-gleichungs `r_k`-Plateau plus globale Termination; der Bit-Identitaets-Smoke wurde durch einen Scalar-Promote-Smoke ersetzt (korrekt — v3.4 bricht die v2.2-Gleichheit bewusst). Statisch geprueft (Julia nicht gestartet, Baseline v1 laeuft):
+
+- **Signal (§3):** `r_k` = Ableitungsresiduum auf der beobachteten Trajektorie; `estimate_derivatives` aus `pretune.jl` wiederverwendet, RHS pro Gleichung an beobachteten Zustaenden ausgewertet — keine Integration im Normalpfad, RNG-neutral (kein Einfluss auf den Such-Stream). Fallback auf Trajektorienresiduum mit lauf-globalem Flag.
+- **Promotion (§4):** drei Bedingungen (Budget `max(min_levels_per_stage, plateau_window+1)`, `r_k`-Plateau, `r_k > loss_tol`) plus Maxstufen-Guard; mehrere Gleichungen koennen pro Level promoten. `eq_plateau_histories` traegt jetzt `r_k` statt `best.objective`.
+- **Termination (§5):** vor der Promotion ausgewertet → globaler `loss_tol`-Stopp hat Vorrang; neue Erschoepfung „alle Gleichungen auf Maxstufe und plateaut"; `min_levels`-Guard erhalten.
+- **Tests stark:** `test/test_evogrow_v3_promote.jl` deckt alle vier §4-Bedingungen deterministisch ab (Plateau / `r_k<tol` / Budget / Maxstufe) plus den `r_k`-Signal-Test (Konstanten-Basis, lineare Trajektorie → `r_1≈0`, `r_2=9`). `test/smoke_evogrow_v3_scalar_promote.jl` faehrt System 3+11 end-to-end ohne v2.2-Gleichheitsanspruch.
+- EvoGrow/v2.2 und Child-Generation unangetastet; `promotion_log`-Formaenderung unkritisch (nur generische Serialisierung in `experiments/run_experiment.jl`).
+
+**Bewusst kein No-Op:** das Plateau-Signal wechselt von `best.objective` auf `r_k`; das aendert das Verhalten auch auf skalaren Systemen. Bit-Identitaet war hier nicht das Kriterium, sondern deterministische Unit-Test-Logik.
+
+Zwei kleine, nicht-blockierende Punkte fuer spaeter: `stage_level_count` ist jetzt toter Code (wird inkrementiert, nie gelesen); der Trajektorien-Fallback ist ungetestet (nur bei nicht-finiter FD aktiv). Naechster Schritt: WP-v3.5 (expected-stage-Metriken `eq_overshoot`/`eq_wasted_levels`), dann WP-v3.6 (Validierung gegen Baseline v1: Overshoot-Rueckgang auf 26/31/63, extern nach der laufenden Baseline).
+
+<!-- WP-v3.4 delivery -->
+
 ### WP-v3.3 geliefert — gleichungs-bewusste Child-Generation, unter Lockstep bit-identisch
 
 Codex hat WP-v3.3 umgesetzt: `src/structure/evogrow_v3_childgen.jl` (neu), `evogrow_v3.jl` ruft im Level-Loop jetzt `_expand_equation_aware_with_usage_policy` statt `_expand_with_usage_policy`, `EvoODE.jl` bindet die neue Datei ein. Verifikation **statisch** geprueft (Julia nicht gestartet, um die parallel laufende Baseline v1 nicht um CPU zu bringen; Ausfuehrungs-Evidenz liefert Codex' eigener Testlauf):
