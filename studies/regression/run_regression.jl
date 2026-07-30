@@ -12,7 +12,7 @@ include(joinpath(@__DIR__, "..", "..", "src", "EvoODE.jl"))
 using .EvoODE
 include(joinpath(@__DIR__, "diagnostic_systems.jl"))
 
-const HISTORY_PATH = joinpath(@__DIR__, "history.jsonl")
+const HISTORY_PATH = get(ENV, "EVO_REGRESSION_HISTORY_PATH", joinpath(@__DIR__, "history.jsonl"))
 const OUTPUT_DIR = joinpath(@__DIR__, "..", "..", "outputs", "studies", "regression")
 const RUN_LOG_PATH = joinpath(OUTPUT_DIR, "run.log")
 
@@ -28,7 +28,7 @@ const BFGS_MAXITERS = 200
 const BFGS_ABSTOL = 1e-6
 const BFGS_RELTOL = 1e-6
 const BFGS_MAXITERS_SOLVE = 10^6
-const BFGS_TIME_LIMIT_S = 86_400.0
+const BFGS_TIME_LIMIT_S = 1800.0
 
 const SCREENING_BUDGETS_ENABLED = lowercase(strip(get(ENV, "EVO_SCREENING_BUDGETS", ""))) in ("1", "true", "yes")
 const SCREENING_BFGS_ABSTOL = 1e-5
@@ -73,29 +73,6 @@ const VARIANTS = [
         ),
     ),
     (
-        label = "evogrow_screening_derivative",
-        constructor = (level_callback, screening_optimizer) -> EvoGrowScreening(
-            pop_size = POP_SIZE,
-            n_levels = N_LEVELS,
-            children_per_parent = CHILDREN_PER_PARENT,
-            max_terms_per_eq = MAX_TERMS,
-            λ = LAMBDA,
-            progression = StageProgressionPolicy(
-                mode = :stage_local,
-                min_levels_per_stage = STAGE_MIN,
-            ),
-            usage = StageUsagePolicy(
-                mode = :hard,
-                new_term_bias_prob = SOFT_BIAS,
-            ),
-            screen_k = DERIVATIVE_SCREEN_K,
-            polish_maxiters = DERIVATIVE_POLISH_MAXITERS,
-            rejected_diagnostic_samples = DERIVATIVE_REJECTED_DIAGNOSTIC_SAMPLES,
-            screening_optimizer = screening_optimizer,
-            level_callback = level_callback,
-        ),
-    ),
-    (
         label = "evogrow_v3",
         constructor = (level_callback, screening_optimizer) -> EvoGrowV3(
             pop_size = POP_SIZE,
@@ -116,6 +93,12 @@ const VARIANTS = [
             level_callback = level_callback,
         ),
     ),
+]
+
+const FINGERPRINT_VARIANT_LABELS = [
+    "evogrow_v2_2_stage_local",
+    "evogrow_screening_derivative",
+    "evogrow_v3",
 ]
 
 function build_options(seed::Int)
@@ -212,7 +195,7 @@ function config_fingerprint()
         screening_bfgs_reltol = SCREENING_BFGS_RELTOL,
         screening_bfgs_maxiters_solve = SCREENING_BFGS_MAXITERS_SOLVE,
         screening_divergence_limit = SCREENING_DIVERGENCE_LIMIT,
-        variants = [String(variant.label) for variant in VARIANTS],
+        variants = FINGERPRINT_VARIANT_LABELS,
         derivative_screen_k = DERIVATIVE_SCREEN_K,
         derivative_polish_maxiters = DERIVATIVE_POLISH_MAXITERS,
         derivative_rejected_diagnostic_samples = DERIVATIVE_REJECTED_DIAGNOSTIC_SAMPLES,
@@ -261,6 +244,40 @@ end
 function fresh_requested()
     flag = lowercase(strip(get(ENV, "FRESH", "")))
     return flag in ("1", "true", "yes")
+end
+
+function _env_filter(name::String)
+    value = strip(get(ENV, name, ""))
+    return isempty(value) ? nothing : value
+end
+
+function selected_variants()
+    label = _env_filter("EVO_REGRESSION_VARIANT")
+    label === nothing && return VARIANTS
+
+    selected = [variant for variant in VARIANTS if String(variant.label) == label]
+    isempty(selected) && error("Unknown EVO_REGRESSION_VARIANT=$(label)")
+    return selected
+end
+
+function selected_systems()
+    value = _env_filter("EVO_REGRESSION_SYSTEM_ID")
+    value === nothing && return REGRESSION_SYSTEMS
+
+    system_id = parse(Int, value)
+    selected = [system for system in REGRESSION_SYSTEMS if Int(system[:system_id]) == system_id]
+    isempty(selected) && error("Unknown EVO_REGRESSION_SYSTEM_ID=$(system_id)")
+    return selected
+end
+
+function selected_seeds()
+    value = _env_filter("EVO_REGRESSION_SEED")
+    value === nothing && return REGRESSION_SEEDS
+
+    seed = parse(Int, value)
+    selected = [s for s in REGRESSION_SEEDS if s == seed]
+    isempty(selected) && error("Unknown EVO_REGRESSION_SEED=$(seed)")
+    return selected
 end
 
 function completed_key(variant, system, seed::Int)
@@ -326,6 +343,10 @@ function build_trajectory(system)
     return Trajectory(t_grid, Array(sol)')
 end
 
+function active_term_names(structure::StructureSpec, basis::AbstractBasis)
+    return [[basis_term_name(basis, term_idx) for term_idx in eq_terms] for eq_terms in structure.active_idxs]
+end
+
 function run_one(variant, system, seed::Int, fingerprint::String, provenance)
     timestamp = iso_timestamp()
     system_id = Int(system[:system_id])
@@ -352,6 +373,7 @@ function run_one(variant, system, seed::Int, fingerprint::String, provenance)
         "eq_final_stages" => nothing,
         "eq_overshoot" => nothing,
         "eq_wasted_levels" => nothing,
+        "support_terms" => nothing,
         "n_levels" => N_LEVELS,
         "use_pretuning" => USE_PRETUNING,
         "screening_budgets_active" => nothing,
@@ -469,6 +491,7 @@ function run_one(variant, system, seed::Int, fingerprint::String, provenance)
         base_record["eq_final_stages"] = eq_final_stages
         base_record["eq_overshoot"] = local_eq_overshoot
         base_record["eq_wasted_levels"] = local_eq_wasted_levels
+        base_record["support_terms"] = active_term_names(result.structure, basis)
         base_record["screening_budgets_active"] = meta.screening_budgets_active
         base_record["derivative_screening_active"] = haskey(meta, :derivative_screening_active) ? meta.derivative_screening_active : false
         base_record["total_parameter_fits"] = haskey(meta, :total_parameter_fits) ? meta.total_parameter_fits : nothing
@@ -586,7 +609,10 @@ function main()
     println("Git: $(provenance.git_hash), dirty=$(provenance.git_dirty)")
     println("Resume: completed=$(length(completed)), fresh=$(fresh_requested())")
 
-    total_runs = length(VARIANTS) * length(REGRESSION_SYSTEMS) * length(REGRESSION_SEEDS)
+    variants = selected_variants()
+    systems = selected_systems()
+    seeds = selected_seeds()
+    total_runs = length(variants) * length(systems) * length(seeds)
     run_index = 0
 
     append_run_log_line!("=== Started at $(iso_timestamp()) ===")
@@ -601,9 +627,9 @@ function main()
             offset = 0,
         )
 
-        for variant in VARIANTS
-            for system in REGRESSION_SYSTEMS
-                for seed in REGRESSION_SEEDS
+        for variant in variants
+            for system in systems
+                for seed in seeds
                     run_index += 1
                     key = completed_key(variant, system, seed)
                     if key in completed
@@ -674,4 +700,6 @@ function main()
     println("History line count: $(total_lines)")
 end
 
-main()
+if abspath(PROGRAM_FILE) == @__FILE__
+    main()
+end

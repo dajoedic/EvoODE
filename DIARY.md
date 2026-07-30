@@ -6,6 +6,22 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ## 2026-07-30
 
+### WP-G2.1 geliefert — Zwei-Varianten-Runner, Einzelzell-Selektor, Do-or-Die-Readout
+
+Gate-2-Vorbereitung: statt einer teuren 45-Lauf-Matrix ein sequenzieller, paarweiser v2.2-vs-v3-Vergleich mit **System 26 / Seed 42 als vorab festgelegter Do-or-Die-Zelle**. Der v2.2-Arm ist bereits eingefroren (Baseline v0, von WP-T2 bit-exakt reproduziert), also genuegt zum Entscheiden **ein** frischer v3-Lauf. Tests real gefahren (Baseline abgebrochen, keine CPU-Konkurrenz):
+
+- **Runner auf zwei Varianten** (`evogrow_v2_2_stage_local`, `evogrow_v3`); Screening aus der Ausfuehrungsliste. `test_regression_runner_gate2.jl` 6/6.
+- **Einzelzell-Selektor** ueber `EVO_REGRESSION_VARIANT/SYSTEM_ID/SEED` (leer = volle Matrix), plus `EVO_REGRESSION_HISTORY_PATH`-Override. `main()` nur noch unter `PROGRAM_FILE`-Guard, damit `include`-bar fuer Tests.
+- **`BFGS_TIME_LIMIT_S` 86.400 → 1.800 s** (reine Notbremse; greift nie — WP-T1/T2). Aendert bewusst den `config_fingerprint`.
+- **Fingerprint sauber:** Codex hat `FINGERPRINT_VARIANT_LABELS` (die alten drei Labels) eingefroren, sodass die Variantenreduktion den Fingerprint **nicht** bewegt. Verifiziert: aktuell `1f9c5f80…` vs. v0 `0c739d4e…`, Delta nur durch das Zeitlimit.
+- **Do-or-Die-Readout** (`studies/gate2_do_or_die/readout.jl` → `outputs/studies/gate2_do_or_die/`): reines Post-Processing, stellt v3/26/42 gegen den eingefrorenen v2.2-Anker. Vorab festgelegtes Kriterium — PASS nur wenn (a) `eq_final_stages[1]==3` (du1 bleibt auf wahrer Stage, kein Overshoot), (b) du1-Support exakt `{u1,u1^2,u1*u2}`, (c) Loss ≤ 0.001391623174905009; sonst PARTIAL (nur a verletzt) bzw. FAIL. `test_gate2_do_or_die.jl` 9/9 (PASS/PARTIAL/FAIL).
+
+Zwei kleine Unsauberkeiten der Lieferung, ohne Korrektheitsfehler: (1) Codex schrieb sechs ungefragte v2.2-Scalar-Records unter einem Zwischenstand-Fingerprint `d596e066` (den der finale Code nicht mehr erzeugt) in die echte History — per `git checkout -- history.jsonl` entfernt, da git-getrackt und einzige uncommittete Aenderung. (2) Der v3-Smoke lief nicht end-to-end ueber den Runner (nur der Selektor unit-getestet); Risiko gering, der echte 26/42-Lauf deckt es ab.
+
+Naechster Schritt: der User startet den einen Lauf (`EVO_REGRESSION_VARIANT=evogrow_v3 EVO_REGRESSION_SYSTEM_ID=26 EVO_REGRESSION_SEED=42`), dann `readout.jl` → Gate-2-Vorentscheidung.
+
+<!-- HASH_G2_1 -->
+
 ### WP-v3.5 geliefert — Pro-Gleichungs-Overshoot-Metriken + gekoppelter Integrations-Smoke
 
 Codex hat die Pro-Gleichungs-Metriken umgesetzt und die Integrationsluecke geschlossen. Statisch geprueft (Julia nicht gestartet, Baseline v1 laeuft weiter):
