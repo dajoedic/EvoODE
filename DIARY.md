@@ -18,7 +18,7 @@ Codex hat die Pro-Gleichungs-Metriken umgesetzt und die Integrationsluecke gesch
 
 Such-Verhalten und globale Metriken (`stage_overshoot`/`wasted_levels`) unangetastet; die Pro-Gleichungs-Metriken verfeinern nur. Damit ist die v3-Kette bis zur Validierung komplett. Naechster Schritt: WP-v3.6 — externer Validierungslauf v3 vs. Baseline v1 (Overshoot-Rueckgang auf gekoppelten Systemen 26/31/63), nach Abschluss der laufenden Baseline.
 
-<!-- HASH_v3_5 -->
+<!-- 960b0e6 -->
 
 ## 2026-07-29
 
