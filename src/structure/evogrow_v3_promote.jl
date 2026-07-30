@@ -1,5 +1,11 @@
 # src/structure/evogrow_v3_promote.jl
 
+eq_overshoot(eq_final_stages, expected_stage::Integer) =
+    [max(0, Int(stage) - Int(expected_stage)) for stage in eq_final_stages]
+
+eq_wasted_levels(eq_stage_histories, expected_stage::Integer) =
+    [count(stage -> Int(stage) > Int(expected_stage), history) for history in eq_stage_histories]
+
 function _evogrow_v3_trajectory_residuals(
     f!::Function,
     params::Vector{Float64},

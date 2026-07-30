@@ -33,6 +33,7 @@ export fit_parameters
 export EvoGrow, EvoGrowScreening, EvoGrowV3
 export GPStructureSearch
 export StageProgressionPolicy, StageUsagePolicy
+export eq_overshoot, eq_wasted_levels
 
 export PolynomialBasis, default_polynomial_basis
 export StagedPolynomialBasis, default_staged_polynomial_basis

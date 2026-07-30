@@ -4,6 +4,22 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ---
 
+## 2026-07-30
+
+### WP-v3.5 geliefert — Pro-Gleichungs-Overshoot-Metriken + gekoppelter Integrations-Smoke
+
+Codex hat die Pro-Gleichungs-Metriken umgesetzt und die Integrationsluecke geschlossen. Statisch geprueft (Julia nicht gestartet, Baseline v1 laeuft weiter):
+
+- **Metrik-Funktionen (§8):** `eq_overshoot`/`eq_wasted_levels` in `src/structure/evogrow_v3_promote.jl` — rein abgeleitet, kein RNG, keine Integration; `eq_overshoot` klammert Untersteuerung, `eq_wasted_levels` zaehlt Level ueber `expected_stage`. Exportiert in `EvoODE.jl`.
+- **Record-Aufnahme:** `run_regression.jl` zieht `eq_stage_histories` aus den Meta-Daten; `has_eq_stage_data`-Guard verlangt beide Felder (`eq_final_stages` + `eq_stage_histories`), sonst bleiben beide neuen Felder `nothing` — genau wie `eq_final_stages` bei Nicht-v3-Varianten.
+- **Fingerprint unveraendert:** nur zwei Ausgabefelder plus deren Export; keine gehashte Hyperparameter-Konstante angefasst. Additiv am Record-Schema, das nicht in den Fingerprint eingeht.
+- **Integrationsluecke geschlossen.** `test/smoke_evogrow_v3_coupled_divergence.jl` faehrt ein billiges synthetisches 2D-System end-to-end: `u1=exp(-0.5t)` (exakt `du1=-0.5·u1`, Stufe 1) vs. `u2=1/(1+t)` (`du2=-u2²`, Stufe 2). Gleichung 1 faellt unter `loss_tol` und promotet nie, Gleichung 2 steigt — `eq_final_stages` divergieren. Damit lief der divergente Pfad (v3.3 eq-aware Child-Generation + v3.4 Pro-Gleichungs-Promotion) **erstmals in einem echten gekoppelten Lauf**, bisher nur mit injizierten Stufen unit-getestet. Ein `FastDerivativeOptimizer` ersetzt BFGS (keine teuren ODE-Solves), umgeht aber den zu testenden Suchpfad nicht — Child-Generation und Promotion laufen durch echten EvoGrowV3-Code.
+- **Tests:** `test/test_evogrow_v3_metrics.jl` (alle drei Spec-Faelle inkl. Aggregat-Konsistenz `maximum(eq_overshoot) == max(0, maximum(eq_final_stages) - expected_stage)`).
+
+Such-Verhalten und globale Metriken (`stage_overshoot`/`wasted_levels`) unangetastet; die Pro-Gleichungs-Metriken verfeinern nur. Damit ist die v3-Kette bis zur Validierung komplett. Naechster Schritt: WP-v3.6 — externer Validierungslauf v3 vs. Baseline v1 (Overshoot-Rueckgang auf gekoppelten Systemen 26/31/63), nach Abschluss der laufenden Baseline.
+
+<!-- HASH_v3_5 -->
+
 ## 2026-07-29
 
 ### WP-v3.4 geliefert — Pro-Gleichungs-Promotion scharf geschaltet

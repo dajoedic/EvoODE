@@ -350,6 +350,8 @@ function run_one(variant, system, seed::Int, fingerprint::String, provenance)
         "wasted_levels" => nothing,
         "elapsed_s" => nothing,
         "eq_final_stages" => nothing,
+        "eq_overshoot" => nothing,
+        "eq_wasted_levels" => nothing,
         "n_levels" => N_LEVELS,
         "use_pretuning" => USE_PRETUNING,
         "screening_budgets_active" => nothing,
@@ -453,6 +455,10 @@ function run_one(variant, system, seed::Int, fingerprint::String, provenance)
         expected_idxs = expected_active_idxs(system_id, basis)
         pruned_match = expected_idxs === nothing ? false : support_match_pruned(result.structure, result.params, expected_idxs)
         eq_final_stages = haskey(meta, :eq_final_stages) ? collect(meta.eq_final_stages) : nothing
+        eq_stage_histories = haskey(meta, :eq_stage_histories) ? [collect(hist) for hist in meta.eq_stage_histories] : nothing
+        has_eq_stage_data = eq_final_stages !== nothing && eq_stage_histories !== nothing
+        local_eq_overshoot = has_eq_stage_data ? eq_overshoot(eq_final_stages, expected_stage) : nothing
+        local_eq_wasted_levels = has_eq_stage_data ? eq_wasted_levels(eq_stage_histories, expected_stage) : nothing
 
         base_record["loss"] = result.loss
         base_record["pruned_match"] = pruned_match
@@ -461,6 +467,8 @@ function run_one(variant, system, seed::Int, fingerprint::String, provenance)
         base_record["wasted_levels"] = wasted_levels
         base_record["elapsed_s"] = elapsed
         base_record["eq_final_stages"] = eq_final_stages
+        base_record["eq_overshoot"] = local_eq_overshoot
+        base_record["eq_wasted_levels"] = local_eq_wasted_levels
         base_record["screening_budgets_active"] = meta.screening_budgets_active
         base_record["derivative_screening_active"] = haskey(meta, :derivative_screening_active) ? meta.derivative_screening_active : false
         base_record["total_parameter_fits"] = haskey(meta, :total_parameter_fits) ? meta.total_parameter_fits : nothing
