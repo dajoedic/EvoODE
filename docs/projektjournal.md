@@ -1,6 +1,6 @@
 # EvoODE — Projektjournal
 
-**Stand: 2026-07-23** · Zeitraum: 2026-04-20 bis 2026-07-23
+**Stand: 2026-07-30** · Zeitraum: 2026-04-20 bis 2026-07-30
 
 ---
 
@@ -47,6 +47,9 @@ Entdeckung gekoppelter ODE-Systeme.**
 | 2026-07-20 | v3-Entwurf + Regressionshistorie | Designnotiz, Lockstep-Brücke, append-only Historie |
 | 2026-07-22 | **Kostenzusammenbruch** | Volllauf abgebrochen; 62 % der Rechenzeit oberhalb der nötigen Stage |
 | 2026-07-22 – 07-23 | Screening & Numerik | Screening verworfen, wieder aufgenommen; Numerikbefund; Faktor 6,2 |
+| 2026-07-29 | **WP-T2 — die Entscheidungsmessung** | Overshoot auf System 26 toleranzinvariant → algorithmisch, v3 bestätigt; Screening ohne Discovery-Gewinn |
+| 2026-07-29 – 07-30 | v3-Kette scharf geschaltet | v3.3 Kindergenerierung, v3.4 Promotion, v3.5 Metriken; divergenter Pfad erstmals gelaufen |
+| 2026-07-30 | **Zweiter Kostenzusammenbruch** | Baseline-v1-Matrix ~2 Wochen, 2/3 Wegwerf-Compute; abgebrochen; Scope-Entscheidung offen |
 
 ---
 
@@ -415,8 +418,8 @@ zuverlässig, die Abbruchbedingung feuert nicht, und die Suche eskaliert.
 |---|---|
 | `discover()` Kernpipeline | stabil seit 2026-04-20 |
 | EvoGrow v1, v2.1, v2.2 | stabil |
-| `EvoGrowV3` (Lockstep-Brücke) | implementiert, bit-identisch zu v2.2 verifiziert |
-| `EvoGrowScreening` | implementiert, Nested-Gate und entkoppelter Start |
+| `EvoGrowV3` (gleichungsweise) | v3.3 Kindergenerierung + v3.4 Pro-Gleichungs-Promotion (`r_k`) + v3.5 Metriken; Lockstep-Anker erhalten |
+| `EvoGrowScreening` | implementiert; nur Performance-Hebel, kein Discovery-Gewinn auf gekoppelten Systemen (WP-T2) |
 | `GPStructureSearch` | Vergleichsbaseline |
 | `StagedPolynomialBasis`, `PolynomialBasis` | stabil |
 | `BFGSOptimizer` | + deterministische Budgets, frühe Verwerfung, Retcode-Kategorien |
@@ -427,6 +430,8 @@ zuverlässig, die Abbruchbedingung feuert nicht, und die Suche eskaliert.
 | Mikro-Benchmark | `studies/profiling/profile_eval_cost.jl` |
 | Vergleichsskript Screening | `studies/debug/compare_screening_variant.jl`, vier Bedingungen |
 | Numerik-Diagnose | `studies/numerics/solver_tolerance_noise_floor.jl` |
+| Entscheidungsmessung System 26 | `studies/numerics/system26_tolerance_screening.jl`, drei Bedingungen + Anker |
+| v3 Pro-Gleichungs-Metriken | `eq_overshoot`, `eq_wasted_levels`; Tests + gekoppelter Divergenz-Smoke |
 
 ---
 
@@ -443,6 +448,8 @@ zuverlässig, die Abbruchbedingung feuert nicht, und die Suche eskaliert.
 | LS-Warmstart als Polish-Startpunkt | Führt auf System 3 in ein Becken bei 3,236e-08 | WP-T1, flach über sechs Toleranz-Größenordnungen |
 | Rangübereinstimmung nur über ausgewählte Kandidaten | Kann die eigene Frage nicht beantworten | WP-P2.2b-Review |
 | Screening-Spur (zwischenzeitlich) | Abbruchregel ausgelöst — später revidiert, weil die Falsifikation weich war | 2026-07-22, wieder aufgenommen 2026-07-23 |
+| Screening als **Kern-Claim** | Ranking-Kollaps (Spearman-Median −0,014) und Nested-Gate inert auf gekoppeltem System | WP-T2, System 26 |
+| Baseline-v1-Matrix mit 3 Varianten | v3-Spalte lief mit veraltetem v3.3-Code, screening irrelevant → 2/3 Wegwerf-Compute, ~2 Wochen | 2026-07-30, abgebrochen bei 6/45 |
 
 ---
 
@@ -468,29 +475,49 @@ war.
 **Numerische Grenzen (bestmöglicher Loss mit wahren Parametern):** bei 1e-6 System 3 → 4,40e-12,
 System 11 → 1,86e-14. Der in Baseline v0 berichtete System-11-Loss von 4,402e-15 liegt darunter.
 
+**Entscheidungsmessung System 26 (WP-T2):** Overshoot toleranzinvariant — R6 und R8 bit-identisch
+Stage 5 / Overshoot 2 / wasted 8. Der Overshoot ist algorithmisch. Suspend-fest: 8 von 25 Leveln,
+~25 % der Integrationen jenseits Stage 3. Struktur: `du1` exakt getroffen, `du2` komplett falsch.
+Screening D8 gegen R8: 98.253 vs 3.348.287 Integrationen (34×), aber Ranking-Median −0,014, Gate inert.
+
+**Kosten der Baseline-v1-Matrix:** ~16 h je gekoppelter Lauf; 45 Läufe ≈ ~2 Wochen; davon nur die
+15 v2.2-Läufe verwertbar.
+
 ---
 
 ## 7. Offene Punkte, nach Dringlichkeit
 
-1. **Ist der Stage-Overshoot teilweise numerisch?** Die stärkste offene Frage. Auf System 3
-   verschwindet der Overshoot allein durch die engere Toleranz. Zu prüfen auf **System 26**, wo
-   Gate 1 gescheitert ist. Berührt direkt die Begründung für v3.
-2. **Bewertungstoleranz dauerhaft auf 1e-8?** Kosten ~1,3× je Fit, aber der Referenzpfad wurde in
-   der Messung netto 3,6× schneller, weil weniger Level nötig waren. Betrifft `config_fingerprint`
-   und erfordert eine neue Baseline.
-3. **Belastbarkeit bisheriger Losses.** Der System-11-Wert ist Rauschen. Zu klären, welche weiteren
-   berichteten Zahlen betroffen sind — auch in Phase A.
-4. **Neue Regressionsbaseline** unter der aktuellen Konfiguration. Baseline v0
-   (`config_fingerprint 0c739d4e36ee6498`) bleibt als historischer Datensatz gültig, taugt aber
-   nicht mehr als Vergleich.
-5. **WP-v3.3** (gleichungsweise Kindergenerierung) ist spezifiziert und wartet. Verhaltensneutraler
-   Umbau — muss bit-identisch bleiben, solange alle Gleichungen im Lockstep promovieren.
-6. **Pathologische Line-Search** (bis zu 39.933 Auswertungen bei zwei Parametern) — unangetastet,
+1. **Scope-Entscheidung für die v2.2-Referenzbaseline — der aktuelle Engpass.** Alles Weitere
+   (WP-v3.6) hängt daran. Zwei Optionen: (a) nur Varianten kürzen (45 → 15, ~Tage, misst genau das
+   Bisherige), oder (b) zusätzlich `N_LEVELS`/`pretuning` *für die Regression* überdenken —
+   schneller, ändert aber, was gemessen wird, und damit den `config_fingerprint`. Bewusst mit klarem
+   Kopf zu entscheiden, nicht im Reaktionsmodus. Hygiene unabhängig davon: `BFGS_TIME_LIMIT_S` von
+   24 h auf Minuten senken (entschärft die Landmine, kein Speedup).
+2. **WP-v3.6 — Validierung v3 gegen Baseline v1.** Braucht (1) und zusätzlich einen **frischen**
+   v3-Lauf mit aktuellem Code (die v3-Spalte des abgebrochenen Laufs war veraltet). Kernfrage: senkt
+   die gleichungsweise Promotion den Overshoot auf 26/31/63, jetzt pro Gleichung messbar
+   (`eq_overshoot`/`eq_wasted_levels`)? Externer Langlauf — nur der User startet.
+3. **Bewertungstoleranz.** WP-T2 hat die Frage verfeinert: Für den **Suchpfad auf gekoppelten
+   Systemen** ist 1e-6 die günstigere und verhaltensgleiche Wahl (1e-8 senkt nur den Loss, ändert
+   das Stopp-Verhalten nicht, verteuert aber die verschwendeten Spät-Stages). 1e-8 ist nur für exakt
+   lösbare Systeme relevant, die die Toleranz tatsächlich erreichen (z. B. System 11) — separate,
+   kleinere Frage.
+4. **Belastbarkeit bisheriger Losses.** Der System-11-Wert (4,402e-15) ist Rauschen. Zu klären,
+   welche weiteren berichteten Zahlen betroffen sind — auch in Phase A.
+5. **Pathologische Line-Search** (bis zu 39.933 Auswertungen bei zwei Parametern) — unangetastet,
    aber ein erheblicher Kostenhebel.
-7. **Sentinel-Loss `1e6` mit Retcode `Success`** — gescheiterte Fits sind nicht als solche
+6. **Sentinel-Loss `1e6` mit Retcode `Success`** — gescheiterte Fits sind nicht als solche
    erkennbar.
-8. **Pruning-Schwelle** `1e-3 × max_coeff` möglicherweise zu streng (System 31 Seed 42, Spurious-Term
+7. **Pruning-Schwelle** `1e-3 × max_coeff` möglicherweise zu streng (System 31 Seed 42, Spurious-Term
    `0,0022·u1`).
+
+**Seit dem letzten Stand erledigt:**
+
+- *Ist der Stage-Overshoot numerisch?* — **Beantwortet (WP-T2).** Auf System 26 toleranzinvariant,
+  also algorithmisch. Die v3-Begründung ist bestätigt, nicht bedroht. Auf System 3 war er numerisch;
+  die Trennung „einfach = numerisch, gekoppelt = algorithmisch" ist die stärkere Aussage.
+- *WP-v3.3–v3.5* — **geliefert.** Gleichungsweise Kindergenerierung, Pro-Gleichungs-Promotion,
+  Metriken; die v3-Kette ist code-seitig komplett.
 
 ---
 
@@ -507,15 +534,162 @@ Rechenzeit gingen in Komplexität, die kein System brauchte. Overshoot und Koste
 Problem, weil jede zusätzliche Stage überproportional teurer ist. Das macht v3 zugleich zum
 Performance-Fix.
 
-**Ebene 3 — die Numerik.** Erst zuletzt wurde sichtbar, dass ein Teil der beobachteten Effekte
-möglicherweise gar nicht algorithmisch ist. Ein berichteter Loss lag unterhalb der Rechengenauigkeit.
-Ein Optimierer meldete Konvergenz, wo er nur blind war. Und die engere Toleranz allein hat auf einem
-System den Overshoot beseitigt.
+**Ebene 3 — die Numerik.** Zwischenzeitlich war offen, ob ein Teil der beobachteten Effekte gar
+nicht algorithmisch ist: Ein berichteter Loss lag unterhalb der Rechengenauigkeit, ein Optimierer
+meldete Konvergenz, wo er nur blind war, und die engere Toleranz allein hatte auf System 3 den
+Overshoot beseitigt. **Diese Frage ist mit WP-T2 beantwortet.** Auf System 26 — dem Gate-1-System —
+ist der Overshoot toleranzinvariant, also algorithmisch. Die Numerik erklärt den Overshoot auf
+*einfachen* Systemen, nicht auf den gekoppelten. Die Messgrundlage für v3 steht damit, und die
+saubere Trennung („einfach = numerisch, gekoppelt = algorithmisch") ist ein stärkeres Paper-Argument
+als die ursprüngliche Vermutung.
 
-**Was das für die nächsten Schritte heißt:** Ebene 3 muss zuerst geklärt werden, weil sie die
-Messgrundlage der beiden anderen betrifft. Die entscheidende Einzelmessung ist der
-Toleranzvergleich auf System 26 — dem System, an dem Gate 1 gescheitert ist. Fällt der Overshoot
-dort ebenfalls, ist ein Teil der v3-Begründung neu zu bewerten. Bleibt er, ist v3 bestätigt und wir
-haben die Numerik nebenbei repariert.
+**Wo es jetzt hakt — Ebene 4, die Ökonomie der Evidenz.** Die drei inhaltlichen Ebenen sind geklärt
+oder in Arbeit: v3 ist begründet (Ebene 1), v3 ist code-seitig fertig, Overshoot und Kosten sind
+dasselbe Problem (Ebene 2), die Numerik ist eingeordnet (Ebene 3). Was v3 noch fehlt, ist der
+**Nachweis am Vergleich** — und der scheitert derzeit nicht an der Wissenschaft, sondern an den
+Kosten: die Referenzbaseline in der aktuellen Form ist ~2 Wochen lang und zu zwei Dritteln
+Wegwerf-Rechnung. Das ist kein Rückschritt, sondern ein **Scope-Problem**: Wir müssen entscheiden,
+was die v2.2-Referenz kosten darf, bevor wir sie und den frischen v3-Lauf starten.
 
-In beiden Fällen ist das Ergebnis verwertbar. Das ist die angenehme Eigenschaft dieser Messung.
+**Was das für die nächsten Schritte heißt:** Die nächste Entscheidung ist keine Messung, sondern
+eine Planungsfrage (7.1) — mit klarem Kopf, nicht im Reaktionsmodus. Ist sie getroffen, folgt genau
+ein sauberer Codex-Spec für den schlanken Runner, dann der externe v2.2-Lauf, dann der frische
+v3-Lauf, dann WP-v3.6. Die inhaltliche Unsicherheit ist ausgeräumt; offen ist nur noch, wie teuer
+wir den Beleg machen wollen.
+
+### 3.13 WP-T2 — die Entscheidungsmessung (2026-07-29)
+
+Die offene Frage aus 3.12 wurde beantwortet. Der Toleranzvergleich lief auf **System 26** — genau
+dem gekoppelten System, an dem Gate 1 gescheitert ist. Drei Bedingungen, Seed 42, 30 Level:
+R6 (Referenz, 1e-6), R8 (Referenz, 1e-8), D8 (Screening, 1e-8).
+
+Vor dem Lauf wurde die Prognose **geschärft**: Auf System 3 war der numerische Kanal spezifisch —
+der Loss operiert nahe `loss_tol = 1e-8`, und bei 1e-6 erreicht der Optimierer die Schwelle nicht,
+also feuert der Abbruch nicht und die Suche eskaliert. Auf System 26 liegt der Loss-Boden bei
+~1,4e-3, drei Größenordnungen **über** selbst der 1e-6-Toleranz. `loss_tol` kann dort nie feuern,
+unabhängig von der Toleranz. **Vorhersage: die engere Toleranz ändert den Overshoot auf System 26
+nicht — er ist hier algorithmisch.**
+
+**Anker bit-exakt reproduziert:** R6 liefert `0.001391623174905009`, `final_stage = 5`,
+Overshoot 2, `wasted_levels = 8`, `pruned_match = false` — identisch zu Baseline v0. Damit ist die
+Messung interpretierbar.
+
+**Ergebnis — Vorhersage bestätigt:** R6 und R8 haben bit-identisch `final_stage = 5`,
+`stage_overshoot = 2`, `wasted_levels = 8`. Die engere Toleranz senkt nur den Loss
+(1,39e-3 → 2,52e-4), nicht das Stopp-Verhalten; beide terminieren via `plateau_absolute` und nähern
+sich `loss_tol` nie.
+
+> **Der Overshoot auf System 26 ist algorithmisch, nicht numerisch.** Damit trennt die Messung
+> sauber: auf einfachen Systemen (System 3) numerisch, auf gekoppelten algorithmisch. Das ist eine
+> *stärkere* Paper-Aussage als „Overshoot ist numerisch" — und die v3-Begründung ist bestätigt,
+> nicht bedroht.
+
+**Der v3-Beleg steckt in der gefundenen Struktur.** Wahrheit:
+`du1 = 3·u1 − u1² − 2·u1·u2 | du2 = 2·u2 − u1·u2 − u2²`. R8 nach Pruning trifft `du1` **exakt**
+(`3.03·u1 − 1.07·u1² − 1.99·u1·u2`), aber `du2` = `{u1, u1²}` ist **komplett falsch**. Eine Gleichung
+gelöst, die andere im Blindflug — und der globale Plateau-Mechanismus eskaliert Stage 4/5 für
+**beide**, obwohl Gleichung 1 längst fertig ist. Das ist exakt die Signatur, die v3
+(gleichungsweise Promotion) auflösen soll: gelöste Gleichung einfrieren, nur die offene
+weiterwachsen.
+
+**Screening auf gekoppeltem System: schnell, aber kein Discovery-Gewinn.** D8 gegen R8 (beide 1e-8):
+D8 braucht **98.253 Integrationen gegen 3.348.287** (34× weniger), aber beide `pruned_match = false`,
+beide Overshoot 2. Zwei Befunde entwerten den Geschwindigkeitsvorteil als Discovery-Hebel:
+
+- **Ranking-Kollaps:** `rank_agreement_spearman` Median **−0,014**. Das FD-Ableitungs-Screening rankt
+  Kandidaten auf dem gekoppelten System praktisch nicht wie der echte Loss. Der 34×-Vorteil kommt aus
+  *wenig integrieren*, nicht aus gutem Diskriminieren.
+- **Nested-Gate inert:** `selection_diff_from_residual = 0` über alle Level. Der WP-P2.4-Durchbruch,
+  der auf System 3 das Ranking reparierte, ändert auf System 26 keine einzige Auswahl. Der
+  Gate-Nutzen ist systemabhängig.
+
+Fazit: Screening ist eine **Performance-Optimierung**, kein Discovery-Qualitäts-Hebel. Es gehört als
+optionale Beschleunigung dokumentiert, nicht in den Kern-Claim; der Ranking-Kollaps muss in die
+Discussion.
+
+**Messvorbehalt — die Wall-Clock ist kontaminiert.** Der PC wurde während des Laufs 2× zugeklappt
+(Arbeitsweg, je ~45 min) und es lief Nebenlast. Das verfälscht **ausschließlich** die Zeitachse
+(`elapsed_s`, `s/Level`, der zitierte ~6×-Speedup) — diese Zahlen dürfen nicht als präzise
+Messwerte gelten. Die tragenden Schlüsse stehen trotzdem, weil sie auf **Zählungen** ruhen, nicht auf
+Zeiten: der Anker ist bit-exakt (Determinismus ungebrochen), `time_limit_s` war nie bindend (max
+31.413 s ≪ 86.400 s, keine Iteration abgeschnitten), und Stage/Overshoot/Struktur/Integrationszählungen
+sind maschinenlastunabhängig. Konsequenz fürs Paper: **Kosten über Integrationszählungen berichten,
+nicht über Wall-Clock.**
+
+Eine eigene Korrektur gehört hierher: Die früher genannten „62 % Overshoot-Kosten" waren die
+*Wall-Clock*-Sicht. Suspend-fest und deterministisch sind es auf System 26 **8 von 25 Leveln
+jenseits der erwarteten Stage 3, ~25 % der Integrationen** (Stages 4+5: 832.350 von 3.348.287 Solves).
+Die Differenz zur Wall-Clock-Zahl kommt daher, dass späte Integrationen einzeln teurer sind — was
+teils echte Numerik ist, aber eben auf der kontaminierten Achse liegt.
+
+### 3.14 EvoGrow v3 wird scharf geschaltet (2026-07-29 bis 2026-07-30)
+
+Mit der bestätigten Begründung wurde die v3-Kette in regressionssicheren Schritten umgesetzt. Jeder
+Schritt wurde **statisch** geprüft (Julia nicht gestartet, um die zu dem Zeitpunkt noch laufende
+Baseline nicht um CPU zu bringen); die Ausführungs-Evidenz liefert jeweils der Test-/Smoke-Lauf.
+
+- **WP-v3.3 — gleichungsweise Kindergenerierung** (`src/structure/evogrow_v3_childgen.jl`). Neu
+  freigeschaltete Terme werden pro Gleichung anhand ihres eigenen Stage-Zustands zugelassen; echte
+  Kreuzterme über die Paarregel `min(eq_stages[v] for v in vars(t)) >= stage(t)`. Entscheidend:
+  bei **uniformen** Stages — dem Lockstep-Zustand — delegiert der Pfad an den unveränderten
+  v2.2-Code mit identischer RNG-Reihenfolge, ist also **strukturell bit-identisch**. Der
+  Pro-Gleichungs-Pfad ist bis v3.4 im echten Lauf tot.
+- **WP-v3.4 — gleichungsweise Promotionsregel** (`src/structure/evogrow_v3_promote.jl`). Das
+  Fortschrittssignal ist das **Ableitungsresiduum pro Gleichung** `r_k`, ausgewertet auf der
+  beobachteten Trajektorie (`estimate_derivatives` aus `pretune.jl`, keine Integration im
+  Normalpfad, RNG-neutral). Promotion pro Gleichung an drei Bedingungen (Budget, `r_k`-Plateau,
+  `r_k > loss_tol`) plus Maxstufen-Guard; die globale Termination wird **vor** der Promotion geprüft,
+  damit der `loss_tol`-Stopp Vorrang behält. Das ist der Schritt, der die v2.2-Gleichheit **bewusst
+  bricht** — der Bit-Identitäts-Smoke wurde durch einen Scalar-Promote-Smoke ersetzt, und die
+  Verifikation ist deterministische Unit-Test-Logik statt Bit-Gleichheit (alle vier
+  Promotionsbedingungen einzeln, plus der `r_k`-Signaltest).
+- **WP-v3.5 — Pro-Gleichungs-Metriken + Integrationsnachweis**
+  (`eq_overshoot`, `eq_wasted_levels`). Rein abgeleitete Metriken, in den Regressions-Record
+  aufgenommen (`nothing` bei Nicht-v3-Varianten, wie `eq_final_stages`), ohne `config_fingerprint`-
+  oder Verhaltensänderung. Der zweite Zweck war das Schließen einer **Integrationslücke**: der
+  divergente Pfad — v3.3-Kindergenerierung und v3.4-Promotion im Zusammenspiel — war bis dahin nur
+  mit injizierten Stages unit-getestet, **nie end-to-end in einem echten gekoppelten Lauf**. Ein
+  billiger synthetischer 2D-Smoke (eine Gleichung exakt linear → bleibt Stage 1, die andere braucht
+  Stage 2 → steigt) lässt die Stages erstmals real divergieren und testet die neuen Metriken
+  zugleich.
+
+Damit ist die v3-Kette **code-seitig komplett** (v3.2 Brücke → v3.3 → v3.4 → v3.5). Was aussteht,
+ist die wissenschaftliche Validierung (WP-v3.6): zeigen, dass v3 den Overshoot auf den gekoppelten
+Systemen 26/31/63 gegenüber v2.2 senkt. Diese Validierung braucht Vergleichsdaten — und genau daran
+hakt es (3.15).
+
+### 3.15 Der zweite Kostenzusammenbruch — die Baseline-v1-Matrix (2026-07-30)
+
+Für die Validierung wurde eine neue Regressionsbaseline gestartet (nötig, weil sich die
+Konfiguration seit Baseline v0 geändert hat — `time_limit_s` ist jetzt explizit, der Fingerprint
+umfasst neue Felder). Nach **~24 Stunden** war der Lauf bei **6 von 45 Läufen (~13 %)** und hing im
+ersten gekoppelten System-26-Lauf, der allein den Großteil des Tages fraß. Der Lauf wurde
+abgebrochen. Die Diagnose deckte ein Design- und ein Scope-Problem auf:
+
+**Der Runner ist zu groß.** Die Matrix ist **3 Varianten** (`evogrow_v2_2_stage_local`,
+`evogrow_screening_derivative`, `evogrow_v3`) × 5 Systeme × 3 Seeds = **45 Läufe**. Bei
+`USE_PRETUNING = false` und `N_LEVELS = 30` kostet ein einzelner gekoppelter Lauf ~16 h (WP-T2-Anker).
+Über alle gekoppelten Zellen dreier Varianten summiert sich das auf **~1,5–2 Wochen** durchgehend.
+
+**Und ein großer Teil davon ist wertlos:**
+
+- Die **`evogrow_v3`-Spalte lief mit v3.3-Code** — der Julia-Prozess hatte den Code beim Start
+  geladen, vor v3.4/v3.5. Diese Spalte ist damit Lockstep (≡ v2.2) und **kein** Beleg für das echte
+  v3.4-Verhalten. Die 9 teuren gekoppelten v3-Läufe müssen für WP-v3.6 mit aktuellem Code ohnehin
+  neu gefahren werden.
+- Die **`screening`-Spalte** ist als Kern-Claim erledigt (3.13) und fürs Paper irrelevant.
+
+Was tatsächlich gebraucht wird, ist genau **eine** Sache: die **v2.2-Referenz** unter dem neuen
+Fingerprint (15 Läufe, davon 9 teure gekoppelte).
+
+**Ein Nebenbefund korrigiert eine frühere Überzeichnung:** `BFGS_TIME_LIMIT_S = 86.400` (24 h pro
+Fit) ist zwar unangemessen für einen 45-Lauf-Runner, aber **nicht** der Kostentreiber — WP-T2 zeigt,
+dass kein Fit dem Limit nahekam. Die ~16 h je gekoppelter Lauf entstehen durch die *Anzahl* teurer
+Fits (`pretuning = false`, 30 Level, steife Kandidaten-ODEs), nicht durch einen hängenden Fit. Das
+Zeitlimit zu senken ist Hygiene, kein Speedup. Der einzige echte Hebel im Scope ist die
+**Varianten-Kürzung** (45 → 15).
+
+**Bewusst offen gelassen:** ob die v2.2-Referenz „nur" durch Varianten-Kürzung (~Tage, sicher) oder
+zusätzlich durch ein Überdenken von `N_LEVELS`/`pretuning` *für die Regression* billiger werden soll.
+Letzteres ändert, was gemessen wird, und wurde als Entscheidung mit klarem Kopf vertagt — nicht im
+Reaktionsmodus. Diese Entscheidung ist der aktuelle Engpass (siehe 7.1).

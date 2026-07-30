@@ -602,15 +602,28 @@ Implemented:
 - all wired into `search_structure` main loop
 - benchmark covers all four comparison variants plus GP baseline
 
-#### v3: equation-wise
+#### v3: equation-wise staging
 
-Status: NOT STARTED
+Status: CODE-COMPLETE (implementation), validation pending
+Implemented: 2026-07-20 (bridge) through 2026-07-30 (metrics)
 
-Planned direction:
+The realized v3 direction is **per-equation staged growth**, not the teacher-forcing idea originally
+sketched here. Motivation: Gate 1 and WP-T2 showed that global staging escalates *all* equations
+together once global progress plateaus, even when one equation is already solved (System 26: `du1`
+recovered exactly, `du2` left blind while both climb to stage 5). v3 lets each equation carry its
+own stage state and promote independently.
 
-- discover equations separately or semi-separately
-- compare against full-system discovery
-- possibly use teacher forcing or hybrid simulation
+Delivered work packages:
+
+- v3.2: `EvoGrowV3` lockstep bridge — per-equation state, synchronized promotion, bit-identical to v2.2.
+- v3.3: equation-aware child generation — newly unlocked terms gated per equation; delegates to v2.2
+  code (bit-identical) while stages are uniform.
+- v3.4: per-equation promotion rule — signal is the per-equation derivative residual `r_k`; three
+  conditions (budget, `r_k` plateau, `r_k > loss_tol`) plus max-stage guard. Deliberately breaks
+  v2.2 equivalence.
+- v3.5: per-equation metrics `eq_overshoot`/`eq_wasted_levels`; closed the coupled-integration gap.
+
+Pending: WP-v3.6 validation vs. Baseline v1 (see Current Priorities), then Gate 2.
 
 #### v4: coupling-aware
 
@@ -652,9 +665,9 @@ Experiment infrastructure complete (WP-E1 through WP-E3):
 - per-run file protocol with atomic writes and robust failure handling
 - `run_registry.csv` as derived aggregation view
 
-Active experiment:
+Archived experiment:
 
-- `paper1_phaseA_v1`: 300 runs total (10 systems × 6 variants × 5 seeds), exploratory — 242 finished as of 2026-04-29; 1 run stuck (System 54, EvoGrow v1, Seed 7, Lorenz 3D, no BFGS timeout)
+- `paper1_phaseA_v1`: 300 runs total (10 systems × 6 variants × 5 seeds), exploratory — **frozen 2026-05-11, 300/300 success=true**. H1–H4 verdicts in `docs/paper1_freeze_memo_phaseA.md`. Not used for final paper claims. Current method work happens in the regression suite (`studies/regression/`), not here; Phase B (`paper1_phaseB_v1`) is the planned final experiment (not yet started, blocked behind Gate 2 and the baseline cost/scope decision).
 
 Target:
 EvoGrow baseline vs GP and SINDy
@@ -676,17 +689,19 @@ Status: NOT STARTED
 - validation-based stage promotion
 - multi-hypothesis models
 
-## Active Studies (as of 2026-05-11)
+## Active Studies (as of 2026-07-30)
 
 | Artifact | Status | Note |
 |----------|--------|------|
 | `paper1_phaseA_v1` | **frozen** (300/300) | H1–H4 verdicts in freeze memo; evidence scope closed |
+| `studies/regression/` | Baseline v0 valid; v1 pending | Longitudinal metric history; v1 run aborted 2026-07-30 (cost/scope), awaits decision |
+| `studies/numerics/system26_tolerance_screening.jl` | done (WP-T2) | Overshoot algorithmic on System 26; screening = performance-only |
 | `studies/generalization/` | fertig | Auxiliary only; insufficient cells for supplementary inclusion |
 | `studies/profiling/profile_init.jl` | Daten vorhanden | Methods section / Discussion only; not evidence for H1–H4 |
 
 ## Current Priorities
 
-Current priorities as of 2026-07-22:
+Current priorities as of 2026-07-30:
 
 Done (do not re-open):
 - WP-0.1 (H4 claim → VACUOUS in `evaluate_hypotheses.py`) — done 2026-05-17.
@@ -698,30 +713,65 @@ Done (do not re-open):
 - WP-P1 / WP-P1b / WP-P1c (evaluation cost: determinism, separate screening budgets, per-level
   instrumentation, micro-benchmark) — done 2026-07-22. Measured 2.71x on System 26; wall-clock
   dependence removed from the regression result path.
-- WP-P2.1 through WP-P2.3 (derivative-based screening) — **discontinued 2026-07-22** by stop rule.
-  Artifacts kept: `docs/evogrow_screening_design.md`, `src/structure/evogrow_screening.jl`,
-  `studies/debug/compare_screening_variant.jl`. Do not resume without new evidence.
+- WP-P2 screening line — discontinued 2026-07-22, then reopened; WP-P2.4 (nested-model gate +
+  decoupled polish start) — done 2026-07-23; 6.2x on System 3 with correct stage. Then **WP-T2
+  (2026-07-29)** tested it on coupled System 26: ranking collapse (Spearman median −0.014), gate
+  inert (`selection_diff_from_residual = 0`). Verdict: screening is a **performance optimization
+  only, not a discovery-quality lever** — documented as an optional speedup, kept out of the core
+  claim. Artifacts: `docs/evogrow_screening_design.md`, `src/structure/evogrow_screening.jl`,
+  `studies/debug/compare_screening_variant.jl`, `studies/numerics/system26_tolerance_screening.jl`.
+- **WP-T2 (System-26 tolerance/screening decisive measurement)** — done 2026-07-29. Overshoot on
+  System 26 is **tolerance-invariant → algorithmic** (R6 and R8 bit-identical stage 5 / overshoot 2 /
+  wasted 8). Separates cleanly: numerical on simple systems (System 3), algorithmic on coupled. v3
+  motivation confirmed, not threatened. Wall-clock was contaminated (2× suspend + concurrent load);
+  all load-bearing conclusions rest on counts, not times.
+- WP-v3.3 (equation-aware child generation, `src/structure/evogrow_v3_childgen.jl`) — done
+  2026-07-29; structurally bit-identical under lockstep (uniform stages delegate to v2.2 code).
+- WP-v3.4 (per-equation promotion rule, `src/structure/evogrow_v3_promote.jl`) — done 2026-07-29.
+  Per-equation derivative-residual signal `r_k`; deliberately breaks v2.2 bit-equivalence; verified
+  by deterministic unit tests (all four promotion conditions + `r_k` signal).
+- WP-v3.5 (per-equation metrics `eq_overshoot`/`eq_wasted_levels` + coupled divergence smoke) — done
+  2026-07-30. Config fingerprint unchanged. Closed the integration gap: the divergent path (v3.3 +
+  v3.4 together) ran end-to-end in a real coupled run for the first time.
+
+**The EvoGrow v3 chain is code-complete (v3.2 → v3.3 → v3.4 → v3.5).** What remains is the scientific
+validation (WP-v3.6), which is blocked on a cost/scope decision — see Active.
 
 Active (Phase 2 — EvoGrow v3):
-1. WP-v3.3: equation-aware child generation (design note section 6).
-2. WP-v3.4 through WP-v3.6: per-equation residual signal and promotion rule, v3 metrics,
-   validation run vs. v2.2.
+1. **Scope decision for the v2.2 reference baseline — the current bottleneck.** The regression runner
+   as configured is 3 variants × 5 systems × 3 seeds = 45 runs; at `USE_PRETUNING=false`,
+   `N_LEVELS=30` a coupled run is ~16 h, so the full matrix is ~2 weeks. A run was started and
+   aborted 2026-07-30 at 6/45. Two-thirds is waste: the `evogrow_v3` column ran stale v3.3-era code
+   (loaded at process start, before v3.4/v3.5, so it is lockstep ≡ v2.2), and the screening column is
+   out of the core claim. Only the **v2.2 reference** (15 runs) is needed. Decide: (a) variant cut
+   only (45 → 15, ~days, measures exactly the current config), or (b) also rethink `N_LEVELS` /
+   `pretuning` *for the regression* (faster, changes what is measured and the `config_fingerprint`).
+   Hygiene either way: drop `BFGS_TIME_LIMIT_S` from 24 h to minutes (it is a landmine, not the cost
+   driver — no fit ever approached it). This is a planning decision, deliberately deferred to be made
+   with a clear head, not in reaction mode.
+2. WP-v3.6: validation run of v3 vs. Baseline v1 (overshoot reduction on coupled systems 26/31/63,
+   now per-equation via `eq_overshoot`/`eq_wasted_levels`). Needs (1) plus a **fresh** v3 run with
+   current code (the aborted run's v3 column is stale). External long run — the user starts it.
 3. Gate 2: decide whether v3 is paper-ready.
 
-Pending before the next regression baseline:
-- The regression configuration has changed since Baseline v0 (`config_fingerprint`
-  `0c739d4e36ee6498`): `time_limit_s` is now explicit, and additional config fields entered the
-  fingerprint. Baseline v0 stays valid as a historical record, but a new baseline must be run
-  under the current configuration before v3.3 results can be regression-checked.
+Baseline note:
+- Baseline v0 (`config_fingerprint 0c739d4e36ee6498`) stays valid as a historical record but is no
+  longer a valid comparison: the regression configuration changed since (`time_limit_s` explicit,
+  additional fields in the fingerprint). Baseline v1 must be produced under the decision in item (1)
+  above before any v3 result can be regression-checked.
 
 After Gate 2:
 4. Phase 3 (PAPER_1.md): ODEBench protocol alignment — system classification, R² metric, protocol-audit document.
 5. Phase B experiment (`paper1_phaseB_v1`) — 63 systems × 2 conditions × 3 seeds.
 
 Open, not scheduled:
-- Hypothesis from WP-P2.3: the ODE solver tolerance in the evaluation path (`abstol = reltol = 1e-6`)
-  may make finite-difference gradients meaningless once the loss falls below roughly that scale,
-  which would affect every warm-started fit and the attainability of `loss_tol = 1e-8`. Unverified.
+- Evaluation tolerance is now understood, not open (WP-T1 + WP-T2): on the coupled search path 1e-6
+  is the cheaper, behavior-equal choice (1e-8 only lowers the loss, does not change stopping, and
+  makes the wasted late stages more expensive); 1e-8 matters only for exactly-solvable systems that
+  actually reach the tolerance (e.g. System 11). The reported System-11 loss of 4.402e-15 is
+  numerical noise (below the noise floor at 1e-6).
+- Pathological line-search (up to 39,933 loss evals at two parameters) and the sentinel-loss `1e6`
+  with retcode `Success` remain untouched cost/robustness levers.
 
 `PAPER_1.md` is the authoritative execution plan and takes precedence if this list drifts.
 
@@ -729,6 +779,8 @@ Open, not scheduled:
 
 - `discover()` end-to-end pipeline
 - `EvoGrow` v1, v2.1, v2.2
+- `EvoGrowV3` (per-equation staging: child generation, promotion via derivative residual `r_k`, metrics)
+- `EvoGrowScreening` (nested-model gate + decoupled polish start; performance-only, not a core claim)
 - `StageProgressionPolicy`, `StageUsagePolicy`
 - `GPStructureSearch`
 - `PolynomialBasis`
@@ -806,11 +858,11 @@ The full execution plan lives in `PAPER_1.md`. That document contains:
 - Implementation and scientific risk register
 - Frozen elements
 
-**Current phase:** Phase 2 — EvoGrow v3 design and implementation (Phase 0 and Phase 1 complete; Gate 1 decided 2026-05-30, v2.2 fails, v3 triggered)
+**Current phase:** Phase 2 — EvoGrow v3 (Phase 0 and Phase 1 complete; Gate 1 decided 2026-05-30, v2.2 fails, v3 triggered). EvoGrow v3 is code-complete; the phase is now blocked on the validation baseline (cost/scope decision — see Current Priorities).
 
 **Active WPs:**
-- WP-v3.1: Design note `docs/evogrow_v3_design.md` (per-equation progress signal and promotion rule) — active Codex task, not yet delivered
-- WP-v3.2 through WP-v3.6: EvoGrow v3 implementation and validation run vs. v2.2
+- WP-v3.1 through WP-v3.5: EvoGrow v3 design and implementation — **all delivered** (see Current Priorities for dates and status).
+- WP-v3.6: validation run of v3 vs. Baseline v1 — pending the baseline scope decision and a fresh v3 run with current code.
 
 **Final experiment scope:**
 - All 63 ODEBench systems (`benchmarks/data/strogatz_extended.json`)

@@ -20,7 +20,7 @@ Zwei kleine Unsauberkeiten der Lieferung, ohne Korrektheitsfehler: (1) Codex sch
 
 Naechster Schritt: der User startet den einen Lauf (`EVO_REGRESSION_VARIANT=evogrow_v3 EVO_REGRESSION_SYSTEM_ID=26 EVO_REGRESSION_SEED=42`), dann `readout.jl` → Gate-2-Vorentscheidung.
 
-<!-- HASH_G2_1 -->
+<!-- f13dbc7 -->
 
 ### WP-v3.5 geliefert — Pro-Gleichungs-Overshoot-Metriken + gekoppelter Integrations-Smoke
 
