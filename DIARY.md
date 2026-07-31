@@ -6,6 +6,61 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ## 2026-07-31
 
+### WP-L3 geliefert — alle vier Vorhersagen bestaetigt; die Grenzen sind jetzt vermessen
+
+`studies/lookahead/floor_gated_probe.jl`, Ausgaben in `outputs/studies/lookahead/floor_gated_probe/`.
+
+**Konfusionsmatrix ueber alle 16 exakten Gleichungen** (Hauptkonfiguration `local_poly` +
+`richardson_wls` + `ols`, `tau_rel = 1e-4`, `tau_abs = 1e-8`):
+
+| Regel | exact | over | under | not_identifiable |
+|---|---|---|---|---|
+| threshold_only | 9 | 3 | 0 | 4 |
+| **floor_gated** | **10** | **0** | **2** | 4 |
+
+Vorhersage 1 exakt eingetroffen: das Boden-Gate entfernt alle drei System-54-Overshoots und erzeugt
+genau zwei Undershoots, beide auf System 54 (du2 und du3, je 3 → 2); du1 wird korrekt. Vorhersage 2
+ebenfalls: Systeme 3, 11 und 26 bleiben unter der bodengesteuerten Regel alle korrekt.
+
+**Vorhersage 3 bestaetigt — System 54 ist schaetzer-/sampling-begrenzt, nicht anregungsbegrenzt.**
+Schon bei doppelter Dichte (T = 600) erscheint die Stage-3-Klippe: du2 hat Residuen
+0,356 | 2,93e-3 | 4,19e-7 | 4,51e-8 | 3,20e-8 bei Rauschboden 6,38e-4 — Stage 2 liegt jetzt *ueber*
+dem Boden, Stage 3 darunter, die Klippe ist also aufloesbar. Bei 4x und 8x noch deutlicher.
+Aufschlussreich ist die Richtung: das Stage-2-Residuum *steigt* von 6,2e-4 (T = 300) auf 2,93e-3
+(T = 600). Bei grobem Sampling absorbierte der Stage-2-Fit einen Teil des Ableitungsfehlers und sah
+dadurch besser aus, als er ist — dieselbe Rausch-Absorptionsmechanik wie bei der `r_k`-Kontamination,
+nur anders sichtbar. **Die beiden Undershoots sind damit eine Datendichte-Grenze, kein Regelfehler.**
+
+**Vorhersage 4 bestaetigt:** System 63 bleibt bei *jeder* Dichte rangdefizient. Das Defizit ist damit
+die Erhaltungsgroesse (die SEIR-Zustaende summieren sich zu einer Konstanten) und keine gewoehnliche
+Schlechtkonditionierung.
+
+**Ablation — die billigen Interventionen tragen den Grossteil.** `central` + unweighted +
+threshold_only liefert exact 2 / over 10; `central` + `richardson_wls` + floor_gated bereits
+exact 9 / over 0 / under 3; erst `local_poly` bringt die zehnte Gleichung. Gewichtung und Boden-Gate
+tun also die Hauptarbeit, der teurere Schaetzer setzt oben drauf.
+
+**Ridge ist vollstaendig wirkungslos** — in allen 16 Kombinationen bitgleiche Konfusionszahlen wie
+`ols`. Regularisierung rettet nicht-identifizierbare Gleichungen nicht, was zum strukturellen (statt
+numerischen) Charakter des Defizits passt. Ehrliches Negativergebnis, gehoert so berichtet.
+
+**Ein Mangel, der vor jeder Paper-Verwendung behoben werden muss: „nicht identifizierbar" bedeutet in
+den beiden Artefakten zwei verschiedene Dinge, und beide ergeben zufaellig 4.** Die
+`identifiability.csv` flaggt {54 du2, 54 du3, 63 du1, 63 du2}; die Konfusionskategorie
+`not_identifiable` umfasst dagegen alle vier Gleichungen von System 63. Dazu kommt: 63 du3 und du4
+haben Erwartungsstage 1 und sind auf ihrer eigenen Stage bestens konditioniert (Kondition 234) — sie
+als `not_identifiable` zu fuehren, nur weil eine *hoehere* Stage rangdefizit ist, ist konservativ und
+untertreibt das Verfahren. Die beiden Definitionen muessen getrennt benannt werden.
+
+**Einordnung.** Die Kernfrage ist damit vollstaendig beantwortet und die Grenzen sind vermessen statt
+vermutet: der Test entscheidet korrekt, wo die Ableitung die Struktur aufloest; wo er das nicht tut,
+ist die Ursache benannt und quantifiziert (Datendichte auf 54, Erhaltungsgroesse auf 63). Was
+weiterhin **nicht** gezeigt ist: dass das die Discovery verbessert. Alles bisher Gemessene ist offline
+auf Systemen mit bekannter Wahrheit, und der Checkpoint ist die *volle* Bibliothek, nicht eine
+gefundene Struktur.
+
+<!-- 2963fcc -->
+
 ### WP-L3 beauftragt — bodengesteuerte Zuendregel, Identifizierbarkeit, Sampling-Grenze
 
 Drei Defekte aus WP-L2, keiner davon ein Zweifel am Kernergebnis: (1) die Zuendregel konsultiert den

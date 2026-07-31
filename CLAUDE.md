@@ -716,7 +716,7 @@ Status: NOT STARTED
 | Artifact | Status | Note |
 |----------|--------|------|
 | `paper1_phaseA_v1` | **frozen** (300/300) | H1–H4 verdicts in freeze memo; evidence scope closed |
-| `studies/lookahead/` | WP-L1, WP-L2 done; WP-L3 active | Derivative-space stage-firing probe; diagnostic only, no algorithm change |
+| `studies/lookahead/` | WP-L1–L3 done | Derivative-space stage-firing probe; floor-gated rule reaches 10 exact / 0 over / 2 under / 4 not-identifiable over the 16 exact equations. Diagnostic only — never tested as a discovery mechanism |
 | `studies/regression/` | Baseline v0 valid; v1 pending | Longitudinal metric history; Gate 2 cell (v3, 26/42) recorded 2026-07-31 |
 | `studies/numerics/system26_tolerance_screening.jl` | done (WP-T2) | Overshoot algorithmic on System 26; screening = performance-only |
 | `studies/generalization/` | fertig | Auxiliary only; insufficient cells for supplementary inclusion |
@@ -774,15 +774,27 @@ Done (do not re-open):
 **Phase 2 is closed with a negative Gate 2.** The v3 chain (v3.2 → v3.5) is implemented and its
 failure is diagnosed and reportable, but v3 is not the final variant.
 
+- **WP-L3** (floor-gated rule, identifiability, density sweep) — done 2026-07-31. All four
+  pre-registered predictions confirmed. Over the 16 exact equations the floor-gated rule reaches
+  10 exact / 0 over / 2 under / 4 not-identifiable. The two undershoots (System 54) are a sampling
+  limit, not a rule defect — at 2x density the stage-3 cliff becomes resolvable. System 63 stays
+  rank-deficient at every density: a conservation law, not ill-conditioning. Ridge regularisation
+  was completely inert. Known defect: "non-identifiable" means two different things in the report and
+  the CSV, both coincidentally 4; must be disambiguated before any paper use.
+
 Active:
-1. **Scope decision for Paper 1 — the current bottleneck, and deliberately not yet made.**
+1. **Scope decision for Paper 1 — the bottleneck, and still deliberately not made.**
    `PAPER_1.md` allows two branches after a failed Gate 2: (a) v2.2 as the final variant with an
    honest v3 failure analysis as a contribution, or (b) revise the paper plan around the stage-firing
-   look-ahead, effectively a v4. WP-L2 has made (b) defensible but not yet safe. Decide once WP-L3 is
-   in; do not drift into (b) by continuing to work on it.
-2. WP-L3 (active, with Codex): floor-gated firing rule, `not_identifiable` verdict for rank-deficient
-   equations instead of silent exclusion, and a sampling-density sweep separating estimator-limited
-   from excitation-limited behaviour on Systems 54 and 63. Diagnostic only, no algorithm change.
+   look-ahead. The look-ahead evidence is now strong *as an offline classifier* — but it has never
+   been tested as a discovery mechanism, and it addresses complexity allocation (Claim B), not
+   structural recovery: on System 26 `du2` was already wrong at stage 3 with all needed terms
+   available, so a perfect gate stops the escalation and leaves `du2` wrong.
+2. The cheap decisive experiment before choosing: integrate the gate as a **per-equation stage cap**
+   (`max_useful_stage_k` precomputed from the probe — no speculative unlock, no rollback, because the
+   gate is search-independent) and re-run the frozen do-or-die cell 26/42 against the v2.2 anchor and
+   the v3 result. One run, a few hours. This is the first test of the look-ahead as a mechanism
+   rather than a classifier, and it decides branch (a) vs (b) on evidence.
 
 Baseline note:
 - Baseline v0 (`config_fingerprint 0c739d4e36ee6498`) stays valid as a historical record but is no
@@ -892,8 +904,8 @@ The full execution plan lives in `PAPER_1.md`. That document contains:
 
 **Active WPs:**
 - WP-v3.1 through WP-v3.5 and WP-G2.1: EvoGrow v3 design, implementation and gate run — **all delivered**; v3 failed Gate 2.
-- WP-L1, WP-L2: derivative-space stage-firing probe — delivered; the look-ahead separates the decisive counterexamples once the derivative estimate is adequate.
-- WP-L3: floor-gated firing rule, identifiability classification, sampling-density sweep — active. Diagnostic only; it does not commit the paper to the look-ahead branch.
+- WP-L1 through WP-L3: derivative-space stage-firing probe — **all delivered**. The look-ahead separates the decisive counterexamples once the derivative estimate is adequate, and its limits are measured rather than assumed (derivative accuracy on System 54, identifiability along a single trajectory on System 63).
+- Next: integrate the gate as a per-equation stage cap and re-run the do-or-die cell 26/42 — the first test of the look-ahead as a discovery mechanism. This decides the open scope branch.
 
 **Final experiment scope:**
 - All 63 ODEBench systems (`benchmarks/data/strogatz_extended.json`)

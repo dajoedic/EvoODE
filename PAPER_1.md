@@ -458,10 +458,32 @@ Both branches allowed above remain open and the choice is **not yet made**:
 1. v2.2 as the final variant, with an honest failure analysis of v3 as a contribution.
 2. Revise the paper plan around the stage-firing look-ahead (effectively a v4).
 
-Evidence bearing on branch 2 is being collected in `studies/lookahead/` (WP-L1 to WP-L3,
-diagnostic only, no algorithm change). WP-L2 has already shown that a cheap
-derivative-space look-ahead separates the two decisive counterexamples once the
-derivative estimate is adequate. The decision should be taken when WP-L3 is in.
+Evidence bearing on branch 2 was collected in `studies/lookahead/` (WP-L1 to WP-L3,
+diagnostic only, no algorithm change). Summary as of 2026-07-31:
+
+- A cheap derivative-space look-ahead separates the two decisive counterexamples once the
+  derivative estimate is adequate — a smoothing estimator matters, higher-order finite
+  differences do not.
+- With a noise-floor-gated firing rule the probe reaches 10 exact / 0 overshoot /
+  2 undershoot / 4 not-identifiable over the 16 exact benchmark equations.
+- Both remaining failure classes are characterised rather than assumed: the undershoots
+  are a sampling-density limit that disappears at 2x density, and the non-identifiable
+  equations stem from a conservation law that no sampling density removes.
+
+Two things this evidence does **not** establish, and both bear directly on the choice:
+
+1. The probe has only ever run offline, on systems with known ground truth, with the full
+   term library as the checkpoint. It has never been tested as a discovery mechanism.
+2. It addresses complexity allocation (Claim B), not structural recovery. On System 26,
+   `du2` was already wrong at stage 3 with every needed term available; a perfect firing
+   gate stops the escalation and still leaves `du2` wrong.
+
+**Recommended decisive step before choosing:** integrate the gate as a per-equation stage
+cap and re-run the frozen do-or-die cell (System 26, seed 42) against the v2.2 anchor and
+the v3 result. No speculative unlock, checkpoint, or rollback machinery is needed — the
+gate depends only on trajectory, basis, equation and stage, so `max_useful_stage_k` can be
+precomputed once per run. That is a small, cheap change and the first genuine test of the
+mechanism.
 
 ---
 
