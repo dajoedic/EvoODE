@@ -69,11 +69,12 @@ This decision prevents Paper 1 from becoming a warm-start/optimizer paper and ke
 | Support matching | Known issue: growth-without-pruning makes raw `exact_support_match` too strict |
 | Pretuning | Removed from Paper 1 main scope; possible future follow-up |
 | Final EvoGrow variant | Not yet frozen |
-| EvoGrow v2.2 | First candidate for Paper 1 after metric repair and diagnosis |
-| EvoGrow v3 | Conditional next step if v2.2 failure modes justify equation-wise staging |
+| EvoGrow v2.2 | Failed Gate 1 on 2026-05-30; still the fallback candidate |
+| EvoGrow v3 | Implemented and **failed Gate 2 on 2026-07-31**; not the final variant |
 | ODEBench full evaluation | Planned only after final EvoGrow variant is selected |
 
-**Active phase:** Phase 0 + Phase 1 diagnostic preparation.
+**Active phase:** Phase 2 closed with a negative Gate 2. Scope decision open — see
+"Open scope decision after Gate 2".
 
 ---
 
@@ -378,14 +379,19 @@ Parameter-magnitude or coefficient-variance proxies may only be used as fallback
 
 ### v3 Work Packages
 
-| WP | What |
-|----|------|
-| WP-v3.1 | Design note: per-equation progress signal and promotion rule |
-| WP-v3.2 | `EvoGrowV3` struct and equation-wise stage state |
-| WP-v3.3 | Equation-aware child generation |
-| WP-v3.4 | Per-equation plateau detection and promotion |
-| WP-v3.5 | New v3 metrics in `result.json` |
-| WP-v3.6 | Validation run comparing v3 against v2.2 on 3–5 diagnostic systems |
+| WP | What | Status |
+|----|------|--------|
+| WP-v3.1 | Design note: per-equation progress signal and promotion rule | done 2026-07-20 |
+| WP-v3.2 | `EvoGrowV3` struct and equation-wise stage state | done 2026-07-20 |
+| WP-v3.3 | Equation-aware child generation | done 2026-07-29 |
+| WP-v3.4 | Per-equation plateau detection and promotion | done 2026-07-29 |
+| WP-v3.5 | New v3 metrics in `result.json` | done 2026-07-30 |
+| WP-v3.6 | Validation run comparing v3 against v2.2 on 3–5 diagnostic systems | replaced by WP-G2.1 do-or-die cell, run 2026-07-31 |
+
+The planned 45-run validation matrix was replaced by a single pre-registered decision
+cell (System 26, seed 42) because the v2.2 arm was already frozen and bit-exactly
+reproduced by WP-T2, so only one fresh v3 run was needed to decide. See the Gate 2
+decision below.
 
 ### Gate 2 — Is v3 Paper-Ready?
 
@@ -404,6 +410,58 @@ If v3 passes Gate 2:
 If v3 fails Gate 2:
 
 > Do not force v3 into Paper 1. Either use v2.2 with an honest limitation/failure analysis or revise the paper plan.
+
+### Gate 2 Decision — 2026-07-31
+
+**Decision: v3 fails Gate 2. v3 is not the final Paper 1 variant.**
+
+Evidence from the pre-registered decision cell (System 26, seed 42, 30 levels,
+`evogrow_v3`, config fingerprint `1f9c5f807d609548`, git hash `e82715b`, 3.6 h):
+
+| Criterion | Target | Observed | Verdict |
+|-----------|--------|----------|---------|
+| (a) `eq_final_stages[1]` | 3 | 5 | failed |
+| (b) `du1` support | exactly `{u1, u1^2, u1*u2}` | extra `u2` term | failed |
+| (c) loss | ≤ 0.001391623174905009 | 2.5195575964774715e-4 | met |
+
+`eq_final_stages = [5,5]`, `eq_overshoot = [2,2]`. No detectable decoupling.
+
+Criterion (c) is worth recording: the loss is 5.5× better than the frozen v2.2 anchor.
+Fit quality was never the problem. What failed is complexity allocation — precisely what
+v3 was built for.
+
+**Diagnosis.** The v3 promotion rule asks three questions per equation: sufficient stage
+budget, `r_k` plateau, and `r_k > loss_tol = 1e-8`. The third condition is unreachable on
+coupled systems, where the error floor is around 1e-3 to 1e-4. For an already correctly
+modelled equation all three conditions therefore hold permanently, and the rule cannot
+distinguish under-modelling from an irreducible error floor: both look like a flat
+residual above 1e-8. Independent per-equation controllers consequently escalate exactly
+as the global one did.
+
+> **v3 changed who decides, but not what evidence justifies a promotion.**
+
+This is a clean negative result and is reportable as such.
+
+**Second, independent cause — found after the gate (WP-L2, 2026-07-31).** The `r_k`
+signal itself is contaminated. On System 26 the derivative residual of the *true*
+structure with *true* parameters is [1.808, 0.520], while the fitted full-stage-3 `r_k`
+is [0.142, 0.0394] — the floor lies a factor of 13 *above* the fitted value. `r_k`
+therefore does not measure structural adequacy; it measures how much finite-difference
+derivative error a model can absorb, and that capacity grows with the number of terms.
+The signal is systematically biased toward "more terms help". A smoothing-based
+derivative estimator reduces the floor by a factor of ~4.5 but does not remove it.
+
+### Open scope decision after Gate 2
+
+Both branches allowed above remain open and the choice is **not yet made**:
+
+1. v2.2 as the final variant, with an honest failure analysis of v3 as a contribution.
+2. Revise the paper plan around the stage-firing look-ahead (effectively a v4).
+
+Evidence bearing on branch 2 is being collected in `studies/lookahead/` (WP-L1 to WP-L3,
+diagnostic only, no algorithm change). WP-L2 has already shown that a cheap
+derivative-space look-ahead separates the two decisive counterexamples once the
+derivative estimate is adequate. The decision should be taken when WP-L3 is in.
 
 ---
 
@@ -816,5 +874,6 @@ This document is updated at each phase transition:
 - update protocol-audit status,
 - add final claim decisions after Phase 5 results.
 
-Last updated: 2026-05-30
-Current phase: Phase 2 — EvoGrow v3 design and implementation
+Last updated: 2026-07-31
+Current phase: Phase 2 closed — v3 failed Gate 2; scope decision open (v2.2 with failure
+analysis, or paper plan revised around the stage-firing look-ahead)

@@ -6,6 +6,76 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ## 2026-07-31
 
+### WP-L3 beauftragt — bodengesteuerte Zuendregel, Identifizierbarkeit, Sampling-Grenze
+
+Drei Defekte aus WP-L2, keiner davon ein Zweifel am Kernergebnis: (1) die Zuendregel konsultiert den
+berechneten Rauschboden nicht — Pflichtvariante mit Boden-Gate, beide Regeln nebeneinander, und die
+Gegenrichtung ausdruecklich mitberichtet (auf 54 du2/du3 faellt das Residuum schon bei Stage 2 unter
+den Boden, eine bodengesteuerte Regel unterschiesst dort). (2) Rangdefizit wird ein eigenes Urteil
+`not_identifiable` statt eines stillen Ausschlusses, plus regularisierte Fitvariante; zusaetzlich
+suiteweit die Frage, wie viele Gleichungen entlang ihrer eigenen Trajektorie nicht identifizierbar
+sind — das begrenzt, was *jedes* ableitungsbasierte Verfahren aus einer Trajektorie entscheiden kann.
+(3) Dichte-Sweep (2x/4x/8x `T`, `u0`/`tspan` unveraendert) trennt auf System 54 die beiden bislang
+konfundierten Erklaerungen: schaetzerbegrenzt (dann erscheint die Klippe bei hoeherer Dichte) gegen
+anregungsbegrenzt (dann nie). Auf System 63 muss das Rangdefizit bei jeder Dichte bestehen bleiben,
+sonst ist es keine Erhaltungsgroesse, sondern gewoehnliche Schlechtkonditionierung. Sampling-Sweep ist
+ausdruecklich als Sensitivitaetsstudie markiert und fliesst nicht in die Hauptkonfusionsmatrix.
+
+### WP-L2 geliefert — Trennung gelingt; die Idee traegt, und `r_k` ist bestaetigt kontaminiert
+
+`studies/lookahead/derivative_estimator_probe.jl`, Ausgaben in
+`outputs/studies/lookahead/derivative_estimator_probe/`. Die WP-L1-Diagnose ist bestaetigt: das
+vermeintliche Negativergebnis war ein Artefakt der Ableitungsschaetzung.
+
+**Schaetzerwahl.** Median-RMS-Ableitungsfehler: `central` 1,75e-2, `fd4` 1,24e-2, `local_poly`
+1,78e-3. **Hoehere FD-Ordnung ist nicht der Hebel — Glaettung ist es** (Faktor 10 gegen Faktor 1,4).
+
+**Die Trennung gelingt sauber.** Holdout-Residuen mit `local_poly`, Splits A/C/D (B bleibt der
+degenerierte Schwanz-Fit):
+
+| Stage | System 26 du2 (wahr: 3) | System 11 du1 (wahr: 4) |
+|---|---|---|
+| 1 | 2,98e-3 | 7,89e-4 |
+| 2 | 3,34e-6 | 4,53e-5 |
+| 3 | **5,24e-13** | 4,53e-5 (leer, identisch) |
+| 4 | 2,70e-11 (schlechter) | **7,60e-12** |
+| 5 | 1,81e-11 | 5,05e-9 (schlechter) |
+
+Beide Klippen sitzen exakt auf der wahren Stage, danach verschlechtert es sich. System 26 du2 faellt
+von 3,65e-3 (WP-L1) auf 5,24e-13 — zehn Groessenordnungen, allein durch die Ableitungsschaetzung.
+System 3 bleibt korrekt bei Stage 2. Alle drei vorregistrierten Vorhersagen halten. **Damit ist die
+Kernfrage des Diskussionsdokuments beantwortet: ein billiger Ableitungs-Look-Ahead trennt die beiden
+Gegenbeispiele, sobald die Ableitung stimmt.**
+
+**Teil 4 — `r_k`-Kontamination bestaetigt, und staerker als vermutet.** Auf System 26 liegt der Boden
+mit *wahrer* Struktur und *wahren* Parametern bei [1,808, 0,520], das gefittete volle Stage-3-`r_k`
+dagegen bei [0,142, 0,0394] — der Boden liegt um Faktor 13 **darueber**. `r_k` misst also nicht
+strukturelle Angemessenheit, sondern wie viel Ableitungsfehler ein Modell absorbieren kann, und diese
+Kapazitaet waechst mit der Termzahl. Das Signal ist damit systematisch nach „mehr Terme helfen"
+verzerrt — genau die Eskalation, die v3 gezeigt hat. Der bessere Schaetzer senkt den Boden auf
+[0,425, 0,106] (Faktor 4,3 / 4,9), beseitigt ihn nicht. **v3s Scheitern an Gate 2 hat damit eine
+zweite, numerische Ursache zusaetzlich zur Evidenz-Diagnose.**
+
+**Drei Einschraenkungen, die der gelieferte Bericht zu leicht nimmt.** Erstens deckt die
+Konfusionsmatrix nur 12 der 16 exakten Gleichungen ab: System 63 faellt komplett heraus, Stages ≥3
+sind auf allen Splits rangdefizient (Kondition > 1e10). Die Ursache ist strukturell — die
+SEIR-Zustaende summieren sich zu einer Konstanten, es gibt eine exakte lineare Abhaengigkeit zwischen
+den Variablen; passend dazu erreicht du1 schon bei Stage 2 ein Residuum von 1,2e-14, obwohl die wahre
+Gleichung einen Kreuzterm braucht. Der Vergleich „5 Overshoots vorher, 3 jetzt" ist deshalb nicht
+like-for-like, die schweren Faelle sind aus dem Nenner gefallen. Zweitens sind alle drei verbliebenen
+Overshoots System 54 und reines Rauschfitten: bei du1 liegt der Rauschboden bei 8,0e-4, saemtliche
+Residuen ab Stage 1 bei 5,9e-6 und darunter — die Zuendregel konsultiert den Boden nicht, obwohl er
+berechnet wird. Drittens ist die naheliegende Korrektur kein Freifahrtschein: bei 54 du2/du3 faellt
+das Residuum schon bei Stage 2 unter den Boden, eine bodengesteuerte Regel wuerde dort unterschiessen.
+Ehrliche Lesart: auf Lorenz reicht die Ableitungsgenauigkeit bei gegebenem Sampling nicht, um die
+Stage-3-Kreuzterme aufzuloesen. Kleinigkeit: Split D wurde ergaenzt, aber nirgends beschrieben.
+
+**Einordnung.** Die Grenze des Verfahrens zeichnet sich klar ab und ist selbst ein Ergebnis: der Test
+funktioniert, wo die Ableitungsschaetzung die Struktur aufloest; die Systeme 54 (schnelle Dynamik) und
+63 (Erhaltungsgroesse) markieren, wo das aufhoert. Das ist eine publizierbare Aussage, kein Scheitern.
+
+<!-- 24145f6 -->
+
 ### WP-L2 beauftragt — Ableitungsschaetzung als bindende Schranke
 
 Konsequenz aus WP-L1. Vier Teile, alle rein diagnostisch: (1) Schaetzervergleich gegen den

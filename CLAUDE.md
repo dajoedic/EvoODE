@@ -154,6 +154,9 @@ EvoODE/
 |-- studies/                               (direct-execution study scripts)
 |   |-- debug/
 |   |   `-- debug_single.jl
+|   |-- lookahead/                         (stage-firing look-ahead diagnostics; no algorithm change)
+|   |   |-- stage_potential_probe.jl       (WP-L1)
+|   |   `-- derivative_estimator_probe.jl  (WP-L2)
 |   |-- generalization/
 |   |   `-- generalization_study.jl
 |   `-- profiling/
@@ -604,8 +607,27 @@ Implemented:
 
 #### v3: equation-wise staging
 
-Status: CODE-COMPLETE (implementation), validation pending
+Status: IMPLEMENTED, **FAILED GATE 2 on 2026-07-31** — not the final Paper 1 variant
 Implemented: 2026-07-20 (bridge) through 2026-07-30 (metrics)
+
+Gate 2 verdict on the pre-registered decision cell (System 26, seed 42): `eq_final_stages = [5,5]`,
+`eq_overshoot = [2,2]`, `du1` carries a spurious `u2` term. No detectable decoupling. Loss was 5.5x
+*better* than the frozen v2.2 anchor (2.52e-4 vs 1.39e-3), so fit quality was never the problem;
+complexity allocation failed — exactly what v3 was built for.
+
+Two causes, established separately:
+
+1. **Wrong evidence.** The promotion condition `r_k > loss_tol = 1e-8` is unreachable on coupled
+   systems (error floor ~1e-3). For an already correct equation all three promotion conditions hold
+   permanently, so the rule cannot distinguish under-modelling from an irreducible error floor.
+   v3 changed *who* decides, not *what evidence* justifies a promotion.
+2. **Contaminated signal** (WP-L2). On System 26 the derivative residual of the true structure with
+   true parameters is [1.808, 0.520] while the fitted full-stage-3 `r_k` is [0.142, 0.0394] — the
+   floor is a factor of 13 *above* the fitted value. `r_k` measures how much finite-difference
+   derivative error a model can absorb, and that capacity grows with term count, biasing the signal
+   toward "more terms help".
+
+Details in `PAPER_1.md` (Gate 2 Decision) and `DIARY.md` (2026-07-31).
 
 The realized v3 direction is **per-equation staged growth**, not the teacher-forcing idea originally
 sketched here. Motivation: Gate 1 and WP-T2 showed that global staging escalates *all* equations
@@ -667,7 +689,7 @@ Experiment infrastructure complete (WP-E1 through WP-E3):
 
 Archived experiment:
 
-- `paper1_phaseA_v1`: 300 runs total (10 systems × 6 variants × 5 seeds), exploratory — **frozen 2026-05-11, 300/300 success=true**. H1–H4 verdicts in `docs/paper1_freeze_memo_phaseA.md`. Not used for final paper claims. Current method work happens in the regression suite (`studies/regression/`), not here; Phase B (`paper1_phaseB_v1`) is the planned final experiment (not yet started, blocked behind Gate 2 and the baseline cost/scope decision).
+- `paper1_phaseA_v1`: 300 runs total (10 systems × 6 variants × 5 seeds), exploratory — **frozen 2026-05-11, 300/300 success=true**. H1–H4 verdicts in `docs/paper1_freeze_memo_phaseA.md`. Not used for final paper claims. Current method work happens in `studies/lookahead/` and the regression suite (`studies/regression/`), not here; Phase B (`paper1_phaseB_v1`) is the planned final experiment (not yet started, blocked behind the open paper scope decision that followed the negative Gate 2).
 
 Target:
 EvoGrow baseline vs GP and SINDy
@@ -689,19 +711,20 @@ Status: NOT STARTED
 - validation-based stage promotion
 - multi-hypothesis models
 
-## Active Studies (as of 2026-07-30)
+## Active Studies (as of 2026-07-31)
 
 | Artifact | Status | Note |
 |----------|--------|------|
 | `paper1_phaseA_v1` | **frozen** (300/300) | H1–H4 verdicts in freeze memo; evidence scope closed |
-| `studies/regression/` | Baseline v0 valid; v1 pending | Longitudinal metric history; v1 run aborted 2026-07-30 (cost/scope), awaits decision |
+| `studies/lookahead/` | WP-L1, WP-L2 done; WP-L3 active | Derivative-space stage-firing probe; diagnostic only, no algorithm change |
+| `studies/regression/` | Baseline v0 valid; v1 pending | Longitudinal metric history; Gate 2 cell (v3, 26/42) recorded 2026-07-31 |
 | `studies/numerics/system26_tolerance_screening.jl` | done (WP-T2) | Overshoot algorithmic on System 26; screening = performance-only |
 | `studies/generalization/` | fertig | Auxiliary only; insufficient cells for supplementary inclusion |
 | `studies/profiling/profile_init.jl` | Daten vorhanden | Methods section / Discussion only; not evidence for H1–H4 |
 
 ## Current Priorities
 
-Current priorities as of 2026-07-30:
+Current priorities as of 2026-07-31:
 
 Done (do not re-open):
 - WP-0.1 (H4 claim → VACUOUS in `evaluate_hypotheses.py`) — done 2026-05-17.
@@ -734,35 +757,42 @@ Done (do not re-open):
   2026-07-30. Config fingerprint unchanged. Closed the integration gap: the divergent path (v3.3 +
   v3.4 together) ran end-to-end in a real coupled run for the first time.
 
-**The EvoGrow v3 chain is code-complete (v3.2 → v3.3 → v3.4 → v3.5).** What remains is the scientific
-validation (WP-v3.6), which is blocked on a cost/scope decision — see Active.
+- **WP-G2.1 + Gate 2** — done 2026-07-31. The 45-run validation matrix was replaced by a single
+  pre-registered decision cell (System 26 / seed 42); the v2.2 arm was already frozen and bit-exactly
+  reproduced by WP-T2, so one fresh v3 run sufficed. **v3 fails Gate 2** — see the v3 section above
+  and the Gate 2 Decision block in `PAPER_1.md`.
+- **WP-L1** (isolated stage-potential probe, `studies/lookahead/stage_potential_probe.jl`) — done
+  2026-07-31. Its reported "no separation" verdict turned out to be a measurement artifact: the
+  noise-floor rows show the central-difference derivative estimate carries O(1) error in the
+  transients of Systems 11 and 26, larger than the signal to be detected.
+- **WP-L2** (derivative estimators + `r_k` contamination) — done 2026-07-31. A local-polynomial
+  smoother cuts the median derivative error by 10x (higher-order FD by only 1.4x — smoothing is the
+  lever, not FD order). With it, the probe separates the counterexamples cleanly: System 26 `du2`
+  falls to 5.24e-13 at its true stage 3 and worsens at 4/5; System 11 falls to 7.60e-12 at stage 4.
+  Confirmed the `r_k` contamination described in the v3 section.
 
-Active (Phase 2 — EvoGrow v3):
-1. **Scope decision for the v2.2 reference baseline — the current bottleneck.** The regression runner
-   as configured is 3 variants × 5 systems × 3 seeds = 45 runs; at `USE_PRETUNING=false`,
-   `N_LEVELS=30` a coupled run is ~16 h, so the full matrix is ~2 weeks. A run was started and
-   aborted 2026-07-30 at 6/45. Two-thirds is waste: the `evogrow_v3` column ran stale v3.3-era code
-   (loaded at process start, before v3.4/v3.5, so it is lockstep ≡ v2.2), and the screening column is
-   out of the core claim. Only the **v2.2 reference** (15 runs) is needed. Decide: (a) variant cut
-   only (45 → 15, ~days, measures exactly the current config), or (b) also rethink `N_LEVELS` /
-   `pretuning` *for the regression* (faster, changes what is measured and the `config_fingerprint`).
-   Hygiene either way: drop `BFGS_TIME_LIMIT_S` from 24 h to minutes (it is a landmine, not the cost
-   driver — no fit ever approached it). This is a planning decision, deliberately deferred to be made
-   with a clear head, not in reaction mode.
-2. WP-v3.6: validation run of v3 vs. Baseline v1 (overshoot reduction on coupled systems 26/31/63,
-   now per-equation via `eq_overshoot`/`eq_wasted_levels`). Needs (1) plus a **fresh** v3 run with
-   current code (the aborted run's v3 column is stale). External long run — the user starts it.
-3. Gate 2: decide whether v3 is paper-ready.
+**Phase 2 is closed with a negative Gate 2.** The v3 chain (v3.2 → v3.5) is implemented and its
+failure is diagnosed and reportable, but v3 is not the final variant.
+
+Active:
+1. **Scope decision for Paper 1 — the current bottleneck, and deliberately not yet made.**
+   `PAPER_1.md` allows two branches after a failed Gate 2: (a) v2.2 as the final variant with an
+   honest v3 failure analysis as a contribution, or (b) revise the paper plan around the stage-firing
+   look-ahead, effectively a v4. WP-L2 has made (b) defensible but not yet safe. Decide once WP-L3 is
+   in; do not drift into (b) by continuing to work on it.
+2. WP-L3 (active, with Codex): floor-gated firing rule, `not_identifiable` verdict for rank-deficient
+   equations instead of silent exclusion, and a sampling-density sweep separating estimator-limited
+   from excitation-limited behaviour on Systems 54 and 63. Diagnostic only, no algorithm change.
 
 Baseline note:
 - Baseline v0 (`config_fingerprint 0c739d4e36ee6498`) stays valid as a historical record but is no
   longer a valid comparison: the regression configuration changed since (`time_limit_s` explicit,
-  additional fields in the fingerprint). Baseline v1 must be produced under the decision in item (1)
-  above before any v3 result can be regression-checked.
+  additional fields in the fingerprint). A Baseline v1 is only needed once a final variant is chosen
+  and regression-checked; it is not on the critical path while the scope decision is open.
 
-After Gate 2:
-4. Phase 3 (PAPER_1.md): ODEBench protocol alignment — system classification, R² metric, protocol-audit document.
-5. Phase B experiment (`paper1_phaseB_v1`) — 63 systems × 2 conditions × 3 seeds.
+After the scope decision:
+3. Phase 3 (PAPER_1.md): ODEBench protocol alignment — system classification, R² metric, protocol-audit document.
+4. Phase B experiment (`paper1_phaseB_v1`) — 63 systems × 2 conditions × 3 seeds.
 
 Open, not scheduled:
 - Evaluation tolerance is now understood, not open (WP-T1 + WP-T2): on the coupled search path 1e-6
@@ -858,11 +888,12 @@ The full execution plan lives in `PAPER_1.md`. That document contains:
 - Implementation and scientific risk register
 - Frozen elements
 
-**Current phase:** Phase 2 — EvoGrow v3 (Phase 0 and Phase 1 complete; Gate 1 decided 2026-05-30, v2.2 fails, v3 triggered). EvoGrow v3 is code-complete; the phase is now blocked on the validation baseline (cost/scope decision — see Current Priorities).
+**Current phase:** Phase 2 closed. Gate 1 decided 2026-05-30 (v2.2 fails, v3 triggered); **Gate 2 decided 2026-07-31 (v3 fails)**. The paper scope decision is open — v2.2 with an honest failure analysis, or a plan revision around the stage-firing look-ahead. See the Gate 2 Decision block in `PAPER_1.md`.
 
 **Active WPs:**
-- WP-v3.1 through WP-v3.5: EvoGrow v3 design and implementation — **all delivered** (see Current Priorities for dates and status).
-- WP-v3.6: validation run of v3 vs. Baseline v1 — pending the baseline scope decision and a fresh v3 run with current code.
+- WP-v3.1 through WP-v3.5 and WP-G2.1: EvoGrow v3 design, implementation and gate run — **all delivered**; v3 failed Gate 2.
+- WP-L1, WP-L2: derivative-space stage-firing probe — delivered; the look-ahead separates the decisive counterexamples once the derivative estimate is adequate.
+- WP-L3: floor-gated firing rule, identifiability classification, sampling-density sweep — active. Diagnostic only; it does not commit the paper to the look-ahead branch.
 
 **Final experiment scope:**
 - All 63 ODEBench systems (`benchmarks/data/strogatz_extended.json`)
