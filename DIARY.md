@@ -4,6 +4,126 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ---
 
+## 2026-07-31
+
+### WP-L2 beauftragt — Ableitungsschaetzung als bindende Schranke
+
+Konsequenz aus WP-L1. Vier Teile, alle rein diagnostisch: (1) Schaetzervergleich gegen den
+*tatsaechlichen* punktweisen Fehler — das wahre RHS ist bekannt, also ist der Fehler exakt
+berechenbar; dazu eine Richardson-Schaetzung (Gitter gegen halbiertes Gitter) mit Pflichtvalidierung
+gegen den echten Fehler, denn ein Fehlerschaetzer, der den echten Fehler nicht nachbildet, ist
+stromabwaerts wertlos. (2) Probe erneut, Baseline- und bester Schaetzer nebeneinander, plus gewichtete
+Regression mit Richardson-Gewichten und punktweisem statt blockweisem Rauschboden. (3) Splits mit
+explizitem Gueltigkeitskriterium; ungueltige Splits werden ausgewiesen und ausgeschlossen, nicht
+mitgemittelt. (4) die `r_k`-Kontaminationsmessung.
+
+`src/optimize/pretune.jl` bleibt ausdruecklich unangetastet — `estimate_derivatives` speist den
+Pretuning-Warmstart und das v3-Promotionssignal; eine Aenderung dort bewegt Suchverhalten und
+`config_fingerprint`. Alle Alternativschaetzer leben im Study-Code.
+
+Vier Vorhersagen vorab registriert, mit Abbruchklausel: scheitern die Vorhersagen zu System 11
+(grosser stabiler Stage-4-Gewinn) oder System 26 (Stage-3-Residuum faellt Richtung analytischen Boden,
+kein Gewinn bei 4/5) unter *allen* Schaetzern, ist der Ableitungsraum auf transientenlastigen Systemen
+zu schwach fuer einen Look-Ahead. Das waere ein echtes Negativergebnis und ist so zu berichten, statt
+weitere Schaetzer nachzuschieben, bis etwas passt.
+
+### WP-L1 geliefert — das vermeintliche Negativergebnis ist ein Messartefakt
+
+Isolierte Stage-Potential-Probe (`studies/lookahead/stage_potential_probe.jl`), Ausgaben in
+`outputs/studies/lookahead/stage_potential_probe/`. Umfang gegenueber dem Diskussionsdokument
+erweitert: 10 Benchmark-Systeme statt 3, davon 8 exakte mit 16 Gleichungen, jeweils mit
+pro-Gleichungs-Erwartungsstage aus `expected_terms` + `term_groups` (System 63 → [3,3,1,1],
+System 54 → [1,3,3]). Kein `strogatz_extended.json`-Parsing. Keine ODE-Simulation in der Probe, kein
+BFGS, kein RNG, kein `src/`-Eingriff. Leerstufen korrekt erkannt (System 11, Stage 3: `new_terms = 0`).
+
+**Der Bericht meldet: keine Trennung.** Kein Gitterpunkt liefert „System 26 stoppt bei Stage 3" und
+zugleich „System 11 geht bis Stage 4"; bestes Gitter `tau_rel = 0.05`, `tau_abs = 1e-6`, Konfusion
+under 2 / exact 9 / over 5. **Diese Schlagzeile ist nicht belastbar.** Die Rauschboden-Zeilen, auf
+denen die Spec bestanden hat, zeigen warum — Split A, Holdout:
+
+| | analytisch wahres RHS | LS-Fit wahrer Support | volle Bibliothek |
+|---|---|---|---|
+| System 3, du1 | 8,2e-12 | 4,6e-7 | Stage 2: 4,6e-7 → Stage 5: 2,6e-6 |
+| System 11, du1 | 1,9e-9 | 2,3e-4 | Stage 2: 5,1e-3 → **Stage 4: 8,8e-2** |
+| System 26, du2 | 4,3e-11 | 5,7e-3 | **Stage 3: 3,7e-3** → Stage 5: 1,5e-7 |
+
+Zwei Zeilen tragen die Diagnose. **System 26 du2 ist bei Stage 3 exakt darstellbar** — der Holdout der
+vollen Stage-3-Bibliothek muesste auf dem Boden von 4,3e-11 liegen, liegt aber acht Groessenordnungen
+darueber; der Fit der wahren Struktur ist mit 5,7e-3 sogar schlechter als die volle Bibliothek.
+**System 11 wiederholt exakt das WP-T1-Muster:** das analytisch wahre RHS hat auf dem Fit-Block
+Residuum 4,606, der LS-Fit derselben wahren Struktur kommt auf 1,159 — der Fit schlaegt die Wahrheit
+um Faktor 4, was nur beim Fitten von Rauschen moeglich ist. Entsprechend sieht Stage 4 (8,8e-2)
+schlechter aus als Stage 2 (5,1e-3), die kubische Klippe ist unsichtbar.
+
+Ursache ist `estimate_derivatives` — ein einfacher zentraler Differenzenquotient. System 11 startet
+bei `du = -39,3`, System 26 du2 bei `du = -31,4`, beide bei `h = 0,05`. Im Transienten ist der
+FD-Fehler dort von Ordnung 1, also groesser als jedes zu detektierende Signal. System 3 hat zahme
+Dynamik und liefert das korrekte Urteil. **Das Muster ist nicht „die Idee traegt nicht", sondern „die
+Probe funktioniert genau dort, wo die Ableitung stimmt".** Die Idee ist damit nicht widerlegt, sondern
+ungeprueft — dieselbe Lage wie bei der Screening-Spur im Juli, diesmal aber mit sofort bekannter
+Ursache.
+
+Zweiter, unabhaengiger Mangel: **Split B ist strukturell wertlos.** Er fittet auf dem kollabierten
+Trajektorienschwanz (Trainingsresiduen ~1e-11, Konditionszahlen bis 3,9e11) und extrapoliert in den
+Transienten (Holdout 1,8 bis 5,3e8). Der Bericht bildet den Median ueber alle drei Splits, mischt also
+einen brauchbaren mit einem degenerierten — die Aussage „keine Trennung" ist teilweise
+Aggregationsartefakt.
+
+**Nebenbefund mit potenziell groesserer Tragweite als die Probe selbst.** `estimate_derivatives` ist
+nicht nur hier im Einsatz: WP-v3.4 verwendet dasselbe Signal als Promotionskriterium (`r_k` ist das
+Ableitungsresiduum auf der beobachteten Trajektorie). Ist der FD-Fehler auf System 26 von Ordnung 1,
+war das Plateau, auf das v3 seine Stage-Entscheidungen gestuetzt hat, dort massgeblich ein numerisches
+Artefakt — eine **zweite, von der Evidenz-Diagnose unabhaengige Erklaerung fuer das Scheitern an
+Gate 2**. Als Hypothese notiert, nicht als Befund; Messung ist Teil 4 von WP-L2.
+
+<!-- 57fa6ba -->
+
+### Gate 2 entschieden — v3 gescheitert, Entkopplung bleibt aus
+
+Der Do-or-Die-Lauf ist durch (System 26, Seed 42, 30 Level, `evogrow_v3`, Fingerprint
+`1f9c5f807d609548`, `git_hash e82715b`, `git_dirty false`, 13.047 s ≈ 3,6 h). Ergebnis gegen die am
+2026-07-30 vorab festgelegten drei Kriterien:
+
+| Kriterium | Soll | Ist | Urteil |
+|---|---|---|---|
+| (a) `eq_final_stages[1]` | 3 | 5 | verfehlt |
+| (b) du1-Support | exakt `{u1, u1^2, u1*u2}` | zusaetzlicher u2-Term | verfehlt |
+| (c) Loss | ≤ 0,001391623174905009 | 2,5195575964774715e-4 | erfuellt |
+
+`eq_final_stages = [5,5]`, `eq_overshoot = [2,2]`. **Keine erkennbare Entkopplung — v3 faellt durch
+Gate 2.** Bemerkenswert ist (c): der Loss ist gegenueber dem eingefrorenen v2.2-Anker um Faktor 5,5
+besser. Die Fitqualitaet war also nie das Problem; gescheitert ist die Komplexitaetsallokation, also
+genau der Punkt, fuer den v3 gebaut wurde.
+
+**Diagnose.** Die v3-Promotionsregel stellt pro Gleichung drei Fragen: genug Stage-Budget, `r_k`
+plateau, `r_k > loss_tol = 1e-8`. Bedingung 3 ist auf gekoppelten Systemen unerreichbar — der
+Fehlerboden liegt bei 1e-3 bis 1e-4. Fuer eine bereits korrekt modellierte Gleichung sind damit alle
+drei Bedingungen dauerhaft erfuellt, und die Regel kann Untermodellierung (eine hoehere Stage enthaelt
+wirklich relevante Terme) nicht von einem irreduziblen Fehlerboden (die Struktur reicht, aber Numerik,
+Fit, Daten oder Kopplung verhindern kleinere Residuen) unterscheiden. Beide Faelle sehen identisch
+aus: flaches Residuum oberhalb von 1e-8. Deshalb eskalieren auch unabhaengige Pro-Gleichungs-
+Controller weiter bis Stage 5 — die Dezentralisierung war technisch aktiv, aber beide lokalen
+Automaten trafen dieselbe qualitative Entscheidung.
+
+**Zentraler Erkenntnisgewinn: v3 hat veraendert, wer entscheidet, aber nicht, welche Evidenz eine
+Promotion rechtfertigt.** Das ist ein sauberes, publizierbares Negativergebnis und keine verlorene
+Arbeit.
+
+Ein bloss relatives Kriterium statt des absoluten Zielwerts loest das ebenfalls nicht. Gegenbeispiel-
+paar: Lotka-Volterra (Best-Loss 3,84e-2 → 3,35e-3 → 1,39e-3 → flach; richtig waere *stoppen* nach
+Stage 3) gegen `du = -u^3` (2,96e-1 → 3,43e-3 → flach → 4,40e-15; richtig waere *weitergehen* ueber
+die flache Stage 3, die in 1D sogar leer ist). Beide Entscheidungsmomente sehen lokal gleich aus —
+Loss um 1e-3, aktuelle Stage bringt nichts, Verlauf flach. Der Unterschied liegt ausschliesslich in
+Information ueber zukuenftige Termgruppen. **Das Stage-Zuend-Problem ist damit ein Look-Ahead-Problem
+unter Unsicherheit.** Ein vollstaendiger simulationsbasierter Look-Ahead ist wegen der ODE-Kosten
+untragbar; deshalb die Pruefung eines billigen Tests im Ableitungsraum (WP-L1).
+
+Offen und bewusst noch nicht entschieden: PAPER_1 sieht fuer ein gescheitertes Gate 2 „v2.2 mit
+ehrlicher Failure-Analyse **oder** Planrevision" vor. Der Look-Ahead waere faktisch v4. Die
+Entscheidung haengt am WP-L2-Ergebnis.
+
+<!-- a022ed2 -->
+
 ## 2026-07-30
 
 ### WP-G2.1 geliefert — Zwei-Varianten-Runner, Einzelzell-Selektor, Do-or-Die-Readout
