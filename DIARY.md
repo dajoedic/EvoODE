@@ -6,6 +6,41 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ## 2026-07-31
 
+### WP-L4 beauftragt — Stage-Cap aus dem Look-Ahead, erster Test als Mechanismus
+
+Zwei Teile. **Teil A** trennt die beiden Bedeutungen von „nicht identifizierbar", die WP-L3
+vermischt und die beide zufaellig 4 ergeben: untere Stage erreicht bereits den Rauschboden (54 du2/du3,
+63 du1/du2) gegen rangdefizite hoehere Stage (System 63 gesamt). Ausserdem wird Rangdefizit
+**pro getesteter Stage** gefuehrt statt als Pauschaleigenschaft — 63 du3/du4 haben Erwartungsstage 1
+und sind dort bestens konditioniert, sie als undentscheidbar zu fuehren untertreibt das Verfahren.
+Teil B haengt davon ab, weil der Cap fuer nicht beurteilbare Gleichungen definiert sein muss.
+
+**Teil B** integriert das Gate als Pro-Gleichungs-Obergrenze: `max_useful_stage_k` einmal vor der
+Suche berechnet, danach darf keine Gleichung darueber hinaus promoten. Kein spekulatives Unlock, kein
+Checkpoint, kein Rollback — das Gate haengt nur an Trajektorie, Basis, Gleichung und Stage, nie an der
+Population. Neue Variante mit eigenem Slug; v2.2 und v3 muessen bei abgeschaltetem Cap bit-identisch
+bleiben. Der Cap ist reine Obergrenze: er kann eine Promotion nur verhindern, nie ausloesen; nicht
+beurteilbare Gleichungen bekommen gar keinen Cap.
+
+**Die schaerfste Auflage der Spec betrifft Ground-Truth-Leckage.** Die Probe hat Wahrheitswissen
+bisher nur zur *Auswertung* benutzt (Konfusionsmatrix, analytische Rauschboden-Zeilen). Der Cap muss
+allein aus beobachteter Trajektorie und Basis entstehen — nichts aus `expected_terms`,
+`expected_stage` oder `true_rhs!` darf ihn erreichen. Dafuer ist ein eigener Test gefordert. Der
+Richardson-Boden ist datenbasiert und erlaubt.
+
+**Zweite Auflage: der Readout darf nicht zirkulaer sein.** Auf System 26 ist der Cap `[3,3]`, also
+erzwingt er `eq_final_stages = [3,3]` per Konstruktion. Das als Erfolg zu melden waere zirkulaer; es
+gilt als Konstruktionspruefung. Die echten Fragen sind: findet `du2` jetzt den richtigen Support
+(unter v2.2 endete es als `{u1, u1^2}`, obwohl alle Terme auf Stage 3 verfuegbar waren), wie
+verhaelt sich der Loss gegen den v2.2-Anker und das v3-Ergebnis, und wie viel Kosten fallen weg —
+gezaehlt in Integrationen, nicht in Wall-Clock. Ausdruecklich als vollwertiges Ergebnis vorgesehen:
+Overshoot weg, Kosten runter, `du2` weiterhin falsch. Das hiesse, der Look-Ahead loest die
+Komplexitaetsallokation und nicht die strukturelle Wiederfindung — genau die Frage, die seit dem
+WP-T2-Befund offen ist.
+
+Der entscheidende Lauf ist **nicht** Teil der Lieferung: Codex implementiert, prueft Bit-Identitaet,
+Leckage-Test, Unit-Tests und einen billigen Smoke auf System 3/11 — den 26/42-Lauf startet der User.
+
 ### WP-L3 geliefert — alle vier Vorhersagen bestaetigt; die Grenzen sind jetzt vermessen
 
 `studies/lookahead/floor_gated_probe.jl`, Ausgaben in `outputs/studies/lookahead/floor_gated_probe/`.

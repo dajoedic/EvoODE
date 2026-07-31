@@ -2,158 +2,138 @@
 
 **Language: Julia**
 
-## WP-L3 — Floor-gated firing rule, identifiability, and the sampling limit (diagnostic)
+## WP-L4 — Stage cap from the look-ahead: first test as a discovery mechanism
 
-### 1. Where WP-L2 left the question
+Two parts, in order. Part A is a small correctness fix that Part B depends on. Part B is
+the first time the look-ahead touches the search at all.
 
-WP-L2 answered the core question positively. With a smoothing-based derivative estimator
-(`local_poly`, median RMS derivative error 1.78e-3 against 1.75e-2 for the central
-difference; note that the higher-order finite difference `fd4` at 1.24e-2 is *not* the
-lever), the stage-potential probe separates the two counterexamples cleanly:
+**Execution rule for this work package: do not run the decisive experiment.** Part B
+produces a run of several hours on System 26. Implement it, verify it with the cheap smoke
+tests described in section B.7, and stop. The real run is started externally.
 
-- System 26 equation 2 drops to 5.24e-13 at stage 3 — its true stage, exactly
-  representable — and gets *worse* at stages 4 and 5. In WP-L1 the same number was
-  3.65e-3, ten orders of magnitude higher.
-- System 11 drops to 7.60e-12 at stage 4 after sitting at 4.53e-5 through stages 2 and 3
-  (stage 3 correctly detected as empty), and gets worse at stage 5.
-- System 3 keeps its correct verdict.
+---
 
-Three defects remain, and this work package addresses them. None of them is a reason to
-doubt the result above; all three concern how the verdict is derived from the profile.
+## Part A — Disambiguate "non-identifiable"
 
-### 2. Scope limits (unchanged from WP-L2)
+WP-L3 reports "non-identifiable" with two different meanings that happen to yield the same
+count of 4, which makes the report easy to misread:
 
-No modification anywhere under `src/`. In particular `estimate_derivatives` stays as it
-is — it feeds the pretuning warm start and the v3 promotion signal. No ODE simulation
-inside the probe beyond generating trajectories, no BFGS, no EvoGrow population, no
-structure search, no RNG, no new package dependencies. Nothing written to
-`studies/regression/history.jsonl`. No integration into the algorithm.
+- `identifiability.csv` flags `{54 du2, 54 du3, 63 du1, 63 du2}` — equations where a
+  lower-stage library already reaches the noise floor, so the true stage cannot be
+  distinguished from a lower one along this trajectory.
+- The confusion category `not_identifiable` covers all four equations of System 63 —
+  equations whose *higher-stage* library is rank-deficient.
 
-Keep WP-L1 and WP-L2 outputs intact; use a new script slug and output subfolder. Reuse
-the WP-L2 estimator and split machinery rather than reimplementing it; `local_poly` is
-the default estimator from here on, with the central difference retained as reference.
+These are different properties and must carry different names and different columns.
+Choose two explicit names (for example a lower-stage-indistinguishable property and a
+rank-deficient property), report them separately everywhere, and state in the report how
+many equations carry each and how many carry both.
 
-### 3. Part 1 — The firing rule must consult the noise floor
+The second classification is also too aggressive. System 63 equations 3 and 4 have expected
+stage 1 and their stage-1 design matrices are well conditioned (condition number 234).
+Marking them undecidable because a stage they never need is rank-deficient understates the
+method. Rank deficiency must be recorded **per tested stage**, not as a blanket property of
+the equation, and an equation must remain decidable up to the highest stage that is
+actually well conditioned.
 
-WP-L2 computes a Richardson-based noise floor per equation and split but the firing rule
-ignores it, and that is the direct cause of the three remaining overshoots, all on
-System 54. For equation 1 of System 54 the floor is 8.0e-4 while every residual from
-stage 1 onward lies at 5.9e-6 or below: the entire profile sits under the floor, so every
-"gain" the rule fires on is noise.
+Regenerate the WP-L3 outputs with the corrected classification and report the confusion
+matrix again. Say explicitly whether the headline numbers (10 exact / 0 over / 2 under)
+change.
 
-Implement a floor-gated verdict as an additional rule variant, evaluated side by side
-with the current threshold-only rule so the difference is attributable:
+---
 
-- a gain may only count if both the gain and the residual level it leads to are above the
-  local noise floor;
-- if the checkpoint residual is already at or below the floor, no further stage can be
-  justified and the verdict is to stop.
+## Part B — Per-equation stage cap in the search
 
-Report the confusion matrix under both rules, per estimator and per weighting.
+### B.1 What is being tested
 
-Do not present the floor-gated rule as a free improvement. On System 54 equations 2 and 3
-the residual falls below the floor already at stage 2 (6.2e-4 against a floor of 1.55e-3,
-and 1.71e-3 against 2.62e-3), so a floor-gated rule will *undershoot* there — stage 2
-instead of the true stage 3. Both failure directions must be reported explicitly. The
-honest reading, which the report must state, is that on Lorenz the derivative estimate
-does not resolve the stage-3 cross terms at the given sampling.
+Every look-ahead result so far is offline: known ground truth, full term library as the
+checkpoint, no interaction with the search. Part B tests the mechanism for the first time.
 
-### 4. Part 2 — Rank deficiency is a result, not a reason to drop equations
+The gate depends only on trajectory, basis, equation and stage — never on the population or
+the current structure. It therefore needs no speculative unlock, no checkpoint and no
+rollback. A per-equation `max_useful_stage_k` is computed once, before the search, and acts
+as a cap: equation `k` may never promote beyond it. Everything else in the search stays as
+it is.
 
-WP-L2 excluded all four equations of System 63 because stages 3 and above exceed the
-condition cap, shrinking the confusion matrix from 16 equations to 12. That silently
-removed the hardest cases and makes the WP-L2 matrix not comparable to the WP-L1 one.
+### B.2 Absolutely no ground truth may enter the cap
 
-The cause is structural, not numerical: the SEIR states sum to a constant, so there is an
-exact linear dependency among the state variables and the higher-stage libraries are
-rank-deficient along the trajectory. Consistent with that, equation 1 of System 63 already
-reaches a holdout residual of 1.2e-14 at stage 2 although its true right-hand side
-`-0.28·u1·u3` needs a stage-3 cross term — along this trajectory the cross term is not
-identifiable.
+This is the single most important constraint in this work package. The probe used ground
+truth only for *evaluation* — confusion matrices and the analytic noise-floor reference
+rows. The cap must be computed from the observed trajectory and the basis alone.
 
-Required changes:
+Nothing derived from `expected_terms`, `expected_stage`, `true_rhs!`, or any per-system
+table may reach `max_useful_stage_k`. The Richardson noise floor is data-only and is
+allowed; the firing thresholds are ordinary hyperparameters and are allowed.
 
-- Introduce an explicit third verdict `not_identifiable`, distinct from
-  `invalid_or_inconclusive`, triggered by rank deficiency or a condition cap breach.
-  Equations carrying it stay in the reported population and are counted in their own
-  category; they must never be silently dropped from the confusion matrix.
-- Add a regularised fit variant (ridge or truncated SVD) so that a verdict can still be
-  produced under collinearity, reported alongside the unregularised result rather than
-  replacing it.
-- Report across the whole suite how many equations are non-identifiable along their own
-  trajectory in the sense above: their true stage is `s`, yet a lower-stage library
-  already explains the derivative down to the noise floor.
+Add a test that fails if the cap computation can see ground truth — for example by
+computing the cap for a system whose true structure is withheld and asserting the same
+result. State in the report how this was enforced.
 
-That last number is a finding in its own right and must be stated prominently. It bounds
-what *any* derivative-space method can decide from a single trajectory, and it is
-relevant well beyond this probe.
+### B.3 Variant, not a modification
 
-### 5. Part 3 — Is System 54 estimator-limited or excitation-limited?
+Introduce the capped search as a **new variant** with its own slug. `EvoGrow` v2.2 and
+`EvoGrowV3` must remain bit-identical when the cap is disabled; verify this the same way
+WP-v3.2 and WP-v3.3 verified their equivalence. The new variant changes search behaviour
+and therefore the `config_fingerprint`; that is expected and must be reported, not avoided.
 
-These two explanations are currently confounded, and they have opposite consequences. If
-the derivative estimate is the limit, better estimation or denser sampling fixes it. If
-the trajectory does not excite the term, no estimator will ever see it and the limit is a
-property of the data.
+### B.4 Behaviour to define explicitly
 
-The trajectories are generated in-house, so this is directly testable: regenerate the
-affected systems at increased sampling density — for example two, four, and eight times
-the benchmark `T`, with `u0` and `tspan` unchanged — and re-run the stage profile. Report
-whether the stage-3 cliff on System 54 emerges as the derivative error falls, and at
-which density.
+- **Equations the probe cannot judge.** If an equation is undecidable under the corrected
+  Part-A classification, it gets **no cap** and falls back to current behaviour. The gate
+  must never block an equation it cannot assess. State this in the docstring.
+- **Cap below the current stage.** Define what happens if a cap is computed that lies below
+  a stage the equation has already reached. It must not retroactively remove terms; specify
+  and implement the conservative reading.
+- **Interaction with existing promotion.** The cap is an upper bound only. All existing
+  promotion conditions still have to be met; the cap can only ever prevent a promotion,
+  never cause one.
 
-Label this explicitly as a sampling-sensitivity study. It deliberately departs from the
-frozen benchmark configuration and its results must never be mixed into the main
-confusion matrix, which stays at the benchmark sampling.
+### B.5 The decisive cell
 
-Run the same density sweep on System 63 to separate its rank deficiency, which is a
-conservation-law property and must *not* disappear with denser sampling, from ordinary
-numerical ill-conditioning, which would.
+The experiment is the frozen do-or-die cell: System 26, seed 42, 30 levels, otherwise the
+WP-G2.1 configuration. Comparison targets are the frozen v2.2 anchor
+(loss `0.001391623174905009`, `final_stage 5`, overshoot 2, wasted 8) and the v3 Gate-2
+result (loss `2.5195575964774715e-4`, `eq_final_stages [5,5]`, `eq_overshoot [2,2]`).
 
-### 6. Part 4 — Document the splits
+Reuse the existing readout in `studies/gate2_do_or_die/` rather than writing a new one;
+extend it if it cannot represent the capped variant.
 
-WP-L2 introduced a fourth split D without describing it anywhere in the report. Document
-the full split set: how each is constructed, what it is for, and the validity criterion
-applied. Report per split how many equation-stage cells it contributes and how many it
-loses to the validity criterion.
+### B.6 What counts as a result — read this before writing the readout
 
-### 7. Pre-registered predictions
+On System 26 the probe's cap is `[3, 3]`. **The cap therefore forces
+`eq_final_stages = [3,3]` by construction.** Reporting that as a success would be
+circular, and the readout must not do it. Treat it as a construction check: if it does not
+hold, the implementation is wrong.
 
-State these in the script header and confront them explicitly, including where they fail:
+The actual questions are:
 
-1. The floor-gated rule removes all three System-54 overshoots and introduces at most two
-   undershoots, both on System 54.
-2. Systems 3, 11, and 26 keep their correct verdicts under the floor-gated rule.
-3. On System 54, increased sampling density lowers the derivative error enough for a
-   stage-3 cliff to appear.
-4. On System 63, the rank deficiency persists at every sampling density.
+1. **Structure.** Does `du2` improve? Under v2.2 it ended as `{u1, u1^2}` while the truth is
+   `2·u2 − u1·u2 − u2²`, all available at stage 3. Confining the search to stage 3 gives it
+   nowhere else to go — does it now find the right support, or does it still fail? This is
+   the question that decides whether stage escalation was the problem or merely a symptom.
+2. **Loss.** Better, equal, or worse than the v2.2 anchor and the v3 result?
+3. **Cost.** Integrations and levels saved relative to both. Report counts, not wall-clock —
+   the wall-clock axis has been unreliable in this project.
 
-If prediction 3 fails, System 54 is excitation-limited rather than estimator-limited, and
-that is the more interesting outcome — report it as such rather than treating it as a
-shortfall.
+A plausible and fully reportable outcome is: overshoot gone, cost down, `du2` still wrong.
+That would mean the look-ahead solves complexity allocation and not structural recovery,
+which is a real and publishable result. Do not present it as a shortfall.
 
-### 8. Outputs
+### B.7 Verification without the long run
 
-CSVs for the stage profiles under both rules, the identifiability classification per
-equation, and the density sweep, plus a human-readable report answering in prose with the
-numbers attached: the confusion matrix under both rules over the full 16 exact equations
-with `not_identifiable` shown as its own category; how many equations are non-identifiable
-along their trajectory; whether System 54 is estimator- or excitation-limited; and whether
-System 63's rank deficiency is structural.
+Permitted: the bit-identity check from B.3, the ground-truth-leak test from B.2, unit tests
+for the cap logic (cap respected, cap never forces a promotion, uncapped equations
+unaffected, cap below current stage handled as specified), and a cheap end-to-end smoke run
+on a small system with a low level count — System 3 or System 11, few levels — purely to
+show the path executes.
 
-Write results incrementally per system so an abort costs at most the current system.
+Not permitted: running System 26, or any configuration expected to exceed a few minutes.
 
-### 9. Tests
+### B.8 Outputs
 
-Unit tests on synthetic data: the floor-gated rule must reject a gain that lies below a
-supplied floor and accept one above it; the rank-deficiency detection must fire on a
-deliberately collinear design matrix and not on a well-conditioned one; the regularised
-fit must reduce to the unregularised one as the regularisation goes to zero; the density
-sweep must reproduce the benchmark result at the benchmark density.
+The new variant, its registration, the readout extension, tests, and a short report on the
+verification performed. Nothing may be written to `studies/regression/history.jsonl` by
+this work package.
 
-### 10. Execution
-
-Cheap as before, though the density sweep multiplies the work: no ODE simulation inside
-the probe, no BFGS, no search. Run it and report the actual numbers. If it has not
-finished within roughly 30 minutes, stop and report that.
-
-Do not modify `src/`. Do not touch `studies/regression/`. Do not commit `outputs/`.
+State clearly in the delivery that the decisive run has not been executed and give the
+exact command to start it.
