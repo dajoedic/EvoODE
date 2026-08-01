@@ -18,6 +18,20 @@ function _record(; eq_final_stages, support_terms, loss = 5e-4)
     )
 end
 
+@testset "Gate 2 record selection ignores current fingerprint" begin
+    old_fingerprint_record = _record(
+        eq_final_stages = [3, 3],
+        support_terms = [["u1", "u1^2", "u1*u2"], ["u2", "u1*u2", "u2^2"]],
+    )
+    old_fingerprint_record["config_fingerprint"] = "3f9be6d36c4043de"
+
+    @test _matching_gate2_record(old_fingerprint_record) == true
+
+    wrong_variant = copy(old_fingerprint_record)
+    wrong_variant["variant"] = "evogrow_v3"
+    @test _matching_gate2_record(wrong_variant) == false
+end
+
 @testset "Gate 2 do-or-die readout criteria" begin
     passing = evaluate_gate2_record(_record(
         eq_final_stages = [3, 3],

@@ -26,6 +26,71 @@ end
     @test all(cap -> cap === nothing || 1 <= cap <= 5, caps)
 end
 
+@testset "look-ahead split decision semantics" begin
+    policy = LookAheadStageCapPolicy(tau_abs = 1e-6, lookahead_horizon = 2)
+
+    fell_to_floor = EvoODE._cap_split_decision(
+        [10.0, 11.0, 1e-12],
+        [true, true, true],
+        [1e-10, 1e-10, 1e-10],
+        [1, 2, 3],
+        policy,
+    )
+    @test fell_to_floor == (kind = :positive, cap = 3, stage = 3)
+
+    already_at_floor = EvoODE._cap_split_decision(
+        [1e-12, 1e-13],
+        [true, true],
+        [1e-10, 1e-10],
+        [1, 2],
+        policy,
+    )
+    @test already_at_floor == (kind = :undecidable, cap = nothing, stage = 1)
+
+    crosses_useless_intermediate = EvoODE._cap_split_decision(
+        [10.0, 11.0, 0.1],
+        [true, true, true],
+        [1e-3, 1e-3, 1e-3],
+        [1, 2, 3],
+        policy,
+    )
+    @test crosses_useless_intermediate == (kind = :positive, cap = 3, stage = 3)
+
+    empty_stage_not_counted = EvoODE._cap_split_decision(
+        [10.0, Inf, 0.1],
+        [true, false, true],
+        [1e-3, 1e-3, 1e-3],
+        [1, 3],
+        LookAheadStageCapPolicy(tau_abs = 1e-6, lookahead_horizon = 1),
+    )
+    @test empty_stage_not_counted == (kind = :positive, cap = 3, stage = 3)
+
+    successor_not_evaluable = EvoODE._cap_split_decision(
+        [10.0, 0.1],
+        [true, false],
+        [1e-3, 1e-3],
+        [1, 2],
+        policy,
+    )
+    @test EvoODE._cap_aggregate_split_decisions([successor_not_evaluable], policy) === nothing
+
+    tau_abs_relaxed_at_floor = EvoODE._cap_rule_counts_gain(
+        1e-7,
+        1e-12,
+        1e-10,
+        policy,
+    )
+    @test tau_abs_relaxed_at_floor == true
+
+    relative_threshold_still_applies = EvoODE._cap_rule_counts_gain(
+        1.0001e-10,
+        1e-10,
+        1e-12,
+        LookAheadStageCapPolicy(tau_abs = 1e-12, tau_rel = 1e-2),
+    )
+    @test relative_threshold_still_applies == false
+end
+
 @testset "look-ahead cap limits promotion only" begin
     strategy = EvoGrowV3(
         progression = StageProgressionPolicy(mode = :stage_local, min_levels_per_stage = 2)

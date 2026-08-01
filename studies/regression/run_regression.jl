@@ -39,6 +39,17 @@ const DERIVATIVE_SCREEN_K = POP_SIZE
 const DERIVATIVE_POLISH_MAXITERS = 20
 const DERIVATIVE_REJECTED_DIAGNOSTIC_SAMPLES = 2
 
+const LOOKAHEAD_CAP_POLICY = (
+    estimator = :local_poly,
+    weighting = :richardson_wls,
+    aggregation = :majority_no_undecided_at_or_below,
+    lookahead_horizon = 2,
+    tau_rel = 1e-4,
+    tau_abs = 1e-8,
+    cond_cap = 1e10,
+    excitation_floor = 1e-10,
+)
+
 const OPTIONS_CONFIG = (
     verbose = 1,
     min_levels = 2,
@@ -112,7 +123,7 @@ const VARIANTS = [
             use_pretuning = USE_PRETUNING,
             screening_optimizer = screening_optimizer,
             level_callback = level_callback,
-            cap_policy = LookAheadStageCapPolicy(),
+            cap_policy = LookAheadStageCapPolicy(; LOOKAHEAD_CAP_POLICY...),
         ),
     ),
 ]
@@ -224,12 +235,14 @@ function config_fingerprint()
         derivative_rejected_diagnostic_samples = DERIVATIVE_REJECTED_DIAGNOSTIC_SAMPLES,
         lookahead_stage_cap = (
             variant = "evogrow_v3_stage_capped",
-            estimator = "local_poly",
-            weighting = "richardson_wls",
-            tau_rel = 1e-4,
-            tau_abs = 1e-8,
-            cond_cap = 1e10,
-            excitation_floor = 1e-10,
+            estimator = String(LOOKAHEAD_CAP_POLICY.estimator),
+            weighting = String(LOOKAHEAD_CAP_POLICY.weighting),
+            aggregation = String(LOOKAHEAD_CAP_POLICY.aggregation),
+            lookahead_horizon = LOOKAHEAD_CAP_POLICY.lookahead_horizon,
+            tau_rel = LOOKAHEAD_CAP_POLICY.tau_rel,
+            tau_abs = LOOKAHEAD_CAP_POLICY.tau_abs,
+            cond_cap = LOOKAHEAD_CAP_POLICY.cond_cap,
+            excitation_floor = LOOKAHEAD_CAP_POLICY.excitation_floor,
         ),
         discovery_options = OPTIONS_CONFIG,
         trajectory_solver = (

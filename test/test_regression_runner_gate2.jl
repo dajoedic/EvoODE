@@ -30,6 +30,8 @@ end
         "evogrow_v3",
         "evogrow_v3_stage_capped",
     ]
+    @test LOOKAHEAD_CAP_POLICY.aggregation == :majority_no_undecided_at_or_below
+    @test LOOKAHEAD_CAP_POLICY.lookahead_horizon == 2
 
     selected = _with_env(
         Dict(
@@ -48,4 +50,7 @@ end
     @test selected.variants == ["evogrow_v3_stage_capped"]
     @test selected.systems == [3]
     @test selected.seeds == [42]
+
+    fingerprint = config_fingerprint()
+    @test fingerprint != "3f9be6d36c4043de"
 end
