@@ -792,31 +792,34 @@ failure is diagnosed and reportable, but v3 is not the final variant.
   built to resolve, one level down. Design rule that follows: **the cap must require positive
   evidence, not the absence of evidence.** Not blocking for cell 26/42, where the cap is correct.
 
+- **WP-L4 through WP-L5d: stage cap complete** (`evogrow_v3_stage_capped`, fingerprint
+  `df5db7763bcd2449`). Verified caps 3 → [2], 11 → [4], 26 → [3,3], 31 → [3,3], 63 → all `nothing`,
+  54 → [`nothing`,2,2]. Suite-wide: 2 safety violations, 8 of 16 equations capped, 18 stages saved.
+  The two violations are System 54 equations 2 and 3 — the resolution limit WP-L3 already measured,
+  where the residual falls below the derivative noise floor at stage 2 and the stage-3 cliff needs
+  twice the sampling density. Closed characterisation: **the cap is safe wherever the derivative
+  estimate resolves the structure, unsafe exactly where it does not, and that is readable in advance
+  from the noise floor.** Caveat: the System 31 repair was made by inference after its diagnosis
+  timed out — first place to look if the rule surprises.
+- **Decisive cell run 2026-08-01** — see the result block in `PAPER_1.md`. Complexity allocation
+  solved at zero cost (overshoot 2 → 0, loss bit-identical to uncapped v3, 390 fits against 530);
+  structural recovery unchanged (`du2` identical to what v2.2 found). **Stage escalation was a
+  symptom, not the cause.**
+
 Active:
-1. **Scope decision for Paper 1 — the bottleneck, and still deliberately not made.**
-   `PAPER_1.md` allows two branches after a failed Gate 2: (a) v2.2 as the final variant with an
-   honest v3 failure analysis as a contribution, or (b) revise the paper plan around the stage-firing
-   look-ahead. The look-ahead evidence is now strong *as an offline classifier* — but it has never
-   been tested as a discovery mechanism, and it addresses complexity allocation (Claim B), not
-   structural recovery: on System 26 `du2` was already wrong at stage 3 with all needed terms
-   available, so a perfect gate stops the escalation and leaves `du2` wrong.
-2. **Run the decisive cell.** `evogrow_v3_stage_capped` on 26/42 is implemented and verified; the
-   run is external and started by the user. Readout via `studies/gate2_do_or_die/readout.jl`. Note
-   that `eq_final_stages = [3,3]` is forced by the cap and is a construction check, not a result —
-   what counts is the `du2` support, the loss against both references, and the integration count.
-3. **WP-L5c — finish the cap repair.** WP-L5b (commit `67b79f7`) fixed the floor semantics and
-   restored a look-ahead horizon of two applicable stages. Verified caps: 3 → [2], 11 → [4],
-   26 → [3,3], 63 → all `nothing` (safe, and buying nothing there). Safety violations went 2 → 4 → 1.
-   Remaining, in order:
-   - **System 31 equation 1 caps at 1 against a true stage 3.** Its truth `-0.4*u1*u2` is the only
-     equation in the set whose support lies entirely in a later stage with no stage-1 or stage-2
-     term at all — precisely the case the horizon should catch. Needs the per-split decisions
-     instrumented to tell a failing gain test from a failing aggregation majority.
-   - Outstanding deliverables not produced because WP-L5b stopped on a stale alarm: unit tests,
-     suite-wide safety and utility counts, aggregation sensitivity, report.
-   - `aggregation` and `lookahead_horizon` are missing from the fingerprinted cap policy in
-     `run_regression.jl`, so two semantic changes have already passed without moving
-     `3f9be6d36c4043de`. Records from before and after must not be pooled as one configuration.
+1. **Scope decision for Paper 1 — now decidable on evidence.** The decisive cell shows the
+   look-ahead is a demonstrated mechanism for Claim B (complexity control) and demonstrably not for
+   structural recovery. That makes branch 2 (rebuild the paper around the look-ahead) weaker than it
+   looked and supports branch 1 enriched: final variant carries the cap, paper is the mechanistic
+   Claim C study, and v2.2 → v3 → capped becomes a documented failure analysis with a quantified
+   positive result on complexity allocation. **The call is the user's; nothing further should be
+   built until it is made.**
+2. Before any broader claim: the decisive evidence is one cell and one seed. If branch 1 is chosen,
+   a handful of additional cells (systems 31 and 63, two or three seeds) should confirm the
+   overshoot result before it becomes a paper claim.
+3. Not a Phase 2 continuation, and not to be started implicitly: the open question of why the search
+   fails to find an available stage-3 structure concerns search power *within* a stage — population
+   size, child generation, parsimony pressure.
 
 Baseline note:
 - Baseline v0 (`config_fingerprint 0c739d4e36ee6498`) stays valid as a historical record but is no

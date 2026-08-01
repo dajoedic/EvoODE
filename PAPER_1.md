@@ -485,6 +485,43 @@ gate depends only on trajectory, basis, equation and stage, so `max_useful_stage
 precomputed once per run. That is a small, cheap change and the first genuine test of the
 mechanism.
 
+### Result of the decisive step — 2026-08-01
+
+| | v2.2 anchor | v3 Gate 2 | capped |
+|---|---|---|---|
+| loss | 1.391623174905009e-3 | 2.5195575964774715e-4 | **2.5195575964774715e-4** |
+| `eq_final_stages` | 5 | [5, 5] | **[3, 3]** |
+| `eq_overshoot` | 2 | [2, 2] | **[0, 0]** |
+| `eq_wasted_levels` | 8 | — | **[0, 0]** |
+| `du1` support | {u1, u1², u1·u2} | — | {u1, **u2**, u1², u1·u2} |
+| `du2` support | {u1, u1²} | — | **{u1, u1²}** |
+
+Two findings, pointing in opposite directions.
+
+**Complexity allocation is solved, at no cost.** Overshoot 2 → 0, wasted levels 8 → 0, and
+the loss is bit-identical to the uncapped v3 run. Stages 4 and 5 contributed literally
+nothing there; the escalation was pure waste and the cap removes it without any loss of fit
+quality. Parameter fits drop from 530 to 390.
+
+**Structural recovery is unchanged — not even moved.** `du2` is exactly what v2.2 found
+three method generations ago, and the true `2·u2 − u1·u2 − u2²` was inside the cap on stage
+3 the whole time. `du1` keeps a spurious `u2` term.
+
+**Consequence for the scope decision.** Stage escalation was a symptom, not the cause.
+Forcing the search onto the correct stage does not improve discovery by a single term, so
+the look-ahead is a demonstrated mechanism for **Claim B** (complexity control) and
+demonstrably not for structural recovery. Branch 2 — rebuilding the paper around the
+look-ahead as the headline contribution — is therefore weaker than it appeared: the
+mechanism works and its scope is measured, but it does not fix the failure that drove
+Phase 2.
+
+The evidence now supports branch 1, enriched: the final variant carries the cap, the paper
+is the mechanistic Claim C study, and the v2.2 → v3 → capped sequence becomes a documented
+failure analysis with a quantified positive result on complexity allocation. The remaining
+open question — why the search fails to find an available stage-3 structure — concerns
+search power *within* a stage (population size, child generation, parsimony pressure) and
+is a different line of work, not a Phase 2 continuation.
+
 ---
 
 ## Phase 3 — ODEBench Protocol and Literature Reference Alignment

@@ -6,6 +6,66 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ## 2026-08-01
 
+### Entscheidungszelle gelaufen — Stage-Eskalation war ein Symptom, nicht die Ursache
+
+Der gecappte 26/42-Lauf ist durch (`evogrow_v3_stage_capped`, Fingerprint `3f9be6d36c4043de`,
+`git_hash d896d77`, 21.159 s). Readout in `outputs/studies/gate2_do_or_die/`.
+
+| | v2.2-Anker | v3 Gate 2 | **gecappt** |
+|---|---|---|---|
+| Loss | 1,391623174905009e-3 | 2,5195575964774715e-4 | **2,5195575964774715e-4** |
+| `eq_final_stages` | 5 | [5, 5] | **[3, 3]** |
+| `eq_overshoot` | 2 | [2, 2] | **[0, 0]** |
+| `eq_wasted_levels` | 8 | — | **[0, 0]** |
+| du1-Support | {u1, u1², u1·u2} | — | {u1, **u2**, u1², u1·u2} |
+| du2-Support | {u1, u1²} | — | **{u1, u1²}** |
+
+**Zwei Befunde, und sie zeigen in entgegengesetzte Richtungen.**
+
+**1. Die Komplexitaetsallokation ist geloest, und zwar zum Nulltarif.** Overshoot 2 → 0, verschwendete
+Level 8 → 0 — und der Loss ist **bit-identisch** zum ungecappten v3-Lauf, bis zur letzten Stelle.
+Das heisst: die Stufen 4 und 5 haben im v3-Lauf zum Ergebnis buchstaeblich nichts beigetragen. Die
+Eskalation war reine Verschwendung, und der Cap entfernt sie ohne jeden Preis an Fitqualitaet.
+Parameter-Fits 390 gegen 530 bei v3, also 26 % weniger. Damit ist der Look-Ahead als Mechanismus
+belegt — nicht mehr als Offline-Klassifikator, sondern im Suchpfad.
+
+**2. Die strukturelle Wiederfindung ist unveraendert — nicht einmal bewegt.** `du2` ist
+`{u1, u1²}`, also **exakt dasselbe, was v2.2 gefunden hat**; der Readout weist es explizit aus
+(`du2_support_changed_from_anchor: false`). Die Wahrheit `2·u2 − u1·u2 − u2²` lag die ganze Zeit
+vollstaendig auf Stage 3 und damit innerhalb des Caps bereit. `du1` behaelt zusaetzlich den
+Fremdterm `u2`.
+
+**Damit ist die Frage beantwortet, die seit WP-T2 offen war: die Stage-Eskalation war ein Symptom,
+nicht die Ursache.** Die Suche auf die richtige Stufe zu zwingen, verbessert die Entdeckung nicht um
+einen einzigen Term. Der Engpass liegt in der Suchkraft *innerhalb* einer Stufe — Populationsgroesse,
+Kindergenerierung, Parsimonie-Druck —, und das ist eine andere Baustelle als alles seit Gate 1.
+
+Das Readout-Verdikt lautet `REPORTABLE`. Das ist eine faire Bezeichnung, darf aber nicht verdecken,
+dass das strukturelle Kriterium verfehlt ist: unter den urspruenglichen Do-or-Die-Kriterien waere
+(a) nur eine Konstruktionspruefung, (b) verfehlt und (c) erfuellt.
+
+**Messvorbehalt, und der geht auf mich.** `elapsed_s` ist mit 21.159 s hoeher als die 13.047 s des
+v3-Laufs, obwohl weniger Fits anfielen. Die Wall-Clock ist kontaminiert: ich habe waehrend des Laufs
+dreimal eigene Julia-Verifikationsjobs gestartet, die Pakete laden und rechnen. Tragend sind wie im
+ganzen Projekt die Zaehlungen — 390 Fits, 1.977.546 ODE-Solves —, nicht die Zeiten.
+
+### WP-L5d geliefert — Cap-Spur abgeschlossen
+
+Bericht in `docs/wp_l5d_stage_cap_closeout.md`. Acceptance gruen, Suite 2 Verletzungen (die bekannten
+54 du2/du3), 8 von 16 Gleichungen gecappt, 18 Stufen gespart.
+
+**Die Fingerprint-Falle wurde korrekt behandelt.** Neuer Fingerprint `df5db7763bcd2449` mit
+`aggregation` und `lookahead_horizon`; das Readout waehlt den Record aber ueber
+Variante/System/Seed statt ueber den neu berechneten Fingerprint und wurde gegen die vorhandene
+History geprueft (2 v3-Records korrekt *nicht* gematcht). Genau deshalb hat es den Lauf-Record mit
+dem alten Fingerprint gefunden — die Auswertung waere sonst stillschweigend leer geblieben.
+
+Sensitivitaet belegt beide Defaults: Horizont 1 liefert 4 Verletzungen statt 2 (der
+System-31-Fall), `any_positive` bei Horizont 1 sogar 5; Horizont 2 und 3 sind identisch. Der
+System-31-Vorbehalt (Ursache unbelegt, Diagnose lief ins Timeout) ist im Bericht festgehalten.
+
+<!-- 27ecb09, 3ddc7f4 -->
+
 ### WP-L5d beauftragt — Provenienz, Tests, Sensitivitaet, Bericht
 
 Abschluss der Cap-Spur; **keine Regelaenderung im Scope** — die Regel ist verifiziert, eine stille
