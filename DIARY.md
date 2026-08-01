@@ -6,6 +6,25 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ## 2026-08-01
 
+### Scope-Entscheidung getroffen — Zweig 1, angereichert
+
+Nach dem Ergebnis der Entscheidungszelle: die finale Paper-1-Variante traegt den Look-Ahead-Cap, das
+Paper wird die mechanistische Claim-C-Studie, und die Kette v2.2 → v3 → gecappt wird als
+dokumentierte Failure-Analyse mit quantifiziertem Positivergebnis zur Komplexitaetsallokation
+gefuehrt. Zweig 2 (Paper um den Look-Ahead herum neu bauen) faellt weg, weil der Mechanismus genau
+das Versagen *nicht* behebt, das Phase 2 ausgeloest hat. Die Frage nach der Suchkraft innerhalb einer
+Stufe bleibt ausdruecklich ausserhalb von Paper 1.
+
+**Planungsfund, der eine frueher von mir genannte Empfehlung korrigiert.** Ich hatte „Bestaetigung
+auf 31 und 63" vorgeschlagen. Auf **System 63 feuert der Cap gar nicht** — alle vier Gleichungen sind
+`nothing`, die gecappte Variante ist dort identisch zu v3, die Zelle koennte den Overshoot-Effekt
+also gar nicht zeigen. 63 gehoert als Identifizierbarkeitsgrenze ins Paper, nicht in die
+Bestaetigung. Ebenfalls geprueft: der v2.2-Vergleichsarm liegt fuer 3, 11, 26, 31 und 63 bei je drei
+Seeds (42/123/7) bereits vor, es ist also nur der gecappte Arm zu fahren. Zu labeln ist dabei, dass
+der Vergleich eine Fingerprint-Grenze kreuzt (v2.2 unter Baseline v0 `0c739d4e36ee6498`, neue Laeufe
+unter `df5db7763bcd2449`); WP-T2 hat gezeigt, dass die zwischenzeitliche Konfigurationsaenderung die
+Ergebnisse nicht bewegt, aber das gehoert benannt.
+
 ### Entscheidungszelle gelaufen — Stage-Eskalation war ein Symptom, nicht die Ursache
 
 Der gecappte 26/42-Lauf ist durch (`evogrow_v3_stage_capped`, Fingerprint `3f9be6d36c4043de`,

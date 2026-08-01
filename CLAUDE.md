@@ -806,20 +806,32 @@ failure is diagnosed and reportable, but v3 is not the final variant.
   structural recovery unchanged (`du2` identical to what v2.2 found). **Stage escalation was a
   symptom, not the cause.**
 
+- **Paper scope decided 2026-08-01: branch 1, enriched.** Final variant carries the look-ahead stage
+  cap; the paper is the mechanistic Claim C study with v2.2 → v3 → capped as a documented failure
+  analysis. Recorded in `PAPER_1.md`.
+
 Active:
-1. **Scope decision for Paper 1 — now decidable on evidence.** The decisive cell shows the
-   look-ahead is a demonstrated mechanism for Claim B (complexity control) and demonstrably not for
-   structural recovery. That makes branch 2 (rebuild the paper around the look-ahead) weaker than it
-   looked and supports branch 1 enriched: final variant carries the cap, paper is the mechanistic
-   Claim C study, and v2.2 → v3 → capped becomes a documented failure analysis with a quantified
-   positive result on complexity allocation. **The call is the user's; nothing further should be
-   built until it is made.**
-2. Before any broader claim: the decisive evidence is one cell and one seed. If branch 1 is chosen,
-   a handful of additional cells (systems 31 and 63, two or three seeds) should confirm the
-   overshoot result before it becomes a paper claim.
+1. **Confirmation cells for the capped variant.** One cell and one seed is too thin for a paper
+   claim. The v2.2 comparison arm already exists for systems 3, 11, 26, 31 and 63 at seeds 42, 123
+   and 7, so only the capped arm has to be run:
+   - **System 31, seeds 42/123/7** — primary confirmation; the cap fires at the true stage [3,3].
+   - **System 26, seeds 123 and 7** — completes the headline cell.
+   - **Systems 3 and 11, seeds 42/123/7** — cheap 1D no-harm evidence where v2.2 already succeeded.
+   - **System 63 is deliberately excluded.** Its cap is `nothing` on all four equations, so the
+     capped variant is identical to v3 there and the cell could not show any overshoot effect. It
+     belongs in the paper as the identifiability limit, not in the confirmation set.
+   - System 54 would need adding to `REGRESSION_SYSTEMS`, which changes the system list and hence
+     the fingerprint — a separate track. Its limit is already documented offline by WP-L3.
+
+   Note that the existing v2.2 arm was recorded under Baseline v0 (`0c739d4e36ee6498`) while new
+   capped runs carry `df5db7763bcd2449`. WP-T2 showed the intervening config change did not alter
+   results (R6 reproduced Baseline v0 bit-exactly), but the comparison crosses a fingerprint
+   boundary and must be labelled as such.
+2. Then Phase 3 (`PAPER_1.md`): ODEBench protocol alignment — system classification, R² metric,
+   protocol-audit document.
 3. Not a Phase 2 continuation, and not to be started implicitly: the open question of why the search
    fails to find an available stage-3 structure concerns search power *within* a stage — population
-   size, child generation, parsimony pressure.
+   size, child generation, parsimony pressure. Explicitly outside Paper 1.
 
 Baseline note:
 - Baseline v0 (`config_fingerprint 0c739d4e36ee6498`) stays valid as a historical record but is no

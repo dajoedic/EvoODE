@@ -451,9 +451,22 @@ derivative error a model can absorb, and that capacity grows with the number of 
 The signal is systematically biased toward "more terms help". A smoothing-based
 derivative estimator reduces the floor by a factor of ~4.5 but does not remove it.
 
-### Open scope decision after Gate 2
+### Scope decision after Gate 2 — decided 2026-08-01
 
-Both branches allowed above remain open and the choice is **not yet made**:
+**Decision: branch 1, enriched.** The final Paper 1 variant carries the look-ahead stage
+cap. The paper is the mechanistic Claim C study, and the sequence v2.2 → v3 → capped
+becomes a documented failure analysis with a quantified positive result on complexity
+allocation.
+
+Basis for the decision is the decisive cell below: the look-ahead is a demonstrated
+mechanism for complexity control and demonstrably not for structural recovery, so
+rebuilding the paper around it (branch 2) would rest on a mechanism that does not address
+the failure which triggered Phase 2.
+
+Explicitly **not** started as part of Paper 1: the open question of search power within a
+stage. It is the most interesting unsolved point and it is a separate line of work.
+
+The two branches that were open:
 
 1. v2.2 as the final variant, with an honest failure analysis of v3 as a contribution.
 2. Revise the paper plan around the stage-firing look-ahead (effectively a v4).
