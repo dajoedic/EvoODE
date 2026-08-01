@@ -782,6 +782,16 @@ failure is diagnosed and reportable, but v3 is not the final variant.
   was completely inert. Known defect: "non-identifiable" means two different things in the report and
   the CSV, both coincidentally 4; must be disambiguated before any paper use.
 
+- **WP-L4** (stage cap as a search variant + identifiability disambiguation) — delivered 2026-08-01.
+  New variant `evogrow_v3_stage_capped`, `config_fingerprint 3f9be6d36c4043de`. No ground-truth
+  channel into the cap; `EvoGrowV3` unchanged with the cap disabled. Verified caps: System 3 [2],
+  11 [4], 26 [3,3], 31 [3,3] — all correct. **Known defect: System 63 gets [1,1,1,1] while its
+  per-equation truth is [3,3,1,1]**, so `du1`/`du2` would be confined to linear terms and the true
+  structure made unreachable. Cause: a residual already below the noise floor at stage 1 is read as
+  "stage 1 suffices" instead of "cannot judge" — the same Fall-A/Fall-B ambiguity the look-ahead was
+  built to resolve, one level down. Design rule that follows: **the cap must require positive
+  evidence, not the absence of evidence.** Not blocking for cell 26/42, where the cap is correct.
+
 Active:
 1. **Scope decision for Paper 1 — the bottleneck, and still deliberately not made.**
    `PAPER_1.md` allows two branches after a failed Gate 2: (a) v2.2 as the final variant with an
@@ -790,11 +800,13 @@ Active:
    been tested as a discovery mechanism, and it addresses complexity allocation (Claim B), not
    structural recovery: on System 26 `du2` was already wrong at stage 3 with all needed terms
    available, so a perfect gate stops the escalation and leaves `du2` wrong.
-2. The cheap decisive experiment before choosing: integrate the gate as a **per-equation stage cap**
-   (`max_useful_stage_k` precomputed from the probe — no speculative unlock, no rollback, because the
-   gate is search-independent) and re-run the frozen do-or-die cell 26/42 against the v2.2 anchor and
-   the v3 result. One run, a few hours. This is the first test of the look-ahead as a mechanism
-   rather than a classifier, and it decides branch (a) vs (b) on evidence.
+2. **Run the decisive cell.** `evogrow_v3_stage_capped` on 26/42 is implemented and verified; the
+   run is external and started by the user. Readout via `studies/gate2_do_or_die/readout.jl`. Note
+   that `eq_final_stages = [3,3]` is forced by the cap and is a construction check, not a result —
+   what counts is the `du2` support, the loss against both references, and the integration count.
+3. **Before any use beyond cell 26/42:** fix the cap safety property (see WP-L4 defect above). A cap
+   must only be set on positive evidence; absence of evidence must leave an equation uncapped.
+   Required before Phase B or any 63-system run.
 
 Baseline note:
 - Baseline v0 (`config_fingerprint 0c739d4e36ee6498`) stays valid as a historical record but is no

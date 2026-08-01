@@ -4,6 +4,66 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ---
 
+## 2026-08-01
+
+### WP-L4 geliefert — Cap korrekt auf 4 von 5 Systemen; ein Sicherheitsdefekt auf System 63
+
+Neue Variante `evogrow_v3_stage_capped` (`EvoGrowStageCapped`), Cap-Berechnung in
+`src/structure/stage_cap.jl`, Bericht in `docs/wp_l4_stage_cap_report.md`. Neuer
+`config_fingerprint 3f9be6d36c4043de`. Der entscheidende 26/42-Lauf wurde korrekt **nicht**
+ausgefuehrt, `history.jsonl` ist unberuehrt.
+
+**Was haelt.** Ground-Truth-Leckage ist konstruktiv ausgeschlossen: `estimate_stage_caps(traj, basis;
+policy)` hat schlicht keinen Parameter, ueber den Wahrheitswissen eintreten koennte — kein
+`expected_terms`, kein `expected_stage`, kein `true_rhs!`, keine System-ID. Die v3-Aenderungen sind
+additiv mit `stage_caps = nothing` als Default; bei abgeschaltetem Cap ist das Verhalten identisch
+(die Umstellung von `all(==(max_stage), eq_stages)` auf die Limit-Form ist aequivalent, weil Stufen
+`max_stage` nie ueberschreiten koennen). Der Cap ist reine Obergrenze und entfernt keine Terme.
+
+**Caps selbst nachgerechnet** (eigener Kontrolllauf ueber `estimate_stage_caps`, nicht aus dem
+Codex-Bericht uebernommen):
+
+| System | Erwartungsstage pro Gleichung | berechneter Cap | |
+|---|---|---|---|
+| 3 | [2] | [2] | korrekt |
+| 11 | [4] | [4] | korrekt |
+| 26 | [3, 3] | [3, 3] | korrekt |
+| 31 | [3, 3] | [3, 3] | korrekt |
+| 63 | [3, 3, 1, 1] | **[1, 1, 1, 1]** | **du1/du2 falsch** |
+
+**Der Defekt.** Auf System 63 bekommen du1 und du2 einen Cap von 1, obwohl sie den Kreuzterm
+`u1*u3` aus Stage 3 brauchen. Unter der gecappten Variante waere die wahre Struktur dort
+**strukturell unerreichbar** — die Suche koennte sie nicht mehr finden, egal wie lange sie laeuft.
+Die Zusicherung des Berichts, nicht beurteilbare Gleichungen blieben ungecappt, greift hier nicht:
+`_cap_for_equation` liefert `nothing` nur, wenn *kein einziger* Split ueberhaupt einen brauchbaren
+Stage-1-Fit hat; in jedem anderen Fall liefert es eine Zahl. „Residuum liegt schon bei Stage 1 unter
+dem Rauschboden" wird als „Stage 1 genuegt" gelesen statt als „nicht beurteilbar".
+
+**Warum das kein blosser Programmierfehler ist.** Die Regel kann „wirklich nur Stage 1 noetig" nicht
+von „Signal zu klein, um zu urteilen" unterscheiden — beide sehen identisch aus: Residuum bei Stage 1
+bereits unter dem Boden. Das ist **exakt die Fall-A-gegen-Fall-B-Ambiguitaet aus dem urspruenglichen
+Problemdokument, eine Ebene tiefer wiedergekehrt**, jetzt im Bodentest des Look-Aheads selbst. Die
+Konsequenz fuer das Design ist asymmetrisch und eindeutig: ein falscher Cap macht die Wahrheit
+unerreichbar, ein fehlender Cap kostet nur den Status quo. **Der Cap muss positive Evidenz verlangen,
+nicht die Abwesenheit von Evidenz.**
+
+**Fuer die Entscheidungszelle unkritisch.** Auf System 26 ist der Cap [3,3] und damit korrekt; der
+vorregistrierte 26/42-Lauf ist von dem Defekt nicht betroffen und kann starten. Der Defekt betrifft
+die Verallgemeinerung (Phase B ueber 63 Systeme), nicht diese Zelle.
+
+**Teil A** ist umgesetzt: `lower_stage_indistinguishable` und `rank_deficient_at_tested_stage` sind
+getrennt, Rangdefizit wird pro getesteter Stage gefuehrt. Die Schlagzeile aendert sich von
+10 exact / 0 over / 2 under / 4 not-identifiable auf **12 exact / 0 over / 4 under / 0 rank_deficient**.
+Die beiden neuen Undershoots sind 63 du1/du2 — also derselbe Defekt, im Offline-Bild sichtbar.
+Konsistent, und ein gutes Argument dafuer, dass die korrigierte Klassifikation ehrlicher ist als die
+alte.
+
+Kleine offene Punkte: beim kombinierten Test-Include trat eine Modul-Ambiguitaet auf, die betroffenen
+Tests wurden einzeln nachgefahren; das sollte bereinigt werden, damit die Suite in einem Rutsch
+laeuft.
+
+<!-- fca1862 -->
+
 ## 2026-07-31
 
 ### WP-L4 beauftragt — Stage-Cap aus dem Look-Ahead, erster Test als Mechanismus
