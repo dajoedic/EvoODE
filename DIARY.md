@@ -6,6 +6,27 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ## 2026-08-01
 
+### WP-L5d beauftragt — Provenienz, Tests, Sensitivitaet, Bericht
+
+Abschluss der Cap-Spur; **keine Regelaenderung im Scope** — die Regel ist verifiziert, eine stille
+Aenderung wuerde das entwerten. Findet ein Test einen echten Defekt, ist zu berichten statt zu
+reparieren.
+
+Wichtigster Punkt ist der Fingerprint: `aggregation` und `lookahead_horizon` fehlen im
+gefingerprinteten Cap-Tupel, drei Semantikaenderungen sind bereits ohne Bewegung von
+`3f9be6d36c4043de` durchgelaufen.
+
+**Dabei eine Falle, die mir beim Schreiben aufgefallen ist und die teuer waere.** Der laufende
+26/42-Lauf hat seinen Fingerprint beim Prozessstart berechnet und schreibt seinen Record mit dem
+alten Wert — richtig so. Aber `studies/gate2_do_or_die/readout.jl` laeuft danach aus aktualisiertem
+Code. Sucht es den Record ueber den *neu berechneten* Fingerprint, findet es ein vorhandenes
+Ergebnis nicht und meldet stillschweigend nichts. Die Spec verlangt, die Record-Auswahl des Readouts
+zu pruefen und gegen die vorhandenen History-Records zu verifizieren, nicht nur den Code zu lesen.
+
+Ausserdem zu dokumentieren: die zwei System-54-Verletzungen ausdruecklich als bekannte
+Aufloesungsgrenze mit dem WP-L3-Dichte-Beleg statt als offener Bug, und der Vorbehalt zum
+System-31-Fix (Ursache unbelegt, Diagnose lief ins Timeout).
+
 ### WP-L5c — Acceptance gruen; die zwei Restverletzungen sind die bekannte Aufloesungsgrenze
 
 Codex hat System 31 du1 repariert und diesmal korrekt gestoppt — belegt mit echter Ausgabe, nachdem

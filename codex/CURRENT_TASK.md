@@ -2,100 +2,97 @@
 
 **Language: Julia**
 
-## WP-L5c — Finish the cap repair: System 31 equation 1, then the outstanding deliverables
+## WP-L5d — Close out the stage cap: provenance, tests, sensitivity, report
 
-### 0. Status, so you start from the right picture
+### 0. Status
 
-WP-L5b worked. It reported a stop with "System 26 is no longer [3,3]", but that alarm was
-false: the message was carried over verbatim from the previous round — it referenced WP-L5
-and a section 8 that WP-L5b does not have, and described the earlier switch to
-positive-evidence-only rather than the change actually made. An independent recomputation
-of `estimate_stage_caps` after your change gives:
+The cap rule is functionally done and independently verified:
 
-| System | per-equation truth | cap after WP-L5b | |
+| System | per-equation truth | cap | |
 |---|---|---|---|
 | 3 | [2] | [2] | correct |
 | 11 | [4] | [4] | correct |
 | 26 | [3, 3] | [3, 3] | correct |
-| 31 | [3, 3] | **[1, 3]** | equation 1 violates |
-| 63 | [3, 3, 1, 1] | [`nothing`×4] | safe |
+| 31 | [3, 3] | [3, 3] | correct |
+| 63 | [3, 3, 1, 1] | all `nothing` | safe |
+| 54 | [1, 3, 3] | [`nothing`, 2, 2] | 2 violations |
 
-Safety violations went 2 → 4 → **1**. System 26 is intact, so the in-flight decisive run
-keeps its comparison basis and must not be disturbed.
+Suite-wide: 2 violations, 8 of 16 equations capped, 18 stages saved.
 
-**Before reporting any stop in this work package, re-run the check that justifies it and
-paste its actual output.** A stop is a strong claim; it cost a full round here.
+**No change to the cap rule is in scope here.** If a test uncovers a genuine rule defect,
+report it with the numbers and stop rather than fixing it silently — the rule is currently
+verified and a quiet change would invalidate that.
 
-### 1. Part 1 — System 31 equation 1
+Keep the working practice from WP-L5c: produce the acceptance table first and again at the
+end, and back any reported stop with the actual output that justifies it.
 
-`du1 = -0.4*u1*u2`. This is the only equation in the set whose true support lies entirely
-in a later stage, with no stage-1 and no stage-2 term at all. It is exactly the case the
-look-ahead horizon exists for: no gain on the intermediate stage, the whole gain arriving
-later. The cap nevertheless lands at 1.
+### 1. Fingerprint — the most important item
 
-Two candidate causes, and the work is to tell them apart rather than guess:
+The cap policy in `run_regression.jl` is a hardcoded tuple containing `estimator`,
+`weighting`, `tau_rel`, `tau_abs`, `cond_cap` and `excitation_floor`. It does **not**
+contain `aggregation` or `lookahead_horizon`. Three semantic changes to the cap have now
+passed without moving `3f9be6d36c4043de`, so records produced under materially different
+rules would be pooled as one configuration.
 
-- the gain test does not fire when comparing stage 1 against stage 3 — for instance because
-  `delta > floors[stage]` or the relative threshold fails at that particular floor;
-- the per-split decisions disagree and the aggregation finds a majority for cap 1 while
-  cap 3 has none.
+Add both fields, plus any other policy parameter that affects behaviour, and report the new
+fingerprint value.
 
-Instrument the per-split decisions for this equation: for each split, report the stage
-residuals, the floor, which stages were usable, the gain test outcome for every pair the
-horizon considers, the resulting per-split verdict, and the aggregation step that produced
-the final answer. Print it. The diagnosis must be visible in numbers before any fix.
+**Trap to avoid, and it is a real one.** A decisive run of `evogrow_v3_stage_capped` on
+System 26 seed 42 is in flight. It computed its fingerprint at process start and will write
+its record with the old value `3f9be6d36c4043de`. That is correct and must stay that way.
+But `studies/gate2_do_or_die/readout.jl` runs afterwards from updated code: if it locates
+the record by recomputing the current fingerprint, it will silently fail to find a result
+that exists.
 
-Then fix the identified cause. Note that equation 2 of the same system, whose truth adds a
-stage-1 term, already comes out correct at 3 — whatever changes, it must stay correct, as
-must Systems 3, 11, 26 and 63.
+Check how the readout selects records. It must be able to find the in-flight record after
+the fingerprint changes — by explicit selection or an explicit fingerprint argument, not by
+implicitly recomputing today's value. If it currently recomputes, fix that and say so.
+Verify it against the existing history records rather than by reading the code alone.
 
-If the cause turns out to be the horizon being structurally unable to see a gain that only
-appears two applicable stages ahead **and** widening it breaks another system, report that
-with the numbers instead of tuning. That would be a real statement about the limits of the
-criterion and belongs in the paper rather than in a threshold.
+### 2. Tests
 
-### 2. Part 2 — The acceptance table, first and always
+- Floor semantics in both directions: a residual that **fell** to the floor after an
+  observed gain yields a cap at that stage; one that was **already** at the floor before any
+  gain yields no cap.
+- The horizon crosses a useless intermediate stage; an empty stage does not consume horizon.
+- No cap when the successor stage is not evaluable.
+- The WP-L5c relaxation: when the successor residual already sits at the floor, the absolute
+  threshold `tau_abs` no longer gates the gain while `delta > floor` and the relative
+  threshold still do.
+- The WP-L4 invariants: the cap never forces a promotion, uncapped equations are unaffected,
+  a cap below the current stage is handled conservatively without removing terms, and
+  `EvoGrowV3` is bit-identical with the cap disabled.
 
-Same rule as WP-L5b: produce and print the acceptance table over the five regression
-systems before anything else, and again at the end. Required outcome is now:
+### 3. Sensitivity
 
-| System | required |
-|---|---|
-| 3 | [2] |
-| 11 | [4] |
-| 26 | [3, 3] |
-| 31 | [3, 3] |
-| 63 | `nothing` for equations 1 and 2; equations 3 and 4 `nothing` or 1 |
+Report the six systems above under each aggregation mode and under at least two values of
+`lookahead_horizon` besides the default. Give safety violations, capped equations and stages
+saved for each combination, so the defaults are visibly a choice and not an assumption.
 
-with 0 safety violations. Ground truth judges the caps and must never enter their
-computation; `estimate_stage_caps` keeps its signature with no channel for it.
+### 4. Report under `docs/`
 
-### 3. Part 3 — The deliverables WP-L5b did not produce
+State plainly, with numbers:
 
-- **Suite-wide safety and utility**, in one table: how many equations have a cap below
-  their true stage (target 0), how many receive a cap at all, and how many stages are saved
-  in total. A rule that is safe because it never caps is worthless and that has to be
-  visible next to the safety number. Note explicitly that System 63 is now entirely
-  uncapped and therefore contributes nothing to the utility side.
-- **Aggregation sensitivity**: the five systems under the stricter and looser aggregation
-  modes, so the default is a choice rather than an assumption. Add the same for at least
-  one alternative `lookahead_horizon`.
-- **Fingerprint**: the cap policy in `run_regression.jl` is a hardcoded tuple missing both
-  `aggregation` and `lookahead_horizon`. Two semantic changes have now passed without
-  moving `3f9be6d36c4043de`. Add the missing fields, report the new fingerprint, and state
-  that pre-repair and post-repair records must not be pooled.
-- **Tests**: floor semantics in both directions (fell to the floor after a gain versus
-  already at it), the horizon crossing a useless intermediate stage, an empty stage not
-  consuming horizon, no cap when the successor stage is not evaluable, plus the WP-L4
-  invariants — cap never forces a promotion, uncapped equations unaffected, cap below the
-  current stage handled conservatively, `EvoGrowV3` bit-identical with the cap disabled.
-- **Report** under `docs/`: acceptance table, the System 31 diagnosis with its numbers,
-  safety and utility counts, sensitivity, new fingerprint.
+- the acceptance table and the suite-wide safety and utility counts;
+- the new fingerprint, and that pre-repair and post-repair records must not be pooled;
+- the sensitivity table;
+- **the two System 54 violations as a known resolution limit, not an open bug.** These are
+  the same equations WP-L3 identified as undershoots: at benchmark sampling the residual on
+  System 54 drops below the noise floor already at stage 2, so the stage-3 cliff lies under
+  the resolution of the derivative estimate, and the WP-L3 density sweep shows it becoming
+  visible from twice the sampling density. This is a data limit, not a rule limit, and it
+  gives the rule a closed characterisation: safe wherever the derivative estimate resolves
+  the structure, unsafe exactly where it does not — and that is readable in advance from the
+  noise floor;
+- **the open caveat on the System 31 fix:** its diagnosis timed out, so the repair was made
+  by inference rather than from instrumented numbers. The result is verified and the change
+  acts in the safe direction, but the cause is unconfirmed and this is the first place to
+  look if the rule surprises later.
 
-### 4. Scope and execution
+### 5. Scope and execution
 
 **Do not run the decisive cell — it is running externally.** Nothing may be written to
 `studies/regression/history.jsonl`. Verification is limited to cap computation, unit tests,
-the suite-wide check and a cheap smoke run on a small system. All of that is seconds to
-minutes; if anything exceeds a few minutes, stop and report — with the output that
-justifies the stop.
+the suite-wide check, readout record selection against existing history, and a cheap smoke
+run on a small system. If anything exceeds a few minutes, stop and report with the output
+that justifies the stop.
