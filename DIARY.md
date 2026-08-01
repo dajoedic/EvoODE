@@ -6,6 +6,28 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ## 2026-08-01
 
+### WP-L5b beauftragt — korrigierte Bodensemantik plus Horizont
+
+Behebt die beiden diagnostizierten Ursachen. **Bodensemantik:** nicht „Residuum unter dem Boden →
+nicht beurteilbar", sondern die Unterscheidung, ob das Residuum auf dieser Stufe *auf* den Boden
+gefallen ist (positive Evidenz, hier cappen) oder schon *vorher* dort lag, bevor eine Stufe geholfen
+hat (keine Information, kein Cap). **Horizont:** mindestens zwei *anwendbare* Stufen, damit eine
+nutzlose Zwischenstufe ueberbrueckt werden kann; leere Stufen verbrauchen keinen Horizont. Erhalten
+bleibt aus WP-L5 die Dreiteilung positive/undecidable/invalid, die expliziten Aggregationsmodi und
+die Auswertbarkeitsregel — nur bei auswertbarer Folgestufe darf gecappt werden, was 63 du1/du2
+ungecappt haelt, weil deren Stage-3-Bibliothek rangdefizit ist.
+
+**Prozessaenderung, aus dem WP-L5-Verlauf gelernt:** die Abnahmetabelle ueber alle fuenf Systeme ist
+**zuerst** zu erzeugen, vor Tests, Bericht und Fingerprint. WP-L5 hat die gesamte Arbeit gemacht und
+erst danach gemerkt, dass die Regel kaputt ist. So steht das Ergebnis in den ersten Minuten.
+
+Zusaetzlich mitspezifiziert: das fehlende `aggregation`-Feld im gefingerprinteten Cap-Tupel, damit
+Records vor und nach der Reparatur nicht als dieselbe Konfiguration verbucht werden.
+
+Vorregistriert inklusive Ausweg: laesst sich System 31 nur reparieren, indem anderswo eine
+Verletzung entsteht, ist das mit Zahlen zu berichten statt Schwellen zu tunen, bis die Tabelle
+passt — es hiesse, Rauschboden plus fester Horizont taugen nicht als Basis fuer einen sicheren Cap.
+
 ### WP-L5 durchgefallen — beide Abnahmekriterien verfehlt; die Ursache ist ein Fehler in meiner Spec
 
 Caps nach WP-L5, wieder selbst nachgerechnet:
