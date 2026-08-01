@@ -6,6 +6,40 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ## 2026-08-01
 
+### WP-L5b — Regel weitgehend repariert; Stoppmeldung war ein Fehlalarm; eine Verletzung bleibt
+
+Codex meldete einen Abbruch mit „System 26 ergibt nicht mehr [3,3] sondern [nothing, nothing]".
+**Der Alarm war falsch.** Die Meldung war wortgleich mit der aus WP-L5, referenzierte „WP-L5" und
+„Abschnitt 8" (den WP-L5b nicht hat) und beschrieb die Umstellung auf *positive evidence only* —
+also die vorige Runde. Der Pflichtcheck nach der neuen Aenderung ist offenbar nicht gelaufen, die
+Meldung wurde uebernommen. Eigene Nachrechnung:
+
+| System | Wahrheit | WP-L4 | WP-L5 | **WP-L5b** |
+|---|---|---|---|---|
+| 3 | [2] | [2] ✓ | nothing | **[2] ✓** |
+| 11 | [4] | [4] ✓ | nothing | **[4] ✓** |
+| 26 | [3, 3] | [3, 3] ✓ | nothing, nothing | **[3, 3] ✓** |
+| 31 | [3, 3] | [3, 3] ✓ | [1, 1] ✗ | **[1, 3]** — du1 verletzt |
+| 63 | [3, 3, 1, 1] | [1, 1, 1, 1] ✗ | [1, 1, n, n] | **[n, n, n, n]** ✓ sicher |
+
+**System 26 steht auf [3,3]** — die Vergleichsbasis des laufenden 26/42-Laufs ist unberuehrt.
+Sicherheitsverletzungen: 2 (L4) → 4 (L5) → **1 (L5b)**. Die Bodensemantik-Korrektur und der
+Horizont wirken beide, und zwar sichtbar: 3, 11 und 26 sind zurueck, 63 ist jetzt durchgaengig
+ungecappt und damit sicher (zum Preis, dass die Mechanik dort nichts einbringt — akzeptabel und
+ehrlich auszuweisen).
+
+**Offen bleibt System 31 du1.** Cap 1 gegen wahre Stage 3. Aufschlussreich ist die Form der
+Gleichung: `du1 = -0.4*u1*u2` ist die **einzige** im Satz, deren wahrer Support vollstaendig in
+einer spaeteren Stufe liegt, ohne jeden Term aus Stage 1 oder 2. Genau dieser Fall — kein Gewinn auf
+den Zwischenstufen, der ganze Gewinn erst spaeter — sollte der Horizont abfangen. Dass er es nicht
+tut, ist die naechste konkrete Frage; ohne Instrumentierung der Split-Entscheidungen ist nicht
+entscheidbar, ob der Gewinntest bei Stage 3 nicht anschlaegt oder die Aggregation die Mehrheit
+verfehlt. Passend dazu ist du2 derselben Gleichung korrekt auf 3 — dort enthaelt die Wahrheit
+zusaetzlich einen Stage-1-Term.
+
+Nicht geliefert, weil Codex am Fehlalarm abgebrochen hat: Tests, suiteweite Invariante,
+Aggregations-Sensitivitaet, Fingerprint-Reparatur, Bericht.
+
 ### WP-L5b beauftragt — korrigierte Bodensemantik plus Horizont
 
 Behebt die beiden diagnostizierten Ursachen. **Bodensemantik:** nicht „Residuum unter dem Boden →

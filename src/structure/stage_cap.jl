@@ -18,6 +18,7 @@ Base.@kwdef struct LookAheadStageCapPolicy
     estimator::Symbol = :local_poly
     weighting::Symbol = :richardson_wls
     aggregation::Symbol = :majority_no_undecided_at_or_below
+    lookahead_horizon::Int = 2
     tau_rel::Float64 = 1e-4
     tau_abs::Float64 = 1e-8
     cond_cap::Float64 = 1e10
@@ -162,6 +163,9 @@ function _cap_validate_policy(policy::LookAheadStageCapPolicy)
     if !(policy.aggregation in (:majority_no_undecided_at_or_below, :unanimous, :any_positive))
         error("Unsupported LookAheadStageCapPolicy.aggregation=$(policy.aggregation)")
     end
+    if policy.lookahead_horizon < 1
+        error("LookAheadStageCapPolicy.lookahead_horizon must be >= 1")
+    end
     return nothing
 end
 
@@ -171,30 +175,57 @@ function _cap_median_stage(values::Vector{Int})
     return sorted_values[cld(length(sorted_values), 2)]
 end
 
+function _cap_successor_evaluable(applicable_stages::Vector{Int}, stage_pos::Int,
+                                  usable::AbstractVector{Bool})
+    stage_pos == length(applicable_stages) && return true
+    return usable[applicable_stages[stage_pos + 1]]
+end
+
 function _cap_split_decision(residuals::AbstractVector{Float64}, usable::AbstractVector{Bool},
-                             floors::AbstractVector{Float64}, new_counts::AbstractVector{Int},
+                             floors::AbstractVector{Float64}, applicable_stages::Vector{Int},
                              policy::LookAheadStageCapPolicy)
-    max_basis_stage = length(residuals)
-    usable[1] || return (kind = :invalid, cap = nothing, stage = 1)
+    isempty(applicable_stages) && return (kind = :invalid, cap = nothing, stage = 1)
 
-    stage = 1
-    while stage <= max_basis_stage
+    pos = 1
+    observed_gain = false
+    while pos <= length(applicable_stages)
+        stage = applicable_stages[pos]
         usable[stage] || return (kind = :invalid, cap = nothing, stage = stage)
-        residuals[stage] <= floors[stage] && return (kind = :undecidable, cap = nothing, stage = stage)
 
-        next_stage = findfirst(s -> s > stage && new_counts[s] > 0, 1:max_basis_stage)
-        next_stage === nothing && return (kind = :positive, cap = stage, stage = stage)
-        usable[next_stage] || return (kind = :invalid, cap = nothing, stage = next_stage)
-
-        if _cap_rule_counts_gain(residuals[stage], residuals[next_stage], floors[stage], policy)
-            stage = next_stage
-            continue
+        if residuals[stage] <= floors[stage]
+            if observed_gain && _cap_successor_evaluable(applicable_stages, pos, usable)
+                return (kind = :positive, cap = stage, stage = stage)
+            end
+            return (kind = :undecidable, cap = nothing, stage = stage)
         end
 
-        return (kind = :positive, cap = stage, stage = stage)
+        horizon_end = min(length(applicable_stages), pos + policy.lookahead_horizon)
+        horizon_end == pos && return (
+            kind = observed_gain ? :positive : :undecidable,
+            cap = observed_gain ? stage : nothing,
+            stage = stage,
+        )
+
+        jumped = false
+        for next_pos in (pos + 1):horizon_end
+            next_stage = applicable_stages[next_pos]
+            usable[next_stage] || return (kind = :invalid, cap = nothing, stage = next_stage)
+            if _cap_rule_counts_gain(residuals[stage], residuals[next_stage], floors[stage], policy)
+                observed_gain = true
+                pos = next_pos
+                jumped = true
+                break
+            end
+        end
+        jumped && continue
+
+        if _cap_successor_evaluable(applicable_stages, pos, usable)
+            return (kind = :positive, cap = stage, stage = stage)
+        end
+        return (kind = :invalid, cap = nothing, stage = applicable_stages[pos + 1])
     end
 
-    return (kind = :positive, cap = max_basis_stage, stage = max_basis_stage)
+    return (kind = :positive, cap = applicable_stages[end], stage = applicable_stages[end])
 end
 
 function _cap_aggregate_split_decisions(decisions, policy::LookAheadStageCapPolicy)
@@ -234,6 +265,7 @@ function _cap_for_equation(traj::Trajectory, basis::StagedPolynomialBasis, dX::M
     split_decisions = NamedTuple[]
     max_basis_stage = _max_stage(basis)
     new_counts = [length(basis.term_groups[s]) for s in 1:max_basis_stage]
+    applicable_stages = [s for s in 1:max_basis_stage if new_counts[s] > 0]
 
     for split in _cap_splits(length(traj.t))
         residuals = fill(Inf, max_basis_stage)
@@ -248,7 +280,7 @@ function _cap_for_equation(traj::Trajectory, basis::StagedPolynomialBasis, dX::M
             floors[stage] = mean(abs2, rich[split.holdout, eq])
             usable[stage] &= fit.valid
         end
-        push!(split_decisions, _cap_split_decision(residuals, usable, floors, new_counts, policy))
+        push!(split_decisions, _cap_split_decision(residuals, usable, floors, applicable_stages, policy))
     end
 
     return _cap_aggregate_split_decisions(split_decisions, policy)
