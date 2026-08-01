@@ -93,12 +93,35 @@ const VARIANTS = [
             level_callback = level_callback,
         ),
     ),
+    (
+        label = "evogrow_v3_stage_capped",
+        constructor = (level_callback, screening_optimizer) -> EvoGrowStageCapped(
+            pop_size = POP_SIZE,
+            n_levels = N_LEVELS,
+            children_per_parent = CHILDREN_PER_PARENT,
+            max_terms_per_eq = MAX_TERMS,
+            λ = LAMBDA,
+            progression = StageProgressionPolicy(
+                mode = :stage_local,
+                min_levels_per_stage = STAGE_MIN,
+            ),
+            usage = StageUsagePolicy(
+                mode = :hard,
+                new_term_bias_prob = SOFT_BIAS,
+            ),
+            use_pretuning = USE_PRETUNING,
+            screening_optimizer = screening_optimizer,
+            level_callback = level_callback,
+            cap_policy = LookAheadStageCapPolicy(),
+        ),
+    ),
 ]
 
 const FINGERPRINT_VARIANT_LABELS = [
     "evogrow_v2_2_stage_local",
     "evogrow_screening_derivative",
     "evogrow_v3",
+    "evogrow_v3_stage_capped",
 ]
 
 function build_options(seed::Int)
@@ -199,6 +222,15 @@ function config_fingerprint()
         derivative_screen_k = DERIVATIVE_SCREEN_K,
         derivative_polish_maxiters = DERIVATIVE_POLISH_MAXITERS,
         derivative_rejected_diagnostic_samples = DERIVATIVE_REJECTED_DIAGNOSTIC_SAMPLES,
+        lookahead_stage_cap = (
+            variant = "evogrow_v3_stage_capped",
+            estimator = "local_poly",
+            weighting = "richardson_wls",
+            tau_rel = 1e-4,
+            tau_abs = 1e-8,
+            cond_cap = 1e10,
+            excitation_floor = 1e-10,
+        ),
         discovery_options = OPTIONS_CONFIG,
         trajectory_solver = (
             algorithm = "Tsit5",
@@ -494,6 +526,8 @@ function run_one(variant, system, seed::Int, fingerprint::String, provenance)
         base_record["support_terms"] = active_term_names(result.structure, basis)
         base_record["screening_budgets_active"] = meta.screening_budgets_active
         base_record["derivative_screening_active"] = haskey(meta, :derivative_screening_active) ? meta.derivative_screening_active : false
+        base_record["stage_caps"] = haskey(meta, :stage_caps) ? meta.stage_caps : nothing
+        base_record["stage_cap_policy_active"] = haskey(meta, :stage_cap_policy_active) ? meta.stage_cap_policy_active : false
         base_record["total_parameter_fits"] = haskey(meta, :total_parameter_fits) ? meta.total_parameter_fits : nothing
         base_record["total_ode_solves"] = haskey(meta, :total_ode_solves) ? meta.total_ode_solves : nothing
         base_record["total_invalid_solves"] = haskey(meta, :total_invalid_solves) ? meta.total_invalid_solves : nothing

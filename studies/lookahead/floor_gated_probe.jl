@@ -119,7 +119,7 @@ function l3_stage_rows_for_equation(sys::ProbeSystem, basis::StagedPolynomialBas
             end
             metrics[(split_label, stage)] = result
             ident[(split_label, stage)] = (
-                not_identifiable = deficient,
+                rank_deficient_at_tested_stage = deficient,
                 reason = ident_reason,
                 rank = design_rank,
                 condition_number = design_cond,
@@ -133,21 +133,19 @@ function l3_stage_rows_for_equation(sys::ProbeSystem, basis::StagedPolynomialBas
             for rule in ("threshold_only", "floor_gated")
                 gain_abs = NaN
                 gain_rel = NaN
-                verdict = ident[(split_label, stage)].not_identifiable ? "not_identifiable" : "invalid_or_inconclusive"
-                if current.valid && !ident[(split_label, stage)].not_identifiable
+                verdict = ident[(split_label, stage)].rank_deficient_at_tested_stage ? "rank_deficient_at_tested_stage" : "invalid_or_inconclusive"
+                if current.valid && !ident[(split_label, stage)].rank_deficient_at_tested_stage
                     if next_stage === nothing
                         verdict = "no_potential"
                     else
                         future = metrics[(split_label, next_stage)]
                         future_ident = ident[(split_label, next_stage)]
-                        if future.valid && !future_ident.not_identifiable
+                        if future.valid && !future_ident.rank_deficient_at_tested_stage
                             gain_abs = current.holdout_residual - future.holdout_residual
                             gain_rel = current.holdout_residual == 0.0 ? Inf : gain_abs / current.holdout_residual
                             verdict = rule_counts_gain(rule, current.holdout_residual,
                                                        future.holdout_residual, floor,
                                                        1e-4, 1e-8) ? "potential_detected" : "no_potential"
-                        elseif future_ident.not_identifiable
-                            verdict = "not_identifiable"
                         end
                     end
                 end
@@ -176,7 +174,7 @@ function l3_stage_rows_for_equation(sys::ProbeSystem, basis::StagedPolynomialBas
                     "rank" => ident[(split_label, stage)].rank,
                     "condition_number" => ident[(split_label, stage)].condition_number,
                     "valid" => current.valid,
-                    "identifiability_verdict" => verdict == "not_identifiable" ? "not_identifiable" : "identifiable",
+                    "rank_deficient_at_tested_stage" => ident[(split_label, stage)].rank_deficient_at_tested_stage,
                     "identifiability_reason" => ident[(split_label, stage)].reason,
                     "invalid_reason" => current.reason,
                     "fitted_coefficients" => join(current.coeffs, "|"),
@@ -192,23 +190,25 @@ end
 function derived_stage_from_rows(group, tau_rel::Float64, tau_abs::Float64, rule::String)
     by_split = Dict(split => [r for r in group if r["split"] == split && r["rule"] == rule] for split in L2_SPLIT_LABELS)
     split_stages = Int[]
-    any_not_identifiable = false
+    any_stage1_rank_deficient = false
     for split in L2_SPLIT_LABELS
         rows = by_split[split]
         isempty(rows) && continue
-        if any(r -> r["verdict"] == "not_identifiable", rows)
-            any_not_identifiable = true
+        by_stage = Dict(r["tested_stage"] => r for r in rows)
+        if !haskey(by_stage, 1) || by_stage[1]["rank_deficient_at_tested_stage"] || !by_stage[1]["valid"]
+            any_stage1_rank_deficient |= haskey(by_stage, 1) && by_stage[1]["rank_deficient_at_tested_stage"]
             continue
         end
-        by_stage = Dict(r["tested_stage"] => r for r in rows)
         max_stage = 1
         for stage in 1:(MAX_STAGE - 1)
             haskey(by_stage, stage) || continue
             current = by_stage[stage]
             current["empty_stage"] && continue
+            (current["rank_deficient_at_tested_stage"] || !current["valid"]) && break
             next_stage = findfirst(s -> s > stage && haskey(by_stage, s) && !by_stage[s]["empty_stage"], 1:MAX_STAGE)
             next_stage === nothing && continue
             future = by_stage[next_stage]
+            (future["rank_deficient_at_tested_stage"] || !future["valid"]) && break
             floor = current["noise_floor_richardson_holdout"]
             if rule_counts_gain(rule, current["holdout_residual"], future["holdout_residual"],
                                 floor, tau_rel, tau_abs)
@@ -217,7 +217,7 @@ function derived_stage_from_rows(group, tau_rel::Float64, tau_abs::Float64, rule
         end
         push!(split_stages, max_stage)
     end
-    isempty(split_stages) && any_not_identifiable && return "not_identifiable"
+    isempty(split_stages) && any_stage1_rank_deficient && return "rank_deficient"
     isempty(split_stages) && return "invalid_or_inconclusive"
     return median_stage(split_stages)
 end
@@ -232,13 +232,13 @@ function confusion_for(stage_rows; estimator::String, weighting::String, fit_met
         push!(get!(grouped, (row["system_id"], row["equation"]), Dict{String,Any}[]), row)
     end
     counts = Dict("under" => 0, "exact" => 0, "over" => 0,
-                  "not_identifiable" => 0, "invalid_or_inconclusive" => 0)
+                  "rank_deficient" => 0, "invalid_or_inconclusive" => 0)
     details = Any[]
     for (key, group) in sort(collect(grouped), by = x -> (x[1][1], x[1][2]))
         expected = group[1]["expected_eq_stage"]
         predicted = derived_stage_from_rows(group, tau_rel, tau_abs, rule)
-        category = if predicted == "not_identifiable"
-            "not_identifiable"
+        category = if predicted == "rank_deficient"
+            "rank_deficient"
         elseif predicted == "invalid_or_inconclusive"
             "invalid_or_inconclusive"
         elseif predicted < expected
@@ -302,7 +302,8 @@ function identifiability_rows_for_system(sys::ProbeSystem)
             "split" => floor_split,
             "lower_stage_holdout_residual" => residual,
             "noise_floor" => floor,
-            "non_identifiable_along_trajectory" => deficient || identifiable_floor,
+            "rank_deficient_at_expected_stage" => deficient,
+            "lower_stage_indistinguishable" => identifiable_floor,
         ))
     end
     return rows
@@ -377,7 +378,7 @@ function split_contribution_summary(stage_rows)
         split_rows = [r for r in stage_rows if r["split"] == split && r["rule"] == "threshold_only" &&
                       r["fit_method"] == "ols" && r["estimator"] == "local_poly" &&
                       r["weighting"] == "richardson_wls"]
-        lost = count(r -> r["verdict"] == "not_identifiable", split_rows)
+        lost = count(r -> r["rank_deficient_at_tested_stage"], split_rows)
         push!(rows, Dict("split" => split, "cells" => length(split_rows), "lost_to_validity" => lost))
     end
     return rows
@@ -397,7 +398,9 @@ function write_l3_report(summary)
         println(io, "Floor-gated Systems 3/11/26 details: $(filter(d -> d["system_id"] in (3, 11, 26), summary["floor_confusion"]["details"])).")
         println(io)
         println(io, "## Identifiability")
-        println(io, "Non-identifiable along trajectory: $(summary["non_identifiable_count"]) of $(summary["exact_equation_count"]) exact equations.")
+        println(io, "Lower-stage indistinguishable: $(summary["lower_stage_indistinguishable_count"]) of $(summary["exact_equation_count"]) exact equations.")
+        println(io, "Rank-deficient at expected stage: $(summary["rank_deficient_at_expected_stage_count"]) of $(summary["exact_equation_count"]) exact equations.")
+        println(io, "Both properties: $(summary["both_identifiability_properties_count"]) of $(summary["exact_equation_count"]) exact equations.")
         println(io, "Rows are in $(IDENTIFIABILITY_CSV).")
         println(io)
         println(io, "## Sampling Sensitivity")
@@ -438,7 +441,7 @@ const L3_STAGE_COLUMNS = [
     "estimator", "weighting", "fit_method", "rule", "train_residual",
     "holdout_residual", "normalised_holdout_residual", "noise_floor_richardson_holdout",
     "absolute_gain", "relative_gain", "rank", "condition_number", "valid",
-    "identifiability_verdict", "identifiability_reason", "invalid_reason",
+    "rank_deficient_at_tested_stage", "identifiability_reason", "invalid_reason",
     "fitted_coefficients", "terms", "verdict",
 ]
 
@@ -446,7 +449,8 @@ const IDENT_COLUMNS = [
     "system_id", "system_name", "representability", "equation", "expected_eq_stage",
     "true_stage_rank_deficient", "true_stage_identifiability_reason", "true_stage_rank",
     "true_stage_condition_number", "lower_stage_reaches_floor", "lower_stage", "split",
-    "lower_stage_holdout_residual", "noise_floor", "non_identifiable_along_trajectory",
+    "lower_stage_holdout_residual", "noise_floor", "rank_deficient_at_expected_stage",
+    "lower_stage_indistinguishable",
 ]
 
 const DENSITY_COLUMNS = [
@@ -496,7 +500,9 @@ function main_l3()
                                weighting = "richardson_wls", fit_method = "ols",
                                rule = "floor_gated")
     exact_ident = [r for r in ident_rows if r["representability"] == "exact"]
-    non_ident_count = count(r -> r["non_identifiable_along_trajectory"], exact_ident)
+    lower_stage_count = count(r -> r["lower_stage_indistinguishable"], exact_ident)
+    rank_def_count = count(r -> r["rank_deficient_at_expected_stage"], exact_ident)
+    both_count = count(r -> r["lower_stage_indistinguishable"] && r["rank_deficient_at_expected_stage"], exact_ident)
     s54_visible = [r for r in density_rows if r["system_id"] == 54 && r["stage3_cliff_visible"]]
     s63_rows = [r for r in density_rows if r["system_id"] == 63]
     s63_all_rank_def = all(r -> r["stage3_rank_deficient"], s63_rows)
@@ -513,7 +519,9 @@ function main_l3()
         "threshold_confusion" => threshold_conf,
         "floor_confusion" => floor_conf,
         "confusion_grid" => confusion_grid(stage_rows),
-        "non_identifiable_count" => non_ident_count,
+        "lower_stage_indistinguishable_count" => lower_stage_count,
+        "rank_deficient_at_expected_stage_count" => rank_def_count,
+        "both_identifiability_properties_count" => both_count,
         "exact_equation_count" => length(exact_ident),
         "system54_visible_rows" => s54_visible,
         "system63_rank_deficient_all_densities" => s63_all_rank_def,

@@ -22,17 +22,18 @@ function _with_env(f::Function, updates::Dict{String, String})
 end
 
 @testset "Gate 2 regression runner selection" begin
-    @test [String(v.label) for v in VARIANTS] == ["evogrow_v2_2_stage_local", "evogrow_v3"]
+    @test [String(v.label) for v in VARIANTS] == ["evogrow_v2_2_stage_local", "evogrow_v3", "evogrow_v3_stage_capped"]
     @test BFGS_TIME_LIMIT_S == 1800.0
     @test FINGERPRINT_VARIANT_LABELS == [
         "evogrow_v2_2_stage_local",
         "evogrow_screening_derivative",
         "evogrow_v3",
+        "evogrow_v3_stage_capped",
     ]
 
     selected = _with_env(
         Dict(
-            "EVO_REGRESSION_VARIANT" => "evogrow_v3",
+            "EVO_REGRESSION_VARIANT" => "evogrow_v3_stage_capped",
             "EVO_REGRESSION_SYSTEM_ID" => "3",
             "EVO_REGRESSION_SEED" => "42",
         )
@@ -44,7 +45,7 @@ end
         )
     end
 
-    @test selected.variants == ["evogrow_v3"]
+    @test selected.variants == ["evogrow_v3_stage_capped"]
     @test selected.systems == [3]
     @test selected.seeds == [42]
 end

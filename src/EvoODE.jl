@@ -30,9 +30,9 @@ export fit_parameters
 # ------------------------
 # Public API – Implementations
 # ------------------------
-export EvoGrow, EvoGrowScreening, EvoGrowV3
+export EvoGrow, EvoGrowScreening, EvoGrowV3, EvoGrowStageCapped
 export GPStructureSearch
-export StageProgressionPolicy, StageUsagePolicy
+export StageProgressionPolicy, StageUsagePolicy, LookAheadStageCapPolicy, estimate_stage_caps
 export eq_overshoot, eq_wasted_levels
 
 export PolynomialBasis, default_polynomial_basis
@@ -123,6 +123,7 @@ include("structure/evogrow.jl")
 include("structure/evogrow_screening.jl")
 include("structure/evogrow_v3_childgen.jl")
 include("structure/evogrow_v3_promote.jl")
+include("structure/stage_cap.jl")
 include("structure/evogrow_v3.jl")
 include("structure/gp.jl")
 

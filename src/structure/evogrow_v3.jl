@@ -17,6 +17,47 @@ Base.@kwdef struct EvoGrowV3 <: AbstractStructureSearch
     use_pretuning::Bool = true
     screening_optimizer::Union{Nothing, AbstractOptimizer} = nothing
     level_callback::Union{Nothing, Function} = nothing
+    stage_caps::Union{Nothing,Vector{Union{Nothing,Int}}} = nothing
+    stage_cap_policy::Union{Nothing,LookAheadStageCapPolicy} = nothing
+end
+
+"""
+EvoGrow variant using a data-only per-equation look-ahead cap.
+
+The cap is computed once from `(trajectory, basis, equation, stage)` before search.
+Unjudged equations receive no cap and fall back to current EvoGrowV3 behavior. A cap
+below a stage an equation has already reached is conservative: no terms are removed;
+the cap only prevents later promotions beyond the current stage.
+"""
+Base.@kwdef struct EvoGrowStageCapped <: AbstractStructureSearch
+    pop_size::Int = 20
+    n_levels::Int = 5
+    children_per_parent::Int = 2
+    max_terms_per_eq::Int = 5
+    λ::Float64 = 1e-3
+    progression::StageProgressionPolicy = StageProgressionPolicy(mode = :stage_local)
+    usage::StageUsagePolicy = StageUsagePolicy()
+    use_pretuning::Bool = true
+    screening_optimizer::Union{Nothing, AbstractOptimizer} = nothing
+    level_callback::Union{Nothing, Function} = nothing
+    cap_policy::LookAheadStageCapPolicy = LookAheadStageCapPolicy()
+end
+
+function _evogrow_v3_from_capped(strategy::EvoGrowStageCapped, stage_caps)
+    return EvoGrowV3(
+        pop_size = strategy.pop_size,
+        n_levels = strategy.n_levels,
+        children_per_parent = strategy.children_per_parent,
+        max_terms_per_eq = strategy.max_terms_per_eq,
+        λ = strategy.λ,
+        progression = strategy.progression,
+        usage = strategy.usage,
+        use_pretuning = strategy.use_pretuning,
+        screening_optimizer = strategy.screening_optimizer,
+        level_callback = strategy.level_callback,
+        stage_caps = stage_caps,
+        stage_cap_policy = strategy.cap_policy,
+    )
 end
 
 function _evogrow_v2_bridge(strategy::EvoGrowV3)
@@ -32,6 +73,16 @@ function _evogrow_v2_bridge(strategy::EvoGrowV3)
         screening_optimizer = strategy.screening_optimizer,
         level_callback = strategy.level_callback
     )
+end
+
+function search_structure(strategy::EvoGrowStageCapped,
+                          traj::Trajectory,
+                          basis::AbstractBasis,
+                          loss::AbstractLoss,
+                          optimizer::AbstractOptimizer,
+                          options::DiscoveryOptions)
+    stage_caps = estimate_stage_caps(traj, basis; policy = strategy.cap_policy)
+    return search_structure(_evogrow_v3_from_capped(strategy, stage_caps), traj, basis, loss, optimizer, options)
 end
 
 function _validate_policy(strategy::EvoGrowV3)
@@ -78,6 +129,10 @@ function search_structure(strategy::EvoGrowV3,
 
     current_stage = maximum(eq_stages)
     max_stage = _max_stage(basis)
+    stage_caps = strategy.stage_caps
+    if stage_caps !== nothing && length(stage_caps) != dim
+        error("stage_caps length $(length(stage_caps)) does not match trajectory dimension $(dim)")
+    end
 
     bridge = _evogrow_v2_bridge(strategy)
     allowed_terms = _allowed_terms(basis, current_stage)
@@ -124,7 +179,8 @@ function search_structure(strategy::EvoGrowV3,
                 :children_per_parent => strategy.children_per_parent,
                 :max_stage => max_stage,
                 :progression_mode => strategy.progression.mode,
-                :usage_mode => strategy.usage.mode
+                :usage_mode => strategy.usage.mode,
+                :stage_caps => stage_caps === nothing ? "disabled" : copy(stage_caps)
             )
         )
     end
@@ -512,7 +568,8 @@ function search_structure(strategy::EvoGrowV3,
             eq_stages,
             eq_plateau_histories,
             max_stage,
-            options
+            options;
+            stage_caps = stage_caps
         )
 
         if stop
@@ -530,7 +587,8 @@ function search_structure(strategy::EvoGrowV3,
             eq_plateau_histories,
             max_stage,
             strategy,
-            options
+            options;
+            stage_caps = stage_caps
         )
 
         if any(promote)
@@ -638,6 +696,8 @@ function search_structure(strategy::EvoGrowV3,
             eq_residual_log = [copy(hist) for hist in eq_residual_log],
             eq_promotion_levels = [copy(levels) for levels in eq_promotion_levels],
             derivative_residual_fallback = derivative_residual_fallback,
+            stage_caps = stage_caps === nothing ? nothing : copy(stage_caps),
+            stage_cap_policy_active = strategy.stage_cap_policy !== nothing,
             termination_reason = termination_reason,
             progression_mode = strategy.progression.mode,
             usage_mode = strategy.usage.mode

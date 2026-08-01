@@ -17,7 +17,15 @@ const GATE2_ANCHOR = (
     du2_support = ["u1", "u1^2"],
 )
 
+const GATE2_V3_RESULT = (
+    variant = "evogrow_v3",
+    loss = 2.5195575964774715e-4,
+    eq_final_stages = [5, 5],
+    eq_overshoot = [2, 2],
+)
+
 const SYSTEM26_EXPECTED_STAGE = 3
+const SYSTEM26_EXPECTED_CAP = [3, 3]
 const SYSTEM26_DU1_TRUTH = ["u1", "u1^2", "u1*u2"]
 const SYSTEM26_DU2_TRUTH = ["u2", "u1*u2", "u2^2"]
 
@@ -57,16 +65,13 @@ function evaluate_gate2_record(record)
     du2_support = _eq_support(record, 2)
     loss = Float64(_record_get(record, "loss", Inf))
 
-    criterion_a = length(eq_final_stages) >= 1 &&
-                  Int(eq_final_stages[1]) == SYSTEM26_EXPECTED_STAGE &&
-                  eq_overs !== nothing &&
-                  length(eq_overs) >= 1 &&
-                  Int(eq_overs[1]) == 0
-    criterion_b = _support_set(du1_support) == _support_set(SYSTEM26_DU1_TRUTH)
-    criterion_c = loss <= GATE2_ANCHOR.loss
+    construction_check = collect(Int.(eq_final_stages)) == SYSTEM26_EXPECTED_CAP
+    du1_exact = _support_set(du1_support) == _support_set(SYSTEM26_DU1_TRUTH)
+    du2_exact = _support_set(du2_support) == _support_set(SYSTEM26_DU2_TRUTH)
+    loss_vs_anchor = loss < GATE2_ANCHOR.loss ? "better" : (loss == GATE2_ANCHOR.loss ? "equal" : "worse")
+    loss_vs_v3 = loss < GATE2_V3_RESULT.loss ? "better" : (loss == GATE2_V3_RESULT.loss ? "equal" : "worse")
 
-    verdict = criterion_a && criterion_b && criterion_c ? "PASS" :
-              (!criterion_a && criterion_b && criterion_c ? "PARTIAL" : "FAIL")
+    verdict = construction_check ? "REPORTABLE" : "IMPLEMENTATION_CHECK_FAILED"
 
     du2_anchor_support = _support_set(GATE2_ANCHOR.du2_support)
     du2_truth_support = _support_set(SYSTEM26_DU2_TRUTH)
@@ -74,10 +79,12 @@ function evaluate_gate2_record(record)
 
     return Dict{String, Any}(
         "verdict" => verdict,
-        "criteria" => Dict(
-            "a_du1_stage3_no_overshoot" => criterion_a,
-            "b_du1_support_exact" => criterion_b,
-            "c_loss_not_worse_than_anchor" => criterion_c,
+        "checks" => Dict(
+            "construction_eq_final_stages_match_cap" => construction_check,
+            "du1_support_exact" => du1_exact,
+            "du2_support_exact" => du2_exact,
+            "loss_vs_v2_2_anchor" => loss_vs_anchor,
+            "loss_vs_v3_gate2" => loss_vs_v3,
         ),
         "anchor" => Dict(
             "variant" => GATE2_ANCHOR.variant,
@@ -104,15 +111,24 @@ function evaluate_gate2_record(record)
             "du1_support" => du1_support,
             "du2_support" => du2_support,
         ),
+        "v3_gate2" => Dict(
+            "variant" => GATE2_V3_RESULT.variant,
+            "loss" => GATE2_V3_RESULT.loss,
+            "eq_final_stages" => GATE2_V3_RESULT.eq_final_stages,
+            "eq_overshoot" => GATE2_V3_RESULT.eq_overshoot,
+        ),
         "diagnostics" => Dict(
             "du2_support_changed_from_anchor" => du2_support_set != du2_anchor_support,
             "du2_support_exact_truth" => du2_support_set == du2_truth_support,
+            "stage_caps" => _record_get(record, "stage_caps"),
+            "total_ode_solves" => _record_get(record, "total_ode_solves"),
+            "total_parameter_fits" => _record_get(record, "total_parameter_fits"),
         ),
     )
 end
 
 function _matching_gate2_record(record)
-    return _record_get(record, "variant") == "evogrow_v3" &&
+    return _record_get(record, "variant") == "evogrow_v3_stage_capped" &&
            Int(_record_get(record, "system_id", -1)) == 26 &&
            Int(_record_get(record, "seed", -1)) == 42 &&
            _record_get(record, "error") === nothing &&
@@ -130,7 +146,7 @@ function load_latest_gate2_record(history_path::String)
             end
         end
     end
-    latest === nothing && error("No evogrow_v3 System 26 Seed 42 record with support_terms found in $(history_path)")
+    latest === nothing && error("No evogrow_v3_stage_capped System 26 Seed 42 record with support_terms found in $(history_path)")
     return latest
 end
 
@@ -144,8 +160,9 @@ function write_gate2_outputs(result; output_dir::String = OUTPUT_DIR)
         write(io, '\n')
     end
 
-    criteria = result["criteria"]
+    checks = result["checks"]
     anchor = result["anchor"]
+    v3_gate2 = result["v3_gate2"]
     v3 = result["v3"]
     diagnostics = result["diagnostics"]
 
@@ -163,7 +180,12 @@ function write_gate2_outputs(result; output_dir::String = OUTPUT_DIR)
         println(io, "- du1_support: $(anchor["du1_support"])")
         println(io, "- du2_support: $(anchor["du2_support"])")
         println(io)
-        println(io, "## EvoGrowV3")
+        println(io, "## Frozen EvoGrowV3 Gate-2")
+        println(io, "- loss: $(v3_gate2["loss"])")
+        println(io, "- eq_final_stages: $(v3_gate2["eq_final_stages"])")
+        println(io, "- eq_overshoot: $(v3_gate2["eq_overshoot"])")
+        println(io)
+        println(io, "## Capped Variant")
         println(io, "- loss: $(v3["loss"])")
         println(io, "- final_stage: $(v3["final_stage"])")
         println(io, "- eq_final_stages: $(v3["eq_final_stages"])")
@@ -172,14 +194,20 @@ function write_gate2_outputs(result; output_dir::String = OUTPUT_DIR)
         println(io, "- du1_support: $(v3["du1_support"])")
         println(io, "- du2_support: $(v3["du2_support"])")
         println(io)
-        println(io, "## Criteria")
-        println(io, "- A du1 stays at Stage 3 with no overshoot: $(criteria["a_du1_stage3_no_overshoot"] ? "PASS" : "FAIL")")
-        println(io, "- B du1 support exact: $(criteria["b_du1_support_exact"] ? "PASS" : "FAIL")")
-        println(io, "- C loss not worse than anchor: $(criteria["c_loss_not_worse_than_anchor"] ? "PASS" : "FAIL")")
+        println(io, "## Checks")
+        println(io, "- Construction eq_final_stages == $(SYSTEM26_EXPECTED_CAP): $(checks["construction_eq_final_stages_match_cap"] ? "PASS" : "FAIL")")
+        println(io, "- du1 support exact: $(checks["du1_support_exact"])")
+        println(io, "- du2 support exact: $(checks["du2_support_exact"])")
+        println(io, "- loss vs v2.2 anchor: $(checks["loss_vs_v2_2_anchor"])")
+        println(io, "- loss vs v3 Gate-2: $(checks["loss_vs_v3_gate2"])")
+        println(io, "The forced stage cap is a construction check only, not a success criterion.")
         println(io)
         println(io, "## Diagnostics")
         println(io, "- du2_support_changed_from_anchor: $(diagnostics["du2_support_changed_from_anchor"])")
         println(io, "- du2_support_exact_truth: $(diagnostics["du2_support_exact_truth"])")
+        println(io, "- stage_caps: $(diagnostics["stage_caps"])")
+        println(io, "- total_ode_solves: $(diagnostics["total_ode_solves"])")
+        println(io, "- total_parameter_fits: $(diagnostics["total_parameter_fits"])")
     end
 
     return (json_path = json_path, md_path = md_path)

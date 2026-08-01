@@ -85,7 +85,8 @@ function _evogrow_v3_promotion_decisions(
     eq_plateau_histories::Vector{Vector{Float64}},
     max_stage::Int,
     strategy,
-    options::DiscoveryOptions
+    options::DiscoveryOptions;
+    stage_caps = nothing
 )
     effective_min_per_stage = max(
         strategy.progression.min_levels_per_stage,
@@ -94,7 +95,8 @@ function _evogrow_v3_promotion_decisions(
     promote = falses(length(eq_stages))
 
     for k in eachindex(eq_stages)
-        if eq_stages[k] >= max_stage
+        eq_limit = stage_caps === nothing || stage_caps[k] === nothing ? max_stage : max(Int(stage_caps[k]), eq_stages[k])
+        if eq_stages[k] >= eq_limit
             continue
         end
         if eq_levels_in_stage[k] < effective_min_per_stage
@@ -114,6 +116,11 @@ function _evogrow_v3_promotion_decisions(
     end
 
     return promote
+end
+
+function _evogrow_v3_effective_stage_limits(eq_stages::Vector{Int}, max_stage::Int, stage_caps)
+    stage_caps === nothing && return fill(max_stage, length(eq_stages))
+    return [cap === nothing ? max_stage : max(Int(cap), eq_stages[k]) for (k, cap) in enumerate(stage_caps)]
 end
 
 function _apply_eq_stage_update!(
@@ -139,9 +146,11 @@ function _evogrow_v3_all_max_plateaued(
     eq_stages::Vector{Int},
     eq_plateau_histories::Vector{Vector{Float64}},
     max_stage::Int,
-    options::DiscoveryOptions
+    options::DiscoveryOptions;
+    stage_caps = nothing
 )
-    if !all(==(max_stage), eq_stages)
+    stage_limits = _evogrow_v3_effective_stage_limits(eq_stages, max_stage, stage_caps)
+    if !all(eq_stages[k] >= stage_limits[k] for k in eachindex(eq_stages))
         return false
     end
     return all(
@@ -156,7 +165,8 @@ function _evogrow_v3_termination_decision(
     eq_stages::Vector{Int},
     eq_plateau_histories::Vector{Vector{Float64}},
     max_stage::Int,
-    options::DiscoveryOptions
+    options::DiscoveryOptions;
+    stage_caps = nothing
 )
     if level >= options.max_levels
         return true, :max_levels
@@ -167,7 +177,7 @@ function _evogrow_v3_termination_decision(
     if best_loss < options.loss_tol
         return true, :loss_tol
     end
-    if _evogrow_v3_all_max_plateaued(eq_stages, eq_plateau_histories, max_stage, options)
+    if _evogrow_v3_all_max_plateaued(eq_stages, eq_plateau_histories, max_stage, options; stage_caps = stage_caps)
         return true, :all_equations_max_stage_plateau
     end
     return false, :continue
