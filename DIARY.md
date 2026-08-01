@@ -62,6 +62,8 @@ als dieselbe Konfiguration verbucht. Muss mit repariert werden.
 **Konsequenz fuer HEAD:** der Arbeitsbaum enthaelt jetzt eine Cap-Berechnung, die unsicherer ist als
 die vorige. Bis WP-L5b liegt, darf aus HEAD kein Lauf mit `evogrow_v3_stage_capped` gestartet werden.
 
+<!-- 94bf5a7 -->  
+
 ### WP-L5 beauftragt — Cap nur auf positive Evidenz
 
 Behebt den WP-L4-Defekt. Kernprinzip in der Spec: **ein Cap darf nur auf positive Evidenz gesetzt

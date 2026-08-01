@@ -804,9 +804,21 @@ Active:
    run is external and started by the user. Readout via `studies/gate2_do_or_die/readout.jl`. Note
    that `eq_final_stages = [3,3]` is forced by the cap and is a construction check, not a result —
    what counts is the `du2` support, the loss against both references, and the integration count.
-3. **Before any use beyond cell 26/42:** fix the cap safety property (see WP-L4 defect above). A cap
-   must only be set on positive evidence; absence of evidence must leave an equation uncapped.
-   Required before Phase B or any 63-system run.
+3. **WP-L5b — repair the cap rule. HEAD is currently unsafe for capped runs.** The WP-L5 attempt
+   (commit `94bf5a7`) failed both acceptance criteria and is strictly worse than WP-L4: caps are
+   now `nothing` on Systems 3, 11 and 26, and System 31 is newly capped at [1,1] against a true
+   [3,3], raising safety violations from 2 to 4. Two causes, both understood:
+   - Treating "residual at or below the noise floor" as undecidable is wrong — reaching the floor is
+     exactly what a correct model does. The distinction that matters is whether the residual *fell*
+     to the floor at this stage (positive evidence, cap here) or was *already* there before any
+     stage helped (no information, no cap).
+   - The look-ahead horizon collapsed to one stage. The rule must be able to cross a useless
+     intermediate stage — System 31 needs the stage-3 cross term while stage 2 contributes nothing.
+     This is the dead-intermediate-stage case that motivated a horizon of 2.
+
+   Also fold in: `aggregation` is missing from the fingerprinted cap policy in `run_regression.jl`,
+   so the WP-L5 semantics change did not move `3f9be6d36c4043de`. Pre- and post-L5 records would be
+   pooled as one configuration.
 
 Baseline note:
 - Baseline v0 (`config_fingerprint 0c739d4e36ee6498`) stays valid as a historical record but is no
