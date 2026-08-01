@@ -2,138 +2,116 @@
 
 **Language: Julia**
 
-## WP-L4 — Stage cap from the look-ahead: first test as a discovery mechanism
+## WP-L5 — Cap safety: only positive evidence may set a cap
 
-Two parts, in order. Part A is a small correctness fix that Part B depends on. Part B is
-the first time the look-ahead touches the search at all.
+### 1. The defect
 
-**Execution rule for this work package: do not run the decisive experiment.** Part B
-produces a run of several hours on System 26. Implement it, verify it with the cheap smoke
-tests described in section B.7, and stop. The real run is started externally.
+WP-L4 delivered the per-equation stage cap. An independent check of
+`estimate_stage_caps` against the five regression systems found:
 
----
+| System | per-equation true stage | computed cap | |
+|---|---|---|---|
+| 3 | [2] | [2] | correct |
+| 11 | [4] | [4] | correct |
+| 26 | [3, 3] | [3, 3] | correct |
+| 31 | [3, 3] | [3, 3] | correct |
+| 63 | [3, 3, 1, 1] | **[1, 1, 1, 1]** | `du1`/`du2` wrong |
 
-## Part A — Disambiguate "non-identifiable"
+On System 63, equations 1 and 2 receive a cap of 1 although they require the stage-3 cross
+term `u1*u3`. Under the capped variant their true structure becomes **structurally
+unreachable** — no amount of search could recover it.
 
-WP-L3 reports "non-identifiable" with two different meanings that happen to yield the same
-count of 4, which makes the report easy to misread:
+The WP-L4 report states that equations which cannot be judged stay uncapped. That property
+is not actually implemented: `_cap_for_equation` returns `nothing` only when no split has a
+usable stage-1 fit at all. In every other case it returns a number, starting from a default
+of 1 and raising it only when a gain is detected. A residual that already lies below the
+noise floor at stage 1 is therefore read as "stage 1 is sufficient" rather than "the data
+cannot discriminate here".
 
-- `identifiability.csv` flags `{54 du2, 54 du3, 63 du1, 63 du2}` — equations where a
-  lower-stage library already reaches the noise floor, so the true stage cannot be
-  distinguished from a lower one along this trajectory.
-- The confusion category `not_identifiable` covers all four equations of System 63 —
-  equations whose *higher-stage* library is rank-deficient.
+This is not merely a coding slip. The rule cannot distinguish "genuinely only stage 1 is
+needed" from "the signal is too small to judge" — both present as a residual below the
+floor at stage 1. It is the same ambiguity the look-ahead was built to resolve, reappearing
+one level down inside the look-ahead's own floor test.
 
-These are different properties and must carry different names and different columns.
-Choose two explicit names (for example a lower-stage-indistinguishable property and a
-rank-deficient property), report them separately everywhere, and state in the report how
-many equations carry each and how many carry both.
+### 2. The principle to implement
 
-The second classification is also too aggressive. System 63 equations 3 and 4 have expected
-stage 1 and their stage-1 design matrices are well conditioned (condition number 234).
-Marking them undecidable because a stage they never need is rank-deficient understates the
-method. Rank deficiency must be recorded **per tested stage**, not as a blanket property of
-the equation, and an equation must remain decidable up to the highest stage that is
-actually well conditioned.
+The costs are asymmetric. A wrong cap makes the truth unreachable; a missing cap merely
+costs the status quo, which is exactly the behaviour the project has today.
 
-Regenerate the WP-L3 outputs with the corrected classification and report the confusion
-matrix again. Say explicitly whether the headline numbers (10 exact / 0 over / 2 under)
-change.
+> **A cap may only be set on positive evidence. Absence of evidence must leave the
+> equation uncapped.**
 
----
+Concretely, three cases must be separated instead of collapsed into a number:
 
-## Part B — Per-equation stage cap in the search
+- **Positive evidence to stop.** The residual at stage `s` is *above* the noise floor, the
+  next applicable stage is evaluable, and it yields no gain above the floor. This justifies
+  a cap at `s`.
+- **Cannot discriminate.** The residual is already at or below the noise floor at stage
+  `s`. The data cannot tell whether a later stage would help. No cap.
+- **Cannot evaluate.** The next applicable stage is rank-deficient, ill-conditioned, or its
+  fit is invalid. No cap.
 
-### B.1 What is being tested
+Review the loop that currently `break`s on an unusable stage: an unevaluable later stage
+must not freeze the cap at the last decidable stage, it must remove the cap.
 
-Every look-ahead result so far is offline: known ground truth, full term library as the
-checkpoint, no interaction with the search. Part B tests the mechanism for the first time.
+### 3. Aggregation across splits
 
-The gate depends only on trajectory, basis, equation and stage — never on the population or
-the current structure. It therefore needs no speculative unlock, no checkpoint and no
-rollback. A per-equation `max_useful_stage_k` is computed once, before the search, and acts
-as a cap: equation `k` may never promote beyond it. Everything else in the search stays as
-it is.
+The current implementation takes a median over per-split caps. Under the new principle an
+undecidable split is not a number and must not be silently dropped.
 
-### B.2 Absolutely no ground truth may enter the cap
+Default rule to implement: a cap is set only if a majority of valid splits provide positive
+evidence for it **and** no valid split reports the equation as undecidable at or below that
+cap. Report how the five verified systems behave under at least one stricter and one looser
+aggregation, so the sensitivity of the choice is visible rather than assumed.
 
-This is the single most important constraint in this work package. The probe used ground
-truth only for *evaluation* — confusion matrices and the analytic noise-floor reference
-rows. The cap must be computed from the observed trajectory and the basis alone.
+### 4. Acceptance criteria
 
-Nothing derived from `expected_terms`, `expected_stage`, `true_rhs!`, or any per-system
-table may reach `max_useful_stage_k`. The Richardson noise floor is data-only and is
-allowed; the firing thresholds are ordinary hyperparameters and are allowed.
+These are concrete and must be checked, not argued:
 
-Add a test that fails if the cap computation can see ground truth — for example by
-computing the cap for a system whose true structure is withheld and asserting the same
-result. State in the report how this was enforced.
+1. Systems 3, 11, 26 and 31 keep their current caps — `[2]`, `[4]`, `[3,3]`, `[3,3]`.
+2. System 63 equations 1 and 2 are **uncapped** (`nothing`). Equations 3 and 4 may be
+   capped at 1 only if positive evidence exists under section 2; otherwise uncapped.
 
-### B.3 Variant, not a modification
+Criterion 1 is load-bearing for a different reason: **a decisive run of
+`evogrow_v3_stage_capped` on System 26 seed 42 is currently in progress.** If this work
+package changes the cap on System 26, that run's comparison basis is invalidated. Verify
+the System 26 cap explicitly and report it first. If it changes, stop and report rather
+than proceeding.
 
-Introduce the capped search as a **new variant** with its own slug. `EvoGrow` v2.2 and
-`EvoGrowV3` must remain bit-identical when the cap is disabled; verify this the same way
-WP-v3.2 and WP-v3.3 verified their equivalence. The new variant changes search behaviour
-and therefore the `config_fingerprint`; that is expected and must be reported, not avoided.
+### 5. The safety invariant, measured suite-wide
 
-### B.4 Behaviour to define explicitly
+Add an offline check over all exact benchmark systems: for every equation, the cap must be
+either `nothing` or greater than or equal to that equation's true stage. Report the number
+of violations. It is 2 today (System 63, equations 1 and 2) and the target is 0.
 
-- **Equations the probe cannot judge.** If an equation is undecidable under the corrected
-  Part-A classification, it gets **no cap** and falls back to current behaviour. The gate
-  must never block an equation it cannot assess. State this in the docstring.
-- **Cap below the current stage.** Define what happens if a cap is computed that lies below
-  a stage the equation has already reached. It must not retroactively remove terms; specify
-  and implement the conservative reading.
-- **Interaction with existing promotion.** The cap is an upper bound only. All existing
-  promotion conditions still have to be met; the cap can only ever prevent a promotion,
-  never cause one.
+Ground truth is used here to *judge* the cap, never to compute it. Keep that separation
+explicit in the code and state it in the report.
 
-### B.5 The decisive cell
+Report the price of the added safety alongside it: how many equations still receive a cap,
+and how many stages are saved in total. A rule that is safe because it never caps anything
+is worthless, and that has to be visible in the same table.
 
-The experiment is the frozen do-or-die cell: System 26, seed 42, 30 levels, otherwise the
-WP-G2.1 configuration. Comparison targets are the frozen v2.2 anchor
-(loss `0.001391623174905009`, `final_stage 5`, overshoot 2, wasted 8) and the v3 Gate-2
-result (loss `2.5195575964774715e-4`, `eq_final_stages [5,5]`, `eq_overshoot [2,2]`).
+### 6. Also report
 
-Reuse the existing readout in `studies/gate2_do_or_die/` rather than writing a new one;
-extend it if it cannot represent the capped variant.
+Whether the offline confusion matrix changes. It currently stands at 12 exact / 0 over /
+4 under / 0 rank-deficient, and two of those undershoots are System 63 equations 1 and 2 —
+the same defect seen from the offline side. Uncapped equations need their own category
+there; they are not undershoots.
 
-### B.6 What counts as a result — read this before writing the readout
+### 7. Scope and execution
 
-On System 26 the probe's cap is `[3, 3]`. **The cap therefore forces
-`eq_final_stages = [3,3]` by construction.** Reporting that as a success would be
-circular, and the readout must not do it. Treat it as a construction check: if it does not
-hold, the implementation is wrong.
+`EvoGrowV3` and `EvoGrow` must remain bit-identical with the cap disabled. The
+`config_fingerprint` will change again; report the new value.
 
-The actual questions are:
+**Do not run the decisive cell — it is already running externally.** Nothing may be written
+to `studies/regression/history.jsonl`. Verification is limited to the cap computation
+itself, unit tests, the suite-wide safety check, and a cheap smoke run on a small system.
+All of that is seconds to minutes; if anything exceeds a few minutes, stop and report.
 
-1. **Structure.** Does `du2` improve? Under v2.2 it ended as `{u1, u1^2}` while the truth is
-   `2·u2 − u1·u2 − u2²`, all available at stage 3. Confining the search to stage 3 gives it
-   nowhere else to go — does it now find the right support, or does it still fail? This is
-   the question that decides whether stage escalation was the problem or merely a symptom.
-2. **Loss.** Better, equal, or worse than the v2.2 anchor and the v3 result?
-3. **Cost.** Integrations and levels saved relative to both. Report counts, not wall-clock —
-   the wall-clock axis has been unreliable in this project.
+### 8. Pre-registered expectation
 
-A plausible and fully reportable outcome is: overshoot gone, cost down, `du2` still wrong.
-That would mean the look-ahead solves complexity allocation and not structural recovery,
-which is a real and publishable result. Do not present it as a shortfall.
-
-### B.7 Verification without the long run
-
-Permitted: the bit-identity check from B.3, the ground-truth-leak test from B.2, unit tests
-for the cap logic (cap respected, cap never forces a promotion, uncapped equations
-unaffected, cap below current stage handled as specified), and a cheap end-to-end smoke run
-on a small system with a low level count — System 3 or System 11, few levels — purely to
-show the path executes.
-
-Not permitted: running System 26, or any configuration expected to exceed a few minutes.
-
-### B.8 Outputs
-
-The new variant, its registration, the readout extension, tests, and a short report on the
-verification performed. Nothing may be written to `studies/regression/history.jsonl` by
-this work package.
-
-State clearly in the delivery that the decisive run has not been executed and give the
-exact command to start it.
+After the fix, System 63 equations 1 and 2 are uncapped, Systems 3/11/26/31 are unchanged,
+and the suite-wide violation count is 0. If violations cannot be driven to 0 without also
+losing the correct caps on Systems 3, 11, 26 and 31, report that trade-off explicitly with
+the numbers — it would mean the noise-floor criterion is not a sufficient basis for a safe
+cap, which is a result in its own right and more useful than a tuned compromise.

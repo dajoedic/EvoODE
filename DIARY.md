@@ -6,6 +6,31 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ## 2026-08-01
 
+### WP-L5 beauftragt — Cap nur auf positive Evidenz
+
+Behebt den WP-L4-Defekt. Kernprinzip in der Spec: **ein Cap darf nur auf positive Evidenz gesetzt
+werden, Abwesenheit von Evidenz muss ungecappt lassen** — die Kosten sind asymmetrisch, ein falscher
+Cap macht die Wahrheit unerreichbar, ein fehlender kostet nur den Status quo. Drei Faelle werden
+getrennt statt in eine Zahl kollabiert: Residuum ueber dem Boden und naechste Stufe bringt nichts
+(→ Cap), Residuum schon unter dem Boden (→ kein Cap), naechste Stufe nicht auswertbar (→ kein Cap).
+Die Aggregation ueber Splits darf undentscheidbare Splits nicht stillschweigend verschlucken.
+
+Harte Abnahmekriterien statt Argumentation: 3 → [2], 11 → [4], 26 → [3,3], 31 → [3,3] unveraendert;
+63 du1/du2 ungecappt. Dazu eine suiteweite Sicherheitsinvariante — fuer jede Gleichung muss der Cap
+entweder `nothing` oder ≥ der wahren Stage sein; aktuell 2 Verletzungen, Ziel 0. Wahrheitswissen
+dient dabei ausschliesslich der Beurteilung, nie der Berechnung. Gegengewicht in derselben Tabelle
+gefordert: wie viele Gleichungen ueberhaupt noch einen Cap bekommen und wie viele Stufen gespart
+werden — eine Regel, die sicher ist, weil sie nie cappt, waere wertlos.
+
+Kritische Nebenbedingung: **der 26/42-Lauf laeuft gerade.** Aendert sich der Cap auf System 26, ist
+dessen Vergleichsbasis hinfaellig; die Spec verlangt, das zuerst zu pruefen und bei Abweichung
+abzubrechen statt weiterzumachen.
+
+Vorregistriert inklusive Ausweg: laesst sich die Verletzungszahl nicht auf 0 bringen, ohne die
+korrekten Caps auf 3/11/26/31 zu verlieren, ist das explizit mit Zahlen zu berichten — es hiesse,
+das Rauschboden-Kriterium taugt nicht als Basis fuer einen sicheren Cap, und das waere ein Ergebnis
+und kein Misserfolg.
+
 ### WP-L4 geliefert — Cap korrekt auf 4 von 5 Systemen; ein Sicherheitsdefekt auf System 63
 
 Neue Variante `evogrow_v3_stage_capped` (`EvoGrowStageCapped`), Cap-Berechnung in
