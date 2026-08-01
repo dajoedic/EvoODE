@@ -6,6 +6,46 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ## 2026-08-01
 
+### WP-L5c — Acceptance gruen; die zwei Restverletzungen sind die bekannte Aufloesungsgrenze
+
+Codex hat System 31 du1 repariert und diesmal korrekt gestoppt — belegt mit echter Ausgabe, nachdem
+der Diagnosebefehl nach 552 s ins Timeout lief. Eigene Nachrechnung, jetzt inklusive System 54:
+
+| System | Wahrheit pro Gleichung | Cap | |
+|---|---|---|---|
+| 3 | [2] | [2] | ✓ |
+| 11 | [4] | [4] | ✓ |
+| 26 | [3, 3] | [3, 3] | ✓ Vergleichsbasis des laufenden 26/42 intakt |
+| 31 | [3, 3] | [3, 3] | ✓ Fix wirkt |
+| 63 | [3, 3, 1, 1] | [n, n, n, n] | ✓ sicher |
+| 54 | [1, 3, 3] | [n, **2**, **2**] | 2 Verletzungen |
+
+Suiteweit: 2 Verletzungen, 8 von 16 Gleichungen gecappt, 18 Stufen gespart. Die Sicherheit ist also
+nicht durch Nichtstun erkauft — genau die Gegenprobe, die die Spec verlangt hatte.
+
+**Die zwei Verletzungen sind kein neuer Defekt.** Es sind exakt die beiden Gleichungen, die WP-L3
+bereits als Undershoot ausgewiesen hatte: die floor-gated Konfusion war 12 exact / 0 over / 4 under,
+und diese vier waren 63 du1/du2 plus 54 du2/du3. Nachdem 63 jetzt sauber ungecappt ist, bleiben genau
+die Lorenz-Gleichungen uebrig. Die Ursache ist gemessen, nicht vermutet: bei Benchmark-Sampling
+faellt das Residuum auf System 54 schon bei Stage 2 unter den Rauschboden, die Stage-3-Klippe liegt
+also unter der Aufloesungsgrenze der Ableitungsschaetzung; der Dichte-Sweep aus WP-L3 zeigt sie ab
+doppelter Dichte. **Datengrenze, keine Regelgrenze.**
+
+Damit hat die Cap-Regel eine geschlossene Charakterisierung: sicher, wo die Ableitungsschaetzung die
+Struktur aufloest, unsicher genau dort, wo sie es nicht tut — und das ist vorab am Rauschboden
+ablesbar. Es bleibt kein unerklaerter Defekt.
+
+**Kritikpunkt zum Vorgehen:** der System-31-Fix kam ohne die geforderte Diagnose zustande, weil diese
+ins Timeout lief. Er lockert den Gewinntest, wenn das Folge-Residuum bereits auf dem Boden liegt
+(`tau_abs` entfaellt, `delta > floor` und die relative Schwelle bleiben). Das wirkt in die sichere
+Richtung — lockerere Gewinnerkennung heisst hoehere Caps, also weniger Blockade — und das Ergebnis
+ist verifiziert. Die *Ursache* bleibt aber unbelegt; das ist eine Reparatur per Schlussfolgerung,
+nicht per Messung, und gehoert so vermerkt.
+
+Weiterhin offen: Fingerprint um `aggregation` und `lookahead_horizon` ergaenzen (inzwischen sind drei
+Semantikaenderungen ohne Fingerprint-Bewegung durchgelaufen), Tests, Aggregations- und
+Horizont-Sensitivitaet, Bericht.
+
 ### WP-L5b — Regel weitgehend repariert; Stoppmeldung war ein Fehlalarm; eine Verletzung bleibt
 
 Codex meldete einen Abbruch mit „System 26 ergibt nicht mehr [3,3] sondern [nothing, nothing]".

@@ -156,6 +156,9 @@ function _cap_rule_counts_gain(current_residual::Float64, next_residual::Float64
     current_residual <= floor && return false
     delta = current_residual - next_residual
     rel = current_residual == 0.0 ? Inf : delta / current_residual
+    if next_residual <= floor
+        return delta > floor && rel > policy.tau_rel
+    end
     return delta > policy.tau_abs && rel > policy.tau_rel && delta > floor
 end
 
