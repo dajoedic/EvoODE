@@ -6,6 +6,62 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ## 2026-08-01
 
+### WP-L5 durchgefallen — beide Abnahmekriterien verfehlt; die Ursache ist ein Fehler in meiner Spec
+
+Caps nach WP-L5, wieder selbst nachgerechnet:
+
+| System | Wahrheit pro Gleichung | WP-L4 | **WP-L5** | |
+|---|---|---|---|---|
+| 3 | [2] | [2] ✓ | **nothing** | Cap verloren |
+| 11 | [4] | [4] ✓ | **nothing** | Cap verloren |
+| 26 | [3, 3] | [3, 3] ✓ | **nothing, nothing** | Cap verloren |
+| 31 | [3, 3] | [3, 3] ✓ | **[1, 1]** | **neue Verletzung** |
+| 63 | [3, 3, 1, 1] | [1, 1, 1, 1] ✗ | [1, 1, nothing, nothing] | du1/du2 weiter verletzt |
+
+Abnahmekriterium 1 (3/11/26/31 behalten ihre Caps) auf allen vier Systemen verfehlt. Kriterium 2
+(63 du1/du2 ungecappt) ebenfalls verfehlt. Die Sicherheitsinvariante ist **schlechter** geworden:
+Verletzungen von 2 auf 4, weil System 31 neu dazukommt. Gleichzeitig cappt die Regel auf keinem
+System mehr, auf dem sie funktioniert hat — also auf beiden Achsen verschlechtert.
+
+**Codex hat sich dabei korrekt verhalten.** Die Stoppbedingung der Spec hat gegriffen: der
+System-26-Cap wurde zuerst geprueft, die Abweichung von [3,3] auf `nothing` erkannt, die Arbeit
+abgebrochen und berichtet. Dass Tests, Bericht, suiteweite Invariante und Fingerprint fehlen, ist
+kein Lieferdefizit, sondern Befolgung der Abbruchregel. Die Regel hat genau das getan, wofuer sie
+da war — teure Folgearbeit auf einer kaputten Basis wurde vermieden.
+
+**Codex' Deutung ist allerdings falsch** und darf nicht so stehenbleiben: er liest das Ergebnis als
+den in Abschnitt 8 vorregistrierten Trade-off zwischen Sicherheit und korrekten Caps. Das ist es
+nicht. Ein echter Trade-off haette die Sicherheit verbessert und dafuer Nutzen gekostet. Hier ist
+**auch die Sicherheit schlechter geworden** — System 31 ist eine neue Verletzung, die es vorher
+nicht gab. Beide Achsen gleichzeitig zu verschlechtern ist kein Trade-off, sondern ein Defekt.
+
+**Der laufende 26/42-Lauf ist nicht betroffen.** Julia laedt den Code beim Prozessstart; der Lauf
+faehrt die WP-L4-Semantik mit Cap [3,3]. Der Arbeitsbaum reproduziert ihn aber nicht mehr —
+siehe Provenienz-Punkt unten.
+
+**Diagnose, und der Fehler liegt bei mir.** Die Spec schrieb vor: Residuum auf oder unter dem
+Rauschboden → nicht beurteilbar → kein Cap. Das ist falsch, denn **den Boden zu erreichen ist genau
+das, was ein korrektes Modell tut.** Die Regel kann damit auf keinem loesbaren System je einen Cap
+setzen. Die Unterscheidung, auf die es ankommt, ist eine andere: *faellt* das Residuum auf dieser
+Stufe auf den Boden (positive Evidenz, hier cappen) oder lag es *schon vorher* dort, bevor
+ueberhaupt eine Stufe geholfen hat (keine Information, kein Cap)?
+
+**Zweiter Defekt, unabhaengig davon: der Look-Ahead-Horizont ist auf 1 geschrumpft.** Der alte Code
+scannte alle Stufen und nahm `max(split_cap, next_stage)`, konnte also ueber eine nutzlose
+Zwischenstufe hinwegsehen. Der neue Walk bricht bei der ersten Stufe ohne Gewinn ab. Genau daran
+scheitert System 31: die Wahrheit braucht den Kreuzterm `u1*u2` aus Stage 3, die selbstquadratische
+Stage 2 bringt dort nichts, der Walk stoppt bei 1. **Das ist die tote Zwischenstufe aus Abschnitt 5.2
+des Ausgangsdokuments, wiedereingefuehrt** — dieselbe Begruendung, aus der dort N = 2 als Horizont
+vorgeschlagen war.
+
+**Provenienz-Defekt, von der Spec nicht abgedeckt.** Der Fingerprint in `run_regression.jl` fuehrt
+die Cap-Politik als hartcodiertes Tupel ohne das neue Feld `aggregation`. WP-L5 hat die Cap-Semantik
+materiell geaendert, ohne dass sich `3f9be6d36c4043de` bewegt. Records vor und nach L5 waeren damit
+als dieselbe Konfiguration verbucht. Muss mit repariert werden.
+
+**Konsequenz fuer HEAD:** der Arbeitsbaum enthaelt jetzt eine Cap-Berechnung, die unsicherer ist als
+die vorige. Bis WP-L5b liegt, darf aus HEAD kein Lauf mit `evogrow_v3_stage_capped` gestartet werden.
+
 ### WP-L5 beauftragt — Cap nur auf positive Evidenz
 
 Behebt den WP-L4-Defekt. Kernprinzip in der Spec: **ein Cap darf nur auf positive Evidenz gesetzt

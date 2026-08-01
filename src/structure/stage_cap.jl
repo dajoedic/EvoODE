@@ -17,6 +17,7 @@ equation and never removes terms if an equation is already above the cap.
 Base.@kwdef struct LookAheadStageCapPolicy
     estimator::Symbol = :local_poly
     weighting::Symbol = :richardson_wls
+    aggregation::Symbol = :majority_no_undecided_at_or_below
     tau_rel::Float64 = 1e-4
     tau_abs::Float64 = 1e-8
     cond_cap::Float64 = 1e10
@@ -157,22 +158,86 @@ function _cap_rule_counts_gain(current_residual::Float64, next_residual::Float64
     return delta > policy.tau_abs && rel > policy.tau_rel && delta > floor
 end
 
+function _cap_validate_policy(policy::LookAheadStageCapPolicy)
+    if !(policy.aggregation in (:majority_no_undecided_at_or_below, :unanimous, :any_positive))
+        error("Unsupported LookAheadStageCapPolicy.aggregation=$(policy.aggregation)")
+    end
+    return nothing
+end
+
 function _cap_median_stage(values::Vector{Int})
     isempty(values) && error("Cannot take median stage of an empty set")
     sorted_values = sort(values)
     return sorted_values[cld(length(sorted_values), 2)]
 end
 
+function _cap_split_decision(residuals::AbstractVector{Float64}, usable::AbstractVector{Bool},
+                             floors::AbstractVector{Float64}, new_counts::AbstractVector{Int},
+                             policy::LookAheadStageCapPolicy)
+    max_basis_stage = length(residuals)
+    usable[1] || return (kind = :invalid, cap = nothing, stage = 1)
+
+    stage = 1
+    while stage <= max_basis_stage
+        usable[stage] || return (kind = :invalid, cap = nothing, stage = stage)
+        residuals[stage] <= floors[stage] && return (kind = :undecidable, cap = nothing, stage = stage)
+
+        next_stage = findfirst(s -> s > stage && new_counts[s] > 0, 1:max_basis_stage)
+        next_stage === nothing && return (kind = :positive, cap = stage, stage = stage)
+        usable[next_stage] || return (kind = :invalid, cap = nothing, stage = next_stage)
+
+        if _cap_rule_counts_gain(residuals[stage], residuals[next_stage], floors[stage], policy)
+            stage = next_stage
+            continue
+        end
+
+        return (kind = :positive, cap = stage, stage = stage)
+    end
+
+    return (kind = :positive, cap = max_basis_stage, stage = max_basis_stage)
+end
+
+function _cap_aggregate_split_decisions(decisions, policy::LookAheadStageCapPolicy)
+    valid_decisions = [d for d in decisions if d.kind != :invalid]
+    isempty(valid_decisions) && return nothing
+
+    positive_caps = Int[d.cap for d in valid_decisions if d.kind == :positive]
+    isempty(positive_caps) && return nothing
+
+    if policy.aggregation == :unanimous
+        length(positive_caps) == length(valid_decisions) || return nothing
+        cap = _cap_median_stage(positive_caps)
+        any(d -> d.kind == :undecidable && d.stage <= cap, valid_decisions) && return nothing
+        return cap
+    elseif policy.aggregation == :any_positive
+        cap = minimum(positive_caps)
+        any(d -> d.kind == :undecidable && d.stage <= cap, valid_decisions) && return nothing
+        return cap
+    end
+
+    n_positive_for(cap) = count(d -> d.kind == :positive && d.cap == cap, valid_decisions)
+    candidates = sort(unique(positive_caps))
+    for cap in candidates
+        has_majority = n_positive_for(cap) > length(valid_decisions) / 2
+        has_blocking_undecidable = any(d -> d.kind == :undecidable && d.stage <= cap, valid_decisions)
+        if has_majority && !has_blocking_undecidable
+            return cap
+        end
+    end
+    return nothing
+end
+
 function _cap_for_equation(traj::Trajectory, basis::StagedPolynomialBasis, dX::Matrix{Float64},
                            rich::Matrix{Float64}, eq::Int, policy::LookAheadStageCapPolicy)
     y = dX[:, eq]
     weights = policy.weighting == :richardson_wls ? _cap_weights_from_richardson(rich[:, eq]) : ones(length(y))
-    split_caps = Int[]
+    split_decisions = NamedTuple[]
     max_basis_stage = _max_stage(basis)
     new_counts = [length(basis.term_groups[s]) for s in 1:max_basis_stage]
 
     for split in _cap_splits(length(traj.t))
         residuals = fill(Inf, max_basis_stage)
+        floors = fill(Inf, max_basis_stage)
         usable = falses(max_basis_stage)
         for stage in 1:max_basis_stage
             idxs = _cap_cumulative_stage_idxs(basis, stage)
@@ -180,30 +245,18 @@ function _cap_for_equation(traj::Trajectory, basis::StagedPolynomialBasis, dX::M
             usable[stage] = _cap_stage_condition(Phi, y, split.fit, policy)
             fit = _cap_fit_eval(Phi, y, split.fit, split.holdout, weights)
             residuals[stage] = fit.residual
+            floors[stage] = mean(abs2, rich[split.holdout, eq])
             usable[stage] &= fit.valid
         end
-
-        usable[1] || continue
-        split_cap = 1
-        for stage in 1:(max_basis_stage - 1)
-            usable[stage] || break
-            next_stage = findfirst(s -> s > stage && new_counts[s] > 0, 1:max_basis_stage)
-            next_stage === nothing && break
-            usable[next_stage] || break
-            floor = mean(abs2, rich[split.holdout, eq])
-            if _cap_rule_counts_gain(residuals[stage], residuals[next_stage], floor, policy)
-                split_cap = max(split_cap, next_stage)
-            end
-        end
-        push!(split_caps, split_cap)
+        push!(split_decisions, _cap_split_decision(residuals, usable, floors, new_counts, policy))
     end
 
-    isempty(split_caps) && return nothing
-    return _cap_median_stage(split_caps)
+    return _cap_aggregate_split_decisions(split_decisions, policy)
 end
 
 function estimate_stage_caps(traj::Trajectory, basis::StagedPolynomialBasis;
                              policy::LookAheadStageCapPolicy = LookAheadStageCapPolicy())
+    _cap_validate_policy(policy)
     dX = _cap_estimate_derivatives(traj, policy.estimator)
     rich = _cap_richardson_error_estimate(traj, policy.estimator)
     _, dim = size(traj.x)
@@ -216,4 +269,3 @@ end
 
 estimate_stage_caps(traj::Trajectory, basis::AbstractBasis; policy::LookAheadStageCapPolicy = LookAheadStageCapPolicy()) =
     Union{Nothing,Int}[nothing for _ in 1:size(traj.x, 2)]
-
