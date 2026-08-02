@@ -2,124 +2,99 @@
 
 **Language: Julia**
 
-## WP-C1 — Look-ahead stage cap on the v2.2 substrate
+## WP-C1b — Resolve the duplicated child-generation path and decide the coupling-term rule
 
-### Why this exists
+WP-C1 is verified and committed (`d3fce98`): fingerprint unchanged, cap-disabled run
+bit-identical to `evogrow_v2_2_stage_local`, capped smoke run on System 3 recovers the true
+support. This work package cleans up three findings from the review of that delivery. It must not
+change any verified behaviour except where explicitly stated below.
 
-The look-ahead stage cap currently only exists as `EvoGrowStageCapped`, which is `EvoGrowV3`
-*plus* cap. Three regression cells on System 31 (run 2026-08-02) separated the two effects and
-found that the v3 substrate, not the cap, carries the dominant share of the loss regression:
-on seed 42, v2.2 reaches 6.808e-11, v3 reaches 1.285e-4 (about six orders worse), and the cap
-adds two more orders on top (1.678e-2).
+### Finding 1 — A load-bearing function was duplicated
 
-The reason is known and measured: v3's per-equation promotion signal `r_k` is the derivative
-residual, and WP-L2 showed it to be contaminated by derivative-estimation error, biasing it
-toward "more terms help".
+`_expand_with_stage_caps` in `src/structure/evogrow.jl` is a near-verbatim copy of the existing
+`_expand_equation_aware_with_usage_policy` in `src/structure/evogrow_v3_childgen.jl`, and
+`_equation_capped_terms` is a near-verbatim copy of `_evogrow_v3_equation_terms`.
 
-But the cap does not need v3. `estimate_stage_caps` reads only the trajectory and the basis; the
-caps are a vector precomputed before the search starts. The cap is coupled to v3 today only
-because it was wired into v3's promotion path.
+Two copies of the child-generation dispatch now exist, and they are used by the two variants we
+are about to compare against each other. If one is ever changed and the other is not, the two
+arms diverge for a reason that will not be visible in any result file.
 
-This work package puts the cap on the v2.2 substrate, so the good mechanism runs on the
-uncontaminated promotion rule. If the resulting variant keeps v2.2's fit quality while removing
-the stage overshoot, it is the final Paper 1 variant.
+There must be **one** implementation, shared by both variants.
 
-### Deliverable
+### Finding 2 — The copy silently dropped the coupling-term coherence rule
 
-A new structure-search variant, label **`evogrow_v2_2_stage_capped`**, registered in the
-regression runner and runnable there.
+The original path filters terms through `_evogrow_v3_term_available`, which contains an extra
+rule beyond the stage check: a term referencing two or more variables is available to equation
+`k` only if **every** referenced variable has itself reached that stage
+(`minimum(eq_stages[v] for v in vars) >= stage`). The new copy checks only the stage of the
+target equation and drops that clause.
 
-### Fixed design decisions
+So the two capped variants currently use different availability semantics for coupling terms —
+the terms this project is fundamentally about — whenever stages are non-uniform.
 
-These are decided. Do not renegotiate them; implement them.
+**Decision, which you implement rather than re-derive: the coherence rule is removed for
+cap-derived stage limits, in both capped variants.**
 
-#### 1. Promotion rule is v2.2's, unchanged
+The reason it must go: the rule was written for v3, where `eq_stages` reflects *promotion
+progress* and a low stage is temporary. A cap is a *permanent ceiling derived from the data*. If
+equation 2 is permanently capped at stage 2, the coherence rule makes `u1*u2` unavailable to
+equation 1 forever, even when equation 1's own cap is 3 — the cap silently becomes a global
+ceiling for every coupling term and the true structure becomes unreachable. That is the same
+failure mode WP-L4 hit on System 63, and the same principle applies: a restriction must rest on
+positive evidence about the equation it restricts.
 
-Stage progression uses the existing v2.2 mechanism (`:stage_local` progression, `:hard` usage,
-stage-local plateau with minimum stage budget). **The per-equation derivative residual `r_k` must
-not appear anywhere in this variant.** That signal is the thing being removed.
+Important scoping question you must answer rather than assume: v3's promotion-driven stage
+limits and the cap-derived limits can coexist in `EvoGrowStageCapped`. Determine whether the
+coherence rule can be removed for cap-derived limits **without** changing v3's behaviour where
+stages differ because of promotion rather than because of a cap. If the two cannot be separated
+cleanly, stop and report the conflict instead of choosing one.
 
-#### 2. The cap restricts terms per equation
+### Finding 3 — The report asserts results as hardcoded prose
 
-The cap vector is per equation. v2.2 carries a single global stage counter. The cap must
-therefore act as a **per-equation term restriction**: equation `k` may only use basis terms from
-stages at or below `cap[k]`. A cap entry of `nothing` means no restriction for that equation.
+`studies/regression/verify_wp_c1.jl` writes the line "No parser or cap-estimator disagreement
+surfaced." as a string literal, independently of what the runs produced. The table values come
+from real data; that sentence does not. A verification report must not contain claims that
+cannot fail.
 
-Do not collapse the cap to a single global value by taking the maximum. That would let an
-equation with a low cap still receive higher-stage terms whenever some other equation needs
-them, which reintroduces exactly the per-equation overshoot the cap removes.
+Derive every factual statement in the report from the measured records, or remove it. In
+particular, the confirmed-cap section should compare against the expected caps and state the
+comparison outcome as data.
 
-Equation-aware child generation already exists from WP-v3.3. Reusing it is acceptable and
-expected — it is the child-generation path, not the contaminated promotion signal. Reuse or a
-separate path is your call; the observable behaviour above is what matters.
+### Also in scope, low risk
 
-#### 3. Promotion stops when no equation can still gain
-
-With per-equation caps, raising the global stage counter past every equation's cap unlocks
-nothing and only burns levels. Promotion must be blocked once every equation has reached its cap
-— that is, the effective maximum stage for the global counter is the maximum over the cap
-entries, with `nothing` counting as the basis maximum.
-
-#### 4. Metrics stay comparable to the existing cells
-
-Record `eq_final_stages`, `eq_overshoot` and `eq_wasted_levels` with the same meaning as in the
-v3 variants, so the new cells sit in the same table as the existing ones. For a globally staged
-algorithm the effective stage of equation `k` is the global stage limited by that equation's cap.
-
-#### 5. The config fingerprint must not change
-
-`FINGERPRINT_VARIANT_LABELS` in `studies/regression/run_regression.jl` is a frozen list that
-feeds the fingerprint hash. **Do not add the new variant to it, and do not touch the
-`lookahead_stage_cap` payload.** The current fingerprint is `df5db7763bcd2449` and must stay
-byte-identical, otherwise all 32 existing history records become incomparable and the entire
-point of these runs is lost.
-
-Each run is independent, so an additional runnable variant cannot affect any other variant's
-result. Keeping it out of the fingerprint is correct, not a workaround.
-
-Consequence to accept without repairing: the `lookahead_stage_cap.variant` field in the
-fingerprint payload names only `evogrow_v3_stage_capped`, which becomes an incomplete
-description once a second variant uses the cap. Leave it. Note it in your report; changing it
-changes the hash.
-
-#### 6. `estimate_stage_caps` must not be modified
-
-The cap computation is verified (WP-L4 through WP-L5d) and its caps are known: System 3 → `[2]`,
-11 → `[4]`, 26 → `[3,3]`, 31 → `[3,3]`, 63 → all `nothing`. It is consumed here, not changed.
-
-Likewise `EvoGrowV3` and `EvoGrowStageCapped` must keep their current behaviour exactly. This is
-an addition, not a refactor.
+`stage_cap_policy::Any` in the `EvoGrow` struct is untyped because `src/structure/stage_cap.jl`
+is included after `src/structure/evogrow.jl` in `src/EvoODE.jl`. If the include order can be
+adjusted so the policy type is available at struct-definition time, do so and give the field its
+proper type. If that reordering causes any other load problem, leave it as is and say so — this
+is cosmetic and must not put the working state at risk.
 
 ### Verification
 
-#### Mandatory: cap-disabled equivalence
+Re-run `studies/regression/verify_wp_c1.jl` and confirm all three results still hold:
 
-With the cap disabled (or all cap entries `nothing`), the new variant must be **bit-identical to
-the existing `evogrow_v2_2_stage_local`** — same loss, same support, same final stage. This is
-the same discipline the v3.2 lockstep bridge was held to, and it is what proves the cap is the
-only thing that changed.
+- `config_fingerprint()` is still `df5db7763bcd2449`
+- cap-disabled on System 11 seed 42 is still bit-identical to `evogrow_v2_2_stage_local`,
+  loss `4.402192340718147e-15`, support `[["u1", "u1^2", "u1^3"]]`
+- capped smoke on System 3 seed 42 still gives cap `[2]`, final stage 2, overshoot 0,
+  loss `1.3476451847014113e-08`, support `[["u1", "u1^2"]]`, `pruned_match = true`
 
-Verify this deterministically on a cheap system and report the compared values, not a verdict.
+Any deviation from these numbers is a regression and must be reported, not explained away.
 
-#### Mandatory: cap-enabled smoke test
+Additionally, demonstrate that the coupling-term change is inert on the five regression systems.
+Their caps are `3 → [2]`, `11 → [4]`, `26 → [3,3]`, `31 → [3,3]`, `63 → all nothing`, all
+uniform, and the coherence rule has no effect when stages are uniform. Show this rather than
+assert it, so the four already-completed capped cells are provably unaffected.
 
-One run on **System 3, seed 42** (1D, minutes). Expected: cap `[2]`, final stage 2, no overshoot,
-and a loss in the same range as v2.2 on that system. Report the actual numbers.
-
-#### Report
-
-Write findings to `codex/REPORT_WP_C1.md`: what changed, the equivalence comparison, the smoke
-test numbers, the confirmed cap values, and anything that surprised you.
+Update `codex/REPORT_WP_C1.md` or add `codex/REPORT_WP_C1b.md` with the outcome.
 
 ### Hard constraints
 
-- **Do not run the regression matrix.** The decisive cells (System 26 seed 42; System 31 seeds
-  42, 123, 7) are multi-hour runs and are started by the user, not by you. Only the two cheap
-  verifications above may be executed.
-- If a verification exceeds a few minutes, stop and report rather than letting it run.
+- **Do not run the regression matrix.** The decisive cells are multi-hour and are started by the
+  user. Only the verification script above may be executed.
 - Do not write to `studies/regression/history.jsonl`.
-- Any generated output goes to its own subfolder under `outputs/`, never directly into a shared
-  output directory.
-- If a fixed decision above turns out to be unimplementable as stated, stop and report the
-  conflict. Do not silently choose a different semantics — the comparability of these cells is
-  the entire deliverable.
+- Do not change `FINGERPRINT_VARIANT_LABELS` or the `lookahead_stage_cap` fingerprint payload.
+- Do not change `estimate_stage_caps`.
+- Generated output goes to its own subfolder under `outputs/`.
+- If any decision above turns out to be unimplementable as stated, stop and report the conflict
+  rather than choosing different semantics silently. The comparability of the two capped arms is
+  the whole point of this work package.
