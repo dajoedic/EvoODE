@@ -6,6 +6,44 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ## 2026-08-02
 
+### WP-C1b — eine Kindgenerierung, cap-bewusste Kohaerenzregel
+
+<!-- 10b717d -->
+
+Duplikat entfernt, `stage_cap_policy` korrekt typisiert (Include-Reihenfolge in `EvoODE.jl`
+angepasst), Report an Daten gebunden. Befunde 1 und 3 erledigt.
+
+**Bei Befund 2 hat Codex bewusst von meiner Vorgabe abgewichen — und die Abweichung ist besser.**
+Ich hatte spezifiziert: Kohaerenzregel raus, in beiden gecappten Varianten. Umgesetzt wurde
+stattdessen eine **cap-bewusste** Regel: eine Variable, deren *Cap* sie dauerhaft unter die
+Term-Stage druckt, blockiert den Kopplungsterm nicht mehr; eine, die die Stage bloss noch nicht
+*erreicht* hat, weiterhin schon. Das ist genau die Unterscheidung, aus der ich meine Entscheidung
+begruendet hatte — nur pro Variable statt pauschal pro Variante.
+
+Die Inertness-Tabelle im Codex-Report prueft nur die fuenf Regressionssysteme, die alle uniforme
+Caps haben und wo die Regel ohnehin wirkungslos ist. Der interessante Fall blieb dort ungetestet;
+selbst nachgeholt:
+
+| Konfiguration | coherence=true | coherence=false |
+|---|---|---|
+| Caps `[nothing,2,2]`, eq_stages `[3,2,2]` (v2.2-Form) | `u1*u2, u1*u3, u2*u3` verfuegbar | identisch |
+| eq_stages `[3,2,2]` ohne Caps (v3-Promotionsform) | alle Kopplungsterme blockiert | verfuegbar |
+
+Das Flag ist in der v2.2-gecappten Variante also **wirkungslos** — die cap-bewusste Ausnahme
+erledigt die Arbeit bereits, das `coupling_coherence = false` in `evogrow.jl` ist redundant. In v3
+wirkt es und erhaelt die Regel dort, wo sie motiviert war. Sweep ueber vier Cap-Vektoren x fuenf
+Stages: kein Unterschied in der v2.2-Form. (Die boolesche Sammelvariable im Pruefskript stand wegen
+Julias Soft-Scope-Regel im falschen Scope; der Beleg ist das Ausbleiben der Differenzmeldungen,
+nicht ihr Rueckgabewert.)
+
+Konsequenz fuer den Vergleich: beide gecappten Arme haben identische Verfuegbarkeitssemantik,
+soweit die Stage-Unterschiede aus Caps stammen. Sie unterscheiden sich nur noch dort, wo v3s
+*Promotion* die Unterschiede erzeugt — das ist die experimentelle Variable selbst, kein Confounder.
+
+Offener Stolperstein fuer spaeter: das asymmetrische Literal (`false` in `evogrow.jl`, `true` in
+`evogrow_v3.jl`) ist heute harmlos, wuerde aber tragend, sobald v2.2 eine andere Quelle
+nicht-uniformer Stages als den Cap bekaeme.
+
 ### WP-P3.1 — Klassifikation aller 63 Systeme, geprueft
 
 <!-- fab01fe -->
