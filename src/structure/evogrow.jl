@@ -56,7 +56,7 @@ Base.@kwdef struct EvoGrow <: AbstractStructureSearch
     screening_optimizer::Union{Nothing, AbstractOptimizer} = nothing
     level_callback::Union{Nothing, Function} = nothing
     stage_caps::Union{Nothing,Vector{Union{Nothing,Int}}} = nothing
-    stage_cap_policy::Any = nothing
+    stage_cap_policy::Union{Nothing,LookAheadStageCapPolicy} = nothing
 end
 
 """
@@ -150,92 +150,6 @@ function _effective_eq_stages(current_stage::Int, max_stage::Int, stage_caps, di
         min(current_stage, cap === nothing ? max_stage : Int(cap))
         for cap in stage_caps
     ]
-end
-
-function _equation_capped_terms(
-    basis::StagedPolynomialBasis,
-    eq_stages::Vector{Int}
-)
-    dim = length(eq_stages)
-    allowed_by_eq = [Int[] for _ in 1:dim]
-    current_by_eq = [Int[] for _ in 1:dim]
-
-    for k in 1:dim
-        for term_idx in 1:basis_num_terms(basis)
-            term_stage = _evogrow_v3_term_stage(basis, term_idx)
-            if term_stage <= eq_stages[k]
-                push!(allowed_by_eq[k], term_idx)
-                if term_stage == eq_stages[k]
-                    push!(current_by_eq[k], term_idx)
-                end
-            end
-        end
-    end
-
-    return allowed_by_eq, current_by_eq
-end
-
-function _equation_capped_terms(
-    basis::AbstractBasis,
-    eq_stages::Vector{Int}
-)
-    terms = collect(1:basis_num_terms(basis))
-    return [copy(terms) for _ in eq_stages], [copy(terms) for _ in eq_stages]
-end
-
-function _expand_with_stage_caps(
-    ind::Individual,
-    dim::Int,
-    basis::AbstractBasis,
-    eq_stages::Vector{Int},
-    allowed_terms::Vector{Int},
-    current_stage_terms::Vector{Int},
-    usage::StageUsagePolicy;
-    n_children::Int,
-    max_terms_per_eq::Int
-)
-    if _evogrow_v3_uniform_stages(eq_stages)
-        return _expand_with_usage_policy(
-            ind,
-            dim,
-            allowed_terms,
-            current_stage_terms,
-            usage;
-            n_children = n_children,
-            max_terms_per_eq = max_terms_per_eq
-        )
-    end
-
-    allowed_by_eq, current_by_eq = _equation_capped_terms(basis, eq_stages)
-
-    if usage.mode == :passive
-        return _expand_equation_aware_passive(
-            ind,
-            dim,
-            allowed_by_eq;
-            n_children = n_children,
-            max_terms_per_eq = max_terms_per_eq
-        )
-    elseif usage.mode == :hard
-        return _expand_equation_aware_hard(
-            ind,
-            dim,
-            allowed_by_eq,
-            current_by_eq;
-            n_children = n_children,
-            max_terms_per_eq = max_terms_per_eq
-        )
-    else
-        return _expand_equation_aware_soft(
-            ind,
-            dim,
-            allowed_by_eq,
-            current_by_eq;
-            n_children = n_children,
-            max_terms_per_eq = max_terms_per_eq,
-            bias_prob = usage.new_term_bias_prob
-        )
-    end
 end
 
 """
@@ -793,7 +707,7 @@ function search_structure(strategy::EvoGrow,
         for ind in pop
             append!(
                 children,
-                _expand_with_stage_caps(
+                _expand_equation_aware_with_usage_policy(
                     ind,
                     dim,
                     basis,
@@ -802,7 +716,9 @@ function search_structure(strategy::EvoGrow,
                     current_stage_terms,
                     strategy.usage;
                     n_children = strategy.children_per_parent,
-                    max_terms_per_eq = strategy.max_terms_per_eq
+                    max_terms_per_eq = strategy.max_terms_per_eq,
+                    stage_caps = stage_caps,
+                    coupling_coherence = false
                 )
             )
         end

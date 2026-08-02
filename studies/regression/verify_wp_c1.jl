@@ -7,7 +7,16 @@ include(joinpath(@__DIR__, "run_regression.jl"))
 
 const WP_C1_OUTPUT_DIR = joinpath(@__DIR__, "..", "..", "outputs", "studies", "regression", "wp_c1")
 const WP_C1_RECORDS_PATH = joinpath(WP_C1_OUTPUT_DIR, "verification_records.json")
-const WP_C1_REPORT_PATH = joinpath(@__DIR__, "..", "..", "codex", "REPORT_WP_C1.md")
+const WP_C1_REPORT_PATH = joinpath(@__DIR__, "..", "..", "codex", "REPORT_WP_C1b.md")
+
+const EXPECTED_FINGERPRINT = "df5db7763bcd2449"
+const EXPECTED_CAPS = Dict(
+    "3" => Union{Nothing,Int}[2],
+    "11" => Union{Nothing,Int}[4],
+    "26" => Union{Nothing,Int}[3, 3],
+    "31" => Union{Nothing,Int}[3, 3],
+    "63" => Union{Nothing,Int}[nothing, nothing, nothing, nothing],
+)
 
 function _system(system_id::Int)
     matches = [system for system in REGRESSION_SYSTEMS if Int(system[:system_id]) == system_id]
@@ -136,22 +145,100 @@ function _same_values(lhs, rhs)
            lhs["support_terms"] == rhs["support_terms"]
 end
 
-function _write_report(path::String, fingerprint::String, baseline, disabled, smoke, caps)
+function _expected_smoke_ok(smoke)
+    return get(smoke, "stage_caps", nothing) == EXPECTED_CAPS["3"] &&
+           smoke["final_stage"] == 2 &&
+           smoke["stage_overshoot"] == 0 &&
+           smoke["loss"] == 1.3476451847014113e-08 &&
+           smoke["support_terms"] == [["u1", "u1^2"]] &&
+           smoke["pruned_match"] == true
+end
+
+function _expected_disabled_ok(baseline, disabled)
+    return _same_values(baseline, disabled) &&
+           disabled["loss"] == 4.402192340718147e-15 &&
+           disabled["support_terms"] == [["u1", "u1^2", "u1^3"]]
+end
+
+function _cap_comparisons(caps)
+    rows = []
+    for key in sort(collect(keys(EXPECTED_CAPS)); by = x -> parse(Int, x))
+        observed = caps[key]
+        expected = EXPECTED_CAPS[key]
+        push!(rows, (system = key, expected = expected, observed = observed, match = observed == expected))
+    end
+    return rows
+end
+
+function _term_names_by_eq(terms_by_eq, basis)
+    return [[basis_term_name(basis, idx) for idx in terms] for terms in terms_by_eq]
+end
+
+function _coupling_inert_rows(caps)
+    rows = []
+    for key in sort(collect(keys(caps)); by = x -> parse(Int, x))
+        system_id = parse(Int, key)
+        system = _system(system_id)
+        dim = Int(system[:dim])
+        basis = default_staged_polynomial_basis(dim)
+        basis_max_stage = EvoODE._max_stage(basis)
+        system_caps = caps[key]
+        effective_max = maximum(cap === nothing ? basis_max_stage : Int(cap) for cap in system_caps)
+
+        identical = true
+        details = String[]
+        for stage in 1:effective_max
+            eq_stages = [
+                min(stage, cap === nothing ? basis_max_stage : Int(cap))
+                for cap in system_caps
+            ]
+            allowed_with, current_with = EvoODE._evogrow_v3_equation_terms(
+                basis,
+                eq_stages;
+                stage_caps = system_caps,
+                coupling_coherence = true,
+            )
+            allowed_without, current_without = EvoODE._evogrow_v3_equation_terms(
+                basis,
+                eq_stages;
+                stage_caps = system_caps,
+                coupling_coherence = false,
+            )
+            stage_same = allowed_with == allowed_without && current_with == current_without
+            identical &= stage_same
+            push!(
+                details,
+                "stage $(stage): eq_stages=$(eq_stages), same=$(stage_same), allowed=$(_term_names_by_eq(allowed_without, basis))",
+            )
+        end
+        push!(rows, (system = key, caps = system_caps, identical = identical, details = details))
+    end
+    return rows
+end
+
+function _write_report(path::String, fingerprint::String, baseline, disabled, smoke, caps, coupling_rows)
+    cap_rows = _cap_comparisons(caps)
+    fingerprint_ok = fingerprint == EXPECTED_FINGERPRINT
+    disabled_ok = _expected_disabled_ok(baseline, disabled)
+    smoke_ok = _expected_smoke_ok(smoke)
+    caps_ok = all(row.match for row in cap_rows)
+    coupling_ok = all(row.identical for row in coupling_rows)
+
     lines = String[
-        "# WP-C1 Report",
+        "# WP-C1b Report",
         "",
         "## What Changed",
         "",
-        "- Added regression variant `evogrow_v2_2_stage_capped`.",
-        "- The variant uses the existing v2.2 `:stage_local` promotion and `:hard` usage path.",
-        "- The look-ahead cap is applied only as a per-equation term restriction: equation `k` sees terms with stage `<= min(global_stage, cap[k])`; `nothing` means the basis maximum.",
-        "- The effective global promotion maximum is the maximum cap, with `nothing` counted as the basis maximum.",
-        "- `estimate_stage_caps`, `EvoGrowV3`, and `EvoGrowStageCapped` were not changed.",
+        "- Replaced the duplicated v2.2 stage-cap child-generation copy with the shared `_expand_equation_aware_with_usage_policy` implementation.",
+        "- Added explicit child-generation semantics for cap-derived limits: cap-limited referenced variables do not block coupling terms in another equation.",
+        "- Kept v3's default promotion-driven coupling coherence for uncapped/non-cap-derived stage differences.",
+        "- `estimate_stage_caps`, `FINGERPRINT_VARIANT_LABELS`, and the `lookahead_stage_cap` fingerprint payload were not changed.",
         "",
         "## Fingerprint",
         "",
         "- `config_fingerprint()` = `$(fingerprint)`.",
-        "- `FINGERPRINT_VARIANT_LABELS` and the `lookahead_stage_cap` payload were left unchanged. The payload still names only `evogrow_v3_stage_capped`, which is now incomplete but intentionally frozen.",
+        "- Expected fingerprint = `$(EXPECTED_FINGERPRINT)`.",
+        "- Match: `$(fingerprint_ok)`.",
         "",
         "## Cap-Disabled Equivalence",
         "",
@@ -165,6 +252,7 @@ function _write_report(path::String, fingerprint::String, baseline, disabled, sm
         "| support_terms | $(_support_terms(baseline)) | $(_support_terms(disabled)) |",
         "",
         "Bit-identical comparison on reported values: `$(_same_values(baseline, disabled))`.",
+        "Expected-value check: `$(disabled_ok)`.",
         "",
         "## Cap-Enabled Smoke Test",
         "",
@@ -182,24 +270,60 @@ function _write_report(path::String, fingerprint::String, baseline, disabled, sm
         "| pruned_match | $(smoke["pruned_match"]) |",
         "| support_terms | $(_support_terms(smoke)) |",
         "",
+        "Expected-value check: `$(smoke_ok)`.",
+        "",
         "## Confirmed Cap Values",
         "",
-        "| system | caps |",
-        "| --- | --- |",
+        "| system | expected | observed | match |",
+        "| --- | --- | --- | --- |",
     ]
 
-    for key in sort(collect(keys(caps)); by = x -> parse(Int, x))
-        push!(lines, "| $(key) | $(caps[key]) |")
+    for row in cap_rows
+        push!(lines, "| $(row.system) | $(row.expected) | $(row.observed) | $(row.match) |")
     end
 
     append!(
         lines,
         [
             "",
-            "## Surprises",
+            "Cap comparison check: `$(caps_ok)`.",
             "",
-            "- No parser or cap-estimator disagreement surfaced.",
-            "- The fingerprint payload's cap variant label is now incomplete by design; changing it would change the frozen hash.",
+            "## Coupling-Term Rule Inertness",
+            "",
+            "| system | caps | coherent vs cap-derived availability identical |",
+            "| --- | --- | --- |",
+        ],
+    )
+
+    for row in coupling_rows
+        push!(lines, "| $(row.system) | $(row.caps) | $(row.identical) |")
+    end
+
+    append!(
+        lines,
+        [
+            "",
+            "Coupling-inertness check: `$(coupling_ok)`.",
+            "",
+            "### Coupling Details",
+            "",
+        ],
+    )
+
+    for row in coupling_rows
+        push!(lines, "System $(row.system):")
+        for detail in row.details
+            push!(lines, "- $(detail)")
+        end
+        push!(lines, "")
+    end
+
+    append!(
+        lines,
+        [
+            "## Overall",
+            "",
+            "- All checks passed: `$(fingerprint_ok && disabled_ok && smoke_ok && caps_ok && coupling_ok)`.",
             "",
         ],
     )
@@ -242,6 +366,7 @@ function main()
         provenance,
     )
     caps = _confirmed_caps()
+    coupling_rows = _coupling_inert_rows(caps)
 
     payload = Dict(
         "fingerprint" => fingerprint,
@@ -249,13 +374,14 @@ function main()
         "cap_disabled_variant" => _record_summary(disabled),
         "cap_enabled_smoke" => _record_summary(smoke),
         "confirmed_caps" => caps,
+        "coupling_inertness" => coupling_rows,
     )
 
     open(WP_C1_RECORDS_PATH, "w") do io
         JSON3.pretty(io, payload)
     end
 
-    _write_report(WP_C1_REPORT_PATH, fingerprint, baseline, disabled, smoke, caps)
+    _write_report(WP_C1_REPORT_PATH, fingerprint, baseline, disabled, smoke, caps, coupling_rows)
     println("Wrote $(WP_C1_RECORDS_PATH)")
     println("Wrote $(WP_C1_REPORT_PATH)")
 end

@@ -307,7 +307,9 @@ function search_structure(strategy::EvoGrowV3,
                     current_stage_terms,
                     strategy.usage;
                     n_children = strategy.children_per_parent,
-                    max_terms_per_eq = strategy.max_terms_per_eq
+                    max_terms_per_eq = strategy.max_terms_per_eq,
+                    stage_caps = stage_caps,
+                    coupling_coherence = true
                 )
             )
         end

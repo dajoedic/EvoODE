@@ -26,7 +26,9 @@ function _evogrow_v3_term_available(
     basis::StagedPolynomialBasis,
     eq_stages::Vector{Int},
     eq_idx::Int,
-    term_idx::Int
+    term_idx::Int;
+    stage_caps = nothing,
+    coupling_coherence::Bool = true
 )
     stage = _evogrow_v3_term_stage(basis, term_idx)
     if stage > eq_stages[eq_idx]
@@ -34,16 +36,27 @@ function _evogrow_v3_term_available(
     end
 
     vars = _evogrow_v3_term_vars(basis, term_idx)
-    if length(vars) < 2
+    if !coupling_coherence || length(vars) < 2
         return true
     end
 
-    return minimum(eq_stages[v] for v in vars) >= stage
+    for v in vars
+        if stage_caps !== nothing && stage_caps[v] !== nothing && Int(stage_caps[v]) < stage
+            continue
+        end
+        if eq_stages[v] < stage
+            return false
+        end
+    end
+
+    return true
 end
 
 function _evogrow_v3_equation_terms(
     basis::StagedPolynomialBasis,
-    eq_stages::Vector{Int}
+    eq_stages::Vector{Int};
+    stage_caps = nothing,
+    coupling_coherence::Bool = true
 )
     dim = length(eq_stages)
     allowed_by_eq = [Int[] for _ in 1:dim]
@@ -51,7 +64,14 @@ function _evogrow_v3_equation_terms(
 
     for k in 1:dim
         for term_idx in 1:basis_num_terms(basis)
-            if _evogrow_v3_term_available(basis, eq_stages, k, term_idx)
+            if _evogrow_v3_term_available(
+                basis,
+                eq_stages,
+                k,
+                term_idx;
+                stage_caps = stage_caps,
+                coupling_coherence = coupling_coherence,
+            )
                 push!(allowed_by_eq[k], term_idx)
                 if _evogrow_v3_term_stage(basis, term_idx) == eq_stages[k]
                     push!(current_by_eq[k], term_idx)
@@ -65,7 +85,9 @@ end
 
 function _evogrow_v3_equation_terms(
     basis::AbstractBasis,
-    eq_stages::Vector{Int}
+    eq_stages::Vector{Int};
+    stage_caps = nothing,
+    coupling_coherence::Bool = true
 )
     terms = collect(1:basis_num_terms(basis))
     return [copy(terms) for _ in eq_stages], [copy(terms) for _ in eq_stages]
@@ -225,7 +247,9 @@ function _expand_equation_aware_with_usage_policy(
     current_stage_terms::Vector{Int},
     usage::StageUsagePolicy;
     n_children::Int,
-    max_terms_per_eq::Int
+    max_terms_per_eq::Int,
+    stage_caps = nothing,
+    coupling_coherence::Bool = true
 )
     if _evogrow_v3_uniform_stages(eq_stages)
         return _expand_with_usage_policy(
@@ -239,7 +263,12 @@ function _expand_equation_aware_with_usage_policy(
         )
     end
 
-    allowed_by_eq, current_by_eq = _evogrow_v3_equation_terms(basis, eq_stages)
+    allowed_by_eq, current_by_eq = _evogrow_v3_equation_terms(
+        basis,
+        eq_stages;
+        stage_caps = stage_caps,
+        coupling_coherence = coupling_coherence,
+    )
 
     if usage.mode == :passive
         return _expand_equation_aware_passive(
