@@ -1,98 +1,116 @@
 # CURRENT TASK
 
-**Language: Julia**
+**Language: Python**
 
-## WP-L5d — Close out the stage cap: provenance, tests, sensitivity, report
+## WP-P3.1 — ODEBench system classification (Phase 3)
 
-### 0. Status
+### 1. Purpose
 
-The cap rule is functionally done and independently verified:
+Phase 3 of `PAPER_1.md` requires all 63 ODEBench systems to be classified into **exact**
+(representable in the staged basis) and **surrogate** (not representable), because the two
+categories must never be mixed into a single structure-correctness metric. Today only the
+ten benchmark systems in `benchmarks/benchmark_evogrow.jl` carry that information, and it
+was entered by hand.
 
-| System | per-equation truth | cap | |
-|---|---|---|---|
-| 3 | [2] | [2] | correct |
-| 11 | [4] | [4] | correct |
-| 26 | [3, 3] | [3, 3] | correct |
-| 31 | [3, 3] | [3, 3] | correct |
-| 63 | [3, 3, 1, 1] | all `nothing` | safe |
-| 54 | [1, 3, 3] | [`nothing`, 2, 2] | 2 violations |
+This work package derives the classification for all 63 systems from
+`benchmarks/data/strogatz_extended.json` and writes it as a committed analysis artifact.
 
-Suite-wide: 2 violations, 8 of 16 equations capped, 18 stages saved.
+It is a data-analysis task with no effect on the algorithm. Nothing under `src/`,
+`studies/` or `benchmarks/` may be modified.
 
-**No change to the cap rule is in scope here.** If a test uncovers a genuine rule defect,
-report it with the numbers and stop rather than fixing it silently — the rule is currently
-verified and a quiet change would invalidate that.
+### 2. Input
 
-Keep the working practice from WP-L5c: produce the acceptance table first and again at the
-end, and back any reported stop with the actual output that justifies it.
+`benchmarks/data/strogatz_extended.json`, a list of 63 entries. The relevant fields:
 
-### 1. Fingerprint — the most important item
+- `id`, `dim`, `eq_description`
+- `substituted` — the equations with constants already substituted, as a list of initial-
+  condition sets, each a list of `dim` expression strings, e.g.
+  `"0.303030303030303 - 0.360750360750361*x_0"`. Use the **first** set; the expressions are
+  identical across sets apart from the initial condition, but verify that assumption and
+  report if it does not hold.
+- `init`, `source` for reference.
 
-The cap policy in `run_regression.jl` is a hardcoded tuple containing `estimator`,
-`weighting`, `tau_rel`, `tau_abs`, `cond_cap` and `excitation_floor`. It does **not**
-contain `aggregation` or `lookahead_horizon`. Three semantic changes to the cap have now
-passed without moving `3f9be6d36c4043de`, so records produced under materially different
-rules would be pooled as one configuration.
+Variables are named `x_0 … x_{dim-1}`. The project basis uses `u1 … u_dim`, so the index
+shift by one must be handled explicitly and stated in the output.
 
-Add both fields, plus any other policy parameter that affects behaviour, and report the new
-fingerprint value.
+Scale of the problem, from a scan of the file: 63 systems, 117 equations, dimensions
+1/2/3/4 with counts 23/28/10/2. Operators appearing across the equations: `**` 42 times,
+`sin` 16, `cos` 8, `exp` 6, `log` once, `cot` once, `Abs` once.
 
-**Trap to avoid, and it is a real one.** A decisive run of `evogrow_v3_stage_capped` on
-System 26 seed 42 is in flight. It computed its fingerprint at process start and will write
-its record with the old value `3f9be6d36c4043de`. That is correct and must stay that way.
-But `studies/gate2_do_or_die/readout.jl` runs afterwards from updated code: if it locates
-the record by recomputing the current fingerprint, it will silently fail to find a result
-that exists.
+### 3. Reference basis
 
-Check how the readout selects records. It must be able to find the in-flight record after
-the fingerprint changes — by explicit selection or an explicit fingerprint argument, not by
-implicitly recomputing today's value. If it currently recomputes, fix that and say so.
-Verify it against the existing history records rather than by reading the code alone.
+`default_staged_polynomial_basis(dim)` in `src/basis/staged_polynomial.jl`, five stages:
 
-### 2. Tests
+1. linear `u_i`
+2. self-quadratic `u_i^2`
+3. cross terms `u_i*u_j`, `i < j`
+4. self-cubic `u_i^3`
+5. trigonometric `sin(u_i)`, `cos(u_i)`
 
-- Floor semantics in both directions: a residual that **fell** to the floor after an
-  observed gain yields a cap at that stage; one that was **already** at the floor before any
-  gain yields no cap.
-- The horizon crosses a useless intermediate stage; an empty stage does not consume horizon.
-- No cap when the successor stage is not evaluable.
-- The WP-L5c relaxation: when the successor residual already sits at the floor, the absolute
-  threshold `tau_abs` no longer gates the gain while `delta > floor` and the relative
-  threshold still do.
-- The WP-L4 invariants: the cap never forces a promotion, uncapped equations are unaffected,
-  a cap below the current stage is handled conservatively without removing terms, and
-  `EvoGrowV3` is bit-identical with the cap disabled.
+Note what the basis does **not** contain, because these are the decisive gaps: there is no
+constant term, no `exp`/`log`/`cot`/`Abs`, no powers other than 2 and 3, no trigonometric
+argument other than a bare variable, and no mixed cubic such as `u_i^2*u_j`.
 
-### 3. Sensitivity
+### 4. Method
 
-Report the six systems above under each aggregation mode and under at least two values of
-`lookahead_horizon` besides the default. Give safety violations, capped equations and stages
-saved for each combination, so the defaults are visibly a choice and not an assumption.
+Parse each equation symbolically rather than by string matching — `sympy` is the natural
+tool. It is not currently in the analysis dependencies; add it to
+`analysis/requirements.txt` and say so in the report.
 
-### 4. Report under `docs/`
+For each equation: expand the expression into additive terms, and classify every term as
+either a basis term (recording which one and its stage) or out-of-basis (recording why).
+Derive:
 
-State plainly, with numbers:
+- per equation: the set of matched basis terms, the list of unmatched terms with a reason,
+  and `expected_eq_stage` = the maximum stage over the matched terms if the equation is
+  fully representable;
+- per system: `representability` = `exact` if **every** term of **every** equation maps to
+  a basis term, otherwise `surrogate`; `expected_stage` = maximum over equations for exact
+  systems.
 
-- the acceptance table and the suite-wide safety and utility counts;
-- the new fingerprint, and that pre-repair and post-repair records must not be pooled;
-- the sensitivity table;
-- **the two System 54 violations as a known resolution limit, not an open bug.** These are
-  the same equations WP-L3 identified as undershoots: at benchmark sampling the residual on
-  System 54 drops below the noise floor already at stage 2, so the stage-3 cliff lies under
-  the resolution of the derivative estimate, and the WP-L3 density sweep shows it becoming
-  visible from twice the sampling density. This is a data limit, not a rule limit, and it
-  gives the rule a closed characterisation: safe wherever the derivative estimate resolves
-  the structure, unsafe exactly where it does not — and that is readable in advance from the
-  noise floor;
-- **the open caveat on the System 31 fix:** its diagnosis timed out, so the repair was made
-  by inference rather than from instrumented numbers. The result is verified and the change
-  acts in the safe direction, but the cause is unconfirmed and this is the first place to
-  look if the rule surprises later.
+Use a controlled vocabulary for the gap reason — for example constant offset, unsupported
+function, unsupported power, unsupported trigonometric argument, mixed higher-order term —
+and report the frequency of each. Do not invent a free-text reason per system.
 
-### 5. Scope and execution
+### 5. Validation against the hand-entered ground truth — mandatory
 
-**Do not run the decisive cell — it is running externally.** Nothing may be written to
-`studies/regression/history.jsonl`. Verification is limited to cap computation, unit tests,
-the suite-wide check, readout record selection against existing history, and a cheap smoke
-run on a small system. If anything exceeds a few minutes, stop and report with the output
-that justifies the stop.
+`benchmarks/benchmark_evogrow.jl` already carries `representability`, `expected_stage` and
+`expected_terms` for ten systems (ids 2, 3, 11, 23, 24, 26, 31, 37, 54, 63), entered by
+hand and used in every result so far. Compare the derived classification against those ten
+and report each agreement and disagreement individually.
+
+**Any disagreement is a finding, not a nuisance to be smoothed over.** It means either the
+parser is wrong or a hand-entered value that current results depend on is wrong. Report it
+prominently and do not adjust the parser to force agreement — investigate and state which
+side is wrong.
+
+Expected agreements to check specifically: system 23 is surrogate because of a constant
+offset, system 37 is surrogate because of the mixed cubic `u1^2*u2`, and systems 2, 3, 11,
+24, 26, 31, 54, 63 are exact with expected stages 1, 2, 4, 1, 3, 3, 3, 3.
+
+### 6. Output
+
+`analysis/data/paper1_phaseB_v1/system_classification.csv`, one row per **equation**, with
+the system-level fields repeated, carrying at minimum: system id, dimension, description,
+equation index, the equation string, representability of the system, expected stage of the
+system, expected stage of the equation, matched basis terms, unmatched terms, gap reason,
+and the source field.
+
+Plus a short report under `docs/` giving: the exact/surrogate split with counts, the
+distribution of expected stages over the exact systems, the frequency of each gap reason,
+the dimension breakdown of both categories, and the full validation table against the ten
+hand-entered systems.
+
+Follow `analysis/CONVENTIONS.md` for naming and structure.
+
+### 7. Why the split matters, so the output is fit for purpose
+
+The exact systems determine how many systems Paper 1 can even report structural recovery
+on — if that number is small, it changes what the paper can claim, so the count is a
+result in itself and must be stated plainly rather than buried in a CSV. The surrogate
+systems are evaluated only on stage reached, target-term usage and fit quality.
+
+### 8. Execution
+
+Cheap: parsing 117 expressions, no simulation. Run it and report the actual numbers. If it
+takes more than a few minutes, stop and report.

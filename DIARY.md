@@ -6,6 +6,53 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ## 2026-08-02
 
+### Phase 3 begonnen — Protokoll-Audit deckt eine Gitter-Fehlausrichtung auf
+
+`docs/paper1_odebench_protocol_alignment.md` angelegt. Die EvoODE-Seite ist gegen den Datensatz
+verifiziert, die Spalten der publizierten Quellen sind ausdruecklich als **ungeprueft** markiert —
+ohne die Papers waere jede Eintragung dort erfunden.
+
+**Verifiziert und unproblematisch:** alle zehn `u0` aus der `BENCHMARKS`-Tabelle reproduzieren exakt
+den *ersten* Anfangsbedingungssatz des Datensatzes. Der Datensatz liefert allerdings **zwei** Saetze
+pro System, wir nutzen nur einen — publizierte Zahlen ueber beide decken also eine groessere
+Auswertungsmenge ab.
+
+**Verifiziert und problematisch: das Zeitgitter passt bei keinem einzigen System.** Der Datensatz
+liefert durchgaengig **512 Punkte ueber t ∈ [0, 10]**; EvoODE nutzt pro System eigene `tspan`/`T`
+zwischen 10 und 20 Punkten pro Zeiteinheit, also **2,6- bis 5,1-fach duenner**, und teils deutlich
+laengere Horizonte (System 63 bis t = 30 gegen t = 10). System 26 trifft immerhin die Zeitspanne,
+aber nicht die Abtastung.
+
+**Querverbindung, die das interessant macht:** WP-L3 hat gemessen, dass die Stage-3-Klippe auf
+System 54 bei unserer Dichte nicht aufloesbar ist und ab etwa doppelter Dichte erscheint. Das
+Datensatz-Gitter ist dort **2,56-fach dichter** (51,2 gegen 20 Punkte pro Zeiteinheit). Der Wechsel
+auf das Datensatz-Gitter wuerde also plausibel eine der beiden verbliebenen Cap-Verletzungen
+beseitigen. Vorhersage aus gemessenem Verhalten, nicht Ergebnis — ungelaufen.
+
+Daraus die Entscheidung, die **vor** der Phase-B-Generierung faellt, weil sie die Trajektorien und
+damit alles Nachgelagerte bestimmt: Datensatz-Gitter uebernehmen (Vergleichbarkeit plausibel,
+doppelte Laufzahl durch zwei IC-Saetze, kein bestehendes Ergebnis traegt ueber, Baseline neu) oder
+beim eigenen Gitter bleiben (bestehende Ergebnisse gelten, publizierte Zahlen bleiben rein
+kontextuell und das muss im Paper konsistent so stehen). Die Systemklassifikation (WP-P3.1) ist
+gitterunabhaengig und kann davor laufen.
+
+### WP-P3.1 beauftragt — Klassifikation aller 63 Systeme
+
+Python, im Analyse-Pipeline-Teil, `sympy` als neue Abhaengigkeit. Grundlage ist das Feld
+`substituted` im Datensatz (Gleichungen mit eingesetzten Konstanten). Der Umfang laut Vorab-Scan:
+63 Systeme, 117 Gleichungen, Dimensionen 1/2/3/4 mit 23/28/10/2. Operatoren: `**` 42×, `sin` 16,
+`cos` 8, `exp` 6, `log`, `cot`, `Abs` je einmal — dazu additive Konstanten, fuer die die Basis
+ueberhaupt keinen Term hat. Das ist symbolische Ausdrucksanalyse, kein String-Matching.
+
+Pflichtbestandteil der Spec ist die **Validierung gegen die zehn handgepflegten Systeme** aus
+`benchmark_evogrow.jl`, mit der ausdruecklichen Auflage, jede Abweichung als Befund zu behandeln und
+den Parser nicht auf Uebereinstimmung zu tunen: eine Abweichung hiesse entweder Parser falsch oder
+ein handgepflegter Wert falsch, auf dem saemtliche bisherigen Ergebnisse beruhen.
+
+Der Grund, warum die Zahl selbst zaehlt und nicht nur die CSV: die Menge der exakten Systeme
+bestimmt, auf wie vielen Systemen Paper 1 ueberhaupt strukturelle Wiederfindung berichten kann.
+Faellt sie klein aus, aendert das, was das Paper behaupten kann.
+
 ### Bestaetigungszellen — Overshoot repliziert, aber „zum Nulltarif" haelt nicht
 
 Vier gecappte Zellen parallel gefahren (26/123, 31/42, 31/123, 31/7), History gemerged (25 → 29).
