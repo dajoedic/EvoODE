@@ -8,6 +8,8 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ### v3 uncapped auf System 31 — Cap-Effekt und v3-Effekt sind jetzt getrennt
 
+<!-- b6fe895 -->
+
 Drei Laeufe (31, Seeds 42/123/7, `evogrow_v3`, Fingerprint `df5db7763bcd2449`, `git_hash c6692a5`,
 `git_dirty=false`, `total_optimizer_safety_limit_hits = 0`). Damit existiert erstmals ein
 v3-Referenzarm auf System 31, und die offene Zuordnungsfrage aus den Bestaetigungszellen ist
