@@ -6,6 +6,69 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ## 2026-08-02
 
+### WP-C1 — Stage-Cap auf dem v2.2-Substrat, verifiziert
+
+<!-- d3fce98 -->
+
+Neue Variante `evogrow_v2_2_stage_capped`: der Look-Ahead-Cap wirkt als Term-Restriktion pro
+Gleichung, die Stage-Progression bleibt die globale stage-lokale Plateau-Regel von v2.2. Das
+`r_k`-Signal kommt nicht vor — es ist genau das, was hier entfernt wird.
+
+Motivation aus den System-31-Zellen: der Cap braucht v3 nicht. `estimate_stage_caps` liest nur
+Trajektorie und Basis, die Caps sind ein vor der Suche berechneter Vektor. Die Kopplung an v3
+bestand nur, weil der Cap in dessen Promotionspfad verdrahtet worden war.
+
+Verifikation (von mir gefahren, nachdem der Codex-Lauf ins Timeout lief):
+
+| Pruefung | Ergebnis |
+|---|---|
+| `config_fingerprint()` | `df5db7763bcd2449`, unveraendert |
+| Cap deaktiviert, Sys 11/42 | Loss bit-identisch `4.402192340718147e-15`, Stage 4, Support `{u1, u1², u1³}`, `pruned_match=true` — identisch zu `evogrow_v2_2_stage_local` |
+| Cap aktiv, Sys 3/42 | Cap `[2]`, Stage 2, Overshoot 0, Loss `1.3476e-8`, Support `{u1, u1²}`, `pruned_match=true` |
+| Caps | 3→`[2]`, 11→`[4]`, 26→`[3,3]`, 31→`[3,3]`, 63→alles `nothing` — deckungsgleich mit WP-L5d |
+
+Die Bit-Identitaet bei deaktiviertem Cap ist **strukturell** garantiert, nicht nur empirisch: ohne
+Caps sind die `eq_stages` immer uniform, damit wird immer der alte Pfad genommen. Der
+Laufzeitunterschied im Aequivalenztest (9,09 s gegen 2,08 s) ist JIT-Warmup, kein Cap-Effekt.
+
+**Fingerprint-Falle, die vorab entschaerft wurde:** `FINGERPRINT_VARIANT_LABELS` geht in den Hash
+ein. Ein Eintrag der neuen Variante haette `df5db7763bcd2449` gewechselt und alle 32
+History-Records unvergleichbar gemacht — also genau das zerstoert, wofuer die Laeufe da sind. Da
+Laeufe unabhaengig sind, ist das Weglassen sachlich korrekt. Der Payload nennt jetzt nur
+`evogrow_v3_stage_capped` und ist damit unvollstaendig; das bleibt bewusst so stehen.
+
+### WP-C1b beauftragt — drei Reviewbefunde
+
+<!-- bb61b3a -->
+
+1. **Duplikation.** `_expand_with_stage_caps` ist eine fast wortgleiche Kopie von
+   `_expand_equation_aware_with_usage_policy`, `_equation_capped_terms` eine von
+   `_evogrow_v3_equation_terms`. Zwei Kopien der Kindgenerierungs-Weiche, benutzt von genau den
+   beiden Varianten, die gegeneinander gestellt werden.
+2. **Stille Semantikaenderung bei Kopplungstermen.** Der Originalpfad filtert ueber
+   `_evogrow_v3_term_available`, das eine Zusatzregel enthaelt: ein Term mit mehreren Variablen ist
+   fuer Gleichung `k` nur verfuegbar, wenn *alle* referenzierten Variablen die Stage erreicht haben.
+   Die Kopie laesst die Klausel weg.
+
+   Entscheidung: **Kohaerenzregel raus, fuer cap-abgeleitete Grenzen, in beiden Varianten.** Sie
+   wurde fuer v3 geschrieben, wo `eq_stages` den *Fortschritt* abbildet und eine niedrige Stage
+   voruebergehend ist. Ein Cap ist eine *permanente, aus den Daten abgeleitete Obergrenze*. Ist
+   Gleichung 2 dauerhaft auf 2 gedeckelt, wird `u1*u2` fuer Gleichung 1 nie verfuegbar, auch wenn
+   deren Cap 3 ist — der Cap wird fuer alle Kopplungsterme zur globalen Schranke und die Wahrheit
+   unerreichbar. Derselbe Fehlermodus wie WP-L4 auf System 63, und dasselbe Prinzip: eine
+   Restriktion muss auf positiver Evidenz ueber die Gleichung beruhen, die sie einschraenkt.
+
+   **Die vier bereits gefahrenen gecappten Zellen sind faktisch nicht betroffen**, weil alle Caps
+   der fuenf Regressionssysteme uniform sind und die Klausel bei uniformen Stages wirkungslos ist.
+   Das ist Glueck, nicht Absicht — auf System 54 (`[nothing,2,2]`) haette es gebissen. WP-C1b muss
+   die Wirkungslosigkeit zeigen statt sie zu behaupten.
+3. **Report mit fest verdrahteter Ergebnisprosa.** `verify_wp_c1.jl` schreibt „No parser or
+   cap-estimator disagreement surfaced" als Stringliteral, unabhaengig vom Laufergebnis. Ein
+   Verifikationsbericht darf keine Aussage enthalten, die nicht falsch werden kann.
+
+Nebenbefund: `stage_cap_policy::Any` ist untypisiert, weil `stage_cap.jl` in `EvoODE.jl` nach
+`evogrow.jl` inkludiert wird. Kosmetisch, in WP-C1b als risikoarme Zugabe.
+
 ### v3 uncapped auf System 31 — Cap-Effekt und v3-Effekt sind jetzt getrennt
 
 <!-- b6fe895 -->
