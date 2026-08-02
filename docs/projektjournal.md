@@ -1,6 +1,6 @@
 # EvoODE — Projektjournal
 
-**Stand: 2026-07-30** · Zeitraum: 2026-04-20 bis 2026-07-30
+**Stand: 2026-08-02** · Zeitraum: 2026-04-20 bis 2026-08-02
 
 ---
 
@@ -49,7 +49,14 @@ Entdeckung gekoppelter ODE-Systeme.**
 | 2026-07-22 – 07-23 | Screening & Numerik | Screening verworfen, wieder aufgenommen; Numerikbefund; Faktor 6,2 |
 | 2026-07-29 | **WP-T2 — die Entscheidungsmessung** | Overshoot auf System 26 toleranzinvariant → algorithmisch, v3 bestätigt; Screening ohne Discovery-Gewinn |
 | 2026-07-29 – 07-30 | v3-Kette scharf geschaltet | v3.3 Kindergenerierung, v3.4 Promotion, v3.5 Metriken; divergenter Pfad erstmals gelaufen |
-| 2026-07-30 | **Zweiter Kostenzusammenbruch** | Baseline-v1-Matrix ~2 Wochen, 2/3 Wegwerf-Compute; abgebrochen; Scope-Entscheidung offen |
+| 2026-07-30 | **Zweiter Kostenzusammenbruch** | Baseline-v1-Matrix ~2 Wochen, 2/3 Wegwerf-Compute; abgebrochen |
+| 2026-07-30 | WP-G2.1 | Eine vorab festgelegte Do-or-Die-Zelle statt 45 Läufen |
+| 2026-07-31 | **Gate 2** | v3 scheitert — verändert nur, *wer* entscheidet, nicht *welche Evidenz* |
+| 2026-07-31 | Look-Ahead im Ableitungsraum | Erst Fehlalarm durch Ableitungsfehler, dann saubere Trennung; `r_k` als kontaminiert nachgewiesen |
+| 2026-07-31 – 08-01 | Stage-Cap | Vom Klassifikator zum Suchmechanismus; Sicherheitsprinzip nach zwei Fehlversuchen |
+| 2026-08-01 | **Entscheidungszelle** | Overshoot 2 → 0 bei bit-identischem Loss, Struktur unverändert → Symptom statt Ursache |
+| 2026-08-02 | Bestätigung + Scope-Entscheidung | Overshoot repliziert; „zum Nulltarif" gilt nicht allgemein; Zweig 1 gewählt |
+| 2026-08-02 | Phase 3 beginnt | Protokoll-Audit: Zeitgitter passt bei keinem System |
 
 ---
 
@@ -412,151 +419,6 @@ zuverlässig, die Abbruchbedingung feuert nicht, und die Suche eskaliert.
 
 ---
 
-## 4. Was implementiert ist und funktioniert
-
-| Komponente | Status |
-|---|---|
-| `discover()` Kernpipeline | stabil seit 2026-04-20 |
-| EvoGrow v1, v2.1, v2.2 | stabil |
-| `EvoGrowV3` (gleichungsweise) | v3.3 Kindergenerierung + v3.4 Pro-Gleichungs-Promotion (`r_k`) + v3.5 Metriken; Lockstep-Anker erhalten |
-| `EvoGrowScreening` | implementiert; nur Performance-Hebel, kein Discovery-Gewinn auf gekoppelten Systemen (WP-T2) |
-| `GPStructureSearch` | Vergleichsbaseline |
-| `StagedPolynomialBasis`, `PolynomialBasis` | stabil |
-| `BFGSOptimizer` | + deterministische Budgets, frühe Verwerfung, Retcode-Kategorien |
-| `pretune.jl` | + `derivative_screening_diagnostics` mit Gültigkeitsflag |
-| Experimentinfrastruktur | Manifest, Runner, Aggregator, atomare Writes |
-| Regressionshistorie | append-only, Fingerprint-basiert, resume-fähig |
-| Kosteninstrumentierung | pro Level und pro Lauf, bis in die Records |
-| Mikro-Benchmark | `studies/profiling/profile_eval_cost.jl` |
-| Vergleichsskript Screening | `studies/debug/compare_screening_variant.jl`, vier Bedingungen |
-| Numerik-Diagnose | `studies/numerics/solver_tolerance_noise_floor.jl` |
-| Entscheidungsmessung System 26 | `studies/numerics/system26_tolerance_screening.jl`, drei Bedingungen + Anker |
-| v3 Pro-Gleichungs-Metriken | `eq_overshoot`, `eq_wasted_levels`; Tests + gekoppelter Divergenz-Smoke |
-
----
-
-## 5. Was verworfen wurde — und warum
-
-| Verworfen | Grund | Beleg |
-|---|---|---|
-| Pretuning als Paper-1-Thema | Strategischer Fokuswechsel auf gestuftes Wachstum | 2026-05-17 |
-| v2.2 als finale Paper-Variante | Systemweites Staging versagt auf gekoppelten Systemen | Gate 1, 3 von 5 Systemen `pruned_match = false` |
-| `isoutofdomain` für frühe Verwerfung | Verwirft den Schritt und verkleinert `dt`, bricht nicht ab — teurer statt billiger | DiffEq-Quellen, `integrator_utils.jl:268-286` |
-| Level-Budget-Kürzung auf 18 | Loss bliebe identisch, aber Overshoot-Metriken würden verfälscht | Stage 5/Overshoot 2 bei 30 gegen Stage 3/Overshoot 0 bei 18 Leveln |
-| AIC als Komplexitätsstrafe | Bei n = 200 vom Fit-Term dominiert; Strafe ≤ 10 gegen Fit-Differenz 19–139 | WP-P2.3, Ergebnisse bit-identisch |
-| BIC als Alternative | Ebenfalls zu schwach (`p·log n ≤ 26,5`) | Rechnerisch, nicht getestet |
-| LS-Warmstart als Polish-Startpunkt | Führt auf System 3 in ein Becken bei 3,236e-08 | WP-T1, flach über sechs Toleranz-Größenordnungen |
-| Rangübereinstimmung nur über ausgewählte Kandidaten | Kann die eigene Frage nicht beantworten | WP-P2.2b-Review |
-| Screening-Spur (zwischenzeitlich) | Abbruchregel ausgelöst — später revidiert, weil die Falsifikation weich war | 2026-07-22, wieder aufgenommen 2026-07-23 |
-| Screening als **Kern-Claim** | Ranking-Kollaps (Spearman-Median −0,014) und Nested-Gate inert auf gekoppeltem System | WP-T2, System 26 |
-| Baseline-v1-Matrix mit 3 Varianten | v3-Spalte lief mit veraltetem v3.3-Code, screening irrelevant → 2/3 Wegwerf-Compute, ~2 Wochen | 2026-07-30, abgebrochen bei 6/45 |
-
----
-
-## 6. Die wichtigsten Zahlen an einem Ort
-
-**Kostenprofil (23 Zellen, 40,5 h):** Stage 1 → 21 s/Level, Stage 5 → 878 s/Level (Faktor 42).
-62 % der Rechenzeit oberhalb der nötigen Stage. 39 % nach dem Punkt, an dem der Loss bereits final
-war.
-
-**Bewertungspfad (System 26):** 95 % Solve-Anteil, 4.707 Integrationen pro Parameter-Fit,
-1,763 ms pro Integration, 153 s Overhead außerhalb der Integration.
-
-**Erreichte Beschleunigungen:**
-
-| Maßnahme | Faktor | Gemessen auf |
-|---|---|---|
-| Solver-Budgets (WP-P1b) | 2,71× | System 26, 370 Fits je Bedingung |
-| Solver-Budgets, nur Stage 2 | 9,9× | System 26, je 8 Level |
-| Nested-Gate (B → C) | 7,2× | System 3 |
-| Bedingung D gegen Referenz | **6,2×** | System 3 |
-| Toleranz 1e-6 → 1e-8, Referenzpfad allein | 3,6× | System 3 |
-
-**Numerische Grenzen (bestmöglicher Loss mit wahren Parametern):** bei 1e-6 System 3 → 4,40e-12,
-System 11 → 1,86e-14. Der in Baseline v0 berichtete System-11-Loss von 4,402e-15 liegt darunter.
-
-**Entscheidungsmessung System 26 (WP-T2):** Overshoot toleranzinvariant — R6 und R8 bit-identisch
-Stage 5 / Overshoot 2 / wasted 8. Der Overshoot ist algorithmisch. Suspend-fest: 8 von 25 Leveln,
-~25 % der Integrationen jenseits Stage 3. Struktur: `du1` exakt getroffen, `du2` komplett falsch.
-Screening D8 gegen R8: 98.253 vs 3.348.287 Integrationen (34×), aber Ranking-Median −0,014, Gate inert.
-
-**Kosten der Baseline-v1-Matrix:** ~16 h je gekoppelter Lauf; 45 Läufe ≈ ~2 Wochen; davon nur die
-15 v2.2-Läufe verwertbar.
-
----
-
-## 7. Offene Punkte, nach Dringlichkeit
-
-1. **Scope-Entscheidung für die v2.2-Referenzbaseline — der aktuelle Engpass.** Alles Weitere
-   (WP-v3.6) hängt daran. Zwei Optionen: (a) nur Varianten kürzen (45 → 15, ~Tage, misst genau das
-   Bisherige), oder (b) zusätzlich `N_LEVELS`/`pretuning` *für die Regression* überdenken —
-   schneller, ändert aber, was gemessen wird, und damit den `config_fingerprint`. Bewusst mit klarem
-   Kopf zu entscheiden, nicht im Reaktionsmodus. Hygiene unabhängig davon: `BFGS_TIME_LIMIT_S` von
-   24 h auf Minuten senken (entschärft die Landmine, kein Speedup).
-2. **WP-v3.6 — Validierung v3 gegen Baseline v1.** Braucht (1) und zusätzlich einen **frischen**
-   v3-Lauf mit aktuellem Code (die v3-Spalte des abgebrochenen Laufs war veraltet). Kernfrage: senkt
-   die gleichungsweise Promotion den Overshoot auf 26/31/63, jetzt pro Gleichung messbar
-   (`eq_overshoot`/`eq_wasted_levels`)? Externer Langlauf — nur der User startet.
-3. **Bewertungstoleranz.** WP-T2 hat die Frage verfeinert: Für den **Suchpfad auf gekoppelten
-   Systemen** ist 1e-6 die günstigere und verhaltensgleiche Wahl (1e-8 senkt nur den Loss, ändert
-   das Stopp-Verhalten nicht, verteuert aber die verschwendeten Spät-Stages). 1e-8 ist nur für exakt
-   lösbare Systeme relevant, die die Toleranz tatsächlich erreichen (z. B. System 11) — separate,
-   kleinere Frage.
-4. **Belastbarkeit bisheriger Losses.** Der System-11-Wert (4,402e-15) ist Rauschen. Zu klären,
-   welche weiteren berichteten Zahlen betroffen sind — auch in Phase A.
-5. **Pathologische Line-Search** (bis zu 39.933 Auswertungen bei zwei Parametern) — unangetastet,
-   aber ein erheblicher Kostenhebel.
-6. **Sentinel-Loss `1e6` mit Retcode `Success`** — gescheiterte Fits sind nicht als solche
-   erkennbar.
-7. **Pruning-Schwelle** `1e-3 × max_coeff` möglicherweise zu streng (System 31 Seed 42, Spurious-Term
-   `0,0022·u1`).
-
-**Seit dem letzten Stand erledigt:**
-
-- *Ist der Stage-Overshoot numerisch?* — **Beantwortet (WP-T2).** Auf System 26 toleranzinvariant,
-  also algorithmisch. Die v3-Begründung ist bestätigt, nicht bedroht. Auf System 3 war er numerisch;
-  die Trennung „einfach = numerisch, gekoppelt = algorithmisch" ist die stärkere Aussage.
-- *WP-v3.3–v3.5* — **geliefert.** Gleichungsweise Kindergenerierung, Pro-Gleichungs-Promotion,
-  Metriken; die v3-Kette ist code-seitig komplett.
-
----
-
-## 8. Der rote Faden
-
-Das Projekt hat drei Ebenen, die sich in den letzten Tagen als verschränkt erwiesen haben:
-
-**Ebene 1 — die Forschungsfrage.** Ist gestuftes, inkrementelles Wachstum ein guter Suchmechanismus?
-Gate 1 hat gezeigt: für gekoppelte Systeme in der v2.2-Form nicht. Daraus entstand v3
-(gleichungsweises Staging). Diese Linie ist unverändert gültig und wartet bei WP-v3.3.
-
-**Ebene 2 — die Kosten.** Die Suche war nicht nur langsam, sondern *falsch* langsam: 62 % der
-Rechenzeit gingen in Komplexität, die kein System brauchte. Overshoot und Kosten sind dasselbe
-Problem, weil jede zusätzliche Stage überproportional teurer ist. Das macht v3 zugleich zum
-Performance-Fix.
-
-**Ebene 3 — die Numerik.** Zwischenzeitlich war offen, ob ein Teil der beobachteten Effekte gar
-nicht algorithmisch ist: Ein berichteter Loss lag unterhalb der Rechengenauigkeit, ein Optimierer
-meldete Konvergenz, wo er nur blind war, und die engere Toleranz allein hatte auf System 3 den
-Overshoot beseitigt. **Diese Frage ist mit WP-T2 beantwortet.** Auf System 26 — dem Gate-1-System —
-ist der Overshoot toleranzinvariant, also algorithmisch. Die Numerik erklärt den Overshoot auf
-*einfachen* Systemen, nicht auf den gekoppelten. Die Messgrundlage für v3 steht damit, und die
-saubere Trennung („einfach = numerisch, gekoppelt = algorithmisch") ist ein stärkeres Paper-Argument
-als die ursprüngliche Vermutung.
-
-**Wo es jetzt hakt — Ebene 4, die Ökonomie der Evidenz.** Die drei inhaltlichen Ebenen sind geklärt
-oder in Arbeit: v3 ist begründet (Ebene 1), v3 ist code-seitig fertig, Overshoot und Kosten sind
-dasselbe Problem (Ebene 2), die Numerik ist eingeordnet (Ebene 3). Was v3 noch fehlt, ist der
-**Nachweis am Vergleich** — und der scheitert derzeit nicht an der Wissenschaft, sondern an den
-Kosten: die Referenzbaseline in der aktuellen Form ist ~2 Wochen lang und zu zwei Dritteln
-Wegwerf-Rechnung. Das ist kein Rückschritt, sondern ein **Scope-Problem**: Wir müssen entscheiden,
-was die v2.2-Referenz kosten darf, bevor wir sie und den frischen v3-Lauf starten.
-
-**Was das für die nächsten Schritte heißt:** Die nächste Entscheidung ist keine Messung, sondern
-eine Planungsfrage (7.1) — mit klarem Kopf, nicht im Reaktionsmodus. Ist sie getroffen, folgt genau
-ein sauberer Codex-Spec für den schlanken Runner, dann der externe v2.2-Lauf, dann der frische
-v3-Lauf, dann WP-v3.6. Die inhaltliche Unsicherheit ist ausgeräumt; offen ist nur noch, wie teuer
-wir den Beleg machen wollen.
-
 ### 3.13 WP-T2 — die Entscheidungsmessung (2026-07-29)
 
 Die offene Frage aus 3.12 wurde beantwortet. Der Toleranzvergleich lief auf **System 26** — genau
@@ -693,3 +555,337 @@ Zeitlimit zu senken ist Hygiene, kein Speedup. Der einzige echte Hebel im Scope 
 zusätzlich durch ein Überdenken von `N_LEVELS`/`pretuning` *für die Regression* billiger werden soll.
 Letzteres ändert, was gemessen wird, und wurde als Entscheidung mit klarem Kopf vertagt — nicht im
 Reaktionsmodus. Diese Entscheidung ist der aktuelle Engpass (siehe 7.1).
+
+### 3.16 WP-G2.1 — eine Zelle statt einer Matrix (2026-07-30)
+
+Aus dem Scope-Problem von 3.15 wurde die Konsequenz gezogen, die Evidenz zu verkleinern statt sie zu
+verbilligen. Der v2.2-Arm war bereits eingefroren und von WP-T2 bit-exakt reproduziert — es genügte
+also **ein** frischer v3-Lauf, um zu entscheiden. Statt 45 Läufen: **System 26, Seed 42**, vorab
+festgelegt als Do-or-Die-Zelle.
+
+Umgesetzt wurden ein Zwei-Varianten-Runner, ein Einzelzell-Selektor über Umgebungsvariablen, die
+Senkung von `BFGS_TIME_LIMIT_S` von 24 h auf 1.800 s (reine Notbremse, greift nie) und ein
+Readout mit **vorab festgelegten** Kriterien: `du1` bleibt auf Stage 3, `du1`-Support exakt
+`{u1, u1², u1·u2}`, Loss nicht schlechter als der Anker. Vorab festgelegt, damit hinterher nicht die
+Kriterien an das Ergebnis angepasst werden können.
+
+### 3.17 Gate 2 — v3 scheitert (2026-07-31)
+
+Der Lauf ergab `eq_final_stages = [5, 5]`, `eq_overshoot = [2, 2]`, und `du1` erhielt zusätzlich
+einen Fremdterm `u2`. Von den drei Kriterien war nur das dritte erfüllt — und zwar deutlich: der Loss
+lag mit 2,52e-4 um Faktor 5,5 **besser** als der v2.2-Anker. **Die Fitqualität war nie das Problem;
+gescheitert ist die Komplexitätsallokation, also genau das, wofür v3 gebaut wurde.**
+
+Die Diagnose ist der eigentliche Ertrag. Die v3-Promotionsregel fragt pro Gleichung: genug Budget,
+`r_k` plateau, `r_k > loss_tol = 1e-8`. Die dritte Bedingung ist auf gekoppelten Systemen
+unerreichbar — der Fehlerboden liegt bei 1e-3 bis 1e-4. Für eine bereits korrekt modellierte
+Gleichung sind damit dauerhaft alle drei Bedingungen erfüllt, und die Regel kann **Untermodellierung**
+nicht von einem **irreduziblen Fehlerboden** unterscheiden. Beide sehen identisch aus: flaches
+Residuum oberhalb von 1e-8.
+
+> **v3 hat verändert, wer entscheidet, aber nicht, welche Evidenz eine Promotion rechtfertigt.**
+
+Das ist ein sauberes, publizierbares Negativergebnis.
+
+### 3.18 Das Stage-Zünd-Problem und der billige Look-Ahead (2026-07-31)
+
+Aus dem Scheitern entstand die schärfere Problemformulierung. Ein rein *relatives* Kriterium statt
+des absoluten Zielwerts löst es nämlich ebenfalls nicht. Zwei Gegenbeispiele zeigen den Konflikt:
+
+- **Lotka-Volterra** (wahre Stage 3): Best-Loss 3,84e-2 → 3,35e-3 → 1,39e-3 → flach → flach. Richtig
+  wäre: nach Stage 3 **stoppen**.
+- **`du = -u³`** (wahre Stage 4): 2,96e-1 → 3,43e-3 → flach → **4,40e-15**. Richtig wäre: über die
+  flache Stage 3 hinweg **weitergehen** — die in 1D sogar leer ist.
+
+Beide Entscheidungsmomente sehen lokal gleich aus: Loss um 1e-3, aktuelle Stage bringt nichts,
+Verlauf flach. Der Unterschied liegt ausschließlich in Information über *zukünftige* Termgruppen.
+**Das Stage-Zünd-Problem ist damit ein Look-Ahead-Problem unter Unsicherheit.** Ein vollständiger
+simulationsbasierter Look-Ahead ist wegen der ODE-Kosten untragbar — also die Frage, ob ein billiger
+Test im *Ableitungsraum* trägt: Besitzt die volle Termbibliothek einer künftigen Stage überhaupt
+zusätzliche Erklärungskraft für die numerisch geschätzten Ableitungen, auf zurückgehaltenen
+Zeitpunkten?
+
+**WP-L1 — der Test scheint zu scheitern, und das ist ein Messartefakt.** Die erste Probe über zehn
+Benchmark-Systeme meldete: keine Trennung. Die Rauschboden-Zeilen, die in der Spec verlangt worden
+waren, zeigten warum. System 26 `du2` ist bei Stage 3 exakt darstellbar, das Holdout-Residuum der
+vollen Stage-3-Bibliothek müsste also auf dem analytischen Boden von 4,3e-11 liegen — es lag bei
+3,7e-3, **acht Größenordnungen darüber**. Und auf System 11 hatte das analytisch wahre RHS ein
+Residuum von 4,606, während der LS-Fit derselben wahren Struktur auf 1,159 kam: **der Fit schlägt die
+Wahrheit um Faktor 4**, was nur beim Fitten von Rauschen möglich ist. Ursache war
+`estimate_derivatives` — ein einfacher zentraler Differenzenquotient, dessen Fehler im Transienten
+von Ordnung 1 ist, also größer als das gesuchte Signal. Das ist dieselbe Signatur wie bei WP-T1.
+
+**WP-L2 — mit brauchbarer Ableitung trennt der Test sauber.** Ein lokal-polynomialer Glätter senkt
+den mittleren Ableitungsfehler um Faktor 10; höhere FD-Ordnung bringt nur 1,4× — **Glättung ist der
+Hebel, nicht die Ordnung.** Damit:
+
+| Stage | System 26 `du2` (wahr: 3) | System 11 `du1` (wahr: 4) |
+|---|---|---|
+| 2 | 3,34e-6 | 4,53e-5 |
+| 3 | **5,24e-13** | 4,53e-5 (leer, identisch) |
+| 4 | 2,70e-11 (schlechter) | **7,60e-12** |
+| 5 | 1,81e-11 | 5,05e-9 (schlechter) |
+
+Beide Klippen sitzen exakt auf der wahren Stage, danach wird es schlechter. Die Kernfrage ist damit
+beantwortet.
+
+**Und ein Nebenbefund mit größerer Tragweite:** `r_k`, das v3-Promotionssignal, ist dasselbe
+Ableitungsresiduum. Auf System 26 liegt der Boden mit *wahrer* Struktur und *wahren* Parametern bei
+[1,808; 0,520], das gefittete volle Stage-3-`r_k` dagegen bei [0,142; 0,0394] — der Boden liegt um
+**Faktor 13 darüber**. `r_k` misst also nicht strukturelle Angemessenheit, sondern wie viel
+Ableitungsfehler ein Modell absorbieren kann, und diese Kapazität wächst mit der Termzahl. Das Signal
+ist systematisch nach „mehr Terme helfen" verzerrt. **v3s Scheitern hat damit eine zweite,
+numerische Ursache zusätzlich zur Evidenz-Diagnose.**
+
+**WP-L3 — Regel und Grenzen vermessen.** Ein Boden-Gate (ein Gewinn zählt nur oberhalb des
+Rauschbodens) bringt die Konfusionsmatrix über die 16 exakten Gleichungen auf 12 exakt / 0 Overshoot
+/ 4 Undershoot. Ein Dichte-Sweep trennt zwei bis dahin konfundierte Erklärungen: auf System 54 ist
+die Stage-3-Klippe **sampling-begrenzt** und erscheint ab doppelter Dichte; auf System 63 bleibt das
+Rangdefizit bei *jeder* Dichte bestehen — es ist die Erhaltungsgröße (die SEIR-Zustände summieren
+sich zu einer Konstanten).
+
+### 3.19 Der Stage-Cap — vom Klassifikator zum Mechanismus (2026-07-31 bis 2026-08-01)
+
+Der entscheidende Designbefund kam beim Lesen: **das Gate ist suchunabhängig.** Es hängt nur an
+Trajektorie, Basis, Gleichung und Stage — nicht an der Population. Damit braucht es weder
+spekulatives Unlock noch Checkpoint noch Rollback: `max_useful_stage_k` wird einmal vor der Suche
+berechnet und wirkt als Obergrenze. Das ersetzte eine ganze Maschinerie durch eine Vorberechnung.
+
+Der Weg dahin war die instruktivste Fehlerkette des Projekts:
+
+- **WP-L4** lieferte den Cap, aber mit einem Sicherheitsdefekt: System 63 bekam `[1,1,1,1]` gegen die
+  wahre Struktur `[3,3,1,1]`. Für `du1`/`du2` wäre die Wahrheit damit **strukturell unerreichbar**
+  gewesen. Ursache: „Residuum schon bei Stage 1 unter dem Boden" wurde als „Stage 1 genügt" gelesen
+  statt als „nicht beurteilbar".
+- **WP-L5** sollte das beheben und machte es schlimmer — Verletzungen von 2 auf 4, und kein System
+  behielt einen nützlichen Cap. **Die Ursache lag in der Spec, nicht in der Umsetzung:** die
+  Vorgabe „Residuum unter dem Boden → nicht beurteilbar → kein Cap" ist falsch, denn **den Boden zu
+  erreichen ist genau das, was ein korrektes Modell tut**. Die Regel konnte damit auf keinem lösbaren
+  System je einen Cap setzen. Zweiter, unabhängiger Defekt: der Look-Ahead-Horizont war auf 1
+  geschrumpft und konnte keine nutzlose Zwischenstufe mehr überbrücken — genau das Gegenbeispiel aus
+  3.18, wiedereingeführt.
+- **WP-L5b/L5c** reparierten beides: unterschieden wird jetzt, ob das Residuum auf dieser Stufe
+  *auf* den Boden **fiel** (positive Evidenz, hier cappen) oder schon *vorher* dort lag (keine
+  Information, kein Cap); der Horizont umfasst zwei *anwendbare* Stufen, leere verbrauchen keinen.
+
+Daraus das leitende Prinzip, das die Asymmetrie der Kosten spiegelt — ein falscher Cap macht die
+Wahrheit unerreichbar, ein fehlender kostet nur den Status quo:
+
+> **Ein Cap darf nur auf positive Evidenz gesetzt werden, nicht auf die Abwesenheit von Evidenz.**
+
+Ergebnis nach WP-L5d, unabhängig nachgerechnet: 3 → [2], 11 → [4], 26 → [3,3], 31 → [3,3], 63 → alle
+ungecappt, 54 → [ungecappt, 2, 2]. Suiteweit **2 Verletzungen, 8 von 16 Gleichungen gecappt, 18
+Stufen gespart** — die Sicherheit ist also nicht durch Nichtstun erkauft. Die zwei Verletzungen sind
+die aus WP-L3 bekannte Auflösungsgrenze auf Lorenz. **Damit hat die Regel eine geschlossene
+Charakterisierung: sicher, wo die Ableitungsschätzung die Struktur auflöst, unsicher genau dort, wo
+sie es nicht tut — und das ist vorab am Rauschboden ablesbar.**
+
+### 3.20 Die Entscheidungszelle — Symptom statt Ursache (2026-08-01 bis 2026-08-02)
+
+Der gecappte Lauf auf 26/42 lieferte das schärfste Ergebnis des Projekts, und zwar in zwei
+entgegengesetzte Richtungen.
+
+| | v2.2-Anker | v3 Gate 2 | gecappt |
+|---|---|---|---|
+| Loss | 1,3916e-3 | 2,5196e-4 | **2,5196e-4** |
+| `eq_overshoot` | 2 | [2, 2] | **[0, 0]** |
+| `eq_wasted_levels` | 8 | — | **[0, 0]** |
+| `du2`-Support | {u1, u1²} | — | **{u1, u1²}** |
+
+**Die Komplexitätsallokation ist gelöst.** Overshoot 2 → 0, verschwendete Level 8 → 0 — und der Loss
+ist **bit-identisch** zum ungecappten v3-Lauf. Die Stufen 4 und 5 haben dort also buchstäblich nichts
+beigetragen; die Eskalation war reine Verschwendung.
+
+**Die strukturelle Wiederfindung ist unverändert.** `du2` ist exakt das, was v2.2 drei
+Methodengenerationen früher fand, obwohl die Wahrheit `2·u2 − u1·u2 − u2²` die ganze Zeit auf Stage 3
+und damit *innerhalb* des Caps bereitlag.
+
+> **Die Stage-Eskalation war ein Symptom, nicht die Ursache.** Die Suche auf die richtige Stufe zu
+> zwingen verbessert die Entdeckung nicht um einen einzigen Term.
+
+**Die Bestätigung relativiert die Kostenaussage.** Vier weitere Zellen (26/123, 31/42, 31/123, 31/7)
+bestätigen den Overshoot-Effekt — alle vier auf `[0,0]`. Aber „zum Nulltarif" gilt nur für System 26:
+auf System 31 ist der gecappte Lauf 50-fach schlechter (Seed 123) und bei Seed 42 um acht
+Größenordnungen (1,7e-2 gegen 6,8e-11). Auf System 31 senken die Stufen 4/5 den Loss real, wenn auch
+mit falschen Termen. **Der Cap tauscht Fitqualität gegen Komplexitätsdisziplin, und ob der Tausch
+gratis ist, hängt am System.**
+
+Der Vergleich ist zudem **konfundiert**: die gecappte Variante ist v3 *plus* Cap, und für System 31
+existiert kein v3-Record. Eine Zelle erlaubt die Trennung aber schon jetzt — auf 31/42 ist der Cap
+**nicht bindend** (v2.2 endete dort von selbst auf Stage 3), und trotzdem bricht der Loss ein. Der
+Einbruch kann folglich nicht vom Cap kommen, sondern muss aus dem v3-Unterbau stammen: dem
+`r_k`-Signal, das in 3.18 als kontaminiert nachgewiesen wurde. Drei ungecappte v3-Läufe auf System 31
+stehen aus.
+
+**Die Scope-Entscheidung** fiel daraufhin auf **Zweig 1, angereichert**: die finale Variante trägt den
+Cap, das Paper wird die mechanistische Claim-C-Studie, und die Kette v2.2 → v3 → gecappt wird als
+dokumentierte Failure-Analyse mit einem quantifizierten Positivergebnis geführt. Das Paper um den
+Look-Ahead herum neu zu bauen wäre schwächer belegt, weil der Mechanismus genau das Versagen nicht
+behebt, das Phase 2 ausgelöst hat.
+
+### 3.21 Phase 3 beginnt — das Protokoll-Audit (2026-08-02)
+
+Für den Vergleich mit publizierten ODEBench-Zahlen wurde das Audit begonnen. Die EvoODE-Seite ist
+gegen den Datensatz verifiziert, die Spalten der publizierten Quellen sind ausdrücklich als
+**ungeprüft** markiert.
+
+**Anfangsbedingungen passen:** alle zehn `u0` reproduzieren exakt den *ersten* der beiden
+Anfangsbedingungssätze des Datensatzes. **Das Zeitgitter passt bei keinem einzigen System:** der
+Datensatz liefert durchgängig 512 Punkte über t ∈ [0, 10], EvoODE nutzt pro System eigene Fenster mit
+10 bis 20 Punkten pro Zeiteinheit — 2,6- bis 5,1-fach dünner, teils mit deutlich längeren Horizonten
+(System 63 bis t = 30).
+
+Die Querverbindung macht das mehr als eine Formalie: das Datensatz-Gitter ist auf System 54
+**2,56-fach dichter** als unseres — genau der Bereich, ab dem WP-L3 die Stage-3-Klippe als auflösbar
+gemessen hat. Der Wechsel auf das Datensatz-Gitter würde also plausibel eine der beiden verbliebenen
+Cap-Verletzungen beseitigen. Das ist eine Vorhersage aus gemessenem Verhalten, kein Ergebnis.
+
+Daraus eine Entscheidung, die **vor** der Phase-B-Generierung fallen muss, weil sie die Trajektorien
+und damit alles Nachgelagerte bestimmt: Datensatz-Gitter übernehmen (Vergleichbarkeit plausibel,
+doppelte Laufzahl durch zwei IC-Sätze, kein bestehendes Ergebnis trägt über) oder beim eigenen Gitter
+bleiben (bestehende Ergebnisse gelten, publizierte Zahlen bleiben rein kontextuell — und das muss im
+Paper konsistent so stehen).
+
+Parallel läuft die Klassifikation aller 63 Systeme in exakt/surrogat (117 Gleichungen; Operatoren
+`**` 42×, `sin` 16, `cos` 8, dazu `exp`, `log`, `cot`, `Abs` — plus additive Konstanten, für die die
+Basis gar keinen Term hat). Diese Zahl ist selbst ein Ergebnis: die Menge der exakten Systeme
+bestimmt, auf wie vielen Systemen Paper 1 überhaupt strukturelle Wiederfindung berichten kann.
+
+---
+
+## 4. Was implementiert ist und funktioniert
+
+| Komponente | Status |
+|---|---|
+| `discover()` Kernpipeline | stabil seit 2026-04-20 |
+| EvoGrow v1, v2.1, v2.2 | stabil |
+| `EvoGrowV3` (gleichungsweise) | vollständig; **an Gate 2 gescheitert**, Promotionssignal `r_k` als kontaminiert nachgewiesen |
+| `EvoGrowStageCapped` | Look-Ahead-Cap als Suchvariante; Caps auf 4 von 5 Regressionssystemen korrekt |
+| `stage_cap.jl` | datenbasierte Cap-Berechnung, kein Ground-Truth-Kanal; Aggregationsmodi + Horizont |
+| `EvoGrowScreening` | implementiert; nur Performance-Hebel, kein Discovery-Gewinn (WP-T2) |
+| `GPStructureSearch` | Vergleichsbaseline |
+| `StagedPolynomialBasis`, `PolynomialBasis` | stabil |
+| `BFGSOptimizer` | + deterministische Budgets, frühe Verwerfung, Retcode-Kategorien |
+| Experimentinfrastruktur | Manifest, Runner, Aggregator, atomare Writes |
+| Regressionshistorie | append-only, Fingerprint-basiert, Einzelzell-Selektor |
+| Look-Ahead-Diagnostik | `studies/lookahead/`: Stage-Potential-Probe, Schätzervergleich, Boden-Gate + Dichte-Sweep |
+| Gate-2-Readout | vorab festgelegte Kriterien, Record-Auswahl fingerprint-unabhängig |
+| Protokoll-Audit | `docs/paper1_odebench_protocol_alignment.md`, EvoODE-Seite verifiziert |
+
+---
+
+## 5. Was verworfen wurde — und warum
+
+| Verworfen | Grund | Beleg |
+|---|---|---|
+| Pretuning als Paper-1-Thema | Strategischer Fokuswechsel auf gestuftes Wachstum | 2026-05-17 |
+| v2.2 als finale Paper-Variante | Systemweites Staging versagt auf gekoppelten Systemen | Gate 1 |
+| `isoutofdomain` für frühe Verwerfung | Verkleinert `dt`, bricht nicht ab — teurer statt billiger | DiffEq-Quellen |
+| Level-Budget-Kürzung auf 18 | Loss identisch, aber Overshoot-Metriken verfälscht | Stage 5/Over 2 bei 30 gegen Stage 3/Over 0 bei 18 |
+| AIC und BIC als Komplexitätsstrafe | Bei n = 200 vom Fit-Term dominiert | WP-P2.3, Ergebnisse bit-identisch |
+| LS-Warmstart als Polish-Startpunkt | Führt auf System 3 in ein Becken bei 3,236e-08 | WP-T1 |
+| Screening als **Kern-Claim** | Ranking-Kollaps (Spearman-Median −0,014), Nested-Gate inert | WP-T2 |
+| Baseline-v1-Matrix mit 3 Varianten | 2/3 Wegwerf-Compute, ~2 Wochen | 2026-07-30, abgebrochen bei 6/45 |
+| **v3 als finale Paper-Variante** | Keine Entkopplung; verändert nur, *wer* entscheidet, nicht *welche Evidenz* | Gate 2, `eq_overshoot = [2,2]` |
+| **Spekulatives Unlock mit Checkpoint/Rollback** | Unnötig — das Gate ist suchunabhängig und einmal vorberechenbar | 3.19 |
+| **Höhere FD-Ordnung als Ableitungs-Fix** | 1,4× gegen 10× durch Glättung | WP-L2 |
+| **„Residuum unter dem Boden → kein Cap"** | Den Boden zu erreichen ist, was ein korrektes Modell tut | WP-L5, Verletzungen 2 → 4 |
+| **Paper um den Look-Ahead herum** | Löst die Allokation, nicht die Wiederfindung | 3.20 |
+
+---
+
+## 6. Die wichtigsten Zahlen an einem Ort
+
+**Kostenprofil (23 Zellen, 40,5 h):** Stage 1 → 21 s/Level, Stage 5 → 878 s/Level (Faktor 42).
+62 % der Rechenzeit oberhalb der nötigen Stage.
+
+**Gate 2 (System 26, Seed 42):** v3 `eq_final_stages = [5,5]`, `eq_overshoot = [2,2]`, Loss 2,52e-4 —
+Faktor 5,5 besser als der v2.2-Anker. Fitqualität war nie das Problem.
+
+**Ableitungsschätzung (WP-L2):** mittlerer RMS-Fehler `central` 1,75e-2, `fd4` 1,24e-2, `local_poly`
+1,78e-3. Glättung bringt 10×, höhere Ordnung 1,4×.
+
+**Stage-Potential nach Korrektur der Ableitung:** System 26 `du2` fällt bei Stage 3 auf 5,24e-13
+(vorher 3,7e-3 — zehn Größenordnungen), System 11 bei Stage 4 auf 7,60e-12; beide verschlechtern sich
+danach.
+
+**`r_k`-Kontamination (System 26):** Boden mit wahrer Struktur und wahren Parametern [1,808; 0,520]
+gegen gefittetes Stage-3-`r_k` [0,142; 0,0394] — Boden **Faktor 13 darüber**.
+
+**Stage-Cap, suiteweit:** 2 Verletzungen, 8 von 16 Gleichungen gecappt, 18 Stufen gespart. Caps:
+3 → [2], 11 → [4], 26 → [3,3], 31 → [3,3], 63 → ungecappt, 54 → [ungecappt, 2, 2].
+
+**Entscheidungszelle (26/42, gecappt):** Overshoot 2 → 0, wasted 8 → 0, Loss bit-identisch zu
+ungecapptem v3, Parameter-Fits 390 gegen 530. `du2`-Support unverändert gegenüber v2.2.
+
+**Bestätigung (4 Zellen):** Overshoot überall `[0,0]`. Loss gegen v2.2: 26/123 gleichauf,
+31/7 leicht schlechter, 31/123 50-fach schlechter, **31/42 acht Größenordnungen schlechter**.
+
+**Protokoll:** Datensatz 512 Punkte über t ∈ [0,10] für alle Systeme; EvoODE 10–20 Punkte pro
+Zeiteinheit bei eigenen Fenstern. Kein System trifft das Gitter.
+
+---
+
+## 7. Offene Punkte, nach Dringlichkeit
+
+1. **v3 ungecappt auf System 31 (Seeds 42/123/7).** Trennt Cap-Effekt von v3-Effekt. Ohne das ist
+   „der Cap kostet Fitqualität" nicht belegbar — es könnte vollständig ein v3-Effekt sein. Drei
+   externe Läufe.
+2. **Gitter-Entscheidung vor Phase B.** Datensatz-Gitter übernehmen oder eigenes behalten. Bestimmt
+   alle Trajektorien und damit alles Nachgelagerte; die Systemklassifikation ist davon unabhängig.
+3. **Systemklassifikation aller 63 Systeme** (WP-P3.1, läuft). Die Zahl der exakten Systeme bestimmt,
+   worüber das Paper strukturelle Wiederfindung berichten kann.
+4. **Publizierte Protokolle einlesen.** Ohne sie bleiben externe Zahlen kontextuell; die vier offenen
+   Fragen stehen im Audit-Dokument.
+5. **Zwei Cap-Verletzungen auf System 54** — verstanden als Auflösungsgrenze, möglicherweise durch
+   die Gitter-Entscheidung von selbst erledigt.
+6. **System-31-Fix ohne belegte Ursache.** Die Diagnose lief ins Timeout, die Reparatur erfolgte per
+   Schlussfolgerung. Erste Stelle zum Nachsehen, falls die Regel überrascht.
+7. **Pathologische Line-Search** (bis 39.933 Auswertungen bei zwei Parametern) und **Sentinel-Loss
+   `1e6` mit Retcode `Success`** — unangetastete Kosten- und Robustheitshebel.
+8. **Pruning-Schwelle** `1e-3 × max_coeff` möglicherweise zu streng.
+
+**Ausdrücklich außerhalb von Paper 1:** die Suchkraft *innerhalb* einer Stufe — Populationsgröße,
+Kindergenerierung, Parsimonie-Druck. Das ist die eigentliche offene Forschungsfrage nach 3.20, aber
+eine eigene Linie.
+
+---
+
+## 8. Der rote Faden
+
+Das Projekt hat eine Frage über drei Methodengenerationen verfolgt und sie beantwortet — nur anders,
+als erwartet.
+
+**Die Ausgangsthese** war, dass gestuftes Wachstum die Komplexität kontrolliert und dass das
+Versagen auf gekoppelten Systemen an der *systemweiten* Stufenlogik liegt. Gate 1 belegte das
+Versagen, v3 dezentralisierte die Entscheidung — und Gate 2 zeigte, dass Dezentralisierung nichts
+bringt, weil beide lokalen Automaten dieselbe untaugliche Evidenz benutzen. Daraus wurde die
+schärfere Einsicht: **das Stage-Zünd-Problem ist ein Look-Ahead-Problem unter Unsicherheit**, weil
+weder ein absolutes noch ein relatives Kriterium eine tote Zwischenstufe von einem erreichten
+Fehlerboden unterscheiden kann.
+
+**Der billige Look-Ahead im Ableitungsraum funktioniert** — nachdem eine Zwischenrunde gezeigt hatte,
+dass er scheinbar scheitert, in Wahrheit aber die Ableitungsschätzung das Signal überdeckte. Er
+wurde vom Offline-Klassifikator zum Suchmechanismus, weil sich zeigte, dass das Gate suchunabhängig
+ist und keine Rollback-Maschinerie braucht. Sein Geltungsbereich ist vermessen statt vermutet:
+sicher, wo die Ableitung die Struktur auflöst; unsicher, wo nicht; und beides vorab am Rauschboden
+ablesbar.
+
+**Und dann die Wendung.** Der Cap beseitigt den Overshoot vollständig — bei bit-identischem Loss,
+also war die Eskalation reine Verschwendung. Aber die entdeckte Struktur bleibt exakt dieselbe wie
+drei Methodengenerationen zuvor. **Die Stage-Eskalation war ein Symptom, nicht die Ursache.** Was
+seit Gate 1 als das zu lösende Problem galt, war die sichtbare Begleiterscheinung eines anderen: die
+Suche findet die richtige Struktur auch dann nicht, wenn man ihr alle nötigen Terme hinlegt und
+alles andere verbietet.
+
+**Was das wert ist.** Wissenschaftlich ist das ein besseres Ergebnis als ein Erfolg gewesen wäre. Das
+Projekt hat eine Hypothese über drei Generationen sauber verfolgt, mit vorab festgelegten Kriterien
+falsifiziert, den Mechanismus dennoch als eigenständigen Beitrag mit vermessenen Grenzen gerettet —
+und dabei die eigentliche Ursache freigelegt. Genau das ist die mechanistische Claim-C-Studie, die
+seit dem Pivot vom 2026-05-17 das Ziel war: nicht zu zeigen, dass EvoGrow gewinnt, sondern **wo
+gestuftes Wachstum hilft, wo es versagt und warum**.
+
+**Der nächste Schritt** ist deshalb nicht die nächste Methodengeneration, sondern das Absichern des
+Belegs: v3 ungecappt auf System 31 zur Entkonfundierung, die Gitter-Entscheidung, die
+Systemklassifikation. Die offene Forschungsfrage — Suchkraft innerhalb einer Stufe — ist notiert und
+bleibt draußen.
