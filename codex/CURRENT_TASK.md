@@ -1,116 +1,125 @@
 # CURRENT TASK
 
-**Language: Python**
+**Language: Julia**
 
-## WP-P3.1 — ODEBench system classification (Phase 3)
+## WP-C1 — Look-ahead stage cap on the v2.2 substrate
 
-### 1. Purpose
+### Why this exists
 
-Phase 3 of `PAPER_1.md` requires all 63 ODEBench systems to be classified into **exact**
-(representable in the staged basis) and **surrogate** (not representable), because the two
-categories must never be mixed into a single structure-correctness metric. Today only the
-ten benchmark systems in `benchmarks/benchmark_evogrow.jl` carry that information, and it
-was entered by hand.
+The look-ahead stage cap currently only exists as `EvoGrowStageCapped`, which is `EvoGrowV3`
+*plus* cap. Three regression cells on System 31 (run 2026-08-02) separated the two effects and
+found that the v3 substrate, not the cap, carries the dominant share of the loss regression:
+on seed 42, v2.2 reaches 6.808e-11, v3 reaches 1.285e-4 (about six orders worse), and the cap
+adds two more orders on top (1.678e-2).
 
-This work package derives the classification for all 63 systems from
-`benchmarks/data/strogatz_extended.json` and writes it as a committed analysis artifact.
+The reason is known and measured: v3's per-equation promotion signal `r_k` is the derivative
+residual, and WP-L2 showed it to be contaminated by derivative-estimation error, biasing it
+toward "more terms help".
 
-It is a data-analysis task with no effect on the algorithm. Nothing under `src/`,
-`studies/` or `benchmarks/` may be modified.
+But the cap does not need v3. `estimate_stage_caps` reads only the trajectory and the basis; the
+caps are a vector precomputed before the search starts. The cap is coupled to v3 today only
+because it was wired into v3's promotion path.
 
-### 2. Input
+This work package puts the cap on the v2.2 substrate, so the good mechanism runs on the
+uncontaminated promotion rule. If the resulting variant keeps v2.2's fit quality while removing
+the stage overshoot, it is the final Paper 1 variant.
 
-`benchmarks/data/strogatz_extended.json`, a list of 63 entries. The relevant fields:
+### Deliverable
 
-- `id`, `dim`, `eq_description`
-- `substituted` — the equations with constants already substituted, as a list of initial-
-  condition sets, each a list of `dim` expression strings, e.g.
-  `"0.303030303030303 - 0.360750360750361*x_0"`. Use the **first** set; the expressions are
-  identical across sets apart from the initial condition, but verify that assumption and
-  report if it does not hold.
-- `init`, `source` for reference.
+A new structure-search variant, label **`evogrow_v2_2_stage_capped`**, registered in the
+regression runner and runnable there.
 
-Variables are named `x_0 … x_{dim-1}`. The project basis uses `u1 … u_dim`, so the index
-shift by one must be handled explicitly and stated in the output.
+### Fixed design decisions
 
-Scale of the problem, from a scan of the file: 63 systems, 117 equations, dimensions
-1/2/3/4 with counts 23/28/10/2. Operators appearing across the equations: `**` 42 times,
-`sin` 16, `cos` 8, `exp` 6, `log` once, `cot` once, `Abs` once.
+These are decided. Do not renegotiate them; implement them.
 
-### 3. Reference basis
+#### 1. Promotion rule is v2.2's, unchanged
 
-`default_staged_polynomial_basis(dim)` in `src/basis/staged_polynomial.jl`, five stages:
+Stage progression uses the existing v2.2 mechanism (`:stage_local` progression, `:hard` usage,
+stage-local plateau with minimum stage budget). **The per-equation derivative residual `r_k` must
+not appear anywhere in this variant.** That signal is the thing being removed.
 
-1. linear `u_i`
-2. self-quadratic `u_i^2`
-3. cross terms `u_i*u_j`, `i < j`
-4. self-cubic `u_i^3`
-5. trigonometric `sin(u_i)`, `cos(u_i)`
+#### 2. The cap restricts terms per equation
 
-Note what the basis does **not** contain, because these are the decisive gaps: there is no
-constant term, no `exp`/`log`/`cot`/`Abs`, no powers other than 2 and 3, no trigonometric
-argument other than a bare variable, and no mixed cubic such as `u_i^2*u_j`.
+The cap vector is per equation. v2.2 carries a single global stage counter. The cap must
+therefore act as a **per-equation term restriction**: equation `k` may only use basis terms from
+stages at or below `cap[k]`. A cap entry of `nothing` means no restriction for that equation.
 
-### 4. Method
+Do not collapse the cap to a single global value by taking the maximum. That would let an
+equation with a low cap still receive higher-stage terms whenever some other equation needs
+them, which reintroduces exactly the per-equation overshoot the cap removes.
 
-Parse each equation symbolically rather than by string matching — `sympy` is the natural
-tool. It is not currently in the analysis dependencies; add it to
-`analysis/requirements.txt` and say so in the report.
+Equation-aware child generation already exists from WP-v3.3. Reusing it is acceptable and
+expected — it is the child-generation path, not the contaminated promotion signal. Reuse or a
+separate path is your call; the observable behaviour above is what matters.
 
-For each equation: expand the expression into additive terms, and classify every term as
-either a basis term (recording which one and its stage) or out-of-basis (recording why).
-Derive:
+#### 3. Promotion stops when no equation can still gain
 
-- per equation: the set of matched basis terms, the list of unmatched terms with a reason,
-  and `expected_eq_stage` = the maximum stage over the matched terms if the equation is
-  fully representable;
-- per system: `representability` = `exact` if **every** term of **every** equation maps to
-  a basis term, otherwise `surrogate`; `expected_stage` = maximum over equations for exact
-  systems.
+With per-equation caps, raising the global stage counter past every equation's cap unlocks
+nothing and only burns levels. Promotion must be blocked once every equation has reached its cap
+— that is, the effective maximum stage for the global counter is the maximum over the cap
+entries, with `nothing` counting as the basis maximum.
 
-Use a controlled vocabulary for the gap reason — for example constant offset, unsupported
-function, unsupported power, unsupported trigonometric argument, mixed higher-order term —
-and report the frequency of each. Do not invent a free-text reason per system.
+#### 4. Metrics stay comparable to the existing cells
 
-### 5. Validation against the hand-entered ground truth — mandatory
+Record `eq_final_stages`, `eq_overshoot` and `eq_wasted_levels` with the same meaning as in the
+v3 variants, so the new cells sit in the same table as the existing ones. For a globally staged
+algorithm the effective stage of equation `k` is the global stage limited by that equation's cap.
 
-`benchmarks/benchmark_evogrow.jl` already carries `representability`, `expected_stage` and
-`expected_terms` for ten systems (ids 2, 3, 11, 23, 24, 26, 31, 37, 54, 63), entered by
-hand and used in every result so far. Compare the derived classification against those ten
-and report each agreement and disagreement individually.
+#### 5. The config fingerprint must not change
 
-**Any disagreement is a finding, not a nuisance to be smoothed over.** It means either the
-parser is wrong or a hand-entered value that current results depend on is wrong. Report it
-prominently and do not adjust the parser to force agreement — investigate and state which
-side is wrong.
+`FINGERPRINT_VARIANT_LABELS` in `studies/regression/run_regression.jl` is a frozen list that
+feeds the fingerprint hash. **Do not add the new variant to it, and do not touch the
+`lookahead_stage_cap` payload.** The current fingerprint is `df5db7763bcd2449` and must stay
+byte-identical, otherwise all 32 existing history records become incomparable and the entire
+point of these runs is lost.
 
-Expected agreements to check specifically: system 23 is surrogate because of a constant
-offset, system 37 is surrogate because of the mixed cubic `u1^2*u2`, and systems 2, 3, 11,
-24, 26, 31, 54, 63 are exact with expected stages 1, 2, 4, 1, 3, 3, 3, 3.
+Each run is independent, so an additional runnable variant cannot affect any other variant's
+result. Keeping it out of the fingerprint is correct, not a workaround.
 
-### 6. Output
+Consequence to accept without repairing: the `lookahead_stage_cap.variant` field in the
+fingerprint payload names only `evogrow_v3_stage_capped`, which becomes an incomplete
+description once a second variant uses the cap. Leave it. Note it in your report; changing it
+changes the hash.
 
-`analysis/data/paper1_phaseB_v1/system_classification.csv`, one row per **equation**, with
-the system-level fields repeated, carrying at minimum: system id, dimension, description,
-equation index, the equation string, representability of the system, expected stage of the
-system, expected stage of the equation, matched basis terms, unmatched terms, gap reason,
-and the source field.
+#### 6. `estimate_stage_caps` must not be modified
 
-Plus a short report under `docs/` giving: the exact/surrogate split with counts, the
-distribution of expected stages over the exact systems, the frequency of each gap reason,
-the dimension breakdown of both categories, and the full validation table against the ten
-hand-entered systems.
+The cap computation is verified (WP-L4 through WP-L5d) and its caps are known: System 3 → `[2]`,
+11 → `[4]`, 26 → `[3,3]`, 31 → `[3,3]`, 63 → all `nothing`. It is consumed here, not changed.
 
-Follow `analysis/CONVENTIONS.md` for naming and structure.
+Likewise `EvoGrowV3` and `EvoGrowStageCapped` must keep their current behaviour exactly. This is
+an addition, not a refactor.
 
-### 7. Why the split matters, so the output is fit for purpose
+### Verification
 
-The exact systems determine how many systems Paper 1 can even report structural recovery
-on — if that number is small, it changes what the paper can claim, so the count is a
-result in itself and must be stated plainly rather than buried in a CSV. The surrogate
-systems are evaluated only on stage reached, target-term usage and fit quality.
+#### Mandatory: cap-disabled equivalence
 
-### 8. Execution
+With the cap disabled (or all cap entries `nothing`), the new variant must be **bit-identical to
+the existing `evogrow_v2_2_stage_local`** — same loss, same support, same final stage. This is
+the same discipline the v3.2 lockstep bridge was held to, and it is what proves the cap is the
+only thing that changed.
 
-Cheap: parsing 117 expressions, no simulation. Run it and report the actual numbers. If it
-takes more than a few minutes, stop and report.
+Verify this deterministically on a cheap system and report the compared values, not a verdict.
+
+#### Mandatory: cap-enabled smoke test
+
+One run on **System 3, seed 42** (1D, minutes). Expected: cap `[2]`, final stage 2, no overshoot,
+and a loss in the same range as v2.2 on that system. Report the actual numbers.
+
+#### Report
+
+Write findings to `codex/REPORT_WP_C1.md`: what changed, the equivalence comparison, the smoke
+test numbers, the confirmed cap values, and anything that surprised you.
+
+### Hard constraints
+
+- **Do not run the regression matrix.** The decisive cells (System 26 seed 42; System 31 seeds
+  42, 123, 7) are multi-hour runs and are started by the user, not by you. Only the two cheap
+  verifications above may be executed.
+- If a verification exceeds a few minutes, stop and report rather than letting it run.
+- Do not write to `studies/regression/history.jsonl`.
+- Any generated output goes to its own subfolder under `outputs/`, never directly into a shared
+  output directory.
+- If a fixed decision above turns out to be unimplementable as stated, stop and report the
+  conflict. Do not silently choose a different semantics — the comparability of these cells is
+  the entire deliverable.
