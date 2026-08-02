@@ -55,6 +55,8 @@ Base.@kwdef struct EvoGrow <: AbstractStructureSearch
     use_pretuning::Bool = true
     screening_optimizer::Union{Nothing, AbstractOptimizer} = nothing
     level_callback::Union{Nothing, Function} = nothing
+    stage_caps::Union{Nothing,Vector{Union{Nothing,Int}}} = nothing
+    stage_cap_policy::Any = nothing
 end
 
 """
@@ -125,6 +127,116 @@ function _current_stage_terms(basis::AbstractBasis, _::Int)
 end
 
 _max_stage(basis::AbstractBasis) = 1
+
+function _validate_stage_caps(stage_caps, dim::Int, max_stage::Int)
+    stage_caps === nothing && return nothing
+    length(stage_caps) == dim || error("stage_caps length $(length(stage_caps)) does not match trajectory dimension $(dim)")
+    for (k, cap) in enumerate(stage_caps)
+        cap === nothing && continue
+        1 <= Int(cap) <= max_stage || error("stage_caps[$k]=$(cap) must lie in 1:$max_stage")
+    end
+    return nothing
+end
+
+function _effective_max_stage(max_stage::Int, stage_caps)
+    stage_caps === nothing && return max_stage
+    isempty(stage_caps) && return max_stage
+    return maximum(cap === nothing ? max_stage : Int(cap) for cap in stage_caps)
+end
+
+function _effective_eq_stages(current_stage::Int, max_stage::Int, stage_caps, dim::Int)
+    stage_caps === nothing && return fill(current_stage, dim)
+    return [
+        min(current_stage, cap === nothing ? max_stage : Int(cap))
+        for cap in stage_caps
+    ]
+end
+
+function _equation_capped_terms(
+    basis::StagedPolynomialBasis,
+    eq_stages::Vector{Int}
+)
+    dim = length(eq_stages)
+    allowed_by_eq = [Int[] for _ in 1:dim]
+    current_by_eq = [Int[] for _ in 1:dim]
+
+    for k in 1:dim
+        for term_idx in 1:basis_num_terms(basis)
+            term_stage = _evogrow_v3_term_stage(basis, term_idx)
+            if term_stage <= eq_stages[k]
+                push!(allowed_by_eq[k], term_idx)
+                if term_stage == eq_stages[k]
+                    push!(current_by_eq[k], term_idx)
+                end
+            end
+        end
+    end
+
+    return allowed_by_eq, current_by_eq
+end
+
+function _equation_capped_terms(
+    basis::AbstractBasis,
+    eq_stages::Vector{Int}
+)
+    terms = collect(1:basis_num_terms(basis))
+    return [copy(terms) for _ in eq_stages], [copy(terms) for _ in eq_stages]
+end
+
+function _expand_with_stage_caps(
+    ind::Individual,
+    dim::Int,
+    basis::AbstractBasis,
+    eq_stages::Vector{Int},
+    allowed_terms::Vector{Int},
+    current_stage_terms::Vector{Int},
+    usage::StageUsagePolicy;
+    n_children::Int,
+    max_terms_per_eq::Int
+)
+    if _evogrow_v3_uniform_stages(eq_stages)
+        return _expand_with_usage_policy(
+            ind,
+            dim,
+            allowed_terms,
+            current_stage_terms,
+            usage;
+            n_children = n_children,
+            max_terms_per_eq = max_terms_per_eq
+        )
+    end
+
+    allowed_by_eq, current_by_eq = _equation_capped_terms(basis, eq_stages)
+
+    if usage.mode == :passive
+        return _expand_equation_aware_passive(
+            ind,
+            dim,
+            allowed_by_eq;
+            n_children = n_children,
+            max_terms_per_eq = max_terms_per_eq
+        )
+    elseif usage.mode == :hard
+        return _expand_equation_aware_hard(
+            ind,
+            dim,
+            allowed_by_eq,
+            current_by_eq;
+            n_children = n_children,
+            max_terms_per_eq = max_terms_per_eq
+        )
+    else
+        return _expand_equation_aware_soft(
+            ind,
+            dim,
+            allowed_by_eq,
+            current_by_eq;
+            n_children = n_children,
+            max_terms_per_eq = max_terms_per_eq,
+            bias_prob = usage.new_term_bias_prob
+        )
+    end
+end
 
 """
     _allowed_term_names(basis, allowed_terms)
@@ -500,7 +612,14 @@ function search_structure(strategy::EvoGrow,
     dim = size(traj.x, 2)
 
     current_stage = 1
-    max_stage = _max_stage(basis)
+    basis_max_stage = _max_stage(basis)
+    stage_caps = strategy.stage_caps
+    if stage_caps === nothing && strategy.stage_cap_policy !== nothing
+        stage_caps = estimate_stage_caps(traj, basis; policy = strategy.stage_cap_policy)
+    end
+    _validate_stage_caps(stage_caps, dim, basis_max_stage)
+    max_stage = _effective_max_stage(basis_max_stage, stage_caps)
+    cap_metrics_active = stage_caps !== nothing || strategy.stage_cap_policy !== nothing
 
     allowed_terms = _allowed_terms(basis, current_stage)
     pop = _init_population(strategy, dim, allowed_terms)
@@ -510,6 +629,7 @@ function search_structure(strategy::EvoGrow,
     stage_level_counts = zeros(Int, max_stage)
     stage_histories = [Float64[] for _ in 1:max_stage]
     stage_first_use_level = fill(-1, max_stage)
+    eq_stage_histories = [Int[] for _ in 1:dim]
     promotion_log = NamedTuple[]
     level_log = NamedTuple[]
     total_loss_evals = 0
@@ -545,8 +665,10 @@ function search_structure(strategy::EvoGrow,
                 :n_levels => n_steps,
                 :children_per_parent => strategy.children_per_parent,
                 :max_stage => max_stage,
+                :basis_max_stage => basis_max_stage,
                 :progression_mode => strategy.progression.mode,
-                :usage_mode => strategy.usage.mode
+                :usage_mode => strategy.usage.mode,
+                :stage_caps => stage_caps === nothing ? "disabled" : copy(stage_caps)
             )
         )
     end
@@ -579,6 +701,7 @@ function search_structure(strategy::EvoGrow,
 
         allowed_terms = _allowed_terms(basis, current_stage)
         current_stage_terms = _current_stage_terms(basis, current_stage)
+        eq_stages = _effective_eq_stages(current_stage, basis_max_stage, stage_caps, dim)
         allowed_names = _allowed_term_names(basis, allowed_terms)
         current_stage_names = _allowed_term_names(basis, current_stage_terms)
 
@@ -670,9 +793,11 @@ function search_structure(strategy::EvoGrow,
         for ind in pop
             append!(
                 children,
-                _expand_with_usage_policy(
+                _expand_with_stage_caps(
                     ind,
                     dim,
+                    basis,
+                    eq_stages,
                     allowed_terms,
                     current_stage_terms,
                     strategy.usage;
@@ -764,6 +889,9 @@ function search_structure(strategy::EvoGrow,
         push!(stage_histories[current_stage], best.objective)
         stage_level_count += 1
         stage_level_counts[current_stage] += 1
+        for k in 1:dim
+            push!(eq_stage_histories[k], eq_stages[k])
+        end
 
         uses_current_stage_terms = _structure_uses_terms(best.structure, current_stage_terms)
         if uses_current_stage_terms && stage_first_use_level[current_stage] == -1
@@ -1025,6 +1153,7 @@ function search_structure(strategy::EvoGrow,
     end
 
     best = pop[1]
+    eq_final_stages = _effective_eq_stages(current_stage, basis_max_stage, stage_caps, dim)
 
     if options.verbose >= 1
         log_info(
@@ -1075,6 +1204,10 @@ function search_structure(strategy::EvoGrow,
             optimizer_retcodes = copy(observed_optimizer_retcodes),
             screening_budgets_active = strategy.screening_optimizer !== nothing,
             final_stage = current_stage,
+            eq_final_stages = cap_metrics_active ? copy(eq_final_stages) : nothing,
+            eq_stage_histories = cap_metrics_active ? eq_stage_histories : nothing,
+            stage_caps = stage_caps === nothing ? nothing : copy(stage_caps),
+            stage_cap_policy_active = strategy.stage_cap_policy !== nothing,
             termination_reason = termination_reason,
             progression_mode = strategy.progression.mode,
             usage_mode = strategy.usage.mode

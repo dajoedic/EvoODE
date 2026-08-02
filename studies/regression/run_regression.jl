@@ -105,6 +105,28 @@ const VARIANTS = [
         ),
     ),
     (
+        label = "evogrow_v2_2_stage_capped",
+        constructor = (level_callback, screening_optimizer) -> EvoGrow(
+            pop_size = POP_SIZE,
+            n_levels = N_LEVELS,
+            children_per_parent = CHILDREN_PER_PARENT,
+            max_terms_per_eq = MAX_TERMS,
+            λ = LAMBDA,
+            progression = StageProgressionPolicy(
+                mode = :stage_local,
+                min_levels_per_stage = STAGE_MIN,
+            ),
+            usage = StageUsagePolicy(
+                mode = :hard,
+                new_term_bias_prob = SOFT_BIAS,
+            ),
+            use_pretuning = USE_PRETUNING,
+            screening_optimizer = screening_optimizer,
+            level_callback = level_callback,
+            stage_cap_policy = LookAheadStageCapPolicy(; LOOKAHEAD_CAP_POLICY...),
+        ),
+    ),
+    (
         label = "evogrow_v3_stage_capped",
         constructor = (level_callback, screening_optimizer) -> EvoGrowStageCapped(
             pop_size = POP_SIZE,
@@ -521,8 +543,8 @@ function run_one(variant, system, seed::Int, fingerprint::String, provenance)
         wasted_levels = isempty(stage_level_counts) ? 0 : sum(stage_level_counts[(expected_stage + 1):end]; init = 0)
         expected_idxs = expected_active_idxs(system_id, basis)
         pruned_match = expected_idxs === nothing ? false : support_match_pruned(result.structure, result.params, expected_idxs)
-        eq_final_stages = haskey(meta, :eq_final_stages) ? collect(meta.eq_final_stages) : nothing
-        eq_stage_histories = haskey(meta, :eq_stage_histories) ? [collect(hist) for hist in meta.eq_stage_histories] : nothing
+        eq_final_stages = haskey(meta, :eq_final_stages) && meta.eq_final_stages !== nothing ? collect(meta.eq_final_stages) : nothing
+        eq_stage_histories = haskey(meta, :eq_stage_histories) && meta.eq_stage_histories !== nothing ? [collect(hist) for hist in meta.eq_stage_histories] : nothing
         has_eq_stage_data = eq_final_stages !== nothing && eq_stage_histories !== nothing
         local_eq_overshoot = has_eq_stage_data ? eq_overshoot(eq_final_stages, expected_stage) : nothing
         local_eq_wasted_levels = has_eq_stage_data ? eq_wasted_levels(eq_stage_histories, expected_stage) : nothing
