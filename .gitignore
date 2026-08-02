@@ -15,6 +15,10 @@ analysis/tables/
 analysis/notebooks/.ipynb_checkpoints/
 outputs/
 data/
+!analysis/data/
+analysis/data/*
+!analysis/data/paper1_phaseB_v1/
+!analysis/data/paper1_phaseB_v1/system_classification.csv
 figures/
 tables/
 experiments/*/run.log
