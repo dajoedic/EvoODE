@@ -6,6 +6,56 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ## 2026-08-02
 
+### v3 uncapped auf System 31 — Cap-Effekt und v3-Effekt sind jetzt getrennt
+
+Drei Laeufe (31, Seeds 42/123/7, `evogrow_v3`, Fingerprint `df5db7763bcd2449`, `git_hash c6692a5`,
+`git_dirty=false`, `total_optimizer_safety_limit_hits = 0`). Damit existiert erstmals ein
+v3-Referenzarm auf System 31, und die offene Zuordnungsfrage aus den Bestaetigungszellen ist
+beantwortet.
+
+| Seed | v2.2 | v3 | v3 + Cap | Fits v3 → Cap | Zeit v3 → Cap |
+|---|---|---|---|---|---|
+| 42 | 6,808e-11 | 1,285e-4 | 1,678e-2 | 490 → 250 | 37 266 s → 6 738 s |
+| 123 | 1,043e-4 | 2,994e-5 | 5,284e-3 | 430 → 230 | 35 726 s → 10 626 s |
+| 7 | 6,975e-5 | 9,872e-5 | **9,872e-5** | 390 → 230 | 41 058 s → 7 201 s |
+
+**Die Zuordnung:** Auf Seed 42 verliert v3 gegenueber v2.2 rund **sechs Groessenordnungen**
+(6,8e-11 → 1,3e-4), der Cap legt danach zwei drauf. Der dominante Anteil des Einbruchs sitzt also im
+v3-Substrat, nicht im Cap. Das bestaetigt die Vermutung, die sich aus der Nicht-Bindung des Caps auf
+dieser Zelle ergab, und zeigt auf das `r_k`-Promotionssignal, dessen Ableitungskontamination WP-L2
+gemessen hat.
+
+**Zwei Befunde, die mehr wert sind als die Tabelle:**
+
+1. **Seed 7 ist bit-identisch.** Gleicher Loss, gleicher Support in beiden Gleichungen
+   (`du1 = {u2, u1², u1·u2}`, `du2 = {u1, u2, u1²}`). Der Cap aendert das Ergebnis nicht und spart
+   160 Fits und rund 34 000 Sekunden. Die Nulltarif-Beobachtung von System 26 repliziert hier.
+2. **Seed 123 hat in beiden Armen identischen Support** (`du1 = {u1, u2, u1·u2}`,
+   `du2 = {u1, u2, u1², u2²}`) und trotzdem 176-fachen Loss-Unterschied. Gleiche Struktur, andere
+   Parameter — das ist Pfadabhaengigkeit im Optimierer, **nicht** eine vom Cap unerreichbar gemachte
+   Struktur. Damit ist die naheliegende Sorge, der Cap schneide die Wahrheit ab, fuer diese Zelle
+   ausgeraeumt.
+
+Bleibt Seed 42, wo dem gecappten `du2` der Kopplungsterm `u1·u2` fehlt — der auf Stage 3 durchgehend
+verfuegbar war. Dasselbe Muster wie auf System 26: nicht der Cap verhindert die Struktur, die Suche
+findet sie innerhalb der Stage nicht. Das ist Suchkraft *innerhalb* einer Stage und liegt
+ausdruecklich ausserhalb von Paper 1.
+
+**Overshoot-Eliminierung repliziert 3/3** (`eq_overshoot [2,2] → [0,0]`, `eq_wasted_levels`
+[12,12]/[7,7]/[7,7] → [0,0]) bei 41–51 % weniger Fits und Faktor 3,4–5,7 kuerzerer Laufzeit.
+`pruned_match = false` in **allen neun** Zellen, auch bei v2.2 mit 6,8e-11 — auf System 31 gelingt
+keinem Arm die exakte Wiederfindung.
+
+Fingerprint-Grenze bleibt bestehen und muss beschriftet werden: der v2.2-Arm liegt auf
+`0c739d4e36ee6498`, v3 und gecappt auf `df5db7763bcd2449`.
+
+**Nebenbefund beim Mergen der History** (29 → 32 Zeilen): das vermeintliche Duplikat
+`(evogrow_v3, 26, 42)` ist keines. Es sind zwei gueltige Laengsschnitteintraege — `0c739d4e` vom
+2026-07-22 mit Loss 1,392e-3 (die v3.2-Lockstep-Bridge, per Konstruktion bit-identisch zu v2.2, was
+der Wert exakt bestaetigt) und `1f9c5f80` vom 2026-07-30 mit 2,520e-4 (der divergente v3 aus dem
+Gate-2-Lauf). Der Uniqueness-Key der History ist `(variant, system_id, seed, config_fingerprint)`,
+nicht das Tripel.
+
 ### Phase 3 begonnen — Protokoll-Audit deckt eine Gitter-Fehlausrichtung auf
 
 `docs/paper1_odebench_protocol_alignment.md` angelegt. Die EvoODE-Seite ist gegen den Datensatz

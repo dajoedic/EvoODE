@@ -818,26 +818,31 @@ failure is diagnosed and reportable, but v3 is not the final variant.
   (seed 7), and eight orders of magnitude (seed 42, 1.678e-2 against 6.808e-11). Details in
   `DIARY.md` (2026-08-02).
 
+- **v3 uncapped on System 31 (seeds 42/123/7) — run 2026-08-02. Attribution settled.** With the v3
+  arm now present, the System 31 loss regression decomposes: on seed 42, **v3 alone loses ~6 orders
+  against v2.2** (6.808e-11 → 1.285e-4) and the cap adds 2 more (→ 1.678e-2). The dominant share sits
+  in the v3 substrate — the `r_k` promotion signal WP-L2 showed to be derivative-error contaminated —
+  not in the cap. Seed 7 is **bit-identical** capped vs uncapped (same loss, same support), seed 123
+  has **identical support in both arms** with a 176x loss gap, i.e. optimizer path dependence rather
+  than a truth made unreachable by the cap. Overshoot elimination replicates 3/3 at 41–51% fewer fits
+  and 3.4–5.7x less wall time. `pruned_match = false` in all nine System-31 cells, including v2.2 at
+  6.8e-11. Details in `DIARY.md` (2026-08-02).
+
 Active:
-1. **Separate the cap effect from the v3 effect — required before any paper claim.** The capped
-   variant is `EvoGrowV3` *plus* cap, and no v3 record exists for System 31, so the loss regression
-   there cannot currently be attributed. One cell already argues it is not the cap: **on 31/42 the
-   cap is non-binding** — v2.2 ended on stage 3 by itself, so a cap at 3 prevented nothing, yet the
-   loss is eight orders worse. That points at the v3 substrate, i.e. the `r_k` promotion signal that
-   WP-L2 showed to be derivative-error contaminated.
-   Needed: **v3 uncapped on System 31, seeds 42/123/7** — three runs, user-started.
-2. Optional cheap no-harm evidence: systems 3 and 11, seeds 42/123/7, capped (1D, minutes).
+1. Optional cheap no-harm evidence: systems 3 and 11, seeds 42/123/7, capped (1D, minutes).
    **System 63 stays excluded** — its cap is `nothing` on all equations, so the capped variant is
    identical to v3 there and the cell could show no overshoot effect; it belongs in the paper as the
    identifiability limit. System 54 would need adding to `REGRESSION_SYSTEMS`, which changes the
    system list and hence the fingerprint — a separate track, and its limit is already documented
    offline by WP-L3.
-3. The v2.2 arm was recorded under Baseline v0 (`0c739d4e36ee6498`) while capped runs carry
+2. The v2.2 arm was recorded under Baseline v0 (`0c739d4e36ee6498`) while v3 and capped runs carry
    `df5db7763bcd2449`. WP-T2 showed the intervening config change did not alter results, but the
-   comparison crosses a fingerprint boundary and must be labelled as such.
-2. Then Phase 3 (`PAPER_1.md`): ODEBench protocol alignment — system classification, R² metric,
-   protocol-audit document.
-3. Not a Phase 2 continuation, and not to be started implicitly: the open question of why the search
+   comparison crosses a fingerprint boundary and must be labelled as such wherever it is reported.
+3. Phase 3 (`PAPER_1.md`): ODEBench protocol alignment — system classification (WP-P3.1), R² metric,
+   protocol-audit document. Open decision that must precede Phase B generation: adopt the dataset
+   grid (512 points over t ∈ [0, 10], both IC sets) or keep the per-system grid — see
+   `docs/paper1_odebench_protocol_alignment.md` §3.
+4. Not a Phase 2 continuation, and not to be started implicitly: the open question of why the search
    fails to find an available stage-3 structure concerns search power *within* a stage — population
    size, child generation, parsimony pressure. Explicitly outside Paper 1.
 
