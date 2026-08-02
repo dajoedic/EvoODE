@@ -6,6 +6,31 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ## 2026-08-02
 
+### WP-P3.1 — Klassifikation aller 63 Systeme, geprueft
+
+<!-- fab01fe -->
+
+**20 exakt, 43 Surrogat.** Alle zehn handgepflegten Klassifikationen werden vom symbolischen
+Klassifikator reproduziert — keine Abweichung, also weder Parser- noch Handeintragsfehler.
+
+Unabhaengig nachgeprueft an Systemen ausserhalb der zehn (6, 12, 25, 55, 61 stimmen). Der
+aussagekraeftigste Fall ist System 8: `0.14*x0*(1 - 0.0077*x0)*(0.227*x0 - 1)` wird korrekt zu
+`u1|u1²|u1³` ausmultipliziert und als Stage 4 eingestuft. Das geht nur symbolisch, nicht per
+String-Matching — der Klassifikator tut wirklich, was er soll.
+
+Stage-Verteilung der 20 exakten Systeme: Stage 1 → 3, Stage 2 → 3, Stage 3 → 9, Stage 4 → 4,
+Stage 5 → 1. Die Spalte `expected_eq_stage` liefert nebenbei die **per-Gleichung-Wahrheit fuer alle
+117 Gleichungen** — genau das, was die Safety-Bewertung des Stage-Caps als Referenz braucht und
+bisher nur fuer eine Handvoll Systeme offline vorlag.
+
+**Befund, der im Codex-Report fehlt und Konsequenzen hat:** 10 der 43 Surrogat-Systeme sind es
+*ausschliesslich* wegen eines konstanten Offsets (IDs 1, 5, 9, 17, 23, 43, 52, 57, 58, 59). Ein
+Konstanten-Term in der Basis — die einfachste denkbare Erweiterung — wuerde sie exakt machen und
+die Auswertungsmenge von 20 auf 30 Systeme heben, also um 50 %. Gratis ist das nicht: eine
+Basisaenderung wechselt den Fingerprint und entwertet alle bestehenden Ergebnisse. Aber die Zahl
+begrenzt direkt, worueber Paper 1 exakte Wiederfindung berichten kann, und muss deshalb in der
+Scope-Diskussion stehen.
+
 ### WP-C1 — Stage-Cap auf dem v2.2-Substrat, verifiziert
 
 <!-- d3fce98 -->
