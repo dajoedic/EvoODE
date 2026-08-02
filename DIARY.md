@@ -91,8 +91,9 @@ Verifikation (von mir gefahren, nachdem der Codex-Lauf ins Timeout lief):
 | Caps | 3→`[2]`, 11→`[4]`, 26→`[3,3]`, 31→`[3,3]`, 63→alles `nothing` — deckungsgleich mit WP-L5d |
 
 Die Bit-Identitaet bei deaktiviertem Cap ist **strukturell** garantiert, nicht nur empirisch: ohne
-Caps sind die `eq_stages` immer uniform, damit wird immer der alte Pfad genommen. Der
-Laufzeitunterschied im Aequivalenztest (9,09 s gegen 2,08 s) ist JIT-Warmup, kein Cap-Effekt.
+Caps sind die `eq_stages` immer uniform, damit wird immer der alte Pfad genommen. Die
+`elapsed_s`-Werte der beiden Aequivalenzlaeufe unterscheiden sich (JIT-Warmup) und sind ohnehin
+keine belastbare Groesse — siehe die Notiz zu Wall-Clock weiter unten.
 
 **Fingerprint-Falle, die vorab entschaerft wurde:** `FINGERPRINT_VARIANT_LABELS` geht in den Hash
 ein. Ein Eintrag der neuen Variante haette `df5db7763bcd2449` gewechselt und alle 32
@@ -141,11 +142,15 @@ Drei Laeufe (31, Seeds 42/123/7, `evogrow_v3`, Fingerprint `df5db7763bcd2449`, `
 v3-Referenzarm auf System 31, und die offene Zuordnungsfrage aus den Bestaetigungszellen ist
 beantwortet.
 
-| Seed | v2.2 | v3 | v3 + Cap | Fits v3 → Cap | Zeit v3 → Cap |
-|---|---|---|---|---|---|
-| 42 | 6,808e-11 | 1,285e-4 | 1,678e-2 | 490 → 250 | 37 266 s → 6 738 s |
-| 123 | 1,043e-4 | 2,994e-5 | 5,284e-3 | 430 → 230 | 35 726 s → 10 626 s |
-| 7 | 6,975e-5 | 9,872e-5 | **9,872e-5** | 390 → 230 | 41 058 s → 7 201 s |
+| Seed | v2.2 | v3 | v3 + Cap | Fits v3 → Cap |
+|---|---|---|---|---|
+| 42 | 6,808e-11 | 1,285e-4 | 1,678e-2 | 490 → 250 |
+| 123 | 1,043e-4 | 2,994e-5 | 5,284e-3 | 430 → 230 |
+| 7 | 6,975e-5 | 9,872e-5 | **9,872e-5** | 390 → 230 |
+
+Wall-Clock ist hier bewusst **nicht** aufgefuehrt. Die Laeufe liefen auf dem Laptop des Nutzers,
+wo jederzeit Parallelarbeit, Suspend oder Throttling dazwischenkommen koennen, ohne Spur in den
+Daten. Kostenaussagen stuetzen sich ausschliesslich auf Zaehlgroessen.
 
 **Die Zuordnung:** Auf Seed 42 verliert v3 gegenueber v2.2 rund **sechs Groessenordnungen**
 (6,8e-11 → 1,3e-4), der Cap legt danach zwei drauf. Der dominante Anteil des Einbruchs sitzt also im
@@ -170,7 +175,7 @@ findet sie innerhalb der Stage nicht. Das ist Suchkraft *innerhalb* einer Stage 
 ausdruecklich ausserhalb von Paper 1.
 
 **Overshoot-Eliminierung repliziert 3/3** (`eq_overshoot [2,2] → [0,0]`, `eq_wasted_levels`
-[12,12]/[7,7]/[7,7] → [0,0]) bei 41–51 % weniger Fits und Faktor 3,4–5,7 kuerzerer Laufzeit.
+[12,12]/[7,7]/[7,7] → [0,0]) bei 41–51 % weniger Fits.
 `pruned_match = false` in **allen neun** Zellen, auch bei v2.2 mit 6,8e-11 — auf System 31 gelingt
 keinem Arm die exakte Wiederfindung.
 

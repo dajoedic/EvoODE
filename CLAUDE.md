@@ -824,8 +824,8 @@ failure is diagnosed and reportable, but v3 is not the final variant.
   in the v3 substrate — the `r_k` promotion signal WP-L2 showed to be derivative-error contaminated —
   not in the cap. Seed 7 is **bit-identical** capped vs uncapped (same loss, same support), seed 123
   has **identical support in both arms** with a 176x loss gap, i.e. optimizer path dependence rather
-  than a truth made unreachable by the cap. Overshoot elimination replicates 3/3 at 41–51% fewer fits
-  and 3.4–5.7x less wall time. `pruned_match = false` in all nine System-31 cells, including v2.2 at
+  than a truth made unreachable by the cap. Overshoot elimination replicates 3/3 at 41–51% fewer
+  fits. `pruned_match = false` in all nine System-31 cells, including v2.2 at
   6.8e-11. Details in `DIARY.md` (2026-08-02).
 
 Active:
@@ -906,6 +906,11 @@ Open, not scheduled:
 4. Minimal: do not add features without direct research motivation.
 5. Consistent logging: route diagnostics through the common verbosity and logging pattern.
 6. Preserve metadata: do not silently discard search or fit diagnostics.
+7. Wall-clock is never evidence. Runs execute on a working laptop where concurrent load, suspend
+   and throttling leave no trace in the data. Every cost, speedup or efficiency claim must rest on
+   counts — `total_parameter_fits`, `total_loss_evals`, `total_ode_solves`, levels, stages.
+   `elapsed_s` is recorded as context only and must be labelled as non-evidence wherever it is
+   reported. If a claim genuinely requires timing, measure it on a dedicated machine.
 
 ## System Handling Directions
 
