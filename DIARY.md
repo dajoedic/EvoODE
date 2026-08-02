@@ -4,6 +4,60 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ---
 
+## 2026-08-02
+
+### Bestaetigungszellen — Overshoot repliziert, aber „zum Nulltarif" haelt nicht
+
+Vier gecappte Zellen parallel gefahren (26/123, 31/42, 31/123, 31/7), History gemerged (25 → 29).
+Technisch sauber: richtige Zellen, kein Env-Leck, `error = nothing`, `git_dirty = false`, Fingerprint
+`df5db7763bcd2449`, und — entscheidend fuer die Parallelitaet — `total_optimizer_safety_limit_hits = 0`
+in allen vier. **Das 1800-s-Zeitlimit hat nie gefeuert, die Parallelitaet hat die Ergebnisse nicht
+kontaminiert.** Die 40–68 `optimizer_limit_hits` sind ausnahmslos BFGS-Konvergenzfehler, das bekannte
+Verhalten aus WP-P2.2c.
+
+| Zelle | Variante | Loss | Stage | Over | Wasted |
+|---|---|---|---|---|---|
+| 26/42 | v2.2 | 1,392e-3 | 5 | 2 | 8 |
+| | gecappt | **2,520e-4** | 3 | 0 | 0 |
+| 26/123 | v2.2 | 1,392e-3 | 5 | 2 | 8 |
+| | gecappt | 1,392e-3 | 3 | 0 | 0 |
+| 31/42 | v2.2 | **6,808e-11** | 3 | 0 | 0 |
+| | gecappt | **1,678e-2** | 3 | 0 | 0 |
+| 31/123 | v2.2 | 1,043e-4 | 5 | 2 | 8 |
+| | gecappt | 5,284e-3 | 3 | 0 | 0 |
+| 31/7 | v2.2 | 6,975e-5 | 5 | 2 | 8 |
+| | gecappt | 9,872e-5 | 3 | 0 | 0 |
+
+**Was haelt: die Overshoot-Eliminierung repliziert.** Alle vier neuen Zellen `eq_overshoot = [0,0]`,
+`eq_wasted_levels = [0,0]`, waehrend v2.2 in vier von fuenf Zellen Overshoot 2 und 8 verschwendete
+Level hatte.
+
+**Was nicht haelt: „zum Nulltarif".** Meine Formulierung nach der Einzelzelle war zu stark. Auf
+System 26 kostet der Cap nichts (26/42 bit-identisch zu v3, 26/123 gleichauf mit v2.2). Auf System 31
+kostet er erheblich: 31/123 ist 50-fach schlechter als v2.2, 31/7 leicht schlechter — und **31/42 ist
+um acht Groessenordnungen schlechter** (1,7e-2 gegen 6,8e-11). Der Befund „die spaeten Stufen tragen
+nichts bei" gilt fuer System 26, nicht allgemein: auf System 31 senken die Stufen 4/5 den Loss real,
+wenn auch mit strukturell falschen Termen. Der Cap tauscht also Fitqualitaet gegen
+Komplexitaetsdisziplin, und ob dieser Tausch gratis ist, haengt am System.
+
+**Der Vergleich ist zudem konfundiert, und das ist der wichtigere methodische Punkt.** Die gecappte
+Variante ist `EvoGrowV3` **plus** Cap. Fuer System 31 existiert kein v3-Record (v3 liegt nur fuer 3,
+11 und 26 vor), also laesst sich Cap-Effekt und v3-Effekt dort nicht trennen.
+
+Eine Zelle erlaubt die Trennung aber schon jetzt: **auf 31/42 ist der Cap nicht bindend** — v2.2
+endete dort von selbst auf Stage 3, ein Cap bei 3 kann also nichts verhindert haben. Trotzdem liegt
+der Loss acht Groessenordnungen hoeher. **Der Einbruch auf dieser Zelle kann folglich nicht vom Cap
+kommen, sondern muss aus dem v3-Unterbau stammen** (Pro-Gleichungs-Promotion ueber `r_k` statt
+globalem Plateau) — genau das Signal, das WP-L2 als ableitungsfehler-kontaminiert nachgewiesen hat.
+
+Konsequenz: bevor daraus ein Paper-Claim wird, braucht es **v3 ungecappt auf System 31, Seeds
+42/123/7** — drei Laeufe, die Cap-Effekt und v3-Effekt sauber trennen. Ohne das ist die Aussage
+„der Cap kostet Fitqualitaet" nicht belegbar; sie koennte vollstaendig ein v3-Effekt sein.
+
+Nebenbefund: `pruned_match` ist in **allen** Zellen false, auch bei v2.2 mit Loss 6,8e-11 auf 31/42 —
+das ist der aus Phase 1 bekannte Fall „nahezu perfekter Fit, aber ein Fremdterm ueberlebt die
+Pruning-Schwelle".
+
 ## 2026-08-01
 
 ### Scope-Entscheidung getroffen — Zweig 1, angereichert

@@ -810,23 +810,31 @@ failure is diagnosed and reportable, but v3 is not the final variant.
   cap; the paper is the mechanistic Claim C study with v2.2 → v3 → capped as a documented failure
   analysis. Recorded in `PAPER_1.md`.
 
-Active:
-1. **Confirmation cells for the capped variant.** One cell and one seed is too thin for a paper
-   claim. The v2.2 comparison arm already exists for systems 3, 11, 26, 31 and 63 at seeds 42, 123
-   and 7, so only the capped arm has to be run:
-   - **System 31, seeds 42/123/7** — primary confirmation; the cap fires at the true stage [3,3].
-   - **System 26, seeds 123 and 7** — completes the headline cell.
-   - **Systems 3 and 11, seeds 42/123/7** — cheap 1D no-harm evidence where v2.2 already succeeded.
-   - **System 63 is deliberately excluded.** Its cap is `nothing` on all four equations, so the
-     capped variant is identical to v3 there and the cell could not show any overshoot effect. It
-     belongs in the paper as the identifiability limit, not in the confirmation set.
-   - System 54 would need adding to `REGRESSION_SYSTEMS`, which changes the system list and hence
-     the fingerprint — a separate track. Its limit is already documented offline by WP-L3.
+- **Confirmation cells run 2026-08-02** (26/123, 31/42, 31/123, 31/7, capped). Overshoot elimination
+  replicates: `eq_overshoot = [0,0]` and `eq_wasted_levels = [0,0]` in all four, against v2.2's
+  overshoot 2 / wasted 8 in four of five cells. `total_optimizer_safety_limit_hits = 0` throughout,
+  so the parallel execution did not contaminate results. **But the zero-cost claim does not
+  generalise:** on System 26 the cap costs nothing, on System 31 it costs 50x (seed 123), a little
+  (seed 7), and eight orders of magnitude (seed 42, 1.678e-2 against 6.808e-11). Details in
+  `DIARY.md` (2026-08-02).
 
-   Note that the existing v2.2 arm was recorded under Baseline v0 (`0c739d4e36ee6498`) while new
-   capped runs carry `df5db7763bcd2449`. WP-T2 showed the intervening config change did not alter
-   results (R6 reproduced Baseline v0 bit-exactly), but the comparison crosses a fingerprint
-   boundary and must be labelled as such.
+Active:
+1. **Separate the cap effect from the v3 effect — required before any paper claim.** The capped
+   variant is `EvoGrowV3` *plus* cap, and no v3 record exists for System 31, so the loss regression
+   there cannot currently be attributed. One cell already argues it is not the cap: **on 31/42 the
+   cap is non-binding** — v2.2 ended on stage 3 by itself, so a cap at 3 prevented nothing, yet the
+   loss is eight orders worse. That points at the v3 substrate, i.e. the `r_k` promotion signal that
+   WP-L2 showed to be derivative-error contaminated.
+   Needed: **v3 uncapped on System 31, seeds 42/123/7** — three runs, user-started.
+2. Optional cheap no-harm evidence: systems 3 and 11, seeds 42/123/7, capped (1D, minutes).
+   **System 63 stays excluded** — its cap is `nothing` on all equations, so the capped variant is
+   identical to v3 there and the cell could show no overshoot effect; it belongs in the paper as the
+   identifiability limit. System 54 would need adding to `REGRESSION_SYSTEMS`, which changes the
+   system list and hence the fingerprint — a separate track, and its limit is already documented
+   offline by WP-L3.
+3. The v2.2 arm was recorded under Baseline v0 (`0c739d4e36ee6498`) while capped runs carry
+   `df5db7763bcd2449`. WP-T2 showed the intervening config change did not alter results, but the
+   comparison crosses a fingerprint boundary and must be labelled as such.
 2. Then Phase 3 (`PAPER_1.md`): ODEBench protocol alignment — system classification, R² metric,
    protocol-audit document.
 3. Not a Phase 2 continuation, and not to be started implicitly: the open question of why the search
