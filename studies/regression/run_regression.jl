@@ -222,7 +222,8 @@ function config_fingerprint()
         (
             system_id = Int(system[:system_id]),
             dim = Int(system[:dim]),
-            u0 = Float64[x for x in system[:u0]],
+            init_sets = [Float64[x for x in init] for init in system[:init_sets]],
+            t_grid = Float64[t for t in system[:t_grid]],
             tspan = system[:tspan],
             T = Int(system[:T]),
             expected_stage = Int(system[:expected_stage]),
@@ -231,6 +232,7 @@ function config_fingerprint()
     ]
     payload = (
         system_ids = sort([Int(system[:system_id]) for system in REGRESSION_SYSTEMS]),
+        initial_condition_sets = REGRESSION_IC_SETS,
         systems = system_payload,
         seeds = REGRESSION_SEEDS,
         pop_size = POP_SIZE,
@@ -269,7 +271,7 @@ function config_fingerprint()
         discovery_options = OPTIONS_CONFIG,
         trajectory_solver = (
             algorithm = "Tsit5",
-            saveat = "range(tspan[1], tspan[2]; length=T)",
+            saveat = "range(0.0, 10.0; length=512)",
             abstol = 1e-9,
             reltol = 1e-9,
         ),
@@ -347,12 +349,22 @@ function selected_seeds()
     return selected
 end
 
-function completed_key(variant, system, seed::Int)
-    return (String(variant.label), Int(system[:system_id]), seed)
+function selected_ic_sets()
+    value = _env_filter("EVO_REGRESSION_IC_SET")
+    value === nothing && return REGRESSION_IC_SETS
+
+    ic_set = parse(Int, value)
+    selected = [s for s in REGRESSION_IC_SETS if s == ic_set]
+    isempty(selected) && error("Unknown EVO_REGRESSION_IC_SET=$(ic_set)")
+    return selected
+end
+
+function completed_key(variant, system, ic_set::Int, seed::Int)
+    return (String(variant.label), Int(system[:system_id]), ic_set, seed)
 end
 
 function load_completed_cells(fingerprint::String)
-    completed = Set{Tuple{String, Int, Int}}()
+    completed = Set{Tuple{String, Int, Int, Int}}()
     isfile(HISTORY_PATH) || return completed
 
     open(HISTORY_PATH, "r") do io
@@ -364,8 +376,9 @@ function load_completed_cells(fingerprint::String)
                    getproperty(record, :error) === nothing
                     variant = String(getproperty(record, :variant))
                     system_id = Int(getproperty(record, :system_id))
+                    ic_set = haskey(record, :initial_condition_set) ? Int(getproperty(record, :initial_condition_set)) : 1
                     seed = Int(getproperty(record, :seed))
-                    push!(completed, (variant, system_id, seed))
+                    push!(completed, (variant, system_id, ic_set, seed))
                 end
             catch
                 continue
@@ -400,26 +413,51 @@ function close_evo_logger!()
     return nothing
 end
 
-function build_trajectory(system)
+function build_trajectory(system, ic_set::Int)
     system_id = Int(system[:system_id])
     tspan = system[:tspan]
-    t_grid = collect(range(tspan[1], tspan[2]; length = Int(system[:T])))
-    u0 = Float64[x for x in system[:u0]]
+    t_grid = Float64[t for t in system[:t_grid]]
+    ic_set in REGRESSION_IC_SETS || error("Unsupported initial-condition set $(ic_set)")
+    u0 = Float64[x for x in system[:init_sets][ic_set]]
     prob = ODEProblem(rhs_for_system(system_id), copy(u0), tspan, nothing)
     sol = solve(prob, Tsit5(); saveat = t_grid, abstol = 1e-9, reltol = 1e-9)
     return Trajectory(t_grid, Array(sol)')
+end
+
+function true_rhs_matrix(system_id::Int, traj::Trajectory)
+    f! = rhs_for_system(system_id)
+    T, dim = size(traj.x)
+    out = zeros(Float64, T, dim)
+    du = zeros(Float64, dim)
+    @inbounds for i in 1:T
+        f!(du, view(traj.x, i, :), nothing, traj.t[i])
+        out[i, :] .= du
+    end
+    return out
+end
+
+function derivative_active_fraction(rhs_values::AbstractVector{Float64})
+    max_abs = maximum(abs, rhs_values)
+    max_abs == 0.0 && return 0.0
+    return count(abs.(rhs_values) .> 0.01 * max_abs) / length(rhs_values)
+end
+
+function derivative_active_fractions(system_id::Int, traj::Trajectory)
+    rhs = true_rhs_matrix(system_id, traj)
+    return [derivative_active_fraction(rhs[:, eq]) for eq in 1:size(rhs, 2)]
 end
 
 function active_term_names(structure::StructureSpec, basis::AbstractBasis)
     return [[basis_term_name(basis, term_idx) for term_idx in eq_terms] for eq_terms in structure.active_idxs]
 end
 
-function run_one(variant, system, seed::Int, fingerprint::String, provenance)
+function run_one(variant, system, ic_set::Int, seed::Int, fingerprint::String, provenance)
     timestamp = iso_timestamp()
     system_id = Int(system[:system_id])
     system_name = String(system[:system_name])
     dim = Int(system[:dim])
     expected_stage = Int(system[:expected_stage])
+    u0 = Float64[x for x in system[:init_sets][ic_set]]
 
     base_record = Dict{String, Any}(
         "timestamp" => timestamp,
@@ -429,6 +467,10 @@ function run_one(variant, system, seed::Int, fingerprint::String, provenance)
         "config_fingerprint" => fingerprint,
         "system_id" => system_id,
         "system_name" => system_name,
+        "initial_condition_set" => ic_set,
+        "u0" => u0,
+        "tspan" => Tuple(Float64[x for x in system[:tspan]]),
+        "T" => Int(system[:T]),
         "seed" => seed,
         "loss" => nothing,
         "pruned_match" => nothing,
@@ -440,6 +482,7 @@ function run_one(variant, system, seed::Int, fingerprint::String, provenance)
         "eq_final_stages" => nothing,
         "eq_overshoot" => nothing,
         "eq_wasted_levels" => nothing,
+        "derivative_active_fractions" => nothing,
         "support_terms" => nothing,
         "n_levels" => N_LEVELS,
         "use_pretuning" => USE_PRETUNING,
@@ -495,6 +538,7 @@ function run_one(variant, system, seed::Int, fingerprint::String, provenance)
             inner_progress;
             showvalues = [
                 (:system_id, system_id),
+                (:ic_set, ic_set),
                 (:seed, seed),
                 (:level, snapshot.level),
                 (:stage, snapshot.stage),
@@ -504,7 +548,8 @@ function run_one(variant, system, seed::Int, fingerprint::String, provenance)
     end
 
     try
-        traj = build_trajectory(system)
+        traj = build_trajectory(system, ic_set)
+        base_record["derivative_active_fractions"] = derivative_active_fractions(system_id, traj)
         optimizer = build_reference_optimizer()
         screening_optimizer = SCREENING_BUDGETS_ENABLED ? build_screening_optimizer() : nothing
         strategy = variant.constructor(level_callback, screening_optimizer)
@@ -615,22 +660,24 @@ end
 function done_log_line(record, index::Int, total::Int)
     if record["error"] !== nothing
         return @sprintf(
-            "[%d/%d] variant=%s sys=%d seed=%d - done loss=null stage=null/%d pruned=null elapsed=nulls error=%s",
+            "[%d/%d] variant=%s sys=%d ic=%d seed=%d - done loss=null stage=null/%d pruned=null elapsed=nulls error=%s",
             index,
             total,
             record["variant"],
             record["system_id"],
+            record["initial_condition_set"],
             record["seed"],
             record["expected_stage"],
             record["error"],
         )
     end
     return @sprintf(
-        "[%d/%d] variant=%s sys=%d seed=%d - done loss=%.3e stage=%s/%d pruned=%s elapsed=%.1fs",
+        "[%d/%d] variant=%s sys=%d ic=%d seed=%d - done loss=%.3e stage=%s/%d pruned=%s elapsed=%.1fs",
         index,
         total,
         record["variant"],
         record["system_id"],
+        record["initial_condition_set"],
         record["seed"],
         record["loss"],
         string(record["final_stage"]),
@@ -643,18 +690,20 @@ end
 function summary_line(record)
     if record["error"] !== nothing
         return @sprintf(
-            "variant=%s sys=%d seed=%d loss=null stage=null/%d pruned=null elapsed=nulls error=%s",
+            "variant=%s sys=%d ic=%d seed=%d loss=null stage=null/%d pruned=null elapsed=nulls error=%s",
             record["variant"],
             record["system_id"],
+            record["initial_condition_set"],
             record["seed"],
             record["expected_stage"],
             record["error"],
         )
     end
     return @sprintf(
-        "variant=%s sys=%d seed=%d loss=%.3e stage=%s/%d pruned=%s elapsed=%.1fs",
+        "variant=%s sys=%d ic=%d seed=%d loss=%.3e stage=%s/%d pruned=%s elapsed=%.1fs",
         record["variant"],
         record["system_id"],
+        record["initial_condition_set"],
         record["seed"],
         record["loss"],
         string(record["final_stage"]),
@@ -672,7 +721,7 @@ function main()
     provenance = git_provenance()
     appended = 0
     skipped = 0
-    completed = fresh_requested() ? Set{Tuple{String, Int, Int}}() : load_completed_cells(fingerprint)
+    completed = fresh_requested() ? Set{Tuple{String, Int, Int, Int}}() : load_completed_cells(fingerprint)
 
     println("Regression history fingerprint: $(fingerprint)")
     println("Git: $(provenance.git_hash), dirty=$(provenance.git_dirty)")
@@ -680,8 +729,9 @@ function main()
 
     variants = selected_variants()
     systems = selected_systems()
+    ic_sets = selected_ic_sets()
     seeds = selected_seeds()
-    total_runs = length(variants) * length(systems) * length(seeds)
+    total_runs = length(variants) * length(systems) * length(ic_sets) * length(seeds)
     run_index = 0
 
     append_run_log_line!("=== Started at $(iso_timestamp()) ===")
@@ -698,18 +748,20 @@ function main()
 
         for variant in variants
             for system in systems
-                for seed in seeds
+                for ic_set in ic_sets
+                    for seed in seeds
                     run_index += 1
-                    key = completed_key(variant, system, seed)
+                    key = completed_key(variant, system, ic_set, seed)
                     if key in completed
                         skipped += 1
                         append_run_log_line!(
                             @sprintf(
-                                "[%d/%d] variant=%s sys=%d seed=%d - skipped (already in history)",
+                                "[%d/%d] variant=%s sys=%d ic=%d seed=%d - skipped (already in history)",
                                 run_index,
                                 total_runs,
                                 variant.label,
                                 Int(system[:system_id]),
+                                ic_set,
                                 seed,
                             )
                         )
@@ -718,6 +770,7 @@ function main()
                             showvalues = [
                                 (:variant, variant.label),
                                 (:system_id, Int(system[:system_id])),
+                                (:ic_set, ic_set),
                                 (:seed, seed),
                             ],
                         )
@@ -726,17 +779,18 @@ function main()
 
                     append_run_log_line!(
                         @sprintf(
-                            "[%d/%d] variant=%s sys=%d seed=%d - start %s",
+                            "[%d/%d] variant=%s sys=%d ic=%d seed=%d - start %s",
                             run_index,
                             total_runs,
                             variant.label,
                             Int(system[:system_id]),
+                            ic_set,
                             seed,
                             iso_timestamp(),
                         )
                     )
 
-                    record = run_one(variant, system, seed, fingerprint, provenance)
+                    record = run_one(variant, system, ic_set, seed, fingerprint, provenance)
                     append_record!(record)
                     appended += 1
 
@@ -747,10 +801,12 @@ function main()
                         showvalues = [
                             (:variant, variant.label),
                             (:system_id, Int(system[:system_id])),
+                            (:ic_set, ic_set),
                             (:seed, seed),
                         ],
                     )
                     println(summary_line(record))
+                    end
                 end
             end
         end

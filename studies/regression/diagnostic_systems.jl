@@ -1,6 +1,27 @@
 # studies/regression/diagnostic_systems.jl
 
+using JSON3
+
 const REGRESSION_SEEDS = [42, 123, 7]
+const REGRESSION_TSPAN = (0.0, 10.0)
+const REGRESSION_T = 512
+const REGRESSION_IC_SETS = [1, 2]
+const REGRESSION_DATA_PATH = joinpath(@__DIR__, "..", "..", "benchmarks", "data", "strogatz_extended.json")
+
+function _dataset_protocol_by_id(path::AbstractString)
+    raw = open(path, "r") do io
+        JSON3.read(io)
+    end
+    return Dict(
+        Int(obj["id"]) => (
+            init_sets = [Float64[x for x in init] for init in obj["init"]],
+            t_grid = Float64[t for t in obj["solutions"][1][1]["t"]],
+        )
+        for obj in raw
+    )
+end
+
+const REGRESSION_PROTOCOL_BY_ID = _dataset_protocol_by_id(REGRESSION_DATA_PATH)
 
 # Runtime is dominated by Systems 26 and 63; System 63 can take hours.
 # Keep this full list as the default suite. If it is trimmed later, the changed
@@ -10,48 +31,66 @@ const REGRESSION_SYSTEMS = [
         :system_id => 3,
         :system_name => "Logistic growth",
         :dim => 1,
-        :u0 => [7.3],
-        :tspan => (0.0, 20.0),
-        :T => 200,
+        :init_sets => REGRESSION_PROTOCOL_BY_ID[3].init_sets,
+        :t_grid => REGRESSION_PROTOCOL_BY_ID[3].t_grid,
+        :tspan => REGRESSION_TSPAN,
+        :T => REGRESSION_T,
         :expected_stage => 2,
     ),
     Dict(
         :system_id => 11,
         :system_name => "Critical slowing down",
         :dim => 1,
-        :u0 => [3.4],
-        :tspan => (0.0, 5.0),
-        :T => 100,
+        :init_sets => REGRESSION_PROTOCOL_BY_ID[11].init_sets,
+        :t_grid => REGRESSION_PROTOCOL_BY_ID[11].t_grid,
+        :tspan => REGRESSION_TSPAN,
+        :T => REGRESSION_T,
         :expected_stage => 4,
     ),
     Dict(
         :system_id => 26,
         :system_name => "Lotka-Volterra competition",
         :dim => 2,
-        :u0 => [5.0, 4.3],
-        :tspan => (0.0, 10.0),
-        :T => 200,
+        :init_sets => REGRESSION_PROTOCOL_BY_ID[26].init_sets,
+        :t_grid => REGRESSION_PROTOCOL_BY_ID[26].t_grid,
+        :tspan => REGRESSION_TSPAN,
+        :T => REGRESSION_T,
         :expected_stage => 3,
     ),
     Dict(
         :system_id => 31,
         :system_name => "SIR infection model",
         :dim => 2,
-        :u0 => [7.2, 0.98],
-        :tspan => (0.0, 20.0),
-        :T => 200,
+        :init_sets => REGRESSION_PROTOCOL_BY_ID[31].init_sets,
+        :t_grid => REGRESSION_PROTOCOL_BY_ID[31].t_grid,
+        :tspan => REGRESSION_TSPAN,
+        :T => REGRESSION_T,
         :expected_stage => 3,
     ),
     Dict(
         :system_id => 63,
         :system_name => "SEIR epidemic",
         :dim => 4,
-        :u0 => [0.6, 0.3, 0.09, 0.01],
-        :tspan => (0.0, 30.0),
-        :T => 300,
+        :init_sets => REGRESSION_PROTOCOL_BY_ID[63].init_sets,
+        :t_grid => REGRESSION_PROTOCOL_BY_ID[63].t_grid,
+        :tspan => REGRESSION_TSPAN,
+        :T => REGRESSION_T,
         :expected_stage => 3,
     ),
 ]
+
+for system in REGRESSION_SYSTEMS
+    init_sets = system[:init_sets]
+    t_grid = system[:t_grid]
+    length(init_sets) >= maximum(REGRESSION_IC_SETS) ||
+        error("System $(system[:system_id]) does not provide all requested initial-condition sets")
+    all(length(init) == Int(system[:dim]) for init in init_sets) ||
+        error("System $(system[:system_id]) has an init dimension mismatch")
+    length(t_grid) == Int(system[:T]) ||
+        error("System $(system[:system_id]) has a t-grid length mismatch")
+    first(t_grid) == first(system[:tspan]) && last(t_grid) == last(system[:tspan]) ||
+        error("System $(system[:system_id]) has a t-grid span mismatch")
+end
 
 function rhs_03!(du, u, _, _)
     du[1] = 0.79 * u[1] * (1.0 - u[1] / 74.3)

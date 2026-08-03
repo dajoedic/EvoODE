@@ -53,7 +53,7 @@ end
 
 function _run_variant(label::String, constructor, system, seed::Int, fingerprint::String, provenance)
     variant = (label = label, constructor = constructor)
-    record = run_one(variant, system, seed, fingerprint, provenance)
+    record = run_one(variant, system, 1, seed, fingerprint, provenance)
     record["error"] === nothing || error("$(label) failed: $(record["error"])")
     return record
 end
@@ -127,7 +127,7 @@ function _confirmed_caps()
     caps = Dict{String, Any}()
     for system_id in (3, 11, 26, 31, 63)
         system = _system(system_id)
-        traj = build_trajectory(system)
+        traj = build_trajectory(system, 1)
         basis = default_staged_polynomial_basis(Int(system[:dim]))
         caps[string(system_id)] = estimate_stage_caps(
             traj,
