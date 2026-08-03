@@ -76,6 +76,8 @@ analysis/   Python analysis pipeline (see analysis/CONVENTIONS.md)
 outputs/    gitignored; every script writes to its own subfolder
 docs/       design notes, reports, protocols
 codex/      CURRENT_TASK.md — the single active task spec
+containers/ Apptainer definition for the batch campaign
+hpc/        example Slurm submission scripts
 ```
 
 `benchmarks/` vs `experiments/` are distinct and must not be conflated: `benchmarks/` is
@@ -98,8 +100,8 @@ The second line of every task spec declares the language: `**Language: Python**`
 |---|---|
 | 1 — stable core | DONE (2026-04-20) |
 | 2 — EvoGrow variants | **CLOSED 2026-08-03** |
-| 3 — benchmarking | infrastructure done; protocol alignment in progress. Planned next axes: noise, sampling density, coupling strength, dimensionality |
-| 4 — Paper 1 | Phase A frozen; Phase B blocked on compute |
+| 3 — benchmarking | infrastructure done; Phase B protocol decided and implemented. Planned next axes: noise, sampling density, coupling strength, dimensionality |
+| 4 — Paper 1 | Phase A frozen; Phase B ported to a job array, blocked on compute |
 | 5 — advanced methods | not started |
 
 ### Phase 2 outcome
@@ -131,7 +133,7 @@ in the current phase.**
 |----------|--------|------|
 | `paper1_phaseA_v1` | **frozen** (300/300) | H1 partial, H2 supported, H3 partial, H4 vacuous. Not used for final claims. `docs/paper1_freeze_memo_phaseA.md` |
 | `studies/lookahead/` | WP-L1–L5d, WP-G1/G1b done | Stage-firing look-ahead — **promoted from diagnostic to the paper's contribution** |
-| `studies/regression/` | 42 records, 2 fingerprints | Final variant covers 10 cells on systems 3, 11, 26, 31. Baseline v1 pending the new grid |
+| `studies/regression/` | 42 records, 4 fingerprints | Final variant covers 10 cells on systems 3, 11, 26, 31 — all on the **old** grid. Batch path (manifest / one cell per process / merge) in place; no record yet on `256014cf6f0295e1` |
 | `studies/numerics/` | done (WP-T2) | Overshoot on System 26 is algorithmic, not numerical; screening is performance-only |
 | `studies/generalization/` | closed | Auxiliary only; insufficient cells for supplementary inclusion |
 | `studies/profiling/` | data available | Methods / Discussion only; not evidence for H1–H4 |
@@ -174,18 +176,24 @@ the coupled search path 1e-6 is the cheaper, behaviour-equal tolerance; the Syst
 
 ### Active
 
-1. **Phase B compute.** 756 runs (63 systems × 2 conditions × 3 seeds × 2 IC sets), ~1e9 ODE solves,
-   ~265k parameter fits. Fully independent runs, so it scales linearly with cores: 32–64 physical
-   cores, ~2 GB RAM per concurrent run, <10 GB disk, no GPU, Julia 1.11.5 pinned; containerised
-   preferred for the version pin, deferred until server access is confirmed. First action on the
-   server: one calibration cell (System 31 / seed 42 / capped — 310 fits, 1,175,567 ODE solves),
-   which would be the project's first trustworthy timing figure.
-2. **Formalise the Phase B protocol** — new grid, both IC sets, own integration, and the resulting
-   change to `expected_stage` bookkeeping and to `config_fingerprint`.
-3. **Fingerprint boundary.** The v2.2 arm sits on Baseline v0 (`0c739d4e36ee6498`), all v3 and
+1. **Phase B compute.** 846 jobs (756 Phase B + 90 regression), ~1e9 ODE solves, ~2.7e5 parameter
+   fits. Fully independent, so throughput scales linearly with cores: 1 core and 2 GB per job,
+   <10 GB disk, no GPU, Julia 1.11.5 pinned. The resource request is `docs/hpc_requirements.md`;
+   consultation 2026-08-06. First action with access: build the container, then one pilot cell —
+   the project's first trustworthy timing figure.
+2. **Merge semantics** (WP-B3). `merge_batch_records.jl` accepts records with a non-null `error`
+   while `load_completed_cells` filters them. A cell killed by a cluster timeout therefore poisons
+   its key and blocks its own re-run. Must be fixed before the campaign.
+3. **`BFGS_TIME_LIMIT_S = 1800` → a budget in counts** (WP-B3). The last wall-clock dependency in
+   the search path; on heterogeneous nodes it would make results depend on node assignment.
+   Fingerprint-affecting, therefore now, while no record exists under the current fingerprint.
+4. **Fingerprint boundary.** The v2.2 arm sits on Baseline v0 (`0c739d4e36ee6498`), all v3 and
    capped runs on `df5db7763bcd2449`. The comparison is sound but crosses a boundary and must be
-   labelled as such wherever it is reported.
-4. **Remaining Phase 3 items** (`PAPER_1.md`): R² metric, and filling the external columns of the
+   labelled as such wherever it is reported. The current code is on `256014cf6f0295e1` (Phase B
+   protocol + corrected grid label) and carries **no records yet** — every Phase B and every new
+   regression run will live there, so all fingerprint-affecting changes must land before the first
+   one.
+5. **Remaining Phase 3 items** (`PAPER_1.md`): R² metric, and filling the external columns of the
    protocol audit from the publications. Open question there: if published numbers were computed on
    the shipped trajectories, we work on cleaner data than the comparison works — a deviation in our
    favour that must be declared.
