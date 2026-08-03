@@ -6,6 +6,72 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ## 2026-08-03
 
+### WP-G1 / WP-G1b — Gitter ja, Trajektorien nein
+
+Caps auf dem ODEBench-Datensatzgitter (512 Punkte, t in [0,10]) nachgemessen, beide IC-Saetze,
+beide Datenquellen: **A** = gelieferte `y`-Matrizen, **B** = selbst integriert mit `Tsit5` bei
+`abstol = reltol = 1e-9` auf identischem Gitter. Keine Suche, reine Messung.
+Skript `studies/lookahead/measure_dataset_grid_caps.jl`, Report
+`docs/wp_g1_dataset_grid_caps.md`.
+
+| System | per-System-Gitter | Datensatzgitter IC1 | IC2 | Wahrheit |
+|---|---|---|---|---|
+| 3 | `[2]` | `[2]` | `[2]` | `[2]` |
+| 11 | `[4]` | `[4]` | `[4]` | `[4]` |
+| 26 | `[3,3]` | `[3,3]` | `[3,3]` | `[3,3]` |
+| 31 | `[3,3]` | `[3,3]` | **`[1,nothing]`** | `[3,3]` |
+| 54 | `[nothing,2,2]` | **`[nothing,3,3]`** | **`[nothing,3,3]`** | `[3,3,3]` |
+| 63 | alle `nothing` | alle `nothing` | alle `nothing` | `[3,3,1,1]` |
+
+**Vorhersage 1 bestaetigt.** Die zwei bekannten Sicherheitsverletzungen auf System 54 verschwinden.
+Auf IC-Satz 1: Verletzungen 2 → 0, korrekte Caps 6 → 8 von 13 Gleichungen. Das ist exakt, was
+WP-L3 aus der Aufloesungsgrenze vorhergesagt hatte.
+
+**Vorhersage 2 falsifiziert.** System 63 bleibt auf beiden IC-Saetzen vollstaendig `nothing`. Kein
+Artefakt unseres t=30-Horizonts — die Identifizierbarkeitsgrenze ist echt.
+
+**Arm A = Arm B, in allen 26 Zellen.** Die Rauschboeden unterscheiden sich erst in der dritten bis
+vierten Stelle. Erklaerung: der Integrationsfehler der gelieferten Daten ist *glatt* in t, kein
+punktweises Rauschen, und ein ableitungsbasierter Rauschboden sieht glatten Fehler praktisch nicht.
+**Der Gewinn auf System 54 gehoert also der Gitterdichte, nicht der Datenqualitaet.**
+
+**Daraus folgt aber nicht, dass die gelieferten Trajektorien brauchbar sind.** Der Cap ist gegen
+den Datenfehler immun, der Loss ist es nicht. Gegen eine unabhaengig konvergierte RK4-Referenz
+(Selbstkonvergenz ~1e-13) erzwingen die gelieferten Daten diese MSE-Untergrenzen:
+
+| System | MSE-Boden | unser bestes Ergebnis |
+|---|---|---|
+| 3 | **2,5e-02** | 1,3e-08 |
+| 11 | 1,9e-11 | **4,4e-15** |
+| 31 | 6,1e-10 | **6,8e-11** |
+| 26 | 3,5e-11 | 1,4e-03 |
+| 54 | 2,0e-07 | — |
+
+Auf 3, 11 und 31 waeren unsere bisherigen Ergebnisse mit diesen Daten unerreichbar, auf System 3
+um sechs Groessenordnungen. Die `nfev`-Felder bestaetigen die Ursache: System 3 wurde mit 77
+Funktionsauswertungen ueber t in [0,10] integriert, also auf scipy-Defaulttoleranzen.
+
+**Empfehlung fuer Phase B: Abtastprotokoll uebernehmen, Trajektorien selbst integrieren.**
+512 Punkte, t in [0,10], beide IC-Saetze, `Tsit5` bei 1e-9. Der Cap ist gegenueber dieser Wahl
+indifferent, sie kostet also nichts von dem, was hier gemessen wurde. Offener Punkt fuer den
+Protokoll-Audit: falls publizierte Zahlen auf den gelieferten Trajektorien gerechnet wurden,
+arbeiten wir auf saubereren Daten als die Vergleichsarbeiten. Das ist eine Abweichung zu unseren
+Gunsten und muss deklariert werden.
+
+**Korrektur an meiner eigenen Zwischenthese.** Aus der System-31-Diagnose hatte ich gefolgert, der
+feste Horizont erzeuge systematisch tote Zellen und das ziehe sich durch Phase B. Die Messung
+begrenzt das scharf: von 26 Zellen sind 5 signalarm (`derivative_active_fraction <= 0.10`), und
+**nur eine davon scheitert** — die anderen vier liefern korrekte Caps. Von den 12 scheiternden
+Zellen ist genau eine signalarm. System 63 hat `derivative_active_fraction = 1` auf allen acht
+Zellen und scheitert vollstaendig. Signalarmut erklaert also genau einen Fall (System 31 IC2
+Gleichung 1: Epidemie nach t = 0,47 durch, 5,3 % der Punkte tragen Dynamik), nicht das Muster.
+
+Notiz zur Diagnosespalte: `state_below_1pct_spread_time` feuert bei t=0 fuer wachsende Zustaende
+(System 3, System 63 Gleichungen 3 und 4). Nicht falsch, aber fuer diese Faelle bedeutungslos;
+tragend ist `derivative_active_fraction`.
+
+---
+
 ### No-Harm-Zellen Systeme 3 und 11 — sauber, mit einem echten Ausreisser
 
 <!-- 77f0fed -->

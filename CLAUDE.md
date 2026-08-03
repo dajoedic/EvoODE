@@ -858,6 +858,25 @@ failure is diagnosed and reportable, but v3 is not the final variant.
   untracked per-cell output files sit inside the repo and `git status --porcelain` counts them; the
   tracked source was identical across all six runs. Details in `DIARY.md` (2026-08-03).
 
+- **WP-G1 / WP-G1b (dataset-grid cap measurement) — done 2026-08-03.** Caps re-measured on the
+  ODEBench grid (512 points, t ∈ [0,10]), both IC sets, both data sources (shipped `y` matrices vs.
+  self-integrated at 1e-9 on the identical grid). No search, measurement only.
+  **Prediction 1 confirmed:** System 54 goes `[nothing,2,2]` → `[nothing,3,3]`, the two known safety
+  violations disappear; on IC set 1 violations 2 → 0 and correct caps 6 → 8 of 13 equations.
+  **Prediction 2 falsified:** System 63 stays `nothing` on all equations and both IC sets — a real
+  identifiability limit, not a horizon artifact. **Arm A = Arm B in all 26 cells** (noise floors
+  differ in the 3rd–4th digit), because the shipped data's integration error is *smooth* in t and a
+  derivative-based floor barely sees it — so the System 54 gain belongs to grid density, not data
+  quality. **But the loss is not immune:** the shipped trajectories impose MSE floors of 2.5e-2
+  (System 3), 1.9e-11 (11) and 6.1e-10 (31), which puts our current results (1.3e-8, 4.4e-15,
+  6.8e-11) out of reach — System 3 was integrated with 77 function evaluations, i.e. scipy default
+  tolerances. **Recommendation for Phase B: adopt the sampling protocol, integrate the trajectories
+  ourselves at 1e-9.** New finding not predicted: the cap is *not* stable across initial conditions
+  — System 31 IC set 2 yields cap 1 against truth 3, because the epidemic is over by t = 0.47 and
+  only 5.3% of the 512 points carry dynamics. Bounded, though: of 26 cells only 5 are low-signal and
+  only 1 of those fails; of the 12 failing cells only 1 is low-signal. Details in `DIARY.md`
+  (2026-08-03), report `docs/wp_g1_dataset_grid_caps.md`.
+
 Active:
 1. **System 63 stays excluded** from capped cells — its cap is `nothing` on all equations, so the
    capped variant is identical to v3 there and the cell could show no overshoot effect; it belongs
