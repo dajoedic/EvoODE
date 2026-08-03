@@ -6,6 +6,25 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ## 2026-08-03
 
+### Konsolidierung — CLAUDE.md und Protokoll-Audit auf Stand gebracht
+
+<!-- 2158170 -->
+
+`CLAUDE.md` war zu einem zweiten Tagebuch geworden: die Prioritätenliste enthielt rund 100 Zeilen
+chronologischer WP-Einträge, die DIARY.md dupliziert haben. Neu gegliedert nach dem, was ein Befund
+*einschränkt*, nicht nach Reihenfolge — Staged-Growth-Claim, Ursachen des v3-Scheiterns, Look-Ahead
+Cap, Endvariante, Phase-B-Protokoll, Kosten/Numerik. Dazu ein eigener Phase-2-Abschnitt für
+`evogrow_v2_2_stage_capped` als Endvariante, aktualisierte Studien-Tabelle, Roadmap und Known Gaps
+(neu darin: die ungelöste Strukturfindung auf gekoppelten Systemen, die IC-Abhängigkeit des Caps,
+der Rechenbedarf von Phase B).
+
+`docs/paper1_odebench_protocol_alignment.md` §3 hielt noch „zwei Optionen, offen" fest. Ersetzt
+durch die getroffene Entscheidung samt der Messungen, die Gitterdichte und Datengenauigkeit
+trennen, und fünf Konsequenzen, die mitgezogen werden müssen — darunter die Abweichung zu unseren
+Gunsten, falls publizierte Zahlen auf den gelieferten Trajektorien gerechnet wurden.
+
+---
+
 ### WP-G1 / WP-G1b — Gitter ja, Trajektorien nein
 
 <!-- 8c5319b, 3fc286c -->
