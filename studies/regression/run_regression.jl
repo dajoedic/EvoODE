@@ -271,7 +271,7 @@ function config_fingerprint()
         discovery_options = OPTIONS_CONFIG,
         trajectory_solver = (
             algorithm = "Tsit5",
-            saveat = "range(0.0, 10.0; length=512)",
+            saveat = "dataset solutions[1][1].t grid; shipped y ignored",
             abstol = 1e-9,
             reltol = 1e-9,
         ),

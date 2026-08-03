@@ -1,0 +1,30 @@
+Bootstrap: docker
+From: julia:1.11.5-bookworm
+
+%environment
+    export JULIA_NUM_THREADS=1
+    export OPENBLAS_NUM_THREADS=1
+    export JULIA_DEPOT_PATH=/opt/julia_depot
+    export EVO_BATCH_MANIFEST=/outputs/manifest.csv
+    export EVO_BATCH_OUTPUT_DIR=/outputs/tasks
+
+%files
+    Project.toml /opt/EvoODE/Project.toml
+    Manifest.toml /opt/EvoODE/Manifest.toml
+    src /opt/EvoODE/src
+    studies /opt/EvoODE/studies
+    benchmarks /opt/EvoODE/benchmarks
+
+%post
+    set -eu
+    mkdir -p /opt/julia_depot /outputs
+    cd /opt/EvoODE
+    export JULIA_NUM_THREADS=1
+    export OPENBLAS_NUM_THREADS=1
+    export JULIA_DEPOT_PATH=/opt/julia_depot
+    julia --project=. -e 'import Pkg; Pkg.instantiate(); Pkg.precompile()'
+
+%runscript
+    set -eu
+    cd /opt/EvoODE
+    exec julia --project=. studies/regression/run_batch_cell.jl "$@"
