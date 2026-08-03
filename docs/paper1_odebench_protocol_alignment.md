@@ -9,7 +9,7 @@ be described as directly comparable, approximately comparable, or contextual onl
 protocol equivalence is not established, external numbers must not be framed as a benchmark
 victory or defeat.
 
-Last updated: 2026-08-02.
+Last updated: 2026-08-03.
 
 ---
 
@@ -64,15 +64,18 @@ WP-L3 measured that on System 54 the stage-3 cliff is not resolvable at the EvoO
 density, and becomes resolvable at roughly twice that density. The dataset grid is 2.56
 times denser in time than EvoODE's System 54 grid (51.2 against 20 points per time unit).
 
-Adopting the dataset grid would therefore plausibly remove one of the two remaining stage-cap
-safety violations. This is a prediction from measured behaviour, not a result — it has not
-been run.
+Adopting the dataset grid would therefore plausibly remove the remaining stage-cap safety
+violations. **Run and confirmed on 2026-08-03 (WP-G1): both violations disappear** — System 54
+goes `[nothing, 2, 2]` → `[nothing, 3, 3]`. See §3.
 
 ### 1.4 EvoODE protocol as currently implemented
 
+This describes the state **before** the Phase B protocol decision in §3, which supersedes the
+initial-condition, time-span and sampling rows.
+
 | Dimension | EvoODE |
 |---|---|
-| Systems | 10 of 63 so far; all 63 planned for Phase B |
+| Systems | 10 of 63 run; all 63 classified (WP-P3.1); all 63 planned for Phase B |
 | Initial conditions | dataset set 0 only, one per system |
 | Time span | per system, see table above |
 | Sampling grid | uniform, per-system T, see table above |
@@ -113,23 +116,73 @@ Until these are answered, published numbers are **contextual only**.
 
 ---
 
-## 3. Consequences for Phase B
+## 3. Phase B sampling protocol — decided 2026-08-03
 
-Two options, and the choice must be deliberate:
+The question was originally framed as a binary choice between adopting the dataset grid and
+keeping the per-system grid. WP-G1 and WP-G1b showed that framing to be wrong: "adopting the
+dataset grid" has two separable components, and the measurement says they should be separated.
 
-**Adopt the dataset grid.** Run Phase B on 512 points over t ∈ [0, 10] with both initial
-condition sets. This makes protocol alignment plausible, doubles the run count, and changes
-every trajectory — so no existing result carries over and the regression baseline would have
-to be re-established. It would also likely improve derivative-based components through the
-denser grid.
+**Decision: adopt the dataset's sampling protocol, integrate the trajectories ourselves.**
 
-**Keep the current per-system grid.** Existing results remain valid and comparable within the
-project, but published numbers stay contextual only and the paper must say so explicitly and
-consistently.
+| Component | Decision |
+|---|---|
+| Time span | t ∈ [0, 10], as shipped |
+| Sampling | 512 uniform points, spacing `10/511`, both endpoints included |
+| Initial conditions | **both** sets per system |
+| Trajectory source | **our own integration**, `Tsit5`, `abstol = reltol = 1e-9`, saved at the dataset's 512 time points |
 
-Recommendation: decide this **before** Phase B is generated, because it determines the
-trajectories and therefore everything downstream. It does not need to be decided before the
-system classification (WP-P3.1), which is grid-independent.
+### Why the sampling protocol is adopted
+
+The dataset grid is 2.56x denser in time than EvoODE's grid. Measured consequence: on System 54
+the look-ahead stage cap goes from `[nothing, 2, 2]` to `[nothing, 3, 3]` against a true
+`[3, 3, 3]`, i.e. **the two known safety violations disappear.** Across the 13 equations of the
+six ground-truth systems on initial-condition set 1, violations go 2 → 0 and correct caps 6 → 8.
+
+This is the prediction WP-L3 made from the resolution limit, now confirmed.
+
+### Why the shipped trajectories are not adopted
+
+They carry the accuracy of the solver that produced them. Verified against an independently
+converged RK4 reference (self-convergence ~1e-13):
+
+| System | max absolute error of shipped data | implied MSE floor | current EvoODE result |
+|---|---|---|---|
+| 3 | 2.3e-01 | **2.5e-02** | 1.3e-08 |
+| 11 | 1.0e-05 | 1.9e-11 | **4.4e-15** |
+| 26 | 2.0e-05 | 3.5e-11 | 1.4e-03 |
+| 31 | 1.1e-04 | 6.1e-10 | **6.8e-11** |
+| 54 | 1.2e-03 | 2.0e-07 | — |
+
+On Systems 3, 11 and 31 our current results are below the floor the shipped data imposes, i.e.
+unreachable on that data — on System 3 by six orders. The `nfev` fields corroborate the cause:
+System 3 was integrated with 77 function evaluations over t ∈ [0, 10], consistent with scipy
+`solve_ivp` default tolerances.
+
+### Why this costs nothing that WP-G1 measured
+
+The caps were measured on both data sources on the identical grid and are **identical in all 26
+cells**; the noise floors differ only in the third to fourth significant digit. The reason is that
+the shipped data's integration error is smooth in t, and a derivative-based noise floor barely
+sees smooth error. The System 54 gain therefore belongs to grid density, not to data quality, and
+is retained by our own integration.
+
+### Consequences that must be carried through
+
+1. `tspan` and `T` enter `config_fingerprint`, so the regression history's 42 records are not
+   comparable across the change. A Baseline v1 must be established on the new grid before the
+   final variant is regression-checked.
+2. Every per-equation cap must be re-derived; the values in this project's older documents refer
+   to the per-system grid.
+3. Run count doubles to 63 × 2 conditions × 3 seeds × 2 IC sets = 756.
+4. **A deviation in our favour that must be declared** (see §2, open question 1): if published
+   numbers were computed on the shipped trajectories, we work on cleaner data than the comparison
+   works. This is not resolvable until the publications are checked.
+5. The cap is **not stable across initial conditions**. System 31 initial-condition set 2 yields a
+   cap of 1 against a true stage of 3, because the epidemic is over by t ≈ 0.47 and only 5.3% of
+   the 512 points carry dynamics (30.3% on set 1). This is bounded rather than systematic: of 26
+   cells, 5 are low-signal and only 1 of those fails; of 12 failing cells only 1 is low-signal.
+   Phase B will contain cells in which no method can recover the structure, and those must be
+   reported as a property of the protocol, not as method failure.
 
 ---
 
@@ -139,6 +192,8 @@ system classification (WP-P3.1), which is grid-independent.
 |---|---|
 | EvoODE initial conditions vs dataset | verified — set 0, exact match, ten systems |
 | EvoODE grid vs dataset | verified — mismatch on all ten |
-| System classification of all 63 | in progress, WP-P3.1 |
+| Accuracy of the shipped trajectories | verified — MSE floors 2.5e-2 to 2e-7, WP-G1b |
+| Phase B sampling protocol | **decided 2026-08-03** — §3 |
+| System classification of all 63 | done, WP-P3.1 |
 | Published source protocols | not started — requires the publications |
 | Comparability verdict | **not established** |
