@@ -208,7 +208,7 @@ a note.
 
 ### 3.4 Budgets
 
-Budgets are fixed as defined in `CLAUDE.md` (Paper 1 Reproducibility Protocol):
+Budgets are fixed as defined in `docs/paper1_phaseA_reproducibility.md`:
 
 ```
 EvoGrow: n_levels = 20
