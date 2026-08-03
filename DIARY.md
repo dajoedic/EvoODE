@@ -6,6 +6,34 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ## 2026-08-03
 
+### CLAUDE.md aufgeteilt — 1251 auf 282 Zeilen
+
+<!-- 6e7b916 -->
+
+`CLAUDE.md` trug drei Sorten Inhalt gleichzeitig: Orientierung, Komponentenreferenz und ein
+eingefrorenes Experimentprotokoll. Verschoben, wortgleich, nichts geloescht:
+
+- Komponentenreferenz (Typen, Pipeline, Suchalgorithmen, Basen, Optimierer, Stopping-Logik,
+  Experiment-Infrastruktur, Benchmark-Daten) → `docs/architecture.md`, 403 Zeilen
+- das 263-zeilige Reproduzierbarkeitsprotokoll, das die eingefrorene `paper1_phaseA_v1` beschreibt
+  → `docs/paper1_phaseA_reproducibility.md`, 273 Zeilen
+
+Verifiziert, dass keine Ueberschrift verlorenging: alle alten `##`/`###`-Titel finden sich in einer
+der drei Dateien wieder oder sind nachweislich zusammengefasst (Vision + Core Idea + PhD Focus →
+"What This Project Is", Phase 1–5 → Statustabelle).
+
+Zwei Folgefunde: `docs/paper1_study_protocol.md` verwies auf den verschobenen Abschnitt (korrigiert),
+und `docs/de/` enthaelt deutsche Lesefassungen vom 2026-04-26 bzw. 2026-05-08, die den Stand vor
+Gate 1, Gate 2 und der Variantenentscheidung wiedergeben — als veraltet markiert statt still
+weiterlaufen zu lassen.
+
+Der Kopfbereich haelt jetzt eine Dokumentenkarte: welche Datei was haelt. Die alte Formulierung
+"single source of truth ... do not maintain a second planning document" war der Grund, warum alles
+in diese eine Datei gewandert ist. Die Regel gilt weiter, aber praezisiert: **Planung und Status**
+gehoeren hierher, Referenz und Chronologie nicht.
+
+---
+
 ### Konsolidierung — CLAUDE.md und Protokoll-Audit auf Stand gebracht
 
 <!-- 2158170 -->
