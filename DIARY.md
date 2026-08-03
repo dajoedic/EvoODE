@@ -8,6 +8,8 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ### WP-G1 / WP-G1b — Gitter ja, Trajektorien nein
 
+<!-- 8c5319b, 3fc286c -->
+
 Caps auf dem ODEBench-Datensatzgitter (512 Punkte, t in [0,10]) nachgemessen, beide IC-Saetze,
 beide Datenquellen: **A** = gelieferte `y`-Matrizen, **B** = selbst integriert mit `Tsit5` bei
 `abstol = reltol = 1e-9` auf identischem Gitter. Keine Suche, reine Messung.
