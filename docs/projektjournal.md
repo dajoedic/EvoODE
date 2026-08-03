@@ -1,6 +1,6 @@
 # EvoODE — Projektjournal
 
-**Stand: 2026-08-02** · Zeitraum: 2026-04-20 bis 2026-08-02
+**Stand: 2026-08-03** · Zeitraum: 2026-04-20 bis 2026-08-03
 
 ---
 
@@ -57,6 +57,10 @@ Entdeckung gekoppelter ODE-Systeme.**
 | 2026-08-01 | **Entscheidungszelle** | Overshoot 2 → 0 bei bit-identischem Loss, Struktur unverändert → Symptom statt Ursache |
 | 2026-08-02 | Bestätigung + Scope-Entscheidung | Overshoot repliziert; „zum Nulltarif" gilt nicht allgemein; Zweig 1 gewählt |
 | 2026-08-02 | Phase 3 beginnt | Protokoll-Audit: Zeitgitter passt bei keinem System |
+| 2026-08-02 | **Attribution geklärt** | v3 ungecappt auf System 31: der Loss-Einbruch gehört dem v3-Substrat, nicht dem Cap |
+| 2026-08-03 | **Endvariante entschieden** | v2.2 + Cap: Overshoot 0 bei bit-identischem Loss — die eskalierten Stufen waren nachweislich wertlos |
+| 2026-08-03 | **Gitter-Entscheidung** | Abtastprotokoll übernehmen, Trajektorien selbst integrieren |
+| 2026-08-03 | Konsolidierung + HPC | CLAUDE.md 1251 → 282 Zeilen; Ressourcenantrag für den Cluster |
 
 ---
 
@@ -751,6 +755,159 @@ Parallel läuft die Klassifikation aller 63 Systeme in exakt/surrogat (117 Gleic
 Basis gar keinen Term hat). Diese Zahl ist selbst ein Ergebnis: die Menge der exakten Systeme
 bestimmt, auf wie vielen Systemen Paper 1 überhaupt strukturelle Wiederfindung berichten kann.
 
+### 3.22 Die Attribution — wem gehört der Loss-Einbruch? (2026-08-02)
+
+Die Bestätigungszellen hatten ein Problem hinterlassen. Der Cap beseitigte den Overshoot zuverlässig,
+aber auf System 31 kostete er Fitqualität — auf Seed 42 acht Größenordnungen (1,678e-2 gegen
+6,808e-11 bei v2.2). Die naheliegende Lesart: der Cap schneidet die Wahrheit weg.
+
+Diese Lesart war nicht belegbar, weil eine Vergleichsgröße fehlte. Alle gecappten Läufe standen auf
+dem **v3-Substrat**, und v3 war an Gate 2 gescheitert. Der Verlust konnte vom Cap kommen oder vom
+Substrat oder von beidem. Drei Läufe schlossen die Lücke: v3 **ungecappt** auf System 31, Seeds
+42/123/7.
+
+Das Ergebnis zerlegt den Verlust sauber. Auf Seed 42 verliert **v3 allein rund sechs
+Größenordnungen** gegen v2.2 (6,808e-11 → 1,285e-4); der Cap fügt zwei weitere hinzu. Der
+dominierende Anteil sitzt im v3-Substrat — also in genau dem `r_k`-Promotionssignal, das WP-L2 als
+ableitungsfehler-kontaminiert nachgewiesen hatte. Zwei Stützbefunde: Seed 7 ist gecappt und
+ungecappt **bit-identisch**, Seed 123 hat in beiden Armen **identischen Support** bei 176-fachem
+Loss-Unterschied — also Pfadabhängigkeit des Optimierers, keine vom Cap unerreichbar gemachte
+Wahrheit.
+
+Damit war die Frage gestellt, die einen Tag später das Paper entschied: **wenn der Cap
+suchunabhängig ist — warum steht er dann überhaupt auf v3?**
+
+---
+
+### 3.23 v2.2 + Cap — die Endvariante (2026-08-03)
+
+Der Cap liest ausschließlich Trajektorie und Basis. Er wird vor der Suche berechnet und ist von ihr
+unabhängig. Dass er bis dahin nur auf dem v3-Substrat existierte, war Entstehungsgeschichte, keine
+Notwendigkeit. Die Kombination, die nie jemand ausprobiert hatte, war die naheliegendste:
+**v2.2-Substrat plus Cap.**
+
+Vier vorab festgelegte Entscheidungszellen, mit vorab formuliertem Kriterium — `eq_overshoot` fällt
+auf `[0,0]` **und** der Loss bleibt auf v2.2-Niveau. Beides erfüllt, und zwar in der schärfsten
+denkbaren Form:
+
+| Zelle | v2.2 | v2.2 + Cap | |
+|---|---|---|---|
+| 26/42 | 0,001391623174905009 | 0,001391623174905009 | **bitgleich** |
+| 31/123 | 0,00010427173348124156 | 0,00010427173348124156 | **bitgleich** |
+| 31/42 | 6,80769890488305e-11 | 6,80769890488305e-11 | **bitgleich** |
+| 31/7 | 6,974887728097135e-05 | 6,974887728171775e-05 | 11 Stellen |
+
+Der entscheidende Punkt liegt nicht in der Übereinstimmung, sondern darin, **wo** sie auftritt. In
+drei dieser Zellen lief v2.2 bis Stage 5 und verbrannte je **8 von 30 Levels** in den Stages 4 und 5
+— und der gecappte Lauf liefert trotzdem denselben Loss auf 11 bis 16 Stellen. Diese acht Levels
+haben nachweislich **exakt nichts** beigetragen. Overshoot ist auf diesen Systemen keine Suche, die
+zufällig nicht zahlt, sondern messbar reine Verschwendung.
+
+Sechs billige No-Harm-Zellen auf den Systemen 3 und 11 bestätigten, dass der Cap nichts kaputt macht,
+wo die Suche funktioniert: alle sechs mit korrektem Cap, `eq_overshoot = [0]`, `pruned_match = true`
+und exakt der wahren Struktur. Die stärkste Einzelzelle des ganzen Datensatzes steckt darin: auf
+System 3, Seed 7 verbrennt v2.2 **12 von 30 Levels** — und der gecappte Lauf liefert den
+bit-identischen Loss.
+
+Ein Ausreißer, offen benannt: System 3, Seed 42 ist gecappt um **Faktor 50** schlechter — bei
+*identischem* Support und `pruned_match = true` in beiden Armen. Verloren geht ein besseres
+Parameteroptimum, nicht eine Struktur. Über alle zehn v2.2+Cap-Zellen: acht bitgleich, eine auf elf
+Stellen gleich, eine 50-fach schlechter — und `pruned_match` in **allen zehn** unverändert. Der Cap
+ändert die Strukturfindung nirgends, nur gelegentlich das Parameteroptimum, in beide Richtungen.
+
+Nebenbefund mit Papierwert: `total_parameter_fits` ist innerhalb eines Systems über alle Seeds
+identisch (170 auf System 3, 270 auf System 11). Der Cap macht das Suchbudget seed-unabhängig, weil
+er die Levelzahl festlegt.
+
+**Damit ist die Endvariante entschieden:** `evogrow_v2_2_stage_capped`. v3 wird zur dokumentierten
+Fehleranalyse, der Look-Ahead-Cap zum Beitrag.
+
+---
+
+### 3.24 Gitter oder Trajektorien — eine falsche Alternative (2026-08-03)
+
+Die Gitter-Entscheidung aus 3.21 stand als Ja/Nein-Frage im Raum. Die Messung zeigte, dass die Frage
+falsch gestellt war: „Datensatz-Gitter übernehmen" besteht aus **zwei trennbaren Teilen**, und die
+Daten sagen, dass man sie trennen soll.
+
+Zuerst die Caps auf dem Datensatz-Gitter, beide IC-Sätze, ohne jede Suche. **Vorhersage 1
+bestätigt:** System 54 geht von `[ungecappt, 2, 2]` auf `[ungecappt, 3, 3]` bei einer Wahrheit von
+`[3,3,3]` — die zwei bekannten Sicherheitsverletzungen verschwinden. Auf IC-Satz 1 insgesamt:
+Verletzungen 2 → 0, korrekte Caps 6 → 8 von 13 Gleichungen. **Vorhersage 2 falsifiziert:** System 63
+bleibt auf beiden IC-Sätzen vollständig ungecappt — kein Artefakt des langen Horizonts, sondern die
+echte Identifizierbarkeitsgrenze.
+
+Dann die eigentliche Trennung. Die Caps wurden auf **zwei Datenquellen** gemessen, auf identischem
+Gitter: den gelieferten `y`-Matrizen und selbst integrierten Trajektorien bei 1e-9. Ergebnis:
+**identisch in allen 26 Zellen**, die Rauschböden unterscheiden sich erst in der dritten Stelle. Der
+Grund ist einleuchtend, sobald man ihn sieht: der Integrationsfehler der gelieferten Daten ist
+**glatt** in t, und ein ableitungsbasierter Rauschboden sieht glatten Fehler praktisch nicht. Der
+Gewinn auf System 54 gehört also der **Gitterdichte**, nicht der Datenqualität.
+
+Daraus folgt aber nicht, dass die gelieferten Trajektorien brauchbar sind. Der Cap ist gegen den
+Datenfehler immun, der **Loss ist es nicht**. Gegen eine unabhängig konvergierte RK4-Referenz
+(Selbstkonvergenz ~1e-13) erzwingen die gelieferten Daten harte MSE-Untergrenzen:
+
+| System | MSE-Boden der Daten | unser bestes Ergebnis |
+|---|---|---|
+| 3 | **2,5e-02** | 1,3e-08 |
+| 11 | 1,9e-11 | **4,4e-15** |
+| 31 | 6,1e-10 | **6,8e-11** |
+
+Auf 3, 11 und 31 wären unsere bisherigen Ergebnisse mit diesen Daten unerreichbar — auf System 3 um
+sechs Größenordnungen. Die `nfev`-Felder im Datensatz bestätigen die Ursache: System 3 wurde mit
+**77 Funktionsauswertungen** über t ∈ [0,10] integriert, also auf scipy-Defaulttoleranzen.
+
+**Entscheidung: Abtastprotokoll übernehmen, Trajektorien selbst integrieren.** 512 Punkte über
+t ∈ [0,10], beide IC-Sätze, `Tsit5` bei 1e-9. Der Cap ist gegenüber dieser Wahl indifferent, sie
+kostet also nichts von dem, was gemessen wurde.
+
+Ein Befund, den niemand vorhergesagt hatte: **der Cap ist nicht stabil über Anfangsbedingungen.**
+System 31 liefert auf IC-Satz 2 einen Cap von 1 bei einer Wahrheit von 3 — weil die Epidemie mit
+u0 = [20; 12,4] nach t = 0,47 durch ist und nur **5,3 % der 512 Punkte** überhaupt Dynamik tragen.
+Die Regel liest das korrekt als „nach Stage 1 hilft nichts mehr"; sie hat recht über die Daten und
+liegt falsch über die Wahrheit, weil die Daten die Wahrheit nicht enthalten. Das ist begrenzt, nicht
+systematisch: von 26 Zellen sind 5 signalarm und nur eine davon scheitert; von 12 scheiternden
+Zellen ist genau eine signalarm. Für Phase B heißt das: es wird Zellen geben, in denen kein Verfahren
+etwas finden kann — und die müssen als Protokolleigenschaft berichtet werden, nicht als
+Methodenversagen.
+
+---
+
+### 3.25 Aufräumen und der Weg auf den Cluster (2026-08-03)
+
+Mit Endvariante und Protokoll war der Zustand entschieden, aber nicht lesbar. `CLAUDE.md` war auf
+**1251 Zeilen** angewachsen und trug drei Sorten Inhalt gleichzeitig: Orientierung,
+Komponentenreferenz und ein eingefrorenes Experimentprotokoll. Die Prioritätenliste war zu einem
+zweiten Tagebuch geworden. Aufgeteilt auf **282 Zeilen** Orientierung plus `docs/architecture.md`
+(Komponentenreferenz) und `docs/paper1_phaseA_reproducibility.md` (das Phase-A-Protokoll, das eine
+eingefrorene Konfiguration beschreibt, die die Endvariante gar nicht mehr verwendet). Nichts
+gelöscht, alles verschoben und geprüft, dass keine Überschrift verlorenging. Die deutschen
+Lesefassungen unter `docs/de/` — Stand April und Mai, also vor beiden Gates — wurden entfernt: eine
+veraltete Zweitfassung ist schlechter als keine.
+
+Parallel wurde die Regressionssuite auf das neue Protokoll umgestellt: 512 Punkte, beide IC-Sätze,
+eigene Integration. Zellen werden jetzt über (Variante, System, **IC-Satz**, Seed) identifiziert, und
+jeder Record trägt den Signalanteil pro Gleichung — damit eine gescheiterte Zelle direkt lesbar ist
+als „Trajektorie trug nichts" statt als Methodenversagen. Neuer `config_fingerprint`
+`fa2469a4dad1b72c`; die 42 alten Records bleiben unter ihren alten Fingerprints liegen, genau dafür
+existiert der Mechanismus.
+
+Und damit rückt die eigentliche Grenze in den Blick: **Phase B ist kein Laptop-Lauf mehr.** 846
+unabhängige Jobs, rund 1e9 ODE-Integrationen, geschätzt 4.500 Kernstunden. Für die HPC-Beratung am
+2026-08-06 wurde ein Ressourcenantrag verfasst, der die Unsicherheit offenlegt statt sie zu
+kaschieren: belastbar sind nur die Zählgrößen, die Zeitschätzung ist eine dokumentierte Umrechnung
+mit Faktor 2 Unsicherheit — weshalb um eine kleine Pilot-Allokation gebeten wird, die dem Projekt
+seine erste vertrauenswürdige Zeitmessung überhaupt verschaffen würde.
+
+Dabei fiel ein echtes Problem auf, das vorher nur eine Randnotiz war: `BFGS_TIME_LIMIT_S = 1800` ist
+ein **Wall-Clock-Limit im Optimierer**. Auf einem Laptop hat es nie gegriffen. Auf heterogenen
+Cluster-Knoten kann es auf einem langsamen Knoten binden und auf einem schnellen nicht — dann hingen
+die wissenschaftlichen Ergebnisse an der Knotenzuteilung. Das muss vor der Kampagne durch ein
+deterministisches Budget ersetzt werden.
+
+---
+
 ---
 
 ## 4. Was implementiert ist und funktioniert
@@ -760,7 +917,8 @@ bestimmt, auf wie vielen Systemen Paper 1 überhaupt strukturelle Wiederfindung 
 | `discover()` Kernpipeline | stabil seit 2026-04-20 |
 | EvoGrow v1, v2.1, v2.2 | stabil |
 | `EvoGrowV3` (gleichungsweise) | vollständig; **an Gate 2 gescheitert**, Promotionssignal `r_k` als kontaminiert nachgewiesen |
-| `EvoGrowStageCapped` | Look-Ahead-Cap als Suchvariante; Caps auf 4 von 5 Regressionssystemen korrekt |
+| `EvoGrowStageCapped` | Look-Ahead-Cap auf v3-Substrat; als Endvariante abgelöst |
+| **`evogrow_v2_2_stage_capped`** | **Endvariante für Paper 1**: v2.2-Substrat + Look-Ahead-Cap; 10 Zellen auf 4 Systemen |
 | `stage_cap.jl` | datenbasierte Cap-Berechnung, kein Ground-Truth-Kanal; Aggregationsmodi + Horizont |
 | `EvoGrowScreening` | implementiert; nur Performance-Hebel, kein Discovery-Gewinn (WP-T2) |
 | `GPStructureSearch` | Vergleichsbaseline |
@@ -770,7 +928,11 @@ bestimmt, auf wie vielen Systemen Paper 1 überhaupt strukturelle Wiederfindung 
 | Regressionshistorie | append-only, Fingerprint-basiert, Einzelzell-Selektor |
 | Look-Ahead-Diagnostik | `studies/lookahead/`: Stage-Potential-Probe, Schätzervergleich, Boden-Gate + Dichte-Sweep |
 | Gate-2-Readout | vorab festgelegte Kriterien, Record-Auswahl fingerprint-unabhängig |
-| Protokoll-Audit | `docs/paper1_odebench_protocol_alignment.md`, EvoODE-Seite verifiziert |
+| Protokoll-Audit | `docs/paper1_odebench_protocol_alignment.md`; Phase-B-Abtastprotokoll entschieden |
+| Phase-B-Protokoll im Code | Regressionssuite auf 512 Punkte, beide IC-Sätze, eigene Integration; Fingerprint `fa2469a4dad1b72c` |
+| Systemklassifikation | alle 63 Systeme exakt/surrogat, `docs/paper1_phaseB_system_classification.md` |
+| HPC-Ressourcenantrag | `docs/hpc_requirements.md`, 846 Jobs, Zählgrößen statt Zeitschätzungen |
+| Dokumentenstruktur | `CLAUDE.md` 282 Zeilen Orientierung; Referenz in `docs/architecture.md` |
 
 ---
 
@@ -791,6 +953,10 @@ bestimmt, auf wie vielen Systemen Paper 1 überhaupt strukturelle Wiederfindung 
 | **Höhere FD-Ordnung als Ableitungs-Fix** | 1,4× gegen 10× durch Glättung | WP-L2 |
 | **„Residuum unter dem Boden → kein Cap"** | Den Boden zu erreichen ist, was ein korrektes Modell tut | WP-L5, Verletzungen 2 → 4 |
 | **Paper um den Look-Ahead herum** | Löst die Allokation, nicht die Wiederfindung | 3.20 |
+| **v3 als Substrat für den Cap** | Der Cap ist suchunabhängig; v3 bringt nur sein kontaminiertes `r_k` mit | 3.23, Loss bitgleich zu v2.2 |
+| **Die gelieferten ODEBench-Trajektorien** | Erzwingen MSE-Böden bis 2,5e-02; unsere Ergebnisse wären unerreichbar | 3.24, RK4-Referenz |
+| **„Datensatz-Gitter" als Ja/Nein-Frage** | Zwei trennbare Teile: Abtastung übernehmen, Daten nicht | 3.24, Caps A = B in 26/26 |
+| **`docs/de/` (deutsche Lesefassungen)** | Stand vor beiden Gates; veraltete Zweitfassung schlechter als keine | 3.25 |
 
 ---
 
@@ -821,33 +987,62 @@ ungecapptem v3, Parameter-Fits 390 gegen 530. `du2`-Support unverändert gegenü
 **Bestätigung (4 Zellen):** Overshoot überall `[0,0]`. Loss gegen v2.2: 26/123 gleichauf,
 31/7 leicht schlechter, 31/123 50-fach schlechter, **31/42 acht Größenordnungen schlechter**.
 
-**Protokoll:** Datensatz 512 Punkte über t ∈ [0,10] für alle Systeme; EvoODE 10–20 Punkte pro
-Zeiteinheit bei eigenen Fenstern. Kein System trifft das Gitter.
+**Attribution (System 31, Seed 42):** v2.2 6,808e-11 → v3 1,285e-4 (sechs Größenordnungen durch das
+Substrat) → v3+Cap 1,678e-2 (zwei weitere durch den Cap). Seed 7 gecappt und ungecappt bit-identisch.
+
+**Endvariante (10 Zellen):** `eq_overshoot = 0` überall. Loss gegen v2.2: **acht bitgleich**, eine auf
+11 Stellen gleich, eine 50-fach schlechter bei identischem Support. `pruned_match` in allen zehn
+unverändert.
+
+**Der Beleg für Verschwendung:** System 3, Seed 7 — v2.2 verbrennt **12 von 30 Levels** oberhalb der
+nötigen Stage und liefert denselben Loss wie der gecappte Lauf, bitgleich. Auf 26/42, 31/123 und
+31/7 dasselbe mit je 8 von 30 Levels.
+
+**Caps auf dem Datensatz-Gitter:** System 54 `[ungecappt,2,2]` → `[ungecappt,3,3]` bei Wahrheit
+`[3,3,3]` — Verletzungen 2 → 0, korrekte Caps 6 → 8 von 13. System 63 bleibt auf beiden IC-Sätzen
+ungecappt.
+
+**Datenquelle A gegen B:** Caps identisch in **allen 26 Zellen**, Rauschböden gleich bis zur dritten
+Stelle. MSE-Böden der gelieferten Daten: System 3 2,5e-02, System 11 1,9e-11, System 31 6,1e-10.
+System 3 wurde mit **77 Funktionsauswertungen** über t ∈ [0,10] integriert.
+
+**Signalanteil:** System 31 IC-Satz 2 trägt auf **5,3 %** der 512 Punkte Dynamik (IC-Satz 1: 30,3 %).
+Von 26 Zellen sind 5 signalarm, davon scheitert 1; von 12 scheiternden Zellen ist 1 signalarm.
+
+**Phase B:** 846 unabhängige Jobs, ~1e9 ODE-Integrationen, ~2,7e5 Parameterfits, geschätzt 4.500
+Kernstunden bei Faktor 2 Unsicherheit.
 
 ---
 
 ## 7. Offene Punkte, nach Dringlichkeit
 
-1. **v3 ungecappt auf System 31 (Seeds 42/123/7).** Trennt Cap-Effekt von v3-Effekt. Ohne das ist
-   „der Cap kostet Fitqualität" nicht belegbar — es könnte vollständig ein v3-Effekt sein. Drei
-   externe Läufe.
-2. **Gitter-Entscheidung vor Phase B.** Datensatz-Gitter übernehmen oder eigenes behalten. Bestimmt
-   alle Trajektorien und damit alles Nachgelagerte; die Systemklassifikation ist davon unabhängig.
-3. **Systemklassifikation aller 63 Systeme** (WP-P3.1, läuft). Die Zahl der exakten Systeme bestimmt,
-   worüber das Paper strukturelle Wiederfindung berichten kann.
-4. **Publizierte Protokolle einlesen.** Ohne sie bleiben externe Zahlen kontextuell; die vier offenen
-   Fragen stehen im Audit-Dokument.
-5. **Zwei Cap-Verletzungen auf System 54** — verstanden als Auflösungsgrenze, möglicherweise durch
-   die Gitter-Entscheidung von selbst erledigt.
-6. **System-31-Fix ohne belegte Ursache.** Die Diagnose lief ins Timeout, die Reparatur erfolgte per
+1. **HPC-Zugang** (Beratung 2026-08-06). Phase B ist kein Laptop-Lauf. Der Antrag steht; erbeten wird
+   zusätzlich eine kleine Pilot-Allokation, die die extrapolierten Laufzeiten durch Messungen
+   ersetzt.
+2. **Batch-Portierung.** Manifest, Einzelzell-Entrypoint mit Fingerprint-Guard, Merge-Schritt,
+   Container mit vorkompilierten Paketen. Ohne das kann Phase B auch mit Zugang nicht starten.
+3. **`BFGS_TIME_LIMIT_S` durch ein deterministisches Budget ersetzen.** Ein Wall-Clock-Limit im
+   Optimierer würde auf heterogenen Knoten die Ergebnisse von der Knotenzuteilung abhängig machen.
+   Muss vor der Kampagne fallen — zusammen mit allen anderen fingerprint-wirksamen Änderungen.
+4. **R²-Metrik** (Phase 3). Voraussetzung für jeden Vergleich mit publizierten ODEBench-Zahlen, die
+   dort üblicherweise als R²-Schwellwert berichtet werden.
+5. **Publizierte Protokolle einlesen.** Die vier offenen Fragen stehen im Audit. Eine davon ist neu
+   und geht zu unseren Lasten: wenn publizierte Zahlen auf den gelieferten Trajektorien gerechnet
+   wurden, arbeiten wir auf saubereren Daten als der Vergleich — das muss deklariert werden.
+6. **Baseline v1** auf dem neuen Gitter, sobald die Endvariante dort regressionsgeprüft ist.
+7. **System-31-Fix ohne belegte Ursache.** Die Diagnose lief ins Timeout, die Reparatur erfolgte per
    Schlussfolgerung. Erste Stelle zum Nachsehen, falls die Regel überrascht.
-7. **Pathologische Line-Search** (bis 39.933 Auswertungen bei zwei Parametern) und **Sentinel-Loss
+8. **Pathologische Line-Search** (bis 39.933 Auswertungen bei zwei Parametern) und **Sentinel-Loss
    `1e6` mit Retcode `Success`** — unangetastete Kosten- und Robustheitshebel.
-8. **Pruning-Schwelle** `1e-3 × max_coeff` möglicherweise zu streng.
+9. **Pruning-Schwelle** `1e-3 × max_coeff` möglicherweise zu streng.
+
+**Erledigt seit dem letzten Stand:** v3 ungecappt auf System 31 (Attribution geklärt, 3.22), die
+Gitter-Entscheidung (3.24), die Systemklassifikation aller 63 Systeme, und die zwei Cap-Verletzungen
+auf System 54 — die das dichtere Gitter tatsächlich beseitigt hat.
 
 **Ausdrücklich außerhalb von Paper 1:** die Suchkraft *innerhalb* einer Stufe — Populationsgröße,
-Kindergenerierung, Parsimonie-Druck. Das ist die eigentliche offene Forschungsfrage nach 3.20, aber
-eine eigene Linie.
+Kindergenerierung, Parsimonie-Druck. Das ist die eigentliche offene Forschungsfrage nach 3.20 und
+3.23, aber eine eigene Linie.
 
 ---
 
@@ -885,7 +1080,21 @@ und dabei die eigentliche Ursache freigelegt. Genau das ist die mechanistische C
 seit dem Pivot vom 2026-05-17 das Ziel war: nicht zu zeigen, dass EvoGrow gewinnt, sondern **wo
 gestuftes Wachstum hilft, wo es versagt und warum**.
 
-**Der nächste Schritt** ist deshalb nicht die nächste Methodengeneration, sondern das Absichern des
-Belegs: v3 ungecappt auf System 31 zur Entkonfundierung, die Gitter-Entscheidung, die
-Systemklassifikation. Die offene Forschungsfrage — Suchkraft innerhalb einer Stufe — ist notiert und
-bleibt draußen.
+**Der Beleg ist inzwischen abgesichert.** Die Entkonfundierung zeigte, dass der Loss-Einbruch dem
+v3-Substrat gehört und nicht dem Cap — und daraus folgte die Frage, die das Paper entschied: wenn
+der Cap suchunabhängig ist, warum steht er dann auf einer gescheiterten Variante? Die Antwort war
+`evogrow_v2_2_stage_capped`, und sie lieferte den schärfsten Einzelbeleg des Projekts: in vier
+Zellen verbrennt v2.2 acht bis zwölf von dreißig Levels oberhalb der nötigen Stufe und erreicht
+**bit-identisch** dasselbe Ergebnis wie der gecappte Lauf. Diese Stufen haben nicht wenig
+beigetragen, sondern nachweislich nichts.
+
+**Der Charakter der offenen Fragen hat sich geändert.** Es geht nicht mehr um die nächste
+Methodengeneration, sondern um Infrastruktur und Protokoll: die Kampagne auf einen Cluster bringen,
+den letzten Wall-Clock-Rest aus dem Optimierer entfernen, die Vergleichbarkeit gegen publizierte
+Arbeiten belegen oder ehrlich als kontextuell ausweisen. Das ist die Arbeit, die zwischen einem
+verstandenen Mechanismus und einem publizierbaren Paper steht.
+
+**Was bleibt, ist die Frage dahinter.** Die Suche findet die richtige Struktur auf gekoppelten
+Systemen auch dann nicht, wenn man ihr alle nötigen Terme hinlegt und alles andere verbietet. Das
+ist notiert, außerhalb von Paper 1 — und es ist der ehrlichste Satz, den dieses Projekt bisher über
+sich selbst geschrieben hat.
