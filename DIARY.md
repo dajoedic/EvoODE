@@ -6,6 +6,53 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ## 2026-08-03
 
+### No-Harm-Zellen Systeme 3 und 11 — sauber, mit einem echten Ausreisser
+
+Sechs Zellen `evogrow_v2_2_stage_capped` x {3, 11} x {42, 123, 7}, sequenziell, Fingerprint
+`df5db7763bcd2449`, `git_hash 63d4c1c`, `total_optimizer_safety_limit_hits = 0` durchgehend.
+In `history.jsonl` gemergt (36 → 42 Records).
+
+Alle sechs: Cap korrekt (`[2]` bzw. `[4]`), `eq_overshoot = [0]`, `eq_wasted_levels = [0]`,
+`pruned_match = true`, Support exakt die Wahrheit (`u1, u1^2` bzw. `u1, u1^2, u1^3`).
+**Der Cap macht die Wahrheit auf keinem der beiden Systeme unerreichbar** — auch nicht auf System
+11, wo er mit Stage 4 genau auf dem Term liegt, den die Wahrheit braucht.
+
+| Zelle | v2.2 | v2.2 + Cap | v2.2 Overshoot / wasted |
+|---|---|---|---|
+| 3/42 | `2.663641831768419e-10` | `1.3476451847014113e-08` | 1 / 2 |
+| 3/123 | `6.52992601045936e-10` | bitgleich | 0 / 0 |
+| 3/7 | `1.1091164010682478e-08` | bitgleich | **3 / 12** |
+| 11/42 | `4.402192340718147e-15` | bitgleich | 0 / 0 |
+| 11/123 | `4.375215202011892e-15` | bitgleich | 0 / 0 |
+| 11/7 | `4.40607367978419e-15` | bitgleich | 0 / 0 |
+
+**3/7 ist die staerkste Einzelzelle im ganzen Datensatz:** v2.2 laeuft dort bis Stage 5 und
+verbrennt **12 von 30 Levels**, der gecappte Lauf bei Stage 2 liefert denselben Loss bitgleich.
+Zwoelf Levels, nachweislich null Beitrag.
+
+**3/42 ist der Ausreisser und wird nicht weggeredet.** Der gecappte Lauf ist um **Faktor 50**
+schlechter (1.348e-8 gegen 2.664e-10) — bei *identischem* Support und `pruned_match = true` in
+beiden Armen. Die Struktur ist also in beiden Faellen die richtige; verloren geht nur ein besseres
+Parameteroptimum, das v2.2 in dem einen zusaetzlichen Stage-3-Level gefunden hat. Dasselbe Muster
+wie auf 31/123: **Optimiererpfad-Abhaengigkeit, nicht eine vom Cap unerreichbar gemachte
+Wahrheit.** Ueber alle bisherigen zehn v2.2+Cap-Zellen: acht bitgleich, eine auf elf Stellen
+gleich, eine um 50x schlechter — und `pruned_match` in *allen zehn* unveraendert gegenueber v2.2.
+Der Cap aendert die Strukturfindung nirgends, nur gelegentlich das Parameteroptimum, in beide
+Richtungen.
+
+Nebenbefund: `total_parameter_fits` ist innerhalb eines Systems ueber alle drei Seeds identisch
+(170 auf System 3, 270 auf System 11). Der Cap macht das Suchbudget seed-unabhaengig, weil er die
+Levelzahl festlegt.
+
+**Provenienz-Defekt, selbst verursacht:** fuenf der sechs Records tragen `git_dirty = true`.
+Ursache ist mein eigenes Runner-Design — die per-Zelle-Dateien `history_nh_*.jsonl` liegen im Repo
+und sind untracked, und `git_dirty` wird aus `git status --porcelain` abgeleitet, das untracked
+Dateien mitzaehlt. Der getrackte Quellstand war ueber alle sechs Laeufe identisch (`63d4c1c`, keine
+Quelldatei angefasst). Das Flag meldet hier also die Ausgabedateien, nicht eine Codeaenderung.
+Fuer kuenftige Laeufe: per-Zelle-Dateien ausserhalb des Repos ablegen oder ignorieren.
+
+---
+
 ### WP-C1 Entscheidungszellen — v2.2 + Cap ist die Endvariante
 
 <!-- 8f362c1 -->

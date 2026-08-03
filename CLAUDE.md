@@ -845,13 +845,25 @@ failure is diagnosed and reportable, but v3 is not the final variant.
   the cap solves complexity allocation, not search power within a stage. Details in `DIARY.md`
   (2026-08-03).
 
+- **No-harm cells on systems 3 and 11 (seeds 42/123/7, capped) — done 2026-08-03.** All six: cap
+  correct (`[2]` / `[4]`), `eq_overshoot = [0]`, `pruned_match = true`, support exactly the truth.
+  Five of six bit-identical to v2.2. **3/7 is the strongest single cell in the dataset**: v2.2 burns
+  **12 of 30 levels** there (overshoot 3) and the capped run returns the identical loss. One
+  outlier, stated as such: **3/42 is 50x worse** (1.348e-8 vs 2.664e-10) with *identical* support
+  and `pruned_match = true` in both arms — a lost parameter optimum, the same optimizer path
+  dependence as 31/123, not a truth made unreachable. Across all ten v2.2+cap cells: eight
+  bit-identical, one identical to 11 digits, one 50x worse, and `pruned_match` unchanged in all ten.
+  `total_parameter_fits` is seed-independent within a system (170 / 270) because the cap fixes the
+  level count. Provenance defect (self-inflicted): five records carry `git_dirty = true` because the
+  untracked per-cell output files sit inside the repo and `git status --porcelain` counts them; the
+  tracked source was identical across all six runs. Details in `DIARY.md` (2026-08-03).
+
 Active:
-1. Optional cheap no-harm evidence: systems 3 and 11, seeds 42/123/7, capped (1D, minutes).
-   **System 63 stays excluded** — its cap is `nothing` on all equations, so the capped variant is
-   identical to v3 there and the cell could show no overshoot effect; it belongs in the paper as the
-   identifiability limit. System 54 would need adding to `REGRESSION_SYSTEMS`, which changes the
-   system list and hence the fingerprint — a separate track, and its limit is already documented
-   offline by WP-L3.
+1. **System 63 stays excluded** from capped cells — its cap is `nothing` on all equations, so the
+   capped variant is identical to v3 there and the cell could show no overshoot effect; it belongs
+   in the paper as the identifiability limit. System 54 would need adding to `REGRESSION_SYSTEMS`,
+   which changes the system list and hence the fingerprint — a separate track, and its limit is
+   already documented offline by WP-L3.
 2. The v2.2 arm was recorded under Baseline v0 (`0c739d4e36ee6498`) while v3 and capped runs carry
    `df5db7763bcd2449`. WP-T2 showed the intervening config change did not alter results, but the
    comparison crosses a fingerprint boundary and must be labelled as such wherever it is reported.
