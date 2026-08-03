@@ -6,6 +6,83 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ## 2026-08-03
 
+### WP-B2 — Batch-Einstiegspunkt und Container fuer den Cluster
+
+<!-- 5a3797a -->
+
+Die Suite lief bisher als geschachtelte Schleife in einem Prozess, gesteuert ueber
+Umgebungsvariablen. Das ueberlebt keinen Scheduler. Neues Ausfuehrungsmodell: ein Slurm-Job-Array,
+jede Array-Task ist ein Prozess, rechnet **genau eine Zelle** und beendet sich. Drei Teile:
+`generate_manifest.jl` (Kampagne als geordnete CSV, 120 Zeilen = 4 Varianten x 5 Systeme x 2
+IC-Saetze x 3 Seeds, regenerierbar byte-identisch), `run_batch_cell.jl` (ein Index rein, eine
+JSONL-Datei raus, Exitcode 0 nur bei Erfolg), `merge_batch_records.jl` (Konsolidierung ueber den
+Eindeutigkeitsschluessel, wiederholt ausfuehrbar).
+
+Der wichtigste Teil ist der **Fingerprint-Guard**: stimmt der Fingerprint im Manifest nicht mit dem
+zur Laufzeit berechneten ueberein, bricht die Task ab, bevor sie rechnet. Verifiziert — ein
+manipuliertes Manifest wird mit Exitcode 1 und ohne Ausgabedatei abgewiesen. Eine Kampagne mit
+gemischten Fingerprints ist nicht publizierbar, und auf 846 Jobs faellt das sonst erst beim
+Auswerten auf.
+
+Verifikationszelle System 3 / IC 1 / Seed 42 / `evogrow_v2_2_stage_capped` durch den Batch-Pfad:
+Loss `5.18873247985214e-9`, Cap `[2]`, `eq_overshoot = [0]`, `pruned_match = true`, Support
+`[["u1","u1^2"]]`, Exitcode 0 — **exakt das WP-B1-Ergebnis**, wie gefordert, nicht nur naeherungsweise.
+Merge in eine Scratch-Kopie: erster Lauf `added=1`, zweiter `added=0, skipped=1`.
+
+**Fingerprint erneut geaendert: `fa2469a4dad1b72c` → `256014cf6f0295e1`.** Die Nutzlast beschrieb
+das Zeitgitter als `range(0.0, 10.0; length=512)`, tatsaechlich laeuft der `t`-Vektor aus dem
+Datensatz; numerisch `i*10/511`, was ein Julia-`range` nicht bitgenau reproduzieren muss. Das Label
+beschrieb also etwas anderes als das Ausgefuehrte. Korrigiert auf
+`dataset solutions[1][1].t grid; shipped y ignored`. Kostet nichts: unter `fa2469a4dad1b72c` existiert
+kein einziger History-Record.
+
+Dimensionsklassen: ein globales Manifest, dazu pro Dimension eine Indexliste
+(`indices_dim1/2/4.txt`, 48/48/24 Zellen; 3D kommt in der Regressionssuite nicht vor). So bleibt die
+Kampagnenidentitaet in einer Datei, waehrend Slurm pro Klasse eigene Walltimes bekommt.
+
+Container (`containers/evoode_regression.apptainer`): Julia auf 1.11.5 gepinnt, `instantiate` und
+`precompile` **zur Bauzeit**, Depot im Image, `JULIA_NUM_THREADS=1` und `OPENBLAS_NUM_THREADS=1`
+gesetzt, Ausgaben nur ueber ein gebundenes `/outputs`. Nicht gebaut — diese Umgebung hat weder
+Apptainer noch Slurm; beides ist statisch geprueft und als ungetestet ausgewiesen.
+
+**Ein Defekt beim Review gefunden.** `run_batch_cell.jl` schreibt auch bei einem Fehler einen Record
+(mit gesetztem `error`) und beendet sich dann mit Exitcode 1. `merge_batch_records.jl` filtert
+`error` aber nicht — anders als `load_completed_cells` in `run_regression.jl`, das genau das tut.
+Folge: eine abgestuerzte Zelle vergiftet ihren Schluessel, und ein spaeterer erfolgreicher Wiederlauf
+wird beim Merge als Duplikat verworfen. Auf einem Cluster mit Timeouts und OOM-Kills ist das kein
+Randfall. Muss vor der Kampagne behoben werden.
+
+---
+
+### Projektjournal auf Stand 2026-08-03
+
+<!-- ee52eb3 -->
+
+Vier neue Kapitel (3.22 Attribution, 3.23 Endvariante, 3.24 Gitter-Entscheidung, 3.25 Aufraeumen und
+Cluster), Kapitel 4–8 durchgezogen. Dazu `tools/build_journal_pdf.py`: die bisherigen PDFs stammten
+aus einem manuellen Browserdruck und waren nicht reproduzierbar. Jetzt Markdown → HTML →
+Headless-Chromium in einem Aufruf. 24 Seiten, Dichte 46 Quellzeilen/Seite gegen vorher 47.
+
+Vorfall: ein pauschales `git add -A` hat Codex' laufende WP-B2-Arbeit in den Journal-Commit gezogen.
+Per `reset --soft` aufgeloest, fremde Pfade ausgestaged, neu committet. Zweites Mal an einem Tag —
+Regel jetzt festgehalten: in diesem Repo nur explizite Pfade stagen, solange Codex parallel im
+selben Arbeitsbaum schreibt.
+
+---
+
+### WP-B1 — Regressionssuite auf das Phase-B-Abtastprotokoll
+
+<!-- 82c4784 -->
+
+Fest verdrahtete `u0`/`tspan`/`T` durch datensatzabgeleitete Werte ersetzt: 512 Punkte ueber
+t in [0,10], beide IC-Saetze, Trajektorien selbst mit `Tsit5` bei 1e-9 integriert. Zellen werden
+jetzt ueber (Variante, System, **IC-Satz**, Seed) identifiziert. Jeder Record traegt zusaetzlich
+`derivative_active_fractions` pro Gleichung — damit eine gescheiterte Zelle direkt als
+"Trajektorie trug nichts" lesbar ist statt als Methodenversagen. Fingerprint `fa2469a4dad1b72c`
+(inzwischen durch WP-B2 abgeloest); die 42 alten Records bleiben unter ihren alten Fingerprints.
+
+---
+
 ### CLAUDE.md aufgeteilt — 1251 auf 282 Zeilen
 
 <!-- 6e7b916 -->

@@ -893,6 +893,18 @@ als „Trajektorie trug nichts" statt als Methodenversagen. Neuer `config_finger
 `fa2469a4dad1b72c`; die 42 alten Records bleiben unter ihren alten Fingerprints liegen, genau dafür
 existiert der Mechanismus.
 
+Anschließend wurde die Suite auf ein **Job-Array** portiert: ein Manifest als geordnete Zellenliste,
+ein Einstiegspunkt, der genau eine Zelle rechnet und sich beendet, ein Merge-Schritt. Der Kern ist
+ein **Fingerprint-Guard** — stimmt der Fingerprint im Manifest nicht mit dem zur Laufzeit
+berechneten überein, bricht die Task ab, bevor sie rechnet. Auf 846 Jobs fällt eine gemischte
+Kampagne sonst erst beim Auswerten auf, und dann ist sie nicht mehr publizierbar. Dabei fiel eine
+Ungenauigkeit auf, die vorher niemandem aufgefallen war: die Fingerprint-Nutzlast beschrieb das
+Zeitgitter als `range(0.0, 10.0; length=512)`, während tatsächlich der `t`-Vektor aus dem Datensatz
+läuft — numerisch `i·10/511`, was ein Julia-`range` nicht bitgenau reproduzieren muss. Das Label
+beschrieb also etwas anderes als das Ausgeführte. Korrigiert, Fingerprint jetzt
+`256014cf6f0295e1`. Der Zeitpunkt war der letztmögliche kostenlose: unter dem Vorgänger existierte
+kein einziger Record.
+
 Und damit rückt die eigentliche Grenze in den Blick: **Phase B ist kein Laptop-Lauf mehr.** 846
 unabhängige Jobs, rund 1e9 ODE-Integrationen, geschätzt 4.500 Kernstunden. Für die HPC-Beratung am
 2026-08-06 wurde ein Ressourcenantrag verfasst, der die Unsicherheit offenlegt statt sie zu
@@ -929,7 +941,8 @@ deterministisches Budget ersetzt werden.
 | Look-Ahead-Diagnostik | `studies/lookahead/`: Stage-Potential-Probe, Schätzervergleich, Boden-Gate + Dichte-Sweep |
 | Gate-2-Readout | vorab festgelegte Kriterien, Record-Auswahl fingerprint-unabhängig |
 | Protokoll-Audit | `docs/paper1_odebench_protocol_alignment.md`; Phase-B-Abtastprotokoll entschieden |
-| Phase-B-Protokoll im Code | Regressionssuite auf 512 Punkte, beide IC-Sätze, eigene Integration; Fingerprint `fa2469a4dad1b72c` |
+| Phase-B-Protokoll im Code | Regressionssuite auf 512 Punkte, beide IC-Sätze, eigene Integration |
+| Batch-Portierung | Manifest, Einzelzell-Entrypoint mit Fingerprint-Guard, Merge, Apptainer-Definition; Fingerprint `256014cf6f0295e1` |
 | Systemklassifikation | alle 63 Systeme exakt/surrogat, `docs/paper1_phaseB_system_classification.md` |
 | HPC-Ressourcenantrag | `docs/hpc_requirements.md`, 846 Jobs, Zählgrößen statt Zeitschätzungen |
 | Dokumentenstruktur | `CLAUDE.md` 282 Zeilen Orientierung; Referenz in `docs/architecture.md` |
@@ -1019,8 +1032,10 @@ Kernstunden bei Faktor 2 Unsicherheit.
 1. **HPC-Zugang** (Beratung 2026-08-06). Phase B ist kein Laptop-Lauf. Der Antrag steht; erbeten wird
    zusätzlich eine kleine Pilot-Allokation, die die extrapolierten Laufzeiten durch Messungen
    ersetzt.
-2. **Batch-Portierung.** Manifest, Einzelzell-Entrypoint mit Fingerprint-Guard, Merge-Schritt,
-   Container mit vorkompilierten Paketen. Ohne das kann Phase B auch mit Zugang nicht starten.
+2. **Merge-Filter für Fehler-Records.** Der Merge-Schritt übernimmt auch Records mit gesetztem
+   `error` — anders als die Wiederaufnahmelogik der Suite, die genau das filtert. Eine abgestürzte
+   Zelle vergiftet damit ihren Schlüssel, und ein erfolgreicher Wiederlauf wird als Duplikat
+   verworfen. Auf einem Cluster mit Timeouts und OOM-Kills kein Randfall.
 3. **`BFGS_TIME_LIMIT_S` durch ein deterministisches Budget ersetzen.** Ein Wall-Clock-Limit im
    Optimierer würde auf heterogenen Knoten die Ergebnisse von der Knotenzuteilung abhängig machen.
    Muss vor der Kampagne fallen — zusammen mit allen anderen fingerprint-wirksamen Änderungen.
@@ -1037,8 +1052,9 @@ Kernstunden bei Faktor 2 Unsicherheit.
 9. **Pruning-Schwelle** `1e-3 × max_coeff` möglicherweise zu streng.
 
 **Erledigt seit dem letzten Stand:** v3 ungecappt auf System 31 (Attribution geklärt, 3.22), die
-Gitter-Entscheidung (3.24), die Systemklassifikation aller 63 Systeme, und die zwei Cap-Verletzungen
-auf System 54 — die das dichtere Gitter tatsächlich beseitigt hat.
+Gitter-Entscheidung (3.24), die Systemklassifikation aller 63 Systeme, die zwei Cap-Verletzungen
+auf System 54 — die das dichtere Gitter tatsächlich beseitigt hat — und die Batch-Portierung samt
+Container (3.25).
 
 **Ausdrücklich außerhalb von Paper 1:** die Suchkraft *innerhalb* einer Stufe — Populationsgröße,
 Kindergenerierung, Parsimonie-Druck. Das ist die eigentliche offene Forschungsfrage nach 3.20 und
