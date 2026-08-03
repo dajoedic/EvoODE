@@ -808,7 +808,8 @@ failure is diagnosed and reportable, but v3 is not the final variant.
 
 - **Paper scope decided 2026-08-01: branch 1, enriched.** Final variant carries the look-ahead stage
   cap; the paper is the mechanistic Claim C study with v2.2 → v3 → capped as a documented failure
-  analysis. Recorded in `PAPER_1.md`.
+  analysis. Recorded in `PAPER_1.md`. **Settled 2026-08-03: the final variant is
+  `evogrow_v2_2_stage_capped` (v2.2 substrate + look-ahead cap), not the v3 substrate.**
 
 - **Confirmation cells run 2026-08-02** (26/123, 31/42, 31/123, 31/7, capped). Overshoot elimination
   replicates: `eq_overshoot = [0,0]` and `eq_wasted_levels = [0,0]` in all four, against v2.2's
@@ -827,6 +828,22 @@ failure is diagnosed and reportable, but v3 is not the final variant.
   than a truth made unreachable by the cap. Overshoot elimination replicates 3/3 at 41–51% fewer
   fits. `pruned_match = false` in all nine System-31 cells, including v2.2 at
   6.8e-11. Details in `DIARY.md` (2026-08-02).
+
+- **WP-C1 decision cells run 2026-08-03 — `evogrow_v2_2_stage_capped` is the final variant.**
+  Four cells (26/42, 31/42, 31/123, 31/7), fingerprint `df5db7763bcd2449`, `git_hash 838b7af`,
+  `total_optimizer_safety_limit_hits = 0` throughout. The pre-registered criterion is met in the
+  strongest possible form: `eq_overshoot = [0,0]` in all four **and** the loss is **bit-identical**
+  to v2.2 on 26/42, 31/123 and 31/42, and identical to 11 digits on 31/7. Decisive detail: in three
+  of those cells v2.2 ran to stage 5 and spent **8 of 30 levels** in stages 4–5, and the capped run
+  still returns the same loss — those levels contributed exactly nothing. Overshoot on these systems
+  is provably pure waste. Attribution closed: on the same cap with a v2.2 substrate, System 31 seed
+  42 returns 6.808e-11, the value v3+cap missed by eight orders — **the loss regression belongs to
+  the v3 substrate (`r_k`), not to the cap.** Not evidenced by these data: cost saving against v2.2
+  — the Baseline v0 records carry no `total_parameter_fits`/`total_ode_solves`; only the structural
+  8-of-30-levels figure is available. Unchanged: `pruned_match = false` in all four cells (on 26/42
+  the capped run reproduces v2.2's wrong `du2` although the truth is fully available at stage 3) —
+  the cap solves complexity allocation, not search power within a stage. Details in `DIARY.md`
+  (2026-08-03).
 
 Active:
 1. Optional cheap no-harm evidence: systems 3 and 11, seeds 42/123/7, capped (1D, minutes).

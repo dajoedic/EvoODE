@@ -4,6 +4,72 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ---
 
+## 2026-08-03
+
+### WP-C1 Entscheidungszellen — v2.2 + Cap ist die Endvariante
+
+Vier Zellen mit `evogrow_v2_2_stage_capped` gelaufen (26/42, 31/42, 31/123, 31/7), Fingerprint
+`df5db7763bcd2449`, `git_hash 838b7af`, `git_dirty false`,
+`total_optimizer_safety_limit_hits = 0` in allen vieren. In `history.jsonl` gemergt (32 → 36
+Records), Einzeldateien entfernt.
+
+Vorab festgelegtes Kriterium: `eq_overshoot` faellt auf `[0,0]` **und** der Loss bleibt auf
+v2.2-Niveau. Beides erfuellt — und zwar in der schaerfstmoeglichen Form.
+
+| Zelle | v2.2 | v2.2 + Cap | identisch |
+|---|---|---|---|
+| 26/42 | `0.001391623174905009` | `0.001391623174905009` | bitgleich |
+| 31/123 | `0.00010427173348124156` | `0.00010427173348124156` | bitgleich |
+| 31/42 | `6.80769890488305e-11` | `6.80769890488305e-11` | bitgleich |
+| 31/7 | `6.974887728097135e-05` | `6.974887728171775e-05` | 11 Stellen |
+
+Alle vier: `eq_final_stages = [3,3]`, `eq_overshoot = [0,0]`, `eq_wasted_levels = [0,0]`,
+`stage_caps = [3,3]`, `stage_cap_policy_active = true`.
+
+**Der entscheidende Punkt liegt nicht in der Uebereinstimmung, sondern darin, wo sie auftritt.**
+31/42 ist trivial: v2.2 blieb dort schon von selbst in Stage 3 (`wasted_levels = 0`), der Cap
+konnte nichts aendern. In den anderen drei Zellen lief v2.2 bis Stage 5 und verbrannte je **8 von
+30 Levels** in den Stages 4 und 5 — und der gecappte Lauf liefert trotzdem denselben Loss auf 11
+bis 16 Stellen. Diese acht Levels haben also nachweislich **exakt nichts** zum Ergebnis
+beigetragen. Overshoot ist auf diesen Systemen reine Verschwendung, nicht ein Suchpfad, der
+zufaellig nicht zahlt.
+
+Zur Einordnung gegen die beiden v3-Arme, dieselben Zellen:
+
+| Zelle | v2.2 | v3 | v3 + Cap | v2.2 + Cap |
+|---|---|---|---|---|
+| 26/42 | 1.392e-3 | 2.520e-4 (530 Fits) | 2.520e-4 (390) | 1.392e-3 (430) |
+| 31/42 | 6.808e-11 | 1.285e-4 (490) | 1.678e-2 (250) | 6.808e-11 (310) |
+| 31/123 | 1.043e-4 | 2.994e-5 (430) | 5.284e-3 (230) | 1.043e-4 (290) |
+| 31/7 | 6.975e-5 | 9.872e-5 (390) | 9.872e-5 (230) | 6.975e-5 (330) |
+
+Damit ist die Attribution vom 2026-08-02 endgueltig geschlossen: der Loss-Einbruch auf System 31
+gehoert **dem v3-Substrat**, nicht dem Cap. Auf demselben Cap, aber v2.2 als Unterbau, kommt
+6.808e-11 zurueck — genau der Wert, den v3+Cap um acht Groessenordnungen verfehlte. Der Cap ist
+unschuldig; das kontaminierte `r_k`-Promotionssignal war das Problem.
+
+Nicht belegbar aus diesen Daten: die Kostenersparnis gegenueber v2.2. Die v2.2-Records stammen aus
+Baseline v0 und fuehren weder `total_parameter_fits` noch `total_ode_solves`. Belegt ist nur die
+strukturelle Groesse: 8 von 30 Levels entfallen. Laufzeiten sind erfasst, aber nach Designprinzip 7
+kein Beleg.
+
+**Fingerprint-Grenze:** der v2.2-Arm liegt auf `0c739d4e36ee6498`, die gecappten Zellen auf
+`df5db7763bcd2449`. Der Vergleich kreuzt die Grenze und muss ueberall so gekennzeichnet werden.
+Die bitgleichen Losses sind allerdings selbst das staerkste Indiz, dass die Grenze inert ist — was
+WP-T2 unabhaengig gezeigt hatte.
+
+**Was nicht geloest ist:** `pruned_match = false` in allen vier Zellen. Auf 26/42 findet der
+gecappte Lauf `du2 = f(u1, u1^2)` — dieselbe falsche Struktur wie v2.2, obwohl die Wahrheit
+(`u2, u1*u2, u2^2`) in Stage 3 vollstaendig verfuegbar ist. Der Cap loest die
+Komplexitaetsallokation, nicht die Suchmaechtigkeit innerhalb einer Stage. Das ist die bekannte,
+explizit ausserhalb von Paper 1 liegende offene Frage.
+
+**Konsequenz:** Endvariante fuer Paper 1 ist `evogrow_v2_2_stage_capped`. v3 wird zur
+dokumentierten Fehleranalyse (Gate 2 negativ, Ursache in `r_k` diagnostiziert), der Look-Ahead-Cap
+zum Beitrag.
+
+---
+
 ## 2026-08-02
 
 ### WP-C1b — eine Kindgenerierung, cap-bewusste Kohaerenzregel
