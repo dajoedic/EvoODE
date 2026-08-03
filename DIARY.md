@@ -6,6 +6,44 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ## 2026-08-03
 
+### WP-B3 — Wall-Clock raus aus dem Optimierer, Merge-Semantik geradegezogen
+
+<!-- 0f4d006 -->
+
+Drei Luecken vor der Kampagne geschlossen.
+
+**Merge.** `merge_batch_records.jl` verweigert jetzt Records mit gesetztem `error` und zaehlt sie
+separat als `skipped_failed`. Vorher wurde eine vom Cluster-Timeout gekillte Zelle gemerged, hat
+damit ihren Eindeutigkeitsschluessel belegt und den eigenen erfolgreichen Wiederlauf als Duplikat
+blockiert. Die Task-Datei bleibt erhalten — auf einem 4D-System ist ein Absturz nach 40 Stunden ein
+Befund, kein Muell.
+
+**`BFGS_TIME_LIMIT_S = 1800` ist weg.** Ersetzt durch `BFGS_MAX_LOSS_EVALS = 100_000` pro
+Parameterfit, also ein Budget in Zaehlgroessen. Ein Wall-Clock-Limit im Optimierer haette auf einem
+langsamen Knoten gebunden und auf einem schnellen nicht — das wissenschaftliche Ergebnis haette an
+der Knotenzuteilung gehangen. Records tragen jetzt `total_loss_evals` und
+`total_optimizer_eval_budget_limit_hits`. Fingerprint `256014cf6f0295e1` → `db8ec4003aa99a0e`; die
+WP-B1-Verifikationszelle liefert darunter unveraendert `5.18873247985214e-9` bei Cap `[2]`, das
+Budget bindet auf einer gesunden Zelle also nicht.
+
+**1D-Klasse gemessen statt skaliert.** Sechs Zellen (Systeme 3 und 11, IC-Satz 1, drei Seeds) durch
+den *Batch*-Pfad, nicht durch die Suite-Schleife — also durch genau den Pfad, den der Cluster
+benutzt. 110–290 Parameterfits, 1,1e4–5,7e5 ODE-Integrationen pro Job, null Budget-Treffer.
+`docs/hpc_requirements.md` §5 stuetzt die 1D-Zeile jetzt darauf und weist die Kernstunden-Tabelle
+ausdruecklich als Planungsannahme aus.
+
+**Zwei Anmerkungen zur Kalibrierung, beide nicht blockierend.** Erstens ist das Budget gegen
+*Mittelwerte* kalibriert (max. 7.577 Loss-Evals pro Fit im Mittel, daher der berichtete Faktor 13);
+gegen den bekannten pathologischen Einzelfit von 39.933 Evals bleiben aber nur **2,5x**. Das Budget
+ist damit weiterhin ein Sicherheitsnetz und kein Kostenhebel — die Line-Search-Pathologie bleibt
+offen, wie vorgesehen. Zweitens: die Defaults von `BFGSOptimizer` sind auf `time_limit_s = Inf` und
+`max_loss_evals = typemax(Int)` gesetzt. Der Regressionspfad setzt sein Budget explizit, aber
+`experiments/run_experiment.jl`, `benchmarks/` und mehrere Studien konstruieren den Optimierer ohne
+Budget und haben damit **gar keine Bremse mehr**, wo vorher 300 s standen. Vor Phase B ueber
+`run_experiment.jl` zu beheben.
+
+---
+
 ### WP-B2 — Batch-Einstiegspunkt und Container fuer den Cluster
 
 <!-- 5a3797a -->

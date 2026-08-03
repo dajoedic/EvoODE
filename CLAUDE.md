@@ -12,6 +12,7 @@ what to work on next. It is deliberately kept short. Detail lives in dedicated d
 | `docs/paper1_study_protocol.md` | frozen Phase A protocol — claims, hypotheses, evidence rules (historical) |
 | `docs/paper1_phaseA_reproducibility.md` | frozen Phase A configuration — systems, hyperparameters, seeds, metrics (historical) |
 | `docs/paper1_odebench_protocol_alignment.md` | Phase B sampling protocol and the comparability audit |
+| `docs/hpc_requirements.md` | Phase B resource profile, cost derivation and its uncertainty |
 | `codex/CURRENT_TASK.md` | the one active task spec for an AI coding assistant |
 
 Do not start a second planning document. Planning and status belong here; everything else belongs
@@ -133,7 +134,7 @@ in the current phase.**
 |----------|--------|------|
 | `paper1_phaseA_v1` | **frozen** (300/300) | H1 partial, H2 supported, H3 partial, H4 vacuous. Not used for final claims. `docs/paper1_freeze_memo_phaseA.md` |
 | `studies/lookahead/` | WP-L1–L5d, WP-G1/G1b done | Stage-firing look-ahead — **promoted from diagnostic to the paper's contribution** |
-| `studies/regression/` | 42 records, 4 fingerprints | Final variant covers 10 cells on systems 3, 11, 26, 31 — all on the **old** grid. Batch path (manifest / one cell per process / merge) in place; no record yet on `256014cf6f0295e1` |
+| `studies/regression/` | 42 records, 4 fingerprints | Final variant covers 10 cells on systems 3, 11, 26, 31 — all on the **old** grid. Batch path (manifest / one cell per process / merge) in place; no record yet on `db8ec4003aa99a0e` |
 | `studies/numerics/` | done (WP-T2) | Overshoot on System 26 is algorithmic, not numerical; screening is performance-only |
 | `studies/generalization/` | closed | Auxiliary only; insufficient cells for supplementary inclusion |
 | `studies/profiling/` | data available | Methods / Discussion only; not evidence for H1–H4 |
@@ -181,16 +182,15 @@ the coupled search path 1e-6 is the cheaper, behaviour-equal tolerance; the Syst
    <10 GB disk, no GPU, Julia 1.11.5 pinned. The resource request is `docs/hpc_requirements.md`;
    consultation 2026-08-06. First action with access: build the container, then one pilot cell —
    the project's first trustworthy timing figure.
-2. **Merge semantics** (WP-B3). `merge_batch_records.jl` accepts records with a non-null `error`
-   while `load_completed_cells` filters them. A cell killed by a cluster timeout therefore poisons
-   its key and blocks its own re-run. Must be fixed before the campaign.
-3. **`BFGS_TIME_LIMIT_S = 1800` → a budget in counts** (WP-B3). The last wall-clock dependency in
-   the search path; on heterogeneous nodes it would make results depend on node assignment.
-   Fingerprint-affecting, therefore now, while no record exists under the current fingerprint.
+2. **Optimizer defaults have no brake.** WP-B3 set `BFGSOptimizer` defaults to `time_limit_s = Inf`
+   and `max_loss_evals = typemax(Int)`. The regression path passes its budget explicitly, but
+   `experiments/run_experiment.jl`, `benchmarks/` and several studies construct the optimizer
+   without one and are now unbounded where 300 s used to stand. Fix before Phase B runs through
+   `run_experiment.jl`.
 4. **Fingerprint boundary.** The v2.2 arm sits on Baseline v0 (`0c739d4e36ee6498`), all v3 and
    capped runs on `df5db7763bcd2449`. The comparison is sound but crosses a boundary and must be
-   labelled as such wherever it is reported. The current code is on `256014cf6f0295e1` (Phase B
-   protocol + corrected grid label) and carries **no records yet** — every Phase B and every new
+   labelled as such wherever it is reported. The current code is on `db8ec4003aa99a0e` (Phase B
+   protocol, corrected grid label, deterministic optimizer budget) and carries **no records yet** — every Phase B and every new
    regression run will live there, so all fingerprint-affecting changes must land before the first
    one.
 5. **Remaining Phase 3 items** (`PAPER_1.md`): R² metric, and filling the external columns of the
