@@ -42,8 +42,6 @@ options   = DiscoveryOptions(rng_seed=42, verbose=2)
 save_plots = true
 save_case_csv = true
 
-mkpath(dirname(out_path))
-
 # -----------------------------
 # Helpers
 # -----------------------------
@@ -120,7 +118,7 @@ end
 
 # Minimal loader for "strogatz_extended-like" JSON
 # Expect: obj["solutions"][1][1]["t"], obj["solutions"][1][1]["y"] where y is list of dim arrays
-function load_systems_json(path::String; nmax::Int=typemax(Int))
+function load_systems_json(path::String; nmax::Int=typemax(Int), ic_set::Int=1)
     raw = open(path, "r") do io
         JSON3.read(io)
     end
@@ -130,7 +128,7 @@ function load_systems_json(path::String; nmax::Int=typemax(Int))
         dim = Int(obj["dim"])
         sols = obj["solutions"]
         first_set = sols[1]
-        sol = first_set[1]
+        sol = first_set[ic_set]
 
         t = Vector{Float64}(sol["t"])
         y = sol["y"]
@@ -155,6 +153,8 @@ end
 # -----------------------------
 # Run
 # -----------------------------
+if abspath(PROGRAM_FILE) == @__FILE__
+mkpath(dirname(out_path))
 println("Loading ODEBench-like systems from: ", data_path)
 systems = load_systems_json(data_path)
 println("Loaded ", length(systems), " systems.")
@@ -259,3 +259,4 @@ for sys in systems
 end
 
 println("\nDone. Results at: ", out_path)
+end

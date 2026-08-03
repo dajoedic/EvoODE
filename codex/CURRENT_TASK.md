@@ -28,6 +28,9 @@ Two predictions are on record and this run tests them:
 Both are predictions from measured behaviour. Report what comes out, including if it contradicts
 them.
 
+A third question was added after the task was first written, and it is now the decisive one — see
+"Data source" below.
+
 ### What the dataset grid is
 
 Verified directly against `benchmarks/data/strogatz_extended.json`:
@@ -39,9 +42,41 @@ Verified directly against `benchmarks/data/strogatz_extended.json`:
 - `y` is stored as `dim` rows of 512 values
 - all 126 carry `success = true`; no non-finite entries
 
-Trajectories are to be **read from the file**, not re-integrated. `load_systems_json` in
-`benchmarks/run_odebench.jl` already parses this structure for the first initial-condition set;
-reuse or extend it rather than writing a second parser.
+`load_systems_json` in `benchmarks/run_odebench.jl` already parses this structure for the first
+initial-condition set; reuse or extend it rather than writing a second parser.
+
+### Data source — measure both, this decides the grid question
+
+The stored trajectories carry the accuracy of the solver that produced them, and that accuracy is
+low. Verified against an independently converged RK4 reference with exact time alignment
+(reference self-convergence ~1e-13, so the reference is trustworthy):
+
+| system | IC | max absolute error of the stored data | relative |
+|---|---|---|---|
+| 11 | 0 | 1.0e-05 | 3.0e-06 |
+| 26 | 0 | 2.0e-05 | 4.0e-06 |
+| 31 | 0 | 1.1e-04 | 1.6e-05 |
+| 54 | 1 | 2.9e-03 | 8.3e-05 |
+| 3 | 0 | 2.3e-01 | 3.1e-03 |
+
+The `nfev` fields corroborate this: System 3 was integrated with 77 function evaluations over
+t ∈ [0, 10]. EvoODE generates its own data at `abstol = reltol = 1e-9`.
+
+This matters directly for the cap: the policy compares a per-stage residual against a derivative
+noise floor. Dirtier data raises that floor, which pushes equations into "cannot judge" and
+produces *more* `nothing` caps — the opposite of prediction 2. The denser grid helps and the
+lower data quality hurts, and which effect dominates is unknown.
+
+Therefore measure the caps on **both** data sources, on the identical grid:
+
+- **A — stored**: the `y` matrices as shipped
+- **B — self-integrated**: the ground-truth ODE integrated with `Tsit5`, `abstol = reltol = 1e-9`,
+  from the same initial condition, saved at exactly the dataset's 512 time points
+
+A and B differ only in data accuracy, so any difference in the caps is attributable to that alone.
+This is the comparison that decides whether Phase B uses the shipped trajectories or only the
+shipped sampling protocol. Report the per-equation noise floor for both, since that is the
+mechanism by which a difference would arise.
 
 ### Scope
 
@@ -49,6 +84,7 @@ Measure `estimate_stage_caps` under the frozen `LOOKAHEAD_CAP_POLICY` used by
 `studies/regression/run_regression.jl`, for:
 
 - the six systems with known ground-truth stages: 3, 11, 26, 31, 54, 63
+- both data sources A and B as defined above
 - both initial-condition sets, reported separately — the second set has never been used in this
   project and whether the cap is stable across initial conditions is itself a finding
 - the same staged polynomial basis the regression suite uses, at the system's dimension
@@ -92,8 +128,14 @@ Per-equation ground truth for the two interesting cases: System 54 is `[3,3,3]`,
 
 ### Deliverable
 
-The script, a CSV of the per-equation results under `outputs/`, and a short report at
-`docs/wp_g1_dataset_grid_caps.md` containing the comparison table, the classification counts, and
-an explicit statement on each of the two predictions above. Every factual sentence in that report
-must be derived from the measured values; do not carry over expectations from this task
-description as if they were results.
+The script, a CSV of the per-equation results under `outputs/` with one row per
+(system, IC set, data source, equation), and a short report at `docs/wp_g1_dataset_grid_caps.md`
+containing:
+
+- the comparison table against the per-system-grid caps
+- the classification counts, separately for data source A and B
+- an explicit statement on each of the two predictions above
+- a statement on whether A and B produce different caps, and where
+
+Every factual sentence in that report must be derived from the measured values; do not carry over
+expectations from this task description as if they were results.
