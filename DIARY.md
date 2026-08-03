@@ -23,9 +23,9 @@ der drei Dateien wieder oder sind nachweislich zusammengefasst (Vision + Core Id
 "What This Project Is", Phase 1–5 → Statustabelle).
 
 Zwei Folgefunde: `docs/paper1_study_protocol.md` verwies auf den verschobenen Abschnitt (korrigiert),
-und `docs/de/` enthaelt deutsche Lesefassungen vom 2026-04-26 bzw. 2026-05-08, die den Stand vor
-Gate 1, Gate 2 und der Variantenentscheidung wiedergeben — als veraltet markiert statt still
-weiterlaufen zu lassen.
+und `docs/de/` enthielt deutsche Lesefassungen vom 2026-04-26 bzw. 2026-05-08, die den Stand vor
+Gate 1, Gate 2 und der Variantenentscheidung wiedergaben. Auf Entscheidung des Users geloescht —
+eine veraltete Zweitfassung ist schlechter als keine.
 
 Der Kopfbereich haelt jetzt eine Dokumentenkarte: welche Datei was haelt. Die alte Formulierung
 "single source of truth ... do not maintain a second planning document" war der Grund, warum alles
