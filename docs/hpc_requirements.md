@@ -71,9 +71,13 @@ dependency set is fully reproducible. No MPI, no GPU, no licensed components.
 Two known failure modes we would like to discuss:
 
 **Package installation needs the internet exactly once.** Julia resolves and downloads packages at
-`Pkg.instantiate()`. Compute nodes typically have no outbound network. Our intended solution is a
-container (Apptainer/Singularity) with the dependencies installed **and precompiled** at build
-time, so that compute nodes need nothing. If the site prefers a module-provided Julia and a shared
+`Pkg.instantiate()`. Compute nodes typically have no outbound network. Our solution is a container
+(Apptainer/Singularity) with the dependencies installed **and precompiled** at build time, so that
+compute nodes need nothing. The definition file exists (`containers/evoode_regression.apptainer`);
+it pins `julia:1.11.5-bookworm`, instantiates and precompiles in `%post`, and keeps the Julia depot
+inside the image rather than on a shared filesystem. It has not been built yet — we have no
+Apptainer runtime locally, which is the first thing we would like to resolve. If the site prefers a
+module-provided Julia and a shared
 depot instead, that works too, but the depot must be populated from a login node before the array
 starts, and precompilation must happen there as well — otherwise every one of 846 jobs pays the
 precompilation cost again.
@@ -83,12 +87,21 @@ single-core array tasks per node this causes severe oversubscription. We set
 `JULIA_NUM_THREADS=1` and `OPENBLAS_NUM_THREADS=1` explicitly and would like to confirm this
 matches the site's expectation for array jobs.
 
-Questions for the consultation:
+Questions for the consultation, in the order they block us:
 
-1. Apptainer/Singularity available? Can we build the image ourselves, or is a build service used?
-2. If containers are discouraged: is there a Julia module, and at which version?
-3. Is `--array` with a concurrency cap (`%N`) the expected pattern for this scale?
-4. Any filesystem guidance for the Julia depot (many small files, read-heavy at job start)?
+1. **Apptainer/Singularity available, and may we build the image ourselves?** Building needs root or
+   fakeroot and outbound network. If neither is available on site, we need either a build service, a
+   login node with fakeroot, or an alternative route (build elsewhere and copy the `.sif` in).
+2. If containers are discouraged: is there a Julia module, at which version, and where should a
+   shared depot live? It would have to be populated **and precompiled** from a login node before the
+   array starts.
+3. Is `--array` with a concurrency cap (`%N`) the expected pattern at this scale, and what cap is
+   considered polite? 846 jobs is small in core-hours but wide in job count.
+4. Any filesystem guidance for the Julia depot (many small files, read-heavy at job start)? Our
+   current answer is "inside the image", which sidesteps the question — we would like to know
+   whether that matches site practice.
+5. Is a small pilot allocation possible ahead of the main one (§5)? It is what converts our
+   estimates into measurements.
 
 ---
 
@@ -172,7 +185,16 @@ These are properties of the study, not requests, but they affect how jobs may be
 
 ## 8. Timeline
 
-The scientific method is fixed and the final algorithm variant is decided. What remains before the
-campaign can start is the port to the batch environment: the array runner and the container
-definition. We expect to be ready to run within days of receiving access, and would use a pilot
+The scientific method is fixed and the final algorithm variant is decided. **The port to the batch
+environment is done**: a manifest enumerates the campaign as an ordered cell list, one entry point
+runs exactly one cell and exits, a merge step consolidates the per-task records, and the container
+definition and an example array submission script exist. A single cell has been verified end to end
+through that path and reproduces the previously measured result exactly.
+
+Two items remain on our side, both scheduled before access would be used: replacing the optimizer's
+wall-clock limit with a deterministic budget (§7), and measuring the 1D cost class instead of
+scaling it (§5). Neither requires cluster access.
+
+What we cannot do without access is build and run the container, and produce a single trustworthy
+timing figure. We expect to be ready to run within days of receiving access, and would use a pilot
 allocation immediately to firm up §5 and §6.
