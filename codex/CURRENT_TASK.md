@@ -2,78 +2,97 @@
 
 **Language: Julia**
 
-## WP-G1b — Add the missing data-source arm and the horizon diagnostic
+## WP-B1 — Move the regression suite to the Phase B sampling protocol
 
-WP-G1 is delivered and committed (`8c5319b`). Its arm-A results stand and must not be recomputed
-differently: System 54 caps become `[nothing, 3, 3]` against a truth of `[3,3,3]`, System 63 stays
-`nothing` on all equations and both initial-condition sets, System 31 initial-condition set 2
-produces a cap of 1 on equation 1 against a truth of 3.
+The Phase B sampling protocol was decided on 2026-08-03 and is recorded in
+`docs/paper1_odebench_protocol_alignment.md` §3. It exists only as a decision; no code implements
+it. Until it does, Phase B cannot be started the moment compute becomes available.
 
-Two things are missing. Both are cheap, and neither involves any search.
+The regression suite is the place to land it first, because that suite exists to catch regressions
+in the variant we ship, and we ship on the new protocol.
 
-### Gap 1 — Arm B was not implemented
+### The protocol
 
-The task specified measuring the caps on two data sources on the identical grid:
+| Component | Value |
+|---|---|
+| Time span | t ∈ [0, 10] for every system |
+| Sampling | 512 uniform points, spacing `10/511`, both endpoints included |
+| Initial conditions | **both** sets shipped by the dataset, per system |
+| Trajectory source | our own integration, `Tsit5`, `abstol = reltol = 1e-9`, saved at exactly those 512 time points |
 
-- **A — stored**: the `y` matrices as shipped in `benchmarks/data/strogatz_extended.json`
-- **B — self-integrated**: the ground-truth ODE integrated with `Tsit5`, `abstol = reltol = 1e-9`,
-  from the same initial condition, saved at exactly the dataset's 512 time points
+The initial conditions come from `benchmarks/data/strogatz_extended.json`, field `init`, which holds
+two sets per system. `solutions[1][k]["t"]` gives the time grid; the shipped `y` matrices are **not**
+used — only the sampling.
 
-Only A was produced. `studies/lookahead/measure_dataset_grid_caps.jl` contains no integration at
-all, and the output CSV has one row per (system, IC set, equation) with no data-source column.
+### Scope
 
-This matters because the two candidate explanations for every change WP-G1 measured are still
-confounded. The dataset grid is 2.56x denser in time than EvoODE's grid, which should help; the
-shipped trajectories carry solver error up to 2.3e-1 absolute on System 3 and 1e-5 to 1e-3
-elsewhere, which should hurt, because the cap policy compares a residual against a derivative
-noise floor and dirtier data raises that floor. Without arm B we cannot say which effect produced
-the System 54 improvement or the System 31 violation.
+`studies/regression/diagnostic_systems.jl` currently hardcodes a per-system `u0`, `tspan` and `T`,
+and a single initial condition. Replace that with the protocol above, keeping the ground-truth RHS
+functions unchanged.
 
-Add arm B and report both arms side by side. Extend the existing script and CSV with a data-source
-column rather than writing a second script; arm A must reproduce the committed numbers exactly,
-and any deviation is a regression to report, not to explain away.
+A cell is now identified by (variant, system, **initial-condition set**, seed). Everything that
+currently keys on (variant, system, seed) must be extended: the runner's selection and resume
+logic, the record schema, and the history uniqueness key. The existing environment-variable
+selection gains a counterpart for the initial-condition set.
 
-The report must state explicitly, per equation, whether A and B give the same cap, and where they
-differ it must show the noise floors of both, since that is the mechanism through which a
-difference would arise.
+`config_fingerprint` must change — the payload already contains `tspan` and `T`, and the
+initial-condition set now belongs in it too. **This is intended, not a problem to work around.**
+The 42 existing records stay in `history.jsonl` under their old fingerprints; that is exactly what
+the fingerprint mechanism is for. Do not delete or rewrite them, and do not attempt to make old and
+new records comparable.
 
-### Gap 2 — Quantify how much of each trajectory carries dynamics
+### Two things that need judgment, not just translation
 
-The System 31 violation was diagnosed after the fact, outside the script. With
-`u0 = [20.0, 12.4]` the epidemic is over by `t ≈ 0.47`, so roughly 5 percent of the 512 samples
-carry any dynamics and the rest sit in a dead tail; on initial-condition set 1 the same figure is
-about 30 percent. The residuals are flat at ~1e-15 across all five stages, so the rule correctly
-reports that nothing beyond stage 1 helps — it is right about the data and wrong about the truth,
-because the trajectory does not contain the truth.
+**1. `expected_stage` is a property of the system, the caps are a property of the trajectory.**
+WP-G1 measured that System 31 initial-condition set 2 does not identify its own true stage: the
+epidemic is over by t ≈ 0.47 and only about 5% of the 512 samples carry dynamics, so a cap of 1 is
+returned against a true stage of 3. `expected_stage` must therefore stay the structural truth of
+the system and must not be adjusted per initial condition. But `stage_overshoot` computed against
+it will now be misleading for such cells.
 
-This is a property of the fixed `t ∈ [0, 10]` window applied to every system and every initial
-condition, and it is a direct input to the Phase B grid decision. Measure it rather than leaving
-it as an anecdote.
+Record enough to tell the two apart: keep `expected_stage` as the structural truth, and add a
+per-cell measure of how much dynamics the trajectory actually carries, using the same definition as
+`studies/lookahead/measure_dataset_grid_caps.jl` (fraction of the 512 points at which the true
+derivative magnitude exceeds one percent of its maximum, computed per equation from the
+ground-truth right-hand side). A cell that fails with a low value there is a protocol limit, not a
+method failure, and the record must make that readable without a separate investigation.
 
-For every (system, IC set) in the six-system set, add to the CSV:
+**2. System 63 runs for hours and now doubles.** It is already the runtime driver of the suite and
+the new grid makes every trajectory longer. Do not remove it — the system list is part of the
+fingerprint and removing it forms a separate track. But the suite must remain selectable per
+system, per initial-condition set and per seed from the outside, so that expensive cells can be
+scheduled separately.
 
-- the fraction of the 512 sample points at which the true derivative magnitude exceeds one percent
-  of its maximum over the trajectory, computed per equation from the ground-truth right-hand side
-  rather than from a finite difference
-- the time at which the state first falls below one percent of the spread it covers
+### Verification
 
-Report these alongside the classification, so that a violation or a `nothing` can be read against
-how much signal the trajectory actually offered. State in the report whether the low-signal cells
-and the failing cells coincide.
+Do **not** run the regression matrix. Verify with the cheapest possible evidence:
 
-Do not draw a conclusion about which grid Phase B should use. That decision is not yours; supply
-the measurement it needs.
+- the new `config_fingerprint`, reported as a value, and a statement that it differs from
+  `df5db7763bcd2449`
+- for all five systems and both initial-condition sets: the constructed trajectory has 512 points,
+  starts at 0.0, ends at 10.0, and its first state matches the dataset's `init` entry exactly
+- one single cheap cell end to end — System 3, initial-condition set 1, seed 42, variant
+  `evogrow_v2_2_stage_capped` — writing to a scratch history path, **not** to
+  `studies/regression/history.jsonl`. Report its loss, cap, `eq_overshoot`, `pruned_match` and
+  support. This cell previously gave cap `[2]`, loss `1.3476451847014113e-8`, support
+  `[["u1", "u1^2"]]` on the old grid; the new value will differ and that is expected — report it,
+  do not tune anything to reach the old number.
+- that selecting by initial-condition set works, by showing that the two sets produce different
+  trajectories for the same system
 
 ### Constraints
 
-- Do not modify `estimate_stage_caps`, the cap policy, `FINGERPRINT_VARIANT_LABELS`, the
-  fingerprint payload, `run_regression.jl`, or any variant definition.
+- Do not modify `estimate_stage_caps` or the cap policy.
 - Do not write to `studies/regression/history.jsonl`.
-- Perform no discovery run and no search of any kind.
-- Output goes to the existing `outputs/studies/lookahead/wp_g1/` folder; update
-  `docs/wp_g1_dataset_grid_caps.md` in place rather than adding a second report.
-- The run must stay cheap. Integrating 12 trajectories at 1e-9 takes seconds; if anything runs
-  longer than a few minutes, stop and report rather than waiting.
-- If any part of this is not implementable as stated, stop and report the conflict instead of
-  silently delivering a subset. The omission of arm B in WP-G1 went unmentioned in the report,
-  which is what made it expensive to notice.
+- Do not run the regression matrix, Baseline v1, or any multi-cell sweep. Those are the user's to
+  start, and on the new grid they belong on a server.
+- Ground-truth RHS functions stay as they are; only the sampling and initial conditions change.
+- Generated output goes to its own subfolder under `outputs/`.
+- If any part of this is not implementable as stated, stop and report the conflict rather than
+  delivering a subset silently.
+
+### Deliverable
+
+The changed suite, and a short report at `codex/REPORT_WP_B1.md` containing the new fingerprint,
+the trajectory checks, the single-cell result, and an explicit list of every place where the
+initial-condition set had to be threaded through.
