@@ -157,6 +157,7 @@ function search_structure(strategy::EvoGrowV3,
     total_optimizer_limit_hits = 0
     total_optimizer_iteration_limit_hits = 0
     total_optimizer_safety_limit_hits = 0
+    total_optimizer_eval_budget_limit_hits = 0
     total_optimizer_failure_hits = 0
     total_optimizer_unknown_retcode_hits = 0
     total_fit_time_s = 0.0
@@ -200,6 +201,7 @@ function search_structure(strategy::EvoGrowV3,
         level_optimizer_limit_hits = 0
         level_optimizer_iteration_limit_hits = 0
         level_optimizer_safety_limit_hits = 0
+        level_optimizer_eval_budget_limit_hits = 0
         level_optimizer_failure_hits = 0
         level_optimizer_unknown_retcode_hits = 0
         level_fit_time_s = 0.0
@@ -249,6 +251,7 @@ function search_structure(strategy::EvoGrowV3,
                 level_optimizer_limit_hits += _fit_stat(fit_meta, :optimizer_limit_hits)
                 level_optimizer_iteration_limit_hits += _fit_stat(fit_meta, :optimizer_iteration_limit_hits)
                 level_optimizer_safety_limit_hits += _fit_stat(fit_meta, :optimizer_safety_limit_hits)
+                level_optimizer_eval_budget_limit_hits += _fit_stat(fit_meta, :optimizer_eval_budget_limit_hits)
                 level_optimizer_failure_hits += _fit_stat(fit_meta, :optimizer_failure_hits)
                 level_optimizer_unknown_retcode_hits += _fit_stat(fit_meta, :optimizer_unknown_retcode_hits)
                 level_fit_time_s += _fit_time_stat(fit_meta, :fit_time_s)
@@ -349,6 +352,7 @@ function search_structure(strategy::EvoGrowV3,
             level_optimizer_limit_hits += _fit_stat(fit_meta, :optimizer_limit_hits)
             level_optimizer_iteration_limit_hits += _fit_stat(fit_meta, :optimizer_iteration_limit_hits)
             level_optimizer_safety_limit_hits += _fit_stat(fit_meta, :optimizer_safety_limit_hits)
+            level_optimizer_eval_budget_limit_hits += _fit_stat(fit_meta, :optimizer_eval_budget_limit_hits)
             level_optimizer_failure_hits += _fit_stat(fit_meta, :optimizer_failure_hits)
             level_optimizer_unknown_retcode_hits += _fit_stat(fit_meta, :optimizer_unknown_retcode_hits)
             level_fit_time_s += _fit_time_stat(fit_meta, :fit_time_s)
@@ -426,6 +430,7 @@ function search_structure(strategy::EvoGrowV3,
         total_optimizer_limit_hits += level_optimizer_limit_hits
         total_optimizer_iteration_limit_hits += level_optimizer_iteration_limit_hits
         total_optimizer_safety_limit_hits += level_optimizer_safety_limit_hits
+        total_optimizer_eval_budget_limit_hits += level_optimizer_eval_budget_limit_hits
         total_optimizer_failure_hits += level_optimizer_failure_hits
         total_optimizer_unknown_retcode_hits += level_optimizer_unknown_retcode_hits
         total_fit_time_s += level_fit_time_s
@@ -453,6 +458,7 @@ function search_structure(strategy::EvoGrowV3,
                 optimizer_limit_hits = level_optimizer_limit_hits,
                 optimizer_iteration_limit_hits = level_optimizer_iteration_limit_hits,
                 optimizer_safety_limit_hits = level_optimizer_safety_limit_hits,
+                optimizer_eval_budget_limit_hits = level_optimizer_eval_budget_limit_hits,
                 optimizer_failure_hits = level_optimizer_failure_hits,
                 optimizer_unknown_retcode_hits = level_optimizer_unknown_retcode_hits,
                 parameter_optimization_time_s = level_parameter_overhead_s,
@@ -522,6 +528,7 @@ function search_structure(strategy::EvoGrowV3,
                         :optimizer_limit_hits => level_optimizer_limit_hits,
                         :optimizer_iteration_limit_hits => level_optimizer_iteration_limit_hits,
                         :optimizer_safety_limit_hits => level_optimizer_safety_limit_hits,
+                        :optimizer_eval_budget_limit_hits => level_optimizer_eval_budget_limit_hits,
                         :optimizer_failure_hits => level_optimizer_failure_hits,
                         :optimizer_unknown_retcode_hits => level_optimizer_unknown_retcode_hits,
                         :parameter_optimization_time_s => level_parameter_overhead_s,
@@ -685,6 +692,7 @@ function search_structure(strategy::EvoGrowV3,
             total_optimizer_limit_hits = total_optimizer_limit_hits,
             total_optimizer_iteration_limit_hits = total_optimizer_iteration_limit_hits,
             total_optimizer_safety_limit_hits = total_optimizer_safety_limit_hits,
+            total_optimizer_eval_budget_limit_hits = total_optimizer_eval_budget_limit_hits,
             total_optimizer_failure_hits = total_optimizer_failure_hits,
             total_optimizer_unknown_retcode_hits = total_optimizer_unknown_retcode_hits,
             total_parameter_optimization_time_s = max(0.0, total_fit_time_s - total_solve_time_s),

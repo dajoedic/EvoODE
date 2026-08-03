@@ -8,24 +8,24 @@ using Random
 
 """
     BFGSOptimizer(; maxiters=300, abstol=1e-6, reltol=1e-6, maxiters_solve=10^6,
-                  clamp_val=10.0, time_limit_s=300.0,
+                  clamp_val=10.0, max_loss_evals=typemax(Int), time_limit_s=Inf,
                   reject_nonfinite=false, divergence_limit=Inf)
 
 Parameter optimizer for fixed-structure models.
 
 Deterministic budget parameters:
 - `maxiters`: optimizer iteration limit.
+- `max_loss_evals`: deterministic objective-evaluation safety budget for one
+  parameter fit.
 - `abstol`, `reltol`, `maxiters_solve`: ODE solver tolerances and step limit.
 - `clamp_val`: deterministic parameter clamp before simulation.
 - `reject_nonfinite`, `divergence_limit`: deterministic early-rejection rules.
   When enabled, these are passed through `unstable_check`; relative to the
   solver default, the added condition is the finite `divergence_limit`.
 
-Non-deterministic safety parameter:
-- `time_limit_s`: wall-clock safety brake passed to Optim.jl. If it fires,
-  `fit_parameters` marks `optimizer_safety_limit_hits` in the returned metadata.
-  Reproducible result paths should set this high enough that normal fits stop
-  by deterministic budgets instead.
+Legacy non-deterministic safety parameter:
+- `time_limit_s`: optional wall-clock safety brake passed to Optim.jl. It is
+  disabled by default; reproducible result paths should leave it at `Inf`.
 """
 Base.@kwdef struct BFGSOptimizer <: AbstractOptimizer
     maxiters::Int = 300
@@ -33,9 +33,15 @@ Base.@kwdef struct BFGSOptimizer <: AbstractOptimizer
     reltol::Float64 = 1e-6
     maxiters_solve::Int = 10^6
     clamp_val::Float64 = 10.0
-    time_limit_s::Float64 = 300.0
+    max_loss_evals::Int = typemax(Int)
+    time_limit_s::Float64 = Inf
     reject_nonfinite::Bool = false
     divergence_limit::Float64 = Inf
+end
+
+struct BFGSLossEvalBudgetExceeded <: Exception
+    limit::Int
+    count::Int
 end
 
 function _empty_solve_stats()
@@ -270,6 +276,7 @@ function fit_parameters(opt::BFGSOptimizer,
     solve_stats = _empty_solve_stats()
     optimizer_limit_hits = Ref(0)
     optimizer_safety_limit_hits = Ref(0)
+    optimizer_eval_budget_limit_hits = Ref(0)
     optimizer_iteration_limit_hits = Ref(0)
     optimizer_failure_hits = Ref(0)
     optimizer_unknown_retcode_hits = Ref(0)
@@ -285,12 +292,16 @@ function fit_parameters(opt::BFGSOptimizer,
                 :abstol => opt.abstol,
                 :reltol => opt.reltol,
                 :maxiters_solve => opt.maxiters_solve,
+                :max_loss_evals => opt.max_loss_evals,
                 :clamp_val => opt.clamp_val
             )
         )
     end
 
     function loss_only(p)
+        if loss_eval_count[] >= opt.max_loss_evals
+            throw(BFGSLossEvalBudgetExceeded(opt.max_loss_evals, loss_eval_count[]))
+        end
         loss_eval_count[] += 1
         Ŷ = _predict_traj(f!, traj, p, opt; stats = solve_stats)
 
@@ -389,17 +400,38 @@ function fit_parameters(opt::BFGSOptimizer,
             end
         end
     catch err
-        if options.verbose >= 2
-            log_warn(
-                "BFGS failed, trying Nelder-Mead fallback",
-                context = Dict(
-                    :n_params => n_params,
-                    :exception_type => typeof(err),
-                    :exception => sprint(showerror, err),
-                    :loss_evals => loss_eval_count[],
-                    :invalid_evals => invalid_eval_count[]
+        if err isa BFGSLossEvalBudgetExceeded
+            optimizer_limit_hits[] += 1
+            optimizer_eval_budget_limit_hits[] += 1
+            if !("MaxLossEvals" in optimizer_retcodes)
+                push!(optimizer_retcodes, "MaxLossEvals")
+            end
+            method_used = "loss_eval_budget"
+            retcode_used = "MaxLossEvals"
+            if options.verbose >= 2
+                log_warn(
+                    "BFGS hit deterministic loss-evaluation budget",
+                    context = Dict(
+                        :n_params => n_params,
+                        :max_loss_evals => opt.max_loss_evals,
+                        :loss_evals => loss_eval_count[],
+                        :invalid_evals => invalid_eval_count[]
+                    )
                 )
-            )
+            end
+        else
+            if options.verbose >= 2
+                log_warn(
+                    "BFGS failed, trying Nelder-Mead fallback",
+                    context = Dict(
+                        :n_params => n_params,
+                        :exception_type => typeof(err),
+                        :exception => sprint(showerror, err),
+                        :loss_evals => loss_eval_count[],
+                        :invalid_evals => invalid_eval_count[]
+                    )
+                )
+            end
         end
     end
 
@@ -488,18 +520,39 @@ function fit_parameters(opt::BFGSOptimizer,
                 end
             end
         catch err
-            method_used = "failed"
-            if options.verbose >= 2
-                log_error(
-                    "Nelder-Mead failed",
-                    context = Dict(
-                        :n_params => n_params,
-                        :exception_type => typeof(err),
-                        :exception => sprint(showerror, err),
-                        :loss_evals => loss_eval_count[],
-                        :invalid_evals => invalid_eval_count[]
+            if err isa BFGSLossEvalBudgetExceeded
+                optimizer_limit_hits[] += 1
+                optimizer_eval_budget_limit_hits[] += 1
+                if !("MaxLossEvals" in optimizer_retcodes)
+                    push!(optimizer_retcodes, "MaxLossEvals")
+                end
+                method_used = "loss_eval_budget"
+                retcode_used = "MaxLossEvals"
+                if options.verbose >= 2
+                    log_warn(
+                        "Nelder-Mead hit deterministic loss-evaluation budget",
+                        context = Dict(
+                            :n_params => n_params,
+                            :max_loss_evals => opt.max_loss_evals,
+                            :loss_evals => loss_eval_count[],
+                            :invalid_evals => invalid_eval_count[]
+                        )
                     )
-                )
+                end
+            else
+                method_used = "failed"
+                if options.verbose >= 2
+                    log_error(
+                        "Nelder-Mead failed",
+                        context = Dict(
+                            :n_params => n_params,
+                            :exception_type => typeof(err),
+                            :exception => sprint(showerror, err),
+                            :loss_evals => loss_eval_count[],
+                            :invalid_evals => invalid_eval_count[]
+                        )
+                    )
+                end
             end
         end
 
@@ -552,6 +605,7 @@ function fit_parameters(opt::BFGSOptimizer,
         optimizer_limit_hits = optimizer_limit_hits[],
         optimizer_iteration_limit_hits = optimizer_iteration_limit_hits[],
         optimizer_safety_limit_hits = optimizer_safety_limit_hits[],
+        optimizer_eval_budget_limit_hits = optimizer_eval_budget_limit_hits[],
         optimizer_failure_hits = optimizer_failure_hits[],
         optimizer_unknown_retcode_hits = optimizer_unknown_retcode_hits[],
         solver_retcodes = copy(solve_stats[:solver_retcodes]),

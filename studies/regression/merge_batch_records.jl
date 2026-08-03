@@ -54,6 +54,7 @@ function merge_batch_records(input_dir::AbstractString, history_path::AbstractSt
     existing = _load_existing_keys(history_path)
     added = 0
     skipped_duplicates = 0
+    skipped_failed = 0
     considered = 0
     mkpath(dirname(history_path))
     open(history_path, "a") do out
@@ -63,6 +64,10 @@ function merge_batch_records(input_dir::AbstractString, history_path::AbstractSt
                     isempty(strip(line)) && continue
                     considered += 1
                     record = JSON3.read(line)
+                    if haskey(record, :error) && getproperty(record, :error) !== nothing
+                        skipped_failed += 1
+                        continue
+                    end
                     key = _record_key(record)
                     if key in existing
                         skipped_duplicates += 1
@@ -76,7 +81,13 @@ function merge_batch_records(input_dir::AbstractString, history_path::AbstractSt
             end
         end
     end
-    return (considered = considered, added = added, skipped_duplicates = skipped_duplicates, history_path = history_path)
+    return (
+        considered = considered,
+        added = added,
+        skipped_duplicates = skipped_duplicates,
+        skipped_failed = skipped_failed,
+        history_path = history_path,
+    )
 end
 
 function main(args = ARGS)
@@ -91,6 +102,7 @@ function main(args = ARGS)
     println("considered=$(result.considered)")
     println("added=$(result.added)")
     println("skipped_duplicates=$(result.skipped_duplicates)")
+    println("skipped_failed=$(result.skipped_failed)")
     println("history=$(result.history_path)")
 end
 

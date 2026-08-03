@@ -112,20 +112,25 @@ reason we are here. All existing timings come from a working laptop where concur
 and thermal throttling leave no trace in the data. The project treats wall-clock as non-evidence by
 policy and argues costs in counts instead.
 
-What we can state precisely are the machine-independent work counts, measured on the current
-sampling grid:
+What we can state precisely are the machine-independent work counts. The 1D row now comes from the
+same batch entry point planned for Slurm, using the Phase B grid and the shipped regression variant
+`evogrow_v2_2_stage_capped` on systems 3 and 11, initial-condition set 1, all three seeds. The
+higher-dimensional rows remain pre-batch measurements and extrapolations until the pilot replaces
+them.
 
 | System class | Parameter fits per job | ODE integrations per job |
 |---|---|---|
-| 1D | 170 – 270 | 9e3 – 1.2e6 |
-| 2D | 290 – 430 | 1.2e6 – 2.4e6 |
+| 1D | 110 - 290 | 1.1e4 - 5.7e5 |
+| 2D | 290 - 430 | 1.2e6 - 2.4e6 |
 
-Across the full campaign this is on the order of **1e9 ODE integrations and ~2.7e5 parameter
-fits**.
+Across the full campaign this remains on the order of **1e9 ODE integrations and ~2.7e5 parameter
+fits**. The 1D batch measurement lowers the observed 1D integration range, but the total is still
+dominated by 2D, 3D and 4D jobs whose timings must be calibrated on the cluster.
 
-The core-hour estimate below converts those counts using laptop medians, scales by 2.56 for the
-denser sampling grid Phase B will use, and extrapolates the 3D and 4D classes from the 2D class.
-Each of those three steps carries error:
+The core-hour estimate below is still a planning assumption, not a measurement. It converts counts
+using laptop medians, keeps the 1D row as a conservative planning number until the pilot maps the
+new batch counts to cluster runtime, and extrapolates the 3D and 4D classes from the 2D class. Each
+of those steps carries error:
 
 | Dimension | Systems | Jobs | Estimated s/job | Core-hours |
 |---|---|---|---|---|

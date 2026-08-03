@@ -28,7 +28,7 @@ const BFGS_MAXITERS = 200
 const BFGS_ABSTOL = 1e-6
 const BFGS_RELTOL = 1e-6
 const BFGS_MAXITERS_SOLVE = 10^6
-const BFGS_TIME_LIMIT_S = 1800.0
+const BFGS_MAX_LOSS_EVALS = 100_000
 
 const SCREENING_BUDGETS_ENABLED = lowercase(strip(get(ENV, "EVO_SCREENING_BUDGETS", ""))) in ("1", "true", "yes")
 const SCREENING_BFGS_ABSTOL = 1e-5
@@ -177,7 +177,7 @@ function build_reference_optimizer()
         abstol = BFGS_ABSTOL,
         reltol = BFGS_RELTOL,
         maxiters_solve = BFGS_MAXITERS_SOLVE,
-        time_limit_s = BFGS_TIME_LIMIT_S,
+        max_loss_evals = BFGS_MAX_LOSS_EVALS,
         reject_nonfinite = false,
         divergence_limit = Inf,
     )
@@ -189,7 +189,7 @@ function build_screening_optimizer()
         abstol = SCREENING_BFGS_ABSTOL,
         reltol = SCREENING_BFGS_RELTOL,
         maxiters_solve = SCREENING_BFGS_MAXITERS_SOLVE,
-        time_limit_s = BFGS_TIME_LIMIT_S,
+        max_loss_evals = BFGS_MAX_LOSS_EVALS,
         reject_nonfinite = true,
         divergence_limit = SCREENING_DIVERGENCE_LIMIT,
     )
@@ -247,7 +247,7 @@ function config_fingerprint()
         bfgs_abstol = BFGS_ABSTOL,
         bfgs_reltol = BFGS_RELTOL,
         bfgs_maxiters_solve = BFGS_MAXITERS_SOLVE,
-        bfgs_time_limit_s = BFGS_TIME_LIMIT_S,
+        bfgs_max_loss_evals = BFGS_MAX_LOSS_EVALS,
         screening_budgets_enabled = SCREENING_BUDGETS_ENABLED,
         screening_bfgs_abstol = SCREENING_BFGS_ABSTOL,
         screening_bfgs_reltol = SCREENING_BFGS_RELTOL,
@@ -488,6 +488,7 @@ function run_one(variant, system, ic_set::Int, seed::Int, fingerprint::String, p
         "use_pretuning" => USE_PRETUNING,
         "screening_budgets_active" => nothing,
         "derivative_screening_active" => nothing,
+        "total_loss_evals" => nothing,
         "total_parameter_fits" => nothing,
         "total_ode_solves" => nothing,
         "total_invalid_solves" => nothing,
@@ -498,6 +499,7 @@ function run_one(variant, system, ic_set::Int, seed::Int, fingerprint::String, p
         "total_optimizer_limit_hits" => nothing,
         "total_optimizer_iteration_limit_hits" => nothing,
         "total_optimizer_safety_limit_hits" => nothing,
+        "total_optimizer_eval_budget_limit_hits" => nothing,
         "total_optimizer_failure_hits" => nothing,
         "total_optimizer_unknown_retcode_hits" => nothing,
         "total_parameter_optimization_time_s" => nothing,
@@ -572,6 +574,7 @@ function run_one(variant, system, ic_set::Int, seed::Int, fingerprint::String, p
         required_meta_fields = (
             :screening_budgets_active,
             :total_parameter_fits,
+            :total_loss_evals,
             :total_ode_solves,
             :total_invalid_solves,
             :solver_retcodes,
@@ -608,6 +611,7 @@ function run_one(variant, system, ic_set::Int, seed::Int, fingerprint::String, p
         base_record["derivative_screening_active"] = haskey(meta, :derivative_screening_active) ? meta.derivative_screening_active : false
         base_record["stage_caps"] = haskey(meta, :stage_caps) ? meta.stage_caps : nothing
         base_record["stage_cap_policy_active"] = haskey(meta, :stage_cap_policy_active) ? meta.stage_cap_policy_active : false
+        base_record["total_loss_evals"] = haskey(meta, :total_loss_evals) ? meta.total_loss_evals : nothing
         base_record["total_parameter_fits"] = haskey(meta, :total_parameter_fits) ? meta.total_parameter_fits : nothing
         base_record["total_ode_solves"] = haskey(meta, :total_ode_solves) ? meta.total_ode_solves : nothing
         base_record["total_invalid_solves"] = haskey(meta, :total_invalid_solves) ? meta.total_invalid_solves : nothing
@@ -618,6 +622,7 @@ function run_one(variant, system, ic_set::Int, seed::Int, fingerprint::String, p
         base_record["total_optimizer_limit_hits"] = haskey(meta, :total_optimizer_limit_hits) ? meta.total_optimizer_limit_hits : nothing
         base_record["total_optimizer_iteration_limit_hits"] = haskey(meta, :total_optimizer_iteration_limit_hits) ? meta.total_optimizer_iteration_limit_hits : nothing
         base_record["total_optimizer_safety_limit_hits"] = haskey(meta, :total_optimizer_safety_limit_hits) ? meta.total_optimizer_safety_limit_hits : nothing
+        base_record["total_optimizer_eval_budget_limit_hits"] = haskey(meta, :total_optimizer_eval_budget_limit_hits) ? meta.total_optimizer_eval_budget_limit_hits : nothing
         base_record["total_optimizer_failure_hits"] = haskey(meta, :total_optimizer_failure_hits) ? meta.total_optimizer_failure_hits : nothing
         base_record["total_optimizer_unknown_retcode_hits"] = haskey(meta, :total_optimizer_unknown_retcode_hits) ? meta.total_optimizer_unknown_retcode_hits : nothing
         base_record["total_parameter_optimization_time_s"] = haskey(meta, :total_parameter_optimization_time_s) ? meta.total_parameter_optimization_time_s : nothing
