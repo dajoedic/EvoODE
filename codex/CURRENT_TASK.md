@@ -2,123 +2,109 @@
 
 **Language: Julia**
 
-## WP-B2 — Batch entry point and container for an HPC cluster
+## WP-B3 — Close the three gaps that stand between WP-B2 and a campaign
 
-WP-B1 is delivered (fingerprint `fa2469a4dad1b72c`). The suite now runs the Phase B sampling
-protocol but is still driven as a nested loop over variants, systems, initial-condition sets and
-seeds inside one process, selected through environment variables. That model does not survive
-contact with a batch scheduler.
+WP-B2 is delivered: manifest, single-cell entry point, merge step, container, fingerprint guard,
+fingerprint `256014cf6f0295e1`. The batch path reproduces the WP-B1 verification cell exactly.
 
-There is a hard deadline: an HPC consultation on **2026-08-06**. What must exist by then is a setup
-that can be shown to run, not a finished campaign. See `docs/hpc_requirements.md` for the resource
-profile the setup has to match.
+Three things must be settled before the campaign can start, and two of them are cheapest to do
+**now**, because no history record exists under the current fingerprint. Once one does, changing
+the fingerprint means discarding runs.
 
-### Target execution model
+The HPC consultation is on **2026-08-06**. What has to exist by then is a setup whose numbers are
+defensible, not a finished campaign.
 
-A Slurm job array. Each array task is one independent process that runs **exactly one cell** and
-exits. No loop, no resume logic inside the process — the scheduler owns retries and concurrency.
+---
 
-Three pieces are needed.
+### 1. The merge step accepts failed records
 
-**1. A manifest.** A generator that enumerates the campaign as an explicit, ordered list of cells
-and writes it to CSV, one row per cell, with a stable integer index as the first column. The index
-is what an array task receives. The manifest must be regenerable and identical when regenerated
-from the same configuration, and it must record the `config_fingerprint` it was generated under.
+`run_batch_cell.jl` writes a record even when the cell failed — the record carries a non-null
+`error` field — and then exits non-zero. `merge_batch_records.jl` does not filter on `error`.
+`load_completed_cells` in `run_regression.jl` does exactly that filtering, so the two paths disagree
+about what "completed" means.
 
-The campaign to enumerate: the regression suite as it now stands (5 systems × 2 initial-condition
-sets × 3 seeds × the variants in `VARIANTS`). Phase B over all 63 systems is a later work package;
-do not build it now, but do not build anything that would have to be thrown away to get there.
+The consequence on a cluster: a cell killed by a timeout or by the OOM killer contributes a record,
+the merge inserts it into the history, and the successful re-run of that same cell is then rejected
+as a duplicate. The campaign ends with a permanently poisoned cell that looks merged.
 
-**2. A single-cell entry point.** A script that takes one index — from a command-line argument, and
-falling back to `SLURM_ARRAY_TASK_ID` — resolves it against the manifest, runs that one cell, writes
-one JSONL record to a per-task output file, and exits.
+Fix the disagreement. Decide deliberately whether a failed cell should produce a task file at all,
+or produce one that the merge recognises and refuses — either is defensible, but the two scripts
+must then agree, and the reasoning belongs in the report. Whatever you choose, failure information
+must not be silently discarded: a cell that crashed 40 hours into a 4D system is a finding, and
+the merge must report how many such records it saw.
 
-Requirements that follow from running under a scheduler:
+Verify against a **scratch copy** of the history, never against `studies/regression/history.jsonl`:
+construct a task file carrying a failed record, show that merging it does not create a key that
+blocks the corresponding successful record, and show that merging a successful record afterwards
+still adds it.
 
-- **Exit code** is 0 only if the cell completed and produced a record; non-zero otherwise, so a
-  failed task is visible to Slurm rather than silently "successful".
-- **Never write to `studies/regression/history.jsonl`.** Each task writes its own file; a separate
-  merge step consolidates. Concurrent appends to one file across nodes are not safe.
-- **All paths configurable** through environment variables with sane defaults, and no Windows path
-  separators anywhere. The target is Linux.
-- **Refuse to start on a fingerprint mismatch.** If the manifest was generated under a different
-  `config_fingerprint` than the code computes at run time, abort with a clear message rather than
-  producing records that cannot be pooled. This is the single most valuable guard in the whole
-  setup: a campaign with mixed fingerprints is not publishable.
+---
 
-**3. A merge step.** Collects the per-task files into `history.jsonl`, applying the existing
-uniqueness key (variant, system, initial-condition set, seed, fingerprint), reporting how many
-records were added and how many were skipped as duplicates. It must be safe to run repeatedly and
-must never rewrite or drop existing records.
+### 2. `BFGS_TIME_LIMIT_S = 1800` must become a deterministic budget
 
-### Dimension classes
+This is a wall-clock limit inside the optimizer. On a laptop it never bound, so it never mattered.
+On a heterogeneous cluster it can bind on a slow node and not on a fast one — which would make a
+scientific result depend on which node the scheduler happened to hand out. That is not a performance
+concern, it is a reproducibility defect, and it is the last wall-clock dependency in the search path.
 
-`docs/hpc_requirements.md` §6 asks for separate arrays per system dimension, because the estimated
-runtime per cell spans four orders of magnitude and walltime limits are set per array. The manifest
-must therefore carry the system dimension as a column, and it must be possible to emit the index
-list for one dimension class. How that is expressed — a filter flag, separate manifest files — is
-your call; state which you chose and why.
+Replace it with a budget expressed in counts, so that two runs of the same cell on different
+hardware execute the same computation. Which count is the right one is your call from the code — the
+guiding property is that the budget must be a function of the search state alone, never of elapsed
+time.
 
-### Container
+Two constraints on the replacement:
 
-An Apptainer/Singularity definition (a Dockerfile is acceptable if it converts cleanly) that
-produces an image able to run one cell with no network access:
+- **Calibrate it, do not guess it.** The existing records carry the counters needed to see what the
+  optimizer actually consumes on cells that converge normally. Pick a bound that does not bind on
+  those cells — the limit is a safety net against pathological line-search, not a tuning knob. State
+  in the report which records you read and what margin the chosen value leaves.
+- The change is fingerprint-affecting. Report the new `config_fingerprint`, and confirm that the
+  WP-B1 verification cell still returns the same result under it — if the budget never bound before,
+  the numbers must not move. A deviation here means the budget is binding on a healthy cell and is
+  therefore set wrong.
 
-- Julia pinned to **1.11.5**
-- `Project.toml` and `Manifest.toml` copied in, then **instantiated and precompiled at build time**.
-  If precompilation is left to run time, every array task pays it again.
-- `JULIA_NUM_THREADS=1` and `OPENBLAS_NUM_THREADS=1` set in the image. Julia and OpenBLAS otherwise
-  each grab all visible cores, which collapses throughput when many single-core tasks share a node.
-- The Julia depot inside the image, not on a shared filesystem.
-- Repository code and the dataset available to the entry point; outputs written to a bind-mounted
-  directory, never inside the image.
+If the counters do not exist to express a sensible budget, say so and propose what would have to be
+recorded, rather than inventing a plausible-looking number.
 
-Also provide an example Slurm submission script, as documentation rather than something we can test
-here: array specification with a concurrency cap, one core, 2 GB, a per-class walltime, and the
-container invocation.
+---
 
-### Verification
+### 3. Replace one extrapolation in the resource request with a measurement
 
-The environment here is Windows and has no Slurm, so verify what can be verified and say plainly
-what could not:
+`docs/hpc_requirements.md` §5 states openly that the cost table rests on laptop medians scaled by
+2.56 for the denser grid, with the 3D and 4D classes extrapolated from 2D. The 1D class is the one
+we can measure here cheaply.
 
-- the manifest generator produces a stable, ordered CSV; regenerating gives an identical file
-- resolving indices 1, 2 and the last index yields the expected cells
-- **one cheap cell end to end through the batch entry point** — the System 3 cell, initial-condition
-  set 1, seed 42, variant `evogrow_v2_2_stage_capped` — writing to a per-task file under
-  `outputs/`. Report loss, cap, `eq_overshoot`, `pruned_match`, support and the process exit code.
-  WP-B1 measured this cell as loss `5.18873247985214e-9`, cap `[2]`, support `[["u1","u1^2"]]`;
-  the batch path must reproduce it **exactly**, since it is the same computation. A deviation is a
-  bug in the port, not an acceptable difference.
-- the fingerprint guard actually fires: show that a manifest carrying a wrong fingerprint is
-  rejected
-- the merge step: merging the single record into a **scratch copy** of `history.jsonl` adds one
-  record, and merging again adds none
-- the container definition is syntactically valid; state explicitly that it was not built here if
-  it was not
+Run through the **batch entry point**, not the suite loop, so the measured path is the path the
+cluster will use: variant `evogrow_v2_2_stage_capped`, systems 3 and 11, initial-condition set 1,
+all three seeds — six cells, all 1D, all previously observed to be cheap. Nothing else. Do not run
+any 2D or 4D cell, and do not run any other variant; those are hours to days and are the user's
+call to start, not yours.
 
-### One correction to carry along
+Report per cell: `total_parameter_fits`, `total_ode_solves`, `total_loss_evals`, `n_levels`, and
+loss. Then update §5 of `docs/hpc_requirements.md` so the 1D row rests on these counts instead of
+on the scaling step, and adjust §1 and the total if the measurement moves them.
 
-The `config_fingerprint` payload records `saveat = "range(0.0, 10.0; length=512)"`, but the grid
-actually used is the `t` vector read from the dataset. Numerically that vector equals `i*10/511`
-exactly, which a Julia `range` need not reproduce bit-for-bit, so the label describes something
-other than what runs. Replace it with a description of the true source. This changes the
-fingerprint again — which is precisely why it has to happen **now**, before any campaign record
-exists, rather than later. Report the new fingerprint value.
+**On timing:** wall-clock measured on this laptop is not evidence and must not enter the cost table
+as though it were. The project rule is that cost claims rest on counts. If §5 needs a counts-to-
+core-hours conversion at all, it must be labelled as the assumption it is, and the request for a
+pilot allocation in §5 stays — it is the only thing that can produce a trustworthy timing figure.
+
+---
 
 ### Constraints
 
 - Do not modify `estimate_stage_caps`, the cap policy, the variant definitions, or any ground-truth
   RHS function.
 - Do not write to `studies/regression/history.jsonl`.
-- Do not run the regression matrix or any multi-cell sweep. One cell for verification, nothing more.
+- Six cells, listed above. No sweep, no additional cells "for completeness".
 - Generated output goes to its own subfolder under `outputs/`.
 - If any part of this is not implementable as stated, stop and report the conflict rather than
-  delivering a subset silently.
+  delivering a subset silently. WP-G1 delivered a subset without saying so, which is what made it
+  expensive to notice.
 
 ### Deliverable
 
-The manifest generator, the batch entry point, the merge step, the container definition, the
-example submission script, and a report at `codex/REPORT_WP_B2.md` with the new fingerprint, the
-verification results, what could not be verified in this environment, and the dimension-class
-decision with its reasoning.
+The merge fix, the deterministic optimizer budget, the updated `docs/hpc_requirements.md`, and a
+report at `codex/REPORT_WP_B3.md` covering: the merge-semantics decision and its reasoning, the new
+`config_fingerprint`, the calibration evidence for the budget and the confirmation that the WP-B1
+cell is unchanged, and the six measured cells with their counts.
