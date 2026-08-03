@@ -8,6 +8,8 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ### No-Harm-Zellen Systeme 3 und 11 — sauber, mit einem echten Ausreisser
 
+<!-- 77f0fed -->
+
 Sechs Zellen `evogrow_v2_2_stage_capped` x {3, 11} x {42, 123, 7}, sequenziell, Fingerprint
 `df5db7763bcd2449`, `git_hash 63d4c1c`, `total_optimizer_safety_limit_hits = 0` durchgehend.
 In `history.jsonl` gemergt (36 → 42 Records).
