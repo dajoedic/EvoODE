@@ -8,6 +8,8 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ### WP-C1 Entscheidungszellen — v2.2 + Cap ist die Endvariante
 
+<!-- 8f362c1 -->
+
 Vier Zellen mit `evogrow_v2_2_stage_capped` gelaufen (26/42, 31/42, 31/123, 31/7), Fingerprint
 `df5db7763bcd2449`, `git_hash 838b7af`, `git_dirty false`,
 `total_optimizer_safety_limit_hits = 0` in allen vieren. In `history.jsonl` gemergt (32 → 36
