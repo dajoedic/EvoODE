@@ -73,7 +73,7 @@ Merged the single task record into a scratch copy, not into `studies/regression/
 
 The Apptainer definition is present and statically checked for the required structure:
 
-- base image pins Julia as `julia:1.11.5-bookworm`
+- base image pins Julia as `julia:1.12.6-bookworm` as corrected by WP-D1; the earlier 1.11.5 claim was a documentation defect, and the existing Phase A and regression results were produced on Julia 1.12.6
 - `Project.toml` and `Manifest.toml` are copied before build-time `Pkg.instantiate()` and `Pkg.precompile()`
 - `JULIA_NUM_THREADS=1` and `OPENBLAS_NUM_THREADS=1` are set
 - depot is inside the image at `/opt/julia_depot`

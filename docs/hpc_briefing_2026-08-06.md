@@ -36,7 +36,7 @@ Laptop-Workload mehr — die Methode selbst ist fertig und entschieden.
 | **Speicher gesamt** | < 10 GB Ausgabe, ~50 MB Eingabe |
 | **Rechenzeit** | geschätzt ~4.500 Kernstunden, **beantragt 10.000** |
 | **Längster Einzeljob** | geschätzt ~23 h (ein 4D-System) — die unsicherste Zahl im Antrag |
-| **Software** | Julia 1.11.5, exakt gepinnt. Kein MPI, kein GPU, keine Lizenzen |
+| **Software** | Julia 1.12.6, exakt gepinnt. Die vorhandenen Phase-A- und Regressionsresultate wurden auf 1.12.6 erzeugt; die fruehere 1.11.5-Dokumentationsbehauptung war falsch. Kein MPI, kein GPU, keine Lizenzen |
 | **Netz zur Laufzeit** | keines — nur einmal beim Bau des Container-Images |
 
 **Ein Job ist eine reine Funktion seiner Eingaben.** Er liest einen kleinen Datensatz, schreibt

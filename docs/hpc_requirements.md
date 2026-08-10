@@ -16,7 +16,7 @@ Contact: David Jödicke. Project: EvoODE (PhD, data-driven discovery of ODE syst
 | Memory per job | 2 GB |
 | Longest single job | ~23 h estimated (one 4D system); see §6 — this is the main open question |
 | Storage | < 10 GB total, ~50 MB input |
-| Software | Julia 1.11.5, exact version pinned; no MPI, no GPU, no licensed software |
+| Software | Julia 1.12.6, exact version pinned; no MPI, no GPU, no licensed software |
 | Internet at runtime | **none needed**, but see §4 — needed once at image build time |
 
 Preferred execution model: **Slurm job arrays**, one array task per run, split into four arrays by
@@ -65,8 +65,10 @@ Per-job output is a few kilobytes. Total output across all 846 jobs, including l
 
 ## 4. Software stack and the two things that usually go wrong
 
-Julia 1.11.5, pinned exactly. The project ships `Project.toml` and `Manifest.toml`, so the
-dependency set is fully reproducible. No MPI, no GPU, no licensed components.
+Julia 1.12.6, pinned exactly. The existing Phase A and regression results were produced on
+1.12.6; the earlier 1.11.5 documentation claim was incorrect. The project ships `Project.toml`
+and `Manifest.toml`, so the dependency set is fully reproducible. No MPI, no GPU, no licensed
+components.
 
 Two known failure modes we would like to discuss:
 
@@ -74,7 +76,7 @@ Two known failure modes we would like to discuss:
 `Pkg.instantiate()`. Compute nodes typically have no outbound network. Our solution is a container
 (Apptainer/Singularity) with the dependencies installed **and precompiled** at build time, so that
 compute nodes need nothing. The definition file exists (`containers/evoode_regression.apptainer`);
-it pins `julia:1.11.5-bookworm`, instantiates and precompiles in `%post`, and keeps the Julia depot
+it pins `julia:1.12.6-bookworm`, instantiates and precompiles in `%post`, and keeps the Julia depot
 inside the image rather than on a shared filesystem. It has not been built yet — we have no
 Apptainer runtime locally, which is the first thing we would like to resolve. If the site prefers a
 module-provided Julia and a shared
