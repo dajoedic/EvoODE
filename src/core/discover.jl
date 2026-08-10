@@ -119,32 +119,16 @@ function discover(traj::Trajectory;
         build_done()
     end
 
-    # Guard against inconsistent structure search output
+    # Guard against inconsistent structure search output.
     if length(params) != n_params
-        if options.verbose >= 1
-            log_warn(
-                "Parameter count mismatch after structure search; refitting once",
-                context = Dict(
-                    :expected => n_params,
-                    :got => length(params)
-                )
-            )
-        end
-
-        refit_done = nothing
-        if options.verbose >= 1
-            refit_done = time_block("parameter refit", level = INFO)
-        end
-
-        params, search_loss, opt_meta =
-            fit_parameters(optimizer, f!, traj, n_params, loss, options)
-
-        if options.verbose >= 1 && refit_done !== nothing
-            refit_done()
-        end
-    else
-        opt_meta = (method = "from_structure_search",)
+        error(
+            "Structure search parameter contract violated: " *
+            "expected $(n_params) parameters from returned structure, " *
+            "received $(length(params)) from $(nameof(typeof(structure))); " *
+            "returned_structure=$(repr(discovered_structure))"
+        )
     end
+    opt_meta = (method = "from_structure_search",)
 
     # ------------------------------------------------------------
     # 3) Final simulation

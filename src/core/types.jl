@@ -47,7 +47,8 @@ Return object of `discover`.
 - `structure`: discovered structure object
 - `params`: fitted parameter vector
 - `loss`: validated loss computed on final simulation output
-- `objective`: objective value (Phase 1: equals `loss`)
+- `objective`: objective value reported by the structure search; it may use
+  search-specific penalties and is not necessarily recomputed from `loss`
 - `meta`: metadata (structure search, build, optimization, prediction diagnostics)
 """
 struct DiscoveryResult
