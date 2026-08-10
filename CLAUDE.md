@@ -134,7 +134,7 @@ in the current phase.**
 |----------|--------|------|
 | `paper1_phaseA_v1` | **frozen** (300/300) | H1 partial, H2 supported, H3 partial, H4 vacuous. Not used for final claims. `docs/paper1_freeze_memo_phaseA.md` |
 | `studies/lookahead/` | WP-L1–L5d, WP-G1/G1b done | Stage-firing look-ahead — **promoted from diagnostic to the paper's contribution** |
-| `studies/regression/` | 42 records, 4 fingerprints | Final variant covers 10 cells on systems 3, 11, 26, 31 — all on the **old** grid. Batch path (manifest / one cell per process / merge) in place; no record yet on `db8ec4003aa99a0e` |
+| `studies/regression/` | 42 records, 4 fingerprints | Final variant covers 10 cells on systems 3, 11, 26, 31 — all on the **old** grid. Batch path (manifest / one cell per process / merge) in place; no record yet on `7acd3ebf3f60b974` |
 | `studies/numerics/` | done (WP-T2) | Overshoot on System 26 is algorithmic, not numerical; screening is performance-only |
 | `studies/generalization/` | closed | Auxiliary only; insufficient cells for supplementary inclusion |
 | `studies/profiling/` | data available | Methods / Discussion only; not evidence for H1–H4 |
@@ -179,20 +179,19 @@ the coupled search path 1e-6 is the cheaper, behaviour-equal tolerance; the Syst
 
 1. **Phase B compute.** 846 jobs (756 Phase B + 90 regression), ~1e9 ODE solves, ~2.7e5 parameter
    fits. Fully independent, so throughput scales linearly with cores: 1 core and 2 GB per job,
-   <10 GB disk, no GPU, Julia 1.11.5 pinned. The resource request is `docs/hpc_requirements.md`;
+   <10 GB disk, no GPU, Julia 1.12.6 pinned. The existing Phase A and regression results were produced on 1.12.6; the earlier 1.11.5 documentation claim was incorrect. The resource request is `docs/hpc_requirements.md`;
    consultation 2026-08-06. First action with access: build the container, then one pilot cell —
    the project's first trustworthy timing figure.
-2. **Optimizer defaults have no brake.** WP-B3 set `BFGSOptimizer` defaults to `time_limit_s = Inf`
-   and `max_loss_evals = typemax(Int)`. The regression path passes its budget explicitly, but
-   `experiments/run_experiment.jl`, `benchmarks/` and several studies construct the optimizer
-   without one and are now unbounded where 300 s used to stand. Fix before Phase B runs through
-   `run_experiment.jl`.
+2. **Unbudgeted call sites outside the campaign.** WP-D3 budgeted the two campaign runners; eleven
+   scripts under `benchmarks/` and `studies/` still construct the optimizer without a budget and are
+   unbounded since WP-B3. Deliberate backlog, listed in `codex/REPORT_WP_D3.md` — not to be fixed
+   before the campaign.
 4. **Fingerprint boundary.** The v2.2 arm sits on Baseline v0 (`0c739d4e36ee6498`), all v3 and
    capped runs on `df5db7763bcd2449`. The comparison is sound but crosses a boundary and must be
-   labelled as such wherever it is reported. The current code is on `db8ec4003aa99a0e` (Phase B
-   protocol, corrected grid label, deterministic optimizer budget) and carries **no records yet** — every Phase B and every new
-   regression run will live there, so all fingerprint-affecting changes must land before the first
-   one.
+   labelled as such wherever it is reported. The current code is on `7acd3ebf3f60b974` (Phase B
+   protocol, corrected grid label, deterministic optimizer budget, budgeted experiment call site)
+   and carries **no records yet** — every Phase B and every new regression run will live there, so
+   all fingerprint-affecting changes must land before the first one.
 5. **Remaining Phase 3 items** (`PAPER_1.md`): R² metric, and filling the external columns of the
    protocol audit from the publications. Open question there: if published numbers were computed on
    the shipped trajectories, we work on cleaner data than the comparison works — a deviation in our
@@ -213,7 +212,24 @@ the coupled search path 1e-6 is the cheaper, behaviour-equal tolerance; the Syst
 - Baseline v1 under a single fingerprint, once the final variant is regression-checked on the new
   grid.
 - Pathological line-search (up to 39,933 loss evals at two parameters) and the sentinel-loss `1e6`
-  with retcode `Success` — untouched cost and robustness levers.
+  with retcode `Success` — untouched cost and robustness levers. Since WP-D2 a budget stop is at
+  least distinguishable from a failed solve in the metadata, but both still collapse to `1e6` in the
+  loss itself.
+- **WP-D4b, the discover-API cleanup, after the campaign**: the `isa BFGSOptimizer` branch and the
+  simulation settings it pulls out of the optimizer, a typed structure-search result instead of an
+  implicitly expected NamedTuple, `search_loss` / `search_objective` / `final_loss` naming, a central
+  `test/runtests.jl`, a narrower export surface, local RNGs instead of the global seed, and
+  `Trajectory` validation. Deferred deliberately: it touches the path every Phase B run goes through,
+  for a purely architectural gain.
+- **Canonical equality and hash for `StructureSpec`** — the precondition for candidate
+  deduplication. Note that under `pretuning=false` duplicates double as implicit multistarts, so a
+  cache would change the experimental condition rather than merely accelerate it. Measure the
+  duplicate rate before deciding.
+- **Growth-only search**: `_expand` only adds terms, and every line starts from one random term, so
+  a wrong term can never leave a line — selection is the only corrective. This is the structural
+  reason `pruned_match = false` persists on coupled systems even at very low loss, and it must be
+  stated as a limitation of the search operators. A remove/replace operator belongs to "search power
+  within a stage" and stays out of Paper 1.
 
 ## Known Gaps
 
@@ -248,7 +264,7 @@ the coupled search path 1e-6 is the cheaper, behaviour-equal tolerance; the Syst
 
 ## Coding Conventions
 
-- Julia only, target Julia 1.11.5
+- Julia only, target Julia 1.12 series; the frozen environment is Julia 1.12.6
 - public API is exported from `src/EvoODE.jl`
 - `Base.@kwdef` for defaulted configuration structs
 - ODE RHS functions in-place: `f!(du, u, params, t)`

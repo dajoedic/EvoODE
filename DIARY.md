@@ -4,6 +4,130 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ---
 
+## 2026-08-10
+
+### WP-D2 bis WP-D5 - Optimizer-Budget, Contract, Telemetrie, Referenzverifikation
+
+<!-- 0498218 WP-D2/D2b -->
+<!-- e0bc706 WP-D3/D3b -->
+<!-- e46e80b WP-D4a -->
+
+Ausloeser war eine externe Code-Kritik, die vor dem HPC-Start gegengeprueft wurde. Zwei ihrer
+Befunde waren echte Fehler, mehrere weitere korrekt, aber bewusst nicht Paper-1-Scope.
+
+**WP-D2 — der Budget-Abbruch warf seine Ergebnisse weg.** `p_best`/`l_best` wurden ausschliesslich
+in den `isfinite(res.minimum)`-Zweigen gesetzt. Das Evaluationsbudget bricht aber per Exception aus
+der Loss-Closure ab, also liefen diese Zuweisungen nie: zurueck kam der *Startvektor* mit Loss
+`1e6`. Verschaerfend ist, dass `1e6` zugleich der MSE-Sentinel fuer gescheiterte Simulationen ist —
+ein budget-abgebrochener Fit war im Record von einem gescheiterten nicht unterscheidbar. Fix:
+best-so-far wird in der Loss-Closure mitgefuehrt (mit demselben Clamp, mit dem auch simuliert wird,
+damit Loss und Parameter zusammenpassen), der Sentinel als Startwert verschwindet, und
+`max_loss_evals` ist als **Gesamtbudget pro Parameterfit** festgelegt — kein Nelder-Mead nach
+Budget-Treffer, weil ein Kandidat sonst sein Budget ueberschreitet und der Kostenvergleich zwischen
+Strukturen unfair wird.
+
+**WP-D2b — der Fix hatte den Fallback abgeschaltet.** Die erste Fassung akzeptierte best-so-far auch
+im Exception- und im Non-finite-Zweig und setzte damit den Wachposten des Nelder-Mead-Fallbacks auf
+"Ergebnis vorhanden". Da `evaluate_loss` bei jedem Problem den *finiten* Sentinel liefert, war
+best-so-far nach der ersten Auswertung praktisch immer gesetzt — der Fallback lief faktisch nie
+mehr. Das aendert Zahlen auf einem Pfad, auf dem das Budget gar nicht bindet. Korrigiert zu drei
+Stufen: Optimizer-Ergebnis, dann Fallback, dann best-so-far als letzte Instanz. Der Budget-Stop
+bleibt Sofortakzeptanz; er braucht keinen Sonderfall, weil erschoepftes Budget den Fallback ohnehin
+ausschliesst.
+
+**WP-D3 — Phase B waere ohne Bremse gelaufen.** `experiments/run_experiment.jl` konstruierte den
+Optimierer nur mit `maxiters`; alles uebrige, insbesondere das Budget, kam aus den seit WP-B3
+unbegrenzten Defaults. Die Kampagne haette also unbudgetiert gerechnet, waehrend die Regression, die
+sie validieren soll, bei 100.000 steht. Jetzt kommen alle deterministischen Parameter aus der
+Konfiguration, und `generate_manifest.jl` traegt sie, damit ein Manifest den Optimierer vollstaendig
+beschreibt. Die elf ungebudgeteten Aufrufstellen in `benchmarks/` und `studies/` sind bewusst
+dokumentierter Backlog und nicht angefasst — kein Repo-Cleanup unmittelbar vor einer Kampagne.
+Zusaetzlich einmalig ins Record-Schema: Budget-Stopps, Fallback-Ergebnisse, Last-Resort-Faelle und
+ungueltige Ergebnisse pro Lauf. Ohne diese Zaehler waere ein budget-abgebrochener Phase-B-Lauf im
+Output unsichtbar. Der aus WP-D2 moegliche Rueckgabewert `Inf` wird an der JSON-Grenze als String
+geschrieben; `Infinity` ist kein gueltiges JSON. Fingerprint `db8ec4003aa99a0e` →
+`7acd3ebf3f60b974`.
+
+**WP-D3b — der Fallback-Zaehler zaehlte doppelt.** Bedingung war `method == "NelderMead"`, was nach
+D2b auch auf Last-Resort-Faelle zutrifft. Jetzt zusaetzlich `result_source == "optimizer_return"`;
+die ersten drei Zaehler sind disjunkt, "ungueltiges Ergebnis" darf bewusst ueberlappen.
+
+**WP-D4a — der stille Refit in `discover()` ist weg.** Bei abweichender Parameterzahl wurden
+Parameter und Loss neu gefittet, das Objective aber nicht — ein Resultat aus zwei Zustaenden, bei
+EvoGrows Loss-plus-Komplexitaet arithmetisch unmoeglich. `discover()` kann das auch nicht reparieren,
+weil es die Objective-Definition einer beliebigen Suche nicht kennt. Jetzt harter `error()` mit
+erwarteter und erhaltener Zahl, Suchverfahren und Struktur in der Meldung. Kein Rescue in den
+Runnern: die Zelle faellt als failed aus und wird vom Merge zurueckgewiesen. Eine fehlende Zelle ist
+sichtbar, eine mit inkonsistenten Zahlen nicht.
+
+**WP-D5 — Referenzverifikation, beide Faelle bestanden.**
+
+*A, nicht-bindend.* System 3, Seed 7, IC-Satz 1: derselbe Fall auf dem Commit vor WP-D2 (Worktree
+auf 29951a6) und auf dem aktuellen Stand. Loss `1.920e-09` in beiden, Stage 2/2, `pruned_match`
+true. Der vollstaendige Feldvergleich ueber alle gemeinsamen Record-Felder ergibt **genau zwei
+Abweichungen, beide Zeitfelder** — nach Designprinzip 7 ohnehin keine Evidenz. Bit-identisch sind
+Loss, Objective, Support, Parameter, `total_parameter_fits`, `total_loss_evals`,
+`total_ode_solves`, alle Limit-Zaehler sowie Stage- und Cap-Entscheidungen. Kein bestehendes Feld
+ist verschwunden. Vorab geprueft, dass die WP-D3-Aenderung an `_polish_optimizer` diese Zelle nicht
+erreichen kann: die Funktion existiert nur fuer `EvoGrowScreening`, die finale Variante konstruiert
+ein `EvoGrow`. Eine Abweichung waere also ein Befund gewesen, keine erwartete Folge.
+
+*B, bindendes Budget.* Logistisches 1D-System, `max_loss_evals = 40`: 78 Fits, 3.120 Evaluierungen
+— exakt 78 x 40, kein Fit ueberschreitet sein Budget. Alle 78 melden Budget-Stop, **null** davon
+ungueltig, null Fallback, null Last-Resort. Damit ist der D2-Fix am laufenden System belegt: vor der
+Reparatur waeren das 78 Fits mit Startvektor und Sentinel-Loss gewesen. Der Loss ist mit `3.5e-3`
+erwartungsgemaess schlecht gegenueber `2.5e-14` unbudgetiert, aber ein gemessenes Ergebnis und kein
+Sentinel.
+
+**Anmerkung zum Testaufbau.** `src/optimize/bfgs.jl` enthaelt nun einen Solve-Hook (`const Ref`,
+Default `nothing`), ueber den Tests Optimizer-Fehlschlaege deterministisch erzwingen. In Produktion
+verhaltensneutral — der Aufruf geht mit identischen Argumenten an `Optimization.solve`. Bewusst
+akzeptiert: einen Fehlschlag numerisch zu provozieren waere fragil gewesen.
+
+**Nicht angefasst, bewusst.** Struktur-Deduplizierung und ein kanonischer Hash fuer `StructureSpec`
+(bei `pretuning=false` sind Duplikate zugleich implizite Multistarts, ein Cache waere also keine
+reine Beschleunigung, sondern eine Aenderung der experimentellen Bedingung); ein
+Evaluation-Result-Typ statt der Sentinel-Semantik; Remove/Replace-Operatoren gegen das
+Growth-only-Verhalten; die Discover-API-Bereinigung (`isa BFGSOptimizer`, typisiertes
+Struktursuch-Resultat, `search_loss`/`final_loss`-Benennung). Letztere ist als WP-D4b nach der
+Kampagne vorgesehen — ein bekannter haesslicher Pfad ist unmittelbar vor einer Kampagne sicherer als
+ein frisch abstrahierter sauberer.
+
+---
+
+### WP-D1 - Freeze der tatsaechlich benutzten Julia-Umgebung
+
+<!-- 417648e -->
+
+Die dokumentierte Umgebung war falsch: mehrere Texte und die Apptainer-Definition nannten Julia
+1.11.5, waehrend `Manifest.toml` `julia_version = "1.12.6"` enthaelt, die Entwicklung auf 1.12.6
+laeuft und die vorhandenen Phase-A- und Regressionsresultate unter 1.12.6 erzeugt wurden.
+Entscheidung: nicht die Resultate auf die alte Dokumentationsbehauptung migrieren, sondern die
+tatsaechlich benutzte Umgebung als Freeze deklarieren.
+
+`Project.toml` deklariert nun `julia = "1.12"`, der Container baut von `julia:1.12.6-bookworm`,
+und die Container-Provenance schreibt Julia-Version sowie SHA-256-Hashes von `Project.toml` und
+`Manifest.toml` nach `/opt/EvoODE/build_provenance.json`. `Manifest.toml` bleibt unveraendert; die
+Abhaengigkeitsstate ist der Freeze, nicht ein neu aufgeloester Zustand.
+
+**Nachtrag 2026-08-10: Load-Smoke im leeren Depot bestanden.** Frisches Depot, `Pkg.instantiate()`,
+`Pkg.precompile()`, dann `using EvoODE` mit einem Basis-Aufruf: Exit 0, erwartete Ausgabe, und
+`Manifest.toml` byte-identisch vor und nach dem Lauf. Damit ist nicht nur die Installierbarkeit,
+sondern die **Benutzbarkeit** des eingefrorenen Zustands belegt — die eigentliche Abnahme, die im
+ersten Anlauf offen geblieben war (das dort verwendete Smoke-Kommando rief zudem
+`default_polynomial_basis` mit zwei Argumenten auf, die Funktion nimmt eines).
+
+Zwei Beobachtungen aus dem Lauf, beide nicht blockierend. Erstens brach `Pkg.instantiate()` einmalig
+mit `IOError: rm(...): directory not empty` beim Entpacken von `AxisArrays` ab — ein
+Windows-Dateisystemeffekt im Temp-Verzeichnis, kein Manifest- oder Aufloesungsproblem; der
+anschliessende `Pkg.precompile()` hat die 554 Pakete vollstaendig installiert und der
+Manifest-Hash blieb gleich. Im Linux-Container ist das gegenstandslos. Zweitens meldet `Plots`
+beim Praekompilieren `GKS: cairoplugin.dll: can't load library` — headless erwartbar und fuer die
+Kampagne ohne Belang, da dort nicht geplottet wird. Das vollstaendige Depot belegt 2,78 GB; im
+Container faellt das einmalig im Image an, nicht pro Job.
+
+---
+
 ## 2026-08-03
 
 ### WP-B3 — Wall-Clock raus aus dem Optimierer, Merge-Semantik geradegezogen
@@ -78,7 +202,9 @@ Dimensionsklassen: ein globales Manifest, dazu pro Dimension eine Indexliste
 (`indices_dim1/2/4.txt`, 48/48/24 Zellen; 3D kommt in der Regressionssuite nicht vor). So bleibt die
 Kampagnenidentitaet in einer Datei, waehrend Slurm pro Klasse eigene Walltimes bekommt.
 
-Container (`containers/evoode_regression.apptainer`): Julia auf 1.11.5 gepinnt, `instantiate` und
+Container (`containers/evoode_regression.apptainer`): damals als Julia 1.11.5 gepinnt dokumentiert;
+WP-D1 korrigierte das als Dokumentationsfehler, weil die vorhandenen Ergebnisse auf 1.12.6
+entstanden. `instantiate` und
 `precompile` **zur Bauzeit**, Depot im Image, `JULIA_NUM_THREADS=1` und `OPENBLAS_NUM_THREADS=1`
 gesetzt, Ausgaben nur ueber ein gebundenes `/outputs`. Nicht gebaut — diese Umgebung hat weder
 Apptainer noch Slurm; beides ist statisch geprueft und als ungetestet ausgewiesen.
