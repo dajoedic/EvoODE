@@ -44,6 +44,16 @@ struct BFGSLossEvalBudgetExceeded <: Exception
     count::Int
 end
 
+const _BFGS_SOLVE_HOOK = Ref{Union{Nothing, Function}}(nothing)
+
+function _solve_optimizer_problem(optprob, algorithm; maxiters::Int, time_limit::Float64)
+    hook = _BFGS_SOLVE_HOOK[]
+    if hook !== nothing
+        return hook(optprob, algorithm; maxiters = maxiters, time_limit = time_limit)
+    end
+    return Optimization.solve(optprob, algorithm; maxiters = maxiters, time_limit = time_limit)
+end
+
 function _empty_solve_stats()
     return Dict{Symbol, Any}(
         :ode_solves => 0,
@@ -281,6 +291,8 @@ function fit_parameters(opt::BFGSOptimizer,
     optimizer_failure_hits = Ref(0)
     optimizer_unknown_retcode_hits = Ref(0)
     optimizer_retcodes = String[]
+    best_observed_p = Ref{Union{Nothing, Vector{Float64}}}(nothing)
+    best_observed_loss = Ref{Union{Nothing, Float64}}(nothing)
 
     if options.verbose >= 3
         log_debug(
@@ -298,27 +310,70 @@ function fit_parameters(opt::BFGSOptimizer,
         )
     end
 
-    function loss_only(p)
+    function tracked_loss_only(p)
         if loss_eval_count[] >= opt.max_loss_evals
             throw(BFGSLossEvalBudgetExceeded(opt.max_loss_evals, loss_eval_count[]))
         end
         loss_eval_count[] += 1
-        Ŷ = _predict_traj(f!, traj, p, opt; stats = solve_stats)
+        predicted = _predict_traj(f!, traj, p, opt; stats = solve_stats)
 
-        if any(isnan, Ŷ)
+        if any(isnan, predicted)
             invalid_eval_count[] += 1
         end
 
-        return evaluate_loss(loss, Ŷ, X)
+        loss_value = evaluate_loss(loss, predicted, X)
+        if isfinite(loss_value)
+            p_evaluated = Base.clamp.(Vector{Float64}(p), -opt.clamp_val, opt.clamp_val)
+            if best_observed_loss[] === nothing || loss_value < best_observed_loss[]
+                best_observed_p[] = p_evaluated
+                best_observed_loss[] = Float64(loss_value)
+            end
+        end
+
+        return loss_value
     end
 
-    loss_fun = OptimizationFunction((p, _) -> loss_only(p), Optimization.AutoFiniteDiff())
+    loss_fun = OptimizationFunction((p, _) -> tracked_loss_only(p), Optimization.AutoFiniteDiff())
     optprob = OptimizationProblem(loss_fun, p0_use)
 
     p_best = copy(p0_use)
-    l_best = 1e6
+    l_best = Inf
     method_used = "none"
     retcode_used = "none"
+    stop_reason = "not_started"
+    result_source = "none"
+    result_valid = Ref(false)
+    optimizer_result_accepted = Ref(false)
+
+    function accept_optimizer_result!(method::String, retcode_text::String, p, loss_value)
+        p_best = Vector{Float64}(p)
+        l_best = Float64(loss_value)
+        method_used = method
+        retcode_used = retcode_text
+        result_valid[] = true
+        result_source = "optimizer_return"
+        optimizer_result_accepted[] = true
+        return nothing
+    end
+
+    function accept_best_observed!(method::String,
+                                   retcode_text::String,
+                                   reason::String;
+                                   source::String = "best_observed")
+        method_used = method
+        retcode_used = retcode_text
+        stop_reason = reason
+        if best_observed_p[] !== nothing && best_observed_loss[] !== nothing
+            p_best = copy(best_observed_p[])
+            l_best = best_observed_loss[]
+            result_valid[] = true
+            result_source = source
+        else
+            result_valid[] = false
+            result_source = "none"
+        end
+        return nothing
+    end
 
     # -----------------------
     # BFGS attempt
@@ -333,9 +388,12 @@ function fit_parameters(opt::BFGSOptimizer,
     end
 
     try
-        res = Optimization.solve(optprob, OptimizationOptimJL.BFGS();
-                                 maxiters = opt.maxiters,
-                                 time_limit = opt.time_limit_s)
+        res = _solve_optimizer_problem(
+            optprob,
+            OptimizationOptimJL.BFGS();
+            maxiters = opt.maxiters,
+            time_limit = opt.time_limit_s,
+        )
         retcode_text = _retcode_string(res.retcode)
         if !(retcode_text in optimizer_retcodes)
             push!(optimizer_retcodes, retcode_text)
@@ -354,10 +412,8 @@ function fit_parameters(opt::BFGSOptimizer,
             end
         end
         if isfinite(res.minimum)
-            p_best = res.u
-            l_best = res.minimum
-            method_used = "BFGS"
-            retcode_used = retcode_text
+            accept_optimizer_result!("BFGS", retcode_text, res.u, res.minimum)
+            stop_reason = string(retcode_category)
 
             timed_out = (res.retcode != SciMLBase.ReturnCode.Success)
             if options.verbose >= 2
@@ -388,6 +444,11 @@ function fit_parameters(opt::BFGSOptimizer,
                 end
             end
         else
+            method_used = "BFGS"
+            retcode_used = retcode_text
+            stop_reason = "nonfinite_optimizer_minimum"
+            result_valid[] = false
+            result_source = "none"
             if options.verbose >= 2
                 log_warn(
                     "BFGS returned non-finite minimum",
@@ -406,8 +467,7 @@ function fit_parameters(opt::BFGSOptimizer,
             if !("MaxLossEvals" in optimizer_retcodes)
                 push!(optimizer_retcodes, "MaxLossEvals")
             end
-            method_used = "loss_eval_budget"
-            retcode_used = "MaxLossEvals"
+            accept_best_observed!("BFGS", "MaxLossEvals", "loss_eval_budget")
             if options.verbose >= 2
                 log_warn(
                     "BFGS hit deterministic loss-evaluation budget",
@@ -420,9 +480,14 @@ function fit_parameters(opt::BFGSOptimizer,
                 )
             end
         else
+            method_used = "BFGS"
+            retcode_used = "Exception"
+            stop_reason = "exception"
+            result_valid[] = false
+            result_source = "none"
             if options.verbose >= 2
                 log_warn(
-                    "BFGS failed, trying Nelder-Mead fallback",
+                    "BFGS failed before optimizer result",
                     context = Dict(
                         :n_params => n_params,
                         :exception_type => typeof(err),
@@ -442,7 +507,7 @@ function fit_parameters(opt::BFGSOptimizer,
     # -----------------------
     # Nelder-Mead fallback
     # -----------------------
-    if method_used == "none"
+    if !optimizer_result_accepted[] && loss_eval_count[] < opt.max_loss_evals
         nm_done = nothing
         if options.verbose >= 2
             nm_done = time_block(
@@ -453,9 +518,12 @@ function fit_parameters(opt::BFGSOptimizer,
         end
 
         try
-            res2 = Optimization.solve(optprob, OptimizationOptimJL.NelderMead();
-                                      maxiters = opt.maxiters,
-                                      time_limit = opt.time_limit_s)
+            res2 = _solve_optimizer_problem(
+                optprob,
+                OptimizationOptimJL.NelderMead();
+                maxiters = opt.maxiters,
+                time_limit = opt.time_limit_s,
+            )
             retcode_text2 = _retcode_string(res2.retcode)
             if !(retcode_text2 in optimizer_retcodes)
                 push!(optimizer_retcodes, retcode_text2)
@@ -474,10 +542,8 @@ function fit_parameters(opt::BFGSOptimizer,
                 end
             end
             if isfinite(res2.minimum)
-                p_best = res2.u
-                l_best = res2.minimum
-                method_used = "NelderMead"
-                retcode_used = retcode_text2
+                accept_optimizer_result!("NelderMead", retcode_text2, res2.u, res2.minimum)
+                stop_reason = string(retcode_category2)
 
                 if options.verbose >= 2
                     timed_out2 = (res2.retcode != SciMLBase.ReturnCode.Success)
@@ -508,6 +574,11 @@ function fit_parameters(opt::BFGSOptimizer,
                     end
                 end
             else
+                method_used = "NelderMead"
+                retcode_used = retcode_text2
+                stop_reason = "nonfinite_optimizer_minimum"
+                result_valid[] = false
+                result_source = "none"
                 if options.verbose >= 2
                     log_warn(
                         "Nelder-Mead returned non-finite minimum",
@@ -526,8 +597,7 @@ function fit_parameters(opt::BFGSOptimizer,
                 if !("MaxLossEvals" in optimizer_retcodes)
                     push!(optimizer_retcodes, "MaxLossEvals")
                 end
-                method_used = "loss_eval_budget"
-                retcode_used = "MaxLossEvals"
+                accept_best_observed!("NelderMead", "MaxLossEvals", "loss_eval_budget")
                 if options.verbose >= 2
                     log_warn(
                         "Nelder-Mead hit deterministic loss-evaluation budget",
@@ -540,7 +610,11 @@ function fit_parameters(opt::BFGSOptimizer,
                     )
                 end
             else
-                method_used = "failed"
+                method_used = "NelderMead"
+                retcode_used = "Exception"
+                stop_reason = "exception"
+                result_valid[] = false
+                result_source = "none"
                 if options.verbose >= 2
                     log_error(
                         "Nelder-Mead failed",
@@ -559,6 +633,15 @@ function fit_parameters(opt::BFGSOptimizer,
         if nm_done !== nothing
             nm_done()
         end
+    end
+
+    if !result_valid[] && best_observed_p[] !== nothing && best_observed_loss[] !== nothing
+        accept_best_observed!(
+            method_used,
+            retcode_used,
+            stop_reason;
+            source = "last_resort_best_observed",
+        )
     end
 
     # Ensure returned params match the ones actually evaluated in the loss
@@ -594,6 +677,11 @@ function fit_parameters(opt::BFGSOptimizer,
     return p_best, l_best, (
         method = method_used,
         retcode = retcode_used,
+        stop_reason = stop_reason,
+        result_valid = result_valid[],
+        result_source = result_source,
+        best_loss_seen = best_observed_loss[] !== nothing,
+        best_observed_loss = best_observed_loss[],
         loss_evals = loss_eval_count[],
         invalid_evals = invalid_eval_count[],
         ode_solves = Int(solve_stats[:ode_solves]),
