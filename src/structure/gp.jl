@@ -212,6 +212,10 @@ function search_structure(strategy::GPStructureSearch,
     pop = _init_population(strategy, dim, n_basis)
     total_loss_evals = 0
     total_invalid_evals = 0
+    total_optimizer_budget_stop_fits = 0
+    total_optimizer_fallback_result_fits = 0
+    total_optimizer_last_resort_fits = 0
+    total_optimizer_invalid_result_fits = 0
 
     if options.verbose >= 1
         log_info(
@@ -245,6 +249,10 @@ function search_structure(strategy::GPStructureSearch,
         _, fit_meta = _evaluate!(ind, traj, basis, loss, optimizer, strategy.λ, options)
         total_loss_evals += haskey(fit_meta, :loss_evals) ? fit_meta.loss_evals : 0
         total_invalid_evals += haskey(fit_meta, :invalid_evals) ? fit_meta.invalid_evals : 0
+        total_optimizer_budget_stop_fits += _fit_string_is(fit_meta, :stop_reason, "loss_eval_budget")
+        total_optimizer_fallback_result_fits += _fit_fallback_optimizer_return(fit_meta)
+        total_optimizer_last_resort_fits += _fit_string_is(fit_meta, :result_source, "last_resort_best_observed")
+        total_optimizer_invalid_result_fits += _fit_bool_is(fit_meta, :result_valid, false)
 
         if options.verbose >= 3
             log_debug(
@@ -330,6 +338,10 @@ function search_structure(strategy::GPStructureSearch,
                 _, fit_meta = _evaluate!(ind, traj, basis, loss, optimizer, strategy.λ, options)
                 total_loss_evals += haskey(fit_meta, :loss_evals) ? fit_meta.loss_evals : 0
                 total_invalid_evals += haskey(fit_meta, :invalid_evals) ? fit_meta.invalid_evals : 0
+                total_optimizer_budget_stop_fits += _fit_string_is(fit_meta, :stop_reason, "loss_eval_budget")
+                total_optimizer_fallback_result_fits += _fit_fallback_optimizer_return(fit_meta)
+                total_optimizer_last_resort_fits += _fit_string_is(fit_meta, :result_source, "last_resort_best_observed")
+                total_optimizer_invalid_result_fits += _fit_bool_is(fit_meta, :result_valid, false)
 
                 if options.verbose >= 3
                     log_debug(
@@ -435,7 +447,11 @@ function search_structure(strategy::GPStructureSearch,
             best_structure_pretty = structure_with_params_string(best.structure, basis, best.params),
             best_J_hist = best_J_hist,
             total_loss_evals = total_loss_evals,
-            total_invalid_evals = total_invalid_evals
+            total_invalid_evals = total_invalid_evals,
+            total_optimizer_budget_stop_fits = total_optimizer_budget_stop_fits,
+            total_optimizer_fallback_result_fits = total_optimizer_fallback_result_fits,
+            total_optimizer_last_resort_fits = total_optimizer_last_resort_fits,
+            total_optimizer_invalid_result_fits = total_optimizer_invalid_result_fits
         )
     )
 end

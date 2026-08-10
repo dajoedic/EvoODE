@@ -22,6 +22,11 @@ const POP_SIZE = 10
 const EVO_LEVELS = 20
 const GP_GENERATIONS = 20
 const BFGS_MAXITERS = 200
+const BFGS_ABSTOL = 1e-6
+const BFGS_RELTOL = 1e-6
+const BFGS_MAXITERS_SOLVE = 10^6
+const BFGS_MAX_LOSS_EVALS = 100_000
+const BFGS_CLAMP_VAL = 10.0
 const STAGE_MIN_LEVELS = 2
 const SOFT_BIAS = 0.75
 const SEEDS = [42, 123, 7, 99, 17]
@@ -283,9 +288,20 @@ function run_id_for(sys::ManifestSystem, variant::ManifestVariant, seed::Int)
     return "$(sys.id)_$(variant.slug)_seed$(seed)"
 end
 
-function algorithm_parameters(strategy, bfgs_maxiters::Int)
+function bfgs_config()
+    return Dict(
+        "bfgs_maxiters" => BFGS_MAXITERS,
+        "bfgs_abstol" => BFGS_ABSTOL,
+        "bfgs_reltol" => BFGS_RELTOL,
+        "bfgs_maxiters_solve" => BFGS_MAXITERS_SOLVE,
+        "bfgs_max_loss_evals" => BFGS_MAX_LOSS_EVALS,
+        "bfgs_clamp_val" => BFGS_CLAMP_VAL
+    )
+end
+
+function algorithm_parameters(strategy)
     if strategy isa EvoGrow
-        return Dict(
+        params = Dict(
             "pop_size" => strategy.pop_size,
             "n_levels" => strategy.n_levels,
             "children_per_parent" => strategy.children_per_parent,
@@ -295,12 +311,13 @@ function algorithm_parameters(strategy, bfgs_maxiters::Int)
             "min_levels_per_stage" => strategy.progression.min_levels_per_stage,
             "usage_mode" => String(strategy.usage.mode),
             "new_term_bias_prob" => strategy.usage.new_term_bias_prob,
-            "use_pretuning" => strategy.use_pretuning,
-            "bfgs_maxiters" => bfgs_maxiters
+            "use_pretuning" => strategy.use_pretuning
         )
+        merge!(params, bfgs_config())
+        return params
     end
 
-    return Dict(
+    params = Dict(
         "pop_size" => getproperty(strategy, :pop_size),
         "n_levels" => getproperty(strategy, :n_generations),
         "children_per_parent" => nothing,
@@ -310,9 +327,10 @@ function algorithm_parameters(strategy, bfgs_maxiters::Int)
         "min_levels_per_stage" => nothing,
         "usage_mode" => nothing,
         "new_term_bias_prob" => nothing,
-        "use_pretuning" => nothing,
-        "bfgs_maxiters" => bfgs_maxiters
+        "use_pretuning" => nothing
     )
+    merge!(params, bfgs_config())
+    return params
 end
 
 # ============================================================
@@ -398,7 +416,7 @@ for spec in run_specs
         "git_hash" => git_hash
     )
 
-    merge!(config_obj, algorithm_parameters(strategy, BFGS_MAXITERS))
+    merge!(config_obj, algorithm_parameters(strategy))
 
     status_obj = Dict(
         "status" => "queued",

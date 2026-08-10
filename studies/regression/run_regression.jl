@@ -29,11 +29,19 @@ const BFGS_ABSTOL = 1e-6
 const BFGS_RELTOL = 1e-6
 const BFGS_MAXITERS_SOLVE = 10^6
 const BFGS_MAX_LOSS_EVALS = 100_000
+const BFGS_CLAMP_VAL = 10.0
+const BFGS_TIME_LIMIT_S = Inf
+const BFGS_REJECT_NONFINITE = false
+const BFGS_DIVERGENCE_LIMIT = Inf
 
 const SCREENING_BUDGETS_ENABLED = lowercase(strip(get(ENV, "EVO_SCREENING_BUDGETS", ""))) in ("1", "true", "yes")
 const SCREENING_BFGS_ABSTOL = 1e-5
 const SCREENING_BFGS_RELTOL = 1e-5
 const SCREENING_BFGS_MAXITERS_SOLVE = 20_000
+const SCREENING_BFGS_MAX_LOSS_EVALS = BFGS_MAX_LOSS_EVALS
+const SCREENING_BFGS_CLAMP_VAL = BFGS_CLAMP_VAL
+const SCREENING_BFGS_TIME_LIMIT_S = BFGS_TIME_LIMIT_S
+const SCREENING_REJECT_NONFINITE = true
 const SCREENING_DIVERGENCE_LIMIT = 1e6
 const DERIVATIVE_SCREEN_K = POP_SIZE
 const DERIVATIVE_POLISH_MAXITERS = 20
@@ -178,8 +186,9 @@ function build_reference_optimizer()
         reltol = BFGS_RELTOL,
         maxiters_solve = BFGS_MAXITERS_SOLVE,
         max_loss_evals = BFGS_MAX_LOSS_EVALS,
-        reject_nonfinite = false,
-        divergence_limit = Inf,
+        clamp_val = BFGS_CLAMP_VAL,
+        reject_nonfinite = BFGS_REJECT_NONFINITE,
+        divergence_limit = BFGS_DIVERGENCE_LIMIT,
     )
 end
 
@@ -189,8 +198,9 @@ function build_screening_optimizer()
         abstol = SCREENING_BFGS_ABSTOL,
         reltol = SCREENING_BFGS_RELTOL,
         maxiters_solve = SCREENING_BFGS_MAXITERS_SOLVE,
-        max_loss_evals = BFGS_MAX_LOSS_EVALS,
-        reject_nonfinite = true,
+        max_loss_evals = SCREENING_BFGS_MAX_LOSS_EVALS,
+        clamp_val = SCREENING_BFGS_CLAMP_VAL,
+        reject_nonfinite = SCREENING_REJECT_NONFINITE,
         divergence_limit = SCREENING_DIVERGENCE_LIMIT,
     )
 end
@@ -248,10 +258,18 @@ function config_fingerprint()
         bfgs_reltol = BFGS_RELTOL,
         bfgs_maxiters_solve = BFGS_MAXITERS_SOLVE,
         bfgs_max_loss_evals = BFGS_MAX_LOSS_EVALS,
+        bfgs_clamp_val = BFGS_CLAMP_VAL,
+        bfgs_time_limit_s = BFGS_TIME_LIMIT_S,
+        bfgs_reject_nonfinite = BFGS_REJECT_NONFINITE,
+        bfgs_divergence_limit = BFGS_DIVERGENCE_LIMIT,
         screening_budgets_enabled = SCREENING_BUDGETS_ENABLED,
         screening_bfgs_abstol = SCREENING_BFGS_ABSTOL,
         screening_bfgs_reltol = SCREENING_BFGS_RELTOL,
         screening_bfgs_maxiters_solve = SCREENING_BFGS_MAXITERS_SOLVE,
+        screening_bfgs_max_loss_evals = SCREENING_BFGS_MAX_LOSS_EVALS,
+        screening_bfgs_clamp_val = SCREENING_BFGS_CLAMP_VAL,
+        screening_bfgs_time_limit_s = SCREENING_BFGS_TIME_LIMIT_S,
+        screening_reject_nonfinite = SCREENING_REJECT_NONFINITE,
         screening_divergence_limit = SCREENING_DIVERGENCE_LIMIT,
         variants = FINGERPRINT_VARIANT_LABELS,
         derivative_screen_k = DERIVATIVE_SCREEN_K,
@@ -500,6 +518,10 @@ function run_one(variant, system, ic_set::Int, seed::Int, fingerprint::String, p
         "total_optimizer_iteration_limit_hits" => nothing,
         "total_optimizer_safety_limit_hits" => nothing,
         "total_optimizer_eval_budget_limit_hits" => nothing,
+        "total_optimizer_budget_stop_fits" => nothing,
+        "total_optimizer_fallback_result_fits" => nothing,
+        "total_optimizer_last_resort_fits" => nothing,
+        "total_optimizer_invalid_result_fits" => nothing,
         "total_optimizer_failure_hits" => nothing,
         "total_optimizer_unknown_retcode_hits" => nothing,
         "total_parameter_optimization_time_s" => nothing,
@@ -623,6 +645,10 @@ function run_one(variant, system, ic_set::Int, seed::Int, fingerprint::String, p
         base_record["total_optimizer_iteration_limit_hits"] = haskey(meta, :total_optimizer_iteration_limit_hits) ? meta.total_optimizer_iteration_limit_hits : nothing
         base_record["total_optimizer_safety_limit_hits"] = haskey(meta, :total_optimizer_safety_limit_hits) ? meta.total_optimizer_safety_limit_hits : nothing
         base_record["total_optimizer_eval_budget_limit_hits"] = haskey(meta, :total_optimizer_eval_budget_limit_hits) ? meta.total_optimizer_eval_budget_limit_hits : nothing
+        base_record["total_optimizer_budget_stop_fits"] = haskey(meta, :total_optimizer_budget_stop_fits) ? meta.total_optimizer_budget_stop_fits : nothing
+        base_record["total_optimizer_fallback_result_fits"] = haskey(meta, :total_optimizer_fallback_result_fits) ? meta.total_optimizer_fallback_result_fits : nothing
+        base_record["total_optimizer_last_resort_fits"] = haskey(meta, :total_optimizer_last_resort_fits) ? meta.total_optimizer_last_resort_fits : nothing
+        base_record["total_optimizer_invalid_result_fits"] = haskey(meta, :total_optimizer_invalid_result_fits) ? meta.total_optimizer_invalid_result_fits : nothing
         base_record["total_optimizer_failure_hits"] = haskey(meta, :total_optimizer_failure_hits) ? meta.total_optimizer_failure_hits : nothing
         base_record["total_optimizer_unknown_retcode_hits"] = haskey(meta, :total_optimizer_unknown_retcode_hits) ? meta.total_optimizer_unknown_retcode_hits : nothing
         base_record["total_parameter_optimization_time_s"] = haskey(meta, :total_parameter_optimization_time_s) ? meta.total_parameter_optimization_time_s : nothing
@@ -654,10 +680,29 @@ function run_one(variant, system, ic_set::Int, seed::Int, fingerprint::String, p
     return base_record
 end
 
+function json_safe(x)
+    if x isa AbstractFloat
+        isfinite(x) && return x
+        return string(x)
+    elseif x isa AbstractDict
+        return Dict(k => json_safe(v) for (k, v) in x)
+    elseif x isa NamedTuple
+        return Dict(String(k) => json_safe(v) for (k, v) in pairs(x))
+    elseif x isa Pair
+        return Dict("first" => json_safe(first(x)), "second" => json_safe(last(x)))
+    elseif x isa AbstractVector
+        return [json_safe(v) for v in x]
+    elseif x isa Tuple
+        return [json_safe(v) for v in x]
+    else
+        return x
+    end
+end
+
 function append_record!(record)
     mkpath(dirname(HISTORY_PATH))
     open(HISTORY_PATH, "a") do io
-        JSON3.write(io, record)
+        JSON3.write(io, json_safe(record))
         write(io, '\n')
     end
 end

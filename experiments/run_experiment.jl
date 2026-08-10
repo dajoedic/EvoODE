@@ -172,10 +172,29 @@ end
 function write_json_atomic(path::String, obj)
     tmp_path = path * ".tmp"
     open(tmp_path, "w") do io
-        JSON3.write(io, obj)
+        JSON3.write(io, json_safe(obj))
     end
     mv(tmp_path, path; force = true)
     return path
+end
+
+function json_safe(x)
+    if x isa AbstractFloat
+        isfinite(x) && return x
+        return string(x)
+    elseif x isa AbstractDict
+        return Dict(k => json_safe(v) for (k, v) in x)
+    elseif x isa NamedTuple
+        return Dict(String(k) => json_safe(v) for (k, v) in pairs(x))
+    elseif x isa Pair
+        return Dict("first" => json_safe(first(x)), "second" => json_safe(last(x)))
+    elseif x isa AbstractVector
+        return [json_safe(v) for v in x]
+    elseif x isa Tuple
+        return [json_safe(v) for v in x]
+    else
+        return x
+    end
 end
 
 function basis_name_to_idx(basis::AbstractBasis)
@@ -305,7 +324,14 @@ function build_strategy_basis_optimizer(cfg)
         basis = default_staged_polynomial_basis(dim)
     end
 
-    optimizer = BFGSOptimizer(maxiters = Int(cfg.bfgs_maxiters))
+    optimizer = BFGSOptimizer(
+        maxiters = Int(cfg.bfgs_maxiters),
+        abstol = Float64(cfg.bfgs_abstol),
+        reltol = Float64(cfg.bfgs_reltol),
+        maxiters_solve = Int(cfg.bfgs_maxiters_solve),
+        max_loss_evals = Int(cfg.bfgs_max_loss_evals),
+        clamp_val = Float64(cfg.bfgs_clamp_val)
+    )
     options = DiscoveryOptions(
         rng_seed = Int(cfg.seed),
         verbose = 1,
@@ -319,6 +345,15 @@ function build_strategy_basis_optimizer(cfg)
     )
 
     return structure, basis, optimizer, options
+end
+
+function optimizer_record_fields(meta)
+    return Dict(
+        "total_optimizer_budget_stop_fits" => haskey(meta, :total_optimizer_budget_stop_fits) ? Int(meta.total_optimizer_budget_stop_fits) : nothing,
+        "total_optimizer_fallback_result_fits" => haskey(meta, :total_optimizer_fallback_result_fits) ? Int(meta.total_optimizer_fallback_result_fits) : nothing,
+        "total_optimizer_last_resort_fits" => haskey(meta, :total_optimizer_last_resort_fits) ? Int(meta.total_optimizer_last_resort_fits) : nothing,
+        "total_optimizer_invalid_result_fits" => haskey(meta, :total_optimizer_invalid_result_fits) ? Int(meta.total_optimizer_invalid_result_fits) : nothing
+    )
 end
 
 function to_plain_dict(x)
@@ -364,7 +399,7 @@ function compute_metrics(result::DiscoveryResult, cfg, basis::AbstractBasis, ela
         wasted_levels = isempty(stage_level_counts) ? 0 : sum(stage_level_counts[(expected_stage + 1):end]; init = 0)
     end
 
-    return Dict(
+    metrics = Dict(
         "loss" => result.loss,
         "objective" => result.objective,
         "exact_support_match" => exact_support_match_raw,
@@ -378,6 +413,8 @@ function compute_metrics(result::DiscoveryResult, cfg, basis::AbstractBasis, ela
         "elapsed_s" => elapsed_s,
         "partial" => false
     )
+    merge!(metrics, optimizer_record_fields(meta))
+    return metrics
 end
 
 function partial_metrics(elapsed_s::Float64)
@@ -392,6 +429,10 @@ function partial_metrics(elapsed_s::Float64)
         "wasted_levels" => nothing,
         "total_loss_evals" => nothing,
         "total_invalid_evals" => nothing,
+        "total_optimizer_budget_stop_fits" => nothing,
+        "total_optimizer_fallback_result_fits" => nothing,
+        "total_optimizer_last_resort_fits" => nothing,
+        "total_optimizer_invalid_result_fits" => nothing,
         "elapsed_s" => elapsed_s,
         "partial" => true
     )
@@ -425,6 +466,10 @@ function build_result_payload(result::DiscoveryResult, cfg, metrics::Dict)
         "exact_support_match_pruned" => metrics["exact_support_match_pruned"],
         "stage_overshoot" => metrics["stage_overshoot"],
         "wasted_levels" => metrics["wasted_levels"],
+        "total_optimizer_budget_stop_fits" => metrics["total_optimizer_budget_stop_fits"],
+        "total_optimizer_fallback_result_fits" => metrics["total_optimizer_fallback_result_fits"],
+        "total_optimizer_last_resort_fits" => metrics["total_optimizer_last_resort_fits"],
+        "total_optimizer_invalid_result_fits" => metrics["total_optimizer_invalid_result_fits"],
         "stage_level_counts" => haskey(meta, :stage_level_counts) ? collect(meta.stage_level_counts) : Int[],
         "stage_histories" => haskey(meta, :stage_histories) ? [collect(hist) for hist in meta.stage_histories] : Any[],
         "promotion_log" => haskey(meta, :promotion_log) ? [to_plain_dict(x) for x in meta.promotion_log] : Any[],
