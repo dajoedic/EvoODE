@@ -28,7 +28,7 @@ const BFGS_MAXITERS = 200
 const BFGS_ABSTOL = 1e-6
 const BFGS_RELTOL = 1e-6
 const BFGS_MAXITERS_SOLVE = 10^6
-const BFGS_MAX_LOSS_EVALS = 100_000
+const BFGS_MAX_LOSS_EVALS = 20_000
 const BFGS_CLAMP_VAL = 10.0
 const BFGS_TIME_LIMIT_S = Inf
 const BFGS_REJECT_NONFINITE = false
@@ -427,6 +427,82 @@ function iso_timestamp()
     return Dates.format(now(UTC), dateformat"yyyy-mm-ddTHH:MM:SS.sssZ")
 end
 
+mutable struct HeartbeatSink
+    path::Union{Nothing, String}
+    context::Dict{String, Any}
+    disabled::Bool
+end
+
+function hostname_string()
+    try
+        return gethostname()
+    catch
+        return "unknown"
+    end
+end
+
+function heartbeat_context(variant, system, ic_set::Int, seed::Int, fingerprint::String)
+    return Dict{String, Any}(
+        "variant" => String(variant.label),
+        "condition" => haskey(variant, :condition) ? String(variant.condition) : String(variant.label),
+        "system_id" => Int(system[:system_id]),
+        "initial_condition_set" => ic_set,
+        "seed" => seed,
+        "config_fingerprint" => fingerprint,
+        "pid" => getpid(),
+        "hostname" => hostname_string(),
+    )
+end
+
+function make_heartbeat_sink(path::Union{Nothing, AbstractString}, context::Dict{String, Any})
+    path === nothing && return HeartbeatSink(nothing, context, true)
+    return HeartbeatSink(String(path), context, false)
+end
+
+function heartbeat_record(sink::HeartbeatSink, event::String; fields...)
+    record = Dict{String, Any}(
+        "timestamp" => iso_timestamp(),
+        "event" => event,
+    )
+    merge!(record, sink.context)
+    for (key, value) in fields
+        record[String(key)] = value
+    end
+    return record
+end
+
+function write_heartbeat!(sink::HeartbeatSink, event::String; fields...)
+    (sink.disabled || sink.path === nothing) && return nothing
+    try
+        mkpath(dirname(sink.path))
+        open(sink.path, "a") do io
+            JSON3.write(io, json_safe(heartbeat_record(sink, event; fields...)))
+            write(io, '\n')
+            flush(io)
+        end
+    catch
+        sink.disabled = true
+    end
+    return nothing
+end
+
+function sanitize_path_part(value)
+    return replace(String(value), r"[^A-Za-z0-9_.-]" => "_")
+end
+
+function suite_heartbeat_path(variant, system, ic_set::Int, seed::Int)
+    stem = join(
+        (
+            sanitize_path_part(variant.label),
+            "sys$(Int(system[:system_id]))",
+            "ic$(ic_set)",
+            "seed$(seed)",
+        ),
+        "_",
+    )
+    return joinpath(dirname(HISTORY_PATH), "heartbeats", stem * ".heartbeat.jsonl")
+end
+
 function append_run_log_line!(line::AbstractString)
     mkpath(dirname(RUN_LOG_PATH))
     open(RUN_LOG_PATH, "a") do io
@@ -495,7 +571,14 @@ function active_term_names(structure::StructureSpec, basis::AbstractBasis)
     return [[basis_term_name(basis, term_idx) for term_idx in eq_terms] for eq_terms in structure.active_idxs]
 end
 
-function run_one(variant, system, ic_set::Int, seed::Int, fingerprint::String, provenance)
+function run_one(variant,
+                 system,
+                 ic_set::Int,
+                 seed::Int,
+                 fingerprint::String,
+                 provenance;
+                 heartbeat_path::Union{Nothing, AbstractString} = nothing,
+                 heartbeat_extra::AbstractDict = Dict{String, Any}())
     timestamp = iso_timestamp()
     system_id = Int(system[:system_id])
     system_name = String(system[:system_name])
@@ -503,6 +586,9 @@ function run_one(variant, system, ic_set::Int, seed::Int, fingerprint::String, p
     expected_stage = system_expected_stage(system)
     use_pretuning = variant_use_pretuning(variant)
     u0 = Float64[x for x in system[:init_sets][ic_set]]
+    hb_context = heartbeat_context(variant, system, ic_set, seed, fingerprint)
+    merge!(hb_context, Dict(String(k) => v for (k, v) in heartbeat_extra))
+    heartbeat = make_heartbeat_sink(heartbeat_path, hb_context)
 
     base_record = Dict{String, Any}(
         "timestamp" => timestamp,
@@ -598,8 +684,16 @@ function run_one(variant, system, ic_set::Int, seed::Int, fingerprint::String, p
                 (:best_loss, @sprintf("%.3e", snapshot.best_loss)),
             ],
         )
+        write_heartbeat!(
+            heartbeat,
+            "level";
+            level = snapshot.level,
+            stage = snapshot.stage,
+            best_loss = snapshot.best_loss,
+        )
     end
 
+    write_heartbeat!(heartbeat, "start")
     try
         traj = build_trajectory(system, ic_set)
         base_record["derivative_active_fractions"] = derivative_active_fractions(system, traj)
@@ -703,6 +797,14 @@ function run_one(variant, system, ic_set::Int, seed::Int, fingerprint::String, p
     catch err
         base_record["error"] = sprint(showerror, err)
     finally
+        write_heartbeat!(
+            heartbeat,
+            "complete";
+            error = base_record["error"],
+            loss = base_record["loss"],
+            final_stage = base_record["final_stage"],
+            pruned_match = base_record["pruned_match"],
+        )
         finish!(inner_progress)
     end
 
@@ -869,7 +971,16 @@ function main()
                         )
                     )
 
-                    record = run_one(variant, system, ic_set, seed, fingerprint, provenance)
+                    record = run_one(
+                        variant,
+                        system,
+                        ic_set,
+                        seed,
+                        fingerprint,
+                        provenance;
+                        heartbeat_path = suite_heartbeat_path(variant, system, ic_set, seed),
+                        heartbeat_extra = Dict("entry_point" => "run_regression"),
+                    )
                     append_record!(record)
                     appended += 1
 

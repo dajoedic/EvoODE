@@ -72,6 +72,10 @@ function _task_output_path(output_dir::AbstractString, index::Int)
     return joinpath(output_dir, @sprintf("cell_%06d.jsonl", index))
 end
 
+function _heartbeat_output_path(output_dir::AbstractString, index::Int)
+    return joinpath(output_dir, @sprintf("cell_%06d.heartbeat.jsonl", index))
+end
+
 function _portable_path(path::AbstractString)
     return replace(String(path), Char(0x5c) => '/')
 end
@@ -97,10 +101,25 @@ function run_batch_cell(index::Int, manifest_path::AbstractString, output_dir::A
     system = _is_phase_b_row(row) ? phase_b_system(parse(Int, row["system_id"])) : _system(parse(Int, row["system_id"]))
     ic_set = parse(Int, row["initial_condition_set"])
     seed = parse(Int, row["seed"])
-    record = run_one(variant, system, ic_set, seed, current_fingerprint, git_provenance())
+    output_path = _task_output_path(output_dir, index)
+    heartbeat_path = _heartbeat_output_path(output_dir, index)
+    record = run_one(
+        variant,
+        system,
+        ic_set,
+        seed,
+        current_fingerprint,
+        git_provenance();
+        heartbeat_path = heartbeat_path,
+        heartbeat_extra = Dict(
+            "entry_point" => "run_batch_cell",
+            "manifest_index" => index,
+            "manifest_path" => _portable_path(manifest_path),
+            "batch_output_file" => _portable_path(output_path),
+        ),
+    )
     record["manifest_index"] = index
     record["manifest_path"] = _portable_path(manifest_path)
-    output_path = _task_output_path(output_dir, index)
     record["batch_output_file"] = _portable_path(output_path)
     write_task_record(output_path, record)
     record["error"] === nothing || error("Cell $(index) failed: $(record["error"])")

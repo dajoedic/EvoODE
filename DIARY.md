@@ -6,7 +6,69 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ## 2026-08-11
 
+### WP-F3 - Evaluationsbudget final auf 20.000 gesetzt
+
+Entscheidung vor dem Campaign-Freeze: `BFGS_MAX_LOSS_EVALS` im Kampagnenpfad sinkt von 100.000 auf
+**20.000** pro Parameterfit. Das aendert den Regressions- und den Phase-B-Fingerprint ein letztes
+Mal vor dem ersten Paper-1-Campaign-Record; ab jetzt ist diese Konfiguration eingefroren.
+
+Die Begruendung ist dreiteilig und gehoert in die Paper-Argumentation:
+
+1. **Sicherheitslimit, kein Tuningparameter.** Das Budget begrenzt Arbeit, die messbar nichts mehr
+   zum Ergebnis beitraegt. Es ersetzt die in WP-B3 entfernte Wall-Clock-Bremse, die auf langsamen
+   Knoten binden und auf schnellen nicht binden konnte. Ein Budget in Zaehleinheiten ist
+   maschinenunabhaengig und verbessert damit die Reproduzierbarkeit.
+2. **Gemessener Wert.** WP-F1 und WP-F2 haben komplette Evaluierungssequenzen pro Fit aufgezeichnet
+   und gemessen, wann der beste Loss erstmals erreicht wurde. Ueber alle gemessenen Fits
+   (Dimension 1 bis 3, Parameterzahlen 1 bis 18) lag dieser Punkt spaetestens bei **5.760**. 20.000
+   haelt einen Faktor von rund **3,5** darueber. Zweite unabhaengige Plausibilisierung: bei der
+   maximalen Campaign-Parameterzahl 24 ergibt `2 * maxiters * (n_params + 1)` mit `maxiters = 200`
+   genau 10.000; 20.000 ist das Doppelte davon.
+3. **Harmlosigkeit demonstriert und falsifizierbar.** Fuer alle aufgezeichneten WP-F1/F2-Fits
+   liefert ein Stop bei 20.000 denselben best-seen Loss wie der vollstaendige Lauf. Seit WP-D2 gibt
+   ein Budget-Stop den besten tatsaechlich gesehenen Punkt zurueck, also graduell statt
+   katastrophal. Seit WP-D3 zaehlt jeder Record Budget-Stopps; die Kampagne kann daher berichten, in
+   wie vielen der 756 Phase-B-Laeufe das Limit gebunden hat.
+
+Nachpruefung an der WP-D5-Referenzzelle (System 3, Seed 7, IC 1,
+`evogrow_v2_2_stage_capped`): Das Budget bindet entgegen Erwartung auf 9 Parameterfits. Support,
+Stage und `pruned_match` bleiben gleich, der Loss wird sogar kleiner, aber
+`total_parameter_fits`, `total_loss_evals`, `total_ode_solves` und die Retcode-Liste aendern sich.
+Das ist kein Grund, das Budget nachzuziehen, aber ein Befund: die Kampagne muss Budget-Stopps
+sichtbar und nach Dimension/Parameterzahl auswerten.
+
+**Die eigentliche Absicherung ist ein Regressionsvergleich ueber sieben Zellen**, gefahren in zwei
+Armen: 20.000 im Working Tree gegen 100.000 aus einem Worktree auf `0af12c9`. Systeme 3 und 11 mit
+je drei Seeds, dazu **System 26 als gekoppelter Fall**, IC-Satz 1.
+
+Ergebnis: `pruned_match`, `final_stage` und `support_terms` sind in **7 von 7** Zellen identisch.
+Gesamtaufwand 1.227.157 gegen 2.687.140 Loss-Evaluierungen, also **54,3 % Ersparnis** bei 43
+Budget-Stopps. **Kein Loss wird schlechter**, einer wird um mehr als eine Groessenordnung besser.
+
+Die gekoppelte Zelle ist der wichtigste Datenpunkt: System 26 liefert in beiden Armen denselben Loss
+(1,396e-03), dieselbe Stage, denselben Support **und dieselbe Zahl Parameterfits (310)** bei 58,2 %
+weniger Evaluierungen. Gleiche Fitzahl heisst gleicher Suchpfad — das Budget hat dort ausschliesslich
+Leerlauf innerhalb einzelner Fits abgeschnitten, ohne die Suche umzulenken. Auf System 11 bindet es
+gar nicht, die Zellen sind bit-identisch. Wo der Pfad divergiert (System 3, Seed 7: 130 statt 150
+Fits), bleiben die Strukturmetriken dennoch gleich.
+
+Damit ist Punkt 3 oben zu praezisieren: bit-identische Ergebnisse sind **nicht** allgemein zu
+erwarten, sobald das Budget bindet — ein gestoppter Fit liefert andere Parameter, damit ein anderes
+Objective und ab da einen anderen Suchpfad. Die belegbare Aussage lautet: ueber sieben Zellen
+einschliesslich eines gekoppelten Systems bleiben alle Strukturmetriken unveraendert, kein Loss
+verschlechtert sich, und der Aufwand halbiert sich.
+
+WP-E2-Anforderung, bewusst noch nicht implementiert: Budget-Stopps muessen nach Dimension und
+Parameterzahl aufgeschluesselt werden, nicht nur global. Ein ueberproportionales Binden auf
+hochdimensionalen Systemen wuerde genau die komplexen gekoppelten Strukturen benachteiligen und die
+zentrale Aussage verzerren; ein globaler Zaehler wuerde das verstecken.
+
+---
+
 ### 1D-Kostenprofil: Pretuning bringt auf 1D nichts, und die Line-Search-Pathologie haengt nicht daran
+
+<!-- dc2847c WP-E1 -->
+<!-- 0af12c9 Kostenprofil -->
 
 Aus WP-E1 fiel eine Zelle auf, die fuer ein triviales 1D-System (System 2, ein Term, ein Parameter)
 **858.540** ODE-Integrationen verbrauchte — 28.618 Loss-Evaluierungen pro Fit, bei einem

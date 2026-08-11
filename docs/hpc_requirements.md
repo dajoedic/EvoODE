@@ -118,7 +118,11 @@ What we can state precisely are the machine-independent work counts. The 1D row 
 same batch entry point planned for Slurm, using the Phase B grid and the shipped regression variant
 `evogrow_v2_2_stage_capped` on systems 3 and 11, initial-condition set 1, all three seeds. The
 higher-dimensional rows remain pre-batch measurements and extrapolations until the pilot replaces
-them.
+them. The per-fit optimizer safety budget is now **20,000 loss evaluations**. That number is based
+on WP-F1/WP-F2 evaluation-sequence measurements, not extrapolation: across dimensions 1 to 3 and
+parameter counts 1 to 18, the latest observed first arrival at the best loss was evaluation 5,760.
+The budget is therefore a 3.5x margin over the measured worst case and twice
+`2 * maxiters * (n_params + 1) = 10,000` at the campaign maximum of 24 parameters.
 
 | System class | Parameter fits per job | ODE integrations per job |
 |---|---|---|
@@ -177,11 +181,10 @@ least reliable numbers in this document.
 
 These are properties of the study, not requests, but they affect how jobs may be scheduled.
 
-- **Every job must be deterministic given its seed.** The code currently contains one wall-clock
-  dependency: the optimizer carries a 1800 s time limit per parameter fit. It has never been hit in
-  any recorded run, but on heterogeneous nodes it could bind on a slow node and not on a fast one,
-  which would make results node-dependent. This will be replaced by an evaluation budget before the
-  campaign runs. Heterogeneous node types are otherwise unproblematic.
+- **Every job must be deterministic given its seed.** The optimizer safety brake is a deterministic
+  count budget, `max_loss_evals = 20,000` per parameter fit, not a wall-clock limit. This avoids
+  node-speed-dependent results on heterogeneous hardware. Heterogeneous node types are otherwise
+  unproblematic.
 - **All jobs of a campaign must run from one code version.** Each job records the git commit hash
   and a configuration fingerprint; a campaign with mixed hashes is not publishable and would have
   to be re-run.
@@ -195,12 +198,13 @@ These are properties of the study, not requests, but they affect how jobs may be
 The scientific method is fixed and the final algorithm variant is decided. **The port to the batch
 environment is done**: a manifest enumerates the campaign as an ordered cell list, one entry point
 runs exactly one cell and exits, a merge step consolidates the per-task records, and the container
-definition and an example array submission script exist. A single cell has been verified end to end
-through that path and reproduces the previously measured result exactly.
+definition and an example array submission script exist. Single-cell checks have been run end to end
+through that path; after the WP-F3 budget change, budget-stop telemetry is expected to be part of
+the campaign interpretation rather than hidden as a timing detail.
 
-Two items remain on our side, both scheduled before access would be used: replacing the optimizer's
-wall-clock limit with a deterministic budget (§7), and measuring the 1D cost class instead of
-scaling it (§5). Neither requires cluster access.
+Two items remain on our side, both scheduled before access would be used: carrying the WP-F1/WP-F2
+budget-stop breakdown into the campaign analysis by dimension and parameter count, and producing
+pilot timing measurements on the cluster. Neither requires changing the campaign code path.
 
 What we cannot do without access is build and run the container, and produce a single trustworthy
 timing figure. We expect to be ready to run within days of receiving access, and would use a pilot
