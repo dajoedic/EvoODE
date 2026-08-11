@@ -5,6 +5,7 @@ using JSON3
 using Printf
 
 include(joinpath(@__DIR__, "run_regression.jl"))
+include(joinpath(@__DIR__, "phase_b_config.jl"))
 
 const DEFAULT_BATCH_DIR = joinpath(@__DIR__, "..", "..", "outputs", "studies", "regression", "wp_b2")
 const DEFAULT_MANIFEST_PATH = joinpath(DEFAULT_BATCH_DIR, "manifest.csv")
@@ -20,7 +21,7 @@ end
 function _task_index(args::Vector{String})
     for (i, arg) in pairs(args)
         startswith(arg, "--") && continue
-        if i == 1 || args[i - 1] ∉ ("--manifest", "--output-dir")
+        if i == 1 || !(args[i - 1] in ("--manifest", "--output-dir"))
             return parse(Int, arg)
         end
     end
@@ -63,6 +64,10 @@ function _system(system_id::Int)
     return matches[1]
 end
 
+function _is_phase_b_row(row)
+    return get(row, "campaign", "") == "phase_b"
+end
+
 function _task_output_path(output_dir::AbstractString, index::Int)
     return joinpath(output_dir, @sprintf("cell_%06d.jsonl", index))
 end
@@ -75,7 +80,7 @@ function write_task_record(path::AbstractString, record)
     mkpath(dirname(path))
     tmp = path * ".tmp"
     open(tmp, "w") do io
-        JSON3.write(io, record)
+        JSON3.write(io, json_safe(record))
         write(io, '\n')
     end
     mv(tmp, path; force = true)
@@ -83,13 +88,13 @@ end
 
 function run_batch_cell(index::Int, manifest_path::AbstractString, output_dir::AbstractString)
     row = _manifest_row(manifest_path, index)
-    current_fingerprint = config_fingerprint()
+    current_fingerprint = _is_phase_b_row(row) ? phase_b_fingerprint() : config_fingerprint()
     manifest_fingerprint = row["config_fingerprint"]
     manifest_fingerprint == current_fingerprint ||
         error("Fingerprint mismatch for manifest $(manifest_path): manifest=$(manifest_fingerprint), runtime=$(current_fingerprint)")
 
-    variant = _variant(row["variant"])
-    system = _system(parse(Int, row["system_id"]))
+    variant = _is_phase_b_row(row) ? phase_b_variant(row["variant"]) : _variant(row["variant"])
+    system = _is_phase_b_row(row) ? phase_b_system(parse(Int, row["system_id"])) : _system(parse(Int, row["system_id"]))
     ic_set = parse(Int, row["initial_condition_set"])
     seed = parse(Int, row["seed"])
     record = run_one(variant, system, ic_set, seed, current_fingerprint, git_provenance())

@@ -381,6 +381,22 @@ function completed_key(variant, system, ic_set::Int, seed::Int)
     return (String(variant.label), Int(system[:system_id]), ic_set, seed)
 end
 
+function variant_use_pretuning(variant)
+    return haskey(variant, :use_pretuning) ? Bool(variant.use_pretuning) : USE_PRETUNING
+end
+
+function system_expected_stage(system)
+    return haskey(system, :expected_stage) && system[:expected_stage] !== nothing ? Int(system[:expected_stage]) : nothing
+end
+
+function system_representability(system)
+    return haskey(system, :representability) ? String(system[:representability]) : nothing
+end
+
+function system_rhs(system)
+    return haskey(system, :rhs!) ? system[:rhs!] : rhs_for_system(Int(system[:system_id]))
+end
+
 function load_completed_cells(fingerprint::String)
     completed = Set{Tuple{String, Int, Int, Int}}()
     isfile(HISTORY_PATH) || return completed
@@ -437,13 +453,13 @@ function build_trajectory(system, ic_set::Int)
     t_grid = Float64[t for t in system[:t_grid]]
     ic_set in REGRESSION_IC_SETS || error("Unsupported initial-condition set $(ic_set)")
     u0 = Float64[x for x in system[:init_sets][ic_set]]
-    prob = ODEProblem(rhs_for_system(system_id), copy(u0), tspan, nothing)
+    prob = ODEProblem(system_rhs(system), copy(u0), tspan, nothing)
     sol = solve(prob, Tsit5(); saveat = t_grid, abstol = 1e-9, reltol = 1e-9)
     return Trajectory(t_grid, Array(sol)')
 end
 
-function true_rhs_matrix(system_id::Int, traj::Trajectory)
-    f! = rhs_for_system(system_id)
+function true_rhs_matrix(system, traj::Trajectory)
+    f! = system_rhs(system)
     T, dim = size(traj.x)
     out = zeros(Float64, T, dim)
     du = zeros(Float64, dim)
@@ -460,9 +476,19 @@ function derivative_active_fraction(rhs_values::AbstractVector{Float64})
     return count(abs.(rhs_values) .> 0.01 * max_abs) / length(rhs_values)
 end
 
-function derivative_active_fractions(system_id::Int, traj::Trajectory)
-    rhs = true_rhs_matrix(system_id, traj)
+function derivative_active_fractions(system, traj::Trajectory)
+    rhs = true_rhs_matrix(system, traj)
     return [derivative_active_fraction(rhs[:, eq]) for eq in 1:size(rhs, 2)]
+end
+
+function expected_active_idxs_or_nothing(system_id::Int, basis::AbstractBasis)
+    try
+        return expected_active_idxs(system_id, basis)
+    catch err
+        message = sprint(showerror, err)
+        startswith(message, "Unsupported system_id") && return nothing
+        rethrow()
+    end
 end
 
 function active_term_names(structure::StructureSpec, basis::AbstractBasis)
@@ -474,7 +500,8 @@ function run_one(variant, system, ic_set::Int, seed::Int, fingerprint::String, p
     system_id = Int(system[:system_id])
     system_name = String(system[:system_name])
     dim = Int(system[:dim])
-    expected_stage = Int(system[:expected_stage])
+    expected_stage = system_expected_stage(system)
+    use_pretuning = variant_use_pretuning(variant)
     u0 = Float64[x for x in system[:init_sets][ic_set]]
 
     base_record = Dict{String, Any}(
@@ -490,6 +517,7 @@ function run_one(variant, system, ic_set::Int, seed::Int, fingerprint::String, p
         "tspan" => Tuple(Float64[x for x in system[:tspan]]),
         "T" => Int(system[:T]),
         "seed" => seed,
+        "condition" => haskey(variant, :condition) ? String(variant.condition) : String(variant.label),
         "loss" => nothing,
         "pruned_match" => nothing,
         "final_stage" => nothing,
@@ -503,7 +531,8 @@ function run_one(variant, system, ic_set::Int, seed::Int, fingerprint::String, p
         "derivative_active_fractions" => nothing,
         "support_terms" => nothing,
         "n_levels" => N_LEVELS,
-        "use_pretuning" => USE_PRETUNING,
+        "use_pretuning" => use_pretuning,
+        "representability" => system_representability(system),
         "screening_budgets_active" => nothing,
         "derivative_screening_active" => nothing,
         "total_loss_evals" => nothing,
@@ -573,7 +602,7 @@ function run_one(variant, system, ic_set::Int, seed::Int, fingerprint::String, p
 
     try
         traj = build_trajectory(system, ic_set)
-        base_record["derivative_active_fractions"] = derivative_active_fractions(system_id, traj)
+        base_record["derivative_active_fractions"] = derivative_active_fractions(system, traj)
         optimizer = build_reference_optimizer()
         screening_optimizer = SCREENING_BUDGETS_ENABLED ? build_screening_optimizer() : nothing
         strategy = variant.constructor(level_callback, screening_optimizer)
@@ -609,15 +638,15 @@ function run_one(variant, system, ic_set::Int, seed::Int, fingerprint::String, p
         end
         final_stage = haskey(meta, :final_stage) ? Int(meta.final_stage) : nothing
         stage_level_counts = haskey(meta, :stage_level_counts) ? collect(meta.stage_level_counts) : Int[]
-        stage_overshoot = final_stage === nothing ? nothing : max(0, final_stage - expected_stage)
-        wasted_levels = isempty(stage_level_counts) ? 0 : sum(stage_level_counts[(expected_stage + 1):end]; init = 0)
-        expected_idxs = expected_active_idxs(system_id, basis)
-        pruned_match = expected_idxs === nothing ? false : support_match_pruned(result.structure, result.params, expected_idxs)
+        stage_overshoot = final_stage === nothing || expected_stage === nothing ? nothing : max(0, final_stage - expected_stage)
+        wasted_levels = isempty(stage_level_counts) || expected_stage === nothing ? nothing : sum(stage_level_counts[(expected_stage + 1):end]; init = 0)
+        expected_idxs = expected_stage === nothing ? nothing : expected_active_idxs_or_nothing(system_id, basis)
+        pruned_match = expected_idxs === nothing ? nothing : support_match_pruned(result.structure, result.params, expected_idxs)
         eq_final_stages = haskey(meta, :eq_final_stages) && meta.eq_final_stages !== nothing ? collect(meta.eq_final_stages) : nothing
         eq_stage_histories = haskey(meta, :eq_stage_histories) && meta.eq_stage_histories !== nothing ? [collect(hist) for hist in meta.eq_stage_histories] : nothing
         has_eq_stage_data = eq_final_stages !== nothing && eq_stage_histories !== nothing
-        local_eq_overshoot = has_eq_stage_data ? eq_overshoot(eq_final_stages, expected_stage) : nothing
-        local_eq_wasted_levels = has_eq_stage_data ? eq_wasted_levels(eq_stage_histories, expected_stage) : nothing
+        local_eq_overshoot = has_eq_stage_data && expected_stage !== nothing ? eq_overshoot(eq_final_stages, expected_stage) : nothing
+        local_eq_wasted_levels = has_eq_stage_data && expected_stage !== nothing ? eq_wasted_levels(eq_stage_histories, expected_stage) : nothing
 
         base_record["loss"] = result.loss
         base_record["pruned_match"] = pruned_match
@@ -710,19 +739,19 @@ end
 function done_log_line(record, index::Int, total::Int)
     if record["error"] !== nothing
         return @sprintf(
-            "[%d/%d] variant=%s sys=%d ic=%d seed=%d - done loss=null stage=null/%d pruned=null elapsed=nulls error=%s",
+            "[%d/%d] variant=%s sys=%d ic=%d seed=%d - done loss=null stage=null/%s pruned=null elapsed=nulls error=%s",
             index,
             total,
             record["variant"],
             record["system_id"],
             record["initial_condition_set"],
             record["seed"],
-            record["expected_stage"],
+            string(record["expected_stage"]),
             record["error"],
         )
     end
     return @sprintf(
-        "[%d/%d] variant=%s sys=%d ic=%d seed=%d - done loss=%.3e stage=%s/%d pruned=%s elapsed=%.1fs",
+        "[%d/%d] variant=%s sys=%d ic=%d seed=%d - done loss=%.3e stage=%s/%s pruned=%s elapsed=%.1fs",
         index,
         total,
         record["variant"],
@@ -731,7 +760,7 @@ function done_log_line(record, index::Int, total::Int)
         record["seed"],
         record["loss"],
         string(record["final_stage"]),
-        record["expected_stage"],
+        string(record["expected_stage"]),
         string(record["pruned_match"]),
         record["elapsed_s"],
     )
@@ -740,24 +769,24 @@ end
 function summary_line(record)
     if record["error"] !== nothing
         return @sprintf(
-            "variant=%s sys=%d ic=%d seed=%d loss=null stage=null/%d pruned=null elapsed=nulls error=%s",
+            "variant=%s sys=%d ic=%d seed=%d loss=null stage=null/%s pruned=null elapsed=nulls error=%s",
             record["variant"],
             record["system_id"],
             record["initial_condition_set"],
             record["seed"],
-            record["expected_stage"],
+            string(record["expected_stage"]),
             record["error"],
         )
     end
     return @sprintf(
-        "variant=%s sys=%d ic=%d seed=%d loss=%.3e stage=%s/%d pruned=%s elapsed=%.1fs",
+        "variant=%s sys=%d ic=%d seed=%d loss=%.3e stage=%s/%s pruned=%s elapsed=%.1fs",
         record["variant"],
         record["system_id"],
         record["initial_condition_set"],
         record["seed"],
         record["loss"],
         string(record["final_stage"]),
-        record["expected_stage"],
+        string(record["expected_stage"]),
         string(record["pruned_match"]),
         record["elapsed_s"],
     )
