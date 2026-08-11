@@ -4,6 +4,54 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ---
 
+## 2026-08-11
+
+### 1D-Kostenprofil: Pretuning bringt auf 1D nichts, und die Line-Search-Pathologie haengt nicht daran
+
+Aus WP-E1 fiel eine Zelle auf, die fuer ein triviales 1D-System (System 2, ein Term, ein Parameter)
+**858.540** ODE-Integrationen verbrauchte — 28.618 Loss-Evaluierungen pro Fit, bei einem
+Regressionsvergleich von 38. Erste Hypothese: das derivative Pretuning trifft per Least-Squares das
+Optimum praktisch exakt, BFGS startet damit im Minimum, und die Line-Search verhungert. Zur Pruefung
+ein vollstaendiges Profil ueber **alle 23 1D-Systeme in beiden Phase-B-Bedingungen**, Seed 42,
+IC-Satz 1 — 46 Zellen, gemessen in Zaehlgroessen, nicht in Sekunden.
+
+**Die Hypothese ist widerlegt.** Pathologische Zellen (>= 1.000 Evals/Fit): **12 mit Pretuning, 14
+ohne**. Die Line-Search-Pathologie ist eine Eigenschaft des Optimierers, nicht des Startpunkts. Auch
+der Kostenfaktor relativiert sich vollstaendig: aggregiert 40,97e6 gegen 26,84e6 Evaluierungen, also
+**1,53x**, nicht die 288x des Einzelfalls. Es gibt ebenso extreme Gegenfaelle — auf System 8 kostet
+`pretune_off` das Tausendfache, auf 3, 12 und 20 rund das Zehnfache.
+
+**Pretuning bringt auf 1D keinen messbaren Nutzen.** Von 23 Systemen liegen **20** im Loss innerhalb
+einer Zehnerpotenz; einmal ist Pretuning besser (System 15, 1,7 Dekaden), **zweimal schlechter**. Die
+erreichte Stage ist in **23 von 23** identisch, der Support in 19 von 23. Bezahlt wird das mit 53 %
+mehr Evaluierungen.
+
+Ein Fall ist ein echter Schaden: **System 8**. Mit Pretuning bricht die Suche nach 1.830
+Evaluierungen mit Loss **5,75e+2** ab; ohne Pretuning kostet sie 2,2e6 Evaluierungen und erreicht
+6,48e-5 — knapp sieben Groessenordnungen. Der Warmstart fuehrt die Suche offenbar in ein Plateau,
+das das Abbruchkriterium ausloest. Das ist ein Kandidat fuer eine gezielte Nachanalyse, nicht fuer
+eine schnelle Korrektur.
+
+**Wichtiger Vorbehalt:** alle 23 Systeme sind eindimensional. Der Forschungsfokus sind gekoppelte
+Systeme, wo ein informierter Startpunkt bei mehreren Gleichungen und groesseren Parametervektoren
+plausibel mehr beitraegt als bei einem einzigen Parameter. Das Nullergebnis auf 1D ist ein
+Teilergebnis der Phase-B-Frage, kein Grund, die Bedingung zu streichen.
+
+**Fuer die Ressourcenplanung:** im Mittel rund 1,5e6 ODE-Integrationen pro 1D-Zelle. Auf 756 Laeufe
+hochgerechnet liegt das in der Groessenordnung der bisherigen 1e9-Annahme in
+`docs/hpc_requirements.md`, mit Aufschlag fuer hoehere Dimensionen. Die Annahme ist damit eher knapp
+als grosszuegig.
+
+Rohdaten: `outputs/studies/regression/phase_b/profile1d/` (gitignored), Manifest
+`wp_e1_manifest.csv`, Phase-B-Fingerprint `e577d9d692f3125b`.
+
+Nebenbefund aus dem Lauf: ein Rechnerabsturz mitten im Profil kostete genau **eine** Zelle — die zum
+Zeitpunkt des Absturzes laufende. Alle bereits geschriebenen Records ueberlebten, weil der Batch-Pfad
+je Zelle einen Prozess faehrt und sofort schreibt. Unfreiwilliger, aber realistischer Test des
+Resume-Verhaltens, das fuer den Cluster gebaut wurde.
+
+---
+
 ## 2026-08-10
 
 ### WP-D2 bis WP-D5 - Optimizer-Budget, Contract, Telemetrie, Referenzverifikation
