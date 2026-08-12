@@ -16,6 +16,10 @@ function _parse_optional_int(value)
     return parse(Int, value)
 end
 
+function _has_flag(args::Vector{String}, name::String)
+    return any(==(name), args)
+end
+
 function phase_b_manifest_rows()
     fingerprint = phase_b_fingerprint()
     rows = NamedTuple[]
@@ -105,7 +109,10 @@ function main(args = ARGS)
     arg_output !== nothing && (output = arg_output)
 
     dimension = _parse_optional_int(_arg_value(args, "--dimension"))
+    all_dimensions = _has_flag(args, "--all-dimensions")
+    dimension !== nothing && all_dimensions && error("Use either --dimension or --all-dimensions, not both")
     index_output = _arg_value(args, "--index-output")
+    index_output !== nothing && all_dimensions && error("--index-output is only valid with --dimension")
 
     rows = phase_b_manifest_rows()
     unique_identities = phase_b_unique_identity_count(rows)
@@ -116,6 +123,10 @@ function main(args = ARGS)
     if dimension !== nothing
         index_output === nothing && (index_output = joinpath(dirname(output), "indices_dim$(dimension).txt"))
         write_phase_b_dimension_index_list(index_output, rows, dimension)
+    elseif all_dimensions
+        for dim in sort(unique(row.system_dim for row in rows))
+            write_phase_b_dimension_index_list(joinpath(dirname(output), "indices_dim$(dim).txt"), rows, dim)
+        end
     end
 
     counts = phase_b_representability_counts()
@@ -134,6 +145,12 @@ function main(args = ARGS)
         println("dimension=$(dimension)")
         println("dimension_rows=$(count_dim)")
         println("dimension_index_output=$(index_output)")
+    elseif all_dimensions
+        for dim in sort(unique(row.system_dim for row in rows))
+            count_dim = count(row -> row.system_dim == dim, rows)
+            println("dimension_$(dim)_rows=$(count_dim)")
+            println("dimension_$(dim)_index_output=$(joinpath(dirname(output), "indices_dim$(dim).txt"))")
+        end
     end
 end
 

@@ -8,6 +8,8 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ### WP-E2 - Strukturmetrik fuer alle 63 Kampagnensysteme, und eine zu grosszuegige Klassifikation
 
+<!-- e675083 -->
+
 `pruned_match` war fuer **jedes** Phase-B-System `nothing`. Die Kampagne haette 756 Zellen ohne ihre
 Hauptmetrik gerechnet. Zwei Ursachen, beide behoben.
 

@@ -209,3 +209,142 @@ pilot timing measurements on the cluster. Neither requires changing the campaign
 What we cannot do without access is build and run the container, and produce a single trustworthy
 timing figure. We expect to be ready to run within days of receiving access, and would use a pilot
 allocation immediately to firm up §5 and §6.
+
+---
+
+## 9. Phase B cluster bootstrap smoke runbook
+
+This is a technical smoke test only. Use a throwaway output root, not a campaign directory.
+Records from this procedure prove that the image and batch plumbing work; they are not scientific
+campaign data.
+
+Set paths on the login node:
+
+```bash
+export EVOODE_IMAGE="$PWD/containers/evoode_regression.sif"
+export EVOODE_OUTPUT_ROOT="$PWD/outputs/hpc_smoke_$(date +%Y%m%d_%H%M%S)"
+mkdir -p "$EVOODE_OUTPUT_ROOT" logs
+```
+
+### Step 1: build the image
+
+```bash
+apptainer build "$EVOODE_IMAGE" containers/evoode_regression.apptainer
+```
+
+Pass criterion: the command exits 0 and creates a readable `.sif`.
+
+Failure looks like: build command fails, cannot pull `julia:1.12.6-bookworm`, fakeroot/root is
+unavailable, or `Pkg.instantiate()` / `Pkg.precompile()` fails.
+
+Meaning: the cluster cannot yet produce the frozen runtime. Resolve Apptainer permissions, network
+at build time, or the Julia depot build before submitting any array job.
+
+### Step 2: inspect build provenance inside the image
+
+```bash
+apptainer exec --cleanenv "$EVOODE_IMAGE" cat /opt/EvoODE/build_provenance.json
+sha256sum Project.toml Manifest.toml
+```
+
+Pass criterion: `julia_version` is `1.12.6`, and the JSON hashes match the local committed
+`Project.toml` and `Manifest.toml` SHA-256 values printed by `sha256sum`.
+
+Failure looks like: missing `build_provenance.json`, Julia version not `1.12.6`, or either hash
+differs.
+
+Meaning: the image was built from the wrong definition, wrong source tree, or wrong dependency
+freeze. Do not run cells from it.
+
+### Step 3: generate manifest and dimension index lists inside the image
+
+```bash
+bash hpc/bootstrap_phase_b_manifest.sh
+```
+
+This binds `$EVOODE_OUTPUT_ROOT` to `/outputs` and runs:
+
+```bash
+julia --project=/opt/EvoODE /opt/EvoODE/studies/regression/generate_phase_b_manifest.jl \
+    --output /outputs/manifest.csv \
+    --all-dimensions
+```
+
+Pass criterion: output includes `phase_b_fingerprint=c71c85ac2ec580ff` and `rows=756`, and the bound
+root contains `manifest.csv`, `indices_dim1.txt`, `indices_dim2.txt`, `indices_dim3.txt`, and
+`indices_dim4.txt`.
+
+Failure looks like: fingerprint differs, row count differs, or an index-list file is missing or
+empty.
+
+Meaning: a fingerprint mismatch means the image does not contain the code/config/support table we
+think it contains. A row/list mismatch means the campaign grid is not the expected 63 systems x 2
+conditions x 3 seeds x 2 IC sets.
+
+### Step 4: submit one to three 1D smoke cells
+
+```bash
+sbatch --array=1-1 --time=01:00:00 hpc/slurm_phase_b_smoke.sh
+```
+
+Optionally use `--array=1-3` for three 1D cells. Do not use 2D or higher cells for this smoke test.
+
+Pass criterion: each array task exits 0 and writes exactly one
+`$EVOODE_OUTPUT_ROOT/tasks/cell_*.jsonl` record.
+
+Failure looks like: Slurm stderr says the manifest or `indices_dim1.txt` is missing, Apptainer cannot
+mount `/outputs`, the cell reports a fingerprint mismatch, or no task record appears.
+
+Meaning: missing manifest/list means Step 3 did not write into the bound root. A mount/path failure
+means the cluster binding command is wrong. A fingerprint mismatch means the manifest and runtime
+came from different code.
+
+### Step 5: check the record
+
+```bash
+wc -l "$EVOODE_OUTPUT_ROOT"/tasks/cell_*.jsonl
+grep -L '"error":null' "$EVOODE_OUTPUT_ROOT"/tasks/cell_*.jsonl
+```
+
+Pass criterion: each record file has exactly one line, and no file is printed by `grep -L`.
+
+Failure looks like: zero lines, more than one line, malformed JSON, or `error` is not `null`.
+
+Meaning: zero lines means the cell did not finish writing; multiple lines means the output path was
+reused incorrectly; non-null `error` means the batch entry point caught a runtime failure and the
+record must not be merged.
+
+### Step 6: check heartbeat liveness
+
+```bash
+for hb in "$EVOODE_OUTPUT_ROOT"/tasks/cell_*.heartbeat.jsonl; do
+    echo "$hb"
+    grep '"event":"start"' "$hb"
+    grep '"event":"level"' "$hb"
+    grep '"event":"complete"' "$hb"
+done
+```
+
+Pass criterion: each cell heartbeat exists and contains one `start`, at least one `level`, and one
+`complete` event.
+
+Failure looks like: missing heartbeat, no `start`, no level events, or no `complete`.
+
+Meaning: missing start means the batch cell did not enter `run_one`; missing level events means the
+search did not advance far enough to prove within-run liveness; missing complete means the process
+ended before the finalizer recorded the terminal state.
+
+### Step 7: verify outputs survive container exit
+
+```bash
+ls -l "$EVOODE_OUTPUT_ROOT"/manifest.csv "$EVOODE_OUTPUT_ROOT"/indices_dim*.txt
+ls -l "$EVOODE_OUTPUT_ROOT"/tasks/cell_*.jsonl "$EVOODE_OUTPUT_ROOT"/tasks/cell_*.heartbeat.jsonl
+```
+
+Pass criterion: manifest, index lists, records, and heartbeat files are visible from the login node
+after all Apptainer commands have exited.
+
+Failure looks like: files existed during the job log but are absent on the host.
+
+Meaning: outputs were written inside the image or an unbound working directory instead of the bound
+output root. Fix bind paths before any real campaign run.
