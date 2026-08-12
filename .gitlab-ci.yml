@@ -6,12 +6,16 @@ build_campaign_image:
   tags:
     - cpu
   timeout: 3 hours
+  services:
+    - name: docker:29-dind
+      alias: docker
   rules:
     - if: '$CI_COMMIT_BRANCH == "main"'
     - if: '$CI_COMMIT_TAG'
     - when: never
   variables:
     DOCKER_BUILDKIT: "1"
+    DOCKER_TLS_CERTDIR: ""
   before_script:
     - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" "$CI_REGISTRY"
   script:
