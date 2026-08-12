@@ -8,7 +8,7 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ### Das Zielsystem ist kein Slurm-Standort - und WP-H2, das Docker-Image dafuer
 
-<!-- HASH -->
+<!-- 16d156a -->
 
 **Der Befund, der die halbe HPC-Vorbereitung neu adressiert.** Der Zielcluster ist SCCH "Orion", ein
 **OpenShift/Kubernetes**-Cluster (`console-openshift-console.apps.orion.scch.at`), **kein
