@@ -6,6 +6,56 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ## 2026-08-12
 
+### Das Zielsystem ist kein Slurm-Standort - und WP-H2, das Docker-Image dafuer
+
+<!-- HASH -->
+
+**Der Befund, der die halbe HPC-Vorbereitung neu adressiert.** Der Zielcluster ist SCCH "Orion", ein
+**OpenShift/Kubernetes**-Cluster (`console-openshift-console.apps.orion.scch.at`), **kein
+Slurm-Standort**. `docs/hpc_requirements.md`, `containers/evoode_regression.apptainer` und
+`hpc/slurm_*.sh` richten sich damit an eine Plattform, die es fuer dieses Projekt nicht gibt. Sie
+bleiben als Slurm-seitige Referenz liegen, sind aber nicht der Weg zur Kampagne.
+
+Die Uebersetzungstabelle: Apptainer-`.sif` → Docker-Image, gebaut von GitLab CI und abgelegt in
+`registry.gitlab.scch.at`; `sbatch --array` → Kubernetes `kind: Job` mit `completions`/`parallelism`;
+`$SLURM_ARRAY_TASK_ID` → `$JOB_COMPLETION_INDEX`; Shared FS → NFS-Volume auf `nfs.orion.scch.at`.
+CPU-only, 1 Kern und 2 GB pro Job — eine GPU beschleunigt 1D-bis-4D-ODE-Loesungen nicht.
+
+**Was die Batch-Architektur betrifft: sie traegt.** Manifest als geordnete Zell-Liste, ein Entry
+Point pro Zelle, Merge am Ende — das ist auch das Kubernetes-Modell. Es aendert sich nur, woher der
+Index kommt. Die WP-B2- und WP-H1-Arbeit ist nicht verloren.
+
+**Nebeneffekt zugunsten der Reproduzierbarkeit.** Die CI der Hausinstanz taggt Images mit
+`$CI_COMMIT_SHA`, nicht mit `latest`. Referenziert das Job-Manifest diesen Tag, ist per Konstruktion
+ausgeschlossen, dass zwei Zellen einer Kampagne auf verschiedenem Code laufen — ein staerkerer
+Provenance-Nachweis als ein `.sif` auf einem Login-Node. GitHub bleibt Single Source of Truth,
+GitLab ist reines Deploy-Ziel; der SHA ist auf beiden identisch.
+
+**WP-H2: `containers/Dockerfile`.** Abschnittsweise aequivalent zur Apptainer-Definition — gleiche
+Basis, gleicher Julia-Pin, Depot im Image, gleicher `build_provenance.json`, Entry Point auf
+`run_batch_cell.jl`.
+
+Die eine Anforderung ohne Apptainer-Gegenstueck: **OpenShift startet Container unter einer
+willkuerlichen UID mit GID 0**, nicht als der aufrufende Nutzer. Ein Image, das eine feste Identitaet
+annimmt, faellt dort mit einem Rechtefehler um, der nicht nach seiner Ursache aussieht. Geloest ueber
+`chgrp -R 0` plus `chmod -R g=u` auf Quellbaum, Depot und Output-Wurzel, dazu `HOME=/tmp`, weil eine
+gewuerfelte UID kein Home-Verzeichnis hat. Kein fixes `USER` — das ueberschreibt die Plattform ohnehin.
+
+Verifikation lokal, ohne Cluster: Image baut; `build_provenance.json` meldet Julia 1.12.6 und beide
+Abhaengigkeits-Hashes stimmen mit den eingecheckten Dateien ueberein; Manifestgenerierung im Container
+liefert `phase_b_fingerprint=c71c85ac2ec580ff` und `rows=756`, also den WP-H1-Wert. Dieselbe 1D-Zelle
+(System 11, Manifestindex 61) lief **zweimal** durch, einmal als Default-User und einmal als
+`--user 12345:0`: beide `loss=4.674e-15`, `error=null`, Record und Heartbeat auf dem Host. Damit ist
+der teuerste OpenShift-Fehlermodus lokal ausgeschlossen statt auf dem Cluster entdeckt.
+
+`.dockerignore` ist eine Allowlist (`*` plus gezielte `!`-Eintraege), damit kein lokaler Zustand
+still ins Image geraet. Bildgroesse 1,29 GB Inhalt, davon 3,1 GB Depot auf Platte.
+
+Offen bis Orion: CI-Mechanik und Registry, Pull-Secrets, das Job-Manifest samt Index-Abbildung, die
+NFS-Konventionen und jede Laufzeitzahl. Details in `codex/REPORT_WP_H2.md`.
+
+---
+
 ### WP-E2 - Strukturmetrik fuer alle 63 Kampagnensysteme, und eine zu grosszuegige Klassifikation
 
 <!-- e675083 -->

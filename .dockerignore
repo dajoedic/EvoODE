@@ -1,0 +1,16 @@
+*
+
+!Project.toml
+!Manifest.toml
+
+!src/
+!src/**
+
+!studies/
+!studies/**
+
+!benchmarks/
+!benchmarks/**
+
+!containers/
+!containers/Dockerfile

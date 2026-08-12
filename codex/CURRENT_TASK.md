@@ -1,97 +1,105 @@
 # CURRENT TASK
 
-**Language: Julia**
+**Language: Docker / Shell**
 
-## WP-H1 — Cluster bootstrap: from image build to one finished cell
+## WP-H2 — A Docker image for the Orion cluster
 
-Goal is a **technical** smoke test on the HPC, not a scientific run: does the image build, does Julia
-find its frozen depot, does one cell complete, do record and heartbeat land in the bound directory.
+### Why this exists
 
-The campaign itself is not ready — the surrogate scoring scheme for 43 of 63 systems is undefined and
-will move the Phase B fingerprint once more. Records produced by this test are therefore technically
-valid and scientifically worthless. That is fine, and it is exactly why they must land in a throwaway
-location and never in the campaign history.
+The target cluster is **not a Slurm site**. It is SCCH "Orion", an **OpenShift/Kubernetes** cluster.
+`containers/evoode_regression.apptainer` and the `hpc/slurm_*.sh` scripts address a platform we do
+not have access to. They stay in the repository as the Slurm-side reference, but the cluster needs
+an **OCI image**, built by GitLab CI and pulled by a Kubernetes Job.
 
-### What already exists
+This work package produces **only the image**. No CI configuration, no Kubernetes manifest, no
+index-mapping wrapper — those depend on site answers we do not have yet. Scope discipline matters
+here: an image that provably runs one cell locally is the precondition for everything downstream,
+and it is verifiable today without any cluster access.
 
-`containers/evoode_regression.apptainer` copies `src`, `studies` and `benchmarks` into the image, so
-the ODEBench dataset and `studies/regression/phase_b_support.json` come along. Its runscript calls
-`run_batch_cell.jl`, which serves both campaigns via the manifest.
+### 1. The Dockerfile
 
-`hpc/slurm_regression_array.sh` runs one cell per array task and binds an output root to `/outputs`.
+Translate `containers/evoode_regression.apptainer` into a `Dockerfile`. The two definitions must
+stay behaviourally equivalent; the Apptainer file is the specification, not a loose inspiration.
 
-### The gap
+Carry over, section by section:
 
-The array script expects `${EVOODE_OUTPUT_ROOT}/manifest.csv` and `indices_dim<N>.txt` to exist.
-Both live under `outputs/` locally, are gitignored, and are therefore **not** in the image. Nothing
-in the cluster workflow creates them.
+- the same base image and the same pinned Julia version
+- the same thread-pinning environment, both Julia and OpenBLAS
+- the same depot location baked into the image, so no compute node ever resolves packages
+- the same set of copied source trees, so the ODEBench dataset and the Phase B support table travel
+  with the image
+- the same build-provenance record, written at build time with the same fields — it is the artifact
+  that proves which dependency freeze the image contains, and it must survive the port
+- the same instantiate-and-precompile step, so container start does no compilation work
+- an entry point that runs one cell and exits, matching the Apptainer runscript's behaviour, so that
+  arguments passed to the container reach the batch entry point unchanged
 
-### 1. Manifest bootstrap inside the container
+Place it where the Apptainer definition already lives. Do not start a parallel directory.
 
-Provide the step that generates the manifest and the per-dimension index lists **inside the image**,
-so they are produced by the same code and the same fingerprint the cells will run under. Writing them
-on a laptop and copying them up would be a silent way to run cells against a manifest from different
-code.
+### 2. The OpenShift constraint that will otherwise bite
 
-It must write into the bound output root, not into the image.
+This is the one requirement with no Apptainer counterpart, and the most likely cause of a silent
+failure later.
 
-Report the fingerprint it prints, so it can be compared against the local value
-`c71c85ac2ec580ff`. A mismatch means the image does not contain the code we think it does — that is
-the single most valuable check in this whole work package.
+Apptainer runs as the invoking user. **OpenShift does not** — under its default security context it
+assigns an arbitrary, unpredictable UID at pod start, with group 0. A container that assumes it runs
+as `root`, or as any specific user, or that writes into a directory only writable by its build-time
+owner, will fail at runtime with a permission error that looks nothing like its cause.
 
-### 2. Smoke submission for a handful of cells
+The image must therefore run correctly as an **arbitrary UID with GID 0**. Every path the process
+reads at runtime must be readable by that UID, and every path it writes must be writable through
+group 0. Apply this to the Julia depot, the source tree, and any directory the entry point creates
+or writes into. Do not solve it by forcing a fixed `USER` — that is precisely what the platform
+overrides.
 
-A submission path for **one to three cells**, not 756, writing into a throwaway output root separate
-from any campaign directory.
+State in the report which paths you adjusted and why.
 
-Pick 1D cells. A 2D cell took over two hours of CPU per arm in the budget comparison and is useless
-for a smoke test; system 11 completes in well under a minute locally.
+### 3. Build context hygiene
 
-Keep the existing array script intact and general. If a separate small script is cleaner than adding
-flags, write a separate one.
+Provide a `.dockerignore`. The build context must not carry `outputs/`, the git history, local
+scratch directories, or anything else the image does not need. The repository is small, so this is
+about correctness and reproducibility of the context, not about transfer time: a stray local output
+directory inside the image would be a silent way to ship laptop state to the cluster.
 
-### 3. The runbook
+### 4. What must be verified, locally, before this is reported done
 
-A short, ordered procedure from `apptainer build` to a finished record, with a **pass criterion per
-step** — not prose. At minimum:
+Docker is available on the development machine. Nothing here needs a cluster.
 
-- image builds
-- `build_provenance.json` inside the image reports Julia 1.12.6 and matches the committed
-  `Project.toml` / `Manifest.toml` hashes (this is what WP-D1 put there; this is the moment it earns
-  its keep)
-- manifest generation prints `phase_b_fingerprint=c71c85ac2ec580ff` and `rows=756`
-- one cell completes, writes exactly one record, `error=null`
-- the heartbeat file for that cell exists and contains `start`, per-level and `complete` events
-- record and heartbeat are in the bound output root and survive container exit
+- the image builds
+- the build-provenance record inside the image reports the pinned Julia version and matches the
+  committed dependency-freeze hashes, exactly as the Apptainer path required
+- the manifest and per-dimension index lists can be generated **inside the container** into a mounted
+  output directory, and the fingerprint printed matches the value WP-H1 established
+- **one 1D cell runs to completion inside the container**, writing exactly one record with a null
+  error field, plus its heartbeat, into the mounted directory
+- record and heartbeat are present on the host after the container exits
 
-State for each step what failure looks like and what it would mean. A runbook that only describes
-success is useless at 2 a.m. on a login node.
+Use a throwaway output location. Records from this test are technically valid and scientifically
+worthless; they must never land in a campaign directory.
 
-Put it where the HPC documentation already lives; do not start a new parallel document.
+Pick a 1D cell. A 2D cell costs hours of CPU and proves nothing extra here.
 
-### 4. What you can verify without a cluster
+### 5. Simulate the arbitrary-UID case
 
-Apptainer is not available here, so the build cannot be tested. Verify what can be verified:
+Verifying the image only as the default user does not test the constraint from §2. Run the
+one-cell check a second time under an arbitrary, non-root UID with group 0, mimicking what OpenShift
+will do. If that run fails while the default run succeeds, §2 is not satisfied yet.
 
-- every file the workflow references exists at the path the image will see, given the `%files`
-  section — walk it explicitly rather than assuming
-- the manifest generator produces manifest and index lists into a given output root, and the index
-  lists reference valid manifest rows
-- one cell runs locally from a generated manifest into a throwaway directory, producing record and
-  heartbeat
+This single check is the highest-value item in the work package — it is the failure mode that would
+otherwise surface for the first time on the cluster, where it is far harder to diagnose.
 
-Say plainly which steps remain untested until the image is built.
+### 6. Out of scope
 
-### 5. Out of scope
+`.gitlab-ci.yml`, any Kubernetes manifest, the mapping from a completion index to a manifest row,
+NFS paths, and any change to metrics, configuration, hyperparameters or fingerprints. This work
+package adds no metric and changes no number.
 
-WP-E3 (merge, registry, aggregation), the surrogate scoring scheme, the resource estimate, and any
-change to metrics, configuration or fingerprints. This work package adds no metric and changes no
-number.
-
-Do not run 2D or higher cells. Do not touch the campaign output directories.
+Do not delete or rewrite the Apptainer definition or the Slurm scripts. Do not run 2D or higher
+cells. Do not touch campaign output directories.
 
 ### Report
 
-Write `codex/REPORT_WP_H1.md`: the bootstrap step and where it writes, the smoke submission path, the
-runbook location, the local verification results, and an explicit list of what remains untested until
-the image exists.
+Write `codex/REPORT_WP_H2.md`: where the Dockerfile lives, the section-by-section correspondence to
+the Apptainer definition, the paths adjusted for the arbitrary-UID constraint, the results of both
+local one-cell runs (default user and arbitrary UID), the fingerprint observed, and an explicit list
+of what remains untested until the image runs on Orion.
