@@ -4,9 +4,61 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ---
 
+## 2026-08-12
+
+### WP-E2 - Strukturmetrik fuer alle 63 Kampagnensysteme, und eine zu grosszuegige Klassifikation
+
+`pruned_match` war fuer **jedes** Phase-B-System `nothing`. Die Kampagne haette 756 Zellen ohne ihre
+Hauptmetrik gerechnet. Zwei Ursachen, beide behoben.
+
+**Der wahre Support existierte nur fuer fuenf Systeme.** `expected_terms_for` ist eine handgepflegte
+Tabelle und warf fuer alles ausserhalb des Diagnosesets. Neu:
+`studies/regression/derive_phase_b_support.jl` leitet den Support pro Gleichung aus den
+RHS-Ausdruecken des Datensatzes ab und schreibt `phase_b_support.json`, eingecheckt und mit blossem
+Auge pruefbar. Der Support muss zweierlei erfuellen: **exakt** (reproduziert die RHS bis 1e-9) und
+**minimal** (kein Term entfernbar, ohne das zu brechen). Minimalitaet ist nicht kosmetisch — eine
+blosse Schwelle auf den LS-Koeffizienten lieferte fuer die Systeme 52 und 62 Supports mit 18 bzw. 26
+Termen, also eine ueber die Basis verschmierte Darstellung statt des wahren Supports.
+
+Ausgewertet wird an beiden IC-Trajektorien plus 400 Streupunkten **innerhalb** der besuchten Box. Eine
+einzelne Trajektorie laesst Basisspalten kollinear, womit die LS-Loesung nicht eindeutig ist; unter
+dieser Bedingung war System 63 gar nicht ableitbar. Die Streuung bleibt in der Box, weil sie sonst den
+Definitionsbereich mancher RHS verlaesst (`log`, `sqrt`).
+
+**Abnahme: alle fuenf handkodierten Systeme werden exakt reproduziert**, System 63 in 4D
+eingeschlossen. Der Generator bricht bei Abweichung ab, statt die Tabelle zu schreiben.
+
+**Nebenbefund, der die Papieraussage betrifft: die Repraesentierbarkeit war zu grosszuegig.** Die
+Systeme **30, 52 und 62** galten als `exact`, haben aber keinen wahren Support in der Basis. Der alte
+Test fittete die Basis entlang **einer Trajektorie**; eine Funktion kann auf einer Kurve mit einer
+Basisdarstellung uebereinstimmen, ohne im Zustandsraum diese Funktion zu sein. Die Kampagne stuetzt
+ihre Strukturaussage damit auf **20 exakte Systeme, nicht 23**. `representability` kommt jetzt aus
+derselben Rechnung wie der Support, damit "exakt" und "es gibt einen wahren Support" eine Aussage
+sind statt zweier, die auseinanderlaufen koennen. Der alte Trajektorien-Test wurde entfernt.
+
+**Entkopplung von `expected_stage`.** Support-Recovery haengt nicht davon ab, welche Stage erwartet
+wurde; das Gate ist weg. Die stage-abhaengigen Metriken bleiben ohne erwartete Stage `nothing` — es
+wurde keine erwartete Stage erfunden.
+
+**Budget-Stopps nach Dimension**: keine Schemaaenderung noetig, Records tragen `system_id` und das
+Manifest `system_dim`. Grenze, die zu nennen ist: die Parameterzahl pro Fit ist **nicht**
+rekonstruierbar, weil die Zaehler pro Zelle aggregiert sind.
+
+Fingerprints: Regression unveraendert `45cb2c4507007366`. Phase B `c0a236edf030e03a` →
+`c71c85ac2ec580ff`, weil drei Systeme neu klassifiziert sind und der abgeleitete Support Teil der
+Identitaet wird — er definiert, was `pruned_match` bedeutet.
+
+Verifikation: exakte Zelle (System 11) liefert `pruned=true`, Surrogatzelle (System 1) `nothing`; die
+Regressionszelle System 11 ist ueber **62 Felder unveraendert**. Details in `codex/REPORT_WP_E2.md`.
+
+---
+
 ## 2026-08-11
 
 ### WP-F3 - Evaluationsbudget final auf 20.000 gesetzt
+
+<!-- fb2c3a9 WP-F1/F2 -->
+<!-- 8ae409e WP-F3/G1 -->
 
 Entscheidung vor dem Campaign-Freeze: `BFGS_MAX_LOSS_EVALS` im Kampagnenpfad sinkt von 100.000 auf
 **20.000** pro Parameterfit. Das aendert den Regressions- und den Phase-B-Fingerprint ein letztes

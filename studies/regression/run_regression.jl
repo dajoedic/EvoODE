@@ -734,7 +734,16 @@ function run_one(variant,
         stage_level_counts = haskey(meta, :stage_level_counts) ? collect(meta.stage_level_counts) : Int[]
         stage_overshoot = final_stage === nothing || expected_stage === nothing ? nothing : max(0, final_stage - expected_stage)
         wasted_levels = isempty(stage_level_counts) || expected_stage === nothing ? nothing : sum(stage_level_counts[(expected_stage + 1):end]; init = 0)
-        expected_idxs = expected_stage === nothing ? nothing : expected_active_idxs_or_nothing(system_id, basis)
+        # Support recovery does not depend on which stage was expected. Gating it
+        # on expected_stage suppressed the metric for every Phase B system, since
+        # the dataset carries no expected stage. Campaign systems supply their
+        # derived support directly; the diagnostic systems keep the hand-encoded
+        # table, which is unchanged.
+        expected_idxs = if haskey(system, :expected_support) && system[:expected_support] !== nothing
+            system[:expected_support]
+        else
+            expected_active_idxs_or_nothing(system_id, basis)
+        end
         pruned_match = expected_idxs === nothing ? nothing : support_match_pruned(result.structure, result.params, expected_idxs)
         eq_final_stages = haskey(meta, :eq_final_stages) && meta.eq_final_stages !== nothing ? collect(meta.eq_final_stages) : nothing
         eq_stage_histories = haskey(meta, :eq_stage_histories) && meta.eq_stage_histories !== nothing ? [collect(hist) for hist in meta.eq_stage_histories] : nothing

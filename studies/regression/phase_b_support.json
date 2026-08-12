@@ -1,0 +1,863 @@
+{
+    "scatter_seed": 20260812,
+    "rtol": 1.0e-9,
+    "atol": 1.0e-9,
+    "generated_by": "studies/regression/derive_phase_b_support.jl",
+    "systems": [
+        {
+            "representability": "surrogate",
+            "status": "eq1_not_representable",
+            "dim": 1,
+            "system_id": 1,
+            "support_idxs": null,
+            "support_terms": null
+        },
+        {
+            "representability": "exact",
+            "status": "ok",
+            "dim": 1,
+            "system_id": 2,
+            "support_idxs": [
+                [
+                    1
+                ]
+            ],
+            "support_terms": [
+                [
+                    "u1"
+                ]
+            ]
+        },
+        {
+            "representability": "exact",
+            "status": "ok",
+            "dim": 1,
+            "system_id": 3,
+            "support_idxs": [
+                [
+                    1,
+                    2
+                ]
+            ],
+            "support_terms": [
+                [
+                    "u1",
+                    "u1^2"
+                ]
+            ]
+        },
+        {
+            "representability": "surrogate",
+            "status": "eq1_not_representable",
+            "dim": 1,
+            "system_id": 4,
+            "support_idxs": null,
+            "support_terms": null
+        },
+        {
+            "representability": "surrogate",
+            "status": "eq1_not_representable",
+            "dim": 1,
+            "system_id": 5,
+            "support_idxs": null,
+            "support_terms": null
+        },
+        {
+            "representability": "exact",
+            "status": "ok",
+            "dim": 1,
+            "system_id": 6,
+            "support_idxs": [
+                [
+                    1,
+                    2
+                ]
+            ],
+            "support_terms": [
+                [
+                    "u1",
+                    "u1^2"
+                ]
+            ]
+        },
+        {
+            "representability": "surrogate",
+            "status": "eq1_not_representable",
+            "dim": 1,
+            "system_id": 7,
+            "support_idxs": null,
+            "support_terms": null
+        },
+        {
+            "representability": "exact",
+            "status": "ok",
+            "dim": 1,
+            "system_id": 8,
+            "support_idxs": [
+                [
+                    1,
+                    2,
+                    3
+                ]
+            ],
+            "support_terms": [
+                [
+                    "u1",
+                    "u1^2",
+                    "u1^3"
+                ]
+            ]
+        },
+        {
+            "representability": "surrogate",
+            "status": "eq1_not_representable",
+            "dim": 1,
+            "system_id": 9,
+            "support_idxs": null,
+            "support_terms": null
+        },
+        {
+            "representability": "surrogate",
+            "status": "eq1_not_representable",
+            "dim": 1,
+            "system_id": 10,
+            "support_idxs": null,
+            "support_terms": null
+        },
+        {
+            "representability": "exact",
+            "status": "ok",
+            "dim": 1,
+            "system_id": 11,
+            "support_idxs": [
+                [
+                    3
+                ]
+            ],
+            "support_terms": [
+                [
+                    "u1^3"
+                ]
+            ]
+        },
+        {
+            "representability": "exact",
+            "status": "ok",
+            "dim": 1,
+            "system_id": 12,
+            "support_idxs": [
+                [
+                    1,
+                    2
+                ]
+            ],
+            "support_terms": [
+                [
+                    "u1",
+                    "u1^2"
+                ]
+            ]
+        },
+        {
+            "representability": "surrogate",
+            "status": "eq1_not_representable",
+            "dim": 1,
+            "system_id": 13,
+            "support_idxs": null,
+            "support_terms": null
+        },
+        {
+            "representability": "surrogate",
+            "status": "eq1_not_representable",
+            "dim": 1,
+            "system_id": 14,
+            "support_idxs": null,
+            "support_terms": null
+        },
+        {
+            "representability": "surrogate",
+            "status": "eq1_not_representable",
+            "dim": 1,
+            "system_id": 15,
+            "support_idxs": null,
+            "support_terms": null
+        },
+        {
+            "representability": "surrogate",
+            "status": "eq1_not_representable",
+            "dim": 1,
+            "system_id": 16,
+            "support_idxs": null,
+            "support_terms": null
+        },
+        {
+            "representability": "surrogate",
+            "status": "eq1_not_representable",
+            "dim": 1,
+            "system_id": 17,
+            "support_idxs": null,
+            "support_terms": null
+        },
+        {
+            "representability": "surrogate",
+            "status": "eq1_not_representable",
+            "dim": 1,
+            "system_id": 18,
+            "support_idxs": null,
+            "support_terms": null
+        },
+        {
+            "representability": "surrogate",
+            "status": "eq1_not_representable",
+            "dim": 1,
+            "system_id": 19,
+            "support_idxs": null,
+            "support_terms": null
+        },
+        {
+            "representability": "surrogate",
+            "status": "eq1_not_representable",
+            "dim": 1,
+            "system_id": 20,
+            "support_idxs": null,
+            "support_terms": null
+        },
+        {
+            "representability": "surrogate",
+            "status": "eq1_not_representable",
+            "dim": 1,
+            "system_id": 21,
+            "support_idxs": null,
+            "support_terms": null
+        },
+        {
+            "representability": "surrogate",
+            "status": "eq1_not_representable",
+            "dim": 1,
+            "system_id": 22,
+            "support_idxs": null,
+            "support_terms": null
+        },
+        {
+            "representability": "surrogate",
+            "status": "eq1_not_representable",
+            "dim": 1,
+            "system_id": 23,
+            "support_idxs": null,
+            "support_terms": null
+        },
+        {
+            "representability": "exact",
+            "status": "ok",
+            "dim": 2,
+            "system_id": 24,
+            "support_idxs": [
+                [
+                    2
+                ],
+                [
+                    1
+                ]
+            ],
+            "support_terms": [
+                [
+                    "u2"
+                ],
+                [
+                    "u1"
+                ]
+            ]
+        },
+        {
+            "representability": "exact",
+            "status": "ok",
+            "dim": 2,
+            "system_id": 25,
+            "support_idxs": [
+                [
+                    2
+                ],
+                [
+                    1,
+                    2
+                ]
+            ],
+            "support_terms": [
+                [
+                    "u2"
+                ],
+                [
+                    "u1",
+                    "u2"
+                ]
+            ]
+        },
+        {
+            "representability": "exact",
+            "status": "ok",
+            "dim": 2,
+            "system_id": 26,
+            "support_idxs": [
+                [
+                    1,
+                    3,
+                    5
+                ],
+                [
+                    2,
+                    4,
+                    5
+                ]
+            ],
+            "support_terms": [
+                [
+                    "u1",
+                    "u1^2",
+                    "u1*u2"
+                ],
+                [
+                    "u2",
+                    "u2^2",
+                    "u1*u2"
+                ]
+            ]
+        },
+        {
+            "representability": "exact",
+            "status": "ok",
+            "dim": 2,
+            "system_id": 27,
+            "support_idxs": [
+                [
+                    1,
+                    5
+                ],
+                [
+                    2,
+                    5
+                ]
+            ],
+            "support_terms": [
+                [
+                    "u1",
+                    "u1*u2"
+                ],
+                [
+                    "u2",
+                    "u1*u2"
+                ]
+            ]
+        },
+        {
+            "representability": "exact",
+            "status": "ok",
+            "dim": 2,
+            "system_id": 28,
+            "support_idxs": [
+                [
+                    2
+                ],
+                [
+                    8
+                ]
+            ],
+            "support_terms": [
+                [
+                    "u2"
+                ],
+                [
+                    "sin(u1)"
+                ]
+            ]
+        },
+        {
+            "representability": "exact",
+            "status": "ok",
+            "dim": 2,
+            "system_id": 29,
+            "support_idxs": [
+                [
+                    5
+                ],
+                [
+                    3,
+                    4
+                ]
+            ],
+            "support_terms": [
+                [
+                    "u1*u2"
+                ],
+                [
+                    "u1^2",
+                    "u2^2"
+                ]
+            ]
+        },
+        {
+            "representability": "surrogate",
+            "status": "eq1_not_representable",
+            "dim": 2,
+            "system_id": 30,
+            "support_idxs": null,
+            "support_terms": null
+        },
+        {
+            "representability": "exact",
+            "status": "ok",
+            "dim": 2,
+            "system_id": 31,
+            "support_idxs": [
+                [
+                    5
+                ],
+                [
+                    2,
+                    5
+                ]
+            ],
+            "support_terms": [
+                [
+                    "u1*u2"
+                ],
+                [
+                    "u2",
+                    "u1*u2"
+                ]
+            ]
+        },
+        {
+            "representability": "exact",
+            "status": "ok",
+            "dim": 2,
+            "system_id": 32,
+            "support_idxs": [
+                [
+                    2
+                ],
+                [
+                    1,
+                    2,
+                    6
+                ]
+            ],
+            "support_terms": [
+                [
+                    "u2"
+                ],
+                [
+                    "u1",
+                    "u2",
+                    "u1^3"
+                ]
+            ]
+        },
+        {
+            "representability": "surrogate",
+            "status": "eq2_not_representable",
+            "dim": 2,
+            "system_id": 33,
+            "support_idxs": null,
+            "support_terms": null
+        },
+        {
+            "representability": "surrogate",
+            "status": "eq2_not_representable",
+            "dim": 2,
+            "system_id": 34,
+            "support_idxs": null,
+            "support_terms": null
+        },
+        {
+            "representability": "surrogate",
+            "status": "eq1_not_representable",
+            "dim": 2,
+            "system_id": 35,
+            "support_idxs": null,
+            "support_terms": null
+        },
+        {
+            "representability": "surrogate",
+            "status": "eq2_not_representable",
+            "dim": 2,
+            "system_id": 36,
+            "support_idxs": null,
+            "support_terms": null
+        },
+        {
+            "representability": "surrogate",
+            "status": "eq2_not_representable",
+            "dim": 2,
+            "system_id": 37,
+            "support_idxs": null,
+            "support_terms": null
+        },
+        {
+            "representability": "exact",
+            "status": "ok",
+            "dim": 2,
+            "system_id": 38,
+            "support_idxs": [
+                [
+                    1,
+                    2,
+                    6
+                ],
+                [
+                    1
+                ]
+            ],
+            "support_terms": [
+                [
+                    "u1",
+                    "u2",
+                    "u1^3"
+                ],
+                [
+                    "u1"
+                ]
+            ]
+        },
+        {
+            "representability": "surrogate",
+            "status": "eq1_not_representable",
+            "dim": 2,
+            "system_id": 39,
+            "support_idxs": null,
+            "support_terms": null
+        },
+        {
+            "representability": "surrogate",
+            "status": "eq2_not_representable",
+            "dim": 2,
+            "system_id": 40,
+            "support_idxs": null,
+            "support_terms": null
+        },
+        {
+            "representability": "surrogate",
+            "status": "eq1_not_representable",
+            "dim": 2,
+            "system_id": 41,
+            "support_idxs": null,
+            "support_terms": null
+        },
+        {
+            "representability": "surrogate",
+            "status": "eq1_not_representable",
+            "dim": 2,
+            "system_id": 42,
+            "support_idxs": null,
+            "support_terms": null
+        },
+        {
+            "representability": "surrogate",
+            "status": "eq2_not_representable",
+            "dim": 2,
+            "system_id": 43,
+            "support_idxs": null,
+            "support_terms": null
+        },
+        {
+            "representability": "surrogate",
+            "status": "eq2_not_representable",
+            "dim": 2,
+            "system_id": 44,
+            "support_idxs": null,
+            "support_terms": null
+        },
+        {
+            "representability": "surrogate",
+            "status": "eq1_not_representable",
+            "dim": 2,
+            "system_id": 45,
+            "support_idxs": null,
+            "support_terms": null
+        },
+        {
+            "representability": "surrogate",
+            "status": "eq1_not_representable",
+            "dim": 2,
+            "system_id": 46,
+            "support_idxs": null,
+            "support_terms": null
+        },
+        {
+            "representability": "surrogate",
+            "status": "eq1_not_representable",
+            "dim": 2,
+            "system_id": 47,
+            "support_idxs": null,
+            "support_terms": null
+        },
+        {
+            "representability": "surrogate",
+            "status": "eq1_not_representable",
+            "dim": 2,
+            "system_id": 48,
+            "support_idxs": null,
+            "support_terms": null
+        },
+        {
+            "representability": "surrogate",
+            "status": "eq1_not_representable",
+            "dim": 2,
+            "system_id": 49,
+            "support_idxs": null,
+            "support_terms": null
+        },
+        {
+            "representability": "surrogate",
+            "status": "eq1_not_representable",
+            "dim": 2,
+            "system_id": 50,
+            "support_idxs": null,
+            "support_terms": null
+        },
+        {
+            "representability": "surrogate",
+            "status": "eq1_not_representable",
+            "dim": 2,
+            "system_id": 51,
+            "support_idxs": null,
+            "support_terms": null
+        },
+        {
+            "representability": "surrogate",
+            "status": "eq3_not_representable",
+            "dim": 3,
+            "system_id": 52,
+            "support_idxs": null,
+            "support_terms": null
+        },
+        {
+            "representability": "surrogate",
+            "status": "eq1_not_representable",
+            "dim": 3,
+            "system_id": 53,
+            "support_idxs": null,
+            "support_terms": null
+        },
+        {
+            "representability": "exact",
+            "status": "ok",
+            "dim": 3,
+            "system_id": 54,
+            "support_idxs": [
+                [
+                    1,
+                    2
+                ],
+                [
+                    1,
+                    2,
+                    8
+                ],
+                [
+                    3,
+                    7
+                ]
+            ],
+            "support_terms": [
+                [
+                    "u1",
+                    "u2"
+                ],
+                [
+                    "u1",
+                    "u2",
+                    "u1*u3"
+                ],
+                [
+                    "u3",
+                    "u1*u2"
+                ]
+            ]
+        },
+        {
+            "representability": "exact",
+            "status": "ok",
+            "dim": 3,
+            "system_id": 55,
+            "support_idxs": [
+                [
+                    1,
+                    2
+                ],
+                [
+                    1,
+                    2,
+                    8
+                ],
+                [
+                    3,
+                    7
+                ]
+            ],
+            "support_terms": [
+                [
+                    "u1",
+                    "u2"
+                ],
+                [
+                    "u1",
+                    "u2",
+                    "u1*u3"
+                ],
+                [
+                    "u3",
+                    "u1*u2"
+                ]
+            ]
+        },
+        {
+            "representability": "exact",
+            "status": "ok",
+            "dim": 3,
+            "system_id": 56,
+            "support_idxs": [
+                [
+                    1,
+                    2
+                ],
+                [
+                    1,
+                    2,
+                    8
+                ],
+                [
+                    3,
+                    7
+                ]
+            ],
+            "support_terms": [
+                [
+                    "u1",
+                    "u2"
+                ],
+                [
+                    "u1",
+                    "u2",
+                    "u1*u3"
+                ],
+                [
+                    "u3",
+                    "u1*u2"
+                ]
+            ]
+        },
+        {
+            "representability": "surrogate",
+            "status": "eq3_not_representable",
+            "dim": 3,
+            "system_id": 57,
+            "support_idxs": null,
+            "support_terms": null
+        },
+        {
+            "representability": "surrogate",
+            "status": "eq3_not_representable",
+            "dim": 3,
+            "system_id": 58,
+            "support_idxs": null,
+            "support_terms": null
+        },
+        {
+            "representability": "surrogate",
+            "status": "eq3_not_representable",
+            "dim": 3,
+            "system_id": 59,
+            "support_idxs": null,
+            "support_terms": null
+        },
+        {
+            "representability": "surrogate",
+            "status": "eq3_not_representable",
+            "dim": 3,
+            "system_id": 60,
+            "support_idxs": null,
+            "support_terms": null
+        },
+        {
+            "representability": "exact",
+            "status": "ok",
+            "dim": 3,
+            "system_id": 61,
+            "support_idxs": [
+                [
+                    1,
+                    9
+                ],
+                [
+                    2,
+                    8
+                ],
+                [
+                    3,
+                    7
+                ]
+            ],
+            "support_terms": [
+                [
+                    "u1",
+                    "u2*u3"
+                ],
+                [
+                    "u2",
+                    "u1*u3"
+                ],
+                [
+                    "u3",
+                    "u1*u2"
+                ]
+            ]
+        },
+        {
+            "representability": "surrogate",
+            "status": "eq1_not_representable",
+            "dim": 4,
+            "system_id": 62,
+            "support_idxs": null,
+            "support_terms": null
+        },
+        {
+            "representability": "exact",
+            "status": "ok",
+            "dim": 4,
+            "system_id": 63,
+            "support_idxs": [
+                [
+                    10
+                ],
+                [
+                    2,
+                    10
+                ],
+                [
+                    2,
+                    3
+                ],
+                [
+                    3
+                ]
+            ],
+            "support_terms": [
+                [
+                    "u1*u3"
+                ],
+                [
+                    "u2",
+                    "u1*u3"
+                ],
+                [
+                    "u2",
+                    "u3"
+                ],
+                [
+                    "u3"
+                ]
+            ]
+        }
+    ],
+    "n_scatter": 400
+}
