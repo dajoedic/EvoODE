@@ -4,6 +4,56 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ---
 
+## 2026-08-14
+
+### Lesender Code-Durchgang vor der Kampagne: nichts zu tun, und das ist der Befund
+
+<!-- HASH -->
+
+Reiner Lesedurchgang auf Bloat, toten Code und Schreibqualitaet. **Keine Aenderung vorgenommen** —
+jede haette den Pfad beruehrt, den 756 Zellen durchlaufen, und seit WP-M1 existiert ein bit-exakter
+Anker, gegen den jede Aenderung neu zu verifizieren waere.
+
+**Toter Code: praktisch keiner.** Bei 143 Funktionen und 6.565 Zeilen genau eine ungenutzte:
+`_cap_uniform_step` in `src/structure/stage_cap.jl`, drei Zeilen. (Ein erster Durchlauf meldete 16
+Kandidaten — Messfehler, Namen mit `!` wurden falsch gezaehlt.)
+
+**Die 46 Prozent "Ballast" sind bezahlte Reproduzierbarkeit.** v3 (1.233 Zeilen), GP (457),
+Screening (870) und Plotting (489) stehen zusammen fuer 46 % des Quellbaums und kommen im
+Paper-1-Umfang nicht vor. Loeschen waere trotzdem falsch: Das Paper erzaehlt v2.2 → v3 → capped als
+dokumentierte Fehleranalyse, und ohne lauffaehigen v3-Code sind diese Zahlen nicht reproduzierbar;
+`gp_baseline` steckt im eingefrorenen Phase-A-Experiment. Das ist der Preis dafuer, die eigene
+Geschichte nicht wegzuwerfen, und er wird bewusst gezahlt.
+
+**Der eine echte Befund: die Suchschleife ist ein Monolith, dreimal geforkt.**
+
+```text
+656 Zeilen  evogrow.jl            search_structure
+638 Zeilen  evogrow_v3.jl         search_structure
+459 Zeilen  evogrow_screening.jl  search_structure
+447 Zeilen  bfgs.jl               fit_parameters
+256 Zeilen  gp.jl                 search_structure
+```
+
+2.009 Zeilen in vier Suchschleifen. Der Beleg fuer das Forken ist `_validate_policy`: dreimal
+vorhanden, in `evogrow.jl` (15 Zeilen), `evogrow_screening.jl` (33) und `evogrow_v3.jl` (7) — drei
+verschiedene Implementierungen unter demselben Namen in Nachbardateien. So etwas entsteht, wenn
+Kopieren leichter ist als Erweitern.
+
+Das ist das Ziel fuer WP-D4b: die gemeinsame Schleife herausziehen, Varianten als Strategien
+einhaengen. Dann verschwinden die drei `_validate_policy` von selbst. Bleibt hinter der Kampagne,
+aus dem in CLAUDE.md genannten Grund.
+
+**Bewusste Entscheidung, zeitkritisch:** `evogrow_v3` und `gp_baseline` bleiben in `VARIANTS`. Die
+Liste geht ueber `FINGERPRINT_VARIANT_LABELS` in den Fingerprint ein und ist nach dem ersten
+Kampagnen-Record eingefroren. Entschieden am 2026-08-14, Begruendung wie oben.
+
+Sonst: keine ungenutzten Abhaengigkeiten, saubere Interface-Struktur mit korrektem Dispatch
+(`search_structure` 6x, `fit_parameters` 3x, `evaluate_loss` 2x sind Interface plus
+Implementierungen, keine Duplikate).
+
+---
+
 ## 2026-08-13
 
 ### WP-M1 - R2 und abgeleitete erwartete Stage; der letzte wissenschaftliche Blocker ist zu
