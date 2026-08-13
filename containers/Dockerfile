@@ -2,6 +2,7 @@ FROM julia:1.12.6-bookworm
 
 ENV JULIA_NUM_THREADS=1 \
     OPENBLAS_NUM_THREADS=1 \
+    JULIA_CPU_TARGET="generic;znver3,clone_all" \
     JULIA_DEPOT_PATH=/opt/julia_depot \
     EVO_BATCH_MANIFEST=/outputs/manifest.csv \
     EVO_BATCH_OUTPUT_DIR=/outputs/tasks \

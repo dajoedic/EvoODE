@@ -6,9 +6,66 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ## 2026-08-13
 
-### WP-H3/H4 - der Weg vom Commit zur Zelle auf Orion steht, und was der Cluster wirklich hergibt
+### WP-H5 - der eingebackene Praekompilierungscache war auf dem Cluster wertlos
 
 <!-- HASH -->
+
+**Der Befund.** Der erste Bootstrap auf Orion lief 46 Minuten, davon praktisch alles
+Praekompilierung — obwohl das Image ein fertiges 3,1-GB-Depot mit 1,3 GB kompiliertem Code traegt.
+Weder Konfiguration noch Code waren schuld: `JULIA_DEPOT_PATH` stimmte, `DEPOT_PATH` loeste korrekt
+auf, der Cache war vorhanden und exakt so gross wie lokal. Julias Lader nannte den Grund selbst:
+
+```text
+Rejecting cache file .../compiled/v1.12/Logging/....ji
+Reasons = "Unable to find compatible target in cached code image.
+           Target 0 (icelake-server): Rejecting this target due to
+           use of runtime-disabled features"
+(cache misses: target mismatch (1))
+```
+
+Der GitLab-Runner ist eine Intel-Maschine und praekompiliert fuer `icelake-server`; die Orion-Nodes
+sind AMD EPYC 7643, von Julia als `znver3` gemeldet. Praekompilierte Images enthalten nativen Code
+und werden gegen die CPU-Features der laufenden Maschine geprueft — also wurde jede einzelne
+Cache-Datei verworfen.
+
+**Warum die lokale Verifikation das nicht finden konnte.** WP-H2 hat auf demselben Laptop gebaut und
+ausgefuehrt; dort ist der Cache per Konstruktion gueltig. Der Fehler entsteht erst, wenn Bau- und
+Laufmaschine auseinanderfallen, und das tut es erst seit der CI. Das ist eine Grenze lokaler
+Verifikation, kein Versaeumnis — und sie ist notierenswert, weil sie fuer jede kuenftige
+Image-Aenderung gilt.
+
+**Der Fix**: `JULIA_CPU_TARGET="generic;znver3,clone_all"` im `ENV`-Block **vor** dem
+Praekompilierungsschritt, damit der eingebackene Cache beide Ziele traegt — einen portablen
+Grundstock und eine Zen-3-Variante. Bewusst nicht ausschliesslich auf die Cluster-CPU gepinnt: ein
+Image, das nur auf einer Mikroarchitektur laeuft, erzeugt denselben Fehler in der Gegenrichtung.
+Preis sind Imagegroesse und Bauzeit, einmal pro Commit statt Dutzende Minuten pro Pod.
+
+**Kosten, beziffert.** Von den 46 Minuten entfielen 1.462 s auf den DifferentialEquations-Stapel,
+**364 s auf Plots und 658 s auf Makie/CairoMakie** — gut 37 % auf einen Grafikstapel, den eine
+Batch-Zelle nie anfasst. `src/plotting/` zieht `Qt6`, `FFMPEG`, `Xorg` und `CairoMakie` in den
+Manifest. Nach diesem Fix kostet das **keine Laufzeit mehr**, nur noch Imagegroesse; die Trennung von
+Rechen- und Plotting-Abhaengigkeiten bleibt damit eine Aufraeumaufgabe und ist kein
+Kampagnenhindernis. Sie waere ausserdem fingerprint-relevant, weil sie `Project.toml` und
+`Manifest.toml` und damit die Hashes im `build_provenance.json` aendert.
+
+**Was der Lauf trotz allem bewiesen hat.** Der Bootstrap kam mit `EXITCODE=0` durch und schrieb
+Manifest und alle fuenf Indexlisten nach `/bigdata/data-science/joedicke`. Gemeldet:
+`phase_b_fingerprint=c71c85ac2ec580ff`, `regression_fingerprint=45cb2c4507007366`, `rows=756`,
+`unique_identities=756`, `systems=63`, `representability_exact=20`, `representability_surrogate=43`,
+Dimensionen 276/336/120/24. Damit ist belegt, dass das Image auf Orion denselben Code, dieselbe
+Konfiguration und dieselbe Support-Tabelle traegt wie lokal — die Korrektheitsaussage steht
+unabhaengig vom Kostenproblem.
+
+**Nebenbefund, noch offen**: Der Bootstrap wurde bei 2 GiB per OOM abgeraeumt und braucht 8 GiB. Das
+Repo-Manifest traegt noch den alten Wert. Ebenso offen: `restartPolicy: OnFailure` loescht
+gescheiterte Pods samt Logs — fuer die Kampagne muss das `Never` sein, sonst verschwindet jede
+fehlgeschlagene Zelle spurlos. Beides gehoert in ein gemeinsames Aufraeum-Work-Package.
+
+---
+
+### WP-H3/H4 - der Weg vom Commit zur Zelle auf Orion steht, und was der Cluster wirklich hergibt
+
+<!-- 9f742fd -->
 
 **WP-H3: das Image entsteht in der CI.** `.gitlab-ci.yml` baut `containers/Dockerfile` auf dem
 CPU-Runner (ALEXANDRIA, Tag `cpu`) und legt es unter `registry.gitlab.scch.at:443/joedicke/evoode`
