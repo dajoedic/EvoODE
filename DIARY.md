@@ -4,6 +4,76 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ---
 
+## 2026-08-13
+
+### WP-H3/H4 - der Weg vom Commit zur Zelle auf Orion steht, und was der Cluster wirklich hergibt
+
+<!-- HASH -->
+
+**WP-H3: das Image entsteht in der CI.** `.gitlab-ci.yml` baut `containers/Dockerfile` auf dem
+CPU-Runner (ALEXANDRIA, Tag `cpu`) und legt es unter `registry.gitlab.scch.at:443/joedicke/evoode`
+ab, getaggt mit `$CI_COMMIT_SHA` und dem Branch-Slug. Kein `latest`. Authentifizierung ueber die
+eingebauten Job-Credentials, nicht ueber den persoenlichen PAT der Hausvorlage.
+
+Der erste Lauf scheiterte an `http://docker:2375` — der Runner belegt `DOCKER_HOST` vor, erwartet
+also einen `docker:dind`-Service, den die Hausvorlage nicht deklariert. Mit Service plus
+`DOCKER_TLS_CERTDIR=""` laeuft es. Anmerkung fuer spaetere Leser: die Vorlage
+`orion/dev-tutorial` traegt acht aufeinanderfolgende Commits "Update .gitlab-ci.yml" und
+funktioniert so, wie sie dasteht, vermutlich nicht — sie ist Anhaltspunkt, nicht Referenz.
+
+**Der Cluster wurde verifiziert, nicht erschlossen.** Ein Wegwerf-Pod mit dem Kampagnenimage hat vier
+Unbekannte auf einmal geklaert. Die UID: Pods in `scch-das` laufen als **uid 0**, nicht unter der
+gewuerfelten UID, gegen die WP-H2 gehaertet hat — die Haertung bleibt richtig, sie war nur nicht
+noetig; das Image ist damit in beiden Welten belegt. Der NFS-Pfad: die Verzeichnisliste im Container
+ist zeichengleich mit `S:\BigDataOrion`, womit `/bigdata/data-science/joedicke` bewiesen und nicht
+mehr geraten ist. Das Pull-Secret: das vorhandene `gitlab-registry` deckt dieses Projekt **nicht** ab
+(`requested access to the resource is denied`); ein eigenes `evoode-gitlab-pull` aus einem
+Deploy-Token mit ausschliesslich `read_registry` loest es. Schreibrecht: vorhanden — aber weil wir
+root sind. Das Zielverzeichnis ist `drwxrws--- <uid> 2000513` und gewaehrt "anderen" nichts; eine
+nicht-root-UID in GID 0 koennte dort **nicht** schreiben. Eine Abhaengigkeit von der derzeitigen SCC,
+kein Naturgesetz, und die erste Stelle zum Nachsehen, falls dort je etwas bricht.
+
+**Keine Walltime.** Auskunft des Betriebs: CPU-Workloads werden selten angefasst, `kind: Job` wird in
+Ruhe gelassen, ausser etwas haengt offensichtlich, und der Eigentuemer wird **vorher** informiert —
+ausdruecklich unter der Bedingung, dass die Workload identifizierende Metadata traegt. Damit
+entfaellt das in `docs/hpc_requirements.md` §6 erwogene Checkpointing fuer die 24-bis-48-Stunden-Zellen
+vollstaendig. Die Labels `hpc.scch.at/service` und `hpc.scch.at/responsibility` sind entsprechend
+keine Kosmetik, sondern die Bedingung dieser Zusage; WP-H4 hatte sie zunaechst durch erfundene
+Schluessel ersetzt, WP-H4b korrigiert das.
+
+**Kapazitaet: der Cluster ist kleiner als die Planung unterstellt.** Orion hat **zwei** Worker-Nodes
+mit je einem AMD EPYC 7643, also **96 physische Kerne fuer das ganze Haus**. Beide Nodes tragen 4x
+A100; die CPU-Kerne existieren primaer, um acht GPUs zu fuettern. `docs/hpc_requirements.md` denkt in
+Core-Stunden-Kontingenten eines grossen Standorts und muss darauf umgeschrieben werden. Bei ~4.500
+geschaetzten Core-Stunden bedeutet `parallelism=16` rund zwoelf Tage, 32 rund sechs, ein ganzer Node
+rund vier — und unabhaengig davon liegt eine Untergrenze bei der laengsten Einzelzelle von geschaetzt
+23 Stunden. Zusaetzlich sind die Laptop-Schaetzungen vermutlich optimistisch, weil viele Zellen auf
+einem Sockel um L3 und Speicherbandbreite konkurrieren. Der Pilotlauf muss messen.
+
+**WP-H4: Zellen als Indexed Job.** Bootstrap und Zell-Job sind getrennt — der Bootstrap schreibt
+Manifest und Indexlisten einmalig ins NFS, die Zellen lesen nur. Waeren beide vereint, haetten 756
+Pods einen Schreibwettlauf auf gemeinsamem Speicher und koennten sich uneinig sein, was Zeile *n*
+bedeutet.
+
+Die Abbildung `JOB_COMPLETION_INDEX` → Manifestzeile liegt in
+`studies/regression/run_k8s_indexed_cell.jl`, also **im Image** und damit vom Commit-SHA abgedeckt,
+statt im YAML, wo sie vom Code abdriften koennte. Der Fallstrick war die Indexbasis: Slurm-Arrays
+sind dort 1-basiert, `JOB_COMPLETION_INDEX` ist 0-basiert. Eine woertliche Uebersetzung haette die
+erste Zelle uebersprungen und einmal ueber das Listenende hinausgelesen — leise, mit 755 plausibel
+aussehenden Records. Geprueft an beiden Raendern: Index 0 loest auf Zeile 1 und Manifestzeile 1 auf,
+Index 275 auf Zeile 276 und Manifestzeile 516, was der letzten 1D-Zeile entspricht.
+
+`generate_phase_b_manifest.jl` schreibt zusaetzlich `indices_all.txt`. Die Aenderung ist rein additiv;
+Manifestinhalt und Identitaetsberechnung bleiben unberuehrt, der Phase-B-Fingerprint steht weiter auf
+`c71c85ac2ec580ff`. Das Job-Manifest referenziert das Image ueber den Commit-SHA, nie ueber `main`:
+ein wandernder Tag koennte Pods auf verschiedenem Code laufen lassen, waehrend jeder Record denselben
+Hash zitiert — genau der Fehler, gegen den die Tag-Strategie gebaut ist.
+
+Offen bis zum ersten echten Lauf: ob Orion `JOB_COMPLETION_INDEX` wie erwartet injiziert, ob
+Bootstrap und Zellen ihre Dateien auf NFS landen, und jede Laufzeitzahl.
+
+---
+
 ## 2026-08-12
 
 ### Das Zielsystem ist kein Slurm-Standort - und WP-H2, das Docker-Image dafuer

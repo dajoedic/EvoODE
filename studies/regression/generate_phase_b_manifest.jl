@@ -103,6 +103,15 @@ function write_phase_b_dimension_index_list(path::AbstractString, rows, dimensio
     end
 end
 
+function write_phase_b_all_index_list(path::AbstractString, rows)
+    mkpath(dirname(path))
+    open(path, "w") do io
+        for row in rows
+            println(io, row.index)
+        end
+    end
+end
+
 function main(args = ARGS)
     output = get(ENV, "EVO_PHASE_B_MANIFEST", PHASE_B_MANIFEST_PATH)
     arg_output = _arg_value(args, "--output")
@@ -124,6 +133,7 @@ function main(args = ARGS)
         index_output === nothing && (index_output = joinpath(dirname(output), "indices_dim$(dimension).txt"))
         write_phase_b_dimension_index_list(index_output, rows, dimension)
     elseif all_dimensions
+        write_phase_b_all_index_list(joinpath(dirname(output), "indices_all.txt"), rows)
         for dim in sort(unique(row.system_dim for row in rows))
             write_phase_b_dimension_index_list(joinpath(dirname(output), "indices_dim$(dim).txt"), rows, dim)
         end
@@ -146,6 +156,8 @@ function main(args = ARGS)
         println("dimension_rows=$(count_dim)")
         println("dimension_index_output=$(index_output)")
     elseif all_dimensions
+        println("all_index_output=$(joinpath(dirname(output), "indices_all.txt"))")
+        println("all_index_rows=$(length(rows))")
         for dim in sort(unique(row.system_dim for row in rows))
             count_dim = count(row -> row.system_dim == dim, rows)
             println("dimension_$(dim)_rows=$(count_dim)")

@@ -1,0 +1,59 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: evoode-phase-b-bootstrap-smoke
+  namespace: scch-das
+  labels:
+    app.kubernetes.io/name: evoode
+    app.kubernetes.io/part-of: evoode-phase-b
+    app.kubernetes.io/component: manifest-bootstrap
+    app.kubernetes.io/managed-by: kubectl
+    hpc.scch.at/service: evoode-phase-b-bootstrap
+    hpc.scch.at/responsibility: joedicke
+spec:
+  backoffLimit: 1
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: evoode
+        app.kubernetes.io/part-of: evoode-phase-b
+        app.kubernetes.io/component: manifest-bootstrap
+        hpc.scch.at/service: evoode-phase-b-bootstrap
+        hpc.scch.at/responsibility: joedicke
+    spec:
+      restartPolicy: OnFailure
+      imagePullSecrets:
+        - name: evoode-gitlab-pull
+      containers:
+        - name: bootstrap
+          image: registry.gitlab.scch.at:443/joedicke/evoode:<COMMIT_SHA>
+          imagePullPolicy: IfNotPresent
+          command:
+            - julia
+            - --project=/opt/EvoODE
+            - /opt/EvoODE/studies/regression/generate_phase_b_manifest.jl
+          args:
+            - --output
+            - /outputs/wp_h4_smoke_<COMMIT_SHA>/manifest.csv
+            - --all-dimensions
+          env:
+            - name: JULIA_NUM_THREADS
+              value: "1"
+            - name: OPENBLAS_NUM_THREADS
+              value: "1"
+          resources:
+            requests:
+              cpu: "1"
+              memory: 2Gi
+            limits:
+              cpu: "1"
+              memory: 2Gi
+          volumeMounts:
+            - name: evoode-bigdata
+              mountPath: /outputs
+              subPath: data-science/joedicke
+      volumes:
+        - name: evoode-bigdata
+          nfs:
+            server: nfs.orion.scch.at
+            path: /bigdata
