@@ -13,6 +13,7 @@ what to work on next. It is deliberately kept short. Detail lives in dedicated d
 | `docs/paper1_phaseA_reproducibility.md` | frozen Phase A configuration — systems, hyperparameters, seeds, metrics (historical) |
 | `docs/paper1_odebench_protocol_alignment.md` | Phase B sampling protocol and the comparability audit |
 | `docs/hpc_requirements.md` | Phase B resource profile, cost derivation and its uncertainty |
+| `docs/hpc_deployment_guide.md` | how code reaches the Orion cluster — CI, image, manifests, glossary, failure modes (German, for newcomers) |
 | `codex/CURRENT_TASK.md` | the one active task spec for an AI coding assistant |
 
 Do not start a second planning document. Planning and status belong here; everything else belongs
