@@ -63,8 +63,34 @@ dem Cluster landen.
 
 ### Schritt 2 — GitLab CI baut ein Image
 
-Sobald der Push ankommt, sieht GitLab die Datei `.gitlab-ci.yml` im Projektwurzelverzeichnis und
-führt aus, was dort steht. Das Ergebnis ist ein **Docker-Image**.
+Hier arbeiten **zwei** Dateien zusammen, und die Arbeitsteilung ist der Schlüssel zum Verständnis:
+
+| Datei | Beantwortet | Enthält |
+|---|---|---|
+| [`.gitlab-ci.yml`](../.gitlab-ci.yml) | **Wann und wo** wird gebaut? | Auslöser (nur `main`), Runner (`cpu`), Anmeldung an der Registry, Namensschilder, Zeitlimit |
+| [`containers/Dockerfile`](../containers/Dockerfile) | **Was** kommt ins Image? | Linux-Basis, Julia 1.12.6, welche Verzeichnisse kopiert werden, Paketinstallation, Vorkompilierung |
+
+Deshalb steht in `.gitlab-ci.yml` nichts von Julia. Dort steht im Kern nur eine Zeile:
+
+```yaml
+docker build --pull -f containers/Dockerfile ... .
+```
+
+Also: „Bau mir ein Image nach dem Rezept in `containers/Dockerfile`." Das **Rezept** ist das
+Dockerfile, und dort beginnt alles mit:
+
+```dockerfile
+FROM julia:1.12.6-bookworm
+```
+
+Ein fertiges Debian-Linux mit exakt dieser Julia-Version, bereitgestellt von den Julia-Entwicklern.
+Darauf kopiert das Dockerfile deinen Code, installiert die Pakete aus `Manifest.toml` und
+kompiliert sie vor.
+
+**Merksatz:** `.gitlab-ci.yml` ist der Auftrag, `Dockerfile` ist das Rezept. Wer wissen will, was im
+Image steckt, schaut ins Dockerfile.
+
+Das Ergebnis ist ein **Docker-Image**.
 
 Ein Image ist ein eingefrorenes Dateisystem: Linux, Julia 1.12.6, dein Code, alle Pakete, alles
 vorkompiliert. Es ist kein Programm, das läuft, sondern eine Vorlage, aus der man beliebig viele
@@ -88,6 +114,38 @@ Das erste ist der **Commit-Hash**, das zweite der Branchname. Warum beides, steh
 
 Zu sehen unter: **Deploy → Container Registry**
 
+#### Warum dort keine Größe steht
+
+Images bestehen aus **Schichten**, und Schichten werden zwischen Images geteilt. Die Linux-Basis und
+die Julia-Installation sind in jedem deiner Images dieselbe Schicht, physisch nur einmal gespeichert.
+Eine Größe pro Namensschild wäre deshalb irreführend — sie würde geteilte Schichten mehrfach zählen.
+
+Was sich bei jedem Bau **wirklich** ändert, ist die große Schicht mit deinem Code und dem
+vorkompilierten Julia-Depot. Die ist rund 2 GB und kommt pro Commit einmal dazu.
+
+#### Räumt man auf?
+
+Nicht zwingend, aber irgendwann sinnvoll. GitLab kann das automatisch: **Settings → Packages and
+registries → Clean up image tags** — etwa „behalte die letzten zehn, lösche alles älter als 90 Tage".
+
+**Eine Warnung dazu, und sie ist wichtig:** Das Image der Kampagne darf **niemals** weggeräumt
+werden. Jeder Ergebnisdatensatz verweist über den Commit-Hash auf genau dieses Image; verschwindet
+es, ist die Kette von Ergebnis zu ausführbarem Code unterbrochen und die Kampagne nicht mehr
+nachvollziehbar reproduzierbar. Eine Aufräumregel muss den Kampagnen-Tag also ausdrücklich
+verschonen.
+
+Deshalb **vor** dem Kampagnenstart einen Git-Tag setzen:
+
+```bash
+git tag phaseB-v1
+git push gitlab phaseB-v1
+```
+
+Die CI baut auch für Git-Tags (`rules: - if: $CI_COMMIT_TAG`) und benennt das Image dann nach dem
+Tag. Das Kampagnen-Image heißt anschließend `…/evoode:phaseB-v1` — ein sprechender, stabiler Name
+statt einer 40-stelligen Hexadezimalzahl. Eine spätere Aufräumregel kann solche Namen gezielt
+schützen, und in Veröffentlichungen lässt sich `phaseB-v1` zitieren.
+
 ### Schritt 4 — Du startest die Rechnung
 
 Jetzt kommst wieder du ins Spiel. Auf deinem Rechner läuft `oc`, das Kommandozeilenwerkzeug für
@@ -100,6 +158,58 @@ oc apply -f manifest.yaml
 Diese Datei nennt das Image, wie viele Zellen laufen sollen, wie viel Speicher jede bekommt und wo
 die Ergebnisse hin sollen. Der Cluster liest das, holt sich das Image aus der Registry und startet
 die entsprechende Zahl Container.
+
+Die Vorlagen liegen im Repository:
+
+- [`k8s/phase_b_bootstrap_smoke_job.yaml`](../k8s/phase_b_bootstrap_smoke_job.yaml) — der Bootstrap
+- [`k8s/phase_b_indexed_smoke_job.yaml`](../k8s/phase_b_indexed_smoke_job.yaml) — die Rechenzellen
+
+Beide enthalten `<COMMIT_SHA>` als Platzhalter, der vor dem Anwenden ersetzt werden muss.
+
+#### Es braucht zwei Manifeste, nicht eines
+
+**Der Bootstrap** läuft **einmal** und erzeugt zwei Dinge auf dem Netzwerkspeicher:
+
+- `manifest.csv` — die Liste aller 756 Kampagnenzellen, jede Zeile eine Kombination aus System,
+  Variante, Startbedingung und Zufallssaat
+- `indices_dim1.txt` bis `indices_dim4.txt` — welche Zeilen zu welcher Systemdimension gehören
+
+**Die Rechenzellen** laufen danach, viele gleichzeitig, und **lesen** diese Dateien nur.
+
+Warum getrennt? Würde jede der 756 Zellen das Manifest selbst erzeugen, schrieben 756 Prozesse
+gleichzeitig auf dieselbe Datei. Im besten Fall Verschwendung, im schlechteren widersprechen sich
+zwei Zellen darüber, was Zeile 400 bedeutet.
+
+Erzeugt wird es **im Container**, nicht auf deinem Laptop — sonst könnte das Manifest aus anderem
+Code stammen als die Zellen, die es abarbeiten.
+
+#### Woher weiß der Pod, welches Julia-Skript er ausführen soll?
+
+Aus dem Feld `command:` im Manifest:
+
+```yaml
+command:
+  - julia
+  - --project=/opt/EvoODE
+  - /opt/EvoODE/studies/regression/run_k8s_indexed_cell.jl
+```
+
+Das ist wörtlich die Kommandozeile, die im Container ausgeführt wird. `/opt/EvoODE` ist der Ort, an
+den das Dockerfile deinen Code kopiert hat.
+
+Deshalb unterscheiden sich Bootstrap und Zellen: **gleiches Image, anderes `command:`**.
+
+| Manifest | ausgeführtes Skript |
+|---|---|
+| Bootstrap | `generate_phase_b_manifest.jl` |
+| Rechenzellen | `run_k8s_indexed_cell.jl` |
+
+Das Dockerfile legt zusätzlich einen Standardbefehl fest (`ENTRYPOINT`), der greift, wenn ein
+Manifest **kein** `command:` angibt. Wir geben es immer explizit an — dann steht im Manifest, was
+tatsächlich passiert, statt es im Dockerfile nachschlagen zu müssen.
+
+Und woher weiß die Zelle, **welche** der 756 Zeilen sie rechnen soll? Aus ihrer Nummer, siehe
+Abschnitt 6.
 
 ### Schritt 5 — Die Ergebnisse landen in deinem Explorer
 
@@ -268,13 +378,76 @@ oc logs -l job-name=<name> --tail=20
 # 3. Die Rechenzellen starten
 oc apply -f cells.yaml
 
-# 4. Zuschauen
+# 4. Zuschauen  (siehe eigener Abschnitt unten)
 oc get jobs -l hpc.scch.at/responsibility=joedicke
-oc get pods -l hpc.scch.at/responsibility=joedicke
 
 # 5. Aufräumen, wenn fertig
 oc delete job <name>
 ```
+
+### Was läuft gerade? — der Überblicksbefehl
+
+Weil jedes Manifest das Namensschild `hpc.scch.at/responsibility` trägt, findet **ein** Befehl
+alles, was dir auf dem Cluster gehört:
+
+```powershell
+oc get jobs -l hpc.scch.at/responsibility=joedicke
+```
+
+Ausgabe lesen: `COMPLETIONS 19/28` heißt neunzehn von achtundzwanzig Zellen fertig, `DURATION` ist
+die bisherige Laufzeit des Jobs.
+
+Feiner, auf Ebene der einzelnen Zellen:
+
+```powershell
+oc get pods -l hpc.scch.at/responsibility=joedicke
+```
+
+`Running` rechnet, `Completed` ist fertig, `Error` ist gescheitert. Die Nummer im Pod-Namen
+(`…-sweep-**7**-x7vw2`) ist der Completion-Index und sagt dir, welche Manifestzeile dort läuft.
+
+Weitere nützliche Befehle, alle mit demselben Namensschild:
+
+```powershell
+# Ressourcenverbrauch der laufenden Zellen — CPU und Speicher
+oc adm top pod -l hpc.scch.at/responsibility=joedicke
+
+# Nur die gescheiterten anzeigen
+oc get pods -l hpc.scch.at/responsibility=joedicke --field-selector=status.phase=Failed
+
+# Ausgabe einer bestimmten Zelle (Name aus 'oc get pods')
+oc logs <pod-name> --tail=20
+
+# Warum hängt ein Pod? Die letzten Zeilen unter 'Events:' sind entscheidend
+oc describe pod <pod-name>
+
+# Warten, bis ein Job fertig ist, und dann von selbst zurückkehren
+oc wait --for=condition=Complete job/<name> --timeout=3600s
+```
+
+> **Hinweis:** `oc logs job/<name>` funktioniert nur, solange ein Pod **läuft**. Bei fertigen oder
+> gescheiterten Jobs immer den Pod-Namen verwenden, sonst kommt `timed out waiting for the
+> condition`.
+
+### Und was ohne Anmeldung geht
+
+Diese Befehle brauchen eine gültige Anmeldung. Der Token läuft nach einiger Zeit ab — die
+**laufenden Jobs stört das nicht**, nur dein Werkzeug.
+
+Ohne Anmeldung siehst du über Laufwerk `S:` trotzdem:
+
+```powershell
+# Wie viele Zellen sind fertig?
+Get-ChildItem "S:\BigDataOrion\data-science\joedicke\<lauf>\tasks\*.jsonl" |
+  Where-Object { $_.Name -notlike "*heartbeat*" } | Measure-Object | Select-Object Count
+
+# Wo steht jede laufende Zelle gerade?
+Get-ChildItem "S:\BigDataOrion\data-science\joedicke\<lauf>\tasks\*.heartbeat.jsonl" |
+  ForEach-Object { "{0}: {1}" -f $_.Name, (Get-Content $_.FullName -Tail 1) }
+```
+
+Für „läuft es noch und wie weit ist es" ist der Explorer-Weg oft der bequemere — er braucht kein
+Token und zeigt alle Zellen auf einmal.
 
 **Die Reihenfolge 2 vor 3 ist zwingend.** Die Zellen lesen das Manifest, das der Bootstrap anlegt.
 
