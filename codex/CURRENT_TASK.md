@@ -1,82 +1,112 @@
 # CURRENT TASK
 
-**Language: Julia / YAML (Kubernetes)**
+**Language: Julia**
 
-## WP-H6 — Three corrections the first cluster run exposed
+## WP-M1 — The two metrics the campaign is currently missing
 
-The path from commit to record now works end to end on Orion: the image builds in CI, the baked
-precompilation cache is accepted, the bootstrap writes manifest and index lists to NFS in 22 seconds,
-and an indexed Job ran three 1D cells that landed records and heartbeats. Nothing here is a
-redesign. These are three defects the run surfaced, each cheap, each with a consequence that only
-appears at campaign scale.
+### Why this exists
 
-### 1. The progress bar must fall silent when there is no terminal
+The campaign would today produce 756 records that cannot answer the questions the paper asks.
 
-The per-level progress display writes terminal control sequences — cursor-up, erase-line — into the
-pod log, where no terminal exists to interpret them. The log becomes unreadable, which is the
-visible symptom, but not the reason this matters.
+`PAPER_1.md` lists `r2` in its core metric table; the code contains no implementation. For the 43
+surrogate systems — two thirds of the campaign — that leaves raw loss as the only quality measure,
+with no bridge to the ODEBench literature, which argues in terms of R².
 
-The reason is volume. Each level emits roughly twenty lines. At thirty levels per cell and 756
-cells, that is on the order of half a million lines of control-sequence noise held on the cluster
-nodes, for information that is already recorded properly elsewhere: the heartbeat file writes one
-structured JSON event per level directly to shared storage, where it is durable, machine-readable,
-and visible without cluster access. The progress bar was built for interactive laptop runs and has
-no addressee in a batch pod.
+Separately, `expected_stage` is hard-coded to `nothing` for every Phase B system. The metric table
+defines `stage_overshoot` and `wasted_levels` relative to it, so both are null throughout — including
+on the 20 exact systems. `wasted_levels` is the quantity the central claim rests on: that stage
+escalation is pure waste on systems where the structure is already reachable. As things stand the
+campaign would not measure it.
 
-Make the display conditional on the output actually being attached to a terminal. Interactive local
-runs must keep the behaviour they have today; batch pods must produce no progress output at all.
-Apply this wherever such a display is created, not only in the path the campaign happens to use — a
-second entry point that still floods the log would reintroduce the problem silently.
+Both changes must land **before the first campaign record**, because both are expected to move the
+Phase B fingerprint.
 
-The heartbeat must be unaffected. It is the batch progress mechanism and its behaviour must not
-change.
+### 1. R², for all 63 systems
 
-### 2. The bootstrap manifest requests too little memory
+Implement the coefficient of determination between the discovered model's simulated trajectory and
+the reference trajectory, per dimension and averaged, and record it alongside `loss`.
 
-The manifest bootstrap was killed by the kernel under its 2 GiB limit and completed at 8 GiB. The
-committed Kubernetes manifest still carries the value that fails. Anyone applying the file as it
-stands reproduces the failure — and does so after a container start, so the cause is not obvious
-from the outcome.
+Do not invent the convention. `docs/paper1_odebench_protocol_alignment.md` exists precisely to keep
+this comparable with the published numbers — follow what the protocol audit establishes, and where
+it is silent, say so in the report rather than choosing silently.
 
-Correct the bootstrap workload's memory request and limit to the value that is known to work.
+Two cases need explicit handling, and both occur in real records: a solve that produces non-finite
+values, and a run that terminated on the optimizer's sentinel loss. Neither may yield a plausible
+looking R². Decide what is recorded in those cases and justify it; a missing value is an acceptable
+answer, a misleading number is not.
 
-Leave the **cell** workload's memory untouched. The bootstrap loads all 63 systems and builds the
-full 756-row manifest; a cell computes a single system. They are different workloads and the
-bootstrap's requirement says nothing about a cell's. The cells ran successfully at their current
-value, and changing it without measurement would replace one unfounded number with another.
+This metric applies to **all** systems. It is the only quality statement the surrogate systems can
+carry, and it is the reason they are in the campaign at all.
 
-### 3. A failed cell must leave its evidence behind
+### 2. `expected_stage`, derived rather than maintained
 
-The Job manifests use a restart policy under which the controller **deletes** the failed pod before
-retrying. That is how the first bootstrap failure was lost: the job reported failure, and the logs
-explaining it no longer existed. Diagnosis required reconstructing the run as a standalone pod.
+`studies/regression/phase_b_support.json` already carries, per exact system, the basis indices of the
+true support (`support_idxs`, one list per equation). The staged basis groups its terms into five
+stages. The expected stage of a system is therefore the highest stage still containing one of its
+support terms — a mechanical consequence of data the project already derives.
 
-At campaign scale this is the difference between a missing record you can explain and one you
-cannot. Switch both Job manifests to the policy under which a failed attempt leaves its pod, and its
-log, in place. Successful pods are cleaned up by the cluster as usual; only failures accumulate,
-which is exactly the set worth keeping.
+Derive it. Do not add a hand-maintained table: this project has been bitten by exactly that before,
+when `expected_terms_for` covered five systems and silently yielded nothing for the rest.
 
-### Verification
+**Acceptance test, and it is a strong one:** the derivation must reproduce **all five** hand-maintained
+values in `studies/regression/diagnostic_systems.jl`. If it disagrees on any of them, either the
+derivation or the hand-maintained value is wrong — stop and report, do not adjust one to match the
+other.
 
-The memory and restart-policy changes are structural and can be confirmed by inspection; state the
-values before and after.
+**Surrogate systems keep `expected_stage = nothing`.** They have no true support, so no expected
+stage exists. Report their reached stage as an observation, never as a deviation from a target. Do
+not invent a value to fill the column.
 
-The progress-display change must be verified behaviourally, not by reading the code: run the same
-entry point twice, once with output attached to a terminal and once with output redirected, and show
-that the first still displays progress while the second emits none. Confirm in both cases that the
-heartbeat file is written with its per-level events, since that is the property that must survive.
+Once this is in place, verify that `stage_overshoot` and `wasted_levels` become non-null on the exact
+systems and remain null on the surrogate ones.
 
-Do not apply anything to the cluster and do not run a campaign.
+### 3. Retire "target term-class usage"
 
-### Out of scope
+`CLAUDE.md` design principle 8 currently promises that surrogate systems are scored on "stage
+reached, target term-class usage, fit quality and stability". Three of those four are covered by this
+work package and by what records already carry. The second has no definition anywhere in the
+repository, no implementation, and no entry in the metric table — it exists only as that phrase.
 
-Cell memory limits, parallelism, the campaign manifests themselves, the plotting dependencies in
-`Project.toml`, and any change to metrics, configuration, hyperparameters or fingerprints. This work
-package changes what is printed and what is requested, never what is computed — results must be
-bit-identical.
+Remove it from the principle and state what surrogate systems are actually scored on. An unfulfilled
+promise in the orientation document is worse than an honest, narrower one.
+
+### 4. The fingerprint will move, and that is intended
+
+Deriving `expected_stage` changes the Phase B system definitions, and the support table is already
+part of the campaign identity — WP-E2 moved the fingerprint for exactly this reason.
+
+Report the old and the new `phase_b_fingerprint` explicitly, and state which of the two changes
+caused the move. Do not attempt to preserve the old value.
+
+The regression fingerprint must be checked too: if it moves, say why, since the regression systems
+already had expected stages.
+
+### 5. Verification
+
+- The five hand-maintained expected stages are reproduced exactly (§2)
+- A reference cell on an **exact** system now reports non-null `stage_overshoot` and `wasted_levels`
+- A reference cell on a **surrogate** system still reports null for both, and a non-null `r2`
+- `loss` and `pruned_match` are **unchanged** on a reference cell against a known previous record —
+  this work package adds measurements, it must not alter what the search does
+- Both fingerprints reported, old and new
+
+The last point matters most. If a previously recorded loss changes, something was altered that
+should not have been.
+
+Do not run a campaign and do not apply anything to the cluster.
+
+### 6. Out of scope
+
+What claim the surrogate systems support is settled: fit quality via R², plus reached stage and
+stability as observations. Do not design a structural metric for them — there is no true support to
+compare against, so no such metric can exist.
+
+Also out of scope: the analysis pipeline (WP-A1 runs separately), the Kubernetes manifests, the
+image, and any change to hyperparameters, variants, seeds or the system list.
 
 ### Report
 
-Write `codex/REPORT_WP_H6.md`: where the terminal check was applied and which entry points it covers,
-the before/after values for memory and restart policy, the two-way behavioural test of the progress
-display with its output, and confirmation that the heartbeat is unchanged in both modes.
+Write `codex/REPORT_WP_M1.md`: the R² definition used and which protocol source it follows, the
+handling of non-finite and sentinel cases, the derivation rule for `expected_stage` and the
+comparison against all five hand-maintained values, the before/after fingerprints with the cause of
+the move, and the reference-cell comparison showing `loss` and `pruned_match` unchanged.

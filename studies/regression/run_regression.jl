@@ -294,7 +294,14 @@ function config_fingerprint()
             reltol = 1e-9,
         ),
         basis = "default_staged_polynomial_basis(dim)",
-        loss = "MSELoss",
+        metrics = (
+            loss = "MSELoss",
+            r2 = "per-dimension coefficient of determination on final simulated trajectory, arithmetic mean across dimensions",
+            r2_undefined = "nothing when prediction is non-finite, loss is the MSELoss sentinel, or a dimension has zero reference variance",
+            exact_support_match = "support_match_pruned for exact systems only",
+            stage_overshoot = "max(0, final_stage - expected_stage) for systems with expected_stage",
+            wasted_levels = "levels spent above expected_stage for systems with expected_stage",
+        ),
     )
     bytes = sha256(codeunits(canonical_value(payload)))
     return bytes2hex(bytes)[1:16]
@@ -585,6 +592,39 @@ function active_term_names(structure::StructureSpec, basis::AbstractBasis)
     return [[basis_term_name(basis, term_idx) for term_idx in eq_terms] for eq_terms in structure.active_idxs]
 end
 
+function r2_by_dimension(yhat::AbstractMatrix, y::AbstractMatrix)
+    size(yhat) == size(y) || return nothing
+    all(isfinite, yhat) || return nothing
+    all(isfinite, y) || return nothing
+
+    values = Vector{Union{Nothing, Float64}}(undef, size(y, 2))
+    @inbounds for dim_idx in 1:size(y, 2)
+        observed = view(y, :, dim_idx)
+        predicted = view(yhat, :, dim_idx)
+        mean_observed = sum(observed) / length(observed)
+        sst = sum((value - mean_observed)^2 for value in observed)
+        if sst == 0.0
+            values[dim_idx] = nothing
+        else
+            sse = sum((pred - obs)^2 for (pred, obs) in zip(predicted, observed))
+            values[dim_idx] = 1.0 - sse / sst
+        end
+    end
+    return values
+end
+
+function r2_summary(yhat::AbstractMatrix, y::AbstractMatrix, loss_value)
+    if loss_value === nothing || !isfinite(Float64(loss_value)) || Float64(loss_value) >= 1e6
+        return (r2 = nothing, r2_by_dim = nothing)
+    end
+
+    by_dim = r2_by_dimension(yhat, y)
+    by_dim === nothing && return (r2 = nothing, r2_by_dim = nothing)
+    any(value -> value === nothing, by_dim) && return (r2 = nothing, r2_by_dim = by_dim)
+    numeric = Float64[value for value in by_dim]
+    return (r2 = sum(numeric) / length(numeric), r2_by_dim = numeric)
+end
+
 function run_one(variant,
                  system,
                  ic_set::Int,
@@ -619,6 +659,8 @@ function run_one(variant,
         "seed" => seed,
         "condition" => haskey(variant, :condition) ? String(variant.condition) : String(variant.label),
         "loss" => nothing,
+        "r2" => nothing,
+        "r2_by_dim" => nothing,
         "pruned_match" => nothing,
         "final_stage" => nothing,
         "expected_stage" => expected_stage,
@@ -762,6 +804,7 @@ function run_one(variant,
             expected_active_idxs_or_nothing(system_id, basis)
         end
         pruned_match = expected_idxs === nothing ? nothing : support_match_pruned(result.structure, result.params, expected_idxs)
+        r2_metrics = r2_summary(result.meta.prediction.Yhat, traj.x, result.loss)
         eq_final_stages = haskey(meta, :eq_final_stages) && meta.eq_final_stages !== nothing ? collect(meta.eq_final_stages) : nothing
         eq_stage_histories = haskey(meta, :eq_stage_histories) && meta.eq_stage_histories !== nothing ? [collect(hist) for hist in meta.eq_stage_histories] : nothing
         has_eq_stage_data = eq_final_stages !== nothing && eq_stage_histories !== nothing
@@ -769,6 +812,8 @@ function run_one(variant,
         local_eq_wasted_levels = has_eq_stage_data && expected_stage !== nothing ? eq_wasted_levels(eq_stage_histories, expected_stage) : nothing
 
         base_record["loss"] = result.loss
+        base_record["r2"] = r2_metrics.r2
+        base_record["r2_by_dim"] = r2_metrics.r2_by_dim
         base_record["pruned_match"] = pruned_match
         base_record["final_stage"] = final_stage
         base_record["stage_overshoot"] = stage_overshoot

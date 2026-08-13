@@ -6,6 +6,74 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ## 2026-08-13
 
+### WP-M1 - R2 und abgeleitete erwartete Stage; der letzte wissenschaftliche Blocker ist zu
+
+<!-- HASH -->
+
+Zwei Metriken haben gefehlt, und ohne sie haette die Kampagne 756 Records erzeugt, die ihre eigenen
+Fragen nicht beantworten.
+
+**R2, fuer alle 63 Systeme.** `PAPER_1.md` fuehrt es in der Kernmetrik-Tabelle, im Code gab es keine
+Zeile dazu. Fuer die 43 Surrogatsysteme — zwei Drittel der Kampagne — blieb damit der rohe Loss als
+einzige Guetegroesse, ohne Anschluss an die ODEBench-Literatur, die in R2 argumentiert. Implementiert
+als `r2` (arithmetisches Mittel ueber Dimensionen) plus `r2_by_dim`.
+
+Drei Faelle liefern ausdruecklich `null` statt einer plausiblen Zahl: nicht-endliche Vorhersagen, der
+`MSELoss`-Sentinel bei `loss >= 1e6`, und verschwindende Referenzvarianz in einer Dimension. Und es
+wurde **kein Schwellenwert** eingefuehrt: `docs/paper1_odebench_protocol_alignment.md` haelt fest,
+dass die publizierten R2-Konventionen noch nicht verifiziert sind, also waere jede Schwelle erfunden.
+
+**`expected_stage` abgeleitet statt gepflegt.** Bisher fuer alle 63 Phase-B-Systeme hartkodiert
+`nothing`, womit `stage_overshoot` und `wasted_levels` durchgehend leer blieben — auch auf den 20
+exakten Systemen. Ausgerechnet `wasted_levels` traegt die zentrale Aussage, dass Stage-Eskalation
+Verschwendung ist. WP-A1 hat das quantifiziert: **33 von 33 Pilot-Records ohne beide Werte.**
+
+Die Ableitung nutzt, was WP-E2 bereits erzeugt: `support_idxs` aus `phase_b_support.json` sind
+Indizes in die Basis, und `default_staged_polynomial_basis(dim).term_groups` ordnet jeden Index einer
+Stufe zu. Die erwartete Stage ist die hoechste Stufe, die noch einen Supportterm enthaelt.
+
+Abnahme gegen **alle fuenf** handgepflegten Werte in `diagnostic_systems.jl`: Systeme 3, 11, 26, 31
+und 63 — hand und abgeleitet stimmen jeweils ueberein. Auf Phase B: `exact_missing=0`,
+`surrogate_nonnull=0`, `expected_stage_missing=43`, und die 43 sind exakt die Surrogatsysteme. Fuer
+sie wird keine Stage erfunden; die erreichte Stage bleibt Beobachtung, nicht Abweichung von einem
+Soll.
+
+**Die entscheidende Abnahme war, dass sich nichts aendert.** Referenzzelle System 11, Seed 42:
+
+```text
+loss              4.635914151853964e-15  ->  4.635914151853964e-15
+pruned_match      true                   ->  true
+total_loss_evals  30550                  ->  30550
+expected_stage    null                   ->  4
+stage_overshoot   null                   ->  0
+wasted_levels     null                   ->  0
+r2                null                   ->  0.9999999999999564
+```
+
+Bis auf die letzte Stelle identisch. Das Paket fuegt Messungen hinzu, ohne die Suche anzufassen.
+
+**Fingerprints, bewusst bewegt:**
+
+| | vorher | nachher |
+|---|---|---|
+| Phase B | `c71c85ac2ec580ff` | `ca02ea284d621f6d` |
+| Regression | `45cb2c4507007366` | `0825cdc88d9264a0` |
+
+Phase B bewegt sich durch die abgeleiteten Stages **und** die Metrikdefinition; die Regression nur
+durch letztere, weil ihre Systeme ihre Stages schon hatten. Dass die Metrikdefinition Teil der
+Nutzlast ist, ist eine Entscheidung mit Begruendung: Die R2-Definition ist eine wissenschaftliche
+Wahl — ein spaeterer Wechsel von "arithmetisches Mittel ueber Dimensionen" auf eine gepoolte Variante
+wuerde Records stillschweigend unvergleichbar machen. So zeigt der Fingerprint es an.
+
+**Folge fuer die Pilotdaten:** Sie stammen vom alten Stand und tragen den alten Fingerprint. Sie
+bleiben gueltige Infrastrukturmessungen, duerfen aber nicht mit Kampagnen-Records vermengt werden.
+
+**Grundsatz 8 in CLAUDE.md korrigiert.** Das nirgends definierte "target term-class usage" ist
+gestrichen; es steht jetzt dort, worauf Surrogatsysteme tatsaechlich bewertet werden — Guete ueber
+R2, erreichte Stage und Stabilitaet als Beobachtungen.
+
+---
+
 ### WP-A1 - die Analysepipeline kann Kampagnendaten nicht lesen, und eine Stelle scheitert leise
 
 <!-- HASH -->

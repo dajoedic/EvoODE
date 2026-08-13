@@ -42,6 +42,24 @@ function load_phase_b_support()
     return table
 end
 
+function stage_for_term_idx(basis::StagedPolynomialBasis, term_idx::Int)
+    for (stage, terms) in enumerate(basis.term_groups)
+        term_idx in terms && return stage
+    end
+    error("Term index $(term_idx) is not present in staged basis")
+end
+
+function expected_stage_from_support(dim::Int, support)
+    support === nothing && return nothing
+    basis = default_staged_polynomial_basis(dim)
+    stages = Int[]
+    for eq_support in support
+        append!(stages, stage_for_term_idx.(Ref(basis), eq_support))
+    end
+    isempty(stages) && error("Cannot derive expected_stage from empty support")
+    return maximum(stages)
+end
+
 function _phase_b_dataset_rows()
     raw = JSON3.read(read(REGRESSION_DATA_PATH, String))
     return sort(collect(raw); by = row -> Int(row["id"]))
@@ -181,6 +199,7 @@ function phase_b_systems()
         haskey(support_table, system_id) ||
             error("Phase B system $(system_id) missing from $(PHASE_B_SUPPORT_PATH); regenerate it")
         support_entry = support_table[system_id]
+        expected_stage = expected_stage_from_support(dim, support_entry.support)
         push!(
             systems,
             Dict{Symbol, Any}(
@@ -191,7 +210,7 @@ function phase_b_systems()
                 :t_grid => protocol.t_grid,
                 :tspan => PHASE_B_TSPAN,
                 :T => PHASE_B_T,
-                :expected_stage => nothing,
+                :expected_stage => expected_stage,
                 :rhs! => rhs!,
                 :representability => support_entry.representability,
                 :expected_support => support_entry.support,
@@ -252,7 +271,7 @@ function phase_b_fingerprint()
             t_grid = Float64[t for t in system[:t_grid]],
             tspan = system[:tspan],
             T = Int(system[:T]),
-            expected_stage = nothing,
+            expected_stage = system[:expected_stage] === nothing ? nothing : Int(system[:expected_stage]),
             representability = String(system[:representability]),
             # The true support defines the structure metric, so it is part of the
             # campaign identity: changing it changes what pruned_match means.
@@ -319,7 +338,15 @@ function phase_b_fingerprint()
             reltol = 1e-9,
         ),
         basis = "default_staged_polynomial_basis(dim)",
-        loss = "MSELoss",
+        metrics = (
+            loss = "MSELoss",
+            r2 = "per-dimension coefficient of determination on final simulated trajectory, arithmetic mean across dimensions",
+            r2_undefined = "nothing when prediction is non-finite, loss is the MSELoss sentinel, or a dimension has zero reference variance",
+            exact_support_match = "support_match_pruned for exact systems only",
+            expected_stage = "derived from phase_b_support support_idxs and staged basis term_groups for exact systems; nothing for surrogate systems",
+            stage_overshoot = "max(0, final_stage - expected_stage) for exact systems",
+            wasted_levels = "levels spent above expected_stage for exact systems",
+        ),
     )
     bytes = sha256(codeunits(canonical_value(payload)))
     return bytes2hex(bytes)[1:16]

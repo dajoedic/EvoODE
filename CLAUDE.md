@@ -260,8 +260,8 @@ the coupled search path 1e-6 is the cheaper, behaviour-equal tolerance; the Syst
    `elapsed_s` is recorded as context only and must be labelled as non-evidence wherever it is
    reported. If a claim genuinely requires timing, measure it on a dedicated machine.
 8. **Exact and surrogate systems are never mixed** into one structure-correctness metric. Exact
-   systems are scored on support recovery; surrogate systems on stage reached, target term-class
-   usage, fit quality and stability.
+   systems are scored on support recovery; surrogate systems on fit quality via R², reached stage
+   and stability observations.
 
 ## Coding Conventions
 
