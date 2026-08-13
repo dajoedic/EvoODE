@@ -8,7 +8,7 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ### Jeder Cluster-Record trug `git_hash: "unknown"` - die Provenienzkette war offen
 
-<!-- HASH -->
+<!-- d2aed32 -->
 
 Beim Zaehlen von Hash-Referenzen fuer eine ganz andere Frage aufgefallen: **alle 29 bisher auf Orion
 erzeugten Records tragen `git_hash: "unknown"`.**
