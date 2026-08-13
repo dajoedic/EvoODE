@@ -477,6 +477,34 @@ Dateien dann auch dort, egal wie tief sie liegen.
 > die Befehle oben rekursiv statt einen festen Pfad anzunehmen. Für die Kampagne gilt die eine
 > Konvention.
 
+### Welcher Ordner gehört zu welchem Job?
+
+Der Ordnername steht im Manifest, der Jobname auch — aber nirgends steht, dass sie zusammengehören.
+Man braucht dafür keine gepflegte Tabelle: **Jeder Record trägt den Pod-Namen im Feld `hostname`**,
+und der ist der Jobname plus Completion-Index. Die Zuordnung ist also aus den Daten ableitbar und
+damit immer aktuell:
+
+```powershell
+$base = "S:\BigDataOrion\data-science\joedicke"
+Get-ChildItem $base -Recurse -Filter "cell_*.jsonl" |
+  Where-Object { $_.Name -notlike "*heartbeat*" } |
+  Group-Object DirectoryName |
+  ForEach-Object {
+    $h = ((Get-Content $_.Group[0].FullName -TotalCount 1) | ConvertFrom-Json).hostname
+    [pscustomobject]@{
+      Ordner = $_.Name.Replace($base, '').TrimStart('\')
+      Job    = $h -replace '-\d+$', ''
+      Zellen = $_.Count
+    }
+  } | Sort-Object Ordner | Format-Table -AutoSize
+```
+
+Nützlich, wenn ein Ordner auftaucht, dessen Herkunft unklar ist — oder umgekehrt, wenn ein Job
+gelaufen ist und du nicht mehr weißt, wohin er geschrieben hat.
+
+**Für neue Läufe:** Benenne das Ausgabeverzeichnis nach dem Job. Dann braucht es den Befehl gar
+nicht erst.
+
 > **Die Heartbeat-Felder heißen je nach Ereignis anders**, und das ist die häufigste Stolperfalle
 > beim Auswerten:
 >
