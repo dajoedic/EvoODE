@@ -436,17 +436,20 @@ Diese Befehle brauchen eine gültige Anmeldung. Der Token läuft nach einiger Ze
 
 Ohne Anmeldung siehst du über Laufwerk `S:` trotzdem alles, was du zum Mitverfolgen brauchst.
 
+Beide Befehle suchen **rekursiv** ab deinem Arbeitsverzeichnis. Das ist Absicht: Sie funktionieren
+unabhängig davon, wie das Ausgabeverzeichnis eines Laufs heißt.
+
 **Wie viele Zellen sind fertig?**
 
 ```powershell
-Get-ChildItem "S:\BigDataOrion\data-science\joedicke\<lauf>\tasks\*.jsonl" |
+Get-ChildItem "S:\BigDataOrion\data-science\joedicke" -Recurse -Filter "cell_*.jsonl" |
   Where-Object { $_.Name -notlike "*heartbeat*" } | Measure-Object | Select-Object Count
 ```
 
 **Wo steht jede laufende Zelle gerade?** Diese Übersicht ist das eigentliche Arbeitswerkzeug:
 
 ```powershell
-Get-ChildItem "S:\BigDataOrion\data-science\joedicke\<lauf>\tasks\*.heartbeat.jsonl" |
+Get-ChildItem "S:\BigDataOrion\data-science\joedicke" -Recurse -Filter "*.heartbeat.jsonl" |
   ForEach-Object {
     $e = (Get-Content $_.FullName -Tail 1) | ConvertFrom-Json
     $l = if ($e.event -eq 'complete') { $e.loss } else { $e.best_loss }
@@ -464,7 +467,15 @@ Get-ChildItem "S:\BigDataOrion\data-science\joedicke\<lauf>\tasks\*.heartbeat.js
 Eine Zeile pro Zelle, mit Level, Stage, Loss — und `StillMin`, den Minuten seit dem letzten
 Fortschrittseintrag. Fertige und laufende Zellen stehen nebeneinander, sortiert nach Status.
 
-Im Pfad sind Platzhalter erlaubt: `pilot_sweep*_tasks` erfasst mehrere Läufe auf einmal.
+Willst du nur einen bestimmten Lauf sehen, häng seinen Ordner an den Pfad an — `-Recurse` findet die
+Dateien dann auch dort, egal wie tief sie liegen.
+
+> **Konvention für Ausgabeverzeichnisse.** `EVO_BATCH_OUTPUT_DIR` gehört auf
+> `/outputs/<lauf>/tasks`, so wie es die Vorlagen unter `k8s/` tun. Während der Pilotphase sind
+> daneben drei andere Formen entstanden — `<lauf>/tasks_dimN` und ein flaches `<lauf>_tasks` ohne
+> Elternordner —, weil die Ad-hoc-Manifeste das Feld jedes Mal anders gesetzt haben. Deshalb suchen
+> die Befehle oben rekursiv statt einen festen Pfad anzunehmen. Für die Kampagne gilt die eine
+> Konvention.
 
 > **Die Heartbeat-Felder heißen je nach Ereignis anders**, und das ist die häufigste Stolperfalle
 > beim Auswerten:
