@@ -1,0 +1,18 @@
+# Line endings
+#
+# Everything is LF, both in the repository and in the working tree, on every platform.
+#
+# This is not cosmetic. The campaign image is built on Linux and `COPY` in
+# containers/Dockerfile takes files exactly as they are on disk. A CRLF line ending in a shell
+# script or a config file read by a Linux tool fails with an error that points nowhere near its
+# cause. Pinning LF here removes the class of problem instead of the symptom, and it silences the
+# "LF will be replaced by CRLF" warnings on Windows checkouts as a side effect.
+
+* text=auto eol=lf
+
+# Binary files must never be converted or diffed as text.
+*.png binary
+*.jpg binary
+*.pdf binary
+*.sif binary
+*.ji  binary
