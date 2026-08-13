@@ -6,6 +6,50 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ## 2026-08-13
 
+### WP-A1 - die Analysepipeline kann Kampagnendaten nicht lesen, und eine Stelle scheitert leise
+
+<!-- HASH -->
+
+Die Python-Auswertung ist Phase-A-foermig: `aggregate_run_registry.py` liest `run_registry.csv` aus
+der `experiments/`-Infrastruktur. Die Kampagne schreibt per-Zelle-JSONL. **Direkt gefuettert bricht
+die Aggregation hart ab** (`Expected 19 fields in line 22, saw 20`) — immerhin ehrlich.
+
+Geloest ueber eine einzelne Konvertierung statt Aenderungen quer durch die Auswertungsskripte:
+`analysis/scripts/aggregate/convert_campaign_history_to_run_registry.py`. Der Phase-A-Pfad bleibt
+unangetastet, `paper1_phaseA_v1` weiter reproduzierbar.
+
+**Der wichtigste Befund ist der stille.** Nach der Konvertierung laeuft `table_main_results.py`
+fehlerfrei durch — und liefert Unsinn:
+
+```text
+agg_variants   = evogrow_v2_2_stage_capped, evogrow_v3, ...   (Kampagne)
+table_variants = evogrow_v1, evogrow_v2_1, gp_baseline, ...   (eingefrorene Phase-A-Liste)
+table_rows=30   table_nonempty_mean_loss=5
+```
+
+Das Skript indiziert auf eine fest verdrahtete Variantenliste um und laesst alles fallen, was es
+nicht kennt. 25 von 30 Zeilen bleiben leer, ohne Fehlermeldung. `evaluate_hypotheses.py` scheitert
+demgegenueber sauber mit `Missing expected variants`. Die Lehre: Vor der Auswertung muessen die
+Downstream-Skripte von der Phase-A-Variantenliste geloest werden, sonst entsteht eine plausibel
+aussehende, fast leere Tabelle.
+
+**Zwei Felder bleiben bewusst leer statt geraten.** `total_invalid_evals` meint in Phase A
+NaN-erzeugende Evaluationen; die Kampagne verteilt verwandte Begriffe auf `total_invalid_solves`,
+`total_optimizer_invalid_result_fits`, `invalid_screening_evals` und Solver-Instabilitaetszaehler.
+Ohne definierte Einheit wird nichts eingetragen. Und `exact_support_match` wird aus `pruned_match`
+gespeist — nuetzlich, aber nicht semantisch identisch, und fuer Surrogatsysteme korrekt leer.
+
+**Nachtest auf echten Pilotdaten.** Codex hatte kein `S:`-Laufwerk und musste auf lokale Altdaten
+ausweichen; die Faelle `pruned_match: null` und `git_hash: "unknown"` blieben ungetestet. Nachgeholt
+an 33 echten Cluster-Records: `loss`, `final_stage`, `elapsed_s` und `system_dim` durchgehend
+gefuellt, `exact_support_match` in 11 von 33 (genau die exakten Systeme), Surrogatsysteme korrekt
+leer. Die Bruecke haelt.
+
+Dabei faellt der Beleg fuer WP-M1 quantitativ an: **`stage_overshoot` und `wasted_levels` sind in
+33 von 33 Records leer**, weil `expected_stage` nirgends gesetzt ist.
+
+---
+
 ### Jeder Cluster-Record trug `git_hash: "unknown"` - die Provenienzkette war offen
 
 <!-- d2aed32 -->
