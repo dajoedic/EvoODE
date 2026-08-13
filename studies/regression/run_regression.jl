@@ -311,10 +311,20 @@ end
 function git_provenance()
     hash = git_output(["rev-parse", "--short", "HEAD"])
     dirty = git_output(["status", "--porcelain"])
-    return (
-        git_hash = hash === nothing || isempty(hash) ? "unknown" : hash,
-        git_dirty = dirty === nothing ? nothing : !isempty(dirty),
-    )
+    if hash !== nothing && !isempty(hash)
+        return (
+            git_hash = hash,
+            git_dirty = dirty === nothing ? nothing : !isempty(dirty),
+        )
+    end
+    # Container runs carry no .git directory, so the revision cannot be discovered here. The
+    # image build bakes it in instead; see containers/Dockerfile. A CI build checks out exactly
+    # one commit into a fresh clone, so such an image is clean by construction.
+    baked = strip(get(ENV, "EVOODE_GIT_SHA", ""))
+    if !isempty(baked)
+        return (git_hash = first(baked, 7), git_dirty = false)
+    end
+    return (git_hash = "unknown", git_dirty = nothing)
 end
 
 function history_line_count()

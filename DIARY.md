@@ -6,9 +6,43 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ## 2026-08-13
 
-### Repo-Inventur vor der Kampagne: SCRIPTS.md neu, Slurm-Schiene entfernt
+### Jeder Cluster-Record trug `git_hash: "unknown"` - die Provenienzkette war offen
 
 <!-- HASH -->
+
+Beim Zaehlen von Hash-Referenzen fuer eine ganz andere Frage aufgefallen: **alle 29 bisher auf Orion
+erzeugten Records tragen `git_hash: "unknown"`.**
+
+Die Auflage in `docs/hpc_requirements.md` §7 lautet, dass jeder Job Commit-Hash und
+Konfigurations-Fingerprint aufzeichnet und eine Kampagne mit gemischten Hashes nicht publizierbar
+ist. Die Zeile, die das leisten soll, ruft `git rev-parse` auf — und im Container gibt es kein
+`.git`-Verzeichnis, weil `.dockerignore` es zu Recht ausschliesst. Der Code trug also ehrlich
+`unknown` ein, und niemandem ist es aufgefallen, weil `Completed` und `error=null` ja stimmten.
+
+Faktisch gerettet war die Nachvollziehbarkeit bisher allein durch den Image-Tag, der der Commit-SHA
+ist. Aber **aus einem Record allein liess sich nicht sagen, welcher Code ihn erzeugt hat** — genau
+das, was das Protokoll verlangt. Ein Kampagnen-Blocker, gefunden zwei Tage bevor er teuer geworden
+waere.
+
+**Der Fix backt die Revision beim Bauen ein.** `.gitlab-ci.yml` reicht `$CI_COMMIT_SHA` als
+Build-Argument durch, das Dockerfile legt es als `EVOODE_GIT_SHA` ab und schreibt es zusaetzlich in
+`build_provenance.json`, und `git_provenance()` faellt darauf zurueck, wenn kein Git verfuegbar ist.
+Der Standardwert des Build-Arguments ist **leer**, nicht `unknown` — ein lokaler Bau ohne Argument
+meldet damit weiterhin ehrlich eine unbekannte Revision statt einer falschen.
+
+`git_dirty` ist im Container-Fall `false`: Ein CI-Bau checkt genau einen Commit in einen frischen
+Klon aus, ist also per Konstruktion sauber. Wo Git verfuegbar ist — lokale Laeufe — bleibt das
+bisherige Verhalten unveraendert, inklusive echter Dirty-Erkennung.
+
+Der Fingerprint ist nicht betroffen: Seine Nutzlast enthaelt ausschliesslich
+Konfigurationskonstanten, keine Provenienz. Die 29 Pilot-Records bleiben damit gueltige
+Infrastrukturmessungen; sie sind ohnehin als wissenschaftlich wertlos deklariert.
+
+---
+
+### Repo-Inventur vor der Kampagne: SCRIPTS.md neu, Slurm-Schiene entfernt
+
+<!-- 2b95eda -->
 
 Anlass ist der Zeitpunkt, nicht Ordnungsliebe. CLAUDE.md verlangt, dass **alle
 fingerprint-relevanten Aenderungen vor dem ersten Kampagnen-Record landen**; danach kostet jede
