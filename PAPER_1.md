@@ -6,6 +6,37 @@ It defines the current paper scope, diagnostic gates, work phases, go/no-go crit
 For architecture and algorithm design, see `CLAUDE.md`.
 For frozen Phase A results, see `docs/paper1_freeze_memo_phaseA.md`.
 
+> ## ⚠ Partially superseded — read this first
+>
+> **The body of this document is dated 2026-05-17 and predates both diagnostic gates.** It plans in
+> detail around EvoGrow v3. **v3 was rejected**, and the variant that is the paper's contribution is
+> not mentioned anywhere below. Until this document is revised, `CLAUDE.md` and `DIARY.md` carry the
+> current state, which inverts the precedence rule stated above.
+>
+> A full revision is scheduled once the Phase B campaign has produced its numbers. This block records
+> only what has already been decided and minuted, so that the plan below is not mistaken for the
+> current one.
+>
+> **Decisions taken since 2026-05-17**
+>
+> | Date | Decision |
+> |---|---|
+> | 2026-05-30 | **Gate 1**: v2.2 stage-local progression fails; v3 triggered |
+> | 2026-07-31 | **Gate 2**: v3 fails. Its promotion condition `r_k > loss_tol = 1e-8` is unreachable on coupled systems, whose error floor is ~1e-3. Kept as documented failure analysis, not as the contribution |
+> | 2026-08-01 | Paper scope decided: the mechanistic Claim C study |
+> | 2026-08-03 | **Final variant settled: `evogrow_v2_2_stage_capped`** — v2.2 substrate plus a per-equation look-ahead stage cap derived from trajectory and basis before the search begins. Search-independent, therefore it does not require the v3 substrate |
+> | 2026-08-13 | Compute path verified end to end on the SCCH "Orion" OpenShift cluster. R² implemented for all systems; `expected_stage` derived rather than hand-maintained |
+>
+> **Frozen experiment scope** (`paper1_phaseB_v1`): all 63 ODEBench systems, two conditions
+> (`pretune_on` / `pretune_off`), 3 seeds, 2 initial-condition sets — 756 runs. 20 exact systems are
+> scored on support recovery; 43 surrogate systems on fit quality via R², with reached stage and
+> stability as observations. Current fingerprints: Phase B `ca02ea284d621f6d`, regression
+> `0825cdc88d9264a0`; neither carries records yet.
+>
+> **What below is still valid:** the gate structure, the go/no-go discipline, the risk register, and
+> the evidence rules. **What is not:** every section that treats v3 as the path forward, and the
+> phase status.
+
 ---
 
 ## Critical Scope Decision (2026-05-17)

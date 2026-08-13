@@ -1,5 +1,25 @@
 # EvoGrow v3 Design Note: Per-Equation Progress Signal and Promotion Rule
 
+> ## ⚠ SUPERSEDED — v3 failed Gate 2 and is not the contribution
+>
+> This note describes a design that was implemented, tested and **rejected on 2026-07-31**. It is
+> kept as documented failure analysis, not as a plan. Do not implement from it.
+>
+> **Why it failed.** The promotion condition requires the derivative residual to exceed
+> `loss_tol = 1e-8`. On coupled systems the error floor sits around 1e-3, so the condition is
+> unreachable and cannot distinguish under-modelling from an irreducible floor. WP-L2 additionally
+> showed the signal is contaminated by derivative error, and that its capacity to absorb that error
+> grows with the term count — biasing it toward "more terms help". On System 31, seed 42, the v3
+> substrate alone loses about six orders of magnitude against v2.2.
+>
+> **What is used instead.** `evogrow_v2_2_stage_capped`: the v2.2 substrate plus a per-equation
+> look-ahead stage cap derived from trajectory and basis *before* the search starts. Because the cap
+> reads only data and basis, it is search-independent and does not need the v3 substrate. See
+> `docs/architecture.md` and `docs/wp_l5d_stage_cap_closeout.md`.
+>
+> The diagnosis of v2.2's weakness in §1 below remains valid — it is what motivated the cap. Only
+> the proposed remedy was wrong.
+
 ## 1. Motivation
 
 EvoGrow v2.2 uses system-wide staged progression: all equations share a single current stage, a single level counter within that stage, and a single plateau history. Gate 1 on 2026-05-30 determined that this design is not paper-ready for coupled systems. The diagnosed failure mode is that one stalled equation can force the entire system to escalate, spending search budget on higher-stage terms for equations that do not need them. This escalation without targeted improvement was confirmed in the Gate 1 diagnostic on Systems 26 and 63.

@@ -1,6 +1,6 @@
 # Phase 1 Diagnostic: Metric Artifact vs. Structural Failure
 Generated: 2026-05-17T19:02:20.419070+00:00
-Source: c:/Users/joedicke/Documents/reps/EvoODE/experiments/paper1_phaseA_v1/runs/
+Source: `experiments/paper1_phaseA_v1/runs/` (frozen Phase A; not used for final claims)
 
 ## Summary
 

@@ -103,7 +103,7 @@ The second line of every task spec declares the language: `**Language: Python**`
 | 1 — stable core | DONE (2026-04-20) |
 | 2 — EvoGrow variants | **CLOSED 2026-08-03** |
 | 3 — benchmarking | infrastructure done; Phase B protocol decided and implemented. Planned next axes: noise, sampling density, coupling strength, dimensionality |
-| 4 — Paper 1 | Phase A frozen; Phase B ported to a job array, blocked on compute |
+| 4 — Paper 1 | Phase A frozen; Phase B ported to Kubernetes and verified end to end on the cluster; pilot running, campaign not yet started |
 | 5 — advanced methods | not started |
 
 ### Phase 2 outcome
@@ -178,25 +178,45 @@ the coupled search path 1e-6 is the cheaper, behaviour-equal tolerance; the Syst
 
 ### Active
 
-1. **Phase B compute.** 846 jobs (756 Phase B + 90 regression), ~1e9 ODE solves, ~2.7e5 parameter
-   fits. Fully independent, so throughput scales linearly with cores: 1 core and 2 GB per job,
-   <10 GB disk, no GPU, Julia 1.12.6 pinned. The existing Phase A and regression results were produced on 1.12.6; the earlier 1.11.5 documentation claim was incorrect. The resource request is `docs/hpc_requirements.md`;
-   consultation 2026-08-06. First action with access: build the container, then one pilot cell —
-   the project's first trustworthy timing figure.
+1. **Phase B compute — access obtained, path verified end to end (2026-08-13).** The target is SCCH
+   **"Orion", an OpenShift/Kubernetes cluster**, not a Slurm site: `containers/Dockerfile` built by
+   GitLab CI, `k8s/` Job manifests with `completionMode: Indexed`, results on NFS. The full chain
+   from commit to finished record has been run and verified at every hand-off; see
+   `docs/hpc_deployment_guide.md` for the mechanics and `DIARY.md` (WP-H2 to WP-H6) for the
+   chronology. 846 jobs (756 Phase B + 90 regression), 1 core and 2 GB each, no GPU, Julia 1.12.6
+   pinned.
+
+   **Open: the cost model.** The estimates in `docs/hpc_requirements.md` are one to two orders of
+   magnitude too high — the work counts held, the seconds-per-integration conversion did not. A
+   pilot across dimension classes is running; that document is banner-marked as superseded and gets
+   rewritten from the pilot numbers. Capacity agreed with the site: **`parallelism: 16`** of 96
+   cluster cores, raise on request. No walltime limit, therefore no checkpointing needed.
+
+   **Open: pathological levels.** Pilot cells show a single search level consuming three to five
+   hours while its neighbours take seconds — not slow systems but slow individual levels. This makes
+   a cell's runtime effectively unbounded above and is the largest remaining planning risk.
 2. **Unbudgeted call sites outside the campaign.** WP-D3 budgeted the two campaign runners; eleven
    scripts under `benchmarks/` and `studies/` still construct the optimizer without a budget and are
    unbounded since WP-B3. Deliberate backlog, listed in `codex/REPORT_WP_D3.md` — not to be fixed
    before the campaign.
 4. **Fingerprint boundary.** The v2.2 arm sits on Baseline v0 (`0c739d4e36ee6498`), all v3 and
    capped runs on `df5db7763bcd2449`. The comparison is sound but crosses a boundary and must be
-   labelled as such wherever it is reported. The current code is on `7acd3ebf3f60b974` (Phase B
-   protocol, corrected grid label, deterministic optimizer budget, budgeted experiment call site)
-   and carries **no records yet** — every Phase B and every new regression run will live there, so
-   all fingerprint-affecting changes must land before the first one.
-5. **Remaining Phase 3 items** (`PAPER_1.md`): R² metric, and filling the external columns of the
-   protocol audit from the publications. Open question there: if published numbers were computed on
-   the shipped trajectories, we work on cleaner data than the comparison works — a deviation in our
-   favour that must be declared.
+   labelled as such wherever it is reported. **Current fingerprints after WP-M1 (2026-08-13):**
+   Phase B `ca02ea284d621f6d`, regression `0825cdc88d9264a0`. Both carry **no records yet** — the
+   pilot data predates them and must never be merged with campaign records. All
+   fingerprint-affecting changes must land before the first campaign record.
+5. **Remaining Phase 3 items** (`PAPER_1.md`): filling the external columns of the protocol audit
+   from the publications. Open question there: if published numbers were computed on the shipped
+   trajectories, we work on cleaner data than the comparison works — a deviation in our favour that
+   must be declared. *(The R² metric is done, WP-M1.)*
+6. **`PAPER_1.md` is stale and it is the authoritative document.** Dated 2026-05-17, it plans in
+   detail around v3 and does not mention the stage cap once — the variant that is the contribution.
+   Until it is revised, `CLAUDE.md` and `DIARY.md` carry the current state, which inverts the
+   precedence rule stated at the top of this file. This must be resolved before writing.
+7. **Analysis downstream is Phase-A shaped.** WP-A1 built a bridge from campaign records into the
+   Python pipeline, but `table_main_results.py` reindexes to a hard-coded Phase-A variant list and
+   silently produces a near-empty table for campaign variants. Not a campaign blocker; a blocker for
+   evaluating one.
 
 ### Excluded, deliberately
 

@@ -1,5 +1,13 @@
 # EvoGrow Screening Design Note: Derivative-Based Candidate Evaluation
 
+> ## Status: closed — a performance optimization, never a quality lever
+>
+> Screening is settled and is **not** part of any scientific claim. It may make the search cheaper;
+> it must never change what is discovered. Any result that depends on screening being on or off is a
+> defect, not a finding.
+>
+> This note is the design record. `docs/architecture.md` marks the component accordingly.
+
 ## 1. Motivation and Measurement Status
 
 The profiling result that motivates this note is narrow but strong: one cell,
