@@ -21,7 +21,7 @@ spec:
         hpc.scch.at/service: evoode-phase-b-bootstrap
         hpc.scch.at/responsibility: joedicke
     spec:
-      restartPolicy: OnFailure
+      restartPolicy: Never
       imagePullSecrets:
         - name: evoode-gitlab-pull
       containers:
@@ -44,10 +44,10 @@ spec:
           resources:
             requests:
               cpu: "1"
-              memory: 2Gi
+              memory: 8Gi
             limits:
               cpu: "1"
-              memory: 2Gi
+              memory: 8Gi
           volumeMounts:
             - name: evoode-bigdata
               mountPath: /outputs

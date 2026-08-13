@@ -523,6 +523,10 @@ function close_evo_logger!()
     return nothing
 end
 
+function progress_display_enabled()
+    return stderr isa Base.TTY
+end
+
 function build_trajectory(system, ic_set::Int)
     system_id = Int(system[:system_id])
     tspan = system[:tspan]
@@ -666,24 +670,27 @@ function run_one(variant,
     # The inner bar ticks once per completed EvoGrow level. One level can still
     # pause for the BFGS time limit if fitting is slow, but this is much finer
     # than the outer per-run progress bar.
-    inner_progress = Progress(
+    show_progress = progress_display_enabled()
+    inner_progress = show_progress ? Progress(
         level_cap;
         desc = "Levels",
         showspeed = true,
         offset = 1,
-    )
+    ) : nothing
     level_callback = snapshot -> begin
-        next!(
-            inner_progress;
-            showvalues = [
-                (:system_id, system_id),
-                (:ic_set, ic_set),
-                (:seed, seed),
-                (:level, snapshot.level),
-                (:stage, snapshot.stage),
-                (:best_loss, @sprintf("%.3e", snapshot.best_loss)),
-            ],
-        )
+        if inner_progress !== nothing
+            next!(
+                inner_progress;
+                showvalues = [
+                    (:system_id, system_id),
+                    (:ic_set, ic_set),
+                    (:seed, seed),
+                    (:level, snapshot.level),
+                    (:stage, snapshot.stage),
+                    (:best_loss, @sprintf("%.3e", snapshot.best_loss)),
+                ],
+            )
+        end
         write_heartbeat!(
             heartbeat,
             "level";
@@ -814,7 +821,7 @@ function run_one(variant,
             final_stage = base_record["final_stage"],
             pruned_match = base_record["pruned_match"],
         )
-        finish!(inner_progress)
+        inner_progress !== nothing && finish!(inner_progress)
     end
 
     return base_record
@@ -929,12 +936,13 @@ function main()
     try
         # The progress bar ticks once per completed run. A single run can take
         # minutes to hours; within-run liveness is written to run.log by EvoGrow.
-        progress = Progress(
+        show_progress = progress_display_enabled()
+        progress = show_progress ? Progress(
             total_runs;
             desc = "Regression",
             showspeed = true,
             offset = 0,
-        )
+        ) : nothing
 
         for variant in variants
             for system in systems
@@ -955,15 +963,17 @@ function main()
                                 seed,
                             )
                         )
-                        next!(
-                            progress;
-                            showvalues = [
-                                (:variant, variant.label),
-                                (:system_id, Int(system[:system_id])),
-                                (:ic_set, ic_set),
-                                (:seed, seed),
-                            ],
-                        )
+                        if progress !== nothing
+                            next!(
+                                progress;
+                                showvalues = [
+                                    (:variant, variant.label),
+                                    (:system_id, Int(system[:system_id])),
+                                    (:ic_set, ic_set),
+                                    (:seed, seed),
+                                ],
+                            )
+                        end
                         continue
                     end
 
@@ -995,22 +1005,24 @@ function main()
 
                     done_line = done_log_line(record, run_index, total_runs)
                     append_run_log_line!(done_line)
-                    next!(
-                        progress;
-                        showvalues = [
-                            (:variant, variant.label),
-                            (:system_id, Int(system[:system_id])),
-                            (:ic_set, ic_set),
-                            (:seed, seed),
-                        ],
-                    )
+                    if progress !== nothing
+                        next!(
+                            progress;
+                            showvalues = [
+                                (:variant, variant.label),
+                                (:system_id, Int(system[:system_id])),
+                                (:ic_set, ic_set),
+                                (:seed, seed),
+                            ],
+                        )
+                    end
                     println(summary_line(record))
                     end
                 end
             end
         end
 
-        finish!(progress)
+        progress !== nothing && finish!(progress)
     finally
         close_evo_logger!()
         append_run_log_line!("=== Finished at $(iso_timestamp()) ===")

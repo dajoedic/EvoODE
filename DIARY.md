@@ -8,7 +8,29 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ### WP-H5 - der eingebackene Praekompilierungscache war auf dem Cluster wertlos
 
-<!-- HASH -->
+<!-- be6bf99 -->
+
+**Ergebnis vorweg, gemessen auf einem Orion-Node**: derselbe Bootstrap, derselbe Fingerprint, dieselbe
+Ausgabe — **2.760 s vorher, 22 s nachher**. `manifest.csv` ist in beiden Laeufen exakt 77.201 Bytes
+gross, `phase_b_fingerprint=c71c85ac2ec580ff` in beiden. `Precompiling packages...` taucht im zweiten
+Lauf nicht mehr auf, und ein Ladetest meldet null `Rejecting cache file`. Das ist eine
+Infrastruktur-Messung auf dedizierter Hardware, nicht der Laptop-Fall, den Grundsatz 7 ausschliesst.
+
+**Und damit lief der erste Indexed Job durch**: drei 1D-Zellen, `completionMode: Indexed`,
+`completions=3`. Die Abbildung haelt auf echter Hardware — Completion-Index 0/1/2 auf Listenzeile
+1/2/3 auf Manifestzeile 1/2/3, kein Off-by-one. Drei Records und drei Heartbeats liegen unter
+`/bigdata/data-science/joedicke/.../tasks/` als `cell_000001` bis `cell_000003`.
+
+Beobachtet an Zelle 3 (System 1, IC 1, Seed 7): Abbruch bei **Level 20 von 30**, Stage 5, vier Level
+ohne Verbesserung bei `loss=6.630e-05`. Zehn Level ungenutzt — dasselbe Muster, das WP-L/G auf System
+3 gezeigt haben, hier zum ersten Mal auf Clusterhardware. `pruned=nothing` ist korrekt: System 1 ist
+eines der 43 Surrogatsysteme. Die Kosten pro Level stiegen von 3,3 auf 12,7 s, weil spaetere Level
+mehr Terme und damit mehr Parameter pro Fit tragen.
+
+Damit ist der Weg vom Commit bis zum Record einmal vollstaendig und an jedem Uebergang verifiziert:
+GitHub → GitLab → CI → Registry → OpenShift → Indexed Job → NFS.
+
+---
 
 **Der Befund.** Der erste Bootstrap auf Orion lief 46 Minuten, davon praktisch alles
 Praekompilierung — obwohl das Image ein fertiges 3,1-GB-Depot mit 1,3 GB kompiliertem Code traegt.

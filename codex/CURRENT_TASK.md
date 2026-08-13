@@ -1,90 +1,82 @@
 # CURRENT TASK
 
-**Language: Docker**
+**Language: Julia / YAML (Kubernetes)**
 
-## WP-H5 — Make the baked precompilation cache usable on the cluster
+## WP-H6 — Three corrections the first cluster run exposed
 
-### The defect, measured on Orion
+The path from commit to record now works end to end on Orion: the image builds in CI, the baked
+precompilation cache is accepted, the bootstrap writes manifest and index lists to NFS in 22 seconds,
+and an indexed Job ran three 1D cells that landed records and heartbeats. Nothing here is a
+redesign. These are three defects the run surfaced, each cheap, each with a consequence that only
+appears at campaign scale.
 
-The image bakes a 3.1 GB Julia depot with 1.3 GB of precompiled code, exactly as intended. On the
-cluster, Julia discards all of it and recompiles the entire dependency stack at pod start — several
-tens of minutes, single-threaded, **per pod**.
+### 1. The progress bar must fall silent when there is no terminal
 
-The cause is not configuration. `JULIA_DEPOT_PATH` is set correctly, `DEPOT_PATH` resolves to the
-baked depot, and the cache is present and the expected size. Julia's own loader states the reason:
+The per-level progress display writes terminal control sequences — cursor-up, erase-line — into the
+pod log, where no terminal exists to interpret them. The log becomes unreadable, which is the
+visible symptom, but not the reason this matters.
 
-```text
-Rejecting cache file .../compiled/v1.12/Logging/....ji
-Reasons = "Unable to find compatible target in cached code image.
-           Target 0 (icelake-server): Rejecting this target due to
-           use of runtime-disabled features"
-(cache misses: target mismatch (1))
-```
+The reason is volume. Each level emits roughly twenty lines. At thirty levels per cell and 756
+cells, that is on the order of half a million lines of control-sequence noise held on the cluster
+nodes, for information that is already recorded properly elsewhere: the heartbeat file writes one
+structured JSON event per level directly to shared storage, where it is durable, machine-readable,
+and visible without cluster access. The progress bar was built for interactive laptop runs and has
+no addressee in a batch pod.
 
-The GitLab CI runner is an Intel machine and precompiles for `icelake-server`. The Orion worker
-nodes are AMD EPYC 7643, reported by Julia as `znver3`. Julia's precompiled images contain native
-code and are validated against the running CPU's feature set, so every cache file is rejected.
+Make the display conditional on the output actually being attached to a terminal. Interactive local
+runs must keep the behaviour they have today; batch pods must produce no progress output at all.
+Apply this wherever such a display is created, not only in the path the campaign happens to use — a
+second entry point that still floods the log would reintroduce the problem silently.
 
-This was invisible until now because WP-H2 built and ran the image on the same laptop CPU. Local
-verification cannot detect it by construction; it appears only once build host and run host differ.
+The heartbeat must be unaffected. It is the batch progress mechanism and its behaviour must not
+change.
 
-### Why it must be fixed before anything is scaled up
+### 2. The bootstrap manifest requests too little memory
 
-Every one of the 756 campaign cells would pay this cost. For the 1D cells, which compute in seconds,
-the recompilation would dominate the runtime by orders of magnitude — the campaign would spend more
-CPU warming up than computing.
+The manifest bootstrap was killed by the kernel under its 2 GiB limit and completed at 8 GiB. The
+committed Kubernetes manifest still carries the value that fails. Anyone applying the file as it
+stands reproduces the failure — and does so after a container start, so the cause is not obvious
+from the outcome.
 
-It would also corrupt the pilot measurement that the whole cost model depends on. `docs/hpc_requirements.md`
-states the project has no trustworthy timing figure yet and that the pilot must produce one. A pilot
-run under this defect would measure compilation, not discovery.
+Correct the bootstrap workload's memory request and limit to the value that is known to work.
 
-### What to change
+Leave the **cell** workload's memory untouched. The bootstrap loads all 63 systems and builds the
+full 756-row manifest; a cell computes a single system. They are different workloads and the
+bootstrap's requirement says nothing about a cell's. The cells ran successfully at their current
+value, and changing it without measurement would replace one unfounded number with another.
 
-Instruct Julia at **image build time** to generate precompiled code for a CPU target that the Orion
-nodes can actually use, rather than for whatever the build machine happens to be.
+### 3. A failed cell must leave its evidence behind
 
-Requirements:
+The Job manifests use a restart policy under which the controller **deletes** the failed pod before
+retrying. That is how the first bootstrap failure was lost: the job reported failure, and the logs
+explaining it no longer existed. Diagnosis required reconstructing the run as a standalone pod.
 
-- The setting must be in effect **before** the instantiate-and-precompile step, so that the baked
-  cache is generated for the intended targets. Setting it only at runtime would not fix the cache
-  that is already in the image.
-- It must remain part of the image environment, so the running process selects the same target it
-  was compiled for.
-- Choose a **multi-target** specification: a portable generic baseline plus a variant optimised for
-  the Zen 3 microarchitecture of the EPYC 7643. Do not pin exclusively to the cluster's CPU — the
-  image is also built and occasionally run elsewhere, and an image that only works on one
-  microarchitecture reintroduces the same class of failure in the other direction.
-- Consult Julia's documented convention for such specifications rather than inventing one; this is
-  the mechanism Julia itself uses to ship portable binaries.
-
-Expect the image to grow, because it now carries code for more than one target, and expect the CI
-build to take longer for the same reason. Both are acceptable: they are paid once per commit, against
-tens of minutes saved per pod.
+At campaign scale this is the difference between a missing record you can explain and one you
+cannot. Switch both Job manifests to the policy under which a failed attempt leaves its pod, and its
+log, in place. Successful pods are cleaned up by the cluster as usual; only failures accumulate,
+which is exactly the set worth keeping.
 
 ### Verification
 
-Locally, confirm that the build still succeeds and that the baked cache is present and now records
-more than one target.
+The memory and restart-policy changes are structural and can be confirmed by inspection; state the
+values before and after.
 
-State plainly in the report that the **decisive** check cannot be performed locally: only a pod on an
-Orion node can confirm that the cache is accepted. Describe exactly what that check is, so it can be
-run immediately after the next CI build — it is a single short pod that loads one package with
-Julia's loader debugging enabled and shows either a rejection or a silent, fast load.
+The progress-display change must be verified behaviourally, not by reading the code: run the same
+entry point twice, once with output attached to a terminal and once with output redirected, and show
+that the first still displays progress while the second emits none. Confirm in both cases that the
+heartbeat file is written with its per-level events, since that is the property that must survive.
 
-Do not apply anything to the cluster and do not run the campaign.
+Do not apply anything to the cluster and do not run a campaign.
 
 ### Out of scope
 
-The Kubernetes manifests, the index mapping, the manifest generator, resource limits, and any change
-to metrics, configuration, hyperparameters or fingerprints. This work package changes how code is
-compiled, never what is computed — the numerical results must be identical.
-
-Note for the report: a separate observation from the same run is that the manifest bootstrap was
-killed at a 2 GiB memory limit and needed 8 GiB. That is a manifest-side value, not an image
-concern, and is deliberately not part of this work package.
+Cell memory limits, parallelism, the campaign manifests themselves, the plotting dependencies in
+`Project.toml`, and any change to metrics, configuration, hyperparameters or fingerprints. This work
+package changes what is printed and what is requested, never what is computed — results must be
+bit-identical.
 
 ### Report
 
-Write `codex/REPORT_WP_H5.md`: the setting used and why that specification, where it sits relative to
-the precompilation step, the observed effect on image size and build time, the local verification
-result, and the exact cluster-side check that must follow the next CI build.
+Write `codex/REPORT_WP_H6.md`: where the terminal check was applied and which entry points it covers,
+the before/after values for memory and restart policy, the two-way behavioural test of the progress
+display with its output, and confirmation that the heartbeat is unchanged in both modes.

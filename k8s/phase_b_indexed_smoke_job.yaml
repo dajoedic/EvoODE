@@ -24,7 +24,7 @@ spec:
         hpc.scch.at/service: evoode-phase-b-cells
         hpc.scch.at/responsibility: joedicke
     spec:
-      restartPolicy: OnFailure
+      restartPolicy: Never
       imagePullSecrets:
         - name: evoode-gitlab-pull
       containers:
