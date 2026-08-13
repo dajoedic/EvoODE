@@ -449,19 +449,32 @@ Get-ChildItem "S:\BigDataOrion\data-science\joedicke\<lauf>\tasks\*.jsonl" |
 Get-ChildItem "S:\BigDataOrion\data-science\joedicke\<lauf>\tasks\*.heartbeat.jsonl" |
   ForEach-Object {
     $e = (Get-Content $_.FullName -Tail 1) | ConvertFrom-Json
+    $l = if ($e.event -eq 'complete') { $e.loss } else { $e.best_loss }
     [pscustomobject]@{
       Sys      = $e.system_id
       Status   = $e.event
       Level    = $e.level
-      Stage    = $e.stage
-      Loss     = $e.best_loss
+      Stage    = if ($e.event -eq 'complete') { $e.final_stage } else { $e.stage }
+      Loss     = "{0:e2}" -f [double]$l
       StillMin = [int]((Get-Date) - [datetime]::Parse($e.timestamp).ToLocalTime()).TotalMinutes
     }
   } | Sort-Object Status, Sys | Format-Table -AutoSize
 ```
 
-Eine Zeile pro Zelle, mit Level, Stage, aktuellem Loss — und `StillMin`, den Minuten seit dem
-letzten Fortschrittseintrag.
+Eine Zeile pro Zelle, mit Level, Stage, Loss — und `StillMin`, den Minuten seit dem letzten
+Fortschrittseintrag. Fertige und laufende Zellen stehen nebeneinander, sortiert nach Status.
+
+Im Pfad sind Platzhalter erlaubt: `pilot_sweep*_tasks` erfasst mehrere Läufe auf einmal.
+
+> **Die Heartbeat-Felder heißen je nach Ereignis anders**, und das ist die häufigste Stolperfalle
+> beim Auswerten:
+>
+> | Ereignis | Loss-Feld | Stage-Feld |
+> |---|---|---|
+> | `level` (läuft) | `best_loss` | `stage` |
+> | `complete` (fertig) | `loss` | `final_stage` |
+>
+> Wer nur `best_loss` liest, bekommt für alle fertigen Zellen eine leere Spalte — ohne Fehler.
 
 > **`StillMin` ist die wichtigste Spalte.** Sie unterscheidet „rechnet langsam" von „hängt". Beim
 > ersten Pilotlauf lagen die meisten Zellen bei wenigen Minuten pro Level, während eine einzelne
