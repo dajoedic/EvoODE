@@ -434,20 +434,56 @@ oc wait --for=condition=Complete job/<name> --timeout=3600s
 Diese Befehle brauchen eine gültige Anmeldung. Der Token läuft nach einiger Zeit ab — die
 **laufenden Jobs stört das nicht**, nur dein Werkzeug.
 
-Ohne Anmeldung siehst du über Laufwerk `S:` trotzdem:
+Ohne Anmeldung siehst du über Laufwerk `S:` trotzdem alles, was du zum Mitverfolgen brauchst.
+
+**Wie viele Zellen sind fertig?**
 
 ```powershell
-# Wie viele Zellen sind fertig?
 Get-ChildItem "S:\BigDataOrion\data-science\joedicke\<lauf>\tasks\*.jsonl" |
   Where-Object { $_.Name -notlike "*heartbeat*" } | Measure-Object | Select-Object Count
-
-# Wo steht jede laufende Zelle gerade?
-Get-ChildItem "S:\BigDataOrion\data-science\joedicke\<lauf>\tasks\*.heartbeat.jsonl" |
-  ForEach-Object { "{0}: {1}" -f $_.Name, (Get-Content $_.FullName -Tail 1) }
 ```
 
-Für „läuft es noch und wie weit ist es" ist der Explorer-Weg oft der bequemere — er braucht kein
-Token und zeigt alle Zellen auf einmal.
+**Wo steht jede laufende Zelle gerade?** Diese Übersicht ist das eigentliche Arbeitswerkzeug:
+
+```powershell
+Get-ChildItem "S:\BigDataOrion\data-science\joedicke\<lauf>\tasks\*.heartbeat.jsonl" |
+  ForEach-Object {
+    $e = (Get-Content $_.FullName -Tail 1) | ConvertFrom-Json
+    [pscustomobject]@{
+      Sys      = $e.system_id
+      Status   = $e.event
+      Level    = $e.level
+      Stage    = $e.stage
+      Loss     = $e.best_loss
+      StillMin = [int]((Get-Date) - [datetime]::Parse($e.timestamp).ToLocalTime()).TotalMinutes
+    }
+  } | Sort-Object Status, Sys | Format-Table -AutoSize
+```
+
+Eine Zeile pro Zelle, mit Level, Stage, aktuellem Loss — und `StillMin`, den Minuten seit dem
+letzten Fortschrittseintrag.
+
+> **`StillMin` ist die wichtigste Spalte.** Sie unterscheidet „rechnet langsam" von „hängt". Beim
+> ersten Pilotlauf lagen die meisten Zellen bei wenigen Minuten pro Level, während eine einzelne
+> seit über vier Stunden keinen Eintrag mehr geschrieben hatte. Ohne diese Spalte sieht beides
+> gleich aus.
+
+Für „läuft es noch und wie weit ist es" ist dieser Weg meist der bequemere: kein Token, keine
+Anmeldung, alle Zellen auf einen Blick.
+
+### Warum das Einzeiler sind und keine `.ps1`-Datei
+
+Naheliegend wäre, so etwas in ein Skript zu schreiben. Auf einem verwalteten Firmenrechner
+scheitert das aber an der PowerShell-Ausführungsrichtlinie:
+
+```text
+... cannot be loaded because running scripts is disabled on this system.
+```
+
+Umgehen ließe sich das mit `-ExecutionPolicy Bypass` oder einer dauerhaften Änderung per
+`Set-ExecutionPolicy`. Beides sind Eingriffe in eine Sicherheitseinstellung, die die IT bewusst
+gesetzt hat — für eine Statusabfrage ein schlechtes Geschäft. Deshalb stehen die Befehle hier so,
+dass sie direkt in die Konsole eingefügt werden können.
 
 **Die Reihenfolge 2 vor 3 ist zwingend.** Die Zellen lesen das Manifest, das der Bootstrap anlegt.
 
