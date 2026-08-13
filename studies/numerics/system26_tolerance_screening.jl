@@ -227,8 +227,8 @@ function pruned_support(structure::StructureSpec, params::Vector{Float64})
 end
 
 """
-Per-stage cost breakdown in the same cut as the baseline table in docs/projektjournal.md
-section 3.8: levels, time, share of total time, seconds per level - plus integrations and
+Per-stage cost breakdown in the same cut as the WP-T2 baseline table recorded in DIARY.md:
+levels, time, share of total time, seconds per level - plus integrations and
 cost per integration, so a tolerance-driven shift of the cost profile is readable.
 """
 function stage_cost_rows(label::String, eval_tol::Float64, level_log)

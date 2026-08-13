@@ -6,6 +6,68 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ## 2026-08-13
 
+### Repo-Inventur vor der Kampagne: SCRIPTS.md neu, Slurm-Schiene entfernt
+
+<!-- HASH -->
+
+Anlass ist der Zeitpunkt, nicht Ordnungsliebe. CLAUDE.md verlangt, dass **alle
+fingerprint-relevanten Aenderungen vor dem ersten Kampagnen-Record landen**; danach kostet jede
+Aenderung die Geschlossenheit der Kampagne. Dies ist das letzte bequeme Fenster.
+
+**Der groesste Befund war kein ueberfluessiges File, sondern ein Dokument, das mehr verspricht als es
+haelt.** `SCRIPTS.md` wird in CLAUDE.md als "exact commands for every script" gefuehrt, dokumentierte
+aber **9 von 33** Skripten — und ausgerechnet die der alten Welt (`aggregate.jl`,
+`run_experiment.jl`, `debug_single.jl`). Vom Kampagnenpfad stand **nichts** darin: weder
+`run_batch_cell.jl` noch `run_k8s_indexed_cell.jl` noch `generate_phase_b_manifest.jl` noch
+`merge_batch_records.jl`. Das ist gefaehrlicher als eine Luecke, weil Vollstaendigkeit behauptet
+wird. Neu geschrieben mit sieben Abschnitten, Kampagnenpfad zuerst, inklusive Flags, Umgebungs-
+variablen und der drei Fallen, die uns heute begegnet sind (Bootstrap genau einmal, Exit 0 heisst
+nicht gueltig, Indexbasis 0 gegen 1).
+
+**Geloescht — veraltete Dokumente.** `docs/paper1_roadmap.md` (Stand 2026-05-17, also vor beiden
+Gates, und selbsterklaert nachrangig gegenueber `PAPER_1.md`), `docs/projektjournal.md` samt PDF und
+dem erzeugenden `tools/build_journal_pdf.py` (abgeleitete Lesefassung von DIARY.md, eingefroren auf
+2026-08-03 und damit bereits widersprechend — dasselbe Muster wie `5b4bd5b`, wo die `docs/de`-Kopien
+gingen), sowie `docs/hpc_briefing_2026-08-06.md` (Kurzfassung fuer einen stattgefundenen Termin, und
+fuer die falsche Plattform).
+
+**Geloescht — die Slurm-Schiene.** `containers/evoode_regression.apptainer` und die drei Skripte
+unter `hpc/`. Sie adressieren einen Standort, den es fuer dieses Projekt nicht gibt; ihre Aufgabe war
+die Vorlage fuer die Docker-Uebersetzung, und die ist erledigt. Der Grund fuers Loeschen statt
+Behalten ist nicht Platz, sondern Irrefuehrung: Wer `hpc/slurm_*.sh` findet, haelt Slurm fuer den
+Weg. Der Git-Verlauf bewahrt sie ohnehin.
+
+**Bewusst behalten: die abgeschlossenen Studienskripte.** Zwanzig Dateien haben keine
+Code-Referenz, was bei Einstiegspunkten nichts bedeutet. Wichtiger: `studies/lookahead/`,
+`studies/linesearch/`, `studies/numerics/` und `studies/gate2_do_or_die/` haben Befunde erzeugt, auf
+die sich die Argumentation stuetzt — die Tolerance-Invarianz auf System 26, die Widerlegung der
+Sentinel-Hypothese, die Stage-Cap-Herleitung. Ein Skript, das ein publiziertes Ergebnis erzeugt hat,
+ist kein Ballast, sondern dessen Reproduzierbarkeitsnachweis. Sie sind jetzt in SCRIPTS.md mit der
+Frage gelistet, die sie beantwortet haben.
+
+**Korrigierte Fehleinschaetzung.** `studies/regression/generate_manifest.jl` sah nach abgeloestem
+Vorgaenger von `generate_phase_b_manifest.jl` aus. Er iteriert aber ueber `REGRESSION_SYSTEMS` und
+erzeugt das Manifest der **Regressionskampagne** (90 Zellen), die neben Phase B geplant ist. Bleibt.
+
+**Nicht angefasst: die Grafikabhaengigkeiten.** `Qt6`, `FFMPEG`, `Xorg`, `CairoMakie` kosteten beim
+ersten Cluster-Bootstrap 1.022 von 2.760 Sekunden Praekompilierung fuer Pakete, die eine Rechenzelle
+nie anfasst. Nach WP-H5 kosten sie **keine Laufzeit mehr**, nur Imagegroesse. Sie zu entfernen
+aendert `Manifest.toml` und laesst Pkg gemeinsame Abhaengigkeiten neu aufloesen — verschobene Zahlen
+kurz vor der Kampagne gegen etwas Plattenplatz ist ein schlechtes Verhaeltnis.
+
+**Neu aufgefallen und noch offen:** `analysis/` erwartet `run_registry.csv` aus der
+`experiments/`-Infrastruktur, die Kampagne schreibt aber `cell_*.jsonl`. Dazwischen steht
+`merge_batch_records.jl`, aber ob die Analysepipeline dessen Ergebnis verarbeitet, ist nirgends
+geprueft. Das ist kein Aufraeumthema, sondern ein Stolperstein **nach** der Kampagne — an den
+Pilotdaten durchspielen, bevor 756 Records da sind.
+
+`docs/hpc_requirements.md` traegt bis zur Ueberarbeitung einen Warnhinweis: falsche Plattform,
+Laufzeitschaetzungen um ein bis zwei Groessenordnungen zu hoch, keine Walltime und damit kein
+Checkpointing noetig. Gueltig bleiben Workload-Form, Ressourcenprofil pro Zelle und die
+Reproduzierbarkeitsauflagen.
+
+---
+
 ### WP-H5 - der eingebackene Praekompilierungscache war auf dem Cluster wertlos
 
 <!-- be6bf99 -->

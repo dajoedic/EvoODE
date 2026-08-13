@@ -78,8 +78,8 @@ analysis/   Python analysis pipeline (see analysis/CONVENTIONS.md)
 outputs/    gitignored; every script writes to its own subfolder
 docs/       design notes, reports, protocols
 codex/      CURRENT_TASK.md — the single active task spec
-containers/ Apptainer definition for the batch campaign
-hpc/        example Slurm submission scripts
+containers/ Dockerfile for the campaign image, built by GitLab CI
+k8s/        Kubernetes Job manifests for the Orion cluster (bootstrap + indexed cells)
 ```
 
 `benchmarks/` vs `experiments/` are distinct and must not be conflated: `benchmarks/` is

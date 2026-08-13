@@ -1,5 +1,30 @@
 # EvoODE — HPC Resource Request
 
+> ## ⚠ SUPERSEDED — do not plan from this document
+>
+> Written for a Slurm site with a core-hour allocation. **The actual target is SCCH "Orion", an
+> OpenShift/Kubernetes cluster with two worker nodes and 96 cores in total.** Three things in here
+> are known to be wrong:
+>
+> - **The platform.** Apptainer, `sbatch --array`, walltime classes and the Julia-module question do
+>   not apply. The Apptainer definition and the Slurm scripts this document references were deleted
+>   on 2026-08-13. The working path is `containers/Dockerfile` plus `k8s/`, described in
+>   `docs/hpc_deployment_guide.md`.
+> - **The runtime estimates.** §5 and §6 are one to two orders of magnitude too high. The work
+>   counts held up — a 4D cell really does perform ~4.5e6 ODE integrations — but the
+>   seconds-per-integration conversion came from a loaded laptop and was off by a factor of 20 to 80.
+>   Measured on Orion: 2D cells from 10 s to over 3 h, 3D 399 s and 922 s, 4D 300 s and 4,279 s.
+> - **The walltime concern in §6.** There is no hard walltime on Orion, and no checkpointing is
+>   required.
+>
+> What remains valid: the workload shape (independent single-core cells), the per-cell resource
+> profile, and the reproducibility constraints in §7.
+>
+> A rewrite follows once the pilot measurements are complete. Until then, `DIARY.md` (entries WP-H2
+> to WP-H6) holds the current picture.
+
+---
+
 Prepared for the HPC consultation on 2026-08-06.
 Contact: David Jödicke. Project: EvoODE (PhD, data-driven discovery of ODE systems).
 
