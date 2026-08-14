@@ -6,6 +6,56 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ## 2026-08-14
 
+### GPU geprueft und verworfen — die Begruendung, damit die Frage nicht wiederkommt
+
+<!-- HASH -->
+
+Frage aufgeworfen: laesst sich im Projekt irgendwo die GPU nutzen? Antwort nach Durchsicht von
+`build_rhs`, `simulate` und der Populationsschleife: **nein, nicht auf dem Paper-1-Pfad.** Vier
+unabhaengige Gruende, jeder fuer sich ausreichend.
+
+**1. Die Batch-Breite fehlt.** Eine GPU gewinnt bei ODEs dieser Groesse (dim 1–4, 512 Punkte) erst
+ab ~1e4 gleichzeitigen Trajektorien — das ist der Arbeitsbereich von `DiffEqGPU.EnsembleGPUKernel`.
+Vorhanden sind `pop_size = 20` plus Kinder, also 20–60 unabhaengige Kandidaten pro Level. Innerhalb
+eines Kandidaten ist BFGS strikt sequenziell. Damit ist ausgerechnet das groesste offene
+Kostenrisiko GPU-immun: die pathologischen Level (3–5 h, bis 39.933 Loss-Evals bei zwei Parametern)
+sind eine Liniensuche, also eine Kette und kein Batch. Eine GPU verkuerzt sie um null.
+
+**2. Die RHS ist nicht kernel-faehig.** `build_rhs` (`src/basis/interface.jl:24`) schliesst ueber
+`basis.funcs::Vector{Function}` und dispatcht pro Term und Zeitschritt dynamisch. Das ist nicht auf
+eine GPU kompilierbar; noetig waeren StaticArrays, allokationsfrei, typstabil. Der Umbau auf eine
+Koeffizientenmatrix ueber der Stage-Basis waere die Vorbedingung fuer alles GPU-artige — und
+CPU-seitig ohnehin ein Gewinn.
+
+**3. Float64.** Das Projekt argumentiert mit `abstol = reltol = 1e-9`, Losses bei 1e-11 bis 1e-15
+und bit-identischen Vergleichen. Consumer-GPUs rechnen FP64 mit 1/32 Durchsatz, waeren also
+langsamer als wenige CPU-Kerne; Float32 wuerde genau die Stellen zerstoeren, ueber die das Paper
+argumentiert. GPU hiesse hier zwingend A100/H100-Klasse.
+
+**4. Die Hardware.** Orion vergibt 846 Jobs a 1 Kern, kein GPU-Node. Ueber die 756 Laeufe ist die
+Parallelitaet als Job-Parallelitaet bereits vollstaendig ausgeschoepft.
+
+**Was vorher kaeme.** Im Quellbaum steht kein einziges `Threads.@threads`, `@spawn` oder `pmap`. Die
+20–60 Kandidaten pro Level werden seriell gefittet, obwohl vollstaendig unabhaengig — der
+offensichtliche Faktor 4–16 auf dem bestehenden Pfad. Gleiche Konsequenz wie jede GPU-Idee: beruehrt
+den Pfad jedes Phase-B-Laufs, aendert den Fingerprint. Gehoert damit hinter die Kampagne, zu WP-D4b.
+
+**Wo GPU tatsaechlich passen wuerde, beides jenseits von Paper 1:**
+
+- *Batched Parameterfitting statt BFGS* (Phase 5, als Forschungsfrage, nicht als Optimierung).
+  Ersetzt man die sequenzielle Liniensuche durch ein populationsbasiertes/Multistart-Verfahren,
+  entsteht die Batch-Breite von selbst: 20 Kandidaten x 500 Starts = 1e4 Trajektorien, identische
+  RHS-Struktur, nur andere Parameter — der Idealfall fuer `EnsembleGPUKernel`. Adressiert zugleich
+  dokumentierte Schmerzen (Sentinel-Loss `1e6`, verlorene Parameteroptima bei identischem Support).
+  Es ist ein Algorithmenwechsel und aendert die experimentelle Bedingung.
+- *Die geplanten Phase-3-Achsen* (Rauschen, Sampling-Dichte). Per Konstruktion Ensembles: gleiches
+  System, gleiche Struktur, viele Realisierungen. Dort liegen 1e3–1e4 Solves natuerlich vor, ohne
+  den Suchalgorithmus anzufassen.
+
+**Entscheidung:** GPU bleibt Non-Goal wie in `CLAUDE.md` festgehalten. Reihenfolge, falls Rechenzeit
+je drueckt: typstabile RHS → Threads ueber die Population → erst dann GPU. Der zweite Punkt oben
+lohnt nur, wenn batched Fitting als eigener Beitrag gefuehrt wird.
+
 ### Lesender Code-Durchgang vor der Kampagne: nichts zu tun, und das ist der Befund
 
 <!-- HASH -->
