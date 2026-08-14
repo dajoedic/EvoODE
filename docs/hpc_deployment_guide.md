@@ -477,6 +477,31 @@ Dateien dann auch dort, egal wie tief sie liegen.
 > die Befehle oben rekursiv statt einen festen Pfad anzunehmen. Für die Kampagne gilt die eine
 > Konvention.
 
+### Die zwei Weboberflächen
+
+Für vieles ist der Browser bequemer als `oc`, und für eines gibt es keine Alternative.
+
+**OpenShift-Konsole** — deine Pods, Jobs, Logs und Ereignisse:
+<https://console-openshift-console.apps.orion.scch.at/>
+
+Unter **Workloads → Jobs** bzw. **→ Pods** siehst du dasselbe wie mit `oc get`, nur klickbar.
+Die Topologie-Ansicht gruppiert nach dem Label `app.kubernetes.io/part-of`, weshalb alle
+EvoODE-Pods dort in **einer** Kachel stecken — sechs laufende Zellen sehen aus wie ein Eintrag.
+Für Fehlersuche ist die Ereignisliste eines Pods der schnellste Weg; sie entspricht dem unteren
+Teil von `oc describe pod`.
+
+**Zabbix** — die Auslastung des Clusters insgesamt:
+<https://zabbix.scch.at/zabbix.php?action=dashboard.view>
+
+Das ist die Sicht, die `oc` **nicht** liefert: Wie stark sind die Knoten belegt, und zwar durch
+alle Nutzer, nicht nur durch dich. `oc adm top pod` zeigt deinen eigenen Verbrauch; Zabbix zeigt,
+wie viel Luft überhaupt noch da ist.
+
+> **Wann das zählt.** Der Cluster hat 96 CPU-Kerne auf zwei Knoten, und die sind primär dafür da,
+> acht A100-GPUs zu füttern. Bevor du `parallelism` erhöhst, lohnt ein Blick auf die aktuelle
+> Belegung — 16 Kerne sind abgesprochen, aber ob der Moment günstig ist, steht nicht im Manifest.
+> Das ist der Unterschied zwischen „ich darf" und „ich störe gerade niemanden".
+
 ### Welcher Ordner gehört zu welchem Job?
 
 Der Ordnername steht im Manifest, der Jobname auch — aber nirgends steht, dass sie zusammengehören.
@@ -583,7 +608,8 @@ Was hier ausgegeben wird, ist fehlerhaft.
 |---|---|
 | Namespace | `scch-das` |
 | API-Adresse | `https://api.orion.scch.at:6443` |
-| Web-Oberfläche | `https://console-openshift-console.apps.orion.scch.at/` |
+| OpenShift-Konsole | `https://console-openshift-console.apps.orion.scch.at/` |
+| Zabbix (Cluster-Auslastung) | `https://zabbix.scch.at/zabbix.php?action=dashboard.view` |
 | Image | `registry.gitlab.scch.at:443/joedicke/evoode:<commit-hash>` |
 | Zugangsgeheimnis | `evoode-gitlab-pull` |
 | NFS-Server | `nfs.orion.scch.at`, Export `/bigdata` |
