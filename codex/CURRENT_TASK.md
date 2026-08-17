@@ -1,91 +1,107 @@
-> **Claude-Status:** `waiting for codex` — WP-A2 übergeben, ich prüfe alle 20 Minuten.
+> **Claude-Status:** `waiting for codex` — WP-W1 übergeben, ich prüfe alle 20 Minuten.
 > Melde dich über `codex/STATUS.md`, nicht in dieser Datei. Committe nichts.
 > Der Dauerauftrag steht in `codex/CODEX_PROTOCOL.md`.
 
-# WP-A2 — Die Auswertung kennt die Kampagnenvarianten nicht und schweigt darüber
+# WP-W1 — `PAPER_1.md` ist das maßgebliche Dokument und beschreibt ein Paper, das es nicht mehr gibt
 **Language: Python**
+
+*(Sprache formal Python, weil kein Julia-Code entsteht — die Aufgabe ist redaktionell. Es ist
+ausdrücklich **kein** Code zu schreiben.)*
 
 ## Der Befund
 
-WP-A1 (2026-08-13) hat eine Brücke von den Kampagnen-Records in die Python-Auswertung gebaut. Dabei
-fiel auf, dass `analysis/scripts/plot/table_main_results.py` danach **fehlerfrei durchläuft und
-Unsinn liefert**:
+`CLAUDE.md` führt `PAPER_1.md` als autoritativen Ausführungsplan: *„takes precedence over this file
+if the two drift."* Das Dokument ist auf **2026-05-17** datiert. Es plant im Detail um **v3** herum
+und erwähnt den **Stage-Cap kein einziges Mal** — also genau die Variante, die inzwischen der
+Beitrag des Papiers ist.
 
-```text
-agg_variants   = evogrow_v2_2_stage_capped, evogrow_v3, …   (Kampagne)
-VARIANT_ORDER  = evogrow_v1, evogrow_v2_1, gp_baseline, …   (eingefrorene Phase-A-Liste)
-table_rows=30   table_nonempty_mean_loss=5
-```
-
-`reindex_table_data` indiziert auf `VARIANT_ORDER` (Zeile 29) um und lässt alles fallen, was dort
-nicht steht. **25 von 30 Zeilen bleiben leer, ohne eine einzige Meldung.** Zum Vergleich:
-`evaluate_hypotheses.py` scheitert bei derselben Datenlage sauber mit `Missing expected variants`.
-
-Das ist die gefährlichste Fehlerklasse in der Auswertung, weil das Ergebnis wie ein Ergebnis
-aussieht. Nach 756 Kampagnenzellen wäre eine fast leere Tabelle das Erste, was jemand ins Paper
-übernimmt.
+Damit steht die Präzedenzregel auf dem Kopf: Der aktuelle Stand liegt in `CLAUDE.md` und `DIARY.md`,
+während das Dokument, das laut eigener Regel gewinnt, überholt ist. Je länger das offen bleibt,
+desto mehr Entscheidungen hängen an einem Text, den niemand mehr liest.
 
 ## Umfang
 
-### Teil 1 — Kein stilles Fallenlassen mehr
+Erstelle einen **Entwurf** einer überarbeiteten Fassung als **neue Datei** `docs/PAPER_1_draft.md`.
+**`PAPER_1.md` selbst bleibt unangetastet** — die Übernahme entscheidet der Nutzer.
 
-Die Skripte unter `analysis/scripts/` dürfen Varianten, die in den Daten vorkommen, nicht
-unbemerkt verwerfen. Zwei Dinge sind zu trennen:
+Der Entwurf trägt oben einen deutlichen Hinweis, dass er ein Entwurf ist, das Datum seiner
+Erstellung, und den Satz, dass bis zu seiner Übernahme weiterhin `CLAUDE.md` und `DIARY.md` den
+aktuellen Stand tragen.
 
-- **Reihenfolge und Beschriftung** — dafür ist eine feste Liste legitim, denn Tabellen brauchen eine
-  stabile Ordnung.
-- **Auswahl, welche Zeilen erscheinen** — dafür ist eine feste Liste falsch, sobald die Daten andere
-  Varianten enthalten.
+### Quellen, in dieser Rangfolge
 
-Wähle den Entwurf selbst. Anforderung: Enthalten die Daten eine Variante, die die Ordnungsliste
-nicht kennt, muss das **sichtbar** werden — entweder erscheint sie in der Ausgabe, oder der Lauf
-bricht mit einer klaren Meldung ab. Stilles Weglassen ist in keinem Fall zulässig. Begründe im
-Report, welchen der beiden Wege du je Skript gewählt hast und warum.
+1. `CLAUDE.md` — aktueller Stand, Prioritäten, Ausschlüsse
+2. `DIARY.md` — Chronologie und Belege; die Einträge ab 2026-07-31 sind die relevanten
+3. `docs/paper1_scope_discussion_2026-08-14.md` — die Umpositionierung als Search-Space-Controller
+4. `docs/wp_c1_stage_cap_horizon_audit.md`, `docs/wp_c2_stage_cap_failure_diagnosis.md`,
+   `docs/wp_c4_stage_cap_doubt_band.md` — die Belege zum Cap
+5. `docs/paper1_odebench_protocol_alignment.md` — Sampling-Protokoll und Vergleichbarkeits-Audit
+6. `PAPER_1.md` — für Struktur, Gliederung und alles, was weiterhin gilt
 
-Betroffen ist mindestens `table_main_results.py`. Prüfe die übrigen Skripte unter
-`analysis/scripts/aggregate/` und `analysis/scripts/plot/` auf dasselbe Muster und behandle sie
-mit.
+### Was der Entwurf abbilden muss
 
-### Teil 2 — Der Phase-A-Pfad bleibt unangetastet
+- **Der Beitrag ist der Stage-Cap** als datengetriebener Search-Space-Controller auf dem
+  v2.2-Substrat, nicht v3.
+- **v2.2 → v3 → capped als dokumentierte Fehleranalyse.** v3 ist ein Ergebnis, kein Beitrag: Die
+  Promotionsbedingung `r_k > loss_tol = 1e-8` ist auf gekoppelten Systemen unerreichbar (Fehlerboden
+  ~1e-3), und `r_k` ist ableitungsfehlerkontaminiert.
+- **Die Geschichte des Caps selbst gehört ins Paper**, nicht nur sein Endzustand. Drei Designregeln,
+  jede aus einem Defekt gewonnen: positive Evidenz statt deren Abwesenheit (System 63); der
+  Vorausblick muss so weit reichen, wie die Basis strukturelle Lücken erzeugt (WP-C1); und im
+  Zweifelsband wird abgelehnt statt behauptet (WP-C4).
+- **Phase-B-Umfang:** 63 Systeme, zwei Bedingungen (`pretuning` an/aus), 3 Seeds, 2 IC-Sets = 756
+  Läufe; 512 Punkte über t ∈ [0,10], selbst integriert mit `Tsit5` bei `abstol = reltol = 1e-9`.
+- **Provenienz:** Kampagnenidentität besteht aus drei Feldern — Git-Hash, Konfigurations- bzw.
+  Phase-B-Fingerprint und `stage_cap_behavior_fingerprint`.
+- **Metriken:** exakte Systeme über Supportwiederherstellung, Surrogatsysteme über R², erreichte
+  Stufe und Stabilität. Beide werden **nie** zu einer Strukturkennzahl vermischt.
+- **Wall-clock ist keine Evidenz.** Kostenaussagen ruhen auf Zählern.
 
-`paper1_phaseA_v1` ist eingefroren und muss reproduzierbar bleiben. Weise nach, dass die
-Phase-A-Auswertung nach deiner Änderung **identische** Ausgaben erzeugt — Tabelle und
-Aggregate byte- oder wertgleich. Wie du das belegst, wählst du; der Nachweis gehört in den Report.
+### Was als Limitation dastehen muss, nicht kleingeredet
 
-Das ist die harte Bedingung dieses Auftrags. Eine Änderung, die Phase A verschiebt, ist nicht
-anzunehmen.
+- `pruned_match = false` auf gekoppelten Systemen, auch bei sehr niedrigem Loss. Ursache ist der
+  rein additive Sucher: `_expand` fügt nur hinzu, jede Linie startet aus einem Zufallsterm, ein
+  falscher Term kann eine Linie nie verlassen.
+- Der Cap ist **nur auf den 20 exakten Systemen prüfbar.** Für die 43 Surrogatsysteme existiert kein
+  wahrer Support; die Sicherheit des Controllers ist dort konstruktionsbedingt nicht auditierbar.
+- Der Cap gibt Schärfe für Sicherheit auf: endliche Caps 49 → 45 auf den exakten Gleichungszeilen.
+- Der Verhaltens-Fingerprint deckt `_cap_split_decision` ab und sonst nichts.
+- System 63 ist die Identifizierbarkeitsgrenze und keine Zelle.
 
-### Teil 3 — Beschriftungen und Farben für die Kampagnenvarianten
+### Was ausdrücklich **nicht** hineingehört
 
-`analysis/utils/style.py` führt `VARIANT_COLORS` und `VARIANT_LABELS` und kennt
-`evogrow_v2_2_stage_capped` nicht. Ergänze die Varianten, die in der Kampagne tatsächlich
-vorkommen — die maßgebliche Liste steht in `VARIANTS` in `studies/regression/run_regression.jl` —
-und achte darauf, dass die Farben unterscheidbar bleiben. Fehlt eine Beschriftung, darf das nicht
-in einem `KeyError` mitten in der Tabellenerzeugung enden.
+Kein GP-Baseline, kein v1, kein v2.1 im Phase-B-Umfang. Keine Behauptung über SINDy- oder
+PySR-Vergleiche — die externen Spalten des Protokoll-Audits sind noch nicht gefüllt. Keine
+Ergebniszahlen aus Phase B, denn es gibt noch keinen einzigen Kampagnen-Record. Wo Ergebnisse
+hingehören, steht ein klar markierter Platzhalter.
 
-### Teil 4 — Ein Test, der den Defekt festhält
+### Form
 
-Ein Test, der mit Daten läuft, die eine der Ordnungsliste unbekannte Variante enthalten, und
-sicherstellt, dass sie nicht stillschweigend verschwindet. Er muss gegen den **alten** Stand
-fehlschlagen — zeige das im Report, indem du ihn einmal gegen den unveränderten Code laufen lässt.
+Deutsch oder Englisch — nimm die Sprache, die `PAPER_1.md` heute verwendet, und bleib dabei.
+Struktur, Nummerierung und Gliederungslogik des bestehenden Dokuments beibehalten, damit ein Diff
+lesbar bleibt.
 
-Halte dich an `analysis/CONVENTIONS.md`.
+**Führe am Ende des Entwurfs eine Liste**, welche Abschnitte des alten Dokuments du gestrichen,
+ersetzt oder unverändert übernommen hast — je mit einem Satz Begründung. Diese Liste ist für den
+Nutzer das Wichtigste am ganzen Auftrag.
 
 ## Verboten
 
-- **Keine Cluster-Jobs, keine Kampagne, keine Regressions- oder Sondierungsläufe**, weder starten
-  noch Manifeste dafür erzeugen.
-- **Keine Änderung an Julia-Code.** Dieser Auftrag ist reine Python-Auswertung.
-- **Keine Änderung an den eingefrorenen Phase-A-Artefakten** unter `experiments/`.
-- **Keine neuen Metrikdefinitionen.** Wenn dir dabei eine fehlende oder fragwürdige Metrik
-  auffällt, gehört sie in den Report, nicht in den Code.
+- **Keinen Code schreiben und keinen ändern**, weder Julia noch Python.
+- **`PAPER_1.md` nicht anfassen.** Der Entwurf ist eine neue Datei.
+- **`CLAUDE.md` und `DIARY.md` nicht anfassen.**
+- **Keine Cluster-Jobs, keine Läufe, keine Manifeste.**
+- **Nichts erfinden.** Jede Zahl im Entwurf muss aus einer der genannten Quellen stammen. Findest du
+  einen Widerspruch zwischen den Quellen, löse ihn nicht selbst auf — führe ihn in einer eigenen
+  Liste „offene Widersprüche" am Ende des Entwurfs.
 - **Nichts committen, nichts stagen, nichts pushen. Kein `git add -A`.**
-- Nichts, was länger als 15 Minuten läuft.
 
 ## Abnahme
 
-- Eine der Ordnungsliste unbekannte Variante verschwindet nicht mehr stillschweigend — belegt an
-  einem konkreten Lauf mit Kampagnendaten, mit Zeilenzahl vorher und nachher.
-- Die Phase-A-Auswertung liefert unverändert dieselben Ergebnisse, mit Nachweis.
-- `evogrow_v2_2_stage_capped` hat Beschriftung und Farbe.
-- Der neue Test schlägt gegen den alten Stand fehl und gegen den neuen nicht — beides belegt.
+- `docs/PAPER_1_draft.md` liegt vor, `PAPER_1.md` ist unverändert.
+- Der Stage-Cap ist als Beitrag dargestellt, v3 als Fehleranalyse.
+- Die drei Designregeln sind benannt und je einem Defekt zugeordnet.
+- Alle oben genannten Limitationen kommen vor.
+- Keine Phase-B-Ergebniszahlen, nur markierte Platzhalter.
+- Die Änderungsliste am Ende ist vollständig.
+- Etwaige Widersprüche zwischen den Quellen sind aufgelistet statt stillschweigend entschieden.
