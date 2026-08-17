@@ -6,6 +6,63 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ## 2026-08-17
 
+### Das Cap-Muster in den Pilot-Records: der Defekt ist breiter als 2 von 7, und Lorenz ist dabei
+
+<!-- HASH -->
+
+Anlass war eine Terminfrage — kann die geplante `pretune_off`-Sondierung parallel zu WP-C1 laufen?
+Zur Beantwortung wurde das Feld `stage_caps` gegen `eq_final_stages` gehalten, um zu sehen, auf
+welchen Zellen der Cap ueberhaupt bindet. Die Antwort auf die Terminfrage ist ja, es kollidiert
+(unten). Der Nebenbefund ist der wichtigere.
+
+**Auf 20 der 39 Pilotzellen bindet der Cap.** Und die Cap-Vektoren zeigen ein Muster, das die
+Stichprobe vom 2026-08-14 nicht sehen konnte, weil dort nur sieben Systeme mit vorliegendem Record
+geprueft wurden:
+
+| Muster | Systeme |
+|---|---|
+| `[*, 1]` — Gleichung 2 auf Stufe 1 gedeckelt | **28, 32, 34, 40, 44, 50** |
+| `[1, *]` — dasselbe spiegelbildlich | 33, 39 |
+| `[None, 3, 2]` — Gleichung 3 auf Stufe 2 | **55, 56** |
+
+Der `[*, 1]`-Fall ist derselbe wie bei 28 und 32: Gleichung 2 wird auf Linearitaet festgenagelt.
+Statt zwei Verdachtsfaellen stehen jetzt **acht** im Raum. Ob alle acht wirklich abschneiden, haengt
+am wahren Support je Gleichung und ist erst nach WP-C1 zu sagen — hier steht ein Muster, keine Rate.
+
+**Lorenz ist betroffen, und das ist die teure Zeile.** Systeme 55 und 56 tragen Cap 2 auf Gleichung
+3. Die dritte Lorenz-Gleichung lautet `du3/dt = u1*u2 - beta*u3`; der Kreuzterm `u1*u2` liegt in der
+gestaffelten Basis auf **Stufe 3**. Ein Cap von 2 schliesst ihn aus. Passend dazu `pruned_match =
+false` auf beiden. System 56 verbraucht dabei **40 Stunden** auf einer Antwort, die nie im
+zugelassenen Raum lag.
+
+Das ist nicht irgendein Benchmarksystem. Wenn das so im Paper steht, ist es die erste Zeile, die
+geprueft wird.
+
+**Gegenprobe, damit der Cap nicht pauschal verurteilt wird:** System 61 (Chen-Lee) traegt `[3,3,3]`
+und erreicht `[3,3,3]`. Chen-Lee besteht aus Kreuztermen, Stufe 3 ist dort korrekt — der Cap bindet
+und liegt richtig. Der Defekt ist selektiv, nicht generell, und genau deshalb ist die
+WP-C1-Auflage "loest 28 und 32, **ohne** die korrekten Caps zu verschieben" die richtige Huerde.
+
+**Konsequenz fuer die Terminplanung: die Sondierung muss hinter WP-C1.** Die Caps steuern den
+Suchraum und damit die Kosten. System 61 hat seine 49,4 Stunden *mit* bindendem Cap auf allen drei
+Gleichungen verbraucht; hebt WP-C1 die Caps, wird diese Zelle teurer, nicht billiger. Eine heute
+gemessene `pretune_off`-Sondierung wuerde ein Cap-Regime vermessen, das gerade abgeschafft wird.
+
+**Und damit ist die gestrige Kostenzahl ein zweites Mal eine Untergrenze.** Die 3.384 Kernstunden
+gelten fuer `lookahead_horizon = 2`. Sie sind untere Schranke einmal wegen des ungemessenen
+`pretune_off` und einmal wegen des Cap-Regimes, das sich in Richtung **mehr** Suchraum bewegt. Das
+Kostenmodell in `docs/hpc_requirements.md` wird deshalb erst nach WP-C1 und nach der Sondierung neu
+geschrieben, nicht jetzt.
+
+Reihenfolge: WP-C1 → Caps final → `pretune_off`-Sondierung auf 56, 59, 61 → Kostenmodell → Kampagne.
+Die Sondierung misst dann beides in einem Lauf, `pretune_off` und das neue Cap-Regime.
+
+**An WP-C1 wurde nichts geaendert.** Der Auftrag deckt alle 20 exakten Systeme und beide IC-Sets
+bereits ab; 55, 56 und 61 sind darunter. Dieser Eintrag ist Gegenprobe fuer den Report, keine
+Erweiterung der Spezifikation.
+
+---
+
 ### Der Pilot ist durch — das Kostenmodell stimmt in der Summe und ist in der Verteilung falsch
 
 <!-- d648993 -->
