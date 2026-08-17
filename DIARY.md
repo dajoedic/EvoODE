@@ -8,7 +8,7 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ### Das Cap-Muster in den Pilot-Records: der Defekt ist breiter als 2 von 7, und Lorenz ist dabei
 
-<!-- HASH -->
+<!-- 9b0cf85 -->
 
 Anlass war eine Terminfrage — kann die geplante `pretune_off`-Sondierung parallel zu WP-C1 laufen?
 Zur Beantwortung wurde das Feld `stage_caps` gegen `eq_final_stages` gehalten, um zu sehen, auf
