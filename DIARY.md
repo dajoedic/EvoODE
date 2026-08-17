@@ -6,6 +6,103 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ## 2026-08-14
 
+### Der Stage-Cap schneidet wahre Strukturen ab - auf 2 von 7 geprueften exakten Systemen
+
+<!-- HASH -->
+
+**Das ist ein Defekt im Beitrag des Papiers, gefunden vor der Kampagne.**
+
+Anlass war die Umpositionierung von EvoODE als *Search-Space-Controller* (siehe
+`docs/paper1_scope_discussion_2026-08-14.md`): Der Cap entscheidet, wie weit der Hypothesenraum je
+Gleichung ueberhaupt geoeffnet wird, der innere Sucher ist austauschbar. Diese Position steht und
+faellt mit einem Halbsatz — der Controller darf unnoetige Suche vermeiden, **ohne relevante
+Strukturen abzuschneiden**. Genau das wurde geprueft.
+
+**Befund.** Je Gleichung die benoetigte Stufe aus `phase_b_support.json` abgeleitet und gegen den im
+Record protokollierten Cap gehalten:
+
+| System | wahrer Support Gl. 2 | benoetigte Stufe | Cap | Ergebnis |
+|---|---|---|---|---|
+| 28 | `sin(u1)` | **5** | **1** | abgeschnitten |
+| 32 | `u1`, `u2`, `u1^3` | **4** | **1** | abgeschnitten |
+| 26, 27, 29, 31, 54 | — | — | — | in Ordnung |
+
+Beide betroffenen Systeme haben `pruned_match = false`. Die Ursache ist damit **nicht** der additive
+Sucher, sondern der Controller: Die Antwort war nie im zugelassenen Raum.
+
+**Die entlastende Erklaerung haelt nicht.** Naheliegend waere, dass die Trajektorie die
+Nichtlinearitaet gar nicht anregt und der Cap insofern recht hat — der Term waere symbolisch
+vorhanden, aus den Daten aber nicht identifizierbar. Gegen den Datensatz geprueft:
+
+```text
+System 28 (Pendel ohne Reibung)     du2/dt = -0.9*sin(u1)      |u1|max = 1.90 rad ~ 109 Grad
+                                    sin(1.90) = 0.946  gegen  u1 = 1.90        -> Faktor 2
+System 32 (Doppelmuldenoszillator)  du2/dt = -u1^3 + u1 - ...  |u1|max = 2.09
+                                    u1^3 = 9.08        gegen  u1 = 2.09        -> Faktor 4,4
+```
+
+In beiden Faellen **dominiert** der hochstufige Term die Dynamik. Ein Cap von 1 ist dort nicht
+konservativ, sondern falsch.
+
+Damit verletzt der Cap die Regel, die aus dem System-63-Vorfall abgeleitet wurde und in `CLAUDE.md`
+unter "Settled" steht: *the cap must rest on positive evidence, never on the absence of evidence.*
+Ein Cap von 1 behauptet positive Evidenz, dass Stufe 1 genuegt.
+
+**Der Mechanismus ist gefunden: der Vorausblick ist genau eine Stufe zu kurz.**
+
+```julia
+# src/structure/stage_cap.jl
+horizon_end = min(length(applicable_stages), pos + policy.lookahead_horizon)
+#                                                  lookahead_horizon = 2
+```
+
+Von Stufe 1 aus prueft die Analyse nur die Stufen 2 und 3. Stufe 4 und 5 sieht sie nie. Und die
+Basis staffelt nach **Grad**, nicht nach **Symmetrie**:
+
+| Stufe | Terme | Paritaet |
+|---|---|---|
+| 1 | `u1`, `u2` | ungerade |
+| 2 | `u1^2`, `u2^2` | gerade |
+| 3 | `u1*u2` | gemischt |
+| 4 | `u1^3` | ungerade |
+| 5 | `sin`, `cos` | ungerade / gerade |
+
+Fuer eine **ungerade** Nichtlinearitaet liegt die erste brauchbare Naeherung jenseits von linear
+also bei Stufe 4 oder 5. Die Stufen 2 und 3 koennen sie nicht approximieren — `u1^2` ist gerade,
+Kreuzterme brauchen eine zweite Variable. Der Vorausblick sieht keine Verbesserung und schliesst:
+Stufe 1 genuegt.
+
+Damit erklaeren sich **alle zehn Faelle**: Jeder korrekte Cap liegt bei Stufe 3, also innerhalb des
+Horizonts. Beide Fehlschlaege brauchen Stufe 4 bzw. 5, also jenseits davon.
+
+> **Designregel, zweite ihrer Art nach der System-63-Regel:** Ein datengetriebener Deckel muss so
+> weit vorausschauen, wie die Basis strukturelle Luecken erzeugt. Bei gradgestaffelter Basis und
+> ungeraden Nichtlinearitaeten betraegt diese Luecke zwei Stufen; ein kuerzerer Horizont schliesst
+> die wahre Struktur systematisch aus.
+
+**Der Cap ist damit nicht grundsaetzlich defekt** — der Parameter ist falsch. Naheliegender Fix:
+`lookahead_horizon` auf 4, also bis ans Ende der Basis. Der Vorausblick rechnet nur
+Ableitungsregressionen, keine Fits; die Mehrkosten sind gegenueber der Suche vernachlaessigbar.
+
+Zwei Auflagen: Der Parameter steckt in `LOOKAHEAD_CAP_POLICY` und damit im Fingerprint, muss also
+vor dem ersten Kampagnen-Record landen. Und es ist zu validieren statt zu glauben — loest es 28 und
+32, **ohne** die fuenf korrekten Caps (26, 27, 29, 31, 54) zu verschieben?
+
+**Konsequenz fuer die Interpretation der 40 % Recovery:** Mindestens zwei der sechs Fehlschlaege sind
+**keine** Suchfehler. Die Diagnose "der additive Sucher kann eine falsche Festlegung nicht
+zuruecknehmen" gilt fuer System 54 — fuer 28 und 32 gilt eine andere Ursache. Beide Fehlerquellen
+muessen getrennt gezaehlt werden, sonst wird dem Sucher angelastet, was der Controller verursacht hat.
+
+**Offen, vor der Kampagne zu klaeren:**
+
+1. Alle 20 exakten Systeme pruefen, nicht nur die sieben mit vorliegendem Record. Zwei von sieben ist
+   eine Stichprobe, keine Rate.
+2. Den Mechanismus verstehen: Warum liefert die Voraus-Analyse bei sinus- bzw. kubikdominierter
+   Dynamik "Stufe 1 genuegt"?
+3. Erst danach entscheiden, ob der Cap in dieser Form in die Kampagne geht.
+
+---
+
 ### GPU geprueft und verworfen — die Begruendung, damit die Frage nicht wiederkommt
 
 <!-- HASH -->
