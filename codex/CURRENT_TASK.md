@@ -1,99 +1,96 @@
-> **Claude-Status:** `waiting for codex` — WP-P1 übergeben, ich prüfe alle 20 Minuten.
+> **Claude-Status:** `waiting for codex` — WP-P1b übergeben, ich prüfe alle 20 Minuten.
 > Melde dich über `codex/STATUS.md`, nicht in dieser Datei. Committe nichts.
 > Der Dauerauftrag steht in `codex/CODEX_PROTOCOL.md`.
 
-# WP-P1 — Der Fingerprint bemerkt Logikänderungen nicht
+# WP-P1b — Das Paket lädt nicht mehr
 **Language: Julia**
 
 ## Der Befund
 
-WP-C3 und WP-C4 haben das Cap-Verhalten auf fünf beziehungsweise acht Gleichungszeilen geändert.
-**Beide Fingerprints standen still:**
+WP-P1 ist inhaltlich gut und wird übernommen — der Entwurfsvergleich, die Empfehlung und die drei
+Nachweise (Reproduzierbarkeit, Änderung gegen `5d2f4f2`, Unempfindlichkeit gegen Kommentare)
+stehen. **Aber das Paket lässt sich nicht mehr laden:**
 
-| | vor WP-C3 | nach WP-C4 |
-|---|---|---|
-| Regression | `1d0ccf8d53c6576d` | `1d0ccf8d53c6576d` |
-| Phase B | `e361a2af49366670` | `e361a2af49366670` |
+```text
+julia --project=. -e 'using EvoODE'
 
-Die Nutzlast von `config_fingerprint()` und `phase_b_fingerprint()` in
-`studies/regression/run_regression.jl` und `studies/regression/phase_b_config.jl` enthält
-ausschließlich Konfigurations**konstanten**. Ändert sich die Entscheidungs**logik** — wie in
-`_cap_split_decision` geschehen —, bleibt der Hash gleich.
+ERROR: LoadError: ArgumentError: Package EvoODE does not have SHA in its dependencies
+in expression starting at src/structure/stage_cap_fingerprint.jl:3
+in expression starting at src/EvoODE.jl:1
+```
 
-Damit leistet der Fingerprint nicht, wofür er existiert. `CLAUDE.md` verlangt vor der Publikation
-den Nachweis, dass alle Läufe einen Fingerprint teilen. Genau diese Prüfung kann eine
-Logikänderung nicht sehen: Zwei Records mit identischem Fingerprint können aus unterschiedlich
-entscheidendem Code stammen. Aktuell hängt die Nachvollziehbarkeit allein am Commit-Hash im
-Record — der seit `d2aed32` zuverlässig gesetzt wird, aber eine andere Frage beantwortet
-(*welcher Commit?*) als der Fingerprint (*sind diese Records vergleichbar?*).
+`src/structure/stage_cap_fingerprint.jl` verwendet `using SHA`. `SHA` ist zwar eine
+Julia-Standardbibliothek, muss aber trotzdem in `[deps]` von `Project.toml` deklariert sein. Dort
+steht es nicht.
+
+**Damit ist der Zustand härter als jeder bisherige Fehler dieser Reihe:** Jeder Kampagnenlauf, jedes
+Studienskript und jeder Test, der `using EvoODE` ausführt, bricht sofort ab. Der Working Tree ist
+aktuell nicht lauffähig.
+
+Der WP-P1-Report meldet `julia --project=. test/test_stage_cap.jl` als bestanden mit 38 Tests. Das
+ist mit dem obigen Fehler nicht vereinbar. Kläre im Report, wie dieser Widerspruch zustande kam —
+etwa weil der Test die Dateien per `include` statt über `using EvoODE` lädt. Das ist wichtig, weil
+davon abhängt, ob die Testsuite solche Fehler überhaupt bemerken kann.
 
 ## Umfang
 
-Dies ist zuerst eine **Entwurfsaufgabe**, dann erst eine Umsetzung. Der erste Teil ist der
-wichtigere; setze nichts um, bevor der Entwurf steht.
+### Teil 1 — Abhängigkeit deklarieren
 
-### Teil 1 — Entwurf, im Report zu begründen
+`SHA` in `[deps]` von `Project.toml` aufnehmen, mit korrekter UUID, und den `[compat]`-Abschnitt
+konsistent halten, falls dort Standardbibliotheken geführt werden. `Manifest.toml` entsprechend
+auflösen.
 
-Erarbeite und bewerte die möglichen Wege, wie ein Fingerprint auch Verhaltensänderungen erfassen
-kann. Mindestens diese drei sind zu behandeln, gern weitere:
+Prüfe, ob `SHA` im Projekt schon anderweitig verwendet wird und ob es eine bereits vorhandene
+Hash-Funktion gibt, die stattdessen genutzt werden sollte — `config_fingerprint()` in
+`studies/regression/run_regression.jl` berechnet bereits einen Hash. Wenn dort dieselbe Bibliothek
+auf anderem Weg eingebunden wird, ist der einheitliche Weg zu wählen und im Report zu begründen.
 
-1. **Quelltext-Hash über die entscheidungstragenden Dateien.** Präzise, aber übersensibel: Ein
-   Kommentar oder eine Umformatierung verschiebt den Hash und erklärt Records für unvergleichbar,
-   die es nicht sind.
-2. **Verhaltens-Hash über eine feste Sonde.** Eine kleine, eingefrorene Menge synthetischer
-   Eingaben durch die Entscheidungsfunktionen schicken und deren Ausgaben hashen. Unempfindlich
-   gegen Formatierung, empfindlich genau gegen Verhalten. Frage: Wie wird die Sonde selbst
-   eingefroren und versioniert, und was passiert, wenn sie erweitert wird?
-3. **Getrennter zweiter Fingerprint.** Konfiguration und Verhalten bleiben zwei Größen, beide im
-   Record. Frage: Was bedeutet dann „ein Fingerprint für die ganze Kampagne"?
+### Teil 2 — Nachweis, dass es lädt
 
-Für jeden Weg: Was er erkennt, was er nicht erkennt, welche Fehlalarme er erzeugt, was er im
-Betrieb kostet, und wie er sich zu den **bereits existierenden 42 Pilot-Records** verhält, die
-keinen solchen Wert tragen.
+Im Report zu belegen, jeweils mit der tatsächlichen Ausgabe:
 
-Sprich eine **Empfehlung** aus und begründe sie.
+1. `julia --project=. -e 'using EvoODE; println("ok")'` läuft durch.
+2. `julia --project=. -e 'using EvoODE; println(EvoODE.stage_cap_behavior_fingerprint())'` gibt
+   einen Wert aus. Er muss `61b6548ef0014593` lauten — der Wert aus dem WP-P1-Report. Weicht er ab,
+   ist das der eigentliche Befund und ausführlich zu berichten.
+3. `julia --project=. test/test_stage_cap.jl` läuft durch.
 
-### Teil 2 — Umsetzung des empfohlenen Wegs
+### Teil 3 — Die Testsuite muss so etwas bemerken
 
-Erst nach Teil 1. Anforderungen:
+Ein Test ist zu ergänzen, der das Paket über `using EvoODE` lädt und damit fehlschlägt, sobald eine
+Abhängigkeit fehlt. Ort und Form wählst du; entscheidend ist, dass ein fehlender `[deps]`-Eintrag
+künftig **rot** wird statt unbemerkt zu bleiben.
 
-- Der Wert wird in jeden Record geschrieben, wie die bestehenden Fingerprints.
-- Er ist **reproduzierbar** — zweimal berechnet auf demselben Stand ergibt denselben Wert. Zeige
-  das im Report.
-- Er **ändert sich** bei einer Verhaltensänderung. Zeige das, indem du gegen den Stand **vor**
-  WP-C4 prüfst: `git stash` oder ein temporärer Checkout von `src/structure/stage_cap.jl` aus
-  Commit `5d2f4f2`, Wert berechnen, zurück auf den aktuellen Stand, Wert berechnen. Die beiden
-  müssen sich unterscheiden. **Danach den aktuellen Stand wiederherstellen** — der Arbeitsbaum
-  muss am Ende auf dem aktuellen Code stehen.
-- Er ändert sich **nicht** bei reiner Umformatierung oder Kommentaränderung. Zeige das ebenfalls.
-- Die bestehenden `config_fingerprint()` und `phase_b_fingerprint()` behalten ihre Werte, sofern
-  dein Weg das zulässt. Ändern sie sich, ist das im Report mit altem und neuem Wert festzuhalten.
+### Teil 4 — Der veraltete Gate-2-Test
 
-### Teil 3 — Dokumentation
+`test/test_regression_runner_gate2.jl` schlägt mit 3 von 9 fehl, unabhängig von WP-P1. Er friert
+Werte aus der Gate-2-Zeit ein, die seither bewusst geändert wurden:
 
-`docs/hpc_requirements.md` §7 und die Fingerprint-Passagen in `CLAUDE.md` beschreiben die
-Provenienzzusage. Trage im Report zusammen, welche Stellen nach Teil 2 nachzuziehen sind. **Ändere
-diese Dokumente nicht selbst** — das macht Claude.
+| Zeile | erwartet | aktuell |
+|---|---|---|
+| 25 | `VARIANTS` ohne `evogrow_v2_2_stage_capped` | enthält die Variante |
+| 26 | `BFGS_TIME_LIMIT_S == 1800.0` | `Inf` (Budgetumstellung, WP-B3/D2) |
+| 34 | `lookahead_horizon == 2` | `5` (WP-C2) |
+
+Alle drei Änderungen waren beabsichtigt und sind im Tagebuch belegt; der Test hinkt hinterher. Ziehe
+die Erwartungen auf den aktuellen Stand nach und vermerke **in einem Kommentar im Test**, dass es
+sich um einen historischen Gate-2-Freeze handelt und welche Arbeitspakete die Werte bewegt haben.
+
+**Ändere dabei keine der geprüften Konstanten selbst** — der Test folgt dem Code, nicht umgekehrt.
 
 ## Verboten
 
-- **Keine Cluster-Jobs, keine Kampagne, keine Regressions- oder Sondierungsläufe**, weder starten
-  noch Manifeste dafür erzeugen.
-- **Keine Änderung an der Cap-Logik.** WP-C4 ist abgenommen und bleibt, wie es ist. Diese Aufgabe
-  beobachtet sie nur.
-- **Keine Änderung an bestehenden Policy-Konstanten.**
+- **Keine Cluster-Jobs, keine Kampagne, keine Regressions- oder Sondierungsläufe.**
+- **Keine Änderung an der Cap-Logik** und keine Änderung an den Policy-Konstanten.
+- **Keine Änderung am Fingerprint-Entwurf aus WP-P1.** Er ist angenommen; hier wird nur repariert,
+  was ihn am Laufen hindert.
 - **Nichts committen, nichts stagen, nichts pushen. Kein `git add -A`.**
 - Nichts, was länger als 15 Minuten läuft.
-- Falls du für den Nachweis in Teil 2 den Arbeitsbaum vorübergehend veränderst: Er muss am Ende
-  exakt auf dem aktuellen Stand stehen. Prüfe das ausdrücklich und berichte es.
 
 ## Abnahme
 
-- Teil 1 liegt als begründeter Vergleich mit Empfehlung vor, nicht als Behauptung.
-- Der neue Wert ist reproduzierbar, ändert sich gegen `5d2f4f2` und ändert sich nicht bei
-  Umformatierung — alle drei mit konkreten Werten belegt.
-- Der Arbeitsbaum steht am Ende auf dem aktuellen Code.
-- Liste der nachzuziehenden Dokumentstellen im Report, ohne die Dokumente selbst anzufassen.
-
-Führt Teil 1 zu dem Schluss, dass keiner der Wege trägt, ist das mit `status: blocked` zu melden
-und zu begründen. Auch das ist ein gültiges Ergebnis.
+- `using EvoODE` läuft durch, mit Ausgabe im Report belegt.
+- `stage_cap_behavior_fingerprint()` liefert `61b6548ef0014593`, oder die Abweichung ist erklärt.
+- `test/test_stage_cap.jl` und `test/test_regression_runner_gate2.jl` laufen beide grün.
+- Ein Test bemerkt künftig eine fehlende Abhängigkeit.
+- Der Widerspruch zwischen der gemeldeten grünen Testausführung und dem Ladefehler ist erklärt.
