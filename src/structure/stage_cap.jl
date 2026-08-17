@@ -28,6 +28,10 @@ Base.@kwdef struct LookAheadStageCapPolicy
     excitation_floor::Float64 = 1e-10
 end
 
+const _CAP_POST_FLOOR_CLEAR_DROP_RATIO = 0.35
+const _CAP_POST_FLOOR_CLEAR_NO_DROP_RATIO = 0.62
+const _CAP_POST_FLOOR_MIN_FLOOR_RATIO = 0.1
+
 function _cap_uniform_step(t::AbstractVector)
     length(t) < 2 && return 1.0
     return mean(diff(t))
@@ -187,6 +191,48 @@ function _cap_successor_evaluable(applicable_stages::Vector{Int}, stage_pos::Int
     return usable[applicable_stages[stage_pos + 1]]
 end
 
+function _cap_post_floor_significant_drop(residuals::AbstractVector{Float64},
+                                          floors::AbstractVector{Float64},
+                                          applicable_stages::Vector{Int},
+                                          stage_pos::Int)
+    stage = applicable_stages[stage_pos]
+    current_residual = residuals[stage]
+    floor = floors[stage]
+    isfinite(current_residual) && isfinite(floor) || return :undecidable
+    current_residual <= floor || return :not_applicable
+    current_residual > 0.0 || return :no_clear_drop
+    floor > 0.0 || return :no_clear_drop
+
+    floor_ratio = current_residual / floor
+    floor_ratio < _CAP_POST_FLOOR_MIN_FLOOR_RATIO && return :no_clear_drop
+    stage_pos == length(applicable_stages) && return :no_clear_drop
+
+    later_residuals = [
+        residuals[next_stage]
+        for next_stage in applicable_stages[(stage_pos + 1):end]
+        if isfinite(residuals[next_stage])
+    ]
+    isempty(later_residuals) && return :undecidable
+
+    later_ratio = minimum(later_residuals) / current_residual
+    later_ratio <= _CAP_POST_FLOOR_CLEAR_DROP_RATIO && return :clear_drop
+    later_ratio >= _CAP_POST_FLOOR_CLEAR_NO_DROP_RATIO && return :no_clear_drop
+    return :undecidable
+end
+
+function _cap_residuals_uninformative_without_gain(residuals::AbstractVector{Float64},
+                                                   applicable_stages::Vector{Int},
+                                                   stage_pos::Int,
+                                                   policy::LookAheadStageCapPolicy)
+    window = [
+        residuals[stage]
+        for stage in applicable_stages[stage_pos:end]
+        if isfinite(residuals[stage])
+    ]
+    isempty(window) && return true
+    return maximum(abs.(window)) <= policy.tau_abs
+end
+
 function _cap_split_decision(residuals::AbstractVector{Float64}, usable::AbstractVector{Bool},
                              floors::AbstractVector{Float64}, applicable_stages::Vector{Int},
                              policy::LookAheadStageCapPolicy)
@@ -199,7 +245,14 @@ function _cap_split_decision(residuals::AbstractVector{Float64}, usable::Abstrac
         usable[stage] || return (kind = :invalid, cap = nothing, stage = stage)
 
         if residuals[stage] <= floors[stage]
-            if observed_gain && _cap_successor_evaluable(applicable_stages, pos, usable)
+            post_floor = _cap_post_floor_significant_drop(residuals, floors, applicable_stages, pos)
+            if post_floor == :clear_drop && observed_gain
+                observed_gain = true
+                pos += 1
+                continue
+            end
+            if post_floor == :no_clear_drop && observed_gain &&
+               _cap_successor_evaluable(applicable_stages, pos, usable)
                 return (kind = :positive, cap = stage, stage = stage)
             end
             return (kind = :undecidable, cap = nothing, stage = stage)
@@ -224,6 +277,11 @@ function _cap_split_decision(residuals::AbstractVector{Float64}, usable::Abstrac
             end
         end
         jumped && continue
+
+        if !observed_gain &&
+           _cap_residuals_uninformative_without_gain(residuals, applicable_stages, pos, policy)
+            return (kind = :undecidable, cap = nothing, stage = stage)
+        end
 
         if _cap_successor_evaluable(applicable_stages, pos, usable)
             return (kind = :positive, cap = stage, stage = stage)

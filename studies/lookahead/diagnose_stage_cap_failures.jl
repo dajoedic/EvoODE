@@ -163,10 +163,17 @@ function traced_split_decision(residuals::AbstractVector{Float64}, usable::Abstr
         usable[stage] || return ((kind = :invalid, cap = nothing, stage = stage), "usability")
 
         if residuals[stage] <= floors[stage]
-            if observed_gain && EvoODE._cap_successor_evaluable(applicable_stages, pos, usable)
+            post_floor = EvoODE._cap_post_floor_significant_drop(residuals, floors, applicable_stages, pos)
+            if post_floor == :clear_drop && observed_gain
+                observed_gain = true
+                pos += 1
+                continue
+            end
+            if post_floor == :no_clear_drop && observed_gain &&
+               EvoODE._cap_successor_evaluable(applicable_stages, pos, usable)
                 return ((kind = :positive, cap = stage, stage = stage), "floor_after_gain")
             end
-            return ((kind = :undecidable, cap = nothing, stage = stage), "floor_without_gain")
+            return ((kind = :undecidable, cap = nothing, stage = stage), "floor_doubt_band")
         end
 
         horizon_end = min(length(applicable_stages), pos + policy.lookahead_horizon)
@@ -187,6 +194,11 @@ function traced_split_decision(residuals::AbstractVector{Float64}, usable::Abstr
             end
         end
         jumped && continue
+
+        if !observed_gain &&
+           EvoODE._cap_residuals_uninformative_without_gain(residuals, applicable_stages, pos, policy)
+            return ((kind = :undecidable, cap = nothing, stage = stage), "uninformative_without_gain")
+        end
 
         if EvoODE._cap_successor_evaluable(applicable_stages, pos, usable)
             return ((kind = :positive, cap = stage, stage = stage), "gain_search_exhausted")

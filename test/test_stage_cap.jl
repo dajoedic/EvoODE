@@ -97,6 +97,64 @@ end
         LookAheadStageCapPolicy(tau_abs = 1e-12, tau_rel = 1e-2),
     )
     @test relative_threshold_still_applies == false
+
+    uninformative_without_gain = EvoODE._cap_split_decision(
+        [1e-12, 2e-12, 5e-13],
+        [true, true, true],
+        [1e-14, 1e-14, 1e-14],
+        [1, 2, 3],
+        policy,
+    )
+    @test uninformative_without_gain == (kind = :undecidable, cap = nothing, stage = 1)
+end
+
+@testset "post-floor split decision has three relative outcomes" begin
+    policy = LookAheadStageCapPolicy(lookahead_horizon = 5)
+
+    clear_later_drop = EvoODE._cap_split_decision(
+        [10.0, 1.0, 0.2],
+        [true, true, true],
+        [0.1, 2.0, 2.0],
+        [1, 2, 3],
+        policy,
+    )
+    @test clear_later_drop == (kind = :positive, cap = 3, stage = 3)
+    @test EvoODE._cap_post_floor_significant_drop(
+        [10.0, 1.0, 0.2],
+        [0.1, 2.0, 2.0],
+        [1, 2, 3],
+        2,
+    ) == :clear_drop
+
+    clear_no_later_drop = EvoODE._cap_split_decision(
+        [10.0, 1.0, 0.8],
+        [true, true, true],
+        [0.1, 2.0, 2.0],
+        [1, 2, 3],
+        policy,
+    )
+    @test clear_no_later_drop == (kind = :positive, cap = 2, stage = 2)
+    @test EvoODE._cap_post_floor_significant_drop(
+        [10.0, 1.0, 0.8],
+        [0.1, 2.0, 2.0],
+        [1, 2, 3],
+        2,
+    ) == :no_clear_drop
+
+    doubtful_later_drop = EvoODE._cap_split_decision(
+        [10.0, 1.0, 0.5],
+        [true, true, true],
+        [0.1, 2.0, 2.0],
+        [1, 2, 3],
+        policy,
+    )
+    @test doubtful_later_drop == (kind = :undecidable, cap = nothing, stage = 2)
+    @test EvoODE._cap_post_floor_significant_drop(
+        [10.0, 1.0, 0.5],
+        [0.1, 2.0, 2.0],
+        [1, 2, 3],
+        2,
+    ) == :undecidable
 end
 
 @testset "look-ahead cap limits promotion only" begin
