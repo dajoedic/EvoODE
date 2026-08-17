@@ -4,11 +4,101 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ---
 
+## 2026-08-17
+
+### Der Pilot ist durch — das Kostenmodell stimmt in der Summe und ist in der Verteilung falsch
+
+<!-- HASH -->
+
+Der Pilot auf Orion ist abgeschlossen. Ausgewertet wurden **42 eindeutige Zellen** aus
+`pilot_e20af80`, `pilot_sweep_tasks` und `pilot_sweep3_tasks`, dazu 888 Level-Intervalle aus den
+Heartbeat-Dateien. Abdeckung: **Systeme 24–62, Seed 42, IC-Set 1, ausschliesslich `pretune_on`**.
+Alle Records `error=null`.
+
+**Zur Zulaessigkeit der Zeitmessung.** Grundsatz 7 in `CLAUDE.md` verbietet Wall-Clock als Evidenz —
+und nennt die Ausnahme selbst: *"If a claim genuinely requires timing, measure it on a dedicated
+machine."* Orion vergibt je Job einen dedizierten Kern ohne Suspend und ohne Mitbewerber. Fuer
+**Kapazitaetsplanung** ist die Messung damit zulaessig; fuer **Methodenvergleiche** bleibt sie es
+nicht. Alle Zahlen unten sind Planungsgroessen, keine Leistungsaussagen ueber Varianten.
+
+**Die Gesamtsumme haelt, die Klassenaufteilung nicht.** Gegen `docs/hpc_requirements.md` §5:
+
+| Dimension | geschaetzt s/Job | gemessen Median | gemessen Mittel | Urteil |
+|---|---|---|---|---|
+| 1 | 170 | 250 s | 250 s | brauchbar (nur System 1, n=3) |
+| 2 | 20.900 | 684 s | 10.440 s | Median 30x zu hoch, Mittel 2x zu hoch |
+| 3 | 41.700 | 22.400 s | 63.800 s | **zu niedrig**, Mittel 1,5x |
+| 4 | 83.500 | 4.280 s | 2.300 s | 36x zu hoch (nur System 62, n=2) |
+
+Hochrechnung auf die 756 Phase-B-Zellen mit gemessenen Systemmitteln, fuer unbeobachtete Systeme das
+Mittel ihrer Dimensionsklasse: **3.384 Kernstunden** gegen geschaetzte 3.900. Das sind **15 Prozent
+Abweichung nach unten** — die Schaetzung war in der Summe richtig.
+
+**Damit ist die bisherige Diagnose zu korrigieren.** `CLAUDE.md` fuehrt unter "Active", die Schaetzung
+sei *"one to two orders of magnitude too high"*. Das war aus den ersten, billigen Zellen geschlossen
+(System 24: 10 s gegen 20.900 s geschaetzt) und ueberlebt den vollen Sweep nicht. Die Verteilung ist
+extrem schief — dim 2 hat Median 0,19 h und Mittel 2,90 h, Faktor 15 zwischen beiden. Wer aus
+Medianzellen auf die Kampagne schliesst, unterschaetzt sie um eine Groessenordnung. Die Ursache des
+alten Fehlschlusses ist also nicht die Umrechnung Sekunden-pro-Integration, sondern eine
+**Stichprobe aus dem Kopf der Verteilung**.
+
+**Kalenderzeit bei `parallelism: 16`: rund 9 Tage** (3.384 / 16 = 212 h). Bei 32 Kernen 4,4 Tage,
+bei allen 96 rund 1,5 Tage. Untere Schranke der Makespan ist aber die **laengste Einzelzelle: 68 h**
+— unter 3 Tage kommt die Kampagne durch keine Parallelitaet.
+
+**Der eigentliche Befund: die pathologischen Level sind keine Ausreisser, sondern ein Trend.**
+`CLAUDE.md` beschreibt sie bisher als *"a single search level consuming three to five hours while its
+neighbours take seconds"*. Die Level-Serie von System 59 (Roessler, chaotisch) zeigt etwas anderes:
+
+```text
+Level  1..8   49  107   60   74  107  115   91  129            Sekunden
+Level  9..16  6214 3985 9532 4468 4482 6035 3473 2917
+Level 17..24  3630 2858 3348 5996 4373 6278 8021 11538
+Level 25..30  25462 20960 21524 30075 16658 42372              = 11,8 h im letzten Level
+```
+
+Kein Ausreisser, sondern **monotones Wachstum ueber drei Groessenordnungen mit der Strukturgroesse**.
+Bestaetigt auf System 61 (48 s → 37.211 s) und, im Kleinen, auf dem billigen System 26 (14 s → 63 s).
+Auch die Konzentrationsmessung passt: In den teuersten Zellen macht das langsamste Level nur 17–26 %
+der Zelle aus — teuer ist die **ganze zweite Haelfte**, nicht ein Level.
+
+**Und diese zweite Haelfte ist Verschwendung.** System 59 endet nach 30 Levels und 68 Stunden bei
+`loss = 1,54`, System 61 bei `63,1`, System 56 (Lorenz) bei `44,5` — alle drei chaotisch, alle drei
+ohne brauchbare Loesung. Die 60 von 68 Stunden ab Level 9 kaufen nichts. In Zaehlern, wie Grundsatz 7
+es verlangt: 6.625.512 Loss-Evaluationen bei 610 Parameter-Fits auf System 59, also **rund 10.900
+Solves je Fit** — das ist die Liniensuche, die seit WP-D2 als offener Kostenhebel notiert ist, hier
+zum ersten Mal auf dedizierter Hardware beziffert.
+
+Das verschiebt die Prioritaet: Nicht ein einzelnes pathologisches Level ist zu jagen, sondern es ist
+zu entscheiden, ob chaotische Systeme ueberhaupt 30 Levels bekommen. Ein Levelbudget in Abhaengigkeit
+der Dimension oder ein Abbruch bei ausbleibender Verbesserung waere fingerprint-relevant und muesste
+damit **vor** dem ersten Kampagnen-Record fallen. Bewusst nicht jetzt entschieden: Der Cap-Defekt hat
+Vorrang, und beide Aenderungen zusammen in einem Fingerprint-Sprung sind sauberer als zwei.
+
+**Provenienz, wie erwartet.** Alle 42 Records tragen `config_fingerprint: c71c85ac2ec580ff` und
+`git_hash: "unknown"` — also den Stand **vor** WP-M1 und vor dem Provenienz-Fix. Sie sind damit
+genau das, was sie sein sollten: gueltige Infrastruktur- und Kostenmessungen, die **niemals** mit
+Kampagnen-Records vermengt werden duerfen. Die Kampagne laeuft unter `ca02ea284d621f6d`.
+
+**Nebenbefund:** Der Pilot hat **281 Kernstunden** verbraucht. `docs/hpc_requirements.md` §5 kuendigt
+dem Standort gegenueber *"roughly 20 jobs, ~50 core-hours"* an. Faktor 5,6 darueber, verursacht von
+denselben drei chaotischen Zellen. Kein Schaden, aber beim naechsten Mal anzukuendigen.
+
+**Offen aus dem Pilot:**
+
+1. **`pretune_off` ist ungemessen** — das ist die Haelfte der Kampagne. Ohne Warmstart ist mehr
+   BFGS-Arbeit je Fit zu erwarten, die Hochrechnung oben ist insofern eine untere Schranke.
+2. Systeme 1–23 ruhen auf **einem** gemessenen System (System 1, 3 Records), System 63 auf keinem.
+3. Ein Seed, ein IC-Set. Die Seed-Streuung ist dort, wo gemessen, erheblich: System 62 braucht
+   4.279 s bei Seed 42 und 300 s bei Seed 123 — Faktor 14 bei identischer Konfiguration.
+
+---
+
 ## 2026-08-14
 
 ### Der Stage-Cap schneidet wahre Strukturen ab - auf 2 von 7 geprueften exakten Systemen
 
-<!-- HASH -->
+<!-- e5c739b -->
 
 **Das ist ein Defekt im Beitrag des Papiers, gefunden vor der Kampagne.**
 
@@ -105,7 +195,7 @@ muessen getrennt gezaehlt werden, sonst wird dem Sucher angelastet, was der Cont
 
 ### GPU geprueft und verworfen — die Begruendung, damit die Frage nicht wiederkommt
 
-<!-- HASH -->
+<!-- 7d23da5 -->
 
 Frage aufgeworfen: laesst sich im Projekt irgendwo die GPU nutzen? Antwort nach Durchsicht von
 `build_rhs`, `simulate` und der Populationsschleife: **nein, nicht auf dem Paper-1-Pfad.** Vier
@@ -155,7 +245,7 @@ lohnt nur, wenn batched Fitting als eigener Beitrag gefuehrt wird.
 
 ### Lesender Code-Durchgang vor der Kampagne: nichts zu tun, und das ist der Befund
 
-<!-- HASH -->
+<!-- 212c4ef -->
 
 Reiner Lesedurchgang auf Bloat, toten Code und Schreibqualitaet. **Keine Aenderung vorgenommen** —
 jede haette den Pfad beruehrt, den 756 Zellen durchlaufen, und seit WP-M1 existiert ein bit-exakter

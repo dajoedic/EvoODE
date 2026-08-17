@@ -103,7 +103,7 @@ The second line of every task spec declares the language: `**Language: Python**`
 | 1 — stable core | DONE (2026-04-20) |
 | 2 — EvoGrow variants | **CLOSED 2026-08-03** |
 | 3 — benchmarking | infrastructure done; Phase B protocol decided and implemented. Planned next axes: noise, sampling density, coupling strength, dimensionality |
-| 4 — Paper 1 | Phase A frozen; Phase B ported to Kubernetes and verified end to end on the cluster; pilot running, campaign not yet started |
+| 4 — Paper 1 | Phase A frozen; Phase B ported to Kubernetes and verified end to end on the cluster; **pilot finished 2026-08-17**; campaign blocked on the stage-cap defect (Active 0) |
 | 5 — advanced methods | not started |
 
 ### Phase 2 outcome
@@ -153,10 +153,12 @@ WP-L2 additionally showed `r_k` is derivative-error contaminated, and its capaci
 error grows with term count — biasing the signal toward "more terms help". Downstream confirmation:
 on System 31 seed 42 the v3 substrate alone loses ~6 orders against v2.2.
 
-**The stage cap.** Safe wherever the derivative estimate resolves the structure, unsafe exactly
-where it does not — and that is readable in advance from the noise floor. Design rule from the
-System 63 defect: **the cap must rest on positive evidence, never on the absence of evidence.**
-Verified caps on the per-system grid: 3 → `[2]`, 11 → `[4]`, 26 → `[3,3]`, 31 → `[3,3]`,
+**The stage cap — design rules only; the parameter is *not* settled, see Active 0.** Safe wherever
+the derivative estimate resolves the structure, unsafe exactly where it does not. Design rule from
+the System 63 defect: **the cap must rest on positive evidence, never on the absence of evidence.**
+Second design rule, from the 2026-08-14 defect: **the look-ahead must reach as far as the basis
+creates structural gaps** — with a degree-staged basis and odd nonlinearities that gap is two
+stages. Verified caps on the per-system grid: 3 → `[2]`, 11 → `[4]`, 26 → `[3,3]`, 31 → `[3,3]`,
 54 → `[nothing,2,2]`, 63 → all `nothing`.
 
 **The final variant, ten cells on four systems.** `eq_overshoot = 0` in all ten. Against v2.2:
@@ -178,6 +180,20 @@ the coupled search path 1e-6 is the cheaper, behaviour-equal tolerance; the Syst
 
 ### Active
 
+0. **CAMPAIGN BLOCKER — the stage cap truncates true structures (2026-08-14).** On 2 of 7 checked
+   exact systems the cap excludes the true support from the searchable space: System 28 needs stage
+   5 (`sin(u1)`), System 32 needs stage 4 (`u1^3`), both are capped at 1. Both show
+   `pruned_match = false`, so the controller caused what was previously charged to the searcher.
+   Mechanism: `lookahead_horizon = 2` in `src/structure/stage_cap.jl` reaches only stage 3 from
+   stage 1, while the basis stages by degree, not parity — odd nonlinearities first become
+   approximable at stage 4/5. Proposed fix `lookahead_horizon = 4`; it sits in
+   `LOOKAHEAD_CAP_POLICY` and therefore in the fingerprint, so it **must land before the first
+   campaign record**. To do: check all 20 exact systems (2 of 7 is a sample, not a rate), validate
+   that the fix resolves 28 and 32 **without** moving the five correct caps (26, 27, 29, 31, 54),
+   then decide whether the cap ships in this form. Consequence for the 40 % recovery figure: at
+   least two of the six failures are controller errors, not search errors, and must be counted
+   separately.
+
 1. **Phase B compute — access obtained, path verified end to end (2026-08-13).** The target is SCCH
    **"Orion", an OpenShift/Kubernetes cluster**, not a Slurm site: `containers/Dockerfile` built by
    GitLab CI, `k8s/` Job manifests with `completionMode: Indexed`, results on NFS. The full chain
@@ -186,15 +202,29 @@ the coupled search path 1e-6 is the cheaper, behaviour-equal tolerance; the Syst
    chronology. 846 jobs (756 Phase B + 90 regression), 1 core and 2 GB each, no GPU, Julia 1.12.6
    pinned.
 
-   **Open: the cost model.** The estimates in `docs/hpc_requirements.md` are one to two orders of
-   magnitude too high — the work counts held, the seconds-per-integration conversion did not. A
-   pilot across dimension classes is running; that document is banner-marked as superseded and gets
-   rewritten from the pilot numbers. Capacity agreed with the site: **`parallelism: 16`** of 96
-   cluster cores, raise on request. No walltime limit, therefore no checkpointing needed.
+   **Cost model — pilot finished 2026-08-17, the total holds.** 42 cells (systems 24–62, seed 42,
+   IC set 1, `pretune_on` only) project to **3,384 core-hours** for the 756 Phase B cells against
+   the ~3,900 estimated in `docs/hpc_requirements.md` §5 — 15 % low, not the "one to two orders of
+   magnitude too high" previously recorded here; that earlier claim was drawn from the head of a
+   very skewed distribution (dim 2: median 0.19 h, mean 2.90 h) and does not survive the full
+   sweep. The per-class split *is* wrong: dim 4 overestimated 36x, **dim 3 underestimated 1.5x**.
+   At `parallelism: 16` that is ~9 days wall; the makespan floor is the longest single cell at
+   **68 h**, so no parallelism gets the campaign under 3 days. Still unmeasured, and therefore a
+   lower bound: **`pretune_off`, i.e. half the campaign**; systems 1–23 rest on one measured system,
+   63 on none; one seed, one IC set (System 62 varies 14x between seeds 42 and 123). Rewrite
+   `docs/hpc_requirements.md` from these numbers. Capacity agreed with the site:
+   **`parallelism: 16`** of 96 cluster cores, raise on request. No walltime limit, therefore no
+   checkpointing needed.
 
-   **Open: pathological levels.** Pilot cells show a single search level consuming three to five
-   hours while its neighbours take seconds — not slow systems but slow individual levels. This makes
-   a cell's runtime effectively unbounded above and is the largest remaining planning risk.
+   **Per-level cost is a trend, not an outlier — diagnosis revised 2026-08-17.** The heartbeat
+   series shows per-level cost growing monotonically over three orders of magnitude with structure
+   size (System 59: 49 s at level 1 → 42,372 s at level 30), not isolated pathological levels; in
+   the most expensive cells the slowest single level is only 17–26 % of the cell. And the expensive
+   half buys nothing: Systems 59, 61 and 56 (all chaotic) burn 40–68 h to end at losses of 1.5,
+   63 and 45. System 59 spends 6.6e6 loss evals on 610 parameter fits — ~10,900 solves per fit,
+   the line-search cost lever, quantified on dedicated hardware for the first time. Open decision:
+   a dimension-dependent level budget or a no-improvement stop. Fingerprint-relevant, so it must
+   land with the cap fix in **one** fingerprint step, not two.
 2. **Unbudgeted call sites outside the campaign.** WP-D3 budgeted the two campaign runners; eleven
    scripts under `benchmarks/` and `studies/` still construct the optimizer without a budget and are
    unbounded since WP-B3. Deliberate backlog, listed in `codex/REPORT_WP_D3.md` — not to be fixed
