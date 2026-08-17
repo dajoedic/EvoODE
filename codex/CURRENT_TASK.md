@@ -1,3 +1,7 @@
+> **Claude-Status:** `waiting for codex` — WP-C3 übergeben, ich prüfe alle 20 Minuten.
+> Melde dich über `codex/STATUS.md`, nicht in dieser Datei. Diese Datei schreibe nur ich.
+> Committe nichts — das übernehme ich nach der Prüfung.
+
 # WP-C3 — Der Cap darf nicht mehr behaupten, was die Ableitung nicht hergibt
 **Language: Julia**
 

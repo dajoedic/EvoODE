@@ -96,6 +96,14 @@ One single task file for all work: `codex/CURRENT_TASK.md`, always overwritten, 
 The second line of every task spec declares the language: `**Language: Python**` or
 `**Language: Julia**`. Contains "Kein aktiver Task" when no work is pending.
 
+**Two-file handshake, one writer each.** `codex/CURRENT_TASK.md` is written only by Claude and read
+only by Codex; `codex/STATUS.md` is written only by Codex and read only by Claude. No file has two
+writers, so the two sides cannot clobber each other. Codex reports `status: working | done |
+blocked` plus the WP identifier and the report path. `done` means the files are in the working tree
+and **uncommitted** — Claude commits after checking. `blocked` means the acceptance criterion is
+out of reach; Claude then stops rather than iterating on the science alone. The working tree is the
+ground truth, `STATUS.md` only the fast signal: a poll checks both.
+
 ## Current Status
 
 | Phase | Status |
