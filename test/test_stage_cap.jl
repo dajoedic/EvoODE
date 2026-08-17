@@ -26,6 +26,14 @@ end
     @test all(cap -> cap === nothing || 1 <= cap <= 5, caps)
 end
 
+@testset "default look-ahead spans staged basis" begin
+    policy = LookAheadStageCapPolicy()
+    for dim in 1:4
+        basis = default_staged_polynomial_basis(dim)
+        @test policy.lookahead_horizon >= EvoODE._max_stage(basis)
+    end
+end
+
 @testset "look-ahead split decision semantics" begin
     policy = LookAheadStageCapPolicy(tau_abs = 1e-6, lookahead_horizon = 2)
 

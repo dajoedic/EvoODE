@@ -13,12 +13,15 @@ arguments for ground truth, expected terms, expected stages, or system identifie
 Equations whose usable stage cannot be judged receive `nothing`, which means no cap.
 The cap is an upper bound only: it can prevent future promotion but never promote an
 equation and never removes terms if an equation is already above the cap.
+
+The default `lookahead_horizon` spans the current staged polynomial basis through
+its final stage; it is not intended as a tuned campaign hyperparameter.
 """
 Base.@kwdef struct LookAheadStageCapPolicy
     estimator::Symbol = :local_poly
     weighting::Symbol = :richardson_wls
     aggregation::Symbol = :majority_no_undecided_at_or_below
-    lookahead_horizon::Int = 3
+    lookahead_horizon::Int = 5
     tau_rel::Float64 = 1e-4
     tau_abs::Float64 = 1e-8
     cond_cap::Float64 = 1e10
