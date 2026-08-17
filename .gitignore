@@ -22,3 +22,8 @@ analysis/data/*
 figures/
 tables/
 experiments/*/run.log
+
+# Python test artefacts
+.pytest_cache/
+.pytest_tmp*/
+tests/__pycache__/

@@ -14,7 +14,7 @@ if str(ANALYSIS_ROOT) not in sys.path:
 
 from utils.io import load_aggregate
 from utils.metrics import check_required_columns
-from utils.style import VARIANT_COLORS, VARIANT_LABELS, apply_style
+from utils.style import apply_style, ordered_variants, variant_color, variant_label
 
 
 REQUIRED_COLUMNS = [
@@ -47,7 +47,9 @@ def load_config(path: Path) -> dict[str, Any]:
         return json.load(handle)
 
 
-def prepare_plot_data(df: pd.DataFrame) -> tuple[pd.DataFrame, list[tuple[int, str]]]:
+def prepare_plot_data(
+    df: pd.DataFrame,
+) -> tuple[pd.DataFrame, list[tuple[int, str]], list[str]]:
     exact_df = df.loc[~df["system_id"].isin(SURROGATE_SYSTEM_IDS)].copy()
     exact_df = exact_df.loc[exact_df["variant_slug"] != "gp_baseline"].copy()
 
@@ -57,9 +59,13 @@ def prepare_plot_data(df: pd.DataFrame) -> tuple[pd.DataFrame, list[tuple[int, s
         .sort_values("system_id")
     )
     system_order = list(systems.itertuples(index=False, name=None))
+    variant_order = ordered_variants(
+        exact_df["variant_slug"].dropna().unique(),
+        VARIANT_ORDER,
+    )
 
     full_index = pd.MultiIndex.from_product(
-        [VARIANT_ORDER, [system_id for system_id, _ in system_order]],
+        [variant_order, [system_id for system_id, _ in system_order]],
         names=["variant_slug", "system_id"],
     )
 
@@ -67,7 +73,7 @@ def prepare_plot_data(df: pd.DataFrame) -> tuple[pd.DataFrame, list[tuple[int, s
     reindexed = indexed.reindex(full_index).reset_index()
     reindexed["mean_stage_overshoot"] = reindexed["mean_stage_overshoot"].fillna(0.0)
 
-    return reindexed, system_order
+    return reindexed, system_order, variant_order
 
 
 def y_limits(values: pd.Series) -> tuple[float, float]:
@@ -83,6 +89,7 @@ def y_limits(values: pd.Series) -> tuple[float, float]:
 def draw_plot(
     plot_data: pd.DataFrame,
     system_order: list[tuple[int, str]],
+    variant_order: list[str],
     experiment_id: str,
 ) -> plt.Figure:
     apply_style()
@@ -90,12 +97,12 @@ def draw_plot(
     fig, ax = plt.subplots(figsize=(10, 4))
     x_positions = np.arange(len(system_order))
     bar_width = 0.14
-    group_width = bar_width * len(VARIANT_ORDER)
+    group_width = bar_width * len(variant_order)
     first_bar_offset = -group_width / 2 + bar_width / 2
 
     ax.axhline(0, color="black", linewidth=0.8, zorder=0)
 
-    for variant_index, variant_slug in enumerate(VARIANT_ORDER):
+    for variant_index, variant_slug in enumerate(variant_order):
         variant_data = plot_data.loc[plot_data["variant_slug"] == variant_slug]
         heights = variant_data["mean_stage_overshoot"].to_numpy(dtype=float)
         n_valid = variant_data["n_valid"]
@@ -105,8 +112,8 @@ def draw_plot(
             bar_positions,
             heights,
             width=bar_width,
-            color=VARIANT_COLORS[variant_slug],
-            label=VARIANT_LABELS[variant_slug],
+            color=variant_color(variant_slug),
+            label=variant_label(variant_slug),
             zorder=2,
         )
 
@@ -158,13 +165,13 @@ def main() -> int:
 
         aggregate = load_aggregate(aggregate_path)
         check_required_columns(aggregate, REQUIRED_COLUMNS)
-        plot_data, system_order = prepare_plot_data(aggregate)
+        plot_data, system_order, variant_order = prepare_plot_data(aggregate)
 
         output_dir.mkdir(parents=True, exist_ok=True)
         pdf_path = output_dir / "stage_overshoot.pdf"
         png_path = output_dir / "stage_overshoot.png"
 
-        fig = draw_plot(plot_data, system_order, experiment_id)
+        fig = draw_plot(plot_data, system_order, variant_order, experiment_id)
         fig.savefig(pdf_path, metadata={"CreationDate": None, "ModDate": None})
         fig.savefig(png_path, dpi=150, metadata={"Software": None})
         plt.close(fig)

@@ -13,7 +13,7 @@ if str(ANALYSIS_ROOT) not in sys.path:
 
 from utils.io import load_aggregate
 from utils.metrics import check_required_columns
-from utils.style import VARIANT_LABELS
+from utils.style import ordered_variants, variant_label
 
 
 REQUIRED_COLUMNS = [
@@ -85,9 +85,10 @@ def ordered_systems(df: pd.DataFrame, system_ids: list[int]) -> list[tuple[int, 
 def reindex_table_data(
     df: pd.DataFrame,
     systems: list[tuple[int, str]],
+    variant_order: list[str],
 ) -> pd.DataFrame:
     full_index = pd.MultiIndex.from_product(
-        [VARIANT_ORDER, [system_id for system_id, _ in systems]],
+        [variant_order, [system_id for system_id, _ in systems]],
         names=["variant_slug", "system_id"],
     )
     indexed = df.set_index(["variant_slug", "system_id"])
@@ -99,10 +100,11 @@ def reindex_table_data(
 
 
 def build_csv_table(df: pd.DataFrame) -> pd.DataFrame:
+    variant_order = ordered_variants(df["variant_slug"].dropna().unique(), VARIANT_ORDER)
     ordered_frames = []
     for system_ids in (EXACT_SYSTEM_IDS, SURROGATE_SYSTEM_IDS):
         systems = ordered_systems(df, system_ids)
-        ordered_frames.append(reindex_table_data(df, systems))
+        ordered_frames.append(reindex_table_data(df, systems, variant_order))
 
     output = pd.concat(ordered_frames, ignore_index=True)
     return output.loc[:, CSV_COLUMNS]
@@ -152,6 +154,7 @@ def latex_tabular(
     title: str,
     table_data: pd.DataFrame,
     systems: list[tuple[int, str]],
+    variant_order: list[str],
     include_exact_match: bool,
 ) -> str:
     alignment = "l" + ("c" * len(systems))
@@ -165,8 +168,8 @@ def latex_tabular(
     lines.append(" & ".join(headers) + r" \\")
     lines.append(r"\midrule")
 
-    for variant_slug in VARIANT_ORDER:
-        row_cells = [latex_escape(VARIANT_LABELS[variant_slug])]
+    for variant_slug in variant_order:
+        row_cells = [latex_escape(variant_label(variant_slug))]
         variant_data = table_data.loc[table_data["variant_slug"] == variant_slug]
         for system_id, _ in systems:
             cell_row = variant_data.loc[variant_data["system_id"] == system_id].iloc[0]
@@ -180,14 +183,21 @@ def latex_tabular(
 def write_latex(df: pd.DataFrame, path: Path) -> None:
     exact_systems = ordered_systems(df, EXACT_SYSTEM_IDS)
     surrogate_systems = ordered_systems(df, SURROGATE_SYSTEM_IDS)
-    exact_data = reindex_table_data(df, exact_systems)
-    surrogate_data = reindex_table_data(df, surrogate_systems)
+    variant_order = ordered_variants(df["variant_slug"].dropna().unique(), VARIANT_ORDER)
+    exact_data = reindex_table_data(df, exact_systems, variant_order)
+    surrogate_data = reindex_table_data(df, surrogate_systems, variant_order)
 
     content = "\n\n".join(
         [
             r"% Requires: \usepackage{booktabs, makecell}",
-            latex_tabular("Exact systems", exact_data, exact_systems, True),
-            latex_tabular("Surrogate systems", surrogate_data, surrogate_systems, False),
+            latex_tabular("Exact systems", exact_data, exact_systems, variant_order, True),
+            latex_tabular(
+                "Surrogate systems",
+                surrogate_data,
+                surrogate_systems,
+                variant_order,
+                False,
+            ),
         ]
     )
     path.write_text(content + "\n", encoding="utf-8")
