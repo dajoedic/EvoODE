@@ -18,7 +18,7 @@ Base.@kwdef struct LookAheadStageCapPolicy
     estimator::Symbol = :local_poly
     weighting::Symbol = :richardson_wls
     aggregation::Symbol = :majority_no_undecided_at_or_below
-    lookahead_horizon::Int = 2
+    lookahead_horizon::Int = 3
     tau_rel::Float64 = 1e-4
     tau_abs::Float64 = 1e-8
     cond_cap::Float64 = 1e10
