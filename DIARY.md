@@ -8,7 +8,7 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ### Der Pilot ist durch — das Kostenmodell stimmt in der Summe und ist in der Verteilung falsch
 
-<!-- HASH -->
+<!-- d648993 -->
 
 Der Pilot auf Orion ist abgeschlossen. Ausgewertet wurden **42 eindeutige Zellen** aus
 `pilot_e20af80`, `pilot_sweep_tasks` und `pilot_sweep3_tasks`, dazu 888 Level-Intervalle aus den
