@@ -180,19 +180,36 @@ the coupled search path 1e-6 is the cheaper, behaviour-equal tolerance; the Syst
 
 ### Active
 
-0. **CAMPAIGN BLOCKER — the stage cap truncates true structures (2026-08-14).** On 2 of 7 checked
-   exact systems the cap excludes the true support from the searchable space: System 28 needs stage
-   5 (`sin(u1)`), System 32 needs stage 4 (`u1^3`), both are capped at 1. Both show
-   `pruned_match = false`, so the controller caused what was previously charged to the searcher.
-   Mechanism: `lookahead_horizon = 2` in `src/structure/stage_cap.jl` reaches only stage 3 from
-   stage 1, while the basis stages by degree, not parity — odd nonlinearities first become
-   approximable at stage 4/5. Proposed fix `lookahead_horizon = 4`; it sits in
-   `LOOKAHEAD_CAP_POLICY` and therefore in the fingerprint, so it **must land before the first
-   campaign record**. To do: check all 20 exact systems (2 of 7 is a sample, not a rate), validate
-   that the fix resolves 28 and 32 **without** moving the five correct caps (26, 27, 29, 31, 54),
-   then decide whether the cap ships in this form. Consequence for the 40 % recovery figure: at
-   least two of the six failures are controller errors, not search errors, and must be counted
-   separately.
+0. **CAMPAIGN BLOCKER — the stage cap truncates true structures. Half solved (WP-C1, 2026-08-17).**
+   The audit over all 20 exact systems, both IC sets, horizons 2–5 (`docs/wp_c1_stage_cap_horizon_audit.md`)
+   put the rate at **9 equation rows on 5 of 20 systems** at the shipped `lookahead_horizon = 2`.
+
+   **Solved: the horizon.** The basis stages by degree, not parity, so odd nonlinearities first
+   become approximable at stage 4/5 and a horizon of 2 never reaches them. Raising it moves six
+   rows and every new cap lands *exactly* on the required stage — 28 eq2 1→5, 32 eq2 1→4, and
+   38 eq1 `nothing`→4, the last one tightening a previously uncapped equation onto the cubic term
+   it needs. Horizons 3, 4 and 5 are cap-identical on all 80 equation rows, so the parameter is
+   inert above 3; WP-C2 sets it to **5 = the number of basis stages**, i.e. no horizon, rather than
+   leave a tuned constant in the paper.
+
+   **Open: a second, different mechanism.** Five rows survive every horizon — Lorenz equation 3 on
+   Systems 55 and 56 (cap 2, required 3, both IC sets) and System 31 equation 1 on IC set 2 (cap 1,
+   required 3). At Lorenz the cross term `u1*u2` is already inside the horizon at 2, so it is seen
+   and not counted as a gain. Prime suspect: derivative estimation on chaotic trajectories, the
+   same ground v3 failed on (WP-L2). WP-C2 diagnoses it; the decisive test is re-running the cap
+   with analytic derivatives. **The campaign stays blocked on these five rows.**
+
+   **Counter-check held:** System 61 (Chen-Lee) caps correctly at `[3,3,3]`. The defect is
+   selective, not general.
+
+   **Consequence for the 40 % recovery figure:** several of the six failures are controller errors,
+   not search errors, and must be counted separately.
+
+   **Limitation to declare regardless of outcome:** the cap is auditable only on the 20 exact
+   systems. The 43 surrogates have no ground-truth support, so controller safety is unverifiable
+   there by construction — and the pilot shows several surrogates carrying an equation capped at
+   stage 1 (33, 34, 40, 44, 50). They are scored on R², so it is a fit-quality risk rather than a
+   support error.
 
 1. **Phase B compute — access obtained, path verified end to end (2026-08-13).** The target is SCCH
    **"Orion", an OpenShift/Kubernetes cluster**, not a Slurm site: `containers/Dockerfile` built by

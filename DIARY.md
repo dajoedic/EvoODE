@@ -6,6 +6,72 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ## 2026-08-17
 
+### WP-C1 — der Horizont war die Ursache, aber nicht die einzige
+
+<!-- d472f8e -->
+
+Audit über alle 20 exakten Systeme, beide IC-Sets, Horizonte 2 bis 5, 320 Gleichungszeilen. Der
+Vorausblick wurde dabei nicht angefasst, nur `estimate_stage_caps` mit variiertem Horizont
+aufgerufen und das Ergebnis gegen die aus `phase_b_support.json` abgeleitete benötigte Stufe
+gehalten.
+
+**Die Rate bei Horizont 2: neun Gleichungszeilen auf fünf der zwanzig exakten Systeme.** Aus zwei
+von sieben ist damit eine belastbare Zahl geworden.
+
+**Der Mechanismus ist bestätigt, und präziser als erwartet.** Von Horizont 2 auf 3 ändern sich genau
+sechs Zeilen — und jeder neue Cap trifft die benötigte Stufe **exakt**:
+
+| System | Gl. | benötigt | Cap alt | Cap neu |
+|---|---|---|---|---|
+| 28 Pendel ohne Reibung | 2 | 5 | 1 | **5** |
+| 32 Doppelmuldenoszillator | 2 | 4 | 1 | **4** |
+| 38 Van der Pol | 1 | 4 | `nothing` | **4** |
+
+System 38 ist der aussagekräftigste Fall, weil er nicht im Verdacht stand. Dort gab es vorher
+**gar keinen** Cap; der längere Vorausblick erkennt den Kubikterm und deckelt punktgenau darauf. Der
+Cap wird durch die Korrektur also nicht nur sicherer, an dieser Stelle wird er auch **schärfer** —
+genau die Doppelaussage, die der Beitrag braucht.
+
+**Der Parameter ist oberhalb von 3 wirkungslos.** Der Report belegt das über Zählwerte; zeilenweise
+nachgerechnet gilt es stärker: Horizonte 3, 4 und 5 sind auf **allen 80 Gleichungszeilen
+cap-identisch**. Damit ist die 3 eine getunte Konstante ohne Wirkung, und es wird auf **5** gegangen
+— die Stufenzahl der Basis, also „kein Horizont". Ergebnis unverändert, aber im Paper steht dann
+keine Zahl mehr, zu der „warum 3?" die einzige ehrliche Antwort „weil es auf unseren zwanzig
+Systemen reicht" wäre. WP-C2 zieht das nach.
+
+**Und es bleibt ein zweiter Defekt.** Fünf Zeilen überleben jeden Horizont:
+
+| System | Gl. | IC | benötigt | Cap |
+|---|---|---|---|---|
+| 55 Lorenz (komplex periodisch) | 3 | 1, 2 | 3 | 2 |
+| 56 Lorenz (Standardparameter) | 3 | 1, 2 | 3 | 2 |
+| 31 | 1 | nur 2 | 3 | 1 |
+
+Die Lorenz-Vorhersage aus dem Pilot-Eintrag hat sich bestätigt — die Erklärung nicht. Von Stufe 2
+aus liegt Stufe 3 **schon bei Horizont 2** im Vorausblick. Der Kreuzterm `u1*u2` wird also gesehen
+und trotzdem nicht als Gewinn gezählt. Das ist ein anderer Mechanismus, und die naheliegende
+Vermutung ist die Ableitungsschätzung auf chaotischen Trajektorien, also derselbe Boden, auf dem v3
+gescheitert ist (WP-L2). System 31 auf IC-Set 2 ist der längst als Grenzfall dokumentierte Fall
+trajektorienarmer Dynamik — hier zum ersten Mal als tatsächliches Abschneiden belegt und nicht nur
+als Instabilität über IC-Sets.
+
+**Gegenprobe gehalten:** System 61 (Chen-Lee) steht auf `[3,3,3]` und ist damit korrekt gedeckelt.
+Der Defekt ist selektiv.
+
+**Fingerprints:** Regression `0825cdc88d9264a0` → `06e1c71fbd10a3a4`, Phase B `ca02ea284d621f6d` →
+`41f69abc3670b6c4`. Beide bewegen sich mit WP-C2 erneut; das ist unkritisch, solange kein
+Kampagnen-Record existiert, und es existiert keiner.
+
+**Eine Limitation, die unabhängig vom Ausgang zu deklarieren ist.** Prüfbar ist der Cap nur auf den
+**20 exakten Systemen**. Für die 43 Surrogatsysteme gibt es keinen wahren Support, die Sicherheit
+des Controllers ist dort konstruktionsbedingt nicht auditierbar — und der Pilot zeigt mehrere
+Surrogate mit einer auf Stufe 1 gedeckelten Gleichung (33, 34, 40, 44, 50). Bewertet werden sie über
+R², es ist also ein Güte- und kein Support-Risiko. Gesagt werden muss es trotzdem.
+
+**Kampagnenstatus: weiterhin blockiert**, jetzt auf den fünf verbleibenden Zeilen.
+
+---
+
 ### Das Cap-Muster in den Pilot-Records: der Defekt ist breiter als 2 von 7, und Lorenz ist dabei
 
 <!-- 9b0cf85 -->
