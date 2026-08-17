@@ -68,7 +68,7 @@ Befund dieser Runde, siehe unten.
 
 ### Ein Audit-Dokument hat sich selbst überschrieben — gefunden beim Paper-Entwurf
 
-<!-- HASH -->
+<!-- 5b6f8e2 -->
 
 WP-W1 sollte `PAPER_1.md` auf den aktuellen Stand entwerfen und dabei Widersprüche zwischen den
 Quellen **auflisten statt entscheiden**. Genau das hat den Fund geliefert.
