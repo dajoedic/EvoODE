@@ -22,8 +22,17 @@ function _with_env(f::Function, updates::Dict{String, String})
 end
 
 @testset "Gate 2 regression runner selection" begin
-    @test [String(v.label) for v in VARIANTS] == ["evogrow_v2_2_stage_local", "evogrow_v3", "evogrow_v3_stage_capped"]
-    @test BFGS_TIME_LIMIT_S == 1800.0
+    # Historical Gate-2 freeze. The values below moved deliberately after Gate 2:
+    # evogrow_v2_2_stage_capped became the Paper 1 variant (2026-08-03),
+    # WP-B3/D2 replaced the BFGS time limit with an evaluation budget (Inf),
+    # and WP-C2 widened the look-ahead horizon to the depth of the staged basis.
+    @test [String(v.label) for v in VARIANTS] == [
+        "evogrow_v2_2_stage_local",
+        "evogrow_v3",
+        "evogrow_v2_2_stage_capped",
+        "evogrow_v3_stage_capped",
+    ]
+    @test BFGS_TIME_LIMIT_S == Inf
     @test FINGERPRINT_VARIANT_LABELS == [
         "evogrow_v2_2_stage_local",
         "evogrow_screening_derivative",
@@ -31,7 +40,7 @@ end
         "evogrow_v3_stage_capped",
     ]
     @test LOOKAHEAD_CAP_POLICY.aggregation == :majority_no_undecided_at_or_below
-    @test LOOKAHEAD_CAP_POLICY.lookahead_horizon == 2
+    @test LOOKAHEAD_CAP_POLICY.lookahead_horizon == 5
 
     selected = _with_env(
         Dict(

@@ -1,6 +1,13 @@
 using Test
 using Random
 
+@testset "package loads through project dependencies" begin
+    project_root = dirname(@__DIR__)
+    script = "using EvoODE; println(EvoODE.stage_cap_behavior_fingerprint())"
+    output = read(`$(Base.julia_cmd()) --project=$project_root -e $script`, String)
+    @test strip(output) == "61b6548ef0014593"
+end
+
 include(joinpath(@__DIR__, "..", "src", "EvoODE.jl"))
 using .EvoODE
 
@@ -155,6 +162,21 @@ end
         [1, 2, 3],
         2,
     ) == :undecidable
+end
+
+@testset "stage cap behavior fingerprint is stable and behavior-derived" begin
+    fp1 = stage_cap_behavior_fingerprint()
+    fp2 = stage_cap_behavior_fingerprint()
+
+    @test fp1 == fp2
+    @test fp1 isa String
+    @test length(fp1) == 16
+    @test fp1 == "61b6548ef0014593"
+    @test occursin(r"^[0-9a-f]{16}$", fp1)
+    @test occursin(
+        "late_floor_doubt_abstains",
+        EvoODE._cap_fingerprint_canonical_value(EvoODE._cap_probe_decision_payload()),
+    )
 end
 
 @testset "look-ahead cap limits promotion only" begin
