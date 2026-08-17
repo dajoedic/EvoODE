@@ -201,18 +201,29 @@ the coupled search path 1e-6 is the cheaper, behaviour-equal tolerance; the Syst
    inert above 3; WP-C2 sets it to **5 = the number of basis stages**, i.e. no horizon, rather than
    leave a tuned constant in the paper.
 
-   **Open: a second, different mechanism.** Five rows survive every horizon — Lorenz equation 3 on
-   Systems 55 and 56 (cap 2, required 3, both IC sets) and System 31 equation 1 on IC set 2 (cap 1,
-   required 3). At Lorenz the cross term `u1*u2` is already inside the horizon at 2, so it is seen
-   and not counted as a gain. Prime suspect: derivative estimation on chaotic trajectories, the
-   same ground v3 failed on (WP-L2). WP-C2 diagnoses it; the decisive test is re-running the cap
-   with analytic derivatives. **The campaign stays blocked on these five rows.**
+   **Solved: the second mechanism (WP-C2 to WP-C4).** The five surviving rows were derivative-driven
+   — with analytic derivatives all five reach the required stage, and a 5×5 sweep of `tau_rel` and
+   `tau_abs` over four orders of magnitude fixes none of them, so thresholds were ruled out
+   empirically. WP-C4 gave the floor-crossing decision a third outcome: a later stage dropping the
+   residual to ≤0.35 reopens the walk, ≥0.62 caps as before, and **anything between returns no cap
+   at all**. All conditions are relative; no stage index and no system identity (WP-C3 was rejected
+   for exactly that). **No truncated rows remain.** Finite caps fell 49 → 45 — the surrendered rows
+   cost compute, never a solution.
 
    **Counter-check held:** System 61 (Chen-Lee) caps correctly at `[3,3,3]`. The defect is
    selective, not general.
 
    **Consequence for the 40 % recovery figure:** several of the six failures are controller errors,
    not search errors, and must be counted separately.
+
+   **Open, smaller (2026-08-17):** the floor-depth constant `0.1` is now the load-bearing one —
+   control 61 / IC 1 has three of four splits inside the ratio band and keeps its cap only because
+   its floor ratios are 0.03–0.07 against targets at 0.30–0.85. Verified, factor four, but it must
+   be reported. And row 12 / IC 1 surrenders a correct tight cap for a wrong reason: its floor ratio
+   is 9.9e-06, so the "improvement" it abstains over is pure noise — the floor-depth condition
+   should disable the band logic entirely, not only the reopen branch. Both 12 / IC 1 and 31 / IC 2
+   flip through **split majority voting**, not clear detection, so aggregation robustness is its own
+   open question.
 
    **Limitation to declare regardless of outcome:** the cap is auditable only on the 20 exact
    systems. The 43 surrogates have no ground-truth support, so controller safety is unverifiable

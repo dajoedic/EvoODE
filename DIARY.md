@@ -6,6 +6,84 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ## 2026-08-17
 
+### WP-C3 abgelehnt, WP-C4 angenommen — der Cap lehnt jetzt ab, statt im Zweifel zu behaupten
+
+<!-- d94bc3b -->
+
+**WP-C3 erfüllte sein Zielbild und wurde trotzdem nicht angenommen.** Vier Lorenz-Zeilen auf Cap 3,
+System 31 / IC 2 auf `nothing`, 75 Zeilen unverändert, Tests grün — und darunter die Bedingung
+`current_stage < 3`, ein hartkodierter Stufenindex. Der Auftrag hatte ausdrücklich verlangt, dass
+das Kriterium nur Residuen, Floors und Policy-Schwellen verwendet und relativ argumentiert.
+
+Der Index war auch nicht nebensächlich. Nachgerechnet, was ohne ihn passiert wäre: Die
+**Kontrollzeile** 31 / IC 1 hätte ihren korrekten Cap 3 verloren und wäre auf 4 gesprungen — ihr
+Verhältnis nach der Unterschreitung liegt bei 0,496 gegen die Schwelle 0,5, also **0,8 % Abstand**.
+Eine zweite Kontrolle lag bei 0,520, 4 % auf der anderen Seite. Der Stufenindex war genau das, was
+die Abnahme trug.
+
+Dazu die methodische Lehre: Der Unempfindlichkeitsnachweis im WP-C3-Report maß nur den Abstand der
+**Zielzeilen** zur Schwelle (0,029–0,315 gegen 0,5). Das Risiko liegt aber auf den **Kontrollen**,
+wo die Regel nicht feuern darf. **Ein Nachweis, der nur auf der Zielseite gemessen wird, ist
+keiner.** Diese Auflage steht jetzt in jedem Folgeauftrag.
+
+**Die Umstellung in WP-C4: drei Ausgänge statt zwei.** Der Versuch, Ziel- und Kontrollzeilen exakt
+zu trennen, wurde aufgegeben — er ist datenseitig knapp und erzwingt deshalb passende Konstanten.
+Stattdessen:
+
+| Verhältnis nach der Floor-Unterschreitung | Ausgang |
+|---|---|
+| ≤ 0,35 | weitersuchen, höher deckeln |
+| ≥ 0,62 | hier deckeln, wie bisher |
+| dazwischen | **`nothing`** — kein Cap |
+
+Das ist die Regel des Projekts, auf den eigenen Mechanismus angewandt: *positive Evidenz, nie deren
+Abwesenheit.* Im Zweifelsband liegt keine vor, also wird nichts behauptet. Die Fehlerrichtung ist
+beabsichtigt — ein `nothing` kostet Rechenzeit, ein falscher Cap kostet die Lösung, und Rechenzeit
+ist nach dem Pilotbefund reichlich vorhanden.
+
+**Ergebnis auf den 80 exakten Gleichungszeilen:** vier Lorenz-Zeilen auf 3, 31 / IC 2 auf `nothing`,
+und die vier Wechsel zwischen endlichen Caps sind **genau** diese Ziele. Endliche Caps 49 → 45. Die
+vier aufgegebenen Zeilen sind 12 / IC 1, 31 / IC 1, 31 / IC 2 und 55 / IC 2 Gl. 2.
+
+**Zwei Anmerkungen, die der Report nicht enthält und die hier festgehalten werden.**
+
+*Erstens: die Floor-Tiefen-Konstante ist jetzt die tragende.* Kontrolle 61 / IC 1 hat **drei von vier
+Splits im Band** (0,520, 0,568, 0,541) und behält ihren Cap allein deshalb, weil ihre Floor-Ratios
+bei 0,03 bis 0,07 unter der Schwelle 0,1 liegen. Die Zielzeilen liegen bei 0,30 bis 0,85. Die
+Trennung hält also mit Faktor vier — aber sie ist nicht dokumentiert worden, obwohl der Auftrag
+den Abstand nach beiden Seiten verlangt hatte. Hier nachgerechnet und bestätigt.
+
+*Zweitens: eine Zeile geht aus dem falschen Grund verloren.* 12 / IC 1 hatte den korrekten, engen
+Cap 2 und gibt ihn auf, obwohl ihre Floor-Ratio bei **9,9e-06** liegt — das Residuum ist fünf
+Größenordnungen unter dem Rauschen, die anschließende „Verbesserung" von 0,477 ist reines Rauschen.
+Sauber wäre, dass die Floor-Tiefen-Bedingung die Bandlogik **ganz** abschaltet statt nur den
+Wiederaufnahmezweig. Der Verlust ist ungefährlich, die Begründung falsch. Notiert als offener Punkt.
+
+*Verwandt dazu:* Sowohl 31 / IC 2 als auch 12 / IC 1 kippen über die **Mehrheitsabstimmung der
+Splits**, nicht über eine klare Erkennung — bei 12 / IC 1 änderte ein einziger Split (Nr. 3) seine
+Stimme. Die Robustheit der Aggregation ist damit eine eigene offene Frage.
+
+**Fingerprints unverändert** (`1d0ccf8d53c6576d`, `e361a2af49366670`) — und das ist der eigentliche
+Befund dieser Runde, siehe unten.
+
+### Die Fingerprints bemerken Logikänderungen nicht
+
+<!-- d94bc3b -->
+
+Bei WP-C3 und WP-C4 hat sich das Cap-Verhalten auf fünf beziehungsweise acht Zeilen geändert, und
+**beide Fingerprints standen still**. Ihre Nutzlast enthält ausschließlich
+Konfigurations**konstanten**, keine Entscheidungs**logik**.
+
+Damit leistet der Fingerprint nicht, wofür er da ist. `CLAUDE.md` verlangt vor der Publikation den
+Nachweis, dass alle Läufe einen Fingerprint teilen — genau diese Prüfung kann eine Logikänderung
+nicht sehen. Zwei Records mit identischem Fingerprint können aus unterschiedlich entscheidendem
+Code stammen. Gerettet wird die Nachvollziehbarkeit derzeit allein durch den Commit-Hash im Record,
+seit `d2aed32`; das ist Glück, nicht Konstruktion.
+
+Nächstes Arbeitspaket.
+
+---
+
 ### WP-C1 — der Horizont war die Ursache, aber nicht die einzige
 
 <!-- d472f8e -->
