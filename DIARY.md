@@ -66,6 +66,48 @@ Stimme. Die Robustheit der Aggregation ist damit eine eigene offene Frage.
 **Fingerprints unverändert** (`1d0ccf8d53c6576d`, `e361a2af49366670`) — und das ist der eigentliche
 Befund dieser Runde, siehe unten.
 
+### Ein Audit-Dokument hat sich selbst überschrieben — gefunden beim Paper-Entwurf
+
+<!-- HASH -->
+
+WP-W1 sollte `PAPER_1.md` auf den aktuellen Stand entwerfen und dabei Widersprüche zwischen den
+Quellen **auflisten statt entscheiden**. Genau das hat den Fund geliefert.
+
+`docs/wp_c1_stage_cap_horizon_audit.md` trug intern den Titel **„WP-C2 Stage-Cap Horizon Audit"**
+und meldete bei Horizont 2 **vier** abgeschnittene Zeilen. Die WP-C1-Fassung von Commit `d472f8e`
+meldet **neun**:
+
+| Horizont | damals (`d472f8e`) | Datei heute |
+|---|---|---|
+| 2 | **9** truncated | 4 truncated |
+| 3 | 5 | 0 |
+| 5 | 5 | 0 |
+
+Ursache: Das erzeugende Skript schreibt auf einen **festen Pfad**. WP-C2 und WP-C4 haben es zur
+Abnahme erneut laufen lassen, und dabei jedes Mal den Bericht des vorherigen Arbeitspakets
+überschrieben. Committet habe ich das mit — der Fehler liegt bei mir, nicht bei Codex.
+
+**Doppelt ärgerlich, weil die neuen Zahlen niemandem nützen.** Die Zeile „Horizont 2 → 4
+abgeschnitten" ist keine historische Messung *und* kein sinnvoller Befund, sondern ein Kontrafaktum:
+was ein Horizont von 2 unter der heutigen Zweifelsband-Logik entscheiden würde. So ein Lauf hat nie
+stattgefunden. Der Beleg für die Aussage, die den Horizont überhaupt bewegt hat — neun
+abgeschnittene Zeilen auf fünf von zwanzig exakten Systemen —, existierte nur noch in der
+Git-Historie und in diesem Tagebuch.
+
+Bereinigt: `wp_c1_...` ist auf die Fassung von `d472f8e` zurückgesetzt und trägt einen Banner, der
+das Regenerieren untersagt. Der Wiederholungslauf steht als `wp_c4_stage_cap_horizon_audit.md`
+daneben, mit dem Hinweis, dass seine Horizont-2-Zeile ein Kontrafaktum ist.
+
+> **Regel, aus dem Vorfall:** Ein Beweisdokument gehört dem Arbeitspaket, das es erzeugt hat. Ein
+> Skript, das auf einen festen Pfad schreibt, darf nicht zur Abnahme eines *späteren* Pakets erneut
+> laufen, ohne dass das Ziel mitwandert. Sonst löscht die Abnahme den Beweis, den sie bestätigen
+> soll.
+
+Das ist dieselbe Klasse wie der Fingerprint-Befund von heute Nachmittag: Die Provenienz war
+formal in Ordnung — Datei da, Zahlen plausibel, Commit sauber — und trug trotzdem nicht.
+
+---
+
 ### WP-P1/P1b — ein zweiter Fingerprint für das Verhalten, und ein Paket, das nicht mehr lud
 
 <!-- 5177d24 -->
