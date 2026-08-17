@@ -1,128 +1,120 @@
-# WP-C2 — Horizont bis ans Basisende ziehen und die fünf verbleibenden Abschneidefälle diagnostizieren
+# WP-C3 — Der Cap darf nicht mehr behaupten, was die Ableitung nicht hergibt
 **Language: Julia**
 
 ## Ausgangslage
 
-WP-C1 (`docs/wp_c1_stage_cap_horizon_audit.md`, Commit `d472f8e`) hat den Look-ahead-Horizont von 2
-auf 3 gehoben. Damit landen die Caps der Systeme 28, 32 und 38 exakt auf der benötigten Stufe.
-Zwei Dinge bleiben offen.
+WP-C2 (`docs/wp_c2_stage_cap_failure_diagnosis.md`, Commit `5d2f4f2`) hat bewiesen, dass die fünf
+verbleibenden Abschneidefälle am Ableitungs-Input hängen: Mit exakten Ableitungen gehen alle fünf
+auf die benötigte Stufe 3, und über ein 5×5-Raster von `tau_rel` und `tau_abs` liefert **keine
+einzige von 25 Zellen** je den korrekten Cap. Schwellen sind damit als Ursache ausgeschlossen.
 
-**Erstens** ist die 3 eine getunte Konstante. Die Audit-CSV zeigt, dass die Horizonte 3, 4 und 5 auf
-**allen 80 Gleichungszeilen cap-identisch** sind — der Parameter ist oberhalb von 3 wirkungslos.
-Dann soll er auch nicht als Stellschraube im Paper stehen.
+Die Ursachenformulierung im Report („Ableitungsfehler auf chaotischen Trajektorien") ist allerdings
+zu grob: System 61 (Chen-Lee) ist ebenso chaotisch und wird korrekt gedeckelt. Aus
+`stage_diagnostics.csv` ergibt sich der tatsächliche Mechanismus, und er zerfällt in **zwei
+verschiedene Fälle**.
 
-**Zweitens** überleben fünf Gleichungszeilen jeden geprüften Horizont:
+**Fall A — der Lauf hält bei der ersten Floor-Unterschreitung an, zu früh.**
 
-| System | Gleichung | IC-Set | benötigte Stufe | Cap |
-|---|---|---|---|---|
-| 55 Lorenz (komplex periodisch) | 3 | 1 und 2 | 3 | 2 |
-| 56 Lorenz (Standardparameter) | 3 | 1 und 2 | 3 | 2 |
-| 31 | 1 | nur 2 | 3 | 1 |
+| | Floor | Residuen Stufe 1→5 | erste Unterschreitung |
+|---|---|---|---|
+| 56 Lorenz Gl. 3 | 123 | 7793 → **66,1** → 2,61 → 2,61 → 2,61 | Stufe 2 — falsch |
+| 61 Chen-Lee Gl. 3 (Kontrolle) | 44,6 | 1360 → 141 → **1,75** → 1,60 → 1,63 | Stufe 3 — richtig |
+| 27 Gl. 1 (Kontrolle) | 0,254 | 152 → 148 → **0,0021** → … | Stufe 3 — richtig |
 
-Das ist ein **zweiter, anderer Defekt**. Bei Lorenz liegt Stufe 3 von Stufe 2 aus schon bei Horizont
-2 im Vorausblick — der Kreuzterm `u1*u2` wird also *gesehen* und trotzdem nicht als Gewinn gezählt.
-Der Horizont ist hier nicht die Ursache.
+Bei allen Kontrollen fällt das Residuum erstmals auf der korrekten Stufe unter den Floor, und danach
+ist es **flach**. Bei Lorenz fällt bereits Stufe 2 darunter, und Stufe 3 senkt es danach noch einmal
+um **Faktor 25**. Diese Verbesserung wird nie betrachtet, weil `_cap_split_decision` bei der
+Unterschreitung sofort zurückkehrt.
+
+**Fall B — behauptet, wo nichts zu behaupten ist.** System 31 auf IC-Set 2: Floor 2,7e-37, Residuen
+um 1e-16, Stufe 2 wird sogar schlechter als Stufe 1. Die Trajektorie trägt keine Dynamik. Der Cap
+liefert dort 1. Richtig wäre `nothing` — das ist wörtlich die Regel aus dem System-63-Vorfall:
+*der Cap muss auf positiver Evidenz ruhen, nie auf deren Abwesenheit.*
 
 ## Umfang
 
-Zwei Teile. Teil 1 ist eine Konstantenänderung, Teil 2 ist reine Diagnose **ohne** Codeänderung am
-Produktivpfad.
+Dies ist die erste Aufgabe der Reihe, die **die Cap-Logik selbst** ändern darf und soll. In WP-C1
+und WP-C2 war das gesperrt; die Sperre ist hiermit für die unten genannten Stellen aufgehoben.
 
-### Teil 1 — Horizont auf das Basisende
+### Teil 1 — Fall A: Die Floor-Unterschreitung beendet die Suche nicht mehr bedingungslos
 
-`lookahead_horizon` von 3 auf **5** setzen, an denselben drei Stellen wie in WP-C1:
+Der Zweig in `_cap_split_decision`, der bei `residuals[stage] <= floors[stage]` zurückkehrt, darf
+den Cap erst setzen, wenn feststeht, dass spätere Stufen das Residuum **nicht mehr erheblich
+senken**. Senkt eine spätere Stufe es weiterhin deutlich, war der Floor für diese Gleichung zu hoch
+angesetzt und die Unterschreitung ist kein Beleg für Ausreichen.
 
-- `LookAheadStageCapPolicy` in `src/structure/stage_cap.jl`
-- `LOOKAHEAD_CAP_POLICY` in `studies/regression/run_regression.jl`
-- `LOOKAHEAD_CAP_POLICY_REGRESSION` in `studies/lookahead/measure_dataset_grid_caps.jl`
+Was „erheblich" heißt, ist von dir zu entwerfen und im Report zu begründen. Anforderungen an das
+Kriterium:
 
-Die 5 ist **nicht** als getunter Wert zu verstehen, sondern als „so weit wie die gestaffelte
-Polynombasis Stufen hat". Das ist im Docstring von `LookAheadStageCapPolicy` in einem Satz
-festzuhalten, damit der Wert nicht später als freier Parameter missverstanden wird.
+- Es darf **ausschließlich** Residuen, Floors und die bestehenden Policy-Schwellen verwenden. Keine
+  Ground-Truth, keine Systemkennung, keine erwartete Stufe — die Zusicherung im Docstring von
+  `estimate_stage_caps` gilt unverändert.
+- Es muss **relativ** argumentieren, nicht absolut. Die Residuenskalen der geprüften Gleichungen
+  liegen zwischen 1e-16 und 1e5; jede absolute Schranke wäre eine an diesen Datensatz angepasste
+  Konstante.
+- Es soll **möglichst keinen neuen freien Parameter** einführen. Führt es doch einen ein, ist im
+  Report zu zeigen, über welchen Wertebereich das Ergebnis unverändert bleibt — sonst wird nur der
+  getunte Horizont durch eine getunte Schwelle ersetzt.
 
-Daraus folgt eine Absicherung: Wird die Basis irgendwann um Stufen erweitert, wird aus der 5
-stillschweigend wieder ein echter Horizont, und der Defekt aus WP-C1 kehrt unbemerkt zurück. Es ist
-deshalb eine Prüfung zu ergänzen, die **laut fehlschlägt**, sobald `lookahead_horizon` kleiner ist
-als die Stufenzahl der verwendeten Basis. Ort und Form wählst du; sie darf keine Cap-Werte ändern,
-sondern nur eine unzulässige Konfiguration sichtbar machen.
+Beobachtung als Ausgangspunkt, nicht als Vorgabe: In den Kontrollzeilen ist das Residuum nach der
+Unterschreitung flach oder wird schlechter; in den Lorenz-Zeilen fällt es danach noch um mehr als
+eine Größenordnung.
 
-**Abnahme von Teil 1:** Das Audit-Skript aus WP-C1
-(`studies/lookahead/audit_exact_stage_cap_horizons.jl`) erneut laufen lassen und zeigen, dass die
-Caps unter dem neuen Default **zeilenweise identisch** zu Horizont 3 sind — nicht nur in den
-Zählwerten, sondern je (System, IC-Set, Gleichung). Danach `config_fingerprint()` und
-`phase_b_fingerprint()` neu ausgeben, alte und neue Werte festhalten.
+### Teil 2 — Fall B: Ablehnen statt behaupten
 
-### Teil 2 — Diagnose der fünf Zeilen
+Ist die Anregung einer Gleichung so gering, dass die Stufenresiduen keine belastbare Unterscheidung
+zulassen, muss `nothing` zurückgegeben werden statt eines Caps. Die Policy hat mit
+`excitation_floor` bereits ein Feld für diesen Zweck; ob es dafür genügt oder ob die Erkennung
+woanders greifen muss, ist Teil der Aufgabe.
 
-Neues Diagnoseskript unter `studies/lookahead/`, Ausgabe nach
-`outputs/studies/lookahead/<script_slug>/`.
+Kennzeichen des Falls, aus den Daten: Die Residuen bewegen sich im Bereich der
+Maschinengenauigkeit, die Stufenfolge ist **nicht monoton** (Stufe 2 schlechter als Stufe 1), und
+der Floor liegt um Größenordnungen unter allen Residuen. Auch hier gilt: nur datenseitige Größen.
 
-Zielzeilen: 55 Gl. 3 (beide IC-Sets), 56 Gl. 3 (beide IC-Sets), 31 Gl. 1 (IC-Set 2).
-**Kontrollzeilen, verpflichtend mitzuführen:** 61 Gl. 1–3 (Cap `[3,3,3]`, korrekt), 26 und 27 (Caps
-korrekt), 31 Gl. 1 auf IC-Set **1** (dort korrekt). Ohne Kontrollen lässt sich nicht sagen, ob ein
-auffälliger Wert der Defekt ist oder überall so aussieht.
+Wichtig ist die Richtung des Fehlers. Ein `nothing` kostet ausschließlich Rechenzeit — die Suche
+läuft ungedeckelt — und niemals Korrektheit. Ein falscher Cap kostet die Lösung. Im Zweifel ist
+abzulehnen. Rechenzeit ist nach dem Pilotbefund reichlich vorhanden.
 
-Je Zeile und je Stufe protokollieren, was `_cap_split_decision` zur Entscheidung heranzieht:
+### Teil 3 — Abnahme über das vollständige Audit
 
-- das Residuum der Stufe
-- den zugehörigen Floor
-- das Usability-Flag
-- ob die Gewinnregel gegenüber der Vorstufe anschlägt, inklusive der beiden Größen, die sie
-  vergleicht (absolute Differenz und relative Differenz gegen `tau_abs` und `tau_rel`)
+`studies/lookahead/audit_exact_stage_cap_horizons.jl` erneut laufen lassen und **zeilenweise** gegen
+den heutigen Stand stellen. Zielbild:
 
-Und je Zeile: **welcher Zweig die Entscheidung beendet hat** — der Floor-Zweig
-(`residuals[stage] <= floors[stage]`), die erschöpfte Gewinnsuche über den Horizont, oder die
-Usability-Prüfung. Das ist die eigentliche Frage von Teil 2. Es genügt, das aus den protokollierten
-Größen nachvollziehbar herzuleiten; die Funktion selbst ist nicht umzubauen.
+| Zeilen | Soll |
+|---|---|
+| 55 Gl. 3 und 56 Gl. 3, beide IC-Sets (4 Zeilen) | Cap **3**, Klassifikation `ok` |
+| 31 Gl. 1, IC-Set 2 (1 Zeile) | Cap **`nothing`**, Klassifikation `uncapped` |
+| alle übrigen 75 Gleichungszeilen | **unverändert**, Cap-Wert für Cap-Wert |
 
-**Das entscheidende Experiment.** Zusätzlich dieselbe Cap-Schätzung einmal mit **analytisch exakten
-Ableitungen** aus der wahren rechten Seite statt mit der geschätzten Ableitung rechnen, und die
-resultierenden Caps gegenüberstellen.
+Die dritte Zeile ist die eigentliche Hürde. Eine Änderung, die Lorenz repariert und dabei
+irgendeinen der korrekten Caps verschiebt oder auf `nothing` setzt, ist **nicht** anzunehmen; dann
+ist das im Report zu berichten statt es durchzudrücken.
 
-- Wird der Cap auf 55 und 56 damit zu 3, liegt der Defekt in der **Ableitungsschätzung auf
-  chaotischen Trajektorien** — derselbe Mechanismus, an dem v3 gescheitert ist (WP-L2).
-- Bleibt er 2, liegt er in der **Gewinnregel oder ihren Schwellen**, unabhängig von der Ableitung.
+Zusätzlich `studies/lookahead/diagnose_stage_cap_failures.jl` erneut laufen lassen, damit die
+Diagnose den neuen Stand zeigt, und `config_fingerprint()` sowie `phase_b_fingerprint()` mit alten
+und neuen Werten festhalten.
 
-Das ist ausdrücklich ein **Diagnoseinstrument und darf niemals in den Produktivpfad**: Es verletzt
-die Regel aus dem Docstring von `estimate_stage_caps`, dass nur Trajektorie, Basis und Schwellen
-gesehen werden dürfen. Es lebt ausschließlich im Studienskript, nie in `src/`, und geht in keine
-Kampagnenkonfiguration ein.
-
-**Schwellensensitivität, nur als Messung.** Zusätzlich berichten, wie sich die Caps der fünf Zeilen
-unter Variation von `tau_rel` und `tau_abs` verhalten (je zwei Dekaden nach oben und unten). Das
-dient dem Verständnis, ob die Entscheidung knapp oder deutlich ausfällt. **Die Defaults dieser
-Schwellen sind in diesem Auftrag nicht zu ändern** — siehe Verboten.
-
-**Abnahme von Teil 2:** Ein Report unter `docs/` beantwortet in dieser Reihenfolge:
-
-1. Welcher Zweig beendet die Entscheidung auf 55 Gl. 3, 56 Gl. 3 und 31 Gl. 1 / IC 2?
-2. Unterscheidet sich dieser Zweig von dem der Kontrollzeilen? Wenn nein, ist die Erklärung
-   woanders zu suchen und das ist zu sagen.
-3. Wie lautet der Cap mit exakten Ableitungen, je Zielzeile?
-4. Welche der beiden oben genannten Ursachen ist damit belegt — oder ist es keine von beiden?
-
-Eine Empfehlung, was zu tun ist, gehört in den Report. **Umgesetzt wird sie in diesem Auftrag
-nicht.**
+Testabdeckung in `test/test_stage_cap.jl` ergänzen: je ein Fall für die zu frühe
+Floor-Unterschreitung und für die Ablehnung bei fehlender Anregung, beide auf synthetischen Daten
+formuliert, nicht auf Systemkennungen.
 
 ## Verboten
 
 - **Keine Kampagne, keine Discovery-Läufe, keine Cluster-Jobs**, weder starten noch Manifeste dafür
-  erzeugen. Beide Teile rechnen ausschließlich Ableitungsregressionen und sind Minutenarbeit. Sollte
-  etwas über 15 Minuten laufen: abbrechen und berichten.
-- **Die Cap-Logik nicht umbauen.** `_cap_split_decision`, `_cap_rule_counts_gain` und
-  `_cap_aggregate_split_decisions` bleiben in Teil 2 unverändert. Teil 2 misst, es repariert nicht.
-- **`tau_rel`, `tau_abs`, `cond_cap`, `excitation_floor`, `estimator`, `weighting` und `aggregation`
-  behalten ihre Defaults.** Schwellen so lange zu verstellen, bis Lorenz durchgeht, wäre Anpassung
-  an das Ergebnis und würde die Aussage des Papiers wertlos machen. Die Sensitivität wird berichtet,
-  nicht ausgenutzt.
-- **Keine Ground-Truth im Produktivpfad.** Die exakten Ableitungen aus dem entscheidenden Experiment
-  bleiben im Studienskript.
-- **Kein `git add -A`.** Nur die zu dieser Aufgabe gehörenden Dateien stagen.
+  erzeugen. Alles hier rechnet Ableitungsregressionen und ist Minutenarbeit.
+- **`tau_rel`, `tau_abs`, `cond_cap`, `estimator`, `weighting` und `aggregation` behalten ihre
+  Defaults.** WP-C2 hat gezeigt, dass die Schwellen die fünf Zeilen nicht erklären; sie jetzt doch
+  zu bewegen, wäre Anpassung an das Ergebnis.
+- **Keine Ground-Truth in `estimate_stage_caps` und keinerlei Sonderbehandlung einzelner Systeme.**
+  Eine Lösung, die Lorenz namentlich kennt, ist keine.
+- **Kein Zurückdrehen des Horizonts** und keine weiteren Änderungen an den Konstanten aus WP-C1/C2.
+- **Kein `git add -A`.**
 
-## Abnahme insgesamt
+## Abnahme
 
-- Default steht an allen drei Stellen auf 5, Docstring erklärt den Wert, Prüfung gegen zu kleine
-  Horizonte vorhanden.
-- Zeilenweise Cap-Identität zu Horizont 3 nachgewiesen, alte und neue Fingerprints im Report.
-- Diagnose-CSV und Report liegen vor, Ziel- **und** Kontrollzeilen enthalten.
-- Die vier Fragen aus Teil 2 sind mit Zahlen beantwortet.
+- Zielbild aus Teil 3 zeilenweise erfüllt, oder begründet berichtet, dass es nicht erreichbar ist.
+- Das Kriterium aus Teil 1 ist im Report beschrieben und begründet, inklusive seiner Parameter und
+  deren Unempfindlichkeitsbereich, falls es welche hat.
+- Die Ablehnung aus Teil 2 greift auf 31 / IC 2 und auf keiner der 75 unbeteiligten Zeilen.
+- Neue Tests vorhanden, alte grün.
+- Alte und neue Fingerprints im Report.
