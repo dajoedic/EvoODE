@@ -66,6 +66,70 @@ Stimme. Die Robustheit der Aggregation ist damit eine eigene offene Frage.
 **Fingerprints unverändert** (`1d0ccf8d53c6576d`, `e361a2af49366670`) — und das ist der eigentliche
 Befund dieser Runde, siehe unten.
 
+### WP-P1/P1b — ein zweiter Fingerprint für das Verhalten, und ein Paket, das nicht mehr lud
+
+<!-- 5177d24 -->
+
+Drei Wege wurden gegeneinander gestellt: Quelltext-Hash über die entscheidungstragenden Dateien,
+Verhaltens-Hash über eine eingefrorene Sonde, und ein getrennter zweiter Fingerprint. Ergebnis und
+Umsetzung: **beides zusammen** — die Sonde als Verfahren, der getrennte Wert als Struktur.
+
+Der Quelltext-Hash fiel durch, weil er zu empfindlich ist: Ein Kommentar oder eine Umformatierung
+erklärt Records für unvergleichbar, die es nicht sind. Das Einfalten ins Konfigurations-Hash fiel
+durch, weil es veröffentlichte Identitäten rückwirkend umschreiben würde. Die Kampagnenidentität
+besteht damit ab sofort aus **zwei Feldern**: `config_fingerprint` beziehungsweise
+`phase_b_fingerprint` plus `stage_cap_behavior_fingerprint`.
+
+Die Sonde schickt fünf synthetische Eingaben durch `_cap_split_decision` und hasht die
+Entscheidungen. Sie deckt genau die drei WP-C4-Ausgänge ab — Wiederaufnahme, Deckeln, Ablehnen —
+plus den Fall fehlender Anregung und einen unbrauchbaren Nachfolger. Belegt wurde: gleicher Stand →
+gleicher Wert; Cap-Logik von `5d2f4f2` → `b0968d0661a11a29` gegen heute `61b6548ef0014593`; reine
+Kommentaränderung → unverändert.
+
+| | Wert |
+|---|---|
+| `config_fingerprint()` | `1d0ccf8d53c6576d` (unverändert) |
+| `phase_b_fingerprint()` | `e361a2af49366670` (unverändert) |
+| `stage_cap_behavior_fingerprint()` | **`61b6548ef0014593`** (neu) |
+
+**Die Lücke ist verengt, nicht geschlossen.** Die Sonde sieht `_cap_split_decision` und sonst
+nichts. Ableitungsschätzer, Floor-Berechnung, Split-Aggregation und die gesamte Suchschleife bleiben
+unbeobachtet. Und die Sondenwerte liegen bei 0,2 / 0,5 / 0,8, die Bandgrenzen bei 0,35 / 0,62 —
+verschöbe jemand eine Grenze auf 0,45, bliebe das **unbemerkt**, denn die Bandkonstanten sind
+`const` in `stage_cap.jl` und stecken in keinem der beiden Fingerprints. Offener Punkt.
+
+**Und dann lud das Paket nicht mehr.** `stage_cap_fingerprint.jl` nutzt `using SHA`, `SHA` stand
+nicht in `[deps]` der `Project.toml`:
+
+```text
+julia --project=. -e 'using EvoODE'
+ERROR: Package EvoODE does not have SHA in its dependencies
+```
+
+Damit war der Arbeitsbaum schlicht nicht lauffähig — jeder Kampagnenlauf wäre beim Laden
+abgebrochen. Der WP-P1-Report meldete gleichzeitig `test/test_stage_cap.jl` als bestanden mit 38
+Tests.
+
+**Die Auflösung dieses Widerspruchs ist der eigentliche Ertrag von P1b.** Die Testsuite lädt die
+Quellen über `include(src/EvoODE.jl)`. Das wertet die Datei als lokales Modul aus und geht **nicht**
+durch Julias Paketlader — die deklarierten Abhängigkeiten werden dabei nie geprüft. Die Suite konnte
+diese Fehlerklasse also strukturell nicht sehen. Ein neuer Test startet jetzt einen eigenen
+Julia-Prozess und führt `using EvoODE` aus; ein fehlender `[deps]`-Eintrag wird damit rot.
+
+**Nebenbefund, überfällig:** `test/test_regression_runner_gate2.jl` war seit Wochen rot, 3 von 9,
+und es ist niemandem aufgefallen — mir eingeschlossen. Er fror Gate-2-Werte ein, die seither bewusst
+bewegt wurden: die Variantenliste, `BFGS_TIME_LIMIT_S` (jetzt `Inf` durch die Budgetumstellung
+WP-B3/D2) und `lookahead_horizon` (jetzt 5). Erwartungen auf den Code nachgezogen, Herkunft als
+Kommentar vermerkt. Vor einer Kampagne muss „Tests grün" wieder etwas bedeuten.
+
+Alle Prüfungen wurden hier nachgerechnet, nicht aus dem Report übernommen: Paket lädt,
+Verhaltens-Fingerprint stabil, Konfigurations-Fingerprints unverändert, beide Testsuiten grün.
+
+**Damit ist das HPC-Tor offen.** Regressionslauf (90 Jobs) und `pretune_off`-Sondierung auf 56, 59
+und 61 sind übergabereif.
+
+---
+
 ### Die Fingerprints bemerken Logikänderungen nicht
 
 <!-- d94bc3b -->

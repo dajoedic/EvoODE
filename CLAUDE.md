@@ -268,10 +268,23 @@ the coupled search path 1e-6 is the cheaper, behaviour-equal tolerance; the Syst
    before the campaign.
 4. **Fingerprint boundary.** The v2.2 arm sits on Baseline v0 (`0c739d4e36ee6498`), all v3 and
    capped runs on `df5db7763bcd2449`. The comparison is sound but crosses a boundary and must be
-   labelled as such wherever it is reported. **Current fingerprints after WP-M1 (2026-08-13):**
-   Phase B `ca02ea284d621f6d`, regression `0825cdc88d9264a0`. Both carry **no records yet** — the
-   pilot data predates them and must never be merged with campaign records. All
-   fingerprint-affecting changes must land before the first campaign record.
+   labelled as such wherever it is reported.
+
+   **Campaign identity is two fields since WP-P1 (2026-08-17).** The config fingerprints hash
+   configuration constants only, so the WP-C3 and WP-C4 cap-logic changes left them standing —
+   two records could share a fingerprint and come from differently deciding code.
+   `stage_cap_behavior_fingerprint()` closes that for the cap: it hashes the decisions a frozen
+   five-case probe draws out of `_cap_split_decision`. Publishability now requires one git hash,
+   one config/Phase B fingerprint **and** one behaviour fingerprint.
+
+   **Current values (verified 2026-08-17):** Phase B `e361a2af49366670`, regression
+   `1d0ccf8d53c6576d`, behaviour `61b6548ef0014593`. All carry **no records yet** — the 42 pilot
+   records predate all three and must never be merged with campaign records.
+
+   **Still blind:** the probe covers `_cap_split_decision` and nothing else — derivative
+   estimation, floor computation, split aggregation and the whole search loop remain unobserved.
+   And the WP-C4 band constants (0.35 / 0.62 / 0.1) are `const` in `stage_cap.jl`, so they sit in
+   neither fingerprint; the probe ratios 0.2 / 0.5 / 0.8 would not flip if an edge moved to 0.45.
 5. **Remaining Phase 3 items** (`PAPER_1.md`): filling the external columns of the protocol audit
    from the publications. Open question there: if published numbers were computed on the shipped
    trajectories, we work on cleaner data than the comparison works — a deviation in our favour that

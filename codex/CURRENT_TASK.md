@@ -1,96 +1,91 @@
-> **Claude-Status:** `waiting for codex` — WP-P1b übergeben, ich prüfe alle 20 Minuten.
+> **Claude-Status:** `waiting for codex` — WP-A2 übergeben, ich prüfe alle 20 Minuten.
 > Melde dich über `codex/STATUS.md`, nicht in dieser Datei. Committe nichts.
 > Der Dauerauftrag steht in `codex/CODEX_PROTOCOL.md`.
 
-# WP-P1b — Das Paket lädt nicht mehr
-**Language: Julia**
+# WP-A2 — Die Auswertung kennt die Kampagnenvarianten nicht und schweigt darüber
+**Language: Python**
 
 ## Der Befund
 
-WP-P1 ist inhaltlich gut und wird übernommen — der Entwurfsvergleich, die Empfehlung und die drei
-Nachweise (Reproduzierbarkeit, Änderung gegen `5d2f4f2`, Unempfindlichkeit gegen Kommentare)
-stehen. **Aber das Paket lässt sich nicht mehr laden:**
+WP-A1 (2026-08-13) hat eine Brücke von den Kampagnen-Records in die Python-Auswertung gebaut. Dabei
+fiel auf, dass `analysis/scripts/plot/table_main_results.py` danach **fehlerfrei durchläuft und
+Unsinn liefert**:
 
 ```text
-julia --project=. -e 'using EvoODE'
-
-ERROR: LoadError: ArgumentError: Package EvoODE does not have SHA in its dependencies
-in expression starting at src/structure/stage_cap_fingerprint.jl:3
-in expression starting at src/EvoODE.jl:1
+agg_variants   = evogrow_v2_2_stage_capped, evogrow_v3, …   (Kampagne)
+VARIANT_ORDER  = evogrow_v1, evogrow_v2_1, gp_baseline, …   (eingefrorene Phase-A-Liste)
+table_rows=30   table_nonempty_mean_loss=5
 ```
 
-`src/structure/stage_cap_fingerprint.jl` verwendet `using SHA`. `SHA` ist zwar eine
-Julia-Standardbibliothek, muss aber trotzdem in `[deps]` von `Project.toml` deklariert sein. Dort
-steht es nicht.
+`reindex_table_data` indiziert auf `VARIANT_ORDER` (Zeile 29) um und lässt alles fallen, was dort
+nicht steht. **25 von 30 Zeilen bleiben leer, ohne eine einzige Meldung.** Zum Vergleich:
+`evaluate_hypotheses.py` scheitert bei derselben Datenlage sauber mit `Missing expected variants`.
 
-**Damit ist der Zustand härter als jeder bisherige Fehler dieser Reihe:** Jeder Kampagnenlauf, jedes
-Studienskript und jeder Test, der `using EvoODE` ausführt, bricht sofort ab. Der Working Tree ist
-aktuell nicht lauffähig.
-
-Der WP-P1-Report meldet `julia --project=. test/test_stage_cap.jl` als bestanden mit 38 Tests. Das
-ist mit dem obigen Fehler nicht vereinbar. Kläre im Report, wie dieser Widerspruch zustande kam —
-etwa weil der Test die Dateien per `include` statt über `using EvoODE` lädt. Das ist wichtig, weil
-davon abhängt, ob die Testsuite solche Fehler überhaupt bemerken kann.
+Das ist die gefährlichste Fehlerklasse in der Auswertung, weil das Ergebnis wie ein Ergebnis
+aussieht. Nach 756 Kampagnenzellen wäre eine fast leere Tabelle das Erste, was jemand ins Paper
+übernimmt.
 
 ## Umfang
 
-### Teil 1 — Abhängigkeit deklarieren
+### Teil 1 — Kein stilles Fallenlassen mehr
 
-`SHA` in `[deps]` von `Project.toml` aufnehmen, mit korrekter UUID, und den `[compat]`-Abschnitt
-konsistent halten, falls dort Standardbibliotheken geführt werden. `Manifest.toml` entsprechend
-auflösen.
+Die Skripte unter `analysis/scripts/` dürfen Varianten, die in den Daten vorkommen, nicht
+unbemerkt verwerfen. Zwei Dinge sind zu trennen:
 
-Prüfe, ob `SHA` im Projekt schon anderweitig verwendet wird und ob es eine bereits vorhandene
-Hash-Funktion gibt, die stattdessen genutzt werden sollte — `config_fingerprint()` in
-`studies/regression/run_regression.jl` berechnet bereits einen Hash. Wenn dort dieselbe Bibliothek
-auf anderem Weg eingebunden wird, ist der einheitliche Weg zu wählen und im Report zu begründen.
+- **Reihenfolge und Beschriftung** — dafür ist eine feste Liste legitim, denn Tabellen brauchen eine
+  stabile Ordnung.
+- **Auswahl, welche Zeilen erscheinen** — dafür ist eine feste Liste falsch, sobald die Daten andere
+  Varianten enthalten.
 
-### Teil 2 — Nachweis, dass es lädt
+Wähle den Entwurf selbst. Anforderung: Enthalten die Daten eine Variante, die die Ordnungsliste
+nicht kennt, muss das **sichtbar** werden — entweder erscheint sie in der Ausgabe, oder der Lauf
+bricht mit einer klaren Meldung ab. Stilles Weglassen ist in keinem Fall zulässig. Begründe im
+Report, welchen der beiden Wege du je Skript gewählt hast und warum.
 
-Im Report zu belegen, jeweils mit der tatsächlichen Ausgabe:
+Betroffen ist mindestens `table_main_results.py`. Prüfe die übrigen Skripte unter
+`analysis/scripts/aggregate/` und `analysis/scripts/plot/` auf dasselbe Muster und behandle sie
+mit.
 
-1. `julia --project=. -e 'using EvoODE; println("ok")'` läuft durch.
-2. `julia --project=. -e 'using EvoODE; println(EvoODE.stage_cap_behavior_fingerprint())'` gibt
-   einen Wert aus. Er muss `61b6548ef0014593` lauten — der Wert aus dem WP-P1-Report. Weicht er ab,
-   ist das der eigentliche Befund und ausführlich zu berichten.
-3. `julia --project=. test/test_stage_cap.jl` läuft durch.
+### Teil 2 — Der Phase-A-Pfad bleibt unangetastet
 
-### Teil 3 — Die Testsuite muss so etwas bemerken
+`paper1_phaseA_v1` ist eingefroren und muss reproduzierbar bleiben. Weise nach, dass die
+Phase-A-Auswertung nach deiner Änderung **identische** Ausgaben erzeugt — Tabelle und
+Aggregate byte- oder wertgleich. Wie du das belegst, wählst du; der Nachweis gehört in den Report.
 
-Ein Test ist zu ergänzen, der das Paket über `using EvoODE` lädt und damit fehlschlägt, sobald eine
-Abhängigkeit fehlt. Ort und Form wählst du; entscheidend ist, dass ein fehlender `[deps]`-Eintrag
-künftig **rot** wird statt unbemerkt zu bleiben.
+Das ist die harte Bedingung dieses Auftrags. Eine Änderung, die Phase A verschiebt, ist nicht
+anzunehmen.
 
-### Teil 4 — Der veraltete Gate-2-Test
+### Teil 3 — Beschriftungen und Farben für die Kampagnenvarianten
 
-`test/test_regression_runner_gate2.jl` schlägt mit 3 von 9 fehl, unabhängig von WP-P1. Er friert
-Werte aus der Gate-2-Zeit ein, die seither bewusst geändert wurden:
+`analysis/utils/style.py` führt `VARIANT_COLORS` und `VARIANT_LABELS` und kennt
+`evogrow_v2_2_stage_capped` nicht. Ergänze die Varianten, die in der Kampagne tatsächlich
+vorkommen — die maßgebliche Liste steht in `VARIANTS` in `studies/regression/run_regression.jl` —
+und achte darauf, dass die Farben unterscheidbar bleiben. Fehlt eine Beschriftung, darf das nicht
+in einem `KeyError` mitten in der Tabellenerzeugung enden.
 
-| Zeile | erwartet | aktuell |
-|---|---|---|
-| 25 | `VARIANTS` ohne `evogrow_v2_2_stage_capped` | enthält die Variante |
-| 26 | `BFGS_TIME_LIMIT_S == 1800.0` | `Inf` (Budgetumstellung, WP-B3/D2) |
-| 34 | `lookahead_horizon == 2` | `5` (WP-C2) |
+### Teil 4 — Ein Test, der den Defekt festhält
 
-Alle drei Änderungen waren beabsichtigt und sind im Tagebuch belegt; der Test hinkt hinterher. Ziehe
-die Erwartungen auf den aktuellen Stand nach und vermerke **in einem Kommentar im Test**, dass es
-sich um einen historischen Gate-2-Freeze handelt und welche Arbeitspakete die Werte bewegt haben.
+Ein Test, der mit Daten läuft, die eine der Ordnungsliste unbekannte Variante enthalten, und
+sicherstellt, dass sie nicht stillschweigend verschwindet. Er muss gegen den **alten** Stand
+fehlschlagen — zeige das im Report, indem du ihn einmal gegen den unveränderten Code laufen lässt.
 
-**Ändere dabei keine der geprüften Konstanten selbst** — der Test folgt dem Code, nicht umgekehrt.
+Halte dich an `analysis/CONVENTIONS.md`.
 
 ## Verboten
 
-- **Keine Cluster-Jobs, keine Kampagne, keine Regressions- oder Sondierungsläufe.**
-- **Keine Änderung an der Cap-Logik** und keine Änderung an den Policy-Konstanten.
-- **Keine Änderung am Fingerprint-Entwurf aus WP-P1.** Er ist angenommen; hier wird nur repariert,
-  was ihn am Laufen hindert.
+- **Keine Cluster-Jobs, keine Kampagne, keine Regressions- oder Sondierungsläufe**, weder starten
+  noch Manifeste dafür erzeugen.
+- **Keine Änderung an Julia-Code.** Dieser Auftrag ist reine Python-Auswertung.
+- **Keine Änderung an den eingefrorenen Phase-A-Artefakten** unter `experiments/`.
+- **Keine neuen Metrikdefinitionen.** Wenn dir dabei eine fehlende oder fragwürdige Metrik
+  auffällt, gehört sie in den Report, nicht in den Code.
 - **Nichts committen, nichts stagen, nichts pushen. Kein `git add -A`.**
 - Nichts, was länger als 15 Minuten läuft.
 
 ## Abnahme
 
-- `using EvoODE` läuft durch, mit Ausgabe im Report belegt.
-- `stage_cap_behavior_fingerprint()` liefert `61b6548ef0014593`, oder die Abweichung ist erklärt.
-- `test/test_stage_cap.jl` und `test/test_regression_runner_gate2.jl` laufen beide grün.
-- Ein Test bemerkt künftig eine fehlende Abhängigkeit.
-- Der Widerspruch zwischen der gemeldeten grünen Testausführung und dem Ladefehler ist erklärt.
+- Eine der Ordnungsliste unbekannte Variante verschwindet nicht mehr stillschweigend — belegt an
+  einem konkreten Lauf mit Kampagnendaten, mit Zeilenzahl vorher und nachher.
+- Die Phase-A-Auswertung liefert unverändert dieselben Ergebnisse, mit Nachweis.
+- `evogrow_v2_2_stage_capped` hat Beschriftung und Farbe.
+- Der neue Test schlägt gegen den alten Stand fehl und gegen den neuen nicht — beides belegt.
