@@ -1,0 +1,68 @@
+# Runs exactly one manifest row via run_batch_cell.jl.
+#
+# Use this when the cells you want are not a contiguous block, so an Indexed Job
+# with an index list does not fit -- and in particular when the index list cannot
+# be written, because the NFS share is read-only outside the cluster.
+#
+# Substitute before applying: <COMMIT_SHA>, <RUN_DIR>, <MANIFEST_INDEX>
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: evoode-cell-<MANIFEST_INDEX>
+  namespace: scch-das
+  labels:
+    app.kubernetes.io/name: evoode
+    app.kubernetes.io/part-of: evoode-phase-b
+    app.kubernetes.io/component: single-cell
+    app.kubernetes.io/managed-by: kubectl
+    hpc.scch.at/service: evoode-phase-b-cells
+    hpc.scch.at/responsibility: joedicke
+spec:
+  backoffLimit: 2
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: evoode
+        app.kubernetes.io/part-of: evoode-phase-b
+        app.kubernetes.io/component: single-cell
+        hpc.scch.at/service: evoode-phase-b-cells
+        hpc.scch.at/responsibility: joedicke
+    spec:
+      restartPolicy: Never
+      imagePullSecrets:
+        - name: evoode-gitlab-pull
+      containers:
+        - name: cell
+          image: registry.gitlab.scch.at:443/joedicke/evoode:<COMMIT_SHA>
+          imagePullPolicy: IfNotPresent
+          command:
+            - julia
+            - --project=/opt/EvoODE
+            - /opt/EvoODE/studies/regression/run_batch_cell.jl
+          args:
+            - --manifest
+            - /outputs/<RUN_DIR>/manifest.csv
+            - --output-dir
+            - /outputs/<RUN_DIR>/tasks_pretune_off_probe
+            - "<MANIFEST_INDEX>"
+          env:
+            - name: JULIA_NUM_THREADS
+              value: "1"
+            - name: OPENBLAS_NUM_THREADS
+              value: "1"
+          resources:
+            requests:
+              cpu: "1"
+              memory: 2Gi
+            limits:
+              cpu: "1"
+              memory: 2Gi
+          volumeMounts:
+            - name: evoode-bigdata
+              mountPath: /outputs
+              subPath: data-science/joedicke
+      volumes:
+        - name: evoode-bigdata
+          nfs:
+            server: nfs.orion.scch.at
+            path: /bigdata
