@@ -8,7 +8,7 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ### Regressionslauf gestartet — und die Jobzahl stimmt seit der Variantenliste nicht mehr
 
-<!-- HASH2 -->
+<!-- 1184303 -->
 
 120 Zellen unter `config_fingerprint=1d0ccf8d53c6576d`, verteilt auf drei Indexed Jobs nach
 Dimension (48 / 48 / 24, `parallelism` 5 / 5 / 3). Zusammen mit den drei Sondierungszellen sind das
