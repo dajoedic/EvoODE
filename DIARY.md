@@ -4,6 +4,39 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ---
 
+## 2026-08-18
+
+### pretune_off-Sondierung gestartet — die letzte unbeschraenkte Zahl im Kostenmodell
+
+<!-- HASH -->
+
+Drei Zellen auf Orion, Manifest-Indizes **709, 727, 739** = Systeme 56 (Lorenz), 59 (Roessler) und
+61 (Chen-Lee), jeweils `pretune_off`, Seed 42, IC-Set 1. Es sind genau die drei teuersten Zellen des
+Pilots; unter `pretune_on` brauchten sie 40, 68 und 49 Stunden.
+
+**Die Frage:** Der gesamte Pilot lief `pretune_on`. `pretune_off` ist die Haelfte der Kampagne und
+war vollstaendig ungemessen. Ohne Warmstart ist mehr BFGS-Arbeit je Fit zu erwarten, die
+Hochrechnung von 3.384 Kernstunden ist insofern eine untere Schranke mit unbekanntem Faktor.
+
+**Provenienz, live geprueft.** Bootstrap-Job unter Image-Tag `88eaeb6fd6c4d9a1832baeb4b28033752ddb370d`:
+`phase_b_fingerprint=e361a2af49366670`, `rows=756`, `unique_identities=756`, `systems=63`,
+`representability` 20 exakt / 43 surrogat, Dimensionen 276/336/120/24. Alles gegengerechnet. Der
+erste Heartbeat traegt denselben Fingerprint.
+
+**Zwei Betriebsbefunde, die in SCRIPTS.md gehoeren.**
+
+*Der NFS-Share ist von Windows aus nur lesend.* Eine handverlesene Indexliste laesst sich dort nicht
+ablegen — und der Indexed-Job-Pfad braucht genau so eine Datei. Geloest ohne Umweg: `run_batch_cell.jl`
+nimmt den Manifest-Index als positionales Argument, also ein Job je Zelle und gar keine Liste. Neue
+Vorlage `k8s/phase_b_single_cell_job.yaml`. Nebengewinn: Ein Fehlschlag betrifft genau eine Zelle und
+ist einzeln wiederholbar, was bei mehrtaegigen Laufzeiten deutlich angenehmer ist als ein Block.
+
+*Die Befehle in SCRIPTS.md und im Deployment-Guide sind Bash, die Arbeitsumgebung ist PowerShell.*
+`sed` existiert dort nicht. Kein Schaden — es brach vor jeder Wirkung ab —, aber die Anleitungen
+gehen von einer Shell aus, die auf dem Zielrechner nicht laeuft.
+
+---
+
 ## 2026-08-17
 
 ### WP-C3 abgelehnt, WP-C4 angenommen — der Cap lehnt jetzt ab, statt im Zweifel zu behaupten
