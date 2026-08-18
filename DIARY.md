@@ -6,6 +6,30 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ## 2026-08-18
 
+### Regressionslauf gestartet — und die Jobzahl stimmt seit der Variantenliste nicht mehr
+
+<!-- HASH2 -->
+
+120 Zellen unter `config_fingerprint=1d0ccf8d53c6576d`, verteilt auf drei Indexed Jobs nach
+Dimension (48 / 48 / 24, `parallelism` 5 / 5 / 3). Zusammen mit den drei Sondierungszellen sind das
+**genau die 16 vereinbarten Kerne**.
+
+**Die 90 in `CLAUDE.md` ist veraltet.** Der Bootstrap meldet `rows=120`: 5 Systeme (3, 11, 26, 31,
+63) x 3 Seeds x 2 IC-Sets x **4 Varianten**. Die 90 stammen aus der Zeit mit drei Varianten. Die
+Gesamtzahl der Kampagnenjobs ist damit 756 + 120 = **876**, nicht 846. Korrigiert.
+
+**Zwei Werkzeugbefunde.** `generate_manifest.jl` schreibt eine Indexliste **nur** zusammen mit
+`--dimension`; `--index-output` allein laeuft ins Leere, weil der Block daran haengt. Es gibt also
+keine Gesamtliste, sondern nur Listen je Dimension — daher drei Bootstraps statt einem, nacheinander
+ausgefuehrt, weil alle dieselbe `manifest.csv` schreiben. Gegengerechnet: 48 + 48 + 24 = 120,
+null Dubletten, null fehlende Indizes; jede Zelle wird genau einmal gerechnet.
+
+Der zweite: Der Phase-B-Bootstrap gibt `all_index_output` und die Zeilen je Dimension aus, der
+Regressions-Bootstrap nicht. Der Unterschied ist leicht zu uebersehen und war der Grund, warum die
+fehlende Indexliste erst beim Blick auf den Share auffiel.
+
+---
+
 ### pretune_off-Sondierung gestartet — die letzte unbeschraenkte Zahl im Kostenmodell
 
 <!-- b951041 -->

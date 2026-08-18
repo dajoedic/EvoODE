@@ -236,7 +236,7 @@ the coupled search path 1e-6 is the cheaper, behaviour-equal tolerance; the Syst
    GitLab CI, `k8s/` Job manifests with `completionMode: Indexed`, results on NFS. The full chain
    from commit to finished record has been run and verified at every hand-off; see
    `docs/hpc_deployment_guide.md` for the mechanics and `DIARY.md` (WP-H2 to WP-H6) for the
-   chronology. 846 jobs (756 Phase B + 90 regression), 1 core and 2 GB each, no GPU, Julia 1.12.6
+   chronology. 876 jobs (756 Phase B + 120 regression), 1 core and 2 GB each, no GPU, Julia 1.12.6
    pinned.
 
    **Cost model — pilot finished 2026-08-17, the total holds.** 42 cells (systems 24–62, seed 42,
