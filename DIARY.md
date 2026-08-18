@@ -8,7 +8,7 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ### pretune_off-Sondierung gestartet — die letzte unbeschraenkte Zahl im Kostenmodell
 
-<!-- HASH -->
+<!-- b951041 -->
 
 Drei Zellen auf Orion, Manifest-Indizes **709, 727, 739** = Systeme 56 (Lorenz), 59 (Roessler) und
 61 (Chen-Lee), jeweils `pretune_off`, Seed 42, IC-Set 1. Es sind genau die drei teuersten Zellen des
