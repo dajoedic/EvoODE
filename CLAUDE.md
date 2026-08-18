@@ -112,7 +112,7 @@ ground truth, `STATUS.md` only the fast signal: a poll checks both.
 | 1 — stable core | DONE (2026-04-20) |
 | 2 — EvoGrow variants | **CLOSED 2026-08-03** |
 | 3 — benchmarking | infrastructure done; Phase B protocol decided and implemented. Planned next axes: noise, sampling density, coupling strength, dimensionality |
-| 4 — Paper 1 | Phase A frozen; Phase B ported to Kubernetes and verified end to end on the cluster; **pilot finished 2026-08-17**; campaign blocked on the stage-cap defect (Active 0) |
+| 4 — Paper 1 | Phase A frozen; pilot finished 2026-08-17; stage-cap defect solved (WP-C4). **Running on Orion since 2026-08-18:** `pretune_off` probe (3 cells) and the regression suite (120 cells), both on `88eaeb6f`. Campaign awaits the cost model from the probe |
 | 5 — advanced methods | not started |
 
 ### Phase 2 outcome
