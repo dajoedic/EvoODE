@@ -11,6 +11,10 @@ metadata:
     hpc.scch.at/service: evoode-phase-b-cells
     hpc.scch.at/responsibility: joedicke
 spec:
+  # Delete the Job and its pods one hour after completion. Without this a finished
+  # Job leaves its pods behind forever, and the shared namespace fills up with them.
+  # The results are the records on NFS, not the pod logs, so nothing is lost.
+  ttlSecondsAfterFinished: 3600
   completionMode: Indexed
   completions: 3
   parallelism: 3
