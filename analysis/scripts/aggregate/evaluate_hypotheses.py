@@ -1,4 +1,6 @@
 import argparse
+import difflib
+import hashlib
 import json
 import math
 import sys
@@ -50,6 +52,10 @@ REQUIRED_AGGREGATE_COLUMNS = [
 ]
 CAMPAIGN_MARKER_COLUMNS = ["campaign", "condition"]
 CAMPAIGN_VARIANT_MARKERS = ["stage_capped", "pretuning"]
+FROZEN_EXPERIMENT_IDS = {"paper1_phaseA_v1"}
+DEFAULT_REPRODUCTION_ROOT = (
+    REPO_ROOT / "outputs" / "analysis" / "evaluate_hypotheses_reproduction"
+)
 
 
 def parse_args() -> argparse.Namespace:
@@ -57,6 +63,21 @@ def parse_args() -> argparse.Namespace:
         description="Evaluate Paper 1 Phase A hypotheses H1-H4 and write freeze memo."
     )
     parser.add_argument("--config", required=True, help="Path to config JSON.")
+    parser.add_argument(
+        "--force-frozen-overwrite",
+        action="store_true",
+        help=(
+            "Overwrite frozen Phase A artifacts instead of writing a reproduction "
+            "comparison. This is only for an explicit rebuild from scratch."
+        ),
+    )
+    parser.add_argument(
+        "--reproduction-dir",
+        help=(
+            "Directory for recomputed outputs when frozen artifacts are protected. "
+            "Defaults to outputs/analysis/evaluate_hypotheses_reproduction/<experiment_id>."
+        ),
+    )
     return parser.parse_args()
 
 
@@ -83,6 +104,84 @@ def resolve_aggregate_path(config: dict[str, Any], config_path: Path) -> Path:
     if not output_dir.is_absolute():
         output_dir = ANALYSIS_ROOT / output_dir
     return (output_dir / "aggregate_by_variant_system.csv").resolve()
+
+
+def is_frozen_experiment(experiment_id: str) -> bool:
+    return experiment_id in FROZEN_EXPERIMENT_IDS
+
+
+def sha256_file(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as handle:
+        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def reproduction_dir(args: argparse.Namespace, experiment_id: str) -> Path:
+    if args.reproduction_dir:
+        return Path(args.reproduction_dir).resolve()
+    return (DEFAULT_REPRODUCTION_ROOT / experiment_id).resolve()
+
+
+def normalize_diagnostics_for_comparison(data: dict[str, Any]) -> dict[str, Any]:
+    normalized = dict(data)
+    normalized.pop("generated_at", None)
+    return normalized
+
+
+def normalize_memo_for_comparison(text: str) -> str:
+    lines = []
+    for line in text.splitlines():
+        if line.startswith("Generated: "):
+            lines.append("Generated: <excluded>")
+        else:
+            lines.append(line)
+    return "\n".join(lines).strip()
+
+
+def compare_diagnostics(recomputed_path: Path, frozen_path: Path) -> tuple[bool, str]:
+    recomputed = normalize_diagnostics_for_comparison(
+        json.loads(recomputed_path.read_text(encoding="utf-8"))
+    )
+    frozen = normalize_diagnostics_for_comparison(
+        json.loads(frozen_path.read_text(encoding="utf-8"))
+    )
+    recomputed_text = json.dumps(recomputed, indent=2, sort_keys=True).splitlines()
+    frozen_text = json.dumps(frozen, indent=2, sort_keys=True).splitlines()
+    if recomputed_text == frozen_text:
+        return True, ""
+    diff = "\n".join(
+        difflib.unified_diff(
+            frozen_text,
+            recomputed_text,
+            fromfile=str(frozen_path),
+            tofile=str(recomputed_path),
+            lineterm="",
+        )
+    )
+    return False, diff
+
+
+def compare_memo(recomputed_path: Path, frozen_path: Path) -> tuple[bool, str]:
+    recomputed_text = normalize_memo_for_comparison(
+        recomputed_path.read_text(encoding="utf-8")
+    ).splitlines()
+    frozen_text = normalize_memo_for_comparison(
+        frozen_path.read_text(encoding="utf-8")
+    ).splitlines()
+    if recomputed_text == frozen_text:
+        return True, ""
+    diff = "\n".join(
+        difflib.unified_diff(
+            frozen_text,
+            recomputed_text,
+            fromfile=str(frozen_path),
+            tofile=str(recomputed_path),
+            lineterm="",
+        )
+    )
+    return False, diff
 
 
 def json_safe(value: Any) -> Any:
@@ -679,6 +778,16 @@ def main() -> int:
         freeze_memo_path = resolve_path(config["freeze_memo_path"], config_path)
         generalization_path = resolve_path(config["generalization_summary_path"], config_path)
         warnings = validate_inputs(aggregate)
+        frozen_protected = (
+            is_frozen_experiment(experiment_id)
+            and diagnostics_path.exists()
+            and freeze_memo_path.exists()
+            and not args.force_frozen_overwrite
+        )
+        original_diagnostics_sha = (
+            sha256_file(diagnostics_path) if diagnostics_path.exists() else None
+        )
+        original_memo_sha = sha256_file(freeze_memo_path) if freeze_memo_path.exists() else None
 
         generated_at = datetime.now(timezone.utc).isoformat()
         h1 = evaluate_h1(aggregate)
@@ -710,12 +819,19 @@ def main() -> int:
             },
         }
 
-        diagnostics_path.parent.mkdir(parents=True, exist_ok=True)
-        diagnostics_path.write_text(
+        target_diagnostics_path = diagnostics_path
+        target_freeze_memo_path = freeze_memo_path
+        if frozen_protected:
+            target_root = reproduction_dir(args, experiment_id)
+            target_diagnostics_path = target_root / diagnostics_path.name
+            target_freeze_memo_path = target_root / freeze_memo_path.name
+
+        target_diagnostics_path.parent.mkdir(parents=True, exist_ok=True)
+        target_diagnostics_path.write_text(
             json.dumps(json_safe(diagnostics), indent=2, sort_keys=True),
             encoding="utf-8",
         )
-        write_memo(freeze_memo_path, generated_at, diagnostics, generalization_rows)
+        write_memo(target_freeze_memo_path, generated_at, diagnostics, generalization_rows)
 
         for warning in warnings:
             print(f"Warning: {warning}")
@@ -725,8 +841,48 @@ def main() -> int:
         print(f"  H3: {h3['verdict']} ({h3['n_correct']}/{h3['n_systems']})")
         print(f"  H4: {h4['verdict']}")
         print(f"  Generalization: {generalization['verdict']}")
-        print(f"  Diagnostics: {diagnostics_path}")
-        print(f"  Freeze memo: {freeze_memo_path}")
+        print(f"  Diagnostics: {target_diagnostics_path}")
+        print(f"  Freeze memo: {target_freeze_memo_path}")
+        if frozen_protected:
+            diagnostics_match, diagnostics_diff = compare_diagnostics(
+                target_diagnostics_path, diagnostics_path
+            )
+            memo_match, memo_diff = compare_memo(target_freeze_memo_path, freeze_memo_path)
+            current_diagnostics_sha = sha256_file(diagnostics_path)
+            current_memo_sha = sha256_file(freeze_memo_path)
+            artifacts_unchanged = (
+                original_diagnostics_sha == current_diagnostics_sha
+                and original_memo_sha == current_memo_sha
+            )
+            print("  Frozen artifact mode: protected")
+            print("  Excluded comparison fields: diagnostics.generated_at; memo Generated line")
+            print(f"  Frozen diagnostics: {diagnostics_path}")
+            print(f"  Frozen freeze memo: {freeze_memo_path}")
+            print(
+                "  Frozen diagnostics sha256: "
+                f"{original_diagnostics_sha} -> {current_diagnostics_sha}"
+            )
+            print(f"  Frozen memo sha256: {original_memo_sha} -> {current_memo_sha}")
+            print(
+                "  Frozen artifacts unchanged: "
+                + ("yes" if artifacts_unchanged else "no")
+            )
+            print(
+                "  Reproduction matches frozen diagnostics excluding generated_at: "
+                + ("yes" if diagnostics_match else "no")
+            )
+            print(
+                "  Reproduction matches frozen memo excluding Generated line: "
+                + ("yes" if memo_match else "no")
+            )
+            if diagnostics_diff:
+                print("  Diagnostics diff after exclusions:")
+                print(diagnostics_diff)
+            if memo_diff:
+                print("  Freeze memo diff after exclusions:")
+                print(memo_diff)
+        elif args.force_frozen_overwrite and is_frozen_experiment(experiment_id):
+            print("  Frozen artifact mode: forced overwrite")
         return 0
     except (FileNotFoundError, KeyError, json.JSONDecodeError, ValueError) as exc:
         print(f"Error: {exc}", file=sys.stderr)

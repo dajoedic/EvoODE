@@ -1,5 +1,7 @@
 import sys
+import subprocess
 from pathlib import Path
+from shutil import copyfile
 
 import pandas as pd
 
@@ -12,6 +14,7 @@ if str(ANALYSIS_ROOT) not in sys.path:
 from scripts.aggregate.evaluate_hypotheses import (  # noqa: E402
     campaign_message,
     classify_dataset,
+    sha256_file,
     validate_inputs,
 )
 from utils.io import load_aggregate  # noqa: E402
@@ -41,3 +44,56 @@ def test_campaign_bridge_data_reports_non_applicable_phase_a_hypotheses() -> Non
     assert "H1-H4 are Phase A hypotheses" in message
     assert "does not define that comparison" in message
     assert "Missing expected variants" not in message
+
+
+def test_phase_a_evaluation_does_not_overwrite_frozen_artifacts(tmp_path: Path) -> None:
+    frozen_dir = tmp_path / "frozen"
+    reproduction_dir = tmp_path / "reproduction"
+    frozen_dir.mkdir()
+    frozen_memo = frozen_dir / "paper1_freeze_memo_phaseA.md"
+    frozen_diagnostics = frozen_dir / "h1_h4_diagnostics.json"
+    copyfile(REPO_ROOT / "docs/paper1_freeze_memo_phaseA.md", frozen_memo)
+    copyfile(
+        ANALYSIS_ROOT / "data/paper1_phaseA_v1/h1_h4_diagnostics.json",
+        frozen_diagnostics,
+    )
+
+    config = tmp_path / "paper1_phaseA_v1.json"
+    config.write_text(
+        "\n".join(
+            [
+                "{",
+                '  "experiment_id": "paper1_phaseA_v1",',
+                f'  "aggregate_path": "{(ANALYSIS_ROOT / "data/paper1_phaseA_v1/aggregate_by_variant_system.csv").as_posix()}",',
+                f'  "diagnostics_path": "{frozen_diagnostics.as_posix()}",',
+                f'  "freeze_memo_path": "{frozen_memo.as_posix()}",',
+                f'  "generalization_summary_path": "{(REPO_ROOT / "debug_results/generalization_summary.csv").as_posix()}"',
+                "}",
+            ]
+        ),
+        encoding="utf-8",
+    )
+    memo_before = sha256_file(frozen_memo)
+    diagnostics_before = sha256_file(frozen_diagnostics)
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            str(ANALYSIS_ROOT / "scripts/aggregate/evaluate_hypotheses.py"),
+            "--config",
+            str(config),
+            "--reproduction-dir",
+            str(reproduction_dir),
+        ],
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+
+    assert sha256_file(frozen_memo) == memo_before
+    assert sha256_file(frozen_diagnostics) == diagnostics_before
+    assert (reproduction_dir / "paper1_freeze_memo_phaseA.md").exists()
+    assert (reproduction_dir / "h1_h4_diagnostics.json").exists()
+    assert "Frozen artifacts unchanged: yes" in result.stdout
+    assert "Reproduction matches frozen diagnostics excluding generated_at: yes" in result.stdout
+    assert "Reproduction matches frozen memo excluding Generated line: yes" in result.stdout
