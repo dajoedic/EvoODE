@@ -8,10 +8,11 @@ using Statistics
 using Optimization
 using OptimizationOptimJL
 
+include(joinpath(@__DIR__, "..", "output_path_guard.jl"))
 include(joinpath(@__DIR__, "..", "regression", "run_regression.jl"))
 include(joinpath(@__DIR__, "..", "regression", "phase_b_config.jl"))
 
-const OUTPUT_DIR = joinpath(@__DIR__, "..", "..", "outputs", "studies", "linesearch", "wp_f1")
+const OUTPUT_DIR = study_resolve_output_dir(joinpath(@__DIR__, "..", "..", "outputs", "studies", "linesearch", "wp_f1"), ARGS)
 const JSONL_PATH = joinpath(OUTPUT_DIR, "fit_records.jsonl")
 const SUMMARY_CSV_PATH = joinpath(OUTPUT_DIR, "fit_summary.csv")
 const SENTINEL = 1e6

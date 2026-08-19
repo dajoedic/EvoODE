@@ -17,7 +17,7 @@ All estimator variants live in this study script. Nothing under src/ is modified
 """
 
 const L2_SCRIPT_SLUG = "derivative_estimator_probe"
-const L2_OUTPUT_DIR = joinpath(@__DIR__, "..", "..", "outputs", "studies", "lookahead", L2_SCRIPT_SLUG)
+const L2_OUTPUT_DIR = study_resolve_output_dir(joinpath(@__DIR__, "..", "..", "outputs", "studies", "lookahead", L2_SCRIPT_SLUG), ARGS)
 const ESTIMATOR_ERROR_CSV = joinpath(L2_OUTPUT_DIR, "estimator_errors.csv")
 const L2_STAGE_CSV = joinpath(L2_OUTPUT_DIR, "stage_capacity_by_estimator.csv")
 const RK_JSON = joinpath(L2_OUTPUT_DIR, "rk_contamination.json")

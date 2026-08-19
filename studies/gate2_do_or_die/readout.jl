@@ -1,7 +1,9 @@
 using Dates
 using JSON3
 
-const OUTPUT_DIR = joinpath(@__DIR__, "..", "..", "outputs", "studies", "gate2_do_or_die")
+include(joinpath(@__DIR__, "..", "output_path_guard.jl"))
+
+const OUTPUT_DIR = study_resolve_output_dir(joinpath(@__DIR__, "..", "..", "outputs", "studies", "gate2_do_or_die"), ARGS)
 const DEFAULT_HISTORY_PATH = joinpath(@__DIR__, "..", "regression", "history.jsonl")
 
 const GATE2_ANCHOR = (

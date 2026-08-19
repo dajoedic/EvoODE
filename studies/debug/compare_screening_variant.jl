@@ -11,7 +11,8 @@ using .EvoODE
 include(joinpath(@__DIR__, "..", "regression", "diagnostic_systems.jl"))
 
 const SCRIPT_SLUG = "compare_screening_variant"
-const OUTPUT_DIR = joinpath(@__DIR__, "..", "..", "outputs", "studies", "debug", SCRIPT_SLUG)
+include(joinpath(@__DIR__, "..", "output_path_guard.jl"))
+const OUTPUT_DIR = study_resolve_output_dir(joinpath(@__DIR__, "..", "..", "outputs", "studies", "debug", SCRIPT_SLUG), ARGS)
 const SEED = 42
 const SYSTEM_IDS = (3, 11)
 const MAIN_EVAL_TOL = 1e-8

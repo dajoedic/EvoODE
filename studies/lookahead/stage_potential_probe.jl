@@ -10,6 +10,7 @@ using Statistics
 
 include(joinpath(@__DIR__, "..", "..", "src", "EvoODE.jl"))
 using .EvoODE
+include(joinpath(@__DIR__, "..", "output_path_guard.jl"))
 
 """
 Stage-potential probe for EvoGrow staging.
@@ -26,7 +27,7 @@ ODE solves only once per benchmark system to generate the reference trajectory.
 """
 
 const SCRIPT_SLUG = "stage_potential_probe"
-const OUTPUT_DIR = joinpath(@__DIR__, "..", "..", "outputs", "studies", "lookahead", SCRIPT_SLUG)
+const OUTPUT_DIR = study_resolve_output_dir(joinpath(@__DIR__, "..", "..", "outputs", "studies", "lookahead", SCRIPT_SLUG), ARGS)
 const DETAIL_CSV = joinpath(OUTPUT_DIR, "stage_potential_rows.csv")
 const GRID_CSV = joinpath(OUTPUT_DIR, "threshold_grid.csv")
 const SUMMARY_JSON = joinpath(OUTPUT_DIR, "summary.json")

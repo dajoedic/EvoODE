@@ -4,12 +4,14 @@ Pkg.activate(joinpath(@__DIR__, "..", ".."))
 using JSON3
 using Printf
 
+include(joinpath(@__DIR__, "..", "output_path_guard.jl"))
+
 const BUDGET = 20_000
 const INPUTS = [
     ("wp_f1", joinpath(@__DIR__, "..", "..", "outputs", "studies", "linesearch", "wp_f1", "fit_records.jsonl")),
     ("wp_f2", joinpath(@__DIR__, "..", "..", "outputs", "studies", "linesearch", "wp_f2", "fit_records.jsonl")),
 ]
-const OUTPUT_DIR = joinpath(@__DIR__, "..", "..", "outputs", "studies", "linesearch", "wp_f3")
+const OUTPUT_DIR = study_resolve_output_dir(joinpath(@__DIR__, "..", "..", "outputs", "studies", "linesearch", "wp_f3"), ARGS)
 const OUTPUT_CSV = joinpath(OUTPUT_DIR, "budget_20000_replay.csv")
 
 function csv_escape(x)

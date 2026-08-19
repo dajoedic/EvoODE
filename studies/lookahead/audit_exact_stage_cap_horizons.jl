@@ -7,10 +7,12 @@ using JSON3
 using Printf
 
 const REPO_ROOT = normpath(joinpath(@__DIR__, "..", ".."))
+include(joinpath(REPO_ROOT, "studies", "output_path_guard.jl"))
+
 const SCRIPT_SLUG = "audit_exact_stage_cap_horizons"
-const OUTPUT_DIR = joinpath(REPO_ROOT, "outputs", "studies", "lookahead", SCRIPT_SLUG)
+const OUTPUT_DIR = study_resolve_output_dir(joinpath(REPO_ROOT, "outputs", "studies", "lookahead", SCRIPT_SLUG), ARGS)
 const CSV_PATH = joinpath(OUTPUT_DIR, "exact_stage_cap_horizon_audit.csv")
-const REPORT_PATH = joinpath(REPO_ROOT, "docs", "wp_c1_stage_cap_horizon_audit.md")
+const REPORT_PATH = study_resolve_output_path(joinpath(REPO_ROOT, "docs", "wp_c1_stage_cap_horizon_audit.md"), ARGS; flag = "--report")
 const HORIZONS = [2, 3, 4, 5]
 const STABILITY_SYSTEM_IDS = [26, 27, 29, 31, 54]
 const DEFECT_SYSTEM_IDS = [28, 32]
@@ -248,7 +250,7 @@ function cap_change_rows(rows, system_ids::Vector{Int}, horizon::Int)
     return out
 end
 
-function write_report(path::String, rows)
+function write_report(path::String, rows, csv_path::String)
     exact_system_ids = sort(unique(row.system_id for row in rows))
     selected = selected_horizon(rows)
     transitions = finite_uncapped_transitions(rows)
@@ -367,7 +369,7 @@ function write_report(path::String, rows)
         "",
         "## Outputs",
         "",
-        "- CSV: `outputs/studies/lookahead/$(SCRIPT_SLUG)/exact_stage_cap_horizon_audit.csv`",
+        "- CSV: `$(relpath(csv_path, REPO_ROOT))`",
     )
 
     mkpath(dirname(path))
@@ -379,7 +381,7 @@ end
 function main()
     rows = audit_rows()
     write_csv(CSV_PATH, rows)
-    write_report(REPORT_PATH, rows)
+    write_report(REPORT_PATH, rows, CSV_PATH)
     println("Wrote $(CSV_PATH)")
     println("Wrote $(REPORT_PATH)")
     println("Rows: $(length(rows))")

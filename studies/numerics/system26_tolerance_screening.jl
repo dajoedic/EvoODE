@@ -49,9 +49,10 @@ using Printf
 include(joinpath(@__DIR__, "..", "..", "src", "EvoODE.jl"))
 using .EvoODE
 include(joinpath(@__DIR__, "..", "regression", "diagnostic_systems.jl"))
+include(joinpath(@__DIR__, "..", "output_path_guard.jl"))
 
 const SCRIPT_SLUG = "system26_tolerance_screening"
-const OUTPUT_DIR = joinpath(@__DIR__, "..", "..", "outputs", "studies", "numerics", SCRIPT_SLUG)
+const OUTPUT_DIR = study_resolve_output_dir(joinpath(@__DIR__, "..", "..", "outputs", "studies", "numerics", SCRIPT_SLUG), ARGS)
 
 # Target configuration. The environment variables exist only for the cheap smoke test
 # described in the header; unset, this script runs the WP-T2 target configuration.

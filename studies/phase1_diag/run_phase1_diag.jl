@@ -8,8 +8,9 @@ using Printf
 
 include(joinpath(@__DIR__, "..", "..", "src", "EvoODE.jl"))
 using .EvoODE
+include(joinpath(@__DIR__, "..", "output_path_guard.jl"))
 
-const OUTPUT_DIR = joinpath(@__DIR__, "..", "..", "outputs", "studies", "phase1_diag")
+const OUTPUT_DIR = study_resolve_output_dir(joinpath(@__DIR__, "..", "..", "outputs", "studies", "phase1_diag"), ARGS)
 
 const POP_SIZE = 10
 const N_LEVELS = 30

@@ -7,15 +7,17 @@ using Printf
 using Statistics
 
 const REPO_ROOT = normpath(joinpath(@__DIR__, "..", ".."))
+include(joinpath(REPO_ROOT, "studies", "output_path_guard.jl"))
+
 const WP_C4_SCRIPT_SLUG = "wp_c4_stage_cap_doubt_band"
-const OUTPUT_DIR = joinpath(REPO_ROOT, "outputs", "studies", "lookahead", WP_C4_SCRIPT_SLUG)
+const OUTPUT_DIR = study_resolve_output_dir(joinpath(REPO_ROOT, "outputs", "studies", "lookahead", WP_C4_SCRIPT_SLUG), ARGS)
 const EVENT_CSV_PATH = joinpath(OUTPUT_DIR, "post_floor_events.csv")
 const CHANGE_CSV_PATH = joinpath(OUTPUT_DIR, "horizon5_cap_changes.csv")
 const BASELINE_CSV_PATH = joinpath(REPO_ROOT, "outputs", "studies", "lookahead", "wp_c3", "baseline_wp_c2_exact_stage_cap_horizon_audit.csv")
 
 include(joinpath(REPO_ROOT, "studies", "lookahead", "audit_exact_stage_cap_horizons.jl"))
 
-const WP_C4_REPORT_PATH = joinpath(REPO_ROOT, "docs", "wp_c4_stage_cap_doubt_band.md")
+const WP_C4_REPORT_PATH = study_resolve_output_path(joinpath(REPO_ROOT, "docs", "wp_c4_stage_cap_doubt_band.md"), ARGS; flag = "--report")
 
 function parse_csv_line(line::AbstractString)
     fields = String[]
@@ -269,7 +271,7 @@ function markdown_table(headers, rows)
     return join(lines, "\n")
 end
 
-function write_report(path::String, current_rows, changes, events)
+function write_report(path::String, current_rows, changes, events, output_paths)
     finite_before = count(row -> parse(Int, row.horizon) == 5 && row.cap != "nothing", csv_rows(BASELINE_CSV_PATH))
     finite_after = count(row -> row.horizon == 5 && row.cap != "nothing", current_rows)
     finite_to_finite = [row for row in changes if row.before != "nothing" && row.after != "nothing"]
@@ -362,8 +364,8 @@ function write_report(path::String, current_rows, changes, events)
         "",
         "## Outputs",
         "",
-        "- Events CSV: `outputs/studies/lookahead/$(WP_C4_SCRIPT_SLUG)/post_floor_events.csv`",
-        "- Changes CSV: `outputs/studies/lookahead/$(WP_C4_SCRIPT_SLUG)/horizon5_cap_changes.csv`",
+        "- Events CSV: `$(relpath(output_paths.events, REPO_ROOT))`",
+        "- Changes CSV: `$(relpath(output_paths.changes, REPO_ROOT))`",
     ]
 
     mkpath(dirname(path))
@@ -386,7 +388,7 @@ function main()
         ["system_id", "ic_set", "equation_index", "before", "after", "ratio", "floor_ratio", "branch", "split_index", "stage"],
         events,
     )
-    write_report(WP_C4_REPORT_PATH, current_rows, changes, events)
+    write_report(WP_C4_REPORT_PATH, current_rows, changes, events, (events = EVENT_CSV_PATH, changes = CHANGE_CSV_PATH))
     println("Wrote $(CHANGE_CSV_PATH)")
     println("Wrote $(EVENT_CSV_PATH)")
     println("Wrote $(WP_C4_REPORT_PATH)")

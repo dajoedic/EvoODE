@@ -7,6 +7,7 @@ using Printf
 
 include(joinpath(dirname(dirname(@__DIR__)), "src", "EvoODE.jl"))
 using .EvoODE
+include(joinpath(dirname(@__DIR__), "output_path_guard.jl"))
 
 # ============================================================
 # Configuration
@@ -19,7 +20,7 @@ const MAX_TERMS_PER_EQ = 5
 const BFGS_MAXITERS = 100
 const SEEDS = [42, 123, 7]
 const INIT_MODES = [:random, :pretune]
-const OUT_DIR = joinpath(dirname(dirname(@__DIR__)), "outputs", "studies", "profiling")
+const OUT_DIR = study_resolve_output_dir(joinpath(dirname(dirname(@__DIR__)), "outputs", "studies", "profiling"), ARGS)
 
 # ============================================================
 # Local system definitions

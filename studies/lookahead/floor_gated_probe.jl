@@ -17,7 +17,7 @@ BFGS, and no ODE simulation beyond generating each trajectory.
 """
 
 const L3_SCRIPT_SLUG = "floor_gated_probe"
-const L3_OUTPUT_DIR = joinpath(@__DIR__, "..", "..", "outputs", "studies", "lookahead", L3_SCRIPT_SLUG)
+const L3_OUTPUT_DIR = study_resolve_output_dir(joinpath(@__DIR__, "..", "..", "outputs", "studies", "lookahead", L3_SCRIPT_SLUG), ARGS)
 const L3_STAGE_CSV = joinpath(L3_OUTPUT_DIR, "stage_profiles_by_rule.csv")
 const IDENTIFIABILITY_CSV = joinpath(L3_OUTPUT_DIR, "identifiability.csv")
 const DENSITY_CSV = joinpath(L3_OUTPUT_DIR, "density_sweep.csv")

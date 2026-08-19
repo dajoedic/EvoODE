@@ -10,9 +10,10 @@ using Random
 include(joinpath(@__DIR__, "..", "..", "src", "EvoODE.jl"))
 using .EvoODE
 include(joinpath(@__DIR__, "..", "regression", "diagnostic_systems.jl"))
+include(joinpath(@__DIR__, "..", "output_path_guard.jl"))
 
 const SCRIPT_SLUG = "solver_tolerance_noise_floor"
-const OUTPUT_DIR = joinpath(@__DIR__, "..", "..", "outputs", "studies", "numerics", SCRIPT_SLUG)
+const OUTPUT_DIR = study_resolve_output_dir(joinpath(@__DIR__, "..", "..", "outputs", "studies", "numerics", SCRIPT_SLUG), ARGS)
 const SYSTEM_IDS = (3, 11)
 const TOLERANCES = (1e-5, 1e-6, 1e-8, 1e-10, 1e-12)
 const SEED = 42

@@ -166,6 +166,10 @@ julia studies/regression/generate_manifest.jl --output <dir>/manifest.csv
 
 Flags: `--output`, `--dimension`, `--index-output`.
 
+If a default manifest or default dimension index already exists and no explicit path is passed, the
+script writes a timestamp-suffixed sibling instead of overwriting it. Passing `--output` and
+`--index-output` keeps the caller-owned target explicit.
+
 ---
 
 ## 3. Support and configuration
@@ -252,6 +256,11 @@ julia experiments/aggregate.jl <experiment_id>
 These produced findings that the project's argument relies on. They are not part of any pipeline and
 will most likely never run again — they are kept so that a published claim can be traced back to the
 code that produced it. Each is a direct-execution script: `julia <path>`.
+
+Closed studies that write CSVs or reports under `outputs/` accept `--output-dir <dir>`. Closed
+studies that write a Markdown report under `docs/` also accept `--report <path>`. Existing direct
+invocations still work; if the default target already contains files, the script writes a
+timestamp-suffixed sibling instead of silently overwriting existing evidence.
 
 | Script | Question it answered |
 |---|---|

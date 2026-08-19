@@ -8,12 +8,14 @@ using Printf
 using Statistics
 
 const REPO_ROOT = normpath(joinpath(@__DIR__, "..", ".."))
+include(joinpath(REPO_ROOT, "studies", "output_path_guard.jl"))
+
 const SCRIPT_SLUG = "diagnose_stage_cap_failures"
-const OUTPUT_DIR = joinpath(REPO_ROOT, "outputs", "studies", "lookahead", SCRIPT_SLUG)
+const OUTPUT_DIR = study_resolve_output_dir(joinpath(REPO_ROOT, "outputs", "studies", "lookahead", SCRIPT_SLUG), ARGS)
 const STAGE_CSV_PATH = joinpath(OUTPUT_DIR, "stage_diagnostics.csv")
 const CAP_CSV_PATH = joinpath(OUTPUT_DIR, "cap_diagnostics.csv")
 const SENSITIVITY_CSV_PATH = joinpath(OUTPUT_DIR, "threshold_sensitivity.csv")
-const REPORT_PATH = joinpath(REPO_ROOT, "docs", "wp_c2_stage_cap_failure_diagnosis.md")
+const REPORT_PATH = study_resolve_output_path(joinpath(REPO_ROOT, "docs", "wp_c2_stage_cap_failure_diagnosis.md"), ARGS; flag = "--report")
 const OLD_CONFIG_FINGERPRINT = "06e1c71fbd10a3a4"
 const OLD_PHASE_B_FINGERPRINT = "41f69abc3670b6c4"
 
@@ -374,7 +376,7 @@ function sensitivity_summary_rows(rows)
     return out
 end
 
-function write_report(path::String, result)
+function write_report(path::String, result, output_paths)
     identity = horizon_identity_summary()
     target_caps = [row for row in result.cap_rows if row.role == "target"]
     control_caps = [row for row in result.cap_rows if row.role == "control"]
@@ -458,9 +460,9 @@ function write_report(path::String, result)
             "",
             "## Outputs",
             "",
-            "- Stage CSV: `outputs/studies/lookahead/$(SCRIPT_SLUG)/stage_diagnostics.csv`",
-            "- Cap CSV: `outputs/studies/lookahead/$(SCRIPT_SLUG)/cap_diagnostics.csv`",
-            "- Sensitivity CSV: `outputs/studies/lookahead/$(SCRIPT_SLUG)/threshold_sensitivity.csv`",
+            "- Stage CSV: `$(relpath(output_paths.stage, REPO_ROOT))`",
+            "- Cap CSV: `$(relpath(output_paths.cap, REPO_ROOT))`",
+            "- Sensitivity CSV: `$(relpath(output_paths.sensitivity, REPO_ROOT))`",
         ],
     )
 
@@ -500,7 +502,7 @@ function main()
         ],
         result.sensitivity_rows,
     )
-    write_report(REPORT_PATH, result)
+    write_report(REPORT_PATH, result, (stage = STAGE_CSV_PATH, cap = CAP_CSV_PATH, sensitivity = SENSITIVITY_CSV_PATH))
     println("Wrote $(STAGE_CSV_PATH)")
     println("Wrote $(CAP_CSV_PATH)")
     println("Wrote $(SENSITIVITY_CSV_PATH)")

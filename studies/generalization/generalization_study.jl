@@ -10,6 +10,7 @@ using Statistics
 
 include(joinpath(dirname(dirname(@__DIR__)), "src", "EvoODE.jl"))
 using .EvoODE
+include(joinpath(dirname(dirname(@__DIR__)), "studies", "output_path_guard.jl"))
 
 # ============================================================
 # Configuration
@@ -23,7 +24,7 @@ const BFGS_MAXITERS = 200
 const REFIT_MAXITERS = 500
 const SEEDS = [42, 123, 7]
 const VARIANTS = ["evogrow_v2_2_stage_local", "gp_baseline"]
-const OUT_DIR = joinpath(dirname(dirname(@__DIR__)), "outputs", "studies", "generalization")
+const OUT_DIR = study_resolve_output_dir(joinpath(dirname(dirname(@__DIR__)), "outputs", "studies", "generalization"), ARGS)
 
 # ============================================================
 # System families

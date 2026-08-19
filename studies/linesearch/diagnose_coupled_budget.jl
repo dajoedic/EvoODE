@@ -5,10 +5,11 @@ using JSON3
 using Printf
 using Random
 
+include(joinpath(@__DIR__, "..", "output_path_guard.jl"))
 include(joinpath(@__DIR__, "..", "regression", "run_regression.jl"))
 include(joinpath(@__DIR__, "..", "regression", "phase_b_config.jl"))
 
-const OUTPUT_DIR = joinpath(@__DIR__, "..", "..", "outputs", "studies", "linesearch", "wp_f2")
+const OUTPUT_DIR = study_resolve_output_dir(joinpath(@__DIR__, "..", "..", "outputs", "studies", "linesearch", "wp_f2"), ARGS; allow_append = true)
 const JSONL_PATH = joinpath(OUTPUT_DIR, "fit_records.jsonl")
 const SUMMARY_CSV_PATH = joinpath(OUTPUT_DIR, "fit_summary.csv")
 const BUDGETS = [500, 1_000, 2_000, 5_000, 10_000, 20_000]

@@ -8,14 +8,15 @@ using Printf
 using Statistics
 
 const REPO_ROOT = normpath(joinpath(@__DIR__, "..", ".."))
+include(joinpath(REPO_ROOT, "studies", "output_path_guard.jl"))
 
 include(joinpath(REPO_ROOT, "benchmarks", "run_odebench.jl"))
 
 const TARGET_SYSTEM_IDS = [3, 11, 26, 31, 54, 63]
 const IC_SETS = [1, 2]
-const OUTPUT_DIR = joinpath(REPO_ROOT, "outputs", "studies", "lookahead", "wp_g1")
+const OUTPUT_DIR = study_resolve_output_dir(joinpath(REPO_ROOT, "outputs", "studies", "lookahead", "wp_g1"), ARGS)
 const CSV_PATH = joinpath(OUTPUT_DIR, "dataset_grid_caps.csv")
-const REPORT_PATH = joinpath(REPO_ROOT, "docs", "wp_g1_dataset_grid_caps.md")
+const REPORT_PATH = study_resolve_output_path(joinpath(REPO_ROOT, "docs", "wp_g1_dataset_grid_caps.md"), ARGS; flag = "--report")
 const DATA_SOURCES = ["stored", "self_integrated"]
 
 const LOOKAHEAD_CAP_POLICY_REGRESSION = (
@@ -506,7 +507,7 @@ function low_signal_failure_summary(rows)
     )
 end
 
-function write_report(path::String, rows)
+function write_report(path::String, rows, csv_path::String)
     grid_lengths = sort(unique(row.t_length for row in rows))
     grid_starts = sort(unique(row.t_start for row in rows))
     grid_ends = sort(unique(row.t_end for row in rows))
@@ -616,7 +617,7 @@ function write_report(path::String, rows)
             "",
             "## Outputs",
             "",
-            "- CSV: `outputs/studies/lookahead/wp_g1/dataset_grid_caps.csv`",
+            "- CSV: `$(relpath(csv_path, REPO_ROOT))`",
             "",
         ],
     )
@@ -630,7 +631,7 @@ end
 function main()
     rows = measure_rows()
     write_csv(CSV_PATH, rows)
-    write_report(REPORT_PATH, rows)
+    write_report(REPORT_PATH, rows, CSV_PATH)
     println("Wrote $(CSV_PATH)")
     println("Wrote $(REPORT_PATH)")
     println("Rows: $(length(rows))")

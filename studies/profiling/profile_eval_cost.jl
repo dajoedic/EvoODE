@@ -9,6 +9,7 @@ using Printf
 include(joinpath(dirname(dirname(@__DIR__)), "src", "EvoODE.jl"))
 using .EvoODE
 include(joinpath(dirname(@__DIR__), "regression", "diagnostic_systems.jl"))
+include(joinpath(dirname(@__DIR__), "output_path_guard.jl"))
 
 # Micro-benchmark for WP-P1.
 #
@@ -24,7 +25,7 @@ include(joinpath(dirname(@__DIR__), "regression", "diagnostic_systems.jl"))
 # the relevant cost regime. B runs first and is flushed to disk before A starts,
 # so an expensive reference run cannot erase the screening result.
 
-const OUT_DIR = joinpath(dirname(dirname(@__DIR__)), "outputs", "studies", "profiling", "profile_eval_cost")
+const OUT_DIR = study_resolve_output_dir(joinpath(dirname(dirname(@__DIR__)), "outputs", "studies", "profiling", "profile_eval_cost"), ARGS)
 
 const SYSTEM_ID = parse(Int, get(ENV, "PROFILE_SYSTEM_ID", "26"))
 const SEED = 42
