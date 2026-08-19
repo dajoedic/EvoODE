@@ -1,77 +1,88 @@
-> **Claude-Status:** `waiting for codex` — WP-A3 übergeben, ich prüfe alle 20 Minuten.
+> **Claude-Status:** `waiting for codex` — WP-E2 übergeben, ich prüfe alle 20 Minuten.
 > Melde dich über `codex/STATUS.md`, nicht in dieser Datei. Committe nichts.
 > Der Dauerauftrag steht in `codex/CODEX_PROTOCOL.md`.
 
-# WP-A3 — Die Hypothesenauswertung kennt nur Phase A
+# WP-E2 — Das eingefrorene Freeze-Memo wird bei jedem Lauf neu datiert
 **Language: Python**
 
 ## Der Befund
 
-WP-A2 hat `table_main_results.py` und zwei Plot-Skripte von der eingefrorenen Phase-A-Variantenliste
-gelöst. `analysis/scripts/*/evaluate_hypotheses.py` ist unangetastet geblieben und trägt weiterhin
-eine fest verdrahtete `EXPECTED_VARIANTS`-Liste, gegen die es hart abbricht:
+WP-E1 hat den Selbstüberschreib-Fehler in den **Julia**-Studienskripten beseitigt. Die
+**Python**-Auswertung hat ihn weiterhin, und dort trifft er das empfindlichste Dokument, das das
+Projekt besitzt.
+
+`analysis/scripts/aggregate/evaluate_hypotheses.py` schreibt am Ende
+`docs/paper1_freeze_memo_phaseA.md` — ein Dokument, das sich selbst so beschreibt:
 
 ```text
-raise ValueError(f"Missing expected variants: {', '.join(missing_variants)}")
+# Paper 1 - Freeze Memo: Phase A Results
+Generated: 2026-05-17T17:44:03.778186+00:00
+Experiment: paper1_phaseA_v1 (300/300 runs, all success=true)
+
+This memo defines what Paper 1 is allowed to claim.
 ```
 
-Das ist ehrlicher als das stille Fallenlassen, das WP-A2 beseitigt hat — aber es macht das Skript
-für Kampagnendaten unbrauchbar. Nach 756 Zellen wäre das die Stelle, an der die Auswertung stehen
-bleibt.
+Bei der Abnahme von WP-A3 wurde das Skript zur Verifikation ausgeführt — und hat das Datum auf
+2026-08-19 gesetzt. Von Hand zurückgesetzt.
 
-Dazu kommt ein inhaltliches Problem: Die Hypothesen H1 bis H4 stammen aus
-`docs/paper1_study_protocol.md` und beziehen sich auf den **Phase-A-Variantenvergleich** (v1, v2.1,
-v2.2-Usage-Modi, GP). Die Kampagne vergleicht etwas anderes: `evogrow_v2_2_stage_capped` mit
-`pretuning` an gegen aus. H1 bis H4 sind darauf nicht anwendbar.
+**Der Inhalt änderte sich nicht, und genau das ist der Punkt.** Ein eingefrorenes Dokument, das ein
+neues Entstehungsdatum bekommt, behauptet, unter dem heutigen Code erzeugt worden zu sein. Wer es
+später liest, hat keine Möglichkeit, das zu bemerken. Dasselbe gilt für
+`analysis/data/paper1_phaseA_v1/h1_h4_diagnostics.json`.
 
 ## Umfang
 
-### Teil 1 — Bestandsaufnahme, bevor irgendetwas geändert wird
+### Teil 1 — Bestandsaufnahme
 
-Lies `docs/paper1_study_protocol.md` und stelle je Hypothese fest, ob sie auf den
-Kampagnenumfang überhaupt übertragbar ist. Ergebnis in den Report als Tabelle: Hypothese,
-übertragbar ja/nein, Begründung in einem Satz.
+Welche Skripte unter `analysis/scripts/` schreiben in Pfade, die bereits belegt sind, und welche
+davon schreiben in **eingefrorene** Artefakte? Als Tabelle in den Report: Skript, Ziel, eingefroren
+ja/nein.
 
-**Erfinde keine neuen Hypothesen.** Wenn H1 bis H4 nicht passen, ist das ein Befund und keine
-Einladung, Ersatz zu formulieren — welche Aussagen die Kampagne trägt, entscheidet der Nutzer.
+Die Kriterien für „eingefroren" stehen in `CLAUDE.md` und
+`docs/paper1_study_protocol.md`; `paper1_phaseA_v1` ist es, ausdrücklich und mit Begründung.
 
-### Teil 2 — Das Skript soll unterscheiden können
+### Teil 2 — Eingefrorene Ziele werden nicht mehr beschrieben
 
-`evaluate_hypotheses.py` muss erkennen, ob ihm Phase-A-Daten oder Kampagnendaten vorliegen, und
-sich entsprechend verhalten:
+Ein Lauf gegen eingefrorene Daten darf sein Ergebnis nachrechnen und anzeigen, aber das
+eingefrorene Artefakt **nicht überschreiben**. Wie du das löst, entscheidest du — es sollte aber
+möglich bleiben, die Reproduzierbarkeit zu prüfen, denn genau dafür wurde das Skript bei WP-A3
+gebraucht. Ein Weg, der beides erfüllt: nachrechnen, in ein Vergleichsziel schreiben, und melden,
+ob es mit dem eingefrorenen Stand übereinstimmt.
 
-- Bei Phase-A-Daten: **exakt wie bisher**, unverändert in Ergebnis und Fehlerverhalten.
-- Bei Kampagnendaten: keine Auswertung erzwingen, die nicht definiert ist. Es soll klar und
-  verständlich melden, was es vorfindet und warum es die Phase-A-Hypothesen nicht anwendet —
-  nicht mit `Missing expected variants` abbrechen, als fehlten Daten.
+Anforderungen:
 
-Wie du erkennst, um welchen Fall es sich handelt, entscheidest du; begründe es im Report. Die
-Variantenliste allein ist ein schwaches Signal, es gibt in den Daten auch `campaign`- und
-`condition`-Felder.
+- Ein Lauf gegen Phase A verändert `docs/paper1_freeze_memo_phaseA.md` und
+  `analysis/data/paper1_phaseA_v1/h1_h4_diagnostics.json` **nicht**.
+- Ob die Reproduktion mit dem eingefrorenen Stand übereinstimmt, muss aus der Ausgabe hervorgehen.
+- Der Vergleich muss den **Zeitstempel ausklammern**, sonst meldet er immer eine Abweichung. Sag im
+  Report, welche Felder du ausklammerst und warum genau diese.
+- Der Neuaufbau von Grund auf muss weiterhin möglich sein — etwa über ein ausdrückliches Flag.
+  Es darf nur nicht mehr der Standardfall sein.
 
 ### Teil 3 — Nachweis
 
-- Phase-A-Lauf vorher und nachher, Ausgaben wert- oder bytegleich, mit Prüfsumme belegt.
-- Ein Lauf gegen die Kampagnen-Brückendaten aus WP-A1
-  (`analysis/data/wp_a1_campaign_bridge_probe/`), der zeigt, dass die Meldung verständlich ist.
-- Ein Test, der beide Fälle abdeckt.
+- Prüfsumme von Memo und Diagnostics-JSON vor und nach einem Phase-A-Lauf: **unverändert**.
+- Die Ausgabe zeigt, dass die Reproduktion übereinstimmt.
+- Ein Test hält das fest und schlägt gegen den heutigen Stand fehl — beides belegen.
 
 Halte dich an `analysis/CONVENTIONS.md`.
 
 ## Verboten
 
 - **Keine Änderung an Julia-Code, an der Cap-Logik oder an irgendetwas Fingerprint-Relevantem.**
-  Auf Orion laufen zwei Sondierungszellen, und die 120 Regressions-Records liegen unter
-  `1d0ccf8d53c6576d` / `61b6548ef0014593`. Diese Werte müssen stehen bleiben.
+  Auf Orion laufen zwei Sondierungszellen; die 120 Regressions-Records liegen unter
+  `1d0ccf8d53c6576d` / `61b6548ef0014593`.
 - **Keine Cluster-Jobs, keine Kampagne, keine Läufe auf Orion.**
-- **Keine neuen Hypothesen und keine neuen Metrikdefinitionen.**
-- **Keine Änderung an den eingefrorenen Phase-A-Artefakten** unter `experiments/`.
+- **Die eingefrorenen Werte nicht „korrigieren".** Stimmt die Reproduktion irgendwo nicht überein,
+  ist das ein **Befund für den Report**, keine Einladung, das Memo anzupassen. Ein solcher Fund
+  wäre wichtig und gehört ausführlich beschrieben.
 - **Nichts committen, nichts stagen, nichts pushen. Kein `git add -A`.**
 - Nichts, was länger als 15 Minuten läuft.
 
 ## Abnahme
 
-- Die Übertragbarkeitstabelle aus Teil 1 liegt vor.
-- Phase A liefert unverändert dieselben Ergebnisse, mit Prüfsumme belegt.
-- Kampagnendaten führen zu einer verständlichen Meldung statt zu `Missing expected variants`.
-- Der neue Test deckt beide Fälle ab.
+- Die Bestandsaufnahme aus Teil 1 liegt vor.
+- Ein Phase-A-Lauf lässt Memo und Diagnostics-JSON unverändert, mit Prüfsummen belegt.
+- Die Übereinstimmung der Reproduktion wird gemeldet, die ausgeklammerten Felder sind benannt.
+- Der erzwungene Neuaufbau ist weiterhin möglich und dokumentiert.
+- Der neue Test schlägt gegen den alten Stand fehl und gegen den neuen nicht.
