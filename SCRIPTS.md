@@ -25,6 +25,25 @@ container image the project lives at `/opt/EvoODE` and the invocation is
 
 These four scripts are what runs on the cluster. They are used in this order.
 
+> **Every Job manifest must set `ttlSecondsAfterFinished`.** A finished Kubernetes Job keeps its
+> pods forever unless told otherwise. By 2026-08-18 that had left 105 `Completed` pods behind —
+> 85 % of every pod in a namespace shared with other groups. The templates in `k8s/` set it to one
+> hour: long enough to read a log, and nothing is lost, because the results are the records on NFS
+> and not the pod logs.
+>
+> **`generate_manifest.jl` writes an index list only together with `--dimension`.** Passing
+> `--index-output` on its own is inert — the block is guarded by `--dimension`. There is no
+> all-rows list for the regression campaign, only per-dimension lists, so it needs one bootstrap
+> per dimension, run **sequentially** because they all write the same `manifest.csv`.
+>
+> **The NFS share is read-only from Windows.** A hand-picked index list cannot be placed there, so
+> the indexed-cell path does not fit a non-contiguous set of rows. Use
+> `k8s/phase_b_single_cell_job.yaml` instead: `run_batch_cell.jl` takes the manifest index as a
+> positional argument and needs no list at all.
+>
+> **The commands in this file are Bash; the working environment is PowerShell**, where `sed` does
+> not exist. Translate before pasting.
+
 ### `studies/regression/generate_phase_b_manifest.jl`
 
 Writes the campaign work list: one row per cell, plus per-dimension index lists that map a cluster
