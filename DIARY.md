@@ -8,7 +8,7 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ### WP-E1/E2 — dreimal hat eine Abnahme den Beleg zerstoert, den sie bestaetigen sollte
 
-<!-- HASH -->
+<!-- 1524d40 -->
 
 Ein Muster, das erst durch Wiederholung sichtbar wurde. Innerhalb von zwei Tagen dreimal derselbe
 Vorgang: Ein Skript wird zur **Verifikation** ausgefuehrt und ueberschreibt dabei genau das
