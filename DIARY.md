@@ -4,6 +4,82 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ---
 
+## 2026-08-19
+
+### Regression vollstaendig: 30 von 30 Zellen bitidentisch, und die Abstinenz kostet messbar 16 %
+
+<!-- HASH -->
+
+120 Records, alle `error: null`, und zum ersten Mal im Projekt stimmen **alle drei Identitaetsfelder**
+ueberein: `git_hash=88eaeb6`, `config_fingerprint=1d0ccf8d53c6576d`,
+`stage_cap_behavior_fingerprint=61b6548ef0014593`. Der Verhaltens-Fingerprint aus WP-P1 kommt damit
+erstmals in echten Records an.
+
+**Die Kernaussage des Papiers steht jetzt auf dem aktuellen Stand.** `evogrow_v2_2_stage_capped`
+gegen `evogrow_v2_2_stage_local`, 30 gemeinsame Zellen ueber die Systeme 3, 11, 26, 31 und 63,
+beide IC-Sets, drei Seeds:
+
+| | |
+|---|---|
+| Loss **bitidentisch** | 30 von 30 |
+| `pruned_match` veraendert | 0 |
+| Loss-Evaluationen | 16.087.320 -> 13.618.177 = **-15,3 %** |
+
+Bisher ruhte diese Aussage auf zehn Zellen und vier Systemen, gemessen ueber eine
+Fingerprint-Grenze hinweg. Jetzt ist sie ein geschlossener Block.
+
+**Die Ersparnis ist ungleich verteilt, und das ist der eigentliche Befund:**
+
+| Zelle | v2.2 | capped | |
+|---|---|---|---|
+| System 26, alle sechs | 1,43 Mio | 0,83 Mio | -42 % |
+| System 11 / IC 2 | 54.398 | 28.318 | -48 % |
+| **System 31 / IC 1** | 1.019.225 | 1.179.637 | **+16 %** |
+| 3, 63, 31 / IC 2, 11 / IC 1 | identisch | identisch | Cap bindet nicht |
+
+**Die eine teurere Zelle ist die Rechnung fuer WP-C4.** 31 / IC 1 war genau die Kontrollzeile mit
+Verhaeltnis 0,496 gegen die Bandgrenze 0,5, die durch das Zweifelsband ihren korrekten Cap 3
+verliert und ungedeckelt laeuft. Die Zusage lautete, eine Abstinenz koste *nur Rechenzeit, nie die
+Loesung*. Genau das ist eingetreten: 16 % mehr Evaluationen, Loss bitidentisch, `pruned_match`
+unveraendert. Vorhersage aus dem Audit und Messung im Lauf decken sich, und der Preis der
+Sicherheit ist damit beziffert statt behauptet.
+
+Alle 30 Zellen laufen ueber volle 30 Level. Der Cap begrenzt die Stufe, nicht die Levelzahl — die
+Ersparnis entsteht innerhalb der Level, nicht durch frueheren Abbruch.
+
+---
+
+### Chen-Lee ohne Pretuning ist dreimal schneller — die Annahme zeigt in die falsche Richtung
+
+<!-- HASH -->
+
+Erste fertige Sondierungszelle, System 61, `pretune_off`:
+
+| | `pretune_on` (Pilot) | `pretune_off` |
+|---|---|---|
+| Laufzeit | 49,4 h | **14,7 h** |
+| Parameter-Fits | 350 | 490 |
+| Loss-Evaluationen | 3.038.641 | **2.206.537** |
+| Evals je Fit | 8.682 | **4.503** |
+| Caps | `[3,3,3]` | `[3,3,3]` |
+| Loss | 63,1 | 100,8 |
+
+Mehr Fits, aber **halb so viele Evaluationen je Fit**. Der OLS-Warmstart fuehrt BFGS offenbar in
+laengere Liniensuchen, statt sie zu verkuerzen — plausibel, wenn der Startpunkt in einer Region
+liegt, aus der die Liniensuche weit laufen muss.
+
+**Damit ist die Grundannahme der Kostenschaetzung in Frage gestellt.** `pretune_off` galt als die
+teure, ungemessene Haelfte der Kampagne und als Grund, die 3.384 Kernstunden als untere Schranke zu
+lesen. Auf dieser Zelle ist es das Gegenteil.
+
+n=1, und es darf noch nichts heissen: Systeme 56 und 59 laufen noch, beide bei 21 h gegen 40 h und
+68 h unter `pretune_on`. Der Loss ist zudem schlechter (100,8 gegen 63,1) — auf einem chaotischen
+System sind beide Werte allerdings unbrauchbar, das trennt nichts.
+
+Der Cap `[3,3,3]` ist unveraendert korrekt. Die Gegenprobe aus WP-C1 haelt auch im Kampagnenlauf.
+
+---
+
 ## 2026-08-18
 
 ### Regressionslauf gestartet — und die Jobzahl stimmt seit der Variantenliste nicht mehr
