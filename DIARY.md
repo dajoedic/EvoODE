@@ -8,7 +8,7 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ### Regression vollstaendig: 30 von 30 Zellen bitidentisch, und die Abstinenz kostet messbar 16 %
 
-<!-- HASH -->
+<!-- 7e7c675 -->
 
 120 Records, alle `error: null`, und zum ersten Mal im Projekt stimmen **alle drei Identitaetsfelder**
 ueberein: `git_hash=88eaeb6`, `config_fingerprint=1d0ccf8d53c6576d`,
@@ -51,7 +51,7 @@ Ersparnis entsteht innerhalb der Level, nicht durch frueheren Abbruch.
 
 ### Chen-Lee ohne Pretuning ist dreimal schneller — die Annahme zeigt in die falsche Richtung
 
-<!-- HASH -->
+<!-- 7e7c675 -->
 
 Erste fertige Sondierungszelle, System 61, `pretune_off`:
 
