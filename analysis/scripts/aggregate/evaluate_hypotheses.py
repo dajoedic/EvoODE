@@ -48,6 +48,8 @@ REQUIRED_AGGREGATE_COLUMNS = [
     "mean_stage_overshoot",
     "mean_wasted_levels",
 ]
+CAMPAIGN_MARKER_COLUMNS = ["campaign", "condition"]
+CAMPAIGN_VARIANT_MARKERS = ["stage_capped", "pretuning"]
 
 
 def parse_args() -> argparse.Namespace:
@@ -68,6 +70,19 @@ def resolve_path(path_value: str, config_path: Path) -> Path:
     if path.is_absolute():
         return path
     return (config_path.parent / path).resolve()
+
+
+def resolve_aggregate_path(config: dict[str, Any], config_path: Path) -> Path:
+    if "aggregate_path" in config:
+        return resolve_path(config["aggregate_path"], config_path)
+
+    if "output_dir" not in config:
+        raise KeyError("aggregate_path")
+
+    output_dir = Path(config["output_dir"])
+    if not output_dir.is_absolute():
+        output_dir = ANALYSIS_ROOT / output_dir
+    return (output_dir / "aggregate_by_variant_system.csv").resolve()
 
 
 def json_safe(value: Any) -> Any:
@@ -130,6 +145,82 @@ def validate_inputs(df: pd.DataFrame) -> list[str]:
             f"n_valid=0 for variant={row['variant_slug']}, system={int(row['system_id'])}"
         )
     return warnings
+
+
+def classify_dataset(df: pd.DataFrame, experiment_id: str, aggregate_path: Path) -> tuple[str, list[str]]:
+    variants = set(df["variant_slug"].astype(str))
+    columns = set(df.columns)
+    path_text = str(aggregate_path).replace("\\", "/").lower()
+    experiment_text = experiment_id.lower()
+    reasons: list[str] = []
+
+    marker_columns = [column for column in CAMPAIGN_MARKER_COLUMNS if column in columns]
+    if marker_columns:
+        reasons.append("campaign marker columns present: " + ", ".join(marker_columns))
+
+    campaign_variants = sorted(
+        variant
+        for variant in variants
+        if any(marker in variant for marker in CAMPAIGN_VARIANT_MARKERS)
+    )
+    if campaign_variants:
+        reasons.append("campaign variant markers present: " + ", ".join(campaign_variants))
+
+    if "campaign" in experiment_text or "campaign" in path_text:
+        reasons.append("experiment id or aggregate path contains 'campaign'")
+
+    if reasons:
+        return "campaign", reasons
+
+    if set(EXPECTED_VARIANTS).issubset(variants):
+        reasons.append("all Phase A variants are present")
+        return "phase_a", reasons
+
+    reasons.append("Phase A variants are incomplete and no campaign marker was detected")
+    return "unknown", reasons
+
+
+def campaign_message(
+    df: pd.DataFrame,
+    experiment_id: str,
+    aggregate_path: Path,
+    reasons: list[str],
+) -> str:
+    variants = sorted(set(df["variant_slug"].astype(str)))
+    systems = sorted(pd.to_numeric(df["system_id"], errors="coerce").dropna().astype(int).unique())
+    conditions = (
+        sorted(set(df["condition"].dropna().astype(str)))
+        if "condition" in df.columns
+        else []
+    )
+    campaigns = (
+        sorted(set(df["campaign"].dropna().astype(str)))
+        if "campaign" in df.columns
+        else []
+    )
+    missing_variants = [variant for variant in EXPECTED_VARIANTS if variant not in variants]
+
+    lines = [
+        f"Dataset classification: campaign",
+        f"Experiment: {experiment_id}",
+        f"Aggregate: {aggregate_path}",
+        "Reason: " + "; ".join(reasons),
+        "Found variants: " + ", ".join(variants),
+        "Found systems: " + ", ".join(str(system) for system in systems),
+    ]
+    if campaigns:
+        lines.append("Found campaigns: " + ", ".join(campaigns))
+    if conditions:
+        lines.append("Found conditions: " + ", ".join(conditions))
+    lines.extend(
+        [
+            "Action: H1-H4 are Phase A hypotheses from docs/paper1_study_protocol.md.",
+            "They compare evogrow_v1, evogrow_v2_1, v2.2 usage modes, and gp_baseline.",
+            "This dataset does not define that comparison, so no Phase A hypothesis evaluation was written.",
+            "Missing Phase A variants are expected for campaign data: " + ", ".join(missing_variants),
+        ]
+    )
+    return "\n".join(lines)
 
 
 def cell(df: pd.DataFrame, variant: str, system_id: int) -> pd.Series:
@@ -574,13 +665,19 @@ def main() -> int:
     try:
         config = load_config(config_path)
         experiment_id = config["experiment_id"]
-        aggregate_path = resolve_path(config["aggregate_path"], config_path)
-        diagnostics_path = resolve_path(config["diagnostics_path"], config_path)
-        freeze_memo_path = resolve_path(config["freeze_memo_path"], config_path)
-        generalization_path = resolve_path(config["generalization_summary_path"], config_path)
+        aggregate_path = resolve_aggregate_path(config, config_path)
 
         aggregate = load_aggregate(aggregate_path)
         aggregate["system_id"] = pd.to_numeric(aggregate["system_id"], errors="raise").astype(int)
+        check_required_columns(aggregate, REQUIRED_AGGREGATE_COLUMNS)
+        dataset_kind, dataset_reasons = classify_dataset(aggregate, experiment_id, aggregate_path)
+        if dataset_kind == "campaign":
+            print(campaign_message(aggregate, experiment_id, aggregate_path, dataset_reasons))
+            return 0
+
+        diagnostics_path = resolve_path(config["diagnostics_path"], config_path)
+        freeze_memo_path = resolve_path(config["freeze_memo_path"], config_path)
+        generalization_path = resolve_path(config["generalization_summary_path"], config_path)
         warnings = validate_inputs(aggregate)
 
         generated_at = datetime.now(timezone.utc).isoformat()
