@@ -6,6 +6,56 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ## 2026-08-19
 
+### WP-E1/E2 — dreimal hat eine Abnahme den Beleg zerstoert, den sie bestaetigen sollte
+
+<!-- HASH -->
+
+Ein Muster, das erst durch Wiederholung sichtbar wurde. Innerhalb von zwei Tagen dreimal derselbe
+Vorgang: Ein Skript wird zur **Verifikation** ausgefuehrt und ueberschreibt dabei genau das
+Dokument, das es belegen soll.
+
+| Fall | Was ueberschrieben wurde |
+|---|---|
+| WP-C2/C4-Abnahme | `docs/wp_c1_stage_cap_horizon_audit.md` — 9 abgeschnittene Zeilen wurden zu 4 |
+| WP-E1-Entwurf | fast der Kampagnen-Indexpfad; abgewendet, siehe unten |
+| WP-A3-Abnahme | `docs/paper1_freeze_memo_phaseA.md` — neu datiert von 2026-05-17 auf 2026-08-19 |
+
+**WP-E1** hat `studies/output_path_guard.jl` eingefuehrt: explizites Flag gewinnt, sonst
+Standardpfad nur wenn dort nichts liegt, andernfalls ein Geschwisterfile mit Zeitstempel.
+Angewandt auf 18 Studienskripte.
+
+**Die beiden Kampagnen-Manifestgeneratoren wurden davon ausgenommen und zurueckgesetzt**, und das
+ist die Lehre des Pakets: `run_k8s_indexed_cell.jl` liest `EVO_BATCH_INDEX_LIST` unter **festem
+Namen**. Mit Guard haette ein erneuter Bootstrap `indices_dim1_<zeitstempel>.txt` danebengelegt,
+waehrend jede Zelle weiter die alte Liste liest — aus einer beabsichtigten Auffrischung waere ein
+stiller Nulleffekt geworden. Zweiter Defekt im selben Zweig: Unter `--all-dimensions` liefen alle
+fuenf Indexlisten durch dasselbe `--index-output`-Flag und haetten sich gegenseitig ueberschrieben.
+
+> **Die Unterscheidung, die daraus folgt:** Der Guard ist richtig, wo die Ausgabe ein **Beweis**
+> ist — dort ist Ueberschreiben der Schaden. Er ist falsch, wo die Ausgabe ein **Vertrag** ist, den
+> ein anderer Prozess unter festem Namen liest — dort ist das Geschwisterfile der Schaden.
+
+**WP-E2** schliesst dieselbe Luecke in der Python-Auswertung, und dort im empfindlichsten Dokument
+des Projekts. `evaluate_hypotheses.py` schreibt seine Reproduktion jetzt nach `outputs/` und
+**vergleicht** sie gegen den eingefrorenen Stand, statt ihn zu ueberschreiben; ausgeklammert werden
+ausdruecklich benannt `diagnostics.generated_at` und die `Generated`-Zeile des Memos.
+
+Nebenbei beantwortet der Vergleich eine Frage, die nie jemand gestellt hat: **Phase A reproduziert
+unter heutigem Code, Werte identisch.**
+
+**Offengelegt, weil es meine eigene Spur ist:** Das eingefrorene
+`analysis/data/paper1_phaseA_v1/h1_h4_diagnostics.json` traegt jetzt `generated_at` vom
+2026-08-19 — aus meinen WP-A3-Verifikationslaeufen, bevor die Absicherung existierte. Die Werte
+sind nachweislich unveraendert, und das Memo traegt weiterhin den 2026-05-17.
+
+**Und dahinter der eigentliche Befund:** Das Memo liess sich zuruecksetzen, weil es in Git liegt.
+Das JSON nicht, weil `analysis/data/` gitignoriert ist. Ein eingefrorenes Artefakt ausserhalb der
+Versionskontrolle ist nicht eingefroren, sondern liegt nur zufaellig da. Zu entscheiden: die
+Phase-A-Artefakte als Ausnahme in die Versionskontrolle nehmen — dann aber mit dem Wissen, dass der
+Zeitstempel des JSON heute ein falscher ist.
+
+---
+
 ### Regression vollstaendig: 30 von 30 Zellen bitidentisch, und die Abstinenz kostet messbar 16 %
 
 <!-- 7e7c675 -->
