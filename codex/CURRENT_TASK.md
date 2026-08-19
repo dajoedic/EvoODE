@@ -1,88 +1,39 @@
-> **Claude-Status:** `waiting for codex` — WP-E2 übergeben, ich prüfe alle 20 Minuten.
-> Melde dich über `codex/STATUS.md`, nicht in dieser Datei. Committe nichts.
-> Der Dauerauftrag steht in `codex/CODEX_PROTOCOL.md`.
+> **Claude-Status:** `idle` — sichere Warteschlange abgearbeitet, Loop laeuft nur noch
+> als Beobachter der beiden Sondierungszellen. Codex: nichts tun.
 
-# WP-E2 — Das eingefrorene Freeze-Memo wird bei jedem Lauf neu datiert
-**Language: Python**
+# Kein aktiver Task
 
-## Der Befund
+## Stand 2026-08-19
 
-WP-E1 hat den Selbstüberschreib-Fehler in den **Julia**-Studienskripten beseitigt. Die
-**Python**-Auswertung hat ihn weiterhin, und dort trifft er das empfindlichste Dokument, das das
-Projekt besitzt.
+Abgeschlossen und committet: WP-C4, WP-P1/P1b, WP-A2, WP-W1, WP-E1, WP-A3, WP-E2.
+Abgelehnt und ersetzt: WP-C3.
 
-`analysis/scripts/aggregate/evaluate_hypotheses.py` schreibt am Ende
-`docs/paper1_freeze_memo_phaseA.md` — ein Dokument, das sich selbst so beschreibt:
+Auf Orion laufen `evoode-cell-709` (System 56) und `evoode-cell-727` (System 59), beide
+`pretune_off`, seit rund 24 Stunden bei Level 24 bzw. 21 von 30.
 
-```text
-# Paper 1 - Freeze Memo: Phase A Results
-Generated: 2026-05-17T17:44:03.778186+00:00
-Experiment: paper1_phaseA_v1 (300/300 runs, all success=true)
+## Warum hier nichts mehr ansteht
 
-This memo defines what Paper 1 is allowed to claim.
-```
+Die verbliebenen Cap-Posten sind **fingerprint-relevant** und wuerden
+`stage_cap_behavior_fingerprint = 61b6548ef0014593` bewegen. Unter diesem Wert liegen die 120
+abgeschlossenen Regressions-Records. Sie sind deshalb vom Nutzer terminiert zu entscheiden — vor
+der Kampagne mit Neurechnung der Regression, oder danach:
 
-Bei der Abnahme von WP-A3 wurde das Skript zur Verifikation ausgeführt — und hat das Datum auf
-2026-08-19 gesetzt. Von Hand zurückgesetzt.
+1. Die Bandkonstanten `0.35` / `0.62` / `0.1` stecken in keinem Fingerprint. Die Sonde prueft bei
+   0,2 / 0,5 / 0,8 und wuerde eine Verschiebung einer Bandgrenze auf 0,45 nicht bemerken.
+2. System 12 / IC 1 verliert einen korrekten Cap aus falschem Grund: Floor-Ratio 9,9e-06, die
+   Ablehnung stuetzt sich auf reines Rauschen. Die Floor-Tiefen-Bedingung sollte die Bandlogik
+   ganz abschalten, nicht nur den Wiederaufnahmezweig.
+3. Split-Aggregation: Zwei der vier Ablehnungen entstehen durch Stimmenmehrheit statt klarer
+   Erkennung.
 
-**Der Inhalt änderte sich nicht, und genau das ist der Punkt.** Ein eingefrorenes Dokument, das ein
-neues Entstehungsdatum bekommt, behauptet, unter dem heutigen Code erzeugt worden zu sein. Wer es
-später liest, hat keine Möglichkeit, das zu bemerken. Dasselbe gilt für
-`analysis/data/paper1_phaseA_v1/h1_h4_diagnostics.json`.
+## Weitere offene Punkte, ohne Codex loesbar
 
-## Umfang
-
-### Teil 1 — Bestandsaufnahme
-
-Welche Skripte unter `analysis/scripts/` schreiben in Pfade, die bereits belegt sind, und welche
-davon schreiben in **eingefrorene** Artefakte? Als Tabelle in den Report: Skript, Ziel, eingefroren
-ja/nein.
-
-Die Kriterien für „eingefroren" stehen in `CLAUDE.md` und
-`docs/paper1_study_protocol.md`; `paper1_phaseA_v1` ist es, ausdrücklich und mit Begründung.
-
-### Teil 2 — Eingefrorene Ziele werden nicht mehr beschrieben
-
-Ein Lauf gegen eingefrorene Daten darf sein Ergebnis nachrechnen und anzeigen, aber das
-eingefrorene Artefakt **nicht überschreiben**. Wie du das löst, entscheidest du — es sollte aber
-möglich bleiben, die Reproduzierbarkeit zu prüfen, denn genau dafür wurde das Skript bei WP-A3
-gebraucht. Ein Weg, der beides erfüllt: nachrechnen, in ein Vergleichsziel schreiben, und melden,
-ob es mit dem eingefrorenen Stand übereinstimmt.
-
-Anforderungen:
-
-- Ein Lauf gegen Phase A verändert `docs/paper1_freeze_memo_phaseA.md` und
-  `analysis/data/paper1_phaseA_v1/h1_h4_diagnostics.json` **nicht**.
-- Ob die Reproduktion mit dem eingefrorenen Stand übereinstimmt, muss aus der Ausgabe hervorgehen.
-- Der Vergleich muss den **Zeitstempel ausklammern**, sonst meldet er immer eine Abweichung. Sag im
-  Report, welche Felder du ausklammerst und warum genau diese.
-- Der Neuaufbau von Grund auf muss weiterhin möglich sein — etwa über ein ausdrückliches Flag.
-  Es darf nur nicht mehr der Standardfall sein.
-
-### Teil 3 — Nachweis
-
-- Prüfsumme von Memo und Diagnostics-JSON vor und nach einem Phase-A-Lauf: **unverändert**.
-- Die Ausgabe zeigt, dass die Reproduktion übereinstimmt.
-- Ein Test hält das fest und schlägt gegen den heutigen Stand fehl — beides belegen.
-
-Halte dich an `analysis/CONVENTIONS.md`.
-
-## Verboten
-
-- **Keine Änderung an Julia-Code, an der Cap-Logik oder an irgendetwas Fingerprint-Relevantem.**
-  Auf Orion laufen zwei Sondierungszellen; die 120 Regressions-Records liegen unter
-  `1d0ccf8d53c6576d` / `61b6548ef0014593`.
-- **Keine Cluster-Jobs, keine Kampagne, keine Läufe auf Orion.**
-- **Die eingefrorenen Werte nicht „korrigieren".** Stimmt die Reproduktion irgendwo nicht überein,
-  ist das ein **Befund für den Report**, keine Einladung, das Memo anzupassen. Ein solcher Fund
-  wäre wichtig und gehört ausführlich beschrieben.
-- **Nichts committen, nichts stagen, nichts pushen. Kein `git add -A`.**
-- Nichts, was länger als 15 Minuten läuft.
-
-## Abnahme
-
-- Die Bestandsaufnahme aus Teil 1 liegt vor.
-- Ein Phase-A-Lauf lässt Memo und Diagnostics-JSON unverändert, mit Prüfsummen belegt.
-- Die Übereinstimmung der Reproduktion wird gemeldet, die ausgeklammerten Felder sind benannt.
-- Der erzwungene Neuaufbau ist weiterhin möglich und dokumentiert.
-- Der neue Test schlägt gegen den alten Stand fehl und gegen den neuen nicht.
+4. Die eingefrorenen Phase-A-Artefakte unter `analysis/data/` sind gitignoriert und damit nicht
+   wirklich eingefroren. Das JSON traegt seit dem 2026-08-19 einen falschen `generated_at`.
+5. `tests/` liegt im Wurzelverzeichnis neben dem Julia-`test/`, in `analysis/CONVENTIONS.md` nicht
+   vorgesehen.
+6. `docs/hpc_deployment_guide.md` enthaelt Bash-Befehle fuer eine PowerShell-Umgebung; die vier
+   Betriebsfallen stehen bisher nur in `SCRIPTS.md`.
+7. `docs/PAPER_1_draft.md` wartet auf das Review des Nutzers, inklusive der fuenf dort
+   aufgelisteten Widersprueche.
+8. Das Kostenmodell in `docs/hpc_requirements.md` wartet auf die beiden laufenden Zellen.
