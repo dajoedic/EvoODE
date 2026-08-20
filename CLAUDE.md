@@ -278,14 +278,22 @@ the coupled search path 1e-6 is the cheaper, behaviour-equal tolerance; the Syst
    five-case probe draws out of `_cap_split_decision`. Publishability now requires one git hash,
    one config/Phase B fingerprint **and** one behaviour fingerprint.
 
-   **Current values (verified 2026-08-17):** Phase B `e361a2af49366670`, regression
-   `1d0ccf8d53c6576d`, behaviour `61b6548ef0014593`. All carry **no records yet** — the 42 pilot
-   records predate all three and must never be merged with campaign records.
+   **Current values (verified 2026-08-20, after WP-C5):** Phase B `604e79733b22d64d`, regression
+   `17fe7d9cfb8f1be3`, behaviour `ffb0266c7913352c` (probe version 2). All carry **no records
+   yet** — the 120 regression records of 2026-08-19 sit under the previous values and are orphaned
+   by the WP-C5 decision; they are being recomputed. The 42 pilot records predate everything.
 
-   **Still blind:** the probe covers `_cap_split_decision` and nothing else — derivative
-   estimation, floor computation, split aggregation and the whole search loop remain unobserved.
-   And the WP-C4 band constants (0.35 / 0.62 / 0.1) are `const` in `stage_cap.jl`, so they sit in
-   neither fingerprint; the probe ratios 0.2 / 0.5 / 0.8 would not flip if an edge moved to 0.45.
+   **Closed by WP-C5:** the load-bearing constants `post_floor_significant_drop_ratio = 0.35` and
+   `post_floor_min_floor_ratio = 0.1` are now policy fields inside the fingerprint payload, so
+   moving the threshold moves `config_fingerprint`. Still blind: the probe covers
+   `_cap_split_decision` only — derivative estimation, floor computation, split aggregation and the
+   search loop remain unobserved.
+
+   **The threshold is not selectable from data (WP-V1).** Leave-one-system-out puts the reopen
+   threshold between 0.044 and 0.278 while the shipped value is 0.35, and at the selected values
+   Lorenz truncates again. The 11 % margin between 0.35 and Lorenz's worst ratio of 0.315 is a
+   human choice, and it must be reported as one.
+
 5. **Remaining Phase 3 items** (`PAPER_1.md`): filling the external columns of the protocol audit
    from the publications. Open question there: if published numbers were computed on the shipped
    trajectories, we work on cleaner data than the comparison works — a deviation in our favour that
