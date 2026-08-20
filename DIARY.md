@@ -6,6 +6,45 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ## 2026-08-20
 
+### Sondierung, zweite Zelle: gleiche Wanduhr, halb so viele Evaluationen
+
+<!-- HASH -->
+
+System 56 (Lorenz, Standardparameter) `pretune_off` ist fertig. Damit liegen zwei der drei
+Sondierungszellen vor, und sie widersprechen einander.
+
+| | `pretune_on` | `pretune_off` | Faktor |
+|---|---|---|---|
+| **System 56** Laufzeit | 39,95 h | 38,68 h | **0,97** |
+| Parameter-Fits | 610 | 610 | 1,00 |
+| Loss-Evaluationen | 6.697.750 | 3.773.031 | **0,56** |
+| Evals je Fit | 10.980 | 6.185 | 0,56 |
+| | | | |
+| **System 61** Laufzeit | 49,41 h | 14,73 h | **0,30** |
+| Loss-Evaluationen | 3.038.641 | 2.206.537 | 0,73 |
+
+**Der wichtigste Befund ist die Divergenz zwischen Zaehlwerten und Wanduhr.** Auf System 56 sinken
+die Evaluationen um 44 Prozent, die Laufzeit aber um drei Prozent. Jede einzelne Evaluation ist ohne
+Warmstart also rund **1,8-mal teurer**. Naheliegende Erklaerung: Ohne OLS-Start bewegt sich die
+Suche durch Parameterbereiche, in denen die ODE steifer und damit teurer zu integrieren ist.
+
+> **Konsequenz fuers Kostenmodell:** Zaehlwerte lassen sich **nicht** mit einem festen Faktor in
+> Kernstunden umrechnen. Wer aus 44 Prozent weniger Evaluationen auf 44 Prozent weniger Rechenzeit
+> schliesst, liegt um eine Groessenordnung daneben. Das beruehrt Grundsatz 7 an einer empfindlichen
+> Stelle: Zaehlwerte bleiben die richtige Evidenz fuer *Suchaufwand*, taugen aber nicht als
+> Stellvertreter fuer *Rechenzeit*.
+
+**Und es gibt keinen einheitlichen `pretune_off`-Faktor.** Chen-Lee 0,30, Lorenz 0,97 — und System
+59 (Roessler) steht bei Level 23 von 30 nach 38 Stunden gegen 68 Stunden fuer den vollen Lauf mit
+Pretuning, wird also voraussichtlich **langsamer**. Drei Systeme, drei Richtungen. Das Kostenmodell
+muss `pretune_off` je Dimensionsklasse fuehren, nicht als globalen Zu- oder Abschlag.
+
+Beide Records: `error=null`, Fingerprints `e361a2af49366670` / `61b6548ef0014593`, git `88eaeb6` —
+also der Stand vor WP-C5. Fuer die Kostenmessung unerheblich, weil die Caps dieser drei Systeme von
+WP-C5 nicht beruehrt werden.
+
+---
+
 ### WP-C5 — das Zweifelsband ist raus, und die tragenden Konstanten stecken jetzt im Fingerprint
 
 <!-- 2f47aa3 -->
