@@ -1,106 +1,105 @@
-> **Claude-Status:** `waiting for codex` — WP-V1 übergeben, ich prüfe alle 20 Minuten.
+> **Claude-Status:** `waiting for codex` — WP-C5 übergeben, ich prüfe alle 20 Minuten.
 > Melde dich über `codex/STATUS.md`, nicht in dieser Datei. Committe nichts.
 > Der Dauerauftrag steht in `codex/CODEX_PROTOCOL.md`.
 
-# WP-V1 — Erkennt der Controller seine eigene Unzuverlässigkeit?
+# WP-C5 — Das Zweifelsband wird entfernt
 **Language: Julia**
 
 ## Warum
 
-Der Stage-Cap funktioniert, aber die Aussage „er schneidet nichts ab" ist derzeit eine Beobachtung
-auf denselben Daten, an denen die Entscheidungsregel gewählt wurde. Für Paper 1 fehlen genau zwei
-Dinge, und beide sind aus vorhandenen Daten beantwortbar.
+WP-V1 (`docs/WP-V1.md`, Commit `55a12f8`) hat gezeigt, dass das in WP-C4 eingeführte Zweifelsband
+seinen Zweck nicht erfüllt. Über alle 80 Gleichungszeilen der 20 exakten Systeme:
 
-**Erstens der Betriebspunkt.** Ein Controller, der sich im Zweifel enthält, hat zwei Fehlerarten mit
-völlig verschiedenen Kosten:
+| | |
+|---|---|
+| Cap gesetzt, korrekt | 77 |
+| Cap gesetzt, falsch | 0 |
+| Band **verhindert** einen falschen Cap | **0** |
+| Band **nimmt einen korrekten Cap weg** | **3** |
 
-|  | Cap gesetzt | Cap enthält sich (`nothing`) |
-|---|---|---|
-| Cap wäre **korrekt** (>= benötigte Stufe) | richtig festgelegt | **unnötige Enthaltung** — kostet Rechenzeit |
-| Cap wäre **falsch** (< benötigte Stufe) | **falsche Festlegung** — kostet die Lösung | **richtig erkannt** |
+Und der Lorenz-Fix, um dessentwillen das Band gebaut wurde, kommt nachweislich **nicht** vom Band:
+Alle vier Lorenz-Zeilen liefern auch mit der binären Entscheidung Cap 3. Repariert hat es der
+**Wiederaufnahme-Zweig** — die Regel, die bei einer Floor-Unterschreitung weitersucht, wenn spätere
+Stufen das Residuum noch deutlich senken. Den enthält die binäre Variante ebenso.
 
-Die entscheidende Zelle ist die falsche Festlegung. Ist sie leer, lautet die Aussage: *Der Controller
-legt sich nie falsch fest, und der Preis dafür sind N unnötige Enthaltungen.* Das ist belastbar. Der
-heutige Stand deutet auf 45 korrekte Festlegungen, null falsche und drei bis vier Enthaltungen hin —
-zu prüfen, nicht zu übernehmen.
-
-**Zweitens die Wahl der Bandgrenzen.** `0.35`, `0.62` und `0.1` wurden anhand derselben 20 Systeme
-festgelegt, gegen die sie validiert werden. Das ist der angreifbarste Punkt der Arbeit. Eine
-Leave-one-system-out-Prüfung beantwortet ihn.
+**Entscheidung des Nutzers:** Das Band wird entfernt, der Wiederaufnahme-Zweig bleibt.
 
 ## Umfang
 
-Drei Teile. **Teil 3 hängt von Teil 2 ab** — siehe dort.
+### Teil 1 — Zurück auf zwei Ausgänge
 
-### Teil 1 — Die Konfusionsmatrix über alle 80 Gleichungszeilen
+Die Entscheidung nach einer Floor-Unterschreitung hat wieder **zwei** Ausgänge statt drei:
 
-Für jede der 80 `(System, IC-Set, Gleichung)`-Zeilen der 20 exakten Systeme:
+- eine spätere Stufe senkt das Residuum deutlich → weitersuchen, höher deckeln
+- sonst → hier deckeln
 
-- die benötigte Stufe, aus `phase_b_support.json` abgeleitet wie im WP-C1-Audit — **wiederverwenden,
-  nicht neu implementieren**
-- den Cap, den der aktuelle Stand liefert
-- den Cap, den dieselbe Logik **ohne** Zweifelsband liefern würde, also mit der binären Entscheidung
-  wie vor WP-C4
+Der dritte Ausgang, die Enthaltung im Zwischenbereich, entfällt. Damit entfällt auch die zweite
+Bandgrenze; es bleibt **eine** Schwelle für „deutlich".
 
-Daraus die Matrix. Die Spalte „wäre falsch" bezieht sich auf den Cap **ohne** Band: Was hätte der
-Controller getan, wenn er sich hätte festlegen müssen?
+Was mit den drei Policy-Feldern geschieht, die WP-V1 eingeführt hat
+(`post_floor_clear_drop_ratio`, `post_floor_clear_no_drop_ratio`, `post_floor_min_floor_ratio`),
+entscheidest du und begründest es im Report. Die verbleibende Schwelle sollte konfigurierbar bleiben
+— sie ist die tragende Größe des Mechanismus, und WP-V1 hat gezeigt, dass ihre Wahl eine
+wissenschaftliche Frage ist und keine Implementierungsdetail.
 
-Zusätzlich je Zeile ausgeben, welche Größe die Enthaltung ausgelöst hat, damit die Fälle einzeln
-nachvollziehbar bleiben.
+**Nicht betroffen und unverändert zu lassen:** die Ablehnung bei fehlender Anregung
+(`_cap_residuals_uninformative_without_gain`). Sie ist ein anderer Mechanismus, war nicht Gegenstand
+des Befundes und betrifft System 31 / IC 2.
 
-**Wichtig:** Es geht nicht darum, eine gute Zahl zu erzeugen. Findet sich eine **falsche
-Festlegung**, ist das der wichtigste Befund des Auftrags und gehört an den Anfang des Reports.
+### Teil 2 — Zielbild, zeilenweise
 
-### Teil 2 — Sind die Bandkonstanten injizierbar, ohne die Fingerprints zu bewegen?
+Nach der Änderung, gegen den heutigen Stand geprüft:
 
-Die drei Konstanten sind derzeit `const` in `src/structure/stage_cap.jl` und damit weder
-konfigurierbar noch in einem Fingerprint enthalten. Für Teil 3 müssen sie von außen setzbar sein.
+| Zeilen | Soll |
+|---|---|
+| 55 Gl. 3 und 56 Gl. 3, beide IC-Sets | Cap **3**, unverändert |
+| 12 / IC 1 Gl. 1 | Cap **2** — kommt zurück |
+| 31 / IC 1 Gl. 1 | Cap **3** — kommt zurück |
+| 55 / IC 2 Gl. 2 | Cap **4** — kommt zurück |
+| 31 / IC 2 Gl. 1 | **`nothing`**, unverändert (fehlende Anregung) |
+| alle übrigen Zeilen | **unverändert**, Cap-Wert für Cap-Wert |
 
-Prüfe zuerst und berichte, **ob** sich das erreichen lässt, ohne dass sich
+Erwartung: **48 endliche Caps statt 45**, weiterhin **null abgeschnittene Zeilen**. Weicht etwas
+davon ab, ist das zu berichten und nicht zu erzwingen.
 
-- `config_fingerprint()` = `1d0ccf8d53c6576d`,
-- `phase_b_fingerprint()` = `e361a2af49366670` und
+### Teil 3 — Fingerprints, bewusst bewegt
+
+Die Änderung bewegt `stage_cap_behavior_fingerprint()`, und das ist beabsichtigt: Die Sonde prüft
+genau die drei Ausgänge, von denen einer entfällt. Ob sich auch `config_fingerprint()` und
+`phase_b_fingerprint()` bewegen, hängt von deiner Wahl in Teil 1 ab.
+
+Alle drei alten und neuen Werte im Report festhalten. Alt:
+
+- `config_fingerprint()` = `1d0ccf8d53c6576d`
+- `phase_b_fingerprint()` = `e361a2af49366670`
 - `stage_cap_behavior_fingerprint()` = `61b6548ef0014593`
 
-verändern. Alle drei müssen **exakt** stehen bleiben; unter ihnen liegen 120 abgeschlossene
-Regressions-Records. Der Weg dahin ist deine Entscheidung.
+Die Sonde in `src/structure/stage_cap_fingerprint.jl` enthält einen Probe-Fall
+`late_floor_doubt_abstains`, der auf den entfallenden Ausgang zielt. Passe die Sonde an und erhöhe
+`STAGE_CAP_BEHAVIOR_FINGERPRINT_VERSION`, damit der Wechsel als eigene Ära erkennbar ist.
 
-**Bewegt sich einer der drei Werte, brich Teil 2 ab, führe Teil 3 nicht aus und berichte das.** Dann
-entscheidet der Nutzer, ob die Fingerprints bewegt werden dürfen. Das ist ein gültiger Ausgang, kein
-Fehlschlag.
+### Teil 4 — Tests und Nachweis
 
-### Teil 3 — Leave-one-system-out, nur bei gelungenem Teil 2
-
-Für jedes der 20 exakten Systeme: Bandgrenzen auf den **übrigen 19** Systemen wählen, dann auf dem
-ausgelassenen System auswerten und dort die Matrix aus Teil 1 bilden.
-
-Wie „auf 19 Systemen wählen" konkret aussieht, entwirfst du und begründest es im Report — etwa die
-Grenzen so legen, dass auf den 19 Systemen keine falsche Festlegung entsteht und die Zahl der
-Enthaltungen minimal bleibt. Entscheidend ist allein, dass das ausgelassene System die Wahl **nicht
-beeinflusst**.
-
-Ergebnis: die aggregierte Konfusionsmatrix über alle 20 Auslassungen, gegen die In-Sample-Matrix aus
-Teil 1 gestellt. Dazu der Wertebereich, den die Grenzen über die 20 Durchläufe annehmen — schwanken
-sie stark, sind sie datenabhängig, und das gehört gesagt.
+- Die Tests aus WP-C4 zu den drei Ausgängen auf zwei Ausgänge anpassen.
+- `test/test_stage_cap.jl` und `test/test_regression_runner_gate2.jl` müssen grün sein.
+- Das WP-C1-Audit erneut laufen lassen, zeilenweise gegen den heutigen Stand stellen, und die
+  Zeilenzahl endlicher Caps vorher und nachher berichten.
 
 ## Verboten
 
-- **Keine Änderung an den Default-Werten** von `0.35`, `0.62`, `0.1`, `tau_rel`, `tau_abs`,
-  `lookahead_horizon` oder irgendeiner anderen Policy-Konstante. Teil 2 macht sie setzbar, nicht
-  anders.
-- **Keine Cluster-Jobs, keine Kampagne, keine Läufe auf Orion.** Dort laufen zwei Sondierungszellen.
-- **Kein Anpassen der Bandgrenzen an das Ergebnis.** Zeigt Teil 3, dass die Grenzen out of sample
-  schlechter abschneiden, ist das der Befund. Nicht nachbessern.
-- **Keine Ground-Truth in `estimate_stage_caps`.** Die benötigte Stufe wird ausschließlich außerhalb
-  zur Bewertung verwendet.
+- **Keine Cluster-Jobs, keine Kampagne, keine Läufe auf Orion.** Dort laufen zwei
+  Sondierungszellen.
+- **Den Wiederaufnahme-Zweig nicht verändern** und seine Schwelle nicht auf einen anderen Wert
+  setzen. Entfernt wird das Band, nicht die Regel, die Lorenz repariert.
+- **`docs/wp_c1_stage_cap_horizon_audit.md` und `docs/wp_c4_stage_cap_horizon_audit.md` nicht
+  anfassen** — historische Belege mit Regenerierverbot.
 - **Nichts committen, nichts stagen, nichts pushen. Kein `git add -A`.**
-- Nichts, was länger als 15 Minuten läuft. Alles hier rechnet Ableitungsregressionen, keine Fits.
+- Nichts, was länger als 15 Minuten läuft.
 
 ## Abnahme
 
-- Die Konfusionsmatrix über 80 Zeilen liegt vor, alle vier Zellen beziffert.
-- Jede Enthaltung ist einzeln aufgeführt, mit der auslösenden Größe.
-- Eine etwaige falsche Festlegung steht am Anfang des Reports.
-- Für Teil 2 ist belegt, dass alle drei Fingerprints unverändert sind — oder begründet, dass es
-  nicht geht.
-- Bei gelungenem Teil 2: die Out-of-Sample-Matrix und der Wertebereich der Grenzen.
+- Zielbild aus Teil 2 zeilenweise erfüllt, insbesondere: Lorenz bleibt bei 3, die drei Caps kommen
+  zurück, keine Zeile wird abgeschnitten.
+- Endliche Caps von 45 auf 48.
+- Alte und neue Werte aller drei Fingerprints im Report, Sondenversion erhöht.
+- Beide Testsuiten grün.
