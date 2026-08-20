@@ -8,7 +8,7 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ### Sondierung, zweite Zelle: gleiche Wanduhr, halb so viele Evaluationen
 
-<!-- HASH -->
+<!-- 6bdafb9 -->
 
 System 56 (Lorenz, Standardparameter) `pretune_off` ist fertig. Damit liegen zwei der drei
 Sondierungszellen vor, und sie widersprechen einander.
