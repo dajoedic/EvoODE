@@ -8,7 +8,7 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ### WP-V1 — das Zweifelsband verhindert nichts und kostet drei korrekte Caps
 
-<!-- HASH -->
+<!-- 55a12f8 -->
 
 Der Test, der klaeren sollte, ob der Controller seine eigene Unzuverlaessigkeit erkennt, hat die
 Begruendung von WP-C4 umgestossen. Codex meldete `blocked` wegen der 15-Minuten-Grenze (904 s), hat
