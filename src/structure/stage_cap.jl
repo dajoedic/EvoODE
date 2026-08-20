@@ -26,6 +26,9 @@ Base.@kwdef struct LookAheadStageCapPolicy
     tau_abs::Float64 = 1e-8
     cond_cap::Float64 = 1e10
     excitation_floor::Float64 = 1e-10
+    post_floor_clear_drop_ratio::Float64 = 0.35
+    post_floor_clear_no_drop_ratio::Float64 = 0.62
+    post_floor_min_floor_ratio::Float64 = 0.1
 end
 
 const _CAP_POST_FLOOR_CLEAR_DROP_RATIO = 0.35
@@ -176,6 +179,15 @@ function _cap_validate_policy(policy::LookAheadStageCapPolicy)
     if policy.lookahead_horizon < 1
         error("LookAheadStageCapPolicy.lookahead_horizon must be >= 1")
     end
+    if policy.post_floor_clear_drop_ratio < 0.0
+        error("LookAheadStageCapPolicy.post_floor_clear_drop_ratio must be >= 0")
+    end
+    if policy.post_floor_clear_no_drop_ratio < policy.post_floor_clear_drop_ratio
+        error("LookAheadStageCapPolicy.post_floor_clear_no_drop_ratio must be >= post_floor_clear_drop_ratio")
+    end
+    if policy.post_floor_min_floor_ratio < 0.0
+        error("LookAheadStageCapPolicy.post_floor_min_floor_ratio must be >= 0")
+    end
     return nothing
 end
 
@@ -194,7 +206,8 @@ end
 function _cap_post_floor_significant_drop(residuals::AbstractVector{Float64},
                                           floors::AbstractVector{Float64},
                                           applicable_stages::Vector{Int},
-                                          stage_pos::Int)
+                                          stage_pos::Int,
+                                          policy::LookAheadStageCapPolicy = LookAheadStageCapPolicy())
     stage = applicable_stages[stage_pos]
     current_residual = residuals[stage]
     floor = floors[stage]
@@ -204,7 +217,7 @@ function _cap_post_floor_significant_drop(residuals::AbstractVector{Float64},
     floor > 0.0 || return :no_clear_drop
 
     floor_ratio = current_residual / floor
-    floor_ratio < _CAP_POST_FLOOR_MIN_FLOOR_RATIO && return :no_clear_drop
+    floor_ratio < policy.post_floor_min_floor_ratio && return :no_clear_drop
     stage_pos == length(applicable_stages) && return :no_clear_drop
 
     later_residuals = [
@@ -215,8 +228,8 @@ function _cap_post_floor_significant_drop(residuals::AbstractVector{Float64},
     isempty(later_residuals) && return :undecidable
 
     later_ratio = minimum(later_residuals) / current_residual
-    later_ratio <= _CAP_POST_FLOOR_CLEAR_DROP_RATIO && return :clear_drop
-    later_ratio >= _CAP_POST_FLOOR_CLEAR_NO_DROP_RATIO && return :no_clear_drop
+    later_ratio <= policy.post_floor_clear_drop_ratio && return :clear_drop
+    later_ratio >= policy.post_floor_clear_no_drop_ratio && return :no_clear_drop
     return :undecidable
 end
 
@@ -245,7 +258,7 @@ function _cap_split_decision(residuals::AbstractVector{Float64}, usable::Abstrac
         usable[stage] || return (kind = :invalid, cap = nothing, stage = stage)
 
         if residuals[stage] <= floors[stage]
-            post_floor = _cap_post_floor_significant_drop(residuals, floors, applicable_stages, pos)
+            post_floor = _cap_post_floor_significant_drop(residuals, floors, applicable_stages, pos, policy)
             if post_floor == :clear_drop && observed_gain
                 observed_gain = true
                 pos += 1

@@ -4,6 +4,73 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ---
 
+## 2026-08-20
+
+### WP-V1 — das Zweifelsband verhindert nichts und kostet drei korrekte Caps
+
+<!-- HASH -->
+
+Der Test, der klaeren sollte, ob der Controller seine eigene Unzuverlaessigkeit erkennt, hat die
+Begruendung von WP-C4 umgestossen. Codex meldete `blocked` wegen der 15-Minuten-Grenze (904 s), hat
+den Report aber vollstaendig erzeugt; die Zahlen sind hier nachgerechnet.
+
+**Die Konfusionsmatrix ueber alle 80 Gleichungszeilen der 20 exakten Systeme:**
+
+| | |
+|---|---|
+| Cap gesetzt, korrekt | 77 |
+| Cap gesetzt, **falsch** | **0** |
+| Zweifelsband **verhindert** einen falschen Cap | **0** |
+| Zweifelsband **nimmt einen korrekten Cap weg** | **3** |
+
+Die drei: System 12 / IC 1 (binaer 2, benoetigt 2), 31 / IC 1 (binaer 3, benoetigt 3) und
+55 / IC 2 Gl. 2 (binaer 4, benoetigt 3). Auf den geprueften Daten hat das Band **nur Kosten und
+keinen einzigen Nutzen**.
+
+**Und der Lorenz-Fix kam nicht vom Band.** Alle vier Lorenz-Zeilen liefern auch mit der binaeren
+Entscheidung Cap 3:
+
+```text
+Sys55 IC1 Gl3: benoetigt 3, binaer=3, aktuell=3
+Sys55 IC2 Gl3: benoetigt 3, binaer=3, aktuell=3
+Sys56 IC1 Gl3: benoetigt 3, binaer=3, aktuell=3
+Sys56 IC2 Gl3: benoetigt 3, binaer=3, aktuell=3
+```
+
+Repariert hat es der **Wiederaufnahme-Zweig** — die Regel, die bei einer Floor-Unterschreitung
+weitersucht, wenn spaetere Stufen noch deutlich verbessern. Den enthaelt die binaere Variante
+ebenso. Das Band ist nur der dritte Ausgang, die Enthaltung, und der zahlt sich nicht aus.
+
+**Die Leave-one-system-out-Pruefung schlaegt zu.** Werden die Grenzen auf 19 Systemen gewaehlt und
+auf dem zwanzigsten ausgewertet, entstehen **zwei falsche Festlegungen** — beide Lorenz, Gl. 3,
+Cap 2 bei benoetigter Stufe 3. Genau der Defekt, den WP-C4 beheben sollte.
+
+Die Ursache ist ablesbar: Tragend ist die **Wiederaufnahme-Schwelle**, ausgeliefert 0,35. Lorenz'
+schlechtestes Verhaeltnis liegt bei 0,315 — **11 Prozent Abstand**. Kein datengetriebenes
+Auswahlverfahren findet 0,35; die LOSO-Wahl landet zwischen 0,044 und 0,278, und dort faellt Lorenz
+durch. Die beiden Bandgrenzen kollabieren dabei auf denselben Wert, das Band hat also Breite null —
+die Zielfunktion "keine falschen Festlegungen im Training, dann minimale Enthaltungen" treibt es
+dorthin.
+
+> **Der Befund, der bleibt:** Der entscheidende Parameter der Vorabkontrolle ist **nicht aus den
+> Daten bestimmbar**. Das ist keine Panne im Mechanismus, sondern die These des Bogens in ihrer
+> unbequemsten Form — Ableitungsqualitaet begrenzt jede Vorabkontrolle, und wo die Grenze liegt,
+> sagen die Daten nicht.
+
+**Zur Herkunft dieses Fehlers, offen:** Die Empfehlung fuer das Zweifelsband stammt von Claude, mit
+der Begruendung, es sei "die sicherste Variante, die alles abdeckt". Sie war falsch. Aufgedeckt hat
+es die Pruefung, die im selben Zug mitverlangt wurde — die LOSO-Validierung war als Absicherung
+gegen genau diese Art von Selbsttaeuschung gedacht und hat funktioniert.
+
+**Entscheidung des Nutzers (2026-08-20):** Das Band wird entfernt, die binaere Entscheidung bleibt.
+Die 120 Regressions-Records werden unter dem neuen Fingerprint neu gerechnet.
+
+Alle drei Fingerprints blieben waehrend WP-V1 unveraendert; die Bandkonstanten wurden nur
+injizierbar gemacht (`post_floor_clear_drop_ratio`, `post_floor_clear_no_drop_ratio`,
+`post_floor_min_floor_ratio` als Policy-Felder mit den bisherigen Werten als Default).
+
+---
+
 ## 2026-08-19
 
 ### WP-E1/E2 — dreimal hat eine Abnahme den Beleg zerstoert, den sie bestaetigen sollte
