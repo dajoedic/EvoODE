@@ -8,7 +8,7 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ### WP-C5 — das Zweifelsband ist raus, und die tragenden Konstanten stecken jetzt im Fingerprint
 
-<!-- HASH -->
+<!-- 2f47aa3 -->
 
 Konsequenz aus WP-V1. Die Entscheidung nach einer Floor-Unterschreitung hat wieder **zwei**
 Ausgaenge: weitersuchen, wenn eine spaetere Stufe deutlich verbessert, sonst deckeln. Die Enthaltung
