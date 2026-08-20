@@ -5,7 +5,7 @@ using Random
     project_root = dirname(@__DIR__)
     script = "using EvoODE; println(EvoODE.stage_cap_behavior_fingerprint())"
     output = read(`$(Base.julia_cmd()) --project=$project_root -e $script`, String)
-    @test strip(output) == "61b6548ef0014593"
+    @test strip(output) == "ffb0266c7913352c"
 end
 
 include(joinpath(@__DIR__, "..", "src", "EvoODE.jl"))
@@ -115,7 +115,7 @@ end
     @test uninformative_without_gain == (kind = :undecidable, cap = nothing, stage = 1)
 end
 
-@testset "post-floor split decision has three relative outcomes" begin
+@testset "post-floor split decision has two relative outcomes" begin
     policy = LookAheadStageCapPolicy(lookahead_horizon = 5)
 
     clear_later_drop = EvoODE._cap_split_decision(
@@ -148,20 +148,20 @@ end
         2,
     ) == :no_clear_drop
 
-    doubtful_later_drop = EvoODE._cap_split_decision(
+    intermediate_later_drop = EvoODE._cap_split_decision(
         [10.0, 1.0, 0.5],
         [true, true, true],
         [0.1, 2.0, 2.0],
         [1, 2, 3],
         policy,
     )
-    @test doubtful_later_drop == (kind = :undecidable, cap = nothing, stage = 2)
+    @test intermediate_later_drop == (kind = :positive, cap = 2, stage = 2)
     @test EvoODE._cap_post_floor_significant_drop(
         [10.0, 1.0, 0.5],
         [0.1, 2.0, 2.0],
         [1, 2, 3],
         2,
-    ) == :undecidable
+    ) == :no_clear_drop
 end
 
 @testset "stage cap behavior fingerprint is stable and behavior-derived" begin
@@ -171,10 +171,10 @@ end
     @test fp1 == fp2
     @test fp1 isa String
     @test length(fp1) == 16
-    @test fp1 == "61b6548ef0014593"
+    @test fp1 == "ffb0266c7913352c"
     @test occursin(r"^[0-9a-f]{16}$", fp1)
     @test occursin(
-        "late_floor_doubt_abstains",
+        "late_floor_intermediate_drop_caps",
         EvoODE._cap_fingerprint_canonical_value(EvoODE._cap_probe_decision_payload()),
     )
 end

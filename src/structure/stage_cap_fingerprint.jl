@@ -2,7 +2,7 @@
 
 using SHA
 
-const STAGE_CAP_BEHAVIOR_FINGERPRINT_VERSION = 1
+const STAGE_CAP_BEHAVIOR_FINGERPRINT_VERSION = 2
 
 function _cap_probe_decision_payload()
     policy = LookAheadStageCapPolicy(tau_abs = 1e-6, tau_rel = 1e-4, lookahead_horizon = 5)
@@ -22,7 +22,7 @@ function _cap_probe_decision_payload()
             stages = [1, 2, 3],
         ),
         (
-            name = "late_floor_doubt_abstains",
+            name = "late_floor_intermediate_drop_caps",
             residuals = [10.0, 1.0, 0.5],
             usable = [true, true, true],
             floors = [0.1, 2.0, 2.0],
@@ -55,6 +55,8 @@ function _cap_probe_decision_payload()
             tau_abs = policy.tau_abs,
             cond_cap = policy.cond_cap,
             excitation_floor = policy.excitation_floor,
+            post_floor_significant_drop_ratio = policy.post_floor_significant_drop_ratio,
+            post_floor_min_floor_ratio = policy.post_floor_min_floor_ratio,
         ),
         probes = [
             (

@@ -6,6 +6,55 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ## 2026-08-20
 
+### WP-C5 — das Zweifelsband ist raus, und die tragenden Konstanten stecken jetzt im Fingerprint
+
+<!-- HASH -->
+
+Konsequenz aus WP-V1. Die Entscheidung nach einer Floor-Unterschreitung hat wieder **zwei**
+Ausgaenge: weitersuchen, wenn eine spaetere Stufe deutlich verbessert, sonst deckeln. Die Enthaltung
+im Zwischenbereich entfaellt, und mit ihr die zweite Bandgrenze.
+
+**Zielbild zeilenweise getroffen**, hier nachgerechnet und nicht aus dem Report uebernommen:
+
+| | |
+|---|---|
+| Gleichungszeilen | 80 |
+| endliche Caps | **45 → 48** |
+| abgeschnittene Zeilen | **0** |
+| geaenderte Zeilen | **genau 3** |
+
+Die drei sind exakt die von WP-V1 vorhergesagten: 12 / IC 1 `nothing` → 2, 31 / IC 1 `nothing` → 3,
+55 / IC 2 Gl. 2 `nothing` → 4. Alle vier Lorenz-Zeilen bleiben bei Cap 3, System 31 / IC 2 bleibt
+`nothing`. Beide Testsuiten gruen.
+
+**Der eigentliche Gewinn war nicht beauftragt.** Die beiden verbleibenden Konstanten —
+`post_floor_significant_drop_ratio = 0.35` und `post_floor_min_floor_ratio = 0.1` — sind jetzt
+Policy-Felder und Teil der Fingerprint-Nutzlast. Damit ist die Luecke geschlossen, die seit WP-P1
+in `CLAUDE.md` stand: Die tragende Schwelle steckte in **keinem** der beiden Fingerprints, eine
+Verschiebung von 0,35 auf 0,45 waere unbemerkt geblieben. Jetzt bewegt sie `config_fingerprint`.
+
+**Alle drei Fingerprints bewegt, absichtlich:**
+
+| | vorher | nachher |
+|---|---|---|
+| `config_fingerprint()` | `1d0ccf8d53c6576d` | `17fe7d9cfb8f1be3` |
+| `phase_b_fingerprint()` | `e361a2af49366670` | `604e79733b22d64d` |
+| `stage_cap_behavior_fingerprint()` | `61b6548ef0014593` | `ffb0266c7913352c` |
+
+Die Sondenversion steht auf **2**: Der frueher gepruefte dritte Ausgang existiert nicht mehr, der
+Wechsel ist damit als eigene Aera erkennbar statt als stille Aenderung.
+
+**Folge:** Die 120 Regressions-Records vom 2026-08-19 liegen unter den alten Werten und sind damit
+verwaist. Sie werden unter den neuen neu gerechnet — Entscheidung des Nutzers, getroffen bevor die
+Kampagne laeuft und nicht danach.
+
+**Nebenbefund zur Hausordnung:** Das Audit-Skript hat wegen der WP-E1-Absicherung eine zweite,
+zeitgestempelte Reportdatei angelegt, weil `docs/WP-C5.md` bereits existierte. Beide waren
+inhaltsgleich; die Kopie wurde entfernt. Die Regel greift also — sie ist nur beim ersten Lauf eines
+neuen Pakets einen Tick zu eifrig.
+
+---
+
 ### WP-V1 — das Zweifelsband verhindert nichts und kostet drei korrekte Caps
 
 <!-- 55a12f8 -->

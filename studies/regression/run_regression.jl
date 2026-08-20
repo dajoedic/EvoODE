@@ -56,6 +56,8 @@ const LOOKAHEAD_CAP_POLICY = (
     tau_abs = 1e-8,
     cond_cap = 1e10,
     excitation_floor = 1e-10,
+    post_floor_significant_drop_ratio = 0.35,
+    post_floor_min_floor_ratio = 0.1,
 )
 
 const OPTIONS_CONFIG = (
@@ -285,6 +287,8 @@ function config_fingerprint()
             tau_abs = LOOKAHEAD_CAP_POLICY.tau_abs,
             cond_cap = LOOKAHEAD_CAP_POLICY.cond_cap,
             excitation_floor = LOOKAHEAD_CAP_POLICY.excitation_floor,
+            post_floor_significant_drop_ratio = LOOKAHEAD_CAP_POLICY.post_floor_significant_drop_ratio,
+            post_floor_min_floor_ratio = LOOKAHEAD_CAP_POLICY.post_floor_min_floor_ratio,
         ),
         discovery_options = OPTIONS_CONFIG,
         trajectory_solver = (

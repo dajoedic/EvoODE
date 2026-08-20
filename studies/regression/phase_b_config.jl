@@ -329,6 +329,8 @@ function phase_b_fingerprint()
             tau_abs = LOOKAHEAD_CAP_POLICY.tau_abs,
             cond_cap = LOOKAHEAD_CAP_POLICY.cond_cap,
             excitation_floor = LOOKAHEAD_CAP_POLICY.excitation_floor,
+            post_floor_significant_drop_ratio = LOOKAHEAD_CAP_POLICY.post_floor_significant_drop_ratio,
+            post_floor_min_floor_ratio = LOOKAHEAD_CAP_POLICY.post_floor_min_floor_ratio,
         ),
         discovery_options = OPTIONS_CONFIG,
         trajectory_solver = (
