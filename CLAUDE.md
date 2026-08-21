@@ -268,7 +268,8 @@ the coupled search path 1e-6 is the cheaper, behaviour-equal tolerance; the Syst
    At `parallelism: 16` that is ~9 days wall; the makespan floor is the longest single cell at
    **68 h**, so no parallelism gets the campaign under 3 days. Remaining blind spots: systems 1–23
    rest on one measured system, 63 on none; one seed, one IC set (System 62 varies 14x between seeds
-   42 and 123). Rewrite `docs/hpc_requirements.md` from these numbers. Capacity agreed with the site:
+   42 and 123). `docs/hpc_requirements.md` was rewritten from these numbers on 2026-08-21 and is now
+   the cost reference. Capacity agreed with the site:
    **`parallelism: 16`** of 96 cluster cores, raise on request. No walltime limit, therefore no
    checkpointing needed.
 

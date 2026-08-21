@@ -1,375 +1,199 @@
-# EvoODE — HPC Resource Request
+# EvoODE — Phase B Compute: measured cost model and resource profile
 
-> ## ⚠ SUPERSEDED — do not plan from this document
->
-> Written for a Slurm site with a core-hour allocation. **The actual target is SCCH "Orion", an
-> OpenShift/Kubernetes cluster with two worker nodes and 96 cores in total.** Three things in here
-> are known to be wrong:
->
-> - **The platform.** Apptainer, `sbatch --array`, walltime classes and the Julia-module question do
->   not apply. The Apptainer definition and the Slurm scripts this document references were deleted
->   on 2026-08-13. The working path is `containers/Dockerfile` plus `k8s/`, described in
->   `docs/hpc_deployment_guide.md`.
-> - **The runtime estimates.** §5 and §6 are one to two orders of magnitude too high. The work
->   counts held up — a 4D cell really does perform ~4.5e6 ODE integrations — but the
->   seconds-per-integration conversion came from a loaded laptop and was off by a factor of 20 to 80.
->   Measured on Orion: 2D cells from 10 s to over 3 h, 3D 399 s and 922 s, 4D 300 s and 4,279 s.
-> - **The walltime concern in §6.** There is no hard walltime on Orion, and no checkpointing is
->   required.
->
-> What remains valid: the workload shape (independent single-core cells), the per-cell resource
-> profile, and the reproducibility constraints in §7.
->
-> A rewrite follows once the pilot measurements are complete. Until then, `DIARY.md` (entries WP-H2
-> to WP-H6) holds the current picture.
+*Rewritten 2026-08-21 from measurements. The previous version was a pre-access resource request
+written for a Slurm site with laptop-derived estimates; it was superseded in full. What that
+document asked for has been granted, and every number it estimated has now been measured.*
+
+**Scope.** This document holds one thing: what the Phase B campaign costs, how that number was
+derived, and where it is still blind. The mechanics of getting code onto the cluster live in
+`docs/hpc_deployment_guide.md`; the chronology of the measurements lives in `DIARY.md`.
 
 ---
 
-Prepared for the HPC consultation on 2026-08-06.
-Contact: David Jödicke. Project: EvoODE (PhD, data-driven discovery of ODE systems).
+## 1. The number
 
----
-
-## 1. The ask, in one table
-
-| Item | Request |
+| Item | Value |
 |---|---|
-| Workload | 846 independent single-core jobs, no inter-process communication |
-| Estimated compute | **~4,500 core-hours**, uncertain by a factor of ~2 — see §5 |
-| Allocation requested | **10,000 core-hours**, to absorb the uncertainty and one re-run |
-| Cores per job | 1 (explicitly single-threaded, see §4) |
-| Memory per job | 2 GB |
-| Longest single job | ~23 h estimated (one 4D system); see §6 — this is the main open question |
-| Storage | < 10 GB total, ~50 MB input |
-| Software | Julia 1.12.6, exact version pinned; no MPI, no GPU, no licensed software |
-| Internet at runtime | **none needed**, but see §4 — needed once at image build time |
-
-Preferred execution model: **Slurm job arrays**, one array task per run, split into four arrays by
-system dimension so that walltime limits can be set per class.
-
----
-
-## 2. What the workload is
-
-The project discovers interpretable systems of ordinary differential equations from time-series
-data. A single job takes one dynamical system, one algorithm configuration and one random seed, and
-runs a structure search that repeatedly fits parameters and integrates candidate models.
-
-A job is a **pure function of its inputs**: it reads a small JSON dataset (~50 MB, read-only),
-writes one JSON record plus a log, and shares nothing with any other job. There is no
-communication, no shared state, no ordering constraint. Failures are per-job and do not affect
-others.
-
-This makes the workload embarrassingly parallel: throughput scales linearly with the number of
-cores made available, and the job count can be partitioned arbitrarily.
-
-### Job count
-
-| Campaign | Jobs | Purpose |
-|---|---|---|
-| Phase B main experiment | 756 | 63 systems × 2 conditions × 3 seeds × 2 initial-condition sets |
-| Regression baseline and failure analysis | 90 | 5 systems × 3 variants × 3 seeds × 2 initial-condition sets |
-| **Total** | **846** | |
+| Campaign | `paper1_phaseB_v1` — 63 systems × 2 conditions × 3 seeds × 2 IC sets = **756 cells** |
+| Projected compute | **~3,384 core-hours** on a `pretune_on` basis — see §3 for the correction |
+| Platform | SCCH "Orion", OpenShift/Kubernetes, 96 cores across two worker nodes |
+| Agreed concurrency | `parallelism: 16`, raise on request |
+| Wall time at 16 | **~9 days** (3,384 / 16 ≈ 212 h) |
+| Makespan floor | **68 h** — the longest single cell; no parallelism gets the campaign under 3 days |
+| Cores per cell | 1, explicitly single-threaded |
+| Memory per cell | ~1 GB resident, 2 GB requested |
+| Storage | < 10 GB total, ~50 MB read-only input |
+| Walltime limit | none on Orion, therefore **no checkpointing needed** |
+| Software | Julia 1.12.6, pinned; no MPI, no GPU, no licensed components |
 
 ---
 
-## 3. Resource profile per job
+## 2. Where the number comes from
+
+The projection rests on the **pilot**: 42 unique cells from `pilot_e20af80`, `pilot_sweep_tasks` and
+`pilot_sweep3_tasks`, plus 888 level intervals from the heartbeat files. Coverage is systems 24–62,
+seed 42, IC set 1, `pretune_on` only. All records `error = null`.
+
+**On the admissibility of timing.** Design Principle 7 in `CLAUDE.md` forbids wall-clock as
+evidence and names its own exception: *"If a claim genuinely requires timing, measure it on a
+dedicated machine."* Orion gives each job a dedicated core with no suspend and no competitor. The
+measurements below are therefore admissible for **capacity planning** and are **not** admissible for
+method comparison. Everything in this document is a planning quantity, never a statement about
+variant performance.
+
+### The old estimate held in the sum and failed in the distribution
+
+| Dimension | Estimated s/cell | Measured median | Measured mean | Verdict |
+|---|---|---|---|---|
+| 1 | 170 | 250 s | 250 s | usable — but only System 1, n = 3 |
+| 2 | 20,900 | 684 s | 10,440 s | median 30x too high, mean 2x too high |
+| 3 | 41,700 | 22,400 s | 63,800 s | **too low** by 1.5x on the mean |
+| 4 | 83,500 | — | — | 36x too high — only System 62, two records: 4,279 s and 300 s |
+
+Projected over the 756 Phase B cells with measured per-system means, and for unobserved systems the
+mean of their dimension class: **3,384 core-hours** against the 3,900 previously estimated. The
+estimate was **15 % high**, not, as this project claimed for a while, "one to two orders of
+magnitude too high".
+
+That earlier claim came from the head of the distribution — System 24 finished in 10 s against
+20,900 s estimated — and does not survive the full sweep. The distribution is extremely skewed:
+dimension 2 has a median of 0.19 h and a mean of 2.90 h, a factor of 15 between the two. **Planning
+from median cells underestimates this campaign by an order of magnitude.** The correct planning
+quantity is the mean; the correct risk quantity is the tail.
+
+### The tail is where the campaign lives
+
+Three chaotic systems dominate everything: System 59 (Rössler) 68.0 h, System 61 (Chen-Lee) 49.4 h,
+System 56 (Lorenz) 40.0 h under `pretune_on`. They are also the reason the pilot consumed **281
+core-hours** against the ~50 announced to the site — a factor of 5.6, no damage done, but to be
+announced correctly next time.
+
+Per-cell cost grows with structure size, monotonically and over three orders of magnitude. System 59
+by level, in seconds:
+
+```text
+Level  1..8    49  107   60   74  107  115   91  129
+Level  9..16  6214 3985 9532 4468 4482 6035 3473 2917
+Level 17..24  3630 2858 3348 5996 4373 6278 8021 11538
+Level 25..30 25462 20960 21524 30075 16658 42372     = 11.8 h in the last level alone
+```
+
+This is a trend, not an outlier: in the most expensive cells the slowest single level is only
+17–26 % of the cell. Expensive is the **whole second half**, and any capacity plan must assume that
+a cell is dominated by its final levels.
+
+---
+
+## 3. `pretune_off` — the other half of the campaign
+
+The pilot ran `pretune_on` only, and the 3,384 core-hours were carried as a **lower** bound on the
+assumption that the missing warm start makes the other half more expensive. Three probe cells
+settled it, and the assumption was wrong:
+
+| System | `pretune_on` | `pretune_off` | Runtime factor | Evaluation factor |
+|---|---|---|---|---|
+| 61 Chen-Lee | 49.41 h | 14.73 h | **0.30** | 0.73 |
+| 56 Lorenz | 39.95 h | 38.68 h | 0.97 | **0.56** |
+| 59 Rössler | 68.04 h | 62.35 h | 0.92 | 0.90 |
+
+`pretune_off` is **cheaper on all three**, so 3,384 core-hours is an upper rather than a lower
+bound — at least for dimension 3, which is where the cost of this campaign sits.
+
+**But there is no factor to apply.** 0.30 against 0.97 against 0.92 within one dimension class, all
+three chaotic. The cost model may state a **range**, never a single multiplier. Planning figure:
+the campaign will consume **between roughly 2,000 and 3,400 core-hours**, and the upper end is what
+should be reserved.
+
+**And counts do not convert into core-hours.** On System 56 evaluations fall 44 % while runtime
+falls 3 % — deriving core-hours from that count is off by a factor of 15. On System 59 the two track
+each other (0.90 against 0.92); on System 61 runtime falls three times faster than the count. Cost
+per evaluation varies by more than a factor of two *inside* one dimension class, plausibly through
+differently stiff parameter regions. Counts remain the correct evidence for **search effort** and
+are demonstrably unusable as a proxy for **compute time**.
+
+---
+
+## 4. What the projection is still blind to
+
+1. **Systems 1–23 rest on a single measured system** (System 1, 3 records), and System 63 on none.
+   That is 276 of 756 cells projected from one system — cheap cells, so the absolute risk is small,
+   but the row is an assumption, not a measurement.
+2. **One seed, one IC set.** Where seed spread was measured it is large: System 62 takes 4,279 s at
+   seed 42 and 300 s at seed 123 — a factor of 14 at identical configuration.
+3. **Dimension 4 rests on two records of one system**, which disagree by that same factor of 14.
+4. `pretune_off` rests on three cells of one dimension class (§3).
+
+None of these blocks the campaign. Orion has no walltime limit, capacity was confirmed as
+sufficient, and a mis-projected class costs calendar days, not results.
+
+---
+
+## 5. A third to a half of this compute contributes nothing
+
+Measured over 287 cells and 599.6 h of recorded runtime (WP-B1, `docs/WP-B1.md`), the share of
+runtime spent in levels that improve nothing:
+
+| Dimension | Levels per cell | Silent levels | Share of runtime |
+|---|---|---|---|
+| 1 | 10.8 | 2.3 | 10 % |
+| 2 | 17.9 | 7.1 | **50 %** |
+| 3 | 25.3 | 8.6 | 44 % |
+| 4 | 19.8 | 18.5 | **96 %** |
+
+This is **not** treated as a cost lever for this campaign. A global "stop after k silent levels" was
+evaluated and rejected at every threshold: k = 3 saves 94 % of the runtime and costs 152 of 287
+cells a materially worse result; k = 5 saves 37 % against 23 damaged cells; k = 8 saves 15 %. The
+decision (2026-08-21) is to run at 30 levels and **report the waste as a result** rather than to
+introduce a second constant that does not follow from the data. See `CLAUDE.md`, *Settled*.
+
+For capacity planning this means the figures in §1 to §3 are the ones to reserve against, and they
+already contain the waste.
+
+---
+
+## 6. Resource profile per cell
 
 | Resource | Value | Basis |
 |---|---|---|
-| Cores | 1 | single-threaded by design; parallelism comes from the array |
-| Memory | ~1 GB resident, 2 GB requested | Julia runtime plus the ODE solver stack; no large data structures |
-| Disk I/O | negligible | one small JSON write at the end, one append-only log |
-| Network | none | |
-| Scratch | none needed | |
+| Cores | 1 | single-threaded by design; parallelism comes from the Indexed Job |
+| Memory | ~1 GB resident, 2 GB requested | Julia runtime plus the ODE solver stack, no large data structures |
+| Disk I/O | negligible | one small JSON record and an append-only heartbeat per cell |
+| Network | none at runtime | needed once at image build time, in GitLab CI |
+| Scratch | none | |
 
-Per-job output is a few kilobytes. Total output across all 846 jobs, including logs, stays below
-10 GB.
+A cell is a **pure function of its inputs**: it reads a small read-only JSON dataset, writes one
+JSON record plus a heartbeat log to NFS, and shares nothing with any other cell. No communication,
+no shared state, no ordering constraint. Cells may be scheduled in any order, restarted
+individually, and interleaved with other users' work; a failed cell is simply re-submitted.
 
----
-
-## 4. Software stack and the two things that usually go wrong
-
-Julia 1.12.6, pinned exactly. The existing Phase A and regression results were produced on
-1.12.6; the earlier 1.11.5 documentation claim was incorrect. The project ships `Project.toml`
-and `Manifest.toml`, so the dependency set is fully reproducible. No MPI, no GPU, no licensed
-components.
-
-Two known failure modes we would like to discuss:
-
-**Package installation needs the internet exactly once.** Julia resolves and downloads packages at
-`Pkg.instantiate()`. Compute nodes typically have no outbound network. Our solution is a container
-(Apptainer/Singularity) with the dependencies installed **and precompiled** at build time, so that
-compute nodes need nothing. The definition file exists (`containers/evoode_regression.apptainer`);
-it pins `julia:1.12.6-bookworm`, instantiates and precompiles in `%post`, and keeps the Julia depot
-inside the image rather than on a shared filesystem. It has not been built yet — we have no
-Apptainer runtime locally, which is the first thing we would like to resolve. If the site prefers a
-module-provided Julia and a shared
-depot instead, that works too, but the depot must be populated from a login node before the array
-starts, and precompilation must happen there as well — otherwise every one of 846 jobs pays the
-precompilation cost again.
-
-**Thread oversubscription.** Julia and OpenBLAS both default to using all visible cores. With many
-single-core array tasks per node this causes severe oversubscription. We set
-`JULIA_NUM_THREADS=1` and `OPENBLAS_NUM_THREADS=1` explicitly and would like to confirm this
-matches the site's expectation for array jobs.
-
-Questions for the consultation, in the order they block us:
-
-1. **Apptainer/Singularity available, and may we build the image ourselves?** Building needs root or
-   fakeroot and outbound network. If neither is available on site, we need either a build service, a
-   login node with fakeroot, or an alternative route (build elsewhere and copy the `.sif` in).
-2. If containers are discouraged: is there a Julia module, at which version, and where should a
-   shared depot live? It would have to be populated **and precompiled** from a login node before the
-   array starts.
-3. Is `--array` with a concurrency cap (`%N`) the expected pattern at this scale, and what cap is
-   considered polite? 846 jobs is small in core-hours but wide in job count.
-4. Any filesystem guidance for the Julia depot (many small files, read-heavy at job start)? Our
-   current answer is "inside the image", which sidesteps the question — we would like to know
-   whether that matches site practice.
-5. Is a small pilot allocation possible ahead of the main one (§5)? It is what converts our
-   estimates into measurements.
+**Thread oversubscription** is the one operational trap: Julia and OpenBLAS both default to all
+visible cores. `JULIA_NUM_THREADS=1` and `OPENBLAS_NUM_THREADS=1` are set explicitly in the image.
 
 ---
 
-## 5. Where the compute estimate comes from, and how uncertain it is
+## 7. Reproducibility constraints that affect scheduling
 
-**The honest position: we cannot currently produce a trustworthy runtime figure**, and this is one
-reason we are here. All existing timings come from a working laptop where concurrent use, suspend
-and thermal throttling leave no trace in the data. The project treats wall-clock as non-evidence by
-policy and argues costs in counts instead.
+These are properties of the study, not requests, but they constrain how cells may be run.
 
-What we can state precisely are the machine-independent work counts. The 1D row now comes from the
-same batch entry point planned for Slurm, using the Phase B grid and the shipped regression variant
-`evogrow_v2_2_stage_capped` on systems 3 and 11, initial-condition set 1, all three seeds. The
-higher-dimensional rows remain pre-batch measurements and extrapolations until the pilot replaces
-them. The per-fit optimizer safety budget is now **20,000 loss evaluations**. That number is based
-on WP-F1/WP-F2 evaluation-sequence measurements, not extrapolation: across dimensions 1 to 3 and
-parameter counts 1 to 18, the latest observed first arrival at the best loss was evaluation 5,760.
-The budget is therefore a 3.5x margin over the measured worst case and twice
-`2 * maxiters * (n_params + 1) = 10,000` at the campaign maximum of 24 parameters.
-
-| System class | Parameter fits per job | ODE integrations per job |
-|---|---|---|
-| 1D | 110 - 290 | 1.1e4 - 5.7e5 |
-| 2D | 290 - 430 | 1.2e6 - 2.4e6 |
-
-Across the full campaign this remains on the order of **1e9 ODE integrations and ~2.7e5 parameter
-fits**. The 1D batch measurement lowers the observed 1D integration range, but the total is still
-dominated by 2D, 3D and 4D jobs whose timings must be calibrated on the cluster.
-
-The core-hour estimate below is still a planning assumption, not a measurement. It converts counts
-using laptop medians, keeps the 1D row as a conservative planning number until the pilot maps the
-new batch counts to cluster runtime, and extrapolates the 3D and 4D classes from the 2D class. Each
-of those steps carries error:
-
-| Dimension | Systems | Jobs | Estimated s/job | Core-hours |
-|---|---|---|---|---|
-| 1 | 23 | 276 | 170 | 13 |
-| 2 | 28 | 336 | 20,900 | 1,950 |
-| 3 | 10 | 120 | 41,700 (extrapolated) | 1,390 |
-| 4 | 2 | 24 | 83,500 (extrapolated) | 560 |
-| **Phase B total** | **63** | **756** | | **~3,900** |
-| Regression and failure analysis | 5 | 90 | | ~630 |
-| **Total** | | **846** | | **~4,500** |
-
-We regard a factor of 2 in either direction as plausible, hence the 10,000 core-hour request.
-
-**We would like to start with a small pilot allocation** — roughly 20 jobs, ~50 core-hours — to
-replace these extrapolations with measurements before committing the full campaign. That pilot
-would also give this project its first reliable timing figure, which is currently missing.
+- **Every cell is deterministic given its seed.** The optimizer safety brake is a deterministic
+  count budget — `max_loss_evals = 20,000` per parameter fit — never a wall-clock limit. Results are
+  therefore independent of node speed, and heterogeneous nodes are unproblematic.
+- **All cells of a campaign must run from one code version.** Publishability requires one git commit
+  hash, one `config_fingerprint` **and** one `stage_cap_behavior_fingerprint`. A campaign with mixed
+  identity is not publishable and has to be re-run — this has already cost one regression suite.
+  Current Phase B values: `604e79733b22d64d` / `ffb0266c7913352c`.
+- Pilot, probe and regression records carry **different** fingerprints by construction. They are
+  valid infrastructure and cost measurements and must never be merged into campaign data.
 
 ---
 
-## 6. The one thing we need site input on: walltime
+## 8. What has been consumed so far
 
-The estimated runtime of a single job spans four orders of magnitude, from about 3 minutes for the
-1D systems to an estimated 23 hours for the largest 4D system. Our plan is four separate arrays
-with walltime limits per dimension class:
+| Run | Cells | Core-hours | Purpose |
+|---|---|---|---|
+| Pilot | 42 | 281 | this cost model |
+| `pretune_off` probe | 3 | 116 | §3 |
+| Regression, two rounds | 240 | — | correctness of the final variant |
+| **Phase B campaign** | **756** | **~2,000–3,400 projected** | the paper |
 
-| Array | Jobs | Requested walltime per job |
-|---|---|---|
-| 1D | 276 | 1 h |
-| 2D | 336 | 12 h |
-| 3D | 120 | 24 h |
-| 4D | 24 | 48 h |
-
-If the site's maximum walltime is below the 3D or 4D figure, we need to discuss options. The
-workload has no natural checkpoint today — a run is a single search that produces its result at the
-end. Adding checkpointing is possible but would be a change to the scientific code, so we would
-prefer to first confirm the actual runtimes in the pilot; the estimates for 3D and 4D are the
-least reliable numbers in this document.
-
----
-
-## 7. Reproducibility constraints we must respect
-
-These are properties of the study, not requests, but they affect how jobs may be scheduled.
-
-- **Every job must be deterministic given its seed.** The optimizer safety brake is a deterministic
-  count budget, `max_loss_evals = 20,000` per parameter fit, not a wall-clock limit. This avoids
-  node-speed-dependent results on heterogeneous hardware. Heterogeneous node types are otherwise
-  unproblematic.
-- **All jobs of a campaign must run from one code version.** Each job records the git commit hash
-  and a configuration fingerprint; a campaign with mixed hashes is not publishable and would have
-  to be re-run.
-- Jobs may be scheduled in any order, restarted individually, and interleaved with other users'
-  work. A failed job is simply re-submitted.
-
----
-
-## 8. Timeline
-
-The scientific method is fixed and the final algorithm variant is decided. **The port to the batch
-environment is done**: a manifest enumerates the campaign as an ordered cell list, one entry point
-runs exactly one cell and exits, a merge step consolidates the per-task records, and the container
-definition and an example array submission script exist. Single-cell checks have been run end to end
-through that path; after the WP-F3 budget change, budget-stop telemetry is expected to be part of
-the campaign interpretation rather than hidden as a timing detail.
-
-Two items remain on our side, both scheduled before access would be used: carrying the WP-F1/WP-F2
-budget-stop breakdown into the campaign analysis by dimension and parameter count, and producing
-pilot timing measurements on the cluster. Neither requires changing the campaign code path.
-
-What we cannot do without access is build and run the container, and produce a single trustworthy
-timing figure. We expect to be ready to run within days of receiving access, and would use a pilot
-allocation immediately to firm up §5 and §6.
-
----
-
-## 9. Phase B cluster bootstrap smoke runbook
-
-This is a technical smoke test only. Use a throwaway output root, not a campaign directory.
-Records from this procedure prove that the image and batch plumbing work; they are not scientific
-campaign data.
-
-Set paths on the login node:
-
-```bash
-export EVOODE_IMAGE="$PWD/containers/evoode_regression.sif"
-export EVOODE_OUTPUT_ROOT="$PWD/outputs/hpc_smoke_$(date +%Y%m%d_%H%M%S)"
-mkdir -p "$EVOODE_OUTPUT_ROOT" logs
-```
-
-### Step 1: build the image
-
-```bash
-apptainer build "$EVOODE_IMAGE" containers/evoode_regression.apptainer
-```
-
-Pass criterion: the command exits 0 and creates a readable `.sif`.
-
-Failure looks like: build command fails, cannot pull `julia:1.12.6-bookworm`, fakeroot/root is
-unavailable, or `Pkg.instantiate()` / `Pkg.precompile()` fails.
-
-Meaning: the cluster cannot yet produce the frozen runtime. Resolve Apptainer permissions, network
-at build time, or the Julia depot build before submitting any array job.
-
-### Step 2: inspect build provenance inside the image
-
-```bash
-apptainer exec --cleanenv "$EVOODE_IMAGE" cat /opt/EvoODE/build_provenance.json
-sha256sum Project.toml Manifest.toml
-```
-
-Pass criterion: `julia_version` is `1.12.6`, and the JSON hashes match the local committed
-`Project.toml` and `Manifest.toml` SHA-256 values printed by `sha256sum`.
-
-Failure looks like: missing `build_provenance.json`, Julia version not `1.12.6`, or either hash
-differs.
-
-Meaning: the image was built from the wrong definition, wrong source tree, or wrong dependency
-freeze. Do not run cells from it.
-
-### Step 3: generate manifest and dimension index lists inside the image
-
-```bash
-bash hpc/bootstrap_phase_b_manifest.sh
-```
-
-This binds `$EVOODE_OUTPUT_ROOT` to `/outputs` and runs:
-
-```bash
-julia --project=/opt/EvoODE /opt/EvoODE/studies/regression/generate_phase_b_manifest.jl \
-    --output /outputs/manifest.csv \
-    --all-dimensions
-```
-
-Pass criterion: output includes `phase_b_fingerprint=c71c85ac2ec580ff` and `rows=756`, and the bound
-root contains `manifest.csv`, `indices_dim1.txt`, `indices_dim2.txt`, `indices_dim3.txt`, and
-`indices_dim4.txt`.
-
-Failure looks like: fingerprint differs, row count differs, or an index-list file is missing or
-empty.
-
-Meaning: a fingerprint mismatch means the image does not contain the code/config/support table we
-think it contains. A row/list mismatch means the campaign grid is not the expected 63 systems x 2
-conditions x 3 seeds x 2 IC sets.
-
-### Step 4: submit one to three 1D smoke cells
-
-```bash
-sbatch --array=1-1 --time=01:00:00 hpc/slurm_phase_b_smoke.sh
-```
-
-Optionally use `--array=1-3` for three 1D cells. Do not use 2D or higher cells for this smoke test.
-
-Pass criterion: each array task exits 0 and writes exactly one
-`$EVOODE_OUTPUT_ROOT/tasks/cell_*.jsonl` record.
-
-Failure looks like: Slurm stderr says the manifest or `indices_dim1.txt` is missing, Apptainer cannot
-mount `/outputs`, the cell reports a fingerprint mismatch, or no task record appears.
-
-Meaning: missing manifest/list means Step 3 did not write into the bound root. A mount/path failure
-means the cluster binding command is wrong. A fingerprint mismatch means the manifest and runtime
-came from different code.
-
-### Step 5: check the record
-
-```bash
-wc -l "$EVOODE_OUTPUT_ROOT"/tasks/cell_*.jsonl
-grep -L '"error":null' "$EVOODE_OUTPUT_ROOT"/tasks/cell_*.jsonl
-```
-
-Pass criterion: each record file has exactly one line, and no file is printed by `grep -L`.
-
-Failure looks like: zero lines, more than one line, malformed JSON, or `error` is not `null`.
-
-Meaning: zero lines means the cell did not finish writing; multiple lines means the output path was
-reused incorrectly; non-null `error` means the batch entry point caught a runtime failure and the
-record must not be merged.
-
-### Step 6: check heartbeat liveness
-
-```bash
-for hb in "$EVOODE_OUTPUT_ROOT"/tasks/cell_*.heartbeat.jsonl; do
-    echo "$hb"
-    grep '"event":"start"' "$hb"
-    grep '"event":"level"' "$hb"
-    grep '"event":"complete"' "$hb"
-done
-```
-
-Pass criterion: each cell heartbeat exists and contains one `start`, at least one `level`, and one
-`complete` event.
-
-Failure looks like: missing heartbeat, no `start`, no level events, or no `complete`.
-
-Meaning: missing start means the batch cell did not enter `run_one`; missing level events means the
-search did not advance far enough to prove within-run liveness; missing complete means the process
-ended before the finalizer recorded the terminal state.
-
-### Step 7: verify outputs survive container exit
-
-```bash
-ls -l "$EVOODE_OUTPUT_ROOT"/manifest.csv "$EVOODE_OUTPUT_ROOT"/indices_dim*.txt
-ls -l "$EVOODE_OUTPUT_ROOT"/tasks/cell_*.jsonl "$EVOODE_OUTPUT_ROOT"/tasks/cell_*.heartbeat.jsonl
-```
-
-Pass criterion: manifest, index lists, records, and heartbeat files are visible from the login node
-after all Apptainer commands have exited.
-
-Failure looks like: files existed during the job log but are absent on the host.
-
-Meaning: outputs were written inside the image or an unbound working directory instead of the bound
-output root. Fix bind paths before any real campaign run.
+The campaign itself has **no records yet**.

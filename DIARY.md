@@ -6,6 +6,41 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ## 2026-08-21
 
+### `docs/hpc_requirements.md` neu geschrieben — aus Messungen statt aus Schaetzungen
+
+<!-- HASH -->
+
+Das Dokument war seit dem 2026-08-13 mit einem SUPERSEDED-Banner versehen: geschrieben fuer einen
+Slurm-Standort, mit Laufzeiten von einem belasteten Laptop und einer Apptainer-Runbook-Sektion fuer
+Skripte, die es nicht mehr gibt. Es war zugleich das Dokument, auf das `CLAUDE.md` fuer die
+Kostenrechnung verweist. Mit der vollstaendigen Sondierung und WP-B1 liegt jede Zahl vor, die es
+geschaetzt hatte.
+
+**Neuer Zuschnitt.** Kein Antragsdokument mehr, sondern ein Kostenmodell: die Zahl (§1), ihre
+Herleitung aus dem Piloten (§2), die `pretune_off`-Korrektur (§3), die blinden Flecken (§4), der
+gemessene Verschwendungsanteil (§5), das Ressourcenprofil je Zelle (§6), die Reproduzierbarkeits-
+bedingungen (§7) und der bisherige Verbrauch (§8). Die Beratungsfragen und das Slurm-Runbook sind
+entfallen — die Mechanik steht in `docs/hpc_deployment_guide.md`.
+
+**Drei Zahlen haben sich gegenueber dem alten Dokument umgedreht:**
+
+1. Die Gesamtschaetzung war **nicht** um ein bis zwei Groessenordnungen zu hoch, sondern um 15
+   Prozent — 3.900 geschaetzt gegen 3.384 hochgerechnet. Falsch war die Klassenaufteilung, nicht die
+   Summe.
+2. Die 3.384 Kernstunden sind eine **obere**, keine untere Schranke. Die Planungsgroesse ist jetzt
+   eine Spanne von rund 2.000 bis 3.400 Kernstunden, weil `pretune_off` auf allen drei gemessenen
+   Systemen billiger ist, aber um Faktor drei streut.
+3. Der Pilot hat 281 statt der angekuendigten 50 Kernstunden verbraucht — steht jetzt als Zahl im
+   Dokument, damit die naechste Ankuendigung an den Standort stimmt.
+
+Der Verschwendungsanteil aus WP-B1 ist bewusst **nicht** als Kostenhebel gefuehrt, sondern als
+Eigenschaft, die in den reservierten Zahlen bereits enthalten ist.
+
+Nachgezogen: der Verweis in `docs/hpc_deployment_guide.md` §10, der noch vor dem Dokument warnte,
+und die Rewrite-Aufforderung in `CLAUDE.md`.
+
+---
+
 ### WP-B1 — kein Levelbudget: der Kompromiss ist bei jedem Schwellenwert schlecht
 
 <!-- f4ceb3d -->

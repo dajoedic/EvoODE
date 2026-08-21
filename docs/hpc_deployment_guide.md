@@ -626,6 +626,6 @@ vor dem Anwenden durch den tatsächlichen ersetzt werden.
 - **Die wissenschaftliche Seite** — was gerechnet wird und warum: `CLAUDE.md` und `PAPER_1.md`
 - **Die Chronologie** — welcher Fehler wann auftrat und wie er gefunden wurde: `DIARY.md`, Einträge
   WP-H2 bis WP-H6
-- **Die Kostenrechnung** — `docs/hpc_requirements.md`. Achtung: Dieses Dokument beschreibt noch einen
-  Slurm-Standort und enthält Schätzungen, die sich als um ein bis zwei Größenordnungen zu hoch
-  erwiesen haben. Es wird überarbeitet, sobald die Pilotmessungen vollständig sind.
+- **Die Kostenrechnung** — `docs/hpc_requirements.md`, am 2026-08-21 aus den Pilot- und
+  Sondierungsmessungen neu geschrieben: gemessenes Kostenmodell, Ressourcenprofil je Zelle und die
+  verbleibenden blinden Flecken.
