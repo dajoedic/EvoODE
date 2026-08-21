@@ -8,7 +8,7 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ### Regression unter dem neuen Fingerprint: 25,4 Prozent statt 15,3, und keine Zelle verliert
 
-<!-- HASH -->
+<!-- 86785e0 -->
 
 120 Records, alle `error: null`, alle drei Identitaetsfelder einheitlich:
 `git_hash=f6143eb`, `config_fingerprint=17fe7d9cfb8f1be3`,
