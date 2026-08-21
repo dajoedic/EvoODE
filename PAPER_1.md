@@ -1,816 +1,502 @@
 # PAPER_1.md — EvoODE Paper 1: Execution Roadmap and Working Plan
 
-This document is the authoritative execution plan for EvoODE Paper 1.
-It defines the current paper scope, diagnostic gates, work phases, go/no-go criteria, risks, and design decisions.
+This document is the **authoritative execution plan** for EvoODE Paper 1. It defines the paper
+scope, the diagnostic gates and their decisions, the work phases, go/no-go criteria, risks and
+frozen elements.
 
-For architecture and algorithm design, see `CLAUDE.md`.
-For frozen Phase A results, see `docs/paper1_freeze_memo_phaseA.md`.
+*Revised 2026-08-21 and promoted from `docs/PAPER_1_draft.md`. The previous body was dated
+2026-05-17, planned around EvoGrow v3 and did not mention the stage cap — the variant that is the
+contribution. With this revision the precedence rule at the top of `CLAUDE.md` holds again: where
+this document and `CLAUDE.md` drift, this document decides.*
 
-> ## ⚠ Partially superseded — read this first
->
-> **The body of this document is dated 2026-05-17 and predates both diagnostic gates.** It plans in
-> detail around EvoGrow v3. **v3 was rejected**, and the variant that is the paper's contribution is
-> not mentioned anywhere below. Until this document is revised, `CLAUDE.md` and `DIARY.md` carry the
-> current state, which inverts the precedence rule stated above.
->
-> A full revision is scheduled once the Phase B campaign has produced its numbers. This block records
-> only what has already been decided and minuted, so that the plan below is not mistaken for the
-> current one.
->
-> **Decisions taken since 2026-05-17**
->
-> | Date | Decision |
-> |---|---|
-> | 2026-05-30 | **Gate 1**: v2.2 stage-local progression fails; v3 triggered |
-> | 2026-07-31 | **Gate 2**: v3 fails. Its promotion condition `r_k > loss_tol = 1e-8` is unreachable on coupled systems, whose error floor is ~1e-3. Kept as documented failure analysis, not as the contribution |
-> | 2026-08-01 | Paper scope decided: the mechanistic Claim C study |
-> | 2026-08-03 | **Final variant settled: `evogrow_v2_2_stage_capped`** — v2.2 substrate plus a per-equation look-ahead stage cap derived from trajectory and basis before the search begins. Search-independent, therefore it does not require the v3 substrate |
-> | 2026-08-13 | Compute path verified end to end on the SCCH "Orion" OpenShift cluster. R² implemented for all systems; `expected_stage` derived rather than hand-maintained |
->
-> **Frozen experiment scope** (`paper1_phaseB_v1`): all 63 ODEBench systems, two conditions
-> (`pretune_on` / `pretune_off`), 3 seeds, 2 initial-condition sets — 756 runs. 20 exact systems are
-> scored on support recovery; 43 surrogate systems on fit quality via R², with reached stage and
-> stability as observations. Current fingerprints: Phase B `ca02ea284d621f6d`, regression
-> `0825cdc88d9264a0`; neither carries records yet.
->
-> **What below is still valid:** the gate structure, the go/no-go discipline, the risk register, and
-> the evidence rules. **What is not:** every section that treats v3 as the path forward, and the
-> phase status.
+| Where to look | For |
+|---|---|
+| `CLAUDE.md` | project orientation, architecture position, current priorities |
+| `DIARY.md` | chronology — measurements, decisions, bug history, commit hashes |
+| `docs/architecture.md` | component reference |
+| `docs/paper1_odebench_protocol_alignment.md` | Phase B sampling protocol and the comparability audit |
+| `docs/hpc_requirements.md` | measured Phase B cost model and resource profile |
+| `docs/paper1_freeze_memo_phaseA.md` | frozen Phase A results (historical, no paper claims) |
+| `docs/wp_c1_stage_cap_horizon_audit.md`, `docs/wp_c2_stage_cap_failure_diagnosis.md`, `docs/WP-V1.md`, `docs/WP-C5.md` | the stage-cap evidence chain |
+| `docs/WP-B1.md` | the wasted-search-level measurement |
 
 ---
 
-## Critical Scope Decision (2026-05-17)
+## Critical Scope Decision (2026-08-03)
 
-Paper 1 is no longer framed as a pretuning study.
+Paper 1 is not a pretuning study and is not planned around EvoGrow v3.
 
-The core contribution of Paper 1 is the scientific evaluation of **EvoGrow as a staged, incremental search mechanism for interpretable ODE discovery**.
+The core contribution of Paper 1 is the **look-ahead stage cap** as a data-driven, per-equation
+search-space controller on the `evogrow_v2_2_stage_capped` substrate:
 
-The guiding research question is:
+```text
+v2.2 substrate + per-equation look-ahead stage cap derived from trajectory and basis
+```
 
-> Is incremental, staged growth of the ODE hypothesis space an effective search mechanism for interpretable ODE discovery, and where does it help or fail?
+The cap is computed **before** the search starts. It reads the trajectory and the basis, never the
+evolving population, so it is search-independent and combines with the v2.2 substrate rather than
+requiring the rejected v3 substrate.
 
-The primary paper target is not a broad in-house benchmark against multiple external methods. The project currently has one implemented method family: **EvoGrow / EvoODE**. Therefore, Paper 1 will focus on diagnosing, stabilizing, and evaluating the final EvoGrow variant. External results from ODEBench-related papers may be used as published reference context, but no new SINDy, PySR, GP, or ODEFormer runs are planned inside this project.
+The guiding research question:
+
+> Can a data-derived, per-equation stage cap control the ODE hypothesis space before search, and
+> where does that control help, fail, or become unauditable?
+
+The central story is the documented failure-analysis chain:
+
+```text
+v2.2 -> v3 -> capped
+```
+
+v3 is a result, not the contribution. It failed Gate 2 because its promotion condition
+`r_k > loss_tol = 1e-8` is unreachable on coupled systems with an error floor around `1e-3`, and
+because `r_k` is contaminated by derivative-estimation error. The cap is the resulting controller:
+it bounds how far each equation may grow, where the data give **positive** evidence about the
+useful stage boundary.
 
 ---
 
 ## Explicit Non-Goals for Paper 1
 
-Paper 1 does **not** run new in-house baselines for:
+Paper 1 does **not** run new in-house baselines for GP, PySR, SINDy, ODEFormer, GODE, Operon or any
+other external symbolic-regression tool.
 
-- GP
-- PySR
-- SINDy
-- ODEFormer
-- GODE
-- Operon or other external symbolic-regression tools
+Paper 1 does **not** make victory or defeat claims against published methods while the external
+columns of `docs/paper1_odebench_protocol_alignment.md` remain unfilled. Published numbers are
+contextual only.
 
-Paper 1 does **not** use pretuning as the main experimental variable.
+Paper 1 does **not** use pretuning as the scientific contribution. Phase B carries `pretune_on` and
+`pretune_off` as its two conditions; any effect is a condition effect around the same controller.
 
-Paper 1 does **not** claim to be the first symbolic-regression-based ODE discovery method.
+Paper 1 does **not** claim structural recovery on surrogate systems. The 43 surrogate systems have
+no true support in the current basis and are evaluated through R², reached stage and stability
+observations.
 
-Paper 1 does **not** make paper claims from Phase A exploratory results.
+Paper 1 does **not** derive claims from Phase A exploratory results, and does **not** report Phase B
+results before campaign records exist. Result sections below are explicit placeholders.
+
+Paper 1 does **not** introduce a stopping rule or level budget. That decision was taken on the
+evidence and is recorded in Phase 6.
 
 ---
 
 ## Pretuning Decision
 
-Pretuning is removed from the main Paper 1 scope.
+Pretuning is retained as an experimental condition because the frozen Phase B scope contains exactly
+two conditions, `pretune_on` and `pretune_off`, over all 63 systems, 3 seeds and both
+initial-condition sets. It is a condition, never the headline mechanism.
 
-Pretuning may become a separate follow-up study, conference paper, or ablation paper if results show a strong effect.
-
-For Paper 1:
-
-- pretuning is not the main contribution,
-- pretuning is not the main comparison axis,
-- final Paper 1 runs should use one fixed fitting configuration,
-- if pretuning is used internally in the final method, it must be treated as a fixed implementation detail, not as the central experimental variable,
-- if pretuning is not required for the final method, it should be disabled for Paper 1 and reserved for future work.
-
-This decision prevents Paper 1 from becoming a warm-start/optimizer paper and keeps the focus on staged structural growth.
+One measured caveat belongs to this decision (probe, 2026-08-20): the effect of pretuning on cost is
+strongly system-dependent and points in different directions within a single dimension class —
+runtime factors 0.30, 0.92 and 0.97 on three chaotic 3D systems. Any pretuning statement in the
+paper must be per-system or per-class, never a single global factor.
 
 ---
 
-## Current Status (as of 2026-05-17)
+## Current Status (as of 2026-08-21)
 
 | Item | Status |
 |------|--------|
-| `paper1_phaseA_v1` | Archived exploratory run set: 10 ODEBench systems × 6 EvoGrow variants × 5 seeds = 300 runs, all successful |
-| Phase A result interpretation | Frozen as exploratory evidence only |
-| Main Phase A observation | Fit quality is promising, but staged-growth economy metrics are weaker than expected |
-| Support matching | Known issue: growth-without-pruning makes raw `exact_support_match` too strict |
-| Pretuning | Removed from Paper 1 main scope; possible future follow-up |
-| Final EvoGrow variant | Not yet frozen |
-| EvoGrow v2.2 | Failed Gate 1 on 2026-05-30; still the fallback candidate |
-| EvoGrow v3 | Implemented and **failed Gate 2 on 2026-07-31**; not the final variant |
-| ODEBench full evaluation | Planned only after final EvoGrow variant is selected |
-
-**Active phase:** Phase 2 closed with a negative Gate 2. Scope decision open — see
-"Open scope decision after Gate 2".
+| `paper1_phaseA_v1` | frozen exploratory set, 300/300 runs. Not used for final claims |
+| Gate 1 | decided 2026-05-30: v2.2 fails |
+| Gate 2 | decided 2026-07-31: v3 fails |
+| Final variant | `evogrow_v2_2_stage_capped`, settled 2026-08-03 |
+| Stage-cap defect | **solved** (WP-C1 to WP-C5, 2026-08-20): 0 truncated equation rows of 80, 48 finite caps |
+| Regression evidence | **complete** (2026-08-20): 120 records, 30 cells, loss bit-identical 30/30, −25.4 % loss evaluations, no cell more expensive |
+| Cost model | **measured** (pilot + probe): 2,000–3,400 core-hours for Phase B, `docs/hpc_requirements.md` |
+| Level budget | **decided against** (WP-B1, 2026-08-21): 30 levels stay, the waste is reported as a result |
+| Phase B protocol | decided 2026-08-03: 63 systems, 2 conditions, 3 seeds, 2 IC sets = 756 cells |
+| Sampling | 512 points over `t ∈ [0, 10]`, both endpoints, self-integrated with `Tsit5` at `abstol = reltol = 1e-9` |
+| Phase B fingerprint | `604e79733b22d64d` — **no records yet** |
+| Regression fingerprint | `17fe7d9cfb8f1be3` — 120 records under `git f6143eb` |
+| Stage-cap behaviour fingerprint | `ffb0266c7913352c` (probe version 2) |
+| Campaign status | **no open scientific blocker.** Awaiting the launch decision |
 
 ---
 
 ## Paper Strategy in One Sentence
 
-> First evaluate whether EvoGrow v2.2 is already paper-ready once structural metrics are corrected; if not, develop EvoGrow v3 only if the diagnosed failure mode is genuinely caused by system-wide staged progression; then run the final selected EvoGrow variant on the full ODEBench suite and analyze fit, structure, search economy, robustness, and failure modes.
+> Paper 1 evaluates a data-driven per-equation stage cap as a search-space controller for
+> incremental ODE discovery, reports the v2.2 and v3 failures that led to it, and keeps structural
+> recovery, surrogate fit quality and compute cost as separate kinds of evidence.
 
 ---
 
 ## Main Claim Strategy
 
-The primary claim target is **Claim C**:
+The primary claim target is **Claim C**.
 
-> EvoGrow is competitive in fit quality while exposing when and why incremental staged complexity control helps or fails.
+### Claim A — Fit-Quality Claim
 
-Two stronger claims are tracked but not assumed:
+> EvoODE achieves the reported Phase B fit-quality outcomes on the 63-system ODEBench protocol.
 
-### Claim A — Performance Claim
+Fillable only from campaign records. **Placeholder: no Phase B records exist.**
 
-> EvoGrow outperforms or matches published reference methods on selected ODEBench regimes.
+### Claim B — Search-Space-Control Claim
 
-This claim may only be used if supported by final results and protocol alignment.
+> The stage cap restricts staged growth wherever the data resolve the stage boundary, at an
+> unchanged result: on the 30-cell regression grid it removes **25.4 %** of the loss evaluations
+> with **bit-identical** losses in 30 of 30 cells, unchanged `pruned_match`, and not one cell made
+> more expensive.
 
-### Claim B — Complexity-Control Claim
-
-> EvoGrow provides a more interpretable and controlled search trajectory, reducing unnecessary complexity in regimes where staged structure is appropriate.
-
-This claim may only be used if supported by stage, overshoot, wasted-level, and structure metrics.
+Supported by stage metrics, cap decisions, support availability on exact systems and evaluation
+counters. **Wall-clock time is not evidence for this claim** (Design Principle 7).
 
 ### Claim C — Primary Mechanistic Claim
 
-> EvoGrow provides a controlled staged search process whose success and failure modes can be analyzed across ODEBench in terms of fit, structural recovery, complexity allocation, solver stability, and basis mismatch.
+> The v2.2 → v3 → capped sequence shows that staged growth needs not only a progression rule but a
+> data-derived boundary on the useful search space. The cap supplies that boundary exactly where the
+> derivative estimate resolves the structural difference between stages — and the threshold that
+> separates the safe from the unsafe region **cannot be selected from the data**.
 
-This is the safest and most defensible core framing.
+This is the safest framing because it carries the negative results as part of the mechanism. The
+second half of the claim is itself a result (WP-V1) and is not to be softened.
 
 ---
 
 ## Phase Overview
 
-| Phase | Goal | Output |
+| Phase | Goal | Status |
 |-------|------|--------|
-| **Phase 0** | Archive and correct Phase A diagnostics | Corrected freeze memo and diagnostic files |
-| **Phase 1** | Repair structural metrics and re-diagnose v2.2 | Fair v2.2 diagnostic report and Gate 1 decision |
-| **Gate 1** | Decide whether v2.2 is paper-ready | v2.2 selected, or v3 triggered |
-| **Phase 2** | Conditional EvoGrow v3 design and validation | v3 validation report and Gate 2 decision |
-| **Gate 2** | Decide whether v3 is paper-ready | final EvoGrow variant selected, or fallback decision |
-| **Phase 3** | ODEBench protocol and literature reference alignment | system classification, metrics, protocol-audit document |
-| **Phase 4** | Small validation run | schema/runtime/metric validation, no paper claims |
-| **Phase 5** | Full ODEBench cluster run | final experiment results |
-| **Phase 6** | Analysis and paper writing | paper draft |
+| **Phase 0** | archive and correct Phase A diagnostics | done |
+| **Phase 1** | repair structural metrics, re-diagnose v2.2 | done |
+| **Gate 1** | is v2.2 paper-ready? | decided 2026-05-30 — no |
+| **Phase 2** | EvoGrow v3 design and validation | done |
+| **Gate 2** | is v3 paper-ready? | decided 2026-07-31 — no |
+| **Phase 2b** | stage-cap design, audits, failure diagnosis | **closed 2026-08-20** |
+| **Phase 3** | ODEBench protocol and literature alignment | protocol done; external audit columns open |
+| **Phase 4** | cluster, schema and cost validation | done |
+| **Phase 5** | full ODEBench Phase B campaign | ready to launch, no records |
+| **Phase 6** | analysis and paper | not started |
 
 ---
 
 ## Phase 0 — Archive and Correct Phase A
 
-### Goal
+Phase A remains exploratory: it guides algorithmic diagnosis and supports no final claim. The
+original run data are unchanged.
 
-Correct known diagnostic issues in Phase A without changing the original run data.
+- **WP-0.1** — corrected the H4 claim in the freeze memo (2026-05-17). H4 is vacuous: all
+  usage-policy variants reached `exact_match_rate = 0` on high-stage systems, so the expected
+  ordering holds only through ties.
+- **WP-0.2** — corrected the generalization data path and reproduced the OMIT verdict (2026-05-17).
 
-Phase A remains exploratory. It is used to guide algorithmic diagnosis, not to support final Paper 1 claims.
-
-### Required Corrections
-
-1. Correct the H4 claim in the freeze memo.
-2. Fix the generalization data path.
-3. Preserve all original Phase A run data unchanged.
-
-### Go Criteria
-
-- `docs/paper1_freeze_memo_phaseA.md` contains the corrected H4 claim.
-- `analysis/data/paper1_phaseA_v1/h1_h4_diagnostics.json` is consistent with the corrected memo.
-- `evaluate_hypotheses.py` points to the correct generalization data path.
-- No new runs are added to `paper1_phaseA_v1`.
-
-### Work Packages
-
-#### WP-0.1 — Correct H4 claim in freeze memo ✓ 2026-05-17
-
-**Language:** Python
-
-**What:** Change the H4 “Allowed paper claim” in `evaluate_hypotheses.py` to reflect that H4 is vacuous: all usage-policy variants achieved `exact_match_rate = 0` on high-stage systems, so the expected ordering holds only through ties.
-
-**Output:** Regenerated `docs/paper1_freeze_memo_phaseA.md` and `analysis/data/paper1_phaseA_v1/h1_h4_diagnostics.json`.
-
-**Done:** H4 verdict corrected to `VACUOUS`, `”vacuous”: true` in diagnostics JSON, claim text updated. H1/H2/H3 unchanged.
-
-#### WP-0.2 — Fix generalization data path ✓ 2026-05-17
-
-**Language:** Python / config
-
-**What:** Update `analysis/configs/paper1_phaseA_v1.json` to point at the actual generalization summary location. Verify that the OMIT verdict is reproduced.
-
-**Done:** Config path corrected to `debug_results/generalization_summary.csv`. Files verified present.
+No runs were added to `paper1_phaseA_v1`, and WP-E2 later made a Phase A run *verify* the frozen
+artefacts instead of rewriting them.
 
 ---
 
 ## Phase 1 — Metric Repair and v2.2 Diagnostic Re-Analysis
 
-### Goal
+### Support-Pruning Rule (frozen)
 
-Before developing a new algorithm variant, evaluate whether EvoGrow v2.2 is already stronger than Phase A suggested once metrics are corrected.
-
-The main concern is that `exact_support_match` was too strict because EvoGrow grows structures but does not prune near-zero terms. A discovered model such as
+For support-matching evaluation only, a term is pruned from equation `k` if
 
 ```text
- dx/dt = 0.000002 u + 1.000043 u²
+|coeff| < max(1e-6, 1e-3 × max_abs_coeff_in_equation_k)
 ```
 
-should be recognized as structurally correct for a true equation
+This applies to evaluation only. It never changes search, parameter optimization or population
+state. Both `exact_support_match_raw` and `exact_support_match_pruned` are stored; the pruned metric
+is the main structural-recovery metric, the raw one stays available for transparency.
 
-```text
- dx/dt = u²
-```
+### Gate 1 Decision — 2026-05-30: v2.2 fails
 
-if the extra term has effectively zero coefficient.
+v2.2 established the substrate but did not solve structural recovery on coupled systems. The failure
+is not a metric artefact: `pruned_match = false` persists on coupled cells, including cells with
+very low loss and with the true structure available at the active stage.
 
-### Key Issue: Growth Without Pruning
+The diagnosed cause stays in the paper as a limitation:
 
-EvoGrow may retain terms with coefficients close to zero. These terms remain in the raw discovered structure and can make `exact_support_match = false` even when the effective model is correct.
+> The search is growth-only. `_expand` only adds terms, and every equation line starts from one
+> random term. Once a wrong term enters a line it can never leave; selection is the only corrective.
+> A line can therefore exhaust `MAX_TERMS = 6` with a mixture of true and false terms.
 
-Therefore, structural recovery must distinguish between:
-
-- **raw discovered structure**, and
-- **effective pruned structure used for support evaluation**.
-
-### Support-Pruning Rule
-
-For support-matching evaluation only, a term is pruned from equation `k` if:
-
-```text
- |coeff| < max(1e-6, 1e-3 × max_abs_coeff_in_equation_k)
-```
-
-This pruning:
-
-- is applied only for evaluation,
-- does not change the search process,
-- does not change parameter optimization,
-- does not modify population state,
-- must be documented and frozen before Phase 4.
-
-### Required Metrics
-
-For exact systems, store both:
-
-- `exact_support_match_raw`
-- `exact_support_match_pruned`
-
-The paper may use the pruned metric as the main structural recovery metric, but the raw metric must remain available for transparency.
-
-### v2.2 Diagnostic Targets
-
-Re-analyze v2.2 on:
-
-- Phase A systems,
-- known problem systems such as 26, 31, and 63,
-- at least one simple control system,
-- at least one system where EvoGrow already performed well.
-
-Questions to answer:
-
-1. Was the apparent structural failure actually a metric problem?
-2. Does pruned support matching recover correct structures that raw matching missed?
-3. Are stage overshoot and wasted levels still weak after metric repair?
-4. Do systems 26, 31, and 63 indicate a real algorithmic failure?
-5. Is the failure caused by system-wide staged progression, parameter fitting, basis mismatch, or something else?
-
-### Phase 1 Work Packages
-
-#### WP-1.1 — Add exact_support_match_raw and exact_support_match_pruned metrics ✓ 2026-05-11
-
-**Language:** Julia
-
-**What:** Implement coefficient-threshold pruning rule in `experiments/run_experiment.jl` and store both raw and pruned support-match metrics per run.
-
-#### WP-1.2 — Phase A metric artifact vs. structural failure diagnostic ✓ 2026-05-11
-
-**Language:** Python / analysis
-
-**What:** Classify each Phase A failure as metric artifact or genuine structural failure. Identified System 11 as metric artifact (loss ~4e-15 but raw match = 0), confirmed genuine failures on Systems 26, 31, 63.
-
-#### WP-1.3 — Phase 1 diagnostic run on problem systems ✓ 2026-05-30
-
-**Language:** Julia
-
-**What:** Run EvoGrow v2.2 stage_local with Paper 1 configuration (pretuning=false, n_levels=30) on Systems 3, 11, 26, 31, 63 with 3 seeds each.
-
-**Result:** 15/15 runs completed. System 11 pruning fix confirmed. Systems 26 and 63 show genuine algorithmic failure (system-wide staging escalates to Stage 5 without finding correct cross-terms). System 31 seed 42 achieves near-perfect fit but spurious term survives pruning threshold.
+A remove/replace operator or a beam-style search belongs to "search power within a stage" and is
+future work, deliberately outside Paper 1.
 
 ---
 
-### Phase 1 Hyperparameter Defaults for Diagnosis
+## Phase 2 — EvoGrow v3 Design and Validation
 
-The diagnostic configuration should include:
+v3 replaced the single global stage state with per-equation stage state and promoted on an
+equation-local derivative-residual signal `r_k`.
 
-```text
-n_levels = 30
-```
+### Gate 2 Decision — 2026-07-31: v3 fails
 
-Rationale: with 5 stages and a minimum budget per stage, `n_levels = 20` leaves little or no search slack in Stage 5. `n_levels = 30` gives high-stage systems meaningful search budget.
-
-`loss_tol` remains as a safety-level early stopping condition, but it is not treated as the main control mechanism. The primary stopping mechanisms are plateau detection and max levels.
-
-### Gate 1 — Is v2.2 Paper-Ready?
-
-After Phase 1, decide whether v2.2 is good enough to become the final Paper 1 variant.
-
-v2.2 is paper-ready if:
-
-- fit quality is strong on important exact systems,
-- pruned support recovery is meaningful,
-- stage overshoot is explainable and not dominant,
-- wasted-level behavior is not fatal to the main story,
-- runtime is acceptable,
-- solver failures are limited and analyzable,
-- known problem systems are either solved or clearly understood.
-
-If v2.2 passes Gate 1:
-
-> Select v2.2 as final Paper 1 variant and skip EvoGrow v3 for Paper 1.
-
-If v2.2 fails Gate 1:
-
-> Proceed to Phase 2 and develop EvoGrow v3 only if the diagnosis indicates that system-wide staged progression is the relevant failure mode.
-
-### Gate 1 Decision — 2026-05-30
-
-**Decision: v2.2 fails Gate 1. Phase 2 (EvoGrow v3) is triggered.**
-
-Evidence from `studies/phase1_diag/` (15 runs, EvoGrow v2.2 stage_local, pretuning=false, n_levels=30, seeds 42/123/7):
-
-| System | pruned_match | Final stage | Loss | Verdict |
-|--------|-------------|-------------|------|---------|
-| 3 (Logistic) | all true ✓ | 2–5 / 2 | ~7e-10 | Fit good, minor overshoot |
-| 11 (Cubic) | all true ✓ | 4/4 | ~4e-15 | Metric artifact healed |
-| 26 (Lotka-Volterra) | all false ✗ | 5/3 | ~5e-4–1.4e-3 | Genuine structural failure |
-| 31 (SIR) | all false ✗ | 3–5 / 3 | ~7e-11 – 1e-4 | Seed 42 near-perfect fit but spurious term; seeds 123/7 fail |
-| 63 (SEIR) | all false ✗ | 5/3 | ~9e-4–1.8e-3 | Consistent failure, 11000–31000s |
-
-**Diagnosed failure mode:** On Systems 26 and 63, loss stagnates in Stage 3 above target. The system-wide plateau trigger then promotes all equations to Stage 4 (cubic) and Stage 5 (trig), none of which are structurally needed. The correct cross-terms (Stage 3) are never found because the global promotion removes search pressure rather than concentrating it on the failing equations.
-
-This failure mode is consistent with the v3 hypothesis: per-equation staged progression would allow each equation to promote only when its own residual stagnates, preventing unnecessary escalation in equations that are already explained.
-
-**Triggering condition met:** the diagnosed failure mode is system-wide staged progression. Phase 2 is triggered.
-
----
-
-## Phase 2 — Conditional EvoGrow v3 Design and Validation
-
-### Status
-
-EvoGrow v3 is conditional. It is not automatically part of Paper 1.
-
-v3 is developed only if Phase 1 shows that v2.2 is not paper-ready and that the likely issue is system-wide staged progression.
-
-### Scientific Motivation
-
-In v2.2, stage progression is system-wide. If one equation needs higher-stage terms, all equations promote together. In coupled multi-dimensional systems, this can waste search budget and introduce unnecessary terms into equations that were already well explained at lower stages.
-
-v3 hypothesis:
-
-> Equation-wise staged progression improves complexity allocation by allowing each equation to grow only when its own progress signal indicates that more complexity is needed.
-
-### Core Design
-
-Replace the single global stage state:
-
-```text
-current_stage::Int
-```
-
-with equation-wise stage state:
-
-```text
-eq_stages::Vector{Int}
-```
-
-Each equation independently tracks:
-
-- current stage,
-- levels spent in current stage,
-- plateau history,
-- promotion decision.
-
-### Per-Equation Progress Signal
-
-The preferred signal is an equation-local derivative residual:
-
-```text
-mean_t ( dx_k/dt - f_k(x(t)) )²
-```
-
-computed on the observed trajectory. Derivative estimation should be consistent with the derivative estimation already used in the project, unless explicitly justified.
-
-A hybrid criterion may also be considered:
-
-```text
-derivative residual plateau AND trajectory residual above tolerance
-```
-
-Parameter-magnitude or coefficient-variance proxies may only be used as fallback if residual-based options fail and this decision is explicitly justified.
-
-### v3 Work Packages
-
-| WP | What | Status |
-|----|------|--------|
-| WP-v3.1 | Design note: per-equation progress signal and promotion rule | done 2026-07-20 |
-| WP-v3.2 | `EvoGrowV3` struct and equation-wise stage state | done 2026-07-20 |
-| WP-v3.3 | Equation-aware child generation | done 2026-07-29 |
-| WP-v3.4 | Per-equation plateau detection and promotion | done 2026-07-29 |
-| WP-v3.5 | New v3 metrics in `result.json` | done 2026-07-30 |
-| WP-v3.6 | Validation run comparing v3 against v2.2 on 3–5 diagnostic systems | replaced by WP-G2.1 do-or-die cell, run 2026-07-31 |
-
-The planned 45-run validation matrix was replaced by a single pre-registered decision
-cell (System 26, seed 42) because the v2.2 arm was already frozen and bit-exactly
-reproduced by WP-T2, so only one fresh v3 run was needed to decide. See the Gate 2
-decision below.
-
-### Gate 2 — Is v3 Paper-Ready?
-
-v3 is paper-ready if it shows:
-
-- at least comparable fit quality to v2.2,
-- better or more interpretable equation-wise complexity allocation,
-- reduced wasted complexity on relevant multi-dimensional systems,
-- no major new solver or runtime instability,
-- meaningful per-equation stage histories.
-
-If v3 passes Gate 2:
-
-> Select v3 as final Paper 1 variant.
-
-If v3 fails Gate 2:
-
-> Do not force v3 into Paper 1. Either use v2.2 with an honest limitation/failure analysis or revise the paper plan.
-
-### Gate 2 Decision — 2026-07-31
-
-**Decision: v3 fails Gate 2. v3 is not the final Paper 1 variant.**
-
-Evidence from the pre-registered decision cell (System 26, seed 42, 30 levels,
-`evogrow_v3`, config fingerprint `1f9c5f807d609548`, git hash `e82715b`, 3.6 h):
+Pre-registered decision cell:
 
 | Criterion | Target | Observed | Verdict |
 |-----------|--------|----------|---------|
-| (a) `eq_final_stages[1]` | 3 | 5 | failed |
-| (b) `du1` support | exactly `{u1, u1^2, u1*u2}` | extra `u2` term | failed |
-| (c) loss | ≤ 0.001391623174905009 | 2.5195575964774715e-4 | met |
+| `eq_final_stages[1]` | 3 | 5 | failed |
+| `du1` support | exactly `{u1, u1², u1·u2}` | extra `u2` term | failed |
+| loss | ≤ `1.391623174905009e-3` | `2.5195575964774715e-4` | met |
 
-`eq_final_stages = [5,5]`, `eq_overshoot = [2,2]`. No detectable decoupling.
+Two mechanisms explain the failure. The promotion condition `r_k > loss_tol = 1e-8` is unreachable
+on coupled systems whose residual floor is around `1e-3`, so it cannot distinguish under-modelling
+from an irreducible floor. And WP-L2 showed `r_k` is contaminated by derivative-estimation error,
+with the capacity to absorb that error growing with term count — biasing the signal toward "more
+terms help". Downstream confirmation: on System 31 seed 42 the v3 substrate alone loses about six
+orders of magnitude against v2.2.
 
-Criterion (c) is worth recording: the loss is 5.5× better than the frozen v2.2 anchor.
-Fit quality was never the problem. What failed is complexity allocation — precisely what
-v3 was built for.
+v3 is retained as documented failure analysis:
 
-**Diagnosis.** The v3 promotion rule asks three questions per equation: sufficient stage
-budget, `r_k` plateau, and `r_k > loss_tol = 1e-8`. The third condition is unreachable on
-coupled systems, where the error floor is around 1e-3 to 1e-4. For an already correctly
-modelled equation all three conditions therefore hold permanently, and the rule cannot
-distinguish under-modelling from an irreducible error floor: both look like a flat
-residual above 1e-8. Independent per-equation controllers consequently escalate exactly
-as the global one did.
-
-> **v3 changed who decides, but not what evidence justifies a promotion.**
-
-This is a clean negative result and is reportable as such.
-
-**Second, independent cause — found after the gate (WP-L2, 2026-07-31).** The `r_k`
-signal itself is contaminated. On System 26 the derivative residual of the *true*
-structure with *true* parameters is [1.808, 0.520], while the fitted full-stage-3 `r_k`
-is [0.142, 0.0394] — the floor lies a factor of 13 *above* the fitted value. `r_k`
-therefore does not measure structural adequacy; it measures how much finite-difference
-derivative error a model can absorb, and that capacity grows with the number of terms.
-The signal is systematically biased toward "more terms help". A smoothing-based
-derivative estimator reduces the floor by a factor of ~4.5 but does not remove it.
-
-### Scope decision after Gate 2 — decided 2026-08-01
-
-**Decision: branch 1, enriched.** The final Paper 1 variant carries the look-ahead stage
-cap. The paper is the mechanistic Claim C study, and the sequence v2.2 → v3 → capped
-becomes a documented failure analysis with a quantified positive result on complexity
-allocation.
-
-Basis for the decision is the decisive cell below: the look-ahead is a demonstrated
-mechanism for complexity control and demonstrably not for structural recovery, so
-rebuilding the paper around it (branch 2) would rest on a mechanism that does not address
-the failure which triggered Phase 2.
-
-Explicitly **not** started as part of Paper 1: the open question of search power within a
-stage. It is the most interesting unsolved point and it is a separate line of work.
-
-The two branches that were open:
-
-1. v2.2 as the final variant, with an honest failure analysis of v3 as a contribution.
-2. Revise the paper plan around the stage-firing look-ahead (effectively a v4).
-
-Evidence bearing on branch 2 was collected in `studies/lookahead/` (WP-L1 to WP-L3,
-diagnostic only, no algorithm change). Summary as of 2026-07-31:
-
-- A cheap derivative-space look-ahead separates the two decisive counterexamples once the
-  derivative estimate is adequate — a smoothing estimator matters, higher-order finite
-  differences do not.
-- With a noise-floor-gated firing rule the probe reaches 10 exact / 0 overshoot /
-  2 undershoot / 4 not-identifiable over the 16 exact benchmark equations.
-- Both remaining failure classes are characterised rather than assumed: the undershoots
-  are a sampling-density limit that disappears at 2x density, and the non-identifiable
-  equations stem from a conservation law that no sampling density removes.
-
-Two things this evidence does **not** establish, and both bear directly on the choice:
-
-1. The probe has only ever run offline, on systems with known ground truth, with the full
-   term library as the checkpoint. It has never been tested as a discovery mechanism.
-2. It addresses complexity allocation (Claim B), not structural recovery. On System 26,
-   `du2` was already wrong at stage 3 with every needed term available; a perfect firing
-   gate stops the escalation and still leaves `du2` wrong.
-
-**Recommended decisive step before choosing:** integrate the gate as a per-equation stage
-cap and re-run the frozen do-or-die cell (System 26, seed 42) against the v2.2 anchor and
-the v3 result. No speculative unlock, checkpoint, or rollback machinery is needed — the
-gate depends only on trajectory, basis, equation and stage, so `max_useful_stage_k` can be
-precomputed once per run. That is a small, cheap change and the first genuine test of the
-mechanism.
-
-### Result of the decisive step — 2026-08-01
-
-| | v2.2 anchor | v3 Gate 2 | capped |
-|---|---|---|---|
-| loss | 1.391623174905009e-3 | 2.5195575964774715e-4 | **2.5195575964774715e-4** |
-| `eq_final_stages` | 5 | [5, 5] | **[3, 3]** |
-| `eq_overshoot` | 2 | [2, 2] | **[0, 0]** |
-| `eq_wasted_levels` | 8 | — | **[0, 0]** |
-| `du1` support | {u1, u1², u1·u2} | — | {u1, **u2**, u1², u1·u2} |
-| `du2` support | {u1, u1²} | — | **{u1, u1²}** |
-
-Two findings, pointing in opposite directions.
-
-**Complexity allocation is solved, at no cost.** Overshoot 2 → 0, wasted levels 8 → 0, and
-the loss is bit-identical to the uncapped v3 run. Stages 4 and 5 contributed literally
-nothing there; the escalation was pure waste and the cap removes it without any loss of fit
-quality. Parameter fits drop from 530 to 390.
-
-**Structural recovery is unchanged — not even moved.** `du2` is exactly what v2.2 found
-three method generations ago, and the true `2·u2 − u1·u2 − u2²` was inside the cap on stage
-3 the whole time. `du1` keeps a spurious `u2` term.
-
-**Consequence for the scope decision.** Stage escalation was a symptom, not the cause.
-Forcing the search onto the correct stage does not improve discovery by a single term, so
-the look-ahead is a demonstrated mechanism for **Claim B** (complexity control) and
-demonstrably not for structural recovery. Branch 2 — rebuilding the paper around the
-look-ahead as the headline contribution — is therefore weaker than it appeared: the
-mechanism works and its scope is measured, but it does not fix the failure that drove
-Phase 2.
-
-The evidence now supports branch 1, enriched: the final variant carries the cap, the paper
-is the mechanistic Claim C study, and the v2.2 → v3 → capped sequence becomes a documented
-failure analysis with a quantified positive result on complexity allocation. The remaining
-open question — why the search fails to find an available stage-3 structure — concerns
-search power *within* a stage (population size, child generation, parsimony pressure) and
-is a different line of work, not a Phase 2 continuation.
+> v3 changed **who** decides, not **what evidence** justifies a promotion.
 
 ---
 
-## Phase 3 — ODEBench Protocol and Literature Reference Alignment
+## Phase 2b — The Look-Ahead Stage Cap
 
-### Goal
+The cap is the contribution: a per-equation upper bound on useful staged growth, derived before
+search from trajectory and basis. It is a search-space controller, not a structural-recovery fix.
 
-Prepare the final full-suite evaluation and clarify how EvoGrow results can be compared to published ODEBench-related results.
+### Design Rule 1 — positive evidence, never the absence of evidence
 
-No external baselines are run in this project.
+**Bought with:** the System 63 defect.
 
-Published results may be used from:
+Missing evidence is not evidence for a cap. A cap must rest on a positive residual drop or a
+resolved floor. System 63 consequently caps at `nothing` everywhere and is the **identifiability
+boundary** of the method, not a capped Phase B comparison cell.
 
-- ODEFormer / ODEBench,
-- PySR and SINDy numbers reported in ODEBench-related work,
-- GODE if protocol-relevant,
-- FIM / Al-Khwarizmi / other ODEBench papers if relevant.
+### Design Rule 2 — look ahead as far as the basis creates structural gaps
 
-These are used as **published reference context**, not as in-house baselines.
+**Bought with:** the WP-C1 horizon audit (all 20 exact systems, both IC sets, horizons 2–5,
+80 equation rows).
 
-### Required Protocol Audit
+The basis stages by **degree, not parity**, so odd nonlinearities first become approximable two
+stages later and a horizon of 2 never reaches them. Six rows move when the horizon is raised, and
+every new cap lands exactly on the required stage — System 28 eq 2 from 1 to 5, System 32 eq 2 from
+1 to 4, System 38 eq 1 from `nothing` to 4, the last one *tightening* a previously uncapped equation
+onto the cubic term it needs.
 
-Create:
+Horizons 3, 4 and 5 are cap-identical on all 80 rows, so the parameter is inert above 3. The shipped
+value is **`lookahead_horizon = 5` = the number of basis stages**, chosen so the paper reports "look
+to the end of the basis" rather than a tuned constant.
 
-```text
-docs/paper1_odebench_protocol_alignment.md
-```
+### Design Rule 3 — credit a mechanism only through an experiment that isolates it
 
-This document must record for each published reference source:
+**Bought with:** WP-C4, and it is the most expensive of the three rules.
 
-| Dimension | EvoGrow | Published source | Match status | Notes |
-|----------|---------|------------------|--------------|-------|
-| Systems used | all 63 ODEBench systems | [source-specific] | exact / partial / mismatch | |
-| Initial conditions | from `strogatz_extended.json` | [source-specific] | exact / partial / mismatch | |
-| tspan | from system JSON | [source-specific] | exact / partial / mismatch | |
-| sampling grid | [TBD] | [source-specific] | exact / partial / mismatch | |
-| noise setting | clean / σ=0 | [source-specific] | exact / partial / mismatch | |
-| metric definition | R², loss, support metrics | [source-specific] | exact / partial / mismatch | |
-| aggregation | across seeds/systems | [source-specific] | exact / partial / mismatch | |
+WP-C4 had introduced a third decision outcome — abstain inside an ambiguous band, issue no cap at
+all — and was credited with repairing the Lorenz rows. WP-V1 measured the band over all 80 rows:
 
-The protocol audit determines whether published numbers may be described as:
+| Measured over 80 equation rows | Result |
+|---|---|
+| caps correct | 77 |
+| caps wrong | 0 |
+| wrong caps prevented by the band | **0** |
+| correct caps surrendered to the band | **3** |
 
-- directly comparable,
-- approximately comparable,
-- contextual only.
+And all four Lorenz rows return cap 3 under the binary decision as well: the repair came from the
+**reopen branch**, not from the band. WP-C5 removed the band. Finite caps rose 45 → 48, exactly the
+three rows WP-V1 predicted (12 / IC 1, 31 / IC 1, 55 / IC 2 eq 2).
 
-If protocol equivalence is not established, do not frame external numbers as a direct benchmark defeat or victory.
+### The mechanism as shipped
+
+The walk over stages is binary again. A later stage that drops the residual to ≤ `0.35` of the floor
+**reopens** the walk; otherwise the walk caps at this stage. All conditions are **relative**: no
+stage index and no system identity enters the rule — WP-C3 was rejected for exactly that.
+
+Two constants are load-bearing, and both sit inside `config_fingerprint` since WP-C5, so moving
+either moves the campaign identity:
+
+| Constant | Value | Status |
+|---|---|---|
+| `post_floor_significant_drop_ratio` | 0.35 | **not selectable from data** — see below |
+| `post_floor_min_floor_ratio` | 0.1 | separates control 61 / IC 1 (floor ratios 0.03–0.07) from the targets (0.30–0.85) by a factor of four — a verified **margin**, not a derivation |
+
+### The negative result — the threshold cannot be selected from the data
+
+Leave-one-system-out over the 20 exact systems puts the reopen threshold between **0.044 and
+0.278**, while the shipped value is **0.35**; at every selected value Lorenz truncates again. The
+margin between 0.35 and Lorenz's worst ratio of 0.315 is **11 %**, and it is a human choice.
+
+This was the intended weak point of the paper and became one of its results. It must be reported as
+a limit of the method, not smoothed over.
+
+### Cap evidence to report
+
+- **0 truncated equation rows of 80**, 48 finite caps, on all 20 exact systems and both IC sets.
+- Verified per-system caps on the diagnostic grid: 3 → `[2]`, 11 → `[4]`, 26 → `[3,3]`, 31 → `[3,3]`,
+  54 → `[nothing,2,2]`, 63 → all `nothing`.
+- Counter-check: System 61 (Chen-Lee) caps correctly at `[3,3,3]` — the defect was selective, never
+  general.
+- Regression, 120 records under one identity triple (`git f6143eb`, `17fe7d9cfb8f1be3`,
+  `ffb0266c7913352c`), 30 shared cells on systems 3, 11, 26, 31, 63:
+
+  | | capped | v2.2 |
+  |---|---|---|
+  | loss | bit-identical in 30/30 cells | — |
+  | `pruned_match` | unchanged in 30/30 | — |
+  | loss evaluations | 12,002,255 | 16,087,320 |
+  | difference | **−25.4 %** | — |
+  | cells made more expensive | **0** | — |
+
+- The strongest single cell: System 3 seed 7, where v2.2 burns **12 of 30 levels** on stage
+  escalation and the capped run returns the bit-identical loss.
+- The measured price of an abstention, before the band was removed: System 31 / IC 1 cost **+16 %**
+  evaluations at a bit-identical loss — compute, never the solution. It is the empirical basis for
+  the safety/economy framing and survives as evidence even though the band does not.
+
+### Cap limitations to report, without minimization
+
+1. `pruned_match = false` persists on coupled systems even at very low loss. The cause is the
+   additive search operator, not the cap.
+2. The cap is auditable **only on the 20 exact systems**. The 43 surrogates have no ground-truth
+   support, so controller safety is unverifiable there by construction. The pilot shows several
+   surrogates carrying an equation capped at stage 1 (systems 33, 34, 40, 44, 50); they are scored
+   on R², so this is a fit-quality risk rather than a support error — but it must be stated.
+3. The reopen threshold 0.35 is not data-selectable (above), and the floor-depth guard 0.1 is a
+   verified margin.
+4. **Aggregation robustness is open.** Rows flip through **split majority voting** rather than clear
+   detection; at 12 / IC 1 a single split changed the outcome.
+5. The behaviour fingerprint covers `_cap_split_decision` only. Derivative estimation, floor
+   computation, split aggregation and the search loop remain unobserved by it.
+6. System 63 is the identifiability boundary, not a capped comparison cell.
+7. System 31 / IC 2 remains a low-dynamics boundary case: where the trajectory carries little
+   dynamics, the cap is not stable across initial conditions.
+
+---
+
+## Phase 3 — ODEBench Protocol and Literature Alignment
+
+No external baselines are run in this project. Published results may be used as reference context
+only, unless protocol equivalence is established.
+
+### Phase B Sampling Protocol — decided 2026-08-03 (frozen)
+
+| Component | Decision |
+|---|---|
+| Systems | all 63 ODEBench systems |
+| Time span | `t ∈ [0, 10]`, as shipped |
+| Sampling | 512 uniform points, both endpoints included |
+| Initial conditions | both sets per system |
+| Trajectory source | self-integration with `Tsit5`, `abstol = reltol = 1e-9` |
+| Noise | none |
+| Cells | 63 × 2 conditions × 3 seeds × 2 IC sets = 756 |
+
+The shipped trajectories are **not** adopted: their solver accuracy would impose MSE floors from
+`2.5e-2` to `6.1e-10`, putting current EvoODE results out of reach. Grid density is what matters,
+and at 512 points System 54's two safety violations disappear.
+
+**Declared deviation:** if published numbers were computed on the shipped trajectories, EvoODE works
+on cleaner data than the comparison does. This is a deviation in our favour and must be declared as
+such until the publications are checked.
+
+### Required Protocol Audit — open
+
+`docs/paper1_odebench_protocol_alignment.md` records, per published reference source: systems used,
+initial conditions, tspan, sampling grid, noise setting, metric definition, aggregation — each with
+a match status of exact / partial / mismatch. The audit decides whether published numbers may be
+called directly comparable, approximately comparable or contextual only.
+
+**The external columns are still unfilled.** Until they are, no framing as benchmark victory or
+defeat is permitted.
 
 ### System Classification
 
-Classify all 63 ODEBench systems into:
-
-1. **Exact systems** — exactly representable in the current staged basis.
-2. **Surrogate systems** — not exactly representable in the current staged basis.
-
-For exact systems, record:
-
-- expected stage,
-- true support,
-- dimensionality,
-- term types.
-
-For surrogate systems, record:
-
-- basis gap reason,
-- e.g. constant offset, fractional powers, non-supported nonlinearities, unsupported products, stiffness, or other mismatch.
-
-Output:
-
-```text
-analysis/data/<experiment_id>/system_classification.csv
-```
+All 63 systems split into **20 exact** systems (exactly representable in the current staged basis)
+and **43 surrogate** systems (not representable). For exact systems record expected stage, true
+support, dimensionality and term types; for surrogates record the basis-gap reason.
+`expected_stage` is derived, not hand-maintained (WP-M1).
 
 ### Core Metrics
 
-Per-run metrics:
+**Exact systems:** raw and pruned support equality, reached stage, stage overshoot, wasted levels,
+stability observations.
 
-| Metric | Definition |
-|--------|------------|
-| `loss` | Simulation MSE over all timesteps and dimensions |
-| `r2` | R² coefficient, per dimension and averaged, following protocol audit |
-| `r2_above_threshold` | Boolean, usually `r2 > 0.9` if aligned with ODEBench |
-| `relative_l2` | Optional bridge metric to grammar-based ODE discovery papers |
-| `exact_support_match_raw` | Raw support equality without pruning, exact systems only |
-| `exact_support_match_pruned` | Support equality after coefficient-threshold pruning, exact systems only |
-| `final_stage` | Final stage at termination |
-| `stage_overshoot` | `final_stage - expected_stage`, exact systems only |
-| `wasted_levels` | Levels spent above expected stage, exact systems only |
-| `elapsed_s` | Wall time for full run |
-| `solver_failures` | NaN-producing ODE solves during search |
-| `status` | queued / running / finished / failed / timeout / interrupted |
-| `failure_reason` | reason for non-finished run |
-| `system_id` | ODEBench system ID |
-| `seed` | RNG seed |
-| `git_hash` | Git commit hash |
+**Surrogate systems:** R², loss, reached stage, stability observations.
+
+Exact and surrogate systems are **never** mixed into one structure-correctness metric
+(Design Principle 8).
+
+**Cost and efficiency:** `total_parameter_fits`, `total_loss_evals`, `total_ode_solves`, levels,
+stages. `elapsed_s` is context only.
 
 ### Valid-Run Rule
 
-A run is valid if:
+A run is valid if `status = finished`, `loss` is finite and non-NaN, and a predicted trajectory
+exists. Poor results remain valid. Invalid are only NaN loss, missing prediction, timeout, crash or
+failed run.
 
-- `status = finished`,
-- `loss` is finite and non-NaN,
-- predicted trajectory exists.
+### Failure and Logging Policy
 
-Poor results are still valid:
+Orion imposes **no walltime limit**, so run-level timeouts are not part of the Phase B design and no
+checkpointing is required. The only deterministic brake is the per-fit evaluation budget
+`max_loss_evals = 20,000`, which is a count and therefore node-speed independent. A budget stop is
+distinguishable from a failed solve in the metadata since WP-D2, but both still collapse to the
+sentinel loss `1e6` in the loss itself — to be stated as a robustness limitation.
 
-- very large loss,
-- negative R²,
-- incorrect structure,
-- unstable-looking but numerically completed trajectory.
-
-Invalid runs are only:
-
-- NaN loss,
-- missing prediction,
-- timeout,
-- crash / failed run.
-
-Do not filter out poor valid runs.
-
-### Timeout Policy
-
-Timeout applies at run level only.
-
-One run is:
-
-```text
-system × final EvoGrow variant × seed
-```
-
-If the run-level timeout is reached:
-
-- `status = timeout`,
-- `failure_reason = timeout`,
-- `loss = NaN`,
-- `r2 = NaN`,
-- `elapsed_s = observed wall time or configured timeout limit`.
-
-Timeout runs:
-
-- count toward `n_seeds`,
-- do not count toward `n_valid`,
-- are included in robustness and failure-rate analyses,
-- must not be silently deleted or silently rerun.
-
-### Logging Policy
-
-Store more rather than less.
-
-Each run folder must contain:
-
-| File | Contents |
-|------|----------|
-| `config.json` | algorithm parameters, system definition, seed, git hash, Julia version, hostname |
-| `metrics.json` | all per-run metrics, written atomically |
-| `result.json` | final structure, final parameters, predicted trajectory, loss, R² |
-| `log.txt` | append-only run log, including restart marker if rerun |
-| `status.json` | current status and status transitions |
-
-Additional fields where available:
-
-- `stage_history`,
-- `eq_stage_history` for v3,
-- `solver_failures`,
-- `elapsed_s`,
-- `git_hash`,
-- `julia_version`,
-- `hostname`.
+Every cell writes its record plus a heartbeat log with one event per level. Failed cells carry
+`error != null`, count toward the cell total, do not count toward the valid total, are included in
+robustness analysis, and are never silently deleted or silently re-run.
 
 ---
 
-## Phase 4 — Small Validation Run
+## Phase 4 — Cluster, Schema and Cost Validation
 
-### Goal
+No paper claims come from this phase.
 
-Validate the selected final EvoGrow variant before launching the full ODEBench run.
+The compute path is verified end to end on SCCH **"Orion"**, an OpenShift/Kubernetes cluster:
+container built by GitLab CI, `k8s/` Indexed Jobs, results on NFS, Julia 1.12.6 pinned, one core and
+2 GB per cell. Mechanics in `docs/hpc_deployment_guide.md`.
 
-No paper claims are derived from this phase.
+The cost model is measured, not estimated (`docs/hpc_requirements.md`): **2,000–3,400 core-hours**
+for the 756 Phase B cells, roughly 9 days at the agreed `parallelism: 16`, with a makespan floor of
+68 h set by the longest single cell.
 
-### Scope
+One methodological result of this phase belongs in the paper's Methods section: **evaluation counts
+do not convert into compute time.** On System 56 the loss evaluations fall 44 % while runtime falls
+3 %; cost per evaluation varies by more than a factor of two within one dimension class. Counts
+remain the correct evidence for **search effort** and are demonstrably unusable as a proxy for
+**compute time**.
 
-Run 3–5 systems locally with 3 seeds.
+### Go criteria (met)
 
-The validation set must include:
-
-- one simple exact 1D system,
-- one exact 2D system,
-- one exact 3D system, e.g. Lorenz,
-- one exact 4D system, e.g. SEIR / System 63,
-- one surrogate system.
-
-### Go Criteria
-
-- all runs either finish, fail cleanly, or timeout cleanly,
-- schema validation passes,
-- R² and support metrics can be computed,
-- run-level timeout works,
-- logs and outputs are complete,
-- runtime estimates are sufficient for cluster planning,
-- no aggregate metric pipeline produces unexplained NaNs.
+- validation cells finish, fail cleanly, or are cleanly abandoned
+- schema validation passes; R² and support metrics computable
+- logs, heartbeats and outputs complete and readable from outside the container
+- all three identity fields recorded per record
+- no aggregate metric pipeline produces unexplained NaNs
 
 ---
 
-## Phase 5 — Full ODEBench Cluster Run
-
-### Goal
-
-Run the final selected EvoGrow variant on all 63 ODEBench systems.
-
-This is the only source of final Paper 1 results.
-
-### Runs
-
-Minimum final run plan:
+## Phase 5 — The Phase B Campaign
 
 ```text
-63 systems × 1 final EvoGrow variant × 3 seeds = 189 runs
+63 systems × 2 pretuning conditions × 3 seeds × 2 IC sets = 756 cells
 ```
 
-Additional seeds may be added later if runtime permits, but the default final plan is 3 seeds.
+No GP baseline, no v1, no v2.1. Search depth stays at **30 levels** (see Phase 6).
 
-### Important
+### Provenance — three fields, not two
 
-There is no pretuning on/off condition in Paper 1.
+Every final record is identified by:
 
-If the final method uses pretuning internally, it is a fixed part of the selected method and must be documented. If pretuning is not needed, it remains disabled and is reserved for future work.
+1. git commit hash
+2. `config_fingerprint` (Phase B variant)
+3. `stage_cap_behavior_fingerprint`
 
-### Cluster Requirements
+The third field exists because the config fingerprints hash configuration constants only: the WP-C3
+and WP-C4 cap-logic changes left them standing, so two records could share a fingerprint and come
+from differently deciding code. `stage_cap_behavior_fingerprint()` hashes the decisions a frozen
+five-case probe draws out of `_cap_split_decision`.
 
-- multiple parallel runners,
-- atomic run acquisition,
-- pinned Julia environment via `Manifest.toml`,
-- git hash and Julia version logged per run,
-- failed/time-out runs preserved,
-- no silent reruns,
-- no system removal due to difficulty or runtime.
+| Field | Value | Records |
+|---|---|---|
+| Phase B fingerprint | `604e79733b22d64d` | none yet |
+| Regression fingerprint | `17fe7d9cfb8f1be3` | 120, `git f6143eb` |
+| Behaviour fingerprint | `ffb0266c7913352c` | as above |
 
-### Go Criteria
+A campaign with mixed identity is not publishable and must be re-run. This has already cost one
+regression suite; the pilot and probe records predate the current identity by construction and must
+never be merged into campaign data.
 
-- Phase 4 validation complete,
-- final EvoGrow variant selected,
-- system classification committed,
-- protocol audit committed,
-- run manifest generated and verified,
-- cluster runner tested with parallel workers,
-- all runs end in `finished`, `failed`, or `timeout` status.
+### Result placeholders
+
+The following remain placeholders until campaign records exist: fit quality over all 63 systems;
+support recovery on the 20 exact systems; R² on the 43 surrogates; stage-cap economy counters;
+`pretune_on` vs `pretune_off`; robustness, failures and stability.
 
 ---
 
@@ -818,91 +504,95 @@ If the final method uses pretuning internally, it is a fixed part of the selecte
 
 ### Primary Analyses
 
-Across all 63 systems:
+**All systems:** R², simulation loss, valid-run rate, failure and solver-failure counts, reached
+stages, stability observations.
 
-- R² accuracy,
-- mean R²,
-- simulation loss,
-- runtime,
-- timeout rate,
-- solver failure rate,
-- valid-run rate,
-- comparison against published reference numbers where protocol-appropriate.
+**Exact systems:** `exact_support_match_raw`, `exact_support_match_pruned`, per-equation required
+stage, per-equation cap, final stage, stage overshoot, wasted levels, cap correctness where true
+support exists.
 
-Exact systems only:
+**Surrogate systems:** R² and loss, approximation behaviour, final stage, basis-mismatch effects,
+stability and failure modes.
 
-- `exact_support_match_raw`,
-- `exact_support_match_pruned`,
-- stage overshoot,
-- wasted levels,
-- final stage distribution,
-- stage-wise search behavior.
+**Search economy:** the counters, never wall-clock. Timing may be reported for capacity planning
+only, measured on dedicated hardware and labelled as such.
 
-Surrogate systems only:
+### Wasted search levels — a result, not a fix
 
-- R² and loss,
-- approximation behavior,
-- final stage reached,
-- basis mismatch effects,
-- stability and failure modes.
+Measured over 287 cells and 599.6 h of recorded runtime (WP-B1, `docs/WP-B1.md`):
 
-If v3 is selected:
+| Dimension | Levels per cell | Silent levels | Share of runtime |
+|---|---|---|---|
+| 1 | 10.8 | 2.3 | 10 % |
+| 2 | 17.9 | 7.1 | **50 %** |
+| 3 | 25.3 | 8.6 | 44 % |
+| 4 | 19.8 | 18.5 | **96 %** |
 
-- equation-wise final stages,
-- equation-wise overshoot,
-- equation-wise wasted levels,
-- equation-wise stage histories,
-- evidence of meaningful complexity allocation.
+A global "stop after k silent levels" was evaluated and **rejected at every threshold**: k = 3 saves
+94 % of the runtime and costs 152 of 287 cells a materially worse result (138 of them by more than
+50 %); k = 5 saves 37 % against 23 damaged cells; k = 8 saves 15 % for one. A tempting counter-
+hypothesis — that the missed improvements are sub-per-mille noise — was tested against the raw data
+and refused.
+
+The decision (2026-08-21) is therefore to run at 30 levels and **report the waste as a result**.
+Introducing a constant that does not follow from the data would repeat the WP-C4 mistake that WP-V1
+uncovered. A structured stopping criterion is an open research question of this project, not a
+configuration constant, and it belongs to the next paper.
 
 ### Published Reference Context
 
-External ODEBench-related numbers may be cited from the literature, but the paper must clearly label them as published reference results.
-
-They may only be presented as direct comparisons if the protocol audit supports comparability.
-
-Otherwise, they are contextual references.
+External numbers are cited as published context only until the protocol audit establishes
+comparability. No SINDy or PySR comparison claims while the external columns are unfilled.
 
 ### Planned Paper Structure
 
-1. Introduction: interpretable ODE discovery and the need for controlled structure search
-2. Related Work: SINDy, PySR/GP, ODEFormer, GODE, and prior SR-based ODE discovery
-3. Method: EvoGrow staged basis expansion and final selected variant
-4. Experimental Protocol: ODEBench full-suite evaluation and exact/surrogate split
-5. Results: fit quality, structural recovery, search economy, runtime, and failures
-6. Analysis: where staged growth helps, where it fails, and why
-7. Limitations and Future Work: pretuning, stronger baselines, noise, larger systems
-8. Conclusion
+1. Introduction — interpretable ODE discovery and the need for controlled structure search
+2. Related Work — SINDy, PySR/GP, ODEFormer, staged search, search-space control
+3. Method — EvoGrow staged basis expansion and the look-ahead stage cap
+4. Failure Analysis — v2.2, v3, and the three cap design rules
+5. Experimental Protocol — ODEBench Phase B, exact/surrogate split, sampling, provenance
+6. Results — placeholder until campaign records exist
+7. Analysis — where the cap controls complexity, where search still fails, and why
+8. Limitations and Future Work — additive search, surrogate unauditability, the non-selectable
+   threshold, baselines, noise, within-stage search power
+9. Conclusion
 
 ### Allowed Claim Types
 
-Claims are only made after final results are available.
+Claims are made only from final campaign records, and only in these shapes:
 
-Allowed claim templates:
+- **fit quality** — the reported R² or loss outcomes under the frozen protocol
+- **structural recovery** — effective support on the reported subset of exact systems, under the
+  frozen pruning rule
+- **search-space control** — the cap limits staged growth according to the frozen decision rule, at
+  the reported evaluation cost
+- **mechanistic** — the v2.2 → v3 → capped sequence exposes why staged growth needs a data-derived
+  boundary, and why the boundary's threshold is not data-selectable
+- **robustness** — EvoODE completes on the reported number of cells
+- **failure mode** — failures are dominated by the reported categories, exact and surrogate
+  separated
 
-- **Accuracy claim:** EvoGrow achieves X% R² accuracy on all or selected ODEBench subsets.
-- **Structural recovery claim:** EvoGrow recovers effective support on X% of exact systems under the frozen pruning rule.
-- **Complexity-control claim:** EvoGrow limits or reveals unnecessary complexity through stage metrics.
-- **Mechanistic claim:** EvoGrow exposes where staged incremental growth helps or fails.
-- **Robustness claim:** EvoGrow completes successfully on N of 63 systems.
-- **Failure-mode claim:** Failures are dominated by solver instability, basis mismatch, timeout, stage escalation, or fitting issues.
-
-No claim may be derived from Phase A exploratory results.
+No claim may be derived from Phase A results.
 
 ---
 
 ## Future Work / Separate Paper Ideas
 
-The following topics are explicitly outside the main Paper 1 scope but may become follow-up work:
+Outside Paper 1 scope, deliberately:
 
-- pretuning / OLS warm-start ablation,
-- noise robustness,
-- irregular sampling,
-- extrapolation to unseen initial conditions,
-- in-house SINDy / PySR / GP benchmark implementation,
-- candidate-level optimizer timeouts,
-- adaptive basis redesign,
-- alternative pruning and sparsification strategies,
-- equation-wise v3 extensions if not used in Paper 1.
+- a **structured stopping criterion** — the direct successor to the WP-B1 measurement
+- remove/replace operators for the growth-only search; beam or forward-stepwise search inside a stage
+- search power within a stage: population size, child generation, parsimony pressure
+- population reset on promotion (currently a deliberate warm start with anchoring as accepted risk)
+- pretuning / OLS warm start as its own ablation
+- noise robustness, irregular sampling, extrapolation to unseen initial conditions
+- in-house SINDy / PySR / GP implementations
+- line-search cost control and candidate-level optimizer budgets
+- canonical equality and hashing for `StructureSpec` as a precondition for deduplication — note that
+  under `pretuning=false` duplicates act as implicit multistarts, so a cache would change the
+  experimental condition rather than merely accelerate it
+- adaptive basis redesign; alternative pruning and sparsification strategies
+- equation-wise v3 extensions beyond the rejected residual-promotion rule
 
 ---
 
@@ -910,14 +600,15 @@ The following topics are explicitly outside the main Paper 1 scope but may becom
 
 | Risk | Severity | Mitigation |
 |------|----------|------------|
-| Raw support matching underestimates recovery | High | Use frozen coefficient-threshold pruning for evaluation and store raw/pruned metrics |
-| v2.2 looks weak due to metric artifact | High | Re-diagnose with pruned support before developing v3 |
-| v3 is developed without clear need | Medium | Only implement v3 if Gate 1 diagnosis justifies it |
-| v3 per-equation progress signal is unstable | High | Resolve in WP-v3.1 before implementation |
-| ODE solve failures on stiff/high-dimensional systems | Medium | Record failures and include in robustness analysis |
-| Run-level timeout too short | Medium | Estimate runtime in validation run and adjust before full cluster run |
-| Julia/package drift on cluster | Medium | Pin `Manifest.toml`, log Julia version and git hash |
-| Protocol mismatch with published baselines | Medium | Use protocol audit; label external numbers as contextual if necessary |
+| Growth-only search prevents structural recovery | High | report as limitation; defer remove/replace to future work |
+| Cap safety is unauditable on surrogate systems | High | separate exact and surrogate metrics; claim no support safety on surrogates |
+| The reopen threshold is a human choice | High | report the LOSO result and the 11 % margin as a finding, not a footnote |
+| Split aggregation flips rows by majority vote | Medium | report as open robustness question with the 12 / IC 1 example |
+| Behaviour fingerprint is too narrow | Medium | state that it covers `_cap_split_decision` only |
+| Phase B records do not share provenance | High | require all three identity fields; verify before publishing |
+| Wall-clock is overinterpreted | Medium | counters for cost claims; timing labelled as capacity planning |
+| Analysis pipeline is Phase-A shaped | Medium | `table_main_results.py` reindexes to a hard-coded Phase A variant list and produces a near-empty table for campaign variants — fix before interpreting results |
+| Cost projection blind spots | Low | systems 1–23 rest on one measured system, 63 on none; a mis-projected class costs calendar days, not results |
 
 ---
 
@@ -925,58 +616,65 @@ The following topics are explicitly outside the main Paper 1 scope but may becom
 
 | Risk | Severity | Mitigation |
 |------|----------|------------|
-| EvoGrow does not outperform published methods | Medium | Frame paper as mechanistic staged-growth study, not SOTA benchmark |
-| v2.2 is not strong enough and v3 does not fix it | High | Report honest failure analysis or revise paper scope |
-| Stage metrics remain weak | Medium | Analyze when and why staged growth fails; do not overclaim |
-| Full ODEBench performance is low | Medium | Use exact/surrogate split and failure-mode analysis |
-| External reviewers expect in-house baselines | Medium | Clearly state scope; compare to published numbers only where protocol supports it |
+| Structural recovery is low on exact coupled systems | High | frame the paper as a mechanistic search-space-control study; report the additive-search cause |
+| The cap saves search space but not solutions | High | state the contribution as a controller, not a recovery fix; the 25.4 %/bit-identical result is exactly this shape |
+| Surrogate performance is poor or unstable | Medium | report via R², loss, reached stage and stability only |
+| Reviewers expect in-house baselines | Medium | state the non-goal and the protocol-audit status plainly |
+| System 63 is misread as a failure cell | Medium | present it as the identifiability boundary |
+| The waste finding invites "why no stopping rule?" | Medium | answer with the WP-B1 table: every threshold was measured and every one was a bad trade |
 
 ---
 
 ## Frozen Elements
 
-### Phase A
+**Phase A.** `paper1_phaseA_v1` run data unchanged; exploratory, no final claims.
 
-- `paper1_phaseA_v1` run data remains unchanged.
-- Phase A is exploratory and not used for final claims.
+**After Gate 1.** v2.2 failed; retained as substrate and as failure evidence.
 
-### After Phase 1 / Gate 1
+**After Gate 2.** v3 failed; retained as failure analysis.
 
-- v2.2 diagnostic decision is recorded.
-- If v2.2 is selected, final v2.2 specification is frozen.
-- If v3 is triggered, v3 design rationale is frozen before implementation.
+**After cap selection.** `evogrow_v2_2_stage_capped` is the final Paper 1 variant. The three design
+rules, the two load-bearing constants and the known limitations are reported.
 
-### After Gate 2
+**After Phase 3.** Phase B sampling: 512 points over `t ∈ [0, 10]`, both IC sets, self-integrated
+with `Tsit5` at `abstol = reltol = 1e-9`. Exact and surrogate systems evaluated separately.
 
-- final EvoGrow variant is frozen.
-- all hyperparameters are frozen.
-- seed list is frozen.
+**After WP-B1.** Search depth stays at 30 levels for the campaign; no level budget, no stopping rule.
 
-### After Phase 3
+**Once Phase 5 begins.** The campaign manifest is frozen. No system may be removed, and no setting
+changed, without a new experiment identifier. Frozen result blocks are never overwritten.
 
-- system classification is frozen.
-- metrics are frozen.
-- protocol-audit status is frozen.
+**Deliberately excluded cells.** System 63 in capped comparison cells (cap is `nothing` everywhere);
+System 54 in the regression suite (adding it changes `REGRESSION_SYSTEMS` and hence the fingerprint,
+and its limit is already documented by WP-L3 and WP-G1).
 
-### After Phase 5 begins
+---
 
-- full ODEBench manifest is frozen.
-- no systems may be removed.
-- no settings may be changed without creating a new experiment ID.
+## Open Items and Known Inconsistencies
+
+1. **External protocol columns unfilled** in `docs/paper1_odebench_protocol_alignment.md` — the last
+   substantive Phase 3 item.
+2. **Analysis downstream is Phase-A shaped** — see the risk table.
+3. `docs/wp_c1_stage_cap_horizon_audit.md` carries the internal title *WP-C2 Stage-Cap Horizon
+   Audit*, and its truncation count (4 rows on systems 28 and 32 at horizon 2) is the audit's own
+   horizon-2 view, while `CLAUDE.md` records the wider 9-row / 5-system figure from the full audit.
+   Both are correct under their own scope; the paper must quote one scope explicitly.
+4. `docs/paper1_odebench_protocol_alignment.md` is dated 2026-08-03 and still describes System 31 /
+   IC 2 under the pre-WP-C5 cap logic. To be refreshed before it is cited.
+5. **Unbudgeted call sites** — eleven scripts under `benchmarks/` and `studies/` construct the
+   optimizer without a budget and are unbounded since WP-B3. Deliberate backlog, outside the
+   campaign path.
 
 ---
 
 ## Document Maintenance
 
-This document is updated at each phase transition:
+Updated at phase transitions:
 
-- mark completed WPs with date,
-- record Gate 1 decision,
-- record Gate 2 decision if v3 is triggered,
-- fill final variant specification,
-- update protocol-audit status,
-- add final claim decisions after Phase 5 results.
+- record gate decisions and the evidence behind them
+- record cap-rule changes and their fingerprint consequences
+- update protocol-audit status
+- fill result placeholders **only** from final Phase B campaign records
+- add final claim decisions after the Phase B analysis
 
-Last updated: 2026-07-31
-Current phase: Phase 2 closed — v3 failed Gate 2; scope decision open (v2.2 with failure
-analysis, or paper plan revised around the stage-firing look-ahead)
+Last revision: 2026-08-21. Current phase: Phase B prepared, no campaign records.

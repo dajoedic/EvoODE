@@ -333,10 +333,6 @@ the coupled search path 1e-6 is the cheaper, behaviour-equal tolerance; the Syst
    from the publications. Open question there: if published numbers were computed on the shipped
    trajectories, we work on cleaner data than the comparison works — a deviation in our favour that
    must be declared. *(The R² metric is done, WP-M1.)*
-6. **`PAPER_1.md` is stale and it is the authoritative document.** Dated 2026-05-17, it plans in
-   detail around v3 and does not mention the stage cap once — the variant that is the contribution.
-   Until it is revised, `CLAUDE.md` and `DIARY.md` carry the current state, which inverts the
-   precedence rule stated at the top of this file. This must be resolved before writing.
 7. **Analysis downstream is Phase-A shaped.** WP-A1 built a bridge from campaign records into the
    Python pipeline, but `table_main_results.py` reindexes to a hard-coded Phase-A variant list and
    silently produces a near-empty table for campaign variants. Not a campaign blocker; a blocker for
@@ -431,10 +427,15 @@ change addresses, do not make it.
 `PAPER_1.md` is the authoritative execution plan (phases 0–5, Go/No-Go criteria, work packages,
 risk register, frozen elements).
 
+**Revised 2026-08-21** from `docs/PAPER_1_draft.md`, which was promoted and removed. The
+precedence rule at the top of this file holds again: where the two documents drift, `PAPER_1.md`
+decides.
+
 **Current phase:** Phase 2 closed. Gate 1 decided 2026-05-30 (v2.2 fails, v3 triggered); Gate 2
 decided 2026-07-31 (v3 fails). Paper scope decided 2026-08-01, final variant settled 2026-08-03:
 the mechanistic Claim C study with `evogrow_v2_2_stage_capped`, and v2.2 → v3 → capped as a
-documented failure analysis. Phase 3 in progress; Phase B blocked only on compute.
+documented failure analysis. Phase 2b closed 2026-08-20. Phase 3 open only in its external audit
+columns; Phase B has no open scientific blocker.
 
 **Final experiment scope** (`paper1_phaseB_v1`, all results from new runs):
 
