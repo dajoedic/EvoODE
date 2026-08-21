@@ -8,7 +8,7 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ### WP-A4/A4b — die Auswertung konnte R² gar nicht sehen, und drei Achsen fielen stumm weg
 
-<!-- HASH -->
+<!-- 1e0820a -->
 
 `CLAUDE.md` fuehrte die Analyse-Pipeline als „Phase-A-foermig": `table_main_results.py` reindiziere
 auf eine hartkodierte Variantenliste. Beim Aufsetzen des Arbeitspakets stellte sich heraus, dass
