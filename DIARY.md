@@ -6,6 +6,58 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ## 2026-08-21
 
+### WP-B1 — kein Levelbudget: der Kompromiss ist bei jedem Schwellenwert schlecht
+
+<!-- HASH -->
+
+287 Zellen aus sechs Quellen — 44 Pilot, 3 Sondierung, zweimal 120 Regression —, alle Records
+gelesen, keine fehlend, 599,6 Stunden Datenbasis. Der Auftrag war ausdruecklich **Messung ohne
+Mechanismus**, als Lehre aus WP-C4.
+
+**Der Kompromiss, hypothetisch durchgerechnet:**
+
+| k stille Level | Ersparnis | Anteil an 599,6 h | Zellen mit verpasster Verbesserung | davon > 50 % |
+|---|---|---|---|---|
+| 3 | 563 h | **94 %** | 152 von 287 | **138** |
+| 5 | 220 h | 37 % | 38 | 23 |
+| 8 | 92 h | 15 % | 3 | 1 |
+
+**Eine eigene Vermutung dabei widerlegt.** Naheliegend war, dass die verpassten Verbesserungen
+ueberwiegend Rauschen sind — sub-Promille-Absenkungen, die als Verbesserung mitzaehlen. Gegen die
+Rohdaten geprueft: falsch. Bei k=3 verpassen **138 der 152** Zellen eine Verbesserung von ueber
+50 Prozent, bei k=5 immer noch 23. Die Zahlen tragen; die Skepsis trug nicht.
+
+**Entscheidung (Nutzer, 2026-08-21): kein Levelbudget vor der Kampagne.** Bei k=3 waere die
+94-Prozent-Ersparnis erkauft mit einem wesentlich schlechteren Ergebnis auf mehr als der Haelfte
+aller Zellen — das ist keine Kostenoptimierung, sondern eine andere Methode. k=5 ist ein schlechtes
+Geschaeft, k=8 vertretbar aber mager. Und jedes k waere zum zweiten Mal eine Konstante, die nicht
+aus den Daten folgt.
+
+**Der eigentliche Befund liegt in der Aufschlüsselung:**
+
+| Dimension | Level gesamt | stille Level | Zeitanteil |
+|---|---|---|---|
+| 1 | 10,8 | 2,3 | 10 % |
+| 2 | 17,9 | 7,1 | **50 %** |
+| 3 | 25,3 | 8,6 | 44 % |
+| 4 | 19,8 | **18,5** | **96 %** |
+
+Dim 4 — System 63, das einzige dim-4-System der Regression — verbringt **96 Prozent seiner Zeit in
+Leveln, die nichts verbessern**. Und im Pilot gibt es eine ganze Klasse von Zellen (Systeme 30, 34,
+36, 39, 46), deren letzte Verbesserung auf **Level 1** liegt und die danach neunzehn stille Level
+rechnen.
+
+Das spricht nicht fuer ein globales k, sondern fuer eine strukturierte Abbruchregel — und die ist
+eine Forschungsfrage, keine Konfigurationskonstante. `CLAUDE.md` fuehrt sie ohnehin als offene
+Frage: *what the best stopping and promotion criterion is*.
+
+**Konsequenz fuer die Kampagne:** 30 Level bleiben, und die Verschwendung wird **gemessen statt
+behoben**. Ein Drittel bis die Haelfte der Rechenzeit traegt nichts bei — das ist ein Ergebnis fuer
+Paper 1 und die Motivation fuer ein Stopp-Kriterium als eigene Arbeit. Rechenzeit ist vorhanden,
+das hat der Pilot geklaert.
+
+---
+
 ### Sondierung vollstaendig — Pretuning wirkt systemabhaengig in beide Richtungen
 
 <!-- 897f0ff -->
