@@ -113,7 +113,7 @@ ground truth, `STATUS.md` only the fast signal: a poll checks both.
 | 1 — stable core | DONE (2026-04-20) |
 | 2 — EvoGrow variants | **CLOSED 2026-08-03** |
 | 3 — benchmarking | infrastructure done; Phase B protocol decided and implemented. Planned next axes: noise, sampling density, coupling strength, dimensionality |
-| 4 — Paper 1 | Phase A frozen; pilot finished 2026-08-17; stage-cap defect solved (WP-C4). **Running on Orion since 2026-08-18:** `pretune_off` probe (3 cells) and the regression suite (120 cells), both on `88eaeb6f`. Campaign awaits the cost model from the probe |
+| 4 — Paper 1 | Phase A frozen; pilot finished 2026-08-17; stage-cap defect solved (WP-C1 to WP-C5, 2026-08-20). regression suite recomputed under the final identity triple (120 cells, 30/30 bit-identical, −25.4 % loss evaluations); `pretune_off` probe complete (3/3); level budget decided against (WP-B1, 2026-08-21). **No open blocker before the campaign** |
 | 5 — advanced methods | not started |
 
 ### Phase 2 outcome
@@ -139,20 +139,20 @@ over unchanged — a deliberate warm start; the accepted risk is anchoring, and 
 the counter-measure. A population reset on promotion is future work and **must not be implemented
 in the current phase.**
 
-## Active Studies (as of 2026-08-03)
+## Active Studies (as of 2026-08-20)
 
 | Artifact | Status | Note |
 |----------|--------|------|
 | `paper1_phaseA_v1` | **frozen** (300/300) | H1 partial, H2 supported, H3 partial, H4 vacuous. Not used for final claims. `docs/paper1_freeze_memo_phaseA.md` |
 | `studies/lookahead/` | WP-L1–L5d, WP-G1/G1b done | Stage-firing look-ahead — **promoted from diagnostic to the paper's contribution** |
-| `studies/regression/` | 42 records, 4 fingerprints | Final variant covers 10 cells on systems 3, 11, 26, 31 — all on the **old** grid. Batch path (manifest / one cell per process / merge) in place; no record yet on `7acd3ebf3f60b974` |
+| `studies/regression/` | 120 records on Orion, recomputed 2026-08-20 | Capped vs v2.2 over 30 cells on systems 3, 11, 26, 31, 63 under `git f6143eb` / `17fe7d9cfb8f1be3` / `ffb0266c7913352c`: loss **bit-identical 30/30**, `pruned_match` unchanged, **−25.4 %** loss evaluations, **no cell more expensive** |
 | `studies/numerics/` | done (WP-T2) | Overshoot on System 26 is algorithmic, not numerical; screening is performance-only |
 | `studies/generalization/` | closed | Auxiliary only; insufficient cells for supplementary inclusion |
 | `studies/profiling/` | data available | Methods / Discussion only; not evidence for H1–H4 |
 
 ## Current Priorities
 
-State as of 2026-08-03. `DIARY.md` holds the measurements; this section keeps only what still
+State as of 2026-08-20. `DIARY.md` holds the measurements; this section keeps only what still
 constrains a decision.
 
 ### Settled — do not re-open
@@ -183,6 +183,18 @@ the trajectories ourselves** at `abstol = reltol = 1e-9`. Grid density is what m
 two safety violations disappear); the shipped trajectories would impose MSE floors of 2.5e-2 to
 6.1e-10, putting current results out of reach.
 
+**No level budget before the campaign (WP-B1, 2026-08-21).** Measured over 287 cells and 599.6 h
+of recorded runtime, a global “stop after k silent levels” is a bad trade at every threshold:
+k = 3 saves 94 % but costs 152 of 287 cells a better result, 138 of them by more than 50 %; k = 5
+saves 37 % against 23 substantially damaged cells; k = 8 saves 15 %. A conjecture was tested and
+refused: the missed improvements are **not** noise. Any k would also have been a second constant
+that does not follow from the data — the WP-C4 mistake. The waste is real and unevenly distributed
+(dim 1: 10 % of the time in silent levels, dim 2: 50 %, dim 3: 44 %, dim 4: 96 %), and a whole class
+of pilot cells improves last at level 1 and then computes nineteen silent levels. That is an
+argument for a **structured stopping criterion as its own research question**, not for a
+configuration constant. The campaign therefore runs at 30 levels and reports the waste as a result.
+`docs/WP-B1.md`.
+
 **Cost and numerics, closed.** Screening is a performance optimization only, never a
 discovery-quality lever. Overshoot on System 26 is tolerance-invariant, therefore algorithmic. On
 the coupled search path 1e-6 is the cheaper, behaviour-equal tolerance; the System 11 loss of
@@ -190,9 +202,10 @@ the coupled search path 1e-6 is the cheaper, behaviour-equal tolerance; the Syst
 
 ### Active
 
-0. **CAMPAIGN BLOCKER — the stage cap truncates true structures. Half solved (WP-C1, 2026-08-17).**
+0. **CAMPAIGN BLOCKER — the stage cap truncates true structures. SOLVED (WP-C1 to WP-C5, 2026-08-20).**
    The audit over all 20 exact systems, both IC sets, horizons 2–5 (`docs/wp_c1_stage_cap_horizon_audit.md`)
    put the rate at **9 equation rows on 5 of 20 systems** at the shipped `lookahead_horizon = 2`.
+   Final state: **0 truncated rows of 80, 48 finite caps.**
 
    **Solved: the horizon.** The basis stages by degree, not parity, so odd nonlinearities first
    become approximable at stage 4/5 and a horizon of 2 never reaches them. Raising it moves six
@@ -202,14 +215,21 @@ the coupled search path 1e-6 is the cheaper, behaviour-equal tolerance; the Syst
    inert above 3; WP-C2 sets it to **5 = the number of basis stages**, i.e. no horizon, rather than
    leave a tuned constant in the paper.
 
-   **Solved: the second mechanism (WP-C2 to WP-C4).** The five surviving rows were derivative-driven
+   **Solved: the second mechanism (WP-C2 to WP-C5).** The five surviving rows were derivative-driven
    — with analytic derivatives all five reach the required stage, and a 5×5 sweep of `tau_rel` and
    `tau_abs` over four orders of magnitude fixes none of them, so thresholds were ruled out
-   empirically. WP-C4 gave the floor-crossing decision a third outcome: a later stage dropping the
-   residual to ≤0.35 reopens the walk, ≥0.62 caps as before, and **anything between returns no cap
-   at all**. All conditions are relative; no stage index and no system identity (WP-C3 was rejected
-   for exactly that). **No truncated rows remain.** Finite caps fell 49 → 45 — the surrendered rows
-   cost compute, never a solution.
+   empirically. What repairs them is the **reopen branch**: a later stage dropping the residual to
+   ≤0.35 reopens the walk, otherwise the walk caps here. All conditions are relative; no stage index
+   and no system identity (WP-C3 was rejected for exactly that). **No truncated rows remain.**
+
+   **The doubt band is gone (WP-V1 → WP-C5, 2026-08-20).** WP-C4 had given the decision a third
+   outcome — abstain in an ambiguous band, no cap at all. WP-V1 measured what that outcome buys over
+   all 80 rows: **77 caps correct, 0 caps wrong, 0 wrong caps prevented by the band, 3 correct caps
+   surrendered to it.** And the Lorenz repair, for which the band was built, comes from the reopen
+   branch — all four Lorenz rows return cap 3 under the binary decision too. The band was removed;
+   finite caps 45 → 48, exactly the 3 rows WP-V1 predicted (12 / IC 1, 31 / IC 1, 55 / IC 2 eq 2).
+   The measured price of one abstention, from the regression run: System 31 / IC 1 cost **+16 %**
+   loss evaluations at a bit-identical loss — compute, never the solution, as promised.
 
    **Counter-check held:** System 61 (Chen-Lee) caps correctly at `[3,3,3]`. The defect is
    selective, not general.
@@ -217,14 +237,13 @@ the coupled search path 1e-6 is the cheaper, behaviour-equal tolerance; the Syst
    **Consequence for the 40 % recovery figure:** several of the six failures are controller errors,
    not search errors, and must be counted separately.
 
-   **Open, smaller (2026-08-17):** the floor-depth constant `0.1` is now the load-bearing one —
-   control 61 / IC 1 has three of four splits inside the ratio band and keeps its cap only because
-   its floor ratios are 0.03–0.07 against targets at 0.30–0.85. Verified, factor four, but it must
-   be reported. And row 12 / IC 1 surrenders a correct tight cap for a wrong reason: its floor ratio
-   is 9.9e-06, so the "improvement" it abstains over is pure noise — the floor-depth condition
-   should disable the band logic entirely, not only the reopen branch. Both 12 / IC 1 and 31 / IC 2
-   flip through **split majority voting**, not clear detection, so aggregation robustness is its own
-   open question.
+   **Open, smaller (2026-08-20):** two constants remain, both now inside `config_fingerprint` —
+   the reopen threshold `post_floor_significant_drop_ratio = 0.35` and the floor-depth guard
+   `post_floor_min_floor_ratio = 0.1`. The first is **not selectable from data**, see Active 4; the
+   second separates control 61 / IC 1 (floor ratios 0.03–0.07) from the targets (0.30–0.85) with a
+   factor of four — verified, but to be reported as a margin rather than a derivation. And
+   aggregation robustness is its own open question: rows flip through **split majority voting**
+   rather than clear detection, and at 12 / IC 1 a single split changed the outcome.
 
    **Limitation to declare regardless of outcome:** the cap is auditable only on the 20 exact
    systems. The 43 surrogates have no ground-truth support, so controller safety is unverifiable
@@ -247,12 +266,27 @@ the coupled search path 1e-6 is the cheaper, behaviour-equal tolerance; the Syst
    very skewed distribution (dim 2: median 0.19 h, mean 2.90 h) and does not survive the full
    sweep. The per-class split *is* wrong: dim 4 overestimated 36x, **dim 3 underestimated 1.5x**.
    At `parallelism: 16` that is ~9 days wall; the makespan floor is the longest single cell at
-   **68 h**, so no parallelism gets the campaign under 3 days. Still unmeasured, and therefore a
-   lower bound: **`pretune_off`, i.e. half the campaign**; systems 1–23 rest on one measured system,
-   63 on none; one seed, one IC set (System 62 varies 14x between seeds 42 and 123). Rewrite
-   `docs/hpc_requirements.md` from these numbers. Capacity agreed with the site:
+   **68 h**, so no parallelism gets the campaign under 3 days. Remaining blind spots: systems 1–23
+   rest on one measured system, 63 on none; one seed, one IC set (System 62 varies 14x between seeds
+   42 and 123). Rewrite `docs/hpc_requirements.md` from these numbers. Capacity agreed with the site:
    **`parallelism: 16`** of 96 cluster cores, raise on request. No walltime limit, therefore no
    checkpointing needed.
+
+   **`pretune_off` is not the expensive half — the assumption is dead (probe complete, 2026-08-20).**
+   It was treated as the unmeasured half that makes 3,384 core-hours a lower bound. All three probe
+   cells are in and `pretune_off` is *cheaper* in every one: System 61 (Chen-Lee) 49.4 h → **14.7 h**,
+   factor 0.30; System 56 (Lorenz) 39.95 h → 38.68 h, factor 0.97; System 59 (Rössler) 68.0 h →
+   62.4 h, factor 0.92. The projection is therefore an upper rather than a lower bound, at least for
+   dim 3. But 0.30 against 0.97 within one dimension class rules out a correction factor: the cost
+   model may state a **range**, never a single multiplier.
+
+   **And counts do not convert into core-hours.** On System 56 the loss evaluations fall 44 % while
+   the wall time falls 3 % — deriving core-hours from that count is off by a factor of 15. On
+   System 59 the two track each other (0.90 against 0.92), on System 61 wall time falls three times
+   faster than the count. Cost per evaluation varies by more than a factor of two *inside* one
+   dimension class, plausibly through differently stiff parameter regions. This touches Design Principle 7 at a
+   sensitive point: counts remain the right evidence for **search effort**, but they are not a proxy
+   for **compute time**, and no cost claim may be derived from them.
 
    **Per-level cost is a trend, not an outlier — diagnosis revised 2026-08-17.** The heartbeat
    series shows per-level cost growing monotonically over three orders of magnitude with structure
@@ -260,9 +294,8 @@ the coupled search path 1e-6 is the cheaper, behaviour-equal tolerance; the Syst
    the most expensive cells the slowest single level is only 17–26 % of the cell. And the expensive
    half buys nothing: Systems 59, 61 and 56 (all chaotic) burn 40–68 h to end at losses of 1.5,
    63 and 45. System 59 spends 6.6e6 loss evals on 610 parameter fits — ~10,900 solves per fit,
-   the line-search cost lever, quantified on dedicated hardware for the first time. Open decision:
-   a dimension-dependent level budget or a no-improvement stop. Fingerprint-relevant, so it must
-   land with the cap fix in **one** fingerprint step, not two.
+   the line-search cost lever, quantified on dedicated hardware for the first time. **Decided against, 2026-08-21 (WP-B1)** — see
+   Settled below. The campaign runs with 30 levels and measures the waste instead of capping it.
 2. **Unbudgeted call sites outside the campaign.** WP-D3 budgeted the two campaign runners; eleven
    scripts under `benchmarks/` and `studies/` still construct the optimizer without a budget and are
    unbounded since WP-B3. Deliberate backlog, listed in `codex/REPORT_WP_D3.md` — not to be fixed
@@ -279,9 +312,10 @@ the coupled search path 1e-6 is the cheaper, behaviour-equal tolerance; the Syst
    one config/Phase B fingerprint **and** one behaviour fingerprint.
 
    **Current values (verified 2026-08-20, after WP-C5):** Phase B `604e79733b22d64d`, regression
-   `17fe7d9cfb8f1be3`, behaviour `ffb0266c7913352c` (probe version 2). All carry **no records
-   yet** — the 120 regression records of 2026-08-19 sit under the previous values and are orphaned
-   by the WP-C5 decision; they are being recomputed. The 42 pilot records predate everything.
+   `17fe7d9cfb8f1be3`, behaviour `ffb0266c7913352c` (probe version 2). The regression suite has
+   been recomputed under them — 120 records, `git f6143eb`, one closed block under one identity
+   triple. Phase B still carries **no records**. The 42 pilot records and the 3 probe cells predate
+   everything (`e361a2af49366670` / `61b6548ef0014593`, `git 88eaeb6`).
 
    **Closed by WP-C5:** the load-bearing constants `post_floor_significant_drop_ratio = 0.35` and
    `post_floor_min_floor_ratio = 0.1` are now policy fields inside the fingerprint payload, so

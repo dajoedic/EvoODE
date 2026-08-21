@@ -42,8 +42,16 @@ and without ground truth, and how does one know when that restriction is trustwo
 
 **Contribution.** Not "a cap saves 15 % of evaluations". The contribution is the **boundary**: a
 data-driven pre-search controller is safe exactly where the derivative estimate resolves the
-structural difference between stages, and unsafe exactly where it does not — with an abstention rule
-for the region in between, and a criterion that identifies that region *without* ground truth.
+structural difference between stages, and unsafe exactly where it does not — together with the
+finding that the threshold separating the two regions **cannot be selected from the data**, and a
+criterion that identifies the unsafe region *without* ground truth.
+
+*Revised 2026-08-20.* The earlier wording put an **abstention rule** at the centre of this
+contribution. WP-V1 removed it: measured over all 80 equation rows the abstention prevented zero
+wrong caps and surrendered three correct ones, and the Lorenz repair it was credited with comes from
+the reopen branch instead. The decision is binary again (WP-C5). What replaces abstention as the
+honest answer to "how do you know when to trust it" is the negative result below — and that is a
+stronger claim, because it is a limit rather than a knob.
 
 **Evidence already in hand.**
 
@@ -54,21 +62,25 @@ for the region in between, and a criterion that identifies that region *without*
 - The decisive causal experiment: with analytic derivatives all five residual failures reach the
   required stage, while a 5x5 sweep of `tau_rel` and `tau_abs` over four orders of magnitude repairs
   none. The cause is the derivative input, not the thresholds.
-- The abstention price, predicted from the audit and then measured: System 31 / IC 1 costs **+16 %**
-  evaluations at an identical loss.
+- **The threshold is not selectable from data (WP-V1).** Leave-one-system-out over the 20 exact
+  systems puts the reopen threshold between 0.044 and 0.278; the shipped value is 0.35, and at every
+  selected value Lorenz truncates again. The margin between 0.35 and Lorenz's worst ratio of 0.315
+  is 11 % and is a human choice. This was the intended weak point of the paper and turned into one
+  of its results.
+- The price of a surrendered cap, predicted from the audit and then measured: System 31 / IC 1 cost
+  **+16 %** evaluations at a bit-identical loss — compute, never the solution.
 - Three design rules, each bought with a defect: positive evidence over its absence (System 63);
-  look ahead as far as the basis creates structural gaps (WP-C1); abstain in the doubt band (WP-C4).
+  look ahead as far as the basis creates structural gaps (WP-C1); and a mechanism must be credited
+  only by an experiment that isolates it (WP-C4's band was credited with a repair the reopen branch
+  had made — WP-V1).
 
 **What is still missing.**
 
-1. **A hold-out for the band constants.** `0.35 / 0.62 / 0.1` were chosen on the same 20 systems
-   they are validated against. This is the most attackable point in the paper and cannot be argued
-   away; it needs a split.
-2. **The predictive criterion.** Can the equations where the controller will fail be identified in
+1. **The predictive criterion.** Can the equations where the controller will fail be identified in
    advance, from the ratio of noise floor to stage residual, *without* ground truth? The data is in
    `stage_diagnostics.csv`. **This is what turns Paper 1 from an observation into a claim.**
-3. **Breadth.** Phase B, so the numbers rest on more than five diagnostic systems.
-4. At least one external baseline, for positioning rather than for winning.
+2. **Breadth.** Phase B, so the numbers rest on more than five diagnostic systems.
+3. At least one external baseline, for positioning rather than for winning.
 
 **Gate.** If the predictive criterion does not exist, Paper 1 is an honest efficiency and
 negative-results paper. The arc still works, but it is a weaker opening and Paper 2 has to carry
