@@ -8,7 +8,7 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ### Sondierung vollstaendig — Pretuning wirkt systemabhaengig in beide Richtungen
 
-<!-- HASH -->
+<!-- 897f0ff -->
 
 System 59 (Roessler, chaotisch) `pretune_off` ist fertig. Damit liegen alle drei Sondierungszellen
 vor, und die Frage, die seit dem Pilot offen war, ist beantwortet.
