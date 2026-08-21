@@ -6,6 +6,54 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ## 2026-08-21
 
+### Sondierung vollstaendig — Pretuning wirkt systemabhaengig in beide Richtungen
+
+<!-- HASH -->
+
+System 59 (Roessler, chaotisch) `pretune_off` ist fertig. Damit liegen alle drei Sondierungszellen
+vor, und die Frage, die seit dem Pilot offen war, ist beantwortet.
+
+| System | `pretune_on` | `pretune_off` | Laufzeit-Faktor | Evals-Faktor |
+|---|---|---|---|---|
+| 61 Chen-Lee | 49,41 h | **14,73 h** | **0,30** | 0,73 |
+| 56 Lorenz | 39,95 h | **38,68 h** | **0,97** | **0,56** |
+| 59 Roessler | 68,04 h | **62,35 h** | **0,92** | 0,90 |
+
+Alle drei Records `error=null`, Fingerprints `e361a2af49366670` / `61b6548ef0014593`, git `88eaeb6`.
+
+**Erstens: `pretune_off` ist nicht die teure Haelfte der Kampagne.** Das war die Annahme, mit der
+die 3.384 Kernstunden als untere Schranke gefuehrt wurden. Auf allen drei gemessenen Systemen ist
+Pretuning-aus **schneller**, im Mittel dieser drei um Faktor 0,73. Die Hochrechnung ist damit eher
+eine obere als eine untere Schranke — jedenfalls fuer dim 3.
+
+**Zweitens: es gibt keinen Faktor, den man einsetzen koennte.** 0,30 gegen 0,97 gegen 0,92 auf drei
+Systemen derselben Dimensionsklasse, alle chaotisch. Chen-Lee spart zwei Drittel, Lorenz nichts.
+Das Kostenmodell darf `pretune_off` nicht als Zu- oder Abschlag fuehren; es kann nur eine Spanne
+angeben.
+
+**Drittens, und das ist der methodisch wichtigste Punkt: Laufzeit und Zaehlwerte laufen
+auseinander.** Auf System 56 sinken die Evaluationen um 44 Prozent und die Laufzeit um drei. Auf
+System 59 laufen beide fast parallel (0,90 gegen 0,92). Auf System 61 sinkt die Laufzeit dreimal
+staerker als die Evaluationszahl. Die Kosten je Evaluation schwanken also selbst innerhalb einer
+Dimensionsklasse um mehr als Faktor zwei — plausibel, weil unterschiedliche Parameterbereiche
+unterschiedlich steife Integration bedeuten.
+
+> **Fuer Grundsatz 7:** Zaehlwerte bleiben die richtige Evidenz fuer **Suchaufwand** und sind als
+> Stellvertreter fuer **Rechenzeit** nachweislich untauglich. Wer aus 44 Prozent weniger
+> Evaluationen 44 Prozent weniger Kernstunden ableitet, liegt auf System 56 um den Faktor 15
+> daneben.
+
+**Nebenbefund zum Levelbudget:** System 59 steht seit Level 21 unveraendert bei Loss 4,082 und
+laeuft trotzdem bis Level 30. **Neun von dreissig Leveln, rund ein Drittel der Zelle, verbessern
+nichts.** Bei 62 Stunden Gesamtlaufzeit und stark wachsenden Levelkosten liegt der verschwendete
+Anteil deutlich ueber einem Drittel der Rechenzeit. Der Punkt war am 2026-08-18 bewusst
+zurueckgestellt worden, weil die Kosten kein Problem waren; er ist damit nicht geloest, sondern
+beziffert.
+
+Cap `[nothing, nothing, 5]`, Endstufe 5, `pruned_match` nicht anwendbar (Surrogatsystem).
+
+---
+
 ### Regression unter dem neuen Fingerprint: 25,4 Prozent statt 15,3, und keine Zelle verliert
 
 <!-- 86785e0 -->
