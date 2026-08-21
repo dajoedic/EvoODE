@@ -8,7 +8,7 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ### WP-B1 — kein Levelbudget: der Kompromiss ist bei jedem Schwellenwert schlecht
 
-<!-- HASH -->
+<!-- f4ceb3d -->
 
 287 Zellen aus sechs Quellen — 44 Pilot, 3 Sondierung, zweimal 120 Regression —, alle Records
 gelesen, keine fehlend, 599,6 Stunden Datenbasis. Der Auftrag war ausdruecklich **Messung ohne
