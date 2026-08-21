@@ -1112,7 +1112,7 @@ Implementierungen, keine Duplikate).
 
 ### WP-M1 - R2 und abgeleitete erwartete Stage; der letzte wissenschaftliche Blocker ist zu
 
-<!-- HASH -->
+<!-- e2a86f3 -->
 
 Zwei Metriken haben gefehlt, und ohne sie haette die Kampagne 756 Records erzeugt, die ihre eigenen
 Fragen nicht beantworten.
@@ -1180,7 +1180,7 @@ R2, erreichte Stage und Stabilitaet als Beobachtungen.
 
 ### WP-A1 - die Analysepipeline kann Kampagnendaten nicht lesen, und eine Stelle scheitert leise
 
-<!-- HASH -->
+<!-- d198cfd -->
 
 Die Python-Auswertung ist Phase-A-foermig: `aggregate_run_registry.py` liest `run_registry.csv` aus
 der `experiments/`-Infrastruktur. Die Kampagne schreibt per-Zelle-JSONL. **Direkt gefuettert bricht
