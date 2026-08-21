@@ -100,7 +100,13 @@ The second line of every task spec declares the language: `**Language: Python**`
 **Two-file handshake, one writer each.** `codex/CURRENT_TASK.md` is written only by Claude and read
 only by Codex; `codex/STATUS.md` is written only by Codex and read only by Claude. No file has two
 writers, so the two sides cannot clobber each other. The standing operating instruction for Codex
-lives in `codex/CODEX_PROTOCOL.md`; it does not change between tasks. Codex reports
+lives in `codex/CODEX_PROTOCOL.md`; it does not change between tasks.
+
+**Claude launches Codex (since 2026-08-21).** After writing a task spec, Claude starts the session
+itself with `codex exec` from the repository root, backgrounded, pointing at
+`codex/CURRENT_TASK.md`. There is no polling interval any more: a session begins with one work
+package and ends with its `STATUS.md` entry. A spec that is merely written and left lying is not
+handed over. Codex reports
 `status: working | done | blocked` plus the WP identifier and the report path. `done` means the files are in the working tree
 and **uncommitted** — Claude commits after checking. `blocked` means the acceptance criterion is
 out of reach; Claude then stops rather than iterating on the science alone. The working tree is the

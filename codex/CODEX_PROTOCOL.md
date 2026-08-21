@@ -1,7 +1,12 @@
-# Dauerauftrag für Codex — Zusammenarbeit mit Claude im 20-Minuten-Takt
+# Dauerauftrag für Codex — Zusammenarbeit mit Claude
 
 Diese Datei ist die stehende Arbeitsanweisung für Codex. Sie ändert sich nicht von Aufgabe zu
 Aufgabe. Der jeweils aktuelle Auftrag steht in `codex/CURRENT_TASK.md`.
+
+**Seit 2026-08-21 wird Codex direkt gestartet.** Claude ruft nach dem Schreiben eines Auftrags
+selbst `codex exec` auf und übergibt darin den Verweis auf `codex/CURRENT_TASK.md`. Es gibt
+**keinen Polling-Takt mehr**: Eine Sitzung beginnt mit einem Auftrag und endet mit dem
+`STATUS.md`-Eintrag. Wer diese Datei in einer laufenden Sitzung liest, hat seinen Auftrag bereits.
 
 ## Rollen
 
@@ -18,22 +23,21 @@ Claude prüft, committet und dokumentiert. **Codex committet nie.**
 Keine Datei hat zwei Schreiber. **Codex bearbeitet `CURRENT_TASK.md` niemals** — auch nicht, um
 eine Fertigmeldung hineinzuschreiben. Rückmeldungen laufen ausschließlich über `STATUS.md`.
 
-## Ablauf, alle 20 Minuten
+## Ablauf je Sitzung
 
-1. `codex/CURRENT_TASK.md` lesen und die Kopfzeile prüfen:
+1. `codex/CURRENT_TASK.md` lesen. Steht dort „Kein aktiver Task", ist nichts zu tun — dann
+   `STATUS.md` nicht anfassen und die Sitzung beenden.
 
-   | Claude-Status | Bedeutung |
-   |---|---|
-   | `waiting for codex` | Neuer Auftrag liegt an. Arbeiten. |
-   | `checking results` | Claude prüft gerade. Nichts tun, nichts anfassen. |
-   | `idle` oder „Kein aktiver Task" | Nichts zu tun. |
+2. Als **erste** Handlung `STATUS.md` auf `working` mit der WP-Kennung des Auftrags setzen. Das ist
+   das Signal, dass die Sitzung läuft; ohne es kann Claude eine abgestürzte Sitzung nicht von einer
+   arbeitenden unterscheiden.
 
-2. Steht dort `waiting for codex` und ist die WP-Kennung (z.B. `WP-C3`) **eine andere** als die
-   zuletzt abgeschlossene: `STATUS.md` sofort auf `working` setzen und mit der Umsetzung beginnen.
+3. Den Auftrag umsetzen. Die Abschnitte **Verboten** und **Abnahme** gelten wörtlich.
 
-3. Ist die WP-Kennung dieselbe wie die zuletzt abgeschlossene: nichts tun. Claude prüft noch.
+4. Als **letzte** Handlung `STATUS.md` vollständig überschreiben — `done` oder `blocked`.
 
-4. Nach Abschluss der Arbeit **als letzte Handlung** `STATUS.md` vollständig überschreiben.
+`CURRENT_TASK.md` wird dabei niemals bearbeitet, auch nicht für eine Fertigmeldung. Rückmeldungen
+laufen ausschließlich über `STATUS.md`.
 
 ## STATUS.md — genau vier Felder
 
