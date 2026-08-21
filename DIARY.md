@@ -8,7 +8,7 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ### `docs/hpc_requirements.md` neu geschrieben — aus Messungen statt aus Schaetzungen
 
-<!-- HASH -->
+<!-- 64ff142 -->
 
 Das Dokument war seit dem 2026-08-13 mit einem SUPERSEDED-Banner versehen: geschrieben fuer einen
 Slurm-Standort, mit Laufzeiten von einem belasteten Laptop und einer Apptainer-Runbook-Sektion fuer
