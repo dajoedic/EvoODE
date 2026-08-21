@@ -8,7 +8,7 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ### `PAPER_1.md` revidiert — das autoritative Dokument beschreibt endlich die Variante, die der Beitrag ist
 
-<!-- de9f367 -->
+<!-- 13fc099 -->
 
 `PAPER_1.md` war auf den 2026-05-17 datiert, plante im Detail um v3 herum und erwaehnte den Stage
 Cap kein einziges Mal. Gleichzeitig erklaert `CLAUDE.md` es zum autoritativen Dokument. Diese
