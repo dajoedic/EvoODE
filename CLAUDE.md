@@ -339,10 +339,12 @@ the coupled search path 1e-6 is the cheaper, behaviour-equal tolerance; the Syst
    from the publications. Open question there: if published numbers were computed on the shipped
    trajectories, we work on cleaner data than the comparison works — a deviation in our favour that
    must be declared. *(The R² metric is done, WP-M1.)*
-7. **Analysis downstream is Phase-A shaped.** WP-A1 built a bridge from campaign records into the
-   Python pipeline, but `table_main_results.py` reindexes to a hard-coded Phase-A variant list and
-   silently produces a near-empty table for campaign variants. Not a campaign blocker; a blocker for
-   evaluating one.
+7. **Analysis downstream — closed 2026-08-21 (WP-A4, WP-A4b).** The system axis now comes from
+   `system_classification.csv` instead of two hard-coded Phase-A id lists, `r2` reaches the analysis
+   at all for the first time (it is the metric for 43 of 63 systems), the two IC sets are no longer
+   averaged away, and an empty selection aborts instead of reporting success. Phase A stays
+   byte-identical, verified. Still open downstream: `r2_by_dim` and
+   `stage_cap_behavior_fingerprint` are carried but not aggregated.
 
 ### Excluded, deliberately
 

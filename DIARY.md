@@ -6,6 +6,59 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ## 2026-08-21
 
+### WP-A4/A4b — die Auswertung konnte R² gar nicht sehen, und drei Achsen fielen stumm weg
+
+<!-- HASH -->
+
+`CLAUDE.md` fuehrte die Analyse-Pipeline als „Phase-A-foermig": `table_main_results.py` reindiziere
+auf eine hartkodierte Variantenliste. Beim Aufsetzen des Arbeitspakets stellte sich heraus, dass
+diese Beschreibung zwei Fehler hat — der eine war laengst behoben, der andere viel zu klein
+beschrieben.
+
+**Erstens, ueberholt:** Die Variantenachse hat WP-A2 repariert; unbekannte Varianten werden
+angehaengt statt verworfen. Geblieben war die **System**achse — zwei feste ID-Listen mit den zehn
+Phase-A-Systemen. Auf Kampagnendaten fallen damit 53 von 63 Systemen ohne Meldung heraus, und wenn
+keine der IDs vorkommt, entsteht eine leere Tabelle mit Erfolgsmeldung.
+
+**Zweitens, und das war der eigentliche Fund:** Die Records tragen seit WP-M1 ein `r2`. Die
+Bruecke aus WP-A1 fuehrt das Feld nicht, das Aggregat kennt es folglich nicht. **Die Bewertung der
+43 Surrogatsysteme war damit ueberhaupt nicht herstellbar** — Grundsatz 8 verpflichtet genau diese
+43 auf R². Das ist kein Darstellungsfehler, sondern ein fehlender Datenpfad fuer zwei Drittel der
+Systeme.
+
+**Drittens, ungesucht:** Aggregiert wurde ueber `(variant_slug, system_id)`. Die beiden IC-Saetze
+verschwanden in einem Mittelwert — ausgerechnet die Achse, auf der der Cap unterschiedlich
+entscheidet (System 31 ist der dokumentierte Fall).
+
+**Geprueft, nicht geglaubt.** Ich habe alle fuenf Abnahmepunkte selbst nachgerechnet. Der
+ueberzeugendste ist der Rueckfallpfad: Ohne Klassifikationsdatei leitet das Skript fuer Phase A
+dieselbe Aufteilung her, die vorher als Konstante im Quelltext stand — **acht exakt, zwei
+Surrogat**. Die alte Liste war korrekt; sie stand nur an der falschen Stelle. Phase A bleibt
+byteidentisch in Aggregat, CSV und TeX.
+
+**Eine bewusste Abweichung von meiner eigenen Spec.** Ich hatte verlangt, dass in der
+Surrogattabelle keine `exact_match_rate`-Spalte auftaucht, „auch nicht leer". Das kollidiert mit der
+Byteidentitaet von Phase A, die dieselbe Datei erzeugt. Aufgeloest ueber zwei zusaetzliche,
+klassenreine Dateien (`exact_systems_summary.csv`, `surrogate_systems_summary.csv`); fuer Paper 1
+sind ohnehin diese die Quelle.
+
+**WP-A4b, der Nachtrag:** `outputs/` steht in `.gitignore`. Die handgeschriebenen Testdaten lagen
+dort, die acht Konfigurationen waren committet — fuenf zeigten ins Ignorierte. Auf einem frischen
+Klon waren die R²-Abnahme und zwei Fehlerfaelle nicht wiederholbar. Die Fixtures liegen jetzt unter
+`analysis/fixtures/`, das `CONVENTIONS.md` neu als Ort fuer handgeschriebene Eingaben fuehrt;
+`analysis/data/` bleibt fuer Abgeleitetes reserviert. Gegengeprueft, indem ich die erzeugten
+Ausgaben geloescht und die Kette aus der getrackten Datei neu aufgebaut habe.
+
+**Erste Uebergabe ueber die Codex-CLI.** Ab jetzt startet Claude die Codex-Sitzung selbst statt eine
+Spec fuer einen Polling-Takt liegenzulassen; `codex/CODEX_PROTOCOL.md` und `CLAUDE.md` sind
+entsprechend geaendert. Anlass war, dass WP-A4 mit sauberem Working Tree wartete und niemand
+zuschaute.
+
+Offen bleibt klein: `r2_by_dim` und `stage_cap_behavior_fingerprint` werden durchgereicht, aber
+nicht aggregiert.
+
+---
+
 ### `PAPER_1.md` revidiert — das autoritative Dokument beschreibt endlich die Variante, die der Beitrag ist
 
 <!-- 13fc099 -->

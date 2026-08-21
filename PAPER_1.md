@@ -607,7 +607,7 @@ Outside Paper 1 scope, deliberately:
 | Behaviour fingerprint is too narrow | Medium | state that it covers `_cap_split_decision` only |
 | Phase B records do not share provenance | High | require all three identity fields; verify before publishing |
 | Wall-clock is overinterpreted | Medium | counters for cost claims; timing labelled as capacity planning |
-| Analysis pipeline is Phase-A shaped | Medium | `table_main_results.py` reindexes to a hard-coded Phase A variant list and produces a near-empty table for campaign variants — fix before interpreting results |
+| Analysis pipeline is Phase-A shaped | Closed | fixed by WP-A4 / WP-A4b (2026-08-21): classification-driven system axis, R² carried through, IC set as a grouping key, loud failure on an empty selection; Phase A byte-identical |
 | Cost projection blind spots | Low | systems 1–23 rest on one measured system, 63 on none; a mis-projected class costs calendar days, not results |
 
 ---
