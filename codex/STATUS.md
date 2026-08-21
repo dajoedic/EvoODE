@@ -1,4 +1,4 @@
 status: done
-task:   WP-A4
-report: docs/WP-A4.md
-note:   WP-A4 implemented; campaign fields, R2 aggregation, IC grouping, classification-based tables, loud failures, and Phase-A byte checks are complete.
+task:   WP-A4b
+report: docs/WP-A4b.md
+note:   WP-A4 handwritten fixtures moved to analysis/fixtures; reruns and Phase A byte checks passed

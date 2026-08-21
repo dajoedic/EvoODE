@@ -2,5 +2,5 @@
   "experiment_id": "wp_a4_error_no_overlap",
   "run_registry_path": "../outputs/wp_a4_r2_fixture/run_registry.csv",
   "output_dir": "data/wp_a4_r2_fixture",
-  "system_classification_path": "../outputs/wp_a4_error_fixtures/no_overlap_classification.csv"
+  "system_classification_path": "fixtures/wp_a4_error_fixtures/no_overlap_classification.csv"
 }
