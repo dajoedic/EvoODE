@@ -4,6 +4,43 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ---
 
+## 2026-08-21
+
+### Regression unter dem neuen Fingerprint: 25,4 Prozent statt 15,3, und keine Zelle verliert
+
+<!-- HASH -->
+
+120 Records, alle `error: null`, alle drei Identitaetsfelder einheitlich:
+`git_hash=f6143eb`, `config_fingerprint=17fe7d9cfb8f1be3`,
+`stage_cap_behavior_fingerprint=ffb0266c7913352c`.
+
+**Der Vergleich `evogrow_v2_2_stage_capped` gegen `evogrow_v2_2_stage_local`** ueber die 30
+gemeinsamen Zellen, gegen den Lauf vom 2026-08-19 mit Zweifelsband gestellt:
+
+| | mit Band (`88eaeb6f`) | binaer (`f6143eb`) |
+|---|---|---|
+| Loss bitidentisch | 30/30 | **30/30** |
+| `pruned_match` veraendert | 0 | **0** |
+| Loss-Evaluationen | 13.618.177 | **12.002.255** |
+| Ersparnis gegen v2.2 | 15,3 % | **25,4 %** |
+| Zellen, die teurer werden | 1 (+16 %) | **keine** |
+
+Basis in beiden Faellen: 16.087.320 Evaluationen fuer v2.2.
+
+**Das Entfernen des Bandes bringt zehn Prozentpunkte und beseitigt die einzige Zelle, die vorher
+mehr gekostet hat** — 31 / IC 1, die durch die Enthaltung ihren korrekten Cap verlor und
+ungedeckelt lief. Die drei zurueckgewonnenen Caps aus WP-C5 zahlen sich also unmittelbar aus.
+
+Damit steht die Kernaussage von Paper 1 sauberer als je zuvor: **identisches Ergebnis, ein Viertel
+weniger Suchaufwand, keine einzige Zelle verliert.** Und sie ruht erstmals auf einem geschlossenen
+Block unter einem einzigen Identitaets-Tripel.
+
+Nachzutragen bleibt, was WP-V1 dazu gesagt hat und was unabhaengig davon gilt: Die tragende
+Schwelle 0,35 ist nicht aus den Daten waehlbar. Die 25,4 Prozent sind gemessen, die Schwelle
+dahinter ist gesetzt.
+
+---
+
 ## 2026-08-20
 
 ### Sondierung, zweite Zelle: gleiche Wanduhr, halb so viele Evaluationen
