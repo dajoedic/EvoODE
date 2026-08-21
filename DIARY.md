@@ -6,6 +6,53 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ## 2026-08-21
 
+### `PAPER_1.md` revidiert — das autoritative Dokument beschreibt endlich die Variante, die der Beitrag ist
+
+<!-- de9f367 -->
+
+`PAPER_1.md` war auf den 2026-05-17 datiert, plante im Detail um v3 herum und erwaehnte den Stage
+Cap kein einziges Mal. Gleichzeitig erklaert `CLAUDE.md` es zum autoritativen Dokument. Diese
+Inversion — das massgebliche Dokument beschreibt eine verworfene Variante — war seit Wochen als
+Prioritaet 6 notiert.
+
+**Grundlage war der Draft von WP-W1** (`docs/PAPER_1_draft.md`, 2026-08-17). Der war brauchbar, aber
+vier Ereignisse alt: WP-V1, WP-C5, die vollstaendige Sondierung und WP-B1. Ich habe ihn
+aktualisiert, promoviert und den Draft geloescht.
+
+**Was gegenueber dem Draft inhaltlich anders ist:**
+
+1. **Designregel 3 ist eine andere geworden.** Der Draft fuehrte *"Abstain in the doubt band"* als
+   dritte, aus einem Defekt erkaufte Regel. Das Band gibt es nicht mehr. An seiner Stelle steht
+   jetzt die Regel, die WP-V1 tatsaechlich erkauft hat: **einen Mechanismus nur durch ein Experiment
+   gutschreiben, das ihn isoliert.** WP-C4 war die Lorenz-Reparatur zugeschrieben worden, die vom
+   Reopen-Zweig kam. Das ist die teuerste der drei Regeln, und sie ist als solche benannt.
+2. **Die nicht waehlbare Schwelle ist von einer Limitation zu einem Teil von Claim C geworden.** Der
+   Draft fuehrte die Bandkonstanten unter "was noch fehlt: ein Hold-out". WP-V1 hat gezeigt, dass es
+   kein Hold-out gibt, der die Schwelle rettet — Leave-one-system-out landet bei 0,044 bis 0,278,
+   geliefert wird 0,35, und bei jedem gewaehlten Wert trunkiert Lorenz wieder. Das ist ein Ergebnis,
+   kein Versaeumnis, und steht jetzt im Claim.
+3. **Claim B hat Zahlen.** Vorher ein Platzhalter, jetzt die Regressionsevidenz: 25,4 Prozent
+   weniger Evaluationen, 30 von 30 bitidentisch, keine Zelle teurer, unter einem Identitaets-Tripel.
+4. **Die Verschwendungsmessung ist als Ergebnis aufgenommen**, mit der k-Tabelle und der Begruendung,
+   warum keine Abbruchregel eingebaut wurde. Sie steht in Phase 6, nicht als offene Aufgabe.
+5. **Neuer Methodenpunkt:** Zaehlwerte lassen sich nicht in Rechenzeit umrechnen. Gehoert in den
+   Methodenteil, weil Grundsatz 7 sonst falsch gelesen wird.
+6. Fingerprints, Statuszeilen und Phasenstand auf den 2026-08-21 gezogen; der Timeout-Abschnitt des
+   alten Dokuments ist durch die Realitaet ersetzt (Orion hat kein Walltime-Limit, der einzige
+   deterministische Stopp ist das Evaluationsbudget).
+7. Aus dem alten `PAPER_1.md` uebernommen, was der Draft fallen liess: der **Protokoll-Audit** als
+   offener Punkt und die Logging-Politik in verdichteter Form.
+
+Der Abschnitt "Change List Against The Existing PAPER_1.md" aus dem Draft ist entfallen — er war ein
+Review-Hilfsmittel fuer genau diesen Schritt. An seine Stelle tritt ein Abschnitt **Open Items and
+Known Inconsistencies**, der die fuenf Punkte fuehrt, die wirklich offen sind, darunter die
+Titel-/Zaehl-Diskrepanz in `docs/wp_c1_stage_cap_horizon_audit.md`.
+
+**Damit ist die Praezedenzregel wieder gueltig:** `PAPER_1.md` entscheidet, wenn die Dokumente
+auseinanderlaufen. Prioritaet 6 in `CLAUDE.md` ist gestrichen.
+
+---
+
 ### `docs/hpc_requirements.md` neu geschrieben — aus Messungen statt aus Schaetzungen
 
 <!-- 64ff142 -->
