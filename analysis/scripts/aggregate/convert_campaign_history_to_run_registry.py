@@ -44,6 +44,11 @@ CSV_COLUMNS = [
     "config_fingerprint",
     "git_hash",
     "git_dirty",
+    "r2",
+    "r2_by_dim",
+    "total_parameter_fits",
+    "total_ode_solves",
+    "stage_cap_behavior_fingerprint",
 ]
 
 
@@ -149,6 +154,13 @@ def row_from_record(record: dict[str, Any], experiment_id: str) -> dict[str, Any
         "config_fingerprint": blank_if_none(record.get("config_fingerprint")),
         "git_hash": blank_if_none(record.get("git_hash")),
         "git_dirty": blank_if_none(record.get("git_dirty")),
+        "r2": blank_if_none(record.get("r2")),
+        "r2_by_dim": blank_if_none(record.get("r2_by_dim")),
+        "total_parameter_fits": blank_if_none(record.get("total_parameter_fits")),
+        "total_ode_solves": blank_if_none(record.get("total_ode_solves")),
+        "stage_cap_behavior_fingerprint": blank_if_none(
+            record.get("stage_cap_behavior_fingerprint")
+        ),
     }
 
 

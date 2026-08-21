@@ -45,6 +45,12 @@ OUTPUT_COLUMNS = [
     "mean_invalid_evals",
 ]
 
+OPTIONAL_METRIC_COLUMNS = {
+    "r2": ["mean_r2", "n_r2"],
+    "total_parameter_fits": ["mean_total_parameter_fits"],
+    "total_ode_solves": ["mean_total_ode_solves"],
+}
+
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
@@ -100,6 +106,39 @@ def mean_final_stage(series: pd.Series) -> float:
     return float(numeric.mean())
 
 
+def mean_numeric_if_present(df: pd.DataFrame, column: str) -> float:
+    if column not in df.columns:
+        return np.nan
+    return pd.to_numeric(df[column], errors="coerce").mean()
+
+
+def count_numeric_if_present(df: pd.DataFrame, column: str) -> int:
+    if column not in df.columns:
+        return 0
+    return int(pd.to_numeric(df[column], errors="coerce").notna().sum())
+
+
+def output_columns_for(df: pd.DataFrame, group_columns: list[str]) -> list[str]:
+    columns = group_columns + [column for column in OUTPUT_COLUMNS if column not in group_columns]
+    for source_column, aggregate_columns in OPTIONAL_METRIC_COLUMNS.items():
+        if source_column in df.columns:
+            columns.extend(aggregate_columns)
+    return columns
+
+
+def group_columns_from_config(config: dict[str, Any], df: pd.DataFrame) -> list[str]:
+    group_columns = ["variant_slug", "system_id"]
+    split_by_ic = bool(config.get("group_by_initial_condition_set", False))
+    if split_by_ic:
+        if "initial_condition_set" not in df.columns:
+            raise ValueError(
+                "Config requests group_by_initial_condition_set, but input data "
+                "has no initial_condition_set column."
+            )
+        group_columns.append("initial_condition_set")
+    return group_columns
+
+
 def aggregate_group(group: pd.DataFrame) -> pd.Series:
     valid = filter_valid_runs(group)
     exact_match = coerce_exact_support_match(valid["exact_support_match"])
@@ -117,17 +156,23 @@ def aggregate_group(group: pd.DataFrame) -> pd.Series:
             "mean_wasted_levels": valid["wasted_levels"].mean(),
             "mean_elapsed_s": valid["elapsed_s"].mean(),
             "mean_invalid_evals": valid["total_invalid_evals"].mean(),
+            "mean_r2": mean_numeric_if_present(valid, "r2"),
+            "n_r2": count_numeric_if_present(valid, "r2"),
+            "mean_total_parameter_fits": mean_numeric_if_present(
+                valid, "total_parameter_fits"
+            ),
+            "mean_total_ode_solves": mean_numeric_if_present(valid, "total_ode_solves"),
         }
     )
 
 
-def aggregate_registry(df: pd.DataFrame) -> pd.DataFrame:
+def aggregate_registry(df: pd.DataFrame, group_columns: list[str]) -> pd.DataFrame:
     aggregated = (
-        df.groupby(["variant_slug", "system_id"], sort=True, dropna=False)
+        df.groupby(group_columns, sort=True, dropna=False)
         .apply(aggregate_group, include_groups=False)
         .reset_index()
     )
-    return aggregated.loc[:, OUTPUT_COLUMNS]
+    return aggregated.loc[:, output_columns_for(df, group_columns)]
 
 
 def display_path(path: Path, analysis_root: Path) -> str:
@@ -153,10 +198,11 @@ def main() -> int:
 
         registry = normalize_registry_columns(load_run_registry(run_registry_path))
         check_required_columns(registry, REQUIRED_COLUMNS)
+        group_columns = group_columns_from_config(config, registry)
 
         total_rows = len(registry)
         valid_rows = len(filter_valid_runs(registry))
-        aggregated = aggregate_registry(registry)
+        aggregated = aggregate_registry(registry, group_columns)
         zero_valid_cells = int((aggregated["n_valid"] == 0).sum())
 
         output_dir.mkdir(parents=True, exist_ok=True)
@@ -172,6 +218,7 @@ def main() -> int:
             f"  Output: {display_path(output_path, analysis_root)}"
             f"  ({len(aggregated)} rows)"
         )
+        print(f"  Grouped by: {', '.join(group_columns)}")
         print(f"  Cells with 0 valid runs: {zero_valid_cells}")
         return 0
     except (FileNotFoundError, KeyError, json.JSONDecodeError, ValueError) as exc:

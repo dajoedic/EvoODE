@@ -1,0 +1,6 @@
+{
+  "experiment_id": "wp_a4_error_ic_missing",
+  "run_registry_path": "../../experiments/paper1_phaseA_v1/run_registry.csv",
+  "output_dir": "data/wp_a4_error_ic_missing",
+  "group_by_initial_condition_set": true
+}

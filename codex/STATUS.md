@@ -1,4 +1,4 @@
 status: done
-task:   WP-B1
-report: docs/WP-B1.md
-note:   Analyzed 287 heartbeat cells from S: sources; outputs are uncommitted in the working tree.
+task:   WP-A4
+report: docs/WP-A4.md
+note:   WP-A4 implemented; campaign fields, R2 aggregation, IC grouping, classification-based tables, loud failures, and Phase-A byte checks are complete.
