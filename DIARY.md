@@ -8,7 +8,7 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ### Vergleichsstrategie entschieden — und eine externe Arbeit trifft unsere Messung von heute
 
-<!-- HASH -->
+<!-- fa25727 -->
 
 Die Vergleichsdiskussion ist gefuehrt. Ergebnis in `docs/diskussion_vergleichsmethoden.md` §8,
 Konsequenzen in `PAPER_1.md`, `docs/paper1_odebench_protocol_alignment.md` §2,
