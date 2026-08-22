@@ -27,3 +27,7 @@ experiments/*/run.log
 .pytest_cache/
 .pytest_tmp*/
 tests/__pycache__/
+
+# Manifests with a substituted commit SHA, produced at launch time
+/phase_b_bootstrap.yaml
+/phase_b_cells.yaml
