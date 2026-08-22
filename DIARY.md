@@ -6,6 +6,53 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ## 2026-08-22
 
+### Provenienz geklaert — die Datei ist Upstream, und die 150/512-Diskrepanz liegt dort
+
+<!-- HASH -->
+
+Nachtrag zum Eintrag darunter, und er korrigiert ihn. Die Vermutung, unsere `strogatz_extended.json`
+sei eine abweichende Version, ist **falsch**.
+
+**Gepruefte Herkunft.** Die Datei ist **byteidentisch** mit dem Upstream-Artefakt in
+`sdascoli/odeformer` unter `odeformer/odebench/strogatz_extended.json`, letzte Upstream-Aenderung
+`32dd990` vom 2023-09-29. Heruntergeladen und verglichen. Im Repo ist sie seit dem allerersten
+Commit unveraendert — identischer Hash bei `366a71a`, `78143e7`, `706549f` und HEAD; die
+Umstrukturierung war eine reine Umbenennung. Der urspruengliche Ordnername `benchmarks/odeformer/`
+hat die Herkunft die ganze Zeit mitgetragen, nur hat sie niemand aufgeschrieben.
+
+**Die Diskrepanz liegt im Upstream-Repository selbst.** Das Erzeugungsskript
+`odeformer/odebench/solve_and_plot.py` traegt
+
+```python
+config = {"t_span": (0,10), "method": "LSODA", "rtol": 1e-5, "atol": 1e-7,
+          "first_step": 1e-6, "t_eval": np.linspace(0,10,150), "min_step": 1e-10}
+```
+
+und schreibt nach **`solutions.json`** — *nicht* in `strogatz_extended.json`. Die committete JSON,
+also die Datei, die man tatsaechlich herunterlaedt, traegt **512** Punkte. Das Repository liefert
+somit zwei Abtastungen, und Tonda et al. beschreiben die des Skripts.
+
+**Was das aendert.** „Wir uebernehmen die Abtastung des Datensatzes" stimmt doch — fuer die
+committete Datei. Die Vergleichbarkeitsfrage verschwindet damit nicht, sie verschiebt sich: **Welches
+der beiden Gitter hat eine publizierte Arbeit verwendet?** Das ist je Quelle zu pruefen, nicht
+anzunehmen, und der Unterschied betraegt Faktor 3,4 in der Dichte — auf genau der Achse, die
+darueber entscheidet, ob der transformierte Suchraum in die Irre fuehrt.
+
+**Und zur Erinnerung des Nutzers, wir haetten die Daten mal selbst gerechnet:** inhaltlich richtig,
+nur nicht an der Datei. Gemeint war **WP-G1b** — dort wurde genau das gemessen, und zwar an den
+Caps, also an der Stufenzuendung. Zwei Arme auf identischem 512-Punkte-Gitter: gelieferte
+`y`-Matrizen gegen selbst integriert mit `Tsit5` bei 1e-9. Ergebnis: **Arm A = Arm B in allen 26
+Zellen**, Rauschboeden unterscheiden sich erst in der dritten bis vierten Stelle. Der
+Integrationsfehler der gelieferten Daten ist *glatt* in t, und ein ableitungsbasierter Rauschboden
+sieht glatten Fehler praktisch nicht. **Der Gewinn auf System 54 gehoerte der Gitterdichte, nicht
+der Datenqualitaet.** Die Selbstintegration bleibt trotzdem, aber aus einem anderen Grund: fuer den
+Suchverlust, wo die gelieferten Toleranzen MSE-Boeden oberhalb unserer Ergebnisse erzwingen.
+
+Provenienzluecke aus §2.2 damit geschlossen: Herkunft, Upstream-Pfad, Upstream-Commit und
+Inhaltshash stehen in `docs/paper1_odebench_protocol_alignment.md` §2.4.
+
+---
+
 ### Tonda et al. gelesen — und dabei eine eigene Protokollangabe widerlegt
 
 <!-- ba8b8be -->
