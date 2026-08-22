@@ -175,60 +175,29 @@ The per-system `source` field names the textbook location ("strogatz p.20"), not
 and upstream commit are in §2.4. The shipped trajectories are **not** used: we integrate ourselves on
 the artefact's own 512-point grid.
 
-### 2.5 Source audited: Tonda et al. 2025 — what it says and what it costs us
+### 2.3 How our own trajectory generation is to be described
 
-Read in full on 2026-08-22.
+Not "we use cleaner ODEBench data" — that devalues the original protocol and invites the obvious
+retort. The wording to use:
 
-**Bibliography.** Alberto Tonda, Hengzhe Zhang, Qi Chen, Bing Xue, Mengjie Zhang, Evelyne Lutton.
-*When Data Transformations Mislead Symbolic Regression: Deceptive Search Spaces in System
-Identification.* GECCO '25 Companion, Malaga, pp. 2563–2571. DOI 10.1145/3712255.3734301.
-CC-BY, 9 pages.
+> We preserve the ODEBench systems, parameterizations, initial conditions and sampling grid, but
+> regenerate trajectories at stricter numerical tolerances to avoid solver-error floors interfering
+> with the accuracy regime studied here.
 
-**What it studies.** The two most common ways of turning trajectory data into a problem that
-standard symbolic regression can handle — the derivative transformation and an integral
-transformation — evaluated on ODEBench with PySR as the search method.
+And the consequence, stated plainly: published ODEBench numbers obtained on the released
+trajectories are not treated as directly comparable.
 
-**The three findings, in their order of importance for us:**
+Open questions that decide comparability:
 
-1. **Misleading search spaces arise without any noise.** In the transformed space the ground-truth
-   equations, which ought to be the global optima, carry *worse* fitness than other candidates, and
-   the authors show experimentally that a state-of-the-art SR algorithm is duly misled.
-2. **The sampling step is strongly correlated with the effect**, and reducing it mitigates the
-   problem. Their explanation: the forward-difference basis of the transformation produces large
-   errors where the derivative changes quickly.
-3. **Noise degrades both transformations markedly**, to different degrees.
+1. Do published results use both initial-condition sets or one?
+2. Is the reported metric an R² threshold, and at what value, and computed on the trajectory
+   or on the derivatives?
+3. Is any noise added, and are results reported per noise level?
+4. Are failed or diverged runs excluded from the aggregate, or scored as failures?
 
-**Their practitioner recommendation:** noise-free, the order-4 derivative transformation performs
-best; under noise, derivative transformations with Savitzky-Golay smoothing (degree 3, window 15 or
-25).
+Until these are answered, published numbers are **contextual only**.
 
-**Where this hits EvoODE — and it is not where we first assumed.**
-
-The obvious reading is that the warm start is affected, since it fits in derivative space. That is
-true but harmless: the warm start only *initialises* a fit whose objective is the simulation loss,
-so a misranked derivative space costs iterations, not decisions.
-
-**The stage cap is the real exposure.** Its entire walk is a sequence of decisions taken on weighted
-least-squares residuals in derivative space, against a floor derived from a Richardson estimate of
-the derivative error. That is precisely a derivative-space objective used to *decide*, and Tonda et
-al. show such objectives can rank the truth below its competitors. The mitigations already in the
-design are real — the cap requires positive evidence, all conditions are relative, the floor is
-estimated rather than assumed, and the audit finds 0 truncated rows of 80 — but the mechanism-level
-threat is genuine and belongs in the limitations rather than in a footnote.
-
-**Two convergences worth reporting.**
-
-- Their central phenomenon is reproduced independently by our own search-free reference: of 126
-  full-basis fits, **13 diverge on integration** despite near-perfect derivative fits, and on the
-  exact systems the mean trajectory R² is −2.8 against a median of 0.9999. Same effect, different
-  measurement, different codebase.
-- Their stated future direction — *anticipate when the transformation will mislead, from the
-  characteristics of the trajectory data* — is, in different words, this project's open "predictive
-  criterion" question. That is a strong external motivation for it.
-
-**What the paper does not give us.** It is not a performance reference and must never be used as
-one: different task framing, different method, and a stated focus on comparing transformations
-rather than ranking systems.
+---
 
 ### 2.4 The 150 / 512 discrepancy — resolved, and the provenance gap with it
 
@@ -345,64 +314,79 @@ threat is genuine and belongs in the limitations rather than in a footnote.
 one: different task framing, different method, and a stated focus on comparing transformations
 rather than ranking systems.
 
-### 2.4 Correction — the shipped sampling is 150 points, not 512
+### 2.6 Source audited: ODEFormer / ODEBench — the benchmark source
 
-**Found on 2026-08-22 while auditing Tonda et al., and it invalidates a claim this document made.**
+Read in full 2026-08-22 (arXiv 2310.05573, ICLR 2024; d'Ascoli, Becker, Mathis, Schwaller,
+Kilbertus). Items the paper does not state are marked as such rather than guessed.
 
-Tonda et al. describe the ODEBench artefact precisely: trajectories integrated with LSODA
-(`scipy`), `t_span=(0,10)`, `rtol=1e-5`, `atol=1e-7`, `first_step=1e-6`, `min_step=1e-10`, and
-`t_eval=np.linspace(0, 10, 150)` — **150 uniformly sampled values** per state variable, two
-trajectories per system, 63 systems (23 one-, 28 two-, 10 three-, 2 four-dimensional; the dimension
-breakdown matches ours exactly).
+**Benchmark construction — verified.** 63 ODEs: 23 one-dimensional, 28 two-dimensional, 10
+three-dimensional, 2 four-dimensional; **4 chaotic**. Curated primarily from Strogatz's *Nonlinear
+Dynamics and Chaos* plus well-known systems from other sources, selected for having been proposed as
+models of real phenomena or for being 'iconic'; realistic parameter values chosen where suggested.
+Typically one parameter set per equation — systems whose behaviour changes qualitatively across
+regimes appear as **separate equations** (Lorenz occurs in a chaotic and a non-chaotic regime).
+**Two manually chosen initial-condition sets per equation**, included specifically to evaluate
+generalization. The dimension breakdown matches our classification exactly.
 
-Our copy ships **512** points per trajectory over the same span, two initial-condition sets per
-system, all 63 systems. Verified directly in the file.
+**Sampling grid — not stated in the paper.** Appendix A describes the curation and mentions "well
+integrated solution trajectories" without solver, tolerances or point count. Those live in the
+artefact, where the two values of §2.4 disagree. **Which grid the published evaluation used cannot
+be established from the paper** — the most consequential open item in this audit, and an artefact
+question rather than a reading one.
 
-Both are called ODEBench. Ours is therefore a different generation configuration or a different
-version of the artefact — exactly the ambiguity §2.2 warns about, now demonstrated rather than
-hypothesised.
+**Metric and success criterion — verified, and it is not ours.** The paper uses
+`R² = 1 − Σ(y − ŷ)² / Σ(y − ȳ)² ∈ (−∞, 1]` and states explicitly that because R² is unbounded from
+below, **average R² is not reported**. The headline quantity is
 
-**Consequences, and they are not cosmetic:**
+> the percentage of predictions for which R² exceeds a threshold of **0.9**
 
-1. **The sentence "we adopt the dataset's sampling" is wrong** wherever it appears. We adopt *our
-   copy's* sampling, which is 3.4x denser than the 150-point protocol the literature describes
-   (`Δ ≈ 0.0196` against `Δ ≈ 0.067`).
-2. **The deviation is larger than previously stated.** We knew we integrate at tighter tolerances
-   (`1e-9` against `rtol=1e-5, atol=1e-7`). We now also sample more than three times as densely.
-3. **And the sampling axis is the one the same paper identifies as decisive.** Tonda et al. find a
-   strong correlation between the sampling step and the appearance of misleading search spaces, and
-   report that reducing the step mitigates the effect. Our denser grid therefore places us on the
-   favourable side of the very axis that governs the failure mode — which is an advantage that must
-   be declared, not a detail.
-4. Any published number computed on the 150-point artefact is **not** comparable to ours on grid
-   density alone, independently of the tolerance question.
+Two settings are evaluated **separately**: *reconstruction* (integrate the inferred ODE from the
+same initial condition) and *generalization* (integrate from the second initial condition).
+Generalization accuracy is substantially lower throughout.
 
-**Open:** which artefact version our file came from. The content hash is in §2.2. The upstream
-repository is `github.com/sdascoli/odeformer` under `odeformer/odebench`, cited by Tonda et al.
+**Consequence:** a thresholded rate over all 63 systems is not commensurable with either of our
+metrics — support recovery on the 20 exact systems, mean R² on the 43 surrogates. Even under an
+identical data protocol the numbers would not compare. This is an independent reason for the
+no-cross-method-claim rule, on top of the protocol questions.
 
-### 2.3 How our own trajectory generation is to be described
+**Perturbation protocol — verified.** Multiplicative Gaussian noise `x_j(t_i) ← (1 + ξ)·x_j(t_i)`
+with level drawn uniformly from `[0, 0.1]`, and subsampling with ratio drawn uniformly from
+`[0, 0.5]`; result figures use grids such as 0 %/5 % noise and 0 %/25 % subsampling. Phase B is
+noise-free and fully sampled, i.e. it sits at the easiest corner of that grid — a further declared
+difference.
 
-Not "we use cleaner ODEBench data" — that devalues the original protocol and invites the obvious
-retort. The wording to use:
+**Baselines — verified.** AFP, FE-AFP, EHC, EPLEX and PySR (genetic programming), SINDy (sparse
+regression), FFX (regularized regression), ProGED (Monte-Carlo over probabilistic context-free
+grammars). Apart from ProGED and SINDy all were developed for *functional* SR and adapted to the
+dynamical setting via derivative estimation. **A separate hyperparameter optimization is run per
+run**, stated as a fairness measure.
 
-> We preserve the ODEBench systems, parameterizations, initial conditions and sampling grid, but
-> regenerate trajectories at stricter numerical tolerances to avoid solver-error floors interfering
-> with the accuracy regime studied here.
+**Derivative handling — verified, and directly relevant.** Temporal derivatives are computed by
+**finite differences with a hyperparameter search over the approximation order and optional
+Savitzky-Golay smoothing**. That is precisely the transformation whose failure mode §2.5 documents:
+the published baseline numbers are numbers *after* a tuned derivative transformation.
 
-And the consequence, stated plainly: published ODEBench numbers obtained on the released
-trajectories are not treated as directly comparable.
+**Representational adequacy — partially fillable from this source.** The evaluated search spaces are
+documented:
 
-Open questions that decide comparability:
+| Method | Search space as evaluated |
+|---|---|
+| SINDy (poly) | `[polynomials]`, degree searched over 1–10 |
+| SINDy (esc) | `[polynomials, sin, cos, exp]` and `[polynomials, sin, cos, exp, log, sqrt, 1/x]` |
+| ProGED | grammars: polynomial, universal, rational, simplerational, trigonometric |
 
-1. Do published results use both initial-condition sets or one?
-2. Is the reported metric an R² threshold, and at what value, and computed on the trajectory
-   or on the derivatives?
-3. Is any noise added, and are results reported per noise level?
-4. Are failed or diverged runs excluded from the aggregate, or scored as failures?
+This is enough to fill the *representable under the evaluated protocol* column per system for those
+methods, which is what the column was introduced for.
 
-Until these are answered, published numbers are **contextual only**.
+One observation that applies symmetrically to us: **SINDy fits a linear combination of fixed library
+functions**, so a saturating response `u/(K + u)` with unknown `K` lies outside the span of *every*
+library above — `1/x` does not help, because the constant sits inside the nonlinearity. The methods
+differ in where their boundary runs, not in whether they have one. ProGED's rational grammars and
+the GP methods with a division operator are the ones that reach such forms.
 
----
+**Unverified after this reading.** Which sampling grid the evaluation used; whether the evaluation
+interval is `[0, 10]` as in the artefact or `[1, 10]` as stated for the model's own setting; and the
+per-system results, which are given as figures rather than tables.
 
 ## 3. Phase B sampling protocol — decided 2026-08-03
 
