@@ -375,11 +375,13 @@ only, unless protocol equivalence is established.
 *Provenance, established 2026-08-22:* the grid below is the artefact's own. Our
 `strogatz_extended.json` is byte-identical to the upstream file in `sdascoli/odeformer`
 (`odeformer/odebench/`, upstream commit `32dd990`), unchanged since our first commit. Note that the
-repository ships **two** samplings: 512 points in the committed JSON, and 150 points from the
-regeneration script in the same directory, which writes elsewhere. Which of the two a published run
-used must be checked per source rather than assumed — the difference is 3.4x in grid density, on the
+repository ships **two** samplings: 512 points in the committed JSON and 150 points from the
+regeneration script, which writes to a file no evaluation path reads. The benchmark's own released
+evaluation code reads the committed 512-point solutions, i.e. **the same grid as ours**; a
+subsequent study took the 150-point script as the protocol instead. Which of the two a given
+published run used must therefore be checked per source — the difference is 3.4x in density, on the
 axis that governs whether derivative-space objectives mislead.
-`docs/paper1_odebench_protocol_alignment.md` §2.4.
+`docs/paper1_odebench_protocol_alignment.md` §2.4, §2.6, §2.7.
 
 | Component | Decision |
 |---|---|

@@ -50,10 +50,19 @@ alongside it in the same directory samples **150** points instead and writes to 
 The repository therefore offers two grids, differing by a factor of 3.4 in density
 (`Δ ≈ 0.0196` against `Δ ≈ 0.067`).
 
-We use the committed grid. Which grid a published result used cannot be assumed and is part of the
-audit, because sampling density is not a neutral axis: it is the axis under which the derivative
-transformation is known to produce misleading search spaces, and under which reducing the step
-mitigates them.
+We use the committed grid, and so does the benchmark's own evaluation: its released evaluation code
+reads the precomputed solutions out of that file rather than re-integrating. The 150-point
+configuration writes to a separate file that no evaluation path reads. Which grid a *given*
+published result used therefore still cannot be assumed — at least one subsequent study takes the
+150-point configuration as the protocol — and sampling density is not a neutral axis: it is the axis
+under which the derivative transformation is known to produce misleading search spaces, and under
+which reducing the step mitigates them.
+
+*The grid is part of the result, not its background.* A dedicated measurement in this project shows
+the stage cap moving with grid density — on one system the cap changes and two safety violations
+disappear when moving from a coarser per-system grid to the benchmark grid — while shipped versus
+self-integrated trajectory values change nothing at all, in any of 26 cells. Cap results are
+therefore stated under their grid.
 
 We do not use the shipped trajectory *values*. We integrate on the same grid at tighter tolerances
 (`abstol = reltol = 1e-9` against the artefact's `rtol = 1e-5`, `atol = 1e-7`), because the shipped

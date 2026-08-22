@@ -6,6 +6,48 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ## 2026-08-22
 
+### Gitterfrage im Code beantwortet — und ODEFormer rechnet auf demselben Gitter wie wir
+
+<!-- HASH -->
+
+Vor der geplanten Autorenanfrage vollstaendig recherchiert, damit nichts gefragt wird, was oeffentlich
+beantwortet ist. Repository-Dateibaum (59 Dateien), `solve_and_plot.py`, `evaluate.py`,
+`environment.py`, `generators.py`, `baseline_utils.py`.
+
+**`evaluate.py` beantwortet es.** `read_equations_from_json_file` liest
+`_sample["solutions"][solution_i][0]["t"]` und `["y"]` direkt aus `strogatz_extended.json` und
+integriert **nicht** neu. Diese Datei traegt 512 Punkte. Also:
+
+> **Die ODEBench-Auswertung von ODEFormer lief auf demselben 512-Punkte-Gitter, das wir verwenden.**
+
+Die 150-Punkte-Konfiguration in `solve_and_plot.py` schreibt nach `solutions.json`, und kein
+Auswertungspfad im Repository liest diese Datei. Tonda et al. haben das Skript als Protokoll
+genommen — der Faktor 3,4 in der Dichte liegt also **zwischen zwei publizierten Arbeiten**, nicht
+zwischen uns und dem Benchmark. Stuetzend: der Forecasting-Pfad baut sein Gitter als
+`np.linspace(t0, t0+5, 512, endpoint=True)`.
+
+**Eine Spannung bleibt, und sie ist die bessere Frage.** Das Paper sagt, die zwei kuratierten
+Anfangsbedingungen je Gleichung seien fuer die Generalisierung da. Der Loader liest aber nur
+`[solution_i][0]`, also die **erste**, und die Aufgabe `y0_generalization` zieht eine frische
+Zufalls-IC per `self.env.rng.randn(dimension)`. Ob die berichteten Generalisierungszahlen aus der
+zweiten kuratierten IC oder aus Zufallsziehungen stammen, ist aus den oeffentlichen Artefakten nicht
+entscheidbar. Das ist die Frage fuer die Mail; Entwurf in `docs/anfrage_odebench_autoren.md`.
+
+**Und zwei Konsequenzen fuer die eigene Darstellung, nachgezogen.** Erstens: **Unsere Caps sind
+gitterabhaengig** — WP-G1b hat es gemessen (System 54: `[nothing,2,2]` → `[nothing,3,3]`, zwei
+Sicherheitsverletzungen verschwinden, korrekte Caps 6 → 8 von 13), waehrend gelieferte gegen selbst
+integrierte Werte in allen 26 Zellen **nichts** aendern. Die Empfindlichkeit gilt der Dichte, nicht
+der Datenqualitaet. Das Gitter gehoert damit in die Aussage hinein — „unter 512 Punkten ueber
+[0,10]" — und nicht in eine Fussnote. Es ist zugleich die sauberste Verteidigung: Wer selbst sagt,
+dass Dichte den Controller bewegt, kann nicht beschuldigt werden, ein guenstiges Gitter still
+auszunutzen.
+
+Zweitens: Die Frage ist **schon eingeplant**. Abtastdichte ist eine der vier Robustheitsachsen von
+Paper 3. 150 und 512 werden als zwei Dichtepunkte dieser Achse festgeschrieben — dann wird die
+Vergleichbarkeit mit beiden publizierten Protokollen per Konstruktion herstellbar statt per Annahme.
+
+---
+
 ### Provenienz geklaert — die Datei ist Upstream, und die 150/512-Diskrepanz liegt dort
 
 <!-- ae954de -->
