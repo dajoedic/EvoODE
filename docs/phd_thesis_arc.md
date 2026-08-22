@@ -116,6 +116,20 @@ the limit.
 **Prerequisite.** Paper 1 must have established that the space is not the cause. Without that, any
 recovery failure is confounded with the controller.
 
+**Three levels, not two** (sharpened 2026-08-22). A failure is only a *search* failure once the two
+levels above it are settled:
+
+| Level | Question | If it fails |
+|---|---|---|
+| representability | is `f*` in `H` at all? | no search can help |
+| identifiability | do the data separate `f*` from its alternatives? | an information problem, not a search problem |
+| search recoverability | does the algorithm find `f*` within budget? | only here is it Paper #2's subject |
+
+This is what gives Paper #2 its scope. Without the distinction every failure collapses into "search
+failure", including the ones the data could never have resolved — and the near-degeneracy of a
+richer catalogue (`u/(u+K)` tends to a linear term for large `K`) lands squarely on the middle
+level.
+
 ---
 
 ## 4. Paper #3 — What survives noise, sparsity, coupling and dimension
@@ -168,11 +182,35 @@ is where a catalogue stops on evidence rather than on taste.
   or two-dimensional search per term remains.
 
 **Why this is not a slide towards GP.** GP is a search, not a representation: global start, large
-random structures, crossover. Three properties define this project instead, and Step B keeps all
-three — an additive term structure, an enumerable and stageable catalogue, and minimal-start growth
-under a promotion rule. What changes is expressiveness, not search discipline. The claim
+random structures, crossover. But the boundary is not `EvoODE ↔ GP` — between catalogue-based
+structural growth and GP sit grammar-guided symbolic regression, beam search, MCTS, enumerative
+search and program synthesis. GP is *one* strategy in the compositional space, not its synonym. The
+axis that actually orders the field is:
+
+```text
+statically bounded space  <->  controlled growing space  <->  freely compositional space
+```
+
+EvoODE sits in the middle, and the middle is thinly populated. Five properties keep it there, and
+Step B keeps all five: an additive term structure; a **finite, stageable catalogue of parameterized
+term templates**; a minimal start; growth that is released rather than granted; and a promotion rule
+that decides the release. What changes is expressiveness, not search discipline. The claim
 "controlled incremental growth works in an expressive space where global search is expensive" is
 strictly stronger than the same claim in a polynomial library.
+
+**A precision the earlier wording got wrong.** "Enumerable catalogue" is false once `sin(ωu)` with
+real `ω` is admissible — that is a continuum of basis functions. What stays finite is the set of
+term *templates*; each instance carries a few inner parameters under linear outer coefficients. The
+method must be defined over templates, not over basis functions.
+
+**And the catalogue must not be derived from the benchmark it is then measured on.** Reading the
+families off ODEBench and afterwards reporting ODEBench coverage as the catalogue's merit is
+circular. The catalogue is to be defined semantically — offsets and forcing, polynomial self
+dynamics, polynomial interaction, saturating interaction, oscillatory transformation — and ODEBench
+then measures its empirical reach. Under that order the coverage number is a property of the
+modelling philosophy rather than its definition, and it is allowed to differ from 58. For the same
+reason "rational" is not an admissible family: `P(u)/Q(u)` would blow the space open. Admissible are
+**named mechanistic motifs** — `u/(K+u)`, optionally `u^n/(K^n+u^n)`, `sin(ωu)`, `cos(ωu)`.
 
 **Where it belongs in the arc.** Nowhere yet, and that is the point of writing it down.
 
@@ -186,7 +224,12 @@ strictly stronger than the same claim in a polynomial library.
   with a rich library, and ODEFormer all search spaces that can express saturation and oscillation.
   Comparing fit quality on systems we cannot represent measures our catalogue, not our search. The
   protocol audit therefore needs a column it does not have today: **is the competitor's search space
-  representationally adequate for this system?**
+  representationally adequate for this system?** One boolean is not enough: separate **in principle
+  representable** from **representable under the evaluated protocol**. SINDy can carry any library,
+  but if the published run used polynomials to degree 3 a saturating term is unreachable there;
+  PySR can allow an operator and still put it out of reach through complexity limits; ODEFormer
+  additionally depends on its training distribution. This dimension is not usually made visible in
+  symbolic-regression comparisons, which makes it a contribution of #3 rather than bookkeeping.
 
 **The open risk, and it points the other way.** This counts representability, not findability. A
 richer catalogue enlarges the space and creates near-degenerate structures — `u/(u+K)` tends to a
@@ -195,9 +238,40 @@ Representability is necessary, not sufficient, and Step B may make #2 harder bef
 anything better. Whether the catalogue grows before or after #2 is therefore a real decision, not a
 formality.
 
-**Status.** Undecided. Phase B is the before-measurement either way: it establishes the controller
-and gives per-system R² on the 43 surrogates, which turns "cannot represent" into "approximates this
-well" — the evidence that says which families are worth their cost.
+**Decided 2026-08-22.** The expansion is **not a fourth paper** but a methodical bridge between #2
+and #3, and it happens **after** Paper 2:
+
+```text
+#1  ->  #2  ->  representation expansion (bridge)  ->  #3
+```
+
+The reason is scientific control, not scheduling. Paper 2 asks why recovery fails *although* the
+truth is in the space. Widening the space first moves the candidate set, the collinearities, the
+optimization landscape and identifiability at the same time, and #2 could then no longer isolate
+any single cause. **The countermeasure belongs to the decision:** the removal and replacement
+operators of Paper 2 must be designed catalogue-agnostically. If they lean on polynomial structure,
+Paper 2 does not transfer to the widened space and the ordering costs exactly what it was meant to
+save.
+
+Two further decisions:
+
+- **Step A is not a target of its own.** It is cheap in representation and *not* cheap in
+  experiment: a new basis moves `config_fingerprint`, candidate counts, promotion points, the
+  look-ahead, every cap, the cost model and the regression block — for A exactly as for B. The
+  experimental price is the same, the methodical gain is not, since 39 of 63 leaves out precisely
+  the interesting motifs. A and B are paid for once, together.
+- **The tail is not served.** Five operator families for five systems is where benchmark
+  completeness turns into benchmark overfitting. Those five stay as declared **out-of-catalog
+  cases**.
+
+**Status of the evidence.** Phase B is the before-measurement: per-system R² on the 43 surrogates
+turns "cannot represent" into "approximates this well", which is what says whether a family is worth
+its cost. One caveat decides whether that evidence holds: a surrogate R² of 0.3 does **not** prove
+the family is missing — the search may simply have failed to find the best model inside the current
+class, and the records cannot tell the two apart. The analysis therefore needs a reference: the best
+attainable fit **within the current basis**, computed algebraically on the derivative problem
+without any search. Only the gap between that reference and the found model separates "the class
+cannot" from "the search did not".
 
 ---
 

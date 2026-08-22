@@ -6,6 +6,72 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ## 2026-08-22
 
+### Die Repraesentationsfrage ist entschieden — als Bruecke zwischen Paper 2 und Paper 3
+
+<!-- HASH -->
+
+Die Gespraechsvorlage vom selben Tag hat eine Antwort bekommen, und sie korrigiert die Vorlage an
+vier Stellen. Ergebnis in `docs/diskussion_repraesentationsraum.md` §9, Konsequenzen in
+`docs/phd_thesis_arc.md` §3 und §5.
+
+**Die Reihenfolge steht:** `#1 -> #2 -> Representation Expansion -> #3`. Die Erweiterung wird **kein
+viertes Paper**, sondern eine methodische Bruecke. Damit hat die Frage einen Platz im Bogen, ohne ihn
+zu strecken. Begruendung ist wissenschaftliche Kontrolle: Paper 2 fragt, warum Recovery scheitert,
+*obwohl* die Wahrheit im Raum liegt — wird vorher der Raum verbreitert, aendern sich Kandidatenraum,
+Kollinearitaeten, Optimierungslandschaft und Identifizierbarkeit gleichzeitig, und keine Ursache
+laesst sich mehr isolieren.
+
+**Meine Ergaenzung dazu:** Die Operatoren aus Paper 2 muessen **katalogunabhaengig** entworfen
+werden. Bauen sie auf Polynomstruktur, ueberträgt sich Paper 2 nicht auf den erweiterten Raum, und
+die Reihenfolge kostet genau das, was sie sparen soll.
+
+**Zwei weitere Entscheidungen.** Stufe A ist **kein eigenes Ziel**: repraesentationstechnisch billig,
+experimentell aber genauso teuer wie B — Fingerprint, Caps, Lookahead, Kostenmodell, Regressionsblock
+bewegen sich in beiden Faellen. Der Preis wird einmal gezahlt, A und B gemeinsam. Und der **Schwanz
+wird nicht bedient**: fuenf Operatorfamilien fuer fuenf Systeme ist der Punkt, an dem
+Benchmark-Vollstaendigkeit in Benchmark-Overfitting kippt. Die fuenf bleiben als *out-of-catalog
+cases* stehen.
+
+**Vier Korrekturen an meiner Vorlage, alle berechtigt:**
+
+1. **Die GP-Abgrenzung war zu binaer.** „Faellt eine der drei Eigenschaften weg, ist man bei GP" ist
+   falsch — dazwischen liegen grammatikgefuehrte SR, Beam Search, MCTS, enumerative Suche,
+   Programmsynthese. Die tragfaehige Achse ist *statisch begrenzt ↔ kontrolliert wachsend ↔ frei
+   kompositionell*. EvoODE steht in der Mitte, und die Mitte ist duenn besetzt — das ist die bessere
+   Positionierung.
+2. **„Abzaehlbarer Katalog" ist bei Stufe B mathematisch falsch.** `sin(omega*u)` mit reellem omega
+   ist ein Kontinuum. Endlich bleibt die Menge der **Term-Templates**. Die Methode ist ueber
+   Templates zu definieren, nicht ueber Basisfunktionen.
+3. **Der Katalog darf nicht aus dem Benchmark abgeleitet werden**, an dem er danach gemessen wird.
+   Erst semantisch definieren, dann ODEBench zur Messung verwenden — sonst ist 58/63 eine Definition
+   und kein Ergebnis. Die Zahl darf sich dabei verschieben.
+4. **„rational" ist keine zulaessige Familie.** `P/Q` sprengt den Raum. Zugelassen werden benannte
+   mechanistische Motive: `u/(K+u)`, `u^n/(K^n+u^n)`, `sin(omega*u)`.
+
+**Neu und wertvoll: drei Ebenen statt zwei.** Darstellbarkeit, Identifizierbarkeit,
+Auffindbarkeit — ein Fehlschlag ist erst dann ein *Suchproblem*, wenn die ersten beiden Ebenen
+geklaert sind. Das gibt Paper 2 seinen Geltungsbereich und ist praezisere Sprache als meine
+Zweiteilung. Die Fast-Entartung eines reicheren Katalogs landet genau auf der mittleren Ebene.
+
+**Neu: der Protokoll-Audit braucht zwei Spalten, nicht eine.** *In principle representable* gegen
+*representable under the evaluated protocol*. SINDy kann jede Bibliothek tragen — wenn der
+publizierte Lauf Polynome bis Grad 3 verwendete, ist ein Saettigungsterm dort unerreichbar. PySR
+kann einen Operator erlauben und ihn durch Komplexitaetsgrenzen dennoch ausschliessen. Diese
+Dimension wird in SR-Vergleichen ueblicherweise nicht sichtbar gemacht; sie ist ein eigener Beitrag
+von Paper 3.
+
+**Und ein Einwand von mir, der in der Antwort fehlte:** Die geplante R²-Auswertung je fehlender
+Motivfamilie hat eine Verwechslungsgefahr. Ein R² von 0,3 belegt **nicht**, dass die Familie fehlt —
+es kann die Suche gewesen sein, die das beste Modell *innerhalb* der Klasse nicht fand. In den
+Records sieht beides gleich aus. Noetig ist eine Referenz: die beste erreichbare Anpassung innerhalb
+der aktuellen Basis, algebraisch auf dem Ableitungsproblem, ohne Suche. Erst die Differenz trennt
+„die Klasse kann es nicht" von „die Suche fand es nicht". Ohne sie ist die Auswahlregel fuer
+kuenftige Termfamilien nicht belastbar.
+
+Phase B laeuft unveraendert weiter. Keine Basisaenderung, kein neuer Fingerprint.
+
+---
+
 ### Phase B laeuft — und der Motivkatalog beziffert, wie eng unser Suchraum ist
 
 <!-- c3eddf3 -->
