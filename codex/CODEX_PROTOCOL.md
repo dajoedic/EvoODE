@@ -65,6 +65,27 @@ note:   <eine Zeile; bei blocked: woran es scheitert>
 - Der Auftrag hat immer einen Abschnitt **Verboten** und einen Abschnitt **Abnahme**. Beide gelten
   wörtlich. Abnahmekriterien sind nicht verhandelbar und werden nicht sinngemäß ausgelegt.
 
+## Julia-Läufe in der Codex-Sitzung
+
+Zweimal blockiert (WP-H7, WP-R1): Julia startet in der Sandbox nicht, Meldung
+`SystemError: longpath: Access is denied` beim Laden von `Pkg`. Ursache ist mit hoher
+Wahrscheinlichkeit das Julia-Depot unter `~/.julia` — es liegt **außerhalb** des beschreibbaren
+Workspace. Claude startet Julia-Pakete deshalb künftig mit einem zusätzlichen Verzeichnis:
+
+```text
+codex exec -s workspace-write --add-dir <Julia-Depot> ...
+```
+
+Falls Julia trotzdem nicht startet: **Das ist kein Grund, den Auftrag zu verwerfen.** Umsetzung
+fertigstellen, `blocked` melden, im `note`-Feld ausdrücklich *Umgebung, nicht Sache* schreiben und
+im Report festhalten, welche Abnahmepunkte deshalb offen sind. Claude fährt die Abnahme dann selbst.
+Nicht mit anderen Julia-Versionen ausweichen — das Projekt ist auf 1.12.6 gepinnt, und ein Lauf
+unter 1.11.5 wäre keine gültige Abnahme.
+
+**Was dabei trotzdem von dir erwartet wird:** Ein Skript, das nie gelaufen ist, ist ungeprüft.
+Lies es vor der Abgabe gegen die Dateien, die es einbindet — WP-R1 scheiterte an einem fehlenden
+`include`, also an etwas, das ohne Ausführung sichtbar gewesen wäre.
+
 ## Handwerkliches
 
 - Die zweite Zeile jedes Auftrags nennt die Sprache: `**Language: Julia**` oder

@@ -321,3 +321,62 @@ es nicht". Billig zu rechnen und ohne sie ist die Auswahlregel nicht belastbar.
 - Die Surrogat-R² werden nach fehlender Motivfamilie ausgewertet — mit der Referenz oben.
 - Der Protokoll-Audit bekommt die zwei Repräsentationsspalten.
 - Die Repräsentationserweiterung wird nach Paper 2 als Brücke umgesetzt, A und B gemeinsam.
+
+
+---
+
+## 10. Der Katalog, semantisch definiert (22.08.2026)
+
+Korrektur 3 aus Abschnitt 9 verlangt die umgekehrte Herleitungsrichtung: erst die Familien
+inhaltlich definieren, dann die Abdeckung messen. Das ist hier nachgeholt.
+
+### Die Familien, aus der Modellierungspraxis
+
+| Familie | Was sie beschreibt | Form |
+|---|---|---|
+| **Offset / Forcing** | konstanter Zu- oder Abfluss, äußerer Antrieb — Geburtenrate, Zuwanderung, Einspeisung | `c` |
+| **polynomiale Eigendynamik** | Wachstum, Zerfall, Selbsthemmung — logistische Dichteabhängigkeit | `u`, `u²`, `u³`, … |
+| **polynomiale Interaktion** | Massenwirkung — Räuber trifft Beute, Infizierter trifft Anfälligen, Reaktion zweiter Ordnung | `u_i·u_j`, `u_i²·u_j`, … |
+| **sättigende Interaktion** | begrenzte Aufnahme- oder Reaktionsrate — Michaelis-Menten, Holling II, Hill | `u/(K+u)`, `uⁿ/(Kⁿ+uⁿ)` |
+| **oszillatorische Transformation** | Rückstellkraft, periodischer Antrieb — Pendel, getriebene Systeme | `sin(ωu)`, `cos(ωu)` |
+
+Diese fünf sind nicht aus ODEBench abgelesen. Sie sind der Kern dessen, womit mechanistische
+Modellierung in Populationsdynamik, Kinetik und Mechanik arbeitet. Erst danach wird gemessen.
+
+### Gemessene Abdeckung
+
+| Katalog | exakt darstellbar |
+|---|---|
+| heutige Basis | 20 / 63 |
+| + Offset / Forcing | 30 / 63 |
+| + polynomiale Interaktion Grad ≥ 3 | 39 / 63 |
+| + sättigende Interaktion | 51 / 63 |
+| + oszillatorische Transformation | **58 / 63** |
+
+**Der semantische Weg landet auf derselben Zahl wie der benchmark-abgeleitete.** Das ist die
+eigentliche Nachricht: Die vier fehlenden Familien sind nicht an ODEBench angepasst, sie sind das,
+was mechanistische Modellierung ohnehin braucht. Damit ist 58/63 eine Eigenschaft der
+Modellierungsphilosophie und keine Definition — genau das, was Korrektur 3 verlangt hat.
+
+### Eine Grenze, die innerhalb einer Familie liegt
+
+„Polynomiale Eigendynamik" hat keine natürliche Gradschranke. Lässt man Grad 5 zu, kommt System 16
+(Landau-Gleichung) hinzu: **59 / 63**. Die Kante bei 58 ist also teilweise eine Entscheidung
+*innerhalb* einer Familie, nicht nur zwischen Familien. Das gehört ausgesprochen, sonst wirkt die
+Zahl schärfer, als sie ist.
+
+### Der Schwanz ist nicht exotisch — er ist verstreut
+
+| System | Familie | Modellierungstradition |
+|---|---|---|
+| 7 | logarithmisches Wachstum | Gompertz, Tumorwachstum |
+| 10 | nicht-ganzzahliges Potenzgesetz | Sprachdynamik |
+| 16 | polynomiale Eigendynamik Grad 5 | Landau-Normalform, Bifurkationstheorie |
+| 21 | exponentielle Antwort | Epidemiologie |
+| 44 | vorzeichenbehaftete quadratische Dämpfung `|v|·v` | Strömungswiderstand |
+
+Keine dieser Familien ist eine Kuriosität. Jede ist in **ihrer** Tradition Standard — sie gehören
+nur zu fünf verschiedenen Traditionen. „Kompakter Katalog" ist damit eine Entscheidung über die
+**Breite der abgedeckten Modellierungstraditionen**, nicht über den Ausschluss von Sonderlichem.
+Diese Formulierung ist ehrlicher und im Zweifel besser zu verteidigen als „die letzten fünf sind
+Einzelfälle".
