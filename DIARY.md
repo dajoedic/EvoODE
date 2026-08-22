@@ -8,7 +8,7 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ### Gitterfrage im Code beantwortet — und ODEFormer rechnet auf demselben Gitter wie wir
 
-<!-- HASH -->
+<!-- 34f3248 -->
 
 Vor der geplanten Autorenanfrage vollstaendig recherchiert, damit nichts gefragt wird, was oeffentlich
 beantwortet ist. Repository-Dateibaum (59 Dateien), `solve_and_plot.py`, `evaluate.py`,
