@@ -1,0 +1,66 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: evoode-phase-b-bootstrap-campaign
+  namespace: scch-das
+  labels:
+    app.kubernetes.io/name: evoode
+    app.kubernetes.io/part-of: evoode-phase-b
+    app.kubernetes.io/component: manifest-bootstrap
+    app.kubernetes.io/managed-by: kubectl
+    hpc.scch.at/service: evoode-phase-b-bootstrap
+    hpc.scch.at/responsibility: joedicke
+spec:
+  # Delete the Job and its pods one hour after completion. Without this a finished
+  # Job leaves its pods behind forever, and the shared namespace fills up with them.
+  # The results are the records on NFS, not the pod logs, so nothing is lost.
+  ttlSecondsAfterFinished: 3600
+  backoffLimit: 1
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: evoode
+        app.kubernetes.io/part-of: evoode-phase-b
+        app.kubernetes.io/component: manifest-bootstrap
+        hpc.scch.at/service: evoode-phase-b-bootstrap
+        hpc.scch.at/responsibility: joedicke
+    spec:
+      restartPolicy: Never
+      imagePullSecrets:
+        - name: evoode-gitlab-pull
+      containers:
+        - name: bootstrap
+          image: registry.gitlab.scch.at:443/joedicke/evoode:<COMMIT_SHA>
+          imagePullPolicy: IfNotPresent
+          command:
+            - julia
+            - --project=/opt/EvoODE
+            - /opt/EvoODE/studies/regression/generate_phase_b_manifest.jl
+          args:
+            - --output
+            # Must match EVO_BATCH_MANIFEST in phase_b_indexed_campaign_job.yaml.
+            # The cells only read these files; nothing recreates them later.
+            - /outputs/phase_b_campaign_<COMMIT_SHA>/manifest.csv
+            - --all-dimensions
+          env:
+            - name: JULIA_NUM_THREADS
+              value: "1"
+            - name: OPENBLAS_NUM_THREADS
+              value: "1"
+          resources:
+            requests:
+              cpu: "1"
+              # The generator loads all 63 systems at once; 2Gi is not enough.
+              memory: 8Gi
+            limits:
+              cpu: "1"
+              memory: 8Gi
+          volumeMounts:
+            - name: evoode-bigdata
+              mountPath: /outputs
+              subPath: data-science/joedicke
+      volumes:
+        - name: evoode-bigdata
+          nfs:
+            server: nfs.orion.scch.at
+            path: /bigdata
