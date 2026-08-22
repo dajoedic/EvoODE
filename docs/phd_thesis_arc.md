@@ -135,12 +135,81 @@ the repaired method. If they do not, Paper 3 measures the limit and says so.
 
 ---
 
-## 5. Dependencies
+## 5. The representation question — a decision this arc does not yet contain
+
+*Added 2026-08-22, from the ODEBench motif audit.*
+
+**The finding.** The staged basis represents 20 of the 63 ODEBench systems exactly. The other 43
+contain terms it cannot express at all. Sorting all 82 uncovered terms into families and adding the
+families greedily gives this closure curve:
+
+| Catalogue grows by | Systems gained | Exact total |
+|---|---|---|
+| baseline | — | 20 / 63 |
+| + constant | +10 | 30 |
+| + rational (saturation, Hill) | +12 | 42 |
+| + mixed monomials of degree ≥ 3 | +9 | 51 |
+| + trigonometry **with a scaled argument** | +7 | **58** |
+| + exp, log, real power, high power, absolute value | +1 each | 63 |
+
+**Four families cover 92 % of the benchmark.** After that the return collapses: the last five
+systems need five different one-off families, one system each — Gompertz (log), language death
+(real power), Landau (high power), reduced SIR (exp), driven pendulum (absolute value). That cliff
+is where a catalogue stops on evidence rather than on taste.
+
+**Two steps, and only the second is architectural.**
+
+- **Step A, 39 of 63.** Constant and mixed monomials are ordinary basis functions. The model stays
+  linear in its coefficients, the OLS warm start is untouched, nothing but the catalogue changes.
+- **Step B, 58 of 63.** Rational and scaled-trigonometric terms carry **inner** parameters — `K` in
+  `u/(u+K)`, `ω` in `sin(ωu)`. The additive structure survives, but each term becomes a small
+  nonlinear fit. The derivative-matching warm start survives as a separable least-squares problem:
+  the outer coefficients stay linear given the inner parameters, so OLS solves them and only a one-
+  or two-dimensional search per term remains.
+
+**Why this is not a slide towards GP.** GP is a search, not a representation: global start, large
+random structures, crossover. Three properties define this project instead, and Step B keeps all
+three — an additive term structure, an enumerable and stageable catalogue, and minimal-start growth
+under a promotion rule. What changes is expressiveness, not search discipline. The claim
+"controlled incremental growth works in an expressive space where global search is expensive" is
+strictly stronger than the same claim in a polynomial library.
+
+**Where it belongs in the arc.** Nowhere yet, and that is the point of writing it down.
+
+- It is **not** Paper #1. Changing the basis changes `config_fingerprint`, invalidates the
+  regression block, and — worse — moves the ground under design rule 2, which derives the look-ahead
+  horizon from where the basis creates structural gaps. That is Phase 2b re-opened.
+- It **qualifies** Paper #1's role in the arc. "The space is not the cause of failed recovery" is
+  established on the 20 exact systems only. On the other 43 the space *is* the cause. The arc must
+  state that scope rather than imply the general claim.
+- It is a **precondition for Paper #3.** External baselines are the point of #3, and PySR, SINDy
+  with a rich library, and ODEFormer all search spaces that can express saturation and oscillation.
+  Comparing fit quality on systems we cannot represent measures our catalogue, not our search. The
+  protocol audit therefore needs a column it does not have today: **is the competitor's search space
+  representationally adequate for this system?**
+
+**The open risk, and it points the other way.** This counts representability, not findability. A
+richer catalogue enlarges the space and creates near-degenerate structures — `u/(u+K)` tends to a
+linear term for large `K` — which is poison for support recovery, the very thing Paper #2 is about.
+Representability is necessary, not sufficient, and Step B may make #2 harder before it makes
+anything better. Whether the catalogue grows before or after #2 is therefore a real decision, not a
+formality.
+
+**Status.** Undecided. Phase B is the before-measurement either way: it establishes the controller
+and gives per-system R² on the 43 surrogates, which turns "cannot represent" into "approximates this
+well" — the evidence that says which families are worth their cost.
+
+---
+
+## 6. Dependencies
 
 ```text
 #1  bound the space        -> establishes that the space is not the cause of failed recovery
+                              (on the 20 exactly representable systems)
 #2  make the search work   -> needs #1, isolates the operators as the cause
 #3  robustness and scaling -> needs #2, else it characterises a method that misses its target
+                              -> and needs the representation decision from section 5, else the
+                                 external comparison measures the catalogue instead of the search
 ```
 
 Each paper is a precondition for the next. That is the property that makes three papers a thesis
@@ -148,7 +217,7 @@ rather than three unrelated results.
 
 ---
 
-## 6. What belongs in none of the three
+## 7. What belongs in none of the three
 
 Line-search cost, the sentinel loss `1e6`, GPU, batched parameter fitting, threading over the
 population, the `discover()` API cleanup. These are craft, not thesis. They may appear in a methods

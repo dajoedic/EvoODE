@@ -4,6 +4,71 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ---
 
+## 2026-08-22
+
+### Phase B laeuft — und der Motivkatalog beziffert, wie eng unser Suchraum ist
+
+<!-- HASH -->
+
+**Die Kampagne ist gestartet.** `git 91f88c46063fa368101326cbfe1abcdfc9d857fc`, Bootstrap auf Orion
+bestaetigt `phase_b_fingerprint=604e79733b22d64d`, `rows=756`, `unique_identities=756`,
+`cost_desc_index_rows=756`, 20 exakt / 43 Surrogat. Job `evoode-phase-b-campaign` laeuft mit
+`parallelism: 16`.
+
+Zwei Dinge waren vor dem Start noch zu reparieren. **`backoffLimit` stand auf 1** — der Wert zaehlt
+Pod-Ausfaelle ueber den *ganzen* Job, und ein wissenschaftlicher Fehler beendet den Pod mit 0. Zwei
+Node-Zwischenfaelle in neun Tagen haetten also die komplette Kampagne beendet. Jetzt 50. Und der
+**Bootstrap schrieb ins Smoke-Verzeichnis**, waehrend die Zellen aus dem Kampagnenverzeichnis lesen;
+dafuer gibt es jetzt ein eigenes Manifest.
+
+**Die Startreihenfolge ist kostensortiert (WP-H7).** Ein Indexed Job verteilt dynamisch, es faellt
+also kein Kern trocken. Was die Gesamtdauer bestimmt, ist der Startzeitpunkt der laengsten Zelle —
+und die dim-3-Zellen lagen in Manifestreihenfolge hinten. `indices_cost_desc.txt` stellt dieselben
+756 Indizes nach gemessenem Klassenmittel um: dim 3, dim 2, dim 4, dim 1. Erwartete Ersparnis rund
+zwei Tage. Wissenschaftlich neutral, `manifest_index` wird mitgeschrieben.
+
+Nach zwei Minuten sichtbar bestaetigt: Index 10 fertig (System 53, `loss=1,87e-05`, 58,9 s), Index 16
+nachgestartet. Die dynamische Zuteilung arbeitet wie beschrieben.
+
+**Der eigentliche Befund des Tages ist aber ein anderer.** Aus der Frage des Nutzers, warum wir nur
+mit einer Polynombasis arbeiten, wurde eine Auswertung aller 82 nicht abgedeckten Terme in den 117
+Gleichungszeilen:
+
+| Katalog waechst um | Systeme neu | exakt gesamt |
+|---|---|---|
+| Ausgangslage | — | 20 / 63 |
+| + Konstante | +10 | 30 |
+| + rational (Saettigung, Hill) | +12 | 42 |
+| + gemischte Monome Grad >= 3 | +9 | 51 |
+| + Trigonometrie mit skaliertem Argument | +7 | **58** |
+| + exp, log, reelle Potenz, hohe Potenz, Betrag | je +1 | 63 |
+
+**Vier Familien decken 92 Prozent.** Danach braucht jedes weitere System seine eigene Familie —
+Gompertz (log), Sprachtod (reelle Potenz), Landau (hohe Potenz), SIR (exp), getriebenes Pendel
+(Betrag). Diese Kante ist selbst ein Ergebnis: Sie sagt, wo ein Katalog aus Evidenz aufhoert.
+
+Und die Leiter hat einen klaren Knick: **39 von 63 ohne jede Architekturaenderung** (Konstante und
+Monome sind gewoehnliche Basisfunktionen, das Modell bleibt linear in den Koeffizienten, der
+OLS-Warmstart unveraendert), **58 von 63 mit Termen, die innere Parameter tragen** (`K` in
+`u/(u+K)`, `omega` in `sin(omega*u)`). Letzteres ist der Architektursprung — und er ist bezahlbar,
+weil das Pretuning auf dem algebraischen Ableitungsproblem arbeitet: aeussere Koeffizienten bleiben
+linear, es entsteht ein separables Kleinste-Quadrate-Problem.
+
+**Kein Schritt davon ist GP.** GP ist ein Suchverfahren, keine Darstellungsform. Additive
+Termstruktur, abzaehlbarer staffelbarer Katalog und minimaler Start mit Promotionsregel bleiben in
+allen Stufen erhalten; es aendert sich die Ausdrucksstaerke, nicht die Suchdisziplin.
+
+**Die Warnung, die dazugehoert:** Das misst Darstellbarkeit, nicht Auffindbarkeit. `u/(u+K)` geht
+fuer grosses `K` in einen linearen Term ueber — ein reicherer Katalog erzeugt fast aequivalente
+Strukturen, und genau daran scheitert Recovery heute schon. Stufe B koennte Paper 2 schwerer machen,
+bevor sie etwas verbessert.
+
+Festgehalten in `docs/phd_thesis_arc.md` §5 (neu, inklusive der Einordnung: die Frage hat im
+Dreier-Bogen bisher **keinen** Platz und ist Voraussetzung fuer Paper 3) und als Gespraechsvorlage
+in `docs/diskussion_repraesentationsraum.md`.
+
+---
+
 ## 2026-08-21
 
 ### WP-A4/A4b — die Auswertung konnte R² gar nicht sehen, und drei Achsen fielen stumm weg
