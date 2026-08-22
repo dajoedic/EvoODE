@@ -6,6 +6,63 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ## 2026-08-22
 
+### WP-R1 — die suchfreie Referenz dreht die Rangfolge der fehlenden Familien um
+
+<!-- HASH -->
+
+Die Referenz steht: fuer alle 63 Systeme und beide IC-Saetze die Kleinste-Quadrate-Projektion der
+geschaetzten Ableitungen auf die **volle** Basis, alle Terme aktiv, keine Suche. 126 Zeilen,
+deterministisch, byteidentisch bei Wiederholung. Damit ist die Auswahlregel aus der
+Repraesentationsdiskussion anwendbar — und sie faellt anders aus als die Abdeckungsrechnung
+nahelegt.
+
+**Erstens: die Basis spannt weit mehr, als „43 nicht darstellbar" klingt.** Surrogate erreichen im
+Ableitungsraum einen Median von **0,999993**, exakte Systeme 0,999998. 55 von 86 Surrogatzeilen
+liegen ueber 0,9999, nur drei unter 0,9. Auf dem beobachteten Wertebereich ist ein Saettigungsterm
+eben doch durch niedrige Polynome darstellbar. *Nicht darstellbar* heisst nicht *schlecht
+approximierbar*.
+
+**Zweitens, und das ist der eigentliche Befund: die Rangfolge ist fast umgekehrt zur Systemzahl.**
+
+| fehlende Familie | Zeilen | Median dR2 |
+|---|---|---|
+| polynomiale Interaktion Grad >= 3 | 18 | **0,99815** |
+| oszillatorisch mit Argument | 14 | 0,99989 |
+| Offset / Forcing | 50 | 0,99998 |
+| **saettigende Interaktion** | 24 | **1,00000** |
+
+Saettigung — zweitgroesste Systemzahl, groesster Architekturpreis, der ganze Grund fuer Stufe B —
+kostet im Mittel **nichts**. Die Familie, die wirklich weh tut, ist `u^2*v`: gemischte Monome
+Grad >= 3, Van der Pol und Duffing. Und die braucht keine inneren Parameter, sie ist Stufe A.
+
+**Damit verschiebt sich die Entscheidung, ueber die am Montag gesprochen wird.** Stufe A gewinnt an
+Gewicht, Stufe B verliert. Was offen bleibt: ob das an den Daten liegt — 512 Punkte ueber einen
+begrenzten Wertebereich. Auf einem Bereich, der die Saettigung wirklich durchlaeuft, saehe es
+anders aus. Das ist eine Frage ans Sampling und gehoert zu Paper 3.
+
+**Drei Einschraenkungen, ohne die die Tabelle ueberinterpretiert wird.** Die Zuordnung ist
+assoziativ, nicht kausal — ein System mit zwei fehlenden Familien geht in beide Zeilen ein; sauber
+trennen koennte man nur durch das teure Experiment selbst. In *eine* Richtung traegt sie trotzdem:
+Wird jedes System einer Familie gut angenaehert, kauft die Familie nachweislich wenig. Zweitens ist
+die volle Basis nicht sparsam — 0,99999 mit achtzehn Termen sagt nichts ueber ein interpretierbares
+Modell, und Interpretierbarkeit ist der Zweck. Drittens ist der Ableitungsraum nicht der
+Trajektorienraum: **13 der 126 Modelle divergieren beim Integrieren**, bei den exakten Systemen
+liegt der Mittelwert der Trajektoriengueten bei −2,8 gegen einen Median von 0,9999. Fuer den
+Vergleich mit Kampagnendaten ist deshalb die Ableitungsguete die belastbare Groesse.
+
+**Nebenbefund:** Zwei exakte Zeilen liegen unter 0,999 — System 11 / IC 1 und 55 / IC 1. Dort
+enthaelt die Basis die Wahrheit, die Luecke ist also die Grenze der **Ableitungsschaetzung**. Das ist
+derselbe Mechanismus, an dem v3 gescheitert ist, hier erstmals auf sauberen Daten beziffert.
+
+**Zur Umsetzung:** Codex hat WP-R1 implementiert und `blocked` gemeldet — Julia startet in seiner
+Sandbox nicht, das Depot liegt ausserhalb des beschreibbaren Workspace. Die Abnahme habe ich
+gefahren. Dabei zwei Fehler in einem nie ausgefuehrten Skript gefunden: ein fehlendes `include` und
+zwei unqualifizierte Aufrufe nicht exportierter Funktionen. Beides waere ohne Ausfuehrung durch
+Lesen sichtbar gewesen; `codex/CODEX_PROTOCOL.md` haelt das jetzt fest, zusammen mit dem
+`--add-dir`-Startbefehl, der den Depot-Zugriff vermutlich behebt.
+
+---
+
 ### Die Repraesentationsfrage ist entschieden — als Bruecke zwischen Paper 2 und Paper 3
 
 <!-- 825da07 -->

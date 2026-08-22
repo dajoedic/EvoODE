@@ -380,3 +380,94 @@ nur zu fünf verschiedenen Traditionen. „Kompakter Katalog" ist damit eine Ent
 **Breite der abgedeckten Modellierungstraditionen**, nicht über den Ausschluss von Sonderlichem.
 Diese Formulierung ist ehrlicher und im Zweifel besser zu verteidigen als „die letzten fünf sind
 Einzelfälle".
+
+
+---
+
+## 11. Was die fehlenden Familien tatsächlich kosten (WP-R1, 22.08.2026)
+
+Abschnitt 9 hat eine suchfreie Referenz verlangt, weil ein niedriges R² aus der Kampagne sonst nicht
+zwischen „die Klasse kann es nicht" und „die Suche fand es nicht" unterscheidet. Die Referenz liegt
+vor: für alle 63 Systeme und beide IC-Sätze die Kleinste-Quadrate-Projektion der geschätzten
+Ableitungen auf die **volle** heutige Basis — alle Terme aktiv, keine Strukturauswahl, keine Suche.
+126 Zeilen, deterministisch, byteidentisch bei Wiederholung. `docs/WP-R1.md`.
+
+### Erster Befund: die Basis spannt weit mehr, als „43 nicht darstellbar" nahelegt
+
+| Gruppe | Zeilen | Median | Minimum |
+|---|---|---|---|
+| exakte Systeme | 40 | 0,999998 | 0,9962 |
+| **Surrogatsysteme** | 86 | **0,999993** | 0,4656 |
+
+Die Surrogate werden im Ableitungsraum **fast so gut angenähert wie die exakten Systeme**. 55 von 86
+Zeilen erreichen mindestens 0,9999, 74 von 86 mindestens 0,99, nur 3 liegen unter 0,9.
+
+Das ist die Identifizierbarkeitsfrage in Zahlen: Auf dem beobachteten Wertebereich ist ein
+Sättigungsterm eben doch durch niedrige Polynome darstellbar. Nicht darstellbar heißt nicht schlecht
+approximierbar.
+
+### Zweiter Befund: die Rangfolge der Familien ist fast umgekehrt zur Systemzahl
+
+Median der Ableitungsgüte über alle Zeilen, deren System diese Familie braucht:
+
+| fehlende Familie | Zeilen | Median | min | schwächste Systeme |
+|---|---|---|---|---|
+| polynomiale Interaktion Grad ≥ 3 | 18 | **0,99815** | 0,8872 | 37 Van der Pol, 40 Duffing |
+| exponentielle Antwort | 2 | 0,99905 | 0,9984 | 21 SIR |
+| oszillatorisch mit Argument | 14 | 0,99989 | 0,7648 | 35, 51 |
+| polynomiale Eigendynamik Grad ≥ 5 | 2 | 0,99993 | 0,9999 | 16 Landau |
+| Offset / Forcing | 50 | 0,99998 | 0,4656 | 5, 48, 51 |
+| logarithmisches Wachstum | 2 | 0,99999 | 1,0000 | 7 Gompertz |
+| nicht-ganzzahlige Potenz | 2 | 0,99999 | 1,0000 | 10 |
+| Strömungswiderstand `|v|·v` | 2 | 1,00000 | 1,0000 | 44 |
+| **sättigende Interaktion** | 24 | **1,00000** | 0,9209 | 42, 48 |
+
+**Sättigung — die Familie mit der zweitgrößten Systemzahl und dem größten Architekturpreis — kostet
+im Mittel nichts.** Michaelis-Menten und Hill sind auf dem beobachteten Bereich glatt und werden von
+der vorhandenen Basis praktisch exakt getroffen. Die Familie, die wirklich weh tut, ist die
+billigste von allen: **gemischte Monome Grad ≥ 3**, also `u²v` — und die braucht keine inneren
+Parameter, sie ist Stufe A.
+
+### Was diese Tabelle nicht sagt
+
+Drei Einschränkungen, ohne die sie überinterpretiert wird:
+
+1. **Die Zuordnung ist assoziativ, nicht kausal.** Ein System, dem zwei Familien fehlen, geht in
+   beide Zeilen ein. `Offset / Forcing` hat ein Minimum von 0,4656, aber dieses System (5, fallender
+   Körper mit Luftwiderstand) braucht auch den Widerstandsterm. Sauber trennen könnte man das nur,
+   indem man jede Familie einzeln hinzufügt und neu misst — also genau durch das teure Experiment,
+   über das entschieden werden soll. **In eine Richtung trägt die Tabelle trotzdem:** Wenn alle
+   Systeme einer Familie gut angenähert werden, kauft diese Familie nachweislich wenig
+   Approximationsgüte. Das ist der Fall bei Sättigung, Widerstand, Logarithmus und
+   nicht-ganzzahliger Potenz.
+2. **Volle Basis heißt keine Sparsamkeit.** Die Referenz aktiviert *alle* Terme. Eine
+   Ableitungsgüte von 0,99999 mit achtzehn Termen sagt nichts darüber, ob es ein **sparsames,
+   interpretierbares** Modell gibt — und Interpretierbarkeit ist der Zweck des Verfahrens. Die
+   Referenz misst die Spannweite der Klasse, nicht ihre Nützlichkeit.
+3. **Ableitungsraum ist nicht Trajektorienraum.** 13 der 126 gefitteten Modelle **divergieren** beim
+   Integrieren, und bei den exakten Systemen liegt der Mittelwert der Trajektoriengüte bei −2,8 bei
+   einem Median von 0,9999 — die chaotischen Systeme explodieren, obwohl ihre Ableitungen praktisch
+   perfekt getroffen sind. Eine gute Projektion ist also kein brauchbares Modell. Für den Vergleich
+   mit Kampagnendaten ist deshalb die **Ableitungsgüte** die belastbare Referenzgröße, nicht die
+   Trajektoriengüte.
+
+### Nebenbefund zu den exakten Systemen
+
+Zwei exakte Zeilen liegen unter 0,999: System 11 / IC 1 mit 0,9962 und System 55 / IC 1 mit 0,9984.
+Dort enthält die Basis die Wahrheit — die Lücke ist also die Grenze der **Ableitungsschätzung**,
+nicht die der Basis. Das ist derselbe Mechanismus, an dem v3 gescheitert ist, und ein nützlicher
+Beleg dafür, wie groß dieser Fehler auf sauberen Daten überhaupt ist.
+
+### Konsequenz für die Entscheidung
+
+Die Auswahlregel aus Abschnitt 9 kann angewendet werden, und sie fällt anders aus als die reine
+Abdeckungsrechnung nahelegt:
+
+- **Stufe A hat gerade an Gewicht gewonnen.** Gemischte Monome Grad ≥ 3 sind die einzige Familie mit
+  spürbarem Approximationsverlust und zugleich die einzige, die ohne Architekturänderung auskommt.
+- **Stufe B hat gerade an Gewicht verloren.** Der teure Teil — Terme mit inneren Parametern für
+  Sättigung — kauft auf diesen Daten messbar wenig.
+- Offen bleibt, ob das an den Daten liegt: 512 Punkte über einen begrenzten Wertebereich. Auf einem
+  Bereich, der die Sättigung wirklich durchläuft, sähe es anders aus. Das ist eine Frage an das
+  **Sampling**, nicht an die Basis — und sie gehört in Paper 3, wo die Achsen Rauschen,
+  Abtastdichte und Kopplungsstärke ohnehin geöffnet werden.
