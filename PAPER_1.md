@@ -372,6 +372,12 @@ only, unless protocol equivalence is established.
 
 ### Phase B Sampling Protocol — decided 2026-08-03 (frozen)
 
+*Correction, 2026-08-22:* the grid below is the one **our copy** of the artefact carries. The
+published ODEBench description specifies 150 points per trajectory, so this protocol samples 3.4x
+more densely than the literature's — a larger deviation than the tolerance difference, and on the
+axis that governs whether derivative-space objectives mislead. See
+`docs/paper1_odebench_protocol_alignment.md` §2.4.
+
 | Component | Decision |
 |---|---|
 | Systems | all 63 ODEBench systems |

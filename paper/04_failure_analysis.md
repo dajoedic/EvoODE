@@ -138,6 +138,33 @@ intended weak point of the work; it became one of its findings.
 rows flip through split majorities rather than through clear detection. In one row a single split
 changed the outcome. This is open.
 
+**The cap decides in derivative space, and that space can misrank.** Every condition in §3.5 is
+evaluated on weighted least-squares residuals of estimated derivatives, against a floor derived from
+an estimate of the derivative error. Recent work on system identification shows that transforming a
+trajectory problem into an algebraic derivative problem can produce *deceptive* search spaces, in
+which the ground-truth equation carries worse fitness than its competitors even on noise-free data,
+and in which a state-of-the-art search is demonstrably misled; the effect correlates with the
+sampling step and weakens as the step shrinks (Tonda et al., 2025).
+
+This work is exposed to that mechanism at exactly one point, and it is worth being precise about
+where. The warm start of §3.4 is *not* the exposure: it only initialises a fit whose objective is
+the simulation loss, so a misranked derivative space costs iterations rather than decisions. The cap
+is the exposure, because its walk consists of decisions taken on that objective.
+
+Four things bound the risk, and none of them removes it. The rule demands positive evidence rather
+than the absence of it; every condition is relative rather than absolute; the floor is estimated
+from the data rather than assumed; and the audit over the exactly representable systems finds no
+truncated equation row. The sampling grid used here is also 3.4 times denser than the published
+benchmark protocol, which places this work on the mitigating side of the effect. But the mechanism
+is real, and an independent measurement in this project reproduces its signature: of 126 full-basis
+reference fits computed in derivative space, 13 diverge when integrated, and on the exactly
+representable systems the mean trajectory R² is −2.8 against a median of 0.9999. A near-perfect
+derivative fit is not a usable dynamical model.
+
+The honest formulation for the method is therefore: derivative-space optimisation is a legitimate
+computational surrogate, but trajectory-space verification is what decides, and any decision that
+*cannot* be moved to trajectory space — the cap is one — inherits this limitation.
+
 **The behaviour fingerprint is narrow.** It observes the decision function of §3.5 and nothing else:
 derivative estimation, floor computation, split aggregation and the search loop are unobserved by it.
 A change in any of those would leave all three identity fields standing.

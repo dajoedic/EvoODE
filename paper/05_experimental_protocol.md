@@ -20,7 +20,8 @@ exponential response, and a signed quadratic drag term.
 
 ## 5.2 Data generation
 
-We adopt the dataset's sampling protocol but **integrate the trajectories ourselves**:
+We keep the systems, parameterizations and initial conditions of the benchmark and **integrate the
+trajectories ourselves** on the grid our copy of the artefact carries:
 
 | Component | Setting |
 |---|---|
@@ -40,11 +41,20 @@ safety violations observed on a coarser grid disappear.
 The consequence is stated plainly rather than argued away: **published ODEBench numbers obtained on
 the released trajectories are not treated as directly comparable to ours.**
 
-*Dataset version.* "ODEBench" alone is not a sufficient protocol statement, since repository states
-and releases can differ in point counts, generators and solver defaults. The artefact used here is
-identified by content hash `b11f8bda01ceee5c5c9445521ac74c8819361af4251bb90c0be398aaeb1a1136`,
-63 systems, shipped solutions present but unused. *(Origin — repository commit, release or DOI —
-to be completed.)*
+*Dataset version, and a difference that matters.* "ODEBench" alone is not a sufficient protocol
+statement, and in this case the ambiguity is real rather than hypothetical. The published
+description of the artefact specifies LSODA integration with `rtol = 1e-5`, `atol = 1e-7` and
+`t_eval = linspace(0, 10, 150)` — **150 points per trajectory**. The copy used here carries **512**
+points over the same span, verified directly in the file (content hash
+`b11f8bda01ceee5c5c9445521ac74c8819361af4251bb90c0be398aaeb1a1136`, 63 systems, two
+initial-condition sets, shipped solutions present but unused).
+
+Our grid is therefore **3.4 times denser** than the published protocol — `Δ ≈ 0.0196` against
+`Δ ≈ 0.067` — in addition to the tighter integration tolerances. This is stated here because it is
+the larger of the two deviations and because sampling density is not a neutral axis: it is the axis
+under which the derivative transformation is known to produce misleading search spaces, and under
+which reducing the step mitigates them. Our denser grid places this work on the favourable side of
+that axis. *(Artefact origin — repository commit, release or DOI — to be completed.)*
 
 ## 5.3 Conditions and grid
 

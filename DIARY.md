@@ -6,6 +6,60 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ## 2026-08-22
 
+### Tonda et al. gelesen — und dabei eine eigene Protokollangabe widerlegt
+
+<!-- HASH -->
+
+Der Nutzer hat das Paper besorgt (GECCO '25 Companion, Malaga, S. 2563–2571,
+DOI 10.1145/3712255.3734301, CC-BY; Tonda, Zhang, Chen, Xue, Zhang, Lutton). Gelesen, auditiert,
+Ergebnis in `docs/paper1_odebench_protocol_alignment.md` §2.4 und §2.5.
+
+**Der teuerste Befund ist nicht das Paper, sondern das, was beim Lesen auffiel.** Tonda et al.
+beschreiben das ODEBench-Artefakt exakt: LSODA, `rtol=1e-5`, `atol=1e-7`,
+`t_eval=np.linspace(0,10,150)` — **150 Punkte je Trajektorie**. Unsere Datei traegt **512**, direkt
+im File nachgeprueft. Gleicher Name, andere Erzeugungskonfiguration.
+
+Damit ist die Aussage *„wir uebernehmen die Abtastung des Datensatzes"* falsch, und sie stand in
+`PAPER_1.md`, im Audit-Dokument und im Paper-Abschnitt 5. Korrigiert. Unsere Abweichung ist groesser
+als bisher berichtet: nicht nur strengere Toleranzen (1e-9 gegen 1e-5/1e-7), sondern ein **3,4-fach
+dichteres Gitter** (Δ ≈ 0,0196 gegen 0,067).
+
+**Und die Abtastdichte ist keine harmlose Achse.** Genau sie identifiziert dieselbe Arbeit als
+entscheidend: Der Sampling-Schritt korreliert stark damit, ob der transformierte Suchraum in die
+Irre fuehrt, und ein kleinerer Schritt mildert den Effekt. Wir stehen also auf der guenstigen Seite
+der Achse, die den Fehlermodus regiert — ein Vorteil, der zu deklarieren ist, kein Detail. Die
+Dimensionsaufteilung der 63 Systeme (23/28/10/2) stimmt dagegen exakt mit unserer ueberein.
+
+**Was das Paper zeigt.** Zwei Datentransformationen fuer Systemidentifikation, PySR als Suchmethode,
+ODEBench als Benchmark. Drei Ergebnisse: Irrefuehrende Suchraeume entstehen **auch ohne Rauschen** —
+die Ground Truth traegt dort schlechtere Fitness als Konkurrenten, und ein State-of-the-Art-Verfahren
+laesst sich nachweislich taeuschen; der Sampling-Schritt korreliert stark damit; Rauschen
+verschlechtert beide Transformationen deutlich.
+
+**Wo uns das trifft — und es ist nicht die Stelle, die wir zuerst vermutet haben.** Das Pretuning
+ist die *harmlose* Stelle: Es initialisiert nur einen Fit, dessen Zielfunktion der Simulationsverlust
+ist, ein fehlrangierter Ableitungsraum kostet dort Iterationen, keine Entscheidungen. **Die
+Exposition ist der Stage Cap.** Sein gesamter Lauf besteht aus Entscheidungen auf gewichteten
+Kleinste-Quadrate-Residuen im Ableitungsraum gegen einen Richardson-Boden — genau die Konstruktion,
+von der die Arbeit zeigt, dass sie die Wahrheit unter ihre Konkurrenten sortieren kann. Vier Dinge
+begrenzen das Risiko (positive Evidenz noetig, alle Bedingungen relativ, Boden geschaetzt statt
+gesetzt, 0 trunkierte Zeilen von 80), keines beseitigt es. Steht jetzt in `paper/04` als Limitation,
+nicht als Fussnote.
+
+**Zwei Konvergenzen.** Ihr zentrales Phaenomen reproduziert unsere WP-R1-Referenz unabhaengig — 13
+von 126 Modellen divergieren beim Integrieren trotz nahezu perfekter Ableitungsanpassung. Und ihre
+genannte Zukunftsrichtung, *vorherzusagen, wann die Transformation in die Irre fuehrt, aus den
+Eigenschaften der Trajektoriendaten*, ist mit anderen Worten unsere offene Frage nach dem
+praediktiven Kriterium. Externe Motivation dafuer, geschenkt.
+
+**Nicht verwendbar als Leistungsreferenz** — anderes Framing, andere Methode, erklaerter Fokus auf
+den Vergleich von Transformationen. Das war ohnehin die Rolle, die ihm zugedacht war.
+
+Offen bleibt die Herkunft unserer Artefaktdatei; die Upstream-Quelle ist laut Tonda et al.
+`github.com/sdascoli/odeformer` unter `odeformer/odebench`.
+
+---
+
 ### Vergleichsstrategie entschieden — und eine externe Arbeit trifft unsere Messung von heute
 
 <!-- fa25727 -->
