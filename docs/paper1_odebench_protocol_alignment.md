@@ -30,7 +30,9 @@ larger evaluation set than ours.
 
 ### 1.2 Time span and sampling grid — mismatch
 
-The dataset ships every system on a uniform grid of **512 points over t ∈ [0, 10]**. EvoODE
+**Our copy of** the dataset ships every system on a uniform grid of **512 points over t ∈ [0, 10]**
+— see the correction in §2.4, which shows this is *not* the sampling the literature describes.
+EvoODE
 uses a per-system time span and point count:
 
 | System | EvoODE tspan | EvoODE T | points per time unit | dataset |
@@ -120,7 +122,7 @@ They are listed as dimensions to check, not as claims.
 | Systems used | to verify | to verify | to verify |
 | Initial conditions | to verify — dataset ships two sets | to verify | to verify |
 | Time span | to verify — dataset ships [0, 10] | to verify | to verify |
-| Sampling grid | to verify — dataset ships 512 points | to verify | to verify |
+| Sampling grid | **verified: 150 points** over `t ∈ (0,10)`, `t_eval=np.linspace(0,10,150)` — see §2.4 | to verify | to verify |
 | Noise setting | to verify | to verify | to verify |
 | Metric definition | to verify — R² threshold expected | to verify | to verify |
 | Aggregation | to verify | to verify | to verify |
@@ -172,6 +174,96 @@ content 63 systems, all carrying shipped solutions
 The per-system `source` field names the textbook location ("strogatz p.20"), not the dataset. Still
 required: origin (repository and commit, release, or DOI), and the explicit statement that the
 shipped trajectories are **not** used.
+
+### 2.5 Source audited: Tonda et al. 2025 — what it says and what it costs us
+
+Read in full on 2026-08-22.
+
+**Bibliography.** Alberto Tonda, Hengzhe Zhang, Qi Chen, Bing Xue, Mengjie Zhang, Evelyne Lutton.
+*When Data Transformations Mislead Symbolic Regression: Deceptive Search Spaces in System
+Identification.* GECCO '25 Companion, Malaga, pp. 2563–2571. DOI 10.1145/3712255.3734301.
+CC-BY, 9 pages.
+
+**What it studies.** The two most common ways of turning trajectory data into a problem that
+standard symbolic regression can handle — the derivative transformation and an integral
+transformation — evaluated on ODEBench with PySR as the search method.
+
+**The three findings, in their order of importance for us:**
+
+1. **Misleading search spaces arise without any noise.** In the transformed space the ground-truth
+   equations, which ought to be the global optima, carry *worse* fitness than other candidates, and
+   the authors show experimentally that a state-of-the-art SR algorithm is duly misled.
+2. **The sampling step is strongly correlated with the effect**, and reducing it mitigates the
+   problem. Their explanation: the forward-difference basis of the transformation produces large
+   errors where the derivative changes quickly.
+3. **Noise degrades both transformations markedly**, to different degrees.
+
+**Their practitioner recommendation:** noise-free, the order-4 derivative transformation performs
+best; under noise, derivative transformations with Savitzky-Golay smoothing (degree 3, window 15 or
+25).
+
+**Where this hits EvoODE — and it is not where we first assumed.**
+
+The obvious reading is that the warm start is affected, since it fits in derivative space. That is
+true but harmless: the warm start only *initialises* a fit whose objective is the simulation loss,
+so a misranked derivative space costs iterations, not decisions.
+
+**The stage cap is the real exposure.** Its entire walk is a sequence of decisions taken on weighted
+least-squares residuals in derivative space, against a floor derived from a Richardson estimate of
+the derivative error. That is precisely a derivative-space objective used to *decide*, and Tonda et
+al. show such objectives can rank the truth below its competitors. The mitigations already in the
+design are real — the cap requires positive evidence, all conditions are relative, the floor is
+estimated rather than assumed, and the audit finds 0 truncated rows of 80 — but the mechanism-level
+threat is genuine and belongs in the limitations rather than in a footnote.
+
+**Two convergences worth reporting.**
+
+- Their central phenomenon is reproduced independently by our own search-free reference: of 126
+  full-basis fits, **13 diverge on integration** despite near-perfect derivative fits, and on the
+  exact systems the mean trajectory R² is −2.8 against a median of 0.9999. Same effect, different
+  measurement, different codebase.
+- Their stated future direction — *anticipate when the transformation will mislead, from the
+  characteristics of the trajectory data* — is, in different words, this project's open "predictive
+  criterion" question. That is a strong external motivation for it.
+
+**What the paper does not give us.** It is not a performance reference and must never be used as
+one: different task framing, different method, and a stated focus on comparing transformations
+rather than ranking systems.
+
+### 2.4 Correction — the shipped sampling is 150 points, not 512
+
+**Found on 2026-08-22 while auditing Tonda et al., and it invalidates a claim this document made.**
+
+Tonda et al. describe the ODEBench artefact precisely: trajectories integrated with LSODA
+(`scipy`), `t_span=(0,10)`, `rtol=1e-5`, `atol=1e-7`, `first_step=1e-6`, `min_step=1e-10`, and
+`t_eval=np.linspace(0, 10, 150)` — **150 uniformly sampled values** per state variable, two
+trajectories per system, 63 systems (23 one-, 28 two-, 10 three-, 2 four-dimensional; the dimension
+breakdown matches ours exactly).
+
+Our copy ships **512** points per trajectory over the same span, two initial-condition sets per
+system, all 63 systems. Verified directly in the file.
+
+Both are called ODEBench. Ours is therefore a different generation configuration or a different
+version of the artefact — exactly the ambiguity §2.2 warns about, now demonstrated rather than
+hypothesised.
+
+**Consequences, and they are not cosmetic:**
+
+1. **The sentence "we adopt the dataset's sampling" is wrong** wherever it appears. We adopt *our
+   copy's* sampling, which is 3.4x denser than the 150-point protocol the literature describes
+   (`Δ ≈ 0.0196` against `Δ ≈ 0.067`).
+2. **The deviation is larger than previously stated.** We knew we integrate at tighter tolerances
+   (`1e-9` against `rtol=1e-5, atol=1e-7`). We now also sample more than three times as densely.
+3. **And the sampling axis is the one the same paper identifies as decisive.** Tonda et al. find a
+   strong correlation between the sampling step and the appearance of misleading search spaces, and
+   report that reducing the step mitigates the effect. Our denser grid therefore places us on the
+   favourable side of the very axis that governs the failure mode — which is an advantage that must
+   be declared, not a detail.
+4. Any published number computed on the 150-point artefact is **not** comparable to ours on grid
+   density alone, independently of the tolerance question.
+
+**Open:** which artefact version our file came from. The content hash is in §2.2. The upstream
+repository is `github.com/sdascoli/odeformer` under `odeformer/odebench`, cited by Tonda et al.
 
 ### 2.3 How our own trajectory generation is to be described
 
