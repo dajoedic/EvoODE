@@ -61,9 +61,16 @@ useful stage boundary.
 Paper 1 does **not** run new in-house baselines for GP, PySR, SINDy, ODEFormer, GODE, Operon or any
 other external symbolic-regression tool.
 
-Paper 1 does **not** make victory or defeat claims against published methods while the external
-columns of `docs/paper1_odebench_protocol_alignment.md` remain unfilled. Published numbers are
-contextual only.
+Paper 1 makes **no quantitative cross-method performance claim** (decided 2026-08-22). Not a
+cautious one, not an approximate one — none. Permitted are statements about *protocols*: that
+ODEBench has been used by several methods, that their search spaces and evaluation protocols differ,
+that published numbers are therefore not treated as directly comparable, and that the broad
+comparison is deliberately deferred. Not permitted: "better than", "competitive with", "comparable
+performance to", "exceeds published results".
+
+The reason is scope, not modesty. Paper 1 asks whether controlled, data-adaptive growth of the
+search space pays off — an internal methodical question. A cross-method comparison opens a second
+question and a second attack surface without adding anything to the first.
 
 Paper 1 does **not** use pretuning as the scientific contribution. Phase B carries `pretune_on` and
 `pretune_off` as its two conditions; any effect is a condition effect around the same controller.
@@ -383,15 +390,39 @@ and at 512 points System 54's two safety violations disappear.
 on cleaner data than the comparison does. This is a deviation in our favour and must be declared as
 such until the publications are checked.
 
-### Required Protocol Audit — open
+### Required Protocol Audit — two sources, decided 2026-08-22
 
 `docs/paper1_odebench_protocol_alignment.md` records, per published reference source: systems used,
 initial conditions, tspan, sampling grid, noise setting, metric definition, aggregation — each with
-a match status of exact / partial / mismatch. The audit decides whether published numbers may be
-called directly comparable, approximately comparable or contextual only.
+a match status of exact / partial / mismatch, plus the representation dimensions below.
 
-**The external columns are still unfilled.** Until they are, no framing as benchmark victory or
-defeat is permitted.
+Two sources are in scope for Paper 1, and only two:
+
+1. **ODEFormer / ODEBench** — the benchmark source. Mandatory, because our systems, initial
+   conditions and sampling grid come from there, and because it reports several method families on
+   the same benchmark, which makes part of the representation audit fillable from one place.
+2. **Tonda et al. 2025**, *When Data Transformations Mislead Symbolic Regression: Deceptive Search
+   Spaces in System Identification* — **not** a performance reference but methodological evidence.
+   It shows that turning a dynamical problem into an algebraic derivative problem can produce
+   deceptive search landscapes, in which a good derivative-space objective does not preserve the
+   ranking of dynamical models. This touches the warm start of §3.4 and the search-free reference of
+   the representation analysis, both of which live in derivative space. Our own measurements
+   reproduce the phenomenon independently: 13 of 126 full-basis reference fits diverge on
+   integration despite near-perfect derivative fits.
+
+**Representational adequacy is audited in three dimensions**, not one:
+
+| Dimension | Question | For external methods |
+|---|---|---|
+| in principle representable | can the model class express the truth at all? | yes / no / unclear |
+| representable under the evaluated protocol | was it reachable given the operators, library and complexity limits actually used? | yes / no / unclear / not reported |
+| best attainable functional fit | how well can that space fit the dynamics irrespective of search error? | **optional**, where available |
+
+The third is available for EvoODE and will be unavailable for most published runs. It must stay
+optional: an audit may not impose a requirement only the authors' own method can meet. *Not
+reported* is a finding, not a gap.
+
+**The external columns are unfilled at the time of writing.**
 
 ### System Classification
 

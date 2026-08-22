@@ -1,8 +1,10 @@
 # Diskussionsgrundlage — Welche Vergleiche verwenden wir?
 
-**Stand 22.08.2026.** Gesprächsvorlage. Zu entscheiden ist, gegen welche publizierten Arbeiten
-EvoODE gestellt wird und in welcher Form. Solange das offen ist, darf Paper 1 über keine
-Fremdmethode eine Aussage treffen — auch keine vorsichtige.
+**Stand 22.08.2026.** Abschnitte 1–7 sind die Vorlage *vor* der Diskussion, **Abschnitt 8 hält das
+Ergebnis fest** — inklusive zweier Punkte, die in der Vorlage fehlten. Wo sich beide widersprechen,
+gilt Abschnitt 8.
+
+Zu entscheiden war, gegen welche publizierten Arbeiten EvoODE gestellt wird und in welcher Form.
 
 Zugehörig: `docs/paper1_odebench_protocol_alignment.md` (der Audit selbst, externe Spalten leer),
 `docs/diskussion_repraesentationsraum.md` (Suchraum), `PAPER_1.md` §5.5.
@@ -145,3 +147,124 @@ Nenn mir die Quellen, dann fülle ich die sieben Protokollzeilen plus die zwei
 Repräsentationsspalten je Quelle und lege das Ergebnis als Audit-Tabelle vor. Wo eine Angabe in der
 Publikation nicht steht, wird das als *nicht berichtet* eingetragen — das ist ein Befund und keine
 Lücke.
+
+
+---
+
+## 8. Ergebnis der Diskussion (22.08.2026)
+
+### Entschieden: harte Regel für Paper 1
+
+> **Keine quantitative Cross-Method-Leistungsaussage.**
+
+Nicht „vorsichtig", nicht „ungefähr", sondern keine. Paper 1 untersucht, ob kontrolliertes,
+datenadaptives Wachstum des Suchraums etwas bringt — eine interne methodische Frage. Ein
+Fremdvergleich würde eine zweite Fragestellung eröffnen und Angriffsfläche schaffen, ohne der
+Aussage etwas hinzuzufügen.
+
+Erlaubt sind Aussagen über *Protokolle*: dass ODEBench von mehreren Verfahren verwendet wurde, dass
+deren Suchräume und Evaluationsprotokolle sich unterscheiden, dass publizierte Zahlen deshalb nicht
+als direkt vergleichbar behandelt werden, und dass der breite Vergleich bewusst verschoben ist.
+Nicht erlaubt sind „besser als", „konkurrenzfähig mit", „ähnliche Leistung wie".
+
+### Entschieden: zwei Quellen für Paper 1
+
+**ODEFormer / ODEBench** als Pflichtquelle — Benchmarkdefinition, Protokoll und zugleich
+Kontextquelle, weil dort mehrere Methodenfamilien auf demselben Benchmark berichtet werden.
+
+**Tonda et al. 2025**, *When Data Transformations Mislead Symbolic Regression: Deceptive Search
+Spaces in System Identification* — nicht als Leistungsreferenz, sondern als **methodische Evidenz**.
+
+### Warum die zweite Quelle heute besonders zählt
+
+Tonda et al. zeigen, dass die Überführung eines dynamischen Problems in ein **algebraisches
+Ableitungsproblem** irreführende Suchlandschaften erzeugen kann: Ein gutes Ziel im Ableitungsraum
+garantiert nicht, dass die dynamisch richtige Struktur bevorzugt wird.
+
+Das trifft zwei Stellen dieses Projekts direkt — das Pretuning und die Referenz aus WP-R1, die
+ebenfalls im Ableitungsraum misst. **Und unsere eigenen Zahlen von heute reproduzieren den Effekt
+unabhängig:** 13 der 126 Referenzmodelle divergieren beim Integrieren, und bei den exakten Systemen
+liegt der Mittelwert der Trajektoriengüte bei −2,8 gegen einen Median von 0,9999. Nahezu perfekte
+Ableitungsanpassung, unbrauchbare Dynamik.
+
+Zwei Konsequenzen:
+
+1. **Die Familien-Rangfolge aus WP-R1 §11 erbt diesen Vorbehalt.** Sie ist im Ableitungsraum
+   gemessen und kann in genau der Weise täuschen, die Tonda et al. beschreiben. Sie bleibt
+   verwertbar, aber nur mit dieser Einschränkung und, wo vorhanden, neben der Trajektoriengüte.
+2. **Für das Verfahren stützt der Befund eine bestehende Designentscheidung:** Ableitungsraum als
+   billiger Warmstart, Trajektorienraum als verbindliche Bewertung. Formulierung fürs Paper:
+   *derivative-space optimization is useful as a computational surrogate, but trajectory-space
+   verification is necessary because the transformed objective need not preserve the true ranking of
+   dynamical models.*
+
+### Neu: eine dritte Repräsentationsdimension
+
+Aus zwei Spalten werden drei:
+
+| Dimension | Frage | Für Fremdmethoden |
+|---|---|---|
+| *in principle representable* | Kann die Modellklasse die Wahrheit ausdrücken? | ja / nein / unklar |
+| *representable under evaluated protocol* | War sie im tatsächlich evaluierten Raum erreichbar? | ja / nein / unklar / nicht berichtet |
+| **best attainable functional fit** | Wie gut kann dieser Raum die Dynamik unabhängig von Suchfehlern überhaupt treffen? | **optional**, wo verfügbar |
+
+Die dritte Dimension ist für EvoODE durch WP-R1 vorhanden und für die meisten Fremdmethoden nicht
+rekonstruierbar. Sie darf deshalb **keine Pflichtspalte** werden — der Audit darf keine Anforderung
+erzeugen, die nur die eigene Methode erfüllt. *Nicht berichtet* ist ein Befund.
+
+### Neu: der Datensatz muss versioniert werden
+
+„Wir verwenden ODEBench" ist als Protokollangabe zu unscharf; verschiedene Repository- oder
+Release-Stände können unterschiedliche Punktzahlen, Generatoren und Solver-Defaults tragen.
+
+**Geprüft, und es ist eine echte Lücke:** Im Repository ist die Herkunft von
+`benchmarks/data/strogatz_extended.json` nirgends festgehalten — kein Commit, kein Release, keine
+URL. Das `source`-Feld je System nennt die Lehrbuchstelle („strogatz p.20"), nicht den Datensatz.
+Verifizierbar ist bisher nur:
+
+```text
+sha256  b11f8bda01ceee5c5c9445521ac74c8819361af4251bb90c0be398aaeb1a1136
+im Repo seit  706549f (2026-04-30)
+63 Systeme, alle mit mitgelieferten Lösungen
+```
+
+Zu ergänzen sind Herkunft (Repository/Release/Commit oder DOI) und die Angabe, dass wir die
+mitgelieferten Trajektorien **nicht** verwenden. **Dafür brauche ich eine Angabe von dir: woher
+stammt die Datei?**
+
+### Neu: Formulierung für die eigene Trajektorienerzeugung
+
+Nicht „wir verwenden sauberere ODEBench-Daten" — das wertet das Originalprotokoll ab und lädt zur
+Gegenfrage ein. Stattdessen:
+
+> We preserve the ODEBench systems, parameterizations, initial conditions and sampling grid, but
+> regenerate trajectories at stricter numerical tolerances to avoid solver-error floors interfering
+> with the accuracy regime studied here.
+
+Und daraus abgeleitet: *published ODEBench numbers obtained on the released trajectories are not
+treated as directly comparable.*
+
+### Paper 3: die Kernmatrix steht
+
+Kein Leaderboard, sondern ein Vergleich von **Suchphilosophien** — je eine Methode je Philosophie:
+
+| Rolle | Methode |
+|---|---|
+| feste Bibliothek | SINDy |
+| freie symbolische Suche | PySR |
+| vortrainierte symbolische Inferenz | ODEFormer oder aktueller Nachfolger |
+| kontrolliertes inkrementelles Wachstum | EvoODE |
+
+Die dritte Zeile wird **spät** eingefroren — welcher symbolische Transformer dann der relevante
+Vertreter ist, entscheidet sich kurz vor dem Experiment.
+
+### Die Kette hat ein viertes Glied bekommen
+
+```text
+Representability -> Identifiability -> Search Recoverability -> Evaluation
+```
+
+Ein gescheiterter Recovery-Versuch darf erst dann der Suche zugeschrieben werden, wenn zusätzlich
+geklärt ist, dass das **Evaluationsprotokoll** die relevante Eigenschaft überhaupt misst. Genau
+darum geht es bei Tonda et al., und genau das ist der Grund, warum das vierte Glied kein
+Formalismus ist.

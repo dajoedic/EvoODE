@@ -30,16 +30,21 @@ We adopt the dataset's sampling protocol but **integrate the trajectories oursel
 | Integration | `Tsit5`, `abstol = reltol = 1e-9` |
 | Noise | none |
 
-The shipped trajectories are not used. Their solver accuracy would impose mean-squared-error floors
-between `2.5e-2` and `6.1e-10` depending on the system, which is above the loss that the method
-reaches on several systems — the benchmark's own data would become the limiting factor rather than
-the method. Grid density matters for a second reason: at 512 points, two safety violations observed
-on a coarser grid disappear.
+We preserve the ODEBench systems, parameterizations, initial conditions and sampling grid, but
+regenerate the trajectories at stricter numerical tolerances, to keep solver-error floors from
+interfering with the accuracy regime studied here. Those floors are not hypothetical: on the shipped
+trajectories they range from `2.5e-2` to `6.1e-10` depending on the system, above the loss this
+method reaches on several of them. Grid density matters for a second reason: at 512 points, two
+safety violations observed on a coarser grid disappear.
 
-**This is a deviation in our favour and is declared as such.** If published results for other methods
-were computed on the shipped trajectories, those methods worked on noisier data than we do, and no
-comparison of absolute error values between them and this work is admissible until the protocol
-audit (§5.5) establishes otherwise.
+The consequence is stated plainly rather than argued away: **published ODEBench numbers obtained on
+the released trajectories are not treated as directly comparable to ours.**
+
+*Dataset version.* "ODEBench" alone is not a sufficient protocol statement, since repository states
+and releases can differ in point counts, generators and solver defaults. The artefact used here is
+identified by content hash `b11f8bda01ceee5c5c9445521ac74c8819361af4251bb90c0be398aaeb1a1136`,
+63 systems, shipped solutions present but unused. *(Origin — repository commit, release or DOI —
+to be completed.)*
 
 ## 5.3 Conditions and grid
 
@@ -76,11 +81,15 @@ published source: systems used, initial conditions, time span, sampling grid, no
 definition, and aggregation.
 
 The audit carries one dimension that comparisons in this area usually omit, and it is a prerequisite
-rather than a refinement: **representational adequacy**, split into two columns.
+rather than a refinement: **representational adequacy**, in three columns.
 
 - *In principle representable* — could the method's model class express the true structure at all?
 - *Representable under the evaluated protocol* — was it reachable under the operators, library,
   complexity limits and constraints actually used in the published run?
+- *Best attainable functional fit* — how well can that space fit the observed dynamics irrespective
+  of search error? This column is **optional**: we can report it for our own method from a
+  search-free reference fit, and it will be unavailable for most published runs. An audit may not
+  impose a requirement that only its authors can satisfy, and *not reported* is itself a finding.
 
 The distinction is not pedantic. A sparse-regression method can carry an arbitrary library, but a
 run using polynomials to degree three cannot express a saturating term; a genetic-programming system
@@ -89,8 +98,16 @@ sequence model is additionally bounded by its training distribution. Comparing f
 system that a method cannot represent measures the library, not the search — and that holds for this
 work exactly as much as for the others, on the 43 systems where our own basis falls short.
 
-**Status:** the external columns are unfilled at the time of writing. Until they are, this paper
-makes no claim of victory or defeat against any published method.
+Two sources are in scope, and only two: the benchmark source itself, and a methodological study of
+how the derivative transformation reshapes the search landscape (Tonda et al., 2025). The second is
+not a performance reference. It matters because the warm start of §3.4 and the reference fit above
+both operate in derivative space, and because this work reproduces the effect it describes: of 126
+full-basis reference fits, 13 diverge on integration despite near-perfect derivative fits.
+
+**Status:** the external columns are unfilled at the time of writing. Independently of them, this
+paper makes **no quantitative cross-method performance claim** — not a cautious one and not an
+approximate one. What it does state is protocol: which conditions would have to hold for published
+numbers to be comparable, and which of them are unverified.
 
 ## 5.6 Provenance
 

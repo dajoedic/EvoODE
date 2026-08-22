@@ -127,15 +127,63 @@ They are listed as dimensions to check, not as claims.
 | Success criterion | to verify | to verify | to verify |
 | **Representable in principle** | to verify | to verify | to verify |
 | **Representable under the evaluated protocol** | to verify | to verify | to verify |
+| **Best attainable functional fit** *(optional)* | to verify | to verify | to verify |
 
 The last two rows were added on 2026-08-22 and are per system rather than per source as a single
 verdict: *in principle* asks whether the method's model class could express the true structure at
 all, *under the evaluated protocol* whether it was reachable given the operators, library,
 complexity limits and constraints of the published run. A saturating term is out of reach for a
 sparse-regression run restricted to polynomials of degree 3 however rich the method could be in
-principle. **The same two columns apply to EvoODE itself:** our basis represents 20 of the 63
-systems exactly, and the search-free reference in `docs/WP-R1.md` quantifies how well it
-approximates the rest. Rationale in `docs/diskussion_vergleichsmethoden.md`.
+principle. A third row was added on the same day: **best attainable functional fit** — how well the space can
+fit the dynamics irrespective of search error. It is **optional**. EvoODE can report it from
+`docs/WP-R1.md`; most published runs cannot, and an audit must not impose a requirement only its
+authors can meet. *Not reported* is a finding.
+
+**All three rows apply to EvoODE itself first:** our basis represents 20 of the 63 systems exactly,
+and the search-free reference quantifies how well it approximates the rest. Rationale in
+`docs/diskussion_vergleichsmethoden.md`.
+
+### 2.1 Sources in scope — decided 2026-08-22
+
+Two, and only two, for Paper 1:
+
+| Source | Role |
+|---|---|
+| **ODEFormer / ODEBench** | benchmark definition, protocol, and context — it reports several method families on the same benchmark, so part of the representation audit is fillable from one place |
+| **Tonda et al. 2025**, *When Data Transformations Mislead Symbolic Regression: Deceptive Search Spaces in System Identification* | methodological evidence, **not** a performance reference: the derivative transformation can produce deceptive search landscapes |
+
+Everything else is context at most. The broad, quantitative comparison — SINDy as fixed library,
+PySR as free symbolic search, a pretrained symbolic model, EvoODE as controlled growth — belongs to
+Paper 3, where it is the purpose rather than a side claim.
+
+### 2.2 Dataset provenance — an open gap
+
+"We use ODEBench" is not a sufficient protocol statement: repository states and releases can differ
+in point counts, generators and solver defaults. **The provenance of our copy is not recorded
+anywhere in this repository.** What is verifiable today:
+
+```text
+file    benchmarks/data/strogatz_extended.json
+sha256  b11f8bda01ceee5c5c9445521ac74c8819361af4251bb90c0be398aaeb1a1136
+in repo since  706549f (2026-04-30)
+content 63 systems, all carrying shipped solutions
+```
+
+The per-system `source` field names the textbook location ("strogatz p.20"), not the dataset. Still
+required: origin (repository and commit, release, or DOI), and the explicit statement that the
+shipped trajectories are **not** used.
+
+### 2.3 How our own trajectory generation is to be described
+
+Not "we use cleaner ODEBench data" — that devalues the original protocol and invites the obvious
+retort. The wording to use:
+
+> We preserve the ODEBench systems, parameterizations, initial conditions and sampling grid, but
+> regenerate trajectories at stricter numerical tolerances to avoid solver-error floors interfering
+> with the accuracy regime studied here.
+
+And the consequence, stated plainly: published ODEBench numbers obtained on the released
+trajectories are not treated as directly comparable.
 
 Open questions that decide comparability:
 

@@ -6,6 +6,64 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ## 2026-08-22
 
+### Vergleichsstrategie entschieden — und eine externe Arbeit trifft unsere Messung von heute
+
+<!-- HASH -->
+
+Die Vergleichsdiskussion ist gefuehrt. Ergebnis in `docs/diskussion_vergleichsmethoden.md` §8,
+Konsequenzen in `PAPER_1.md`, `docs/paper1_odebench_protocol_alignment.md` §2,
+`docs/phd_thesis_arc.md` §3 und `paper/05_experimental_protocol.md`.
+
+**Harte Regel fuer Paper 1: keine quantitative Cross-Method-Leistungsaussage.** Nicht vorsichtig,
+nicht ungefaehr, sondern keine. Erlaubt sind Aussagen ueber Protokolle — dass ODEBench von mehreren
+Verfahren verwendet wurde, dass deren Suchraeume und Evaluationsprotokolle sich unterscheiden, dass
+publizierte Zahlen deshalb nicht als direkt vergleichbar behandelt werden. Verboten sind „besser
+als", „konkurrenzfaehig mit", „aehnliche Leistung".
+
+**Zwei Quellen, und nur zwei.** ODEFormer/ODEBench als Pflichtquelle — sie definiert den Benchmark
+und berichtet mehrere Methodenfamilien darauf, womit ein Teil der Repraesentationsspalte aus einer
+einzigen Quelle fuellbar wird. Und **Tonda et al. 2025**, *When Data Transformations Mislead
+Symbolic Regression: Deceptive Search Spaces in System Identification* — ausdruecklich **keine**
+Leistungsreferenz, sondern methodische Evidenz.
+
+**Und die zweite Quelle trifft genau das, was ich heute gemessen habe.** Tonda et al. zeigen, dass
+die Ueberfuehrung eines dynamischen Problems in ein algebraisches Ableitungsproblem irrefuehrende
+Suchlandschaften erzeugen kann: Ein gutes Ziel im Ableitungsraum garantiert nicht, dass die
+dynamisch richtige Struktur bevorzugt wird. Genau das steht seit heute Nachmittag in unseren eigenen
+Zahlen — **13 der 126 WP-R1-Referenzmodelle divergieren beim Integrieren**, bei den exakten Systemen
+Mittelwert −2,8 gegen Median 0,9999 der Trajektoriengueten. Zwei unabhaengige Belege desselben
+Effekts.
+
+Zwei Konsequenzen: Die Familien-Rangfolge aus WP-R1 erbt den Vorbehalt — sie ist im Ableitungsraum
+gemessen und kann in genau dieser Weise taeuschen. Und fuer das Verfahren stuetzt der Befund eine
+bestehende Entscheidung: Ableitungsraum als billiger Warmstart, Trajektorienraum als verbindliche
+Bewertung.
+
+**Die Kette hat ein viertes Glied bekommen:** Representability → Identifiability → Search
+Recoverability → **Evaluation**. Ein gescheiterter Recovery-Versuch darf der Suche erst zugeschrieben
+werden, wenn auch feststeht, dass das Evaluationsprotokoll die relevante Eigenschaft misst.
+
+**Dritte Repraesentationsdimension**, optional: *best attainable functional fit*. Fuer EvoODE durch
+WP-R1 vorhanden, fuer die meisten Fremdlaeufe nicht rekonstruierbar — deshalb keine Pflichtspalte.
+Ein Audit darf keine Anforderung erzeugen, die nur die eigene Methode erfuellt.
+
+**Neue Luecke gefunden und dokumentiert:** Die Herkunft von `benchmarks/data/strogatz_extended.json`
+ist im Repository **nirgends** festgehalten — kein Commit, kein Release, keine URL. Das
+`source`-Feld je System nennt die Lehrbuchstelle, nicht den Datensatz. Gesichert ist bisher nur der
+Inhaltshash `b11f8bda…` und dass die Datei seit `706549f` (2026-04-30) im Repo liegt. Herkunft muss
+nachgetragen werden; das braucht eine Angabe vom Nutzer.
+
+**Formulierung korrigiert:** Nicht „wir verwenden sauberere ODEBench-Daten" — das wertet das
+Originalprotokoll ab. Stattdessen: gleiche Systeme, Parametrisierungen, Anfangsbedingungen und
+Abtastung, aber Neuintegration bei strengeren Toleranzen, damit Solver-Fehlerboeden nicht in das
+untersuchte Genauigkeitsregime hineinreichen.
+
+**Paper 3, Kernmatrix steht:** SINDy (feste Bibliothek), PySR (freie symbolische Suche), ODEFormer
+oder Nachfolger (vortrainierte symbolische Inferenz), EvoODE (kontrolliertes Wachstum) — je eine
+Methode je Suchphilosophie, kein Leaderboard. Die dritte Zeile wird spaet eingefroren.
+
+---
+
 ### WP-R1 — die suchfreie Referenz dreht die Rangfolge der fehlenden Familien um
 
 <!-- c05e3a6 -->

@@ -124,6 +124,14 @@ levels above it are settled:
 | representability | is `f*` in `H` at all? | no search can help |
 | identifiability | do the data separate `f*` from its alternatives? | an information problem, not a search problem |
 | search recoverability | does the algorithm find `f*` within budget? | only here is it Paper #2's subject |
+| evaluation | does the protocol measure the property that matters? | the answer is about the objective, not the search |
+
+The fourth level was added on 2026-08-22 and is not a formality. Tonda et al. (2025) show that
+turning a dynamical problem into an algebraic derivative problem can produce deceptive search
+landscapes, in which the transformed objective does not preserve the ranking of dynamical models —
+and this project's own search-free reference reproduces the effect: 13 of 126 full-basis fits
+diverge on integration despite near-perfect derivative fits. A recovery failure may be charged to
+the search only once the objective is known to measure the right thing.
 
 This is what gives Paper #2 its scope. Without the distinction every failure collapses into "search
 failure", including the ones the data could never have resolved — and the near-degeneracy of a
