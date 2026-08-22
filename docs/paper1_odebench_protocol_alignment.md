@@ -241,9 +241,11 @@ the regeneration script. Tonda et al. describe the latter.
 
 1. **Our sampling is the artefact's own grid**, not a deviation. The claim "we adopt the dataset's
    sampling" is correct after all, for the committed file.
-2. **The comparability question moves rather than disappears.** It is now: which of the two grids
-   did a given published run use? A run driven by the regeneration script sampled 3.4x more coarsely
-   (`Δ ≈ 0.067` against our `Δ ≈ 0.0196`). This must be checked per source and cannot be assumed.
+2. **The comparability question moves rather than disappears** — and for the benchmark source it is
+   now answered. Which of the two grids a published run used must be checked per source; for
+   ODEFormer the released `evaluate.py` reads the precomputed 512-point solutions, i.e. **the same
+   grid we use** (§2.6). Tonda et al. used the 150-point script configuration, `Δ ≈ 0.067` against
+   our `Δ ≈ 0.0196`.
 3. **The axis still matters.** Tonda et al. find the sampling step strongly correlated with whether
    the transformed search space misleads, and report that reducing it mitigates the effect. Whoever
    sampled at 150 was on the unfavourable side of that axis; the difference is a genuine
@@ -328,11 +330,41 @@ regimes appear as **separate equations** (Lorenz occurs in a chaotic and a non-c
 **Two manually chosen initial-condition sets per equation**, included specifically to evaluate
 generalization. The dimension breakdown matches our classification exactly.
 
-**Sampling grid — not stated in the paper.** Appendix A describes the curation and mentions "well
-integrated solution trajectories" without solver, tolerances or point count. Those live in the
-artefact, where the two values of §2.4 disagree. **Which grid the published evaluation used cannot
-be established from the paper** — the most consequential open item in this audit, and an artefact
-question rather than a reading one.
+**Sampling grid — not in the paper, but settled from the released code.** Appendix A mentions "well
+integrated solution trajectories" without solver, tolerances or point count. The released
+`evaluate.py` answers it:
+
+```python
+def read_equations_from_json_file(self, path: str, save: bool):
+    store = json.load(fjson)
+    for sample_i, _sample in enumerate(store):
+        for solution_i in range(len(_sample["solutions"])):
+            times      = np.array(_sample["solutions"][solution_i][0]["t"])
+            trajectory = np.array(_sample["solutions"][solution_i][0]["y"]).T
+            ...
+            'dataset': ["strogatz_extended"],
+```
+
+The evaluation reads the **precomputed solutions out of `strogatz_extended.json`** and does not
+re-integrate. That file carries 512 points per trajectory.
+
+**Conclusion: ODEFormer's ODEBench evaluation ran on the same 512-point grid we use.** The
+150-point configuration in `solve_and_plot.py` writes to `solutions.json`, which no evaluation path
+reads. Tonda et al. describe that script, so their protocol is 3.4x coarser than both ODEFormer's
+evaluation and ours — a difference between those two published works, not between us and the
+benchmark.
+
+A second appearance of the same resolution supports the reading: the forecasting task builds its
+evaluation grid as `teval = np.linspace(t0, t0+5, 512, endpoint=True)`.
+
+**One tension the code raises, which the paper does not resolve.** The paper states that two
+manually chosen initial conditions per equation are included *to evaluate generalization*. The
+released loader reads only `_sample["solutions"][solution_i][0]` — the **first** initial condition —
+and the `y0_generalization` task draws a fresh random initial condition,
+`y0 = self.env.rng.randn(dimension)`, rather than using the second shipped one. Whether the reported
+ODEBench generalization numbers come from the second curated initial condition or from random draws
+is therefore not determinable from the public artefacts. This is the one question worth putting to
+the authors; it is recorded in §2.7.
 
 **Metric and success criterion — verified, and it is not ours.** The paper uses
 `R² = 1 − Σ(y − ŷ)² / Σ(y − ȳ)² ∈ (−∞, 1]` and states explicitly that because R² is unbounded from
@@ -384,9 +416,52 @@ library above — `1/x` does not help, because the constant sits inside the nonl
 differ in where their boundary runs, not in whether they have one. ProGED's rational grammars and
 the GP methods with a division operator are the ones that reach such forms.
 
-**Unverified after this reading.** Which sampling grid the evaluation used; whether the evaluation
-interval is `[0, 10]` as in the artefact or `[1, 10]` as stated for the model's own setting; and the
-per-system results, which are given as figures rather than tables.
+**Unverified after this reading.** Whether the reported generalization numbers use the second
+curated initial condition or a random draw (above); whether the evaluation interval is `[0, 10]` as
+in the artefact or `[1, 10]` as stated for the model's own setting; and the per-system results,
+which are given as figures rather than tables.
+
+### 2.7 The grid is a condition of our results, not background
+
+Two consequences follow from §2.4 and §2.6, and they are recorded here because they change how
+results are to be phrased rather than what they are.
+
+**Our own caps are demonstrably grid-sensitive.** WP-G1b measured caps on the per-system grid
+against the dataset's 512-point grid: System 54 moves from `[nothing,2,2]` to `[nothing,3,3]`, its
+two safety violations disappear, and correct caps rise from 6 to 8 of 13 equations. The commit that
+recorded it is titled *"caps are grid-driven, not data-driven"*. The same work also showed that
+using the shipped trajectory values instead of our own integration changes nothing — identical caps
+in all 26 cells, because the shipped integration error is smooth in `t` and a derivative-based noise
+floor barely registers smooth error.
+
+So the sensitivity is to **density**, not to data quality. The grid therefore belongs inside the
+statement of any cap result — "under 512 points over `t ∈ [0,10]`" — and not in a footnote. Stating
+it ourselves is also the cleanest defence: a method whose controller is known to move with sampling
+density cannot be accused of quietly benefiting from a favourable grid.
+
+**And the question is already an axis of Paper 3.** The thesis arc plans noise level, sampling
+density, coupling strength and dimensionality as the robustness axes. The 150 / 512 question is
+therefore not an obstacle but a preview: **150 and 512 are to be fixed as two of the density points**
+of that axis, which makes the comparison with both published protocols possible by construction
+rather than by assumption.
+
+### 2.8 Question for the benchmark authors
+
+Everything the public artefacts can answer has been answered above. One question remains, and it is
+worth asking because it affects how a generalization number may be read:
+
+> The paper states that two manually chosen initial conditions are included per equation in order to
+> evaluate generalization. In the released `evaluate.py`, `read_equations_from_json_file` reads
+> `_sample["solutions"][solution_i][0]`, i.e. the first initial condition, and the
+> `y0_generalization` task draws a fresh initial condition with `self.env.rng.randn(dimension)`.
+> Were the reported ODEBench generalization results obtained from the second curated initial
+> condition, or from random draws?
+
+Worth mentioning alongside it, as an observation rather than a question: the repository ships two
+samplings of the same benchmark — 512 points in the committed `strogatz_extended.json`, which
+`evaluate.py` reads, and 150 points from `solve_and_plot.py`, which writes to `solutions.json` and is
+read by no evaluation path. At least one subsequent publication has taken the 150-point
+configuration as the benchmark protocol.
 
 ## 3. Phase B sampling protocol — decided 2026-08-03
 
