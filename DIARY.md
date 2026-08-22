@@ -8,7 +8,7 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ### WP-R1 — die suchfreie Referenz dreht die Rangfolge der fehlenden Familien um
 
-<!-- HASH -->
+<!-- c05e3a6 -->
 
 Die Referenz steht: fuer alle 63 Systeme und beide IC-Saetze die Kleinste-Quadrate-Projektion der
 geschaetzten Ableitungen auf die **volle** Basis, alle Terme aktiv, keine Suche. 126 Zeilen,
