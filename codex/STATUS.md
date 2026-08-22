@@ -1,4 +1,4 @@
-status: done
-task:   WP-A4b
-report: docs/WP-A4b.md
-note:   WP-A4 handwritten fixtures moved to analysis/fixtures; reruns and Phase A byte checks passed
+status: blocked
+task:   WP-H7
+report: docs/WP-H7.md
+note:   Acceptance is blocked because local Julia cannot load Pkg (`longpath: Access is denied`) before generator code runs.

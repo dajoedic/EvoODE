@@ -4,6 +4,14 @@ Pkg.activate(joinpath(@__DIR__, "..", ".."))
 include(joinpath(@__DIR__, "run_regression.jl"))
 include(joinpath(@__DIR__, "phase_b_config.jl"))
 
+# Measured dimension-class means in seconds per cell, from docs/hpc_requirements.md Section 2.
+const PHASE_B_DIMENSION_MEAN_SECONDS = Dict(
+    1 => 250.0,
+    2 => 10_440.0,
+    3 => 63_800.0,
+    4 => 2_300.0,
+)
+
 function _arg_value(args::Vector{String}, name::String)
     idx = findfirst(==(name), args)
     idx === nothing && return nothing
@@ -112,6 +120,24 @@ function write_phase_b_all_index_list(path::AbstractString, rows)
     end
 end
 
+function phase_b_cost_desc_rows(rows)
+    return sort(
+        rows;
+        by = row -> PHASE_B_DIMENSION_MEAN_SECONDS[row.system_dim],
+        rev = true,
+        alg = MergeSort,
+    )
+end
+
+function write_phase_b_cost_desc_index_list(path::AbstractString, rows)
+    mkpath(dirname(path))
+    open(path, "w") do io
+        for row in phase_b_cost_desc_rows(rows)
+            println(io, row.index)
+        end
+    end
+end
+
 function main(args = ARGS)
     output = get(ENV, "EVO_PHASE_B_MANIFEST", PHASE_B_MANIFEST_PATH)
     arg_output = _arg_value(args, "--output")
@@ -134,6 +160,7 @@ function main(args = ARGS)
         write_phase_b_dimension_index_list(index_output, rows, dimension)
     elseif all_dimensions
         write_phase_b_all_index_list(joinpath(dirname(output), "indices_all.txt"), rows)
+        write_phase_b_cost_desc_index_list(joinpath(dirname(output), "indices_cost_desc.txt"), rows)
         for dim in sort(unique(row.system_dim for row in rows))
             write_phase_b_dimension_index_list(joinpath(dirname(output), "indices_dim$(dim).txt"), rows, dim)
         end
@@ -158,6 +185,8 @@ function main(args = ARGS)
     elseif all_dimensions
         println("all_index_output=$(joinpath(dirname(output), "indices_all.txt"))")
         println("all_index_rows=$(length(rows))")
+        println("cost_desc_index_output=$(joinpath(dirname(output), "indices_cost_desc.txt"))")
+        println("cost_desc_index_rows=$(length(rows))")
         for dim in sort(unique(row.system_dim for row in rows))
             count_dim = count(row -> row.system_dim == dim, rows)
             println("dimension_$(dim)_rows=$(count_dim)")

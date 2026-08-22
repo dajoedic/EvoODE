@@ -46,8 +46,9 @@ These four scripts are what runs on the cluster. They are used in this order.
 
 ### `studies/regression/generate_phase_b_manifest.jl`
 
-Writes the campaign work list: one row per cell, plus per-dimension index lists that map a cluster
-task number to a manifest row.
+Writes the campaign work list: one row per cell, plus index lists that map a cluster task number to
+a manifest row. With `--all-dimensions`, it writes `indices_all.txt`, `indices_cost_desc.txt`, and
+the per-dimension lists `indices_dim1.txt` ... `indices_dim4.txt`.
 
 ```
 julia studies/regression/generate_phase_b_manifest.jl --output <dir>/manifest.csv --all-dimensions
@@ -56,7 +57,7 @@ julia studies/regression/generate_phase_b_manifest.jl --output <dir>/manifest.cs
 | Flag | Meaning |
 |---|---|
 | `--output <path>` | Where `manifest.csv` goes. Index lists are written next to it |
-| `--all-dimensions` | Write `indices_all.txt` and `indices_dim1.txt` … `indices_dim4.txt` |
+| `--all-dimensions` | Write `indices_all.txt`, `indices_cost_desc.txt`, and `indices_dim1.txt` ... `indices_dim4.txt` |
 | `--dimension <N>` | Only one dimension class |
 | `--index-output <path>` | Explicit path for a single index list |
 
@@ -71,6 +72,13 @@ count per dimension.
 >
 > **Verify the fingerprint** against the expected value before starting cells. It is the cheapest
 > check that code, configuration and support table are the ones you think they are.
+>
+> **Campaign start order:** build and substitute the bootstrap manifest, run it, verify that
+> `manifest.csv`, `indices_all.txt`, `indices_cost_desc.txt`, and `indices_dim1.txt` through
+> `indices_dim4.txt` exist, then start `k8s/phase_b_indexed_campaign_job.yaml`, watch the Job, and
+> clean it up after completion. Use the command sequence in
+> `docs/hpc_deployment_guide.md` Section 7 as the maintained source for login, apply, wait, logs,
+> observe, and delete commands.
 
 Memory: needs about **8 GiB**. It loads all 63 systems; 2 GiB is not enough.
 
