@@ -8,7 +8,7 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ### Provenienz geklaert — die Datei ist Upstream, und die 150/512-Diskrepanz liegt dort
 
-<!-- HASH -->
+<!-- ae954de -->
 
 Nachtrag zum Eintrag darunter, und er korrigiert ihn. Die Vermutung, unsere `strogatz_extended.json`
 sei eine abweichende Version, ist **falsch**.
