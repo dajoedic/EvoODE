@@ -1,6 +1,7 @@
 # Paper 1 — ODEBench Protocol Alignment Audit
 
-Status: **in progress.** The EvoODE side is verified against the repository and the dataset.
+Status: **in progress.** The EvoODE side is verified against the repository and the dataset, and
+§1.5 carries the protocol as it runs since 2026-08-22.
 The published-source columns are **not yet verified** and are marked as such; nothing in this
 document may be cited as a comparison until they are.
 
@@ -9,7 +10,7 @@ be described as directly comparable, approximately comparable, or contextual onl
 protocol equivalence is not established, external numbers must not be framed as a benchmark
 victory or defeat.
 
-Last updated: 2026-08-03.
+Last updated: 2026-08-22.
 
 ---
 
@@ -68,10 +69,11 @@ Adopting the dataset grid would therefore plausibly remove the remaining stage-c
 violations. **Run and confirmed on 2026-08-03 (WP-G1): both violations disappear** — System 54
 goes `[nothing, 2, 2]` → `[nothing, 3, 3]`. See §3.
 
-### 1.4 EvoODE protocol as currently implemented
+### 1.4 EvoODE protocol before Phase B (historical)
 
 This describes the state **before** the Phase B protocol decision in §3, which supersedes the
-initial-condition, time-span and sampling rows.
+initial-condition, time-span and sampling rows. It is kept because §1.2 and §1.3 argue against it;
+for what runs today see §1.5.
 
 | Dimension | EvoODE |
 |---|---|
@@ -85,6 +87,26 @@ initial-condition, time-span and sampling rows.
 | Structure metric | `exact_support_match_raw` and `_pruned`, exact systems only |
 | Aggregation | mean and standard deviation over seeds, per system |
 | Seeds | 3 in the regression suite (42, 123, 7); 5 in the frozen Phase A |
+
+### 1.5 EvoODE protocol as it runs today
+
+State of 2026-08-22, i.e. the campaign started on that date under
+`git 91f88c46063fa368101326cbfe1abcdfc9d857fc`.
+
+| Dimension | EvoODE |
+|---|---|
+| Systems | **all 63**, campaign running; 20 exact / 43 surrogate by derived classification |
+| Initial conditions | **both** dataset sets per system |
+| Time span | `t ∈ [0, 10]` for all systems, as shipped |
+| Sampling grid | 512 uniform points, both endpoints included |
+| Trajectory generation | `Tsit5`, `abstol = reltol = 1e-9` — **self-integrated**, see §3 |
+| Noise | none |
+| Evaluation metric | simulation MSE **and R²** (implemented in WP-M1; R² is the reported metric for the 43 surrogate systems) |
+| Structure metric | `exact_support_match_raw` and `_pruned`, exact systems only |
+| Aggregation | per system, over seeds; the two IC sets are reported separately, not averaged |
+| Seeds | 3 (42, 123, 7) |
+| Conditions | `pretune_on` and `pretune_off` |
+| Record identity | git hash, config fingerprint, stage-cap behaviour fingerprint |
 
 ---
 
@@ -103,6 +125,17 @@ They are listed as dimensions to check, not as claims.
 | Metric definition | to verify — R² threshold expected | to verify | to verify |
 | Aggregation | to verify | to verify | to verify |
 | Success criterion | to verify | to verify | to verify |
+| **Representable in principle** | to verify | to verify | to verify |
+| **Representable under the evaluated protocol** | to verify | to verify | to verify |
+
+The last two rows were added on 2026-08-22 and are per system rather than per source as a single
+verdict: *in principle* asks whether the method's model class could express the true structure at
+all, *under the evaluated protocol* whether it was reachable given the operators, library,
+complexity limits and constraints of the published run. A saturating term is out of reach for a
+sparse-regression run restricted to polynomials of degree 3 however rich the method could be in
+principle. **The same two columns apply to EvoODE itself:** our basis represents 20 of the 63
+systems exactly, and the search-free reference in `docs/WP-R1.md` quantifies how well it
+approximates the rest. Rationale in `docs/diskussion_vergleichsmethoden.md`.
 
 Open questions that decide comparability:
 
