@@ -8,7 +8,7 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ### Phase B laeuft — und der Motivkatalog beziffert, wie eng unser Suchraum ist
 
-<!-- HASH -->
+<!-- c3eddf3 -->
 
 **Die Kampagne ist gestartet.** `git 91f88c46063fa368101326cbfe1abcdfc9d857fc`, Bootstrap auf Orion
 bestaetigt `phase_b_fingerprint=604e79733b22d64d`, `rows=756`, `unique_identities=756`,
