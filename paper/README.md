@@ -8,8 +8,11 @@ traceable to `DIARY.md`, a `docs/WP-*.md` report, or a committed artefact.
 |---|---|---|
 | `03_method.md` | 3 Method | draft |
 | `04_failure_analysis.md` | 4 Failure analysis | draft |
+| `05_experimental_protocol.md` | 5 Experimental protocol | draft |
 
-Sections 1, 2, 5–9 are not started. Sections 6 and 7 cannot be started: they need Phase B records.
+Sections 1, 2, 8 and 9 are not started. Sections 6 and 7 cannot be started: they need Phase B
+records. Section 2 (Related Work) waits on the protocol audit, since what may be said about
+published results depends on what that audit finds.
 
 **Rules while drafting.**
 

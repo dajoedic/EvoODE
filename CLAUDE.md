@@ -254,8 +254,18 @@ the coupled search path 1e-6 is the cheaper, behaviour-equal tolerance; the Syst
    change. Steps A and B are paid for together, the tail stays out. Full reasoning and the four
    corrections to the first draft: `docs/diskussion_repraesentationsraum.md` §9,
    `docs/phd_thesis_arc.md` §5. Two consequences that bind earlier work: Paper 2's operators must be
-   **catalogue-agnostic**, and the surrogate-R² analysis needs the search-free reference fit (WP-R1)
-   before it can attribute a low R² to a missing family rather than to a failed search.
+   **catalogue-agnostic**, and the surrogate-R² analysis needs the search-free reference fit before
+   it can attribute a low R² to a missing family rather than to a failed search.
+
+   **That reference now exists, and it moves the decision (WP-R1, 2026-08-22).** The full basis
+   approximates surrogate systems almost as well as exact ones in derivative space — median 0.999993
+   against 0.999998 — so "not representable" is not "poorly approximable" on the observed range. And
+   the ranking of the missing families is close to the inverse of their system count: **saturating
+   interaction costs nothing in the median**, while mixed monomials of degree ≥ 3 (Van der Pol,
+   Duffing) are the one family with a real approximation loss — and they need no inner parameters.
+   Step A gains weight, Step B loses it. Three limits are recorded with the finding
+   (`docs/diskussion_repraesentationsraum.md` §11): the attribution is associative, the full basis is
+   not sparse, and 13 of 126 fitted models diverge when integrated.
 4. **Unbudgeted call sites outside the campaign.** WP-D3 budgeted the two campaign runners; eleven
    scripts under `benchmarks/` and `studies/` still construct the optimizer without a budget and are
    unbounded since WP-B3. Deliberate backlog, listed in `codex/REPORT_WP_D3.md`.
