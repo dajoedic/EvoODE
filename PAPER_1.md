@@ -93,7 +93,7 @@ paper must be per-system or per-class, never a single global factor.
 
 ---
 
-## Current Status (as of 2026-08-21)
+## Current Status (as of 2026-08-22)
 
 | Item | Status |
 |------|--------|
@@ -107,10 +107,10 @@ paper must be per-system or per-class, never a single global factor.
 | Level budget | **decided against** (WP-B1, 2026-08-21): 30 levels stay, the waste is reported as a result |
 | Phase B protocol | decided 2026-08-03: 63 systems, 2 conditions, 3 seeds, 2 IC sets = 756 cells |
 | Sampling | 512 points over `t ∈ [0, 10]`, both endpoints, self-integrated with `Tsit5` at `abstol = reltol = 1e-9` |
-| Phase B fingerprint | `604e79733b22d64d` — **no records yet** |
+| Phase B fingerprint | `604e79733b22d64d` — **campaign running since 2026-08-22**, `git 91f88c4` |
 | Regression fingerprint | `17fe7d9cfb8f1be3` — 120 records under `git f6143eb` |
 | Stage-cap behaviour fingerprint | `ffb0266c7913352c` (probe version 2) |
-| Campaign status | **no open scientific blocker.** Awaiting the launch decision |
+| Campaign status | **running** since 2026-08-22, 756 cells at `parallelism: 16`, cost-descending start order (WP-H7). Expect ~9 days, floor 68 h |
 
 ---
 
@@ -166,7 +166,7 @@ second half of the claim is itself a result (WP-V1) and is not to be softened.
 | **Phase 2b** | stage-cap design, audits, failure diagnosis | **closed 2026-08-20** |
 | **Phase 3** | ODEBench protocol and literature alignment | protocol done; external audit columns open |
 | **Phase 4** | cluster, schema and cost validation | done |
-| **Phase 5** | full ODEBench Phase B campaign | ready to launch, no records |
+| **Phase 5** | full ODEBench Phase B campaign | **running** since 2026-08-22 |
 | **Phase 6** | analysis and paper | not started |
 
 ---
@@ -484,13 +484,26 @@ five-case probe draws out of `_cap_split_decision`.
 
 | Field | Value | Records |
 |---|---|---|
-| Phase B fingerprint | `604e79733b22d64d` | none yet |
+| Phase B fingerprint | `604e79733b22d64d` | campaign running, `git 91f88c4` |
 | Regression fingerprint | `17fe7d9cfb8f1be3` | 120, `git f6143eb` |
 | Behaviour fingerprint | `ffb0266c7913352c` | as above |
 
 A campaign with mixed identity is not publishable and must be re-run. This has already cost one
 regression suite; the pilot and probe records predate the current identity by construction and must
 never be merged into campaign data.
+
+### Representational scope — a limitation to state, not to fix here
+
+The staged basis represents **20 of the 63 systems exactly**. Four motif families would take that to
+58, and the remaining five need one family each — the closure curve and the reasoning are in
+`docs/diskussion_repraesentationsraum.md`. The expansion is deliberately **not** part of Paper 1: it
+moves `config_fingerprint`, invalidates the regression block and reopens design rule 2, which derives
+the look-ahead from where the basis creates structural gaps. It is scheduled as a bridge between
+Paper 2 and Paper 3.
+
+For Paper 1 this means two things. The limitation is reported with its numbers rather than
+apologised for. And the claim "the space is not the cause of failed recovery" holds **for the 20
+exact systems only** — on the other 43 the space *is* the cause, and no sentence may blur that.
 
 ### Result placeholders
 

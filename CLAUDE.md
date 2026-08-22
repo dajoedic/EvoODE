@@ -119,7 +119,7 @@ ground truth, `STATUS.md` only the fast signal: a poll checks both.
 | 1 — stable core | DONE (2026-04-20) |
 | 2 — EvoGrow variants | **CLOSED 2026-08-03** |
 | 3 — benchmarking | infrastructure done; Phase B protocol decided and implemented. Planned next axes: noise, sampling density, coupling strength, dimensionality |
-| 4 — Paper 1 | Phase A frozen; pilot finished 2026-08-17; stage-cap defect solved (WP-C1 to WP-C5, 2026-08-20). regression suite recomputed under the final identity triple (120 cells, 30/30 bit-identical, −25.4 % loss evaluations); `pretune_off` probe complete (3/3); level budget decided against (WP-B1, 2026-08-21). **No open blocker before the campaign** |
+| 4 — Paper 1 | **Phase B campaign running since 2026-08-22** (`git 91f88c4`, 756 cells, `parallelism: 16`, ~9 days). Phase A frozen; stage-cap defect solved (WP-C1 to WP-C5); regression recomputed under the final identity triple (120 cells, 30/30 bit-identical, −25.4 % loss evaluations); `pretune_off` probe complete; level budget decided against (WP-B1) |
 | 5 — advanced methods | not started |
 
 ### Phase 2 outcome
@@ -145,7 +145,7 @@ over unchanged — a deliberate warm start; the accepted risk is anchoring, and 
 the counter-measure. A population reset on promotion is future work and **must not be implemented
 in the current phase.**
 
-## Active Studies (as of 2026-08-20)
+## Active Studies (as of 2026-08-22)
 
 | Artifact | Status | Note |
 |----------|--------|------|
@@ -158,7 +158,7 @@ in the current phase.**
 
 ## Current Priorities
 
-State as of 2026-08-20. `DIARY.md` holds the measurements; this section keeps only what still
+State as of 2026-08-22. `DIARY.md` holds the measurements; this section keeps only what still
 constrains a decision.
 
 ### Settled — do not re-open
@@ -201,6 +201,32 @@ argument for a **structured stopping criterion as its own research question**, n
 configuration constant. The campaign therefore runs at 30 levels and reports the waste as a result.
 `docs/WP-B1.md`.
 
+**The stage cap defect, closed (WP-C1 to WP-C5, 2026-08-20).** The audit over all 20 exact systems,
+both IC sets and horizons 2–5 put truncation at 9 equation rows on 5 systems at the shipped
+`lookahead_horizon = 2`. Final state: **0 truncated rows of 80, 48 finite caps.** Two mechanisms
+were responsible. The horizon: the basis stages by degree, not parity, so odd nonlinearities first
+become approximable at stage 4/5; horizons 3, 4 and 5 are cap-identical on all 80 rows, and the
+shipped value is **5 = the number of basis stages**, i.e. no horizon rather than a tuned constant.
+The second mechanism was derivative-driven — analytic derivatives repair all five survivors, and a
+5×5 threshold sweep over four orders of magnitude repairs none. What repairs them is the **reopen
+branch**: a later stage dropping the residual to ≤ 0.35 reopens the walk, otherwise the walk caps.
+All conditions are relative; no stage index, no system identity (WP-C3 was rejected for exactly
+that). WP-C4's doubt band was removed again after WP-V1 measured it: 77 caps correct, 0 wrong,
+**0 wrong caps prevented, 3 correct caps surrendered** — and the Lorenz repair it was credited with
+comes from the reopen branch. Counter-check: System 61 caps correctly at `[3,3,3]`; the defect was
+selective, never general. Two constants remain load-bearing and sit inside `config_fingerprint`:
+`post_floor_significant_drop_ratio = 0.35` and `post_floor_min_floor_ratio = 0.1`. Aggregation
+robustness stays open — rows flip through split majority voting, and at 12 / IC 1 a single split
+changed the outcome. **Limitation to declare regardless:** the cap is auditable only on the 20 exact
+systems; several surrogates carry an equation capped at stage 1 (33, 34, 40, 44, 50), a fit-quality
+risk rather than a support error.
+
+**Analysis downstream, closed (WP-A4/A4b, 2026-08-21).** The system axis comes from
+`system_classification.csv` instead of hard-coded id lists, `r2` reaches the analysis at all for the
+first time — it is the metric for 43 of 63 systems — the two IC sets are no longer averaged away,
+and an empty selection aborts instead of reporting success. Phase A stays byte-identical. Still
+carried but not aggregated: `r2_by_dim` and `stage_cap_behavior_fingerprint`.
+
 **Cost and numerics, closed.** Screening is a performance optimization only, never a
 discovery-quality lever. Overshoot on System 26 is tolerance-invariant, therefore algorithmic. On
 the coupled search path 1e-6 is the cheaper, behaviour-equal tolerance; the System 11 loss of
@@ -208,143 +234,55 @@ the coupled search path 1e-6 is the cheaper, behaviour-equal tolerance; the Syst
 
 ### Active
 
-0. **CAMPAIGN BLOCKER — the stage cap truncates true structures. SOLVED (WP-C1 to WP-C5, 2026-08-20).**
-   The audit over all 20 exact systems, both IC sets, horizons 2–5 (`docs/wp_c1_stage_cap_horizon_audit.md`)
-   put the rate at **9 equation rows on 5 of 20 systems** at the shipped `lookahead_horizon = 2`.
-   Final state: **0 truncated rows of 80, 48 finite caps.**
-
-   **Solved: the horizon.** The basis stages by degree, not parity, so odd nonlinearities first
-   become approximable at stage 4/5 and a horizon of 2 never reaches them. Raising it moves six
-   rows and every new cap lands *exactly* on the required stage — 28 eq2 1→5, 32 eq2 1→4, and
-   38 eq1 `nothing`→4, the last one tightening a previously uncapped equation onto the cubic term
-   it needs. Horizons 3, 4 and 5 are cap-identical on all 80 equation rows, so the parameter is
-   inert above 3; WP-C2 sets it to **5 = the number of basis stages**, i.e. no horizon, rather than
-   leave a tuned constant in the paper.
-
-   **Solved: the second mechanism (WP-C2 to WP-C5).** The five surviving rows were derivative-driven
-   — with analytic derivatives all five reach the required stage, and a 5×5 sweep of `tau_rel` and
-   `tau_abs` over four orders of magnitude fixes none of them, so thresholds were ruled out
-   empirically. What repairs them is the **reopen branch**: a later stage dropping the residual to
-   ≤0.35 reopens the walk, otherwise the walk caps here. All conditions are relative; no stage index
-   and no system identity (WP-C3 was rejected for exactly that). **No truncated rows remain.**
-
-   **The doubt band is gone (WP-V1 → WP-C5, 2026-08-20).** WP-C4 had given the decision a third
-   outcome — abstain in an ambiguous band, no cap at all. WP-V1 measured what that outcome buys over
-   all 80 rows: **77 caps correct, 0 caps wrong, 0 wrong caps prevented by the band, 3 correct caps
-   surrendered to it.** And the Lorenz repair, for which the band was built, comes from the reopen
-   branch — all four Lorenz rows return cap 3 under the binary decision too. The band was removed;
-   finite caps 45 → 48, exactly the 3 rows WP-V1 predicted (12 / IC 1, 31 / IC 1, 55 / IC 2 eq 2).
-   The measured price of one abstention, from the regression run: System 31 / IC 1 cost **+16 %**
-   loss evaluations at a bit-identical loss — compute, never the solution, as promised.
-
-   **Counter-check held:** System 61 (Chen-Lee) caps correctly at `[3,3,3]`. The defect is
-   selective, not general.
-
-   **Consequence for the 40 % recovery figure:** several of the six failures are controller errors,
-   not search errors, and must be counted separately.
-
-   **Open, smaller (2026-08-20):** two constants remain, both now inside `config_fingerprint` —
-   the reopen threshold `post_floor_significant_drop_ratio = 0.35` and the floor-depth guard
-   `post_floor_min_floor_ratio = 0.1`. The first is **not selectable from data**, see Active 4; the
-   second separates control 61 / IC 1 (floor ratios 0.03–0.07) from the targets (0.30–0.85) with a
-   factor of four — verified, but to be reported as a margin rather than a derivation. And
-   aggregation robustness is its own open question: rows flip through **split majority voting**
-   rather than clear detection, and at 12 / IC 1 a single split changed the outcome.
-
-   **Limitation to declare regardless of outcome:** the cap is auditable only on the 20 exact
-   systems. The 43 surrogates have no ground-truth support, so controller safety is unverifiable
-   there by construction — and the pilot shows several surrogates carrying an equation capped at
-   stage 1 (33, 34, 40, 44, 50). They are scored on R², so it is a fit-quality risk rather than a
-   support error.
-
-1. **Phase B compute — access obtained, path verified end to end (2026-08-13).** The target is SCCH
-   **"Orion", an OpenShift/Kubernetes cluster**, not a Slurm site: `containers/Dockerfile` built by
-   GitLab CI, `k8s/` Job manifests with `completionMode: Indexed`, results on NFS. The full chain
-   from commit to finished record has been run and verified at every hand-off; see
-   `docs/hpc_deployment_guide.md` for the mechanics and `DIARY.md` (WP-H2 to WP-H6) for the
-   chronology. 876 jobs (756 Phase B + 120 regression), 1 core and 2 GB each, no GPU, Julia 1.12.6
-   pinned.
-
-   **Cost model — pilot finished 2026-08-17, the total holds.** 42 cells (systems 24–62, seed 42,
-   IC set 1, `pretune_on` only) project to **3,384 core-hours** for the 756 Phase B cells against
-   the ~3,900 estimated in `docs/hpc_requirements.md` §5 — 15 % low, not the "one to two orders of
-   magnitude too high" previously recorded here; that earlier claim was drawn from the head of a
-   very skewed distribution (dim 2: median 0.19 h, mean 2.90 h) and does not survive the full
-   sweep. The per-class split *is* wrong: dim 4 overestimated 36x, **dim 3 underestimated 1.5x**.
-   At `parallelism: 16` that is ~9 days wall; the makespan floor is the longest single cell at
-   **68 h**, so no parallelism gets the campaign under 3 days. Remaining blind spots: systems 1–23
-   rest on one measured system, 63 on none; one seed, one IC set (System 62 varies 14x between seeds
-   42 and 123). `docs/hpc_requirements.md` was rewritten from these numbers on 2026-08-21 and is now
-   the cost reference. Capacity agreed with the site:
-   **`parallelism: 16`** of 96 cluster cores, raise on request. No walltime limit, therefore no
-   checkpointing needed.
-
-   **`pretune_off` is not the expensive half — the assumption is dead (probe complete, 2026-08-20).**
-   It was treated as the unmeasured half that makes 3,384 core-hours a lower bound. All three probe
-   cells are in and `pretune_off` is *cheaper* in every one: System 61 (Chen-Lee) 49.4 h → **14.7 h**,
-   factor 0.30; System 56 (Lorenz) 39.95 h → 38.68 h, factor 0.97; System 59 (Rössler) 68.0 h →
-   62.4 h, factor 0.92. The projection is therefore an upper rather than a lower bound, at least for
-   dim 3. But 0.30 against 0.97 within one dimension class rules out a correction factor: the cost
-   model may state a **range**, never a single multiplier.
-
-   **And counts do not convert into core-hours.** On System 56 the loss evaluations fall 44 % while
-   the wall time falls 3 % — deriving core-hours from that count is off by a factor of 15. On
-   System 59 the two track each other (0.90 against 0.92), on System 61 wall time falls three times
-   faster than the count. Cost per evaluation varies by more than a factor of two *inside* one
-   dimension class, plausibly through differently stiff parameter regions. This touches Design Principle 7 at a
-   sensitive point: counts remain the right evidence for **search effort**, but they are not a proxy
-   for **compute time**, and no cost claim may be derived from them.
-
-   **Per-level cost is a trend, not an outlier — diagnosis revised 2026-08-17.** The heartbeat
-   series shows per-level cost growing monotonically over three orders of magnitude with structure
-   size (System 59: 49 s at level 1 → 42,372 s at level 30), not isolated pathological levels; in
-   the most expensive cells the slowest single level is only 17–26 % of the cell. And the expensive
-   half buys nothing: Systems 59, 61 and 56 (all chaotic) burn 40–68 h to end at losses of 1.5,
-   63 and 45. System 59 spends 6.6e6 loss evals on 610 parameter fits — ~10,900 solves per fit,
-   the line-search cost lever, quantified on dedicated hardware for the first time. **Decided against, 2026-08-21 (WP-B1)** — see
-   Settled below. The campaign runs with 30 levels and measures the waste instead of capping it.
-2. **Unbudgeted call sites outside the campaign.** WP-D3 budgeted the two campaign runners; eleven
+1. **The Phase B campaign is running.** Started 2026-08-22 under
+   `git 91f88c46063fa368101326cbfe1abcdfc9d857fc` on Orion, Job `evoode-phase-b-campaign`,
+   `completions: 756`, `parallelism: 16`. The bootstrap confirmed the identity on the cluster:
+   `604e79733b22d64d`, 756 rows, 756 unique identities, 20 exact / 43 surrogate. Cells start in
+   cost-descending order (`indices_cost_desc.txt`, WP-H7) so the 68 h cell runs in the shadow of the
+   field rather than after it; expect roughly nine days, floor 68 h. Cost model and its blind spots:
+   `docs/hpc_requirements.md`. **Nothing about the campaign path may be touched while it runs.**
+2. **The external columns of the protocol audit** (`docs/paper1_odebench_protocol_alignment.md`) are
+   the last substantive Phase 3 item. Two additions decided 2026-08-22: the audit needs
+   **representational adequacy** as a dimension, split into *in principle representable* and
+   *representable under the evaluated protocol* — a published SINDy run with polynomials to degree 3
+   cannot express a saturating term whatever the method could carry in principle. Open question
+   unchanged: if published numbers were computed on the shipped trajectories, we work on cleaner data
+   than the comparison does, and that must be declared.
+3. **Representation is decided but not built** (2026-08-22). The basis represents 20 of 63 systems
+   exactly; four motif families would take that to 58, the remaining five need one family each. The
+   expansion is a **bridge between Paper 2 and Paper 3**, not a fourth paper and not a Paper 1
+   change. Steps A and B are paid for together, the tail stays out. Full reasoning and the four
+   corrections to the first draft: `docs/diskussion_repraesentationsraum.md` §9,
+   `docs/phd_thesis_arc.md` §5. Two consequences that bind earlier work: Paper 2's operators must be
+   **catalogue-agnostic**, and the surrogate-R² analysis needs the search-free reference fit (WP-R1)
+   before it can attribute a low R² to a missing family rather than to a failed search.
+4. **Unbudgeted call sites outside the campaign.** WP-D3 budgeted the two campaign runners; eleven
    scripts under `benchmarks/` and `studies/` still construct the optimizer without a budget and are
-   unbounded since WP-B3. Deliberate backlog, listed in `codex/REPORT_WP_D3.md` — not to be fixed
-   before the campaign.
-4. **Fingerprint boundary.** The v2.2 arm sits on Baseline v0 (`0c739d4e36ee6498`), all v3 and
+   unbounded since WP-B3. Deliberate backlog, listed in `codex/REPORT_WP_D3.md`.
+5. **Fingerprint boundary.** The v2.2 arm sits on Baseline v0 (`0c739d4e36ee6498`), all v3 and
    capped runs on `df5db7763bcd2449`. The comparison is sound but crosses a boundary and must be
    labelled as such wherever it is reported.
 
-   **Campaign identity is two fields since WP-P1 (2026-08-17).** The config fingerprints hash
-   configuration constants only, so the WP-C3 and WP-C4 cap-logic changes left them standing —
-   two records could share a fingerprint and come from differently deciding code.
+   **Campaign identity is three fields since WP-P1.** The config fingerprints hash configuration
+   constants only, so the WP-C3 and WP-C4 cap-logic changes left them standing — two records could
+   share a fingerprint and come from differently deciding code.
    `stage_cap_behavior_fingerprint()` closes that for the cap: it hashes the decisions a frozen
-   five-case probe draws out of `_cap_split_decision`. Publishability now requires one git hash,
-   one config/Phase B fingerprint **and** one behaviour fingerprint.
+   five-case probe draws out of `_cap_split_decision`. Publishability requires one git hash, one
+   config/Phase B fingerprint **and** one behaviour fingerprint.
 
-   **Current values (verified 2026-08-20, after WP-C5):** Phase B `604e79733b22d64d`, regression
-   `17fe7d9cfb8f1be3`, behaviour `ffb0266c7913352c` (probe version 2). The regression suite has
-   been recomputed under them — 120 records, `git f6143eb`, one closed block under one identity
-   triple. Phase B still carries **no records**. The 42 pilot records and the 3 probe cells predate
-   everything (`e361a2af49366670` / `61b6548ef0014593`, `git 88eaeb6`).
+   **Current values:** Phase B `604e79733b22d64d` — now carrying campaign records for the first
+   time, under `git 91f88c4`. Regression `17fe7d9cfb8f1be3` with 120 records under `git f6143eb`.
+   Behaviour `ffb0266c7913352c` (probe version 2). The 42 pilot records and the 3 probe cells
+   predate all of it (`e361a2af49366670` / `61b6548ef0014593`, `git 88eaeb6`) and must never be
+   merged into campaign data.
 
-   **Closed by WP-C5:** the load-bearing constants `post_floor_significant_drop_ratio = 0.35` and
-   `post_floor_min_floor_ratio = 0.1` are now policy fields inside the fingerprint payload, so
-   moving the threshold moves `config_fingerprint`. Still blind: the probe covers
-   `_cap_split_decision` only — derivative estimation, floor computation, split aggregation and the
-   search loop remain unobserved.
+   **Still blind:** the behaviour probe covers `_cap_split_decision` only — derivative estimation,
+   floor computation, split aggregation and the search loop remain unobserved.
 
    **The threshold is not selectable from data (WP-V1).** Leave-one-system-out puts the reopen
    threshold between 0.044 and 0.278 while the shipped value is 0.35, and at the selected values
    Lorenz truncates again. The 11 % margin between 0.35 and Lorenz's worst ratio of 0.315 is a
    human choice, and it must be reported as one.
-
-5. **Remaining Phase 3 items** (`PAPER_1.md`): filling the external columns of the protocol audit
-   from the publications. Open question there: if published numbers were computed on the shipped
-   trajectories, we work on cleaner data than the comparison works — a deviation in our favour that
-   must be declared. *(The R² metric is done, WP-M1.)*
-7. **Analysis downstream — closed 2026-08-21 (WP-A4, WP-A4b).** The system axis now comes from
-   `system_classification.csv` instead of two hard-coded Phase-A id lists, `r2` reaches the analysis
-   at all for the first time (it is the metric for 43 of 63 systems), the two IC sets are no longer
-   averaged away, and an empty selection aborts instead of reporting success. Phase A stays
-   byte-identical, verified. Still open downstream: `r2_by_dim` and
-   `stage_cap_behavior_fingerprint` are carried but not aggregated.
 
 ### Excluded, deliberately
 
