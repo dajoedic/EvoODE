@@ -8,7 +8,7 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ### Tonda et al. gelesen — und dabei eine eigene Protokollangabe widerlegt
 
-<!-- HASH -->
+<!-- ba8b8be -->
 
 Der Nutzer hat das Paper besorgt (GECCO '25 Companion, Malaga, S. 2563–2571,
 DOI 10.1145/3712255.3734301, CC-BY; Tonda, Zhang, Chen, Xue, Zhang, Lutton). Gelesen, auditiert,
