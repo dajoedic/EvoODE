@@ -41,20 +41,27 @@ safety violations observed on a coarser grid disappear.
 The consequence is stated plainly rather than argued away: **published ODEBench numbers obtained on
 the released trajectories are not treated as directly comparable to ours.**
 
-*Dataset version, and a difference that matters.* "ODEBench" alone is not a sufficient protocol
-statement, and in this case the ambiguity is real rather than hypothetical. The published
-description of the artefact specifies LSODA integration with `rtol = 1e-5`, `atol = 1e-7` and
-`t_eval = linspace(0, 10, 150)` — **150 points per trajectory**. The copy used here carries **512**
-points over the same span, verified directly in the file (content hash
-`b11f8bda01ceee5c5c9445521ac74c8819361af4251bb90c0be398aaeb1a1136`, 63 systems, two
-initial-condition sets, shipped solutions present but unused).
+*Dataset version.* "ODEBench" alone is not a sufficient protocol statement, and in this case the
+ambiguity is concrete. The artefact used here is byte-identical to the upstream file
+(`sdascoli/odeformer`, `odeformer/odebench/strogatz_extended.json`, upstream commit `32dd990`;
+content hash `b11f8bda01ceee5c5c9445521ac74c8819361af4251bb90c0be398aaeb1a1136`), and it carries
+512-point solutions for 63 systems and two initial-condition sets. The regeneration script shipped
+alongside it in the same directory samples **150** points instead and writes to a different file.
+The repository therefore offers two grids, differing by a factor of 3.4 in density
+(`Δ ≈ 0.0196` against `Δ ≈ 0.067`).
 
-Our grid is therefore **3.4 times denser** than the published protocol — `Δ ≈ 0.0196` against
-`Δ ≈ 0.067` — in addition to the tighter integration tolerances. This is stated here because it is
-the larger of the two deviations and because sampling density is not a neutral axis: it is the axis
-under which the derivative transformation is known to produce misleading search spaces, and under
-which reducing the step mitigates them. Our denser grid places this work on the favourable side of
-that axis. *(Artefact origin — repository commit, release or DOI — to be completed.)*
+We use the committed grid. Which grid a published result used cannot be assumed and is part of the
+audit, because sampling density is not a neutral axis: it is the axis under which the derivative
+transformation is known to produce misleading search spaces, and under which reducing the step
+mitigates them.
+
+We do not use the shipped trajectory *values*. We integrate on the same grid at tighter tolerances
+(`abstol = reltol = 1e-9` against the artefact's `rtol = 1e-5`, `atol = 1e-7`), because the shipped
+tolerances impose mean-squared-error floors between `2.5e-2` and `6.1e-10` depending on the system,
+above the loss this method reaches on several of them. For the stage cap specifically this choice is
+measurably neutral: shipped and self-integrated data yield identical caps in all 26 cells of a
+dedicated comparison, because the shipped integration error is smooth in `t` and a derivative-based
+noise floor barely registers smooth error. The benefit of the denser grid, by contrast, is real.
 
 ## 5.3 Conditions and grid
 

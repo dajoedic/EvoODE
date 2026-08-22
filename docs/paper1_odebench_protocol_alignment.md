@@ -122,7 +122,7 @@ They are listed as dimensions to check, not as claims.
 | Systems used | to verify | to verify | to verify |
 | Initial conditions | to verify — dataset ships two sets | to verify | to verify |
 | Time span | to verify — dataset ships [0, 10] | to verify | to verify |
-| Sampling grid | **verified: 150 points** over `t ∈ (0,10)`, `t_eval=np.linspace(0,10,150)` — see §2.4 | to verify | to verify |
+| Sampling grid | **two exist upstream**: 512 points in the committed JSON, 150 from the regeneration script — which one a run used must be checked, see §2.4 | to verify | to verify |
 | Noise setting | to verify | to verify | to verify |
 | Metric definition | to verify — R² threshold expected | to verify | to verify |
 | Aggregation | to verify | to verify | to verify |
@@ -158,11 +158,11 @@ Everything else is context at most. The broad, quantitative comparison — SINDy
 PySR as free symbolic search, a pretrained symbolic model, EvoODE as controlled growth — belongs to
 Paper 3, where it is the purpose rather than a side claim.
 
-### 2.2 Dataset provenance — an open gap
+### 2.2 Dataset provenance — closed 2026-08-22, see §2.4
 
 "We use ODEBench" is not a sufficient protocol statement: repository states and releases can differ
-in point counts, generators and solver defaults. **The provenance of our copy is not recorded
-anywhere in this repository.** What is verifiable today:
+in point counts, generators and solver defaults. The provenance was not recorded anywhere in this
+repository until 2026-08-22; it is now established in §2.4. What the file itself gives:
 
 ```text
 file    benchmarks/data/strogatz_extended.json
@@ -171,9 +171,124 @@ in repo since  706549f (2026-04-30)
 content 63 systems, all carrying shipped solutions
 ```
 
-The per-system `source` field names the textbook location ("strogatz p.20"), not the dataset. Still
-required: origin (repository and commit, release, or DOI), and the explicit statement that the
-shipped trajectories are **not** used.
+The per-system `source` field names the textbook location ("strogatz p.20"), not the dataset. Origin
+and upstream commit are in §2.4. The shipped trajectories are **not** used: we integrate ourselves on
+the artefact's own 512-point grid.
+
+### 2.5 Source audited: Tonda et al. 2025 — what it says and what it costs us
+
+Read in full on 2026-08-22.
+
+**Bibliography.** Alberto Tonda, Hengzhe Zhang, Qi Chen, Bing Xue, Mengjie Zhang, Evelyne Lutton.
+*When Data Transformations Mislead Symbolic Regression: Deceptive Search Spaces in System
+Identification.* GECCO '25 Companion, Malaga, pp. 2563–2571. DOI 10.1145/3712255.3734301.
+CC-BY, 9 pages.
+
+**What it studies.** The two most common ways of turning trajectory data into a problem that
+standard symbolic regression can handle — the derivative transformation and an integral
+transformation — evaluated on ODEBench with PySR as the search method.
+
+**The three findings, in their order of importance for us:**
+
+1. **Misleading search spaces arise without any noise.** In the transformed space the ground-truth
+   equations, which ought to be the global optima, carry *worse* fitness than other candidates, and
+   the authors show experimentally that a state-of-the-art SR algorithm is duly misled.
+2. **The sampling step is strongly correlated with the effect**, and reducing it mitigates the
+   problem. Their explanation: the forward-difference basis of the transformation produces large
+   errors where the derivative changes quickly.
+3. **Noise degrades both transformations markedly**, to different degrees.
+
+**Their practitioner recommendation:** noise-free, the order-4 derivative transformation performs
+best; under noise, derivative transformations with Savitzky-Golay smoothing (degree 3, window 15 or
+25).
+
+**Where this hits EvoODE — and it is not where we first assumed.**
+
+The obvious reading is that the warm start is affected, since it fits in derivative space. That is
+true but harmless: the warm start only *initialises* a fit whose objective is the simulation loss,
+so a misranked derivative space costs iterations, not decisions.
+
+**The stage cap is the real exposure.** Its entire walk is a sequence of decisions taken on weighted
+least-squares residuals in derivative space, against a floor derived from a Richardson estimate of
+the derivative error. That is precisely a derivative-space objective used to *decide*, and Tonda et
+al. show such objectives can rank the truth below its competitors. The mitigations already in the
+design are real — the cap requires positive evidence, all conditions are relative, the floor is
+estimated rather than assumed, and the audit finds 0 truncated rows of 80 — but the mechanism-level
+threat is genuine and belongs in the limitations rather than in a footnote.
+
+**Two convergences worth reporting.**
+
+- Their central phenomenon is reproduced independently by our own search-free reference: of 126
+  full-basis fits, **13 diverge on integration** despite near-perfect derivative fits, and on the
+  exact systems the mean trajectory R² is −2.8 against a median of 0.9999. Same effect, different
+  measurement, different codebase.
+- Their stated future direction — *anticipate when the transformation will mislead, from the
+  characteristics of the trajectory data* — is, in different words, this project's open "predictive
+  criterion" question. That is a strong external motivation for it.
+
+**What the paper does not give us.** It is not a performance reference and must never be used as
+one: different task framing, different method, and a stated focus on comparing transformations
+rather than ranking systems.
+
+### 2.4 The 150 / 512 discrepancy — resolved, and the provenance gap with it
+
+**Investigated 2026-08-22 after auditing Tonda et al. The first reading of this was wrong and is
+corrected here.**
+
+Tonda et al. describe the ODEBench artefact as 150 uniformly sampled points per trajectory
+(`LSODA`, `rtol=1e-5`, `atol=1e-7`, `first_step=1e-6`, `min_step=1e-10`,
+`t_eval=np.linspace(0,10,150)`). Our copy carries **512** points. The first conclusion drawn was
+that our file must be a different version or generation configuration. **It is not.**
+
+**Verified provenance.** The file is byte-identical to the upstream artefact:
+
+```text
+file     benchmarks/data/strogatz_extended.json
+sha256   b11f8bda01ceee5c5c9445521ac74c8819361af4251bb90c0be398aaeb1a1136
+upstream github.com/sdascoli/odeformer, odeformer/odebench/strogatz_extended.json
+         last upstream change 32dd990839ae, 2023-09-29 ("Code release") — downloaded and compared
+in repo  unchanged since the first commit; identical at 366a71a, 78143e7, 706549f and HEAD
+```
+
+The `benchmarks/odeformer/` directory it originally sat in already recorded its origin; the
+restructure at `706549f` was a pure rename with no content change.
+
+**Where the discrepancy actually lives: inside the upstream repository.** The generation script in
+the same directory, `odeformer/odebench/solve_and_plot.py`, carries
+
+```python
+config = {"t_span": (0, 10), "method": "LSODA", "rtol": 1e-5, "atol": 1e-7,
+          "first_step": 1e-6, "t_eval": np.linspace(0, 10, 150), "min_step": 1e-10}
+```
+
+and writes its output to **`solutions.json`**, *not* into `strogatz_extended.json`. The committed
+`strogatz_extended.json` — the file everyone actually downloads, and the one we use — carries
+512-point solutions under its `solutions` key.
+
+So the repository ships two different samplings: 512 points in the committed JSON, 150 points from
+the regeneration script. Tonda et al. describe the latter.
+
+**What this changes for us.**
+
+1. **Our sampling is the artefact's own grid**, not a deviation. The claim "we adopt the dataset's
+   sampling" is correct after all, for the committed file.
+2. **The comparability question moves rather than disappears.** It is now: which of the two grids
+   did a given published run use? A run driven by the regeneration script sampled 3.4x more coarsely
+   (`Δ ≈ 0.067` against our `Δ ≈ 0.0196`). This must be checked per source and cannot be assumed.
+3. **The axis still matters.** Tonda et al. find the sampling step strongly correlated with whether
+   the transformed search space misleads, and report that reducing it mitigates the effect. Whoever
+   sampled at 150 was on the unfavourable side of that axis; the difference is a genuine
+   confounder in any comparison, in our favour.
+4. **The remaining deviation is the tolerance**, and it stands unchanged: we integrate ourselves at
+   `abstol = reltol = 1e-9` against the artefact's `rtol=1e-5, atol=1e-7`. WP-G1b measured what that
+   buys for the stage cap specifically: **nothing** — shipped and self-integrated data give
+   identical caps in all 26 measured cells, because the integration error of the shipped data is
+   smooth in `t` and a derivative-based noise floor barely sees smooth error. The gain observed on
+   System 54 belongs to grid density, not to data quality. Self-integration is retained for the
+   search loss, where the shipped tolerances would impose MSE floors above what the method reaches.
+
+**Provenance gap from §2.2: closed.** Origin, upstream path, upstream commit and content hash are
+recorded above.
 
 ### 2.5 Source audited: Tonda et al. 2025 — what it says and what it costs us
 

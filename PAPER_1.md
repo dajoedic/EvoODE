@@ -372,10 +372,13 @@ only, unless protocol equivalence is established.
 
 ### Phase B Sampling Protocol — decided 2026-08-03 (frozen)
 
-*Correction, 2026-08-22:* the grid below is the one **our copy** of the artefact carries. The
-published ODEBench description specifies 150 points per trajectory, so this protocol samples 3.4x
-more densely than the literature's — a larger deviation than the tolerance difference, and on the
-axis that governs whether derivative-space objectives mislead. See
+*Provenance, established 2026-08-22:* the grid below is the artefact's own. Our
+`strogatz_extended.json` is byte-identical to the upstream file in `sdascoli/odeformer`
+(`odeformer/odebench/`, upstream commit `32dd990`), unchanged since our first commit. Note that the
+repository ships **two** samplings: 512 points in the committed JSON, and 150 points from the
+regeneration script in the same directory, which writes elsewhere. Which of the two a published run
+used must be checked per source rather than assumed — the difference is 3.4x in grid density, on the
+axis that governs whether derivative-space objectives mislead.
 `docs/paper1_odebench_protocol_alignment.md` §2.4.
 
 | Component | Decision |
