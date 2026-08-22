@@ -8,7 +8,7 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ### Die Repraesentationsfrage ist entschieden — als Bruecke zwischen Paper 2 und Paper 3
 
-<!-- HASH -->
+<!-- 825da07 -->
 
 Die Gespraechsvorlage vom selben Tag hat eine Antwort bekommen, und sie korrigiert die Vorlage an
 vier Stellen. Ergebnis in `docs/diskussion_repraesentationsraum.md` §9, Konsequenzen in
