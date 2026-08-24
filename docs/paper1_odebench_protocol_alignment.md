@@ -451,6 +451,55 @@ propagates 150 points as the ODEBench default while the benchmark's own evaluati
 That is worth telling the authors, and it raises the value of the observation in §2.8 rather than
 lowering it: the discrepancy is no longer internal trivia, it has a downstream carrier.
 
+### 2.6c Representational adequacy, filled per system — and it is uncomfortable
+
+Computed 2026-08-24 from the per-equation classification and the search spaces documented in §2.6.
+Table: `analysis/data/paper1_phaseB_v1/representational_adequacy.csv`, one row per system, verdicts
+**Y** representable / **N** not / **U** not decidable from the published description.
+
+| Search space as evaluated | Y | U | N |
+|---|---|---|---|
+| EvoODE staged basis | **20** | 0 | 43 |
+| SINDy, polynomial library, degree 1–10 | **40** | 0 | 23 |
+| SINDy, `[poly, sin, cos, exp]` | 42 | 5 | 16 |
+| SINDy, `[poly, sin, cos, exp, log, sqrt, 1/x]` | 43 | 7 | 13 |
+| ProGED, polynomial grammar | 40 | 0 | 23 |
+| ProGED, rational grammar | **53** | 1 | 9 |
+| ProGED, trigonometric grammar | 41 | 5 | 17 |
+
+**The finding: our staged basis is narrower than the standard baseline's default library.** A plain
+polynomial library covers 40 of 63 systems exactly; we cover 20. And the entire 20-system gap has
+one shape:
+
+| what we lack on those 20 systems | systems |
+|---|---|
+| constant term only | 10 |
+| constant + mixed monomials of degree ≥ 3 | 6 |
+| mixed monomials only | 3 |
+| degree ≥ 5 | 1 |
+
+That is **exactly Step A** of the representation ladder, and nothing else. The single most
+consequential item is the constant: removing the bias term from the polynomial library drops SINDy
+from 40 to 24, i.e. **16 of the 20 systems in the gap turn on a constant term alone**.
+
+**What this does and does not say.** It is a statement about *libraries*, not about recovery: a
+larger library is also a larger search problem, and growing structure inside a small space is the
+very axis this method varies. SINDy at degree 10 in four dimensions enumerates an enormous library
+by construction; we enumerate five stages. But representability is a precondition, not a
+performance claim, and on that precondition we currently sit below the nearest relative's default
+configuration.
+
+**One system is out of reach for everyone:** 44, the driven pendulum with `|v|·v` drag, is N for the
+staged basis, for the richest SINDy library and for ProGED's rational grammar alike.
+
+**Rules used, stated so the verdicts can be checked.** A term counts as representable only if it is
+a library function applied to a single state variable, or a polynomial. Products of two library
+functions (`sin(u1)·cos(u1)`), library functions of composite arguments (`sin(u1 − u2)`) and
+quotients by a state (`cos(u2)/u1`) are marked **U**, because whether the published run enabled
+interaction terms across a custom library is not stated. The 5 to 7 **U** verdicts are therefore not
+sloppiness — they are the audit's actual result for those systems: *the published description does
+not fix representability*.
+
 ### 2.7 The grid is a condition of our results, not background
 
 Two consequences follow from §2.4 and §2.6, and they are recorded here because they change how

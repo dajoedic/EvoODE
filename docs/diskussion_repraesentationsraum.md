@@ -471,3 +471,69 @@ Abdeckungsrechnung nahelegt:
   Bereich, der die Sättigung wirklich durchläuft, sähe es anders aus. Das ist eine Frage an das
   **Sampling**, nicht an die Basis — und sie gehört in Paper 3, wo die Achsen Rauschen,
   Abtastdichte und Kopplungsstärke ohnehin geöffnet werden.
+
+---
+
+## 12. Der Vergleich mit den Baselines — und was er für die Entscheidung bedeutet (24.08.2026)
+
+Der Protokoll-Audit hat die Repräsentationsspalte je System gefüllt
+(`docs/paper1_odebench_protocol_alignment.md` §2.6c,
+`analysis/data/paper1_phaseB_v1/representational_adequacy.csv`). Das Ergebnis verschiebt die
+Entscheidungslage ein zweites Mal, und diesmal unbequem.
+
+| Suchraum, wie evaluiert | exakt darstellbar |
+|---|---|
+| **EvoODE, gestufte Basis** | **20 / 63** |
+| SINDy, Polynombibliothek Grad 1–10 | **40 / 63** |
+| ProGED, rationale Grammatik | 53 / 63 |
+
+**Unsere Basis ist schmaler als die Standardbibliothek des nächsten Verwandten.** Nicht schmaler als
+eine exotische Konfiguration — schmaler als der Default.
+
+Und die Lücke hat genau eine Form:
+
+| was uns auf diesen 20 Systemen fehlt | Systeme |
+|---|---|
+| nur die Konstante | 10 |
+| Konstante + gemischte Monome Grad ≥ 3 | 6 |
+| nur gemischte Monome | 3 |
+| Grad ≥ 5 | 1 |
+
+Das ist **Stufe A, und sonst nichts.** Der einzelne folgenreichste Posten ist die Konstante: Nimmt
+man den Bias-Term aus der Polynombibliothek heraus, fällt SINDy von 40 auf 24. **16 der 20 Systeme
+in der Lücke hängen an einem konstanten Term.**
+
+### Was das für die Entscheidung heißt
+
+Abschnitt 11 hatte Stufe A bereits Gewicht gegeben, weil gemischte Monome die einzige Familie mit
+messbarem Approximationsverlust sind. Dieser Befund verstärkt das aus einer ganz anderen Richtung —
+und er ist der schärfere der beiden, weil er nicht von einer Messung abhängt, sondern von einem
+Vergleich, den jeder Leser selbst anstellen kann:
+
+> Ein Reviewer, der unsere Methode neben SINDy legt, sieht **20 gegen 40**, bevor er eine einzige
+> Ergebniszahl gelesen hat.
+
+Dagegen hilft keine gute Erklärung. Die einzige Antwort, die trägt, ist entweder Stufe A zu bauen
+oder die Zahl offensiv zu berichten und zu begründen, warum sie für die Aussage von Paper 1
+irrelevant ist.
+
+**Für Paper 1 ist sie das tatsächlich.** Der Beitrag ist ein Controller, der Stufen begrenzt; er
+wird auf den 20 exakten Systemen auditiert, und dort ist die Wahrheit erreichbar. Die Aussage
+„weniger Suchaufwand bei identischem Ergebnis" hängt an keiner Bibliotheksgröße. Aber die Zahl
+gehört genannt, bevor jemand anderes sie nennt.
+
+**Für die Brücke nach Paper 2 ist sie ein Argument mit neuem Gewicht.** Bisher lautete die
+Begründung für Stufe A: *19 Systeme mehr, ohne Architekturänderung*. Sie lautet jetzt: *schließt die
+gesamte Repräsentationslücke zur Standardbibliothek des nächsten Verwandten*. Das ist dieselbe
+Arbeit mit einer erheblich besseren Begründung.
+
+### Was der Befund nicht sagt
+
+Es ist eine Aussage über **Bibliotheken**, nicht über Recovery. Eine größere Bibliothek ist auch ein
+größeres Suchproblem — SINDy Grad 10 in vier Dimensionen zählt eine gewaltige Bibliothek auf, wir
+fünf Stufen. Genau diese Achse variiert unsere Methode. Darstellbarkeit ist eine Vorbedingung, keine
+Leistungsaussage.
+
+Und ein System bleibt für alle unerreichbar: **44**, das getriebene Pendel mit `|v|·v`-Dämpfung, ist
+N für unsere Basis, für die reichste SINDy-Bibliothek und für ProGEDs rationale Grammatik
+gleichermaßen.
