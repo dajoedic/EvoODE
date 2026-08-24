@@ -8,7 +8,7 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ### Repraesentationsspalte gefuellt — unsere Basis ist schmaler als SINDys Default
 
-<!-- HASH -->
+<!-- 20658b5 -->
 
 Letzter offener Phase-3-Punkt abgearbeitet: die Repraesentationsfaehigkeit je System und je
 evaluiertem Suchraum. Grundlage sind die in §2.6 dokumentierten Bibliotheken und Grammatiken der
