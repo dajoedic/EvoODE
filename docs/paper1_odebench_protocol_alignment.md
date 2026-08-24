@@ -535,12 +535,24 @@ is retained by our own integration.
 
 ## 4. Audit status
 
+Updated 2026-08-22.
+
 | Item | Status |
 |---|---|
-| EvoODE initial conditions vs dataset | verified — set 0, exact match, ten systems |
-| EvoODE grid vs dataset | verified — mismatch on all ten |
+| EvoODE initial conditions vs dataset | verified — exact match; **both** sets used since Phase B, §1.5 |
+| EvoODE grid vs dataset | verified — the pre-Phase-B per-system grids mismatched; Phase B uses the artefact's own 512-point grid |
 | Accuracy of the shipped trajectories | verified — MSE floors 2.5e-2 to 2e-7, WP-G1b |
 | Phase B sampling protocol | **decided 2026-08-03** — §3 |
 | System classification of all 63 | done, WP-P3.1 |
-| Published source protocols | not started — requires the publications |
-| Comparability verdict | **not established** |
+| Dataset provenance | **closed 2026-08-22** — upstream file identified, byte-identical, never modified here (§2.4) |
+| Sampling grid of the published evaluation | **resolved 2026-08-22** — ODEFormer evaluates on the same 512-point solutions we use (§2.6) |
+| Source audit: ODEFormer / ODEBench | **done** — §2.6 |
+| Source audit: Tonda et al. 2025 | **done** — §2.5 |
+| Representational adequacy rows | defined (three dimensions, third optional); **per-system entries not yet filled** |
+| Open question to the authors | drafted — generalization initial conditions, §2.8 and `docs/anfrage_odebench_autoren.md` |
+| Comparability verdict | **not established, and not required for Paper 1** — the paper makes no quantitative cross-method claim |
+
+**What remains.** The two audited sources are read; what is not yet written down is the per-system
+representational-adequacy table for the baselines ODEFormer reports (SINDy library variants, ProGED
+grammar, PySR operator set). That is mechanical work against §2.6, and it is the last open item of
+Phase 3.
