@@ -8,7 +8,7 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ### Erste Kampagnendaten, und ein drittes ODEBench-Artefakt
 
-<!-- HASH -->
+<!-- 37f6c5f -->
 
 **Kampagne nach zwei Tagen: 45/756, 16 laufend, null Fehler.** Alle 45 sind dim 3 — genau wie die
 Kostensortierung es vorsieht. Gegenrechnung: 48 h x 16 Kerne = 768 Kernstunden, bei einem gemessenen
