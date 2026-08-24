@@ -6,6 +6,56 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ## 2026-08-24
 
+### Repraesentationsspalte gefuellt — unsere Basis ist schmaler als SINDys Default
+
+<!-- HASH -->
+
+Letzter offener Phase-3-Punkt abgearbeitet: die Repraesentationsfaehigkeit je System und je
+evaluiertem Suchraum. Grundlage sind die in §2.6 dokumentierten Bibliotheken und Grammatiken der
+ODEFormer-Baselines, gerechnet gegen unsere Gleichungsklassifikation. Tabelle in
+`analysis/data/paper1_phaseB_v1/representational_adequacy.csv`, Auswertung in Audit §2.6c.
+
+| Suchraum | Y | U | N |
+|---|---|---|---|
+| EvoODE, gestufte Basis | **20** | 0 | 43 |
+| SINDy, Polynombibliothek Grad 1–10 | **40** | 0 | 23 |
+| SINDy, `[poly, sin, cos, exp]` | 42 | 5 | 16 |
+| SINDy, `[poly, sin, cos, exp, log, sqrt, 1/x]` | 43 | 7 | 13 |
+| ProGED, polynomiale Grammatik | 40 | 0 | 23 |
+| ProGED, rationale Grammatik | **53** | 1 | 9 |
+| ProGED, trigonometrische Grammatik | 41 | 5 | 17 |
+
+**Der Befund ist unbequem und gehoert genau deshalb auf den Tisch.** Eine schlichte
+Polynombibliothek stellt 40 von 63 Systemen exakt dar, unsere gestufte Basis 20. Wir sind also nicht
+schmaler als eine exotische Konfiguration, sondern schmaler als der **Default** des naechsten
+Verwandten.
+
+Und die Luecke hat genau eine Form: 10 Systeme brauchen nur die Konstante, 6 Konstante plus
+gemischte Monome, 3 nur gemischte Monome, 1 Grad ≥ 5. **Das ist Stufe A, und sonst nichts.** Der
+folgenreichste Einzelposten ist die Konstante — ohne Bias-Term faellt SINDy von 40 auf 24, also
+haengen 16 der 20 Systeme an einem konstanten Term.
+
+**Konsequenz fuer die Repraesentationsentscheidung.** Abschnitt 11 hatte Stufe A Gewicht gegeben,
+weil gemischte Monome die einzige Familie mit messbarem Approximationsverlust sind. Dieser Befund
+verstaerkt es aus anderer Richtung und ist der schaerfere von beiden, weil er von keiner Messung
+abhaengt: Ein Reviewer, der EvoODE neben SINDy legt, sieht 20 gegen 40, bevor er eine Ergebniszahl
+gelesen hat. Fuer die Aussage von Paper 1 ist das irrelevant — der Controller wird auf den 20
+exakten Systemen auditiert, und „weniger Suchaufwand bei identischem Ergebnis" haengt an keiner
+Bibliotheksgroesse. Aber die Zahl gehoert genannt, bevor jemand anderes sie nennt. Fuer die Bruecke
+nach Paper 2 lautet die Begruendung fuer Stufe A jetzt nicht mehr „19 Systeme mehr", sondern
+„schliesst die gesamte Repraesentationsluecke zur Standardbibliothek des naechsten Verwandten".
+
+**Die U-Verdikte sind kein Schlamperei-Rest, sondern das Ergebnis.** Produkte zweier
+Bibliotheksfunktionen (`sin(u1)*cos(u1)`), Funktionen zusammengesetzter Argumente (`sin(u1-u2)`) und
+Quotienten durch einen Zustand (`cos(u2)/u1`) sind nur darstellbar, wenn der publizierte Lauf
+Interaktionsterme ueber die Custom-Bibliothek aktiviert hatte — und das steht nirgends. Fuer diese 5
+bis 7 Systeme lautet die Antwort des Audits: aus der Beschreibung nicht entscheidbar.
+
+**Ein System ist fuer alle unerreichbar:** 44, getriebenes Pendel mit `|v|*v`-Daempfung — N fuer
+unsere Basis, fuer die reichste SINDy-Bibliothek und fuer ProGEDs rationale Grammatik.
+
+---
+
 ### Erste Kampagnendaten, und ein drittes ODEBench-Artefakt
 
 <!-- 37f6c5f -->
