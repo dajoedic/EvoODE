@@ -4,6 +4,65 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ---
 
+## 2026-08-24
+
+### Erste Kampagnendaten, und ein drittes ODEBench-Artefakt
+
+<!-- HASH -->
+
+**Kampagne nach zwei Tagen: 45/756, 16 laufend, null Fehler.** Alle 45 sind dim 3 — genau wie die
+Kostensortierung es vorsieht. Gegenrechnung: 48 h x 16 Kerne = 768 Kernstunden, bei einem gemessenen
+dim-3-Mittel von 17,7 h sind das rund 43 Zellen. Beobachtet 45. Das Kostenmodell traegt.
+
+**Und das Identitaets-Tripel ist ueber alle 45 Records einheitlich:**
+`91f88c4` / `604e79733b22d64d` / `ffb0266c7913352c`. Publizierbarkeit verlangt genau das, und es
+haelt erstmals in Produktion statt nur im Bootstrap.
+
+**Die Caps feuern wie auditiert.** System 54 → `[None,3,3]`, System 56 (Lorenz) → `[None,3,3]`. Der
+WP-C5-Befund haelt im Kampagnenlauf.
+
+**Inhaltlich der erste harte Befund**, mit der Einschraenkung, dass dies die haerteste Teilmenge ist
+(nur dim 3, nur `pretune_on`, 6 % des Feldes):
+
+| System | Typ | Loss | R² | `pruned_match` |
+|---|---|---|---|---|
+| 55 | exakt | 312–351 | 0,19–0,26 | false |
+| 56 Lorenz | exakt | 44–56 | 0,25–0,37 | false |
+| 54 IC 2 | exakt | 0,404 | 0,954 | false |
+
+Auf den chaotischen **exakten** Systemen ist der Cap korrekt bei 3, die Wahrheit liegt in der Basis,
+die Stufe ist frei — und die Suche scheitert trotzdem deutlich. Das ist woertlich die These von
+Paper 2, erstmals mit Kampagnenevidenz statt nur aus dem Regressionsgitter. Nebenbefund: System 59
+zeigt Cap-Instabilitaet zwischen den IC-Saetzen (`[None,None,5]` gegen `[None,None,None]`) — derselbe
+Effekt wie System 31, jetzt auf einem zweiten System.
+
+**Beim Absichern der Autorenanfrage ein drittes Artefakt gefunden.** `github.com/GPBench/ODEBench`,
+ein *eigenstaendiges* ODEBench-Repository, dokumentiert LSODA und **150 Punkte** als Default. Erster
+Reflex: Das koennte meine Schlussfolgerung aus `evaluate.py` kippen.
+
+Kippt sie nicht — **es gehoert Alberto Tonda**, angelegt 2025-08-06, alle Commits von ihm, also die
+Neuverpackung des Autors der methodischen Quelle, knapp zwei Jahre nach ODEFormer. Damit stehen drei
+Artefakte nebeneinander:
+
+| Artefakt | Eigentuemer | Abtastung | von einer Auswertung gelesen? |
+|---|---|---|---|
+| `strogatz_extended.json` | Benchmark-Autoren | 512 | ja, `evaluate.py` |
+| `solve_and_plot.py` | Benchmark-Autoren | 150 | nein |
+| `GPBench/ODEBench` | Tonda 2025 | 150 | ja, eigene Studie |
+
+Die Inkonsistenz entsteht **im Benchmark-Repository selbst**, und die spaetere Neuverpackung hat den
+Wert des Skripts geerbt statt den der Datendatei. Ein eigenstaendiges Repository verbreitet jetzt
+150 Punkte als ODEBench-Default, waehrend die Auswertung des Benchmarks selbst auf 512 lief. Das
+*erhoeht* den Wert der Beobachtung in der Mail — sie ist keine interne Marginalie mehr, sie hat
+einen Traeger.
+
+Zusaetzlich geprueft und ohne Treffer: `run.py`, `metrics.py`, `sklearn_wrapper.py` enthalten keinen
+zweiten Generalisierungspfad. Ungeprueft und ans Team uebergeben: OpenReview-Forum, Issues, die
+Commit-Historie von `evaluate.py`, Camera-ready gegen arXiv, Datensatz-Spiegelungen.
+Pruefauftrag in `docs/anfrage_pruefauftrag.md`.
+
+---
+
 ## 2026-08-22
 
 ### Gitterfrage im Code beantwortet — und ODEFormer rechnet auf demselben Gitter wie wir

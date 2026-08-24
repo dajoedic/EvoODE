@@ -11,6 +11,9 @@ Mathis, Philippe Schwaller, Niki Kilbertus (ODEFormer, ICLR 2024).
 - `odeformer/odebench/solve_and_plot.py` gelesen — 150 Punkte, schreibt nach `solutions.json`
 - `evaluate.py` gelesen — liest die vorberechneten Lösungen aus `strogatz_extended.json`
 - Repository-Dateibaum vollständig durchgesehen (59 Dateien)
+- `run.py`, `metrics.py`, `sklearn_wrapper.py` geprüft — kein zweiter Generalisierungspfad
+- `github.com/GPBench/ODEBench` gefunden und zugeordnet: Tondas eigene Neuverpackung von 2025,
+  nicht von den Benchmark-Autoren
 
 Damit ist die Gitterfrage beantwortet und **nicht** Teil der Mail. Übrig bleibt eine Frage.
 
@@ -36,15 +39,18 @@ condition — and the `y0_generalization` task draws a fresh initial condition v
 second curated initial condition, or from random draws? It matters for how the number should be
 read, and I would rather cite it correctly than guess.
 
-**The observation.** The repository appears to ship two different samplings of the benchmark. The
-committed `odeformer/odebench/strogatz_extended.json` carries 512-point trajectories, and this is
-what `evaluate.py` reads. The generation script in the same directory, `solve_and_plot.py`, uses
+**The observation.** The repository appears to ship two different samplings of the benchmark, and
+the difference has since propagated. The committed
+`odeformer/odebench/strogatz_extended.json` carries 512-point trajectories, and this is what
+`evaluate.py` reads. The generation script in the same directory, `solve_and_plot.py`, uses
 `t_eval = np.linspace(0, 10, 150)` and writes to `solutions.json`, which no evaluation path in the
-repository seems to read. Both are reasonable in isolation, but the difference is a factor of 3.4 in
-sampling density, and at least one later study has taken the 150-point configuration as *the*
-ODEBench protocol. Since sampling density has since been shown to affect how misleading the
-derivative-transformed search space becomes, the two are not interchangeable. You may want to
-document which is canonical.
+repository appears to read. That is a factor of 3.4 in sampling density.
+
+It has since been inherited: a stand-alone ODEBench repository (`github.com/GPBench/ODEBench`,
+2025) documents 150 uniformly sampled points as the default, and the accompanying study uses that
+configuration. Sampling density is not a neutral parameter here — that same study shows it
+correlates strongly with how misleading the derivative-transformed search space becomes — so the two
+protocols are not interchangeable. You may want to state which sampling is canonical for ODEBench.
 
 For what it is worth from the outside: the curation is the most usable ODE benchmark I have worked
 with, and the fact that the equations come with sources and descriptions is what made a careful

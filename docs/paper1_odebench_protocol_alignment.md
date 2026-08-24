@@ -421,6 +421,36 @@ curated initial condition or a random draw (above); whether the evaluation inter
 in the artefact or `[1, 10]` as stated for the model's own setting; and the per-system results,
 which are given as figures rather than tables.
 
+### 2.6b A third artefact, and it propagates the coarser grid
+
+Found 2026-08-24: a **stand-alone ODEBench repository**, `github.com/GPBench/ODEBench`, described as
+"Stand-alone repository for the ODEBench benchmark suite for system identification". Its README
+documents `scipy.integrate.solve_ivp`, LSODA, configurable `rtol`/`atol`, and **"150 points
+uniformly sampled"**, and it states that the two initial-condition sets are "the same used for the
+experiments".
+
+**Ownership matters here and settles the reading.** The repository was created 2025-08-06 and every
+commit is authored by **Alberto Tonda** — the first author of the methodological source in §2.5. It
+is a third-party repackaging made roughly two years after ODEFormer (ICLR 2024) and after the
+`strogatz_extended.json` artefact (last upstream change 2023-09-29). It is **not** a publication of
+the benchmark's original authors.
+
+So the three artefacts line up as:
+
+| Artefact | Owner | Sampling | Read by an evaluation? |
+|---|---|---|---|
+| `strogatz_extended.json` in `sdascoli/odeformer` | benchmark authors | **512** | yes — `evaluate.py` |
+| `solve_and_plot.py` in the same repository | benchmark authors | 150 | no — writes `solutions.json`, unread |
+| `GPBench/ODEBench`, stand-alone | Tonda (2025) | 150 | yes — his own study |
+
+This does not weaken §2.6, it sharpens it. The inconsistency originates *inside* the benchmark
+repository — a committed data file and a generation script that disagree — and the later
+repackaging inherited the script's value rather than the data file's. A stand-alone repository now
+propagates 150 points as the ODEBench default while the benchmark's own evaluation ran on 512.
+
+That is worth telling the authors, and it raises the value of the observation in §2.8 rather than
+lowering it: the discrepancy is no longer internal trivia, it has a downstream carrier.
+
 ### 2.7 The grid is a condition of our results, not background
 
 Two consequences follow from §2.4 and §2.6, and they are recorded here because they change how
