@@ -18,8 +18,8 @@ derived, and where it is still blind. The mechanics of getting code onto the clu
 | Projected compute | **~3,384 core-hours** on a `pretune_on` basis — see §3 for the correction |
 | Platform | SCCH "Orion", OpenShift/Kubernetes, 96 cores across two worker nodes |
 | Agreed concurrency | `parallelism: 16`, raise on request |
-| Wall time at 16 | **~9 days** (3,384 / 16 ≈ 212 h) |
-| Makespan floor | **68 h** — the longest single cell; no parallelism gets the campaign under 3 days |
+| Wall time at 16 | projected ~9 days; **revised to ~12 days** from the running campaign, §3b |
+| Makespan floor | projected 68 h from the pilot; **the longest cell observed so far is 123.5 h**, §3b |
 | Cores per cell | 1, explicitly single-threaded |
 | Memory per cell | ~1 GB resident, 2 GB requested |
 | Storage | < 10 GB total, ~50 MB read-only input |
