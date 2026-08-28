@@ -113,6 +113,49 @@ are demonstrably unusable as a proxy for **compute time**.
 
 ---
 
+## 3b. What the running campaign says about this model (2026-08-28)
+
+At 75 of 756 cells, all of them dimension 3, the model can be checked against itself for the first
+time.
+
+**The class mean holds.** Measured dim-3 mean in the campaign: **20.5 h** against the pilot's
+17.7 h — a factor of 1.16. As a capacity figure the pilot was good.
+
+**The per-system spread is what the pilot could not see, and it is enormous.**
+
+| System | cells done | mean h |
+|---|---|---|
+| 57 | 6 | **0.3** |
+| 52 | 12 | 1.5 |
+| 53 | 12 | 2.7 |
+| 60 | 6 | 6.6 |
+| 58 | 6 | 10.1 |
+| 54 | 11 | 29.2 |
+| 59 | 6 | 32.6 |
+| 56 | 4 | 36.6 |
+| 61 | 6 | 38.2 |
+| **55** | 6 | **47.3** |
+
+A factor of **150** between the cheapest and the most expensive system inside one dimension class.
+The single most expensive cell so far ran **123.5 h** — System 55, IC 2, seed 7, `pretune_on`,
+7.6 million loss evaluations, final loss 262. That is nearly twice the pilot's worst cell and it
+belongs to a system the pilot never measured.
+
+**Both blind spots of §4 are confirmed, not refuted.** System 55 was unmeasured; System 54 was never
+measured under `pretune_off` and now averages 29.2 h there. And the seed spread inside one system
+and condition reaches a factor of 9.5 (System 59, `pretune_on`, 8.5 h to 80.9 h).
+
+**Revised remaining time.** With campaign means for the open dim-3 cells and the pilot class means
+for the rest: **2,100–2,300 core-hours remaining, i.e. 5.5 to 6 days at `parallelism: 16`**. Total
+campaign duration therefore lands near **12 days** rather than the 9 projected in §1. The projection
+was not wrong about cost — it was wrong about *where* the cost sits, which is the same lesson §2
+drew from the pilot.
+
+The dominant remaining uncertainty is unchanged: the 336 dimension-2 cells carry roughly half the
+remaining work and rest on a class mean whose median is 15 times smaller.
+
+---
+
 ## 4. What the projection is still blind to
 
 1. **Systems 1–23 rest on a single measured system** (System 1, 3 records), and System 63 on none.
