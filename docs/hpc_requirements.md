@@ -19,7 +19,7 @@ derived, and where it is still blind. The mechanics of getting code onto the clu
 | Platform | SCCH "Orion", OpenShift/Kubernetes, 96 cores across two worker nodes |
 | Agreed concurrency | `parallelism: 16`, raise on request |
 | Wall time at 16 | projected ~9 days; **revised to ~12 days** from the running campaign, §3b |
-| Makespan floor | projected 68 h from the pilot; **the longest cell observed so far is 123.5 h**, §3b |
+| Makespan floor | projected 68 h from the pilot; **the longest finished cell is 183.6 h and one cell has been running 192 h**, §3c |
 | Cores per cell | 1, explicitly single-threaded |
 | Memory per cell | ~1 GB resident, 2 GB requested |
 | Storage | < 10 GB total, ~50 MB read-only input |
@@ -141,6 +141,9 @@ The single most expensive cell so far ran **123.5 h** — System 55, IC 2, seed 
 7.6 million loss evaluations, final loss 262. That is nearly twice the pilot's worst cell and it
 belongs to a system the pilot never measured.
 
+*(Superseded on 2026-08-30: see §3c — the worst cell is now 183.6 h finished, and Lorenz cell 25 is
+still running after 192 h.)*
+
 **Both blind spots of §4 are confirmed, not refuted.** System 55 was unmeasured; System 54 was never
 measured under `pretune_off` and now averages 29.2 h there. And the seed spread inside one system
 and condition reaches a factor of 9.5 (System 59, `pretune_on`, 8.5 h to 80.9 h).
@@ -153,6 +156,34 @@ drew from the pilot.
 
 The dominant remaining uncertainty is unchanged: the 336 dimension-2 cells carry roughly half the
 remaining work and rest on a class mean whose median is 15 times smaller.
+
+---
+
+## 3c. Second check, at 93 of 756 cells (2026-08-30)
+
+Eight days in, `parallelism: 16`, **0 failures**, 93 succeeded, 16 running, 109 of 756 cells started.
+All started cells are dimension 3, i.e. the campaign is 11 cells short of finishing the most
+expensive dimension class and has not yet touched the other 636.
+
+**The makespan figure of §3b is already overtaken.** Finished cells now reach **183.6 h** (cell 21),
+with 166.4 h and 123.5 h behind it. More importantly, **cell 25 — System 56 (Lorenz), IC set 1,
+seed 123, `pretune_on` — has occupied one of the 16 slots since the campaign started and is past
+192 h.** It, not the class mean, now defines the floor: the campaign cannot finish before that cell
+does. Two further slots are long-term blocked (cell 79 at 130 h, cell 83 at 103 h), so effective
+concurrency on the remaining field is 13, not 16.
+
+**Consumption so far:** 2,442 core-hours in the 93 finished cells, roughly 766 h more in the 16 open
+ones — about **3,208 core-hours for 14 % of the field**. The §1 figure of 3,384 core-hours is
+therefore spent, and the model was wrong in the direction §3b named: not about the class mean, about
+where inside a class the cost sits.
+
+**What this does and does not say about the remaining time.** The 647 unstarted cells are dimensions
+1, 2 and 4 and are ordered cost-descending, so they are individually far cheaper; §3b's estimate of
+5.5 to 6 days remaining, dated 2026-08-28, is not refuted by anything measured here. But it rests on
+pilot class means for exactly those dimensions, and the one class where a campaign check exists
+showed a factor of 150 spread inside the class. **The estimate should be read as a class-mean
+capacity figure, not as a completion date**, and the 336 dimension-2 cells remain the dominant
+uncertainty, unchanged since §3b.
 
 ---
 

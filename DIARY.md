@@ -4,6 +4,40 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ---
 
+## 2026-08-30
+
+### Kampagne bei 93/756 — die Makespan-Zahl ist ueberholt, das Kostenmodell aufgebraucht
+
+Statusabfrage am Cluster, acht Tage nach dem Start. Job `evoode-phase-b-campaign`: **93 succeeded,
+16 running, 0 failed**, 109 von 756 Zellen gestartet. Alle gestarteten Zellen sind Dimension 3 — die
+Kostensortierung arbeitet also noch immer die teuerste Klasse ab und hat die restlichen 636 Zellen
+noch nicht angefasst.
+
+**Der Befund ist die Makespan-Zahl, nicht der Durchsatz.** §3b hatte am 2026-08-28 bei 75 Zellen die
+teuerste beobachtete Zelle mit 123,5 h notiert. Inzwischen sind **183,6 h** fertig (Zelle 21), und
+entscheidender: **Zelle 25 — System 56 (Lorenz), IC-Satz 1, Seed 123, `pretune_on` — belegt seit dem
+Start einen der 16 Slots und laeuft jenseits von 192 h.** Damit definiert nicht mehr der Klassenmittel-
+wert den Boden, sondern diese eine Zelle: Die Kampagne kann nicht vor ihr fertig werden. Zwei
+weitere Slots haengen langfristig fest (Zelle 79 bei 130 h, Zelle 83 bei 103 h), die effektive
+Nebenlaeufigkeit auf dem Restfeld ist also 13 statt 16.
+
+**Das Kostenbudget aus §1 ist ausgegeben.** 2.442 Kernstunden in den 93 fertigen Zellen, rund 766 h
+in den 16 offenen — etwa **3.208 Kernstunden fuer 14 % des Feldes**, gegen projizierte 3.384 fuer
+alles. Der Fehler liegt genau dort, wo §3b ihn schon lokalisiert hatte: nicht im Klassenmittel,
+sondern in der Verteilung innerhalb der Klasse.
+
+**Was das ueber die Restzeit nicht sagt.** Die 647 ungestarteten Zellen sind Dimension 1, 2 und 4 und
+kostabsteigend sortiert, also einzeln deutlich billiger. §3b's 5,5 bis 6 Tage Restzeit sind durch
+nichts hier widerlegt. Sie ruhen aber auf Pilot-Klassenmitteln fuer genau diese Dimensionen, und in
+der einen Klasse, fuer die es inzwischen Kampagnendaten gibt, betrug die Spreizung *innerhalb* der
+Klasse einen Faktor 150. Die Zahl ist eine Kapazitaetsangabe, kein Fertigstellungsdatum. Die 336
+Dimension-2-Zellen bleiben die dominante Unsicherheit — unveraendert seit §3b.
+
+Dokumentiert als `docs/hpc_requirements.md` §3c; die ueberholte 123,5-h-Zeile im Kopf und in §3b ist
+als ueberholt markiert statt geloescht.
+
+---
+
 ## 2026-08-24
 
 ### Repraesentationsspalte gefuellt — unsere Basis ist schmaler als SINDys Default
