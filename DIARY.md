@@ -8,6 +8,8 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ### Kampagne bei 93/756 — die Makespan-Zahl ist ueberholt, das Kostenmodell aufgebraucht
 
+<!-- ce0f7f7 -->
+
 Statusabfrage am Cluster, acht Tage nach dem Start. Job `evoode-phase-b-campaign`: **93 succeeded,
 16 running, 0 failed**, 109 von 756 Zellen gestartet. Alle gestarteten Zellen sind Dimension 3 — die
 Kostensortierung arbeitet also noch immer die teuerste Klasse ab und hat die restlichen 636 Zellen
