@@ -8,6 +8,8 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ### Erste Qualitaetsauswertung der Kampagne, 102 Zellen — und 45 % der Rechenzeit faellt nach der letzten Verbesserung
 
+<!-- eecd778 -->
+
 Die Records liegen ueber Laufwerk `S:` lesbar vor, ohne Clusterzugriff; die Kampagne bleibt
 unberuehrt. Ausgewertet wurden alle 102 fertigen Zellen plus die 118 Heartbeat-Stroeme.
 
