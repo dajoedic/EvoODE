@@ -4,6 +4,90 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ---
 
+## 2026-08-31
+
+### Erste Qualitaetsauswertung der Kampagne, 102 Zellen — und 45 % der Rechenzeit faellt nach der letzten Verbesserung
+
+Die Records liegen ueber Laufwerk `S:` lesbar vor, ohne Clusterzugriff; die Kampagne bleibt
+unberuehrt. Ausgewertet wurden alle 102 fertigen Zellen plus die 118 Heartbeat-Stroeme.
+
+**Hygiene zuerst:** alle 102 Records tragen *ein* Identitaets-Tripel
+(`91f88c4` / `604e79733b22d64d` / `ffb0266c7913352c`), `git_dirty = false`, null Fehler. Die
+Publizierbarkeitsbedingung aus WP-P1 haelt erstmals ueber eine dreistellige Zahl von Produktions-
+records.
+
+**Alles Folgende gilt fuer die haertesten 16 % des Feldes** — ausnahmslos Dimension 3, ausnahmslos
+Attraktoren, vier davon chaotisch. Die Kostensortierung liefert das Schlimmste zuerst, und genau das
+ist hier zu sehen. Ueber Dimension 1 und 2 sagt der Befund nichts.
+
+#### Exakte Systeme: `pruned_match` = 0 von 40
+
+| System | | Loss (Median) | R² (Median) |
+|---|---|---|---|
+| 54 | Lorenz, gutartig | 0,21 | **0,966** |
+| 56 | Lorenz, Standard | 53,6 | 0,247 |
+| 61 | Chen-Lee | 62,9 | 0,196 |
+| 55 | Lorenz, komplex | 351 | 0,186 |
+
+Kein einziger Support-Treffer. Das ist die bekannte Luecke, hier ohne jede Abmilderung: System 54
+erreicht R² 0,966 und trifft die Struktur trotzdem nicht, 55/56/61 scheitern auch im Fit. Die
+Kampagne bestaetigt damit auf breiterer Basis, was das Regressionsgitter schon zeigte — und was
+woertlich die These von Paper 2 ist.
+
+#### Surrogate: R² Median 0,787
+
+62 Zellen, 20 davon ueber 0,9, genau eine ueber 0,99, sieben unter 0,5. Schlusslicht ist der
+Aizawa-Attraktor (60) mit 0,44.
+
+#### Der Kontrast, fuer den die Kampagne existiert
+
+42 vollstaendige `(System, IC, Seed)`-Paare. **`pretune_on` gewinnt 34 von 42 beim Loss**,
+Median-Loss 0,022 gegen 0,075, Median-R² 0,789 gegen 0,646. Ein klares gerichtetes Ergebnis, und es
+steht auf der ungnaedigsten Teilmenge, die das Feld hergibt.
+
+Nebenbefund, der die Kostenlehre aus `hpc_requirements.md` §3 bestaetigt: `pretune_on` leistet in
+*Zaehlern* mehr Arbeit (5,0 Mio. Loss-Evaluationen im Median gegen 2,9 Mio.) und verbraucht in
+Kernstunden ungefaehr gleich viel (1.334 h gegen 1.468 h). Zaehler und Rechenzeit laufen wieder
+auseinander; die Zeitdifferenz darf nicht als Speedup berichtet werden.
+
+#### Die Laufzeitfrage, beantwortet
+
+**1.262 von 2.802 Kernstunden — 45 % — fallen nach der letzten Verbesserung an.** Rekonstruiert aus
+den Heartbeats, die `best_loss` pro Level lueckenlos tragen (keine Level-Luecken in 102 von 102
+Stroemen). Extremfall: eine Zelle auf System 56 verbringt 142 ihrer 166 Stunden stumm.
+
+Und die Kosten-Qualitaets-Beziehung ist **invertiert**:
+
+| | Median Laufzeit | Median R² |
+|---|---|---|
+| billigere Haelfte | 4,2 h | **0,795** |
+| teurere Haelfte | 42,2 h | **0,427** |
+
+Die Rechenzeit wird von den Zellen erzeugt, die scheitern. Das ist das WP-B1-Argument, jetzt mit
+Kampagnendaten und deutlich schaerfer als aus dem Piloten.
+
+**Es ist aber kein Argument fuer ein Konstanten-k, und der Grund ist neu.** Die teuren Systeme haben
+*wenige* stumme Levels (55: 8, 56: 6, 59: 3, 61: 3 von 30) — sie verbessern sich bis spaet, nur
+immer marginaler. Die vielen stummen Levels sitzen bei den *billigen* Systemen (53: 19, 57: 15,
+52: 13,5). Ein globales „stoppe nach k stummen Levels" wuerde also dort sparen, wo ohnehin wenig zu
+holen ist, und die teuren Zellen kaum anfassen. WP-B1s Ablehnung eines konfigurierten k wird
+bestaetigt, nicht widerlegt. Was die 45 % rechtfertigen, ist ein **strukturiertes** Kriterium mit
+Blick auf die Verbesserungsrate, und das bleibt eine eigene Forschungsfrage.
+
+#### Metadaten-Luecke, ohne Kampagneneingriff reparierbar
+
+`wasted_levels` und `eq_wasted_levels` werden in `experiments/run_experiment.jl:385` nur im
+`representability == "exact"`-Zweig berechnet — die Definition haengt an `expected_stage`, also an
+der bekannten Wahrheit. Fuer 43 der 63 Systeme bleiben beide Felder `null`. Die Waste-Zahl, die die
+Kampagne laut `CLAUDE.md` als Ergebnis berichten will, fehlt damit fuer zwei Drittel des Feldes.
+
+**Das ist kein Neustartgrund.** Die WP-B1-Groesse ist „Levels seit der letzten Verbesserung" und
+braucht die Wahrheit gar nicht; sie steht vollstaendig in den Heartbeats und ist genau der Weg, ueber
+den die 45 % oben entstanden sind. Der Nachbau gehoert in die Analyse-Pipeline, nicht in den
+Kampagnenpfad.
+
+---
+
 ## 2026-08-30
 
 ### Kampagne bei 93/756 — die Makespan-Zahl ist ueberholt, das Kostenmodell aufgebraucht

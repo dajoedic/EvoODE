@@ -336,6 +336,10 @@ the coupled search path 1e-6 is the cheaper, behaviour-equal tolerance; the Syst
 - the stage cap is not stable across initial conditions where the trajectory carries little
   dynamics (System 31, IC set 2)
 - Phase B needs a machine: 756 runs, ~1e9 ODE solves; not a laptop workload
+- `wasted_levels` / `eq_wasted_levels` are computed only for `representability == "exact"`
+  (`experiments/run_experiment.jl:385`), so they are `null` for 43 of 63 systems. The WP-B1 waste
+  measure does not need the truth and is fully recoverable from the heartbeat `best_loss` stream —
+  rebuild it in the analysis pipeline, never in the campaign path
 - no train/validation split in discovery; no noise injection utilities
 - no systematic comparison against ODEBench baselines (SINDy, PySR) yet — Phase 5
 - expression trees are not implemented
