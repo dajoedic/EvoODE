@@ -8,6 +8,8 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ### 224 von 756 — die ersten Support-Treffer der Kampagne, und Dimension 3 ist 98 % der Rechenzeit
 
+<!-- ca2cb85 -->
+
 Achtzehn Stunden nach der ersten Qualitaetsauswertung: **224 fertige Zellen statt 102**, plus 122,
 weiterhin **null Fehler**, weiterhin ein einziges Identitaets-Tripel ueber alle Records
 (`91f88c4` / `604e79733b22d64d` / `ffb0266c7913352c`, `git_dirty = false`). Der dim-3-Block ist
