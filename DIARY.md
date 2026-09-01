@@ -4,6 +4,82 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ---
 
+## 2026-09-01
+
+### 224 von 756 — die ersten Support-Treffer der Kampagne, und Dimension 3 ist 98 % der Rechenzeit
+
+Achtzehn Stunden nach der ersten Qualitaetsauswertung: **224 fertige Zellen statt 102**, plus 122,
+weiterhin **null Fehler**, weiterhin ein einziges Identitaets-Tripel ueber alle Records
+(`91f88c4` / `604e79733b22d64d` / `ffb0266c7913352c`, `git_dirty = false`). Der dim-3-Block ist
+durch, die Kostensortierung liefert jetzt das billige Feld.
+
+#### Der Kostenkontrast zwischen den Dimensionsklassen ist brutal
+
+| Klasse | Zellen | Kernstunden | Mittel je Zelle |
+|---|---|---|---|
+| dim 3 | 113 | **3.159** | 27,96 h |
+| dim 2 | 111 | **61** | 0,55 h |
+
+Praktisch gleich viele Zellen, **Faktor 52 im Mittelwert**, und Dimension 3 traegt 98 % der bisher
+verbrauchten Rechenzeit. Damit ist die Warnung aus `hpc_requirements.md` §3b — die 336
+dim-2-Zellen ruhten auf einem Klassenmittel, dessen Median 15-mal kleiner ist — nach oben aufgeloest:
+Das Klassenmittel war nicht zu klein, sondern die dim-3-Klasse zu teuer. Das Restfeld ist billig.
+
+#### Die ersten Support-Treffer, und wo sie sitzen
+
+| Klasse | exakte Zellen | `pruned_match` | Surrogat-R² (Median) |
+|---|---|---|---|
+| dim 3 | 45 | **0** | 0,758 |
+| dim 2 | 54 | **23** | **0,984** |
+
+Auf Dimension 2 gelingt Strukturfindung also ueberhaupt — zum ersten Mal in dieser Kampagne. Und die
+Verteilung ist informativ:
+
+| System | | Treffer | Loss (Median) |
+|---|---|---|---|
+| 24 | harmonischer Oszillator, ungedaempft | **6/6** | 1,2e-14 |
+| 25 | harmonischer Oszillator, gedaempft | **6/6** | 8,6e-15 |
+| 27 | Lotka-Volterra, einfach | 5/6 | 3,1e-08 |
+| 32 | gedaempfter Doppelmuldenoszillator | 3/6 | 19,6 |
+| 38 | Van der Pol, vereinfacht | 3/6 | 1,6e-09 |
+| 26 | Lotka-Volterra, Konkurrenz | **0/6** | 3,9e-04 |
+| 28 | Pendel ohne Reibung | **0/6** | 3,0e-05 |
+| 29 | Dipol-Fixpunkt | **0/6** | 7,2e-04 |
+| 31 | SIR | **0/6** | 6,7e-05 |
+
+**Die untere Haelfte ist der eigentliche Befund.** Vier Systeme mit einem Loss zwischen 3e-5 und
+7e-4 — also einem sehr guten Fit — und trotzdem null Struktur-Treffer. Das ist der Befund des
+Regressionsgitters, jetzt auf vier zusaetzlichen Systemen und in einer Klasse, in der die Suche
+nachweislich treffen *kann*: Systeme 24 und 25 sitzen im selben Lauf und treffen 6 von 6. Niedriger
+Loss und richtige Struktur sind also nicht dasselbe, und der Unterschied ist nicht die Schwierigkeit
+der Klasse.
+
+Surrogate auf dim 2 sind stark: 33, 34 und 36 bei R² ≥ 0,999, Schlusslicht ist 41 (Zellzyklus nach
+Tyson) mit 0,854.
+
+#### Ein Vorbehalt, der die Zahlen oben bindet
+
+**Alle 111 dim-2-Zellen sind `pretune_on`.** Die Kostensortierung hat die `pretune_off`-Haelfte der
+Klasse noch nicht angefasst, es gibt auf Dimension 2 also **keinen Kontrast**. Der Paper-Kontrast
+steht weiterhin ausschliesslich auf Dimension 3 — dort inzwischen **53 Paare, `pretune_on` gewinnt
+44**, Median-Loss 0,161 gegen 0,274. Ob die Richtung auf dim 2 haelt, ist offen; die 23 Treffer oben
+sind kein Ergebnis *ueber* die Bedingungen, sondern eines *innerhalb* einer Bedingung.
+
+#### Das Ende der Kampagne haengt jetzt an zwei Zellen
+
+516 ungestartete Zellen, ueberwiegend dim 1 und 2, nach dem gemessenen dim-2-Mittel grob wenige
+hundert Kernstunden. Das Feld begrenzt die Laufzeit nicht mehr. Was sie begrenzt:
+
+- **Zelle 25** — System 56 (Lorenz), IC 1, Seed 123, `pretune_on` — **10 Tage**, seit dem Start
+- **Zelle 79** — System 55, `pretune_off` — 7 d 4 h
+
+Beide halten je einen der 16 Slots. Fuer die angekuendigte Wartung (SILVERTON/STERLING, Notfenster
+7.9., Migration 13.10.) heisst das: Der 13. Oktober ist praktisch vom Tisch, und der 7. September
+ist nur dann relevant, falls `nfs.orion.scch.at` von einem der beiden Systeme bedient wird. Compute
+laeuft auf `alnilam01/02`, also nicht auf den angekuendigten Maschinen.
+
+---
+
 ## 2026-08-31
 
 ### Erste Qualitaetsauswertung der Kampagne, 102 Zellen — und 45 % der Rechenzeit faellt nach der letzten Verbesserung
