@@ -4,6 +4,55 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ---
 
+## 2026-09-02
+
+### Der Kontrast auf Dimension 2 ist ein Unentschieden — und die teuerste Zelle der Kampagne ist ein Fehlschlag
+
+308 von 756 fertig, weiterhin **null Fehler**, weiterhin ein Identitaets-Tripel ueber alle Records
+(`91f88c4` / `604e79733b22d64d` / `ffb0266c7913352c`, `git_dirty = false`). Dimension 1 ist noch
+nicht angefangen; verbraucht sind 3.563 Kernstunden auf 117 dim-3-Zellen gegen 230 auf 191
+dim-2-Zellen.
+
+#### Der offene Punkt von gestern ist beantwortet, und die Antwort ist nicht die erwartete
+
+Gestern war festgehalten, dass alle dim-2-Zellen `pretune_on` waren und der Paper-Kontrast deshalb
+allein auf Dimension 3 stand. Inzwischen liegen **28 vollstaendige Paare auf Dimension 2** vor (alle
+exakt, Systeme 24–29):
+
+| | Paare | `on` besser | `off` besser | Support-Treffer on/off | Median Loss-Evals on/off |
+|---|---|---|---|---|---|
+| **dim 2** | 28 | **14** | **14** | 17 / 16 | **1,1e5 / 4,9e5** |
+| dim 3 | 57 | **45** | 12 | 0 / 0 | 5,0e6 / 3,2e6 |
+
+Auf Dimension 2 macht Pretuning **qualitativ keinen Unterschied**: 14:14 beim Loss, Mediane
+praktisch identisch (1,892e-08 gegen 1,841e-08), Support-Treffer 17 gegen 16. Es ist aber
+**4,34-mal billiger in Zaehlern**.
+
+**Die Richtung des Kontrasts haengt also an der Dimension, und das sind zwei verschiedene Aussagen,
+nicht eine abgeschwaechte.** Auf dim 2: gleich gut, deutlich billiger. Auf dim 3: besser, und dort
+sogar teurer in Zaehlern (5,0e6 gegen 3,2e6). Eine ueber alle Dimensionen gemittelte Zahl wuerde
+beide Aussagen zerstoeren und ist zu vermeiden — das ist dieselbe Lehre, die WP-A4 fuer die
+IC-Saetze gezogen hat.
+
+Anzumerken ist, dass die 28 dim-2-Paare aus nur sechs Systemen stammen (24, 25, 26, 27, 28, 29) und
+die Klasse 336 Zellen umfasst. Die Aussage ist belastbar fuer diese sechs Systeme, nicht fuer die
+Klasse.
+
+#### Zelle 79: 185,7 Stunden fuer einen Fehlschlag
+
+System 55, `pretune_off`, IC 1, Seed 123 — die zweite der beiden Torwaechter-Zellen ist fertig und
+setzt einen neuen Kampagnenrekord in der Laufzeit: **185,7 h**, 3,82 Mio. Loss-Evaluationen.
+Ergebnis: **Loss 336,7, R² 0,194, kein Support-Treffer, Endstufe 4**.
+
+Die teuerste Zelle der Kampagne liefert damit eines ihrer schlechtesten Ergebnisse. Das ist die am
+2026-08-31 gemessene invertierte Kosten-Qualitaets-Beziehung, hier nicht als Aggregat ueber
+Haelften, sondern in einer einzelnen, benennbaren Zelle.
+
+Damit haengt das Kampagnenende nur noch an **Zelle 25** — System 56 (Lorenz), IC 1, Seed 123,
+`pretune_on` — seit dem Start in Betrieb, inzwischen **11 Tage**.
+
+---
+
 ## 2026-09-01
 
 ### 224 von 756 — die ersten Support-Treffer der Kampagne, und Dimension 3 ist 98 % der Rechenzeit
