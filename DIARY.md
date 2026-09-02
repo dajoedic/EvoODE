@@ -8,6 +8,8 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ### Der Kontrast auf Dimension 2 ist ein Unentschieden — und die teuerste Zelle der Kampagne ist ein Fehlschlag
 
+<!-- eaf52d7 -->
+
 308 von 756 fertig, weiterhin **null Fehler**, weiterhin ein Identitaets-Tripel ueber alle Records
 (`91f88c4` / `604e79733b22d64d` / `ffb0266c7913352c`, `git_dirty = false`). Dimension 1 ist noch
 nicht angefangen; verbraucht sind 3.563 Kernstunden auf 117 dim-3-Zellen gegen 230 auf 191
