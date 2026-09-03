@@ -8,6 +8,8 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ### Das Feedback von 2024 gegen den heutigen Stand — ein Punkt haelt, und er korrigiert unsere eigene Erzaehlung
 
+<!-- 90fb639 -->
+
 Eine zusammengefasste Diskussion ueber die urspruengliche Dissertationsidee wurde gegen den
 aktuellen Code geprueft. Der groesste Teil ist erledigt oder bewusst verworfen; ein Punkt ist heute
 schaerfer als damals.
