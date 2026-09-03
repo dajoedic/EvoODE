@@ -594,6 +594,40 @@ Introducing a constant that does not follow from the data would repeat the WP-C4
 uncovered. A structured stopping criterion is an open research question of this project, not a
 configuration constant, and it belongs to the next paper.
 
+### Method Positioning — integration versus differentiation, stated honestly
+
+The project's founding motivation was that candidate models are judged by integrated trajectories
+rather than by pointwise derivative estimates, so that noisy differentiation never enters the
+evaluation. That framing is no longer accurate as a blanket statement and must not be written that
+way.
+
+Evaluation is trajectory-based: the loss is MSE between the integrated candidate trajectory and the
+data (`src/loss/mse.jl`), and the selection objective is `loss + lambda * n_params`
+(`src/structure/evogrow.jl`). No derivative estimate reaches the loss.
+
+But the Paper 1 contribution itself is derivative-based. The look-ahead stage cap estimates
+derivatives before the search starts — central differences or a local polynomial fit
+(`_cap_estimate_derivatives`, `src/structure/stage_cap.jl`) — and decides the per-equation stage
+boundary from residuals in derivative space. The OLS warm start (`src/optimize/pretune.jl`) uses
+finite differences as well, and WP-R1's reference fit is a derivative-space argument.
+
+The correct statement therefore separates two roles:
+
+- **evaluation** is trajectory-based, with no derivative estimate in the objective;
+- **structural pre-analysis** is derivative-based, and its estimate never has to carry the model
+  quality, only the boundary of the search space.
+
+This is a stronger position than the original one, because the project has measured what happens
+when a derivative estimate is let into the evaluation loop: WP-L2 showed v3's promotion signal
+`r_k` to be derivative-error contaminated, with its absorption capacity growing in term count, and
+Gate 2 rejected v3. The separation of roles is thus an empirical finding of the failure analysis,
+not a design preference.
+
+Where this must appear: Method (section 3, when the cap is introduced), Failure Analysis
+(section 4, as the v3 lesson), and Limitations (section 8 — cap quality is bounded by derivative
+estimate quality, which is the documented mechanism behind the System 63 and low-dynamics IC
+cases).
+
 ### Published Reference Context
 
 External numbers are cited as published context only until the protocol audit establishes
@@ -647,6 +681,11 @@ Outside Paper 1 scope, deliberately:
   under `pretuning=false` duplicates act as implicit multistarts, so a cache would change the
   experimental condition rather than merely accelerate it
 - adaptive basis redesign; alternative pruning and sparsification strategies
+- **scored, error-guided term selection** — expansion is currently uniform random over allowed
+  terms and equations (`_expand`, `src/structure/evogrow.jl`), with the usage policy the only
+  non-uniformity; a candidate score over predicted improvement and term cost belongs to the
+  within-stage search power question and is the mechanism the persistent `pruned_match = false`
+  on coupled systems points at
 - equation-wise v3 extensions beyond the rejected residual-promotion rule
 
 ---

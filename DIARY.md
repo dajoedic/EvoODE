@@ -4,6 +4,52 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ---
 
+## 2026-09-03
+
+### Das Feedback von 2024 gegen den heutigen Stand — ein Punkt haelt, und er korrigiert unsere eigene Erzaehlung
+
+Eine zusammengefasste Diskussion ueber die urspruengliche Dissertationsidee wurde gegen den
+aktuellen Code geprueft. Der groesste Teil ist erledigt oder bewusst verworfen; ein Punkt ist heute
+schaerfer als damals.
+
+**Erledigt oder obsolet.** Die Forderung nach sauberen Definitionen von `E` und `Delta E` ist
+gegenstandslos: es gibt kein Delta-E-Scoring, der Loss ist fixes MSE auf der integrierten
+Trajektorie, das Selektionskriterium `loss + lambda * n_params`. Die Frage nach einem Mass fuer
+strukturelle Komplexitaet ist dreifach beantwortet (lambda-Term, gestufte Basis, Stage-Cap) und
+bildet die Achse des Papers. Die adaptive Datenauswahl ist faktisch mit *nein* beantwortet — kein
+Gewichtungsmechanismus, kein Train/Val-Split, keine Noise-Injection. Der Unsicherheitszweig
+(local variance gegen statistical uncertainty) existiert nicht.
+
+**Nie gebaut, und als Luecke benannt.** Die probabilistische, Boltzmann-artige Termauswahl gibt es
+nicht: kein `softmax`, keine Temperatur, kein Kandidaten-Score. Die Expansion waehlt Gleichung und
+Term uniform zufaellig (`_expand`), die Selektion sortiert elitaer nach `objective`; einzige
+Nicht-Uniformitaet ist die Usage-Policy. Das ist genau die Stelle, auf die `pruned_match = false`
+auf gekoppelten Systemen zeigt. Als Future-Work-Punkt in `PAPER_1.md` aufgenommen.
+
+**Der Punkt, der haelt: Integration gegen Differentiation.** Die Gruenderzaehlung — wir schaetzen
+keine Ableitungen — ist als pauschale Aussage nicht mehr haltbar. Die Bewertung ist
+trajektorienbasiert, aber der Paper-1-Beitrag selbst ist ableitungsbasiert:
+`_cap_estimate_derivatives` in `src/structure/stage_cap.jl` schaetzt vor Suchbeginn per zentraler
+Differenzen oder lokaler Polynomanpassung, das OLS-Warmstart-Pretuning ebenfalls, und WP-R1
+argumentiert im Ableitungsraum.
+
+Die Korrektur trennt zwei Rollen: Bewertung ohne Ableitungsschaetzung, strukturelle Voranalyse mit
+ihr. Diese Trennung ist keine Designpraeferenz, sondern ein Messergebnis — WP-L2 hat gezeigt, dass
+v3s Promotionssignal `r_k` ableitungsfehler-kontaminiert ist und seine Absorptionskapazitaet mit der
+Termzahl waechst; Gate 2 hat v3 verworfen. Damit ist die Position staerker als die urspruengliche,
+weil Evidenz dahintersteht. Unausgesprochen waere sie die erste Reviewer-Frage.
+
+Festgehalten in `PAPER_1.md`, Phase 6, als *Method Positioning*, mit den drei Stellen im Paper, an
+denen es stehen muss: Method (Einfuehrung des Caps), Failure Analysis (die v3-Lehre), Limitations
+(Cap-Qualitaet ist durch Ableitungsqualitaet begrenzt — der dokumentierte Mechanismus hinter System
+63 und den IC-Saetzen mit wenig Dynamik).
+
+**Offen bleibt** der Anwendungs- und Nutzenpunkt: fuer welche Problemklasse die Methode einen
+messbaren Vorteil hat. Das ist woertlich die Frage, die die externen Spalten des Protokoll-Audits
+beantworten muessen, und damit kein neuer Punkt.
+
+---
+
 ## 2026-09-02
 
 ### Der Kontrast auf Dimension 2 ist ein Unentschieden — und die teuerste Zelle der Kampagne ist ein Fehlschlag
