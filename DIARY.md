@@ -8,7 +8,7 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ### Die Verschwendungsmessung auf Kampagnenbreite — und `n_levels` war nie eine Messung
 
-<!-- COMMIT_HASH_6 -->
+<!-- 87b2468 -->
 
 WP-A9 schliesst die Auswertung ab: die WP-B1-Verschwendungsgroesse aus den 756 Heartbeat-Stroemen und
 die Systemtabelle mit 252 Zeilen. Alle Zahlen unabhaengig aus den Rohstroemen nachgerechnet, alle vier
