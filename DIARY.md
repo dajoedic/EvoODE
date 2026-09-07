@@ -8,7 +8,7 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ### Die Kampagne ist in der Analyse-Pipeline — und der Merge hat beim ersten Versuch das Falsche geliefert
 
-<!-- COMMIT_HASH_2 -->
+<!-- 0176ee5 -->
 
 Die 756 Records liegen jetzt lokal unter `experiments/paper1_phaseB_v1/runs/records/`, die 756
 Heartbeat-Stroeme daneben unter `runs/heartbeats/`; beide Verzeichnisse sind ueber
