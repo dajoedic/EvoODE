@@ -1,4 +1,4 @@
 status: done
-task:   WP-A5
-report: codex/REPORT_WP_A5.md
-note:   Phase-B registry verification and aggregation completed; aggregate has 252 rows.
+task:   WP-A6
+report: codex/REPORT_WP_A6.md
+note:   Pretuning contrast analysis implemented and verified on registry plus incomplete-pair fixture.

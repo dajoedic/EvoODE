@@ -307,6 +307,7 @@ Conventions and environment: `analysis/CONVENTIONS.md`, dependencies in
 | Script | Purpose |
 |---|---|
 | `analysis/scripts/aggregate/aggregate_run_registry.py` | Builds the analysis table from an experiment's run registry |
+| `analysis/scripts/aggregate/analyze_pretuning_contrast.py` | Paired Phase-B pretuning contrast with naive and cluster-robust tests |
 | `analysis/scripts/aggregate/classify_odebench_systems.py` | Exact / surrogate classification of the ODEBench systems |
 | `analysis/scripts/aggregate/verify_campaign_registry.py` | Checks converted campaign registry invariants before aggregation |
 | `analysis/scripts/aggregate/evaluate_hypotheses.py` | Evaluates H1–H4 against the aggregated data |

@@ -1,140 +1,131 @@
-# WP-A5 — Die Phase-B-Kampagne in die Analyse-Pipeline bringen
+# WP-A6 — Der Pretuning-Kontrast, gepaart und clusterfest
 
 **Language: Python**
 
 ## Kontext
 
-Die Phase-B-Kampagne ist am 2026-09-04 abgeschlossen: 756 von 756 Zellen, kein Record mit
-gesetztem `error`, ein Identitäts-Tripel über alle Records (`git_hash = 91f88c4` mit
-`git_dirty = false`, `config_fingerprint = 604e79733b22d64d`,
-`stage_cap_behavior_fingerprint = ffb0266c7913352c`).
+Die Phase-B-Kampagne liegt vollständig in der Analyse-Pipeline (WP-A5). Die konvertierte Registry
+ist `experiments/paper1_phaseB_v1/run_registry.csv`, 756 Zeilen, geprüft durch
+`analysis/scripts/aggregate/verify_campaign_registry.py`.
 
-Die Records liegen bereits lokal und müssen **nicht** mehr geholt werden:
+Die Kampagne existiert für **einen** Kontrast: `evogrow_v2_2_stage_capped` mit `pretuning=true`
+gegen `pretuning=false`, alles andere identisch. Dieses WP entscheidet, ob dieser Kontrast eine
+Aussage trägt. Es ist der Test, von dem die Gewichtung aller späteren Tabellen abhängt.
 
-- `experiments/paper1_phaseB_v1/runs/records/` — 756 Endrecords (`cell_*.jsonl`, je 77 Felder)
-- `experiments/paper1_phaseB_v1/runs/heartbeats/` — 756 Heartbeat-Ströme (in diesem WP unbenutzt)
-- `experiments/paper1_phaseB_v1/history.jsonl` — die zusammengeführte History, 756 Zeilen
-- `experiments/paper1_phaseB_v1/manifest.csv` und die Indexlisten
+**Die Paarung ist bereits verifiziert** und darf als gegeben angenommen, muss aber vom Skript selbst
+geprüft werden: Schlüssel ist das Tripel aus `system_id`, `seed` und `initial_condition_set`. Es gibt
+378 vollständige Paare, davon **120 auf exakten Systemen** und **258 auf Surrogaten**. Kein Paar ist
+unvollständig. In der Registry unterscheidet `variant_slug` die beiden Bedingungen
+(`..._pretune_on` / `..._pretune_off`); eine Spalte `condition` gibt es dort nicht.
 
-Beide `runs/`-Verzeichnisse sind über `experiments/*/runs/` gitignored. `history.jsonl` ist es
-nicht — prüfe das und ergänze `.gitignore`, falls nötig; die History ist ein ableitbares Artefakt
-und gehört nicht ins Repository.
+Zwei weitere geprüfte Randbedingungen: es gibt **keine** Zelle mit dem Sentinel-Loss `1e6`, und `r2`
+ist in allen 756 Zeilen numerisch belegt. Beides muss das Skript trotzdem prüfen und bei Verletzung
+abbrechen — die Randbedingung gilt für diese Kampagne, nicht für alle künftigen.
 
-**Eine Falle, die bereits einmal zugeschnappt ist.** `studies/regression/merge_batch_records.jl`
-filtert sein Eingabeverzeichnis nicht nach Endrecords. Beim ersten Merge-Versuch lagen Records und
-Heartbeats im selben Verzeichnis; das Skript meldete `added=756`, `skipped_failed=0` — und hatte
-756 **Heartbeat-Zeilen** aufgenommen statt der Endrecords. Erkennbar war das nur an der Struktur:
-15 Felder statt 77, ein Feld `event` vorhanden, `loss` und `git_hash` fehlend, und nur 378 statt
-756 eindeutige Identitäten, weil `use_pretuning` im Heartbeat nicht vorkommt. Die vorliegende
-`history.jsonl` ist bereits aus dem getrennten Record-Verzeichnis neu erzeugt und geprüft.
+## Das methodische Problem, das den Auftrag bestimmt
 
-Diese Aufgabe ist der Grund für den Prüfschritt unten: eine Zusammenfassungszeile eines Skripts ist
-kein Nachweis, dass die richtigen Daten angekommen sind.
+Die 120 exakten Paare stammen aus nur **20 Systemen** — sechs Paare je System (3 Seeds x 2 IC-Sätze).
+Die 258 Surrogat-Paare stammen aus 43 Systemen. Paare innerhalb eines Systems sind **nicht
+unabhängig**: sie teilen dieselbe Dynamik, dieselbe Repräsentierbarkeit und dieselbe Schwierigkeit.
 
-## Ziel
+Ein gewöhnlicher McNemar-Test behandelt alle 120 Paare als unabhängige Ziehungen und wird deshalb
+einen zu kleinen p-Wert liefern. Die effektive Stichprobengröße liegt näher an 20 als an 120.
 
-Die 756 Kampagnen-Records reproduzierbar bis zum Aggregat in die Analyse-Pipeline bringen, mit
-einer mechanischen Prüfung, die einen falschen Datenstand zum Fehlschlag macht statt zu einem
-plausibel aussehenden Ergebnis.
-
-**Ausdrücklich nicht Teil dieser Aufgabe:** jede wissenschaftliche Interpretation, jede Figur, jede
-Signifikanzaussage, jede Tabelle für das Paper. Das sind spätere Work Packages. Hier geht es nur
-darum, dass die Daten vollständig und identitätsrein ankommen.
+**Deshalb ist die Kernanforderung dieses WP nicht ein Test, sondern zwei — und die ehrliche
+Hauptaussage ist die clusterfeste.** Beide werden berichtet, nebeneinander, mit der Differenz als
+eigenem Ergebnis. Wenn die beiden Verfahren zu verschiedenen Schlüssen kommen, ist das ein Befund und
+kein Grund, sich das günstigere auszusuchen.
 
 ## Deliverables
 
-### 1. `analysis/configs/paper1_phaseB_v1.json`
+### 1. Ein Auswertungsskript
 
-Nach dem Muster von `analysis/configs/wp_a4_realdata_by_ic.json`. Die `experiment_id` ist
-`paper1_phaseB_v1`. Die beiden IC-Sätze werden **nicht** gemittelt — die Gruppierung nach
-IC-Satz ist eingeschaltet (WP-A4b hat das genau dafür eingebaut). Die Systemklassifikation kommt
-aus der vorhandenen `analysis/data/paper1_phaseB_v1/system_classification.csv`, niemals aus einer
-fest verdrahteten Systemliste. Pfade relativ, wie in den bestehenden Configs.
+Neu unter `analysis/scripts/aggregate/`, benannt nach `<verb>_<subject>.py`, parametrisiert über
+`--config` nach dem Muster der bestehenden Skripte, Sollwerte der Paarung als CLI-Parameter mit den
+oben genannten Zahlen als Vorgabe. Es schreibt sein Ergebnis als maschinenlesbare Datei nach
+`analysis/data/paper1_phaseB_v1/` und gibt eine lesbare Zusammenfassung auf stdout aus.
 
-### 2. Ein Prüfskript
+Es wertet **drei** Zielgrößen aus, exakte und Surrogat-Systeme strikt getrennt (Design-Prinzip 8 —
+sie werden nie in eine Kennzahl gemischt):
 
-Neu unter `analysis/scripts/aggregate/`, benannt nach der Konvention `<verb>_<subject>.py`. Es liest
-eine konvertierte `run_registry.csv` und prüft die folgenden Invarianten. Bei jeder Verletzung
-beendet es sich mit einem Exit-Code ungleich null und einer Meldung, die sagt, welche Invariante
-gebrochen ist und mit welchem gemessenen Wert — kein stiller Erfolg, keine Warnung, die man
-übersehen kann.
+**(a) Strukturfindung, exakte Systeme, 120 Paare.** Zielgröße ist `exact_support_match`, binär.
 
-Zu prüfende Invarianten:
+- Die vollständige 2x2-Kontingenztafel der Paare wird berichtet, nicht nur die diskordanten Zellen.
+- Primärtest naiv: **exakter McNemar** über die diskordanten Paare, also der zweiseitige exakte
+  Binomialtest mit p = 0.5. **Kein** Chi-Quadrat, **keine** Stetigkeitskorrektur — die Zahl der
+  diskordanten Paare ist klein, die Approximation dort unbrauchbar.
+- Primärtest clusterfest: ein **Permutationstest**, der die Bedingungszuweisung **innerhalb jedes
+  Systems** vertauscht und so die Clusterstruktur erhält. Prüfgröße ist die Differenz der
+  Trefferzahlen zwischen den Bedingungen. Die Zahl der Permutationen ist ein benannter Konstantenwert
+  im Skript, der Zufallsgenerator wird mit einem ebenfalls benannten Seed initialisiert, mit
+  Kommentar — das ist die einzige erlaubte Randomisierung (`analysis/CONVENTIONS.md`).
 
-- genau 756 Zeilen
-- 756 eindeutige Identitäten aus System, Seed, IC-Satz und Bedingung
-- keine Zeile mit `corrupted`, keine Zeile mit gesetztem Fehlergrund
-- `git_hash` über alle Zeilen einwertig, `git_dirty` überall falsch
-- `config_fingerprint` über alle Zeilen einwertig
-- `stage_cap_behavior_fingerprint` über alle Zeilen einwertig
-- 378 Zeilen je Bedingung
-- genau 240 Zeilen mit `system_representability == "exact"` und 516 mit `"surrogate"`
-- `exact_support_match` in genau den 240 exakten Zeilen belegt und in keiner Surrogat-Zeile
-- `r2` in mindestens den 516 Surrogat-Zeilen numerisch belegt
+**(b) Fit-Qualität, Surrogat-Systeme, 258 Paare.** Zielgröße ist `r2`.
 
-Die Sollwerte sind CLI-Parameter mit diesen Zahlen als Vorgabe, nicht fest verdrahtet — das Skript
-muss auch auf einer künftigen Kampagne anderer Größe brauchbar sein. Die geforderten Fingerprints
-werden als Parameter übergeben, damit die Prüfung eine Aussage gegen einen erwarteten Wert ist und
-nicht nur gegen sich selbst.
+- Gepaarter **Wilcoxon-Vorzeichen-Rang-Test** über die Paardifferenzen.
+- Derselbe clusterfeste Permutationstest wie in (a), Prüfgröße ist der Median der Paardifferenzen.
+- Effektstärke: Median der Paardifferenz mit Bootstrap-Konfidenzintervall, wobei **auf Systemebene
+  gebootstrappt wird**, nicht auf Paarebene — sonst wiederholt sich derselbe Unabhängigkeitsfehler.
 
-Ergänze eine Fixture unter `analysis/fixtures/`, die eine verletzte Invariante enthält, und weise
-im Report nach, dass das Skript daran scheitert. Ein Prüfskript, dessen Fehlerpfad nie gelaufen ist,
-ist kein Prüfskript.
+**(c) Loss, alle 378 Paare.** Der Loss überspannt siebzehn Größenordnungen (4,6e-15 bis 5,8e+2),
+deshalb wird auf `log10` gerechnet oder rangbasiert getestet; begründe die Wahl im Report. Getrennt
+nach exakt und Surrogat berichten, nie zusammengefasst.
 
-### 3. Der Durchlauf
+Für jede Zielgröße gehören in die Ausgabe: die Prüfgröße, der p-Wert beider Verfahren, die
+Effektstärke mit Intervall, und die Zahl der eingehenden Paare. **Ein p-Wert ohne Effektstärke ist
+kein Ergebnis.**
 
-Führe in dieser Reihenfolge aus und halte die exakten Kommandos im Report fest:
+### 2. Deskriptive Aufschlüsselung nach Dimension
 
-1. `convert_campaign_history_to_run_registry.py` auf `experiments/paper1_phaseB_v1/history.jsonl`,
-   mit `--experiment-id paper1_phaseB_v1`, Ausgabe nach
-   `experiments/paper1_phaseB_v1/run_registry.csv` (dieser Pfad ist gitignored)
-2. das neue Prüfskript auf der erzeugten `run_registry.csv`
-3. `aggregate_run_registry.py` mit der neuen Config
+Die Kontingenztafel aus (a) zusätzlich je Systemdimension, als **rein beschreibende** Tabelle.
 
-### 4. Lückenbericht zur Spaltenabdeckung
+**Ausdrücklich verboten:** ein Signifikanztest je Dimension. Die Zellen sind winzig, und vier Tests
+auf denselben Daten wären unkorrigiertes multiples Testen. Die Aufschlüsselung zeigt, *wo* der
+Unterschied sitzt, sie behauptet nichts über ihn.
 
-Der Konverter schreibt eine feste Spaltenliste. Vergleiche sie gegen die 77 Felder eines
-Kampagnen-Records und liste im Report auf, **welche Felder verlorengehen**. Erweitere die
-Spaltenliste in diesem WP **nicht** — die Entscheidung, welche Felder die späteren Stufen brauchen,
-fällt informiert, wenn das Aggregat vorliegt. Der Bericht ist das Deliverable, nicht die Erweiterung.
+### 3. Abbruchbedingungen
 
-Von Interesse sind mindestens: `condition`, `use_pretuning`, `n_levels`, `eq_overshoot`,
-`eq_final_stages`, `eq_wasted_levels`, `stage_caps`, `representability`, `total_ode_solves`,
-`total_parameter_fits`, `timestamp`.
+Das Skript bricht mit Exit-Code ungleich null ab, wenn: die Paarung unvollständig ist, die Zahl der
+Paare von den Sollwerten abweicht, eine Zelle den Sentinel-Loss `1e6` trägt, `r2` fehlt, oder eine
+Zielgröße in einer der beiden Bedingungen leer ist. Kein stiller Ausschluss von Zellen — wenn Daten
+fehlen, ist das ein Fehler und keine Filterbedingung.
 
-### 5. Zwei Dokumentkorrekturen
+Belege den Fehlerpfad an mindestens einer Fixture unter `analysis/fixtures/` mit unvollständiger
+Paarung.
 
-In `SCRIPTS.md`:
+### 4. Abhängigkeiten
 
-- Der Hinweiskasten am Ende von Abschnitt 7 („Known gap … Whether the pipeline consumes that format
-  has not been verified") ist überholt. Die Brücke existiert
-  (`convert_campaign_history_to_run_registry.py`) und ist auf Kampagnendaten gelaufen. Ersetze den
-  Kasten durch die tatsächliche Kette History → Registry → Aggregat.
-- Bei `studies/regression/merge_batch_records.jl` fehlt die Warnung, dass `--input-dir` **nur**
-  Endrecords enthalten darf. Ergänze sie mitsamt dem Erkennungsmerkmal aus dem Kontext oben
-  (Feldzahl, `event`, fehlendes `git_hash`). Das Skript selbst wird hier **nicht** geändert — es ist
-  Julia und gehört in ein eigenes WP.
+`analysis/requirements.txt` enthält bisher nur `sympy`. Falls du `scipy` für den Wilcoxon-Test
+verwendest, trage es mit **fester** Version ein (installiert ist 1.13.1, kein `>=`,
+`analysis/CONVENTIONS.md`). Den exakten Binomialtest und den Permutationstest bitte ohne
+Fremdbibliothek — `math.comb` genügt und macht die Rechnung nachlesbar.
 
-Trage das neue Prüfskript in die Skripttabelle in Abschnitt 7 ein.
+### 5. SCRIPTS.md
+
+Das neue Skript in die Tabelle in Abschnitt 7 eintragen.
 
 ## Verboten
 
-- keine Änderung an `studies/`, `src/`, `experiments/run_experiment.jl` oder irgendeinem Julia-Code
-- keine Änderung an den Kampagnen-Records oder an `history.jsonl`
-- kein erneutes Mergen
-- keine Figuren, keine Paper-Tabellen, keine Signifikanztests, keine Interpretation der Zahlen
-- keine fest verdrahteten Systemlisten — die Systemachse kommt aus `system_classification.csv`
-- kein `git add -A`; committe nichts, lass die Dateien im Arbeitsbaum liegen
+- keine Änderung an `src/`, `studies/`, `experiments/` oder irgendeinem Julia-Code
+- keine Änderung an `run_registry.csv`, am Konverter oder am Prüfskript aus WP-A5
+- **keine Figuren** — dieses WP produziert Zahlen, keine Grafiken
+- **keine Eintragung von Ergebnissen in `PAPER_1.md`, `CLAUDE.md` oder `DIARY.md`.** Die
+  wissenschaftliche Wertung trifft Claude, nicht das WP. Der Report berichtet, er schließt nicht.
+- keine Signifikanzaussage je Dimension, je System oder je IC-Satz
+- keine Vermischung exakter und Surrogat-Zellen in einer Kennzahl
+- kein `git add -A`, keine Git-Operationen; Dateien im Arbeitsbaum liegen lassen
 
 ## Akzeptanzkriterium
 
-Das Prüfskript läuft auf der aus `history.jsonl` konvertierten `run_registry.csv` **fehlerfrei
-durch** und scheitert auf der verletzten Fixture mit Exit-Code ungleich null. `aggregate_run_registry.py`
-erzeugt sein Aggregat unter `analysis/data/paper1_phaseB_v1/` ohne Fehler, und die Zeilenzahl des
-Aggregats ist im Report genannt und plausibel gegen 63 Systeme × 2 Bedingungen × 2 IC-Sätze erklärt.
+Das Skript läuft auf der Phase-B-Registry fehlerfrei durch, meldet 378 Paare gesamt, 120 exakt und
+258 Surrogat, und liefert für alle drei Zielgrößen **beide** Verfahren mit Effektstärke. Auf der
+Fixture mit unvollständiger Paarung bricht es mit Exit-Code ungleich null ab. Die Ergebnisdatei liegt
+unter `analysis/data/paper1_phaseB_v1/`.
 
 ## Report
 
-`codex/REPORT_WP_A5.md`. Enthält: die exakten Kommandos, die Ausgabe des Prüfskripts in beiden
-Richtungen (Erfolg und erzwungener Fehlschlag), die Zeilenzahl des Aggregats mit Erklärung, und den
-Lückenbericht aus Punkt 4 als Liste.
+`codex/REPORT_WP_A6.md`. Enthält: die exakten Kommandos, die vollständige Kontingenztafel, beide
+p-Werte je Zielgröße nebeneinander, die Effektstärken mit Intervallen, die deskriptive
+Dimensionstabelle, die Begründung der Loss-Transformation, die Zahl der Permutationen und den
+verwendeten Seed — und einen ausdrücklichen Absatz dazu, **ob und wie weit naives und clusterfestes
+Verfahren auseinanderlaufen**.
