@@ -56,6 +56,15 @@ CSV_COLUMNS = [
     "eq_overshoot",
     "eq_final_stages",
     "stage_caps",
+    "solver_retcodes",
+    "optimizer_retcodes",
+    "total_diverged_solves",
+    "total_invalid_solves",
+    "total_nonfinite_solves",
+    "total_solver_unstable_solves",
+    "total_step_limit_solves",
+    "total_optimizer_limit_hits",
+    "total_optimizer_budget_stop_fits",
 ]
 
 
@@ -179,6 +188,19 @@ def row_from_record(record: dict[str, Any], experiment_id: str) -> dict[str, Any
         "eq_overshoot": json_cell(record.get("eq_overshoot")),
         "eq_final_stages": json_cell(record.get("eq_final_stages")),
         "stage_caps": json_cell(record.get("stage_caps")),
+        "solver_retcodes": json_cell(record.get("solver_retcodes")),
+        "optimizer_retcodes": json_cell(record.get("optimizer_retcodes")),
+        "total_diverged_solves": blank_if_none(record.get("total_diverged_solves")),
+        "total_invalid_solves": blank_if_none(record.get("total_invalid_solves")),
+        "total_nonfinite_solves": blank_if_none(record.get("total_nonfinite_solves")),
+        "total_solver_unstable_solves": blank_if_none(
+            record.get("total_solver_unstable_solves")
+        ),
+        "total_step_limit_solves": blank_if_none(record.get("total_step_limit_solves")),
+        "total_optimizer_limit_hits": blank_if_none(record.get("total_optimizer_limit_hits")),
+        "total_optimizer_budget_stop_fits": blank_if_none(
+            record.get("total_optimizer_budget_stop_fits")
+        ),
     }
 
 
