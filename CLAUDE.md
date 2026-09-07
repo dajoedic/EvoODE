@@ -235,6 +235,50 @@ the coupled search path 1e-6 is the cheaper, behaviour-equal tolerance; the Syst
 
 ### Active
 
+0. **Reset 2026-09-07: four foundational gaps outrank everything below.** Full reasoning in
+   `DIARY.md`, entry "Kassasturz".
+
+   **(a) The basis has no constant term.** `src/basis/staged_polynomial.jl` carries `u1`, `u1^2`,
+   `u1*u2`, `u1^3`, `sin`, `cos` — no `1`. Representability: **EvoODE 20 of 63 systems, SINDy's
+   plain polynomial library 40, ProGED's rational grammar 53.** Ten systems fail on the constant
+   **alone** (1, 5, 9, 17, 23, 43, 52, 57, 58, 59), 15 more have it as a component — 25 of the 43
+   non-representable systems. System 1 is the RC circuit. Recorded since 2026-08-24 in
+   `analysis/data/paper1_phaseB_v1/representational_adequacy.csv` and never acted on. Our search
+   space is half the nearest relative's default.
+
+   **(b) The fitted coefficients are never stored.** `run_regression.jl:831` writes only term names
+   via `active_term_names(...)`; `result.params` is dropped. No model from the 5,248 core hours can
+   be rebuilt, re-simulated, or applied to other initial conditions. Violates Design Principle 6.
+
+   **(c) Both IC sets were trained, never tested.** The protocol adopted both sets; why they are two
+   separate training problems rather than train/test is nowhere justified — the question was never
+   asked. ODEBench ships the second IC *to evaluate generalization*, which the audit itself quotes.
+   **The project has no evaluation on held-out data at all**; every number, R² included, is
+   in-sample on the final simulated trajectory.
+
+   **(d) The literature metric is a thresholded rate, and we can compute only half of it.**
+   ODEFormer (ICLR 2024) reports **the share of predictions with R² > 0.9**, reconstruction and
+   generalization separately, and deliberately does not report mean R². Our reconstruction-side
+   number from existing data: **80.7 %** over 756 cells (dim 1 96.7 %, dim 2 89.6 %, dim 3 25.8 %).
+   The generalization side needs the coefficients. **The published per-method ODEBench numbers are
+   not in our hands** — they are bar charts in Figures 4 and 5, and the repository ships no result
+   files. Whether 80.7 % is good or bad is **open** and must not be asserted either way.
+
+   **The step order was wrong.** v1 → v2.1 → v2.2 → Gate 1 → v3 → Gate 2 → cap → campaign, and at no
+   point was it tested whether the base method is competitive. EvoGrow has only ever been measured
+   against itself; no baseline run exists.
+
+   **Plan, in order:** (1) add the constant as a **new** basis variant, old basis bit-identical, and
+   probe on dim 1 only — 72 cells, 0.6 core hours (WP-N1, running); (2) store the coefficients (part
+   of WP-N1); (3) generalization as a standard evaluation — rebuild the structure from the record,
+   fit parameters on IC 1, integrate from IC 2, R² against truth; this costs **no search run**, one
+   parameter fit per cell, and turns the existing campaign into the "before" value; (4) SINDy on the
+   same data, scored on both metrics; (5) only then decide what Paper 1 is. **Deferred on purpose:**
+   the uncapped arm — whether the cap is interesting depends on whether the base method carries.
+
+   The campaign data is not discarded: 756 clean cells under one identity triple, protocol-conform,
+   with a sharply named boundary. A good chapter, not a paper.
+
 1. **The Phase B campaign is complete, and the analysis is the open work.** Ran 2026-08-22 to
    2026-09-04 on Orion under `git 91f88c46063fa368101326cbfe1abcdfc9d857fc`; the Job has since
    removed itself from `scch-das`. **756/756 records, no `error`, 756 unique identities, one
@@ -257,6 +301,18 @@ the coupled search path 1e-6 is the cheaper, behaviour-equal tolerance; the Syst
    **p = 0.218** (independently reproduced at 0.219). The 120 pairs come from 20 systems, so the
    effective sample size is 20. **60 against 50 is not a reportable finding** and must not appear as
    one. The cluster-robust procedure is the primary one throughout.
+
+   **RETRACTED 2026-09-07 (evening): the collapse is mostly an artefact of the setup.** Without
+   pretuning the parameter start is drawn randomly (`bfgs.jl:269`, `0.1 .* randn(n_params)`); with
+   pretuning it is computed deterministically from the data (`evogrow.jl:473`). `pretune_off`
+   therefore has **two** seed-dependent sources — structure search and parameter start — and
+   `pretune_on` only one. The higher repeat rate follows from the design, not from a discovery. It
+   survives as an **ablation**: the random start acts as an implicit multistart, and replacing it
+   with one very good start does not always land in the right basin (system 8: `pretune_off` finds
+   the structure on all three seeds at loss 8.5e-06 to 2.9e-05, `pretune_on` misses it three times
+   at loss 575). Counter-evidence against "pretuning is simply deterministic": 30 of the 126
+   `pretune_on` groups do **not** collapse, because the structure search stays random. The numbers
+   below are correct; only their weight was wrong. Appendix material, not a carrying finding.
 
    **What the campaign does show is mechanistic, and it is structural (WP-A7, 2026-09-07).**
    Pretuning collapses seed diversity — grouped by system, IC set and condition, three seeds each,
@@ -313,6 +369,13 @@ the coupled search path 1e-6 is the cheaper, behaviour-equal tolerance; the Syst
    T5 confirms 756 cells with `success == True`, no `failure_reason`, and `total_nonfinite_solves`
    zero throughout — but the other counters are nonzero, so error-free means completed, not
    eventless.
+
+   **RETRACTED 2026-09-07 (evening): the campaign does not corroborate Claim B.** Both arms are
+   `evogrow_v2_2_stage_capped`, 756 of 756 — **there is no uncapped arm**, so the campaign has no
+   counterpart to compare against. It shows the cap's *behaviour* (early termination tracking the
+   stage), never that the cap saves effort **at an unchanged result**. That half of Claim B still
+   rests on the regression grid alone: **30 cells, 5 systems** — the thinnest evidence in the paper,
+   carrying its main claim.
 
    **The analysis is complete (WP-A9, 2026-09-07).** The level-waste measure and the 252-row
    per-system table close the last two items, and `PAPER_1.md`'s result placeholders are filled.
@@ -455,6 +518,13 @@ the coupled search path 1e-6 is the cheaper, behaviour-equal tolerance; the Syst
 - `total_diverged_solves` and `total_solver_unstable_solves` are identical in all 756 campaign
   cells — one quantity counted twice on the Julia side. Not a data defect, but they must not be
   reported as two independent robustness measures until the redundancy is understood
+- **no constant term in the basis** — 20 of 63 systems representable against SINDy's 40; 10 fail on
+  the constant alone (see Active 0a)
+- **fitted coefficients are not persisted** — discovered models cannot be rebuilt or re-simulated
+  (see Active 0b)
+- **no held-out evaluation anywhere** — both IC sets are training data, every number is in-sample,
+  the literature's generalization metric is unreachable without coefficients (see Active 0c)
+- **no baseline has ever been run** — EvoGrow has only been compared against itself
 - environment and test execution need cleanup and faster verification
 
 ## Design Principles

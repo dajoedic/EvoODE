@@ -6,6 +6,155 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ## 2026-09-07
 
+### Kassasturz: zwei ueberzogene Befunde zurueckgenommen, vier Grundlagenluecken benannt
+
+<!-- COMMIT_HASH_7 -->
+
+Ein langes Gespraech am Abend des 2026-09-07 hat die Auswertung derselben Nacht in wesentlichen
+Teilen entwertet. Dieser Eintrag haelt fest, was nicht mehr gilt und was stattdessen gilt. Er ist
+bewusst vor der naechsten Messung geschrieben, damit die falschen Aussagen keine Nacht laenger
+stehen.
+
+#### Zuruecknahme 1: der Seed-Kollaps ist kein tiefer Mechanismus
+
+Frueher an diesem Tag notiert (WP-A7): Pretuning kollabiere die Seed-Diversitaet, 96 von 126 Gruppen
+gegen 61, alle diskordanten Paare einseitig, clusterfest p = 1e-5 — als *der* mechanistische Befund,
+der das Paper traegt.
+
+Die Zahlen stimmen. Die Deutung war ueberzogen. Im Code steht in `evogrow.jl:473`, dass `p0` nur bei
+`use_pretuning` aus `pretune_parameters` kommt und sonst `nothing` ist — und `bfgs.jl:269` ersetzt
+`nothing` durch `0.1 .* randn(n_params)`.
+
+**Ohne Pretuning werden die Startparameter zufaellig gezogen, mit Pretuning deterministisch aus den
+Daten berechnet.** `pretune_off` hat damit *zwei* seedabhaengige Quellen — Struktursuche und
+Parameterstart —, `pretune_on` nur eine. Dass die Ergebnisse mit Pretuning haeufiger identisch sind,
+folgt groesstenteils aus dem Versuchsaufbau und ist keine Entdeckung.
+
+Der Zusammenhang stand bereits in `CLAUDE.md` (unter `pretuning=false` wirken Duplikate als implizite
+Multistarts); er wurde beim Auswerten nicht mit dem Kollaps verbunden.
+
+**Was bleibt:** ein Ablationsbefund. Der Zufallsstart wirkt wie ein impliziter Mehrfachstart, und die
+Vorschaetzung ersetzt ihn durch einen einzigen, sehr guten Startpunkt — der nicht immer in das
+richtige Tal fuehrt. System 8 zeigt es scharf: `pretune_off` findet die Struktur mit allen drei
+Seeds bei Loss 8,5e-06 bis 2,9e-05, `pretune_on` verfehlt sie dreimal bei Loss 575. Berichtenswert,
+aber als Ablation im Anhang, nicht als tragender Befund. Gegenbeleg gegen "Pretuning ist rein
+deterministisch": 30 der 126 `pretune_on`-Gruppen kollabieren *nicht*, weil die Struktursuche
+zufaellig bleibt.
+
+#### Zuruecknahme 2: Claim B steht nicht auf 756 Zellen
+
+Frueher notiert: die Kampagne bestaetige Claim B auf Kampagnenbreite. Falsch.
+
+**Beide Kampagnenarme sind `evogrow_v2_2_stage_capped`, 756 von 756. Es gibt keinen ungecappten
+Arm.** Damit kann die Kampagne ueber den Cap keine Vergleichsaussage machen — der Gegenspieler fehlt.
+
+Was sie zeigt, ist das *Verhalten* des Caps: 690 von 756 Zellen brechen vor dem 30-Level-Budget ab,
+und die Levelzahl folgt der erreichten Stufe. Was sie **nicht** zeigen kann, ist die eigentliche
+Behauptung — dass der Cap Aufwand spart, *ohne das Ergebnis zu verschlechtern*. Diese Aussage ruht
+weiterhin allein auf dem Regressionsgitter: **30 Zellen, 5 Systeme.** Das ist die duennste
+Datenbasis im ganzen Paper und traegt zugleich dessen Hauptaussage.
+
+#### Luecke 1: der Basis fehlt der konstante Term
+
+`src/basis/staged_polynomial.jl` kennt `u1`, `u1^2`, `u1*u2`, `u1^3`, `sin`, `cos` — **keine `1`.**
+
+Die Folgen stehen seit dem 2026-08-24 in
+`analysis/data/paper1_phaseB_v1/representational_adequacy.csv` und im Protokoll-Audit, wurden aber
+nie zum Handlungsanlass:
+
+| Suchraum | Systeme exakt darstellbar |
+|---|---|
+| EvoODE, gestufte Basis | **20 von 63** |
+| SINDy, Polynombibliothek | **40 von 63** |
+| ProGED, rationale Grammatik | 53 von 63 |
+
+**Zehn Systeme scheitern allein an der Konstante** (1, 5, 9, 17, 23, 43, 52, 57, 58, 59), bei 15
+weiteren ist sie mitbeteiligt — insgesamt haengt sie an 25 der 43 nicht darstellbaren Systeme. System
+1 ist der RC-Kondensator, das einfachste System des Benchmarks, fuer jede Standardbibliothek
+darstellbar und fuer uns nicht.
+
+Unser Suchraum ist damit **halb so gross wie die Standardbibliothek des naechsten Verwandten.** Das
+ist keine Feinheit der Suchstrategie, sondern eine Vorbedingung, die nicht erfuellt ist.
+
+#### Luecke 2: die gefundenen Parameterwerte werden nicht gespeichert
+
+`run_regression.jl:831` schreibt mit `active_term_names(...)` nur die **Termnamen**. Die
+Koeffizienten aus `result.params` gehen verloren.
+
+Die Struktur haben wir also, das Modell nicht. Aus 5.248 Kernstunden Kampagne laesst sich kein
+einziges gefundenes Modell rekonstruieren, neu simulieren oder auf andere Anfangswerte anwenden.
+Das verletzt Design-Prinzip 6 und ist fuer die 756 vorhandenen Records nicht nachtraeglich
+reparierbar — wohl aber umgehbar, siehe Plan.
+
+#### Luecke 3: beide Anfangswertsaetze wurden trainiert, nicht getestet
+
+Das Protokoll (§3, entschieden 2026-08-03) uebernimmt beide Saetze je System. Die Begruendungen
+darunter behandeln Gitterdichte und Trajektorienquelle. **Warum die beiden Saetze als zwei getrennte
+Trainingsprobleme behandelt werden statt als Train/Test, ist nirgends begruendet** — die Frage wurde
+nie gestellt.
+
+Der Audit weiss es sogar: er zitiert, ODEBench enthalte die zwei Anfangswerte *to evaluate
+generalization*. Wir haben das Datenlayout uebernommen, nicht seinen Zweck.
+
+**Es gibt im ganzen Projekt keine Auswertung auf zurueckgehaltenen Daten.** Kein Train/Val-Split,
+keine Generalisierung. Jede Zahl ist In-Sample — auch das R2, das auf der *finalen simulierten
+Trajektorie* gegen dieselben Daten gerechnet wird, an die angepasst wurde.
+
+#### Luecke 4: die Metrik der Literatur, und was wir davon koennen
+
+Aus der ODEFormer-Publikation (ICLR 2024, lokal ausgelesen): die Kennzahl ist **Anteil der
+Vorhersagen mit R2 groesser 0,9**, getrennt nach *Rekonstruktion* und *Generalisierung*. Mittleres R2
+wird bewusst nicht berichtet, weil R2 nach unten unbeschraenkt ist.
+
+Unsere Zahl in dieser Form, aus vorhandenen Daten gerechnet: **80,7 %** ueber alle 756 Zellen
+(dim 1: 96,7 %, dim 2: 89,6 %, dim 3: 25,8 %). Das ist die Rekonstruktionshaelfte. Die
+Generalisierungshaelfte ist ohne Koeffizienten verschlossen.
+
+**Die publizierten ODEBench-Zahlen je Verfahren liegen uns nicht vor** — sie stehen in den
+Abbildungen 4 und 5 als Balkendiagramme, nicht als Tabelle, und das Repository enthaelt keine
+Ergebnisdateien. Aus dem Fliesstext belegt ist nur eine Zahl, und die gilt fuer ihren synthetischen
+Testsatz, nicht fuer ODEBench: 85 % Rekonstruktion gegen 60 % Generalisierung auf 1D. Ein Satz ist
+fuer uns dennoch wichtig: ODEFormer werde nur gelegentlich von PySR uebertroffen, **wenn die Daten
+sehr sauber sind** — und unser Regime ist genau das.
+
+**Es ist damit offen, ob 80,7 % gut oder schlecht ist.** Diese Frage ist nicht beantwortet und darf
+in keine Richtung behauptet werden.
+
+#### Der Befund hinter allen vieren: die Schrittfolge war verkehrt
+
+Der Projektverlauf war v1, v2.1, v2.2, Gate 1, v3, Gate 2, Stage-Cap, Defektbehebung, 5.248
+Kernstunden Kampagne. **In keinem dieser Schritte wurde geprueft, ob das Grundverfahren
+konkurrenzfaehig ist.** EvoGrow wurde ausschliesslich gegen sich selbst gemessen. Es gibt bis heute
+keinen Baseline-Lauf; `CLAUDE.md` fuehrt ihn seit langem als Phase-5-Luecke.
+
+Was die Kampagne tatsaechlich belegt: das Verfahren laeuft robust durch (756/756, ein
+Identitaets-Tripel), es findet Strukturen zu 79 % auf dim 1 und 49 % auf dim 2, und **null von 60 auf
+dim 3 und 4**. Das ist eine ehrliche Charakterisierung mit scharfer Grenze. Es ist kein Nachweis,
+dass die Methode etwas kann, was andere nicht koennen.
+
+#### Der Plan, in dieser Reihenfolge
+
+1. **Konstante einbauen und messen** (WP-N1, laeuft). Neue Basisvariante, alte bleibt bitgleich.
+   Probelauf nur auf dim 1 — 72 Zellen, 0,6 Kernstunden. Zwei getrennte Fragen: steigen die
+   bisherigen sechs dim-1-Systeme ueber 79 %, und werden die fuenf neu erreichbaren gefunden?
+2. **Parameterwerte mitschreiben** (Teil von WP-N1). Vorbedingung fuer alles Weitere.
+3. **Generalisierung als Standardauswertung.** Struktur aus dem Record neu aufbauen, Parameter auf
+   IC 1 fitten, von IC 2 aus integrieren, R2 gegen die Wahrheit. Kostet **keinen Suchlauf** — ein
+   Parameterfit je Zelle statt der Tausenden, die die Suche gerechnet hat. Damit wird die
+   vorhandene Kampagne zum Vorher-Wert des Konstanten-Experiments.
+4. **SINDy auf denselben Daten**, gemessen auf beiden Metriken: R2 groesser 0,9 wie die Literatur,
+   und Strukturtreffer als das strengere Mass, das wir zusaetzlich anbieten koennen.
+5. **Erst dann entscheiden, was Paper 1 ist.**
+
+Ausdruecklich zurueckgestellt: der ungecappte Arm. Er beantwortet eine Frage ueber den Cap, und ob
+der Cap interessant ist, haengt daran, ob das Grundverfahren traegt.
+
+**Die Kampagnendaten werden nicht verworfen.** 756 saubere Zellen unter einem Identitaets-Tripel,
+protokollkonform, mit benannter Grenze — das bleibt ein gutes Kapitel. Es ist nur kein Paper,
+solange die Vergleichszahl fehlt.
+
+---
+
 ### Die Verschwendungsmessung auf Kampagnenbreite — und `n_levels` war nie eine Messung
 
 <!-- 87b2468 -->

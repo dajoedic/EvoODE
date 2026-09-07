@@ -156,7 +156,12 @@ median alone.
 Supported by stage metrics, cap decisions, support availability on exact systems and evaluation
 counters. **Wall-clock time is not evidence for this claim** (Design Principle 7).
 
-**Campaign-scale corroboration (WP-A9, 2026-09-07).** The heartbeat streams show the search
+**RETRACTED 2026-09-07 (evening).** Both campaign arms are `evogrow_v2_2_stage_capped` — there is
+**no uncapped arm**, so the campaign cannot corroborate the comparative half of this claim. It shows
+the cap's behaviour, not that the cap is free. "At an unchanged result" rests on the regression grid
+alone: 30 cells, 5 systems. The paragraph below stands only as a behavioural observation.
+
+**Campaign-scale observation (WP-A9, 2026-09-07).** The heartbeat streams show the search
 terminating early wherever the cap binds: **690 of 756 cells execute fewer than the 30 configured
 levels**, and the executed count tracks the reached stage — median 1 level at stage 1, 5 at stage 2,
 21 at stage 5. A cell capped at stage 1 computes **one** level instead of thirty. The claim no
@@ -578,6 +583,10 @@ Three results constrain how they may be written up:
    120 pairs from only 20 systems. What the campaign supports instead is mechanistic: pretuning
    collapses seed diversity, on the **discovered support pattern** as well as on the numbers
    (96/126 groups against 61/126, all 35 discordant pairs one-sided, cluster p = 1e-5).
+1b. **The seed-collapse finding is an ablation, not a mechanism (retracted 2026-09-07).** Without
+   pretuning the parameter start is random (`bfgs.jl:269`); with pretuning it is deterministic. The
+   higher repeat rate under pretuning largely follows from removing one of two random sources.
+   Report it as an ablation with the system-8 example, not as a carrying result.
 2. **Effect sizes are distributions, never a median.** The R² median paired difference is -8.2e-13
    and means nothing; the threshold grid shows the asymmetry sits in the small differences and
    vanishes toward the large ones. Report grids in full; never select a threshold after seeing the
@@ -806,4 +815,9 @@ Updated at phase transitions:
 - result placeholders filled 2026-09-07 from the final campaign records; regenerate via the scripts, never by hand
 - add final claim decisions after the Phase B analysis
 
-Last revision: 2026-09-07. Current phase: Phase B campaign complete (756/756), analysis complete (WP-A5 to WP-A9), write-up open.
+Last revision: 2026-09-07 (evening). Current phase: **reset**. The campaign and its analysis are
+complete and stand as a characterisation, but four foundational gaps outrank the write-up: the
+missing constant term in the basis (20 of 63 representable against SINDy's 40), unpersisted
+coefficients, no held-out evaluation anywhere, and no baseline run ever performed. See `CLAUDE.md`
+Active 0 and the `DIARY.md` entry "Kassasturz" of 2026-09-07. Paper scope is reopened until the
+baseline number exists.
