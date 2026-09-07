@@ -250,8 +250,31 @@ the coupled search path 1e-6 is the cheaper, behaviour-equal tolerance; the Syst
    is a dead heat — median 0.9937 (`pretune_on`) against 0.9941 (`pretune_off`), 213 vs 217 cells
    above 0.9.
 
-   Three things this does *not* yet establish and the analysis must: whether the pretuning gap is
-   significant on 120 cells per arm, the WP-B1 waste measure (needs the heartbeat streams), and the
+   **The pretuning gap does not survive clustering (WP-A6, 2026-09-07).** Paired over system, seed
+   and IC set — 378 complete pairs, 120 exact, 258 surrogate. The exact-support contingency is 47/57
+   concordant against **13 `pretune_off`-only and 3 `pretune_on`-only**; exact McNemar gives
+   p = 0.021, but the permutation test that swaps the condition label **per system** gives
+   **p = 0.218** (independently reproduced at 0.219). The 120 pairs come from 20 systems, so the
+   effective sample size is 20. **60 against 50 is not a reportable finding** and must not appear as
+   one. The cluster-robust procedure is the primary one throughout.
+
+   **What the campaign does show is mechanistic.** Pretuning collapses seed diversity: under
+   `pretune_on` **96 of 126** (system, IC) groups return bit-identical R² across all three seeds,
+   under `pretune_off` only **34 of 126**. The OLS warm start pulls the search into the same basin
+   regardless of seed — the anchoring risk this file records for population carry-over, measured for
+   the first time and at a different site. That explains the direction of the structural difference
+   without requiring it to be significant. The claim to carry is *pretuning trades search diversity
+   for determinism at unchanged median fit quality*, not *pretuning is worse*.
+
+   **A specification error to repair, not a result error.** The R² effect size was specified as the
+   median paired difference; the median is −8.2e-13 and suggests numerical noise, but **25.6 % of
+   the 258 pairs differ by more than 0.01 in R²**, the extremes reach ±0.4, and the signs are
+   skewed 174 negative against 82 positive. A median over that distribution is not an effect size.
+   Same for loss: a fold change of 1.00000000008 at cluster-robust p = 0.011 is a statement about
+   the systematic direction, not the size, of an effect. Both need a distribution-aware measure —
+   share of pairs beyond a substantive threshold, with a cluster-robust interval.
+
+   Two things the analysis still owes: the WP-B1 waste measure (needs the heartbeat streams) and the
    per-system picture. `wasted_levels` in the records means levels above the expected stage, not
    waste after the last improvement — median 0, 370 of 7,200 levels — and it is defined on exact
    cells only; `eq_overshoot` is nonzero in all 516 surrogate cells purely because `expected_stage`

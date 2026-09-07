@@ -6,6 +6,67 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ## 2026-09-07
 
+### Der Pretuning-Kontrast haelt der Clusterung nicht stand — und die eigentliche Wirkung des Pretunings ist eine andere
+
+<!-- COMMIT_HASH_3 -->
+
+WP-A6 hat den gepaarten Test gerechnet, fuer den die Kampagne existiert. Gepaart wird ueber
+System, Seed und IC-Satz; die Paarung ist vollstaendig, 378 Paare, davon 120 exakt und 258 Surrogat.
+
+**Die naive Signifikanz auf der Strukturfindung verschwindet, sobald man die Clusterung ernst nimmt.**
+Die Kontingenztafel der 120 exakten Paare: 47 beide Bedingungen treffend, 57 beide danebenliegend,
+**13 nur `pretune_off`, 3 nur `pretune_on`**. Der exakte McNemar ueber die 16 diskordanten Paare gibt
+p = 0,0213. Der Permutationstest, der das Bedingungslabel **je System** vertauscht und damit die
+Clusterstruktur erhaelt, gibt **p = 0,218**. Nachgerechnet mit unabhaengiger Implementierung:
+p = 0,219, also gleich im Rahmen des Monte-Carlo-Rauschens.
+
+Der Grund ist keine Feinheit, sondern Arithmetik: die 120 Paare stammen aus **20 Systemen**, sechs
+Paare je System. Sie teilen Dynamik, Repraesentierbarkeit und Schwierigkeit. Die effektive
+Stichprobengroesse liegt bei 20, nicht bei 120. Die Differenz 60 gegen 50 ist damit **kein
+belastbarer Befund**, und sie darf im Paper nicht als einer auftreten. Das ist der Grund, warum die
+clusterfeste Variante von vornherein als Hauptaussage spezifiziert war.
+
+**Ein Fehler in meiner eigenen Spezifikation.** Ich hatte als Effektstaerke fuer R² den Median der
+Paardifferenz mit Bootstrap-Intervall verlangt. Der Median ist hier ein irrefuehrendes Mass: er
+betraegt -8,2e-13 und legt nahe, der Unterschied sei numerisches Rauschen. Die Verteilung sagt etwas
+anderes — **25,6 % der 258 Paare unterscheiden sich um mehr als 0,01 im R²**, die Extreme liegen bei
+±0,4, und die Vorzeichen sind schief verteilt: 174 negativ gegen 82 positiv. Pretuning aendert das
+Ergebnis auf einem Viertel der Zellen deutlich, meist zum Schlechteren, waehrend die typische Zelle
+unberuehrt bleibt. Ein Median ueber eine solche Verteilung ist keine Effektstaerke. Der Report ist
+korrekt, die Frage war falsch gestellt.
+
+Dasselbe gilt fuer den Loss: Fold-Change-Mediane von 1,00000000008 bei p = 0,0106 clusterfest sind
+kein Ergebnis ueber die Groesse einer Wirkung, sondern eines ueber die Systematik ihrer Richtung.
+
+#### Der Mechanismus: Pretuning kollabiert die Seed-Streuung
+
+Der Blick auf die groessten Abweichungen hat den eigentlichen Befund geliefert. System 35 liefert
+unter `pretune_on` fuer **alle drei Seeds bitgleiches R² von 0,569583**, waehrend `pretune_off`
+zwischen 0,920 und 0,969 streut. Das ist kein Einzelfall:
+
+| Bedingung | Zellgruppen (System x IC) mit ueber alle 3 Seeds identischem R² |
+|---|---|
+| `pretune_on` | **96 von 126 (76,2 %)** |
+| `pretune_off` | 34 von 126 (27,0 %) |
+
+Der OLS-Warmstart zieht die Suche unabhaengig vom Seed in dasselbe Becken. Das ist genau die
+Verankerung, die `CLAUDE.md` fuer die Populationsuebernahme bei der Promotion als in Kauf genommenes
+Risiko fuehrt — hier tritt sie an anderer Stelle auf und ist erstmals gemessen. Und sie erklaert die
+Richtung der Strukturdifferenz, ohne dass diese signifikant sein muss: ohne Pretuning erkunden
+verschiedene Seeds verschiedene Becken, mit Pretuning nicht.
+
+**Damit verschiebt sich, was die Kampagne aussagt.** Nicht „Pretuning ist schlechter" — das traegt
+die Statistik nicht —, sondern „Pretuning tauscht Suchdiversitaet gegen Determinismus, ohne die
+Fit-Qualitaet im Median zu veraendern". Das ist eine mechanistische Aussage und passt zu Claim C,
+statt eine schwache Vergleichsaussage zu sein, die an der Clusterung zerbricht.
+
+**Nachzuarbeiten:** die Effektstaerke fuer R² und Loss braucht ein Mass, das die Verteilung abbildet
+statt ihres Medians — Anteil der Paare jenseits einer inhaltlichen Schwelle, mit clusterfestem
+Intervall. Ausserdem war `pandas` trotz durchgaengiger Verwendung nie in `analysis/requirements.txt`
+gepinnt; `matplotlib` und `numpy` ebenfalls nicht. Nachgetragen, alle mit fester Version.
+
+---
+
 ### Die Kampagne ist in der Analyse-Pipeline — und der Merge hat beim ersten Versuch das Falsche geliefert
 
 <!-- 0176ee5 -->
