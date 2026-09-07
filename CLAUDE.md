@@ -258,21 +258,38 @@ the coupled search path 1e-6 is the cheaper, behaviour-equal tolerance; the Syst
    effective sample size is 20. **60 against 50 is not a reportable finding** and must not appear as
    one. The cluster-robust procedure is the primary one throughout.
 
-   **What the campaign does show is mechanistic.** Pretuning collapses seed diversity: under
-   `pretune_on` **96 of 126** (system, IC) groups return bit-identical R² across all three seeds,
-   under `pretune_off` only **34 of 126**. The OLS warm start pulls the search into the same basin
-   regardless of seed — the anchoring risk this file records for population carry-over, measured for
-   the first time and at a different site. That explains the direction of the structural difference
-   without requiring it to be significant. The claim to carry is *pretuning trades search diversity
-   for determinism at unchanged median fit quality*, not *pretuning is worse*.
+   **What the campaign does show is mechanistic, and it is structural (WP-A7, 2026-09-07).**
+   Pretuning collapses seed diversity — grouped by system, IC set and condition, three seeds each,
+   126 groups per condition paired over 63 systems:
 
-   **A specification error to repair, not a result error.** The R² effect size was specified as the
-   median paired difference; the median is −8.2e-13 and suggests numerical noise, but **25.6 % of
-   the 258 pairs differ by more than 0.01 in R²**, the extremes reach ±0.4, and the signs are
-   skewed 174 negative against 82 positive. A median over that distribution is not an effect size.
-   Same for loss: a fold change of 1.00000000008 at cluster-robust p = 0.011 is a statement about
-   the systematic direction, not the size, of an effect. Both need a distribution-aware measure —
-   share of pairs beyond a substantive threshold, with a cluster-robust interval.
+   | target | `pretune_on` | `pretune_off` | discordant on-yes/off-no | reverse | cluster p |
+   |---|---|---|---|---|---|
+   | support pattern | **96 / 126** | 61 / 126 | 35 | **0** | 1.0e-5 |
+   | R² | 96 / 126 | 35 / 126 | 61 | **0** | 1.0e-5 |
+   | loss | 96 / 126 | 14 / 126 | 82 | **0** | 1.0e-5 |
+
+   Across all three targets and all 126 pairs there is **not one group** where `pretune_off`
+   collapses and `pretune_on` spreads, and the finding survives clustering easily — unlike the
+   structural difference, which did not. Crucially the collapse shows on the **discovered support
+   pattern**, not only on a number: the OLS warm start pulls the search into the same structure
+   regardless of seed. That is the anchoring risk this file records for population carry-over,
+   measured for the first time and at a different site, and it is what makes the claim carry for
+   Claim C. Support collapse is weaker than R² collapse (61 against 35 collapsed `pretune_off`
+   groups) — expected, since same structure at different parameters is more common than both.
+
+   **The median was a specification error, and not a small one — it would have made the campaign
+   look resultless.** The threshold grid shows structure the median hid. For R² the asymmetry sits
+   in the *small* differences and vanishes toward the large ones (1e-4: 46 vs 63 pairs; 1e-2: 30 vs
+   36; 1e-1: 16 vs 13, slightly reversed). The sign test is clear (81 against 174, cluster-robust
+   p = 5.4e-4) but measures the systematic *direction*, not the *size*, of an effect. Loss separates
+   the two classes cleanly: on exact systems direction is a draw (52 vs 62, p = 0.67) while the
+   magnitude is skewed (fold 10: 7 vs 21; fold 100: 4 vs 14); on surrogates the direction is
+   systematic (74 vs 176, p = 9.0e-5) and the magnitudes are balanced. Two different phenomena that
+   one median averaged to nothing.
+
+   **Standing rule for all further analysis:** quantiles and threshold grids, never a mean or median
+   as the effect size, and the threshold is **never** picked after seeing the data — the grid is
+   reported in full.
 
    Two things the analysis still owes: the WP-B1 waste measure (needs the heartbeat streams) and the
    per-system picture. `wasted_levels` in the records means levels above the expected stage, not

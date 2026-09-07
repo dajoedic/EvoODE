@@ -6,6 +6,79 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ## 2026-09-07
 
+### Die Verankerung ist strukturell, nicht bloss numerisch — und der Median hatte genau das Gegenteil suggeriert
+
+<!-- COMMIT_HASH_4 -->
+
+WP-A7 hat die beiden Luecken geschlossen, die WP-A6 hinterlassen hat: eine Effektstaerke, die die
+Verteilung abbildet statt ihres Medians, und die Kollapsmessung sauber in der Pipeline statt in einer
+Handrechnung. Dafuer traegt der Konverter jetzt sieben zusaetzliche Spalten, darunter
+`support_terms`; die Invariantenpruefung aus WP-A5 laeuft auf der neu erzeugten Registry unveraendert
+durch.
+
+#### Der Befund: der Kollaps sitzt auf der Struktur
+
+Gruppiert wird nach System, IC-Satz und Bedingung — je drei Seeds, 126 Gruppen je Bedingung, gepaart
+ueber 63 Systeme. „Kollabiert" heisst: alle drei Seeds liefern dasselbe Ergebnis.
+
+| Zielgroesse | `pretune_on` | `pretune_off` | diskordant on-ja/off-nein | umgekehrt | Cluster-p |
+|---|---|---|---|---|---|
+| Support-Muster | **96 / 126** | 61 / 126 | 35 | **0** | 1,0e-5 |
+| R² | 96 / 126 | 35 / 126 | 61 | **0** | 1,0e-5 |
+| Loss | 96 / 126 | 14 / 126 | 82 | **0** | 1,0e-5 |
+
+Unabhaengig nachgerechnet fuer das Support-Muster: 96 gegen 61, diskordant 35 zu 0 — identisch.
+
+Zwei Dinge daran sind bemerkenswert. Erstens ist die Richtung **vollstaendig einseitig**: ueber alle
+drei Zielgroessen und alle 126 Paare gibt es keine einzige Gruppe, in der `pretune_off` kollabiert
+und `pretune_on` streut. Zweitens ueberlebt der Befund die Clusterung muehelos — anders als die
+Strukturdifferenz aus WP-A6, die daran zerbrach.
+
+**Die entscheidende Frage war, ob der Kollaps strukturell ist oder nur numerisch.** Sie ist
+beantwortet: er zeigt sich auch auf dem gefundenen Support-Muster, also auf der Gleichheit der
+entdeckten Struktur und nicht bloss auf der Gleichheit einer Kennzahl. Damit ist die
+Verankerungsaussage fuer Claim C belastbar — der OLS-Warmstart zieht die Suche unabhaengig vom Seed
+in dieselbe Struktur, nicht nur zu derselben Zahl.
+
+Der Support-Kollaps ist dabei **schwaecher ausgepraegt** als der auf R² (61 statt 35 kollabierte
+`pretune_off`-Gruppen). Das ist erwartbar und kein Widerspruch: gleiche Struktur bei verschiedenen
+Parametern ist haeufiger als gleiche Struktur *und* gleiche Zahl. Die Spannweiten stuetzen dasselbe
+Bild — unter `pretune_on` ist die Seed-Spannweite des R² bis zum 75-%-Quantil exakt null, unter
+`pretune_off` erst bis zum 25-%-Quantil praktisch null.
+
+#### Warum der Median in die Irre fuehrte
+
+Das Schwellengitter zeigt eine Struktur, die der Median vollstaendig verdeckt hatte. Fuer R² auf den
+258 Surrogat-Paaren:
+
+| Schwelle | Paare fuer `pretune_on` | Paare fuer `pretune_off` |
+|---|---|---|
+| 1e-4 | 46 | 63 |
+| 1e-3 | 36 | 56 |
+| 1e-2 | 30 | 36 |
+| 1e-1 | 16 | 13 |
+
+Die Asymmetrie sitzt bei den **kleinen** Differenzen und verschwindet zu den grossen hin — bei 1e-1
+liegt sie sogar leicht andersherum. Der Vorzeichentest ist entsprechend deutlich (81 gegen 174,
+clusterfest p = 5,4e-4), aber er misst die Systematik einer Richtung, nicht die Groesse einer
+Wirkung. Beides zusammen ist die ehrliche Aussage: **die Richtung ist systematisch, der grosse
+Ausschlag ist es nicht.**
+
+Beim Loss trennt sich exakt und Surrogat sauber. Auf exakten Systemen ist die Richtung ein
+Unentschieden (52 gegen 62, p = 0,67), aber der **Betrag** ist schief: bei Faktor 10 stehen 7 Paare
+zugunsten `pretune_on` gegen 21 zugunsten `pretune_off`, bei Faktor 100 sind es 4 gegen 14. Auf
+Surrogaten ist es umgekehrt — die Richtung systematisch (74 gegen 176, p = 9,0e-5), die Betraege
+ausgeglichen. Zwei verschiedene Phaenomene, die ein einziger Median beide zu null gemittelt haette.
+
+#### Methodische Konsequenz
+
+Der Median als alleinige Effektstaerke war mein Spezifikationsfehler, und er war kein kleiner: er
+haette die Kampagne als ergebnislos erscheinen lassen. Fuer alle weiteren Auswertungen gilt deshalb —
+Quantile und Schwellengitter statt Mittelwert oder Median, und die Schwelle wird **nie** nach
+Sichtung der Daten ausgewaehlt, sondern das Gitter vollstaendig berichtet.
+
+---
+
 ### Der Pretuning-Kontrast haelt der Clusterung nicht stand — und die eigentliche Wirkung des Pretunings ist eine andere
 
 <!-- e8bb1c6 -->
