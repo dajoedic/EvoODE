@@ -291,6 +291,29 @@ the coupled search path 1e-6 is the cheaper, behaviour-equal tolerance; the Syst
    as the effect size, and the threshold is **never** picked after seeing the data — the grid is
    reported in full.
 
+   **The descriptive tables exist (WP-A8, 2026-09-07)** under `analysis/tables/paper1_phaseB_v1/`:
+   fit quality for surrogates (T1) and exact systems (T2), support recovery (T3), stage economy (T4),
+   robustness and failure modes (T5). All distributions as quantiles and threshold grids. The
+   dimension boundary is sharp — support recovery per condition and IC set is 18/18 to 9/27 on
+   dim 1–2 and **0 of 60 on dim 3–4 in all four combinations**; the median `log10` loss on exact
+   systems falls from about −11 on dim 1 to **+1.8 on dim 3**. The IC set is a real axis: on dim 1
+   `pretune_off` drops from 18/18 to 12/18 on the second IC set alone, which is what WP-A4b's
+   no-averaging rule was for.
+
+   **Two instrumentation findings nobody was looking for.** `total_diverged_solves` and
+   `total_solver_unstable_solves` are **identical in all 756 cells** (756 equal, 0 unequal) — one
+   measure counted twice, and they must never be reported as two independent robustness quantities.
+   And **18 cells never saw a single optimizer `Success`** yet reach losses down to 1.9e-12 at
+   R² ≈ 0.9999, their retcode sets consisting only of `Failure` and `MaxLossEvals`. Together with
+   the long-known sentinel loss `1e6` at retcode `Success`, this settles it: **the optimizer retcode
+   carries no statement about result quality in either direction.** All 18 are `pretune_on` with the
+   three seeds identical per system — the WP-A7 collapse again, and mechanistically consistent: the
+   warm start begins so close to the optimum that the budget is exhausted before anything improves.
+
+   T5 confirms 756 cells with `success == True`, no `failure_reason`, and `total_nonfinite_solves`
+   zero throughout — but the other counters are nonzero, so error-free means completed, not
+   eventless.
+
    Two things the analysis still owes: the WP-B1 waste measure (needs the heartbeat streams) and the
    per-system picture. `wasted_levels` in the records means levels above the expected stage, not
    waste after the last improvement — median 0, 370 of 7,200 levels — and it is defined on exact
@@ -364,7 +387,9 @@ the coupled search path 1e-6 is the cheaper, behaviour-equal tolerance; the Syst
 - Baseline v1 under a single fingerprint, once the final variant is regression-checked on the new
   grid.
 - Pathological line-search (up to 39,933 loss evals at two parameters) and the sentinel-loss `1e6`
-  with retcode `Success` — untouched cost and robustness levers. Since WP-D2 a budget stop is at
+  with retcode `Success` — untouched cost and robustness levers. WP-A8 added the counter-direction:
+  18 campaign cells reach excellent fits with no optimizer `Success` at all, so the retcode is
+  uninformative in both directions. Since WP-D2 a budget stop is at
   least distinguishable from a failed solve in the metadata, but both still collapse to `1e6` in the
   loss itself.
 - **WP-D4b, the discover-API cleanup, after the campaign**: the `isa BFGSOptimizer` branch and the
@@ -399,6 +424,9 @@ the coupled search path 1e-6 is the cheaper, behaviour-equal tolerance; the Syst
 - no systematic comparison against ODEBench baselines (SINDy, PySR) yet — Phase 5
 - expression trees are not implemented
 - `utils/checks.jl` is effectively a placeholder; `simulate()` still returns NaNs on failed solves
+- `total_diverged_solves` and `total_solver_unstable_solves` are identical in all 756 campaign
+  cells — one quantity counted twice on the Julia side. Not a data defect, but they must not be
+  reported as two independent robustness measures until the redundancy is understood
 - environment and test execution need cleanup and faster verification
 
 ## Design Principles

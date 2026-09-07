@@ -6,6 +6,68 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ## 2026-09-07
 
+### Die deskriptiven Tabellen stehen — und zwei Instrumentierungsbefunde fallen dabei ab
+
+<!-- COMMIT_HASH_5 -->
+
+WP-A8 hat die fuenf Ergebnistabellen erzeugt, die `PAPER_1.md` als Platzhalter fuehrt: Fit-Qualitaet
+getrennt fuer Surrogate (T1) und exakte Systeme (T2), Support-Findung (T3), Stufenoekonomie (T4),
+Robustheit und Fehlermodi (T5). Der Konverter traegt jetzt auch die neun Robustheitsfelder; die
+Invariantenpruefung laeuft auf der neu erzeugten Registry unveraendert durch. Aggregation und
+Darstellung sind getrennte Skripte, wie `analysis/CONVENTIONS.md` es verlangt.
+
+Zum ersten Mal sind die Verteilungen durchgaengig als Quantile und Schwellengitter ausgewiesen statt
+als Mittelwerte — die Regel aus WP-A7, jetzt angewandt.
+
+#### Was die Tabellen zeigen
+
+**Die Dimensionsgrenze ist scharf.** Support-Findung auf exakten Systemen, je Bedingung und IC-Satz:
+
+| | dim 1 | dim 2 | dim 3 | dim 4 |
+|---|---|---|---|---|
+| `pretune_off`, IC 1 | 18/18 | 15/27 | **0/12** | **0/3** |
+| `pretune_off`, IC 2 | 12/18 | 15/27 | **0/12** | **0/3** |
+| `pretune_on`, IC 1 | 15/18 | 14/27 | **0/12** | **0/3** |
+| `pretune_on`, IC 2 | 12/18 | 9/27 | **0/12** | **0/3** |
+
+Auf dim 1 und 2 gelingt Strukturfindung regelmaessig, ab dim 3 nie — in keiner der vier Kombinationen,
+in keinem der 60 Faelle. Der IC-Satz ist dabei eine echte Achse: auf dim 1 faellt `pretune_off` von
+18/18 auf 12/18, allein durch den Wechsel des Anfangswertsatzes. Das rechtfertigt WP-A4bs
+Entscheidung, die IC-Saetze nicht wegzumitteln.
+
+**Die Fit-Qualitaet folgt derselben Grenze.** Auf Surrogaten liegt der Median-R² auf dim 1 und 2 bei
+0,98 bis 0,9999, auf dim 3 zwischen 0,66 und 0,91. Auf exakten Systemen faellt der Median-`log10`-Loss
+von etwa -11 auf dim 1 auf **+1,8 auf dim 3** — sechs bis dreizehn Groessenordnungen schlechter, je
+nach Bedingung.
+
+#### Zwei Instrumentierungsbefunde, die keiner gesucht hat
+
+**`total_diverged_solves` und `total_solver_unstable_solves` sind identisch — in allen 756 Zellen.**
+Nachgerechnet: 756 Zellen gleich, null ungleich. Das sind nicht zwei Robustheitsmasse, sondern eines,
+zweimal gezaehlt. Sie duerfen im Paper nicht als unabhaengige Groessen nebeneinander stehen. Ob das
+Absicht ist oder ein Julia-seitiger Fehler, ist noch offen; die Kampagnendaten sind davon nicht
+betroffen, nur ihre Interpretation.
+
+**18 Zellen haben nie einen einzigen Optimizer-`Success` gesehen — und liefern trotzdem exzellente
+Fits.** Ihre Retcode-Mengen bestehen nur aus `Failure` und `MaxLossEvals`, bei Losswerten bis
+1,9e-12 und R² um 0,9999. Der Retcode ist also kein Qualitaetssignal; das ist die Gegenrichtung zum
+laengst bekannten Problem des Sentinel-Loss `1e6` mit Retcode `Success`. Beide Faelle zusammen heissen:
+**der Optimizer-Retcode traegt keine Aussage ueber die Ergebnisqualitaet, in keiner der beiden
+Richtungen.**
+
+Bemerkenswert daran: **alle 18 sind `pretune_on`**, und je System liefern die drei Seeds identische
+Werte — derselbe Kollaps wie in WP-A7. Mechanistisch plausibel: der Warmstart startet so nah am
+Optimum, dass der Optimizer sein Evaluationsbudget erreicht oder scheitert, bevor er etwas
+verbessern kann. Der Fit ist da schon gut.
+
+**Nicht widerlegt:** T5 bestaetigt 756 Zellen mit `success == True` und null gesetzte
+`failure_reason`. `total_nonfinite_solves` ist ueberall null. Die uebrigen Zaehler sind ungleich null
+— erfolgreiche Zellen enthalten also sehr wohl interne Solver- und Optimizer-Ereignisse. Das
+widerspricht der Annahme fehlerfreier Zellen nicht, praezisiert sie aber: fehlerfrei heisst
+abgeschlossen, nicht ereignislos.
+
+---
+
 ### Die Verankerung ist strukturell, nicht bloss numerisch — und der Median hatte genau das Gegenteil suggeriert
 
 <!-- 40b89dc -->
