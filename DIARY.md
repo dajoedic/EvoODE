@@ -8,7 +8,7 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ### Die Verankerung ist strukturell, nicht bloss numerisch — und der Median hatte genau das Gegenteil suggeriert
 
-<!-- COMMIT_HASH_4 -->
+<!-- 40b89dc -->
 
 WP-A7 hat die beiden Luecken geschlossen, die WP-A6 hinterlassen hat: eine Effektstaerke, die die
 Verteilung abbildet statt ihres Medians, und die Kollapsmessung sauber in der Pipeline statt in einer
