@@ -8,7 +8,7 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ### Die deskriptiven Tabellen stehen — und zwei Instrumentierungsbefunde fallen dabei ab
 
-<!-- COMMIT_HASH_5 -->
+<!-- 67f2086 -->
 
 WP-A8 hat die fuenf Ergebnistabellen erzeugt, die `PAPER_1.md` als Platzhalter fuehrt: Fit-Qualitaet
 getrennt fuer Surrogate (T1) und exakte Systeme (T2), Support-Findung (T3), Stufenoekonomie (T4),
