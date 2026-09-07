@@ -1,131 +1,127 @@
-# WP-A6 — Der Pretuning-Kontrast, gepaart und clusterfest
+# WP-A7 — Verteilungsbewusste Effektstaerke und die Seed-Kollaps-Messung
 
 **Language: Python**
 
 ## Kontext
 
-Die Phase-B-Kampagne liegt vollständig in der Analyse-Pipeline (WP-A5). Die konvertierte Registry
-ist `experiments/paper1_phaseB_v1/run_registry.csv`, 756 Zeilen, geprüft durch
-`analysis/scripts/aggregate/verify_campaign_registry.py`.
+WP-A6 hat den gepaarten Pretuning-Kontrast gerechnet. Zwei Ergebnisse stehen, beide committet:
 
-Die Kampagne existiert für **einen** Kontrast: `evogrow_v2_2_stage_capped` mit `pretuning=true`
-gegen `pretuning=false`, alles andere identisch. Dieses WP entscheidet, ob dieser Kontrast eine
-Aussage trägt. Es ist der Test, von dem die Gewichtung aller späteren Tabellen abhängt.
+1. Die Strukturdifferenz auf exakten Systemen (13 nur `pretune_off`, 3 nur `pretune_on` unter 120
+   Paaren) **haelt der Clusterung nicht stand**: exakter McNemar p = 0,021, clusterfeste Permutation
+   p = 0,218. Die 120 Paare stammen aus 20 Systemen. Das ist abgeschlossen und wird hier nicht
+   wiederholt.
+2. Die berichtete Effektstaerke fuer R² und Loss ist **unbrauchbar** — nicht falsch gerechnet,
+   sondern falsch gewaehlt. Das zu reparieren ist der erste Teil dieses Auftrags.
 
-**Die Paarung ist bereits verifiziert** und darf als gegeben angenommen, muss aber vom Skript selbst
-geprüft werden: Schlüssel ist das Tripel aus `system_id`, `seed` und `initial_condition_set`. Es gibt
-378 vollständige Paare, davon **120 auf exakten Systemen** und **258 auf Surrogaten**. Kein Paar ist
-unvollständig. In der Registry unterscheidet `variant_slug` die beiden Bedingungen
-(`..._pretune_on` / `..._pretune_off`); eine Spalte `condition` gibt es dort nicht.
+Bestehende Bausteine, auf denen aufgesetzt wird:
+`analysis/scripts/aggregate/analyze_pretuning_contrast.py` (Paarung, Clusterpermutation,
+System-Bootstrap), `analysis/configs/paper1_phaseB_v1.json`,
+`experiments/paper1_phaseB_v1/run_registry.csv`, geprueft durch `verify_campaign_registry.py`.
 
-Zwei weitere geprüfte Randbedingungen: es gibt **keine** Zelle mit dem Sentinel-Loss `1e6`, und `r2`
-ist in allen 756 Zeilen numerisch belegt. Beides muss das Skript trotzdem prüfen und bei Verletzung
-abbrechen — die Randbedingung gilt für diese Kampagne, nicht für alle künftigen.
+Paarung wie gehabt: Schluessel aus `system_id`, `seed`, `initial_condition_set`; 378 vollstaendige
+Paare, 120 exakt, 258 Surrogat; Bedingung aus `variant_slug`.
 
-## Das methodische Problem, das den Auftrag bestimmt
+## Teil 1 — Der Konverter muss mehr Felder tragen
 
-Die 120 exakten Paare stammen aus nur **20 Systemen** — sechs Paare je System (3 Seeds x 2 IC-Sätze).
-Die 258 Surrogat-Paare stammen aus 43 Systemen. Paare innerhalb eines Systems sind **nicht
-unabhängig**: sie teilen dieselbe Dynamik, dieselbe Repräsentierbarkeit und dieselbe Schwierigkeit.
+`convert_campaign_history_to_run_registry.py` laesst 53 der 77 Record-Felder fallen
+(`codex/REPORT_WP_A5.md`). Teil 2 dieses Auftrags braucht davon `support_terms`. Ergaenze die
+Spaltenliste um genau diese sieben Felder und **keine weiteren**:
 
-Ein gewöhnlicher McNemar-Test behandelt alle 120 Paare als unabhängige Ziehungen und wird deshalb
-einen zu kleinen p-Wert liefern. Die effektive Stichprobengröße liegt näher an 20 als an 120.
+`support_terms`, `condition`, `use_pretuning`, `n_levels`, `eq_overshoot`, `eq_final_stages`,
+`stage_caps`
 
-**Deshalb ist die Kernanforderung dieses WP nicht ein Test, sondern zwei — und die ehrliche
-Hauptaussage ist die clusterfeste.** Beide werden berichtet, nebeneinander, mit der Differenz als
-eigenem Ergebnis. Wenn die beiden Verfahren zu verschiedenen Schlüssen kommen, ist das ein Befund und
-kein Grund, sich das günstigere auszusuchen.
+Die letzten vier und `support_terms` sind verschachtelte Werte (Beispiele: `support_terms` ist
+`[['u1', 'u1^2', 'cos(u1)']]`, `stage_caps` ist `[5]`, `eq_overshoot` kann `null` sein). Sie werden
+als JSON in die Zelle geschrieben, damit sie verlustfrei zurueckgelesen werden koennen — nicht als
+Pythons `str()`-Darstellung, die sich nicht sicher parsen laesst.
 
-## Deliverables
+Anschliessend die Registry neu erzeugen und `verify_campaign_registry.py` erneut laufen lassen. Die
+Pruefung muss unveraendert durchlaufen; halte ihre Ausgabe im Report fest. **Wenn sie scheitert, ist
+das ein Abbruchgrund und kein Anlass, die Pruefung anzupassen.**
 
-### 1. Ein Auswertungsskript
+## Teil 2 — Die Auswertung
 
-Neu unter `analysis/scripts/aggregate/`, benannt nach `<verb>_<subject>.py`, parametrisiert über
-`--config` nach dem Muster der bestehenden Skripte, Sollwerte der Paarung als CLI-Parameter mit den
-oben genannten Zahlen als Vorgabe. Es schreibt sein Ergebnis als maschinenlesbare Datei nach
-`analysis/data/paper1_phaseB_v1/` und gibt eine lesbare Zusammenfassung auf stdout aus.
+Erweitere `analyze_pretuning_contrast.py` oder lege ein zweites Skript daneben — entscheide nach
+Lesbarkeit und begruende die Wahl kurz im Report. Alles unter `analysis/scripts/aggregate/`,
+Ergebnis maschinenlesbar nach `analysis/data/paper1_phaseB_v1/`.
 
-Es wertet **drei** Zielgrößen aus, exakte und Surrogat-Systeme strikt getrennt (Design-Prinzip 8 —
-sie werden nie in eine Kennzahl gemischt):
+### 2a — Effektstaerke, die die Verteilung abbildet
 
-**(a) Strukturfindung, exakte Systeme, 120 Paare.** Zielgröße ist `exact_support_match`, binär.
+Fuer R² (258 Surrogat-Paare) und Loss (getrennt nach exakt und Surrogat, nie gemischt):
 
-- Die vollständige 2x2-Kontingenztafel der Paare wird berichtet, nicht nur die diskordanten Zellen.
-- Primärtest naiv: **exakter McNemar** über die diskordanten Paare, also der zweiseitige exakte
-  Binomialtest mit p = 0.5. **Kein** Chi-Quadrat, **keine** Stetigkeitskorrektur — die Zahl der
-  diskordanten Paare ist klein, die Approximation dort unbrauchbar.
-- Primärtest clusterfest: ein **Permutationstest**, der die Bedingungszuweisung **innerhalb jedes
-  Systems** vertauscht und so die Clusterstruktur erhält. Prüfgröße ist die Differenz der
-  Trefferzahlen zwischen den Bedingungen. Die Zahl der Permutationen ist ein benannter Konstantenwert
-  im Skript, der Zufallsgenerator wird mit einem ebenfalls benannten Seed initialisiert, mit
-  Kommentar — das ist die einzige erlaubte Randomisierung (`analysis/CONVENTIONS.md`).
+- **Die Verteilung selbst**, nicht ihre Mitte: die Quantile 5, 10, 25, 50, 75, 90, 95 der
+  Paardifferenz. Fuer den Loss auf `log10` wie in WP-A6.
+- **Anteil der Paare jenseits einer Schwelle**, ueber ein **Gitter** von Schwellen, jeweils mit
+  clusterfestem Bootstrap-Intervall auf Systemebene. Fuer R²: 1e-4, 1e-3, 1e-2, 1e-1. Fuer den Loss:
+  Fold-Change-Schwellen 1,1 / 2 / 10 / 100.
 
-**(b) Fit-Qualität, Surrogat-Systeme, 258 Paare.** Zielgröße ist `r2`.
+  Das Gitter wird **vollstaendig berichtet**. Es wird keine Schwelle ausgewaehlt, hervorgehoben oder
+  als *die* Effektstaerke bezeichnet — genau diese Auswahl nach Sichtung der Daten waere
+  Schwellenschieberei und ist hier verboten.
+- **Vorzeichenasymmetrie**: Zahl der Paare zugunsten jeder Bedingung und die Zahl der exakten
+  Nullen, geprueft mit demselben clusterfesten Permutationsverfahren wie in WP-A6.
 
-- Gepaarter **Wilcoxon-Vorzeichen-Rang-Test** über die Paardifferenzen.
-- Derselbe clusterfeste Permutationstest wie in (a), Prüfgröße ist der Median der Paardifferenzen.
-- Effektstärke: Median der Paardifferenz mit Bootstrap-Konfidenzintervall, wobei **auf Systemebene
-  gebootstrappt wird**, nicht auf Paarebene — sonst wiederholt sich derselbe Unabhängigkeitsfehler.
+**Verboten:** ein Median als alleinige Effektstaerke, an irgendeiner Stelle der Ausgabe. Er war der
+Fehler, der dieses WP ausgeloest hat. Er darf als **eines** von sieben Quantilen erscheinen, nie
+allein.
 
-**(c) Loss, alle 378 Paare.** Der Loss überspannt siebzehn Größenordnungen (4,6e-15 bis 5,8e+2),
-deshalb wird auf `log10` gerechnet oder rangbasiert getestet; begründe die Wahl im Report. Getrennt
-nach exakt und Surrogat berichten, nie zusammengefasst.
+### 2b — Die Seed-Kollaps-Messung
 
-Für jede Zielgröße gehören in die Ausgabe: die Prüfgröße, der p-Wert beider Verfahren, die
-Effektstärke mit Intervall, und die Zahl der eingehenden Paare. **Ein p-Wert ohne Effektstärke ist
-kein Ergebnis.**
+Die Beobachtung, die dieses WP traegt: unter `pretune_on` liefern die drei Seeds sehr viel haeufiger
+dasselbe Ergebnis als unter `pretune_off`. Eine Handmessung ergab 96 von 126 Gruppen gegen 34 von
+126 auf R². Diese Messung gehoert sauber in die Pipeline, nicht in eine Notiz.
 
-### 2. Deskriptive Aufschlüsselung nach Dimension
+Gruppierungseinheit ist das Tripel aus System, IC-Satz und Bedingung — je drei Seeds, 126 Gruppen je
+Bedingung. Zu berichten:
 
-Die Kontingenztafel aus (a) zusätzlich je Systemdimension, als **rein beschreibende** Tabelle.
+- Anteil der Gruppen, deren drei Seeds **dasselbe Ergebnis** liefern, getrennt fuer drei Zielgroessen:
+  `r2`, `loss` und das **gefundene Support-Muster** aus `support_terms`. Das Support-Muster ist der
+  interessanteste der drei, weil er Strukturgleichheit misst statt Zahlengleichheit; er ist der
+  Grund, warum Teil 1 noetig war.
+- Die Gleichheitstoleranz ist ein **CLI-Parameter**, kein fest verdrahteter Wert. Vorgabe: relative
+  Toleranz 1e-12. Begruende im Report, wie du absolute und relative Toleranz behandelst, besonders
+  fuer Losswerte nahe null. Der Support-Vergleich ist exakt und braucht keine Toleranz — dokumentiere
+  aber, ob Reihenfolge innerhalb einer Gleichung normalisiert wird und warum.
+- Die Streuung je Gruppe, nicht nur die Ja/Nein-Aussage: Spannweite bei `r2`, Spannweite von
+  `log10(loss)`.
+- **Der Vergleich zwischen den Bedingungen ist gepaart**: dieselbe (System, IC)-Gruppe unter beiden
+  Bedingungen, also 126 Paare aus 63 Systemen. Naiver exakter McNemar auf „kollabiert ja/nein" **und**
+  clusterfeste Permutation auf Systemebene, beide nebeneinander wie in WP-A6.
 
-**Ausdrücklich verboten:** ein Signifikanztest je Dimension. Die Zellen sind winzig, und vier Tests
-auf denselben Daten wären unkorrigiertes multiples Testen. Die Aufschlüsselung zeigt, *wo* der
-Unterschied sitzt, sie behauptet nichts über ihn.
+Exakte und Surrogat-Systeme werden auch hier getrennt ausgewiesen (Design-Prinzip 8).
 
-### 3. Abbruchbedingungen
+### 2c — Abbruchbedingungen
 
-Das Skript bricht mit Exit-Code ungleich null ab, wenn: die Paarung unvollständig ist, die Zahl der
-Paare von den Sollwerten abweicht, eine Zelle den Sentinel-Loss `1e6` trägt, `r2` fehlt, oder eine
-Zielgröße in einer der beiden Bedingungen leer ist. Kein stiller Ausschluss von Zellen — wenn Daten
-fehlen, ist das ein Fehler und keine Filterbedingung.
+Wie in WP-A6: unvollstaendige Paarung, abweichende Paarzahlen, Sentinel-Loss `1e6`, fehlendes `r2`,
+leere Zielgroesse. Zusaetzlich: eine Gruppe, die nicht genau drei Seeds hat, und ein
+`support_terms`-Feld, das sich nicht als JSON lesen laesst. Kein stiller Ausschluss.
 
-Belege den Fehlerpfad an mindestens einer Fixture unter `analysis/fixtures/` mit unvollständiger
-Paarung.
-
-### 4. Abhängigkeiten
-
-`analysis/requirements.txt` enthält bisher nur `sympy`. Falls du `scipy` für den Wilcoxon-Test
-verwendest, trage es mit **fester** Version ein (installiert ist 1.13.1, kein `>=`,
-`analysis/CONVENTIONS.md`). Den exakten Binomialtest und den Permutationstest bitte ohne
-Fremdbibliothek — `math.comb` genügt und macht die Rechnung nachlesbar.
-
-### 5. SCRIPTS.md
-
-Das neue Skript in die Tabelle in Abschnitt 7 eintragen.
+Fehlerpfad an einer Fixture unter `analysis/fixtures/` belegen.
 
 ## Verboten
 
-- keine Änderung an `src/`, `studies/`, `experiments/` oder irgendeinem Julia-Code
-- keine Änderung an `run_registry.csv`, am Konverter oder am Prüfskript aus WP-A5
-- **keine Figuren** — dieses WP produziert Zahlen, keine Grafiken
-- **keine Eintragung von Ergebnissen in `PAPER_1.md`, `CLAUDE.md` oder `DIARY.md`.** Die
-  wissenschaftliche Wertung trifft Claude, nicht das WP. Der Report berichtet, er schließt nicht.
+- keine Aenderung an `src/`, `studies/`, `experiments/` oder Julia-Code
+- keine Aenderung an `verify_campaign_registry.py` und keine Abschwaechung seiner Invarianten
+- keine weiteren Konverterspalten als die sieben genannten
+- **keine Figuren**
+- **keine Ergebnisse in `PAPER_1.md`, `CLAUDE.md` oder `DIARY.md`** — der Report berichtet, gewertet
+  wird von Claude
 - keine Signifikanzaussage je Dimension, je System oder je IC-Satz
-- keine Vermischung exakter und Surrogat-Zellen in einer Kennzahl
-- kein `git add -A`, keine Git-Operationen; Dateien im Arbeitsbaum liegen lassen
+- keine Auswahl einer bevorzugten Schwelle aus dem Gitter
+- kein `git add -A`, keine Git-Operationen
 
 ## Akzeptanzkriterium
 
-Das Skript läuft auf der Phase-B-Registry fehlerfrei durch, meldet 378 Paare gesamt, 120 exakt und
-258 Surrogat, und liefert für alle drei Zielgrößen **beide** Verfahren mit Effektstärke. Auf der
-Fixture mit unvollständiger Paarung bricht es mit Exit-Code ungleich null ab. Die Ergebnisdatei liegt
-unter `analysis/data/paper1_phaseB_v1/`.
+Die neu erzeugte Registry traegt die sieben zusaetzlichen Spalten, `verify_campaign_registry.py`
+laeuft unveraendert durch. Die Auswertung liefert fuer R² und Loss die sieben Quantile und das
+vollstaendige Schwellengitter mit clusterfesten Intervallen, und fuer alle drei Zielgroessen der
+Kollapsmessung beide Testverfahren nebeneinander. Auf der Fixture bricht das Skript mit Exit-Code
+ungleich null ab.
 
 ## Report
 
-`codex/REPORT_WP_A6.md`. Enthält: die exakten Kommandos, die vollständige Kontingenztafel, beide
-p-Werte je Zielgröße nebeneinander, die Effektstärken mit Intervallen, die deskriptive
-Dimensionstabelle, die Begründung der Loss-Transformation, die Zahl der Permutationen und den
-verwendeten Seed — und einen ausdrücklichen Absatz dazu, **ob und wie weit naives und clusterfestes
-Verfahren auseinanderlaufen**.
+`codex/REPORT_WP_A7.md`. Enthaelt: die Kommandos, die unveraenderte Ausgabe der Invariantenpruefung,
+die Quantiltabellen, das vollstaendige Schwellengitter, die Kollapstabelle fuer alle drei
+Zielgroessen mit beiden p-Werten, die Begruendung der Toleranzbehandlung und der Support-
+Normalisierung — und einen Absatz dazu, ob die Kollapsmessung auf dem Support-Muster dasselbe Bild
+zeigt wie auf R².

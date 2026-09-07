@@ -1,4 +1,4 @@
 status: done
-task:   WP-A6
-report: codex/REPORT_WP_A6.md
-note:   Pretuning contrast analysis implemented and verified on registry plus incomplete-pair fixture.
+task:   WP-A7
+report: codex/REPORT_WP_A7.md
+note:   Registry conversion, distribution-aware pretuning analysis, seed-collapse analysis, fixture, and report are complete.

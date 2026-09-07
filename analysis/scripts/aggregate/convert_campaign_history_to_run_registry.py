@@ -49,6 +49,13 @@ CSV_COLUMNS = [
     "total_parameter_fits",
     "total_ode_solves",
     "stage_cap_behavior_fingerprint",
+    "support_terms",
+    "condition",
+    "use_pretuning",
+    "n_levels",
+    "eq_overshoot",
+    "eq_final_stages",
+    "stage_caps",
 ]
 
 
@@ -68,6 +75,10 @@ def parse_args() -> argparse.Namespace:
 
 def blank_if_none(value: Any) -> Any:
     return "" if value is None else value
+
+
+def json_cell(value: Any) -> str:
+    return json.dumps(value, ensure_ascii=True, separators=(",", ":"))
 
 
 def read_records(path: Path) -> list[dict[str, Any]]:
@@ -161,6 +172,13 @@ def row_from_record(record: dict[str, Any], experiment_id: str) -> dict[str, Any
         "stage_cap_behavior_fingerprint": blank_if_none(
             record.get("stage_cap_behavior_fingerprint")
         ),
+        "support_terms": json_cell(record.get("support_terms")),
+        "condition": blank_if_none(record.get("condition")),
+        "use_pretuning": blank_if_none(record.get("use_pretuning")),
+        "n_levels": blank_if_none(record.get("n_levels")),
+        "eq_overshoot": json_cell(record.get("eq_overshoot")),
+        "eq_final_stages": json_cell(record.get("eq_final_stages")),
+        "stage_caps": json_cell(record.get("stage_caps")),
     }
 
 

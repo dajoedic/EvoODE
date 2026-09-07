@@ -1,0 +1,2 @@
+variant_slug,system_id,system_name,system_dim,system_representability,seed,initial_condition_set,loss,r2,support_terms
+evogrow_v2_2_stage_capped_pretune_on,1,Fixture system,1,surrogate,42,1,0.1,0.9,not-json
