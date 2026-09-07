@@ -119,7 +119,7 @@ ground truth, `STATUS.md` only the fast signal: a poll checks both.
 | 1 — stable core | DONE (2026-04-20) |
 | 2 — EvoGrow variants | **CLOSED 2026-08-03** |
 | 3 — benchmarking | infrastructure done; Phase B protocol decided and implemented. Planned next axes: noise, sampling density, coupling strength, dimensionality |
-| 4 — Paper 1 | **Phase B campaign running since 2026-08-22** (`git 91f88c4`, 756 cells, `parallelism: 16`, ~9 days). Phase A frozen; stage-cap defect solved (WP-C1 to WP-C5); regression recomputed under the final identity triple (120 cells, 30/30 bit-identical, −25.4 % loss evaluations); `pretune_off` probe complete; level budget decided against (WP-B1) |
+| 4 — Paper 1 | **Phase B campaign complete 2026-09-04** (`git 91f88c4`, 756/756 cells, 0 errors, one identity triple, 5,248 core hours). Analysis pending. Phase A frozen; stage-cap defect solved (WP-C1 to WP-C5); regression recomputed under the final identity triple (120 cells, 30/30 bit-identical, −25.4 % loss evaluations); `pretune_off` probe complete; level budget decided against (WP-B1) |
 | 5 — advanced methods | not started |
 
 ### Phase 2 outcome
@@ -145,10 +145,11 @@ over unchanged — a deliberate warm start; the accepted risk is anchoring, and 
 the counter-measure. A population reset on promotion is future work and **must not be implemented
 in the current phase.**
 
-## Active Studies (as of 2026-08-22)
+## Active Studies (as of 2026-09-07)
 
 | Artifact | Status | Note |
 |----------|--------|------|
+| `paper1_phaseB_v1` | **complete** (756/756) | Campaign records under `git 91f88c4` / `604e79733b22d64d` / `ffb0266c7913352c`, 0 errors, 756 unique identities. Analysis not yet run |
 | `paper1_phaseA_v1` | **frozen** (300/300) | H1 partial, H2 supported, H3 partial, H4 vacuous. Not used for final claims. `docs/paper1_freeze_memo_phaseA.md` |
 | `studies/lookahead/` | WP-L1–L5d, WP-G1/G1b done | Stage-firing look-ahead — **promoted from diagnostic to the paper's contribution** |
 | `studies/regression/` | 120 records on Orion, recomputed 2026-08-20 | Capped vs v2.2 over 30 cells on systems 3, 11, 26, 31, 63 under `git f6143eb` / `17fe7d9cfb8f1be3` / `ffb0266c7913352c`: loss **bit-identical 30/30**, `pruned_match` unchanged, **−25.4 %** loss evaluations, **no cell more expensive** |
@@ -158,7 +159,7 @@ in the current phase.**
 
 ## Current Priorities
 
-State as of 2026-08-22. `DIARY.md` holds the measurements; this section keeps only what still
+State as of 2026-09-07. `DIARY.md` holds the measurements; this section keeps only what still
 constrains a decision.
 
 ### Settled — do not re-open
@@ -234,13 +235,26 @@ the coupled search path 1e-6 is the cheaper, behaviour-equal tolerance; the Syst
 
 ### Active
 
-1. **The Phase B campaign is running.** Started 2026-08-22 under
-   `git 91f88c46063fa368101326cbfe1abcdfc9d857fc` on Orion, Job `evoode-phase-b-campaign`,
-   `completions: 756`, `parallelism: 16`. The bootstrap confirmed the identity on the cluster:
-   `604e79733b22d64d`, 756 rows, 756 unique identities, 20 exact / 43 surrogate. Cells start in
-   cost-descending order (`indices_cost_desc.txt`, WP-H7) so the 68 h cell runs in the shadow of the
-   field rather than after it; expect roughly nine days, floor 68 h. Cost model and its blind spots:
-   `docs/hpc_requirements.md`. **Nothing about the campaign path may be touched while it runs.**
+1. **The Phase B campaign is complete, and the analysis is the open work.** Ran 2026-08-22 to
+   2026-09-04 on Orion under `git 91f88c46063fa368101326cbfe1abcdfc9d857fc`; the Job has since
+   removed itself from `scch-das`. **756/756 records, no `error`, 756 unique identities, one
+   identity triple over every record** (`91f88c4` clean / `604e79733b22d64d` / `ffb0266c7913352c`),
+   378 `pretune_on` against 378 `pretune_off`. Records live on the NFS share under
+   `phase_b_campaign_91f88c46.../tasks` and are readable without cluster access.
+
+   Raw numbers, ahead of the pipeline: 5,248 core hours, 1.418e9 loss evaluations. dim 3 is 120
+   cells and **75.6 %** of the compute, dim 1 is 276 cells and 0.2 %; the five most expensive cells
+   are all Lorenz (systems 55/56) with R² between 0.19 and 0.43, the costliest at 289.7 h. Support
+   recovery on the 240 exact cells: `pretune_off` **60/120** against `pretune_on` **50/120**, the
+   gap carried by dim 1 (30 vs 27) and dim 2 (30 vs 23), **0/50 on dim 3 and dim 4**. Surrogate R²
+   is a dead heat — median 0.9941 in both arms, 430 of 516 cells above 0.9.
+
+   Three things this does *not* yet establish and the analysis must: whether the pretuning gap is
+   significant on 120 cells per arm, the WP-B1 waste measure (needs the heartbeat streams), and the
+   per-system picture. `wasted_levels` in the records means levels above the expected stage, not
+   waste after the last improvement — median 0, 370 of 7,200 levels — and it is defined on exact
+   cells only; `eq_overshoot` is nonzero in all 516 surrogate cells purely because `expected_stage`
+   is nominal there. Do not aggregate the two classes on either metric.
 2. **The external columns of the protocol audit** (`docs/paper1_odebench_protocol_alignment.md`) are
    the last substantive Phase 3 item. Two additions decided 2026-08-22: the audit needs
    **representational adequacy** as a dimension, split into *in principle representable* and
@@ -280,8 +294,8 @@ the coupled search path 1e-6 is the cheaper, behaviour-equal tolerance; the Syst
    five-case probe draws out of `_cap_split_decision`. Publishability requires one git hash, one
    config/Phase B fingerprint **and** one behaviour fingerprint.
 
-   **Current values:** Phase B `604e79733b22d64d` — now carrying campaign records for the first
-   time, under `git 91f88c4`. Regression `17fe7d9cfb8f1be3` with 120 records under `git f6143eb`.
+   **Current values:** Phase B `604e79733b22d64d` — carrying all 756 campaign records under
+   `git 91f88c4`, verified clean at campaign end. Regression `17fe7d9cfb8f1be3` with 120 records under `git f6143eb`.
    Behaviour `ffb0266c7913352c` (probe version 2). The 42 pilot records and the 3 probe cells
    predate all of it (`e361a2af49366670` / `61b6548ef0014593`, `git 88eaeb6`) and must never be
    merged into campaign data.
@@ -332,10 +346,10 @@ the coupled search path 1e-6 is the cheaper, behaviour-equal tolerance; the Syst
 
 - **structural recovery on coupled systems is unsolved**: `pruned_match = false` on every coupled
   regression cell, including ones with a loss of 6.8e-11 and the true structure available at the
-  active stage
+  active stage — and confirmed on campaign breadth: **0 of 50 exact dim-3/dim-4 cells** recover the
+  support, against 60/120 (`pretune_off`) and 50/120 (`pretune_on`) over all exact cells
 - the stage cap is not stable across initial conditions where the trajectory carries little
   dynamics (System 31, IC set 2)
-- Phase B needs a machine: 756 runs, ~1e9 ODE solves; not a laptop workload
 - `wasted_levels` / `eq_wasted_levels` are computed only for `representability == "exact"`
   (`experiments/run_experiment.jl:385`), so they are `null` for 43 of 63 systems. The WP-B1 waste
   measure does not need the truth and is fully recoverable from the heartbeat `best_loss` stream —

@@ -4,6 +4,90 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ---
 
+## 2026-09-07
+
+### Die Phase-B-Kampagne ist durch — 756 von 756, null Fehler, ein Identitaets-Tripel
+
+<!-- COMMIT_HASH -->
+
+Nach dreizehneinhalb Tagen ist die Kampagne fertig. Der erste Record traegt den Zeitstempel
+2026-08-22T10:54:50Z, der letzte 2026-09-04T22:14:38Z. Der Job hat sich auf dem Cluster selbst
+abgeraeumt: `oc get jobs -l hpc.scch.at/responsibility=joedicke` findet in `scch-das` nichts mehr,
+es ist nichts aufzuraeumen. Die Records liegen vollstaendig auf dem Netzwerkspeicher unter
+`phase_b_campaign_91f88c46063fa368101326cbfe1abcdfc9d857fc/tasks`.
+
+**Die Integritaetspruefung ueber alle 756 Records ist sauber.** Kein Record mit gesetztem `error`,
+keine leere Datei, 756 eindeutige Zellidentitaeten aus System, Seed, IC-Satz und Bedingung. Und das
+Identitaets-Tripel steht ueber die gesamte Kampagne: `git_hash = 91f88c4` mit `git_dirty = false`,
+`config_fingerprint = 604e79733b22d64d`, `stage_cap_behavior_fingerprint = ffb0266c7913352c` —
+jeweils 756 von 756. Die Publizierbarkeitsbedingung aus `CLAUDE.md` ist damit erfuellt, ohne
+Diskrepanz, die in den Supplement muesste. Die Bedingungen sind exakt geteilt, 378 `pretune_on`
+gegen 378 `pretune_off`, `stage_cap_policy_active` in allen 756, `n_levels = 30` in allen 756.
+
+**Umfang.** 5.248 Kernstunden, 1,418 Mrd. Loss-Evaluationen und ebenso viele ODE-Solves. Die
+Wall-Clock-Zahlen sind hier ausnahmsweise mehr als Kontext, weil die Zellen auf dedizierten
+Cluster-Knoten liefen — aber die Kostenaussagen unten ruhen trotzdem auf den Zaehlwerten, nicht auf
+`elapsed_s`.
+
+#### Die Kostenverteilung ist noch schiefer als der Zwischenstand vermuten liess
+
+| Klasse | Zellen | Kernstunden | Anteil | Mittel je Zelle |
+|---|---|---|---|---|
+| dim 1 | 276 | 9 | 0,2 % | Minuten |
+| dim 2 | 336 | 1.168 | 22,2 % | 3,5 h |
+| dim 3 | 120 | 3.969 | **75,6 %** | 33,1 h |
+| dim 4 | 24 | 102 | 1,9 % | 4,3 h |
+
+Hundertzwanzig Zellen — sechzehn Prozent der Kampagne — verbrauchen drei Viertel der Rechenzeit.
+Die 276 dim-1-Zellen zusammen kosten neun Stunden, also weniger als ein Drittel einer einzigen
+mittleren dim-3-Zelle. Der Zwischenstand vom 2026-09-02 hatte 98 % fuer dim 3 gemessen; das war ein
+Artefakt der kostenabsteigenden Startreihenfolge (WP-H7), die die billigen Zellen ans Ende schiebt.
+Der Endstand von 75,6 % ist die belastbare Zahl.
+
+**Die teuerste Zelle der Kampagne ist ein Fehlschlag, und zwar der groesste.** System 56, Lorenz mit
+Standardparametern im chaotischen Regime, `pretune_on`, IC 1, Seed 123: **289,7 h** fuer Loss 4,27e+1
+und R² 0,417. Das ist der neue Rekord und loest System 55 mit 185,7 h ab, das seinerseits nur R²
+0,193 liefert. Die fuenf teuersten Zellen sind samt und sonders Lorenz-Zellen (55 und 56) mit R²
+zwischen 0,193 und 0,427. Die Rechenzeit wird von den Zellen erzeugt, die scheitern — das
+WP-B1-Argument, jetzt auf der vollen Kampagne und mit einem Extremfall, den der Pilot nicht kannte.
+
+#### Der Kontrast, fuer den die Kampagne existiert
+
+Auf den 240 exakten Zellen, gemessen an `pruned_match`:
+
+| Klasse | `pretune_off` | `pretune_on` |
+|---|---|---|
+| dim 1 | 30 / 36 | 27 / 36 |
+| dim 2 | **30 / 54** | **23 / 54** |
+| dim 3 | 0 / 24 | 0 / 24 |
+| dim 4 | 0 / 6 | 0 / 6 |
+| gesamt | **60 / 120** | **50 / 120** |
+
+Auf den 516 Surrogat-Zellen ist der Kontrast dagegen ein glattes Unentschieden: Median-R² 0,9941 in
+**beiden** Bedingungen, ueber alles 430 von 516 Zellen ueber 0,9. Die Richtung des
+Struktur-Ergebnisses — Pretuning schadet der Support-Findung eher, als dass es hilft — ist auf dim 1
+und dim 2 konsistent, aber sie ruht auf 120 Zellen je Arm und braucht eine Signifikanzaussage, bevor
+sie ins Paper geht. Das ist die erste Aufgabe der Analyse-Pipeline.
+
+**Strukturfindung auf dim 3 und dim 4 ist null.** Fuenfzig gekoppelte Zellen, kein einziger
+`pruned_match`. Die bekannte Luecke ist damit auf voller Kampagnenbreite bestaetigt und nicht mehr
+nur an Regressionszellen belegt. Sie gehoert als Limitation ins Paper, mit dem
+Wachstums-only-Argument aus `PAPER_1.md` als Mechanismus.
+
+#### Cap-Verhalten und Verschwendung
+
+Auf den exakten Zellen liegt `eq_overshoot != 0` bei **57 von 240**; `wasted_levels` — hier Levels
+oberhalb der erwarteten Stufe, nicht die WP-B1-Verschwendung nach der letzten Verbesserung — hat
+Median 0 und Summe 370 von 7.200 Levels, also gut 5 %. Auf Surrogaten sind beide Groessen
+bedeutungslos, weil `expected_stage` dort nominell ist; entsprechend ist `eq_overshoot` dort in allen
+516 Zellen ungleich null. Das ist keine Messung, sondern die Definitionsgrenze, und die Analyse darf
+die beiden Klassen an dieser Stelle nicht zusammenwerfen.
+
+Die eigentliche WP-B1-Verschwendungsmessung braucht die Heartbeat-Stroeme und die Analyse-Pipeline;
+sie ist mit dem Kampagnenende unveraendert rekonstruierbar und steht als naechster Schritt an.
+
+---
+
 ## 2026-09-03
 
 ### Das Feedback von 2024 gegen den heutigen Stand — ein Punkt haelt, und er korrigiert unsere eigene Erzaehlung

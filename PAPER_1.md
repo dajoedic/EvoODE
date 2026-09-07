@@ -80,7 +80,8 @@ no true support in the current basis and are evaluated through R², reached stag
 observations.
 
 Paper 1 does **not** derive claims from Phase A exploratory results, and does **not** report Phase B
-results before campaign records exist. Result sections below are explicit placeholders.
+results before they are produced by the analysis pipeline. The campaign records exist since
+2026-09-04; the result sections below stay placeholders until the analysis has run.
 
 Paper 1 does **not** introduce a stopping rule or level budget. That decision was taken on the
 evidence and is recorded in Phase 6.
@@ -114,10 +115,10 @@ paper must be per-system or per-class, never a single global factor.
 | Level budget | **decided against** (WP-B1, 2026-08-21): 30 levels stay, the waste is reported as a result |
 | Phase B protocol | decided 2026-08-03: 63 systems, 2 conditions, 3 seeds, 2 IC sets = 756 cells |
 | Sampling | 512 points over `t ∈ [0, 10]`, both endpoints, self-integrated with `Tsit5` at `abstol = reltol = 1e-9` |
-| Phase B fingerprint | `604e79733b22d64d` — **campaign running since 2026-08-22**, `git 91f88c4` |
+| Phase B fingerprint | `604e79733b22d64d` — **756/756 campaign records**, `git 91f88c4` clean, complete 2026-09-04 |
 | Regression fingerprint | `17fe7d9cfb8f1be3` — 120 records under `git f6143eb` |
 | Stage-cap behaviour fingerprint | `ffb0266c7913352c` (probe version 2) |
-| Campaign status | **running** since 2026-08-22, 756 cells at `parallelism: 16`, cost-descending start order (WP-H7). Expect ~9 days, floor 68 h |
+| Campaign status | **complete** 2026-09-04 after 13.5 days: 756/756 records, 0 errors, 756 unique identities, one identity triple, 5,248 core hours, 1.418e9 loss evaluations |
 
 ---
 
@@ -137,7 +138,7 @@ The primary claim target is **Claim C**.
 
 > EvoODE achieves the reported Phase B fit-quality outcomes on the 63-system ODEBench protocol.
 
-Fillable only from campaign records. **Placeholder: no Phase B records exist.**
+Fillable from campaign records. **Placeholder: records exist since 2026-09-04, analysis not yet run.**
 
 ### Claim B — Search-Space-Control Claim
 
@@ -173,8 +174,8 @@ second half of the claim is itself a result (WP-V1) and is not to be softened.
 | **Phase 2b** | stage-cap design, audits, failure diagnosis | **closed 2026-08-20** |
 | **Phase 3** | ODEBench protocol and literature alignment | protocol done; external audit columns open |
 | **Phase 4** | cluster, schema and cost validation | done |
-| **Phase 5** | full ODEBench Phase B campaign | **running** since 2026-08-22 |
-| **Phase 6** | analysis and paper | not started |
+| **Phase 5** | full ODEBench Phase B campaign | **done** 2026-09-04, 756/756 |
+| **Phase 6** | analysis and paper | **open — the active phase** |
 
 ---
 
@@ -526,7 +527,7 @@ five-case probe draws out of `_cap_split_decision`.
 
 | Field | Value | Records |
 |---|---|---|
-| Phase B fingerprint | `604e79733b22d64d` | campaign running, `git 91f88c4` |
+| Phase B fingerprint | `604e79733b22d64d` | 756, `git 91f88c4` clean — verified over every record at campaign end |
 | Regression fingerprint | `17fe7d9cfb8f1be3` | 120, `git f6143eb` |
 | Behaviour fingerprint | `ffb0266c7913352c` | as above |
 
@@ -549,7 +550,8 @@ exact systems only** — on the other 43 the space *is* the cause, and no senten
 
 ### Result placeholders
 
-The following remain placeholders until campaign records exist: fit quality over all 63 systems;
+The records exist since 2026-09-04; the following remain placeholders until the analysis pipeline
+has produced them: fit quality over all 63 systems;
 support recovery on the 20 exact systems; R² on the 43 surrogates; stage-cap economy counters;
 `pretune_on` vs `pretune_off`; robustness, failures and stability.
 
@@ -640,7 +642,7 @@ comparability. No SINDy or PySR comparison claims while the external columns are
 3. Method — EvoGrow staged basis expansion and the look-ahead stage cap
 4. Failure Analysis — v2.2, v3, and the three cap design rules
 5. Experimental Protocol — ODEBench Phase B, exact/surrogate split, sampling, provenance
-6. Results — placeholder until campaign records exist
+6. Results — placeholder until the Phase B analysis has run
 7. Analysis — where the cap controls complexity, where search still fails, and why
 8. Limitations and Future Work — additive search, surrogate unauditability, the non-selectable
    threshold, baselines, noise, within-stage search power
@@ -768,7 +770,7 @@ Updated at phase transitions:
 - record gate decisions and the evidence behind them
 - record cap-rule changes and their fingerprint consequences
 - update protocol-audit status
-- fill result placeholders **only** from final Phase B campaign records
+- fill result placeholders **only** from final Phase B campaign records (available since 2026-09-04)
 - add final claim decisions after the Phase B analysis
 
-Last revision: 2026-08-21. Current phase: Phase B prepared, no campaign records.
+Last revision: 2026-09-07. Current phase: Phase B campaign complete (756/756), analysis open.
