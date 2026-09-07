@@ -138,7 +138,13 @@ The primary claim target is **Claim C**.
 
 > EvoODE achieves the reported Phase B fit-quality outcomes on the 63-system ODEBench protocol.
 
-Fillable from campaign records. **Placeholder: records exist since 2026-09-04, analysis not yet run.**
+**Filled 2026-09-07 (WP-A8/A9).** Tables under `analysis/tables/paper1_phaseB_v1/`. Surrogate R²
+median is 0.98-0.9999 on dim 1-2 and 0.66-0.91 on dim 3; the exact-system median `log10` loss falls
+from about -11 on dim 1 to **+1.8 on dim 3**. Support recovery on the 20 exact systems is 18/18 to
+9/27 per condition and IC set on dim 1-2 and **0 of 60 on dim 3-4 in all four combinations**. The IC
+set is a real axis, not a nuisance: on dim 1 `pretune_off` drops from 18/18 to 12/18 on the second
+set alone. All distributions are reported as quantiles and threshold grids, never as a mean or
+median alone.
 
 ### Claim B — Search-Space-Control Claim
 
@@ -149,6 +155,16 @@ Fillable from campaign records. **Placeholder: records exist since 2026-09-04, a
 
 Supported by stage metrics, cap decisions, support availability on exact systems and evaluation
 counters. **Wall-clock time is not evidence for this claim** (Design Principle 7).
+
+**Campaign-scale corroboration (WP-A9, 2026-09-07).** The heartbeat streams show the search
+terminating early wherever the cap binds: **690 of 756 cells execute fewer than the 30 configured
+levels**, and the executed count tracks the reached stage — median 1 level at stage 1, 5 at stage 2,
+21 at stage 5. A cell capped at stage 1 computes **one** level instead of thirty. The claim no
+longer rests on the 30-cell regression grid alone.
+
+Note for the write-up: `n_levels` in the records is the constant `N_LEVELS = 30`
+(`studies/regression/run_regression.jl:681`), i.e. the configured budget, **not** an executed count.
+The level heartbeat fires once per completed level and is the measurement.
 
 ### Claim C — Primary Mechanistic Claim
 
@@ -550,10 +566,27 @@ exact systems only** — on the other 43 the space *is* the cause, and no senten
 
 ### Result placeholders
 
-The records exist since 2026-09-04; the following remain placeholders until the analysis pipeline
-has produced them: fit quality over all 63 systems;
-support recovery on the 20 exact systems; R² on the 43 surrogates; stage-cap economy counters;
-`pretune_on` vs `pretune_off`; robustness, failures and stability.
+**All result placeholders are filled as of 2026-09-07** (WP-A5 to WP-A9). Fit quality, support
+recovery, surrogate R², stage-cap economy, the `pretune_on` / `pretune_off` contrast, robustness and
+failure modes, the level-waste measure and the per-system table are produced by scripts under
+`analysis/scripts/` into `analysis/tables/paper1_phaseB_v1/` and `analysis/data/paper1_phaseB_v1/`.
+
+Three results constrain how they may be written up:
+
+1. **The pretuning contrast is not a comparative result.** Its structural difference (60/120 against
+   50/120) dies under clustering — cluster-robust p = 0.218 against a naive McNemar p = 0.021, on
+   120 pairs from only 20 systems. What the campaign supports instead is mechanistic: pretuning
+   collapses seed diversity, on the **discovered support pattern** as well as on the numbers
+   (96/126 groups against 61/126, all 35 discordant pairs one-sided, cluster p = 1e-5).
+2. **Effect sizes are distributions, never a median.** The R² median paired difference is -8.2e-13
+   and means nothing; the threshold grid shows the asymmetry sits in the small differences and
+   vanishes toward the large ones. Report grids in full; never select a threshold after seeing the
+   data.
+3. **Two instrumentation facts must be stated.** `total_diverged_solves` and
+   `total_solver_unstable_solves` are identical in all 756 cells — one quantity counted twice, not
+   two independent robustness measures. And the optimizer retcode carries no quality signal in
+   either direction: 18 cells reach losses to 1.9e-12 at R² ≈ 0.9999 with no `Success` retcode at
+   all, alongside the long-known sentinel loss `1e6` at retcode `Success`.
 
 ---
 
@@ -642,7 +675,7 @@ comparability. No SINDy or PySR comparison claims while the external columns are
 3. Method — EvoGrow staged basis expansion and the look-ahead stage cap
 4. Failure Analysis — v2.2, v3, and the three cap design rules
 5. Experimental Protocol — ODEBench Phase B, exact/surrogate split, sampling, provenance
-6. Results — placeholder until the Phase B analysis has run
+6. Results — fit quality, support recovery, stage-cap economy, level waste (filled 2026-09-07)
 7. Analysis — where the cap controls complexity, where search still fails, and why
 8. Limitations and Future Work — additive search, surrogate unauditability, the non-selectable
    threshold, baselines, noise, within-stage search power
@@ -770,7 +803,7 @@ Updated at phase transitions:
 - record gate decisions and the evidence behind them
 - record cap-rule changes and their fingerprint consequences
 - update protocol-audit status
-- fill result placeholders **only** from final Phase B campaign records (available since 2026-09-04)
+- result placeholders filled 2026-09-07 from the final campaign records; regenerate via the scripts, never by hand
 - add final claim decisions after the Phase B analysis
 
-Last revision: 2026-09-07. Current phase: Phase B campaign complete (756/756), analysis open.
+Last revision: 2026-09-07. Current phase: Phase B campaign complete (756/756), analysis complete (WP-A5 to WP-A9), write-up open.

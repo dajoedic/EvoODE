@@ -6,6 +6,84 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ## 2026-09-07
 
+### Die Verschwendungsmessung auf Kampagnenbreite — und `n_levels` war nie eine Messung
+
+<!-- COMMIT_HASH_6 -->
+
+WP-A9 schliesst die Auswertung ab: die WP-B1-Verschwendungsgroesse aus den 756 Heartbeat-Stroemen und
+die Systemtabelle mit 252 Zeilen. Alle Zahlen unabhaengig aus den Rohstroemen nachgerechnet, alle vier
+Dimensionen stellengenau reproduziert.
+
+#### Der Befund, der die Fragestellung korrigiert
+
+Der Auftrag ging von einer *Unstimmigkeit* aus: Zelle 1 hat 20 Level-Events, ihr Record meldet
+`n_levels = 30`. Die Messung ueber alle Stroeme zeigt das Ausmass — die Level-Event-Zahl streut von
+1 bis 30, und **690 von 756 Zellen weichen von 30 ab**; nur 66 erreichen den Wert.
+
+Die Aufloesung steht im Code, nicht in den Daten. `n_levels` ist die Konstante `N_LEVELS = 30`
+(`studies/regression/run_regression.jl:681`) — das **konfigurierte Budget**, nicht die ausgefuehrte
+Zahl. Der Level-Callback feuert ungedrosselt einmal je abgeschlossenem Level (`:751`). Die
+Heartbeat-Zahl ist also die Wahrheit, und die Zellen brechen frueh ab. Es war nie eine Unstimmigkeit,
+sondern ein irrefuehrend benanntes Feld.
+
+**Und der Abbruch folgt dem Stage-Cap.** Level-Events nach erreichter Endstufe:
+
+| Endstufe | Zellen | Median Level-Events | min | max |
+|---|---|---|---|---|
+| 1 | 42 | 1 | 1 | 4 |
+| 2 | 42 | 5 | 5 | 8 |
+| 3 | 59 | 15 | 11 | 30 |
+| 4 | 98 | 16 | 13 | 30 |
+| 5 | 515 | 21 | 20 | 30 |
+
+Das ist Claim B auf Kampagnenbreite: wo der Cap greift, endet die Suche, statt das Budget
+auszurechnen. Eine bei Stufe 1 gedeckelte Zelle rechnet **ein** Level statt dreissig. Bisher ruhte
+diese Aussage auf dem 30-Zellen-Regressionsgitter; jetzt steht sie auf 756 Zellen.
+
+#### Die Verschwendung selbst
+
+Stumme Levels sind die nach der letzten Verbesserung von `best_loss`. Die Groesse braucht die
+Wahrheit nicht und gilt deshalb fuer alle 63 Systeme — anders als `wasted_levels` in den Records, das
+Levels *oberhalb der erwarteten Stufe* zaehlt und nur auf den 20 exakten definiert ist. Zwei
+verschiedene Groessen, die nicht verwechselt werden duerfen.
+
+| dim | Zellen | Mittel `silent_fraction` | stumme / gesamte Levels | letzte Verbesserung auf Level 1 |
+|---|---|---|---|---|
+| 1 | 276 | 0,385 | 1904 / 4378 | 42 (15,2 %) |
+| 2 | 336 | 0,346 | 2401 / 6804 | 68 (20,2 %) |
+| 3 | 120 | 0,381 | 1115 / 3143 | 4 (3,3 %) |
+| 4 | 24 | **0,811** | 436 / 550 | **12 (50,0 %)** |
+
+Auf Dimension 4 ist die Haelfte aller Zellen nach dem **ersten** Level fertig und rechnet den Rest
+umsonst. Ueber alle Dimensionen liegt der Anteil stummer Levels zwischen einem Drittel und vier
+Fuenfteln.
+
+**Gegen den Piloten gehalten, mit Vorbehalt.** WP-B1 mass Zeitanteile (dim 1 ~10 %, dim 2 50 %,
+dim 3 44 %, dim 4 96 %), hier stehen Levelanteile — die Zahlen sind **nicht direkt vergleichbar**,
+und Zeit ist ohnehin keine Evidenz (Design-Prinzip 7). Richtungsgleich sind dim 3 (0,381 gegen 0,44)
+und dim 4 als Spitzenreiter. Deutlich anders ist **dim 1: 0,385 gegen 10 %** — auf der billigsten
+Klasse ist der Levelanteil viermal hoeher als der Zeitanteil des Piloten. Das ist plausibel, weil
+frueh im Lauf die Levels billig sind: viele stumme Levels koennen wenig Zeit kosten. Es bestaetigt
+die WP-B1-Entscheidung gegen ein globales Levelbudget eher, als sie zu erschuettern — ein k, das auf
+dim 4 richtig waere, waere auf dim 1 teuer erkauft.
+
+#### Wo die Auffaelligkeiten sitzen
+
+Die Auszugstabellen machen die Ausreisser benennbar. **System 63** (SEIR, dim 4) fuehrt beide Listen
+an: `silent_fraction` 0,95, 228 stumme Levels auf 12 Zellen, Support-Rate 0. Das ist die
+Identifizierbarkeitsgrenze, die `CLAUDE.md` bereits als bewusst ausgeschlossen fuehrt — jetzt mit
+Zahlen. **System 28** (Pendel ohne Reibung) ist der teuerste exakte Fehlschlag mit Support-Rate 0 bei
+155 stummen Levels, **System 8** (Allee-Effekt, dim 1) verschwendet 0,906 seiner Levels bei
+Support-Rate 0,25.
+
+Auf der Surrogatseite sind hohe Verschwendung und schlechter Fit **entkoppelt**: System 30 und 36
+verschwenden 0,95 bzw. 0,925 der Levels und erreichen trotzdem R² von 0,988 und 0,9994. Schlechte
+Fits sitzen woanders — System 9 (Sprachtod, R² 0,291), System 60 (Aizawa, 0,492), System 53
+(Apoptose, 0,629). Verschwendung und Fehlschlag sind also verschiedene Phaenomene und brauchen im
+Paper verschiedene Abschnitte.
+
+---
+
 ### Die deskriptiven Tabellen stehen — und zwei Instrumentierungsbefunde fallen dabei ab
 
 <!-- 67f2086 -->

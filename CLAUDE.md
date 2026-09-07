@@ -314,8 +314,36 @@ the coupled search path 1e-6 is the cheaper, behaviour-equal tolerance; the Syst
    zero throughout — but the other counters are nonzero, so error-free means completed, not
    eventless.
 
-   Two things the analysis still owes: the WP-B1 waste measure (needs the heartbeat streams) and the
-   per-system picture. `wasted_levels` in the records means levels above the expected stage, not
+   **The analysis is complete (WP-A9, 2026-09-07).** The level-waste measure and the 252-row
+   per-system table close the last two items, and `PAPER_1.md`'s result placeholders are filled.
+
+   Two findings from the heartbeat streams. First, **`n_levels` in the records is the constant
+   `N_LEVELS = 30`** (`studies/regression/run_regression.jl:681`) — the configured budget, not an
+   executed count; the level heartbeat fires once per completed level and is the measurement. **690
+   of 756 cells execute fewer than 30 levels**, and the count tracks the reached stage (median 1
+   level at stage 1, 5 at stage 2, 21 at stage 5). That is Claim B at campaign scale: where the cap
+   binds, the search ends instead of spending the budget.
+
+   Second, the waste itself — silent levels after the last `best_loss` improvement, defined for all
+   63 systems unlike `wasted_levels`:
+
+   | dim | cells | mean `silent_fraction` | silent / total levels | last improvement at level 1 |
+   |---|---|---|---|---|
+   | 1 | 276 | 0.385 | 1904 / 4378 | 42 (15.2 %) |
+   | 2 | 336 | 0.346 | 2401 / 6804 | 68 (20.2 %) |
+   | 3 | 120 | 0.381 | 1115 / 3143 | 4 (3.3 %) |
+   | 4 | 24 | **0.811** | 436 / 550 | **12 (50.0 %)** |
+
+   Against the WP-B1 pilot (time fractions, therefore **not** directly comparable, and time is not
+   evidence): dim 3 and the dim-4 peak agree, dim 1 does not — 0.385 in levels against 10 % in time.
+   Cheap early levels explain it, and it strengthens rather than weakens the decision against a
+   global level budget: a k tuned for dim 4 would be expensive on dim 1.
+
+   Waste and failure are **different phenomena** and need separate sections: surrogate systems 30
+   and 36 waste 0.95 and 0.925 of their levels at R² 0.988 and 0.9994, while the poor fits sit
+   elsewhere (system 9 at R² 0.291, 60 at 0.492, 53 at 0.629). System 63 leads both lists —
+   `silent_fraction` 0.95, support rate 0 — which is the identifiability limit this file already
+   excludes, now with numbers. `wasted_levels` in the records means levels above the expected stage, not
    waste after the last improvement — median 0, 370 of 7,200 levels — and it is defined on exact
    cells only; `eq_overshoot` is nonzero in all 516 surrogate cells purely because `expected_stage`
    is nominal there. Do not aggregate the two classes on either metric.
