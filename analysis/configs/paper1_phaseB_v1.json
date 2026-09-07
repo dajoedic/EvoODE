@@ -1,0 +1,7 @@
+{
+  "experiment_id": "paper1_phaseB_v1",
+  "run_registry_path": "../experiments/paper1_phaseB_v1/run_registry.csv",
+  "output_dir": "data/paper1_phaseB_v1",
+  "group_by_initial_condition_set": true,
+  "system_classification_path": "data/paper1_phaseB_v1/system_classification.csv"
+}

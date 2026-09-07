@@ -63,8 +63,8 @@ Auf den 240 exakten Zellen, gemessen an `pruned_match`:
 | dim 4 | 0 / 6 | 0 / 6 |
 | gesamt | **60 / 120** | **50 / 120** |
 
-Auf den 516 Surrogat-Zellen ist der Kontrast dagegen ein glattes Unentschieden: Median-R² 0,9941 in
-**beiden** Bedingungen, ueber alles 430 von 516 Zellen ueber 0,9. Die Richtung des
+Auf den 516 Surrogat-Zellen ist der Kontrast dagegen ein glattes Unentschieden: Median-R² 0,9937
+(`pretune_on`) gegen 0,9941 (`pretune_off`), 213 gegen 217 Zellen ueber 0,9. Die Richtung des
 Struktur-Ergebnisses — Pretuning schadet der Support-Findung eher, als dass es hilft — ist auf dim 1
 und dim 2 konsistent, aber sie ruht auf 120 Zellen je Arm und braucht eine Signifikanzaussage, bevor
 sie ins Paper geht. Das ist die erste Aufgabe der Analyse-Pipeline.

@@ -138,6 +138,11 @@ Environment alternatives: `EVO_BATCH_TASK_DIR`, `EVO_BATCH_HISTORY_PATH`.
 
 Refuses records whose `error` is not null, so a failed cell cannot silently enter the history.
 
+`--input-dir` must contain final per-cell records only. If heartbeat streams are mixed into the
+same directory, this script can merge those heartbeat rows instead of campaign records; the
+heartbeat shape is recognizable by about 15 fields, an `event` field, and missing `git_hash` /
+`loss` fields, while Phase-B final records have 77 fields.
+
 ---
 
 ## 2. Regression suite
@@ -303,6 +308,7 @@ Conventions and environment: `analysis/CONVENTIONS.md`, dependencies in
 |---|---|
 | `analysis/scripts/aggregate/aggregate_run_registry.py` | Builds the analysis table from an experiment's run registry |
 | `analysis/scripts/aggregate/classify_odebench_systems.py` | Exact / surrogate classification of the ODEBench systems |
+| `analysis/scripts/aggregate/verify_campaign_registry.py` | Checks converted campaign registry invariants before aggregation |
 | `analysis/scripts/aggregate/evaluate_hypotheses.py` | Evaluates H1–H4 against the aggregated data |
 | `analysis/scripts/aggregate/phase1_diagnostic.py` | Phase 1 diagnostic evaluation |
 | `analysis/scripts/plot/plot_exact_match_rates.py` | Support recovery rates |
@@ -310,7 +316,11 @@ Conventions and environment: `analysis/CONVENTIONS.md`, dependencies in
 | `analysis/scripts/plot/table_main_results.py` | The main results table |
 | `analysis/status.py` | Status overview of an experiment |
 
-> **Known gap:** this pipeline was written for `run_registry.csv` from the `experiments/`
-> infrastructure. The cluster campaign writes per-cell `.jsonl` records that
-> `merge_batch_records.jl` consolidates. Whether the pipeline consumes that format has not been
-> verified. Test it on pilot data before relying on it for a campaign.
+Campaign bridge for Phase-B data:
+
+```
+studies/regression/merge_batch_records.jl final records -> experiments/<id>/history.jsonl
+analysis/scripts/aggregate/convert_campaign_history_to_run_registry.py -> experiments/<id>/run_registry.csv
+analysis/scripts/aggregate/verify_campaign_registry.py -> invariant check
+analysis/scripts/aggregate/aggregate_run_registry.py -> analysis/data/<id>/aggregate_by_variant_system.csv
+```

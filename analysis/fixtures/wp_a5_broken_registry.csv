@@ -1,0 +1,2 @@
+system_id,seed,variant_slug,initial_condition_set,corrupted,failure_reason,git_hash,git_dirty,config_fingerprint,stage_cap_behavior_fingerprint,system_representability,exact_support_match,r2
+1,1,pretune_off,1,true,,91f88c4,false,604e79733b22d64d,ffb0266c7913352c,surrogate,,0.5

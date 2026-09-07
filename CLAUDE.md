@@ -247,7 +247,8 @@ the coupled search path 1e-6 is the cheaper, behaviour-equal tolerance; the Syst
    are all Lorenz (systems 55/56) with R² between 0.19 and 0.43, the costliest at 289.7 h. Support
    recovery on the 240 exact cells: `pretune_off` **60/120** against `pretune_on` **50/120**, the
    gap carried by dim 1 (30 vs 27) and dim 2 (30 vs 23), **0/50 on dim 3 and dim 4**. Surrogate R²
-   is a dead heat — median 0.9941 in both arms, 430 of 516 cells above 0.9.
+   is a dead heat — median 0.9937 (`pretune_on`) against 0.9941 (`pretune_off`), 213 vs 217 cells
+   above 0.9.
 
    Three things this does *not* yet establish and the analysis must: whether the pretuning gap is
    significant on 120 cells per arm, the WP-B1 waste measure (needs the heartbeat streams), and the
