@@ -6,6 +6,56 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ## 2026-09-07
 
+### Die Kampagne ist in der Analyse-Pipeline — und der Merge hat beim ersten Versuch das Falsche geliefert
+
+<!-- COMMIT_HASH_2 -->
+
+Die 756 Records liegen jetzt lokal unter `experiments/paper1_phaseB_v1/runs/records/`, die 756
+Heartbeat-Stroeme daneben unter `runs/heartbeats/`; beide Verzeichnisse sind ueber
+`experiments/*/runs/` gitignored, das Manifest und die Indexlisten sind als Provenienz eingecheckt.
+Der Netzspeicher ist ein Cluster-Ausgabeverzeichnis, kein Archiv — die Analyse laeuft ab jetzt gegen
+die eingefrorene lokale Kopie.
+
+**Der Merge hat beim ersten Versuch das Falsche geliefert, und die Zusammenfassung sah richtig aus.**
+`studies/regression/merge_batch_records.jl` filtert sein `--input-dir` nicht nach Endrecords. Lagen
+Records und Heartbeats im selben Verzeichnis, meldete das Skript `considered=17143`, `added=756`,
+`skipped_failed=0` — und hatte 756 **Heartbeat-Zeilen** aufgenommen. Die Zahl 756 stimmte, der
+Inhalt nicht. Erkennbar war es nur an der Struktur: 15 Felder statt 77, ein Feld `event`, kein
+`loss`, kein `git_hash`, und nur 378 statt 756 eindeutige Identitaeten, weil `use_pretuning` im
+Heartbeat gar nicht vorkommt. Genau die eine Kennzahl, die man beim Ueberfliegen prueft — die
+Zeilenzahl —, war die einzige, die nichts verraten hat.
+
+Nach Trennung der beiden Dateisorten ist die History korrekt. Die Warnung steht in `SCRIPTS.md`; das
+Skript selbst ist Julia und wird in einem eigenen WP gehaertet.
+
+**WP-A5** hat daraus die Konsequenz gezogen: `analysis/scripts/aggregate/verify_campaign_registry.py`
+prueft elf Invarianten auf der konvertierten Registry — Zeilenzahl, Eindeutigkeit der Identitaeten,
+`git_dirty`, die drei Fingerprints **gegen erwartete Werte** statt nur gegen sich selbst, 378 je
+Bedingung, 240 exakt gegen 516 Surrogat, Belegung von `exact_support_match` und `r2`. Sollwerte und
+Fingerprints sind CLI-Parameter mit den Kampagnenwerten als Vorgabe, damit die Pruefung auf einer
+kuenftigen Kampagne anderer Groesse brauchbar bleibt. Der Fehlerpfad ist in beide Richtungen belegt:
+auf einer absichtlich verletzten Fixture und auf den echten Daten mit falsch uebergebenem
+Fingerprint, beide Male Exit-Code 1.
+
+Die Kette steht damit: Records → `history.jsonl` → `run_registry.csv` → Invariantenpruefung →
+`aggregate_by_variant_system.csv`, 252 Zeilen = 63 Systeme x 2 Bedingungen x 2 IC-Saetze. Die
+IC-Saetze werden nicht gemittelt (WP-A4b), die Systemachse kommt aus `system_classification.csv`.
+Der veraltete „Known gap"-Kasten in `SCRIPTS.md`, der die Bruecke noch als ungeprueft fuehrte, ist
+durch die tatsaechliche Kette ersetzt.
+
+**Gegenprobe.** Die Registry reproduziert die direkt aus den Rohrecords gemessenen Zahlen: 60/120
+gegen 50/120 beim Support, 20 exakte Systeme, 80 Aggregatzeilen mit `exact_match_rate`. Eine Zahl
+aus dem Eintrag oben ist dabei korrigiert — das Surrogat-Median-R² ist 0,9937 (`pretune_on`) gegen
+0,9941 (`pretune_off`), nicht zweimal 0,9941; am Befund „Unentschieden" aendert das nichts.
+
+**Offen und bewusst nicht erweitert:** der Konverter traegt 42 seiner moeglichen Spalten, 53
+Record-Felder fallen weg — darunter `n_levels`, `eq_overshoot`, `eq_final_stages`, `stage_caps`,
+`support_terms` und die Optimizer-Zaehler. Welche davon die Auswertung braucht, wird entschieden,
+wenn die Stufen 2 und 3 spezifiziert werden, nicht auf Verdacht. Die Liste steht in
+`codex/REPORT_WP_A5.md`.
+
+---
+
 ### Die Phase-B-Kampagne ist durch — 756 von 756, null Fehler, ein Identitaets-Tripel
 
 <!-- 5b4ec6c -->
