@@ -8,7 +8,7 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ### Der Pretuning-Kontrast haelt der Clusterung nicht stand — und die eigentliche Wirkung des Pretunings ist eine andere
 
-<!-- COMMIT_HASH_3 -->
+<!-- e8bb1c6 -->
 
 WP-A6 hat den gepaarten Test gerechnet, fuer den die Kampagne existiert. Gepaart wird ueber
 System, Seed und IC-Satz; die Paarung ist vollstaendig, 378 Paare, davon 120 exakt und 258 Surrogat.
