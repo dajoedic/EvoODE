@@ -1,0 +1,2 @@
+{"event":"start","system_id":1,"seed":42,"initial_condition_set":1,"condition":"pretune_on","manifest_index":1,"timestamp":"2026-09-04T19:33:33.591Z"}
+{"event":"level","system_id":1,"seed":42,"initial_condition_set":1,"condition":"pretune_on","manifest_index":1,"level":1,"stage":1,"best_loss":0.1,"timestamp":"2026-09-04T19:33:48.121Z"}
