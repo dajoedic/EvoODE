@@ -8,7 +8,7 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ### Kassasturz: zwei ueberzogene Befunde zurueckgenommen, vier Grundlagenluecken benannt
 
-<!-- COMMIT_HASH_7 -->
+<!-- 7a014b3 -->
 
 Ein langes Gespraech am Abend des 2026-09-07 hat die Auswertung derselben Nacht in wesentlichen
 Teilen entwertet. Dieser Eintrag haelt fest, was nicht mehr gilt und was stattdessen gilt. Er ist
