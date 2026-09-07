@@ -8,7 +8,7 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ### Die Phase-B-Kampagne ist durch — 756 von 756, null Fehler, ein Identitaets-Tripel
 
-<!-- COMMIT_HASH -->
+<!-- 5b4ec6c -->
 
 Nach dreizehneinhalb Tagen ist die Kampagne fertig. Der erste Record traegt den Zeitstempel
 2026-08-22T10:54:50Z, der letzte 2026-09-04T22:14:38Z. Der Job hat sich auf dem Cluster selbst
