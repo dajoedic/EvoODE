@@ -8,7 +8,7 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ### Die Pruning-Schwelle ist ein Nullsummenregler — und R2 sieht von alldem fast nichts
 
-<!-- COMMIT_HASH_9 -->
+<!-- f7c0643 -->
 
 WP-N2 hat die Pruning-Regel als Messinstrument vermessen, auf den 132 Zellen des
 WP-N1-dim-1-Probelaufs, ohne einen einzigen neuen Suchlauf — moeglich, weil seit WP-N1 die
