@@ -1,4 +1,4 @@
 status: done
-task:   WP-N2
-report: codex/REPORT_WP_N2.md
-note:   implemented pruning sensitivity analysis; current-rule counts reproduce the WP-N2 acceptance numbers
+task:   WP-N3b
+report: codex/REPORT_WP_N3b.md
+note:   Fixed the Set/sort crash, hardened static JSON/null access paths, and documented smoke/full commands.

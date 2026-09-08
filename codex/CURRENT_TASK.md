@@ -1,110 +1,87 @@
-# WP-N2 — Die Pruning-Regel als Messinstrument pruefen
+# WP-N3b — Laufzeitfehler in `wp_n3_oracle_refit.jl` beheben
 
-**Language: Python**
+**Language: Julia**
 
-## Kontext
+## Lage
 
-Der WP-N1-Probelauf (132 Zellen, `outputs/wp_n1_dim1_probe/history.jsonl`) hat einen Defekt in der
-Auswertungsregel sichtbar gemacht. `pruned_match` beurteilt eine gefundene Struktur, indem es Terme
-mit kleinem Koeffizienten entfernt und den Rest mit der Wahrheit vergleicht. Die Schwelle steht in
-`experiments/run_experiment.jl:239`:
+Der Auftrag WP-N3 ist inhaltlich unveraendert gueltig (siehe `codex/REPORT_WP_N3.md` fuer den
+bisherigen Stand). Das Skript `studies/regression/wp_n3_oracle_refit.jl` liegt vor, wurde von Claude
+ausgefuehrt und **stuerzt sofort ab**, bevor eine einzige Zelle gerechnet wird.
+
+**Du kannst Julia in dieser Umgebung nicht starten** (`A specified logon session does not exist`),
+also auch diesen Fix nicht selbst verifizieren. Claude fuehrt den Lauf aus und meldet zurueck. Das
+macht diesen Auftrag anders als sonst: **du arbeitest blind, und jede Runde kostet einen vollen
+Durchlauf.** Entsprechend sorgfaeltig ist das ganze Skript durchzusehen, nicht nur die gemeldete
+Zeile.
+
+## Der gemeldete Fehler
+
+Kommando:
 
 ```
-threshold = max(1e-6, 1e-3 * max_abs)
+julia --project=. --startup-file=no studies/regression/wp_n3_oracle_refit.jl --input outputs/wp_n1_dim1_probe/history.jsonl --output-dir outputs/wp_n3_oracle_refit --fresh
 ```
 
-`max_abs` ist der groesste Betrag unter den Koeffizienten **derselben Gleichung**. Die Schwelle ist
-also relativ zum groessten Term.
+Ausgabe:
 
-**Das zerstoert wahre Terme, sobald ein Term gross ist.** Beispiel aus dem Lauf, System 5, Seed 123,
-IC-Satz 1, neue Basis: Koeffizienten `1` = +9,809, `u1` = +7,8e-05, `u1^2` = -2,1e-03. Erwartet sind
-`['1','u1^2']`. Die Schwelle betraegt 9,8e-03 und entfernt **beide** kleinen Terme — auch das echte
-`u1^2`. Uebrig bleibt `['1']`, die Zelle gilt als Fehlschlag. Der Loss dieser Zelle ist 1,4e-07 und
-ihr R2 0,9999999996.
+```
+WP-N3 fingerprint: abb604eb07ba4223
+Input: outputs/wp_n1_dim1_probe/history.jsonl
+Output: outputs/wp_n3_oracle_refit
+Cells requested: 132
+ERROR: LoadError: MethodError: no method matching sort(::Set{Int64})
 
-Ueber die 66 exakten Zellen der neuen Basis klassifiziert sich das heute so: 29 Treffer, **12 Zellen
-mit ueberlebendem ueberzaehligem Term**, **4 Zellen mit vom Pruning geloeschtem wahrem Term**, 21
-Zellen, in denen ein wahrer Term nie gefunden wurde.
+Stacktrace:
+  [1] (::var"#_intersect_terms##0#_intersect_terms##1")(::Tuple{Vector{Int64}, Vector{Int64}})
+  [4] _intersect_terms  studies/regression/wp_n3_oracle_refit.jl:131
+  [5] _run_record       studies/regression/wp_n3_oracle_refit.jl:244
+  [6] main              studies/regression/wp_n3_oracle_refit.jl:478
+```
 
-Seit WP-N1 stehen die Koeffizienten im Record (`model_terms` mit `term`, `term_index`,
-`coefficient`), die Frage ist also vollstaendig aus vorhandenen Daten beantwortbar — **ohne einen
-einzigen neuen Suchlauf**.
+Die verursachende Zeile 131:
 
-## Zweck
+```julia
+return [sort(intersect(Set(found_eq), Set(true_eq))) for (found_eq, true_eq) in zip(found, truth)]
+```
 
-Feststellen, **wie stark die Bewertung von der Pruning-Regel abhaengt** und ob es eine Regel gibt,
-die weniger Artefakte erzeugt. Das ist eine Messung ueber ein Messinstrument, keine Optimierung
-eines Ergebnisses.
+`intersect` auf zwei `Set` liefert ein `Set`, und `sort` nimmt kein `Set`. Es fehlt ein `collect`
+oder der Umweg ueber `Set` ist ueberfluessig.
 
-## Deliverables
+## Auftrag
 
-### 1. Zerlegung der Fehlschlaege nach Ursache
+1. **Diesen Fehler beheben.**
 
-Fuer beide Basen getrennt, je Gleichung, aus `model_terms` und den erwarteten Termen:
+2. **Das gesamte Skript auf gleichartige Laufzeitfehler durchsehen**, die ein Typprueflauf nicht
+   findet: Operationen auf `Set` statt `Vector`, `JSON3.Object` dort, wo ein `Dict` erwartet wird,
+   fehlende `collect`-Aufrufe, Indizierung mit `nothing`, Zugriffe auf Felder, die im Record fehlen
+   koennen (`model_terms`, `wp_n1_expected_support_terms`, `basis_name`), und Zellen, deren
+   Wahrheit `nothing` ist. Jede Stelle, an der du etwas aenderst, im Report benennen.
 
-| Kategorie | Bedeutung |
-|---|---|
-| Treffer | beschnittene Menge gleich der erwarteten |
-| ueberzaehliger Term ueberlebt | erwartete Menge ist Teilmenge, ein Fremdterm bleibt ueber der Schwelle |
-| wahrer Term geloescht | ein erwarteter Term liegt **unter** der Schwelle und faellt weg |
-| wahrer Term nie gefunden | erwartete Menge ist keine Teilmenge der gefundenen |
+3. **Einen billigen Selbsttest einbauen oder vorbereiten**, der ohne vollen Lauf zeigt, dass die
+   Datenpfade tragen — etwa ein `--limit`-Pfad ueber wenige Zellen, den Claude in Sekunden
+   ausfuehren kann, bevor die vollen 132 gerechnet werden. Falls `--limit` schon existiert, halte im
+   Report fest, wie es zu benutzen ist.
 
-Die Kategorien sind in dieser Reihenfolge zu pruefen und schliessen einander aus. Berichte
-zusaetzlich, in wie vielen Zellen **beide** Fehler zugleich auftreten, falls das vorkommt.
-
-### 2. Sensitivitaet gegenueber der Regel
-
-Rechne die Klassifikation fuer ein **Gitter** von Pruning-Regeln durch und berichte es vollstaendig:
-
-- rein relativ: `rel * max_abs` mit `rel` in 1e-4, 1e-3 (heutiger Wert), 1e-2, 1e-1
-- rein absolut: `abs` in 1e-8, 1e-6 (heutiger Boden), 1e-4, 1e-2
-- die heutige Mischform `max(abs, rel * max_abs)` fuer die Kombinationen des Gitters
-
-Fuer jede Regel: Trefferzahl und die drei Fehlerkategorien, je Basis.
-
-**Keine Regel wird als die beste bezeichnet, keine wird empfohlen.** Eine Schwelle nach Sichtung der
-Daten auszuwaehlen ist der Fehler, den WP-V1 fuer den Reopen-Schwellwert bereits benannt hat. Der
-Auftrag ist, die Abhaengigkeit **sichtbar** zu machen: wie viele Zellen wechseln ihre Bewertung, und
-ab wo ist die Klassifikation stabil.
-
-### 3. Ein regelfreies Mass als Gegenprobe
-
-Zusaetzlich eine Bewertung, die ohne Schwelle auskommt: der gefundene Termsatz **ohne jede
-Beschneidung** gegen die Wahrheit (`raw_match`), sowie die Frage, ob die wahre Menge **Teilmenge**
-der gefundenen ist. Letzteres ist die Obergrenze dessen, was Beschneiden ueberhaupt erreichen kann.
-
-### 4. Beide Metriken, immer
-
-Jede Tabelle traegt **beide** Kennzahlen: Strukturtreffer **und** den Anteil der Zellen mit
-R2 > 0,9 (Design-Prinzip 9 in `CLAUDE.md`). Das gilt auch dort, wo die zweite Zahl langweilig
-aussieht — gerade dort ist sie die Aussage.
+**Aendere nichts an der Fragestellung von WP-N3.** Die beiden Nachanpassungen — Oracle-Beschneidung
+und suchfreie Referenzanpassung — und die Berichtspflicht fuer **beide** Metriken (Strukturtreffer
+und Anteil R2 > 0,9, Design-Prinzip 9) bleiben unveraendert.
 
 ## Verboten
 
-- keine Aenderung an Julia-Code, insbesondere **nicht** an `experiments/run_experiment.jl` oder der
-  dortigen Schwelle. Dieses WP **misst**, es aendert nichts.
-- keine Aenderung an den WP-N1-Ergebnissen, an der Kampagne oder an der Analyse-Pipeline der
-  A5-bis-A9-Reihe
-- **keine Empfehlung fuer eine Schwelle**, weder im Code noch im Report
-- **keine Figuren**
+- keine Aenderung an der Suchlogik, der Basis, am Stage-Cap oder an `pruned_match`
+- keine Aenderung an `outputs/wp_n1_dim1_probe/`, an der Kampagne oder an den A5-bis-A9-Skripten
+- **keine erfundenen Ergebnisse** — du kannst nicht ausfuehren, also berichte auch nichts, was einen
+  Lauf voraussetzt
 - keine Ergebnisse in `PAPER_1.md`, `CLAUDE.md` oder `DIARY.md`
-- kein Mittelwert oder Median als alleinige Zusammenfassung
 - kein `git add -A`, keine Git-Operationen
 
 ## Akzeptanzkriterium
 
-Ein Skript unter `analysis/scripts/aggregate/`, ueber `--config` oder `--input` parametrisiert, das
-`outputs/wp_n1_dim1_probe/history.jsonl` liest und nach `analysis/data/` schreibt; Tabellen als
-`.csv` und `.tex` unter `analysis/tables/`. Die Zerlegung reproduziert fuer die heutige Regel die
-bekannten Zahlen: alte Basis 30 Treffer von 36, neue Basis 29 von 66 mit 12 ueberlebenden Fremdtermen
-und 4 geloeschten wahren Termen. Weicht deine Rechnung davon ab, ist das ein Befund und im Report zu
-benennen, nicht anzugleichen.
-
-Fehlerpfad an einer Fixture unter `analysis/fixtures/` belegen (z. B. ein Record ohne `model_terms`).
+Das Skript enthaelt keine der oben genannten Fehlerklassen mehr, so weit statisch pruefbar. Im Report
+steht das genaue Kommando fuer einen kurzen Testlauf ueber wenige Zellen **und** das Kommando fuer
+den vollen Lauf ueber 132 Zellen.
 
 ## Report
 
-`codex/REPORT_WP_N2.md`. Enthaelt: die Kommandos, die Ursachenzerlegung fuer beide Basen, das
-vollstaendige Regelgitter, die regelfreien Gegenproben, alle Tabellen mit beiden Metriken — und
-einen Absatz dazu, **wie viele Zellen ihre Bewertung ueber das Gitter hinweg wechseln** und ob es
-einen Bereich gibt, in dem die Klassifikation stabil ist.
+`codex/REPORT_WP_N3b.md`. Enthaelt: jede geaenderte Stelle mit Begruendung, die Liste der zusaetzlich
+geprueften Fehlerklassen und ihr Ergebnis, sowie die beiden Kommandos.
