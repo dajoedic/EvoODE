@@ -508,6 +508,16 @@ the coupled search path 1e-6 is the cheaper, behaviour-equal tolerance; the Syst
   deduplication. Note that under `pretuning=false` duplicates double as implicit multistarts, so a
   cache would change the experimental condition rather than merely accelerate it. Measure the
   duplicate rate before deciding.
+- **The multistart is load-bearing and unnamed (WP-N4, 2026-09-09).** Handed the *true* structure,
+  a **single** parameter fit hits the sentinel loss `1e6` in **15 of 102** cells; at k = 2 it is 13,
+  and at **k = 3 it is zero**, with no non-adaptable cell left at k = 10. R² > 0.9 on the reference
+  fit rises from 71.6 % (k = 1) to 97.1 % (k = 10). Under `pretuning=false` every fit draws
+  `0.1 .* randn` (`bfgs.jl:269`) and the search runs thousands of them, i.e. an **implicit multistart
+  with very large k**; under `pretuning=true` the start is deterministic, i.e. **k = 1**. That is the
+  measured mechanism behind the pretuning disadvantage — not a vague anchoring effect. Two
+  consequences: the multistart must be named, measured and described rather than existing as a side
+  effect of random initialisation; and **no pretuning comparison is interpretable without stating the
+  number of starts**, because it varies start quality and start count at the same time.
 - **Growth-only search**: `_expand` only adds terms, and every line starts from one random term, so
   a wrong term can never leave a line — selection is the only corrective. This is the structural
   reason `pruned_match = false` persists on coupled systems even at very low loss, and it must be

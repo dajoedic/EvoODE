@@ -4,6 +4,85 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ---
 
+## 2026-09-09
+
+### Drei Zufallsstarts genuegen — und damit steht der Mechanismus hinter dem Pretuning-Befund
+
+<!-- COMMIT_HASH_10 -->
+
+WP-N4 hat die Referenzanpassung aus WP-N3 mit **mehreren Zufallsstarts** wiederholt, k = 1, 2, 3, 5,
+10, je Zelle das beste Ergebnis nach Loss. Codex hat den Code geschrieben und `blocked` gemeldet
+(Julia startet in seiner Sandbox nicht); ausgefuehrt hat Claude, erst ueber `--limit 3`, dann
+vollstaendig ueber 102 Zellen.
+
+**Beide Kontrollen bestanden.** Bei k = 1 kommen exakt die WP-N3-Zahlen heraus — 15 Sentinel-Zellen
+bei der wahren Struktur, 11 bei der Oracle-Beschneidung. Der Mehrfachstart fuegt also nur Versuche
+hinzu und aendert sonst nichts. Und die Liste nicht anpassbarer Zellen bei k = 10 ist **leer**.
+
+#### Die Kurve
+
+Wahre Struktur, alle 102 Zellen:
+
+| k | Fit gescheitert (Sentinel 1e6) | Anteil R2 > 0,9 | erreicht/schlaegt Originallauf |
+|---|---|---|---|
+| 1 | **15** | 71,6 % | 29,4 % |
+| 2 | 13 | 80,4 % | 37,3 % |
+| 3 | **0** | 91,2 % | 46,1 % |
+| 5 | 0 | 92,2 % | 52,9 % |
+| 10 | **0** | **97,1 %** | 64,7 % |
+
+Bei der Oracle-Beschneidung dasselbe Bild: 11 → 9 → **0** ab k = 3.
+
+**Kein Plateau. Drei Zufallsstarts loeschen saemtliche Fehlschlaege aus.** Die Frage, die WP-N4
+stellen sollte, ist damit eindeutig beantwortet: der Optimierer kann diese Strukturen anpassen; ein
+**einzelner Versuch** ist unzuverlaessig.
+
+Die urspruengliche Vermutung — der Optimierer druecke Koeffizienten nicht weit genug gegen null — ist
+damit nicht bestaetigt. Der Befund liegt daneben und ist unangenehmer: **jeder siebte Einzelversuch
+scheitert vollstaendig**, auch wenn man dem Verfahren die richtige Antwort vorlegt.
+
+#### Was das erklaert
+
+Der Zusammenhang, der die letzten Tage offen war, schliesst sich hier.
+
+Unter `pretuning=false` zieht jeder Fit seinen Startwert zufaellig (`0.1 .* randn(n_params)`,
+`bfgs.jl:269`). Die Suche rechnet ueber ihren Verlauf tausende Anpassungen und behaelt die beste —
+**ein impliziter Mehrfachstart mit sehr grossem k**. Unter `pretuning=true` wird der Startwert
+deterministisch aus den Daten berechnet: **k = 1, immer derselbe.**
+
+Damit ist der Pretuning-Nachteil kein vager Verankerungseffekt mehr, sondern beziffert: Pretuning
+ersetzt einen Mehrfachstart, dessen Notwendigkeit hier gemessen ist, durch einen einzigen Versuch —
+und ein einziger Versuch scheitert in 15 % der Faelle selbst bei bekannter richtiger Struktur.
+
+Das korrigiert die Rueecknahme vom 2026-09-07 nicht, aber es praezisiert sie. Damals wurde der
+Seed-Kollaps zurueckgenommen, weil er groesstenteils daraus folgt, dass `pretune_off` eine zweite
+Zufallsquelle hat. Das bleibt richtig. Neu ist, **warum diese zweite Zufallsquelle nuetzlich ist**:
+sie ist kein Rauschen, sondern ein Mehrfachstart, und das Verfahren braucht ihn.
+
+#### Einordnung, die mitberichtet werden muss
+
+Der Originallauf bleibt auch bei k = 10 in 36 von 102 Zellen besser als die Referenzanpassung. Das
+ist erwartbar und **kein** Widerspruch: er hat tausende Anpassungen gerechnet, die Referenz zehn. Der
+Vergleich „Referenz gegen Original" bleibt schief, nur nicht mehr so schief wie in WP-N3.
+
+Die Strukturtrefferzahlen sind ueber k konstant — 75 von 102 bei der Oracle-Beschneidung, 102 von
+102 bei der wahren Struktur, letzteres trivial. Der Mehrfachstart aendert die **Anpassung**, nicht
+die Struktur; das ist die erwartete Invarianz und zugleich eine weitere Kontrolle, dass das Skript
+tut, was es soll.
+
+#### Konsequenz
+
+Zwei Dinge folgen, beide bisher unbelegt gewesen:
+
+1. **Der Mehrfachstart ist eine tragende Komponente des Verfahrens**, keine Nebenwirkung der
+   Konfiguration. Er gehoert benannt, gemessen und im Paper beschrieben — derzeit existiert er nur
+   implizit als Nebenprodukt zufaelliger Startwerte.
+2. **Jede Aussage ueber Pretuning muss die Zahl der Startversuche mitfuehren.** Ein Vergleich
+   `pretune_on` gegen `pretune_off` ist ohne diese Angabe nicht interpretierbar, weil er zwei Dinge
+   zugleich variiert: die Guete des Startwerts und ihre Anzahl.
+
+---
+
 ## 2026-09-08
 
 ### Die Pruning-Schwelle ist ein Nullsummenregler — und R2 sieht von alldem fast nichts
