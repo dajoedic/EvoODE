@@ -406,6 +406,20 @@ function variant_use_pretuning(variant)
     return haskey(variant, :use_pretuning) ? Bool(variant.use_pretuning) : USE_PRETUNING
 end
 
+function variant_basis_name(variant)
+    return haskey(variant, :basis_name) ? String(variant.basis_name) : "default_staged_polynomial_basis"
+end
+
+function build_variant_basis(variant, dim::Int)
+    basis_name = variant_basis_name(variant)
+    if basis_name == "default_staged_polynomial_basis"
+        return default_staged_polynomial_basis(dim)
+    elseif basis_name == "staged_polynomial_basis_with_constant"
+        return staged_polynomial_basis_with_constant(dim)
+    end
+    error("Unknown basis_name=$(basis_name)")
+end
+
 function system_expected_stage(system)
     return haskey(system, :expected_stage) && system[:expected_stage] !== nothing ? Int(system[:expected_stage]) : nothing
 end
@@ -597,6 +611,28 @@ function active_term_names(structure::StructureSpec, basis::AbstractBasis)
     return [[basis_term_name(basis, term_idx) for term_idx in eq_terms] for eq_terms in structure.active_idxs]
 end
 
+function active_model_terms(structure::StructureSpec, basis::AbstractBasis, params::Vector{Float64})
+    terms_by_eq = Vector{Vector{Dict{String, Any}}}()
+    offset = 0
+    for eq_terms in structure.active_idxs
+        eq_model = Dict{String, Any}[]
+        for term_idx in eq_terms
+            offset += 1
+            push!(
+                eq_model,
+                Dict{String, Any}(
+                    "term_index" => Int(term_idx),
+                    "term" => basis_term_name(basis, term_idx),
+                    "coefficient" => params[offset],
+                ),
+            )
+        end
+        push!(terms_by_eq, eq_model)
+    end
+    offset == length(params) || error("Parameter count does not match active terms")
+    return terms_by_eq
+end
+
 function r2_by_dimension(yhat::AbstractMatrix, y::AbstractMatrix)
     size(yhat) == size(y) || return nothing
     all(isfinite, yhat) || return nothing
@@ -644,6 +680,7 @@ function run_one(variant,
     dim = Int(system[:dim])
     expected_stage = system_expected_stage(system)
     use_pretuning = variant_use_pretuning(variant)
+    basis_name = variant_basis_name(variant)
     u0 = Float64[x for x in system[:init_sets][ic_set]]
     hb_context = heartbeat_context(variant, system, ic_set, seed, fingerprint)
     merge!(hb_context, Dict(String(k) => v for (k, v) in heartbeat_extra))
@@ -664,6 +701,7 @@ function run_one(variant,
         "T" => Int(system[:T]),
         "seed" => seed,
         "condition" => haskey(variant, :condition) ? String(variant.condition) : String(variant.label),
+        "basis_name" => basis_name,
         "loss" => nothing,
         "r2" => nothing,
         "r2_by_dim" => nothing,
@@ -678,6 +716,7 @@ function run_one(variant,
         "eq_wasted_levels" => nothing,
         "derivative_active_fractions" => nothing,
         "support_terms" => nothing,
+        "model_terms" => nothing,
         "n_levels" => N_LEVELS,
         "use_pretuning" => use_pretuning,
         "representability" => system_representability(system),
@@ -765,7 +804,7 @@ function run_one(variant,
         optimizer = build_reference_optimizer()
         screening_optimizer = SCREENING_BUDGETS_ENABLED ? build_screening_optimizer() : nothing
         strategy = variant.constructor(level_callback, screening_optimizer)
-        basis = default_staged_polynomial_basis(dim)
+        basis = build_variant_basis(variant, dim)
         options = build_options(seed)
 
         result = nothing
@@ -829,6 +868,7 @@ function run_one(variant,
         base_record["eq_overshoot"] = local_eq_overshoot
         base_record["eq_wasted_levels"] = local_eq_wasted_levels
         base_record["support_terms"] = active_term_names(result.structure, basis)
+        base_record["model_terms"] = active_model_terms(result.structure, basis, result.params)
         base_record["screening_budgets_active"] = meta.screening_budgets_active
         base_record["derivative_screening_active"] = haskey(meta, :derivative_screening_active) ? meta.derivative_screening_active : false
         base_record["stage_caps"] = haskey(meta, :stage_caps) ? meta.stage_caps : nothing

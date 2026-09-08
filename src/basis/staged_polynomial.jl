@@ -109,3 +109,70 @@ function default_staged_polynomial_basis(dim::Int)
 
     return StagedPolynomialBasis(term_funcs, term_names, term_groups)
 end
+
+"""
+    staged_polynomial_basis_with_constant(dim)
+
+Builds the default staged basis plus a constant term in stage 1.
+
+The stage layout remains degree ordered:
+
+1. constant and linear
+2. self quadratic
+3. cross terms
+4. cubic (self only)
+5. trigonometric (sin/cos per variable)
+"""
+function staged_polynomial_basis_with_constant(dim::Int)
+
+    term_funcs = Function[]
+    term_names = String[]
+    term_groups = Vector{Vector{Int}}()
+
+    function add_term!(f, name, group)
+        push!(term_funcs, f)
+        push!(term_names, name)
+        push!(group, length(term_funcs))
+    end
+
+    group1 = Int[]
+    add_term!((u, t) -> 1.0, "1", group1)
+    for i in 1:dim
+        ii = i
+        add_term!((u, t) -> u[ii], "u$ii", group1)
+    end
+    push!(term_groups, group1)
+
+    group2 = Int[]
+    for i in 1:dim
+        ii = i
+        add_term!((u, t) -> u[ii]^2, "u$ii^2", group2)
+    end
+    push!(term_groups, group2)
+
+    group3 = Int[]
+    for i in 1:dim
+        for j in (i+1):dim
+            ii, jj = i, j
+            add_term!((u, t) -> u[ii] * u[jj], "u$ii*u$jj", group3)
+        end
+    end
+    push!(term_groups, group3)
+
+    group4 = Int[]
+    for i in 1:dim
+        ii = i
+        add_term!((u, t) -> u[ii]^3, "u$ii^3", group4)
+    end
+    push!(term_groups, group4)
+
+    group5 = Int[]
+    for i in 1:dim
+        ii = i
+        add_term!((u, t) -> sin(u[ii]), "sin(u$ii)", group5)
+        add_term!((u, t) -> cos(u[ii]), "cos(u$ii)", group5)
+    end
+    push!(term_groups, group5)
+
+    return StagedPolynomialBasis(term_funcs, term_names, term_groups)
+end

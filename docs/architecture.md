@@ -207,6 +207,10 @@ Default staged basis with five complexity levels:
 4. self-cubic terms
 5. trigonometric terms
 
+`staged_polynomial_basis_with_constant(dim)` is a separate staged basis variant. It keeps the same
+five levels and adds the constant term `1` to stage 1, so the default builder and all frozen
+campaign fingerprints that name it remain unchanged.
+
 For non-staged bases, all terms are available from the start.
 
 ## Losses and Evaluation

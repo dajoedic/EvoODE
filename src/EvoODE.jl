@@ -37,7 +37,7 @@ export stage_cap_behavior_fingerprint
 export eq_overshoot, eq_wasted_levels
 
 export PolynomialBasis, default_polynomial_basis
-export StagedPolynomialBasis, default_staged_polynomial_basis
+export StagedPolynomialBasis, default_staged_polynomial_basis, staged_polynomial_basis_with_constant
 
 export MSELoss
 
