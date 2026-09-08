@@ -4,6 +4,101 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ---
 
+## 2026-09-08
+
+### Die Konstante ist kein Gratisgewinn: sie oeffnet fuenf Systeme und kostet die Haelfte der bisherigen
+
+<!-- COMMIT_HASH_8 -->
+
+WP-N1 hat die Konstante als **neue** Basisvariante gebaut (`staged_polynomial_basis_with_constant`,
+Term `"1"` in Stufe 1), die Koeffizienten in den Record aufgenommen und einen dim-1-Probelauf ueber
+132 Zellen gerechnet: 11 Systeme x 3 Seeds x 2 IC-Saetze x 2 Basen, `pretuning=false`.
+
+Codex hat den Lauf nicht ausfuehren koennen — seine Sandbox startet `julia.exe` unter `WindowsApps`
+nicht (`status: blocked` nach 6,9 Minuten). Tests und Probelauf wurden von Claude ausgefuehrt; die
+Implementierung stammt unveraendert aus dem WP.
+
+**Akzeptanz erfuellt.** Die alte Basis ist unangetastet: alle **66 von 66** Zellen liefern
+bitgleiche Losswerte gegen die Kampagne (`pretune_off`), und alle 36 exakten Zellen stimmen im
+`pruned_match` ueberein. Die Unit-Tests laufen 10/10.
+
+#### Das Ergebnis, in beide Richtungen
+
+**Frage 1 — die sechs bisher darstellbaren dim-1-Systeme (2, 3, 6, 8, 11, 12):**
+
+| Basis | Strukturtreffer |
+|---|---|
+| alt | **30 / 36 = 83,3 %** |
+| neu, mit Konstante | **14 / 36 = 38,9 %** |
+
+Die Konstante **halbiert** die Trefferquote dort, wo sie nicht gebraucht wird. System 3 faellt von
+6/6 auf 2/6, System 6 von 6/6 auf 3/6, System 11 von 3/6 auf 0/6, System 12 von 6/6 auf 3/6.
+
+**Frage 2 — die fuenf Systeme, die allein an der Konstante scheiterten (1, 5, 9, 17, 23):**
+
+| Basis | Strukturtreffer |
+|---|---|
+| alt | nicht bewertbar (dort Surrogate) |
+| neu, mit Konstante | **15 / 30 = 50 %** |
+
+System 1 (RC-Kondensator) 6/6, System 17 6/6, System 9 3/6, Systeme 5 und 23 je 0/6. Ein
+Vorher-Nachher gibt es hier nicht — unter der alten Basis ist ihre Struktur gar nicht darstellbar,
+die Strukturbewertung ist erst mit der Konstante definiert.
+
+#### Die Ursache: die Konstante ist ein Falschpositiv-Magnet
+
+In **31 der 37** verfehlten exakten Zellen unter der neuen Basis steht die Konstante im gefundenen
+Modell; in **22** davon war sie nicht erwartet. Beispiele: System 3 findet `['1','u1','u1^2']` statt
+`['u1','u1^2']`, System 12 dasselbe Muster.
+
+Die neu gespeicherten Koeffizienten — der zweite Teil dieses WP — trennen dabei **zwei
+Fehlermodi**, die ohne sie nicht unterscheidbar gewesen waeren:
+
+| System | c(1) | groesster anderer Koeffizient | Verhaeltnis | Deutung |
+|---|---|---|---|---|
+| 3 | 1,0e-03 bis 5,2e-03 | 0,790 | **1,3e-03 bis 6,6e-03** | numerisch belanglos |
+| 12 | 2,6e-02 bis 1,5e-01 | 1,80 | 1,5e-02 bis 8,2e-02 | Grenzfall |
+| 6 | **6,321** | 1,502 | **4,21** | echte Fehlanpassung |
+
+Bei System 3 ist die ueberzaehlige Konstante **tausendmal kleiner** als der groesste Koeffizient —
+die Struktur ist faktisch richtig gefunden, nur ein winziger Term ueberlebt. Bei System 6 ist die
+Konstante **viermal groesser** als alles andere: dort hat die Suche ein anderes Modell gefunden
+(`['1','u1']` statt `['u1','u1^2']`), das ist kein Pruning-Problem, sondern ein Suchfehler.
+
+**Die Pruning-Regel steht in `experiments/run_experiment.jl:239`:**
+`threshold = max(1e-6, 1e-3 * max_abs)`. Fuer System 3 sind das 7,9e-04 — die stoerende Konstante
+liegt bei 1,0068e-03, also **um Faktor 1,27 darueber**. Sie ueberlebt das Pruning haarscharf.
+
+**Daraus folgt ausdruecklich keine Empfehlung, die Schwelle zu erhoehen.** Eine Schwelle nach
+Sichtung der Daten passend zu waehlen ist genau der Fehler, den WP-V1 fuer den Reopen-Schwellwert
+schon einmal benannt hat. Der Befund lautet: die Fehlschlaege haeufen sich unmittelbar oberhalb der
+Schwelle, und die Schwelle ist damit ein Messinstrument mit sichtbarer Aufloesungsgrenze — nicht ein
+Parameter, an dem man dreht.
+
+#### Was das bedeutet
+
+Das ist ein Ergebnis ueber **Suchraumkontrolle**, also ueber genau die Achse, um die das
+Promotionsthema kreist. Ein Term mehr in der Bibliothek ist nicht gratis: er erschliesst Systeme, die
+ohne ihn unerreichbar sind, und kostet Treffer bei Systemen, die ihn nicht brauchen. Repraesentierbarkeit
+und Auffindbarkeit ziehen gegeneinander, und beides ist hier zum ersten Mal am selben Datensatz
+gemessen.
+
+Damit ist auch klar, dass die Konstante **nicht einfach in die Standardbasis wandern kann**. Die
+naheliegende Konsequenz — Modellauswahl statt fester Bibliothek, oder ein Sparsamkeitsdruck, der
+einen um drei Groessenordnungen kleineren Term verwirft — ist eine Forschungsfrage und keine
+Konfigurationsaenderung.
+
+**Offen und nicht in diesem WP zu klaeren:** ob die 83,3 % der alten Basis gegen die 38,9 % der neuen
+auf denselben sechs Systemen ein fairer Vergleich ist. Die neue Basis loest eine schwierigere
+Aufgabe — groesserer Suchraum bei gleichem Budget. Ein Vergleich bei gleichem *effektiven* Aufwand
+statt gleicher Levelzahl waere die ehrlichere Messung.
+
+**Nachzutragen:** der Probelauf schreibt `git_hash = "not_collected"`
+(`wp_n1_basis_probe.jl`). Das widerspricht der Identitaetsregel des Projekts und muss vor jeder
+weiteren Verwendung dieser Daten repariert werden.
+
+---
+
 ## 2026-09-07
 
 ### Kassasturz: zwei ueberzogene Befunde zurueckgenommen, vier Grundlagenluecken benannt

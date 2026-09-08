@@ -268,8 +268,23 @@ the coupled search path 1e-6 is the cheaper, behaviour-equal tolerance; the Syst
    point was it tested whether the base method is competitive. EvoGrow has only ever been measured
    against itself; no baseline run exists.
 
-   **Plan, in order:** (1) add the constant as a **new** basis variant, old basis bit-identical, and
-   probe on dim 1 only — 72 cells, 0.6 core hours (WP-N1, running); (2) store the coefficients (part
+   **(1) is done, and the answer is two-sided (WP-N1, 2026-09-08).** `staged_polynomial_basis_with_constant`
+   adds `"1"` to stage 1; the old basis is untouched and verified **bit-identical on 66 of 66 cells**
+   against the campaign. The dim-1 probe over 132 cells says: on the six systems that never needed
+   the constant, recovery **falls from 30/36 (83.3 %) to 14/36 (38.9 %)**; on the five systems that
+   failed on the constant alone, it reaches **15/30 (50 %)** where no score existed before (system 1
+   and 17 at 6/6). Cause: the constant is a false-positive magnet — it appears in 31 of 37 missed
+   cells, unexpected in 22 of them. The newly stored coefficients separate two failure modes: on
+   system 3 the spurious constant is ~1e-3 of the largest coefficient and survives the pruning rule
+   `max(1e-6, 1e-3*max_abs)` by a factor of 1.27, i.e. the structure is effectively right; on system
+   6 it is **4.2× larger** than everything else, i.e. a genuinely wrong model. **No threshold change
+   is implied** — picking a threshold after seeing the data is the WP-V1 mistake. The constant
+   therefore **cannot simply move into the default basis**; representability and searchability pull
+   against each other, and that tension is the finding. Open: the comparison gives both bases the
+   same level budget although the new one searches a larger space — an equal-effort comparison would
+   be the fairer measurement.
+
+   **Plan, in order:** (1) **done**, see above; (2) store the coefficients (part
    of WP-N1); (3) generalization as a standard evaluation — rebuild the structure from the record,
    fit parameters on IC 1, integrate from IC 2, R² against truth; this costs **no search run**, one
    parameter fit per cell, and turns the existing campaign into the "before" value; (4) SINDy on the
