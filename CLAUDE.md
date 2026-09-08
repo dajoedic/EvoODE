@@ -522,6 +522,13 @@ the coupled search path 1e-6 is the cheaper, behaviour-equal tolerance; the Syst
   support, against 60/120 (`pretune_off`) and 50/120 (`pretune_on`) over all exact cells
 - the stage cap is not stable across initial conditions where the trajectory carries little
   dynamics (System 31, IC set 2)
+- **the pruning threshold in `pruned_match` is a zero-sum dial (WP-N2, 2026-09-08).** Over a 24-rule
+  grid, hits + deleted-true-term + surviving-extra-term stays constant at 45 (the subset ceiling);
+  raising the threshold trades one error type for the other almost one-for-one, because spurious and
+  genuine small coefficients overlap in magnitude. Best achievable over the whole grid is 30 of 66
+  against today's 29 — **there is no better threshold to find.** The old basis scores 30/36 only by
+  luck: at a relative threshold of 1e-1 it drops to 15/36. Report the rule dependence wherever
+  `pruned_match` is used
 - `wasted_levels` / `eq_wasted_levels` are computed only for `representability == "exact"`
   (`experiments/run_experiment.jl:385`), so they are `null` for 43 of 63 systems. The WP-B1 waste
   measure does not need the truth and is fully recoverable from the heartbeat `best_loss` stream —

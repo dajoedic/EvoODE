@@ -6,6 +6,78 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ## 2026-09-08
 
+### Die Pruning-Schwelle ist ein Nullsummenregler — und R2 sieht von alldem fast nichts
+
+<!-- COMMIT_HASH_9 -->
+
+WP-N2 hat die Pruning-Regel als Messinstrument vermessen, auf den 132 Zellen des
+WP-N1-dim-1-Probelaufs, ohne einen einzigen neuen Suchlauf — moeglich, weil seit WP-N1 die
+Koeffizienten im Record stehen.
+
+#### Die Zerlegung der Fehlschlaege
+
+Heutige Regel `max(1e-6, 1e-3 * max_abs)`, 102 exakte Gleichungen:
+
+| Basis | Zellen | Treffer | Fremdterm ueberlebt | wahrer Term geloescht | Term nie gefunden | Anteil R2 > 0,9 |
+|---|---|---|---|---|---|---|
+| alt | 36 | 30 | 0 | 0 | 6 | **100 %** |
+| neu, mit Konstante | 66 | 29 | 12 | **4** | 21 | **95,5 %** |
+
+Die alte Basis hat **keinen einzigen** Pruning-Fehler: jeder ihrer sechs Fehlschlaege ist ein nie
+gefundener wahrer Term. Die neue Basis dagegen verliert 16 Zellen an die Messregel selbst.
+
+#### Der Kern: die Schwelle verschiebt nur, sie loest nicht
+
+Ueber ein Gitter aus 24 Regeln — rein relativ, rein absolut und die heutige Mischform, je vier
+Werte — bleibt die Summe konstant:
+
+**Treffer + geloeschter wahrer Term + ueberlebender Fremdterm = 45** in 18 der 24 Regeln (45 ist
+zugleich die Teilmengen-Obergrenze: in 45 der 66 Zellen ist die wahre Struktur ueberhaupt enthalten).
+
+| Regel | Treffer | wahrer Term geloescht | Fremdterm ueberlebt |
+|---|---|---|---|
+| relativ 1e-4 | 30 | 0 | 15 |
+| relativ 1e-3 (**heute**) | 29 | 4 | 12 |
+| relativ 1e-2 | 29 | 13 | 3 |
+| relativ 1e-1 | 18 | 27 | 0 |
+
+Jede Zelle, die man durch eine hoehere Schwelle vom ueberlebenden Fremdterm befreit, verliert man an
+einen geloeschten wahren Term. **Die beiden Fehlerarten tauschen fast eins zu eins.** Der Grund ist
+einfach und liegt in den Daten: die stoerenden Konstanten (relativ 1,3e-03 bis 4,1e-01) und die
+kleinen echten Terme (System 5: relativ 2,2e-04) ueberlappen im Betrag. **Es gibt keine Schwelle,
+die sie trennt**, weil sie nicht getrennt sind.
+
+Die hoechste Trefferzahl ueber alle 24 Regeln ist **30 von 66** gegen heute 29 — ein Gewinn von
+einer einzigen Zelle. Eine bessere Schwelle gibt es also nicht zu finden. Das ist ein negatives
+Ergebnis ueber unser Messverfahren, und es ist wertvoller als jede Feinjustierung es gewesen waere.
+
+**Auch die alte Basis ist nicht robust**, sie hat nur Glueck: bei relativ 1e-1 faellt sie von 30 auf
+15 von 36. Ihre Koeffizienten liegen bloss weit genug auseinander, dass die heutige Schwelle sie
+sauber trennt.
+
+#### Und die zweite Metrik sieht davon fast nichts
+
+**Der Anteil R2 > 0,9 ist ueber das gesamte Regelgitter invariant** — logisch, denn Pruning aendert
+die Klassifikation, nicht die Anpassung. Er betraegt 36/36 fuer die alte und 63/66 fuer die neue
+Basis.
+
+Damit steht der Kontrast, der Design-Prinzip 9 begruendet: Die Konstante kostet auf der
+**Strukturmetrik** die Haelfte der Treffer (83,3 % auf 43,9 %), auf der **Literaturmetrik** dagegen
+nur drei von 66 Zellen (100 % auf 95,5 %). Wer nur R2 berichtet, sieht den Einbruch nicht. Wer nur
+Struktur berichtet, ist mit keiner Publikation vergleichbar. Beide Zahlen sind ab sofort Pflicht.
+
+#### Was daraus folgt
+
+Nicht eine neue Schwelle. Sondern: die 21 Zellen, in denen ein wahrer Term **nie gefunden** wurde,
+sind das eigentliche Problem der neuen Basis — sie liegen ausserhalb dessen, was Beschneiden je
+erreichen kann. Die Obergrenze bei 45 von 66 ist eine Eigenschaft der **Suche**, nicht der Messung.
+
+Offen bleibt die Frage, die dieses WP nicht beantworten konnte: was passiert, wenn man die
+Fremdterme entfernt und die Parameter **neu fittet**. Alles hier Berichtete rechnet mit unveraenderten
+Koeffizienten. Das ist WP-N3.
+
+---
+
 ### Die Konstante ist kein Gratisgewinn: sie oeffnet fuenf Systeme und kostet die Haelfte der bisherigen
 
 <!-- 4f2fab0 -->
