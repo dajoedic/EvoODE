@@ -1,110 +1,110 @@
-# WP-N1 — Die Konstante, und das Modell endlich mitschreiben
+# WP-N2 — Die Pruning-Regel als Messinstrument pruefen
 
-**Language: Julia**
+**Language: Python**
 
-## Kontext und Zweck
+## Kontext
 
-Zwei Grundlagenluecken, die vor jeder weiteren Methodenarbeit geschlossen werden muessen.
+Der WP-N1-Probelauf (132 Zellen, `outputs/wp_n1_dim1_probe/history.jsonl`) hat einen Defekt in der
+Auswertungsregel sichtbar gemacht. `pruned_match` beurteilt eine gefundene Struktur, indem es Terme
+mit kleinem Koeffizienten entfernt und den Rest mit der Wahrheit vergleicht. Die Schwelle steht in
+`experiments/run_experiment.jl:239`:
 
-**Erstens: der Basis fehlt der konstante Term.** `src/basis/staged_polynomial.jl` kennt `u1`,
-`u1^2`, `u1*u2`, `u1^3`, `sin`/`cos` — aber keine `1`. Der Audit in
-`docs/paper1_odebench_protocol_alignment.md` §2.6 hat das quantifiziert: unsere Basis stellt 20 von
-63 ODEBench-Systemen exakt dar, SINDys schlichte Polynombibliothek 40. **Zehn Systeme scheitern
-allein an der Konstante** (1, 5, 9, 17, 23, 43, 52, 57, 58, 59), bei 15 weiteren ist sie
-mitbeteiligt. System 1 ist der RC-Kondensator — das einfachste System des Benchmarks.
+```
+threshold = max(1e-6, 1e-3 * max_abs)
+```
 
-**Zweitens: die gefundenen Parameterwerte werden nie gespeichert.** `run_regression.jl:831` schreibt
-mit `active_term_names(...)` nur die Termnamen. Die Koeffizienten aus `result.params` gehen
-verloren. Damit laesst sich kein gefundenes Modell rekonstruieren, neu simulieren oder auf andere
-Anfangswerte anwenden — die Generalisierungsmetrik der Literatur ist unerreichbar, und Design-Prinzip
-6 („Metadaten bewahren") ist verletzt. Die 756 Zellen der Phase-B-Kampagne sind davon betroffen und
-nicht nachtraeglich reparierbar.
+`max_abs` ist der groesste Betrag unter den Koeffizienten **derselben Gleichung**. Die Schwelle ist
+also relativ zum groessten Term.
 
-## Absolute Randbedingung: die Kampagnenidentitaet bleibt unberuehrt
+**Das zerstoert wahre Terme, sobald ein Term gross ist.** Beispiel aus dem Lauf, System 5, Seed 123,
+IC-Satz 1, neue Basis: Koeffizienten `1` = +9,809, `u1` = +7,8e-05, `u1^2` = -2,1e-03. Erwartet sind
+`['1','u1^2']`. Die Schwelle betraegt 9,8e-03 und entfernt **beide** kleinen Terme — auch das echte
+`u1^2`. Uebrig bleibt `['1']`, die Zelle gilt als Fehlschlag. Der Loss dieser Zelle ist 1,4e-07 und
+ihr R2 0,9999999996.
 
-Die Phase-B-Kampagne (`git 91f88c4`, `config_fingerprint 604e79733b22d64d`,
-`stage_cap_behavior_fingerprint ffb0266c7913352c`, 756 Records) ist eingefroren und wird
-**ausschliesslich lesend** angefasst. Konkret:
+Ueber die 66 exakten Zellen der neuen Basis klassifiziert sich das heute so: 29 Treffer, **12 Zellen
+mit ueberlebendem ueberzaehligem Term**, **4 Zellen mit vom Pruning geloeschtem wahrem Term**, 21
+Zellen, in denen ein wahrer Term nie gefunden wurde.
 
-- `default_staged_polynomial_basis` behaelt exakt sein heutiges Verhalten. Die Konstante kommt in
-  eine **neue, zusaetzliche** Basisfunktion, nicht in die bestehende.
-- Ein bestehender Lauf, der die alte Basis waehlt, muss weiterhin bitgleiche Ergebnisse liefern.
-- Aendert sich ein Fingerprint fuer die bestehende Konfiguration, ist das ein **Abbruchgrund**.
+Seit WP-N1 stehen die Koeffizienten im Record (`model_terms` mit `term`, `term_index`,
+`coefficient`), die Frage ist also vollstaendig aus vorhandenen Daten beantwortbar — **ohne einen
+einzigen neuen Suchlauf**.
 
-## Teil 1 — Die Parameterwerte in den Record
+## Zweck
 
-Ergaenze den Record um die Koeffizienten des gefundenen Modells, direkt neben `support_terms`, so
-dass Termname und Wert **eindeutig einander zugeordnet** sind. Die genaue Form ist deine
-Entscheidung; sie muss nur diese Bedingung erfuellen: aus Record plus Basisangabe muss sich das
-Modell **ohne Rueckgriff auf den Suchlauf** wieder aufbauen und integrieren lassen.
+Feststellen, **wie stark die Bewertung von der Pruning-Regel abhaengt** und ob es eine Regel gibt,
+die weniger Artefakte erzeugt. Das ist eine Messung ueber ein Messinstrument, keine Optimierung
+eines Ergebnisses.
 
-Schreibe zusaetzlich mit, **welche Basis** verwendet wurde, als Name oder Kennung. Ohne diese Angabe
-ist die Termliste mehrdeutig, sobald es zwei Basisvarianten gibt.
+## Deliverables
 
-Das ist eine reine Ergaenzung der Ausgabe. Sie darf den Suchverlauf nicht beeinflussen. Belege das:
-ein Lauf mit alter Basis muss denselben `loss` liefern wie vorher.
+### 1. Zerlegung der Fehlschlaege nach Ursache
 
-## Teil 2 — Die Basisvariante mit Konstante
+Fuer beide Basen getrennt, je Gleichung, aus `model_terms` und den erwarteten Termen:
 
-Eine neue Builder-Funktion neben `default_staged_polynomial_basis`, die dieselbe gestufte Struktur
-hat und zusaetzlich den konstanten Term traegt.
+| Kategorie | Bedeutung |
+|---|---|
+| Treffer | beschnittene Menge gleich der erwarteten |
+| ueberzaehliger Term ueberlebt | erwartete Menge ist Teilmenge, ein Fremdterm bleibt ueber der Schwelle |
+| wahrer Term geloescht | ein erwarteter Term liegt **unter** der Schwelle und faellt weg |
+| wahrer Term nie gefunden | erwartete Menge ist keine Teilmenge der gefundenen |
 
-**Der konstante Term gehoert in Stufe 1.** Begruendung: die Stufung ist nach Grad geordnet, und eine
-Konstante hat Grad 0 — sie ist einfacher als der lineare Term und muss deshalb ab der ersten Stufe
-verfuegbar sein. Diese Entscheidung ist bewusst getroffen und im Report festzuhalten; sie nicht
-anders zu treffen ist Teil des Auftrags.
+Die Kategorien sind in dieser Reihenfolge zu pruefen und schliessen einander aus. Berichte
+zusaetzlich, in wie vielen Zellen **beide** Fehler zugleich auftreten, falls das vorkommt.
 
-Die neue Basis muss ueber die bestehende Registrierung in `src/EvoODE.jl` erreichbar sein und in
-`docs/architecture.md` auftauchen, wie es fuer Bases dort vorgesehen ist.
+### 2. Sensitivitaet gegenueber der Regel
 
-## Teil 3 — Der Probelauf, und nur der billige Teil davon
+Rechne die Klassifikation fuer ein **Gitter** von Pruning-Regeln durch und berichte es vollstaendig:
 
-**Ausfuehren darfst du ausschliesslich Dimension 1.** Aus den Kampagnenlaufzeiten: die 72 exakten
-dim-1-Zellen kosteten zusammen 0,6 Kernstunden, im Median 0,3 Minuten je Zelle. Das ist Minutenarbeit
-und darf laufen.
+- rein relativ: `rel * max_abs` mit `rel` in 1e-4, 1e-3 (heutiger Wert), 1e-2, 1e-1
+- rein absolut: `abs` in 1e-8, 1e-6 (heutiger Boden), 1e-4, 1e-2
+- die heutige Mischform `max(abs, rel * max_abs)` fuer die Kombinationen des Gitters
 
-**Dimension 2 und hoeher darfst du NICHT starten.** Die exakten dim-2-Zellen kosteten 114
-Kernstunden, dim 3 ueber 2.600. Bereite den Lauf als startbares Skript vor und halte das Kommando im
-Report fest — starten wird ihn der Nutzer.
+Fuer jede Regel: Trefferzahl und die drei Fehlerkategorien, je Basis.
 
-Der dim-1-Probelauf vergleicht **alte gegen neue Basis** auf denselben Systemen, Seeds und
-IC-Saetzen, alles andere unveraendert:
+**Keine Regel wird als die beste bezeichnet, keine wird empfohlen.** Eine Schwelle nach Sichtung der
+Daten auszuwaehlen ist der Fehler, den WP-V1 fuer den Reopen-Schwellwert bereits benannt hat. Der
+Auftrag ist, die Abhaengigkeit **sichtbar** zu machen: wie viele Zellen wechseln ihre Bewertung, und
+ab wo ist die Klassifikation stabil.
 
-- die sechs bisher exakt darstellbaren dim-1-Systeme: 2, 3, 6, 8, 11, 12 — **Frage: steigt die
-  Trefferquote ueber die heutigen 79 %?**
-- die fuenf dim-1-Systeme, die allein an der Konstante scheitern: 1, 5, 9, 17, 23 — **Frage: werden
-  sie mit Konstante gefunden?** Fuer diese fuenf ist die Strukturbewertung erst mit der neuen Basis
-  ueberhaupt definiert; unter der alten Basis sind sie Surrogate. Weise das getrennt aus und behaupte
-  keinen Vorher-Nachher-Vergleich, wo es kein Vorher gibt.
+### 3. Ein regelfreies Mass als Gegenprobe
 
-Seeds und IC-Saetze wie in der Kampagne: Seeds 7, 42, 123, beide IC-Saetze. Eine Bedingung genuegt;
-nimm `pretuning=false` und begruende im Report, warum — nicht stillschweigend.
+Zusaetzlich eine Bewertung, die ohne Schwelle auskommt: der gefundene Termsatz **ohne jede
+Beschneidung** gegen die Wahrheit (`raw_match`), sowie die Frage, ob die wahre Menge **Teilmenge**
+der gefundenen ist. Letzteres ist die Obergrenze dessen, was Beschneiden ueberhaupt erreichen kann.
 
-Ergebnisse in ein **eigenes Ausgabeverzeichnis** unter `outputs/` mit eigenem Namen. Sie werden
-niemals mit Kampagnendaten in einer Datei zusammengefuehrt.
+### 4. Beide Metriken, immer
+
+Jede Tabelle traegt **beide** Kennzahlen: Strukturtreffer **und** den Anteil der Zellen mit
+R2 > 0,9 (Design-Prinzip 9 in `CLAUDE.md`). Das gilt auch dort, wo die zweite Zahl langweilig
+aussieht — gerade dort ist sie die Aussage.
 
 ## Verboten
 
-- keine Aenderung an `default_staged_polynomial_basis` oder an bestehenden Fingerprint-Bestandteilen
-- kein Start von Laeufen jenseits Dimension 1
-- keine Aenderung an `experiments/paper1_phaseB_v1/`, an der Analyse-Pipeline oder an den
-  A5-bis-A9-Skripten
-- keine Aenderung an der Suchlogik, am Stage-Cap oder am Optimizer — dieses WP aendert die **Basis**
-  und die **Ausgabe**, sonst nichts
+- keine Aenderung an Julia-Code, insbesondere **nicht** an `experiments/run_experiment.jl` oder der
+  dortigen Schwelle. Dieses WP **misst**, es aendert nichts.
+- keine Aenderung an den WP-N1-Ergebnissen, an der Kampagne oder an der Analyse-Pipeline der
+  A5-bis-A9-Reihe
+- **keine Empfehlung fuer eine Schwelle**, weder im Code noch im Report
+- **keine Figuren**
 - keine Ergebnisse in `PAPER_1.md`, `CLAUDE.md` oder `DIARY.md`
+- kein Mittelwert oder Median als alleinige Zusammenfassung
 - kein `git add -A`, keine Git-Operationen
 
 ## Akzeptanzkriterium
 
-Ein Lauf mit der alten Basis liefert denselben `loss` wie vor der Aenderung und einen unveraenderten
-`config_fingerprint`. Der Record traegt die Koeffizienten und die Basiskennung, und aus einem Record
-allein laesst sich das Modell wieder aufbauen — zeige das an einem Beispiel. Der dim-1-Probelauf ist
-durchgelaufen, seine Ergebnisse liegen unter `outputs/`. Das Kommando fuer den dim-2-Lauf steht im
-Report, ungestartet.
+Ein Skript unter `analysis/scripts/aggregate/`, ueber `--config` oder `--input` parametrisiert, das
+`outputs/wp_n1_dim1_probe/history.jsonl` liest und nach `analysis/data/` schreibt; Tabellen als
+`.csv` und `.tex` unter `analysis/tables/`. Die Zerlegung reproduziert fuer die heutige Regel die
+bekannten Zahlen: alte Basis 30 Treffer von 36, neue Basis 29 von 66 mit 12 ueberlebenden Fremdtermen
+und 4 geloeschten wahren Termen. Weicht deine Rechnung davon ab, ist das ein Befund und im Report zu
+benennen, nicht anzugleichen.
+
+Fehlerpfad an einer Fixture unter `analysis/fixtures/` belegen (z. B. ein Record ohne `model_terms`).
 
 ## Report
 
-`codex/REPORT_WP_N1.md`. Enthaelt: die Kommandos, den Nachweis der Bitgleichheit auf der alten Basis,
-die Record-Form mit einem vollstaendigen Beispiel inklusive Rekonstruktion des Modells, die
-Begruendung fuer Stufe 1 und fuer `pretuning=false`, die Ergebnistabelle des dim-1-Probelaufs mit den
-beiden getrennten Fragen — und das startbereite, **nicht ausgefuehrte** Kommando fuer Dimension 2.
+`codex/REPORT_WP_N2.md`. Enthaelt: die Kommandos, die Ursachenzerlegung fuer beide Basen, das
+vollstaendige Regelgitter, die regelfreien Gegenproben, alle Tabellen mit beiden Metriken — und
+einen Absatz dazu, **wie viele Zellen ihre Bewertung ueber das Gitter hinweg wechseln** und ob es
+einen Bereich gibt, in dem die Klassifikation stabil ist.

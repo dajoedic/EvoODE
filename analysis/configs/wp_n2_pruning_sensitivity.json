@@ -1,0 +1,5 @@
+{
+  "input_path": "../../outputs/wp_n1_dim1_probe/history.jsonl",
+  "data_output_dir": "data/wp_n2_pruning_sensitivity",
+  "table_output_dir": "tables/wp_n2_pruning_sensitivity"
+}
