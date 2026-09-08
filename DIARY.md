@@ -8,7 +8,7 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ### Drei Zufallsstarts genuegen — und damit steht der Mechanismus hinter dem Pretuning-Befund
 
-<!-- COMMIT_HASH_10 -->
+<!-- 34fdc0a -->
 
 WP-N4 hat die Referenzanpassung aus WP-N3 mit **mehreren Zufallsstarts** wiederholt, k = 1, 2, 3, 5,
 10, je Zelle das beste Ergebnis nach Loss. Codex hat den Code geschrieben und `blocked` gemeldet
