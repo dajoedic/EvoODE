@@ -8,7 +8,7 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ### Die Konstante ist kein Gratisgewinn: sie oeffnet fuenf Systeme und kostet die Haelfte der bisherigen
 
-<!-- COMMIT_HASH_8 -->
+<!-- 4f2fab0 -->
 
 WP-N1 hat die Konstante als **neue** Basisvariante gebaut (`staged_polynomial_basis_with_constant`,
 Term `"1"` in Stufe 1), die Koeffizienten in den Record aufgenommen und einen dim-1-Probelauf ueber
