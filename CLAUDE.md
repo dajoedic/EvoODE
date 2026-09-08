@@ -558,6 +558,14 @@ the coupled search path 1e-6 is the cheaper, behaviour-equal tolerance; the Syst
 8. **Exact and surrogate systems are never mixed** into one structure-correctness metric. Exact
    systems are scored on support recovery; surrogate systems on fit quality via R², reached stage
    and stability observations.
+9. **Always report both metrics: structure recovery and the R² > 0.9 rate.** Every evaluation, every
+   table, every claim carries both — never one alone. They measure different things and they
+   disagree: on the WP-N1 dim-1 probe, structurally *wrong* cells still reach a median R² of 0.9997
+   with **92 % of them above 0.9**, and a cell whose true term was destroyed by the pruning rule
+   scores R² = 0.9999999996. The R² > 0.9 rate is also the metric the literature reports
+   (ODEFormer/ODEBench), so it is what makes any external comparison possible at all; support
+   recovery is the stricter criterion we can additionally offer. Reporting only R² hides structural
+   failure; reporting only structure makes us incomparable.
 
 ## Coding Conventions
 
