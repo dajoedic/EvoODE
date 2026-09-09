@@ -1,4 +1,4 @@
 status: done
-task:   WP-N6
-report: codex/REPORT_WP_N6.md
-note:   SINDy baseline grid, tables, trajectory check, fixture error path, and WP-N5 comparison are written.
+task:   WP-O1
+report: codex/REPORT_WP_O1.md
+note:   Python tests moved under analysis, red test repaired, acceptance passes with 4 tests.

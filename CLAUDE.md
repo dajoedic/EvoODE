@@ -651,14 +651,7 @@ the coupled search path 1e-6 is the cheaper, behaviour-equal tolerance; the Syst
 - **no held-out evaluation anywhere** — both IC sets are training data, every number is in-sample,
   the literature's generalization metric is unreachable without coefficients (see Active 0c)
 - **no baseline has ever been run** — EvoGrow has only been compared against itself
-- **the Python test suite is red and nothing runs it.**
-  `tests/test_analysis_variant_visibility.py` calls `build_csv_table` with the signature it had
-  before WP-A4/A4b added `exact_ids` and `surrogate_ids`, so it has failed since roughly 2026-08-21
-  without anyone noticing. The invariant it guards — an unknown variant must not be silently dropped
-  from the main table — is exactly the one WP-A4b was about, so the guard was lost at the moment it
-  became most relevant. There is no CI for tests; GitLab CI builds the campaign image only
-- the Python tests live in a root-level `tests/` beside the Julia `test/`, a location
-  `analysis/CONVENTIONS.md` does not provide for
+- nothing runs the Python tests; there is no CI for tests, GitLab CI builds the campaign image only
 - environment and test execution need cleanup and faster verification
 
 ## Design Principles

@@ -4,7 +4,9 @@ from pathlib import Path
 import pandas as pd
 
 
-REPO_ROOT = Path(__file__).resolve().parents[1]
+REPO_ROOT = Path(__file__).resolve().parents[2]
+assert (REPO_ROOT / "CLAUDE.md").is_file()
+assert (REPO_ROOT / "benchmarks").is_dir()
 ANALYSIS_ROOT = REPO_ROOT / "analysis"
 if str(ANALYSIS_ROOT) not in sys.path:
     sys.path.insert(0, str(ANALYSIS_ROOT))
@@ -38,6 +40,6 @@ def test_unknown_variant_is_not_silently_dropped_from_main_table() -> None:
             }
         )
 
-    table = build_csv_table(pd.DataFrame(rows))
+    table = build_csv_table(pd.DataFrame(rows), exact_ids=[2], surrogate_ids=[23])
 
     assert "campaign_unknown_variant" in set(table["variant_slug"])
