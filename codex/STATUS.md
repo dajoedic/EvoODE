@@ -1,4 +1,4 @@
-status: done
-task:   WP-N7b
-report: codex/reports/REPORT_WP_N7b.md
-note:   implemented Phase-B raw-versus-pruned support checks, guard tests, table, and report
+status: blocked
+task:   WP-N8
+report: codex/reports/REPORT_WP_N8.md
+note:   Umgebung, nicht Sache: Julia kann in dieser Codex-Sitzung nicht ausgeführt werden

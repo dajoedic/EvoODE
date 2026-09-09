@@ -337,9 +337,19 @@ julia --project=. --startup-file=no studies/regression/wp_n1_basis_probe.jl --di
 ```
 
 `--dim=2` is prepared but **unstarted**: roughly 114 core hours. Only the user starts long runs.
+Use `--limit=N` (with the equals sign) for a bounded smoke run over the first `N` cells.
 
-> **Known defect.** This script writes `git_hash = "not_collected"`. That contradicts the project's
-> identity rule, and the records must not be used for anything beyond exploration until it is fixed.
+The script aborts before writing records if `git_hash` is missing, empty, `not_collected`, or
+`unknown`; that means the run lacks the git identity required for configuration decisions. Set
+`WP_N1_ALLOW_PLACEHOLDER_IDENTITY=1` only for development runs; records are then marked with
+`probe_identity_mode = "development"`.
+
+> **The existing dim-1 records predate this fix** (WP-N8, 2026-09-09) and carry
+> `git_hash = "not_collected"` with no `probe_identity_definition` field. They are deliberately left
+> unchanged — a retrofitted hash would be an unverifiable claim. New records carry
+> `probe_identity_definition = "collected_git_identity_v1"`, so the two sets are distinguishable, and
+> the resume logic treats records without the identity fields as not completed. **Do not merge the
+> two sets in one evaluation.**
 
 Writes `outputs/wp_n1_dim1_probe/history.jsonl`, which the next three scripts read.
 

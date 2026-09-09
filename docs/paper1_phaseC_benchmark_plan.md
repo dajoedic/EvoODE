@@ -182,6 +182,26 @@ against a raw baseline of 17.6 %, not 49.1 %.
 3. The pruning rule stays frozen. This finding is a **reason to report the dependence**, never a
    reason to retune the threshold.
 
+### §4a-bis — Which earlier findings the raw/pruned split touches, and which it does not
+
+Checked when the split was discovered, because a threshold-dependent quantity underneath a published
+finding would change what that finding means:
+
+- **WP-A7, the pretuning seed collapse — unaffected.** It groups on `support_terms`
+  (`analysis/scripts/aggregate/analyze_pretuning_distribution_collapse.py:183`), i.e. the **raw**
+  set. The collapse result (96/126 against 61/126 on support pattern, cluster-robust p = 1.0e-5, not
+  one reverse pair) is therefore **threshold-independent** and stands as measured.
+- **WP-A6, the retracted structural contrast — was pruned.** It reads `exact_support_match`
+  (`analyze_pretuning_contrast.py:40`), so the 60/120 against 50/120 figure carried the pruning
+  dependence on top of the clustering problem that already retracted it. It stays retracted, now for
+  two independent reasons.
+- **The T3 descriptive table — pruned throughout.** Every support-recovery figure in
+  `descriptive_t3_exact_support.csv` is the pruned quantity. Wherever it is cited, the raw
+  counterpart from `phaseb_raw_pruned_support_comparison.csv` is cited beside it.
+
+The pattern is worth keeping in view: the pretuning finding the project kept is the one that does not
+depend on the threshold, and the one it retracted is the one that did.
+
 ### §4b — One column name, two definitions
 
 The two runners disagree, and the registry column does not say which it carries:

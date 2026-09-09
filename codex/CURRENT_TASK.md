@@ -1,95 +1,108 @@
-# WP-N7b — Abnahme korrigiert: roher gegen ausgedünnter Support
+# WP-N8 — Identität im Probe-Skript: Reparatur und Wächter
 
-**Language: Python**
+**Language: Julia**
 
-## Warum dieses Paket existiert
+## Warum
 
-WP-N7 hat korrekt `blocked` gemeldet. **Der Fehler lag im Abnahmekriterium, nicht im Code.** Die
-Begründung im Report ist allerdings unvollständig, und die richtige Erklärung ist ein eigener Befund.
+`studies/regression/wp_n1_basis_probe.jl:273` setzt die Provenienz hart auf
+`(git_hash = "not_collected", git_dirty = nothing)`. Jeder Record des Probelaufs trägt damit eine
+Platzhalter-Identität, obwohl das Projekt Publizierbarkeit an ein vollständiges Identity-Triple
+bindet (git-Hash, Config-Fingerprint, Behaviour-Fingerprint; `PAPER_1.md`, WP-P1).
 
-Nachgeprüft an den Rohdaten:
+Das blockiert den kritischen Pfad: der **dim-2-Probelauf zur Konstanten entscheidet die kanonische
+Basis für Phase C** (`docs/paper1_phaseC_benchmark_plan.md`, Voraussetzung P2 und P3). Daten mit
+Platzhalter-Identität dürfen eine eingefrorene Konfigurationsentscheidung nicht tragen.
 
-- `run_registry.exact_support_match` ist für Phase B **identisch mit `pruned_match`** aus
-  `history.jsonl` — 756 von 756 Zellen, keine Abweichung. Die Spalte ist also der **ausgedünnte**
-  Support-Match.
-- `support_terms` ist dagegen die **rohe**, nicht ausgedünnte aktive Termmenge
-  (`active_term_names`, `studies/regression/run_regression.jl:870`).
+Die Reparatur selbst ist klein: `git_provenance()` steht in `studies/regression/run_regression.jl`
+und ist über den vorhandenen `include` in Zeile 8 bereits im Geltungsbereich des Probe-Skripts. Sie
+behandelt auch den Containerfall über `EVOODE_GIT_SHA`.
 
-Die 40 Abweichungen sind daher keine Fehler, sondern genau die Zellen, in denen die Ausdünnungsregel
-überzählige Terme entfernt und den Treffer damit erst herstellt. Ein Vergleich von roh gegen
-ausgedünnt **kann** nicht übereinstimmen, und aus den Phase-B-Records ist der ausgedünnte Zustand
-nicht rekonstruierbar, weil dort keine Koeffizienten gespeichert sind.
-
-Die WP-N7-Dateien bleiben liegen und werden hier erweitert, nicht ersetzt.
+**Das Paket ist deshalb bewusst weiter geschnitten als die eine Zeile.** Eine Platzhalter-Identität
+konnte unbemerkt in ein Skript geraten, das Entscheidungsdaten erzeugt — die Fehlerklasse ist das
+eigentliche Ziel, nicht der Einzelfall.
 
 ## Was zu tun ist
 
-### Teil 1 — Die erreichbare Abnahme als Test festschreiben
+### Teil 1 — Reparatur
 
-Es gibt eine exakte, gerichtete Beziehung, und sie ist nachgeprüft:
+Die hartkodierte Provenienz durch die vorhandene Funktion ersetzen. **Nicht neu implementieren** —
+eine zweite Provenienzlogik läuft von der ersten weg.
 
-> `pruned_match == True` impliziert `n_missing_true_terms == 0`.
+Prüfe im selben Zug, ob die übrigen Identitätsfelder des Probe-Skripts tatsächlich gefüllt werden
+und nicht nur gesetzt aussehen: `base_config_fingerprint` und `stage_cap_behavior_fingerprint` in
+den Zeilen um 166/167, und ob beide im geschriebenen Record landen. Was fehlt, ergänzen; was da ist,
+unangetastet lassen.
 
-Auf den 240 exakten Phase-B-Zellen gilt sie in **110 von 110** Fällen ohne eine einzige Verletzung.
-Die Umkehrung gilt nicht: 119 Zellen haben `missing == 0`, aber nur 110 davon sind ausgedünnte
-Treffer.
+### Teil 2 — Wächter gegen Platzhalter-Identität
 
-Das ist die richtige Validierung der neuen Recall-Berechnung, und sie gehört als **Test** nach
-`analysis/tests/`, nicht nur als Zahl in einen Report. Der Test muss fallen, wenn die
-Normalisierung oder die Recall-Berechnung kaputtgeht.
+Das Skript darf einen Record mit unbrauchbarer Identität **nicht schreiben**. Unbrauchbar heißt:
+git-Hash fehlt, ist leer, oder ist einer der Platzhalter (`"not_collected"`, `"unknown"`).
 
-### Teil 2 — Roh gegen ausgedünnt als eigene Ableitung
+Verhalten: **laut abbrechen, bevor der erste Record geschrieben wird**, mit einer Meldung, die sagt,
+welches Feld fehlt und warum das den Lauf ungültig macht. Kein stilles Weiterlaufen, keine Warnung,
+die im Log untergeht — ein Lauf über viele Stunden, dessen Daten am Ende unbrauchbar sind, ist
+teurer als ein Abbruch nach zwei Sekunden.
 
-Eine Tabelle nach `analysis/data/paper1_phaseB_v1/`, die je Zellklasse gegenüberstellt:
+Ein ausdrücklicher Ausweg gehört dazu, weil Entwicklungsläufe legitim sind: eine Umgebungsvariable,
+die den Abbruch aufhebt und dafür den Record sichtbar als Entwicklungsdaten markiert. Der Name der
+Variablen und das Markierungsfeld sind deine Wahl; beides gehört in den Report und in `SCRIPTS.md`.
 
-- Anzahl exakter Zellen
-- roher exakter Struktur-Match (aus `support_terms`, ohne Ausdünnung)
-- ausgedünnter Match (`exact_support_match` aus dem Registry)
-- die Differenz, also die Zellen, die den Treffer **allein der Ausdünnungsregel verdanken**
-- dieselben Zahlen aufgeschlüsselt nach Dimension, Bedingung und IC-Satz
+### Teil 3 — Die Altdaten bleiben unterscheidbar
 
-Die Gesamtzahlen sind bereits geprüft und dienen dir als Kontrolle: 240 exakte Zellen, 110
-ausgedünnte Treffer, 70 rohe Treffer, 40 durch Ausdünnung gerettet. **Weichen deine Zahlen davon ab,
-ist das ein Fehler in der Ableitung und gehört im Report benannt — nicht stillschweigend korrigiert.**
+Die vorhandenen dim-1-Probedaten unter `outputs/wp_n1_dim1_probe/` wurden **vor** dieser Reparatur
+geschrieben und tragen `git_hash = "not_collected"`. Sie werden **nicht** verändert, nicht migriert
+und nicht nachträglich mit einem Hash versehen — ein nachgetragener Hash wäre eine Behauptung, die
+niemand prüfen kann.
 
-### Teil 3 — Die Doppeldeutigkeit der Spalte dokumentieren
+Sie müssen aber von den neuen Daten unterscheidbar bleiben, und das Zusammenführen beider in einer
+Auswertung darf nicht stillschweigend möglich sein. Das ist dieselbe Fehlerklasse, für die in
+WP-N7b `analysis/utils/support_match_definition.py` gebaut wurde — **sieh dir an, wie der Wächter
+dort funktioniert, und halte dich an dasselbe Muster**, statt ein zweites Verfahren zu erfinden.
 
-Die beiden Runner belegen denselben Spaltennamen verschieden:
+Auf der Julia-Seite genügt, dass die Unterscheidung im Record steht. Die Auswertungsseite ist nicht
+Teil dieses Pakets.
 
-- `experiments/run_experiment.jl:405` setzt `"exact_support_match" => exact_support_match_raw` und
-  führt roh und ausgedünnt zusätzlich getrennt. Das ist der **Phase-A**-Pfad.
-- `studies/regression/run_regression.jl` schreibt ausschließlich `pruned_match`, das in der Registry
-  als `exact_support_match` landet. Das ist der **Phase-B**-Pfad.
+### Teil 4 — `SCRIPTS.md`
 
-Ein Join von Phase A und Phase B über diese Spalte vergleicht damit **verschiedene Größen**. Baue
-eine Prüffunktion, die aus Registry-Metadaten bestimmt, welche Definition eine Datei trägt, und die
-**laut fehlschlägt**, wenn Daten mit unterschiedlicher Definition in einer Auswertung
-zusammenkommen. Stillschweigendes Zusammenführen darf nicht möglich sein.
-
-Phase A wird dabei **nicht angefasst und nicht neu ausgewertet** — die Prüffunktion ist ein Wächter,
-keine Migration.
+Der Eintrag zum Probe-Skript nennt die neue Umgebungsvariable, den Abbruchfall und was der Abbruch
+bedeutet. Bestehende Einträge nicht umformulieren.
 
 ## Abnahme
 
-1. Der Test aus Teil 1 existiert, läuft grün und fällt nachweislich, wenn man die Recall-Berechnung
-   absichtlich kaputtmacht. Den Gegenprobe-Nachweis im Report beschreiben.
-2. Die Tabelle aus Teil 2 existiert und reproduziert 240 / 110 / 70 / 40 exakt.
-3. Die Prüffunktion aus Teil 3 existiert, hat einen Test für den Gutfall und einen für den
-   Konfliktfall.
-4. Alle Tests unter `analysis/tests/` laufen grün; das Kommando steht im Report.
-5. Die WP-N7-Ergebnisse bleiben gültig und reproduzierbar; nichts davon wird zurückgebaut.
+1. Das Skript schreibt einen echten git-Hash und `git_dirty`, sichtbar im geschriebenen Record.
+2. Ohne ermittelbare Identität bricht das Skript ab, **bevor** ein Record geschrieben wird.
+3. Der Ausweg über die Umgebungsvariable funktioniert und markiert die Records als Entwicklungsdaten.
+4. Alte und neue Probedaten sind am Record unterscheidbar; die Altdaten sind unverändert.
+5. `SCRIPTS.md` ist ergänzt.
+
+**Julia lässt sich in deiner Sitzung nicht ausführen.** Erwartet ist deshalb: Code schreiben,
+statisch sorgfältig prüfen, `status: blocked` melden mit `note: Umgebung, nicht Sache`. Claude führt
+die Abnahme aus.
+
+Weil jede Runde bei Claude einen vollen Durchlauf kostet, geh das **ganze** geänderte Skript auf
+Laufzeitfehlerklassen durch, die ein statischer Blick übersieht: Zugriffe auf Record-Felder, die
+fehlen können, `Set` gegen `Vector`, fehlende `collect`-Aufrufe, `JSON3.Object` wo ein `Dict`
+erwartet wird, Indizierung mit `nothing`. WP-R1 ist an einem fehlenden `include` gescheitert, also
+an etwas, das ohne Ausführung sichtbar war.
 
 ## Verboten
 
-- **Keine Kampagne, keine Cluster-Jobs, keine Julia-Läufe, nichts über 15 Minuten.**
-- **Keine Änderung an der Ausdünnungsregel** `max(1e-6, 1e-3 * max_abs)`. Sie ist eingefroren; WP-V1
-  und WP-N2 dokumentieren genau das als Fehler.
-- **Keine Phase-A-Daten neu auswerten oder verändern.**
-- Bestehende T1–T5-Tabellen und die WP-N7-Dateien nicht überschreiben.
-- Keine Bewertung der Ergebnisse. Zahlen nennen, Einschätzungen weglassen.
+- **Den Probelauf nicht starten.** Weder dim 1 noch dim 2, auch nicht verkürzt. Der dim-2-Lauf
+  kostet 114 Kernstunden und wird ausschließlich vom Nutzer gestartet.
+- **Keine Cluster-Jobs, keine Manifeste dafür, nichts über 15 Minuten.**
+- **Altdaten unter `outputs/wp_n1_dim1_probe/` nicht verändern, nicht migrieren, nicht löschen.**
+- Keine zweite Provenienz- oder Fingerprint-Implementierung.
+- Keine Änderung an `run_regression.jl`, `phase_b_config.jl` oder der Ausdünnungsregel.
 - Nicht committen, nicht stagen, keine Git-Operationen.
 
 ## Report
 
-`codex/reports/REPORT_WP_N7b.md`. Enthält die Tabelle aus Teil 2, den Gegenprobe-Nachweis aus
-Abnahmepunkt 1, das Verhalten der Prüffunktion in beiden Fällen und die Kommandos.
+`codex/reports/REPORT_WP_N8.md`. Enthält:
+
+- welche Identitätsfelder vorher fehlten und welche jetzt geschrieben werden
+- Name und Wirkung der Umgebungsvariable, und wie ein Entwicklungsrecord markiert ist
+- wie alte von neuen Probedaten unterscheidbar sind
+- **zwei Kommandos**: ein kurzer Testlauf über wenige Zellen und der volle dim-2-Lauf, jeweils mit
+  erwarteter Zellenzahl. Keine erfundenen Ergebnisse — der Report enthält die Kommandos, nicht deren
+  Ausgabe
+- die Laufzeitfehlerklassen, die du durchgesehen hast
