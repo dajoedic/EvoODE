@@ -2,7 +2,7 @@
 
 **Messung:** 2026-09-09 · `git a78346f`
 **Daten:** `outputs/wp_n4_multistart_refit/` · **Skript:** `studies/regression/wp_n4_multistart_refit.jl`
-**Rohbericht:** `codex/REPORT_WP_N4.md` · **Vorläufer:** WP-N3 (`codex/REPORT_WP_N3.md`)
+**Rohbericht:** `codex/reports/REPORT_WP_N4.md` · **Vorläufer:** WP-N3 (`codex/reports/REPORT_WP_N3.md`)
 
 ---
 

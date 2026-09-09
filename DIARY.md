@@ -132,7 +132,7 @@ Was das Paket **nicht** loest und was als Luecke stehen bleibt: es fuehrt sie ni
 
 - Branch `refactor/discover-api`: **0 Commits ahead, 186 behind**, letzter Commit 12.08. — eine leere
   Huelle, geloescht.
-- Report-Konvention: drei Namensschemata (`codex/REPORT_WP_*.md` 39x, `docs/WP-*.md` 13x,
+- Report-Konvention: drei Namensschemata (`codex/reports/REPORT_WP_*.md` 39x, `docs/WP-*.md` 13x,
   `docs/wp_*_<beschreibung>.md` 7x) ohne Regel, welches wohin. Die Regel steht jetzt in `CLAUDE.md`
   und `README.md`: Codex-Report ist Provenienz, `docs/WP-*.md` ist ein **befoerderter** Report, an dem
   eine Entscheidung haengt. Die alten Kleinschreibungen werden **nicht** umbenannt, weil `DIARY.md`
@@ -1102,7 +1102,7 @@ aus dem Eintrag oben ist dabei korrigiert — das Surrogat-Median-R² ist 0,9937
 Record-Felder fallen weg — darunter `n_levels`, `eq_overshoot`, `eq_final_stages`, `stage_caps`,
 `support_terms` und die Optimizer-Zaehler. Welche davon die Auswertung braucht, wird entschieden,
 wenn die Stufen 2 und 3 spezifiziert werden, nicht auf Verdacht. Die Liste steht in
-`codex/REPORT_WP_A5.md`.
+`codex/reports/REPORT_WP_A5.md`.
 
 ---
 
@@ -3594,7 +3594,7 @@ der teuerste OpenShift-Fehlermodus lokal ausgeschlossen statt auf dem Cluster en
 still ins Image geraet. Bildgroesse 1,29 GB Inhalt, davon 3,1 GB Depot auf Platte.
 
 Offen bis Orion: CI-Mechanik und Registry, Pull-Secrets, das Job-Manifest samt Index-Abbildung, die
-NFS-Konventionen und jede Laufzeitzahl. Details in `codex/REPORT_WP_H2.md`.
+NFS-Konventionen und jede Laufzeitzahl. Details in `codex/reports/REPORT_WP_H2.md`.
 
 ---
 
@@ -3643,7 +3643,7 @@ Fingerprints: Regression unveraendert `45cb2c4507007366`. Phase B `c0a236edf030e
 Identitaet wird — er definiert, was `pruned_match` bedeutet.
 
 Verifikation: exakte Zelle (System 11) liefert `pruned=true`, Surrogatzelle (System 1) `nothing`; die
-Regressionszelle System 11 ist ueber **62 Felder unveraendert**. Details in `codex/REPORT_WP_E2.md`.
+Regressionszelle System 11 ist ueber **62 Felder unveraendert**. Details in `codex/reports/REPORT_WP_E2.md`.
 
 ---
 

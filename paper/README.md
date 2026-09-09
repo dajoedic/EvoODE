@@ -24,7 +24,7 @@ what may be said about published results depends on what that audit finds.
 > **the paper's scope is reopened**: `PAPER_1.md` lists three candidate framings that have to be
 > chosen between before sections 6 and 7 can be written.
 
-**Where a report lives.** `codex/REPORT_WP_<id>.md` is the finishing report of a work package —
+**Where a report lives.** `codex/reports/REPORT_WP_<id>.md` is the finishing report of a work package —
 provenance, written once. `docs/WP-<id>.md` is a report promoted because a decision rests on it; it
 is linked from `CLAUDE.md` or `PAPER_1.md` and kept correct. Cite the promoted form where one
 exists. Older `docs/wp_<id>_<description>.md` files predate the rule and keep their names.

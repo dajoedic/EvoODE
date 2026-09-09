@@ -107,7 +107,7 @@ One single task file for all work: `codex/CURRENT_TASK.md`, always overwritten, 
 The second line of every task spec declares the language: `**Language: Python**` or
 `**Language: Julia**`. Contains "Kein aktiver Task" when no work is pending.
 
-**Where a report belongs.** `codex/REPORT_WP_<id>.md` is the finishing report of a work package,
+**Where a report belongs.** `codex/reports/REPORT_WP_<id>.md` is the finishing report of a work package,
 written once and not maintained afterwards — provenance, not documentation. `docs/WP-<id>.md` is a
 report **promoted** because a decision rests on it and someone outside the work package needs to
 read it; it is linked from this file or from `PAPER_1.md` and kept correct. A report never lives in
@@ -488,7 +488,7 @@ the coupled search path 1e-6 is the cheaper, behaviour-equal tolerance; the Syst
 1b. **Parked operational debts (2026-09-09).** None blocks the scientific work; collected here so
    they are not only findable in diary prose.
    - The **dim-2 probe of the constant basis** is prepared and unstarted — 114 core hours, command in
-     `codex/REPORT_WP_N1.md`. Only the user starts long runs. Until it exists, the constant's
+     `codex/reports/REPORT_WP_N1.md`. Only the user starts long runs. Until it exists, the constant's
      verdict rests on dimension 1 alone.
    - `studies/regression/wp_n1_basis_probe.jl` writes **`git_hash = "not_collected"`**. That
      contradicts the project's identity rule and must be repaired before those data are used for
@@ -525,7 +525,7 @@ the coupled search path 1e-6 is the cheaper, behaviour-equal tolerance; the Syst
    not sparse, and 13 of 126 fitted models diverge when integrated.
 4. **Unbudgeted call sites outside the campaign.** WP-D3 budgeted the two campaign runners; eleven
    scripts under `benchmarks/` and `studies/` still construct the optimizer without a budget and are
-   unbounded since WP-B3. Deliberate backlog, listed in `codex/REPORT_WP_D3.md`.
+   unbounded since WP-B3. Deliberate backlog, listed in `codex/reports/REPORT_WP_D3.md`.
 5. **Fingerprint boundary.** The v2.2 arm sits on Baseline v0 (`0c739d4e36ee6498`), all v3 and
    capped runs on `df5db7763bcd2449`. The comparison is sound but crosses a boundary and must be
    labelled as such wherever it is reported.

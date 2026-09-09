@@ -92,7 +92,8 @@ Lies es vor der Abgabe gegen die Dateien, die es einbindet — WP-R1 scheiterte 
   `**Language: Python**`.
 - Code, Kommentare und Docstrings auf **Englisch**. Reports dürfen englisch sein.
 - Jedes Skript schreibt in seinen **eigenen** Unterordner unter `outputs/`, nie direkt hinein.
-- Reports nach `docs/`, benannt nach der WP-Kennung.
+- Reports nach `codex/reports/`, benannt `REPORT_WP_<Kennung>.md`. **Niemals nach `docs/`** — dort
+  liegen nur Reports, die Claude bewusst befördert hat, weil eine Entscheidung an ihnen hängt.
 - Bestehende Ableitungen und Hilfsfunktionen wiederverwenden statt neu implementieren — doppelte
   Implementierungen derselben Größe laufen auseinander.
 - Im Report Zahlen nennen, keine Einschätzungen. Claude prüft jede Kausalaussage gegen die

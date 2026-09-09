@@ -110,7 +110,7 @@ Files corrected:
 - `docs/hpc_requirements.md`
 - `docs/hpc_briefing_2026-08-06.md`
 - `containers/evoode_regression.apptainer`
-- `codex/REPORT_WP_B2.md`
+- `codex/reports/REPORT_WP_B2.md`
 - `DIARY.md`
 
 The correction states that the existing Phase A and regression results were produced on Julia

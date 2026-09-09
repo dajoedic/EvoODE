@@ -281,7 +281,7 @@ Genetic programming search over the full basis.
 
 **Not used as a baseline anywhere.** It was written as one and never run as one: Paper 1 explicitly
 excludes a GP baseline (`PAPER_1.md`, "Explicit Non-Goals"), and the only baseline the project has
-ever executed is SINDy on identical trajectories (WP-N6, 2026-09-09, `codex/REPORT_WP_N6.md`). The
+ever executed is SINDy on identical trajectories (WP-N6, 2026-09-09, `codex/reports/REPORT_WP_N6.md`). The
 implementation is kept because it is the natural comparison for the "starts large and random" arm of
 the scientific position, and because removing it would make that position unfalsifiable in this
 repository. Do not cite it as evidence of anything until it has been run under a manifest.

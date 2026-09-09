@@ -2,7 +2,7 @@
 
 **Messung:** 2026-09-09 · `git 731b7cf` · `pysindy 2.1.0`
 **Daten:** `analysis/data/wp_n6_sindy_baseline/` · **Skript:** `analysis/scripts/aggregate/run_wp_n6_sindy_baseline.py`
-**Rohbericht:** `codex/REPORT_WP_N6.md`
+**Rohbericht:** `codex/reports/REPORT_WP_N6.md`
 
 ---
 

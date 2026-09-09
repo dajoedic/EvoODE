@@ -170,7 +170,7 @@ outputs/      gitignored; every script writes to its own subfolder
 `benchmarks/` and `experiments/` are not interchangeable: the former is exploratory and qualitative,
 the latter is paper-grade with atomic writes, per-run status tracking and a derived registry.
 
-Work-package reports live in two places by rule, not by accident: `codex/REPORT_WP_*.md` is what the
+Work-package reports live in two places by rule, not by accident: `codex/reports/REPORT_WP_*.md` is what the
 assistant wrote when it finished the package, `docs/WP-*.md` is a report promoted to a reference
 someone else is expected to read. See "Documentation" below.
 
@@ -231,7 +231,7 @@ The properties below are enforced, not aspirational.
 
 Start with `CLAUDE.md`. Where it and `PAPER_1.md` disagree, `PAPER_1.md` wins.
 
-**Where a report belongs.** `codex/REPORT_WP_<id>.md` is the finishing report of a work package,
+**Where a report belongs.** `codex/reports/REPORT_WP_<id>.md` is the finishing report of a work package,
 written once and not maintained afterwards — provenance, not documentation. `docs/WP-<id>.md` is a
 report promoted because a decision rests on it and someone outside the work package needs to read
 it; it is linked from `CLAUDE.md` or `PAPER_1.md` and kept correct. A report never exists in both
