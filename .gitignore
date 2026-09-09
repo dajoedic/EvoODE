@@ -65,14 +65,6 @@ analysis/tables/*
 !analysis/tables/paper1_phaseB_v1/
 
 # ---------------------------------------------------------------------------
-# Phase A leftovers at the repository root, superseded by analysis/figures and analysis/tables.
-# Awaiting deletion; remove these three lines once the directories are gone.
-# ---------------------------------------------------------------------------
-/data/
-/figures/
-/tables/
-
-# ---------------------------------------------------------------------------
 # Kubernetes manifests with a substituted commit SHA, produced at launch time from k8s/
 # ---------------------------------------------------------------------------
 /phase_b_bootstrap.yaml
