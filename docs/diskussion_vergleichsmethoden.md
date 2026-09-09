@@ -268,3 +268,33 @@ Ein gescheiterter Recovery-Versuch darf erst dann der Suche zugeschrieben werden
 geklärt ist, dass das **Evaluationsprotokoll** die relevante Eigenschaft überhaupt misst. Genau
 darum geht es bei Tonda et al., und genau das ist der Grund, warum das vierte Glied kein
 Formalismus ist.
+
+---
+
+## 9. Nachtrag 09.09.2026 — die erste Zeile der Matrix ist gerechnet
+
+Dieses Dokument entschied am 22.08., **welche** Vergleiche gefahren werden. Seither ist einer davon
+tatsächlich gelaufen, und das Ergebnis gehört neben die Planung.
+
+**WP-N6 (09.09.2026): SINDy auf identischen Trajektorien.** 63 Systeme, beide Anfangswertsätze, 512
+Punkte über t ∈ [0, 10], von uns integriert bei 1e-9 — nicht die mitgelieferten Lösungen. Zehn
+Konfigurationen vollständig berichtet, keine ausgewählt. Auf Dimension 1, der einzigen vergleichbaren
+Klasse, weil unsere Generalisierungszahlen aus dem dim-1-Probelauf stammen:
+
+| Anteil R² > 0,9 | SINDy | EvoODE |
+|---|---|---|
+| Rekonstruktion | 44/46 = 95,7 % | 126/132 = 95,5 % |
+| Generalisierung | 28/46 = 60,9 % | 90/132 = 68,2 % |
+
+Unentschieden bei der Rekonstruktion, EvoODE vorn bei der Generalisierung — bei rund zwei
+Größenordnungen mehr Rechenaufwand. Vollständige Zahlen, Kostenzeile und die vier Vorbehalte, die
+mitreisen: `docs/WP-N6.md`.
+
+**Was das für dieses Dokument bedeutet.** Abschnitt 1 sagt, ein Vergleich mit publizierten Zahlen sei
+derzeit nicht zulässig, weil drei Voraussetzungen ungeprüft sind. Das gilt unverändert — WP-N6 legt
+gerade **keine** publizierten Zahlen daneben, sondern rechnet die Vergleichsmethode auf unseren Daten
+neu. Genau deshalb ist es zulässig, und genau deshalb ersetzt es den Audit nicht.
+
+Die Zeile "feste Bibliothek" der Paper-3-Kernmatrix ist damit als Verfahren erprobt, nicht als
+Ergebnis eingefroren: der Lauf betrifft rauschfreie Daten, was SINDy begünstigt, und der verrauschte
+Fall ist ungemessen.
