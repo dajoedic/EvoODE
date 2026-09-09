@@ -97,3 +97,25 @@ Lies es vor der Abgabe gegen die Dateien, die es einbindet — WP-R1 scheiterte 
   Implementierungen derselben Größe laufen auseinander.
 - Im Report Zahlen nennen, keine Einschätzungen. Claude prüft jede Kausalaussage gegen die
   Rohdaten; eine Behauptung, die die CSV nicht trägt, fällt auf.
+
+## Julia kann in dieser Umgebung nicht ausgeführt werden
+
+Codex' Sandbox startet `julia.exe` nicht — der Aufruf scheitert reproduzierbar mit
+`Program 'julia.exe' failed to run: A specified logon session does not exist`. Beobachtet in WP-N1,
+WP-N3 und WP-N5. **Python läuft dagegen normal**, inklusive Ausführung und Fehlerpfad-Tests
+(WP-N2, WP-N6).
+
+Folgen für Julia-Aufträge:
+
+- Code schreiben, statisch so sorgfältig wie möglich prüfen, dann `status: blocked` melden. Das ist
+  kein Scheitern, sondern der vorgesehene Weg.
+- **Niemals Ergebnisse erfinden**, die einen Lauf voraussetzen. Der Report enthält die Kommandos,
+  nicht deren Ausgabe.
+- Zwei Kommandos in den Report: einen kurzen Testlauf über wenige Zellen (`--limit`) und den vollen
+  Lauf. Der `--limit`-Pfad hat sich bewährt und spart Claude eine volle Runde.
+- Weil jede Runde einen kompletten Durchlauf bei Claude kostet, gehört bei Julia-Code das **ganze
+  Skript** auf Laufzeitfehlerklassen durchgesehen, die ein statischer Blick übersieht: Operationen
+  auf `Set` statt `Vector`, fehlende `collect`-Aufrufe, `JSON3.Object` wo ein `Dict` erwartet wird,
+  Indizierung mit `nothing`, Zugriffe auf Record-Felder, die fehlen können.
+
+Claude führt Julia-Läufe aus und meldet Fehler mit vollständigem Stacktrace zurück.

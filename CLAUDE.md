@@ -468,6 +468,19 @@ the coupled search path 1e-6 is the cheaper, behaviour-equal tolerance; the Syst
    waste after the last improvement — median 0, 370 of 7,200 levels — and it is defined on exact
    cells only; `eq_overshoot` is nonzero in all 516 surrogate cells purely because `expected_stage`
    is nominal there. Do not aggregate the two classes on either metric.
+1b. **Parked operational debts (2026-09-09).** None blocks the scientific work; collected here so
+   they are not only findable in diary prose.
+   - The **dim-2 probe of the constant basis** is prepared and unstarted — 114 core hours, command in
+     `codex/REPORT_WP_N1.md`. Only the user starts long runs. Until it exists, the constant's
+     verdict rests on dimension 1 alone.
+   - `studies/regression/wp_n1_basis_probe.jl` writes **`git_hash = "not_collected"`**. That
+     contradicts the project's identity rule and must be repaired before those data are used for
+     anything beyond exploration.
+   - **Codex cannot execute Julia in this environment** (`A specified logon session does not exist`);
+     Python runs normally. Recorded in `codex/CODEX_PROTOCOL.md` — Julia work packages are written by
+     Codex, reported as `blocked`, and executed by Claude.
+   - The **756 campaign cells carry no coefficients**, so their generalization is reachable only
+     through a re-run. Any all-dimension generalization figure requires that run.
 2. **The external columns of the protocol audit** (`docs/paper1_odebench_protocol_alignment.md`) are
    the last substantive Phase 3 item. Two additions decided 2026-08-22: the audit needs
    **representational adequacy** as a dimension, split into *in principle representable* and
