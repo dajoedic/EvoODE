@@ -8,7 +8,7 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ### Ein falsches Abnahmekriterium, ein unbelegter Kostenwert, ein abgelaufenes Token — und der dim-2-Probelauf läuft
 
-<!-- COMMIT_HASH -->
+<!-- f17f6eb -->
 
 Der Abend nach der Zuschnittsentscheidung, gedacht als Abarbeiten der Phase-C-Voraussetzungen. Drei
 von vier Befunden waren nicht geplant, und zwei davon sind wissenschaftlich relevant.
