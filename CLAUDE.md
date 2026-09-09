@@ -78,12 +78,20 @@ benchmarks/ exploratory, direct-execution scripts + strogatz_extended.json
 experiments/ formal, manifest-based Paper 1 runs
 studies/    direct-execution study scripts (debug, lookahead, regression, numerics, generalization, profiling)
 analysis/   Python analysis pipeline (see analysis/CONVENTIONS.md)
+test/       Julia tests, run per file — there is no runtests.jl and no [targets] in Project.toml
 outputs/    gitignored; every script writes to its own subfolder
 docs/       design notes, reports, protocols
-codex/      CURRENT_TASK.md — the single active task spec
+paper/      Paper 1 manuscript sections, one file per section
+codex/      CURRENT_TASK.md — the single active task spec, plus the work-package reports
 containers/ Dockerfile for the campaign image, built by GitLab CI
 k8s/        Kubernetes Job manifests for the Orion cluster (bootstrap + indexed cells)
 ```
+
+**What is tracked and what is not.** Run registries, campaign histories and the derived tables the
+documents cite by name are **in the repository** since 2026-09-09; only the per-run scratch
+directories under `experiments/*/runs/` stay out, because they are reproducible from the registry
+plus the image while the registry is not reproducible at all. The rule is not
+"generated versus handwritten" — it is what a result can be checked against. `.gitignore` states it.
 
 `benchmarks/` vs `experiments/` are distinct and must not be conflated: `benchmarks/` is
 exploratory and qualitative with best-effort reproducibility; `experiments/` is formal and
@@ -98,6 +106,13 @@ optimizers are added through the relevant interface layer and registered in `src
 One single task file for all work: `codex/CURRENT_TASK.md`, always overwritten, never appended.
 The second line of every task spec declares the language: `**Language: Python**` or
 `**Language: Julia**`. Contains "Kein aktiver Task" when no work is pending.
+
+**Where a report belongs.** `codex/REPORT_WP_<id>.md` is the finishing report of a work package,
+written once and not maintained afterwards — provenance, not documentation. `docs/WP-<id>.md` is a
+report **promoted** because a decision rests on it and someone outside the work package needs to
+read it; it is linked from this file or from `PAPER_1.md` and kept correct. A report never lives in
+both places. Older files under `docs/wp_<id>_<description>.md` predate the rule and are not renamed,
+because `DIARY.md` cites them by path.
 
 **Two-file handshake, one writer each.** `codex/CURRENT_TASK.md` is written only by Claude and read
 only by Codex; `codex/STATUS.md` is written only by Codex and read only by Claude. No file has two
@@ -636,6 +651,14 @@ the coupled search path 1e-6 is the cheaper, behaviour-equal tolerance; the Syst
 - **no held-out evaluation anywhere** — both IC sets are training data, every number is in-sample,
   the literature's generalization metric is unreachable without coefficients (see Active 0c)
 - **no baseline has ever been run** — EvoGrow has only been compared against itself
+- **the Python test suite is red and nothing runs it.**
+  `tests/test_analysis_variant_visibility.py` calls `build_csv_table` with the signature it had
+  before WP-A4/A4b added `exact_ids` and `surrogate_ids`, so it has failed since roughly 2026-08-21
+  without anyone noticing. The invariant it guards — an unknown variant must not be silently dropped
+  from the main table — is exactly the one WP-A4b was about, so the guard was lost at the moment it
+  became most relevant. There is no CI for tests; GitLab CI builds the campaign image only
+- the Python tests live in a root-level `tests/` beside the Julia `test/`, a location
+  `analysis/CONVENTIONS.md` does not provide for
 - environment and test execution need cleanup and faster verification
 
 ## Design Principles
