@@ -109,8 +109,23 @@ Ordered. None may be skipped, and the campaign is not submitted while any is ope
 `git_hash = "not_collected"`, which contradicts the project's identity rule. Repair before the probe
 data are used for anything beyond exploration.
 
-**P2 — Run the dim-2 constant-term probe.** 114 core hours, prepared and unstarted; command in
-`codex/reports/REPORT_WP_N1.md`. This is ~1 % of Phase C's cost and it decides the most consequential
+**P2 — Run the dim-2 constant-term probe.** Prepared and unstarted; command in
+`codex/reports/REPORT_WP_N1.md`.
+
+> **Cost corrected 2026-09-09, and the old figure was wrong by an order of magnitude.** The
+> "114 core hours" quoted here, in `CLAUDE.md` and in the diary is **unsourced** — `REPORT_WP_N1.md`
+> contains no cost estimate at all. Derived instead from the campaign's own dim-2 arm, which is the
+> same cell count under the same configuration family: **336 cells at a mean of 3.47 h and a median
+> of 1.12 h, totalling 1,167.5 h**. The probe is 28 dim-2 systems x 2 bases x 2 IC sets x 3 seeds =
+> **336 cells**, so the realistic figure is **~1,200 core hours**, not 114. The constant basis
+> searches a larger space, so if anything this is optimistic. (Timing used for capacity planning
+> only, per Design Principle 7 — never as evidence for a claim.)
+>
+> **Consequences.** The probe cannot run on the laptop: 1,200 core hours serial is roughly seven
+> weeks. It needs the cluster, and `wp_n1_basis_probe.jl` has **no sharding or index support** — it
+> is a single serial loop appending to one `history.jsonl`, so it cannot use the
+> `run_k8s_indexed_cell.jl` path the campaign used. Either the script gains sharding, or the probe
+> scope is cut. Both are decisions, and they are recorded before the run rather than after. This is ~1 % of Phase C's cost and it decides the most consequential
 frozen parameter. Until it exists, the trade-off is measured on dimension 1 alone: the constant
 halves structure recovery there (83.3 % → 38.9 %) while markedly improving generalization
 (72.7 % → 87.9 % and 45.5 % → 66.7 %), and all nine diverging integrations fall on the old basis.

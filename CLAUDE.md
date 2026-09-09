@@ -386,7 +386,7 @@ the coupled search path 1e-6 is the cheaper, behaviour-equal tolerance; the Syst
    the cap saves compute is the most expensive thing in the project — state that in the paper.
 
    **Blocking before the freeze, in order:** repair `git_hash` in `wp_n1_basis_probe.jl`; run the
-   dim-2 constant-term probe (114 core hours) — **the canonical basis is the one still-open frozen
+   dim-2 constant-term probe (**~1,200 core hours, not the 114 long quoted** — see below) — **the canonical basis is the one still-open frozen
    parameter**; build structural F1 / term precision / term recall / coefficient error, which exist
    **nowhere** in the codebase today; build the three-way representability class; implement and
    declare the restart policy; measure the never-measured `StructureSpec` duplicate rate, without
@@ -531,9 +531,16 @@ the coupled search path 1e-6 is the cheaper, behaviour-equal tolerance; the Syst
    is nominal there. Do not aggregate the two classes on either metric.
 1b. **Parked operational debts (2026-09-09).** None blocks the scientific work; collected here so
    they are not only findable in diary prose.
-   - The **dim-2 probe of the constant basis** is prepared and unstarted — 114 core hours, command in
+   - The **dim-2 probe of the constant basis** is prepared and unstarted, command in
      `codex/reports/REPORT_WP_N1.md`. Only the user starts long runs. Until it exists, the constant's
      verdict rests on dimension 1 alone.
+     **The long-quoted "114 core hours" is unsourced and wrong (corrected 2026-09-09).**
+     `REPORT_WP_N1.md` carries no cost estimate. The campaign's own dim-2 arm is the same 336 cells
+     under the same configuration family and cost **1,167.5 h** (mean 3.47 h/cell, median 1.12 h).
+     Realistic figure: **~1,200 core hours**, and the constant basis searches a larger space, so that
+     is optimistic. This puts the probe **out of reach of the laptop** (~seven weeks serial), and
+     `wp_n1_basis_probe.jl` has **no sharding support**, so it cannot use the indexed cluster path
+     either. Sharding or a reduced probe scope is a decision that comes before the run.
    - `studies/regression/wp_n1_basis_probe.jl` writes **`git_hash = "not_collected"`**. That
      contradicts the project's identity rule and must be repaired before those data are used for
      anything beyond exploration.
