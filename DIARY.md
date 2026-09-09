@@ -6,6 +6,78 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ## 2026-09-09
 
+### Generalisierung, zum ersten Mal gemessen — und die Konstante dreht das Vorzeichen
+
+<!-- COMMIT_HASH_12 -->
+
+WP-N5 hat die zweite Haelfte der Literaturmetrik erschlossen: das gefundene Modell wird ab dem
+**ungesehenen** Anfangswert integriert und gegen die wahre Loesung geprueft. Die Parameter werden
+dabei **nicht** neu angepasst — gemessen wird das Modell, das die Suche geliefert hat. 132 Zellen
+des dim-1-Probelaufs, beide Richtungen. Kosten: eine Integration je Zelle, kein Suchlauf.
+
+Codex hat den Code geschrieben und `blocked` gemeldet (Julia startet in seiner Sandbox nicht);
+ausgefuehrt hat Claude.
+
+#### Die Kontrolle, ohne die nichts gilt
+
+Integriert man ein Modell ab **seinem eigenen** Anfangswert, muss der im Record gespeicherte Loss
+herauskommen. **132 von 132 Zellen bestehen mit einer Abweichung von exakt null.** Damit ist zum
+ersten Mal belegt, dass die in WP-N1 eingefuehrte Koeffizientenspeicherung ihren Zweck erfuellt: aus
+`model_terms` plus `basis_name` laesst sich das Modell bitgleich rekonstruieren.
+
+#### Der Abfall
+
+| | Rekonstruktion | Generalisierung |
+|---|---|---|
+| **alle 132 Zellen** | 126/132 = **95,5 %** | 90/132 = **68,2 %** |
+
+**27 Prozentpunkte.** Qualitativ dasselbe Bild, das die ODEFormer-Publikation beschreibt
+(„generalization accuracy is substantially lower than reconstruction accuracy"). Das ist die erste
+Zahl des Projekts, die auf zurueckgehaltenen Daten gemessen ist — bis heute war jede Kennzahl
+In-Sample.
+
+Nach Basis und Richtung:
+
+| Basis | Richtung | Rekonstruktion | Generalisierung |
+|---|---|---|---|
+| alt | IC1 → IC2 | 100 % | 72,7 % |
+| alt | IC2 → IC1 | 90,9 % | **45,5 %** |
+| mit Konstante | IC1 → IC2 | 100 % | **87,9 %** |
+| mit Konstante | IC2 → IC1 | 90,9 % | 66,7 % |
+
+Die Richtung traegt erhebliche Information: IC2 → IC1 ist in beiden Basen deutlich schlechter. Die
+Entscheidung aus WP-A4b, die IC-Saetze nicht wegzumitteln, zahlt sich hier zum zweiten Mal aus.
+
+#### Der eigentliche Befund: die Konstante dreht das Vorzeichen
+
+**Die Konstante generalisiert deutlich besser** — 87,9 % gegen 72,7 % und 66,7 % gegen 45,5 %. Und
+**alle neun divergierenden Integrationen entfallen auf die alte Basis, keine einzige auf die neue.**
+
+Damit steht sie auf den beiden Metriken gegenlaeufig:
+
+| | Strukturtreffer (WP-N1) | Generalisierung (WP-N5) |
+|---|---|---|
+| alte Basis | **83,3 %** | 72,7 % / 45,5 % |
+| mit Konstante | 38,9 % | **87,9 % / 66,7 %** |
+
+Die Konstante halbiert die Strukturfindung und verbessert die Generalisierung erheblich. Physikalisch
+plausibel: ein konstanter Term faengt Offset oder Gleichgewichtslage ab, und genau das entscheidet,
+wenn man von einem anderen Anfangswert startet.
+
+**Die Frage „gehoert die Konstante in die Basis?" ist damit nicht mit ja oder nein zu beantworten.**
+Sie haengt daran, welche Metrik zaehlt — und das ist eine Entscheidung ueber den Zweck des
+Verfahrens, keine ueber die Konfiguration. Ohne die am 2026-09-08 eingefuehrte Pflicht, immer beide
+Metriken zu berichten (Design-Prinzip 9), waere dieser Befund nicht sichtbar geworden.
+
+#### Die Kampagne bleibt aussen vor
+
+Bestaetigt und als eigener Punkt festgehalten: die 756 Kampagnenzellen tragen **keine
+Koeffizienten** — sie liefen vor WP-N1. Ihre Generalisierung ist daher nicht nachtraeglich
+berechenbar, sondern nur ueber einen Neulauf. Codex hat das als eigene Probe im Manifest vermerkt und
+Kampagnendaten nicht mit den Probelaufdaten vermischt.
+
+---
+
 ### Literaturvergleich zum Restart-Budget — und eine Korrektur an unserer eigenen Zahl
 
 <!-- b42b051 -->

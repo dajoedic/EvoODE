@@ -291,6 +291,19 @@ the coupled search path 1e-6 is the cheaper, behaviour-equal tolerance; the Syst
    same data, scored on both metrics; (5) only then decide what Paper 1 is. **Deferred on purpose:**
    the uncapped arm — whether the cap is interesting depends on whether the base method carries.
 
+   **(3) is done (WP-N5, 2026-09-09) and it reverses the constant-term verdict.** The model is
+   rebuilt from the record and integrated from the *unseen* initial condition, parameters unchanged.
+   Control: **132 of 132 reconstruction probes exact to zero**, so `model_terms` does its job.
+   Result: R² > 0.9 falls from **95.5 % (reconstruction) to 68.2 % (generalization)** — 27 points,
+   qualitatively the drop ODEFormer reports, and the first number in this project measured on
+   held-out data. Direction matters (IC2 → IC1 is far worse in both bases). And the constant, which
+   **halves** structure recovery (83.3 % → 38.9 %), **improves** generalization markedly (72.7 % →
+   87.9 % and 45.5 % → 66.7 %), with all nine diverging integrations falling on the old basis and
+   none on the new. "Should the constant be in the basis?" is therefore not a yes/no question but a
+   question about which metric counts — a decision about the method's purpose, not its configuration.
+   Design Principle 9 is what made this visible. **The campaign cannot be evaluated this way**: its
+   756 cells carry no coefficients, so their generalization is reachable only through a re-run.
+
    The campaign data is not discarded: 756 clean cells under one identity triple, protocol-conform,
    with a sharply named boundary. A good chapter, not a paper.
 
