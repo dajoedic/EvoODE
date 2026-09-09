@@ -40,6 +40,7 @@ export PolynomialBasis, default_polynomial_basis
 export StagedPolynomialBasis, default_staged_polynomial_basis, staged_polynomial_basis_with_constant
 
 export MSELoss
+export MSE_SENTINEL_LOSS
 
 export BFGSOptimizer
 export DummyOptimizer
@@ -72,6 +73,7 @@ include("core/types.jl")
 # ============================================================
 include("utils/logging.jl")
 using .EvoLogger
+include("utils/strings.jl")
 
 # ============================================================
 # Interfaces

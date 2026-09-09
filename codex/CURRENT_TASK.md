@@ -1,105 +1,77 @@
-# WP-N10 — Kanonischer Strukturschlüssel und die Messung der Duplikatrate
+# WP-N11b — Zwei Defekte aus der Abnahme von WP-N11
 
 **Language: Julia**
 
-## Warum
+## Ausgangslage
 
-Die kanonische EvoGrow-Konfiguration enthält einen tragenden, unbenannten Mechanismus. Unter
-`pretuning = false` zieht jeder Parameterfit `0.1 .* randn` (`src/optimize/bfgs.jl:269`). Jede
-Kandidatenstruktur bekommt aber genau **einen** Fit — ein zweiter Start entsteht nur, wenn die Suche
-dieselbe Struktur zufällig erneut erzeugt. Das effektive Restart-k ist damit die
-**`StructureSpec`-Duplikatrate**, und die ist **nie gemessen worden**.
+WP-N11 ist inhaltlich richtig umgesetzt. Die Abnahme durch Claude hat ergeben:
 
-Ohne sie ist der k = 1-Referenzpunkt der Restart-Ablation (Abl-3 in
-`docs/paper1_phaseC_benchmark_plan.md`) nicht definiert, und jede Aussage über Restarts hängt in der
-Luft.
+- Fehlschlag-Prädikat, k = 1 ohne Wiederholung, Annahme des zweiten Versuchs, Erschöpfung aller
+  Versuche: **grün**.
+- `phase_b_fingerprint()` = `604e79733b22d64d`, `config_fingerprint()` = `17fe7d9cfb8f1be3`,
+  `stage_cap_behavior_fingerprint()` = `ffb0266c7913352c` — alle drei **unverändert**.
+- `test/test_bfgs_budget.jl` und `test/test_bfgs_fallback_order.jl`: **grün**.
 
-Nachgeprüft: **aus vorhandenen Daten ist das nicht rekonstruierbar.** `level_log`
-(`src/structure/evogrow.jl:876`) hält je Level nur das Beste fest — `best_loss`, `best_objective`,
-`n_params`. Die in `_expand*` erzeugten Kandidatenstrukturen werden nirgends persistiert, weder in
-den Records noch in den Heartbeats.
+Zwei Defekte bleiben. Beide sind durch Ausführung belegt, nicht vermutet.
 
-## Was zu tun ist
+## Defekt 1 — das Paket präkompiliert nicht mehr (blockierend)
 
-### Teil 1 — Kanonische Gleichheit und Hash für `StructureSpec`
+`_append_unique_strings!` ist jetzt **zweimal mit identischer Signatur im Modul `EvoODE`** definiert:
+`src/optimize/bfgs.jl:148` (neu) und `src/structure/evogrow.jl:509` (bestand vorher). Julia meldet
+bei jedem Start:
 
-Ein kanonischer Schlüssel, der zwei Strukturen genau dann gleich abbildet, wenn sie **denselben
-Support** haben — unabhängig von der Reihenfolge, in der die Terme aufgenommen wurden, und
-unabhängig von den Parameterwerten.
+```text
+WARNING: Method definition _append_unique_strings!(Array{String, 1}, Any) in module EvoODE
+at src/optimize/bfgs.jl:148 overwritten at src/structure/evogrow.jl:509.
+ERROR: Method overwriting is not permitted during Module precompilation.
+```
 
-Zwei Punkte, an denen es leicht falsch wird:
+Die Bodies sind zeichengleich, das Verhalten ist also korrekt — **aber die Präkompilierung schlägt
+fehl und jeder Julia-Start zahlt die volle Kompilierzeit.** Bei einer Kampagne mit 378 Pods trifft
+das jede einzelne Zelle.
 
-- Die Struktur ist **je Gleichung** definiert. Der Schlüssel muss die Gleichungszuordnung erhalten:
-  `u1` in Gleichung 1 und `u1` in Gleichung 2 sind nicht dasselbe.
-- Reihenfolgeunabhängigkeit **innerhalb** einer Gleichung ist erwünscht, **zwischen** Gleichungen
-  nicht.
+**Was zu tun ist:** genau **eine** Definition im Modul. Ort so wählen, dass der Optimierer nicht von
+der Suchschicht abhängt — `bfgs.jl` wird in `src/EvoODE.jl` an Zeile 109 eingebunden, `evogrow.jl`
+erst an Zeile 126. Der Helfer wird ausserdem von `evogrow_v3.jl` und `evogrow_screening.jl` benutzt.
+Ein eigener kleiner Platz unter `src/utils/`, früh eingebunden, ist die naheliegende Lösung; die
+konkrete Wahl ist deine, die Randbedingungen sind: eine Definition, saubere Schichtung, Modul
+präkompiliert ohne Warnung und ohne Fehler.
 
-Der Schlüssel wird ausschließlich zum Zählen verwendet.
+## Defekt 2 — exakter Float-Vergleich im neuen Test
 
-### Teil 2 — Zähler in der Suchschleife
+`test/test_bfgs_retry_policy.jl:175` vergleicht mit `==`:
 
-In `src/structure/evogrow.jl` mitzählen und in die Ergebnis-Metadaten aufnehmen:
+```text
+Expression: lval == 0.25
+Evaluated:  0.24999999999999994 == 0.25
+```
 
-- Gesamtzahl bewerteter Kandidatenstrukturen
-- Zahl **eindeutiger** Strukturschlüssel
-- die Verteilung der Wiederholungen, nicht nur ein Mittelwert — mindestens Quantile oder ein
-  Häufigkeitsgitter „wie oft wurde eine Struktur k-mal bewertet". Ein Mittelwert allein ist nach der
-  stehenden Analyseregel des Projekts nicht berichtbar.
-- dieselben Größen zusätzlich **je Level und je Stufe**, damit sichtbar wird, ob Duplikate am Anfang
-  oder Ende der Suche entstehen
-
-### Teil 3 — Ein Zähler, der nichts verändert
-
-**Das ist die eigentliche Anforderung dieses Pakets.** Der Zähler darf das Suchverhalten in keiner
-Weise beeinflussen — insbesondere **keine Zufallsziehung verändern, hinzufügen oder verschieben**.
-Wird die RNG-Sequenz verändert, sind Phase-C-Zellen nicht mehr mit den Regressions- und
-Kampagnendaten vergleichbar, und die gesamte Vergleichbarkeitskette des Projekts reißt.
-
-Ebenso: **kein Caching, keine Deduplizierung, kein Überspringen** bereits gesehener Strukturen. Unter
-`pretuning = false` wirken Duplikate als impliziter Multistart; sie zu überspringen würde die
-experimentelle Bedingung ändern statt sie nur zu beschleunigen. Der Zähler zählt und tut sonst nichts.
-
-## Abnahme
-
-1. **Bit-identische Regression.** Ein Regressionslauf über das bestehende Gitter liefert mit Zähler
-   **exakt** dieselben Ergebnisse wie ohne: `loss` bit-identisch, `pruned_match` unverändert, und die
-   Auswertungszähler (`total_loss_evals`, `total_parameter_fits`, `total_ode_solves`) identisch. Eine
-   einzige Abweichung heißt, dass der Zähler das Verhalten verändert, und ist ein Abnahmefehler.
-   Nenne das Kommando; Claude fährt den Lauf.
-2. **Fingerprints unverändert.** `phase_b_fingerprint()` bleibt `604e79733b22d64d`,
-   `stage_cap_behavior_fingerprint()` bleibt `ffb0266c7913352c`. Ein Zähler ist keine
-   Konfigurationskonstante und darf keinen Fingerprint bewegen.
-3. Die neuen Größen stehen in den Ergebnis-Metadaten und landen im Record.
-4. Tests für den kanonischen Schlüssel unter `test/`: gleiche Struktur in anderer Termreihenfolge
-   ergibt denselben Schlüssel; dieselben Terme in **anderen Gleichungen** ergeben einen **anderen**;
-   verschiedene Parameterwerte bei gleichem Support ergeben denselben.
-5. Ein kurzer Lauf auf einem kleinen System zeigt plausible Zahlen — eindeutig ≤ gesamt, und die
-   Verteilung ist ausgegeben.
-
-**Julia lässt sich in deiner Sitzung nicht ausführen.** Code schreiben, statisch sorgfältig prüfen,
-`status: blocked` melden mit `note: Umgebung, nicht Sache`. Claude fährt Regression und Abnahme.
-
-Geh das geänderte Modul auf Laufzeitfehlerklassen durch, die ein statischer Blick übersieht: `Set`
-gegen `Vector`, fehlende `collect`-Aufrufe, Indizierung mit `nothing`, Typinstabilität in der heißen
-Schleife, und Zugriffe auf Felder, die je nach Variante fehlen können.
+Das ist ein Testfehler, kein Codefehler. Verwende einen Toleranzvergleich. **Gehe die ganze Datei
+durch** und ersetze jeden exakten Gleichheitsvergleich auf Fliesskommawerte; belasse exakte
+Vergleiche nur dort, wo sie beabsichtigt sind, etwa bei Zählern.
 
 ## Verboten
 
-- **Keine Deduplizierung, kein Cache, kein Überspringen.** Nur zählen.
-- **Keine Änderung an der RNG-Nutzung**, auch keine scheinbar harmlose Umstellung der Reihenfolge.
-- **Keine Änderung an Ausdünnungsregel, Kappe, Stufenlogik oder Konfigurationskonstanten.**
-- **Keinen Kampagnen- oder Cluster-Lauf starten.** Auf dem Cluster läuft gerade der dim-2-Probelauf;
-  nichts einreichen, nichts löschen, keine `kubectl`- oder `oc`-Aufrufe.
-- Nichts über 15 Minuten.
-- Nicht committen, nicht stagen, keine Git-Operationen.
+- **Keinen langen Lauf starten.** Weder Kampagne noch Regressionszelle.
+- **Keine inhaltliche Änderung an der Retry-Logik.** Sie ist abgenommen. Diese Aufgabe repariert
+  ausschliesslich die beiden genannten Punkte.
+- **`phase_b_fingerprint()`, `config_fingerprint()` und `stage_cap_behavior_fingerprint()` nicht
+  anfassen**, und die Fingerprint-Eingaben ebenfalls nicht.
+- Keine Umbenennung bestehender Metriken.
 
-## Report
+## Abnahme
 
-`codex/reports/REPORT_WP_N10.md`. Enthält:
+Julia lässt sich in dieser Umgebung nicht ausführen; melde `blocked`, Claude fährt die Abnahme.
 
-- wie der kanonische Schlüssel gebildet wird und warum er reihenfolgeunabhängig innerhalb, aber nicht
-  zwischen Gleichungen ist
-- die Stelle in der Suchschleife, an der gezählt wird, und die Begründung, warum sie die RNG-Sequenz
-  nicht berührt
-- das Kommando für den bit-identischen Regressionsvergleich
-- die durchgesehenen Laufzeitfehlerklassen
+Im Report brauche ich:
+
+- wo die eine verbliebene Definition jetzt liegt und warum dort,
+- die Liste der geänderten Dateien mit je einem Satz,
+- welche Zeilen im Test von exakter auf tolerante Gleichheit umgestellt wurden.
+
+Claude prüft: `julia --project=. -e 'using EvoODE'` läuft **ohne** Präkompilierungswarnung und ohne
+Fehler; `test/test_bfgs_retry_policy.jl`, `test/test_bfgs_budget.jl` und
+`test/test_bfgs_fallback_order.jl` vollständig grün; die drei Fingerprints unverändert; anschliessend
+eine reale Regressionszelle bei k = 1 bitgleich gegen `HEAD`.
+
+Report nach `codex/reports/REPORT_WP_N11b.md`.

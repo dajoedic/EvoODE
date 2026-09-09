@@ -724,6 +724,7 @@ function run_one(variant,
         "derivative_screening_active" => nothing,
         "total_loss_evals" => nothing,
         "total_parameter_fits" => nothing,
+        "total_parameter_fit_attempts" => nothing,
         "total_ode_solves" => nothing,
         "total_invalid_solves" => nothing,
         "total_diverged_solves" => nothing,
@@ -875,6 +876,7 @@ function run_one(variant,
         base_record["stage_cap_policy_active"] = haskey(meta, :stage_cap_policy_active) ? meta.stage_cap_policy_active : false
         base_record["total_loss_evals"] = haskey(meta, :total_loss_evals) ? meta.total_loss_evals : nothing
         base_record["total_parameter_fits"] = haskey(meta, :total_parameter_fits) ? meta.total_parameter_fits : nothing
+        base_record["total_parameter_fit_attempts"] = haskey(meta, :total_parameter_fit_attempts) ? meta.total_parameter_fit_attempts : nothing
         base_record["total_ode_solves"] = haskey(meta, :total_ode_solves) ? meta.total_ode_solves : nothing
         base_record["total_candidate_structures_evaluated"] = haskey(meta, :total_candidate_structures_evaluated) ? meta.total_candidate_structures_evaluated : nothing
         base_record["unique_candidate_structures_evaluated"] = haskey(meta, :unique_candidate_structures_evaluated) ? meta.unique_candidate_structures_evaluated : nothing

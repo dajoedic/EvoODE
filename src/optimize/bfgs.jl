@@ -9,7 +9,7 @@ using Random
 """
     BFGSOptimizer(; maxiters=300, abstol=1e-6, reltol=1e-6, maxiters_solve=10^6,
                   clamp_val=10.0, max_loss_evals=typemax(Int), time_limit_s=Inf,
-                  reject_nonfinite=false, divergence_limit=Inf)
+                  reject_nonfinite=false, divergence_limit=Inf, max_fit_attempts=1)
 
 Parameter optimizer for fixed-structure models.
 
@@ -22,6 +22,11 @@ Deterministic budget parameters:
 - `reject_nonfinite`, `divergence_limit`: deterministic early-rejection rules.
   When enabled, these are passed through `unstable_check`; relative to the
   solver default, the added condition is the finite `divergence_limit`.
+- `max_fit_attempts`: maximum number of parameter-fit attempts for one
+  `fit_parameters` call. Attempt 1 uses the canonical start point: the supplied
+  `p0` when available, otherwise the normal random start. Later attempts are
+  only triggered after a failed result and always use a fresh random start;
+  repeating a deterministic warm start would reproduce the same result.
 
 Legacy non-deterministic safety parameter:
 - `time_limit_s`: optional wall-clock safety brake passed to Optim.jl. It is
@@ -37,6 +42,7 @@ Base.@kwdef struct BFGSOptimizer <: AbstractOptimizer
     time_limit_s::Float64 = Inf
     reject_nonfinite::Bool = false
     divergence_limit::Float64 = Inf
+    max_fit_attempts::Int = 1
 end
 
 struct BFGSLossEvalBudgetExceeded <: Exception
@@ -123,6 +129,28 @@ function _optimizer_retcode_category(retcode)
     else
         return :unknown
     end
+end
+
+"""
+    fit_attempt_failed(loss_value, result_valid)
+
+Return whether a completed parameter-fit attempt should trigger a retry.
+
+An attempt fails when the returned loss is non-finite, reaches the shared MSE
+sentinel, or the optimizer result is explicitly marked invalid.
+"""
+function fit_attempt_failed(loss_value, result_valid::Bool)
+    return !isfinite(Float64(loss_value)) ||
+           Float64(loss_value) >= MSE_SENTINEL_LOSS ||
+           !result_valid
+end
+
+function _sum_fit_meta(attempts, key::Symbol, default)
+    total = default
+    for (_, _, meta) in attempts
+        total += haskey(meta, key) ? getfield(meta, key) : default
+    end
+    return total
 end
 
 """
@@ -255,13 +283,13 @@ function _predict_traj(f!,
     return Yhat
 end
 
-function fit_parameters(opt::BFGSOptimizer,
-                        f!::Function,
-                        traj::Trajectory,
-                        n_params::Int,
-                        loss::AbstractLoss,
-                        options::DiscoveryOptions;
-                        p0=nothing)
+function _fit_parameters_once(opt::BFGSOptimizer,
+                              f!::Function,
+                              traj::Trajectory,
+                              n_params::Int,
+                              loss::AbstractLoss,
+                              options::DiscoveryOptions;
+                              p0=nothing)
 
     fit_t0 = time()
     X = traj.x
@@ -700,5 +728,86 @@ function fit_parameters(opt::BFGSOptimizer,
         optimizer_retcodes = copy(optimizer_retcodes),
         solve_time_s = Float64(solve_stats[:solve_time_s]),
         fit_time_s = time() - fit_t0
+    )
+end
+
+function fit_parameters(opt::BFGSOptimizer,
+                        f!::Function,
+                        traj::Trajectory,
+                        n_params::Int,
+                        loss::AbstractLoss,
+                        options::DiscoveryOptions;
+                        p0=nothing)
+
+    max_attempts = max(1, opt.max_fit_attempts)
+    attempts = Tuple{Vector{Float64}, Float64, NamedTuple}[]
+    accepted_idx = 0
+
+    for attempt in 1:max_attempts
+        attempt_p0 = attempt == 1 ? p0 : nothing
+        result = _fit_parameters_once(opt, f!, traj, n_params, loss, options; p0 = attempt_p0)
+        push!(attempts, result)
+
+        _, lval, meta = result
+        if !fit_attempt_failed(lval, Bool(meta.result_valid))
+            accepted_idx = attempt
+            break
+        end
+    end
+
+    if accepted_idx == 0
+        accepted_idx = length(attempts)
+    end
+
+    params, lval, meta = attempts[accepted_idx]
+    all_solver_retcodes = String[]
+    all_optimizer_retcodes = String[]
+    attempt_solver_retcodes = Vector{String}[]
+    attempt_optimizer_retcodes = Vector{String}[]
+    for (_, _, attempt_meta) in attempts
+        solver_retcodes = haskey(attempt_meta, :solver_retcodes) ? String.(attempt_meta.solver_retcodes) : String[]
+        optimizer_retcodes = haskey(attempt_meta, :optimizer_retcodes) ? String.(attempt_meta.optimizer_retcodes) : String[]
+        push!(attempt_solver_retcodes, solver_retcodes)
+        push!(attempt_optimizer_retcodes, optimizer_retcodes)
+        _append_unique_strings!(
+            all_solver_retcodes,
+            solver_retcodes,
+        )
+        _append_unique_strings!(
+            all_optimizer_retcodes,
+            optimizer_retcodes,
+        )
+    end
+
+    fit_failed = fit_attempt_failed(lval, Bool(meta.result_valid))
+
+    return params, lval, merge(
+        meta,
+        (
+            loss_evals = _sum_fit_meta(attempts, :loss_evals, 0),
+            invalid_evals = _sum_fit_meta(attempts, :invalid_evals, 0),
+            ode_solves = _sum_fit_meta(attempts, :ode_solves, 0),
+            invalid_solves = _sum_fit_meta(attempts, :invalid_solves, 0),
+            diverged_solves = _sum_fit_meta(attempts, :diverged_solves, 0),
+            nonfinite_solves = _sum_fit_meta(attempts, :nonfinite_solves, 0),
+            step_limit_solves = _sum_fit_meta(attempts, :step_limit_solves, 0),
+            solver_unstable_solves = _sum_fit_meta(attempts, :solver_unstable_solves, 0),
+            optimizer_limit_hits = _sum_fit_meta(attempts, :optimizer_limit_hits, 0),
+            optimizer_iteration_limit_hits = _sum_fit_meta(attempts, :optimizer_iteration_limit_hits, 0),
+            optimizer_safety_limit_hits = _sum_fit_meta(attempts, :optimizer_safety_limit_hits, 0),
+            optimizer_eval_budget_limit_hits = _sum_fit_meta(attempts, :optimizer_eval_budget_limit_hits, 0),
+            optimizer_failure_hits = _sum_fit_meta(attempts, :optimizer_failure_hits, 0),
+            optimizer_unknown_retcode_hits = _sum_fit_meta(attempts, :optimizer_unknown_retcode_hits, 0),
+            solve_time_s = _sum_fit_meta(attempts, :solve_time_s, 0.0),
+            fit_time_s = _sum_fit_meta(attempts, :fit_time_s, 0.0),
+            solver_retcodes = all_solver_retcodes,
+            optimizer_retcodes = all_optimizer_retcodes,
+            attempt_solver_retcodes = attempt_solver_retcodes,
+            attempt_optimizer_retcodes = attempt_optimizer_retcodes,
+            fit_attempts = length(attempts),
+            accepted_attempt = accepted_idx,
+            retry_triggered = length(attempts) > 1,
+            fit_failed = fit_failed,
+        ),
     )
 end

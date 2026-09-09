@@ -148,6 +148,7 @@ function search_structure(strategy::EvoGrowV3,
     total_loss_evals = 0
     total_invalid_evals = 0
     total_parameter_fits = 0
+    total_parameter_fit_attempts = 0
     total_ode_solves = 0
     total_invalid_solves = 0
     total_diverged_solves = 0
@@ -196,6 +197,7 @@ function search_structure(strategy::EvoGrowV3,
         level_stage_at_start = current_stage
         level_ctx = Dict(:level => level, :stage => current_stage)
         level_parameter_fits = 0
+        level_parameter_fit_attempts = 0
         level_ode_solves = 0
         level_invalid_solves = 0
         level_diverged_solves = 0
@@ -250,6 +252,7 @@ function search_structure(strategy::EvoGrowV3,
                 total_loss_evals += haskey(fit_meta, :loss_evals) ? fit_meta.loss_evals : 0
                 total_invalid_evals += haskey(fit_meta, :invalid_evals) ? fit_meta.invalid_evals : 0
                 level_parameter_fits += 1
+                level_parameter_fit_attempts += _fit_attempt_count(fit_meta)
                 level_ode_solves += _fit_stat(fit_meta, :ode_solves)
                 level_invalid_solves += _fit_stat(fit_meta, :invalid_solves)
                 level_diverged_solves += _fit_stat(fit_meta, :diverged_solves)
@@ -355,6 +358,7 @@ function search_structure(strategy::EvoGrowV3,
             total_loss_evals += haskey(fit_meta, :loss_evals) ? fit_meta.loss_evals : 0
             total_invalid_evals += haskey(fit_meta, :invalid_evals) ? fit_meta.invalid_evals : 0
             level_parameter_fits += 1
+            level_parameter_fit_attempts += _fit_attempt_count(fit_meta)
             level_ode_solves += _fit_stat(fit_meta, :ode_solves)
             level_invalid_solves += _fit_stat(fit_meta, :invalid_solves)
             level_diverged_solves += _fit_stat(fit_meta, :diverged_solves)
@@ -437,6 +441,7 @@ function search_structure(strategy::EvoGrowV3,
         level_parameter_overhead_s = max(0.0, level_fit_time_s - level_solve_time_s)
 
         total_parameter_fits += level_parameter_fits
+        total_parameter_fit_attempts += level_parameter_fit_attempts
         total_ode_solves += level_ode_solves
         total_invalid_solves += level_invalid_solves
         total_diverged_solves += level_diverged_solves
@@ -469,6 +474,7 @@ function search_structure(strategy::EvoGrowV3,
                 uses_current_stage_terms = uses_current_stage_terms,
                 elapsed_s = level_elapsed_s,
                 parameter_fits = level_parameter_fits,
+                parameter_fit_attempts = level_parameter_fit_attempts,
                 ode_solves = level_ode_solves,
                 invalid_solves = level_invalid_solves,
                 diverged_solves = level_diverged_solves,
@@ -543,6 +549,7 @@ function search_structure(strategy::EvoGrowV3,
                     Dict(
                         :elapsed_s => level_elapsed_s,
                         :parameter_fits => level_parameter_fits,
+                        :parameter_fit_attempts => level_parameter_fit_attempts,
                         :ode_solves => level_ode_solves,
                         :invalid_solves => level_invalid_solves,
                         :diverged_solves => level_diverged_solves,
@@ -711,6 +718,7 @@ function search_structure(strategy::EvoGrowV3,
             total_loss_evals = total_loss_evals,
             total_invalid_evals = total_invalid_evals,
             total_parameter_fits = total_parameter_fits,
+            total_parameter_fit_attempts = total_parameter_fit_attempts,
             total_ode_solves = total_ode_solves,
             total_invalid_solves = total_invalid_solves,
             total_diverged_solves = total_diverged_solves,

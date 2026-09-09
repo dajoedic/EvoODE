@@ -358,6 +358,7 @@ function _add_fit_stats!(totals::Dict{Symbol, Any}, fit_meta)
     totals[:loss_evals] += _fit_stat(fit_meta, :loss_evals)
     totals[:invalid_evals] += _fit_stat(fit_meta, :invalid_evals)
     totals[:parameter_fits] += 1
+    totals[:parameter_fit_attempts] += _fit_attempt_count(fit_meta)
     totals[:ode_solves] += _fit_stat(fit_meta, :ode_solves)
     totals[:invalid_solves] += _fit_stat(fit_meta, :invalid_solves)
     totals[:diverged_solves] += _fit_stat(fit_meta, :diverged_solves)
@@ -386,6 +387,7 @@ function _empty_fit_totals()
         :loss_evals => 0,
         :invalid_evals => 0,
         :parameter_fits => 0,
+        :parameter_fit_attempts => 0,
         :ode_solves => 0,
         :invalid_solves => 0,
         :diverged_solves => 0,
@@ -671,6 +673,7 @@ function search_structure(strategy::EvoGrowScreening,
                 uses_current_stage_terms = uses_current_stage_terms,
                 elapsed_s = level_elapsed_s,
                 parameter_fits = level_totals[:parameter_fits],
+                parameter_fit_attempts = level_totals[:parameter_fit_attempts],
                 ode_solves = level_totals[:ode_solves],
                 invalid_solves = level_totals[:invalid_solves],
                 diverged_solves = level_totals[:diverged_solves],
@@ -808,6 +811,7 @@ function search_structure(strategy::EvoGrowScreening,
             total_loss_evals = totals[:loss_evals],
             total_invalid_evals = totals[:invalid_evals],
             total_parameter_fits = totals[:parameter_fits],
+            total_parameter_fit_attempts = totals[:parameter_fit_attempts],
             total_ode_solves = totals[:ode_solves],
             total_invalid_solves = totals[:invalid_solves],
             total_diverged_solves = totals[:diverged_solves],

@@ -1,5 +1,7 @@
 using Statistics: mean
 
+const MSE_SENTINEL_LOSS = 1e6
+
 """
 Mean squared error loss.
 """
@@ -12,11 +14,11 @@ Returns a large penalty if sizes mismatch or prediction contains non-finite valu
 """
 function evaluate_loss(::MSELoss, Ŷ::AbstractArray, Y::AbstractArray)
     if size(Ŷ) != size(Y)
-        return 1e6
+        return MSE_SENTINEL_LOSS
     end
     if any(x -> !isfinite(x), Ŷ)
-        return 1e6
+        return MSE_SENTINEL_LOSS
     end
     l = mean(@. (Ŷ - Y)^2)
-    return isfinite(l) ? l : 1e6
+    return isfinite(l) ? l : MSE_SENTINEL_LOSS
 end
