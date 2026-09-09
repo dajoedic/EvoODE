@@ -3,7 +3,8 @@
 **Status: matrix complete (P8, 2026-09-10), not frozen. Nothing long-running starts from this
 document yet.** Every claim now names an arm, a script, an output path and a pass criterion, and the
 five questions this document left open are decided in section 7. What still blocks the freeze is
-listed in section 8: the canonical basis (P2/P3) and the unimplemented restart policy (P6/B3).
+listed in section 8: the canonical basis (P2/P3), and the declaration of the restart policy in the
+Phase C fingerprint (the code half of P6/B3 landed on 2026-09-10 with WP-N11).
 
 This is the operational authority for Phase C. `PAPER_1.md` holds the paper scope and the claims;
 this document holds the experiment matrix, the freeze list and the prerequisites. Where the two
@@ -448,8 +449,11 @@ it lands, every arm in section 2 has a basis-shaped hole in it, and B4 cannot ru
 on WP-N4, which measured that a single fit hits the sentinel loss in 15 of 102 cells. WP-N10 then
 measured that on dim 1 a structure receives 20 to 160 fits, so "a single fit" is a state the search
 does not produce there. The policy is not refuted - it is unfounded until the duplicate rate is
-known on coupled systems. C-1 supplies that distribution over 378 cells at no extra cost, but B3
-must be implemented before C-1 starts, which means the policy is implemented before its premise is
-settled. **That ordering is a known defect of the plan and is declared rather than hidden:** if the
+known on coupled systems. C-1 supplies that distribution over 378 cells at no extra cost, but the
+policy had to be built before C-1 starts — and it was, on 2026-09-10 (WP-N11), **before its premise
+is settled**. What softens this is that the implementation is behaviour-neutral at its default of
+k = 1 and was verified so; the choice of k = 3 is a separate act, and it happens in the Phase C
+configuration where it can still be revised on C-1's own duplicate-rate distribution.
+**The ordering remains a known defect of the plan and is declared rather than hidden:** if the
 duplicate rate on dim 2 and 3 turns out high, the honest reporting is that the explicit retry adds
 little on top of a large implicit multistart, and that statement is made from Phase C's own data.
