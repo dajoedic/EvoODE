@@ -1,112 +1,106 @@
-# WP-N6 — SINDy als Baseline auf unseren Daten
+# WP-O1 — Die Python-Tests an ihren Ort bringen und den roten Test reparieren
 
 **Language: Python**
 
 ## Kontext und Zweck
 
-EvoODE ist in vier Jahren Projektarbeit **nie gegen ein anderes Verfahren gemessen worden**. Alle
-Vergleiche liefen gegen frühere EvoODE-Varianten. Damit ist bis heute unbekannt, ob die Zahlen gut
-oder schlecht sind — unser Anteil R2 > 0,9 liegt bei 80,7 % auf der Kampagne, und niemand kann sagen,
-ob das ein Erfolg ist.
+Beim Repo-Durchgang am 2026-09-09 sind zwei zusammenhängende Befunde aufgetaucht, die zusammen ein
+Arbeitspaket ergeben.
 
-Dieses WP liefert die fehlende Vergleichszahl. `pysindy 2.1.0`, `scikit-learn 1.5.1`, `scipy 1.13.1`
-und `numpy 2.2.6` sind installiert.
+**Erstens: der Test ist rot und niemand merkt es.**
+`tests/test_analysis_variant_visibility.py::test_unknown_variant_is_not_silently_dropped_from_main_table`
+schlägt mit
 
-**Dies ist kein Wettbewerb, sondern eine Messung.** Das Ergebnis darf ausfallen, wie es will, und
-wird so berichtet. Jede Konfigurationswahl, die SINDy schlechter aussehen liesse, ist ein
-Auswertungsfehler.
+```
+TypeError: build_csv_table() missing 2 required positional arguments: 'exact_ids' and 'surrogate_ids'
+```
 
-## Die Daten: identisch zu unseren
+fehl. Die beiden Parameter sind in WP-A4/A4b dazugekommen, als die Systemachse von fest verdrahteten
+ID-Listen auf `system_classification.csv` umgestellt wurde. Der Test wurde nicht mitgezogen und ist
+seit etwa 2026-08-21 rot. Es gibt keine CI für Tests — die GitLab-CI baut ausschliesslich das
+Kampagnen-Image.
 
-SINDy bekommt **exakt dieselben Trajektorien**, die EvoODE bekommt. Erzeuge sie nach dem Phase-B-
-Protokoll (`docs/paper1_odebench_protocol_alignment.md` §3):
+Das ist nicht irgendein Test. Die Invariante, die er absichert — **eine unbekannte Variante darf
+nicht stillschweigend aus der Haupttabelle verschwinden** — ist genau die, um die es in WP-A4b ging
+("an empty selection aborts instead of reporting success"). Der Wächter ist in dem Moment ausgefallen,
+in dem er am wichtigsten wurde.
 
-- Systeme aus `benchmarks/data/strogatz_extended.json`, alle 63
-- 512 Punkte ueber t in [0, 10], beide Endpunkte, Abstand 10/511
-- **beide** Anfangswertsaetze je System
-- selbst integriert mit Toleranz 1e-9, **nicht** die mitgelieferten Trajektorien
+**Zweitens: die Tests liegen am falschen Ort.** `tests/` (Python, 2 Dateien) steht im Wurzelverzeichnis
+direkt neben `test/` (Julia, 15 Dateien). Die beiden sind auf einen Blick nicht unterscheidbar, und
+`analysis/CONVENTIONS.md` sieht in seiner Verzeichnisstruktur überhaupt kein `tests/` vor. Die Tests
+prüfen ausschliesslich Code unter `analysis/`, gehören also dorthin.
 
-Die mitgelieferten Loesungen sind ausdruecklich **nicht** zu verwenden — der Audit hat gemessen, dass
-sie MSE-Boeden von bis zu 2,5e-2 tragen. Wenn `scipy.integrate.solve_ivp` verwendet wird, mit
-`rtol=atol=1e-9` und expliziter Auswertung an den 512 Zeitpunkten.
+Beides zusammen, weil der Umzug die Pfadkonstante in denselben Dateien anfasst, die der Fix anfasst.
 
-**Prüfe und berichte**, ob deine Trajektorien mit denen uebereinstimmen, die EvoODE verwendet. Eine
-Abweichung ist ein Befund, kein Detail — ohne identische Daten ist der Vergleich wertlos.
+## Was zu tun ist
 
-## Was gemessen wird
+### 1. Verschieben
 
-### Beide Metriken, beide Regime
+`tests/` → `analysis/tests/`, mit `git mv`, damit die Historie erhalten bleibt.
 
-Design-Prinzip 9 gilt: **Strukturtreffer und Anteil R2 > 0,9**, immer beide. Zusaetzlich beide
-Regime aus WP-N5:
+Beide Dateien setzen `REPO_ROOT = Path(__file__).resolve().parents[1]`. Nach dem Umzug ist
+`parents[1]` das Verzeichnis `analysis/` statt der Repo-Wurzel. Der Index muss entsprechend
+angepasst werden. **Bitte nicht raten** — nach dem Umzug einmal nachrechnen und die Annahme im Test
+selbst absichern, etwa indem geprüft wird, dass unter `REPO_ROOT` tatsächlich `benchmarks/` oder
+`CLAUDE.md` liegt. Ein Test, der den falschen Ordner für die Repo-Wurzel hält und trotzdem grün ist,
+wäre schlimmer als der jetzige Zustand.
 
-- **Rekonstruktion** — Modell auf IC-Satz *x* fitten, ab IC-Satz *x* integrieren
-- **Generalisierung** — Modell auf IC-Satz *x* fitten, ab dem **anderen** IC-Satz integrieren
+### 2. Den roten Test reparieren
 
-Beide Richtungen getrennt (IC1→IC2 und IC2→IC1), wie in WP-N5.
+`build_csv_table` in `analysis/scripts/plot/table_main_results.py` hat heute die Signatur mit
+`exact_ids` und `surrogate_ids`. Der Test muss sie mit Werten aufrufen, die zu seinen eigenen
+Testdaten passen — er verwendet die Systeme 2 und 23.
 
-### Strukturtreffer, sauber definiert
+**Wichtig: die Invariante darf sich nicht ändern.** Der Test prüft, dass
+`campaign_unknown_variant` in der erzeugten Tabelle auftaucht und nicht stillschweigend
+weggefiltert wird. Wenn der Test nach der Anpassung grün wird, weil die Invariante aufgeweicht
+wurde statt weil der Aufruf korrekt ist, ist das ein Fehlschlag des Arbeitspakets. Prüfe das aktiv:
+lass den Test einmal gegen eine absichtlich kaputte Variante von `build_csv_table` laufen (nur lokal,
+nicht committen) und überzeuge dich, dass er dann **rot** wird.
 
-SINDy schwellt intern bereits. Ein Strukturvergleich braucht deshalb eine **explizit benannte**
-Regel, und diese Regel muss dieselbe sein wie bei uns: ein Term zaehlt als aktiv, wenn sein
-Koeffizient betragsmaessig ueber `max(1e-6, 1e-3 * max_abs)` derselben Gleichung liegt
-(`experiments/run_experiment.jl:239`). Wende sie auf SINDys Koeffizientenmatrix an und vergleiche
-gegen die wahre Termmenge.
+Falls sich beim Lesen herausstellt, dass die Invariante durch WP-A4b bewusst geändert wurde und der
+Test heute etwas Falsches fordert: **dann nicht anpassen, sondern `blocked` melden** und im Report
+begründen. Das wäre eine wissenschaftliche Entscheidung, keine technische.
 
-Strukturtreffer sind **nur auf den 20 exakt darstellbaren Systemen** definiert. Nutze
-`analysis/data/paper1_phaseB_v1/representational_adequacy.csv` für die Zuordnung — und beachte, dass
-die Spalte `sindy_poly` dort sagt, welche Systeme in *SINDys* Bibliothek darstellbar sind (40 von
-63). **Weise beide Teilmengen getrennt aus:** die 20 für uns darstellbaren und die 40 für SINDy
-darstellbaren. Sie sind nicht dieselben, und das ist selbst ein Ergebnis.
+### 3. Den zweiten Test mitprüfen
 
-### Bibliotheken: ein Gitter, keine Auswahl
+`test_evaluate_hypotheses_dataset_classification.py` ist grün, hängt aber an `REPO_ROOT` für
+`docs/paper1_freeze_memo_phaseA.md` und `debug_results/generalization_summary.csv`. Nach dem Umzug
+muss er weiter grün sein, aus demselben Grund wie vorher und nicht durch Zufall.
 
-Rechne **mehrere** Konfigurationen und berichte alle:
+### 4. Dokumentation nachziehen
 
-- Polynombibliothek Grad 2, 3, 4, 5
-- Polynom Grad 3 zusaetzlich mit `sin` und `cos`
-- je Konfiguration mindestens zwei Sparsity-Schwellen der STLSQ, etwa 0,01 und 0,1
+- `analysis/CONVENTIONS.md`: `tests/` in die Verzeichnisstruktur aufnehmen, mit einer Zeile in der
+  Tabelle "Allowed and forbidden per folder". Erlaubt sind Tests gegen `analysis/`-Code; verboten
+  ist alles, was einen vollständigen Kampagnenlauf oder Cluster-Zugang braucht.
+- `SCRIPTS.md`: falls dort ein Testaufruf steht, den Pfad korrigieren.
+- `docs/WP-E2.md` nennt in Zeile 81/82 `pytest tests ...`. Das ist ein **historischer Report** —
+  nicht ändern. Reports werden nicht nachgeführt.
+- `CLAUDE.md`, Abschnitt "Known Gaps": die beiden Einträge, die ich am 2026-09-09 eingetragen habe
+  ("the Python test suite is red" und "the Python tests live in a root-level `tests/`"), sind danach
+  erledigt und müssen entfernt werden. Der Umstand, dass **nichts** die Tests ausführt, bleibt
+  stehen — das löst dieses Paket nicht.
 
-**Keine wird als die beste bezeichnet, keine wird ausgewählt.** Dieselbe Regel wie beim
-Pruning-Gitter in WP-N2: die Abhaengigkeit sichtbar machen, nicht wegoptimieren. Die
-Konfigurationszahl bleibt klein genug, dass die Tabelle lesbar bleibt.
+## Was ausdrücklich nicht Teil dieses Pakets ist
 
-### Was ausserdem in den Report gehoert
+- **Keine CI einrichten.** Ob Tests automatisch laufen sollen, ist eine offene Frage und wird
+  gesondert entschieden.
+- **Kein `test/runtests.jl`** und kein `[targets]`-Abschnitt in `Project.toml`. Das ist Julia und
+  steht in `CLAUDE.md` unter WP-D4b geparkt.
+- **Keine neuen Tests.** Dieses Paket repariert, was da ist.
+- **Keine Änderung an `analysis/scripts/plot/table_main_results.py`**, es sei denn, der Test deckt
+  dort einen echten Fehler auf. Dann: `blocked` melden statt selbst entscheiden.
 
-- **Ableitungen.** SINDy braucht Ableitungen, EvoODE nicht. Halte fest, welches
-  Differentiationsverfahren du verwendest und dass dies ein **protokollarischer Unterschied** ist,
-  kein Implementierungsdetail. Unsere Daten sind rauschfrei, das begünstigt SINDy hier.
-- **Kosten** als Zaehlwerte, nicht als Zeit (Design-Prinzip 7): Zahl der Regressionen, Groesse der
-  Bibliothek. `elapsed_s` nur als gekennzeichnete Nicht-Evidenz.
-- Zellen, deren Modell beim Integrieren divergiert oder nicht-finite Werte liefert, getrennt zaehlen.
+## Abnahmekriterium
 
-## Verboten
+```bash
+python -m pytest analysis/tests -q -p no:cacheprovider
+```
 
-- keine Aenderung an Julia-Code, an der Kampagne, an `outputs/wp_n*`-Verzeichnissen oder den
-  A5-bis-A9-Skripten
-- **keine Auswahl einer besten SINDy-Konfiguration**
-- **kein Tuning gegen unsere Ergebnisse** — SINDys Konfigurationen werden nicht danach gewaehlt, wie
-  EvoODE dasteht
-- keine mitgelieferten Trajektorien
-- **keine Figuren**
-- keine Ergebnisse in `PAPER_1.md`, `CLAUDE.md` oder `DIARY.md`
-- kein `git add -A`, keine Git-Operationen
-
-## Akzeptanzkriterium
-
-Skript unter `analysis/scripts/aggregate/`, ueber `--config` parametrisiert, Ergebnisse nach
-`analysis/data/` und Tabellen nach `analysis/tables/`, `.csv` und `.tex`. Die Trajektorienprüfung
-gegen EvoODEs Daten ist durchgefuehrt und ihr Ergebnis berichtet. Alle Tabellen tragen beide
-Metriken und beide Regime. Fehlerpfad an einer Fixture belegt.
-
-`pysindy` ist mit fester Version in `analysis/requirements.txt` einzutragen.
+läuft mit **2 passed, 2 passed** — also allen vier Tests grün — und das Verzeichnis `tests/` im
+Wurzelverzeichnis existiert nicht mehr. Zusätzlich im Report festhalten: welchen Index `parents[...]`
+jetzt hat und woran du geprüft hast, dass er stimmt; und das Ergebnis der Gegenprobe aus Schritt 2.
 
 ## Report
 
-`codex/REPORT_WP_N6.md`. Enthaelt: die Kommandos, das Ergebnis der Trajektorienprüfung, das
-vollstaendige Konfigurationsgitter mit beiden Metriken und beiden Regimen, die getrennte Auswertung
-auf den 20 und den 40 darstellbaren Systemen, die Zahl divergenter Integrationen, das
-Differentiationsverfahren — und einen Absatz dazu, **wo SINDy in dieser Messung besser und wo
-schlechter abschneidet als die in `outputs/wp_n5_ic_generalization/` liegenden EvoODE-Zahlen**. Diese
-Gegenueberstellung ist deskriptiv zu halten: keine Signifikanztests, keine Wertung, nur die Zahlen
-nebeneinander.
+`codex/REPORT_WP_O1.md`, plus `codex/STATUS.md` mit `status`, `task: WP-O1` und dem Reportpfad.
