@@ -1,107 +1,105 @@
-# WP-N9 — Der dim-2-Probelauf über den vorhandenen Cluster-Pfad
+# WP-N10 — Kanonischer Strukturschlüssel und die Messung der Duplikatrate
 
 **Language: Julia**
 
 ## Warum
 
-Der dim-2-Probelauf entscheidet die kanonische Basis für Phase C — der einzige noch offene
-eingefrorene Parameter (`docs/paper1_phaseC_benchmark_plan.md`, P2/P3). Er ist **nicht** lauffähig:
+Die kanonische EvoGrow-Konfiguration enthält einen tragenden, unbenannten Mechanismus. Unter
+`pretuning = false` zieht jeder Parameterfit `0.1 .* randn` (`src/optimize/bfgs.jl:269`). Jede
+Kandidatenstruktur bekommt aber genau **einen** Fit — ein zweiter Start entsteht nur, wenn die Suche
+dieselbe Struktur zufällig erneut erzeugt. Das effektive Restart-k ist damit die
+**`StructureSpec`-Duplikatrate**, und die ist **nie gemessen worden**.
 
-- Die Kosten liegen bei **~1.200 Kernstunden**, nicht bei den lange zitierten 114. Nachgerechnet am
-  dim-2-Arm der Kampagne, der dieselben 336 Zellen unter derselben Konfigurationsfamilie hatte:
-  1.167,5 h, Mittel 3,47 h je Zelle. Seriell auf einem Rechner sind das rund sieben Wochen.
-- `studies/regression/wp_n1_basis_probe.jl` ist eine **serielle Schleife**, die in eine einzige
-  `history.jsonl` anhängt. Es hat kein Index- oder Shard-Argument und kann den Cluster-Pfad der
-  Kampagne nicht nutzen.
+Ohne sie ist der k = 1-Referenzpunkt der Restart-Ablation (Abl-3 in
+`docs/paper1_phaseC_benchmark_plan.md`) nicht definiert, und jede Aussage über Restarts hängt in der
+Luft.
 
-## Der Ansatz — und was ausdrücklich nicht gemacht wird
-
-**Kein Sharding in `wp_n1_basis_probe.jl` einbauen.** Das erzeugte einen zweiten, parallelen
-Ausführungspfad neben dem der Kampagne, mit eigener Wiederaufnahme-, Schreib- und Identitätslogik.
-Zwei Pfade laufen auseinander; das Projekt hat diese Fehlerklasse gerade zweimal bezahlt
-(`exact_support_match` mit zwei Bedeutungen, `git_hash` als Platzhalter).
-
-Stattdessen der vorhandene Weg, unverändert in seiner Struktur:
-
-```text
-Manifest-Generator  ->  manifest.csv + Indexliste  ->  run_k8s_indexed_cell.jl  ->  run_batch_cell.jl
-```
-
-`run_batch_cell.jl` löst die Methodenkonfiguration bereits über die Spalte `variant` auf
-(`phase_b_variant(row["variant"])`). **Die beiden Basis-Modi der Probe gehören deshalb als Varianten
-in dieselbe Auflösung**, nicht als Sonderweg.
-
-Das zahlt doppelt: Phase C braucht denselben Mechanismus für den **ungekappten Arm**, der ebenfalls
-nur eine Variante derselben Zelle ist. Lege die Erweiterung deshalb so an, dass sie
-Methodenkonfiguration je Zeile trägt, und nicht als Einzelfall „Basis".
+Nachgeprüft: **aus vorhandenen Daten ist das nicht rekonstruierbar.** `level_log`
+(`src/structure/evogrow.jl:876`) hält je Level nur das Beste fest — `best_loss`, `best_objective`,
+`n_params`. Die in `_expand*` erzeugten Kandidatenstrukturen werden nirgends persistiert, weder in
+den Records noch in den Heartbeats.
 
 ## Was zu tun ist
 
-1. **Die WP-N1-Basis-Modi als Varianten auflösbar machen.** Die Modi stehen in
-   `_wp_n1_basis_modes()` in `studies/regression/wp_n1_basis_probe.jl`; die Auflösung liegt bei
-   `phase_b_variant`. Bestehende Kampagnen-Varianten bleiben unverändert — eine Änderung an ihnen
-   verändert den Config-Fingerprint und damit die Identität der 756 Kampagnenrecords.
-2. **Einen Manifest-Generator für die Probe**, nach dem Muster von
-   `studies/regression/generate_phase_b_manifest.jl`. Er erzeugt die Zeilen für
-   28 dim-2-Systeme × 2 Basen × 2 IC-Sätze × 3 Seeds = **336 Zellen**, plus die Indexliste, die
-   `run_k8s_indexed_cell.jl` erwartet.
-3. **Ein k8s-Job-Manifest** nach dem Muster von `k8s/phase_b_indexed_campaign_job.yaml` und
-   `k8s/phase_b_indexed_smoke_job.yaml` — beides, ein Smoke-Job über wenige Zellen und der volle
-   Lauf. Ressourcenanforderungen aus dem Kampagnen-Manifest übernehmen, nicht neu erfinden.
-4. **Die Identitätsfelder müssen erhalten bleiben.** Die Records tragen weiterhin echten git-Hash,
-   Config-Fingerprint und Behaviour-Fingerprint, und der WP-N8-Wächter darf nicht umgangen werden.
-   Ein Cluster-Lauf ohne ermittelbare Identität nutzt den in `containers/Dockerfile` eingebackenen
-   `EVOODE_GIT_SHA` — sieh nach, wie `git_provenance()` das behandelt.
+### Teil 1 — Kanonische Gleichheit und Hash für `StructureSpec`
+
+Ein kanonischer Schlüssel, der zwei Strukturen genau dann gleich abbildet, wenn sie **denselben
+Support** haben — unabhängig von der Reihenfolge, in der die Terme aufgenommen wurden, und
+unabhängig von den Parameterwerten.
+
+Zwei Punkte, an denen es leicht falsch wird:
+
+- Die Struktur ist **je Gleichung** definiert. Der Schlüssel muss die Gleichungszuordnung erhalten:
+  `u1` in Gleichung 1 und `u1` in Gleichung 2 sind nicht dasselbe.
+- Reihenfolgeunabhängigkeit **innerhalb** einer Gleichung ist erwünscht, **zwischen** Gleichungen
+  nicht.
+
+Der Schlüssel wird ausschließlich zum Zählen verwendet.
+
+### Teil 2 — Zähler in der Suchschleife
+
+In `src/structure/evogrow.jl` mitzählen und in die Ergebnis-Metadaten aufnehmen:
+
+- Gesamtzahl bewerteter Kandidatenstrukturen
+- Zahl **eindeutiger** Strukturschlüssel
+- die Verteilung der Wiederholungen, nicht nur ein Mittelwert — mindestens Quantile oder ein
+  Häufigkeitsgitter „wie oft wurde eine Struktur k-mal bewertet". Ein Mittelwert allein ist nach der
+  stehenden Analyseregel des Projekts nicht berichtbar.
+- dieselben Größen zusätzlich **je Level und je Stufe**, damit sichtbar wird, ob Duplikate am Anfang
+  oder Ende der Suche entstehen
+
+### Teil 3 — Ein Zähler, der nichts verändert
+
+**Das ist die eigentliche Anforderung dieses Pakets.** Der Zähler darf das Suchverhalten in keiner
+Weise beeinflussen — insbesondere **keine Zufallsziehung verändern, hinzufügen oder verschieben**.
+Wird die RNG-Sequenz verändert, sind Phase-C-Zellen nicht mehr mit den Regressions- und
+Kampagnendaten vergleichbar, und die gesamte Vergleichbarkeitskette des Projekts reißt.
+
+Ebenso: **kein Caching, keine Deduplizierung, kein Überspringen** bereits gesehener Strukturen. Unter
+`pretuning = false` wirken Duplikate als impliziter Multistart; sie zu überspringen würde die
+experimentelle Bedingung ändern statt sie nur zu beschleunigen. Der Zähler zählt und tut sonst nichts.
 
 ## Abnahme
 
-**Der entscheidende Punkt ist Äquivalenz, nicht Funktion.** Ein neuer Ausführungspfad, der andere
-Zahlen liefert als der alte, ist wertlos für eine Konfigurationsentscheidung.
+1. **Bit-identische Regression.** Ein Regressionslauf über das bestehende Gitter liefert mit Zähler
+   **exakt** dieselben Ergebnisse wie ohne: `loss` bit-identisch, `pruned_match` unverändert, und die
+   Auswertungszähler (`total_loss_evals`, `total_parameter_fits`, `total_ode_solves`) identisch. Eine
+   einzige Abweichung heißt, dass der Zähler das Verhalten verändert, und ist ein Abnahmefehler.
+   Nenne das Kommando; Claude fährt den Lauf.
+2. **Fingerprints unverändert.** `phase_b_fingerprint()` bleibt `604e79733b22d64d`,
+   `stage_cap_behavior_fingerprint()` bleibt `ffb0266c7913352c`. Ein Zähler ist keine
+   Konfigurationskonstante und darf keinen Fingerprint bewegen.
+3. Die neuen Größen stehen in den Ergebnis-Metadaten und landen im Record.
+4. Tests für den kanonischen Schlüssel unter `test/`: gleiche Struktur in anderer Termreihenfolge
+   ergibt denselben Schlüssel; dieselben Terme in **anderen Gleichungen** ergeben einen **anderen**;
+   verschiedene Parameterwerte bei gleichem Support ergeben denselben.
+5. Ein kurzer Lauf auf einem kleinen System zeigt plausible Zahlen — eindeutig ≤ gesamt, und die
+   Verteilung ist ausgegeben.
 
-1. **Äquivalenznachweis auf dim 1.** Lasse einige dim-1-Zellen über den neuen Manifest-Pfad laufen
-   und vergleiche gegen die vorhandenen Records in `outputs/wp_n1_dim1_probe/history.jsonl`. Für
-   dieselbe Kombination aus Basis, System, IC-Satz und Seed müssen `loss`, `pruned_match` und die
-   gefundene Termmenge übereinstimmen. Nenne im Report, welche Zellen du verglichen hast und wie
-   genau sie übereinstimmen.
-   Die Altdaten tragen `git_hash = "not_collected"` und keine Identitätsfelder — das ist erwartet
-   und **kein** Abweichungsgrund; verglichen werden die Ergebnisfelder, nicht die Provenienz.
-2. Der Manifest-Generator erzeugt 336 Zeilen für dim 2, und die Indexliste passt dazu.
-3. Die erzeugten Records enthalten dieselben WP-N1-spezifischen Felder wie bisher, damit die
-   vorhandenen Auswertungsskripte sie lesen können. Prüfe das an
-   `analysis/scripts/aggregate/aggregate_wp_n1_coefficient_metrics.py`, welche Felder erwartet
-   werden. Fehlt eines, ist das ein Abnahmefehler.
-4. Kampagnen-Varianten und deren Fingerprint sind unverändert. Weise das nach.
-5. Smoke- und Voll-Manifest liegen vor.
+**Julia lässt sich in deiner Sitzung nicht ausführen.** Code schreiben, statisch sorgfältig prüfen,
+`status: blocked` melden mit `note: Umgebung, nicht Sache`. Claude fährt Regression und Abnahme.
 
-**Julia lässt sich in deiner Sitzung nicht ausführen** — Code schreiben, statisch prüfen,
-`status: blocked` melden mit `note: Umgebung, nicht Sache`. Claude fährt die Abnahme, inklusive des
-Äquivalenzlaufs.
-
-Weil jede Runde bei Claude einen vollen Durchlauf kostet, geh die geänderten Dateien auf
-Laufzeitfehlerklassen durch, die ein statischer Blick übersieht: fehlende Manifestspalten, `Set`
-gegen `Vector`, `JSON3.Object` wo ein `Dict` erwartet wird, Indizierung mit `nothing`, Zugriffe auf
-Record-Felder, die fehlen können, und Pfade, die nur im Container existieren.
+Geh das geänderte Modul auf Laufzeitfehlerklassen durch, die ein statischer Blick übersieht: `Set`
+gegen `Vector`, fehlende `collect`-Aufrufe, Indizierung mit `nothing`, Typinstabilität in der heißen
+Schleife, und Zugriffe auf Felder, die je nach Variante fehlen können.
 
 ## Verboten
 
-- **Keinen Lauf starten** — weder lokal noch auf dem Cluster, weder dim 1 noch dim 2. Auch keine
-  Cluster-Jobs einreichen. Der volle Lauf kostet ~1.200 Kernstunden und wird ausschließlich vom
-  Nutzer gestartet.
-- **Nichts über 15 Minuten.**
-- **Kampagnen-Varianten, `phase_b_config.jl`-Konstanten, den Config-Fingerprint und die
-  Ausdünnungsregel nicht verändern.** Die 756 Kampagnenrecords hängen daran.
-- **Altdaten unter `outputs/wp_n1_dim1_probe/` nicht verändern.**
-- Keine zweite Provenienz-, Fingerprint- oder Wiederaufnahmelogik.
-- Den WP-N8-Identitätswächter nicht aufweichen.
+- **Keine Deduplizierung, kein Cache, kein Überspringen.** Nur zählen.
+- **Keine Änderung an der RNG-Nutzung**, auch keine scheinbar harmlose Umstellung der Reihenfolge.
+- **Keine Änderung an Ausdünnungsregel, Kappe, Stufenlogik oder Konfigurationskonstanten.**
+- **Keinen Kampagnen- oder Cluster-Lauf starten.** Auf dem Cluster läuft gerade der dim-2-Probelauf;
+  nichts einreichen, nichts löschen, keine `kubectl`- oder `oc`-Aufrufe.
+- Nichts über 15 Minuten.
 - Nicht committen, nicht stagen, keine Git-Operationen.
 
 ## Report
 
-`codex/reports/REPORT_WP_N9.md`. Enthält:
+`codex/reports/REPORT_WP_N10.md`. Enthält:
 
-- welche Zellen für den Äquivalenznachweis vorgesehen sind und mit welchem Kommando Claude ihn fährt
-- den Nachweis, dass die Kampagnen-Fingerprints unverändert sind
-- die erwartete Zeilenzahl von Manifest und Indexliste
-- **drei Kommandos**: Manifest erzeugen, Smoke-Job, voller dim-2-Lauf — mit erwarteter Zellenzahl.
-  Keine erfundenen Ergebnisse
+- wie der kanonische Schlüssel gebildet wird und warum er reihenfolgeunabhängig innerhalb, aber nicht
+  zwischen Gleichungen ist
+- die Stelle in der Suchschleife, an der gezählt wird, und die Begründung, warum sie die RNG-Sequenz
+  nicht berührt
+- das Kommando für den bit-identischen Regressionsvergleich
 - die durchgesehenen Laufzeitfehlerklassen

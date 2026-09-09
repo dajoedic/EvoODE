@@ -512,6 +512,59 @@ function _append_unique_strings!(target::Vector{String}, values)
     return nothing
 end
 
+function _canonical_structure_key(structure::StructureSpec)
+    return Tuple(Tuple(sort(unique(eq_terms))) for eq_terms in structure.active_idxs)
+end
+
+function _record_structure_evaluation!(counter::Dict{Any, Int}, structure::StructureSpec)
+    key = _canonical_structure_key(structure)
+    counter[key] = get(counter, key, 0) + 1
+    return nothing
+end
+
+function _structure_repeat_histogram(counter::Dict{Any, Int})
+    histogram = Dict{String, Int}()
+    for count in values(counter)
+        key = string(count)
+        histogram[key] = get(histogram, key, 0) + 1
+    end
+    return histogram
+end
+
+function _nearest_rank(values::Vector{Int}, p::Float64)
+    isempty(values) && return 0
+    idx = clamp(Int(ceil(p * length(values))), 1, length(values))
+    return values[idx]
+end
+
+function _structure_duplicate_stats(counter::Dict{Any, Int})
+    repeat_counts = sort!(collect(values(counter)))
+    total = sum(repeat_counts; init = 0)
+    unique_count = length(repeat_counts)
+    return (
+        total_evaluated = total,
+        unique_structures = unique_count,
+        duplicate_evaluations = total - unique_count,
+        repeat_histogram = _structure_repeat_histogram(counter),
+        repeat_quantiles = (
+            q0 = _nearest_rank(repeat_counts, 0.0),
+            q25 = _nearest_rank(repeat_counts, 0.25),
+            q50 = _nearest_rank(repeat_counts, 0.50),
+            q75 = _nearest_rank(repeat_counts, 0.75),
+            q90 = _nearest_rank(repeat_counts, 0.90),
+            q95 = _nearest_rank(repeat_counts, 0.95),
+            q100 = _nearest_rank(repeat_counts, 1.0),
+        )
+    )
+end
+
+function _stage_structure_duplicate_stats(stage_counters::Vector{Dict{Any, Int}})
+    return [
+        merge((stage = stage,), _structure_duplicate_stats(counter))
+        for (stage, counter) in enumerate(stage_counters)
+    ]
+end
+
 # ------------------------------------------------------------
 # Main loop
 # ------------------------------------------------------------
@@ -584,6 +637,8 @@ function search_structure(strategy::EvoGrow,
     total_solve_time_s = 0.0
     observed_solver_retcodes = String[]
     observed_optimizer_retcodes = String[]
+    structure_evaluation_counts = Dict{Any, Int}()
+    stage_structure_evaluation_counts = [Dict{Any, Int}() for _ in 1:max_stage]
     termination_reason = :max_levels
     vis_history = NamedTuple[]
 
@@ -633,6 +688,7 @@ function search_structure(strategy::EvoGrow,
         level_solve_time_s = 0.0
         level_solver_retcodes = String[]
         level_optimizer_retcodes = String[]
+        level_structure_evaluation_counts = Dict{Any, Int}()
 
         if options.verbose >= 1
             log_info("Level start", context=level_ctx)
@@ -668,6 +724,9 @@ function search_structure(strategy::EvoGrow,
                 end
 
                 _, fit_meta = _evaluate!(ind, traj, basis, loss, eval_optimizer, strategy.λ, options, strategy.use_pretuning)
+                _record_structure_evaluation!(structure_evaluation_counts, ind.structure)
+                _record_structure_evaluation!(stage_structure_evaluation_counts[current_stage], ind.structure)
+                _record_structure_evaluation!(level_structure_evaluation_counts, ind.structure)
                 total_loss_evals += haskey(fit_meta, :loss_evals) ? fit_meta.loss_evals : 0
                 total_invalid_evals += haskey(fit_meta, :invalid_evals) ? fit_meta.invalid_evals : 0
                 level_parameter_fits += 1
@@ -779,6 +838,9 @@ function search_structure(strategy::EvoGrow,
             end
 
             _, fit_meta = _evaluate!(child, traj, basis, loss, eval_optimizer, strategy.λ, options, strategy.use_pretuning)
+            _record_structure_evaluation!(structure_evaluation_counts, child.structure)
+            _record_structure_evaluation!(stage_structure_evaluation_counts[current_stage], child.structure)
+            _record_structure_evaluation!(level_structure_evaluation_counts, child.structure)
             total_loss_evals += haskey(fit_meta, :loss_evals) ? fit_meta.loss_evals : 0
             total_invalid_evals += haskey(fit_meta, :invalid_evals) ? fit_meta.invalid_evals : 0
             level_parameter_fits += 1
@@ -903,7 +965,8 @@ function search_structure(strategy::EvoGrow,
                 parameter_optimization_time_s = level_parameter_overhead_s,
                 simulation_time_s = level_solve_time_s,
                 solver_retcodes = copy(level_solver_retcodes),
-                optimizer_retcodes = copy(level_optimizer_retcodes)
+                optimizer_retcodes = copy(level_optimizer_retcodes),
+                structure_duplicate_stats = _structure_duplicate_stats(level_structure_evaluation_counts)
             )
         )
 
@@ -1120,6 +1183,8 @@ function search_structure(strategy::EvoGrow,
 
     best = pop[1]
     eq_final_stages = _effective_eq_stages(current_stage, basis_max_stage, stage_caps, dim)
+    duplicate_stats = _structure_duplicate_stats(structure_evaluation_counts)
+    stage_duplicate_stats = _stage_structure_duplicate_stats(stage_structure_evaluation_counts)
 
     if options.verbose >= 1
         log_info(
@@ -1173,6 +1238,12 @@ function search_structure(strategy::EvoGrow,
             total_simulation_time_s = total_solve_time_s,
             solver_retcodes = copy(observed_solver_retcodes),
             optimizer_retcodes = copy(observed_optimizer_retcodes),
+            total_candidate_structures_evaluated = duplicate_stats.total_evaluated,
+            unique_candidate_structures_evaluated = duplicate_stats.unique_structures,
+            duplicate_candidate_structure_evaluations = duplicate_stats.duplicate_evaluations,
+            structure_repeat_histogram = duplicate_stats.repeat_histogram,
+            structure_repeat_quantiles = duplicate_stats.repeat_quantiles,
+            stage_structure_duplicate_stats = stage_duplicate_stats,
             screening_budgets_active = strategy.screening_optimizer !== nothing,
             final_stage = current_stage,
             eq_final_stages = cap_metrics_active ? copy(eq_final_stages) : nothing,

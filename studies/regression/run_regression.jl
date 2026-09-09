@@ -876,6 +876,13 @@ function run_one(variant,
         base_record["total_loss_evals"] = haskey(meta, :total_loss_evals) ? meta.total_loss_evals : nothing
         base_record["total_parameter_fits"] = haskey(meta, :total_parameter_fits) ? meta.total_parameter_fits : nothing
         base_record["total_ode_solves"] = haskey(meta, :total_ode_solves) ? meta.total_ode_solves : nothing
+        base_record["total_candidate_structures_evaluated"] = haskey(meta, :total_candidate_structures_evaluated) ? meta.total_candidate_structures_evaluated : nothing
+        base_record["unique_candidate_structures_evaluated"] = haskey(meta, :unique_candidate_structures_evaluated) ? meta.unique_candidate_structures_evaluated : nothing
+        base_record["duplicate_candidate_structure_evaluations"] = haskey(meta, :duplicate_candidate_structure_evaluations) ? meta.duplicate_candidate_structure_evaluations : nothing
+        base_record["structure_repeat_histogram"] = haskey(meta, :structure_repeat_histogram) ? meta.structure_repeat_histogram : nothing
+        base_record["structure_repeat_quantiles"] = haskey(meta, :structure_repeat_quantiles) ? meta.structure_repeat_quantiles : nothing
+        base_record["stage_structure_duplicate_stats"] = haskey(meta, :stage_structure_duplicate_stats) ? meta.stage_structure_duplicate_stats : nothing
+        base_record["level_structure_duplicate_stats"] = level_structure_duplicate_records(meta)
         base_record["total_invalid_solves"] = haskey(meta, :total_invalid_solves) ? meta.total_invalid_solves : nothing
         base_record["total_diverged_solves"] = haskey(meta, :total_diverged_solves) ? meta.total_diverged_solves : nothing
         base_record["total_nonfinite_solves"] = haskey(meta, :total_nonfinite_solves) ? meta.total_nonfinite_solves : nothing
@@ -945,6 +952,28 @@ function json_safe(x)
     else
         return x
     end
+end
+
+function level_structure_duplicate_records(meta)
+    haskey(meta, :level_log) || return nothing
+    records = NamedTuple[]
+    for entry in meta.level_log
+        haskey(entry, :structure_duplicate_stats) || continue
+        stats = entry.structure_duplicate_stats
+        push!(
+            records,
+            (
+                level = entry.level,
+                stage = entry.stage,
+                total_evaluated = stats.total_evaluated,
+                unique_structures = stats.unique_structures,
+                duplicate_evaluations = stats.duplicate_evaluations,
+                repeat_histogram = stats.repeat_histogram,
+                repeat_quantiles = stats.repeat_quantiles,
+            )
+        )
+    end
+    return records
 end
 
 function append_record!(record)
