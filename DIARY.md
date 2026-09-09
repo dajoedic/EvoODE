@@ -4,6 +4,194 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ---
 
+## 2026-09-09 (nachts)
+
+### Ein falsches Abnahmekriterium, ein unbelegter Kostenwert, ein abgelaufenes Token — und der dim-2-Probelauf läuft
+
+<!-- COMMIT_HASH -->
+
+Der Abend nach der Zuschnittsentscheidung, gedacht als Abarbeiten der Phase-C-Voraussetzungen. Drei
+von vier Befunden waren nicht geplant, und zwei davon sind wissenschaftlich relevant.
+
+#### WP-N7: das Abnahmekriterium war falsch, und das war der Befund
+
+Die Strukturmetriken — Term Precision, Recall, Structural F1, Koeffizientenfehler — gab es im
+Repository **nirgends**; die Pipeline konnte ausschliesslich exaktes Support-Match. Claim A des
+Methodenpapiers ist ohne sie nicht berichtbar.
+
+Als Abnahme hatte ich verlangt, dass die neuen Metriken `run_registry.exact_support_match` ueber alle
+756 Kampagnenzellen reproduzieren. Codex meldete korrekt `blocked` bei 716 von 756. Die Begruendung
+im Report war unvollstaendig, die Nachpruefung an den Rohdaten ergab etwas anderes:
+
+- `exact_support_match` ist fuer Phase B **identisch mit `pruned_match`** — 756 von 756, keine
+  Abweichung. Also der **ausgeduennte** Match.
+- `support_terms` ist die **rohe**, nicht ausgeduennte aktive Termmenge (`active_term_names`,
+  `run_regression.jl:870`).
+
+Zwei verschiedene Groessen unter einem Vergleich. Und der ausgeduennte Zustand ist aus Phase B **gar
+nicht rekonstruierbar**, weil Ausduennen Koeffizienten braucht und Phase B keine speichert. Das
+Kriterium war prinzipiell unerreichbar.
+
+#### Die Groesse der Luecke ist das Ergebnis
+
+Auf den 240 exakten Zellen:
+
+| Groesse | Zellen | Anteil |
+|---|---:|---:|
+| alle wahren Terme im rohen Support | 119 | 49,6 % |
+| **ausgeduennter** Match — die berichtete Kampagnenzahl | **110** | **45,8 %** |
+| **roher** exakter Strukturtreffer | **70** | **29,2 %** |
+| Treffer allein durch die Ausduennung | **40** | 16,7 % |
+
+**40 von 110 Strukturtreffern — 36,4 % — existieren nur, weil die Ausduennungsregel ueberzaehlige
+Terme entfernt hat.** Die Enthaltung ist exakt und einseitig: `pruned_match == True` impliziert
+`missing == 0` in 110 von 110 Faellen, nie umgekehrt; neun Zellen tragen jeden wahren Term und
+scheitern trotzdem, weil Zusatzterme die Ausduennung ueberleben.
+
+**Die Dimensionsaufschluesselung verdeckt die Gesamtzahl, und sie ist der eigentliche Befund:**
+
+| dim | exakte Zellen | roh | ausgeduennt | gerettet |
+|---|---:|---:|---:|---:|
+| 1 | 72 | 51 (70,8 %) | 57 (79,2 %) | 6 |
+| **2** | **108** | **19 (17,6 %)** | **53 (49,1 %)** | **34** |
+| 3 | 48 | 0 | 0 | 0 |
+| 4 | 12 | 0 | 0 | 0 |
+
+Auf dim 1 ist die Schwelle fast bedeutungslos. **Auf dim 2 verdreifacht sie die Trefferquote nahezu —
+34 der 53 Treffer, also 64 %, produziert die Schwelle und nicht die Suche.** Die ehrliche Lesart von
+„dim 2 liegt bei etwa der Haelfte" lautet damit: *die Suche landet auf gekoppelten Systemen fast nie
+auf dem exakten Support, sie landet auf einer Obermenge, und die Schwelle raeumt auf.*
+
+Das verschaerft die bekannte Limitierung, statt sie abzumildern. Und es ist ein Grund, die
+Schwellenabhaengigkeit zu **berichten**, nie einer, an der Schwelle zu drehen — WP-N2 hat ueber ein
+24er-Regelgitter gezeigt, dass es keine bessere Schwelle gibt.
+
+Konsequenz fuer Phase C, bindend: Records speichern **roh, ausgeduennt und Koeffizienten**, alle
+drei. Phase B hatte eines von dreien.
+
+#### Welche frueheren Befunde das beruehrt — und welche nicht
+
+Sofort nachgeprueft, weil eine schwellenabhaengige Groesse unter einem berichteten Befund dessen
+Bedeutung aendert:
+
+- **WP-A7, der Pretuning-Seed-Kollaps — nicht betroffen.** Er gruppiert auf `support_terms`, also dem
+  **rohen** Muster. Die 96/126 gegen 61/126 bei p = 1,0e-5 sind schwellenunabhaengig.
+- **WP-A6, der zurueckgezogene Strukturkontrast — war ausgeduennt.** Bleibt zurueckgezogen, jetzt aus
+  zwei unabhaengigen Gruenden.
+- **T3 ist durchgehend ausgeduennt.** Ueberall, wo es zitiert wird, gehoert die Rohzahl daneben.
+
+Das Muster ist bemerkenswert: der Pretuning-Befund, den das Projekt behalten hat, ist der, der nicht
+an der Schwelle haengt; der zurueckgezogene hing daran.
+
+#### Zweiter Befund: ein Spaltenname, zwei Bedeutungen
+
+`experiments/run_experiment.jl:405` schreibt den **rohen** Match in `exact_support_match` und fuehrt
+roh und ausgeduennt zusaetzlich getrennt — der **Phase-A**-Pfad. `run_regression.jl` schreibt
+ausschliesslich `pruned_match`, das unter demselben Namen in der Registry landet — der
+**Phase-B**-Pfad. Ein Join ueber diese Spalte vergleicht verschiedene Groessen. `WP-N7b` hat dafuer
+`analysis/utils/support_match_definition.py` als Waechter gebaut, plus den erreichbaren Abnahmetest
+mit Gegenprobe.
+
+#### WP-N8: die Probe sammelt jetzt eine echte Identitaet
+
+`wp_n1_basis_probe.jl:273` setzte die Provenienz hart auf
+`(git_hash = "not_collected", git_dirty = nothing)`. Die Reparatur war eine Zeile — `git_provenance()`
+stand ueber den vorhandenen `include` bereits im Geltungsbereich. Das Paket wurde bewusst weiter
+geschnitten, weil eine Platzhalter-Identitaet unbemerkt in ein Skript geraten konnte, das
+Entscheidungsdaten erzeugt: das Skript **bricht jetzt ab, bevor der erste Record geschrieben wird**,
+wenn der Hash fehlt, leer oder ein Platzhalter ist. `WP_N1_ALLOW_PLACEHOLDER_IDENTITY=1` ist der
+deklarierte Ausweg fuer Entwicklungslaeufe und markiert die Records entsprechend.
+
+Die vorhandenen dim-1-Records bleiben byte-identisch. Ein nachgetragener Hash waere eine Behauptung,
+die niemand pruefen kann.
+
+Abnahme hier gefahren, alle vier Punkte: echter Hash, Wachter bricht ohne Schreibvorgang ab (135
+Zeilen vor und nach dem Versuch), Override erzeugt einen markierten Entwicklungsrecord, 132 Altzeilen
+unveraendert.
+
+#### Der unbelegte Kostenwert — und er war um das Zehnfache falsch
+
+Auf die Frage, ob der dim-2-Probelauf auf den Rechner oder den Cluster gehoert, stellte sich heraus:
+die ueberall zitierten **114 Kernstunden haben keine Quelle.** `REPORT_WP_N1.md` enthaelt gar keine
+Kostenschaetzung; `CLAUDE.md`, der Phase-C-Plan und das Tagebuch zitierten sie mit Verweis auf ihn.
+
+Nachgerechnet am dim-2-Arm der Kampagne, der **dieselben 336 Zellen** unter derselben
+Konfigurationsfamilie hatte: **1.167,5 h, Mittel 3,47 h je Zelle, Median 1,12 h.** Realistisch also
+**~1.200 Kernstunden**, und die Konstanten-Basis durchsucht einen groesseren Raum, das ist eher
+optimistisch.
+
+Der dim-1-Probelauf war in 3,7 Stunden durch — deshalb wirkte das harmlos. **dim-2-Zellen kosten im
+Mittel das Hundertfache einer dim-1-Zelle** (3,47 h gegen 0,03 h). Damit war der Laptop raus: seriell
+rund sieben Wochen.
+
+#### WP-N9: der Cluster-Pfad, und warum kein Sharding
+
+`wp_n1_basis_probe.jl` ist eine serielle Schleife ohne Index-Argument und konnte den Cluster-Pfad der
+Kampagne nicht nutzen. **Sharding einzubauen waere der falsche Weg gewesen** — ein zweiter
+Ausfuehrungspfad neben dem der Kampagne, mit eigener Wiederaufnahme-, Schreib- und Identitaetslogik.
+Genau die Fehlerklasse, die das Projekt am selben Tag zweimal bezahlt hat.
+
+Stattdessen der vorhandene Weg: Manifest-Generator → `run_k8s_indexed_cell.jl` → `run_batch_cell.jl`.
+Letzteres loest die Methodenkonfiguration ohnehin ueber die Spalte `variant` auf, also wurden die
+beiden Basis-Modi Varianten in derselben Aufloesung. Das zahlt doppelt: **Phase C braucht denselben
+Mechanismus fuer den ungekappten Arm**, der ebenfalls nur eine Variante derselben Zelle ist.
+
+**Der Aequivalenznachweis von Codex war zu schwach, und das ist eine Lehre fuer kuenftige Specs.**
+Alle sechs vorgeschlagenen Pruefzellen lagen auf System 2 — einem Ein-Term-System, bei dem *beide
+Basen dasselbe liefern*. Der Test haette die neue Variantenaufloesung kaum beruehrt. Erweitert auf
+die Systeme 3 und 6: **10 von 10 Zellen reproduzieren `loss`, `pruned_match` und die Termmenge
+exakt**, einschliesslich des Falls, in dem sich die Basen unterscheiden — System 3 unter der
+Konstanten-Basis liefert `pruned_match = False` mit 3 Termen und Loss 1,1024e-07 gegen `True` mit 2
+Termen und 1,2642e-09. Der neue Pfad reproduziert **den Unterschied**, nicht nur die Zahlen.
+
+Kampagnenidentitaet gemessen statt gelesen: `phase_b_fingerprint` = `604e79733b22d64d` und
+`stage_cap_behavior_fingerprint` = `ffb0266c7913352c` beide unveraendert, obwohl `phase_b_config.jl`
+angefasst wurde — es ist eine Erweiterung der Nachschlagefunktion, `PHASE_B_VARIANTS` bleibt
+unberuehrt.
+
+#### Parallelitaet 16 → 32, und warum das unbedenklich ist
+
+Der Namespace hat **keine `ResourceQuota`, kein `LimitRange`, keine Cluster-Quota**. Die vereinbarten
+16 waren also eine Absprache, keine technische Grenze. Die CPU stand bei **171 Millicores ueber alle
+12 residenten Pods** von 96 Kernen — rechnerisch leer. Der Speicher ist die belegte Achse, ~70 GiB,
+dominiert von OpenSearch.
+
+Unbedenklich ist das Hochdrehen, weil im Job `requests == limits` gilt: Kubernetes plant nach
+Requests, ueberzaehlige Pods bleiben **`Pending`** statt jemanden zu verdraengen, und ein Pod, der
+seine 2 GiB ueberschreitet, killt sich selbst. Ueber 32 hinaus bringt es nichts: **die laengste
+einzelne dim-2-Zelle der Kampagne lief 46,98 h**, eine Zelle ist ein Pod und laesst sich nicht
+teilen — die Wanduhr hat dort ihren Boden.
+
+#### Das abgelaufene Deploy-Token, und warum der Smoke-Job sich bezahlt gemacht hat
+
+Der erste Smoke-Job scheiterte an `ErrImagePull` mit `HTTP Basic: Access denied`. Nicht das Image
+fehlte — das **Deploy-Token war abgelaufen**, 28 Tage alt. Neues Token mit Scope `read_registry`,
+Secret ersetzt, Job neu gestartet: 3/3 `Complete` in 101 Sekunden.
+
+Die Lehre steht jetzt in `docs/hpc_deployment_guide.md` §8, weil sie beim naechsten Mal Stunden
+spart: Pods werden **ueber die gesamte Laufzeit** neu erzeugt, nicht alle zu Beginn. Ein Ablauf
+mitten in einem mehrtaegigen Lauf haette einen halb fertigen Datensatz mit einer **Luecke in der
+Mitte** ergeben — beim Auswerten leicht zu uebersehen. Der Smoke-Job hat den Fehler nach 35 Sekunden
+sichtbar gemacht statt in Stunde 30.
+
+#### Stand
+
+Der volle dim-2-Probelauf laeuft seit dem Abend des 09.09.: **336 Zellen, `parallelism: 32`,
+erwartete Wanduhr ~47 h**, Image `ec3b6bd5b43f06539d38b633257ca51115bfa47f`. Die Smoke-Records
+bestaetigen die Identitaetskette: `git_hash = ec3b6bd`, `git_dirty = false`,
+`probe_identity_mode = collected`, `model_terms` vorhanden — diese Zellen tragen also Koeffizienten
+und erlauben damit, anders als die 756 Kampagnenzellen, auch die Generalisierungsrechnung.
+
+Der Lauf entscheidet den letzten offenen eingefrorenen Parameter der Phase C: ob der konstante Term
+in die kanonische Basis kommt. Ausgewertet wird er gegen eine **Rohbasis von 17,6 %**, nicht gegen
+die vertrauten 49,1 % — sonst wird die neue Basis gegen einen Massstab bewertet, der zu zwei Dritteln
+aus der Ausduennung stammt.
+
+Offen und nicht vom Lauf abhaengig: die Restart-Politik existiert im Code noch nicht (P6), und die
+`StructureSpec`-Duplikatrate ist weiterhin ungemessen (P7).
+
+---
+
 ## 2026-09-09 (abends)
 
 ### Zuschnittsentscheidung: Paper 1 wird ein Methodenpaper, und die Kampagne verliert ihren Rang

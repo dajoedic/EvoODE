@@ -583,6 +583,7 @@ Alle diese Fälle sind tatsächlich aufgetreten.
 | Symptom | Ursache | Abhilfe |
 |---|---|---|
 | `ImagePullBackOff`, scheitert nach 1 s | Das Zugangsgeheimnis gilt nicht für dein Projekt | Deploy-Token mit `read_registry` anlegen, daraus ein eigenes Secret |
+| `ErrImagePull` mit `HTTP Basic: Access denied` | **Deploy-Token abgelaufen** — nicht das Image fehlt | Neues Token, Secret ersetzen. Siehe unten |
 | `OOMKilled` | Speicherlimit zu niedrig | Wert im Manifest erhöhen. RAM ist auf Orion reichlich vorhanden |
 | Pod läuft 40 min, bevor er rechnet | `JULIA_CPU_TARGET` fehlt | siehe Abschnitt 5 |
 | `dial tcp: lookup docker … server misbehaving` | Docker-Hilfsdienst fehlt in der CI | `services:`-Block ergänzen |
@@ -599,6 +600,57 @@ Select-String -Path "S:\...\tasks\*.jsonl" -NotMatch -Pattern '"error":null'
 ```
 
 Was hier ausgegeben wird, ist fehlerhaft.
+
+### Das abgelaufene Deploy-Token — eine stille Zeitbombe
+
+Aufgetreten am 2026-09-09 beim Smoke-Job des dim-2-Probelaufs. Die Meldung steht unter `Events:` und
+sieht zunächst nach einem fehlenden Image aus:
+
+```text
+Failed to pull image "registry.gitlab.scch.at:443/joedicke/evoode:<sha>":
+unable to retrieve auth token: invalid username/password:
+unauthorized: HTTP Basic: Access denied.
+If a token was provided, it was either incorrect, expired, or improperly scoped.
+```
+
+**Das Image ist in Ordnung.** Die Anmeldung scheitert, bevor die Registry überhaupt nachsieht, ob
+der Tag existiert. Verdächtige also nicht zuerst die CI oder den Tag.
+
+Prüfen, welcher Benutzer im Secret steckt — der Name verrät den Typ, das Passwort bleibt ungelesen:
+
+```powershell
+kubectl get secret evoode-gitlab-pull -n scch-das -o jsonpath='{.data.\.dockerconfigjson}' |
+  % { [Text.Encoding]::UTF8.GetString([Convert]::FromBase64String($_)) }
+```
+
+Steht dort `gitlab+deploy-token-<n>` und ist das Secret einige Wochen alt, ist das Token abgelaufen.
+Ersetzen:
+
+```powershell
+kubectl delete secret evoode-gitlab-pull -n scch-das
+kubectl create secret docker-registry evoode-gitlab-pull `
+  --docker-server=registry.gitlab.scch.at:443 `
+  --docker-username=<gitlab+deploy-token-N> `
+  --docker-password=<token> `
+  -n scch-das
+```
+
+Neues Token in GitLab unter **Settings → Repository → Deploy tokens**, Scope **nur `read_registry`**.
+Der Anzeigename ist frei wählbar; der Hinweis der Oberfläche, das Token `gitlab-deploy-token` zu
+nennen, betrifft nur CI/CD-Jobs und ist hier **irrelevant** — unsere Pipeline meldet sich mit
+`$CI_REGISTRY_USER` an. Für `--docker-username` brauchst du den von GitLab **erzeugten** Namen
+`gitlab+deploy-token-N`, nicht den Anzeigenamen.
+
+**Warum das mehr ist als eine Fußnote.** Pods werden über die gesamte Laufzeit hinweg neu erzeugt,
+nicht alle zu Beginn: bei 336 Zellen und `parallelism: 32` entstehen laufend neue, während frühere
+enden. Läuft das Token mitten in einem mehrtägigen Lauf ab, ziehen die späteren Pods kein Image mehr
+— und das Ergebnis ist ein halb fertiger Lauf mit einer **Lücke in der Mitte**, die beim Auswerten
+leicht übersehen wird. Die Phase-B-Kampagne lief 13,5 Tage; dass sie durchlief, heißt nur, dass das
+Token damals noch galt.
+
+**Deshalb zwei Regeln:** Ablaufdatum großzügig über die geplante Laufzeit hinaus setzen, und **immer
+erst den Smoke-Job** fahren. Am 2026-09-09 hat genau das den Fehler zum harmlosest möglichen
+Zeitpunkt sichtbar gemacht — nach 35 Sekunden statt in Stunde 30.
 
 ---
 
