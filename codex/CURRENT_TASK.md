@@ -1,110 +1,116 @@
-# WP-N4 — Die Referenzanpassung mit Mehrfachstart
+# WP-N5 — Generalisierung: das gefundene Modell auf einem ungesehenen Anfangswert
 
 **Language: Julia**
 
 ## Kontext
 
-WP-N3 hat je Zelle **einen** Parameterfit gerechnet (`_fit_fixed_structure` in
-`studies/regression/wp_n3_oracle_refit.jl`: `Random.seed!(seed)`, dann ein einziger
-`fit_parameters`-Aufruf). Ergebnis auf 102 Zellen:
+Im gesamten Projekt gibt es **keine einzige Auswertung auf zurueckgehaltenen Daten**. Beide
+Anfangswertsaetze wurden trainiert, nie getestet; jedes R2 ist In-Sample, gerechnet auf derselben
+Trajektorie, an die angepasst wurde.
 
-| Anpassung | Sentinel-Loss 1e6 |
-|---|---|
-| Originallauf | **0 / 102** |
-| Oracle-Beschneidung | 11 / 102 |
-| wahre Struktur | **15 / 102** |
+ODEBench ist anders gebaut. Die Publikation liefert zwei Anfangswerte je System ausdruecklich
+*to evaluate generalization*, und die Kennzahl wird in **zwei getrennten Regimen** berichtet:
 
-Die Referenzanpassung war ausserdem in 72 von 102 Zellen schlechter als der Originallauf.
+- **Rekonstruktion** — aus demselben Anfangswert integrieren, aus dem angepasst wurde
+- **Generalisierung** — aus dem **zweiten** Anfangswert integrieren
 
-**Das ist kein fairer Vergleich, und der Grund ist der Versuchsaufbau.** Der Originallauf hat ueber
-die Suche hinweg tausende Anpassungen gerechnet, jede aus einem eigenen Zufallsstart
-(`0.1 .* randn(n_params)` in `bfgs.jl:269`, weil unter `pretuning=false` kein `p0` uebergeben wird),
-und behaelt davon die beste. WP-N3 stellt dagegen **einen** Versuch. Der Vergleich lautet damit
-"ein Versuch gegen das Beste aus tausenden" und misst ueberwiegend die Zahl der Versuche.
+Berichtet wird jeweils der **Anteil der Vorhersagen mit R2 > 0,9**. Wir koennen bisher nur die erste
+Haelfte rechnen.
+
+Seit WP-N1 stehen die Koeffizienten im Record (`model_terms` mit `term`, `term_index`,
+`coefficient`) und die Basis unter `basis_name`. Damit ist das gefundene Modell rekonstruierbar, und
+die zweite Haelfte wird erreichbar — **ohne einen einzigen neuen Suchlauf**.
 
 ## Zweck
 
-Die Frage sauber trennen:
-
-> Scheitert die Anpassung an die wahre Struktur, **weil ein einzelner Versuch unzuverlaessig ist**,
-> oder **weil der Optimierer diese Strukturen grundsaetzlich nicht anpassen kann**?
+Die Generalisierungsmetrik als Standardauswertung verfuegbar machen und auf den vorhandenen Daten
+messen.
 
 ## Deliverables
 
-### 1. Mehrfachstart statt Einzelversuch
+### 1. Die Auswertung
 
-Erweitere die Anpassung um wiederholte Zufallsstarts und behalte je Zelle das **beste** Ergebnis
-nach Loss. Das gilt fuer **beide** Strukturen aus WP-N3 — Oracle-Beschneidung und wahre Struktur.
+Fuer jede Zelle, deren Modell aus **IC-Satz 1** stammt:
 
-Die Zahl der Starts ist ein CLI-Parameter, Vorgabe 10. Die Startwerte muessen **deterministisch aus
-dem Zellen-Seed abgeleitet** sein, damit der Lauf reproduzierbar ist; halte im Report fest, wie du
-sie ableitest.
+1. Struktur und Koeffizienten aus dem Record rekonstruieren (Basis aus `basis_name`)
+2. Das Modell vom **Anfangswert des IC-Satzes 2** aus integrieren, ueber dieselbe Zeitspanne und
+   dasselbe Zeitgitter wie im Original
+3. Gegen die wahre Loesung des Systems ab IC-Satz 2 vergleichen
+4. Loss und R2 berechnen, mit derselben R2-Definition wie im Rest des Projekts
 
-### 2. Die eigentliche Messung: eine Kurve, keine Zahl
+**Die Parameter werden nicht neu angepasst.** Das ist der Kern der Metrik: es geht um das Modell, das
+die Suche geliefert hat, nicht um ein nachtraeglich verbessertes.
 
-Berichte die Ergebnisse **als Funktion der Startzahl** k = 1, 2, 3, 5, 10. Das ist der Kern dieses
-WP: eine einzelne Zahl bei k = 10 wuerde die Frage nicht beantworten.
+Symmetrisch dasselbe fuer Modelle aus IC-Satz 2, integriert ab IC-Satz 1. Beide Richtungen getrennt
+ausweisen — sie sind nicht austauschbar, weil die beiden Saetze unterschiedlich viel Dynamik tragen.
 
-Aus denselben 10 Laeufen laesst sich jedes kleinere k ableiten, indem nur die ersten k Starts
-betrachtet werden — rechne **nicht** fuer jedes k neu, sondern werte die Startfolge kumulativ aus,
-und beschreibe im Report, dass die k-Werte dadurch verschachtelt und nicht unabhaengig sind.
+### 2. Auf welchen Daten
 
-Je k und je Struktur (Oracle, wahr), getrennt nach Basis:
+Zwei Quellen, getrennt gehalten und **nie in einer Datei zusammengefuehrt**:
 
-- Zahl der Zellen mit Sentinel-Loss 1e6
-- Loss-Quantile 5/10/25/50/75/90/95
-- **beide Metriken** (Design-Prinzip 9): Strukturtreffer **und** Anteil R2 > 0,9
-- Zahl der Zellen, in denen die Anpassung den Originallauf erreicht oder uebertrifft
+- **`outputs/wp_n1_dim1_probe/history.jsonl`** — 132 Zellen, beide Basen. Hier ist die Frage, ob die
+  Konstante die Generalisierung anders beeinflusst als die Rekonstruktion.
+- **`experiments/paper1_phaseB_v1/run_registry.csv`** — die 756 Kampagnenzellen. Achtung: dort fehlen
+  die Koeffizienten, weil sie vor WP-N1 gerechnet wurden. **Pruefe das zuerst und melde es als
+  Befund**, statt es zu umgehen. Wenn die Kampagne nicht auswertbar ist, ist das die Antwort — dann
+  laeuft dieses WP nur auf dem Probelauf, und der Kampagnenteil wird zum eigenen offenen Punkt.
 
-### 3. Was der Report entscheiden muss
+### 3. Was zu berichten ist
 
-> **Faellt die Sentinel-Quote der wahren Struktur mit wachsendem k gegen null?** Dann ist ein
-> einzelner Versuch unzuverlaessig, und der Mehrfachstart ist eine tragende Komponente des
-> Verfahrens — kein Nebeneffekt von `pretuning=false`.
->
-> **Bleibt sie auf einem Plateau?** Dann gibt es Strukturen, die der Optimierer grundsaetzlich nicht
-> anpasst. Benenne diese Zellen einzeln mit System, IC-Satz und Seed — sie waeren der Ausgangspunkt
-> der naechsten Untersuchung.
+**Immer beide Metriken** (Design-Prinzip 9): Strukturtreffer und Anteil R2 > 0,9.
 
-Berichte in beiden Faellen, **wie viele Starts noetig sind**, um die Sentinel-Quote unter die des
-Originallaufs (null von 102) zu druecken, falls das ueberhaupt eintritt.
+Zusaetzlich, und das ist der eigentliche Zweck:
 
-### 4. Ausfuehrung
+| Groesse | Rekonstruktion | Generalisierung |
+|---|---|---|
+| Anteil R2 > 0,9 | vorhanden | **neu** |
+| Loss-Quantile 5/10/25/50/75/90/95 | vorhanden | **neu** |
 
-Kosten: 102 Zellen mal zwei Strukturen mal 10 Starts, **keine Struktursuche**. Zum Vergleich hat
-eine einzelne Kampagnenzelle tausende Anpassungen gerechnet.
+Getrennt nach Basis, Dimension und Richtung (IC1 → IC2 und IC2 → IC1). Kein Mittelwert oder Median
+als alleinige Zusammenfassung.
 
-**Du kannst Julia in dieser Umgebung nicht starten** (`A specified logon session does not exist`) —
-das ist in WP-N1 und WP-N3 zweimal passiert. Schreibe den Code, pruefe ihn statisch so sorgfaeltig
-wie in WP-N3b, melde `blocked` und **erfinde keine Ergebnisse**. Claude fuehrt aus.
+Zaehle ausserdem die Zellen, deren Modell beim Integrieren ab dem ungesehenen Anfangswert
+**divergiert oder nicht-finite Werte** liefert — das ist bei ungesehenen Anfangswerten ein
+erwartbarer Ausgang und darf nicht stillschweigend als schlechtes R2 verbucht werden.
 
-Halte im Report **zwei** Kommandos fest: einen kurzen Testlauf ueber wenige Zellen via `--limit` und
-den vollen Lauf. Der `--limit`-Pfad aus WP-N3b hat sich bewaehrt und ist beizubehalten.
+### 4. Die Frage, die der Report beantworten muss
 
-Ergebnisse in ein eigenes Verzeichnis unter `outputs/`, nie mit WP-N3-Daten in einer Datei
-zusammengefuehrt.
+> **Wie weit faellt der Anteil R2 > 0,9 von der Rekonstruktion zur Generalisierung?** Die
+> ODEFormer-Publikation berichtet, Generalisierung liege durchweg deutlich niedriger. Faellt unsere
+> Zahl aehnlich stark, ist das ein Hinweis auf ein gemeinsames Problem der Verfahrensklasse. Faellt
+> sie kaum, waere das ein starkes Ergebnis — und dann ist zuerst zu pruefen, ob die Messung stimmt.
+
+### 5. Ausfuehrung
+
+Kosten: eine Integration je Zelle, **keine Anpassung, keine Suche**. Das ist billiger als alles
+bisher Gerechnete.
+
+**Du kannst Julia in dieser Umgebung nicht starten** (`A specified logon session does not exist`).
+Schreibe den Code, pruefe ihn statisch so sorgfaeltig wie in WP-N3b, melde `blocked` und **erfinde
+keine Ergebnisse**. Claude fuehrt aus. Halte zwei Kommandos im Report fest: einen `--limit`-Testlauf
+ueber wenige Zellen und den vollen Lauf.
+
+Ergebnisse in ein eigenes Verzeichnis unter `outputs/`.
 
 ## Verboten
 
 - keine Aenderung an der Suchlogik, der Basis, am Stage-Cap oder an `pruned_match`
-- keine Aenderung an `outputs/wp_n1_dim1_probe/`, `outputs/wp_n3_oracle_refit/`, der Kampagne oder
-  den A5-bis-A9-Skripten
-- **kein Pretuning als Startwert** — die Frage ist, was zufaellige Starts leisten; ein OLS-Warmstart
-  waere eine andere Untersuchung
+- **keine Neuanpassung der Parameter** — das waere eine andere Messung
+- keine Aenderung an `outputs/wp_n1_dim1_probe/`, `outputs/wp_n3_oracle_refit/`,
+  `outputs/wp_n4_multistart_refit/`, der Kampagne oder den A5-bis-A9-Skripten
 - **keine Figuren**
 - keine Ergebnisse in `PAPER_1.md`, `CLAUDE.md` oder `DIARY.md`
-- `elapsed_s` nie als Kostenmass
 - kein `git add -A`, keine Git-Operationen
 
 ## Akzeptanzkriterium
 
-Bei k = 1 muss das Ergebnis die WP-N3-Zahlen **reproduzieren**, sofern der erste Startwert identisch
-abgeleitet wird: 15 Sentinel-Zellen bei der wahren Struktur, 11 bei der Oracle-Beschneidung. Weicht
-es ab, ist das ein Befund und im Report zu benennen, nicht anzugleichen — und dann ist die
-Ableitung der Startwerte die wahrscheinliche Ursache und zu dokumentieren.
+Kontrolle, die stimmen muss: Integriert man ein Modell ab **seinem eigenen** Anfangswert, muss der
+Loss dem im Record gespeicherten entsprechen. Baue diese Probe ein und melde jede Abweichung — sie
+waere der Beleg, dass Rekonstruktion aus dem Record nicht korrekt funktioniert, und dann ist jedes
+Generalisierungsergebnis wertlos.
 
 ## Report
 
-`codex/REPORT_WP_N4.md`. Enthaelt: die Kommandos, die Ableitung der Startwerte, die Kurventabellen
-ueber k mit **beiden** Metriken, die Antwort auf die Entscheidungsfrage aus Abschnitt 3, und — falls
-ein Plateau bleibt — die Liste der nicht anpassbaren Zellen.
+`codex/REPORT_WP_N5.md`. Enthaelt: die Kommandos, das Ergebnis der Rekonstruktionsprobe, die
+Tabellen mit beiden Metriken und beiden Regimen, die Zahl divergierender Integrationen, den Befund
+zur Kampagne (Koeffizienten vorhanden oder nicht) — und die Antwort auf die Frage aus Abschnitt 4.
