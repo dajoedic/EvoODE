@@ -1,0 +1,31 @@
+% Requires: \usepackage{booktabs}
+\begin{table}[htbp]
+\centering
+\caption{A9. Ten per-class system rows with the largest silent-level totals.}
+\begin{tabular}{lrrrrrrrrrr}
+\toprule
+system\_id & system\_name & system\_dim & system\_representability & n\_cells & silent\_levels\_sum & silent\_fraction\_q50 & silent\_fraction\_q90 & exact\_support\_match\_rate & r2\_median & class\_target \\
+\midrule
+63 & SEIR infection model (proportions) & 4 & exact & 12 & 228 & 0.95 & 0.95 & 0 &  & 0 \\
+28 & Pendulum without friction & 2 & exact & 12 & 155 & 0.65 & 0.95 & 0 &  & 0 \\
+8 & Logistic equation with Allee effect & 1 & exact & 12 & 135 & 0.90625 & 0.9375 & 0.25 &  & 0.25 \\
+55 & Lorenz equations in complex periodic regime & 3 & exact & 12 & 99 & 0.266667 & 0.464 & 0 &  & 0 \\
+54 & Lorenz equations in well-behaved periodic regime & 3 & exact & 12 & 93 & 0.333333 & 0.429286 & 0 &  & 0 \\
+56 & Lorenz equations standard parameters (chaotic) & 3 & exact & 12 & 76 & 0.216667 & 0.383571 & 0 &  & 0 \\
+31 & SIR infection model only for healthy and sick & 2 & exact & 12 & 69 & 0.46875 & 0.5 & 0.25 &  & 0.25 \\
+32 & Damped double well oscillator & 2 & exact & 12 & 64 & 0.0166667 & 0.95 & 0.583333 &  & 0.583333 \\
+11 & Naive critical slowing down (statistical mechanics) & 1 & exact & 12 & 55 & 0.125 & 0.6875 & 0.5 &  & 0.5 \\
+26 & Lotka-Volterra competition model (Strogatz version with sheeps and rabbits) & 2 & exact & 12 & 53 & 0.232143 & 0.5 & 0 &  & 0 \\
+30 & RNA molecules catalyzing each others replication & 2 & surrogate & 12 & 228 & 0.95 & 0.95 &  & 0.988019 & 0.988019 \\
+39 & Glycolytic oscillator, e.g., ADP and F6P in yeast (dimensionless) & 2 & surrogate & 12 & 218 & 0.95 & 0.95 &  & 0.966267 & 0.966267 \\
+36 & Pendulum with non-linear damping, no driving (dimensionless) & 2 & surrogate & 12 & 217 & 0.925 & 0.95 &  & 0.999435 & 0.999435 \\
+53 & Model for apoptosis (cell death) & 3 & surrogate & 12 & 210 & 0.844862 & 0.95 &  & 0.628915 & 0.628915 \\
+62 & Binocular rivalry model with adaptation (oscillations) & 4 & surrogate & 12 & 208 & 0.711852 & 0.76 &  & 0.999458 & 0.999458 \\
+46 & Interacting bar magnets & 2 & surrogate & 12 & 201 & 0.94375 & 0.95 &  & 0.90263 & 0.90263 \\
+47 & Binocular rivalry model (no oscillations) & 2 & surrogate & 12 & 186 & 0.738095 & 0.904762 &  & 0.875516 & 0.875516 \\
+9 & Language death model for two languages & 1 & surrogate & 12 & 185 & 0.85 & 0.95 &  & 0.290633 & 0.290633 \\
+10 & Refined language death model for two languages & 1 & surrogate & 12 & 174 & 0.74375 & 0.95 &  & 0.9965 & 0.9965 \\
+57 & Rössler attractor (stable fixed point) & 3 & surrogate & 12 & 163 & 0.667832 & 0.900649 &  & 0.796172 & 0.796172 \\
+\bottomrule
+\end{tabular}
+\end{table}

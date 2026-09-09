@@ -1,0 +1,151 @@
+{
+  "analyses": [
+    {
+      "cluster_permutation_p": 0.2177178228217718,
+      "contingency_table": {
+        "off_0_on_0": 57,
+        "off_0_on_1": 3,
+        "off_1_on_0": 13,
+        "off_1_on_1": 47
+      },
+      "dimension_contingency": [
+        {
+          "n_pairs": 36,
+          "off_0_on_0": 6,
+          "off_0_on_1": 0,
+          "off_1_on_0": 3,
+          "off_1_on_1": 27,
+          "system_dim": 1
+        },
+        {
+          "n_pairs": 54,
+          "off_0_on_0": 21,
+          "off_0_on_1": 3,
+          "off_1_on_0": 10,
+          "off_1_on_1": 20,
+          "system_dim": 2
+        },
+        {
+          "n_pairs": 24,
+          "off_0_on_0": 24,
+          "off_0_on_1": 0,
+          "off_1_on_0": 0,
+          "off_1_on_1": 0,
+          "system_dim": 3
+        },
+        {
+          "n_pairs": 6,
+          "off_0_on_0": 6,
+          "off_0_on_1": 0,
+          "off_1_on_0": 0,
+          "off_1_on_1": 0,
+          "system_dim": 4
+        }
+      ],
+      "effect_size": {
+        "cluster_bootstrap_ci95": [
+          -0.19166666666666668,
+          0.016666666666666666
+        ],
+        "paired_proportion_difference_on_minus_off": -0.08333333333333333
+      },
+      "n_pairs": 120,
+      "n_systems": 20,
+      "naive_exact_mcnemar_p": 0.021270751953125,
+      "system_representability": "exact",
+      "target": "exact_support_match",
+      "test_statistic": {
+        "discordant_pairs": 16,
+        "hit_count_difference_on_minus_off": -10
+      }
+    },
+    {
+      "cluster_permutation_p": 0.026969730302696972,
+      "effect_size": {
+        "cluster_bootstrap_ci95": [
+          -1.476707145453558e-10,
+          -1.3322676295501878e-14
+        ],
+        "median_pair_difference": -8.187339695098217e-13
+      },
+      "n_pairs": 258,
+      "n_systems": 43,
+      "naive_wilcoxon": {
+        "p": 0.007234118692530728,
+        "statistic": 13153.5
+      },
+      "system_representability": "surrogate",
+      "target": "r2",
+      "test_statistic": {
+        "median_pair_difference": -8.187339695098217e-13
+      }
+    },
+    {
+      "cluster_permutation_p": 0.5900640993590064,
+      "effect_size": {
+        "cluster_bootstrap_ci95": [
+          -0.020935726654082387,
+          0.01348906947866269
+        ],
+        "fold_change_ci95": [
+          0.9529371833821113,
+          1.0315471166650996
+        ],
+        "median_fold_change_on_over_off": 1.000000000010745,
+        "median_pair_difference": 4.666489417104458e-12
+      },
+      "n_pairs": 120,
+      "n_systems": 20,
+      "naive_wilcoxon": {
+        "p": 0.29484551841848716,
+        "statistic": 2907.0
+      },
+      "system_representability": "exact",
+      "target": "log10_loss",
+      "test_statistic": {
+        "median_pair_difference": 4.666489417104458e-12
+      }
+    },
+    {
+      "cluster_permutation_p": 0.010579894201057989,
+      "effect_size": {
+        "cluster_bootstrap_ci95": [
+          6.122047313539269e-13,
+          1.7977361671528315e-08
+        ],
+        "fold_change_ci95": [
+          1.0000000000014098,
+          1.000000041394406
+        ],
+        "median_fold_change_on_over_off": 1.000000000080303,
+        "median_pair_difference": 3.487521382794512e-11
+      },
+      "n_pairs": 258,
+      "n_systems": 43,
+      "naive_wilcoxon": {
+        "p": 0.005957979400892643,
+        "statistic": 12540.0
+      },
+      "system_representability": "surrogate",
+      "target": "log10_loss",
+      "test_statistic": {
+        "median_pair_difference": 3.487521382794512e-11
+      }
+    }
+  ],
+  "experiment_id": "paper1_phaseB_v1",
+  "input_path": "C:\\Users\\joedicke\\Documents\\reps\\EvoODE\\experiments\\paper1_phaseB_v1\\run_registry.csv",
+  "loss_analysis_note": "Loss is analyzed as log10(on) - log10(off), because raw loss spans many orders of magnitude; negative values favor pretuning.",
+  "pair_counts": {
+    "exact": 120,
+    "surrogate": 258,
+    "total": 378
+  },
+  "randomization": {
+    "bootstrap_replicates": 10000,
+    "bootstrap_unit": "system_id",
+    "permutation_count": 100000,
+    "permutation_unit": "system_id",
+    "seed": 20260907
+  }
+}

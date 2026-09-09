@@ -1,0 +1,15 @@
+% Requires: \usepackage{booktabs}
+\begin{table}[htbp]
+\centering
+\caption{T5. Robustness and failure modes. Retcode frequencies and robustness counters are grouped by condition and exact/surrogate class.}
+\begin{tabular}{lrrrrrrrrrrrrrrrrrrrrrrrr}
+\toprule
+condition & system\_representability & n\_cells & success\_true\_cells & failure\_reason\_set\_cells & total\_diverged\_solves\_sum & total\_diverged\_solves\_nonzero\_cells & total\_invalid\_solves\_sum & total\_invalid\_solves\_nonzero\_cells & total\_nonfinite\_solves\_sum & total\_nonfinite\_solves\_nonzero\_cells & total\_solver\_unstable\_solves\_sum & total\_solver\_unstable\_solves\_nonzero\_cells & total\_step\_limit\_solves\_sum & total\_step\_limit\_solves\_nonzero\_cells & total\_optimizer\_limit\_hits\_sum & total\_optimizer\_limit\_hits\_nonzero\_cells & total\_optimizer\_budget\_stop\_fits\_sum & total\_optimizer\_budget\_stop\_fits\_nonzero\_cells & solver\_retcodes\_MaxIters\_count & solver\_retcodes\_Success\_count & solver\_retcodes\_Unstable\_count & optimizer\_retcodes\_Failure\_count & optimizer\_retcodes\_MaxLossEvals\_count & optimizer\_retcodes\_Success\_count \\
+\midrule
+pretune\_off & exact & 120 & 120 & 0 & 7034272 & 102 & 7893964 & 102 & 0 & 0 & 7034272 & 102 & 859652 & 72 & 12579 & 112 & 4265 & 99 & 72 & 120 & 102 & 107 & 99 & 120 \\
+pretune\_off & surrogate & 258 & 258 & 0 & 20336833 & 255 & 21639859 & 255 & 0 & 0 & 20336833 & 255 & 1301902 & 159 & 47480 & 246 & 15772 & 212 & 159 & 258 & 255 & 241 & 212 & 258 \\
+pretune\_on & exact & 120 & 120 & 0 & 15553750 & 74 & 16212146 & 74 & 0 & 0 & 15553750 & 74 & 658396 & 44 & 18146 & 81 & 5087 & 66 & 44 & 120 & 74 & 75 & 66 & 117 \\
+pretune\_on & surrogate & 258 & 258 & 0 & 17434386 & 176 & 17771637 & 176 & 0 & 0 & 17434386 & 176 & 337251 & 109 & 58013 & 225 & 13558 & 144 & 109 & 258 & 176 & 225 & 144 & 243 \\
+\bottomrule
+\end{tabular}
+\end{table}

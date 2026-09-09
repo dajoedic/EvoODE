@@ -1,0 +1,61 @@
+variant_slug,system_id,system_name,mean_loss,std_loss,exact_match_rate,n_valid
+evogrow_v1,2,Population growth (linear),6.32274e-12,0,1,5
+evogrow_v1,3,Logistic growth,3.23636e-08,0,1,5
+evogrow_v1,11,Critical slowing down,4.34544e-15,0,0,5
+evogrow_v1,24,Harmonic oscillator,5.35423e-14,0,1,5
+evogrow_v1,26,Lotka-Volterra competition,0.000365809,0.000173144,0,5
+evogrow_v1,31,SIR model,6.97489e-05,0,0,5
+evogrow_v1,54,Lorenz (periodic),0.00135884,0.00165212,0,5
+evogrow_v1,63,SEIR model,0.00116653,0.000962591,0,5
+evogrow_v2_1,2,Population growth (linear),6.32274e-12,0,1,5
+evogrow_v2_1,3,Logistic growth,3.23636e-08,0,1,5
+evogrow_v2_1,11,Critical slowing down,4.34544e-15,0,0,5
+evogrow_v2_1,24,Harmonic oscillator,5.35423e-14,0,1,5
+evogrow_v2_1,26,Lotka-Volterra competition,0.000365809,0.000173144,0,5
+evogrow_v2_1,31,SIR model,6.97489e-05,0,0,5
+evogrow_v2_1,54,Lorenz (periodic),0.00159398,0.00151071,0,5
+evogrow_v2_1,63,SEIR model,0.00116653,0.000962591,0,5
+evogrow_v2_2_stage_local,2,Population growth (linear),6.32274e-12,0,1,5
+evogrow_v2_2_stage_local,3,Logistic growth,3.23636e-08,0,1,5
+evogrow_v2_2_stage_local,11,Critical slowing down,4.34544e-15,0,0,5
+evogrow_v2_2_stage_local,24,Harmonic oscillator,5.35423e-14,0,1,5
+evogrow_v2_2_stage_local,26,Lotka-Volterra competition,0.000365809,0.000173144,0,5
+evogrow_v2_2_stage_local,31,SIR model,6.97489e-05,0,0,5
+evogrow_v2_2_stage_local,54,Lorenz (periodic),0.000741879,0.000406281,0,5
+evogrow_v2_2_stage_local,63,SEIR model,0.00116653,0.000962591,0,5
+evogrow_v2_2_passive,2,Population growth (linear),6.32274e-12,0,1,5
+evogrow_v2_2_passive,3,Logistic growth,3.23636e-08,0,1,5
+evogrow_v2_2_passive,11,Critical slowing down,4.34544e-15,0,0,5
+evogrow_v2_2_passive,24,Harmonic oscillator,5.35423e-14,0,1,5
+evogrow_v2_2_passive,26,Lotka-Volterra competition,0.000378721,0.000159338,0,5
+evogrow_v2_2_passive,31,SIR model,6.97489e-05,0,0,5
+evogrow_v2_2_passive,54,Lorenz (periodic),0.00118531,0.000581556,0,5
+evogrow_v2_2_passive,63,SEIR model,0.00116446,0.00096526,0,5
+evogrow_v2_2_soft,2,Population growth (linear),6.32274e-12,0,1,5
+evogrow_v2_2_soft,3,Logistic growth,3.23636e-08,0,1,5
+evogrow_v2_2_soft,11,Critical slowing down,4.34544e-15,0,0,5
+evogrow_v2_2_soft,24,Harmonic oscillator,5.35423e-14,0,1,5
+evogrow_v2_2_soft,26,Lotka-Volterra competition,0.000249445,2.88731e-05,0,5
+evogrow_v2_2_soft,31,SIR model,6.97489e-05,0,0,5
+evogrow_v2_2_soft,54,Lorenz (periodic),0.000942508,0.000330062,0,5
+evogrow_v2_2_soft,63,SEIR model,0.000961116,0.000835783,0,5
+gp_baseline,2,Population growth (linear),6.32274e-12,0,1,5
+gp_baseline,3,Logistic growth,2.99973e-08,5.29123e-09,0.8,5
+gp_baseline,11,Critical slowing down,4.60566e-15,0,1,5
+gp_baseline,24,Harmonic oscillator,0.00454095,0.0101537,0,5
+gp_baseline,26,Lotka-Volterra competition,0.00298165,0.00117012,0,5
+gp_baseline,31,SIR model,0.313561,0.373227,0,5
+gp_baseline,54,Lorenz (periodic),0.921269,0.308894,0,5
+gp_baseline,63,SEIR model,0.00126627,0.000333306,0,5
+evogrow_v1,23,Overdamped pendulum,0.000184159,0,,5
+evogrow_v1,37,Van der Pol oscillator,0.0251874,0.00100419,,5
+evogrow_v2_1,23,Overdamped pendulum,0.000184159,0,,5
+evogrow_v2_1,37,Van der Pol oscillator,0.0251874,0.00100419,,5
+evogrow_v2_2_stage_local,23,Overdamped pendulum,0.000184159,0,,5
+evogrow_v2_2_stage_local,37,Van der Pol oscillator,0.0251874,0.00100419,,5
+evogrow_v2_2_passive,23,Overdamped pendulum,0.000184159,0,,5
+evogrow_v2_2_passive,37,Van der Pol oscillator,0.0258623,0.00191789,,5
+evogrow_v2_2_soft,23,Overdamped pendulum,0.000184159,0,,5
+evogrow_v2_2_soft,37,Van der Pol oscillator,0.0264097,0.00188206,,5
+gp_baseline,23,Overdamped pendulum,0.000611592,0.00133806,,5
+gp_baseline,37,Van der Pol oscillator,0.0464749,0.0124718,,5

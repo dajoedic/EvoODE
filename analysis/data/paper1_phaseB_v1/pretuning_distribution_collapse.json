@@ -1,0 +1,951 @@
+{
+  "collapse_group_counts": {
+    "pretune_off": 126,
+    "pretune_on": 126
+  },
+  "collapse_tolerance": {
+    "absolute": 0.0,
+    "numeric_rule": "abs(value - first) <= absolute + relative * abs(first)",
+    "relative": 1e-12,
+    "support_rule": "JSON is parsed, equation order is preserved, and terms within each equation are sorted before exact comparison."
+  },
+  "distributions": [
+    {
+      "difference": "pretune_on - pretune_off",
+      "n_pairs": 258,
+      "n_systems": 43,
+      "quantiles": [
+        {
+          "probability": 0.05,
+          "value": -0.0807121354256392
+        },
+        {
+          "probability": 0.1,
+          "value": -0.019820705138902252
+        },
+        {
+          "probability": 0.25,
+          "value": -9.920151286396672e-06
+        },
+        {
+          "probability": 0.5,
+          "value": -8.187339695098217e-13
+        },
+        {
+          "probability": 0.75,
+          "value": 5.858985377416026e-08
+        },
+        {
+          "probability": 0.9,
+          "value": 0.0199583201651007
+        },
+        {
+          "probability": 0.95,
+          "value": 0.11105364037597845
+        }
+      ],
+      "sign_asymmetry": {
+        "cluster_permutation_p": 0.0005399946000539995,
+        "exact_zero": 3,
+        "favor_pretune_off": 174,
+        "favor_pretune_on": 81
+      },
+      "system_representability": "surrogate",
+      "target": "r2",
+      "threshold_grid": [
+        {
+          "favor_pretune_off_cluster_bootstrap_ci95": [
+            0.1511627906976744,
+            0.3488372093023256
+          ],
+          "favor_pretune_off_count": 63,
+          "favor_pretune_off_share": 0.2441860465116279,
+          "favor_pretune_on_cluster_bootstrap_ci95": [
+            0.09689922480620156,
+            0.2713178294573643
+          ],
+          "favor_pretune_on_count": 46,
+          "favor_pretune_on_share": 0.17829457364341086,
+          "threshold": 0.0001
+        },
+        {
+          "favor_pretune_off_cluster_bootstrap_ci95": [
+            0.12403100775193798,
+            0.3178294573643411
+          ],
+          "favor_pretune_off_count": 56,
+          "favor_pretune_off_share": 0.21705426356589147,
+          "favor_pretune_on_cluster_bootstrap_ci95": [
+            0.06976744186046512,
+            0.22093023255813954
+          ],
+          "favor_pretune_on_count": 36,
+          "favor_pretune_on_share": 0.13953488372093023,
+          "threshold": 0.001
+        },
+        {
+          "favor_pretune_off_cluster_bootstrap_ci95": [
+            0.06589147286821706,
+            0.22868217054263565
+          ],
+          "favor_pretune_off_count": 36,
+          "favor_pretune_off_share": 0.13953488372093023,
+          "favor_pretune_on_cluster_bootstrap_ci95": [
+            0.046511627906976744,
+            0.19389534883720788
+          ],
+          "favor_pretune_on_count": 30,
+          "favor_pretune_on_share": 0.11627906976744186,
+          "threshold": 0.01
+        },
+        {
+          "favor_pretune_off_cluster_bootstrap_ci95": [
+            0.015503875968992248,
+            0.09302325581395349
+          ],
+          "favor_pretune_off_count": 13,
+          "favor_pretune_off_share": 0.050387596899224806,
+          "favor_pretune_on_cluster_bootstrap_ci95": [
+            0.015503875968992248,
+            0.12015503875968993
+          ],
+          "favor_pretune_on_count": 16,
+          "favor_pretune_on_share": 0.06201550387596899,
+          "threshold": 0.1
+        }
+      ]
+    },
+    {
+      "difference": "log10(loss_on) - log10(loss_off)",
+      "n_pairs": 120,
+      "n_systems": 20,
+      "quantiles": [
+        {
+          "probability": 0.05,
+          "value": -1.1820112707175447
+        },
+        {
+          "probability": 0.1,
+          "value": -0.5548805905689651
+        },
+        {
+          "probability": 0.25,
+          "value": -0.0674075243197827
+        },
+        {
+          "probability": 0.5,
+          "value": 4.666489417104458e-12
+        },
+        {
+          "probability": 0.75,
+          "value": 0.12614502701063168
+        },
+        {
+          "probability": 0.9,
+          "value": 2.497231358206752
+        },
+        {
+          "probability": 0.95,
+          "value": 7.304433565887934
+        }
+      ],
+      "sign_asymmetry": {
+        "cluster_permutation_p": 0.6681633183668163,
+        "exact_zero": 6,
+        "favor_pretune_off": 62,
+        "favor_pretune_on": 52
+      },
+      "system_representability": "exact",
+      "target": "log10_loss",
+      "threshold_grid": [
+        {
+          "favor_pretune_off_cluster_bootstrap_ci95": [
+            0.14166666666666666,
+            0.45
+          ],
+          "favor_pretune_off_count": 35,
+          "favor_pretune_off_share": 0.2916666666666667,
+          "favor_pretune_on_cluster_bootstrap_ci95": [
+            0.13333333333333333,
+            0.4666666666666667
+          ],
+          "favor_pretune_on_count": 35,
+          "favor_pretune_on_share": 0.2916666666666667,
+          "threshold": 1.1
+        },
+        {
+          "favor_pretune_off_cluster_bootstrap_ci95": [
+            0.10833333333333334,
+            0.3333333333333333
+          ],
+          "favor_pretune_off_count": 26,
+          "favor_pretune_off_share": 0.21666666666666667,
+          "favor_pretune_on_cluster_bootstrap_ci95": [
+            0.016666666666666666,
+            0.23333333333333334
+          ],
+          "favor_pretune_on_count": 13,
+          "favor_pretune_on_share": 0.10833333333333334,
+          "threshold": 2.0
+        },
+        {
+          "favor_pretune_off_cluster_bootstrap_ci95": [
+            0.075,
+            0.2833333333333333
+          ],
+          "favor_pretune_off_count": 21,
+          "favor_pretune_off_share": 0.175,
+          "favor_pretune_on_cluster_bootstrap_ci95": [
+            0.0,
+            0.14166666666666666
+          ],
+          "favor_pretune_on_count": 7,
+          "favor_pretune_on_share": 0.058333333333333334,
+          "threshold": 10.0
+        },
+        {
+          "favor_pretune_off_cluster_bootstrap_ci95": [
+            0.03333333333333333,
+            0.20833333333333334
+          ],
+          "favor_pretune_off_count": 14,
+          "favor_pretune_off_share": 0.11666666666666667,
+          "favor_pretune_on_cluster_bootstrap_ci95": [
+            0.0,
+            0.1
+          ],
+          "favor_pretune_on_count": 4,
+          "favor_pretune_on_share": 0.03333333333333333,
+          "threshold": 100.0
+        }
+      ]
+    },
+    {
+      "difference": "log10(loss_on) - log10(loss_off)",
+      "n_pairs": 258,
+      "n_systems": 43,
+      "quantiles": [
+        {
+          "probability": 0.05,
+          "value": -0.8579539432916871
+        },
+        {
+          "probability": 0.1,
+          "value": -0.5779865894661447
+        },
+        {
+          "probability": 0.25,
+          "value": -5.5510332330754864e-08
+        },
+        {
+          "probability": 0.5,
+          "value": 3.487521382794512e-11
+        },
+        {
+          "probability": 0.75,
+          "value": 0.03399940701197082
+        },
+        {
+          "probability": 0.9,
+          "value": 0.24456196491777102
+        },
+        {
+          "probability": 0.95,
+          "value": 0.9507566554624209
+        }
+      ],
+      "sign_asymmetry": {
+        "cluster_permutation_p": 8.99991000089999e-05,
+        "exact_zero": 8,
+        "favor_pretune_off": 176,
+        "favor_pretune_on": 74
+      },
+      "system_representability": "surrogate",
+      "target": "log10_loss",
+      "threshold_grid": [
+        {
+          "favor_pretune_off_cluster_bootstrap_ci95": [
+            0.13178294573643412,
+            0.313953488372093
+          ],
+          "favor_pretune_off_count": 56,
+          "favor_pretune_off_share": 0.21705426356589147,
+          "favor_pretune_on_cluster_bootstrap_ci95": [
+            0.12015503875968993,
+            0.29069767441860467
+          ],
+          "favor_pretune_on_count": 52,
+          "favor_pretune_on_share": 0.20155038759689922,
+          "threshold": 1.1
+        },
+        {
+          "favor_pretune_off_cluster_bootstrap_ci95": [
+            0.03488372093023256,
+            0.16279069767441862
+          ],
+          "favor_pretune_off_count": 24,
+          "favor_pretune_off_share": 0.09302325581395349,
+          "favor_pretune_on_cluster_bootstrap_ci95": [
+            0.06201550387596899,
+            0.19767441860465115
+          ],
+          "favor_pretune_on_count": 32,
+          "favor_pretune_on_share": 0.12403100775193798,
+          "threshold": 2.0
+        },
+        {
+          "favor_pretune_off_cluster_bootstrap_ci95": [
+            0.015503875968992248,
+            0.08527131782945736
+          ],
+          "favor_pretune_off_count": 12,
+          "favor_pretune_off_share": 0.046511627906976744,
+          "favor_pretune_on_cluster_bootstrap_ci95": [
+            0.011627906976744186,
+            0.08527131782945736
+          ],
+          "favor_pretune_on_count": 12,
+          "favor_pretune_on_share": 0.046511627906976744,
+          "threshold": 10.0
+        },
+        {
+          "favor_pretune_off_cluster_bootstrap_ci95": [
+            0.0,
+            0.0
+          ],
+          "favor_pretune_off_count": 0,
+          "favor_pretune_off_share": 0.0,
+          "favor_pretune_on_cluster_bootstrap_ci95": [
+            0.0,
+            0.011627906976744186
+          ],
+          "favor_pretune_on_count": 1,
+          "favor_pretune_on_share": 0.003875968992248062,
+          "threshold": 100.0
+        }
+      ]
+    }
+  ],
+  "experiment_id": "paper1_phaseB_v1",
+  "input_path": "C:\\Users\\joedicke\\Documents\\reps\\EvoODE\\experiments\\paper1_phaseB_v1\\run_registry.csv",
+  "pair_counts": {
+    "exact": 120,
+    "surrogate": 258,
+    "total": 378
+  },
+  "randomization": {
+    "bootstrap_replicates": 10000,
+    "bootstrap_unit": "system_id",
+    "permutation_count": 100000,
+    "permutation_unit": "system_id",
+    "seed": 20260907
+  },
+  "seed_collapse": [
+    {
+      "by_condition": {
+        "pretune_off": {
+          "collapsed_groups": 14,
+          "groups": 40,
+          "max_range": 0.35586889317165005,
+          "range_quantiles": [
+            {
+              "probability": 0.05,
+              "value": 4.2188474935755956e-16
+            },
+            {
+              "probability": 0.1,
+              "value": 1.4765966227514585e-15
+            },
+            {
+              "probability": 0.25,
+              "value": 1.1876610805927612e-13
+            },
+            {
+              "probability": 0.5,
+              "value": 2.64509303349314e-10
+            },
+            {
+              "probability": 0.75,
+              "value": 0.01957752742869548
+            },
+            {
+              "probability": 0.9,
+              "value": 0.1303426199730772
+            },
+            {
+              "probability": 0.95,
+              "value": 0.17004144924561473
+            }
+          ],
+          "share": 0.35
+        },
+        "pretune_on": {
+          "collapsed_groups": 29,
+          "groups": 40,
+          "max_range": 0.3558689011149846,
+          "range_quantiles": [
+            {
+              "probability": 0.05,
+              "value": 0.0
+            },
+            {
+              "probability": 0.1,
+              "value": 0.0
+            },
+            {
+              "probability": 0.25,
+              "value": 0.0
+            },
+            {
+              "probability": 0.5,
+              "value": 0.0
+            },
+            {
+              "probability": 0.75,
+              "value": 0.0001603386420235553
+            },
+            {
+              "probability": 0.9,
+              "value": 0.08811873718289931
+            },
+            {
+              "probability": 0.95,
+              "value": 0.26702499007885616
+            }
+          ],
+          "share": 0.725
+        }
+      },
+      "cluster_permutation_p": 0.0008999910000899991,
+      "n_condition_pairs": 40,
+      "n_systems": 20,
+      "naive_exact_mcnemar_p": 6.103515625e-05,
+      "paired_contingency": {
+        "off_no_on_no": 11,
+        "off_no_on_yes": 15,
+        "off_yes_on_no": 0,
+        "off_yes_on_yes": 14
+      },
+      "system_representability": "exact",
+      "target": "r2"
+    },
+    {
+      "by_condition": {
+        "pretune_off": {
+          "collapsed_groups": 21,
+          "groups": 86,
+          "max_range": 0.30594410045167364,
+          "range_quantiles": [
+            {
+              "probability": 0.05,
+              "value": 2.7755575615628914e-16
+            },
+            {
+              "probability": 0.1,
+              "value": 5.190292640122607e-15
+            },
+            {
+              "probability": 0.25,
+              "value": 1.367184143674649e-12
+            },
+            {
+              "probability": 0.5,
+              "value": 1.2033362317698248e-06
+            },
+            {
+              "probability": 0.75,
+              "value": 0.006410505624362212
+            },
+            {
+              "probability": 0.9,
+              "value": 0.12787405884461883
+            },
+            {
+              "probability": 0.95,
+              "value": 0.2265669481192662
+            }
+          ],
+          "share": 0.2441860465116279
+        },
+        "pretune_on": {
+          "collapsed_groups": 67,
+          "groups": 86,
+          "max_range": 0.282658791179912,
+          "range_quantiles": [
+            {
+              "probability": 0.05,
+              "value": 0.0
+            },
+            {
+              "probability": 0.1,
+              "value": 0.0
+            },
+            {
+              "probability": 0.25,
+              "value": 0.0
+            },
+            {
+              "probability": 0.5,
+              "value": 0.0
+            },
+            {
+              "probability": 0.75,
+              "value": 0.0
+            },
+            {
+              "probability": 0.9,
+              "value": 0.00923796066982549
+            },
+            {
+              "probability": 0.95,
+              "value": 0.060845389052295085
+            }
+          ],
+          "share": 0.7790697674418605
+        }
+      },
+      "cluster_permutation_p": 9.99990000099999e-06,
+      "n_condition_pairs": 86,
+      "n_systems": 43,
+      "naive_exact_mcnemar_p": 2.842170943040401e-14,
+      "paired_contingency": {
+        "off_no_on_no": 19,
+        "off_no_on_yes": 46,
+        "off_yes_on_no": 0,
+        "off_yes_on_yes": 21
+      },
+      "system_representability": "surrogate",
+      "target": "r2"
+    },
+    {
+      "by_condition": {
+        "pretune_off": {
+          "collapsed_groups": 35,
+          "groups": 126,
+          "max_range": 0.35586889317165005,
+          "range_quantiles": [
+            {
+              "probability": 0.05,
+              "value": 2.7755575615628914e-16
+            },
+            {
+              "probability": 0.1,
+              "value": 4.524158825347513e-15
+            },
+            {
+              "probability": 0.25,
+              "value": 6.452061107609097e-13
+            },
+            {
+              "probability": 0.5,
+              "value": 1.1635574287405248e-07
+            },
+            {
+              "probability": 0.75,
+              "value": 0.008802553894568244
+            },
+            {
+              "probability": 0.9,
+              "value": 0.13047195142443868
+            },
+            {
+              "probability": 0.95,
+              "value": 0.21215963152731107
+            }
+          ],
+          "share": 0.2777777777777778
+        },
+        "pretune_on": {
+          "collapsed_groups": 96,
+          "groups": 126,
+          "max_range": 0.3558689011149846,
+          "range_quantiles": [
+            {
+              "probability": 0.05,
+              "value": 0.0
+            },
+            {
+              "probability": 0.1,
+              "value": 0.0
+            },
+            {
+              "probability": 0.25,
+              "value": 0.0
+            },
+            {
+              "probability": 0.5,
+              "value": 0.0
+            },
+            {
+              "probability": 0.75,
+              "value": 0.0
+            },
+            {
+              "probability": 0.9,
+              "value": 0.042147470193466374
+            },
+            {
+              "probability": 0.95,
+              "value": 0.08026960751012925
+            }
+          ],
+          "share": 0.7619047619047619
+        }
+      },
+      "cluster_permutation_p": 9.99990000099999e-06,
+      "n_condition_pairs": 126,
+      "n_systems": 63,
+      "naive_exact_mcnemar_p": 8.673617379884035e-19,
+      "paired_contingency": {
+        "off_no_on_no": 30,
+        "off_no_on_yes": 61,
+        "off_yes_on_no": 0,
+        "off_yes_on_yes": 35
+      },
+      "system_representability": "all",
+      "target": "r2"
+    },
+    {
+      "by_condition": {
+        "pretune_off": {
+          "collapsed_groups": 1,
+          "groups": 40,
+          "log10_range_quantiles": [
+            {
+              "probability": 0.05,
+              "value": 6.956857312445664e-12
+            },
+            {
+              "probability": 0.1,
+              "value": 2.448950723987765e-07
+            },
+            {
+              "probability": 0.25,
+              "value": 0.010460069066438038
+            },
+            {
+              "probability": 0.5,
+              "value": 0.07903819238842325
+            },
+            {
+              "probability": 0.75,
+              "value": 0.5292219151346851
+            },
+            {
+              "probability": 0.9,
+              "value": 1.2869222608268622
+            },
+            {
+              "probability": 0.95,
+              "value": 2.302384934548948
+            }
+          ],
+          "max_log10_range": 6.8473146496463295,
+          "share": 0.025
+        },
+        "pretune_on": {
+          "collapsed_groups": 29,
+          "groups": 40,
+          "log10_range_quantiles": [
+            {
+              "probability": 0.05,
+              "value": 0.0
+            },
+            {
+              "probability": 0.1,
+              "value": 0.0
+            },
+            {
+              "probability": 0.25,
+              "value": 0.0
+            },
+            {
+              "probability": 0.5,
+              "value": 0.0
+            },
+            {
+              "probability": 0.75,
+              "value": 0.027744035417156754
+            },
+            {
+              "probability": 0.9,
+              "value": 0.12034971113903796
+            },
+            {
+              "probability": 0.95,
+              "value": 0.42653388944627774
+            }
+          ],
+          "max_log10_range": 2.4295622308927065,
+          "share": 0.725
+        }
+      },
+      "cluster_permutation_p": 5.999940000599994e-05,
+      "n_condition_pairs": 40,
+      "n_systems": 20,
+      "naive_exact_mcnemar_p": 7.450580596923828e-09,
+      "paired_contingency": {
+        "off_no_on_no": 11,
+        "off_no_on_yes": 28,
+        "off_yes_on_no": 0,
+        "off_yes_on_yes": 1
+      },
+      "system_representability": "exact",
+      "target": "loss"
+    },
+    {
+      "by_condition": {
+        "pretune_off": {
+          "collapsed_groups": 13,
+          "groups": 86,
+          "log10_range_quantiles": [
+            {
+              "probability": 0.05,
+              "value": 1.7763568394002505e-15
+            },
+            {
+              "probability": 0.1,
+              "value": 1.503241975342462e-13
+            },
+            {
+              "probability": 0.25,
+              "value": 2.4837465417704152e-11
+            },
+            {
+              "probability": 0.5,
+              "value": 0.006291183911256826
+            },
+            {
+              "probability": 0.75,
+              "value": 0.2315621086758054
+            },
+            {
+              "probability": 0.9,
+              "value": 0.6204543996174718
+            },
+            {
+              "probability": 0.95,
+              "value": 0.7805131268100266
+            }
+          ],
+          "max_log10_range": 1.4301879837924616,
+          "share": 0.1511627906976744
+        },
+        "pretune_on": {
+          "collapsed_groups": 67,
+          "groups": 86,
+          "log10_range_quantiles": [
+            {
+              "probability": 0.05,
+              "value": 0.0
+            },
+            {
+              "probability": 0.1,
+              "value": 0.0
+            },
+            {
+              "probability": 0.25,
+              "value": 0.0
+            },
+            {
+              "probability": 0.5,
+              "value": 0.0
+            },
+            {
+              "probability": 0.75,
+              "value": 0.0
+            },
+            {
+              "probability": 0.9,
+              "value": 0.07327246984085975
+            },
+            {
+              "probability": 0.95,
+              "value": 0.3721336225977612
+            }
+          ],
+          "max_log10_range": 2.6683660159672598,
+          "share": 0.7790697674418605
+        }
+      },
+      "cluster_permutation_p": 9.99990000099999e-06,
+      "n_condition_pairs": 86,
+      "n_systems": 43,
+      "naive_exact_mcnemar_p": 1.1102230246251565e-16,
+      "paired_contingency": {
+        "off_no_on_no": 19,
+        "off_no_on_yes": 54,
+        "off_yes_on_no": 0,
+        "off_yes_on_yes": 13
+      },
+      "system_representability": "surrogate",
+      "target": "loss"
+    },
+    {
+      "by_condition": {
+        "pretune_off": {
+          "collapsed_groups": 14,
+          "groups": 126,
+          "log10_range_quantiles": [
+            {
+              "probability": 0.05,
+              "value": 1.8610113450279187e-14
+            },
+            {
+              "probability": 0.1,
+              "value": 3.6148861681795097e-13
+            },
+            {
+              "probability": 0.25,
+              "value": 7.869026652507216e-09
+            },
+            {
+              "probability": 0.5,
+              "value": 0.035626647576285864
+            },
+            {
+              "probability": 0.75,
+              "value": 0.3381360141410935
+            },
+            {
+              "probability": 0.9,
+              "value": 0.7561472866080294
+            },
+            {
+              "probability": 0.95,
+              "value": 1.2103736993218637
+            }
+          ],
+          "max_log10_range": 6.8473146496463295,
+          "share": 0.1111111111111111
+        },
+        "pretune_on": {
+          "collapsed_groups": 96,
+          "groups": 126,
+          "log10_range_quantiles": [
+            {
+              "probability": 0.05,
+              "value": 0.0
+            },
+            {
+              "probability": 0.1,
+              "value": 0.0
+            },
+            {
+              "probability": 0.25,
+              "value": 0.0
+            },
+            {
+              "probability": 0.5,
+              "value": 0.0
+            },
+            {
+              "probability": 0.75,
+              "value": 0.0
+            },
+            {
+              "probability": 0.9,
+              "value": 0.11558210257298895
+            },
+            {
+              "probability": 0.95,
+              "value": 0.41976762007698787
+            }
+          ],
+          "max_log10_range": 2.6683660159672598,
+          "share": 0.7619047619047619
+        }
+      },
+      "cluster_permutation_p": 9.99990000099999e-06,
+      "n_condition_pairs": 126,
+      "n_systems": 63,
+      "naive_exact_mcnemar_p": 4.1359030627651384e-25,
+      "paired_contingency": {
+        "off_no_on_no": 30,
+        "off_no_on_yes": 82,
+        "off_yes_on_no": 0,
+        "off_yes_on_yes": 14
+      },
+      "system_representability": "all",
+      "target": "loss"
+    },
+    {
+      "by_condition": {
+        "pretune_off": {
+          "collapsed_groups": 16,
+          "groups": 40,
+          "share": 0.4
+        },
+        "pretune_on": {
+          "collapsed_groups": 29,
+          "groups": 40,
+          "share": 0.725
+        }
+      },
+      "cluster_permutation_p": 0.003689963100368996,
+      "n_condition_pairs": 40,
+      "n_systems": 20,
+      "naive_exact_mcnemar_p": 0.000244140625,
+      "paired_contingency": {
+        "off_no_on_no": 11,
+        "off_no_on_yes": 13,
+        "off_yes_on_no": 0,
+        "off_yes_on_yes": 16
+      },
+      "system_representability": "exact",
+      "target": "support_terms"
+    },
+    {
+      "by_condition": {
+        "pretune_off": {
+          "collapsed_groups": 45,
+          "groups": 86,
+          "share": 0.5232558139534884
+        },
+        "pretune_on": {
+          "collapsed_groups": 67,
+          "groups": 86,
+          "share": 0.7790697674418605
+        }
+      },
+      "cluster_permutation_p": 0.00018999810001899982,
+      "n_condition_pairs": 86,
+      "n_systems": 43,
+      "naive_exact_mcnemar_p": 4.76837158203125e-07,
+      "paired_contingency": {
+        "off_no_on_no": 19,
+        "off_no_on_yes": 22,
+        "off_yes_on_no": 0,
+        "off_yes_on_yes": 45
+      },
+      "system_representability": "surrogate",
+      "target": "support_terms"
+    },
+    {
+      "by_condition": {
+        "pretune_off": {
+          "collapsed_groups": 61,
+          "groups": 126,
+          "share": 0.48412698412698413
+        },
+        "pretune_on": {
+          "collapsed_groups": 96,
+          "groups": 126,
+          "share": 0.7619047619047619
+        }
+      },
+      "cluster_permutation_p": 9.99990000099999e-06,
+      "n_condition_pairs": 126,
+      "n_systems": 63,
+      "naive_exact_mcnemar_p": 5.820766091346741e-11,
+      "paired_contingency": {
+        "off_no_on_no": 30,
+        "off_no_on_yes": 35,
+        "off_yes_on_no": 0,
+        "off_yes_on_yes": 61
+      },
+      "system_representability": "all",
+      "target": "support_terms"
+    }
+  ]
+}

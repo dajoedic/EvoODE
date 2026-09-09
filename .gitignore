@@ -1,34 +1,79 @@
+# The rule this file follows
+#
+# Tracked:   everything a result can be rebuilt or checked from — manifests, run registries,
+#            campaign histories, and the derived tables and figures a document cites by name.
+# Ignored:   per-run scratch output, logs, caches, environments, and derived artefacts of probes
+#            and fixtures that no document refers to.
+#
+# The distinction is deliberately not "generated vs. handwritten". A run registry is generated and
+# is tracked, because regenerating it costs 5,248 core hours. A probe figure is generated and is
+# ignored, because regenerating it costs a minute.
+
+# ---------------------------------------------------------------------------
+# Tooling and environments
+# ---------------------------------------------------------------------------
 .claude/
-fit*.csv
-fit*.png
-benchmarks/results/
-benchmarks/odeformer/results/
-debug_results/
-experiments/*/runs/
-experiments/*/run_registry.csv
-experiments/*/history.jsonl
 analysis/.venv/
 analysis/__pycache__/
 **/*.pyc
-analysis/data/
-analysis/figures/
-analysis/tables/
 analysis/notebooks/.ipynb_checkpoints/
-outputs/
-data/
-!analysis/data/
-analysis/data/*
-!analysis/data/paper1_phaseB_v1/
-!analysis/data/paper1_phaseB_v1/system_classification.csv
-figures/
-tables/
-experiments/*/run.log
 
 # Python test artefacts
 .pytest_cache/
 .pytest_tmp*/
-tests/__pycache__/
+**/__pycache__/
 
-# Manifests with a substituted commit SHA, produced at launch time
+# ---------------------------------------------------------------------------
+# Scratch output
+# ---------------------------------------------------------------------------
+outputs/
+debug_results/
+fit*.csv
+fit*.png
+benchmarks/results/
+benchmarks/odeformer/results/
+
+# ---------------------------------------------------------------------------
+# experiments/ — the per-run files are scratch, the registry and history are evidence
+#
+# runs/ holds one directory per cell and reaches 16 MB for Phase B alone; it is reproducible
+# from the registry plus the image. run_registry.csv and history.jsonl are NOT reproducible
+# without re-running the campaign and are therefore tracked.
+# ---------------------------------------------------------------------------
+experiments/*/runs/
+experiments/*/run.log
+
+# ---------------------------------------------------------------------------
+# analysis/ — derived data, tables and figures
+#
+# Ignored by default; the two named experiment identifiers are tracked because CLAUDE.md,
+# PAPER_1.md and the paper sections cite those artefacts by name. Probe and fixture outputs
+# (wp_a2_*, wp_a4_*, wp_n2_*, ...) stay out.
+# ---------------------------------------------------------------------------
+analysis/data/*
+!analysis/data/.gitkeep
+!analysis/data/paper1_phaseB_v1/
+
+analysis/figures/*
+!analysis/figures/.gitkeep
+!analysis/figures/paper1_phaseA_v1/
+!analysis/figures/paper1_phaseB_v1/
+
+analysis/tables/*
+!analysis/tables/.gitkeep
+!analysis/tables/paper1_phaseA_v1/
+!analysis/tables/paper1_phaseB_v1/
+
+# ---------------------------------------------------------------------------
+# Phase A leftovers at the repository root, superseded by analysis/figures and analysis/tables.
+# Awaiting deletion; remove these three lines once the directories are gone.
+# ---------------------------------------------------------------------------
+/data/
+/figures/
+/tables/
+
+# ---------------------------------------------------------------------------
+# Kubernetes manifests with a substituted commit SHA, produced at launch time from k8s/
+# ---------------------------------------------------------------------------
 /phase_b_bootstrap.yaml
 /phase_b_cells.yaml

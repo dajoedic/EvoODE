@@ -1,0 +1,253 @@
+system_id,system_name,system_dim,system_representability,initial_condition_set,condition,n_cells,exact_support_match_rate,r2_median,loss_q50,loss_q90,final_stage_q50,stage_caps,total_loss_evals_q50,total_ode_solves_q50,total_parameter_fits_q50,silent_levels_q50,silent_levels_sum,silent_fraction_q50,silent_fraction_q90,level_event_count_q50
+1,RC-circuit (charging capacitor),1,surrogate,1,pretune_off,3,,0.9999880667015916,6.63048899214e-05,6.6304890975e-05,5,[5],572604,572604,410,2,7,0.1,0.14,20
+1,RC-circuit (charging capacitor),1,surrogate,1,pretune_on,3,,0.9999880667006428,6.63048951931e-05,6.63048951931e-05,5,[5],1906176,1906176,410,3,9,0.15,0.15,20
+1,RC-circuit (charging capacitor),1,surrogate,2,pretune_off,3,,0.9997791483178248,0.000106615991479,0.000106615991486,5,[5],231744,231744,410,6,18,0.3,0.34,20
+1,RC-circuit (charging capacitor),1,surrogate,2,pretune_on,3,,0.999779148317866,0.000106615991459,0.000106615991459,5,[5],114168,114168,410,7,21,0.35,0.35,20
+2,Population growth (naive),1,exact,1,pretune_off,3,1.0,,1.95581264025e-12,1.95581266475e-12,1,[null],2871,2871,30,0,0,0,0,1
+2,Population growth (naive),1,exact,1,pretune_on,3,1.0,,1.8637666178e-12,1.8637666178e-12,1,[null],600000,600000,30,0,0,0,0,1
+2,Population growth (naive),1,exact,2,pretune_off,3,1.0,,6.56045457821e-14,6.56045482736e-14,1,[null],2436,2436,30,0,0,0,0,1
+2,Population growth (naive),1,exact,2,pretune_on,3,1.0,,6.56045388907e-14,6.56045388907e-14,1,[null],480,480,30,0,0,0,0,1
+3,Population growth with carrying capacity,1,exact,1,pretune_off,3,1.0,,1.26419651022e-09,6.46588092534e-09,2,[2],151137,151137,110,0,0,0,0,5
+3,Population growth with carrying capacity,1,exact,1,pretune_on,3,1.0,,1.34161969691e-08,1.34161969691e-08,2,[2],58050,58050,170,3,9,0.375,0.375,8
+3,Population growth with carrying capacity,1,exact,2,pretune_off,3,1.0,,7.41229320668e-09,1.988271528e-08,2,[2],97756,97756,130,0,2,0,0.2,6
+3,Population growth with carrying capacity,1,exact,2,pretune_on,3,1.0,,4.81907871736e-09,4.81907871736e-09,2,[2],198290,198290,110,0,0,0,0,5
+4,RC-circuit with non-linear resistor (charging capacitor),1,surrogate,1,pretune_off,3,,0.9998781415371524,7.51112864308e-05,7.51112864671e-05,5,[5],1000876,1000876,410,6,18,0.3,0.34,20
+4,RC-circuit with non-linear resistor (charging capacitor),1,surrogate,1,pretune_on,3,,0.9998781415342218,7.51112882371e-05,7.51112882371e-05,5,[5],1325664,1325664,410,7,21,0.35,0.35,20
+4,RC-circuit with non-linear resistor (charging capacitor),1,surrogate,2,pretune_off,3,,0.99932432279343,0.000609092308258,0.000609092354508,5,[5],329613,329613,410,3,9,0.15,0.15,20
+4,RC-circuit with non-linear resistor (charging capacitor),1,surrogate,2,pretune_on,3,,0.99932432285211,0.000609092255361,0.000609092255361,5,[5],263560,263560,410,3,9,0.15,0.15,20
+5,Velocity of a falling object with air resistance,1,surrogate,1,pretune_off,3,,0.9802761586341768,6.29730904729,6.30988529764,5,[null],2794030,2794030,490,3,9,0.125,0.129347826087,24
+5,Velocity of a falling object with air resistance,1,surrogate,1,pretune_on,3,,0.9786475002418552,6.81729727061,6.81729727061,5,[null],2462060,2462060,430,3,9,0.142857142857,0.142857142857,21
+5,Velocity of a falling object with air resistance,1,surrogate,2,pretune_off,3,,0.9999941223017046,9.38672994406e-06,1.10889130477e-05,5,[5],2290576,2290576,410,9,33,0.45,0.69,20
+5,Velocity of a falling object with air resistance,1,surrogate,2,pretune_on,3,,0.9999945197905024,8.75193723904e-06,8.75193723904e-06,5,[5],6446800,6446800,410,15,45,0.75,0.75,20
+6,Autocatalysis with one fixed abundant chemical,1,exact,1,pretune_off,3,1.0,,2.2959971422e-14,2.39861171508e-14,2,[2],85184,85184,110,0,0,0,0,5
+6,Autocatalysis with one fixed abundant chemical,1,exact,1,pretune_on,3,1.0,,2.83179309449e-14,2.83179309449e-14,2,[2],21890,21890,110,0,0,0,0,5
+6,Autocatalysis with one fixed abundant chemical,1,exact,2,pretune_off,3,1.0,,5.09155216572e-14,6.77578219517e-14,2,[2],154567,154567,110,0,0,0,0,5
+6,Autocatalysis with one fixed abundant chemical,1,exact,2,pretune_on,3,1.0,,2.10344886496e-13,2.10344886496e-13,2,[2],43680,43680,110,0,0,0,0,5
+7,Gompertz law for tumor growth,1,surrogate,1,pretune_off,3,,0.9960170493416276,0.000454247717558,0.000454247717558,5,[5],105453,105453,410,16,50,0.8,0.88,20
+7,Gompertz law for tumor growth,1,surrogate,1,pretune_on,3,,0.996017049341627,0.000454247717558,0.000454247717558,5,[5],35998,35998,410,19,57,0.95,0.95,20
+7,Gompertz law for tumor growth,1,surrogate,2,pretune_off,3,,0.9999992052486848,2.75664437272e-05,3.10774814257e-05,5,[null],1264344,1264344,410,7,21,0.35,0.35,20
+7,Gompertz law for tumor growth,1,surrogate,2,pretune_on,3,,0.9999993566555182,2.23148035329e-05,2.23148035329e-05,5,[null],3197288,3197288,410,7,21,0.35,0.35,20
+8,Logistic equation with Allee effect,1,exact,1,pretune_off,3,1.0,,1.72988069013e-05,2.68882684888e-05,4,[4],1099241,1099241,330,3,7,0.1875,0.1875,16
+8,Logistic equation with Allee effect,1,exact,1,pretune_on,3,0.0,,574.984676447,574.984676447,4,[4],1830,1830,330,15,45,0.9375,0.9375,16
+8,Logistic equation with Allee effect,1,exact,2,pretune_off,3,0.0,,0.000947074647172,0.000947074647178,4,[4],257626,257626,330,12,38,0.75,0.85,16
+8,Logistic equation with Allee effect,1,exact,2,pretune_on,3,0.0,,0.000947074647213,0.000947074647213,4,[4],391820,391820,330,15,45,0.9375,0.9375,16
+9,Language death model for two languages,1,surrogate,1,pretune_off,3,,0.9785158044430906,0.000187104480145,0.000187104480145,5,[5],112093,112093,410,8,26,0.4,0.48,20
+9,Language death model for two languages,1,surrogate,1,pretune_on,3,,0.978515804443052,0.000187104480146,0.000187104480146,5,[5],207690,207690,410,15,45,0.75,0.75,20
+9,Language death model for two languages,1,surrogate,2,pretune_off,3,,-0.397249554734741,2.18481698518e-05,2.18481698518e-05,5,[null],889924,889924,410,19,57,0.95,0.95,20
+9,Language death model for two languages,1,surrogate,2,pretune_on,3,,-0.3972495547347674,2.18481698518e-05,2.18481698518e-05,5,[null],18890,18890,410,19,57,0.95,0.95,20
+10,Refined language death model for two languages,1,surrogate,1,pretune_off,3,,0.9996955585199204,2.34959055703e-05,2.3495905571e-05,4,[4],186829,186829,330,10,30,0.625,0.625,16
+10,Refined language death model for two languages,1,surrogate,1,pretune_on,3,,0.9996955585198666,2.34959055745e-05,2.34959055745e-05,4,[4],127480,127480,330,11,33,0.6875,0.6875,16
+10,Refined language death model for two languages,1,surrogate,2,pretune_off,3,,0.9933051887652216,5.42593097044e-05,5.42593097044e-05,5,[null],63698,63698,410,19,54,0.95,0.95,20
+10,Refined language death model for two languages,1,surrogate,2,pretune_on,3,,0.9933051887652216,5.42593097044e-05,5.42593097044e-05,5,[null],24450,24450,410,19,57,0.95,0.95,20
+11,Naive critical slowing down (statistical mechanics),1,exact,1,pretune_off,3,1.0,,4.65201955791e-15,4.66637630141e-15,4,[4],11444,11444,270,0,0,0,0,13
+11,Naive critical slowing down (statistical mechanics),1,exact,1,pretune_on,3,1.0,,4.6741159058e-15,4.6741159058e-15,4,[4],24010,24010,270,0,0,0,0,13
+11,Naive critical slowing down (statistical mechanics),1,exact,2,pretune_off,3,0.0,,0.000572744454029,0.000572744454029,4,[4],74032,74032,330,8,22,0.5,0.6,16
+11,Naive critical slowing down (statistical mechanics),1,exact,2,pretune_on,3,0.0,,0.000572744454029,0.000572744454029,4,[4],27280,27280,330,11,33,0.6875,0.6875,16
+12,Photons in a laser (simple),1,exact,1,pretune_off,3,1.0,,4.73564392749e-11,3.03440039008e-10,2,[2],112177,112177,110,0,0,0,0,5
+12,Photons in a laser (simple),1,exact,1,pretune_on,3,1.0,,4.45268049889e-10,4.45268049889e-10,2,[2],9470,9470,110,0,0,0,0,5
+12,Photons in a laser (simple),1,exact,2,pretune_off,3,1.0,,1.02219506413e-12,7.33265014715e-12,2,[2],179298,179298,110,0,0,0,0,5
+12,Photons in a laser (simple),1,exact,2,pretune_on,3,1.0,,1.17851547736e-11,1.17851547736e-11,2,[2],9930,9930,110,0,0,0,0,5
+13,Overdamped bead on a rotating hoop,1,surrogate,1,pretune_off,3,,0.9994252398044784,0.000216646928433,0.000216647367468,5,[5],1442336,1442336,410,5,15,0.25,0.29,20
+13,Overdamped bead on a rotating hoop,1,surrogate,1,pretune_on,3,,0.9999008598054828,3.73693564616e-05,3.73693564616e-05,5,[5],1715330,1715330,410,3,9,0.15,0.15,20
+13,Overdamped bead on a rotating hoop,1,surrogate,2,pretune_off,3,,0.9887239438708058,0.000508335436782,0.000508335436782,5,[5],106947,106947,410,10,33,0.5,0.66,20
+13,Overdamped bead on a rotating hoop,1,surrogate,2,pretune_on,3,,0.9887239438707832,0.000508335436783,0.000508335436783,5,[5],734880,734880,410,15,45,0.75,0.75,20
+14,Budworm outbreak model with predation,1,surrogate,1,pretune_off,3,,0.99999241976846,0.00586012031074,0.00586012031078,2,[2],144068,144068,170,3,7,0.375,0.375,8
+14,Budworm outbreak model with predation,1,surrogate,1,pretune_on,3,,0.9999924197684252,0.00586012033751,0.00586012033751,2,[2],65370,65370,170,3,9,0.375,0.375,8
+14,Budworm outbreak model with predation,1,surrogate,2,pretune_off,3,,0.9999990841865104,0.00025203414413,0.000252034277157,4,[4],939502,939502,330,8,24,0.5,0.55,16
+14,Budworm outbreak model with predation,1,surrogate,2,pretune_on,3,,0.9999990839302884,0.000252104657037,0.000252104657037,4,[4],1665930,1665930,330,11,33,0.6875,0.6875,16
+15,Budworm outbreak with predation (dimensionless),1,surrogate,1,pretune_off,3,,0.9999928252031892,0.00132116098009,0.00132133743808,4,[4],1107129,1107129,330,6,23,0.375,0.625,16
+15,Budworm outbreak with predation (dimensionless),1,surrogate,1,pretune_on,3,,0.9999998800831412,2.20813883472e-05,2.20813883472e-05,4,[4],1906530,1906530,330,3,9,0.1875,0.1875,16
+15,Budworm outbreak with predation (dimensionless),1,surrogate,2,pretune_off,3,,0.997893955216364,0.334053665245,0.334053665245,1,[1],61425,61425,90,2,5,0.5,0.7,4
+15,Budworm outbreak with predation (dimensionless),1,surrogate,2,pretune_on,3,,0.9978939552163614,0.334053665245,0.334053665245,1,[1],44640,44640,90,3,9,0.75,0.75,4
+16,Landau equation (typical time scale tau = 1),1,surrogate,1,pretune_off,3,,0.999926152064394,0.000353810783574,0.00035381078585,5,[5],1160082,1160082,410,3,9,0.15,0.15,20
+16,Landau equation (typical time scale tau = 1),1,surrogate,1,pretune_on,3,,0.9999261520581244,0.000353810813613,0.000353810813613,5,[5],1392192,1392192,410,3,9,0.15,0.15,20
+16,Landau equation (typical time scale tau = 1),1,surrogate,2,pretune_off,3,,0.999980385277418,6.50422722397e-05,6.50422767107e-05,5,[5],985013,985013,410,3,8,0.15,0.15,20
+16,Landau equation (typical time scale tau = 1),1,surrogate,2,pretune_on,3,,0.999980385274897,6.50422805992e-05,6.50422805992e-05,5,[5],1643012,1643012,410,3,9,0.15,0.15,20
+17,Logistic equation with harvesting/fishing,1,surrogate,1,pretune_off,3,,0.9999980700468636,0.00108926901378,0.00201169529192,5,[null],1415137,1415137,450,7,21,0.318181818182,0.330303030303,22
+17,Logistic equation with harvesting/fishing,1,surrogate,1,pretune_on,3,,0.9999977349370168,0.00127840561279,0.00127840561279,5,[null],3177416,3177416,410,7,21,0.35,0.35,20
+17,Logistic equation with harvesting/fishing,1,surrogate,2,pretune_off,3,,0.9999983834439464,0.000570722175382,0.000570858404468,4,[4],1001747,1001747,330,7,21,0.4375,0.5375,16
+17,Logistic equation with harvesting/fishing,1,surrogate,2,pretune_on,3,,0.999998382124471,0.000571188013771,0.000571188013771,4,[4],1899280,1899280,330,11,33,0.6875,0.6875,16
+18,Improved logistic equation with harvesting/fishing,1,surrogate,1,pretune_off,3,,0.9999999468794368,2.7529351893e-05,2.75436571864e-05,4,[4],1310865,1310865,330,10,26,0.625,0.625,16
+18,Improved logistic equation with harvesting/fishing,1,surrogate,1,pretune_on,3,,0.9999999465125902,2.7719467633e-05,2.7719467633e-05,4,[4],1703730,1703730,330,11,33,0.6875,0.6875,16
+18,Improved logistic equation with harvesting/fishing,1,surrogate,2,pretune_off,3,,0.9999999823008476,4.42126903285e-06,4.46145065015e-06,4,[4],1597757,1597757,330,8,24,0.5,0.55,16
+18,Improved logistic equation with harvesting/fishing,1,surrogate,2,pretune_on,3,,0.999999980809746,4.79374793726e-06,4.79374793726e-06,4,[4],4842210,4842210,330,11,33,0.6875,0.6875,16
+19,Improved logistic equation with harvesting/fishing (dimensionless),1,surrogate,1,pretune_off,3,,0.9999929254364618,4.93812925772e-07,4.93812925774e-07,5,[5],91353,91353,410,12,32,0.6,0.6,20
+19,Improved logistic equation with harvesting/fishing (dimensionless),1,surrogate,1,pretune_on,3,,0.9999929254364572,4.938129261e-07,4.938129261e-07,5,[5],32190,32190,410,15,45,0.75,0.75,20
+19,Improved logistic equation with harvesting/fishing (dimensionless),1,surrogate,2,pretune_off,3,,0.9999884086017596,1.37862520773e-06,1.37862520774e-06,5,[5],79704,79704,410,14,36,0.7,0.7,20
+19,Improved logistic equation with harvesting/fishing (dimensionless),1,surrogate,2,pretune_on,3,,0.9999884086017586,1.37862520785e-06,1.37862520785e-06,5,[5],29710,29710,410,15,45,0.75,0.75,20
+20,Autocatalytic gene switching (dimensionless),1,surrogate,1,pretune_off,3,,0.9999916215744898,5.93509265759e-08,5.93509273337e-08,5,[5],375177,375177,410,3,9,0.15,0.15,20
+20,Autocatalytic gene switching (dimensionless),1,surrogate,1,pretune_on,3,,0.9999916215688092,5.93509668169e-08,5.93509668169e-08,5,[5],57290,57290,410,3,9,0.15,0.15,20
+20,Autocatalytic gene switching (dimensionless),1,surrogate,2,pretune_off,3,,0.9775541270184792,5.63022690875e-05,5.63022690875e-05,5,[5],44500,44500,410,19,57,0.95,0.95,20
+20,Autocatalytic gene switching (dimensionless),1,surrogate,2,pretune_on,3,,0.9775541270184788,5.63022690875e-05,5.63022690875e-05,5,[5],27744,27744,410,19,57,0.95,0.95,20
+21,Dimensionally reduced SIR infection model for dead people (dimensionless),1,surrogate,1,pretune_off,3,,0.9999937626235104,1.45421088629e-05,1.45421098249e-05,5,[5],827368,827368,450,3,8,0.136363636364,0.136363636364,22
+21,Dimensionally reduced SIR infection model for dead people (dimensionless),1,surrogate,1,pretune_on,3,,0.999993762623877,1.4542108008e-05,1.4542108008e-05,5,[5],451546,451546,450,3,9,0.136363636364,0.136363636364,22
+21,Dimensionally reduced SIR infection model for dead people (dimensionless),1,surrogate,2,pretune_off,3,,0.9995753816039172,0.000703138632161,0.000703138636031,5,[5],1205983,1205983,410,6,17,0.3,0.3,20
+21,Dimensionally reduced SIR infection model for dead people (dimensionless),1,surrogate,2,pretune_on,3,,0.9995753814242846,0.00070313892962,0.00070313892962,5,[5],2012842,2012842,410,7,21,0.35,0.35,20
+22,"Hysteretic activation of a protein expression (positive feedback, basal promoter expression)",1,surrogate,1,pretune_off,3,,0.9941285400398746,0.000665309363707,0.000665309363707,5,[5],273529,273529,410,13,39,0.65,0.69,20
+22,"Hysteretic activation of a protein expression (positive feedback, basal promoter expression)",1,surrogate,1,pretune_on,3,,0.9941285400398702,0.000665309363707,0.000665309363707,5,[5],354660,354660,410,15,45,0.75,0.75,20
+22,"Hysteretic activation of a protein expression (positive feedback, basal promoter expression)",1,surrogate,2,pretune_off,3,,0.9991017801153744,0.000948320144485,0.000948320144485,5,[5],202617,202617,410,6,17,0.3,0.3,20
+22,"Hysteretic activation of a protein expression (positive feedback, basal promoter expression)",1,surrogate,2,pretune_on,3,,0.9991017801153164,0.000948320144546,0.000948320144546,5,[5],735502,735502,410,7,21,0.35,0.35,20
+23,Overdamped pendulum with constant driving torque/fireflies/Josephson junction (dimensionless),1,surrogate,1,pretune_off,3,,0.9994496468756444,0.000376915649101,0.000376915649103,5,[5],160937,160937,430,3,6,0.142857142857,0.142857142857,21
+23,Overdamped pendulum with constant driving torque/fireflies/Josephson junction (dimensionless),1,surrogate,1,pretune_on,3,,0.9994496468756406,0.000376915649103,0.000376915649103,5,[5],424980,424980,410,3,9,0.15,0.15,20
+23,Overdamped pendulum with constant driving torque/fireflies/Josephson junction (dimensionless),1,surrogate,2,pretune_off,3,,0.9967382747837376,0.000367951624937,0.000367951624937,5,[5],174716,174716,410,5,16,0.25,0.29,20
+23,Overdamped pendulum with constant driving torque/fireflies/Josephson junction (dimensionless),1,surrogate,2,pretune_on,3,,0.9967382747829177,0.00036795162503,0.00036795162503,5,[5],324124,324124,410,7,21,0.35,0.35,20
+24,Harmonic oscillator without damping,2,exact,1,pretune_off,3,1.0,,1.72246973151e-14,1.94401603812e-14,1,"[null,null]",52956,52956,30,0,0,0,0,1
+24,Harmonic oscillator without damping,2,exact,1,pretune_on,3,1.0,,1.66344535242e-14,1.66344535242e-14,1,"[null,null]",3686,3686,30,0,0,0,0,1
+24,Harmonic oscillator without damping,2,exact,2,pretune_off,3,1.0,,5.91942439729e-15,6.05515312478e-15,1,"[null,null]",11015,11015,30,0,0,0,0,1
+24,Harmonic oscillator without damping,2,exact,2,pretune_on,3,1.0,,6.50030748258e-15,6.50030748258e-15,1,"[null,null]",3521,3521,30,0,0,0,0,1
+25,Harmonic oscillator with damping,2,exact,1,pretune_off,3,1.0,,7.46984633726e-15,7.78147824118e-15,1,"[null,null]",215905,215905,30,0,0,0,0,1
+25,Harmonic oscillator with damping,2,exact,1,pretune_on,3,1.0,,7.43566549613e-15,7.43566549613e-15,1,"[null,null]",7353,7353,30,0,0,0,0,1
+25,Harmonic oscillator with damping,2,exact,2,pretune_off,3,1.0,,9.47195058078e-15,9.6323873819e-15,1,"[null,null]",9790,9790,30,0,0,0,0,1
+25,Harmonic oscillator with damping,2,exact,2,pretune_on,3,1.0,,9.67043875702e-15,9.67043875702e-15,1,"[null,null]",6110,6110,30,0,0,0,0,1
+26,Lotka-Volterra competition model (Strogatz version with sheeps and rabbits),2,exact,1,pretune_off,3,0.0,,0.000255825313121,0.000309604389702,3,"[3,3]",844994,844994,330,3,10,0.1875,0.2375,16
+26,Lotka-Volterra competition model (Strogatz version with sheeps and rabbits),2,exact,1,pretune_on,3,0.0,,0.000265282654023,0.000265282654023,3,"[3,3]",1295098,1295098,290,3,9,0.214285714286,0.214285714286,14
+26,Lotka-Volterra competition model (Strogatz version with sheeps and rabbits),2,exact,2,pretune_off,3,0.0,,0.000508922167801,0.000536489328887,3,"[3,3]",474812,474812,290,4,13,0.285714285714,0.430476190476,14
+26,Lotka-Volterra competition model (Strogatz version with sheeps and rabbits),2,exact,2,pretune_on,3,0.0,,0.000508922167833,0.000508922167833,3,"[3,3]",505259,505259,290,7,21,0.5,0.5,14
+27,Lotka-Volterra simple (as on Wikipedia),2,exact,1,pretune_off,3,0.0,,0.661133823566,1.13923038339,3,"[3,3]",1252895,1252895,430,3,9,0.142857142857,0.188571428571,21
+27,Lotka-Volterra simple (as on Wikipedia),2,exact,1,pretune_on,3,0.6666666666666666,,6.54415212603e-07,9.18269859662e-06,3,"[3,3]",990234,990234,290,3,9,0.214285714286,0.214285714286,14
+27,Lotka-Volterra simple (as on Wikipedia),2,exact,2,pretune_off,3,0.6666666666666666,,3.73104201438e-08,0.00489104804873,3,"[3,3]",2794949,2794949,350,3,7,0.176470588235,0.195294117647,17
+27,Lotka-Volterra simple (as on Wikipedia),2,exact,2,pretune_on,3,1.0,,1.89223895855e-08,1.89223895855e-08,3,"[3,3]",3686385,3686385,350,3,9,0.176470588235,0.176470588235,17
+28,Pendulum without friction,2,exact,1,pretune_off,3,0.0,,2.0548538886e-06,2.0671675233e-06,5,"[null,5]",1000554,1000554,410,7,20,0.318181818182,0.343636363636,20
+28,Pendulum without friction,2,exact,1,pretune_on,3,0.0,,2.13203406785e-06,2.13203406785e-06,5,"[null,5]",691803,691803,410,7,21,0.35,0.35,20
+28,Pendulum without friction,2,exact,2,pretune_off,3,0.0,,5.72401427929e-05,5.72401427932e-05,5,"[null,5]",2155427,2155427,410,19,57,0.95,0.95,20
+28,Pendulum without friction,2,exact,2,pretune_on,3,0.0,,5.72401427932e-05,5.72401427932e-05,5,"[null,5]",131720,131720,410,19,57,0.95,0.95,20
+29,Dipole fixed point,2,exact,1,pretune_off,3,1.0,,4.4028985036e-14,4.63096366101e-14,3,"[3,2]",761580,761580,330,0,0,0,0,16
+29,Dipole fixed point,2,exact,1,pretune_on,3,0.0,,0.000643044457045,0.000643044457045,3,"[3,2]",109764,109764,270,3,9,0.230769230769,0.230769230769,13
+29,Dipole fixed point,2,exact,2,pretune_off,3,0.0,,0.000777255862125,0.000777255862125,3,"[3,2]",608554,608554,250,7,17,0.538461538462,0.574358974359,12
+29,Dipole fixed point,2,exact,2,pretune_on,3,0.0,,0.000801776043487,0.000801776043487,3,"[3,2]",134988,134988,270,7,21,0.538461538462,0.538461538462,13
+30,RNA molecules catalyzing each others replication,2,surrogate,1,pretune_off,3,,0.9836863057724344,0.000188519538557,0.000188519538557,5,"[null,null]",672441,672441,410,19,57,0.95,0.95,20
+30,RNA molecules catalyzing each others replication,2,surrogate,1,pretune_on,3,,0.9836863057077015,0.000188519538557,0.000188519538557,5,"[null,null]",611227,611227,410,19,57,0.95,0.95,20
+30,RNA molecules catalyzing each others replication,2,surrogate,2,pretune_off,3,,0.9923521907222514,0.000117595321338,0.000117595321338,5,"[null,null]",690938,690938,410,19,57,0.95,0.95,20
+30,RNA molecules catalyzing each others replication,2,surrogate,2,pretune_on,3,,0.9923521905747872,0.000117595321338,0.000117595321338,5,"[null,null]",682749,682749,410,19,57,0.95,0.95,20
+31,SIR infection model only for healthy and sick,2,exact,1,pretune_off,3,0.0,,0.000132211024293,0.000133875914745,3,"[3,3]",619746,619746,330,7,15,0.411764705882,0.432352941176,16
+31,SIR infection model only for healthy and sick,2,exact,1,pretune_on,3,0.0,,0.000134292137358,0.000134292137358,3,"[3,3]",1022782,1022782,290,7,21,0.5,0.5,14
+31,SIR infection model only for healthy and sick,2,exact,2,pretune_off,3,1.0,,1.99636656848e-11,1.99859278813e-11,3,"[null,null]",329767,329767,230,0,0,0,0,11
+31,SIR infection model only for healthy and sick,2,exact,2,pretune_on,3,0.0,,2.75360632179e-08,2.75360632179e-08,5,"[null,null]",4866642,4866642,450,11,33,0.5,0.5,22
+32,Damped double well oscillator,2,exact,1,pretune_off,3,1.0,,1.38942698003e-11,1.54814208438e-10,4,"[null,4]",2099883,2099883,470,0,0,0,0,23
+32,Damped double well oscillator,2,exact,1,pretune_on,3,1.0,,1.9570919599e-12,1.9570919599e-12,4,"[null,4]",1830722,1830722,350,0,0,0,0,17
+32,Damped double well oscillator,2,exact,2,pretune_off,3,0.3333333333333333,,1.06498149026,5.40991387392,5,"[null,4]",1345446,1345446,510,3,7,0.12,0.138285714286,25
+32,Damped double well oscillator,2,exact,2,pretune_on,3,0.0,,39.1987587599,39.1987587599,5,"[null,4]",632931,632931,410,19,57,0.95,0.95,20
+33,Glider (dimensionless),2,surrogate,1,pretune_off,3,,0.9994412811069692,0.00206116738695,0.00213560661442,5,"[5,null]",2720349,2720349,610,1,4,0.0333333333333,0.0955555555556,30
+33,Glider (dimensionless),2,surrogate,1,pretune_on,3,,0.998640491336494,0.00792700545387,0.0601332757496,5,"[5,null]",5988346,5988346,510,3,9,0.12,0.128347826087,25
+33,Glider (dimensionless),2,surrogate,2,pretune_off,3,,0.986117315064232,0.0523970534739,0.0541734369293,5,"[5,null]",1804049,1804049,570,3,14,0.107142857143,0.35989010989,28
+33,Glider (dimensionless),2,surrogate,2,pretune_on,3,,0.9999709671348276,0.00103202509322,0.00113295077289,5,"[5,null]",4321644,4321644,510,3,8,0.115384615385,0.119076923077,25
+34,Frictionless bead on a rotating hoop (dimensionless),2,surrogate,1,pretune_off,3,,0.999652514835637,0.000417637267605,0.00041773667505,5,"[null,5]",868679,868679,410,4,14,0.190476190476,0.318095238095,20
+34,Frictionless bead on a rotating hoop (dimensionless),2,surrogate,1,pretune_on,3,,0.9996434709293822,0.000432897605246,0.000432897605246,5,"[null,5]",564293,564293,410,7,21,0.35,0.35,20
+34,Frictionless bead on a rotating hoop (dimensionless),2,surrogate,2,pretune_off,3,,0.9999499919285412,1.39819703723e-05,1.44443061921e-05,5,"[null,5]",1269262,1269262,410,7,20,0.35,0.35,20
+34,Frictionless bead on a rotating hoop (dimensionless),2,surrogate,2,pretune_on,3,,0.9999499919257951,1.39819703745e-05,1.39819703745e-05,5,"[null,5]",212358,212358,410,7,21,0.35,0.35,20
+35,Rotational dynamics of an object in a shear flow,2,surrogate,1,pretune_off,3,,0.9683245876053804,0.0404021781967,0.089922011815,5,"[5,5]",4919970,4919970,610,2,7,0.0666666666667,0.0933333333333,30
+35,Rotational dynamics of an object in a shear flow,2,surrogate,1,pretune_on,3,,0.5695831665716939,0.527487195116,0.527487195116,5,"[5,5]",3282388,3282388,490,7,21,0.291666666667,0.291666666667,24
+35,Rotational dynamics of an object in a shear flow,2,surrogate,2,pretune_off,3,,0.9961746478373534,0.00183788552416,0.00192382358547,5,"[5,5]",1798021,1798021,490,5,16,0.217391304348,0.29947826087,24
+35,Rotational dynamics of an object in a shear flow,2,surrogate,2,pretune_on,3,,0.9961746478776056,0.0018378855234,0.0018378855234,5,"[5,5]",1942691,1942691,430,7,21,0.333333333333,0.333333333333,21
+36,"Pendulum with non-linear damping, no driving (dimensionless)",2,surrogate,1,pretune_off,3,,0.9997934543402084,1.20704361349e-05,1.20704361349e-05,5,"[null,5]",535228,535228,410,17,52,0.85,0.89,20
+36,"Pendulum with non-linear damping, no driving (dimensionless)",2,surrogate,1,pretune_on,3,,0.999793454309824,1.20704361349e-05,1.20704361349e-05,5,"[null,5]",73130,73130,410,19,57,0.95,0.95,20
+36,"Pendulum with non-linear damping, no driving (dimensionless)",2,surrogate,2,pretune_off,3,,0.9990767808277616,8.4411348365e-05,8.4411348365e-05,5,"[null,4]",713873,713873,410,17,51,0.85,0.89,20
+36,"Pendulum with non-linear damping, no driving (dimensionless)",2,surrogate,2,pretune_on,3,,0.9990767806364076,8.44113483658e-05,8.44113483658e-05,5,"[null,4]",82131,82131,410,19,57,0.95,0.95,20
+37,Van der Pol oscillator (standard form),2,surrogate,1,pretune_off,3,,0.99122223992825,0.0167891292592,0.0194574976248,5,"[null,null]",2961114,2961114,570,7,20,0.25,0.316666666667,28
+37,Van der Pol oscillator (standard form),2,surrogate,1,pretune_on,3,,0.9873210921849936,0.0234216796937,0.0234216796937,5,"[null,null]",2683316,2683316,510,3,9,0.12,0.124,25
+37,Van der Pol oscillator (standard form),2,surrogate,2,pretune_off,3,,0.9844696513284924,0.0385063096273,0.0560384229462,5,"[null,null]",2470835,2470835,570,3,6,0.107142857143,0.113736263736,28
+37,Van der Pol oscillator (standard form),2,surrogate,2,pretune_on,3,,0.9778590180975374,0.0548050481316,0.0548050481316,5,"[null,null]",2154773,2154773,490,7,21,0.291666666667,0.291666666667,24
+38,Van der Pol oscillator (simplified form from Strogatz),2,exact,1,pretune_off,3,1.0,,6.82526620696e-12,6.86520766298e-12,4,"[4,null]",4600277,4600277,490,0,0,0,0,24
+38,Van der Pol oscillator (simplified form from Strogatz),2,exact,1,pretune_on,3,1.0,,6.97788391413e-12,6.97788391413e-12,4,"[4,null]",3034410,3034410,350,0,0,0,0,17
+38,Van der Pol oscillator (simplified form from Strogatz),2,exact,2,pretune_off,3,1.0,,9.59781204359e-12,9.94574798174e-12,4,"[4,null]",1412203,1412203,330,0,0,0,0,16
+38,Van der Pol oscillator (simplified form from Strogatz),2,exact,2,pretune_on,3,0.0,,3.13852701438e-09,3.13852701438e-09,4,"[4,null]",1789317,1789317,350,0,0,0,0,17
+39,"Glycolytic oscillator, e.g., ADP and F6P in yeast (dimensionless)",2,surrogate,1,pretune_off,3,,0.9535047340218544,0.000484433204117,0.000484433204118,5,"[1,5]",2604934,2604934,410,17,52,0.85,0.93,20
+39,"Glycolytic oscillator, e.g., ADP and F6P in yeast (dimensionless)",2,surrogate,1,pretune_on,3,,0.9535047315111548,0.000484433204119,0.000484433204119,5,"[1,5]",120476,120476,410,19,57,0.95,0.95,20
+39,"Glycolytic oscillator, e.g., ADP and F6P in yeast (dimensionless)",2,surrogate,2,pretune_off,3,,0.9802198386222803,0.000530774647477,0.000530774647477,5,"[5,5]",353363,353363,410,17,52,0.85,0.89,20
+39,"Glycolytic oscillator, e.g., ADP and F6P in yeast (dimensionless)",2,surrogate,2,pretune_on,3,,0.9790293467764736,0.000574272348936,0.000574272348936,5,"[5,5]",97720,97720,410,19,57,0.95,0.95,20
+40,Duffing equation (weakly non-linear oscillation),2,surrogate,1,pretune_off,3,,0.9559790775707556,0.0646510566078,0.0646510566078,5,"[null,1]",3202094,3202094,470,6,17,0.272727272727,0.298023715415,23
+40,Duffing equation (weakly non-linear oscillation),2,surrogate,1,pretune_on,3,,0.9559790761689556,0.0646510566084,0.0646510566084,5,"[null,1]",1837925,1837925,450,7,21,0.318181818182,0.318181818182,22
+40,Duffing equation (weakly non-linear oscillation),2,surrogate,2,pretune_off,3,,0.9695380928488488,0.0328695277058,0.0328779488865,5,"[null,null]",8565752,8565752,610,5,13,0.166666666667,0.226436781609,30
+40,Duffing equation (weakly non-linear oscillation),2,surrogate,2,pretune_on,3,,0.9699489866480808,0.0323095220835,0.0354121283817,5,"[null,null]",2373207,2373207,490,3,13,0.125,0.258333333333,24
+41,Cell cycle model by Tyson for interaction between protein cdc2 and cyclin (dimensionless),2,surrogate,1,pretune_off,3,,0.9763527709053752,0.00152606944229,0.0015583599918,5,"[null,5]",4046153,4046153,510,9,28,0.36,0.424,25
+41,Cell cycle model by Tyson for interaction between protein cdc2 and cyclin (dimensionless),2,surrogate,1,pretune_on,3,,0.7608722723469257,0.0134979261257,0.0134979261257,5,"[null,5]",1565587,1565587,430,7,21,0.333333333333,0.333333333333,21
+41,Cell cycle model by Tyson for interaction between protein cdc2 and cyclin (dimensionless),2,surrogate,2,pretune_off,3,,0.96695628290505,0.00524281766394,0.00596100512124,5,"[null,5]",5068301,5068301,530,11,25,0.423076923077,0.423076923077,26
+41,Cell cycle model by Tyson for interaction between protein cdc2 and cyclin (dimensionless),2,surrogate,2,pretune_on,3,,0.94723816108409,0.00792354532696,0.00792354532696,5,"[null,5]",3895153,3895153,530,7,21,0.269230769231,0.269230769231,26
+42,Reduced model for chlorine dioxide-iodine-malonic acid rection (dimensionless),2,surrogate,1,pretune_off,3,,0.9122882877835076,0.156163242258,0.157726405568,5,"[null,null]",5709724,5709724,610,1,2,0.0333333333333,0.0333333333333,30
+42,Reduced model for chlorine dioxide-iodine-malonic acid rection (dimensionless),2,surrogate,1,pretune_on,3,,0.8927418308230102,0.186215414066,0.186215414066,5,"[null,null]",4354766,4354766,530,7,21,0.269230769231,0.269230769231,26
+42,Reduced model for chlorine dioxide-iodine-malonic acid rection (dimensionless),2,surrogate,2,pretune_off,3,,0.9799785164395556,0.0157523196671,0.0158379112402,5,"[5,5]",1490981,1490981,570,6,13,0.214285714286,0.250264550265,28
+42,Reduced model for chlorine dioxide-iodine-malonic acid rection (dimensionless),2,surrogate,2,pretune_on,3,,0.9656754497784726,0.0252677945306,0.0252677945306,5,"[5,5]",3015179,3015179,530,7,21,0.269230769231,0.269230769231,26
+43,Driven pendulum with linear damping / Josephson junction (dimensionless),2,surrogate,1,pretune_off,3,,0.9810033426343372,0.0176634080419,0.0181626937477,5,"[null,5]",3013788,3013788,510,2,6,0.08,0.116,25
+43,Driven pendulum with linear damping / Josephson junction (dimensionless),2,surrogate,1,pretune_on,3,,0.9813964242445744,0.0192989644273,0.0192989644273,5,"[null,5]",2655865,2655865,470,7,21,0.304347826087,0.304347826087,23
+43,Driven pendulum with linear damping / Josephson junction (dimensionless),2,surrogate,2,pretune_off,3,,0.8876635197696345,0.0406071785261,0.0407924314949,5,"[null,5]",2812810,2812810,590,11,25,0.379310344828,0.427862068966,29
+43,Driven pendulum with linear damping / Josephson junction (dimensionless),2,surrogate,2,pretune_on,3,,0.9932269570594368,0.00275571887452,0.00275571887452,5,"[null,5]",6109531,6109531,470,3,9,0.130434782609,0.130434782609,23
+44,Driven pendulum with quadratic damping (dimensionless),2,surrogate,1,pretune_off,3,,0.9678915700941252,0.00971961635869,0.0105137221779,5,"[null,5]",3260164,3260164,570,1,4,0.0357142857143,0.0899014778325,28
+44,Driven pendulum with quadratic damping (dimensionless),2,surrogate,1,pretune_on,3,,0.9974784996407404,0.000906052598029,0.000906052598029,5,"[null,5]",4066525,4066525,470,3,10,0.130434782609,0.159420289855,23
+44,Driven pendulum with quadratic damping (dimensionless),2,surrogate,2,pretune_off,3,,0.9903736205159106,0.00148334841534,0.0284326193882,5,"[null,5]",1998885,1998885,530,3,6,0.115384615385,0.119076923077,26
+44,Driven pendulum with quadratic damping (dimensionless),2,surrogate,2,pretune_on,3,,0.7762981959544637,0.0260336878373,0.0260336878373,5,"[null,5]",5307654,5307654,490,3,9,0.125,0.125,24
+45,Isothermal autocatalytic reaction model by Gray and Scott 1985 (dimensionless),2,surrogate,1,pretune_off,3,,0.9994126705709464,0.000300171506998,0.00127790140385,5,"[null,5]",2294185,2294185,470,4,19,0.173913043478,0.434782608696,23
+45,Isothermal autocatalytic reaction model by Gray and Scott 1985 (dimensionless),2,surrogate,1,pretune_on,3,,0.9994239456140775,0.000322314127689,0.000333217856531,5,"[null,5]",2744096,2744096,450,7,20,0.318181818182,0.318181818182,22
+45,Isothermal autocatalytic reaction model by Gray and Scott 1985 (dimensionless),2,surrogate,2,pretune_off,3,,0.9257423070104764,0.00152526599868,0.001525265999,5,"[5,5]",2008127,2008127,430,2,4,0.0952380952381,0.0952380952381,21
+45,Isothermal autocatalytic reaction model by Gray and Scott 1985 (dimensionless),2,surrogate,2,pretune_on,3,,0.925742293767064,0.0015252659997,0.0015252659997,5,"[5,5]",2029054,2029054,430,3,9,0.142857142857,0.142857142857,21
+46,Interacting bar magnets,2,surrogate,1,pretune_off,3,,0.8088552114553993,0.00044743855922,0.00044743855922,5,"[null,null]",291143,291143,410,19,57,0.95,0.95,20
+46,Interacting bar magnets,2,surrogate,1,pretune_on,3,,0.8088552114553671,0.00044743855922,0.00044743855922,5,"[null,null]",110412,110412,410,19,57,0.95,0.95,20
+46,Interacting bar magnets,2,surrogate,2,pretune_off,3,,0.9964055080961916,0.000171820314446,0.000171820314446,4,"[4,4]",336348,336348,330,15,42,0.9375,0.9375,16
+46,Interacting bar magnets,2,surrogate,2,pretune_on,3,,0.9964055080915212,0.000171820314446,0.000171820314446,4,"[4,4]",77462,77462,330,15,45,0.9375,0.9375,16
+47,Binocular rivalry model (no oscillations),2,surrogate,1,pretune_off,3,,0.7516370949015643,0.000452358698397,0.000452358698399,5,"[null,null]",2148950,2148950,430,16,51,0.761904761905,0.87619047619,21
+47,Binocular rivalry model (no oscillations),2,surrogate,1,pretune_on,3,,0.7516371074749462,0.000452358698535,0.000452358698535,5,"[null,null]",323456,323456,430,19,57,0.904761904762,0.904761904762,21
+47,Binocular rivalry model (no oscillations),2,surrogate,2,pretune_off,3,,0.9994850604543676,0.00042209440332,0.000636865304847,5,"[5,5]",798372,798372,450,11,33,0.44,0.633454545455,22
+47,Binocular rivalry model (no oscillations),2,surrogate,2,pretune_on,3,,0.999561247786012,0.000404159813008,0.000404159813008,5,"[5,5]",1318506,1318506,430,15,45,0.714285714286,0.714285714286,21
+48,Bacterial respiration model for nutrients and oxygen levels,2,surrogate,1,pretune_off,3,,0.9972085804868572,0.0847415377344,0.0856206664944,5,"[3,null]",2040318,2040318,610,7,17,0.233333333333,0.233333333333,30
+48,Bacterial respiration model for nutrients and oxygen levels,2,surrogate,1,pretune_on,3,,0.997473777370412,0.0537508382955,0.0537508382955,5,"[3,null]",5956450,5956450,510,7,21,0.28,0.28,25
+48,Bacterial respiration model for nutrients and oxygen levels,2,surrogate,2,pretune_off,3,,0.999110252783488,0.0402811357053,0.0813971259852,5,"[4,null]",2366785,2366785,570,7,24,0.259259259259,0.366137566138,28
+48,Bacterial respiration model for nutrients and oxygen levels,2,surrogate,2,pretune_on,3,,0.998380932185793,0.053102887325,0.053102887325,5,"[4,null]",7512889,7512889,490,11,33,0.458333333333,0.458333333333,24
+49,Brusselator: hypothetical chemical oscillation model (dimensionless),2,surrogate,1,pretune_off,3,,0.9966658358763464,0.000738140676048,0.00175105754304,5,"[null,null]",2585728,2585728,490,3,13,0.125,0.26847826087,24
+49,Brusselator: hypothetical chemical oscillation model (dimensionless),2,surrogate,1,pretune_on,3,,0.9570680461861774,0.00883387419393,0.00883387419393,5,"[null,null]",3557626,3557626,490,7,21,0.291666666667,0.291666666667,24
+49,Brusselator: hypothetical chemical oscillation model (dimensionless),2,surrogate,2,pretune_off,3,,0.9931127729058832,0.00026564935509,0.000265649355969,5,"[5,5]",1971204,1971204,490,10,29,0.416666666667,0.45,24
+49,Brusselator: hypothetical chemical oscillation model (dimensionless),2,surrogate,2,pretune_on,3,,0.9789054877726844,0.000999383489308,0.000999383489308,5,"[5,5]",1069712,1069712,450,3,9,0.136363636364,0.136363636364,22
+50,Chemical oscillator model by Schnackenberg 1979 (dimensionless),2,surrogate,1,pretune_off,3,,0.9963746422747396,0.00279537187196,0.00354605013487,5,"[null,null]",6227872,6227872,530,7,25,0.28,0.394461538462,26
+50,Chemical oscillator model by Schnackenberg 1979 (dimensionless),2,surrogate,1,pretune_on,3,,0.8930723296333988,0.0771991794099,0.0771991794099,5,"[null,null]",4845801,4845801,510,3,13,0.12,0.239384615385,25
+50,Chemical oscillator model by Schnackenberg 1979 (dimensionless),2,surrogate,2,pretune_off,3,,0.9137355197790572,0.000323881634851,0.000323881634853,5,"[null,3]",985438,985438,430,15,45,0.714285714286,0.714285714286,21
+50,Chemical oscillator model by Schnackenberg 1979 (dimensionless),2,surrogate,2,pretune_on,3,,0.9137355251605056,0.000323881634852,0.000323881634852,5,"[null,3]",339631,339631,430,15,45,0.714285714286,0.714285714286,21
+51,Oscillator death model by Ermentrout and Kopell 1990,2,surrogate,1,pretune_off,3,,0.9990901037286142,0.0126755148902,0.012822015632,5,"[null,null]",3058221,3058221,490,7,17,0.269230769231,0.287179487179,24
+51,Oscillator death model by Ermentrout and Kopell 1990,2,surrogate,1,pretune_on,3,,0.9990982954298508,0.0121075981889,0.0121075981889,5,"[null,null]",5778728,5778728,490,3,9,0.125,0.125,24
+51,Oscillator death model by Ermentrout and Kopell 1990,2,surrogate,2,pretune_off,3,,0.9838478680524656,0.0697314874373,0.0780113085565,5,"[null,1]",5596473,5596473,530,3,9,0.115384615385,0.137362637363,26
+51,Oscillator death model by Ermentrout and Kopell 1990,2,surrogate,2,pretune_on,3,,0.982457916303174,0.0822977725047,0.0822977725047,5,"[null,1]",2358318,2358318,430,3,9,0.142857142857,0.142857142857,21
+52,Maxwell-Bloch equations (laser dynamics),3,surrogate,1,pretune_off,3,,0.9647692411381598,0.000418305172443,0.000888178461309,5,"[null,null,null]",2324403,2324403,450,3,17,0.130434782609,0.498814229249,22
+52,Maxwell-Bloch equations (laser dynamics),3,surrogate,1,pretune_on,3,,0.9868231901137962,0.000264751954746,0.00166258141296,5,"[null,null,null]",1631580,1631580,430,6,29,0.285714285714,0.780952380952,21
+52,Maxwell-Bloch equations (laser dynamics),3,surrogate,2,pretune_off,3,,0.5215402234758603,0.000645877710603,0.00096622411359,5,"[null,null,null]",1417624,1417624,430,14,45,0.666666666667,0.819047619048,21
+52,Maxwell-Bloch equations (laser dynamics),3,surrogate,2,pretune_on,3,,0.549919174473981,0.000608245621515,0.000608245621515,5,"[null,null,null]",916417,916417,430,19,57,0.904761904762,0.904761904762,21
+53,Model for apoptosis (cell death),3,surrogate,1,pretune_off,3,,0.5273430409880431,0.000384564728242,0.000387403418074,5,"[null,null,null]",2672098,2672098,490,17,42,0.708333333333,0.749666666667,24
+53,Model for apoptosis (cell death),3,surrogate,1,pretune_on,3,,0.5273430441830439,0.000385025292721,0.000387886915837,5,"[null,null,null]",1088680,1088680,470,19,56,0.826086956522,0.856126482213,23
+53,Model for apoptosis (cell death),3,surrogate,2,pretune_off,3,,0.9670620603046132,3.75486604083e-05,7.58634282942e-05,5,"[null,null,null]",1013364,1013364,430,19,55,0.904761904762,0.940952380952,21
+53,Model for apoptosis (cell death),3,surrogate,2,pretune_on,3,,0.967062005150586,1.87031396155e-05,1.87031396155e-05,5,"[null,null,null]",341176,341176,410,19,57,0.95,0.95,20
+54,Lorenz equations in well-behaved periodic regime,3,exact,1,pretune_off,3,0.0,,0.00469186685783,0.0126031588986,5,"[null,3,3]",3621712,3621712,610,7,16,0.233333333333,0.286666666667,30
+54,Lorenz equations in well-behaved periodic regime,3,exact,1,pretune_on,3,0.0,,0.000627230123002,0.000955066079891,5,"[null,3,3]",4626601,4626601,570,11,33,0.392857142857,0.392857142857,28
+54,Lorenz equations in well-behaved periodic regime,3,exact,2,pretune_off,3,0.0,,1.82056551766,1.98981471427,5,"[null,3,3]",2301384,2301384,610,3,6,0.1,0.108888888889,30
+54,Lorenz equations in well-behaved periodic regime,3,exact,2,pretune_on,3,0.0,,0.403806414822,0.403806414822,5,"[null,3,3]",5416729,5416729,610,13,38,0.433333333333,0.46,30
+55,Lorenz equations in complex periodic regime,3,exact,1,pretune_off,3,0.0,,359.383164957,385.884953126,4,"[null,3,3]",3738149,3738149,610,3,15,0.1,0.372,30
+55,Lorenz equations in complex periodic regime,3,exact,1,pretune_on,3,0.0,,337.814717093,348.034130217,5,"[null,3,3]",7636888,7636888,610,11,32,0.392857142857,0.451904761905,30
+55,Lorenz equations in complex periodic regime,3,exact,2,pretune_off,3,0.0,,397.554608744,399.446473925,5,"[null,4,3]",3218811,3218811,610,8,27,0.266666666667,0.497777777778,30
+55,Lorenz equations in complex periodic regime,3,exact,2,pretune_on,3,0.0,,280.487278037,332.674656062,5,"[null,4,3]",7610950,7610950,610,8,25,0.266666666667,0.346666666667,30
+56,Lorenz equations standard parameters (chaotic),3,exact,1,pretune_off,3,0.0,,53.1242648543,53.4945764928,4,"[null,3,3]",3773031,3773031,610,4,12,0.133333333333,0.226666666667,30
+56,Lorenz equations standard parameters (chaotic),3,exact,1,pretune_on,3,0.0,,44.339157238,45.1307918058,4,"[null,3,3]",6278981,6278981,610,7,22,0.233333333333,0.286666666667,30
+56,Lorenz equations standard parameters (chaotic),3,exact,2,pretune_off,3,0.0,,60.0666489399,60.4111718332,4,"[null,3,3]",3173640,3173640,610,5,15,0.166666666667,0.22,30
+56,Lorenz equations standard parameters (chaotic),3,exact,2,pretune_on,3,0.0,,55.9395034966,57.2891323856,5,"[null,3,3]",7242038,7242038,570,11,27,0.392857142857,0.430571428571,28
+57,Rössler attractor (stable fixed point),3,surrogate,1,pretune_off,3,,0.79541430968444,0.00126064933869,0.00188044429444,5,"[null,null,4]",2616261,2616261,530,17,39,0.653846153846,0.764102564103,26
+57,Rössler attractor (stable fixed point),3,surrogate,1,pretune_on,3,,0.7900614913388195,0.0012844068446,0.00129673241484,5,"[null,null,4]",320973,320973,430,19,57,0.904761904762,0.940952380952,21
+57,Rössler attractor (stable fixed point),3,surrogate,2,pretune_off,3,,0.937746329600719,0.00564227103898,0.0078219280879,5,"[null,null,5]",2600036,2600036,470,11,33,0.478260869565,0.641106719368,23
+57,Rössler attractor (stable fixed point),3,surrogate,2,pretune_on,3,,0.9395566135770992,0.00122493269436,0.00132852127108,5,"[null,null,5]",558680,558680,490,13,34,0.541666666667,0.679761904762,24
+58,Rössler attractor (periodic),3,surrogate,1,pretune_off,3,,0.6856535671845156,0.274187572756,0.343459459498,5,"[null,null,5]",6038380,6038380,610,6,13,0.2,0.247407407407,30
+58,Rössler attractor (periodic),3,surrogate,1,pretune_on,3,,0.92774562789956,0.0412913328333,0.0412913328333,5,"[null,null,5]",5362857,5362857,610,12,36,0.4,0.4,30
+58,Rössler attractor (periodic),3,surrogate,2,pretune_off,3,,0.8471307298603167,0.325252925252,0.458510162887,5,"[null,null,5]",4318743,4318743,570,7,22,0.25,0.375925925926,28
+58,Rössler attractor (periodic),3,surrogate,2,pretune_on,3,,0.9365425601469384,0.0466648199446,0.0467637880852,5,"[null,null,5]",5423101,5423101,610,4,13,0.133333333333,0.186666666667,30
+59,Rössler attractor (chaotic),3,surrogate,1,pretune_off,3,,0.612241757150331,4.08224194812,4.4915593312,5,"[null,null,5]",5994587,5994587,610,9,24,0.3,0.473793103448,30
+59,Rössler attractor (chaotic),3,surrogate,1,pretune_on,3,,0.7861122274412042,1.54097928126,1.62510762547,5,"[null,null,5]",5969198,5969198,610,3,13,0.1,0.286666666667,30
+59,Rössler attractor (chaotic),3,surrogate,2,pretune_off,3,,0.6484338375314925,3.42928787605,3.62829205396,5,"[null,null,null]",4495876,4495876,610,11,26,0.392857142857,0.425238095238,30
+59,Rössler attractor (chaotic),3,surrogate,2,pretune_on,3,,0.8644776977464451,0.826670553575,0.826670553575,4,"[null,null,null]",5362806,5362806,610,3,8,0.1,0.126666666667,30
+60,Aizawa attractor (chaotic),3,surrogate,1,pretune_off,3,,0.4079742008529551,0.145807871891,0.157123645746,5,"[3,3,5]",5551020,5551020,550,3,15,0.111111111111,0.365079365079,27
+60,Aizawa attractor (chaotic),3,surrogate,1,pretune_on,3,,0.330915778412672,0.161001814084,0.16262444959,5,"[3,3,5]",2406120,2406120,470,19,57,0.826086956522,0.856126482213,23
+60,Aizawa attractor (chaotic),3,surrogate,2,pretune_off,3,,0.6373415319221448,0.15677366289,0.167950060244,5,"[3,3,5]",7157271,7157271,610,6,23,0.2,0.343448275862,30
+60,Aizawa attractor (chaotic),3,surrogate,2,pretune_on,3,,0.5471207529861681,0.193447352194,0.208204345483,5,"[3,3,5]",7273304,7273304,570,11,32,0.392857142857,0.507142857143,28
+61,Chen-Lee attractor; system for gyro motion with feedback control of rigid body (chaotic),3,exact,1,pretune_off,3,0.0,,96.0518897327,99.8173492991,3,"[3,3,3]",2154809,2154809,430,3,13,0.142857142857,0.378571428571,21
+61,Chen-Lee attractor; system for gyro motion with feedback control of rigid body (chaotic),3,exact,1,pretune_on,3,0.0,,62.7232227228,63.0322262567,3,"[3,3,3]",3038641,3038641,350,3,9,0.176470588235,0.176470588235,17
+61,Chen-Lee attractor; system for gyro motion with feedback control of rigid body (chaotic),3,exact,2,pretune_off,3,0.0,,87.759674065,88.0325363037,3,"[3,3,3]",2484280,2484280,430,3,13,0.142857142857,0.378571428571,21
+61,Chen-Lee attractor; system for gyro motion with feedback control of rigid body (chaotic),3,exact,2,pretune_on,3,0.0,,64.401377558,68.5480079318,3,"[3,3,3]",5026839,5026839,490,3,9,0.125,0.129347826087,24
+62,Binocular rivalry model with adaptation (oscillations),4,surrogate,1,pretune_off,3,,0.9999791177014868,2.0866699905e-06,1.61065397302e-05,5,"[null,null,null,null]",4005667,4005667,530,19,53,0.678571428571,0.72032967033,26
+62,Binocular rivalry model with adaptation (oscillations),4,surrogate,1,pretune_on,3,,0.9995862498449192,4.64557603024e-05,5.27795559389e-05,5,"[null,null,null,null]",1135137,1135137,510,19,57,0.76,0.76,25
+62,Binocular rivalry model with adaptation (oscillations),4,surrogate,2,pretune_off,3,,0.9206251770688652,0.000585944089702,0.000615778421849,5,"[null,null,null,null]",4947088,4947088,550,18,53,0.666666666667,0.717948717949,27
+62,Binocular rivalry model with adaptation (oscillations),4,surrogate,2,pretune_on,3,,0.9471558812584004,0.000228953661977,0.000696680601052,5,"[null,null,null,null]",1871685,1871685,510,18,45,0.72,0.804869565217,25
+63,SEIR infection model (proportions),4,exact,1,pretune_off,3,0.0,,0.000788737193891,0.00133283253485,5,"[null,null,null,null]",510251,510251,410,19,57,0.95,0.95,20
+63,SEIR infection model (proportions),4,exact,1,pretune_on,3,0.0,,0.000788737193891,0.00133283253485,5,"[null,null,null,null]",271717,271717,410,19,57,0.95,0.95,20
+63,SEIR infection model (proportions),4,exact,2,pretune_off,3,0.0,,0.000474181749109,0.00057483330256,5,"[null,null,null,null]",629784,629784,410,19,57,0.95,0.95,20
+63,SEIR infection model (proportions),4,exact,2,pretune_on,3,0.0,,0.000474181749109,0.00057483330256,5,"[null,null,null,null]",441599,441599,410,19,57,0.95,0.95,20

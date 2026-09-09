@@ -1,0 +1,107 @@
+% Requires: \usepackage{booktabs}
+\begin{table}[htbp]
+\centering
+\caption{T3. Exact-system support recovery. Counts and rates are descriptive; dimension rows keep the dim 3 and dim 4 entries visible.}
+\begin{tabular}{lrrrrrrrrrrrr}
+\toprule
+aggregation\_level & condition & initial\_condition\_set & system\_dim & system\_id & system\_name & n\_cells & support\_match\_count & support\_match\_rate & share\_system\_rate\_ge\_0\_0 & share\_system\_rate\_ge\_0\_333333 & share\_system\_rate\_ge\_0\_666667 & share\_system\_rate\_ge\_1\_0 \\
+\midrule
+system & pretune\_off & 1 & 1 & 2 & Population growth (naive) & 3 & 3 & 1 &  &  &  &  \\
+system & pretune\_off & 1 & 1 & 3 & Population growth with carrying capacity & 3 & 3 & 1 &  &  &  &  \\
+system & pretune\_off & 1 & 1 & 6 & Autocatalysis with one fixed abundant chemical & 3 & 3 & 1 &  &  &  &  \\
+system & pretune\_off & 1 & 1 & 8 & Logistic equation with Allee effect & 3 & 3 & 1 &  &  &  &  \\
+system & pretune\_off & 1 & 1 & 11 & Naive critical slowing down (statistical mechanics) & 3 & 3 & 1 &  &  &  &  \\
+system & pretune\_off & 1 & 1 & 12 & Photons in a laser (simple) & 3 & 3 & 1 &  &  &  &  \\
+system & pretune\_off & 1 & 2 & 24 & Harmonic oscillator without damping & 3 & 3 & 1 &  &  &  &  \\
+system & pretune\_off & 1 & 2 & 25 & Harmonic oscillator with damping & 3 & 3 & 1 &  &  &  &  \\
+system & pretune\_off & 1 & 2 & 26 & Lotka-Volterra competition model (Strogatz version with sheeps and rabbits) & 3 & 0 & 0 &  &  &  &  \\
+system & pretune\_off & 1 & 2 & 27 & Lotka-Volterra simple (as on Wikipedia) & 3 & 0 & 0 &  &  &  &  \\
+system & pretune\_off & 1 & 2 & 28 & Pendulum without friction & 3 & 0 & 0 &  &  &  &  \\
+system & pretune\_off & 1 & 2 & 29 & Dipole fixed point & 3 & 3 & 1 &  &  &  &  \\
+system & pretune\_off & 1 & 2 & 31 & SIR infection model only for healthy and sick & 3 & 0 & 0 &  &  &  &  \\
+system & pretune\_off & 1 & 2 & 32 & Damped double well oscillator & 3 & 3 & 1 &  &  &  &  \\
+system & pretune\_off & 1 & 2 & 38 & Van der Pol oscillator (simplified form from Strogatz) & 3 & 3 & 1 &  &  &  &  \\
+system & pretune\_off & 1 & 3 & 54 & Lorenz equations in well-behaved periodic regime & 3 & 0 & 0 &  &  &  &  \\
+system & pretune\_off & 1 & 3 & 55 & Lorenz equations in complex periodic regime & 3 & 0 & 0 &  &  &  &  \\
+system & pretune\_off & 1 & 3 & 56 & Lorenz equations standard parameters (chaotic) & 3 & 0 & 0 &  &  &  &  \\
+system & pretune\_off & 1 & 3 & 61 & Chen-Lee attractor; system for gyro motion with feedback control of rigid body (chaotic) & 3 & 0 & 0 &  &  &  &  \\
+system & pretune\_off & 1 & 4 & 63 & SEIR infection model (proportions) & 3 & 0 & 0 &  &  &  &  \\
+system & pretune\_off & 2 & 1 & 2 & Population growth (naive) & 3 & 3 & 1 &  &  &  &  \\
+system & pretune\_off & 2 & 1 & 3 & Population growth with carrying capacity & 3 & 3 & 1 &  &  &  &  \\
+system & pretune\_off & 2 & 1 & 6 & Autocatalysis with one fixed abundant chemical & 3 & 3 & 1 &  &  &  &  \\
+system & pretune\_off & 2 & 1 & 8 & Logistic equation with Allee effect & 3 & 0 & 0 &  &  &  &  \\
+system & pretune\_off & 2 & 1 & 11 & Naive critical slowing down (statistical mechanics) & 3 & 0 & 0 &  &  &  &  \\
+system & pretune\_off & 2 & 1 & 12 & Photons in a laser (simple) & 3 & 3 & 1 &  &  &  &  \\
+system & pretune\_off & 2 & 2 & 24 & Harmonic oscillator without damping & 3 & 3 & 1 &  &  &  &  \\
+system & pretune\_off & 2 & 2 & 25 & Harmonic oscillator with damping & 3 & 3 & 1 &  &  &  &  \\
+system & pretune\_off & 2 & 2 & 26 & Lotka-Volterra competition model (Strogatz version with sheeps and rabbits) & 3 & 0 & 0 &  &  &  &  \\
+system & pretune\_off & 2 & 2 & 27 & Lotka-Volterra simple (as on Wikipedia) & 3 & 2 & 0.666667 &  &  &  &  \\
+system & pretune\_off & 2 & 2 & 28 & Pendulum without friction & 3 & 0 & 0 &  &  &  &  \\
+system & pretune\_off & 2 & 2 & 29 & Dipole fixed point & 3 & 0 & 0 &  &  &  &  \\
+system & pretune\_off & 2 & 2 & 31 & SIR infection model only for healthy and sick & 3 & 3 & 1 &  &  &  &  \\
+system & pretune\_off & 2 & 2 & 32 & Damped double well oscillator & 3 & 1 & 0.333333 &  &  &  &  \\
+system & pretune\_off & 2 & 2 & 38 & Van der Pol oscillator (simplified form from Strogatz) & 3 & 3 & 1 &  &  &  &  \\
+system & pretune\_off & 2 & 3 & 54 & Lorenz equations in well-behaved periodic regime & 3 & 0 & 0 &  &  &  &  \\
+system & pretune\_off & 2 & 3 & 55 & Lorenz equations in complex periodic regime & 3 & 0 & 0 &  &  &  &  \\
+system & pretune\_off & 2 & 3 & 56 & Lorenz equations standard parameters (chaotic) & 3 & 0 & 0 &  &  &  &  \\
+system & pretune\_off & 2 & 3 & 61 & Chen-Lee attractor; system for gyro motion with feedback control of rigid body (chaotic) & 3 & 0 & 0 &  &  &  &  \\
+system & pretune\_off & 2 & 4 & 63 & SEIR infection model (proportions) & 3 & 0 & 0 &  &  &  &  \\
+system & pretune\_on & 1 & 1 & 2 & Population growth (naive) & 3 & 3 & 1 &  &  &  &  \\
+system & pretune\_on & 1 & 1 & 3 & Population growth with carrying capacity & 3 & 3 & 1 &  &  &  &  \\
+system & pretune\_on & 1 & 1 & 6 & Autocatalysis with one fixed abundant chemical & 3 & 3 & 1 &  &  &  &  \\
+system & pretune\_on & 1 & 1 & 8 & Logistic equation with Allee effect & 3 & 0 & 0 &  &  &  &  \\
+system & pretune\_on & 1 & 1 & 11 & Naive critical slowing down (statistical mechanics) & 3 & 3 & 1 &  &  &  &  \\
+system & pretune\_on & 1 & 1 & 12 & Photons in a laser (simple) & 3 & 3 & 1 &  &  &  &  \\
+system & pretune\_on & 1 & 2 & 24 & Harmonic oscillator without damping & 3 & 3 & 1 &  &  &  &  \\
+system & pretune\_on & 1 & 2 & 25 & Harmonic oscillator with damping & 3 & 3 & 1 &  &  &  &  \\
+system & pretune\_on & 1 & 2 & 26 & Lotka-Volterra competition model (Strogatz version with sheeps and rabbits) & 3 & 0 & 0 &  &  &  &  \\
+system & pretune\_on & 1 & 2 & 27 & Lotka-Volterra simple (as on Wikipedia) & 3 & 2 & 0.666667 &  &  &  &  \\
+system & pretune\_on & 1 & 2 & 28 & Pendulum without friction & 3 & 0 & 0 &  &  &  &  \\
+system & pretune\_on & 1 & 2 & 29 & Dipole fixed point & 3 & 0 & 0 &  &  &  &  \\
+system & pretune\_on & 1 & 2 & 31 & SIR infection model only for healthy and sick & 3 & 0 & 0 &  &  &  &  \\
+system & pretune\_on & 1 & 2 & 32 & Damped double well oscillator & 3 & 3 & 1 &  &  &  &  \\
+system & pretune\_on & 1 & 2 & 38 & Van der Pol oscillator (simplified form from Strogatz) & 3 & 3 & 1 &  &  &  &  \\
+system & pretune\_on & 1 & 3 & 54 & Lorenz equations in well-behaved periodic regime & 3 & 0 & 0 &  &  &  &  \\
+system & pretune\_on & 1 & 3 & 55 & Lorenz equations in complex periodic regime & 3 & 0 & 0 &  &  &  &  \\
+system & pretune\_on & 1 & 3 & 56 & Lorenz equations standard parameters (chaotic) & 3 & 0 & 0 &  &  &  &  \\
+system & pretune\_on & 1 & 3 & 61 & Chen-Lee attractor; system for gyro motion with feedback control of rigid body (chaotic) & 3 & 0 & 0 &  &  &  &  \\
+system & pretune\_on & 1 & 4 & 63 & SEIR infection model (proportions) & 3 & 0 & 0 &  &  &  &  \\
+system & pretune\_on & 2 & 1 & 2 & Population growth (naive) & 3 & 3 & 1 &  &  &  &  \\
+system & pretune\_on & 2 & 1 & 3 & Population growth with carrying capacity & 3 & 3 & 1 &  &  &  &  \\
+system & pretune\_on & 2 & 1 & 6 & Autocatalysis with one fixed abundant chemical & 3 & 3 & 1 &  &  &  &  \\
+system & pretune\_on & 2 & 1 & 8 & Logistic equation with Allee effect & 3 & 0 & 0 &  &  &  &  \\
+system & pretune\_on & 2 & 1 & 11 & Naive critical slowing down (statistical mechanics) & 3 & 0 & 0 &  &  &  &  \\
+system & pretune\_on & 2 & 1 & 12 & Photons in a laser (simple) & 3 & 3 & 1 &  &  &  &  \\
+system & pretune\_on & 2 & 2 & 24 & Harmonic oscillator without damping & 3 & 3 & 1 &  &  &  &  \\
+system & pretune\_on & 2 & 2 & 25 & Harmonic oscillator with damping & 3 & 3 & 1 &  &  &  &  \\
+system & pretune\_on & 2 & 2 & 26 & Lotka-Volterra competition model (Strogatz version with sheeps and rabbits) & 3 & 0 & 0 &  &  &  &  \\
+system & pretune\_on & 2 & 2 & 27 & Lotka-Volterra simple (as on Wikipedia) & 3 & 3 & 1 &  &  &  &  \\
+system & pretune\_on & 2 & 2 & 28 & Pendulum without friction & 3 & 0 & 0 &  &  &  &  \\
+system & pretune\_on & 2 & 2 & 29 & Dipole fixed point & 3 & 0 & 0 &  &  &  &  \\
+system & pretune\_on & 2 & 2 & 31 & SIR infection model only for healthy and sick & 3 & 0 & 0 &  &  &  &  \\
+system & pretune\_on & 2 & 2 & 32 & Damped double well oscillator & 3 & 0 & 0 &  &  &  &  \\
+system & pretune\_on & 2 & 2 & 38 & Van der Pol oscillator (simplified form from Strogatz) & 3 & 0 & 0 &  &  &  &  \\
+system & pretune\_on & 2 & 3 & 54 & Lorenz equations in well-behaved periodic regime & 3 & 0 & 0 &  &  &  &  \\
+system & pretune\_on & 2 & 3 & 55 & Lorenz equations in complex periodic regime & 3 & 0 & 0 &  &  &  &  \\
+system & pretune\_on & 2 & 3 & 56 & Lorenz equations standard parameters (chaotic) & 3 & 0 & 0 &  &  &  &  \\
+system & pretune\_on & 2 & 3 & 61 & Chen-Lee attractor; system for gyro motion with feedback control of rigid body (chaotic) & 3 & 0 & 0 &  &  &  &  \\
+system & pretune\_on & 2 & 4 & 63 & SEIR infection model (proportions) & 3 & 0 & 0 &  &  &  &  \\
+dimension & pretune\_off & 1 & 1 &  &  & 18 & 18 & 1 & 1 & 1 & 1 & 1 \\
+dimension & pretune\_off & 1 & 2 &  &  & 27 & 15 & 0.555556 & 1 & 0.555556 & 0.555556 & 0.555556 \\
+dimension & pretune\_off & 1 & 3 &  &  & 12 & 0 & 0 & 1 & 0 & 0 & 0 \\
+dimension & pretune\_off & 1 & 4 &  &  & 3 & 0 & 0 & 1 & 0 & 0 & 0 \\
+dimension & pretune\_off & 2 & 1 &  &  & 18 & 12 & 0.666667 & 1 & 0.666667 & 0.666667 & 0.666667 \\
+dimension & pretune\_off & 2 & 2 &  &  & 27 & 15 & 0.555556 & 1 & 0.666667 & 0.555556 & 0.444444 \\
+dimension & pretune\_off & 2 & 3 &  &  & 12 & 0 & 0 & 1 & 0 & 0 & 0 \\
+dimension & pretune\_off & 2 & 4 &  &  & 3 & 0 & 0 & 1 & 0 & 0 & 0 \\
+dimension & pretune\_on & 1 & 1 &  &  & 18 & 15 & 0.833333 & 1 & 0.833333 & 0.833333 & 0.833333 \\
+dimension & pretune\_on & 1 & 2 &  &  & 27 & 14 & 0.518519 & 1 & 0.555556 & 0.555556 & 0.444444 \\
+dimension & pretune\_on & 1 & 3 &  &  & 12 & 0 & 0 & 1 & 0 & 0 & 0 \\
+dimension & pretune\_on & 1 & 4 &  &  & 3 & 0 & 0 & 1 & 0 & 0 & 0 \\
+dimension & pretune\_on & 2 & 1 &  &  & 18 & 12 & 0.666667 & 1 & 0.666667 & 0.666667 & 0.666667 \\
+dimension & pretune\_on & 2 & 2 &  &  & 27 & 9 & 0.333333 & 1 & 0.333333 & 0.333333 & 0.333333 \\
+dimension & pretune\_on & 2 & 3 &  &  & 12 & 0 & 0 & 1 & 0 & 0 & 0 \\
+dimension & pretune\_on & 2 & 4 &  &  & 3 & 0 & 0 & 1 & 0 & 0 & 0 \\
+\bottomrule
+\end{tabular}
+\end{table}

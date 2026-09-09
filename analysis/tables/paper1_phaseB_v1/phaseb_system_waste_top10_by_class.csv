@@ -1,0 +1,21 @@
+system_id,system_name,system_dim,system_representability,n_cells,silent_levels_sum,silent_fraction_q50,silent_fraction_q90,exact_support_match_rate,r2_median,class_target
+63,SEIR infection model (proportions),4,exact,12,228,0.95,0.95,0,,0
+28,Pendulum without friction,2,exact,12,155,0.65,0.95,0,,0
+8,Logistic equation with Allee effect,1,exact,12,135,0.90625,0.9375,0.25,,0.25
+55,Lorenz equations in complex periodic regime,3,exact,12,99,0.266666666667,0.464,0,,0
+54,Lorenz equations in well-behaved periodic regime,3,exact,12,93,0.333333333333,0.429285714286,0,,0
+56,Lorenz equations standard parameters (chaotic),3,exact,12,76,0.216666666667,0.383571428571,0,,0
+31,SIR infection model only for healthy and sick,2,exact,12,69,0.46875,0.5,0.25,,0.25
+32,Damped double well oscillator,2,exact,12,64,0.0166666666667,0.95,0.583333333333,,0.583333333333
+11,Naive critical slowing down (statistical mechanics),1,exact,12,55,0.125,0.6875,0.5,,0.5
+26,Lotka-Volterra competition model (Strogatz version with sheeps and rabbits),2,exact,12,53,0.232142857143,0.5,0,,0
+30,RNA molecules catalyzing each others replication,2,surrogate,12,228,0.95,0.95,,0.988019248179,0.988019248179
+39,"Glycolytic oscillator, e.g., ADP and F6P in yeast (dimensionless)",2,surrogate,12,218,0.95,0.95,,0.966267040798,0.966267040798
+36,"Pendulum with non-linear damping, no driving (dimensionless)",2,surrogate,12,217,0.925,0.95,,0.999435117568,0.999435117568
+53,Model for apoptosis (cell death),3,surrogate,12,210,0.844861660079,0.95,,0.628914662045,0.628914662045
+62,Binocular rivalry model with adaptation (oscillations),4,surrogate,12,208,0.711851851852,0.76,,0.999457624591,0.999457624591
+46,Interacting bar magnets,2,surrogate,12,201,0.94375,0.95,,0.902630359773,0.902630359773
+47,Binocular rivalry model (no oscillations),2,surrogate,12,186,0.738095238095,0.904761904762,,0.875515966553,0.875515966553
+9,Language death model for two languages,1,surrogate,12,185,0.85,0.95,,0.290633124854,0.290633124854
+10,Refined language death model for two languages,1,surrogate,12,174,0.74375,0.95,,0.996500373643,0.996500373643
+57,Rössler attractor (stable fixed point),3,surrogate,12,163,0.667832167832,0.900649350649,,0.796171500126,0.796171500126

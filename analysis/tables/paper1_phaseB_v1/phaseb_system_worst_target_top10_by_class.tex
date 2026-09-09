@@ -1,0 +1,31 @@
+% Requires: \usepackage{booktabs}
+\begin{table}[htbp]
+\centering
+\caption{A9. Ten per-class system rows with the lowest class-specific target values.}
+\begin{tabular}{lrrrrrrrrrr}
+\toprule
+system\_id & system\_name & system\_dim & system\_representability & n\_cells & silent\_levels\_sum & silent\_fraction\_q50 & silent\_fraction\_q90 & exact\_support\_match\_rate & r2\_median & class\_target \\
+\midrule
+26 & Lotka-Volterra competition model (Strogatz version with sheeps and rabbits) & 2 & exact & 12 & 53 & 0.232143 & 0.5 & 0 &  & 0 \\
+28 & Pendulum without friction & 2 & exact & 12 & 155 & 0.65 & 0.95 & 0 &  & 0 \\
+54 & Lorenz equations in well-behaved periodic regime & 3 & exact & 12 & 93 & 0.333333 & 0.429286 & 0 &  & 0 \\
+55 & Lorenz equations in complex periodic regime & 3 & exact & 12 & 99 & 0.266667 & 0.464 & 0 &  & 0 \\
+56 & Lorenz equations standard parameters (chaotic) & 3 & exact & 12 & 76 & 0.216667 & 0.383571 & 0 &  & 0 \\
+61 & Chen-Lee attractor; system for gyro motion with feedback control of rigid body (chaotic) & 3 & exact & 12 & 44 & 0.136646 & 0.411397 & 0 &  & 0 \\
+63 & SEIR infection model (proportions) & 4 & exact & 12 & 228 & 0.95 & 0.95 & 0 &  & 0 \\
+8 & Logistic equation with Allee effect & 1 & exact & 12 & 135 & 0.90625 & 0.9375 & 0.25 &  & 0.25 \\
+29 & Dipole fixed point & 2 & exact & 12 & 47 & 0.240385 & 0.538462 & 0.25 &  & 0.25 \\
+31 & SIR infection model only for healthy and sick & 2 & exact & 12 & 69 & 0.46875 & 0.5 & 0.25 &  & 0.25 \\
+9 & Language death model for two languages & 1 & surrogate & 12 & 185 & 0.85 & 0.95 &  & 0.290633 & 0.290633 \\
+60 & Aizawa attractor (chaotic) & 3 & surrogate & 12 & 127 & 0.386084 & 0.822645 &  & 0.492156 & 0.492156 \\
+53 & Model for apoptosis (cell death) & 3 & surrogate & 12 & 210 & 0.844862 & 0.95 &  & 0.628915 & 0.628915 \\
+52 & Maxwell-Bloch equations (laser dynamics) & 3 & surrogate & 12 & 148 & 0.642857 & 0.904762 &  & 0.668585 & 0.668585 \\
+59 & Rössler attractor (chaotic) & 3 & surrogate & 12 & 71 & 0.116667 & 0.429286 &  & 0.742734 & 0.742734 \\
+57 & Rössler attractor (stable fixed point) & 3 & surrogate & 12 & 163 & 0.667832 & 0.900649 &  & 0.796172 & 0.796172 \\
+47 & Binocular rivalry model (no oscillations) & 2 & surrogate & 12 & 186 & 0.738095 & 0.904762 &  & 0.875516 & 0.875516 \\
+46 & Interacting bar magnets & 2 & surrogate & 12 & 201 & 0.94375 & 0.95 &  & 0.90263 & 0.90263 \\
+50 & Chemical oscillator model by Schnackenberg 1979 (dimensionless) & 2 & surrogate & 12 & 128 & 0.568681 & 0.714286 &  & 0.913736 & 0.913736 \\
+58 & Rössler attractor (periodic) & 3 & surrogate & 12 & 84 & 0.225 & 0.4 &  & 0.927746 & 0.927746 \\
+\bottomrule
+\end{tabular}
+\end{table}
