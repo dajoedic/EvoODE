@@ -5,6 +5,8 @@ orientation length. This file is **reference, not planning**: it describes what 
 pieces fit together. Project state, priorities and decisions stay in `CLAUDE.md`; chronology stays
 in `DIARY.md`.
 
+Last brought level with the code on **2026-09-09**.
+
 ---
 
 ## Key Types
@@ -110,12 +112,26 @@ Behavior:
 
 #### EvoGrow variants
 
-- v1: flat growth over all available basis terms
-- v2: staged complexity release
-- v2.1: stage-aware child generation after stage unlock
-- v2.2: stage-local progression with minimum stage budget and configurable stage usage policy
-- v3: planned equation-wise growth
-- v4: planned coupling-aware growth
+The chain and its verdicts. Phase 2 is closed; nothing here is planned work except v4.
+
+| Variant | What it does | Status |
+|---|---|---|
+| v1 | flat growth over all available basis terms | superseded |
+| v2 | staged complexity release | superseded |
+| v2.1 | stage-aware child generation after stage unlock | superseded |
+| v2.2 | stage-local progression, minimum stage budget, configurable stage usage policy | **fails Gate 1** (2026-05-30); kept as the substrate |
+| v3 (`EvoGrowV3`) | per-equation staging with a derivative-residual promotion signal `r_k` | **implemented, fails Gate 2** (2026-07-31); kept as documented failure analysis |
+| `evogrow_v2_2_stage_capped` (`EvoGrowStageCapped`) | v2.2 substrate plus the look-ahead stage cap | **the final Paper 1 variant** (settled 2026-08-03) |
+| v4 | coupling-aware growth | not started |
+
+Why v3 failed, because the reason constrains later designs: its promotion condition
+`r_k > loss_tol = 1e-8` is unreachable on coupled systems, whose error floor sits around 1e-3, so it
+cannot distinguish under-modelling from an irreducible floor. `r_k` is additionally contaminated by
+derivative error, and its capacity to absorb that error grows with term count — biasing the signal
+toward "more terms help".
+
+The stage cap combines with the v2.2 substrate rather than requiring v3 because it reads only the
+trajectory and the basis, and is therefore search-independent.
 
 #### EvoGrow v2.2 design freeze
 
@@ -180,16 +196,99 @@ Results are frozen. Full verdicts in `docs/paper1_freeze_memo_phaseA.md`.
 
 Key limitation: growth-without-pruning causes exact_match=0 on System 11 despite loss ~4e-15. Genuine algorithmic limitation; stated in the paper.
 
+### The look-ahead stage cap
+
+`src/structure/stage_cap.jl` — the mechanism Paper 1 is about. It answers, **before the search
+starts**, which basis stages are worth unlocking at all for a given equation.
+
+```julia
+estimate_stage_caps(traj, basis; policy = LookAheadStageCapPolicy()) -> Vector{Union{Nothing,Int}}
+```
+
+One entry per equation: an integer upper bound on the stage, or `nothing` for "no cap". The cap is
+an **upper bound only** — it can prevent a future promotion, but it never promotes an equation and
+never removes terms from an equation already above it.
+
+**What it is allowed to read.** The observed trajectory, the staged basis, and ordinary threshold
+hyperparameters. The signature deliberately has no argument for ground truth, expected terms,
+expected stages or system identity. That is what makes it search-independent, and it is why it
+combines with the v2.2 substrate rather than requiring v3. `estimate_stage_caps` on a non-staged
+basis returns all-`nothing`.
+
+**How it decides.** Derivatives are estimated from the trajectory (`:local_poly`), with a Richardson
+error estimate from a coarsened grid supplying per-point weights. For each equation the walk fits
+the cumulative stage columns to the estimated derivative on data splits and compares the residual of
+stage *s* against stage *s+1*. Split decisions are aggregated by majority
+(`:majority_no_undecided_at_or_below`).
+
+**The two design rules, both learned from defects.**
+
+1. *Positive evidence, never the absence of evidence.* A stage is unlocked because something was
+   measured, not because nothing was. This came from the System 63 defect.
+2. *Look ahead as far as the basis creates structural gaps.* The basis stages by degree, not parity,
+   so odd nonlinearities first become approximable at stage 4/5. The shipped
+   `lookahead_horizon = 5` is the **number of basis stages** — that is, no horizon — not a tuned
+   constant. Horizons 3, 4 and 5 are cap-identical on all 80 audited equation rows.
+
+**The reopen branch** is what makes the walk work where a plain monotone rule fails: a later stage
+that drops the residual to ≤ `post_floor_significant_drop_ratio` reopens the walk; otherwise it
+caps. All conditions are relative — no stage index, no system identity.
+
+**Two load-bearing constants**, both inside `config_fingerprint`:
+
+| Constant | Value | Role |
+|---|---|---|
+| `post_floor_significant_drop_ratio` | 0.35 | how large a later drop must be to reopen the walk |
+| `post_floor_min_floor_ratio` | 0.1 | how far above the floor a residual must sit to count |
+
+**The threshold cannot be selected from the data, and this is reported as a result.**
+Leave-one-system-out puts the reopen threshold between 0.044 and 0.278 while the shipped value is
+0.35, and at the selected values Lorenz truncates again. The 11 % margin between 0.35 and Lorenz's
+worst ratio of 0.315 is a human choice (WP-V1, `docs/WP-V1.md`).
+
+**Audited state.** Over all 20 exact systems, both IC sets: **0 truncated equation rows of 80, 48
+finite caps.** Verified caps on the per-system grid: 3 → `[2]`, 11 → `[4]`, 26 → `[3,3]`,
+31 → `[3,3]`, 54 → `[nothing,2,2]`, 63 → all `nothing`.
+
+**Limitations to carry.** The cap is auditable only on the 20 exact systems; on surrogates it is
+unauditable by construction, and several surrogates carry an equation capped at stage 1 (33, 34, 40,
+44, 50) — a fit-quality risk, not a support error. Aggregation robustness is open: rows can flip
+through split majority voting. The cap is not stable across initial conditions where the trajectory
+carries little dynamics (System 31, IC set 2).
+
+### Behaviour fingerprinting
+
+`src/structure/stage_cap_fingerprint.jl` closes a gap the config fingerprints left open: those hash
+configuration constants only, so a change to the cap *logic* left them standing and two records
+could share a fingerprint while coming from differently deciding code.
+
+`stage_cap_behavior_fingerprint()` hashes the decisions a frozen five-case probe draws out of
+`_cap_split_decision`. **Publishability requires three fields**: one git hash, one config/Phase B
+fingerprint, and one behaviour fingerprint. Current values are recorded in `CLAUDE.md` and
+`PAPER_1.md`.
+
+Still blind: the probe covers `_cap_split_decision` only. Derivative estimation, floor computation,
+split aggregation and the search loop remain unobserved.
+
 ### GPStructureSearch
 
-Baseline genetic programming search over the full basis.
+Genetic programming search over the full basis.
 
 - tournament selection
 - per-equation crossover
 - add/remove/replace mutation
 - no staged complexity release
 
-This is a comparison baseline, not the central contribution.
+**Not used as a baseline anywhere.** It was written as one and never run as one: Paper 1 explicitly
+excludes a GP baseline (`PAPER_1.md`, "Explicit Non-Goals"), and the only baseline the project has
+ever executed is SINDy on identical trajectories (WP-N6, 2026-09-09, `codex/REPORT_WP_N6.md`). The
+implementation is kept because it is the natural comparison for the "starts large and random" arm of
+the scientific position, and because removing it would make that position unfalsifiable in this
+repository. Do not cite it as evidence of anything until it has been run under a manifest.
+
+Note also that `GPStructureSearch` has the only add/**remove**/**replace** mutation in the
+repository. EvoGrow's `_expand` grows only, which is the structural reason a wrong term can never
+leave a candidate line — see "Known limitations" in `CLAUDE.md`.
 
 ## Basis Libraries
 
@@ -312,9 +411,46 @@ julia experiments/run_experiment.jl <experiment_id>
 julia experiments/aggregate.jl <experiment_id>
 ```
 
-### Current experiments
+### Experiments
 
-- `paper1_phaseA_v1`: Phase A exploratory run — 10 systems × 6 variants × 5 seeds = 300 runs; `run_type=exploratory`, `include_in_paper=false`
+| Identifier | Scope | Status |
+|---|---|---|
+| `paper1_phaseA_v1` | 10 systems × 6 variants × 5 seeds = 300 runs; `run_type=exploratory`, `include_in_paper=false` | **frozen** 2026-05-11, not used for final claims (`docs/paper1_freeze_memo_phaseA.md`) |
+| `paper1_phaseB_v1` | all 63 ODEBench systems × 2 pretuning conditions × 3 seeds × 2 IC sets = 756 runs | **complete** 2026-09-04 |
+
+#### `paper1_phaseB_v1` — the main campaign
+
+Ran 2026-08-22 to 2026-09-04 on the Orion cluster. **756 of 756 records, no `error`, 756 unique
+identities, one identity triple over every record**: `git 91f88c4` (clean), config fingerprint
+`604e79733b22d64d`, behaviour fingerprint `ffb0266c7913352c`. 5,248 core hours, 1.418e9 loss
+evaluations.
+
+Both arms are `evogrow_v2_2_stage_capped`; the conditions differ only in `pretuning`. **There is no
+uncapped arm** — the campaign shows the cap's behaviour, never that the cap is free. Any comparative
+cap claim rests on the 30-cell regression grid instead.
+
+Artefacts in the repository:
+
+```text
+experiments/paper1_phaseB_v1/manifest.csv        the 756 cells
+experiments/paper1_phaseB_v1/run_registry.csv    one row per cell, the analysis input
+experiments/paper1_phaseB_v1/history.jsonl       the campaign history
+analysis/data/paper1_phaseB_v1/                  derived aggregates
+analysis/tables/paper1_phaseB_v1/                descriptive tables T1–T5 (CSV and LaTeX)
+```
+
+Two instrumentation facts that must not be misread when working with these records:
+
+- `n_levels` is the constant `N_LEVELS = 30` — the configured budget, **not** an executed count.
+  The level heartbeat fires once per completed level and is the actual measurement; 690 of 756 cells
+  execute fewer than 30 levels.
+- `total_diverged_solves` and `total_solver_unstable_solves` are **identical in all 756 cells**. One
+  quantity counted twice; never report them as two independent robustness measures.
+- The optimizer retcode carries no statement about result quality in either direction: 18 cells
+  reach losses down to 1.9e-12 at R² ≈ 0.9999 with no `Success` at all, and the sentinel loss `1e6`
+  occurs at retcode `Success`.
+- The 756 cells **carry no fitted coefficients** (coefficient persistence was added afterwards), so
+  their models cannot be rebuilt and their generalization is reachable only through a re-run.
 
 ## Benchmark Data and Scripts
 
@@ -386,7 +522,9 @@ These two categories must never be mixed into one structure-correctness metric.
 - `StageProgressionPolicy`, `StageUsagePolicy`
 - `GPStructureSearch`
 - `PolynomialBasis`
-- `StagedPolynomialBasis`
+- `StagedPolynomialBasis`, and `staged_polynomial_basis_with_constant` as a separate variant
+- `stage_cap_behavior_fingerprint()` — behaviour identity for the cap decision logic
+- persistence of fitted coefficients alongside term names (`model_terms`)
 - `MSELoss`
 - `BFGSOptimizer`
 - `DummyOptimizer`
@@ -395,6 +533,24 @@ These two categories must never be mixed into one structure-correctness metric.
 - 10-system benchmark with 6 variants, 5 seeds, exact/surrogate split
 - aggregate statistics (mean/std loss, exact_match_rate, wasted_levels)
 - experiment infrastructure: manifest generation, per-run execution, aggregation to run_registry.csv
+- the Phase B campaign at cluster scale: 756 cells, Kubernetes indexed jobs, atomic per-cell writes
+- SINDy baseline on identical trajectories (Python, `analysis/scripts/aggregate/run_wp_n6_sindy_baseline.py`)
+- generalization evaluation: rebuild a model from its record, fit on one IC set, integrate from the other
+
+## Not Implemented
+
+Named here because their absence shapes what can be claimed.
+
+- **no term removal or replacement in EvoGrow.** `_expand` only adds, and every line starts from one
+  random term, so a wrong term can never leave a line — selection is the only corrective.
+- **no expression trees.** Structures are subsets of a fixed staged basis.
+- **no noise injection** and no train/validation split inside `discover()`.
+- **no central `test/runtests.jl`** and no `[targets]` section in `Project.toml`; the files under
+  `test/` are run individually.
+- **`src/utils/checks.jl` is a placeholder** with no code, and `simulate()` still returns NaNs on
+  failed solves.
+- **`src/structure/null.jl` is deliberately not included** by `EvoODE.jl`; load it explicitly when a
+  trivial `du/dt = 0` lower bound is wanted.
 
 ## System Handling Directions
 

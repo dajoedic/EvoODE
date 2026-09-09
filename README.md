@@ -42,14 +42,44 @@ signal (fails its gate, 2026-07-31). The second failed for an instructive reason
 threshold is unreachable on coupled systems, where the error floor sits four orders of magnitude
 above it.
 
-**The evidence.** An earlier 300-run study is frozen and **explicitly not used for final claims**;
-see `docs/paper1_freeze_memo_phaseA.md`. The campaign that will carry the claims covers all 63
-ODEBench systems and has not been run yet.
+**The evidence.** The main campaign is **complete** (2026-09-04): all 63 ODEBench systems, two
+pretuning conditions, three seeds, both initial-condition sets — 756 of 756 cells, no errors, one
+git hash and one identity triple across every record, 5,248 core hours. The registry, the heartbeat
+history and the descriptive tables are in the repository under `experiments/paper1_phaseB_v1/` and
+`analysis/tables/paper1_phaseB_v1/`. An earlier 300-run study is frozen and **explicitly not used
+for final claims**; see `docs/paper1_freeze_memo_phaseA.md`.
 
-**Known limitation.** Structure recovery on coupled systems succeeds on some systems and not on
-others, and the discriminator appears to be the achieved loss rather than the dimension. The search
+**Where the project stands, stated plainly.** A review in September 2026 found four gaps that the
+campaign had not been designed to close, and closing them changed the picture more than the campaign
+did:
+
+- **The basis has no constant term.** It represents 20 of 63 systems exactly; SINDy's plain
+  polynomial library represents 40. Adding the constant is not a free improvement — it roughly
+  halves structure recovery on dimension 1 (83 % → 39 %, the constant is a false-positive magnet)
+  while markedly improving generalization (73 % → 88 %). Which basis is right depends on which
+  metric counts, and that is a question about the method's purpose.
+- **No held-out evaluation existed.** Both initial-condition sets were training data. Measured for
+  the first time in September 2026: the share of predictions with R² > 0.9 falls from **95.5 %
+  reconstruction to 68.2 % generalization** — qualitatively the drop ODEFormer reports.
+- **No baseline had ever been run.** EvoGrow had only been compared against earlier EvoGrow
+  variants. On identical trajectories and dimension 1, the best of ten SINDy configurations reaches
+  95.7 % reconstruction and 60.9 % generalization against EvoODE's 95.5 % and 68.2 % — **a draw on
+  reconstruction, EvoODE ahead on generalization, at roughly two orders of magnitude more compute.**
+  SINDy runs one linear regression per equation; EvoODE runs a median of 410 nonlinear fits per cell.
+- **Fitted coefficients were not persisted** and now are. The 756 campaign cells predate that change,
+  so their generalization is reachable only through a re-run.
+
+The consequence is stated rather than argued away: on the easiest system class the method is level
+with a far cheaper baseline. Its value has to show somewhere else — under noise, on coupled systems,
+or in the interpretability of the search path. See `CLAUDE.md` (Active 0) and `PAPER_1.md`.
+
+**Known limitations.** Structure recovery on coupled systems is unsolved: **0 of 50 exact
+dimension-3/4 cells** recover the support, against 60 of 120 over all exact cells. The search
 operators only add terms — a wrong term can never leave a candidate line, and selection is the sole
-corrective. This is stated as a limitation, not worked around.
+corrective. Parameter fitting minimises MSE on the *integrated* trajectory, which is badly
+conditioned; a single start hits the failure sentinel in 15 of 102 cells even when handed the true
+structure. SINDy has no analogous failure mode because it fits in derivative space. These are stated
+as limitations, not worked around.
 
 ---
 
@@ -106,6 +136,11 @@ The default basis exposes five complexity stages:
 The search unlocks stages one at a time. The stage cap decides, before the search begins, which
 stages are worth unlocking at all for a given system and equation.
 
+Note what is **not** in the table: a constant term. A second basis,
+`staged_polynomial_basis_with_constant`, adds `1` to stage 1 and is verified bit-identical to the
+default on 66 of 66 control cells. It is not the default, because representability and searchability
+pull against each other — see the Status section above.
+
 ### Two design axes, deliberately separate
 
 **Stage progression** governs when a stage is kept, promoted or terminated. **Stage usage** governs
@@ -125,13 +160,19 @@ studies/      direct-execution studies; most are closed and kept for provenance
 analysis/     Python analysis pipeline
 containers/   Dockerfile for the campaign image
 k8s/          Kubernetes Job manifests for the compute cluster
-codex/        the single active task spec for an AI coding assistant
+codex/        the active task spec and the work-package reports of an AI coding assistant
 docs/         protocols, design notes, reports
+paper/        Paper 1 manuscript sections, one file per section
+test/         Julia tests (per-file, run directly)
 outputs/      gitignored; every script writes to its own subfolder
 ```
 
 `benchmarks/` and `experiments/` are not interchangeable: the former is exploratory and qualitative,
 the latter is paper-grade with atomic writes, per-run status tracking and a derived registry.
+
+Work-package reports live in two places by rule, not by accident: `codex/REPORT_WP_*.md` is what the
+assistant wrote when it finished the package, `docs/WP-*.md` is a report promoted to a reference
+someone else is expected to read. See "Documentation" below.
 
 ---
 
@@ -168,6 +209,9 @@ The properties below are enforced, not aspirational.
   from.
 - **Wall-clock is never evidence.** Cost claims rest on counts — parameter fits, loss evaluations,
   ODE solves, levels, stages. Timings are recorded as context and labelled as such.
+- **The evidence is in the repository.** Run registries, campaign histories and the tables the
+  documents cite are tracked; only the per-run scratch directories are not, because they are
+  reproducible from the registry and the image while the registry is not reproducible at all.
 
 ---
 
@@ -179,10 +223,20 @@ The properties below are enforced, not aspirational.
 | `PAPER_1.md` | authoritative execution plan for the first paper |
 | `DIARY.md` | chronology — decisions, measurements, bug history, commit hashes |
 | `SCRIPTS.md` | runbook — every script, with exact commands |
-| `docs/architecture.md` | component reference |
+| `docs/architecture.md` | component reference — types, pipeline, search algorithms, bases, optimizers |
+| `docs/paper1_odebench_protocol_alignment.md` | ODEBench sampling protocol and the comparability audit |
+| `docs/diskussion_repraesentationsraum.md` | what the basis can and cannot represent, and what that costs |
 | `docs/hpc_deployment_guide.md` | how code reaches the compute cluster (German, for newcomers) |
+| `analysis/CONVENTIONS.md` | rules for the Python analysis pipeline |
 
 Start with `CLAUDE.md`. Where it and `PAPER_1.md` disagree, `PAPER_1.md` wins.
+
+**Where a report belongs.** `codex/REPORT_WP_<id>.md` is the finishing report of a work package,
+written once and not maintained afterwards — provenance, not documentation. `docs/WP-<id>.md` is a
+report promoted because a decision rests on it and someone outside the work package needs to read
+it; it is linked from `CLAUDE.md` or `PAPER_1.md` and kept correct. A report never exists in both
+places. Older files under `docs/wp_<id>_<description>.md` predate the rule and are not renamed,
+because `DIARY.md` cites them by path.
 
 ---
 
