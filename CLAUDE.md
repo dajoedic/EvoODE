@@ -400,13 +400,12 @@ the coupled search path 1e-6 is the cheaper, behaviour-equal tolerance; the Syst
 
    **Blocking before the freeze, in order:** run the dim-2 constant-term probe (**~1,200 core
    hours, not the 114 long quoted**) — **the canonical basis is the one still-open frozen
-   parameter**; implement the restart policy, which **does not exist in `src/` at all** (verified
-   2026-09-10: `grep -rn "restart\|retry\|multistart\|n_starts" src/` returns nothing, so the
-   frozen `k = 3` is a sentence in a document and the effective restart count is whatever structure
-   duplication happens to produce); build the seven Phase C work packages listed in
-   `docs/paper1_phaseC_benchmark_plan.md` §2a; pilot; smoke-test. Done since: `git_hash` repair
-   (WP-N8), structural metrics and three-way representability (WP-N7/N7b), duplicate counter
-   (WP-N10), matrix completion (P8).
+   parameter**; build the remaining Phase C work packages listed in
+   `docs/paper1_phaseC_benchmark_plan.md` §2a — including the declaration of the restart parameter in
+   the **Phase C** fingerprint, which is the half of P6 that is still open; pilot; smoke-test. Done
+   since: `git_hash` repair (WP-N8), structural metrics and three-way representability (WP-N7/N7b),
+   duplicate counter (WP-N10), matrix completion (P8), restart policy implemented with a
+   behaviour-neutral default (WP-N11).
 
    **An ordering defect of the plan, declared rather than hidden:** the restart policy must be
    implemented before the campaign starts, but the campaign is what measures the duplicate rate its
@@ -753,10 +752,12 @@ the coupled search path 1e-6 is the cheaper, behaviour-equal tolerance; the Syst
   distribution is still missing, so the k = 1 reference point remains undefined and the frozen
   `k = 3` restart policy is unfounded rather than refuted. Phase C's C-1 arm supplies the
   distribution over 378 cells at no extra cost
-- **the restart policy has no implementation.** `grep -rn "restart\|retry\|multistart\|n_starts" src/`
-  returns nothing (2026-09-10). The canonical `k = 3` is frozen in
-  `docs/paper1_phaseC_benchmark_plan.md` and exists nowhere in the code; today the effective restart
-  count is a side effect of how often the search regenerates the same structure
+- ~~the restart policy has no implementation~~ — **built 2026-09-10 (WP-N11, `4908b07`)**.
+  `BFGSOptimizer.max_fit_attempts` defaults to **1**, so behaviour is unchanged and was verified
+  bit-identical on a real regression cell across 84 fields. Attempt 1 uses the canonical start, later
+  attempts fire only after the named predicate `fit_attempt_failed` and always draw a fresh random
+  start. **Still open:** the parameter is deliberately outside the Phase B fingerprint and must enter
+  the Phase C fingerprint (work package B1), where k = 3 is set — not in the optimizer default
 - nothing runs the Python tests; there is no CI for tests, GitLab CI builds the campaign image only
 - environment and test execution need cleanup and faster verification
 

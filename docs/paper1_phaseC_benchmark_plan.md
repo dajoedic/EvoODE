@@ -94,7 +94,7 @@ Decided experiments whose code does not exist yet. None is an open question; eac
 |---|---|---|
 | B1 | `studies/regression/phase_c_config.jl` + `generate_phase_c_manifest.jl` | Phase C needs its own campaign id, variant list and fingerprint; the Phase B pair is frozen and must not be edited |
 | B2 | Record fields `exact_support_match_raw`, `exact_support_match_pruned` and an explicit support-definition tag | Section 4b: one column name currently carries two definitions, and Phase C must name which it stores |
-| B3 | Restart policy in the optimizer, inside `config_fingerprint` | P6 - **no restart, retry or multistart code exists in `src/` at all** (verified 2026-09-10); the frozen `k = 3` is today a sentence in a document |
+| B3 | ~~Restart policy in the optimizer~~ **done (WP-N11, `4908b07`)**; remaining part is declaring it in the Phase C fingerprint, which belongs to B1 | P6 - the policy had no code at all until 2026-09-10; `max_fit_attempts` now exists with default 1, verified behaviour-neutral |
 | B4 | `phase_c_support.json` via `derive_phase_b_support.jl` on the canonical basis | true support and representability are basis-dependent; if P3 freezes the constant basis, the Phase B table is wrong for Phase C |
 | B5 | `analysis/scripts/aggregate/aggregate_phasec_cap_ablation.py` | the paired capped-vs-uncapped analysis has no script, and Claim B is the paper's main figure |
 | B6 | Campaign-id parameter for the existing aggregate scripts | they are hard-wired to `paper1_phaseB_v1` |
@@ -292,13 +292,24 @@ files carrying different definitions.
 (`unmatched_terms`, `gap_reason`) and `representational_adequacy.csv`. Structural metrics are never
 reported without it.
 
-**P6 — Implement and declare the restart policy. OPEN, and larger than it looks.** Retry-on-failure up to k = 3, as an explicit
+**P6 — Implement and declare the restart policy. Implemented 2026-09-10 (WP-N11, `4908b07`);
+declaration in the Phase C fingerprint still open.** Retry-on-failure up to k = 3, as an explicit
 parameter inside the config fingerprint — not as a side effect of random initialisation.
 
-> **Verified 2026-09-10: none of this exists.** `grep -rn "restart\|retry\|multistart\|n_starts" src/`
-> returns nothing. The policy is frozen in this document and unimplemented in the code, so today the
-> effective restart count is whatever the search's structure duplication happens to produce. This is
-> work package B3 of section 2a, and section 8 records why its ordering against P7 is uncomfortable.
+> **It did not exist until 2026-09-10.** `grep -rn "restart\|retry\|multistart\|n_starts" src/`
+> returned nothing: the policy was frozen in this document and absent from the code, so the effective
+> restart count was whatever the search's structure duplication happened to produce.
+>
+> **Now built (WP-N11).** `BFGSOptimizer.max_fit_attempts`, default **1**, so existing behaviour is
+> unchanged — verified bit-identical on a real regression cell across 84 fields. Attempt 1 takes the
+> canonical start, later attempts fire only after a failure and always draw a fresh random start.
+> Failure is the named predicate `fit_attempt_failed`. Attempt costs are summed;
+> `total_parameter_fit_attempts` is a new counter and `total_parameter_fits` keeps its meaning.
+>
+> **Still open, and B1 owns it:** the parameter is deliberately outside the Phase B fingerprint,
+> whose value the 756 campaign records depend on. It must enter the **Phase C** fingerprint, and
+> Phase C must set k = 3 there rather than in the optimizer default. Section 8 records why the
+> ordering against P7 stays uncomfortable.
 
 **P7 — Measure the `StructureSpec` duplicate rate. Counter built (WP-N10, commit `22a9059`); the
 distribution comes from C-1.** Without it the k = 1 reference point is not

@@ -96,6 +96,55 @@ Generalisierung sind drei existierende Skripte, die eine `history.jsonl` lesen. 
 Arbeitspakete B1–B7 in Abschnitt 2a — im Wesentlichen Phase-C-Konfiguration, die Roh/Ausgeduennt-Felder,
 die Restart-Politik und ein fehlendes Auswertungsskript fuer Claim B.
 
+### WP-N11: die Restart-Politik hat jetzt Code — und k = 1 aendert nachweislich nichts
+
+<!-- 4908b07 -->
+
+Die am 09.09. als eingefroren deklarierte Politik *retry-on-failure bis k = 3* existierte bis heute
+ausschliesslich als Satz in einem Dokument. `BFGSOptimizer` traegt nun `max_fit_attempts`, **Default
+1**, sodass sich nichts aendert, bis eine Kampagne mehr verlangt.
+
+**Die Entwurfsentscheidungen, die im Paper zitierbar sein muessen.** Versuch 1 nutzt den kanonischen
+Start — das uebergebene `p0`, sonst den Zufallsstart; jeder weitere Versuch zieht **immer** neu
+zufaellig, weil ein deterministischer Warmstart bei Wiederholung dasselbe Ergebnis liefert. Der
+Retry sitzt in `fit_parameters`, nicht in der Suche, damit Screening- und GP-Pfad ihn ohne
+Duplikation erben. Und der Fehlschlag ist eine **benannte, getestete Funktion**
+(`fit_attempt_failed`) statt einer Bedingung im Kontrollfluss: Loss nicht endlich, Loss ≥ Sentinel,
+oder Ergebnis ungueltig. Der Sentinel `1e6` wandert dabei nach `MSE_SENTINEL_LOSS`, statt ein
+viertes Mal hingeschrieben zu werden.
+
+**Buchfuehrung nach Designprinzip 7.** Kostenzaehler werden ueber alle Versuche summiert — ein Retry,
+dessen Kosten unsichtbar bleiben, macht jede Effizienzaussage falsch —, die Diagnosefelder stammen
+vom angenommenen Versuch. `total_parameter_fits` behaelt seine Bedeutung; die Versuche bekommen mit
+`total_parameter_fit_attempts` einen **getrennt benannten** Zaehler. Eine bestehende Metrik still
+umzudefinieren waere der „ein Spaltenname, zwei Bedeutungen"-Fehler gewesen, den das Projekt zwei
+Tage zuvor dokumentiert hat.
+
+**Die Abnahme.** Eine reale Regressionszelle (System 3, Seed 42, IC 1) bei k = 1 gegen `HEAD`:
+**0 Abweichungen ueber 84 verglichene Felder** — `loss` = 4.92180053120543e-10 ueber alle Stellen,
+dazu `r2`, `total_loss_evals` = 139.478, `total_parameter_fits` = 110, `total_ode_solves`,
+`pruned_match`, `support_terms`. Einziger Unterschied ist das neue Feld, und es steht bei k = 1
+erwartungsgemaess auf 110, also gleich `total_parameter_fits`. Alle drei Fingerprints unveraendert
+(`604e79733b22d64d`, `17fe7d9cfb8f1be3`, `ffb0266c7913352c`). Tests gruen.
+
+Nebenbei bestaetigt die Zelle die WP-N10-Zahl fuer System 3 unabhaengig: 110 Fits ueber **2**
+eindeutige Strukturen.
+
+**Zwei Defekte kamen aus der Abnahme, nicht aus dem Report.** Erstens hatte Codex
+`_append_unique_strings!` ein zweites Mal mit identischer Signatur definiert — das Modul
+**praekompilierte nicht mehr** (`Method overwriting is not permitted during Module precompilation`).
+Verhalten korrekt, Bodies zeichengleich, aber jeder Julia-Start haette die volle Kompilierzeit
+gezahlt, auf 378 Pods also jede Zelle. Zweitens verglich der neue Test Fliesskommawerte exakt
+(`0.24999999999999994 == 0.25`). Beides in WP-N11b repariert; der Helfer liegt jetzt einmal in
+`src/utils/strings.jl`.
+
+Das Gegenlesen des Codes hat den ersten Defekt vor der Ausfuehrung gefunden, die Ausfuehrung hat ihn
+bestaetigt. Der Report allein haette ihn nicht gezeigt — er meldete die Umsetzung als vollstaendig.
+
+**Offen und ausdruecklich so gewollt:** der Parameter geht **nicht** in den Phase-B-Fingerprint ein,
+an dessen Wert die 756 Kampagnenrecords haengen. Arbeitspaket B1 muss ihn in den
+Phase-C-Fingerprint aufnehmen.
+
 ---
 
 ## 2026-09-09 (nachts)
