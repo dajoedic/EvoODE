@@ -19,6 +19,7 @@ what to work on next. It is deliberately kept short. Detail lives in dedicated d
 | `docs/phd_thesis_arc.md` | draft: the three-paper thesis arc that `PAPER_1.md` hangs under |
 | `docs/WP-N4.md` | the restart budget of the parameter fit, and its placement against SINDy/PySR/ODEFormer/ProGED |
 | `docs/WP-N6.md` | the first baseline: EvoODE against SINDy on identical trajectories, with the cost line and the caveats |
+| `READ_THIS_FIRST.md` | **volatile session handover** — what is running, what is uncommitted, what decision is pending. Overwritten wholesale, never appended; nothing durable belongs there |
 | `codex/CURRENT_TASK.md` | the one active task spec for an AI coding assistant |
 
 Do not start a second planning document. Planning and status belong here; everything else belongs
