@@ -336,8 +336,38 @@ and persists the fitted coefficients alongside the term names.
 julia --project=. --startup-file=no studies/regression/wp_n1_basis_probe.jl --dim=1
 ```
 
-`--dim=2` is prepared but **unstarted**: roughly 114 core hours. Only the user starts long runs.
+`--dim=2` is prepared but **unstarted**. Only the user starts long runs.
 Use `--limit=N` (with the equals sign) for a bounded smoke run over the first `N` cells.
+
+> **This serial path is for dimension 1 only.** dim 2 costs **~1,200 core hours** — measured from the
+> campaign's own dim-2 arm, which is the same 336 cells (1,167.5 h, mean 3.47 h per cell). The
+> "114 core hours" quoted until 2026-09-09 was unsourced and wrong by an order of magnitude. Serial
+> execution would take roughly seven weeks; use the cluster path below.
+
+### `studies/regression/generate_wp_n1_basis_probe_manifest.jl`
+
+Generates the manifest and index list that let the basis probe run on the cluster through the same
+path as the campaign — `run_k8s_indexed_cell.jl` → `run_batch_cell.jl`. The probe's two basis modes
+are resolved as variants by `phase_b_variant`, so there is no second execution path.
+
+```bash
+julia --project=. --startup-file=no studies/regression/generate_wp_n1_basis_probe_manifest.jl \
+  --dimension 2 --output outputs/wp_n1_dim2_probe/manifest.csv \
+  --index-output outputs/wp_n1_dim2_probe/indices_dim2.txt
+```
+
+Expected: **336 rows** for dim 2 (28 systems × 2 bases × 2 IC sets × 3 seeds), 132 for dim 1. The
+generator prints `base_phase_b_fingerprint`, which **must** stay `604e79733b22d64d` — the campaign
+identity depends on it.
+
+Cluster jobs: `k8s/wp_n1_basis_probe_dim2_smoke_job.yaml` (3 cells) and
+`k8s/wp_n1_basis_probe_dim2_campaign_job.yaml` (336 cells, `parallelism: 32`, ~47 h wall clock —
+floored by the longest single cell at 47 h, so more pods do not help).
+
+**Equivalence to the serial path is verified** (WP-N9, 2026-09-09): 10 dim-1 cells over systems 2, 3
+and 6 in both bases reproduce `loss`, `pruned_match` and the term set exactly, including the case
+where the two bases disagree (system 3, constant basis: `pruned_match` False, 3 terms). Re-check with
+`analysis/scripts/aggregate/compare_wp_n1_manifest_equivalence.py` after any change to the path.
 
 The script aborts before writing records if `git_hash` is missing, empty, `not_collected`, or
 `unknown`; that means the run lacks the git identity required for configuration decisions. Set

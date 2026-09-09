@@ -356,8 +356,14 @@ end
 
 function phase_b_variant(label::String)
     matches = [variant for variant in PHASE_B_VARIANTS if String(variant.label) == label]
-    isempty(matches) && error("Unknown Phase B variant in manifest: $(label)")
-    return matches[1]
+    !isempty(matches) && return matches[1]
+
+    if isdefined(@__MODULE__, :_wp_n1_basis_modes)
+        wp_n1_matches = [variant for variant in _wp_n1_basis_modes() if String(variant.label) == label]
+        !isempty(wp_n1_matches) && return wp_n1_matches[1]
+    end
+
+    error("Unknown Phase B variant in manifest: $(label)")
 end
 
 function phase_b_system(system_id::Int)

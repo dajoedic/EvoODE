@@ -6,6 +6,7 @@ using Printf
 
 include(joinpath(@__DIR__, "run_regression.jl"))
 include(joinpath(@__DIR__, "phase_b_config.jl"))
+include(joinpath(@__DIR__, "wp_n1_basis_probe.jl"))
 
 const DEFAULT_BATCH_DIR = joinpath(@__DIR__, "..", "..", "outputs", "studies", "regression", "wp_b2")
 const DEFAULT_MANIFEST_PATH = joinpath(DEFAULT_BATCH_DIR, "manifest.csv")
@@ -68,6 +69,38 @@ function _is_phase_b_row(row)
     return get(row, "campaign", "") == "phase_b"
 end
 
+function _is_wp_n1_row(row)
+    return get(row, "campaign", "") == "wp_n1_basis_probe"
+end
+
+function _uses_phase_b_config(row)
+    return _is_phase_b_row(row) || _is_wp_n1_row(row)
+end
+
+function _batch_fingerprint(row)
+    if _is_wp_n1_row(row)
+        return _wp_n1_fingerprint(parse(Int, row["system_dim"]))
+    elseif _is_phase_b_row(row)
+        return phase_b_fingerprint()
+    end
+    return config_fingerprint()
+end
+
+function _batch_variant(row)
+    return _uses_phase_b_config(row) ? phase_b_variant(row["variant"]) : _variant(row["variant"])
+end
+
+function _batch_system(row, variant)
+    system_id = parse(Int, row["system_id"])
+    if _is_wp_n1_row(row)
+        rows = Dict(Int(r["id"]) => r for r in _phase_b_dataset_rows())
+        return _wp_n1_system_for_basis(phase_b_system(system_id), String(variant.basis_name), rows)
+    elseif _is_phase_b_row(row)
+        return phase_b_system(system_id)
+    end
+    return _system(system_id)
+end
+
 function _task_output_path(output_dir::AbstractString, index::Int)
     return joinpath(output_dir, @sprintf("cell_%06d.jsonl", index))
 end
@@ -92,24 +125,26 @@ end
 
 function run_batch_cell(index::Int, manifest_path::AbstractString, output_dir::AbstractString)
     row = _manifest_row(manifest_path, index)
-    current_fingerprint = _is_phase_b_row(row) ? phase_b_fingerprint() : config_fingerprint()
+    current_fingerprint = _batch_fingerprint(row)
     manifest_fingerprint = row["config_fingerprint"]
     manifest_fingerprint == current_fingerprint ||
         error("Fingerprint mismatch for manifest $(manifest_path): manifest=$(manifest_fingerprint), runtime=$(current_fingerprint)")
 
-    variant = _is_phase_b_row(row) ? phase_b_variant(row["variant"]) : _variant(row["variant"])
-    system = _is_phase_b_row(row) ? phase_b_system(parse(Int, row["system_id"])) : _system(parse(Int, row["system_id"]))
+    variant = _batch_variant(row)
+    system = _batch_system(row, variant)
     ic_set = parse(Int, row["initial_condition_set"])
     seed = parse(Int, row["seed"])
     output_path = _task_output_path(output_dir, index)
     heartbeat_path = _heartbeat_output_path(output_dir, index)
+    provenance = git_provenance()
+    identity_context = _is_wp_n1_row(row) ? _wp_n1_identity_context(provenance) : nothing
     record = run_one(
         variant,
         system,
         ic_set,
         seed,
         current_fingerprint,
-        git_provenance();
+        provenance;
         heartbeat_path = heartbeat_path,
         heartbeat_extra = Dict(
             "entry_point" => "run_batch_cell",
@@ -118,6 +153,12 @@ function run_batch_cell(index::Int, manifest_path::AbstractString, output_dir::A
             "batch_output_file" => _portable_path(output_path),
         ),
     )
+    if _is_wp_n1_row(row)
+        record["base_config_fingerprint"] = phase_b_fingerprint()
+        merge!(record, identity_context)
+        record["wp_n1_expected_support_terms"] = system[:wp_n1_support_terms]
+        record["wp_n1_support_status"] = system[:wp_n1_support_status]
+    end
     record["manifest_index"] = index
     record["manifest_path"] = _portable_path(manifest_path)
     record["batch_output_file"] = _portable_path(output_path)

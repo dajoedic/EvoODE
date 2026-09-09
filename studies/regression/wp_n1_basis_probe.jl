@@ -5,8 +5,12 @@ using Random
 using SHA
 using Statistics
 
-include(joinpath(@__DIR__, "run_regression.jl"))
-include(joinpath(@__DIR__, "phase_b_config.jl"))
+if !isdefined(@__MODULE__, :run_one)
+    include(joinpath(@__DIR__, "run_regression.jl"))
+end
+if !isdefined(@__MODULE__, :PHASE_B_VARIANTS)
+    include(joinpath(@__DIR__, "phase_b_config.jl"))
+end
 
 const WP_N1_DIM1_SYSTEM_IDS = [2, 3, 6, 8, 11, 12, 1, 5, 9, 17, 23]
 const WP_N1_SEEDS = [7, 42, 123]
@@ -394,4 +398,6 @@ function main()
     println("Summary: $(summary_path)")
 end
 
-main()
+if abspath(PROGRAM_FILE) == @__FILE__
+    main()
+end
