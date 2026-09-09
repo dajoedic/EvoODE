@@ -8,7 +8,7 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ### Generalisierung, zum ersten Mal gemessen — und die Konstante dreht das Vorzeichen
 
-<!-- COMMIT_HASH_12 -->
+<!-- 24e1179 -->
 
 WP-N5 hat die zweite Haelfte der Literaturmetrik erschlossen: das gefundene Modell wird ab dem
 **ungesehenen** Anfangswert integriert und gegen die wahre Loesung geprueft. Die Parameter werden
