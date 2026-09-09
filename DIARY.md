@@ -6,6 +6,145 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ## 2026-09-09
 
+### Repo-Durchgang vor der externen Diskussion: was die Dokumente behaupteten und was tatsaechlich galt
+
+<!-- COMMIT_REPO_SWEEP -->
+
+Vor der ersten externen Diskussion der Ergebnisse ein vollstaendiger Durchgang durch das Repository:
+Struktur, alle 89 versionierten Markdown-Dateien (1,2 MB), Code, Git-Zustand, Ignore-Regeln. Der Code
+war in besserem Zustand als die Dokumentation — **kein einziges TODO, FIXME oder HACK** in `src`,
+`studies`, `analysis`, `test`. Das Problem war nicht Unordnung, sondern Drift: die letzten drei Wochen
+(Kampagnenabschluss, WP-A6 bis A9, WP-N1 bis N6) waren in `CLAUDE.md` und `DIARY.md` nachgefuehrt, in
+allen anderen Einstiegsdokumenten nicht.
+
+#### Der einzige echte Risikobefund: die Beweiskette lag auf einem Laptop
+
+`experiments/paper1_phaseB_v1/history.jsonl` (1,9 MB) und `run_registry.csv` (492 KB) waren
+gitignoriert. Ebenso `analysis/tables/paper1_phaseB_v1/` — also genau die Tabellen T1 bis T5, die
+`CLAUDE.md` namentlich zitiert. Die gesamte Auswertungsgrundlage der 5.248 Kernstunden existierte in
+zwei Kopien: Arbeitsverzeichnis und NFS-Share. Ein Plattenschaden haette die Studie beendet, und eine
+externe Diskussion haette ueber Zahlen stattgefunden, deren Quelle im Repository nicht auffindbar ist.
+
+2,4 MB sind trivial versionierbar. Sie sind es jetzt.
+
+Dabei stellte sich heraus, dass die Ignore-Regel nie das war, wofuer sie gehalten wurde. Sie sortierte
+nach "generiert gegen handgeschrieben", was die falsche Achse ist: eine Run-Registry ist generiert und
+gehoert versioniert, weil ihre Neuerzeugung 5.248 Kernstunden kostet; eine Probe-Abbildung ist
+generiert und gehoert nicht versioniert, weil ihre Neuerzeugung eine Minute kostet. Die Regel heisst
+jetzt **"woran laesst sich ein Ergebnis pruefen"** und steht so in `.gitignore`. Die
+`experiments/*/runs/`-Verzeichnisse (16 MB Phase B, 6,4 MB Phase A) bleiben draussen: sie sind aus
+Registry plus Image reproduzierbar, die Registry ist es nicht.
+
+Nebenbei war die alte Whitelist widerspruechlich — `!analysis/data/paper1_phaseB_v1/` hob das
+Ignorieren fuer das ganze Verzeichnis auf, waehrend `analysis/tables/` vollstaendig ignoriert blieb.
+Dieselbe Art Artefakt, gegenteilig behandelt, und 16 abgeleitete Dateien standen dauerhaft als
+`untracked` im Status.
+
+#### Ein Selbstwiderspruch in Claim B, vier Zeilen auseinander
+
+`PAPER_1.md` sagte in der Retraktion, der Anspruch ruhe "on the regression grid alone: 30 cells", und
+im naechsten Absatz "The claim no longer rests on the 30-cell regression grid alone." Beide Saetze
+sind fuer sich verteidigbar und nebeneinander nicht.
+
+Der Grund ist, dass Claim B zwei Haelften hat, die verschiedene Evidenz brauchen, und die Zeilen
+sortierten sie nicht auseinander:
+
+- **Haelfte 1, die Kappe schraenkt das Wachstum ein.** Kampagnenweit belegt: 690 von 756 Zellen
+  rechnen weniger als die konfigurierten 30 Level. Zaehlt Level *innerhalb* des gekappten Arms.
+- **Haelfte 2, bei unveraendertem Ergebnis.** Braucht eine *Differenz zwischen* Armen. Beide
+  Kampagnenarme sind gekappt, also gibt es diese Differenz nur auf dem Regressionsgitter: 30 Zellen,
+  5 Systeme.
+
+Die Verwechslung liegt nahe, weil beide Haelften Level zaehlen. Das steht jetzt explizit da, samt der
+Aufforderung, Haelfte 2 nicht die 756 Zellen von Haelfte 1 als geliehenes Gewicht zu geben.
+
+Zweiter Befund am selben Dokument: der Statusblock war auf den 22.08. datiert und die Schlusszeile
+sagte, der Paper-Zuschnitt bleibe offen, "until the baseline number exists". Die Zahl existiert seit
+dem 09.09. **Die offene Frage ist damit nicht mehr "messen", sondern "was ist Paper 1 jetzt"** — mit
+drei Kandidaten, die im Dokument stehen, damit die Wahl bewusst getroffen wird und nicht durch Drift.
+
+#### `docs/architecture.md` beschrieb einen Stand von Ende Juli
+
+Das Dokument ist als Komponentenreferenz verlinkt und war am weitesten abgedriftet:
+
+- Die Variantenliste fuehrte **"v3: planned equation-wise growth"**. v3 ist implementiert und am
+  31.07. an Gate 2 gescheitert. `evogrow_v2_2_stage_capped`, die finale Paper-1-Variante, fehlte in
+  der Liste vollstaendig.
+- Die **Look-ahead-Stufenkappe** — der Mechanismus, um den das Paper geht, 374 Zeilen Code — hatte
+  keinen eigenen Abschnitt, sondern zwei beilaeufige Erwaehnungen. EvoGrow und GP hatten volle
+  Mechanismus-Abschnitte.
+- **"Phase B" kam null Mal vor.** "Current experiments" listete allein Phase A.
+- `GPStructureSearch` war als *"a comparison baseline"* beschrieben. `PAPER_1.md` sagt "no GP
+  baseline", `CLAUDE.md` sagte bis vorgestern "no baseline has ever been run". Diesen Widerspruch
+  findet ein aufmerksamer externer Leser sofort.
+
+Die Kappe hat jetzt ihren Abschnitt: was sie lesen darf (Trajektorie, Basis, Schwellen — kein
+Grundwahrheits-, Stufen- oder Systemargument, das ist der Grund fuer die Suchunabhaengigkeit), die
+zwei Designregeln mitsamt den Defekten, aus denen sie stammen, der Reopen-Zweig, die beiden
+tragenden Konstanten und das WP-V1-Negativergebnis. Dazu ein Abschnitt **"Not Implemented"**, weil
+die Abwesenheiten mitbestimmen, was behauptet werden darf.
+
+#### Neunzehn Skripte, die das Runbook nie kannte
+
+`SCRIPTS.md` beansprucht Vollstaendigkeit und fuehrte 44 von 63 Skripten. Nichts darin war falsch —
+jedes dokumentierte Skript existiert —, aber die Luecken waren die falschen: die **komplette
+WP-N-Linie**, also die aktuelle Arbeit und die Quelle der Zahlen, ueber die jetzt extern geredet wird,
+plus die fuenf Stufenkappen-Audits, die Horizont und Reopen-Schwelle bestimmt haben. Die Kommandos
+sind aus den Arbeitspaket-Reports uebernommen, nicht rekonstruiert.
+
+`studies/output_path_guard.jl` fehlte nicht versehentlich: es ist ein geteilter Helfer, kein
+ausfuehrbares Skript. Das steht jetzt da, damit die Luecke nicht wieder wie eine aussieht.
+
+#### Ein Waechter, der seit drei Wochen nicht mehr waechte
+
+`tests/test_analysis_variant_visibility.py` faellt mit
+
+```
+TypeError: build_csv_table() missing 2 required positional arguments: 'exact_ids' and 'surrogate_ids'
+```
+
+Die beiden Parameter kamen mit WP-A4/A4b, als die Systemachse von fest verdrahteten ID-Listen auf
+`system_classification.csv` umgestellt wurde. Der Test wurde nicht mitgezogen und ist seit etwa dem
+21.08. rot. Es faellt niemandem auf, weil **nichts die Python-Tests ausfuehrt** — die GitLab-CI baut
+ausschliesslich das Kampagnen-Image.
+
+Das ist nicht irgendein Test. Die Invariante, die er sichert — eine unbekannte Variante darf nicht
+stillschweigend aus der Haupttabelle verschwinden — ist genau die, um die es in WP-A4b ging. Der
+Waechter fiel in dem Moment aus, in dem er am wichtigsten wurde. Repariert wird er in WP-O1, zusammen
+mit dem Umzug von `tests/` nach `analysis/tests/`; das Wurzelverzeichnis hatte `test/` (Julia) und
+`tests/` (Python) nebeneinander, und `analysis/CONVENTIONS.md` sieht `tests/` gar nicht vor.
+
+#### Kleinkram, benannt statt stillschweigend behoben
+
+- Branch `refactor/discover-api`: **0 Commits ahead, 186 behind**, letzter Commit 12.08. — eine leere
+  Huelle, geloescht.
+- Report-Konvention: drei Namensschemata (`codex/REPORT_WP_*.md` 39x, `docs/WP-*.md` 13x,
+  `docs/wp_*_<beschreibung>.md` 7x) ohne Regel, welches wohin. Die Regel steht jetzt in `CLAUDE.md`
+  und `README.md`: Codex-Report ist Provenienz, `docs/WP-*.md` ist ein **befoerderter** Report, an dem
+  eine Entscheidung haengt. Die alten Kleinschreibungen werden **nicht** umbenannt, weil `DIARY.md`
+  sie mit Pfad zitiert.
+- Wurzelverzeichnisse `data/` (leer), `figures/`, `tables/`: Phase-A-Altlasten, dupliziert von
+  `analysis/`. Ebenso `tools/` (nur `__pycache__`), `examples/`, `.agents/` (beide leer). Die Loeschung
+  hat der Berechtigungsfilter zweimal blockiert; die Befehle liegen beim Nutzer, eine Sicherungskopie
+  im Scratchpad.
+- Die generierten `phase_b_*.yaml` im Wurzelverzeichnis tragen ein UTF-8-BOM — dieselbe Klasse
+  Problem, gegen die `.gitattributes` ausfuehrlich argumentiert. Sie sind gitignoriert und haben
+  funktioniert, also folgenlos; der Generator schreibt es trotzdem.
+
+#### Was ausdruecklich in Ordnung war
+
+Kein TODO/FIXME im gesamten Code. `.gitattributes` mit ausgeschriebener Begruendung. `Manifest.toml`
+gepinnt, `[compat]` vollstaendig. `analysis/CONVENTIONS.md` ist ein durchgehaltenes Dokument samt
+Anti-Pattern-Liste. Fehlerpfad-Fixtures existieren, also nicht nur der Happy Path. Die
+Identity-Triple-Disziplin ist ueberall durchgezogen.
+
+Und eine Beobachtung zu `CLAUDE.md` selbst: 710 Zeilen bei der Selbstbeschreibung "deliberately kept
+short". Abschnitt "Active 0" ist inzwischen ein mehrseitiger Essay mit vollstaendigen
+Ergebnistabellen — inhaltlich richtig, aber Ergebnisprosa, die laut der eigenen Aufteilungstabelle
+nach `DIARY.md` oder `PAPER_1.md` gehoert. Nicht angefasst, weil das eine inhaltliche Umschichtung
+waere und keine Aufraeumarbeit.
+
+
 ### Die erste Baseline seit Projektbeginn: auf Dimension 1 steht es unentschieden, zu erheblich hoeheren Kosten
 
 <!-- d62ad78 -->
