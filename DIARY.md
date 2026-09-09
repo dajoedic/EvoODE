@@ -8,7 +8,7 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ### Repo-Durchgang vor der externen Diskussion: was die Dokumente behaupteten und was tatsaechlich galt
 
-<!-- COMMIT_REPO_SWEEP -->
+<!-- c7ae516 -->
 
 Vor der ersten externen Diskussion der Ergebnisse ein vollstaendiger Durchgang durch das Repository:
 Struktur, alle 89 versionierten Markdown-Dateien (1,2 MB), Code, Git-Zustand, Ignore-Regeln. Der Code
