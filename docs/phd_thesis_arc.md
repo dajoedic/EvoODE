@@ -109,6 +109,27 @@ loss.
 measure recovery against the same regression suite. A clean before/after on infrastructure that
 already exists — regression suite, fingerprints, cluster path.
 
+**A second mechanism, measured 2026-09-09 (WP-N4), that may deserve its own paper.** Growth-only
+search is not the only reason a correct space fails. The parameter fit itself is unreliable per
+attempt: handed the **true** structure, a single fit from a random start hits the sentinel loss in
+**15 of 102** cells; at k = 2 it is 13, at **k = 3 it is zero**, and R² > 0.9 rises from 71.6 % to
+97.1 % between k = 1 and k = 10. Today this restart budget exists only implicitly — under
+`pretuning=false` every fit draws `0.1 .* randn` (`bfgs.jl:269`) and the search runs thousands of
+them, so the multistart is a side effect of random initialisation rather than a named component.
+
+The paper-sized question: **how many restarts does structure discovery need, and how does the
+recovery/cost curve behave?** It is attractive for four reasons. It is cheap — no structure search,
+one fit per restart, and the 2026-09-09 run took ninety minutes on a laptop for 102 cells at k = 10.
+It has a natural cost axis, so it speaks to the efficiency claim the thesis is built on. It
+interacts with the stage cap and with pretuning, both of which change the effective restart count
+without saying so. And it is currently a **confound in every comparison we have made**: `pretune_on`
+supplies one deterministic start per candidate structure, `pretune_off` supplies a random one per
+fit, so the two arms differ in start *count*, not only in start *quality* — which means the Phase B
+contrast measured two things at once.
+
+Whether this becomes its own paper or a chapter of Paper #2 is open. It is recorded here so the
+decision is made deliberately rather than by omission.
+
 **Risk, stated in advance.** The operators may not repair recovery. That outcome is publishable and
 keeps the arc intact, because the thesis asks what limits discovery rather than claiming to remove
 the limit.

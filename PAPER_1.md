@@ -717,7 +717,12 @@ Outside Paper 1 scope, deliberately:
 - remove/replace operators for the growth-only search; beam or forward-stepwise search inside a stage
 - search power within a stage: population size, child generation, parsimony pressure
 - population reset on promotion (currently a deliberate warm start with anchoring as accepted risk)
-- pretuning / OLS warm start as its own ablation
+- pretuning / OLS warm start as its own ablation — **and inseparable from it:** the number of
+  parameter restarts. WP-N4 (2026-09-09) measured that a single fit on the *true* structure fails in
+  15 of 102 cells and that k = 3 restarts remove every failure. `pretune_off` supplies a random start
+  per fit, `pretune_on` one deterministic start per structure, so the two arms differ in restart
+  **count** as well as start quality. A restart-budget study — recovery and cost against k — is a
+  candidate for its own paper; see `docs/phd_thesis_arc.md` §3
 - noise robustness, irregular sampling, extrapolation to unseen initial conditions
 - in-house SINDy / PySR / GP implementations
 - line-search cost control and candidate-level optimizer budgets
