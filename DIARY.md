@@ -37,6 +37,65 @@ Die dim-2-Messung auf System 26 laeuft. Eine Zelle entscheidet die Frage nicht, 
 Groessenordnung; die belastbare Verteilung ueber 378 Zellen liefert Phase C jetzt umsonst, weil
 der Zaehler drin ist.
 
+### P8: die Phase-C-Matrix ist vollstaendig, und die Kostenrechnung war dreifach falsch
+
+<!-- 02d80dd -->
+
+Jede Claim-Zeile nennt jetzt Arm, Skript, Ausgabepfad und Pass-Kriterium (neuer Abschnitt 1b), und
+die fuenf offenen Fragen des Plans sind mit Begruendung entschieden (Abschnitt 7). P8 ist damit
+erledigt.
+
+**Die Entscheidungen.** SINDy vergleicht ueber alle 63 Systeme, gepaart je (System, IC-Set),
+geschichtet nach Dimension und dreiwertiger Repraesentierbarkeit, **ohne aggregierte Kopfzahl ueber
+die Schichten** — der WP-N6-Einwand ungleicher Aggregationseinheiten entfaellt bei Phase C
+konstruktionsbedingt, weil C-1 ohnehin alle 63 Systeme auf denselben Trajektorien rechnet. Die
+Restart-Ablation laeuft ueber den Oracle-Pfad, weil nur dort k isoliert ist: in der vollen Suche
+variiert der implizite Multistart aus Strukturduplikaten gleichzeitig, eine Recovery-gegen-k-Kurve
+aus vollen Laeufen misst also zwei Dinge auf einmal. Der Oracle-Arm laeuft nur auf der kanonischen
+Basis — das Argument ist Zuschnitt, nicht Kosten. Die Pretuning-Ablation bekommt einen
+Bestaetigungsarm von 120 Zellen statt eines Zitats ueber eine Basisgrenze hinweg. Und vor der
+Einreichung steht ein 12-Zellen-Pilot mit fuenfteiligem Go-Kriterium, ausdruecklich verschieden vom
+Smoke-Test: der Smoke-Test fragt, ob der Pfad laeuft, der Pilot, ob die Records die Claims tragen.
+
+**Die Kosten waren geschaetzt, jetzt sind sie abgeleitet — und die Schaetzung war zu niedrig.** Aus
+`experiments/paper1_phaseB_v1/run_registry.csv`, nicht aus dem Bauch:
+
+| Groesse | alt | gemessen |
+|---|---:|---:|
+| kanonischer Arm C-1 | ~2.600 h | **3.249,3 h** (Phase B `pretune_off`, dieselben 378 Zellen) |
+| Pretuning-Arm C-3 | von mir mit ~400 h veranschlagt | **1.331,4 h** |
+| Gesamt | ~8.000–11.000 h | **~9.600–12.600 h** |
+
+Der Pretuning-Arm ist der lehrreiche Posten. Meine Annahme war, „nur exakte Systeme" mache ihn
+billig. Das stimmt nicht, weil die exakte Menge Lorenz enthaelt: **1.314,5 der 1.331,4 Stunden
+(98,7 %) liegen in 24 dim-3-Zellen**, System 56 allein kostet 602,3 h ueber sechs Zellen, die
+restlichen 96 Zellen laufen in 17,0 h. Median einer exakten `pretune_on`-Zelle: 0,02 h bei einem
+Maximum von 289,7 h. Ueber diese Verteilung bedeutet kein Mittelwert etwas — dasselbe Muster, das
+WP-A8 schon fuer die Effektstaerken gezeigt hat, hier fuer die Kapazitaetsplanung. Der Nutzer hat
+den vollen Zuschnitt inklusive dim 3 gewaehlt, damit der Kollaps unter kanonischer Konfiguration
+dort gemessen ist, wo die Methode am schwaechsten ist; das kostet rund 16 % des Budgets fuer eine
+Ablation und steht so im Plan.
+
+**Der Befund, der nicht geplant war: die Restart-Politik hat keinen Code.**
+`grep -rn "restart\|retry\|multistart\|n_starts" src/` liefert **null Treffer**. Das am 09.09. als
+frozen deklarierte `k = 3` existiert ausschliesslich als Satz in einem Dokument; die tatsaechliche
+Restart-Zahl ist heute ein Nebeneffekt davon, wie oft die Suche dieselbe Struktur neu erzeugt. P6
+ist damit nicht „teilweise offen", sondern vollstaendig unimplementiert.
+
+Daraus folgt ein **Ordnungsdefekt des Plans, der deklariert statt versteckt wird**: die Politik muss
+vor Kampagnenstart implementiert sein, aber die Kampagne ist das, was die Duplikatrate misst, von
+der ihre Praemisse abhaengt. Steht als Abschnitt 8 im Phase-C-Plan. Faellt die Duplikatrate auf dim 2
+und 3 hoch aus, lautet die ehrliche Berichterstattung, dass der explizite Retry ueber einem grossen
+impliziten Multistart wenig beitraegt — und diese Aussage kommt dann aus Phase C's eigenen Daten.
+
+**Was die Bestandsaufnahme entlastet hat.** Der unkappte Spiegelarm braucht keinen neuen Suchcode
+(`evogrow_v2_2_stage_local` ist ausgelieferte Variante, ueber `EVO_REGRESSION_VARIANT` waehlbar), die
+Basis ist bereits Variantenparameter (`build_variant_basis`, `run_regression.jl:413`), Koeffizienten
+werden gespeichert (`model_terms`, `run_regression.jl:871`), und Oracle, Restart-Kurve und
+Generalisierung sind drei existierende Skripte, die eine `history.jsonl` lesen. Uebrig bleiben sieben
+Arbeitspakete B1–B7 in Abschnitt 2a — im Wesentlichen Phase-C-Konfiguration, die Roh/Ausgeduennt-Felder,
+die Restart-Politik und ein fehlendes Auswertungsskript fuer Claim B.
+
 ---
 
 ## 2026-09-09 (nachts)
