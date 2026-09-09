@@ -8,7 +8,7 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ### Die erste Baseline seit Projektbeginn: auf Dimension 1 steht es unentschieden, zu erheblich hoeheren Kosten
 
-<!-- COMMIT_HASH_13 -->
+<!-- d62ad78 -->
 
 WP-N6 hat SINDy auf **denselben Trajektorien** gerechnet wie EvoODE — 63 Systeme, beide
 Anfangswertsaetze, 512 Punkte ueber t in [0, 10], selbst integriert bei 1e-9, ohne die mitgelieferten
