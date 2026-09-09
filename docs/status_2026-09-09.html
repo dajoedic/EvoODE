@@ -1,0 +1,981 @@
+<title>EvoODE Kassasturz</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Spectral:ital,wght@0,400;0,600;0,700;1,400&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+
+<style>
+:root {
+  --ground:        #FCFCFB;
+  --surface:       #F4F4F1;
+  --surface-2:     #EDEDE8;
+  --ink:           #17191E;
+  --ink-2:         #40454F;
+  --ink-3:         #6B7280;
+  --rule:          #DEDEDA;
+  --rule-strong:   #C3C4BE;
+
+  --accent:        #2F4B99;
+  --accent-soft:   #2F4B991A;
+  --data-a:        #2F4B99;
+  --data-b:        #C4761E;
+  --data-c:        #0E8A74;
+
+  --good:          #0E7B57;
+  --warn:          #A5680F;
+  --crit:          #A8402F;
+  --good-bg:       #0E7B5714;
+  --warn-bg:       #A5680F16;
+  --crit-bg:       #A8402F14;
+
+  --shadow:        0 1px 2px rgba(23,25,30,.05), 0 8px 24px -12px rgba(23,25,30,.18);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --ground:      #131418;
+    --surface:     #1B1D22;
+    --surface-2:   #22242A;
+    --ink:         #E9EAEC;
+    --ink-2:       #B4B8C0;
+    --ink-3:       #868C97;
+    --rule:        #2C2F36;
+    --rule-strong: #3D414A;
+
+    --accent:      #8EA1E4;
+    --accent-soft: #6C82D822;
+    --data-a:      #6C82D8;
+    --data-b:      #C58139;
+    --data-c:      #26A184;
+
+    --good:        #3FB08A;
+    --warn:        #D0973F;
+    --crit:        #D9705C;
+    --good-bg:     #3FB08A1C;
+    --warn-bg:     #D0973F1C;
+    --crit-bg:     #D9705C1C;
+
+    --shadow:      0 1px 2px rgba(0,0,0,.4), 0 10px 28px -14px rgba(0,0,0,.7);
+  }
+}
+:root[data-theme="dark"] {
+  --ground:      #131418;
+  --surface:     #1B1D22;
+  --surface-2:   #22242A;
+  --ink:         #E9EAEC;
+  --ink-2:       #B4B8C0;
+  --ink-3:       #868C97;
+  --rule:        #2C2F36;
+  --rule-strong: #3D414A;
+  --accent:      #8EA1E4;
+  --accent-soft: #6C82D822;
+  --data-a:      #6C82D8;
+  --data-b:      #C58139;
+  --data-c:      #26A184;
+  --good:        #3FB08A;
+  --warn:        #D0973F;
+  --crit:        #D9705C;
+  --good-bg:     #3FB08A1C;
+  --warn-bg:     #D0973F1C;
+  --crit-bg:     #D9705C1C;
+  --shadow:      0 1px 2px rgba(0,0,0,.4), 0 10px 28px -14px rgba(0,0,0,.7);
+}
+
+* { box-sizing: border-box; }
+
+body {
+  background: var(--ground);
+  color: var(--ink);
+  font-family: "IBM Plex Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-size: 16.5px;
+  line-height: 1.62;
+  -webkit-font-smoothing: antialiased;
+}
+
+.wrap {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 0 28px 120px;
+}
+
+/* ---------- trajectory rail ---------- */
+.rail {
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr);
+  column-gap: 26px;
+}
+.rail__line {
+  position: relative;
+  border-right: 1px solid var(--rule);
+}
+.rail__line::after {
+  content: "";
+  position: absolute;
+  right: -3.5px; top: 0;
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--accent);
+}
+.rail__body { min-width: 0; display: flex; flex-direction: column; gap: 78px; }
+
+section { scroll-margin-top: 20px; }
+.measure { max-width: 66ch; }
+
+/* ---------- type ---------- */
+h1, h2, h3 { font-family: Spectral, Georgia, "Times New Roman", serif; text-wrap: balance; margin: 0; }
+h1 { font-size: clamp(2.6rem, 6.2vw, 4.1rem); font-weight: 700; line-height: 1.02; letter-spacing: -.022em; }
+h2 { font-size: clamp(1.65rem, 3.4vw, 2.25rem); font-weight: 600; line-height: 1.14; letter-spacing: -.014em; }
+h3 { font-size: 1.16rem; font-weight: 600; line-height: 1.3; }
+p  { margin: 0 0 .95em; color: var(--ink-2); }
+p.lede { font-family: Spectral, Georgia, serif; font-size: 1.28rem; line-height: 1.52; color: var(--ink); }
+strong { color: var(--ink); font-weight: 600; }
+a { color: var(--accent); }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 3px; }
+
+.eyebrow {
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: .705rem; font-weight: 500;
+  letter-spacing: .17em; text-transform: uppercase;
+  color: var(--ink-3);
+  display: flex; align-items: center; gap: 10px;
+  margin: 0 0 14px;
+}
+.eyebrow::after { content: ""; flex: 1; height: 1px; background: var(--rule); }
+
+.mono { font-family: "IBM Plex Mono", ui-monospace, monospace; font-variant-numeric: tabular-nums; }
+.sec-head { margin-bottom: 26px; }
+.sec-head h2 + p { margin-top: .55em; }
+
+/* ---------- hero ---------- */
+header.hero { padding: 76px 0 12px; }
+.hero__meta {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: .74rem; letter-spacing: .12em; text-transform: uppercase;
+  color: var(--ink-3);
+  display: flex; flex-wrap: wrap; gap: 8px 22px;
+  margin-bottom: 30px;
+}
+.hero h1 em { font-style: italic; color: var(--accent); }
+.hero__sub { max-width: 60ch; margin-top: 26px; }
+
+.figures {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 1px;
+  background: var(--rule);
+  border-block: 1px solid var(--rule);
+  margin-top: 46px;
+}
+.fig { background: var(--ground); padding: 22px 20px 20px; }
+.fig__n {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 2.0rem; font-weight: 500; letter-spacing: -.03em;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.1; color: var(--ink);
+}
+.fig__n span { font-size: 1.05rem; color: var(--ink-3); letter-spacing: 0; }
+.fig__l { font-size: .84rem; color: var(--ink-3); margin-top: 6px; line-height: 1.4; }
+
+/* ---------- chart figure block ---------- */
+figure.chart {
+  margin: 0;
+  background: var(--surface);
+  border: 1px solid var(--rule);
+  border-radius: 4px;
+  padding: 24px 26px 20px;
+}
+figure.chart figcaption {
+  font-size: .855rem; color: var(--ink-3);
+  border-top: 1px solid var(--rule);
+  padding-top: 12px; margin-top: 16px;
+  line-height: 1.5;
+}
+figure.chart figcaption b { color: var(--ink-2); font-weight: 600; }
+.chart__title { font-family: Spectral, Georgia, serif; font-size: 1.05rem; font-weight: 600; color: var(--ink); margin-bottom: 2px; }
+.chart__sub { font-size: .84rem; color: var(--ink-3); margin-bottom: 18px; }
+.chart__scroll { overflow-x: auto; }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 20px; margin-bottom: 16px; font-size: .82rem; color: var(--ink-2); }
+.legend i { display: inline-block; width: 11px; height: 11px; border-radius: 2px; margin-right: 7px; vertical-align: -1px; }
+svg text { font-family: "IBM Plex Mono", monospace; font-variant-numeric: tabular-nums; }
+
+/* ---------- cards / grids ---------- */
+.grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 18px; }
+.grid-3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 18px; }
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--rule);
+  border-radius: 4px;
+  padding: 20px 22px 22px;
+  display: flex; flex-direction: column; gap: 9px;
+}
+.card p { margin: 0; font-size: .93rem; }
+.card__tag {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: .68rem; letter-spacing: .14em; text-transform: uppercase;
+  color: var(--ink-3);
+}
+
+/* status pills */
+.pill {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-family: "IBM Plex Mono", monospace;
+  font-size: .68rem; letter-spacing: .09em; text-transform: uppercase;
+  padding: 3px 9px; border-radius: 100px;
+  border: 1px solid currentColor;
+  width: fit-content;
+}
+.pill--good { color: var(--good); background: var(--good-bg); }
+.pill--warn { color: var(--warn); background: var(--warn-bg); }
+.pill--crit { color: var(--crit); background: var(--crit-bg); }
+.pill--flat { color: var(--ink-3); background: transparent; }
+
+/* phase ladder — a real sequence, so it is numbered */
+.ladder { display: flex; flex-direction: column; }
+.ladder__row {
+  display: grid;
+  grid-template-columns: 42px minmax(0,1fr) auto;
+  gap: 18px; align-items: baseline;
+  padding: 15px 0;
+  border-top: 1px solid var(--rule);
+}
+.ladder__row:last-child { border-bottom: 1px solid var(--rule); }
+.ladder__n { font-family: "IBM Plex Mono", monospace; font-size: .82rem; color: var(--ink-3); }
+.ladder__t { font-size: .97rem; color: var(--ink); }
+.ladder__t small { display: block; color: var(--ink-3); font-size: .855rem; margin-top: 2px; }
+
+/* chain */
+.chain { display: flex; flex-wrap: wrap; gap: 10px; align-items: stretch; }
+.chain__step {
+  flex: 1 1 150px;
+  border: 1px solid var(--rule);
+  border-top: 3px solid var(--rule-strong);
+  border-radius: 3px;
+  background: var(--surface);
+  padding: 14px 15px 15px;
+  display: flex; flex-direction: column; gap: 5px;
+}
+.chain__step--fail { border-top-color: var(--crit); }
+.chain__step--live { border-top-color: var(--accent); background: var(--accent-soft); }
+.chain__name { font-family: "IBM Plex Mono", monospace; font-size: .82rem; font-weight: 500; color: var(--ink); }
+.chain__verdict { font-size: .8rem; color: var(--ink-3); line-height: 1.4; }
+
+/* pull quote / verdict block */
+.verdict {
+  border-left: 3px solid var(--accent);
+  padding: 4px 0 4px 22px;
+  font-family: Spectral, Georgia, serif;
+  font-size: 1.3rem; line-height: 1.45;
+  color: var(--ink);
+}
+.verdict small { display:block; font-family: "IBM Plex Sans", sans-serif; font-size: .87rem; color: var(--ink-3); margin-top: 10px; line-height:1.5; }
+
+.note {
+  background: var(--crit-bg);
+  border: 1px solid var(--rule);
+  border-left: 3px solid var(--crit);
+  border-radius: 3px;
+  padding: 16px 20px;
+}
+.note h3 { color: var(--crit); font-size: 1rem; margin-bottom: 4px; }
+.note p { font-size: .92rem; margin: 0; }
+.note p + p { margin-top: .6em; }
+
+/* tables */
+.tbl-scroll { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; font-size: .9rem; }
+th, td { text-align: left; padding: 10px 14px 10px 0; border-bottom: 1px solid var(--rule); }
+th {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: .7rem; letter-spacing: .1em; text-transform: uppercase;
+  color: var(--ink-3); font-weight: 500;
+  border-bottom-color: var(--rule-strong);
+}
+td.num, th.num { text-align: right; font-family: "IBM Plex Mono", monospace; font-variant-numeric: tabular-nums; padding-right: 0; }
+tbody tr:last-child td { border-bottom: none; }
+
+/* fork */
+.fork { display: grid; grid-template-columns: repeat(auto-fit, minmax(270px, 1fr)); gap: 1px; background: var(--rule); border: 1px solid var(--rule); border-radius: 4px; overflow: hidden; }
+.fork__opt { background: var(--surface); padding: 24px 22px 26px; display: flex; flex-direction: column; gap: 10px; }
+.fork__num { font-family: "IBM Plex Mono", monospace; font-size: .74rem; letter-spacing: .13em; color: var(--accent); }
+.fork__opt h3 { font-size: 1.08rem; }
+.fork__opt p { font-size: .91rem; margin: 0; }
+.fork__cost { margin-top: auto; padding-top: 14px; border-top: 1px solid var(--rule); font-size: .84rem; color: var(--ink-3); }
+.fork__cost b { color: var(--ink-2); }
+
+/* todo list */
+.todo { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; }
+.todo li {
+  display: grid; grid-template-columns: auto minmax(0,1fr); gap: 14px;
+  padding: 13px 0; border-top: 1px solid var(--rule);
+  font-size: .94rem; color: var(--ink-2);
+}
+.todo li:last-child { border-bottom: 1px solid var(--rule); }
+.todo b { color: var(--ink); font-weight: 600; }
+.todo .mark { font-family: "IBM Plex Mono", monospace; font-size: .8rem; color: var(--ink-3); padding-top: 2px; }
+
+footer {
+  margin-top: 90px; padding-top: 22px;
+  border-top: 1px solid var(--rule);
+  font-size: .82rem; color: var(--ink-3);
+  display: flex; flex-wrap: wrap; gap: 6px 24px;
+  font-family: "IBM Plex Mono", monospace;
+}
+
+@media (max-width: 640px) {
+  .wrap { padding: 0 18px 80px; }
+  .rail { grid-template-columns: 1fr; }
+  .rail__line { display: none; }
+  .rail__body { gap: 62px; }
+  body { font-size: 16px; }
+}
+@media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+</style>
+
+<div class="wrap">
+
+<header class="hero">
+  <div class="hero__meta">
+    <span>EvoODE · Statusbericht</span>
+    <span>09.09.2026</span>
+    <span>main @ 4ae5120</span>
+  </div>
+  <h1>Die Kampagne ist fertig.<br>Jetzt beginnt die <em>eigentliche</em> Frage.</h1>
+  <p class="lede hero__sub">5.248 Kernstunden, 756 saubere Zellen, null Fehler — und seit zwei Tagen zum
+  ersten Mal eine Zahl, die nicht gegen uns selbst gemessen ist. Sie ist nicht schlecht. Sie ist auch
+  nicht das Paper, das geplant war.</p>
+
+  <div class="figures">
+    <div class="fig">
+      <div class="fig__n">5.248<span> h</span></div>
+      <div class="fig__l">Kernstunden Phase B, ein Identity-Triple über alle Records</div>
+    </div>
+    <div class="fig">
+      <div class="fig__n">756<span> / 756</span></div>
+      <div class="fig__l">Zellen abgeschlossen, kein <span class="mono">error</span>, 756 eindeutige Identitäten</div>
+    </div>
+    <div class="fig">
+      <div class="fig__n">0<span> / 50</span></div>
+      <div class="fig__l">Strukturtreffer auf exakten dim-3/dim-4-Zellen</div>
+    </div>
+    <div class="fig">
+      <div class="fig__n">~100<span>×</span></div>
+      <div class="fig__l">Rechenaufwand gegenüber SINDy, bei gleichem Rekonstruktionsergebnis</div>
+    </div>
+  </div>
+</header>
+
+<div class="rail">
+  <div class="rail__line" aria-hidden="true"></div>
+  <div class="rail__body">
+
+  <!-- ============ 1 ============ -->
+  <section>
+    <div class="sec-head measure">
+      <p class="eyebrow">Wo wir stehen</p>
+      <h2>Fünf Phasen, vier davon abgeschlossen</h2>
+      <p>Der Weg war: Kern stabilisieren, Varianten bauen, Benchmark-Infrastruktur, Kampagne rechnen.
+      Das ist alles passiert. Was nie passiert ist: prüfen, ob das Grundverfahren überhaupt
+      konkurrenzfähig ist.</p>
+    </div>
+
+    <div class="ladder">
+      <div class="ladder__row">
+        <div class="ladder__n">01</div>
+        <div class="ladder__t">Stabiler Kern
+          <small>discover() end-to-end, konsistenter Loss</small></div>
+        <div><span class="pill pill--good">fertig · 04/26</span></div>
+      </div>
+      <div class="ladder__row">
+        <div class="ladder__n">02</div>
+        <div class="ladder__t">EvoGrow-Varianten
+          <small>v1 → v2.1 → v2.2 → v3 → Stufenkappe</small></div>
+        <div><span class="pill pill--good">geschlossen · 08/26</span></div>
+      </div>
+      <div class="ladder__row">
+        <div class="ladder__n">03</div>
+        <div class="ladder__t">Benchmarking
+          <small>Phase-B-Protokoll entschieden und umgesetzt; Achsen Rauschen, Abtastdichte, Kopplung offen</small></div>
+        <div><span class="pill pill--warn">teilweise</span></div>
+      </div>
+      <div class="ladder__row">
+        <div class="ladder__n">04</div>
+        <div class="ladder__t">Paper 1
+          <small>Kampagne gerechnet, Analyse fertig, Zuschnitt offen</small></div>
+        <div><span class="pill pill--warn">Entscheidung fällig</span></div>
+      </div>
+      <div class="ladder__row">
+        <div class="ladder__n">05</div>
+        <div class="ladder__t">Fortgeschrittene Verfahren
+          <small>Rauschen, Repräsentationsraum, Suchoperatoren</small></div>
+        <div><span class="pill pill--flat">nicht begonnen</span></div>
+      </div>
+    </div>
+
+    <div style="margin-top:34px">
+      <p class="eyebrow">Die Variantenkette als Befundkette</p>
+      <div class="chain">
+        <div class="chain__step">
+          <div class="chain__name">v1 · flat</div>
+          <div class="chain__verdict">Flaches Wachstum, alles sofort entsperrt. Referenz.</div>
+        </div>
+        <div class="chain__step">
+          <div class="chain__name">v2.1 · staged</div>
+          <div class="chain__verdict">Globales Plateau. Overshoot 1,5 auf System 3.</div>
+        </div>
+        <div class="chain__step chain__step--fail">
+          <div class="chain__name">v2.2 · stage-local</div>
+          <div class="chain__verdict">Overshoot 0 — aber <b>Gate 1 nicht bestanden</b>, 30.05.</div>
+        </div>
+        <div class="chain__step chain__step--fail">
+          <div class="chain__name">v3 · per-equation</div>
+          <div class="chain__verdict"><b>Gate 2 nicht bestanden</b>, 31.07. Promotionsschwelle 1e-8 bei Fehlerboden 1e-3 unerreichbar.</div>
+        </div>
+        <div class="chain__step chain__step--live">
+          <div class="chain__name">v2.2 + Stufenkappe</div>
+          <div class="chain__verdict">Die Paper-1-Variante. Kappe vor der Suche aus Trajektorie und Basis.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 2 ============ -->
+  <section>
+    <div class="sec-head measure">
+      <p class="eyebrow">Der Kampagnenbefund</p>
+      <h2>Eine Klippe, keine Kurve</h2>
+      <p>Strukturtreffer auf den 240 exakten Zellen, aufgeschlüsselt nach Systemdimension. Der Übergang
+      von zwei auf drei Dimensionen ist kein Abfall — er ist ein Abbruch. Beide Bedingungen, beide
+      Anfangswertsätze, jede Kombination: null.</p>
+    </div>
+
+    <figure class="chart">
+      <div class="chart__title">Strukturtreffer nach Dimension</div>
+      <div class="chart__sub">Anteil der exakten Zellen mit korrektem Support · 240 Zellen · beide IC-Sätze zusammengefasst</div>
+      <div class="legend">
+        <span><i style="background:var(--data-a)"></i>pretune_off</span>
+        <span><i style="background:var(--data-b)"></i>pretune_on</span>
+      </div>
+      <div class="chart__scroll">
+      <svg viewBox="0 0 720 300" width="100%" height="300" role="img"
+           aria-label="Strukturtrefferrate nach Dimension: dim 1 83 und 75 Prozent, dim 2 56 und 43 Prozent, dim 3 und dim 4 jeweils null Prozent in beiden Bedingungen.">
+        <!-- gridlines -->
+        <g stroke="var(--rule-strong)" stroke-width="1">
+          <line x1="52" y1="230" x2="700" y2="230"/>
+        </g>
+        <g stroke="var(--rule)" stroke-width="1" stroke-dasharray="2 4">
+          <line x1="52" y1="180" x2="700" y2="180"/>
+          <line x1="52" y1="130" x2="700" y2="130"/>
+          <line x1="52" y1="80"  x2="700" y2="80"/>
+          <line x1="52" y1="30"  x2="700" y2="30"/>
+        </g>
+        <g fill="var(--ink-3)" font-size="11" text-anchor="end">
+          <text x="44" y="234">0 %</text>
+          <text x="44" y="184">25</text>
+          <text x="44" y="134">50</text>
+          <text x="44" y="84">75</text>
+          <text x="44" y="34">100 %</text>
+        </g>
+
+        <!-- dim 1 : 83.3 / 75.0 -->
+        <rect x="80"  y="63.4" width="58" height="166.6" rx="4" fill="var(--data-a)"/>
+        <rect x="140" y="80"   width="58" height="150"   rx="4" fill="var(--data-b)"/>
+        <text x="109" y="55"  fill="var(--ink)" font-size="12" text-anchor="middle">83,3</text>
+        <text x="169" y="72"  fill="var(--ink)" font-size="12" text-anchor="middle">75,0</text>
+        <text x="139" y="252" fill="var(--ink-2)" font-size="12" text-anchor="middle">dim 1</text>
+        <text x="139" y="268" fill="var(--ink-3)" font-size="10.5" text-anchor="middle">36 Zellen</text>
+
+        <!-- dim 2 : 55.6 / 42.6 -->
+        <rect x="240" y="118.8" width="58" height="111.2" rx="4" fill="var(--data-a)"/>
+        <rect x="300" y="144.8" width="58" height="85.2"  rx="4" fill="var(--data-b)"/>
+        <text x="269" y="110" fill="var(--ink)" font-size="12" text-anchor="middle">55,6</text>
+        <text x="329" y="136" fill="var(--ink)" font-size="12" text-anchor="middle">42,6</text>
+        <text x="299" y="252" fill="var(--ink-2)" font-size="12" text-anchor="middle">dim 2</text>
+        <text x="299" y="268" fill="var(--ink-3)" font-size="10.5" text-anchor="middle">54 Zellen</text>
+
+        <!-- dim 3 : 0 / 0 -->
+        <rect x="400" y="227" width="58" height="3" rx="1.5" fill="var(--data-a)" opacity=".45"/>
+        <rect x="460" y="227" width="58" height="3" rx="1.5" fill="var(--data-b)" opacity=".45"/>
+        <text x="459" y="219" fill="var(--crit)" font-size="12" text-anchor="middle">0 von 24</text>
+        <text x="459" y="252" fill="var(--ink-2)" font-size="12" text-anchor="middle">dim 3</text>
+        <text x="459" y="268" fill="var(--ink-3)" font-size="10.5" text-anchor="middle">24 Zellen</text>
+
+        <!-- dim 4 : 0 / 0 -->
+        <rect x="560" y="227" width="58" height="3" rx="1.5" fill="var(--data-a)" opacity=".45"/>
+        <rect x="620" y="227" width="58" height="3" rx="1.5" fill="var(--data-b)" opacity=".45"/>
+        <text x="619" y="219" fill="var(--crit)" font-size="12" text-anchor="middle">0 von 6</text>
+        <text x="619" y="252" fill="var(--ink-2)" font-size="12" text-anchor="middle">dim 4</text>
+        <text x="619" y="268" fill="var(--ink-3)" font-size="10.5" text-anchor="middle">6 Zellen</text>
+
+        <!-- cliff marker -->
+        <line x1="379" y1="20" x2="379" y2="240" stroke="var(--crit)" stroke-width="1" stroke-dasharray="3 4"/>
+        <text x="371" y="20" fill="var(--crit)" font-size="10.5" text-anchor="end">Bruch</text>
+      </svg>
+      </div>
+      <figcaption><b>Quelle:</b> <span class="mono">descriptive_t3_exact_support.csv</span>, Kampagne
+      <span class="mono">paper1_phaseB_v1</span>. Die Pretuning-Differenz (60/120 gegen 50/120) überlebt
+      die Clusterung nach System <b>nicht</b> — Permutationstest p = 0,218 bei effektiv 20 Systemen.
+      Sie ist kein berichtbarer Befund.</figcaption>
+    </figure>
+
+    <div class="grid-2" style="margin-top:22px">
+      <div class="card">
+        <div class="card__tag">Kostenverteilung</div>
+        <p><b>dim 3 verbraucht 75,6 % der Rechenzeit</b> in 120 von 756 Zellen. dim 1 hat 276 Zellen
+        und 0,2 %. Die fünf teuersten Zellen sind alle Lorenz — die teuerste 289,7 Stunden, bei R²
+        zwischen 0,19 und 0,43.</p>
+      </div>
+      <div class="card">
+        <div class="card__tag">Die Ursache ist bekannt</div>
+        <p>Die Suche kann Terme nur <b>hinzufügen</b>. <span class="mono">_expand</span> entfernt nie,
+        und jede Linie startet aus einem Zufallsterm. Ein falscher Term kann eine Linie nie verlassen —
+        Selektion ist die einzige Korrektur. Das ist der strukturelle Grund für
+        <span class="mono">pruned_match = false</span> auf gekoppelten Systemen, selbst bei Loss 6,8e-11.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 3 ============ -->
+  <section>
+    <div class="sec-head measure">
+      <p class="eyebrow">Kassasturz · 07.09.</p>
+      <h2>Vier Lücken, die alles darüber überholt haben</h2>
+      <p>Bei der Durchsicht vor der ersten externen Diskussion kamen vier Befunde zusammen, die nicht
+      Detailfragen waren, sondern das Fundament betrafen. Drei sind seither geschlossen — in zwei Tagen,
+      ohne einen einzigen neuen Suchlauf.</p>
+    </div>
+
+    <div class="grid-2">
+      <div class="card">
+        <span class="pill pill--good">geschlossen · WP-N1</span>
+        <h3>a — Die Basis hatte keinen konstanten Term</h3>
+        <p>Kein <span class="mono">1</span> in <span class="mono">staged_polynomial.jl</span>.
+        Repräsentierbarkeit: <b>EvoODE 20 von 63 Systemen, SINDys schlichte Polynombibliothek 40,
+        ProGEDs Grammatik 53.</b> Zehn Systeme scheitern allein daran, darunter der RC-Schwingkreis.
+        Seit 24.08. in einer CSV protokolliert und nie gehandelt.</p>
+      </div>
+      <div class="card">
+        <span class="pill pill--good">geschlossen · WP-N1</span>
+        <h3>b — Die Koeffizienten wurden nie gespeichert</h3>
+        <p>Nur Termnamen gingen in den Record. Kein einziges Modell aus 5.248 Kernstunden ließ sich
+        rekonstruieren, neu integrieren oder auf andere Anfangswerte anwenden. Verstoß gegen
+        Designprinzip 6.</p>
+      </div>
+      <div class="card">
+        <span class="pill pill--good">geschlossen · WP-N5</span>
+        <h3>c — Beide IC-Sätze waren Training</h3>
+        <p>ODEBench liefert den zweiten Anfangswertsatz <i>zur Bewertung der Generalisierung</i> — das
+        zitiert unser eigenes Audit. Wir haben ihn als zweites Trainingsproblem behandelt. <b>Das Projekt
+        hatte keinerlei Auswertung auf ungesehenen Daten.</b></p>
+      </div>
+      <div class="card">
+        <span class="pill pill--warn">halb offen</span>
+        <h3>d — Die Literaturkennzahl ist eine Quote</h3>
+        <p>ODEFormer berichtet den <b>Anteil R² &gt; 0,9</b>, Rekonstruktion und Generalisierung
+        getrennt, und ausdrücklich keinen Mittelwert. Unsere Rekonstruktionsseite: <b>80,7 %</b> über
+        756 Zellen. Die publizierten Vergleichszahlen liegen allerdings nur als Balken in Figures 4
+        und 5 vor — das Repository liefert keine Ergebnisdateien.</p>
+      </div>
+    </div>
+
+    <div class="verdict" style="margin-top:30px">
+      Die Schrittfolge war falsch: v1 → v2.1 → v2.2 → Gate 1 → v3 → Gate 2 → Kappe → Kampagne — und an
+      keiner Stelle wurde geprüft, ob das Grundverfahren mithält.
+      <small>EvoGrow war bis vor zwei Tagen ausschließlich gegen sich selbst gemessen.</small>
+    </div>
+  </section>
+
+  <!-- ============ 4 ============ -->
+  <section>
+    <div class="sec-head measure">
+      <p class="eyebrow">WP-N6 · 09.09.</p>
+      <h2>Die erste Baseline der Projektgeschichte</h2>
+      <p>SINDy auf <b>denselben Trajektorien</b>: 63 Systeme, beide Anfangswertsätze, 512 Punkte über
+      t ∈ [0, 10], selbst integriert bei 1e-9. Zehn Konfigurationen vollständig berichtet, keine
+      ausgewählt. Der faire Vergleich ist Dimension 1, weil nur dort unsere Generalisierungszahlen
+      existieren.</p>
+    </div>
+
+    <figure class="chart">
+      <div class="chart__title">Anteil R² &gt; 0,9 auf Dimension 1</div>
+      <div class="chart__sub">SINDy: beste von zehn Konfigurationen, 46 Zellen · EvoODE: WP-N5-Probelauf, 132 Zellen</div>
+      <div class="legend">
+        <span><i style="background:var(--data-c)"></i>SINDy</span>
+        <span><i style="background:var(--data-a)"></i>EvoODE</span>
+      </div>
+      <div class="chart__scroll">
+      <svg viewBox="0 0 720 290" width="100%" height="290" role="img"
+           aria-label="Anteil R-Quadrat über 0,9 auf Dimension 1: Rekonstruktion SINDy 95,7 Prozent gegen EvoODE 95,5 Prozent; Generalisierung SINDy 60,9 gegen EvoODE 68,2 Prozent.">
+        <g stroke="var(--rule-strong)" stroke-width="1"><line x1="60" y1="220" x2="700" y2="220"/></g>
+        <g stroke="var(--rule)" stroke-width="1" stroke-dasharray="2 4">
+          <line x1="60" y1="170" x2="700" y2="170"/>
+          <line x1="60" y1="120" x2="700" y2="120"/>
+          <line x1="60" y1="70"  x2="700" y2="70"/>
+          <line x1="60" y1="30"  x2="700" y2="30"/>
+        </g>
+        <g fill="var(--ink-3)" font-size="11" text-anchor="end">
+          <text x="52" y="224">0 %</text>
+          <text x="52" y="174">25</text>
+          <text x="52" y="124">50</text>
+          <text x="52" y="74">75</text>
+          <text x="52" y="34">95</text>
+        </g>
+
+        <!-- Rekonstruktion: 95.7 / 95.5  (scale: 220 - pct*2) -->
+        <rect x="110" y="28.6" width="72" height="191.4" rx="4" fill="var(--data-c)"/>
+        <rect x="186" y="29.0" width="72" height="191.0" rx="4" fill="var(--data-a)"/>
+        <text x="146" y="21" fill="var(--ink)" font-size="12.5" text-anchor="middle">95,7 %</text>
+        <text x="222" y="21" fill="var(--ink)" font-size="12.5" text-anchor="middle">95,5 %</text>
+        <text x="184" y="243" fill="var(--ink-2)" font-size="12.5" text-anchor="middle">Rekonstruktion</text>
+        <text x="184" y="260" fill="var(--ink-3)" font-size="10.5" text-anchor="middle">44/46 · 126/132</text>
+        <text x="184" y="278" fill="var(--data-c)" font-size="11" text-anchor="middle">Unentschieden</text>
+
+        <!-- Generalisierung: 60.9 / 68.2 -->
+        <rect x="430" y="98.2"  width="72" height="121.8" rx="4" fill="var(--data-c)"/>
+        <rect x="506" y="83.6"  width="72" height="136.4" rx="4" fill="var(--data-a)"/>
+        <text x="466" y="90" fill="var(--ink)" font-size="12.5" text-anchor="middle">60,9 %</text>
+        <text x="542" y="75" fill="var(--ink)" font-size="12.5" text-anchor="middle">68,2 %</text>
+        <text x="504" y="243" fill="var(--ink-2)" font-size="12.5" text-anchor="middle">Generalisierung</text>
+        <text x="504" y="260" fill="var(--ink-3)" font-size="10.5" text-anchor="middle">28/46 · 90/132</text>
+        <text x="504" y="278" fill="var(--data-a)" font-size="11" text-anchor="middle">EvoODE vorn</text>
+
+        <line x1="340" y1="24" x2="340" y2="230" stroke="var(--rule)" stroke-width="1"/>
+      </svg>
+      </div>
+      <figcaption><b>Vorbehalte, die mitreisen:</b> die Systemmengen sind nicht identisch (unsere 132
+      dim-1-Zellen aus 11 ausgewählten Systemen × 3 Seeds × 2 IC-Sätze × 2 Basen, SINDys 46 aus allen 23
+      dim-1-Systemen × 2 IC-Sätze). SINDys Zahl ist das Maximum über zehn Konfigurationen, also bewusst
+      zu seinen Gunsten. SINDy braucht Ableitungen, und unsere rauschfreien Daten begünstigen das —
+      der verrauschte Fall ist ungemessen.</figcaption>
+    </figure>
+
+    <div class="note" style="margin-top:22px">
+      <h3>Und daneben gehört die Kostenzahl</h3>
+      <p>SINDy rechnet <b>eine lineare Regression je Gleichung</b> — 46 Regressionen für 46 Zellen.
+      EvoODE rechnet im Median <b>410 nichtlineare Parameteranpassungen je Zelle</b> (dim 3: 570,
+      Maximum 610), jede mit ODE-Integrationen.</p>
+      <p>Das sind rund zwei Größenordnungen. Für ein Verfahren, dessen Leitthese Effizienz ist, ist das
+      die unbequemste Zahl des Tages — und sie gehört neben jede Trefferquote.</p>
+    </div>
+
+    <div class="verdict" style="margin-top:26px">
+      Ist 80,7 % gut oder peinlich? Weder noch.
+      <small>Auf der einfachsten Systemklasse liegt EvoODE mit SINDy gleichauf und generalisiert etwas
+      besser — für etwa das Hundertfache an Rechenzeit. Das verschiebt die Beweislast: der Wert des
+      Verfahrens muss sich woanders zeigen. Unter Rauschen, auf gekoppelten Systemen, oder in der
+      Interpretierbarkeit des Suchpfads.</small>
+    </div>
+  </section>
+
+  <!-- ============ 5 ============ -->
+  <section>
+    <div class="sec-head measure">
+      <p class="eyebrow">WP-N1 + WP-N5 · der interessanteste Befund</p>
+      <h2>Die Konstante zieht in zwei Richtungen</h2>
+      <p>Der fehlende konstante Term sah aus wie ein Bug mit offensichtlichem Fix. Er ist stattdessen
+      eine Zielkonflikt-Messung: dieselbe Änderung halbiert die Strukturtreffer und verbessert die
+      Generalisierung deutlich. Sichtbar wurde das nur, weil Designprinzip 9 beide Metriken verlangt.</p>
+    </div>
+
+    <figure class="chart">
+      <div class="chart__title">Alte Basis → Basis mit konstantem Term</div>
+      <div class="chart__sub">dim-1-Probelauf, 132 Zellen · dieselben Trajektorien, dasselbe Level-Budget</div>
+      <div class="legend">
+        <span><i style="background:var(--data-b)"></i>Strukturtreffer</span>
+        <span><i style="background:var(--data-a)"></i>Generalisierung, Anteil R² &gt; 0,9</span>
+      </div>
+      <div class="chart__scroll">
+      <svg viewBox="0 0 720 300" width="100%" height="300" role="img"
+           aria-label="Slope-Diagramm: Strukturtreffer fällt von 83,3 auf 38,9 Prozent, Generalisierung IC1 nach IC2 steigt von 72,7 auf 87,9 Prozent, Generalisierung IC2 nach IC1 steigt von 45,5 auf 66,7 Prozent.">
+        <!-- axis -->
+        <g stroke="var(--rule)" stroke-width="1" stroke-dasharray="2 4">
+          <line x1="200" y1="30" x2="200" y2="250"/>
+          <line x1="520" y1="30" x2="520" y2="250"/>
+        </g>
+        <g fill="var(--ink-3)" font-size="11" text-anchor="end">
+          <text x="180" y="254">0 %</text>
+          <text x="180" y="34">100 %</text>
+        </g>
+        <text x="200" y="278" fill="var(--ink-2)" font-size="12" text-anchor="middle">alte Basis</text>
+        <text x="520" y="278" fill="var(--ink-2)" font-size="12" text-anchor="middle">mit Konstante</text>
+
+        <!-- scale: y = 250 - pct*2.2 -->
+        <!-- Strukturtreffer 83.3 -> 38.9 -->
+        <line x1="200" y1="66.7" x2="520" y2="164.4" stroke="var(--data-b)" stroke-width="2.5"/>
+        <circle cx="200" cy="66.7" r="5.5" fill="var(--data-b)" stroke="var(--surface)" stroke-width="2"/>
+        <circle cx="520" cy="164.4" r="5.5" fill="var(--data-b)" stroke="var(--surface)" stroke-width="2"/>
+        <text x="188" y="62" fill="var(--ink)" font-size="12" text-anchor="end">83,3</text>
+        <text x="532" y="160" fill="var(--ink)" font-size="12">38,9</text>
+        <text x="532" y="176" fill="var(--data-b)" font-size="10.5">Strukturtreffer</text>
+
+        <!-- Gen IC1->IC2 72.7 -> 87.9 -->
+        <line x1="200" y1="90.1" x2="520" y2="56.6" stroke="var(--data-a)" stroke-width="2.5"/>
+        <circle cx="200" cy="90.1" r="5.5" fill="var(--data-a)" stroke="var(--surface)" stroke-width="2"/>
+        <circle cx="520" cy="56.6" r="5.5" fill="var(--data-a)" stroke="var(--surface)" stroke-width="2"/>
+        <text x="188" y="95" fill="var(--ink)" font-size="12" text-anchor="end">72,7</text>
+        <text x="532" y="52" fill="var(--ink)" font-size="12">87,9</text>
+        <text x="532" y="68" fill="var(--data-a)" font-size="10.5">Gen. IC 1 → IC 2</text>
+
+        <!-- Gen IC2->IC1 45.5 -> 66.7 -->
+        <line x1="200" y1="149.9" x2="520" y2="103.3" stroke="var(--data-a)" stroke-width="2.5" stroke-dasharray="6 4"/>
+        <circle cx="200" cy="149.9" r="5.5" fill="var(--data-a)" stroke="var(--surface)" stroke-width="2"/>
+        <circle cx="520" cy="103.3" r="5.5" fill="var(--data-a)" stroke="var(--surface)" stroke-width="2"/>
+        <text x="188" y="154" fill="var(--ink)" font-size="12" text-anchor="end">45,5</text>
+        <text x="532" y="99" fill="var(--ink)" font-size="12">66,7</text>
+        <text x="532" y="115" fill="var(--data-a)" font-size="10.5">Gen. IC 2 → IC 1</text>
+
+        <!-- arrows annotation -->
+        <text x="360" y="128" fill="var(--crit)" font-size="11" text-anchor="middle">▼ Struktur bricht ein</text>
+        <text x="360" y="38"  fill="var(--good)" font-size="11" text-anchor="middle">▲ Generalisierung steigt</text>
+      </svg>
+      </div>
+      <figcaption><b>Mechanismus:</b> die Konstante ist ein Falsch-Positiv-Magnet — sie erscheint in 31
+      von 37 verfehlten Zellen. Die neu gespeicherten Koeffizienten trennen zwei Fehlerarten: auf
+      System 3 ist die überzählige Konstante ~1e-3 des größten Koeffizienten und überlebt die
+      Ausdünnungsregel um Faktor 1,27 (Struktur faktisch richtig); auf System 6 ist sie <b>4,2× größer
+      als alles andere</b> (Modell echt falsch). Alle neun divergierenden Integrationen fallen auf die
+      alte Basis, keine auf die neue.</figcaption>
+    </figure>
+
+    <div class="grid-2" style="margin-top:22px">
+      <div class="card">
+        <div class="card__tag">Was daraus <i>nicht</i> folgt</div>
+        <p>Keine Schwellenänderung. Eine Schwelle nach Sicht der Daten zu wählen ist genau der
+        WP-V1-Fehler. Und ein 24er-Regelgitter zeigt (WP-N2): Treffer + gelöschter wahrer Term +
+        überlebender Zusatzterm bleibt konstant bei 45. <b>Es gibt keine bessere Schwelle zu finden.</b></p>
+      </div>
+      <div class="card">
+        <div class="card__tag">Was daraus folgt</div>
+        <p>„Gehört die Konstante in die Basis?“ ist keine Ja/Nein-Frage, sondern die Frage, welche
+        Metrik zählt — eine Entscheidung über den <b>Zweck</b> des Verfahrens, nicht über seine
+        Konfiguration. Das ist Papiermaterial, kein Konfigurationsdetail.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 6 ============ -->
+  <section>
+    <div class="sec-head measure">
+      <p class="eyebrow">Kosten ohne Gegenwert</p>
+      <h2>Wie viel der Suche stumm läuft</h2>
+      <p>Anteil der Level nach der letzten Verbesserung von <span class="mono">best_loss</span>. Diese
+      Größe braucht keine Grundwahrheit und ist deshalb für alle 63 Systeme definiert — anders als
+      <span class="mono">wasted_levels</span>, das für 43 Systeme <span class="mono">null</span> ist.</p>
+    </div>
+
+    <figure class="chart">
+      <div class="chart__title">Stumme Level je Dimension</div>
+      <div class="chart__sub">Mittlerer <span class="mono">silent_fraction</span> · 756 Zellen · Budget 30 Level</div>
+      <div class="chart__scroll">
+      <svg viewBox="0 0 720 250" width="100%" height="250" role="img"
+           aria-label="Anteil stummer Level: dim 1 0,385, dim 2 0,346, dim 3 0,381, dim 4 0,811.">
+        <g stroke="var(--rule-strong)"><line x1="70" y1="185" x2="700" y2="185"/></g>
+        <g stroke="var(--rule)" stroke-dasharray="2 4">
+          <line x1="70" y1="145" x2="700" y2="145"/>
+          <line x1="70" y1="105" x2="700" y2="105"/>
+          <line x1="70" y1="65"  x2="700" y2="65"/>
+          <line x1="70" y1="25"  x2="700" y2="25"/>
+        </g>
+        <g fill="var(--ink-3)" font-size="11" text-anchor="end">
+          <text x="62" y="189">0</text>
+          <text x="62" y="149">0,25</text>
+          <text x="62" y="109">0,50</text>
+          <text x="62" y="69">0,75</text>
+          <text x="62" y="29">1,00</text>
+        </g>
+        <!-- y = 185 - v*160 -->
+        <rect x="100" y="123.4" width="96" height="61.6"  rx="4" fill="var(--data-a)" opacity=".55"/>
+        <rect x="256" y="129.6" width="96" height="55.4"  rx="4" fill="var(--data-a)" opacity=".55"/>
+        <rect x="412" y="124.0" width="96" height="61.0"  rx="4" fill="var(--data-a)" opacity=".55"/>
+        <rect x="568" y="55.2"  width="96" height="129.8" rx="4" fill="var(--data-b)"/>
+
+        <text x="148" y="116" fill="var(--ink)" font-size="12.5" text-anchor="middle">0,385</text>
+        <text x="304" y="122" fill="var(--ink)" font-size="12.5" text-anchor="middle">0,346</text>
+        <text x="460" y="117" fill="var(--ink)" font-size="12.5" text-anchor="middle">0,381</text>
+        <text x="616" y="48"  fill="var(--data-b)" font-size="13.5" text-anchor="middle" font-weight="600">0,811</text>
+
+        <g fill="var(--ink-2)" font-size="12" text-anchor="middle">
+          <text x="148" y="206">dim 1</text><text x="304" y="206">dim 2</text>
+          <text x="460" y="206">dim 3</text><text x="616" y="206">dim 4</text>
+        </g>
+        <g fill="var(--ink-3)" font-size="10.5" text-anchor="middle">
+          <text x="148" y="222">276 Zellen</text><text x="304" y="222">336 Zellen</text>
+          <text x="460" y="222">120 Zellen</text><text x="616" y="222">24 Zellen</text>
+        </g>
+        <text x="616" y="238" fill="var(--data-b)" font-size="10.5" text-anchor="middle">436 von 550 Leveln</text>
+      </svg>
+      </div>
+      <figcaption><b>Warum trotzdem kein Level-Budget:</b> WP-B1 hat jede Schwelle gemessen. k = 3 spart
+      94 % und kostet 152 von 287 Zellen ein besseres Ergebnis, 138 davon um mehr als 50 %. k = 5 spart
+      37 % gegen 23 beschädigte Zellen. Und die verpassten Verbesserungen sind <b>nachweislich kein
+      Rauschen</b>. Jedes k wäre außerdem eine zweite Konstante ohne Datenherleitung. Die Kampagne
+      läuft mit 30 Leveln und berichtet die Verschwendung <i>als Ergebnis</i> — ein Argument für ein
+      strukturiertes Abbruchkriterium als eigene Forschungsfrage.</figcaption>
+    </figure>
+
+    <div class="card" style="margin-top:22px">
+      <div class="card__tag">Nicht verwechseln</div>
+      <p>Verschwendung und Misserfolg sind verschiedene Phänomene und brauchen getrennte Abschnitte:
+      die Surrogatsysteme 30 und 36 verschwenden 0,95 bzw. 0,925 ihrer Level bei R² 0,988 und 0,9994,
+      während die schlechten Fits ganz woanders sitzen (System 9 bei R² 0,291, System 60 bei 0,492).
+      Nur System 63 führt beide Listen an — und das ist die Identifizierbarkeitsgrenze, die ohnehin
+      ausgeschlossen ist.</p>
+    </div>
+  </section>
+
+  <!-- ============ 7 ============ -->
+  <section>
+    <div class="sec-head measure">
+      <p class="eyebrow">Zwei Retraktionen</p>
+      <h2>Was am 07.09. abends wieder zurückgenommen wurde</h2>
+      <p>Beide Befunde waren rechnerisch korrekt und in ihrer Bedeutung falsch gewichtet. Sie stehen
+      hier, weil das Zurücknehmen zur Beweisführung gehört.</p>
+    </div>
+
+    <div class="grid-2">
+      <div class="note">
+        <h3>Die Pretuning-Lücke ist größtenteils ein Setup-Artefakt</h3>
+        <p>Ohne Pretuning wird der Parameterstart zufällig gezogen
+        (<span class="mono">0.1 .* randn</span>), mit Pretuning deterministisch aus den Daten berechnet.
+        <span class="mono">pretune_off</span> hat damit <b>zwei</b> seed-abhängige Quellen,
+        <span class="mono">pretune_on</span> nur eine. Die höhere Wiederholrate folgt aus dem Design,
+        nicht aus einer Entdeckung.</p>
+        <p>Überlebt als <b>Ablation</b>: der Zufallsstart wirkt als impliziter Multistart. Anhangmaterial,
+        kein tragender Befund.</p>
+      </div>
+      <div class="note">
+        <h3>Die Kampagne belegt Claim B nur zur Hälfte</h3>
+        <p>Beide Arme sind <span class="mono">evogrow_v2_2_stage_capped</span>, 756 von 756. <b>Es gibt
+        keinen ungekappten Arm.</b> Die Kampagne zeigt das <i>Verhalten</i> der Kappe — 690 von 756
+        Zellen rechnen weniger als die konfigurierten 30 Level —, nie dass die Kappe Aufwand
+        <i>bei unverändertem Ergebnis</i> spart.</p>
+        <p>Diese Hälfte ruht auf dem Regressionsgitter allein: <b>30 Zellen, 5 Systeme</b> — die dünnste
+        Evidenz im Paper, und sie trägt dessen Hauptanspruch.</p>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:18px">
+      <div class="card__tag">Was der Kampagnenmechanismus stattdessen sauber zeigt (WP-A7)</div>
+      <div class="tbl-scroll">
+      <table>
+        <thead><tr>
+          <th>Ziel</th><th class="num">pretune_on kollabiert</th><th class="num">pretune_off</th>
+          <th class="num">diskordant</th><th class="num">umgekehrt</th><th class="num">Cluster-p</th>
+        </tr></thead>
+        <tbody>
+          <tr><td>Support-Muster</td><td class="num">96 / 126</td><td class="num">61 / 126</td><td class="num">35</td><td class="num">0</td><td class="num">1,0e-5</td></tr>
+          <tr><td>R²</td><td class="num">96 / 126</td><td class="num">35 / 126</td><td class="num">61</td><td class="num">0</td><td class="num">1,0e-5</td></tr>
+          <tr><td>Loss</td><td class="num">96 / 126</td><td class="num">14 / 126</td><td class="num">82</td><td class="num">0</td><td class="num">1,0e-5</td></tr>
+        </tbody>
+      </table>
+      </div>
+      <p style="margin-top:12px">Über alle drei Ziele und alle 126 Paare gibt es <b>nicht eine Gruppe</b>,
+      in der <span class="mono">pretune_off</span> kollabiert und <span class="mono">pretune_on</span>
+      streut. Entscheidend: der Kollaps zeigt sich am <b>gefundenen Support-Muster</b>, nicht nur an
+      einer Zahl — der OLS-Warmstart zieht die Suche seed-unabhängig in dieselbe Struktur. Das ist das
+      Anchoring-Risiko, das die Projektdokumentation seit jeher notiert, zum ersten Mal gemessen.</p>
+    </div>
+  </section>
+
+  <!-- ============ 8 ============ -->
+  <section>
+    <div class="sec-head measure">
+      <p class="eyebrow">Die Gabelung</p>
+      <h2>Nicht mehr „messen“, sondern: was ist Paper 1?</h2>
+      <p>Die Baselinezahl existiert seit dem 09.09. Damit ist die offene Frage keine Messfrage mehr.
+      Drei Zuschnitte stehen zur Wahl — und sie müssen <b>gewählt</b> werden, nicht vermischt, sonst
+      entscheidet die Drift.</p>
+    </div>
+
+    <div class="fork">
+      <div class="fork__opt">
+        <div class="fork__num">OPTION 1</div>
+        <h3>Die Stufenkappe als Suchraum-Regler</h3>
+        <p>Am nächsten am aktuellen Entwurf. Die Kappe ist der Mechanismus, die Baseline liefert
+        Kontext, die Rechenkosten werden offen deklariert.</p>
+        <p style="color:var(--crit)"><b>Schwachstelle:</b> Claim B, Hälfte 2 bleibt bei 30 Zellen und
+        5 Systemen.</p>
+        <div class="fork__cost"><b>Was fehlt:</b> ein ungekappter Arm — sonst bleibt der Kernanspruch
+        auf dem Regressionsgitter stehen.</div>
+      </div>
+      <div class="fork__opt">
+        <div class="fork__num">OPTION 2</div>
+        <h3>Charakterisierung: wo inkrementelles Wachstum bricht</h3>
+        <p>Die Kampagne als das lesen, was sie ist: 756 saubere Zellen mit einer scharf benannten
+        Grenze. Der dim-3/4-Bruch bei 0 von 50, die Verschwendungsverteilung, die
+        Identifizierbarkeitsgrenze bei System 63.</p>
+        <p style="color:var(--good)"><b>Stärke:</b> ruht vollständig auf vorhandenen Daten.</p>
+        <div class="fork__cost"><b>Was fehlt:</b> nichts zu rechnen. Nur zu schreiben — und die
+        Erzählung von „unser Regler wirkt“ auf „hier bricht die Klasse“ umzustellen.</div>
+      </div>
+      <div class="fork__opt">
+        <div class="fork__num">OPTION 3</div>
+        <h3>Das Restart-Budget und unsere eigene Fehlerklasse</h3>
+        <p>Mit der <i>wahren</i> Struktur trifft ein <b>einzelner</b> Parameterfit in 15 von 102 Zellen
+        den Sentinel-Loss 1e6; bei k = 3 sind es null. Wir optimieren MSE auf der <i>integrierten</i>
+        Trajektorie — schlecht konditioniert. SINDy kann diese Fehlerklasse strukturell nicht haben.</p>
+        <p style="color:var(--good)"><b>Stärke:</b> ehrliche, scharfe, eigenständige These.</p>
+        <div class="fork__cost"><b>Was fehlt:</b> eine Trefferquote-gegen-<i>Fits</i>-Kurve (nicht gegen k),
+        und die nie gemessene Duplikatrate von <span class="mono">StructureSpec</span>.</div>
+      </div>
+    </div>
+
+    <div class="verdict" style="margin-top:30px">
+      Die Kampagnendaten werden nicht verworfen: 756 saubere Zellen unter einem Identity-Triple,
+      protokollkonform, mit einer scharf benannten Grenze.
+      <small>Ein gutes Kapitel. Noch kein Paper.</small>
+    </div>
+  </section>
+
+  <!-- ============ 9 ============ -->
+  <section>
+    <div class="sec-head measure">
+      <p class="eyebrow">Offene Posten</p>
+      <h2>Was unabhängig von der Wahl zu tun ist</h2>
+      <p>Nichts davon blockiert die wissenschaftliche Arbeit. Alles davon würde ein externer Leser
+      finden.</p>
+    </div>
+
+    <ul class="todo">
+      <li><span class="mark">01</span><span><b>dim-2-Probelauf der Konstanten-Basis</b> — vorbereitet und
+      ungestartet, 114 Kernstunden, Kommando in <span class="mono">REPORT_WP_N1.md</span>. Bis er
+      existiert, ruht das Konstanten-Urteil auf Dimension 1 allein. <i>Lange Läufe startest nur du.</i></span></li>
+      <li><span class="mark">02</span><span><span class="mono">wp_n1_basis_probe.jl</span> schreibt
+      <b><span class="mono">git_hash = "not_collected"</span></b>. Das widerspricht der Identitätsregel
+      des Projekts und muss vor jeder weiteren Verwendung dieser Daten repariert werden.</span></li>
+      <li><span class="mark">03</span><span>Die <b>756 Kampagnenzellen tragen keine Koeffizienten</b>.
+      Jede dimensionsübergreifende Generalisierungszahl erfordert einen Neulauf.</span></li>
+      <li><span class="mark">04</span><span><b>Codex kann in dieser Umgebung kein Julia ausführen</b>
+      (<span class="mono">A specified logon session does not exist</span>). Julia-Arbeitspakete werden
+      von Codex geschrieben, als <span class="mono">blocked</span> gemeldet und von mir ausgeführt.</span></li>
+      <li><span class="mark">05</span><span><b>Niemand führt die Python-Tests aus.</b> Die GitLab-CI baut
+      ausschließlich das Kampagnen-Image. Ein Wächtertest war drei Wochen rot, ohne dass es auffiel.</span></li>
+      <li><span class="mark">06</span><span>Die <b>externen Spalten des Protokoll-Audits</b> sind der
+      letzte substanzielle Phase-3-Posten — inklusive der offenen Frage, ob publizierte Zahlen auf den
+      mitgelieferten Trajektorien gerechnet wurden. Dann arbeiten wir auf saubereren Daten als der
+      Vergleich, und das muss deklariert werden.</span></li>
+      <li><span class="mark">07</span><span><b>Elf Skripte</b> unter <span class="mono">benchmarks/</span>
+      und <span class="mono">studies/</span> konstruieren den Optimierer ohne Budget und sind seit WP-B3
+      unbeschränkt. Bewusster Rückstand.</span></li>
+    </ul>
+
+    <div class="card" style="margin-top:24px">
+      <div class="card__tag">Nebenbefund vom Repo-Durchgang</div>
+      <p><span class="mono">.git</span> war <b>852 MB</b>. Der tatsächliche Inhalt der gesamten
+      Projekthistorie: <b>6,3 MB</b>. 25.985 lose, nie gepackte Objekte plus ein 48,6-MB-Rest eines
+      abgebrochenen <span class="mono">gc</span>. Ursache ist die Arbeitsweise — <span class="mono">DIARY.md</span>
+      ist 405 KB und wird bei fast jedem Commit angefasst. <span class="mono">git gc --prune=now</span>:
+      852 MB → 11 MB. Lehre für die Priorisierung: 38 Reports zu verschieben spart 246 KB, ein Befehl
+      sparte 840 MB.</p>
+    </div>
+  </section>
+
+  </div>
+</div>
+
+<footer>
+  <span>Quellen: CLAUDE.md · PAPER_1.md · DIARY.md 07.–09.09.</span>
+  <span>WP-A6 – A9 · WP-N1 – N6 · WP-B1 · WP-V1</span>
+  <span>analysis/tables/paper1_phaseB_v1/</span>
+  <span>Kampagne 91f88c4 / 604e79733b22d64d / ffb0266c7913352c</span>
+</footer>
+
+</div>

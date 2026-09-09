@@ -4,100 +4,164 @@ This document is the **authoritative execution plan** for EvoODE Paper 1. It def
 scope, the diagnostic gates and their decisions, the work phases, go/no-go criteria, risks and
 frozen elements.
 
-*Revised 2026-08-21 and promoted from `docs/PAPER_1_draft.md`. The previous body was dated
-2026-05-17, planned around EvoGrow v3 and did not mention the stage cap — the variant that is the
-contribution. With this revision the precedence rule at the top of `CLAUDE.md` holds again: where
-this document and `CLAUDE.md` drift, this document decides.*
+*Revised 2026-09-09: the paper scope changed from a mechanistic stage-cap study to a method paper.
+See "Critical Scope Decision" below. The previous scope decision of 2026-08-03 is retained further
+down as the historical record of how the cap became the contribution, because Phases 1 to 5 were
+executed under it.*
 
 | Where to look | For |
 |---|---|
 | `CLAUDE.md` | project orientation, architecture position, current priorities |
 | `DIARY.md` | chronology — measurements, decisions, bug history, commit hashes |
+| `docs/paper1_phaseC_benchmark_plan.md` | **the frozen Phase C claim → experiment → metric → output matrix** |
 | `docs/architecture.md` | component reference |
+| `docs/status_2026-09-09.md` | frozen status snapshot written before the scope decision |
 | `docs/paper1_odebench_protocol_alignment.md` | Phase B sampling protocol and the comparability audit |
 | `docs/hpc_requirements.md` | measured Phase B cost model and resource profile |
 | `docs/paper1_freeze_memo_phaseA.md` | frozen Phase A results (historical, no paper claims) |
 | `docs/wp_c1_stage_cap_horizon_audit.md`, `docs/wp_c2_stage_cap_failure_diagnosis.md`, `docs/WP-V1.md`, `docs/WP-C5.md` | the stage-cap evidence chain |
 | `docs/WP-B1.md` | the wasted-search-level measurement |
+| `docs/WP-N4.md` | the restart budget of the parameter fit |
+| `docs/WP-N6.md` | the SINDy baseline on identical trajectories |
 
 ---
 
-## Critical Scope Decision (2026-08-03)
+## Critical Scope Decision (2026-09-09) — Paper 1 is a method paper
 
-Paper 1 is not a pretuning study and is not planned around EvoGrow v3.
+**Paper 1 establishes EvoGrow as a method.** It is not a failure analysis, and it is not a
+characterisation study of where incremental growth breaks.
 
-The core contribution of Paper 1 is the **look-ahead stage cap** as a data-driven, per-equation
-search-space controller on the `evogrow_v2_2_stage_capped` substrate:
+> We introduce EvoGrow, an incremental structure-growth method for interpretable ODE discovery.
+> EvoGrow progressively expands the admissible functional space instead of exposing the full search
+> space at once. A trajectory-informed stage cap controls how far this expansion proceeds. We
+> evaluate structural recovery, trajectory reconstruction, generalization and computational cost on
+> ODEBench and compare EvoGrow against an established sparse-regression baseline.
 
-```text
-v2.2 substrate + per-equation look-ahead stage cap derived from trajectory and basis
-```
+Four things follow, and they are binding.
 
-The cap is computed **before** the search starts. It reads the trajectory and the basis, never the
-evolving population, so it is search-independent and combines with the v2.2 substrate rather than
-requiring the rejected v3 substrate.
+**1. EvoGrow is the object, not the stage cap.** EvoGrow is the whole incremental structure-discovery
+strategy: incremental opening of the search space, staged function classes, growth instead of
+enumeration, parameter optimization over integrated trajectories, selection, pruning, stage
+progression, the stage cap, termination. The central idea is *don't expose the entire search space
+at once — grow it.* The cap is a **mechanism inside** EvoGrow that controls how far the expansion
+proceeds, and it gets its own ablation. It is not the paper's single innovation.
 
-The guiding research question:
+**2. Bad results keep their place, and it is not the headline.** The dim-3/4 structural collapse, the
+add-only path dependence, the silent search levels and the optimizer failures are reported as
+**evaluation results and limitations of EvoGrow v1**, in a Failure Modes section. They are not the
+thesis, and they are not in the title.
 
-> Can a data-derived, per-equation stage cap control the ODE hypothesis space before search, and
-> where does that control help, fail, or become unauditable?
+**3. The 756-cell campaign is not automatically the final benchmark.** It was computed before the
+methodological audit of 2026-09-07 closed, and it carries four defects that a final method benchmark
+cannot have: no constant term in the basis, no persisted coefficients, both IC sets used as training,
+and no uncapped arm. It remains valuable as exploration, diagnostics, ablation source, runtime
+analysis and failure-case collection. It is **not** the source of the paper's main tables.
 
-The central story is the documented failure-analysis chain:
+**4. The 5,248 core hours are sunk cost.** They must not shape the paper's scope. We do not fit the
+paper to the campaign; we define the paper and then compute exactly the experiments it needs.
 
-```text
-v2.2 -> v3 -> capped
-```
+### What this decision replaces
 
-v3 is a result, not the contribution. It failed Gate 2 because its promotion condition
-`r_k > loss_tol = 1e-8` is unreachable on coupled systems with an error floor around `1e-3`, and
-because `r_k` is contaminated by derivative-estimation error. The cap is the resulting controller:
-it bounds how far each equation may grow, where the data give **positive** evidence about the
-useful stage boundary.
+The scope decision of 2026-08-03 made the look-ahead stage cap the contribution and the
+`v2.2 → v3 → capped` failure chain the central story. That framing produced Phases 1 to 5 and is
+retained below as the historical record. It is **superseded**: the failure chain becomes design
+justification inside the Method section, not the paper's argument.
 
 ---
 
 ## Explicit Non-Goals for Paper 1
 
-Paper 1 does **not** run new in-house baselines for GP, PySR, SINDy, ODEFormer, GODE, Operon or any
-other external symbolic-regression tool.
+**Superseded non-goals (2026-09-09).** Two prohibitions decided on 2026-08-22 are lifted, because
+Claim D now requires exactly what they forbade:
 
-Paper 1 makes **no quantitative cross-method performance claim** (decided 2026-08-22). Not a
-cautious one, not an approximate one — none. Permitted are statements about *protocols*: that
-ODEBench has been used by several methods, that their search spaces and evaluation protocols differ,
-that published numbers are therefore not treated as directly comparable, and that the broad
-comparison is deliberately deferred. Not permitted: "better than", "competitive with", "comparable
-performance to", "exceeds published results".
+- ~~"Paper 1 does not run new in-house baselines for GP, PySR, SINDy…"~~ — **SINDy is now a main-table
+  baseline**, computed in-house on identical trajectories (WP-N6, extended in Phase C). GP, PySR,
+  ODEFormer, GODE and Operon stay out.
+- ~~"Paper 1 makes no quantitative cross-method performance claim. Not a cautious one, not an
+  approximate one — none."~~ — **Quantitative EvoGrow-versus-SINDy comparison is now in scope**, under
+  the fairness conditions of Claim D: identical trajectories, identical train/test ICs, all SINDy
+  configurations reported, no undeclared cherry-picking, and cost reported beside every quality
+  number.
 
-The reason is scope, not modesty. Paper 1 asks whether controlled, data-adaptive growth of the
-search space pays off — an internal methodical question. A cross-method comparison opens a second
-question and a second attack surface without adding anything to the first.
+The remaining non-goals stand:
 
-Paper 1 does **not** use pretuning as the scientific contribution. Phase B carries `pretune_on` and
-`pretune_off` as its two conditions; any effect is a condition effect around the same controller.
+Paper 1 does **not** claim to beat SINDy. The comparison answers *where does EvoGrow stand relative
+to an established sparse-regression baseline*, and the honest current answer includes a compute
+disadvantage of roughly two orders of magnitude.
 
-Paper 1 does **not** claim structural recovery on surrogate systems. The 43 surrogate systems have
-no true support in the current basis and are evaluated through R², reached stage and stability
-observations.
+Paper 1 does **not** use pretuning as a headline mechanism, and no longer carries it as a
+co-equal main variant. There is **one canonical EvoGrow configuration**; pretuning on/off is an
+ablation. See "Pretuning Decision".
 
-Paper 1 does **not** derive claims from Phase A exploratory results, and does **not** report Phase B
-results before they are produced by the analysis pipeline. The campaign records exist since
-2026-09-04; the result sections below stay placeholders until the analysis has run.
+Paper 1 does **not** claim structural recovery on systems whose ground truth is not representable in
+the frozen basis. Representability is declared per system and per equation, and structural metrics
+are only ever interpreted together with it.
+
+Paper 1 does **not** derive claims from Phase A, and does **not** derive its main tables from
+Phase B. Phase B supplies diagnostics, ablations and failure analysis under an explicitly declared,
+differently configured predecessor.
 
 Paper 1 does **not** introduce a stopping rule or level budget. That decision was taken on the
 evidence and is recorded in Phase 6.
 
+Paper 1 does **not** tune hyperparameters on benchmark results. Once Phase C starts, the
+configuration is frozen; any later change produces a new, fully declared experiment identifier.
+
 ---
 
-## Pretuning Decision
+## Pretuning Decision (revised 2026-09-09)
 
-Pretuning is retained as an experimental condition because the frozen Phase B scope contains exactly
-two conditions, `pretune_on` and `pretune_off`, over all 63 systems, 3 seeds and both
-initial-condition sets. It is a condition, never the headline mechanism.
+**The canonical EvoGrow configuration runs `pretuning = false`.** Pretuning becomes an ablation arm,
+not a second main version.
 
-One measured caveat belongs to this decision (probe, 2026-08-20): the effect of pretuning on cost is
-strongly system-dependent and points in different directions within a single dimension class —
-runtime factors 0.30, 0.92 and 0.97 on three chaotic 3D systems. Any pretuning statement in the
-paper must be per-system or per-class, never a single global factor.
+The evidence is one-directional. Grouped by system, IC set and condition — 126 pairs per condition
+over 63 systems — pretuning collapses seed diversity on all three targets: support pattern 96/126
+against 61/126, R² 96/126 against 35/126, loss 96/126 against 14/126, with cluster-robust
+p = 1.0e-5 and **not one pair in the reverse direction** (WP-A7). The collapse shows on the
+*discovered support pattern*, not only on a number: the OLS warm start pulls the search into the
+same structure regardless of seed. That is the anchoring risk the project has recorded since
+population carry-over was introduced, measured for the first time.
+
+**One condition attaches to this decision, and it produced its own frozen parameter.** Under
+`pretuning = false` every parameter fit draws `0.1 .* randn` (`src/optimize/bfgs.jl:269`). What that
+gives today is **not** a controlled multistart: each candidate structure gets exactly one fit, and a
+structure is only re-started if the search happens to generate it again — so the effective restart
+count is the **`StructureSpec` duplicate rate, which has never been measured**. The canonical k is
+therefore 1 with uncontrolled repetition, which is not a describable method.
+
+That matters beyond bookkeeping. WP-N4 measured, with the *true* structure supplied, that a single
+fit hits the sentinel loss `1e6` in **15 of 102 cells**, 13 at k = 2 and **zero at k = 3**. Carried
+into the search, this is a **search-quality** problem, not an optimizer footnote: roughly one in
+seven correct candidate structures is discarded because its fit failed, not because the structure
+was wrong.
+
+**Decided 2026-09-09 — retry-on-failure, up to k = 3, canonical and declared.** One fit per
+candidate structure; a restart is drawn **only** when the fit fails (sentinel loss, non-success
+termination). This captures essentially the whole WP-N4 effect at an overhead of roughly the failure
+rate — about 15 % — instead of the ~200 % a true per-structure multistart at k = 3 would cost, which
+on a full-mirror Phase C would mean 25,000–35,000 core hours and would further damage the very cost
+comparison Claim D has to report honestly.
+
+**This must be named precisely in the paper: it is retry-on-failure, not a multistart.** The two are
+different mechanisms and only one of them was measured by WP-N4 in its original form. The value
+k = 3 is taken from an **oracle diagnostic**, never from benchmark performance — that is what keeps
+it out of the "hyperparameter tuned on the benchmark" category.
+
+The restart dependence itself becomes a **subset ablation with a cost axis**: recovery against
+*fits*, never against k, plus the `StructureSpec` duplicate-rate measurement, without which the
+k = 1 reference point is not even defined.
+
+The earlier caveat still holds and is unchanged: pretuning's effect on cost is strongly
+system-dependent and points in different directions within a single dimension class — runtime
+factors 0.30, 0.92 and 0.97 on three chaotic 3D systems (probe, 2026-08-20). Any pretuning statement
+is per-system or per-class, never a single global factor.
+
+**Retracted, and it must stay retracted.** The Phase B structural difference between conditions
+(60/120 against 50/120 support hits) is **not a reportable finding**: the cluster-robust permutation
+test that swaps the condition label per system gives p = 0.218 against 20 effective systems.
+Additionally, `pretune_off` has two seed-dependent sources (structure search *and* parameter start)
+where `pretune_on` has one, so part of its apparent advantage follows from the design. It survives
+as an ablation about the implicit multistart, not as a discovery.
 
 ---
 
@@ -105,97 +169,138 @@ paper must be per-system or per-class, never a single global factor.
 
 | Item | Status |
 |------|--------|
+| Paper scope | **method paper, decided 2026-09-09.** EvoGrow is the object; the cap is a component with its own ablation |
+| Phase C | **defined, not started.** `docs/paper1_phaseC_benchmark_plan.md` |
 | `paper1_phaseA_v1` | frozen exploratory set, 300/300 runs. Not used for final claims |
+| `paper1_phaseB_v1` | **complete, demoted from main benchmark to diagnostics/ablation source** (2026-09-09) |
 | Gate 1 | decided 2026-05-30: v2.2 fails |
 | Gate 2 | decided 2026-07-31: v3 fails |
-| Final variant | `evogrow_v2_2_stage_capped`, settled 2026-08-03 |
+| Final variant substrate | `evogrow_v2_2_stage_capped`, settled 2026-08-03 |
 | Stage-cap defect | **solved** (WP-C1 to WP-C5, 2026-08-20): 0 truncated equation rows of 80, 48 finite caps |
-| Regression evidence | **complete** (2026-08-20): 120 records, 30 cells, loss bit-identical 30/30, −25.4 % loss evaluations, no cell more expensive |
-| Cost model | **measured** (pilot + probe): 2,000–3,400 core-hours for Phase B, `docs/hpc_requirements.md` |
+| Regression evidence | 120 records, 30 cells, loss bit-identical 30/30, −25.4 % loss evaluations. **Superseded as Claim B evidence by the Phase C uncapped arm** |
 | Level budget | **decided against** (WP-B1, 2026-08-21): 30 levels stay, the waste is reported as a result |
-| Phase B protocol | decided 2026-08-03: 63 systems, 2 conditions, 3 seeds, 2 IC sets = 756 cells |
-| Sampling | 512 points over `t ∈ [0, 10]`, both endpoints, self-integrated with `Tsit5` at `abstol = reltol = 1e-9` |
-| Phase B fingerprint | `604e79733b22d64d` — **756/756 campaign records**, `git 91f88c4` clean, complete 2026-09-04 |
-| Regression fingerprint | `17fe7d9cfb8f1be3` — 120 records under `git f6143eb` |
+| Canonical basis | **open — blocks the Phase C freeze.** Decided: run the dim-2 constant-term probe first (114 core hours), then freeze |
+| Canonical pretuning | **decided 2026-09-09: `pretuning = false`**, with the restart count made explicit |
+| Uncapped-arm scope | **decided 2026-09-09: full mirror of the canonical arm** — 63 systems, 3 seeds, both IC sets = 378 paired cells |
+| Restart policy | **decided 2026-09-09: retry-on-failure, up to k = 3.** Canonical, explicit, declared. Restart dependence is a subset ablation with a cost axis |
+| Phase C cost estimate | grob 8,000–11,000 core hours, 3–5 weeks on Orion. The uncapped arm carries the majority |
+| Structural F1 / precision / recall | **does not exist anywhere in the codebase.** Must be built before Phase C |
+| Phase B fingerprint | `604e79733b22d64d` — 756/756 records, `git 91f88c4` clean, complete 2026-09-04 |
 | Stage-cap behaviour fingerprint | `ffb0266c7913352c` (probe version 2) |
-| Campaign status | **complete** 2026-09-04 after 13.5 days: 756/756 records, 0 errors, 756 unique identities, one identity triple, 5,248 core hours, 1.418e9 loss evaluations |
-| Campaign analysis | **complete** (WP-A5 to WP-A9, 2026-09-07): descriptive tables T1–T5, pretuning contrast, seed-collapse mechanism, level-waste measure, per-system table |
+| Campaign analysis | complete (WP-A5 to WP-A9, 2026-09-07): tables T1–T5, pretuning contrast, seed-collapse, level waste, per-system table |
 | Coefficient persistence | **added** (WP-N1, 2026-09-08). The 756 campaign cells predate it and carry no coefficients |
-| Held-out evaluation | **exists for the first time** (WP-N5, 2026-09-09): R² > 0.9 falls from 95.5 % reconstruction to 68.2 % generalization on the dim-1 probe |
-| Baseline | **exists for the first time** (WP-N6, 2026-09-09): SINDy on identical trajectories. `docs/WP-N6.md` |
-| Evidence in the repository | run registries, campaign history and the descriptive tables are tracked since 2026-09-09; only per-run scratch directories stay out |
+| Held-out evaluation | **exists** (WP-N5, 2026-09-09): R² > 0.9 falls from 95.5 % reconstruction to 68.2 % generalization on the dim-1 probe |
+| Baseline | **exists** (WP-N6, 2026-09-09): SINDy on identical trajectories. `docs/WP-N6.md` |
+| Evidence in the repository | run registries, campaign history and the descriptive tables are tracked since 2026-09-09 |
 
 ---
 
 ## Paper Strategy in One Sentence
 
-> Paper 1 evaluates a data-driven per-equation stage cap as a search-space controller for
-> incremental ODE discovery, reports the v2.2 and v3 failures that led to it, and keeps structural
-> recovery, surrogate fit quality and compute cost as separate kinds of evidence.
+> Paper 1 introduces EvoGrow as an incremental structure-discovery method for interpretable ODE
+> models, evaluates it on ODEBench for structural recovery, reconstruction, generalization and
+> computational cost against a SINDy baseline, ablates the stage cap and the warm start, and reports
+> the path dependence of add-only growth as the limitation that motivates the follow-up work.
 
 ---
 
-## Main Claim Strategy
+## Main Claim Strategy (revised 2026-09-09)
 
-The primary claim target is **Claim C**.
+Four claims, each with a defined experiment, comparison, metric and output. The full matrix — and
+the rule that nothing is computed before the matrix is complete — is
+`docs/paper1_phaseC_benchmark_plan.md`.
 
-### Claim A — Fit-Quality Claim
+**Renumbering warning.** These labels replace the previous Claim A/B/C of this document. `DIARY.md`
+and the WP reports cite the old labels; the old ones are preserved verbatim under "Superseded Claim
+Labels" below so a citation can still be resolved. Never mix the two sets.
 
-> EvoODE achieves the reported Phase B fit-quality outcomes on the 63-system ODEBench protocol.
+### Claim A — EvoGrow discovers interpretable ODE structure
 
-**Filled 2026-09-07 (WP-A8/A9).** Tables under `analysis/tables/paper1_phaseB_v1/`. Surrogate R²
-median is 0.98-0.9999 on dim 1-2 and 0.66-0.91 on dim 3; the exact-system median `log10` loss falls
-from about -11 on dim 1 to **+1.8 on dim 3**. Support recovery on the 20 exact systems is 18/18 to
-9/27 per condition and IC set on dim 1-2 and **0 of 60 on dim 3-4 in all four combinations**. The IC
-set is a real axis, not a nuisance: on dim 1 `pretune_off` drops from 18/18 to 12/18 on the second
-set alone. All distributions are reported as quantiles and threshold grids, never as a mean or
-median alone.
+> EvoGrow recovers the governing structure of dynamical systems from trajectory data, at a rate that
+> depends on dimensionality, coupling and the representability of the ground truth in the frozen
+> basis.
 
-### Claim B — Search-Space-Control Claim
+Reported metrics: exact structural recovery, term precision, term recall, structural F1, coefficient
+error, reconstruction R², trajectory MSE.
 
-> The stage cap restricts staged growth wherever the data resolve the stage boundary, at an
-> unchanged result: on the 30-cell regression grid it removes **25.4 %** of the loss evaluations
-> with **bit-identical** losses in 30 of 30 cells, unchanged `pruned_match`, and not one cell made
-> more expensive.
+**Representability is a precondition, not a footnote.** A method is not credited with a search
+failure when the ground truth is not expressible in its search space. Every system is classified as
+**fully representable**, **partially representable** or **non-representable**, and structural metrics
+are only interpreted together with that class. The original basis represented 20 of 63 systems where
+SINDy's plain polynomial library represented 40 — that is the reason the rule exists.
 
-Supported by stage metrics, cap decisions, support availability on exact systems and evaluation
-counters. **Wall-clock time is not evidence for this claim** (Design Principle 7).
+### Claim B — Stage capping controls search effort
 
-**The claim has two halves and they rest on different evidence. Keep them apart in the write-up.**
+> Stage capping substantially reduces the explored search space while preserving most of the
+> resulting model quality.
 
-*Half 1 — the cap restricts growth.* **Corroborated at campaign scale** (WP-A9, 2026-09-07). The
-heartbeat streams show the search terminating early wherever the cap binds: **690 of 756 cells
-execute fewer than the 30 configured levels**, and the executed count tracks the reached stage —
-median 1 level at stage 1, 5 at stage 2, 21 at stage 5. A cell capped at stage 1 computes **one**
-level instead of thirty. This half does not rest on the regression grid.
+**This claim is not currently supported and requires the Phase C uncapped arm.** Both Phase B arms
+are capped, so the campaign has no counterpart; the existing difference evidence is the 30-cell,
+5-system regression grid. The Phase C comparison is `EvoGrow capped` against `EvoGrow uncapped` with
+everything else identical: systems, trajectories, ICs, seeds, basis, optimizer, initialisation,
+restart policy, parameter budgets, search operators, integration settings, maximum reachable search
+space. The uncapped arm is a **full mirror** of the canonical arm — 63 systems, 3 seeds, both IC
+sets, 378 paired cells — and it is the single most expensive experiment in the project, because it
+executes the full 30 levels where the capped arm stops early.
 
-*Half 2 — at an unchanged result.* **RETRACTED 2026-09-07 (evening) as a campaign finding.** Both
-campaign arms are `evogrow_v2_2_stage_capped`, 756 of 756 — there is **no uncapped arm**, so the
-campaign has no counterpart to compare against and cannot show that the restriction is free. This
-half rests on the regression grid **alone: 30 cells, 5 systems** — the thinnest evidence in the
-paper, carrying its comparative claim. Say so in the paper rather than letting Half 1's 756 cells
-lend it borrowed weight.
+The intended main figure is the paired trade-off plot: computational saving on the x-axis, quality
+difference `capped − uncapped` on the y-axis. Points far to the right and close to `y = 0` are the
+visual form of this claim.
 
-The two halves are easy to conflate because both are about the cap and both cite level counts.
-Half 1 counts levels *within* the capped arm; Half 2 needs a *difference* between arms, and that
-difference exists only on the regression grid.
+Reported: explored stages, explored levels, nonlinear fits, ODE integrations, core hours, final loss,
+structural F1, exact recovery, reconstruction and generalization quality.
 
-Note for the write-up: `n_levels` in the records is the constant `N_LEVELS = 30`
-(`studies/regression/run_regression.jl:681`), i.e. the configured budget, **not** an executed count.
-The level heartbeat fires once per completed level and is the measurement.
+**Do not overstate.** "Without loss of quality" may be written only if that is what the paired data
+show. The default formulation is *substantially reduces … while preserving most of*. Counts are the
+evidence; core hours are capacity context and are labelled as such (Design Principle 7).
 
-### Claim C — Primary Mechanistic Claim
+Half of the claim is already corroborated at campaign scale and can be cited as behaviour: 690 of
+756 cells execute fewer than the 30 configured levels, and the executed count tracks the reached
+stage. That shows the cap *restricts growth*; it does not show the restriction is free.
 
-> The v2.2 → v3 → capped sequence shows that staged growth needs not only a progression rule but a
-> data-derived boundary on the useful search space. The cap supplies that boundary exactly where the
-> derivative estimate resolves the structural difference between stages — and the threshold that
-> separates the safe from the unsafe region **cannot be selected from the data**.
+### Claim C — EvoGrow generalizes to unseen trajectories
 
-This is the safest framing because it carries the negative results as part of the mechanism. The
-second half of the claim is itself a result (WP-V1) and is not to be softened.
+> A model discovered on one initial condition describes an unseen trajectory of the same system, at
+> a measurably lower rate than it describes the trajectory it was identified on.
+
+Design, both directions, no averaging across them:
+
+```text
+train on IC1 -> reconstruction on IC1, generalization on IC2
+train on IC2 -> reconstruction on IC2, generalization on IC1
+```
+
+This requires structure, coefficients and full model state to be persisted — impossible in Phase B,
+available since WP-N1. The dim-1 probe already shows the metric carries: R² > 0.9 falls from 95.5 %
+to 68.2 %, qualitatively the drop ODEFormer reports, and direction matters (IC2 → IC1 is worse in
+both bases).
+
+This block is what prevents EvoGrow from being read as an expensive trajectory fitter.
+
+### Claim D — Where EvoGrow stands against an established baseline
+
+> EvoGrow provides an alternative incremental trajectory-based structure-search mechanism with
+> different algorithmic properties, comparable performance on simple system classes, higher current
+> computational cost, and specific failure modes that motivate subsequent methodological work.
+
+SINDy on identical trajectories, identical train/test ICs, comparable libraries where meaningful,
+**all** configurations reported. The current SINDy figure is the maximum over ten configurations,
+which is deliberately favourable to SINDy and is declared as such.
+
+Cost belongs beside every quality number: SINDy solves one linear regression per equation; EvoGrow
+runs a median of 410 nonlinear fits per cell, each with ODE integrations.
+
+### Superseded Claim Labels (pre-2026-09-09, for resolving older citations)
+
+- **Old Claim A — Fit-Quality Claim.** Phase B fit-quality outcomes on the 63-system protocol.
+  Content survives inside new Claim A.
+- **Old Claim B — Search-Space-Control Claim.** The cap restricts growth at an unchanged result.
+  Content survives as new Claim B; its retracted second half is the reason the uncapped arm exists.
+- **Old Claim C — Primary Mechanistic Claim.** The `v2.2 → v3 → capped` sequence and the
+  non-selectable threshold. **No longer a paper claim**; it becomes design justification in the
+  Method section and a Limitations item. The WP-V1 negative result is not softened by the move.
 
 ---
-
 ## Phase Overview
 
 | Phase | Goal | Status |
@@ -205,14 +310,116 @@ second half of the claim is itself a result (WP-V1) and is not to be softened.
 | **Gate 1** | is v2.2 paper-ready? | decided 2026-05-30 — no |
 | **Phase 2** | EvoGrow v3 design and validation | done |
 | **Gate 2** | is v3 paper-ready? | decided 2026-07-31 — no |
-| **Phase 2b** | stage-cap design, audits, failure diagnosis | **closed 2026-08-20** |
+| **Phase 2b** | stage-cap design, audits, failure diagnosis | closed 2026-08-20 |
 | **Phase 3** | ODEBench protocol and literature alignment | protocol done; external audit columns open |
 | **Phase 4** | cluster, schema and cost validation | done |
-| **Phase 5** | full ODEBench Phase B campaign | **done** 2026-09-04, 756/756 |
-| **Phase 6** | analysis and paper | **open — the active phase** |
+| **Phase 5** | full ODEBench Phase B campaign | done 2026-09-04, 756/756 — **demoted to diagnostics** |
+| **Phase 6** | Phase B analysis | done 2026-09-07 (WP-A5 to WP-A9) |
+| **Phase C** | **canonical EvoGrow evaluation — the active phase** | **defined, not started** |
+
+**Everything from Phase 0 to Phase 6 below is the historical execution record**, written and executed
+under the 2026-08-03 scope in which the stage cap was the contribution. It is kept because it
+documents how the method reached its current form and because Gate 1, Gate 2 and the cap audits are
+cited by `DIARY.md` and the WP reports. It is **not** the plan for the paper's main results — that is
+Phase C.
 
 ---
 
+## Phase C — Canonical EvoGrow Evaluation
+
+The frozen, pre-registered evaluation from which Paper 1's main tables and figures come. The full
+claim → experiment → comparison → metric → output matrix is
+`docs/paper1_phaseC_benchmark_plan.md`; that document is the operational authority for Phase C and
+this section is its summary.
+
+**The governing rule: nothing long-running starts until the matrix is complete and the configuration
+is frozen.** Not the other way round. The reason this rule exists is Phase B, which was computed
+before the methodological audit closed and therefore cannot serve as the main benchmark.
+
+### The four arms
+
+| Arm | Function | Scope |
+|---|---|---|
+| **EvoGrow capped** | the proposed final method | 63 systems × 3 seeds × 2 IC sets = 378 cells |
+| **EvoGrow uncapped** | stage-cap ablation, Claim B | full mirror, 378 paired cells |
+| **SINDy** | external baseline, Claim D | all configurations reported, identical trajectories |
+| **Oracle-structure fit** | search-versus-optimizer diagnostic | true structure supplied, parameters fitted only |
+
+The **oracle arm** separates two error classes that Phase B could not tell apart: a *search failure*
+(the right structure was never found) and an *optimization failure* (the right structure is known and
+the nonlinear trajectory fit still finds no good parameters). WP-N4 already showed the second class
+is real — 15 of 102 cells at a single fit. It is cheap, because it runs no structure search, and it
+may live in the appendix; the interpretation of every EvoGrow number depends on it.
+
+### Blocking prerequisites — none of these may be skipped
+
+1. **The canonical basis is not yet decided.** The dim-2 constant-term probe runs first: 114 core
+   hours, prepared and unstarted, command in `codex/reports/REPORT_WP_N1.md`. Until it exists, the
+   trade-off is measured on dimension 1 alone, where the constant halves structure recovery
+   (83.3 % → 38.9 %) and markedly improves generalization. **Repair `git_hash = "not_collected"` in
+   `studies/regression/wp_n1_basis_probe.jl` before those data are used for anything.**
+2. **Structural F1, term precision, term recall and coefficient error do not exist.** They appear
+   nowhere in `src/`, `analysis/`, `experiments/` or `studies/` — the pipeline can only do exact
+   support match today. Claim A cannot be reported without them.
+3. **Three-way representability classification.** Fully / partially / non-representable, derived from
+   `system_classification.csv` (`unmatched_terms`, `gap_reason`) and
+   `representational_adequacy.csv`. Structural metrics are never reported without it.
+4. **The restart policy must be implemented as declared** — retry-on-failure up to k = 3 — and the
+   `StructureSpec` duplicate rate measured, because it defines the k = 1 reference point.
+5. **A smoke test on a small system** before any cluster submission, per the standing rule for
+   multi-hour runs.
+
+### Cost
+
+| Item | Estimate |
+|---|---|
+| capped canonical arm, 378 cells | ~2,600 core hours |
+| uncapped mirror, 378 cells | ~5,200–7,900 core hours |
+| oracle arm | < 20 core hours |
+| SINDy | minutes |
+| **Phase C total** | **~8,000–11,000 core hours, 3–5 weeks on Orion** |
+
+Derived from Phase B's measured 5,248 core hours over 756 cells. The uncapped arm dominates because
+it executes the full 30 levels where the capped arm stops early — Phase B cells averaged about 19.7
+executed levels, and the late levels are the expensive ones. **The experiment that must show the cap
+saves compute is itself the most expensive thing in the project.** That irony is worth stating in
+the paper.
+
+The uncapped arm keeps all 63 systems deliberately. dim 3 carries 75.6 % of Phase B's compute, so it
+is where the saving is largest; a cap demonstration that omits the expensive class is the first thing
+a reviewer attacks.
+
+### Freeze discipline
+
+Once Phase C starts, this configuration does not change on the basis of observed benchmark results:
+basis, stage definitions, stage cap, pruning, expansion, selection, optimization, restart policy,
+termination, seed handling, integration, preprocessing. A necessary later change produces a **new,
+fully declared experiment identifier** — never an edit to a running configuration, and never a
+version-drift chain (`v4`, `v4-paper`, `v4-paper-final`).
+
+Two specific prohibitions, both of which the project has already violated once and diagnosed:
+
+- **No pruning threshold chosen after seeing results.** WP-V1 is that mistake; WP-N2 additionally
+  showed a 24-rule grid holds hits + deleted-true-term + surviving-extra-term constant at 45, so
+  there is no better threshold to find.
+- **No library component removed because it produces false positives.** That is the constant-term
+  question, and it is decided before the freeze on probe evidence, not after the benchmark on
+  benchmark evidence.
+
+### What Phase B still supplies
+
+Diagnostics (dimension and coupling effects, path dependence, failure cases), efficiency analysis
+(runtime, fit counts, silent levels, cost distribution), the pretuning ablation (seed diversity,
+anchoring), stage-cap behaviour (690 of 756 cells below 30 levels), and the failure-analysis material
+(dim-3/4 collapse, Lorenz cases, identifiability, wasted effort).
+
+**One caveat travels with all of it.** If Phase C freezes a different basis, Phase B ran a
+differently configured method, and its failure analysis cannot be reported as the canonical method's.
+Where Phase C covers the same ground — and for the failure analysis it does, with 378 capped cells
+over all 63 systems and all dimensions — the Phase C numbers are the ones reported, and Phase B is
+cited only for what Phase C does not cover.
+
+---
 ## Phase 0 — Archive and Correct Phase A
 
 Phase A remains exploratory: it guides algorithmic diagnosis and supports no final claim. The
@@ -687,38 +894,64 @@ cases).
 
 ### Published Reference Context
 
-External numbers are cited as published context only until the protocol audit establishes
-comparability. No SINDy or PySR comparison claims while the external columns are unfilled.
+**Superseded 2026-09-09.** This section forbade in-house SINDy comparison until the external protocol
+audit was filled. Claim D replaces that with a stronger arrangement: SINDy is computed **in-house on
+identical trajectories**, so comparability is established by construction rather than by auditing
+someone else's protocol. The external audit columns remain open Phase 3 work and still govern how
+*published* third-party numbers may be cited — and the published per-method ODEBench figures are bar
+charts in Figures 4 and 5 of the ODEFormer paper with no result files shipped, so they are not in our
+hands regardless.
 
-### Planned Paper Structure
+### Planned Paper Structure (revised 2026-09-09 — method paper)
 
-1. Introduction — interpretable ODE discovery and the need for controlled structure search
-2. Related Work — SINDy, PySR/GP, ODEFormer, staged search, search-space control
-3. Method — EvoGrow staged basis expansion and the look-ahead stage cap
-4. Failure Analysis — v2.2, v3, and the three cap design rules
-5. Experimental Protocol — ODEBench Phase B, exact/surrogate split, sampling, provenance
-6. Results — fit quality, support recovery, stage-cap economy, level waste (filled 2026-09-07)
-7. Analysis — where the cap controls complexity, where search still fails, and why
-8. Limitations and Future Work — additive search, surrogate unauditability, the non-selectable
-   threshold, baselines, noise, within-stage search power
-9. Conclusion
+1. **Introduction** — the combinatorial structure space of equation discovery; fixed libraries and
+   global search versus incremental growth. Contributions: EvoGrow, stage-wise expansion, the
+   trajectory-informed stage cap, the ODEBench evaluation, the SINDy comparison, the ablations.
+2. **Related Work** — SINDy, PySR/GP, ODEFormer, ProGED, staged search, search-space control
+3. **Method: EvoGrow** — *the strongest section of the paper.* Problem formulation, structure
+   representation, stage hierarchy, initialization, parameter optimization over integrated
+   trajectories, structure expansion, selection, pruning, the stage cap, termination. With
+   pseudocode, a process diagram, a worked example system, and a figure of the growing search space.
+   The design justification includes the `v2.2 → v3 → capped` chain — as *why the method looks like
+   this*, not as the paper's argument.
+4. **Experimental Setup** — the fully frozen Phase C protocol
+5. **Main Benchmark** — how EvoGrow performs; the EvoGrow-versus-SINDy table with cost, broken down
+   by dimension, coupling and representability
+6. **Stage-Cap Ablation** — capped versus uncapped; does progressive search-space control reduce
+   unnecessary search?
+7. **Generalization** — train on one IC, evaluate on another; both directions, never averaged
+8. **Failure Modes and Limitations** — dim-3/4 structural collapse, add-only path dependence,
+   wrong-term persistence, silent levels, optimization failures, identifiability, the non-selectable
+   cap threshold, surrogate unauditability
+9. **Discussion** — EvoGrow works as a concept; it is currently expensive; stage-wise search is
+   sound but needs validation; add-only growth creates path dependence; generalization is harder than
+   reconstruction; v1 is a starting point, not an end state
+10. **Conclusion**
 
-### Allowed Claim Types
+The ordering is deliberate and is the point of the revision: **method → evaluation → ablation →
+generalization → limits.** Not: limits → and a method reverse-engineered from them.
 
-Claims are made only from final campaign records, and only in these shapes:
+### Allowed Claim Types (revised 2026-09-09)
 
-- **fit quality** — the reported R² or loss outcomes under the frozen protocol
-- **structural recovery** — effective support on the reported subset of exact systems, under the
-  frozen pruning rule
-- **search-space control** — the cap limits staged growth according to the frozen decision rule, at
-  the reported evaluation cost
-- **mechanistic** — the v2.2 → v3 → capped sequence exposes why staged growth needs a data-derived
-  boundary, and why the boundary's threshold is not data-selectable
-- **robustness** — EvoODE completes on the reported number of cells
-- **failure mode** — failures are dominated by the reported categories, exact and surrogate
-  separated
+Main-table claims come only from **Phase C** records. Phase B may support diagnostics, ablations and
+failure-mode description, always labelled as a differently configured predecessor.
 
-No claim may be derived from Phase A results.
+- **structural discovery** — exact recovery, term precision, term recall, structural F1 and
+  coefficient error, always reported together with the three-way representability class
+- **fit quality** — reconstruction R² and loss under the frozen protocol
+- **generalization** — the same discovered model, unchanged, on an unseen initial condition of the
+  same system; both directions reported separately
+- **search-space control** — capped versus uncapped at identical settings; savings in counts, quality
+  difference paired. Never "without loss of quality" unless the paired data show exactly that
+- **baseline positioning** — where EvoGrow stands relative to SINDy on quality *and* cost, with all
+  SINDy configurations reported. Never "better than" as an unqualified statement
+- **diagnostic** — search failure versus optimization failure, separated by the oracle arm
+- **robustness** — EvoGrow completes on the reported number of cells
+- **failure mode** — failures are dominated by the reported categories, exact and surrogate separated
+
+No claim may be derived from Phase A results. No main-table claim may be derived from Phase B.
+Design Principle 9 binds every one of them: **structure recovery and the R² > 0.9 rate are always
+reported together, never one alone.**
 
 ---
 
@@ -772,12 +1005,16 @@ Outside Paper 1 scope, deliberately:
 
 | Risk | Severity | Mitigation |
 |------|----------|------------|
-| Structural recovery is low on exact coupled systems | High | frame the paper as a mechanistic search-space-control study; report the additive-search cause |
-| The cap saves search space but not solutions | High | state the contribution as a controller, not a recovery fix; the 25.4 %/bit-identical result is exactly this shape |
+| Structural recovery is low on exact coupled systems | High | report as a Failure Modes result of EvoGrow v1 with its mechanism (add-only path dependence), not as the paper's thesis |
+| The cap saves search space but not solutions | High | Claim B is stated as *reduces search while preserving most quality*; the paired capped/uncapped data decide the wording, not the draft |
 | Surrogate performance is poor or unstable | Medium | report via R², loss, reached stage and stability only |
-| Reviewers expect in-house baselines | Medium | state the non-goal and the protocol-audit status plainly |
 | System 63 is misread as a failure cell | Medium | present it as the identifiability boundary |
 | The waste finding invites "why no stopping rule?" | Medium | answer with the WP-B1 table: every threshold was measured and every one was a bad trade |
+| **The compute gap to SINDy dominates the reception** | **High** | state it first and plainly, with counts; position EvoGrow on algorithmic properties and generalization, and name the harder regimes as the follow-up question rather than claiming them |
+| **Phase C exceeds its cost envelope** | **High** | the uncapped mirror carries the majority; a smoke test and a pilot subset precede submission, and the cost model is re-derived before the full run |
+| **Phase B and Phase C configurations differ** | **High** | never mix them in one table; label Phase B as a differently configured predecessor wherever it is cited |
+| **New structural metrics are wrong on arrival** | **Medium** | F1/precision/recall are new code on the critical path; validate against the existing exact-support column, which must be reproducible from them |
+| Reviewers ask why the constant term was added or omitted | Medium | report the measured two-sided trade-off and the probe evidence the decision rested on, with its date — never a post-hoc justification |
 
 ---
 
@@ -799,6 +1036,29 @@ with `Tsit5` at `abstol = reltol = 1e-9`. Exact and surrogate systems evaluated 
 
 **Once Phase 5 begins.** The campaign manifest is frozen. No system may be removed, and no setting
 changed, without a new experiment identifier. Frozen result blocks are never overwritten.
+
+**Decided 2026-09-09, before the Phase C freeze.**
+
+- **Paper scope** — method paper. EvoGrow is the object; the cap is a component with its own
+  ablation; failure analysis is a Limitations section, not the thesis.
+- **Canonical pretuning** — `pretuning = false`. Pretuning on/off is an ablation, never a second main
+  version.
+- **Restart policy** — retry-on-failure, up to k = 3, explicit and declared. The value comes from the
+  WP-N4 oracle diagnostic, never from benchmark performance. It is named as retry-on-failure, not as
+  a multistart.
+- **Uncapped-arm scope** — full mirror of the canonical arm, 378 paired cells, all 63 systems, both
+  IC sets.
+- **Main-table provenance** — Phase C only. Phase B supplies diagnostics and ablations under an
+  explicit predecessor label.
+
+**Once Phase C begins.** The canonical configuration is frozen in full: basis, stage definitions,
+stage cap, pruning, expansion, selection, optimization, restart policy, termination, seed handling,
+integration, preprocessing. No hyperparameter is changed on the basis of observed benchmark results.
+A necessary change produces a new, fully declared experiment identifier — never a version-drift
+chain.
+
+**Still open at the time of writing, and blocking the Phase C freeze.** The canonical basis: the
+dim-2 constant-term probe decides it, and the probe's `git_hash` defect is repaired first.
 
 **Deliberately excluded cells.** System 63 in capped comparison cells (cap is `nothing` everywhere);
 System 54 in the regression suite (adding it changes `REGRESSION_SYSTEMS` and hence the fingerprint,
@@ -833,29 +1093,37 @@ Updated at phase transitions:
 - result placeholders filled 2026-09-07 from the final campaign records; regenerate via the scripts, never by hand
 - add final claim decisions after the Phase B analysis
 
-Last revision: 2026-09-09. Current phase: **reset, and the reset's own condition is now met.**
+Last revision: 2026-09-09 (evening). Current phase: **Phase C, defined and not started.**
 
-The campaign and its analysis are complete and stand as a characterisation. The four foundational
-gaps that outranked the write-up on 2026-09-07 have all been measured:
+The four foundational gaps that outranked the write-up on 2026-09-07 are all measured:
 
 | Gap | State |
 |---|---|
-| missing constant term in the basis | measured, **not** resolved — WP-N1/N5 show it halves structure recovery and improves generalization; which basis is right depends on which metric counts |
+| missing constant term in the basis | measured on dim 1, **decided by the pending dim-2 probe**. WP-N1/N5: it halves structure recovery and improves generalization — which basis is right depends on which metric counts |
 | unpersisted coefficients | **closed** (WP-N1), not retroactive for the 756 campaign cells |
 | no held-out evaluation | **closed** (WP-N5) |
 | no baseline ever run | **closed** (WP-N6) |
 
-"Paper scope is reopened until the baseline number exists" — the number exists as of 2026-09-09, and
-it says: on dimension 1 EvoODE is level with SINDy on reconstruction, ahead on generalization, at
-roughly two orders of magnitude more compute. **The open decision is therefore no longer "measure
-the baseline" but "what is Paper 1 now"**, with three candidate framings that need to be chosen
-between rather than merged:
+**The scope question is answered.** The three candidate framings that stood here on 2026-09-07 —
+the cap as controller, the campaign as characterisation, the restart budget as its own thesis — were
+all shapes fitted to the data that happened to exist. The decision of 2026-09-09 rejects that whole
+move: *we do not fit Paper 1 to the existing campaign; we define the paper and then compute exactly
+the experiments it needs.* All three survive inside the method paper — the cap as Claim B's ablation,
+the failure analysis as the Limitations section, the restart dependence as a subset ablation with a
+cost axis — but none of them is the thesis. The thesis is EvoGrow.
 
-1. the stage cap as a search-space controller, with the baseline as context and the compute cost
-   declared (closest to the current draft; Claim B Half 2 stays thin at 30 cells)
-2. the campaign as a characterisation study of where incremental growth breaks — the dim-3/4
-   boundary at 0 of 50, the waste distribution, the identifiability limit
-3. the restart budget and the failure class our integrated loss carries and SINDy structurally
-   cannot (`docs/WP-N4.md`)
+The reading target for the finished paper:
 
-See `CLAUDE.md` Active 0 and the `DIARY.md` entry "Kassasturz" of 2026-09-07.
+> I know what EvoGrow is. I understand why the search space grows in stages. I understand the stage
+> cap. I know how EvoGrow performs on ODEBench. I know how it compares to SINDy. I know how well the
+> models generalize to unseen trajectories. I know what it costs. I know its current limits. And I
+> can see which methodological questions come next.
+
+**Next actions, in order.** Repair the probe's `git_hash`; run the dim-2 constant-term probe; decide
+and freeze the canonical basis; build structural F1 / precision / recall / coefficient error and the
+three-way representability class; implement and declare the retry-on-failure policy; measure the
+`StructureSpec` duplicate rate; complete the Phase C matrix in
+`docs/paper1_phaseC_benchmark_plan.md`; smoke-test; **then** freeze and submit the campaign.
+
+See `docs/paper1_phaseC_benchmark_plan.md`, `CLAUDE.md` Active 0, and the `DIARY.md` entries of
+2026-09-07 ("Kassasturz") and 2026-09-09.

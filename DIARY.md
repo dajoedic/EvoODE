@@ -4,6 +4,136 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ---
 
+## 2026-09-09 (abends)
+
+### Zuschnittsentscheidung: Paper 1 wird ein Methodenpaper, und die Kampagne verliert ihren Rang
+
+<!-- COMMIT_HASH -->
+
+Am Vormittag stand im Statusbericht noch die Frage, welche der drei Erzählungen Paper 1 wird — Kappe
+als Regler, Kampagne als Charakterisierung, oder das Restart-Budget. Am Abend ist die Frage nicht
+beantwortet, sondern **verworfen**: alle drei waren Zuschnitte, die an den zufällig vorhandenen
+Datensatz angepasst wurden. Genau die Reihenfolge, die der Kassasturz zwei Tage zuvor als Grundfehler
+benannt hatte.
+
+Die Entscheidung lautet:
+
+> **Paper 1 etabliert EvoGrow als Methode.** Here is EvoGrow. This is how it works. This is why it is
+> designed this way. This is how it performs. These are its current strengths and limitations.
+
+Und die dazugehörige Regel, die alles andere nach sich zieht:
+
+> **Wir passen Paper 1 nicht an die bestehende Kampagne an. Wir definieren zuerst das Paper und
+> rechnen dann exakt die Experimente, die es braucht.**
+
+Die 5.248 Kernstunden sind damit ausdrücklich **sunk cost**. Sie dürfen den Zuschnitt nicht bestimmen.
+
+#### Was das an eingefrorenen Entscheidungen umwirft
+
+Vier Dinge kippen, und sie mussten gelöscht statt abgeschwächt werden.
+
+**Zwei Non-Goals vom 22.08. sind aufgehoben.** `PAPER_1.md` verbot wörtlich in-house-Baselines für
+SINDy und *jede* quantitative Methodenvergleichsaussage — „not a cautious one, not an approximate one
+— none". Claim D verlangt exakt das Verbotene. Aufgehoben unter deklarierten Fairnessbedingungen:
+identische Trajektorien, identische Train/Test-ICs, alle SINDy-Konfigurationen berichtet, Kosten
+neben jeder Qualitätszahl. GP, PySR, ODEFormer, GODE und Operon bleiben draußen.
+
+**Die Kappe verliert den Rang der Hauptthese.** Sie war seit dem 03.08. *die* Contribution. Jetzt ist
+EvoGrow der Gegenstand und die Kappe eine Komponente mit eigener Ablation. Der alte
+`v2.2 → v3 → capped`-Faden wird von der Argumentation zur **Designbegründung im Method-Abschnitt**.
+
+**Die Claim-Bezeichner kollidieren.** Das Dokument hatte Claim A (Fit-Quality), B
+(Search-Space-Control) und C (mechanistisch, „primary"). Die neuen A–D sind anders belegt. Die alten
+stehen jetzt unter „Superseded Claim Labels" wörtlich erhalten, weil `DIARY.md` und die WP-Reports
+sie zitieren — die zwei Sätze dürfen nie vermischt werden.
+
+**Phase B wird degradiert.** Vom Hauptbenchmark zu Diagnostik, Ablationsquelle, Laufzeitanalyse und
+Failure-Case-Sammlung. Sie wurde gerechnet, bevor das methodische Audit geschlossen war, und trägt
+vier Defekte, die ein finaler Benchmark nicht haben darf: keine Konstante in der Basis, keine
+gespeicherten Koeffizienten, beide IC-Sätze als Training, kein ungekappter Arm.
+**Phase-B- und Phase-C-Zahlen erscheinen nie in derselben Tabelle.**
+
+#### Phase C — die kanonische Evaluation
+
+Vier Arme: EvoGrow capped (378 Zellen), EvoGrow uncapped als voller Spiegel (378 gepaarte Zellen),
+SINDy als externe Baseline, und ein **Oracle-Arm**, der die wahre Struktur vorgibt und nur die
+Parameter fittet. Der Oracle-Arm trennt zwei Fehlerklassen, die Phase B nicht auseinanderhalten
+konnte: *Search Failure* (Struktur nicht gefunden) gegen *Optimization Failure* (Struktur bekannt,
+Fit scheitert trotzdem). Er ist billig, weil er keine Suche rechnet.
+
+**Kosten: grob 8.000–11.000 Kernstunden, drei bis fünf Wochen auf Orion.** Der ungekappte Spiegel
+trägt die Mehrheit, weil er die vollen 30 Level rechnet, wo der gekappte früh abbricht — Phase B lag
+im Mittel bei etwa 19,7 ausgeführten Leveln, und die späten sind die teuren. Das ist eine Ironie, die
+ins Paper gehört: **das Experiment, das zeigen soll, dass die Kappe Rechenzeit spart, ist das teuerste
+des Projekts.** Alle 63 Systeme bleiben trotzdem drin — dim 3 trug 75,6 % der Phase-B-Rechenzeit, dort
+ist die Ersparnis am größten, und ein Kappen-Nachweis ohne die teure Klasse ist die erste Frage im
+Review.
+
+#### Drei Konfigurationsentscheidungen, alle vor dem Einfrieren
+
+**Kanonisch ist `pretuning = false`.** Pretuning wird Ablation, nicht zweite Hauptversion. Die
+Evidenz ist einseitig: über 126 gepaarte Gruppen kollabiert Pretuning die Seed-Diversität auf allen
+drei Zielen (96/126 gegen 61, 35 und 14), cluster-robust p = 1,0e-5, und **kein einziges Paar in der
+Gegenrichtung** (WP-A7).
+
+**Restart-Politik: retry-on-failure bis k = 3.** Das war die interessanteste Frage des Tages, und die
+Präzisierung ist wichtig. Was heute unter `pretuning = false` passiert, ist **kein Multistart**: jede
+Kandidatenstruktur bekommt genau einen Fit, und ein zweiter Start entsteht nur, wenn die Suche
+dieselbe Struktur zufällig erneut erzeugt. Das effektive k ist also die
+**`StructureSpec`-Duplikatrate — und die ist nie gemessen worden.** Die kanonische Methode hatte damit
+einen unbenannten, unquantifizierten Mechanismus im Kern.
+
+Warum das mehr als Buchhaltung ist: WP-N4 hat mit der *wahren* Struktur gemessen, dass ein einzelner
+Fit in 15 von 102 Zellen am Sentinel-Loss scheitert, bei k = 3 in keiner. In die Suche übersetzt heißt
+das, dass etwa jede siebte **richtige** Kandidatenstruktur wegen eines misslungenen Fits verworfen
+wird. Das ist ein Suchqualitätsproblem, keine Optimierer-Fußnote.
+
+Echtes k = 3 je Struktur hätte ~3× Fits gekostet — auf einer Phase C mit vollem Spiegel
+25.000–35.000 Kernstunden, ein Quartal, und es hätte ausgerechnet die Kostenbilanz gegen SINDy weiter
+verschlechtert. Retry-on-failure holt praktisch denselben Effekt zum Preis der Fehlerrate, also etwa
+15 % Overhead. **Im Paper muss es als retry-on-failure benannt werden, nicht als Multistart** — das
+sind verschiedene Mechanismen, und WP-N4 hat in seiner ursprünglichen Form nur den einen gemessen.
+Der Wert k = 3 stammt aus einer **Oracle-Diagnostik**, nie aus Benchmark-Performance; das ist es, was
+ihn aus der Kategorie „auf dem Benchmark getunter Hyperparameter" heraushält.
+
+**Der ungekappte Arm ist ein voller Spiegel.** Zwischenzeitlich war ein IC-Satz beschlossen (189
+Zellen, ~2.600–4.000 h); die Entscheidung wurde noch am selben Abend auf beide IC-Sätze korrigiert.
+
+#### Was fehlt, und es ist mehr als erwartet
+
+Beim Prüfen kam heraus: **Term precision, term recall, structural F1 und Koeffizientenfehler kommen in
+`src/`, `analysis/`, `experiments/` und `studies/` kein einziges Mal vor.** Die Pipeline kann heute
+ausschließlich exaktes Support-Match. Claim A ist ohne diese Metriken nicht berichtbar — das ist neuer
+Code auf dem kritischen Pfad, und er muss gegen die bestehende Exact-Support-Spalte validiert werden,
+die aus den neuen Metriken exakt reproduzierbar sein muss.
+
+Die dreiwertige Repräsentierbarkeit dagegen ist ableitbar: `system_classification.csv` führt
+`unmatched_terms` und `gap_reason` je Gleichung, `representational_adequacy.csv` die Methodenmatrix
+über EvoODE, SINDy und ProGED.
+
+**Der einzige noch offene eingefrorene Parameter ist die kanonische Basis.** Der dim-2-Probelauf zur
+Konstanten entscheidet ihn — 114 Kernstunden, etwa 1 % der Phase-C-Kosten für den folgenreichsten
+Parameter. Vorher muss `git_hash = "not_collected"` in `studies/regression/wp_n1_basis_probe.jl`
+repariert werden.
+
+#### Dokumente
+
+`PAPER_1.md` umgeschrieben: neuer Zuschnitt, neue Claims A–D, Phase C, aufgehobene Non-Goals, alte
+Claims konserviert, Risikotabellen um Kostenrisiko, Konfigurationsbruch Phase B/C und
+„neue Strukturmetriken sind bei Ankunft falsch" ergänzt. Phasen 0–6 bleiben unverändert als
+historischer Ausführungsbericht stehen und sind als solcher markiert.
+
+Neu: `docs/paper1_phaseC_benchmark_plan.md` — die Claim-→-Experiment-→-Metrik-→-Output-Matrix, die
+Freeze-Liste und neun blockierende Voraussetzungen. Ausdrücklich als **unvollständig und nicht
+eingefroren** markiert, mit fünf offenen Fragen am Ende. Das Dokument ist die operative Autorität für
+Phase C; `PAPER_1.md` bleibt die Autorität für den Zuschnitt.
+
+`CLAUDE.md`: Phase-4-Zeile, neuer Abschnitt Active 0b, Known Gaps um die fehlenden Strukturmetriken
+und die ungemessene Duplikatrate ergänzt — und „no baseline has ever been run" entfernt, das seit
+WP-N6 falsch war.
+
+---
+
 ## 2026-09-09
 
 ### Repo-Durchgang vor der externen Diskussion: was die Dokumente behaupteten und was tatsaechlich galt

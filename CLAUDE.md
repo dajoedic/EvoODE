@@ -9,6 +9,8 @@ what to work on next. It is deliberately kept short. Detail lives in dedicated d
 | `docs/architecture.md` | component reference — types, pipeline, search algorithms, bases, optimizers, experiment infrastructure |
 | `SCRIPTS.md` | runbook — exact commands for every script |
 | `PAPER_1.md` | authoritative Paper 1 execution plan; takes precedence over this file if the two drift |
+| `docs/paper1_phaseC_benchmark_plan.md` | **the Phase C claim → experiment → metric → output matrix, freeze list and blocking prerequisites** |
+| `docs/status_2026-09-09.md` | frozen status snapshot, written before the scope decision |
 | `docs/paper1_study_protocol.md` | frozen Phase A protocol — claims, hypotheses, evidence rules (historical) |
 | `docs/paper1_phaseA_reproducibility.md` | frozen Phase A configuration — systems, hyperparameters, seeds, metrics (historical) |
 | `docs/paper1_odebench_protocol_alignment.md` | Phase B sampling protocol and the comparability audit |
@@ -136,7 +138,7 @@ ground truth, `STATUS.md` only the fast signal: a poll checks both.
 | 1 — stable core | DONE (2026-04-20) |
 | 2 — EvoGrow variants | **CLOSED 2026-08-03** |
 | 3 — benchmarking | infrastructure done; Phase B protocol decided and implemented. Planned next axes: noise, sampling density, coupling strength, dimensionality |
-| 4 — Paper 1 | **Phase B campaign complete 2026-09-04** (`git 91f88c4`, 756/756 cells, 0 errors, one identity triple, 5,248 core hours). Analysis pending. Phase A frozen; stage-cap defect solved (WP-C1 to WP-C5); regression recomputed under the final identity triple (120 cells, 30/30 bit-identical, −25.4 % loss evaluations); `pretune_off` probe complete; level budget decided against (WP-B1) |
+| 4 — Paper 1 | **Scope decided 2026-09-09: method paper.** Phase B campaign complete and **demoted to diagnostics** (756/756, 5,248 core hours, analysis done WP-A5–A9). **Phase C — canonical evaluation — defined, not started**: `docs/paper1_phaseC_benchmark_plan.md` |
 | 5 — advanced methods | not started |
 
 ### Phase 2 outcome
@@ -301,12 +303,10 @@ the coupled search path 1e-6 is the cheaper, behaviour-equal tolerance; the Syst
    same level budget although the new one searches a larger space — an equal-effort comparison would
    be the fairer measurement.
 
-   **Plan, in order:** (1) **done**, see above; (2) store the coefficients (part
-   of WP-N1); (3) generalization as a standard evaluation — rebuild the structure from the record,
-   fit parameters on IC 1, integrate from IC 2, R² against truth; this costs **no search run**, one
-   parameter fit per cell, and turns the existing campaign into the "before" value; (4) SINDy on the
-   same data, scored on both metrics; (5) only then decide what Paper 1 is. **Deferred on purpose:**
-   the uncapped arm — whether the cap is interesting depends on whether the base method carries.
+   **Plan (1)–(5) is complete.** (1) constant-term basis, (2) coefficient persistence, (3)
+   generalization, (4) SINDy baseline — all done, see below. **(5) is decided 2026-09-09: Paper 1 is
+   a method paper**, and the uncapped arm is no longer deferred but is the second Phase C arm. See
+   Active 0b.
 
    **(3) is done (WP-N5, 2026-09-09) and it reverses the constant-term verdict.** The model is
    rebuilt from the record and integrated from the *unseen* initial condition, parameters unchanged.
@@ -353,6 +353,50 @@ the coupled search path 1e-6 is the cheaper, behaviour-equal tolerance; the Syst
 
    The campaign data is not discarded: 756 clean cells under one identity triple, protocol-conform,
    with a sharply named boundary. A good chapter, not a paper.
+
+0b. **Scope decided 2026-09-09: Paper 1 is a method paper, and Phase C is the campaign it needs.**
+   Authority: `PAPER_1.md` and `docs/paper1_phaseC_benchmark_plan.md`. The short form:
+
+   **EvoGrow is the object, not the stage cap.** The cap is a component with its own ablation. The
+   failure analysis — dim-3/4 collapse, add-only path dependence, silent levels — is a Limitations
+   section, not the thesis. The three candidate framings recorded here on 2026-09-07 are all shapes
+   fitted to whichever data happened to exist; that move is rejected. **We define the paper, then
+   compute what it needs.** The 5,248 core hours are sunk cost and must not shape the scope.
+
+   **Phase B is demoted** from main benchmark to diagnostics, ablation source, runtime analysis and
+   failure-case collection. It was computed before the methodological audit closed and carries four
+   defects a final benchmark cannot have (no constant term, no coefficients, both IC sets as
+   training, no uncapped arm). **Phase B and Phase C numbers never appear in the same table.**
+
+   **Four claims:** A — EvoGrow discovers structure (with three-way representability, F1, precision,
+   recall, coefficient error); B — stage capping controls search effort (capped vs uncapped, **full
+   mirror, 378 paired cells**); C — generalization to unseen trajectories, both directions; D — where
+   EvoGrow stands against SINDy, quality **and** cost. Plus an oracle-structure arm that separates
+   search failure from optimization failure.
+
+   **Decisions taken 2026-09-09, all frozen before the campaign:** canonical `pretuning = false`;
+   restart policy **retry-on-failure up to k = 3** — named as retry-on-failure, *not* a multistart,
+   with k taken from the WP-N4 oracle diagnostic and never from benchmark performance; uncapped arm
+   as a full mirror; main tables from Phase C only. Two prohibitions the project has already violated
+   once: no pruning threshold chosen after seeing results, no library component removed because it
+   produces false positives.
+
+   **Cost: ~8,000–11,000 core hours, 3–5 weeks on Orion.** The uncapped mirror carries the majority,
+   because it runs the full 30 levels where the capped arm stops early. The experiment that must show
+   the cap saves compute is the most expensive thing in the project — state that in the paper.
+
+   **Blocking before the freeze, in order:** repair `git_hash` in `wp_n1_basis_probe.jl`; run the
+   dim-2 constant-term probe (114 core hours) — **the canonical basis is the one still-open frozen
+   parameter**; build structural F1 / term precision / term recall / coefficient error, which exist
+   **nowhere** in the codebase today; build the three-way representability class; implement and
+   declare the restart policy; measure the never-measured `StructureSpec` duplicate rate, without
+   which the k = 1 reference point is undefined; complete the Phase C matrix; smoke-test.
+
+   **Superseded by this decision:** `PAPER_1.md`'s two non-goals of 2026-08-22 (no in-house SINDy
+   baseline, no quantitative cross-method claim) are **lifted** — Claim D requires exactly what they
+   forbade, under declared fairness conditions. The old Claim A/B/C labels are retired and preserved
+   in `PAPER_1.md` under "Superseded Claim Labels"; `DIARY.md` and the WP reports cite the old set,
+   so the two must never be mixed.
 
 1. **The Phase B campaign is complete, and the analysis is the open work.** Ran 2026-08-22 to
    2026-09-04 on Orion under `git 91f88c46063fa368101326cbfe1abcdfc9d857fc`; the Job has since
@@ -650,7 +694,10 @@ the coupled search path 1e-6 is the cheaper, behaviour-equal tolerance; the Syst
   (see Active 0b)
 - **no held-out evaluation anywhere** — both IC sets are training data, every number is in-sample,
   the literature's generalization metric is unreachable without coefficients (see Active 0c)
-- **no baseline has ever been run** — EvoGrow has only been compared against itself
+- **no structural F1, term precision, term recall or coefficient error anywhere in the codebase** — the
+  pipeline can only do exact support match; Claim A of Phase C cannot be reported without them
+- **the `StructureSpec` duplicate rate has never been measured**, so the effective restart count of the
+  canonical configuration is unknown and the k = 1 reference point is undefined
 - nothing runs the Python tests; there is no CI for tests, GitLab CI builds the campaign image only
 - environment and test execution need cleanup and faster verification
 
