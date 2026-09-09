@@ -114,6 +114,20 @@ Waechter fiel in dem Moment aus, in dem er am wichtigsten wurde. Repariert wird 
 mit dem Umzug von `tests/` nach `analysis/tests/`; das Wurzelverzeichnis hatte `test/` (Julia) und
 `tests/` (Python) nebeneinander, und `analysis/CONVENTIONS.md` sieht `tests/` gar nicht vor.
 
+#### WP-O1: der Waechter waecht wieder
+
+Noch am selben Tag repariert. Der Aufruf uebergibt jetzt System 2 als exakt und System 23 als
+Surrogat — was die Klassifikation auch sagt —, der Test bedient also beide Zweige und erfuellt nicht
+bloss die Signatur. Verifiziert wurde die Reparatur durch absichtliches Kaputtmachen: mit einem auf
+bekannte Varianten eingeschraenkten `build_csv_table` faellt der Test mit genau der Zusicherung, mit
+der er fallen soll. `table_main_results.py` blieb unangetastet.
+
+`tests/` liegt jetzt unter `analysis/tests/`. `REPO_ROOT` geht von `parents[1]` auf `parents[2]`, und
+beide Dateien pruefen per `assert`, dass unter dieser Wurzel wirklich `CLAUDE.md` und `benchmarks/`
+liegen — ein falscher Index faellt damit laut auf statt zufaellig durchzugehen. Vier Tests gruen.
+
+Was das Paket **nicht** loest und was als Luecke stehen bleibt: es fuehrt sie niemand aus.
+
 #### Kleinkram, benannt statt stillschweigend behoben
 
 - Branch `refactor/discover-api`: **0 Commits ahead, 186 behind**, letzter Commit 12.08. — eine leere
