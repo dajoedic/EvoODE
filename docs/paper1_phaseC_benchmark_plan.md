@@ -121,8 +121,80 @@ exactly where SINDy's plain polynomial library represents 40 and ProGED's ration
 
 **P4 — Build the structural metrics.** Term precision, term recall, structural F1 and coefficient
 error appear **nowhere** in `src/`, `analysis/`, `experiments/` or `studies/`. Claim A cannot be
-reported without them. Validation requirement: the existing exact-support column must be exactly
-reproducible from the new metrics, otherwise the new code is wrong.
+reported without them. **Partly done (WP-N7/N7b, 2026-09-09)**, and the validation attempt produced a
+finding of its own — see §4a.
+
+### §4a — Raw versus pruned support, and what Phase C must therefore store
+
+The original acceptance criterion for WP-N7 required the new metrics to reproduce the registry's
+`exact_support_match` on all 756 Phase B cells. **That criterion was wrong, and being wrong exposed
+something the project had not stated.** Verified against the raw data:
+
+- `run_registry.exact_support_match` for Phase B is **identical to `pruned_match`** — 756 of 756
+  cells, no exception. It is the **pruned** match.
+- `support_terms` is the **raw**, unpruned active term set (`active_term_names`,
+  `studies/regression/run_regression.jl:870`).
+
+Two different quantities under one comparison. And the pruned state is **not reconstructible** from
+Phase B records, because pruning needs coefficients and Phase B stores none.
+
+**The size of the gap is the finding.** On the 240 exact Phase B cells:
+
+| quantity | cells | share of exact cells |
+|---|---:|---:|
+| all true terms present in the raw support (`missing == 0`) | 119 | 49.6 % |
+| **pruned** support match — the reported campaign figure | **110** | **45.8 %** |
+| **raw** exact structural match | **70** | **29.2 %** |
+| hits owed **entirely** to the pruning rule | **40** | 16.7 % |
+
+**40 of the campaign's 110 support hits — 36.4 % — exist only because the pruning rule removed
+surviving extra terms.** The reported structure-recovery number is therefore substantially
+threshold-dependent, on a threshold that WP-V1 showed cannot be selected from data and WP-N2 showed
+is a zero-sum dial. The containment is exact and directional: `pruned_match == True` implies
+`missing == 0` in 110 of 110 cells, and never the reverse — 9 cells carry every true term and still
+fail because extras survive pruning.
+
+**Per dimension the aggregate is misleading, and the split is the real result** (WP-N7b):
+
+| dim | exact cells | raw match | pruned match | rescued by pruning |
+|---|---:|---:|---:|---:|
+| 1 | 72 | 51 (70.8 %) | 57 (79.2 %) | 6 (8.3 %) |
+| **2** | **108** | **19 (17.6 %)** | **53 (49.1 %)** | **34 (31.5 %)** |
+| 3 | 48 | 0 | 0 | 0 |
+| 4 | 12 | 0 | 0 | 0 |
+
+On dimension 1 pruning barely matters — six cells. **On dimension 2 it nearly triples the recovery
+rate, and 34 of the 53 hits (64 %) are produced by the threshold rather than by the search.** The
+honest reading of dim-2 structure recovery is therefore not "about half" but: *the search almost
+never lands on the exact support; it lands on a superset, and the threshold cleans it up.*
+
+That sharpens the known coupled-system limitation rather than softening it, and it is the form in
+which the result belongs in the paper. It also means the dim-2 constant-term probe (P2) will be read
+against a raw baseline of 17.6 %, not 49.1 %.
+
+**Consequences, binding for Phase C:**
+
+1. **Records store raw support, pruned support and coefficients** — all three. Phase B stored one of
+   the three and is therefore not re-analysable on this axis at all.
+2. **Both figures are reported wherever structure recovery appears**, raw and pruned, never one
+   alone. Reporting only the pruned figure overstates recovery by roughly half; reporting only the
+   raw figure understates the method as configured.
+3. The pruning rule stays frozen. This finding is a **reason to report the dependence**, never a
+   reason to retune the threshold.
+
+### §4b — One column name, two definitions
+
+The two runners disagree, and the registry column does not say which it carries:
+
+- `experiments/run_experiment.jl:405` sets `exact_support_match` to the **raw** match, and
+  additionally stores `exact_support_match_raw` and `exact_support_match_pruned` separately. This is
+  the **Phase A** path.
+- `studies/regression/run_regression.jl` stores only `pruned_match`, which reaches the registry as
+  `exact_support_match`. This is the **Phase B** path.
+
+**A join of Phase A and Phase B on that column compares different quantities.** Phase C must name
+the definition in the record itself, and the analysis must fail loudly rather than silently merge
+files carrying different definitions.
 
 **P5 — Build the three-way representability class.** Derived from `system_classification.csv`
 (`unmatched_terms`, `gap_reason`) and `representational_adequacy.csv`. Structural metrics are never

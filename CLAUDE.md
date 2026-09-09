@@ -696,6 +696,25 @@ the coupled search path 1e-6 is the cheaper, behaviour-equal tolerance; the Syst
   the literature's generalization metric is unreachable without coefficients (see Active 0c)
 - **no structural F1, term precision, term recall or coefficient error anywhere in the codebase** — the
   pipeline can only do exact support match; Claim A of Phase C cannot be reported without them
+- **36.4 % of the campaign's support hits exist only because of the pruning rule (WP-N7, 2026-09-09).**
+  On the 240 exact Phase B cells: 119 carry every true term in the raw support, the reported
+  (**pruned**) match is 110, the **raw** exact match is **70**, and **40 hits are owed entirely to
+  pruning**. `exact_support_match` in the registry *is* `pruned_match`, verified 756/756;
+  `support_terms` is the raw set. The containment is exact and one-way — `pruned_match == True`
+  implies `missing == 0` in 110/110, never the reverse. Report raw **and** pruned wherever structure
+  recovery appears; the pruned figure alone overstates recovery by roughly half. This is a reason to
+  report the threshold dependence, **never** to retune the threshold.
+  **The aggregate hides where it lives (WP-N7b):** dim 1 raw 51/72 → pruned 57/72, only 6 rescued;
+  **dim 2 raw 19/108 (17,6 %) → pruned 53/108 (49,1 %), 34 rescued — 64 % of the dim-2 hits are
+  produced by the threshold, not by the search.** dim 3/4 are 0 either way. The honest reading of
+  dim-2 recovery is that the search almost never lands on the exact support, it lands on a superset
+  and the threshold cleans it. The dim-2 constant-term probe must be read against a raw baseline of
+  17,6 %, not 49,1 %
+- **one column name, two definitions.** `experiments/run_experiment.jl:405` writes the **raw** match
+  into `exact_support_match` (Phase A path, and it stores raw and pruned separately);
+  `studies/regression/run_regression.jl` writes only `pruned_match`, which reaches the registry under
+  the same name (Phase B path). **A join of Phase A and Phase B on that column compares different
+  quantities.** Phase C records must name the definition
 - **the `StructureSpec` duplicate rate has never been measured**, so the effective restart count of the
   canonical configuration is unknown and the k = 1 reference point is undefined
 - nothing runs the Python tests; there is no CI for tests, GitLab CI builds the campaign image only
