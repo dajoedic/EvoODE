@@ -1,0 +1,6 @@
+{
+  "benchmark_path": "fixtures/wp_n6_sindy_baseline/missing_strogatz_extended.json",
+  "representational_adequacy_path": "data/paper1_phaseB_v1/representational_adequacy.csv",
+  "output_data_dir": "data/wp_n6_sindy_fixture",
+  "output_table_dir": "tables/wp_n6_sindy_fixture"
+}

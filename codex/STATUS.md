@@ -1,4 +1,4 @@
-status: blocked
-task:   WP-N5
-report: codex/REPORT_WP_N5.md
-note:   Environment, not task: Julia cannot be started here, so the fixed-coefficient generalization evaluator is implemented but numerical acceptance remains for Claude.
+status: done
+task:   WP-N6
+report: codex/REPORT_WP_N6.md
+note:   SINDy baseline grid, tables, trajectory check, fixture error path, and WP-N5 comparison are written.

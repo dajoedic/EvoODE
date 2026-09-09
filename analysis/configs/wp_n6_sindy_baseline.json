@@ -1,0 +1,12 @@
+{
+  "benchmark_path": "../benchmarks/data/strogatz_extended.json",
+  "representational_adequacy_path": "data/paper1_phaseB_v1/representational_adequacy.csv",
+  "output_data_dir": "data/wp_n6_sindy_baseline",
+  "output_table_dir": "tables/wp_n6_sindy_baseline",
+  "time_points": 512,
+  "t_start": 0.0,
+  "t_end": 10.0,
+  "polynomial_degrees": [2, 3, 4, 5],
+  "trig_polynomial_degree": 3,
+  "thresholds": [0.01, 0.1]
+}

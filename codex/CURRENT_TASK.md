@@ -1,116 +1,112 @@
-# WP-N5 — Generalisierung: das gefundene Modell auf einem ungesehenen Anfangswert
+# WP-N6 — SINDy als Baseline auf unseren Daten
 
-**Language: Julia**
+**Language: Python**
 
-## Kontext
+## Kontext und Zweck
 
-Im gesamten Projekt gibt es **keine einzige Auswertung auf zurueckgehaltenen Daten**. Beide
-Anfangswertsaetze wurden trainiert, nie getestet; jedes R2 ist In-Sample, gerechnet auf derselben
-Trajektorie, an die angepasst wurde.
+EvoODE ist in vier Jahren Projektarbeit **nie gegen ein anderes Verfahren gemessen worden**. Alle
+Vergleiche liefen gegen frühere EvoODE-Varianten. Damit ist bis heute unbekannt, ob die Zahlen gut
+oder schlecht sind — unser Anteil R2 > 0,9 liegt bei 80,7 % auf der Kampagne, und niemand kann sagen,
+ob das ein Erfolg ist.
 
-ODEBench ist anders gebaut. Die Publikation liefert zwei Anfangswerte je System ausdruecklich
-*to evaluate generalization*, und die Kennzahl wird in **zwei getrennten Regimen** berichtet:
+Dieses WP liefert die fehlende Vergleichszahl. `pysindy 2.1.0`, `scikit-learn 1.5.1`, `scipy 1.13.1`
+und `numpy 2.2.6` sind installiert.
 
-- **Rekonstruktion** — aus demselben Anfangswert integrieren, aus dem angepasst wurde
-- **Generalisierung** — aus dem **zweiten** Anfangswert integrieren
+**Dies ist kein Wettbewerb, sondern eine Messung.** Das Ergebnis darf ausfallen, wie es will, und
+wird so berichtet. Jede Konfigurationswahl, die SINDy schlechter aussehen liesse, ist ein
+Auswertungsfehler.
 
-Berichtet wird jeweils der **Anteil der Vorhersagen mit R2 > 0,9**. Wir koennen bisher nur die erste
-Haelfte rechnen.
+## Die Daten: identisch zu unseren
 
-Seit WP-N1 stehen die Koeffizienten im Record (`model_terms` mit `term`, `term_index`,
-`coefficient`) und die Basis unter `basis_name`. Damit ist das gefundene Modell rekonstruierbar, und
-die zweite Haelfte wird erreichbar — **ohne einen einzigen neuen Suchlauf**.
+SINDy bekommt **exakt dieselben Trajektorien**, die EvoODE bekommt. Erzeuge sie nach dem Phase-B-
+Protokoll (`docs/paper1_odebench_protocol_alignment.md` §3):
 
-## Zweck
+- Systeme aus `benchmarks/data/strogatz_extended.json`, alle 63
+- 512 Punkte ueber t in [0, 10], beide Endpunkte, Abstand 10/511
+- **beide** Anfangswertsaetze je System
+- selbst integriert mit Toleranz 1e-9, **nicht** die mitgelieferten Trajektorien
 
-Die Generalisierungsmetrik als Standardauswertung verfuegbar machen und auf den vorhandenen Daten
-messen.
+Die mitgelieferten Loesungen sind ausdruecklich **nicht** zu verwenden — der Audit hat gemessen, dass
+sie MSE-Boeden von bis zu 2,5e-2 tragen. Wenn `scipy.integrate.solve_ivp` verwendet wird, mit
+`rtol=atol=1e-9` und expliziter Auswertung an den 512 Zeitpunkten.
 
-## Deliverables
+**Prüfe und berichte**, ob deine Trajektorien mit denen uebereinstimmen, die EvoODE verwendet. Eine
+Abweichung ist ein Befund, kein Detail — ohne identische Daten ist der Vergleich wertlos.
 
-### 1. Die Auswertung
+## Was gemessen wird
 
-Fuer jede Zelle, deren Modell aus **IC-Satz 1** stammt:
+### Beide Metriken, beide Regime
 
-1. Struktur und Koeffizienten aus dem Record rekonstruieren (Basis aus `basis_name`)
-2. Das Modell vom **Anfangswert des IC-Satzes 2** aus integrieren, ueber dieselbe Zeitspanne und
-   dasselbe Zeitgitter wie im Original
-3. Gegen die wahre Loesung des Systems ab IC-Satz 2 vergleichen
-4. Loss und R2 berechnen, mit derselben R2-Definition wie im Rest des Projekts
+Design-Prinzip 9 gilt: **Strukturtreffer und Anteil R2 > 0,9**, immer beide. Zusaetzlich beide
+Regime aus WP-N5:
 
-**Die Parameter werden nicht neu angepasst.** Das ist der Kern der Metrik: es geht um das Modell, das
-die Suche geliefert hat, nicht um ein nachtraeglich verbessertes.
+- **Rekonstruktion** — Modell auf IC-Satz *x* fitten, ab IC-Satz *x* integrieren
+- **Generalisierung** — Modell auf IC-Satz *x* fitten, ab dem **anderen** IC-Satz integrieren
 
-Symmetrisch dasselbe fuer Modelle aus IC-Satz 2, integriert ab IC-Satz 1. Beide Richtungen getrennt
-ausweisen — sie sind nicht austauschbar, weil die beiden Saetze unterschiedlich viel Dynamik tragen.
+Beide Richtungen getrennt (IC1→IC2 und IC2→IC1), wie in WP-N5.
 
-### 2. Auf welchen Daten
+### Strukturtreffer, sauber definiert
 
-Zwei Quellen, getrennt gehalten und **nie in einer Datei zusammengefuehrt**:
+SINDy schwellt intern bereits. Ein Strukturvergleich braucht deshalb eine **explizit benannte**
+Regel, und diese Regel muss dieselbe sein wie bei uns: ein Term zaehlt als aktiv, wenn sein
+Koeffizient betragsmaessig ueber `max(1e-6, 1e-3 * max_abs)` derselben Gleichung liegt
+(`experiments/run_experiment.jl:239`). Wende sie auf SINDys Koeffizientenmatrix an und vergleiche
+gegen die wahre Termmenge.
 
-- **`outputs/wp_n1_dim1_probe/history.jsonl`** — 132 Zellen, beide Basen. Hier ist die Frage, ob die
-  Konstante die Generalisierung anders beeinflusst als die Rekonstruktion.
-- **`experiments/paper1_phaseB_v1/run_registry.csv`** — die 756 Kampagnenzellen. Achtung: dort fehlen
-  die Koeffizienten, weil sie vor WP-N1 gerechnet wurden. **Pruefe das zuerst und melde es als
-  Befund**, statt es zu umgehen. Wenn die Kampagne nicht auswertbar ist, ist das die Antwort — dann
-  laeuft dieses WP nur auf dem Probelauf, und der Kampagnenteil wird zum eigenen offenen Punkt.
+Strukturtreffer sind **nur auf den 20 exakt darstellbaren Systemen** definiert. Nutze
+`analysis/data/paper1_phaseB_v1/representational_adequacy.csv` für die Zuordnung — und beachte, dass
+die Spalte `sindy_poly` dort sagt, welche Systeme in *SINDys* Bibliothek darstellbar sind (40 von
+63). **Weise beide Teilmengen getrennt aus:** die 20 für uns darstellbaren und die 40 für SINDy
+darstellbaren. Sie sind nicht dieselben, und das ist selbst ein Ergebnis.
 
-### 3. Was zu berichten ist
+### Bibliotheken: ein Gitter, keine Auswahl
 
-**Immer beide Metriken** (Design-Prinzip 9): Strukturtreffer und Anteil R2 > 0,9.
+Rechne **mehrere** Konfigurationen und berichte alle:
 
-Zusaetzlich, und das ist der eigentliche Zweck:
+- Polynombibliothek Grad 2, 3, 4, 5
+- Polynom Grad 3 zusaetzlich mit `sin` und `cos`
+- je Konfiguration mindestens zwei Sparsity-Schwellen der STLSQ, etwa 0,01 und 0,1
 
-| Groesse | Rekonstruktion | Generalisierung |
-|---|---|---|
-| Anteil R2 > 0,9 | vorhanden | **neu** |
-| Loss-Quantile 5/10/25/50/75/90/95 | vorhanden | **neu** |
+**Keine wird als die beste bezeichnet, keine wird ausgewählt.** Dieselbe Regel wie beim
+Pruning-Gitter in WP-N2: die Abhaengigkeit sichtbar machen, nicht wegoptimieren. Die
+Konfigurationszahl bleibt klein genug, dass die Tabelle lesbar bleibt.
 
-Getrennt nach Basis, Dimension und Richtung (IC1 → IC2 und IC2 → IC1). Kein Mittelwert oder Median
-als alleinige Zusammenfassung.
+### Was ausserdem in den Report gehoert
 
-Zaehle ausserdem die Zellen, deren Modell beim Integrieren ab dem ungesehenen Anfangswert
-**divergiert oder nicht-finite Werte** liefert — das ist bei ungesehenen Anfangswerten ein
-erwartbarer Ausgang und darf nicht stillschweigend als schlechtes R2 verbucht werden.
-
-### 4. Die Frage, die der Report beantworten muss
-
-> **Wie weit faellt der Anteil R2 > 0,9 von der Rekonstruktion zur Generalisierung?** Die
-> ODEFormer-Publikation berichtet, Generalisierung liege durchweg deutlich niedriger. Faellt unsere
-> Zahl aehnlich stark, ist das ein Hinweis auf ein gemeinsames Problem der Verfahrensklasse. Faellt
-> sie kaum, waere das ein starkes Ergebnis — und dann ist zuerst zu pruefen, ob die Messung stimmt.
-
-### 5. Ausfuehrung
-
-Kosten: eine Integration je Zelle, **keine Anpassung, keine Suche**. Das ist billiger als alles
-bisher Gerechnete.
-
-**Du kannst Julia in dieser Umgebung nicht starten** (`A specified logon session does not exist`).
-Schreibe den Code, pruefe ihn statisch so sorgfaeltig wie in WP-N3b, melde `blocked` und **erfinde
-keine Ergebnisse**. Claude fuehrt aus. Halte zwei Kommandos im Report fest: einen `--limit`-Testlauf
-ueber wenige Zellen und den vollen Lauf.
-
-Ergebnisse in ein eigenes Verzeichnis unter `outputs/`.
+- **Ableitungen.** SINDy braucht Ableitungen, EvoODE nicht. Halte fest, welches
+  Differentiationsverfahren du verwendest und dass dies ein **protokollarischer Unterschied** ist,
+  kein Implementierungsdetail. Unsere Daten sind rauschfrei, das begünstigt SINDy hier.
+- **Kosten** als Zaehlwerte, nicht als Zeit (Design-Prinzip 7): Zahl der Regressionen, Groesse der
+  Bibliothek. `elapsed_s` nur als gekennzeichnete Nicht-Evidenz.
+- Zellen, deren Modell beim Integrieren divergiert oder nicht-finite Werte liefert, getrennt zaehlen.
 
 ## Verboten
 
-- keine Aenderung an der Suchlogik, der Basis, am Stage-Cap oder an `pruned_match`
-- **keine Neuanpassung der Parameter** — das waere eine andere Messung
-- keine Aenderung an `outputs/wp_n1_dim1_probe/`, `outputs/wp_n3_oracle_refit/`,
-  `outputs/wp_n4_multistart_refit/`, der Kampagne oder den A5-bis-A9-Skripten
+- keine Aenderung an Julia-Code, an der Kampagne, an `outputs/wp_n*`-Verzeichnissen oder den
+  A5-bis-A9-Skripten
+- **keine Auswahl einer besten SINDy-Konfiguration**
+- **kein Tuning gegen unsere Ergebnisse** — SINDys Konfigurationen werden nicht danach gewaehlt, wie
+  EvoODE dasteht
+- keine mitgelieferten Trajektorien
 - **keine Figuren**
 - keine Ergebnisse in `PAPER_1.md`, `CLAUDE.md` oder `DIARY.md`
 - kein `git add -A`, keine Git-Operationen
 
 ## Akzeptanzkriterium
 
-Kontrolle, die stimmen muss: Integriert man ein Modell ab **seinem eigenen** Anfangswert, muss der
-Loss dem im Record gespeicherten entsprechen. Baue diese Probe ein und melde jede Abweichung — sie
-waere der Beleg, dass Rekonstruktion aus dem Record nicht korrekt funktioniert, und dann ist jedes
-Generalisierungsergebnis wertlos.
+Skript unter `analysis/scripts/aggregate/`, ueber `--config` parametrisiert, Ergebnisse nach
+`analysis/data/` und Tabellen nach `analysis/tables/`, `.csv` und `.tex`. Die Trajektorienprüfung
+gegen EvoODEs Daten ist durchgefuehrt und ihr Ergebnis berichtet. Alle Tabellen tragen beide
+Metriken und beide Regime. Fehlerpfad an einer Fixture belegt.
+
+`pysindy` ist mit fester Version in `analysis/requirements.txt` einzutragen.
 
 ## Report
 
-`codex/REPORT_WP_N5.md`. Enthaelt: die Kommandos, das Ergebnis der Rekonstruktionsprobe, die
-Tabellen mit beiden Metriken und beiden Regimen, die Zahl divergierender Integrationen, den Befund
-zur Kampagne (Koeffizienten vorhanden oder nicht) — und die Antwort auf die Frage aus Abschnitt 4.
+`codex/REPORT_WP_N6.md`. Enthaelt: die Kommandos, das Ergebnis der Trajektorienprüfung, das
+vollstaendige Konfigurationsgitter mit beiden Metriken und beiden Regimen, die getrennte Auswertung
+auf den 20 und den 40 darstellbaren Systemen, die Zahl divergenter Integrationen, das
+Differentiationsverfahren — und einen Absatz dazu, **wo SINDy in dieser Messung besser und wo
+schlechter abschneidet als die in `outputs/wp_n5_ic_generalization/` liegenden EvoODE-Zahlen**. Diese
+Gegenueberstellung ist deskriptiv zu halten: keine Signifikanztests, keine Wertung, nur die Zahlen
+nebeneinander.
