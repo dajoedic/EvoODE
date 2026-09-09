@@ -114,8 +114,10 @@ search is not the only reason a correct space fails. The parameter fit itself is
 attempt: handed the **true** structure, a single fit from a random start hits the sentinel loss in
 **15 of 102** cells; at k = 2 it is 13, at **k = 3 it is zero**, and R² > 0.9 rises from 71.6 % to
 97.1 % between k = 1 and k = 10. Today this restart budget exists only implicitly — under
-`pretuning=false` every fit draws `0.1 .* randn` (`bfgs.jl:269`) and the search runs thousands of
-them, so the multistart is a side effect of random initialisation rather than a named component.
+`pretuning=false` every fit draws `0.1 .* randn` (`bfgs.jl:269`), so the multistart is a side effect
+of random initialisation rather than a named component. Its size is **unknown**: the campaign runs a
+median of 410 fits per cell, but spread over different candidate structures, and the rate at which
+the same structure is re-evaluated has never been measured.
 
 The paper-sized question: **how many restarts does structure discovery need, and how does the
 recovery/cost curve behave?** It is attractive for four reasons. It is cheap — no structure search,

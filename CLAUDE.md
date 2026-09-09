@@ -512,12 +512,33 @@ the coupled search path 1e-6 is the cheaper, behaviour-equal tolerance; the Syst
   a **single** parameter fit hits the sentinel loss `1e6` in **15 of 102** cells; at k = 2 it is 13,
   and at **k = 3 it is zero**, with no non-adaptable cell left at k = 10. R² > 0.9 on the reference
   fit rises from 71.6 % (k = 1) to 97.1 % (k = 10). Under `pretuning=false` every fit draws
-  `0.1 .* randn` (`bfgs.jl:269`) and the search runs thousands of them, i.e. an **implicit multistart
-  with very large k**; under `pretuning=true` the start is deterministic, i.e. **k = 1**. That is the
+  `0.1 .* randn` (`bfgs.jl:269`); under `pretuning=true` the start is deterministic per structure.
+  **Corrected 2026-09-09:** the campaign runs a median of **410 parameter fits per cell** (dim 3: 570,
+  max 610) — hundreds, not thousands — and those are spread over *different* candidate structures.
+  The per-structure multistart therefore equals the rate at which the same structure is re-evaluated,
+  and that **duplicate rate has never been measured** (it is already listed as open under
+  "Canonical equality and hash for `StructureSpec`"). The direction holds; the magnitude is
+  unsupported and must not be asserted. That is the
   measured mechanism behind the pretuning disadvantage — not a vague anchoring effect. Two
   consequences: the multistart must be named, measured and described rather than existing as a side
   effect of random initialisation; and **no pretuning comparison is interpretable without stating the
   number of starts**, because it varies start quality and start count at the same time.
+- **Three budget levels must be kept apart** (literature review, 2026-09-09) and currently are not:
+  **structural search budget** (structures examined — PySR populations/iterations, ProGED candidates,
+  ODEFormer beam size), **parameter optimization budget** (restarts k — PySR's `optimizer_nrestarts`,
+  ProGED's differential-evolution population), and **run-level stochasticity** (whole seeds). Beam
+  size is **not** our k: it varies *structures*, k varies *parameter starts*. Two consequences for
+  the write-up: any recovery-versus-k curve needs a **cost axis** (recovery against *fits*, not
+  against k) or it measures the wrong thing; and ODEFormer's constant optimizer — a learned warm
+  start plus a **single** local run — is structurally our `pretune_on`, which raises an open question
+  worth a contribution: is their warm start better than our OLS pretuning, or do they have the same
+  15 % failure and not measure it?
+- **The restart dependence is a symptom of our loss, not a universal necessity.** We optimise MSE on
+  the *integrated* trajectory, which is badly conditioned; SINDy has no analogous failure mode
+  because it fits in derivative space where the coefficient problem is linear. Honest framing is
+  therefore not "everyone needs a budget, so do we" but **"our approach carries a failure class SINDy
+  structurally cannot have"** — a limitation, and the direct continuation of the Method Positioning
+  note (integration versus differentiation) of 2026-09-03.
 - **Growth-only search**: `_expand` only adds terms, and every line starts from one random term, so
   a wrong term can never leave a line — selection is the only corrective. This is the structural
   reason `pruned_match = false` persists on coupled systems even at very low loss, and it must be

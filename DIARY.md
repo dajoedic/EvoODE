@@ -6,6 +6,81 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ## 2026-09-09
 
+### Literaturvergleich zum Restart-Budget — und eine Korrektur an unserer eigenen Zahl
+
+<!-- COMMIT_HASH_11 -->
+
+Eine Recherche zu SINDy, PySR, ODEFormer und ProGED (Nutzer, 2026-09-09) hat den WP-N4-Befund
+eingeordnet. Sie bestaetigt die Richtung, korrigiert die Sprache an zwei Stellen und legt einen
+Fehler in unserer eigenen Darstellung offen.
+
+#### Die Korrektur: „tausende Anpassungen" war falsch
+
+Im WP-N4-Eintrag stand, die Suche rechne „tausende Anpassungen, also ein impliziter Mehrfachstart mit
+sehr grossem k". Nachgemessen an der Kampagne:
+
+| Klasse | Parameterfits je Zelle (Median) | max |
+|---|---|---|
+| dim 1 | 410 | 530 |
+| dim 2 | 430 | 610 |
+| dim 3 | 570 | 610 |
+| dim 4 | 440 | 570 |
+
+**Hunderte, nicht tausende.** Und schwerwiegender: diese Fits verteilen sich auf **verschiedene
+Kandidatenstrukturen**. Der Mehrfachstart *je Struktur* ist nur so gross wie die Rate, mit der
+dieselbe Struktur mehrfach ausgewertet wird — und die ist nie gemessen worden. Sie steht in
+`CLAUDE.md` selbst als offener Punkt unter der kanonischen Gleichheit fuer `StructureSpec`.
+
+Was bleibt: `pretune_off` bekommt bei Wiederholung neue Startwerte, `pretune_on` nicht. Die Richtung
+ist gedeckt, die **Groessenordnung nicht**. In `CLAUDE.md`, `docs/phd_thesis_arc.md` und dem
+WP-N4-Eintrag korrigiert.
+
+#### Was die Recherche beitraegt
+
+**Drei Budgetebenen, die wir bisher vermischt haben.** Struktursuche (PySR-Populationen, ProGED-
+Kandidaten, ODEFormer-Beam), Parameteroptimierung (Restarts k), und Run-Stochastik (ganze Seeds).
+Diese Trennung gehoert ins Paper und in jede kuenftige Messung.
+
+**Beam Size ist nicht unser k.** ODEFormers Beam variiert *Strukturen*, unser k variiert
+*Parameterstarts*. Die Gleichsetzung waere sachlich falsch — und sie stand als Analogon in der
+Rechercheliste, die Claude tags zuvor geschrieben hatte.
+
+**Der Praezedenzfall ist PySR**, nicht ODEFormer: `optimizer_nrestarts` ist dort ein regulaerer
+Methodenparameter fuer die Konstantenoptimierung. Ein Restart-Budget explizit zu benennen ist also
+etabliert, kein Sonderweg. Zu pruefen bleibt, ob sich der Parameter auf jede Konstantenoptimierung
+oder nur auf finale Kandidaten bezieht, und welcher Default im ODEBench-Lauf galt.
+
+**ODEFormers Constant Optimizer ist strukturell unser `pretune_on`**: ein gelernter Warmstart plus
+ein **einzelner** lokaler Lauf. Daraus folgt eine Frage, die die Recherche nicht stellt und die einen
+eigenen Beitrag traegt: Wir messen, dass ein guter Warmstart bei k = 1 in 15 % der Faelle scheitert.
+Entweder ist ihr Warmstart deutlich besser als unser OLS-Pretuning — oder sie haben dasselbe Problem
+und messen es nicht.
+
+#### Zwei Punkte, die in der Recherche fehlen und gegen uns laufen
+
+**Die Kostenachse.** Das Projekt haengt an einer Effizienzthese, und k multipliziert die Fits direkt.
+Ein Restart-Budget ohne Kosten ist keine Messung, sondern eine Stellschraube. Die richtige Kurve ist
+**Trefferquote gegen Fits**, nicht gegen k. Gegenargument, das geprueft gehoert: die 410 Fits werden
+ohnehin gezahlt, nur unkontrolliert — k explizit zu machen waere dann eine **Umverteilung** (weniger
+Strukturen, jede zuverlaessig angepasst) statt Zusatzkosten. Das ist pruefbar und waere ein
+Ergebnis.
+
+**Restarts sind ein Symptom, keine Loesung.** Unsere Startpunktabhaengigkeit folgt aus einer
+Designentscheidung: wir optimieren MSE auf der **integrierten** Trajektorie, ein schlecht
+konditioniertes Ziel. SINDy hat diese Fehlerklasse nicht — nicht weil es besser optimiert, sondern
+weil es im **Ableitungsraum** fittet, wo das Koeffizientenproblem linear ist. Die ehrliche Formulierung
+ist deshalb nicht „alle brauchen ein Budget, wir auch", sondern **„unser Ansatz traegt eine
+Fehlerklasse, die SINDy strukturell nicht haben kann"**. Das ist eine Limitation und die direkte
+Fortsetzung der Method-Positioning-Notiz vom 2026-09-03.
+
+#### Sprachliche Korrektur, die uebernommen wird
+
+k = 3 ist **kein Default**. Belegt ist: ab drei Restarts verschwinden auf den eindimensionalen
+Systemen die Totalausfaelle. Die Fit-Qualitaet steigt danach weiter (R2 > 0,9 von 91,2 % bei k = 3 auf
+97,1 % bei k = 10). Vor einer Festlegung muessen hoehere Dimensionen gemessen werden.
+
+---
+
 ### Drei Zufallsstarts genuegen — und damit steht der Mechanismus hinter dem Pretuning-Befund
 
 <!-- 34fdc0a -->
@@ -46,8 +121,9 @@ scheitert vollstaendig**, auch wenn man dem Verfahren die richtige Antwort vorle
 Der Zusammenhang, der die letzten Tage offen war, schliesst sich hier.
 
 Unter `pretuning=false` zieht jeder Fit seinen Startwert zufaellig (`0.1 .* randn(n_params)`,
-`bfgs.jl:269`). Die Suche rechnet ueber ihren Verlauf tausende Anpassungen und behaelt die beste —
-**ein impliziter Mehrfachstart mit sehr grossem k**. Unter `pretuning=true` wird der Startwert
+`bfgs.jl:269`). Die Suche rechnet ueber ihren Verlauf viele Anpassungen und behaelt die beste — ein
+**impliziter Mehrfachstart unbekannter Groesse** (zur Korrektur der urspruenglich behaupteten
+Groessenordnung siehe den Eintrag zur Literaturrecherche weiter oben). Unter `pretuning=true` wird der Startwert
 deterministisch aus den Daten berechnet: **k = 1, immer derselbe.**
 
 Damit ist der Pretuning-Nachteil kein vager Verankerungseffekt mehr, sondern beziffert: Pretuning
