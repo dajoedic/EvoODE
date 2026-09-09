@@ -17,7 +17,8 @@ container image the project lives at `/opt/EvoODE` and the invocation is
 4. [Benchmarks](#4-benchmarks)
 5. [Phase A experiment infrastructure](#5-phase-a-experiment-infrastructure-frozen)
 6. [Closed studies](#6-closed-studies-kept-for-provenance)
-7. [Analysis pipeline](#7-analysis-pipeline-python)
+7. [Reset studies](#7-reset-studies-wp-n-september-2026) — the constant term, generalization, the baseline
+8. [Analysis pipeline](#8-analysis-pipeline-python)
 
 ---
 
@@ -296,10 +297,115 @@ timestamp-suffixed sibling instead of silently overwriting existing evidence.
 | `studies/visualization/animate_search.jl` | Animation of a search trajectory |
 | `studies/regression/verify_wp_b1.jl` | Acceptance check for WP-B1 (Phase B sampling protocol) |
 | `studies/regression/verify_wp_c1.jl` | Acceptance check for WP-C1 |
+| `studies/lookahead/audit_exact_stage_cap_horizons.jl` | The horizon audit over all 20 exact systems, both IC sets, horizons 2-5 - the measurement behind `lookahead_horizon = 5` |
+| `studies/lookahead/diagnose_stage_cap_failures.jl` | Why five equation rows still truncated: analytic derivatives repair all five, a 5x5 threshold sweep repairs none |
+| `studies/lookahead/wp_c4_stage_cap_doubt_band_report.jl` | The doubt band that was added and then removed again |
+| `studies/lookahead/wp_c5_stage_cap_binary_audit.jl` | The closing audit: 0 truncated rows of 80, 48 finite caps |
+| `studies/lookahead/wp_v1_stage_cap_reliability.jl` | Whether the reopen threshold can be selected from data - leave-one-system-out says no |
+| `studies/regression/analyze_wasted_search_levels.jl` | The level-budget question: what a global "stop after k silent levels" would cost (WP-B1) |
+| `studies/representation/wp_r1_full_basis_reference.jl` | The search-free reference fit: how well the full basis approximates surrogate systems in derivative space |
+
+The two audit scripts that write a Markdown report take `--report <path>`:
+
+```bash
+julia studies/lookahead/audit_exact_stage_cap_horizons.jl --report docs/wp_c1_stage_cap_horizon_audit.md
+julia studies/lookahead/wp_v1_stage_cap_reliability.jl --report docs/WP-V1.md
+```
+
+`studies/output_path_guard.jl` is **not** a runnable script. It is the shared helper the closed
+studies include for `--output-dir` / `--output` handling and for the guard that writes a
+timestamp-suffixed sibling instead of overwriting existing evidence.
 
 ---
 
-## 7. Analysis pipeline (Python)
+## 7. Reset studies (WP-N, September 2026)
+
+The September 2026 review found four gaps the campaign was not designed to close: no constant term
+in the basis, no persisted coefficients, no held-out evaluation, and no baseline ever run. These
+scripts are the measurements that closed them. Unlike section 6 they are **not** closed - they are
+the current line of work, and the numbers they produce are the ones under external discussion.
+
+They run in this order, because each consumes the previous one's records.
+
+### `studies/regression/wp_n1_basis_probe.jl`
+
+Compares the default staged basis against `staged_polynomial_basis_with_constant` on the same cells,
+and persists the fitted coefficients alongside the term names.
+
+```bash
+julia --project=. --startup-file=no studies/regression/wp_n1_basis_probe.jl --dim=1
+```
+
+`--dim=2` is prepared but **unstarted**: roughly 114 core hours. Only the user starts long runs.
+
+> **Known defect.** This script writes `git_hash = "not_collected"`. That contradicts the project's
+> identity rule, and the records must not be used for anything beyond exploration until it is fixed.
+
+Writes `outputs/wp_n1_dim1_probe/history.jsonl`, which the next three scripts read.
+
+### `studies/regression/wp_n3_oracle_refit.jl`
+
+Hands the search the *true* structure and fits only parameters - the reference point that separates
+"the search failed" from "the parameter fit failed".
+
+```bash
+julia --project=. --startup-file=no studies/regression/wp_n3_oracle_refit.jl --input outputs/wp_n1_dim1_probe/history.jsonl --output-dir outputs/wp_n3_oracle_refit --fresh
+```
+
+Smoke test: add `--limit 3` and a separate `--output-dir`.
+
+### `studies/regression/wp_n4_multistart_refit.jl`
+
+The same refit at k parameter starts, which is how the multistart was found to be load-bearing: a
+single start hits the sentinel loss `1e6` in 15 of 102 cells, k = 3 in none.
+
+```bash
+julia --project=. --startup-file=no studies/regression/wp_n4_multistart_refit.jl --input outputs/wp_n1_dim1_probe/history.jsonl --output-dir outputs/wp_n4_multistart_refit --starts 10 --fresh
+```
+
+Write-up and the placement against SINDy / PySR / ODEFormer / ProGED: `docs/WP-N4.md`.
+
+### `studies/regression/wp_n5_ic_generalization.jl`
+
+The first held-out evaluation in the project. Rebuilds the model from its record, keeps the
+parameters, and integrates from the *unseen* initial condition.
+
+```bash
+julia --project=. --startup-file=no studies/regression/wp_n5_ic_generalization.jl --input outputs/wp_n1_dim1_probe/history.jsonl --output-dir outputs/wp_n5_ic_generalization --fresh
+```
+
+Smoke test: `--limit 6`. The control that makes the result trustworthy is inside the script - 132 of
+132 reconstruction probes must come out exact to zero, otherwise `model_terms` is not doing its job.
+
+### `analysis/scripts/aggregate/run_wp_n6_sindy_baseline.py`
+
+SINDy on **identical** trajectories - the first baseline the project has ever run. Ten
+configurations are reported in full and none is selected, so the number is not tuned in our favour.
+
+```bash
+python analysis/scripts/aggregate/run_wp_n6_sindy_baseline.py --config analysis/configs/wp_n6_sindy_baseline.json
+```
+
+Error path on a deliberately broken fixture, which must fail rather than report success:
+
+```bash
+python analysis/scripts/aggregate/run_wp_n6_sindy_baseline.py --config analysis/configs/wp_n6_sindy_error_fixture.json
+```
+
+Write-up, cost line and caveats: `docs/WP-N6.md`.
+
+### `analysis/scripts/aggregate/aggregate_wp_n2_pruning_sensitivity.py`
+
+How much of `pruned_match` is the pruning rule rather than the search. Over a 24-rule grid the sum
+of hits and both error types is constant, so the threshold is a zero-sum dial.
+
+```bash
+python analysis/scripts/aggregate/aggregate_wp_n2_pruning_sensitivity.py --config analysis/configs/wp_n2_pruning_sensitivity.json
+```
+
+---
+
+## 8. Analysis pipeline (Python)
 
 Conventions and environment: `analysis/CONVENTIONS.md`, dependencies in
 `analysis/requirements.txt`.
@@ -312,9 +418,14 @@ Conventions and environment: `analysis/CONVENTIONS.md`, dependencies in
 | `analysis/scripts/aggregate/verify_campaign_registry.py` | Checks converted campaign registry invariants before aggregation |
 | `analysis/scripts/aggregate/evaluate_hypotheses.py` | Evaluates H1–H4 against the aggregated data |
 | `analysis/scripts/aggregate/phase1_diagnostic.py` | Phase 1 diagnostic evaluation |
+| `analysis/scripts/aggregate/aggregate_phaseb_descriptive_tables.py` | Descriptive tables T1-T5: fit quality, support recovery, stage economy, robustness |
+| `analysis/scripts/aggregate/aggregate_phaseb_heartbeat_waste_systems.py` | Level waste from the heartbeat stream - defined for all 63 systems, unlike `wasted_levels` |
+| `analysis/scripts/aggregate/analyze_pretuning_distribution_collapse.py` | The seed-collapse mechanism: pretuning collapses diversity on support, R2 and loss |
 | `analysis/scripts/plot/plot_exact_match_rates.py` | Support recovery rates |
 | `analysis/scripts/plot/plot_stage_overshoot.py` | Stage overshoot per system |
 | `analysis/scripts/plot/table_main_results.py` | The main results table |
+| `analysis/scripts/plot/table_phaseb_descriptive_results.py` | Renders T1-T5 to CSV and LaTeX under `analysis/tables/<id>/` |
+| `analysis/scripts/plot/table_phaseb_heartbeat_waste_systems.py` | Renders the waste summary and the per-system table |
 | `analysis/status.py` | Status overview of an experiment |
 
 Campaign bridge for Phase-B data:
