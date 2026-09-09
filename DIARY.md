@@ -145,6 +145,49 @@ Was das Paket **nicht** loest und was als Luecke stehen bleibt: es fuehrt sie ni
   Problem, gegen die `.gitattributes` ausfuehrlich argumentiert. Sie sind gitignoriert und haben
   funktioniert, also folgenlos; der Generator schreibt es trotzdem.
 
+#### Nachtrag am selben Abend: 852 MB waren zu 99 Prozent Luft
+
+Ein Messbefehl, der im Hintergrund nachlief, lieferte die Zahl, die den Groessen-Eindruck erklaert —
+und keiner der bis dahin diskutierten Punkte war es. `.git` war **852 MB** gross. Die Aufschluesselung:
+
+```
+lose Objekte:   25.985 Stueck  =  739,8 MB   <- nie gepackt
+gepackt:           613 Stueck  =    6,3 MB
+Muell:      tmp_pack_vlx5bO    =   48,6 MB   <- Rest eines abgebrochenen gc
+```
+
+**Der tatsaechliche Inhalt der gesamten Projekthistorie sind 6,3 MB.** Das groesste Objekt ueberhaupt
+ist `strogatz_extended.json` mit 3,5 MB — es lag also kein versehentlich eingecheckter Datenberg
+herum. Der Objektspeicher war schlicht nie aufgeraeumt worden.
+
+Die Ursache ist strukturell und haengt an der Arbeitsweise: `DIARY.md` ist 405 KB und wird bei fast
+jedem Commit angefasst. Jede Fassung liegt als eigenes, **unkomprimiertes** loses Objekt da, bis Git
+sie packt. Ueber 470 Commits summiert sich das. Das `tmp_pack` zeigt, dass ein `git gc` einmal lief
+und abgebrochen wurde — vermutlich der Grund, warum seither nichts mehr gepackt wurde.
+
+`git gc --prune=now`: **852 MB -> 11 MB.** Lose Objekte 0, Muell 0, ein Packfile mit 9,68 MB.
+Gegengeprueft: `git fsck` ohne Beanstandung, 470 Commits unveraendert, `history.jsonl` mit 1,8 MB im
+Baum. Danach die sechs Altordner geloescht — 18 sichtbare Verzeichnisse auf 13, elf davon getrackt.
+Die drei `.pytest_*`-Verzeichnisse widersetzen sich sowohl `rm` als auch PowerShell (ACL-Problem,
+dasselbe, das schon beim Testlauf den Cache-Schreibzugriff verweigert hat); sie sind versteckt, leer
+und gitignoriert.
+
+**Lehre fuer die Priorisierung:** die vorgeschlagene Reihenfolge war falsch gewichtet. Die 38
+Codex-Reports zu verschieben spart 246 KB, ein Befehl sparte 840 MB. Ordnung und Groesse sind
+verschiedene Probleme, und der Groessen-Eindruck des Nutzers zeigte auf das zweite.
+
+#### Und die Reports liegen jetzt eine Ebene tiefer
+
+`codex/` hatte drei aktive Dateien und 38 Einmal-Reports auf einer Ebene — ein Archiv, in dem die
+Task-Spec versteckt lag. Die Reports behalten Namen und Inhalt, nur die Ebene aendert sich; alle 15
+Verweise in 9 Dokumenten wurden mitgezogen und loesen auf, `DIARY.md` eingeschlossen.
+
+Dabei ist aufgefallen, dass `codex/CODEX_PROTOCOL.md` seit jeher **"Reports nach `docs/`"** vorgab.
+Dort ist nie einer gelandet: jede Task-Spec ueberschrieb die Vorgabe, indem sie einen `codex/`-Pfad
+nannte. Die stehende Anweisung war ueber 38 Arbeitspakete hinweg falsch, ohne Folgen — weil sie
+jedes Mal ueberschrieben wurde. Jetzt nennt sie `codex/reports/` und sagt, wofuer `docs/` reserviert
+ist.
+
 #### Was ausdruecklich in Ordnung war
 
 Kein TODO/FIXME im gesamten Code. `.gitattributes` mit ausgeschriebener Begruendung. `Manifest.toml`
