@@ -15,6 +15,8 @@ what to work on next. It is deliberately kept short. Detail lives in dedicated d
 | `docs/hpc_requirements.md` | Phase B resource profile, cost derivation and its uncertainty |
 | `docs/hpc_deployment_guide.md` | how code reaches the Orion cluster — CI, image, manifests, glossary, failure modes (German, for newcomers) |
 | `docs/phd_thesis_arc.md` | draft: the three-paper thesis arc that `PAPER_1.md` hangs under |
+| `docs/WP-N4.md` | the restart budget of the parameter fit, and its placement against SINDy/PySR/ODEFormer/ProGED |
+| `docs/WP-N6.md` | the first baseline: EvoODE against SINDy on identical trajectories, with the cost line and the caveats |
 | `codex/CURRENT_TASK.md` | the one active task spec for an AI coding assistant |
 
 Do not start a second planning document. Planning and status belong here; everything else belongs
