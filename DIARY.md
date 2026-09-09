@@ -8,7 +8,7 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ### Zuschnittsentscheidung: Paper 1 wird ein Methodenpaper, und die Kampagne verliert ihren Rang
 
-<!-- COMMIT_HASH -->
+<!-- 5e9e200 -->
 
 Am Vormittag stand im Statusbericht noch die Frage, welche der drei Erzählungen Paper 1 wird — Kappe
 als Regler, Kampagne als Charakterisierung, oder das Restart-Budget. Am Abend ist die Frage nicht
