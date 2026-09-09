@@ -4,6 +4,41 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ---
 
+## 2026-09-10
+
+### WP-N10: der Duplikatzaehler steht, und er stellt die Restart-Politik infrage
+
+<!-- 22a9059 -->
+
+Der Zaehler fuer die `StructureSpec`-Duplikatrate ist committet. Kanonischer Schluessel ist die
+je Gleichung sortierte, eindeutige Termindexmenge; gezaehlt wird auf drei Ebenen — ganzer Lauf,
+je Stufe, je Level. Die Records tragen Summen, Wiederholungshistogramm und Quantile, **nie einen
+Mittelwert** (stehende Auswertungsregel).
+
+Der Eingriff ist rein beobachtend: gezaehlt wird nach `_evaluate!`, die Suche liest den Zaehler
+nie. Abnahme von Claude gefahren, nicht von Codex: dieselbe Zelle mit und ohne Zaehler ist
+**bit-identisch** — `loss` ueber alle 15 Stellen, dazu `total_loss_evals`,
+`total_parameter_fits`, `total_ode_solves`, `r2`, `pruned_match`, `support_terms`.
+`phase_b_fingerprint()` bleibt `604e79733b22d64d`, `stage_cap_behavior_fingerprint()` bleibt
+`ffb0266c7913352c`; die Kampagnenvergleichbarkeit ist also unberuehrt. Neun Tests gruen.
+
+**Warum das mehr ist als Instrumentierung.** Die ersten dim-1-Messungen sagen: jede Struktur
+bekommt effektiv 20 bis 160 Fits, nicht einen — System 3 kommt auf 110 Fits bei 2 eindeutigen
+Strukturen (98,2 % Duplikate), System 11 auf 290 bei 3 (99,0 %). Die eingefrorene Restart-Politik
+`retry-on-failure bis k = 3` ruht auf WP-N4, und WP-N4 lief auf dim-1-Zellen. Ein „einzelner Fit"
+ist dort ein Zustand, den die Suche gar nicht herstellt. Die Praemisse der Politik ist damit
+offen, nicht widerlegt.
+
+Einordnung, die eine naheliegende Fehldeutung ausschliesst: die hohe Duplikatrate heisst **nicht**
+„die Suche exploriert nicht". Auf dim 1 und niedriger Stufe ist der Strukturraum so klein, dass es
+kaum mehr Strukturen *gibt*. Der Befund lautet „Raum erschoepft", nicht „Suche untaetig".
+
+Die dim-2-Messung auf System 26 laeuft. Eine Zelle entscheidet die Frage nicht, sie zeigt die
+Groessenordnung; die belastbare Verteilung ueber 378 Zellen liefert Phase C jetzt umsonst, weil
+der Zaehler drin ist.
+
+---
+
 ## 2026-09-09 (nachts)
 
 ### Ein falsches Abnahmekriterium, ein unbelegter Kostenwert, ein abgelaufenes Token — und der dim-2-Probelauf läuft
