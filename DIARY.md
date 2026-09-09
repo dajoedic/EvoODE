@@ -8,7 +8,7 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ### Literaturvergleich zum Restart-Budget — und eine Korrektur an unserer eigenen Zahl
 
-<!-- COMMIT_HASH_11 -->
+<!-- b42b051 -->
 
 Eine Recherche zu SINDy, PySR, ODEFormer und ProGED (Nutzer, 2026-09-09) hat den WP-N4-Befund
 eingeordnet. Sie bestaetigt die Richtung, korrigiert die Sprache an zwei Stellen und legt einen
