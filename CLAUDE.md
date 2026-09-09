@@ -304,6 +304,36 @@ the coupled search path 1e-6 is the cheaper, behaviour-equal tolerance; the Syst
    Design Principle 9 is what made this visible. **The campaign cannot be evaluated this way**: its
    756 cells carry no coefficients, so their generalization is reachable only through a re-run.
 
+   **(4) is done (WP-N6, 2026-09-09): the first baseline in the project's history.** SINDy on
+   **identical trajectories** (63 systems, both IC sets, self-integrated at 1e-9), ten configurations
+   reported in full, none selected. Like-for-like on dimension 1, best SINDy configuration against
+   EvoODE's WP-N5 numbers:
+
+   | R² > 0.9 | SINDy | EvoODE |
+   |---|---|---|
+   | reconstruction | 44/46 = **95.7 %** | 126/132 = **95.5 %** |
+   | generalization | 28/46 = **60.9 %** | 90/132 = **68.2 %** |
+
+   **A draw on reconstruction, EvoODE ahead on generalization — at roughly two orders of magnitude
+   more compute.** SINDy runs one linear regression per equation; EvoODE runs a median of 410
+   nonlinear fits per cell, each with ODE integrations. For a method whose thesis is efficiency, that
+   number belongs beside every recovery rate. Over all 63 systems SINDy reaches 68.3 %
+   (reconstruction) and 47.6 % (generalization); our 80.7 % campaign figure is **not** a
+   counterpart — different aggregation units, and our all-dimension generalization does not exist
+   because the campaign cells carry no coefficients.
+
+   **Caveats that travel with these numbers:** the system sets are not identical (our 132 dim-1 cells
+   come from 11 selected systems × 3 seeds × 2 IC sets × 2 bases, SINDy's 46 from all 23 dim-1
+   systems × 2 IC sets); SINDy's figure is the maximum over ten configurations, deliberately in its
+   favour; SINDy needs derivatives (`FiniteDifference(order=2)`) and our noise-free data favour it,
+   while the noisy case is unmeasured; and the trajectory check verified the grid against the
+   *shipped* solutions rather than directly against ours.
+
+   **The answer to "is 80.7 % good or embarrassing" is: neither.** On the easiest system class EvoODE
+   is level with SINDy and somewhat better at generalization, for about a hundred times the compute.
+   That shifts the burden of proof: the method must show its value somewhere else — under noise, on
+   coupled systems, or in the interpretability of the search path.
+
    The campaign data is not discarded: 756 clean cells under one identity triple, protocol-conform,
    with a sharply named boundary. A good chapter, not a paper.
 

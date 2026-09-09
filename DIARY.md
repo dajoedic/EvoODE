@@ -6,6 +6,86 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ## 2026-09-09
 
+### Die erste Baseline seit Projektbeginn: auf Dimension 1 steht es unentschieden, zu erheblich hoeheren Kosten
+
+<!-- COMMIT_HASH_13 -->
+
+WP-N6 hat SINDy auf **denselben Trajektorien** gerechnet wie EvoODE — 63 Systeme, beide
+Anfangswertsaetze, 512 Punkte ueber t in [0, 10], selbst integriert bei 1e-9, ohne die mitgelieferten
+Loesungen. Zehn Konfigurationen (Polynomgrade 2 bis 5, einmal mit `sin`/`cos`, je zwei
+STLSQ-Schwellen), beide Regime aus WP-N5, beide Richtungen. **Keine Konfiguration wurde ausgewaehlt**;
+das Gitter wird vollstaendig berichtet.
+
+Damit hat das Projekt zum ersten Mal eine Zahl, die nicht gegen sich selbst gemessen ist.
+
+#### Der faire Vergleich: Dimension 1
+
+Unsere Generalisierungszahlen stammen aus dem dim-1-Probelauf, deshalb ist nur diese Klasse
+vergleichbar. SINDy auf die dim-1-Systeme eingeschraenkt, jeweils die beste der zehn Konfigurationen:
+
+| Anteil R2 > 0,9 | SINDy | EvoODE |
+|---|---|---|
+| Rekonstruktion | 44/46 = **95,7 %** | 126/132 = **95,5 %** |
+| Generalisierung | 28/46 = **60,9 %** | 90/132 = **68,2 %** |
+
+**Auf der Rekonstruktion ist es ein Unentschieden** — 95,7 gegen 95,5 Prozent. Auf der
+Generalisierung liegt EvoODE vorn, 68,2 gegen 60,9 Prozent.
+
+#### Und die Kosten, die dabei stehen muessen
+
+SINDy rechnet **eine lineare Regression je Gleichung** — bei den dim-1-Systemen also 46 Regressionen
+fuer 46 Zellen. EvoODE rechnet im Median **410 nichtlineare Parameteranpassungen je Zelle**, jede mit
+ODE-Integrationen.
+
+Das sind rund **zwei Groessenordnungen**. Fuer ein Verfahren, dessen Leitthese Effizienz ist, ist das
+die unbequemste Zahl des Tages — und sie gehoert neben jede Trefferquote.
+
+#### Ueber alle 63 Systeme
+
+| Anteil R2 > 0,9, bestes der zehn Gitter | SINDy |
+|---|---|
+| Rekonstruktion | 43/63 = 68,3 % |
+| Generalisierung | 30/63 = 47,6 % |
+
+Zum Vergleich der Kampagnenwert von EvoODE, 80,7 % ueber 756 Zellen — **aber das ist keine
+Gegenueberstellung.** Die Aggregationseinheiten unterscheiden sich (756 Zellen mit drei Seeds und
+zwei Bedingungen gegen 63 Zellen je Konfiguration und Richtung), und unsere Generalisierung ueber
+alle Dimensionen ist gar nicht gerechnet, weil den Kampagnenzellen die Koeffizienten fehlen.
+
+Strukturtreffer, bestes Gitterergebnis: 19 von 63 ueber alle Systeme, 11 von 20 auf den fuer EvoODE
+darstellbaren, 17 von 40 auf den fuer SINDy darstellbaren. Diese Zahlen sind mit unseren nicht direkt
+vergleichbar, weil unsere Strukturmessung auf einer anderen Systemauswahl beruht.
+
+#### Was zu deklarieren ist
+
+**Vorbehalte, die in jede Nennung dieser Zahlen gehoeren:**
+
+1. Die Systemmengen sind nicht identisch. EvoODEs 132 dim-1-Zellen kommen aus **11 ausgewaehlten**
+   Systemen mal drei Seeds mal zwei IC-Saetze mal zwei Basen; SINDys 46 aus **allen 23**
+   dim-1-Systemen mal zwei IC-Saetze. Naeher am Vergleich als alles bisherige, aber nicht deckungsgleich.
+2. SINDys Zahl ist jeweils das **Maximum ueber zehn Konfigurationen** — ein leichter Vorteil zu seinen
+   Gunsten, bewusst so gewaehlt, damit die Baseline nicht kleingerechnet wird.
+3. **Protokollunterschied:** SINDy braucht Ableitungen (`FiniteDifference(order=2)`), EvoODE nicht.
+   Unsere Daten sind rauschfrei, was SINDy hier beguenstigt. Bei Rauschen waere das Bild ein anderes,
+   und das ist ungemessen.
+4. Integrator: SINDy-Seite `DOP853`, EvoODE `Tsit5`, beide bei 1e-9 auf identischem Gitter. Die
+   Gitterpruefung bestaetigt 126 von 126 Zellen. Der Abgleich lief allerdings gegen die
+   **mitgelieferten** Trajektorien, nicht gegen unsere eigenen — die Uebereinstimmung folgt aus
+   gleicher Toleranz und gleichem Gitter, ist aber nicht direkt gemessen.
+
+#### Die Antwort auf die Ausgangsfrage
+
+Gefragt war, ob 80,7 % gut oder peinlich sind. Die Antwort lautet: **weder noch.** Auf der einfachsten
+Systemklasse ist EvoODE mit SINDy gleichauf in der Rekonstruktion und etwas besser in der
+Generalisierung — bei rund hundertfachem Rechenaufwand.
+
+Das ist keine Katastrophe und kein Sieg. Es ist die Ausgangslage, von der aus sich entscheiden
+laesst, was Paper 1 behaupten kann. Und es verschiebt die Beweislast: Ein Verfahren, das gleichauf
+liegt und hundertmal mehr rechnet, muss seinen Mehrwert woanders zeigen — bei Rauschen, bei
+gekoppelten Systemen, oder in der Interpretierbarkeit des Suchwegs.
+
+---
+
 ### Generalisierung, zum ersten Mal gemessen — und die Konstante dreht das Vorzeichen
 
 <!-- 24e1179 -->
