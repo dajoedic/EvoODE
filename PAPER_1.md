@@ -101,7 +101,7 @@ paper must be per-system or per-class, never a single global factor.
 
 ---
 
-## Current Status (as of 2026-08-22)
+## Current Status (as of 2026-09-09)
 
 | Item | Status |
 |------|--------|
@@ -119,6 +119,11 @@ paper must be per-system or per-class, never a single global factor.
 | Regression fingerprint | `17fe7d9cfb8f1be3` — 120 records under `git f6143eb` |
 | Stage-cap behaviour fingerprint | `ffb0266c7913352c` (probe version 2) |
 | Campaign status | **complete** 2026-09-04 after 13.5 days: 756/756 records, 0 errors, 756 unique identities, one identity triple, 5,248 core hours, 1.418e9 loss evaluations |
+| Campaign analysis | **complete** (WP-A5 to WP-A9, 2026-09-07): descriptive tables T1–T5, pretuning contrast, seed-collapse mechanism, level-waste measure, per-system table |
+| Coefficient persistence | **added** (WP-N1, 2026-09-08). The 756 campaign cells predate it and carry no coefficients |
+| Held-out evaluation | **exists for the first time** (WP-N5, 2026-09-09): R² > 0.9 falls from 95.5 % reconstruction to 68.2 % generalization on the dim-1 probe |
+| Baseline | **exists for the first time** (WP-N6, 2026-09-09): SINDy on identical trajectories. `docs/WP-N6.md` |
+| Evidence in the repository | run registries, campaign history and the descriptive tables are tracked since 2026-09-09; only per-run scratch directories stay out |
 
 ---
 
@@ -156,16 +161,24 @@ median alone.
 Supported by stage metrics, cap decisions, support availability on exact systems and evaluation
 counters. **Wall-clock time is not evidence for this claim** (Design Principle 7).
 
-**RETRACTED 2026-09-07 (evening).** Both campaign arms are `evogrow_v2_2_stage_capped` — there is
-**no uncapped arm**, so the campaign cannot corroborate the comparative half of this claim. It shows
-the cap's behaviour, not that the cap is free. "At an unchanged result" rests on the regression grid
-alone: 30 cells, 5 systems. The paragraph below stands only as a behavioural observation.
+**The claim has two halves and they rest on different evidence. Keep them apart in the write-up.**
 
-**Campaign-scale observation (WP-A9, 2026-09-07).** The heartbeat streams show the search
-terminating early wherever the cap binds: **690 of 756 cells execute fewer than the 30 configured
-levels**, and the executed count tracks the reached stage — median 1 level at stage 1, 5 at stage 2,
-21 at stage 5. A cell capped at stage 1 computes **one** level instead of thirty. The claim no
-longer rests on the 30-cell regression grid alone.
+*Half 1 — the cap restricts growth.* **Corroborated at campaign scale** (WP-A9, 2026-09-07). The
+heartbeat streams show the search terminating early wherever the cap binds: **690 of 756 cells
+execute fewer than the 30 configured levels**, and the executed count tracks the reached stage —
+median 1 level at stage 1, 5 at stage 2, 21 at stage 5. A cell capped at stage 1 computes **one**
+level instead of thirty. This half does not rest on the regression grid.
+
+*Half 2 — at an unchanged result.* **RETRACTED 2026-09-07 (evening) as a campaign finding.** Both
+campaign arms are `evogrow_v2_2_stage_capped`, 756 of 756 — there is **no uncapped arm**, so the
+campaign has no counterpart to compare against and cannot show that the restriction is free. This
+half rests on the regression grid **alone: 30 cells, 5 systems** — the thinnest evidence in the
+paper, carrying its comparative claim. Say so in the paper rather than letting Half 1's 756 cells
+lend it borrowed weight.
+
+The two halves are easy to conflate because both are about the cap and both cite level counts.
+Half 1 counts levels *within* the capped arm; Half 2 needs a *difference* between arms, and that
+difference exists only on the regression grid.
 
 Note for the write-up: `n_levels` in the records is the constant `N_LEVELS = 30`
 (`studies/regression/run_regression.jl:681`), i.e. the configured budget, **not** an executed count.
@@ -820,9 +833,29 @@ Updated at phase transitions:
 - result placeholders filled 2026-09-07 from the final campaign records; regenerate via the scripts, never by hand
 - add final claim decisions after the Phase B analysis
 
-Last revision: 2026-09-07 (evening). Current phase: **reset**. The campaign and its analysis are
-complete and stand as a characterisation, but four foundational gaps outrank the write-up: the
-missing constant term in the basis (20 of 63 representable against SINDy's 40), unpersisted
-coefficients, no held-out evaluation anywhere, and no baseline run ever performed. See `CLAUDE.md`
-Active 0 and the `DIARY.md` entry "Kassasturz" of 2026-09-07. Paper scope is reopened until the
-baseline number exists.
+Last revision: 2026-09-09. Current phase: **reset, and the reset's own condition is now met.**
+
+The campaign and its analysis are complete and stand as a characterisation. The four foundational
+gaps that outranked the write-up on 2026-09-07 have all been measured:
+
+| Gap | State |
+|---|---|
+| missing constant term in the basis | measured, **not** resolved — WP-N1/N5 show it halves structure recovery and improves generalization; which basis is right depends on which metric counts |
+| unpersisted coefficients | **closed** (WP-N1), not retroactive for the 756 campaign cells |
+| no held-out evaluation | **closed** (WP-N5) |
+| no baseline ever run | **closed** (WP-N6) |
+
+"Paper scope is reopened until the baseline number exists" — the number exists as of 2026-09-09, and
+it says: on dimension 1 EvoODE is level with SINDy on reconstruction, ahead on generalization, at
+roughly two orders of magnitude more compute. **The open decision is therefore no longer "measure
+the baseline" but "what is Paper 1 now"**, with three candidate framings that need to be chosen
+between rather than merged:
+
+1. the stage cap as a search-space controller, with the baseline as context and the compute cost
+   declared (closest to the current draft; Claim B Half 2 stays thin at 30 cells)
+2. the campaign as a characterisation study of where incremental growth breaks — the dim-3/4
+   boundary at 0 of 50, the waste distribution, the identifiability limit
+3. the restart budget and the failure class our integrated loss carries and SINDy structurally
+   cannot (`docs/WP-N4.md`)
+
+See `CLAUDE.md` Active 0 and the `DIARY.md` entry "Kassasturz" of 2026-09-07.
