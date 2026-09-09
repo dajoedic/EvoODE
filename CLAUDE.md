@@ -382,16 +382,35 @@ the coupled search path 1e-6 is the cheaper, behaviour-equal tolerance; the Syst
    once: no pruning threshold chosen after seeing results, no library component removed because it
    produces false positives.
 
-   **Cost: ~8,000–11,000 core hours, 3–5 weeks on Orion.** The uncapped mirror carries the majority,
-   because it runs the full 30 levels where the capped arm stops early. The experiment that must show
-   the cap saves compute is the most expensive thing in the project — state that in the paper.
+   **Cost: ~9,600–12,600 core hours, 4–6 weeks on Orion (revised 2026-09-10).** The figure is now
+   **derived from the Phase B registry rather than estimated**: the canonical capped arm is the
+   measured cost of Phase B's `pretune_off` arm, 3,249.3 h over the same 378 cells, which supersedes
+   the "~2,600 h" estimate. Added since: a 120-cell pretuning confirmation arm at 1,331 h. The
+   uncapped mirror still carries the majority, because it runs the full 30 levels where the capped
+   arm stops early. The experiment that must show the cap saves compute is the most expensive thing
+   in the project — state that in the paper.
 
-   **Blocking before the freeze, in order:** repair `git_hash` in `wp_n1_basis_probe.jl`; run the
-   dim-2 constant-term probe (**~1,200 core hours, not the 114 long quoted** — see below) — **the canonical basis is the one still-open frozen
-   parameter**; build structural F1 / term precision / term recall / coefficient error, which exist
-   **nowhere** in the codebase today; build the three-way representability class; implement and
-   declare the restart policy; measure the never-measured `StructureSpec` duplicate rate, without
-   which the k = 1 reference point is undefined; complete the Phase C matrix; smoke-test.
+   **The matrix is complete (P8, 2026-09-10).** Every claim names an arm, a script, an output path
+   and a pass criterion, and all five questions the plan left open are decided: SINDy compares over
+   all 63 systems paired and stratified with no cross-stratum headline; the restart ablation runs
+   through the oracle path so that k is isolated from the implicit multistart; the oracle uses the
+   canonical basis only; the pretuning ablation gets a 120-cell confirmation arm rather than a
+   citation across a basis boundary; and a 12-cell pilot with a five-part go criterion precedes
+   submission, distinct from the smoke test.
+
+   **Blocking before the freeze, in order:** run the dim-2 constant-term probe (**~1,200 core
+   hours, not the 114 long quoted**) — **the canonical basis is the one still-open frozen
+   parameter**; implement the restart policy, which **does not exist in `src/` at all** (verified
+   2026-09-10: `grep -rn "restart\|retry\|multistart\|n_starts" src/` returns nothing, so the
+   frozen `k = 3` is a sentence in a document and the effective restart count is whatever structure
+   duplication happens to produce); build the seven Phase C work packages listed in
+   `docs/paper1_phaseC_benchmark_plan.md` §2a; pilot; smoke-test. Done since: `git_hash` repair
+   (WP-N8), structural metrics and three-way representability (WP-N7/N7b), duplicate counter
+   (WP-N10), matrix completion (P8).
+
+   **An ordering defect of the plan, declared rather than hidden:** the restart policy must be
+   implemented before the campaign starts, but the campaign is what measures the duplicate rate its
+   premise depends on. See §8 of the Phase C plan.
 
    **Superseded by this decision:** `PAPER_1.md`'s two non-goals of 2026-08-22 (no in-house SINDy
    baseline, no quantitative cross-method claim) are **lifted** — Claim D requires exactly what they
@@ -702,8 +721,11 @@ the coupled search path 1e-6 is the cheaper, behaviour-equal tolerance; the Syst
   (see Active 0b)
 - **no held-out evaluation anywhere** — both IC sets are training data, every number is in-sample,
   the literature's generalization metric is unreachable without coefficients (see Active 0c)
-- **no structural F1, term precision, term recall or coefficient error anywhere in the codebase** — the
-  pipeline can only do exact support match; Claim A of Phase C cannot be reported without them
+- ~~no structural F1, term precision, term recall or coefficient error anywhere in the codebase~~ —
+  **closed by WP-N7/N7b (2026-09-09)**; `analysis/utils/metrics.py` and
+  `aggregate_phaseb_structure_metrics.py` supply them, and the three-way representability class
+  exists. They are still hard-wired to `paper1_phaseB_v1` and need a campaign-id parameter for
+  Phase C (work package B6)
 - **36.4 % of the campaign's support hits exist only because of the pruning rule (WP-N7, 2026-09-09).**
   On the 240 exact Phase B cells: 119 carry every true term in the raw support, the reported
   (**pruned**) match is 110, the **raw** exact match is **70**, and **40 hits are owed entirely to
@@ -723,8 +745,18 @@ the coupled search path 1e-6 is the cheaper, behaviour-equal tolerance; the Syst
   `studies/regression/run_regression.jl` writes only `pruned_match`, which reaches the registry under
   the same name (Phase B path). **A join of Phase A and Phase B on that column compares different
   quantities.** Phase C records must name the definition
-- **the `StructureSpec` duplicate rate has never been measured**, so the effective restart count of the
-  canonical configuration is unknown and the k = 1 reference point is undefined
+- **the `StructureSpec` duplicate rate is instrumented but not yet characterised.** The counter
+  exists since WP-N10 (`22a9059`), canonical key plus per-run, per-stage and per-level counts, and
+  it is verified bit-identical against the campaign. First dim-1 numbers: system 3 at 110 fits over
+  2 unique structures (98.2 %), system 11 at 290 over 3 (99.0 %) — read as *the structure space is
+  exhausted at low stages on dim 1*, *not* as *the search does not explore*. The coupled-system
+  distribution is still missing, so the k = 1 reference point remains undefined and the frozen
+  `k = 3` restart policy is unfounded rather than refuted. Phase C's C-1 arm supplies the
+  distribution over 378 cells at no extra cost
+- **the restart policy has no implementation.** `grep -rn "restart\|retry\|multistart\|n_starts" src/`
+  returns nothing (2026-09-10). The canonical `k = 3` is frozen in
+  `docs/paper1_phaseC_benchmark_plan.md` and exists nowhere in the code; today the effective restart
+  count is a side effect of how often the search regenerates the same structure
 - nothing runs the Python tests; there is no CI for tests, GitLab CI builds the campaign image only
 - environment and test execution need cleanup and faster verification
 

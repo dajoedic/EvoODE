@@ -1,6 +1,9 @@
 # Phase C — Canonical EvoGrow Evaluation: Benchmark Plan
 
-**Status: draft, incomplete, not frozen. Nothing long-running starts from this document yet.**
+**Status: matrix complete (P8, 2026-09-10), not frozen. Nothing long-running starts from this
+document yet.** Every claim now names an arm, a script, an output path and a pass criterion, and the
+five questions this document left open are decided in section 7. What still blocks the freeze is
+listed in section 8: the canonical basis (P2/P3) and the unimplemented restart policy (P6/B3).
 
 This is the operational authority for Phase C. `PAPER_1.md` holds the paper scope and the claims;
 this document holds the experiment matrix, the freeze list and the prerequisites. Where the two
@@ -18,49 +21,103 @@ audit closed and therefore cannot serve as the main benchmark, at a cost of 5,24
 
 ## 1. The claim matrix
 
-| Claim | Question | Experiment | Comparison | Metric | Output |
-|---|---|---|---|---|---|
-| **A** | Can EvoGrow recover governing structure from trajectory data? | canonical capped arm | ground truth | exact recovery, term precision, term recall, structural F1, coefficient error, reconstruction R², trajectory MSE — all by representability class | Main Table |
-| **B** | Does stage capping reduce search effort, and at what cost in quality? | capped vs uncapped, full mirror | paired per (system, seed, IC set) | explored stages, explored levels, nonlinear fits, ODE integrations, core hours, final loss, structural F1, exact recovery, reconstruction, generalization | Main Figure (savings vs Δquality) |
-| **C** | Does a discovered model describe an unseen trajectory of the same system? | canonical capped arm, both directions | train IC vs test IC | R², share R² > 0.9, paired reconstruction vs generalization, by dimension and by exact/non-exact structure | Main Figure |
-| **D** | Where does EvoGrow stand against an established sparse-regression baseline? | EvoGrow vs SINDy, identical trajectories | defined common subset, paired where possible | quality (A and C metrics) **and** cost (fits, integrations, core hours) | Main Table |
-| **Diag** | Is a failure a search failure or an optimization failure? | oracle-structure fit | true structure supplied | success rate, sentinel-loss rate, reconstruction R² | Appendix |
-| **Abl-1** | What does the stage cap change, mechanism-wise? | folded into Claim B | paired | cap decisions, reached stage, truncation | Ablation |
-| **Abl-2** | What does pretuning do? | pretune on vs off | paired seeds | seed diversity, support pattern collapse, R², loss | Ablation |
-| **Abl-3** | How does recovery depend on restarts? | subset, varying k | recovery against **fits**, never against k | recovery, R², total fits, `StructureSpec` duplicate rate | Ablation |
+Every row names an arm, a script, an output path and a pass criterion. **Completed 2026-09-10
+(P8).** A row whose script column says *to build* is a work package, not an open question: the
+experiment is decided, the code is not written yet. Section 2a lists them.
 
-**Open cells in this matrix are blockers.** The matrix is not complete until every row names a
-concrete script, an output path and a pass criterion. That is the remaining work on this document.
+### 1a - Question, comparison, metric
+
+| Claim | Question | Arm | Comparison | Metric | Output |
+|---|---|---|---|---|---|
+| **A** | Can EvoGrow recover governing structure from trajectory data? | C-1 | ground truth | exact recovery **raw and pruned**, term precision, term recall, structural F1, coefficient error, reconstruction R2, trajectory MSE - all by representability class | Main Table |
+| **B** | Does stage capping reduce search effort, and at what cost in quality? | C-1 vs C-2 | paired per (system, seed, IC set) | explored stages, executed levels, nonlinear fits, ODE integrations, final loss, structural F1, exact recovery, reconstruction, generalization; core hours as context only | Main Figure (savings vs quality delta) |
+| **C** | Does a discovered model describe an unseen trajectory of the same system? | C-5 on C-1 | train IC vs test IC, both directions | R2, share R2 > 0.9, paired reconstruction vs generalization, by dimension and by exact/non-exact structure | Main Figure |
+| **D** | Where does EvoGrow stand against an established sparse-regression baseline? | C-1 vs C-4 | paired per (system, IC set), **all 63 systems**, stratified | quality (A and C metrics) **and** cost (fits, integrations, core hours) | Main Table |
+| **Diag** | Is a failure a search failure or an optimization failure? | C-5 on C-1 | true structure supplied | success rate, sentinel-loss rate, reconstruction R2 | Appendix |
+| **Abl-1** | What does the stage cap change, mechanism-wise? | C-1 vs C-2 | paired | cap decisions, reached stage, truncation | Ablation |
+| **Abl-2** | What does pretuning do? | C-3 vs C-1 subset | paired seeds, grouped on **raw** support | seed diversity, support pattern collapse, R2, loss | Ablation |
+| **Abl-3** | How does recovery depend on restarts? | C-5 on C-1 | k in {1, 2, 3, 5, 10} | recovery against **fits**, never against k; R2, total fits, `StructureSpec` duplicate rate | Ablation |
+
+### 1b - Script, output path, pass criterion
+
+| Claim | Script | Output path | Pass criterion |
+|---|---|---|---|
+| **A** | `studies/regression/generate_phase_c_manifest.jl` *(to build)* -> `studies/regression/run_k8s_indexed_cell.jl` -> `analysis/scripts/aggregate/aggregate_phaseb_structure_metrics.py` *(campaign-id parameter to build)* + `aggregate_representability_threeway.py` | records `outputs/studies/regression/phase_c/tasks/`; derived `analysis/data/paper1_phaseC_v1/phasec_structure_metrics_by_cell.csv`, `..._by_equation.csv`; tables `analysis/tables/paper1_phaseC_v1/` | 378/378 records, zero `error`, 378 unique identities, **one identity triple**; every cell carries raw support, pruned match, coefficients, `basis_name` and the support-definition tag non-null; raw **and** pruned reported side by side in every stratum; representability class present for all 63 systems |
+| **B** | same runner with `EVO_REGRESSION_VARIANT=evogrow_v2_2_stage_local` -> `analysis/scripts/aggregate/aggregate_phasec_cap_ablation.py` *(to build)* | `analysis/data/paper1_phaseC_v1/phasec_cap_ablation_paired.csv`; figure `analysis/figures/paper1_phaseC_v1/` | **378 complete pairs**; the identical-conditions check of section 2b passes as a **computed diff**, not an assertion; savings stated in counts first, core hours labelled context; quality delta as quantiles and a full threshold grid, cluster-robust per system |
+| **C** | `studies/regression/wp_n5_ic_generalization.jl --input <phase_c history>` | `outputs/phase_c_generalization/`; `analysis/data/paper1_phaseC_v1/phasec_generalization.csv` | the WP-N5 reconstruction control is **exact to zero on 378/378** - a nonzero control means the record cannot rebuild the model and invalidates the arm; both directions reported separately, never averaged; structure recovery reported beside every R2 figure (DP 9) |
+| **D** | `analysis/scripts/aggregate/run_wp_n6_sindy_baseline.py` on the C-1 trajectories | `analysis/data/paper1_phaseC_v1/phasec_sindy_paired.csv`; table `analysis/tables/paper1_phaseC_v1/` | trajectories **verified byte-identical** to those C-1 consumed, by hash, not by assertion; paired per (system, IC set) over all 63; stratified by dimension **and** three-way representability with **no cross-stratum headline number**; all SINDy configurations reported, none selected post hoc; cost axis beside every quality number; EvoGrow seed handling declared explicitly |
+| **Diag** | `studies/regression/wp_n3_oracle_refit.jl --input <phase_c history>` | `outputs/phase_c_oracle/`; `analysis/data/paper1_phaseC_v1/phasec_oracle.csv` | covers every exact-system cell of C-1; sentinel-loss rate and R2 > 0.9 share reported; each failure class named as search or optimizer, never left implicit |
+| **Abl-1** | folded into Claim B, same script | same as B, columns `stage_caps`, `final_stage`, `eq_final_stages` | truncated equation rows are **counted and named per system**, never reported only as an aggregate |
+| **Abl-2** | C-3 arm -> `analysis/scripts/aggregate/analyze_pretuning_distribution_collapse.py` | `analysis/data/paper1_phaseC_v1/phasec_pretuning_collapse.json` | 120/120 cells; grouping on **raw** `support_terms`, which is what makes the result threshold-independent; per-system permutation test primary, McNemar secondary; reported beside the Phase B WP-A7 figure **with the basis label on each** |
+| **Abl-3** | `studies/regression/wp_n4_multistart_refit.jl --input <phase_c history> --starts 10` | `analysis/data/paper1_phaseC_v1/phasec_restart_curve.csv` | recovery plotted against **fits**, never against k; the measured `StructureSpec` duplicate rate from C-1 reported beside it as the implicit multistart; the text states that k is a **per-structure parameter start count, not a beam size** |
 
 ---
 
-## 2. The four arms
+## 2. The five arms
 
-| Arm | Function | Scope | Estimated cost |
-|---|---|---|---|
-| EvoGrow capped | the proposed final method | 63 systems × 3 seeds × 2 IC sets = **378 cells** | ~2,600 core hours |
-| EvoGrow uncapped | stage-cap ablation (Claim B) | full mirror, **378 paired cells** | ~5,200–7,900 core hours |
-| SINDy | external baseline (Claim D) | all configurations, identical trajectories | minutes |
-| Oracle-structure fit | search-vs-optimizer diagnostic | true structure supplied, parameters only | < 20 core hours |
-| **Total** | | | **~8,000–11,000 core hours, 3–5 weeks on Orion** |
+Costs are **derived from the Phase B registry**, not estimated:
+`experiments/paper1_phaseB_v1/run_registry.csv`, 756 cells, 5,248.0 core hours. Timing is capacity
+planning and is labelled as such (Design Principle 7); it is never evidence for a claim.
 
-Cost derived from Phase B's measured 5,248 core hours over 756 cells. The uncapped arm dominates
-because it executes the full 30 levels where the capped arm stops early; Phase B averaged about 19.7
-executed levels per cell and the late levels are the expensive ones, so the factor is above the
-naive 30/19.7.
+| Arm | Variant / script | Basis | Scope | Core hours |
+|---|---|---|---|---|
+| **C-1** capped canonical | `evogrow_v2_2_stage_capped`, `pretuning = false` | canonical (P3) | 63 systems x 3 seeds x 2 IC sets = **378 cells** | **~3,250** |
+| **C-2** uncapped mirror | `evogrow_v2_2_stage_local`, otherwise identical | canonical | full mirror, **378 paired cells** | **~5,000-8,000** |
+| **C-3** pretuning confirmation | `evogrow_v2_2_stage_capped`, `pretuning = true` | canonical | 20 exact systems x 3 seeds x 2 IC sets = **120 cells** | **~1,330** |
+| **C-4** SINDy baseline | `run_wp_n6_sindy_baseline.py` | n/a | 63 systems x 2 IC sets, all configurations | minutes |
+| **C-5** derived arms | `wp_n3_oracle_refit.jl`, `wp_n4_multistart_refit.jl`, `wp_n5_ic_generalization.jl` | canonical | no new search - all three read C-1's `history.jsonl` | **< 50** |
+| **Total** | | | | **~9,600-12,600, 4-6 weeks on Orion** |
+
+**The C-1 figure supersedes the "~2,600 core hours" this document carried until 2026-09-10.** That
+number was an estimate; 3,249.3 h is the measured cost of the equivalent Phase B arm
+(`pretune_off`, 378 cells). C-2 dominates because it executes the full 30 levels where the capped
+arm stops early: Phase B averaged about 19.7 executed levels per cell and the late levels are the
+expensive ones, so the factor exceeds the naive 30/19.7.
 
 The uncapped arm keeps all 63 systems deliberately. dim 3 carried 75.6 % of Phase B's compute, which
 is exactly where the cap's saving is largest; a demonstration that omits the expensive class invites
 the obvious objection.
 
-### Identical-conditions requirement for Claim B
+**C-3's cost is concentrated in 24 cells, and that is recorded rather than hidden.** Of its
+1,331.4 h, **1,314.5 h (98.7 %) fall on the four dim-3 exact systems** - system 56 alone costs
+602.3 h over six cells - while the remaining 96 cells run in 17.0 h. The median exact `pretune_on`
+cell costs 0.02 h against a maximum of 289.7 h, so no mean over this distribution means anything.
+Including dim 3 was decided on 2026-09-10 so that the collapse is measured under the canonical
+configuration on the class where the method is weakest, accepting that this spends about 16 % of the
+budget on an ablation.
+
+### 2a - What must be built before C-1 starts
+
+Decided experiments whose code does not exist yet. None is an open question; each is a work package.
+
+| # | Item | Why |
+|---|---|---|
+| B1 | `studies/regression/phase_c_config.jl` + `generate_phase_c_manifest.jl` | Phase C needs its own campaign id, variant list and fingerprint; the Phase B pair is frozen and must not be edited |
+| B2 | Record fields `exact_support_match_raw`, `exact_support_match_pruned` and an explicit support-definition tag | Section 4b: one column name currently carries two definitions, and Phase C must name which it stores |
+| B3 | Restart policy in the optimizer, inside `config_fingerprint` | P6 - **no restart, retry or multistart code exists in `src/` at all** (verified 2026-09-10); the frozen `k = 3` is today a sentence in a document |
+| B4 | `phase_c_support.json` via `derive_phase_b_support.jl` on the canonical basis | true support and representability are basis-dependent; if P3 freezes the constant basis, the Phase B table is wrong for Phase C |
+| B5 | `analysis/scripts/aggregate/aggregate_phasec_cap_ablation.py` | the paired capped-vs-uncapped analysis has no script, and Claim B is the paper's main figure |
+| B6 | Campaign-id parameter for the existing aggregate scripts | they are hard-wired to `paper1_phaseB_v1` |
+| B7 | k8s manifests for C-1, C-2, C-3 plus their smoke jobs | the Phase B manifests carry the Phase B campaign path |
+
+Good news from the same audit, which is why this list is short: the uncapped mirror needs **no new
+search code** - `evogrow_v2_2_stage_local` is already a shipped variant selectable through
+`EVO_REGRESSION_VARIANT`; the basis is already a per-variant parameter
+(`build_variant_basis`, `studies/regression/run_regression.jl:413`); coefficients are already
+persisted (`model_terms`, `run_regression.jl:871`); and the oracle diagnostic, the restart curve and
+the generalization pass are three existing scripts that read a `history.jsonl` and need no arm of
+their own.
+
+### 2b - Identical-conditions requirement for Claim B
 
 Capped and uncapped differ in **one** thing: whether the stage cap is applied. Everything else is
-identical and must be verified identical before submission, not assumed:
+identical and must be **verified identical by a computed diff before submission**, not assumed:
 
-systems · trajectories · initial conditions · seeds · basis · stage definitions · optimizer ·
-initialisation · restart policy · parameter budgets · search operators · selection · pruning ·
-integration settings · maximum reachable search space · level budget.
+systems, trajectories, initial conditions, seeds, basis, stage definitions, optimizer,
+initialisation, restart policy, parameter budgets, search operators, selection, pruning,
+integration settings, maximum reachable search space, level budget.
+
+The check is part of B5, and its failure is a hard stop rather than a caveat.
 
 ---
 
@@ -235,18 +292,27 @@ files carrying different definitions.
 (`unmatched_terms`, `gap_reason`) and `representational_adequacy.csv`. Structural metrics are never
 reported without it.
 
-**P6 — Implement and declare the restart policy.** Retry-on-failure up to k = 3, as an explicit
+**P6 — Implement and declare the restart policy. OPEN, and larger than it looks.** Retry-on-failure up to k = 3, as an explicit
 parameter inside the config fingerprint — not as a side effect of random initialisation.
 
-**P7 — Measure the `StructureSpec` duplicate rate.** Without it the k = 1 reference point is not
+> **Verified 2026-09-10: none of this exists.** `grep -rn "restart\|retry\|multistart\|n_starts" src/`
+> returns nothing. The policy is frozen in this document and unimplemented in the code, so today the
+> effective restart count is whatever the search's structure duplication happens to produce. This is
+> work package B3 of section 2a, and section 8 records why its ordering against P7 is uncomfortable.
+
+**P7 — Measure the `StructureSpec` duplicate rate. Counter built (WP-N10, commit `22a9059`); the
+distribution comes from C-1.** Without it the k = 1 reference point is not
 defined, because today a structure is only re-started when the search happens to regenerate it. This
 also settles whether candidate deduplication would change the experimental condition rather than
 merely accelerate it.
 
-**P8 — Complete this matrix.** Every row names a script, an output path and a pass criterion.
+**P8 — Complete this matrix. DONE 2026-09-10.** Every row of section 1b names a script, an output
+path and a pass criterion; the five open questions are decided in section 7; the work packages the
+matrix implies are listed in section 2a.
 
 **P9 — Smoke test on a small system**, per the standing rule for multi-hour runs, before any cluster
-submission.
+submission. Distinct from the 12-cell pilot of Q5: the smoke test asks whether the path runs, the
+pilot asks whether the records support the claims.
 
 ---
 
@@ -303,13 +369,76 @@ table and every claim. They disagree — structurally wrong cells reach a median
 
 ---
 
-## 7. Open questions on this document
+## 7. Decisions on the questions this document left open
 
-1. Does the SINDy arm get a paired subset defined by representability, by dimension, or both? Claim D
-   currently compares dim 1 like-for-like; the all-system comparison has different aggregation units
-   and must not be presented as a counterpart.
-2. Which systems form the Abl-3 restart subset, and which values of k? Both fixed before running.
-3. Does the oracle arm run on the canonical basis only, or on both bases?
-4. Does Phase C re-run the pretuning ablation, or is Phase B's WP-A7 result cited as-is under the
-   predecessor label? Re-running costs a second 378-cell arm.
-5. Pilot before full submission: which subset, and what is the go criterion?
+All five were open on 2026-09-09 and all five are **decided 2026-09-10**. They are recorded here
+with their reasoning because a decision without its reason is re-opened by the next reader.
+
+**Q1 - Scope of the SINDy comparison (Claim D). Decided: all 63 systems, paired and stratified.**
+Pairing is per (system, IC set); stratification is by dimension **and** by three-way
+representability; there is **no aggregated headline number across strata**. The WP-N6 objection was
+never about the system count but about mismatched aggregation units - 11 selected systems x 2 bases
+against all 23 dim-1 systems. Phase C removes that mismatch by construction: C-1 covers all 63
+systems on the same self-integrated trajectories SINDy receives, so the pairing costs nothing. Two
+declarations travel with the table: SINDy is deterministic while EvoGrow carries three seeds, so the
+seed handling is stated explicitly rather than implied; and SINDy's figure remains the maximum over
+its reported configuration set, deliberately in its favour.
+
+**Q2 - How the restart ablation runs. Decided: through the oracle path, not through full search.**
+`wp_n4_multistart_refit.jl` reads C-1's `history.jsonl`, holds the structure fixed and varies only
+the parameter start, over k in {1, 2, 3, 5, 10}. This is the only design that isolates k: in the
+full search the implicit multistart from structure duplicates varies at the same time, so a
+recovery-versus-k curve from full runs would measure two things at once. Cost is under 20 core hours
+and no campaign arm is added. The measured `StructureSpec` duplicate rate from C-1 is reported
+beside the curve as the implicit multistart, and the curve's x-axis is **fits, never k**.
+
+**Q3 - Basis of the oracle arm. Decided: canonical basis only.**
+The oracle answers whether a failure belongs to the search or to the optimizer **in the method as
+configured**. Running it on both bases would answer a basis question, and the basis question is what
+P2 and P3 exist for. The argument is scope, not cost.
+
+**Q4 - Pretuning ablation. Decided: a confirmation arm of 120 cells, not a citation and not a full
+mirror.** The 20 exact systems x 3 seeds x 2 IC sets with `pretuning = true` on the canonical basis,
+arm C-3. Citing Phase B's WP-A7 would have been defensible - it is measured on raw `support_terms`
+and therefore threshold-independent - but if P3 freezes a different basis, the citation crosses a
+configuration boundary in the paper's own ablation section. A full 378-cell mirror was rejected as
+disproportionate. **The cost of this decision is stated in section 2 and is not small: 1,331 core
+hours, 98.7 % of it in 24 dim-3 cells.** Including dim 3 was chosen deliberately so the collapse is
+measured where the method is weakest.
+
+**Q5 - Pilot and go criterion. Decided: a 12-cell pilot, distinct from the P9 smoke test.**
+The smoke test asks whether the cluster path runs at all; the pilot asks whether the **records are
+fit for the claims**. Scope: the cheapest exact system per dimension class, selected by Phase B
+median cell cost - a rule fixed in advance, not a pick after seeing Phase C - crossed with arms C-1
+and C-2, one seed, both IC sets. The go criterion is all five of:
+
+1. every cell completes with `success == true` and no `failure_reason`;
+2. one identity triple across all pilot records, and it matches the manifest;
+3. every new field is present and non-null: raw support, pruned match, coefficients, `basis_name`,
+   support-definition tag, duplicate counters, restart counters;
+4. the section 2b identical-conditions diff between the paired C-1 and C-2 cells shows differences
+   **only** in stage-cap fields;
+5. `wp_n5_ic_generalization.jl` reproduces the reconstruction control exactly to zero on every pilot
+   cell, proving the records can rebuild their own models.
+
+A failure of (4) or (5) is a hard stop: (4) invalidates Claim B and (5) invalidates Claim C, and
+both are cheaper to find now than after 9,600 core hours.
+
+---
+
+## 8. What remains open
+
+Not questions about this document any more, but work and one genuine unknown.
+
+**The canonical basis (P2/P3) is the last open frozen parameter.** The dim-2 probe decides it. Until
+it lands, every arm in section 2 has a basis-shaped hole in it, and B4 cannot run.
+
+**The restart policy rests on a premise the project is currently undermining.** `k = 3` was frozen
+on WP-N4, which measured that a single fit hits the sentinel loss in 15 of 102 cells. WP-N10 then
+measured that on dim 1 a structure receives 20 to 160 fits, so "a single fit" is a state the search
+does not produce there. The policy is not refuted - it is unfounded until the duplicate rate is
+known on coupled systems. C-1 supplies that distribution over 378 cells at no extra cost, but B3
+must be implemented before C-1 starts, which means the policy is implemented before its premise is
+settled. **That ordering is a known defect of the plan and is declared rather than hidden:** if the
+duplicate rate on dim 2 and 3 turns out high, the honest reporting is that the explicit retry adds
+little on top of a large implicit multistart, and that statement is made from Phase C's own data.
