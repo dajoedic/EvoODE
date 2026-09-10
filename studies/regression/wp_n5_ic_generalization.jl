@@ -124,17 +124,7 @@ function _model_from_record(record, basis, dim::Int)
 end
 
 function _pruned_terms(structure::StructureSpec, params::Vector{Float64})
-    offset = 0
-    out = Vector{Vector{Int}}()
-    for got_idxs in structure.active_idxs
-        n_terms = length(got_idxs)
-        eq_params = n_terms == 0 ? Float64[] : params[(offset + 1):(offset + n_terms)]
-        offset += n_terms
-        max_abs = isempty(eq_params) ? 0.0 : maximum(abs, eq_params)
-        threshold = max(1e-6, 1e-3 * max_abs)
-        push!(out, sort(Int[got_idxs[i] for i in 1:n_terms if abs(eq_params[i]) >= threshold]))
-    end
-    return out
+    return pruned_support_idxs(structure, params)
 end
 
 function _same_terms(lhs, rhs)

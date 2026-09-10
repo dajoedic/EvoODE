@@ -30,6 +30,9 @@ CSV_COLUMNS = [
     "loss",
     "objective",
     "exact_support_match",
+    "exact_support_match_raw",
+    "exact_support_match_pruned",
+    "exact_support_match_definition",
     "final_stage",
     "stage_overshoot",
     "wasted_levels",
@@ -50,6 +53,7 @@ CSV_COLUMNS = [
     "total_ode_solves",
     "stage_cap_behavior_fingerprint",
     "support_terms",
+    "pruned_support_terms",
     "condition",
     "use_pretuning",
     "n_levels",
@@ -160,6 +164,13 @@ def row_from_record(record: dict[str, Any], experiment_id: str) -> dict[str, Any
         "loss": blank_if_none(record.get("loss")),
         "objective": "",
         "exact_support_match": support_match(record),
+        "exact_support_match_raw": blank_if_none(record.get("exact_support_match_raw")),
+        "exact_support_match_pruned": blank_if_none(
+            record.get("exact_support_match_pruned", record.get("pruned_match"))
+        ),
+        "exact_support_match_definition": blank_if_none(
+            record.get("exact_support_match_definition", "pruned_support_terms_exact_match")
+        ),
         "final_stage": blank_if_none(record.get("final_stage")),
         "stage_overshoot": blank_if_none(record.get("stage_overshoot")),
         "wasted_levels": blank_if_none(record.get("wasted_levels")),
@@ -182,6 +193,7 @@ def row_from_record(record: dict[str, Any], experiment_id: str) -> dict[str, Any
             record.get("stage_cap_behavior_fingerprint")
         ),
         "support_terms": json_cell(record.get("support_terms")),
+        "pruned_support_terms": json_cell(record.get("pruned_support_terms")),
         "condition": blank_if_none(record.get("condition")),
         "use_pretuning": blank_if_none(record.get("use_pretuning")),
         "n_levels": blank_if_none(record.get("n_levels")),

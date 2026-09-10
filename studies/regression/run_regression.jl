@@ -611,6 +611,10 @@ function active_term_names(structure::StructureSpec, basis::AbstractBasis)
     return [[basis_term_name(basis, term_idx) for term_idx in eq_terms] for eq_terms in structure.active_idxs]
 end
 
+function pruned_active_term_names(structure::StructureSpec, basis::AbstractBasis, params::Vector{Float64})
+    return [[basis_term_name(basis, term_idx) for term_idx in eq_terms] for eq_terms in pruned_support_idxs(structure, params)]
+end
+
 function active_model_terms(structure::StructureSpec, basis::AbstractBasis, params::Vector{Float64})
     terms_by_eq = Vector{Vector{Dict{String, Any}}}()
     offset = 0
@@ -706,6 +710,9 @@ function run_one(variant,
         "r2" => nothing,
         "r2_by_dim" => nothing,
         "pruned_match" => nothing,
+        "exact_support_match_raw" => nothing,
+        "exact_support_match_pruned" => nothing,
+        "exact_support_match_definition" => "pruned_support_terms_exact_match",
         "final_stage" => nothing,
         "expected_stage" => expected_stage,
         "stage_overshoot" => nothing,
@@ -716,6 +723,7 @@ function run_one(variant,
         "eq_wasted_levels" => nothing,
         "derivative_active_fractions" => nothing,
         "support_terms" => nothing,
+        "pruned_support_terms" => nothing,
         "model_terms" => nothing,
         "n_levels" => N_LEVELS,
         "use_pretuning" => use_pretuning,
@@ -849,6 +857,7 @@ function run_one(variant,
         else
             expected_active_idxs_or_nothing(system_id, basis)
         end
+        raw_match = expected_idxs === nothing ? nothing : support_match(result.structure, expected_idxs)
         pruned_match = expected_idxs === nothing ? nothing : support_match_pruned(result.structure, result.params, expected_idxs)
         r2_metrics = r2_summary(result.meta.prediction.Yhat, traj.x, result.loss)
         eq_final_stages = haskey(meta, :eq_final_stages) && meta.eq_final_stages !== nothing ? collect(meta.eq_final_stages) : nothing
@@ -861,6 +870,8 @@ function run_one(variant,
         base_record["r2"] = r2_metrics.r2
         base_record["r2_by_dim"] = r2_metrics.r2_by_dim
         base_record["pruned_match"] = pruned_match
+        base_record["exact_support_match_raw"] = raw_match
+        base_record["exact_support_match_pruned"] = pruned_match
         base_record["final_stage"] = final_stage
         base_record["stage_overshoot"] = stage_overshoot
         base_record["wasted_levels"] = wasted_levels
@@ -869,6 +880,7 @@ function run_one(variant,
         base_record["eq_overshoot"] = local_eq_overshoot
         base_record["eq_wasted_levels"] = local_eq_wasted_levels
         base_record["support_terms"] = active_term_names(result.structure, basis)
+        base_record["pruned_support_terms"] = pruned_active_term_names(result.structure, basis, result.params)
         base_record["model_terms"] = active_model_terms(result.structure, basis, result.params)
         base_record["screening_budgets_active"] = meta.screening_budgets_active
         base_record["derivative_screening_active"] = haskey(meta, :derivative_screening_active) ? meta.derivative_screening_active : false

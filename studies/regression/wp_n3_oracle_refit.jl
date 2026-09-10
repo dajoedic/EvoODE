@@ -138,14 +138,8 @@ function _pruned_terms_from_model(record, dim::Int)
         model_terms[eq] === nothing &&
             error("model_terms[$(eq)] is null")
         coeffs = Float64[Float64(_json_require(term, :coefficient, "model_terms[$(eq)]")) for term in model_terms[eq]]
-        max_abs = isempty(coeffs) ? 0.0 : maximum(abs, coeffs)
-        threshold = max(1e-6, 1e-3 * max_abs)
-        kept = Int[]
-        for (idx, term) in enumerate(model_terms[eq])
-            abs(coeffs[idx]) >= threshold &&
-                push!(kept, Int(_json_require(term, :term_index, "model_terms[$(eq)]")))
-        end
-        push!(out, sort(unique(kept)))
+        term_idxs = Int[Int(_json_require(term, :term_index, "model_terms[$(eq)]")) for term in model_terms[eq]]
+        push!(out, sort(unique(pruned_support_idxs_for_equation(term_idxs, coeffs))))
     end
     return out
 end
