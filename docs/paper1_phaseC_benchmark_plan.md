@@ -94,7 +94,7 @@ Decided experiments whose code does not exist yet. None is an open question; eac
 | # | Item | Why |
 |---|---|---|
 | B1 | `studies/regression/phase_c_config.jl` + `generate_phase_c_manifest.jl` | Phase C needs its own campaign id, variant list and fingerprint; the Phase B pair is frozen and must not be edited |
-| B2 | Record fields `exact_support_match_raw`, `exact_support_match_pruned` and an explicit support-definition tag | Section 4b: one column name currently carries two definitions, and Phase C must name which it stores |
+| B2 | ~~Record fields for raw/pruned support and the definition tag~~ **done (WP-N12, `47920a2`)** | Section 4b: one column name carried two definitions. Records now write `pruned_support_terms`, `exact_support_match_raw`, `exact_support_match_pruned` and `exact_support_match_definition`; the frozen pruning threshold has exactly one implementation instead of five inline copies |
 | B3 | ~~Restart policy in the optimizer~~ **done (WP-N11, `4908b07`)**; remaining part is declaring it in the Phase C fingerprint, which belongs to B1 | P6 - the policy had no code at all until 2026-09-10; `max_fit_attempts` now exists with default 1, verified behaviour-neutral |
 | B4 | `phase_c_support.json` via `derive_phase_b_support.jl` on the canonical basis | true support and representability are basis-dependent; if P3 freezes the constant basis, the Phase B table is wrong for Phase C |
 | B5 | `analysis/scripts/aggregate/aggregate_phasec_cap_ablation.py` | the paired capped-vs-uncapped analysis has no script, and Claim B is the paper's main figure |

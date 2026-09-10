@@ -145,6 +145,40 @@ bestaetigt. Der Report allein haette ihn nicht gezeigt — er meldete die Umsetz
 an dessen Wert die 756 Kampagnenrecords haengen. Arbeitspaket B1 muss ihn in den
 Phase-C-Fingerprint aufnehmen.
 
+### WP-N12: der ausgeduennte Support existiert jetzt als Datum, nicht nur als Bool
+
+<!-- 47920a2 -->
+
+Arbeitspaket B2 des Phase-C-Plans. §4a verlangt **rohen Support, ausgeduennten Support und
+Koeffizienten — alle drei** im Record. Gespeichert waren zwei: `support_terms` (roh) und seit WP-N1
+`model_terms` (mit Koeffizienten). Der ausgeduennte Zustand existierte nur als Bool `pruned_match`,
+war also **nicht rekonstruierbar** — und genau daran war das WP-N7-Abnahmekriterium prinzipiell
+gescheitert.
+
+Neu im Record: `pruned_support_terms`, `exact_support_match_raw`, `exact_support_match_pruned` und
+`exact_support_match_definition`. Der Vermerk traegt den kanonischen Wert, den der Python-Waechter
+`analysis/utils/support_match_definition.py` bereits kennt; damit kann ein Join von Phase A und
+Phase B nicht mehr stillschweigend zwei verschiedene Groessen unter einem Spaltennamen vergleichen
+(§4b). `pruned_match` bleibt unveraendert — Name, Bedeutung, Berechnung —, weil die gesamte
+Phase-B-Auswertung daran haengt.
+
+**Der Nebenbefund ist der aufraeumende Teil.** Die eingefrorene Schwelle `max(1e-6, 1e-3*max_abs)`
+stand **fuenfmal inline** im Code: in `support_match_pruned` und in den drei Refit-Studien N3, N4, N5,
+und sie wurde fuer das neue Feld ein sechstes Mal gebraucht. Jetzt gibt es genau eine
+Implementierung, `pruned_support_idxs_for_equation`; alle Aufrufer haengen daran. Fuenf Kopien einer
+eingefrorenen Konstante sind ein Driftrisiko, das irgendwann still zuschlaegt.
+
+**Abnahme.** Reale Regressionszelle (System 3, Seed 42, IC 1): **0 Abweichungen ueber 79 bestehende
+Felder** gegen `HEAD`, alle vier neuen Felder belegt, `exact_support_match_pruned == pruned_match`,
+ausgeduennte Menge je Gleichung Teilmenge der rohen. Diese Zelle duennt allerdings **nichts** aus —
+roh und ausgeduennt sind identisch, die Teilmengenpruefung also trivial erfuellt. Die Regel wurde
+deshalb zusaetzlich direkt gefahren: ein Term bei 5e-4 gegen eine Schwelle von 2e-3 faellt, und eine
+Gleichung, deren Koeffizienten alle unter dem absoluten Boden 1e-6 liegen, wird **komplett leer**.
+Das ist Eigenschaft der eingefrorenen Regel, nicht neu — aber es sollte bekannt sein, dass die Regel
+eine ganze Gleichung entleeren kann.
+
+Alle drei Fingerprints unveraendert, Julia-Tests gruen, 15 Python-Tests gruen.
+
 ---
 
 ## 2026-09-09 (nachts)
