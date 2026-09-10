@@ -11,17 +11,17 @@ dorthin, nach `PAPER_1.md` oder ins `DIARY.md` — **nicht hierher.**
 ist mit einem Datum versehen. Was älter als ein paar Tage ist, ist vermutlich falsch — dann gilt
 `CLAUDE.md`.
 
-**Stand: 2026-09-09, spätabends. HEAD = `d558828`.**
+**Stand: 2026-09-10, nachmittags. HEAD = `c049f6b`. Working Tree sauber.**
 
 ---
 
 ## 1. Wo das Projekt inhaltlich steht — in drei Sätzen
 
-Paper 1 ist seit dem 09.09. ein **Methodenpaper**: EvoGrow ist der Gegenstand, die Stufenkappe eine
-Komponente mit eigener Ablation, die Failure-Analyse ein Limitations-Abschnitt. Die 756-Zellen-Phase-B-Kampagne
-ist vom Hauptbenchmark zu **Diagnostik und Ablationsquelle degradiert**, weil sie vor Abschluss des
-methodischen Audits gerechnet wurde. Die neue kanonische Evaluation heißt **Phase C** und ist
-definiert, aber nicht gestartet.
+Paper 1 ist ein **Methodenpaper**; die 756-Zellen-Phase-B-Kampagne ist zu Diagnostik und
+Ablationsquelle degradiert. Die kanonische Evaluation heißt **Phase C**, ihre Matrix ist seit dem
+10.09. **vollständig** — jeder Claim nennt Arm, Skript, Ausgabepfad und Pass-Kriterium — und alle
+fünf offenen Planfragen sind entschieden. Gestartet ist Phase C **nicht**: es fehlt die kanonische
+Basis, und die entscheidet ein Probelauf, der gerade rechnet.
 
 Autoritative Quellen, in dieser Reihenfolge: `PAPER_1.md` (Zuschnitt und Claims) →
 `docs/paper1_phaseC_benchmark_plan.md` (Experimentmatrix, Freeze-Liste, Voraussetzungen) →
@@ -38,223 +38,196 @@ kubectl get jobs -n scch-das
 ```
 
 Erwartet: `evoode-wp-n1-dim2-campaign`, Ziel **336** Zellen, `parallelism: 32`.
-Stand 09.09. ~23:00: **46/336 nach 122 Minuten.**
-
-Erwartete Gesamtdauer **~47 Stunden**, also bis etwa **11.09. abends**. Der Fortschritt verlangsamt
-sich stark — Median 1,12 h je Zelle, p90 10,5 h, längste Kampagnenzelle 46,98 h. Ein langsam
-kriechender Zähler am Ende ist **normal, kein Hängen**; mehr Pods würden nichts bringen, weil eine
-Zelle ein Pod ist und nicht teilbar.
+Stand 10.09. ~13:45: **124/336 nach 16 Stunden**, 32 aktiv, **0 failed**, keine Pod-Restarts.
 
 Ergebnisse ohne Anmeldung sichtbar unter:
 `S:\BigDataOrion\data-science\joedicke\wp_n1_dim2_probe_ec3b6bd5b43f06539d38b633257ca51115bfa47f\tasks\`
 
+**Zwei Dinge, die man über diesen Lauf wissen muss.**
+
+**(a) Der Vergleichsarm hat noch nicht begonnen.** Das Manifest schleift `for variant` **außen**
+(`generate_wp_n1_basis_probe_manifest.jl:32`), also ist Index **1–168 die alte Basis** und
+**169–336 die konstante**. Alle bisher fertigen Zellen tragen `basis_name =
+default_staged_polynomial_basis`. Ein Abbruch vor Index 169 hinterließe 168 Zellen einer Basis, die
+wir schon kennen — für die Entscheidung wertlos. Der Lauf ist erst ab dort überhaupt teilauswertbar.
+
+**(b) Der Rest dauert länger als die erste Hälfte.** Die konstante Basis durchsucht einen größeren
+Raum. Realistisch **41–47 Stunden gesamt**, also 11.09. abends bis 12.09. früh. Zeitangaben sind
+Kapazitätsplanung, keine Evidenz (Designprinzip 7).
+
+**Gesundheitsprüfung, falls Zweifel:** 124 Ergebnis-Records auf dem Share, `error` in allen leer,
+ein Git-Hash `ec3b6bd`, ein `config_fingerprint`, ein Verhaltens-Fingerprint. Die WP-N8-Reparatur
+greift nachweislich — kein `not_collected` mehr in echten Daten.
+
 **Wozu der Lauf dient:** Er entscheidet den **letzten offenen eingefrorenen Parameter** der Phase C —
 ob der konstante Term `1` in die kanonische Basis kommt. Ohne diese Entscheidung darf Phase C nicht
-starten.
+starten, und **drei der sieben Arbeitspakete hängen daran**.
 
-**Wie er ausgewertet werden muss** (wichtig, sonst wird falsch verglichen): gegen eine **Rohbasis von
-17,6 %**, nicht gegen die vertrauten 49,1 %. Siehe Abschnitt 4.
+**Wie er ausgewertet werden muss:** gegen eine **rohe dim-2-Basisrate von 17,6 %**, nicht gegen die
+vertrauten 49,1 %. Der Unterschied ist die Ausdünnungsregel, siehe `CLAUDE.md`, Known Gaps.
 
-### Lokal: eine Messung im Hintergrund
+### Lokal: nichts mehr
 
-Eine Regressionszelle auf **System 26** (dim 2, gekoppelt) misst die `StructureSpec`-Duplikatrate.
-Erwartete Laufzeit 11–27 Minuten. Ergebnis landet in
-`outputs/studies/regression/wp_n10_dup_26/history.jsonl`, Felder
-`total_candidate_structures_evaluated` und `unique_candidate_structures_evaluated`.
-
-Falls die Datei fehlt oder leer ist, ist der Lauf gestorben — dann einfach neu starten (Kommando in
-`codex/reports/REPORT_WP_N10.md`).
+Die WP-N10-Messung auf System 26 ist **durchgelaufen**, das Ergebnis steht in Abschnitt 4.
 
 ---
 
-## 3. Was uncommittet im Working Tree liegt — WP-N10
+## 3. Was uncommittet im Working Tree liegt
 
-```text
- M src/structure/evogrow.jl              <- kanonischer Strukturschlüssel + Duplikatzähler
- M studies/regression/run_regression.jl  <- neue Felder in die Records
- M codex/CURRENT_TASK.md, codex/STATUS.md
-?? codex/reports/REPORT_WP_N10.md
-?? test/test_structure_canonical_key.jl
-```
-
-**Die Abnahme ist gefahren und bestanden**, alles davon von Claude verifiziert, nicht von Codex:
-
-| Prüfung | Ergebnis |
-|---|---|
-| A/B bit-identisch (dieselbe Zelle mit/ohne Zähler) | **0 Abweichungen** — `loss` über alle 15 Stellen gleich, `total_loss_evals`, `total_parameter_fits`, `total_ode_solves`, `r2`, `pruned_match`, `support_terms` identisch |
-| `phase_b_fingerprint()` | `604e79733b22d64d`, unverändert |
-| `stage_cap_behavior_fingerprint()` | `ffb0266c7913352c`, unverändert |
-| Tests | 9 grün (`test/test_structure_canonical_key.jl`) |
-
-**Warum noch nicht committet:** Ich wollte die dim-2-Duplikatrate abwarten, damit Abnahme und Befund
-in einem Commit stehen. **Wenn das stört: committen ist unbedenklich**, die Abnahme ist vollständig.
+**Nichts.** Alle sechs Arbeitspakete dieser Sitzung sind abgenommen und committet.
 
 ---
 
-## 4. Die zwei Befunde von heute, die künftige Auswertungen binden
+## 4. Was diese Sitzung erledigt hat
 
-### (a) 36 % unserer Strukturtreffer stammen von der Ausdünnungsregel
+Sechs Arbeitspakete, alle von Claude abgenommen, nicht von Codex.
 
-Auf den 240 exakten Phase-B-Zellen: **roher** exakter Match **70**, **ausgedünnter** Match **110**
-(die berichtete Zahl), **40 Treffer allein durch die Ausdünnung**. Die Aufschlüsselung ist der
-eigentliche Befund:
+| WP | Inhalt | Commit |
+|---|---|---|
+| N10 | `StructureSpec`-Duplikatzähler, verhaltensneutral | `22a9059` |
+| **P8** | **Phase-C-Matrix vollständig, fünf Planfragen entschieden** | `02d80dd` |
+| N11 | Restart-Politik als benannter Parameter, Default k = 1 | `4908b07` |
+| N12 | Roher und ausgedünnter Support getrennt im Record | `47920a2` |
+| N13 | Kampagne als expliziter, geprüfter Parameter der Auswertung | `1c984a6` |
+| N14 | Gepaarte Kappen-Ablation — die Hauptabbildung des Papers | `e738b0c` |
 
-| dim | roh | ausgedünnt | gerettet |
-|---|---:|---:|---:|
-| 1 | 51/72 (70,8 %) | 57/72 (79,2 %) | 6 |
-| **2** | **19/108 (17,6 %)** | **53/108 (49,1 %)** | **34** |
-| 3, 4 | 0 | 0 | 0 |
+**Die dim-2-Duplikatrate ist da und dreht eine Lesart um.** System 26, dim 2: 310 Fits über **45**
+eindeutige Strukturen, Rate 85,5 %. Die Aggregatzahl ähnelt dim 1 (98,2 % und 99,0 %), **die
+Verteilung nicht**: Wiederholungen je Struktur von **1** über einen Median von **5** bis 32, gegen
+55–97 auf dim 1. Strukturen mit **genau einem** Fit gibt es auf gekoppelten Systemen also — und dort
+greift ein expliziter Retry. Die eingefrorene Politik `retry-on-failure bis k = 3` steht damit
+besser da, als die dim-1-Zahlen vermuten ließen. **Eine Zelle entscheidet nichts**, sie zeigt die
+Größenordnung; die Verteilung über 378 Zellen liefert Phase C umsonst.
 
-Auf dim 2 produziert **die Schwelle 64 % der Treffer, nicht die Suche**. Ehrliche Lesart: die Suche
-landet auf gekoppelten Systemen fast nie auf dem exakten Support, sondern auf einer Obermenge, und
-die Schwelle räumt auf.
+**Drei Befunde aus der Abnahme, die kein Report gemeldet hatte** — alle drei durch Ausführung oder
+Gegenrechnen gefunden, nicht durch Lesen:
 
-**Bindende Regeln daraus:** roh **und** ausgedünnt immer nebeneinander berichten. Die Schwelle
-`max(1e-6, 1e-3*max_abs)` bleibt **eingefroren** — das ist ein Grund zu berichten, nie zu justieren
-(WP-V1, WP-N2). Phase-C-Records speichern **roh, ausgedünnt und Koeffizienten**, alle drei.
+- **Das Paket präkompilierte nicht mehr** (WP-N11): eine doppelte Methodendefinition im selben
+  Modul. Verhalten korrekt, aber jeder Julia-Start hätte die volle Kompilierzeit gezahlt — auf 378
+  Pods jede Zelle.
+- **`campaign_manifest_index`** (WP-N14) musste zwischen den Armen übereinstimmen, kann das aber
+  nicht: jeder Arm hat seine eigene Manifestzeile, in Phase B weicht die Spalte in **378 von 378**
+  Paarungen ab. Die Hauptabbildung wäre in jeder Paarung abgebrochen — mit der Meldung „die
+  Bedingungen sind nicht identisch", also einem Buchhaltungsfeld, das wie ein wissenschaftlicher
+  Befund aussieht.
+- **`.gitignore` hätte alle Phase-C-Ergebnisse verschluckt** (bei WP-N13 aufgefallen):
+  `analysis/{data,figures,tables}/*` sind ignoriert mit Ausnahmen **je Kampagne**, und für
+  `paper1_phaseC_v1` gab es keine. Drei Zeilen ergänzt.
 
-Nicht betroffen: **WP-A7** (Pretuning-Seed-Kollaps) gruppiert auf rohen `support_terms` und ist
-schwellenunabhängig. Betroffen und weiterhin zurückgezogen: WP-A6.
-
-### (b) Ein Spaltenname, zwei Bedeutungen
-
-`experiments/run_experiment.jl:405` schreibt den **rohen** Match in `exact_support_match` (Phase-A-Pfad);
-`studies/regression/run_regression.jl` schreibt `pruned_match` unter demselben Namen (Phase-B-Pfad).
-**Phase A und Phase B über diese Spalte zu joinen vergleicht verschiedene Größen.** Wächter:
-`analysis/utils/support_match_definition.py`.
-
----
-
-## 5. Die offene Frage, die als Nächstes entschieden werden muss
-
-**Die eingefrorene Restart-Politik steht auf wackliger Begründung.**
-
-Entschieden am 09.09.: kanonisch ist `pretuning = false` plus **retry-on-failure bis k = 3**.
-Begründung war WP-N4: mit der *wahren* Struktur scheitert ein **einzelner** Fit in 15 von 102 Zellen
-am Sentinel-Loss, bei k = 3 in keiner.
-
-**Die heutige Messung stellt die Prämisse infrage.** Auf dim 1 bekommt jede Struktur effektiv
-**20 bis 160 Fits**, nicht einen:
-
-| System | Fits | eindeutige Strukturen | Duplikatrate |
-|---|---:|---:|---:|
-| 3 | 110 | 2 | 98,2 % |
-| 11 | 290 | 3 | 99,0 % |
-
-Der implizite Multistart ist auf dim 1 also **riesig**, und WP-N4 lief auf dim-1-Zellen — genau dort.
-Ein „einzelner Fit" ist ein Zustand, den die Suche dort gar nicht herstellt.
-
-**Wichtige Einordnung, die eine frühere Fehldeutung korrigiert:** Die hohe Duplikatrate heißt **nicht**
-„die Suche exploriert nicht". Auf dim 1 und niedriger Stufe ist der Strukturraum so klein, dass es
-kaum mehr Strukturen *gibt*. Der Befund lautet „Raum erschöpft", nicht „Suche untätig".
-
-**Was die Entscheidung bringt:** die laufende dim-2-Messung (System 26). Ist die Duplikatrate auf
-gekoppelten Systemen ebenfalls sehr hoch, trägt der explizite Retry kaum etwas bei und die Politik
-gehört neu begründet. Ist sie niedrig, greift er genau dort, wo die Trefferquote 0 von 50 ist.
-**Eine einzelne Zelle entscheidet die Frage nicht** — sie zeigt die Größenordnung. Phase C liefert
-die belastbare Verteilung über 378 Zellen umsonst, weil der Zähler jetzt drin ist.
+**Und eine falsche Beschreibung im Plan selbst:** B6 behauptete, die Aggregatskripte seien auf
+Phase B verdrahtet. Sie waren es nie — nur ihre Defaults. Die echte Lücke war, dass
+`verify_campaign_registry.py` `experiment_id` **überhaupt nicht** prüfte; eine Registry aus zwei
+Kampagnen bestand die Prüfung.
 
 ---
 
-## 6. Was danach ansteht
+## 5. Was als Nächstes ansteht
 
-Die blockierenden Voraussetzungen stehen vollständig in
-`docs/paper1_phaseC_benchmark_plan.md` §4. Kurzfassung des Stands:
+**Die Arbeit, die ohne die Basisentscheidung möglich ist, ist aufgebraucht.** Freeze-Liste
+(`docs/paper1_phaseC_benchmark_plan.md` §2a und §4):
 
 | | Voraussetzung | Stand |
 |---|---|---|
-| P1 | `git_hash` im Probe-Skript reparieren | **erledigt** (WP-N8) |
-| P2 | dim-2-Probelauf | **läuft** |
-| P3 | kanonische Basis entscheiden und einfrieren | wartet auf P2 |
-| P4 | Strukturmetriken (F1, Precision, Recall, Koeffizientenfehler) | **erledigt** (WP-N7/N7b) |
-| P5 | dreiwertige Repräsentierbarkeit | **erledigt** (WP-N7) |
-| P6 | Restart-Politik implementieren und deklarieren | **offen**, siehe §5 |
-| P7 | Duplikatrate messen | **Zähler gebaut** (WP-N10), Zahl kommt aus Phase C |
-| P8 | Phase-C-Matrix vervollständigen | offen |
-| P9 | Smoke-Test vor Einreichung | offen |
+| P1 | `git_hash` im Probe-Skript | erledigt (WP-N8) |
+| P2 | dim-2-Probelauf | **läuft**, 124/336 |
+| P3 | kanonische Basis entscheiden und einfrieren | **wartet auf P2 — der Engpass** |
+| P4/P5 | Strukturmetriken, dreiwertige Repräsentierbarkeit | erledigt (WP-N7/N7b) |
+| P6 | Restart-Politik | Code erledigt (WP-N11), Deklaration im Phase-C-Fingerprint offen → B1 |
+| P7 | Duplikatrate | Zähler erledigt (WP-N10), Verteilung kommt aus C-1 |
+| P8 | Phase-C-Matrix | **erledigt** |
+| P9 | Smoke-Test und 12-Zellen-Pilot | offen |
+| B1 | `phase_c_config.jl` + Manifestgenerator | **offen, braucht die Basis** |
+| B2 | Roh/Ausgedünnt-Felder | erledigt (WP-N12) |
+| B4 | Support-Tabelle für die kanonische Basis | **offen, braucht die Basis** |
+| B5 | Auswertung Claim B | erledigt (WP-N14) |
+| B6 | Kampagne als geprüfter Parameter | erledigt (WP-N13) |
+| B7 | k8s-Manifeste | **offen, braucht B1** |
 
-Dazu **fünf offene Fragen** in §7 des Phase-C-Plans, die den Freeze blockieren: Zuschnitt der
-SINDy-Vergleichsmenge, Systeme und k-Werte der Restart-Ablation, Oracle-Arm auf einer oder beiden
-Basen, Pretuning-Ablation neu rechnen oder Phase B zitieren, Pilot samt Go-Kriterium.
+**B1 hat drei Anforderungen geerbt**, alle im Plan festgeschrieben, alle leicht zu vergessen:
 
-Zu einer davon gibt es bereits eine begründete Empfehlung: **die Pretuning-Ablation muss Phase C
-nicht neu rechnen.** WP-A7 ist schwellenunabhängig gemessen und unter Vorgänger-Label zitierbar —
-das spart einen kompletten 378-Zellen-Arm.
+1. die Spaltenliste, die das Ablationsskript verlangt — allen voran **`executed_levels`**, und
+   ausdrücklich **nicht** `n_levels`, das die Konstante 30 ist;
+2. die Deklaration des Restart-Parameters im **Phase-C**-Fingerprint, wobei k = 3 in der
+   Phase-C-Konfiguration gesetzt wird und **nie** im Optimierer-Default, der auf 1 bleibt;
+3. die Phase-C-Erwartungswerte für `verify_campaign_registry.py`, der sonst gegen Phase-B-Zahlen
+   prüft (756 statt 378 und so weiter).
 
 ---
 
-## 6b. Was man nicht vergessen darf
+## 6. Was man nicht vergessen darf
 
-Dinge, die nichts blockieren und genau deshalb untergehen. Keine davon ist dringend; jede kostet
-später mehr als jetzt.
+Dinge, die nichts blockieren und genau deshalb untergehen.
 
 **Das Deploy-Token für die Registry läuft ab.** Am 09.09. ist genau das passiert, mitten im
-Smoke-Job (`ErrImagePull` mit `HTTP Basic: Access denied` — es sieht nach einem fehlenden Image aus,
-ist aber die Anmeldung). Das aktuelle Token ist `gitlab+deploy-token-13`, angelegt 09.09. **Pods
-werden über die ganze Laufzeit hinweg neu erzeugt** — läuft das Token mitten in einem mehrtägigen
-Lauf ab, entsteht ein halb fertiger Datensatz mit einer Lücke in der Mitte. Deshalb: Ablaufdatum
-großzügig, und **immer erst den Smoke-Job**. Fehlermodus dokumentiert in
-`docs/hpc_deployment_guide.md` §8.
-
-**Das Token steht im Klartext im Chatverlauf vom 09.09.** Read-only auf die Registry beschränkt,
-aber wenn es stört: tauschen.
+Smoke-Job (`ErrImagePull` mit `HTTP Basic: Access denied` — sieht nach fehlendem Image aus, ist aber
+die Anmeldung). Aktuelles Token `gitlab+deploy-token-13`, angelegt 09.09. **Pods werden über die
+ganze Laufzeit neu erzeugt** — läuft das Token mitten in einem mehrtägigen Lauf ab, entsteht ein
+halb fertiger Datensatz mit einer Lücke in der Mitte. Also: Ablaufdatum großzügig, und **immer erst
+den Smoke-Job**. Fehlermodus in `docs/hpc_deployment_guide.md` §8. Das Token steht im Klartext im
+Chatverlauf vom 09.09.; read-only auf die Registry beschränkt, aber tauschbar, wenn es stört.
 
 **`parallelism` steht auf 32, nicht auf den vereinbarten 16.** Begründung als Kommentar im Manifest
-`k8s/wp_n1_basis_probe_dim2_campaign_job.yaml`. Der Namespace hat keine `ResourceQuota` und keine
-`LimitRange`, die 16 waren eine Absprache — nicht abgestimmt, aber technisch unbedenklich, weil
-`requests == limits` gilt und überzählige Pods `Pending` bleiben statt jemanden zu verdrängen.
-Falls sich jemand meldet: das ist der Kontext.
+`k8s/wp_n1_basis_probe_dim2_campaign_job.yaml`. Technisch unbedenklich, weil `requests == limits`
+gilt und überzählige Pods `Pending` bleiben. Falls sich jemand meldet: das ist der Kontext.
 
 **Die 756 Kampagnenzellen tragen keine Koeffizienten.** Jede dimensionsübergreifende
-Generalisierungszahl erfordert einen Neulauf. Das ist der Grund, warum Phase C überhaupt nötig ist.
+Generalisierungszahl erfordert einen Neulauf. Das ist der Grund, warum Phase C nötig ist.
 
-**Niemand führt die Python-Tests aus.** Die GitLab-CI baut ausschließlich das Kampagnen-Image. Ein
-Wächtertest war drei Wochen rot, ohne dass es auffiel. Aktuell 15 Tests grün, aber nur weil sie von
-Hand laufen.
+**Niemand führt die Python-Tests automatisch aus.** Die GitLab-CI baut ausschließlich das
+Kampagnen-Image. Aktuell **27 Tests grün**, aber nur weil sie von Hand laufen. Ein Wächtertest war
+schon einmal drei Wochen rot, ohne dass es auffiel — und WP-N13 hat genau deshalb die Exit-Codes
+getrennt geprüft, nicht nur die Meldungen.
 
 **Elf Skripte** unter `benchmarks/` und `studies/` konstruieren den Optimierer ohne Budget und sind
 seit WP-B3 unbeschränkt. Bewusster Rückstand, gelistet in `codex/reports/REPORT_WP_D3.md`.
 
 **Die externen Spalten des Protokoll-Audits** (`docs/paper1_odebench_protocol_alignment.md`) sind
-der letzte substanzielle Phase-3-Posten — inklusive der offenen Frage, ob publizierte Vergleichszahlen
-auf den *mitgelieferten* Trajektorien gerechnet wurden. Falls ja, arbeiten wir auf saubereren Daten
-als der Vergleich, und das muss deklariert werden.
+der letzte substanzielle Phase-3-Posten — inklusive der offenen Frage, ob publizierte
+Vergleichszahlen auf den *mitgelieferten* Trajektorien gerechnet wurden. Falls ja, arbeiten wir auf
+saubereren Daten als der Vergleich, und das muss deklariert werden.
 
-**`DIARY.md` ist 400+ KB und wird bei fast jedem Commit angefasst.** Das hatte `.git` auf 852 MB
-aufgebläht (tatsächlicher Inhalt: 6,3 MB, der Rest lose Objekte). Nach `git gc --prune=now` sind es
-11 MB. Gelegentlich wiederholen.
+**`DIARY.md` wächst schnell und wird bei fast jedem Commit angefasst.** Das hatte `.git` schon
+einmal auf 852 MB aufgebläht. Nach `git gc --prune=now` sind es 11 MB. Gelegentlich wiederholen.
+
+**Reste im Arbeitsbaum, alle gitignoriert:** `outputs/wp_n13_bytecheck/`,
+`analysis/tables/wp_n13_bytecheck/`, `.pytest_tmp/`. Können weg, stören aber nicht.
 
 ---
 
 ## 7. Arbeitsweise — was eine neue Sitzung wissen muss
 
 **Codex-Handschlag.** Claude schreibt `codex/CURRENT_TASK.md` und startet die Sitzung selbst per
-`codex exec`; Codex schreibt ausschließlich `codex/STATUS.md`. **Codex kann in dieser Umgebung kein
-Julia ausführen** — Julia-Pakete werden geschrieben, als `blocked` gemeldet, und Claude fährt die
-Abnahme. Python läuft normal.
+`codex exec`; Codex schreibt ausschließlich `codex/STATUS.md`. **Julia kann Codex hier nicht
+ausführen** — Julia-Pakete werden geschrieben, als `blocked` gemeldet, Claude fährt die Abnahme.
+**Python läuft normal**, dort fährt Codex die Abnahme selbst und meldet `done`.
 
-**Zwei Fallen, heute beide aufgetreten:**
+**Drei Startfallen, alle real aufgetreten:**
 
-- Codex **löscht** `STATUS.md` manchmal, statt sie zu überschreiben — das Signal fehlt dann kurz ganz.
-- Bei einem Absturz (`ERROR: Selected model is at capacity`) bleibt `status: working` stehen. Eine
-  tote Sitzung ist an `STATUS.md` **nicht** von einer arbeitenden zu unterscheiden. **Immer beides
-  prüfen: Working Tree und Prozess-CPU-Zeit**, nie nur `STATUS.md`.
+- `codex exec` mit `nohup ... &` meldet **sofort exit 0**, während der Kindprozess weiterläuft. Am
+  10.09. sind so **drei gleichzeitige Sitzungen** am selben Auftrag entstanden. Immer als getrackten
+  Hintergrundprozess starten, und **vor jedem Neustart** die Prozessliste prüfen:
+  `Get-CimInstance Win32_Process -Filter "Name='codex.exe'"`. Die Sitzung des VS-Code-Plugins ist an
+  `.vscode\extensions\openai.chatgpt-*` in der Kommandozeile erkennbar und gehört nicht dazu.
+- Codex **löscht** `STATUS.md` manchmal, statt sie zu überschreiben.
+- Bei einem Absturz bleibt `status: working` stehen. **Immer beides prüfen: Working Tree und
+  CPU-Zeit**, nie nur `STATUS.md`. Ein leerer Log ist kein Beleg für einen toten Lauf.
+
+**Den Reports nicht blind glauben.** Alle drei gravierenden Befunde dieser Sitzung standen in
+keinem Report — sie kamen aus Gegenlesen und Ausführen. Bewährt hat sich: **eine reale Zelle
+bitgleich gegen `HEAD`** (Julia) und **Ableitungen an Ort und Stelle neu erzeugen, `git status` muss
+leer bleiben** (Python). Letzteres deckt 43 von 45 Phase-B-Dateien ab.
 
 **Lange Läufe startet ausschließlich der Nutzer.** Claude bereitet vor, prüft, gibt die Kommandos im
 Chat aus — mit Zweck, Dauer, Pass-Kriterium und ob die Ausgabe gebraucht wird.
 
-**Wall-clock ist nie Evidenz** (Designprinzip 7). Kostenaussagen ruhen auf Zählern; Zeiten dienen
-der Kapazitätsplanung und werden als solche gekennzeichnet.
-
-**Immer beide Metriken** (Designprinzip 9): Strukturtreffer **und** Anteil R² > 0,9, nie eine allein.
-
-**Kein Mittelwert oder Median als Effektstärke** — Quantile und Schwellengitter, und die Schwelle
-wird nie nach Sicht der Daten gewählt.
+**Wall-clock ist nie Evidenz** (Designprinzip 7). **Immer beide Metriken** (Designprinzip 9):
+Strukturtreffer **und** Anteil R² > 0,9. **Kein Mittelwert oder Median als Effektstärke** —
+Quantile und Schwellengitter, und die Schwelle wird nie nach Sicht der Daten gewählt.
 
 ---
 
 ## 8. Wenn dieses Dokument alt ist
 
 Prüfe zuerst `git log --oneline -10` und die obersten Einträge in `DIARY.md`. Weicht der HEAD von
-`d558828` ab, ist alles in Abschnitt 2 und 3 hier vermutlich überholt — dann gilt `CLAUDE.md`, und
-dieses Dokument gehört neu geschrieben statt geflickt.
+`c049f6b` ab, ist alles in Abschnitt 2 bis 4 vermutlich überholt — dann gilt `CLAUDE.md`, und dieses
+Dokument gehört neu geschrieben statt geflickt.
