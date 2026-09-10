@@ -4,7 +4,7 @@ import math
 import random
 import sys
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any
 
 import pandas as pd
 from scipy.stats import wilcoxon
@@ -17,6 +17,18 @@ if str(ANALYSIS_ROOT) not in sys.path:
 from utils.io import load_run_registry  # noqa: E402
 from utils.campaign import require_single_campaign_id  # noqa: E402
 from utils.metrics import check_required_columns  # noqa: E402
+from utils.paired_stats import (  # noqa: E402
+    cluster_bootstrap_ci,
+    cluster_permutation_p,
+    cluster_values,
+    coerce_bool,
+    contingency_table,
+    exact_binomial_two_sided,
+    fail,
+    mean,
+    median,
+    pair_registry_by_conditions,
+)
 
 
 PRETUNE_ON = "evogrow_v2_2_stage_capped_pretune_on"
@@ -82,29 +94,11 @@ def resolve_path(path_value: str, analysis_root: Path, config_path: Path) -> Pat
     return analysis_relative.resolve()
 
 
-def fail(message: str) -> None:
-    raise ValueError(message)
-
-
 def coerce_numeric(df: pd.DataFrame, columns: list[str]) -> pd.DataFrame:
     coerced = df.copy()
     for column in columns:
         coerced[column] = pd.to_numeric(coerced[column], errors="coerce")
     return coerced
-
-
-def coerce_bool(value: Any) -> int | None:
-    if pd.isna(value):
-        return None
-    if isinstance(value, bool):
-        return int(value)
-    text = str(value).strip().lower()
-    if text in {"true", "1", "yes", "y"}:
-        return 1
-    if text in {"false", "0", "no", "n"}:
-        return 0
-    return None
-
 
 def condition_from_variant(variant_slug: str) -> str:
     if variant_slug == PRETUNE_ON:
@@ -138,17 +132,17 @@ def pair_registry(
     expected_exact_pairs: int,
     expected_surrogate_pairs: int,
 ) -> pd.DataFrame:
-    pair_rows: list[dict[str, Any]] = []
     key_columns = ["system_id", "seed", "initial_condition_set"]
-    for key, group in registry.groupby(key_columns, sort=True, dropna=False):
-        by_condition = {row["condition"]: row for _, row in group.iterrows()}
-        if set(by_condition) != {"pretune_on", "pretune_off"} or len(group) != 2:
-            fail(
-                "incomplete or duplicate pair for "
-                f"system_id={key[0]}, seed={key[1]}, initial_condition_set={key[2]}"
-            )
-        on = by_condition["pretune_on"]
-        off = by_condition["pretune_off"]
+    pairs = pair_registry_by_conditions(
+        registry,
+        key_columns=key_columns,
+        condition_column="condition",
+        left_condition="pretune_on",
+        right_condition="pretune_off",
+        expected_total_pairs=expected_total_pairs,
+    )
+    pair_rows: list[dict[str, Any]] = []
+    for key, on, off in pairs:
         if on["system_representability"] != off["system_representability"]:
             fail(f"representability mismatch within pair {key}")
         if int(on["system_dim"]) != int(off["system_dim"]):
@@ -185,103 +179,6 @@ def pair_registry(
         )
     return paired
 
-
-def median(values: list[float]) -> float:
-    if not values:
-        fail("cannot compute median of an empty value set")
-    ordered = sorted(values)
-    mid = len(ordered) // 2
-    if len(ordered) % 2:
-        return float(ordered[mid])
-    return float((ordered[mid - 1] + ordered[mid]) / 2.0)
-
-
-def percentile(values: list[float], probability: float) -> float:
-    if not values:
-        fail("cannot compute percentile of an empty value set")
-    ordered = sorted(values)
-    if len(ordered) == 1:
-        return float(ordered[0])
-    position = probability * (len(ordered) - 1)
-    lower = math.floor(position)
-    upper = math.ceil(position)
-    if lower == upper:
-        return float(ordered[lower])
-    fraction = position - lower
-    return float(ordered[lower] * (1.0 - fraction) + ordered[upper] * fraction)
-
-
-def exact_binomial_two_sided(discordant: int, off_only: int) -> float:
-    if discordant == 0:
-        return 1.0
-    tail = min(off_only, discordant - off_only)
-    probability = sum(math.comb(discordant, k) for k in range(tail + 1)) / (2**discordant)
-    return min(1.0, 2.0 * probability)
-
-
-def cluster_values(df: pd.DataFrame, diff_column: str) -> dict[int, list[float]]:
-    clusters: dict[int, list[float]] = {}
-    for system_id, group in df.groupby("system_id", sort=True):
-        clusters[int(system_id)] = [float(value) for value in group[diff_column].tolist()]
-    if not clusters:
-        fail(f"no clusters available for {diff_column}")
-    return clusters
-
-
-def cluster_bootstrap_ci(
-    clusters: dict[int, list[float]],
-    statistic: Callable[[list[float]], float],
-    rng: random.Random,
-) -> tuple[float, float]:
-    system_ids = list(clusters)
-    estimates = []
-    for _ in range(BOOTSTRAP_REPLICATES):
-        sampled_values: list[float] = []
-        for _ in system_ids:
-            sampled_values.extend(clusters[rng.choice(system_ids)])
-        estimates.append(statistic(sampled_values))
-    return (
-        percentile(estimates, BOOTSTRAP_ALPHA / 2.0),
-        percentile(estimates, 1.0 - BOOTSTRAP_ALPHA / 2.0),
-    )
-
-
-def cluster_permutation_p(
-    clusters: dict[int, list[float]],
-    statistic: Callable[[list[float]], float],
-    rng: random.Random,
-) -> float:
-    observed_values = [value for values in clusters.values() for value in values]
-    observed = statistic(observed_values)
-    threshold = abs(observed)
-    extreme = 0
-    system_items = list(clusters.items())
-    for _ in range(PERMUTATION_COUNT):
-        permuted_values: list[float] = []
-        for _, values in system_items:
-            sign = -1.0 if rng.random() < 0.5 else 1.0
-            permuted_values.extend(sign * value for value in values)
-        if abs(statistic(permuted_values)) >= threshold - 1e-15:
-            extreme += 1
-    return (extreme + 1.0) / (PERMUTATION_COUNT + 1.0)
-
-
-def mean(values: list[float]) -> float:
-    if not values:
-        fail("cannot compute mean of an empty value set")
-    return float(sum(values) / len(values))
-
-
-def contingency_table(df: pd.DataFrame) -> dict[str, int]:
-    pairs = df[["exact_support_match_off", "exact_support_match_on"]].dropna()
-    return {
-        "off_0_on_0": int(((pairs["exact_support_match_off"] == 0) & (pairs["exact_support_match_on"] == 0)).sum()),
-        "off_0_on_1": int(((pairs["exact_support_match_off"] == 0) & (pairs["exact_support_match_on"] == 1)).sum()),
-        "off_1_on_0": int(((pairs["exact_support_match_off"] == 1) & (pairs["exact_support_match_on"] == 0)).sum()),
-        "off_1_on_1": int(((pairs["exact_support_match_off"] == 1) & (pairs["exact_support_match_on"] == 1)).sum()),
-    }
-
-
 def analyze_exact_support(pairs: pd.DataFrame, rng: random.Random) -> dict[str, Any]:
     exact = pairs.loc[pairs["system_representability"] == "exact"].copy()
     if exact.empty:
@@ -297,8 +194,8 @@ def analyze_exact_support(pairs: pd.DataFrame, rng: random.Random) -> dict[str, 
     naive_p = exact_binomial_two_sided(discordant, table["off_1_on_0"])
     clusters = cluster_values(exact, "support_diff")
     effect = mean(exact["support_diff"].astype(float).tolist())
-    ci = cluster_bootstrap_ci(clusters, mean, rng)
-    cluster_p = cluster_permutation_p(clusters, sum, rng)
+    ci = cluster_bootstrap_ci(clusters, mean, rng, BOOTSTRAP_REPLICATES)
+    cluster_p = cluster_permutation_p(clusters, sum, rng, PERMUTATION_COUNT)
 
     dimension_rows = []
     for dim, group in exact.groupby("system_dim", sort=True):
@@ -342,8 +239,8 @@ def analyze_continuous(
     clusters = cluster_values(subset, diff_column)
     wilcoxon_result = wilcoxon(diffs, alternative="two-sided", zero_method="wilcox")
     effect = median(diffs)
-    ci = cluster_bootstrap_ci(clusters, median, rng)
-    cluster_p = cluster_permutation_p(clusters, median, rng)
+    ci = cluster_bootstrap_ci(clusters, median, rng, BOOTSTRAP_REPLICATES)
+    cluster_p = cluster_permutation_p(clusters, median, rng, PERMUTATION_COUNT)
     result: dict[str, Any] = {
         "target": target,
         "system_representability": representability,
