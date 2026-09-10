@@ -269,6 +269,37 @@ Spaltenabgleich gegen die echte Registry zeigt keine Spalte mehr, die legitim ab
 verboten waere — waehrend `use_pretuning`, `seed`, `basis_name`, `n_levels` und alle drei
 Identitaets-Fingerprints weiterhin uebereinstimmen muessen.
 
+### Die dim-2-Duplikatrate ist da, und sie stuetzt die Restart-Politik statt sie zu untergraben
+
+Die WP-N10-Messung auf System 26 (dim 2, gekoppelt, Seed 42, IC 1) ist durchgelaufen. Ergebnis:
+
+| | dim 1, System 3 | dim 1, System 11 | **dim 2, System 26** |
+|---|---:|---:|---:|
+| Fits | 110 | 290 | **310** |
+| eindeutige Strukturen | 2 | 3 | **45** |
+| Duplikatrate | 98,2 % | 99,0 % | **85,5 %** |
+| mittlere Fits je Struktur | 55 | 97 | **6,9** |
+
+Die Aggregatrate von 85,5 % sieht aehnlich aus, **die Verteilung ist es nicht**. Wiederholungen je
+Struktur: Minimum **1**, q25 = 3, Median **5**, q75 = 10, q95 = 20, Maximum 32.
+
+**Das dreht die Lesart aus der Uebergabe vom 09.09.** Dort stand, WP-N4 habe auf dim-1-Zellen
+gemessen, wo ein „einzelner Fit" ein Zustand ist, den die Suche gar nicht herstellt — die Praemisse
+der Politik `retry-on-failure bis k = 3` sei damit offen. Auf dim 2 gilt das nicht: `q0 = 1` heisst,
+es gibt Strukturen, die **genau einen** Fit bekommen, und der Median liegt bei 5 statt bei 55 bis 97.
+Der implizite Multistart ist auf gekoppelten Systemen also um eine Groessenordnung kleiner, und ein
+expliziter Retry greift genau am unteren Ende dieser Verteilung — dort, wo die Trefferquote 0 von 50
+ist.
+
+**Bewertung mit der gebotenen Zurueckhaltung:** das ist **eine** Zelle, ein System, ein Seed, ein
+IC-Satz. Sie entscheidet die Frage nicht, sie zeigt die Groessenordnung — genau die Rolle, die ihr am
+09.09. zugedacht war. Die belastbare Verteilung ueber 378 Zellen liefert Phase C umsonst, weil der
+Zaehler seit WP-N10 in der Kampagnenbahn steckt.
+
+Was bleibt: die hohe Duplikatrate heisst weiterhin **nicht** „die Suche exploriert nicht". Auf dim 2
+sind es 45 eindeutige Strukturen gegen 2 und 3 auf dim 1 — der Raum ist groesser und wird auch
+begangen.
+
 ---
 
 ## 2026-09-09 (nachts)

@@ -746,12 +746,15 @@ the coupled search path 1e-6 is the cheaper, behaviour-equal tolerance; the Syst
   quantities.** Phase C records must name the definition
 - **the `StructureSpec` duplicate rate is instrumented but not yet characterised.** The counter
   exists since WP-N10 (`22a9059`), canonical key plus per-run, per-stage and per-level counts, and
-  it is verified bit-identical against the campaign. First dim-1 numbers: system 3 at 110 fits over
-  2 unique structures (98.2 %), system 11 at 290 over 3 (99.0 %) — read as *the structure space is
-  exhausted at low stages on dim 1*, *not* as *the search does not explore*. The coupled-system
-  distribution is still missing, so the k = 1 reference point remains undefined and the frozen
-  `k = 3` restart policy is unfounded rather than refuted. Phase C's C-1 arm supplies the
-  distribution over 378 cells at no extra cost
+  it is verified bit-identical against the campaign. dim 1: system 3 at 110 fits over 2 unique
+  structures (98.2 %), system 11 at 290 over 3 (99.0 %) — read as *the structure space is exhausted
+  at low stages on dim 1*, *not* as *the search does not explore*. **First coupled cell (system 26,
+  dim 2): 310 fits over 45 unique structures, 85.5 %** — the aggregate looks similar but the
+  distribution does not: repeats per structure run from **1** through a median of **5** to 32,
+  against 55–97 on dim 1. Structures receiving exactly one fit **do** occur on coupled systems, which
+  is where an explicit retry bites — so the frozen `k = 3` is better founded than the dim-1 numbers
+  suggested. **One cell shows the order of magnitude and decides nothing**; Phase C's C-1 arm
+  supplies the distribution over 378 cells at no extra cost
 - ~~the restart policy has no implementation~~ — **built 2026-09-10 (WP-N11, `4908b07`)**.
   `BFGSOptimizer.max_fit_attempts` defaults to **1**, so behaviour is unchanged and was verified
   bit-identical on a real regression cell across 84 fields. Attempt 1 uses the canonical start, later

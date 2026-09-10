@@ -462,11 +462,17 @@ Not questions about this document any more, but work and one genuine unknown.
 **The canonical basis (P2/P3) is the last open frozen parameter.** The dim-2 probe decides it. Until
 it lands, every arm in section 2 has a basis-shaped hole in it, and B4 cannot run.
 
-**The restart policy rests on a premise the project is currently undermining.** `k = 3` was frozen
-on WP-N4, which measured that a single fit hits the sentinel loss in 15 of 102 cells. WP-N10 then
-measured that on dim 1 a structure receives 20 to 160 fits, so "a single fit" is a state the search
-does not produce there. The policy is not refuted - it is unfounded until the duplicate rate is
-known on coupled systems. C-1 supplies that distribution over 378 cells at no extra cost, but the
+**The restart policy's premise was in doubt and the first coupled measurement supports it.** `k = 3`
+was frozen on WP-N4, which measured that a single fit hits the sentinel loss in 15 of 102 cells.
+WP-N10 then measured that on dim 1 a structure receives 55 to 97 fits, so "a single fit" is a state
+the search does not produce there, and the premise looked unfounded.
+
+The first dim-2 cell (system 26, seed 42, IC 1) points the other way. The aggregate duplicate rate is
+comparable — 85.5 % against 98.2 % and 99.0 % — but **the distribution is not**: repeats per structure
+run from a minimum of **1** through a median of **5** to a maximum of 32, against 55 to 97 on
+dimension 1. Structures that receive exactly one fit **do** occur on coupled systems, and that is
+precisely where an explicit retry-on-failure bites. **One cell decides nothing** — it shows the order
+of magnitude. C-1 supplies the distribution over 378 cells. C-1 supplies that distribution over 378 cells at no extra cost, but the
 policy had to be built before C-1 starts — and it was, on 2026-09-10 (WP-N11), **before its premise
 is settled**. What softens this is that the implementation is behaviour-neutral at its default of
 k = 1 and was verified so; the choice of k = 3 is a separate act, and it happens in the Phase C
