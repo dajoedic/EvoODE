@@ -220,6 +220,55 @@ status` bleibt leer. Die zwei Ausnahmen sind `system_classification.csv` und
 `paper1_phaseC_v1` gab es keine — genau die Ausgabepfade, die §1b des Plans nennt, waeren erzeugt und
 nie versioniert worden. Drei Zeilen ergaenzt.
 
+### WP-N14: die gepaarte Kappen-Ablation steht — und ein Fehlalarm haette wie ein Befund ausgesehen
+
+<!-- e738b0c -->
+
+Arbeitspaket B5, die Auswertung fuer Claim B und damit die **Hauptabbildung** des Papers. Bisher ruhte
+diese Haelfte des Claims auf **30 Zellen ueber 5 Systeme**; das Skript fuer den eigentlichen Vergleich
+ueber 378 Paarungen existierte nicht.
+
+**Die Entwurfsentscheidung, auf die es ankam: Erlaubnisliste statt Pruefliste.** §2b verlangt, dass
+sich gekappt und ungekappt in genau einer Sache unterscheiden, **nachgewiesen durch einen gerechneten
+Vergleich**. Wer eine Liste zu pruefender Spalten schreibt, prueft genau die, an die er gedacht hat.
+Also andersherum: die Spalten benennen, die sich unterscheiden **duerfen** — Armkennzeichnung,
+Kappenfelder, Ergebnisse, Kostenzaehler, Kampagnenbuchhaltung —, und von **allem uebrigen**
+Gleichheit verlangen, auch von Spalten, die es noch gar nicht gibt.
+
+**Die Falle, die vorher in die Spezifikation musste:** `n_levels` in den Records ist die Konstante 30,
+das konfigurierte Budget. Genau diese Spalte wuerde man fuer „ausgefuehrte Level" nehmen — und damit
+das Budget gegen sich selbst rechnen und eine sauber aussehende Ersparnis von null bekommen. Das
+Skript verweigert die Ersetzung und bricht ab, wenn die Spalte mit der tatsaechlich ausgefuehrten
+Levelzahl fehlt. Sie ist damit eine Anforderung an die Phase-C-Records.
+
+**Der Defekt aus der Abnahme, und warum er zaehlt.** `campaign_manifest_index` stand nicht in der
+Erlaubnisliste, musste also uebereinstimmen — kann sie aber nicht, weil jeder Arm seine eigene
+Manifestzeile hat. In der Phase-B-Registry weicht sie in **378 von 378** Paarungen ab. Die Auswertung
+waere auf echten Daten in **jeder** Paarung abgebrochen, und zwar mit der Meldung „die Bedingungen
+sind nicht identisch" — ein Buchhaltungsfeld, das wie ein wissenschaftlicher Befund ueber die
+Konfiguration aussieht. Dazu `stage_cap_policy_active`, das in Julia geschrieben wird, in der
+Phase-B-Registry aber nicht vorkommt und denselben Fehlalarm ausgeloest haette, sobald der
+Phase-C-Konverter es durchreicht.
+
+**Warum er ueberlebt hat:** alle Fixtures prueften, dass unerlaubte Abweichungen **abbrechen**. Keines
+prueft, dass eine realistische Paarung **durchlaeuft**. Dieser Positivtest existiert jetzt.
+
+Gefunden wurde der Defekt nicht durch Lesen, sondern indem die Phase-B-Zeilen als **Formfixture**
+benutzt und ausgezaehlt wurde, welche Spalten sich zwischen zwei tatsaechlich verschiedenen Armen
+unterscheiden. Daraus wurden ausschliesslich Spaltennamen gelesen, keine Zahlen — Phase B hat keinen
+ungekappten Arm, jede Kennzahl daraus waere eine Scheinablation. Das Skript lehnt darum Arme ab,
+deren Kennzeichnung nicht das gekappt/ungekappt-Paar ist.
+
+**Aufraeumen vorweg:** Paarung, Cluster-Bootstrap, Cluster-Permutation und die Quantil-Helfer lagen im
+Pretuning-Skript und sind nach `analysis/utils/paired_stats.py` gezogen; beide Skripte teilen sie
+jetzt. Zwei Kopien einer Statistik, die Papierzahlen erzeugt, waeren schlimmer als die fuenf Kopien
+der Ausduennungsschwelle aus WP-N12.
+
+**Abnahme, unabhaengig gefahren:** 27 Python-Tests gruen, Phase-B-Ableitungen bitgleich, und ein
+Spaltenabgleich gegen die echte Registry zeigt keine Spalte mehr, die legitim abweicht und dennoch
+verboten waere — waehrend `use_pretuning`, `seed`, `basis_name`, `n_levels` und alle drei
+Identitaets-Fingerprints weiterhin uebereinstimmen muessen.
+
 ---
 
 ## 2026-09-09 (nachts)

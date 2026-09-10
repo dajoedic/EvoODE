@@ -93,11 +93,11 @@ Decided experiments whose code does not exist yet. None is an open question; eac
 
 | # | Item | Why |
 |---|---|---|
-| B1 | `studies/regression/phase_c_config.jl` + `generate_phase_c_manifest.jl` | Phase C needs its own campaign id, variant list and fingerprint; the Phase B pair is frozen and must not be edited |
+| B1 | `studies/regression/phase_c_config.jl` + `generate_phase_c_manifest.jl` | Phase C needs its own campaign id, variant list and fingerprint; the Phase B pair is frozen and must not be edited. **Carries the record-column requirements from WP-N14 and the restart-parameter declaration from WP-N11 — see below** |
 | B2 | ~~Record fields for raw/pruned support and the definition tag~~ **done (WP-N12, `47920a2`)** | Section 4b: one column name carried two definitions. Records now write `pruned_support_terms`, `exact_support_match_raw`, `exact_support_match_pruned` and `exact_support_match_definition`; the frozen pruning threshold has exactly one implementation instead of five inline copies |
 | B3 | ~~Restart policy in the optimizer~~ **done (WP-N11, `4908b07`)**; remaining part is declaring it in the Phase C fingerprint, which belongs to B1 | P6 - the policy had no code at all until 2026-09-10; `max_fit_attempts` now exists with default 1, verified behaviour-neutral |
 | B4 | `phase_c_support.json` via `derive_phase_b_support.jl` on the canonical basis | true support and representability are basis-dependent; if P3 freezes the constant basis, the Phase B table is wrong for Phase C |
-| B5 | `analysis/scripts/aggregate/aggregate_phasec_cap_ablation.py` | the paired capped-vs-uncapped analysis has no script, and Claim B is the paper's main figure |
+| B5 | ~~`analysis/scripts/aggregate/aggregate_phasec_cap_ablation.py`~~ **done (WP-N14, `e738b0c`)** | The identical-conditions check is an allowlist, so a column nobody has defined yet still has to match. The script refuses to substitute `n_levels` for executed levels, and refuses arms that are not the capped/uncapped pair -- Phase B's 378 pairs look mechanically identical but are both capped |
 | B6 | ~~Campaign-id parameter for the existing aggregate scripts~~ **done (WP-N13, `1c984a6`)** | The stated premise was wrong: the scripts already took `--registry`, `--classification` and `--output-dir`, only their defaults pointed at Phase B. The real gap was that `verify_campaign_registry.py` never checked `experiment_id` at all, so a two-campaign registry passed. Now `--campaign` derives the paths and a mismatch aborts before any file is written. `.gitignore` also gained the missing `paper1_phaseC_v1` negations, without which every output path named in section 1b would have been silently untracked |
 | B7 | k8s manifests for C-1, C-2, C-3 plus their smoke jobs | the Phase B manifests carry the Phase B campaign path |
 
@@ -105,6 +105,18 @@ Decided experiments whose code does not exist yet. None is an open question; eac
 756 rows, 756 unique identities, 378 per condition, 240 exact, 516 surrogate. A Phase C run must
 pass its own values explicitly (378 cells per arm), or the verifier passes on the wrong
 expectations.
+
+**Carried into B1 from WP-N14 — the columns Phase C records must provide.** The cap-ablation script
+requires them and aborts without them:
+
+`executed_levels` (the **executed** level count, never `n_levels`, which is the constant 30),
+`structural_f1`, `term_precision`, `term_recall`, `coefficient_relative_error_mean`,
+`exact_support_match_raw`, `exact_support_match_pruned`, `total_parameter_fits`,
+`total_parameter_fit_attempts`, `total_loss_evals`, `total_ode_solves`, `final_stage`,
+`system_expected_stage`. Generalization columns are used when present.
+
+**Carried into B1 from WP-N11:** the restart parameter must enter the **Phase C** fingerprint, and
+k = 3 is set in the Phase C configuration — never in the optimizer default, which stays at 1.
 
 Good news from the same audit, which is why this list is short: the uncapped mirror needs **no new
 search code** - `evogrow_v2_2_stage_local` is already a shipped variant selectable through
