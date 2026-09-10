@@ -98,8 +98,13 @@ Decided experiments whose code does not exist yet. None is an open question; eac
 | B3 | ~~Restart policy in the optimizer~~ **done (WP-N11, `4908b07`)**; remaining part is declaring it in the Phase C fingerprint, which belongs to B1 | P6 - the policy had no code at all until 2026-09-10; `max_fit_attempts` now exists with default 1, verified behaviour-neutral |
 | B4 | `phase_c_support.json` via `derive_phase_b_support.jl` on the canonical basis | true support and representability are basis-dependent; if P3 freezes the constant basis, the Phase B table is wrong for Phase C |
 | B5 | `analysis/scripts/aggregate/aggregate_phasec_cap_ablation.py` | the paired capped-vs-uncapped analysis has no script, and Claim B is the paper's main figure |
-| B6 | Campaign-id parameter for the existing aggregate scripts | they are hard-wired to `paper1_phaseB_v1` |
+| B6 | ~~Campaign-id parameter for the existing aggregate scripts~~ **done (WP-N13, `1c984a6`)** | The stated premise was wrong: the scripts already took `--registry`, `--classification` and `--output-dir`, only their defaults pointed at Phase B. The real gap was that `verify_campaign_registry.py` never checked `experiment_id` at all, so a two-campaign registry passed. Now `--campaign` derives the paths and a mismatch aborts before any file is written. `.gitignore` also gained the missing `paper1_phaseC_v1` negations, without which every output path named in section 1b would have been silently untracked |
 | B7 | k8s manifests for C-1, C-2, C-3 plus their smoke jobs | the Phase B manifests carry the Phase B campaign path |
+
+**Carried into B1 from WP-N13:** `verify_campaign_registry.py` still defaults to Phase B counts —
+756 rows, 756 unique identities, 378 per condition, 240 exact, 516 surrogate. A Phase C run must
+pass its own values explicitly (378 cells per arm), or the verifier passes on the wrong
+expectations.
 
 Good news from the same audit, which is why this list is short: the uncapped mirror needs **no new
 search code** - `evogrow_v2_2_stage_local` is already a shipped variant selectable through

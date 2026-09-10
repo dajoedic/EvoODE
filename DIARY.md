@@ -179,6 +179,47 @@ eine ganze Gleichung entleeren kann.
 
 Alle drei Fingerprints unveraendert, Julia-Tests gruen, 15 Python-Tests gruen.
 
+### WP-N13: B6 war falsch beschrieben, und die echte Luecke war die stillere
+
+<!-- 1c984a6 -->
+
+Arbeitspaket B6 lautete „Kampagnen-ID-Parameter fuer die Aggregatskripte, sie sind auf
+`paper1_phaseB_v1` verdrahtet". **Nachgeprueft: sie sind es nicht.** `--registry`,
+`--classification`, `--adequacy` und `--output-dir` existierten bereits; verdrahtet waren nur die
+**Defaults**. Ein reiner Kennungs-Parameter waere weitgehend redundanter Code gewesen.
+
+Die tatsaechliche Luecke war unangenehmer, weil sie nichts sagt:
+
+- **`verify_campaign_registry.py` erwaehnte `experiment_id` an keiner Stelle**, auch nicht in
+  `REQUIRED_COLUMNS`. Eine Registry mit Zeilen aus **zwei** Kampagnen bestand die Pruefung.
+- **Jeder Default zeigte auf Phase B.** Ein vergessenes Flag beim Phase-C-Lauf haette
+  Phase-B-Zahlen in ein Phase-C-Verzeichnis geschrieben, kommentarlos. §5 des Plans verlangt
+  ausdruecklich, dass Phase-B- und Phase-C-Zahlen nie in derselben Tabelle stehen — erzwungen hat
+  das nichts.
+- Registry, Klassifikation und Adaequanztabelle wurden unabhaengig uebergeben, durften also aus
+  verschiedenen Kampagnen stammen.
+
+Neu: `--campaign` leitet die Pfade ab und steht auf `paper1_phaseB_v1`, damit bestehende Aufrufe
+unveraendert laufen; Registry-Eingaben muessen **genau einen** `experiment_id` tragen, und der muss
+zur angeforderten Kampagne passen; sonst bricht das Skript ab, **bevor** eine Datei geschrieben wird.
+Systemweite Eingaben bekommen bewusst keine kuenstliche Kampagnenspalte.
+
+**Abnahme, unabhaengig vom Report gefahren.** Der Waechter greift bei einer Registry, in der **eine
+von 756** Zeilen umetikettiert ist, und bei einer falsch angeforderten Kampagne — Exit-Code 1 in
+beiden Faellen, die Meldung nennt die gefundenen Werte, und es entsteht **keine Ausgabedatei**. Der
+korrekte Fall liefert 0. Die Exit-Codes wurden getrennt geprueft: eine Fehlermeldung auf stdout bei
+Exit 0 waere genau der Waechter, der drei Wochen rot ist, ohne dass es auffaellt.
+
+**Byte-Vergleich:** 43 der 45 eingecheckten Phase-B-Ableitungen an Ort und Stelle neu erzeugt, `git
+status` bleibt leer. Die zwei Ausnahmen sind `system_classification.csv` und
+`representational_adequacy.csv` — systemweite Eingaben, nicht Ausgaben eines geaenderten Skripts.
+19 Python-Tests gruen, vier davon neu.
+
+**Nebenbefund beim Pruefen, der Phase C beinahe stillgelegt haette.** `.gitignore` ignoriert
+`analysis/data/*`, `analysis/figures/*` und `analysis/tables/*` mit Ausnahmen **je Kampagne**. Fuer
+`paper1_phaseC_v1` gab es keine — genau die Ausgabepfade, die §1b des Plans nennt, waeren erzeugt und
+nie versioniert worden. Drei Zeilen ergaenzt.
+
 ---
 
 ## 2026-09-09 (nachts)
