@@ -12,10 +12,12 @@ import numpy as np
 import pandas as pd
 
 from utils.io import load_run_registry
+from utils.campaign import require_single_campaign_id
 from utils.metrics import check_required_columns, filter_valid_runs
 
 
 REQUIRED_COLUMNS = [
+    "experiment_id",
     "variant_slug",
     "system_id",
     "system_name",
@@ -56,6 +58,7 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description="Aggregate run_registry.csv by variant and system."
     )
+    parser.add_argument("--campaign")
     parser.add_argument("--config", required=True, help="Path to config JSON.")
     return parser.parse_args()
 
@@ -191,6 +194,12 @@ def main() -> int:
     try:
         config = load_config(config_path)
         experiment_id = config["experiment_id"]
+        campaign_id = args.campaign or experiment_id
+        if experiment_id != campaign_id:
+            raise ValueError(
+                f"config experiment_id {experiment_id!r} does not match "
+                f"requested campaign {campaign_id!r}"
+            )
         run_registry_path = resolve_path(
             config["run_registry_path"], analysis_root, config_path
         )
@@ -198,6 +207,7 @@ def main() -> int:
 
         registry = normalize_registry_columns(load_run_registry(run_registry_path))
         check_required_columns(registry, REQUIRED_COLUMNS)
+        require_single_campaign_id(registry, campaign_id, "run_registry")
         group_columns = group_columns_from_config(config, registry)
 
         total_rows = len(registry)

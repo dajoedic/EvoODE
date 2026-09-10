@@ -15,6 +15,7 @@ if str(ANALYSIS_ROOT) not in sys.path:
     sys.path.insert(0, str(ANALYSIS_ROOT))
 
 from utils.io import load_run_registry  # noqa: E402
+from utils.campaign import require_single_campaign_id  # noqa: E402
 from utils.metrics import check_required_columns  # noqa: E402
 
 
@@ -29,6 +30,7 @@ BOOTSTRAP_REPLICATES = 10_000
 BOOTSTRAP_ALPHA = 0.05
 
 REQUIRED_COLUMNS = [
+    "experiment_id",
     "variant_slug",
     "system_id",
     "system_name",
@@ -46,6 +48,7 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description="Analyze the paired Phase-B pretuning contrast."
     )
+    parser.add_argument("--campaign")
     parser.add_argument("--config", required=True, help="Path to config JSON.")
     parser.add_argument(
         "--input",
@@ -112,8 +115,9 @@ def condition_from_variant(variant_slug: str) -> str:
     raise AssertionError("unreachable")
 
 
-def validate_registry(df: pd.DataFrame) -> pd.DataFrame:
+def validate_registry(df: pd.DataFrame, campaign_id: str) -> pd.DataFrame:
     check_required_columns(df, REQUIRED_COLUMNS)
+    require_single_campaign_id(df, campaign_id, "run_registry")
     registry = coerce_numeric(df, ["system_id", "system_dim", "loss", "r2"])
     registry["condition"] = registry["variant_slug"].astype(str).map(condition_from_variant)
 
@@ -411,6 +415,12 @@ def main() -> int:
     try:
         config = load_config(config_path)
         experiment_id = config["experiment_id"]
+        campaign_id = args.campaign or experiment_id
+        if experiment_id != campaign_id:
+            fail(
+                f"config experiment_id {experiment_id!r} does not match "
+                f"requested campaign {campaign_id!r}"
+            )
         input_path = (
             Path(args.input).resolve()
             if args.input
@@ -422,7 +432,7 @@ def main() -> int:
             else (analysis_root / config["output_dir"] / "pretuning_contrast.json").resolve()
         )
 
-        registry = validate_registry(load_run_registry(input_path))
+        registry = validate_registry(load_run_registry(input_path), campaign_id)
         pairs = pair_registry(
             registry,
             args.expected_total_pairs,

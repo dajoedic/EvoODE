@@ -53,16 +53,19 @@ experiments/*/run.log
 analysis/data/*
 !analysis/data/.gitkeep
 !analysis/data/paper1_phaseB_v1/
+!analysis/data/paper1_phaseC_v1/
 
 analysis/figures/*
 !analysis/figures/.gitkeep
 !analysis/figures/paper1_phaseA_v1/
 !analysis/figures/paper1_phaseB_v1/
+!analysis/figures/paper1_phaseC_v1/
 
 analysis/tables/*
 !analysis/tables/.gitkeep
 !analysis/tables/paper1_phaseA_v1/
 !analysis/tables/paper1_phaseB_v1/
+!analysis/tables/paper1_phaseC_v1/
 
 # ---------------------------------------------------------------------------
 # Kubernetes manifests with a substituted commit SHA, produced at launch time from k8s/

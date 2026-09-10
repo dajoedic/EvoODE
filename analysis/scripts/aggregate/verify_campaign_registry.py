@@ -6,12 +6,26 @@ from collections import Counter
 from pathlib import Path
 from typing import Iterable
 
+import pandas as pd
+
+REPO_ROOT = Path(__file__).resolve().parents[3]
+ANALYSIS_ROOT = REPO_ROOT / "analysis"
+if str(ANALYSIS_ROOT) not in sys.path:
+    sys.path.insert(0, str(ANALYSIS_ROOT))
+
+from utils.campaign import (  # noqa: E402
+    DEFAULT_CAMPAIGN_ID,
+    campaign_registry_path,
+    require_single_campaign_id,
+)
+
 
 DEFAULT_EXPECTED_GIT_HASH = "91f88c4"
 DEFAULT_EXPECTED_CONFIG_FINGERPRINT = "604e79733b22d64d"
 DEFAULT_EXPECTED_STAGE_CAP_FINGERPRINT = "ffb0266c7913352c"
 
 REQUIRED_COLUMNS = [
+    "experiment_id",
     "system_id",
     "seed",
     "variant_slug",
@@ -32,7 +46,11 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description="Verify campaign run_registry.csv invariants before aggregation."
     )
-    parser.add_argument("--input", required=True, help="Converted run_registry.csv path.")
+    parser.add_argument("--campaign", default=DEFAULT_CAMPAIGN_ID)
+    parser.add_argument(
+        "--input",
+        help="Converted run_registry.csv path. Defaults to experiments/<campaign>/run_registry.csv.",
+    )
     parser.add_argument("--expected-row-count", type=int, default=756)
     parser.add_argument("--expected-unique-identities", type=int, default=756)
     parser.add_argument("--expected-rows-per-condition", type=int, default=378)
@@ -108,6 +126,13 @@ def condition_column(rows: list[dict[str, str]]) -> str:
 
 def verify(rows: list[dict[str, str]], args: argparse.Namespace) -> int:
     row_count = len(rows)
+    try:
+        require_single_campaign_id(
+            pd.DataFrame(rows), args.campaign, "campaign registry"
+        )
+    except ValueError as exc:
+        return fail(str(exc))
+
     if row_count != args.expected_row_count:
         return fail(f"row count expected {args.expected_row_count}, got {row_count}")
 
@@ -228,8 +253,13 @@ def verify(rows: list[dict[str, str]], args: argparse.Namespace) -> int:
 
 def main() -> int:
     args = parse_args()
+    input_path = (
+        Path(args.input)
+        if args.input
+        else campaign_registry_path(REPO_ROOT, args.campaign)
+    )
     try:
-        rows = read_rows(Path(args.input))
+        rows = read_rows(input_path)
     except (OSError, ValueError) as exc:
         print(f"Error: {exc}", file=sys.stderr)
         return 1

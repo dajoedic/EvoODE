@@ -14,6 +14,7 @@ if str(ANALYSIS_ROOT) not in sys.path:
     sys.path.insert(0, str(ANALYSIS_ROOT))
 
 from utils.io import load_run_registry  # noqa: E402
+from utils.campaign import require_single_campaign_id  # noqa: E402
 from utils.metrics import check_required_columns  # noqa: E402
 
 
@@ -31,6 +32,7 @@ R2_THRESHOLDS = [1e-4, 1e-3, 1e-2, 1e-1]
 LOSS_FOLD_THRESHOLDS = [1.1, 2.0, 10.0, 100.0]
 
 REQUIRED_COLUMNS = [
+    "experiment_id",
     "variant_slug",
     "system_id",
     "system_name",
@@ -48,6 +50,7 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description="Analyze Phase-B pretuning distributions and seed collapse."
     )
+    parser.add_argument("--campaign")
     parser.add_argument("--config", required=True, help="Path to config JSON.")
     parser.add_argument(
         "--input",
@@ -174,8 +177,9 @@ def canonical_support(value: Any) -> str:
     return json.dumps(normalized, ensure_ascii=True, separators=(",", ":"))
 
 
-def validate_registry(df: pd.DataFrame) -> pd.DataFrame:
+def validate_registry(df: pd.DataFrame, campaign_id: str) -> pd.DataFrame:
     check_required_columns(df, REQUIRED_COLUMNS)
+    require_single_campaign_id(df, campaign_id, "run_registry")
     registry = df.copy()
     for column in ["system_id", "system_dim", "loss", "r2"]:
         registry[column] = pd.to_numeric(registry[column], errors="coerce")
@@ -546,6 +550,12 @@ def main() -> int:
     config_path = Path(args.config).resolve()
     try:
         config = load_config(config_path)
+        campaign_id = args.campaign or config["experiment_id"]
+        if config["experiment_id"] != campaign_id:
+            fail(
+                f"config experiment_id {config['experiment_id']!r} does not match "
+                f"requested campaign {campaign_id!r}"
+            )
         input_path = (
             Path(args.input).resolve()
             if args.input
@@ -560,7 +570,7 @@ def main() -> int:
                 / "pretuning_distribution_collapse.json"
             ).resolve()
         )
-        registry = validate_registry(load_run_registry(input_path))
+        registry = validate_registry(load_run_registry(input_path), campaign_id)
         pairs = pair_registry(
             registry,
             args.expected_total_pairs,

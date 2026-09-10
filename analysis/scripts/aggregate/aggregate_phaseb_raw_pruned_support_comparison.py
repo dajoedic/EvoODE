@@ -12,20 +12,22 @@ if str(ANALYSIS_ROOT) not in sys.path:
     sys.path.insert(0, str(ANALYSIS_ROOT))
 
 from utils.metrics import check_required_columns  # noqa: E402
+from utils.campaign import (  # noqa: E402
+    DEFAULT_CAMPAIGN_ID,
+    campaign_data_dir,
+    campaign_registry_path,
+    require_single_campaign_id,
+)
 from utils.support_match_definition import (  # noqa: E402
     PRUNED_SUPPORT_MATCH,
     infer_exact_support_match_definition,
 )
 
 
-DEFAULT_REGISTRY = REPO_ROOT / "experiments" / "paper1_phaseB_v1" / "run_registry.csv"
-DEFAULT_STRUCTURE_METRICS = (
-    ANALYSIS_ROOT / "data" / "paper1_phaseB_v1" / "phaseb_structure_metrics_by_cell.csv"
-)
+DEFAULT_REGISTRY = campaign_registry_path(REPO_ROOT, DEFAULT_CAMPAIGN_ID)
+DEFAULT_STRUCTURE_METRICS = campaign_data_dir(ANALYSIS_ROOT, DEFAULT_CAMPAIGN_ID) / "phaseb_structure_metrics_by_cell.csv"
 DEFAULT_OUTPUT = (
-    ANALYSIS_ROOT
-    / "data"
-    / "paper1_phaseB_v1"
+    campaign_data_dir(ANALYSIS_ROOT, DEFAULT_CAMPAIGN_ID)
     / "phaseb_raw_pruned_support_comparison.csv"
 )
 
@@ -39,9 +41,10 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description="Compare raw and pruned Phase-B exact support matches."
     )
-    parser.add_argument("--registry", default=str(DEFAULT_REGISTRY))
-    parser.add_argument("--structure-metrics", default=str(DEFAULT_STRUCTURE_METRICS))
-    parser.add_argument("--output", default=str(DEFAULT_OUTPUT))
+    parser.add_argument("--campaign", default=DEFAULT_CAMPAIGN_ID)
+    parser.add_argument("--registry")
+    parser.add_argument("--structure-metrics")
+    parser.add_argument("--output")
     return parser.parse_args()
 
 
@@ -76,7 +79,11 @@ def summarize(group: pd.DataFrame, level: str, keys: dict[str, Any]) -> dict[str
     }
 
 
-def build_comparison(registry: pd.DataFrame, metrics: pd.DataFrame) -> pd.DataFrame:
+def build_comparison(
+    registry: pd.DataFrame,
+    metrics: pd.DataFrame,
+    campaign_id: str = DEFAULT_CAMPAIGN_ID,
+) -> pd.DataFrame:
     check_required_columns(
         registry,
         [
@@ -89,6 +96,7 @@ def build_comparison(registry: pd.DataFrame, metrics: pd.DataFrame) -> pd.DataFr
             "exact_support_match",
         ],
     )
+    require_single_campaign_id(registry, campaign_id, "run_registry")
     check_required_columns(
         metrics,
         [
@@ -97,6 +105,8 @@ def build_comparison(registry: pd.DataFrame, metrics: pd.DataFrame) -> pd.DataFr
             "n_missing_true_terms",
         ],
     )
+    if "experiment_id" in metrics.columns:
+        require_single_campaign_id(metrics, campaign_id, "structure metrics")
     definition = infer_exact_support_match_definition(registry, "Phase-B run_registry")
     if definition.definition != PRUNED_SUPPORT_MATCH:
         raise ValueError(
@@ -169,10 +179,16 @@ def build_comparison(registry: pd.DataFrame, metrics: pd.DataFrame) -> pd.DataFr
     return pd.DataFrame(rows)
 
 
-def run(registry_path: Path, metrics_path: Path, output_path: Path) -> dict[str, Any]:
+def run(
+    registry_path: Path,
+    metrics_path: Path,
+    output_path: Path,
+    campaign_id: str = DEFAULT_CAMPAIGN_ID,
+) -> dict[str, Any]:
     table = build_comparison(
         pd.read_csv(registry_path),
         pd.read_csv(metrics_path),
+        campaign_id,
     )
     output_path.parent.mkdir(parents=True, exist_ok=True)
     table.to_csv(output_path, index=False, float_format="%.12g")
@@ -182,8 +198,24 @@ def run(registry_path: Path, metrics_path: Path, output_path: Path) -> dict[str,
 
 def main() -> int:
     args = parse_args()
+    data_dir = campaign_data_dir(ANALYSIS_ROOT, args.campaign)
+    registry_path = (
+        Path(args.registry).resolve()
+        if args.registry
+        else campaign_registry_path(REPO_ROOT, args.campaign)
+    )
+    metrics_path = (
+        Path(args.structure_metrics).resolve()
+        if args.structure_metrics
+        else data_dir / "phaseb_structure_metrics_by_cell.csv"
+    )
+    output_path = (
+        Path(args.output).resolve()
+        if args.output
+        else data_dir / "phaseb_raw_pruned_support_comparison.csv"
+    )
     try:
-        result = run(Path(args.registry), Path(args.structure_metrics), Path(args.output))
+        result = run(registry_path, metrics_path, output_path, args.campaign)
     except (OSError, ValueError) as exc:
         print(f"Error: {exc}", file=sys.stderr)
         return 1

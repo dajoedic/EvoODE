@@ -19,23 +19,44 @@ from utils.metrics import (  # noqa: E402
     parse_support_terms_json,
     term_set_metrics,
 )
-
-
-DEFAULT_REGISTRY = REPO_ROOT / "experiments" / "paper1_phaseB_v1" / "run_registry.csv"
-DEFAULT_CLASSIFICATION = (
-    ANALYSIS_ROOT / "data" / "paper1_phaseB_v1" / "system_classification.csv"
+from utils.campaign import (  # noqa: E402
+    DEFAULT_CAMPAIGN_ID,
+    campaign_data_dir,
+    campaign_registry_path,
+    require_single_campaign_id,
 )
-DEFAULT_OUTPUT_DIR = ANALYSIS_ROOT / "data" / "paper1_phaseB_v1"
+
+
+DEFAULT_REGISTRY = campaign_registry_path(REPO_ROOT, DEFAULT_CAMPAIGN_ID)
+DEFAULT_CLASSIFICATION = campaign_data_dir(ANALYSIS_ROOT, DEFAULT_CAMPAIGN_ID) / "system_classification.csv"
+DEFAULT_OUTPUT_DIR = campaign_data_dir(ANALYSIS_ROOT, DEFAULT_CAMPAIGN_ID)
 
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description="Compute Phase-B structural term metrics from run_registry.csv."
     )
-    parser.add_argument("--registry", default=str(DEFAULT_REGISTRY))
-    parser.add_argument("--classification", default=str(DEFAULT_CLASSIFICATION))
-    parser.add_argument("--output-dir", default=str(DEFAULT_OUTPUT_DIR))
+    parser.add_argument("--campaign", default=DEFAULT_CAMPAIGN_ID)
+    parser.add_argument("--registry")
+    parser.add_argument("--classification")
+    parser.add_argument("--output-dir")
     return parser.parse_args()
+
+
+def resolve_paths(args: argparse.Namespace) -> tuple[Path, Path, Path]:
+    data_dir = campaign_data_dir(ANALYSIS_ROOT, args.campaign)
+    registry_path = (
+        Path(args.registry).resolve()
+        if args.registry
+        else campaign_registry_path(REPO_ROOT, args.campaign)
+    )
+    classification_path = (
+        Path(args.classification).resolve()
+        if args.classification
+        else data_dir / "system_classification.csv"
+    )
+    output_dir = Path(args.output_dir).resolve() if args.output_dir else data_dir
+    return registry_path, classification_path, output_dir
 
 
 def registry_match_value(value: Any, derived: bool) -> Any:
@@ -70,7 +91,12 @@ def load_truth(path: Path) -> dict[int, dict[int, list[str]]]:
     return truth
 
 
-def run(registry_path: Path, classification_path: Path, output_dir: Path) -> dict[str, Any]:
+def run(
+    registry_path: Path,
+    classification_path: Path,
+    output_dir: Path,
+    campaign_id: str = DEFAULT_CAMPAIGN_ID,
+) -> dict[str, Any]:
     registry = pd.read_csv(registry_path)
     check_required_columns(
         registry,
@@ -85,6 +111,7 @@ def run(registry_path: Path, classification_path: Path, output_dir: Path) -> dic
             "initial_condition_set",
         ],
     )
+    require_single_campaign_id(registry, campaign_id, "run_registry")
     truth_by_system = load_truth(classification_path)
 
     equation_rows: list[dict[str, Any]] = []
@@ -174,8 +201,9 @@ def run(registry_path: Path, classification_path: Path, output_dir: Path) -> dic
 
 def main() -> int:
     args = parse_args()
+    registry_path, classification_path, output_dir = resolve_paths(args)
     try:
-        result = run(Path(args.registry), Path(args.classification), Path(args.output_dir))
+        result = run(registry_path, classification_path, output_dir, args.campaign)
     except (OSError, ValueError) as exc:
         print(f"Error: {exc}", file=sys.stderr)
         return 1

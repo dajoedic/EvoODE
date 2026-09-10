@@ -13,6 +13,13 @@ if str(ANALYSIS_ROOT) not in sys.path:
     sys.path.insert(0, str(ANALYSIS_ROOT))
 
 from utils.io import load_run_registry  # noqa: E402
+from utils.campaign import (  # noqa: E402
+    DEFAULT_CAMPAIGN_ID,
+    campaign_config_path,
+    campaign_data_dir,
+    campaign_registry_path,
+    require_single_campaign_id,
+)
 from utils.metrics import check_required_columns  # noqa: E402
 
 
@@ -22,6 +29,7 @@ EXPECTED_ROW_COUNT = 756
 SENTINEL_LOSS = 1e6
 
 REQUIRED_COLUMNS = [
+    "experiment_id",
     "system_id",
     "system_name",
     "system_dim",
@@ -46,7 +54,11 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description="Aggregate Phase-B heartbeat silent-level waste and per-system tables."
     )
-    parser.add_argument("--config", required=True, help="Path to config JSON.")
+    parser.add_argument("--campaign", default=DEFAULT_CAMPAIGN_ID)
+    parser.add_argument(
+        "--config",
+        help="Path to config JSON. Defaults to analysis/configs/<campaign>.json when present.",
+    )
     parser.add_argument("--input", help="Optional run_registry.csv override.")
     parser.add_argument(
         "--heartbeat-dir",
@@ -113,9 +125,14 @@ def coerce_optional_bool(value: Any) -> float | None:
     raise AssertionError("unreachable")
 
 
-def validate_registry(df: pd.DataFrame, expected_row_count: int) -> pd.DataFrame:
+def validate_registry(
+    df: pd.DataFrame,
+    expected_row_count: int,
+    campaign_id: str = DEFAULT_CAMPAIGN_ID,
+) -> pd.DataFrame:
     check_required_columns(df, REQUIRED_COLUMNS)
     registry = df.copy()
+    require_single_campaign_id(registry, campaign_id, "run_registry")
     for column in [
         "system_id",
         "system_dim",
@@ -537,13 +554,27 @@ def write_csv(df: pd.DataFrame, path: Path) -> None:
 
 def main() -> int:
     args = parse_args()
-    config_path = Path(args.config).resolve()
+    config_path = (
+        Path(args.config).resolve()
+        if args.config
+        else campaign_config_path(ANALYSIS_ROOT, args.campaign).resolve()
+    )
     try:
-        config = load_config(config_path)
+        config = load_config(config_path) if config_path.exists() else {}
+        campaign_id = str(config.get("experiment_id", args.campaign))
+        if campaign_id != args.campaign:
+            fail(
+                f"config experiment_id {campaign_id!r} does not match "
+                f"requested campaign {args.campaign!r}"
+            )
         input_path = (
             Path(args.input).resolve()
             if args.input
-            else resolve_path(config["run_registry_path"], ANALYSIS_ROOT, config_path)
+            else (
+                resolve_path(config["run_registry_path"], ANALYSIS_ROOT, config_path)
+                if "run_registry_path" in config
+                else campaign_registry_path(ANALYSIS_ROOT.parent, args.campaign).resolve()
+            )
         )
         heartbeat_dir = (
             Path(args.heartbeat_dir).resolve()
@@ -553,9 +584,15 @@ def main() -> int:
         output_dir = (
             Path(args.output_dir).resolve()
             if args.output_dir
-            else (ANALYSIS_ROOT / config["output_dir"]).resolve()
+            else (
+                (ANALYSIS_ROOT / config["output_dir"]).resolve()
+                if "output_dir" in config
+                else campaign_data_dir(ANALYSIS_ROOT, args.campaign).resolve()
+            )
         )
-        registry = validate_registry(load_run_registry(input_path), args.expected_row_count)
+        registry = validate_registry(
+            load_run_registry(input_path), args.expected_row_count, args.campaign
+        )
         heartbeat_metrics = load_heartbeat_metrics(
             registry,
             heartbeat_dir,

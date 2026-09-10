@@ -13,13 +13,15 @@ if str(ANALYSIS_ROOT) not in sys.path:
     sys.path.insert(0, str(ANALYSIS_ROOT))
 
 from utils.metrics import check_required_columns, parse_pipe_terms  # noqa: E402
-
-
-DEFAULT_CLASSIFICATION = (
-    ANALYSIS_ROOT / "data" / "paper1_phaseB_v1" / "system_classification.csv"
+from utils.campaign import (  # noqa: E402
+    DEFAULT_CAMPAIGN_ID,
+    campaign_data_dir,
 )
-DEFAULT_ADEQUACY = ANALYSIS_ROOT / "data" / "paper1_phaseB_v1" / "representational_adequacy.csv"
-DEFAULT_OUTPUT_DIR = ANALYSIS_ROOT / "data" / "paper1_phaseB_v1"
+
+
+DEFAULT_CLASSIFICATION = campaign_data_dir(ANALYSIS_ROOT, DEFAULT_CAMPAIGN_ID) / "system_classification.csv"
+DEFAULT_ADEQUACY = campaign_data_dir(ANALYSIS_ROOT, DEFAULT_CAMPAIGN_ID) / "representational_adequacy.csv"
+DEFAULT_OUTPUT_DIR = campaign_data_dir(ANALYSIS_ROOT, DEFAULT_CAMPAIGN_ID)
 
 BASIS_OLD = "default_staged_polynomial_basis"
 BASIS_CONSTANT = "staged_polynomial_basis_with_constant"
@@ -29,9 +31,10 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description="Classify systems and equations into three representability classes."
     )
-    parser.add_argument("--classification", default=str(DEFAULT_CLASSIFICATION))
-    parser.add_argument("--adequacy", default=str(DEFAULT_ADEQUACY))
-    parser.add_argument("--output-dir", default=str(DEFAULT_OUTPUT_DIR))
+    parser.add_argument("--campaign", default=DEFAULT_CAMPAIGN_ID)
+    parser.add_argument("--classification")
+    parser.add_argument("--adequacy")
+    parser.add_argument("--output-dir")
     return parser.parse_args()
 
 
@@ -175,8 +178,20 @@ def run(classification_path: Path, adequacy_path: Path, output_dir: Path) -> dic
 
 def main() -> int:
     args = parse_args()
+    data_dir = campaign_data_dir(ANALYSIS_ROOT, args.campaign)
+    classification_path = (
+        Path(args.classification).resolve()
+        if args.classification
+        else data_dir / "system_classification.csv"
+    )
+    adequacy_path = (
+        Path(args.adequacy).resolve()
+        if args.adequacy
+        else data_dir / "representational_adequacy.csv"
+    )
+    output_dir = Path(args.output_dir).resolve() if args.output_dir else data_dir
     try:
-        result = run(Path(args.classification), Path(args.adequacy), Path(args.output_dir))
+        result = run(classification_path, adequacy_path, output_dir)
     except (OSError, ValueError) as exc:
         print(f"Error: {exc}", file=sys.stderr)
         return 1

@@ -1,4 +1,4 @@
-status: blocked
-task:   WP-N12
-report: codex/reports/REPORT_WP_N12.md
-note:   Umgebung, nicht Sache: Julia-Abnahme kann hier nicht ausgefuehrt werden.
+status: done
+task:   WP-N13
+report: codex/reports/REPORT_WP_N13.md
+note:   Umsetzung abgeschlossen; Tests, Bytevergleich und Registry-Waechter bestanden.

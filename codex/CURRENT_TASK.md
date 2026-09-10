@@ -1,112 +1,111 @@
-# WP-N12 — Roher und ausgedünnter Support getrennt im Record, mit benannter Definition
+# WP-N13 — Die Kampagne wird ein expliziter, geprüfter Parameter der Auswertung
 
-**Language: Julia**
+**Language: Python**
 
-## Warum
+## Warum — und was an der ursprünglichen Annahme falsch war
 
-`docs/paper1_phaseC_benchmark_plan.md` §4a hält als bindende Folgerung fest: **Phase-C-Records
-speichern rohen Support, ausgedünnten Support und Koeffizienten — alle drei.** Heute speichert der
-Phase-B-Pfad zwei davon:
+Arbeitspaket B6 in `docs/paper1_phaseC_benchmark_plan.md` §2a lautet „Kampagnen-ID-Parameter für die
+vorhandenen Aggregatskripte, sie sind auf `paper1_phaseB_v1` verdrahtet". **Nachgeprüft am
+2026-09-10: das stimmt so nicht.** Die Skripte haben bereits `--registry`, `--classification`,
+`--adequacy` und `--output-dir`; verdrahtet sind nur die **Defaults**.
 
-- `support_terms` — die **rohe** aktive Termmenge (`active_term_names`,
-  `studies/regression/run_regression.jl:870`),
-- `model_terms` — Terme **mit Koeffizienten** (seit WP-N1),
-- `pruned_match` — ein **Bool**, aber **nicht** die ausgedünnte Termmenge selbst.
+Die tatsächliche Lücke ist eine andere und gefährlicher, weil sie still ist:
 
-Der ausgedünnte Support ist damit **nicht rekonstruierbar**, und genau daran ist WP-N7 gescheitert:
-Ausdünnen braucht Koeffizienten, Phase B speicherte keine, das Abnahmekriterium war prinzipiell
-unerreichbar.
+1. **`verify_campaign_registry.py` prüft `experiment_id` überhaupt nicht.** Die Spalte kommt in der
+   Datei kein einziges Mal vor, steht auch nicht in `REQUIRED_COLUMNS`. Eine Registry, die Zeilen aus
+   **zwei** Kampagnen enthält, besteht die Prüfung.
+2. **Jeder Default zeigt auf Phase B.** Wer bei einer Phase-C-Auswertung ein Flag vergisst, erhält
+   **Phase-B-Ergebnisse in einem Phase-C-Verzeichnis**, ohne Fehlermeldung. Der Plan verlangt in §5
+   ausdrücklich: *Phase-B- und Phase-C-Zahlen erscheinen nie in derselben Tabelle.* Nichts erzwingt
+   das derzeit.
+3. **Es gibt keine Konsistenzprüfung zwischen den Eingaben.** Registry, `system_classification.csv`
+   und `representational_adequacy.csv` werden unabhängig übergeben; sie dürfen heute aus
+   verschiedenen Kampagnen stammen.
 
-Warum das mehr als Buchhaltung ist: **40 der 110 Phase-B-Supporttreffer (36,4 %) entstehen
-ausschließlich durch die Ausdünnungsregel**, auf dim 2 sind es 34 von 53 — also 64 % der Treffer.
-Beide Zahlen müssen künftig nebeneinander berichtet werden, und dafür müssen beide im Record stehen.
-
-Zweiter Grund, §4b: **ein Spaltenname trägt heute zwei Bedeutungen.**
-`experiments/run_experiment.jl:405` schreibt den **rohen** Match nach `exact_support_match`,
-`run_regression.jl` schreibt dort den **ausgedünnten**. Ein Join über diese Spalte vergleicht
-verschiedene Größen. Der Record muss die Definition selbst benennen.
-
-Das ist Arbeitspaket **B2** aus §2a des Phase-C-Plans.
+Das Projekt hat diesen Fehlertyp schon einmal bezahlt: ein Spaltenname mit zwei Bedeutungen (§4b),
+und ein Wächtertest, der drei Wochen rot war, ohne dass es auffiel.
 
 ## Was zu bauen ist
 
-### 1. Die Ausdünnungsregel bekommt genau eine Implementierung
+### 1. Die Kampagne wird ein benanntes Argument
 
-`support_match_pruned` (`studies/regression/diagnostic_systems.jl:183`) trägt die Regel
-`max(1e-6, 1e-3 * max_abs)` **inline**. Für den neuen ausgedünnten Support wird dieselbe Regel
-gebraucht.
+Alle Skripte unter `analysis/scripts/aggregate/`, die eine Kampagne auswerten, bekommen ein
+Argument für die Kampagnen-Kennung. **Default bleibt `paper1_phaseB_v1`**, damit bestehende Aufrufe
+unverändert weiterlaufen.
 
-**Schreibe sie nicht ein zweites Mal.** Ziehe sie in eine eigene, benannte Funktion, die je Gleichung
-aus Termindizes und zugehörigen Parametern die **überlebenden** Termindizes liefert, und baue
-`support_match_pruned` darauf um. Zwei Kopien einer eingefrorenen Konstante driften irgendwann
-auseinander; die Regel ist eingefroren (WP-V1, WP-N2) und darf genau einmal im Code stehen.
+Aus dieser Kennung werden die übrigen Pfade abgeleitet, solange sie nicht ausdrücklich überschrieben
+werden — Registry unter `experiments/<kennung>/`, abgeleitete Daten und Tabellen unter
+`analysis/data/<kennung>/` bzw. `analysis/tables/<kennung>/`. Eine explizit übergebene Option hat
+weiterhin Vorrang.
 
-Die Regel selbst wird **nicht geändert** — weder Schwelle noch Form.
+Betroffen sind mindestens `aggregate_phaseb_structure_metrics.py`,
+`aggregate_phaseb_raw_pruned_support_comparison.py`, `aggregate_representability_threeway.py` und
+`verify_campaign_registry.py`. **Prüfe die übrigen Skripte im Verzeichnis selbst** und behandle jedes
+gleich, das eine Kampagne auswertet; nenne im Report, welche du warum ausgelassen hast.
 
-### 2. Neue Felder im Record
+### 2. Der Wächter prüft die Kampagnenidentität
 
-`studies/regression/run_regression.jl` ergänzt:
+`verify_campaign_registry.py` bekommt zusätzlich:
 
-| Feld | Inhalt |
-|---|---|
-| `pruned_support_terms` | die ausgedünnte Termmenge als Namen, je Gleichung — dieselbe Form wie `support_terms` |
-| `exact_support_match_raw` | Bool: roher Support gleich wahrem Support; `nothing`, wenn kein wahrer Support existiert |
-| `exact_support_match_pruned` | Bool: ausgedünnter Support gleich wahrem Support; `nothing` ebenso |
-| `exact_support_match_definition` | fester Textwert, siehe Punkt 3 |
+- `experiment_id` in den Pflichtspalten,
+- die Prüfung, dass die Registry **genau einen** `experiment_id`-Wert enthält — mehrere sind ein
+  Fehler mit einer Meldung, die die gefundenen Werte nennt,
+- die Prüfung, dass dieser Wert mit der übergebenen Kampagnen-Kennung übereinstimmt.
 
-Den rohen Match berechnest du mit der **vorhandenen** `support_match`
-(`studies/regression/diagnostic_systems.jl:171`), nicht mit einer neuen Implementierung.
+Die bestehenden Erwartungswerte für Zeilenzahl, Bedingungen und Identitätstripel sind
+Phase-B-Konstanten. Sie bleiben als Defaults, aber der Report muss festhalten, dass sie beim
+Phase-C-Lauf gesetzt werden müssen — 378 statt 756 und so weiter.
 
-**`pruned_match` bleibt unverändert bestehen**, gleicher Name, gleiche Bedeutung, gleiche Berechnung.
-Die gesamte Phase-B-Auswertung hängt an diesem Namen. `exact_support_match_pruned` steht daneben und
-muss im selben Record denselben Wert tragen.
+### 3. Die Aggregatskripte lehnen gemischte Eingaben ab
 
-### 3. Der Definitionsvermerk
+Vor der Auswertung wird geprüft, dass die geladene Registry genau einen `experiment_id` trägt und
+dass er der angeforderten Kampagne entspricht. Passt es nicht, **bricht das Skript mit einer klaren
+Meldung ab**, statt zu rechnen. Ein leeres Ergebnis ist ebenfalls ein Abbruch, kein Erfolg — diese
+Regel existiert seit WP-A4b und muss erhalten bleiben.
 
-Der Wert ist ein fester Text und wird vom bestehenden Python-Wächter
-`analysis/utils/support_match_definition.py` erkannt. Dieser kennt die kanonischen Werte
-`raw_support_terms_exact_match` und `pruned_support_terms_exact_match`.
+Wo eine Eingabedatei die Spalte gar nicht führt (`system_classification.csv` und
+`representational_adequacy.csv` sind systemweit, nicht zellweise), wird **nicht** künstlich eine
+Kampagnenspalte erfunden. Halte im Report fest, welche Eingaben systemweit sind und deshalb von der
+Prüfung ausgenommen bleiben.
 
-Für den Phase-B-Pfad ist der korrekte Wert **`pruned_support_terms_exact_match`**, weil die
-Registry-Spalte `exact_support_match` aus diesem Pfad aus `pruned_match` gefüllt wird. Lies den
-Wächter, bevor du den Namen des Feldes und den Wert festlegst, damit beide Seiten zusammenpassen.
+### 4. Tests
 
-### 4. Nichtberechenbarkeit sauber führen
+`analysis/tests/` bekommt Tests für:
 
-Für Surrogatsysteme existiert kein wahrer Support. Dort sind beide Match-Felder `nothing`, so wie
-`pruned_match` es heute schon handhabt. `pruned_support_terms` ist dagegen **immer** berechenbar, weil
-es nur Struktur und Koeffizienten braucht — es darf also auch bei Surrogaten nicht `nothing` sein.
+1. Registry mit zwei verschiedenen `experiment_id`-Werten → Abbruch, und die Meldung nennt beide,
+2. Registry, deren `experiment_id` nicht zur angeforderten Kampagne passt → Abbruch,
+3. korrekter Fall → Erfolg,
+4. Pfadableitung aus der Kennung, und dass eine explizite Option die Ableitung schlägt.
+
+Die Tests arbeiten auf kleinen, selbst erzeugten Fixtures, **nicht** auf den echten Kampagnendaten.
 
 ## Verboten
 
-- **Keinen langen Lauf starten.** Ein Smoke-Test auf einem kleinen System ist erlaubt.
-- **Die Ausdünnungsschwelle nicht ändern.** Sie ist eingefroren; diese Aufgabe macht sie nur sichtbar.
-- **`pruned_match` nicht umbenennen, nicht umdefinieren, nicht entfernen.**
-- **`studies/regression/wp_n1_basis_probe.jl` nicht anfassen.** Dieses Skript rechnet **gerade jetzt**
-  auf dem Cluster; jede Änderung würde die Identität des laufenden Datensatzes brechen.
-- **`experiments/run_experiment.jl` nicht anfassen.** Der Phase-A-Pfad ist eingefroren.
-- **Fingerprints und ihre Eingaben nicht anfassen:** `phase_b_fingerprint()`, `config_fingerprint()`,
-  `stage_cap_behavior_fingerprint()`.
+- **Keine Zahlen der Phase-B-Auswertung verändern.** Das ist das schärfste Kriterium dieser Aufgabe.
+- Keine Änderung an Metrikdefinitionen, an der Ausdünnungsregel oder an
+  `analysis/utils/support_match_definition.py`.
+- Keine neuen Abhängigkeiten.
+- Keine Julia-Datei anfassen.
+- `studies/regression/wp_n1_basis_probe.jl` und alles unter `experiments/paper1_phaseB_v1/` bleiben
+  unberührt — Letzteres sind eingefrorene Kampagnendaten.
 
 ## Abnahme
 
-Julia lässt sich hier nicht ausführen; melde `blocked`, Claude fährt die Abnahme.
+**Python läuft in deiner Umgebung** — diese Aufgabe fährst du also selbst zu Ende und meldest `done`,
+nicht `blocked`.
 
-Im Report brauche ich:
+Vor der Abgabe auszuführen und im Report mit Ausgabe zu belegen:
 
-- wo die extrahierte Ausdünnungsregel jetzt liegt und welche Aufrufer sie benutzen,
-- den gewählten Feldnamen und Wert des Definitionsvermerks, mit der Stelle im Python-Wächter, gegen
-  die du ihn geprüft hast,
-- die Liste der geänderten Dateien mit je einem Satz.
+1. `python -m pytest analysis/tests/ -q` — alle grün, inklusive der neuen Tests.
+2. **Der Byte-Vergleich:** die vorhandenen Phase-B-Ableitungen unter `analysis/data/paper1_phaseB_v1/`
+   und `analysis/tables/paper1_phaseB_v1/` mit den Skripten **neu erzeugen** — in ein temporäres
+   Verzeichnis, nicht über die vorhandenen Dateien — und die Ergebnisse Byte für Byte gegen die
+   eingecheckten Dateien vergleichen. Erwartung: **identisch**. Nenne im Report jede Datei, die du
+   verglichen hast, und jede, die du nicht vergleichen konntest, mit Grund.
+3. `verify_campaign_registry.py` gegen `experiments/paper1_phaseB_v1/run_registry.csv` — muss
+   weiterhin bestehen.
 
-Claude prüft an einer realen Regressionszelle:
+Findest du bei (2) eine Abweichung, ist das ein Fund und kein Grund, die Erwartung anzupassen:
+melde `blocked` und beschreibe die Abweichung.
 
-1. alle vier neuen Felder vorhanden und plausibel belegt,
-2. `exact_support_match_pruned == pruned_match` im selben Record,
-3. `pruned_support_terms` ist je Gleichung eine **Teilmenge** von `support_terms`,
-4. alle übrigen Felder **bitgleich** gegen `HEAD`, insbesondere `loss`, `total_loss_evals`,
-   `total_parameter_fits`, `total_ode_solves`, `r2`, `pruned_match`, `support_terms`,
-5. die drei Fingerprints unverändert,
-6. Tests grün.
-
-Report nach `codex/reports/REPORT_WP_N12.md`.
+Report nach `codex/reports/REPORT_WP_N13.md`.
