@@ -12,6 +12,13 @@ const PHASE_C_DIMENSION_MEAN_SECONDS = Dict(
     4 => 2_300.0,
 )
 
+# WP-N18/P9 pilot selection is frozen before Phase-C data exist: cheapest exact
+# Phase-B system per dimension class under the canonical support table, crossed
+# with C-1/C-2, one predeclared seed, and both IC sets.
+const PHASE_C_P9_PILOT_SYSTEM_IDS = Set([2, 24, 52, 63])
+const PHASE_C_P9_PILOT_SEED = 42
+const PHASE_C_P9_PILOT_CONDITIONS = Set(["capped", "uncapped"])
+
 function _arg_value(args::Vector{String}, name::String)
     idx = findfirst(==(name), args)
     idx === nothing && return nothing
@@ -212,6 +219,28 @@ function write_phase_c_smoke_index_list(path::AbstractString, rows)
     end
 end
 
+function phase_c_p9_pilot_rows(rows)
+    selected = [
+        row for row in rows
+        if row.system_id in PHASE_C_P9_PILOT_SYSTEM_IDS &&
+           row.seed == PHASE_C_P9_PILOT_SEED &&
+           row.condition in PHASE_C_P9_PILOT_CONDITIONS
+    ]
+    expected = length(PHASE_C_P9_PILOT_SYSTEM_IDS) * length(PHASE_C_IC_SETS) * length(PHASE_C_P9_PILOT_CONDITIONS)
+    length(selected) == expected ||
+        error("WP-N18/P9 pilot expected $(expected) rows, got $(length(selected))")
+    return sort(selected; by = row -> row.index)
+end
+
+function write_phase_c_p9_pilot_index_list(path::AbstractString, rows)
+    mkpath(dirname(path))
+    open(path, "w") do io
+        for row in phase_c_p9_pilot_rows(rows)
+            println(io, row.index)
+        end
+    end
+end
+
 function phase_c_limit_rows(rows, limit::Union{Nothing, Int})
     limit === nothing && return rows
     limit >= 3 || error("--limit must be at least 3 so the smoke manifest covers all Phase C arms")
@@ -262,6 +291,7 @@ function main(args = ARGS)
             ("pretune_on",),
         )
         write_phase_c_smoke_index_list(joinpath(dirname(output), "indices_smoke_dim1_all_arms.txt"), rows)
+        write_phase_c_p9_pilot_index_list(joinpath(dirname(output), "indices_p9_pilot_c1_c2.txt"), rows)
         for dim in sort(unique(row.system_dim for row in rows))
             write_phase_c_dimension_index_list(joinpath(dirname(output), "indices_dim$(dim).txt"), rows, dim)
         end
@@ -304,6 +334,11 @@ function main(args = ARGS)
         println("c3_cost_desc_index_rows=$(length(c3_rows))")
         println("smoke_dim1_all_arms_index_output=$(joinpath(dirname(output), "indices_smoke_dim1_all_arms.txt"))")
         println("smoke_dim1_all_arms_index_rows=$(length(smoke_rows))")
+        pilot_rows = phase_c_p9_pilot_rows(rows)
+        println("p9_pilot_index_output=$(joinpath(dirname(output), "indices_p9_pilot_c1_c2.txt"))")
+        println("p9_pilot_index_rows=$(length(pilot_rows))")
+        println("p9_pilot_seed=$(PHASE_C_P9_PILOT_SEED)")
+        println("p9_pilot_system_ids=$(join(sort(collect(PHASE_C_P9_PILOT_SYSTEM_IDS)), ","))")
         for dim in sort(unique(row.system_dim for row in rows))
             count_dim = count(row -> row.system_dim == dim, rows)
             println("dimension_$(dim)_rows=$(count_dim)")
