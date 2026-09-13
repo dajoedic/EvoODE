@@ -8,7 +8,7 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ### WP-N15: die dim-2-Auswertung steht, und sie bestaetigt die dim-1-Richtung
 
-<!-- 5b0e227 / 03e7606 -->
+<!-- 5b0e227 / 0bfff14 -->
 
 Der Probelauf auf Orion ist bei **335 von 336 Zellen**, fehlerfrei, unter einer Identitaet
 (`git ec3b6bd` / `0290b75a28791195` / `ffb0266c7913352c`). Die fehlende Zelle 293 ist System 44,
