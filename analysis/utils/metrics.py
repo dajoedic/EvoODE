@@ -115,6 +115,23 @@ def term_set_metrics(found_terms: Iterable[Any], true_terms: Iterable[Any]) -> d
     }
 
 
+def equationwise_support_match(
+    found_equations: Sequence[Iterable[Any]],
+    true_equations: Sequence[Iterable[Any]],
+) -> bool:
+    """Return whether every equation has the same normalized support-term set.
+
+    Equations are compared by index; equation order is not permuted.
+    """
+    if len(found_equations) != len(true_equations):
+        return False
+    return all(
+        {normalize_term_name(term) for term in found_terms}
+        == {normalize_term_name(term) for term in true_terms}
+        for found_terms, true_terms in zip(found_equations, true_equations)
+    )
+
+
 def aggregate_equation_metrics(equation_metrics: Sequence[dict[str, Any]]) -> dict[str, Any]:
     if not equation_metrics:
         raise ValueError("At least one equation metric row is required")

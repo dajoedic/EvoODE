@@ -54,6 +54,7 @@ analysis/data/*
 !analysis/data/.gitkeep
 !analysis/data/paper1_phaseB_v1/
 !analysis/data/paper1_phaseC_v1/
+!analysis/data/wp_n1_dim2_probe/
 
 analysis/figures/*
 !analysis/figures/.gitkeep

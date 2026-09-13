@@ -1,77 +1,87 @@
-# WP-N14b — Ein Defekt aus der Abnahme von WP-N14
+# WP-N15b — Zwei Defekte aus der Abnahme von WP-N15
 
 **Language: Python**
 
 ## Ausgangslage
 
-WP-N14 ist im Kern richtig. Die Abnahme durch Claude hat ergeben:
+WP-N15 ist in der Anlage richtig: die Schichtenlogik, die Trennung roh/ausgedünnt, die
+Abbruchpfade und die `.gitignore`-Ausnahme sind da, und die gemeinsame Gleichheitsfunktion sitzt
+korrekt in `analysis/utils/metrics.py`.
 
-- 26 Python-Tests grün, inklusive aller geforderten Fixture-Fälle,
-- Phase-B-Ableitungen nach dem Herausziehen der Statistik nach `analysis/utils/paired_stats.py`
-  **bitgleich** neu erzeugt — `git status` bleibt leer,
-- die Erlaubnisliste wirkt in die richtige Richtung: unbekannte Spalten müssen gleich sein.
+Zwei Defekte bleiben, und beide sind blockierend. Keiner davon stand im Report — sie kamen aus dem
+Ausführen.
 
-Ein Defekt bleibt, und er ist blockierend.
+**Wichtig zur Einordnung:** der Report meldet „33 passed". Bei der Abnahme sind **4 von 33 rot**.
+Die Ursache steht unter Defekt 1; die Zahl im Report war also nicht belastbar. Bitte diesmal die
+volle Suite ausführen und das Ergebnis wörtlich übernehmen, nicht aus einem früheren Zwischenstand.
 
-## Der Defekt — `campaign_manifest_index`
+## Defekt 1 — die Erfolgspfade stürzen ab, sobald die Ausgabe außerhalb des Repos liegt
 
-Die Spalte steht **nicht** in `ALLOWED_DIFFERENCE_COLUMNS`, muss nach der Erlaubnislogik also
-zwischen den beiden Armen einer Paarung übereinstimmen.
+Am Ende von `main` wird der Ausgabepfad für die Abschlussmeldung relativ zum Repo-Wurzelverzeichnis
+gemacht. Dieser Aufruf ist unbedingt. Liegt das Ausgabeverzeichnis nicht unterhalb des Repos, wirft
+er `ValueError` — und alle Tests arbeiten auf `tmp_path`, wie es sich gehört.
 
-Sie kann das nicht. Jeder Arm hat seine **eigene Zeile im Kampagnenmanifest** und damit seinen
-eigenen Index; in der Phase-B-Registry unterscheidet sich die Spalte bereits in **378 von 378**
-Paarungen. In Phase C wird das genauso sein.
+Folge: **genau die vier Tests fallen um, die einen erfolgreichen Schreibvorgang erreichen**, während
+die Abbruchpfade grün bleiben, weil sie vorher aussteigen. Das ist die unangenehme Sorte Fehler —
+die Testsuite sieht überwiegend grün aus, aber kein einziger Erfolgsfall ist tatsächlich belegt.
 
-Folge: die Auswertung von Claim B bräche auf echten Daten in **jeder** Paarung ab — und zwar
-scheinbar mit dem Befund „die Bedingungen sind nicht identisch", also mit einer Meldung, die einen
-Konfigurationsfehler behauptet, wo ein Buchhaltungsfeld abweicht. Das ist die schlechteste Sorte
-Fehlalarm: er sieht aus wie ein wissenschaftlicher Befund.
+Die Meldung ist reine Kosmetik, die Wegwerfbarkeit der Ausgabe ist es nicht: `--output-dir` ist
+laut `analysis/CONVENTIONS.md` ein freier CLI-Parameter, und ein Ausgabeverzeichnis außerhalb des
+Repos muss zulässig bleiben. Also: die Meldung darf den Pfad verkürzen, wenn er unterhalb des Repos
+liegt, und muss ihn sonst vollständig ausgeben — abstürzen darf sie nie.
 
-**Zu tun:** Die Spalte gehört zu den zulässigen Unterschieden — sie identifiziert die Zelle
-innerhalb der Kampagne, nicht ihre Bedingungen. Nimm sie auf, mit einem kurzen Kommentar, **warum**
-sie dort steht, damit niemand sie später für einen übersehenen Fehler hält.
+## Defekt 2 — ein normaler Wert wird als tödlicher Fehler behandelt
 
-## Die zweite Stelle — vorsorglich, kein Fehler
+Der Lauf über die echten Records bricht sofort ab:
 
-`stage_cap_policy_active` und verwandte Kappen-Schalter kommen in der Phase-B-Registry **gar nicht**
-vor, in den Julia-Records aber schon (`studies/regression/run_regression.jl` schreibt
-`stage_cap_policy_active`). Sobald der Phase-C-Konverter dieses Feld durchreicht, unterscheidet es
-sich zwangsläufig zwischen gekapptem und ungekapptem Arm — und würde denselben Fehlalarm auslösen.
+```text
+Error: Record 37 field wp_n1_expected_support_terms must be a list
+```
 
-`stage_caps` ist bereits in der Liste. Ergänze `stage_cap_policy_active` und prüfe die
-Julia-Recordfelder auf weitere Schalter derselben Art, die sich zwischen den Armen unterscheiden
-müssen. Nenne im Report, welche du geprüft und welche du aufgenommen hast.
+Der Exit-Code ist korrekt 1. Die Prüfung selbst ist falsch.
 
-**Nicht aufnehmen** darfst du dabei irgendetwas, das eine echte Bedingung beschreibt — Basis, Seed,
-Levelbudget, Pretuning-Schalter, Screening-Schalter, Toleranzen, Fingerprints. Genau die sollen
-abbrechen, wenn sie abweichen; das ist der Zweck der Prüfung.
+`wp_n1_expected_support_terms` ist für **Surrogatsysteme** `null`, und zwar konstruktionsbedingt:
+`wp_n1_basis_probe.jl` setzt das Feld nur, wenn ein exakter Support hergeleitet werden konnte
+(`_wp_n1_system_for_basis`). In den echten Daten ist das Feld in **221 von 335** Records `null` —
+in **allen 221 Surrogatzellen** und in **keiner einzigen der 114 exakten**. Der Zusammenhang ist
+exakt und muss geprüft, nicht umgangen werden.
 
-## Der Test, der gefehlt hat
+Die bestehende Prüfung erklärt damit zwei Drittel des Datensatzes für kaputt. Sie sind es nicht.
 
-Die vorhandenen Fixtures decken ab, dass eine **unerlaubte** Abweichung abbricht. Es fehlt der
-Gegenfall: dass eine Paarung, die sich **genau in den erlaubten Feldern** unterscheidet — inklusive
-Armkennzeichnung, Manifestindex und Kappen-Schaltern — sauber **durchläuft**.
+Folge für die Wissenschaft, nicht nur für den Lauf: **Schicht C ist so unerreichbar.** Der Anteil
+R² > 0,9 wird über alle Zellen berichtet, getrennt nach exakt und Surrogat — das ist die
+Literaturkennzahl und nach Designprinzip 9 zwingend. Ein Skript, das an der ersten Surrogatzelle
+stirbt, kann die Hälfte der geforderten Aussage nicht liefern.
 
-Ohne diesen Test wäre der Defekt nicht aufgefallen, weil kein Fixture den realistischen Fall
-abbildete. Ergänze ihn.
+Zu tun: `null` ist für Surrogatzellen der **erwartete** Wert und muss durchlaufen. Für exakte
+Zellen bleibt eine Liste Pflicht — dort ist `null` weiterhin ein Abbruchgrund. Beide Trefferspalten
+sind für Surrogatzellen leer im Sinne von „nicht anwendbar" und dürfen **nicht** als `False`
+gefüllt werden: ein nicht vorhandener Strukturtreffer ist kein verfehlter Strukturtreffer, und in
+keiner Aggregation darf ein Surrogat in einen Nenner der Strukturkennzahl geraten (Designprinzip 8).
 
-## Verboten
+## Warum die Tests das nicht gefunden haben
 
-- Keine Änderung an der Statistik, an der Paarungslogik oder an der Richtung der Erlaubnislogik.
-  Unbekannte Spalten müssen weiterhin gleich sein.
-- Keine Zahlen der Phase-B-Auswertung verändern.
-- Das Skript nicht auf echten Phase-B-Daten laufen lassen und nichts daraus berichten.
-- Keine neuen Abhängigkeiten, keine Julia-Datei anfassen.
+`analysis/tests/test_wp_n1_dim2_probe_aggregation.py` gibt in der Record-Fabrik **jeder** Zelle
+`[["u1"], ["u2"]]` als erwartete Terme mit, auch den als Surrogat markierten. Diese Kombination —
+`representability == "surrogate"` **mit** Termliste — kommt in echten Daten nicht vor. Die Fixture
+bildet die Daten also an der entscheidenden Stelle falsch ab.
 
-## Abnahme
+Die Fixtures müssen den realen Zusammenhang tragen: Surrogatzellen ohne Termliste, exakte Zellen
+mit. Zusätzlich ein Test, der die **verbotene** Kombination absichert — eine exakte Zelle ohne
+Termliste muss weiterhin mit einem von Null verschiedenen Exit-Code abbrechen.
 
-Python läuft bei dir — fahre sie selbst und melde `done`.
+## Abnahmekriterien
 
-Zu belegen:
+1. Die volle Suite unter `analysis/tests` ist grün, **alle** Erfolgspfade eingeschlossen, und die
+   genannte Zahl stammt aus diesem Lauf.
+2. Neue Tests: Ausgabeverzeichnis außerhalb des Repos läuft durch; Surrogatzelle ohne Termliste
+   läuft durch; exakte Zelle ohne Termliste bricht mit Exit-Code ungleich Null ab.
+3. Die Trefferspalten sind für Surrogatzellen als „nicht anwendbar" gekennzeichnet, nicht als
+   `False`, und kein Surrogat erscheint in einem Nenner der Strukturkennzahlen.
+4. Report nach `codex/reports/REPORT_WP_N15b.md`, knapp: was geändert wurde, welche Tests neu sind,
+   das wörtliche Testergebnis.
 
-1. `python -m pytest analysis/tests/ -q` — alle grün, inklusive des neuen Positivtests.
-2. Byte-Vergleich der Phase-B-Ableitungen weiterhin identisch.
-3. Im Report: die vollständige Liste der Spalten, die du zusätzlich aufgenommen hast, je mit einem
-   Satz Begründung, und die Liste derer, die du bewusst **nicht** aufgenommen hast.
-
-Report nach `codex/reports/REPORT_WP_N14b.md`.
+Der Lauf über die echten Records bleibt blockiert, weil der Share `S:\` aus der Codex-Sitzung nicht
+sichtbar ist — das ist bekannt und kein Mangel dieses Pakets. Diese Abnahme fährt Claude. Melde
+den Datenlauf wieder als das, was er ist, und stütze **keine** Aussage auf echte Zahlen, die du
+nicht selbst erzeugt hast.
