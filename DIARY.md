@@ -6,6 +6,51 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ## 2026-09-13
 
+### WP-N18: der Pilot steht, und sein Go-Kriterium haette immer „nein" gesagt
+
+<!-- 5d9bbf6 -->
+
+**Die „12 Zellen" des Plans folgen nicht aus seiner eigenen Auswahlregel.** Billigstes exaktes
+System je Dimensionsklasse, gekreuzt mit C-1 und C-2, einem Seed und beiden IC-Sets — unter der
+kanonischen Basis haben **alle vier** Dimensionsklassen exakte Systeme, also ergibt die Regel
+**16 Zellen**. Die Regel bleibt, die Zahl wird korrigiert: eine vorab festgelegte Regel
+nachtraeglich zu beschneiden, damit eine Zahl stimmt, waere die falsche Richtung — und die vierte
+Klasse kostet praktisch nichts, waehrend dim 3/4 genau die Stelle ist, an der Recordfehler am
+wahrscheinlichsten sind.
+
+Eingefrorene Auswahl, aus `run_registry.csv` gegen die kanonische Supporttabelle hergeleitet:
+Systeme **2, 24, 52, 63**, Seed **42**, je Dimension vier Zellen, **alle acht Paare benachbart**.
+Zwei Eigenheiten sind deklariert statt geglaettet: **System 52** ist eines der zehn neu exakten
+Systeme, seine Kostenzahl stammt also aus einer Basis, unter der es Surrogat war; **System 63** ist
+die Identifizierbarkeitsgrenze, deren Kappe auf der alten Basis ueberall `nothing` war — ob das
+unter der kanonischen noch gilt, weiss niemand, und der Pilot zeigt es.
+
+**Der Defekt, und er ist die lehrreiche Haelfte (WP-N18b).** Kriterium 1 prueft je Zelle
+`success == true` und leeres `failure_reason`. **Beide Felder gibt es im Record nicht** — nur
+`error`. Mit sechzehn Kopien des echten Smoke-Records ausgefuehrt: `success is None, expected true`.
+Der Pilot waere durchgefallen, **egal wie gut er laeuft** — und das ist gefaehrlicher als ein
+Fehlalarm sonst: ein eingefrorenes Go-Kriterium, das grundlos „nein" sagt, laedt dazu ein, es
+abzuschwaechen statt den Fehler zu suchen.
+
+Ursache: `success` und `failure_reason` sind **Registry-Spalten**, keine Recordfelder; das Kriterium
+ist auf der Registry formuliert. Der Pruefer liest sie jetzt dort — und damit entfiel zugleich die
+Erweiterung der WP-N14-Erlaubnisliste, die der rohe Pfad gebraucht haette, weil die Registry
+ohnehin `campaign_manifest_index` fuehrt. Zwei Probleme, eine Ursache.
+
+**Gegen echte Daten geprueft, nicht gegen Fixtures:** sechzehn aus dem Smoke-Record geformte Records
+laufen durch, `16 records, 8 pairs`, Exit 0; und der Probe-Schluessel wird in
+`wp_n5_ic_generalization.jl` und im Pruefer **identisch** gebildet. Das belegt die Mechanik, nicht
+dass ein echter Pilot besteht.
+
+**Ein Muster, das diese Sitzung dreimal gezeigt hat.** WP-N15: die Fixture gab Surrogaten eine
+Termliste, die echte Surrogate nie haben. WP-N16: erst die Ausfuehrung fand einen World-Age-Fehler,
+der jeden Pod getoetet haette. WP-N18: die Fixture gab jedem Record ein `success`, das kein Record
+hat. Immer dieselbe Ursache — **die Fixture wurde erfunden statt abgeleitet** und prueft damit die
+Annahme gegen sich selbst. Konsequenz fuer kuenftige Pakete: Fixtures aus einem echten Record
+ableiten.
+
+Damit ist **P9 gebaut**. Es fehlt nur noch die Ausfuehrung: Smoke-Job, Pilot, Go-Kriterium, Start.
+
 ### WP-N17: die Cluster-Manifeste, und warum es zwei Jobs sind statt drei
 
 <!-- 29a0030 -->

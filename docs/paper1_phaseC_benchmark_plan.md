@@ -382,7 +382,7 @@ merely accelerate it.
 path and a pass criterion; the five open questions are decided in section 7; the work packages the
 matrix implies are listed in section 2a.
 
-**P9 — Smoke test on a small system**, per the standing rule for multi-hour runs, before any cluster
+**P9 — ~~Smoke test on a small system~~ built 2026-09-14 (WP-N17 manifest, WP-N18 pilot and checker); only the execution is left.** Per the standing rule for multi-hour runs, before any cluster
 submission. Distinct from the 12-cell pilot of Q5: the smoke test asks whether the path runs, the
 pilot asks whether the records support the claims.
 
@@ -478,7 +478,16 @@ disproportionate. **The cost of this decision is stated in section 2 and is not 
 hours, 98.7 % of it in 24 dim-3 cells.** Including dim 3 was chosen deliberately so the collapse is
 measured where the method is weakest.
 
-**Q5 - Pilot and go criterion. Decided: a 12-cell pilot, distinct from the P9 smoke test.**
+**Q5 - Pilot and go criterion. Decided: a ~~12~~ **16**-cell pilot, distinct from the P9 smoke test.**
+**Corrected 2026-09-14 (WP-N18): "12 cells" does not follow from this rule.** All four dimension
+classes have exact systems under the canonical basis, so the rule yields 4 x 2 arms x 1 seed x 2 IC
+sets = **16**. The rule is kept and the count corrected - narrowing a pre-registered rule so a
+number matches would be the wrong direction. Frozen selection: systems **2, 24, 52, 63**, seed
+**42**, four cells per dimension class, all eight pairs adjacent in the index list. Two properties
+are declared: system 52 is one of the ten newly exact systems, so its Phase B cost figure comes
+from a basis under which it was a surrogate; and system 63 is the identifiability limit whose cap
+was `nothing` everywhere on the old basis - whether that still holds under the canonical basis is
+unknown, and the pilot will show it.
 The smoke test asks whether the cluster path runs at all; the pilot asks whether the **records are
 fit for the claims**. Scope: the cheapest exact system per dimension class, selected by Phase B
 median cell cost - a rule fixed in advance, not a pick after seeing Phase C - crossed with arms C-1
