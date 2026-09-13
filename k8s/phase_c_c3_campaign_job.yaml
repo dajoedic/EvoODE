@@ -1,0 +1,78 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: evoode-phase-c-c3-campaign
+  namespace: scch-das
+  labels:
+    app.kubernetes.io/name: evoode
+    app.kubernetes.io/part-of: evoode-phase-c
+    app.kubernetes.io/component: indexed-campaign
+    app.kubernetes.io/managed-by: kubectl
+    hpc.scch.at/service: evoode-phase-c-cells
+    hpc.scch.at/responsibility: joedicke
+spec:
+  # Start order matters: bootstrap first, smoke second, this campaign third.
+  # Do not skip smoke; it is the cheap place where an expired evoode-gitlab-pull
+  # deploy token shows up as ErrImagePull / HTTP Basic: Access denied before a
+  # 5-7 week run can create a mid-run data gap that looks like science.
+  ttlSecondsAfterFinished: 3600
+  completionMode: Indexed
+  completions: 180
+  # Parallelism is set to 32 like the WP-N1 probe, but that namespace snapshot
+  # was from 2026-09-09. Repeat these checks immediately before launch:
+  # kubectl -n scch-das get resourcequota,limitrange
+  # kubectl -n scch-das top pods
+  # kubectl get nodes
+  # requests == limits below, so surplus pods queue Pending instead of evicting
+  # co-tenants if the scheduler cannot place all 32 at once.
+  parallelism: 32
+  # Scientific failures are recorded by run_batch_cell and exit 0; pod failures
+  # here are infrastructure failures such as eviction, OOM kill, or image pull.
+  backoffLimit: 50
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: evoode
+        app.kubernetes.io/part-of: evoode-phase-c
+        app.kubernetes.io/component: indexed-campaign
+        hpc.scch.at/service: evoode-phase-c-cells
+        hpc.scch.at/responsibility: joedicke
+    spec:
+      restartPolicy: Never
+      imagePullSecrets:
+        - name: evoode-gitlab-pull
+      containers:
+        - name: cell
+          image: registry.gitlab.scch.at:443/joedicke/evoode:<COMMIT_SHA>
+          imagePullPolicy: IfNotPresent
+          command:
+            - julia
+            - --project=/opt/EvoODE
+            - /opt/EvoODE/studies/regression/run_k8s_indexed_cell.jl
+          env:
+            - name: JULIA_NUM_THREADS
+              value: "1"
+            - name: OPENBLAS_NUM_THREADS
+              value: "1"
+            - name: EVO_BATCH_MANIFEST
+              value: /outputs/phase_c_campaign_<COMMIT_SHA>/manifest.csv
+            - name: EVO_BATCH_INDEX_LIST
+              value: /outputs/phase_c_campaign_<COMMIT_SHA>/indices_c3_cost_desc.txt
+            - name: EVO_BATCH_OUTPUT_DIR
+              value: /outputs/phase_c_campaign_<COMMIT_SHA>/tasks
+          resources:
+            requests:
+              cpu: "1"
+              memory: 2Gi
+            limits:
+              cpu: "1"
+              memory: 2Gi
+          volumeMounts:
+            - name: evoode-bigdata
+              mountPath: /outputs
+              subPath: data-science/joedicke
+      volumes:
+        - name: evoode-bigdata
+          nfs:
+            server: nfs.orion.scch.at
+            path: /bigdata

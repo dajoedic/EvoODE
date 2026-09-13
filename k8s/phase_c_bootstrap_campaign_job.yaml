@@ -1,0 +1,66 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: evoode-phase-c-bootstrap-campaign
+  namespace: scch-das
+  labels:
+    app.kubernetes.io/name: evoode
+    app.kubernetes.io/part-of: evoode-phase-c
+    app.kubernetes.io/component: manifest-bootstrap
+    app.kubernetes.io/managed-by: kubectl
+    hpc.scch.at/service: evoode-phase-c-bootstrap
+    hpc.scch.at/responsibility: joedicke
+spec:
+  # Start order matters: run this bootstrap first, then the smoke Job, then the
+  # campaign Jobs. Do not skip smoke; it is the cheap place where an expired
+  # evoode-gitlab-pull deploy token shows up as ErrImagePull / HTTP Basic:
+  # Access denied before the long campaign can create a mid-run data gap.
+  ttlSecondsAfterFinished: 3600
+  backoffLimit: 1
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: evoode
+        app.kubernetes.io/part-of: evoode-phase-c
+        app.kubernetes.io/component: manifest-bootstrap
+        hpc.scch.at/service: evoode-phase-c-bootstrap
+        hpc.scch.at/responsibility: joedicke
+    spec:
+      restartPolicy: Never
+      imagePullSecrets:
+        - name: evoode-gitlab-pull
+      containers:
+        - name: bootstrap
+          image: registry.gitlab.scch.at:443/joedicke/evoode:<COMMIT_SHA>
+          imagePullPolicy: IfNotPresent
+          command:
+            - julia
+            - --project=/opt/EvoODE
+            - /opt/EvoODE/studies/regression/generate_phase_c_manifest.jl
+          args:
+            - --output
+            # Must match EVO_BATCH_MANIFEST in the Phase-C smoke and campaign Jobs.
+            # The cells only read these files; nothing recreates them later.
+            - /outputs/phase_c_campaign_<COMMIT_SHA>/manifest.csv
+            - --all-dimensions
+          env:
+            - name: JULIA_NUM_THREADS
+              value: "1"
+            - name: OPENBLAS_NUM_THREADS
+              value: "1"
+          resources:
+            requests:
+              cpu: "1"
+              memory: 8Gi
+            limits:
+              cpu: "1"
+              memory: 8Gi
+          volumeMounts:
+            - name: evoode-bigdata
+              mountPath: /outputs
+              subPath: data-science/joedicke
+      volumes:
+        - name: evoode-bigdata
+          nfs:
+            server: nfs.orion.scch.at
+            path: /bigdata

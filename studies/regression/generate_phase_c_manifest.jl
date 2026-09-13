@@ -179,18 +179,68 @@ function write_phase_c_cost_desc_index_list(path::AbstractString, rows)
     end
 end
 
+function _phase_c_condition_rows(rows, conditions)
+    condition_set = Set(String(condition) for condition in conditions)
+    return [row for row in rows if row.condition in condition_set]
+end
+
+function write_phase_c_condition_cost_desc_index_list(path::AbstractString, rows, conditions)
+    mkpath(dirname(path))
+    open(path, "w") do io
+        for row in phase_c_cost_desc_rows(_phase_c_condition_rows(rows, conditions))
+            println(io, row.index)
+        end
+    end
+end
+
+function phase_c_smoke_rows(rows)
+    smoke_rows = NamedTuple[]
+    for condition in ("capped", "uncapped", "pretune_on")
+        row = findfirst(row -> row.condition == condition && row.system_dim == 1, rows)
+        row === nothing && error("No dim-1 Phase C smoke row found for condition $(condition)")
+        push!(smoke_rows, rows[row])
+    end
+    return smoke_rows
+end
+
+function write_phase_c_smoke_index_list(path::AbstractString, rows)
+    mkpath(dirname(path))
+    open(path, "w") do io
+        for row in phase_c_smoke_rows(rows)
+            println(io, row.index)
+        end
+    end
+end
+
+function phase_c_limit_rows(rows, limit::Union{Nothing, Int})
+    limit === nothing && return rows
+    limit >= 3 || error("--limit must be at least 3 so the smoke manifest covers all Phase C arms")
+    smoke_rows = phase_c_smoke_rows(rows)
+    limited = copy(smoke_rows)
+    smoke_indices = Set(row.index for row in smoke_rows)
+    for row in rows
+        length(limited) >= limit && break
+        if row.index in smoke_indices
+            continue
+        end
+        push!(limited, row)
+    end
+    return limited
+end
+
 function main(args = ARGS)
     output = get(ENV, "EVO_PHASE_C_MANIFEST", PHASE_C_MANIFEST_PATH)
     arg_output = _arg_value(args, "--output")
     arg_output !== nothing && (output = arg_output)
 
     dimension = _parse_optional_int(_arg_value(args, "--dimension"))
+    limit = _parse_optional_int(_arg_value(args, "--limit"))
     all_dimensions = _has_flag(args, "--all-dimensions")
     dimension !== nothing && all_dimensions && error("Use either --dimension or --all-dimensions, not both")
     index_output = _arg_value(args, "--index-output")
     index_output !== nothing && all_dimensions && error("--index-output is only valid with --dimension")
 
-    rows = phase_c_manifest_rows()
+    rows = phase_c_limit_rows(phase_c_manifest_rows(), limit)
     unique_identities = phase_c_unique_identity_count(rows)
     unique_identities == length(rows) || error("Phase C manifest identities are not unique")
     write_phase_c_manifest(output, rows)
@@ -201,6 +251,17 @@ function main(args = ARGS)
     elseif all_dimensions
         write_phase_c_all_index_list(joinpath(dirname(output), "indices_all.txt"), rows)
         write_phase_c_cost_desc_index_list(joinpath(dirname(output), "indices_cost_desc.txt"), rows)
+        write_phase_c_condition_cost_desc_index_list(
+            joinpath(dirname(output), "indices_c1_c2_cost_desc.txt"),
+            rows,
+            ("capped", "uncapped"),
+        )
+        write_phase_c_condition_cost_desc_index_list(
+            joinpath(dirname(output), "indices_c3_cost_desc.txt"),
+            rows,
+            ("pretune_on",),
+        )
+        write_phase_c_smoke_index_list(joinpath(dirname(output), "indices_smoke_dim1_all_arms.txt"), rows)
         for dim in sort(unique(row.system_dim for row in rows))
             write_phase_c_dimension_index_list(joinpath(dirname(output), "indices_dim$(dim).txt"), rows, dim)
         end
@@ -213,6 +274,7 @@ function main(args = ARGS)
     println("phase_c_fingerprint=$(phase_c_fingerprint())")
     println("regression_fingerprint=$(config_fingerprint())")
     println("rows=$(length(rows))")
+    limit !== nothing && println("limit=$(limit)")
     println("unique_identities=$(unique_identities)")
     println("systems=$(length(PHASE_C_SYSTEMS))")
     println("expected_stage_missing=$(missing_expected_stage)")
@@ -233,6 +295,15 @@ function main(args = ARGS)
         println("all_index_rows=$(length(rows))")
         println("cost_desc_index_output=$(joinpath(dirname(output), "indices_cost_desc.txt"))")
         println("cost_desc_index_rows=$(length(rows))")
+        c1_c2_rows = _phase_c_condition_rows(rows, ("capped", "uncapped"))
+        c3_rows = _phase_c_condition_rows(rows, ("pretune_on",))
+        smoke_rows = phase_c_smoke_rows(rows)
+        println("c1_c2_cost_desc_index_output=$(joinpath(dirname(output), "indices_c1_c2_cost_desc.txt"))")
+        println("c1_c2_cost_desc_index_rows=$(length(c1_c2_rows))")
+        println("c3_cost_desc_index_output=$(joinpath(dirname(output), "indices_c3_cost_desc.txt"))")
+        println("c3_cost_desc_index_rows=$(length(c3_rows))")
+        println("smoke_dim1_all_arms_index_output=$(joinpath(dirname(output), "indices_smoke_dim1_all_arms.txt"))")
+        println("smoke_dim1_all_arms_index_rows=$(length(smoke_rows))")
         for dim in sort(unique(row.system_dim for row in rows))
             count_dim = count(row -> row.system_dim == dim, rows)
             println("dimension_$(dim)_rows=$(count_dim)")
