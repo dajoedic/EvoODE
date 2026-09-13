@@ -382,13 +382,22 @@ the coupled search path 1e-6 is the cheaper, behaviour-equal tolerance; the Syst
    once: no pruning threshold chosen after seeing results, no library component removed because it
    produces false positives.
 
-   **Cost: ~9,600–12,600 core hours, 4–6 weeks on Orion (revised 2026-09-10).** The figure is now
+   **Cost: ~11,500–15,100 core hours, 5–7 weeks on Orion (revised 2026-09-13).** The figure is
    **derived from the Phase B registry rather than estimated**: the canonical capped arm is the
    measured cost of Phase B's `pretune_off` arm, 3,249.3 h over the same 378 cells, which supersedes
    the "~2,600 h" estimate. Added since: a 120-cell pretuning confirmation arm at 1,331 h. The
    uncapped mirror still carries the majority, because it runs the full 30 levels where the capped
    arm stops early. The experiment that must show the cap saves compute is the most expensive thing
    in the project — state that in the paper.
+
+   **The 2026-09-13 raise comes from the basis freeze, and it is a carry-over, not a measurement.**
+   The Phase B registry measures the **old** basis; the canonical arm is now the constant basis.
+   Over all 335 probe cells the constant costs **+19.8 %** `total_loss_evals` and +3.2 %
+   `total_parameter_fits`, so +20 % is applied to C-1, C-2 and C-3. Three cautions: core hours are
+   not readable off loss-eval counts (Design Principle 7); the premium is measured on **dim 2 only**
+   while dim 3 carried 75.6 % of Phase B's compute; and on the nine paired exact systems the premium
+   is about +60 %, so the aggregate is not a bound. The risk is one-sided — the total can be
+   exceeded, and the uncapped mirror is where it would show first.
 
    **The matrix is complete (P8, 2026-09-10).** Every claim names an arm, a script, an output path
    and a pass criterion, and all five questions the plan left open are decided: SINDy compares over
@@ -398,9 +407,18 @@ the coupled search path 1e-6 is the cheaper, behaviour-equal tolerance; the Syst
    citation across a basis boundary; and a 12-cell pilot with a five-part go criterion precedes
    submission, distinct from the smoke test.
 
-   **Blocking before the freeze, in order:** run the dim-2 constant-term probe (**~1,200 core
-   hours, not the 114 long quoted**) — **the canonical basis is the one still-open frozen
-   parameter**; build the remaining Phase C work packages listed in
+   **P3 is closed: the canonical basis is `staged_polynomial_basis_with_constant` (2026-09-13).**
+   The dim-2 probe ran (335/336 at decision time, 0 errors, one identity triple) and WP-N15
+   evaluated it. **The decision was taken against the probe's recovery numbers, not with them** —
+   on the nine dim-2 systems exact under both bases the constant costs recovery (pruned 55.6 % →
+   35.2 %, raw 13.0 % → 7.4 %) at an identical R² > 0.9 rate of 94.4 %. Representability decides it
+   anyway: 20 of 63 systems against SINDy's 40 is not a defensible search space for a method paper.
+   Declared limitation: the constant's benefit is measured on dim 1 (generalization, 72.7 % →
+   87.9 %) and its cost on dim 2 — **no run measures both on the same dimension**, and the dim-2
+   probe is not re-run.
+
+   **Blocking before the freeze, in order:** ~~run the dim-2 constant-term probe~~ **done**; build
+   the remaining Phase C work packages listed in
    `docs/paper1_phaseC_benchmark_plan.md` §2a — including the declaration of the restart parameter in
    the **Phase C** fingerprint, which is the half of P6 that is still open; pilot; smoke-test. Done
    since: `git_hash` repair (WP-N8), structural metrics and three-way representability (WP-N7/N7b),
@@ -550,19 +568,13 @@ the coupled search path 1e-6 is the cheaper, behaviour-equal tolerance; the Syst
    is nominal there. Do not aggregate the two classes on either metric.
 1b. **Parked operational debts (2026-09-09).** None blocks the scientific work; collected here so
    they are not only findable in diary prose.
-   - The **dim-2 probe of the constant basis** is prepared and unstarted, command in
-     `codex/reports/REPORT_WP_N1.md`. Only the user starts long runs. Until it exists, the constant's
-     verdict rests on dimension 1 alone.
-     **The long-quoted "114 core hours" is unsourced and wrong (corrected 2026-09-09).**
-     `REPORT_WP_N1.md` carries no cost estimate. The campaign's own dim-2 arm is the same 336 cells
-     under the same configuration family and cost **1,167.5 h** (mean 3.47 h/cell, median 1.12 h).
-     Realistic figure: **~1,200 core hours**, and the constant basis searches a larger space, so that
-     is optimistic. This puts the probe **out of reach of the laptop** (~seven weeks serial), and
-     `wp_n1_basis_probe.jl` has **no sharding support**, so it cannot use the indexed cluster path
-     either. Sharding or a reduced probe scope is a decision that comes before the run.
-   - `studies/regression/wp_n1_basis_probe.jl` writes **`git_hash = "not_collected"`**. That
-     contradicts the project's identity rule and must be repaired before those data are used for
-     anything beyond exploration.
+   - ~~The **dim-2 probe of the constant basis** is prepared and unstarted.~~ **Ran on Orion
+     2026-09-10 to 2026-09-13** through the campaign's indexed path (WP-N9 gave the script the
+     sharding it lacked), 335 of 336 cells at decision time, 0 errors, one identity triple
+     `ec3b6bd` / `0290b75a28791195` / `ffb0266c7913352c`. Evaluated by WP-N15
+     (`analysis/data/wp_n1_dim2_probe/`), and it closed P3.
+   - ~~`studies/regression/wp_n1_basis_probe.jl` writes `git_hash = "not_collected"`.~~ **Repaired by
+     WP-N8** before the run; the real records carry a git hash.
    - **Codex cannot execute Julia in this environment** (`A specified logon session does not exist`);
      Python runs normally. Recorded in `codex/CODEX_PROTOCOL.md` — Julia work packages are written by
      Codex, reported as `blocked`, and executed by Claude.
@@ -714,8 +726,12 @@ the coupled search path 1e-6 is the cheaper, behaviour-equal tolerance; the Syst
 - `total_diverged_solves` and `total_solver_unstable_solves` are identical in all 756 campaign
   cells — one quantity counted twice on the Julia side. Not a data defect, but they must not be
   reported as two independent robustness measures until the redundancy is understood
-- **no constant term in the basis** — 20 of 63 systems representable against SINDy's 40; 10 fail on
-  the constant alone (see Active 0a)
+- ~~**no constant term in the basis**~~ — **closed 2026-09-13 by the P3 freeze**: the canonical
+  Phase C basis is `staged_polynomial_basis_with_constant`. The gap it leaves behind is not
+  representability but **searchability**: the constant is a false-positive magnet (dim 1: present in
+  31 of 37 missed cells), and on dim 2 it lowers structure recovery. Expect a very low **raw**
+  recovery rate in Phase C — on dim 2 the pruning rule already produces 77 % of the old basis's hits
+  (30 pruned against 7 raw). Report raw and pruned everywhere; never retune the threshold
 - **fitted coefficients are not persisted** — discovered models cannot be rebuilt or re-simulated
   (see Active 0b)
 - **no held-out evaluation anywhere** — both IC sets are training data, every number is in-sample,

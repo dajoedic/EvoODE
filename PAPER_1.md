@@ -179,11 +179,11 @@ as an ablation about the implicit multistart, not as a discovery.
 | Stage-cap defect | **solved** (WP-C1 to WP-C5, 2026-08-20): 0 truncated equation rows of 80, 48 finite caps |
 | Regression evidence | 120 records, 30 cells, loss bit-identical 30/30, −25.4 % loss evaluations. **Superseded as Claim B evidence by the Phase C uncapped arm** |
 | Level budget | **decided against** (WP-B1, 2026-08-21): 30 levels stay, the waste is reported as a result |
-| Canonical basis | **open — blocks the Phase C freeze.** Decided: run the dim-2 constant-term probe first (114 core hours), then freeze |
+| Canonical basis | **frozen 2026-09-13: `staged_polynomial_basis_with_constant`.** Probe ran (335/336, evaluated by WP-N15); decided on representability *against* its recovery numbers |
 | Canonical pretuning | **decided 2026-09-09: `pretuning = false`**, with the restart count made explicit |
 | Uncapped-arm scope | **decided 2026-09-09: full mirror of the canonical arm** — 63 systems, 3 seeds, both IC sets = 378 paired cells |
 | Restart policy | **decided 2026-09-09: retry-on-failure, up to k = 3.** Canonical, explicit, declared. Restart dependence is a subset ablation with a cost axis |
-| Phase C cost estimate | grob 8,000–11,000 core hours, 3–5 weeks on Orion. The uncapped arm carries the majority |
+| Phase C cost estimate | **~11,500–15,100 core hours, 5–7 weeks on Orion (2026-09-13)**, after the basis freeze added ~20 % to the counting quantities. The uncapped arm carries the majority |
 | Structural F1 / precision / recall | **does not exist anywhere in the codebase.** Must be built before Phase C |
 | Phase B fingerprint | `604e79733b22d64d` — 756/756 records, `git 91f88c4` clean, complete 2026-09-04 |
 | Stage-cap behaviour fingerprint | `ffb0266c7913352c` (probe version 2) |
@@ -353,11 +353,23 @@ may live in the appendix; the interpretation of every EvoGrow number depends on 
 
 ### Blocking prerequisites — none of these may be skipped
 
-1. **The canonical basis is not yet decided.** The dim-2 constant-term probe runs first: 114 core
-   hours, prepared and unstarted, command in `codex/reports/REPORT_WP_N1.md`. Until it exists, the
-   trade-off is measured on dimension 1 alone, where the constant halves structure recovery
-   (83.3 % → 38.9 %) and markedly improves generalization. **Repair `git_hash = "not_collected"` in
-   `studies/regression/wp_n1_basis_probe.jl` before those data are used for anything.**
+1. ~~The canonical basis is not yet decided.~~ **Decided and frozen 2026-09-13: the canonical basis
+   is `staged_polynomial_basis_with_constant`.** The dim-2 probe ran on Orion (335 of 336 cells at
+   the time of the decision, 0 errors, one identity triple `ec3b6bd` / `0290b75a28791195` /
+   `ffb0266c7913352c`), and it was evaluated by WP-N15. **The decision was taken against the probe's
+   own recovery numbers, not with them**, and that is the honest way to report it: on the nine dim-2
+   systems exact under both bases the constant costs structure recovery (pruned 55.6 % → 35.2 %, raw
+   13.0 % → 7.4 %) at an unchanged R² > 0.9 rate (94.4 % in both arms). It is decisive anyway,
+   because representability is not a tuning parameter: without the constant the basis represents
+   **20 of 63** systems where SINDy's plain polynomial library represents 40, and ten systems fail on
+   the constant alone. A method paper cannot claim a search-strategy contribution while searching
+   half the space of the baseline it compares against. The `git_hash = "not_collected"` defect was
+   repaired by WP-N8 before the run.
+
+   Two consequences are declared, not hidden. **The cost figures rise** — see the cost note in
+   `docs/paper1_phaseC_benchmark_plan.md` §2. And **the paper's structure-recovery numbers will be
+   lower than Phase B's**, because Phase B ran on the old basis; the two are never tabulated
+   together anyway.
 2. **Structural F1, term precision, term recall and coefficient error do not exist.** They appear
    nowhere in `src/`, `analysis/`, `experiments/` or `studies/` — the pipeline can only do exact
    support match today. Claim A cannot be reported without them.
@@ -1036,6 +1048,12 @@ with `Tsit5` at `abstol = reltol = 1e-9`. Exact and surrogate systems evaluated 
 
 **Once Phase 5 begins.** The campaign manifest is frozen. No system may be removed, and no setting
 changed, without a new experiment identifier. Frozen result blocks are never overwritten.
+
+**After the dim-2 basis probe (2026-09-13).** The canonical basis is
+`staged_polynomial_basis_with_constant` — the staged polynomial basis **including the constant term
+`1` in stage 1**. Every Phase C arm uses it. The trade-off is a reported result, not a footnote:
+representability against searchability, with the constant reducing structure recovery on dim 2 and
+improving generalization on dim 1. P3 is closed; the basis is no longer an open frozen parameter.
 
 **Decided 2026-09-09, before the Phase C freeze.**
 

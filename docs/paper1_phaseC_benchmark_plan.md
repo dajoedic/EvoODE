@@ -62,16 +62,31 @@ planning and is labelled as such (Design Principle 7); it is never evidence for 
 
 | Arm | Variant / script | Basis | Scope | Core hours |
 |---|---|---|---|---|
-| **C-1** capped canonical | `evogrow_v2_2_stage_capped`, `pretuning = false` | canonical (P3) | 63 systems x 3 seeds x 2 IC sets = **378 cells** | **~3,250** |
-| **C-2** uncapped mirror | `evogrow_v2_2_stage_local`, otherwise identical | canonical | full mirror, **378 paired cells** | **~5,000-8,000** |
-| **C-3** pretuning confirmation | `evogrow_v2_2_stage_capped`, `pretuning = true` | canonical | 20 exact systems x 3 seeds x 2 IC sets = **120 cells** | **~1,330** |
+| **C-1** capped canonical | `evogrow_v2_2_stage_capped`, `pretuning = false` | canonical (P3) | 63 systems x 3 seeds x 2 IC sets = **378 cells** | **~3,900** |
+| **C-2** uncapped mirror | `evogrow_v2_2_stage_local`, otherwise identical | canonical | full mirror, **378 paired cells** | **~6,000-9,600** |
+| **C-3** pretuning confirmation | `evogrow_v2_2_stage_capped`, `pretuning = true` | canonical | 20 exact systems x 3 seeds x 2 IC sets = **120 cells** | **~1,600** |
 | **C-4** SINDy baseline | `run_wp_n6_sindy_baseline.py` | n/a | 63 systems x 2 IC sets, all configurations | minutes |
 | **C-5** derived arms | `wp_n3_oracle_refit.jl`, `wp_n4_multistart_refit.jl`, `wp_n5_ic_generalization.jl` | canonical | no new search - all three read C-1's `history.jsonl` | **< 50** |
-| **Total** | | | | **~9,600-12,600, 4-6 weeks on Orion** |
+| **Total** | | | | **~11,500-15,100, 5-7 weeks on Orion** |
+
+**The figures were raised again on 2026-09-13, when P3 froze the constant basis.** The Phase B
+registry measures the **old** basis, so every number derived from it understates the canonical arm.
+The dim-2 probe measures the premium directly, over all 335 of its cells and both arms:
+`total_loss_evals` **+19.8 %** in sum (3.51e8 against 4.20e8), `total_parameter_fits` **+3.2 %**,
+with stage 5 reached by exactly 121 cells in either arm. The table therefore carries **+20 % on the
+counting quantities**, applied to C-1, C-2 and C-3.
+
+Three cautions travel with that. Core hours are **not** readable off loss-eval counts (Design
+Principle 7) — this is a proportional carry-over, not a measurement in hours. The premium was
+measured on **dimension 2 only**, while dim 3 carried 75.6 % of Phase B's compute and is unmeasured
+under the constant basis. And in the nine paired exact systems the premium is far larger (about
++60 % in median loss evaluations) than in the whole probe, so the aggregate is not a bound. **Treat
+the total as a planning figure with a one-sided risk: it can be exceeded, and the uncapped mirror is
+where that would show first.**
 
 **The C-1 figure supersedes the "~2,600 core hours" this document carried until 2026-09-10.** That
 number was an estimate; 3,249.3 h is the measured cost of the equivalent Phase B arm
-(`pretune_off`, 378 cells). C-2 dominates because it executes the full 30 levels where the capped
+(`pretune_off`, 378 cells) on the old basis. C-2 dominates because it executes the full 30 levels where the capped
 arm stops early: Phase B averaged about 19.7 executed levels per cell and the late levels are the
 expensive ones, so the factor exceeds the naive 30/19.7.
 
@@ -205,9 +220,31 @@ frozen parameter. Until it exists, the trade-off is measured on dimension 1 alon
 halves structure recovery there (83.3 % → 38.9 %) while markedly improving generalization
 (72.7 % → 87.9 % and 45.5 % → 66.7 %), and all nine diverging integrations fall on the old basis.
 
-**P3 — Decide and freeze the canonical basis.** On the probe evidence, with the reasoning and the
-date recorded. Representability is declared either way: the old basis represents 20 of 63 systems
-exactly where SINDy's plain polynomial library represents 40 and ProGED's rational grammar 53.
+**P3 — Decide and freeze the canonical basis. CLOSED 2026-09-13: the canonical basis is
+`staged_polynomial_basis_with_constant`.** Every Phase C arm uses it.
+
+The decision was taken **against** the probe's recovery numbers, and it is reported that way. On the
+nine dim-2 systems exact under both bases the constant costs recovery — pruned 55.6 % → 35.2 %, raw
+13.0 % → 7.4 % — at an identical R² > 0.9 rate of 94.4 %. What decides it is representability, which
+is not a tuning parameter: the old basis represents 20 of 63 systems exactly where SINDy's plain
+polynomial library represents 40 and ProGED's rational grammar 53, and ten systems fail on the
+constant alone. A search-strategy contribution cannot be claimed over half the search space of the
+baseline it is compared against.
+
+The evidence base and its limits: WP-N15 over the dim-2 probe (335 of 336 cells at decision time,
+the missing cell a surrogate that touches only one R² denominator), plus WP-N1 and WP-N5 on
+dimension 1, where the constant halves structure recovery (83.3 % → 38.9 %) and markedly improves
+generalization (72.7 % → 87.9 %). **Generalization was never measured on dim 2**, so the strongest
+argument in the constant's favour rests on dimension 1 alone. Phase C's Claim C closes that gap for
+the canonical basis, but it will have no old-basis counterpart on dim 2 — deliberately, since the
+probe is not re-run.
+
+**Two consequences are carried forward rather than absorbed.** Costs rise by about 20 % on the
+counting quantities (see §2). And the raw structure-recovery rate will be very low: on dim 2 the
+pruning rule already produces 77 % of the old basis's hits (30 pruned against 7 raw), and the
+constant is a false-positive magnet — on dim 1 it appears in 31 of 37 missed cells. Raw **and**
+pruned are reported everywhere, which is already the standing rule from WP-N7 and Design Principle 9.
+This is a reason to report the threshold dependence, **never** to retune the threshold.
 
 **P4 — Build the structural metrics.** Term precision, term recall, structural F1 and coefficient
 error appear **nowhere** in `src/`, `analysis/`, `experiments/` or `studies/`. Claim A cannot be
@@ -451,7 +488,7 @@ and C-2, one seed, both IC sets. The go criterion is all five of:
    cell, proving the records can rebuild their own models.
 
 A failure of (4) or (5) is a hard stop: (4) invalidates Claim B and (5) invalidates Claim C, and
-both are cheaper to find now than after 9,600 core hours.
+both are cheaper to find now than after 11,500 core hours.
 
 ---
 
@@ -459,8 +496,11 @@ both are cheaper to find now than after 9,600 core hours.
 
 Not questions about this document any more, but work and one genuine unknown.
 
-**The canonical basis (P2/P3) is the last open frozen parameter.** The dim-2 probe decides it. Until
-it lands, every arm in section 2 has a basis-shaped hole in it, and B4 cannot run.
+**~~The canonical basis (P2/P3) is the last open frozen parameter.~~ Closed 2026-09-13** — the
+constant basis is canonical, and the basis-shaped hole in section 2's arms is filled. B1, B4 and B7
+are unblocked. What remains open about the basis is not a decision but a declared limitation: the
+constant's benefit is measured on dimension 1 (generalization) and its cost on dimension 2
+(structure recovery), and no single run measures both on the same dimension.
 
 **The restart policy's premise was in doubt and the first coupled measurement supports it.** `k = 3`
 was frozen on WP-N4, which measured that a single fit hits the sentinel loss in 15 of 102 cells.
