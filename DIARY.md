@@ -6,6 +6,60 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ## 2026-09-13
 
+### WP-N16: die Phase-C-Konfiguration steht, und der wahre Support war basisabhaengig
+
+<!-- 6212809 / e29895c -->
+
+B4 und B1 sind **ein** Arbeitspaket, nicht zwei. Der Fingerprint nimmt den wahren Support in die
+Kampagnenidentitaet auf — mit der Begruendung, dass er definiert, was `pruned_match` bedeutet — und
+der Support haengt an der Basis. Die Konstante wird ein Term **in Stufe 1**, also verschiebt sich
+**jeder Termindex**. Ein weiterverwendetes `phase_b_support.json` haette keinen Fehler erzeugt,
+sondern **lautlos falsche Strukturtreffer**.
+
+**Die kanonische Tabelle validiert sich selbst.** `phase_c_support.json`, hergeleitet auf der
+kanonischen Basis: **30 exakte Systeme statt 20**, neu dazu genau 1, 5, 9, 17, 23, 43, 52, 57, 58,
+59 — exakt die zehn, die `CLAUDE.md` seit dem 07.09. als „scheitern allein am konstanten Term"
+fuehrt. Kein exaktes System verloren, keine `expected_stage` verschoben. Dass eine unabhaengige
+Herleitung genau die Liste trifft, die aus der Repraesentierbarkeitsanalyse stammt, ist die beste
+Bestaetigung, die hier zu haben war.
+
+**Folgen fuer den Plan, alle nachgezogen:** C-3 umfasst **180 Zellen statt 120**, weil er alle
+exakten Systeme abdeckt; die Kosten steigen auf **~12.300–15.900 Kernstunden**; und jede aus
+„20 exakte Systeme" abgeleitete Zahl ist fuer Phase C veraltet, die Phase-B-Aufteilung 240/516
+eingeschlossen.
+
+**Phase-C-Identitaet:** `0c9672de35c75a9d`, 936 Manifestzeilen (378 + 378 + 180), mit Basisname und
+`max_fit_attempts = 3` im Fingerprint. Der Optimierer-Default bleibt bei 1 — die 3 steht in der
+Phase-C-Konfiguration, nie im Default. Damit ist die offene Haelfte von **P6** geschlossen.
+
+**Ein stiller Totalausfall wurde verbaut:** `variant_basis_name` faellt auf die **alte** Basis
+zurueck, wenn eine Variante kein `basis_name` traegt. Fuer Phase B war das richtig, fuer Phase C
+waere ein vergessenes Feld ein Arm auf der falschen Basis gewesen, dem man es nicht ansieht. Jede
+Variante deklariert die Basis jetzt ausdruecklich, und die Konfiguration bricht ab statt
+zurueckzufallen.
+
+**Die Indexanordnung ist eine bewusste Entscheidung.** Gekappter und ungekappter Arm wechseln sich
+**zeilenweise** ab, C-3 liegt hinten. Der `wp_n1`-Generator hatte die Varianten aussen geschleift,
+sodass ein Abbruch in der ersten Haelfte nur einen Arm hinterlaesst — bei Claim B, der
+Hauptabbildung des Papers, waere das der Verlust der Paarung.
+
+**Ein Defekt aus der Abnahme, der jeden Pod getroffen haette (WP-N16b).** Der Smoke-Test brach mit
+einem Julia-1.12-**World-Age**-Fehler ab: `phase_c_config.jl` wurde *innerhalb einer Funktion*
+eingebunden, die so erzeugten Methoden leben in einem neueren World als der aufrufende Code.
+`run_batch_cell.jl` ist der Einsprungpunkt **jedes** Kampagnen-Pods — der Fehler haette 936 Pods
+nacheinander gegen dieselbe Zeile gefahren. Behoben durch unbedingtes Einbinden auf oberster Ebene,
+wie Phase B es seit der Kampagne macht.
+
+**Die Abnahme, gefahren von Claude, weil Codex hier kein Julia startet.** `phase_b_fingerprint()`
+unveraendert `604e79733b22d64d`; die alte Supporttabelle datengleich reproduziert (einziger
+Unterschied das neue, gewuenschte Feld `basis_name`, das der Fingerprint ueberlebt); und eine echte
+Phase-B-Zelle — System 3, Seed 42, IC 1, `pretune_off` — **bitgleich gegen ihren Kampagnen-Record
+ueber 67 Felder**, einzige Abweichung `git_dirty`. Der Smoke-Test auf Phase C laeuft: System 1, der
+RC-Schaltkreis, eines der zehn ohne Konstante nicht darstellbaren Systeme, Loss 1,5e-14, Struktur
+getroffen, `executed_levels = 1` gegen `n_levels = 30`. 37 Python-Tests gruen.
+
+Offen bleiben **B7** (k8s-Manifeste) und **P9** (Smoke-Job und 12-Zellen-Pilot).
+
 ### P3 ist entschieden: die Konstante kommt in die kanonische Basis
 
 <!-- a62073c -->
