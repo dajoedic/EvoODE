@@ -54,6 +54,13 @@ Loss-Evaluationen im Median** — bei schlechterer Strukturausbeute und gleicher
 Parameterfits liegen naeher beieinander (330 gegen 370 im Median), die Obergrenze 610 ist in beiden
 Armen dieselbe.
 
+**Wichtige Einordnung dieser Zahl, weil sie ab jetzt die Kostenrechnung traegt:** die 60 % gelten
+fuer **Schicht A**, die neun gepaarten exakten Systeme. Ueber **alle** Zellen je Arm ist der
+Aufschlag kleiner — `total_loss_evals` im Median 1,96e6 gegen 1,99e6, in der Summe 3,51e8 gegen
+4,20e8, also **+19,8 %**; `total_parameter_fits` in der Summe +3,2 %; die Endstufe 5 erreichen in
+beiden Armen exakt 121 Zellen. Fuer die Hochrechnung der Phase-C-Kosten ist **+20 % auf die
+Zaehlgroessen** die belastbare Zahl, nicht die 60 %.
+
 **Zur Abnahme.** Codex meldete „33 passed"; tatsaechlich waren **4 von 33 rot**, und zwar genau die
 Tests, die einen erfolgreichen Schreibvorgang erreichen — die Abschlussmeldung machte den
 Ausgabepfad bedingungslos relativ zum Repo und starb auf `tmp_path`. Der zweite Defekt hielt den
