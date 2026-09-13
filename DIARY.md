@@ -6,6 +6,45 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ## 2026-09-13
 
+### P3 ist entschieden: die Konstante kommt in die kanonische Basis
+
+<!-- a62073c -->
+
+Entscheidung des Nutzers, mit dem Zusatz „leider". Das trifft die Lage genau: **die Entscheidung
+faellt gegen die eigenen Messwerte des Probelaufs, nicht mit ihnen.** Auf den neun dim-2-Systemen,
+die unter beiden Basen exakt sind, kostet die Konstante Strukturtreffer — ausgeduennt 55,6 % →
+35,2 %, roh 13,0 % → 7,4 % — bei identischer R²-Rate von 94,4 %.
+
+Was trotzdem entscheidet, ist **Repraesentierbarkeit, und die ist kein Stellparameter**: die alte
+Basis stellt 20 von 63 Systemen exakt dar, SINDys schlichte Polynombibliothek 40, ProGEDs rationale
+Grammatik 53; zehn Systeme scheitern **allein** am konstanten Term. Ein Methodenpaper kann keinen
+Beitrag zur Suchstrategie behaupten, waehrend es den halben Suchraum der Vergleichsmethode
+durchsucht. Die Suchbarkeit zahlt dafuer — das ist ab jetzt ein berichtetes Ergebnis, keine Fussnote.
+
+**Die Kosten steigen, und zwar aus einem Grund, der leicht uebersehen worden waere.** Jede
+Phase-C-Kostenzahl ist aus der Phase-B-Registry abgeleitet, und Phase B lief auf der **alten** Basis.
+Der Probelauf misst den Aufschlag direkt: **+19,8 %** `total_loss_evals` und +3,2 %
+`total_parameter_fits` ueber alle 335 Zellen. Damit **~11.500–15.100 Kernstunden, 5–7 Wochen**
+statt 9.600–12.600. Drei Vorbehalte stehen dabei: Kernstunden sind aus Loss-Eval-Zaehlungen nicht
+ablesbar (Designprinzip 7), gemessen ist **nur dim 2**, waehrend dim 3 in Phase B 75,6 % der Rechenzeit
+trug — und auf den neun gepaarten exakten Systemen ist der Aufschlag mit rund 60 % dreimal so gross
+wie im Aggregat. Das Risiko ist **einseitig**: die Zahl kann ueberschritten werden, und der
+ungekappte Spiegel ist die Stelle, an der das zuerst sichtbar wuerde.
+
+**Die zweite Folge betrifft das Narrativ.** Der rohe Strukturtreffer wird sehr klein. Schon auf der
+alten Basis erzeugt die Ausduennungsregel auf dim 2 **77 % der Treffer** (30 ausgeduennt gegen 7
+roh), und die Konstante ist ein Falsch-Positiv-Magnet — auf dim 1 in 31 von 37 verfehlten Zellen
+vertreten. Roh **und** ausgeduennt werden ueberall berichtet; die Schwelle wird nicht nachgezogen.
+
+**Als Limitation deklariert, nicht versteckt:** der Nutzen der Konstante ist auf **dim 1** gemessen
+(Generalisierung 72,7 % → 87,9 %), ihre Kosten auf **dim 2** (Strukturtreffer). Kein Lauf misst
+beides auf derselben Dimension, und der dim-2-Probelauf wird nicht wiederholt. Phase Cs Claim C
+schliesst die Luecke fuer die kanonische Basis, bekommt auf dim 2 aber kein Gegenstueck auf der
+alten Basis.
+
+P3 ist damit geschlossen, **B1, B4 und B7 sind frei**. Nachgezogen in `CLAUDE.md`, `PAPER_1.md` und
+der Freeze-Liste des Phase-C-Plans.
+
 ### WP-N15: die dim-2-Auswertung steht, und sie bestaetigt die dim-1-Richtung
 
 <!-- 5b0e227 / 0bfff14 -->
