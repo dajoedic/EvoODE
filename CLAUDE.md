@@ -382,13 +382,19 @@ the coupled search path 1e-6 is the cheaper, behaviour-equal tolerance; the Syst
    once: no pruning threshold chosen after seeing results, no library component removed because it
    produces false positives.
 
-   **Cost: ~11,500–15,100 core hours, 5–7 weeks on Orion (revised 2026-09-13).** The figure is
+   **Cost: ~12,300–15,900 core hours, 5–7 weeks on Orion (revised 2026-09-13).** The figure is
    **derived from the Phase B registry rather than estimated**: the canonical capped arm is the
    measured cost of Phase B's `pretune_off` arm, 3,249.3 h over the same 378 cells, which supersedes
    the "~2,600 h" estimate. Added since: a 120-cell pretuning confirmation arm at 1,331 h. The
    uncapped mirror still carries the majority, because it runs the full 30 levels where the capped
    arm stops early. The experiment that must show the cap saves compute is the most expensive thing
    in the project — state that in the paper.
+
+   **The canonical basis makes 30 of 63 systems exact, not 20 (WP-N16).** The ten that failed on the
+   constant alone are now representable, no exact system was lost and no `expected_stage` shifted.
+   Consequences: C-3 covers **180 cells, not 120**; and every count derived from "20 exact systems"
+   is stale for Phase C, the Phase B split of 240 exact / 516 surrogate cells included. Phase C
+   identity: `0c9672de35c75a9d`, carrying the basis name and `max_fit_attempts = 3`.
 
    **The 2026-09-13 raise comes from the basis freeze, and it is a carry-over, not a measurement.**
    The Phase B registry measures the **old** basis; the canonical arm is now the constant basis.

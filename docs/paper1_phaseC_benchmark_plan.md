@@ -64,10 +64,16 @@ planning and is labelled as such (Design Principle 7); it is never evidence for 
 |---|---|---|---|---|
 | **C-1** capped canonical | `evogrow_v2_2_stage_capped`, `pretuning = false` | canonical (P3) | 63 systems x 3 seeds x 2 IC sets = **378 cells** | **~3,900** |
 | **C-2** uncapped mirror | `evogrow_v2_2_stage_local`, otherwise identical | canonical | full mirror, **378 paired cells** | **~6,000-9,600** |
-| **C-3** pretuning confirmation | `evogrow_v2_2_stage_capped`, `pretuning = true` | canonical | 20 exact systems x 3 seeds x 2 IC sets = **120 cells** | **~1,600** |
+| **C-3** pretuning confirmation | `evogrow_v2_2_stage_capped`, `pretuning = true` | canonical | **30** exact systems x 3 seeds x 2 IC sets = **180 cells** | **~2,400** |
 | **C-4** SINDy baseline | `run_wp_n6_sindy_baseline.py` | n/a | 63 systems x 2 IC sets, all configurations | minutes |
 | **C-5** derived arms | `wp_n3_oracle_refit.jl`, `wp_n4_multistart_refit.jl`, `wp_n5_ic_generalization.jl` | canonical | no new search - all three read C-1's `history.jsonl` | **< 50** |
-| **Total** | | | | **~11,500-15,100, 5-7 weeks on Orion** |
+| **Total** | | | | **~12,300-15,900, 5-7 weeks on Orion** |
+
+**C-3 grew with the basis (2026-09-13, WP-N16).** Under the canonical basis **30 of 63 systems are
+exact**, not 20 — the ten that failed on the constant alone (1, 5, 9, 17, 23, 43, 52, 57, 58, 59)
+are now representable. C-3 covers all exact systems, so it is **180 cells, not 120**, and its cost
+rises with it. Every other count derived from "20 exact systems" is stale for Phase C in the same
+way, the Phase B figures of 240 exact / 516 surrogate cells included.
 
 **The figures were raised again on 2026-09-13, when P3 froze the constant basis.** The Phase B
 registry measures the **old** basis, so every number derived from it understates the canonical arm.
@@ -108,10 +114,10 @@ Decided experiments whose code does not exist yet. None is an open question; eac
 
 | # | Item | Why |
 |---|---|---|
-| B1 | `studies/regression/phase_c_config.jl` + `generate_phase_c_manifest.jl` | Phase C needs its own campaign id, variant list and fingerprint; the Phase B pair is frozen and must not be edited. **Carries the record-column requirements from WP-N14 and the restart-parameter declaration from WP-N11 — see below** |
+| B1 | ~~`studies/regression/phase_c_config.jl` + `generate_phase_c_manifest.jl`~~ **done (WP-N16, `6212809`)** — Phase C identity is `0c9672de35c75a9d`, 936 manifest rows (378 + 378 + 180) | Phase C needs its own campaign id, variant list and fingerprint; the Phase B pair is frozen and must not be edited. **Carries the record-column requirements from WP-N14 and the restart-parameter declaration from WP-N11 — see below** |
 | B2 | ~~Record fields for raw/pruned support and the definition tag~~ **done (WP-N12, `47920a2`)** | Section 4b: one column name carried two definitions. Records now write `pruned_support_terms`, `exact_support_match_raw`, `exact_support_match_pruned` and `exact_support_match_definition`; the frozen pruning threshold has exactly one implementation instead of five inline copies |
 | B3 | ~~Restart policy in the optimizer~~ **done (WP-N11, `4908b07`)**; remaining part is declaring it in the Phase C fingerprint, which belongs to B1 | P6 - the policy had no code at all until 2026-09-10; `max_fit_attempts` now exists with default 1, verified behaviour-neutral |
-| B4 | `phase_c_support.json` via `derive_phase_b_support.jl` on the canonical basis | true support and representability are basis-dependent; if P3 freezes the constant basis, the Phase B table is wrong for Phase C |
+| B4 | ~~`phase_c_support.json` via `derive_phase_b_support.jl` on the canonical basis~~ **done (WP-N16)** — 30 exact / 33 surrogate | true support and representability are basis-dependent; if P3 freezes the constant basis, the Phase B table is wrong for Phase C |
 | B5 | ~~`analysis/scripts/aggregate/aggregate_phasec_cap_ablation.py`~~ **done (WP-N14, `e738b0c`)** | The identical-conditions check is an allowlist, so a column nobody has defined yet still has to match. The script refuses to substitute `n_levels` for executed levels, and refuses arms that are not the capped/uncapped pair -- Phase B's 378 pairs look mechanically identical but are both capped |
 | B6 | ~~Campaign-id parameter for the existing aggregate scripts~~ **done (WP-N13, `1c984a6`)** | The stated premise was wrong: the scripts already took `--registry`, `--classification` and `--output-dir`, only their defaults pointed at Phase B. The real gap was that `verify_campaign_registry.py` never checked `experiment_id` at all, so a two-campaign registry passed. Now `--campaign` derives the paths and a mismatch aborts before any file is written. `.gitignore` also gained the missing `paper1_phaseC_v1` negations, without which every output path named in section 1b would have been silently untracked |
 | B7 | k8s manifests for C-1, C-2, C-3 plus their smoke jobs | the Phase B manifests carry the Phase B campaign path |

@@ -183,7 +183,7 @@ as an ablation about the implicit multistart, not as a discovery.
 | Canonical pretuning | **decided 2026-09-09: `pretuning = false`**, with the restart count made explicit |
 | Uncapped-arm scope | **decided 2026-09-09: full mirror of the canonical arm** — 63 systems, 3 seeds, both IC sets = 378 paired cells |
 | Restart policy | **decided 2026-09-09: retry-on-failure, up to k = 3.** Canonical, explicit, declared. Restart dependence is a subset ablation with a cost axis |
-| Phase C cost estimate | **~11,500–15,100 core hours, 5–7 weeks on Orion (2026-09-13)**, after the basis freeze added ~20 % to the counting quantities. The uncapped arm carries the majority |
+| Phase C cost estimate | **~12,300–15,900 core hours, 5–7 weeks on Orion (2026-09-13)**, after the basis freeze added ~20 % to the counting quantities. The uncapped arm carries the majority |
 | Structural F1 / precision / recall | **does not exist anywhere in the codebase.** Must be built before Phase C |
 | Phase B fingerprint | `604e79733b22d64d` — 756/756 records, `git 91f88c4` clean, complete 2026-09-04 |
 | Stage-cap behaviour fingerprint | `ffb0266c7913352c` (probe version 2) |
