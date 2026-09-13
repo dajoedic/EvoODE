@@ -4,6 +4,69 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ---
 
+## 2026-09-13
+
+### WP-N15: die dim-2-Auswertung steht, und sie bestaetigt die dim-1-Richtung
+
+<!-- 5b0e227 / 03e7606 -->
+
+Der Probelauf auf Orion ist bei **335 von 336 Zellen**, fehlerfrei, unter einer Identitaet
+(`git ec3b6bd` / `0290b75a28791195` / `ffb0266c7913352c`). Die fehlende Zelle 293 ist System 44,
+Surrogat, konstante Basis — sie lebt, Level 27 von 30. Die exakte Haelfte ist damit **vollstaendig**;
+offen ist nur ein Beitrag zur R²-Rate.
+
+**Ein Befund strukturiert die ganze Auswertung.** `representability` wird **je Basis** neu
+hergeleitet (`_wp_n1_system_for_basis`). Auf dim 2 sind **9 Systeme unter beiden Basen exakt**
+(24, 25, 26, 27, 28, 29, 31, 32, 38), **System 43 nur unter der konstanten**, keines nur unter der
+alten. Wer die exakten Zellen der Arme naiv gegeneinanderstellt — 54 gegen 60 — vergleicht
+verschiedene Systemmengen. Daher drei Schichten, die nie zu einer Zahl verschmelzen.
+
+**Schicht A, die gepaarte Frage** (9 Systeme, je Arm 54 Zellen):
+
+| | alte Basis | konstante Basis |
+|---|---|---|
+| Strukturtreffer **roh** | 7/54 = 13,0 % | 4/54 = **7,4 %** |
+| Strukturtreffer **ausgeduennt** | 30/54 = 55,6 % | 19/54 = **35,2 %** |
+| R² > 0,9 | 51/54 = 94,4 % | 51/54 = **94,4 %** |
+
+Die dim-1-Richtung bestaetigt sich auf gekoppelten Systemen: der konstante Term **kostet**
+Strukturtreffer, roh wie ausgeduennt, waehrend die Literaturkennzahl ein **exakter Gleichstand**
+ist. Die gepaarte Kontingenz der Rohtreffer: 2 beide, 5 nur alt, 2 nur konstant, 45 keiner. Neun
+Systeme sind die effektive Stichprobe, deshalb **kein p-Wert** — die Lehre aus WP-A6.
+
+**Schicht B, wo es vorher keinen Wert gab:** System 43, 6 Zellen, nur konstante Basis. Roh 0/6,
+ausgeduennt 3/6, R² 6/6. Kein Vergleichsarm, konstruktionsbedingt — nie als Verbesserung gegen
+eine Null lesen.
+
+**Schicht C, die Literaturkennzahl:** Surrogate 105/114 = 92,1 % (alt) gegen 97/107 = 90,7 %
+(konstant, Nenner wegen Zelle 293 um eins kleiner); exakte 51/54 = 94,4 % gegen 57/60 = 95,0 %.
+
+**Die Ausduennungsregel traegt hier noch mehr als bekannt.** Auf der alten Basis stehen 30
+ausgeduennten Treffern **7 rohe** gegenueber: **23 von 30 Treffern, also 77 %, erzeugt die
+Schwelle, nicht die Suche.** WP-N7b hatte fuer Phase B dim 2 64 % gemessen. Das ist ein Grund, die
+Schwellenabhaengigkeit zu berichten, **nie** die Schwelle nachzuziehen.
+
+**Die Aufwandsachse ist zum ersten Mal beziffert.** Der Einwand gegen die dim-1-Auswertung —
+gleiches Level-Budget fuer einen groesseren Suchraum — stand seit dem 08.09. ohne Zahl. Schicht A,
+`total_loss_evals` als Quantile: alte Basis 8,5e3 / 3,6e5 / **8,1e5** / 1,5e6 / 4,8e6, konstante
+Basis 5,0e4 / 5,6e5 / **1,3e6** / 2,4e6 / 6,7e6. Die konstante Basis zahlt also rund **60 % mehr
+Loss-Evaluationen im Median** — bei schlechterer Strukturausbeute und gleicher R²-Rate. Die
+Parameterfits liegen naeher beieinander (330 gegen 370 im Median), die Obergrenze 610 ist in beiden
+Armen dieselbe.
+
+**Zur Abnahme.** Codex meldete „33 passed"; tatsaechlich waren **4 von 33 rot**, und zwar genau die
+Tests, die einen erfolgreichen Schreibvorgang erreichen — die Abschlussmeldung machte den
+Ausgabepfad bedingungslos relativ zum Repo und starb auf `tmp_path`. Der zweite Defekt hielt den
+Lauf ueber echte Daten vollstaendig auf: `wp_n1_expected_support_terms` ist fuer Surrogate `null`
+(221 von 335 Records, alle Surrogate, kein exaktes), und das galt als toedlicher Fehler. **Schicht C
+waere damit unerreichbar gewesen.** Die Fixtures gaben jeder Zelle eine Termliste, auch den
+Surrogaten — eine Kombination, die es in echten Daten nicht gibt. Beides in WP-N15b behoben, 36
+Tests gruen, Rohtrefferzahl unabhaengig nachgerechnet (11 von 114).
+
+Damit ist die Entscheidungsgrundlage fuer **P3** da. Die Entscheidung selbst — ob die Konstante in
+die kanonische Basis kommt — ist damit **nicht** getroffen: sie haengt daran, welche Metrik zaehlt,
+und genau das ist nach WP-N5 eine Frage nach dem Zweck der Methode, nicht nach ihrer Konfiguration.
+
 ## 2026-09-10
 
 ### WP-N10: der Duplikatzaehler steht, und er stellt die Restart-Politik infrage
