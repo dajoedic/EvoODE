@@ -6,6 +6,41 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ## 2026-09-13
 
+### WP-N17: die Cluster-Manifeste, und warum es zwei Jobs sind statt drei
+
+<!-- 29a0030 -->
+
+Bootstrap, Smoke und **zwei** Kampagnen-Jobs. Der Plan hatte „Manifeste fuer C-1, C-2, C-3"
+gefordert; richtig ist eine andere Aufteilung, und der Grund ist wissenschaftlich, nicht
+betrieblich. **C-1 und C-2 teilen sich einen Job**, weil ihre Paarung bindend ist (§2b): getrennte
+Jobs haetten getrennte Abbruchzeitpunkte und hinterliessen unvollstaendige Paare — genau das, was
+Claim B nicht ueberlebt. **C-3 laeuft allein**, weil er gegen niemanden gepaart ist, ~2.400
+Kernstunden kostet und das ist, was man streicht, wenn das Budget knapp wird.
+
+**Die kostenabsteigende Indexliste erfuellt zwei Ziele gleichzeitig**, und deshalb ist sie die
+richtige: die teuren Zellen starten zuerst — die teuerste Phase-B-Zelle lief 289,7 h, und eine Zelle
+ist nicht teilbar, also bestimmt sie am Ende allein die Wanduhr —, **und alle 378 Paare bleiben
+benachbart**, sodass ein Teillauf ganze Paare liefert. `indices_all.txt` hat nur die zweite
+Eigenschaft, die Dimensionslisten keine.
+
+**Abnahme:** `completions` deckt sich exakt mit den Listenlaengen (756, 180, 3); die beiden Armlisten
+sind disjunkt und ergeben zusammen die 936; **alle 378 Paare nachweislich benachbart**; die
+Smoke-Liste deckt wirklich alle drei Arme ab statt dreimal dieselbe Sorte Zelle. Der Bootstrap
+schreibt die Indexlisten **neben** das Manifest — gegen ein temporaeres Verzeichnis ausprobiert, weil
+ein fester Vorgabepfad hier bedeutet haette, dass der Kampagnen-Job nichts findet. Alle Jobs zeigen
+auf denselben Kampagnenpfad, **der Smoke-Job auf ein eigenes Ausgabeverzeichnis** — Probe-Records
+koennen so nie in die Kampagnendaten geraten, die Lehre aus den 42 Pilot-Records.
+
+**Zwei Dinge bewusst nicht abgeschrieben.** `parallelism: 32` wird uebernommen, seine Begruendung
+nicht: sie ruht auf einer Momentaufnahme des Namensraums vom 09.09., die seither niemand geprueft
+hat. Das Manifest nennt jetzt die Kommandos, die **unmittelbar vor dem Start** zu wiederholen sind.
+Und der Token-Fehlermodus steht als Kommentar in **jedem** Manifest: bei 5–7 Wochen Laufzeit und
+Pods, die durchgehend neu erzeugt werden, hinterlaesst ein ablaufendes Deploy-Token eine Luecke in
+der Mitte des Datensatzes — eine, die ganze Systeme trifft und deshalb wie ein Ergebnis aussieht.
+
+Damit sind **alle Bauteile der Phase C fertig**. Offen ist nur noch **P9**: Smoke-Job und der
+12-Zellen-Pilot mit dem fuenfteiligen Go-Kriterium. Beides braucht ein gueltiges Cluster-Token.
+
 ### WP-N16: die Phase-C-Konfiguration steht, und der wahre Support war basisabhaengig
 
 <!-- 6212809 / e29895c -->
