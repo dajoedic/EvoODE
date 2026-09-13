@@ -1,87 +1,74 @@
-# WP-N15b — Zwei Defekte aus der Abnahme von WP-N15
+# WP-N16b — Ein Defekt aus der Abnahme von WP-N16
 
-**Language: Python**
+**Language: Julia** — Codex kann Julia hier nicht ausführen. Schreiben, als `blocked` melden,
+Claude fährt die Abnahme.
 
 ## Ausgangslage
 
-WP-N15 ist in der Anlage richtig: die Schichtenlogik, die Trennung roh/ausgedünnt, die
-Abbruchpfade und die `.gitignore`-Ausnahme sind da, und die gemeinsame Gleichheitsfunktion sitzt
-korrekt in `analysis/utils/metrics.py`.
+WP-N16 ist in der Substanz richtig, und die Abnahme hat die schwierigen Teile bestätigt:
 
-Zwei Defekte bleiben, und beide sind blockierend. Keiner davon stand im Report — sie kamen aus dem
-Ausführen.
+- **Phase B ist unberührt:** `phase_b_fingerprint()` steht weiter auf `604e79733b22d64d`, der
+  Verhaltens-Fingerprint auf `ffb0266c7913352c`.
+- Die parametrisierte Supportherleitung reproduziert die alte Tabelle **datengleich** — einziger
+  Unterschied ist das neue, ausdrücklich gewünschte Feld `basis_name`, und der Fingerprint
+  überlebt es.
+- Die kanonische Tabelle steht: **30 exakte Systeme statt 20**, neu dazu genau
+  1, 5, 9, 17, 23, 43, 52, 57, 58, 59 — exakt die zehn Systeme, die `CLAUDE.md` als „scheitern
+  allein am konstanten Term" führt. Kein exaktes System verloren, keine `expected_stage` verschoben.
+- Das Manifest erzeugt 936 Zeilen (378 + 378 + 180), `phase_c_fingerprint=0c9672de35c75a9d`, mit
+  `basis_name` und `max_fit_attempts=3` deklariert.
+- Die Indexanordnung ist richtig gelöst: gekappter und ungekappter Arm wechseln sich **zeilenweise**
+  ab, ein Abbruch trifft beide gleichmäßig, und C-3 liegt hinten, wo es die Paarung nicht stört.
 
-**Wichtig zur Einordnung:** der Report meldet „33 passed". Bei der Abnahme sind **4 von 33 rot**.
-Die Ursache steht unter Defekt 1; die Zahl im Report war also nicht belastbar. Bitte diesmal die
-volle Suite ausführen und das Ergebnis wörtlich übernehmen, nicht aus einem früheren Zwischenstand.
+Ein Defekt bleibt, und er ist total: **keine einzige Phase-C-Zelle läuft.**
 
-## Defekt 1 — die Erfolgspfade stürzen ab, sobald die Ausgabe außerhalb des Repos liegt
+## Der Defekt — World Age bei der verzögerten Einbindung
 
-Am Ende von `main` wird der Ausgabepfad für die Abschlussmeldung relativ zum Repo-Wurzelverzeichnis
-gemacht. Dieser Aufruf ist unbedingt. Liegt das Ausgabeverzeichnis nicht unterhalb des Repos, wirft
-er `ValueError` — und alle Tests arbeiten auf `tmp_path`, wie es sich gehört.
-
-Folge: **genau die vier Tests fallen um, die einen erfolgreichen Schreibvorgang erreichen**, während
-die Abbruchpfade grün bleiben, weil sie vorher aussteigen. Das ist die unangenehme Sorte Fehler —
-die Testsuite sieht überwiegend grün aus, aber kein einziger Erfolgsfall ist tatsächlich belegt.
-
-Die Meldung ist reine Kosmetik, die Wegwerfbarkeit der Ausgabe ist es nicht: `--output-dir` ist
-laut `analysis/CONVENTIONS.md` ein freier CLI-Parameter, und ein Ausgabeverzeichnis außerhalb des
-Repos muss zulässig bleiben. Also: die Meldung darf den Pfad verkürzen, wenn er unterhalb des Repos
-liegt, und muss ihn sonst vollständig ausgeben — abstürzen darf sie nie.
-
-## Defekt 2 — ein normaler Wert wird als tödlicher Fehler behandelt
-
-Der Lauf über die echten Records bricht sofort ab:
+Der Smoke-Test auf Index 1 bricht ab:
 
 ```text
-Error: Record 37 field wp_n1_expected_support_terms must be a list
+WARNING: Detected access to binding `Main.phase_c_fingerprint` in a world prior to its definition world.
+ERROR: LoadError: MethodError: no method matching phase_c_fingerprint()
+The applicable method may be too new: running in world age 40870, while current world is 40982.
 ```
 
-Der Exit-Code ist korrekt 1. Die Prüfung selbst ist falsch.
+Ursache: `_ensure_phase_c_config` (`run_batch_cell.jl:84`) bindet `phase_c_config.jl` **innerhalb
+einer Funktion** ein, und `_batch_fingerprint` ruft unmittelbar danach `phase_c_fingerprint()` auf.
+Die durch den `include` erzeugten Methoden leben in einem **neueren World Age** als die laufende
+Funktion; Julia 1.12 verschärft genau das. Der Aufruf ist damit nicht bloß unsauber, er ist
+unmöglich — und die Warnung sagt ausdrücklich, dass es in künftigen Versionen hart fehlschlägt.
 
-`wp_n1_expected_support_terms` ist für **Surrogatsysteme** `null`, und zwar konstruktionsbedingt:
-`wp_n1_basis_probe.jl` setzt das Feld nur, wenn ein exakter Support hergeleitet werden konnte
-(`_wp_n1_system_for_basis`). In den echten Daten ist das Feld in **221 von 335** Records `null` —
-in **allen 221 Surrogatzellen** und in **keiner einzigen der 114 exakten**. Der Zusammenhang ist
-exakt und muss geprüft, nicht umgangen werden.
+Es sind drei Aufrufstellen betroffen (`run_batch_cell.jl:97, 105, 119`), nicht nur eine.
 
-Die bestehende Prüfung erklärt damit zwei Drittel des Datensatzes für kaputt. Sie sind es nicht.
+**Tragweite:** `run_batch_cell.jl` ist der Einsprungpunkt jedes Kampagnen-Pods. Der Fehler trifft
+**jede** Phase-C-Zelle, sofort, in Pod eins. Wäre er erst auf dem Cluster aufgefallen, hätte ein
+mehrwöchiger Lauf 936 Pods in Folge gegen dieselbe Zeile gefahren.
 
-Folge für die Wissenschaft, nicht nur für den Lauf: **Schicht C ist so unerreichbar.** Der Anteil
-R² > 0,9 wird über alle Zellen berichtet, getrennt nach exakt und Surrogat — das ist die
-Literaturkennzahl und nach Designprinzip 9 zwingend. Ein Skript, das an der ersten Surrogatzelle
-stirbt, kann die Hälfte der geforderten Aussage nicht liefern.
+## Was zu tun ist
 
-Zu tun: `null` ist für Surrogatzellen der **erwartete** Wert und muss durchlaufen. Für exakte
-Zellen bleibt eine Liste Pflicht — dort ist `null` weiterhin ein Abbruchgrund. Beide Trefferspalten
-sind für Surrogatzellen leer im Sinne von „nicht anwendbar" und dürfen **nicht** als `False`
-gefüllt werden: ein nicht vorhandener Strukturtreffer ist kein verfehlter Strukturtreffer, und in
-keiner Aggregation darf ein Surrogat in einen Nenner der Strukturkennzahl geraten (Designprinzip 8).
+`phase_b_config.jl` wird auf **oberster Ebene** eingebunden (`run_batch_cell.jl:8`), unbedingt und
+neben `run_regression.jl`. Für die Phase-C-Konfiguration gilt dasselbe: die Einbindung gehört
+dorthin, wo sie world-age-sicher ist, nicht in eine Funktion.
 
-## Warum die Tests das nicht gefunden haben
+Falls die verzögerte Einbindung einen Grund hatte, den ich nicht sehe — nenne ihn im Report, statt
+ihn stillschweigend zu erhalten. Ich sehe keinen: Phase B macht es seit der Kampagne unbedingt, und
+das Laden kostet nichts, was gegen 936 abgestürzte Pods aufwiegt.
 
-`analysis/tests/test_wp_n1_dim2_probe_aggregation.py` gibt in der Record-Fabrik **jeder** Zelle
-`[["u1"], ["u2"]]` als erwartete Terme mit, auch den als Surrogat markierten. Diese Kombination —
-`representability == "surrogate"` **mit** Termliste — kommt in echten Daten nicht vor. Die Fixture
-bildet die Daten also an der entscheidenden Stelle falsch ab.
-
-Die Fixtures müssen den realen Zusammenhang tragen: Surrogatzellen ohne Termliste, exakte Zellen
-mit. Zusätzlich ein Test, der die **verbotene** Kombination absichert — eine exakte Zelle ohne
-Termliste muss weiterhin mit einem von Null verschiedenen Exit-Code abbrechen.
+Prüfe bei der Gelegenheit, ob dieselbe Bauart noch anderswo vorkommt — ein `include` innerhalb einer
+Funktion mit unmittelbar folgendem Aufruf der so erzeugten Namen.
 
 ## Abnahmekriterien
 
-1. Die volle Suite unter `analysis/tests` ist grün, **alle** Erfolgspfade eingeschlossen, und die
-   genannte Zahl stammt aus diesem Lauf.
-2. Neue Tests: Ausgabeverzeichnis außerhalb des Repos läuft durch; Surrogatzelle ohne Termliste
-   läuft durch; exakte Zelle ohne Termliste bricht mit Exit-Code ungleich Null ab.
-3. Die Trefferspalten sind für Surrogatzellen als „nicht anwendbar" gekennzeichnet, nicht als
-   `False`, und kein Surrogat erscheint in einem Nenner der Strukturkennzahlen.
-4. Report nach `codex/reports/REPORT_WP_N15b.md`, knapp: was geändert wurde, welche Tests neu sind,
-   das wörtliche Testergebnis.
+1. Der Smoke-Test läuft durch:
+   `julia --project=. --startup-file=no studies/regression/run_batch_cell.jl 1 --manifest outputs/studies/regression/phase_c/manifest.csv --output-dir outputs/studies/regression/phase_c/smoke_tasks`
+2. Der erzeugte Record trägt `config_fingerprint = 0c9672de35c75a9d`,
+   `basis_name = staged_polynomial_basis_with_constant`, `max_fit_attempts = 3` und ein
+   **gefülltes** `executed_levels`, das sich von `n_levels` unterscheidet.
+3. Eine **Phase-B**-Zelle läuft weiterhin unverändert — die Einbindung darf den bestehenden Pfad
+   nicht verschieben.
+4. Keine Warnung mehr über den Zugriff auf ein Binding vor seinem Definitions-World.
+5. Report nach `codex/reports/REPORT_WP_N16b.md`, knapp: Ursache, Änderung, warum sie
+   world-age-sicher ist, und ob die Bauart anderswo vorkommt.
 
-Der Lauf über die echten Records bleibt blockiert, weil der Share `S:\` aus der Codex-Sitzung nicht
-sichtbar ist — das ist bekannt und kein Mangel dieses Pakets. Diese Abnahme fährt Claude. Melde
-den Datenlauf wieder als das, was er ist, und stütze **keine** Aussage auf echte Zahlen, die du
-nicht selbst erzeugt hast.
+Beide Läufe fährt Claude. Stütze **keine** Aussage auf einen Julia-Lauf, den du nicht selbst
+ausgeführt hast.

@@ -6,6 +6,7 @@ using Printf
 
 include(joinpath(@__DIR__, "run_regression.jl"))
 include(joinpath(@__DIR__, "phase_b_config.jl"))
+include(joinpath(@__DIR__, "phase_c_config.jl"))
 include(joinpath(@__DIR__, "wp_n1_basis_probe.jl"))
 
 const DEFAULT_BATCH_DIR = joinpath(@__DIR__, "..", "..", "outputs", "studies", "regression", "wp_b2")
@@ -69,6 +70,10 @@ function _is_phase_b_row(row)
     return get(row, "campaign", "") == "phase_b"
 end
 
+function _is_phase_c_row(row)
+    return get(row, "campaign", "") == "paper1_phaseC_v1"
+end
+
 function _is_wp_n1_row(row)
     return get(row, "campaign", "") == "wp_n1_basis_probe"
 end
@@ -82,11 +87,16 @@ function _batch_fingerprint(row)
         return _wp_n1_fingerprint(parse(Int, row["system_dim"]))
     elseif _is_phase_b_row(row)
         return phase_b_fingerprint()
+    elseif _is_phase_c_row(row)
+        return phase_c_fingerprint()
     end
     return config_fingerprint()
 end
 
 function _batch_variant(row)
+    if _is_phase_c_row(row)
+        return phase_c_variant(row["variant"])
+    end
     return _uses_phase_b_config(row) ? phase_b_variant(row["variant"]) : _variant(row["variant"])
 end
 
@@ -97,6 +107,8 @@ function _batch_system(row, variant)
         return _wp_n1_system_for_basis(phase_b_system(system_id), String(variant.basis_name), rows)
     elseif _is_phase_b_row(row)
         return phase_b_system(system_id)
+    elseif _is_phase_c_row(row)
+        return phase_c_system(system_id)
     end
     return _system(system_id)
 end

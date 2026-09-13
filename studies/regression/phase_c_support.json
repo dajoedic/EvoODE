@@ -1,17 +1,27 @@
 {
-    "basis_name": "default_staged_polynomial_basis",
+    "basis_name": "staged_polynomial_basis_with_constant",
     "scatter_seed": 20260812,
     "rtol": 1.0e-9,
     "atol": 1.0e-9,
     "generated_by": "studies/regression/derive_phase_b_support.jl",
     "systems": [
         {
-            "representability": "surrogate",
-            "status": "eq1_not_representable",
+            "representability": "exact",
+            "status": "ok",
             "dim": 1,
             "system_id": 1,
-            "support_idxs": null,
-            "support_terms": null
+            "support_idxs": [
+                [
+                    1,
+                    2
+                ]
+            ],
+            "support_terms": [
+                [
+                    "1",
+                    "u1"
+                ]
+            ]
         },
         {
             "representability": "exact",
@@ -20,7 +30,7 @@
             "system_id": 2,
             "support_idxs": [
                 [
-                    1
+                    2
                 ]
             ],
             "support_terms": [
@@ -36,8 +46,8 @@
             "system_id": 3,
             "support_idxs": [
                 [
-                    1,
-                    2
+                    2,
+                    3
                 ]
             ],
             "support_terms": [
@@ -56,12 +66,22 @@
             "support_terms": null
         },
         {
-            "representability": "surrogate",
-            "status": "eq1_not_representable",
+            "representability": "exact",
+            "status": "ok",
             "dim": 1,
             "system_id": 5,
-            "support_idxs": null,
-            "support_terms": null
+            "support_idxs": [
+                [
+                    1,
+                    3
+                ]
+            ],
+            "support_terms": [
+                [
+                    "1",
+                    "u1^2"
+                ]
+            ]
         },
         {
             "representability": "exact",
@@ -70,8 +90,8 @@
             "system_id": 6,
             "support_idxs": [
                 [
-                    1,
-                    2
+                    2,
+                    3
                 ]
             ],
             "support_terms": [
@@ -96,9 +116,9 @@
             "system_id": 8,
             "support_idxs": [
                 [
-                    1,
                     2,
-                    3
+                    3,
+                    4
                 ]
             ],
             "support_terms": [
@@ -110,12 +130,22 @@
             ]
         },
         {
-            "representability": "surrogate",
-            "status": "eq1_not_representable",
+            "representability": "exact",
+            "status": "ok",
             "dim": 1,
             "system_id": 9,
-            "support_idxs": null,
-            "support_terms": null
+            "support_idxs": [
+                [
+                    1,
+                    2
+                ]
+            ],
+            "support_terms": [
+                [
+                    "1",
+                    "u1"
+                ]
+            ]
         },
         {
             "representability": "surrogate",
@@ -132,7 +162,7 @@
             "system_id": 11,
             "support_idxs": [
                 [
-                    3
+                    4
                 ]
             ],
             "support_terms": [
@@ -148,8 +178,8 @@
             "system_id": 12,
             "support_idxs": [
                 [
-                    1,
-                    2
+                    2,
+                    3
                 ]
             ],
             "support_terms": [
@@ -192,12 +222,24 @@
             "support_terms": null
         },
         {
-            "representability": "surrogate",
-            "status": "eq1_not_representable",
+            "representability": "exact",
+            "status": "ok",
             "dim": 1,
             "system_id": 17,
-            "support_idxs": null,
-            "support_terms": null
+            "support_idxs": [
+                [
+                    1,
+                    2,
+                    3
+                ]
+            ],
+            "support_terms": [
+                [
+                    "1",
+                    "u1",
+                    "u1^2"
+                ]
+            ]
         },
         {
             "representability": "surrogate",
@@ -240,12 +282,22 @@
             "support_terms": null
         },
         {
-            "representability": "surrogate",
-            "status": "eq1_not_representable",
+            "representability": "exact",
+            "status": "ok",
             "dim": 1,
             "system_id": 23,
-            "support_idxs": null,
-            "support_terms": null
+            "support_idxs": [
+                [
+                    1,
+                    5
+                ]
+            ],
+            "support_terms": [
+                [
+                    "1",
+                    "sin(u1)"
+                ]
+            ]
         },
         {
             "representability": "exact",
@@ -254,10 +306,10 @@
             "system_id": 24,
             "support_idxs": [
                 [
-                    2
+                    3
                 ],
                 [
-                    1
+                    2
                 ]
             ],
             "support_terms": [
@@ -276,11 +328,11 @@
             "system_id": 25,
             "support_idxs": [
                 [
-                    2
+                    3
                 ],
                 [
-                    1,
-                    2
+                    2,
+                    3
                 ]
             ],
             "support_terms": [
@@ -300,14 +352,14 @@
             "system_id": 26,
             "support_idxs": [
                 [
-                    1,
-                    3,
-                    5
-                ],
-                [
                     2,
                     4,
-                    5
+                    6
+                ],
+                [
+                    3,
+                    5,
+                    6
                 ]
             ],
             "support_terms": [
@@ -330,12 +382,12 @@
             "system_id": 27,
             "support_idxs": [
                 [
-                    1,
-                    5
+                    2,
+                    6
                 ],
                 [
-                    2,
-                    5
+                    3,
+                    6
                 ]
             ],
             "support_terms": [
@@ -356,10 +408,10 @@
             "system_id": 28,
             "support_idxs": [
                 [
-                    2
+                    3
                 ],
                 [
-                    8
+                    9
                 ]
             ],
             "support_terms": [
@@ -378,11 +430,11 @@
             "system_id": 29,
             "support_idxs": [
                 [
-                    5
+                    6
                 ],
                 [
-                    3,
-                    4
+                    4,
+                    5
                 ]
             ],
             "support_terms": [
@@ -410,11 +462,11 @@
             "system_id": 31,
             "support_idxs": [
                 [
-                    5
+                    6
                 ],
                 [
-                    2,
-                    5
+                    3,
+                    6
                 ]
             ],
             "support_terms": [
@@ -434,12 +486,12 @@
             "system_id": 32,
             "support_idxs": [
                 [
-                    2
+                    3
                 ],
                 [
-                    1,
                     2,
-                    6
+                    3,
+                    7
                 ]
             ],
             "support_terms": [
@@ -500,12 +552,12 @@
             "system_id": 38,
             "support_idxs": [
                 [
-                    1,
                     2,
-                    6
+                    3,
+                    7
                 ],
                 [
-                    1
+                    2
                 ]
             ],
             "support_terms": [
@@ -552,12 +604,30 @@
             "support_terms": null
         },
         {
-            "representability": "surrogate",
-            "status": "eq2_not_representable",
+            "representability": "exact",
+            "status": "ok",
             "dim": 2,
             "system_id": 43,
-            "support_idxs": null,
-            "support_terms": null
+            "support_idxs": [
+                [
+                    3
+                ],
+                [
+                    1,
+                    3,
+                    9
+                ]
+            ],
+            "support_terms": [
+                [
+                    "u2"
+                ],
+                [
+                    "1",
+                    "u2",
+                    "sin(u1)"
+                ]
+            ]
         },
         {
             "representability": "surrogate",
@@ -624,12 +694,40 @@
             "support_terms": null
         },
         {
-            "representability": "surrogate",
-            "status": "eq3_not_representable",
+            "representability": "exact",
+            "status": "ok",
             "dim": 3,
             "system_id": 52,
-            "support_idxs": null,
-            "support_terms": null
+            "support_idxs": [
+                [
+                    2,
+                    3
+                ],
+                [
+                    3,
+                    9
+                ],
+                [
+                    1,
+                    4,
+                    8
+                ]
+            ],
+            "support_terms": [
+                [
+                    "u1",
+                    "u2"
+                ],
+                [
+                    "u2",
+                    "u1*u3"
+                ],
+                [
+                    "1",
+                    "u3",
+                    "u1*u2"
+                ]
+            ]
         },
         {
             "representability": "surrogate",
@@ -646,17 +744,17 @@
             "system_id": 54,
             "support_idxs": [
                 [
-                    1,
-                    2
-                ],
-                [
-                    1,
                     2,
-                    8
+                    3
                 ],
                 [
+                    2,
                     3,
-                    7
+                    9
+                ],
+                [
+                    4,
+                    8
                 ]
             ],
             "support_terms": [
@@ -682,17 +780,17 @@
             "system_id": 55,
             "support_idxs": [
                 [
-                    1,
-                    2
-                ],
-                [
-                    1,
                     2,
-                    8
+                    3
                 ],
                 [
+                    2,
                     3,
-                    7
+                    9
+                ],
+                [
+                    4,
+                    8
                 ]
             ],
             "support_terms": [
@@ -718,17 +816,17 @@
             "system_id": 56,
             "support_idxs": [
                 [
-                    1,
-                    2
-                ],
-                [
-                    1,
                     2,
-                    8
+                    3
                 ],
                 [
+                    2,
                     3,
-                    7
+                    9
+                ],
+                [
+                    4,
+                    8
                 ]
             ],
             "support_terms": [
@@ -748,28 +846,112 @@
             ]
         },
         {
-            "representability": "surrogate",
-            "status": "eq3_not_representable",
+            "representability": "exact",
+            "status": "ok",
             "dim": 3,
             "system_id": 57,
-            "support_idxs": null,
-            "support_terms": null
+            "support_idxs": [
+                [
+                    3,
+                    4
+                ],
+                [
+                    2,
+                    3
+                ],
+                [
+                    1,
+                    4,
+                    9
+                ]
+            ],
+            "support_terms": [
+                [
+                    "u2",
+                    "u3"
+                ],
+                [
+                    "u1",
+                    "u2"
+                ],
+                [
+                    "1",
+                    "u3",
+                    "u1*u3"
+                ]
+            ]
         },
         {
-            "representability": "surrogate",
-            "status": "eq3_not_representable",
+            "representability": "exact",
+            "status": "ok",
             "dim": 3,
             "system_id": 58,
-            "support_idxs": null,
-            "support_terms": null
+            "support_idxs": [
+                [
+                    3,
+                    4
+                ],
+                [
+                    2,
+                    3
+                ],
+                [
+                    1,
+                    4,
+                    9
+                ]
+            ],
+            "support_terms": [
+                [
+                    "u2",
+                    "u3"
+                ],
+                [
+                    "u1",
+                    "u2"
+                ],
+                [
+                    "1",
+                    "u3",
+                    "u1*u3"
+                ]
+            ]
         },
         {
-            "representability": "surrogate",
-            "status": "eq3_not_representable",
+            "representability": "exact",
+            "status": "ok",
             "dim": 3,
             "system_id": 59,
-            "support_idxs": null,
-            "support_terms": null
+            "support_idxs": [
+                [
+                    3,
+                    4
+                ],
+                [
+                    2,
+                    3
+                ],
+                [
+                    1,
+                    4,
+                    9
+                ]
+            ],
+            "support_terms": [
+                [
+                    "u2",
+                    "u3"
+                ],
+                [
+                    "u1",
+                    "u2"
+                ],
+                [
+                    "1",
+                    "u3",
+                    "u1*u3"
+                ]
+            ]
         },
         {
             "representability": "surrogate",
@@ -786,16 +968,16 @@
             "system_id": 61,
             "support_idxs": [
                 [
-                    1,
-                    9
-                ],
-                [
                     2,
-                    8
+                    10
                 ],
                 [
                     3,
-                    7
+                    9
+                ],
+                [
+                    4,
+                    8
                 ]
             ],
             "support_terms": [
@@ -828,18 +1010,18 @@
             "system_id": 63,
             "support_idxs": [
                 [
-                    10
+                    11
                 ],
                 [
-                    2,
-                    10
+                    3,
+                    11
                 ],
                 [
-                    2,
-                    3
+                    3,
+                    4
                 ],
                 [
-                    3
+                    4
                 ]
             ],
             "support_terms": [

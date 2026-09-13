@@ -1,4 +1,5 @@
 import argparse
+import json
 import sys
 from pathlib import Path
 
@@ -13,7 +14,10 @@ if str(ANALYSIS_ROOT) not in sys.path:
 from scripts.aggregate.aggregate_phaseb_structure_metrics import (  # noqa: E402
     resolve_paths,
 )
-from scripts.aggregate.verify_campaign_registry import verify  # noqa: E402
+from scripts.aggregate.verify_campaign_registry import (  # noqa: E402
+    apply_phase_c_support_expectations,
+    verify,
+)
 from utils.campaign import require_single_campaign_id  # noqa: E402
 
 
@@ -54,6 +58,7 @@ def verifier_args(
         expected_rows_per_condition=expected_row_count,
         expected_exact_rows=expected_row_count,
         expected_surrogate_rows=0,
+        phase_c_support_table=None,
         expected_git_hash="91f88c4",
         expected_config_fingerprint="604e79733b22d64d",
         expected_stage_cap_behavior_fingerprint="ffb0266c7913352c",
@@ -93,6 +98,59 @@ def test_verify_campaign_registry_accepts_matching_campaign(capsys) -> None:
 
     assert result == 0
     assert "Verified campaign registry: 1 rows" in capsys.readouterr().out
+
+
+def test_verify_campaign_registry_derives_phasec_counts_from_support_table(capsys) -> None:
+    work_dir = REPO_ROOT / ".pytest_tmp_phasec_registry_verify"
+    work_dir.mkdir(exist_ok=True)
+    support_path = work_dir / "phase_c_support.json"
+    support_path.write_text(
+        json.dumps(
+            {
+                "basis_name": "staged_polynomial_basis_with_constant",
+                "systems": [
+                    {"system_id": 1, "representability": "exact"},
+                    {"system_id": 2, "representability": "surrogate"},
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+    rows = []
+    for condition, variant, system_ids in [
+        ("capped", "evogrow_v2_2_stage_capped", [1, 2]),
+        ("uncapped", "evogrow_v2_2_stage_local", [1, 2]),
+        ("pretune_on", "evogrow_v2_2_stage_capped_pretune_on", [1]),
+    ]:
+        for system_id in system_ids:
+            for seed in [42, 123, 7]:
+                for ic_set in [1, 2]:
+                    row = registry_rows(["paper1_phaseC_v1"])[0]
+                    row.update(
+                        {
+                            "system_id": str(system_id),
+                            "seed": str(seed),
+                            "variant_slug": variant,
+                            "condition": condition,
+                            "initial_condition_set": str(ic_set),
+                            "system_representability": "exact"
+                            if system_id == 1
+                            else "surrogate",
+                            "exact_support_match": "true" if system_id == 1 else "",
+                            "r2": "0.99",
+                        }
+                    )
+                    rows.append(row)
+
+    args = verifier_args("paper1_phaseC_v1", 0, 0)
+    args.phase_c_support_table = str(support_path)
+
+    result = verify(rows, apply_phase_c_support_expectations(args))
+
+    assert result == 0
+    assert "Representability: exact=18, surrogate=12" in capsys.readouterr().out
+    support_path.unlink()
+    work_dir.rmdir()
 
 
 def test_structure_metric_paths_derive_from_campaign_and_allow_overrides() -> None:

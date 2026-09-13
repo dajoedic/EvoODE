@@ -15,6 +15,9 @@
 # Usage:
 #   julia --project=. studies/regression/derive_phase_b_support.jl
 #   julia --project=. studies/regression/derive_phase_b_support.jl --check
+#   julia --project=. studies/regression/derive_phase_b_support.jl \
+#       --basis staged_polynomial_basis_with_constant \
+#       --output studies/regression/phase_c_support.json
 #
 # --check verifies the committed file against a fresh derivation without
 # rewriting it, and exits non-zero on any disagreement.
@@ -29,6 +32,7 @@ include(joinpath(@__DIR__, "diagnostic_systems.jl"))
 include(joinpath(@__DIR__, "phase_b_config.jl"))
 
 const SUPPORT_PATH = joinpath(@__DIR__, "phase_b_support.json")
+const DEFAULT_SUPPORT_BASIS_NAME = "default_staged_polynomial_basis"
 
 # Points at which the RHS and the basis are compared. A single trajectory leaves
 # basis columns collinear, which makes the least-squares support non-unique; both
@@ -56,8 +60,14 @@ function _support_eval_points(row, dim::Int)
     return vcat(X, S)
 end
 
-function _support_design_and_rhs(rhs!, X::Matrix{Float64}, dim::Int)
-    basis = default_staged_polynomial_basis(dim)
+function _support_basis(basis_name::AbstractString, dim::Int)
+    name = String(basis_name)
+    name == "default_staged_polynomial_basis" && return default_staged_polynomial_basis(dim)
+    name == "staged_polynomial_basis_with_constant" && return staged_polynomial_basis_with_constant(dim)
+    error("Unknown support basis: $(name)")
+end
+
+function _support_design_and_rhs(rhs!, X::Matrix{Float64}, dim::Int, basis)
     p = basis_num_terms(basis)
     n = size(X, 1)
     phi = zeros(Float64, n, p)
@@ -93,8 +103,8 @@ threshold on least-squares coefficients spreads a representable RHS across many
 basis terms on an ill-conditioned design and reports a support that is not the
 true one.
 """
-function derive_true_support(rhs!, X::Matrix{Float64}, dim::Int)
-    phi, rhs = _support_design_and_rhs(rhs!, X, dim)
+function derive_true_support(rhs!, X::Matrix{Float64}, dim::Int, basis)
+    phi, rhs = _support_design_and_rhs(rhs!, X, dim, basis)
     size(phi, 1) >= size(phi, 2) || return (nothing, "too_few_valid_points")
     all(isfinite, phi) || return (nothing, "nonfinite_design")
     all(isfinite, rhs) || return (nothing, "nonfinite_rhs")
@@ -125,7 +135,7 @@ function derive_true_support(rhs!, X::Matrix{Float64}, dim::Int)
     return (support, "ok")
 end
 
-function derive_all()
+function derive_all(basis_name::AbstractString = DEFAULT_SUPPORT_BASIS_NAME)
     systems = phase_b_systems()
     rows = Dict(Int(r["id"]) => r for r in _phase_b_dataset_rows())
     entries = Dict{String, Any}[]
@@ -133,8 +143,8 @@ function derive_all()
         sid = Int(s[:system_id])
         dim = Int(s[:dim])
         X = _support_eval_points(rows[sid], dim)
-        support, status = derive_true_support(s[:rhs!], X, dim)
-        basis = default_staged_polynomial_basis(dim)
+        basis = _support_basis(basis_name, dim)
+        support, status = derive_true_support(s[:rhs!], X, dim, basis)
         push!(entries, Dict{String, Any}(
             "system_id" => sid,
             "dim" => dim,
@@ -146,6 +156,13 @@ function derive_all()
         ))
     end
     return entries
+end
+
+function _arg_value(args::Vector{String}, name::String)
+    idx = findfirst(==(name), args)
+    idx === nothing && return nothing
+    idx == length(args) && error("Missing value for $(name)")
+    return args[idx + 1]
 end
 
 function load_support_table()
@@ -204,9 +221,11 @@ function _cross_check(entries)
     return failures
 end
 
-function main()
-    check_only = "--check" in ARGS
-    entries = derive_all()
+function main(args = ARGS)
+    check_only = "--check" in args
+    basis_name = something(_arg_value(args, "--basis"), DEFAULT_SUPPORT_BASIS_NAME)
+    output_path = something(_arg_value(args, "--output"), SUPPORT_PATH)
+    entries = derive_all(basis_name)
     _print_table(entries)
 
     failures = _cross_check(entries)
@@ -222,6 +241,7 @@ function main()
 
     payload = Dict{String, Any}(
         "generated_by" => "studies/regression/derive_phase_b_support.jl",
+        "basis_name" => basis_name,
         "n_scatter" => SUPPORT_N_SCATTER,
         "scatter_seed" => SUPPORT_SCATTER_SEED,
         "atol" => SUPPORT_ATOL,
@@ -230,18 +250,21 @@ function main()
     )
 
     if check_only
-        isfile(SUPPORT_PATH) || error("--check requested but $(SUPPORT_PATH) does not exist")
-        committed = JSON3.read(read(SUPPORT_PATH, String))
+        isfile(output_path) || error("--check requested but $(output_path) does not exist")
+        committed = JSON3.read(read(output_path, String))
         fresh = JSON3.read(JSON3.write(payload))
+        committed_basis = haskey(committed, "basis_name") ? String(committed["basis_name"]) : DEFAULT_SUPPORT_BASIS_NAME
+        committed_basis == basis_name ||
+            error("Committed support table basis $(committed_basis) != requested basis $(basis_name)")
         if JSON3.write(committed["systems"]) != JSON3.write(fresh["systems"])
             error("Committed support table differs from a fresh derivation")
         end
         println("\n--check: committed table matches a fresh derivation")
     else
-        open(SUPPORT_PATH, "w") do io
+        open(output_path, "w") do io
             JSON3.pretty(io, payload)
         end
-        println("\nwrote ", SUPPORT_PATH)
+        println("\nwrote ", output_path)
     end
 end
 

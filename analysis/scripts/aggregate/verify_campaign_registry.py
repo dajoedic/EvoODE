@@ -1,5 +1,6 @@
 import argparse
 import csv
+import json
 import math
 import sys
 from collections import Counter
@@ -57,6 +58,13 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--expected-exact-rows", type=int, default=240)
     parser.add_argument("--expected-surrogate-rows", type=int, default=516)
     parser.add_argument(
+        "--phase-c-support-table",
+        help=(
+            "Derive Phase-C row-count and representability expectations from "
+            "phase_c_support.json instead of hard-coding them in Python."
+        ),
+    )
+    parser.add_argument(
         "--expected-git-hash",
         default=DEFAULT_EXPECTED_GIT_HASH,
         help="Expected single git_hash value.",
@@ -72,6 +80,38 @@ def parse_args() -> argparse.Namespace:
         help="Expected single stage_cap_behavior_fingerprint value.",
     )
     return parser.parse_args()
+
+
+def apply_phase_c_support_expectations(args: argparse.Namespace) -> argparse.Namespace:
+    if not args.phase_c_support_table:
+        return args
+
+    support_path = Path(args.phase_c_support_table)
+    with support_path.open("r", encoding="utf-8") as handle:
+        payload = json.load(handle)
+    systems = payload.get("systems")
+    if not isinstance(systems, list) or not systems:
+        raise ValueError(f"Support table has no systems list: {support_path}")
+
+    counts = Counter(str(system.get("representability", "")).strip() for system in systems)
+    exact_systems = counts.get("exact", 0)
+    surrogate_systems = counts.get("surrogate", 0)
+    unknown = sorted(key for key in counts if key not in {"exact", "surrogate"})
+    if unknown:
+        raise ValueError(f"Support table has unknown representability labels: {unknown}")
+
+    per_full_arm = len(systems) * 3 * 2
+    per_exact_arm = exact_systems * 3 * 2
+    args.expected_rows_per_condition = {
+        "capped": per_full_arm,
+        "uncapped": per_full_arm,
+        "pretune_on": per_exact_arm,
+    }
+    args.expected_row_count = sum(args.expected_rows_per_condition.values())
+    args.expected_unique_identities = args.expected_row_count
+    args.expected_exact_rows = exact_systems * 3 * 2 * 3
+    args.expected_surrogate_rows = surrogate_systems * 3 * 2 * 2
+    return args
 
 
 def fail(message: str) -> int:
@@ -185,16 +225,28 @@ def verify(rows: list[dict[str, str]], args: argparse.Namespace) -> int:
         )
 
     rows_per_condition = Counter(normalized_text(row[condition]) for row in rows)
-    wrong_condition_counts = {
-        key: value
-        for key, value in rows_per_condition.items()
-        if value != args.expected_rows_per_condition
-    }
-    if wrong_condition_counts:
-        return fail(
-            f"rows per {condition} expected {args.expected_rows_per_condition}, "
-            f"got {dict(rows_per_condition)}"
-        )
+    if isinstance(args.expected_rows_per_condition, dict):
+        expected_condition_counts = {
+            str(key): int(value)
+            for key, value in args.expected_rows_per_condition.items()
+        }
+        actual_condition_counts = dict(rows_per_condition)
+        if actual_condition_counts != expected_condition_counts:
+            return fail(
+                f"rows per {condition} expected {expected_condition_counts}, "
+                f"got {actual_condition_counts}"
+            )
+    else:
+        wrong_condition_counts = {
+            key: value
+            for key, value in rows_per_condition.items()
+            if value != args.expected_rows_per_condition
+        }
+        if wrong_condition_counts:
+            return fail(
+                f"rows per {condition} expected {args.expected_rows_per_condition}, "
+                f"got {dict(rows_per_condition)}"
+            )
 
     representability_counts = Counter(
         normalized_text(row["system_representability"]) for row in rows
@@ -259,6 +311,7 @@ def main() -> int:
         else campaign_registry_path(REPO_ROOT, args.campaign)
     )
     try:
+        args = apply_phase_c_support_expectations(args)
         rows = read_rows(input_path)
     except (OSError, ValueError) as exc:
         print(f"Error: {exc}", file=sys.stderr)

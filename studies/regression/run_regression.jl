@@ -181,7 +181,7 @@ function build_options(seed::Int)
     )
 end
 
-function build_reference_optimizer()
+function build_reference_optimizer(; max_fit_attempts::Int = 1)
     return BFGSOptimizer(
         maxiters = BFGS_MAXITERS,
         abstol = BFGS_ABSTOL,
@@ -191,6 +191,7 @@ function build_reference_optimizer()
         clamp_val = BFGS_CLAMP_VAL,
         reject_nonfinite = BFGS_REJECT_NONFINITE,
         divergence_limit = BFGS_DIVERGENCE_LIMIT,
+        max_fit_attempts = max_fit_attempts,
     )
 end
 
@@ -404,6 +405,10 @@ end
 
 function variant_use_pretuning(variant)
     return haskey(variant, :use_pretuning) ? Bool(variant.use_pretuning) : USE_PRETUNING
+end
+
+function variant_max_fit_attempts(variant)
+    return haskey(variant, :max_fit_attempts) ? Int(variant.max_fit_attempts) : 1
 end
 
 function variant_basis_name(variant)
@@ -684,6 +689,7 @@ function run_one(variant,
     dim = Int(system[:dim])
     expected_stage = system_expected_stage(system)
     use_pretuning = variant_use_pretuning(variant)
+    max_fit_attempts = variant_max_fit_attempts(variant)
     basis_name = variant_basis_name(variant)
     u0 = Float64[x for x in system[:init_sets][ic_set]]
     hb_context = heartbeat_context(variant, system, ic_set, seed, fingerprint)
@@ -726,7 +732,9 @@ function run_one(variant,
         "pruned_support_terms" => nothing,
         "model_terms" => nothing,
         "n_levels" => N_LEVELS,
+        "executed_levels" => nothing,
         "use_pretuning" => use_pretuning,
+        "max_fit_attempts" => max_fit_attempts,
         "representability" => system_representability(system),
         "screening_budgets_active" => nothing,
         "derivative_screening_active" => nothing,
@@ -810,7 +818,7 @@ function run_one(variant,
     try
         traj = build_trajectory(system, ic_set)
         base_record["derivative_active_fractions"] = derivative_active_fractions(system, traj)
-        optimizer = build_reference_optimizer()
+        optimizer = build_reference_optimizer(max_fit_attempts = max_fit_attempts)
         screening_optimizer = SCREENING_BUDGETS_ENABLED ? build_screening_optimizer() : nothing
         strategy = variant.constructor(level_callback, screening_optimizer)
         basis = build_variant_basis(variant, dim)
@@ -845,6 +853,7 @@ function run_one(variant,
         end
         final_stage = haskey(meta, :final_stage) ? Int(meta.final_stage) : nothing
         stage_level_counts = haskey(meta, :stage_level_counts) ? collect(meta.stage_level_counts) : Int[]
+        executed_levels = isempty(stage_level_counts) ? nothing : sum(stage_level_counts; init = 0)
         stage_overshoot = final_stage === nothing || expected_stage === nothing ? nothing : max(0, final_stage - expected_stage)
         wasted_levels = isempty(stage_level_counts) || expected_stage === nothing ? nothing : sum(stage_level_counts[(expected_stage + 1):end]; init = 0)
         # Support recovery does not depend on which stage was expected. Gating it
@@ -873,6 +882,7 @@ function run_one(variant,
         base_record["exact_support_match_raw"] = raw_match
         base_record["exact_support_match_pruned"] = pruned_match
         base_record["final_stage"] = final_stage
+        base_record["executed_levels"] = executed_levels
         base_record["stage_overshoot"] = stage_overshoot
         base_record["wasted_levels"] = wasted_levels
         base_record["elapsed_s"] = elapsed

@@ -50,13 +50,18 @@ CSV_COLUMNS = [
     "r2",
     "r2_by_dim",
     "total_parameter_fits",
+    "total_parameter_fit_attempts",
     "total_ode_solves",
     "stage_cap_behavior_fingerprint",
+    "basis_name",
     "support_terms",
     "pruned_support_terms",
+    "model_terms",
     "condition",
     "use_pretuning",
+    "max_fit_attempts",
     "n_levels",
+    "executed_levels",
     "eq_overshoot",
     "eq_final_stages",
     "stage_caps",
@@ -129,6 +134,16 @@ def support_match(record: dict[str, Any]) -> Any:
     return blank_if_none(record.get("pruned_match"))
 
 
+def phase_from_experiment_id(experiment_id: str) -> str:
+    if "phaseC" in experiment_id:
+        return "C"
+    if "phaseB" in experiment_id:
+        return "B"
+    if "phaseA" in experiment_id:
+        return "A"
+    return ""
+
+
 def row_from_record(record: dict[str, Any], experiment_id: str) -> dict[str, Any]:
     error = record.get("error")
     success = error in ("", None)
@@ -143,7 +158,7 @@ def row_from_record(record: dict[str, Any], experiment_id: str) -> dict[str, Any
     return {
         "run_id": "_".join(run_id_parts),
         "experiment_id": experiment_id,
-        "phase": "B",
+        "phase": phase_from_experiment_id(experiment_id),
         "hypothesis": "",
         "run_type": "campaign_cell",
         "include_in_paper": "",
@@ -188,15 +203,22 @@ def row_from_record(record: dict[str, Any], experiment_id: str) -> dict[str, Any
         "r2": blank_if_none(record.get("r2")),
         "r2_by_dim": blank_if_none(record.get("r2_by_dim")),
         "total_parameter_fits": blank_if_none(record.get("total_parameter_fits")),
+        "total_parameter_fit_attempts": blank_if_none(
+            record.get("total_parameter_fit_attempts")
+        ),
         "total_ode_solves": blank_if_none(record.get("total_ode_solves")),
         "stage_cap_behavior_fingerprint": blank_if_none(
             record.get("stage_cap_behavior_fingerprint")
         ),
+        "basis_name": blank_if_none(record.get("basis_name")),
         "support_terms": json_cell(record.get("support_terms")),
         "pruned_support_terms": json_cell(record.get("pruned_support_terms")),
+        "model_terms": json_cell(record.get("model_terms")),
         "condition": blank_if_none(record.get("condition")),
         "use_pretuning": blank_if_none(record.get("use_pretuning")),
+        "max_fit_attempts": blank_if_none(record.get("max_fit_attempts")),
         "n_levels": blank_if_none(record.get("n_levels")),
+        "executed_levels": blank_if_none(record.get("executed_levels")),
         "eq_overshoot": json_cell(record.get("eq_overshoot")),
         "eq_final_stages": json_cell(record.get("eq_final_stages")),
         "stage_caps": json_cell(record.get("stage_caps")),
