@@ -8,6 +8,8 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ### Kann k = 3 den Konstanten-Defekt auf dim 2 heilen? Vermutlich nicht — der Mechanismus passt nicht
 
+<!-- dc07d25 -->
+
 Die Frage kam aus dem Gespraech und ist berechtigt: der dim-2-Probelauf lief unter `ec3b6bd`
 (09.09.), die Restart-Politik kam mit `4908b07` (WP-N11, 10.09.) und hat den Vorgabewert
 `max_fit_attempts = 1`. **Die Probe ist also k = 1, Phase C faehrt k = 3.** Also koennte der
