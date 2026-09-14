@@ -6,6 +6,66 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ## 2026-09-14
 
+### Der Phase-C-SINDy-Arm steht — und zwei Reproduzierbarkeitsbefunde nebenbei
+
+<!-- 465ef58, a8f45b5 -->
+
+**WP-C4a und WP-C4a2, beide abgenommen.** Waehrend C-1 rechnet, ist der Baseline-Arm fuer Claim D
+gebaut, soweit er ohne C-1-Records gebaut werden kann: 2.520 Zeilen ueber 63 Systeme x 2 IC-Sets x
+10 Konfigurationen x 2 Richtungen, Repraesentierbarkeit aus `studies/regression/phase_c_support.json`
+(30 exakt / 33 Surrogat) statt aus der Phase-B-Klassifikation, Generalisierung in **beiden**
+Richtungen getrennt mit Rekonstruktionskontrolle, Trajektorien-Hashes in dokumentiertem Format
+(SHA-256 ueber rohe Little-Endian-Float64-Bytes, Zeit und Zustand getrennt), und eine
+Paarungsmaschinerie, die gegen die 16 Pilot-Records laeuft und **keinen** Vorgabewert auf die
+laufende Kampagne hat.
+
+**Das Abnahmekriterium 1 war falsch formuliert, und der Fehler war meiner.** Verlangt war
+Bit-Identitaet der WP-N6-Ausgaben bei erneutem Lauf. Das ist unerreichbar, weil diese Dateien
+Laufzeitspalten fuehren. Codex hat `blocked` gemeldet statt die Bedingung sinngemaess auszulegen —
+das ist das richtige Verhalten und der Grund, warum das Kriterium jetzt sauber dasteht.
+
+**Beim Nachpruefen von Hand kam ein Befund dazu, der im Codex-Report unvollstaendig war.** Ein
+eigener WP-N6-Lauf zeigt: `details.csv` weicht nicht nur in der Laufzeitspalte ab, sondern **auch in
+`r2`, in 109 von 2.520 Zeilen**. Die Aufloesung entlastet vollstaendig — **alle 109 tragen
+`integration_status = diverged`** mit |r²| > 1e6, und **keine berichtete Groesse kippt**:
+`r2_gt_0_9`, die Strukturtreffer, die Termzahlen, `fit_status` und `integration_status` sind
+identisch. `summary.csv` und `trajectory_check.csv` sind byte-identisch. **WP-N6 ist in allem
+reproduzierbar, was wir berichten**, und der Nichtdeterminismus sitzt ausschliesslich im Zahlenmuell
+divergierter Integrationen. Das gehoert als Satz ins Paper, nicht als Fussnote.
+
+**Derselbe Mechanismus hatte in der neuen Ausgabe einen echten Defekt erzeugt.** `r2_median_valid`
+filterte auf **Endlichkeit** von `r2` statt auf **nicht divergiert** — und eine divergierte
+Integration liefert regelmaessig endlichen Unsinn. Folge: die Median-Spalte reichte bis
+**−1,181e+86**, und `r2_valid_count == n_cells − diverged` galt nur in 196 von 382 Zeilen. Betroffen
+war ausschliesslich der Median; unter allen 473 divergierten Zeilen ist `r2_gt_0_9` **nirgends** wahr,
+die Schwellenkennzahl war also von Anfang an korrekt.
+
+WP-C4a2 hat das repariert: Auswahl ohne divergierte Zeilen, die Zaehlspalte heisst jetzt
+`r2_finite_nondiverged_count` und sagt damit, worauf sie filtert — der alte Name `..._valid` war die
+eigentliche Ursache —, und Quantile stehen neben dem Median, wie es die stehende Regel seit WP-A7
+verlangt. **Die Kontrolle haelt:** `r2_gt_0_9_rate_over_cells`, `n_cells`, beide Strukturtreffer-Raten
+und `diverged_or_nonfinite_count` sind gegen den Vorcommit unveraendert, die Reparatur hat also nur
+die R²-Verteilung angefasst.
+
+**Ein Extremwert bleibt und ist kein Defekt.** `r2_q000_finite_nondiverged` erreicht −4,25e+09. Die
+betroffenen Zeilen tragen `integration_status = success` und `diverged_or_nonfinite = False`: die
+Integration ist durchgelaufen, das Modell ist nur astronomisch falsch. Ein R² darf das. Geprueft an
+System 8 (dim 1, Generalisierung) und System 52 (dim 3, Rekonstruktion).
+
+**Offen geblieben, kosmetisch:** die Median-Spalte heisst weiterhin `r2_median_valid`, waehrend die
+Zaehlspalte umbenannt wurde. Der Filter geht aus dem Namen also nur zur Haelfte hervor. Beim
+naechsten Anfassen mitziehen, kein eigenes Arbeitspaket wert.
+
+**Was weiterhin blockiert ist:** die Paarung gegen das echte C-1 und der Hash-Abgleich. Letzterer
+braucht ein Julia-Paket, denn **die Records tragen keinen Trajektorien-Hash** —
+`run_regression.jl` schreibt keinen, und das Abnahmekriterium von Claim D verlangt „by hash, not by
+assertion". Das Hash-Format ist jetzt so dokumentiert, dass die Julia-Seite es ohne Rueckfrage
+nachbilden kann.
+
+---
+
+## 2026-09-14
+
 ### 82 Heartbeats bei 50 gestarteten Zellen — und eine Vorbedingung fuer den C-3-Neustart
 
 <!-- 847dce8 -->
