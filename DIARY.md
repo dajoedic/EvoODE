@@ -6,6 +6,81 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ## 2026-09-14
 
+### „Identische Trajektorien" waren nie identisch — und die zehnte Stelle entscheidet in vier Zellen
+
+<!-- a1b8297, cca22e0, fe60e97 -->
+
+**WP-C4b hat gemessen, was seit WP-N6 behauptet wurde.** Claim D verlangt Trajektorien „verified
+byte-identical to those C-1 consumed, **by hash, not by assertion**". Der Nachweis war ueber die
+Records nicht fuehrbar — sie tragen keinen Trajektorien-Hash —, also fuehrt ihn WP-C4b ueber den
+**Konstruktionspfad**: ein Julia-Skript ruft `build_trajectory` der Kampagne auf (nicht nachgebaut,
+das war die bindende Bedingung), hasht im Format der Python-Seite und vergleicht.
+
+Ergebnis ueber 63 Systeme und beide IC-Sets:
+
+| | |
+|---|---|
+| Zeitgitter bit-identisch | **126 / 126** |
+| Zustandsmatrix identisch | **0 / 126** |
+| Formfehler, fehlende Zeilen | 0 |
+
+**Die Ursache ist kein Fehler auf einer der beiden Seiten.** Die Kampagne integriert mit `Tsit5`
+(`run_regression.jl:578`), das SINDy-Skript mit `DOP853` (`scipy.integrate.solve_ivp`), beide bei
+`1e-9`. Zwei Verfahren verschiedener Ordnung stimmen bei dieser Toleranz auf etwa **1e-10** ueberein.
+Sichtbar an System 1: `1.0884142834867072` gegen `1.0884142835242978`.
+
+Dass die Zeitvektoren 126-mal bit-identisch sind, ist zugleich der Beleg, dass die Hash-Mechanik
+stimmt — der wahrscheinlichste Fehlschlag waere gewesen, Julias spaltenweise Speicherung gegen
+NumPys C-Reihenfolge zu hashen; das Skript laeuft die Matrix deshalb ausdruecklich zeilenweise ab.
+
+**Warum das 90 Tage unsichtbar blieb:** WP-N6 hat seine Trajektorien gegen die **ausgelieferten**
+ODEBench-Loesungen geprueft, nicht gegen unsere. Genau an dieser Stelle vorbei. Die Formulierung
+„identical trajectories" stand an neun Stellen in `CLAUDE.md` und `PAPER_1.md` als
+Selbstverstaendlichkeit und ist korrigiert.
+
+### Die Reparatur, und der Weg, der nicht gegangen wurde
+
+**Nicht gegangen:** den Python-Integrator auf `Tsit5` umstellen oder Toleranzen drehen, bis die
+Hashes passen. Das waere eine Reimplementierung des Konstruktionspfads und liesse genau die Frage
+offen, die der Nachweis beantworten soll.
+
+**Gegangen (WP-C4c):** SINDy **konsumiert die Bytes der Kampagne**. Julia exportiert dieselben
+Zahlen, die es hasht; Python laedt sie, rechnet den Hash beim Laden nach und **bricht ab** bei
+Abweichung oder fehlendem Export — kein stilles Zurueckfallen auf eigene Integration, denn genau das
+haette den Nachweis spaeter unbemerkt entwertet. `solve_ivp` bleibt dort, wo es um die Integration
+des **gefitteten** Modells geht; das ist unsere Auswertung, keine gemeinsame Eingabe.
+
+Nachgefahren: **`both_hashes_equal: 126 / 126`**, nichts fehlend, kein Formfehler. Byte-Identitaet ist
+damit nicht behauptet, sondern trivial wahr.
+
+### Und die eigentliche Ueberraschung: 1e-10 ist nicht harmlos
+
+Ueber 2.520 gepaarte Zeilen aendern **4 ihren `r2_gt_0_9`-Befund** und **2 ihren Strukturtreffer**.
+Das klingt nach wenig — die Einzelfaelle sind es nicht:
+
+| System | dim | alt | neu |
+|---|---|---|---|
+| 47 | 2 | R² 0,911 | **−2,5e23** |
+| 53 | 3 | R² 0,965 | **−3,5e94** |
+| 53 | 3 | −3,9e30 | **R² 0,999** |
+| 53 | 3 | R² 0,948 | −0,434 |
+
+Diese Zellen sitzen auf einer **numerischen Messerschneide**: die zehnte Stelle der Eingabe
+entscheidet zwischen exzellentem Fit und divergierendem Muell. Ihre berichtete Qualitaet traegt dort
+keine Information ueber die Methode, sondern ueber den Integrator. Das ist ein Argument dafuer, die
+**volle Spanne ueber die zehn Konfigurationen** zu berichten statt irgendeine ausgewaehlte Zahl — und
+es haette uns sonst als Ergebnis ins Paper geschrieben.
+
+R²-Abweichungen ueber alle Zeilen als Quantile: Median **5,4e-10**, q75 **2,7e-6**, q100 3,5e+94 —
+letzteres wieder die divergierten Zeilen, in denen eine 1e-10-Stoerung astronomisch verstaerkt wird.
+
+Der alte Lauf bleibt liegen, aber **als Beleg fuer diesen Unterschied, nicht als Ergebnis**.
+Kanonisch ist der exportbasierte Lauf.
+
+---
+
+## 2026-09-14
+
 ### Der Phase-C-SINDy-Arm steht — und zwei Reproduzierbarkeitsbefunde nebenbei
 
 <!-- 465ef58, a8f45b5 -->
