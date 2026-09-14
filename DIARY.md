@@ -8,6 +8,8 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ### 82 Heartbeats bei 50 gestarteten Zellen — und eine Vorbedingung fuer den C-3-Neustart
 
+<!-- 847dce8 -->
+
 Die Frage kam beim Nachschauen des Fortschritts auf: der Job meldet `18/756`, die Parallelitaet ist
 32. Das ist kein Widerspruch — **`COMPLETIONS` zaehlt fertige Zellen, `parallelism` gleichzeitige
 Pods.** Nachgezaehlt: 50 Pods, davon 18 `Completed` und 32 `Running`, **0 Restarts**. Die fertigen
