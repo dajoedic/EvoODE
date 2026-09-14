@@ -120,3 +120,33 @@ Folgen für Julia-Aufträge:
   Indizierung mit `nothing`, Zugriffe auf Record-Felder, die fehlen können.
 
 Claude führt Julia-Läufe aus und meldet Fehler mit vollständigem Stacktrace zurück.
+
+## Fixtures werden abgeleitet, nicht erfunden
+
+Am 2026-09-14 sind in einer Sitzung **drei** Arbeitspakete mit grünen Tests an echten Daten sofort
+umgefallen — immer aus derselben Ursache:
+
+- **WP-N15:** die Fixture gab jeder Zelle eine Liste erwarteter Terme, auch den als Surrogat
+  markierten. Echte Surrogatzellen haben dort `null` — 221 von 335 Records. Das Skript erklärte
+  zwei Drittel des Datensatzes für kaputt und konnte die Literaturkennzahl gar nicht berechnen.
+- **WP-N16:** ein `include` innerhalb einer Funktion lief statisch sauber, scheiterte aber an Julias
+  World-Age-Regeln. Der Einsprungpunkt jedes Kampagnen-Pods war betroffen.
+- **WP-N18:** die Fixture gab jedem Record ein Feld `success`, das kein echter Record trägt — es ist
+  eine Registry-Spalte. Das eingefrorene Go-Kriterium hätte für **jede** Zelle „nein" gesagt.
+
+Das Muster ist immer dasselbe: die Fixture bildet ab, was der **Plan beschreibt**, nicht was die
+**Pipeline erzeugt**, und prüft damit die eigene Annahme gegen sich selbst. Grüne Tests sind dann
+kein Beleg, sondern eine Bestätigung des Irrtums.
+
+Daher gilt:
+
+- **Fixtures werden aus einem echten Record abgeleitet.** Ausgangspunkt ist eine reale Datei —
+  gekürzt und angepasst, aber mit deren Feldbestand als Grundlage. Wo ein Feld für einen Fehlerfall
+  verändert wird, ist die Änderung sichtbar, nicht die Grundlage.
+- **Vor der Feldliste steht die Feldprüfung.** Verlangt ein Auftrag Spalten, wird jeder Name
+  einzeln gegen einen echten Record geprüft und im Report mit seiner Herkunft genannt: bestehendes
+  Recordfeld, neues Recordfeld, oder Analysepipeline. Die Namen im Plan sind oft keine echten
+  Spaltennamen — bei WP-N16 und WP-N18 war jeweils die Hälfte anders benannt oder stammte aus einer
+  anderen Schicht.
+- **Ein Testergebnis wird nur berichtet, wenn es aus dem Lauf stammt**, den der Report beschreibt.
+  Eine Zahl aus einem früheren Zwischenstand ist keine Abnahme.
