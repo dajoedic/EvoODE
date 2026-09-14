@@ -92,8 +92,16 @@ laufender.
    die Untergrenze ist die längste **einzelne** Zelle — in Phase B 289,7 h, im ungekappten Arm
    potenziell mehr, weil er die vollen 30 Level fährt.
 2. **Danach C-3 fortsetzen** (siehe Abschnitt 4).
-3. **Parallel möglich, ohne Cluster:** C-4 (SINDy, Minuten auf dem Laptop), Methoden- und
-   Limitations-Abschnitte, das Phase-B-Diagnostikkapitel, Abbildungs- und Tabellengerüste.
+3. **Parallel möglich, ohne Cluster:** Methoden- und Limitations-Abschnitte, das
+   Phase-B-Diagnostikkapitel, Abbildungs- und Tabellengerüste.
+
+**C-4 (SINDy) ist weitgehend erledigt** — WP-C4a/C4a2, `465ef58` und `a8f45b5`. Gerechnet sind
+63 Systeme × 2 IC-Sets × 10 Konfigurationen × 2 Richtungen unter
+`analysis/data/paper1_phaseC_v1/phasec_sindy_baseline/`. Offen und **erst mit C-1 möglich**: die
+Paarung gegen die echten C-1-Zellen und der Hash-Abgleich der Trajektorien. Letzterer braucht ein
+Julia-Paket (WP-C4b), weil **die Records keinen Trajektorien-Hash tragen** — `run_regression.jl`
+schreibt keinen, und Claim D verlangt „by hash, not by assertion". Das Hash-Format ist in
+`codex/reports/REPORT_WP_C4a.md` so beschrieben, dass die Julia-Seite es nachbilden kann.
 
 **Während des Laufs verboten:** irgendetwas an der eingefrorenen Konfiguration ändern. Eine
 Änderung erzwingt eine neue Experiment-Identität.
