@@ -6,6 +6,59 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ## 2026-09-14
 
+### Kann k = 3 den Konstanten-Defekt auf dim 2 heilen? Vermutlich nicht — der Mechanismus passt nicht
+
+Die Frage kam aus dem Gespraech und ist berechtigt: der dim-2-Probelauf lief unter `ec3b6bd`
+(09.09.), die Restart-Politik kam mit `4908b07` (WP-N11, 10.09.) und hat den Vorgabewert
+`max_fit_attempts = 1`. **Die Probe ist also k = 1, Phase C faehrt k = 3.** Also koennte der
+Einbruch der Strukturtreffer unter der Konstanten (pruned 55,6 % → 35,2 %) ein Artefakt zu weniger
+Parameterstarts sein.
+
+**Er ist es vermutlich nicht, und der Grund ist die Form des Fehlschlags.** `fit_attempt_failed`
+(`src/optimize/bfgs.jl:142`) ist eng definiert: nicht-endlicher Loss **oder** Loss ≥ 1e6 **oder**
+`result_valid == false`. Der Neustart repariert **gescheiterte** Fits. Auf dim 2 scheitert aber
+nichts — die Fits gelingen auf der falschen Struktur:
+
+| Schicht A | alte Basis | mit Konstante |
+|---|---|---|
+| verfehlte Zellen | 24 / 54 | 35 / 54 |
+| davon Sentinel-Loss | **0** | **0** |
+| Median-Loss der verfehlten Zellen | ~0 | ~0 |
+| R² > 0,9 unter den verfehlten | 21 / 24 | **32 / 35** |
+
+Der staerkste Einzelbeleg ist die R²-Zeile des Probelaufs: **51/54 in beiden Armen, identisch**.
+Waeren misslungene Parameterfits die Ursache, muesste der konstante Arm im R² schlechter sein. Er
+ist gleich gut und trifft trotzdem seltener die Struktur — **eine Selektionsfrage, keine
+Optimierungsfrage.** Direkt an den Zaehlern, ueber alle 336 Zellen und rund 148.000 Parameterfits:
+`total_optimizer_invalid_result_fits = 0` (0 Zellen mit > 0) und `total_nonfinite_solves = 0`. Zwei
+der drei Praedikat-Zweige haben **kein einziges Mal** gefeuert.
+
+**Grenze der Pruefung, ausdruecklich:** der dritte Zweig — ein *einzelner* Fit bei ≥ 1e6 — hat in
+diesen Records keinen eigenen Zaehler. Auf Zellebene endet keine der 336 Zellen im Sentinel, aber
+innerhalb einer Zelle kann es passiert sein. WP-N4 hat gezeigt, dass es vorkommt (15 von 102 mit der
+wahren Struktur bei einem Start). Die Wirkung ist also **nicht auf null bewiesen**, sie erklaert nur
+das beobachtete Muster nicht.
+
+**Zwei Gegenpunkte, die die Vermutung nicht ganz erledigen.** Ein Pfad existiert: selektiert wird
+ueber den Loss, also verliert eine richtige Struktur mit schlechtem Fit gegen eine falsche mit
+Gluecksfit — dort wirkt k = 3 indirekt auf die Strukturtreffer. Und der implizite Multistart ist
+laengst da und schwaecht k = 3 ab: unter `pretuning = false` zieht jeder Fit `0.1 .* randn`, in der
+ersten vermessenen gekoppelten Zelle (System 26) 310 Fits auf 45 Strukturen, 85,5 % Duplikate,
+Median 5 Wiederholungen je Struktur. Der Retry beisst dort, wo eine Struktur **genau einmal**
+gefittet wird — das kommt auf gekoppelten Systemen vor, weshalb k = 3 dort besser begruendet ist als
+die dim-1-Zahlen nahelegten. Eine Randverbesserung, keine Gegenmassnahme gegen die
+Falsch-Positiv-Magnetik der Konstanten.
+
+**Die Antwort kostet nichts.** C-1 faehrt kanonische Basis *und* k = 3 ueber dieselben dim-2-Systeme,
+Seeds und IC-Sets wie der Probelauf. Der Unterschied ist im Wesentlichen k. Zwei Auflagen: anderes
+Identitaetstripel, also **Diagnostik und niemals eine gemeinsame Tabelle**; und der Git-Hash driftet
+mit, k ist nicht sauber isoliert. Sauber isoliert wird es nur in der Restart-Ablation ueber den
+Orakel-Pfad. **Beim Auswerten von C-1 nachsehen** — dafuer steht es hier.
+
+---
+
+## 2026-09-14
+
 ### Der dim-2-Probelauf ist vollstaendig — und die Nachrechnung aendert keine Entscheidung
 
 <!-- e09034e -->
