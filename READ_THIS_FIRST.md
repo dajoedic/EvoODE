@@ -10,7 +10,7 @@ zweites davon. Alles Dauerhafte gehört dorthin, nach `PAPER_1.md` oder ins `DIA
 **Regeln:** wird immer **vollständig überschrieben**, nie angehängt. Was älter als ein paar Tage
 ist, ist vermutlich falsch — dann gilt `CLAUDE.md`.
 
-**Stand: 2026-09-14, 13:00. HEAD = `c7898ec`. Working Tree sauber.**
+**Stand: 2026-09-14, 13:10. HEAD = `755b125`. Working Tree sauber.**
 
 ---
 
@@ -48,11 +48,13 @@ blockiert nichts).
 ### Auslastung — der Posten, der schon einmal schiefging
 
 ```bash
-kubectl -n scch-das get pods --field-selector=status.phase=Running --no-headers | wc -l
+kubectl -n scch-das get pods -l job-name=evoode-phase-c-c1-c2-campaign --field-selector=status.phase=Running --no-headers | wc -l
 ```
 
-Erwartet rund **33 laufende Pods**: 32 für C-1+C-2 plus die letzte Zelle des alten Probelaufs.
-Deutlich mehr heißt, dass C-3 wieder mitläuft.
+Erwartet **32** — die Parallelität des Jobs. **Nicht** die Gesamtzahl der Pods im Namensraum
+zählen: die Mitbenutzer fahren viele kleine Pods (am 14.09. 45 Pods bei nur 36,55 belegten Kernen),
+Pods und Kerne sind hier also nicht dasselbe. Wer wissen will, wie viel wir wirklich belegen, zählt
+**CPU-Requests**, nicht Pods.
 
 ### Ergebnisse, ohne Cluster
 
