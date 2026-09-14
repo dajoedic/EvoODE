@@ -1,99 +1,97 @@
-# WP-C4b — Der Trajektorien-Hash auf der Julia-Seite
+# WP-C4c — SINDy rechnet auf den Trajektorien der Kampagne, nicht auf eigenen
 
-**Language: Julia**
-
-**Vorbemerkung:** Julia startet in deiner Sitzung nicht (`A specified logon session does not exist`
-bzw. `SystemError: longpath`). Das ist bekannt und **kein Grund, den Auftrag zu verwerfen**.
-Schreib das Paket fertig, melde `blocked`, schreib ins `note`-Feld ausdrücklich *Umgebung, nicht
-Sache*, und halte im Report fest, welche Abnahmepunkte deshalb offen sind. Claude fährt die Abnahme.
-Was trotzdem erwartet wird: **lies das Skript vor der Abgabe gegen die Dateien, die es einbindet.**
-WP-R1 ist an einem fehlenden `include` gescheitert, also an etwas, das ohne Ausführung sichtbar war.
+**Language: Python**
 
 ## Ausgangslage
 
-Claim D verlangt, dass die Trajektorien, auf denen SINDy rechnet, **nachweislich dieselben** sind,
-die der EvoGrow-Arm C-1 verbraucht — „**by hash, not by assertion**"
-(`docs/paper1_phaseC_benchmark_plan.md` §1b, Zeile **D**).
+WP-C4b hat den Hash-Abgleich gebaut und gefahren (`a1b8297`). Ergebnis über alle 63 Systeme und
+beide IC-Sets:
 
-Der Nachweis ist heute nicht führbar, und der Grund ist ein Befund von gestern: **die Records tragen
-keinen Trajektorien-Hash.** `studies/regression/run_regression.jl` schreibt keinen. Der Abgleich muss
-deshalb über den **Konstruktionspfad** geführt werden statt über die Records.
+| | |
+|---|---|
+| Zeitgitter bit-identisch | **126 / 126** |
+| Zustandsmatrix identisch | **0 / 126** |
+| Formfehler, fehlende Zeilen | 0 |
 
-Die Python-Seite ist fertig (WP-C4a, `465ef58`). Sie liegt unter
-`analysis/data/paper1_phaseC_v1/phasec_sindy_baseline/trajectory_hashes.csv`, 126 Zeilen, je eine
-pro (System, IC-Set), und ihr Format ist in `codex/reports/REPORT_WP_C4a.md` unter „Trajectory Hash
-Format" beschrieben. **Dieses Format ist bindend** und wird nicht neu erfunden.
+Die Ursache ist kein Fehler auf einer der beiden Seiten: die Kampagne integriert mit **`Tsit5`**
+(`studies/regression/run_regression.jl:578`), das SINDy-Skript mit **`DOP853`**
+(`scipy.integrate.solve_ivp`), beide bei `1e-9`. Zwei Verfahren verschiedener Ordnung stimmen bei
+dieser Toleranz auf etwa **1e-10** überein — mehr nicht.
 
-## Aufgabe
+Claim D verlangt aber „trajectories **verified byte-identical** to those C-1 consumed, **by hash,
+not by assertion**". Mit zwei Integratoren ist das grundsätzlich unerreichbar, egal wie die
+Toleranzen gesetzt werden.
 
-Ein Julia-Skript unter `studies/regression/`, das für alle 63 Systeme und beide IC-Sets die
-Trajektorie erzeugt, sie im vorgegebenen Format hasht und das Ergebnis gegen die Python-Datei
-vergleicht.
+## Die Aufgabe, und der Weg, der nicht gegangen wird
 
-### Die eine Bedingung, an der alles hängt
+**Nicht gegangen wird:** den Python-Integrator auf `Tsit5` umstellen oder die Toleranzen so lange
+drehen, bis die Hashes zufällig passen. Das wäre eine Reimplementierung des Konstruktionspfads und
+ließe genau die Frage offen, die der Nachweis beantworten soll — derselbe Fehler, den WP-C4b auf der
+Julia-Seite ausdrücklich vermeiden musste.
 
-**Die Trajektorie wird über `build_trajectory` aus `studies/regression/run_regression.jl` erzeugt
-(dort ab Zeile 571), nicht nachgebaut.** Eine Reimplementierung — und sei sie zeichengleich —
-entwertet den gesamten Nachweis, weil sie genau die Frage offenlässt, die der Nachweis beantworten
-soll. Binde die Datei ein und ruf die Funktion auf. Wenn das Einbinden Nebenwirkungen hat (ein
-Skript, das beim Laden losrechnet), ist das ein Befund für den Report und **kein** Anlass, die
-Funktion zu kopieren.
+**Gegangen wird:** SINDy **konsumiert die Trajektorien der Kampagne als Bytes**, statt eigene zu
+erzeugen. Dann ist Byte-Identität nicht hergestellt, sondern trivial wahr.
 
-Dasselbe gilt für die Systemliste und die IC-Sets: aus derselben Quelle wie die Kampagne, nicht aus
-einer zweiten Liste.
+Dazu zwei Teile:
 
-### Der Fallstrick, an dem so etwas scheitert
+### 1. Export auf der Julia-Seite
 
-Das Format verlangt die Zustandsmatrix **in C-Reihenfolge mit den Achsen (Zeit, Dimension)**. Julia
-speichert spaltenweise. Ein direktes Hashen des Speicherinhalts von `Trajectory.x` liefert deshalb
-eine **andere Bytefolge** als NumPy für dieselben Zahlen. Das ist die wahrscheinlichste Ursache eines
-Fehlschlags, und sie sieht aus wie ein echter Unterschied. Sorge ausdrücklich für die
-zeilenweise Reihenfolge und halte im Report fest, wie du das sichergestellt hast.
+`studies/regression/phase_c_trajectory_hashes.jl` erzeugt die Trajektorien bereits über
+`build_trajectory`. Es soll sie zusätzlich **exportieren** — dieselben Zahlen, die es hasht, in einem
+Format, das die Python-Seite verlustfrei liest. Bindend: Float64, Little Endian, Zustandsmatrix in
+C-Reihenfolge mit Achsen (Zeit, Dimension), Zeitvektor getrennt — also exakt das Format, das der
+Hash schon beschreibt, damit Export und Hash **dieselbe** Bytefolge sind.
 
-Ebenso bindend: Float64, **Little Endian**, Zeitvektor und Zustandsmatrix **getrennt** gehasht,
-SHA-256.
+Neben den Daten gehört je (System, IC-Set) der Hash in eine Begleitdatei, damit die Python-Seite
+beim Laden prüfen kann, dass sie bekommen hat, was sie erwartet.
 
-### Ausgabe
+**Julia läuft in deiner Sitzung nicht.** Schreib den Teil fertig, melde ihn als offen, Claude fährt
+ihn. Lies ihn vorher gegen die Datei, die er einbindet.
 
-Eine CSV mit denselben Schlüssel- und Hashspalten wie die Python-Datei, plus Form und Wertebereich je
-Achse, damit ein Formfehler nicht als Hash-Unterschied erscheint. Dazu ein Vergleichsschritt, der je
-Zeile sagt: beide Hashes gleich, nur Zeit gleich, nur Zustand gleich, oder keiner — und der am Ende
-eine Gesamtbilanz zieht.
+### 2. Die Python-Seite lädt statt zu integrieren
 
-**Der Vergleich darf nicht schweigen.** Fehlt eine Zeile auf einer Seite, ist das zu melden, nicht zu
-überspringen. Unterscheiden sich Hashes, ist die betroffene Zeile mit Form und Wertebereich
-auszugeben, damit man Formfehler von Zahlenfehlern trennen kann.
+`run_phasec_sindy_baseline.py` bekommt den Export als **kanonische** Quelle der Trajektorien. Das
+eigene `solve_ivp` für die Wahrheits-Trajektorie entfällt in diesem Pfad.
 
-## Was ausdrücklich offenbleibt, und im Report so zu benennen ist
+Regeln:
 
-Dieser Nachweis zeigt, dass **derselbe Konstruktionspfad unter derselben Konfiguration** dieselben
-Zahlen liefert wie die Python-Seite. Er zeigt **nicht**, dass die laufende Kampagne genau diese
-Bytes verbraucht hat — das könnte nur ein Hash im Record. Diese Grenze gehört in den Report und
-später ins Paper, nicht wegerklärt. Ob ein Trajektorien-Hash künftig in die Records geschrieben
-wird, ist **nicht** Teil dieses Pakets: die Konfiguration ist eingefroren, und der Lauf läuft.
+- **Beim Laden wird der Hash neu berechnet und gegen die Begleitdatei geprüft.** Stimmt er nicht,
+  **Abbruch** — nicht warnen, nicht weiterrechnen.
+- Fehlt der Export, **Abbruch mit klarer Meldung**. Kein stilles Zurückfallen auf eigene Integration:
+  genau dieses Zurückfallen würde den Nachweis später unbemerkt entwerten.
+- Der Pfad zum Export ist ein Parameter ohne Vorgabewert, der auf etwas Laufendes zeigt.
+- `solve_ivp` bleibt dort erlaubt, wo es **nicht** um die Wahrheits-Trajektorie geht, sondern um die
+  Integration des **gefitteten** Modells (Rekonstruktion und Generalisierung). Das ist unsere eigene
+  Auswertung, keine gemeinsame Eingabe. Halte die beiden Verwendungen im Code und im Report
+  auseinander.
+
+### 3. Neu rechnen, und den Unterschied ausweisen
+
+Der Phase-C-SINDy-Lauf wird auf den geladenen Trajektorien wiederholt. **Die Ergebnisse werden sich
+ändern** — das ist erwartet und kein Fehler.
+
+Der Report muss den Unterschied beziffern, mindestens: wie viele der 2.520 Zeilen ihren
+`r2_gt_0_9`-Wert ändern, wie viele ihren Strukturtreffer ändern, und wie groß die
+`r2`-Abweichungen sind (Quantile, keine Mittelwerte). **Keine Deutung, keine Bewertung** — nur die
+Zahlen. Wenn sich nichts ändert, ist auch das ein Ergebnis und gehört so berichtet.
+
+**Das darf nicht dazu führen, dass eine Konfiguration ausgewählt oder eine Schwelle angepasst wird.**
+Beides bleibt verboten wie bisher.
 
 ## Abnahme
 
-1. Das Skript ruft `build_trajectory` aus `run_regression.jl` auf; es gibt keine zweite
-   Trajektorienkonstruktion im Repo-Pfad dieses Pakets.
-2. 126 Zeilen, 63 Systeme, beide IC-Sets.
-3. Der Vergleich gegen die Python-Datei läuft und berichtet je Zeile und in Summe.
-4. Abweichungen — falls welche auftreten — sind mit Form und Wertebereich ausgewiesen.
-5. Laufzeit weit unter 15 Minuten (126 Integrationen bei `abstol = reltol = 1e-9`).
+1. Der Export existiert und ist bytegleich mit dem, was `phase_c_trajectory_hashes.jl` hasht.
+2. Der Hash-Abgleich meldet **126 / 126 in beiden Hashes gleich**. Das ist das eigentliche Ziel
+   dieses Pakets.
+3. Die Python-Seite bricht ab, wenn der Export fehlt oder ein Hash nicht stimmt — beides getestet.
+4. Der neue SINDy-Lauf liegt vor, und der Unterschied zum bisherigen ist beziffert.
+5. Alle Python-Tests grün.
 
 ## Verboten
 
-- Keine Reimplementierung von `build_trajectory`, aus keinem Grund.
-- Keine Änderung an `run_regression.jl`, an der Kampagnenkonfiguration, an
-  `trajectory_hashes.csv` oder an irgendetwas, das den laufenden Lauf berührt.
-- **Kein Kampagnen-, Regressions- oder Sondierungslauf**, kein Manifest dafür.
-- Keine Anpassung der Python-Seite, damit die Hashes passen. Wenn sie nicht passen, ist das das
-  Ergebnis und gehört in den Report.
-- Keine neue Planungsdatei. Report nach `codex/reports/REPORT_WP_C4b.md`.
-
-## Ausgaben
-
-- Skript: `studies/regression/`
-- Daten: `outputs/phase_c_trajectory_hashes/` — eigener Unterordner, nie direkt in ein
-  Sammelverzeichnis
-- Report: `codex/reports/REPORT_WP_C4b.md`
+- Den Python-Integrator auf ein anderes Verfahren umstellen, um Hashes zu erzwingen.
+- Toleranzen verändern.
+- Stilles Zurückfallen auf eigene Integration, wenn der Export fehlt.
+- Eine SINDy-Konfiguration auswählen; die Schwelle 0,9 anfassen; eine Pruning-Regel ändern.
+- Irgendetwas, das den laufenden Kampagnenlauf berührt. Die Konfiguration ist eingefroren.
+- Keine neue Planungsdatei. Report nach `codex/reports/REPORT_WP_C4c.md`.
