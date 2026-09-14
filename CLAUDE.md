@@ -385,7 +385,8 @@ the coupled search path 1e-6 is the cheaper, behaviour-equal tolerance; the Syst
    **Cost: ~12,300–15,900 core hours, 5–7 weeks on Orion (revised 2026-09-13).** The figure is
    **derived from the Phase B registry rather than estimated**: the canonical capped arm is the
    measured cost of Phase B's `pretune_off` arm, 3,249.3 h over the same 378 cells, which supersedes
-   the "~2,600 h" estimate. Added since: a 120-cell pretuning confirmation arm at 1,331 h. The
+   the "~2,600 h" estimate. Added since: a pretuning confirmation arm, **180 cells at ~2,400 h**
+   (WP-N16 grew it with the basis; the measured 1,331 h belong to its earlier 120-cell scope). The
    uncapped mirror still carries the majority, because it runs the full 30 levels where the capped
    arm stops early. The experiment that must show the cap saves compute is the most expensive thing
    in the project — state that in the paper.

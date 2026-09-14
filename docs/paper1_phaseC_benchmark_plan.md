@@ -49,7 +49,7 @@ experiment is decided, the code is not written yet. Section 2a lists them.
 | **D** | `analysis/scripts/aggregate/run_wp_n6_sindy_baseline.py` on the C-1 trajectories | `analysis/data/paper1_phaseC_v1/phasec_sindy_paired.csv`; table `analysis/tables/paper1_phaseC_v1/` | trajectories **verified byte-identical** to those C-1 consumed, by hash, not by assertion; paired per (system, IC set) over all 63; stratified by dimension **and** three-way representability with **no cross-stratum headline number**; all SINDy configurations reported, none selected post hoc; cost axis beside every quality number; EvoGrow seed handling declared explicitly |
 | **Diag** | `studies/regression/wp_n3_oracle_refit.jl --input <phase_c history>` | `outputs/phase_c_oracle/`; `analysis/data/paper1_phaseC_v1/phasec_oracle.csv` | covers every exact-system cell of C-1; sentinel-loss rate and R2 > 0.9 share reported; each failure class named as search or optimizer, never left implicit |
 | **Abl-1** | folded into Claim B, same script | same as B, columns `stage_caps`, `final_stage`, `eq_final_stages` | truncated equation rows are **counted and named per system**, never reported only as an aggregate |
-| **Abl-2** | C-3 arm -> `analysis/scripts/aggregate/analyze_pretuning_distribution_collapse.py` | `analysis/data/paper1_phaseC_v1/phasec_pretuning_collapse.json` | 120/120 cells; grouping on **raw** `support_terms`, which is what makes the result threshold-independent; per-system permutation test primary, McNemar secondary; reported beside the Phase B WP-A7 figure **with the basis label on each** |
+| **Abl-2** | C-3 arm -> `analysis/scripts/aggregate/analyze_pretuning_distribution_collapse.py` | `analysis/data/paper1_phaseC_v1/phasec_pretuning_collapse.json` | **180/180 cells** (WP-N16 grew the arm with the basis; the running Job confirms it at 180); grouping on **raw** `support_terms`, which is what makes the result threshold-independent; per-system permutation test primary, McNemar secondary; reported beside the Phase B WP-A7 figure **with the basis label on each** |
 | **Abl-3** | `studies/regression/wp_n4_multistart_refit.jl --input <phase_c history> --starts 10` | `analysis/data/paper1_phaseC_v1/phasec_restart_curve.csv` | recovery plotted against **fits**, never against k; the measured `StructureSpec` duplicate rate from C-1 reported beside it as the implicit multistart; the text states that k is a **per-structure parameter start count, not a beam size** |
 
 ---
@@ -104,9 +104,12 @@ The uncapped arm keeps all 63 systems deliberately. dim 3 carried 75.6 % of Phas
 is exactly where the cap's saving is largest; a demonstration that omits the expensive class invites
 the obvious objection.
 
-**C-3's cost is concentrated in 24 cells, and that is recorded rather than hidden.** Of its
-1,331.4 h, **1,314.5 h (98.7 %) fall on the four dim-3 exact systems** - system 56 alone costs
-602.3 h over six cells - while the remaining 96 cells run in 17.0 h. The median exact `pretune_on`
+**C-3's cost is concentrated in 24 cells, and that is recorded rather than hidden.** The
+breakdown below is measured on the arm's **pre-WP-N16 scope of 120 cells** and on the old basis;
+the current arm is 180 cells at ~2,400 h (section 2 table), and the 60 cells added by the ten
+newly-exact systems are not in these figures. Of the measured 1,331.4 h, **1,314.5 h (98.7 %) fall
+on the four dim-3 exact systems** - system 56 alone costs 602.3 h over six cells - while the
+remaining 96 cells run in 17.0 h. The median exact `pretune_on`
 cell costs 0.02 h against a maximum of 289.7 h, so no mean over this distribution means anything.
 Including dim 3 was decided on 2026-09-10 so that the collapse is measured under the canonical
 configuration on the class where the method is weakest, accepting that this spends about 16 % of the
@@ -480,8 +483,9 @@ mirror.** The 20 exact systems x 3 seeds x 2 IC sets with `pretuning = true` on 
 arm C-3. Citing Phase B's WP-A7 would have been defensible - it is measured on raw `support_terms`
 and therefore threshold-independent - but if P3 freezes a different basis, the citation crosses a
 configuration boundary in the paper's own ablation section. A full 378-cell mirror was rejected as
-disproportionate. **The cost of this decision is stated in section 2 and is not small: 1,331 core
-hours, 98.7 % of it in 24 dim-3 cells.** Including dim 3 was chosen deliberately so the collapse is
+disproportionate. **The cost of this decision is stated in section 2 and is not small: ~2,400 core
+hours at the current 180-cell scope, and in the 120-cell measurement it was 1,331 h with 98.7 % of
+it in 24 dim-3 cells.** Including dim 3 was chosen deliberately so the collapse is
 measured where the method is weakest.
 
 **Q5 - Pilot and go criterion. Decided: a ~~12~~ **16**-cell pilot, distinct from the P9 smoke test.**
