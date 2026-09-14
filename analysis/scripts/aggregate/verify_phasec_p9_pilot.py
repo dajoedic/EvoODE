@@ -106,14 +106,22 @@ def read_records(records_dir: Path) -> list[dict[str, Any]]:
     if not records_dir.is_dir():
         raise FileNotFoundError(f"Pilot record directory does not exist: {records_dir}")
     records: list[dict[str, Any]] = []
-    for path in sorted(records_dir.glob("cell_*.jsonl")):
+    for path in sorted(
+        path
+        for path in records_dir.glob("cell_*.jsonl")
+        if not path.name.endswith(".heartbeat.jsonl")
+    ):
+        file_records: list[dict[str, Any]] = []
         for line_no, line in enumerate(path.read_text(encoding="utf-8").splitlines(), start=1):
             if not line.strip():
                 continue
             record = json.loads(line)
             record["_source_file"] = str(path)
             record["_source_line"] = line_no
-            records.append(record)
+            file_records.append(record)
+        if len(file_records) != 1:
+            raise ValueError(f"{path} contains {len(file_records)} records, expected exactly 1")
+        records.extend(file_records)
     if not records:
         raise ValueError(f"No pilot JSONL records found in {records_dir}")
     return records

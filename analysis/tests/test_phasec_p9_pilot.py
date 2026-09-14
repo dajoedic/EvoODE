@@ -163,6 +163,20 @@ def write_fixture(tmp_path: Path, records: list[dict[str, object]]) -> tuple[Pat
     return records_dir, manifest_path, probe_path
 
 
+def write_heartbeat_files(records_dir: Path, records: list[dict[str, object]]) -> None:
+    for index, record in enumerate(records, start=1):
+        heartbeat_path = records_dir / f"cell_{index:06d}.heartbeat.jsonl"
+        events = [
+            {"event": "start", "manifest_index": record["manifest_index"]},
+            {"event": "level", "manifest_index": record["manifest_index"], "level": 1},
+            {"event": "complete", "manifest_index": record["manifest_index"]},
+        ]
+        heartbeat_path.write_text(
+            "".join(json.dumps(event) + "\n" for event in events),
+            encoding="utf-8",
+        )
+
+
 def run_checker(monkeypatch, records_dir: Path, manifest_path: Path, probe_path: Path) -> int:
     monkeypatch.setattr(
         sys,
@@ -189,6 +203,26 @@ def test_complete_pilot_passes(tmp_path, monkeypatch, capsys) -> None:
 
     assert run_checker(monkeypatch, records_dir, manifest_path, probe_path) == 0
     assert "16 records, 8 pairs" in capsys.readouterr().out
+
+
+def test_heartbeat_files_are_not_read(tmp_path, monkeypatch, capsys) -> None:
+    records = complete_records()
+    records_dir, manifest_path, probe_path = write_fixture(tmp_path, records)
+    write_heartbeat_files(records_dir, records)
+
+    assert run_checker(monkeypatch, records_dir, manifest_path, probe_path) == 0
+    assert "16 records, 8 pairs" in capsys.readouterr().out
+
+
+def test_result_file_with_multiple_records_exits_nonzero(tmp_path, monkeypatch, capsys) -> None:
+    records = complete_records()
+    records_dir, manifest_path, probe_path = write_fixture(tmp_path, records)
+    duplicated = json.dumps(records[0]) + "\n" + json.dumps(records[0]) + "\n"
+    (records_dir / "cell_000001.jsonl").write_text(duplicated, encoding="utf-8")
+
+    assert run_checker(monkeypatch, records_dir, manifest_path, probe_path) == 1
+    err = capsys.readouterr().err
+    assert "expected exactly 1" in err
 
 
 def test_criterion_1_failure_exits_nonzero(tmp_path, monkeypatch, capsys) -> None:

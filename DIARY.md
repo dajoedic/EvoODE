@@ -4,6 +4,51 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ---
 
+## 2026-09-14
+
+### Phase C ist gestartet — und der Pilot konnte Claim B nicht pruefen
+
+<!-- HASH -->
+
+**Der Startablauf lief durch.** Image `221a3a72f0cb...` aus sauberem Baum (`git_dirty = False`),
+Bootstrap **bestanden** — der Fingerprint **aus dem Image** ist `0c9672de35c75a9d` und damit
+identisch mit dem lokalen —, Smoke-Test 3/3 bestanden, Pilot **16/16 in 97 Minuten**, und das
+**Go-Kriterium ist gruen**: `16 records, 8 pairs`, Exit 0. Kriterium 5 separat: alle 16 Zellen
+`probe_ok`, **0 Rekonstruktionsfehler, 0 divergierte Integrationen**.
+
+**Und trotzdem ist das Wichtigste an diesem Piloten, was er nicht zeigen konnte.** In allen acht
+Paaren sind `executed_levels`, `final_stage` und `loss` **identisch** zwischen gekapptem und
+ungekapptem Arm. Grund: in **allen 16 Zellen ist jede Kappe `nothing`**. Die Kappe greift auf
+keinem der vier Pilotsysteme, also rechnen beide Arme dieselbe Suche. Kriterium 4 besteht damit
+**trivial** — null Unterschiede erfuellen „Unterschiede nur in Kappenfeldern" —, und der Pilot
+liefert **kein Signal fuer Claim B**.
+
+Das ist ein Artefakt der Auswahlregel, nicht ein Defekt: „billigstes exaktes System je
+Dimensionsklasse" waehlt genau die Systeme, auf denen die Suche frueh endet — und wo sie frueh
+endet, ist die Kappe belanglos. Die Regel bleibt trotzdem richtig, sie war vorab festgelegt. Aber
+**das Go-Kriterium kann den Mechanismus der Hauptabbildung nicht pruefen**, und das gehoert
+notiert, bevor jemand aus dem gruenen Exit-Code mehr liest, als drinsteht.
+
+**Die Gegenprobe, und sie entscheidet den Start.** Die Kappe liest nur Trajektorie und Basis, ist
+also **ohne jede Suche** berechenbar (`estimate_stage_caps`). Ueber alle 63 Systeme, beide IC-Sets,
+beide Basen gerechnet — 252 Zeilen, `outputs/phase_c_cap_incidence/stage_caps_by_basis.csv`:
+
+| Basis | gekappte Gleichungen | Zellen mit mindestens einer Kappe |
+|---|---|---|
+| alt | 124 / 234 (53,0 %) | 94 / 126 |
+| **kanonisch** | **111 / 234 (47,4 %)** | **83 / 126** |
+
+Je Dimension unter der kanonischen Basis: dim 1 32/46, dim 2 36/56, dim 3 15/20, **dim 4 0/4**.
+
+Die Kampagne hat also reichlich Zellen, in denen die Kappe bindet — **Claim B hat Signal**, der
+Pilot hatte nur zufaellig keines. Zwei Dinge zum Mitschreiben: die Konstante **senkt** die
+Kappenhaeufigkeit leicht (53,0 % → 47,4 %), eine weitere deklarationspflichtige Folge der
+Basisentscheidung; und auf **dim 4 bindet keine einzige Kappe**, dort sind gekappter und
+ungekappter Arm strukturell identisch.
+
+Ein Nebenbefund aus denselben Records, der zeigt, wofuer Phase C da ist: auf System 52, IC 2,
+springt der Verlust von `4,6e-04` (Rekonstruktion) auf `1,18e+01` (Generalisierung).
+
 ## 2026-09-13
 
 ### WP-N18: der Pilot steht, und sein Go-Kriterium haette immer „nein" gesagt
