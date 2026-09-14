@@ -15,6 +15,14 @@ spec:
   # Do not skip smoke; it is the cheap place where an expired evoode-gitlab-pull
   # deploy token shows up as ErrImagePull / HTTP Basic: Access denied before a
   # 5-7 week run can create a mid-run data gap that looks like science.
+  # NICHT gleichzeitig mit phase_c_c1_c2_campaign_job.yaml starten.
+  # Beide Jobs stehen einzeln auf parallelism: 32 — zusammen also 64 der 96
+  # Clusterkerne, zwei Drittel statt des begruendeten Drittels. Am 2026-09-14
+  # ist genau das passiert (68,55 Kerne belegt) und wurde binnen Minuten per
+  # suspend zurueckgenommen. Reihenfolge: erst C-1+C-2 fertig, dann dieser Job.
+  # Anhalten/fortsetzen ohne Datenverlust:
+  #   kubectl -n scch-das patch job evoode-phase-c-c3-campaign --type=merge -p '{"spec":{"suspend":true}}'
+  #   ... "suspend":false zum Fortsetzen
   ttlSecondsAfterFinished: 3600
   completionMode: Indexed
   completions: 180

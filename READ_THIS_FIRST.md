@@ -127,9 +127,24 @@ kubectl apply -f outputs/k8s_phase_c_221a3a7/phase_c_c1_c2_campaign_job.yaml
 kubectl apply -f outputs/k8s_phase_c_221a3a7/phase_c_c3_campaign_job.yaml
 ```
 
-Erst C-1+C-2 (756 Zellen, gepaart), dann C-3 (180). **Nicht in einen Job zusammenlegen:** C-1 und
-C-2 teilen sich einen Job, weil ihre Paarung bindend ist; C-3 läuft getrennt, damit er streichbar
-bleibt.
+**Nacheinander, nicht gleichzeitig.** Erst C-1+C-2 (756 Zellen, gepaart) vollständig, **dann** C-3
+(180). Beide Jobs stehen einzeln auf `parallelism: 32` — zusammen belegen sie **64 der 96
+Clusterkerne**, also zwei Drittel statt des begründeten Drittels. Am 14.09. wurden beide zugleich
+gestartet (68,55 Kerne) und C-3 binnen Minuten wieder angehalten.
+
+**C-1 und C-2 dürfen nicht getrennt werden:** ihre Paarung ist bindend, getrennte Jobs hätten
+getrennte Abbruchzeitpunkte. C-3 läuft getrennt, damit er streichbar bleibt.
+
+Anhalten und fortsetzen ohne Datenverlust (Patch-Dateien liegen bereit, weil PowerShell die
+Anführungszeichen in `-p '{...}'` frisst):
+
+```powershell
+kubectl -n scch-das patch job evoode-phase-c-c3-campaign --type=merge --patch-file outputs/k8s_phase_c_221a3a7/suspend_c3.json
+kubectl -n scch-das patch job evoode-phase-c-c3-campaign --type=merge --patch-file outputs/k8s_phase_c_221a3a7/resume_c3.json
+```
+
+`kubectl scale job --replicas=0` funktioniert **nicht** — `jobs/scale` ist für diesen Account nicht
+freigegeben.
 
 ---
 
