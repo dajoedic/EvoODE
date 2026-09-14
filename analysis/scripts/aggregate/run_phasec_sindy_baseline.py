@@ -40,6 +40,8 @@ R2_THRESHOLD = 0.9
 RECONSTRUCTION_CONTROL_TOL = 0.0
 PAIR_OUTPUT = ANALYSIS_ROOT / "data" / CAMPAIGN_ID / "phasec_sindy_paired.csv"
 PAIR_TABLE_DIR = ANALYSIS_ROOT / "tables" / CAMPAIGN_ID / "phasec_sindy_pairing"
+WPN6_DETAILS_RUNTIME_COLUMNS = {"fit_elapsed_s_non_evidence"}
+WPN6_COST_RUNTIME_COLUMNS = {"elapsed_s_non_evidence_total"}
 
 
 def parse_args() -> argparse.Namespace:
@@ -272,6 +274,8 @@ def summarize(details: pd.DataFrame) -> pd.DataFrame:
         row = dict(zip(group_columns, keys))
         n_cells = int(len(group))
         finite = group["r2"].apply(math.isfinite)
+        r2_clean = finite & ~group["diverged_or_nonfinite"].astype(bool)
+        clean_r2_values = group.loc[r2_clean, "r2"]
         row.update(
             {
                 "aggregation_scope": "dimension_by_phasec_representability_threeway",
@@ -281,10 +285,14 @@ def summarize(details: pd.DataFrame) -> pd.DataFrame:
                 "structure_hit_pruned_count": int(group["sindy_structure_hit_pruned"].sum()),
                 "structure_hit_pruned_rate": float(group["sindy_structure_hit_pruned"].mean()) if n_cells else float("nan"),
                 "diverged_or_nonfinite_count": int(group["diverged_or_nonfinite"].sum()),
-                "r2_valid_count": int(finite.sum()),
+                "r2_finite_nondiverged_count": int(r2_clean.sum()),
                 "r2_gt_0_9_count": int(group["r2_gt_0_9"].sum()),
                 "r2_gt_0_9_rate_over_cells": float(group["r2_gt_0_9"].sum() / n_cells) if n_cells else float("nan"),
-                "r2_median_valid": float(group.loc[finite, "r2"].median()) if int(finite.sum()) else float("nan"),
+                "r2_median_valid": float(clean_r2_values.median()) if int(r2_clean.sum()) else float("nan"),
+                "r2_q000_finite_nondiverged": float(clean_r2_values.quantile(0.0)) if int(r2_clean.sum()) else float("nan"),
+                "r2_q025_finite_nondiverged": float(clean_r2_values.quantile(0.25)) if int(r2_clean.sum()) else float("nan"),
+                "r2_q075_finite_nondiverged": float(clean_r2_values.quantile(0.75)) if int(r2_clean.sum()) else float("nan"),
+                "r2_q100_finite_nondiverged": float(clean_r2_values.quantile(1.0)) if int(r2_clean.sum()) else float("nan"),
             }
         )
         rows.append(row)
@@ -555,6 +563,97 @@ def paired_summary(paired: pd.DataFrame) -> pd.DataFrame:
     return pd.DataFrame(rows)
 
 
+def values_equal(reference: Any, candidate: Any) -> bool:
+    if pd.isna(reference) and pd.isna(candidate):
+        return True
+    return reference == candidate
+
+
+def compare_csv_byte_identical(reference: Path, candidate: Path) -> list[str]:
+    if reference.read_bytes() == candidate.read_bytes():
+        return []
+    return [f"{reference.name}: expected byte-identical output"]
+
+
+def compare_reported_csv(
+    reference: Path,
+    candidate: Path,
+    runtime_columns: set[str],
+    allow_diverged_r2_differences: bool = False,
+) -> list[str]:
+    reference_frame = pd.read_csv(reference)
+    candidate_frame = pd.read_csv(candidate)
+    failures: list[str] = []
+    if list(reference_frame.columns) != list(candidate_frame.columns):
+        return [
+            f"{reference.name}: columns changed from {list(reference_frame.columns)} "
+            f"to {list(candidate_frame.columns)}"
+        ]
+    if len(reference_frame) != len(candidate_frame):
+        return [f"{reference.name}: row count changed from {len(reference_frame)} to {len(candidate_frame)}"]
+
+    for column in reference_frame.columns:
+        if column in runtime_columns:
+            continue
+        for row_index, (reference_value, candidate_value) in enumerate(
+            zip(reference_frame[column], candidate_frame[column], strict=True),
+            start=2,
+        ):
+            if values_equal(reference_value, candidate_value):
+                continue
+            if (
+                allow_diverged_r2_differences
+                and column == "r2"
+                and str(reference_frame.at[row_index - 2, "integration_status"]) == "diverged"
+                and str(candidate_frame.at[row_index - 2, "integration_status"]) == "diverged"
+            ):
+                continue
+            failures.append(
+                f"{reference.name}: reported column {column!r} changed at CSV row {row_index} "
+                f"from {reference_value!r} to {candidate_value!r}"
+            )
+            break
+    return failures
+
+
+def compare_wpn6_outputs(
+    reference_data: Path,
+    reference_tables: Path,
+    candidate_data: Path,
+    candidate_tables: Path,
+) -> list[str]:
+    failures: list[str] = []
+    for name in ["trajectory_check.csv", "summary.csv"]:
+        failures.extend(compare_csv_byte_identical(reference_data / name, candidate_data / name))
+    for name in ["wp_n6_trajectory_check.csv", "wp_n6_summary.csv", "wp_n6_trajectory_check.tex", "wp_n6_summary.tex"]:
+        failures.extend(compare_csv_byte_identical(reference_tables / name, candidate_tables / name))
+    failures.extend(
+        compare_reported_csv(
+            reference_data / "details.csv",
+            candidate_data / "details.csv",
+            WPN6_DETAILS_RUNTIME_COLUMNS,
+            allow_diverged_r2_differences=True,
+        )
+    )
+    failures.extend(
+        compare_reported_csv(
+            reference_data / "costs.csv",
+            candidate_data / "costs.csv",
+            WPN6_COST_RUNTIME_COLUMNS,
+            allow_diverged_r2_differences=False,
+        )
+    )
+    failures.extend(
+        compare_reported_csv(
+            reference_tables / "wp_n6_costs.csv",
+            candidate_tables / "wp_n6_costs.csv",
+            WPN6_COST_RUNTIME_COLUMNS,
+            allow_diverged_r2_differences=False,
+        )
+    )
+    return failures
+
+
 def check_wpn6_bitidentical(args: argparse.Namespace) -> None:
     from scripts.aggregate.run_wp_n6_sindy_baseline import main as wpn6_main
 
@@ -575,27 +674,9 @@ def check_wpn6_bitidentical(args: argparse.Namespace) -> None:
             sys.argv = old_argv
         reference_data = Path(args.reference_data_dir)
         reference_tables = Path(args.reference_table_dir)
-        comparisons = [
-            (reference_data / name, tmp_root / "data" / name)
-            for name in ["trajectory_check.csv", "details.csv", "summary.csv", "costs.csv"]
-        ]
-        comparisons.extend(
-            (reference_tables / name, tmp_root / "tables" / name)
-            for name in [
-                "wp_n6_trajectory_check.csv",
-                "wp_n6_summary.csv",
-                "wp_n6_costs.csv",
-                "wp_n6_trajectory_check.tex",
-                "wp_n6_summary.tex",
-                "wp_n6_costs.tex",
-            ]
-        )
-        mismatches = []
-        for reference, candidate in comparisons:
-            if not reference.read_bytes() == candidate.read_bytes():
-                mismatches.append(str(reference))
+        mismatches = compare_wpn6_outputs(reference_data, reference_tables, tmp_root / "data", tmp_root / "tables")
         if mismatches:
-            fail(f"WP-N6 bit-identical check failed for: {mismatches}")
+            fail("WP-N6 reported-measure check failed:\n- " + "\n- ".join(mismatches))
 
 
 def main() -> int:

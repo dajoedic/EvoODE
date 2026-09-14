@@ -1,5 +1,7 @@
 import copy
+import csv
 import json
+import shutil
 import sys
 from pathlib import Path
 
@@ -16,6 +18,9 @@ from scripts.aggregate import run_phasec_sindy_baseline as phasec_sindy  # noqa:
 
 PILOT_DIR = REPO_ROOT / "outputs" / "phase_c_p9_pilot_records"
 PILOT_SYSTEMS = [2, 24, 52, 63]
+PHASEC_DETAILS = ANALYSIS_ROOT / "data" / "paper1_phaseC_v1" / "phasec_sindy_baseline" / "details.csv"
+WPN6_DATA_DIR = ANALYSIS_ROOT / "data" / "wp_n6_sindy_baseline"
+WPN6_TABLE_DIR = ANALYSIS_ROOT / "tables" / "wp_n6_sindy_baseline"
 
 
 def read_pilot_records() -> list[dict[str, object]]:
@@ -81,6 +86,44 @@ def sindy_fixture(path: Path, systems: list[int] | None = None, invalid_control:
     frame = pd.DataFrame(rows)
     frame.to_csv(path, index=False)
     return path
+
+
+def real_phasec_summary_rows() -> pd.DataFrame:
+    details = pd.read_csv(PHASEC_DETAILS)
+    diverged = details[(details["diverged_or_nonfinite"]) & (details["r2"].notna())].iloc[[0]].copy()
+    clean = details[
+        (~details["diverged_or_nonfinite"])
+        & (details["r2"].notna())
+        & (details["library_id"] == diverged.iloc[0]["library_id"])
+        & (details["direction"] == diverged.iloc[0]["direction"])
+        & (details["regime"] == diverged.iloc[0]["regime"])
+        & (details["dimension"] == diverged.iloc[0]["dimension"])
+        & (details["phasec_representability_threeway"] == diverged.iloc[0]["phasec_representability_threeway"])
+    ].iloc[[0]].copy()
+    clean.loc[:, "r2"] = 0.25
+    clean.loc[:, "r2_gt_0_9"] = False
+    diverged.loc[:, "r2"] = -1.0e80
+    diverged.loc[:, "r2_gt_0_9"] = False
+    return pd.concat([clean, diverged], ignore_index=True)
+
+
+def copy_wpn6_outputs(tmp_path: Path) -> tuple[Path, Path]:
+    data_dir = tmp_path / "data"
+    table_dir = tmp_path / "tables"
+    shutil.copytree(WPN6_DATA_DIR, data_dir)
+    shutil.copytree(WPN6_TABLE_DIR, table_dir)
+    return data_dir, table_dir
+
+
+def rewrite_csv_cells(path: Path, updates: dict[tuple[int, str], str]) -> None:
+    with path.open("r", encoding="utf-8", newline="") as handle:
+        rows = list(csv.reader(handle))
+    header = rows[0]
+    column_indexes = {column: index for index, column in enumerate(header)}
+    for (data_row_index, column), value in updates.items():
+        rows[data_row_index + 1][column_indexes[column]] = value
+    with path.open("w", encoding="utf-8", newline="") as handle:
+        csv.writer(handle).writerows(rows)
 
 
 def pair_args(tmp_path: Path, records_dir: Path, sindy_path: Path, **updates: object):
@@ -173,3 +216,59 @@ def test_summary_is_layered_by_dimension_and_phasec_representability(tmp_path: P
     assert "structure_hit_raw_count" in summary.columns
     assert "structure_hit_pruned_count" in summary.columns
     assert "r2_gt_0_9_count" in summary.columns
+
+
+def test_summary_excludes_finite_diverged_r2_from_median_and_quantiles() -> None:
+    details = real_phasec_summary_rows()
+    summary = phasec_sindy.summarize(details)
+
+    assert len(summary) == 1
+    row = summary.iloc[0]
+    assert row["diverged_or_nonfinite_count"] == 1
+    assert row["r2_finite_nondiverged_count"] == 1
+    assert row["r2_median_valid"] == 0.25
+    assert row["r2_q000_finite_nondiverged"] == 0.25
+    assert row["r2_q025_finite_nondiverged"] == 0.25
+    assert row["r2_q075_finite_nondiverged"] == 0.25
+    assert row["r2_q100_finite_nondiverged"] == 0.25
+
+
+def test_summary_empty_clean_r2_selection_reports_nan_not_zero() -> None:
+    details = real_phasec_summary_rows().iloc[[1]].copy()
+    summary = phasec_sindy.summarize(details)
+
+    row = summary.iloc[0]
+    assert row["diverged_or_nonfinite_count"] == 1
+    assert row["r2_finite_nondiverged_count"] == 0
+    assert pd.isna(row["r2_median_valid"])
+    assert pd.isna(row["r2_q000_finite_nondiverged"])
+    assert pd.isna(row["r2_q100_finite_nondiverged"])
+
+
+def test_wpn6_reported_measure_check_allows_runtime_and_diverged_r2_only(tmp_path: Path) -> None:
+    candidate_data, candidate_tables = copy_wpn6_outputs(tmp_path)
+    details = pd.read_csv(candidate_data / "details.csv")
+    diverged_index = details.index[details["integration_status"] == "diverged"][0]
+    rewrite_csv_cells(
+        candidate_data / "details.csv",
+        {
+            (0, "fit_elapsed_s_non_evidence"): "123.0",
+            (int(diverged_index), "r2"): str(float(details.loc[diverged_index, "r2"]) - 1.0),
+        },
+    )
+    rewrite_csv_cells(candidate_data / "costs.csv", {(0, "elapsed_s_non_evidence_total"): "123.0"})
+    rewrite_csv_cells(candidate_tables / "wp_n6_costs.csv", {(0, "elapsed_s_non_evidence_total"): "123.0"})
+
+    failures = phasec_sindy.compare_wpn6_outputs(WPN6_DATA_DIR, WPN6_TABLE_DIR, candidate_data, candidate_tables)
+
+    assert failures == []
+
+
+def test_wpn6_reported_measure_check_rejects_reported_column_flip(tmp_path: Path) -> None:
+    candidate_data, candidate_tables = copy_wpn6_outputs(tmp_path)
+    rewrite_csv_cells(candidate_data / "details.csv", {(0, "r2_gt_0_9"): "False"})
+
+    failures = phasec_sindy.compare_wpn6_outputs(WPN6_DATA_DIR, WPN6_TABLE_DIR, candidate_data, candidate_tables)
+
+    assert len(failures) == 1
+    assert "r2_gt_0_9" in failures[0]
