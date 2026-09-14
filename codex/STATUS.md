@@ -1,4 +1,4 @@
-status: done
-task:   WP-C4a2
-report: codex/reports/REPORT_WP_C4a2.md
-note:   Phase-C SINDy R2 aggregation fixed, WP-N6 reported-measure check updated, and Python tests are green.
+status: blocked
+task:   WP-C4b
+report: codex/reports/REPORT_WP_C4b.md
+note:   Umgebung, nicht Sache: julia.exe startet in Codex nicht; Skript ist implementiert und statisch gegen Includes geprüft.
