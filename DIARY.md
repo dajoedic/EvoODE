@@ -8,7 +8,7 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ### Phase C ist gestartet — und der Pilot konnte Claim B nicht pruefen
 
-<!-- HASH -->
+<!-- a6c0e6c -->
 
 **Der Startablauf lief durch.** Image `221a3a72f0cb...` aus sauberem Baum (`git_dirty = False`),
 Bootstrap **bestanden** — der Fingerprint **aus dem Image** ist `0c9672de35c75a9d` und damit
