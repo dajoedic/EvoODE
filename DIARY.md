@@ -8,6 +8,8 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ### Der dim-2-Probelauf ist vollstaendig — und die Nachrechnung aendert keine Entscheidung
 
+<!-- e09034e -->
+
 Zelle 293 ist am 14.09. um 14:34 fertig geworden, **336 von 336**, Job `evoode-wp-n1-dim2-campaign`
 auf `Complete`. Damit laeuft die WP-N15-Auswertung zum ersten Mal **ohne `--allow-incomplete`**:
 336 Records gelesen, `raw-implies-pruned`-Verletzungen 0, ein Identitaetstripel ueber jeden Record
