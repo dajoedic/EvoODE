@@ -1,0 +1,8 @@
+library_id,direction,dimension,phasec_representability_threeway,evogrow_seed_policy,aggregation_scope,n_cells,sindy_structure_hit_raw_rate,sindy_structure_hit_pruned_rate,sindy_r2_gt_0_9_rate,evogrow_structure_hit_raw_rate,evogrow_structure_hit_pruned_rate,evogrow_r2_gt_0_9_rate
+poly_deg2_stlsq_0.01,IC1_to_IC2,2,exact,mean_rate_over_available_phasec_seeds,dimension_by_phasec_representability_threeway,1,1.0,1.0,1.0,0.0,1.0,1.0
+poly_deg2_stlsq_0.01,IC1_to_IC2,3,exact,mean_rate_over_available_phasec_seeds,dimension_by_phasec_representability_threeway,1,1.0,1.0,1.0,0.0,0.0,0.0
+poly_deg2_stlsq_0.01,IC1_to_IC2,4,exact,mean_rate_over_available_phasec_seeds,dimension_by_phasec_representability_threeway,1,1.0,1.0,1.0,0.0,0.0,0.0
+poly_deg2_stlsq_0.01,IC2_to_IC1,1,exact,mean_rate_over_available_phasec_seeds,dimension_by_phasec_representability_threeway,1,1.0,1.0,1.0,1.0,1.0,1.0
+poly_deg2_stlsq_0.01,IC2_to_IC1,2,exact,mean_rate_over_available_phasec_seeds,dimension_by_phasec_representability_threeway,1,1.0,1.0,1.0,0.0,1.0,1.0
+poly_deg2_stlsq_0.01,IC2_to_IC1,3,exact,mean_rate_over_available_phasec_seeds,dimension_by_phasec_representability_threeway,1,1.0,1.0,1.0,0.0,0.0,1.0
+poly_deg2_stlsq_0.01,IC2_to_IC1,4,exact,mean_rate_over_available_phasec_seeds,dimension_by_phasec_representability_threeway,1,1.0,1.0,1.0,0.0,0.0,0.0

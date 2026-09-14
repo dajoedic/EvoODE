@@ -1,0 +1,12 @@
+{
+  "benchmark_path": "../benchmarks/data/strogatz_extended.json",
+  "phase_c_support_path": "../studies/regression/phase_c_support.json",
+  "output_data_dir": "data/paper1_phaseC_v1/phasec_sindy_baseline",
+  "output_table_dir": "tables/paper1_phaseC_v1/phasec_sindy_baseline",
+  "time_points": 512,
+  "t_start": 0.0,
+  "t_end": 10.0,
+  "polynomial_degrees": [2, 3, 4, 5],
+  "trig_polynomial_degree": 3,
+  "thresholds": [0.01, 0.1]
+}
