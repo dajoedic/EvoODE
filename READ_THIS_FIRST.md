@@ -106,6 +106,22 @@ laufender.
 Am 14.09. wurden sie zugleich gestartet, die Belegung lag bei 68,55 Kernen (71 %), und C-3 wurde
 binnen Minuten angehalten. Bei 0 von 180 Zellen ging nichts verloren.
 
+**Vor dem Fortsetzen aufräumen — sonst verdirbt der Heartbeat-Strom.** Der abgebrochene Start hat
+für die Zellen **883–914** je 3–6 Heartbeat-Zeilen hinterlassen (32 Dateien, kein Ergebnis). Der
+Runner schreibt **anhängend** (`run_regression.jl:520`), und der Leser verschmilzt beide Läufe zu
+einer Reihe mit doppelten Levelnummern (`analyze_wasted_search_levels.jl:98`). Also die 32 Reste
+vorher beiseiteräumen:
+
+```powershell
+$t = "S:\BigDataOrion\data-science\joedicke\phase_c_campaign_221a3a72f0cb43164a22b09baac2d9ae82681a02\tasks"
+New-Item -ItemType Directory -Force "$t\_aborted_c3_start" | Out-Null
+883..914 | ForEach-Object { $f = Join-Path $t ("cell_{0:D6}.heartbeat.jsonl" -f $_); if (Test-Path $f) { Move-Item $f "$t\_aborted_c3_start" } }
+```
+
+Verschieben, nicht löschen — die Reste sind der Beleg dafür, dass C-3 bei 0 Zellen angehalten wurde.
+Die **dauerhafte** Reparatur wäre, den Leser an `start`-Ereignissen zu segmentieren; ein Pod-Neustart
+erzeugt dasselbe Bild in jeder Kampagne.
+
 Fortsetzen, **erst wenn C-1+C-2 auf 756/756 steht**:
 
 ```powershell

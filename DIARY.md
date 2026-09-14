@@ -6,6 +6,51 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ## 2026-09-14
 
+### 82 Heartbeats bei 50 gestarteten Zellen — und eine Vorbedingung fuer den C-3-Neustart
+
+Die Frage kam beim Nachschauen des Fortschritts auf: der Job meldet `18/756`, die Parallelitaet ist
+32. Das ist kein Widerspruch — **`COMPLETIONS` zaehlt fertige Zellen, `parallelism` gleichzeitige
+Pods.** Nachgezaehlt: 50 Pods, davon 18 `Completed` und 32 `Running`, **0 Restarts**. Die fertigen
+sind schlicht die billigen, Systeme 52 und 53 mit 5,9 bis 109,6 Minuten.
+
+**Auffaellig war etwas anderes: 82 Heartbeat-Dateien bei 50 gestarteten Zellen.** Sie zerfallen
+sauber in zwei Bloecke:
+
+| Block | Zellen | Ergebnis | seit > 60 min stumm |
+|---|---|---|---|
+| 613–662 | 50 | 18 | 39 |
+| **883–914** | **32** | **0** | **32** |
+
+Der zweite Block stammt vom abgebrochenen C-3-Start: Zeitstempel 10:53 UTC, `"hostname":
+"evoode-phase-c-c3-campaign-0"`, Variante `evogrow_v2_2_stage_capped_pretune_on`. Das sind die 32
+Pods, die beim gleichzeitigen Start hochfuhren und binnen Minuten angehalten wurden. Je 3 bis 6
+Heartbeat-Zeilen, dann nichts mehr. 50 + 32 = 82, vollstaendig erklaert. Nebenbei bestaetigt der
+Pod-Index die Zuordnung: Index + 613 = Zellnummer.
+
+**Daraus folgt eine Vorbedingung, die vor dem Fortsetzen von C-3 zu erledigen ist.** Der Runner
+schreibt Heartbeats **anhaengend** — `open(sink.path, "a")`, `studies/regression/run_regression.jl:520`.
+Wird C-3 fortgesetzt, schreiben die 32 Zellen 883–914 also **in die vorhandenen Dateien hinein**,
+und der Strom enthaelt danach zwei Laeufe hintereinander.
+
+Der Leser haelt das nicht aus. `read_heartbeat` (`studies/regression/analyze_wasted_search_levels.jl:98`)
+ueberschreibt `start_time` bei jedem `start`-Ereignis — das waere noch gutartig —, schiebt aber
+**alle** `level`-Ereignisse in **eine** Liste und sortiert sie nur nach Levelnummer. Der abgebrochene
+Vorlauf und der echte Lauf werden damit zu einer Reihe mit doppelten Levelnummern verschmolzen.
+Betroffen waere die Level-Waste-Messung, die genau aus diesem `best_loss`-Strom rekonstruiert wird.
+
+Zwei Abhilfen, und sie schliessen einander nicht aus. Kurzfristig: die 32 Reste vor dem Fortsetzen
+beiseiteraeumen — billig, aber leicht zu vergessen, deshalb steht es jetzt in der Uebergabe.
+Dauerhaft: **den Leser gegen mehrfache `start`-Ereignisse robust machen**, den Strom an ihnen
+segmentieren und nur das letzte Segment auswerten. Das ist die eigentliche Reparatur, denn ein
+Pod-Neustart erzeugt dasselbe Bild in jeder Kampagne — hier waren es zufaellig 0 Restarts.
+
+Kein Datenverlust, kein Defekt im laufenden Lauf: die Ergebnisdateien sind davon nicht beruehrt, und
+fuer die 32 C-3-Zellen existiert ohnehin kein Ergebnis.
+
+---
+
+## 2026-09-14
+
 ### Kann k = 3 den Konstanten-Defekt auf dim 2 heilen? Vermutlich nicht — der Mechanismus passt nicht
 
 <!-- dc07d25 -->
