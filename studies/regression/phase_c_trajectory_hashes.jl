@@ -20,7 +20,8 @@ const DEFAULT_PYTHON_HASHES = joinpath(
     "phasec_sindy_baseline",
     "trajectory_hashes.csv",
 )
-const DEFAULT_OUTPUT_DIR = joinpath(@__DIR__, "..", "..", "outputs", "phase_c_trajectory_hashes", "wp_c4b")
+const DEFAULT_OUTPUT_DIR = joinpath(@__DIR__, "..", "..", "outputs", "phase_c_trajectory_hashes", "wp_c4c")
+const DEFAULT_EXPORT_DIR = joinpath(@__DIR__, "..", "..", "outputs", "phase_c_trajectory_hashes", "wp_c4c", "trajectory_export")
 
 function usage()
     return """
@@ -32,6 +33,8 @@ function usage()
                              Default: $(DEFAULT_PYTHON_HASHES)
       --output-dir PATH      Output directory for Julia hashes and comparison CSVs.
                              Default: $(DEFAULT_OUTPUT_DIR)
+      --export-dir PATH      Directory for raw trajectory bytes and manifest.
+                             Default: $(DEFAULT_EXPORT_DIR)
       --limit N              Hash only the first N (system, IC-set) rows for a quick check.
       --help                 Show this help text.
     """
@@ -41,6 +44,7 @@ function parse_args(args)
     parsed = Dict{String, Any}(
         "python_hashes" => DEFAULT_PYTHON_HASHES,
         "output_dir" => DEFAULT_OUTPUT_DIR,
+        "export_dir" => DEFAULT_EXPORT_DIR,
         "limit" => nothing,
     )
     i = 1
@@ -57,6 +61,10 @@ function parse_args(args)
             i += 1
             i <= length(args) || error("--output-dir requires a path")
             parsed["output_dir"] = args[i]
+        elseif arg == "--export-dir"
+            i += 1
+            i <= length(args) || error("--export-dir requires a path")
+            parsed["export_dir"] = args[i]
         elseif arg == "--limit"
             i += 1
             i <= length(args) || error("--limit requires an integer")
@@ -79,15 +87,25 @@ function append_float64_le!(bytes::Vector{UInt8}, value)
 end
 
 function sha256_vector_float64_le(values::AbstractVector)
+    bytes = float64_vector_le_bytes(values)
+    return bytes2hex(sha256(bytes))
+end
+
+function sha256_matrix_float64_le_c_order(values::AbstractMatrix)
+    bytes = float64_matrix_le_c_order_bytes(values)
+    return bytes2hex(sha256(bytes))
+end
+
+function float64_vector_le_bytes(values::AbstractVector)
     bytes = UInt8[]
     sizehint!(bytes, 8 * length(values))
     @inbounds for value in values
         append_float64_le!(bytes, value)
     end
-    return bytes2hex(sha256(bytes))
+    return bytes
 end
 
-function sha256_matrix_float64_le_c_order(values::AbstractMatrix)
+function float64_matrix_le_c_order_bytes(values::AbstractMatrix)
     rows, cols = size(values)
     bytes = UInt8[]
     sizehint!(bytes, 8 * rows * cols)
@@ -96,7 +114,7 @@ function sha256_matrix_float64_le_c_order(values::AbstractMatrix)
             append_float64_le!(bytes, values[row, col])
         end
     end
-    return bytes2hex(sha256(bytes))
+    return bytes
 end
 
 shape_string(dims) = "[" * join(string.(collect(dims)), ",") * "]"
@@ -145,6 +163,70 @@ function trajectory_hash_row(system, ic_set::Int)
         "time_sha256" => sha256_vector_float64_le(traj.t),
         "state_sha256" => sha256_matrix_float64_le_c_order(traj.x),
     )
+end
+
+function trajectory_hash_row(system, ic_set::Int, traj::Trajectory)
+    size(traj.x, 1) == length(traj.t) ||
+        error("Trajectory row/time mismatch for system $(system[:system_id]) IC $(ic_set)")
+    size(traj.x, 2) == Int(system[:dim]) ||
+        error("Trajectory dimension mismatch for system $(system[:system_id]) IC $(ic_set)")
+
+    time_min, time_max = finite_range(traj.t)
+    state_min, state_max = finite_range(traj.x)
+
+    return Dict{String, String}(
+        "system_id" => string(Int(system[:system_id])),
+        "initial_condition_set" => string(ic_set),
+        "dimension" => string(Int(system[:dim])),
+        "hash_format" => HASH_FORMAT,
+        "time_axis_order" => TIME_AXIS_ORDER,
+        "state_axis_order" => STATE_AXIS_ORDER,
+        "time_shape" => shape_string(size(traj.t)),
+        "state_shape" => shape_string(size(traj.x)),
+        "time_min" => string(Float64(time_min)),
+        "time_max" => string(Float64(time_max)),
+        "state_min" => string(Float64(state_min)),
+        "state_max" => string(Float64(state_max)),
+        "time_sha256" => sha256_vector_float64_le(traj.t),
+        "state_sha256" => sha256_matrix_float64_le_c_order(traj.x),
+    )
+end
+
+function safe_cell_stem(system_id::Int, ic_set::Int)
+    return @sprintf("system_%04d_ic%d", system_id, ic_set)
+end
+
+function relative_cell_path(stem::AbstractString, suffix::AbstractString)
+    return joinpath("cells", stem * suffix)
+end
+
+function write_raw_bytes(path::AbstractString, bytes::Vector{UInt8})
+    mkpath(dirname(path))
+    open(path, "w") do io
+        write(io, bytes)
+    end
+    return bytes2hex(sha256(bytes))
+end
+
+function export_trajectory!(export_dir::AbstractString, system, ic_set::Int, traj::Trajectory)
+    system_id = Int(system[:system_id])
+    stem = safe_cell_stem(system_id, ic_set)
+    time_rel = relative_cell_path(stem, "_time_f64le.bin")
+    state_rel = relative_cell_path(stem, "_state_f64le_c_order.bin")
+    time_bytes = float64_vector_le_bytes(traj.t)
+    state_bytes = float64_matrix_le_c_order_bytes(traj.x)
+    time_sha = write_raw_bytes(joinpath(export_dir, time_rel), time_bytes)
+    state_sha = write_raw_bytes(joinpath(export_dir, state_rel), state_bytes)
+    row = trajectory_hash_row(system, ic_set, traj)
+    row["time_sha256"] == time_sha ||
+        error("Internal time hash mismatch while exporting system $(system_id) IC $(ic_set)")
+    row["state_sha256"] == state_sha ||
+        error("Internal state hash mismatch while exporting system $(system_id) IC $(ic_set)")
+    row["time_path"] = time_rel
+    row["state_path"] = state_rel
+    row["dtype"] = "float64"
+    row["byte_order"] = "little_endian"
+    return row
 end
 
 function planned_cells(; limit = nothing)
@@ -317,6 +399,7 @@ function main(args = ARGS)
     parsed = parse_args(args)
     python_hashes = parsed["python_hashes"]
     output_dir = parsed["output_dir"]
+    export_dir = parsed["export_dir"]
     limit = parsed["limit"]
 
     isfile(python_hashes) || error("Missing Python hash CSV: $(python_hashes)")
@@ -328,8 +411,11 @@ function main(args = ARGS)
     end
 
     rows = Dict{String, String}[]
+    export_rows = Dict{String, String}[]
     for (system, ic_set) in cells
-        push!(rows, trajectory_hash_row(system, ic_set))
+        traj = build_trajectory(system, ic_set)
+        push!(rows, trajectory_hash_row(system, ic_set, traj))
+        push!(export_rows, export_trajectory!(export_dir, system, ic_set, traj))
     end
 
     hash_columns = [
@@ -350,6 +436,29 @@ function main(args = ARGS)
     ]
     hash_path = joinpath(output_dir, "trajectory_hashes_julia.csv")
     write_csv(hash_path, hash_columns, rows)
+
+    manifest_columns = [
+        "system_id",
+        "initial_condition_set",
+        "dimension",
+        "hash_format",
+        "dtype",
+        "byte_order",
+        "time_axis_order",
+        "state_axis_order",
+        "time_shape",
+        "state_shape",
+        "time_min",
+        "time_max",
+        "state_min",
+        "state_max",
+        "time_sha256",
+        "state_sha256",
+        "time_path",
+        "state_path",
+    ]
+    manifest_path = joinpath(export_dir, "trajectory_manifest.csv")
+    write_csv(manifest_path, manifest_columns, export_rows)
 
     _, python_rows = read_csv(python_hashes)
     if limit !== nothing
@@ -388,6 +497,7 @@ function main(args = ARGS)
 
     println("Julia hash CSV: $(hash_path)")
     println("Comparison CSV: $(comparison_path)")
+    println("Trajectory export manifest: $(manifest_path)")
     return nothing
 end
 

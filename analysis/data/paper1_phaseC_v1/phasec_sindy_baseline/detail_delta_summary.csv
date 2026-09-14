@@ -1,0 +1,2 @@
+n_rows_reference,n_rows_candidate,n_rows_paired,r2_gt_0_9_changed_count,sindy_structure_hit_raw_changed_count,sindy_structure_hit_pruned_changed_count,r2_abs_delta_finite_count,r2_abs_delta_q000,r2_abs_delta_q025,r2_abs_delta_q050,r2_abs_delta_q075,r2_abs_delta_q100
+2520,2520,2520,4,2,2,2520,7.771561172376096e-16,2.0009438550516734e-11,5.373951283971223e-10,2.674022959947564e-06,3.5299455669185986e+94

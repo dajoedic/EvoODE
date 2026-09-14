@@ -1,10 +1,12 @@
 import copy
 import csv
+import hashlib
 import json
 import shutil
 import sys
 from pathlib import Path
 
+import numpy as np
 import pandas as pd
 
 
@@ -21,6 +23,53 @@ PILOT_SYSTEMS = [2, 24, 52, 63]
 PHASEC_DETAILS = ANALYSIS_ROOT / "data" / "paper1_phaseC_v1" / "phasec_sindy_baseline" / "details.csv"
 WPN6_DATA_DIR = ANALYSIS_ROOT / "data" / "wp_n6_sindy_baseline"
 WPN6_TABLE_DIR = ANALYSIS_ROOT / "tables" / "wp_n6_sindy_baseline"
+
+
+def write_exported_trajectory_fixture(tmp_path: Path) -> tuple[Path, list[dict[str, object]]]:
+    export_dir = tmp_path / "trajectory_export"
+    cells_dir = export_dir / "cells"
+    cells_dir.mkdir(parents=True)
+    benchmark = [
+        {"id": 101, "dim": 1},
+        {"id": 102, "dim": 2},
+    ]
+    t_grid = np.asarray([0.0, 0.5, 1.0], dtype="<f8")
+    rows = []
+    for system in benchmark:
+        system_id = int(system["id"])
+        dim = int(system["dim"])
+        for ic_set in (1, 2):
+            state = (np.arange(len(t_grid) * dim, dtype="<f8").reshape((len(t_grid), dim), order="C") + system_id + ic_set)
+            time_path = Path("cells") / f"system_{system_id}_ic{ic_set}_time_f64le.bin"
+            state_path = Path("cells") / f"system_{system_id}_ic{ic_set}_state_f64le_c_order.bin"
+            time_bytes = np.ascontiguousarray(t_grid, dtype="<f8").tobytes(order="C")
+            state_bytes = np.ascontiguousarray(state, dtype="<f8").tobytes(order="C")
+            (export_dir / time_path).write_bytes(time_bytes)
+            (export_dir / state_path).write_bytes(state_bytes)
+            rows.append(
+                {
+                    "system_id": system_id,
+                    "initial_condition_set": ic_set,
+                    "dimension": dim,
+                    "hash_format": "sha256_raw_little_endian_float64",
+                    "dtype": "float64",
+                    "byte_order": "little_endian",
+                    "time_axis_order": "time",
+                    "state_axis_order": "time_by_dimension_c_order",
+                    "time_shape": json.dumps([len(t_grid)], separators=(",", ":")),
+                    "state_shape": json.dumps([len(t_grid), dim], separators=(",", ":")),
+                    "time_min": float(np.min(t_grid)),
+                    "time_max": float(np.max(t_grid)),
+                    "state_min": float(np.min(state)),
+                    "state_max": float(np.max(state)),
+                    "time_sha256": hashlib.sha256(time_bytes).hexdigest(),
+                    "state_sha256": hashlib.sha256(state_bytes).hexdigest(),
+                    "time_path": time_path.as_posix(),
+                    "state_path": state_path.as_posix(),
+                }
+            )
+    pd.DataFrame(rows).to_csv(export_dir / "trajectory_manifest.csv", index=False)
+    return export_dir, benchmark
 
 
 def read_pilot_records() -> list[dict[str, object]]:
@@ -142,6 +191,41 @@ def pair_args(tmp_path: Path, records_dir: Path, sindy_path: Path, **updates: ob
     for key, value in updates.items():
         setattr(args, key, value)
     return args
+
+
+def test_load_exported_trajectories_recomputes_hashes_and_returns_c_order_arrays(tmp_path: Path) -> None:
+    export_dir, benchmark = write_exported_trajectory_fixture(tmp_path)
+
+    t_grid, trajectories, checks = phasec_sindy.load_exported_trajectories(export_dir, benchmark)
+
+    assert t_grid.tolist() == [0.0, 0.5, 1.0]
+    assert trajectories[(101, 1)].shape == (3, 1)
+    assert trajectories[(102, 2)].shape == (3, 2)
+    assert len(checks) == 4
+    assert checks["hash_verified"].all()
+    assert set(checks["truth_trajectory_source"]) == {"campaign_export"}
+
+
+def test_load_exported_trajectories_rejects_missing_export(tmp_path: Path) -> None:
+    try:
+        phasec_sindy.load_exported_trajectories(tmp_path / "missing", [{"id": 1, "dim": 1}])
+    except ValueError as exc:
+        assert "missing trajectory export manifest" in str(exc)
+    else:
+        raise AssertionError("missing trajectory export should fail")
+
+
+def test_load_exported_trajectories_rejects_hash_mismatch(tmp_path: Path) -> None:
+    export_dir, benchmark = write_exported_trajectory_fixture(tmp_path)
+    state_path = export_dir / "cells" / "system_101_ic1_state_f64le_c_order.bin"
+    state_path.write_bytes(state_path.read_bytes()[:-8] + np.asarray([999.0], dtype="<f8").tobytes())
+
+    try:
+        phasec_sindy.load_exported_trajectories(export_dir, benchmark)
+    except ValueError as exc:
+        assert "hash mismatch" in str(exc)
+    else:
+        raise AssertionError("hash mismatch should fail")
 
 
 def test_pairing_runs_against_real_pilot_records_and_keeps_directions(tmp_path: Path) -> None:

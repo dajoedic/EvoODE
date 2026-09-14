@@ -1,4 +1,4 @@
 status: blocked
-task:   WP-C4b
-report: codex/reports/REPORT_WP_C4b.md
-note:   Umgebung, nicht Sache: julia.exe startet in Codex nicht; Skript ist implementiert und statisch gegen Includes geprüft.
+task:   WP-C4c
+report: codex/reports/REPORT_WP_C4c.md
+note:   Umgebung/Input, nicht Sache: Julia-Export und exportbasierter SINDy-Lauf brauchen Claudes Julia-Ausführung; Python-Implementierung und Tests sind fertig.

@@ -50,6 +50,13 @@ def parse_args() -> argparse.Namespace:
 
     run_parser = subparsers.add_parser("run-sindy")
     run_parser.add_argument("--config", required=True, help="Phase-C SINDy config JSON.")
+    run_parser.add_argument(
+        "--trajectory-export-dir",
+        required=True,
+        help="Directory containing trajectory_manifest.csv and raw campaign trajectory bytes.",
+    )
+    run_parser.add_argument("--output-data-dir", default="", help="Optional override for config output_data_dir.")
+    run_parser.add_argument("--output-table-dir", default="", help="Optional override for config output_table_dir.")
 
     pair_parser = subparsers.add_parser("pair")
     pair_parser.add_argument("--sindy-details", required=True, help="SINDy details CSV from run-sindy.")
@@ -82,6 +89,14 @@ def parse_args() -> argparse.Namespace:
     check_parser.add_argument("--config", default="analysis/configs/wp_n6_sindy_baseline.json")
     check_parser.add_argument("--reference-data-dir", default="analysis/data/wp_n6_sindy_baseline")
     check_parser.add_argument("--reference-table-dir", default="analysis/tables/wp_n6_sindy_baseline")
+
+    compare_parser = subparsers.add_parser("compare-details")
+    compare_parser.add_argument("--reference-details", required=True)
+    compare_parser.add_argument("--candidate-details", required=True)
+    compare_parser.add_argument(
+        "--output",
+        default="analysis/data/paper1_phaseC_v1/phasec_sindy_baseline/detail_delta_summary.csv",
+    )
     return parser.parse_args()
 
 
@@ -163,6 +178,129 @@ def trajectory_hash_rows(
                 }
             )
     return pd.DataFrame(rows)
+
+
+def parse_shape(text: Any, label: str) -> tuple[int, ...]:
+    try:
+        values = json.loads(str(text))
+    except json.JSONDecodeError as exc:
+        fail(f"{label} is not valid JSON shape: {text!r}")
+        raise AssertionError("unreachable") from exc
+    if not isinstance(values, list) or not all(isinstance(value, int) and value >= 0 for value in values):
+        fail(f"{label} must be a JSON integer list, got {text!r}")
+    return tuple(int(value) for value in values)
+
+
+def read_exported_float64(path: Path, expected_shape: tuple[int, ...], expected_sha256: str, label: str) -> np.ndarray:
+    if not path.is_file():
+        fail(f"missing exported trajectory file for {label}: {path}")
+    payload = path.read_bytes()
+    actual_sha256 = hashlib.sha256(payload).hexdigest()
+    if actual_sha256 != str(expected_sha256):
+        fail(
+            f"hash mismatch for exported trajectory {label}: "
+            f"expected {expected_sha256}, got {actual_sha256}"
+        )
+    expected_values = int(np.prod(expected_shape, dtype=np.int64))
+    expected_bytes = expected_values * 8
+    if len(payload) != expected_bytes:
+        fail(f"wrong byte length for exported trajectory {label}: expected {expected_bytes}, got {len(payload)}")
+    return np.frombuffer(payload, dtype="<f8").reshape(expected_shape, order="C").copy()
+
+
+def load_exported_trajectories(
+    export_dir: Path,
+    benchmark: list[dict[str, Any]],
+) -> tuple[np.ndarray, dict[tuple[int, int], np.ndarray], pd.DataFrame]:
+    manifest_path = export_dir / "trajectory_manifest.csv"
+    if not manifest_path.is_file():
+        fail(f"missing trajectory export manifest: {manifest_path}")
+    manifest = pd.read_csv(manifest_path)
+    required_columns = {
+        "system_id",
+        "initial_condition_set",
+        "dimension",
+        "hash_format",
+        "dtype",
+        "byte_order",
+        "time_axis_order",
+        "state_axis_order",
+        "time_shape",
+        "state_shape",
+        "time_sha256",
+        "state_sha256",
+        "time_path",
+        "state_path",
+    }
+    missing_columns = sorted(required_columns - set(manifest.columns))
+    if missing_columns:
+        fail(f"trajectory export manifest missing columns: {missing_columns}")
+    if len(manifest) != len(benchmark) * 2:
+        fail(f"trajectory export manifest must contain {len(benchmark) * 2} rows, got {len(manifest)}")
+
+    benchmark_dims = {int(system["id"]): int(system["dim"]) for system in benchmark}
+    expected_keys = {(system_id, ic_set) for system_id in benchmark_dims for ic_set in (1, 2)}
+    actual_keys = {
+        (int(row["system_id"]), int(row["initial_condition_set"]))
+        for _, row in manifest.iterrows()
+    }
+    if actual_keys != expected_keys:
+        missing = sorted(expected_keys - actual_keys)
+        extra = sorted(actual_keys - expected_keys)
+        fail(f"trajectory export manifest key mismatch: missing={missing}, extra={extra}")
+    if manifest.duplicated(["system_id", "initial_condition_set"]).any():
+        fail("trajectory export manifest contains duplicate system_id/initial_condition_set rows")
+
+    trajectories: dict[tuple[int, int], np.ndarray] = {}
+    trajectory_checks: list[dict[str, Any]] = []
+    t_grid: np.ndarray | None = None
+    first_time_sha256: str | None = None
+    for _, row in manifest.sort_values(["system_id", "initial_condition_set"]).iterrows():
+        system_id = int(row["system_id"])
+        ic_set = int(row["initial_condition_set"])
+        dim = int(row["dimension"])
+        key = (system_id, ic_set)
+        if dim != benchmark_dims[system_id]:
+            fail(f"trajectory export dimension mismatch for {key}: manifest {dim}, benchmark {benchmark_dims[system_id]}")
+        if str(row["hash_format"]) != "sha256_raw_little_endian_float64":
+            fail(f"unsupported trajectory hash_format for {key}: {row['hash_format']!r}")
+        if str(row["dtype"]) != "float64" or str(row["byte_order"]) != "little_endian":
+            fail(f"unsupported trajectory dtype/byte_order for {key}: {row['dtype']!r}/{row['byte_order']!r}")
+        if str(row["time_axis_order"]) != "time" or str(row["state_axis_order"]) != "time_by_dimension_c_order":
+            fail(f"unsupported trajectory axis order for {key}")
+        time_shape = parse_shape(row["time_shape"], f"time_shape {key}")
+        state_shape = parse_shape(row["state_shape"], f"state_shape {key}")
+        if len(time_shape) != 1:
+            fail(f"time_shape for {key} must be one-dimensional, got {time_shape}")
+        if state_shape != (time_shape[0], dim):
+            fail(f"state_shape for {key} must be {(time_shape[0], dim)}, got {state_shape}")
+
+        time_values = read_exported_float64(export_dir / str(row["time_path"]), time_shape, str(row["time_sha256"]), f"{key} time")
+        state_values = read_exported_float64(export_dir / str(row["state_path"]), state_shape, str(row["state_sha256"]), f"{key} state")
+        if t_grid is None:
+            t_grid = time_values
+            first_time_sha256 = str(row["time_sha256"])
+        elif str(row["time_sha256"]) != first_time_sha256 or not np.array_equal(time_values, t_grid):
+            fail(f"trajectory export time grid differs for {key}")
+        trajectories[key] = state_values
+        trajectory_checks.append(
+            {
+                "system_id": system_id,
+                "initial_condition_set": ic_set,
+                "dimension": dim,
+                "grid_points": int(time_shape[0]),
+                "t_start": float(time_values[0]),
+                "t_end": float(time_values[-1]),
+                "truth_trajectory_source": "campaign_export",
+                "hash_format": str(row["hash_format"]),
+                "time_sha256": str(row["time_sha256"]),
+                "state_sha256": str(row["state_sha256"]),
+                "hash_verified": True,
+            }
+        )
+    if t_grid is None:
+        fail("trajectory export manifest contains no rows")
+    return t_grid, trajectories, pd.DataFrame(trajectory_checks)
 
 
 def fit_eval_rows(
@@ -326,35 +464,21 @@ def cost_table(details: pd.DataFrame) -> pd.DataFrame:
     return pd.DataFrame(rows)
 
 
-def run_sindy(config_path: Path) -> dict[str, Path]:
+def run_sindy(
+    config_path: Path,
+    trajectory_export_dir: Path,
+    output_data_dir: str = "",
+    output_table_dir: str = "",
+) -> dict[str, Path]:
     config = load_config(config_path)
+    if output_data_dir:
+        config["output_data_dir"] = output_data_dir
+    if output_table_dir:
+        config["output_table_dir"] = output_table_dir
     benchmark = load_benchmark(resolve_path(config.get("benchmark_path", "../benchmarks/data/strogatz_extended.json"), config_path))
     support = load_phase_c_support(resolve_path(config.get("phase_c_support_path", "../studies/regression/phase_c_support.json"), config_path))
     support_by_id = support.set_index("system_id")
-    t_grid = np.linspace(
-        float(config.get("t_start", 0.0)),
-        float(config.get("t_end", 10.0)),
-        int(config.get("time_points", 512)),
-    )
-    trajectories = {}
-    trajectory_checks = []
-    for system in benchmark:
-        for ic_index in (0, 1):
-            y, status = integrate_truth(system, ic_index, t_grid)
-            trajectories[(int(system["id"]), ic_index + 1)] = y
-            trajectory_checks.append(
-                {
-                    "system_id": int(system["id"]),
-                    "initial_condition_set": ic_index + 1,
-                    "dimension": int(system["dim"]),
-                    "grid_points": len(t_grid),
-                    "t_start": float(t_grid[0]),
-                    "t_end": float(t_grid[-1]),
-                    "rtol": 1e-9,
-                    "atol": 1e-9,
-                    "integration_status": status,
-                }
-            )
+    t_grid, trajectories, trajectory_check = load_exported_trajectories(trajectory_export_dir, benchmark)
 
     detail_rows: list[dict[str, Any]] = []
     for cfg in library_grid(config):
@@ -363,7 +487,7 @@ def run_sindy(config_path: Path) -> dict[str, Path]:
 
     details = pd.DataFrame(detail_rows)
     frames = {
-        "trajectory_check": pd.DataFrame(trajectory_checks),
+        "trajectory_check": trajectory_check,
         "trajectory_hashes": trajectory_hash_rows(benchmark, t_grid, trajectories),
         "details": details,
         "summary": summarize(details),
@@ -654,6 +778,67 @@ def compare_wpn6_outputs(
     return failures
 
 
+def compare_phasec_details(reference_path: Path, candidate_path: Path, output_path: Path) -> Path:
+    reference = pd.read_csv(reference_path)
+    candidate = pd.read_csv(candidate_path)
+    key_columns = [
+        "library_id",
+        "polynomial_degree",
+        "include_sin_cos",
+        "stlsq_threshold",
+        "system_id",
+        "source_initial_condition_set",
+        "target_initial_condition_set",
+        "initial_condition_set",
+        "direction",
+        "regime",
+    ]
+    merged = reference.merge(candidate, on=key_columns, suffixes=("_reference", "_candidate"), validate="one_to_one")
+    if len(merged) != len(reference) or len(merged) != len(candidate):
+        fail(
+            f"Phase-C details are not one-to-one comparable: "
+            f"reference={len(reference)}, candidate={len(candidate)}, paired={len(merged)}"
+        )
+    r2_reference = pd.to_numeric(merged["r2_reference"], errors="coerce")
+    r2_candidate = pd.to_numeric(merged["r2_candidate"], errors="coerce")
+    r2_abs_delta = (r2_candidate - r2_reference).abs()
+    finite_delta = r2_abs_delta[np.isfinite(r2_abs_delta)]
+    quantiles = finite_delta.quantile([0.0, 0.25, 0.5, 0.75, 1.0]) if len(finite_delta) else pd.Series(dtype=float)
+    summary = pd.DataFrame(
+        [
+            {
+                "n_rows_reference": int(len(reference)),
+                "n_rows_candidate": int(len(candidate)),
+                "n_rows_paired": int(len(merged)),
+                "r2_gt_0_9_changed_count": int(
+                    (merged["r2_gt_0_9_reference"].astype(bool) != merged["r2_gt_0_9_candidate"].astype(bool)).sum()
+                ),
+                "sindy_structure_hit_raw_changed_count": int(
+                    (
+                        merged["sindy_structure_hit_raw_reference"].astype(bool)
+                        != merged["sindy_structure_hit_raw_candidate"].astype(bool)
+                    ).sum()
+                ),
+                "sindy_structure_hit_pruned_changed_count": int(
+                    (
+                        merged["sindy_structure_hit_pruned_reference"].astype(bool)
+                        != merged["sindy_structure_hit_pruned_candidate"].astype(bool)
+                    ).sum()
+                ),
+                "r2_abs_delta_finite_count": int(len(finite_delta)),
+                "r2_abs_delta_q000": float(quantiles.loc[0.0]) if len(finite_delta) else float("nan"),
+                "r2_abs_delta_q025": float(quantiles.loc[0.25]) if len(finite_delta) else float("nan"),
+                "r2_abs_delta_q050": float(quantiles.loc[0.5]) if len(finite_delta) else float("nan"),
+                "r2_abs_delta_q075": float(quantiles.loc[0.75]) if len(finite_delta) else float("nan"),
+                "r2_abs_delta_q100": float(quantiles.loc[1.0]) if len(finite_delta) else float("nan"),
+            }
+        ]
+    )
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    summary.to_csv(output_path, index=False)
+    return output_path
+
+
 def check_wpn6_bitidentical(args: argparse.Namespace) -> None:
     from scripts.aggregate.run_wp_n6_sindy_baseline import main as wpn6_main
 
@@ -683,7 +868,12 @@ def main() -> int:
     args = parse_args()
     try:
         if args.command == "run-sindy":
-            paths = run_sindy(Path(args.config).resolve())
+            paths = run_sindy(
+                Path(args.config).resolve(),
+                Path(args.trajectory_export_dir).resolve(),
+                args.output_data_dir,
+                args.output_table_dir,
+            )
             print(json.dumps({key: str(value) for key, value in paths.items()}, indent=2))
         elif args.command == "pair":
             path = pair_sindy_evogrow(args)
@@ -691,6 +881,13 @@ def main() -> int:
         elif args.command == "check-wpn6-bitidentical":
             check_wpn6_bitidentical(args)
             print("WP-N6 bit-identical check passed")
+        elif args.command == "compare-details":
+            path = compare_phasec_details(
+                Path(args.reference_details),
+                Path(args.candidate_details),
+                Path(args.output),
+            )
+            print(f"Wrote {path}")
         return 0
     except (OSError, ValueError, KeyError, json.JSONDecodeError) as exc:
         print(f"Error: {exc}", file=sys.stderr)
