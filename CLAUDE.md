@@ -347,6 +347,15 @@ the coupled search path 1e-6 is the cheaper, behaviour-equal tolerance; the Syst
    while the noisy case is unmeasured; and the trajectory check verified the grid against the
    *shipped* solutions rather than directly against ours.
 
+   **"Identical trajectories" is imprecise, and WP-C4b measured by how much (2026-09-14).** The
+   campaign integrates with `Tsit5`, the SINDy script with `DOP853`, both at 1e-9. Hashed over all
+   63 systems and both IC sets, the time grids are bit-identical in **126 of 126** rows and the
+   state matrices differ in **126 of 126**, at a relative level of about **1e-10**. The trajectories
+   are therefore built under the same protocol but are not the same numbers. Whether 1e-10 matters
+   for a method that differentiates numerically is unmeasured and must not be assumed either way;
+   Phase C closes the question by construction, by having SINDy consume the exported campaign
+   trajectories instead of integrating its own.
+
    **The answer to "is 80.7 % good or embarrassing" is: neither.** On the easiest system class EvoODE
    is level with SINDy and somewhat better at generalization, for about a hundred times the compute.
    That shifts the burden of proof: the method must show its value somewhere else — under noise, on

@@ -912,8 +912,13 @@ cases).
 
 **Superseded 2026-09-09.** This section forbade in-house SINDy comparison until the external protocol
 audit was filled. Claim D replaces that with a stronger arrangement: SINDy is computed **in-house on
-identical trajectories**, so comparability is established by construction rather than by auditing
-someone else's protocol. The external audit columns remain open Phase 3 work and still govern how
+the same trajectories**, so comparability is established by construction rather than by auditing
+someone else's protocol. **What "the same" has to mean was settled on 2026-09-14 (WP-C4b):** hashing
+both sides showed the time grids bit-identical in 126 of 126 rows and the state matrices different
+in 126 of 126, because the campaign integrates with `Tsit5` and the SINDy script with `DOP853`, both
+at 1e-9 — agreement to about 1e-10, not identity. Claim D's pass criterion says "by hash, not by
+assertion", so the arrangement only holds once SINDy consumes the exported campaign trajectories
+rather than integrating its own. The external audit columns remain open Phase 3 work and still govern how
 *published* third-party numbers may be cited — and the published per-method ODEBench figures are bar
 charts in Figures 4 and 5 of the ODEFormer paper with no result files shipped, so they are not in our
 hands regardless.
