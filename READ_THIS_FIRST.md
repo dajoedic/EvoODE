@@ -10,15 +10,19 @@ zweites davon. Alles Dauerhafte gehört dorthin, nach `PAPER_1.md` oder ins `DIA
 **Regeln:** wird immer **vollständig überschrieben**, nie angehängt. Was älter als ein paar Tage
 ist, ist vermutlich falsch — dann gilt `CLAUDE.md`.
 
-**Stand: 2026-09-14, 13:10. HEAD = `755b125`. Working Tree sauber.**
+**Stand: 2026-09-14, 15:10. HEAD siehe `git log -1`. Working Tree sauber.**
 
 ---
 
 ## 1. Wo wir stehen — in drei Sätzen
 
 **Die Phase-C-Kampagne läuft.** C-1+C-2 (756 gepaarte Zellen) rechnet seit dem 14.09. mittags auf
-Orion; C-3 (180 Zellen) ist **absichtlich angehalten** und wird erst danach gestartet. Bootstrap,
-Smoke-Test und der 16-Zellen-Pilot sind bestanden, das Go-Kriterium war grün.
+Orion, Stand 15:00 **18/756**; C-3 (180 Zellen) ist **absichtlich angehalten** und wird erst danach
+gestartet. Bootstrap, Smoke-Test und der 16-Zellen-Pilot sind bestanden, das Go-Kriterium war grün.
+
+**Der alte dim-2-Probelauf ist erledigt.** 336/336 seit dem 14.09., Job `Complete`, WP-N15 ohne
+`--allow-incomplete` nachgerechnet — **keine Entscheidungszahl hat sich bewegt**. Punkt 3 der
+früheren To-do-Liste entfällt damit.
 
 Autoritative Quellen: `PAPER_1.md` → `docs/paper1_phaseC_benchmark_plan.md` → `CLAUDE.md` →
 `DIARY.md` (neueste Einträge oben).
@@ -42,8 +46,8 @@ kubectl get jobs -n scch-das
 ```
 
 Erwartet: `evoode-phase-c-c1-c2-campaign` **Running**, Zähler wächst Richtung 756;
-`evoode-phase-c-c3-campaign` **Suspended** 0/180; `evoode-wp-n1-dim2-campaign` 335/336 (alt,
-blockiert nichts).
+`evoode-phase-c-c3-campaign` **Suspended** 0/180. Der Probelauf-Job `evoode-wp-n1-dim2-campaign`
+steht auf `Complete` 336/336 und darf jetzt verschwinden — er räumt sich selbst weg.
 
 ### Auslastung — der Posten, der schon einmal schiefging
 
@@ -62,6 +66,15 @@ Pods und Kerne sind hier also nicht dasselbe. Wer wissen will, wie viel wir wirk
 S:\BigDataOrion\data-science\joedicke\phase_c_campaign_221a3a72f0cb43164a22b09baac2d9ae82681a02\tasks\
 ```
 
+**Wenn `S:` nicht da ist** — am 14.09. meldete `net use` das Laufwerk als `Unavailable`, obwohl die
+VPN stand —, dann geht derselbe Pfad über UNC ohne jedes Zutun:
+
+```text
+\\scch.at\scch\BigDataOrion\data-science\joedicke\...
+```
+
+Die Analyseskripte haben `S:` als Vorgabewert einkompiliert, nehmen aber `--input`.
+
 `cell_NNNNNN.jsonl` ist je ein Ergebnis, `*.heartbeat.jsonl` der Verlauf. **Beim Zählen die
 Heartbeats ausschließen** — ein Glob auf `cell_*.jsonl` fängt sie mit ein, genau daran ist der
 Pilotprüfer einmal gescheitert.
@@ -78,9 +91,7 @@ laufender.
    die Untergrenze ist die längste **einzelne** Zelle — in Phase B 289,7 h, im ungekappten Arm
    potenziell mehr, weil er die vollen 30 Level fährt.
 2. **Danach C-3 fortsetzen** (siehe Abschnitt 4).
-3. **Zelle 293** des alten Probelaufs: war am 14.09. um 04:19 UTC im Level 29 von 30. Sobald
-   `cell_000293.jsonl` existiert, die WP-N15-Auswertung **ohne** `--allow-incomplete` laufen lassen
-   — dann ist die dim-2-Basisauswertung vollständig.
+3. ~~Zelle 293 des alten Probelaufs~~ **erledigt am 14.09.** — siehe Abschnitt 5.
 4. **Parallel möglich, ohne Cluster:** C-4 (SINDy, Minuten auf dem Laptop), Methoden- und
    Limitations-Abschnitte, das Phase-B-Diagnostikkapitel, Abbildungs- und Tabellengerüste.
 
@@ -110,7 +121,22 @@ getrennte Abbruchzeitpunkte und unvollständige Paare.
 
 ---
 
-## 5. Ein Befund, der das Ergebnis einordnet
+## 5. Der dim-2-Probelauf, abgeschlossen
+
+**336/336 seit 14.09., 14:34.** Zelle 293 — System 44, Seed 42, IC-Set 2, konstante Basis — war die
+teuerste des Laufs (610 Fits, 3,75e6 Loss-Evals) und ist ein **Surrogat** mit R² = 0,808. Die
+WP-N15-Auswertung lief danach ohne `--allow-incomplete` durch:
+
+- bewegt hat sich **eine** Zahl: R² > 0,9 im konstanten Arm auf Surrogaten, 90,7 % → **89,8 %**
+- alle Exakt-Schichten und damit **alle P3-Entscheidungszahlen sind unverändert**
+- Identitätstripel `ec3b6bd` / `0290b75a28791195` / `ffb0266c7913352c` über alle 336 Records
+- der Konstanten-Aufschlag steigt leicht: **+20,8 %** Loss-Evals statt +19,8 %, +4,0 % statt +3,2 %.
+  Die Kostentabelle trägt +20 % und liegt damit knapp **unter** der Messung. Nicht korrigieren —
+  die Kampagne ist eingefroren; deklariert in `docs/paper1_phaseC_benchmark_plan.md` §2.
+
+---
+
+## 6. Ein Befund, der das Ergebnis einordnet
 
 **Der Pilot hat das Go-Kriterium bestanden, konnte Claim B aber nicht prüfen.** In allen acht
 Paaren waren `executed_levels`, `final_stage` und `loss` identisch — weil in allen 16 Zellen jede
@@ -133,7 +159,7 @@ und C-2 strukturell dieselbe Rechnung.
 
 ---
 
-## 6. Kleinkram, der sonst untergeht
+## 7. Kleinkram, der sonst untergeht
 
 - **Identität dieser Kampagne:** `git 221a3a72f0cb43164a22b09baac2d9ae82681a02`,
   `config_fingerprint 0c9672de35c75a9d`, Verhaltens-Fingerprint `ffb0266c7913352c`, Basis
@@ -146,8 +172,7 @@ und C-2 strukturell dieselbe Rechnung.
   96 Kerne auf zwei Knoten (`alnilam01`, `alnilam02`); herleitbar aus
   `kubectl get pods -n scch-das -o custom-columns='NODE:.spec.nodeName'`.
 - **Fertige Jobs räumen sich selbst weg** (`ttlSecondsAfterFinished: 3600`). Eine kürzer werdende
-  Jobliste heißt „aufgeräumt", nicht „fertig". Den Probelauf-Job **nicht** löschen, solange Zelle
-  293 rechnet.
+  Jobliste heißt „aufgeräumt", nicht „fertig".
 - **Codex kann hier kein Julia ausführen.** Julia-Pakete werden geschrieben, als `blocked` gemeldet,
   Claude fährt die Abnahme.
 - **Protokollregel seit `221a3a7`:** Fixtures werden aus echten Records **abgeleitet**, nie

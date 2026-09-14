@@ -77,10 +77,14 @@ way, the Phase B figures of 240 exact / 516 surrogate cells included.
 
 **The figures were raised again on 2026-09-13, when P3 froze the constant basis.** The Phase B
 registry measures the **old** basis, so every number derived from it understates the canonical arm.
-The dim-2 probe measures the premium directly, over all 335 of its cells and both arms:
-`total_loss_evals` **+19.8 %** in sum (3.51e8 against 4.20e8), `total_parameter_fits` **+3.2 %**,
-with stage 5 reached by exactly 121 cells in either arm. The table therefore carries **+20 % on the
-counting quantities**, applied to C-1, C-2 and C-3.
+The dim-2 probe measures the premium directly, over both arms. On the 335 cells available when the
+table was written: `total_loss_evals` **+19.8 %** in sum (3.51e8 against 4.20e8),
+`total_parameter_fits` **+3.2 %**, with stage 5 reached by exactly 121 cells in either arm. On the
+**complete 336** (2026-09-14) it is **+20.8 %** (3.507e8 against 4.237e8) and **+4.0 %**, with stage 5
+at 122 constant against 121 old cells. The table carries **+20 % on the counting quantities**,
+applied to C-1, C-2 and C-3 — **now marginally below the measured premium**. The campaign is frozen
+and running, so the figure stays as it is and the shortfall is declared here rather than corrected;
+it is the same one-sided risk the cautions below describe.
 
 Three cautions travel with that. Core hours are **not** readable off loss-eval counts (Design
 Principle 7) — this is a proportional carry-over, not a measurement in hours. The premium was
@@ -238,7 +242,9 @@ constant alone. A search-strategy contribution cannot be claimed over half the s
 baseline it is compared against.
 
 The evidence base and its limits: WP-N15 over the dim-2 probe (335 of 336 cells at decision time,
-the missing cell a surrogate that touches only one R² denominator), plus WP-N1 and WP-N5 on
+**336 of 336 since 2026-09-14**; the missing cell was indeed a surrogate and touched only one R²
+denominator — the constant arm's surrogate R² > 0.9 rate fell 90.7 % → 89.8 %, nothing else moved),
+plus WP-N1 and WP-N5 on
 dimension 1, where the constant halves structure recovery (83.3 % → 38.9 %) and markedly improves
 generalization (72.7 % → 87.9 %). **Generalization was never measured on dim 2**, so the strongest
 argument in the constant's favour rests on dimension 1 alone. Phase C's Claim C closes that gap for

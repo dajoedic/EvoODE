@@ -179,7 +179,7 @@ as an ablation about the implicit multistart, not as a discovery.
 | Stage-cap defect | **solved** (WP-C1 to WP-C5, 2026-08-20): 0 truncated equation rows of 80, 48 finite caps |
 | Regression evidence | 120 records, 30 cells, loss bit-identical 30/30, −25.4 % loss evaluations. **Superseded as Claim B evidence by the Phase C uncapped arm** |
 | Level budget | **decided against** (WP-B1, 2026-08-21): 30 levels stay, the waste is reported as a result |
-| Canonical basis | **frozen 2026-09-13: `staged_polynomial_basis_with_constant`.** Probe ran (335/336, evaluated by WP-N15); decided on representability *against* its recovery numbers |
+| Canonical basis | **frozen 2026-09-13: `staged_polynomial_basis_with_constant`.** Probe **complete 336/336 since 2026-09-14** (335/336 at the decision, evaluated by WP-N15); decided on representability *against* its recovery numbers |
 | Canonical pretuning | **decided 2026-09-09: `pretuning = false`**, with the restart count made explicit |
 | Uncapped-arm scope | **decided 2026-09-09: full mirror of the canonical arm** — 63 systems, 3 seeds, both IC sets = 378 paired cells |
 | Restart policy | **decided 2026-09-09: retry-on-failure, up to k = 3.** Canonical, explicit, declared. Restart dependence is a subset ablation with a cost axis |
@@ -355,8 +355,12 @@ may live in the appendix; the interpretation of every EvoGrow number depends on 
 
 1. ~~The canonical basis is not yet decided.~~ **Decided and frozen 2026-09-13: the canonical basis
    is `staged_polynomial_basis_with_constant`.** The dim-2 probe ran on Orion (335 of 336 cells at
-   the time of the decision, 0 errors, one identity triple `ec3b6bd` / `0290b75a28791195` /
-   `ffb0266c7913352c`), and it was evaluated by WP-N15. **The decision was taken against the probe's
+   the time of the decision, **complete at 336/336 on 2026-09-14**, 0 errors, one identity triple
+   `ec3b6bd` / `0290b75a28791195` / `ffb0266c7913352c` over every record), and it was evaluated by
+   WP-N15. The re-evaluation on the complete set confirms what the plan predicted of the missing
+   cell: it is a surrogate (system 44, seed 42, IC 2, constant basis, R² = 0.808) and moves only the
+   constant arm's surrogate R² > 0.9 rate, from 90.7 % to 89.8 %; **no decision-bearing number
+   changed.** **The decision was taken against the probe's
    own recovery numbers, not with them**, and that is the honest way to report it: on the nine dim-2
    systems exact under both bases the constant costs structure recovery (pruned 55.6 % → 35.2 %, raw
    13.0 % → 7.4 %) at an unchanged R² > 0.9 rate (94.4 % in both arms). It is decisive anyway,

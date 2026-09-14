@@ -6,6 +6,49 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ## 2026-09-14
 
+### Der dim-2-Probelauf ist vollstaendig — und die Nachrechnung aendert keine Entscheidung
+
+Zelle 293 ist am 14.09. um 14:34 fertig geworden, **336 von 336**, Job `evoode-wp-n1-dim2-campaign`
+auf `Complete`. Damit laeuft die WP-N15-Auswertung zum ersten Mal **ohne `--allow-incomplete`**:
+336 Records gelesen, `raw-implies-pruned`-Verletzungen 0, ein Identitaetstripel ueber jeden Record
+(`ec3b6bd` / `0290b75a28791195` / `ffb0266c7913352c`).
+
+**Die fehlende Zelle war genau das, was der Phase-C-Plan von ihr vorhergesagt hatte** — ein
+Surrogat, das nur einen einzigen R²-Nenner beruehrt. System 44 (Driven pendulum with quadratic
+damping), Seed 42, IC-Set 2, konstante Basis, R² = 0,808, also **unter** der Schwelle. Bewegt hat
+sich deshalb nur eine Zahl: die R² > 0,9-Rate des konstanten Arms auf Surrogaten,
+97/107 = 90,7 % → 97/108 = **89,8 %**. Alle Exakt-Schichten, die P3-Entscheidungszahlen
+eingeschlossen, sind unveraendert: Layer A 9 Systeme, 54 Zellen je Arm, pruned 30/54 (alt) gegen
+19/54 (konstant), raw 7/54 gegen 4/54, R² > 0,9 in beiden Armen 51/54.
+
+**Teuer war sie allerdings.** 610 Parameterfits, 3,75e6 Loss-Evaluationen, Endstufe 5 in beiden
+Gleichungen — die Zelle mit der laengsten Laufzeit des ganzen Probelaufs. Das ist der Grund, warum
+sie vier Tage nach den anderen 335 fertig wurde, und es ist kein Zufall, dass ausgerechnet sie
+unter R² 0,9 bleibt.
+
+**Eine Kennzahl verschiebt sich dadurch messbar: der Konstanten-Aufschlag.** Ueber alle 336 Zellen
+kostet die Konstante **+20,8 %** `total_loss_evals` (3,507e8 gegen 4,237e8) und **+4,0 %**
+`total_parameter_fits`; am 13.09. standen dort +19,8 % und +3,2 %, gerechnet auf 335 Zellen. Stufe 5
+erreichen 122 statt 121 Zellen im konstanten Arm. Der in die Kostentabelle uebertragene Aufschlag
+betraegt **+20 %** und liegt damit jetzt **knapp unter** der gemessenen Groesse. Die Kampagne ist
+eingefroren und laeuft, also bleibt die Zahl stehen; die Unterdeckung wird deklariert statt
+korrigiert. Sie ist dieselbe einseitige Risikorichtung, die der Plan ohnehin nennt — und sie ist
+klein gegen die zwei groesseren Vorbehalte: der Aufschlag ist **nur auf dim 2** gemessen, waehrend
+dim 3 drei Viertel der Phase-B-Rechenzeit trug, und auf den neun gepaarten exakten Systemen liegt er
+bei etwa +60 %.
+
+**Betrieblich:** das Laufwerk `S:` war in dieser Sitzung `Unavailable`, der UNC-Pfad
+`\\scch.at\scch\BigDataOrion\...` dagegen erreichbar. Der Aggregator nimmt `--input`, also war
+nichts zu reparieren — aber die Vorgabewerte der Analyseskripte zeigen auf `S:`, und das faellt beim
+naechsten Mal wieder auf.
+
+Nebenbefund aus derselben Abfrage: C-1+C-2 stand um 15:00 bei **18/756**, C-3 unveraendert
+`Suspended` 0/180.
+
+---
+
+## 2026-09-14
+
 ### Phase C ist gestartet — und der Pilot konnte Claim B nicht pruefen
 
 <!-- a6c0e6c -->

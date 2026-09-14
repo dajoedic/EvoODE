@@ -398,8 +398,12 @@ the coupled search path 1e-6 is the cheaper, behaviour-equal tolerance; the Syst
 
    **The 2026-09-13 raise comes from the basis freeze, and it is a carry-over, not a measurement.**
    The Phase B registry measures the **old** basis; the canonical arm is now the constant basis.
-   Over all 335 probe cells the constant costs **+19.8 %** `total_loss_evals` and +3.2 %
-   `total_parameter_fits`, so +20 % is applied to C-1, C-2 and C-3. Three cautions: core hours are
+   Over all 336 probe cells the constant costs **+20.8 %** `total_loss_evals` and +4.0 %
+   `total_parameter_fits` (the +19.8 % / +3.2 % recorded on 2026-09-13 came from the 335 cells that
+   had finished then; the last cell is the probe's most expensive one). The carry-over applied to
+   C-1, C-2 and C-3 is **+20 %, i.e. now marginally below the measured premium** — the campaign is
+   frozen and running, so this is a note on the planning figure, not a change to it. Three cautions:
+   core hours are
    not readable off loss-eval counts (Design Principle 7); the premium is measured on **dim 2 only**
    while dim 3 carried 75.6 % of Phase B's compute; and on the nine paired exact systems the premium
    is about +60 %, so the aggregate is not a bound. The risk is one-sided — the total can be
@@ -414,8 +418,9 @@ the coupled search path 1e-6 is the cheaper, behaviour-equal tolerance; the Syst
    submission, distinct from the smoke test.
 
    **P3 is closed: the canonical basis is `staged_polynomial_basis_with_constant` (2026-09-13).**
-   The dim-2 probe ran (335/336 at decision time, 0 errors, one identity triple) and WP-N15
-   evaluated it. **The decision was taken against the probe's recovery numbers, not with them** —
+   The dim-2 probe ran (335/336 at decision time, **complete at 336/336 on 2026-09-14**, 0 errors,
+   one identity triple) and WP-N15 evaluated it; the re-evaluation on the complete set left every
+   decision-bearing number untouched. **The decision was taken against the probe's recovery numbers, not with them** —
    on the nine dim-2 systems exact under both bases the constant costs recovery (pruned 55.6 % →
    35.2 %, raw 13.0 % → 7.4 %) at an identical R² > 0.9 rate of 94.4 %. Representability decides it
    anyway: 20 of 63 systems against SINDy's 40 is not a defensible search space for a method paper.
@@ -576,9 +581,13 @@ the coupled search path 1e-6 is the cheaper, behaviour-equal tolerance; the Syst
    they are not only findable in diary prose.
    - ~~The **dim-2 probe of the constant basis** is prepared and unstarted.~~ **Ran on Orion
      2026-09-10 to 2026-09-13** through the campaign's indexed path (WP-N9 gave the script the
-     sharding it lacked), 335 of 336 cells at decision time, 0 errors, one identity triple
-     `ec3b6bd` / `0290b75a28791195` / `ffb0266c7913352c`. Evaluated by WP-N15
-     (`analysis/data/wp_n1_dim2_probe/`), and it closed P3.
+     sharding it lacked) and is **complete since 2026-09-14: 336 of 336 cells**, 0 errors, one
+     identity triple `ec3b6bd` / `0290b75a28791195` / `ffb0266c7913352c` over every record.
+     Evaluated by WP-N15 (`analysis/data/wp_n1_dim2_probe/`), and it closed P3. Re-aggregated
+     without `--allow-incomplete` on 2026-09-14: the late cell 293 (system 44, seed 42, IC 2,
+     constant basis) is a **surrogate** cell at R² = 0.808, so the only figure it moves is the
+     constant arm's surrogate R² > 0.9 rate, 97/107 = 90.7 % → 97/108 = **89.8 %**. All exact-layer
+     numbers, the P3 decision numbers included, are unchanged.
    - ~~`studies/regression/wp_n1_basis_probe.jl` writes `git_hash = "not_collected"`.~~ **Repaired by
      WP-N8** before the run; the real records carry a git hash.
    - **Codex cannot execute Julia in this environment** (`A specified logon session does not exist`);
