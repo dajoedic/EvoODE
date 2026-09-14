@@ -113,10 +113,11 @@ Regeln, die der Schritt erzwingen muss:
 ## Tests
 
 **Protokollregel seit `221a3a7`: Fixtures werden aus echten Records abgeleitet, nie erfunden.** Für
-die Paarungsmaschinerie stehen echte Phase-C-Records zur Verfügung — der 16-Zellen-Pilot unter
-`S:\BigDataOrion\data-science\joedicke\phase_c_p9_pilot_221a3a72f0cb43164a22b09baac2d9ae82681a02\tasks`
-(bei fehlendem Laufwerksbuchstaben derselbe Pfad über `\\scch.at\scch\BigDataOrion\...`). Diese
-Records tragen die Phase-C-Identität und die von WP-N14 geforderten Spalten.
+die Paarungsmaschinerie stehen echte Phase-C-Records zur Verfügung: die **16 Pilot-Records** liegen
+bereits lokal unter `outputs/phase_c_p9_pilot_records/` (von der Cluster-Freigabe kopiert, das
+Verzeichnis ist gitignored). Sie tragen die Phase-C-Identität und die von WP-N14 geforderten
+Spalten. **Du brauchst keinen Netzwerk- oder Clusterzugriff** — fehlt dir etwas, melde `blocked`,
+statt dir einen Ersatz auszudenken.
 
 Zu testen sind mindestens: der Abbruch bei unvollständiger Eingabe, die Ablehnung einer
 Nicht-Phase-C-Identität, die Trennung der beiden Generalisierungsrichtungen, die Ungültigkeit einer
