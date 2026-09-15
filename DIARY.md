@@ -4,6 +4,54 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ---
 
+## 2026-09-15
+
+### WP-C5 — der Heartbeat-Leser haelt Neustarts aus, und zwei Defekte, die nur ein Lauf sichtbar macht
+
+<!-- 35366c3 -->
+
+**Die Sache selbst ist klein.** `read_heartbeat` trennt den JSONL-Strom jetzt an `start`-Ereignissen
+und wertet das letzte Segment mit Level-Ereignissen aus. Eine neu gestartete Zelle vermischt damit
+nicht mehr zwei Laeufe zu einer Verschwendungsmessung. Verworfene Segmente und Level-Ereignisse
+werden gezaehlt und erreichen `cell_wasted_levels.csv` und den WP-B1-Report.
+
+**Der Vorgang selbst ist der Eintrag wert.** Codex meldete `blocked` aus Umgebungsgrund — Julia
+startet in seiner Sitzung nicht —, die Implementierung sah statisch einwandfrei aus. Die Abnahme
+durch Claude brauchte danach **drei** weitere Arbeitspakete, und jedes hat einen echten Defekt
+gefunden:
+
+- **C5b:** Die Fixture-Suche lief rekursiv durch `outputs/` und brach an vier liegengebliebenen,
+  nicht lesbaren pytest-Verzeichnissen ab, bevor der erste `@test` erreicht war. Kein Produktfehler,
+  aber der Grund, warum der Test nie ein Ergebnis lieferte.
+- **C5c:** Beide Summen ueber verworfene Level-Ereignisse reduzierten ueber eine moeglicherweise
+  leere Sammlung. Bei **einem** Segment — dem Normalfall jeder bestehenden Record-Datei — wirft
+  Julia, statt null zu liefern. Der Analyzer waere auf allen 287 lokalen Zellen unbenutzbar gewesen.
+  Bezeichnend: die beiden Zwei-Segment-Testfaelle bestanden, gefallen sind die Ein-Segment-Faelle.
+  Der Fehler sass genau im ungetesteten Regelbetrieb.
+- **C5d:** Die Fixture-Hilfsfunktion kehrte mit `return` aus einem `do`-Block zurueck. In Julia ist
+  das eine anonyme Funktion — der Ablauf lief aus beiden `open`-Bloecken heraus und erreichte den
+  Fehlerpfad **unbedingt**. Die Funktion scheiterte bei jeder Eingabe, auch bei korrekter, und
+  meldete dabei eine Ursache, die nicht zutraf.
+
+**Was daraus folgt, ist keine Kritik an Codex, sondern eine Aussage ueber die Umgebung.** Alle drei
+Defekte sind ohne Ausfuehrung unsichtbar und statisch plausibel. Solange Codex in dieser Umgebung
+kein Julia starten kann, ist jedes `done` bei einem Julia-Paket eine Vermutung, und jede
+Verifikation kostet einen Rundlauf. Das ist der Preis, und er ist hier dreimal angefallen.
+
+**Abnahme:** 40 von 40 Pruefungen bestanden. Der Analyzer reproduziert `docs/WP-B1.md` mit **44 von
+44 Per-Cell-Zeilen identisch**; angehaengt sind nur die zwei neuen Spalten und drei beschreibende
+Zeilen. Keine entscheidungstragende Zahl bewegt sich — die Grundlage fuer „kein globales
+Level-Budget" bleibt unberuehrt.
+
+**Offen, und bewusst nicht mitgeloest:** die Kennung `WP-C5` ist **doppelt vergeben**. Es gibt
+bereits ein WP-C5 vom 2026-08-20 (Zweifelsband beim Stage-Cap), das `CLAUDE.md` unter „WP-C1 to
+WP-C5" zitiert. Die Kollision ist aelter als dieser Eintrag — am 2026-08-20 wurde deshalb schon
+eine zeitgestempelte Reportdatei angelegt, weil `docs/WP-C5.md` bereits existierte. Wer kuenftig
+`WP-C5` zitiert, muss das Datum dazusagen. Ebenfalls offen: die vier unlesbaren
+pytest-Verzeichnisse unter `outputs/` sind jetzt uebersprungen statt toedlich, aber nicht beseitigt.
+
+---
+
 ## 2026-09-14
 
 ### „Identische Trajektorien" waren nie identisch — und die zehnte Stelle entscheidet in vier Zellen
