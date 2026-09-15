@@ -1,4 +1,4 @@
 # Kein aktiver Task
 
-Das Pipeline-Audit laeuft im Chat; der naechste Codex-Auftrag folgt, sobald Schritt 1
-(Kampagnen-Image sichern) entschieden ist.
+Pipeline-Audit WP-CI1 bis WP-CI4 abgeschlossen. Offen und zurueckgestellt:
+WP-CI5 (Multi-Stage-Dockerfile, non-root) erst nach der Phase-C-Kampagne.

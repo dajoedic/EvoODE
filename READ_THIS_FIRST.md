@@ -10,7 +10,7 @@ zweites davon. Alles Dauerhafte gehört dorthin, nach `PAPER_1.md` oder ins `DIA
 **Regeln:** wird immer **vollständig überschrieben**, nie angehängt. Was älter als ein paar Tage
 ist, ist vermutlich falsch — dann gilt `CLAUDE.md`.
 
-**Stand: 2026-09-14, 15:45. HEAD siehe `git log -1`. Working Tree sauber.**
+**Stand: 2026-09-15. HEAD siehe `git log -1`. Working Tree sauber.**
 
 ---
 
@@ -105,6 +105,31 @@ schreibt keinen, und Claim D verlangt „by hash, not by assertion". Das Hash-Fo
 
 **Während des Laufs verboten:** irgendetwas an der eingefrorenen Konfiguration ändern. Eine
 Änderung erzwingt eine neue Experiment-Identität.
+
+### Das Pipeline-Audit vom 2026-09-15 — und warum es die Kampagne nicht berührt
+
+`.gitlab-ci.yml` und `containers/Dockerfile` wurden geändert (WP-CI1 bis WP-CI4, siehe
+`CHANGELOG.md`): Base-Images über den Harbor-Cache, `workflow: rules`, vier nicht blockierende
+Security-Jobs, plus der Ausnahmenkatalog nach §11.1 der SCCH-Pipeline-Policy.
+
+**Die laufende Kampagne ist davon nicht betroffen**, und zwar aus zwei voneinander unabhängigen
+Gründen: Das Job-Manifest pinnt einen festen Image-SHA, und ein Bau wird ohnehin nur durch einen
+Push nach **GitLab** ausgelöst — der letzte war `221a3a7` vom 14.09. Alles seither liegt nur auf
+GitHub.
+
+**Daraus folgt aber eine Vorsichtsregel:** Der nächste Push nach GitLab baut ein Image, das auf
+einem anderen Basis-Bezug beruht als das der laufenden Kampagne. Solange C-1+C-2 rechnet, nicht
+nach GitLab pushen — und wenn doch, das Kampagnen-Manifest nicht auf den neuen SHA umstellen.
+
+Die Wirksamkeit der Pipeline-Änderungen ist **ungeprüft**; sie zeigt sich erst beim ersten
+bewussten GitLab-Push. Zwei Fehlerarten wären dabei still: ein Tippfehler in `workflow: rules`
+(gar keine Pipeline) und ein unbekannter Component-Input (Include abgelehnt, ebenfalls keine
+Pipeline). Beide wurden statisch geprüft — Inputs gegen die Komponenten-Repositories, Auslöserwerte
+gegen die GitLab-Dokumentation —, aber statisch ist nicht gelaufen.
+
+**Offen, bewusst zurückgestellt:** §9.2, also Multi-Stage-Dockerfile und non-root. Das ist der
+einzige verbliebene mandatory-Punkt und fasst den Bauweg des Kampagnen-Images an — erst nach der
+Kampagne.
 
 ---
 
