@@ -1,4 +1,4 @@
-FROM julia:1.12.6-bookworm
+FROM registry.scch.at/cache/library/julia:1.12.6-bookworm
 
 ENV JULIA_NUM_THREADS=1 \
     OPENBLAS_NUM_THREADS=1 \
