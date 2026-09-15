@@ -103,16 +103,25 @@ first.
 Not an exception, because the policy is met as written. Stated because four green jobs suggest more
 coverage than exists:
 
-| Scanned | Not scanned |
-|---|---|
-| Debian base layer of the campaign image (`trivy-image`) | The 80 Julia source files |
-| Repository filesystem, secrets and misconfiguration (`trivy-fs`) | `Manifest.toml` and the Julia dependency graph |
-| `analysis/requirements.txt`, 6 pinned packages (`python-dependency-vuln`) | |
-| 43 Python files of the analysis pipeline (`bandit`) | |
+| Scanned for vulnerabilities | Listed but not scanned | Not covered |
+|---|---|---|
+| Debian base layer of the image (`trivy-image`) | `Manifest.toml` / `Project.toml` — Trivy parses them and resolves the Julia dependency tree | The 80 Julia source files: no SAST exists for Julia |
+| `analysis/requirements.txt`, 6 pinned packages (`python-dependency-vuln`) | | |
+| 43 Python files of the analysis pipeline (`bandit`) | | |
+| Repository secrets and misconfiguration (`trivy-fs`) | | |
 
-The catalog offers no Julia component, and Trivy has no Julia ecosystem support. The project's
-primary language is therefore covered by nothing. Reporting this to DevOps is more useful than
-working around it.
+**The Julia gap is an ecosystem gap, not a platform gap, and it is not closable here.** Trivy does
+support Julia — it parses `Manifest.toml` and `Project.toml` and produces a dependency listing. What
+does not exist is a *vulnerability advisory database* for Julia; Trivy's own coverage table shows a
+dash in the vulnerability column for Pkg.jl. No scanner anywhere can report Julia package
+vulnerabilities, because there is no advisory source to report from.
+
+The defensible position for any audit is therefore not "we are missing a scan" but: everything that
+can be scanned is scanned, and the primary language has no advisory database in existence. This
+needs no DevOps ticket — there is nothing for them to fix.
+
+Residual risk is low for a second reason worth stating: the image runs isolated batch compute on an
+internal cluster. It exposes no service, accepts no untrusted input, and is reachable from nothing.
 
 ### Open questions for DevOps
 
