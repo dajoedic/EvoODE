@@ -44,6 +44,16 @@ struct LevelEvent
     timestamp::DateTime
 end
 
+struct HeartbeatSegment
+    start_time::Union{Missing, DateTime}
+    levels::Vector{LevelEvent}
+    first_level_row::Any
+end
+
+function HeartbeatSegment(start_time = missing)
+    return HeartbeatSegment(start_time, LevelEvent[], nothing)
+end
+
 function parse_timestamp(text::AbstractString)
     s = replace(String(text), r"Z$" => "")
     if occursin('.', s)
@@ -96,9 +106,8 @@ function json_get(obj, key::Symbol, default = nothing)
 end
 
 function read_heartbeat(path::AbstractString)
-    levels = LevelEvent[]
-    start_time = missing
-    first_level_row = nothing
+    segments = HeartbeatSegment[]
+    current = HeartbeatSegment()
     malformed = 0
     open(path, "r") do io
         for line in eachline(io)
@@ -108,19 +117,46 @@ function read_heartbeat(path::AbstractString)
                 haskey(row, :timestamp) || continue
                 event = String(get(row, :event, ""))
                 if event == "start"
-                    start_time = parse_timestamp(String(row[:timestamp]))
+                    if !isempty(current.levels) || current.start_time !== missing
+                        push!(segments, current)
+                    end
+                    current = HeartbeatSegment(parse_timestamp(String(row[:timestamp])))
                 elseif event == "level"
-                    first_level_row === nothing && (first_level_row = row)
+                    current.first_level_row === nothing && (current = HeartbeatSegment(current.start_time, current.levels, row))
                     stage = haskey(row, :stage) && row[:stage] !== nothing ? Int(row[:stage]) : missing
-                    push!(levels, LevelEvent(Int(row[:level]), stage, Float64(row[:best_loss]), parse_timestamp(String(row[:timestamp]))))
+                    push!(current.levels, LevelEvent(Int(row[:level]), stage, Float64(row[:best_loss]), parse_timestamp(String(row[:timestamp]))))
                 end
             catch
                 malformed += 1
             end
         end
     end
+    if !isempty(current.levels) || current.start_time !== missing
+        push!(segments, current)
+    end
+
+    selected_index = findlast(segment -> !isempty(segment.levels), segments)
+    if selected_index === nothing
+        selected = HeartbeatSegment()
+        discarded_segments = length(segments)
+        discarded_level_events = sum((length(segment.levels) for segment in segments); init = 0)
+    else
+        selected = segments[selected_index]
+        discarded_segments = length(segments) - 1
+        discarded_level_events = sum(
+            (length(segment.levels) for (idx, segment) in enumerate(segments) if idx != selected_index);
+            init = 0,
+        )
+    end
+    levels = selected.levels
     sort!(levels; by = x -> x.level)
-    return start_time, levels, first_level_row, malformed
+    segment_info = (
+        total_segments = length(segments),
+        selected_segment = selected_index === nothing ? missing : selected_index,
+        discarded_segments = discarded_segments,
+        discarded_level_events = discarded_level_events,
+    )
+    return selected.start_time, levels, selected.first_level_row, malformed, segment_info
 end
 
 function load_system_maps()
@@ -378,7 +414,7 @@ function analyze()
         source_row = Dict("source" => source.label, "path" => source.root, "heartbeat_files" => length(paths), "records_read" => 0, "records_missing" => 0, "note" => note, "record_error" => "")
         push!(source_rows, source_row)
         for hb_path in paths
-            start_time, levels, first_level_row, malformed = read_heartbeat(hb_path)
+            start_time, levels, first_level_row, malformed, segment_info = read_heartbeat(hb_path)
             malformed_total += malformed
             isempty(levels) && continue
             record_path = replace(hb_path, ".heartbeat.jsonl" => ".jsonl")
@@ -438,6 +474,10 @@ function analyze()
                 "last_promille_improvement_level" => last_promille,
                 "small_change_tail_levels" => small_tail_levels,
                 "max_silent_pause_before_improvement" => max_pause,
+                "heartbeat_segments" => segment_info.total_segments,
+                "selected_heartbeat_segment" => segment_info.selected_segment,
+                "discarded_heartbeat_segments" => segment_info.discarded_segments,
+                "discarded_heartbeat_level_events" => segment_info.discarded_level_events,
                 "heartbeat_path" => hb_path,
             )
             push!(cell_rows, row)
@@ -492,7 +532,8 @@ function analyze()
         "final_loss", "last_improvement_level", "total_levels", "silent_tail_levels",
         "silent_tail_time_s", "total_heartbeat_time_s", "silent_tail_time_share",
         "last_promille_improvement_level", "small_change_tail_levels", "max_silent_pause_before_improvement",
-        "heartbeat_path",
+        "heartbeat_segments", "selected_heartbeat_segment", "discarded_heartbeat_segments",
+        "discarded_heartbeat_level_events", "heartbeat_path",
     ], cell_rows)
     write_csv(joinpath(OUTPUT_DIR, "breakdowns.csv"), [
         "split", "value", "n_cells", "mean_total_levels", "mean_silent_tail_levels",
@@ -532,6 +573,8 @@ function write_markdown_table(io, header, rows; limit = nothing)
 end
 
 function write_report(cell_rows, split_rows, hypothetic_rows, late_rows, source_rows, malformed_total)
+    discarded_segment_total = sum(Int(get(row, "discarded_heartbeat_segments", 0)) for row in cell_rows)
+    discarded_level_total = sum(Int(get(row, "discarded_heartbeat_level_events", 0)) for row in cell_rows)
     open(REPORT_PATH, "w") do io
         println(io, "# WP-B1 - Wasted Search Levels")
         println(io)
@@ -550,12 +593,15 @@ function write_report(cell_rows, split_rows, hypothetic_rows, late_rows, source_
         println(io, "- Silent tail time share: time from the last improving level timestamp to the last level timestamp, divided by time from the start heartbeat timestamp to the last level timestamp.")
         println(io, "- Last promille improvement level: last level whose strict decrease was at least `0.001 * previous_best_loss`; `small_change_tail_levels` is `total_levels - last_promille_improvement_level`.")
         println(io, "- Usable solution: cell record has no error and a finite `loss < 1e6`, matching the existing MSE sentinel convention.")
+        println(io, "- Heartbeat restart handling: the reader analyzes the last segment with at least one `level` event. Leading `level` events before any `start` form an implicit segment with a missing start timestamp, so a start-less stream is still analyzed instead of becoming an empty heartbeat. Empty trailing segments are counted as discarded segments with zero discarded level events.")
         println(io)
         println(io, "## Source coverage")
         write_markdown_table(io, ["source", "heartbeat_files", "records_read", "records_missing", "note", "record_error", "path"], source_rows)
         println(io)
         println(io, "- Cells with heartbeat data analyzed: $(length(cell_rows))")
         println(io, "- Malformed heartbeat lines skipped: $(malformed_total)")
+        println(io, "- Discarded heartbeat segments: $(discarded_segment_total)")
+        println(io, "- Discarded heartbeat level events: $(discarded_level_total)")
         println(io)
         println(io, "## Per-cell table")
         write_markdown_table(io, [
@@ -563,6 +609,7 @@ function write_report(cell_rows, split_rows, hypothetic_rows, late_rows, source_
             "variant", "initial_condition_set", "seed", "usable_solution", "final_loss",
             "last_improvement_level", "total_levels", "silent_tail_levels", "silent_tail_time_share",
             "last_promille_improvement_level", "small_change_tail_levels",
+            "discarded_heartbeat_segments", "discarded_heartbeat_level_events",
         ], cell_rows; limit = 80)
         println(io)
         println(io, "Full per-cell table has $(length(cell_rows)) rows in `cell_wasted_levels.csv`.")

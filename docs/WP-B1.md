@@ -15,6 +15,7 @@ Definitions:
 - Silent tail time share: time from the last improving level timestamp to the last level timestamp, divided by time from the start heartbeat timestamp to the last level timestamp.
 - Last promille improvement level: last level whose strict decrease was at least `0.001 * previous_best_loss`; `small_change_tail_levels` is `total_levels - last_promille_improvement_level`.
 - Usable solution: cell record has no error and a finite `loss < 1e6`, matching the existing MSE sentinel convention.
+- Heartbeat restart handling: the reader analyzes the last segment with at least one `level` event. Leading `level` events before any `start` form an implicit segment with a missing start timestamp, so a start-less stream is still analyzed instead of becoming an empty heartbeat. Empty trailing segments are counted as discarded segments with zero discarded level events.
 
 ## Source coverage
 | source | heartbeat_files | records_read | records_missing | note | record_error | path |
@@ -28,90 +29,92 @@ Definitions:
 
 - Cells with heartbeat data analyzed: 287
 - Malformed heartbeat lines skipped: 0
+- Discarded heartbeat segments: 0
+- Discarded heartbeat level events: 0
 
 ## Per-cell table
-| source | manifest_index | system_id | dimension_class | representability | pretune | variant | initial_condition_set | seed | usable_solution | final_loss | last_improvement_level | total_levels | silent_tail_levels | silent_tail_time_share | last_promille_improvement_level | small_change_tail_levels |
-|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
-| pilot_sweep_tasks | 139 | 24 | 2 | exact | pretune_on | evogrow_v2_2_stage_capped_pretune_on | 1 | 42 | true | 1.663e-14 | 1 | 1 | 0 | 0 | 1 | 0 |
-| pilot_sweep_tasks | 145 | 25 | 2 | exact | pretune_on | evogrow_v2_2_stage_capped_pretune_on | 1 | 42 | true | 7.436e-15 | 1 | 1 | 0 | 0 | 1 | 0 |
-| pilot_sweep_tasks | 151 | 26 | 2 | exact | pretune_on | evogrow_v2_2_stage_capped_pretune_on | 1 | 42 | true | 0.0002653 | 11 | 14 | 3 | 0.3489 | 11 | 3 |
-| pilot_sweep_tasks | 157 | 27 | 2 | exact | pretune_on | evogrow_v2_2_stage_capped_pretune_on | 1 | 42 | true | 4.208e-08 | 11 | 14 | 3 | 0.3484 | 11 | 3 |
-| pilot_sweep_tasks | 163 | 28 | 2 | exact | pretune_on | evogrow_v2_2_stage_capped_pretune_on | 1 | 42 | true | 0.002008 | 13 | 20 | 7 | 0.4029 | 13 | 7 |
-| pilot_sweep_tasks | 169 | 29 | 2 | exact | pretune_on | evogrow_v2_2_stage_capped_pretune_on | 1 | 42 | true | 0.000643 | 10 | 13 | 3 | 0.1933 | 10 | 3 |
-| pilot_sweep_tasks | 175 | 30 | 2 | surrogate | pretune_on | evogrow_v2_2_stage_capped_pretune_on | 1 | 42 | true | 0.0001885 | 1 | 20 | 19 | 0.8567 | 1 | 19 |
-| pilot_sweep_tasks | 181 | 31 | 2 | exact | pretune_on | evogrow_v2_2_stage_capped_pretune_on | 1 | 42 | true | 0.0001343 | 7 | 14 | 7 | 0.4795 | 7 | 7 |
-| pilot_sweep_tasks | 187 | 32 | 2 | exact | pretune_on | evogrow_v2_2_stage_capped_pretune_on | 1 | 42 | true | 0.2309 | 15 | 22 | 7 | 0.01319 | 15 | 7 |
-| pilot_sweep_tasks | 193 | 33 | 2 | surrogate | pretune_on | evogrow_v2_2_stage_capped_pretune_on | 1 | 42 | true | 0.08628 | 15 | 22 | 7 | 0.6137 | 15 | 7 |
-| pilot_sweep_tasks | 199 | 34 | 2 | surrogate | pretune_on | evogrow_v2_2_stage_capped_pretune_on | 1 | 42 | true | 0.002661 | 1 | 20 | 19 | 0.8531 | 1 | 19 |
-| pilot_sweep_tasks | 205 | 35 | 2 | surrogate | pretune_on | evogrow_v2_2_stage_capped_pretune_on | 1 | 42 | true | 0.5275 | 17 | 24 | 7 | 0.9481 | 17 | 7 |
-| pilot_sweep_tasks | 211 | 36 | 2 | surrogate | pretune_on | evogrow_v2_2_stage_capped_pretune_on | 1 | 42 | true | 1.207e-05 | 1 | 20 | 19 | 0.4452 | 1 | 19 |
-| pilot_sweep_tasks | 217 | 37 | 2 | surrogate | pretune_on | evogrow_v2_2_stage_capped_pretune_on | 1 | 42 | true | 0.02342 | 21 | 24 | 3 | 0.3144 | 21 | 3 |
-| pilot_sweep_tasks | 223 | 38 | 2 | exact | pretune_on | evogrow_v2_2_stage_capped_pretune_on | 1 | 42 | true | 6.978e-12 | 17 | 17 | 0 | 0 | 17 | 0 |
-| pilot_sweep_tasks | 229 | 39 | 2 | surrogate | pretune_on | evogrow_v2_2_stage_capped_pretune_on | 1 | 42 | true | 0.0004844 | 1 | 20 | 19 | 0.6515 | 1 | 19 |
-| pilot_sweep_tasks | 235 | 40 | 2 | surrogate | pretune_on | evogrow_v2_2_stage_capped_pretune_on | 1 | 42 | true | 0.06465 | 15 | 22 | 7 | 0.3652 | 15 | 7 |
-| pilot_sweep_tasks | 241 | 41 | 2 | surrogate | pretune_on | evogrow_v2_2_stage_capped_pretune_on | 1 | 42 | true | 0.0135 | 14 | 21 | 7 | 0.6703 | 14 | 7 |
-| pilot_sweep_tasks | 247 | 42 | 2 | surrogate | pretune_on | evogrow_v2_2_stage_capped_pretune_on | 1 | 42 | true | 0.1862 | 19 | 26 | 7 | 0.5472 | 19 | 7 |
-| pilot_sweep_tasks | 253 | 43 | 2 | surrogate | pretune_on | evogrow_v2_2_stage_capped_pretune_on | 1 | 42 | true | 0.0193 | 16 | 23 | 7 | 0.2049 | 16 | 7 |
-| pilot_sweep_tasks | 259 | 44 | 2 | surrogate | pretune_on | evogrow_v2_2_stage_capped_pretune_on | 1 | 42 | true | 0.1869 | 19 | 22 | 3 | 0.06661 | 19 | 3 |
-| pilot_sweep_tasks | 265 | 45 | 2 | surrogate | pretune_on | evogrow_v2_2_stage_capped_pretune_on | 1 | 42 | true | 0.0003359 | 16 | 22 | 6 | 0.28 | 16 | 6 |
-| pilot_sweep_tasks | 271 | 46 | 2 | surrogate | pretune_on | evogrow_v2_2_stage_capped_pretune_on | 1 | 42 | true | 0.0004474 | 1 | 20 | 19 | 0.4827 | 1 | 19 |
-| pilot_sweep_tasks | 277 | 47 | 2 | surrogate | pretune_on | evogrow_v2_2_stage_capped_pretune_on | 1 | 42 | true | 0.0004524 | 2 | 21 | 19 | 0.553 | 2 | 19 |
-| pilot_sweep_tasks | 283 | 48 | 2 | surrogate | pretune_on | evogrow_v2_2_stage_capped_pretune_on | 1 | 42 | true | 0.05375 | 18 | 25 | 7 | 0.2908 | 18 | 7 |
-| pilot_sweep_tasks | 289 | 49 | 2 | surrogate | pretune_on | evogrow_v2_2_stage_capped_pretune_on | 1 | 42 | true | 0.008834 | 17 | 24 | 7 | 0.97 | 17 | 7 |
-| pilot_sweep_tasks | 295 | 50 | 2 | surrogate | pretune_on | evogrow_v2_2_stage_capped_pretune_on | 1 | 42 | true | 0.3953 | 15 | 22 | 7 | 0.6189 | 15 | 7 |
-| pilot_sweep_tasks | 301 | 51 | 2 | surrogate | pretune_on | evogrow_v2_2_stage_capped_pretune_on | 1 | 42 | true | 0.01211 | 21 | 24 | 3 | 0.08577 | 21 | 3 |
-| pilot_sweep3_tasks | 307 | 52 | 3 | surrogate | pretune_on | evogrow_v2_2_stage_capped_pretune_on | 1 | 42 | true | 0.0002648 | 15 | 21 | 6 | 0.1151 | 15 | 6 |
-| pilot_sweep3_tasks | 313 | 53 | 3 | surrogate | pretune_on | evogrow_v2_2_stage_capped_pretune_on | 1 | 42 | true | 0.000385 | 4 | 23 | 19 | 0.9864 | 4 | 19 |
-| pilot_sweep3_tasks | 319 | 54 | 3 | exact | pretune_on | evogrow_v2_2_stage_capped_pretune_on | 1 | 42 | true | 0.001037 | 18 | 29 | 11 | 0.5841 | 18 | 11 |
-| pilot_sweep3_tasks | 325 | 55 | 3 | exact | pretune_on | evogrow_v2_2_stage_capped_pretune_on | 1 | 42 | true | 311.9 | 23 | 30 | 7 | 0.2935 | 23 | 7 |
-| pilot_sweep3_tasks | 331 | 56 | 3 | exact | pretune_on | evogrow_v2_2_stage_capped_pretune_on | 1 | 42 | true | 44.51 | 30 | 30 | 0 | 0 | 30 | 0 |
-| pilot_sweep3_tasks | 337 | 57 | 3 | surrogate | pretune_on | evogrow_v2_2_stage_capped_pretune_on | 1 | 42 | true | 0.001284 | 2 | 21 | 19 | 0.9258 | 2 | 19 |
-| pilot_sweep3_tasks | 343 | 58 | 3 | surrogate | pretune_on | evogrow_v2_2_stage_capped_pretune_on | 1 | 42 | true | 0.04129 | 18 | 30 | 12 | 0.3344 | 18 | 12 |
-| pilot_sweep3_tasks | 349 | 59 | 3 | surrogate | pretune_on | evogrow_v2_2_stage_capped_pretune_on | 1 | 42 | true | 1.541 | 20 | 30 | 10 | 0.7645 | 20 | 10 |
-| pilot_sweep3_tasks | 355 | 60 | 3 | surrogate | pretune_on | evogrow_v2_2_stage_capped_pretune_on | 1 | 42 | true | 0.163 | 4 | 23 | 19 | 0.9975 | 4 | 19 |
-| pilot_sweep3_tasks | 361 | 61 | 3 | exact | pretune_on | evogrow_v2_2_stage_capped_pretune_on | 1 | 42 | true | 63.11 | 14 | 17 | 3 | 0.5738 | 14 | 3 |
-| pilot_e20af80 | 139 | 24 | 2 | exact | pretune_on | evogrow_v2_2_stage_capped_pretune_on | 1 | 42 | true | 1.663e-14 | 1 | 1 | 0 | 0 | 1 | 0 |
-| pilot_e20af80 | 140 | 24 | 2 | exact | pretune_on | evogrow_v2_2_stage_capped_pretune_on | 1 | 123 | true | 1.663e-14 | 1 | 1 | 0 | 0 | 1 | 0 |
-| pilot_e20af80 | 307 | 52 | 3 | surrogate | pretune_on | evogrow_v2_2_stage_capped_pretune_on | 1 | 42 | true | 0.0002648 | 15 | 21 | 6 | 0.1151 | 15 | 6 |
-| pilot_e20af80 | 308 | 52 | 3 | surrogate | pretune_on | evogrow_v2_2_stage_capped_pretune_on | 1 | 123 | true | 0.0002648 | 17 | 21 | 4 | 0.1508 | 17 | 4 |
-| pilot_e20af80 | 367 | 62 | 4 | surrogate | pretune_on | evogrow_v2_2_stage_capped_pretune_on | 1 | 42 | true | 4.646e-05 | 8 | 27 | 19 | 0.7965 | 8 | 19 |
-| pilot_e20af80 | 368 | 62 | 4 | surrogate | pretune_on | evogrow_v2_2_stage_capped_pretune_on | 1 | 123 | true | 2.017e-05 | 6 | 25 | 19 | 0.5492 | 6 | 19 |
-| pretune_off_probe | 709 | 56 | 3 | exact | pretune_off | evogrow_v2_2_stage_capped_pretune_off | 1 | 42 | true | 53.59 | 29 | 30 | 1 | 0.09817 | 29 | 1 |
-| pretune_off_probe | 727 | 59 | 3 | surrogate | pretune_off | evogrow_v2_2_stage_capped_pretune_off | 1 | 42 | true | 4.082 | 21 | 30 | 9 | 0.6222 | 21 | 9 |
-| pretune_off_probe | 739 | 61 | 3 | exact | pretune_off | evogrow_v2_2_stage_capped_pretune_off | 1 | 42 | true | 100.8 | 21 | 24 | 3 | 0.09226 | 21 | 3 |
-| regression_88eaeb6f | 1 | 3 | 1 | exact | pretune_off | evogrow_v2_2_stage_local | 1 | 42 | true | 4.922e-10 | 5 | 5 | 0 | 0 | 5 | 0 |
-| regression_88eaeb6f | 2 | 3 | 1 | exact | pretune_off | evogrow_v2_2_stage_local | 1 | 123 | true | 2.9e-10 | 5 | 5 | 0 | 0 | 5 | 0 |
-| regression_88eaeb6f | 3 | 3 | 1 | exact | pretune_off | evogrow_v2_2_stage_local | 1 | 7 | true | 1.064e-09 | 6 | 6 | 0 | 0 | 6 | 0 |
-| regression_88eaeb6f | 4 | 3 | 1 | exact | pretune_off | evogrow_v2_2_stage_local | 2 | 42 | true | 8.997e-09 | 7 | 7 | 0 | 0 | 7 | 0 |
-| regression_88eaeb6f | 5 | 3 | 1 | exact | pretune_off | evogrow_v2_2_stage_local | 2 | 123 | true | 9.715e-09 | 7 | 7 | 0 | 0 | 7 | 0 |
-| regression_88eaeb6f | 6 | 3 | 1 | exact | pretune_off | evogrow_v2_2_stage_local | 2 | 7 | true | 3.573e-09 | 8 | 8 | 0 | 0 | 8 | 0 |
-| regression_88eaeb6f | 7 | 11 | 1 | exact | pretune_off | evogrow_v2_2_stage_local | 1 | 42 | true | 4.67e-15 | 14 | 14 | 0 | 0 | 14 | 0 |
-| regression_88eaeb6f | 8 | 11 | 1 | exact | pretune_off | evogrow_v2_2_stage_local | 1 | 123 | true | 4.652e-15 | 13 | 13 | 0 | 0 | 13 | 0 |
-| regression_88eaeb6f | 9 | 11 | 1 | exact | pretune_off | evogrow_v2_2_stage_local | 1 | 7 | true | 4.594e-15 | 13 | 13 | 0 | 0 | 13 | 0 |
-| regression_88eaeb6f | 10 | 11 | 1 | exact | pretune_off | evogrow_v2_2_stage_local | 2 | 42 | true | 0.0005727 | 6 | 20 | 14 | 0.5802 | 5 | 15 |
-| regression_88eaeb6f | 11 | 11 | 1 | exact | pretune_off | evogrow_v2_2_stage_local | 2 | 123 | true | 0.0005727 | 12 | 20 | 8 | 0.4831 | 5 | 15 |
-| regression_88eaeb6f | 12 | 11 | 1 | exact | pretune_off | evogrow_v2_2_stage_local | 2 | 7 | true | 0.0005727 | 8 | 20 | 12 | 0.373 | 5 | 15 |
-| regression_88eaeb6f | 13 | 26 | 2 | exact | pretune_off | evogrow_v2_2_stage_local | 1 | 42 | true | 0.001396 | 12 | 23 | 11 | 0.95 | 12 | 11 |
-| regression_88eaeb6f | 14 | 26 | 2 | exact | pretune_off | evogrow_v2_2_stage_local | 1 | 123 | true | 0.0002558 | 13 | 27 | 14 | 0.9415 | 13 | 14 |
-| regression_88eaeb6f | 15 | 26 | 2 | exact | pretune_off | evogrow_v2_2_stage_local | 1 | 7 | true | 0.0002558 | 13 | 24 | 11 | 0.8362 | 13 | 11 |
-| regression_88eaeb6f | 16 | 26 | 2 | exact | pretune_off | evogrow_v2_2_stage_local | 2 | 42 | true | 0.0002211 | 11 | 22 | 11 | 0.8235 | 11 | 11 |
-| regression_88eaeb6f | 17 | 26 | 2 | exact | pretune_off | evogrow_v2_2_stage_local | 2 | 123 | true | 0.0005089 | 8 | 24 | 16 | 0.9288 | 8 | 16 |
-| regression_88eaeb6f | 18 | 26 | 2 | exact | pretune_off | evogrow_v2_2_stage_local | 2 | 7 | true | 0.0005089 | 8 | 23 | 15 | 0.9125 | 8 | 15 |
-| regression_88eaeb6f | 19 | 31 | 2 | exact | pretune_off | evogrow_v2_2_stage_local | 1 | 42 | true | 9.47e-05 | 9 | 24 | 15 | 0.7981 | 9 | 15 |
-| regression_88eaeb6f | 20 | 31 | 2 | exact | pretune_off | evogrow_v2_2_stage_local | 1 | 123 | true | 0.0001322 | 13 | 22 | 9 | 0.8327 | 12 | 10 |
-| regression_88eaeb6f | 21 | 31 | 2 | exact | pretune_off | evogrow_v2_2_stage_local | 1 | 7 | true | 0.0001343 | 10 | 25 | 15 | 0.8233 | 10 | 15 |
-| regression_88eaeb6f | 22 | 31 | 2 | exact | pretune_off | evogrow_v2_2_stage_local | 2 | 42 | true | 1.996e-11 | 13 | 13 | 0 | 0 | 13 | 0 |
-| regression_88eaeb6f | 23 | 31 | 2 | exact | pretune_off | evogrow_v2_2_stage_local | 2 | 123 | true | 1.999e-11 | 11 | 11 | 0 | 0 | 11 | 0 |
-| regression_88eaeb6f | 24 | 31 | 2 | exact | pretune_off | evogrow_v2_2_stage_local | 2 | 7 | true | 1.972e-11 | 11 | 11 | 0 | 0 | 11 | 0 |
-| regression_88eaeb6f | 25 | 63 | 4 | exact | pretune_off | evogrow_v2_2_stage_local | 1 | 42 | true | 0.0007887 | 1 | 20 | 19 | 0.9729 | 1 | 19 |
-| regression_88eaeb6f | 26 | 63 | 4 | exact | pretune_off | evogrow_v2_2_stage_local | 1 | 123 | true | 0.0006022 | 1 | 20 | 19 | 0.9925 | 1 | 19 |
-| regression_88eaeb6f | 27 | 63 | 4 | exact | pretune_off | evogrow_v2_2_stage_local | 1 | 7 | true | 0.001469 | 1 | 20 | 19 | 0.9917 | 1 | 19 |
-| regression_88eaeb6f | 28 | 63 | 4 | exact | pretune_off | evogrow_v2_2_stage_local | 2 | 42 | true | 0.0004661 | 1 | 20 | 19 | 0.9859 | 1 | 19 |
-| regression_88eaeb6f | 29 | 63 | 4 | exact | pretune_off | evogrow_v2_2_stage_local | 2 | 123 | true | 0.0004742 | 1 | 20 | 19 | 0.9709 | 1 | 19 |
-| regression_88eaeb6f | 30 | 63 | 4 | exact | pretune_off | evogrow_v2_2_stage_local | 2 | 7 | true | 0.0006 | 1 | 20 | 19 | 0.9383 | 1 | 19 |
-| regression_88eaeb6f | 31 | 3 | 1 | exact | pretune_off | evogrow_v3 | 1 | 42 | true | 4.922e-10 | 5 | 5 | 0 | 0 | 5 | 0 |
-| regression_88eaeb6f | 32 | 3 | 1 | exact | pretune_off | evogrow_v3 | 1 | 123 | true | 2.9e-10 | 5 | 5 | 0 | 0 | 5 | 0 |
-| regression_88eaeb6f | 33 | 3 | 1 | exact | pretune_off | evogrow_v3 | 1 | 7 | true | 1.064e-09 | 6 | 6 | 0 | 0 | 6 | 0 |
+| source | manifest_index | system_id | dimension_class | representability | pretune | variant | initial_condition_set | seed | usable_solution | final_loss | last_improvement_level | total_levels | silent_tail_levels | silent_tail_time_share | last_promille_improvement_level | small_change_tail_levels | discarded_heartbeat_segments | discarded_heartbeat_level_events |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| pilot_sweep_tasks | 139 | 24 | 2 | exact | pretune_on | evogrow_v2_2_stage_capped_pretune_on | 1 | 42 | true | 1.663e-14 | 1 | 1 | 0 | 0 | 1 | 0 | 0 | 0 |
+| pilot_sweep_tasks | 145 | 25 | 2 | exact | pretune_on | evogrow_v2_2_stage_capped_pretune_on | 1 | 42 | true | 7.436e-15 | 1 | 1 | 0 | 0 | 1 | 0 | 0 | 0 |
+| pilot_sweep_tasks | 151 | 26 | 2 | exact | pretune_on | evogrow_v2_2_stage_capped_pretune_on | 1 | 42 | true | 0.0002653 | 11 | 14 | 3 | 0.3489 | 11 | 3 | 0 | 0 |
+| pilot_sweep_tasks | 157 | 27 | 2 | exact | pretune_on | evogrow_v2_2_stage_capped_pretune_on | 1 | 42 | true | 4.208e-08 | 11 | 14 | 3 | 0.3484 | 11 | 3 | 0 | 0 |
+| pilot_sweep_tasks | 163 | 28 | 2 | exact | pretune_on | evogrow_v2_2_stage_capped_pretune_on | 1 | 42 | true | 0.002008 | 13 | 20 | 7 | 0.4029 | 13 | 7 | 0 | 0 |
+| pilot_sweep_tasks | 169 | 29 | 2 | exact | pretune_on | evogrow_v2_2_stage_capped_pretune_on | 1 | 42 | true | 0.000643 | 10 | 13 | 3 | 0.1933 | 10 | 3 | 0 | 0 |
+| pilot_sweep_tasks | 175 | 30 | 2 | surrogate | pretune_on | evogrow_v2_2_stage_capped_pretune_on | 1 | 42 | true | 0.0001885 | 1 | 20 | 19 | 0.8567 | 1 | 19 | 0 | 0 |
+| pilot_sweep_tasks | 181 | 31 | 2 | exact | pretune_on | evogrow_v2_2_stage_capped_pretune_on | 1 | 42 | true | 0.0001343 | 7 | 14 | 7 | 0.4795 | 7 | 7 | 0 | 0 |
+| pilot_sweep_tasks | 187 | 32 | 2 | exact | pretune_on | evogrow_v2_2_stage_capped_pretune_on | 1 | 42 | true | 0.2309 | 15 | 22 | 7 | 0.01319 | 15 | 7 | 0 | 0 |
+| pilot_sweep_tasks | 193 | 33 | 2 | surrogate | pretune_on | evogrow_v2_2_stage_capped_pretune_on | 1 | 42 | true | 0.08628 | 15 | 22 | 7 | 0.6137 | 15 | 7 | 0 | 0 |
+| pilot_sweep_tasks | 199 | 34 | 2 | surrogate | pretune_on | evogrow_v2_2_stage_capped_pretune_on | 1 | 42 | true | 0.002661 | 1 | 20 | 19 | 0.8531 | 1 | 19 | 0 | 0 |
+| pilot_sweep_tasks | 205 | 35 | 2 | surrogate | pretune_on | evogrow_v2_2_stage_capped_pretune_on | 1 | 42 | true | 0.5275 | 17 | 24 | 7 | 0.9481 | 17 | 7 | 0 | 0 |
+| pilot_sweep_tasks | 211 | 36 | 2 | surrogate | pretune_on | evogrow_v2_2_stage_capped_pretune_on | 1 | 42 | true | 1.207e-05 | 1 | 20 | 19 | 0.4452 | 1 | 19 | 0 | 0 |
+| pilot_sweep_tasks | 217 | 37 | 2 | surrogate | pretune_on | evogrow_v2_2_stage_capped_pretune_on | 1 | 42 | true | 0.02342 | 21 | 24 | 3 | 0.3144 | 21 | 3 | 0 | 0 |
+| pilot_sweep_tasks | 223 | 38 | 2 | exact | pretune_on | evogrow_v2_2_stage_capped_pretune_on | 1 | 42 | true | 6.978e-12 | 17 | 17 | 0 | 0 | 17 | 0 | 0 | 0 |
+| pilot_sweep_tasks | 229 | 39 | 2 | surrogate | pretune_on | evogrow_v2_2_stage_capped_pretune_on | 1 | 42 | true | 0.0004844 | 1 | 20 | 19 | 0.6515 | 1 | 19 | 0 | 0 |
+| pilot_sweep_tasks | 235 | 40 | 2 | surrogate | pretune_on | evogrow_v2_2_stage_capped_pretune_on | 1 | 42 | true | 0.06465 | 15 | 22 | 7 | 0.3652 | 15 | 7 | 0 | 0 |
+| pilot_sweep_tasks | 241 | 41 | 2 | surrogate | pretune_on | evogrow_v2_2_stage_capped_pretune_on | 1 | 42 | true | 0.0135 | 14 | 21 | 7 | 0.6703 | 14 | 7 | 0 | 0 |
+| pilot_sweep_tasks | 247 | 42 | 2 | surrogate | pretune_on | evogrow_v2_2_stage_capped_pretune_on | 1 | 42 | true | 0.1862 | 19 | 26 | 7 | 0.5472 | 19 | 7 | 0 | 0 |
+| pilot_sweep_tasks | 253 | 43 | 2 | surrogate | pretune_on | evogrow_v2_2_stage_capped_pretune_on | 1 | 42 | true | 0.0193 | 16 | 23 | 7 | 0.2049 | 16 | 7 | 0 | 0 |
+| pilot_sweep_tasks | 259 | 44 | 2 | surrogate | pretune_on | evogrow_v2_2_stage_capped_pretune_on | 1 | 42 | true | 0.1869 | 19 | 22 | 3 | 0.06661 | 19 | 3 | 0 | 0 |
+| pilot_sweep_tasks | 265 | 45 | 2 | surrogate | pretune_on | evogrow_v2_2_stage_capped_pretune_on | 1 | 42 | true | 0.0003359 | 16 | 22 | 6 | 0.28 | 16 | 6 | 0 | 0 |
+| pilot_sweep_tasks | 271 | 46 | 2 | surrogate | pretune_on | evogrow_v2_2_stage_capped_pretune_on | 1 | 42 | true | 0.0004474 | 1 | 20 | 19 | 0.4827 | 1 | 19 | 0 | 0 |
+| pilot_sweep_tasks | 277 | 47 | 2 | surrogate | pretune_on | evogrow_v2_2_stage_capped_pretune_on | 1 | 42 | true | 0.0004524 | 2 | 21 | 19 | 0.553 | 2 | 19 | 0 | 0 |
+| pilot_sweep_tasks | 283 | 48 | 2 | surrogate | pretune_on | evogrow_v2_2_stage_capped_pretune_on | 1 | 42 | true | 0.05375 | 18 | 25 | 7 | 0.2908 | 18 | 7 | 0 | 0 |
+| pilot_sweep_tasks | 289 | 49 | 2 | surrogate | pretune_on | evogrow_v2_2_stage_capped_pretune_on | 1 | 42 | true | 0.008834 | 17 | 24 | 7 | 0.97 | 17 | 7 | 0 | 0 |
+| pilot_sweep_tasks | 295 | 50 | 2 | surrogate | pretune_on | evogrow_v2_2_stage_capped_pretune_on | 1 | 42 | true | 0.3953 | 15 | 22 | 7 | 0.6189 | 15 | 7 | 0 | 0 |
+| pilot_sweep_tasks | 301 | 51 | 2 | surrogate | pretune_on | evogrow_v2_2_stage_capped_pretune_on | 1 | 42 | true | 0.01211 | 21 | 24 | 3 | 0.08577 | 21 | 3 | 0 | 0 |
+| pilot_sweep3_tasks | 307 | 52 | 3 | surrogate | pretune_on | evogrow_v2_2_stage_capped_pretune_on | 1 | 42 | true | 0.0002648 | 15 | 21 | 6 | 0.1151 | 15 | 6 | 0 | 0 |
+| pilot_sweep3_tasks | 313 | 53 | 3 | surrogate | pretune_on | evogrow_v2_2_stage_capped_pretune_on | 1 | 42 | true | 0.000385 | 4 | 23 | 19 | 0.9864 | 4 | 19 | 0 | 0 |
+| pilot_sweep3_tasks | 319 | 54 | 3 | exact | pretune_on | evogrow_v2_2_stage_capped_pretune_on | 1 | 42 | true | 0.001037 | 18 | 29 | 11 | 0.5841 | 18 | 11 | 0 | 0 |
+| pilot_sweep3_tasks | 325 | 55 | 3 | exact | pretune_on | evogrow_v2_2_stage_capped_pretune_on | 1 | 42 | true | 311.9 | 23 | 30 | 7 | 0.2935 | 23 | 7 | 0 | 0 |
+| pilot_sweep3_tasks | 331 | 56 | 3 | exact | pretune_on | evogrow_v2_2_stage_capped_pretune_on | 1 | 42 | true | 44.51 | 30 | 30 | 0 | 0 | 30 | 0 | 0 | 0 |
+| pilot_sweep3_tasks | 337 | 57 | 3 | surrogate | pretune_on | evogrow_v2_2_stage_capped_pretune_on | 1 | 42 | true | 0.001284 | 2 | 21 | 19 | 0.9258 | 2 | 19 | 0 | 0 |
+| pilot_sweep3_tasks | 343 | 58 | 3 | surrogate | pretune_on | evogrow_v2_2_stage_capped_pretune_on | 1 | 42 | true | 0.04129 | 18 | 30 | 12 | 0.3344 | 18 | 12 | 0 | 0 |
+| pilot_sweep3_tasks | 349 | 59 | 3 | surrogate | pretune_on | evogrow_v2_2_stage_capped_pretune_on | 1 | 42 | true | 1.541 | 20 | 30 | 10 | 0.7645 | 20 | 10 | 0 | 0 |
+| pilot_sweep3_tasks | 355 | 60 | 3 | surrogate | pretune_on | evogrow_v2_2_stage_capped_pretune_on | 1 | 42 | true | 0.163 | 4 | 23 | 19 | 0.9975 | 4 | 19 | 0 | 0 |
+| pilot_sweep3_tasks | 361 | 61 | 3 | exact | pretune_on | evogrow_v2_2_stage_capped_pretune_on | 1 | 42 | true | 63.11 | 14 | 17 | 3 | 0.5738 | 14 | 3 | 0 | 0 |
+| pilot_e20af80 | 139 | 24 | 2 | exact | pretune_on | evogrow_v2_2_stage_capped_pretune_on | 1 | 42 | true | 1.663e-14 | 1 | 1 | 0 | 0 | 1 | 0 | 0 | 0 |
+| pilot_e20af80 | 140 | 24 | 2 | exact | pretune_on | evogrow_v2_2_stage_capped_pretune_on | 1 | 123 | true | 1.663e-14 | 1 | 1 | 0 | 0 | 1 | 0 | 0 | 0 |
+| pilot_e20af80 | 307 | 52 | 3 | surrogate | pretune_on | evogrow_v2_2_stage_capped_pretune_on | 1 | 42 | true | 0.0002648 | 15 | 21 | 6 | 0.1151 | 15 | 6 | 0 | 0 |
+| pilot_e20af80 | 308 | 52 | 3 | surrogate | pretune_on | evogrow_v2_2_stage_capped_pretune_on | 1 | 123 | true | 0.0002648 | 17 | 21 | 4 | 0.1508 | 17 | 4 | 0 | 0 |
+| pilot_e20af80 | 367 | 62 | 4 | surrogate | pretune_on | evogrow_v2_2_stage_capped_pretune_on | 1 | 42 | true | 4.646e-05 | 8 | 27 | 19 | 0.7965 | 8 | 19 | 0 | 0 |
+| pilot_e20af80 | 368 | 62 | 4 | surrogate | pretune_on | evogrow_v2_2_stage_capped_pretune_on | 1 | 123 | true | 2.017e-05 | 6 | 25 | 19 | 0.5492 | 6 | 19 | 0 | 0 |
+| pretune_off_probe | 709 | 56 | 3 | exact | pretune_off | evogrow_v2_2_stage_capped_pretune_off | 1 | 42 | true | 53.59 | 29 | 30 | 1 | 0.09817 | 29 | 1 | 0 | 0 |
+| pretune_off_probe | 727 | 59 | 3 | surrogate | pretune_off | evogrow_v2_2_stage_capped_pretune_off | 1 | 42 | true | 4.082 | 21 | 30 | 9 | 0.6222 | 21 | 9 | 0 | 0 |
+| pretune_off_probe | 739 | 61 | 3 | exact | pretune_off | evogrow_v2_2_stage_capped_pretune_off | 1 | 42 | true | 100.8 | 21 | 24 | 3 | 0.09226 | 21 | 3 | 0 | 0 |
+| regression_88eaeb6f | 1 | 3 | 1 | exact | pretune_off | evogrow_v2_2_stage_local | 1 | 42 | true | 4.922e-10 | 5 | 5 | 0 | 0 | 5 | 0 | 0 | 0 |
+| regression_88eaeb6f | 2 | 3 | 1 | exact | pretune_off | evogrow_v2_2_stage_local | 1 | 123 | true | 2.9e-10 | 5 | 5 | 0 | 0 | 5 | 0 | 0 | 0 |
+| regression_88eaeb6f | 3 | 3 | 1 | exact | pretune_off | evogrow_v2_2_stage_local | 1 | 7 | true | 1.064e-09 | 6 | 6 | 0 | 0 | 6 | 0 | 0 | 0 |
+| regression_88eaeb6f | 4 | 3 | 1 | exact | pretune_off | evogrow_v2_2_stage_local | 2 | 42 | true | 8.997e-09 | 7 | 7 | 0 | 0 | 7 | 0 | 0 | 0 |
+| regression_88eaeb6f | 5 | 3 | 1 | exact | pretune_off | evogrow_v2_2_stage_local | 2 | 123 | true | 9.715e-09 | 7 | 7 | 0 | 0 | 7 | 0 | 0 | 0 |
+| regression_88eaeb6f | 6 | 3 | 1 | exact | pretune_off | evogrow_v2_2_stage_local | 2 | 7 | true | 3.573e-09 | 8 | 8 | 0 | 0 | 8 | 0 | 0 | 0 |
+| regression_88eaeb6f | 7 | 11 | 1 | exact | pretune_off | evogrow_v2_2_stage_local | 1 | 42 | true | 4.67e-15 | 14 | 14 | 0 | 0 | 14 | 0 | 0 | 0 |
+| regression_88eaeb6f | 8 | 11 | 1 | exact | pretune_off | evogrow_v2_2_stage_local | 1 | 123 | true | 4.652e-15 | 13 | 13 | 0 | 0 | 13 | 0 | 0 | 0 |
+| regression_88eaeb6f | 9 | 11 | 1 | exact | pretune_off | evogrow_v2_2_stage_local | 1 | 7 | true | 4.594e-15 | 13 | 13 | 0 | 0 | 13 | 0 | 0 | 0 |
+| regression_88eaeb6f | 10 | 11 | 1 | exact | pretune_off | evogrow_v2_2_stage_local | 2 | 42 | true | 0.0005727 | 6 | 20 | 14 | 0.5802 | 5 | 15 | 0 | 0 |
+| regression_88eaeb6f | 11 | 11 | 1 | exact | pretune_off | evogrow_v2_2_stage_local | 2 | 123 | true | 0.0005727 | 12 | 20 | 8 | 0.4831 | 5 | 15 | 0 | 0 |
+| regression_88eaeb6f | 12 | 11 | 1 | exact | pretune_off | evogrow_v2_2_stage_local | 2 | 7 | true | 0.0005727 | 8 | 20 | 12 | 0.373 | 5 | 15 | 0 | 0 |
+| regression_88eaeb6f | 13 | 26 | 2 | exact | pretune_off | evogrow_v2_2_stage_local | 1 | 42 | true | 0.001396 | 12 | 23 | 11 | 0.95 | 12 | 11 | 0 | 0 |
+| regression_88eaeb6f | 14 | 26 | 2 | exact | pretune_off | evogrow_v2_2_stage_local | 1 | 123 | true | 0.0002558 | 13 | 27 | 14 | 0.9415 | 13 | 14 | 0 | 0 |
+| regression_88eaeb6f | 15 | 26 | 2 | exact | pretune_off | evogrow_v2_2_stage_local | 1 | 7 | true | 0.0002558 | 13 | 24 | 11 | 0.8362 | 13 | 11 | 0 | 0 |
+| regression_88eaeb6f | 16 | 26 | 2 | exact | pretune_off | evogrow_v2_2_stage_local | 2 | 42 | true | 0.0002211 | 11 | 22 | 11 | 0.8235 | 11 | 11 | 0 | 0 |
+| regression_88eaeb6f | 17 | 26 | 2 | exact | pretune_off | evogrow_v2_2_stage_local | 2 | 123 | true | 0.0005089 | 8 | 24 | 16 | 0.9288 | 8 | 16 | 0 | 0 |
+| regression_88eaeb6f | 18 | 26 | 2 | exact | pretune_off | evogrow_v2_2_stage_local | 2 | 7 | true | 0.0005089 | 8 | 23 | 15 | 0.9125 | 8 | 15 | 0 | 0 |
+| regression_88eaeb6f | 19 | 31 | 2 | exact | pretune_off | evogrow_v2_2_stage_local | 1 | 42 | true | 9.47e-05 | 9 | 24 | 15 | 0.7981 | 9 | 15 | 0 | 0 |
+| regression_88eaeb6f | 20 | 31 | 2 | exact | pretune_off | evogrow_v2_2_stage_local | 1 | 123 | true | 0.0001322 | 13 | 22 | 9 | 0.8327 | 12 | 10 | 0 | 0 |
+| regression_88eaeb6f | 21 | 31 | 2 | exact | pretune_off | evogrow_v2_2_stage_local | 1 | 7 | true | 0.0001343 | 10 | 25 | 15 | 0.8233 | 10 | 15 | 0 | 0 |
+| regression_88eaeb6f | 22 | 31 | 2 | exact | pretune_off | evogrow_v2_2_stage_local | 2 | 42 | true | 1.996e-11 | 13 | 13 | 0 | 0 | 13 | 0 | 0 | 0 |
+| regression_88eaeb6f | 23 | 31 | 2 | exact | pretune_off | evogrow_v2_2_stage_local | 2 | 123 | true | 1.999e-11 | 11 | 11 | 0 | 0 | 11 | 0 | 0 | 0 |
+| regression_88eaeb6f | 24 | 31 | 2 | exact | pretune_off | evogrow_v2_2_stage_local | 2 | 7 | true | 1.972e-11 | 11 | 11 | 0 | 0 | 11 | 0 | 0 | 0 |
+| regression_88eaeb6f | 25 | 63 | 4 | exact | pretune_off | evogrow_v2_2_stage_local | 1 | 42 | true | 0.0007887 | 1 | 20 | 19 | 0.9729 | 1 | 19 | 0 | 0 |
+| regression_88eaeb6f | 26 | 63 | 4 | exact | pretune_off | evogrow_v2_2_stage_local | 1 | 123 | true | 0.0006022 | 1 | 20 | 19 | 0.9925 | 1 | 19 | 0 | 0 |
+| regression_88eaeb6f | 27 | 63 | 4 | exact | pretune_off | evogrow_v2_2_stage_local | 1 | 7 | true | 0.001469 | 1 | 20 | 19 | 0.9917 | 1 | 19 | 0 | 0 |
+| regression_88eaeb6f | 28 | 63 | 4 | exact | pretune_off | evogrow_v2_2_stage_local | 2 | 42 | true | 0.0004661 | 1 | 20 | 19 | 0.9859 | 1 | 19 | 0 | 0 |
+| regression_88eaeb6f | 29 | 63 | 4 | exact | pretune_off | evogrow_v2_2_stage_local | 2 | 123 | true | 0.0004742 | 1 | 20 | 19 | 0.9709 | 1 | 19 | 0 | 0 |
+| regression_88eaeb6f | 30 | 63 | 4 | exact | pretune_off | evogrow_v2_2_stage_local | 2 | 7 | true | 0.0006 | 1 | 20 | 19 | 0.9383 | 1 | 19 | 0 | 0 |
+| regression_88eaeb6f | 31 | 3 | 1 | exact | pretune_off | evogrow_v3 | 1 | 42 | true | 4.922e-10 | 5 | 5 | 0 | 0 | 5 | 0 | 0 | 0 |
+| regression_88eaeb6f | 32 | 3 | 1 | exact | pretune_off | evogrow_v3 | 1 | 123 | true | 2.9e-10 | 5 | 5 | 0 | 0 | 5 | 0 | 0 | 0 |
+| regression_88eaeb6f | 33 | 3 | 1 | exact | pretune_off | evogrow_v3 | 1 | 7 | true | 1.064e-09 | 6 | 6 | 0 | 0 | 6 | 0 | 0 | 0 |
 
 _Table truncated in report: 207 additional rows are in the CSV._
 
