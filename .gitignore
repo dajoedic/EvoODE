@@ -23,6 +23,9 @@ analysis/notebooks/.ipynb_checkpoints/
 .pytest_tmp*/
 **/__pycache__/
 
+# Codex session scratch (codex exec logs)
+.codex_tmp/
+
 # ---------------------------------------------------------------------------
 # Scratch output
 # ---------------------------------------------------------------------------

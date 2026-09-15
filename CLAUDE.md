@@ -21,6 +21,7 @@ what to work on next. It is deliberately kept short. Detail lives in dedicated d
 | `docs/WP-N6.md` | the first baseline: EvoODE against SINDy on identical trajectories, with the cost line and the caveats |
 | `READ_THIS_FIRST.md` | **volatile session handover** — what is running, what is uncommitted, what decision is pending. Overwritten wholesale, never appended; nothing durable belongs there |
 | `codex/CURRENT_TASK.md` | the one active task spec for an AI coding assistant |
+| `CHANGELOG.md` | **pipeline compliance record** — CI/CD changes, and the documented exceptions from the SCCH Pipeline Policy required by its §11.1. No scientific history |
 
 Do not start a second planning document. Planning and status belong here; everything else belongs
 in one of the files above.
