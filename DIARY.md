@@ -6,6 +6,75 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ## 2026-09-18
 
+### Das ODEFormer-Repo liefert keine Zahlen, aber etwas Besseres — und eine Kennzahl, die nicht unsere ist
+
+<!-- 919cd5c -->
+
+**Die Ausgangsfrage war, ob wir uns Arbeit sparen koennen, indem wir publizierte Zahlen
+uebernehmen.** Antwort: nein, und das ist jetzt geprueft statt vermutet. `sdascoli/odeformer`
+(59 Dateien, Stand `c9193012`, seit August 2024 unveraendert) hat **kein `results/`-Verzeichnis und
+keine Ergebnisdatei**. Auch die beiden Notebooks nicht: `tests.ipynb` traegt 7,2 MB, 88 PNGs und 31
+LaTeX-Ausgaben, aber die LaTeX-Ausgaben sind **sympy-gerenderte Gleichungen**, keine Tabellen, und
+keine Textausgabe enthaelt eine Methoden-Metrik-Tabelle. Die Balken aus Abbildung 4/5 sind nicht
+rekonstruierbar. Die Notiz in `CLAUDE.md` bestand die Nachpruefung.
+
+**Drei Funde, die mehr wert sind als die Zahlen.**
+
+Erstens: **unsere Benchmarkdatei ist ihre Datei, bitidentisch.**
+`benchmarks/data/strogatz_extended.json` und `odeformer/odebench/strogatz_extended.json` haben
+denselben SHA256 `b11f8bda01ceee5c5c9445521ac74c8819361af4251bb90c0be398aaeb1a1136`. Eine
+Vergleichbarkeitsaussage fuers Paper, die nichts gekostet hat.
+
+Zweitens: die komplette Baseline-Maschinerie liegt offen und MIT-lizenziert — Wrapper fuer SINDy
+(sieben Varianten), PySR, ProGED, FFX, ellyn —, und ODEFormer selbst ist per pip samt vortrainierter
+Gewichte lauffaehig (`sklearn_wrapper.py:60-66`, Google Drive per `gdown`). **Wir koennen die
+Methoden auf unseren Trajektorien rechnen, statt eine Balkengrafik zu zitieren.** Fuer Claim D ist
+das nicht der Notnagel, sondern das Bessere: der Phase-C-Plan verlangt „by hash, not by assertion",
+und gezitierte Zahlen haetten das nie hergegeben.
+
+Drittens: ihre Evaluationsachsen (`subsample_ratio` 0/0,25/0,5 und additives Rauschen
+`eval_noise_gamma` bis 0,05) sind genau die Achsen, die `CLAUDE.md` unter Phase 3 als naechste
+fuehrt — als Protokoll uebernehmbar.
+
+**Und eine Abweichung, die unsere Zahlen betrifft.** Ihre Metrik ist
+`r2_score(..., multioutput='variance_weighted')`, Fehlschlag zaehlt als 0 (`metrics.py:97-125`).
+Die Fehlschlagbehandlung passt bei uns — NaN zaehlt als `False` und bleibt im Nenner, geprueft auf
+beiden Wegen (`run_phasec_sindy_baseline.py:377` und `:601`). Die **Aggregation ueber Dimensionen
+passt nicht**: wir mitteln arithmetisch (`run_regression.jl:675`), sie gewichten nach Varianz. Auf
+echten Trajektorien, mit der WP-N19-Harness gemessen: **System 24 (dim 2) 0,955000 gegen 0,971856,
+System 52 (dim 3) 0,970000 gegen 0,990121** — 1,7 und 2,0 Punkte. An der 0,9-Schwelle entscheidet
+das ueber Treffer oder Nichttreffer. Beide Aggregationen gehoeren nebeneinander berichtet, und keine
+davon wird zur Hauptzahl erklaert, solange die Entscheidung nicht bewusst faellt.
+
+**Noch eine Einordnung fuer Claim D:** ihre SINDy-Baseline wird **pro Instanz gridgesucht**
+(`hyper_opt=True`, 30 % Auswertungsanteil, Gitter ueber threshold/alpha/max_iter). Unsere
+WP-N6-Zahl ist das Maximum ueber zehn Konfigurationen, also ein Orakelmaximum und damit noch
+grosszuegiger als ihr Protokoll. Gut fuer uns, gehoert aber so benannt.
+
+**Gebaut ist daraus WP-N19:** `baselines/` als eigener Teilbaum mit eigenem Python-3.9-Image,
+`odeformer` **gepinnt statt einkopiert**, `containers/Dockerfile` unberuehrt. Die Harness prueft
+beide Manifest-Hashes vor Gebrauch und bricht bei Abweichung ab, schreibt bei Methodenfehlern einen
+Fehler-Record statt gar keiner Zeile, und **speichert die Koeffizienten** — der Phase-B-Fehler wird
+nicht wiederholt. SINDy laeuft; ODEFormer ist registriert, aber lokal blockiert, weil der gepinnte
+GitHub-Stand und die Drive-Gewichte den Container brauchen.
+
+**Die Entscheidung dahinter war Architektur, nicht Geschmack.** Ein eigenes Repository haette
+bedeutet, dass eine Baseline-Zahl auf einen **zweiten** Git-Hash zeigt — genau dort, wo Claim D
+lebt, und gegen die Identitaetsdisziplin des Projekts. Das echte Risiko ist nicht das Repo, sondern
+die Umgebung: **PySR bringt eine eigene Julia mit**, die der eingefrorenen 1.12.6 der Kampagne nie
+begegnen darf. Dagegen hilft ein getrenntes Image, keine Repo-Grenze.
+
+**Drei Befunde aus der Abnahme, offen und nicht mitgeloest:** `selected_systems` ist auf `dim == 1`
+festverdrahtet (`harness.py:311`), der volle Lauf ueber 126 Trajektorien ist also noch nicht
+erreichbar; die beiden `r2_gt_0_9`-Flags werden allein aus dem arithmetischen Mittel gebildet
+(`harness.py:284-285`), womit die verbotene Hauptzahl implizit doch gewaehlt ist; und der
+Mehrdimensions-Test erfindet seine Fixture, gegen die Regel vom 14.09. Die Messung oben stammt
+deshalb aus einer eigenen Probe an echten Exportdaten, nicht aus dem Test.
+
+**Umfang, bewusst eng gehalten:** ODEFormer und SINDy fuer Paper 1, die uebrigen vier registriert
+und inaktiv. Alle sechs Methoden aufzunehmen waere eine Erweiterung des Papers und gehoert dann
+vorher nach `PAPER_1.md`, nicht implizit in die Infrastruktur.
+
 ### Die Kampagne ist billiger als geplant — und die Kappe tut auf dim 3 nichts
 
 <!-- b0b0986, be1e312 -->
