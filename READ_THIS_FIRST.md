@@ -10,15 +10,23 @@ zweites davon. Alles Dauerhafte gehört dorthin, nach `PAPER_1.md` oder ins `DIA
 **Regeln:** wird immer **vollständig überschrieben**, nie angehängt. Was älter als ein paar Tage
 ist, ist vermutlich falsch — dann gilt `CLAUDE.md`.
 
-**Stand: 2026-09-15. HEAD siehe `git log -1`. Working Tree sauber.**
+**Stand: 2026-09-18. HEAD siehe `git log -1`. Working Tree sauber.**
 
 ---
 
 ## 1. Wo wir stehen — in zwei Sätzen
 
 **Die Phase-C-Kampagne läuft, und es gibt nichts zu tun als zu warten.** C-1+C-2 (756 gepaarte
-Zellen) rechnet seit dem 14.09. mittags auf Orion, Stand 15:45 **18/756**; C-3 (180 Zellen) ist
-**absichtlich angehalten** und wird erst danach gestartet.
+Zellen) rechnet seit dem 14.09. mittags auf Orion, Stand 18.09. vormittags **41/756**; C-3
+(180 Zellen) ist **absichtlich angehalten** und wird erst danach gestartet.
+
+**Die Zellzahl ist irreführend, und zwar systematisch.** Die Warteschlange
+(`indices_c1_c2_cost_desc.txt`) ist **nach absteigenden Kosten** sortiert: erledigt und laufend sind
+bisher ausschließlich dim-3-Zellen, die 276 dim-1-Zellen stehen ganz hinten. Die 41 Zellen sind
+**13,5 % der Gesamtkosten**, nicht 5,4 %. Eine Rate „Zellen pro Tag" hochzurechnen ergibt darum
+grob falsche Zahlen — am 18.09. einmal auf 140 Tage danebengegriffen. Nach Kernstunden statt nach
+Zellen gerechnet liegt der Lauf **vor** Plan, Rest grob 6 Tage bei `parallelism: 32`. Kapazitäts-
+planung, keine Evidenz (Designprinzip 7).
 
 **Alle Vorarbeiten sind abgeschlossen.** Bootstrap, Smoke-Test und der 16-Zellen-Pilot sind
 bestanden, das Go-Kriterium war grün, und der alte dim-2-Probelauf ist mit 336/336 fertig und
@@ -88,9 +96,18 @@ laufender.
 
 ## 3. Was als Nächstes ansteht
 
-1. **Warten.** Grob 16–21 Tage für C-1+C-2. Kapazitätsplanung, keine Evidenz (Designprinzip 7);
-   die Untergrenze ist die längste **einzelne** Zelle — in Phase B 289,7 h, im ungekappten Arm
-   potenziell mehr, weil er die vollen 30 Level fährt.
+1. **Warten.** Grob 6 Tage Rest für C-1+C-2 (Stand 18.09., LPT-Simulation über die Restwarte-
+   schlange mit den Phase-B-Kosten je Zelle). Kapazitätsplanung, keine Evidenz (Designprinzip 7);
+   die Untergrenze ist die längste **einzelne** Zelle — noch nicht gestartet sind 92 h. Mehr
+   Parallelität bringt ab etwa 48 Slots fast nichts mehr, weil dann diese Einzelzelle bindet und
+   nicht mehr die Slotzahl.
+
+   **Die Kostenprognose ist am 18.09. gegen die Wirklichkeit geprüft.** Jede der 41 fertigen Zellen
+   gegen ihre Phase-B-Messung (gleiches System, Seed, IC-Set, Arm `pretune_off`): Medianfaktor
+   **0,83 gekappt / 0,75 ungekappt**, Mittel 0,95 / 0,98. Die Zellen laufen also eher **billiger**
+   als das Phase-B-Vorbild, trotz Konstantenbasis und k = 3 — der in `CLAUDE.md` eingeplante
+   Aufschlag von +20 % zeigt sich auf dim 3 nicht. Gemessen ist das **nur auf dim 3**; dim 1 und
+   dim 2 stehen noch aus.
 2. **Danach C-3 fortsetzen** (siehe Abschnitt 4).
 3. **Parallel möglich, ohne Cluster:** Methoden- und Limitations-Abschnitte, das
    Phase-B-Diagnostikkapitel, Abbildungs- und Tabellengerüste.
@@ -202,6 +219,33 @@ Je Dimension kanonisch: dim 1 32/46, dim 2 36/56, dim 3 15/20, **dim 4 0/4**. Di
 Signal für Claim B; der Pilot hatte nur zufällig keines. Zwei deklarationspflichtige Folgen: die
 Konstante senkt die Kappenhäufigkeit leicht, und auf dim 4 bindet **keine** Kappe — dort sind C-1
 und C-2 strukturell dieselbe Rechnung.
+
+**(c) Auf dim 3 hat Claim B bisher null Signal — nachzählen, sobald dim 2 anläuft (18.09.).** Die
+ersten 19 vollständigen Paare der Kampagne, alle dim 3, sehen so aus:
+
+- **14 von 19 Paaren haben gar keine Kappe** (`stage_caps == [None, None, None]`, Systeme 52, 53,
+  57). Dort sind `total_loss_evals` und `executed_levels` zwischen den Armen **bit-identisch** —
+  erwartbar, aber es heißt eben auch: kein Beitrag zu Claim B.
+- Die 5 Paare **mit** Kappe (`[None, 3, 3]`, Systeme 54 und 56) fahren **in beiden Armen 30 von 30
+  Leveln**. Die Kappe terminiert nichts. In einem Fall ist der gekappte Arm sogar minimal teurer
+  (5.692.463 gegen 5.602.929 Evaluationen).
+
+Der Mechanismus ist plausibel und sollte beim Auswerten bestätigt werden: kappt die Kappe nicht
+*alle* Gleichungen, läuft die Suche bis zum Levelbudget weiter — `[None, 3, 3]` lässt Gleichung 1
+offen. Das ist schärfer als (b): dort waren alle Kappen `nothing`, hier sind Kappen **vorhanden und
+wirkungslos**.
+
+**Nicht überinterpretieren.** 19 dim-3-Paare entscheiden nichts, und die Gegenprobe oben sagt, dass
+Kappen auf dim 1 (32/46) und dim 2 (36/56) binden — genau die Zellen stehen noch aus, ab Position 74
+der Warteschlange. **Zu tun:** sobald die ersten dim-2-Zellen fertig sind, dieselbe Paartabelle
+(`stage_caps`, `executed_levels`, `total_loss_evals`) nachziehen. Findet sich dort ebenfalls kein
+Unterschied, ist das keine Kleinigkeit, sondern betrifft Claim B im Kern — dann ist vor dem
+Weiterrechnen zu klären, ob die Kappe überhaupt je ein Levelbudget einspart oder nur die Stufe
+begrenzt.
+
+**Folge für die Kostenplanung:** die Annahme aus `CLAUDE.md`, „der ungekappte Spiegel trägt den
+Großteil der Kosten", trifft auf dim 3 nicht zu — beide Arme kosten dort praktisch gleich viel. Das
+ist der Grund, warum die Gesamtprognose jetzt unter dem geplanten Band liegt.
 
 ---
 
