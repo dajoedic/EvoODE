@@ -8,7 +8,7 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ### Das ODEFormer-Repo liefert keine Zahlen, aber etwas Besseres — und eine Kennzahl, die nicht unsere ist
 
-<!-- 919cd5c -->
+<!-- 919cd5c, ae6b1e3 -->
 
 **Die Ausgangsfrage war, ob wir uns Arbeit sparen koennen, indem wir publizierte Zahlen
 uebernehmen.** Antwort: nein, und das ist jetzt geprueft statt vermutet. `sdascoli/odeformer`
