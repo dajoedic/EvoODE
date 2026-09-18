@@ -150,3 +150,37 @@ Daher gilt:
   anderen Schicht.
 - **Ein Testergebnis wird nur berichtet, wenn es aus dem Lauf stammt**, den der Report beschreibt.
   Eine Zahl aus einem früheren Zwischenstand ist keine Abnahme.
+
+## Der Start von Codex braucht eine Berechtigungsregel (seit 2026-09-18)
+
+Läuft Claude Code im **Auto-Modus**, entscheidet ein Klassifizierer ohne Rückfrage über jeden
+Werkzeugaufruf. `codex exec` fällt dort ohne Freigabe unter „Create Unsafe Agents" und wird
+abgewiesen — der Auftrag ist dann zwar in `codex/CURRENT_TASK.md` geschrieben, aber **nie
+übergeben**. Das ist ein stiller Fehler: die Übergabe sieht getan aus und ist es nicht.
+
+Nötig ist ein Eintrag in `permissions.allow` von `.claude/settings.json`:
+
+```json
+"Bash(codex exec *)"
+```
+
+**Claude darf diese Regel nicht selbst setzen.** Der Auto-Modus blockt das Bearbeiten der eigenen
+Berechtigungsdatei als „Self-Modification", und das ist richtig so — die Freigabe trägt der Nutzer
+ein, über die Datei oder über `/permissions`.
+
+**`.claude/` steht in der `.gitignore`, die Regel lebt also nur auf dem Rechner, auf dem sie
+eingetragen wurde.** Auf einem frischen Klon oder einem zweiten Arbeitsplatz fehlt sie und der
+stille Abbruch kehrt zurück. Deshalb steht die Anforderung hier, in einer versionierten Datei.
+
+Der Aufruf selbst, aus dem Repository-Wurzelverzeichnis:
+
+```
+codex exec -s workspace-write "Bearbeite codex/CURRENT_TASK.md nach codex/CODEX_PROTOCOL.md."
+```
+
+Nicht `--full-auto` im Hintergrund verwenden — diese Form hat den Klassifizierer am 2026-09-18
+zusätzlich ausgelöst. Ob die Regel ohne sie überhaupt nötig gewesen wäre, ist ungeprüft; mit Regel
+und der obigen Form läuft der Start zuverlässig.
+
+**Lebendprüfung nach dem Start:** CPU-Zeit des Prozesses, nicht Laufzeit. Ein hängender Start sieht
+wie ein laufender aus.
