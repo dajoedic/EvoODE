@@ -8,7 +8,7 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ### Die Kampagne ist billiger als geplant — und die Kappe tut auf dim 3 nichts
 
-<!-- b0b0986 -->
+<!-- b0b0986, be1e312 -->
 
 **Anlass war eine falsche Zahl von mir.** Ein Statusblick auf C-1+C-2 ergab 41 von 756 Zellen nach
 knapp vier Tagen, daraus eine Rate von rund 5 Zellen pro Tag und daraus eine Restlaufzeit von
