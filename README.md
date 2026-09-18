@@ -48,15 +48,24 @@ starts. Because the cap reads only data and basis, it is search-independent.
 Two earlier designs are retained as documented failure analysis rather than being quietly dropped:
 stage-local progression alone (fails its gate, 2026-05-30) and a derivative-residual promotion
 signal (fails its gate, 2026-07-31). The second failed for an instructive reason — its promotion
-threshold is unreachable on coupled systems, where the error floor sits four orders of magnitude
+threshold is unreachable on coupled systems, where the error floor sits five orders of magnitude
 above it.
 
-**The evidence.** The main campaign is **complete** (2026-09-04): all 63 ODEBench systems, two
-pretuning conditions, three seeds, both initial-condition sets — 756 of 756 cells, no errors, one
-git hash and one identity triple across every record, 5,248 core hours. The registry, the heartbeat
-history and the descriptive tables are in the repository under `experiments/paper1_phaseB_v1/` and
-`analysis/tables/paper1_phaseB_v1/`. An earlier 300-run study is frozen and **explicitly not used
-for final claims**; see `docs/paper1_freeze_memo_phaseA.md`.
+**The evidence, and which run carries it.** The paper rests on **Phase C**, the canonical
+evaluation, which is **running now** — see the live status page above. Its plan, with a claim,
+an arm, a script and a pass criterion for each question, is `docs/paper1_phaseC_benchmark_plan.md`.
+
+An earlier campaign, **Phase B**, finished on 2026-09-04: all 63 ODEBench systems, two pretuning
+conditions, three seeds, both initial-condition sets — 756 of 756 cells, no errors, one git hash and
+one identity triple across every record, 5,248 core hours. It was **demoted to diagnostics on
+2026-09-09** and is not the benchmark: it was computed before the methodological review below closed,
+and carries four defects a final benchmark cannot have — no constant term in the basis, no stored
+coefficients, both initial-condition sets used as training, and no uncapped arm to compare against.
+**Phase B and Phase C numbers never appear in the same table.** Phase B remains a good source of
+ablations, runtime analysis and failure cases; its registry, heartbeat history and descriptive tables
+are tracked under `experiments/paper1_phaseB_v1/` and `analysis/tables/paper1_phaseB_v1/`. An even
+earlier 300-run study is frozen and **explicitly not used for final claims**; see
+`docs/paper1_freeze_memo_phaseA.md`.
 
 **Where the project stands, stated plainly.** A review in September 2026 found four gaps that the
 campaign had not been designed to close, and closing them changed the picture more than the campaign
@@ -145,10 +154,14 @@ The default basis exposes five complexity stages:
 The search unlocks stages one at a time. The stage cap decides, before the search begins, which
 stages are worth unlocking at all for a given system and equation.
 
-Note what is **not** in the table: a constant term. A second basis,
-`staged_polynomial_basis_with_constant`, adds `1` to stage 1 and is verified bit-identical to the
-default on 66 of 66 control cells. It is not the default, because representability and searchability
-pull against each other — see the Status section above.
+Note what is **not** in the table: a constant term. `staged_polynomial_basis_with_constant` adds
+`1` to stage 1 and is verified bit-identical to the table above on 66 of 66 control cells. Since
+2026-09-13 it is the **canonical basis for Phase C**: 20 of 63 systems exactly representable is not
+a defensible search space when SINDy's plain polynomial library reaches 40. The decision was taken
+*against* the recovery numbers, not with them — the constant is a false-positive magnet and lowers
+structure recovery — so representability and searchability genuinely pull against each other, and
+that tension is a finding rather than a settled trade. The basis in the table remains available and
+is what every Phase B result was computed on.
 
 ### Two design axes, deliberately separate
 
@@ -167,6 +180,7 @@ benchmarks/   exploratory, direct-execution scripts + the ODEBench dataset
 experiments/  formal, manifest-based runs with atomic writes and per-run status
 studies/      direct-execution studies; most are closed and kept for provenance
 analysis/     Python analysis pipeline
+baselines/    foreign discovery methods run on our own exported trajectories
 containers/   Dockerfile for the campaign image
 k8s/          Kubernetes Job manifests for the compute cluster
 codex/        the active task spec and the work-package reports of an AI coding assistant
@@ -190,8 +204,10 @@ someone else is expected to read. See "Documentation" below.
 `benchmarks/data/strogatz_extended.json` — the extended Strogatz/ODEBench catalogue:
 
 - **63 systems**: 23 scalar (1D), 28 coupled 2D, 10 coupled 3D, 2 coupled 4D
-- **20 exact**, meaning the true right-hand side is exactly representable in the staged basis
-- **43 surrogate**, meaning it is not — these are scored on fit quality, never on support recovery
+- **exact** means the true right-hand side is exactly representable in the basis, and the count
+  therefore depends on which basis: **20 of 63** without a constant term, **30 of 63** under the
+  canonical Phase C basis, which adds one
+- the remainder are **surrogate** — scored on fit quality, never on support recovery
 
 The exact/surrogate split is **derived**, not hand-maintained: the true support is reconstructed from
 the dataset's right-hand sides and must be both exact to 1e-9 and minimal. An earlier hand-written
@@ -230,6 +246,8 @@ The properties below are enforced, not aspirational.
 |---|---|
 | `CLAUDE.md` | orientation: what the project is, what is decided, what to work on next |
 | `PAPER_1.md` | authoritative execution plan for the first paper |
+| `docs/paper1_phaseC_benchmark_plan.md` | the Phase C claim → experiment → metric → output matrix, and the frozen decisions |
+| `READ_THIS_FIRST.md` | volatile session handover — what is running, what is uncommitted, what decision is pending |
 | `DIARY.md` | chronology — decisions, measurements, bug history, commit hashes |
 | `SCRIPTS.md` | runbook — every script, with exact commands |
 | `docs/architecture.md` | component reference — types, pipeline, search algorithms, bases, optimizers |
