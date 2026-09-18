@@ -33,7 +33,7 @@ experiment is decided, the code is not written yet. Section 2a lists them.
 | **A** | Can EvoGrow recover governing structure from trajectory data? | C-1 | ground truth | exact recovery **raw and pruned**, term precision, term recall, structural F1, coefficient error, reconstruction R2, trajectory MSE - all by representability class | Main Table |
 | **B** | Does stage capping reduce search effort, and at what cost in quality? | C-1 vs C-2 | paired per (system, seed, IC set) | explored stages, executed levels, nonlinear fits, ODE integrations, final loss, structural F1, exact recovery, reconstruction, generalization; core hours as context only | Main Figure (savings vs quality delta) |
 | **C** | Does a discovered model describe an unseen trajectory of the same system? | C-5 on C-1 | train IC vs test IC, both directions | R2, share R2 > 0.9, paired reconstruction vs generalization, by dimension and by exact/non-exact structure | Main Figure |
-| **D** | Where does EvoGrow stand against an established sparse-regression baseline? | C-1 vs C-4 | paired per (system, IC set), **all 63 systems**, stratified | quality (A and C metrics) **and** cost (fits, integrations, core hours) | Main Table |
+| **D** | Where does EvoGrow stand against an established sparse-regression baseline? | C-1 vs C-4 | paired per (system, IC set), **all 63 systems**, stratified | quality (A and C metrics) **and** cost — structural per method, see §6a; core hours are context, never the headline | Main Table |
 | **Diag** | Is a failure a search failure or an optimization failure? | C-5 on C-1 | true structure supplied | success rate, sentinel-loss rate, reconstruction R2 | Appendix |
 | **Abl-1** | What does the stage cap change, mechanism-wise? | C-1 vs C-2 | paired | cap decisions, reached stage, truncation | Ablation |
 | **Abl-2** | What does pretuning do? | C-3 vs C-1 subset | paired seeds, grouped on **raw** support | seed diversity, support pattern collapse, R2, loss | Ablation |
@@ -447,6 +447,46 @@ size of 20. The cluster-robust procedure is the primary one throughout Phase C.
 **Both metrics, always.** Design Principle 9: structure recovery **and** the R² > 0.9 rate, in every
 table and every claim. They disagree — structurally wrong cells reach a median R² of 0.9997 with
 92 % above 0.9 — and the R² > 0.9 rate is what makes any external comparison possible at all.
+
+### 6a — Cross-method cost, and why time cannot carry it (decided 2026-09-18)
+
+**The rule above assumes a shared unit, and across methods there is none.** Within EvoGrow, cost is
+`total_parameter_fits`, `total_loss_evals`, `total_ode_solves`. SINDy performs one linear regression
+per equation. ODEFormer performs one transformer forward pass, a beam over its candidates, and a
+single parameter optimization. These three quantities are not convertible into one another. Wall
+clock is the only axis all three share — which is exactly why it is tempting and exactly why it must
+not carry the claim.
+
+**Decision: the headline cost statement is structural, not timed.** The defensible form is the one
+WP-N6 already uses — *SINDy runs one linear regression per equation; EvoODE runs a median of 410
+nonlinear fits per cell, each with ODE integrations* — extended to ODEFormer by naming its
+per-instance work. A statement of that shape needs no stopwatch, no hardware footnote, and survives
+review. It is what Claim D reports.
+
+**Timing is permitted, secondary, and declaration-bound.** Design Principle 7 allows timing "on a
+dedicated machine", and the campaign pods are one: 1 CPU, `JULIA_NUM_THREADS=1`,
+`OPENBLAS_NUM_THREADS=1`, `requests == limits`. Any cross-method timing is measured **in that same
+pod shape on Orion**, never on the laptop, and is reported as a secondary axis with the confounders
+below stated in full. It never appears as the headline of Claim D.
+
+**Four confounders, and all four are declared — in both directions.** Declaring only the ones that
+favour us is the failure mode:
+
+| Confounder | Direction |
+|---|---|
+| ODEFormer is a neural model built for GPU; Orion is CPU | **against ODEFormer** — the number measures our hardware, not their method |
+| Julia against Python/torch | neither — implementation quality, with no defensible correction |
+| **ODEFormer's pretraining cost is excluded** | **for ODEFormer** — its forward pass is cheap *because* a large one-time training already happened |
+| Orion is shared | neither — co-tenant load moved from 36.55 to ~3.4 cores within four days of 2026-09-18 |
+
+**Practical requirement for the baseline image.** ODEFormer fetches its weights from Google Drive
+via `gdown` (`odeformer/model/sklearn_wrapper.py:60-66`). The weights must be **baked into the
+image**. Otherwise every pod either fails without egress, or 32 pods request Google Drive at once.
+
+**Why this section was written before the measurement.** `CLAUDE.md` records that the three
+candidate framings of 2026-09-07 were shapes fitted to whichever data happened to exist, and rejects
+that move. Deciding what a timing run may claim *after* seeing its numbers is the same mistake in a
+smaller place.
 
 ---
 
