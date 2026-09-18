@@ -1,4 +1,4 @@
-status: blocked
-task:   WP-N19
-report: codex/reports/REPORT_WP_N19.md
-note:   Umgebung, nicht Sache: ODEFormer/Gewichte sind lokal nicht installierbar; SINDy, Hashabbruch und Fehler-Records sind umgesetzt.
+status: done
+task:   WP-N19b
+report: codex/reports/REPORT_WP_N19b.md
+note:   Baseline-Harness-Auswahl, aggregationsspezifische Flags, echte Mehrdimensions-Tests und Smoke-Records aktualisiert.

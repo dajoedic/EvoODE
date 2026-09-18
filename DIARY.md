@@ -40,11 +40,22 @@ fuehrt — als Protokoll uebernehmbar.
 `r2_score(..., multioutput='variance_weighted')`, Fehlschlag zaehlt als 0 (`metrics.py:97-125`).
 Die Fehlschlagbehandlung passt bei uns — NaN zaehlt als `False` und bleibt im Nenner, geprueft auf
 beiden Wegen (`run_phasec_sindy_baseline.py:377` und `:601`). Die **Aggregation ueber Dimensionen
-passt nicht**: wir mitteln arithmetisch (`run_regression.jl:675`), sie gewichten nach Varianz. Auf
-echten Trajektorien, mit der WP-N19-Harness gemessen: **System 24 (dim 2) 0,955000 gegen 0,971856,
-System 52 (dim 3) 0,970000 gegen 0,990121** — 1,7 und 2,0 Punkte. An der 0,9-Schwelle entscheidet
-das ueber Treffer oder Nichttreffer. Beide Aggregationen gehoeren nebeneinander berichtet, und keine
-davon wird zur Hauptzahl erklaert, solange die Entscheidung nicht bewusst faellt.
+passt nicht**: wir mitteln arithmetisch (`run_regression.jl:675`), sie gewichten nach Varianz.
+
+**Wie gross der Unterschied ist, haengt vom Fehlerbild ab — und die erste hier notierte Zahl war zu
+gross.** Eine Probe mit **konstruierter** Vorhersage (echte Trajektorie, eine Dimension um
+0,3 Standardabweichungen verschlechtert) ergab 0,955000 gegen 0,971856 auf System 24 und 0,970000
+gegen 0,990121 auf System 52, also 1,7 und 2,0 Punkte. Diese Werte zeigen nur, **wozu die
+Varianzstruktur der echten Systeme faehig ist**, und ihre Groesse haengt an der gewaehlten
+Verschlechterung — sie sind kein Messwert einer Methode. Der **echte** SINDy-Fit auf System 24
+(WP-N19b-Rauchtest) unterscheidet sich zwischen den Aggregationen um **3,7e-04** — drei
+Groessenordnungen weniger.
+
+Die Folgerung bleibt, mit richtiger Begruendung: die beiden Aggregationen sind **nicht dieselbe
+Groesse**, der Abstand ist datenabhaengig und im Schlechtfall schwellenrelevant. Beide gehoeren
+nebeneinander berichtet, und keine wird zur Hauptzahl erklaert, solange die Entscheidung nicht
+bewusst faellt. Auf gut gefitteten Systemen ist der Abstand allerdings klein, und das gehoert
+dazugesagt, statt eine Dramatik zu behaupten, die die Messung nicht traegt.
 
 **Noch eine Einordnung fuer Claim D:** ihre SINDy-Baseline wird **pro Instanz gridgesucht**
 (`hyper_opt=True`, 30 % Auswertungsanteil, Gitter ueber threshold/alpha/max_iter). Unsere

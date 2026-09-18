@@ -2,7 +2,7 @@
   "benchmark_path": "benchmarks/data/strogatz_extended.json",
   "trajectory_export_dir": "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export",
   "output_dir": "analysis/data/paper1_phaseC_v1/phasec_external_baselines_wp_n19_smoke",
-  "max_dim1_systems": 3,
+  "system_ids": [1, 2, 24],
   "methods": ["sindy", "odeformer"],
   "sindy": {
     "polynomial_degree": 2,
@@ -14,4 +14,3 @@
     "weights_source": "google_drive_via_gdown"
   }
 }
-

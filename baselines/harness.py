@@ -221,7 +221,17 @@ def base_record(method: str, config: dict[str, Any], fit_cell: TrajectoryCell, t
     }
 
 
+def r2_threshold_flags(prefix: str, scores: dict[str, float]) -> dict[str, bool]:
+    return {f"{prefix}_{name}_gt_0_9": value > R2_THRESHOLD for name, value in scores.items()}
+
+
+def zero_r2_scores() -> dict[str, float]:
+    return {"r2_arithmetic_mean": 0.0, "r2_variance_weighted": 0.0}
+
+
 def record_failure(record: dict[str, Any], exc: Exception) -> dict[str, Any]:
+    reconstruction_r2 = zero_r2_scores()
+    generalization_r2 = zero_r2_scores()
     failed = dict(record)
     failed.update(
         {
@@ -234,12 +244,10 @@ def record_failure(record: dict[str, Any], exc: Exception) -> dict[str, Any]:
             "true_terms": "[]",
             "structure_hit_raw": False,
             "structure_hit_pruned": False,
-            "reconstruction_r2_arithmetic_mean": 0.0,
-            "reconstruction_r2_variance_weighted": 0.0,
-            "generalization_r2_arithmetic_mean": 0.0,
-            "generalization_r2_variance_weighted": 0.0,
-            "reconstruction_r2_gt_0_9": False,
-            "generalization_r2_gt_0_9": False,
+            **{f"reconstruction_{key}": value for key, value in reconstruction_r2.items()},
+            **{f"generalization_{key}": value for key, value in generalization_r2.items()},
+            **r2_threshold_flags("reconstruction", reconstruction_r2),
+            **r2_threshold_flags("generalization", generalization_r2),
         }
     )
     return failed
@@ -281,11 +289,11 @@ def run_sindy_record(system: dict[str, Any], fit_cell: TrajectoryCell, target_ce
                 "structure_hit_pruned": support_hit(raw_terms, true_terms),
                 "reconstruction_status": reconstruction_status,
                 "generalization_status": generalization_status,
-                "reconstruction_r2_gt_0_9": reconstruction_r2["r2_arithmetic_mean"] > R2_THRESHOLD,
-                "generalization_r2_gt_0_9": generalization_r2["r2_arithmetic_mean"] > R2_THRESHOLD,
                 "fit_elapsed_s_context": time.perf_counter() - start,
                 **{f"reconstruction_{key}": value for key, value in reconstruction_r2.items()},
                 **{f"generalization_{key}": value for key, value in generalization_r2.items()},
+                **r2_threshold_flags("reconstruction", reconstruction_r2),
+                **r2_threshold_flags("generalization", generalization_r2),
             }
         )
         return record
@@ -307,8 +315,38 @@ def inactive_record(method: str, fit_cell: TrajectoryCell, target_cell: Trajecto
     return record_failure(record, RuntimeError(REGISTERED_INACTIVE[method]))
 
 
-def selected_systems(benchmark: list[dict[str, Any]], limit: int) -> list[dict[str, Any]]:
-    return [system for system in benchmark if int(system["dim"]) == 1][:limit]
+def optional_int_set(values: Any, label: str) -> set[int] | None:
+    if values is None:
+        return None
+    if not isinstance(values, list):
+        fail(f"{label} must be a list of integers")
+    result: set[int] = set()
+    for value in values:
+        if isinstance(value, bool):
+            fail(f"{label} must contain integers, got {value!r}")
+        result.add(int(value))
+    return result
+
+
+def selected_systems(benchmark: list[dict[str, Any]], config: dict[str, Any]) -> list[dict[str, Any]]:
+    dimensions = optional_int_set(config.get("dimensions"), "dimensions")
+    system_ids = optional_int_set(config.get("system_ids"), "system_ids")
+    max_systems = config.get("max_systems")
+    selected = []
+    for system in sorted(benchmark, key=lambda item: int(item["id"])):
+        if dimensions is not None and int(system["dim"]) not in dimensions:
+            continue
+        if system_ids is not None and int(system["id"]) not in system_ids:
+            continue
+        selected.append(system)
+    if max_systems is not None:
+        selected = selected[: int(max_systems)]
+    return selected
+
+
+def selected_manifest_rows(manifest: pd.DataFrame, system_ids: set[int]) -> pd.DataFrame:
+    selected = manifest[manifest["system_id"].astype(int).isin(system_ids)].copy()
+    return selected.sort_values(["system_id", "initial_condition_set"]).reset_index(drop=True)
 
 
 def run(config_path: Path, output_dir: str | None = None, corrupt_manifest_hash: bool = False, force_sindy_failure: bool = False) -> Path:
@@ -327,7 +365,32 @@ def run(config_path: Path, output_dir: str | None = None, corrupt_manifest_hash:
     cells, trajectory_check = load_exported_cells(export_dir, benchmark)
     out_dir = resolve_path(output_dir or config["output_dir"])
     out_dir.mkdir(parents=True, exist_ok=True)
-    systems = selected_systems(benchmark, int(config.get("max_dim1_systems", 3)))
+    systems = selected_systems(benchmark, config)
+    selected_ids = {int(system["id"]) for system in systems}
+    manifest = pd.read_csv(export_dir / "trajectory_manifest.csv")
+    selection_rows = selected_manifest_rows(manifest, selected_ids)
+    selection_path = out_dir / "selected_systems.json"
+    selection_path.write_text(
+        json.dumps(
+            {
+                "selection": {
+                    "dimensions": config.get("dimensions"),
+                    "system_ids": config.get("system_ids"),
+                    "max_systems": config.get("max_systems"),
+                },
+                "system_count": len(systems),
+                "trajectory_manifest_row_count": int(len(selection_rows)),
+                "systems": [
+                    {"system_id": int(system["id"]), "dimension": int(system["dim"])}
+                    for system in systems
+                ],
+            },
+            indent=2,
+            sort_keys=True,
+        )
+        + "\n",
+        encoding="utf-8",
+    )
     records: list[dict[str, Any]] = []
     methods = list(config.get("methods", ["sindy", "odeformer"]))
     for system in systems:

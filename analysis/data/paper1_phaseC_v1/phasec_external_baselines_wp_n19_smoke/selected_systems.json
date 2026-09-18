@@ -1,0 +1,27 @@
+{
+  "selection": {
+    "dimensions": null,
+    "max_systems": null,
+    "system_ids": [
+      1,
+      2,
+      24
+    ]
+  },
+  "system_count": 3,
+  "systems": [
+    {
+      "dimension": 1,
+      "system_id": 1
+    },
+    {
+      "dimension": 1,
+      "system_id": 2
+    },
+    {
+      "dimension": 2,
+      "system_id": 24
+    }
+  ],
+  "trajectory_manifest_row_count": 6
+}

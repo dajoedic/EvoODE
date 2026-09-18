@@ -1,124 +1,97 @@
-# WP-N19 — Baseline-Harness: Fremdmethoden auf unseren Trajektorien
+# WP-N19b — Baseline-Harness: die drei Befunde der Abnahme schliessen
 **Language: Python**
 
-## Ziel
+## Ausgangslage
 
-Ein neuer Teilbaum `baselines/`, der fremde ODE-Discovery-Methoden auf **unseren exportierten
-Trajektorien** laufen laesst und Records ausgibt, die die bestehende Analysepipeline neben
-Kampagnen-Records legen kann.
+WP-N19 ist committet (`919cd5c`) und die Harness unter `baselines/` funktioniert: Hashpruefung mit
+Abbruch, Fehler-Records statt fehlender Zeilen, Koeffizienten gespeichert, `containers/Dockerfile`
+unberuehrt. Die Abnahme durch Claude hat drei Befunde ergeben, die hier geschlossen werden. **Es
+geht um Nachbesserung, nicht um Neubau** — der bestehende Aufbau bleibt.
 
-Der wissenschaftliche Zweck ist Claim D: der Vergleich muss **auf identischen Trajektorien, per Hash
-belegt** stattfinden. Publizierte Zahlen aus dem ODEFormer-Paper sind dafuer unbrauchbar — das Repo
-liefert keine Ergebnisdateien, und deren Trajektorien sind die mitgelieferten, unsere sind selbst
-integriert.
+## Befund 1 — die Systemauswahl ist festverdrahtet
 
-**Dieses Arbeitspaket baut das Geruest und macht zwei Methoden lauffaehig. Es rechnet keine
-Kampagne.**
+`selected_systems` in `baselines/harness.py` filtert hart auf `dim == 1`. Damit ist der eigentliche
+Zweck der Harness — alle 126 exportierten Trajektorien — **nicht erreichbar**; sie kann bisher nur
+den Rauchtest.
 
-## Harte Auflagen
+Die Auswahl gehoert in die Konfiguration. Verlangt sind drei Angaben, die sich kombinieren lassen:
+eine Einschraenkung auf Dimensionen, eine Einschraenkung auf ausdrueckliche System-Kennungen, und
+eine Obergrenze fuer die Anzahl. Ohne jede Angabe laeuft die Harness ueber **alle** Systeme des
+Manifests — das ist der Normalfall, nicht der Sonderfall.
 
-1. **`containers/Dockerfile` bleibt unberuehrt.** Die Baseline-Abhaengigkeiten duerfen das
-   Kampagnen-Image nie erreichen. `baselines/` bekommt ein **eigenes** Dockerfile und eine eigene
-   Abhaengigkeitsdatei.
-2. **Nicht nach GitLab pushen.** Ein Push baut das Kampagnen-Image neu, und C-1+C-2 rechnet noch.
-   Arbeiten bleiben lokal; Claude committet nach Pruefung.
-3. **`odeformer` wird gepinnt, nicht einkopiert.** Commit `c9193012ad07a97186290b98d8290d1a177f4609`
-   (Stand main, 2024-08-15, MIT). Kein Fremdcode in unseren Baum kopieren.
-4. **Python 3.9** in der Baseline-Umgebung. Die Pins des Fremdrepos sind von 2023
-   (`torch==2.0.0`, `numpy==1.23.5`); ein Container ist der einzige vernuenftige Weg, und die
-   Umgebung `odeformer39` liefert das Fremdrepo nicht mit — sie ist zu rekonstruieren.
-5. **Kein langer Lauf.** Siehe Abschnitt „Was ausdruecklich nicht gerechnet wird".
+Die Auswahl muss deterministisch sein: dieselbe Konfiguration ergibt dieselbe Systemliste in
+derselben Reihenfolge. Welche Systeme ein Lauf umfasst, gehoert in jeden Record oder in eine
+Begleitdatei, nicht nur in die Konfiguration.
 
-## Eingabevertrag
+`max_dim1_systems` aus der bestehenden Smoke-Konfiguration verschwindet damit. Der Name hat die
+Einschraenkung mitgetragen und darf nicht als Synonym weiterleben.
 
-Quelle ist der bestehende Export:
-`outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/` mit `trajectory_manifest.csv`
-(126 Zeilen = 63 Systeme x 2 IC-Sets) und 252 Rohdateien unter `cells/`.
+## Befund 2 — die Schwellenflags waehlen heimlich eine Hauptzahl
 
-Das Manifest benennt fuer jede Zeile Datentyp, Byte-Reihenfolge, Achsenreihenfolge, Formen und je
-einen `time_sha256` und `state_sha256`.
+`reconstruction_r2_gt_0_9` und `generalization_r2_gt_0_9` werden allein aus dem arithmetischen
+Mittel gebildet (`harness.py:284-285`). Der Auftrag von WP-N19 verbot ausdruecklich, eine der beiden
+Aggregationen zur Hauptzahl zu erklaeren — hier ist es implizit doch geschehen.
 
-**Die Harness prueft vor jeder Nutzung beide Hashes und bricht bei Abweichung ab.** Ein
-stillschweigendes Weiterrechnen auf abweichenden Daten zerstoert genau die Aussage, fuer die das
-Arbeitspaket existiert. Die Pruefung ist zu protokollieren, nicht nur durchzufuehren.
+Verlangt ist **je ein Flag pro Aggregation**, beide Richtungen, also vier Felder. Die Benennung muss
+die Aggregation im Namen tragen, sodass eine Auswertung nicht raten muss. Die beiden bisherigen
+Feldnamen duerfen **nicht** bestehen bleiben: ein Name ohne Aggregationsangabe ist genau der Defekt,
+der geschlossen wird — `CLAUDE.md` fuehrt unter „Known Gaps" bereits einen Fall, in dem ein
+Spaltenname zwei Bedeutungen trug.
 
-Die Achsen- und Formangaben des Manifests sind zu **lesen**, nicht anzunehmen.
+Warum das zaehlt: an echten Trajektorien liegen die beiden Aggregationen 1,7 Punkte (System 24,
+dim 2) und 2,0 Punkte (System 52, dim 3) auseinander. An einer Schwelle von 0,9 entscheidet das
+ueber Treffer oder Nichttreffer.
 
-## Ausgabevertrag
+## Befund 3 — der Mehrdimensions-Test erfindet seine Fixture
 
-Ein Record je Kombination aus System, IC-Set, Methode und Konfiguration. Jeder Record traegt:
+`test_r2_aggregations_are_distinct_on_multidimensional_case` baut ein Array aus vier Zeilen von
+Hand. Das verstoesst gegen die Regel in `codex/CODEX_PROTOCOL.md`, und schwerer wiegt die Folge: der
+Rauchtest deckt nur Dimension 1 ab, wo beide Aggregationen **konstruktionsbedingt gleich** sind.
+Die beiden Codepfade sind auf echten mehrdimensionalen Daten nie verglichen worden.
 
-- Identitaet: unser `git_hash`, der gepinnte odeformer-Commit, eine Umgebungskennung (aufgeloeste
-  Paketversionen), Methodenkennung und die vollstaendige Konfiguration der Methode
-- die beiden Trajektorien-Hashes aus dem Manifest, damit die Paarung spaeter nachpruefbar ist
-- das entdeckte Modell in wiederherstellbarer Form, **Koeffizienten eingeschlossen** — ohne sie ist
-  keine Generalisierung rechenbar, das ist der Fehler, den Phase B gemacht hat
-- die Metriken aus dem naechsten Abschnitt
-- Fehlerfelder: eine gescheiterte Methode erzeugt einen Record mit Begruendung, **niemals gar
-  keinen**. Eine fehlende Zeile ist als Ergebnis nicht unterscheidbar von einem nie gestarteten Lauf.
+Der Test leitet seine Daten kuenftig aus dem **echten Export** ab
+(`outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/`, 126 Zeilen, Rohdaten als float64
+mit Achsenangaben im Manifest). Referenz ist eine reale Trajektorie eines mehrdimensionalen Systems;
+die Vorhersage darf daraus abgeleitet werden, solange die Ableitung sichtbar ist und die Varianzen
+der Dimensionen aus den echten Daten stammen — genau sie erzeugen den Unterschied.
 
-Format und Ablage analog zu den bestehenden Baseline-Ausgaben unter
-`analysis/data/paper1_phaseC_v1/phasec_sindy_baseline/`; das Schema dort ist die Vorlage, nicht neu
-zu erfinden.
+Fuer Records gilt dieselbe Regel, und die Grundlage existiert jetzt:
+`analysis/data/paper1_phaseC_v1/phasec_external_baselines_wp_n19_smoke/records.jsonl` ist ein
+echter, versionierter Recordbestand.
 
-## Metrikvertrag — der Teil, der am leichtesten falsch wird
+## Zusaetzlich: der Rauchtest muss mehrdimensional werden
 
-1. **Beide Aggregationen ueber Dimensionen berichten.** Wir bilden bisher das arithmetische Mittel
-   ueber die Dimensionen (`run_regression.jl:675`), ODEFormer gewichtet nach Varianz
-   (`metrics.py`, `r2_score(..., multioutput='variance_weighted')`). Das sind auf mehrdimensionalen
-   Systemen **verschiedene Groessen**. Beide Spalten fuehren, beide benennen. Keine davon zur
-   Hauptzahl erklaeren — das entscheidet Claude.
-2. **Fehlschlag zaehlt als Misserfolg, nicht als fehlender Wert.** Nicht-endliche oder fehlende
-   Vorhersagen ergeben R² = 0 und bleiben im Nenner. Das ist die Konvention des Fremdrepos und
-   bereits unsere; sie darf nicht versehentlich durch ein `dropna` verlorengehen.
-3. **Beide Richtungen.** Rekonstruktion (Fit-IC) und Generalisierung (die jeweils andere IC),
-   getrennt ausgewiesen.
-4. **Strukturtreffer und R²>0,9-Rate immer beide**, wo ein Strukturvergleich ueberhaupt definiert
-   ist; bei Strukturtreffern **roh und gepruned getrennt**. Die Pruning-Regel wird uebernommen, nicht
-   neu gewaehlt.
+Bisher deckt er drei Systeme der Dimension 1 ab und kann die Kernaussage aus Befund 2 deshalb gar
+nicht pruefen. Kuenftig enthaelt er **mindestens ein System mit Dimension 2 oder hoeher**. SINDy ist
+dort eine lineare Regression je Gleichung, also weiterhin im Minutenbereich.
 
-## Methodenumfang
-
-**Jetzt lauffaehig zu machen:**
-
-- **ODEFormer** — pip-installierbar, vortrainierte Gewichte werden per `gdown` von Google Drive
-  geladen. Hoechster Wert, es ist die Vergleichsarbeit.
-- **SINDy (`pysindy`)** — als Gegenprobe gegen unsere eigene Implementierung unter
-  `analysis/scripts/aggregate/run_phasec_sindy_baseline.py`. Die Frage, die diese Gegenprobe
-  beantwortet: reproduziert unsere Implementierung deren Wrapper?
-
-**Jetzt nur vorbereitet, registriert und ausdruecklich inaktiv:** PySR, ProGED, FFX, ellyn. Je ein
-Platzhalter, der die Methode kennt, ihre Abhaengigkeit benennt und beim Aufruf sauber meldet, dass
-sie nicht eingerichtet ist.
-
-**Warnung zu PySR:** es bringt eine **eigene Julia** mit. Die darf der eingefrorenen Julia 1.12.6
-der Kampagne nicht begegnen. Das ist der Grund fuer das getrennte Image und in der
-Abhaengigkeitsdatei zu kommentieren.
+Aendert sich durch die Umbenennung der Felder der Recordbestand unter
+`phasec_external_baselines_wp_n19_smoke/`, wird er **neu erzeugt** und nicht von Hand angepasst.
 
 ## Was ausdruecklich nicht gerechnet wird
 
-Die vollen 126 Trajektorien x Methoden sind **nicht** zu rechnen. Erlaubt und erwartet ist ein
-**Rauchtest ueber hoechstens drei Systeme der Dimension 1**, der zeigt, dass Hashpruefung, Lauf,
-Metrikberechnung und Recordschreibung zusammenspielen. Laufzeit im Minutenbereich.
+Kein Lauf ueber alle 126 Trajektorien, auch wenn die Auswahl ihn jetzt zulaesst. Kein Bauen des
+Baseline-Images, kein Netzzugriff auf die ODEFormer-Gewichte. **Nicht nach GitLab pushen** —
+C-1+C-2 rechnet, und ein Push baut das Kampagnen-Image neu.
 
-Den vollen Lauf startet ausschliesslich der Nutzer, nach Abnahme.
+`containers/Dockerfile` bleibt unberuehrt.
 
 ## Abnahmekriterium
 
-1. Ein Rauchtest laeuft durch und erzeugt fuer jedes geprueste System je einen Record fuer
-   ODEFormer und SINDy, mit allen Feldern des Ausgabevertrags belegt.
-2. Eine absichtlich verfaelschte Hashangabe fuehrt zum Abbruch mit klarer Meldung, nicht zu einem
-   Ergebnis.
-3. Eine absichtlich zum Scheitern gebrachte Methode erzeugt einen Fehler-Record, keine fehlende
-   Zeile.
-4. `containers/Dockerfile` ist unveraendert; `git status` zeigt keine Aenderung daran.
-5. Die beiden R²-Aggregationen stehen als getrennte Spalten im Record und unterscheiden sich auf
-   mindestens einem mehrdimensionalen Testfall nachweisbar — sonst ist die Implementierung
-   vermutlich zweimal dieselbe.
+1. Eine Konfiguration ohne Auswahlangabe umfasst alle 126 Manifestzeilen; eine mit Dimensions- oder
+   Kennungsfilter genau die erwartete Teilmenge. Beides nachweisbar **ohne** die Zellen zu rechnen.
+2. Ein Record traegt vier Schwellenflags, je Richtung und Aggregation, mit der Aggregation im
+   Namen. Die beiden alten Namen kommen im Recordbestand nicht mehr vor.
+3. Der Rauchtest enthaelt mindestens ein System mit Dimension >= 2, und fuer dieses System sind die
+   beiden Aggregationen im Record **nachweislich verschieden**.
+4. Kein Test im Paket baut seine Eingabedaten von Hand; jeder leitet sie aus dem Export oder aus dem
+   vorhandenen Recordbestand ab. Im Report ist je Test die Herkunft benannt.
+5. Die Zusagen aus WP-N19 halten weiterhin: verfaelschter Hash bricht ab, gescheiterte Methode
+   erzeugt einen Fehler-Record, `containers/Dockerfile` unveraendert.
 
 ## Bericht
 
-`codex/reports/REPORT_WP_N19.md`. Aufzunehmen: die rekonstruierte Umgebung mit aufgeloesten
-Versionen, welche Methoden laufen und welche nur registriert sind, das Ergebnis des Rauchtests, und
-**jede Abweichung, die beim Nachbauen der Umgebung noetig war** — die Pins sind zwei Jahre alt, und
-jede stille Anpassung ist spaeter eine unerklaerliche Zahl.
+`codex/reports/REPORT_WP_N19b.md`. Aufzunehmen: die neuen Feldnamen mit ihrer Herkunft, die
+Herkunft der Testdaten je Test, die gemessene Differenz der beiden Aggregationen auf dem
+mehrdimensionalen Rauchtestsystem, und jede Stelle, an der die Umbenennung eine bestehende Datei
+beruehrt hat.
