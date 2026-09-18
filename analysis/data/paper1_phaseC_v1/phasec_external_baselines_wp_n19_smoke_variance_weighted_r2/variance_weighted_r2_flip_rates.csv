@@ -1,0 +1,9 @@
+dimension,arm,initial_condition_set,n_cells,threshold_flip_count,threshold_flip_rate,threshold_flip_up_count,threshold_flip_up_rate,threshold_flip_down_count,threshold_flip_down_rate
+1,odeformer,1,4,0,0.0,0,0.0,0,0.0
+1,odeformer,2,4,0,0.0,0,0.0,0,0.0
+1,sindy,1,4,0,0.0,0,0.0,0,0.0
+1,sindy,2,4,0,0.0,0,0.0,0,0.0
+2,odeformer,1,2,0,0.0,0,0.0,0,0.0
+2,odeformer,2,2,0,0.0,0,0.0,0,0.0
+2,sindy,1,2,0,0.0,0,0.0,0,0.0
+2,sindy,2,2,0,0.0,0,0.0,0,0.0

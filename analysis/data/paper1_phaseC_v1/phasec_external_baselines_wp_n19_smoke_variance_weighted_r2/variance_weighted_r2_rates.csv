@@ -1,0 +1,9 @@
+dimension,arm,initial_condition_set,n_cells,r2_arithmetic_mean_gt_0_9_count,r2_arithmetic_mean_gt_0_9_rate,r2_variance_weighted_gt_0_9_count,r2_variance_weighted_gt_0_9_rate
+1,odeformer,1,4,0,0.0,0,0.0
+1,odeformer,2,4,0,0.0,0,0.0
+1,sindy,1,4,4,1.0,4,1.0
+1,sindy,2,4,4,1.0,4,1.0
+2,odeformer,1,2,0,0.0,0,0.0
+2,odeformer,2,2,0,0.0,0,0.0
+2,sindy,1,2,2,1.0,2,1.0
+2,sindy,2,2,2,1.0,2,1.0

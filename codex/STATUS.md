@@ -1,4 +1,4 @@
 status: done
-task:   WP-N19b
-report: codex/reports/REPORT_WP_N19b.md
-note:   Baseline-Harness-Auswahl, aggregationsspezifische Flags, echte Mehrdimensions-Tests und Smoke-Records aktualisiert.
+task:   WP-N20
+report: codex/reports/REPORT_WP_N20.md
+note:   Variance-weighted R2 analysis, controls, parameterized second input, outputs, and tests completed.
