@@ -533,6 +533,26 @@ reconstruction is exact, not approximate — the control is that recomputing the
 `r2_by_dim` reproduces the stored `r2`. This is implemented in the analysis pipeline, never in the
 campaign path.
 
+**Built and measured on the whole of Phase B (WP-N20, 2026-09-18).**
+`analysis/scripts/aggregate/aggregate_variance_weighted_r2.py` takes the campaign identifier as a
+parameter. The control holds on **756 of 756** cells at a maximum error of 1.1e-16, and the
+one-dimensional cells agree in **276 of 276**, as they must. Over the full campaign **53 of 756
+cells change side of the threshold, every one of them upward, none downward.** The rate rises with
+dimension — 0 % on dim 1, 3.6 to 9.5 % on dim 2, 13 to 30 % on dim 3, and 67 % in one dim-4 group of
+six. Differences themselves go both ways (the quantiles of `variance_weighted − arithmetic` reach
+−5.1e-02), but no downward difference crosses the threshold. These are **Phase B diagnostics** and
+never appear beside a Phase C number; the Phase C rate is computed on the Phase C records.
+
+**One assumption is declared rather than verified.** The weights for the Phase B analysis are read
+from the **Phase C** trajectory export, because Phase B's own trajectories are not tracked. The
+reference trajectory for a given system and IC set depends only on the sampling protocol — 512 points
+over t ∈ [0,10], self-integrated with `Tsit5` at 1e-9 — and not on the basis, the arm or the search,
+and that protocol is frozen and identical across both phases, so the two should be the same numbers.
+**Nothing in the pipeline checks it**, and the controls above cannot: they test `r2_by_dim` against
+`r2`, which is internal to the record and passes whatever the weights are. The Phase B registry
+carries no `u0`, so it cannot be checked after the fact either. For Phase C the question does not
+arise, since export and records come from the same run.
+
 ---
 
 ## 7. Decisions on the questions this document left open
