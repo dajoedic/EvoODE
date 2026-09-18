@@ -156,23 +156,30 @@ Kampagne.
 Am 14.09. wurden sie zugleich gestartet, die Belegung lag bei 68,55 Kernen (71 %), und C-3 wurde
 binnen Minuten angehalten. Bei 0 von 180 Zellen ging nichts verloren.
 
-**Vor dem Fortsetzen aufräumen — sonst verdirbt der Heartbeat-Strom.** Der abgebrochene Start hat
-für die Zellen **883–914** je 3–6 Heartbeat-Zeilen hinterlassen (32 Dateien, kein Ergebnis). Der
-Runner schreibt **anhängend** (`run_regression.jl:520`), und der Leser verschmilzt beide Läufe zu
-einer Reihe mit doppelten Levelnummern (`analyze_wasted_search_levels.jl:98`). Also die 32 Reste
-vorher beiseiteräumen:
+**Der Aufräumschritt ist hinfällig — hier stand bis zum 18.09. das Gegenteil.** Der abgebrochene
+Start hat für die Zellen **883–914** je 3–18 Heartbeat-Zeilen hinterlassen (32 Dateien, kein
+Ergebnis; die früher notierten „3–6" waren zu niedrig, Zelle 883 kam bis Level 17). Der Runner
+schreibt anhängend (`run_regression.jl:520`), und der Leser verschmolz beide Läufe einmal zu einer
+Reihe mit doppelten Levelnummern. **Genau das hat WP-C5 am 15.09. repariert** (`35366c3`):
+`read_heartbeat` trennt an `start`-Ereignissen und wählt mit
+`findlast(segment -> !isempty(segment.levels), ...)` das **letzte** Segment mit Level-Ereignissen
+(`analyze_wasted_search_levels.jl:108–158`). Der angehängte echte C-3-Lauf gewinnt also, die Reste
+werden verworfen und gezählt. **Nichts ist vorher zu tun.**
 
-```powershell
-$t = "S:\BigDataOrion\data-science\joedicke\phase_c_campaign_221a3a72f0cb43164a22b09baac2d9ae82681a02\tasks"
-New-Item -ItemType Directory -Force "$t\_aborted_c3_start" | Out-Null
-883..914 | ForEach-Object { $f = Join-Path $t ("cell_{0:D6}.heartbeat.jsonl" -f $_); if (Test-Path $f) { Move-Item $f "$t\_aborted_c3_start" } }
-```
+**Und verschieben ginge ohnehin nicht.** Die Freigabe ist über SMB **nur lesbar**: die ACL auf
+`tasks` gibt `SCCH\Domain Users` und `Everyone` nur `ReadAndExecute`, `FullControl` hat allein
+`S-1-22-1-0` — die NFS-Kennung, unter der die Pods schreiben. Am 18.09. scheiterten sowohl Git Bash
+als auch PowerShell mit `UnauthorizedAccessException`, auch ohne Sandbox. Wer die Reste wirklich
+beiseiteräumen will, braucht einen Pod, der die Freigabe über NFS einhängt. Lohnt nicht.
 
-Verschieben, nicht löschen — die Reste sind der Beleg dafür, dass C-3 bei 0 Zellen angehalten wurde.
-Die **dauerhafte** Reparatur wäre, den Leser an `start`-Ereignissen zu segmentieren; ein Pod-Neustart
-erzeugt dasselbe Bild in jeder Kampagne.
+**Der Grund, C-3 angehalten zu lassen, ist am 18.09. entfallen.** Er war Kapazität: am 14.09.
+lagen 68,55 Kerne (71 %) belegt. Inzwischen ist die Fremdlast im Namensraum von 36,55 auf **~3,4
+Kerne** gefallen — mit unseren 32 sind rund **60 der 96 Kerne frei**, C-3 käme auf ~67. Die
+ursprüngliche Auflage „erst wenn C-1+C-2 auf 756/756 steht" ist damit sachlich überholt; sie war nie
+eine wissenschaftliche Bedingung, sondern eine Rücksicht auf Mitbenutzer. Die Belegung vor dem
+Fortsetzen trotzdem neu zählen — **nach CPU-Requests, nicht nach Pods** (§2).
 
-Fortsetzen, **erst wenn C-1+C-2 auf 756/756 steht**:
+Fortsetzen:
 
 ```powershell
 kubectl -n scch-das patch job evoode-phase-c-c3-campaign --type=merge --patch-file outputs/k8s_phase_c_221a3a7/resume_c3.json

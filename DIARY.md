@@ -4,6 +4,75 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ---
 
+## 2026-09-18
+
+### Die Kampagne ist billiger als geplant — und die Kappe tut auf dim 3 nichts
+
+<!-- b0b0986 -->
+
+**Anlass war eine falsche Zahl von mir.** Ein Statusblick auf C-1+C-2 ergab 41 von 756 Zellen nach
+knapp vier Tagen, daraus eine Rate von rund 5 Zellen pro Tag und daraus eine Restlaufzeit von
+**140 Tagen**. Das war grob falsch, und der Fehler ist methodisch, nicht arithmetisch: Der Job liest
+seine Arbeitsliste aus `indices_c1_c2_cost_desc.txt`, also **kostenabsteigend**. Erledigt und
+laufend sind bisher ausschliesslich dim-3-Zellen; die 276 dim-1-Zellen stehen ganz hinten. Eine Rate
+ueber Zellen zu bilden setzt Zellen als gleich teuer voraus — und der Dateiname sagt woertlich, dass
+sie es nicht sind. Die 41 Zellen sind **13,5 % der Gesamtkosten**, nicht 5,4 %.
+
+Festgehalten als Regel, weil der Fehler jederzeit wiederkommt: **Fortschritt dieser Kampagne wird in
+Kernstunden gelesen, nie in Zellen.**
+
+**Die Kostenprognose ist damit zum ersten Mal gegen die Wirklichkeit gehalten.** Jede der 41
+fertigen Zellen gegen ihre Phase-B-Messung derselben Zelle (gleiches System, Seed, IC-Set, Arm
+`pretune_off`):
+
+| Arm | n | Medianfaktor | Mittel | max |
+|---|---|---|---|---|
+| gekappt | 20 | 0,83 | 0,95 | 2,25 |
+| ungekappt | 21 | 0,75 | 0,98 | 2,26 |
+
+Die Zellen laufen also eher **billiger** als das Phase-B-Vorbild, **trotz** Konstantenbasis und
+k = 3. Der in `CLAUDE.md` eingeplante Aufschlag von +20 % zeigt sich auf dim 3 nicht. Zwei
+Einschraenkungen gehoeren dazu: gemessen ist ausschliesslich dim 3, und `elapsed_s` ist nach
+Designprinzip 7 keine Evidenz, sondern Kapazitaetsplanung. Hochgerechnet ueber die Restwarteschlange
+(LPT-Simulation, Phase-B-Kosten je Zelle) sind es rund **6 Tage Rest** bei `parallelism: 32`, also
+gut 10 Tage gesamt gegen die geplanten 16–21. Ab etwa 48 Slots bindet die laengste **einzelne**
+Zelle — 92 h noch nicht gestartet — und nicht mehr die Slotzahl.
+
+**Der eigentliche Befund kam beim Nachsehen, warum beide Arme fast gleich viel kosten.** Ueber alle
+19 vollstaendigen Paare, alle dim 3:
+
+- **14 von 19 tragen gar keine Kappe** (`stage_caps == [None, None, None]`, Systeme 52, 53, 57).
+  `total_loss_evals` und `executed_levels` sind zwischen den Armen **bit-identisch**.
+- Die 5 Paare **mit** Kappe (`[None, 3, 3]`, Systeme 54 und 56) fahren **in beiden Armen 30 von 30
+  Leveln**. Die Kappe terminiert nichts. In einem Fall ist der gekappte Arm minimal teurer
+  (5.692.463 gegen 5.602.929 Evaluationen).
+
+Der plausible Mechanismus, noch nicht bestaetigt: kappt die Kappe nicht *alle* Gleichungen, laeuft
+die Suche bis zum Levelbudget weiter — `[None, 3, 3]` laesst Gleichung 1 offen. Das ist schaerfer
+als der Pilotbefund vom 14.09., wo alle Kappen `nothing` waren und Kriterium 4 deshalb trivial
+bestand: hier sind Kappen **vorhanden und wirkungslos**.
+
+**Nicht ueberinterpretieren, und ausdruecklich keine Entscheidung.** 19 dim-3-Paare entscheiden
+nichts. Die suchfreie Gegenprobe vom 14.09. sagt, dass Kappen auf dim 1 (32/46) und dim 2 (36/56)
+binden — genau diese Zellen stehen noch aus, ab Position 74 der Warteschlange. Der Merkposten steht
+in `READ_THIS_FIRST.md` §5(c): sobald die ersten dim-2-Zellen fertig sind, dieselbe Paartabelle
+nachziehen. Findet sich auch dort kein Unterschied, betrifft das Claim B im Kern, und dann ist zu
+klaeren, ob die Kappe je ein Levelbudget einspart oder nur die Stufe begrenzt.
+
+**Eine Planungsannahme faellt damit schon jetzt.** `CLAUDE.md` fuehrt den Kostenanstieg der Phase C
+darauf zurueck, dass „der ungekappte Spiegel den Grossteil traegt, weil er die vollen 30 Level
+faehrt". Auf dim 3 — 68 % der Restkosten — stimmt das nicht: beide Arme fahren die vollen 30 Level
+und kosten praktisch gleich viel. Das ist der Grund, warum die Gesamtprognose unter dem geplanten
+Band liegt, und es ist dieselbe Beobachtung wie oben, nur von der Kostenseite gelesen.
+
+**Betriebslage nebenbei:** Job gesund — 32 Pods laufen, 0 Restarts, kein `ErrImagePull`, kein
+`OOMKilled`, kein Fehlerfeld in einem der 41 Records, eine Identitaet ueber alle
+(`221a3a7` / `0c9672de35c75a9d`). Die Fremdlast im Namensraum ist von 36,55 Kernen (14.09.) auf
+**~3,4** gefallen; mit unseren 32 sind rund **60 der 96 Kerne frei**. Der Grund, C-3 angehalten zu
+lassen, ist damit entfallen.
+
+---
+
 ## 2026-09-15
 
 ### WP-C5 — der Heartbeat-Leser haelt Neustarts aus, und zwei Defekte, die nur ein Lauf sichtbar macht
