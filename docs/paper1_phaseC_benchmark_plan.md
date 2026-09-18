@@ -488,6 +488,51 @@ candidate framings of 2026-09-07 were shapes fitted to whichever data happened t
 that move. Deciding what a timing run may claim *after* seeing its numbers is the same mistake in a
 smaller place.
 
+### 6b — Which R² aggregation the R² > 0.9 rate uses (decided 2026-09-18)
+
+**Two aggregations exist and they are not the same quantity.** We average the per-dimension R²
+arithmetically (`run_regression.jl:675`; the stored `r2` is exactly `mean(r2_by_dim)`, verified on
+52 of 52 Phase C records to 1e-12). ODEFormer weights by the variance of each dimension
+(`odeformer/metrics.py`, `r2_score(..., multioutput='variance_weighted')`). On one-dimensional
+systems they coincide; on multidimensional ones they do not.
+
+**Decision: both are reported everywhere, and the variance-weighted figure is the one labelled as
+the literature comparison** — because it is ODEBench's own definition, and Design Principle 9
+justifies carrying an R² > 0.9 rate at all by the external comparison it makes possible. A rate
+computed under a different convention than the work it is compared against is not a comparison. The
+arithmetic mean remains the internal figure: it is what the records store and what every earlier
+result in `DIARY.md` and the Phase B tables cites.
+
+**That reason is stated first because the numbers push the other way, and must not be the reason.**
+Measured on the 52 Phase C records available on 2026-09-18 — all dimension 3, the hardest class and
+the first block of the cost-ordered queue:
+
+| | |
+|---|---|
+| median absolute difference | 3.3e-02 |
+| maximum absolute difference | 5.3e-01 |
+| cells that change side of the 0.9 threshold | **14 of 52** |
+
+The direction is one-sided: **variance weighting is the higher number**, because a badly fitted
+low-variance dimension drags the arithmetic mean down and is nearly ignored by the weighting.
+System 52, seed 42, IC set 2 moves from 0.5727 to 0.9175. Choosing the aggregation after seeing
+that it flatters us is the pruning-threshold mistake and the WP-V1 mistake in a third place. The
+choice therefore rests on the definition, and would stand unchanged had the numbers fallen the other
+way.
+
+**The flip rate is itself a result and is published as a declared sensitivity**, not smoothed away.
+It states how strongly the literature metric depends on a convention on multidimensional systems.
+Two cautions travel with the figure above: those 52 records are dimension 3 only, where the two
+aggregations diverge most, so the campaign-wide rate will be lower; and the rate is recomputed on
+the complete campaign rather than carried forward.
+
+**No re-run is required.** The variance-weighted figure is reconstructable from what is already
+stored: `r2_by_dim` is present in every record, and the weights are variances of the reference
+trajectory, which the hashed export under `outputs/phase_c_trajectory_hashes/wp_c4c/` supplies. The
+reconstruction is exact, not approximate — the control is that recomputing the arithmetic mean from
+`r2_by_dim` reproduces the stored `r2`. This is implemented in the analysis pipeline, never in the
+campaign path.
+
 ---
 
 ## 7. Decisions on the questions this document left open
