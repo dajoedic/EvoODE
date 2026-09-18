@@ -14,6 +14,15 @@ take precedence over speed and feature count.
 
 ---
 
+## 🛰️ Live status — [Phase C auf Orion](https://claude.ai/artifact/4sq6HhRsnxgrFVqVF2trBx)
+
+**What is computing right now, how far it has come, and what happens next.** The Phase C campaign —
+the canonical evaluation this project's first paper rests on — runs on the Orion cluster. The status
+page carries the current cell counts, the cost-based progress that the cell counter misrepresents,
+the open risk to Claim B, and the ordered plan. It is republished whenever the state changes.
+
+---
+
 ## Scientific position
 
 | Method | Search space | Growth strategy | Complexity control |
