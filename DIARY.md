@@ -8,6 +8,8 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ### Claim B ist auf dim 3 nicht widerlegt, sondern noch nicht getestet — und die Vorhersage steht vor der Messung
 
+<!-- 0321347 -->
+
 **Anlass.** Die Zwischenauswertung der laufenden Phase-C-Kampagne (Stand 19.09., C-1+C-2 bei
 52/756, C-3 bei 62/180, 0 Fehler, ein Identitaetstripel `221a3a7` / `0c9672de35c75a9d` /
 `ffb0266c7913352c`) sah zunaechst nach einem Negativbefund fuer Claim B aus. Die Nachrechnung dreht
