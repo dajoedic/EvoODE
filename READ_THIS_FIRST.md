@@ -10,15 +10,18 @@ zweites davon. Alles Dauerhafte gehört dorthin, nach `PAPER_1.md` oder ins `DIA
 **Regeln:** wird immer **vollständig überschrieben**, nie angehängt. Was älter als ein paar Tage
 ist, ist vermutlich falsch — dann gilt `CLAUDE.md`.
 
-**Stand: 2026-09-18 abends. HEAD `a6fc5ec`. Working Tree sauber, nichts uncommittet.**
+**Stand: 2026-09-20. Kampagnenzahlen vom 19.09. Working Tree: DIARY.md und diese Datei geändert.**
 
 ---
 
 ## 1. Wo wir stehen — in zwei Sätzen
 
-**Beide Kampagnen-Jobs rechnen fehlerfrei, und es gibt nichts zu tun als zu warten.** C-1+C-2 steht
-bei **44/756**, C-3 bei **8/180**; C-3 wurde am 18.09. vorgezogen, weil die Fremdlast auf dem Cluster
-von 36,6 auf 3,4 Kerne gefallen war.
+**Beide Kampagnen-Jobs rechnen fehlerfrei, und es gibt nichts zu tun als zu warten.** Stand 19.09.:
+C-1+C-2 bei **52/756**, C-3 bei **62/180**, 0 Fehler, ein Identitätstripel über alle 114 Records,
+1.965 verbrauchte Kernstunden gegen 12.300–15.900 geplant. Fremdlast rund 3,6 Kerne, 64 Pods à
+1 Kern belegt. C-1+C-2 steckt noch komplett in dim 3 (Systeme 52–57); die erste dim-2-Zelle ab
+Warteschlangenposition 121 kommt **später als der in der alten Übergabe genannte 20.09.** — der
+Zähler stieg zuletzt um 8 Zellen in 15 Stunden, und die vorderen Positionen sind die teuersten.
 
 **Alles, was ohne Kampagnenergebnisse machbar war, ist gemacht.** Es steht **keine Entscheidung
 offen**, die den Lauf betrifft.
@@ -56,10 +59,10 @@ kubectl get jobs -n scch-das
 Erwartet: beide Jobs **Running**, Zähler wachsend.
 
 **Den Zähler nicht hochrechnen.** Die Warteschlange (`indices_c1_c2_cost_desc.txt`) ist
-**kostenabsteigend**: Positionen 1–120 sind dim 3, 121–456 dim 2, 457–480 dim 4, 481–756 dim 1. Die
-44 fertigen Zellen sind **14,7 % der Kosten**, nicht 5,8 %. Am 18.09. wurde daraus einmal eine
-Restlaufzeit von 140 Tagen statt der tatsächlichen ~5 Tage. **In Kernstunden rechnen, nie in
-Zellen.**
+**kostenabsteigend**: Positionen 1–120 sind dim 3, 121–456 dim 2, 457–480 dim 4, 481–756 dim 1. Am
+18.09. wurde aus einer Zellen-Hochrechnung einmal eine Restlaufzeit von 140 Tagen. **In Kernstunden
+rechnen, nie in Zellen** — die fertigen Zellen sind stets ein weit größerer Kostenanteil, als ihre
+Zahl nahelegt.
 
 ### Auslastung
 
@@ -88,10 +91,12 @@ NFS-Kennung, unter der die Pods schreiben. Schreibversuche scheitern auch ohne S
 ## 3. Was als Nächstes ansteht
 
 1. **Die dim-2-Nachzählung — der einzige terminierte Punkt.** Sobald die ersten dim-2-Zellen fertig
-   sind (ab Warteschlangenposition 121, also etwa ab dem 20.09.), dieselbe Paartabelle ziehen:
-   `stage_caps`, `executed_levels`, `total_loss_evals`. Begründung in Abschnitt 4.
-2. **Warten.** Rest grob **5 Tage** für C-1+C-2, C-3 deutlich früher fertig. Kapazitätsplanung,
-   keine Evidenz (Designprinzip 7).
+   sind (ab Warteschlangenposition 121), dieselbe Paartabelle ziehen: `stage_caps`,
+   `executed_levels`, `total_loss_evals`. **Dabei nach voll gegen teilweise gekappten Zeilen
+   trennen** — das ist der eigentliche Test, Begründung in Abschnitt 4.
+   Vorher noch interessant: die drei voll gekappten dim-3-Zeilen (System 60 IC 2, System 61 IC 1/2).
+2. **Warten.** Kapazitätsplanung, keine Evidenz (Designprinzip 7). Die alte 5-Tage-Angabe stammt vom
+   18.09.; der Zähler ist seither langsamer gelaufen als sie unterstellt.
 3. **Danach auswerten**, dann Claim D über die Paarung gegen die gerechnete SINDy-Baseline schließen,
    inklusive Trajektorien-Abgleich per Hash.
 4. **Nach Kampagnenende:** Baseline-Image bauen, damit ODEFormer laufen kann.
@@ -102,23 +107,42 @@ GitHub.
 
 ---
 
-## 4. Der eine offene Befund: Claim B hat auf dim 3 kein Signal
+## 4. Der eine offene Befund: die Kappe terminiert nur, wenn sie *alle* Gleichungen kappt
 
-Über alle bisher vollständigen Paare, alle dim 3:
+**Stand 20.09., 25 vollständige Paare, alle dim 3, Systeme 52–57.** Ausführlich im `DIARY.md` unter
+dem 20.09.; hier die Kurzform und was daraus für die Auswertung folgt.
 
-- **14 von 19 tragen gar keine Kappe** (`stage_caps == [None, None, None]`); dort sind
-  `total_loss_evals` und `executed_levels` zwischen den Armen **bit-identisch**.
-- Die 5 Paare **mit** Kappe (`[None, 3, 3]`, Systeme 54 und 56) fahren **in beiden Armen 30 von 30
-  Leveln**. Die Kappe terminiert nichts; in einem Fall ist der gekappte Arm minimal teurer.
+- **15 Paare ohne Kappe:** `total_loss_evals` und `executed_levels` **15/15 bit-identisch**. Das ist
+  eine bestandene Kontrolle — die Arme unterscheiden sich durch die Kappe und sonst nichts.
+- **10 Paare mit Kappe** (`[None,3,3]`, `[None,None,3]`): **alle zehn fahren 30/30 Level.** Loss und
+  R² sind in **7 von 10 bit-identisch**; die Kostenabweichungen liegen bei 1,3–8,8 % in beide
+  Richtungen und sind **kein Befund**.
 
-Plausibler, **unbestätigter** Mechanismus: kappt die Kappe nicht *alle* Gleichungen, läuft die Suche
-bis zum Levelbudget weiter — `[None, 3, 3]` lässt Gleichung 1 offen.
+**Der Mechanismus steht im Code.** `_effective_max_stage` (`src/structure/evogrow.jl:141-144`)
+nimmt das **Maximum** über die Kappen und setzt `nothing` auf `max_stage`; eine offene Gleichung
+hält das volle Stufenbudget für alle offen. Gekappte Gleichungen werden nur in ihren Termen
+begrenzt, nicht eingefroren.
 
-**Nicht überinterpretieren.** 19 dim-3-Paare entscheiden nichts, und die suchfreie Gegenprobe
-(`outputs/phase_c_cap_incidence/stage_caps_by_basis.csv`) sagt, dass Kappen auf dim 1 (32/46) und
-dim 2 (36/56) binden — auf **dim 4 dagegen gar nicht**, dort sind C-1 und C-2 strukturell dieselbe
-Rechnung. Findet sich auch auf dim 2 kein Unterschied, betrifft das Claim B im Kern; dann ist zu
-klären, ob die Kappe je ein Levelbudget einspart oder nur die Stufe begrenzt.
+**Vorhersage, datiert vor der Messung:** Ersparnis genau dort, wo **alle** Gleichungen eine endliche
+Kappe tragen. Die suchfreie Gegenprobe
+(`outputs/phase_c_cap_incidence/stage_caps_by_basis.csv`) sagt, wo das ist — voll gekappt sind
+**dim 1: 32/46, dim 2: 15/56, dim 3: 3/20, dim 4: 0/4**. Die drei dim-3-Zeilen sind **System 60 IC 2
+und System 61 IC 1/2** und stehen noch aus. Bisher gemessen wurden ausschließlich Zellen, in denen
+die Kappe strukturell nicht terminieren kann — **Claim B ist nicht widerlegt, sondern noch nicht
+getestet.**
+
+**Beim Auswerten prüfen:** die drei ausstehenden dim-3-Zeilen, dann die 15 voll gekappten dim-2-Zeilen
+gegen die 21 nur teilweise gekappten, dann die 32 voll gekappten dim-1-Zeilen. Fällt die Ersparnis
+auch bei voller Kappe aus, betrifft das Claim B im Kern.
+
+**Nicht an der Kappe drehen.** Aggressiver kappen hieße, auf die Abwesenheit von Evidenz zu kappen
+(vom System-63-Defekt ausgeschlossen); die Schwellen nachziehen ist der WP-V1-Fehler. Der Hebel wäre
+die Granularität der Terminierung — gekappte Gleichungen einfrieren statt nur ihre Terme begrenzen.
+**Paper 2, nicht jetzt**, und zu messen statt zu behaupten.
+
+**Instrumentierungslücke:** im ungekappten Arm sind `eq_final_stages`, `stage_caps` und
+`eq_overshoot` **0/26 befüllt**; nur `final_stage` existiert, und das ist das Maximum über die
+Gleichungen. Aus der suchfreien Gegenprobe rekonstruierbar.
 
 **Zweiter Merkposten fürs Auswerten:** hilft k = 3 gegen den Konstanten-Defekt auf dim 2? Der
 dim-2-Probelauf lief unter `ec3b6bd`, also vor der Restart-Politik, mit k = 1; C-1 fährt k = 3. Die

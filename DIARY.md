@@ -4,6 +4,88 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ---
 
+## 2026-09-20
+
+### Claim B ist auf dim 3 nicht widerlegt, sondern noch nicht getestet — und die Vorhersage steht vor der Messung
+
+**Anlass.** Die Zwischenauswertung der laufenden Phase-C-Kampagne (Stand 19.09., C-1+C-2 bei
+52/756, C-3 bei 62/180, 0 Fehler, ein Identitaetstripel `221a3a7` / `0c9672de35c75a9d` /
+`ffb0266c7913352c`) sah zunaechst nach einem Negativbefund fuer Claim B aus. Die Nachrechnung dreht
+das Bild. Beides wird hier festgehalten, das Fehlurteil eingeschlossen.
+
+**Was gemessen ist: 25 vollstaendige Paare, alle dim 3, Systeme 52-57.**
+
+- **15 Paare ohne Kappe** (`stage_caps == [nothing, nothing, nothing]`): `total_loss_evals` und
+  `executed_levels` in **15 von 15 bitidentisch**. Das ist keine Nullmeldung, sondern eine
+  **bestandene Kontrolle** — C-1 und C-2 unterscheiden sich durch die Kappe und durch sonst nichts.
+- **10 Paare mit Kappe** (`[nothing,3,3]` auf 54/55/56, `[nothing,nothing,3]` auf 57): **alle zehn
+  fahren 30 von 30 Leveln in beiden Armen.** Die Kappe terminiert nichts.
+- Qualitaet: Loss und R2 in **7 von 10 bitidentisch**. Von den drei uebrigen ist der *gekappte* Arm
+  einmal besser (System 54, Seed 123, IC 2: R2 0,9787 gegen 0,9439 bei ratio 0,993) und zweimal
+  schlechter (System 56 Seed 123 IC 2, beide Arme im Totalausfall bei R2 0,13 bzw. 0,23; System 57
+  Seed 42 IC 2, R2 0,9390 gegen 0,9478).
+- Kosten: 5 der 10 gekappten Paare sind im gekappten Arm **teurer**, um 1,3 bis 8,8 %, keines
+  billiger. **Das war zuerst als Befund berichtet und ist keiner** — es sind Abweichungen im
+  einstelligen Prozentbereich bei ueberwiegend identischem Ergebnis.
+- Endstufe: die Kappe drueckt `final_stage` in **1 von 10** Paaren (System 57, 5 auf 4), in 9 nicht.
+
+**Der Mechanismus, und er steht im Code, nicht in der Statistik.** `_effective_max_stage`
+(`src/structure/evogrow.jl:141-144`) bildet das **Maximum** ueber die Kappen und setzt `nothing` auf
+`max_stage`. Eine einzige ungekappte Gleichung haelt damit das volle Stufenbudget fuer **alle**
+Gleichungen offen. `_effective_eq_stages` (Zeile 147-152) begrenzt die gekappte Gleichung nur in den
+verfuegbaren Termen; eingefroren wird sie nicht. **Die Kappe spart ein Levelbudget genau dann, wenn
+alle Gleichungen gekappt sind, und sonst nie.** Das erklaert auch die Kostenlage: der Suchraum pro
+Gleichung schrumpft, die Levelzahl nicht — und ein kleinerer Suchraum kann zufaellig auf teurere
+Strukturen fallen, daher die Streuung in beide Richtungen.
+
+**Die suchfreie Gegenprobe sagt, wo das eintritt** (`outputs/phase_c_cap_incidence/stage_caps_by_basis.csv`,
+kanonische Basis):
+
+| dim | Zeilen | >= 1 Kappe | **alle Gleichungen gekappt** |
+|---|---|---|---|
+| 1 | 46 | 32 | **32** |
+| 2 | 56 | 36 | **15** |
+| 3 | 20 | 15 | **3** |
+| 4 | 4 | 0 | **0** |
+
+Auf dim 1 ist jede Zeile mit Kappe zugleich voll gekappt. Auf dim 3 sind es 3 von 20 — **System 60
+IC 2 sowie System 61 IC 1 und IC 2**, und die sind noch nicht gerechnet. Gemessen wurden bisher
+exakt die Zellen, in denen die Kappe strukturell **nicht** terminieren kann.
+
+**Vorhersage, festgehalten vor den Daten.** Die Ersparnis an `executed_levels` und
+`total_loss_evals` faellt dort an, wo **alle** Gleichungen eine endliche Kappe tragen, und sonst
+nicht. Pruefbar an drei Stellen: den drei ausstehenden dim-3-Zeilen (60 IC 2, 61 IC 1/2), den 15
+voll gekappten dim-2-Zeilen gegen die 21 nur teilweise gekappten, und den 32 voll gekappten
+dim-1-Zeilen. Wird sie dort bestaetigt, ist der Mechanismus belegt statt vermutet; faellt sie auch
+bei voller Kappe aus, betrifft das Claim B im Kern.
+
+**Zur Frage, ob die Kappe zu konservativ steht: das ist die falsche Stellschraube.** Eine
+aggressivere Kappe hiesse, auf die *Abwesenheit* von Evidenz zu kappen — genau die Regel, die der
+System-63-Defekt geschlossen hat, und die Fehlerkosten sind asymmetrisch: eine falsche Kappe macht
+die Wahrheit unerreichbar, eine fehlende kostet nur Rechenzeit. WP-C1-C5 hat mit **0 truncated rows
+von 80 bei 48 endlichen Kappen** genau das Gewuenschte erreicht. Die Schwellen nachzuziehen ist
+zusaetzlich durch WP-V1 ausgeschlossen (Leave-one-system-out liefert 0,044 bis 0,278; dort
+truncatet Lorenz wieder) und waere der WP-V1-Fehler ein zweites Mal. Der Hebel liegt nicht in der
+Schaerfe der Kappe, sondern in der **Granularitaet der Terminierung**: gekappte Gleichungen
+einzufrieren statt nur ihre Terme zu begrenzen, waehrend die offenen weitersuchen. Das spart
+Aufwand, ohne eine einzige Kappe zu verschaerfen, also ohne Truncation-Risiko. **Nicht in Phase 1
+und nicht waehrend der laufenden Kampagne** — die Konfiguration ist eingefroren, und der Gewinn ist
+unklar, weil die Gleichungen ueber den gemeinsamen Loss auf der integrierten Trajektorie gekoppelt
+bleiben: eingefroren waere die Struktur, nicht die Parameter. Zu messen, nicht zu behaupten.
+
+**Zwei Einschraenkungen.** 10 Paare entscheiden nichts, und das gilt fuer die guenstige Lesart
+genauso wie fuer die unguenstige. Und im ungekappten Arm sind `eq_final_stages`, `stage_caps` und
+`eq_overshoot` **0 von 26 mal befuellt** — nur `final_stage` existiert, und das ist das Maximum
+ueber die Gleichungen, verdeckt also genau den Effekt, um den es geht. Fuer die Auswertung aus der
+suchfreien Gegenprobe rekonstruierbar, aber ein Merkposten.
+
+**Was fuer das Paper bleibt, unabhaengig vom Ausgang der Vorhersage:** Claim B wird schmaler als
+geplant. Die Ersparnis lebt auf dim 1 und einem Teil von dim 2 — auf den gekoppelten Systemen, dem
+erklaerten PhD-Fokus, kappt die Kappe meist nur einzelne Gleichungen und spart dann nichts. Das
+gehoert in die Limitations, und es verschiebt das Gewicht des Papers.
+
+---
+
 ## 2026-09-18
 
 ### Das ODEFormer-Repo liefert keine Zahlen, aber etwas Besseres — und eine Kennzahl, die nicht unsere ist
