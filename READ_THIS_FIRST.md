@@ -10,18 +10,34 @@ zweites davon. Alles Dauerhafte gehört dorthin, nach `PAPER_1.md` oder ins `DIA
 **Regeln:** wird immer **vollständig überschrieben**, nie angehängt. Was älter als ein paar Tage
 ist, ist vermutlich falsch — dann gilt `CLAUDE.md`.
 
-**Stand: 2026-09-20. Kampagnenzahlen vom 19.09. Working Tree: DIARY.md und diese Datei geändert.**
+**Stand: 2026-09-21. Working Tree sauber bis auf diese Datei.**
 
 ---
 
 ## 1. Wo wir stehen — in zwei Sätzen
 
-**Beide Kampagnen-Jobs rechnen fehlerfrei, und es gibt nichts zu tun als zu warten.** Stand 19.09.:
-C-1+C-2 bei **52/756**, C-3 bei **62/180**, 0 Fehler, ein Identitätstripel über alle 114 Records,
-1.965 verbrauchte Kernstunden gegen 12.300–15.900 geplant. Fremdlast rund 3,6 Kerne, 64 Pods à
-1 Kern belegt. C-1+C-2 steckt noch komplett in dim 3 (Systeme 52–57); die erste dim-2-Zelle ab
-Warteschlangenposition 121 kommt **später als der in der alten Übergabe genannte 20.09.** — der
-Zähler stieg zuletzt um 8 Zellen in 15 Stunden, und die vorderen Positionen sind die teuersten.
+**Beide Kampagnen-Jobs rechnen fehlerfrei, und es gibt nichts zu tun als zu warten.** Stand 21.09.:
+C-1+C-2 bei **79/756**, C-3 bei **170/180** und damit fast fertig. 249 Records, **0 Fehler**, ein
+Identitätstripel über alle. 5.068 verbrauchte Kernstunden.
+
+**Die Parallelität von C-1+C-2 wurde am 21.09. von 32 auf 64 gepatcht**, weil C-3 auslief und über
+50 Kerne brachgelegen hätten:
+
+```
+kubectl -n scch-das patch job evoode-phase-c-c1-c2-campaign -p '{\"spec\":{\"parallelism\":64}}'
+```
+
+(In PowerShell **müssen** die inneren Anführungszeichen escaped werden, sonst kommt bei kubectl
+ungültiges JSON an.) Das ist reines Scheduling — `completions` bleibt 756, jede Zelle rechnet
+unverändert, **keine Änderung an der eingefrorenen Konfiguration**. Danach 64 + 10 Pods bei 3,6
+Kernen Fremdlast, also rund 78 von 96, keine Pending.
+
+**Folge fürs Auswerten:** ab Zelle 80 laufen doppelt so viele Pods pro Node, `elapsed_s` ist deshalb
+**nicht mit den ersten 79 Zellen vergleichbar**. Wissenschaftlich folgenlos (Designprinzip 7), aber
+wo `elapsed_s` als Kontext auftaucht, gehört der Wechsel dazugesagt.
+
+C-1+C-2 steckt noch in dim 3 (Systeme 52–60); die teuersten Systeme 55 und 56 sind durch. Die erste
+dim-2-Zelle ab Warteschlangenposition 121 kommt **später als der ursprünglich genannte 20.09.**
 
 **Alles, was ohne Kampagnenergebnisse machbar war, ist gemacht.** Es steht **keine Entscheidung
 offen**, die den Lauf betrifft.
@@ -70,8 +86,10 @@ Zahl nahelegt.
 kubectl -n scch-das get pods --field-selector=status.phase=Running -o jsonpath='{range .items[*]}{.spec.containers[*].resources.requests.cpu}{"\n"}{end}' | sort | uniq -c
 ```
 
-Erwartet 64 Pods mit je `1` — unsere zwei Jobs — plus die kleinen Pods der Mitbenutzer.
-**CPU-Requests zählen, nicht Pods.**
+Erwartet **74 Pods** mit je `1`, solange C-3 noch läuft (64 für C-1+C-2 plus dessen letzte 10),
+danach 64 — plus die kleinen Pods der Mitbenutzer, zusammen rund 3,6 Kerne.
+**CPU-Requests zählen, nicht Pods.** Keine ResourceQuota im Namespace; es begrenzt allein die
+Node-Kapazität von 96 Kernen. Reicht sie nicht, werden Pods **Pending** — der harmlose Fehlermodus.
 
 ### Ergebnisse, ohne Cluster
 
@@ -95,8 +113,15 @@ NFS-Kennung, unter der die Pods schreiben. Schreibversuche scheitern auch ohne S
    `executed_levels`, `total_loss_evals`. **Dabei nach voll gegen teilweise gekappten Zeilen
    trennen** — das ist der eigentliche Test, Begründung in Abschnitt 4.
    Vorher noch interessant: die drei voll gekappten dim-3-Zeilen (System 60 IC 2, System 61 IC 1/2).
-2. **Warten.** Kapazitätsplanung, keine Evidenz (Designprinzip 7). Die alte 5-Tage-Angabe stammt vom
-   18.09.; der Zähler ist seither langsamer gelaufen als sie unterstellt.
+2. **Warten.** Rest grob **2 bis 2,5 Tage** bei 64 Kernen — Kapazitätsplanung, keine Evidenz
+   (Designprinzip 7). Hergeleitet aus ~3.400 offenen Kernstunden: dim 3 noch ~1.650 h (41 Zellen,
+   davon 12 auf System 61), dim 2 ~1.450–2.000 h (2,0 h/Zelle aus C-3 mal Faktor 2,17, dem
+   gemessenen Pretuning-Unterschied auf dim 3), dim 1 und dim 4 zusammen unter 35 h. **Die
+   Restlaufzeit hängt an der längsten Einzelzelle, nicht am Durchsatz** — die teuerste bisher lief
+   167 Stunden.
+   Nebenrechnung: 5.068 verbraucht plus ~3.400 Rest ergibt **~8.500 Kernstunden gegen die geplanten
+   12.300–15.900**. Vor allem, weil C-3 mit ~1.000 h statt 2.400 h durchläuft. Die Planzahl war
+   konservativ — beim Schreiben so sagen, sonst wird sie als Messwert zitiert.
 3. **Danach auswerten**, dann Claim D über die Paarung gegen die gerechnete SINDy-Baseline schließen,
    inklusive Trajektorien-Abgleich per Hash.
 4. **Nach Kampagnenende:** Baseline-Image bauen, damit ODEFormer laufen kann.
@@ -109,14 +134,14 @@ GitHub.
 
 ## 4. Der eine offene Befund: die Kappe terminiert nur, wenn sie *alle* Gleichungen kappt
 
-**Stand 20.09., 25 vollständige Paare, alle dim 3, Systeme 52–57.** Ausführlich im `DIARY.md` unter
+**Stand 21.09., 38 vollständige Paare, alle dim 3, Systeme 52–60.** Ausführlich im `DIARY.md` unter
 dem 20.09.; hier die Kurzform und was daraus für die Auswertung folgt.
 
 - **15 Paare ohne Kappe:** `total_loss_evals` und `executed_levels` **15/15 bit-identisch**. Das ist
   eine bestandene Kontrolle — die Arme unterscheiden sich durch die Kappe und sonst nichts.
-- **10 Paare mit Kappe** (`[None,3,3]`, `[None,None,3]`): **alle zehn fahren 30/30 Level.** Loss und
-  R² sind in **7 von 10 bit-identisch**; die Kostenabweichungen liegen bei 1,3–8,8 % in beide
-  Richtungen und sind **kein Befund**.
+- **23 Paare teilweise gekappt** (`[None,3,3]`, `[None,None,3]`): **22 von 23 fahren 30/30 Level**
+  (die Ausnahme 29). Die Kappe terminiert dort nichts — Zahlen weiter unten.
+- **Kein vollständiges Paar mit voller Kappe**, und genau das wäre der Test.
 
 **Der Mechanismus steht im Code.** `_effective_max_stage` (`src/structure/evogrow.jl:141-144`)
 nimmt das **Maximum** über die Kappen und setzt `nothing` auf `max_stage`; eine offene Gleichung
@@ -131,9 +156,32 @@ und System 61 IC 1/2** und stehen noch aus. Bisher gemessen wurden ausschließli
 die Kappe strukturell nicht terminieren kann — **Claim B ist nicht widerlegt, sondern noch nicht
 getestet.**
 
-**Beim Auswerten prüfen:** die drei ausstehenden dim-3-Zeilen, dann die 15 voll gekappten dim-2-Zeilen
-gegen die 21 nur teilweise gekappten, dann die 32 voll gekappten dim-1-Zeilen. Fällt die Ersparnis
-auch bei voller Kappe aus, betrifft das Claim B im Kern.
+**Erster Beleg, Stand 21.09. — er passt, trägt aber noch nicht.** Über alle dim-3-Zellen mit
+aktiver Kappenpolitik:
+
+| Kappenklasse | n | Level min/median/max | erreichen 30 Level |
+|---|---|---|---|
+| keine | 24 | 20 / 22 / 26 | 0 / 24 |
+| teilweise | 47 | 23 / **30** / 30 | **41 / 47** |
+| voll | 7 | 14 / 23 / 25 | **0 / 7** |
+
+Alle sieben voll gekappten Zellen enden auf **Endstufe 3** — exakt dem Kappenwert. **Aber der
+Systemeffekt ist nicht abgetrennt:** „voll" (Median 23) liegt nicht früher als „keine" (Median 22),
+und die Kappenklasse *ist* eine Systemeigenschaft. Sechs der sieben Zellen gehören zu C-3 und haben
+gar kein Gegenstück; von System 60 IC 2 Seed 123 (`[3,3,2]`, 14 Level, Stufe 3) fehlt der
+uncapped-Partner noch.
+
+**Die scharfe Einzelvorhersage lautet deshalb: der uncapped-Partner von 60/IC 2/Seed 123 erreicht
+Stufe 5 und fährt deutlich mehr als 14 Level.** Trifft das nicht zu, ist der Mechanismus falsch.
+
+**Teilweise gekappt, jetzt 23 Paare statt 10:** 14 teurer, 2 billiger, 7 gleich, in Summe
+**+1,36 %** — systematisch, aber winzig. Qualität spricht eher für die Kappe: Loss in 7 Paaren
+besser, in 3 schlechter. Die 15 kappenlosen Paare bleiben **15/15 bit-identisch**.
+
+**Beim Auswerten prüfen:** die ausstehenden voll gekappten dim-3-Paare (System 60 IC 2, System 61),
+dann die 15 voll gekappten dim-2-Zeilen gegen die 21 nur teilweise gekappten, dann die 32 voll
+gekappten dim-1-Zeilen. Fällt die Ersparnis auch bei voller Kappe aus, betrifft das Claim B im
+Kern.
 
 **Nicht an der Kappe drehen.** Aggressiver kappen hieße, auf die Abwesenheit von Evidenz zu kappen
 (vom System-63-Defekt ausgeschlossen); die Schwellen nachziehen ist der WP-V1-Fehler. Der Hebel wäre
@@ -152,7 +200,7 @@ und der Git-Hash driftet mit, k ist nicht sauber isoliert.
 
 ---
 
-## 5. Was am 18.09. dazugekommen ist
+## 5. Was am 18.09. dazugekommen ist (unverändert gültig)
 
 Alles committet, alles im `DIARY.md` unter dem 18.09. mit Hashes.
 
