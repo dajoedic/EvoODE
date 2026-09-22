@@ -26,6 +26,8 @@ DEGENERATE_STD_TOL = 1.0e-12
 RANDOM_PERMUTATIONS = 10_000
 THRESHOLDS = [0, 1, 2, 3, 5, 10]
 QUANTILES = [0.10, 0.25, 0.50, 0.75, 0.90]
+STLSQ_THRESHOLD_GRID = [0.0] + [10.0**exponent for exponent in range(-12, 9)]
+STLSQ_MAX_ITERATIONS = 25
 
 
 @dataclass(frozen=True)
@@ -262,6 +264,86 @@ def rank_forward(A: np.ndarray, y: np.ndarray, degenerate: np.ndarray) -> tuple[
     return selected, scores
 
 
+def _least_squares_on_active(A: np.ndarray, y: np.ndarray, active: np.ndarray) -> np.ndarray:
+    coef = np.zeros(A.shape[1], dtype=float)
+    active_idx = np.flatnonzero(active)
+    if active_idx.size:
+        values, *_ = np.linalg.lstsq(A[:, active_idx], y, rcond=None)
+        coef[active_idx] = values
+    return coef
+
+
+def stlsq_coefficients(A: np.ndarray, y: np.ndarray, threshold: float) -> tuple[np.ndarray, np.ndarray]:
+    active = np.ones(A.shape[1], dtype=bool)
+    coef = np.zeros(A.shape[1], dtype=float)
+    for _ in range(STLSQ_MAX_ITERATIONS):
+        coef = _least_squares_on_active(A, y, active)
+        next_active = np.abs(coef) >= threshold
+        if np.array_equal(next_active, active):
+            return coef, active
+        active = next_active
+        if not np.any(active):
+            return coef, active
+    raise ValueError(f"STLSQ active set did not stabilize within {STLSQ_MAX_ITERATIONS} iterations")
+
+
+def stlsq_path(
+    A: np.ndarray,
+    y: np.ndarray,
+    threshold_grid: Iterable[float] = STLSQ_THRESHOLD_GRID,
+) -> tuple[list[int], np.ndarray, dict[str, object]]:
+    grid = [float(x) for x in threshold_grid]
+    if grid != sorted(grid) or len(set(grid)) != len(grid):
+        raise ValueError("STLSQ threshold grid must be strictly increasing")
+    if not grid or grid[0] != 0.0:
+        raise ValueError("STLSQ threshold grid must start at 0.0")
+
+    p = A.shape[1]
+    active_by_threshold: list[np.ndarray] = []
+    coef_by_threshold: list[np.ndarray] = []
+    for threshold in grid:
+        coef, active = stlsq_coefficients(A, y, threshold)
+        coef_by_threshold.append(coef)
+        active_by_threshold.append(active)
+
+    if int(np.sum(active_by_threshold[0])) != p:
+        raise ValueError("STLSQ threshold grid lower end does not keep all terms active")
+    if int(np.sum(active_by_threshold[-1])) != 0:
+        raise ValueError("STLSQ threshold grid upper end does not remove all terms")
+
+    last_active_threshold = np.full(p, grid[0], dtype=float)
+    last_active_abs_coef = np.zeros(p, dtype=float)
+    dropout_threshold = np.full(p, np.nan, dtype=float)
+    for term_idx in range(p):
+        active_positions = [idx for idx, active in enumerate(active_by_threshold) if bool(active[term_idx])]
+        if active_positions:
+            last_pos = max(active_positions)
+            last_active_threshold[term_idx] = grid[last_pos]
+            last_active_abs_coef[term_idx] = abs(float(coef_by_threshold[last_pos][term_idx]))
+            later = [idx for idx in range(last_pos + 1, len(grid)) if not bool(active_by_threshold[idx][term_idx])]
+            if later:
+                dropout_threshold[term_idx] = grid[min(later)]
+        if not np.isfinite(dropout_threshold[term_idx]):
+            dropout_threshold[term_idx] = math.inf
+
+    order = sorted(
+        range(p),
+        key=lambda j: (-last_active_threshold[j], -last_active_abs_coef[j], j),
+    )
+    metadata = {
+        "threshold_grid": grid,
+        "dropout_threshold": dropout_threshold.tolist(),
+        "last_active_threshold": last_active_threshold.tolist(),
+        "last_active_abs_coef": last_active_abs_coef.tolist(),
+        "active_counts": [int(np.sum(active)) for active in active_by_threshold],
+        "tie_break_rule": (
+            "Terms dropping at the same threshold are ordered by the absolute standardized "
+            "coefficient at the last threshold where both were active, then by ascending basis index."
+        ),
+    }
+    return order, last_active_threshold, metadata
+
+
 def metrics_from_order(order: list[int], true_idxs0: set[int], k_values: Iterable[int] = (1, 2, 3, 5, 10)) -> dict[str, object]:
     ranks = {idx: rank for rank, idx in enumerate(order, start=1)}
     true_ranks = [ranks[idx] for idx in sorted(true_idxs0)]
@@ -355,6 +437,8 @@ def ranking_for(
         order, scores = rank_marginal(A_std, y_centered, degenerate)
     elif method == "forward":
         order, scores = rank_forward(A_std, y_centered, degenerate)
+    elif method == "stlsq_path":
+        order, scores, _metadata = stlsq_path(A_std, y_centered)
     else:
         raise ValueError(f"unknown ranking method: {method}")
     return order, scores, degenerate, A_std
