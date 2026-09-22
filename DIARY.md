@@ -6,6 +6,107 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ## 2026-09-22
 
+### Der Seitenzweig wird umgehaengt: nicht Compute, sondern Strukturtreffer auf gekoppelten Systemen
+
+**Die urspruengliche Idee.** Eine Skizze schlug vor, aus den beobachteten Trajektorien vorab eine
+billige Relevanzordnung ueber die Kandidatenterme zu gewinnen — Integral- beziehungsweise
+Weak-Form-Signaturen entlang der Trajektorie statt punktweiser Ableitungen — und damit die teure
+EvoGrow-Suche zu entlasten. Erklaertes Primaerziel war **Compute-Reduktion**: Bibliothek
+verkleinern, weniger Kandidaten teuer evaluieren.
+
+**Dieses Primaerziel ist verworfen, und der Grund steht bereits im Haus.** WP-N6 misst EvoODE
+gegen SINDy auf gleichem Protokoll: Rekonstruktion 95,5 % gegen 95,7 %, Generalisierung 68,2 %
+gegen 60,9 % — bei rund **zwei Groessenordnungen** mehr Rechenaufwand auf unserer Seite. Ein
+Faktor 2 oder 3 an Ersparnis schliesst diese Luecke nicht, er verschiebt sie um eine Stelle. Eine
+Kostenoptimierung kann die strategische Position der Methode nicht retten; ein Seitenzweig, der
+darauf zielt, gewinnt im besten Fall etwas Nettes.
+
+**Das neue Primaerziel: Support-Recovery auf gekoppelten Systemen.** Dort liegt der Raum, den
+keine der beiden Seiten besetzt. EvoGrow erkennt **0 von 50** exakten dim-3/dim-4-Zellen den
+Support (WP-A8), und dim 3 traegt **75,6 %** des Kampagnen-Compute bei 120 von 756 Zellen. SINDy
+liefert auf gekoppelten Systemen ebenfalls keinen guten Support. Ein relevanter Sprung von 0/50
+waere ein methodischer Gewinn; ein Faktor 2 bei den Kosten waere keiner.
+
+**Der Mechanismus, auf den die Umhaengung zielt:**
+
+trajectory → term relevance prior → better early additions → less add-only path damage →
+higher support recovery.
+
+Das setzt an einer Schwaeche an, die dieses Tagebuch seit laengerem als Limitation fuehrt:
+`_expand` fuegt nur hinzu, und alle Kandidatenziehungen in `src/structure/evogrow.jl:271-450`
+sind uniform (`rand(candidates)`, `rand(candidates_new)`). Ein falscher frueher Term verlaesst
+eine Linie nie wieder — Selektion ist die einzige Korrektur. Damit zaehlt die
+Kandidaten-Reihenfolge hier mehr als in einer Suche mit Loeschen oder Ersetzen, und ein Prior
+greift genau dort an, statt Kandidaten zu entfernen.
+
+**Der Konstantenterm ist das Minimalbeispiel und deshalb Motivation Nummer eins.** Er ist noetig,
+damit die Modellklasse 30 statt 20 Systeme exakt darstellt (WP-N16, P3-Freeze), kann also nicht
+entfernt werden. Gleichzeitig ist er ein gemessener False-Positive-Magnet — dim 1: anwesend in 31
+von 37 verfehlten Zellen (WP-N1); dim 2: Strukturtreffer pruned 55,6 % → 35,2 % (WP-N15). Und
+Threshold-Tuning loest das nachweislich nicht: WP-N2 zeigt einen Nullsummen-Dial, 45 ist die
+Decke, ein besserer Schwellenwert existiert nicht. Ein Prior kann sagen „Term bleibt zulaessig,
+aber diese Trajektorie liefert wenig Evidenz dafuer" — ohne die Bibliothek anzutasten und ohne
+das Verbot zu brechen, eine Bibliothekskomponente zu entfernen, weil sie False Positives
+erzeugt.
+
+**Compute bleibt, aber als Folgekennzahl.** Kosten werden weiter erhoben und berichtet, sind aber
+nie die Zielgroesse des Zweigs. Fuer die spaetere Guidance-Messung ist das mehr als eine
+Formalie: eine konzentriertere Ziehungsverteilung erzeugt **mehr** Wiederholungen derselben
+Struktur, nicht weniger, und unter `pretuning = false` wirken Duplikate als implizite Multistarts
+(WP-N4, WP-N10: 85,5 % Duplikatrate auf der ersten gekoppelten Zelle). Ein blosses Δ Loss-Evals
+waere daher uninterpretierbar — Guidance verschiebt Suchbreite und Fit-Qualitaet gleichzeitig,
+derselbe Konfundierungsfehler wie beim Pretuning-Vergleich. Jede spaetere Guidance-Messung
+berichtet deshalb gemeinsam: Support-Recovery, eindeutige Strukturen, Duplikatrate, Fits je
+eindeutiger Struktur, `max_fit_attempts`, Gesamt-Fits, Loss-Evaluationen, ODE-Solves.
+
+**Die Kausalkette wird nicht in einem Schritt getestet.** Drei getrennte Work Packages, in dieser
+Reihenfolge, damit hinterher feststeht, was gemessen wurde:
+
+- **WP-T1** — existiert das Signal ueberhaupt? Isoliert, ohne jeden Suchcodepfad.
+- **WP-T2a** — relevance-guided child generation, nur bei positivem oder bedingtem WP-T1.
+- **WP-T2b** — separat und spaeter: taugt dasselbe ableitungsfreie Signal fuer Stage Progression
+  und Stage Cap besser als das bisherige Residualsignal `r_k`, das WP-L2 als
+  ableitungskontaminiert ausgewiesen hat?
+
+T2b gleichzeitig mit T2a zu bauen waere der naheliegende Fehler: dann waere hinterher unklar,
+welche der beiden Aenderungen gewirkt hat.
+
+**Eine Regel, die hier festgehalten wird, weil sie in vier Wochen weich gelesen werden wird:**
+
+> **Positive dim-1 results cannot satisfy the decision gate.**
+
+dim 1 ist Sanity-Check und nichts sonst. Die Bibliothek hat dort 6 Terme, SINDy loest die Klasse
+bereits, und ein schoenes dim-1-Bild sagt nichts ueber den Fall, fuer den der Zweig existiert.
+Entscheidungsstratum ist dim 2 und dim 3 — 18 Systeme, 44 Gleichungen, effektive Clustergroesse
+**18, nicht 44**. System 63 (dim 4) laeuft mit und wird getrennt berichtet, als der
+dokumentierte Identifizierbarkeitsgrenzfall, der es ist.
+
+**Das Gate ist konjunktiv und vor Sicht der Daten gesetzt**, weil beide Fehlrichtungen real sind:
+ein winziges p bei schwachem Niveau ist algorithmisch wertlos, und ein gutes Niveau ohne
+Absicherung ist bei 18 Clustern nicht belastbar. Ein knapper Fall — etwa Median 2, 61 % bei ≤ 3,
+p = 0,014 — ist **bedingt**, nicht positiv, und wird nicht durch eine alternative Aggregation
+nachtraeglich gerettet. Die Schwellen sind eine menschliche Designentscheidung und als solche zu
+kennzeichnen, wie bei der Reopen-Schwelle 0,35.
+
+**Was diese Entscheidung nicht ist.** Sie haengt nicht am WP-T1-Ergebnis. Faellt WP-T1 negativ
+aus, bleibt die Umhaengung richtig und der Zweig endet mit einem dokumentierten negativen
+Ergebnis — nicht mit einer Rueckkehr zur Compute-Geschichte. Keine Paper-1-Aussage haengt an
+diesem Zweig; `wp_t1_term_relevance` ist ausdruecklich **kein** Experiment-Identifier im Sinne
+von Paper 1.
+
+**Kein eigener Branch, und der Grund ist geprueft statt vermutet.** Das Repository hat in seiner
+gesamten Historie weder einen Branch noch einen Merge; WP-T1 schreibt ausschliesslich in neue
+Pfade unter `analysis/exploratory/`, `analysis/data/wp_t1_term_relevance/` und
+`analysis/tests/`, ueberschneidet sich also mit nichts. Die Isolation, die hier gewollt ist, ist
+eine wissenschaftliche Eigenschaft und wird durch Benennung und Bericht durchgesetzt, nicht durch
+git — und ein nicht gemergter Zweig laege ausserhalb der Reichweite des terminierten
+Claim-Tracing-Audits, was bei einem wahrscheinlichen negativen Ergebnis genau falsch herum waere.
+Operative Konsequenz: Commits auf `main`, Push nach GitHub wie immer, **GitLab-Push
+zurueckgehalten**, bis die Phase-C-Kampagne durch ist — `.gitlab-ci.yml:54-75` baut auf `main`
+das Kampagnen-Image und verschiebt dabei den Tag `:main`. Gefahr fuer die laufende Kampagne
+besteht nicht, alle zwoelf Manifeste unter `k8s/` pinnen `<COMMIT_SHA>`; es waere nur ein
+Drei-Stunden-Build ohne Zweck.
+
 ### Externer Repo-Audit: ein echter Fund, ein Widerspruch im eigenen Haus, und vier bekannte Punkte
 
 <!-- 0db66f0 -->
