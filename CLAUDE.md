@@ -555,6 +555,18 @@ the coupled search path 1e-6 is the cheaper, behaviour-equal tolerance; the Syst
    rests on the regression grid alone: **30 cells, 5 systems** — the thinnest evidence in the paper,
    carrying its main claim.
 
+   **Superseded in part by the running Phase C campaign (interim, 2026-09-22).** C-2 supplies the
+   uncapped mirror Phase B lacked. At 89 complete pairs the picture is sharp and it was **predicted
+   before it was measured** (`DIARY.md`, 2026-09-20 and 2026-09-22): the cap saves effort **only
+   where every equation carries a finite cap**, because `_effective_max_stage`
+   (`src/structure/evogrow.jl:141-144`) takes the maximum over the caps. Over the 21 fully capped
+   pairs (systems 26, 27, 29, 31, 60): pooled **−28.3 %** `total_loss_evals`, per-pair ratio
+   0.521 / 0.634 / 1.000, `pruned_match` equal in 21/21 and R² bit-identical in 16/21. The 39
+   uncapped pairs are **39/39 bit-identical** — the control holds. Partially capped pairs save
+   nothing (dim 3: +1.3 %). Claim B is therefore **conditional, not general**, and how often the
+   condition holds is known from the search-free counter-check: dim 1 32/46, dim 2 15/56, dim 3
+   3/20, dim 4 0/4. Interim numbers over five clusters — not the final figure.
+
    **The analysis is complete (WP-A9, 2026-09-07).** The level-waste measure and the 252-row
    per-system table close the last two items, and `PAPER_1.md`'s result placeholders are filled.
 

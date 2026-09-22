@@ -10,40 +10,26 @@ zweites davon. Alles Dauerhafte gehört dorthin, nach `PAPER_1.md` oder ins `DIA
 **Regeln:** wird immer **vollständig überschrieben**, nie angehängt. Was älter als ein paar Tage
 ist, ist vermutlich falsch — dann gilt `CLAUDE.md`.
 
-**Stand: 2026-09-21. Working Tree sauber bis auf diese Datei.**
+**Stand: 2026-09-22. Working Tree sauber bis auf diese Datei.**
 
 ---
 
 ## 1. Wo wir stehen — in zwei Sätzen
 
-**Beide Kampagnen-Jobs rechnen fehlerfrei, und es gibt nichts zu tun als zu warten.** Stand 21.09.:
-C-1+C-2 bei **79/756**, C-3 bei **170/180** und damit fast fertig. 249 Records, **0 Fehler**, ein
-Identitätstripel über alle. 5.068 verbrauchte Kernstunden.
+**Beide Jobs rechnen fehlerfrei, und die Kappen-Vorhersage ist eingetroffen.** Stand 22.09.:
+C-1+C-2 bei **184/756**, C-3 bei **171/180**. 355 Records, **0 Fehler**, ein Identitätstripel über
+alle, 5.874 verbrauchte Kernstunden.
 
-**Die Parallelität von C-1+C-2 wurde am 21.09. von 32 auf 64 gepatcht**, weil C-3 auslief und über
-50 Kerne brachgelegen hätten:
+Der Sprung von 249 auf 355 Records über Nacht ist die Parallelitätserhöhung vom 21.09. (32 → 64).
+**Folge fürs Auswerten unverändert:** ab Zelle 80 laufen doppelt so viele Pods pro Node, `elapsed_s`
+ist deshalb nicht mit den ersten 79 Zellen vergleichbar. Wissenschaftlich folgenlos
+(Designprinzip 7), aber deklarationspflichtig, wo `elapsed_s` als Kontext auftaucht.
 
-```
-kubectl -n scch-das patch job evoode-phase-c-c1-c2-campaign -p '{\"spec\":{\"parallelism\":64}}'
-```
-
-(In PowerShell **müssen** die inneren Anführungszeichen escaped werden, sonst kommt bei kubectl
-ungültiges JSON an.) Das ist reines Scheduling — `completions` bleibt 756, jede Zelle rechnet
-unverändert, **keine Änderung an der eingefrorenen Konfiguration**. Danach 64 + 10 Pods bei 3,6
-Kernen Fremdlast, also rund 78 von 96, keine Pending.
-
-**Folge fürs Auswerten:** ab Zelle 80 laufen doppelt so viele Pods pro Node, `elapsed_s` ist deshalb
-**nicht mit den ersten 79 Zellen vergleichbar**. Wissenschaftlich folgenlos (Designprinzip 7), aber
-wo `elapsed_s` als Kontext auftaucht, gehört der Wechsel dazugesagt.
-
-C-1+C-2 steckt noch in dim 3 (Systeme 52–60); die teuersten Systeme 55 und 56 sind durch. Die erste
-dim-2-Zelle ab Warteschlangenposition 121 kommt **später als der ursprünglich genannte 20.09.**
-
-**Alles, was ohne Kampagnenergebnisse machbar war, ist gemacht.** Es steht **keine Entscheidung
-offen**, die den Lauf betrifft.
+**Die dim-2-Zellen sind angelaufen** — damit existiert zum ersten Mal die Zellklasse, die Claim B
+testet. Ergebnis in Abschnitt 4. **Es steht keine Entscheidung offen, die den Lauf betrifft.**
 
 Laufender Stand auch als Seite: <https://claude.ai/artifact/4sq6HhRsnxgrFVqVF2trBx> — im README
-verlinkt, wird bei Statuswechseln neu veröffentlicht.
+verlinkt, wird bei Statuswechseln neu veröffentlicht. **Noch nicht auf den 22.09. aktualisiert.**
 
 Autoritative Quellen: `PAPER_1.md` → `docs/paper1_phaseC_benchmark_plan.md` → `CLAUDE.md` →
 `DIARY.md` (neueste Einträge oben).
@@ -52,12 +38,19 @@ Autoritative Quellen: `PAPER_1.md` → `docs/paper1_phaseC_benchmark_plan.md` �
 
 ## 2. Wie du nachschaust
 
-**Voraussetzung: VPN.** Am 18.09. war sie zwischenzeitlich weg. Prüfen mit PowerShell — **nicht**
-mit `getent` in der Git-Bash, das benutzt einen anderen Resolver und meldet fälschlich
-„nicht auflösbar":
+**Voraussetzung: VPN.** Prüfen mit PowerShell — **nicht** mit `getent` in der Git-Bash, das benutzt
+einen anderen Resolver und meldet fälschlich „nicht auflösbar":
 
 ```powershell
 Resolve-DnsName api.orion.scch.at     # erwartet 172.21.202.100
+```
+
+**Neu am 22.09.: ein nicht erreichbares `S:` heißt nicht zwangsläufig „VPN weg".** Die Freigabe war
+abgehängt, während das VPN stand. Zurückgeholt mit:
+
+```powershell
+net use S: /delete /y
+net use S: \\scch.at\scch
 ```
 
 Meldet `kubectl` „must be logged in", ist das Token abgelaufen:
@@ -75,19 +68,19 @@ kubectl get jobs -n scch-das
 Erwartet: beide Jobs **Running**, Zähler wachsend.
 
 **Den Zähler nicht hochrechnen.** Die Warteschlange (`indices_c1_c2_cost_desc.txt`) ist
-**kostenabsteigend**: Positionen 1–120 sind dim 3, 121–456 dim 2, 457–480 dim 4, 481–756 dim 1. Am
-18.09. wurde aus einer Zellen-Hochrechnung einmal eine Restlaufzeit von 140 Tagen. **In Kernstunden
-rechnen, nie in Zellen** — die fertigen Zellen sind stets ein weit größerer Kostenanteil, als ihre
-Zahl nahelegt.
+**kostenabsteigend**: Positionen 1–120 sind dim 3, 121–456 dim 2, 457–480 dim 4, 481–756 dim 1.
+Die Reihenfolge ist **nicht strikt** — bei 64 Arbeitern starten Positionen ab 121, während teure
+dim-3-Zellen noch laufen. Bei 184 fertigen Zellen waren 84 davon dim 3 und 100 dim 2, es fehlen
+also noch 36 dim-3-Nachzügler. **In Kernstunden rechnen, nie in Zellen.**
 
 ### Auslastung
 
-```bash
-kubectl -n scch-das get pods --field-selector=status.phase=Running -o jsonpath='{range .items[*]}{.spec.containers[*].resources.requests.cpu}{"\n"}{end}' | sort | uniq -c
+```powershell
+$p = kubectl -n scch-das get pods --no-headers
+($p | Select-String " Running ").Count      # 22.09.: 85, davon 64 C-1+C-2, 9 C-3, 12 fremd
+($p | Select-String " Pending ").Count      # muss 0 sein
 ```
 
-Erwartet **74 Pods** mit je `1`, solange C-3 noch läuft (64 für C-1+C-2 plus dessen letzte 10),
-danach 64 — plus die kleinen Pods der Mitbenutzer, zusammen rund 3,6 Kerne.
 **CPU-Requests zählen, nicht Pods.** Keine ResourceQuota im Namespace; es begrenzt allein die
 Node-Kapazität von 96 Kernen. Reicht sie nicht, werden Pods **Pending** — der harmlose Fehlermodus.
 
@@ -99,7 +92,7 @@ S:\BigDataOrion\data-science\joedicke\phase_c_campaign_221a3a72f0cb43164a22b09ba
 
 `cell_NNNNNN.jsonl` ist je ein Ergebnis, `*.heartbeat.jsonl` der Verlauf — **beim Zählen die
 Heartbeats ausschließen.** Die Freigabe ist über SMB **nur lesbar**: `FullControl` hat allein die
-NFS-Kennung, unter der die Pods schreiben. Schreibversuche scheitern auch ohne Sandbox.
+NFS-Kennung, unter der die Pods schreiben.
 
 **Fehlerbilder:** `ErrImagePull` heißt Anmeldung, nicht fehlendes Image. `OOMKilled` heißt, die
 2 GiB haben nicht gereicht.
@@ -108,20 +101,16 @@ NFS-Kennung, unter der die Pods schreiben. Schreibversuche scheitern auch ohne S
 
 ## 3. Was als Nächstes ansteht
 
-1. **Die dim-2-Nachzählung — der einzige terminierte Punkt.** Sobald die ersten dim-2-Zellen fertig
-   sind (ab Warteschlangenposition 121), dieselbe Paartabelle ziehen: `stage_caps`,
-   `executed_levels`, `total_loss_evals`. **Dabei nach voll gegen teilweise gekappten Zeilen
-   trennen** — das ist der eigentliche Test, Begründung in Abschnitt 4.
-   Vorher noch interessant: die drei voll gekappten dim-3-Zeilen (System 60 IC 2, System 61 IC 1/2).
-2. **Warten.** Rest grob **2 bis 2,5 Tage** bei 64 Kernen — Kapazitätsplanung, keine Evidenz
-   (Designprinzip 7). Hergeleitet aus ~3.400 offenen Kernstunden: dim 3 noch ~1.650 h (41 Zellen,
-   davon 12 auf System 61), dim 2 ~1.450–2.000 h (2,0 h/Zelle aus C-3 mal Faktor 2,17, dem
-   gemessenen Pretuning-Unterschied auf dim 3), dim 1 und dim 4 zusammen unter 35 h. **Die
-   Restlaufzeit hängt an der längsten Einzelzelle, nicht am Durchsatz** — die teuerste bisher lief
-   167 Stunden.
-   Nebenrechnung: 5.068 verbraucht plus ~3.400 Rest ergibt **~8.500 Kernstunden gegen die geplanten
-   12.300–15.900**. Vor allem, weil C-3 mit ~1.000 h statt 2.400 h durchläuft. Die Planzahl war
-   konservativ — beim Schreiben so sagen, sonst wird sie als Messwert zitiert.
+1. **Warten.** Offen sind 36 dim-3-Zellen (Median 47,2 h, es sind die teuren Nachzügler), 236
+   dim-2-Zellen (Median 2,47 h) sowie dim 4 und dim 1. Grob **~3.000 Kernstunden**, also 2 bis 3
+   Tage — Kapazitätsplanung, keine Evidenz (Designprinzip 7). **Die Restlaufzeit hängt an der
+   längsten Einzelzelle, nicht am Durchsatz.**
+   Nebenrechnung: 5.874 verbraucht plus ~3.000 Rest ergibt **~8.900 Kernstunden gegen die geplanten
+   12.300–15.900**. Die Planzahl war konservativ — beim Schreiben so sagen, sonst wird sie als
+   Messwert zitiert.
+2. **Die Kappenauswertung nachziehen, sobald mehr voll gekappte Paare da sind** — die 15 voll
+   gekappten dim-2-Zeilen der suchfreien Gegenprobe sind erst teilweise gepaart, die 32 dim-1-Zeilen
+   gar nicht. Fünf Systeme sind fünf Cluster; die Zahlen in Abschnitt 4 sind Zwischenstand.
 3. **Danach auswerten**, dann Claim D über die Paarung gegen die gerechnete SINDy-Baseline schließen,
    inklusive Trajektorien-Abgleich per Hash.
 4. **Nach Kampagnenende:** Baseline-Image bauen, damit ODEFormer laufen kann.
@@ -132,64 +121,55 @@ GitHub.
 
 ---
 
-## 4. Der eine offene Befund: die Kappe terminiert nur, wenn sie *alle* Gleichungen kappt
+## 4. Claim B ist getestet, und die Vorhersage hat gehalten
 
-**Stand 21.09., 38 vollständige Paare, alle dim 3, Systeme 52–60.** Ausführlich im `DIARY.md` unter
-dem 20.09.; hier die Kurzform und was daraus für die Auswertung folgt.
+Ausführlich im `DIARY.md` unter dem 22.09.; hier die Kurzform.
 
-- **15 Paare ohne Kappe:** `total_loss_evals` und `executed_levels` **15/15 bit-identisch**. Das ist
-  eine bestandene Kontrolle — die Arme unterscheiden sich durch die Kappe und sonst nichts.
-- **23 Paare teilweise gekappt** (`[None,3,3]`, `[None,None,3]`): **22 von 23 fahren 30/30 Level**
-  (die Ausnahme 29). Die Kappe terminiert dort nichts — Zahlen weiter unten.
-- **Kein vollständiges Paar mit voller Kappe**, und genau das wäre der Test.
+Die am 20.09. **vor der Messung** datierte Einzelvorhersage lautete: der ungekappte Partner von
+System 60 / IC 2 / Seed 123 erreicht Stufe 5 und fährt deutlich mehr als 14 Level.
 
-**Der Mechanismus steht im Code.** `_effective_max_stage` (`src/structure/evogrow.jl:141-144`)
-nimmt das **Maximum** über die Kappen und setzt `nothing` auf `max_stage`; eine offene Gleichung
-hält das volle Stufenbudget für alle offen. Gekappte Gleichungen werden nur in ihren Termen
-begrenzt, nicht eingefroren.
+```text
+System 60, IC 2, Seed 123, stage_caps [3,3,2]
+  gekappt:    14 Level, Endstufe 3,  3.098.076 loss evals
+  ungekappt:  22 Level, Endstufe 5,  5.336.451 loss evals
+```
 
-**Vorhersage, datiert vor der Messung:** Ersparnis genau dort, wo **alle** Gleichungen eine endliche
-Kappe tragen. Die suchfreie Gegenprobe
-(`outputs/phase_c_cap_incidence/stage_caps_by_basis.csv`) sagt, wo das ist — voll gekappt sind
-**dim 1: 32/46, dim 2: 15/56, dim 3: 3/20, dim 4: 0/4**. Die drei dim-3-Zeilen sind **System 60 IC 2
-und System 61 IC 1/2** und stehen noch aus. Bisher gemessen wurden ausschließlich Zellen, in denen
-die Kappe strukturell nicht terminieren kann — **Claim B ist nicht widerlegt, sondern noch nicht
-getestet.**
+Getroffen. Dazu **21 voll gekappte Paare** auf fünf Systemen (26, 27, 29, 31, 60), 89 vollständige
+Paare insgesamt:
 
-**Erster Beleg, Stand 21.09. — er passt, trägt aber noch nicht.** Über alle dim-3-Zellen mit
-aktiver Kappenpolitik:
+| Kappenklasse | dim | n | identisch | gekappt billiger | teurer | evals cap/unc |
+|---|---|---|---|---|---|---|
+| keine | 2 | 24 | **24** | 0 | 0 | 1,000 |
+| keine | 3 | 15 | **15** | 0 | 0 | 1,000 |
+| teilweise | 2 | 5 | 5 | 0 | 0 | 1,000 |
+| teilweise | 3 | 24 | 7 | 2 | 15 | 1,013 |
+| **voll** | **2** | **20** | 1 | **19** | 0 | **0,727** |
+| **voll** | **3** | **1** | 0 | **1** | 0 | **0,581** |
 
-| Kappenklasse | n | Level min/median/max | erreichen 30 Level |
-|---|---|---|---|
-| keine | 24 | 20 / 22 / 26 | 0 / 24 |
-| teilweise | 47 | 23 / **30** / 30 | **41 / 47** |
-| voll | 7 | 14 / 23 / 25 | **0 / 7** |
+Gepoolt über die 21 voll gekappten Paare: **28,3 % Ersparnis** an `total_loss_evals`, Ratio pro Paar
+0,521 / **0,634** / 1,000. Das einzige Paar ohne Ersparnis ist System 27 Seed 7 IC 1, wo **auch der
+ungekappte Arm bei Stufe 3 endet** — derselbe Mechanismus von der anderen Seite, kein Gegenbeispiel.
 
-Alle sieben voll gekappten Zellen enden auf **Endstufe 3** — exakt dem Kappenwert. **Aber der
-Systemeffekt ist nicht abgetrennt:** „voll" (Median 23) liegt nicht früher als „keine" (Median 22),
-und die Kappenklasse *ist* eine Systemeigenschaft. Sechs der sieben Zellen gehören zu C-3 und haben
-gar kein Gegenstück; von System 60 IC 2 Seed 123 (`[3,3,2]`, 14 Level, Stufe 3) fehlt der
-uncapped-Partner noch.
+**Bei unverändertem Ergebnis:** `pruned_match` in **21/21** gleich, R² in **16/21** bitidentisch,
+größte Abweichung 0,0045 (System 27 Seed 123 IC 1), einmal ist der gekappte Arm besser.
 
-**Die scharfe Einzelvorhersage lautet deshalb: der uncapped-Partner von 60/IC 2/Seed 123 erreicht
-Stufe 5 und fährt deutlich mehr als 14 Level.** Trifft das nicht zu, ist der Mechanismus falsch.
+**Die Kontrolle hält:** die inzwischen **39 kappenlosen Paare sind 39/39 bitidentisch** in
+`total_loss_evals` und `executed_levels`.
 
-**Teilweise gekappt, jetzt 23 Paare statt 10:** 14 teurer, 2 billiger, 7 gleich, in Summe
-**+1,36 %** — systematisch, aber winzig. Qualität spricht eher für die Kappe: Loss in 7 Paaren
-besser, in 3 schlechter. Die 15 kappenlosen Paare bleiben **15/15 bit-identisch**.
-
-**Beim Auswerten prüfen:** die ausstehenden voll gekappten dim-3-Paare (System 60 IC 2, System 61),
-dann die 15 voll gekappten dim-2-Zeilen gegen die 21 nur teilweise gekappten, dann die 32 voll
-gekappten dim-1-Zeilen. Fällt die Ersparnis auch bei voller Kappe aus, betrifft das Claim B im
-Kern.
+**Der Mechanismus steht im Code.** `_effective_max_stage` (`src/structure/evogrow.jl:141-144`) bildet
+das **Maximum** über die Kappen; eine offene Gleichung hält das volle Stufenbudget für alle offen.
+Claim B lautet deshalb präzise: **die Kappe spart genau dann, wenn sie alle Gleichungen kappt.** Wie
+oft das eintritt, sagt die suchfreie Gegenprobe (`outputs/phase_c_cap_incidence/stage_caps_by_basis.csv`):
+dim 1 **32/46**, dim 2 **15/56**, dim 3 **3/20**, dim 4 **0/4**. Ersparnis real und messbar, aber auf
+einen Minderheitenfall beschränkt — **beides gehört in denselben Satz.**
 
 **Nicht an der Kappe drehen.** Aggressiver kappen hieße, auf die Abwesenheit von Evidenz zu kappen
-(vom System-63-Defekt ausgeschlossen); die Schwellen nachziehen ist der WP-V1-Fehler. Der Hebel wäre
-die Granularität der Terminierung — gekappte Gleichungen einfrieren statt nur ihre Terme begrenzen.
-**Paper 2, nicht jetzt**, und zu messen statt zu behaupten.
+(vom System-63-Defekt ausgeschlossen); die Schwellen nachziehen ist der WP-V1-Fehler. Der Hebel ist
+die **Granularität der Terminierung** — gekappte Gleichungen einfrieren statt nur ihre Terme
+begrenzen. **Paper 2, nicht jetzt**, und zu messen statt zu behaupten.
 
 **Instrumentierungslücke:** im ungekappten Arm sind `eq_final_stages`, `stage_caps` und
-`eq_overshoot` **0/26 befüllt**; nur `final_stage` existiert, und das ist das Maximum über die
+`eq_overshoot` nicht befüllt; nur `final_stage` existiert, und das ist das Maximum über die
 Gleichungen. Aus der suchfreien Gegenprobe rekonstruierbar.
 
 **Zweiter Merkposten fürs Auswerten:** hilft k = 3 gegen den Konstanten-Defekt auf dim 2? Der
@@ -206,21 +186,19 @@ Alles committet, alles im `DIARY.md` unter dem 18.09. mit Hashes.
 
 - **C-3 gestartet** (`resume_c3.json`). Der Aufräumschritt aus der alten Übergabe war **hinfällig**:
   WP-C5 hat den Heartbeat-Leser am 15.09. an `start`-Ereignissen segmentiert, der angehängte echte
-  Lauf gewinnt. Nachgeprüft — die Reste der Zellen 883–914 tragen jetzt zwei `start`-Zeitstempel.
+  Lauf gewinnt.
 - **`baselines/`** — Harness, die Fremdmethoden auf **unseren** 126 exportierten Trajektorien
   rechnet, mit Hashprüfung als Abbruchbedingung und gespeicherten Koeffizienten. `odeformer` ist
   **gepinnt** (`c9193012`), nicht einkopiert; eigenes Python-3.9-Image; `containers/Dockerfile`
   unberührt. SINDy läuft, ODEFormer wartet aufs Image. WP-N19 / WP-N19b.
 - **Zwei Entscheidungen vor der Messung eingefroren**, beide in
   `docs/paper1_phaseC_benchmark_plan.md`: **§6a** — Methodenkosten sind *strukturell*, Zeit ist
-  sekundär und deklarationspflichtig, weil es über Methoden hinweg keine gemeinsame Zähleinheit
-  gibt. **§6b** — beide R²-Aggregationen werden berichtet, die varianzgewichtete trägt das Etikett
-  Literaturvergleich, **weil** sie ODEBench' Definition ist und nicht, weil sie besser aussieht.
+  sekundär und deklarationspflichtig. **§6b** — beide R²-Aggregationen werden berichtet, die
+  varianzgewichtete trägt das Etikett Literaturvergleich, **weil** sie ODEBench' Definition ist.
 - **WP-N20**: die varianzgewichtete Aggregation ist aus vorhandenen Records rekonstruierbar, ohne
   Neulauf. Über die volle Phase-B-Kampagne: **53 von 756 Zellen kippen über die 0,9-Schwelle, alle
   53 nach oben, 0 nach unten.** Kontrolle in 756/756 bestanden.
-- **README korrigiert** — er führte die auf Diagnostik herabgestufte Phase B noch als „die Evidenz"
-  und „die Hauptkampagne", während Phase C im Fließtext gar nicht vorkam. Plus fünf kleinere.
+- **README korrigiert** — er führte die auf Diagnostik herabgestufte Phase B noch als „die Evidenz".
 
 ---
 
@@ -228,14 +206,14 @@ Alles committet, alles im `DIARY.md` unter dem 18.09. mit Hashes.
 
 - **Identität dieser Kampagne:** `git 221a3a72f0cb43164a22b09baac2d9ae82681a02`,
   `config_fingerprint 0c9672de35c75a9d`, Verhaltens-Fingerprint `ffb0266c7913352c`, Basis
-  `staged_polynomial_basis_with_constant`, `max_fit_attempts = 3`.
+  `staged_polynomial_basis_with_constant`, `max_fit_attempts = 3`. Am 22.09. über alle 355 Records
+  geprüft: ein Tripel, `git_dirty` nirgends.
 - **Jobs startet ausschließlich der Nutzer.** Claude sind `kubectl apply`, `patch` und `delete`
   gesperrt; Claude liest und prüft.
-- **`codex exec` braucht im Auto-Modus eine `allow`-Regel**, sonst scheitert die Übergabe **still** —
-  der Auftrag ist geschrieben, aber nie übergeben. Die Regel steht in `.claude/settings.json`, die
-  ignoriert ist und daher nur auf diesem Rechner lebt; die Anforderung ist deshalb in
-  `codex/CODEX_PROTOCOL.md` dokumentiert. **Claude darf sie nicht selbst setzen** — das blockt der
-  Auto-Modus als Self-Modification, zu Recht.
+- **`codex exec` braucht im Auto-Modus eine `allow`-Regel**, sonst scheitert die Übergabe **still**.
+  Die Regel steht in `.claude/settings.json`, die ignoriert ist und daher nur auf diesem Rechner
+  lebt; die Anforderung ist in `codex/CODEX_PROTOCOL.md` dokumentiert. **Claude darf sie nicht selbst
+  setzen** — das blockt der Auto-Modus als Self-Modification, zu Recht.
 - **Codex kann hier kein Julia ausführen.** Julia-Pakete werden geschrieben, als `blocked` gemeldet,
   Claude fährt die Abnahme. Python läuft normal.
 - **Nodes darfst du nicht auflisten** (`Forbidden`). 96 Kerne auf `alnilam01` / `alnilam02`.
@@ -245,5 +223,4 @@ Alles committet, alles im `DIARY.md` unter dem 18.09. mit Hashes.
   an erfundenen Daten haben schon mehrere Arbeitspakete durchgewinkt, die an echten Daten umfielen.
 - **Eine deklarierte, ungeprüfte Annahme** (§6b): die Gewichte der Phase-B-Auswertung stammen aus
   dem **Phase-C**-Trajektorienexport, weil Phase Bs eigene Trajektorien nicht versioniert sind. Das
-  Protokoll ist identisch, also sollten es dieselben Zahlen sein — geprüft ist es nicht, und die
-  Kontrollen können es nicht prüfen.
+  Protokoll ist identisch, also sollten es dieselben Zahlen sein — geprüft ist es nicht.

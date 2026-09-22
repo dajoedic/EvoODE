@@ -4,6 +4,91 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ---
 
+## 2026-09-22
+
+### Die Vorhersage ist eingetroffen: die Kappe spart genau dann, wenn sie alle Gleichungen kappt
+
+**Anlass.** Am 20.09. wurde hier eine datierte Einzelvorhersage abgelegt, weil der damalige Stand
+der Kampagne keine einzige voll gekappte Zelle mit Gegenstueck enthielt und Claim B deshalb
+**nicht widerlegt, sondern ungetestet** war. Die Vorhersage lautete: der ungekappte Partner von
+System 60, IC 2, Seed 123 erreicht Stufe 5 und faehrt deutlich mehr als 14 Level. Mit der
+Parallelitaetserhoehung vom 21.09. sind ueber Nacht 105 Zellen dazugekommen, darunter die ersten
+dim-2-Zellen — und damit die Zellklasse, die den Test traegt.
+
+**Stand der Messung.** 355 Records (C-1+C-2 bei 184/756, C-3 bei 171/180), **0 Fehler**, ein
+Identitaetstripel `221a3a7` / `0c9672de35c75a9d` / `ffb0266c7913352c` ueber alle 355, `git_dirty`
+nirgends. 89 vollstaendige Paare, davon **21 voll gekappt** auf fuenf Systemen (26, 27, 29, 31, 60)
+und zwei Dimensionen.
+
+**Die Vorhersage, gegen die Messung gehalten:**
+
+```text
+System 60, IC 2, Seed 123, stage_caps [3,3,2]
+  gekappt:    14 Level, Endstufe 3,  3.098.076 loss evals
+  ungekappt:  22 Level, Endstufe 5,  5.336.451 loss evals
+```
+
+Stufe 5 gegen Stufe 3, 22 Level gegen 14. Die Vorhersage war scharf genug, um falsch sein zu
+koennen, und sie ist es nicht.
+
+**Das Bild ueber alle Paare, nach Kappenklasse getrennt:**
+
+| Kappenklasse | dim | n | identisch | gekappt billiger | gekappt teurer | evals cap/unc |
+|---|---|---|---|---|---|---|
+| keine | 2 | 24 | **24** | 0 | 0 | 1,000 |
+| keine | 3 | 15 | **15** | 0 | 0 | 1,000 |
+| teilweise | 2 | 5 | 5 | 0 | 0 | 1,000 |
+| teilweise | 3 | 24 | 7 | 2 | 15 | 1,013 |
+| **voll** | **2** | **20** | 1 | **19** | 0 | **0,727** |
+| **voll** | **3** | **1** | 0 | **1** | 0 | **0,581** |
+
+Ueber die 21 voll gekappten Paare: gepoolte Ersparnis **28,3 %** an `total_loss_evals`, Ratio pro
+Paar 0,521 / **0,634** / 1,000 (min/median/max). Das einzige Paar ohne Ersparnis ist System 27
+Seed 7 IC 1, wo **auch der ungekappte Arm bei Stufe 3 endet** — dort kann die Kappe nichts sparen,
+und das ist kein Gegenbeispiel, sondern derselbe Mechanismus von der anderen Seite.
+
+**Bei unveraendertem Ergebnis.** `pruned_match` stimmt in **21 von 21** Paaren ueberein, R² ist in
+**16 von 21** bitidentisch. Die groesste Abweichung ist 0,0045 (System 27, Seed 123, IC 1: 0,9951
+gekappt gegen 0,9995 ungekappt), drei weitere liegen unter 1e-3, und in einem Paar ist der
+*gekappte* Arm besser. Das ist die Form, die Claim B braucht: weniger Aufwand, gleiches Ergebnis.
+
+**Die Kontrolle haelt weiter.** Die inzwischen 39 kappenlosen Paare sind in `total_loss_evals` und
+`executed_levels` **39 von 39 bitidentisch**. C-1 und C-2 unterscheiden sich durch die Kappe und
+durch sonst nichts; das war am 19.09. bei 15 Paaren so und ist es bei 39.
+
+**Und die teilweise gekappten Paare bleiben, was sie waren:** auf dim 3 in Summe +1,3 % teurer,
+15 teurer gegen 2 billiger, 22 von 24 fahren 30 von 30 Leveln. Die fuenf teilweise gekappten
+dim-2-Paare sind sogar bitidentisch. Das ist kein Defekt, sondern die direkte Folge von
+`_effective_max_stage` (`src/structure/evogrow.jl:141-144`), das das **Maximum** ueber die Kappen
+bildet: eine einzige offene Gleichung haelt das volle Stufenbudget fuer alle offen.
+
+**Was daraus fuers Paper folgt.** Claim B ist nicht "die Kappe spart Suchaufwand", sondern
+**"die Kappe spart Suchaufwand genau dann, wenn sie alle Gleichungen kappt, und das ist eine
+Eigenschaft der Terminierungsgranularitaet, nicht der Kappe"**. Die suchfreie Gegenprobe
+(`outputs/phase_c_cap_incidence/stage_caps_by_basis.csv`) sagt, wie oft das eintritt: dim 1 32/46,
+dim 2 15/56, dim 3 3/20, dim 4 0/4. Die Ersparnis ist also real, messbar und **auf einen
+Minderheitenfall beschraenkt** — beides gehoert in denselben Satz. Die feinere Terminierung
+(gekappte Gleichungen einfrieren statt nur ihre Terme begrenzen) ist der Hebel, und sie ist
+Paper 2, zu messen statt zu behaupten.
+
+**Zwei Einschraenkungen, die mitreisen.** Fuenf Systeme sind fuenf Cluster — fuer die
+clusterrobuste Paarstatistik der Endauswertung ist das zu wenig, die Zahlen hier sind
+Zwischenstand und keine Endzahl. Und die voll gekappten Zellen sind ueberwiegend dim-2-Zellen,
+also die billigen: in `total_loss_evals` ist die Ersparnis deutlich, in Kernstunden klein. Die
+15 voll gekappten dim-2-Zeilen und die 32 dim-1-Zeilen der Gegenprobe sind noch nicht vollstaendig
+gepaart.
+
+**Nebenbefund zur Infrastruktur.** Die SMB-Freigabe war heute frueh nicht gemountet, obwohl das VPN
+stand (`Resolve-DnsName api.orion.scch.at` lieferte 172.21.202.100). `net use S: /delete /y` und
+`net use S: \scch.at\scch` haben sie zurueckgeholt. Ein nicht erreichbares `S:` heisst also nicht
+zwangslaeufig "VPN weg".
+
+**Kosten.** 5.874 Kernstunden verbraucht (Kontext, keine Evidenz — Designprinzip 7), davon 4.785 in
+C-1+C-2 und 1.089 in C-3. Aus den fertigen Zellen: dim 3 Median 47,2 h, dim 2 Median 2,47 h. Offen
+sind 36 dim-3-Zellen und 236 dim-2-Zellen plus dim 4 und dim 1, grob **3.000 Kernstunden**.
+
+---
+
 ## 2026-09-20
 
 ### Claim B ist auf dim 3 nicht widerlegt, sondern noch nicht getestet — und die Vorhersage steht vor der Messung
