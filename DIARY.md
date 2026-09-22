@@ -8,6 +8,8 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ### Externer Repo-Audit: ein echter Fund, ein Widerspruch im eigenen Haus, und vier bekannte Punkte
 
+<!-- 0db66f0 -->
+
 **Anlass.** Ein externes LLM hat den Stand `29ac936` (21.09.) statisch auditiert — Architektur,
 Suchlogik, Stage Cap, BFGS, Phase-C-Konfiguration, Tests, Paper- und Protokolldokumente. Alle
 Befunde wurden vor der Diskussion gegen den Code geprueft. Das Ergebnis ist lehrreich, aber anders
