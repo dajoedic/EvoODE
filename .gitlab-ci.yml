@@ -66,10 +66,17 @@ build_campaign_image:
   variables:
     DOCKER_BUILDKIT: "1"
     DOCKER_TLS_CERTDIR: ""
+    # BuildKit attaches a provenance attestation by default, which turns the push into an OCI
+    # image index. The GitLab registry rejects that index with
+    # "error from registry: blob unknown to registry" after every layer has already uploaded —
+    # the layers arrive, the manifest does not, and the tag then fails to resolve with
+    # "manifest unknown". Belt and braces: the variable covers the case where the build is
+    # routed through buildx, the flags below state it explicitly.
+    BUILDX_NO_DEFAULT_ATTESTATIONS: "1"
   before_script:
     - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" "$CI_REGISTRY"
   script:
-    - docker build --pull --build-arg "EVOODE_GIT_SHA=$CI_COMMIT_SHA" -f containers/Dockerfile -t "$CI_REGISTRY_IMAGE:$CI_COMMIT_SHA" -t "$CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG" .
+    - docker build --provenance=false --sbom=false --pull --build-arg "EVOODE_GIT_SHA=$CI_COMMIT_SHA" -f containers/Dockerfile -t "$CI_REGISTRY_IMAGE:$CI_COMMIT_SHA" -t "$CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG" .
     - docker push "$CI_REGISTRY_IMAGE:$CI_COMMIT_SHA"
     - docker push "$CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG"
 

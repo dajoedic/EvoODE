@@ -10,6 +10,28 @@ project**. Scientific history belongs in `DIARY.md`, not here.
 
 ## [Unreleased]
 
+### Fixed — 2026-09-22
+
+- `build_campaign_image` no longer attaches build attestations: `--provenance=false --sbom=false`
+  on `docker build`, plus `BUILDX_NO_DEFAULT_ATTESTATIONS: "1"` in the job variables.
+
+  **Symptom.** The build itself succeeded — 554 packages precompiled in 1,687 s, image exported and
+  named — and every layer pushed. Only the final manifest failed, with
+  `error from registry: blob unknown to registry - sha256:651d95e6…`. The tag therefore never
+  resolved, and pods referencing it stayed in `ImagePullBackOff` reporting `manifest unknown`.
+
+  **Cause.** Two lines above the push, BuildKit reports `exporting attestation manifest` and
+  `exporting manifest list`: the default provenance attestation turns the result into an OCI image
+  index, which this registry does not accept. Nothing in the project changed — the build step is
+  `Pkg.instantiate(); Pkg.precompile()` against unchanged `Project.toml` and `Manifest.toml`.
+
+  **Why it worked before.** The service image is pinned to the floating tag
+  `registry.scch.at/cache/library/docker:29-dind`, recorded under *Changed — 2026-09-15* below.
+  A patch-level move of that tag enabled attestations by default. **The floating tag is the
+  underlying defect; this entry fixes the symptom.** Pinning the service image to an exact version
+  is the follow-up, and it needs the version that last built successfully (commit `221a3a7`,
+  2026-09-14) to be established first.
+
 ### Added — 2026-09-15
 
 - `workflow: rules` — the pipeline now answers only branch pushes, tag pushes and manual runs from
