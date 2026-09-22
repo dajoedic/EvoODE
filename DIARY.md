@@ -6,6 +6,71 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ## 2026-09-22
 
+### Externer Repo-Audit: ein echter Fund, ein Widerspruch im eigenen Haus, und vier bekannte Punkte
+
+**Anlass.** Ein externes LLM hat den Stand `29ac936` (21.09.) statisch auditiert — Architektur,
+Suchlogik, Stage Cap, BFGS, Phase-C-Konfiguration, Tests, Paper- und Protokolldokumente. Alle
+Befunde wurden vor der Diskussion gegen den Code geprueft. Das Ergebnis ist lehrreich, aber anders
+gewichtet als der Audit selbst es tut.
+
+**Der eine neue Fund, und er ist ernster als beschrieben.** Der exportierte Typ
+`EvoGrowStageCapped` baut einen `EvoGrowV3` (`src/structure/evogrow_v3.jl:46-86`), nicht das
+v2.2-Substrat. Der Auditor schloss daraus kurzzeitig, Phase C koenne den gescheiterten
+v3-Zweig fahren. **Tut sie nicht** — `studies/regression/phase_c_config.jl:193-204` konstruiert
+`EvoGrow(..., stage_cap_policy = ...)`, und `studies/regression/run_regression.jl` fuehrt zwei
+getrennte Labels, `evogrow_v2_2_stage_capped` ueber `EvoGrow` und `evogrow_v3_stage_capped` ueber
+`EvoGrowStageCapped`. Beide Runner sind korrekt.
+
+**Der Defekt lag in genau einer Zeile Dokumentation:** `docs/architecture.md:124` setzte
+`evogrow_v2_2_stage_capped` mit `(EvoGrowStageCapped)` gleich. Das ist die Zeile, die den Fehlalarm
+ausgeloest hat, und der Audit hat sie nicht als Ursache benannt. Eine Architekturreferenz, die eine
+Identitaet behauptet, die der Code ausdruecklich nicht herstellt, ist schlimmer als keine. Jetzt
+stehen beide Varianten nebeneinander, mit dem Aufrufpfad ausgeschrieben.
+
+**Entscheidung fuer danach: umbenennen, nicht umwidmen.** Nach der Kampagne wird
+`EvoGrowStageCapped` zu `EvoGrowV3StageCapped`, alter Name als deprecated alias fuer eine
+Uebergangszeit. Die Alternative — den Typ auf v2.2 umstellen, damit der Name stimmt — ist verworfen:
+vorhandener Code liefe weiter und fuehrte **still einen anderen Algorithmus** aus, und die
+gemessenen `evogrow_v3_stage_capped`-Laeufe haengen an der heutigen Semantik. Ein Breaking Change
+ist harmloser als ein stiller semantischer Bruch.
+
+**Der zweite echte Treffer ist ein Widerspruch im eigenen Haus.** `README.md` und `CLAUDE.md`
+fuehrten EvoODE mit einem **„unrestricted" Suchraum** — im selben Repo, das 30 von 63 exakt
+repraesentierbaren Systemen gegen SINDys 40 und ProGEDs 53 gemessen und daraus die Basisentscheidung
+P3 abgeleitet hat. Die Positionierungstabelle widersprach drei Abschnitte weiter unten der eigenen
+Messung. Beide Tabellen sind ersetzt: die Achse ist nicht die **Groesse** der Modellklasse, sondern
+**wann** ihre Mitglieder erreichbar werden — SINDy legt die Bibliothek vollstaendig offen und waehlt
+sparsam darin aus, EvoGrow legt sie stufenweise offen und waechst einen sparsamen Support hinein.
+Ein Reviewer, der „unrestricted" liest, antwortet mit „SINDy nimmt beliebige custom libraries", und
+er haette recht.
+
+**Vier von sechs Audit-Befunden standen schon bei uns:** `paper/` veraltet (Warnkasten in
+`paper/README.md`), kein `runtests.jl` und keine Test-CI (Known Gaps, woertlich), add-only growth
+(Open, not scheduled, mit derselben Kausalkette), und der Stage-Cap-Mechanismus (`DIARY.md` 20.09.,
+mit Codezeile und datierter Vorhersage). Das entwertet den Audit nicht — unabhaengige Bestaetigung
+ist etwas wert —, aber es sind Terminfragen, keine Entdeckungen.
+
+**Zwei Korrekturen an der Diagnose.** Die Duplizierung zwischen `evogrow.jl` und `evogrow_v3.jl`
+ist enger als behauptet: v3 benutzt die Blattfunktionen mit (`_evaluate!`, `_init_population`,
+`_allowed_terms`, `_fit_stat` 24-mal), dupliziert ist die Treiberschleife samt Zaehler-Akkumulation.
+Und die Test-CI ist nicht „wenig Aufwand", sondern **gesperrt**: die CI liegt auf GitLab, ein Push
+dorthin baut das Kampagnen-Image neu. GitHub ist SSOT und hat gar keine CI — die eigentliche Frage
+ist deshalb, ob die Teststufe nach GitHub Actions gehoert.
+
+**Und die wichtigste offene Frage des Audits war beim Eintreffen bereits beantwortet.** Er fordert,
+Claim B nach none / partial / full cap zu trennen und nicht nur an `executed_levels`, sondern an
+`loss_evals` zu messen, weil partial cap ueber den kleineren Suchraum trotzdem sparen *koenne*.
+Genau diese Messung liegt seit heute frueh vor (Eintrag oben): voll gekappt **-28,3 %** bei
+`pruned_match` 21/21 gleich, teilweise gekappt dim 3 **+1,3 %**, teilweise gekappt dim 2 **5/5
+bitidentisch**, ungekappt **39/39 bitidentisch**. Die Hypothese ist geprueft und faellt negativ
+aus — partial cap spart auch ueber den zweiten Mechanismus nichts.
+
+**Nicht gemacht, bewusst:** `paper/03_method.md` und `paper/05_experimental_protocol.md` neu ziehen.
+Das ist kein Hygiene-Schritt, sondern Paper-Schreiben, und es braucht die Phase-C-Zahlen — wer es
+heute tut, tut es in drei Tagen nochmal. Stattdessen ist der Warnkasten in `paper/README.md`
+nachgezogen: er behauptete noch, die Scope-Frage sei offen und es stuenden drei Kandidatenrahmungen
+zur Wahl. Entschieden am 09.09.: Methodenpaper.
+
 ### Die Vorhersage ist eingetroffen: die Kappe spart genau dann, wenn sie alle Gleichungen kappt
 
 <!-- 63a551a -->

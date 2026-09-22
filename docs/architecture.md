@@ -121,8 +121,29 @@ The chain and its verdicts. Phase 2 is closed; nothing here is planned work exce
 | v2.1 | stage-aware child generation after stage unlock | superseded |
 | v2.2 | stage-local progression, minimum stage budget, configurable stage usage policy | **fails Gate 1** (2026-05-30); kept as the substrate |
 | v3 (`EvoGrowV3`) | per-equation staging with a derivative-residual promotion signal `r_k` | **implemented, fails Gate 2** (2026-07-31); kept as documented failure analysis |
-| `evogrow_v2_2_stage_capped` (`EvoGrowStageCapped`) | v2.2 substrate plus the look-ahead stage cap | **the final Paper 1 variant** (settled 2026-08-03) |
+| `evogrow_v2_2_stage_capped` (`EvoGrow` + `stage_cap_policy`) | v2.2 substrate plus the look-ahead stage cap | **the final Paper 1 variant** (settled 2026-08-03) |
+| `evogrow_v3_stage_capped` (`EvoGrowStageCapped`) | **v3** substrate plus the same cap | historical/experimental branch; inherits the Gate-2 failure |
 | v4 | coupling-aware growth | not started |
+
+**The two capped variants are different algorithms, and the type name does not say so.** Until
+2026-09-22 this table put `EvoGrowStageCapped` in the Paper-1 row, which is wrong and has already
+misled one reader into thinking the Phase C campaign runs the failed v3 substrate. It does not:
+
+```text
+evogrow_v2_2_stage_capped  →  EvoGrow(..., stage_cap_policy = LookAheadStageCapPolicy(...))
+evogrow_v3_stage_capped    →  EvoGrowStageCapped(...)  →  EvoGrowV3(..., stage_caps = ...)
+```
+
+`EvoGrowStageCapped` computes the caps and then hands them to `EvoGrowV3`
+(`src/structure/evogrow_v3.jl:46-86`), so it carries equation-local stage state, the
+derivative-residual promotion signal and v3's coupling coherence — the branch that **fails Gate 2**.
+Both campaign runners construct the Paper-1 arm correctly and label the v3 arm as v3
+(`studies/regression/run_regression.jl`, `studies/regression/phase_c_config.jl`); the defect was in
+this document alone. **Decided 2026-09-22: the type is renamed to `EvoGrowV3StageCapped` after the
+Phase C campaign, with the old name kept as a deprecated alias for one transition period.** The
+alternative — repointing `EvoGrowStageCapped` at the v2.2 substrate so the name becomes true — was
+rejected: existing code would keep compiling and silently run a different algorithm, and the
+recorded `evogrow_v3_stage_capped` measurements hang on today's semantics.
 
 Why v3 failed, because the reason constrains later designs: its promotion condition
 `r_k > loss_tol = 1e-8` is unreachable on coupled systems, whose error floor sits around 1e-3, so it

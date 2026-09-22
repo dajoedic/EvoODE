@@ -56,11 +56,20 @@ systems.
 
 ## Scientific Position
 
-| Method | Search space | Growth strategy | Complexity control |
-|--------|-------------|-----------------|-------------------|
-| SINDy | restricted: fixed linear library | none (direct regression) | L1 sparsity |
-| GP | unrestricted | global: starts large, random | parsimony pressure |
-| EvoODE | unrestricted | incremental: starts minimal, grows | staged grammar + stopping criterion |
+| Method | Candidate library | How the library is exposed | Complexity control |
+|--------|-------------------|----------------------------|-------------------|
+| SINDy | fixed, user-supplied | all at once; one linear regression over the whole library | L1 sparsity |
+| GP | open, operator-generated | not applicable; built globally from random large structures | parsimony pressure |
+| EvoODE | fixed, staged by degree | incrementally: one stage at a time, unlocked on demand | staged grammar + stopping criterion |
+
+**Never call EvoODE's search space "unrestricted"** — the table said so until 2026-09-22 and it was
+indefensible. The canonical basis is `1, u_i, u_i², u_i·u_j, u_i³, sin(u_i), cos(u_i)`: no rational
+functions, no mixed cubics, no `sin(a·u)`, no `exp`/`log`. It makes **30 of 63** systems exactly
+representable against SINDy's **40** and ProGED's **53** — a number this project measured itself and
+then contradicted three lines later. The difference to SINDy is **when** library members become
+reachable, not how many there are: SINDy exposes the whole library at once and selects sparsely
+within it, EvoGrow exposes it stage by stage and grows a sparse support into it. A reviewer who
+reads "unrestricted" answers with "SINDy takes arbitrary custom libraries", and they are right.
 
 Core claims:
 
@@ -683,6 +692,27 @@ the coupled search path 1e-6 is the cheaper, behaviour-equal tolerance; the Syst
 
 ### Open, not scheduled
 
+- **Rename `EvoGrowStageCapped` to `EvoGrowV3StageCapped` after the Phase C campaign, decided
+  2026-09-22.** The exported type builds an `EvoGrowV3` (`src/structure/evogrow_v3.jl:46-86`), so
+  its name claims the Paper-1 variant and delivers the Gate-2 failure branch. The Paper-1 arm is
+  `EvoGrow(..., stage_cap_policy = ...)`, and both campaign runners construct it correctly — the
+  defect was `docs/architecture.md` asserting the two were the same thing, which cost one external
+  reader a false alarm. **Rename, do not repurpose:** pointing the old name at the v2.2 substrate
+  would let existing code keep compiling while silently running a different algorithm, and the
+  recorded `evogrow_v3_stage_capped` measurements hang on today's semantics. Keep the old name as a
+  deprecated alias for one transition period. Touches the export in `src/EvoODE.jl`,
+  `studies/regression/run_regression.jl` and `test/test_stage_cap.jl`.
+- **A central `test/runtests.jl` plus a CI test stage.** 18 Julia and 10 Python test files exist and
+  nothing runs them; `.gitlab-ci.yml` has `build` and `security` only. Cheap in work, **but not
+  schedulable right now**: the CI lives on GitLab and a push there rebuilds the campaign image, so
+  it waits for the campaign to end. GitHub is SSOT and has no CI at all — decide there whether the
+  test stage should live on GitHub Actions instead of GitLab. `runtests.jl` is also listed inside
+  WP-D4b below; do it once, in whichever package runs first.
+- **De-duplicate the driver loop of `evogrow.jl` and `evogrow_v3.jl`, after Paper 1.** The leaf
+  helpers are already shared — v3 calls `_evaluate!`, `_init_population`, `_allowed_terms` and
+  `_fit_stat` (24×) out of `evogrow.jl` — so the duplication is the 30-level loop and its counter
+  accumulation, not candidate evaluation. Narrow, but it is exactly where a fix to solver or
+  accounting semantics can land in one branch and miss the other.
 - Baseline v1 under a single fingerprint, once the final variant is regression-checked on the new
   grid.
 - Pathological line-search (up to 39,933 loss evals at two parameters) and the sentinel-loss `1e6`

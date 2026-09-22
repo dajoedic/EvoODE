@@ -25,11 +25,20 @@ the open risk to Claim B, and the ordered plan. It is republished whenever the s
 
 ## Scientific position
 
-| Method | Search space | Growth strategy | Complexity control |
+| Method | Candidate library | How the library is exposed | Complexity control |
 |---|---|---|---|
-| SINDy | restricted: fixed linear library | none (direct regression) | L1 sparsity |
-| GP | unrestricted | global: starts large, random | parsimony pressure |
-| **EvoODE** | **unrestricted** | **incremental: starts minimal, grows** | **staged grammar + stopping criterion** |
+| SINDy | fixed, user-supplied | all at once; one linear regression over the whole library | L1 sparsity |
+| GP | open, operator-generated | not applicable; expressions are built globally from random large structures | parsimony pressure |
+| **EvoODE** | **fixed, staged by degree** | **incrementally: one stage at a time, unlocked on demand** | **staged grammar + stopping criterion** |
+
+**EvoODE's search space is restricted, and saying otherwise would not survive review.** The
+canonical basis is `1, u_i, u_i², u_i·u_j, u_i³, sin(u_i), cos(u_i)` — no rational functions, no
+mixed cubics, no `sin(a·u)`, no `exp` or `log`. It makes 30 of the 63 ODEBench systems exactly
+representable, against 40 for SINDy's plain polynomial library and 53 for ProGED's rational
+grammar; the other 33 are approximated. The difference to SINDy is therefore **not** the size of
+the model class but **when** its members become reachable: SINDy exposes the whole library
+simultaneously and selects sparsely within it, EvoGrow exposes it stage by stage and grows a sparse
+support into it.
 
 Claims under investigation:
 
