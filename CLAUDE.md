@@ -31,6 +31,15 @@ in one of the files above.
 All communication with the user happens in **German**.
 Code, comments, docstrings, and commit messages remain in **English**.
 
+**Where a run executes — decided 2026-09-22.** Anything that cannot be shown with certainty to
+finish in **under 8 hours** runs on the Orion cluster, never on the working laptop. The reason is
+risk asymmetry, not convenience: a wrong estimate on the cluster is an annoyance, the same wrong
+estimate on the laptop blocks the machine for days. A projection built from one average cost
+constant does **not** count as certainty when the underlying per-cell costs span orders of
+magnitude — Phase B's dim-2 cells run from 0.003 h to 5.33 h, a factor of 1,800. Every such run
+also carries an explicit bound: a loss-evaluation budget per fit, and `activeDeadlineSeconds` in
+the job manifest, so the runtime is limited by construction rather than by estimate.
+
 ## What This Project Is
 
 EvoODE is a Julia research framework for data-driven discovery of interpretable ODE systems from
