@@ -10,118 +10,118 @@ zweites davon. Alles Dauerhafte gehört dorthin, nach `PAPER_1.md` oder ins `DIA
 **Regeln:** wird immer **vollständig überschrieben**, nie angehängt. Was älter als ein paar Tage
 ist, ist vermutlich falsch — dann gilt `CLAUDE.md`.
 
-**Stand: 2026-09-22, 19:30.** Der Nutzer hat die Freigabe auf **frühestens 20:15** terminiert.
+**Stand: 2026-09-22, 23:55.**
 
 ---
 
-## 1. Was gerade läuft
+## 1. Der nächste Handgriff
 
-**Die Phase-C-Kampagne läuft unverändert auf Orion.** Nichts von heute hat den Kampagnenpfad
-berührt. Image ist SHA-gepinnt, siehe Abschnitt 5.
+**Der Nutzer startet HPC-Jobs selbst** (Regel wieder in Kraft seit 2026-09-22 spät abends; die
+Delegation an Claude galt nur für diesen einen Abend). Claude bereitet vor und prüft, führt aber
+kein `oc apply` mehr aus.
 
-**WP-T1e ist fertig und lokal verifiziert** — die Reparatur von WP-T1d plus Budget, Sharding und die
-Cluster-Manifeste.
+Zwei Befehle stehen aus. Die Manifeste liegen substituiert unter `outputs/k8s_wp_t1e/`
+(gitignoriert, überlebt Sitzungen), alle auf Image
+`evoode:5a87efb3438ef459f57e28fca9fde8564b97217f`.
 
-**Der Nutzer hat für heute ausnahmsweise delegiert:** Claude darf nach **GitLab** pushen und den
-T1d-Job auf Orion starten. **GitHub bleibt beim Nutzer** (18 ungepushte Commits). Die Delegation
-gilt für diesen einen Vorgang, nicht dauerhaft.
+**Schritt 1 — Smoke, zwei Zellen, wenige Minuten:**
 
-## 2. Der Ablauf, und wo er steht
+```powershell
+oc apply -f outputs\k8s_wp_t1e\wp_t1e_indexed_smoke_job.yaml
+oc get job evoode-wp-t1e-indexed-smoke -o custom-columns="JOB:.metadata.name,SUCCEEDED:.status.succeeded,FAILED:.status.failed"
+```
 
-| # | Schritt | Status |
-|---|---|---|
-| 1 | WP-T1e schreiben (Codex) | **fertig**, `blocked` wie vorgesehen |
-| 2 | Regressionstest: `log10_loss_ratio(1e-4, 1e-2) == -2.0` | **grün**, 188 + 3 Tests |
-| 3 | Lokaler Smoke, System 24 + 25, beide IC | **grün**, 168 Zeilen, 4 Zellen |
-| 4 | `git push gitlab main` (77 Commits hinterher) | **frühestens 20:15** |
-| 5 | CI baut, Zeitlimit 3 h | offen |
-| 6 | `oc apply` Bootstrap → Smoke-Job (2 Zellen) | offen |
-| 7 | Records prüfen | offen |
-| 8 | `oc apply` der Lauf: `completions: 36`, `parallelism: 2` | offen |
+Pass-Kriterium `SUCCEEDED = 2`. **Danach prüft Claude die Records**, bevor Schritt 2 kommt.
 
-**Der Smoke-Job ist zugleich der Build-Check.** `glab` ist nicht installiert und die Registry
-verweigert Docker den Lesezugriff, also lässt sich der Pipeline-Status nicht direkt abfragen.
-`ImagePullBackOff` heißt „Build noch nicht fertig", nicht „kaputt" — dann einfach später erneut.
+**Schritt 2 — der Lauf, 36 Zellen, `parallelism: 2`, ~5–6 h. Erst nach Abnahme des Smoke:**
 
-**Abbruchbedingungen, die sich Claude gesetzt hat:** nicht pushen, wenn Schritt 2 oder 3 scheitert;
-den echten Job nie vor dem Smoke; die Kampagnen-Jobs nicht anfassen; bei Unerwartetem anhalten und
-aufschreiben statt improvisieren.
+```powershell
+oc apply -f outputs\k8s_wp_t1e\wp_t1e_indexed_campaign_job.yaml
+```
 
-## 3. Warum T1d auf den Cluster geht
+## 2. Wer was macht
 
-Entschieden 2026-09-22 und in `CLAUDE.md` als Regel festgehalten: **was nicht sicher unter 8 h
-bleibt, läuft auf Orion, nie auf dem Laptop.** Risiko-Asymmetrie — eine Fehlschätzung ist auf dem
-Cluster ärgerlich, auf dem Arbeitsgerät blockiert sie Tage.
+Claude kann die Freigabe `S:\BigDataOrion\data-science\joedicke\` **lesen** und `oc` für
+Statusabfragen benutzen. Prüfen, auswerten, committen macht also Claude. Der Nutzer muss nur die
+zwei `oc apply` oben ausführen — und die GitLab-Pipeline ansehen, falls ein Bau scheitert, denn
+`glab` fehlt und die Registry verweigert Docker den Lesezugriff.
 
-Für T1d ist die Unsicherheit belegt: Projektion 3.946 Fits / 10,4 h, aber gemessen wurde auf
-System 24 (dem **billigsten**) 1,80 s je Fit, während die Projektion mit 9,48 s rechnet — und
-Phase B zeigt zwischen den dim-2-Systemen einen Faktor **1.800** bei den Kosten je Zelle
-(0,003 h bis 5,33 h). Eine Konstante über diese Spanne ist keine Schranke. Deshalb zusätzlich:
-Loss-Eval-Budget je Fit und `activeDeadlineSeconds: 86400`.
+## 3. Was heute Abend auf dem Cluster passiert ist
 
-## 4. Was heute committet wurde
+| | |
+|---|---|
+| WP-T1e lokal verifiziert | 188 + 3 Tests, Smoke über 4 Zellen |
+| Commit + Push | `10ba7ad`, dann CI-Fix `5a87efb` |
+| **Erster Bau scheiterte** | `blob unknown to registry` beim Manifest-Push |
+| Ursache | BuildKit hängt eine Provenance-Attestation an → OCI-Index, den die Registry ablehnt |
+| Fix | `--provenance=false --sbom=false` + `BUILDX_NO_DEFAULT_ATTESTATIONS: "1"` |
+| Zweiter Bau | **Passed**, 35:17 |
+| Bootstrap-Job | **fertig** — 36 Indizes, `cell_index_map.csv` geprüft |
+
+**Die eigentliche Ursache ist der gleitende Tag `docker:29-dind`.** Ein Versionssprung darin hat
+Attestationen eingeschaltet. Der Fix behandelt das Symptom; das Pinnen auf eine exakte Version
+steht als Folgeaufgabe im `CHANGELOG.md`.
+
+## 4. Die zwei fehlgeschlagenen Sicherheitsjobs — angesehen, nicht erledigt
+
+In Pipeline #8379 (`5a87efb3`) sind **`trivy-fs` und `trivy-image` fehlgeschlagen**, beide mit
+`allow-failure: true`, die Pipeline ist also grün. `python-sast` und `python-dependency-vuln` sind
+durchgelaufen.
+
+**Das sind die ersten echten Ergebnisse dieser Jobs überhaupt.** Sie wurden am 2026-09-15
+hinzugefügt, der letzte erfolgreiche Bau davor war `221a3a7` vom 2026-09-14 — seither wurde die
+`security`-Stage jedes Mal übersprungen, weil `build` scheiterte.
+
+**Vermutliche Bedeutung, nicht verifiziert:** bei Trivy ist ein Fehlercode das vorgesehene Signal
+für Funde, nicht für einen Werkzeugfehler. Beide laufen mit `severity: HIGH,CRITICAL`.
+`trivy-image` (47 s) scannt das Debian-basierte Julia-Image, `trivy-fs` (21 s) das Repository,
+wo die gepinnten Python-Abhängigkeiten der wahrscheinlichste Kandidat sind. Ein reiner
+Konfigurationsfehler ist ohne Blick ins Log nicht ausgeschlossen — beide Laufzeiten sind kurz.
+
+**Zu tun, wenn Ruhe ist:** Logs ansehen, und falls es echte Funde sind, eine Zeile ins
+`CHANGELOG.md` — §11.1 will dokumentierte Abweichungen im Projekt haben. **Blockiert nichts**, der
+Container läuft intern und die Jobs sind bewusst nicht-blockierend eingerichtet.
+
+## 5. Was heute committet wurde
 
 | Commit | Inhalt |
 |---|---|
-| `700a685` / `2eb54e6` | DIARY: Seitenzweig umgehängt — Ziel ist Strukturtreffer auf gekoppelten Systemen |
-| `ae7573d` / `b4498f6` | WP-T1: Term-Relevanz, Machbarkeit. Gate **positiv** |
-| `139dd89` | Paper-Bogen umgebaut, `PAPER_TIMELINE.md` eingearbeitet und entfernt |
-| `32c7989` / `401e07f` | DIARY: die vier Bogen-Entscheidungen, Grenzen-Rahmung beibehalten |
-| `10a809c` / `75baed6` | WP-T1b: Standalone-Rangliste. Deutung **C** |
+| `700a685` / `2eb54e6` | DIARY: Seitenzweig umgehängt — Strukturtreffer statt Compute |
+| `ae7573d` / `b4498f6` | WP-T1: Term-Relevanz, Gate **positiv** |
+| `139dd89` | Paper-Bogen umgebaut, `PAPER_TIMELINE.md` eingearbeitet |
+| `32c7989` / `401e07f` | DIARY: vier Bogen-Entscheidungen, Grenzen-Rahmung behalten |
+| `10a809c` / `75baed6` | WP-T1b: Standalone-Rangliste, Deutung **C** |
 | `58cb17a` / `0701cf6` | DIARY: WP-T1b und die Kreuzprüfung |
-| `0dc79cc` / `5a6a447` | Seitenzweig als geschlossene Liste eingefroren, T1d-Kosten korrigiert |
-| `25e4ad5` | WP-T1c: STLSQ-Pfad, **kein Gewinner**, `forward` bleibt |
-| `a9a9471` / `bf5d353` | Kampagnen-Image dokumentiert, Prüfbefehl im Deployment-Guide §6b |
-| `c6d714e` | Die 8-Stunden-Regel in `CLAUDE.md` |
+| `0dc79cc` / `5a6a447` | Seitenzweig eingefroren, T1d-Kosten korrigiert |
+| `25e4ad5` | WP-T1c: **kein Gewinner**, `forward` bleibt |
+| `a9a9471` / `bf5d353` | Kampagnen-Image dokumentiert, Prüfbefehl im Guide §6b |
+| `c6d714e` | 8-Stunden-Regel in `CLAUDE.md` |
+| `10ba7ad` | WP-T1d/T1e: Nachbarschaftssonde, repariert, begrenzt, shardbar |
+| `5a87efb` | CI-Fix: keine Build-Attestationen mehr, CHANGELOG nach §11.1 |
 
-## 5. Das Kampagnen-Image — verifiziert, nicht erschlossen
+**GitHub ist nicht gepusht** — dort liegen die Commits für den Nutzer.
 
-Beide Phase-C-Jobs laufen unter `evoode:221a3a72f0cb43164a22b09baac2d9ae82681a02` — Commit
-`221a3a7` vom 14.09., Vorfahr von `main` — mit `imagePullPolicy: IfNotPresent`.
+## 6. Die Kampagne, unberührt
 
-**Ein GitLab-Push kann die laufende Kampagne nicht verändern.** Der Push erzeugt einen neuen
-SHA-Tag und verschiebt `:main`; beide sind verschieden vom gepinnten Tag, und die CI hat keinen
-Deploy-Schritt — `.gitlab-ci.yml` kennt nur `build` und `security`.
+C-1/C-2 bei 226 Zellen, C-3 bei 171, beide auf `:221a3a72f0cb…`. Der Push konnte sie nicht
+erreichen: neuer SHA-Tag, `:main` wandert ins Leere, und die CI hat keinen Deploy-Schritt.
+Prüfbefehl in `docs/hpc_deployment_guide.md` §6b.
 
-**Aus den Vorlagen unter `k8s/` lässt sich das nicht schließen**, die tragen nur `<COMMIT_SHA>`,
-und die erzeugten Manifeste sind gitignoriert. Prüfbefehl: `docs/hpc_deployment_guide.md` §6b.
+## 7. Der Stand des Seitenzweigs
 
-## 6. Der Stand des Seitenzweigs
-
-Die eingefrorene Liste steht in `docs/phd_thesis_arc.md` §5. Schritte 0–2 sind abgeschlossen:
+Eingefrorene Liste in `docs/phd_thesis_arc.md` §5. Schritte 0–2 abgeschlossen:
 
 - **WP-T1** — Signal vorhanden, Median `n_false_before_last_true` = 0,0 auf dim 2+3
-- **WP-T1b** — ersetzt die Suche **nicht** (Deutung C): 30,0 % / 0,0 % gegen SINDys 66,7 % / 28,6 %
+- **WP-T1b** — ersetzt die Suche **nicht** (Deutung C)
 - **WP-T1c** — **kein Gewinner**, `forward` bleibt Prioritätsgeber
-- **WP-T1d** — läuft als Nächstes: ist der wahre Träger ein lokales Optimum unseres Loss?
+- **WP-T1d** — läuft gerade an: ist der wahre Träger ein lokales Optimum unseres Loss?
 
-Zwei Befunde, die in den Codex-Reports fehlen und in `docs/phd_thesis_arc.md` §5 stehen: die
-p-Werte sitzen am **Auflösungsboden** von 18 Clustern; und **„weak schlägt fd" ist nicht haltbar**.
+Entscheidende Klasse ist `swap_one` bei gleicher Größe. `add_one` zu gewinnen ist Verschachtelung,
+kein Befund. Die drei Klassen werden nie zu einer Kennzahl verrechnet.
 
-## 7. Offene Entscheidungen, keine davon dringend
+## 8. Offene Entscheidungen
 
-1. **Der Rauschzuschnitt von Paper 1** — größter unbudgetierter Posten. `docs/phd_thesis_arc.md`
-   §3 und §11.
-2. **Das prädiktive Kriterium für Kappen-Versagen** hat unter Claim A–D keinen Besitzer mehr.
-3. **Was WP-T2a wird**, hängt an WP-T1ds Ausgang. Nicht vorher festlegen.
-
-## 8. Betriebliches
-
-- **Kein Branch.** Historie ist linear, Pfade disjunkt. Bei **WP-T2a** neu bewerten — der greift in
-  `src/structure/evogrow.jl` ein.
-- **`PAPER_TIMELINE.md` nicht wieder anlegen.** Eingearbeitet in `docs/phd_thesis_arc.md`.
-- **Codex kann kein Julia ausführen.** Julia-Pakete werden geschrieben, als `blocked` gemeldet und
-  von Claude ausgeführt. Heute hat das zwei Defekte erzeugt, einen davon **still**:
-  `log10(neighbor / true)` teilt durch `Bool(1)`. Deshalb der konkrete Zahlenwert im
-  Regressionstest.
-
-## 9. Was die lokale Prüfung ergeben hat
-
-Beide Defekte aus WP-T1d sind behoben: `true_loss_value` als zulässiger Name, und Zeile 364 teilt
-tatsächlich durch den wahren Loss statt durch `Bool(1)`. Der Regressionstest prüft den konkreten
-Wert `-2.0`, nicht nur „nicht `nothing`".
-
-Der lokale Smoke über System 24 und 25, beide IC-Sätze, lieferte 168 Nachbarzeilen und ein Bild,
-das die Theorie trifft: `add_one` schlägt die Wahrheit in 54 von 76 Fällen (Verschachtelung,
-erwartet), `remove_one` in 0 von 8, `swap_one` in 19 von 84. **Das ist eine Installationsprüfung,
-kein Ergebnis** — zwei Systeme, und zwar die beiden trivialsten der Stichprobe.
+1. **Rauschzuschnitt von Paper 1** — größter unbudgetierter Posten, `docs/phd_thesis_arc.md` §3/§11
+2. **Prädiktives Kriterium für Kappen-Versagen** — hat unter Claim A–D keinen Besitzer
+3. **Was WP-T2a wird** — hängt an WP-T1ds Ausgang
+4. **`docker:29-dind` pinnen** und eine Registry-Cleanup-Policy — Betrieb, nicht Forschung
