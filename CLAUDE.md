@@ -692,6 +692,22 @@ the coupled search path 1e-6 is the cheaper, behaviour-equal tolerance; the Syst
 
 ### Open, not scheduled
 
+- **The full claim-tracing audit, on a frozen evidence state — timing decided 2026-09-22.**
+  Trigger, and not before all three hold: Phase C complete, baselines complete, the final Phase C
+  evaluation produced — **but before the paper drafts are rewritten**. Running it earlier mixes
+  scientific scrutiny with moving-target hygiene: it would find real inconsistencies, part of which
+  new Phase C evidence makes obsolete within days. Two passes, and the second is the one this
+  project needs most:
+  1. `claim → admissible evidence → experiment/arm → constructor/code path → record field →
+     aggregation → table/figure → sentence in the manuscript`
+  2. `current measurement or decision → every document that still asserts an older version of it`
+  **The project's weakness is not missing documentation, it is documentation latency.** Measurement,
+  decision and describing text move at different speeds, so statements that were correct go
+  silently false. All three real findings of the 2026-09-22 external audit had that shape:
+  semantic drift (`architecture.md` bound a name to the wrong type), positioning drift
+  ("unrestricted" outlived the representability analysis that refutes it), and scope/evidence drift
+  (`paper/` still described the old basis and the retired claim labels). Pass 2 searches for that
+  class directly.
 - **Rename `EvoGrowStageCapped` to `EvoGrowV3StageCapped` after the Phase C campaign, decided
   2026-09-22.** The exported type builds an `EvoGrowV3` (`src/structure/evogrow_v3.jl:46-86`), so
   its name claims the Paper-1 variant and delivers the Gate-2 failure branch. The Paper-1 arm is
