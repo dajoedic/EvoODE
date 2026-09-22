@@ -10,115 +10,118 @@ zweites davon. Alles Dauerhafte gehört dorthin, nach `PAPER_1.md` oder ins `DIA
 **Regeln:** wird immer **vollständig überschrieben**, nie angehängt. Was älter als ein paar Tage
 ist, ist vermutlich falsch — dann gilt `CLAUDE.md`.
 
-**Stand: 2026-09-22, nachmittags.**
+**Stand: 2026-09-22, 19:30.** Der Nutzer hat die Freigabe auf **frühestens 20:15** terminiert.
 
 ---
 
-## 1. Das Wichtigste zuerst
+## 1. Was gerade läuft
 
-**Uncommittet im Working Tree liegt WP-T1b, und es ist NICHT geprüft.** Codex meldet `done`, aber
-keine Zahl daraus gilt, bevor sie nachgerechnet ist. Das ist die offene Aufgabe der nächsten
-Sitzung.
+**Die Phase-C-Kampagne läuft unverändert auf Orion.** Nichts von heute hat den Kampagnenpfad
+berührt. Image ist SHA-gepinnt, siehe Abschnitt 5.
 
-Die Phase-C-Kampagne läuft unverändert auf Orion weiter. **Es steht keine Entscheidung offen, die
-den Lauf betrifft.** Nichts, was heute passiert ist, hat den Kampagnenpfad berührt.
+**WP-T1e ist fertig und lokal verifiziert** — die Reparatur von WP-T1d plus Budget, Sharding und die
+Cluster-Manifeste.
 
----
+**Der Nutzer hat für heute ausnahmsweise delegiert:** Claude darf nach **GitLab** pushen und den
+T1d-Job auf Orion starten. **GitHub bleibt beim Nutzer** (18 ungepushte Commits). Die Delegation
+gilt für diesen einen Vorgang, nicht dauerhaft.
 
-## 2. Was uncommittet im Baum liegt
+## 2. Der Ablauf, und wo er steht
 
-```
- M analysis/exploratory/term_relevance/term_relevance.py
- M codex/CURRENT_TASK.md          (WP-T1b-Spec)
- M codex/STATUS.md                (Codex meldet done)
-?? analysis/scripts/aggregate/run_wp_t1b_standalone_ranking.py
-?? analysis/tests/test_wp_t1b_standalone_ranking.py
-?? codex/reports/REPORT_WP_T1b.md
-```
+| # | Schritt | Status |
+|---|---|---|
+| 1 | WP-T1e schreiben (Codex) | **fertig**, `blocked` wie vorgesehen |
+| 2 | Regressionstest: `log10_loss_ratio(1e-4, 1e-2) == -2.0` | **grün**, 188 + 3 Tests |
+| 3 | Lokaler Smoke, System 24 + 25, beide IC | **grün**, 168 Zeilen, 4 Zellen |
+| 4 | `git push gitlab main` (77 Commits hinterher) | **frühestens 20:15** |
+| 5 | CI baut, Zeitlimit 3 h | offen |
+| 6 | `oc apply` Bootstrap → Smoke-Job (2 Zellen) | offen |
+| 7 | Records prüfen | offen |
+| 8 | `oc apply` der Lauf: `completions: 36`, `parallelism: 2` | offen |
 
-Dazu die Ausgaben unter `analysis/data/wp_t1b_standalone_ranking/` und
-`analysis/figures/wp_t1b_standalone_ranking/` (gitignoriert, Tracking-Entscheidung wie bei WP-T1:
-Aggregate ja, Rohsätze nein).
+**Der Smoke-Job ist zugleich der Build-Check.** `glab` ist nicht installiert und die Registry
+verweigert Docker den Lesezugriff, also lässt sich der Pipeline-Status nicht direkt abfragen.
+`ImagePullBackOff` heißt „Build noch nicht fertig", nicht „kaputt" — dann einfach später erneut.
 
-## 3. Die Prüfliste für WP-T1b, bevor irgendetwas committet wird
+**Abbruchbedingungen, die sich Claude gesetzt hat:** nicht pushen, wenn Schritt 2 oder 3 scheitert;
+den echten Job nie vor dem Smoke; die Kampagnen-Jobs nicht anfassen; bei Unerwartetem anhalten und
+aufschreiben statt improvisieren.
 
-Beim ersten Anlauf war der Teilstand nicht deterministisch — genau dort also hinsehen:
+## 3. Warum T1d auf den Cluster geht
 
-1. `cd analysis && python -m pytest tests/test_wp_t1b_standalone_ranking.py tests/test_wp_t1_term_relevance.py -q`
-   — beide müssen grün sein.
-2. **Die WP-T1-Regression:** ein erneuter WP-T1-Lauf muss `gate_decision.json` und
-   `aggregate_by_configuration_dimension.csv` **bitidentisch** reproduzieren. Die Spec verlangt,
-   dass die Intercept-Reparatur als Option mit altem Vorgabewert gebaut ist. Prüfen, nicht glauben.
-3. **Die Integrationsschranke:** die Spec verbietet den vollen Lauf über 40.000 Integrationen und
-   verlangt eine Hochrechnung aus einem Smoke-Test. Erwartet waren ~21.600. Steht die tatsächliche
-   Zahl in `cost.csv`, und liegt sie darunter?
-4. **Kein Ground-Truth-Leck** in der Selektion — bei WP-T1 war das sauber (`rank_forward` sieht
-   keinen Truth), bei den neuen Betriebspunkten neu prüfen. `oracle_size` darf den Truth sehen,
-   `bic` nicht.
-5. Gegen die vorab festgelegte Latte lesen: SINDy auf denselben Trajektorien, exakte Systeme,
-   bestes von zehn Konfigurationen — **dim 2: 66,7 % Strukturtreffer, dim 3: 28,6 %.**
-   Deutung A/B/C steht in `codex/CURRENT_TASK.md`, nicht nachträglich ändern.
+Entschieden 2026-09-22 und in `CLAUDE.md` als Regel festgehalten: **was nicht sicher unter 8 h
+bleibt, läuft auf Orion, nie auf dem Laptop.** Risiko-Asymmetrie — eine Fehlschätzung ist auf dem
+Cluster ärgerlich, auf dem Arbeitsgerät blockiert sie Tage.
 
-Danach committen wie bei WP-T1: Implementierung getrennt von den getrackten Ausgaben, nie
-`git add -A` (Codex arbeitet nebenher).
+Für T1d ist die Unsicherheit belegt: Projektion 3.946 Fits / 10,4 h, aber gemessen wurde auf
+System 24 (dem **billigsten**) 1,80 s je Fit, während die Projektion mit 9,48 s rechnet — und
+Phase B zeigt zwischen den dim-2-Systemen einen Faktor **1.800** bei den Kosten je Zelle
+(0,003 h bis 5,33 h). Eine Konstante über diese Spanne ist keine Schranke. Deshalb zusätzlich:
+Loss-Eval-Budget je Fit und `activeDeadlineSeconds: 86400`.
 
 ## 4. Was heute committet wurde
 
 | Commit | Inhalt |
 |---|---|
-| `700a685` / `2eb54e6` | DIARY: Umhängung des Seitenzweigs — Ziel ist Strukturtreffer auf gekoppelten Systemen, nicht Compute |
-| `ae7573d` | WP-T1: trajektorien-abgeleitete Term-Relevanz, isolierte Machbarkeitsstudie |
-| `b4498f6` | WP-T1-Ausgaben getrackt, 11-MB-Rohsätze draußen |
-| `139dd89` | Paper-Bogen umgebaut, `PAPER_TIMELINE.md` eingearbeitet und entfernt, zwei CLAUDE.md-Stellen nachgezogen |
-| `32c7989` / `401e07f` | DIARY: die vier Bogen-Entscheidungen und die beibehaltene Grenzen-Rahmung |
+| `700a685` / `2eb54e6` | DIARY: Seitenzweig umgehängt — Ziel ist Strukturtreffer auf gekoppelten Systemen |
+| `ae7573d` / `b4498f6` | WP-T1: Term-Relevanz, Machbarkeit. Gate **positiv** |
+| `139dd89` | Paper-Bogen umgebaut, `PAPER_TIMELINE.md` eingearbeitet und entfernt |
+| `32c7989` / `401e07f` | DIARY: die vier Bogen-Entscheidungen, Grenzen-Rahmung beibehalten |
+| `10a809c` / `75baed6` | WP-T1b: Standalone-Rangliste. Deutung **C** |
+| `58cb17a` / `0701cf6` | DIARY: WP-T1b und die Kreuzprüfung |
+| `0dc79cc` / `5a6a447` | Seitenzweig als geschlossene Liste eingefroren, T1d-Kosten korrigiert |
+| `25e4ad5` | WP-T1c: STLSQ-Pfad, **kein Gewinner**, `forward` bleibt |
+| `a9a9471` / `bf5d353` | Kampagnen-Image dokumentiert, Prüfbefehl im Deployment-Guide §6b |
+| `c6d714e` | Die 8-Stunden-Regel in `CLAUDE.md` |
 
-**Das Kampagnen-Image ist SHA-gepinnt — verifiziert am 2026-09-22 auf dem Cluster.** Beide
-Phase-C-Jobs laufen unter `evoode:221a3a72f0cb43164a22b09baac2d9ae82681a02` — Commit `221a3a7` vom
-14.09., Vorfahr von `main` — mit `imagePullPolicy: IfNotPresent`.
+## 5. Das Kampagnen-Image — verifiziert, nicht erschlossen
 
-**Ein GitLab-Push kann die laufende Kampagne deshalb nicht verändern.** Der Push erzeugt einen neuen
-SHA-Tag und verschiebt `:main`; beide sind verschieden vom gepinnten Tag, und die CI hat gar keinen
-Deploy-Schritt — `.gitlab-ci.yml` kennt nur die Stages `build` und `security`, ohne `oc`, `kubectl`,
-`apply` oder `helm`.
+Beide Phase-C-Jobs laufen unter `evoode:221a3a72f0cb43164a22b09baac2d9ae82681a02` — Commit
+`221a3a7` vom 14.09., Vorfahr von `main` — mit `imagePullPolicy: IfNotPresent`.
 
-**Wichtig für das nächste Mal:** aus den Vorlagen unter `k8s/` lässt sich das **nicht** schließen,
-die tragen nur den Platzhalter `<COMMIT_SHA>`, und die erzeugten Manifeste sind gitignoriert. Der
-Prüfbefehl steht in `docs/hpc_deployment_guide.md` §6b. Stünde dort `:main`, wäre ein Push während
-eines Indexed Job mit `completions: 756` fatal: jeder danach erzeugte Pod rechnete mit anderem Code,
-und die Kampagne trüge zwei Git-Hashes in ihren Records.
+**Ein GitLab-Push kann die laufende Kampagne nicht verändern.** Der Push erzeugt einen neuen
+SHA-Tag und verschiebt `:main`; beide sind verschieden vom gepinnten Tag, und die CI hat keinen
+Deploy-Schritt — `.gitlab-ci.yml` kennt nur `build` und `security`.
 
-**Trotzdem kein GitLab-Push, solange nichts ihn braucht.** Nicht aus Sicherheitsgründen — die sind
-oben geklärt —, sondern weil der Build drei Stunden CI kostet und bisher zwecklos wäre. Gebraucht
-wird er erst, wenn eine Cluster-Rechnung neuen Code braucht. GitHub-Push wie immer durch den Nutzer.
+**Aus den Vorlagen unter `k8s/` lässt sich das nicht schließen**, die tragen nur `<COMMIT_SHA>`,
+und die erzeugten Manifeste sind gitignoriert. Prüfbefehl: `docs/hpc_deployment_guide.md` §6b.
 
-## 5. WP-T1 — geprüft und gültig
+## 6. Der Stand des Seitenzweigs
 
-Gate **positiv**, von mir nachgerechnet: Median `n_false_before_last_true` = **0,0**, 37/44
-Gleichungen ≤ 3, Replikation auf IC2 hält. Entscheidungszelle weak × forward, σ=0, IC1, dim 2+3.
+Die eingefrorene Liste steht in `docs/phd_thesis_arc.md` §5. Schritte 0–2 sind abgeschlossen:
 
-**Zwei Befunde, die im Codex-Report fehlen und in `docs/phd_thesis_arc.md` §5 stehen:**
+- **WP-T1** — Signal vorhanden, Median `n_false_before_last_true` = 0,0 auf dim 2+3
+- **WP-T1b** — ersetzt die Suche **nicht** (Deutung C): 30,0 % / 0,0 % gegen SINDys 66,7 % / 28,6 %
+- **WP-T1c** — **kein Gewinner**, `forward` bleibt Prioritätsgeber
+- **WP-T1d** — läuft als Nächstes: ist der wahre Träger ein lokales Optimum unseres Loss?
 
-- Alle p-Werte sitzen am **Auflösungsboden** von 18 Clustern (2^18 Vorzeichenwechsel, Minimum
-  3,8e-06). Nicht mit zwölf Stellen zitieren.
-- **„weak schlägt fd" ist nicht haltbar.** Auf den 39 Gleichungen ohne Konstante im Support sind
-  beide bei σ=0 identisch (0,872). Die Lücke kommt aus einem Zentrierungsdefekt, der die Konstante
-  im `fd`-Arm unauffindbar macht — den repariert WP-T1b.
+Zwei Befunde, die in den Codex-Reports fehlen und in `docs/phd_thesis_arc.md` §5 stehen: die
+p-Werte sitzen am **Auflösungsboden** von 18 Clustern; und **„weak schlägt fd" ist nicht haltbar**.
 
-## 6. Offene Entscheidungen, keine davon dringend
+## 7. Offene Entscheidungen, keine davon dringend
 
-1. **Der Rauschzuschnitt von Paper 1** — der größte unbudgetierte Posten des Projekts. Robustheit
-   ist heute in Paper 1 gefaltet worden, aber die Phase-C-Kampagne hat keine Rauschachse, es gibt
-   keine Rausch-Infrastruktur im Julia-Suchpfad, und Phase C kostet bereits ~12.300–15.900
-   Kernstunden. Entweder reduzierter Rauscharm auf benannter Teilmenge oder deklarierte
-   Zukunftsarbeit. `docs/phd_thesis_arc.md` §3 und §11.
-2. **Das prädiktive Kriterium für Kappen-Versagen hat keinen Besitzer mehr** unter dem
-   Claim-A–D-Zuschnitt. Benannt, nicht entschieden.
-3. **Was WP-T2a wird**, hängt an WP-T1bs Ausgang A/B/C. Nicht vorher festlegen.
+1. **Der Rauschzuschnitt von Paper 1** — größter unbudgetierter Posten. `docs/phd_thesis_arc.md`
+   §3 und §11.
+2. **Das prädiktive Kriterium für Kappen-Versagen** hat unter Claim A–D keinen Besitzer mehr.
+3. **Was WP-T2a wird**, hängt an WP-T1ds Ausgang. Nicht vorher festlegen.
 
-## 7. Zwei betriebliche Dinge
+## 8. Betriebliches
 
-- **Ein Branch wurde geprüft und verworfen** (Historie ist vollständig linear, Pfade sind disjunkt,
-  ein nicht gemergter Zweig läge außerhalb des Claim-Tracing-Audits). Begründung im DIARY-Eintrag
-  `700a685`. Bei **WP-T2a** neu bewerten — der greift in `src/structure/evogrow.jl` ein.
-- **`PAPER_TIMELINE.md` nicht wieder anlegen.** Eingearbeitet in `docs/phd_thesis_arc.md`, das ist
-  jetzt die Paper-Roadmap. Eine Sicherungskopie lag im Scratchpad dieser Sitzung und ist flüchtig.
+- **Kein Branch.** Historie ist linear, Pfade disjunkt. Bei **WP-T2a** neu bewerten — der greift in
+  `src/structure/evogrow.jl` ein.
+- **`PAPER_TIMELINE.md` nicht wieder anlegen.** Eingearbeitet in `docs/phd_thesis_arc.md`.
+- **Codex kann kein Julia ausführen.** Julia-Pakete werden geschrieben, als `blocked` gemeldet und
+  von Claude ausgeführt. Heute hat das zwei Defekte erzeugt, einen davon **still**:
+  `log10(neighbor / true)` teilt durch `Bool(1)`. Deshalb der konkrete Zahlenwert im
+  Regressionstest.
+
+## 9. Was die lokale Prüfung ergeben hat
+
+Beide Defekte aus WP-T1d sind behoben: `true_loss_value` als zulässiger Name, und Zeile 364 teilt
+tatsächlich durch den wahren Loss statt durch `Bool(1)`. Der Regressionstest prüft den konkreten
+Wert `-2.0`, nicht nur „nicht `nothing`".
+
+Der lokale Smoke über System 24 und 25, beide IC-Sätze, lieferte 168 Nachbarzeilen und ein Bild,
+das die Theorie trifft: `add_one` schlägt die Wahrheit in 54 von 76 Fällen (Verschachtelung,
+erwartet), `remove_one` in 0 von 8, `swap_one` in 19 von 84. **Das ist eine Installationsprüfung,
+kein Ergebnis** — zwei Systeme, und zwar die beiden trivialsten der Stichprobe.
