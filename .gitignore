@@ -59,6 +59,11 @@ analysis/data/*
 !analysis/data/paper1_phaseC_v1/
 !analysis/data/wp_n1_dim2_probe/
 !analysis/data/wp_t1_term_relevance/
+!analysis/data/wp_t1b_standalone_ranking/
+# ... but not the per-cell evaluation rows and the full selection path: both are
+# deterministic and rebuildable from the hashed inputs plus the configuration hash.
+analysis/data/wp_t1b_standalone_ranking/details.csv
+analysis/data/wp_t1b_standalone_ranking/selection_path.csv
 # ... but not its 11 MB per-equation records: deterministic, and rebuildable from
 # the hashed inputs plus the configuration hash in run_metadata.json.
 analysis/data/wp_t1_term_relevance/records.csv
@@ -80,3 +85,6 @@ analysis/tables/*
 # ---------------------------------------------------------------------------
 /phase_b_bootstrap.yaml
 /phase_b_cells.yaml
+
+# pytest scratch
+.tmp/

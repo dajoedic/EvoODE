@@ -1,0 +1,25 @@
+{
+  "study_id": "wp_t1b_standalone_ranking",
+  "configuration_hash": "b3c454611283664f78e31112474ff296da07b20ae37e0c2b7aa9f64ace941fd7",
+  "input_hashes": {
+    "C:\\Users\\joedicke\\Documents\\reps\\EvoODE\\studies\\regression\\phase_c_support.json": "ad8594f47399c1c5ef03e26bfe93f680bf7e866cb37e3d0462ce1e7b1c767e75",
+    "C:\\Users\\joedicke\\Documents\\reps\\EvoODE\\benchmarks\\data\\strogatz_extended.json": "b11f8bda01ceee5c5c9445521ac74c8819361af4251bb90c0be398aaeb1a1136",
+    "C:\\Users\\joedicke\\Documents\\reps\\EvoODE\\outputs\\phase_c_trajectory_hashes\\wp_c4c\\trajectory_export\\trajectory_manifest.csv": "c92ec60a3453c18d123e29b10c63f28a2cc67a67e5ea6021f014d9847ccb63b0",
+    "C:\\Users\\joedicke\\Documents\\reps\\EvoODE\\analysis\\data\\paper1_phaseC_v1\\phasec_sindy_baseline_wp_c4c_export\\details.csv": "8ddebad159ffb4d2b346a0c0f81ceded1a48549916b98b617fd1d67431ee66c1"
+  },
+  "noise_seeds": [
+    2026092201,
+    2026092202,
+    2026092203,
+    2026092204,
+    2026092205
+  ],
+  "bic_formula": "n * log(SSE / n) + k * log(n), with n equal to design rows",
+  "bic_dependency_limitation": "Weak-form rows include overlapping windows and are not independent.",
+  "fd_intercept_treatment": "The repaired fd arm keeps the constant column uncentered and fit as a regular candidate.",
+  "projected_integrations_from_smoke": 16832,
+  "actual_evaluation_integrations": 16832,
+  "selection_integrations": 0,
+  "support_abs": 1e-06,
+  "support_rel": 0.001
+}
