@@ -8,6 +8,8 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ### Der Seitenzweig wird umgehaengt: nicht Compute, sondern Strukturtreffer auf gekoppelten Systemen
 
+<!-- 700a685 -->
+
 **Die urspruengliche Idee.** Eine Skizze schlug vor, aus den beobachteten Trajektorien vorab eine
 billige Relevanzordnung ueber die Kandidatenterme zu gewinnen — Integral- beziehungsweise
 Weak-Form-Signaturen entlang der Trajektorie statt punktweiser Ableitungen — und damit die teure
