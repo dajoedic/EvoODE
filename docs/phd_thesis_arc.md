@@ -295,6 +295,52 @@ together: support recovery, unique structures, duplicate rate, fits per unique s
 `max_fit_attempts`, total parameter fits, loss evaluations, ODE solves, and R². **Δ loss evaluations
 alone is uninterpretable.**
 
+### The frozen sequence — decided 2026-09-22
+
+**This list is closed.** No work package in this branch that is not on it, unless a gate outcome
+forces one. The purpose of freezing is not rigidity but protection against creep: every step so far
+was individually cheap and individually justified, and that is exactly how a side branch eats a
+thesis.
+
+| # | WP | Question it closes | Cost | Gate / stop rule |
+|---|---|---|---|---|
+| 0 | WP-T1 ✔ | Is there ranking signal at all? | done | **positive** — median 0 on dim 2+3 |
+| 1 | WP-T1b ✔ | Does the signal replace the search? | done | **C — no.** 30.0 % / 0.0 % against SINDy's 66.7 % / 28.6 % |
+| 2 | WP-T1c ✔ | Which prior generator orders our basis better? | ~0 | winner, else the incumbent `forward` stays |
+| 3 | WP-T1d | **Is the true support even a local optimum of our trajectory loss?** | **< 1 h** | if no → **stop the branch** and report it as a loss finding, not a guidance finding |
+| 4 | WP-T2a pilot | Does EvoGrow improve with a prior? dim 1 + dim 2, three arms | 130–420 h, local | see below |
+| 5 | WP-T2a full | The same on dim 3, where the failure lives | ~1,000–1,600 h, Orion | only after the Phase C campaign ends |
+
+**Step 4 carries three arms** — control (free, C-1 supplies it), guided, and **oracle prior** (ground
+truth ranked first). The oracle arm is what makes the pilot conclusive in both directions:
+
+- oracle prior fails → **stop.** Guidance is not the lever, learned for the price of one arm
+  instead of one paper.
+- oracle works, guided does not → the **prior generator** is the problem, not the idea.
+- both work → guidance is established, and the distance between them says how much is left in the
+  generator.
+
+**Step 3 comes first because it can make steps 4 and 5 unnecessary.** It costs under an hour and
+asks something nobody has asked: the project holds cells at loss 6.8e-11 with `pruned_match =
+false`, so a *wrong* support reaches essentially zero loss. If the true support is not even a local
+optimum of the objective, no ordering can help, because the search converges correctly to something
+wrong. That finding would belong to Paper 1 or Paper 3 — it is about the loss, not about guidance.
+
+**Why exhaustive enumeration is not on the list.** Measured from the Phase B registry: a dim-2 cell
+runs a median of 430 parameter fits at 9.48 s each. Enumerating all supports with |S| ≤ 4 in
+trajectory space is 630,436 joint models per cell, or **1,660 h per cell** — about 33,200 h for the
+ten exact dim-2 systems alone, more than twice the entire Phase C campaign, and dim 3 is four
+million hours. In weak-form space the same enumeration is free, but it answers the ranking question
+WP-T1 already answered rather than the question about our loss.
+
+**What may reopen this plan:** a gate outcome, a cost finding that makes a step unaffordable, or a
+blocking dependency. **What may not:** a result we dislike, an idea that arrives mid-flight, or a
+threshold chosen after seeing data.
+
+**Priority rule.** Paper 1's blocking items outrank every step above: the noise-scope decision
+(§3), the completion of Phase C, and the claim-tracing audit. The branch runs in the gaps, not
+against them.
+
 ### Kept separate, deliberately
 
 The same trajectory-derived signal may serve stage progression and the stage cap — WP-L2 showed the
