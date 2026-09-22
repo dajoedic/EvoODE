@@ -16,7 +16,7 @@ what to work on next. It is deliberately kept short. Detail lives in dedicated d
 | `docs/paper1_odebench_protocol_alignment.md` | Phase B sampling protocol and the comparability audit |
 | `docs/hpc_requirements.md` | Phase B resource profile, cost derivation and its uncertainty |
 | `docs/hpc_deployment_guide.md` | how code reaches the Orion cluster — CI, image, manifests, glossary, failure modes (German, for newcomers) |
-| `docs/phd_thesis_arc.md` | draft: the three-paper thesis arc that `PAPER_1.md` hangs under |
+| `docs/phd_thesis_arc.md` | **the paper roadmap** that `PAPER_1.md` hangs under — three papers plus a conference insert, their order, their dependencies and the guardrails. `PAPER_TIMELINE.md` was merged into it on 2026-09-22 and must not be recreated |
 | `docs/WP-N4.md` | the restart budget of the parameter fit, and its placement against SINDy/PySR/ODEFormer/ProGED |
 | `docs/WP-N6.md` | the first baseline: EvoODE against SINDy on identical trajectories, with the cost line and the caveats |
 | `READ_THIS_FIRST.md` | **volatile session handover** — what is running, what is uncommitted, what decision is pending. Overwritten wholesale, never appended; nothing durable belongs there |
@@ -639,9 +639,12 @@ the coupled search path 1e-6 is the cheaper, behaviour-equal tolerance; the Syst
    expansion is a **bridge between Paper 2 and Paper 3**, not a fourth paper and not a Paper 1
    change. Steps A and B are paid for together, the tail stays out. Full reasoning and the four
    corrections to the first draft: `docs/diskussion_repraesentationsraum.md` §9,
-   `docs/phd_thesis_arc.md` §5. Two consequences that bind earlier work: Paper 2's operators must be
-   **catalogue-agnostic**, and the surrogate-R² analysis needs the search-free reference fit before
-   it can attribute a low R² to a missing family rather than to a failed search.
+   `docs/phd_thesis_arc.md` §6. Two consequences that bind earlier work: the removal and replacement
+   operators must be **catalogue-agnostic**, and the surrogate-R² analysis needs the search-free
+   reference fit before it can attribute a low R² to a missing family rather than to a failed
+   search. **The operators moved from Paper 2 to Paper 3 on 2026-09-22** — the constraint moved with
+   them and is not about Paper 2 any more. The bridge now sits between Paper 2 (guidance) and
+   Paper 3 (reversible operators), which is the same position in the chain under the new numbering.
 
    **That reference now exists, and it moves the decision (WP-R1, 2026-08-22).** The full basis
    approximates surrogate systems almost as well as exact ones in derivative space — median 0.999993
