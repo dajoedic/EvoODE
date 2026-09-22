@@ -1,0 +1,68 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: evoode-wp-t1e-indexed-smoke
+  namespace: scch-das
+  labels:
+    app.kubernetes.io/name: evoode
+    app.kubernetes.io/part-of: evoode-wp-t1e
+    app.kubernetes.io/component: indexed-cell-smoke
+    app.kubernetes.io/managed-by: kubectl
+    hpc.scch.at/service: evoode-wp-t1e-cells
+    hpc.scch.at/responsibility: joedicke
+spec:
+  # Run after wp_t1e_bootstrap_index_job.yaml. These two completions are
+  # system 24 IC 1 and system 25 IC 1, the cheapest Phase-B cells listed in the
+  # task. The goal is infrastructure validation, especially image pull and NFS.
+  ttlSecondsAfterFinished: 3600
+  completionMode: Indexed
+  completions: 2
+  parallelism: 2
+  backoffLimit: 2
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: evoode
+        app.kubernetes.io/part-of: evoode-wp-t1e
+        app.kubernetes.io/component: indexed-cell-smoke
+        hpc.scch.at/service: evoode-wp-t1e-cells
+        hpc.scch.at/responsibility: joedicke
+    spec:
+      restartPolicy: Never
+      imagePullSecrets:
+        - name: evoode-gitlab-pull
+      containers:
+        - name: cell
+          image: registry.gitlab.scch.at:443/joedicke/evoode:<COMMIT_SHA>
+          imagePullPolicy: IfNotPresent
+          command:
+            - julia
+            - --project=/opt/EvoODE
+            - /opt/EvoODE/studies/regression/wp_t1d_neighbourhood_loss.jl
+          args:
+            - --fresh
+          env:
+            - name: JULIA_NUM_THREADS
+              value: "1"
+            - name: OPENBLAS_NUM_THREADS
+              value: "1"
+            - name: EVO_T1D_INDEX_LIST
+              value: /outputs/wp_t1e_<COMMIT_SHA>/indices_smoke_sys24_sys25_ic1.txt
+            - name: EVO_T1D_OUTPUT_DIR
+              value: /outputs/wp_t1e_smoke_<COMMIT_SHA>
+          resources:
+            requests:
+              cpu: "1"
+              memory: 2Gi
+            limits:
+              cpu: "1"
+              memory: 2Gi
+          volumeMounts:
+            - name: evoode-bigdata
+              mountPath: /outputs
+              subPath: data-science/joedicke
+      volumes:
+        - name: evoode-bigdata
+          nfs:
+            server: nfs.orion.scch.at
+            path: /bigdata

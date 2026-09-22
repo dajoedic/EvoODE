@@ -1,0 +1,72 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: evoode-wp-t1e-indexed-campaign
+  namespace: scch-das
+  labels:
+    app.kubernetes.io/name: evoode
+    app.kubernetes.io/part-of: evoode-wp-t1e
+    app.kubernetes.io/component: indexed-campaign
+    app.kubernetes.io/managed-by: kubectl
+    hpc.scch.at/service: evoode-wp-t1e-cells
+    hpc.scch.at/responsibility: joedicke
+spec:
+  # Run only after the bootstrap and smoke Jobs succeed. parallelism: 2 is
+  # intentionally small while Phase C can occupy 64 of Orion's 96 cores; this
+  # avoids pushing the namespace toward full-cluster saturation.
+  ttlSecondsAfterFinished: 3600
+  completionMode: Indexed
+  completions: 36
+  parallelism: 2
+  # This is a ceiling, not an expectation. With two pods the expected wall time
+  # is about five to six hours; one day leaves room for slow pathological cells
+  # while still bounding stuck infrastructure.
+  activeDeadlineSeconds: 86400
+  backoffLimit: 10
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: evoode
+        app.kubernetes.io/part-of: evoode-wp-t1e
+        app.kubernetes.io/component: indexed-campaign
+        hpc.scch.at/service: evoode-wp-t1e-cells
+        hpc.scch.at/responsibility: joedicke
+    spec:
+      restartPolicy: Never
+      imagePullSecrets:
+        - name: evoode-gitlab-pull
+      containers:
+        - name: cell
+          image: registry.gitlab.scch.at:443/joedicke/evoode:<COMMIT_SHA>
+          imagePullPolicy: IfNotPresent
+          command:
+            - julia
+            - --project=/opt/EvoODE
+            - /opt/EvoODE/studies/regression/wp_t1d_neighbourhood_loss.jl
+          args:
+            - --fresh
+          env:
+            - name: JULIA_NUM_THREADS
+              value: "1"
+            - name: OPENBLAS_NUM_THREADS
+              value: "1"
+            - name: EVO_T1D_INDEX_LIST
+              value: /outputs/wp_t1e_<COMMIT_SHA>/indices_all.txt
+            - name: EVO_T1D_OUTPUT_DIR
+              value: /outputs/wp_t1e_campaign_<COMMIT_SHA>
+          resources:
+            requests:
+              cpu: "1"
+              memory: 2Gi
+            limits:
+              cpu: "1"
+              memory: 2Gi
+          volumeMounts:
+            - name: evoode-bigdata
+              mountPath: /outputs
+              subPath: data-science/joedicke
+      volumes:
+        - name: evoode-bigdata
+          nfs:
+            server: nfs.orion.scch.at
+            path: /bigdata
