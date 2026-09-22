@@ -10,7 +10,7 @@ zweites davon. Alles Dauerhafte gehört dorthin, nach `PAPER_1.md` oder ins `DIA
 **Regeln:** wird immer **vollständig überschrieben**, nie angehängt. Was älter als ein paar Tage
 ist, ist vermutlich falsch — dann gilt `CLAUDE.md`.
 
-**Stand: 2026-09-22, 23:55.**
+**Stand: 2026-09-23, 00:05.** Der WP-T1d-Lauf ist gestartet und laeuft.
 
 ---
 
@@ -44,10 +44,15 @@ beantwortet.
 
 ## 2. Wer was macht
 
-Claude kann die Freigabe `S:\BigDataOrion\data-science\joedicke\` **lesen** und `oc` für
-Statusabfragen benutzen. Prüfen, auswerten, committen macht also Claude. Der Nutzer muss nur die
-zwei `oc apply` oben ausführen — und die GitLab-Pipeline ansehen, falls ein Bau scheitert, denn
-`glab` fehlt und die Registry verweigert Docker den Lesezugriff.
+**Fuer den Nutzer ist derzeit nichts zu tun.** Beide `oc apply` sind ausgefuehrt, der Lauf ist an.
+
+Claude kann die Freigabe `S:\BigDataOrion\data-science\joedicke\` **lesen** und `oc` fuer
+Statusabfragen benutzen; Pruefen, Auswerten, Committen und DIARY macht also Claude.
+
+Zwei Dinge bleiben beim Nutzer: **HPC-Jobs starten** (`oc apply`, Regel wieder in Kraft seit
+2026-09-22 spaet abends — die Delegation an Claude galt nur fuer diesen einen Abend) und **die
+GitLab-Pipeline ansehen**, falls ein Bau scheitert, denn `glab` fehlt und die Registry verweigert
+Docker den Lesezugriff.
 
 ## 3. Was heute Abend auf dem Cluster passiert ist
 
@@ -101,6 +106,7 @@ Container läuft intern und die Jobs sind bewusst nicht-blockierend eingerichtet
 | `c6d714e` | 8-Stunden-Regel in `CLAUDE.md` |
 | `10ba7ad` | WP-T1d/T1e: Nachbarschaftssonde, repariert, begrenzt, shardbar |
 | `5a87efb` | CI-Fix: keine Build-Attestationen mehr, CHANGELOG nach §11.1 |
+| `a690d4b` / `923cc20` | READ_THIS_FIRST: Clusterstand, Sicherheitsjobs, laufender Job |
 
 **GitHub ist nicht gepusht** — dort liegen die Commits für den Nutzer.
 
