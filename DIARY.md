@@ -8,6 +8,8 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ### Die Vorhersage ist eingetroffen: die Kappe spart genau dann, wenn sie alle Gleichungen kappt
 
+<!-- 63a551a -->
+
 **Anlass.** Am 20.09. wurde hier eine datierte Einzelvorhersage abgelegt, weil der damalige Stand
 der Kampagne keine einzige voll gekappte Zelle mit Gegenstueck enthielt und Claim B deshalb
 **nicht widerlegt, sondern ungetestet** war. Die Vorhersage lautete: der ungekappte Partner von
