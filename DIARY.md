@@ -8,6 +8,8 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ### WP-T1b: die billige Rangliste ersetzt die teure Suche nicht — und die Kreuzprüfung, die beide Studien gegeneinander hält
 
+<!-- 58cb17a -->
+
 **Die Frage war nicht, ob wir SINDy schlagen.** Sie war: ersetzt das billige Verfahren die teure
 Suche? Wenn ja, gäbe es keinen Grund für Guidance, weil es dann keinen zu lenkenden Suchprozess mehr
 gäbe. Die Antwort ist nein, und damit ist der Zwischenschritt erledigt und WP-T2a die nächste
