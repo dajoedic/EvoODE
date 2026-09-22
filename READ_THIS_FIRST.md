@@ -72,6 +72,14 @@ Danach committen wie bei WP-T1: Implementierung getrennt von den getrackten Ausg
 | `139dd89` | Paper-Bogen umgebaut, `PAPER_TIMELINE.md` eingearbeitet und entfernt, zwei CLAUDE.md-Stellen nachgezogen |
 | `32c7989` / `401e07f` | DIARY: die vier Bogen-Entscheidungen und die beibehaltene Grenzen-Rahmung |
 
+**Das Kampagnen-Image ist SHA-gepinnt — verifiziert am 2026-09-22.** Beide Phase-C-Jobs laufen
+unter  (Commit  vom 14.09., Vorfahr von
+) mit . **Ein GitLab-Push kann die laufende Kampagne daher
+nicht verändern**: der Push erzeugt einen neuen SHA-Tag und verschiebt , beide verschieden
+vom gepinnten Tag, und die CI hat keinen Deploy-Schritt ( kennt nur  und
+). Geprüft wird das mit dem Befehl in  §6b — **aus den
+Vorlagen unter  lässt es sich nicht schliessen**, die tragen nur den Platzhalter.
+
 **Kein GitLab-Push.** Bewusst zurückgehalten, bis die Kampagne durch ist — `.gitlab-ci.yml:54-75`
 baut auf `main` das Kampagnen-Image und verschiebt den Tag `:main`. Für die laufende Kampagne
 ungefährlich (alle k8s-Manifeste pinnen `<COMMIT_SHA>`), aber ein zweckloser Drei-Stunden-Build.

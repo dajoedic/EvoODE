@@ -363,6 +363,39 @@ die sind eigentlich dazu da, acht GPUs zu füttern. Abgesprochen sind 16.
 
 ---
 
+## 6b. Welches Image läuft gerade wirklich?
+
+**Die Vorlagen in `k8s/` beweisen nichts.** Sie tragen `<COMMIT_SHA>` als Platzhalter; was beim
+Start eingesetzt wurde, steht nur im erzeugten Manifest, und das ist gitignoriert. Wer aus der
+Vorlage schließt, rät.
+
+Die Frage entscheidet, ob ein GitLab-Push gefahrlos ist. Ist der Tag eine SHA, ist er unveränderlich
+und ein neues Image erreicht den laufenden Job nicht. Steht dort `:main`, verschiebt **jeder Push**
+den Tag, und jeder danach neu erzeugte Pod eines Indexed Jobs rechnet mit anderem Code — bei
+`completions: 756` sind das hunderte Pods. Das Ergebnis wäre eine Kampagne mit zwei Git-Hashes in
+den Records, also unbrauchbar.
+
+```powershell
+oc get jobs -n scch-das -o custom-columns="JOB:.metadata.name,IMAGE:.spec.template.spec.containers[*].image,PULL:.spec.template.spec.containers[*].imagePullPolicy"
+```
+
+Endet `IMAGE` auf 40 Hex-Zeichen, ist alles gut. Steht dort `:main`, **nicht pushen**, solange der
+Job läuft.
+
+Gegenprobe, dass der Tag zu echtem Code gehört: `git cat-file -t <sha>` und
+`git merge-base --is-ancestor <sha> main`.
+
+> **Stand 2026-09-22:** beide Phase-C-Jobs laufen unter
+> `registry.gitlab.scch.at:443/joedicke/evoode:221a3a72f0cb43164a22b09baac2d9ae82681a02` mit
+> `imagePullPolicy: IfNotPresent`. Der Hash ist Commit `221a3a7` vom 14.09. und ein Vorfahr von
+> `main`. Ein Push ist für diese Kampagne folgenlos.
+
+Und die Gegenrichtung, die oft vergessen wird: die CI hat **keinen Deploy-Schritt**. `.gitlab-ci.yml`
+kennt nur die Stages `build` und `security`; `oc`, `kubectl`, `apply` und `helm` kommen darin nicht
+vor. Ein Push baut ein Image und schiebt es in die Registry — er fasst kein Objekt im Cluster an.
+
+---
+
 ## 7. Die übliche Reihenfolge
 
 ```powershell
