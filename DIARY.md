@@ -8,6 +8,8 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ### Der Paper-Bogen wird umgebaut: drei Paper, ein Konferenz-Einschub, ein Dokument
 
+<!-- 32c7989 -->
+
 **Anlass.** Ein neues `PAPER_TIMELINE.md` trat neben das bestehende `docs/phd_thesis_arc.md`
 (2026-08-19). Beide beschrieben denselben Gegenstand — die Abfolge der Paper — und widersprachen
 sich an drei Stellen, ohne es zu sagen. Genau die Fehlerklasse, für die der Claim-Tracing-Audit
