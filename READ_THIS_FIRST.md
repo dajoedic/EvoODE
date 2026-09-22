@@ -72,18 +72,24 @@ Danach committen wie bei WP-T1: Implementierung getrennt von den getrackten Ausg
 | `139dd89` | Paper-Bogen umgebaut, `PAPER_TIMELINE.md` eingearbeitet und entfernt, zwei CLAUDE.md-Stellen nachgezogen |
 | `32c7989` / `401e07f` | DIARY: die vier Bogen-Entscheidungen und die beibehaltene Grenzen-Rahmung |
 
-**Das Kampagnen-Image ist SHA-gepinnt — verifiziert am 2026-09-22.** Beide Phase-C-Jobs laufen
-unter  (Commit  vom 14.09., Vorfahr von
-) mit . **Ein GitLab-Push kann die laufende Kampagne daher
-nicht verändern**: der Push erzeugt einen neuen SHA-Tag und verschiebt , beide verschieden
-vom gepinnten Tag, und die CI hat keinen Deploy-Schritt ( kennt nur  und
-). Geprüft wird das mit dem Befehl in  §6b — **aus den
-Vorlagen unter  lässt es sich nicht schliessen**, die tragen nur den Platzhalter.
+**Das Kampagnen-Image ist SHA-gepinnt — verifiziert am 2026-09-22 auf dem Cluster.** Beide
+Phase-C-Jobs laufen unter `evoode:221a3a72f0cb43164a22b09baac2d9ae82681a02` — Commit `221a3a7` vom
+14.09., Vorfahr von `main` — mit `imagePullPolicy: IfNotPresent`.
 
-**Kein GitLab-Push.** Bewusst zurückgehalten, bis die Kampagne durch ist — `.gitlab-ci.yml:54-75`
-baut auf `main` das Kampagnen-Image und verschiebt den Tag `:main`. Für die laufende Kampagne
-ungefährlich (alle k8s-Manifeste pinnen `<COMMIT_SHA>`), aber ein zweckloser Drei-Stunden-Build.
-GitHub-Push wie immer durch den Nutzer.
+**Ein GitLab-Push kann die laufende Kampagne deshalb nicht verändern.** Der Push erzeugt einen neuen
+SHA-Tag und verschiebt `:main`; beide sind verschieden vom gepinnten Tag, und die CI hat gar keinen
+Deploy-Schritt — `.gitlab-ci.yml` kennt nur die Stages `build` und `security`, ohne `oc`, `kubectl`,
+`apply` oder `helm`.
+
+**Wichtig für das nächste Mal:** aus den Vorlagen unter `k8s/` lässt sich das **nicht** schließen,
+die tragen nur den Platzhalter `<COMMIT_SHA>`, und die erzeugten Manifeste sind gitignoriert. Der
+Prüfbefehl steht in `docs/hpc_deployment_guide.md` §6b. Stünde dort `:main`, wäre ein Push während
+eines Indexed Job mit `completions: 756` fatal: jeder danach erzeugte Pod rechnete mit anderem Code,
+und die Kampagne trüge zwei Git-Hashes in ihren Records.
+
+**Trotzdem kein GitLab-Push, solange nichts ihn braucht.** Nicht aus Sicherheitsgründen — die sind
+oben geklärt —, sondern weil der Build drei Stunden CI kostet und bisher zwecklos wäre. Gebraucht
+wird er erst, wenn eine Cluster-Rechnung neuen Code braucht. GitHub-Push wie immer durch den Nutzer.
 
 ## 5. WP-T1 — geprüft und gültig
 
