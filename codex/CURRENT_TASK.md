@@ -1,327 +1,265 @@
-# WP-T1 — Trajektorien-abgeleitete Term-Relevanz: Machbarkeit auf gekoppelten Systemen
+# WP-T1b — Trägt die trajektorien-abgeleitete Rangliste als eigenständiges Discovery-Verfahren?
 **Language: Python**
 
-## Oberstes Designprinzip
+## Warum dieses Work Package existiert
 
-**A positive dim-1 result proves nothing. The branch lives or dies on coupled systems.**
+WP-T1 hat gemessen, dass das Signal da ist — und zwar stärker als erwartet: im Entscheidungsfall
+(`weak` × `forward`, σ = 0, IC1, dim 2+3) ist der Median von `n_false_before_last_true` **0,0** bei
+einer Zufallserwartung von 6,1 (dim 2) und 11,5 (dim 3), und 37 von 44 Gleichungen liegen bei ≤ 3.
+Bei über der Hälfte der gekoppelten Gleichungen steht der vollständige wahre Support ganz oben.
 
-Jede Aggregation, jede Tabelle und jedes Gate trennt dim 1 von dim ≥ 2. dim 1 ist ausschließlich
-Sanity-Check — „erkennt das Verfahren offensichtliche Signale überhaupt?" — und geht nie in eine
-Entscheidung ein.
+Daraus folgt eine Frage, die vor jeder Guidance-Arbeit beantwortet sein muss, weil eine Begutachtung
+sie zuerst stellt:
 
-## Forschungsfrage
+> **Wenn ein billiger linearer Schritt den wahren Support meist auf Platz 1 rankt — warum dann noch
+> EvoGrow?**
 
-Do trajectory-derived term rankings contain enough equation-specific information to place the
-complete ground-truth support ahead of substantially fewer false candidates than random ordering
-on coupled, exactly representable ODE systems?
+WP-T1b liefert die Zahl, die diese Frage beantwortbar macht: wie weit die Rangliste **allein**
+trägt, wenn man sie zu einem vollständigen Verfahren macht. Ohne sie haben wir keine Antwort;
+mit ihr haben wir entweder eine klare Arbeitsteilung oder ein ehrliches Negativergebnis über die
+eigene Suche. Beides ist verwertbar.
 
-Der Mechanismus, den die Frage vorbereitet und der **nicht** Gegenstand dieses Work Packages ist:
+**Dies ist keine Guidance-Arbeit.** WP-T2a (relevance-guided child generation) beginnt erst danach
+und ist nicht Gegenstand dieses Auftrags.
 
-trajectory → term relevance prior → better early additions → less add-only path damage →
-higher support recovery.
+## Was gemessen wird
 
-**Nicht das Ziel:** Bibliotheksreduktion oder Compute-Ersparnis. Kosten sind eine sekundäre
-Folgekennzahl, nie die Zielgröße. Begriffe wie „pruning", „library reduction" oder „compute
-saving" gehören nicht in Code, Spaltennamen oder Report.
-
-## Motivation, in dieser Reihenfolge
-
-1. **Der Konstantenterm ist das Minimalbeispiel.** Er ist nötig, damit die Modellklasse 30 statt
-   20 Systeme exakt darstellt (P3-Freeze, WP-N16), kann also nicht entfernt werden. Gleichzeitig
-   ist er ein gemessener False-Positive-Magnet — dim 1: in 31 von 37 verfehlten Zellen; dim 2:
-   Strukturtreffer pruned 55,6 % → 35,2 % (WP-N15). Threshold-Tuning löst das nicht (WP-N2:
-   Nullsummen-Dial, 45 ist die Decke). Ein Prior kann sagen „Term bleibt zulässig, aber diese
-   Trajektorie liefert wenig Evidenz dafür" — ohne die Bibliothek anzutasten.
-2. **Add-only growth macht frühe Fehlgriffe teuer.** `_expand` fügt nur hinzu; ein falscher früher
-   Term verlässt eine Linie nie wieder. Kandidaten-Reihenfolge zählt hier mehr als in einer Suche
-   mit Löschen oder Ersetzen.
-3. **Auf gekoppelten Systemen scheitern beide Seiten.** EvoGrow erkennt 0 von 50 exakten
-   dim-3/dim-4-Supports; SINDy liefert dort ebenfalls keinen guten Support. Genau dort ist Raum
-   für einen methodischen Gewinn.
-
-## Abgrenzung
-
-WP-T1 beantwortet **eine** Frage: enthält das Signal die Information. Nicht Gegenstand:
-
-- keine Änderung an `src/structure/evogrow.jl` oder irgendeinem Suchcodepfad,
-- keine relevance-guided child generation — das ist WP-T2a, später,
-- keine Anwendung des Signals auf Stage Progression oder Stage Cap — das ist WP-T2b, später,
-- keine Surrogatsysteme, dort gibt es keinen sauberen wahren Support,
-- keine Aussage über Compute-Ersparnis.
-
-## Ort im Repository
-
-Explorative, isolierte Studie. Implementierung unter `analysis/exploratory/term_relevance/`; das
-Verzeichnis `analysis/exploratory/` existiert und ist leer. `analysis/CONVENTIONS.md` gilt: keine
-Cross-Imports zwischen Julia und Python, Daten nach `analysis/data/<id>/`, Tests nach
-`analysis/tests/`. Der Bezeichner lautet `wp_t1_term_relevance`; er ist **kein**
-Experiment-Identifier im Sinne von Paper 1 und darf nie so behandelt werden.
+Aus der Rangliste wird ein Verfahren: **Selektion → Koeffizienten → Integration → Metriken**. Die
+Metriken sind exakt die des bereits gerechneten SINDy-Baselines auf denselben Trajektorien, damit
+die Zahlen nebeneinander stehen können, ohne umgerechnet zu werden.
 
 ## Eingänge, alle nur lesend
 
-1. `benchmarks/data/strogatz_extended.json` — Systemdefinitionen und Initialbedingungen.
-2. `studies/regression/phase_c_support.json` — Ground-Truth-Support unter der kanonischen
-   Phase-C-Basis `staged_polynomial_basis_with_constant`, bereits in Basis-Termnamen
-   (`support_terms`) **und** 1-basierten Basisindizes (`support_idxs`). Verwendet werden nur
-   Einträge mit `representability == "exact"` und `status == "ok"`: 30 Systeme, 11/10/8/1 auf
-   dim 1/2/3/4.
-3. **Trajektorien: die exportierten Kampagnenbytes**, nicht neu integrierte.
-   `outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/` enthält
-   `trajectory_manifest.csv` mit 126 Zeilen (63 Systeme × 2 IC-Sätze) und die Rohdaten als
-   float64 unter `cells/`. Achsenreihenfolge, Form, Dtype und Byte-Order stehen im Manifest und
-   sind **zu lesen, nicht anzunehmen**; die SHA256-Summen sind zu prüfen und ein Mismatch bricht
-   ab. Damit arbeitet WP-T1 auf denselben Bytes wie die Phase-C-Kampagne.
+1. Die Trajektorien: derselbe gehashte Export wie in WP-T1,
+   `outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/`. Kein Fallback, keine
+   Selbstintegration. Ein Hash-Mismatch bricht ab.
+2. `studies/regression/phase_c_support.json` — Ground Truth unter der kanonischen Basis.
+3. `benchmarks/data/strogatz_extended.json` — Systemdefinitionen, Initialbedingungen.
+4. Der bestehende Studienkern `analysis/exploratory/term_relevance/term_relevance.py` wird
+   **wiederverwendet**, nicht neu geschrieben: Basisklon, Export-Loader, Fensterbau,
+   Standardisierung, `rank_forward`, Diagnostik. Erweiterungen dort sind erlaubt, dürfen aber die
+   WP-T1-Ergebnisse nicht verändern — siehe Regressionskontrolle.
+5. Als Vergleichspartner, nur lesend:
+   `analysis/data/paper1_phaseC_v1/phasec_sindy_baseline_wp_c4c_export/`.
 
-   **Fallback, nur falls der Export fehlt:** Selbstintegration über den vorhandenen Helfer
-   `integrate_truth` aus `analysis/scripts/aggregate/run_wp_n6_sindy_baseline.py` (DOP853,
-   rtol = atol = 1e-9), Gitter 512 Punkte über t ∈ [0,10]. Dieser Fall ist im Record über ein
-   Feld `trajectory_source` zu kennzeichnen und im Report zu deklarieren: WP-C4b misst zwischen
-   Tsit5 und DOP853 bei 1e-9 eine relative Abweichung von etwa 1e-10 bei bitgleichem Zeitgitter.
-   Für eine Rangfrage ist das irrelevant, muss aber genannt werden. Beide Quellen zu mischen ist
-   verboten — ein Lauf verwendet genau eine.
+## Die vier Arme
 
-## Basisklon und Drift-Schutz
+Zwei Signale, jeweils als eigenständiges Verfahren:
 
-Die kanonische Basis wird in Python nachgebaut, in genau der Stage-Reihenfolge der Julia-Seite
-(`src/basis/staged_polynomial.jl`, `staged_polynomial_basis_with_constant`):
+- **`weak`** — Integral-/Weak-Form wie in WP-T1, Fenster 1/2/4/8/16, überlappend, gestapelt.
+- **`fd`** — finite Differenzen, zentrale Differenzen zweiter Ordnung.
 
-- Stage 1: `1`, dann `u1` … `ud`
-- Stage 2: `u1^2` … `ud^2`
-- Stage 3: `ui*uj` für i < j, i aufsteigend außen, j innen
-- Stage 4: `u1^3` … `ud^3`
-- Stage 5: je Variable `sin(ui)` und `cos(ui)`, in dieser Reihenfolge
+Beide mit `forward` als Selektionsverfahren. `marginal` entfällt: WP-T1 hat gezeigt, dass es das
+Zufallsniveau nicht schlägt (Median 7 bis 9 gegen eine Erwartung von 6,1 bis 11,5) — als
+Discovery-Verfahren ist es damit erledigt und wird nicht weitergeschleppt.
 
-Bibliotheksgröße 1 + 5d + d(d−1)/2, also 6 / 12 / 19 / 27 für dim 1 bis 4.
+### Der `fd`-Arm muss vorher repariert werden
 
-**Drift-Schutz, verpflichtend als Test:** für alle 30 exakten Systeme muss `support_idxs[k]` im
-Python-Basisklon exakt auf die Namen in `support_terms[k]` zeigen. Ein einziger Mismatch bricht
-den Lauf ab — kein Warnen, kein Überspringen. Damit ist kein Julia-Aufruf nötig, und ein
-Auseinanderlaufen der beiden Implementierungen wird sofort sichtbar.
+In WP-T1 ist im `fd`-Design die Konstantenspalte konstant, wird von der Standardisierung als
+degeneriert erkannt und ans Ende gerankt. Als Rangplatz war das eine vertretbare Konvention; als
+**Modellterm** ist es ein Defekt: der Arm kann die Konstante strukturell nicht finden. Messbar in
+WP-T1: auf den 39 Gleichungen ohne Konstante im Support sind `fd` und `weak` bei σ = 0 identisch
+(Median 0, Anteil ≤ 3 jeweils 0,872); auf den 5 Gleichungen **mit** Konstante fällt `fd` auf
+Median 16 und Anteil 0,0, `weak` auf Median 2 und 0,600.
 
-## Zwei Signale, die verglichen werden
+Für WP-T1b ist das zu beheben: der Intercept wird **explizit behandelt** statt durch Zentrierung
+entfernt, sodass der Konstantenterm ein regulärer, auffindbarer Kandidat ist. Die gewählte Lösung
+ist im Report zu benennen und zu begründen. **Das ist eine Korrektur, kein Tuning** — sie wird
+nicht danach ausgewählt, welche Zahlen sie erzeugt. Der `weak`-Arm bleibt unverändert.
 
-Nicht „Integral statt Ableitung", sondern Integral **gegen** Ableitung. Beide erzeugen eine
-Designmatrix A und einen Zielvektor y **pro Gleichung i**.
+Konsequenz für WP-T1: dessen `fd`-Zahlen behalten ihren Defekt und werden **nicht** neu gerechnet.
+Der Report hält fest, dass die WP-T1-Aussage „weak schlägt fd" **nicht haltbar** ist — auf dem
+fairen Teilsatz von 39 Gleichungen liegen die beiden bei σ = 0 gleichauf, und auch unter Rauschen
+zeigen Anteil ≤ 3 und Mittelwert in verschiedene Richtungen (σ = 0,05: 0,744 gegen 0,713 beim
+Anteil, 2,785 gegen 2,764 beim Mittelwert).
 
-### Signal `weak` — Integral-/Weak-Form
+## Selektionsregel — der gefährlichste Punkt
 
-Fenster über dem Abtastgitter. Für ein Fenster w = [t_a, t_b]:
+Vorab deklariert, nie nach Sicht der Daten gewählt. Drei Dinge werden berichtet:
 
-- Ziel: die Zustandsdifferenz der Zielkomponente zwischen Fensterende und Fensteranfang.
-- Spalte j: das Integral der Basisfunktion φ_j, ausgewertet entlang der beobachteten Trajektorie,
-  über das Fenster, numerisch per Trapezregel auf dem Abtastgitter.
+1. **Der vollständige Selektionspfad** k = 1 … p. Für jedes k: Support, Koeffizienten, Metriken.
+   Das ist die eigentliche Ausgabe; alles Weitere sind Betriebspunkte darauf.
 
-Fenster-Schema: multi-scale, Längen 1, 2, 4, 8, 16 Abtastschritte, überlappend mit Schrittweite 1,
-alle Längen in **eine** gemeinsame Matrix gestapelt. Das Fenster-Schema ist in WP-T1 **keine**
-Studienachse — es ist fixiert und wird als Designentscheidung deklariert.
+   **Der volle Pfad wird ausschließlich bei σ = 0 integriert und ausgewertet.** Unter Rauschen
+   werden nur die beiden Betriebspunkte `bic` und `oracle_size` integriert. Grund ist gemessen,
+   nicht vermutet: die Summe der Bibliotheksgrößen über alle 63 Systeme ist 718, und der volle
+   Pfad über beide Quell-ICs, beide Signale, elf Rauschstufen und zwei Auswertungen je Modell
+   ergäbe **126.368 Integrationen**. Eine Integration kostet gemessen 13 ms (System 26, dim 2),
+   20 ms (System 3, dim 1) und 151 ms (System 55, dim 3), gewichtet rund 65 ms — also mehrere
+   Stunden, und divergierende Teil-Supports entlang des Pfades sind der teure Ausreißerfall. Der
+   Schnitt bringt das auf etwa 21.600 Integrationen.
 
-### Signal `fd` — finite Differenzen
+   Wissenschaftlich kostet das genau eine Aussage: wie sich die **Form** der Selektionskurve unter
+   Rauschen verschiebt. Die Wanderung der beiden Betriebspunkte bleibt sichtbar, und die
+   Hauptbedingung ist ohnehin σ = 0, weil nur dort die Zahlen neben dem SINDy-Baseline stehen
+   dürfen. Diese Einschränkung ist im Report ausdrücklich als bewusster Zuschnitt zu nennen.
+2. **BIC** als die eine parameterfreie automatische Regel. Das k mit minimalem BIC über den Pfad,
+   berechnet auf dem jeweiligen Designproblem. Die verwendete Formel und die Wahl von n
+   (Zeilenzahl des Designs) sind im Report zu nennen, weil beim `weak`-Signal die Zeilen
+   überlappender Fenster nicht unabhängig sind — das ist eine **bekannte und zu deklarierende
+   Schwäche** des Kriteriums an dieser Stelle, kein Grund, es wegzulassen.
+3. **Oracle-|S|** — die wahre Supportgröße wird vorgegeben. Ausdrücklich eine **obere Schranke,
+   kein Verfahren**, und in jeder Tabelle so zu kennzeichnen. Sie trennt Selektionsfehler von
+   Rangfehlern: ein schlechter Oracle-|S|-Wert bedeutet, dass die Rangliste falsch war; ein guter
+   Oracle-Wert bei schlechtem BIC-Wert bedeutet, dass nur die Stoppregel versagt.
 
-- Ziel: punktweise Schätzung der Ableitung der Zielkomponente, zentrale Differenzen zweiter
-  Ordnung, einseitig an den Rändern. Bewusst dieselbe Ordnung wie `FiniteDifference(order=2)` im
-  SINDy-Baseline-Skript, damit der Vergleich zur bestehenden Baseline lesbar bleibt.
-- Spalte j: die Basisfunktion φ_j, ausgewertet an den Gitterpunkten.
+**Verboten:** jeder zusätzliche Schwellenwert, jede Regel, die nach Sicht der Ergebnisse
+hinzukommt, und jede Auswahl eines besten k außerhalb dieser drei deklarierten Betriebspunkte.
 
-### Normalisierung
+## Koeffizienten
 
-Beide Signale werden vor dem Ranking spaltenweise standardisiert (Mittelwert abziehen, durch
-Standardabweichung teilen), y wird zentriert. Spalten mit verschwindender Streuung — der
-Konstantenterm im `fd`-Signal ist der Regelfall — werden **nicht entfernt**, sondern erhalten eine
-dokumentierte Sonderbehandlung: sie bleiben in der Bibliothek, bekommen den schlechtestmöglichen
-Rang und werden im Record als `degenerate_column` markiert. Stilles Entfernen ist verboten; das
-wäre genau der Präprozessierungsfehler, den der Konstantenterm provoziert. Die gewählte Regel wird
-im Report ausdrücklich als Regel genannt.
+Kleinste-Quadrate-Lösung auf dem selektierten Support, **im jeweiligen Signalraum** — Weak-Form
+beziehungsweise Ableitungsraum. **Kein Refit im Trajektorienraum.** Gemessen werden soll die
+billige Pipeline; ein Refit wäre EvoODEs teurer Schritt und würde genau die Grenze verwischen, die
+dieses Work Package ziehen soll. Im Report ist zu deklarieren, dass die Koeffizienten damit aus
+einem anderen Fehlermaß stammen als EvoODEs Trajektorien-MSE.
 
-## Zwei Ranking-Methoden
+## Auswertung — identisch zum bestehenden SINDy-Baseline
 
-1. `marginal` — normierte marginale Korrelation zwischen Spalte und Ziel, absolut genommen.
-   Primitiver Sanity-Baseline ohne Behandlung von Kollinearität.
-2. `forward` — Forward Residual Reduction, OMP-artig: wiederholt jenen noch nicht gewählten
-   Kandidaten wählen, der den Residualfehler am stärksten senkt, gewählte Menge refitten, Residuum
-   aktualisieren. **Die Auswahlreihenfolge ist das Ranking**, nicht das entstehende Modell. Die
-   Schleife läuft über die gesamte Bibliothek, bis alle Terme gerankt sind.
+Pro Modell:
 
-Ridge wird bewusst **nicht** implementiert. Falls `forward` sich als numerisch instabil erweist —
-nicht reproduzierbare Auswahlreihenfolge bei identischem Input — ist das als Blocker zu melden,
-nicht durch eine dritte Methode zu umgehen.
+- Aus dem selektierten Support und den Koeffizienten wird ein ODE-System gebaut und integriert.
+- **Rekonstruktion:** Integration von der Trainings-IC, verglichen gegen deren Trajektorie.
+- **Generalisierung:** Integration von der **ungesehenen** IC, Parameter unverändert.
+- **Beide Richtungen**, `IC1_to_IC2` und `IC2_to_IC1`. WP-N5 hat gezeigt, dass die Richtung
+  materiell ist.
+- Divergenz- und Nichtendlichkeitsbehandlung wie im SINDy-Skript (`INTEGRATION_LIMIT = 1e9`),
+  damit eine divergierte Integration nicht als fehlendes R² verschwindet.
 
-Beide Methoden sind deterministisch. Rangbindungen werden nach aufsteigendem Basisindex gelöst;
-diese Regel wird im Report genannt.
+Metriken, immer gemeinsam (Designprinzip 9):
 
-## Achsen des Experiments
+- **Strukturtreffer raw und pruned.** Die Pruning-Regel ist die bestehende,
+  `max(SUPPORT_ABS, SUPPORT_REL · max_abs)` mit `SUPPORT_ABS = 1e-6` und `SUPPORT_REL = 1e-3`.
+  Sie wird **wiederverwendet, nie neu abgestimmt** — WP-N2 hat gezeigt, dass es keine bessere
+  Schwelle gibt, nur einen Nullsummen-Tausch der Fehlerarten.
+- **R² und die Rate R² > 0,9**, Verteilungen als Quantile.
+
+Strukturmetriken **nur auf den 30 exakten Systemen** (Designprinzip 8), R² auf allen 63. Exakte und
+Surrogatsysteme werden nie in eine Korrektheitskennzahl gemischt.
+
+## Kostenachse
+
+In denselben Einheiten wie der SINDy-Baseline, damit die Zahlen vergleichbar sind:
+`n_target_regressions` und `n_evaluation_integrations` je Zelle. Zusätzlich die Anzahl der
+Kleinste-Quadrate-Lösungen über den vollen Selektionspfad.
+
+Die Kernaussage, die dabei herauskommen muss: **wie viele ODE-Integrationen während der Selektion
+stattfinden.** Wall-clock ist nach Designprinzip 7 keine Evidenz und wird, wenn überhaupt, nur als
+Kontext mit Etikett geführt.
+
+## Achsen
 
 | Achse | Werte |
 |---|---|
-| Signal | `weak`, `fd` |
-| Methode | `marginal`, `forward` |
-| Rauschen | `sigma_rel` ∈ {0, 0,01, 0,05} |
-| IC-Strategie | `ic1`, `ic2`, `ic1_ic2` (Zeilen beider Trajektorien gestapelt) |
+| Signal | `weak`, `fd` (repariert) |
+| Betriebspunkt | voller Pfad, `bic`, `oracle_size` |
+| Rauschen | `sigma_rel` ∈ {0, 0,01, 0,05}, für σ > 0 fünf Replikate mit den WP-T1-Seeds |
+| Richtung | `IC1_to_IC2`, `IC2_to_IC1` |
 
-36 Konfigurationen. Alles ist lineare Algebra auf 512 Punkten; die Gesamtlaufzeit muss im
-Minutenbereich liegen. Falls nicht, ist die Implementierung falsch — dann melden, nicht Systeme
-streichen.
-
-**Rauschen:** additives gaußsches Rauschen auf den beobachteten Zuständen, Standardabweichung
-`sigma_rel` mal der empirischen Standardabweichung der jeweiligen Zustandskomponente über die
-Trajektorie. Der wahre Support bleibt unverändert. Für `sigma_rel > 0` fünf Replikate mit fest
-deklarierten Seeds; Replikate werden als Verteilung berichtet, nie als Mittelwert allein. Rauschen
-wird **nach** der Integration aufgeprägt, nie während ihr.
-
-## Primäre Metrik
-
-Pro Gleichung und Konfiguration:
-
-**`n_false_before_last_true`** — die Anzahl falscher Kandidaten, die im Ranking vor dem schlechtest
-gerankten Ground-Truth-Term stehen.
-
-Beispiel: wahrer Support {u1, u2^3, u1*u2}, Ranking [u2^3, u1, sin(u1), 1, u1*u2, …] ergibt 2.
-
-Lesart: so viele falsche Richtungen muss die Suche überleben, bevor alle nötigen Terme priorisiert
-sind. Genau die Größe, die für add-only-Pfadabhängigkeit zählt.
-
-Sekundär, immer mitberichtet:
-
-- `rank_worst_true` — Rang des schlechtesten wahren Terms, 1-basiert,
-- `mrr_true` — mittlerer reziproker Rang der wahren Terme,
-- `recall_at_k` — als Diagnose, nicht als Gate.
-
-`k_star / p` wird **nicht** als Entscheidungsgröße geführt: bei p = 6 bis 27 ist die Granularität
-zu grob, um darauf eine Entscheidung zu stützen.
-
-## Nullmodell
-
-Jedes Ergebnis wird gegen zufällige Rangordnungen gestellt.
-
-- Analytisch: der Erwartungswert von `n_false_before_last_true` unter gleichverteilter Permutation
-  bei Bibliotheksgröße p und Supportgröße s beträgt (p − s)·s/(s + 1). Zur Orientierung: dim 2 mit
-  s = 2, p = 12 ergibt 6,67; dim 3 mit s = 3, p = 19 ergibt 12,0.
-- Empirisch: 10 000 zufällige Permutationen pro Gleichung, fester deklarierter Seed. Empirische
-  und analytische Erwartung müssen übereinstimmen; die Abweichung ist ein Test.
-
-**Signifikanz cluster-robust.** Die Gleichungen stammen aus wenigen Systemen — dim 2+3 sind 44
-Gleichungen aus 18 Systemen, die effektive Stichprobengröße ist also 18, nicht 44. Der primäre
-Test permutiert **pro System**, analog zum in WP-A6 etablierten Verfahren; ein gleichungsweise
-unabhängiger Test darf zusätzlich berichtet werden, nie als der primäre. Effektstärken werden als
-Quantile und Schwellenraster berichtet, nie als Mittelwert oder Median allein, und die Schwellen
-werden nicht nach Sicht der Ergebnisse gewählt.
-
-## Diagnostik, die Misserfolge erklären soll
-
-Pro Gleichung und Konfiguration zusätzlich erheben:
-
-- Konditionszahl der standardisierten Matrix A,
-- für jeden wahren Term die maximale absolute Kosinus-Ähnlichkeit zu irgendeiner falschen Spalte —
-  das ist der Fall `x` gegen `sin(x)` auf kleinem Zustandsbereich,
-- Anregung jeder Spalte: Standardabweichung und mittlerer Absolutwert entlang der Trajektorie,
-- effektiver Rang von A, Anteil der Singulärwerte oberhalb einer deklarierten relativen Schwelle,
-- Beitragsgröße jedes wahren Terms: Betrag des wahren Koeffizienten mal Streuung seiner Spalte.
-  Ein wahrer Term mit verschwindendem Beitrag ist ein Identifizierbarkeits-, kein
-  Verfahrensproblem, und das muss unterscheidbar sein.
-
-## Entscheidungszelle und Gate — vor Sicht der Ergebnisse festgelegt
-
-**Entscheidungszelle:** Signal `weak`, Methode `forward`, `sigma_rel = 0`, IC-Strategie `ic1`,
-Stratum **dim 2 und dim 3** — 18 Systeme, 44 Gleichungen.
-
-Begründung für `ic1` statt `ic1_ic2`: EvoGrow sieht pro Zelle genau eine Trajektorie, eine Zelle
-ist (System, Seed, IC-Satz). Ein Prior, der zwei IC-Sätze braucht, existiert zur Suchzeit nicht.
-`ic1_ic2` läuft als **obere Referenz** mit und beantwortet die Frage nach dem Wert von
-Trajektoriendiversität, ist aber nicht die Entscheidungsgrundlage.
-
-Begründung für den Ausschluss von dim 4: System 63 ist der dokumentierte
-Identifizierbarkeitsgrenzfall des Projekts — Cap überall `nothing`, Supportrate 0. Es läuft mit und
-wird getrennt berichtet, verzerrt aber kein Aggregat.
-
-**Gate, dreiwertig:**
-
-- **positiv** — Median `n_false_before_last_true` ≤ 2 **und** mindestens 60 % der Gleichungen mit
-  Wert ≤ 3 **und** das cluster-robuste Nullmodell wird mit p < 0,01 geschlagen.
-- **bedingt** — das Nullmodell wird klar geschlagen, aber eine der beiden Niveaubedingungen fällt.
-  Dann ist nur konfidenzgesteuerte weiche Guidance gerechtfertigt, nie hartes Pruning.
-- **negativ** — das cluster-robuste Nullmodell wird auf dim 2+3 nicht geschlagen. Dann endet der
-  Seitenzweig, und das negative Ergebnis wird dokumentiert.
-
-Die Schwellen 2 und 3 sind eine **menschliche Designentscheidung**, keine aus Daten abgeleitete
-Größe, und im Report ausdrücklich als solche zu kennzeichnen — so, wie das Projekt es bei der
-Reopen-Schwelle 0,35 tut. Begründung: bei add-only-Wachstum mit mehreren parallelen Linien ist das
-Überleben von zwei falschen frühen Additionen plausibel; jenseits von etwa drei verliert ein Prior
-seine Handlungsrelevanz.
-
-**Replikationsbedingung:** das Urteil muss auf `ic2` in derselben Richtung stehen. Ein Ergebnis,
-das zwischen IC1 und IC2 kippt, ist kein Ergebnis und führt höchstens zu **bedingt**.
-
-**Verboten:** nach Sicht der Ergebnisse eine andere Entscheidungszelle, ein anderes Stratum oder
-eine andere Schwelle zu wählen. Die beste von 36 Konfigurationen zu berichten wäre genau der
-WP-V1-Fehler. Das volle Raster wird berichtet, ausgewählt wird nichts.
+**Hauptbedingung ist σ = 0**, weil das die Bedingung des SINDy-Baselines ist und nur dort die
+Zahlen nebeneinander stehen dürfen. Die Rauschachse läuft mit und wird getrennt berichtet.
 
 ## Ausgaben
 
-Nach `analysis/data/wp_t1_term_relevance/`:
+Nach `analysis/data/wp_t1b_standalone_ranking/`:
 
-- Satzweise Records, eine Zeile je (System, Gleichung, IC-Strategie, Signal, Methode, `sigma_rel`,
-  Rausch-Replikat), mindestens mit: `system_id`, `system_name`, `dimension`, `equation_idx`,
-  `ic_strategy`, `signal`, `ranking_method`, `sigma_rel`, `noise_replicate`, `noise_seed`,
-  `basis_name`, `library_size`, `true_support_terms`, `true_support_size`, `candidate_names`,
-  `candidate_scores`, `candidate_ranks`, `n_false_before_last_true`, `rank_worst_true`,
-  `mrr_true`, `condition_number`, `effective_rank`, `max_cosine_true_vs_false`,
-  `column_excitation`, `true_term_contribution`, `degenerate_column_count`, `trajectory_source`,
-  `trajectory_sha256`.
-- Aggregat je Konfiguration und Dimension, als Quantile (0,1 / 0,25 / 0,5 / 0,75 / 0,9) und als
-  Schwellenraster über `n_false_before_last_true` bei 0, 1, 2, 3, 5, 10.
-- Nullmodell-Vergleich je Konfiguration und Dimension, analytisch und empirisch, mit
-  cluster-robustem p-Wert.
-- Gate-Urteil als JSON: Entscheidungszelle, die drei Bedingungen einzeln, die
-  Replikationsbedingung, das dreiwertige Urteil.
+- `details.csv` — **satzweise gespiegelt auf das Schema von**
+  `phasec_sindy_baseline_wp_c4c_export/details.csv`, damit die beiden Bestände ohne Umrechnung
+  übereinandergelegt werden können. Mindestens diese Spalten mit identischer Bedeutung:
+  `system_id`, `system_name`, `dimension`, `source_initial_condition_set`,
+  `target_initial_condition_set`, `direction`, `regime`, `n_library_terms`, `true_terms`,
+  `active_terms_raw`, `active_terms_pruned`, `structure_hit_raw`, `structure_hit_pruned`, `r2`,
+  `r2_gt_0_9`, `diverged_or_nonfinite`, `integration_status`, `fit_status`,
+  `n_target_regressions`, `n_evaluation_integrations`, `phasec_representability_threeway`,
+  `phasec_basis_name`, `valid_for_analysis`. Dazu die T1b-eigenen Spalten: `signal`,
+  `operating_point`, `selected_k`, `sigma_rel`, `noise_replicate`.
+- `summary.csv` — aggregiert nach Dimension und Repräsentierbarkeitsklasse, in derselben
+  Gliederung wie die SINDy-Summary, mit Nennern in jeder Zeile.
+- `selection_path.csv` — der volle Pfad k = 1 … p je Zelle.
+- `cost.csv` — die Kostenspalten.
+- `run_metadata.json` — Konfigurationshash, Eingangs-Hashes, Seeds, verwendete BIC-Formel.
 
-Nach `analysis/figures/wp_t1_term_relevance/` genau zwei Abbildungen:
+Nach `analysis/figures/wp_t1b_standalone_ranking/` genau zwei Abbildungen: Strukturtreffer gegen k
+entlang des Pfades je Dimension mit den beiden Betriebspunkten markiert; und Strukturtreffer gegen
+R²-über-0,9-Rate, T1b-Arme gegen SINDy, je Dimension.
 
-1. Verteilung von `n_false_before_last_true` je Dimension und Konfiguration, mit der
-   Nullmodell-Erwartung als Referenzlinie.
-2. `n_false_before_last_true` gegen `max_cosine_true_vs_false` beziehungsweise Konditionszahl —
-   die Prüfung, ob Misserfolge Identifizierbarkeitsprobleme sind.
+**Kein Vergleich gegen EvoGrow-Zahlen in diesem Work Package.** Phase B läuft auf der alten Basis
+ohne Konstante und ist als Vergleichspartner ungültig; die kanonische EvoGrow-Zahl kommt aus der
+laufenden Phase-C-Kampagne. Wer die Zahlen trotzdem nebeneinanderstellt, vergleicht zwei Basen.
 
-Konfigurationshash und Eingangs-Hashes werden mitgeschrieben, damit der Lauf reproduzierbar ist.
-Jede berichtete Rate nennt ihren Nenner.
+## Vorab festgelegte Deutung
+
+Nicht nach Sicht der Ergebnisse zu ändern. Der Vergleichspartner ist der SINDy-Baseline auf
+denselben Trajektorien, exakte Systeme, bestes von zehn Konfigurationen: dim 2 Strukturtreffer
+66,7 % und R² > 0,9 bei 70,0 % (Rekonstruktion) beziehungsweise 66,7 % (Generalisierung), dim 3
+28,6 % und 12,5 %.
+
+- **A** — Standalone erreicht oder schlägt diese Werte auf dim 2+3. Dann muss EvoGrows
+  Rechtfertigung woanders herkommen — Rauschen, Surrogate, Generalisierung — oder die Pipeline
+  wird screening-first.
+- **B** — Die Rangliste ist stark (WP-T1), aber die Standalone-Selektion scheitert. Dann ist die
+  Arbeitsteilung real und WP-T2a ist gerechtfertigt. Der Oracle-|S|-Arm sagt dabei, ob es an der
+  Stoppregel oder am Rang lag.
+- **C** — Standalone scheitert ebenfalls und der Oracle-Arm auch. Dann war die Rangqualität
+  notwendig, aber nicht hinreichend.
+
+Alle drei sind verwertbare Ergebnisse. Keines ist ein Grund, Parameter zu ändern.
+
+## Laufzeitschranke, verpflichtend
+
+Vor dem vollen Lauf ist ein **Smoke-Test auf wenigen Systemen** zu fahren, aus dem die projizierte
+Gesamtzahl der Integrationen hochgerechnet wird. Diese Zahl ist im Report zu nennen.
+
+**Liegt die Projektion über 40.000 Integrationen, wird der volle Lauf nicht gestartet**, sondern
+als `blocked` gemeldet, mit der projizierten Zahl und der Stelle, an der der Zuschnitt verletzt
+ist. Die erwartete Größenordnung nach dem Schnitt ist rund 21.600; eine deutliche Überschreitung
+bedeutet, dass der Schnitt falsch umgesetzt wurde, und ist kein Grund, trotzdem zu rechnen.
+
+Die Zahl der tatsächlich ausgeführten Integrationen wird mitgezählt und in `cost.csv` geführt.
+
+## Regressionskontrolle
+
+`analysis/exploratory/term_relevance/` wird erweitert, und WP-T1 hängt daran. Verpflichtend:
+**ein erneuter WP-T1-Lauf reproduziert `gate_decision.json` und
+`aggregate_by_configuration_dimension.csv` bitidentisch** — mit Ausnahme der `fd`-Zahlen, falls die
+Intercept-Reparatur den gemeinsamen Codepfad berührt. Ist das der Fall, ist die Reparatur so zu
+bauen, dass der WP-T1-Pfad unverändert bleibt (etwa als Option, deren Vorgabewert das alte
+Verhalten ist). Die Kontrolle läuft als Test, nicht als Behauptung im Report.
 
 ## Tests
 
-Nach `analysis/tests/`:
-
-- Basis-Konsistenz: `support_idxs` zeigt für alle 30 exakten Systeme auf `support_terms`;
-  Bibliotheksgrößen 6 / 12 / 19 / 27.
-- Synthetisches System mit bekanntem Support, gut angeregt und schwach kollinear: beide
-  Ranking-Methoden müssen `n_false_before_last_true == 0` liefern. Fällt dieser Test, ist die
-  Implementierung falsch, nicht das Signal schwach.
-- Nullmodell: empirischer Erwartungswert stimmt mit (p − s)·s/(s + 1) überein.
-- Determinismus: zweimaliger Lauf mit identischem Seed erzeugt identische Records.
-- Degenerierte Spalten: eine konstante Spalte wird nicht entfernt, sondern markiert und
-  schlechtest gerankt.
-- Trajektorienquelle: ein manipuliertes Byte im Export führt zum Abbruch, nicht zu stillem
-  Weiterrechnen.
+- Synthetisches System mit bekanntem Support und bekannten Koeffizienten: Oracle-|S| muss den
+  exakten Support und die Koeffizienten bis auf Integrationsfehler treffen.
+- Der Intercept-Test: ein System, dessen wahrer Support die Konstante enthält, muss im reparierten
+  `fd`-Arm auffindbar sein. Dieser Test scheitert gegen den WP-T1-Stand — das ist sein Zweck.
+- Schema-Kontrolle: die geforderten Spalten von `details.csv` existieren und tragen dieselben
+  Wertebereiche wie im SINDy-Bestand (`direction`, `regime`, boolesche Trefferspalten).
+- Determinismus: zweimaliger Lauf mit identischem Seed erzeugt identische Ausgaben.
+- Die WP-T1-Regressionskontrolle oben.
 
 ## Verbote
 
 - Keine Änderung unter `src/`, `experiments/`, `studies/`, `k8s/`, `containers/`, `benchmarks/`.
-- Kein Schreiben nach `analysis/data/paper1_phaseA_v1`, `paper1_phaseB_v1` oder
-  `paper1_phaseC_v1`. Die Phase-C-Kampagne läuft; nichts in diesem WP darf ihre Records lesen,
-  schreiben oder anfassen. Der Trajektorien-Export unter `outputs/` wird ausschließlich gelesen.
-- Keine Julia-Ausführung; in dieser Umgebung ohnehin nicht möglich.
-- Keine neue Abhängigkeit über `analysis/requirements.txt` hinaus. Fehlt etwas, als Blocker
-  melden.
-- Keine Auswahl einer besten Konfiguration, kein nachträglich gewählter Schwellenwert.
-- Ergebnisse sind ausdrücklich explorativ; keine Paper-1-Aussage hängt daran.
+- Kein Schreiben in `analysis/data/paper1_phaseA_v1`, `paper1_phaseB_v1`, `paper1_phaseC_v1`. Der
+  SINDy-Bestand und der Trajektorien-Export werden ausschließlich gelesen. Die Phase-C-Kampagne
+  läuft.
+- Keine Julia-Ausführung.
+- Keine neue Abhängigkeit über `analysis/requirements.txt` hinaus; fehlt etwas, als Blocker melden.
+- Kein Neuabstimmen der Pruning-Schwelle, kein zusätzlicher Selektionsschwellenwert, keine Auswahl
+  eines besten Arms.
 - Kein GitLab-Push.
 
 ## Abnahmekriterium
 
-Alle 36 Konfigurationen laufen über die 30 exakten Systeme und beide IC-Sätze durch, die Tests sind
-grün, die Ausgaben liegen vollständig vor, und das Gate-Urteil ist als dreiwertige Entscheidung mit
-allen Einzelbedingungen belegt — unabhängig davon, wie es ausfällt. **Ein negatives Urteil ist ein
-vollwertiges Ergebnis dieses Work Packages** und kein Grund, Parameter zu ändern.
+Alle vier Arm-Kombinationen laufen über alle 63 Systeme, beide Richtungen und beide IC-Sätze
+durch; die drei Betriebspunkte sind berichtet; `details.csv` lässt sich ohne Umrechnung auf den
+SINDy-Bestand legen; die WP-T1-Regressionskontrolle ist grün; jede berichtete Rate nennt ihren
+Nenner. Welche der drei Deutungen A, B oder C eintritt, ist für die Abnahme ohne Belang.
 
 ## Bericht
 
-`codex/reports/REPORT_WP_T1.md`. Zwingend aufzunehmen: die verwendete Trajektorienquelle mit ihrer
-Deklaration, die Regel für degenerierte Spalten, die Tie-Break-Regel, die Kennzeichnung der
-Gate-Schwellen als menschliche Entscheidung, die effektive Clustergröße 18, und die getrennte
-Darstellung von dim 1 als Sanity-Check und dim 4 als System 63.
+`codex/reports/REPORT_WP_T1b.md`. Zwingend aufzunehmen: die gewählte Intercept-Behandlung mit
+Begründung, die BIC-Formel samt der Abhängigkeitsschwäche bei überlappenden Fenstern, die
+Feststellung, dass die WP-T1-Aussage „weak schlägt fd" nicht haltbar ist, die Kennzeichnung von
+Oracle-|S| als obere Schranke, die Zahl der ODE-Integrationen während der Selektion, und die
+ausdrückliche Feststellung, dass kein EvoGrow-Vergleich stattgefunden hat und warum.

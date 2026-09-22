@@ -198,14 +198,26 @@ def build_design(time: np.ndarray, state: np.ndarray, equation_idx0: int, signal
     return np.vstack(rows), np.asarray(targets, dtype=float), phi
 
 
-def standardize_design(A: np.ndarray, y: np.ndarray) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+def standardize_design(
+    A: np.ndarray,
+    y: np.ndarray,
+    *,
+    explicit_intercept: bool = False,
+) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
     means = np.mean(A, axis=0)
     stds = np.std(A, axis=0, ddof=0)
     degenerate = stds <= DEGENERATE_STD_TOL
+    if explicit_intercept and A.shape[1] > 0 and np.allclose(A[:, 0], A[0, 0], rtol=0.0, atol=DEGENERATE_STD_TOL):
+        means = means.copy()
+        stds = stds.copy()
+        degenerate = degenerate.copy()
+        means[0] = 0.0
+        stds[0] = 1.0
+        degenerate[0] = False
     safe_stds = np.where(degenerate, 1.0, stds)
     A_std = (A - means) / safe_stds
     A_std[:, degenerate] = 0.0
-    y_centered = y - np.mean(y)
+    y_centered = y if explicit_intercept else y - np.mean(y)
     return A_std, y_centered, means, stds, degenerate
 
 
@@ -331,8 +343,14 @@ def coefficient_map(substituted_expr: str, terms: list[BasisTerm]) -> dict[int, 
     return mapping
 
 
-def ranking_for(A: np.ndarray, y: np.ndarray, method: str) -> tuple[list[int], np.ndarray, np.ndarray, np.ndarray]:
-    A_std, y_centered, _means, _stds, degenerate = standardize_design(A, y)
+def ranking_for(
+    A: np.ndarray,
+    y: np.ndarray,
+    method: str,
+    *,
+    explicit_intercept: bool = False,
+) -> tuple[list[int], np.ndarray, np.ndarray, np.ndarray]:
+    A_std, y_centered, _means, _stds, degenerate = standardize_design(A, y, explicit_intercept=explicit_intercept)
     if method == "marginal":
         order, scores = rank_marginal(A_std, y_centered, degenerate)
     elif method == "forward":
