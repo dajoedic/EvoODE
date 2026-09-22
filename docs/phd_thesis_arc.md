@@ -307,7 +307,7 @@ thesis.
 | 0 | WP-T1 ✔ | Is there ranking signal at all? | done | **positive** — median 0 on dim 2+3 |
 | 1 | WP-T1b ✔ | Does the signal replace the search? | done | **C — no.** 30.0 % / 0.0 % against SINDy's 66.7 % / 28.6 % |
 | 2 | WP-T1c ✔ | Which prior generator orders our basis better? | ~0 | winner, else the incumbent `forward` stays |
-| 3 | WP-T1d | **Is the true support even a local optimum of our trajectory loss?** | **< 1 h** | if no → **stop the branch** and report it as a loss finding, not a guidance finding |
+| 3 | WP-T1d | **Is the true support even a local optimum of our trajectory loss?** | **~12 h** | if no → **stop the branch** and report it as a loss finding, not a guidance finding |
 | 4 | WP-T2a pilot | Does EvoGrow improve with a prior? dim 1 + dim 2, three arms | 130–420 h, local | see below |
 | 5 | WP-T2a full | The same on dim 3, where the failure lives | ~1,000–1,600 h, Orion | only after the Phase C campaign ends |
 
@@ -320,9 +320,18 @@ truth ranked first). The oracle arm is what makes the pilot conclusive in both d
 - both work → guidance is established, and the distance between them says how much is left in the
   generator.
 
-**Step 3 comes first because it can make steps 4 and 5 unnecessary.** It costs under an hour and
-asks something nobody has asked: the project holds cells at loss 6.8e-11 with `pruned_match =
-false`, so a *wrong* support reaches essentially zero loss. If the true support is not even a local
+**Step 3 comes first because it can make steps 4 and 5 unnecessary.** It costs about 12 h — derived,
+not guessed: roughly 2,900 fixed-structure fits at the measured 9.48 s per dim-2 fit, from
+add-one (p−s), remove-one (s) and same-size swap (s·(p−s)) neighbours over 18 exact systems and both
+IC sets. The first estimate recorded here was "under an hour", which was a per-cell figure for
+dim 2 mistaken for the total. It asks something nobody has asked: the project holds cells at loss
+6.8e-11 with `pruned_match = false`, so a *wrong* support reaches essentially zero loss.
+
+**Within step 3 the decisive class is the same-size swap.** An added term cannot fit worse by
+construction, so `add_one` winning is nesting, not evidence; `remove_one` winning means a true term
+does not earn its place, which is an identifiability or optimizer finding. Only a same-size wrong
+support beating the truth shows that the objective does not identify it. The three classes are
+never aggregated into one number. If the true support is not even a local
 optimum of the objective, no ordering can help, because the search converges correctly to something
 wrong. That finding would belong to Paper 1 or Paper 3 — it is about the loss, not about guidance.
 
