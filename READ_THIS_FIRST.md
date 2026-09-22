@@ -14,30 +14,33 @@ ist, ist vermutlich falsch — dann gilt `CLAUDE.md`.
 
 ---
 
-## 1. Der nächste Handgriff
+## 1. Was gerade läuft
 
-**Der Nutzer startet HPC-Jobs selbst** (Regel wieder in Kraft seit 2026-09-22 spät abends; die
-Delegation an Claude galt nur für diesen einen Abend). Claude bereitet vor und prüft, führt aber
-kein `oc apply` mehr aus.
-
-Zwei Befehle stehen aus. Die Manifeste liegen substituiert unter `outputs/k8s_wp_t1e/`
-(gitignoriert, überlebt Sitzungen), alle auf Image
-`evoode:5a87efb3438ef459f57e28fca9fde8564b97217f`.
-
-**Schritt 1 — Smoke, zwei Zellen, wenige Minuten:**
+**WP-T1d läuft auf Orion seit 2026-09-23 00:01.** Job `evoode-wp-t1e-indexed-campaign`,
+36 Zellen, `parallelism: 2`, `activeDeadlineSeconds: 86400`, Image
+`evoode:5a87efb3438ef459f57e28fca9fde8564b97217f`. Erwartetes Ende gegen 06:00.
 
 ```powershell
-oc apply -f outputs\k8s_wp_t1e\wp_t1e_indexed_smoke_job.yaml
-oc get job evoode-wp-t1e-indexed-smoke -o custom-columns="JOB:.metadata.name,SUCCEEDED:.status.succeeded,FAILED:.status.failed"
+oc get job evoode-wp-t1e-indexed-campaign -o custom-columns="SUCCEEDED:.status.succeeded,ACTIVE:.status.active,FAILED:.status.failed"
 ```
 
-Pass-Kriterium `SUCCEEDED = 2`. **Danach prüft Claude die Records**, bevor Schritt 2 kommt.
+Ergebnisse landen unter `S:\BigDataOrion\data-science\joedicke\wp_t1e_<SHA>	asks\`, eine
+Datei je Zelle. **Claude kann die Freigabe lesen** und übernimmt Prüfung, Auswertung, Commit und
+DIARY. Für den Nutzer ist nichts mehr zu tun.
 
-**Schritt 2 — der Lauf, 36 Zellen, `parallelism: 2`, ~5–6 h. Erst nach Abnahme des Smoke:**
+**Der Smoke ist abgenommen, und zwar scharf:** die Cluster-Zelle System 24 / IC 1 ist
+**bitidentisch** zum lokalen Lauf — 46 von 46 Zeilen gleiches `loss_neighbor`, gleiches
+`beats_true`, identischer `loss_true`. Und obwohl der Pod die Trajektorie **selbst integriert**
+(`trajectory_source = generated`, der Export liegt nicht im Image), stimmt die
+`trajectory_sha256` exakt mit den exportierten Kampagnenbytes überein. Die In-Image-Integration
+reproduziert die Kampagnentrajektorie bit für bit.
 
-```powershell
-oc apply -f outputs\k8s_wp_t1e\wp_t1e_indexed_campaign_job.yaml
-```
+Records tragen `config_fingerprint = 0c9672de35c75a9d` (Phase-C-Identität) und
+`git_hash = 5a87efb`.
+
+**Nebenbefund:** die Cluster-Knoten heissen `alnilam*`, der CI-Runner `ALEXANDRIA`. Verschiedene
+Maschinen — ein Bau konkurriert nicht mit der Kampagne. Damit ist die offene Frage vom 22.09.
+beantwortet.
 
 ## 2. Wer was macht
 
