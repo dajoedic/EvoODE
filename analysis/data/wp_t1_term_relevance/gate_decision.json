@@ -1,0 +1,26 @@
+{
+  "decision_cell": {
+    "signal": "weak",
+    "ranking_method": "forward",
+    "sigma_rel": 0.0,
+    "ic_strategy": "ic1",
+    "stratum": "dimension 2 and dimension 3",
+    "systems": 18,
+    "equations": 44
+  },
+  "conditions": {
+    "median_n_false_before_last_true_le_2": true,
+    "median_n_false_before_last_true": 0.0,
+    "share_n_false_before_last_true_le_3_ge_0_60": true,
+    "share_n_false_before_last_true_le_3": 0.8409090909090909,
+    "cluster_robust_null_p_lt_0_01": true,
+    "cluster_robust_null_p": 7.6293654275305656e-06
+  },
+  "replication_condition": {
+    "ic2_same_direction": true,
+    "ic2_cluster_robust_p": 7.6293654275305656e-06
+  },
+  "judgment": "positive",
+  "threshold_policy": "The levels 2 and 3 are pre-declared human design thresholds, not data-derived thresholds.",
+  "effective_cluster_count": 18
+}

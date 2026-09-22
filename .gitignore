@@ -58,6 +58,10 @@ analysis/data/*
 !analysis/data/paper1_phaseB_v1/
 !analysis/data/paper1_phaseC_v1/
 !analysis/data/wp_n1_dim2_probe/
+!analysis/data/wp_t1_term_relevance/
+# ... but not its 11 MB per-equation records: deterministic, and rebuildable from
+# the hashed inputs plus the configuration hash in run_metadata.json.
+analysis/data/wp_t1_term_relevance/records.csv
 
 analysis/figures/*
 !analysis/figures/.gitkeep

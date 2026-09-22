@@ -1,0 +1,23 @@
+{
+  "study_id": "wp_t1_term_relevance",
+  "basis_name": "staged_polynomial_basis_with_constant",
+  "trajectory_source": "campaign_export",
+  "noise_seeds": [
+    2026092201,
+    2026092202,
+    2026092203,
+    2026092204,
+    2026092205
+  ],
+  "null_seed": 2026092291,
+  "permutation_seed": 2026092292,
+  "singular_relative_threshold": 1e-10,
+  "degenerate_std_tol": 1e-12,
+  "random_permutations_per_equation": 10000,
+  "configuration_hash": "7553f5d563e2b5c0ce0db8dd93b8d0384f2633f0fe5a11695d793022975b0b03",
+  "input_hashes": {
+    "C:\\Users\\joedicke\\Documents\\reps\\EvoODE\\studies\\regression\\phase_c_support.json": "ad8594f47399c1c5ef03e26bfe93f680bf7e866cb37e3d0462ce1e7b1c767e75",
+    "C:\\Users\\joedicke\\Documents\\reps\\EvoODE\\benchmarks\\data\\strogatz_extended.json": "b11f8bda01ceee5c5c9445521ac74c8819361af4251bb90c0be398aaeb1a1136",
+    "C:\\Users\\joedicke\\Documents\\reps\\EvoODE\\outputs\\phase_c_trajectory_hashes\\wp_c4c\\trajectory_export\\trajectory_manifest.csv": "c92ec60a3453c18d123e29b10c63f28a2cc67a67e5ea6021f014d9847ccb63b0"
+  }
+}
