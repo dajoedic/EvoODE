@@ -6,6 +6,88 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ## 2026-09-22
 
+### Der Paper-Bogen wird umgebaut: drei Paper, ein Konferenz-Einschub, ein Dokument
+
+**Anlass.** Ein neues `PAPER_TIMELINE.md` trat neben das bestehende `docs/phd_thesis_arc.md`
+(2026-08-19). Beide beschrieben denselben Gegenstand — die Abfolge der Paper — und widersprachen
+sich an drei Stellen, ohne es zu sagen. Genau die Fehlerklasse, für die der Claim-Tracing-Audit
+seinen zweiten Durchgang hat: nicht fehlende Dokumentation, sondern Dokumentation, die still falsch
+wird, weil Messung, Entscheidung und beschreibender Text verschieden schnell laufen. CLAUDE.md
+verbietet ein zweites Planungsdokument; der Grund ist nicht Ordnungsliebe, sondern dieser.
+
+Die drei Widersprüche, zur Aktenlage: der Arc definierte Paper #2 als die Operatoren-Arbeit
+(„Why the search fails inside a correct space"), die Timeline machte daraus Paper 3 und schob
+Guidance davor. Der Arc hatte ein Robustheits-Paper #3 (Rauschen, Sampling, Kopplung, Dimension) —
+in der Timeline kam es nicht vor. Und die Timeline schlug ein „Paper 4" für die
+Repräsentationserweiterung vor, die am 2026-08-22 ausdrücklich **nicht als viertes Paper**, sondern
+als Brücke entschieden worden war.
+
+**Vier Entscheidungen, alle heute getroffen.**
+
+**(1) Guidance wird Paper 2, die Operatoren werden Paper 3.** Begründung: Guidance bereitet die
+Operatoren vor. Bessere frühe Additionen senken den Reparaturbedarf, und Paper 3 lässt sich dann
+aus den *Restfehlern* von Paper 2 entwerfen statt aus Spekulation. Die Reihenfolge folgt damit der
+Kausalkette und nicht der Entstehungsgeschichte.
+
+**(2) Robustheit fällt in Paper 1.** Rauschen und Sampling-Dichte werden Achsen des Methodenpapers
+statt eines eigenen Papers. Begründung ist Vergleichbarkeit: ODEFormer/ODEBench und das Umfeld
+variieren beides, und ein Methodenpapier, das nur den rauschfreien, dicht abgetasteten Fall
+berichtet, ist nicht danebenstellbar.
+
+**Der Preis ist unbudgetiert und wird hier als offener Posten festgehalten, nicht versteckt.** Die
+Phase-C-Kampagne läuft eingefroren und **hat keine Rauschachse**; die Identität `0c9672de35c75a9d`
+deckt sie nicht ab. CLAUDE.md führt „no noise injection utilities" unter Known Gaps, und WP-T1 hat
+Rauschen zwar gebaut, aber in der Python-Analyseschicht auf Trajektorien — **nicht im
+Julia-Suchpfad**, den EvoGrow benutzt. Phase C kostet bereits ~12.300–15.900 Kernstunden. Daraus
+folgt eine Entscheidung, die **noch niemand getroffen hat**: reduzierter Rauscharm auf einer
+benannten Systemteilmenge, oder Rauschen als deklarierte Zukunftsarbeit mit genannter
+Vergleichbarkeitsgrenze. In voller Kampagnenbreite ist es nicht bezahlbar, und es darf sich nicht
+durch Driften erledigen.
+
+**(3) Es gibt kein Paper 4.** Die Repräsentationserweiterung bleibt die Brücke von 2026-08-22, mit
+unveränderter Begründung: wer den Raum vor Paper 2 verbreitert, verschiebt Kandidatenmenge,
+Kollinearitäten, Optimierungslandschaft und Identifizierbarkeit gleichzeitig, und Paper 2 isoliert
+dann keine Ursache mehr. Die Auflage, die an dieser Entscheidung hängt — die Entfernungs- und
+Ersetzungsoperatoren müssen **katalogagnostisch** gebaut sein — ist mit den Operatoren zu Paper 3
+gewandert und in CLAUDE.md nachgezogen. Sie wäre bei der Umnummerierung sonst still verschwunden,
+und das ist die teuerste Art, eine Auflage zu verlieren.
+
+**(4) Das Restart-Budget wird ein Konferenz-Einschub, und zwar *vor* Paper 2.** WP-N4 hat die
+Datenlage: mit der *wahren* Struktur trifft ein einzelner Fit in 15 von 102 Zellen den
+Sentinel-Loss, bei k = 3 ist es null, und R² > 0,9 steigt von 71,6 % auf 97,1 % zwischen k = 1 und
+k = 10. Die Platzierung ist kein Geschmack: ein Relevanz-Prior konzentriert die Ziehungsverteilung,
+das **erhöht** die Duplikatrate, und Duplikate wirken unter `pretuning = false` als implizite
+Multistarts. Ohne geklärtes Restart-Budget verschöbe Paper 2 Suchbreite und effektive Startanzahl
+gleichzeitig — derselbe Konfundierungsfehler wie beim Pretuning-Vergleich, eine Ebene höher.
+
+**Die Rahmung bleibt eine Grenzen-These, und das war die eigentliche Entscheidung.** Die Timeline
+schlug eine Fähigkeits-These vor — wachsen, lenken, reparieren. Erzählerisch ist sie besser, und
+sie ist als *Erzählung* der drei Paper übernommen. Als **These** wurde sie abgelehnt, weil sie durch
+die eigenen Ergebnisse widerlegbar ist: scheitern Guidance und Reparatur, bleibt kein Beitrag. Die
+Frage „was begrenzt strukturelle Entdeckung auf gekoppelten Systemen, und wieviel davon lässt sich
+vor der teuren Suche kontrollieren" überlebt beide Negativausgänge, weil das *Warum* der Beitrag
+ist. Das ist eine bewusste Risikoentscheidung, zum zweiten Mal getroffen — erstmals am 2026-08-19,
+heute gegen einen konkreten Gegenvorschlag bestätigt.
+
+**Zwei stille Fehler, beim Umbau gefunden und behoben.** Der Arc beschrieb Paper 1 noch als das
+Stage-Cap-Paper, was die Scope-Entscheidung vom 2026-09-09 abgelöst hat — Paper 1 ist das
+Methodenpapier mit Claims A–D, und die Kappe ist eine Komponente mit eigener Ablation. Und die
+Katalogagnostik-Auflage nannte Paper 2, obwohl die Operatoren, die sie bindet, inzwischen in
+Paper 3 sitzen.
+
+**Zwei offene Posten ohne Besitzer**, im Dokument als §11 geführt. Erstens der Rauschzuschnitt von
+Paper 1, siehe oben. Zweitens: **das prädiktive Kriterium für Kappen-Versagen.** Der alte Arc nannte
+es das, was Paper 1 „von einer Beobachtung zu einer Behauptung" macht — die Frage, ob sich *vorab
+und ohne Ground Truth* sagen lässt, wo der Controller scheitern wird. Unter dem Claim-A–D-Zuschnitt
+kommt es nicht mehr vor. Das ist kein Argument, es zurückzuholen; es ist ein Posten, der benannt
+sein muss, statt unbemerkt wegzufallen.
+
+`PAPER_TIMELINE.md` ist eingearbeitet und gelöscht. Übernommen wurden daraus vor allem die
+Guardrails, die im Arc kein Gegenstück hatten — darunter „do not hide screening compute from total
+method cost" und „do not use dim-1 success as evidence for coupled-system success" —, die
+Abnahmeliste für den Duplikat-Confounder und die Disziplinregel, Paper 3 aus den Restfehlern von
+Paper 2 zu entwerfen.
+
 ### Der Seitenzweig wird umgehaengt: nicht Compute, sondern Strukturtreffer auf gekoppelten Systemen
 
 <!-- 700a685 -->
