@@ -10,217 +10,101 @@ zweites davon. Alles Dauerhafte gehört dorthin, nach `PAPER_1.md` oder ins `DIA
 **Regeln:** wird immer **vollständig überschrieben**, nie angehängt. Was älter als ein paar Tage
 ist, ist vermutlich falsch — dann gilt `CLAUDE.md`.
 
-**Stand: 2026-09-22. Working Tree sauber bis auf diese Datei.**
+**Stand: 2026-09-22, nachmittags.**
 
 ---
 
-## 1. Wo wir stehen — in zwei Sätzen
+## 1. Das Wichtigste zuerst
 
-**Beide Jobs rechnen fehlerfrei, und die Kappen-Vorhersage ist eingetroffen.** Stand 22.09.:
-C-1+C-2 bei **184/756**, C-3 bei **171/180**. 355 Records, **0 Fehler**, ein Identitätstripel über
-alle, 5.874 verbrauchte Kernstunden.
+**Uncommittet im Working Tree liegt WP-T1b, und es ist NICHT geprüft.** Codex meldet `done`, aber
+keine Zahl daraus gilt, bevor sie nachgerechnet ist. Das ist die offene Aufgabe der nächsten
+Sitzung.
 
-Der Sprung von 249 auf 355 Records über Nacht ist die Parallelitätserhöhung vom 21.09. (32 → 64).
-**Folge fürs Auswerten unverändert:** ab Zelle 80 laufen doppelt so viele Pods pro Node, `elapsed_s`
-ist deshalb nicht mit den ersten 79 Zellen vergleichbar. Wissenschaftlich folgenlos
-(Designprinzip 7), aber deklarationspflichtig, wo `elapsed_s` als Kontext auftaucht.
-
-**Die dim-2-Zellen sind angelaufen** — damit existiert zum ersten Mal die Zellklasse, die Claim B
-testet. Ergebnis in Abschnitt 4. **Es steht keine Entscheidung offen, die den Lauf betrifft.**
-
-Laufender Stand auch als Seite: <https://claude.ai/artifact/4sq6HhRsnxgrFVqVF2trBx> — im README
-verlinkt, wird bei Statuswechseln neu veröffentlicht. **Noch nicht auf den 22.09. aktualisiert.**
-
-Autoritative Quellen: `PAPER_1.md` → `docs/paper1_phaseC_benchmark_plan.md` → `CLAUDE.md` →
-`DIARY.md` (neueste Einträge oben).
+Die Phase-C-Kampagne läuft unverändert auf Orion weiter. **Es steht keine Entscheidung offen, die
+den Lauf betrifft.** Nichts, was heute passiert ist, hat den Kampagnenpfad berührt.
 
 ---
 
-## 2. Wie du nachschaust
-
-**Voraussetzung: VPN.** Prüfen mit PowerShell — **nicht** mit `getent` in der Git-Bash, das benutzt
-einen anderen Resolver und meldet fälschlich „nicht auflösbar":
-
-```powershell
-Resolve-DnsName api.orion.scch.at     # erwartet 172.21.202.100
-```
-
-**Neu am 22.09.: ein nicht erreichbares `S:` heißt nicht zwangsläufig „VPN weg".** Die Freigabe war
-abgehängt, während das VPN stand. Zurückgeholt mit:
-
-```powershell
-net use S: /delete /y
-net use S: \\scch.at\scch
-```
-
-Meldet `kubectl` „must be logged in", ist das Token abgelaufen:
+## 2. Was uncommittet im Baum liegt
 
 ```
-oc login --web https://api.orion.scch.at:6443
+ M analysis/exploratory/term_relevance/term_relevance.py
+ M codex/CURRENT_TASK.md          (WP-T1b-Spec)
+ M codex/STATUS.md                (Codex meldet done)
+?? analysis/scripts/aggregate/run_wp_t1b_standalone_ranking.py
+?? analysis/tests/test_wp_t1b_standalone_ranking.py
+?? codex/reports/REPORT_WP_T1b.md
 ```
 
-### Fortschritt
+Dazu die Ausgaben unter `analysis/data/wp_t1b_standalone_ranking/` und
+`analysis/figures/wp_t1b_standalone_ranking/` (gitignoriert, Tracking-Entscheidung wie bei WP-T1:
+Aggregate ja, Rohsätze nein).
 
-```bash
-kubectl get jobs -n scch-das
-```
+## 3. Die Prüfliste für WP-T1b, bevor irgendetwas committet wird
 
-Erwartet: beide Jobs **Running**, Zähler wachsend.
+Beim ersten Anlauf war der Teilstand nicht deterministisch — genau dort also hinsehen:
 
-**Den Zähler nicht hochrechnen.** Die Warteschlange (`indices_c1_c2_cost_desc.txt`) ist
-**kostenabsteigend**: Positionen 1–120 sind dim 3, 121–456 dim 2, 457–480 dim 4, 481–756 dim 1.
-Die Reihenfolge ist **nicht strikt** — bei 64 Arbeitern starten Positionen ab 121, während teure
-dim-3-Zellen noch laufen. Bei 184 fertigen Zellen waren 84 davon dim 3 und 100 dim 2, es fehlen
-also noch 36 dim-3-Nachzügler. **In Kernstunden rechnen, nie in Zellen.**
+1. `cd analysis && python -m pytest tests/test_wp_t1b_standalone_ranking.py tests/test_wp_t1_term_relevance.py -q`
+   — beide müssen grün sein.
+2. **Die WP-T1-Regression:** ein erneuter WP-T1-Lauf muss `gate_decision.json` und
+   `aggregate_by_configuration_dimension.csv` **bitidentisch** reproduzieren. Die Spec verlangt,
+   dass die Intercept-Reparatur als Option mit altem Vorgabewert gebaut ist. Prüfen, nicht glauben.
+3. **Die Integrationsschranke:** die Spec verbietet den vollen Lauf über 40.000 Integrationen und
+   verlangt eine Hochrechnung aus einem Smoke-Test. Erwartet waren ~21.600. Steht die tatsächliche
+   Zahl in `cost.csv`, und liegt sie darunter?
+4. **Kein Ground-Truth-Leck** in der Selektion — bei WP-T1 war das sauber (`rank_forward` sieht
+   keinen Truth), bei den neuen Betriebspunkten neu prüfen. `oracle_size` darf den Truth sehen,
+   `bic` nicht.
+5. Gegen die vorab festgelegte Latte lesen: SINDy auf denselben Trajektorien, exakte Systeme,
+   bestes von zehn Konfigurationen — **dim 2: 66,7 % Strukturtreffer, dim 3: 28,6 %.**
+   Deutung A/B/C steht in `codex/CURRENT_TASK.md`, nicht nachträglich ändern.
 
-### Auslastung
+Danach committen wie bei WP-T1: Implementierung getrennt von den getrackten Ausgaben, nie
+`git add -A` (Codex arbeitet nebenher).
 
-```powershell
-$p = kubectl -n scch-das get pods --no-headers
-($p | Select-String " Running ").Count      # 22.09.: 85, davon 64 C-1+C-2, 9 C-3, 12 fremd
-($p | Select-String " Pending ").Count      # muss 0 sein
-```
+## 4. Was heute committet wurde
 
-**CPU-Requests zählen, nicht Pods.** Keine ResourceQuota im Namespace; es begrenzt allein die
-Node-Kapazität von 96 Kernen. Reicht sie nicht, werden Pods **Pending** — der harmlose Fehlermodus.
+| Commit | Inhalt |
+|---|---|
+| `700a685` / `2eb54e6` | DIARY: Umhängung des Seitenzweigs — Ziel ist Strukturtreffer auf gekoppelten Systemen, nicht Compute |
+| `ae7573d` | WP-T1: trajektorien-abgeleitete Term-Relevanz, isolierte Machbarkeitsstudie |
+| `b4498f6` | WP-T1-Ausgaben getrackt, 11-MB-Rohsätze draußen |
+| `139dd89` | Paper-Bogen umgebaut, `PAPER_TIMELINE.md` eingearbeitet und entfernt, zwei CLAUDE.md-Stellen nachgezogen |
+| `32c7989` / `401e07f` | DIARY: die vier Bogen-Entscheidungen und die beibehaltene Grenzen-Rahmung |
 
-### Ergebnisse, ohne Cluster
+**Kein GitLab-Push.** Bewusst zurückgehalten, bis die Kampagne durch ist — `.gitlab-ci.yml:54-75`
+baut auf `main` das Kampagnen-Image und verschiebt den Tag `:main`. Für die laufende Kampagne
+ungefährlich (alle k8s-Manifeste pinnen `<COMMIT_SHA>`), aber ein zweckloser Drei-Stunden-Build.
+GitHub-Push wie immer durch den Nutzer.
 
-```text
-S:\BigDataOrion\data-science\joedicke\phase_c_campaign_221a3a72f0cb43164a22b09baac2d9ae82681a02\tasks\
-```
+## 5. WP-T1 — geprüft und gültig
 
-`cell_NNNNNN.jsonl` ist je ein Ergebnis, `*.heartbeat.jsonl` der Verlauf — **beim Zählen die
-Heartbeats ausschließen.** Die Freigabe ist über SMB **nur lesbar**: `FullControl` hat allein die
-NFS-Kennung, unter der die Pods schreiben.
+Gate **positiv**, von mir nachgerechnet: Median `n_false_before_last_true` = **0,0**, 37/44
+Gleichungen ≤ 3, Replikation auf IC2 hält. Entscheidungszelle weak × forward, σ=0, IC1, dim 2+3.
 
-**Fehlerbilder:** `ErrImagePull` heißt Anmeldung, nicht fehlendes Image. `OOMKilled` heißt, die
-2 GiB haben nicht gereicht.
+**Zwei Befunde, die im Codex-Report fehlen und in `docs/phd_thesis_arc.md` §5 stehen:**
 
----
+- Alle p-Werte sitzen am **Auflösungsboden** von 18 Clustern (2^18 Vorzeichenwechsel, Minimum
+  3,8e-06). Nicht mit zwölf Stellen zitieren.
+- **„weak schlägt fd" ist nicht haltbar.** Auf den 39 Gleichungen ohne Konstante im Support sind
+  beide bei σ=0 identisch (0,872). Die Lücke kommt aus einem Zentrierungsdefekt, der die Konstante
+  im `fd`-Arm unauffindbar macht — den repariert WP-T1b.
 
-## 3. Was als Nächstes ansteht
+## 6. Offene Entscheidungen, keine davon dringend
 
-1. **Warten.** Offen sind 36 dim-3-Zellen (Median 47,2 h, es sind die teuren Nachzügler), 236
-   dim-2-Zellen (Median 2,47 h) sowie dim 4 und dim 1. Grob **~3.000 Kernstunden**, also 2 bis 3
-   Tage — Kapazitätsplanung, keine Evidenz (Designprinzip 7). **Die Restlaufzeit hängt an der
-   längsten Einzelzelle, nicht am Durchsatz.**
-   Nebenrechnung: 5.874 verbraucht plus ~3.000 Rest ergibt **~8.900 Kernstunden gegen die geplanten
-   12.300–15.900**. Die Planzahl war konservativ — beim Schreiben so sagen, sonst wird sie als
-   Messwert zitiert.
-2. **Die Kappenauswertung nachziehen, sobald mehr voll gekappte Paare da sind** — die 15 voll
-   gekappten dim-2-Zeilen der suchfreien Gegenprobe sind erst teilweise gepaart, die 32 dim-1-Zeilen
-   gar nicht. Fünf Systeme sind fünf Cluster; die Zahlen in Abschnitt 4 sind Zwischenstand.
-3. **Danach auswerten**, dann Claim D über die Paarung gegen die gerechnete SINDy-Baseline schließen,
-   inklusive Trajektorien-Abgleich per Hash.
-4. **Nach Kampagnenende:** Baseline-Image bauen, damit ODEFormer laufen kann.
+1. **Der Rauschzuschnitt von Paper 1** — der größte unbudgetierte Posten des Projekts. Robustheit
+   ist heute in Paper 1 gefaltet worden, aber die Phase-C-Kampagne hat keine Rauschachse, es gibt
+   keine Rausch-Infrastruktur im Julia-Suchpfad, und Phase C kostet bereits ~12.300–15.900
+   Kernstunden. Entweder reduzierter Rauscharm auf benannter Teilmenge oder deklarierte
+   Zukunftsarbeit. `docs/phd_thesis_arc.md` §3 und §11.
+2. **Das prädiktive Kriterium für Kappen-Versagen hat keinen Besitzer mehr** unter dem
+   Claim-A–D-Zuschnitt. Benannt, nicht entschieden.
+3. **Was WP-T2a wird**, hängt an WP-T1bs Ausgang A/B/C. Nicht vorher festlegen.
 
-**Während des Laufs verboten:** irgendetwas an der eingefrorenen Konfiguration ändern, und **nicht
-nach GitLab pushen** — ein Push baut das Kampagnen-Image neu. Alles seit `221a3a7` liegt nur auf
-GitHub.
+## 7. Zwei betriebliche Dinge
 
----
-
-## 4. Claim B ist getestet, und die Vorhersage hat gehalten
-
-Ausführlich im `DIARY.md` unter dem 22.09.; hier die Kurzform.
-
-Die am 20.09. **vor der Messung** datierte Einzelvorhersage lautete: der ungekappte Partner von
-System 60 / IC 2 / Seed 123 erreicht Stufe 5 und fährt deutlich mehr als 14 Level.
-
-```text
-System 60, IC 2, Seed 123, stage_caps [3,3,2]
-  gekappt:    14 Level, Endstufe 3,  3.098.076 loss evals
-  ungekappt:  22 Level, Endstufe 5,  5.336.451 loss evals
-```
-
-Getroffen. Dazu **21 voll gekappte Paare** auf fünf Systemen (26, 27, 29, 31, 60), 89 vollständige
-Paare insgesamt:
-
-| Kappenklasse | dim | n | identisch | gekappt billiger | teurer | evals cap/unc |
-|---|---|---|---|---|---|---|
-| keine | 2 | 24 | **24** | 0 | 0 | 1,000 |
-| keine | 3 | 15 | **15** | 0 | 0 | 1,000 |
-| teilweise | 2 | 5 | 5 | 0 | 0 | 1,000 |
-| teilweise | 3 | 24 | 7 | 2 | 15 | 1,013 |
-| **voll** | **2** | **20** | 1 | **19** | 0 | **0,727** |
-| **voll** | **3** | **1** | 0 | **1** | 0 | **0,581** |
-
-Gepoolt über die 21 voll gekappten Paare: **28,3 % Ersparnis** an `total_loss_evals`, Ratio pro Paar
-0,521 / **0,634** / 1,000. Das einzige Paar ohne Ersparnis ist System 27 Seed 7 IC 1, wo **auch der
-ungekappte Arm bei Stufe 3 endet** — derselbe Mechanismus von der anderen Seite, kein Gegenbeispiel.
-
-**Bei unverändertem Ergebnis:** `pruned_match` in **21/21** gleich, R² in **16/21** bitidentisch,
-größte Abweichung 0,0045 (System 27 Seed 123 IC 1), einmal ist der gekappte Arm besser.
-
-**Die Kontrolle hält:** die inzwischen **39 kappenlosen Paare sind 39/39 bitidentisch** in
-`total_loss_evals` und `executed_levels`.
-
-**Der Mechanismus steht im Code.** `_effective_max_stage` (`src/structure/evogrow.jl:141-144`) bildet
-das **Maximum** über die Kappen; eine offene Gleichung hält das volle Stufenbudget für alle offen.
-Claim B lautet deshalb präzise: **die Kappe spart genau dann, wenn sie alle Gleichungen kappt.** Wie
-oft das eintritt, sagt die suchfreie Gegenprobe (`outputs/phase_c_cap_incidence/stage_caps_by_basis.csv`):
-dim 1 **32/46**, dim 2 **15/56**, dim 3 **3/20**, dim 4 **0/4**. Ersparnis real und messbar, aber auf
-einen Minderheitenfall beschränkt — **beides gehört in denselben Satz.**
-
-**Nicht an der Kappe drehen.** Aggressiver kappen hieße, auf die Abwesenheit von Evidenz zu kappen
-(vom System-63-Defekt ausgeschlossen); die Schwellen nachziehen ist der WP-V1-Fehler. Der Hebel ist
-die **Granularität der Terminierung** — gekappte Gleichungen einfrieren statt nur ihre Terme
-begrenzen. **Paper 2, nicht jetzt**, und zu messen statt zu behaupten.
-
-**Instrumentierungslücke:** im ungekappten Arm sind `eq_final_stages`, `stage_caps` und
-`eq_overshoot` nicht befüllt; nur `final_stage` existiert, und das ist das Maximum über die
-Gleichungen. Aus der suchfreien Gegenprobe rekonstruierbar.
-
-**Zweiter Merkposten fürs Auswerten:** hilft k = 3 gegen den Konstanten-Defekt auf dim 2? Der
-dim-2-Probelauf lief unter `ec3b6bd`, also vor der Restart-Politik, mit k = 1; C-1 fährt k = 3. Die
-Vermutung ist geprüft und **vermutlich falsch** (0 Sentinel-Losses in 336 Zellen), aber nachsehen.
-Zwei Auflagen: anderes Identitätstripel, deshalb **Diagnostik und niemals eine gemeinsame Tabelle**;
-und der Git-Hash driftet mit, k ist nicht sauber isoliert.
-
----
-
-## 5. Was am 18.09. dazugekommen ist (unverändert gültig)
-
-Alles committet, alles im `DIARY.md` unter dem 18.09. mit Hashes.
-
-- **C-3 gestartet** (`resume_c3.json`). Der Aufräumschritt aus der alten Übergabe war **hinfällig**:
-  WP-C5 hat den Heartbeat-Leser am 15.09. an `start`-Ereignissen segmentiert, der angehängte echte
-  Lauf gewinnt.
-- **`baselines/`** — Harness, die Fremdmethoden auf **unseren** 126 exportierten Trajektorien
-  rechnet, mit Hashprüfung als Abbruchbedingung und gespeicherten Koeffizienten. `odeformer` ist
-  **gepinnt** (`c9193012`), nicht einkopiert; eigenes Python-3.9-Image; `containers/Dockerfile`
-  unberührt. SINDy läuft, ODEFormer wartet aufs Image. WP-N19 / WP-N19b.
-- **Zwei Entscheidungen vor der Messung eingefroren**, beide in
-  `docs/paper1_phaseC_benchmark_plan.md`: **§6a** — Methodenkosten sind *strukturell*, Zeit ist
-  sekundär und deklarationspflichtig. **§6b** — beide R²-Aggregationen werden berichtet, die
-  varianzgewichtete trägt das Etikett Literaturvergleich, **weil** sie ODEBench' Definition ist.
-- **WP-N20**: die varianzgewichtete Aggregation ist aus vorhandenen Records rekonstruierbar, ohne
-  Neulauf. Über die volle Phase-B-Kampagne: **53 von 756 Zellen kippen über die 0,9-Schwelle, alle
-  53 nach oben, 0 nach unten.** Kontrolle in 756/756 bestanden.
-- **README korrigiert** — er führte die auf Diagnostik herabgestufte Phase B noch als „die Evidenz".
-
----
-
-## 6. Kleinkram, der sonst untergeht
-
-- **Identität dieser Kampagne:** `git 221a3a72f0cb43164a22b09baac2d9ae82681a02`,
-  `config_fingerprint 0c9672de35c75a9d`, Verhaltens-Fingerprint `ffb0266c7913352c`, Basis
-  `staged_polynomial_basis_with_constant`, `max_fit_attempts = 3`. Am 22.09. über alle 355 Records
-  geprüft: ein Tripel, `git_dirty` nirgends.
-- **Jobs startet ausschließlich der Nutzer.** Claude sind `kubectl apply`, `patch` und `delete`
-  gesperrt; Claude liest und prüft.
-- **`codex exec` braucht im Auto-Modus eine `allow`-Regel**, sonst scheitert die Übergabe **still**.
-  Die Regel steht in `.claude/settings.json`, die ignoriert ist und daher nur auf diesem Rechner
-  lebt; die Anforderung ist in `codex/CODEX_PROTOCOL.md` dokumentiert. **Claude darf sie nicht selbst
-  setzen** — das blockt der Auto-Modus als Self-Modification, zu Recht.
-- **Codex kann hier kein Julia ausführen.** Julia-Pakete werden geschrieben, als `blocked` gemeldet,
-  Claude fährt die Abnahme. Python läuft normal.
-- **Nodes darfst du nicht auflisten** (`Forbidden`). 96 Kerne auf `alnilam01` / `alnilam02`.
-- **Fertige Jobs räumen sich selbst weg** (`ttlSecondsAfterFinished: 3600`). Eine kürzer werdende
-  Jobliste heißt „aufgeräumt", nicht „fertig".
-- **Protokollregel:** Fixtures werden aus echten Records **abgeleitet**, nie erfunden. Grüne Tests
-  an erfundenen Daten haben schon mehrere Arbeitspakete durchgewinkt, die an echten Daten umfielen.
-- **Eine deklarierte, ungeprüfte Annahme** (§6b): die Gewichte der Phase-B-Auswertung stammen aus
-  dem **Phase-C**-Trajektorienexport, weil Phase Bs eigene Trajektorien nicht versioniert sind. Das
-  Protokoll ist identisch, also sollten es dieselben Zahlen sein — geprüft ist es nicht.
+- **Ein Branch wurde geprüft und verworfen** (Historie ist vollständig linear, Pfade sind disjunkt,
+  ein nicht gemergter Zweig läge außerhalb des Claim-Tracing-Audits). Begründung im DIARY-Eintrag
+  `700a685`. Bei **WP-T2a** neu bewerten — der greift in `src/structure/evogrow.jl` ein.
+- **`PAPER_TIMELINE.md` nicht wieder anlegen.** Eingearbeitet in `docs/phd_thesis_arc.md`, das ist
+  jetzt die Paper-Roadmap. Eine Sicherungskopie lag im Scratchpad dieser Sitzung und ist flüchtig.
