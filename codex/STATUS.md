@@ -1,4 +1,4 @@
 status: done
-task:   WP-N20
-report: codex/reports/REPORT_WP_N20.md
-note:   Variance-weighted R2 analysis, controls, parameterized second input, outputs, and tests completed.
+task:   WP-T1
+report: codex/reports/REPORT_WP_T1.md
+note:   WP-T1 implemented, full run completed, gate judgment positive, tests passed.
