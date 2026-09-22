@@ -6,6 +6,93 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ## 2026-09-22
 
+### WP-T1b: die billige Rangliste ersetzt die teure Suche nicht — und die Kreuzprüfung, die beide Studien gegeneinander hält
+
+**Die Frage war nicht, ob wir SINDy schlagen.** Sie war: ersetzt das billige Verfahren die teure
+Suche? Wenn ja, gäbe es keinen Grund für Guidance, weil es dann keinen zu lenkenden Suchprozess mehr
+gäbe. Die Antwort ist nein, und damit ist der Zwischenschritt erledigt und WP-T2a die nächste
+offene Frage.
+
+**Aufbau.** Aus der WP-T1-Rangliste wird ein vollständiges Verfahren: Selektionspfad →
+Kleinste-Quadrate-Koeffizienten im jeweiligen Signalraum → ODE-Integration → dieselben Metriken, die
+der Phase-C-SINDy-Baseline auf denselben Trajektorien bereits führt. Drei vorab deklarierte
+Betriebspunkte: voller Pfad, **BIC** als einzige parameterfreie automatische Regel und
+**Oracle-|S|** als ausdrücklich benannte obere Schranke. 16.832 Auswertungsintegrationen, unter der
+in der Spec gesetzten Schranke von 40.000.
+
+**Ergebnis: Deutung C** — Rangqualität ist notwendig, aber nicht hinreichend. Exakte Systeme, σ = 0:
+
+| | SINDy bestes von 10 | SINDy Median | `weak`+`bic` | `weak`+`oracle` |
+|---|---|---|---|---|
+| dim 2 Struktur | 66,7 % | 44,4 % | 30,0 % | 45,0 % |
+| dim 3 Struktur | 28,6 % | 7,1 % | 0,0 % | 6,25 % |
+| dim 2 R² > 0,9 | 70,0 % | — | **75,0 %** | 65,0 % |
+| dim 3 R² > 0,9 | 12,5 % | — | 12,5 % | 12,5 % |
+
+Zwei Lesarten, beide zutreffend und beide zu nennen: gegen SINDys **beste** von zehn
+Konfigurationen liegen wir auf Struktur überall zurück; gegen den **Median** der zehn sind wir
+gleichauf (45,0 gegen 44,4 und 6,25 gegen 7,1), und bei R² auf dim 2 vorn. Welche gilt, hängt
+davon ab, ob man SINDy zugesteht, die beste Bibliothek aus zehn zu wählen — WP-N6 hat das bewusst
+zu seinen Gunsten getan. Designprinzip 9 zeigt hier wieder seinen Wert: die Strukturzahl und die
+R²-Zahl erzählen verschiedene Geschichten, und nur eine zu berichten wäre in beide Richtungen
+irreführend.
+
+**Die Kreuzprüfung, und sie ist die beste, die das Projekt bisher hatte.** `oracle_size` nimmt die
+obersten |S| Terme und trifft damit **genau dann**, wenn WP-T1s `n_false_before_last_true == 0`
+ist. WP-T1 sagt die WP-T1b-Trefferrate also vorher, ohne dass eine der beiden Studien von der
+anderen weiß:
+
+| dim | WP-T1 sagt vorher | WP-T1b misst |
+|---|---|---|
+| 1 | 0,3636 | 0,3182 |
+| 2 | **0,4500** | **0,4500** |
+| 3 | **0,0625** | **0,0625** |
+| 4 | 0,0000 | 0,0000 |
+
+dim 2, 3 und 4 exakt. Die einzige Abweichung ist **System 5 auf IC1**: wahrer Support
+`["1","x0^2"]`, Rang 1 und 2 korrekt getroffen, aber der gefittete Koeffizient von `x0^2` fiel
+unter die Aktivitätsschwelle und verschwand aus `active_terms_raw`. Kein Rang- und kein
+Selektionsfehler, sondern dieselbe Nullsummen-Mechanik, die WP-N2 für die Pruning-Regel gemessen
+hat — hier auf der Rohebene. Eine korrekte Auswahl kann von der Aktivitätsschwelle zerstört werden.
+
+**Der Befund, der woanders hinzeigt — und er war der Zweck des `fd`-Arms.** `fd`+`bic` erreicht auf
+dim 2 **20,0 %**, `weak`+`bic` **30,0 %**, beide auf **unserer** kanonischen Basis. SINDy erreicht
+66,7 % auf **seiner** Bibliothek, mit demselben Ableitungssignal wie unser `fd`-Arm. **Der Abstand
+kommt also nicht vom Signal**, sondern von der Bibliothek oder von der Selektionsregel (STLSQ gegen
+Forward+BIC). Vorbehalt, der mitzuführen ist: SINDys Strukturtreffer wird gegen polynomiale
+Wahrheitsterme in seiner Benennung geprüft, unserer gegen den kanonischen Basis-Support; für exakte
+Systeme sollte das zusammenfallen, verifiziert ist es nicht.
+
+**Zwei Korrekturen an WP-T1, in derselben Prüfung entstanden.** Erstens ist die dortige Aussage
+„weak schlägt fd" **nicht haltbar**: auf den 39 Gleichungen, deren Support die Konstante nicht
+enthält, sind beide Signale bei σ = 0 identisch (Anteil ≤ 3 jeweils 0,872); die scheinbare Lücke
+entsteht aus einem Zentrierungsdefekt, der die Konstante im `fd`-Design unauffindbar macht. WP-T1b
+repariert ihn hinter der Option `explicit_intercept`, deren Vorgabewert den WP-T1-Pfad bitidentisch
+lässt — nachgerechnet: erneuter Lauf, `git diff` leer, `records.csv`-Hash unverändert. Zweitens
+sitzen alle cluster-robusten p-Werte am **Auflösungsboden** von 18 Clustern und dürfen nicht mit
+zwölf Stellen zitiert werden.
+
+**Was daraus folgt, und was ausdrücklich nicht.** C tötet die Guidance-Idee nicht. Es beantwortet
+die Frage, die eine Begutachtung zuerst stellt — *warum dann noch EvoGrow?* —, und zwar günstig:
+weil der billige Schritt allein 30 % / 0 % erreicht, wo SINDy 66,7 % / 28,6 % schafft. Als
+**Prior** bleibt die Rangliste plausibel, denn EvoGrow braucht sie nicht korrekt, sondern nur besser
+als uniform, und WP-T1s Median 0 sagt, dass sie das deutlich ist. Die unbequeme Hälfte bleibt
+stehen und gehört ins Paper: **unser billiger Schritt ist schlechter als SINDys billiger Schritt.**
+
+**Die Entscheidungskette, damit die Reihenfolge nicht wieder verrutscht:** WP-T1 hat gezeigt, dass
+Signal da ist; WP-T1b, dass es die Suche nicht ersetzt; **WP-T2a muss zeigen, ob EvoGrow mit Prior
+besser wird als ohne** — das ist die einzige Messung, die über den Zweig entscheidet; und erst
+danach steht EvoGrow+Prior gegen SINDy, wofür weiter das EvoGrow-Bein aus Phase C fehlt.
+
+**Daraus abgeleitet und sofort angesetzt: WP-T1c.** Wenn SINDys billiger Schritt besser selektiert,
+ist er möglicherweise der bessere **Prior-Erzeuger**. Getestet wird das mit WP-T1s Metrik, nicht mit
+WP-T1bs — für einen Prior zählt die *Ordnung*, nicht das entstehende Modell. STLSQ läuft dafür auf
+**unserer** Basis, weil der Prior unsere Terme ordnen muss, und der Rang entsteht aus dem
+Regularisierungspfad statt aus einer einzelnen Lösung. Kosten: null Integrationen. **Die Wahl des
+Prioritätsgebers fällt dort, an der Rangqualität, und vorab** — nicht später danach, welcher bei
+EvoGrow besser aussieht. Das wäre der WP-V1-Fehler in neuer Verkleidung. Gibt es keinen klaren
+Gewinner, bleibt `forward` als Amtsinhaber.
+
 ### Der Paper-Bogen wird umgebaut: drei Paper, ein Konferenz-Einschub, ein Dokument
 
 <!-- 32c7989 -->
