@@ -8,6 +8,8 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ### WP-T1d: die Deadline wird herausgenommen — eine bewusste Ausnahme von der Regel vom Vortag
 
+<!-- 2d5b0b5 -->
+
 Der Job `evoode-wp-t1e-indexed-campaign` startete am 2026-09-23 um 00:01 mit
 `activeDeadlineSeconds: 86400`. Um 10:17 waren 22 von 36 Zellen fertig: alle 20 dim-2-Zellen und
 System 52. Die übrigen 14 Zellen sind dim 3, darunter Lorenz (55/56), bei `parallelism: 2`. Das
