@@ -6,6 +6,23 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ## 2026-09-23
 
+### ODEFormer-Raster auf dem Laptop: eine zweite, begründete Ausnahme von der 8-Stunden-Regel
+
+Die Zeitmessung (WP-N22) lief auf den Systemen 1, 2, 24 und 52, jeweils 32 Zellen je Umgebung, und
+alle waren erfolgreich. Beam 10 braucht im Mittel ~5 s je Zelle, mit Konstantenoptimierung ~11 s.
+Beam 50 braucht ~35 s, mit Optimierung ~39 s. Das Maximum lag bei 94 s. Hochgerechnet sind das
+rund 3 bis 5 h je Umgebung. Das ist eine Durchschnittsprojektion aus vier Systemen ohne dim 4 und
+zählt nach der Regel ausdrücklich **nicht** als Sicherheit.
+
+**Entscheidung des Nutzers: Lauf auf dem Laptop**, 4 parallele Shards, Referenzumgebung zuerst.
+Das ist vertretbar, weil der eigentliche Grund der Regel entfällt, nämlich dass der Laptop tagelang
+blockiert ist. Seit WP-N22b hat jede Zelle eine **harte** Grenze von 300 s, also dem Dreifachen des
+gemessenen Maximums. Die Grenze wird per Kindprozess durchgesetzt und im Linux-Image getestet.
+Jede fertige Zelle wird atomar gespeichert, und der Runner setzt ohne Verlust fort. Der Lauf lässt
+sich also jederzeit beenden, ohne dass etwas verloren geht. Das ist anders als bei WP-T1d, wo die
+Deadline den Lauf selbst beendet hätte. Die Regel gilt unverändert weiter.
+
+
 ### WP-N21: ODEFormer läuft auf unseren Trajektorien, aber seine Zahlen hängen an der torch-Version
 
 <!-- 7740b2f -->
