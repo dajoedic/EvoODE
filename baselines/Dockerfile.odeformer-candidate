@@ -1,0 +1,47 @@
+FROM registry.scch.at/cache/library/python:3.11-slim
+
+ARG ODEFORMER_WEIGHTS_SHA256=56754040be5aa92ed4767fc43ee2008faa293f87c12b643e66c7df3e1623a5e8
+ARG ODEFORMER_GOOGLE_DRIVE_ID=1L_UZ0qgrBVkRuhg5j3BQoGxlvMk_Pm1W
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PYTHONPATH=/workspace/EvoODE \
+    ODEFORMER_WEIGHTS_PATH=/opt/odeformer/odeformer.pt \
+    ODEFORMER_WEIGHTS_SHA256=${ODEFORMER_WEIGHTS_SHA256} \
+    ODEFORMER_GOOGLE_DRIVE_ID=${ODEFORMER_GOOGLE_DRIVE_ID} \
+    TORCH_FORCE_NO_WEIGHTS_ONLY_LOAD=1
+
+WORKDIR /workspace/EvoODE
+
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends build-essential git ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY baselines/requirements-odeformer-candidate.txt /tmp/requirements.txt
+RUN pip install --no-cache-dir --extra-index-url https://download.pytorch.org/whl/cpu -r /tmp/requirements.txt
+
+# Installed from the pinned upstream commit, not from a local clone, so the image builds anywhere.
+RUN pip install --no-cache-dir --no-deps "git+https://github.com/sdascoli/odeformer.git@c9193012ad07a97186290b98d8290d1a177f4609"
+
+RUN python - <<'PY'
+import hashlib
+import os
+from pathlib import Path
+
+import gdown
+
+expected = os.environ["ODEFORMER_WEIGHTS_SHA256"]
+target = Path(os.environ["ODEFORMER_WEIGHTS_PATH"])
+target.parent.mkdir(parents=True, exist_ok=True)
+gdown.download(id=os.environ["ODEFORMER_GOOGLE_DRIVE_ID"], output=str(target), quiet=False)
+actual = hashlib.sha256(target.read_bytes()).hexdigest()
+print(f"ODEFormer weights sha256: {actual}")
+if expected.startswith("TO_BE_FILLED"):
+    raise SystemExit("Replace ODEFORMER_WEIGHTS_SHA256 with the printed hash and rebuild.")
+if actual != expected:
+    raise SystemExit(f"ODEFormer weight hash mismatch: expected {expected}, got {actual}")
+PY
+
+COPY . /workspace/EvoODE
+
+ENTRYPOINT ["python", "-m", "baselines.harness"]

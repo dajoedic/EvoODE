@@ -3,6 +3,7 @@ from pathlib import Path
 
 import pandas as pd
 
+from baselines import compare_odeformer_equivalence
 from baselines import harness
 
 
@@ -60,6 +61,13 @@ def test_smoke_writes_sindy_and_odeformer_records(tmp_path: Path) -> None:
         "reconstruction_r2_variance_weighted_gt_0_9",
         "generalization_r2_arithmetic_mean_gt_0_9",
         "generalization_r2_variance_weighted_gt_0_9",
+        "odeformer_model_raw",
+        "odeformer_model_canonical",
+        "odeformer_weight_sha256",
+        "odeformer_candidates_evaluated",
+        "odeformer_beam_size",
+        "odeformer_beam_temperature",
+        "odeformer_parameter_optimization_iterations",
     }.issubset(frame.columns)
     assert "reconstruction_r2_gt_0_9" not in frame.columns
     assert "generalization_r2_gt_0_9" not in frame.columns
@@ -76,6 +84,10 @@ def test_smoke_writes_sindy_and_odeformer_records(tmp_path: Path) -> None:
         {"dimension": 1, "system_id": 2},
         {"dimension": 2, "system_id": 24},
     ]
+    odeformer_records = frame[frame["method"] == "odeformer"]
+    assert set(odeformer_records["status"]) == {"error"}
+    assert odeformer_records["error_message"].str.contains("ODEFormer is not importable").all()
+    assert set(odeformer_records["odeformer_beam_size"]) == {10}
 
 
 def test_r2_aggregations_are_distinct_on_multidimensional_case() -> None:
@@ -100,3 +112,23 @@ def test_selection_combines_dimension_id_and_limit_filters() -> None:
     systems = benchmark()
     selected = harness.selected_systems(systems, {"dimensions": [2, 3], "system_ids": [24, 25, 52], "max_systems": 2})
     assert [(int(system["id"]), int(system["dim"])) for system in selected] == [(24, 2), (25, 2)]
+
+
+def test_odeformer_equivalence_compare_rule_uses_export_records(tmp_path: Path) -> None:
+    path = harness.run(CONFIG, str(tmp_path / "out"))
+    result = compare_odeformer_equivalence.compare(path, path)
+    assert result["passed"] is True
+    assert result["reference_record_count"] == 6
+    assert result["comparison_rule"]["constants"] == {"abs_tol": 1e-8, "rel_tol": 1e-8}
+
+
+def test_odeformer_equivalence_compare_reports_r2_difference_from_export_records(tmp_path: Path) -> None:
+    path = harness.run(CONFIG, str(tmp_path / "out"))
+    records = read_jsonl(path)
+    candidate = tmp_path / "candidate.jsonl"
+    odeformer_record = next(record for record in records if record["method"] == "odeformer")
+    odeformer_record["reconstruction_r2_arithmetic_mean"] = 0.25
+    candidate.write_text("\n".join(json.dumps(record, sort_keys=True) for record in records) + "\n", encoding="utf-8")
+    result = compare_odeformer_equivalence.compare(path, candidate)
+    assert result["passed"] is False
+    assert result["findings"][0]["field"] == "reconstruction_r2_arithmetic_mean"

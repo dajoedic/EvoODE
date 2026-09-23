@@ -1,4 +1,4 @@
 status: blocked
-task:   WP-T1e
-report: codex/reports/REPORT_WP_T1e.md
-note:   Implementation complete; blocked by Julia execution environment, not by the task.
+task:   WP-N21
+report: codex/reports/REPORT_WP_N21.md
+note:   Umgebung, nicht Sache: Docker, ODEFormer-Gewichte und OSV/Trivy-Netzscan sind in Codex nicht ausführbar.

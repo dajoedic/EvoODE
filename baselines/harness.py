@@ -1,9 +1,12 @@
 import argparse
+import contextlib
 import hashlib
 import importlib.metadata
 import json
 import math
-import subprocess
+import os
+import random
+import re
 import sys
 import time
 from dataclasses import dataclass
@@ -83,6 +86,12 @@ def read_float64_file(path: Path, shape: tuple[int, ...], expected_hash: str, la
     return np.frombuffer(payload, dtype="<f8").reshape(shape, order="C").copy()
 
 
+def manifest_relative_path(value: Any) -> Path:
+    # The export manifest is written on Windows and stores "cells\file.bin"; inside a Linux
+    # container a backslash is not a separator. The hash check on the bytes stays unchanged.
+    return Path(str(value).replace("\\", "/"))
+
+
 def load_exported_cells(export_dir: Path, benchmark: list[dict[str, Any]]) -> tuple[dict[tuple[int, int], TrajectoryCell], pd.DataFrame]:
     manifest_path = export_dir / "trajectory_manifest.csv"
     if not manifest_path.is_file():
@@ -128,8 +137,8 @@ def load_exported_cells(export_dir: Path, benchmark: list[dict[str, Any]]) -> tu
         state_shape = parse_shape(row["state_shape"], f"state_shape system_id={system_id}, ic={ic_set}")
         if len(time_shape) != 1 or state_shape != (time_shape[0], dim):
             fail(f"shape mismatch for system_id={system_id}, ic={ic_set}: time={time_shape}, state={state_shape}")
-        time_values = read_float64_file(export_dir / str(row["time_path"]), time_shape, str(row["time_sha256"]), f"system_id={system_id}, ic={ic_set} time")
-        state_values = read_float64_file(export_dir / str(row["state_path"]), state_shape, str(row["state_sha256"]), f"system_id={system_id}, ic={ic_set} state")
+        time_values = read_float64_file(export_dir / manifest_relative_path(row["time_path"]), time_shape, str(row["time_sha256"]), f"system_id={system_id}, ic={ic_set} time")
+        state_values = read_float64_file(export_dir / manifest_relative_path(row["state_path"]), state_shape, str(row["state_sha256"]), f"system_id={system_id}, ic={ic_set} state")
         cells[(system_id, ic_set)] = TrajectoryCell(
             system_id=system_id,
             initial_condition_set=ic_set,
@@ -195,7 +204,11 @@ def package_versions() -> dict[str, str]:
 
 def git_hash() -> str:
     try:
-        return subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=REPO_ROOT, text=True).strip()
+        head = (REPO_ROOT / ".git" / "HEAD").read_text(encoding="utf-8").strip()
+        if head.startswith("ref: "):
+            ref_path = REPO_ROOT / ".git" / head.removeprefix("ref: ").strip()
+            return ref_path.read_text(encoding="utf-8").strip()
+        return head
     except Exception:
         return "unknown"
 
@@ -253,6 +266,72 @@ def record_failure(record: dict[str, Any], exc: Exception) -> dict[str, Any]:
     return failed
 
 
+def odeformer_schema_defaults(config: dict[str, Any]) -> dict[str, Any]:
+    keys = [
+        "beam_size",
+        "beam_temperature",
+        "beam_type",
+        "beam_length_penalty",
+        "beam_early_stopping",
+        "max_input_points",
+        "max_generated_output_len",
+        "rescale",
+        "sort_metric",
+        "eval_subsample_ratio",
+        "parameter_optimization",
+        "parameter_optimization_iterations",
+        "weight_sha256",
+        "weights_path",
+    ]
+    return {f"odeformer_{key}": config.get(key, "") for key in keys}
+
+
+def odeformer_failure(record: dict[str, Any], config: dict[str, Any], exc: Exception) -> dict[str, Any]:
+    failed = record_failure(record, exc)
+    failed.update(
+        {
+            "odeformer_model_raw": "",
+            "odeformer_model_canonical": "",
+            "odeformer_fitted_constants": "[]",
+            "odeformer_candidates_evaluated": 0,
+            "elapsed_s_non_evidence": 0.0,
+            **odeformer_schema_defaults(config),
+        }
+    )
+    return failed
+
+
+@contextlib.contextmanager
+def temporary_working_directory(path: Path):
+    previous = Path.cwd()
+    os.chdir(path)
+    try:
+        yield
+    finally:
+        os.chdir(previous)
+
+
+def canonicalize_odeformer_expression(expression: str) -> str:
+    import sympy
+
+    canonical_parts = []
+    for part in expression.split("|"):
+        text = part.strip()
+        if not text:
+            canonical_parts.append("")
+            continue
+        parsed = sympy.sympify(text.replace("^", "**"))
+        canonical_parts.append(str(sympy.simplify(parsed)))
+    return " | ".join(canonical_parts)
+
+
+def numeric_constants(expression: str) -> list[float]:
+    constants = []
+    for match in re.finditer(r"(?<![_A-Za-z])[-+]?(?:(?:\d*\.\d+)|(?:\d+\.?))(?:[Ee][+-]?\d+)?", expression):
+        constants.append(float(match.group(0)))
+    return constants
+
+
 def run_sindy_record(system: dict[str, Any], fit_cell: TrajectoryCell, target_cell: TrajectoryCell, config: dict[str, Any]) -> dict[str, Any]:
     record = base_record("sindy", config, fit_cell, target_cell)
     start = time.perf_counter()
@@ -303,11 +382,87 @@ def run_sindy_record(system: dict[str, Any], fit_cell: TrajectoryCell, target_ce
 
 def run_odeformer_record(_system: dict[str, Any], fit_cell: TrajectoryCell, target_cell: TrajectoryCell, config: dict[str, Any]) -> dict[str, Any]:
     record = base_record("odeformer", config, fit_cell, target_cell)
+    record.update(odeformer_schema_defaults(config))
+    start = time.perf_counter()
     try:
-        import odeformer  # type: ignore  # noqa: F401
+        import torch
+        from odeformer.model import SymbolicTransformerRegressor
     except Exception as exc:
-        return record_failure(record, RuntimeError(f"ODEFormer is not importable in this environment: {exc}"))
-    return record_failure(record, NotImplementedError("ODEFormer adapter requires the upstream inference entry point and weights."))
+        return odeformer_failure(record, config, RuntimeError(f"ODEFormer is not importable in this environment: {exc}"))
+    try:
+        seed = int(config.get("seed", 2023))
+        random.seed(seed)
+        np.random.seed(seed)
+        torch.manual_seed(seed)
+        torch.set_num_threads(1)
+        weights_path = resolve_path(config.get("weights_path", "odeformer.pt"))
+        if not weights_path.is_file():
+            raise FileNotFoundError(f"ODEFormer weights not found: {weights_path}")
+        actual_hash = hashlib.sha256(weights_path.read_bytes()).hexdigest()
+        expected_hash = str(config.get("weight_sha256", "")).strip()
+        if expected_hash and not expected_hash.startswith("TO_BE_FILLED") and actual_hash != expected_hash:
+            raise ValueError(f"ODEFormer weights hash mismatch: expected {expected_hash}, got {actual_hash}")
+        os.environ.setdefault("TORCH_FORCE_NO_WEIGHTS_ONLY_LOAD", "1")
+        with temporary_working_directory(weights_path.parent):
+            model = SymbolicTransformerRegressor(
+                from_pretrained=True,
+                max_input_points=int(config["max_input_points"]),
+                rescale=bool(config["rescale"]),
+            )
+        model.set_model_args(
+            {
+                "beam_size": int(config["beam_size"]),
+                "beam_temperature": float(config["beam_temperature"]),
+                "beam_type": str(config["beam_type"]),
+                "beam_length_penalty": float(config["beam_length_penalty"]),
+                "beam_early_stopping": bool(config["beam_early_stopping"]),
+                "max_generated_output_len": int(config["max_generated_output_len"]),
+            }
+        )
+        model.fit(
+            fit_cell.time,
+            fit_cell.state,
+            sort_candidates=True,
+            sort_metric=str(config["sort_metric"]),
+            rescale=bool(config["rescale"]),
+            verbose=False,
+        )
+        candidates = list(model.predictions.get(0, []))
+        if not candidates or candidates[0] is None:
+            raise RuntimeError("ODEFormer produced no candidate expression")
+        best = candidates[0]
+        model_raw = best.infix() if hasattr(best, "infix") else str(best)
+        model_canonical = canonicalize_odeformer_expression(model_raw)
+        reconstruction = model.predict(fit_cell.time, fit_cell.state[0, :])
+        generalization = model.integrate_prediction(target_cell.time, target_cell.state[0, :], prediction=best)
+        reconstruction_r2 = aggregate_r2(fit_cell.state, np.asarray(reconstruction, dtype=float))
+        generalization_r2 = aggregate_r2(target_cell.state, np.asarray(generalization, dtype=float))
+        record.update(
+            {
+                "model": model_raw,
+                "active_terms_raw": "[]",
+                "active_terms_pruned": "[]",
+                "true_terms": "[]",
+                "structure_hit_raw": False,
+                "structure_hit_pruned": False,
+                "reconstruction_status": "success",
+                "generalization_status": "success",
+                "odeformer_model_raw": model_raw,
+                "odeformer_model_canonical": model_canonical,
+                "odeformer_fitted_constants": json.dumps(numeric_constants(model_canonical), separators=(",", ":")),
+                "odeformer_weight_sha256": actual_hash,
+                "odeformer_candidates_evaluated": len(candidates),
+                "odeformer_parameter_optimization_iterations": int(config.get("parameter_optimization_iterations", 0)),
+                "elapsed_s_non_evidence": time.perf_counter() - start,
+                **{f"reconstruction_{key}": value for key, value in reconstruction_r2.items()},
+                **{f"generalization_{key}": value for key, value in generalization_r2.items()},
+                **r2_threshold_flags("reconstruction", reconstruction_r2),
+                **r2_threshold_flags("generalization", generalization_r2),
+            }
+        )
+        return record
+    except Exception as exc:
+        return odeformer_failure(record, config, exc)
 
 
 def inactive_record(method: str, fit_cell: TrajectoryCell, target_cell: TrajectoryCell) -> dict[str, Any]:

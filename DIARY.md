@@ -6,6 +6,35 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ## 2026-09-23
 
+### WP-N21: ODEFormer läuft auf unseren Trajektorien, aber seine Zahlen hängen an der torch-Version
+
+Codex hat den Adapter, zwei Dockerfiles und den Äquivalenztest geschrieben. Die Images habe ich
+gebaut und gefahren (Details im Nachtrag von `codex/reports/REPORT_WP_N21.md`). Die Gewichte sind
+im Image, ihr SHA-256 ist `56754040…3a5e8`, und in allen Builds beider Images ist er identisch.
+ODEFormer rechnet in beiden Umgebungen alle sechs Smoke-Zellen erfolgreich. System 1, der RC-Kreis,
+wird korrekt als `c₀ − c₁·x₀` gefunden.
+
+**Die Äquivalenz ist nach der vorab festgelegten Regel durchgefallen:** 34 Befunde, 0 von 6
+Ausdrücken identisch. Die Diagnose ist gemessen: Jede Umgebung ist für sich bitgenau
+reproduzierbar, und **der Seed ist wirkungslos**, weil `transformer.py:495` intern
+`torch.manual_seed(0)` setzt. Zwischen den Umgebungen ist bei jedem Seed kein Ausdruck gleich. Die
+Abweichung ist also ein echter Umgebungseffekt: torch 2.0 und 2.14 ziehen aus demselben internen
+Seed andere Stichproben. Die Größenordnung: Bei System 1 und 2 ist die Form gleich und die
+Konstanten weichen in der dritten Stelle ab. Bei System 24 ist die Struktur anders. Die Zahl der
+R² > 0.9 ist gleich (6/6 und 3/6), einzelne R²-Werte weichen um bis zu 0,04 ab.
+
+**Das Dilemma:** Die Referenzumgebung (torch 2.0) ist die, für die ODEFormer gebaut und mit der
+es veröffentlicht wurde. Sie hat 12 HIGH/CRITICAL-Befunde in torch und 2 in `numexpr`. Die
+Kandidatenumgebung ist sauber, liefert aber messbar andere Formeln. Welche Umgebung die
+publizierten Zahlen liefert, entscheidet der Nutzer.
+
+**Zwei Nebenbefunde.** Der Seed ist wirkungslos, also ist ODEFormer je Umgebung deterministisch,
+und ein Lauf pro Zelle genügt. SINDy und ODEFormer passen nicht in eine Umgebung: pysindy 2.1.0,
+mit dem C-4 lief, verlangt `numpy ≥ 2.0`, ODEFormer `numpy==1.23.5`.
+`baselines/requirements.txt` pinnte seit WP-N19 pysindy 1.7.5 gegen Code, der die 2.x-API
+benutzt. Aufgefallen ist das niemandem, weil das Image nie gebaut wurde.
+
+
 ### WP-T1d, Zwischenblick: gemessen wird das Scheitern des Referenzfits, nicht die Loss-Landschaft
 
 <!-- 621a5e7 -->
