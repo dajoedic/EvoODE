@@ -20,8 +20,8 @@ ist, ist vermutlich falsch — dann gilt `CLAUDE.md`.
 36 Zellen, `parallelism: 2`, `activeDeadlineSeconds: 86400`, Image
 `evoode:5a87efb3438ef459f57e28fca9fde8564b97217f`. ~~Erwartetes Ende gegen 06:00~~ — **falsch:**
 Stand 10:17 sind 22/36 fertig (alle dim 2 plus System 52), Zellen 22/23 (System 54, dim 3) laufen
-seit 06:58 bzw. 07:46. Es fehlen 14 dim-3-Zellen inkl. Lorenz (55/56); die Deadline greift am
-2026-09-24 um 00:01 und ist damit erstmals eine reale Schranke, keine Formalie.
+seit 06:58 bzw. 07:46. Es fehlen 14 dim-3-Zellen inkl. Lorenz (55/56); die Deadline wurde
+am 23.09. vormittags **entfernt** (`activeDeadlineSeconds: null`, bewusste Ausnahme, DIARY 2026-09-23).
 
 ```powershell
 oc get job evoode-wp-t1e-indexed-campaign -o custom-columns="SUCCEEDED:.status.succeeded,ACTIVE:.status.active,FAILED:.status.failed"
