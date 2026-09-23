@@ -8,6 +8,8 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ### Die Trivy-Befunde: nicht torch, sondern der Plot-Stack in der Rechenumgebung
 
+<!-- 5018675 -->
+
 Die ersten echten Ergebnisse von `trivy-fs` und `trivy-image` (Pipeline #8379) habe ich lokal mit
 demselben Scanner nachgestellt. Die Vermutung vom Vortag, dass die Python-Abhängigkeiten schuld
 sind, stimmt nur zum kleineren Teil. **109 der Befunde liegen in Julias Binärpaketen in
