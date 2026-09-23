@@ -6,6 +6,23 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ## 2026-09-23
 
+### Das prädiktive Kriterium für Kappen-Versagen bekommt einen Termin: nach der Phase-C-Analyse
+
+Der Posten aus `docs/phd_thesis_arc.md` §11 hatte seit dem Umbau des Bogens keinen Besitzer mehr.
+Gefragt ist, ob sich **vorab und ohne Ground Truth** sagen lässt, wo die Kappe versagen wird. Die
+bisherigen Versagensfälle hat man erst im Nachhinein gesehen: der System-63-Defekt, die
+abgeschnittenen Zeilen bis WP-C5 und System 31 bei IC-Set 2. Entscheidung des Nutzers: Das
+bekommt eine **eigene, tiefere Analyse, sobald die laufende Phase-C-Analyse fertig ist.** Sie
+kommt nicht vorher und wird auch nicht in die Phase-C-Analyse hineingemischt. Wohin das Ergebnis
+gehört (Limitation in Paper 1, eigene Analyse in Paper 1 oder Paper 2), wird erst anhand dieser
+Analyse entschieden.
+
+Rechnen muss man dafür voraussichtlich nichts neu. Die Phase-C-Records tragen `stage_caps` neben
+dem Strukturergebnis, also lassen sich Kandidaten für ein Kriterium nachträglich auf den 30
+exakten Systemen testen. Die Ground Truth dient dabei nur zur **Bewertung** eines Kriteriums und
+geht nie selbst in das Kriterium ein.
+
+
 ### Rauschen in Paper 1: zurückgestellt, bis der Algorithmus auf sauberen Daten trägt
 
 <!-- 7b6161f -->

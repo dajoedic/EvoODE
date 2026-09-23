@@ -558,5 +558,11 @@ not a claim.
 3. **Where the predictive criterion for cap failure lands.** Identifying in advance, without ground
    truth, where the controller will fail was the item that turned Paper 1's cap work from an
    observation into a claim. Under the current Claim A–D scope it has no owner.
+   **Scheduled 2026-09-23:** it gets its own in-depth analysis **after the current Phase C
+   analysis is complete** — not before, and not folded into it. Placement (Paper 1 limitation,
+   Paper 1 analysis, or Paper 2) is decided on that analysis, not ahead of it. Starting material:
+   the Phase C records carry `stage_caps` next to the structural outcome, so candidate predictors
+   can be tested post hoc on the 30 exact systems without new compute — the ground truth is used
+   only to *score* a predictor, never inside it.
 4. **Whether the conference insert is written before or after Paper 1 is submitted.** Its data
    largely exists; its dependency runs to Paper 2, not to Paper 1.

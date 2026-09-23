@@ -133,7 +133,9 @@ kein Befund. Die drei Klassen werden nie zu einer Kennzahl verrechnet.
 
 ## 8. Offene Entscheidungen
 
-1. **Rauschzuschnitt von Paper 1** — größter unbudgetierter Posten, `docs/phd_thesis_arc.md` §3/§11
-2. **Prädiktives Kriterium für Kappen-Versagen** — hat unter Claim A–D keinen Besitzer
-3. **Was WP-T2a wird** — hängt an WP-T1ds Ausgang
-4. **`docker:29-dind` pinnen** und eine Registry-Cleanup-Policy — Betrieb, nicht Forschung
+Am 23.09. vormittags durchgegangen:
+
+1. **Rauschzuschnitt:** zurückgestellt, bis Phase C den Nutzen auf rauschfreien Daten zeigt (DIARY, `docs/phd_thesis_arc.md` §3)
+2. **Prädiktives Kriterium für Kappen-Versagen:** eigene tiefere Analyse **nach** der Phase-C-Analyse (DIARY, Bogen §11)
+3. **WP-T2a:** nur vorgemerkt, hängt an WP-T1d
+4. **`docker:29-dind`:** per Digest gepinnt (`CHANGELOG.md`). Beim nächsten Push wird neu gebaut, die laufenden Jobs bleiben unberührt. **Registry-Cleanup-Policy:** Vorschlag liegt beim Nutzer (GitLab-Oberfläche, Kampagnen-SHAs ausnehmen)
