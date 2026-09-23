@@ -483,6 +483,21 @@ favour us is the failure mode:
 via `gdown` (`odeformer/model/sklearn_wrapper.py:60-66`). The weights must be **baked into the
 image**. Otherwise every pod either fails without egress, or 32 pods request Google Drive at once.
 
+**ODEFormer arm — decided 2026-09-23 (WP-N21).** The published ODEFormer numbers come from the
+**reference environment** — torch 2.0.0, sympy 1.11.1, numpy 1.23.5, i.e. the environment ODEFormer
+was built and published with. WP-N21 measured that the environment moves its output: every
+environment is bit-reproducible, the seed is inert (`transformer.py:495` resets
+`torch.manual_seed(0)`), and between torch 2.0 and 2.14 0 of 6 expressions agree, R² values move by
+up to 0.04. A reviewer must not be able to say we ran a different ODEFormer. The candidate
+environment (torch 2.14) runs the same grid as a **sensitivity check**, reported beside it — the
+shift itself is a reportable reproducibility finding about the literature baseline. The reference
+image's HIGH/CRITICAL findings are a documented exception (`CHANGELOG.md` E7).
+**Configurations: all four, all reported, none selected** — beam size 10 and 50, each with and
+without ODEFormer's own constant optimisation (`param_optimizer.py`, `ConstantOptimizer`, its own
+defaults). The same rule as SINDy's ten configurations. One run per cell and configuration,
+because the output is deterministic. SINDy runs in its own environment: pysindy 2.1.0 needs
+`numpy >= 2.0`, ODEFormer `numpy==1.23.5`.
+
 **The baseline environment carries a dependency conflict (found 2026-09-23).** `torch==2.0.0` has
 a CRITICAL and several HIGH advisories (`CHANGELOG.md` E6). Every torch release that clears them
 (≥ 2.10, which needs Python ≥ 3.10) requires `sympy ≥ 1.13.3`, while the pinned ODEFormer commit

@@ -176,6 +176,20 @@ resolved inside the ODEFormer baseline work package, whose acceptance requires O
 its weights under torch ≥ 2.10 and to reproduce, on a test system, the result it gives under
 `sympy==1.11.1`.
 
+**E7 — §5.1: the ODEFormer reference image runs with known HIGH/CRITICAL findings.**
+`baselines/Dockerfile.odeformer-reference` pins `torch==2.0.0` (12 HIGH/CRITICAL advisories per
+OSV, among them CVE-2025-32434, code execution through `torch.load`) and `numexpr==2.8.4` (2).
+*Reason:* scientific fidelity. This is the environment ODEFormer was published with, and WP-N21
+measured that a torch upgrade changes its output — 0 of 6 expressions identical between torch 2.0
+and 2.14. Publishing baseline numbers from a different environment would compare against a
+different method. Decided by the project lead on 2026-09-23.
+*Compensating:* the only file loaded through `torch.load` is the ODEFormer checkpoint, verified
+against a fixed SHA-256 both at build time and before every load; the image runs batch inference on
+an internal cluster, exposes no service and loads no user-supplied model. The clean candidate image
+(torch 2.14, no HIGH/CRITICAL findings) exists and runs the same grid as a sensitivity check.
+*Scope:* the reference image is used only for the Paper 1 ODEFormer baseline and is not a base for
+anything else.
+
 ### Declared limitation — security scan coverage
 
 Not an exception, because the policy is met as written. Stated because four green jobs suggest more
