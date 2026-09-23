@@ -8,6 +8,8 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ### ODEFormer-Raster auf dem Laptop: eine zweite, begründete Ausnahme von der 8-Stunden-Regel
 
+<!-- e60d76c -->
+
 Die Zeitmessung (WP-N22) lief auf den Systemen 1, 2, 24 und 52, jeweils 32 Zellen je Umgebung, und
 alle waren erfolgreich. Beam 10 braucht im Mittel ~5 s je Zelle, mit Konstantenoptimierung ~11 s.
 Beam 50 braucht ~35 s, mit Optimierung ~39 s. Das Maximum lag bei 94 s. Hochgerechnet sind das
