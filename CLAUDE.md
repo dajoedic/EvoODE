@@ -733,12 +733,18 @@ the coupled search path 1e-6 is the cheaper, behaviour-equal tolerance; the Syst
 - **The GitLab project moves to another namespace once the running Orion jobs finish (announced
   2026-09-23).** That namespace has its own rules for where images are pushed; the CI image path
   follows those rules, not today's `registry.gitlab.scch.at/joedicke/evoode`. Two things must be
-  settled **before** the move, not after: (1) the campaign images that records point to —
-  `91f88c4…` (Phase B), `221a3a7…` (Phase C), `5a87efb…` (WP-T1d), `ec3b6bd…`, `f6143eb…`,
-  `88eaeb6…` — must survive it, and GitLab has historically refused to transfer a project whose
-  container registry holds tags, so check with DevOps whether this instance still does; (2) every
-  `k8s/` manifest and `docs/hpc_deployment_guide.md` name the old registry path. No registry
-  cleanup policy is set before the move — the new namespace's rules decide it.
+  settled **before** the move, not after: (1) **the campaign images move with the project —
+  decided 2026-09-23; the user must request this explicitly when the move is ordered.** They are
+  not needed by the runs once those end; they are needed because an image is the only
+  *demonstrably* identical executable for a record — a rebuild from the Dockerfile is only
+  *probably* identical (floating base tag, drifting Debian packages). Priority:
+  **must keep** `221a3a7…` (Phase C) and `91f88c4…` (Phase B); **keep** `5a87efb…` (WP-T1d, basis
+  of Paper 2) and `ec3b6bd…` (dim-2 probe, carries the P3 basis decision); **may go** `f6143eb…`
+  (regression grid) and `88eaeb6…` (pilots, never merged into campaign data). Horizon: until
+  Papers 1 and 2 are published; after that, export the Phase C image as a file and archive it with
+  the paper (e.g. Zenodo), so no result depends on a GitLab registry. (2) every `k8s/` manifest
+  and `docs/hpc_deployment_guide.md` name the old registry path. No registry cleanup policy is set
+  before the move — the new namespace's rules decide it.
 - **A central `test/runtests.jl` plus a CI test stage.** 18 Julia and 10 Python test files exist and
   nothing runs them; `.gitlab-ci.yml` has `build` and `security` only. Cheap in work, **but not
   schedulable right now**: the CI lives on GitLab and a push there rebuilds the campaign image, so
