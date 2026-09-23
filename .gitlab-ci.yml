@@ -57,7 +57,9 @@ build_campaign_image:
     - cpu
   timeout: 3 hours
   services:
-    - name: registry.scch.at/cache/library/docker:29-dind
+    # Pinned by digest: the floating 29-dind tag switched attestations on in a patch release
+    # (CHANGELOG, Fixed — 2026-09-22). This digest built 5a87efb successfully in pipeline #8379.
+    - name: registry.scch.at/cache/library/docker:29-dind@sha256:5efed980cba3fc126cf54e21a5a6ff8849d05b6e0623d6e7612f48e9cd6cd17e
       alias: docker
   rules:
     - if: '$CI_COMMIT_BRANCH == "main"'

@@ -10,6 +10,16 @@ project**. Scientific history belongs in `DIARY.md`, not here.
 
 ## [Unreleased]
 
+### Changed — 2026-09-23
+
+- The CI service image is pinned by digest:
+  `registry.scch.at/cache/library/docker:29-dind@sha256:5efed980cba3fc126cf54e21a5a6ff8849d05b6e0623d6e7612f48e9cd6cd17e`.
+  This closes the follow-up named under *Fixed — 2026-09-22*: the floating tag was the underlying
+  defect. The digest is the one pipeline #8379 (`5a87efb`) pulled and built successfully with, read
+  from that job's service log. It is **not** the version that built `221a3a7`. That version was
+  never established, and the attestation flags stay because they are harmless under either version.
+  A future upgrade is a deliberate change of this line, recorded here.
+
 ### Fixed — 2026-09-22
 
 - `build_campaign_image` no longer attaches build attestations: `--provenance=false --sbom=false`
