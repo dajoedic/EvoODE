@@ -1,129 +1,143 @@
-# WP-T1e — WP-T1d reparieren, begrenzen und clusterfähig machen
-**Language: Julia**
+# WP-N21 — ODEFormer-Baseline: Adapter, Image mit Gewichten, Umgebungsäquivalenz
+**Language: Python**
 
 ## Ausführung
 
-Codex kann hier kein Julia ausführen. Schreiben, dann `blocked` melden; Claude fährt den
-Smoke-Test, der Nutzer startet den Cluster-Lauf. Der Code muss also ohne eigenen Probelauf korrekt
-sein. **Genau daran ist der letzte Anlauf gescheitert** — siehe die zwei Defekte unten.
+Codex schreibt, testet lokal was ohne ODEFormer geht, und meldet dann. Alles, was ein Docker-Image
+oder die ODEFormer-Gewichte braucht, **führt Claude aus** — Codex hat weder Docker noch Netz. Wenn
+die Umsetzung fertig ist und nur die Ausführung fehlt: `blocked` mit *Umgebung, nicht Sache*.
+Der Code muss also ohne eigenen Probelauf der Docker-Teile korrekt sein; die Skripte bekommen
+deshalb klare Ein- und Ausgaben, die Claude mit einem Befehl pro Schritt fahren kann.
 
-## Teil 1 — Zwei Defekte in `studies/regression/wp_t1d_neighbourhood_loss.jl`
+Der ODEFormer-Quellcode am gepinnten Commit `c9193012ad07a97186290b98d8290d1a177f4609` liegt
+**lesbar** unter `outputs/third_party/odeformer/` (gitignored, nicht verändern, nicht committen).
+Jede Aussage über ODEFormer im Report nennt Datei und Zeile dort.
 
-Beide sitzen in `log10_loss_ratio`, beide entstanden aus demselben Griff: `true` ist in Julia ein
-Schlüsselwort und darf weder als Variable noch als Wert für den wahren Loss stehen.
+## Worum es geht
 
-**Defekt 1, Zeile 278: `true = Float64(true_loss)`.** Zuweisung an ein Schlüsselwort, **Parse-Fehler**.
-Das Skript lässt sich nicht laden. Laut, harmlos, sofort sichtbar.
+Claim D vergleicht EvoGrow mit etablierten Verfahren (`docs/paper1_phaseC_benchmark_plan.md`,
+Abschnitte 6a und die folgenden). SINDy läuft. ODEFormer ist im Harness nur ein Stub:
+`baselines/harness.py:304-310` schreibt einen `NotImplementedError`-Datensatz. Dieses Paket macht
+ODEFormer lauffähig — auf **unseren** exportierten Trajektorien, mit **ODEFormers eigener**
+Evaluationskonfiguration, in einem Image, das seine Gewichte enthält.
 
-**Defekt 2, Zeile 282: `return log10(neighbor / true)`.** Das **parst und läuft**, weil `true` als
-`1` durchgeht. Berechnet würde `log10(neighbor)` statt `log10(neighbor / true_loss)` — **die
-Hauptmetrik dieses Work Packages wäre still falsch gewesen**, mit plausibel aussehenden Zahlen.
-Hätte Defekt 1 das Laden nicht verhindert, wäre das unentdeckt durchgelaufen.
+## Teil 1 — Der Umgebungskonflikt
 
-Beide beheben, indem die lokale Variable einen zulässigen Namen bekommt und **beide** Verwendungen
-darauf zeigen. Anschließend die ganze Datei nach weiteren Zuweisungen an Schlüsselwörter absuchen;
-eine Suche über beide Dateien hat sonst nichts gefunden, aber die Prüfung gehört in den Report.
+`baselines/requirements.txt` pinnt `torch==2.0.0`. Das hat einen CRITICAL- und mehrere
+HIGH-Befunde (`CHANGELOG.md`, Ausnahme E6). Jedes torch, das sie behebt (≥ 2.10, braucht
+Python ≥ 3.10), verlangt `sympy ≥ 1.13.3`; ODEFormer pinnt in `setup.py` exakt `sympy==1.11.1`.
+Das lässt sich nicht gemeinsam per pip auflösen.
 
-**Verpflichtender Regressionstest**, ohne den die Reparatur nicht abgenommen wird: `log10_loss_ratio`
-wird mit bekannten Werten geprüft, sodass Defekt 2 auffallen **muss** — etwa Nachbarloss `1e-4`
-gegen wahren Loss `1e-2` ergibt exakt `-2.0`. Ein Test, der nur auf „nicht `nothing`" prüft, ist
-wertlos: Defekt 2 hätte ihn bestanden.
+**Zwei Umgebungen, zwei Dockerfiles:**
 
-## Teil 2 — Die Laufzeit konstruktiv begrenzen
+- **Referenz** — das, wofür ODEFormer gebaut ist: Python 3.9, `torch==2.0.0` (CPU-Wheel),
+  `sympy==1.11.1`, `numpy==1.23.5`, `sympytorch==0.1.1`, ODEFormer am gepinnten Commit mit seinen
+  eigenen Abhängigkeiten. Dient **nur** als Vergleichsmaßstab, wird nie für Records benutzt.
+- **Kandidat** — die Umgebung, die künftig rechnet: Python 3.11, aktuelles torch **ohne bekannte
+  HIGH/CRITICAL-Befunde** (Stand heute 2.14.0, CPU-Wheel), `sympy` in der kleinsten Version, die
+  torch zulässt, ODEFormer **ohne** seine eigene Abhängigkeitsauflösung installiert (die übrigen
+  Laufzeitabhängigkeiten einzeln gepinnt, inklusive `sympytorch`). Alle übrigen Pins wie heute.
 
-Heute ist die Laufzeit **geschätzt**, nicht begrenzt. Das ist zu wenig: `CLAUDE.md` führt unter
-„Unbudgeted call sites", dass elf Skripte unter `benchmarks/` und `studies/` den Optimierer **ohne
-Budget** konstruieren und seit WP-B3 unbeschränkt sind — mit hoher Wahrscheinlichkeit auch der
-Pfad, den `wp_n3_oracle_refit.jl` benutzt und den dieses Skript übernimmt. Phase B kennt
-pathologische Line-Searches mit bis zu 39.933 Loss-Evaluationen bei zwei Parametern; ein entarteter
-Nachbarträger ist genau der Fall, in dem das eintritt.
+Beide als eigene Dockerfiles unter `baselines/`, beide Basisimages über den Harbor-Cache
+(`registry.scch.at/cache/library/python:<tag>`), wie es die Pipeline-Policy verlangt.
+`baselines/Dockerfile.dockerignore` existiert seit heute und regelt den Build-Kontext; für ein
+zweites Dockerfile braucht es eine eigene `<name>.dockerignore` daneben.
 
-**Der Optimierer bekommt ein explizites Loss-Eval-Budget je Fit.** Verwende den Mechanismus, den die
-Kampagnenrunner bereits benutzen (`studies/regression/phase_c_config.jl`,
-`studies/regression/run_regression.jl`) — **nicht** einen neu erfundenen. Den Namen des Feldes und
-den gewählten Wert im Report nennen.
+**`torch.load`.** `odeformer/model/sklearn_wrapper.py:69` lädt ein vollständig gepickeltes Modell
+ohne `weights_only`-Argument. Ab torch 2.6 ist der Standard `weights_only=True`, der Aufruf
+scheitert dort. Lösen, **ohne den ODEFormer-Quellcode zu patchen** — etwa über den Mechanismus,
+den torch für genau diesen Fall vorsieht. Welcher Weg, im Report begründen. Dass damit ein
+vollständiges Unpickling aktiviert wird, ist bewusst: die Datei stammt aus einer festen Quelle und
+wird über ihren Hash geprüft (Teil 2). Das gehört als Satz in den Report.
 
-Ein Fit, der am Budget endet, wird als `budget_exhausted` markiert, geht in die Records ein und
-wird **nie** als „Nachbar schlägt Wahrheit" gewertet — in keine Richtung, genau wie die
-Sentinel-Fälle.
+## Teil 2 — Gewichte ins Image
 
-Warum das zählt: die Messung auf System 24 ergab 1,80 s je Fit, die Projektion rechnet mit 9,48 s,
-und Phase B zeigt zwischen den dim-2-Systemen einen Faktor **1.800** bei den Kosten je Zelle
-(0,003 h bis 5,33 h). Eine Schätzung über diese Spanne ist keine Schranke.
+ODEFormer lädt seine Gewichte zur Laufzeit per `gdown` von Google Drive
+(`sklearn_wrapper.py:59-66`). Auf dem Cluster geht das nicht: ohne Egress scheitert jeder Pod, mit
+Egress fragen bis zu 32 Pods gleichzeitig Google Drive an. Die Gewichte kommen deshalb **beim Bau**
+ins Image, in beide Images identisch.
 
-## Teil 3 — Sharding über Zellindizes
+- Download im Build-Schritt, danach **SHA-256-Prüfung gegen einen festen Wert im Dockerfile**.
+  Stimmt der Hash nicht, bricht der Build ab. Den Wert kennt heute niemand: im Dockerfile als klar
+  benannten Platzhalter hinterlegen, Claude trägt ihn nach dem ersten Download ein und dokumentiert
+  die Herkunft.
+- Zur Laufzeit darf kein Netzzugriff mehr nötig sein; der Adapter zeigt ODEFormer auf die Datei im
+  Image.
+- Jeder Record trägt den Gewichts-Hash.
 
-Der Lauf wird auf Orion als Indexed Job gefahren, also muss das Skript **eine Zelle je Index**
-rechnen können.
+## Teil 3 — Der Adapter
 
-- Eine Zelle ist ein Paar (System, IC-Satz). Umfang: 18 exakte Systeme auf dim 2 und dim 3, beide
-  IC-Sätze, also **36 Zellen**, Index 0 bis 35.
-- Die Reihenfolge ist **deterministisch und dokumentiert** (System aufsteigend, darin IC 1 vor
-  IC 2), damit ein Index dauerhaft dieselbe Zelle bezeichnet.
-- Die Auswahl kommt aus der Umgebung, nach dem Muster von
-  `studies/regression/run_k8s_indexed_cell.jl`: eine Indexliste und ein Ausgabeverzeichnis als
-  Umgebungsvariablen. Dieses Muster lesen und übernehmen, nicht neu erfinden.
-- Jede Zelle schreibt ihre eigene Ergebnisdatei. **Kein gemeinsames Anhängen an eine Datei** — 36
-  Pods, die in dieselbe Datei schreiben, ist ein Datenverlust mit Anlauf.
-- Die Aggregation über alle Zellen bleibt ein **getrennter, lokaler Schritt** und läuft nicht im Pod.
+`run_odeformer_record` in `baselines/harness.py` ersetzt den Stub. Er fittet auf der Trajektorie
+der Fit-Zelle und wertet Rekonstruktion (gleiche Anfangsbedingung) und Generalisierung (die andere
+Anfangsbedingung, durch Integration des gefundenen Modells) aus — **dieselbe Record-Form wie der
+SINDy-Pfad**, inklusive beider R²-Aggregationen und ihrer `> 0.9`-Felder aus WP-N19b.
 
-Die bestehende lokale Aufrufform (`--systems`, `--limit-cells`, `--smoke`, `--self-test`,
-`--projection-only`) bleibt erhalten und unverändert.
+**Konfiguration: ODEFormers eigene, nicht unsere.** Beam-Größe, Temperatur, Parameteroptimierung,
+Rescaling, Subsampling — alles aus der Konfiguration, mit der ODEFormer auf ODEBench evaluiert wurde,
+belegt mit Datei und Zeile unter `outputs/third_party/odeformer/`. Wo ODEFormer mehrere
+Einstellungen berichtet, die im Paper für ODEBench verwendete. Wo das nicht eindeutig
+feststellbar ist: **nicht raten**, im Report als offene Frage an Claude benennen und die
+Wrapper-Voreinstellung verwenden, ausdrücklich so markiert. In `baselines/configs/` abgelegt, nicht
+im Code verstreut.
 
-## Teil 4 — Trajektorien im Image
+**Record-Felder zusätzlich zum SINDy-Schema:**
+- das gefundene Modell als Zeichenkette, so wie ODEFormer es ausgibt, und eine
+  sympy-kanonische Form davon
+- die Konfigurationswerte oben
+- Gewichts-Hash, torch-, sympy-, Python-Version
+- **strukturelle Kosten je Instanz**, soweit ODEFormer sie hergibt: Beam-Größe, Zahl der
+  bewerteten Kandidaten, Iterationen der Parameteroptimierung. Wanduhrzeit höchstens als
+  `elapsed_s_non_evidence` (Designprinzip 7, Plan-Abschnitt 6a)
 
-**Der gehashte Export liegt unter `outputs/` und ist gitignoriert, ist also nicht im Image.** Auf
-dem Cluster integriert das Skript die Trajektorien deshalb **selbst**, mit demselben Codepfad und
-denselben Einstellungen wie die Kampagne (`Tsit5`, `abstol = reltol = 1e-9`, 512 Punkte über
-t ∈ [0,10], beide IC-Sätze). Das ist nicht der zweitbeste Weg, sondern der genauere: es ist exakt
-der Pfad, der die Kampagnenzahlen erzeugt hat.
+**Determinismus:** feste Seeds für torch/numpy/random, `torch.set_num_threads(1)`, CPU. Zwei Läufe
+derselben Zelle in derselben Umgebung müssen identische Records liefern (bis auf Zeitfelder).
 
-Jede Zelle schreibt die **`trajectory_sha256`** ihrer Trajektorie in den Record. Der Abgleich gegen
-`trajectory_manifest.csv` des Exports passiert später lokal; im Pod wird nichts verglichen, weil
-dort nichts zu vergleichen ist.
+**Nicht in diesem Paket:** die Abbildung von ODEFormers Ausdrücken auf unsere Basisterme
+(Strukturmetriken für Claim A). ODEFormer erzeugt beliebige Ausdrücke; die Abbildung ist eine
+eigene methodische Entscheidung. Den Ausdruck speichern, nicht zerlegen.
 
-Ist der Export lokal vorhanden, wird er lokal weiterhin bevorzugt — aber **eine Zelle benutzt genau
-eine Quelle**, und welche, steht im Record. Mischen ist verboten.
+## Teil 4 — Äquivalenz der beiden Umgebungen
 
-## Teil 5 — Die Cluster-Artefakte
+Ein Skript, das in einem Image läuft und für eine feste Zellliste ODEFormer ausführt und eine
+Ergebnisdatei schreibt; ein zweites, das zwei solche Dateien vergleicht. Zellliste: die
+Smoke-Systeme 1, 2 und 24, beide Anfangsbedingungen, beide Richtungen.
 
-Drei neue Dateien unter `k8s/`, gebaut nach dem Muster der vorhandenen Manifeste — Namensschilder
-`hpc.scch.at/service` und `hpc.scch.at/responsibility`, `imagePullSecrets: evoode-gitlab-pull`,
-Image `registry.gitlab.scch.at:443/joedicke/evoode:<COMMIT_SHA>` als Platzhalter,
-`JULIA_NUM_THREADS=1` und `OPENBLAS_NUM_THREADS=1`, `cpu: "1"` und `memory: 2Gi` je Pod:
+Verglichen werden je Zelle: kanonischer Ausdruck, gefittete Konstanten, beide R²-Aggregationen für
+Rekonstruktion und Generalisierung.
 
-1. **Ein Bootstrap- oder Indexlisten-Schritt**, der die 36 Zellen als Liste erzeugt und auf die
-   Freigabe schreibt — analog zum Kampagnen-Bootstrap.
-2. **Ein Smoke-Job mit zwei Zellen.** Nimm die beiden billigsten, System 24 IC 1 und System 25 IC 1
-   (Phase B: 0,003 und 0,004 h je Zelle). Zweck ist **nicht** Wissenschaft, sondern der Nachweis,
-   dass Image, Deploy-Token und Freigabe funktionieren — das Kampagnen-Manifest begründet das in
-   seinem eigenen Kommentar, und ein abgelaufenes Token zeigt sich sonst erst mitten im langen Lauf.
-3. **Der eigentliche Job:** `completions: 36`, **`parallelism: 2`**, und
-   **`activeDeadlineSeconds: 86400`**.
+**Die Vergleichsregel wird vor dem Lauf festgelegt und im Skript kodiert, nicht danach gewählt:**
+Ausdrücke kanonisch identisch; Konstanten und R² innerhalb einer Toleranz, die im Report begründet
+wird, bevor Claude die Images baut. Eine Abweichung ist **ein Befund, kein Fehler** — das Skript
+meldet sie vollständig, Codex passt keine Toleranz nachträglich an.
 
-`parallelism: 2` ist bewusst klein: die Kampagne belegt 64 der 96 Kerne, und der Nutzer will den
-Cluster nicht ausreizen. `activeDeadlineSeconds` ist eine **Decke, keine Erwartung** — erwartet
-sind bei 36 Zellen und zwei Pods rund fünf bis sechs Stunden. Beides im Manifest kommentieren, wie
-es die bestehenden Manifeste tun.
+## Verboten
 
-## Verbote
+- Keine Git-Operationen, keine Commits, kein Staging.
+- `outputs/third_party/odeformer/` nicht verändern.
+- ODEFormer-Quellcode nicht patchen, auch nicht per Monkeypatch zur Laufzeit.
+- Keine ODEFormer-Hyperparameter wählen, die nicht aus ODEFormers eigenem Code oder Paper belegt
+  sind. Kein Tuning auf unseren Daten.
+- Nicht anfassen: `containers/Dockerfile`, `.gitlab-ci.yml`, `Project.toml`, `Manifest.toml`,
+  `src/`, `studies/`, `experiments/`, `k8s/`, den SINDy-Pfad im Harness über das hinaus, was ein
+  gemeinsames Record-Schema erzwingt.
+- Keine Cluster-Jobs, keine Manifeste dafür.
+- Nichts, was länger als 15 Minuten läuft.
 
-- Keine Änderung an `src/`, an `studies/regression/run_regression.jl`, an `phase_c_config.jl`, an
-  bestehenden Manifesten oder an irgendeinem Fingerprint. Neue Dateien, keine Umbauten.
-- Kein Schreiben in `analysis/data/paper1_phase*` oder `experiments/`. Die Phase-C-Kampagne läuft.
-- Kein Ausführen des vollen Laufs, kein GitLab-Push, kein `oc apply`.
-- Keine neue Abhängigkeit; fehlt etwas, als Blocker melden.
+## Abnahme
 
-## Abnahmekriterium
-
-Das Skript lädt fehlerfrei; der Regressionstest für `log10_loss_ratio` prüft einen bekannten
-Zahlenwert und würde Defekt 2 fangen; das Budget ist gesetzt und `budget_exhausted` wird geführt;
-eine Zelle je Index ist rechenbar und die Indexordnung ist dokumentiert; die drei Manifeste liegen
-vor. Melde `blocked` mit dem Hinweis auf die fehlende Julia-Ausführung.
-
-## Bericht
-
-`codex/reports/REPORT_WP_T1e.md`. Zwingend: beide Defekte mit ihrer Wirkung — insbesondere, dass
-Defekt 2 still war —, der verwendete Budgetmechanismus samt Wert und Herkunft, die Indexordnung,
-die Trajektorienquelle je Umgebung, und die Begründung für `parallelism: 2` und
-`activeDeadlineSeconds`.
+1. Beide Dockerfiles und ihre `.dockerignore`-Dateien liegen vor; das Kandidaten-requirements
+   enthält kein Paket mit bekanntem HIGH/CRITICAL-Befund (im Report per Paket belegt, Quelle
+   OSV oder Trivy-Datenbank, Stand heute).
+2. `run_odeformer_record` ist implementiert und schreibt das Record-Schema aus Teil 3.
+3. Die ODEFormer-Konfiguration liegt unter `baselines/configs/`, jeder Wert mit Datei:Zeile belegt
+   oder ausdrücklich als offene Frage markiert.
+4. Äquivalenz-Lauf- und Vergleichsskript liegen vor, Vergleichsregel kodiert und im Report
+   begründet.
+5. `python -m pytest baselines/tests/test_harness.py -q` läuft lokal grün. Lokal ist ODEFormer
+   nicht installiert — die Tests prüfen dort, dass der Adapter dann einen sauberen
+   Fehler-Record schreibt statt abzustürzen. Neue Tests für Vergleichsregel und Record-Schema
+   laufen ebenfalls lokal, mit Eingaben, die aus echten Exporten stammen, nicht handgebaut.
+6. Der Report `codex/reports/REPORT_WP_N21.md` enthält **die exakten Befehle**, mit denen Claude:
+   (a) beide Images baut, (b) den Gewichts-Hash ermittelt und einträgt, (c) den Äquivalenzlauf in
+   beiden Images fährt, (d) den Vergleich ausführt, (e) den Smoke-Test des Harness im
+   Kandidaten-Image fährt. Je Befehl: erwartete Ausgabe und Pass-Kriterium.
