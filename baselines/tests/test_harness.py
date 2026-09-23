@@ -5,6 +5,8 @@ import pandas as pd
 
 from baselines import compare_odeformer_equivalence
 from baselines import harness
+from baselines import run_odeformer_grid
+from baselines import summarize_odeformer_grid
 
 
 CONFIG = harness.REPO_ROOT / "baselines" / "configs" / "wp_n19_smoke.json"
@@ -132,3 +134,117 @@ def test_odeformer_equivalence_compare_reports_r2_difference_from_export_records
     result = compare_odeformer_equivalence.compare(path, candidate)
     assert result["passed"] is False
     assert result["findings"][0]["field"] == "reconstruction_r2_arithmetic_mean"
+
+
+def make_grid_record(fit_cell: harness.TrajectoryCell, target_cell: harness.TrajectoryCell, config: dict[str, object], status: str = "success") -> dict[str, object]:
+    record = harness.base_record("odeformer", config, fit_cell, target_cell)
+    r2 = {"r2_arithmetic_mean": 1.0, "r2_variance_weighted": 1.0}
+    record.update(
+        {
+            **harness.odeformer_schema_defaults(config),
+            "status": status,
+            "model": "x_0",
+            "reconstruction_status": status,
+            "generalization_status": status,
+            "odeformer_model_raw": "x_0",
+            "odeformer_model_canonical": "x_0",
+            "odeformer_expression_before_optimization": "x_0",
+            "odeformer_expression_after_optimization": "x_0",
+            "odeformer_fitted_constants": "[]",
+            "odeformer_candidates_evaluated": 1,
+            "odeformer_optimization_status": "not_requested",
+            "odeformer_optimization_nit": 0,
+            "odeformer_optimization_nfev": 0,
+            "odeformer_optimization_stop_reason": "",
+            **{f"reconstruction_{key}": value for key, value in r2.items()},
+            **{f"generalization_{key}": value for key, value in r2.items()},
+            **{f"reconstruction_before_optimization_{key}": value for key, value in r2.items()},
+            **{f"generalization_before_optimization_{key}": value for key, value in r2.items()},
+            **{f"reconstruction_after_optimization_{key}": value for key, value in r2.items()},
+            **{f"generalization_after_optimization_{key}": value for key, value in r2.items()},
+        }
+    )
+    return record
+
+
+def test_odeformer_grid_resumes_complete_records_from_real_export(tmp_path: Path, monkeypatch) -> None:
+    calls = {"count": 0}
+
+    def fake_build(config):
+        return object()
+
+    def fake_run(system, fit_cell, target_cell, config, adapter):
+        calls["count"] += 1
+        return make_grid_record(fit_cell, target_cell, config)
+
+    monkeypatch.setattr(harness, "build_odeformer_adapter", fake_build)
+    monkeypatch.setattr(harness, "run_odeformer_record_with_adapter", fake_run)
+    kwargs = {
+        "output_dir": str(tmp_path / "grid"),
+        "system_ids": {1},
+        "config_ids": {"beam10_noopt"},
+        "limit": 1,
+    }
+    first = run_odeformer_grid.run(harness.REPO_ROOT / "baselines" / "configs" / "odeformer_grid.json", **kwargs)
+    second = run_odeformer_grid.run(harness.REPO_ROOT / "baselines" / "configs" / "odeformer_grid.json", **kwargs)
+    assert first == second
+    assert calls["count"] == 1
+    records = read_jsonl(first)
+    assert len(records) == 1
+    assert records[0]["odeformer_config_id"] == "beam10_noopt"
+
+
+def test_odeformer_grid_atomic_write_ignores_partial_tmp(tmp_path: Path) -> None:
+    records_dir = tmp_path / "records"
+    path = records_dir / "cell.json"
+    run_odeformer_grid.atomic_write_json(path, {"status": "success", "odeformer_config_id": "beam10_noopt"})
+    (records_dir / ".cell.json.999.tmp").write_text("{", encoding="utf-8")
+    assert run_odeformer_grid.complete_record(path) is True
+    assert run_odeformer_grid.complete_record(records_dir / ".cell.json.999.tmp") is False
+
+
+def test_odeformer_grid_marks_timeout_from_real_export(tmp_path: Path, monkeypatch) -> None:
+    def fake_build(config):
+        return object()
+
+    def fake_run(system, fit_cell, target_cell, config, adapter):
+        return make_grid_record(fit_cell, target_cell, config)
+
+    monkeypatch.setattr(harness, "build_odeformer_adapter", fake_build)
+    monkeypatch.setattr(harness, "run_odeformer_record_with_adapter", fake_run)
+    config = json.loads((harness.REPO_ROOT / "baselines" / "configs" / "odeformer_grid.json").read_text(encoding="utf-8"))
+    config["timeout_seconds_per_cell"] = -1
+    config_path = tmp_path / "timeout_config.json"
+    config_path.write_text(json.dumps(config), encoding="utf-8")
+    path = run_odeformer_grid.run(config_path, str(tmp_path / "grid"), system_ids={1}, config_ids={"beam10_noopt"}, limit=1)
+    records = read_jsonl(path)
+    assert records[0]["status"] == "timeout"
+    assert records[0]["error_type"] == "Timeout"
+
+
+def test_odeformer_summary_counts_and_expression_identity_from_export_records(tmp_path: Path) -> None:
+    path = harness.run(CONFIG, str(tmp_path / "source"))
+    records = [record for record in read_jsonl(path) if record["method"] == "odeformer"][:2]
+    for idx, record in enumerate(records):
+        record["status"] = "success"
+        record["odeformer_environment_id"] = "reference"
+        record["odeformer_config_id"] = "beam10_noopt"
+        record["odeformer_model_canonical"] = "x_0" if idx == 0 else "x_0 + 1"
+        record["reconstruction_r2_arithmetic_mean"] = 0.95
+        record["reconstruction_r2_variance_weighted"] = 0.95
+        record["generalization_r2_arithmetic_mean"] = 0.25
+        record["generalization_r2_variance_weighted"] = 0.25
+    reference = tmp_path / "reference.jsonl"
+    reference.write_text("\n".join(json.dumps(record, sort_keys=True) for record in records) + "\n", encoding="utf-8")
+    candidate_records = [dict(record, odeformer_environment_id="candidate") for record in records]
+    candidate_records[1]["odeformer_model_canonical"] = "x_0 - 1"
+    candidate = tmp_path / "candidate.jsonl"
+    candidate.write_text("\n".join(json.dumps(record, sort_keys=True) for record in candidate_records) + "\n", encoding="utf-8")
+    paths = summarize_odeformer_grid.run(reference, candidate, tmp_path / "summary")
+    summary = pd.read_csv(paths["summary"])
+    identity = pd.read_csv(paths["expression_identity"])
+    assert set(summary["environment_id"]) == {"reference", "candidate"}
+    assert set(summary["reconstruction_r2_arithmetic_gt_0_9_count"]) == {2}
+    assert set(summary["generalization_r2_arithmetic_gt_0_9_count"]) == {0}
+    assert int(identity["paired_cell_count"].sum()) == 2
+    assert int(identity["identical_expression_count"].sum()) == 1

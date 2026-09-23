@@ -268,6 +268,8 @@ def record_failure(record: dict[str, Any], exc: Exception) -> dict[str, Any]:
 
 def odeformer_schema_defaults(config: dict[str, Any]) -> dict[str, Any]:
     keys = [
+        "config_id",
+        "environment_id",
         "beam_size",
         "beam_temperature",
         "beam_type",
@@ -280,6 +282,11 @@ def odeformer_schema_defaults(config: dict[str, Any]) -> dict[str, Any]:
         "eval_subsample_ratio",
         "parameter_optimization",
         "parameter_optimization_iterations",
+        "constant_optimization_enabled",
+        "constant_optimization_init_random",
+        "constant_optimization_objective",
+        "constant_optimization_eval_objective",
+        "constant_optimization_track_eval_history",
         "weight_sha256",
         "weights_path",
     ]
@@ -294,6 +301,24 @@ def odeformer_failure(record: dict[str, Any], config: dict[str, Any], exc: Excep
             "odeformer_model_canonical": "",
             "odeformer_fitted_constants": "[]",
             "odeformer_candidates_evaluated": 0,
+            "odeformer_expression_before_optimization": "",
+            "odeformer_expression_after_optimization": "",
+            "odeformer_constants_before_optimization": "[]",
+            "odeformer_constants_after_optimization": "[]",
+            "odeformer_optimization_status": "not_run",
+            "odeformer_optimization_error_type": "",
+            "odeformer_optimization_error_message": "",
+            "odeformer_optimization_nit": 0,
+            "odeformer_optimization_nfev": 0,
+            "odeformer_optimization_stop_reason": "",
+            "reconstruction_before_optimization_r2_arithmetic_mean": 0.0,
+            "reconstruction_before_optimization_r2_variance_weighted": 0.0,
+            "generalization_before_optimization_r2_arithmetic_mean": 0.0,
+            "generalization_before_optimization_r2_variance_weighted": 0.0,
+            "reconstruction_after_optimization_r2_arithmetic_mean": 0.0,
+            "reconstruction_after_optimization_r2_variance_weighted": 0.0,
+            "generalization_after_optimization_r2_arithmetic_mean": 0.0,
+            "generalization_after_optimization_r2_variance_weighted": 0.0,
             "elapsed_s_non_evidence": 0.0,
             **odeformer_schema_defaults(config),
         }
@@ -330,6 +355,191 @@ def numeric_constants(expression: str) -> list[float]:
     for match in re.finditer(r"(?<![_A-Za-z])[-+]?(?:(?:\d*\.\d+)|(?:\d+\.?))(?:[Ee][+-]?\d+)?", expression):
         constants.append(float(match.group(0)))
     return constants
+
+
+class ODEFormerAdapter:
+    def __init__(self, config: dict[str, Any]):
+        import torch
+        from odeformer.model import SymbolicTransformerRegressor
+
+        self.config = dict(config)
+        self.torch = torch
+        seed = int(self.config.get("seed", 2023))
+        random.seed(seed)
+        np.random.seed(seed)
+        torch.manual_seed(seed)
+        torch.set_num_threads(1)
+        self.weights_path = resolve_path(self.config.get("weights_path", "odeformer.pt"))
+        if not self.weights_path.is_file():
+            raise FileNotFoundError(f"ODEFormer weights not found: {self.weights_path}")
+        self.actual_hash = hashlib.sha256(self.weights_path.read_bytes()).hexdigest()
+        expected_hash = str(self.config.get("weight_sha256", "")).strip()
+        if expected_hash and not expected_hash.startswith("TO_BE_FILLED") and self.actual_hash != expected_hash:
+            raise ValueError(f"ODEFormer weights hash mismatch: expected {expected_hash}, got {self.actual_hash}")
+        os.environ.setdefault("TORCH_FORCE_NO_WEIGHTS_ONLY_LOAD", "1")
+        with temporary_working_directory(self.weights_path.parent):
+            self.model = SymbolicTransformerRegressor(
+                from_pretrained=True,
+                max_input_points=int(self.config["max_input_points"]),
+                rescale=bool(self.config["rescale"]),
+            )
+
+    def set_generation_args(self) -> None:
+        self.model.set_model_args(
+            {
+                "beam_size": int(self.config["beam_size"]),
+                "beam_temperature": float(self.config["beam_temperature"]),
+                "beam_type": str(self.config["beam_type"]),
+                "beam_length_penalty": float(self.config["beam_length_penalty"]),
+                "beam_early_stopping": bool(self.config["beam_early_stopping"]),
+                "max_generated_output_len": int(self.config["max_generated_output_len"]),
+            }
+        )
+
+    def fit_best_candidate(self, fit_cell: TrajectoryCell) -> tuple[Any, str, str, list[Any]]:
+        self.set_generation_args()
+        self.model.fit(
+            fit_cell.time,
+            fit_cell.state,
+            sort_candidates=True,
+            sort_metric=str(self.config["sort_metric"]),
+            rescale=bool(self.config["rescale"]),
+            verbose=False,
+        )
+        candidates = list(self.model.predictions.get(0, []))
+        if not candidates or candidates[0] is None:
+            raise RuntimeError("ODEFormer produced no candidate expression")
+        best = candidates[0]
+        model_raw = best.infix() if hasattr(best, "infix") else str(best)
+        return best, model_raw, canonicalize_odeformer_expression(model_raw), candidates
+
+    def integrate_expression(self, cell: TrajectoryCell, expression: Any) -> np.ndarray:
+        return np.asarray(self.model.integrate_prediction(cell.time, cell.state[0, :], prediction=expression), dtype=float)
+
+    def optimize_constants(self, expression: str, fit_cell: TrajectoryCell) -> dict[str, Any]:
+        source_root = REPO_ROOT / "outputs" / "third_party" / "odeformer"
+        if str(source_root) not in sys.path:
+            sys.path.insert(0, str(source_root))
+        from param_optimizer import ConstantOptimizer
+
+        optimizer = ConstantOptimizer(
+            eq=expression,
+            y0=fit_cell.state[0, :],
+            time=fit_cell.time,
+            observed_trajectory=fit_cell.state,
+            init_random=bool(self.config.get("constant_optimization_init_random", False)),
+            optimization_objective=str(self.config.get("constant_optimization_objective", "r2")),
+            eval_objective=str(self.config.get("constant_optimization_eval_objective", "r2")),
+            track_eval_history=bool(self.config.get("constant_optimization_track_eval_history", True)),
+        )
+        original_minimize = optimizer.optimize.__globals__["minimize"]
+        holder: dict[str, Any] = {}
+
+        def tracked_minimize(*args: Any, **kwargs: Any) -> Any:
+            result = original_minimize(*args, **kwargs)
+            holder["result"] = result
+            return result
+
+        optimizer.optimize.__globals__["minimize"] = tracked_minimize
+        try:
+            optimized_expression, optimized_params, optimized_fit = optimizer.optimize()
+        finally:
+            optimizer.optimize.__globals__["minimize"] = original_minimize
+        info = holder.get("result")
+        return {
+            "expression": str(optimized_expression),
+            "params": np.asarray(optimized_params, dtype=float).tolist(),
+            "fit_prediction": np.asarray(optimized_fit, dtype=float),
+            "nit": int(getattr(info, "nit", 0) or 0),
+            "nfev": int(getattr(info, "nfev", 0) or 0),
+            "stop_reason": str(getattr(info, "message", "")),
+        }
+
+
+def build_odeformer_adapter(config: dict[str, Any]) -> ODEFormerAdapter:
+    return ODEFormerAdapter(config)
+
+
+def run_odeformer_record_with_adapter(
+    _system: dict[str, Any],
+    fit_cell: TrajectoryCell,
+    target_cell: TrajectoryCell,
+    config: dict[str, Any],
+    adapter: ODEFormerAdapter,
+) -> dict[str, Any]:
+    record = base_record("odeformer", config, fit_cell, target_cell)
+    record.update(odeformer_schema_defaults(config))
+    start = time.perf_counter()
+    try:
+        best, model_raw, model_canonical, candidates = adapter.fit_best_candidate(fit_cell)
+        reconstruction_before = adapter.integrate_expression(fit_cell, best)
+        generalization_before = adapter.integrate_expression(target_cell, best)
+        reconstruction_before_r2 = aggregate_r2(fit_cell.state, reconstruction_before)
+        generalization_before_r2 = aggregate_r2(target_cell.state, generalization_before)
+        expression_after = model_canonical
+        optimization_status = "not_requested"
+        optimization_error_type = ""
+        optimization_error_message = ""
+        optimization_nit = 0
+        optimization_nfev = 0
+        optimization_stop_reason = ""
+        reconstruction_after_r2 = reconstruction_before_r2
+        generalization_after_r2 = generalization_before_r2
+        if bool(config.get("constant_optimization_enabled", False)):
+            try:
+                optimized = adapter.optimize_constants(model_canonical, fit_cell)
+                expression_after = canonicalize_odeformer_expression(str(optimized["expression"]))
+                reconstruction_after_r2 = aggregate_r2(fit_cell.state, optimized["fit_prediction"])
+                generalization_after = adapter.integrate_expression(target_cell, expression_after)
+                generalization_after_r2 = aggregate_r2(target_cell.state, generalization_after)
+                optimization_status = "success"
+                optimization_nit = int(optimized["nit"])
+                optimization_nfev = int(optimized["nfev"])
+                optimization_stop_reason = str(optimized["stop_reason"])
+            except Exception as exc:
+                optimization_status = "error_unoptimized_expression_retained"
+                optimization_error_type = type(exc).__name__
+                optimization_error_message = str(exc)
+        record.update(
+            {
+                "model": expression_after,
+                "active_terms_raw": "[]",
+                "active_terms_pruned": "[]",
+                "true_terms": "[]",
+                "structure_hit_raw": False,
+                "structure_hit_pruned": False,
+                "reconstruction_status": "success",
+                "generalization_status": "success",
+                "odeformer_model_raw": model_raw,
+                "odeformer_model_canonical": expression_after,
+                "odeformer_fitted_constants": json.dumps(numeric_constants(expression_after), separators=(",", ":")),
+                "odeformer_weight_sha256": adapter.actual_hash,
+                "odeformer_candidates_evaluated": len(candidates),
+                "odeformer_parameter_optimization_iterations": optimization_nit,
+                "odeformer_expression_before_optimization": model_canonical,
+                "odeformer_expression_after_optimization": expression_after,
+                "odeformer_constants_before_optimization": json.dumps(numeric_constants(model_canonical), separators=(",", ":")),
+                "odeformer_constants_after_optimization": json.dumps(numeric_constants(expression_after), separators=(",", ":")),
+                "odeformer_optimization_status": optimization_status,
+                "odeformer_optimization_error_type": optimization_error_type,
+                "odeformer_optimization_error_message": optimization_error_message,
+                "odeformer_optimization_nit": optimization_nit,
+                "odeformer_optimization_nfev": optimization_nfev,
+                "odeformer_optimization_stop_reason": optimization_stop_reason,
+                "elapsed_s_non_evidence": time.perf_counter() - start,
+                **{f"reconstruction_before_optimization_{key}": value for key, value in reconstruction_before_r2.items()},
+                **{f"generalization_before_optimization_{key}": value for key, value in generalization_before_r2.items()},
+                **{f"reconstruction_after_optimization_{key}": value for key, value in reconstruction_after_r2.items()},
+                **{f"generalization_after_optimization_{key}": value for key, value in generalization_after_r2.items()},
+                **{f"reconstruction_{key}": value for key, value in reconstruction_after_r2.items()},
+                **{f"generalization_{key}": value for key, value in generalization_after_r2.items()},
+                **r2_threshold_flags("reconstruction", reconstruction_after_r2),
+                **r2_threshold_flags("generalization", generalization_after_r2),
+            }
+        )
+        return record
+    except Exception as exc:
+        return odeformer_failure(record, config, exc)
 
 
 def run_sindy_record(system: dict[str, Any], fit_cell: TrajectoryCell, target_cell: TrajectoryCell, config: dict[str, Any]) -> dict[str, Any]:
@@ -381,88 +591,13 @@ def run_sindy_record(system: dict[str, Any], fit_cell: TrajectoryCell, target_ce
 
 
 def run_odeformer_record(_system: dict[str, Any], fit_cell: TrajectoryCell, target_cell: TrajectoryCell, config: dict[str, Any]) -> dict[str, Any]:
-    record = base_record("odeformer", config, fit_cell, target_cell)
-    record.update(odeformer_schema_defaults(config))
-    start = time.perf_counter()
     try:
-        import torch
-        from odeformer.model import SymbolicTransformerRegressor
+        adapter = build_odeformer_adapter(config)
     except Exception as exc:
+        record = base_record("odeformer", config, fit_cell, target_cell)
+        record.update(odeformer_schema_defaults(config))
         return odeformer_failure(record, config, RuntimeError(f"ODEFormer is not importable in this environment: {exc}"))
-    try:
-        seed = int(config.get("seed", 2023))
-        random.seed(seed)
-        np.random.seed(seed)
-        torch.manual_seed(seed)
-        torch.set_num_threads(1)
-        weights_path = resolve_path(config.get("weights_path", "odeformer.pt"))
-        if not weights_path.is_file():
-            raise FileNotFoundError(f"ODEFormer weights not found: {weights_path}")
-        actual_hash = hashlib.sha256(weights_path.read_bytes()).hexdigest()
-        expected_hash = str(config.get("weight_sha256", "")).strip()
-        if expected_hash and not expected_hash.startswith("TO_BE_FILLED") and actual_hash != expected_hash:
-            raise ValueError(f"ODEFormer weights hash mismatch: expected {expected_hash}, got {actual_hash}")
-        os.environ.setdefault("TORCH_FORCE_NO_WEIGHTS_ONLY_LOAD", "1")
-        with temporary_working_directory(weights_path.parent):
-            model = SymbolicTransformerRegressor(
-                from_pretrained=True,
-                max_input_points=int(config["max_input_points"]),
-                rescale=bool(config["rescale"]),
-            )
-        model.set_model_args(
-            {
-                "beam_size": int(config["beam_size"]),
-                "beam_temperature": float(config["beam_temperature"]),
-                "beam_type": str(config["beam_type"]),
-                "beam_length_penalty": float(config["beam_length_penalty"]),
-                "beam_early_stopping": bool(config["beam_early_stopping"]),
-                "max_generated_output_len": int(config["max_generated_output_len"]),
-            }
-        )
-        model.fit(
-            fit_cell.time,
-            fit_cell.state,
-            sort_candidates=True,
-            sort_metric=str(config["sort_metric"]),
-            rescale=bool(config["rescale"]),
-            verbose=False,
-        )
-        candidates = list(model.predictions.get(0, []))
-        if not candidates or candidates[0] is None:
-            raise RuntimeError("ODEFormer produced no candidate expression")
-        best = candidates[0]
-        model_raw = best.infix() if hasattr(best, "infix") else str(best)
-        model_canonical = canonicalize_odeformer_expression(model_raw)
-        reconstruction = model.predict(fit_cell.time, fit_cell.state[0, :])
-        generalization = model.integrate_prediction(target_cell.time, target_cell.state[0, :], prediction=best)
-        reconstruction_r2 = aggregate_r2(fit_cell.state, np.asarray(reconstruction, dtype=float))
-        generalization_r2 = aggregate_r2(target_cell.state, np.asarray(generalization, dtype=float))
-        record.update(
-            {
-                "model": model_raw,
-                "active_terms_raw": "[]",
-                "active_terms_pruned": "[]",
-                "true_terms": "[]",
-                "structure_hit_raw": False,
-                "structure_hit_pruned": False,
-                "reconstruction_status": "success",
-                "generalization_status": "success",
-                "odeformer_model_raw": model_raw,
-                "odeformer_model_canonical": model_canonical,
-                "odeformer_fitted_constants": json.dumps(numeric_constants(model_canonical), separators=(",", ":")),
-                "odeformer_weight_sha256": actual_hash,
-                "odeformer_candidates_evaluated": len(candidates),
-                "odeformer_parameter_optimization_iterations": int(config.get("parameter_optimization_iterations", 0)),
-                "elapsed_s_non_evidence": time.perf_counter() - start,
-                **{f"reconstruction_{key}": value for key, value in reconstruction_r2.items()},
-                **{f"generalization_{key}": value for key, value in generalization_r2.items()},
-                **r2_threshold_flags("reconstruction", reconstruction_r2),
-                **r2_threshold_flags("generalization", generalization_r2),
-            }
-        )
-        return record
-    except Exception as exc:
-        return odeformer_failure(record, config, exc)
+    return run_odeformer_record_with_adapter(_system, fit_cell, target_cell, config, adapter)
 
 
 def inactive_record(method: str, fit_cell: TrajectoryCell, target_cell: TrajectoryCell) -> dict[str, Any]:
