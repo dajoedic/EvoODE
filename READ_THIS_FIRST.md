@@ -10,7 +10,7 @@ zweites davon. Alles Dauerhafte gehört dorthin, nach `PAPER_1.md` oder ins `DIA
 **Regeln:** wird immer **vollständig überschrieben**, nie angehängt. Was älter als ein paar Tage
 ist, ist vermutlich falsch — dann gilt `CLAUDE.md`.
 
-**Stand: 2026-09-23, 00:05.** Der WP-T1d-Lauf ist gestartet und laeuft.
+**Stand: 2026-09-23, vormittags.** WP-T1d läuft ohne Deadline weiter, die offenen Entscheidungen sind durchgegangen (§8).
 
 ---
 
@@ -115,7 +115,7 @@ Container läuft intern und die Jobs sind bewusst nicht-blockierend eingerichtet
 
 ## 6. Die Kampagne, unberührt
 
-C-1/C-2 bei 226 Zellen, C-3 bei 171, beide auf `:221a3a72f0cb…`. Der Push konnte sie nicht
+C-1/C-2 bei 258 von 756 Zellen, C-3 bei 172 von 180 (Stand 23.09. vormittags, 0 Fehler, eine Identität über alle 430 Records), beide auf `:221a3a72f0cb…`. Der Push konnte sie nicht
 erreichen: neuer SHA-Tag, `:main` wandert ins Leere, und die CI hat keinen Deploy-Schritt.
 Prüfbefehl in `docs/hpc_deployment_guide.md` §6b.
 
