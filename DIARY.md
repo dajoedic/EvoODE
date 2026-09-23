@@ -8,6 +8,8 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ### Rauschen in Paper 1: zurückgestellt, bis der Algorithmus auf sauberen Daten trägt
 
+<!-- 7b6161f -->
+
 Entscheidung des Nutzers: Zum Rauschen wird erst etwas zugeschnitten, budgetiert oder gebaut, wenn
 Phase C gezeigt hat, dass EvoGrow auf **rauschfreien** Daten seine Berechtigung hat. Eine
 Rauschachse für eine Methode, die auf sauberen Daten noch nichts bewiesen hat, misst nur, wie etwas
