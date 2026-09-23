@@ -1,4 +1,4 @@
-status: blocked
-task:   WP-N22
-report: codex/reports/REPORT_WP_N22.md
-note:   Umgebung, nicht Sache: Docker/Image-Ausführung der ODEFormer-Referenz- und Kandidatenläufe liegt bei Claude.
+status: done
+task:   WP-N22b
+report: codex/reports/REPORT_WP_N22b.md
+note:   Implemented POSIX hard per-cell timeout, explicit timeout rerun switch, tests, and report.

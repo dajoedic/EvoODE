@@ -1,9 +1,12 @@
 import argparse
 import json
+import multiprocessing as mp
 import os
+import queue
+import sys
 import time
 from pathlib import Path
-from typing import Any
+from typing import Any, Callable
 
 import pandas as pd
 
@@ -22,12 +25,14 @@ def load_json(path: Path) -> dict[str, Any]:
     return json.loads(path.read_text(encoding="utf-8"))
 
 
-def complete_record(path: Path) -> bool:
+def complete_record(path: Path, rerun_timeouts: bool = False) -> bool:
     if not path.is_file():
         return False
     try:
         record = json.loads(path.read_text(encoding="utf-8"))
     except json.JSONDecodeError:
+        return False
+    if rerun_timeouts and record.get("status") == "timeout":
         return False
     return bool(record.get("status")) and bool(record.get("odeformer_config_id"))
 
@@ -43,7 +48,7 @@ def record_name(system_id: int, fit_ic: int, target_ic: int, config_id: str) -> 
     return f"system_{system_id:03d}_fit{fit_ic}_gen{target_ic}_{config_id}.json"
 
 
-def timeout_record(record: dict[str, Any], elapsed: float, budget: float) -> dict[str, Any]:
+def timeout_record(record: dict[str, Any], elapsed: float, budget: float, timeout_enforced: bool) -> dict[str, Any]:
     updated = dict(record)
     updated.update(
         {
@@ -53,9 +58,106 @@ def timeout_record(record: dict[str, Any], elapsed: float, budget: float) -> dic
             "reconstruction_status": "timeout",
             "generalization_status": "timeout",
             "elapsed_s_non_evidence": elapsed,
+            "timeout_enforced": bool(timeout_enforced),
         }
     )
     return updated
+
+
+def timeout_enforcement_available() -> bool:
+    return os.name == "posix"
+
+
+def timeout_base_record(
+    system: dict[str, Any],
+    fit_cell: harness.TrajectoryCell,
+    target_cell: harness.TrajectoryCell,
+    ode_config: dict[str, Any],
+    elapsed: float,
+    budget: float,
+    timeout_enforced: bool,
+) -> dict[str, Any]:
+    base = harness.base_record("odeformer", ode_config, fit_cell, target_cell)
+    base.update(harness.odeformer_schema_defaults(ode_config))
+    failed = harness.odeformer_failure(base, ode_config, TimeoutError(f"cell exceeded timeout_seconds_per_cell={budget:g}"))
+    failed["system_id"] = int(system["id"])
+    return timeout_record(failed, elapsed, budget, timeout_enforced)
+
+
+def run_odeformer_cell_direct(
+    system: dict[str, Any],
+    fit_cell: harness.TrajectoryCell,
+    target_cell: harness.TrajectoryCell,
+    ode_config: dict[str, Any],
+    adapter_or_exc: harness.ODEFormerAdapter | Exception,
+    timeout_enforced: bool,
+) -> dict[str, Any]:
+    if isinstance(adapter_or_exc, Exception):
+        base = harness.base_record("odeformer", ode_config, fit_cell, target_cell)
+        base.update(harness.odeformer_schema_defaults(ode_config))
+        record = harness.odeformer_failure(base, ode_config, adapter_or_exc)
+    else:
+        record = harness.run_odeformer_record_with_adapter(system, fit_cell, target_cell, ode_config, adapter_or_exc)
+    record["timeout_enforced"] = bool(timeout_enforced)
+    return record
+
+
+def _run_cell_child(
+    result_queue: Any,
+    system: dict[str, Any],
+    fit_cell: harness.TrajectoryCell,
+    target_cell: harness.TrajectoryCell,
+    ode_config: dict[str, Any],
+) -> None:
+    try:
+        try:
+            adapter_or_exc: harness.ODEFormerAdapter | Exception = harness.build_odeformer_adapter(ode_config)
+        except Exception as exc:
+            adapter_or_exc = RuntimeError(f"ODEFormer is not importable in this environment: {exc}")
+        result_queue.put(("record", run_odeformer_cell_direct(system, fit_cell, target_cell, ode_config, adapter_or_exc, True)))
+    except BaseException as exc:
+        result_queue.put(("exception", (type(exc).__name__, str(exc))))
+
+
+def run_cell_with_hard_timeout(
+    system: dict[str, Any],
+    fit_cell: harness.TrajectoryCell,
+    target_cell: harness.TrajectoryCell,
+    ode_config: dict[str, Any],
+    budget: float,
+    runner: Callable[[Any, dict[str, Any], harness.TrajectoryCell, harness.TrajectoryCell, dict[str, Any]], None] = _run_cell_child,
+) -> dict[str, Any]:
+    ctx = mp.get_context("fork")
+    result_queue = ctx.Queue(maxsize=1)
+    start = time.perf_counter()
+    process = ctx.Process(target=runner, args=(result_queue, system, fit_cell, target_cell, ode_config))
+    process.start()
+    process.join(max(0.0, float(budget)))
+    elapsed = time.perf_counter() - start
+    if process.is_alive():
+        process.terminate()
+        process.join(5.0)
+        if process.is_alive():
+            process.kill()
+            process.join(5.0)
+        return timeout_base_record(system, fit_cell, target_cell, ode_config, elapsed, budget, True)
+    try:
+        kind, payload = result_queue.get_nowait()
+    except queue.Empty:
+        base = harness.base_record("odeformer", ode_config, fit_cell, target_cell)
+        base.update(harness.odeformer_schema_defaults(ode_config))
+        record = harness.odeformer_failure(base, ode_config, RuntimeError(f"cell worker exited with code {process.exitcode} before returning a record"))
+        record["timeout_enforced"] = True
+        return record
+    if kind == "record":
+        payload["timeout_enforced"] = True
+        return payload
+    error_type, error_message = payload
+    base = harness.base_record("odeformer", ode_config, fit_cell, target_cell)
+    base.update(harness.odeformer_schema_defaults(ode_config))
+    record = harness.odeformer_failure(base, ode_config, RuntimeError(f"{error_type}: {error_message}"))
+    record["timeout_enforced"] = True
+    return record
 
 
 def selected_config_paths(config: dict[str, Any]) -> list[Path]:
@@ -116,6 +218,7 @@ def run(
     limit: int | None = None,
     shard_index: int | None = None,
     shard_count: int | None = None,
+    rerun_timeouts: bool = False,
 ) -> Path:
     config = load_json(config_path)
     if environment_id is not None:
@@ -163,30 +266,29 @@ def run(
 
     adapters: dict[str, harness.ODEFormerAdapter | Exception] = {}
     budget = float(config.get("timeout_seconds_per_cell", 900))
+    hard_timeout = timeout_enforcement_available()
+    if not hard_timeout:
+        print("timeout_enforced=false: hard per-cell timeout is only enforced on POSIX runners", file=sys.stderr)
     for system, fit_ic, target_ic, ode_config in work_items:
         system_id = int(system["id"])
         config_id = str(ode_config["config_id"])
         path = records_dir / record_name(system_id, fit_ic, target_ic, config_id)
-        if complete_record(path):
+        if complete_record(path, rerun_timeouts=rerun_timeouts):
             continue
-        if config_id not in adapters:
-            try:
-                adapters[config_id] = harness.build_odeformer_adapter(ode_config)
-            except Exception as exc:
-                adapters[config_id] = RuntimeError(f"ODEFormer is not importable in this environment: {exc}")
-        adapter_or_exc = adapters[config_id]
         fit_cell = cells[(system_id, fit_ic)]
         target_cell = cells[(system_id, target_ic)]
         start = time.perf_counter()
-        if isinstance(adapter_or_exc, Exception):
-            base = harness.base_record("odeformer", ode_config, fit_cell, target_cell)
-            base.update(harness.odeformer_schema_defaults(ode_config))
-            record = harness.odeformer_failure(base, ode_config, adapter_or_exc)
+        if hard_timeout:
+            record = run_cell_with_hard_timeout(system, fit_cell, target_cell, ode_config, budget)
         else:
-            record = harness.run_odeformer_record_with_adapter(system, fit_cell, target_cell, ode_config, adapter_or_exc)
+            if config_id not in adapters:
+                try:
+                    adapters[config_id] = harness.build_odeformer_adapter(ode_config)
+                except Exception as exc:
+                    adapters[config_id] = RuntimeError(f"ODEFormer is not importable in this environment: {exc}")
+            adapter_or_exc = adapters[config_id]
+            record = run_odeformer_cell_direct(system, fit_cell, target_cell, ode_config, adapter_or_exc, False)
         elapsed = time.perf_counter() - start
-        if elapsed > budget:
-            record = timeout_record(record, elapsed, budget)
         atomic_write_json(path, record)
 
     trajectory_check.to_csv(out_dir / "trajectory_check.csv", index=False)
@@ -203,6 +305,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--limit", type=int, default=None)
     parser.add_argument("--shard-index", type=int, default=None)
     parser.add_argument("--shard-count", type=int, default=None)
+    parser.add_argument("--rerun-timeouts", action="store_true")
     return parser.parse_args()
 
 
@@ -217,6 +320,7 @@ def main() -> int:
         limit=args.limit,
         shard_index=args.shard_index,
         shard_count=args.shard_count,
+        rerun_timeouts=args.rerun_timeouts,
     )
     print(path)
     return 0

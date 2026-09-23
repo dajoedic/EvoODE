@@ -1,7 +1,10 @@
 import json
+import os
+import time
 from pathlib import Path
 
 import pandas as pd
+import pytest
 
 from baselines import compare_odeformer_equivalence
 from baselines import harness
@@ -203,6 +206,13 @@ def test_odeformer_grid_atomic_write_ignores_partial_tmp(tmp_path: Path) -> None
     assert run_odeformer_grid.complete_record(records_dir / ".cell.json.999.tmp") is False
 
 
+def test_odeformer_grid_rerun_timeouts_is_explicit(tmp_path: Path) -> None:
+    path = tmp_path / "records" / "cell.json"
+    run_odeformer_grid.atomic_write_json(path, {"status": "timeout", "odeformer_config_id": "beam10_noopt"})
+    assert run_odeformer_grid.complete_record(path) is True
+    assert run_odeformer_grid.complete_record(path, rerun_timeouts=True) is False
+
+
 def test_odeformer_grid_marks_timeout_from_real_export(tmp_path: Path, monkeypatch) -> None:
     def fake_build(config):
         return object()
@@ -218,8 +228,46 @@ def test_odeformer_grid_marks_timeout_from_real_export(tmp_path: Path, monkeypat
     config_path.write_text(json.dumps(config), encoding="utf-8")
     path = run_odeformer_grid.run(config_path, str(tmp_path / "grid"), system_ids={1}, config_ids={"beam10_noopt"}, limit=1)
     records = read_jsonl(path)
-    assert records[0]["status"] == "timeout"
-    assert records[0]["error_type"] == "Timeout"
+    if run_odeformer_grid.timeout_enforcement_available():
+        assert records[0]["status"] == "timeout"
+        assert records[0]["error_type"] == "Timeout"
+        assert records[0]["timeout_enforced"] is True
+    else:
+        assert records[0]["status"] == "success"
+        assert records[0]["timeout_enforced"] is False
+
+
+@pytest.mark.skipif(os.name != "posix", reason="hard per-cell timeout uses POSIX forked worker termination; Windows records timeout_enforced=false")
+def test_odeformer_grid_hard_timeout_kills_hanging_cell_and_continues(tmp_path: Path, monkeypatch) -> None:
+    calls = {"count": 0}
+
+    def fake_build(config):
+        return object()
+
+    def fake_run(system, fit_cell, target_cell, config, adapter):
+        calls["count"] += 1
+        if fit_cell.initial_condition_set == 1:
+            time.sleep(10.0)
+        return make_grid_record(fit_cell, target_cell, config)
+
+    monkeypatch.setattr(harness, "build_odeformer_adapter", fake_build)
+    monkeypatch.setattr(harness, "run_odeformer_record_with_adapter", fake_run)
+    config = json.loads((harness.REPO_ROOT / "baselines" / "configs" / "odeformer_grid.json").read_text(encoding="utf-8"))
+    config["timeout_seconds_per_cell"] = 0.2
+    config_path = tmp_path / "hanging_config.json"
+    config_path.write_text(json.dumps(config), encoding="utf-8")
+
+    path = run_odeformer_grid.run(config_path, str(tmp_path / "grid"), system_ids={1}, config_ids={"beam10_noopt"}, limit=2)
+    records = read_jsonl(path)
+
+    assert [record["status"] for record in records] == ["timeout", "success"]
+    assert all(record["timeout_enforced"] is True for record in records)
+    assert records[1]["fit_initial_condition_set"] == 2
+    assert records[1]["reconstruction_status"] == "success"
+
+    second = run_odeformer_grid.run(config_path, str(tmp_path / "grid"), system_ids={1}, config_ids={"beam10_noopt"}, limit=2)
+    assert second == path
+    assert [record["status"] for record in read_jsonl(second)] == ["timeout", "success"]
 
 
 def test_odeformer_summary_counts_and_expression_identity_from_export_records(tmp_path: Path) -> None:

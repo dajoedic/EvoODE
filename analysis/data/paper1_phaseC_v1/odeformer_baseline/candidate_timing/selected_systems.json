@@ -1,0 +1,39 @@
+{
+  "selection": {
+    "config_ids": [
+      "beam10_noopt",
+      "beam10_opt",
+      "beam50_noopt",
+      "beam50_opt"
+    ],
+    "limit": null,
+    "shard_count": null,
+    "shard_index": null,
+    "system_ids": [
+      1,
+      2,
+      24,
+      52
+    ]
+  },
+  "system_count": 4,
+  "systems": [
+    {
+      "dimension": 1,
+      "system_id": 1
+    },
+    {
+      "dimension": 1,
+      "system_id": 2
+    },
+    {
+      "dimension": 2,
+      "system_id": 24
+    },
+    {
+      "dimension": 3,
+      "system_id": 52
+    }
+  ],
+  "trajectory_manifest_row_count": 8
+}
