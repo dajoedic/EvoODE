@@ -4,7 +4,41 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ---
 
-## 2026-09-23
+## 2026-09-24
+
+### ODEFormer-Referenzraster komplett: stark in der Rekonstruktion, schwach in der Generalisierung
+
+504 von 504 Zellen sind in der Referenzumgebung (torch 2.0) erfolgreich gelaufen, nach 2.989 s
+Wanduhrzeit in 4 Shards. Die Wanduhrzeit ist Kontext, keine Evidenz. Die 300-s-Grenze wurde auf
+Wunsch des Nutzers mitten im Lauf entfernt, bei 370 fertigen Zellen, von denen keine an der Grenze
+lag. Genau **eine** Zelle hätte sie gerissen: System 45, `beam10_opt`, 859 s. Mit der Grenze wäre
+dort ein Ergebnis verloren gegangen, nicht ein Hänger abgefangen worden.
+
+Anteil R² > 0.9, varianzgewichtet (ODEBench-Definition), über alle 126 Zellen je Konfiguration:
+
+| Konfiguration | Rekonstruktion | Generalisierung |
+|---|---|---|
+| beam10_noopt | 77 (61,1 %) | 34 (27,0 %) |
+| beam10_opt | 97 (77,0 %) | 41 (32,5 %) |
+| beam50_noopt | 89 (70,6 %) | 36 (28,6 %) |
+| beam50_opt | 101 (80,2 %) | 43 (34,1 %) |
+
+Mit der arithmetischen Aggregation sind es 1 bis 7 Treffer weniger, die Rangfolge bleibt gleich.
+Die Konstantenoptimierung hebt die Rekonstruktion deutlich an (+20 bzw. +12 Zellen), die
+Generalisierung kaum (+7). Nach Dimension fällt die Generalisierung von 50–59 % auf dim 1 über
+18–27 % auf dim 2 bis 0–5 % auf dim 3. Auf dim 4 liegt sie bei 0 von 4.
+
+**Das ist noch kein Vergleich**, und es darf keiner daraus gemacht werden, bevor C-1 fertig ist.
+SINDys WP-N6-Zahlen (68,3 % / 47,6 %) sind das Maximum über zehn Konfigurationen, andere
+Aggregation, und die EvoODE-Zahlen aus Phase B sind nach dem Plan nie in derselben Tabelle zu
+nennen. Die gepaarte Gegenüberstellung kommt mit C-1.
+
+**Ein Instrumentierungsbefund:** `r2_by_dimension` im Harness verbucht eine gescheiterte oder
+divergente Integration still als R² = 0. Das betrifft 11 bis 12 Generalisierungszellen je
+Konfiguration. Die R² > 0.9-Rate ändert sich dadurch nicht, weil 0 und „gescheitert" beide unter der
+Schwelle liegen. Divergenz ist aber ein eigener Befund, EvoODE zählt sie ja auch getrennt. Sie muss
+deshalb als eigenes Feld in die Records, bevor die Tabellen fürs Paper entstehen.
+
 
 ### ODEFormer-Raster auf dem Laptop: eine zweite, begründete Ausnahme von der 8-Stunden-Regel
 
