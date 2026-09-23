@@ -65,6 +65,8 @@ GitLab-Logs ansehen (`glab` fehlt), pushen.
 
 ## 4. Was als Nächstes ansteht
 
+- **Codex arbeitet an WP-N21** (ODEFormer-Adapter, zwei Images, Äquivalenztest; seit 15:02, Log `outputs/codex_wp_n21.log`). Docker-Teile führt Claude aus, erwartet ist `blocked` mit *Umgebung, nicht Sache*. ODEFormer-Quelle am Pin liegt unter `outputs/third_party/odeformer/`.
+- **WP-T1d ist in seiner jetzigen Form nicht auswertbar** (DIARY 23.09., Zwischenblick): Der Referenzfit der Wahrheit scheitert in 16 von 22 Zellen, alle `swap_one`-Siege liegen dort. Neuer Maßstab (Orakelstart plus symmetrischer Mehrfachstart) wartet auf die Entscheidung des Nutzers.
 - **Warten.** Bei Abschluss von WP-T1d: auswerten (Klasse `swap_one` bei gleicher Größe ist die
   entscheidende; `add_one` zu gewinnen ist Verschachtelung) → danach **WP-T2a** festlegen.
 - Wenn dim 1 in C-1/C-2 gerechnet ist: Claim-B-Paartabelle neu ziehen (129 Paare fertig, Stand heute).
