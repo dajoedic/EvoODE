@@ -8,6 +8,8 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ### WP-N21: ODEFormer läuft auf unseren Trajektorien, aber seine Zahlen hängen an der torch-Version
 
+<!-- 7740b2f -->
+
 Codex hat den Adapter, zwei Dockerfiles und den Äquivalenztest geschrieben. Die Images habe ich
 gebaut und gefahren (Details im Nachtrag von `codex/reports/REPORT_WP_N21.md`). Die Gewichte sind
 im Image, ihr SHA-256 ist `56754040…3a5e8`, und in allen Builds beider Images ist er identisch.
