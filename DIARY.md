@@ -8,6 +8,8 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ### WP-T1d, Zwischenblick: gemessen wird das Scheitern des Referenzfits, nicht die Loss-Landschaft
 
+<!-- 621a5e7 -->
+
 Die Zwischensichtung lief über die ersten 22 von 36 Zellen: alle 20 dim-2-Zellen plus System 52,
 1.516 Nachbarzeilen. Gesucht war, ob der wahre Träger ein lokales Optimum unseres Loss ist. Die
 Probe fittet dafür den wahren Träger **einmal pro Zelle**. Das geschieht mit dem Phase-C-Optimierer,
