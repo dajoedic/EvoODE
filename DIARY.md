@@ -6,6 +6,54 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ## 2026-09-23
 
+### WP-T1d, Zwischenblick: gemessen wird das Scheitern des Referenzfits, nicht die Loss-Landschaft
+
+Die Zwischensichtung lief über die ersten 22 von 36 Zellen: alle 20 dim-2-Zellen plus System 52,
+1.516 Nachbarzeilen. Gesucht war, ob der wahre Träger ein lokales Optimum unseres Loss ist. Die
+Probe fittet dafür den wahren Träger **einmal pro Zelle**. Das geschieht mit dem Phase-C-Optimierer,
+also `max_fit_attempts = 3`, wobei ein neuer Versuch nur nach einem Wächterwert ≥ 1e6 startet.
+Dieser eine Loss ist der Maßstab für jeden Nachbarn.
+
+**Der Referenzfit scheitert in 16 von 22 Zellen**, mit `loss_true ≥ 1e-3`. Nur 6 Zellen kommen
+unter 1e-8. Auf rauschfreien Daten erreicht der wahre Träger mit den wahren Parametern einen Loss
+nahe null. Jeder Wert deutlich darüber ist also ein Optimiererfehler und keine Eigenschaft der
+Landschaft. Den Beleg liefert die Probe selbst: In **15 der 16** gescheiterten Zellen erreicht
+eine Obermenge des wahren Trägers (`add_one`) weniger als 1e-8. Die wahren `true_terms` wurden
+für alle zehn Systeme gegen die ODEBench-Gleichungen geprüft und stimmen. Ein Zuordnungsfehler
+ist ausgeschlossen.
+
+**Die Folge für die Kennzahl:** Alle 168 `swap_one`-Siege über die Wahrheit und alle 11
+`remove_one`-Siege liegen in den gescheiterten Zellen. In den 6 sauberen Zellen gibt es **0 von 386**
+`swap_one`-Siegen und 0 von 30 `remove_one`-Siegen. Dort gibt es nur 28 `add_one`-Siege, alle mit
+einem Verhältnis unter Faktor 3. Das ist Verschachtelung, kein Befund. So wie die Probe gebaut ist,
+würde sie behaupten, die wahre Struktur sei oft kein lokales Optimum. Tatsächlich ist nur ihr
+einzelner Fit gescheitert.
+
+**Der Mechanismus bei System 24** (harmonischer Oszillator): Fast alle Obermengen enden auf
+demselben Plateau um 0,12. Nur die eine, die `u1` in Gleichung 1 ergänzt, erreicht 3e-14. Das ist
+keine zufällige Streuung, sondern ein stabiles lokales Minimum. Der Trajektorien-MSE ist in der
+Frequenz multimodal, und der kleine Zufallsstart `0.1·randn` liegt im falschen Becken. Ein
+zusätzlicher Parameter öffnet eine Richtung, über die der Fit herausfindet.
+
+**Warum das über WP-T1d hinausreicht:** Die Suche in Phase C benutzt denselben Fit. Ein wahrer
+Träger, der während der Suche ausgewertet wird, kann also gegen einen Nachbarn verlieren, weil sein
+Fit scheitert, und nicht, weil er schlechter passt. Das ist ein Kandidat für den Mechanismus hinter
+`pruned_match = false` auf gekoppelten Systemen, **ist aber noch nicht gezeigt**: Die Probe misst
+Einzelfits, nicht die Suche. Es passt zu WP-N4, wo R² > 0.9 auf dem Referenzfit von 71,6 % (k = 1)
+auf 97,1 % (k = 10) steigt. **„Kein Wächterwert" heißt nicht „erfolgreich"**: Die frozen
+retry-on-failure-Regel fängt nur den Wächterwert ab und kein schlechtes lokales Optimum. Das ist
+eine Limitation für Paper 1 und darf nicht während der laufenden Kampagne behoben werden. Der
+Orakel-Arm des Phase-C-Plans, der Suchversagen von Optimierungsversagen trennt, ist genau die
+Messung, die das für die Suche beantwortet.
+
+**Was mit WP-T1d passiert:** Der Lauf läuft zu Ende. Die Nachbar-Losses sind als Messung gültig,
+nur der Maßstab muss ersetzt werden. Den Ersatz entscheidet der Nutzer. Mein Vorschlag: den wahren
+Träger zusätzlich aus **den wahren Parametern** starten, was den erreichbaren Boden ergibt, und aus
+mehreren Zufallsstarts. Die Nachbarn bekommen dasselbe Mehrfachstart-Budget, sonst verlieren sie
+künftig aus demselben Grund und bestätigen die Wahrheit fälschlich. Die dim-3-Zellen stehen noch
+aus. Nach dem Muster ist dort mit demselben Störfaktor zu rechnen.
+
+
 ### Die Trivy-Befunde: nicht torch, sondern der Plot-Stack in der Rechenumgebung
 
 <!-- 5018675 -->
