@@ -744,7 +744,12 @@ the coupled search path 1e-6 is the cheaper, behaviour-equal tolerance; the Syst
   Papers 1 and 2 are published; after that, export the Phase C image as a file and archive it with
   the paper (e.g. Zenodo), so no result depends on a GitLab registry. (2) every `k8s/` manifest
   and `docs/hpc_deployment_guide.md` name the old registry path. No registry cleanup policy is set
-  before the move — the new namespace's rules decide it.
+  before the move — the new namespace's rules decide it. (3) **Image hardening rides on the same
+  cut (decided 2026-09-23, `CHANGELOG.md` E6):** move `Plots` and `CairoMakie` out of the compute
+  environment into a separate plotting environment — they are direct deps in `Project.toml` and
+  carry most of the 109 HIGH/CRITICAL findings in `Manifest.toml`, in code the campaign never runs;
+  raise Julia to the current 1.12 patch; `apt-get upgrade` for the five fixable Debian packages;
+  rescan. New image identity, therefore only after every run has ended.
 - **A central `test/runtests.jl` plus a CI test stage.** 18 Julia and 10 Python test files exist and
   nothing runs them; `.gitlab-ci.yml` has `build` and `security` only. Cheap in work, **but not
   schedulable right now**: the CI lives on GitLab and a push there rebuilds the campaign image, so

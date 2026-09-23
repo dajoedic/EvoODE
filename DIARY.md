@@ -6,6 +6,31 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ## 2026-09-23
 
+### Die Trivy-Befunde: nicht torch, sondern der Plot-Stack in der Rechenumgebung
+
+Die ersten echten Ergebnisse von `trivy-fs` und `trivy-image` (Pipeline #8379) habe ich lokal mit
+demselben Scanner nachgestellt. Die Vermutung vom Vortag, dass die Python-Abhängigkeiten schuld
+sind, stimmt nur zum kleineren Teil. **109 der Befunde liegen in Julias Binärpaketen in
+`Manifest.toml`.** Den größten Teil davon ziehen `Plots` und `CairoMakie` herein. Beide stehen als
+direkte Abhängigkeiten in `Project.toml`, obwohl die Kampagne nie etwas plottet. Der Rest kommt aus
+Binärpaketen, die an die Julia-Version selbst gebunden sind. Das Debian-Grundimage bringt 72
+Befunde mit, davon sind nur 5 überhaupt behebbar.
+
+Keiner der beiden Jobs wird grün, ohne die eingefrorene Kampagnen-Umgebung zu ändern. Deshalb
+behebe ich jetzt nichts, sondern dokumentiere die Befunde als Ausnahme E6 im `CHANGELOG.md`. Die
+Härtung (Plot-Stack in eine eigene Umgebung auslagern, Julia-Patchstand, `apt-get upgrade`) kommt
+mit dem Namespace-Umzug, denn erst dann darf das Image eine neue Identität bekommen.
+
+Zwei Nebenfunde. **Der ODEFormer-Nachbau hat einen echten Abhängigkeitskonflikt:** Jedes torch, das
+die Befunde behebt, verlangt `sympy ≥ 1.13.3`, und ODEFormer pinnt exakt `sympy==1.11.1`. Das
+gehört jetzt als Abnahmekriterium ins ODEFormer-Arbeitspaket. **Das Baseline-Image ließ sich nie
+bauen**, weil die zentrale `.dockerignore` `baselines/` ausschließt. Behoben durch eine eigene
+Ignore-Datei neben dem Dockerfile.
+
+Ausserdem war eine Aussage im `CHANGELOG.md` falsch: Es gebe für Julia keine Befunddatenbank.
+Trivy 0.71.2 kennt Befunde für die `*_jll`-Pakete. Das ist korrigiert.
+
+
 ### Das prädiktive Kriterium für Kappen-Versagen bekommt einen Termin: nach der Phase-C-Analyse
 
 <!-- 5a9d724 -->

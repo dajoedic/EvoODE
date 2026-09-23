@@ -69,7 +69,8 @@ GitLab-Logs ansehen (`glab` fehlt), pushen.
   entscheidende; `add_one` zu gewinnen ist Verschachtelung) → danach **WP-T2a** festlegen.
 - Wenn dim 1 in C-1/C-2 gerechnet ist: Claim-B-Paartabelle neu ziehen (129 Paare fertig, Stand heute).
 - Nach Kampagnenende: Phase-C-Auswertung → Claim D → Kappen-Kriterium → Umzug.
-- Liegt ohne Eile: `trivy-fs` / `trivy-image` in #8379 fehlgeschlagen, Logs noch nicht angesehen.
+- **Trivy geklärt, bleibt rot bis nach der Kampagne:** 109 Befunde in Julia-Binärpaketen (v. a. `Plots`/`CairoMakie` in `Project.toml`), 72 Debian (5 behebbar), torch im Baseline-Nachbau. Ausnahme E6 im `CHANGELOG.md`; Härtung kommt mit dem Namespace-Umzug (`CLAUDE.md`). Der nächste Push ändert an den roten Jobs nichts.
+- **ODEFormer-Arbeitspaket:** Abnahme muss den torch/sympy-Konflikt lösen (Phase-C-Plan, Abschnitt zum Baseline-Image).
 
 ## 5. Git
 

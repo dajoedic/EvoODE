@@ -483,6 +483,17 @@ favour us is the failure mode:
 via `gdown` (`odeformer/model/sklearn_wrapper.py:60-66`). The weights must be **baked into the
 image**. Otherwise every pod either fails without egress, or 32 pods request Google Drive at once.
 
+**The baseline environment carries a dependency conflict (found 2026-09-23).** `torch==2.0.0` has
+a CRITICAL and several HIGH advisories (`CHANGELOG.md` E6). Every torch release that clears them
+(≥ 2.10, which needs Python ≥ 3.10) requires `sympy ≥ 1.13.3`, while the pinned ODEFormer commit
+requires exactly `sympy==1.11.1`. The ODEFormer work package resolves this, and its acceptance
+includes: ODEFormer loads its weights under torch ≥ 2.10 — mind that `torch.load` defaults to
+`weights_only=True` from 2.6 on — and reproduces, on a test system, the prediction it gives under
+`sympy==1.11.1`. A silent change in the symbolic output would change a baseline number, so this is
+a comparison, not an install check. Also: before 2026-09-23 the baseline image could not be built
+at all, because the root `.dockerignore` excluded `baselines/`; `baselines/Dockerfile.dockerignore`
+fixes that.
+
 **Why this section was written before the measurement.** `CLAUDE.md` records that the three
 candidate framings of 2026-09-07 were shapes fitted to whichever data happened to exist, and rejects
 that move. Deciding what a timing run may claim *after* seeing its numbers is the same mistake in a

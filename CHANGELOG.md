@@ -10,6 +10,16 @@ project**. Scientific history belongs in `DIARY.md`, not here.
 
 ## [Unreleased]
 
+### Fixed — 2026-09-23
+
+- `baselines/Dockerfile.dockerignore` added. The root `.dockerignore` is an allowlist for the Julia
+  campaign image and excludes `baselines/`, so `docker build -f baselines/Dockerfile .` failed on its
+  first `COPY` — **the baseline image could never be built.** BuildKit reads a
+  `<Dockerfile>.dockerignore` next to the Dockerfile in place of the root file; the new one allowlists
+  `baselines/`, `analysis/` and `benchmarks/data/`, which is what the harness imports and reads.
+  Verified locally: the build context loads and the build reaches `pip install`. The trajectory
+  export stays under the gitignored `outputs/` and is mounted at run time, never baked in.
+
 ### Changed — 2026-09-23
 
 - The CI service image is pinned by digest:
@@ -130,6 +140,42 @@ gap recorded in `CLAUDE.md`.
 *Compensating:* none. This is the weakest item on the list and the most likely to be resolved
 first.
 
+**E6 — §5.1: `trivy-fs` and `trivy-image` report HIGH/CRITICAL findings that are not remediated.**
+Both jobs failed in pipeline #8379 (`5a87efb`) for the first time with real results. They run
+`allow-failure: true`, so the pipeline stays green. Inventory reproduced locally on 2026-09-23
+with the same scanner (`aquasec/trivy:0.71.2`, `--severity HIGH,CRITICAL`):
+
+| Job | Findings | Source | Fixable now? |
+|---|---|---|---|
+| `trivy-fs` | 109 in `Manifest.toml`, 13 packages | Julia binary packages (`*_jll`), see below | no — requires changing the frozen campaign environment |
+| `trivy-fs` | torch 2.0.0 in `baselines/requirements.txt` (1 CRITICAL, several HIGH) | pin for the ODEFormer baseline | blocked, see below |
+| `trivy-image` | 72 in the Debian 12.15 layer | base image `julia:1.12.6-bookworm` | 5 of 72 have a Debian fix |
+| `trivy-image` | 88 in Julia's own shipped test and doc `Manifest.toml` files | the official Julia image, not this project | no — upstream content |
+| `trivy-image` | the Julia depot of the image, presumably the same 109 as `trivy-fs` | `Pkg.instantiate()` against `Manifest.toml` | no — as for `trivy-fs` |
+
+The 109 Julia findings have two sources. **The plotting stack:** `Plots` and `CairoMakie` are
+direct dependencies in `Project.toml` and pull in `FFMPEG_jll`, `Glib_jll`, `HarfBuzz_jll`,
+`OpenEXR_jll`, `libpng_jll`, `Giflib_jll` and `Expat_jll` — most of the findings, in code that the
+campaign never executes. **Julia's standard library:** `OpenSSL_jll`, `LibCURL_jll`,
+`LibSSH2_jll`, `LibGit2_jll`, `MbedTLS_jll` and `nghttp2_jll` are bound to the Julia version; 3
+`MbedTLS_jll` findings have no fix at all.
+
+*Reason:* every remediation changes the image the Phase C campaign and WP-T1d run on. Records are
+reproducible because each names the one image it ran in; changing that environment mid-campaign
+breaks the identity the results depend on. The torch pin cannot be raised on its own either: every
+torch release that clears the HIGH findings (≥ 2.10) requires `sympy ≥ 1.13.3`, while the pinned
+ODEFormer commit requires exactly `sympy==1.11.1`.
+*Compensating:* the image runs isolated batch compute on an internal cluster. It exposes no
+service, accepts no untrusted input, and makes no outbound request during a run. The baseline
+image, which carries torch, has never been built or deployed.
+*Action, after the campaign ends and with the planned namespace move:* move `Plots` and
+`CairoMakie` out of the compute environment into a separate plotting environment; raise Julia to
+the current 1.12 patch release; add `apt-get upgrade` for the five fixable Debian packages; then
+rescan. This produces a new image identity, which is why it waits. The torch/sympy conflict is
+resolved inside the ODEFormer baseline work package, whose acceptance requires ODEFormer to load
+its weights under torch ≥ 2.10 and to reproduce, on a test system, the result it gives under
+`sympy==1.11.1`.
+
 ### Declared limitation — security scan coverage
 
 Not an exception, because the policy is met as written. Stated because four green jobs suggest more
@@ -137,20 +183,23 @@ coverage than exists:
 
 | Scanned for vulnerabilities | Listed but not scanned | Not covered |
 |---|---|---|
-| Debian base layer of the image (`trivy-image`) | `Manifest.toml` / `Project.toml` — Trivy parses them and resolves the Julia dependency tree | The 80 Julia source files: no SAST exists for Julia |
+| Debian base layer of the image (`trivy-image`) | | The 80 Julia source files: no SAST exists for Julia |
+| Julia binary packages (`*_jll`) in `Manifest.toml` and in the image's depot (`trivy-fs`, `trivy-image`) | | Pure-Julia packages: see below |
 | `analysis/requirements.txt`, 6 pinned packages (`python-dependency-vuln`) | | |
+| `baselines/requirements.txt` (`trivy-fs` only — `python-dependency-vuln` reads `analysis/` alone) | | |
 | 43 Python files of the analysis pipeline (`bandit`) | | |
 | Repository secrets and misconfiguration (`trivy-fs`) | | |
 
-**The Julia gap is an ecosystem gap, not a platform gap, and it is not closable here.** Trivy does
-support Julia — it parses `Manifest.toml` and `Project.toml` and produces a dependency listing. What
-does not exist is a *vulnerability advisory database* for Julia; Trivy's own coverage table shows a
-dash in the vulnerability column for Pkg.jl. No scanner anywhere can report Julia package
-vulnerabilities, because there is no advisory source to report from.
+**Corrected 2026-09-23.** This section said until then that no vulnerability advisory database
+exists for Julia and that no scanner can report Julia package vulnerabilities. That was wrong by
+the time the scans first ran: Trivy 0.71.2 reports advisories for Julia's binary wrapper packages
+(`*_jll`), which ship C libraries such as OpenSSL, libcurl and libpng, and it found 109 of them in
+`Manifest.toml` (E6). What remains uncovered is **pure-Julia package code** and the project's own
+Julia sources — for those, the ecosystem-gap reasoning below still holds.
 
-The defensible position for any audit is therefore not "we are missing a scan" but: everything that
-can be scanned is scanned, and the primary language has no advisory database in existence. This
-needs no DevOps ticket — there is nothing for them to fix.
+The defensible position for any audit is therefore: everything that can be scanned is scanned,
+the binary layer is scanned and its findings are inventoried under E6, and the pure-Julia layer has
+no advisory source. That last part needs no DevOps ticket — there is nothing for them to fix.
 
 Residual risk is low for a second reason worth stating: the image runs isolated batch compute on an
 internal cluster. It exposes no service, accepts no untrusted input, and is reachable from nothing.
