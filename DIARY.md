@@ -8,6 +8,8 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ### ODEFormer-Referenzraster komplett: stark in der Rekonstruktion, schwach in der Generalisierung
 
+<!-- 8cbec6d -->
+
 504 von 504 Zellen sind in der Referenzumgebung (torch 2.0) erfolgreich gelaufen, nach 2.989 s
 Wanduhrzeit in 4 Shards. Die Wanduhrzeit ist Kontext, keine Evidenz. Die 300-s-Grenze wurde auf
 Wunsch des Nutzers mitten im Lauf entfernt, bei 370 fertigen Zellen, von denen keine an der Grenze
