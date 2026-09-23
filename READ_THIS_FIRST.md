@@ -138,4 +138,4 @@ Am 23.09. vormittags durchgegangen:
 1. **Rauschzuschnitt:** zurückgestellt, bis Phase C den Nutzen auf rauschfreien Daten zeigt (DIARY, `docs/phd_thesis_arc.md` §3)
 2. **Prädiktives Kriterium für Kappen-Versagen:** eigene tiefere Analyse **nach** der Phase-C-Analyse (DIARY, Bogen §11)
 3. **WP-T2a:** nur vorgemerkt, hängt an WP-T1d
-4. **`docker:29-dind`:** per Digest gepinnt (`CHANGELOG.md`). Beim nächsten Push wird neu gebaut, die laufenden Jobs bleiben unberührt. **Registry-Cleanup-Policy:** Vorschlag liegt beim Nutzer (GitLab-Oberfläche, Kampagnen-SHAs ausnehmen)
+4. **`docker:29-dind`:** per Digest gepinnt (`CHANGELOG.md`). Beim nächsten Push wird neu gebaut, die laufenden Jobs bleiben unberührt. **Registry-Cleanup-Policy:** entfällt vorerst, das Repo zieht nach den Läufen in einen anderen Namespace mit eigenen Image-Regeln (`CLAUDE.md`, Open)

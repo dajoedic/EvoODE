@@ -730,6 +730,15 @@ the coupled search path 1e-6 is the cheaper, behaviour-equal tolerance; the Syst
   recorded `evogrow_v3_stage_capped` measurements hang on today's semantics. Keep the old name as a
   deprecated alias for one transition period. Touches the export in `src/EvoODE.jl`,
   `studies/regression/run_regression.jl` and `test/test_stage_cap.jl`.
+- **The GitLab project moves to another namespace once the running Orion jobs finish (announced
+  2026-09-23).** That namespace has its own rules for where images are pushed; the CI image path
+  follows those rules, not today's `registry.gitlab.scch.at/joedicke/evoode`. Two things must be
+  settled **before** the move, not after: (1) the campaign images that records point to —
+  `91f88c4…` (Phase B), `221a3a7…` (Phase C), `5a87efb…` (WP-T1d), `ec3b6bd…`, `f6143eb…`,
+  `88eaeb6…` — must survive it, and GitLab has historically refused to transfer a project whose
+  container registry holds tags, so check with DevOps whether this instance still does; (2) every
+  `k8s/` manifest and `docs/hpc_deployment_guide.md` name the old registry path. No registry
+  cleanup policy is set before the move — the new namespace's rules decide it.
 - **A central `test/runtests.jl` plus a CI test stage.** 18 Julia and 10 Python test files exist and
   nothing runs them; `.gitlab-ci.yml` has `build` and `security` only. Cheap in work, **but not
   schedulable right now**: the CI lives on GitLab and a push there rebuilds the campaign image, so
