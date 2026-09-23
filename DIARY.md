@@ -4,6 +4,32 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ---
 
+## 2026-09-23
+
+### WP-T1d: die Deadline wird herausgenommen — eine bewusste Ausnahme von der Regel vom Vortag
+
+Der Job `evoode-wp-t1e-indexed-campaign` startete am 2026-09-23 um 00:01 mit
+`activeDeadlineSeconds: 86400`. Um 10:17 waren 22 von 36 Zellen fertig: alle 20 dim-2-Zellen und
+System 52. Die übrigen 14 Zellen sind dim 3, darunter Lorenz (55/56), bei `parallelism: 2`. Das
+erwartete Ende um 06:00 war falsch. Die 86.400 s kamen aus derselben zu optimistischen
+dim-3-Schätzung, eine obere Schranke waren sie nie.
+
+**Entscheidung des Nutzers: Deadline entfernen** (`activeDeadlineSeconds: null`) statt sie auf
+72 h zu verlängern. Das Feld ist bei einem laufenden Job änderbar. Beide Varianten hat der Server
+im Probelauf (`--dry-run=server`) angenommen, laufende Pods bleiben unberührt.
+
+**Das ist eine Ausnahme von der Regel in `CLAUDE.md` vom 2026-09-22** (jeder lange Lauf trägt
+eine konstruktive Laufzeitgrenze). Die Regel selbst gilt unverändert weiter. Diesen Lauf begrenzen
+jetzt noch das Loss-Evaluationsbudget pro Fit und der feste Zuschnitt der Probe: eine
+Nachbarschaft um eine feste Struktur, keine offene Suche. Der Lauf hat damit dieselbe Stellung
+wie C-1/C-2 und C-3. Diese Jobs starteten vor der Regel und laufen ohne Deadline.
+
+**Die Lehre gehört zur Regel:** Eine Deadline, die aus einer Kostenschätzung abgeleitet ist, erbt
+deren Fehler. Wenn sie begrenzen soll, ohne den Lauf zu gefährden, muss sie eine grosszügige
+obere Schranke sein, keine Punktschätzung.
+
+---
+
 ## 2026-09-22
 
 ### WP-T1b: die billige Rangliste ersetzt die teure Suche nicht — und die Kreuzprüfung, die beide Studien gegeneinander hält
