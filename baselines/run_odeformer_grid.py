@@ -124,7 +124,7 @@ def run_cell_with_hard_timeout(
     fit_cell: harness.TrajectoryCell,
     target_cell: harness.TrajectoryCell,
     ode_config: dict[str, Any],
-    budget: float,
+    budget: float | None,
     runner: Callable[[Any, dict[str, Any], harness.TrajectoryCell, harness.TrajectoryCell, dict[str, Any]], None] = _run_cell_child,
 ) -> dict[str, Any]:
     ctx = mp.get_context("fork")
@@ -132,7 +132,8 @@ def run_cell_with_hard_timeout(
     start = time.perf_counter()
     process = ctx.Process(target=runner, args=(result_queue, system, fit_cell, target_cell, ode_config))
     process.start()
-    process.join(max(0.0, float(budget)))
+    # budget None means no per-cell limit: wait for the worker however long it takes.
+    process.join(None if budget is None else max(0.0, float(budget)))
     elapsed = time.perf_counter() - start
     if process.is_alive():
         process.terminate()
@@ -265,7 +266,8 @@ def run(
     )
 
     adapters: dict[str, harness.ODEFormerAdapter | Exception] = {}
-    budget = float(config.get("timeout_seconds_per_cell", 900))
+    raw_budget = config.get("timeout_seconds_per_cell", 900)
+    budget = None if raw_budget is None else float(raw_budget)
     hard_timeout = timeout_enforcement_available()
     if not hard_timeout:
         print("timeout_enforced=false: hard per-cell timeout is only enforced on POSIX runners", file=sys.stderr)
@@ -289,6 +291,9 @@ def run(
             adapter_or_exc = adapters[config_id]
             record = run_odeformer_cell_direct(system, fit_cell, target_cell, ode_config, adapter_or_exc, False)
         elapsed = time.perf_counter() - start
+        record["timeout_seconds_per_cell"] = budget
+        if budget is None:
+            record["timeout_enforced"] = False
         atomic_write_json(path, record)
 
     trajectory_check.to_csv(out_dir / "trajectory_check.csv", index=False)

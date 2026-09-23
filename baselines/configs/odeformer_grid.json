@@ -3,7 +3,7 @@
   "trajectory_export_dir": "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export",
   "output_dir": "analysis/data/paper1_phaseC_v1/odeformer_baseline/candidate",
   "environment_id": "candidate",
-  "timeout_seconds_per_cell": 300,
+  "timeout_seconds_per_cell": null,
   "odeformer_configs": [
     "baselines/configs/odeformer_beam10_noopt.json",
     "baselines/configs/odeformer_beam10_opt.json",
