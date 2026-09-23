@@ -8,6 +8,8 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ### Das prädiktive Kriterium für Kappen-Versagen bekommt einen Termin: nach der Phase-C-Analyse
 
+<!-- 5a9d724 -->
+
 Der Posten aus `docs/phd_thesis_arc.md` §11 hatte seit dem Umbau des Bogens keinen Besitzer mehr.
 Gefragt ist, ob sich **vorab und ohne Ground Truth** sagen lässt, wo die Kappe versagen wird. Die
 bisherigen Versagensfälle hat man erst im Nachhinein gesehen: der System-63-Defekt, die
