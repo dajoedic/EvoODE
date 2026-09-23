@@ -147,6 +147,17 @@ concrete:
 of systems, or noise as declared future work with the comparability limitation stated in the paper.
 Doing it at full campaign breadth is not affordable. **Do not let this resolve itself by drifting.**
 
+**Deferred, deliberately — decided 2026-09-23.** No noise work is scoped, budgeted or built until
+Phase C shows that EvoGrow earns its place on **noise-free** data. The reason is sequencing: a noise
+axis for a method that has not yet shown its merit on clean data measures the degradation of
+something unproven. This is a decision to *order* the work, not to drop the axis — the
+comparability argument above still holds, and the choice between a reduced arm and declared
+future work is re-opened once the Phase C evaluation exists. One correction to the premise it was
+taken on: the ODEBench file ships **noise-free** solver output (`solutions[*].y`, the
+`solve_ivp` fields); noise is part of ODEFormer's *evaluation protocol*, applied on top, not
+contained in the data. The protocol audit (`docs/paper1_odebench_protocol_alignment.md`) still
+carries the noise setting of the published baselines as "to verify".
+
 ### Limitations Paper 1 may leave open
 
 These are not reasons to delay Paper 1. They are the motivation for the papers after it:
@@ -542,6 +553,7 @@ not a claim.
 ## 11. Open items this arc does not resolve
 
 1. **The noise and sampling-density scope of Paper 1** — §3. The single largest unbudgeted cost.
+   **Deferred 2026-09-23** until Phase C shows merit on noise-free data; re-open then, not before.
 2. **Paper 2's identity**, pending WP-T1b — §5.
 3. **Where the predictive criterion for cap failure lands.** Identifying in advance, without ground
    truth, where the controller will fail was the item that turned Paper 1's cap work from an

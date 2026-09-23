@@ -6,6 +6,22 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ## 2026-09-23
 
+### Rauschen in Paper 1: zurückgestellt, bis der Algorithmus auf sauberen Daten trägt
+
+Entscheidung des Nutzers: Zum Rauschen wird erst etwas zugeschnitten, budgetiert oder gebaut, wenn
+Phase C gezeigt hat, dass EvoGrow auf **rauschfreien** Daten seine Berechtigung hat. Eine
+Rauschachse für eine Methode, die auf sauberen Daten noch nichts bewiesen hat, misst nur, wie etwas
+Unbewiesenes schlechter wird. Die Achse wird damit nach hinten gestellt, nicht gestrichen. Das
+Vergleichbarkeitsargument vom 2026-09-22 gilt weiter, und die Wahl zwischen einem reduzierten Arm
+und erklärter Future Work steht wieder an, sobald die Phase-C-Auswertung vorliegt.
+`docs/phd_thesis_arc.md` §3 und §11.
+
+**Eine Prämisse musste korrigiert werden:** Rauschen ist **nicht** in den ODEBench-Daten
+enthalten. `strogatz_extended.json` liefert rauschfreie `solve_ivp`-Ausgabe. ODEFormer legt das
+Rauschen erst im Evaluationsprotokoll darüber. Welche Rauschstufen die veröffentlichten Baselines
+nutzen, steht im Protokoll-Audit weiterhin auf „to verify".
+
+
 ### WP-T1d: die Deadline wird herausgenommen — eine bewusste Ausnahme von der Regel vom Vortag
 
 <!-- 2d5b0b5 -->
