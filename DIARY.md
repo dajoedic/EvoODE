@@ -6,6 +6,33 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ## 2026-09-24
 
+### ODEFormer ist nicht deterministisch, und die Ursache ist ein 1-s-Wall-Clock-Timeout
+
+<!-- 6810a6e -->
+
+Die WP-N23-Neuberechnung beider Raster ist fertig (504 + 504), gleicher Git-Hash, gleiche
+Umgebung, Seed 2023, frischer Adapter pro Zelle. Gegen den ersten Lauf ist sie **nicht bitgleich**:
+Abweichende R²-Werte gibt es in 18 von 504 Referenz- und 8 von 504 Kandidatenzellen, in 10 davon ist
+schon das Rohmodell aus dem Transformer ein anderes. Bei anderen Zellen kippt bei identischem Modell
+der Ausgang zwischen `finite` und `wrong_shape`. Die R²>0.9-Raten bewegen sich kaum
+(Rekonstruktion Referenz 364 → 363, Kandidat 326 → 324 auf der Schnittmenge, Generalisierung
+unverändert). Einzelzellen sind aber nicht belastbar.
+
+Ursache aus dem Code im Image, empirisch noch unbestätigt: `_integrate_ode` trägt `@timeout(1)`
+(`odeformer/envs/generators.py:823`, `SIGALRM`), und `integrate_ode` gibt beim Timeout eine
+1-D-Liste aus NaN zurück (`:919-924`). Unser Harness zählt das als `wrong_shape`. Weil
+`sort_candidates` jeden Beam-Kandidaten integriert, hängt auch die Modellauswahl an der Uhr. Die
+Ergebnisse sind damit lastabhängig (vier parallele Shards). Einen RNG-Zustand, der über Zellen
+weitergereicht würde, schließe ich aus: Beide Läufe forken pro Zelle und seeden den Adapter neu.
+Nebenbefund: `timeout_enforced` war im ersten Lauf in 370 Zellen gesetzt, im zweiten in keiner.
+Das kommt vom `null`-Budget, nicht von einer Konfigurationsänderung an ODEFormer.
+
+Entscheidung mit dem Nutzer: erst die Ursache belegen (WP-N24: Zeitgrenze steuerbar machen,
+Timeouts zählen, 26 abweichende + 8 Kontrollzellen wiederholen unter 1 s und 10 s). Die alten
+Ordner bleiben, die `_wp_n23`-Ordner bleiben untracked, bis das Ergebnis vorliegt. Welcher Modus
+für Claim D kanonisch ist, ist offen. Dabei beachten: ODEFormers eigene publizierte Zahlen sind
+unter derselben hardwareabhängigen 1-s-Grenze entstanden.
+
 ### ODEFormer-Sensitivität: die Raten halten, die einzelnen Formeln nicht
 
 <!-- 4219444 -->
