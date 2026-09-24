@@ -8,7 +8,7 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ### ODEFormer ist nicht deterministisch, und die Ursache ist ein 1-s-Wall-Clock-Timeout
 
-<!-- 6810a6e c4c5982 -->
+<!-- 6810a6e c4c5982 3e98e31 -->
 
 Die WP-N23-Neuberechnung beider Raster ist fertig (504 + 504), gleicher Git-Hash, gleiche
 Umgebung, Seed 2023, frischer Adapter pro Zelle. Gegen den ersten Lauf ist sie **nicht bitgleich**:
@@ -32,6 +32,21 @@ Timeouts zählen, 26 abweichende + 8 Kontrollzellen wiederholen unter 1 s und 10
 Ordner bleiben, die `_wp_n23`-Ordner bleiben untracked, bis das Ergebnis vorliegt. Welcher Modus
 für Claim D kanonisch ist, ist offen. Dabei beachten: ODEFormers eigene publizierte Zahlen sind
 unter derselben hardwareabhängigen 1-s-Grenze entstanden.
+
+**Nachtrag, WP-N24/b/c.** Die erste Instrumentierung zählte 0 Timeouts, obwohl ein Aufruf genau
+1,0001 s dauerte. Der Grund: Der `solve_ivp`-Zweig von `_integrate_ode` hat ein nacktes
+`except: return None`, das den `MyTimeoutError` verschluckt. Ein Timeout ist dort also von einem
+Solver-Fehler ununterscheidbar. Außerdem entsteht das NaN-Sentinel auch bei NaN, zu kurzer
+Trajektorie und **jeder** Warnung, es ist also kein Timeout-Merkmal. Und unser Harness machte aus
+`None` ein 0-d-Array, das als `wrong_shape` zählte. Jetzt wird im Signal-Handler gezählt, mit einem
+semantisch identischen Nachbau von ODEFormers `timeout`. Die Signal-Tests laufen im Linux-Container
+grün (6/6); unter Windows werden sie übersprungen. Zwei Integrationstests scheitern im Container,
+das tun sie aber schon auf HEAD vor WP-N24: Altlast, nicht von dieser Änderung.
+
+Rauchtest mit je 3 Wiederholungen. Kandidat, System 11, `beam10_opt`: unter 1 s **6–7
+Handler-Timeouts** in der Konstantenoptimierung, R² 0,517. Unter 10 s **0 Timeouts**, R² **0,983**,
+bitgleich über alle Wiederholungen. Referenz, System 2: 0 Timeouts in beiden Modi, bitgleich. Die
+Grenze kostet also nicht nur Reproduzierbarkeit, sondern im Einzelfall fast 0,5 in R².
 
 ### ODEFormer-Sensitivität: die Raten halten, die einzelnen Formeln nicht
 
