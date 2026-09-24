@@ -5,6 +5,7 @@ from pathlib import Path
 
 import pandas as pd
 import pytest
+import numpy as np
 
 from baselines import compare_odeformer_equivalence
 from baselines import harness
@@ -66,6 +67,16 @@ def test_smoke_writes_sindy_and_odeformer_records(tmp_path: Path) -> None:
         "reconstruction_r2_variance_weighted_gt_0_9",
         "generalization_r2_arithmetic_mean_gt_0_9",
         "generalization_r2_variance_weighted_gt_0_9",
+        "reconstruction_prediction_outcome",
+        "reconstruction_r2_dimension_status",
+        "reconstruction_r2_zero_reason",
+        "reconstruction_integration_error_type",
+        "reconstruction_integration_error_message",
+        "generalization_prediction_outcome",
+        "generalization_r2_dimension_status",
+        "generalization_r2_zero_reason",
+        "generalization_integration_error_type",
+        "generalization_integration_error_message",
         "odeformer_model_raw",
         "odeformer_model_canonical",
         "odeformer_weight_sha256",
@@ -102,6 +113,49 @@ def test_r2_aggregations_are_distinct_on_multidimensional_case() -> None:
     prediction[:, 0] = reference[:, 0].mean()
     scores = harness.aggregate_r2(reference, prediction)
     assert scores["r2_arithmetic_mean"] != scores["r2_variance_weighted"]
+
+
+def test_r2_diagnostics_preserve_zero_convention_on_invalid_predictions_from_export() -> None:
+    cell = first_multidimensional_cell()
+    reference = cell.state
+    cases = [
+        (None, "none", "prediction_none"),
+        (np.full(reference.shape, np.nan), "nonfinite", "prediction_nonfinite"),
+        (reference[:, :1].copy(), "wrong_shape", "prediction_wrong_shape"),
+    ]
+    for prediction, outcome, reason in cases:
+        scores = harness.aggregate_r2(reference, prediction)
+        fields = harness.r2_diagnostic_fields("generalization", reference, prediction)
+        assert scores == {"r2_arithmetic_mean": 0.0, "r2_variance_weighted": 0.0}
+        assert fields["generalization_prediction_outcome"] == outcome
+        assert json.loads(fields["generalization_r2_dimension_status"]) == ["zero_convention"] * reference.shape[1]
+        assert json.loads(fields["generalization_r2_zero_reason"]) == [reason] * reference.shape[1]
+
+
+def test_r2_diagnostics_report_reference_without_variance_from_export() -> None:
+    cell = first_multidimensional_cell()
+    reference = cell.state.copy()
+    reference[:, 0] = 0.0
+    prediction = reference.copy()
+    scores = harness.r2_by_dimension(reference, prediction)
+    fields = harness.r2_diagnostic_fields("reconstruction", reference, prediction)
+    statuses = json.loads(fields["reconstruction_r2_dimension_status"])
+    reasons = json.loads(fields["reconstruction_r2_zero_reason"])
+    assert scores[0] == 0.0
+    assert fields["reconstruction_prediction_outcome"] == "finite"
+    assert statuses[0] == "zero_convention"
+    assert reasons[0] == "reference_no_variance"
+
+
+def test_r2_diagnostics_keep_regular_case_unchanged_from_export() -> None:
+    cell = first_multidimensional_cell()
+    reference = cell.state
+    scores = harness.aggregate_r2(reference, reference.copy())
+    fields = harness.r2_diagnostic_fields("reconstruction", reference, reference.copy())
+    assert scores == {"r2_arithmetic_mean": 1.0, "r2_variance_weighted": 1.0}
+    assert fields["reconstruction_prediction_outcome"] == "finite"
+    assert json.loads(fields["reconstruction_r2_dimension_status"]) == ["regular"] * reference.shape[1]
+    assert json.loads(fields["reconstruction_r2_zero_reason"]) == [""] * reference.shape[1]
 
 
 def test_selection_without_filters_covers_all_manifest_rows() -> None:
@@ -282,6 +336,9 @@ def test_odeformer_summary_counts_and_expression_identity_from_export_records(tm
         record["reconstruction_r2_variance_weighted"] = 0.95
         record["generalization_r2_arithmetic_mean"] = 0.25
         record["generalization_r2_variance_weighted"] = 0.25
+        for key in list(record):
+            if key.startswith("reconstruction_prediction_") or key.startswith("generalization_prediction_"):
+                del record[key]
     reference = tmp_path / "reference.jsonl"
     reference.write_text("\n".join(json.dumps(record, sort_keys=True) for record in records) + "\n", encoding="utf-8")
     candidate_records = [dict(record, odeformer_environment_id="candidate") for record in records]
@@ -294,5 +351,25 @@ def test_odeformer_summary_counts_and_expression_identity_from_export_records(tm
     assert set(summary["environment_id"]) == {"reference", "candidate"}
     assert set(summary["reconstruction_r2_arithmetic_gt_0_9_count"]) == {2}
     assert set(summary["generalization_r2_arithmetic_gt_0_9_count"]) == {0}
+    assert set(summary["reconstruction_prediction_not_captured_count"]) == {2}
     assert int(identity["paired_cell_count"].sum()) == 2
     assert int(identity["identical_expression_count"].sum()) == 1
+
+
+def test_odeformer_summary_counts_prediction_outcomes_from_export_records(tmp_path: Path) -> None:
+    path = harness.run(CONFIG, str(tmp_path / "source"))
+    records = [record for record in read_jsonl(path) if record["method"] == "odeformer"][:2]
+    for idx, record in enumerate(records):
+        record["status"] = "success"
+        record["odeformer_environment_id"] = "reference"
+        record["odeformer_config_id"] = "beam10_noopt"
+        record["reconstruction_prediction_outcome"] = "finite" if idx == 0 else "nonfinite"
+        record["generalization_prediction_outcome"] = "wrong_shape"
+    reference = tmp_path / "reference.jsonl"
+    reference.write_text("\n".join(json.dumps(record, sort_keys=True) for record in records) + "\n", encoding="utf-8")
+    paths = summarize_odeformer_grid.run(reference, None, tmp_path / "summary")
+    summary = pd.read_csv(paths["summary"])
+    assert int(summary["reconstruction_prediction_finite_count"].sum()) == 1
+    assert int(summary["reconstruction_prediction_nonfinite_count"].sum()) == 1
+    assert int(summary["reconstruction_prediction_not_captured_count"].sum()) == 0
+    assert int(summary["generalization_prediction_wrong_shape_count"].sum()) == 2

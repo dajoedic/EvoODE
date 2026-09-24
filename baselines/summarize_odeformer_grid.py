@@ -37,6 +37,19 @@ def proportion_gt(frame: pd.DataFrame, column: str) -> float:
     return float((values > harness.R2_THRESHOLD).sum()) / float(len(frame))
 
 
+def outcome_counts(group: pd.DataFrame, prefix: str) -> dict[str, int]:
+    column = f"{prefix}_prediction_outcome"
+    if column in group.columns:
+        values = group[column].fillna("not_captured").astype(str)
+        values = values.where(values.isin(harness.PREDICTION_OUTCOMES), "not_captured")
+    else:
+        values = pd.Series(["not_captured"] * len(group), index=group.index)
+    return {
+        f"{prefix}_prediction_{outcome}_count": int(values.eq(outcome).sum())
+        for outcome in [*sorted(harness.PREDICTION_OUTCOMES), "not_captured"]
+    }
+
+
 def summarize(frame: pd.DataFrame) -> pd.DataFrame:
     rows = []
     if frame.empty:
@@ -60,6 +73,8 @@ def summarize(frame: pd.DataFrame) -> pd.DataFrame:
                 "generalization_r2_arithmetic_gt_0_9_share": proportion_gt(group, "generalization_r2_arithmetic_mean"),
                 "generalization_r2_variance_weighted_gt_0_9_count": int((pd.to_numeric(group["generalization_r2_variance_weighted"], errors="coerce") > harness.R2_THRESHOLD).sum()),
                 "generalization_r2_variance_weighted_gt_0_9_share": proportion_gt(group, "generalization_r2_variance_weighted"),
+                **outcome_counts(group, "reconstruction"),
+                **outcome_counts(group, "generalization"),
             }
         )
     return pd.DataFrame(rows).sort_values(["environment_id", "config_id", "dimension"]).reset_index(drop=True)

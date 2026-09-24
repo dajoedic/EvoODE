@@ -35,6 +35,25 @@ from scripts.aggregate.run_wp_n6_sindy_baseline import (  # noqa: E402
 
 ODEFORMER_COMMIT = "c9193012ad07a97186290b98d8290d1a177f4609"
 R2_THRESHOLD = 0.9
+PREDICTION_OUTCOMES = {
+    "finite",
+    "none",
+    "wrong_shape",
+    "nonfinite",
+}
+R2_DIMENSION_STATUSES = {
+    "regular",
+    "zero_convention",
+}
+R2_ZERO_REASONS = {
+    "",
+    "prediction_none",
+    "prediction_wrong_shape",
+    "prediction_nonfinite",
+    "nonfinite_score",
+    "reference_no_variance",
+}
+ERROR_MESSAGE_LIMIT = 240
 REGISTERED_INACTIVE = {
     "pysr": "PySR dependency is not installed; it carries an isolated Julia runtime.",
     "proged": "ProGED dependency is not installed in the baseline image.",
@@ -177,6 +196,78 @@ def r2_by_dimension(reference: np.ndarray, prediction: np.ndarray | None) -> lis
     return scores
 
 
+def short_error_message(exc: BaseException, limit: int = ERROR_MESSAGE_LIMIT) -> str:
+    text = str(exc).replace("\r", " ").replace("\n", " ")
+    return text[:limit]
+
+
+def prediction_outcome(reference: np.ndarray, prediction: np.ndarray | None) -> str:
+    if prediction is None:
+        return "none"
+    if reference.shape != prediction.shape:
+        return "wrong_shape"
+    if not np.all(np.isfinite(prediction)):
+        return "nonfinite"
+    return "finite"
+
+
+def r2_dimension_diagnostics(reference: np.ndarray, prediction: np.ndarray | None) -> tuple[str, list[str], list[str]]:
+    outcome = prediction_outcome(reference, prediction)
+    if outcome != "finite":
+        reason = f"prediction_{outcome}"
+        return (
+            outcome,
+            ["zero_convention" for _ in range(reference.shape[1])],
+            [reason for _ in range(reference.shape[1])],
+        )
+    statuses = []
+    reasons = []
+    for idx in range(reference.shape[1]):
+        y = reference[:, idx]
+        yhat = prediction[:, idx]
+        denom = float(np.sum((y - np.mean(y)) ** 2))
+        if denom == 0.0:
+            statuses.append("zero_convention")
+            reasons.append("reference_no_variance")
+        else:
+            score = 1.0 - float(np.sum((y - yhat) ** 2)) / denom
+            if math.isfinite(score):
+                statuses.append("regular")
+                reasons.append("")
+            else:
+                statuses.append("zero_convention")
+                reasons.append("nonfinite_score")
+    return outcome, statuses, reasons
+
+
+def r2_diagnostic_fields(prefix: str, reference: np.ndarray, prediction: np.ndarray | None) -> dict[str, Any]:
+    outcome, statuses, reasons = r2_dimension_diagnostics(reference, prediction)
+    return {
+        f"{prefix}_prediction_outcome": outcome,
+        f"{prefix}_r2_dimension_status": json.dumps(statuses, separators=(",", ":")),
+        f"{prefix}_r2_zero_reason": json.dumps(reasons, separators=(",", ":")),
+    }
+
+
+def empty_r2_diagnostic_fields(prefix: str, dimension: int, outcome: str = "none") -> dict[str, Any]:
+    if outcome not in PREDICTION_OUTCOMES:
+        outcome = "none"
+    reason = f"prediction_{outcome}" if outcome != "finite" else ""
+    status = "regular" if outcome == "finite" else "zero_convention"
+    return {
+        f"{prefix}_prediction_outcome": outcome,
+        f"{prefix}_r2_dimension_status": json.dumps([status for _ in range(dimension)], separators=(",", ":")),
+        f"{prefix}_r2_zero_reason": json.dumps([reason for _ in range(dimension)], separators=(",", ":")),
+    }
+
+
+def integration_error_fields(prefix: str, exc: BaseException | None = None) -> dict[str, str]:
+    return {
+        f"{prefix}_integration_error_type": type(exc).__name__ if exc is not None else "",
+        f"{prefix}_integration_error_message": short_error_message(exc) if exc is not None else "",
+    }
+
+
 def aggregate_r2(reference: np.ndarray, prediction: np.ndarray | None) -> dict[str, float]:
     scores = r2_by_dimension(reference, prediction)
     variances = np.var(reference, axis=0)
@@ -259,6 +350,10 @@ def record_failure(record: dict[str, Any], exc: Exception) -> dict[str, Any]:
             "structure_hit_pruned": False,
             **{f"reconstruction_{key}": value for key, value in reconstruction_r2.items()},
             **{f"generalization_{key}": value for key, value in generalization_r2.items()},
+            **empty_r2_diagnostic_fields("reconstruction", record["dimension"]),
+            **empty_r2_diagnostic_fields("generalization", record["dimension"]),
+            **integration_error_fields("reconstruction", exc),
+            **integration_error_fields("generalization", exc),
             **r2_threshold_flags("reconstruction", reconstruction_r2),
             **r2_threshold_flags("generalization", generalization_r2),
         }
@@ -472,8 +567,18 @@ def run_odeformer_record_with_adapter(
     start = time.perf_counter()
     try:
         best, model_raw, model_canonical, candidates = adapter.fit_best_candidate(fit_cell)
-        reconstruction_before = adapter.integrate_expression(fit_cell, best)
-        generalization_before = adapter.integrate_expression(target_cell, best)
+        reconstruction_error: BaseException | None = None
+        generalization_error: BaseException | None = None
+        try:
+            reconstruction_before = adapter.integrate_expression(fit_cell, best)
+        except Exception as exc:
+            reconstruction_before = None
+            reconstruction_error = exc
+        try:
+            generalization_before = adapter.integrate_expression(target_cell, best)
+        except Exception as exc:
+            generalization_before = None
+            generalization_error = exc
         reconstruction_before_r2 = aggregate_r2(fit_cell.state, reconstruction_before)
         generalization_before_r2 = aggregate_r2(target_cell.state, generalization_before)
         expression_after = model_canonical
@@ -485,12 +590,20 @@ def run_odeformer_record_with_adapter(
         optimization_stop_reason = ""
         reconstruction_after_r2 = reconstruction_before_r2
         generalization_after_r2 = generalization_before_r2
+        reconstruction_after = reconstruction_before
+        generalization_after = generalization_before
         if bool(config.get("constant_optimization_enabled", False)):
             try:
                 optimized = adapter.optimize_constants(model_canonical, fit_cell)
                 expression_after = canonicalize_odeformer_expression(str(optimized["expression"]))
-                reconstruction_after_r2 = aggregate_r2(fit_cell.state, optimized["fit_prediction"])
-                generalization_after = adapter.integrate_expression(target_cell, expression_after)
+                reconstruction_after = optimized["fit_prediction"]
+                reconstruction_after_r2 = aggregate_r2(fit_cell.state, reconstruction_after)
+                try:
+                    generalization_after = adapter.integrate_expression(target_cell, expression_after)
+                    generalization_error = None
+                except Exception as exc:
+                    generalization_after = None
+                    generalization_error = exc
                 generalization_after_r2 = aggregate_r2(target_cell.state, generalization_after)
                 optimization_status = "success"
                 optimization_nit = int(optimized["nit"])
@@ -533,6 +646,10 @@ def run_odeformer_record_with_adapter(
                 **{f"generalization_after_optimization_{key}": value for key, value in generalization_after_r2.items()},
                 **{f"reconstruction_{key}": value for key, value in reconstruction_after_r2.items()},
                 **{f"generalization_{key}": value for key, value in generalization_after_r2.items()},
+                **r2_diagnostic_fields("reconstruction", fit_cell.state, reconstruction_after),
+                **r2_diagnostic_fields("generalization", target_cell.state, generalization_after),
+                **integration_error_fields("reconstruction", reconstruction_error),
+                **integration_error_fields("generalization", generalization_error),
                 **r2_threshold_flags("reconstruction", reconstruction_after_r2),
                 **r2_threshold_flags("generalization", generalization_after_r2),
             }
@@ -562,6 +679,16 @@ def run_sindy_record(system: dict[str, Any], fit_cell: TrajectoryCell, target_ce
         generalization, generalization_status = simulate_model(coefficients, feature_names, target_cell.state[0, :], target_cell.time)
         reconstruction_r2 = aggregate_r2(fit_cell.state, reconstruction)
         generalization_r2 = aggregate_r2(target_cell.state, generalization)
+        reconstruction_error = (
+            RuntimeError(reconstruction_status)
+            if reconstruction is None and reconstruction_status not in {"success", "fit_failed"}
+            else None
+        )
+        generalization_error = (
+            RuntimeError(generalization_status)
+            if generalization is None and generalization_status not in {"success", "fit_failed"}
+            else None
+        )
         record.update(
             {
                 "model": json.dumps(
@@ -581,6 +708,10 @@ def run_sindy_record(system: dict[str, Any], fit_cell: TrajectoryCell, target_ce
                 "fit_elapsed_s_context": time.perf_counter() - start,
                 **{f"reconstruction_{key}": value for key, value in reconstruction_r2.items()},
                 **{f"generalization_{key}": value for key, value in generalization_r2.items()},
+                **r2_diagnostic_fields("reconstruction", fit_cell.state, reconstruction),
+                **r2_diagnostic_fields("generalization", target_cell.state, generalization),
+                **integration_error_fields("reconstruction", reconstruction_error),
+                **integration_error_fields("generalization", generalization_error),
                 **r2_threshold_flags("reconstruction", reconstruction_r2),
                 **r2_threshold_flags("generalization", generalization_r2),
             }
