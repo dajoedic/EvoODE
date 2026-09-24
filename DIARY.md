@@ -8,6 +8,8 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ### ODEFormer-Sensitivität: die Raten halten, die einzelnen Formeln nicht
 
+<!-- 4219444 -->
+
 Das Kandidatenraster (torch 2.14) ist komplett: 504 von 504 erfolgreich, längste Zelle 549 s.
 Gegen die Referenz (torch 2.0) je Konfiguration, R² > 0.9, varianzgewichtet, jeweils 126 Zellen:
 
