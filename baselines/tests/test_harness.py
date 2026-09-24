@@ -1,6 +1,12 @@
+import argparse
+import contextlib
 import json
 import os
+import functools
+import signal
+import sys
 import time
+import types
 from pathlib import Path
 
 import pandas as pd
@@ -10,6 +16,7 @@ import numpy as np
 from baselines import compare_odeformer_equivalence
 from baselines import harness
 from baselines import run_odeformer_grid
+from baselines import run_odeformer_repeatability
 from baselines import summarize_odeformer_grid
 
 
@@ -132,6 +139,231 @@ def test_r2_diagnostics_preserve_zero_convention_on_invalid_predictions_from_exp
         assert json.loads(fields["generalization_r2_zero_reason"]) == [reason] * reference.shape[1]
 
 
+def test_r2_diagnostics_name_odeformer_nan_sentinel_from_export() -> None:
+    cell = first_multidimensional_cell()
+    sentinel = np.full(cell.state.shape[0], np.nan)
+    scores = harness.aggregate_r2(cell.state, sentinel)
+    fields = harness.r2_diagnostic_fields("generalization", cell.state, sentinel)
+    assert scores == {"r2_arithmetic_mean": 0.0, "r2_variance_weighted": 0.0}
+    assert fields["generalization_prediction_outcome"] == "odeformer_nan_sentinel"
+    assert json.loads(fields["generalization_r2_zero_reason"]) == ["prediction_odeformer_nan_sentinel"] * cell.state.shape[1]
+
+
+@pytest.mark.skipif(not hasattr(signal, "SIGALRM"), reason="signal timeout equivalence requires SIGALRM")
+def test_odeformer_timeout_hook_matches_original_timer_semantics() -> None:
+    class MyTimeoutError(BaseException):
+        pass
+
+    def original_timeout(seconds=10, error_message=os.strerror(62)):
+        def decorator(func):
+            def _handle_timeout(repeat_id, signum, frame):
+                signal.signal(signal.SIGALRM, functools.partial(_handle_timeout, repeat_id + 1))
+                signal.setitimer(signal.ITIMER_REAL, seconds)
+                raise MyTimeoutError(error_message)
+
+            def wrapper(*args, **kwargs):
+                old_signal = signal.signal(signal.SIGALRM, functools.partial(_handle_timeout, 0))
+                old_time_left = signal.getitimer(signal.ITIMER_REAL)[0]
+                assert type(old_time_left) is float and old_time_left >= 0
+                if 0 < old_time_left < seconds:
+                    signal.setitimer(signal.ITIMER_REAL, old_time_left)
+                else:
+                    signal.setitimer(signal.ITIMER_REAL, seconds)
+                start_time = time.time()
+                try:
+                    result = func(*args, **kwargs)
+                finally:
+                    if old_time_left == 0:
+                        signal.setitimer(signal.ITIMER_REAL, 0)
+                    else:
+                        time_elapsed = time.time() - start_time
+                        signal.signal(signal.SIGALRM, old_signal)
+                        signal.setitimer(signal.ITIMER_REAL, max(0, old_time_left - time_elapsed))
+                return result
+
+            return functools.wraps(func)(wrapper)
+
+        return decorator
+
+    def slow() -> str:
+        time.sleep(0.2)
+        return "done"
+
+    counts = {"value": 0}
+    copied = harness.odeformer_timeout_with_hook(
+        0.05,
+        on_timeout=lambda: counts.__setitem__("value", counts["value"] + 1),
+        error_type=MyTimeoutError,
+        error_message=os.strerror(62),
+    )(slow)
+    reference = original_timeout(0.05)(slow)
+    with pytest.raises(MyTimeoutError):
+        reference()
+    with pytest.raises(MyTimeoutError):
+        copied()
+    assert counts["value"] == 1
+    assert signal.getitimer(signal.ITIMER_REAL)[0] == 0.0
+
+    def fast() -> str:
+        return "done"
+
+    assert harness.odeformer_timeout_with_hook(0.1, error_type=MyTimeoutError)(fast)() == "done"
+    assert signal.getitimer(signal.ITIMER_REAL)[0] == 0.0
+
+    signal.setitimer(signal.ITIMER_REAL, 0.2)
+    try:
+        started = time.time()
+        assert harness.odeformer_timeout_with_hook(1.0, error_type=MyTimeoutError)(fast)() == "done"
+        restored = signal.getitimer(signal.ITIMER_REAL)[0]
+        assert 0.0 < restored <= max(0.2 - (time.time() - started), 0.2)
+    finally:
+        signal.setitimer(signal.ITIMER_REAL, 0)
+
+
+@pytest.mark.skipif(not hasattr(signal, "SIGALRM"), reason="signal timeout handling requires SIGALRM")
+def test_odeformer_timeout_hook_counts_when_naked_except_returns_none() -> None:
+    class MyTimeoutError(BaseException):
+        pass
+
+    counts = {"value": 0}
+
+    @harness.odeformer_timeout_with_hook(
+        0.05,
+        on_timeout=lambda: counts.__setitem__("value", counts["value"] + 1),
+        error_type=MyTimeoutError,
+    )
+    def catches_timeout() -> None:
+        try:
+            time.sleep(0.2)
+        except BaseException:
+            return None
+        return None
+
+    assert catches_timeout() is None
+    assert counts["value"] == 1
+
+
+def test_odeformer_timeout_patch_counts_and_restores(monkeypatch) -> None:
+    class MyTimeoutError(Exception):
+        pass
+
+    def timeout(seconds):
+        def decorate(fn):
+            @functools.wraps(fn)
+            def wrapped(*args, **kwargs):
+                return fn(*args, **kwargs)
+
+            wrapped.timeout_seconds = seconds
+            return wrapped
+
+        return decorate
+
+    def fake_timeout_with_hook(seconds, on_timeout, error_type):
+        def decorate(fn):
+            @functools.wraps(fn)
+            def wrapped(*args, **kwargs):
+                try:
+                    return fn(*args, **kwargs)
+                except error_type:
+                    on_timeout()
+                    raise
+
+            wrapped.timeout_seconds = seconds
+            return wrapped
+
+        return decorate
+
+    def original_impl(*_args, **_kwargs):
+        raise MyTimeoutError("timeout")
+
+    original = timeout(1.0)(original_impl)
+    odeformer_mod = types.ModuleType("odeformer")
+    envs_mod = types.ModuleType("odeformer.envs")
+    generators_mod = types.ModuleType("odeformer.envs.generators")
+    utils_mod = types.ModuleType("odeformer.utils")
+    generators_mod._integrate_ode = original
+    envs_mod.generators = generators_mod
+    utils_mod.MyTimeoutError = MyTimeoutError
+    utils_mod.timeout = timeout
+    monkeypatch.setitem(sys.modules, "odeformer", odeformer_mod)
+    monkeypatch.setitem(sys.modules, "odeformer.envs", envs_mod)
+    monkeypatch.setitem(sys.modules, "odeformer.envs.generators", generators_mod)
+    monkeypatch.setitem(sys.modules, "odeformer.utils", utils_mod)
+    monkeypatch.setattr(harness, "odeformer_timeout_with_hook", fake_timeout_with_hook)
+
+    adapter = object.__new__(harness.ODEFormerAdapter)
+    adapter.config = {"integration_timeout_seconds": 10.0}
+    adapter.integration_timeout_seconds = adapter._configured_integration_timeout_seconds()
+    adapter._timeout_counts = adapter.empty_timeout_counts()
+    adapter._integration_outcome_counts = harness.empty_odeformer_integration_outcome_counts()
+    adapter._timeout_phase = "fit_candidate_ranking"
+    adapter._generators_module = None
+    adapter._original_integrate_ode = None
+    adapter._original_integrate_ode_wrapped = None
+    adapter._install_integration_timeout_patch()
+
+    assert generators_mod._integrate_ode is not original
+    assert generators_mod._integrate_ode.timeout_seconds == 10.0
+    with pytest.raises(MyTimeoutError):
+        generators_mod._integrate_ode()
+    fields = adapter.timeout_count_fields()
+    assert fields["odeformer_integration_timeout_count_fit_candidate_ranking"] == 1
+    assert fields["odeformer_integration_fit_candidate_ranking_call_count"] == 1
+    adapter.close()
+    assert generators_mod._integrate_ode is original
+
+
+def test_odeformer_adapter_preserves_none_prediction_for_outcome_and_r2() -> None:
+    cell = first_multidimensional_cell()
+    adapter = object.__new__(harness.ODEFormerAdapter)
+    adapter.model = types.SimpleNamespace(integrate_prediction=lambda *_args, **_kwargs: None)
+
+    prediction = adapter.integrate_expression(cell, "x_0")
+    scores = harness.aggregate_r2(cell.state, prediction)
+    fields = harness.r2_diagnostic_fields("reconstruction", cell.state, prediction)
+
+    assert prediction is None
+    assert scores == {"r2_arithmetic_mean": 0.0, "r2_variance_weighted": 0.0}
+    assert fields["reconstruction_prediction_outcome"] == "none"
+
+
+def test_odeformer_constant_optimization_preserves_none_fit_prediction(monkeypatch) -> None:
+    cell = first_multidimensional_cell()
+
+    class FakeConstantOptimizer:
+        def __init__(self, **_kwargs):
+            pass
+
+        def optimize(self):
+            return "x_0", [1.0], None
+
+    def fake_minimize(*_args, **_kwargs):
+        return types.SimpleNamespace(nit=3, nfev=5, message="done")
+
+    FakeConstantOptimizer.optimize.__globals__["minimize"] = fake_minimize
+    module = types.ModuleType("param_optimizer")
+    module.ConstantOptimizer = FakeConstantOptimizer
+    monkeypatch.setitem(sys.modules, "param_optimizer", module)
+
+    adapter = object.__new__(harness.ODEFormerAdapter)
+    adapter.config = {
+        "constant_optimization_init_random": False,
+        "constant_optimization_objective": "r2",
+        "constant_optimization_eval_objective": "r2",
+        "constant_optimization_track_eval_history": True,
+    }
+
+    @contextlib.contextmanager
+    def phase(_name):
+        yield
+
+    adapter.timeout_phase = phase
+    optimized = adapter.optimize_constants("x_0", cell)
+
+    assert optimized["fit_prediction"] is None
+    assert optimized["params"] == [1.0]
+
+
 def test_r2_diagnostics_report_reference_without_variance_from_export() -> None:
     cell = first_multidimensional_cell()
     reference = cell.state.copy()
@@ -222,6 +454,150 @@ def make_grid_record(fit_cell: harness.TrajectoryCell, target_cell: harness.Traj
         }
     )
     return record
+
+
+def write_repeatability_pair(base: Path, environment_id: str, index: int, changed: bool) -> None:
+    record = {
+        "system_id": index,
+        "fit_initial_condition_set": 1,
+        "generalization_initial_condition_set": 2,
+        "odeformer_config_id": "beam10_noopt",
+        "odeformer_environment_id": environment_id,
+        "dimension": 1 + (index % 2),
+        "reconstruction_r2_variance_weighted": 1.0,
+        "generalization_r2_variance_weighted": 1.0,
+        "odeformer_model_raw": "x_0",
+        "environment": json.dumps({"torch": "2.0.0+cpu" if environment_id == "reference" else "2.14.0+cpu"}),
+    }
+    repeat = dict(record)
+    if changed:
+        repeat["odeformer_model_raw"] = f"x_0 + {index}"
+    for run_name, item in [(environment_id, record), (f"{environment_id}_wp_n23", repeat)]:
+        path = base / run_name / "records" / f"system_{index:03d}.json"
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(json.dumps(item, sort_keys=True) + "\n", encoding="utf-8")
+
+
+def make_repeatability_fixture(base: Path) -> None:
+    for index in range(1, 19):
+        write_repeatability_pair(base, "reference", index, True)
+    for index in range(19, 23):
+        write_repeatability_pair(base, "reference", index, False)
+    for index in range(101, 113):
+        write_repeatability_pair(base, "candidate", index, True)
+    for index in range(113, 117):
+        write_repeatability_pair(base, "candidate", index, False)
+
+
+def repeatability_args(tmp_path: Path, **overrides: object) -> argparse.Namespace:
+    values = {
+        "mode": "faithful",
+        "repetitions": 1,
+        "shards": 1,
+        "shard_index": None,
+        "max_hours": 1.0,
+        "output_dir": str(tmp_path / "run"),
+        "environment_id": "reference",
+        "expected_changed": 30,
+        "control_seed": 20260924,
+        "limit_cells": None,
+        "derive_only": False,
+        "collect": False,
+        "compare_modes": False,
+    }
+    values.update(overrides)
+    return argparse.Namespace(**values)
+
+
+def test_repeatability_cell_derivation_counts_by_environment(tmp_path: Path, monkeypatch) -> None:
+    make_repeatability_fixture(tmp_path)
+    monkeypatch.setattr(run_odeformer_repeatability, "BASE_DIR", tmp_path)
+    changed, controls = run_odeformer_repeatability.derive_cells()
+    changed_by_environment = pd.Series([item["environment_id"] for item in changed]).value_counts().to_dict()
+    controls_by_environment = pd.Series([item["environment_id"] for item in controls]).value_counts().to_dict()
+    assert changed_by_environment == {"reference": 18, "candidate": 12}
+    assert controls_by_environment == {"reference": 4, "candidate": 4}
+
+
+def test_repeatability_wrong_environment_aborts_before_first_cell(tmp_path: Path, monkeypatch) -> None:
+    make_repeatability_fixture(tmp_path / "records")
+    monkeypatch.setattr(run_odeformer_repeatability, "BASE_DIR", tmp_path / "records")
+    monkeypatch.setattr(run_odeformer_repeatability, "installed_environment_signature", lambda: {"torch": "2.14.0+cpu"})
+
+    def unexpected_run(*_args: object, **_kwargs: object) -> dict[str, object]:
+        raise AssertionError("cell execution must not start after an environment mismatch")
+
+    monkeypatch.setattr(run_odeformer_repeatability, "run_one_cell", unexpected_run)
+    with pytest.raises(RuntimeError, match="installed environment does not match reference"):
+        run_odeformer_repeatability.run(repeatability_args(tmp_path))
+
+
+def test_repeatability_collect_merges_shards_and_not_run_records(tmp_path: Path) -> None:
+    out_dir = tmp_path / "reference_faithful_2"
+    selected_cells = [
+        {
+            "environment_id": "reference",
+            "system_id": 1,
+            "fit_initial_condition_set": 1,
+            "generalization_initial_condition_set": 2,
+            "odeformer_config_id": "beam10_noopt",
+            "selection_reason": "changed",
+        },
+        {
+            "environment_id": "reference",
+            "system_id": 2,
+            "fit_initial_condition_set": 1,
+            "generalization_initial_condition_set": 2,
+            "odeformer_config_id": "beam10_noopt",
+            "selection_reason": "control",
+        },
+    ]
+    (out_dir / "records").mkdir(parents=True)
+    (out_dir / "selected_cells.json").write_text(json.dumps(selected_cells), encoding="utf-8")
+    for repetition in [1, 2]:
+        for cell in selected_cells:
+            record = {
+                **cell,
+                "repeatability_mode": "faithful",
+                "repeatability_repetition": repetition,
+                "repeatability_selection_reason": cell["selection_reason"],
+                "status": "success",
+                "odeformer_model_raw": "x_0",
+                "reconstruction_r2_variance_weighted": 1.0,
+                "generalization_r2_variance_weighted": 1.0,
+            }
+            if repetition == 2 and cell["system_id"] == 2:
+                record["status"] = "not_run_global_time_limit"
+            path = out_dir / "records" / run_odeformer_repeatability.repeatability_record_name(cell, repetition, "faithful")
+            path.write_text(json.dumps(record, sort_keys=True) + "\n", encoding="utf-8")
+
+    path = run_odeformer_repeatability.collect(out_dir, repetitions=2)
+    records = read_jsonl(path)
+    summary = json.loads((out_dir / "collection_summary.json").read_text(encoding="utf-8"))
+    assert len(records) == 4
+    assert summary == {
+        "expected_cell_repetitions": 4,
+        "missing_count": 0,
+        "not_run_global_time_limit_count": 1,
+        "record_count": 4,
+    }
+
+
+def test_repeatability_compare_modes_uses_environment_mode_shards_pattern(tmp_path: Path) -> None:
+    columns = {
+        "all_bitwise_identical": [True],
+        "timeout_count_min": [0],
+        "timeout_count_max": [0],
+        "r2_gt_0_9_flip": [False],
+    }
+    for name in ["reference_faithful_4", "candidate_lifted_1", "derive_probe_30"]:
+        directory = tmp_path / name
+        directory.mkdir()
+        pd.DataFrame(columns).to_csv(directory / "cell_summary.csv", index=False)
+    path = run_odeformer_repeatability.compare_modes(tmp_path)
+    frame = pd.read_csv(path)
+    assert set(frame["run"]) == {"reference_faithful_4", "candidate_lifted_1"}
+    assert set(frame["environment_id"]) == {"reference", "candidate"}
 
 
 def test_odeformer_grid_resumes_complete_records_from_real_export(tmp_path: Path, monkeypatch) -> None:
@@ -363,13 +739,13 @@ def test_odeformer_summary_counts_prediction_outcomes_from_export_records(tmp_pa
         record["status"] = "success"
         record["odeformer_environment_id"] = "reference"
         record["odeformer_config_id"] = "beam10_noopt"
-        record["reconstruction_prediction_outcome"] = "finite" if idx == 0 else "nonfinite"
+        record["reconstruction_prediction_outcome"] = "finite" if idx == 0 else "odeformer_nan_sentinel"
         record["generalization_prediction_outcome"] = "wrong_shape"
     reference = tmp_path / "reference.jsonl"
     reference.write_text("\n".join(json.dumps(record, sort_keys=True) for record in records) + "\n", encoding="utf-8")
     paths = summarize_odeformer_grid.run(reference, None, tmp_path / "summary")
     summary = pd.read_csv(paths["summary"])
     assert int(summary["reconstruction_prediction_finite_count"].sum()) == 1
-    assert int(summary["reconstruction_prediction_nonfinite_count"].sum()) == 1
+    assert int(summary["reconstruction_prediction_odeformer_nan_sentinel_count"].sum()) == 1
     assert int(summary["reconstruction_prediction_not_captured_count"].sum()) == 0
     assert int(summary["generalization_prediction_wrong_shape_count"].sum()) == 2

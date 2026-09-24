@@ -1,5 +1,7 @@
 import argparse
 import contextlib
+import errno
+import functools
 import hashlib
 import importlib.metadata
 import json
@@ -7,10 +9,12 @@ import math
 import os
 import random
 import re
+import signal
 import sys
 import time
 from dataclasses import dataclass
 from pathlib import Path
+from functools import partial
 from typing import Any
 
 import numpy as np
@@ -38,6 +42,7 @@ R2_THRESHOLD = 0.9
 PREDICTION_OUTCOMES = {
     "finite",
     "none",
+    "odeformer_nan_sentinel",
     "wrong_shape",
     "nonfinite",
 }
@@ -48,6 +53,7 @@ R2_DIMENSION_STATUSES = {
 R2_ZERO_REASONS = {
     "",
     "prediction_none",
+    "prediction_odeformer_nan_sentinel",
     "prediction_wrong_shape",
     "prediction_nonfinite",
     "nonfinite_score",
@@ -60,6 +66,79 @@ REGISTERED_INACTIVE = {
     "ffx": "FFX dependency is not installed in the baseline image.",
     "ellyn": "ellyn dependency is not installed in the baseline image.",
 }
+ODEFORMER_TIMEOUT_COUNT_KEYS = [
+    "fit_candidate_ranking",
+    "reconstruction_before_optimization",
+    "generalization_before_optimization",
+    "reconstruction_after_optimization",
+    "generalization_after_optimization",
+    "constant_optimization",
+    "unclassified",
+]
+
+
+def empty_odeformer_timeout_counts() -> dict[str, int]:
+    return {key: 0 for key in ODEFORMER_TIMEOUT_COUNT_KEYS}
+
+
+ODEFORMER_INTEGRATION_OUTCOMES = [
+    "call",
+    "trajectory",
+    "none",
+    "nan_sentinel",
+    "none_after_timeout",
+    "nan_sentinel_after_timeout",
+]
+_NO_INTEGRATION_RESULT = object()
+
+
+def empty_odeformer_integration_outcome_counts() -> dict[str, dict[str, int]]:
+    return {
+        phase: {outcome: 0 for outcome in ODEFORMER_INTEGRATION_OUTCOMES}
+        for phase in ODEFORMER_TIMEOUT_COUNT_KEYS
+    }
+
+
+def odeformer_timeout_with_hook(
+    seconds: float = 10,
+    on_timeout: Any | None = None,
+    error_type: type[BaseException] | None = None,
+    error_message: str = os.strerror(errno.ETIME),
+):
+    if error_type is None:
+        error_type = TimeoutError
+
+    def decorator(func):
+        def _handle_timeout(repeat_id, signum, frame):
+            if on_timeout is not None:
+                on_timeout()
+            signal.signal(signal.SIGALRM, partial(_handle_timeout, repeat_id + 1))
+            signal.setitimer(signal.ITIMER_REAL, seconds)
+            raise error_type(error_message)
+
+        def wrapper(*args, **kwargs):
+            old_signal = signal.signal(signal.SIGALRM, partial(_handle_timeout, 0))
+            old_time_left = signal.getitimer(signal.ITIMER_REAL)[0]
+            assert type(old_time_left) is float and old_time_left >= 0
+            if 0 < old_time_left < seconds:
+                signal.setitimer(signal.ITIMER_REAL, old_time_left)
+            else:
+                signal.setitimer(signal.ITIMER_REAL, seconds)
+            start_time = time.time()
+            try:
+                result = func(*args, **kwargs)
+            finally:
+                if old_time_left == 0:
+                    signal.setitimer(signal.ITIMER_REAL, 0)
+                else:
+                    time_elapsed = time.time() - start_time
+                    signal.signal(signal.SIGALRM, old_signal)
+                    signal.setitimer(signal.ITIMER_REAL, max(0, old_time_left - time_elapsed))
+            return result
+
+        return functools.wraps(func)(wrapper)
+
+    return decorator
 
 
 @dataclass(frozen=True)
@@ -204,11 +283,20 @@ def short_error_message(exc: BaseException, limit: int = ERROR_MESSAGE_LIMIT) ->
 def prediction_outcome(reference: np.ndarray, prediction: np.ndarray | None) -> str:
     if prediction is None:
         return "none"
+    if is_odeformer_nan_sentinel(reference, prediction):
+        return "odeformer_nan_sentinel"
     if reference.shape != prediction.shape:
         return "wrong_shape"
     if not np.all(np.isfinite(prediction)):
         return "nonfinite"
     return "finite"
+
+
+def is_odeformer_nan_sentinel(reference: np.ndarray, prediction: np.ndarray | None) -> bool:
+    if prediction is None:
+        return False
+    array = np.asarray(prediction)
+    return array.ndim == 1 and array.shape == (reference.shape[0],) and bool(np.all(np.isnan(array)))
 
 
 def r2_dimension_diagnostics(reference: np.ndarray, prediction: np.ndarray | None) -> tuple[str, list[str], list[str]]:
@@ -385,7 +473,17 @@ def odeformer_schema_defaults(config: dict[str, Any]) -> dict[str, Any]:
         "weight_sha256",
         "weights_path",
     ]
-    return {f"odeformer_{key}": config.get(key, "") for key in keys}
+    defaults = {f"odeformer_{key}": config.get(key, "") for key in keys}
+    integration_timeout = config.get("integration_timeout_seconds", 1.0)
+    if integration_timeout is None:
+        integration_timeout = 1.0
+    defaults["odeformer_integration_timeout_seconds"] = float(integration_timeout)
+    defaults["odeformer_integration_timeout_count_total"] = 0
+    defaults.update({f"odeformer_integration_timeout_count_{key}": 0 for key in empty_odeformer_timeout_counts()})
+    for phase, counts in empty_odeformer_integration_outcome_counts().items():
+        for outcome, value in counts.items():
+            defaults[f"odeformer_integration_{phase}_{outcome}_count"] = value
+    return defaults
 
 
 def odeformer_failure(record: dict[str, Any], config: dict[str, Any], exc: Exception) -> dict[str, Any]:
@@ -459,6 +557,13 @@ class ODEFormerAdapter:
 
         self.config = dict(config)
         self.torch = torch
+        self.integration_timeout_seconds = self._configured_integration_timeout_seconds()
+        self._timeout_counts = self.empty_timeout_counts()
+        self._integration_outcome_counts = empty_odeformer_integration_outcome_counts()
+        self._timeout_phase = "unclassified"
+        self._generators_module = None
+        self._original_integrate_ode = None
+        self._original_integrate_ode_wrapped = None
         seed = int(self.config.get("seed", 2023))
         random.seed(seed)
         np.random.seed(seed)
@@ -478,6 +583,123 @@ class ODEFormerAdapter:
                 max_input_points=int(self.config["max_input_points"]),
                 rescale=bool(self.config["rescale"]),
             )
+        self._install_integration_timeout_patch()
+
+    @staticmethod
+    def empty_timeout_counts() -> dict[str, int]:
+        return empty_odeformer_timeout_counts()
+
+    def _configured_integration_timeout_seconds(self) -> float:
+        value = self.config.get("integration_timeout_seconds", 1.0)
+        if value is None:
+            value = 1.0
+        timeout_seconds = float(value)
+        if timeout_seconds <= 0.0:
+            raise ValueError("integration_timeout_seconds must be positive when set")
+        return timeout_seconds
+
+    def _install_integration_timeout_patch(self) -> None:
+        from odeformer.envs import generators
+        from odeformer.utils import MyTimeoutError
+
+        current = generators._integrate_ode
+        undecorated = getattr(current, "__wrapped__", current)
+        self._generators_module = generators
+        self._original_integrate_ode = current
+        self._original_integrate_ode_wrapped = undecorated
+
+        call_state = {"timeout_fired": False}
+
+        def record_timeout() -> None:
+            call_state["timeout_fired"] = True
+            phase = self._timeout_phase if self._timeout_phase in self._timeout_counts else "unclassified"
+            self._timeout_counts[phase] += 1
+
+        def counted_integrate_ode(*args: Any, **kwargs: Any) -> Any:
+            result = _NO_INTEGRATION_RESULT
+            try:
+                call_state["timeout_fired"] = False
+                result = undecorated(*args, **kwargs)
+                return result
+            finally:
+                self._record_integration_outcome(args, kwargs, result, bool(call_state["timeout_fired"]))
+
+        generators._integrate_ode = odeformer_timeout_with_hook(
+            self.integration_timeout_seconds,
+            on_timeout=record_timeout,
+            error_type=MyTimeoutError,
+        )(counted_integrate_ode)
+
+    def _record_integration_outcome(self, args: tuple[Any, ...], kwargs: dict[str, Any], result: Any, timeout_fired: bool) -> None:
+        phase = self._timeout_phase if self._timeout_phase in self._integration_outcome_counts else "unclassified"
+        counts = self._integration_outcome_counts[phase]
+        counts["call"] += 1
+        if result is _NO_INTEGRATION_RESULT:
+            return
+        outcome = self._integration_result_outcome(args, kwargs, result)
+        counts[outcome] += 1
+        if timeout_fired and outcome in {"none", "nan_sentinel"}:
+            counts[f"{outcome}_after_timeout"] += 1
+
+    @staticmethod
+    def _integration_result_outcome(args: tuple[Any, ...], kwargs: dict[str, Any], result: Any) -> str:
+        if result is None:
+            return "none"
+        try:
+            array = np.asarray(result, dtype=float)
+        except (TypeError, ValueError):
+            return "trajectory"
+        expected_len = kwargs.get("t_eval")
+        if expected_len is None and len(args) >= 4:
+            expected_len = args[3]
+        try:
+            expected_shape = (len(expected_len),)
+        except TypeError:
+            expected_shape = None
+        if array.ndim == 1 and bool(np.all(np.isnan(array))) and (expected_shape is None or array.shape == expected_shape):
+            return "nan_sentinel"
+        return "trajectory"
+
+    def close(self) -> None:
+        if self._generators_module is not None and self._original_integrate_ode is not None:
+            if getattr(self._generators_module._integrate_ode, "__wrapped__", None) is not self._original_integrate_ode_wrapped:
+                self._generators_module._integrate_ode = self._original_integrate_ode
+            else:
+                self._generators_module._integrate_ode = self._original_integrate_ode
+        self._generators_module = None
+        self._original_integrate_ode = None
+        self._original_integrate_ode_wrapped = None
+
+    def __enter__(self) -> "ODEFormerAdapter":
+        return self
+
+    def __exit__(self, _exc_type: Any, _exc: Any, _tb: Any) -> None:
+        self.close()
+
+    def __del__(self) -> None:
+        with contextlib.suppress(Exception):
+            self.close()
+
+    @contextlib.contextmanager
+    def timeout_phase(self, phase: str):
+        previous = self._timeout_phase
+        self._timeout_phase = phase
+        try:
+            yield
+        finally:
+            self._timeout_phase = previous
+
+    def timeout_count_fields(self) -> dict[str, Any]:
+        total = int(sum(self._timeout_counts.values()))
+        fields = {
+            "odeformer_integration_timeout_seconds": self.integration_timeout_seconds,
+            "odeformer_integration_timeout_count_total": total,
+            **{f"odeformer_integration_timeout_count_{key}": int(value) for key, value in self._timeout_counts.items()},
+        }
+        for phase, counts in self._integration_outcome_counts.items():
+            for outcome, value in counts.items():
+                fields[f"odeformer_integration_{phase}_{outcome}_count"] = int(value)
+        return fields
 
     def set_generation_args(self) -> None:
         self.model.set_model_args(
@@ -493,14 +715,15 @@ class ODEFormerAdapter:
 
     def fit_best_candidate(self, fit_cell: TrajectoryCell) -> tuple[Any, str, str, list[Any]]:
         self.set_generation_args()
-        self.model.fit(
-            fit_cell.time,
-            fit_cell.state,
-            sort_candidates=True,
-            sort_metric=str(self.config["sort_metric"]),
-            rescale=bool(self.config["rescale"]),
-            verbose=False,
-        )
+        with self.timeout_phase("fit_candidate_ranking"):
+            self.model.fit(
+                fit_cell.time,
+                fit_cell.state,
+                sort_candidates=True,
+                sort_metric=str(self.config["sort_metric"]),
+                rescale=bool(self.config["rescale"]),
+                verbose=False,
+            )
         candidates = list(self.model.predictions.get(0, []))
         if not candidates or candidates[0] is None:
             raise RuntimeError("ODEFormer produced no candidate expression")
@@ -508,8 +731,11 @@ class ODEFormerAdapter:
         model_raw = best.infix() if hasattr(best, "infix") else str(best)
         return best, model_raw, canonicalize_odeformer_expression(model_raw), candidates
 
-    def integrate_expression(self, cell: TrajectoryCell, expression: Any) -> np.ndarray:
-        return np.asarray(self.model.integrate_prediction(cell.time, cell.state[0, :], prediction=expression), dtype=float)
+    def integrate_expression(self, cell: TrajectoryCell, expression: Any) -> np.ndarray | None:
+        prediction = self.model.integrate_prediction(cell.time, cell.state[0, :], prediction=expression)
+        if prediction is None:
+            return None
+        return np.asarray(prediction, dtype=float)
 
     def optimize_constants(self, expression: str, fit_cell: TrajectoryCell) -> dict[str, Any]:
         source_root = REPO_ROOT / "outputs" / "third_party" / "odeformer"
@@ -537,14 +763,15 @@ class ODEFormerAdapter:
 
         optimizer.optimize.__globals__["minimize"] = tracked_minimize
         try:
-            optimized_expression, optimized_params, optimized_fit = optimizer.optimize()
+            with self.timeout_phase("constant_optimization"):
+                optimized_expression, optimized_params, optimized_fit = optimizer.optimize()
         finally:
             optimizer.optimize.__globals__["minimize"] = original_minimize
         info = holder.get("result")
         return {
             "expression": str(optimized_expression),
             "params": np.asarray(optimized_params, dtype=float).tolist(),
-            "fit_prediction": np.asarray(optimized_fit, dtype=float),
+            "fit_prediction": None if optimized_fit is None else np.asarray(optimized_fit, dtype=float),
             "nit": int(getattr(info, "nit", 0) or 0),
             "nfev": int(getattr(info, "nfev", 0) or 0),
             "stop_reason": str(getattr(info, "message", "")),
@@ -570,12 +797,14 @@ def run_odeformer_record_with_adapter(
         reconstruction_error: BaseException | None = None
         generalization_error: BaseException | None = None
         try:
-            reconstruction_before = adapter.integrate_expression(fit_cell, best)
+            with adapter.timeout_phase("reconstruction_before_optimization"):
+                reconstruction_before = adapter.integrate_expression(fit_cell, best)
         except Exception as exc:
             reconstruction_before = None
             reconstruction_error = exc
         try:
-            generalization_before = adapter.integrate_expression(target_cell, best)
+            with adapter.timeout_phase("generalization_before_optimization"):
+                generalization_before = adapter.integrate_expression(target_cell, best)
         except Exception as exc:
             generalization_before = None
             generalization_error = exc
@@ -599,7 +828,8 @@ def run_odeformer_record_with_adapter(
                 reconstruction_after = optimized["fit_prediction"]
                 reconstruction_after_r2 = aggregate_r2(fit_cell.state, reconstruction_after)
                 try:
-                    generalization_after = adapter.integrate_expression(target_cell, expression_after)
+                    with adapter.timeout_phase("generalization_after_optimization"):
+                        generalization_after = adapter.integrate_expression(target_cell, expression_after)
                     generalization_error = None
                 except Exception as exc:
                     generalization_after = None
@@ -652,6 +882,7 @@ def run_odeformer_record_with_adapter(
                 **integration_error_fields("generalization", generalization_error),
                 **r2_threshold_flags("reconstruction", reconstruction_after_r2),
                 **r2_threshold_flags("generalization", generalization_after_r2),
+                **adapter.timeout_count_fields(),
             }
         )
         return record
@@ -728,7 +959,10 @@ def run_odeformer_record(_system: dict[str, Any], fit_cell: TrajectoryCell, targ
         record = base_record("odeformer", config, fit_cell, target_cell)
         record.update(odeformer_schema_defaults(config))
         return odeformer_failure(record, config, RuntimeError(f"ODEFormer is not importable in this environment: {exc}"))
-    return run_odeformer_record_with_adapter(_system, fit_cell, target_cell, config, adapter)
+    try:
+        return run_odeformer_record_with_adapter(_system, fit_cell, target_cell, config, adapter)
+    finally:
+        adapter.close()
 
 
 def inactive_record(method: str, fit_cell: TrajectoryCell, target_cell: TrajectoryCell) -> dict[str, Any]:

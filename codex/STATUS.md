@@ -1,4 +1,4 @@
 status: done
-task:   WP-N23
-report: codex/reports/REPORT_WP_N23.md
-note:   Implemented prediction diagnostics, summary outcome counts, tests, and report.
+task:   WP-N24c
+report: codex/reports/REPORT_WP_N24c.md
+note:   Timeout handler counting, honest outcomes, repeatability timeout summaries, and tests are implemented.
