@@ -1,69 +1,89 @@
-# WP-N24b — Wiederholbarkeitsskript: Umgebung trennen, Shards sicher zusammenführen
+# WP-N24c — Timeouts dort zählen, wo sie feuern; Ausgänge ehrlich benennen
 **Language: Python**
 
 ## Ausführung
 
-Lokal umsetzbar und testbar. Kein Docker nötig; den Rauchtest in Docker macht Claude.
+Lokal umsetzbar und testbar, kein Docker nötig. Den Rauchtest in Docker macht Claude.
 Nichts starten, was länger als 15 Minuten läuft.
 
 ## Ausgangslage
 
-WP-N24 (`codex/reports/REPORT_WP_N24.md`) ist im Working Tree, uncommittet. Der Harness-Teil ist
-abgenommen und bleibt unverändert. Die Abweichung „30 statt 26 Zellen" ist **kein Befund**: Die 26
-stammten aus einer Zählung, als das Kandidatenraster erst 427 von 504 Zellen hatte. 30 = 18
-Referenz + 12 Kandidat ist richtig. `baselines/run_odeformer_repeatability.py` hat drei Fehler, die
-den vollen Lauf unbrauchbar machen würden.
+WP-N24 und WP-N24b liegen uncommittet im Working Tree. Der Rauchtest in Docker (Claude,
+2026-09-24) hat einen Messfehler der Instrumentierung gezeigt. Eine Diagnosesonde hat ihn
+eingegrenzt.
+
+- Kandidat, System 11, Fit-IC 1, `beam10_opt`, Modus `faithful`: Zwei Wiederholungen sind **nicht**
+  bitgleich. `nfev` ist 31 gegen 35, die Rekonstruktion nach der Optimierung endet einmal `finite`,
+  einmal `wrong_shape`. Die Timeout-Zähler stehen beide Male auf **0**. Unter `lifted` sind die
+  Wiederholungen bitgleich.
+- Die Sonde protokollierte jeden `_integrate_ode`-Aufruf der Konstantenoptimierung. Pro
+  Wiederholung dauert **ein Aufruf genau 1,0001 s**, das ist der Timeout. Er kommt aber als
+  Rückgabewert `None` zurück, nicht als Ausnahme. 45 von 51 Aufrufen liefern `None`.
+
+**Ursache:** `odeformer/envs/generators.py`, Zweig `solve_ivp` in `_integrate_ode` (ca.
+Zeile 890–905): `try: ... solve_ivp(...) except: return None`. Das **nackte `except`** fängt den
+`MyTimeoutError`, den der `SIGALRM`-Handler mitten in `solve_ivp` wirft. Der Timeout kommt als
+`None` heraus und erreicht den Zähler in `counted_integrate_ode` nie. Ein Timeout ist damit von
+einem gewöhnlichen Solver-Fehler nicht zu unterscheiden.
+
+Zwei weitere Befunde im selben Code:
+
+- Das NaN-Sentinel am Ende von `_integrate_ode` (Liste aus NaN, Länge `len(times)`) entsteht bei
+  NaN in der Trajektorie, bei einer zu kurzen Trajektorie **und bei jeder abgefangenen Warnung**.
+  Nur im Nicht-`solve_ivp`-Pfad kommt es auch aus einem Timeout (`integrate_ode`, ca.
+  Zeile 919–924). Das Label `odeformer_timeout` ist deshalb sachlich falsch.
+- `ODEFormerAdapter.integrate_expression` und `optimize_constants` wandeln die Vorhersage mit
+  `np.asarray(..., dtype=float)` um. Aus `None` wird so ein **0-dimensionales NaN-Array**, und das
+  landet als `wrong_shape` im Record statt als `none`. So kam der `wrong_shape` im Rauchtest
+  zustande.
 
 ## Was zu tun ist
 
-1. **Umgebung trennen.** Eine Zelle der Referenzumgebung darf nur im Referenz-Image laufen, eine
-   Kandidatenzelle nur im Kandidaten-Image. Heute laufen beide gemischt im selben Prozess,
-   `run_one_cell` setzt nur das Feld `environment_id`. Neu:
-   - Beim Rechnen ist `--environment-id reference|candidate` Pflicht. Es laufen nur Zellen dieser
-     Umgebung.
-   - Vor der ersten Zelle prüft das Skript, dass die installierte Umgebung zur gewählten passt, und
-     zwar über dasselbe Merkmal, das die `_wp_n23`-Records im Feld `environment` tragen (z. B. die
-     torch-Version). Stimmt es nicht, bricht das Skript ab, bevor eine Zelle rechnet.
-   - Die Konfiguration je Zelle kommt aus derselben Quelle wie im Grid-Lauf der jeweiligen Umgebung.
-     Prüfen und im Report belegen, dass sich Referenz- und Kandidatenkonfiguration nur in den
-     Feldern unterscheiden, in denen sie sich im Grid-Lauf unterscheiden. Wenn es Abweichungen
-     gibt, sie beheben.
-2. **Shards sicher zusammenführen.** Heute schreibt jeder Shard-Prozess am Ende `records.jsonl`,
-   `records.csv` und `cell_summary.csv` in dasselbe Verzeichnis, und der letzte gewinnt. Neu:
-   Shards schreiben nur die Einzelrecords (wie heute unter `records/`) und nicht gelaufene Zellen
-   ebenfalls als Einzeldatei. Ein eigener Schritt `--collect` baut `records.jsonl`, `records.csv`
-   und `cell_summary.csv` aus **allen** Einzeldateien eines Laufverzeichnisses. Er meldet, wie viele
-   Zellen × Wiederholungen erwartet waren, wie viele vorliegen und wie viele wegen der globalen
-   Zeitgrenze nicht gelaufen sind.
-3. **Kleinkram.**
-   - Default für `--expected-changed` auf 30, zusätzlich je Umgebung geprüft (18 / 12).
-   - `--compare-modes` liest nur die Laufverzeichnisse, deren Name dem Muster
-     `<umgebung>_<modus>_<shards>` folgt. Die heutige Glob-Suche nimmt auch `derive_probe_30` mit.
-   - Ein Argument, das den Lauf auf die ersten n Zellen begrenzt, für den Rauchtest.
-   - Die Kontrollzellen werden **je Umgebung** gewählt, 4 + 4, damit jede Umgebung eigene
-     Kontrollen hat.
+1. **Timeouts im Handler zählen.** Die Zählung erfolgt in dem Moment, in dem der Alarm feuert,
+   nicht beim Abfangen der Ausnahme. Dafür ersetzt der Adapter ODEFormers `timeout`-Dekorator
+   (`odeformer/utils.py:147`) durch eine **semantisch identische** Nachbildung mit Zählhaken im
+   Handler. Identisch heißt: gleiche Sekunden, gleiche Behandlung eines schon laufenden äußeren
+   Timers (nicht überschreiten, Restzeit wiederherstellen), gleiches erneutes Scharfschalten im
+   Handler, gleiche Ausnahmeklasse `MyTimeoutError` aus `odeformer.utils`. Die Zählung bleibt je
+   Phase, wie in WP-N24. Die Ersetzung gilt auch im Modus `faithful` (1 s), und dort muss das
+   Verhalten bitgleich zum ausgelieferten Dekorator sein. Das belegt Abnahme 1.
+2. **Aufrufe klassifizieren.** Je Phase zählen, wie viele `_integrate_ode`-Aufrufe es gab und wie
+   viele davon eine Trajektorie liefern, `None` liefern oder das NaN-Sentinel liefern. Zusätzlich
+   zählen, wie viele `None`- bzw. Sentinel-Rückgaben mit einem gefeuerten Alarm im selben Aufruf
+   zusammenfallen. Das ist die eigentliche Timeout-Zahl je Ausgang. Kein Zeitschwellen-Kriterium
+   über die gemessene Dauer: Die Zuordnung erfolgt über den Handler, nicht über die Uhr.
+3. **Ausgänge ehrlich benennen.**
+   - `odeformer_timeout` umbenennen in einen Namen, der das Sentinel beschreibt und keine Ursache
+     unterstellt, z. B. `odeformer_nan_sentinel`. Alle Stellen nachziehen: Wertemengen, Summary,
+     Tests.
+   - `None` bleibt beim Umwandeln in `integrate_expression` und `optimize_constants` `None`, damit
+     `prediction_outcome` `none` meldet und nicht `wrong_shape`.
+   - R²-Werte und die 0.0-Konvention ändern sich dadurch nicht. Test dafür.
+4. **Wiederholbarkeitsskript** unverändert, bis auf die Nachführung der Feldnamen. Die
+   Zusammenfassung pro Zelle zeigt zusätzlich min/max der Handler-Timeouts.
 
 ## Verboten
 
 - Keine Git-Operationen.
-- `baselines/harness.py` nicht verändern, außer ein Test aus Abnahme 3 zwingt dazu. Dann im
-  Report begründen.
+- ODEFormer-Quellen nicht verändern, weder im Image noch unter `outputs/third_party/`. Nur
+  Laufzeit-Ersetzung im Adapter.
 - Nichts unter `analysis/data/` verändern.
+- Die Zuordnung Timeout ↔ Ausgang **nicht** über eine Dauer-Schwelle lösen.
 
 ## Abnahme
 
-1. Tests:
-   - Falsche Umgebung → Abbruch vor der ersten Zelle.
-   - Zwei simulierte Shards schreiben in dasselbe Verzeichnis → `--collect` enthält beide
-     vollständig.
-   - Nicht gelaufene Zellen erscheinen als solche.
-   - Die Zellableitung ergibt 18 / 12 und je 4 Kontrollen.
-2. `python -m pytest baselines/tests -q` grün.
-3. Report `codex/reports/REPORT_WP_N24b.md` mit den **vollständigen `docker run`-Befehlen** nach dem
-   Muster aus `codex/reports/REPORT_WP_N22.md` (Mounts von `baselines/`, `outputs/`, `analysis/`):
-   - Rauchtest: 1 Zelle, 2 Wiederholungen, je Modus, je Umgebung.
-   - Voller Lauf: je Umgebung `faithful` mit 4 Shards, `faithful` mit 1 Shard und `lifted` mit
-     4 Shards, 3 Wiederholungen, `--max-hours 7`. Ausführungsreihenfolge **strikt nacheinander**,
-     denn die Last ist die Messgröße und darf zwischen den Läufen nicht vermischt werden.
-   - Die `--collect`- und `--compare-modes`-Befehle.
-   - Eine Laufzeit-Obergrenze je Lauf aus den Schranken.
+1. **Äquivalenz des nachgebildeten Dekorators**, als Test ohne ODEFormer-Import (reine
+   Signal-Logik) gegen ODEFormers Originalfunktion, falls sie importierbar ist, sonst gegen eine
+   wörtliche Kopie im Test. Geprüft werden: Timeout feuert nach der eingestellten Zeit, ein äußerer
+   kürzerer Timer wird nicht überschritten, die Restzeit wird wiederhergestellt, und ohne Timeout
+   gibt es kein Scharfschalten danach.
+2. Test mit einer Funktion, die **innerhalb** eines nackten `except` schläft, wie der
+   `solve_ivp`-Zweig: Sie gibt `None` zurück, und der Handler-Zähler steht trotzdem auf 1. Das ist
+   der Fall, den WP-N24 übersehen hat.
+3. Test: `None` aus der Integration führt zu Ausgang `none`, nicht `wrong_shape`, und R² bleibt 0.0.
+4. `python -m pytest baselines/tests -q` grün.
+5. Report `codex/reports/REPORT_WP_N24c.md` mit der neuen Feldliste und dem Rauchtest-Befehl aus
+   WP-N24b. Die Image-Namen dort sind falsch: richtig sind `evoode/odeformer-reference:wp-n21` und
+   `evoode/odeformer-candidate:wp-n21`. Außerdem ist anzugeben, dass die Shard-Befehle **eines**
+   Laufs **gleichzeitig** gestartet werden und nur die Läufe untereinander strikt nacheinander
+   laufen.
