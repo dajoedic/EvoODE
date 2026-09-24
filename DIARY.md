@@ -8,7 +8,7 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ### ODEFormer ist nicht deterministisch, und die Ursache ist ein 1-s-Wall-Clock-Timeout
 
-<!-- 6810a6e -->
+<!-- 6810a6e c4c5982 -->
 
 Die WP-N23-Neuberechnung beider Raster ist fertig (504 + 504), gleicher Git-Hash, gleiche
 Umgebung, Seed 2023, frischer Adapter pro Zelle. Gegen den ersten Lauf ist sie **nicht bitgleich**:
