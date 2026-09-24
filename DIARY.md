@@ -6,6 +6,27 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ## 2026-09-24
 
+### ODEFormer-Sensitivität: die Raten halten, die einzelnen Formeln nicht
+
+Das Kandidatenraster (torch 2.14) ist komplett: 504 von 504 erfolgreich, längste Zelle 549 s.
+Gegen die Referenz (torch 2.0) je Konfiguration, R² > 0.9, varianzgewichtet, jeweils 126 Zellen:
+
+| Konfiguration | Rekon. Ref / Kand | Gen. Ref / Kand | identische Ausdrücke | Zellen, die die 0,9 kreuzen (Rekon. / Gen.) |
+|---|---|---|---|---|
+| beam10_noopt | 77 / 74 | 34 / 35 | 1 | 9 / 5 |
+| beam10_opt | 97 / 96 | 41 / 43 | 1 | 5 / 8 |
+| beam50_noopt | 89 / 87 | 36 / 33 | 3 | 6 / 5 |
+| beam50_opt | 101 / 102 | 43 / 42 | 3 | 7 / 9 |
+
+**Die aggregierten Raten sind robust**: höchstens 3 Zellen Unterschied, beide Richtungen. **Die
+Einzelergebnisse sind es nicht:** Nur 1 bis 3 von 126 Ausdrücken sind identisch, und 5 bis 9
+Zellen je Konfiguration wechseln die Seite der Schwelle. Die Deutung für das Paper: Eine
+aggregierte ODEFormer-Zahl lässt sich über torch-Versionen hinweg reproduzieren, ein Vergleich pro
+System oder eine Aussage über „die Formel, die ODEFormer findet" dagegen nicht. Die gepaarte
+Gegenüberstellung mit C-1 muss das tragen. Deshalb bleibt die Referenzumgebung die Quelle, und die
+Kandidatenzahlen stehen daneben als Streuband.
+
+
 ### ODEFormer-Referenzraster komplett: stark in der Rekonstruktion, schwach in der Generalisierung
 
 <!-- 8cbec6d -->

@@ -1,0 +1,270 @@
+{
+  "selection": {
+    "config_ids": [
+      "beam10_noopt",
+      "beam10_opt",
+      "beam50_noopt",
+      "beam50_opt"
+    ],
+    "limit": null,
+    "shard_count": null,
+    "shard_index": null,
+    "system_ids": null
+  },
+  "system_count": 63,
+  "systems": [
+    {
+      "dimension": 1,
+      "system_id": 1
+    },
+    {
+      "dimension": 1,
+      "system_id": 2
+    },
+    {
+      "dimension": 1,
+      "system_id": 3
+    },
+    {
+      "dimension": 1,
+      "system_id": 4
+    },
+    {
+      "dimension": 1,
+      "system_id": 5
+    },
+    {
+      "dimension": 1,
+      "system_id": 6
+    },
+    {
+      "dimension": 1,
+      "system_id": 7
+    },
+    {
+      "dimension": 1,
+      "system_id": 8
+    },
+    {
+      "dimension": 1,
+      "system_id": 9
+    },
+    {
+      "dimension": 1,
+      "system_id": 10
+    },
+    {
+      "dimension": 1,
+      "system_id": 11
+    },
+    {
+      "dimension": 1,
+      "system_id": 12
+    },
+    {
+      "dimension": 1,
+      "system_id": 13
+    },
+    {
+      "dimension": 1,
+      "system_id": 14
+    },
+    {
+      "dimension": 1,
+      "system_id": 15
+    },
+    {
+      "dimension": 1,
+      "system_id": 16
+    },
+    {
+      "dimension": 1,
+      "system_id": 17
+    },
+    {
+      "dimension": 1,
+      "system_id": 18
+    },
+    {
+      "dimension": 1,
+      "system_id": 19
+    },
+    {
+      "dimension": 1,
+      "system_id": 20
+    },
+    {
+      "dimension": 1,
+      "system_id": 21
+    },
+    {
+      "dimension": 1,
+      "system_id": 22
+    },
+    {
+      "dimension": 1,
+      "system_id": 23
+    },
+    {
+      "dimension": 2,
+      "system_id": 24
+    },
+    {
+      "dimension": 2,
+      "system_id": 25
+    },
+    {
+      "dimension": 2,
+      "system_id": 26
+    },
+    {
+      "dimension": 2,
+      "system_id": 27
+    },
+    {
+      "dimension": 2,
+      "system_id": 28
+    },
+    {
+      "dimension": 2,
+      "system_id": 29
+    },
+    {
+      "dimension": 2,
+      "system_id": 30
+    },
+    {
+      "dimension": 2,
+      "system_id": 31
+    },
+    {
+      "dimension": 2,
+      "system_id": 32
+    },
+    {
+      "dimension": 2,
+      "system_id": 33
+    },
+    {
+      "dimension": 2,
+      "system_id": 34
+    },
+    {
+      "dimension": 2,
+      "system_id": 35
+    },
+    {
+      "dimension": 2,
+      "system_id": 36
+    },
+    {
+      "dimension": 2,
+      "system_id": 37
+    },
+    {
+      "dimension": 2,
+      "system_id": 38
+    },
+    {
+      "dimension": 2,
+      "system_id": 39
+    },
+    {
+      "dimension": 2,
+      "system_id": 40
+    },
+    {
+      "dimension": 2,
+      "system_id": 41
+    },
+    {
+      "dimension": 2,
+      "system_id": 42
+    },
+    {
+      "dimension": 2,
+      "system_id": 43
+    },
+    {
+      "dimension": 2,
+      "system_id": 44
+    },
+    {
+      "dimension": 2,
+      "system_id": 45
+    },
+    {
+      "dimension": 2,
+      "system_id": 46
+    },
+    {
+      "dimension": 2,
+      "system_id": 47
+    },
+    {
+      "dimension": 2,
+      "system_id": 48
+    },
+    {
+      "dimension": 2,
+      "system_id": 49
+    },
+    {
+      "dimension": 2,
+      "system_id": 50
+    },
+    {
+      "dimension": 2,
+      "system_id": 51
+    },
+    {
+      "dimension": 3,
+      "system_id": 52
+    },
+    {
+      "dimension": 3,
+      "system_id": 53
+    },
+    {
+      "dimension": 3,
+      "system_id": 54
+    },
+    {
+      "dimension": 3,
+      "system_id": 55
+    },
+    {
+      "dimension": 3,
+      "system_id": 56
+    },
+    {
+      "dimension": 3,
+      "system_id": 57
+    },
+    {
+      "dimension": 3,
+      "system_id": 58
+    },
+    {
+      "dimension": 3,
+      "system_id": 59
+    },
+    {
+      "dimension": 3,
+      "system_id": 60
+    },
+    {
+      "dimension": 3,
+      "system_id": 61
+    },
+    {
+      "dimension": 4,
+      "system_id": 62
+    },
+    {
+      "dimension": 4,
+      "system_id": 63
+    }
+  ],
+  "trajectory_manifest_row_count": 126
+}
