@@ -27,9 +27,8 @@ ist, ist vermutlich falsch — dann gilt `CLAUDE.md`.
 oc get jobs -o custom-columns="NAME:.metadata.name,PAR:.spec.parallelism,SUCC:.status.succeeded,ACTIVE:.status.active,FAILED:.status.failed"
 ```
 
-Records Phase C: `S:\BigDataOrion\data-science\joedicke\phase_c_campaign_221a3a7…	asks\`; WP-T1d:
-`wp_t1e_campaign_5a87efb…\cell_*
-eighbour_rows.csv`. Statusseite (Version 9):
+Records Phase C: `S:/BigDataOrion/data-science/joedicke/phase_c_campaign_221a3a7…/tasks/`; WP-T1d:
+`wp_t1e_campaign_5a87efb…/cell_*/neighbour_rows.csv`. Statusseite (Version 9):
 https://claude.ai/artifact/4sq6HhRsnxgrFVqVF2trBx — führt **alle** Läufe, bei Statuswechsel neu veröffentlichen.
 
 **Wenn die ODEFormer-Neuberechnung fertig ist:** (a) R² und Ausdrücke gegen die ersten Raster
