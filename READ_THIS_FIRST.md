@@ -10,37 +10,32 @@ zweites davon. Alles Dauerhafte gehört dorthin, nach `PAPER_1.md` oder ins `DIA
 **Regeln:** wird immer **vollständig überschrieben**, nie angehängt. Was älter als ein paar Tage
 ist, ist vermutlich falsch — dann gilt `CLAUDE.md`.
 
-**Stand: 2026-09-23, 11:30.**
+**Stand: 2026-09-24, 10:15.** Bewusste Pause — nichts ansteht, was nicht auf laufende Rechnungen wartet.
 
 ---
 
-## 1. Was gerade läuft — drei Jobs auf Orion, 0 Fehler, 0 Neustarts
+## 1. Was gerade läuft
 
-| Job | Stand | Image | Deadline |
+| Lauf | Wo | Stand 24.09. 10:00 | Anmerkung |
 |---|---|---|---|
-| `evoode-phase-c-c1-c2-campaign` | **258 / 756**, 64 aktiv, 5.599 Kernstunden | `221a3a7` | keine (vor der 8-h-Regel gestartet) |
-| `evoode-phase-c-c3-campaign` | **172 / 180**, 8 aktiv (alle dim 3, inkl. Lorenz), 1.205 Kernstunden | `221a3a7` | keine |
-| `evoode-wp-t1e-indexed-campaign` (WP-T1d) | **22 / 36**, 2 aktiv (System 54), 14 dim-3-Zellen offen | `5a87efb` | **am 23.09. entfernt** |
-
-Integrität C-1–C-3: 430 Records, alle `error = None`, ein Identitätstripel
-(`221a3a7` sauber / `0c9672de35c75a9d` / `ffb0266c7913352c`). Capped und uncapped exakt gleich weit.
-Heartbeats älter als 6 h bei 22 Zellen sind **kein Hängen** — ein Heartbeat pro Level, ein
-Lorenz-Level dauerte in Phase B ~10 h. Offen in C-1/C-2: 26 dim 3 (alle laufen), Rest dim 2,
-alle 24 dim 4 und alle 276 dim 1 (billig). Kein Enddatum nennen.
-
-Prüfen:
+| C-1/C-2 | Orion, `221a3a7` | 313 / 756, 64 aktiv, 0 Fehler | letzte 15 dim-3-Zellen laufen, dann dim 4 und dim 1 |
+| C-3 | Orion, `221a3a7` | 172 / 180, 8 aktiv, 0 Fehler | letzte 8 sind dim 3 inkl. Lorenz |
+| WP-T1d | Orion, `5a87efb` | 24 / 36, **8 aktiv** | `parallelism` am 24.09. 09:59 von 2 auf 8 (Nutzer), keine Deadline; Rest ~15–20 h geschätzt |
+| ODEFormer-Neuberechnung (WP-N23) | Laptop, 4 Docker-Shards | Referenz 107/504, dann Kandidat | Ausgabe `analysis/data/paper1_phaseC_v1/odeformer_baseline/{reference,candidate}_wp_n23/` |
 
 ```powershell
-oc get jobs -o custom-columns="NAME:.metadata.name,COMPL:.spec.completions,SUCC:.status.succeeded,ACTIVE:.status.active,FAILED:.status.failed,DEADLINE:.spec.activeDeadlineSeconds"
+oc get jobs -o custom-columns="NAME:.metadata.name,PAR:.spec.parallelism,SUCC:.status.succeeded,ACTIVE:.status.active,FAILED:.status.failed"
 ```
 
-Records: Phase C unter `S:\BigDataOrion\data-science\joedicke\phase_c_campaign_221a3a7…\tasks\`
-(`cell_NNNNNN.jsonl` + `.heartbeat.jsonl`, `manifest.csv` eine Ebene höher). WP-T1d unter
-`wp_t1e_campaign_5a87efb…\cell_NNN_system_XXXX_icN\neighbour_rows.{csv,jsonl}`.
+Records Phase C: `S:\BigDataOrion\data-science\joedicke\phase_c_campaign_221a3a7…	asks\`; WP-T1d:
+`wp_t1e_campaign_5a87efb…\cell_*
+eighbour_rows.csv`. Statusseite (Version 9):
+https://claude.ai/artifact/4sq6HhRsnxgrFVqVF2trBx — führt **alle** Läufe, bei Statuswechsel neu veröffentlichen.
 
-**Online-Statusseite:** https://claude.ai/artifact/4sq6HhRsnxgrFVqVF2trBx („EvoODE auf Orion",
-Version 5). Führt **seit heute alle Läufe** samt Image, nicht nur Phase C — bei jedem
-Statuswechsel neu veröffentlichen, gleiche URL.
+**Wenn die ODEFormer-Neuberechnung fertig ist:** (a) R² und Ausdrücke gegen die ersten Raster
+(`reference/`, `candidate/`) vergleichen — müssen bitgleich sein, das ist der Determinismus-Beleg
+über 1.008 Zellen; (b) Ausgänge der Vorhersagen auszählen (`*_prediction_outcome`); (c) bei
+Gleichheit die alten Ordner durch die `_wp_n23`-Ordner ersetzen, committen, DIARY.
 
 ## 2. Wer was macht
 
@@ -63,19 +58,17 @@ GitLab-Logs ansehen (`glab` fehlt), pushen.
    scheduled): unbedingt `221a3a7`, `91f88c4`; behalten `5a87efb`, `ec3b6bd`; kann weg `f6143eb`,
    `88eaeb6`. Keine Aufräumregel im alten Projekt.
 
-## 4. Was als Nächstes ansteht
+## 4. Was als Nächstes ansteht — der Reihe nach, keine neuen Themen
 
-- **Codex arbeitet an WP-N21** (ODEFormer-Adapter, zwei Images, Äquivalenztest; seit 15:02, Log `outputs/codex_wp_n21.log`). Docker-Teile führt Claude aus, erwartet ist `blocked` mit *Umgebung, nicht Sache*. ODEFormer-Quelle am Pin liegt unter `outputs/third_party/odeformer/`.
-- **WP-T1d ist in seiner jetzigen Form nicht auswertbar** (DIARY 23.09., Zwischenblick): Der Referenzfit der Wahrheit scheitert in 16 von 22 Zellen, alle `swap_one`-Siege liegen dort. Neuer Maßstab (Orakelstart plus symmetrischer Mehrfachstart) wartet auf die Entscheidung des Nutzers.
-- **Warten.** Bei Abschluss von WP-T1d: auswerten (Klasse `swap_one` bei gleicher Größe ist die
-  entscheidende; `add_one` zu gewinnen ist Verschachtelung) → danach **WP-T2a** festlegen.
-- Wenn dim 1 in C-1/C-2 gerechnet ist: Claim-B-Paartabelle neu ziehen (129 Paare fertig, Stand heute).
-- Nach Kampagnenende: Phase-C-Auswertung → Claim D → Kappen-Kriterium → Umzug.
-- **Trivy geklärt, bleibt rot bis nach der Kampagne:** 109 Befunde in Julia-Binärpaketen (v. a. `Plots`/`CairoMakie` in `Project.toml`), 72 Debian (5 behebbar), torch im Baseline-Nachbau. Ausnahme E6 im `CHANGELOG.md`; Härtung kommt mit dem Namespace-Umzug (`CLAUDE.md`). Der nächste Push ändert an den roten Jobs nichts.
-- **ODEFormer-Arbeitspaket:** Abnahme muss den torch/sympy-Konflikt lösen (Phase-C-Plan, Abschnitt zum Baseline-Image).
+1. **ODEFormer-Neuberechnung prüfen** (siehe §1).
+2. **WP-T1d vollständig** → neuen Maßstab entscheiden (Orakelstart + symmetrischer Mehrfachstart;
+   Vorschlag im DIARY vom 23.09., Zwischenblick). Wartet auf Zustimmung des Nutzers.
+3. **Kampagne fertig** → Phase-C-Auswertung → gepaarter Vergleich EvoGrow / SINDy / ODEFormer
+   (Claim D) → prädiktives Kappen-Kriterium → Namespace-Umzug samt Image-Härtung.
+
+Zurückgestellt, bewusst: Rauschen (bis Phase C trägt). Vorgemerkt: WP-T2a (hängt an WP-T1d).
 
 ## 5. Git
 
-Heute committet, **nichts gepusht**: `af40dc6`, `2d5b0b5`/`b833d6b`, `689eff3`, `7b6161f`/`095609c`,
-`5a9d724`/`1d35aeb`, `e4f8d38`, `383273b`, `776d4a5`, plus der Commit mit dieser Datei. Der Push löst
-einen Image-Neubau aus (~35 min); die laufenden Jobs hängen an festen SHAs und sind unberührt.
+Alles committet, **nichts gepusht**. Ein Push baut das Kampagnen-Image neu (Digest-Pin testet sich
+dabei zum ersten Mal); laufende Jobs hängen an festen SHAs.
