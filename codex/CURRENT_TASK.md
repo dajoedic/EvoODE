@@ -1,48 +1,60 @@
-# WP-N22b — ODEFormer-Runner: harte Zeitgrenze je Zelle statt nachträglicher Markierung
+# WP-N23 — Harness: gescheiterte Integrationen sichtbar machen statt still als R² = 0 zu verbuchen
 **Language: Python**
 
 ## Ausführung
 
-Klein und lokal testbar. Ausführung in den Images macht Claude.
+Lokal umsetzbar und testbar. Ein erneuter Lauf der ODEFormer-Raster ist **nicht** Teil dieses
+Pakets — den entscheidet und fährt Claude.
 
-## Der Defekt
+## Der Befund
 
-`baselines/run_odeformer_grid.py:165-189` misst die Laufzeit einer Zelle **nach** ihrem Ende und
-markiert sie dann als `timeout`. Das begrenzt nichts: Eine Zelle, die hängt — etwa eine
-ODE-Integration in `ConstantOptimizer`, die bei einem entarteten Ausdruck nicht terminiert —
-blockiert den ganzen Lauf unbegrenzt. `CLAUDE.md` verlangt seit 2026-09-22, dass lange Läufe
-**konstruktiv** begrenzt sind, nicht per Schätzung. Zweitens verwirft die heutige Logik ein
-fertig gerechnetes Ergebnis, nur weil es langsam war — das ist weder Budget noch Befund.
+`baselines/harness.py`, `r2_by_dimension`: Ist die Vorhersage `None`, hat sie die falsche Form oder
+enthält sie nicht-endliche Werte, liefert die Funktion für jede Dimension **0.0**. Ebenso wird ein
+nicht-endlicher Score still zu 0.0, und eine Dimension ohne Varianz in der Referenz ebenfalls.
+Im ODEFormer-Referenzraster (1.008 Records, `analysis/data/paper1_phaseC_v1/odeformer_baseline/`)
+stehen 11–12 Generalisierungszellen je Konfiguration auf exakt 0.0, bei `generalization_status =
+success`. Die R² > 0.9-Rate ändert sich dadurch nicht — beide Fälle liegen unter der Schwelle —,
+aber eine divergente Integration ist ein **eigener Befund**, den EvoODE getrennt zählt, und er ist
+heute im Record nicht von einem echten schlechten Fit zu unterscheiden. `CLAUDE.md`,
+Designprinzip 6: Diagnosen nicht still verwerfen.
 
 ## Was zu tun ist
 
-- Die Zeitgrenze je Zelle **bricht die Zelle ab**, während sie läuft. Die Images laufen unter
-  Linux; ein Mechanismus, der dort zuverlässig einen hängenden Python-Aufruf unterbricht, genügt.
-  Auf Windows (lokale Tests) darf die harte Grenze fehlen, muss dann aber im Record und im Log als
-  `timeout_enforced=false` erkennbar sein — kein stilles Weglassen.
-- Welcher Mechanismus, im Report begründen. Beachten: Das Modell wird einmal je Prozess geladen
-  und soll das bleiben; ein Abbruch darf den Prozess nicht in einem Zustand hinterlassen, in dem
-  die nächste Zelle falsch rechnet. Wenn der gewählte Mechanismus das nicht garantieren kann,
-  lieber die Zelle in einem Kindprozess rechnen und das Modell dort je Kindprozess laden — dann die
-  Kosten im Report nennen.
-- Eine abgebrochene Zelle wird als `status=timeout` mit `timeout_enforced=true` geschrieben, atomar
-  wie alle anderen, und der Lauf geht weiter. Eine Zelle, die **innerhalb** der Grenze fertig wird,
-  behält ihr Ergebnis — keine nachträgliche Umdeutung mehr.
-- Beim Fortsetzen werden `timeout`-Zellen **nicht** automatisch neu gerechnet; ein eigener
-  Schalter erlaubt das ausdrücklich.
+1. **Die R²-Werte selbst ändern sich nicht.** Die 0.0-Konvention bleibt für die Rate bestehen,
+   damit neue und alte Records in der Rate vergleichbar bleiben. Geändert wird nur, dass der Grund
+   **mitgeschrieben** wird.
+2. Für Rekonstruktion und Generalisierung je ein Feld, das den Ausgang der Vorhersage benennt, mit
+   einer kleinen, festen Wertemenge — mindestens: Vorhersage vorhanden und endlich; keine
+   Vorhersage (`None`, etwa weil die Integration abbrach); falsche Form; nicht-endliche Werte in der
+   Vorhersage. Dazu je Dimension, ob der Score regulär berechnet oder durch die 0.0-Konvention
+   ersetzt wurde, und aus welchem Grund (nicht-endlicher Score, Referenz ohne Varianz).
+3. Wo die Vorhersage entsteht (ODEFormer-Adapter und SINDy-Pfad im Harness), wird eine Ausnahme
+   bei der Integration nicht verschluckt, sondern als Grund im Record festgehalten — Typ und
+   Meldung, gekürzt.
+4. **Nur prüfen, nicht ändern:** Ob `analysis/scripts/aggregate/run_wp_n6_sindy_baseline.py`, mit
+   dem C-4 gerechnet wurde, dieselbe stille 0.0-Konvention hat. Im Report mit Datei:Zeile
+   beantworten. Das Skript nicht anfassen — C-4 ist gerechnet.
+5. Das Zusammenfassungsskript `baselines/summarize_odeformer_grid.py` weist die Zahl der Zellen je
+   Ausgang getrennt aus, sobald die Felder vorhanden sind, und kommt mit alten Records ohne die
+   Felder zurecht (dann als „nicht erfasst" ausgewiesen, nicht als 0).
 
 ## Verboten
 
-- Keine Git-Operationen. ODEFormer nicht patchen. Keine Änderung an Konfigurationswerten, am
-  Record-Schema über die Timeout-Felder hinaus, am SINDy-Pfad.
+- Keine Git-Operationen.
+- Keine Änderung an R²-Werten, Schwellen, Aggregationen, Konfigurationen.
+- `run_wp_n6_sindy_baseline.py` und alles unter `analysis/data/` nicht verändern.
+- ODEFormer nicht patchen. Nichts anfassen außerhalb von `baselines/`.
 - Nichts, was länger als 15 Minuten läuft.
 
 ## Abnahme
 
-1. Harte Zeitgrenze unter Linux, begründet; `timeout_enforced` in jedem Record.
-2. Test, der eine künstlich hängende Zellfunktion (nicht ODEFormer) mit kurzer Grenze abbricht und
-   prüft, dass der Lauf danach die nächste Zelle korrekt rechnet — unter Windows als
-   übersprungen markiert, wenn der Mechanismus dort nicht greift, mit Begründung im Skip-Text.
-3. `python -m pytest baselines/tests -q` lokal grün.
-4. Report `codex/reports/REPORT_WP_N22b.md` mit dem Befehl, mit dem Claude den Abbruch-Test im
-   Linux-Image fährt (`--entrypoint python`, `baselines/` eingebunden), und dem Pass-Kriterium.
+1. Neue Felder in beiden Pfaden, feste Wertemenge, im Report dokumentiert.
+2. Tests mit echten Trajektorien aus dem Export: Vorhersage `None`, nicht-endliche Vorhersage,
+   falsche Form, Referenz-Dimension ohne Varianz — jeweils R² unverändert 0.0 **und** der richtige
+   Grund im Record. Ein Test, der zeigt, dass ein regulärer Fall unverändert bleibt.
+3. Zusammenfassung zeigt die Ausgänge; alte Records ohne Felder werden als „nicht erfasst"
+   geführt.
+4. `python -m pytest baselines/tests -q` lokal grün.
+5. Report `codex/reports/REPORT_WP_N23.md`, inklusive der Antwort zu Punkt 4 und dem Befehl, mit
+   dem Claude die beiden Raster neu rechnen kann (Records vollständig neu erzeugen, nicht
+   überspringen).
