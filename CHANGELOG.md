@@ -205,6 +205,16 @@ an internal cluster, exposes no service and loads no user-supplied model. The cl
 (torch 2.14, no HIGH/CRITICAL findings) exists and runs the same grid as a sensitivity check.
 *Scope:* the reference image is used only for the Paper 1 ODEFormer baseline and is not a base for
 anything else.
+*First registry scan, 2026-09-25 (pipeline of `9ff548e`, job `trivy-odeformer-reference-image`):*
+145 HIGH/CRITICAL in the Debian 13.7 base layer (1 CRITICAL), most with status `affected` and no
+fixed version; 3 in `torch 2.0.0+cpu`; 1 each in `numexpr`, setuptools' vendored `jaraco.context`
+and `wheel`; and **49 in `wandb/bin/wandb-core`**, a Go binary that arrives with `wandb`, a logging
+dependency ODEFormer's requirements pull in and the harness never calls. Only the torch findings
+are inherent to the exception. *Planned reduction, not before the reference grid is complete:* a
+hardened reference image without `wandb`, without `build-essential`/`git` in the final stage
+(multi-stage build) and with `apt-get upgrade`, adopted **only if** it reproduces the reference grid
+bit-identically; otherwise this exception stands as written. Rides with the E6 hardening at the
+namespace move.
 
 ### Declared limitation — security scan coverage
 

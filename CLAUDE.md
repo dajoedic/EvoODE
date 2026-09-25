@@ -749,7 +749,11 @@ the coupled search path 1e-6 is the cheaper, behaviour-equal tolerance; the Syst
   environment into a separate plotting environment — they are direct deps in `Project.toml` and
   carry most of the 109 HIGH/CRITICAL findings in `Manifest.toml`, in code the campaign never runs;
   raise Julia to the current 1.12 patch; `apt-get upgrade` for the five fixable Debian packages;
-  rescan. New image identity, therefore only after every run has ended.
+  rescan. New image identity, therefore only after every run has ended. **The ODEFormer reference
+  image joins that cut (added 2026-09-25, `CHANGELOG.md` E7):** its first scan shows 49 findings in
+  `wandb-core` (unused logging dependency) and 145 in the Debian base; drop `wandb`, build
+  multi-stage without `build-essential`/`git`, `apt-get upgrade` — adopted only if the reference
+  grid reproduces bit-identically. The torch 2.0 findings stay by design.
 - **A central `test/runtests.jl` plus a CI test stage.** 18 Julia and 10 Python test files exist and
   nothing runs them; `.gitlab-ci.yml` has `build` and `security` only. Cheap in work, **but not
   schedulable right now**: the CI lives on GitLab and a push there rebuilds the campaign image, so
