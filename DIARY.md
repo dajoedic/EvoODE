@@ -4,6 +4,73 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ---
 
+## 2026-09-25
+
+### ODEFormer-Wiederholbarkeit (WP-N24): Jede Abweichung fällt auf einen Timeout, aber 10 s beseitigt sie nicht
+
+Sechs Läufe: je Umgebung `faithful` (1 s) mit 4 und mit 1 Shard, dazu `lifted` (10 s) mit 4
+Shards. Jede Zelle wurde dreimal wiederholt, bei 22 Referenz- und 16 Kandidatenzellen. Zwei der
+sechs Läufe waren kontaminiert und sind neu gerechnet worden. `reference_faithful_4` lief über
+Nacht bei zugeklapptem Laptop, also mit Standby mitten in Zellen. `candidate_faithful_4` lief
+parallel zu meiner eigenen Last (Codex, Record-Kopie, Merge, Julia, 15:35–16:07). Die alten Ordner
+liegen als `*_lid_closed` / `*_local_load` daneben, der alte Vergleich als
+`mode_comparison_contaminated_1739.csv`. Die Neuläufe liefen am Abend auf einem ruhigen Laptop
+(21:52–22:49), vollständig, ohne Zeitlimit-Abbruch. `reference_faithful_1` hatte am Ende leichte
+I/O-Last von mir; das halte ich für vertretbar.
+
+| Lauf | Zellen | nicht bitgleich | davon mit streuendem Timeout-Zähler | nicht bitgleich **ohne** Timeout | R²>0.9-Kipper |
+|---|---|---|---|---|---|
+| reference faithful 4 | 22 | 7 | 5 | **0** | 1 |
+| reference faithful 1 | 22 | 4 | 4 | **0** | 1 |
+| reference lifted 4 | 22 | 6 | 6 | **0** | 0 |
+| candidate faithful 4 | 16 | 7 | 5 | **0** | 2 |
+| candidate faithful 1 | 16 | 1 | 1 | **0** | 1 |
+| candidate lifted 4 | 16 | 3 | 1 | **0** | 2 |
+
+Drei Befunde:
+
+1. **Die Ursache ist belegt.** In keinem der sechs Läufe gibt es eine nicht bitgleiche Zelle ohne
+   Timeout. Die Nichtdeterminiertheit ist vollständig durch den Wall-Clock-Timeout erklärt.
+2. **Mehr Parallelität bedeutet mehr Streuung**: mit 4 Shards 7 und 7 abweichende Zellen, mit 1
+   Shard 4 und 1. Das passt zur Lastabhängigkeit.
+3. **Die Erwartung "10 s macht es deterministisch" ist widerlegt.** Auch unter `lifted` feuern
+   Timeouts, bis zu 18 bzw. 26 je Zelle (System 55 Referenz: 7–14). Einige Kandidaten-ODEs brauchen
+   länger als 10 s, und jede endliche Wall-Clock-Grenze bleibt ein Wettlauf mit der Uhr. Eine
+   angehobene Grenze kauft also keine Reproduzierbarkeit, sie verschiebt nur, welche Zellen
+   betroffen sind.
+
+Die R²>0.9-Rate bewegt sich pro Lauf um 0–2 Zellen; einzelne Formeln sind dagegen nicht
+belastbar. **Die Entscheidung über den kanonischen Modus für Claim D liegt beim Nutzer**; die
+Optionen stehen im Chat vom 25.09.
+
+### Phase C Zwischenstand, und die Generalprobe der Auswertung
+
+C-1/C-2 stand am Abend bei 729/756, C-3 bei 172/180 (die letzten 8 sind Lorenz und System 59, bei
+~20–25 h pro Level), WP-T1d bei 34/36. 882 Records tragen ein einziges Identitätstripel. Die
+Claim-B-Paartabelle über 350 Paare: Voll gekappte Paare (146 auf 31 Systemen) sparen gepoolt
+**−20,8 %** `total_loss_evals`, bei `pruned_match` 146/146 gleich und R² 130/146 bitgleich. Die 119
+ungekappten Kontrollpaare sind 119/119 identisch, teilweise gekappte sparen nichts. Die Planzahl
+vom 22.09. (Endsumme ~8.800 Kernstunden) ist mit 10.737 h bereits überschritten.
+
+Eine Generalprobe der Auswertung auf 885 Records (`outputs/phase_c_dryrun_2026-09-25/`, Probe,
+nicht zitierfähig) hat vier Defekte gefunden, bevor sie am Kampagnenende gestört hätten:
+
+- **Es gibt keine Phase-C-Wahrheit für die Strukturmetriken.** Diese lesen `matched_basis_terms`
+  aus `system_classification.csv`, und die einzige solche Datei beruht auf der alten Basis. Die
+  zehn Systeme, die erst durch die Konstante exakt werden, wären **ohne Fehlermeldung** gegen eine
+  falsche Wahrheit bewertet worden.
+- Der **Koeffizientenfehler ist fest auf `None` gesetzt** und wird nie berechnet. Claim A verlangt
+  ihn.
+- Der Registry-Abgleich meldet 80 Abweichungen. Das sind alles Vergleiche roh gegen gepruned (§4b),
+  also Fehlalarme.
+- `merge_batch_records.jl` übernimmt Heartbeat-Zeilen stillschweigend als Records.
+
+Außerdem waren die C-5-Skripte (Oracle, Restart-Kurve, Generalisierung) noch an den WP-N1-Probe
+gebunden: `PHASE_B_SYSTEMS` und `wp_n1_expected_support_terms`. WP-N25 (C-5 für Phase C) und
+WP-N26 (die vier Defekte) sind bei Codex.
+
+---
+
 ## 2026-09-24
 
 ### ODEFormer ist nicht deterministisch, und die Ursache ist ein 1-s-Wall-Clock-Timeout
