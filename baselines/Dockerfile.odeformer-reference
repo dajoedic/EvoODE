@@ -2,6 +2,8 @@ FROM registry.scch.at/cache/library/python:3.10-slim
 
 ARG ODEFORMER_WEIGHTS_SHA256=56754040be5aa92ed4767fc43ee2008faa293f87c12b643e66c7df3e1623a5e8
 ARG ODEFORMER_GOOGLE_DRIVE_ID=1L_UZ0qgrBVkRuhg5j3BQoGxlvMk_Pm1W
+ARG ODEFORMER_COMMIT=c9193012ad07a97186290b98d8290d1a177f4609
+ARG ODEFORMER_PARAM_OPTIMIZER_NORMALIZED_SHA256=31e4a6cabf2b180118c6ee47286a537968720710b420c1dc17bc8d670ceb0bea
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
@@ -9,6 +11,9 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     ODEFORMER_WEIGHTS_PATH=/opt/odeformer/odeformer.pt \
     ODEFORMER_WEIGHTS_SHA256=${ODEFORMER_WEIGHTS_SHA256} \
     ODEFORMER_GOOGLE_DRIVE_ID=${ODEFORMER_GOOGLE_DRIVE_ID} \
+    ODEFORMER_SOURCE_ROOT=/opt/odeformer-src \
+    ODEFORMER_COMMIT=${ODEFORMER_COMMIT} \
+    ODEFORMER_PARAM_OPTIMIZER_NORMALIZED_SHA256=${ODEFORMER_PARAM_OPTIMIZER_NORMALIZED_SHA256} \
     TORCH_FORCE_NO_WEIGHTS_ONLY_LOAD=1
 
 WORKDIR /workspace/EvoODE
@@ -22,6 +27,22 @@ RUN pip install --no-cache-dir --extra-index-url https://download.pytorch.org/wh
 
 # Installed from the pinned upstream commit, not from a local clone, so the image builds anywhere.
 RUN pip install --no-cache-dir --no-deps "git+https://github.com/sdascoli/odeformer.git@c9193012ad07a97186290b98d8290d1a177f4609"
+
+RUN git clone --no-checkout https://github.com/sdascoli/odeformer.git "${ODEFORMER_SOURCE_ROOT}" \
+    && cd "${ODEFORMER_SOURCE_ROOT}" \
+    && git checkout "${ODEFORMER_COMMIT}" \
+    && python - <<'PY'
+import hashlib
+import os
+from pathlib import Path
+
+expected = os.environ["ODEFORMER_PARAM_OPTIMIZER_NORMALIZED_SHA256"]
+target = Path(os.environ["ODEFORMER_SOURCE_ROOT"]) / "param_optimizer.py"
+actual = hashlib.sha256(target.read_bytes().replace(b"\r\n", b"\n")).hexdigest()
+print(f"ODEFormer param_optimizer.py normalized sha256: {actual}")
+if actual != expected:
+    raise SystemExit(f"ODEFormer param_optimizer.py normalized hash mismatch: expected {expected}, got {actual}")
+PY
 
 RUN python - <<'PY'
 import hashlib

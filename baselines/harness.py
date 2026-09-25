@@ -3,6 +3,7 @@ import contextlib
 import errno
 import functools
 import hashlib
+import importlib
 import importlib.metadata
 import json
 import math
@@ -38,6 +39,7 @@ from scripts.aggregate.run_wp_n6_sindy_baseline import (  # noqa: E402
 
 
 ODEFORMER_COMMIT = "c9193012ad07a97186290b98d8290d1a177f4609"
+ODEFORMER_PARAM_OPTIMIZER_NORMALIZED_SHA256 = "31e4a6cabf2b180118c6ee47286a537968720710b420c1dc17bc8d670ceb0bea"
 R2_THRESHOLD = 0.9
 PREDICTION_OUTCOMES = {
     "finite",
@@ -161,6 +163,70 @@ def resolve_path(path_value: str | Path) -> Path:
     if path.is_absolute():
         return path.resolve()
     return (REPO_ROOT / path).resolve()
+
+
+class ODEFormerInfrastructureError(RuntimeError):
+    """Raised when required ODEFormer infrastructure files or imports are missing."""
+
+
+def odeformer_source_root() -> tuple[Path, str]:
+    env_value = os.environ.get("ODEFORMER_SOURCE_ROOT")
+    if env_value:
+        return Path(env_value).resolve(), "env"
+    return (REPO_ROOT / "outputs" / "third_party" / "odeformer").resolve(), "default"
+
+
+def normalized_text_sha256(path: Path) -> str:
+    return hashlib.sha256(path.read_bytes().replace(b"\r\n", b"\n")).hexdigest()
+
+
+def odeformer_source_metadata() -> dict[str, str]:
+    source_root, source = odeformer_source_root()
+    param_optimizer_path = source_root / "param_optimizer.py"
+    sha256 = ""
+    if param_optimizer_path.is_file():
+        sha256 = normalized_text_sha256(param_optimizer_path)
+    return {
+        "odeformer_source_root": str(source_root),
+        "odeformer_source_root_source": source,
+        "odeformer_param_optimizer_normalized_sha256": sha256,
+    }
+
+
+def import_odeformer_param_optimizer() -> Any:
+    source_root, source = odeformer_source_root()
+    param_optimizer_path = source_root / "param_optimizer.py"
+    if not param_optimizer_path.is_file():
+        raise ODEFormerInfrastructureError(
+            f"ODEFormer source root from {source} does not contain param_optimizer.py: {param_optimizer_path}"
+        )
+    actual = normalized_text_sha256(param_optimizer_path)
+    if actual != ODEFORMER_PARAM_OPTIMIZER_NORMALIZED_SHA256:
+        raise ODEFormerInfrastructureError(
+            "ODEFormer param_optimizer.py normalized hash mismatch: "
+            f"expected {ODEFORMER_PARAM_OPTIMIZER_NORMALIZED_SHA256}, got {actual} at {param_optimizer_path}"
+        )
+    if str(source_root) not in sys.path:
+        sys.path.insert(0, str(source_root))
+    existing = sys.modules.get("param_optimizer")
+    if existing is not None:
+        existing_file = getattr(existing, "__file__", "")
+        try:
+            if existing_file and Path(existing_file).resolve().is_relative_to(source_root):
+                return existing
+        except OSError:
+            pass
+        del sys.modules["param_optimizer"]
+    try:
+        return importlib.import_module("param_optimizer")
+    except ImportError as exc:
+        raise ODEFormerInfrastructureError(
+            f"ODEFormer constant optimization imports failed from {source_root}: {type(exc).__name__}: {exc}"
+        ) from exc
+
+
+def preflight_odeformer_constant_optimization() -> None:
+    import_odeformer_param_optimizer()
 
 
 def parse_shape(text: Any, label: str) -> tuple[int, ...]:
@@ -474,6 +540,7 @@ def odeformer_schema_defaults(config: dict[str, Any]) -> dict[str, Any]:
         "weights_path",
     ]
     defaults = {f"odeformer_{key}": config.get(key, "") for key in keys}
+    defaults.update(odeformer_source_metadata())
     integration_timeout = config.get("integration_timeout_seconds", 1.0)
     if integration_timeout is None:
         integration_timeout = 1.0
@@ -738,10 +805,15 @@ class ODEFormerAdapter:
         return np.asarray(prediction, dtype=float)
 
     def optimize_constants(self, expression: str, fit_cell: TrajectoryCell) -> dict[str, Any]:
-        source_root = REPO_ROOT / "outputs" / "third_party" / "odeformer"
-        if str(source_root) not in sys.path:
-            sys.path.insert(0, str(source_root))
-        from param_optimizer import ConstantOptimizer
+        """Optimize numeric constants, treating import failures as run-aborting infrastructure errors.
+
+        ImportError anywhere in the ODEFormer constant-optimization import path means the image or
+        local checkout is incomplete and must abort the run. Exceptions raised by the optimizer after
+        its dependencies are importable remain scientific optimization failures and are recorded by
+        the caller as before.
+        """
+        module = import_odeformer_param_optimizer()
+        ConstantOptimizer = module.ConstantOptimizer
 
         optimizer = ConstantOptimizer(
             eq=expression,
@@ -765,6 +837,8 @@ class ODEFormerAdapter:
         try:
             with self.timeout_phase("constant_optimization"):
                 optimized_expression, optimized_params, optimized_fit = optimizer.optimize()
+        except ImportError as exc:
+            raise ODEFormerInfrastructureError(f"ODEFormer constant optimization import failed: {exc}") from exc
         finally:
             optimizer.optimize.__globals__["minimize"] = original_minimize
         info = holder.get("result")
@@ -839,6 +913,10 @@ def run_odeformer_record_with_adapter(
                 optimization_nit = int(optimized["nit"])
                 optimization_nfev = int(optimized["nfev"])
                 optimization_stop_reason = str(optimized["stop_reason"])
+            except ODEFormerInfrastructureError:
+                raise
+            except ImportError as exc:
+                raise ODEFormerInfrastructureError(f"ODEFormer constant optimization import failed: {exc}") from exc
             except Exception as exc:
                 optimization_status = "error_unoptimized_expression_retained"
                 optimization_error_type = type(exc).__name__
@@ -886,6 +964,8 @@ def run_odeformer_record_with_adapter(
             }
         )
         return record
+    except ODEFormerInfrastructureError:
+        raise
     except Exception as exc:
         return odeformer_failure(record, config, exc)
 

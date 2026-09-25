@@ -243,6 +243,9 @@ CPU.
 4. User: substitute `<COMMIT_SHA>` in `k8s/odeformer_reference_grid_smoke_job.yaml`, apply it,
    and inspect the smoke output under
    `/bigdata/data-science/joedicke/odeformer_grid_<COMMIT_SHA>/reference/smoke`.
+   The smoke selection must include at least one `_opt` configuration, and the check must compare
+   `odeformer_optimization_status` so a missing constant-optimization source checkout cannot pass
+   as an unoptimized but otherwise valid record.
 5. User: after checking quota and running Phase-C pods, substitute `<COMMIT_SHA>` in
    `k8s/odeformer_reference_grid_job.yaml` and apply it. The indexed Job runs 126 completions:
    3 repetitions x 42 shards.

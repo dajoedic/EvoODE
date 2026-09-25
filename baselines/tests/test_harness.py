@@ -45,6 +45,13 @@ def first_multidimensional_cell() -> harness.TrajectoryCell:
     return cells[(system_id, 1)]
 
 
+def write_fake_odeformer_source(tmp_path: Path, body: str) -> Path:
+    source_root = tmp_path / "odeformer-src"
+    source_root.mkdir()
+    (source_root / "param_optimizer.py").write_text(body, encoding="utf-8")
+    return source_root
+
+
 def test_hash_mismatch_aborts_before_records(tmp_path: Path) -> None:
     try:
         harness.run(CONFIG, str(tmp_path / "out"), corrupt_manifest_hash=True)
@@ -328,23 +335,32 @@ def test_odeformer_adapter_preserves_none_prediction_for_outcome_and_r2() -> Non
     assert fields["reconstruction_prediction_outcome"] == "none"
 
 
-def test_odeformer_constant_optimization_preserves_none_fit_prediction(monkeypatch) -> None:
+def test_odeformer_constant_optimization_preserves_none_fit_prediction(tmp_path: Path, monkeypatch) -> None:
     cell = first_multidimensional_cell()
-
-    class FakeConstantOptimizer:
-        def __init__(self, **_kwargs):
-            pass
-
-        def optimize(self):
-            return "x_0", [1.0], None
-
-    def fake_minimize(*_args, **_kwargs):
-        return types.SimpleNamespace(nit=3, nfev=5, message="done")
-
-    FakeConstantOptimizer.optimize.__globals__["minimize"] = fake_minimize
-    module = types.ModuleType("param_optimizer")
-    module.ConstantOptimizer = FakeConstantOptimizer
-    monkeypatch.setitem(sys.modules, "param_optimizer", module)
+    source_root = write_fake_odeformer_source(
+        tmp_path,
+        "\n".join(
+            [
+                "import types",
+                "",
+                "def minimize(*_args, **_kwargs):",
+                "    return types.SimpleNamespace(nit=3, nfev=5, message='done')",
+                "",
+                "class ConstantOptimizer:",
+                "    def __init__(self, **_kwargs):",
+                "        pass",
+                "",
+                "    def optimize(self):",
+                "        minimize()",
+                "        return 'x_0', [1.0], None",
+                "",
+            ]
+        ),
+    )
+    param_hash = harness.normalized_text_sha256(source_root / "param_optimizer.py")
+    monkeypatch.setenv("ODEFORMER_SOURCE_ROOT", str(source_root))
+    monkeypatch.setattr(harness, "ODEFORMER_PARAM_OPTIMIZER_NORMALIZED_SHA256", param_hash)
+    monkeypatch.delitem(sys.modules, "param_optimizer", raising=False)
 
     adapter = object.__new__(harness.ODEFormerAdapter)
     adapter.config = {
@@ -363,6 +379,134 @@ def test_odeformer_constant_optimization_preserves_none_fit_prediction(monkeypat
 
     assert optimized["fit_prediction"] is None
     assert optimized["params"] == [1.0]
+
+
+def test_odeformer_source_root_defaults_to_local_checkout(monkeypatch) -> None:
+    monkeypatch.delenv("ODEFORMER_SOURCE_ROOT", raising=False)
+    source_root, source = harness.odeformer_source_root()
+    assert source == "default"
+    assert source_root == (harness.REPO_ROOT / "outputs" / "third_party" / "odeformer").resolve()
+
+
+def test_odeformer_param_optimizer_hash_normalizes_crlf(tmp_path: Path) -> None:
+    lf_path = tmp_path / "param_optimizer_lf.py"
+    crlf_path = tmp_path / "param_optimizer_crlf.py"
+    body = b"def f():\n    return 1\n"
+    lf_path.write_bytes(body)
+    crlf_path.write_bytes(body.replace(b"\n", b"\r\n"))
+
+    assert harness.normalized_text_sha256(lf_path) == harness.normalized_text_sha256(crlf_path)
+
+
+def test_odeformer_param_optimizer_changed_content_aborts(tmp_path: Path, monkeypatch) -> None:
+    source_root = write_fake_odeformer_source(
+        tmp_path,
+        "\n".join(
+            [
+                "class ConstantOptimizer:",
+                "    pass",
+                "",
+            ]
+        ),
+    )
+    expected = harness.normalized_text_sha256(source_root / "param_optimizer.py")
+    (source_root / "param_optimizer.py").write_text(
+        "\n".join(
+            [
+                "class ConstantOptimizer:",
+                "    changed = True",
+                "",
+            ]
+        ),
+        encoding="utf-8",
+    )
+    monkeypatch.setenv("ODEFORMER_SOURCE_ROOT", str(source_root))
+    monkeypatch.setattr(harness, "ODEFORMER_PARAM_OPTIMIZER_NORMALIZED_SHA256", expected)
+    monkeypatch.delitem(sys.modules, "param_optimizer", raising=False)
+
+    with pytest.raises(harness.ODEFormerInfrastructureError, match="normalized hash mismatch"):
+        harness.import_odeformer_param_optimizer()
+
+
+def test_odeformer_grid_preflight_rejects_missing_param_optimizer(tmp_path: Path, monkeypatch) -> None:
+    empty_source = tmp_path / "empty-source"
+    empty_source.mkdir()
+    monkeypatch.setenv("ODEFORMER_SOURCE_ROOT", str(empty_source))
+    monkeypatch.delitem(sys.modules, "param_optimizer", raising=False)
+
+    with pytest.raises(harness.ODEFormerInfrastructureError, match="param_optimizer.py"):
+        run_odeformer_grid.run(
+            harness.REPO_ROOT / "baselines" / "configs" / "odeformer_grid.json",
+            str(tmp_path / "grid"),
+            system_ids={1},
+            config_ids={"beam10_opt"},
+            limit=1,
+        )
+    assert not list((tmp_path / "grid" / "records").glob("*.json"))
+
+
+def test_odeformer_optimization_import_error_aborts_without_record() -> None:
+    cell = first_multidimensional_cell()
+    config = {
+        "config_id": "import_error_opt",
+        "constant_optimization_enabled": True,
+    }
+
+    class ImportErrorAdapter:
+        actual_hash = "hash"
+
+        def fit_best_candidate(self, _fit_cell):
+            return "x_0", "x_0", "x_0", ["x_0"]
+
+        def integrate_expression(self, fit_cell, _expression):
+            return fit_cell.state.copy()
+
+        def optimize_constants(self, _expression, _fit_cell):
+            raise ImportError("No module named 'evaluate'")
+
+        def timeout_count_fields(self):
+            return {}
+
+        @contextlib.contextmanager
+        def timeout_phase(self, _name):
+            yield
+
+    with pytest.raises(harness.ODEFormerInfrastructureError, match="evaluate"):
+        harness.run_odeformer_record_with_adapter({}, cell, cell, config, ImportErrorAdapter())
+
+
+def test_odeformer_optimization_value_error_remains_record() -> None:
+    cell = first_multidimensional_cell()
+    config = {
+        "config_id": "value_error_opt",
+        "constant_optimization_enabled": True,
+    }
+
+    class ValueErrorAdapter:
+        actual_hash = "hash"
+
+        def fit_best_candidate(self, _fit_cell):
+            return "x_0", "x_0", "x_0", ["x_0"]
+
+        def integrate_expression(self, fit_cell, _expression):
+            return fit_cell.state.copy()
+
+        def optimize_constants(self, _expression, _fit_cell):
+            raise ValueError("optimizer did not converge")
+
+        def timeout_count_fields(self):
+            return {}
+
+        @contextlib.contextmanager
+        def timeout_phase(self, _name):
+            yield
+
+    record = harness.run_odeformer_record_with_adapter({}, cell, cell, config, ValueErrorAdapter())
+
+    assert record["status"] == "success"
+    assert record["odeformer_optimization_status"] == "error_unoptimized_expression_retained"
+    assert record["odeformer_optimization_error_type"] == "ValueError"
+    assert record["odeformer_optimization_nfev"] == 0
 
 
 def test_r2_diagnostics_report_reference_without_variance_from_export() -> None:

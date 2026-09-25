@@ -193,6 +193,8 @@ def run_cell_with_hard_timeout(
         payload["timeout_enforced"] = True
         return payload
     error_type, error_message = payload
+    if error_type == "ODEFormerInfrastructureError":
+        raise harness.ODEFormerInfrastructureError(error_message)
     base = harness.base_record("odeformer", ode_config, fit_cell, target_cell)
     base.update(harness.odeformer_schema_defaults(ode_config))
     record = harness.odeformer_failure(base, ode_config, RuntimeError(f"{error_type}: {error_message}"))
@@ -215,6 +217,18 @@ def selected_config_objects(config: dict[str, Any], config_ids: set[str] | None)
         merged["environment_id"] = config.get("environment_id", item.get("environment_id", "candidate"))
         configs.append(merged)
     return configs
+
+
+def preflight_odeformer_constant_optimization(configs: list[dict[str, Any]]) -> None:
+    if any(bool(config.get("constant_optimization_enabled", False)) for config in configs):
+        try:
+            harness.preflight_odeformer_constant_optimization()
+        except harness.ODEFormerInfrastructureError:
+            raise
+        except ImportError as exc:
+            raise harness.ODEFormerInfrastructureError(
+                f"ODEFormer constant optimization preflight failed: {type(exc).__name__}: {exc}"
+            ) from exc
 
 
 def parse_int_set(text: str) -> set[int] | None:
@@ -406,6 +420,7 @@ def run(
     records_dir = out_dir / "records"
     out_dir.mkdir(parents=True, exist_ok=True)
     configs = selected_config_objects(config, config_ids)
+    preflight_odeformer_constant_optimization(configs)
     work_cells = shard_cells([(system, 1, 2) for system in systems] + [(system, 2, 1) for system in systems], shard_index, shard_count)
     work_items = [(system, fit_ic, target_ic, ode_config) for system, fit_ic, target_ic in work_cells for ode_config in configs]
     if limit is not None:
