@@ -73,3 +73,22 @@ die Hälfte des Referenzrasters unbemerkt ohne Konstantenoptimierung gerechnet w
    Windows nicht; Claude führt sie im Linux-Container aus).
 3. Report `codex/reports/REPORT_WP_N27c.md` mit dem lokalen Docker-Build-Befehl für Claude und der
    Prüfung, dass das gebaute Image `param_optimizer` importieren kann.
+
+## Nachtrag 2026-09-26, 00:45 — der Soll-Hash war falsch (Fehler in der Spezifikation)
+
+Der Wert `5f73e0df…` wurde unter Windows berechnet. Die lokale Kopie
+`outputs/third_party/odeformer/param_optimizer.py` hat **CRLF**-Zeilenenden (`core.autocrlf=true`,
+10.581 Byte), der Blob im gepinnten Commit hat LF (10.333 Byte). Der Hash des Blobs, also dessen,
+was `git clone` im Linux-Image liefert, ist
+**`31e4a6cabf2b180118c6ee47286a537968720710b420c1dc17bc8d670ceb0bea`**.
+
+Korrektur:
+
+1. Kanonischer Hash ist der über den **LF-normalisierten** Inhalt (`\r\n` → `\n`) =
+   `31e4a6ca…`. Dockerfile-Prüfung (reference und candidate) und die Laufzeitprüfung in
+   `harness.py` normalisieren vor dem Hashen und vergleichen gegen diesen Wert. Damit bestehen
+   Linux-Klon und Windows-CRLF-Kopie dieselbe Prüfung.
+2. Der Record trägt den normalisierten Hash (Feldname so, dass "normalisiert" erkennbar ist).
+3. Test: Dieselbe Datei einmal mit LF, einmal mit CRLF, ergibt denselben normalisierten Hash; eine
+   inhaltlich veränderte Datei ergibt einen anderen und führt zum Abbruch.
+4. Report `REPORT_WP_N27c.md` um den Nachtrag ergänzen.
