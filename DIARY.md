@@ -8,6 +8,8 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ### ODEFormer-Wiederholbarkeit (WP-N24): Jede Abweichung fällt auf einen Timeout, aber 10 s beseitigt sie nicht
 
+<!-- 0e59f75 bc29d2e 732c2c2 -->
+
 Sechs Läufe: je Umgebung `faithful` (1 s) mit 4 und mit 1 Shard, dazu `lifted` (10 s) mit 4
 Shards. Jede Zelle wurde dreimal wiederholt, bei 22 Referenz- und 16 Kandidatenzellen. Zwei der
 sechs Läufe waren kontaminiert und sind neu gerechnet worden. `reference_faithful_4` lief über

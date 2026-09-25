@@ -494,9 +494,26 @@ shift itself is a reportable reproducibility finding about the literature baseli
 image's HIGH/CRITICAL findings are a documented exception (`CHANGELOG.md` E7).
 **Configurations: all four, all reported, none selected** — beam size 10 and 50, each with and
 without ODEFormer's own constant optimisation (`param_optimizer.py`, `ConstantOptimizer`, its own
-defaults). The same rule as SINDy's ten configurations. One run per cell and configuration,
-because the output is deterministic. SINDy runs in its own environment: pysindy 2.1.0 needs
-`numpy >= 2.0`, ODEFormer `numpy==1.23.5`.
+defaults). The same rule as SINDy's ten configurations. SINDy runs in its own environment:
+pysindy 2.1.0 needs `numpy >= 2.0`, ODEFormer `numpy==1.23.5`.
+
+**The output is not deterministic, and the integration limit stays at ODEFormer's 1 s — decided
+2026-09-25 (WP-N24).** The sentence "one run per cell, because the output is deterministic" stood
+here until 2026-09-25 and is refuted. ODEFormer's `_integrate_ode` carries a 1-s wall-clock
+`SIGALRM` timeout that acts in candidate ranking, constant optimisation and evaluation. The
+repeatability measurement (38 cells × 3 repetitions, six runs, `DIARY.md` 2026-09-25) shows:
+**every** non-reproducible cell has a timeout, with none in any run lacking one; more parallel
+load gives more spread; and a 10-s limit does **not** restore determinism, because some candidate
+ODEs integrate for longer than 10 s. Every limit in seconds stays a race against the clock.
+Decision: **the canonical mode is `faithful` (1 s)**, the protocol ODEFormer's published numbers
+were produced under. The reference grid runs **three repetitions per cell** with one ODEFormer
+process per CPU and no co-scheduled work in the same process, and is reported as a rate **with its
+spread across repetitions**. The non-determinism is declared as a property of the baseline, not
+smoothed. The candidate environment stays a sensitivity check. A deterministic step budget in
+place of the clock was considered and rejected as the canonical choice: it would leave ODEFormer's
+protocol and add a constant of our own. Three repetitions of the reference grid cost about 25 h
+sequentially, measured from the WP-N23 grid (8.35 h per repetition; capacity planning, not
+evidence), so the run belongs on Orion.
 
 **The baseline environment carries a dependency conflict (found 2026-09-23).** `torch==2.0.0` has
 a CRITICAL and several HIGH advisories (`CHANGELOG.md` E6). Every torch release that clears them
