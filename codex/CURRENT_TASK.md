@@ -1,132 +1,121 @@
-# WP-N25 — Die abgeleiteten C-5-Arme für Phase C lauffähig machen
-**Language: Julia**
+# WP-N26 — Die Claim-A-Auswertung für Phase C korrekt machen
+**Language: Python**
 
 ## Ausführung
 
-Codex kann in dieser Umgebung kein Julia ausführen (`codex/CODEX_PROTOCOL.md`). Code und Tests
-schreiben, dann mit `status: blocked` und dem Grund "Julia-Ausführung" melden; Claude führt Tests
-und Rauchtest aus. **Nichts starten, was länger als 15 Minuten läuft.** Die eigentlichen C-5-Läufe
-startet niemand in diesem Paket.
+Lokal umsetzbar und testbar. **Wichtig: Auf dem Laptop läuft zeitgleich eine lastempfindliche
+ODEFormer-Messung.** Deshalb nur die neuen und geänderten Tests gezielt ausführen, nicht die ganze
+Suite, und nichts, was länger als 5 Minuten rechnet. Permutationstests und Bootstraps nicht starten.
 
 ## Ausgangslage
 
-Der C-5-Arm des Phase-C-Plans (`docs/paper1_phaseC_benchmark_plan.md`, §1a/§1b und §2) besteht aus
-drei Skripten, die **keine neue Suche** machen, sondern die C-1-Records nachnutzen:
+Eine Generalprobe der Phase-C-Auswertung lief am 2026-09-25 auf 885 von 936 Records (lokale Kopie
+unter `outputs/phase_c_dryrun_2026-09-25/`: `tasks/`, `history.jsonl`, `run_registry.csv`). Registry
+und Invarianten sind sauber. Die Strukturauswertung für Claim A hat dagegen vier Defekte.
 
-| Claim | Skript | Was es tut |
-|---|---|---|
-| Diag | `studies/regression/wp_n3_oracle_refit.jl` | Fit auf der wahren Struktur (`reference`) und auf gefundene ∩ wahre Terme (`oracle`) |
-| Abl-3 | `studies/regression/wp_n4_multistart_refit.jl` | dasselbe mit k Parameterstarts, Kurve über k ∈ {1, 2, 3, 5, 10} |
-| C | `studies/regression/wp_n5_ic_generalization.jl` | gespeichertes Modell von der ungesehenen Anfangsbedingung aus integrieren, beide Richtungen |
-
-Alle drei sind für den WP-N1-Probe gebaut und passen an vier Stellen **nicht** zu Phase C:
-
-1. **Systeme und Trajektorien.** Sie laden `phase_b_config.jl` und bauen Systeme aus
-   `PHASE_B_SYSTEMS` mit `build_trajectory(system, ic_set)`. Phase C hat einen eigenen Pfad:
-   `phase_c_systems()` in `studies/regression/phase_c_config.jl`, mit eigener
-   Trajektorienerzeugung (`_phase_c_solution_trajectory`). Ob beide Pfade dieselben Zahlen liefern,
-   ist nicht gezeigt, und das darf auch nicht vorausgesetzt werden.
-2. **Wahrheit.** Sie lesen die wahre Struktur aus dem Record-Feld `wp_n1_expected_support_terms`.
-   Das Feld gibt es in Phase-C-Records nicht. Die Phase-C-Wahrheit steht in
-   `studies/regression/phase_c_support.json` (Lader: `load_phase_c_support()`), 30 exakt, 33
-   Surrogat, Basis `staged_polynomial_basis_with_constant`.
-3. **Eingabe.** Die Standardeingabe ist `outputs/wp_n1_dim1_probe/history.jsonl`. Die Phase-C-Records
-   liegen als Einzeldateien pro Zelle vor und werden mit `studies/regression/merge_batch_records.jl`
-   zu einer History zusammengeführt. Diese History enthält **drei Arme**: C-1 (gekappt,
-   `use_pretuning = false`), C-2 (`evogrow_v2_2_stage_local`) und C-3 (gekappt, `use_pretuning = true`).
-   C-5 gilt laut Plan **nur für C-1**.
-4. **Laufzeit.** Der Plan nennt "< 50 Kernstunden" für C-5 zusammen. Das ist eine Schätzung, keine
-   Messung. Abl-3 rechnet mit k = 10 zwei Fits pro Start über alle exakten C-1-Zellen, dim 3
-   eingeschlossen. Nach `CLAUDE.md` läuft alles auf Orion, was nicht nachweislich unter 8 h
-   bleibt. Dafür braucht es eine hergeleitete obere Schranke und eine Aufteilung in Shards.
-
-Ein Phase-C-Record hat 93 Felder, darunter `basis_name`, `model_terms` (mit `term_index` und
-`coefficient`), `u0`, `T`, `tspan`, `seed`, `initial_condition_set`, `system_id`, `variant`,
-`use_pretuning`, `condition`, `representability`, `max_fit_attempts`, `git_hash`,
-`config_fingerprint`, `stage_cap_behavior_fingerprint`, `total_parameter_fits`, `total_loss_evals`,
-`total_parameter_optimization_time_s`. Beispiel: jede Datei `cell_*.jsonl` (ohne `.heartbeat`) unter
-`outputs/phase_c_dryrun_2026-09-25/tasks/`, einer lokalen Kopie des Kampagnenstands vom 25.09.
+1. **Keine Phase-C-Wahrheit.** `analysis/scripts/aggregate/aggregate_phaseb_structure_metrics.py`
+   liest die wahre Struktur aus `matched_basis_terms` in `system_classification.csv`
+   (`load_truth`). Für `--campaign paper1_phaseC_v1` wird dort
+   `analysis/data/paper1_phaseC_v1/system_classification.csv` gesucht, und diese Datei existiert
+   nicht. Die einzige Klassifikation (`analysis/data/paper1_phaseB_v1/system_classification.csv`)
+   stammt von `classify_odebench_systems.py` und damit von der **alten Basis ohne Konstante**. Bei
+   System 1 steht dort als Wahrheit nur `u1`, und die Konstante gilt als Lücke `constant_offset`.
+   Mit dieser Datei würden die zehn Systeme, die unter der kanonischen Basis exakt sind (1, 5, 9,
+   17, 23, 43, 52, 57, 58, 59), **stillschweigend** gegen eine falsche Wahrheit bewertet. Die
+   Phase-C-Wahrheit steht in `studies/regression/phase_c_support.json`: pro System
+   `representability`, `dim`, `support_terms` pro Gleichung, `basis_name =
+   staged_polynomial_basis_with_constant`, 30 exakt und 33 Surrogat. Diese Datei ist auch die
+   Wahrheit, gegen die die Kampagne selbst `exact_support_match_*` berechnet.
+2. **Koeffizientenfehler nie berechnet.** Im selben Skript stehen
+   `coefficient_relative_error_mean`, `coefficient_relative_error_max` und `n_coefficient_terms` fest
+   auf `None`/`0` (etwa Zeilen 148–150 und 173–175). `analysis/utils/metrics.py` hat eine Funktion
+   `coefficient_metrics(found_coefficients, true_coefficients)`, die nie aufgerufen wird.
+   Phase-C-Records tragen die gefundenen Koeffizienten in `model_terms` (pro Gleichung eine Liste
+   von `{term, term_index, coefficient}`); in der Registry landen sie als JSON-Spalte `model_terms`.
+   Die wahren Koeffizienten stehen in der Spalte `equation` der Klassifikation (ODEBench-Ausdrücke
+   mit eingesetzten Parametern, Variablen `x_0, x_1, …`, Zuordnung `x_i -> u{i+1}` in
+   `variable_mapping`). `classify_odebench_systems.py` zerlegt diese Ausdrücke bereits mit sympy in
+   Terme.
+3. **Falscher Abgleich mit der Registry.** Das Skript vergleicht seinen **rohen** Treffer mit
+   `exact_support_match` der Registry. In Phase C trägt diese Spalte den **gepruneten** Treffer
+   (`exact_support_match_definition = pruned_support_terms_exact_match`). Ergebnis: 80 gemeldete
+   Abweichungen, alle mit null fehlenden wahren Termen und mindestens einem überzähligen Term, also
+   roh `False` gegen gepruned `True`. Das sind keine Datenfehler, sondern der in
+   `docs/paper1_phaseC_benchmark_plan.md` §4b beschriebene Zustand "ein Spaltenname, zwei
+   Definitionen". Phase-C-Registries haben dafür die Spalten `exact_support_match_raw`,
+   `exact_support_match_pruned`, `exact_support_match_definition` und `pruned_support_terms`.
+4. **`merge_batch_records.jl` nimmt Heartbeat-Zeilen an.** Liegen Heartbeat-Dateien im
+   Eingabeordner, übernimmt das Skript deren Zeilen ohne Fehler als Records. In der Generalprobe sind
+   so 8 Zeilen in die History geraten. `SCRIPTS.md` warnt davor, das Skript selbst prüft es nicht.
+   Das ist Julia; siehe Punkt 4 unten, der Teil wird nur geschrieben.
 
 ## Was zu tun ist
 
-1. **Phase-C-Modus für alle drei Skripte**, ausgewählt über ein explizites Argument
-   (z. B. `--campaign paper1_phaseC_v1`). **Ohne das Argument bleibt das bisherige WP-N1-Verhalten
-   bitgleich.** Das ist die Abnahme 1.
-2. **Systeme und Trajektorien im Phase-C-Modus ausschließlich über `phase_c_systems()`**, also über
-   denselben Pfad, den der Kampagnen-Runner benutzt hat. Jede Ausgabezeile trägt einen
-   Trajektorien-Hash im Format von `studies/regression/phase_c_trajectory_hashes.jl`
-   (`HASH_FORMAT`, gleiche Achsenordnung). Wo es einen Quell- und einen Ziel-IC gibt (WP-N5), zwei
-   Hashes. Damit lässt sich die Identität zu den Trajektorien der Kampagne **per Hash** prüfen statt
-   behaupten.
-3. **Wahrheit im Phase-C-Modus aus `phase_c_support.json`.** Abbruch, wenn der `basis_name` im
-   Record nicht mit dem `basis_name` der Support-Tabelle übereinstimmt. Surrogat-Systeme haben keine
-   wahre Struktur: WP-N3 und WP-N4 überspringen sie **mit Zählung im Manifest**, WP-N5 braucht keine
-   Wahrheit und rechnet alle 63 Systeme.
-4. **Nur C-1.** Im Phase-C-Modus werden genau die Records mit `variant ==
-   "evogrow_v2_2_stage_capped"` und `use_pretuning == false` verarbeitet. Alle anderen werden
-   **gezählt und im Manifest ausgewiesen, nicht stillschweigend verworfen**. Abbruch, wenn die
-   ausgewählten Records mehr als ein Identitätstripel tragen (`git_hash`, `config_fingerprint`,
-   `stage_cap_behavior_fingerprint`), oder wenn eine Zelle (System, Seed, IC-Set) doppelt vorkommt.
-5. **Optimierer im Phase-C-Modus = Phase-C-Konfiguration**, also die Konstanten, die in
-   `phase_c_fingerprint()` eingehen, inklusive `BFGS_MAX_LOSS_EVALS` als Budget pro Fit. Damit ist
-   jeder Fit per Konstruktion begrenzt. Zur Restart-Regel:
-   - **WP-N3 (Diag)** fittet mit `max_fit_attempts = 3`, so wie die Kampagne. Die Diagnose misst,
-     was der kanonische Optimierer auf der wahren Struktur schafft.
-   - **WP-N4 (Abl-3)** macht jeden seiner k Starts als **einen** Versuch
-     (`max_fit_attempts = 1`), weil das Skript k selbst variiert. Andernfalls würden sich zwei
-     Mehrfachstart-Mechanismen überlagern.
-   - Beide Festlegungen stehen im Manifest und im Fingerprint des jeweiligen Skripts.
-6. **Aufteilung in Shards und Wiederaufnahme** für alle drei Skripte: `--shards N --shard-index i`
-   teilt die ausgewählten Zellen deterministisch auf, sortiert nach dem Zellschlüssel und nicht nach
-   Dateireihenfolge. Jeder Shard schreibt in eigene Dateien, die kein anderer Shard anfasst. Ein
-   Neustart überspringt fertige Zellen. `--collect` führt die Shards zusammen und bricht ab, wenn
-   eine Zelle fehlt oder doppelt ist. Die bestehenden Ausgabedateien (`cells.csv`,
-   `metric_summary.csv` usw.) entstehen erst in `--collect` bzw. im Ein-Shard-Fall.
-7. **Kostenschranke vor dem Lauf:** `--estimate-cost` rechnet nichts, sondern leitet aus den
-   Eingabe-Records eine obere Schranke pro Zelle her:
-   Anzahl Fits der Zelle × `BFGS_MAX_LOSS_EVALS` × gemessene Zeit pro Loss-Evaluation derselben
-   Zelle in der Kampagne (`total_parameter_optimization_time_s / total_loss_evals`). Die Anzahl Fits
-   pro Zelle ist bei WP-N3 2 × 3 Versuche, bei WP-N4 2 × k_max, bei WP-N5 null Fits und zwei
-   Integrationen. Ausgabe: Schranke pro Zelle, Summe und Maximum pro Dimension, Gesamtsumme, teuerste
-   Zelle. In der Ausgabe als **Planungsgröße** kennzeichnen, nicht als Evidenz (Designprinzip 7).
-   Aus dieser Zahl wird entschieden, ob ein Lauf auf den Laptop darf.
-8. **Rekonstruktionskontrolle in WP-N5 unverändert:** Das Modell wird vom **Trainings**-IC aus
-   integriert und muss den gespeicherten Loss exakt treffen. Im Phase-C-Modus zählt das Manifest
-   Treffer und Abweichungen. Eine Abweichung ungleich null wird pro Zelle ausgewiesen und nicht
-   geglättet.
-9. **Runbook:** In `SCRIPTS.md` fehlt die Phase-C-Auswertungskette ganz. Einen Abschnitt ergänzen,
-   der der Reihe nach nennt: `merge_batch_records.jl` → `convert_campaign_history_to_run_registry.py`
-   → `verify_campaign_registry.py --campaign paper1_phaseC_v1` → Strukturmetriken, Dreiwege-
-   Repräsentierbarkeit, Cap-Ablation, Pretuning-Collapse, SINDy-Paarung → die drei C-5-Skripte im
-   Phase-C-Modus, jeweils mit `--estimate-cost`, Shard-Aufruf und `--collect`. Nur Befehle und
-   Zweck. Wo ein Argument unklar ist, `TODO(Claude)` statt zu raten.
+1. **Phase-C-Wahrheit.** Ein neues Skript unter `analysis/scripts/aggregate/` erzeugt aus
+   `studies/regression/phase_c_support.json` und den ODEBench-Ausdrücken
+   `analysis/data/paper1_phaseC_v1/system_classification.csv`, und zwar im **Spaltenschema der
+   Phase-B-Datei**, damit alle Konsumenten sie lesen können. Dabei gilt:
+   - `representability` und `matched_basis_terms` kommen ausschließlich aus der Support-Tabelle.
+     Für exakte Systeme ist `matched_basis_terms` die Support-Termliste, mit `|` verbunden, in
+     Basis-Termnamen (`1`, `u1`, `u1^2`, `u1*u2`, …).
+   - Die übrigen Spalten (`description`, `equation`, `variable_mapping`, `source` usw.) werden aus
+     der Phase-B-Datei übernommen. `unmatched_terms` und `gap_reason` werden für die kanonische
+     Basis neu bestimmt, also mit der Konstante als Basisterm. Wo das nicht sauber geht, bleibt die
+     Spalte leer, und die Lücke wird im Report benannt.
+   - `expected_stage` / `expected_eq_stage` wie in `phase_c_config.jl`
+     (`phase_c_expected_stage_from_support`). Die Regel wird in Python nachgebildet und per Test
+     gegen die Werte geprüft, die die Records in `expected_stage` tragen.
+   - **Abbruch**, wenn die erzeugte Wahrheit für ein exaktes System nicht mit der Support-Tabelle
+     übereinstimmt, oder wenn die Zahl exakter Systeme nicht 30 ist.
+   - Die Datei gehört unter `analysis/data/paper1_phaseC_v1/`. Sie darf nur **dieses** Skript
+     schreiben, und nur diese eine Datei dort.
+2. **Kein stiller Rückfall.** `aggregate_phaseb_structure_metrics.py` bricht für
+   `--campaign paper1_phaseC_v1` ab, wenn die übergebene Klassifikation nicht zur Basis der Registry
+   passt. Prüfkriterium: `basis_name` der Registry-Zeilen gegen eine Basis-Kennung, die das Skript
+   aus Punkt 1 in die Klassifikation schreibt (neue Spalte `basis_name`). Fehlt die Spalte, ist das
+   ein Abbruch, kein Default.
+3. **Koeffizientenfehler berechnen**, über das vorhandene `coefficient_metrics`. Gefundene
+   Koeffizienten aus `model_terms`, wahre aus `equation` über die Variablenzuordnung. Nur für exakte
+   Systeme; für Surrogate bleiben die Felder leer. Welche Definition gilt (relativ pro Term, über
+   die **wahren** Terme; nicht gefundene wahre Terme zählen mit gefundenem Koeffizienten 0), steht
+   im Report und im Docstring. Zur Kontrolle: Ein Test mit einem handgebauten Record für System 1
+   (`0.30303 - 0.36075*x_0`) liefert den erwarteten Fehler.
+4. **Registry-Abgleich nach Definition.** Liegt `exact_support_match_definition` vor, wird der
+   rohe Treffer gegen `exact_support_match_raw` und der gepruned-Treffer gegen
+   `exact_support_match_pruned` abgeglichen (gepruned aus `pruned_support_terms`). Beide Abgleiche
+   erscheinen getrennt in der Ausgabe. Ohne die Spalte (Phase B) bleibt das Verhalten **bitgleich**
+   wie bisher.
+5. **Heartbeat-Schutz in `studies/regression/merge_batch_records.jl`** (nur schreiben, Julia wird
+   von Claude ausgeführt): Eine Zeile mit Feld `event` oder ohne `git_hash`/`loss` ist ein Abbruch
+   mit Datei und Zeilennummer, kein Überspringen. Der Abbruch passiert, bevor irgendetwas in die
+   History geschrieben wird.
+6. **Ausgabenamen.** Die Ausgaben heißen für Phase C noch `phaseb_structure_metrics_by_*.csv`. Für
+   `--campaign paper1_phaseC_v1` sollen sie `phasec_structure_metrics_by_cell.csv` /
+   `..._by_equation.csv` heißen, wie im Plan §1b vorgesehen. Die Phase-B-Namen bleiben unverändert.
+7. `SCRIPTS.md`: Die Phase-C-Kette (von WP-N25 ergänzt) um den Schritt aus Punkt 1 erweitern,
+   **vor** den Strukturmetriken, mit der Ausführungsreihenfolge.
 
 ## Verboten
 
 - Keine Git-Operationen.
-- **Nichts ändern, was in `phase_c_fingerprint()`, `stage_cap_behavior_fingerprint()` oder den
-  Kampagnen-Runner eingeht**: `phase_c_config.jl`, `run_regression.jl`, `run_k8s_indexed_cell.jl`,
-  `src/`. Die Kampagne läuft noch mit diesem Stand. Wenn ein Helfer von dort gebraucht wird, wird er
-  aufgerufen, nicht verändert. Ist das unmöglich, `blocked` melden und nicht umbauen.
-- Keine k8s-Manifeste in diesem Paket. Ob es welche braucht, entscheidet die Schranke aus Punkt 7.
-- Nichts unter `analysis/data/` oder `experiments/` schreiben.
-- Keine Trajektorien über `PHASE_B_SYSTEMS` im Phase-C-Modus, auch nicht als Rückfall.
+- Nichts unter `analysis/data/paper1_phaseB_v1/` und `experiments/` ändern. Phase-B-Ausgaben
+  müssen bitgleich bleiben.
+- Keine Pruning-Schwelle anfassen oder neu wählen.
+- `studies/regression/phase_c_config.jl`, `run_regression.jl`, `src/`: nicht ändern. Die Kampagne
+  läuft noch.
+- Keine Permutations- oder Bootstrap-Läufe, keine vollständige Testsuite (siehe Ausführung).
 
-## Abnahme (Claude führt aus)
+## Abnahme
 
-1. **WP-N1-Verhalten bitgleich:** Jedes der drei Skripte liefert ohne `--campaign` auf
-   `outputs/wp_n1_dim1_probe/history.jsonl` mit `--limit 4` dieselben `results.jsonl`-Zeilen wie
-   der Stand vor dem Paket. Den genauen Befehl für den Vorher/Nachher-Vergleich in den Report
-   schreiben.
-2. **Hash-Identität:** Für eine dim-1- und eine dim-3-Zelle stimmen die Trajektorien-Hashes aus
-   Punkt 2 mit `phase_c_trajectory_hashes.jl` für dasselbe System und denselben IC überein.
-3. **Rauchtest im Phase-C-Modus** auf `outputs/phase_c_dryrun_2026-09-25/`: je Skript eine dim-1-
-   Zelle über `--limit` bzw. einen Shard mit einer Zelle, dann `--collect`. WP-N5 meldet für diese
-   Zelle Rekonstruktionsabweichung null.
-4. `--estimate-cost` läuft für alle drei Skripte auf der zusammengeführten History und gibt die
-   Tabelle aus Punkt 7 aus.
-5. Neue Julia-Tests (pro Datei ausführbar, es gibt kein `runtests.jl`) für: Armfilter und
-   Zählung, Abbruch bei gemischten Identitätstripeln, Abbruch bei doppelter Zelle, deterministische
-   Shard-Aufteilung, `--collect` bricht bei fehlender Zelle ab, Basisabgleich mit der Support-Tabelle.
-6. Report `codex/reports/REPORT_WP_N25.md` mit geänderten Dateien, neuen Argumenten, allen
-   Befehlen für Abnahme 1–5 und einer Liste, **was nicht verifiziert** werden konnte.
+1. Neue Tests für die Punkte 1–4 und 6 grün. Nur die neuen bzw. betroffenen Testdateien ausführen.
+2. **Phase-B-Bitgleichheit:** `aggregate_phaseb_structure_metrics.py` mit den Phase-B-Defaults
+   erzeugt vor und nach der Änderung byte-identische Ausgaben. Den Befehl in den Report schreiben;
+   ausführen nur, wenn er unter 5 Minuten läuft, sonst als offen melden.
+3. Das Skript aus Punkt 1 läuft und erzeugt die Phase-C-Klassifikation mit 30 exakten Systemen.
+   Ein Test prüft die zehn neu exakten Systeme einzeln: Ihre Wahrheit enthält den Term `1`.
+4. Auf `outputs/phase_c_dryrun_2026-09-25/run_registry.csv` mit der neuen Klassifikation: 0
+   Abweichungen im gepruned-Abgleich, und der Koeffizientenfehler ist für jede exakte Zelle gesetzt.
+   Ausgabe nach `outputs/phase_c_dryrun_2026-09-25/agg/structure_n26/`, **nicht** nach
+   `analysis/`. Zahlen daraus sind Probe und werden nicht zitiert.
+5. Report `codex/reports/REPORT_WP_N26.md`: geänderte Dateien, Koeffizientenfehler-Definition,
+   Befehle, was nicht verifiziert wurde. Der Julia-Teil (Punkt 5) ist immer "nicht verifiziert".
