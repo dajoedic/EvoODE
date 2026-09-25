@@ -457,6 +457,60 @@ def make_grid_record(fit_cell: harness.TrajectoryCell, target_cell: harness.Traj
     return record
 
 
+def make_timeout_test_cell(initial_condition_set: int) -> harness.TrajectoryCell:
+    state = np.array([[float(initial_condition_set)], [float(initial_condition_set) + 1.0]])
+    return harness.TrajectoryCell(
+        system_id=999,
+        initial_condition_set=initial_condition_set,
+        dimension=1,
+        time=np.array([0.0, 1.0]),
+        state=state,
+        time_sha256=f"time-{initial_condition_set}",
+        state_sha256=f"state-{initial_condition_set}",
+    )
+
+
+def timeout_test_inputs() -> tuple[dict[str, object], harness.TrajectoryCell, harness.TrajectoryCell, dict[str, object]]:
+    return (
+        {"id": 999},
+        make_timeout_test_cell(1),
+        make_timeout_test_cell(2),
+        {"config_id": "beam10_noopt", "environment_id": "test", "integration_timeout_seconds": 1.0},
+    )
+
+
+def large_payload_runner(
+    result_queue: object,
+    _system: dict[str, object],
+    fit_cell: harness.TrajectoryCell,
+    target_cell: harness.TrajectoryCell,
+    config: dict[str, object],
+) -> None:
+    record = make_grid_record(fit_cell, target_cell, config)
+    record["large_payload"] = "x" * (1024 * 1024)
+    result_queue.put(("record", record))
+
+
+def exit_without_result_runner(
+    _result_queue: object,
+    _system: dict[str, object],
+    _fit_cell: harness.TrajectoryCell,
+    _target_cell: harness.TrajectoryCell,
+    _config: dict[str, object],
+) -> None:
+    os._exit(3)
+
+
+def slow_without_result_runner(
+    _result_queue: object,
+    _system: dict[str, object],
+    _fit_cell: harness.TrajectoryCell,
+    _target_cell: harness.TrajectoryCell,
+    _config: dict[str, object],
+) -> None:
+    time.sleep(1.0)
+
+
 def write_repeatability_pair(base: Path, environment_id: str, index: int, changed: bool) -> None:
     record = {
         "system_id": index,
@@ -642,6 +696,46 @@ def test_odeformer_grid_rerun_timeouts_is_explicit(tmp_path: Path) -> None:
     run_odeformer_grid.atomic_write_json(path, {"status": "timeout", "odeformer_config_id": "beam10_noopt"})
     assert run_odeformer_grid.complete_record(path) is True
     assert run_odeformer_grid.complete_record(path, rerun_timeouts=True) is False
+
+
+@pytest.mark.skipif(os.name != "posix" or not hasattr(signal, "SIGALRM"), reason="hard timeout worker uses POSIX fork and signal guard")
+def test_odeformer_grid_hard_timeout_reads_large_queue_payload_before_join() -> None:
+    def fail_on_alarm(_signum, _frame):
+        raise TimeoutError("large queue payload deadlocked")
+
+    old_handler = signal.signal(signal.SIGALRM, fail_on_alarm)
+    signal.setitimer(signal.ITIMER_REAL, 3.0)
+    try:
+        record = run_odeformer_grid.run_cell_with_hard_timeout(*timeout_test_inputs(), budget=None, runner=large_payload_runner)
+    finally:
+        signal.setitimer(signal.ITIMER_REAL, 0)
+        signal.signal(signal.SIGALRM, old_handler)
+    assert record["status"] == "success"
+    assert len(record["large_payload"]) == 1024 * 1024
+    assert record["timeout_enforced"] is True
+
+
+@pytest.mark.skipif(os.name != "posix", reason="hard timeout worker uses POSIX fork")
+def test_odeformer_grid_hard_timeout_reports_child_exit_without_result_for_unbounded_budget() -> None:
+    started = time.perf_counter()
+    record = run_odeformer_grid.run_cell_with_hard_timeout(*timeout_test_inputs(), budget=None, runner=exit_without_result_runner)
+    elapsed = time.perf_counter() - started
+    assert elapsed < 1.0
+    assert record["status"] == "error"
+    assert record["error_type"] == "RuntimeError"
+    assert "exited with code 3 before returning a record" in record["error_message"]
+    assert record["timeout_enforced"] is True
+
+
+@pytest.mark.skipif(os.name != "posix", reason="hard timeout worker uses POSIX fork")
+def test_odeformer_grid_hard_timeout_reports_timeout_for_small_budget() -> None:
+    record = run_odeformer_grid.run_cell_with_hard_timeout(*timeout_test_inputs(), budget=0.05, runner=slow_without_result_runner)
+    assert record["status"] == "timeout"
+    assert record["error_type"] == "Timeout"
+    assert "timeout_seconds_per_cell=0.05" in record["error_message"]
+    assert record["reconstruction_status"] == "timeout"
+    assert record["generalization_status"] == "timeout"
+    assert record["timeout_enforced"] is True
 
 
 def test_odeformer_grid_repetition_uses_own_subdirectory(tmp_path: Path, monkeypatch) -> None:

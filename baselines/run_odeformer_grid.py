@@ -25,6 +25,8 @@ CELL_KEYS = ["system_id", "fit_initial_condition_set", "generalization_initial_c
 R2_FIELDS = ["reconstruction_r2_variance_weighted", "generalization_r2_variance_weighted"]
 MODEL_FIELD = "odeformer_model_raw"
 REPETITION_DIR_RE = re.compile(r"^rep_([0-9]{3})$")
+QUEUE_POLL_SECONDS = 0.05
+PROCESS_JOIN_GRACE_SECONDS = 5.0
 
 
 def load_json(path: Path) -> dict[str, Any]:
@@ -138,24 +140,55 @@ def run_cell_with_hard_timeout(
     start = time.perf_counter()
     process = ctx.Process(target=runner, args=(result_queue, system, fit_cell, target_cell, ode_config))
     process.start()
-    # budget None means no per-cell limit: wait for the worker however long it takes.
-    process.join(None if budget is None else max(0.0, float(budget)))
+    deadline = None if budget is None else start + max(0.0, float(budget))
+    result: tuple[str, Any] | None = None
+    timed_out = False
+    while result is None:
+        now = time.perf_counter()
+        if deadline is None:
+            wait_seconds = QUEUE_POLL_SECONDS
+        else:
+            remaining = deadline - now
+            if remaining <= 0.0:
+                wait_seconds = 0.0
+            else:
+                wait_seconds = min(QUEUE_POLL_SECONDS, remaining)
+        try:
+            result = result_queue.get(timeout=wait_seconds)
+            break
+        except queue.Empty:
+            if deadline is not None and time.perf_counter() >= deadline and process.is_alive():
+                timed_out = True
+                break
+            if not process.is_alive():
+                break
     elapsed = time.perf_counter() - start
-    if process.is_alive():
-        process.terminate()
-        process.join(5.0)
+    if result is None:
+        if timed_out or process.is_alive():
+            process.terminate()
+            process.join(PROCESS_JOIN_GRACE_SECONDS)
+            if process.is_alive():
+                process.kill()
+                process.join(PROCESS_JOIN_GRACE_SECONDS)
+            return timeout_base_record(system, fit_cell, target_cell, ode_config, elapsed, budget, True)
+        process.join(PROCESS_JOIN_GRACE_SECONDS)
+        try:
+            result = result_queue.get_nowait()
+        except queue.Empty:
+            base = harness.base_record("odeformer", ode_config, fit_cell, target_cell)
+            base.update(harness.odeformer_schema_defaults(ode_config))
+            record = harness.odeformer_failure(base, ode_config, RuntimeError(f"cell worker exited with code {process.exitcode} before returning a record"))
+            record["timeout_enforced"] = True
+            return record
+    else:
+        process.join(PROCESS_JOIN_GRACE_SECONDS)
         if process.is_alive():
-            process.kill()
-            process.join(5.0)
-        return timeout_base_record(system, fit_cell, target_cell, ode_config, elapsed, budget, True)
-    try:
-        kind, payload = result_queue.get_nowait()
-    except queue.Empty:
-        base = harness.base_record("odeformer", ode_config, fit_cell, target_cell)
-        base.update(harness.odeformer_schema_defaults(ode_config))
-        record = harness.odeformer_failure(base, ode_config, RuntimeError(f"cell worker exited with code {process.exitcode} before returning a record"))
-        record["timeout_enforced"] = True
-        return record
+            process.terminate()
+            process.join(PROCESS_JOIN_GRACE_SECONDS)
+            if process.is_alive():
+                process.kill()
+                process.join(PROCESS_JOIN_GRACE_SECONDS)
+    kind, payload = result
     if kind == "record":
         payload["timeout_enforced"] = True
         return payload
