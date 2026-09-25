@@ -3,6 +3,7 @@ import json
 import multiprocessing as mp
 import os
 import queue
+import re
 import sys
 import time
 from pathlib import Path
@@ -19,6 +20,11 @@ DEFAULT_CONFIGS = [
     "baselines/configs/odeformer_beam50_noopt.json",
     "baselines/configs/odeformer_beam50_opt.json",
 ]
+
+CELL_KEYS = ["system_id", "fit_initial_condition_set", "generalization_initial_condition_set", "odeformer_config_id"]
+R2_FIELDS = ["reconstruction_r2_variance_weighted", "generalization_r2_variance_weighted"]
+MODEL_FIELD = "odeformer_model_raw"
+REPETITION_DIR_RE = re.compile(r"^rep_([0-9]{3})$")
 
 
 def load_json(path: Path) -> dict[str, Any]:
@@ -200,6 +206,52 @@ def shard_cells(cells: list[tuple[dict[str, Any], int, int]], shard_index: int |
     return [cell for idx, cell in enumerate(cells) if idx % shard_count == shard_index]
 
 
+def output_root(base_output_dir: Path, repetition: int | None) -> Path:
+    if repetition is None:
+        return base_output_dir
+    if repetition < 1:
+        raise ValueError("--repetition must be 1-based")
+    return base_output_dir / f"rep_{int(repetition):03d}"
+
+
+def configure_torch_threads_from_env(env_var: str = "ODEFORMER_TORCH_THREADS") -> tuple[int | None, str]:
+    requested = os.environ.get(env_var)
+    if requested is None or requested == "":
+        return None, "not_requested"
+    try:
+        requested_threads = int(requested)
+    except ValueError as exc:
+        raise ValueError(f"{env_var} must be an integer") from exc
+    if requested_threads < 1:
+        raise ValueError(f"{env_var} must be >= 1")
+    try:
+        import torch
+    except Exception as exc:
+        return None, f"torch_unavailable:{type(exc).__name__}"
+    torch.set_num_threads(requested_threads)
+    return int(torch.get_num_threads()), "set_from_env"
+
+
+def observed_torch_threads() -> int | None:
+    try:
+        import torch
+    except Exception:
+        return None
+    try:
+        return int(torch.get_num_threads())
+    except Exception:
+        return None
+
+
+def assert_faithful_mode(config: dict[str, Any]) -> None:
+    if config.get("timeout_seconds_per_cell") is not None:
+        raise ValueError("ODEFormer reference grid must run in faithful mode: timeout_seconds_per_cell must be null")
+    for path in selected_config_paths(config):
+        ode_config = load_json(path)
+        if ode_config.get("integration_timeout_seconds") is not None:
+            raise ValueError(f"ODEFormer reference grid must run in faithful mode: {path} sets integration_timeout_seconds")
+
+
 def collect_records(records_dir: Path, output_dir: Path) -> Path:
     records = []
     for path in sorted(records_dir.glob("*.json")):
@@ -207,6 +259,84 @@ def collect_records(records_dir: Path, output_dir: Path) -> Path:
     jsonl_path = output_dir / "records.jsonl"
     jsonl_path.write_text("\n".join(json.dumps(record, sort_keys=True) for record in records) + ("\n" if records else ""), encoding="utf-8")
     pd.DataFrame(records).to_csv(output_dir / "records.csv", index=False)
+    return jsonl_path
+
+
+def discover_repetition_dirs(output_dir: Path) -> list[tuple[int, Path]]:
+    reps: list[tuple[int, Path]] = []
+    for path in sorted(output_dir.iterdir() if output_dir.is_dir() else []):
+        match = REPETITION_DIR_RE.match(path.name)
+        if match and (path / "records").is_dir():
+            reps.append((int(match.group(1)), path))
+    return reps
+
+
+def read_record_dir(records_dir: Path) -> list[dict[str, Any]]:
+    return [json.loads(path.read_text(encoding="utf-8")) for path in sorted(records_dir.glob("*.json"))]
+
+
+def summarize_repetition_groups(records: list[dict[str, Any]], group_keys: list[str]) -> pd.DataFrame:
+    rows = []
+    frame = pd.DataFrame(records)
+    if not frame.empty:
+        for key, group in frame.groupby(group_keys, dropna=False):
+            key_tuple = key if isinstance(key, tuple) else (key,)
+            values = dict(zip(group_keys, key_tuple))
+            raw_models = group[MODEL_FIELD].astype(str).tolist() if MODEL_FIELD in group.columns else []
+            r2_columns = [field for field in R2_FIELDS if field in group.columns]
+            timeout_values = pd.to_numeric(group.get("odeformer_integration_timeout_count_total", pd.Series([0] * len(group))), errors="coerce").fillna(0)
+            rows.append(
+                {
+                    **values,
+                    "repetition_count": int(len(group)),
+                    "all_bitwise_identical": bool(len(set(raw_models)) <= 1 and all(group[field].astype(str).nunique(dropna=False) <= 1 for field in r2_columns)),
+                    "handler_timeout_count_min": int(timeout_values.min()) if len(timeout_values) else 0,
+                    "handler_timeout_count_max": int(timeout_values.max()) if len(timeout_values) else 0,
+                    "r2_gt_0_9_flip": bool(any(pd.to_numeric(group[field], errors="coerce").gt(harness.R2_THRESHOLD).nunique(dropna=False) > 1 for field in r2_columns)),
+                }
+            )
+    return pd.DataFrame(rows)
+
+
+def summarize_cell_repetitions(records: list[dict[str, Any]], output_dir: Path) -> Path:
+    path = output_dir / "cell_repetition_summary.csv"
+    summarize_repetition_groups(records, CELL_KEYS).to_csv(path, index=False)
+    return path
+
+
+def expected_record_count(config_path: Path, system_ids: set[int] | None = None, config_ids: set[str] | None = None) -> int:
+    config = load_json(config_path)
+    if system_ids is not None:
+        config = dict(config)
+        config["system_ids"] = sorted(system_ids)
+    benchmark = harness.load_benchmark(harness.resolve_path(config["benchmark_path"]))
+    systems = harness.selected_systems(benchmark, config)
+    configs = selected_config_objects(config, config_ids)
+    return len(systems) * 2 * len(configs)
+
+
+def collect_repetitions(output_dir: Path, expected_per_repetition: int, repetitions: int = 3) -> Path:
+    output_dir.mkdir(parents=True, exist_ok=True)
+    rep_dirs = dict(discover_repetition_dirs(output_dir))
+    missing_reps = [rep for rep in range(1, int(repetitions) + 1) if rep not in rep_dirs]
+    if missing_reps:
+        raise ValueError(f"missing repetition directories: {missing_reps}")
+    records: list[dict[str, Any]] = []
+    summary_rows = []
+    for rep in range(1, int(repetitions) + 1):
+        rep_records = read_record_dir(rep_dirs[rep] / "records")
+        if len(rep_records) != int(expected_per_repetition):
+            raise ValueError(f"repetition {rep} incomplete: expected {expected_per_repetition} records, found {len(rep_records)}")
+        for record in rep_records:
+            record = dict(record)
+            record.setdefault("odeformer_grid_repetition", rep)
+            records.append(record)
+        summary_rows.append({"repetition": rep, "record_count": len(rep_records)})
+    jsonl_path = output_dir / "records.jsonl"
+    jsonl_path.write_text("\n".join(json.dumps(record, sort_keys=True) for record in records) + ("\n" if records else ""), encoding="utf-8")
+    pd.DataFrame(records).to_csv(output_dir / "records.csv", index=False)
+    pd.DataFrame(summary_rows).to_csv(output_dir / "repetition_counts.csv", index=False)
+    summarize_cell_repetitions(records, output_dir)
     return jsonl_path
 
 
@@ -220,11 +350,18 @@ def run(
     shard_index: int | None = None,
     shard_count: int | None = None,
     rerun_timeouts: bool = False,
+    repetition: int | None = None,
+    trajectory_export_dir: str | None = None,
 ) -> Path:
     config = load_json(config_path)
     if environment_id is not None:
         config = dict(config)
         config["environment_id"] = environment_id
+    if trajectory_export_dir is not None:
+        config = dict(config)
+        config["trajectory_export_dir"] = trajectory_export_dir
+    assert_faithful_mode(config)
+    torch_threads, torch_thread_source = configure_torch_threads_from_env()
     benchmark = harness.load_benchmark(harness.resolve_path(config["benchmark_path"]))
     if system_ids is not None:
         config = dict(config)
@@ -232,7 +369,7 @@ def run(
     systems = harness.selected_systems(benchmark, config)
     export_dir = harness.resolve_path(config["trajectory_export_dir"])
     cells, trajectory_check = harness.load_exported_cells(export_dir, benchmark)
-    out_dir = harness.resolve_path(output_dir or config["output_dir"])
+    out_dir = output_root(harness.resolve_path(output_dir or config["output_dir"]), repetition)
     records_dir = out_dir / "records"
     out_dir.mkdir(parents=True, exist_ok=True)
     configs = selected_config_objects(config, config_ids)
@@ -253,6 +390,8 @@ def run(
                     "limit": limit,
                     "shard_index": shard_index,
                     "shard_count": shard_count,
+                    "repetition": repetition,
+                    "trajectory_export_dir": str(export_dir),
                 },
                 "system_count": len(systems),
                 "trajectory_manifest_row_count": int(len(selection_rows)),
@@ -266,8 +405,7 @@ def run(
     )
 
     adapters: dict[str, harness.ODEFormerAdapter | Exception] = {}
-    raw_budget = config.get("timeout_seconds_per_cell", 900)
-    budget = None if raw_budget is None else float(raw_budget)
+    budget = None
     hard_timeout = timeout_enforcement_available()
     if not hard_timeout:
         print("timeout_enforced=false: hard per-cell timeout is only enforced on POSIX runners", file=sys.stderr)
@@ -292,6 +430,11 @@ def run(
             record = run_odeformer_cell_direct(system, fit_cell, target_cell, ode_config, adapter_or_exc, False)
         elapsed = time.perf_counter() - start
         record["timeout_seconds_per_cell"] = budget
+        record["odeformer_grid_mode"] = "faithful"
+        record["odeformer_grid_repetition"] = repetition
+        record["trajectory_export_dir"] = str(export_dir)
+        record["torch_num_threads"] = observed_torch_threads() if torch_threads is None else torch_threads
+        record["torch_num_threads_source"] = torch_thread_source
         if budget is None:
             record["timeout_enforced"] = False
         atomic_write_json(path, record)
@@ -311,11 +454,25 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--shard-index", type=int, default=None)
     parser.add_argument("--shard-count", type=int, default=None)
     parser.add_argument("--rerun-timeouts", action="store_true")
+    parser.add_argument("--repetition", type=int, default=None)
+    parser.add_argument("--trajectory-export-dir", default="")
+    parser.add_argument("--collect", action="store_true")
+    parser.add_argument("--repetitions", type=int, default=3)
     return parser.parse_args()
 
 
 def main() -> int:
     args = parse_args()
+    if args.collect:
+        output_dir = harness.resolve_path(args.output_dir)
+        expected = expected_record_count(
+            harness.resolve_path(args.config),
+            system_ids=parse_int_set(args.system_ids),
+            config_ids=parse_str_set(args.config_ids),
+        )
+        path = collect_repetitions(output_dir, expected, args.repetitions)
+        print(path)
+        return 0
     path = run(
         harness.resolve_path(args.config),
         args.output_dir or None,
@@ -326,6 +483,8 @@ def main() -> int:
         shard_index=args.shard_index,
         shard_count=args.shard_count,
         rerun_timeouts=args.rerun_timeouts,
+        repetition=args.repetition,
+        trajectory_export_dir=args.trajectory_export_dir or None,
     )
     print(path)
     return 0

@@ -229,6 +229,50 @@ Runs the ODEBench suite from `benchmarks/data/strogatz_extended.json`.
 julia benchmarks/run_odebench.jl
 ```
 
+### ODEFormer-Referenzraster auf Orion
+
+Claim D uses the ODEFormer reference image in faithful mode: ODEFormer's own 1 s integration
+guard stays active, the grid has three repetitions, and each pod runs one ODEFormer process on one
+CPU.
+
+1. User: push the desired commit to GitLab.
+2. User: run or trigger the `build_odeformer_reference_image` CI job. It publishes
+   `registry.gitlab.scch.at:443/joedicke/evoode/odeformer-reference:<COMMIT_SHA>`.
+3. User: prepare NFS by copying the trajectory export to
+   `/bigdata/data-science/joedicke/odeformer_grid_<COMMIT_SHA>/trajectory_export`.
+4. User: substitute `<COMMIT_SHA>` in `k8s/odeformer_reference_grid_smoke_job.yaml`, apply it,
+   and inspect the smoke output under
+   `/bigdata/data-science/joedicke/odeformer_grid_<COMMIT_SHA>/reference/smoke`.
+5. User: after checking quota and running Phase-C pods, substitute `<COMMIT_SHA>` in
+   `k8s/odeformer_reference_grid_job.yaml` and apply it. The indexed Job runs 126 completions:
+   3 repetitions x 42 shards.
+6. User: collect after all pods finish:
+
+```bash
+python -m baselines.run_odeformer_grid \
+  --config baselines/configs/odeformer_grid.json \
+  --output-dir /outputs/odeformer_grid_<COMMIT_SHA>/reference \
+  --collect --repetitions 3
+```
+
+For a local Docker check of the Kubernetes entry point with the existing WP-N21 image:
+
+```bash
+docker run --rm \
+  -e JOB_COMPLETION_INDEX=0 \
+  -e OMP_NUM_THREADS=1 \
+  -e MKL_NUM_THREADS=1 \
+  -e OPENBLAS_NUM_THREADS=1 \
+  -e ODEFORMER_TORCH_THREADS=1 \
+  -v /path/to/trajectory_export:/trajectory_export:ro \
+  -v /path/to/output:/outputs \
+  evoode/odeformer-reference:wp-n21 \
+  python -m baselines.run_odeformer_grid_k8s \
+    --trajectory-export-dir /trajectory_export \
+    --output-dir /outputs/reference \
+    --limit 2
+```
+
 ---
 
 ## 5. Phase A experiment infrastructure (frozen)

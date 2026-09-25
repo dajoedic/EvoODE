@@ -276,32 +276,20 @@ def read_record_files(output_dir: Path) -> list[dict[str, Any]]:
 
 
 def summarize_records(records: list[dict[str, Any]], output_dir: Path) -> Path:
-    rows = []
-    frame = pd.DataFrame(records)
-    if not frame.empty:
-        if "environment_id" not in frame.columns and "odeformer_environment_id" in frame.columns:
-            frame["environment_id"] = frame["odeformer_environment_id"]
-        if "odeformer_config_id" not in frame.columns:
-            frame["odeformer_config_id"] = ""
-        for key, group in frame.groupby(CELL_KEYS + ["repeatability_mode", "repeatability_selection_reason"], dropna=False):
-            values = dict(zip([*CELL_KEYS, "mode", "selection_reason"], key))
-            raw_models = group[MODEL_FIELD].astype(str).tolist() if MODEL_FIELD in group.columns else []
-            r2_columns = [field for field in R2_FIELDS if field in group.columns]
-            timeout_values = pd.to_numeric(group.get("odeformer_integration_timeout_count_total", pd.Series([0] * len(group))), errors="coerce").fillna(0)
-            rows.append(
-                {
-                    **values,
-                    "repetition_count": int(len(group)),
-                    "all_bitwise_identical": bool(len(set(raw_models)) <= 1 and all(group[field].astype(str).nunique(dropna=False) <= 1 for field in r2_columns)),
-                    "timeout_count_min": int(timeout_values.min()) if len(timeout_values) else 0,
-                    "timeout_count_max": int(timeout_values.max()) if len(timeout_values) else 0,
-                    "handler_timeout_count_min": int(timeout_values.min()) if len(timeout_values) else 0,
-                    "handler_timeout_count_max": int(timeout_values.max()) if len(timeout_values) else 0,
-                    "r2_gt_0_9_flip": bool(any(pd.to_numeric(group[field], errors="coerce").gt(harness.R2_THRESHOLD).nunique(dropna=False) > 1 for field in r2_columns)),
-                }
-            )
+    normalized = []
+    for record in records:
+        item = dict(record)
+        if "environment_id" not in item and "odeformer_environment_id" in item:
+            item["environment_id"] = item["odeformer_environment_id"]
+        item.setdefault("odeformer_config_id", "")
+        normalized.append(item)
+    summary = run_odeformer_grid.summarize_repetition_groups(normalized, CELL_KEYS + ["repeatability_mode", "repeatability_selection_reason"])
+    if not summary.empty:
+        summary = summary.rename(columns={"repeatability_mode": "mode", "repeatability_selection_reason": "selection_reason"})
+        summary["timeout_count_min"] = summary["handler_timeout_count_min"]
+        summary["timeout_count_max"] = summary["handler_timeout_count_max"]
     path = output_dir / "cell_summary.csv"
-    pd.DataFrame(rows).to_csv(path, index=False)
+    summary.to_csv(path, index=False)
     return path
 
 

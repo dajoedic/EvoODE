@@ -1,0 +1,85 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: evoode-odeformer-reference-grid
+  namespace: scch-das
+  labels:
+    app.kubernetes.io/name: evoode
+    app.kubernetes.io/part-of: evoode-phase-c
+    app.kubernetes.io/component: odeformer-reference-grid
+    app.kubernetes.io/managed-by: kubectl
+    hpc.scch.at/service: evoode-phase-c-cells
+    hpc.scch.at/responsibility: joedicke
+spec:
+  # Start only after the smoke Job has verified image pull, NFS, ODEFormer weights,
+  # and the external trajectory export path.
+  ttlSecondsAfterFinished: 3600
+  completionMode: Indexed
+  # 3 repetitions * 42 shards. Each repetition covers 504 records as 42 shards
+  # over 126 system/direction cells, with 4 ODEFormer configs per shard cell.
+  completions: 126
+  # Check namespace quota and running Phase-C pods immediately before launch:
+  # kubectl -n scch-das get resourcequota,limitrange
+  # kubectl -n scch-das top pods
+  # kubectl get nodes
+  parallelism: 16
+  # Infrastructure failures such as eviction, OOM kill, and image pull failure
+  # are retried here. Scientific failures are recorded in JSON records.
+  backoffLimit: 50
+  # Upper bound, not a point estimate: 1,512 cell-repetitions * 940 s maximum /
+  # 16 parallel pods * safety factor 2 = 177,660 s, rounded up. A point-estimate
+  # deadline would have repeated the 2026-09-23 WP-T1d failure mode.
+  activeDeadlineSeconds: 180000
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: evoode
+        app.kubernetes.io/part-of: evoode-phase-c
+        app.kubernetes.io/component: odeformer-reference-grid
+        hpc.scch.at/service: evoode-phase-c-cells
+        hpc.scch.at/responsibility: joedicke
+    spec:
+      restartPolicy: Never
+      imagePullSecrets:
+        - name: evoode-gitlab-pull
+      containers:
+        - name: cell
+          image: registry.gitlab.scch.at:443/joedicke/evoode/odeformer-reference:<COMMIT_SHA>
+          imagePullPolicy: IfNotPresent
+          command:
+            - python
+            - -m
+            - baselines.run_odeformer_grid_k8s
+          args:
+            - --config
+            - /workspace/EvoODE/baselines/configs/odeformer_grid.json
+            - --trajectory-export-dir
+            - /outputs/odeformer_grid_<COMMIT_SHA>/trajectory_export
+            - --output-dir
+            - /outputs/odeformer_grid_<COMMIT_SHA>/reference
+          env:
+            - name: OMP_NUM_THREADS
+              value: "1"
+            - name: MKL_NUM_THREADS
+              value: "1"
+            - name: OPENBLAS_NUM_THREADS
+              value: "1"
+            - name: ODEFORMER_TORCH_THREADS
+              value: "1"
+          resources:
+            requests:
+              cpu: "1"
+              # Estimated; WP-N23 recorded runtime but no memory-watermark column.
+              memory: 4Gi
+            limits:
+              cpu: "1"
+              memory: 4Gi
+          volumeMounts:
+            - name: evoode-bigdata
+              mountPath: /outputs
+              subPath: data-science/joedicke
+      volumes:
+        - name: evoode-bigdata
+          nfs:
+            server: nfs.orion.scch.at
+            path: /bigdata

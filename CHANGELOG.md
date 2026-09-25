@@ -10,6 +10,22 @@ project**. Scientific history belongs in `DIARY.md`, not here.
 
 ## [Unreleased]
 
+### Added - 2026-09-25
+
+- `build_odeformer_reference_image` builds
+  `$CI_REGISTRY_IMAGE/odeformer-reference:$CI_COMMIT_SHA` and
+  `$CI_REGISTRY_IMAGE/odeformer-reference:$CI_COMMIT_REF_SLUG` from
+  `baselines/Dockerfile.odeformer-reference`, using the same pinned Docker-in-Docker service and
+  attestation-disabling flags as the campaign image. The job is for the Claim D ODEFormer
+  reference grid on Orion: 63 systems x 2 directions x 4 configurations x 3 repetitions, which
+  crosses the 8-hour rule under the WP-N23 timing line.
+- `trivy-odeformer-reference-image` scans that image with `allow-failure: true`. The expected
+  HIGH/CRITICAL findings are the documented E7 exception: the reference image intentionally keeps
+  ODEFormer's published torch environment for scientific fidelity.
+- The CI build downloads ODEFormer weights from Google Drive via `gdown` during the Docker build.
+  If the runner cannot reach Google Drive or the download changes, the image build is the first
+  visible failure point because the Dockerfile verifies the SHA-256 before the image is pushed.
+
 ### Fixed — 2026-09-23
 
 - `baselines/Dockerfile.dockerignore` added. The root `.dockerignore` is an allowlist for the Julia

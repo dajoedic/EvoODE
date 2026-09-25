@@ -16,6 +16,7 @@ import numpy as np
 from baselines import compare_odeformer_equivalence
 from baselines import harness
 from baselines import run_odeformer_grid
+from baselines import run_odeformer_grid_k8s
 from baselines import run_odeformer_repeatability
 from baselines import summarize_odeformer_grid
 
@@ -643,7 +644,7 @@ def test_odeformer_grid_rerun_timeouts_is_explicit(tmp_path: Path) -> None:
     assert run_odeformer_grid.complete_record(path, rerun_timeouts=True) is False
 
 
-def test_odeformer_grid_marks_timeout_from_real_export(tmp_path: Path, monkeypatch) -> None:
+def test_odeformer_grid_repetition_uses_own_subdirectory(tmp_path: Path, monkeypatch) -> None:
     def fake_build(config):
         return object()
 
@@ -652,52 +653,76 @@ def test_odeformer_grid_marks_timeout_from_real_export(tmp_path: Path, monkeypat
 
     monkeypatch.setattr(harness, "build_odeformer_adapter", fake_build)
     monkeypatch.setattr(harness, "run_odeformer_record_with_adapter", fake_run)
+    kwargs = {
+        "output_dir": str(tmp_path / "grid"),
+        "system_ids": {1},
+        "config_ids": {"beam10_noopt"},
+        "limit": 1,
+    }
+    default_path = run_odeformer_grid.run(harness.REPO_ROOT / "baselines" / "configs" / "odeformer_grid.json", **kwargs)
+    repetition_path = run_odeformer_grid.run(harness.REPO_ROOT / "baselines" / "configs" / "odeformer_grid.json", **kwargs, repetition=2)
+
+    assert default_path == tmp_path / "grid" / "records.jsonl"
+    assert repetition_path == tmp_path / "grid" / "rep_002" / "records.jsonl"
+    assert (tmp_path / "grid" / "records").is_dir()
+    assert (tmp_path / "grid" / "rep_002" / "records").is_dir()
+    assert read_jsonl(repetition_path)[0]["odeformer_grid_repetition"] == 2
+
+
+def test_odeformer_grid_rejects_non_faithful_timeout(tmp_path: Path) -> None:
     config = json.loads((harness.REPO_ROOT / "baselines" / "configs" / "odeformer_grid.json").read_text(encoding="utf-8"))
-    config["timeout_seconds_per_cell"] = -1
-    config_path = tmp_path / "timeout_config.json"
-    config_path.write_text(json.dumps(config), encoding="utf-8")
-    path = run_odeformer_grid.run(config_path, str(tmp_path / "grid"), system_ids={1}, config_ids={"beam10_noopt"}, limit=1)
-    records = read_jsonl(path)
-    if run_odeformer_grid.timeout_enforcement_available():
-        assert records[0]["status"] == "timeout"
-        assert records[0]["error_type"] == "Timeout"
-        assert records[0]["timeout_enforced"] is True
-    else:
-        assert records[0]["status"] == "success"
-        assert records[0]["timeout_enforced"] is False
-
-
-@pytest.mark.skipif(os.name != "posix", reason="hard per-cell timeout uses POSIX forked worker termination; Windows records timeout_enforced=false")
-def test_odeformer_grid_hard_timeout_kills_hanging_cell_and_continues(tmp_path: Path, monkeypatch) -> None:
-    calls = {"count": 0}
-
-    def fake_build(config):
-        return object()
-
-    def fake_run(system, fit_cell, target_cell, config, adapter):
-        calls["count"] += 1
-        if fit_cell.initial_condition_set == 1:
-            time.sleep(10.0)
-        return make_grid_record(fit_cell, target_cell, config)
-
-    monkeypatch.setattr(harness, "build_odeformer_adapter", fake_build)
-    monkeypatch.setattr(harness, "run_odeformer_record_with_adapter", fake_run)
-    config = json.loads((harness.REPO_ROOT / "baselines" / "configs" / "odeformer_grid.json").read_text(encoding="utf-8"))
-    config["timeout_seconds_per_cell"] = 0.2
-    config_path = tmp_path / "hanging_config.json"
+    config["timeout_seconds_per_cell"] = 1
+    config_path = tmp_path / "non_faithful.json"
     config_path.write_text(json.dumps(config), encoding="utf-8")
 
-    path = run_odeformer_grid.run(config_path, str(tmp_path / "grid"), system_ids={1}, config_ids={"beam10_noopt"}, limit=2)
-    records = read_jsonl(path)
+    with pytest.raises(ValueError, match="faithful mode"):
+        run_odeformer_grid.run(config_path, str(tmp_path / "grid"), system_ids={1}, config_ids={"beam10_noopt"}, limit=1)
 
-    assert [record["status"] for record in records] == ["timeout", "success"]
-    assert all(record["timeout_enforced"] is True for record in records)
-    assert records[1]["fit_initial_condition_set"] == 2
-    assert records[1]["reconstruction_status"] == "success"
 
-    second = run_odeformer_grid.run(config_path, str(tmp_path / "grid"), system_ids={1}, config_ids={"beam10_noopt"}, limit=2)
-    assert second == path
-    assert [record["status"] for record in read_jsonl(second)] == ["timeout", "success"]
+def test_odeformer_grid_completion_index_mapping() -> None:
+    assert run_odeformer_grid_k8s.completion_to_repetition_shard(0) == (1, 0)
+    assert run_odeformer_grid_k8s.completion_to_repetition_shard(41) == (1, 41)
+    assert run_odeformer_grid_k8s.completion_to_repetition_shard(42) == (2, 0)
+    assert run_odeformer_grid_k8s.completion_to_repetition_shard(125) == (3, 41)
+
+
+def test_odeformer_grid_shards_cover_504_cells_once() -> None:
+    config = run_odeformer_grid.load_json(harness.REPO_ROOT / "baselines" / "configs" / "odeformer_grid.json")
+    systems = harness.selected_systems(benchmark(), config)
+    configs = run_odeformer_grid.selected_config_objects(config, None)
+    cells = [(system, 1, 2) for system in systems] + [(system, 2, 1) for system in systems]
+    seen = []
+    for shard_index in range(42):
+        shard = run_odeformer_grid.shard_cells(cells, shard_index, 42)
+        seen.extend(
+            (int(system["id"]), fit_ic, target_ic, str(ode_config["config_id"]))
+            for system, fit_ic, target_ic in shard
+            for ode_config in configs
+        )
+    assert len(seen) == 504
+    assert len(set(seen)) == 504
+
+
+def test_odeformer_grid_collect_rejects_incomplete_repetition(tmp_path: Path) -> None:
+    for rep, count in [(1, 2), (2, 1), (3, 2)]:
+        records_dir = tmp_path / "grid" / f"rep_{rep:03d}" / "records"
+        records_dir.mkdir(parents=True)
+        for index in range(count):
+            record = {
+                "system_id": index + 1,
+                "fit_initial_condition_set": 1,
+                "generalization_initial_condition_set": 2,
+                "odeformer_config_id": "beam10_noopt",
+                "odeformer_grid_repetition": rep,
+                "status": "success",
+                "odeformer_model_raw": "x_0",
+                "reconstruction_r2_variance_weighted": 1.0,
+                "generalization_r2_variance_weighted": 1.0,
+            }
+            (records_dir / f"cell_{index}.json").write_text(json.dumps(record), encoding="utf-8")
+
+    with pytest.raises(ValueError, match="repetition 2 incomplete"):
+        run_odeformer_grid.collect_repetitions(tmp_path / "grid", expected_per_repetition=2, repetitions=3)
 
 
 def test_odeformer_summary_counts_and_expression_identity_from_export_records(tmp_path: Path) -> None:
