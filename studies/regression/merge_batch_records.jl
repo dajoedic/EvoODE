@@ -50,7 +50,29 @@ function _task_files(input_dir::AbstractString)
     )
 end
 
+function _reject_heartbeat_or_incomplete_record(record, path::AbstractString, line_number::Int)
+    haskey(record, :event) &&
+        error("Heartbeat row found in merge input at $(path):$(line_number)")
+    (!haskey(record, :git_hash) || !haskey(record, :loss)) &&
+        error("Incomplete campaign record in merge input at $(path):$(line_number): missing git_hash or loss")
+    return nothing
+end
+
+function _validate_task_records(input_dir::AbstractString)
+    for path in _task_files(input_dir)
+        open(path, "r") do io
+            for (line_number, line) in enumerate(eachline(io))
+                isempty(strip(line)) && continue
+                record = JSON3.read(line)
+                _reject_heartbeat_or_incomplete_record(record, path, line_number)
+            end
+        end
+    end
+    return nothing
+end
+
 function merge_batch_records(input_dir::AbstractString, history_path::AbstractString)
+    _validate_task_records(input_dir)
     existing = _load_existing_keys(history_path)
     added = 0
     skipped_duplicates = 0
