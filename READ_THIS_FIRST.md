@@ -10,7 +10,7 @@ zweites davon. Alles Dauerhafte gehört dorthin, nach `PAPER_1.md` oder ins `DIA
 **Regeln:** wird immer **vollständig überschrieben**, nie angehängt. Was älter als ein paar Tage
 ist, ist vermutlich falsch — dann gilt `CLAUDE.md`.
 
-**Stand: 2026-09-26, 01:20.** Nachtschicht von Claude läuft. Dieses Dokument wird bei jedem Schritt
+**Stand: 2026-09-26, 01:30.** Nachtschicht von Claude läuft. Dieses Dokument wird bei jedem Schritt
 neu geschrieben; die Uhrzeit oben sagt, wie aktuell es ist.
 
 ---
@@ -31,7 +31,7 @@ macht der Nutzer. Die Freigabe erlischt morgen früh.
 | C-3 | Orion, `221a3a7` | 172 / 180 | 8 × dim 3 (Lorenz, System 59), ~20–25 h pro Level |
 | WP-T1d | Orion, `5a87efb` | 34 / 36 | |
 | ODEFormer-Referenzraster | Orion, noch nicht gestartet | WP-N27c gepusht (`55e9c75`), CI baut; Smoke 3 startet automatisch ~01:55 | 126 Pods, 3 Wdh. × 42 Shards |
-| Codex WP-N28 | Laptop | läuft seit 01:15 | |
+| Codex WP-N28 | — | **abgebrochen: Codex-Login abgelaufen (401)** | Nutzer: `codex login`, dann startet Claude WP-N28 neu |
 
 ## 2. ODEFormer-Referenzraster — der Weg bis zum Start
 
@@ -58,7 +58,7 @@ macht der Nutzer. Die Freigabe erlischt morgen früh.
 ## 3. Warteschlange Codex (eine nach der anderen)
 
 1. ~~WP-N27c~~ erledigt.
-2. **WP-N28 (läuft), Auswertungskette Phase C schließen.** Befunde der Generalprobe vom 25.09.:
+2. **WP-N28 (wartet auf `codex login`; Spezifikation committet `3ad2033`), Auswertungskette Phase C schließen.** Befunde der Generalprobe vom 25.09.:
    Strukturmetriken nicht in die Registry eingemischt; Cap-Ablation braucht einen C-1/C-2-Filter und
    kommt mit exakt-only-Metriken bei Surrogaten nicht klar; SINDy-Paarung verlangt C-3 für alle
    Systeme; Pretuning-Collapse hat die Phase-B-Variantennamen fest verdrahtet. **Entschieden:
