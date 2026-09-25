@@ -1,89 +1,132 @@
-# WP-N24c — Timeouts dort zählen, wo sie feuern; Ausgänge ehrlich benennen
-**Language: Python**
+# WP-N25 — Die abgeleiteten C-5-Arme für Phase C lauffähig machen
+**Language: Julia**
 
 ## Ausführung
 
-Lokal umsetzbar und testbar, kein Docker nötig. Den Rauchtest in Docker macht Claude.
-Nichts starten, was länger als 15 Minuten läuft.
+Codex kann in dieser Umgebung kein Julia ausführen (`codex/CODEX_PROTOCOL.md`). Code und Tests
+schreiben, dann mit `status: blocked` und dem Grund "Julia-Ausführung" melden; Claude führt Tests
+und Rauchtest aus. **Nichts starten, was länger als 15 Minuten läuft.** Die eigentlichen C-5-Läufe
+startet niemand in diesem Paket.
 
 ## Ausgangslage
 
-WP-N24 und WP-N24b liegen uncommittet im Working Tree. Der Rauchtest in Docker (Claude,
-2026-09-24) hat einen Messfehler der Instrumentierung gezeigt. Eine Diagnosesonde hat ihn
-eingegrenzt.
+Der C-5-Arm des Phase-C-Plans (`docs/paper1_phaseC_benchmark_plan.md`, §1a/§1b und §2) besteht aus
+drei Skripten, die **keine neue Suche** machen, sondern die C-1-Records nachnutzen:
 
-- Kandidat, System 11, Fit-IC 1, `beam10_opt`, Modus `faithful`: Zwei Wiederholungen sind **nicht**
-  bitgleich. `nfev` ist 31 gegen 35, die Rekonstruktion nach der Optimierung endet einmal `finite`,
-  einmal `wrong_shape`. Die Timeout-Zähler stehen beide Male auf **0**. Unter `lifted` sind die
-  Wiederholungen bitgleich.
-- Die Sonde protokollierte jeden `_integrate_ode`-Aufruf der Konstantenoptimierung. Pro
-  Wiederholung dauert **ein Aufruf genau 1,0001 s**, das ist der Timeout. Er kommt aber als
-  Rückgabewert `None` zurück, nicht als Ausnahme. 45 von 51 Aufrufen liefern `None`.
+| Claim | Skript | Was es tut |
+|---|---|---|
+| Diag | `studies/regression/wp_n3_oracle_refit.jl` | Fit auf der wahren Struktur (`reference`) und auf gefundene ∩ wahre Terme (`oracle`) |
+| Abl-3 | `studies/regression/wp_n4_multistart_refit.jl` | dasselbe mit k Parameterstarts, Kurve über k ∈ {1, 2, 3, 5, 10} |
+| C | `studies/regression/wp_n5_ic_generalization.jl` | gespeichertes Modell von der ungesehenen Anfangsbedingung aus integrieren, beide Richtungen |
 
-**Ursache:** `odeformer/envs/generators.py`, Zweig `solve_ivp` in `_integrate_ode` (ca.
-Zeile 890–905): `try: ... solve_ivp(...) except: return None`. Das **nackte `except`** fängt den
-`MyTimeoutError`, den der `SIGALRM`-Handler mitten in `solve_ivp` wirft. Der Timeout kommt als
-`None` heraus und erreicht den Zähler in `counted_integrate_ode` nie. Ein Timeout ist damit von
-einem gewöhnlichen Solver-Fehler nicht zu unterscheiden.
+Alle drei sind für den WP-N1-Probe gebaut und passen an vier Stellen **nicht** zu Phase C:
 
-Zwei weitere Befunde im selben Code:
+1. **Systeme und Trajektorien.** Sie laden `phase_b_config.jl` und bauen Systeme aus
+   `PHASE_B_SYSTEMS` mit `build_trajectory(system, ic_set)`. Phase C hat einen eigenen Pfad:
+   `phase_c_systems()` in `studies/regression/phase_c_config.jl`, mit eigener
+   Trajektorienerzeugung (`_phase_c_solution_trajectory`). Ob beide Pfade dieselben Zahlen liefern,
+   ist nicht gezeigt, und das darf auch nicht vorausgesetzt werden.
+2. **Wahrheit.** Sie lesen die wahre Struktur aus dem Record-Feld `wp_n1_expected_support_terms`.
+   Das Feld gibt es in Phase-C-Records nicht. Die Phase-C-Wahrheit steht in
+   `studies/regression/phase_c_support.json` (Lader: `load_phase_c_support()`), 30 exakt, 33
+   Surrogat, Basis `staged_polynomial_basis_with_constant`.
+3. **Eingabe.** Die Standardeingabe ist `outputs/wp_n1_dim1_probe/history.jsonl`. Die Phase-C-Records
+   liegen als Einzeldateien pro Zelle vor und werden mit `studies/regression/merge_batch_records.jl`
+   zu einer History zusammengeführt. Diese History enthält **drei Arme**: C-1 (gekappt,
+   `use_pretuning = false`), C-2 (`evogrow_v2_2_stage_local`) und C-3 (gekappt, `use_pretuning = true`).
+   C-5 gilt laut Plan **nur für C-1**.
+4. **Laufzeit.** Der Plan nennt "< 50 Kernstunden" für C-5 zusammen. Das ist eine Schätzung, keine
+   Messung. Abl-3 rechnet mit k = 10 zwei Fits pro Start über alle exakten C-1-Zellen, dim 3
+   eingeschlossen. Nach `CLAUDE.md` läuft alles auf Orion, was nicht nachweislich unter 8 h
+   bleibt. Dafür braucht es eine hergeleitete obere Schranke und eine Aufteilung in Shards.
 
-- Das NaN-Sentinel am Ende von `_integrate_ode` (Liste aus NaN, Länge `len(times)`) entsteht bei
-  NaN in der Trajektorie, bei einer zu kurzen Trajektorie **und bei jeder abgefangenen Warnung**.
-  Nur im Nicht-`solve_ivp`-Pfad kommt es auch aus einem Timeout (`integrate_ode`, ca.
-  Zeile 919–924). Das Label `odeformer_timeout` ist deshalb sachlich falsch.
-- `ODEFormerAdapter.integrate_expression` und `optimize_constants` wandeln die Vorhersage mit
-  `np.asarray(..., dtype=float)` um. Aus `None` wird so ein **0-dimensionales NaN-Array**, und das
-  landet als `wrong_shape` im Record statt als `none`. So kam der `wrong_shape` im Rauchtest
-  zustande.
+Ein Phase-C-Record hat 93 Felder, darunter `basis_name`, `model_terms` (mit `term_index` und
+`coefficient`), `u0`, `T`, `tspan`, `seed`, `initial_condition_set`, `system_id`, `variant`,
+`use_pretuning`, `condition`, `representability`, `max_fit_attempts`, `git_hash`,
+`config_fingerprint`, `stage_cap_behavior_fingerprint`, `total_parameter_fits`, `total_loss_evals`,
+`total_parameter_optimization_time_s`. Beispiel: jede Datei `cell_*.jsonl` (ohne `.heartbeat`) unter
+`outputs/phase_c_dryrun_2026-09-25/tasks/`, einer lokalen Kopie des Kampagnenstands vom 25.09.
 
 ## Was zu tun ist
 
-1. **Timeouts im Handler zählen.** Die Zählung erfolgt in dem Moment, in dem der Alarm feuert,
-   nicht beim Abfangen der Ausnahme. Dafür ersetzt der Adapter ODEFormers `timeout`-Dekorator
-   (`odeformer/utils.py:147`) durch eine **semantisch identische** Nachbildung mit Zählhaken im
-   Handler. Identisch heißt: gleiche Sekunden, gleiche Behandlung eines schon laufenden äußeren
-   Timers (nicht überschreiten, Restzeit wiederherstellen), gleiches erneutes Scharfschalten im
-   Handler, gleiche Ausnahmeklasse `MyTimeoutError` aus `odeformer.utils`. Die Zählung bleibt je
-   Phase, wie in WP-N24. Die Ersetzung gilt auch im Modus `faithful` (1 s), und dort muss das
-   Verhalten bitgleich zum ausgelieferten Dekorator sein. Das belegt Abnahme 1.
-2. **Aufrufe klassifizieren.** Je Phase zählen, wie viele `_integrate_ode`-Aufrufe es gab und wie
-   viele davon eine Trajektorie liefern, `None` liefern oder das NaN-Sentinel liefern. Zusätzlich
-   zählen, wie viele `None`- bzw. Sentinel-Rückgaben mit einem gefeuerten Alarm im selben Aufruf
-   zusammenfallen. Das ist die eigentliche Timeout-Zahl je Ausgang. Kein Zeitschwellen-Kriterium
-   über die gemessene Dauer: Die Zuordnung erfolgt über den Handler, nicht über die Uhr.
-3. **Ausgänge ehrlich benennen.**
-   - `odeformer_timeout` umbenennen in einen Namen, der das Sentinel beschreibt und keine Ursache
-     unterstellt, z. B. `odeformer_nan_sentinel`. Alle Stellen nachziehen: Wertemengen, Summary,
-     Tests.
-   - `None` bleibt beim Umwandeln in `integrate_expression` und `optimize_constants` `None`, damit
-     `prediction_outcome` `none` meldet und nicht `wrong_shape`.
-   - R²-Werte und die 0.0-Konvention ändern sich dadurch nicht. Test dafür.
-4. **Wiederholbarkeitsskript** unverändert, bis auf die Nachführung der Feldnamen. Die
-   Zusammenfassung pro Zelle zeigt zusätzlich min/max der Handler-Timeouts.
+1. **Phase-C-Modus für alle drei Skripte**, ausgewählt über ein explizites Argument
+   (z. B. `--campaign paper1_phaseC_v1`). **Ohne das Argument bleibt das bisherige WP-N1-Verhalten
+   bitgleich.** Das ist die Abnahme 1.
+2. **Systeme und Trajektorien im Phase-C-Modus ausschließlich über `phase_c_systems()`**, also über
+   denselben Pfad, den der Kampagnen-Runner benutzt hat. Jede Ausgabezeile trägt einen
+   Trajektorien-Hash im Format von `studies/regression/phase_c_trajectory_hashes.jl`
+   (`HASH_FORMAT`, gleiche Achsenordnung). Wo es einen Quell- und einen Ziel-IC gibt (WP-N5), zwei
+   Hashes. Damit lässt sich die Identität zu den Trajektorien der Kampagne **per Hash** prüfen statt
+   behaupten.
+3. **Wahrheit im Phase-C-Modus aus `phase_c_support.json`.** Abbruch, wenn der `basis_name` im
+   Record nicht mit dem `basis_name` der Support-Tabelle übereinstimmt. Surrogat-Systeme haben keine
+   wahre Struktur: WP-N3 und WP-N4 überspringen sie **mit Zählung im Manifest**, WP-N5 braucht keine
+   Wahrheit und rechnet alle 63 Systeme.
+4. **Nur C-1.** Im Phase-C-Modus werden genau die Records mit `variant ==
+   "evogrow_v2_2_stage_capped"` und `use_pretuning == false` verarbeitet. Alle anderen werden
+   **gezählt und im Manifest ausgewiesen, nicht stillschweigend verworfen**. Abbruch, wenn die
+   ausgewählten Records mehr als ein Identitätstripel tragen (`git_hash`, `config_fingerprint`,
+   `stage_cap_behavior_fingerprint`), oder wenn eine Zelle (System, Seed, IC-Set) doppelt vorkommt.
+5. **Optimierer im Phase-C-Modus = Phase-C-Konfiguration**, also die Konstanten, die in
+   `phase_c_fingerprint()` eingehen, inklusive `BFGS_MAX_LOSS_EVALS` als Budget pro Fit. Damit ist
+   jeder Fit per Konstruktion begrenzt. Zur Restart-Regel:
+   - **WP-N3 (Diag)** fittet mit `max_fit_attempts = 3`, so wie die Kampagne. Die Diagnose misst,
+     was der kanonische Optimierer auf der wahren Struktur schafft.
+   - **WP-N4 (Abl-3)** macht jeden seiner k Starts als **einen** Versuch
+     (`max_fit_attempts = 1`), weil das Skript k selbst variiert. Andernfalls würden sich zwei
+     Mehrfachstart-Mechanismen überlagern.
+   - Beide Festlegungen stehen im Manifest und im Fingerprint des jeweiligen Skripts.
+6. **Aufteilung in Shards und Wiederaufnahme** für alle drei Skripte: `--shards N --shard-index i`
+   teilt die ausgewählten Zellen deterministisch auf, sortiert nach dem Zellschlüssel und nicht nach
+   Dateireihenfolge. Jeder Shard schreibt in eigene Dateien, die kein anderer Shard anfasst. Ein
+   Neustart überspringt fertige Zellen. `--collect` führt die Shards zusammen und bricht ab, wenn
+   eine Zelle fehlt oder doppelt ist. Die bestehenden Ausgabedateien (`cells.csv`,
+   `metric_summary.csv` usw.) entstehen erst in `--collect` bzw. im Ein-Shard-Fall.
+7. **Kostenschranke vor dem Lauf:** `--estimate-cost` rechnet nichts, sondern leitet aus den
+   Eingabe-Records eine obere Schranke pro Zelle her:
+   Anzahl Fits der Zelle × `BFGS_MAX_LOSS_EVALS` × gemessene Zeit pro Loss-Evaluation derselben
+   Zelle in der Kampagne (`total_parameter_optimization_time_s / total_loss_evals`). Die Anzahl Fits
+   pro Zelle ist bei WP-N3 2 × 3 Versuche, bei WP-N4 2 × k_max, bei WP-N5 null Fits und zwei
+   Integrationen. Ausgabe: Schranke pro Zelle, Summe und Maximum pro Dimension, Gesamtsumme, teuerste
+   Zelle. In der Ausgabe als **Planungsgröße** kennzeichnen, nicht als Evidenz (Designprinzip 7).
+   Aus dieser Zahl wird entschieden, ob ein Lauf auf den Laptop darf.
+8. **Rekonstruktionskontrolle in WP-N5 unverändert:** Das Modell wird vom **Trainings**-IC aus
+   integriert und muss den gespeicherten Loss exakt treffen. Im Phase-C-Modus zählt das Manifest
+   Treffer und Abweichungen. Eine Abweichung ungleich null wird pro Zelle ausgewiesen und nicht
+   geglättet.
+9. **Runbook:** In `SCRIPTS.md` fehlt die Phase-C-Auswertungskette ganz. Einen Abschnitt ergänzen,
+   der der Reihe nach nennt: `merge_batch_records.jl` → `convert_campaign_history_to_run_registry.py`
+   → `verify_campaign_registry.py --campaign paper1_phaseC_v1` → Strukturmetriken, Dreiwege-
+   Repräsentierbarkeit, Cap-Ablation, Pretuning-Collapse, SINDy-Paarung → die drei C-5-Skripte im
+   Phase-C-Modus, jeweils mit `--estimate-cost`, Shard-Aufruf und `--collect`. Nur Befehle und
+   Zweck. Wo ein Argument unklar ist, `TODO(Claude)` statt zu raten.
 
 ## Verboten
 
 - Keine Git-Operationen.
-- ODEFormer-Quellen nicht verändern, weder im Image noch unter `outputs/third_party/`. Nur
-  Laufzeit-Ersetzung im Adapter.
-- Nichts unter `analysis/data/` verändern.
-- Die Zuordnung Timeout ↔ Ausgang **nicht** über eine Dauer-Schwelle lösen.
+- **Nichts ändern, was in `phase_c_fingerprint()`, `stage_cap_behavior_fingerprint()` oder den
+  Kampagnen-Runner eingeht**: `phase_c_config.jl`, `run_regression.jl`, `run_k8s_indexed_cell.jl`,
+  `src/`. Die Kampagne läuft noch mit diesem Stand. Wenn ein Helfer von dort gebraucht wird, wird er
+  aufgerufen, nicht verändert. Ist das unmöglich, `blocked` melden und nicht umbauen.
+- Keine k8s-Manifeste in diesem Paket. Ob es welche braucht, entscheidet die Schranke aus Punkt 7.
+- Nichts unter `analysis/data/` oder `experiments/` schreiben.
+- Keine Trajektorien über `PHASE_B_SYSTEMS` im Phase-C-Modus, auch nicht als Rückfall.
 
-## Abnahme
+## Abnahme (Claude führt aus)
 
-1. **Äquivalenz des nachgebildeten Dekorators**, als Test ohne ODEFormer-Import (reine
-   Signal-Logik) gegen ODEFormers Originalfunktion, falls sie importierbar ist, sonst gegen eine
-   wörtliche Kopie im Test. Geprüft werden: Timeout feuert nach der eingestellten Zeit, ein äußerer
-   kürzerer Timer wird nicht überschritten, die Restzeit wird wiederhergestellt, und ohne Timeout
-   gibt es kein Scharfschalten danach.
-2. Test mit einer Funktion, die **innerhalb** eines nackten `except` schläft, wie der
-   `solve_ivp`-Zweig: Sie gibt `None` zurück, und der Handler-Zähler steht trotzdem auf 1. Das ist
-   der Fall, den WP-N24 übersehen hat.
-3. Test: `None` aus der Integration führt zu Ausgang `none`, nicht `wrong_shape`, und R² bleibt 0.0.
-4. `python -m pytest baselines/tests -q` grün.
-5. Report `codex/reports/REPORT_WP_N24c.md` mit der neuen Feldliste und dem Rauchtest-Befehl aus
-   WP-N24b. Die Image-Namen dort sind falsch: richtig sind `evoode/odeformer-reference:wp-n21` und
-   `evoode/odeformer-candidate:wp-n21`. Außerdem ist anzugeben, dass die Shard-Befehle **eines**
-   Laufs **gleichzeitig** gestartet werden und nur die Läufe untereinander strikt nacheinander
-   laufen.
+1. **WP-N1-Verhalten bitgleich:** Jedes der drei Skripte liefert ohne `--campaign` auf
+   `outputs/wp_n1_dim1_probe/history.jsonl` mit `--limit 4` dieselben `results.jsonl`-Zeilen wie
+   der Stand vor dem Paket. Den genauen Befehl für den Vorher/Nachher-Vergleich in den Report
+   schreiben.
+2. **Hash-Identität:** Für eine dim-1- und eine dim-3-Zelle stimmen die Trajektorien-Hashes aus
+   Punkt 2 mit `phase_c_trajectory_hashes.jl` für dasselbe System und denselben IC überein.
+3. **Rauchtest im Phase-C-Modus** auf `outputs/phase_c_dryrun_2026-09-25/`: je Skript eine dim-1-
+   Zelle über `--limit` bzw. einen Shard mit einer Zelle, dann `--collect`. WP-N5 meldet für diese
+   Zelle Rekonstruktionsabweichung null.
+4. `--estimate-cost` läuft für alle drei Skripte auf der zusammengeführten History und gibt die
+   Tabelle aus Punkt 7 aus.
+5. Neue Julia-Tests (pro Datei ausführbar, es gibt kein `runtests.jl`) für: Armfilter und
+   Zählung, Abbruch bei gemischten Identitätstripeln, Abbruch bei doppelter Zelle, deterministische
+   Shard-Aufteilung, `--collect` bricht bei fehlender Zelle ab, Basisabgleich mit der Support-Tabelle.
+6. Report `codex/reports/REPORT_WP_N25.md` mit geänderten Dateien, neuen Argumenten, allen
+   Befehlen für Abnahme 1–5 und einer Liste, **was nicht verifiziert** werden konnte.
