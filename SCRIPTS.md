@@ -476,3 +476,90 @@ analysis/scripts/aggregate/convert_campaign_history_to_run_registry.py -> experi
 analysis/scripts/aggregate/verify_campaign_registry.py -> invariant check
 analysis/scripts/aggregate/aggregate_run_registry.py -> analysis/data/<id>/aggregate_by_variant_system.csv
 ```
+
+Campaign bridge and C-5 evaluation for Phase-C data:
+
+```bash
+# Merge finished per-cell records into one campaign history.
+julia --project=. --startup-file=no studies/regression/merge_batch_records.jl \
+  --input-dir outputs/phase_c_dryrun_2026-09-25/tasks \
+  --history outputs/studies/regression/phase_c/history.jsonl
+
+# Convert the merged history to the analysis registry.
+python analysis/scripts/aggregate/convert_campaign_history_to_run_registry.py \
+  --input outputs/studies/regression/phase_c/history.jsonl \
+  --output experiments/paper1_phaseC_v1/run_registry.csv
+
+# Verify registry invariants for the frozen campaign id.
+python analysis/scripts/aggregate/verify_campaign_registry.py \
+  --campaign paper1_phaseC_v1 \
+  --registry experiments/paper1_phaseC_v1/run_registry.csv
+
+# Build the Phase-C structure truth from the constant-basis support table.
+python analysis/scripts/aggregate/build_phasec_system_classification.py
+
+# Structure metrics, three-way representability, cap ablation, pretuning collapse, and SINDy pairing.
+python analysis/scripts/aggregate/aggregate_phaseb_structure_metrics.py \
+  --campaign paper1_phaseC_v1 \
+  --registry experiments/paper1_phaseC_v1/run_registry.csv \
+  --classification analysis/data/paper1_phaseC_v1/system_classification.csv \
+  --output-dir analysis/data/paper1_phaseC_v1
+python TODO(Claude)  # three-way representability
+python TODO(Claude)  # cap ablation
+python TODO(Claude)  # pretuning collapse
+python TODO(Claude)  # SINDy pairing
+
+# C-5 Diag: cost estimate, sharded run, and collection.
+julia --project=. --startup-file=no studies/regression/wp_n3_oracle_refit.jl \
+  --campaign paper1_phaseC_v1 \
+  --input outputs/studies/regression/phase_c/history.jsonl \
+  --output-dir outputs/wp_n3_oracle_refit_phase_c \
+  --estimate-cost
+julia --project=. --startup-file=no studies/regression/wp_n3_oracle_refit.jl \
+  --campaign paper1_phaseC_v1 \
+  --input outputs/studies/regression/phase_c/history.jsonl \
+  --output-dir outputs/wp_n3_oracle_refit_phase_c \
+  --shards TODO(Claude) --shard-index TODO(Claude)
+julia --project=. --startup-file=no studies/regression/wp_n3_oracle_refit.jl \
+  --campaign paper1_phaseC_v1 \
+  --input outputs/studies/regression/phase_c/history.jsonl \
+  --output-dir outputs/wp_n3_oracle_refit_phase_c \
+  --shards TODO(Claude) --collect
+
+# C-5 Abl-3: cost estimate, sharded run, and collection.
+julia --project=. --startup-file=no studies/regression/wp_n4_multistart_refit.jl \
+  --campaign paper1_phaseC_v1 \
+  --input outputs/studies/regression/phase_c/history.jsonl \
+  --output-dir outputs/wp_n4_multistart_refit_phase_c \
+  --starts 10 \
+  --estimate-cost
+julia --project=. --startup-file=no studies/regression/wp_n4_multistart_refit.jl \
+  --campaign paper1_phaseC_v1 \
+  --input outputs/studies/regression/phase_c/history.jsonl \
+  --output-dir outputs/wp_n4_multistart_refit_phase_c \
+  --starts 10 \
+  --shards TODO(Claude) --shard-index TODO(Claude)
+julia --project=. --startup-file=no studies/regression/wp_n4_multistart_refit.jl \
+  --campaign paper1_phaseC_v1 \
+  --input outputs/studies/regression/phase_c/history.jsonl \
+  --output-dir outputs/wp_n4_multistart_refit_phase_c \
+  --starts 10 \
+  --shards TODO(Claude) --collect
+
+# C-5 held-out IC generalization: cost estimate, sharded run, and collection.
+julia --project=. --startup-file=no studies/regression/wp_n5_ic_generalization.jl \
+  --campaign paper1_phaseC_v1 \
+  --input outputs/studies/regression/phase_c/history.jsonl \
+  --output-dir outputs/wp_n5_ic_generalization_phase_c \
+  --estimate-cost
+julia --project=. --startup-file=no studies/regression/wp_n5_ic_generalization.jl \
+  --campaign paper1_phaseC_v1 \
+  --input outputs/studies/regression/phase_c/history.jsonl \
+  --output-dir outputs/wp_n5_ic_generalization_phase_c \
+  --shards TODO(Claude) --shard-index TODO(Claude)
+julia --project=. --startup-file=no studies/regression/wp_n5_ic_generalization.jl \
+  --campaign paper1_phaseC_v1 \
+  --input outputs/studies/regression/phase_c/history.jsonl \
+  --output-dir outputs/wp_n5_ic_generalization_phase_c \
+  --shards TODO(Claude) --collect
+```

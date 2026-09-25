@@ -9,6 +9,7 @@ using Statistics
 
 include(joinpath(@__DIR__, "run_regression.jl"))
 include(joinpath(@__DIR__, "phase_b_config.jl"))
+include(joinpath(@__DIR__, "wp_n25_phase_c_c5_common.jl"))
 
 const WP_N3_DEFAULT_INPUT = joinpath(@__DIR__, "..", "..", "outputs", "wp_n1_dim1_probe", "history.jsonl")
 const WP_N3_DEFAULT_OUTPUT_DIR = joinpath(@__DIR__, "..", "..", "outputs", "wp_n3_oracle_refit")
@@ -199,10 +200,10 @@ function _category_flags(found, pruned, truth)
     )
 end
 
-function _fit_fixed_structure(structure_terms, system, basis, traj, seed::Int)
+function _fit_fixed_structure(structure_terms, system, basis, traj, seed::Int; max_fit_attempts::Int = 1)
     structure = StructureSpec([sort(unique(Int[x for x in eq])) for eq in structure_terms])
     f!, n_params, _ = build_rhs(structure, basis)
-    optimizer = build_reference_optimizer()
+    optimizer = build_reference_optimizer(max_fit_attempts = max_fit_attempts)
     options = build_options(seed)
 
     params = Float64[]
@@ -238,6 +239,162 @@ function _fit_fixed_structure(structure_terms, system, basis, traj, seed::Int)
         "optimizer_loss" => fit_loss,
         "fit_meta" => fit_meta,
     )
+end
+
+function _wp_n3_phase_c_fingerprint(input_path::AbstractString)
+    payload = (
+        task = "WP-N3",
+        campaign = WP_N25_PHASE_C_CAMPAIGN,
+        input_path = replace(abspath(input_path), Char(0x5c) => '/'),
+        input_sha256 = bytes2hex(sha256(read(input_path))),
+        selected_arm = (variant = WP_N25_C1_VARIANT, use_pretuning = false),
+        support_source = PHASE_C_SUPPORT_PATH,
+        trajectory_source = "phase_c_systems/build_trajectory",
+        max_fit_attempts = PHASE_C_MAX_FIT_ATTEMPTS,
+        bfgs_max_loss_evals = BFGS_MAX_LOSS_EVALS,
+        r2_threshold = WP_N3_R2_THRESHOLD,
+    )
+    return bytes2hex(sha256(codeunits(canonical_value(payload))))[1:16]
+end
+
+function _run_record_phase_c(record, systems_by_id, support_table)
+    system_id = Int(_json_require(record, :system_id, "Phase-C trajectory selection"))
+    haskey(systems_by_id, system_id) || error("Unknown Phase-C system_id=$(system_id)")
+    system = systems_by_id[system_id]
+    dim = Int(system[:dim])
+    basis_name = String(_json_require(record, :basis_name, "Phase-C basis reconstruction"))
+    basis_name == PHASE_C_BASIS_NAME || error("Record $(wp_n25_record_key(record)) basis_name=$(basis_name), expected $(PHASE_C_BASIS_NAME)")
+    basis = phase_c_basis(dim)
+    seed = Int(_json_require(record, :seed, "Phase-C refit seed"))
+    ic_set = Int(_json_require(record, :initial_condition_set, "Phase-C trajectory selection"))
+    traj = build_trajectory(system, ic_set)
+    traj_hash = wp_n25_trajectory_hash(system, ic_set, traj)
+
+    original_terms = _terms_from_model(record, dim)
+    original_pruned_terms = _pruned_terms_from_model(record, dim)
+    true_terms = wp_n25_phase_c_support_terms(record, support_table, dim)
+    true_terms === nothing && error("Phase-C WP-N3 received surrogate cell after exact filter: $(wp_n25_record_key(record))")
+    oracle_terms = _intersect_terms(original_terms, true_terms)
+    flags = _category_flags(original_terms, original_pruned_terms, true_terms)
+
+    oracle_result = _fit_fixed_structure(oracle_terms, system, basis, traj, seed; max_fit_attempts = PHASE_C_MAX_FIT_ATTEMPTS)
+    reference_result = _fit_fixed_structure(true_terms, system, basis, traj, seed; max_fit_attempts = PHASE_C_MAX_FIT_ATTEMPTS)
+    exact_original = _same_terms(original_pruned_terms, true_terms)
+
+    return Dict{String, Any}(
+        "cell_key" => wp_n25_record_key(record),
+        "system_id" => system_id,
+        "system_name" => String(_json_require(record, :system_name, "output row")),
+        "initial_condition_set" => ic_set,
+        "seed" => seed,
+        "condition" => String(_json_require(record, :condition, "output row")),
+        "basis_name" => basis_name,
+        "support_status" => String(_json_get(record, :representability, "unknown")),
+        "trajectory_hash" => traj_hash,
+        "original_structure" => _term_names(original_terms, basis),
+        "original_pruned_structure" => _term_names(original_pruned_terms, basis),
+        "oracle_structure" => _term_names(oracle_terms, basis),
+        "true_structure" => _term_names(true_terms, basis),
+        "original_loss" => Float64(_json_require(record, :loss, "loss ratios")),
+        "oracle_loss" => oracle_result["loss"],
+        "reference_loss" => reference_result["loss"],
+        "original_r2" => _json_get(record, :r2),
+        "oracle_r2" => oracle_result["r2"],
+        "reference_r2" => reference_result["r2"],
+        "original_structure_hit" => Bool(flags["structure_hit"]),
+        "oracle_structure_hit" => _same_terms(oracle_terms, true_terms),
+        "reference_structure_hit" => true,
+        "oracle_is_true_subset" => !_same_terms(oracle_terms, true_terms),
+        "wp_n2_category" => flags["category"],
+        "extra_term_survives" => flags["extra_term_survives"],
+        "true_term_deleted" => flags["true_term_deleted"],
+        "true_term_never_found" => flags["true_term_never_found"],
+        "both_pruning_error" => flags["both_pruning_error"],
+        "original_to_oracle_loss_ratio" => _ratio(oracle_result["loss"], _json_require(record, :loss, "loss ratios")),
+        "original_to_reference_loss_ratio" => _ratio(reference_result["loss"], _json_require(record, :loss, "loss ratios")),
+        "oracle_to_reference_loss_ratio" => _ratio(oracle_result["loss"], reference_result["loss"]),
+        "oracle_coefficients" => oracle_result["coefficients"],
+        "reference_coefficients" => reference_result["coefficients"],
+        "oracle_fit_meta" => oracle_result["fit_meta"],
+        "reference_fit_meta" => reference_result["fit_meta"],
+        "exact_original_structure_deviation" => exact_original && !_same_terms(oracle_terms, true_terms),
+        "error" => nothing,
+    )
+end
+
+function _wp_n3_write_phase_c_manifest(path, input_path, output_dir, fingerprint, filter_counts, run_count, shards, shard_index; collect_mode = false)
+    wp_n25_write_manifest(path, Dict{String, Any}(
+        "task" => "WP-N3",
+        "campaign" => WP_N25_PHASE_C_CAMPAIGN,
+        "input" => input_path,
+        "output_dir" => output_dir,
+        "config_fingerprint" => fingerprint,
+        "filter_counts" => filter_counts,
+        "run_count" => run_count,
+        "shards" => shards,
+        "shard_index" => shard_index,
+        "collect_mode" => collect_mode,
+        "max_fit_attempts" => PHASE_C_MAX_FIT_ATTEMPTS,
+        "bfgs_max_loss_evals" => BFGS_MAX_LOSS_EVALS,
+        "trajectory_hash_format" => HASH_FORMAT,
+    ))
+end
+
+function main_phase_c(args)
+    input_path = _arg_value(args, "--input", PHASE_C_HISTORY_PATH)
+    output_dir = _arg_value(args, "--output-dir", joinpath(@__DIR__, "..", "..", "outputs", "wp_n3_oracle_refit_phase_c"))
+    shards, shard_index = wp_n25_shard_options(args)
+    collect_mode = _arg_flag(args, "--collect")
+    estimate_cost = _arg_flag(args, "--estimate-cost")
+    records_all = _read_history(input_path)
+    records, filter_counts = wp_n25_phase_c_filter(records_all; require_exact_support = true)
+    limit = wp_n25_parse_limit(args, length(records))
+    records = records[1:limit]
+    fingerprint = _wp_n3_phase_c_fingerprint(input_path)
+
+    if estimate_cost
+        wp_n25_write_cost_estimate(wp_n25_estimate_rows(records, "WP-N3", 2 * PHASE_C_MAX_FIT_ATTEMPTS))
+        return nothing
+    end
+
+    result_basename = "results.jsonl"
+    if collect_mode
+        expected_keys = [wp_n25_record_key(record) for record in records]
+        results = wp_n25_collect_jsonl(output_dir, result_basename, shards, expected_keys)
+        _write_cell_csv(joinpath(output_dir, "cells.csv"), results)
+        _write_metric_summary(joinpath(output_dir, "metric_summary.csv"), results)
+        _write_loss_quantiles(joinpath(output_dir, "loss_quantiles.csv"), results)
+        _write_loss_ratios(joinpath(output_dir, "loss_ratios.csv"), results)
+        _write_deviations(joinpath(output_dir, "exact_structure_deviations.csv"), results)
+        _wp_n3_write_phase_c_manifest(joinpath(output_dir, "manifest.json"), input_path, output_dir, fingerprint, filter_counts, length(records), shards, shard_index; collect_mode = true)
+        open(joinpath(output_dir, "fingerprint.txt"), "w") do io
+            println(io, fingerprint)
+        end
+        println("Collected $(length(results)) Phase-C WP-N3 cells")
+        return nothing
+    end
+
+    shard_records = wp_n25_shard_records(records, shards, shard_index)
+    result_path = wp_n25_shard_path(output_dir, result_basename, shards, shard_index)
+    fresh = _arg_flag(args, "--fresh")
+    if fresh && isfile(result_path)
+        rm(result_path)
+    end
+    done = wp_n25_done_keys(result_path)
+    systems_by_id = wp_n25_phase_c_systems_by_id()
+    support_table = load_phase_c_support()
+    println("WP-N3 Phase-C fingerprint: $(fingerprint)")
+    println("Cells requested in shard: $(length(shard_records))")
+    for (idx, record) in enumerate(shard_records)
+        key = wp_n25_record_key(record)
+        key in done && (println("[$(idx)/$(length(shard_records))] $(key) skipped existing"); continue)
+        result = _run_record_phase_c(record, systems_by_id, support_table)
+        result["config_fingerprint"] = fingerprint
+        _append_jsonl!(result_path, result)
+        println(@sprintf("[%d/%d] %s oracle=%.3e reference=%.3e", idx, length(shard_records), key, result["oracle_loss"], result["reference_loss"]))
+    end
+    _wp_n3_write_phase_c_manifest(wp_n25_shard_path(output_dir, "manifest.json", shards, shard_index), input_path, output_dir, fingerprint, filter_counts, length(shard_records), shards, shard_index)
+    return nothing
 end
 
 function _ratio(numerator, denominator)
@@ -476,6 +633,9 @@ function _write_deviations(path::AbstractString, results)
 end
 
 function main(args = ARGS)
+    if wp_n25_phase_c_requested(args)
+        return main_phase_c(args)
+    end
     input_path = _arg_value(args, "--input", WP_N3_DEFAULT_INPUT)
     output_dir = _arg_value(args, "--output-dir", WP_N3_DEFAULT_OUTPUT_DIR)
     limit_value = _arg_value(args, "--limit", nothing)

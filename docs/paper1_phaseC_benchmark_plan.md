@@ -66,8 +66,10 @@ planning and is labelled as such (Design Principle 7); it is never evidence for 
 | **C-2** uncapped mirror | `evogrow_v2_2_stage_local`, otherwise identical | canonical | full mirror, **378 paired cells** | **~6,000-9,600** |
 | **C-3** pretuning confirmation | `evogrow_v2_2_stage_capped`, `pretuning = true` | canonical | **30** exact systems x 3 seeds x 2 IC sets = **180 cells** | **~2,400** |
 | **C-4** SINDy baseline | `run_wp_n6_sindy_baseline.py` | n/a | 63 systems x 2 IC sets, all configurations | minutes |
-| **C-5** derived arms | `wp_n3_oracle_refit.jl`, `wp_n4_multistart_refit.jl`, `wp_n5_ic_generalization.jl` | canonical | no new search - all three read C-1's `history.jsonl` | **< 50** |
+| **C-5** derived arms | `wp_n3_oracle_refit.jl`, `wp_n4_multistart_refit.jl`, `wp_n5_ic_generalization.jl` | canonical | no new search - all three read C-1's `history.jsonl` | **upper bound ~400** (N3 ~92, N4 ~305, N5 seconds; see below) |
 | **Total** | | | | **~12,300-15,900, 5-7 weeks on Orion** |
+
+**The C-5 figure of "< 50" core hours was an estimate and is withdrawn (2026-09-25).** An upper bound derived from 175 of the 180 exact C-1 cells - fits per cell x the loss-evaluation budget of 20,000 x the cell's measured `elapsed_s / total_loss_evals` - gives about **92 h** for the oracle refit and **305 h** for the restart curve at k = 10, of which dim 3 carries 71 h and 238 h; the most expensive single cell is bounded at about 17 h. The bound assumes every fit exhausts its budget, so the real cost is lower, but not by an amount that can be asserted. `total_parameter_optimization_time_s` must not be used for the per-eval cost: it excludes the ODE integrations (`total_simulation_time_s`), which dominate on dim 3 by three orders of magnitude. Both refits therefore run on Orion; capacity planning, not evidence.
 
 **C-3 grew with the basis (2026-09-13, WP-N16).** Under the canonical basis **30 of 63 systems are
 exact**, not 20 — the ten that failed on the constant alone (1, 5, 9, 17, 23, 43, 52, 57, 58, 59)

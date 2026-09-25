@@ -8,6 +8,7 @@ using Statistics
 
 include(joinpath(@__DIR__, "run_regression.jl"))
 include(joinpath(@__DIR__, "phase_b_config.jl"))
+include(joinpath(@__DIR__, "wp_n25_phase_c_c5_common.jl"))
 
 const WP_N5_DEFAULT_INPUT = joinpath(@__DIR__, "..", "..", "outputs", "wp_n1_dim1_probe", "history.jsonl")
 const WP_N5_DEFAULT_OUTPUT_DIR = joinpath(@__DIR__, "..", "..", "outputs", "wp_n5_ic_generalization")
@@ -453,6 +454,120 @@ function _wp_n5_fingerprint(input_path::AbstractString)
     return bytes2hex(sha256(codeunits(canonical_value(payload))))[1:16]
 end
 
+function _wp_n5_phase_c_fingerprint(input_path::AbstractString)
+    payload = (
+        task = "WP-N5",
+        campaign = WP_N25_PHASE_C_CAMPAIGN,
+        input_path = replace(abspath(input_path), Char(0x5c) => '/'),
+        input_sha256 = bytes2hex(sha256(read(input_path))),
+        selected_arm = (variant = WP_N25_C1_VARIANT, use_pretuning = false),
+        trajectory_source = "phase_c_systems/build_trajectory",
+        parameter_policy = "record coefficients only; no refit",
+        bfgs_max_loss_evals = BFGS_MAX_LOSS_EVALS,
+        reconstruction_probe_atol = WP_N5_RECONSTRUCTION_ATOL,
+        reconstruction_probe_rtol = WP_N5_RECONSTRUCTION_RTOL,
+        r2_threshold = WP_N5_R2_THRESHOLD,
+        quantiles = WP_N5_QUANTILES,
+    )
+    return bytes2hex(sha256(codeunits(canonical_value(payload))))[1:16]
+end
+
+function _run_record_phase_c(record, systems_by_id)
+    system_id = Int(_json_require(record, :system_id, "Phase-C trajectory selection"))
+    haskey(systems_by_id, system_id) || error("Unknown Phase-C system_id=$(system_id)")
+    system = systems_by_id[system_id]
+    dim = Int(system[:dim])
+    source_ic_set = Int(_json_require(record, :initial_condition_set, "Phase-C trajectory selection"))
+    target_ic_set = _target_ic_set(source_ic_set)
+    basis_name = String(_json_require(record, :basis_name, "Phase-C basis reconstruction"))
+    basis_name == PHASE_C_BASIS_NAME || error("Record $(wp_n25_record_key(record)) basis_name=$(basis_name), expected $(PHASE_C_BASIS_NAME)")
+    basis = phase_c_basis(dim)
+    structure, params, term_names = _model_from_record(record, basis, dim)
+
+    source_traj = build_trajectory(system, source_ic_set)
+    target_traj = build_trajectory(system, target_ic_set)
+    reconstruction = _evaluate_regime(structure, basis, params, source_traj)
+    generalization = _evaluate_regime(structure, basis, params, target_traj)
+
+    structure_hit = if _json_get(record, :pruned_match) !== nothing
+        Bool(_json_get(record, :pruned_match))
+    else
+        false
+    end
+    stored_loss = Float64(_json_require(record, :loss, "reconstruction probe"))
+    reconstruction_ok = _reconstruction_ok(stored_loss, reconstruction["loss"])
+
+    return Dict{String, Any}(
+        "cell_key" => wp_n25_record_key(record),
+        "condition" => String(_json_require(record, :condition, "output row")),
+        "variant" => String(_json_require(record, :variant, "output row")),
+        "basis_name" => basis_name,
+        "system_id" => system_id,
+        "system_name" => String(_json_require(record, :system_name, "output row")),
+        "dimension" => dim,
+        "source_initial_condition_set" => source_ic_set,
+        "target_initial_condition_set" => target_ic_set,
+        "direction" => _direction(source_ic_set),
+        "seed" => Int(_json_require(record, :seed, "output row")),
+        "representability" => String(_json_require(record, :representability, "output row")),
+        "source_trajectory_hash" => wp_n25_trajectory_hash(system, source_ic_set, source_traj),
+        "target_trajectory_hash" => wp_n25_trajectory_hash(system, target_ic_set, target_traj),
+        "structure_hit" => structure_hit,
+        "model_terms" => term_names,
+        "stored_reconstruction_loss" => stored_loss,
+        "reconstruction_loss" => reconstruction["loss"],
+        "reconstruction_r2" => reconstruction["r2"],
+        "reconstruction_r2_by_dim" => reconstruction["r2_by_dim"],
+        "reconstruction_diverged_or_nonfinite" => reconstruction["diverged_or_nonfinite"],
+        "reconstruction_error" => reconstruction["error"],
+        "reconstruction_probe_ok" => reconstruction_ok,
+        "reconstruction_abs_loss_delta" => reconstruction["loss"] === nothing ? nothing : abs(Float64(reconstruction["loss"]) - stored_loss),
+        "generalization_loss" => generalization["loss"],
+        "generalization_r2" => generalization["r2"],
+        "generalization_r2_by_dim" => generalization["r2_by_dim"],
+        "generalization_diverged_or_nonfinite" => generalization["diverged_or_nonfinite"],
+        "generalization_error" => generalization["error"],
+    )
+end
+
+function _wp_n5_write_phase_c_cost_estimate(records)
+    println("Planning cost estimate only; not runtime evidence.")
+    println("cell_key,dimension,fits_per_cell,integrations_per_cell,campaign_simulation_time_per_ode_solve_s,planning_upper_bound_s")
+    total = 0.0
+    by_dim = Dict{Int, Vector{Float64}}()
+    rows = Dict{String, Any}[]
+    for record in records
+        system = phase_c_system(Int(_json_require(record, :system_id, "cost estimate")))
+        dim = Int(system[:dim])
+        sim_time = Float64(_json_require(record, :total_simulation_time_s, "cost estimate"))
+        ode_solves = Int(_json_require(record, :total_ode_solves, "cost estimate"))
+        ode_solves > 0 || error("Record $(wp_n25_record_key(record)) has non-positive total_ode_solves")
+        per_solve = sim_time / ode_solves
+        bound = 2 * per_solve
+        total += bound
+        if !haskey(by_dim, dim)
+            by_dim[dim] = Float64[]
+        end
+        push!(by_dim[dim], bound)
+        row = Dict{String, Any}("cell_key" => wp_n25_record_key(record), "dimension" => dim, "planning_upper_bound_s" => bound)
+        push!(rows, row)
+        println(join([wp_n25_record_key(record), dim, 0, 2, per_solve, bound], ","))
+    end
+    println("dimension,n_cells,sum_planning_upper_bound_s,max_planning_upper_bound_s")
+    for dim in sort(collect(keys(by_dim)))
+        println(join([dim, length(by_dim[dim]), sum(by_dim[dim]), maximum(by_dim[dim])], ","))
+    end
+    if isempty(rows)
+        println("total_planning_upper_bound_s=0")
+        println("most_expensive_cell=")
+    else
+        expensive = rows[argmax(Float64[row["planning_upper_bound_s"] for row in rows])]
+        println("total_planning_upper_bound_s=$(total)")
+        println("most_expensive_cell=$(expensive["cell_key"]) planning_upper_bound_s=$(expensive["planning_upper_bound_s"])")
+    end
+    return nothing
+end
+
 function _write_manifest(path::AbstractString, input_path::AbstractString, output_dir::AbstractString, run_count::Int, fingerprint::AbstractString)
     campaign_path = joinpath(@__DIR__, "..", "..", "experiments", "paper1_phaseB_v1", "run_registry.csv")
     open(path, "w") do io
@@ -475,7 +590,111 @@ function _write_manifest(path::AbstractString, input_path::AbstractString, outpu
     end
 end
 
+function _wp_n5_write_phase_c_manifest(path, input_path, output_dir, fingerprint, filter_counts, run_count, shards, shard_index, results = nothing; collect_mode = false)
+    payload = Dict{String, Any}(
+        "task" => "WP-N5",
+        "campaign" => WP_N25_PHASE_C_CAMPAIGN,
+        "input" => input_path,
+        "output_dir" => output_dir,
+        "run_count" => run_count,
+        "config_fingerprint" => fingerprint,
+        "filter_counts" => filter_counts,
+        "shards" => shards,
+        "shard_index" => shard_index,
+        "collect_mode" => collect_mode,
+        "parameter_policy" => "record coefficients are reused without refitting",
+        "trajectory_hash_format" => HASH_FORMAT,
+        "reconstruction_probe" => Dict(
+            "atol" => WP_N5_RECONSTRUCTION_ATOL,
+            "rtol" => WP_N5_RECONSTRUCTION_RTOL,
+            "criterion" => "abs(reconstructed_loss - stored_loss) <= atol + rtol * abs(stored_loss)",
+        ),
+    )
+    if results !== nothing
+        payload["reconstruction_probe_ok_count"] = count(row -> row["reconstruction_probe_ok"] === true, results)
+        payload["reconstruction_probe_deviation_count"] = count(row -> row["reconstruction_probe_ok"] !== true, results)
+        payload["reconstruction_deviations"] = [
+            Dict(
+                "cell_key" => row["cell_key"],
+                "stored_reconstruction_loss" => row["stored_reconstruction_loss"],
+                "reconstruction_loss" => row["reconstruction_loss"],
+                "reconstruction_abs_loss_delta" => row["reconstruction_abs_loss_delta"],
+            )
+            for row in results if row["reconstruction_probe_ok"] !== true
+        ]
+    end
+    wp_n25_write_manifest(path, payload)
+end
+
+function main_phase_c(args)
+    input_path = _arg_value(args, "--input", PHASE_C_HISTORY_PATH)
+    output_dir = _arg_value(args, "--output-dir", joinpath(@__DIR__, "..", "..", "outputs", "wp_n5_ic_generalization_phase_c"))
+    shards, shard_index = wp_n25_shard_options(args)
+    collect_mode = _arg_flag(args, "--collect")
+    estimate_cost = _arg_flag(args, "--estimate-cost")
+    records_all = _read_history(input_path)
+    records, filter_counts = wp_n25_phase_c_filter(records_all; require_exact_support = false)
+    limit = wp_n25_parse_limit(args, length(records))
+    records = records[1:limit]
+    fingerprint = _wp_n5_phase_c_fingerprint(input_path)
+
+    if estimate_cost
+        _wp_n5_write_phase_c_cost_estimate(records)
+        return nothing
+    end
+
+    result_basename = "results.jsonl"
+    if collect_mode
+        expected_keys = [wp_n25_record_key(record) for record in records]
+        results = wp_n25_collect_jsonl(output_dir, result_basename, shards, expected_keys)
+        _write_cells(joinpath(output_dir, "cells.csv"), results)
+        _write_reconstruction_probe(joinpath(output_dir, "reconstruction_probe.csv"), results)
+        _write_metric_summary(joinpath(output_dir, "metric_summary.csv"), results)
+        _write_loss_quantiles(joinpath(output_dir, "loss_quantiles.csv"), results)
+        _wp_n5_write_phase_c_manifest(joinpath(output_dir, "manifest.json"), input_path, output_dir, fingerprint, filter_counts, length(records), shards, shard_index, results; collect_mode = true)
+        open(joinpath(output_dir, "fingerprint.txt"), "w") do io
+            println(io, fingerprint)
+        end
+        println("Collected $(length(results)) Phase-C WP-N5 cells")
+        println("Reconstruction probe failures: $(count(row -> row["reconstruction_probe_ok"] !== true, results))")
+        return nothing
+    end
+
+    shard_records = wp_n25_shard_records(records, shards, shard_index)
+    result_path = wp_n25_shard_path(output_dir, result_basename, shards, shard_index)
+    fresh = _arg_flag(args, "--fresh")
+    if fresh && isfile(result_path)
+        rm(result_path)
+    end
+    done = wp_n25_done_keys(result_path)
+    systems_by_id = wp_n25_phase_c_systems_by_id()
+    println("WP-N5 Phase-C fingerprint: $(fingerprint)")
+    println("Cells requested in shard: $(length(shard_records))")
+    println("Parameter policy: reuse record coefficients without refitting")
+    for (idx, record) in enumerate(shard_records)
+        key = wp_n25_record_key(record)
+        key in done && (println("[$(idx)/$(length(shard_records))] $(key) skipped existing"); continue)
+        result = _run_record_phase_c(record, systems_by_id)
+        result["config_fingerprint"] = fingerprint
+        _append_jsonl!(result_path, result)
+        println(@sprintf(
+            "[%d/%d] %s recon=%s gen=%s probe_ok=%s",
+            idx,
+            length(shard_records),
+            key,
+            result["reconstruction_loss"] === nothing ? "null" : @sprintf("%.3e", result["reconstruction_loss"]),
+            result["generalization_loss"] === nothing ? "null" : @sprintf("%.3e", result["generalization_loss"]),
+            result["reconstruction_probe_ok"],
+        ))
+    end
+    _wp_n5_write_phase_c_manifest(wp_n25_shard_path(output_dir, "manifest.json", shards, shard_index), input_path, output_dir, fingerprint, filter_counts, length(shard_records), shards, shard_index)
+    return nothing
+end
+
 function main(args = ARGS)
+    if wp_n25_phase_c_requested(args)
+        return main_phase_c(args)
+    end
     input_path = _arg_value(args, "--input", WP_N5_DEFAULT_INPUT)
     output_dir = _arg_value(args, "--output-dir", WP_N5_DEFAULT_OUTPUT_DIR)
     limit_value = _arg_value(args, "--limit", nothing)
