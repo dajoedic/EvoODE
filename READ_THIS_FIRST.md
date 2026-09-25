@@ -10,7 +10,7 @@ zweites davon. Alles Dauerhafte gehört dorthin, nach `PAPER_1.md` oder ins `DIA
 **Regeln:** wird immer **vollständig überschrieben**, nie angehängt. Was älter als ein paar Tage
 ist, ist vermutlich falsch — dann gilt `CLAUDE.md`.
 
-**Stand: 2026-09-26, 01:40.** Nachtschicht von Claude läuft. Dieses Dokument wird bei jedem Schritt
+**Stand: 2026-09-26, 01:55.** Nachtschicht von Claude läuft. Dieses Dokument wird bei jedem Schritt
 neu geschrieben; die Uhrzeit oben sagt, wie aktuell es ist.
 
 ---
@@ -30,7 +30,7 @@ macht der Nutzer. Die Freigabe erlischt morgen früh.
 | C-1/C-2 | Orion, `221a3a7` | 731 / 756 (25.09. abends) | nur noch Nachzügler |
 | C-3 | Orion, `221a3a7` | 172 / 180 | 8 × dim 3 (Lorenz, System 59), ~20–25 h pro Level |
 | WP-T1d | Orion, `5a87efb` | 34 / 36 | |
-| **ODEFormer-Referenzraster** | Orion, `55e9c75` | **läuft seit 01:29**, 16 Pods aktiv, 0/126 | Smoke 3 sauber (`_opt` = success, bitgleich zum lokalen Image). Job `evoode-odeformer-reference-grid`, Ausgabe `odeformer_grid_55e9c75…/reference/rep_00{1,2,3}/` |
+| **ODEFormer-Referenzraster** | Orion, `55e9c75` | **läuft seit 01:29**, 30/126 um ~01:50; 474 Records geprüft: alle 232 `_opt` = success, 0 Fehler | Smoke 3 sauber (`_opt` = success, bitgleich zum lokalen Image). Job `evoode-odeformer-reference-grid`, Ausgabe `odeformer_grid_55e9c75…/reference/rep_00{1,2,3}/` |
 | Codex WP-N28 | — | **abgebrochen: Codex-Login abgelaufen (401)** | Nutzer: `codex login`, dann startet Claude WP-N28 neu |
 
 ## 2. ODEFormer-Referenzraster — der Weg bis zum Start
