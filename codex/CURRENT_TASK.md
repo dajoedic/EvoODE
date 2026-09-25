@@ -1,61 +1,75 @@
-# WP-N27b — Deadlock im Zell-Worker des ODEFormer-Grids beheben
+# WP-N27c — ODEFormers Konstantenoptimierung ins Image, und ein fehlendes Modul ist ein Abbruch
 **Language: Python**
 
 ## Ausführung
 
-Lokal umsetzbar und testbar. Kein Docker, kein `oc`, kein Push. Nur die betroffenen Tests ausführen.
+Lokal umsetzbar. Kein Docker-Build, kein `oc`, kein Push; das macht Claude. Nur die betroffenen
+Tests ausführen. Nichts, was länger als 15 Minuten läuft.
 
 ## Ausgangslage
 
-Der Smoke-Job des ODEFormer-Referenzrasters auf Orion (`k8s/odeformer_reference_grid_smoke_job.yaml`,
-Image `9ff548e`) hängt seit dem Start mit 0 CPU. Diagnose im laufenden Pod:
+Der Orion-Smoke mit dem CI-Image `odeformer-reference:3ca31bb` hat gezeigt:
 
-- PID 1 (Elternprozess) steht in `do_wait`, also in `process.join()`.
-- PID 69 (Kind, per `fork`) hat zwei Threads. Der Hauptthread wartet in `futex_wait_queue`: Beim
-  Beenden wartet er auf den Feeder-Thread der Queue. Der Feeder-Thread steht in `write(fd=4,
-  8395 Bytes)`, fd 4 ist das Schreibende der Queue-Pipe.
-- Lokal (Docker Desktop) läuft derselbe Code mit derselben Zelle in 4–7 s durch.
+- `beam10_noopt` ist bitgleich zum lokalen Lauf.
+- `beam10_opt` endet mit `odeformer_optimization_error_type = ModuleNotFoundError`,
+  `odeformer_optimization_error_message = "No module named 'param_optimizer'"`,
+  `odeformer_optimization_status = error_unoptimized_expression_retained`, `nfev = 0`. Der Record
+  sieht ansonsten gültig aus und trägt das **unoptimierte** R².
 
-Ursache: `baselines/run_odeformer_grid.py`, `run_cell_with_hard_timeout`. Dort steht
-`process.join(...)` **vor** `result_queue.get_nowait()`. Das Kind kann nicht enden, solange der
-Feeder-Thread seine Daten nicht in die Pipe schreiben konnte. Passt der Record nicht auf einmal in
-den Pipe-Puffer, wartet das Kind auf den Leser und der Elternprozess auf das Kind. Lokal fasst die
-Pipe 64 KiB. Auf Orion war sie beim Anlegen vermutlich kleiner: Linux vergibt nur eine Seite, wenn
-`pipe-user-pages-soft` überschritten ist. Die genaue Größe ist unerheblich. Das Muster ist in der
-Python-Dokumentation von `multiprocessing` als Deadlock beschrieben ("joining processes that use
-queues").
+Ursache: `baselines/harness.py`, `ODEFormerAdapter.optimize_constants` (etwa Zeile 740) hängt
+`REPO_ROOT / "outputs" / "third_party" / "odeformer"` an `sys.path` und importiert dann
+`param_optimizer`. Dieser Ordner ist ein lokaler, gitignorierter Checkout des ODEFormer-Repos am
+Commit `c9193012ad07a97186290b98d8290d1a177f4609`, also demselben Commit, den
+`baselines/Dockerfile.odeformer-reference` per `pip install git+…@c919301…` installiert. Lokal
+kommt er über das Einbinden von `outputs/` in den Container; im CI-Image fehlt er. Das per pip
+installierte Paket enthält nur `odeformer/`, nicht die Dateien im Repo-Stamm. `param_optimizer.py`
+(SHA-256 `5f73e0dff443bf7ab8d065a074c7279a30ceec53111456b72576d64f510e5328`) importiert zusätzlich
+`from evaluate import *` aus dem Repo-Stamm.
+
+Zwei Defekte also: Das Image ist unvollständig, und ein Infrastrukturfehler wird still in einen
+gültig aussehenden Record verwandelt. Hätte der Smoke keine `_opt`-Konfiguration getroffen, wäre
+die Hälfte des Referenzrasters unbemerkt ohne Konstantenoptimierung gerechnet worden.
 
 ## Was zu tun ist
 
-1. In `run_cell_with_hard_timeout` erst das Ergebnis aus der Queue holen, **dann** joinen:
-   - Blockierendes `get` mit dem Budget als Timeout (`None` = ohne Grenze).
-   - Kommt nichts, weil das Budget abgelaufen ist oder das Kind ohne Ergebnis gestorben ist, gilt
-     das bisherige Verhalten: `terminate`/`kill` und derselbe Timeout- bzw. Fehler-Record wie heute.
-   - Ein Kind, das stirbt, ohne etwas zu schicken, darf den Elternprozess **nicht** ewig blockieren,
-     auch nicht bei `budget=None`. Deshalb nicht blind blockierend lesen, sondern das Lesen mit der
-     Lebendprüfung des Kindes verbinden (z. B. `get` in kurzen Intervallen, dazwischen
-     `is_alive()`/`exitcode` prüfen). Eine Wall-Clock-Grenze für ODEFormer selbst wird dadurch
-     **nicht** eingeführt; das Intervall ist nur ein Warte-Takt.
-   - Danach `join` mit kurzer Frist, dann wie heute ggf. `terminate`/`kill`.
-2. Records, Felder und Ausgänge bleiben unverändert. Das betrifft nur die Prozesskommunikation.
-3. Prüfen, ob `run_odeformer_repeatability.py` oder andere Stellen (`grep` nach
-   `get_context("fork")`, `.join(` vor `.get`) dasselbe Muster haben. Wenn ja, dort dieselbe
-   Korrektur, im Report aufgeführt.
+1. **Dockerfile** (`baselines/Dockerfile.odeformer-reference`, und gleichartig
+   `Dockerfile.odeformer-candidate`): Den ODEFormer-Quellbaum am **selben** gepinnten Commit ins
+   Image legen, z. B. per `git clone` + `git checkout <commit>` nach `/opt/odeformer-src`.
+   Anschließend beim Bau den SHA-256 von `param_optimizer.py` gegen den obigen Wert prüfen und bei
+   Abweichung abbrechen, im selben Stil wie die Gewichtsprüfung. Den Pfad als
+   `ENV ODEFORMER_SOURCE_ROOT=/opt/odeformer-src` setzen. Paketversionen, der pip-installierte
+   ODEFormer und die Gewichte bleiben unverändert.
+2. **harness.py:** Der Quellpfad kommt aus `ODEFORMER_SOURCE_ROOT`. Ist die Variable nicht
+   gesetzt, gilt der bisherige Pfad `outputs/third_party/odeformer` (lokale Läufe bleiben
+   bitgleich). Der Pfad, die Herkunft (env oder Default) und der SHA-256 von `param_optimizer.py`
+   stehen in jedem Record.
+3. **Kein stiller Rückfall bei Infrastrukturfehlern.** Kann `param_optimizer` (oder `evaluate`)
+   nicht importiert werden, ist das ein **harter Abbruch des Laufs**, kein Record mit
+   `error_unoptimized_expression_retained`. Dasselbe gilt für jeden anderen `ImportError` im
+   Optimierungspfad. Wissenschaftliche Fehler der Optimierung (Nichtkonvergenz, Integrationsfehler,
+   Ausnahmen aus `minimize`) bleiben wie bisher Records. Die Trennung steht im Docstring.
+4. **Vorabprüfung beim Start** von `run_odeformer_grid.py` bzw. `run_odeformer_grid_k8s.py`:
+   Enthält der Lauf eine `_opt`-Konfiguration, wird `param_optimizer` einmal importiert, bevor die
+   erste Zelle rechnet. Ein Fehler bricht sofort ab, mit klarer Meldung. So scheitert ein
+   unvollständiges Image in Sekunden statt nach Stunden.
+5. `SCRIPTS.md`, Abschnitt "ODEFormer-Referenzraster auf Orion": Der Smoke muss mindestens eine
+   `_opt`-Zelle enthalten, und seine Prüfung umfasst `odeformer_optimization_status`. Das kurz
+   vermerken.
 
 ## Verboten
 
 - Keine Git-Operationen.
-- Nichts an ODEFormer-Aufruf, Timeout-Zählung, Modus oder Records ändern.
-- Kein `spawn` statt `fork`: Das würde das Laden der Gewichte und den Zustand pro Zelle verändern.
+- Keine Änderung an ODEFormers Verhalten, am Modus (`faithful`), an Records außer den neuen
+  Herkunftsfeldern.
+- `outputs/third_party/` nicht verändern.
 
 ## Abnahme
 
-1. **Regressionstest für den Deadlock:** ein Test-Runner, der einen Payload **deutlich größer als
-   64 KiB** (z. B. 1 MiB) in die Queue legt. Mit dem alten Code hängt er, mit dem neuen liefert er
-   den Record zurück. Der Test braucht eine eigene Zeitgrenze, damit er nicht die Suite blockiert,
-   falls die Korrektur fehlschlägt.
-2. Test: Ein Kind, das ohne Ergebnis endet (`os._exit(3)`), liefert den bisherigen Fehler-Record,
-   auch bei `budget=None`, und zwar schnell.
-3. Test: Ein Kind, das länger als ein kleines Budget braucht, liefert den bisherigen Timeout-Record.
-4. `python -m pytest baselines/tests -q` grün.
-5. Report `codex/reports/REPORT_WP_N27b.md`.
+1. Tests: Mit gesetztem `ODEFORMER_SOURCE_ROOT` auf einen Ordner ohne `param_optimizer` bricht
+   die Vorabprüfung ab. Ein simulierter `ImportError` im Optimierungspfad bricht ab und erzeugt
+   keinen Record. Ein simulierter Optimierungsfehler anderer Art bleibt ein Record wie bisher. Ohne
+   Variable wird der Default-Pfad benutzt.
+2. `python -m pytest baselines/tests -q` für die betroffenen Dateien grün (Fork-Tests laufen unter
+   Windows nicht; Claude führt sie im Linux-Container aus).
+3. Report `codex/reports/REPORT_WP_N27c.md` mit dem lokalen Docker-Build-Befehl für Claude und der
+   Prüfung, dass das gebaute Image `param_optimizer` importieren kann.
