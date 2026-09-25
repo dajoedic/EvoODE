@@ -10,7 +10,7 @@ zweites davon. Alles Dauerhafte gehört dorthin, nach `PAPER_1.md` oder ins `DIA
 **Regeln:** wird immer **vollständig überschrieben**, nie angehängt. Was älter als ein paar Tage
 ist, ist vermutlich falsch — dann gilt `CLAUDE.md`.
 
-**Stand: 2026-09-26, 01:30.** Nachtschicht von Claude läuft. Dieses Dokument wird bei jedem Schritt
+**Stand: 2026-09-26, 01:40.** Nachtschicht von Claude läuft. Dieses Dokument wird bei jedem Schritt
 neu geschrieben; die Uhrzeit oben sagt, wie aktuell es ist.
 
 ---
@@ -30,7 +30,7 @@ macht der Nutzer. Die Freigabe erlischt morgen früh.
 | C-1/C-2 | Orion, `221a3a7` | 731 / 756 (25.09. abends) | nur noch Nachzügler |
 | C-3 | Orion, `221a3a7` | 172 / 180 | 8 × dim 3 (Lorenz, System 59), ~20–25 h pro Level |
 | WP-T1d | Orion, `5a87efb` | 34 / 36 | |
-| ODEFormer-Referenzraster | Orion, noch nicht gestartet | WP-N27c gepusht (`55e9c75`), CI baut; Smoke 3 startet automatisch ~01:55 | 126 Pods, 3 Wdh. × 42 Shards |
+| **ODEFormer-Referenzraster** | Orion, `55e9c75` | **läuft seit 01:29**, 16 Pods aktiv, 0/126 | Smoke 3 sauber (`_opt` = success, bitgleich zum lokalen Image). Job `evoode-odeformer-reference-grid`, Ausgabe `odeformer_grid_55e9c75…/reference/rep_00{1,2,3}/` |
 | Codex WP-N28 | — | **abgebrochen: Codex-Login abgelaufen (401)** | Nutzer: `codex login`, dann startet Claude WP-N28 neu |
 
 ## 2. ODEFormer-Referenzraster — der Weg bis zum Start
@@ -50,6 +50,8 @@ macht der Nutzer. Die Freigabe erlischt morgen früh.
   Trajektorien unter `odeformer_grid_55e9c75…/trajectory_export`, per Hash geprüft.
 - Trajektorien liegen auf dem NFS unter `odeformer_grid_<SHA>/trajectory_export`, jeweils per Hash
   geprüft. Für den neuen SHA müssen sie neu hingelegt werden.
+- **Smoke 3 (`55e9c75`): sauber → Grid gestartet 01:29 (Claude, Freigabe A).** Nach Ende:
+  `--collect --repetitions 3` (Befehl in `SCRIPTS.md`, Abschnitt ODEFormer auf Orion).
 - Befehle (mit `<SHA>` des gebauten Commits):
   `oc delete job evoode-odeformer-reference-grid-smoke`, dann
   `(Get-Content k8s\odeformer_reference_grid_smoke_job.yaml) -replace '<COMMIT_SHA>','<SHA>' | oc apply -f -`,

@@ -4,6 +4,47 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ---
 
+## 2026-09-26
+
+### ODEFormer-Referenzraster auf Orion: drei Smokes, zwei echte Fehler, dann der Start
+
+<!-- 9ff548e 3ca31bb 55e9c75 -->
+
+Das Referenzraster (Claim D, `faithful`, 3 Wiederholungen × 504 Zellen, 126 Pods) sollte am 25.09.
+abends auf Orion starten. Der Smoke-Job hat es zweimal verhindert, beide Male zu Recht.
+
+**Smoke 1 (`9ff548e`) hing mit 0 CPU.** Im Pod stand der Elternprozess in `do_wait`, das
+Kind mit einem Thread in `write(fd=4, 8395 Bytes)` auf die Queue-Pipe. `run_cell_with_hard_timeout`
+rief `join()` vor `get()` auf, das in der `multiprocessing`-Dokumentation beschriebene Deadlock-Muster.
+Lokal hat die Pipe 64 KiB und der Record passte hinein; auf dem Orion-Knoten war sie beim Anlegen
+offenbar kleiner (Vermutung: `pipe-user-pages-soft`, nicht bewiesen). Der Fehler steckte seit WP-N23
+im Code und ist lokal nie aufgefallen. WP-N27b liest jetzt zuerst und joint dann.
+
+**Smoke 2 (`3ca31bb`) lief durch, aber falsch.** `beam10_opt` endete mit
+`ModuleNotFoundError: param_optimizer` und `status = error_unoptimized_expression_retained`, in einem
+ansonsten gültig aussehenden Record. ODEFormers Konstantenoptimierung wurde lokal aus
+`outputs/third_party/odeformer` importiert, einem gitignorierten Checkout, der nur über das
+eingebundene `outputs/` in den Container kam. Im CI-Image fehlte er. **Ohne `_opt`-Zelle im Smoke
+wäre die Hälfte des Referenzrasters stillschweigend ohne Konstantenoptimierung gerechnet worden.**
+WP-N27c legt den gepinnten Quellbaum ins Image und macht einen Importfehler zum harten Abbruch (mit
+Vorabprüfung beim Start). Nebenbei war mein Soll-Hash für `param_optimizer.py` ein CRLF-Hash aus der
+Windows-Kopie (`core.autocrlf=true`, 10.581 statt 10.333 Byte); geprüft wird jetzt über den
+LF-normalisierten Inhalt. Alle lokalen ODEFormer-Läufe bisher (WP-N22–N24) sind davon nicht betroffen:
+Sie hatten den Checkout eingebunden.
+
+**Smoke 3 (`55e9c75`) ist sauber:** `_opt` = `success`, Umgebung `reference` / 1 s / 1 Thread /
+Quellbaum aus dem Image, beide Records bitgleich zu einem lokal gebauten Image ohne eingebundene
+Ordner. Der Grid-Job läuft seit 01:29 mit 16 Pods, von Claude gestartet (Freigabe des Nutzers für
+diese Nacht).
+
+Lehre: Ein Smoke muss jeden Codepfad berühren, den der Lauf nimmt, hier also mindestens eine
+`_opt`-Zelle, und er muss den **Inhalt** der Records prüfen, nicht nur, dass sie existieren.
+
+Außerdem: Codex brach bei WP-N28 mit `401 Unauthorized` ab (Login abgelaufen). WP-N28 und WP-N25c
+warten auf `codex login`.
+
+---
+
 ## 2026-09-25
 
 ### ODEFormer-Wiederholbarkeit (WP-N24): Jede Abweichung fällt auf einen Timeout, aber 10 s beseitigt sie nicht
