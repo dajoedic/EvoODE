@@ -1,0 +1,16 @@
+{
+  "experiment_id": "paper1_phaseC_v1",
+  "run_registry_path": "../outputs/phase_c_dryrun_2026-09-25/agg_n28/phasec_analysis_registry_pretuning.csv",
+  "output_dir": "../outputs/phase_c_dryrun_2026-09-25/agg_n28",
+  "phase_c_support_path": "../studies/regression/phase_c_support.json",
+  "pretuning_variants": {
+    "pretune_on": {
+      "variant_slug": "evogrow_v2_2_stage_capped_pretune_on",
+      "use_pretuning": true
+    },
+    "pretune_off": {
+      "variant_slug": "evogrow_v2_2_stage_capped",
+      "use_pretuning": false
+    }
+  }
+}

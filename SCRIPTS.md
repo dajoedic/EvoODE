@@ -545,16 +545,40 @@ python analysis/scripts/aggregate/verify_campaign_registry.py \
 # Build the Phase-C structure truth from the constant-basis support table.
 python analysis/scripts/aggregate/build_phasec_system_classification.py
 
-# Structure metrics, three-way representability, cap ablation, pretuning collapse, and SINDy pairing.
+# Structure metrics, analysis registry, three-way representability, cap ablation,
+# pretuning collapse, and SINDy pairing.
 python analysis/scripts/aggregate/aggregate_phaseb_structure_metrics.py \
   --campaign paper1_phaseC_v1 \
   --registry experiments/paper1_phaseC_v1/run_registry.csv \
   --classification analysis/data/paper1_phaseC_v1/system_classification.csv \
   --output-dir analysis/data/paper1_phaseC_v1
+python analysis/scripts/aggregate/build_phasec_analysis_registry.py \
+  --campaign paper1_phaseC_v1 \
+  --registry outputs/phase_c_dryrun_2026-09-25/run_registry.csv \
+  --structure-metrics outputs/phase_c_dryrun_2026-09-25/agg/structure_n26/phasec_structure_metrics_by_cell.csv \
+  --output outputs/phase_c_dryrun_2026-09-25/agg_n28/phasec_analysis_registry.csv \
+  --allow-incomplete
 python TODO(Claude)  # three-way representability
-python TODO(Claude)  # cap ablation
-python TODO(Claude)  # pretuning collapse
-python TODO(Claude)  # SINDy pairing
+python analysis/scripts/aggregate/aggregate_phasec_cap_ablation.py \
+  --campaign paper1_phaseC_v1 \
+  --input outputs/phase_c_dryrun_2026-09-25/agg_n28/phasec_analysis_registry_c1_c2.csv \
+  --output-dir outputs/phase_c_dryrun_2026-09-25/agg_n28/cap_ablation \
+  --expected-total-pairs 378 \
+  --allow-incomplete
+python analysis/scripts/aggregate/analyze_pretuning_distribution_collapse.py \
+  --campaign paper1_phaseC_v1 \
+  --config analysis/configs/paper1_phaseC_v1.json \
+  --expected-total-pairs 180 \
+  --expected-exact-pairs 180 \
+  --expected-surrogate-pairs 0 \
+  --expected-collapse-groups-per-condition 60 \
+  --allow-incomplete
+python analysis/scripts/aggregate/run_phasec_sindy_baseline.py pair \
+  --sindy-details analysis/data/paper1_phaseC_v1/phasec_sindy_baseline/details.csv \
+  --evogrow-records-dir outputs/phase_c_dryrun_2026-09-25/tasks \
+  --output outputs/phase_c_dryrun_2026-09-25/agg_n28/phasec_sindy_paired.csv \
+  --summary-output outputs/phase_c_dryrun_2026-09-25/agg_n28/phasec_sindy_paired_summary.csv \
+  --allow-incomplete
 
 # C-5 Diag: cost estimate, sharded run, and collection.
 julia --project=. --startup-file=no studies/regression/wp_n3_oracle_refit.jl \

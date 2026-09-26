@@ -1,4 +1,4 @@
 status: done
-task:   WP-N24c
-report: codex/reports/REPORT_WP_N24c.md
-note:   Timeout handler counting, honest outcomes, repeatability timeout summaries, and tests are implemented.
+task:   WP-N28
+report: codex/reports/REPORT_WP_N28.md
+note:   Phase-C analysis chain implemented and dry-run outputs generated under agg_n28; focused tests and Phase-B bitcheck passed.

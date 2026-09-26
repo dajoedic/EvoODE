@@ -68,6 +68,26 @@ die kanonischen Claim-D-Daten gehören und was mit den `_wp_n23`-Ordnern passier
 Nutzer. Nebenbefund: Docker Desktop kann das Netzlaufwerk `S:` nicht einbinden (der Container sieht
 einen leeren Ordner). Eingesammelt wird deshalb aus einer lokalen Kopie.
 
+### WP-N28: Die Phase-C-Auswertungskette läuft durch
+
+Die vier Bruchstellen aus der Generalprobe vom 25.09. sind geschlossen. Ein neuer Schritt
+`build_phasec_analysis_registry.py` verbindet Registry und Strukturmetriken 1:1 über `run_id`; die
+unsuffigierten Namen `structural_f1`, `term_precision` und `term_recall` sind micro, macro steht
+daneben. Die Teilmengen C-1/C-2, C-1 und die Pretuning-Teilmenge werden über `variant_slug` **und**
+`use_pretuning` gebildet. Die Cap-Ablation rechnet Strukturdeltas und Koeffizientenfehler nur auf
+exakten Paaren und weist deren Zahl aus. Die SINDy-Paarung nimmt nur C-1. Der Pretuning-Collapse
+liest die Variantenzuordnung aus der Konfiguration.
+
+Probe auf 885 von 936 Records, im Modus für unvollständige Daten: C-1/C-2 352 von 378 Paaren (173
+exakt, 179 Surrogat), SINDy 1.167 gepaarte Zeilen (10 Konfigurationen × 125 Paare aus System und
+IC-Set, EvoGrow pro Paar über die Seeds zusammengefasst), Pretuning 168 von 180 Paaren. Der
+Phase-B-Collapse ist mit der Phase-B-Konfiguration **bytegleich** (26.748 Bytes). Tests: 27 grün, von
+Claude nachgeprüft.
+
+**Offen:** `analysis/configs/paper1_phaseC_v1.json` zeigt auf die Probe unter
+`outputs/phase_c_dryrun_2026-09-25/`. Vor der endgültigen Auswertung muss sie auf die vollständige
+Kampagnen-Registry umgestellt werden.
+
 ---
 
 ## 2026-09-25

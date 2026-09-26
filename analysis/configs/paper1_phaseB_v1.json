@@ -3,5 +3,15 @@
   "run_registry_path": "../experiments/paper1_phaseB_v1/run_registry.csv",
   "output_dir": "data/paper1_phaseB_v1",
   "group_by_initial_condition_set": true,
-  "system_classification_path": "data/paper1_phaseB_v1/system_classification.csv"
+  "system_classification_path": "data/paper1_phaseB_v1/system_classification.csv",
+  "pretuning_variants": {
+    "pretune_on": {
+      "variant_slug": "evogrow_v2_2_stage_capped_pretune_on",
+      "use_pretuning": true
+    },
+    "pretune_off": {
+      "variant_slug": "evogrow_v2_2_stage_capped_pretune_off",
+      "use_pretuning": false
+    }
+  }
 }

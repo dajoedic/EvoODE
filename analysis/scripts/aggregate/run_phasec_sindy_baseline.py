@@ -36,6 +36,7 @@ from scripts.aggregate.run_wp_n6_sindy_baseline import (  # noqa: E402
 
 
 CAMPAIGN_ID = "paper1_phaseC_v1"
+C1_VARIANT = "evogrow_v2_2_stage_capped"
 R2_THRESHOLD = 0.9
 RECONSTRUCTION_CONTROL_TOL = 0.0
 PAIR_OUTPUT = ANALYSIS_ROOT / "data" / CAMPAIGN_ID / "phasec_sindy_paired.csv"
@@ -63,6 +64,11 @@ def parse_args() -> argparse.Namespace:
     pair_parser.add_argument("--evogrow-records-dir", required=True, help="Directory with EvoGrow JSONL records.")
     pair_parser.add_argument("--output", default=str(PAIR_OUTPUT), help="Paired CSV output path.")
     pair_parser.add_argument(
+        "--summary-output",
+        default=str(PAIR_TABLE_DIR / "phasec_sindy_paired_summary.csv"),
+        help="Summary CSV output path.",
+    )
+    pair_parser.add_argument(
         "--expected-systems",
         default="",
         help="Comma-separated system ids required in EvoGrow input; empty means derive from input.",
@@ -83,6 +89,11 @@ def parse_args() -> argparse.Namespace:
         "--expected-stage-cap-behavior-fingerprint",
         default="",
         help="Optional exact stage_cap_behavior_fingerprint required for all EvoGrow records.",
+    )
+    pair_parser.add_argument(
+        "--allow-incomplete",
+        action="store_true",
+        help="Allow incomplete dry-run C-1 records; available keys are paired and full runs still abort by default.",
     )
 
     check_parser = subparsers.add_parser("check-wpn6-bitidentical")
@@ -534,6 +545,10 @@ def as_bool(value: Any) -> bool:
     return str(value).strip().lower() in {"true", "1", "yes", "y"}
 
 
+def is_c1_record(row: pd.Series) -> bool:
+    return str(row["variant_slug"]) == C1_VARIANT and not as_bool(row["use_pretuning"])
+
+
 def validate_evogrow_registry(
     evogrow: pd.DataFrame,
     expected_systems: set[int],
@@ -564,20 +579,27 @@ def validate_evogrow_registry(
         for _, row in evogrow[["seed", "condition"]].drop_duplicates().iterrows()
     }
     groups = evogrow.groupby(["system_id", "initial_condition_set"], dropna=False)
+    allow_incomplete = bool(getattr(args, "allow_incomplete", False))
     for system_id in systems:
         for ic_set in ics:
             key = (system_id, ic_set)
             if key not in groups.groups:
+                if allow_incomplete:
+                    continue
                 fail(f"EvoGrow input incomplete: missing system_id={system_id}, initial_condition_set={ic_set}")
             cell_group = groups.get_group(key)
             got_seeds = {int(value) for value in cell_group["seed"]}
             if got_seeds != seeds:
+                if allow_incomplete and got_seeds.issubset(seeds):
+                    continue
                 fail(f"EvoGrow input incomplete for {key}: seeds {sorted(got_seeds)} != expected {sorted(seeds)}")
             got_seed_condition_pairs = {
                 (int(row["seed"]), str(row["condition"]))
                 for _, row in cell_group[["seed", "condition"]].drop_duplicates().iterrows()
             }
             if got_seed_condition_pairs != seed_condition_pairs:
+                if allow_incomplete and got_seed_condition_pairs.issubset(seed_condition_pairs):
+                    continue
                 fail(
                     f"EvoGrow input incomplete for {key}: seed-condition pairs "
                     f"{sorted(got_seed_condition_pairs)} != expected {sorted(seed_condition_pairs)}"
@@ -635,6 +657,11 @@ def pair_sindy_evogrow(args: argparse.Namespace) -> Path:
     sindy = pd.read_csv(args.sindy_details)
     records = read_records_dir(Path(args.evogrow_records_dir))
     evogrow = pd.DataFrame([row_from_record(record, CAMPAIGN_ID) for record in records])
+    if "variant_slug" not in evogrow.columns or "use_pretuning" not in evogrow.columns:
+        fail("EvoGrow records must expose variant_slug and use_pretuning for Claim-D C-1 pairing")
+    evogrow = evogrow.loc[evogrow.apply(is_c1_record, axis=1)].copy()
+    if evogrow.empty:
+        fail("EvoGrow input contains no C-1 records (capped, use_pretuning=false)")
     expected_systems = parse_int_set(args.expected_systems)
     expected_ics = parse_int_set(args.expected_ic_sets)
     expected_seeds = parse_int_set(args.expected_seeds)
@@ -655,8 +682,11 @@ def pair_sindy_evogrow(args: argparse.Namespace) -> Path:
     output.parent.mkdir(parents=True, exist_ok=True)
     paired.to_csv(output, index=False)
 
-    PAIR_TABLE_DIR.mkdir(parents=True, exist_ok=True)
-    paired_summary(paired).to_csv(PAIR_TABLE_DIR / "phasec_sindy_paired_summary.csv", index=False)
+    summary_output = Path(
+        getattr(args, "summary_output", str(PAIR_TABLE_DIR / "phasec_sindy_paired_summary.csv"))
+    )
+    summary_output.parent.mkdir(parents=True, exist_ok=True)
+    paired_summary(paired).to_csv(summary_output, index=False)
     return output
 
 

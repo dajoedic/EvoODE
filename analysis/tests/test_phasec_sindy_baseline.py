@@ -180,6 +180,7 @@ def pair_args(tmp_path: Path, records_dir: Path, sindy_path: Path, **updates: ob
         sindy_details = str(sindy_path)
         evogrow_records_dir = str(records_dir)
         output = str(tmp_path / "paired.csv")
+        summary_output = str(tmp_path / "paired_summary.csv")
         expected_systems = ""
         expected_ic_sets = "1,2"
         expected_seeds = ""
@@ -243,9 +244,25 @@ def test_pairing_runs_against_real_pilot_records_and_keeps_directions(tmp_path: 
     assert paired["stage_cap_behavior_fingerprint"].nunique() == 1
 
 
+def test_pairing_uses_c1_scope_and_does_not_require_c3_for_every_system(tmp_path: Path) -> None:
+    records = read_pilot_records()
+    c3_record = copy.deepcopy(records[0])
+    c3_record["variant_slug"] = "evogrow_v2_2_stage_capped_pretune_on"
+    c3_record["variant"] = "evogrow_v2_2_stage_capped_pretune_on"
+    c3_record["use_pretuning"] = True
+    records_dir = write_records(tmp_path, records + [c3_record])
+    sindy_path = sindy_fixture(tmp_path / "sindy.csv")
+
+    output = phasec_sindy.pair_sindy_evogrow(pair_args(tmp_path, records_dir, sindy_path))
+    paired = pd.read_csv(output)
+
+    assert len(paired) == 8
+    assert (tmp_path / "paired_summary.csv").is_file()
+
+
 def test_pairing_rejects_incomplete_evogrow_input(tmp_path: Path) -> None:
     records = read_pilot_records()
-    records_dir = write_records(tmp_path, records[:-1])
+    records_dir = write_records(tmp_path, records[1:])
     sindy_path = sindy_fixture(tmp_path / "sindy.csv")
 
     try:

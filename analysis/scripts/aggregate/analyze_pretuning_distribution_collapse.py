@@ -34,6 +34,7 @@ LOSS_FOLD_THRESHOLDS = [1.1, 2.0, 10.0, 100.0]
 REQUIRED_COLUMNS = [
     "experiment_id",
     "variant_slug",
+    "use_pretuning",
     "system_id",
     "system_name",
     "system_dim",
@@ -61,6 +62,11 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--expected-exact-pairs", type=int, default=120)
     parser.add_argument("--expected-surrogate-pairs", type=int, default=258)
     parser.add_argument("--expected-collapse-groups-per-condition", type=int, default=126)
+    parser.add_argument(
+        "--allow-incomplete",
+        action="store_true",
+        help="Allow incomplete dry-run pretuning pairs and seed-collapse groups.",
+    )
     parser.add_argument("--collapse-rtol", type=float, default=1e-12)
     parser.add_argument("--collapse-atol", type=float, default=0.0)
     return parser.parse_args()
@@ -151,12 +157,47 @@ def cluster_permutation_p(
     return (extreme + 1.0) / (PERMUTATION_COUNT + 1.0)
 
 
-def condition_from_variant(variant_slug: str) -> str:
-    if variant_slug == PRETUNE_ON:
-        return "pretune_on"
-    if variant_slug == PRETUNE_OFF:
-        return "pretune_off"
-    fail(f"Unexpected variant_slug for pretuning contrast: {variant_slug}")
+def parse_bool(value: Any) -> bool:
+    if isinstance(value, bool):
+        return value
+    text = str(value).strip().lower()
+    if text in {"true", "1", "yes", "y"}:
+        return True
+    if text in {"false", "0", "no", "n"}:
+        return False
+    fail(f"use_pretuning is not boolean: {value!r}")
+    raise AssertionError("unreachable")
+
+
+def default_pretuning_variants() -> dict[str, dict[str, Any]]:
+    return {
+        "pretune_on": {"variant_slug": PRETUNE_ON, "use_pretuning": True},
+        "pretune_off": {"variant_slug": PRETUNE_OFF, "use_pretuning": False},
+    }
+
+
+def pretuning_variants_from_config(config: dict[str, Any]) -> dict[str, dict[str, Any]]:
+    mapping = config.get("pretuning_variants", default_pretuning_variants())
+    for condition in ["pretune_on", "pretune_off"]:
+        if condition not in mapping:
+            fail(f"config pretuning_variants missing {condition}")
+        if "variant_slug" not in mapping[condition] or "use_pretuning" not in mapping[condition]:
+            fail(f"config pretuning_variants.{condition} must define variant_slug and use_pretuning")
+    return mapping
+
+
+def condition_from_variant(variant_slug: str, use_pretuning: Any, mapping: dict[str, dict[str, Any]]) -> str:
+    actual_pretuning = parse_bool(use_pretuning)
+    for condition, expected in mapping.items():
+        if (
+            variant_slug == str(expected["variant_slug"])
+            and actual_pretuning == parse_bool(expected["use_pretuning"])
+        ):
+            return condition
+    fail(
+        "Unexpected variant/use_pretuning for pretuning contrast: "
+        f"variant_slug={variant_slug!r}, use_pretuning={use_pretuning!r}"
+    )
     raise AssertionError("unreachable")
 
 
@@ -177,13 +218,21 @@ def canonical_support(value: Any) -> str:
     return json.dumps(normalized, ensure_ascii=True, separators=(",", ":"))
 
 
-def validate_registry(df: pd.DataFrame, campaign_id: str) -> pd.DataFrame:
+def validate_registry(
+    df: pd.DataFrame,
+    campaign_id: str,
+    pretuning_variants: dict[str, dict[str, Any]] | None = None,
+) -> pd.DataFrame:
     check_required_columns(df, REQUIRED_COLUMNS)
     require_single_campaign_id(df, campaign_id, "run_registry")
+    mapping = pretuning_variants or default_pretuning_variants()
     registry = df.copy()
     for column in ["system_id", "system_dim", "loss", "r2"]:
         registry[column] = pd.to_numeric(registry[column], errors="coerce")
-    registry["condition"] = registry["variant_slug"].astype(str).map(condition_from_variant)
+    registry["condition"] = registry.apply(
+        lambda row: condition_from_variant(str(row["variant_slug"]), row["use_pretuning"], mapping),
+        axis=1,
+    )
     registry["support_key"] = registry["support_terms"].map(canonical_support)
 
     if registry["loss"].isna().any():
@@ -202,14 +251,22 @@ def pair_registry(
     expected_total_pairs: int,
     expected_exact_pairs: int,
     expected_surrogate_pairs: int,
+    allow_incomplete: bool = False,
 ) -> pd.DataFrame:
     pair_rows: list[dict[str, Any]] = []
     key_columns = ["system_id", "seed", "initial_condition_set"]
     for key, group in registry.groupby(key_columns, sort=True, dropna=False):
         by_condition = {row["condition"]: row for _, row in group.iterrows()}
-        if set(by_condition) != {"pretune_on", "pretune_off"} or len(group) != 2:
+        if len(group) != len(by_condition):
             fail(
-                "incomplete or duplicate pair for "
+                "duplicate pair for "
+                f"system_id={key[0]}, seed={key[1]}, initial_condition_set={key[2]}"
+            )
+        if set(by_condition) != {"pretune_on", "pretune_off"}:
+            if allow_incomplete and set(by_condition).issubset({"pretune_on", "pretune_off"}):
+                continue
+            fail(
+                "incomplete pair for "
                 f"system_id={key[0]}, seed={key[1]}, initial_condition_set={key[2]}"
             )
         on = by_condition["pretune_on"]
@@ -236,12 +293,14 @@ def pair_registry(
         )
 
     paired = pd.DataFrame(pair_rows)
-    if len(paired) != expected_total_pairs:
+    if (not allow_incomplete and len(paired) != expected_total_pairs) or len(paired) > expected_total_pairs:
         fail(f"total pairs expected {expected_total_pairs}, got {len(paired)}")
     counts = paired["system_representability"].value_counts().to_dict()
     exact_pairs = int(counts.get("exact", 0))
     surrogate_pairs = int(counts.get("surrogate", 0))
-    if exact_pairs != expected_exact_pairs or surrogate_pairs != expected_surrogate_pairs:
+    counts_bad = exact_pairs != expected_exact_pairs or surrogate_pairs != expected_surrogate_pairs
+    counts_exceed = exact_pairs > expected_exact_pairs or surrogate_pairs > expected_surrogate_pairs
+    if (counts_bad and not allow_incomplete) or counts_exceed:
         fail(
             "pair counts expected "
             f"exact={expected_exact_pairs}, surrogate={expected_surrogate_pairs}; "
@@ -277,7 +336,14 @@ def analyze_distribution(
 ) -> dict[str, Any]:
     subset = pairs.loc[pairs["system_representability"] == representability].copy()
     if subset.empty:
-        fail(f"{target} target is empty for {representability} systems")
+        return {
+            "target": target,
+            "system_representability": representability,
+            "n_pairs": 0,
+            "n_systems": 0,
+            "skipped": True,
+            "skip_reason": "empty stratum",
+        }
     diffs = [float(value) for value in subset[diff_column].tolist()]
     quantiles = [
         {"probability": probability, "value": percentile(diffs, probability)}
@@ -361,11 +427,14 @@ def collapse_groups(
     expected_groups_per_condition: int,
     rtol: float,
     atol: float,
+    allow_incomplete: bool = False,
 ) -> pd.DataFrame:
     rows: list[dict[str, Any]] = []
     key_columns = ["system_id", "initial_condition_set", "condition"]
     for key, group in registry.groupby(key_columns, sort=True, dropna=False):
         if len(group) != 3:
+            if allow_incomplete and len(group) < 3:
+                continue
             fail(
                 "seed-collapse group expected exactly 3 rows for "
                 f"system_id={key[0]}, initial_condition_set={key[1]}, condition={key[2]}; "
@@ -400,10 +469,11 @@ def collapse_groups(
     collapsed = pd.DataFrame(rows)
     counts = collapsed["condition"].value_counts().to_dict()
     for condition in ["pretune_on", "pretune_off"]:
-        if int(counts.get(condition, 0)) != expected_groups_per_condition:
+        actual = int(counts.get(condition, 0))
+        if (not allow_incomplete and actual != expected_groups_per_condition) or actual > expected_groups_per_condition:
             fail(
                 f"seed-collapse groups for {condition} expected "
-                f"{expected_groups_per_condition}, got {int(counts.get(condition, 0))}"
+                f"{expected_groups_per_condition}, got {actual}"
             )
     return collapsed
 
@@ -413,7 +483,14 @@ def collapse_pair_table(groups: pd.DataFrame, target_column: str) -> pd.DataFram
     key_columns = ["system_id", "initial_condition_set"]
     for key, group in groups.groupby(key_columns, sort=True, dropna=False):
         by_condition = {row["condition"]: row for _, row in group.iterrows()}
+        if len(group) != len(by_condition):
+            fail(
+                "duplicate seed-collapse condition pair for "
+                f"system_id={key[0]}, initial_condition_set={key[1]}"
+            )
         if set(by_condition) != {"pretune_on", "pretune_off"} or len(group) != 2:
+            if set(by_condition).issubset({"pretune_on", "pretune_off"}):
+                continue
             fail(
                 "incomplete or duplicate seed-collapse condition pair for "
                 f"system_id={key[0]}, initial_condition_set={key[1]}"
@@ -449,7 +526,17 @@ def analyze_collapse_target(
             else paired.loc[paired["system_representability"] == representability].copy()
         )
         if subset.empty:
-            fail(f"collapse target {target_name} is empty for {representability}")
+            results.append(
+                {
+                    "target": target_name,
+                    "system_representability": representability,
+                    "n_condition_pairs": 0,
+                    "n_systems": 0,
+                    "skipped": True,
+                    "skip_reason": "empty stratum",
+                }
+            )
+            continue
         off_only = int((subset["off"] & ~subset["on"]).sum())
         on_only = int((~subset["off"] & subset["on"]).sum())
         both_no = int((~subset["off"] & ~subset["on"]).sum())
@@ -570,12 +657,14 @@ def main() -> int:
                 / "pretuning_distribution_collapse.json"
             ).resolve()
         )
-        registry = validate_registry(load_run_registry(input_path), campaign_id)
+        pretuning_variants = pretuning_variants_from_config(config)
+        registry = validate_registry(load_run_registry(input_path), campaign_id, pretuning_variants)
         pairs = pair_registry(
             registry,
             args.expected_total_pairs,
             args.expected_exact_pairs,
             args.expected_surrogate_pairs,
+            args.allow_incomplete,
         )
         pairs["r2_diff"] = pairs["r2_on"] - pairs["r2_off"]
         pairs["log10_loss_diff"] = pairs["loss_on"].map(math.log10) - pairs["loss_off"].map(
@@ -587,6 +676,7 @@ def main() -> int:
             args.expected_collapse_groups_per_condition,
             args.collapse_rtol,
             args.collapse_atol,
+            args.allow_incomplete,
         )
         rng = random.Random(RANDOM_SEED)
         distributions = [

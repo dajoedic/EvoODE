@@ -176,6 +176,37 @@ def test_wrong_arm_label_aborts() -> None:
         raise AssertionError("Expected wrong arm label to fail")
 
 
+def test_surrogate_truth_metric_blanks_are_allowed_but_exact_blanks_abort() -> None:
+    rows = [
+        base_row(4, 101, 1, CAPPED_VARIANT),
+        base_row(4, 101, 1, UNCAPPED_VARIANT),
+    ]
+    for row in rows:
+        row["system_representability"] = "surrogate"
+        row["system_expected_stage"] = None
+        row["structural_f1"] = None
+        row["term_precision"] = None
+        row["term_recall"] = None
+        row["coefficient_relative_error_mean"] = None
+        row["exact_support_match_raw"] = None
+        row["exact_support_match_pruned"] = None
+
+    pairs = validated_pairs(rows, expected_pairs=1)
+
+    assert len(pairs) == 1
+    assert pairs["structural_f1_delta_capped_minus_uncapped"].isna().all()
+
+    rows[0]["system_representability"] = "exact"
+    rows[1]["system_representability"] = "exact"
+    try:
+        validate_registry(pd.DataFrame(rows), "paper1_phaseC_v1")
+    except ValueError as exc:
+        assert "system_expected_stage" in str(exc)
+        assert "exact-system" in str(exc)
+    else:
+        raise AssertionError("Expected exact-system metric blank to fail")
+
+
 def test_missing_executed_levels_column_aborts_clearly() -> None:
     rows = paired_rows()
     df = pd.DataFrame(rows).drop(columns=["executed_levels"])

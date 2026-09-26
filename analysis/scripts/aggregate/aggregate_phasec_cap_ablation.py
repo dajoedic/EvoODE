@@ -18,6 +18,7 @@ from utils.campaign import campaign_data_dir, campaign_registry_path, require_si
 from utils.io import load_run_registry  # noqa: E402
 from utils.metrics import check_required_columns  # noqa: E402
 from utils.paired_stats import (  # noqa: E402
+    assert_allowed_pair_differences,
     cluster_bootstrap_ci,
     cluster_permutation_p,
     cluster_values,
@@ -75,19 +76,22 @@ REQUIRED_COLUMNS = [
 NUMERIC_COLUMNS = [
     "system_id",
     "system_dim",
-    "system_expected_stage",
     "loss",
     "r2",
-    "structural_f1",
-    "term_precision",
-    "term_recall",
-    "coefficient_relative_error_mean",
     "total_parameter_fits",
     "total_parameter_fit_attempts",
     "total_loss_evals",
     "total_ode_solves",
     "final_stage",
     EXECUTED_LEVELS_COLUMN,
+]
+
+EXACT_ONLY_NUMERIC_COLUMNS = [
+    "system_expected_stage",
+    "structural_f1",
+    "term_precision",
+    "term_recall",
+    "coefficient_relative_error_mean",
 ]
 
 COST_COLUMNS = [
@@ -102,6 +106,9 @@ COST_COLUMNS = [
 QUALITY_COLUMNS = [
     "log10_loss",
     "r2",
+]
+
+EXACT_ONLY_QUALITY_COLUMNS = [
     "exact_support_match_raw",
     "exact_support_match_pruned",
     "structural_f1",
@@ -147,6 +154,13 @@ ALLOWED_DIFFERENCE_COLUMNS = {
     "coefficient_errors",
     "coefficient_relative_error_mean",
     "coefficient_relative_error_max",
+    "n_coefficient_terms",
+    "n_equations",
+    "n_found_terms_micro",
+    "n_true_terms_micro",
+    "n_true_positive_terms_micro",
+    "n_missing_true_terms",
+    "n_extra_found_terms",
     "structural_f1",
     "structural_f1_micro",
     "structural_f1_macro",
@@ -195,6 +209,11 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--input", help="Optional run_registry.csv override.")
     parser.add_argument("--output-dir", help="Optional output directory override.")
     parser.add_argument("--expected-total-pairs", type=int, required=True)
+    parser.add_argument(
+        "--allow-incomplete",
+        action="store_true",
+        help="Allow dry-run registries with missing countercells; complete pairs are still validated.",
+    )
     parser.add_argument("--permutations", type=int, default=PERMUTATION_COUNT)
     parser.add_argument("--bootstrap-replicates", type=int, default=BOOTSTRAP_REPLICATES)
     return parser.parse_args()
@@ -227,12 +246,16 @@ def validate_registry(df: pd.DataFrame, campaign_id: str) -> pd.DataFrame:
         )
     check_required_columns(df, REQUIRED_COLUMNS)
     require_single_campaign_id(df, campaign_id, "run_registry")
-    registry = coerce_numeric(df, NUMERIC_COLUMNS)
+    registry = coerce_numeric(df, NUMERIC_COLUMNS + EXACT_ONLY_NUMERIC_COLUMNS)
     registry["condition"] = registry["variant_slug"].astype(str).map(condition_from_variant)
 
     for column in NUMERIC_COLUMNS:
         if registry[column].isna().any():
             fail(f"{column} is missing or non-numeric in at least one row")
+    exact = registry["system_representability"].astype(str).str.strip() == "exact"
+    for column in EXACT_ONLY_NUMERIC_COLUMNS:
+        if registry.loc[exact, column].isna().any():
+            fail(f"{column} is missing or non-numeric in at least one exact-system row")
     if (registry["loss"] <= 0).any():
         fail("loss must be positive for log10 analysis")
     if (registry["loss"] == SENTINEL_LOSS).any():
@@ -240,23 +263,69 @@ def validate_registry(df: pd.DataFrame, campaign_id: str) -> pd.DataFrame:
     return registry
 
 
-def build_pairs(registry: pd.DataFrame, expected_total_pairs: int) -> pd.DataFrame:
+def complete_pair_items(
+    registry: pd.DataFrame,
+    expected_total_pairs: int,
+    allow_incomplete: bool,
+) -> list[tuple[Any, pd.Series, pd.Series]]:
+    if not allow_incomplete:
+        return pair_registry_by_conditions(
+            registry,
+            key_columns=KEY_COLUMNS,
+            condition_column="condition",
+            left_condition="capped",
+            right_condition="uncapped",
+            expected_total_pairs=expected_total_pairs,
+            allowed_difference_columns=ALLOWED_DIFFERENCE_COLUMNS,
+        )
+
+    pairs: list[tuple[Any, pd.Series, pd.Series]] = []
+    for key, group in registry.groupby(KEY_COLUMNS, sort=True, dropna=False):
+        by_condition = {row["condition"]: row for _, row in group.iterrows()}
+        if len(group) != len(by_condition):
+            fail(f"duplicate condition rows within pair {'/'.join(str(part) for part in key)}")
+        if set(by_condition) == {"capped", "uncapped"}:
+            capped = by_condition["capped"]
+            uncapped = by_condition["uncapped"]
+            assert_allowed_pair_differences(
+                capped,
+                uncapped,
+                key_columns=KEY_COLUMNS,
+                key=key,
+                condition_column="condition",
+                allowed_difference_columns=ALLOWED_DIFFERENCE_COLUMNS,
+            )
+            pairs.append((key, capped, uncapped))
+        elif set(by_condition).issubset({"capped", "uncapped"}):
+            continue
+        else:
+            fail(f"unexpected conditions in pair group {key}: {sorted(by_condition)}")
+    if len(pairs) > expected_total_pairs:
+        fail(f"complete pairs exceed expected {expected_total_pairs}: got {len(pairs)}")
+    return pairs
+
+
+def build_pairs(
+    registry: pd.DataFrame,
+    expected_total_pairs: int,
+    allow_incomplete: bool = False,
+) -> pd.DataFrame:
     pair_rows: list[dict[str, Any]] = []
-    for _, capped, uncapped in pair_registry_by_conditions(
+    for _, capped, uncapped in complete_pair_items(
         registry,
-        key_columns=KEY_COLUMNS,
-        condition_column="condition",
-        left_condition="capped",
-        right_condition="uncapped",
-        expected_total_pairs=expected_total_pairs,
-        allowed_difference_columns=ALLOWED_DIFFERENCE_COLUMNS,
+        expected_total_pairs,
+        allow_incomplete,
     ):
         row: dict[str, Any] = {
             "system_id": int(capped["system_id"]),
             "system_name": str(capped["system_name"]),
             "system_dim": int(capped["system_dim"]),
             "system_representability": str(capped["system_representability"]).strip(),
-            "system_expected_stage": int(capped["system_expected_stage"]),
+            "system_expected_stage": (
+                int(capped["system_expected_stage"])
+                if str(capped["system_representability"]).strip() == "exact"
+                else math.nan
+            ),
             "seed": str(capped["seed"]),
             "initial_condition_set": str(capped["initial_condition_set"]),
         }
@@ -283,6 +352,23 @@ def build_pairs(registry: pd.DataFrame, expected_total_pairs: int) -> pd.DataFra
             else:
                 capped_value = float(capped[column])
                 uncapped_value = float(uncapped[column])
+            row[f"{column}_capped"] = capped_value
+            row[f"{column}_uncapped"] = uncapped_value
+            row[f"{column}_delta_capped_minus_uncapped"] = capped_value - uncapped_value
+        is_exact_pair = str(capped["system_representability"]).strip() == "exact"
+        for column in EXACT_ONLY_QUALITY_COLUMNS:
+            if is_exact_pair:
+                if column.startswith("exact_support_match"):
+                    capped_value = coerce_bool(capped[column])
+                    uncapped_value = coerce_bool(uncapped[column])
+                    if capped_value is None or uncapped_value is None:
+                        fail(f"{column} is missing or non-binary in at least one exact-system pair")
+                else:
+                    capped_value = float(capped[column])
+                    uncapped_value = float(uncapped[column])
+            else:
+                capped_value = math.nan
+                uncapped_value = math.nan
             row[f"{column}_capped"] = capped_value
             row[f"{column}_uncapped"] = uncapped_value
             row[f"{column}_delta_capped_minus_uncapped"] = capped_value - uncapped_value
@@ -494,7 +580,7 @@ def main() -> int:
     try:
         input_path, output_dir = resolve_paths(args)
         registry = validate_registry(load_run_registry(input_path), args.campaign)
-        pairs = build_pairs(registry, args.expected_total_pairs)
+        pairs = build_pairs(registry, args.expected_total_pairs, args.allow_incomplete)
 
         rng = random.Random(RANDOM_SEED)
         cost_savings = [
@@ -512,6 +598,19 @@ def main() -> int:
         ]
         for column in [
             "r2_delta_capped_minus_uncapped",
+        ]:
+            quality.append(
+                summarize_signed_delta(
+                    pairs,
+                    column,
+                    QUALITY_DELTA_THRESHOLD_GRID,
+                    rng,
+                    args.permutations,
+                    args.bootstrap_replicates,
+                )
+            )
+        exact_pairs = pairs.loc[pairs["system_representability"] == "exact"].copy()
+        for column in [
             "exact_support_match_raw_delta_capped_minus_uncapped",
             "exact_support_match_pruned_delta_capped_minus_uncapped",
             "structural_f1_delta_capped_minus_uncapped",
@@ -521,7 +620,7 @@ def main() -> int:
         ]:
             quality.append(
                 summarize_signed_delta(
-                    pairs,
+                    exact_pairs,
                     column,
                     QUALITY_DELTA_THRESHOLD_GRID,
                     rng,
@@ -561,7 +660,11 @@ def main() -> int:
             },
             "pair_counts": {
                 "total": int(len(pairs)),
+                "expected_total": int(args.expected_total_pairs),
+                "allow_incomplete": bool(args.allow_incomplete),
                 "systems": int(pairs["system_id"].nunique()),
+                "exact_quality_pairs": int(len(exact_pairs)),
+                "exact_quality_systems": int(exact_pairs["system_id"].nunique()),
                 "by_representability": {
                     str(key): int(value)
                     for key, value in pairs["system_representability"].value_counts().items()

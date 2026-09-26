@@ -30,7 +30,7 @@ experiment is decided, the code is not written yet. Section 2a lists them.
 
 | Claim | Question | Arm | Comparison | Metric | Output |
 |---|---|---|---|---|---|
-| **A** | Can EvoGrow recover governing structure from trajectory data? | C-1 | ground truth | exact recovery **raw and pruned**, term precision, term recall, structural F1, coefficient error, reconstruction R2, trajectory MSE - all by representability class | Main Table |
+| **A** | Can EvoGrow recover governing structure from trajectory data? | C-1 | ground truth | exact recovery **raw and pruned**, term precision, term recall, structural F1 (micro; macro reported beside it, decided 2026-09-26), coefficient error, reconstruction R2, trajectory MSE - all by representability class | Main Table |
 | **B** | Does stage capping reduce search effort, and at what cost in quality? | C-1 vs C-2 | paired per (system, seed, IC set) | explored stages, executed levels, nonlinear fits, ODE integrations, final loss, structural F1, exact recovery, reconstruction, generalization; core hours as context only | Main Figure (savings vs quality delta) |
 | **C** | Does a discovered model describe an unseen trajectory of the same system? | C-5 on C-1 | train IC vs test IC, both directions | R2, share R2 > 0.9, paired reconstruction vs generalization, by dimension and by exact/non-exact structure | Main Figure |
 | **D** | Where does EvoGrow stand against an established sparse-regression baseline? | C-1 vs C-4 | paired per (system, IC set), **all 63 systems**, stratified | quality (A and C metrics) **and** cost — structural per method, see §6a; core hours are context, never the headline | Main Table |

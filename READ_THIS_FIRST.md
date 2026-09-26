@@ -10,7 +10,7 @@ zweites davon. Alles Dauerhafte gehört dorthin, nach `PAPER_1.md` oder ins `DIA
 **Regeln:** wird immer **vollständig überschrieben**, nie angehängt. Was älter als ein paar Tage
 ist, ist vermutlich falsch — dann gilt `CLAUDE.md`.
 
-**Stand: 2026-09-26, 02:45.** Nachtschicht von Claude läuft. Dieses Dokument wird bei jedem Schritt
+**Stand: 2026-09-26, vormittags.** Nachtfreigabe erloschen; Push und `oc apply` macht wieder der Nutzer.
 neu geschrieben; die Uhrzeit oben sagt, wie aktuell es ist.
 
 ---
@@ -31,7 +31,7 @@ macht der Nutzer. Die Freigabe erlischt morgen früh.
 | C-3 | Orion, `221a3a7` | 172 / 180 | 8 × dim 3 (Lorenz, System 59), ~20–25 h pro Level |
 | WP-T1d | Orion, `5a87efb` | 34 / 36 | |
 | **ODEFormer-Referenzraster** | Orion, `55e9c75` | **fertig 02:30**: 126/126, 1.512 Records, 0 Fehler, alle `_opt` success; eingesammelt | Smoke 3 sauber (`_opt` = success, bitgleich zum lokalen Image). Job `evoode-odeformer-reference-grid`, Ausgabe `odeformer_grid_55e9c75…/reference/rep_00{1,2,3}/` |
-| Codex WP-N28 | — | **abgebrochen: Codex-Login abgelaufen (401)** | Nutzer: `codex login`, dann startet Claude WP-N28 neu |
+| Codex WP-N28 | — | **erledigt, geprüft, committet** | Offen: `analysis/configs/paper1_phaseC_v1.json` zeigt noch auf die Probe (`outputs/phase_c_dryrun_2026-09-25/`) und muss vor der endgültigen Auswertung auf die vollständige Registry umgestellt werden |
 
 ## 2. ODEFormer-Referenzraster — der Weg bis zum Start
 
@@ -68,7 +68,7 @@ ob das Kandidaten-Image (torch 2.14) als Sensitivitätsprüfung ebenfalls 3 × a
 ## 3. Warteschlange Codex (eine nach der anderen)
 
 1. ~~WP-N27c~~ erledigt.
-2. **WP-N28 (wartet auf `codex login`; Spezifikation committet `3ad2033`), Auswertungskette Phase C schließen.** Befunde der Generalprobe vom 25.09.:
+2. ~~WP-N28~~ erledigt (26.09.). Befunde der Generalprobe vom 25.09., jetzt geschlossen:
    Strukturmetriken nicht in die Registry eingemischt; Cap-Ablation braucht einen C-1/C-2-Filter und
    kommt mit exakt-only-Metriken bei Surrogaten nicht klar; SINDy-Paarung verlangt C-3 für alle
    Systeme; Pretuning-Collapse hat die Phase-B-Variantennamen fest verdrahtet. **Entschieden:
