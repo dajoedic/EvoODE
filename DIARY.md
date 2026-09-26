@@ -69,6 +69,7 @@ Nutzer. Nebenbefund: Docker Desktop kann das Netzlaufwerk `S:` nicht einbinden (
 einen leeren Ordner). Eingesammelt wird deshalb aus einer lokalen Kopie.
 
 ### WP-N28: Die Phase-C-Auswertungskette läuft durch
+<!-- 2f87379 -->
 
 Die vier Bruchstellen aus der Generalprobe vom 25.09. sind geschlossen. Ein neuer Schritt
 `build_phasec_analysis_registry.py` verbindet Registry und Strukturmetriken 1:1 über `run_id`; die
