@@ -81,6 +81,19 @@ Seiten der Sensitivitätsprüfung unter demselben Protokoll stehen. Dafür fehle
 Kandidaten-Image, ein Umgebungsparameter im k8s-Runner (heute fest `reference`) und eigene
 Manifeste. Das wird WP-N29.
 
+### WP-N25c: Die C-5-Kostenschranke rechnet mit der gesamten Zellzeit
+<!-- ee504bd -->
+
+`--estimate-cost` von WP-N3 und WP-N4 teilt jetzt `elapsed_s` durch `total_loss_evals`, statt
+`total_parameter_optimization_time_s`. Dieses Feld enthält die ODE-Integrationen nicht. Auf der
+Probe-History (175 exakte C-1-Zellen) ergibt das eine Obergrenze von **91,6 h** für den
+Oracle-Refit (dim 3: 71,3 h) und **305,4 h** für die Restart-Kurve bei k = 10 (dim 3: 237,7 h). Die
+teuerste Zelle ist System 55, Seed 42, IC 2, mit 16,9 h. Das deckt sich mit der Handrechnung im
+Plan. WP-N5 bleibt unverändert: Es rechnet `total_simulation_time_s / total_ode_solves`, und das
+ist richtig für einen Lauf, der nur integriert. Weitere Stellen, die das Feld als Kostenmaß nutzen,
+gibt es außerhalb von `src/` nicht. Das ist Kapazitätsplanung, keine Evidenz; beide Refits laufen
+auf Orion.
+
 ### WP-N28: Die Phase-C-Auswertungskette läuft durch
 <!-- 2f87379 -->
 

@@ -71,9 +71,9 @@ Nicht-Determinismus); (c) Kandidat (torch 2.14) läuft ebenfalls 3× auf Orion �
    kommt mit exakt-only-Metriken bei Surrogaten nicht klar; SINDy-Paarung verlangt C-3 für alle
    Systeme; Pretuning-Collapse hat die Phase-B-Variantennamen fest verdrahtet. **Entschieden:
    `structural_f1` = micro als Hauptzahl, macro daneben.**
-3. **WP-N25c:** `--estimate-cost` der C-5-Skripte nimmt `total_parameter_optimization_time_s`,
+3. ~~WP-N25c~~ erledigt (`ee504bd`, 91,6 h / 305,4 h bestätigt). `--estimate-cost` der C-5-Skripte nimmt `total_parameter_optimization_time_s`,
    das die ODE-Integrationen **nicht** enthält; richtig ist `elapsed_s / total_loss_evals`.
-   Korrigierte Schranke: Oracle ~92 h, Restart-Kurve ~305 h → Orion. **Codex fertig, Julia-Prüfung durch Claude läuft.**
+   Korrigierte Schranke: Oracle ~92 h, Restart-Kurve ~305 h → Orion.
 4. **WP-N29 (noch nicht spezifiziert):** Kandidaten-Image auf Orion — CI-Build + Trivy für
    `odeformer-candidate`, Umgebungsparameter in `baselines/run_odeformer_grid_k8s.py` (heute fest
    `reference`), Smoke- und Grid-Manifeste mit Ausgabe `…/candidate`. CI-Änderung → Eintrag in `CHANGELOG.md`.
