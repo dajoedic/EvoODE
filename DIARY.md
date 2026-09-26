@@ -43,6 +43,31 @@ Lehre: Ein Smoke muss jeden Codepfad berühren, den der Lauf nimmt, hier also mi
 Außerdem: Codex brach bei WP-N28 mit `401 Unauthorized` ab (Login abgelaufen). WP-N28 und WP-N25c
 warten auf `codex login`.
 
+**Ergebnis, 02:30: das Referenzraster ist fertig.** 126/126 Shards, 0 Fehlschläge, 1.512 Records (3 ×
+504), 0 Fehler-Records, alle 756 `_opt`-Records `success`. Anzahl Zellen mit R² > 0,9 (varianz-
+gewichtet) je Konfiguration und Wiederholung, von 126 Zellen:
+
+| Konfiguration | Rekonstruktion W1 / W2 / W3 | Generalisierung W1 / W2 / W3 | lokal WP-N23 (Rek. / Gen.) |
+|---|---|---|---|
+| beam10_noopt | 76 / 77 / 77 | 34 / 34 / 34 | 77 / 34 |
+| beam10_opt | 96 / 95 / 94 | 40 / 40 / 40 | 96 / 41 |
+| beam50_noopt | 89 / 88 / 89 | 36 / 36 / 36 | 89 / 36 |
+| beam50_opt | 100 / 101 / 101 | 42 / 42 / 43 | 101 / 43 |
+
+441 von 504 Zellen sind über die drei Wiederholungen bitgleich. **Alle 63 übrigen haben Timeouts,
+keine einzige ohne**. Das bestätigt WP-N24 auf der vollen Zellmenge. 10 Zellen kippen über die
+Schwelle, 8 davon in `_opt`-Konfigurationen, wo die Konstantenoptimierung am meisten integriert.
+Die Raten schwanken um höchstens 2 von 126 Zellen und liegen innerhalb von 1 an den lokalen
+WP-N23-Zahlen. Orion reproduziert also die lokale Größenordnung trotz anderer Hardware unter
+derselben 1-s-Uhr.
+
+Ablage: Records auf dem NFS unter `odeformer_grid_55e9c75…/reference/rep_00{1,2,3}/`, eingesammelt
+lokal unter `outputs/odeformer_grid_55e9c75/reference/` (`records.jsonl`,
+`cell_repetition_summary.csv`, `repetition_counts.csv`). **Noch nicht** unter `analysis/data/`: Wohin
+die kanonischen Claim-D-Daten gehören und was mit den `_wp_n23`-Ordnern passiert, entscheidet der
+Nutzer. Nebenbefund: Docker Desktop kann das Netzlaufwerk `S:` nicht einbinden (der Container sieht
+einen leeren Ordner). Eingesammelt wird deshalb aus einer lokalen Kopie.
+
 ---
 
 ## 2026-09-25
