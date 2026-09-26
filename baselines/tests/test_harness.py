@@ -924,6 +924,97 @@ def test_odeformer_grid_completion_index_mapping() -> None:
     assert run_odeformer_grid_k8s.completion_to_repetition_shard(125) == (3, 41)
 
 
+def test_odeformer_grid_k8s_parser_defaults_to_reference(monkeypatch) -> None:
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "run_odeformer_grid_k8s",
+            "--output-dir",
+            "/outputs/grid/reference",
+            "--trajectory-export-dir",
+            "/outputs/grid/trajectory_export",
+        ],
+    )
+    args = run_odeformer_grid_k8s.parse_args()
+    assert args.environment_id == "reference"
+
+
+def test_odeformer_grid_k8s_environment_id_passed_to_runner(monkeypatch, tmp_path: Path) -> None:
+    calls: dict[str, object] = {}
+
+    def fake_run(config_path: Path, output_dir: str, **kwargs: object) -> Path:
+        calls["config_path"] = config_path
+        calls["output_dir"] = output_dir
+        calls.update(kwargs)
+        return tmp_path / "records.jsonl"
+
+    monkeypatch.setenv("JOB_COMPLETION_INDEX", "42")
+    monkeypatch.setattr(run_odeformer_grid_k8s, "assert_torch_environment", lambda environment_id: calls.setdefault("checked", environment_id))
+    monkeypatch.setattr(run_odeformer_grid_k8s.run_odeformer_grid, "run", fake_run)
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "run_odeformer_grid_k8s",
+            "--config",
+            "baselines/configs/odeformer_grid.json",
+            "--output-dir",
+            str(tmp_path / "candidate"),
+            "--trajectory-export-dir",
+            str(tmp_path / "trajectory_export"),
+            "--environment-id",
+            "candidate",
+            "--limit",
+            "2",
+        ],
+    )
+
+    assert run_odeformer_grid_k8s.main() == 0
+    assert calls["checked"] == "candidate"
+    assert calls["environment_id"] == "candidate"
+    assert calls["repetition"] == 2
+    assert calls["shard_index"] == 0
+
+
+def test_odeformer_grid_k8s_expected_torch_version_reads_requirements(tmp_path: Path) -> None:
+    (tmp_path / "requirements-odeformer-reference.txt").write_text("numpy==1.0\ntorch==9.8.7+cpu\n", encoding="utf-8")
+    assert run_odeformer_grid_k8s.expected_torch_version("reference", tmp_path) == "9.8.7+cpu"
+
+
+def test_odeformer_grid_k8s_torch_guard_accepts_matching_public_version(monkeypatch, tmp_path: Path) -> None:
+    (tmp_path / "requirements-odeformer-candidate.txt").write_text("torch==2.14.0\n", encoding="utf-8")
+    monkeypatch.setattr(run_odeformer_grid_k8s, "expected_torch_version", lambda environment_id: "2.14.0")
+    monkeypatch.setattr(run_odeformer_grid_k8s.importlib.metadata, "version", lambda package: "2.14.0+cpu")
+    run_odeformer_grid_k8s.assert_torch_environment("candidate")
+
+
+def test_odeformer_grid_k8s_torch_guard_aborts_before_run(monkeypatch, tmp_path: Path) -> None:
+    def unexpected_run(*_args: object, **_kwargs: object) -> Path:
+        raise AssertionError("grid runner must not start after a torch mismatch")
+
+    monkeypatch.setenv("JOB_COMPLETION_INDEX", "0")
+    monkeypatch.setattr(run_odeformer_grid_k8s, "expected_torch_version", lambda environment_id: "2.0.0")
+    monkeypatch.setattr(run_odeformer_grid_k8s.importlib.metadata, "version", lambda package: "2.14.0")
+    monkeypatch.setattr(run_odeformer_grid_k8s.run_odeformer_grid, "run", unexpected_run)
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "run_odeformer_grid_k8s",
+            "--output-dir",
+            str(tmp_path / "reference"),
+            "--trajectory-export-dir",
+            str(tmp_path / "trajectory_export"),
+            "--environment-id",
+            "reference",
+        ],
+    )
+
+    with pytest.raises(RuntimeError, match="does not match reference requirement"):
+        run_odeformer_grid_k8s.main()
+
+
 def test_odeformer_grid_shards_cover_504_cells_once() -> None:
     config = run_odeformer_grid.load_json(harness.REPO_ROOT / "baselines" / "configs" / "odeformer_grid.json")
     systems = harness.selected_systems(benchmark(), config)
@@ -961,6 +1052,31 @@ def test_odeformer_grid_collect_rejects_incomplete_repetition(tmp_path: Path) ->
 
     with pytest.raises(ValueError, match="repetition 2 incomplete"):
         run_odeformer_grid.collect_repetitions(tmp_path / "grid", expected_per_repetition=2, repetitions=3)
+
+
+def test_odeformer_grid_collect_accepts_candidate_output_dir(tmp_path: Path) -> None:
+    output_dir = tmp_path / "odeformer_grid_sha" / "candidate"
+    for rep in [1, 2, 3]:
+        records_dir = output_dir / f"rep_{rep:03d}" / "records"
+        records_dir.mkdir(parents=True)
+        record = {
+            "system_id": 1,
+            "fit_initial_condition_set": 1,
+            "generalization_initial_condition_set": 2,
+            "odeformer_config_id": "beam10_noopt",
+            "odeformer_environment_id": "candidate",
+            "odeformer_grid_repetition": rep,
+            "status": "success",
+            "odeformer_model_raw": "x_0",
+            "reconstruction_r2_variance_weighted": 1.0,
+            "generalization_r2_variance_weighted": 1.0,
+        }
+        (records_dir / "cell.json").write_text(json.dumps(record), encoding="utf-8")
+
+    path = run_odeformer_grid.collect_repetitions(output_dir, expected_per_repetition=1, repetitions=3)
+    records = read_jsonl(path)
+    assert len(records) == 3
+    assert {record["odeformer_environment_id"] for record in records} == {"candidate"}
 
 
 def test_odeformer_summary_counts_and_expression_identity_from_export_records(tmp_path: Path) -> None:

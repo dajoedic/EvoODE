@@ -1,4 +1,4 @@
-status: blocked
-task:   WP-N25c
-report: codex/reports/REPORT_WP_N25c.md
-note:   Umsetzung fertig; blocked wegen Julia-Ausführung durch Claude (Umgebung, nicht Sache).
+status: done
+task:   WP-N29
+report: codex/reports/REPORT_WP_N29.md
+note:   Umsetzung fertig; Tests und YAML-Parse gruen, Docker/Orion nicht ausgefuehrt.

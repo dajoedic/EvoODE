@@ -10,6 +10,19 @@ project**. Scientific history belongs in `DIARY.md`, not here.
 
 ## [Unreleased]
 
+### Added - 2026-09-26
+
+- `build_odeformer_candidate_image` builds
+  `$CI_REGISTRY_IMAGE/odeformer-candidate:$CI_COMMIT_SHA` and
+  `$CI_REGISTRY_IMAGE/odeformer-candidate:$CI_COMMIT_REF_SLUG` from
+  `baselines/Dockerfile.odeformer-candidate`, using the same pinned Docker-in-Docker service and
+  attestation-disabling flags as the reference image. The job supports the ODEFormer candidate
+  sensitivity grid on Orion under the same protocol as the reference arm.
+- `trivy-odeformer-candidate-image` scans that image with `allow-failure: true`. Its
+  HIGH/CRITICAL findings are not measured yet; interpret the first scan beside E7, which documents
+  why the reference image is allowed to remain scientifically pinned while the torch 2.14 candidate
+  is checked as the sensitivity arm.
+
 ### Added - 2026-09-25
 
 - `build_odeformer_reference_image` builds

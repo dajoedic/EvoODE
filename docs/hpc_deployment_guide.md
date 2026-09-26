@@ -101,6 +101,12 @@ zahlst du **einmal pro Commit** — dafür starten später alle 756 Rechenzellen
 
 Zu sehen unter: `gitlab.scch.at/joedicke/evoode` → **Build → Pipelines**
 
+Die ODEFormer-Arme haben eigene CI-Jobs und Image-Pfade neben dem Kampagnen-Image:
+`build_odeformer_reference_image` schiebt
+`registry.gitlab.scch.at:443/joedicke/evoode/odeformer-reference:<commit-hash>`,
+`build_odeformer_candidate_image` schiebt
+`registry.gitlab.scch.at:443/joedicke/evoode/odeformer-candidate:<commit-hash>`.
+
 ### Schritt 3 — Das Image landet in der Registry
 
 Am Ende des Baus schiebt die CI das Image in die Registry, mit **zwei Namensschildern**:
@@ -163,8 +169,16 @@ Die Vorlagen liegen im Repository:
 
 - [`k8s/phase_b_bootstrap_smoke_job.yaml`](../k8s/phase_b_bootstrap_smoke_job.yaml) — der Bootstrap
 - [`k8s/phase_b_indexed_smoke_job.yaml`](../k8s/phase_b_indexed_smoke_job.yaml) — die Rechenzellen
+- [`k8s/odeformer_reference_grid_smoke_job.yaml`](../k8s/odeformer_reference_grid_smoke_job.yaml)
+  und [`k8s/odeformer_reference_grid_job.yaml`](../k8s/odeformer_reference_grid_job.yaml) — das
+  ODEFormer-Referenzraster
+- [`k8s/odeformer_candidate_grid_smoke_job.yaml`](../k8s/odeformer_candidate_grid_smoke_job.yaml)
+  und [`k8s/odeformer_candidate_grid_job.yaml`](../k8s/odeformer_candidate_grid_job.yaml) — das
+  ODEFormer-Kandidatenraster
 
-Beide enthalten `<COMMIT_SHA>` als Platzhalter, der vor dem Anwenden ersetzt werden muss.
+Diese Vorlagen enthalten `<COMMIT_SHA>` als Platzhalter, der vor dem Anwenden ersetzt werden muss.
+Die Kandidaten-Manifeste enthalten zusätzlich `<TRAJECTORY_SHA>`, damit das torch-2.14-Image
+dieselben Trajektoriendateien wie der Referenzarm liest.
 
 #### Es braucht zwei Manifeste, nicht eines
 
@@ -695,7 +709,7 @@ Zeitpunkt sichtbar gemacht — nach 35 Sekunden statt in Stunde 30.
 | API-Adresse | `https://api.orion.scch.at:6443` |
 | OpenShift-Konsole | `https://console-openshift-console.apps.orion.scch.at/` |
 | Zabbix (Cluster-Auslastung) | `https://zabbix.scch.at/zabbix.php?action=dashboard.view` |
-| Image | `registry.gitlab.scch.at:443/joedicke/evoode:<commit-hash>` |
+| Image | Kampagne: `registry.gitlab.scch.at:443/joedicke/evoode:<commit-hash>`; ODEFormer-Referenz: `registry.gitlab.scch.at:443/joedicke/evoode/odeformer-reference:<commit-hash>`; ODEFormer-Kandidat: `registry.gitlab.scch.at:443/joedicke/evoode/odeformer-candidate:<commit-hash>` |
 | Zugangsgeheimnis | `evoode-gitlab-pull` |
 | NFS-Server | `nfs.orion.scch.at`, Export `/bigdata` |
 | Arbeitsverzeichnis | `/bigdata/data-science/joedicke` = `S:\BigDataOrion\data-science\joedicke` |

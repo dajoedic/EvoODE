@@ -28,6 +28,16 @@ include:
       allow-failure: true
       tags:
         - cpu
+  - component: $CI_SERVER_FQDN/devops_examples/components/security/trivy-image@v3.2.0
+    inputs:
+      stage: security
+      job-name: trivy-odeformer-candidate-image
+      scan-mode: registry
+      image: "$CI_REGISTRY_IMAGE/odeformer-candidate:$CI_COMMIT_SHA"
+      severity: HIGH,CRITICAL
+      allow-failure: true
+      tags:
+        - cpu
   - component: $CI_SERVER_FQDN/devops_examples/components/python/dependency-vuln@v3.3.3
     inputs:
       stage: security
@@ -120,6 +130,34 @@ build_odeformer_reference_image:
     - docker push "$CI_REGISTRY_IMAGE/odeformer-reference:$CI_COMMIT_SHA"
     - docker push "$CI_REGISTRY_IMAGE/odeformer-reference:$CI_COMMIT_REF_SLUG"
 
+build_odeformer_candidate_image:
+  stage: build
+  tags:
+    - cpu
+  timeout: 3 hours
+  services:
+    # Pinned by digest: the floating 29-dind tag switched attestations on in a patch release
+    # (CHANGELOG, Fixed — 2026-09-22). This digest built 5a87efb successfully in pipeline #8379.
+    - name: registry.scch.at/cache/library/docker:29-dind@sha256:5efed980cba3fc126cf54e21a5a6ff8849d05b6e0623d6e7612f48e9cd6cd17e
+      alias: docker
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'
+      changes:
+        - baselines/**/*
+    - if: '$CI_COMMIT_BRANCH == "main"'
+      when: manual
+    - when: never
+  variables:
+    DOCKER_BUILDKIT: "1"
+    DOCKER_TLS_CERTDIR: ""
+    BUILDX_NO_DEFAULT_ATTESTATIONS: "1"
+  before_script:
+    - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" "$CI_REGISTRY"
+  script:
+    - docker build --provenance=false --sbom=false --pull -f baselines/Dockerfile.odeformer-candidate -t "$CI_REGISTRY_IMAGE/odeformer-candidate:$CI_COMMIT_SHA" -t "$CI_REGISTRY_IMAGE/odeformer-candidate:$CI_COMMIT_REF_SLUG" .
+    - docker push "$CI_REGISTRY_IMAGE/odeformer-candidate:$CI_COMMIT_SHA"
+    - docker push "$CI_REGISTRY_IMAGE/odeformer-candidate:$CI_COMMIT_REF_SLUG"
+
 trivy-fs:
   rules:
     - if: '$CI_COMMIT_BRANCH == "main"'
@@ -145,6 +183,18 @@ trivy-odeformer-reference-image:
     - when: never
   needs:
     - job: build_odeformer_reference_image
+      artifacts: false
+
+trivy-odeformer-candidate-image:
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'
+      changes:
+        - baselines/**/*
+    - if: '$CI_COMMIT_BRANCH == "main"'
+      when: manual
+    - when: never
+  needs:
+    - job: build_odeformer_candidate_image
       artifacts: false
 
 python-dependency-vuln:

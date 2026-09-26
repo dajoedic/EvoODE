@@ -229,32 +229,49 @@ Runs the ODEBench suite from `benchmarks/data/strogatz_extended.json`.
 julia benchmarks/run_odebench.jl
 ```
 
-### ODEFormer-Referenzraster auf Orion
+### ODEFormer-Raster auf Orion
 
-Claim D uses the ODEFormer reference image in faithful mode: ODEFormer's own 1 s integration
-guard stays active, the grid has three repetitions, and each pod runs one ODEFormer process on one
-CPU.
+Claim D uses the ODEFormer reference image in faithful mode and the torch 2.14 candidate image as a
+sensitivity arm under the same protocol: ODEFormer's own 1 s integration guard stays active, the
+grid has three repetitions, and each pod runs one ODEFormer process on one CPU. The candidate arm
+must read the same trajectory export as the reference arm; use the reference grid SHA as
+`<TRAJECTORY_SHA>` when applying candidate manifests.
 
 1. User: push the desired commit to GitLab.
-2. User: run or trigger the `build_odeformer_reference_image` CI job. It publishes
-   `registry.gitlab.scch.at:443/joedicke/evoode/odeformer-reference:<COMMIT_SHA>`.
+2. User: run or trigger the image CI job for the intended arm:
+   `build_odeformer_reference_image` publishes
+   `registry.gitlab.scch.at:443/joedicke/evoode/odeformer-reference:<COMMIT_SHA>`;
+   `build_odeformer_candidate_image` publishes
+   `registry.gitlab.scch.at:443/joedicke/evoode/odeformer-candidate:<COMMIT_SHA>`.
 3. User: prepare NFS by copying the trajectory export to
    `/bigdata/data-science/joedicke/odeformer_grid_<COMMIT_SHA>/trajectory_export`.
-4. User: substitute `<COMMIT_SHA>` in `k8s/odeformer_reference_grid_smoke_job.yaml`, apply it,
-   and inspect the smoke output under
-   `/bigdata/data-science/joedicke/odeformer_grid_<COMMIT_SHA>/reference/smoke`.
+4. User: substitute placeholders in the smoke manifest and apply it. For the reference arm,
+   substitute `<COMMIT_SHA>` in `k8s/odeformer_reference_grid_smoke_job.yaml`; for the candidate
+   arm, substitute `<COMMIT_SHA>` and `<TRAJECTORY_SHA>` in
+   `k8s/odeformer_candidate_grid_smoke_job.yaml`. Inspect the smoke output under
+   `/bigdata/data-science/joedicke/odeformer_grid_<COMMIT_SHA>/reference/smoke` or
+   `/bigdata/data-science/joedicke/odeformer_grid_<COMMIT_SHA>/candidate/smoke`.
    The smoke selection must include at least one `_opt` configuration, and the check must compare
    `odeformer_optimization_status` so a missing constant-optimization source checkout cannot pass
-   as an unoptimized but otherwise valid record.
-5. User: after checking quota and running Phase-C pods, substitute `<COMMIT_SHA>` in
-   `k8s/odeformer_reference_grid_job.yaml` and apply it. The indexed Job runs 126 completions:
-   3 repetitions x 42 shards.
+   as an unoptimized but otherwise valid record. At least one `_opt` cell must show
+   `odeformer_optimization_status = success` before the full grid starts.
+5. User: after checking quota and running Phase-C pods, substitute placeholders in the full manifest
+   and apply it. Reference uses `k8s/odeformer_reference_grid_job.yaml`; candidate uses
+   `k8s/odeformer_candidate_grid_job.yaml`. The indexed Job runs 126 completions: 3 repetitions x
+   42 shards.
 6. User: collect after all pods finish:
 
 ```bash
+# Reference
 python -m baselines.run_odeformer_grid \
   --config baselines/configs/odeformer_grid.json \
   --output-dir /outputs/odeformer_grid_<COMMIT_SHA>/reference \
+  --collect --repetitions 3
+
+# Candidate
+python -m baselines.run_odeformer_grid \
+  --config baselines/configs/odeformer_grid.json \
+  --output-dir /outputs/odeformer_grid_<COMMIT_SHA>/candidate \
   --collect --repetitions 3
 ```
 
@@ -274,6 +291,14 @@ docker run --rm \
     --trajectory-export-dir /trajectory_export \
     --output-dir /outputs/reference \
     --limit 2
+```
+
+Candidate smoke and grid manifests add:
+
+```bash
+--environment-id candidate
+--trajectory-export-dir /outputs/odeformer_grid_<TRAJECTORY_SHA>/trajectory_export
+--output-dir /outputs/odeformer_grid_<COMMIT_SHA>/candidate
 ```
 
 ---
