@@ -74,9 +74,10 @@ Nicht-Determinismus); (c) Kandidat (torch 2.14) läuft ebenfalls 3× auf Orion �
 3. ~~WP-N25c~~ erledigt (`ee504bd`, 91,6 h / 305,4 h bestätigt). `--estimate-cost` der C-5-Skripte nimmt `total_parameter_optimization_time_s`,
    das die ODE-Integrationen **nicht** enthält; richtig ist `elapsed_s / total_loss_evals`.
    Korrigierte Schranke: Oracle ~92 h, Restart-Kurve ~305 h → Orion.
-4. **WP-N29 (noch nicht spezifiziert):** Kandidaten-Image auf Orion — CI-Build + Trivy für
-   `odeformer-candidate`, Umgebungsparameter in `baselines/run_odeformer_grid_k8s.py` (heute fest
-   `reference`), Smoke- und Grid-Manifeste mit Ausgabe `…/candidate`. CI-Änderung → Eintrag in `CHANGELOG.md`.
+4. ~~WP-N29~~ erledigt (`78a18e7`). **Nächster Schritt liegt beim Nutzer:** Push (baut
+   `odeformer-candidate`), dann Kandidaten-Smoke mit `<COMMIT_SHA>` = gebauter Commit und
+   `<TRAJECTORY_SHA>` = `55e9c753185ff6596913547cdf635bcc45d0bbfc`; Grid nur, wenn der Smoke eine
+   `_opt`-Zelle mit `success` zeigt. Befehle in `SCRIPTS.md`, Abschnitt ODEFormer auf Orion.
 
 ## 4. Heute erledigt (25.09.), alles committet
 
@@ -86,5 +87,4 @@ Deadlock), CHANGELOG E7 (wandb-Befund), Plan-Korrekturen (Determinismus-Satz, C-
 
 ## 5. Git
 
-Uncommittet: nur was Codex gerade schreibt. Lokal committet, **nicht gepusht**: `2f87379`,
-`97e73d8`, `8a2db1b` und folgende. Gepusht bis `55e9c75`.
+Uncommittet: nur was Codex gerade schreibt. Lokal committet, **nicht gepusht**: `2f87379` bis `78a18e7` und folgende. Gepusht bis `55e9c75`.

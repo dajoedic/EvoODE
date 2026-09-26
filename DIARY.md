@@ -81,6 +81,21 @@ Seiten der Sensitivitätsprüfung unter demselben Protokoll stehen. Dafür fehle
 Kandidaten-Image, ein Umgebungsparameter im k8s-Runner (heute fest `reference`) und eigene
 Manifeste. Das wird WP-N29.
 
+### WP-N29: Das Kandidatenraster ist für Orion vorbereitet
+<!-- 78a18e7 -->
+
+Die CI baut und scannt jetzt `odeformer-candidate` nach dem Muster der Referenz (automatisch bei
+Änderungen unter `baselines/`; Eintrag in `CHANGELOG.md`). Der k8s-Runner hat `--environment-id`
+(Default `reference`). Vor der ersten Zelle prüft er, dass die installierte torch-Version zur
+Pinnung in `requirements-odeformer-<env>.txt` passt; das falsche Image bricht also sofort ab. Das
+gilt jetzt auch für den Referenzarm. Die Kandidaten-Manifeste lesen die Trajektorien des
+Referenzrasters (`odeformer_grid_55e9c753…/trajectory_export`) über einen eigenen Platzhalter
+`<TRAJECTORY_SHA>`. Beide Arme sehen damit dieselben Eingabedateien. Das Einsammeln hängt nur am
+Ausgabeordner und funktioniert ohne Änderung. Tests: 41 grün, 5 übersprungen. Nachgebessert habe ich
+einen Kodierungsfehler, den Codex in einen CI-Kommentar kopiert hatte (`â€”` statt `—`). Nicht
+geprüft: der NFS-Pfad, denn das Laufwerk `S:` war aus der Sitzung nicht lesbar. Der Smoke-Test
+fängt das ab.
+
 ### WP-N25c: Die C-5-Kostenschranke rechnet mit der gesamten Zellzeit
 <!-- ee504bd -->
 
