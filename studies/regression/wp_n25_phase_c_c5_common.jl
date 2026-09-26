@@ -207,9 +207,14 @@ function wp_n25_phase_c_support_terms(record, support_table, dim::Int)
 end
 
 function wp_n25_loss_eval_seconds(record)
-    total_time = Float64(_json_require(record, :total_parameter_optimization_time_s, "cost estimate"))
+    key = wp_n25_record_key(record)
+    elapsed_value = _json_get(record, :elapsed_s)
+    elapsed_value === nothing && error("Record $(key) missing elapsed_s for cost estimate")
+    total_time = Float64(elapsed_value)
+    isfinite(total_time) && total_time > 0.0 ||
+        error("Record $(key) has non-positive or non-finite elapsed_s")
     total_evals = Int(_json_require(record, :total_loss_evals, "cost estimate"))
-    total_evals > 0 || error("Record $(wp_n25_record_key(record)) has non-positive total_loss_evals")
+    total_evals > 0 || error("Record $(key) has non-positive total_loss_evals")
     return total_time / total_evals
 end
 
@@ -229,7 +234,7 @@ function wp_n25_estimate_rows(records, task_label::AbstractString, fits_per_cell
             "initial_condition_set" => Int(_json_require(record, :initial_condition_set, "cost estimate")),
             "fits_per_cell" => fits_per_cell,
             "bfgs_max_loss_evals" => BFGS_MAX_LOSS_EVALS,
-            "campaign_loss_eval_s" => loss_eval_s,
+            "campaign_elapsed_s_per_loss_eval" => loss_eval_s,
             "planning_upper_bound_s" => bound_s,
         ))
     end
@@ -238,7 +243,8 @@ end
 
 function wp_n25_write_cost_estimate(rows)
     println("Planning cost estimate only; not runtime evidence.")
-    println("cell_key,dimension,fits_per_cell,bfgs_max_loss_evals,campaign_loss_eval_s,planning_upper_bound_s")
+    println("Per-loss estimate source: elapsed_s / total_loss_evals for capacity planning only; not runtime evidence.")
+    println("cell_key,dimension,fits_per_cell,bfgs_max_loss_evals,campaign_elapsed_s_per_loss_eval,planning_upper_bound_s")
     total = 0.0
     by_dim = Dict{Int, Vector{Float64}}()
     for row in rows
@@ -253,7 +259,7 @@ function wp_n25_write_cost_estimate(rows)
             row["dimension"],
             row["fits_per_cell"],
             row["bfgs_max_loss_evals"],
-            row["campaign_loss_eval_s"],
+            row["campaign_elapsed_s_per_loss_eval"],
             row["planning_upper_bound_s"],
         ], ","))
     end

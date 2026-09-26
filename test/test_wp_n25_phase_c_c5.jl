@@ -93,3 +93,32 @@ end
     broken["basis_name"] = "default_staged_polynomial_basis"
     @test_throws ErrorException wp_n25_phase_c_filter([broken]; require_exact_support = true)
 end
+
+@testset "WP-N25 cost estimate uses elapsed cell time" begin
+    record = mutable_json(first(real_phase_c_records(1)))
+    record["elapsed_s"] = 120.0
+    record["total_parameter_optimization_time_s"] = 6.0
+    record["total_loss_evals"] = 30
+
+    @test wp_n25_loss_eval_seconds(record) == 4.0
+    rows = wp_n25_estimate_rows([record], "WP-N25-test", 2)
+    @test only(rows)["campaign_elapsed_s_per_loss_eval"] == 4.0
+    @test only(rows)["planning_upper_bound_s"] == 2 * BFGS_MAX_LOSS_EVALS * 4.0
+end
+
+@testset "WP-N25 cost estimate rejects missing or invalid elapsed_s" begin
+    record = mutable_json(first(real_phase_c_records(1)))
+    record["total_loss_evals"] = 30
+
+    missing_elapsed = mutable_json(record)
+    delete!(missing_elapsed, "elapsed_s")
+    @test_throws ErrorException wp_n25_loss_eval_seconds(missing_elapsed)
+
+    zero_elapsed = mutable_json(record)
+    zero_elapsed["elapsed_s"] = 0.0
+    @test_throws ErrorException wp_n25_loss_eval_seconds(zero_elapsed)
+
+    nonfinite_elapsed = mutable_json(record)
+    nonfinite_elapsed["elapsed_s"] = Inf
+    @test_throws ErrorException wp_n25_loss_eval_seconds(nonfinite_elapsed)
+end

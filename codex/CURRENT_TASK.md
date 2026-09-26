@@ -1,92 +1,67 @@
-# WP-N28 — Die Phase-C-Auswertungskette schließen: Registry mit Metriken, Arm-Filter, Cap-Ablation, SINDy-Paarung, Pretuning-Collapse
-**Language: Python**
+# WP-N25c — Die Kostenschranke der C-5-Skripte auf die gesamte Zellzeit umstellen
+**Language: Julia**
 
 ## Ausführung
 
-Lokal umsetzbar. Nur die betroffenen Tests ausführen. Permutationen und Bootstraps in Tests klein
-halten. Keine Git-Operationen. Nichts, was länger als 15 Minuten läuft.
+Julia ist in der Codex-Umgebung nicht ausführbar (`codex/CODEX_PROTOCOL.md`). Code und Tests
+schreiben, **nicht ausführen**, und mit `status: blocked` plus dem Vermerk „Julia-Ausführung durch
+Claude“ melden. Claude führt die Tests und die Abnahmeläufe aus. Keine Git-Operationen.
 
 ## Ausgangslage
 
-Am 2026-09-25 lief eine Generalprobe der Phase-C-Auswertung auf 885 von 936 Records
-(`outputs/phase_c_dryrun_2026-09-25/`: `tasks/`, `history.jsonl`, `run_registry.csv`). Registry,
-Invarianten und Strukturmetriken laufen seit WP-N26. Die Strukturmetriken liegen unter
-`outputs/phase_c_dryrun_2026-09-25/agg/structure_n26/phasec_structure_metrics_by_cell.csv` und
-sind per `run_id` an die Registry anschließbar. Danach scheitert die Kette an vier Stellen:
+`--estimate-cost` in `wp_n3_oracle_refit.jl`, `wp_n4_multistart_refit.jl` und
+`wp_n5_ic_generalization.jl` schätzt eine Planungsobergrenze pro Zelle als
+Fits pro Zelle × Loss-Evaluations-Budget × Sekunden pro Loss-Evaluation. Die Sekunden pro
+Loss-Evaluation kommen aus `wp_n25_loss_eval_seconds` in
+`studies/regression/wp_n25_phase_c_c5_common.jl` und werden als
+`total_parameter_optimization_time_s / total_loss_evals` berechnet.
 
-1. **Es fehlt ein Schritt, der die Strukturmetriken in die Registry einmischt.**
-   `aggregate_phasec_cap_ablation.py` verlangt Spalten `structural_f1`, `term_precision`,
-   `term_recall`, `coefficient_relative_error_mean`. Die Strukturmetriken liefern
-   `structural_f1_micro/_macro`, `term_precision_micro/_macro` usw. **Entschieden am 2026-09-26 vom
-   Nutzer:** Die unsuffigierten Namen sind **micro** (über alle Terme eines Laufs gepoolt), macro
-   steht immer daneben.
-2. **Cap-Ablation** (`aggregate_phasec_cap_ablation.py`):
-   (a) Sie akzeptiert nur die Arme C-1/C-2 und bricht an der Kampagnen-Registry ab, die auch C-3
-   (`evogrow_v2_2_stage_capped_pretune_on`) enthält.
-   (b) Sie verlangt `system_expected_stage` und `coefficient_relative_error_mean` in **jeder**
-   Zeile als Zahl. Beide sind für Surrogat-Systeme per Definition leer (Designprinzip 8: exakte und
-   Surrogat-Systeme werden nie in einer Strukturmetrik gemischt).
-3. **SINDy-Paarung** (`run_phasec_sindy_baseline.py pair`) leitet die erwartete Menge
-   (Seed, Bedingung) global ab und verlangt sie für jedes System. C-3 deckt nur die 30 exakten
-   Systeme ab, also scheitert sie auch auf vollständigen Daten (Beispiel System 4, Surrogat). Claim D
-   paart laut `docs/paper1_phaseC_benchmark_plan.md` **nur C-1** gegen SINDy.
-4. **Pretuning-Collapse** (`analyze_pretuning_distribution_collapse.py`) hat die Phase-B-Varianten
-   fest verdrahtet (`..._pretune_on` / `..._pretune_off`), und es gibt keine Konfiguration
-   `analysis/configs/paper1_phaseC_v1.json`. In Phase C ist `pretune_on` =
-   `evogrow_v2_2_stage_capped_pretune_on` (C-3), `pretune_off` = `evogrow_v2_2_stage_capped` mit
-   `use_pretuning = false` (C-1). Der Vergleich (Abl-2) umfasst nur die 30 exakten Systeme ×
-   3 Seeds × 2 IC-Sets = **180 Paare** und gruppiert auf **roher** `support_terms` (Plan §1b).
+Das ist falsch. `total_parameter_optimization_time_s` ist in `src/structure/evogrow.jl`
+`total_fit_time_s - total_solve_time_s`, also **ohne** die ODE-Integrationen. Die Integrationen
+dominieren auf dim 3 um drei Größenordnungen. Die Schranke war dadurch viel zu niedrig. Richtig
+ist die gemessene gesamte Zellzeit: `elapsed_s / total_loss_evals`. Sie enthält alles, was eine
+Loss-Evaluation kostet.
+
+Von Hand nachgerechnet, über 175 der 180 exakten C-1-Zellen: Oracle-Refit etwa **92 h**,
+Restart-Kurve bei k = 10 etwa **305 h**, davon dim 3 71 h bzw. 238 h. Die teuerste Einzelzelle
+liegt bei etwa 17 h. Stand: `docs/paper1_phaseC_benchmark_plan.md`, Absatz unter der Kostentabelle.
 
 ## Was zu tun ist
 
-1. **Neuer Schritt `analysis/scripts/aggregate/build_phasec_analysis_registry.py`:** Er liest die
-   verifizierte Kampagnen-Registry und die Strukturmetriken pro Zelle, verbindet sie 1:1 über
-   `run_id` (Abbruch bei fehlender oder doppelter Zeile) und schreibt eine Analyse-Registry mit den
-   unsuffigierten Namen = micro plus allen `_micro`/`_macro`-Spalten. Dazu kommen die abgeleiteten
-   Teilmengen als eigene Dateien:
-   - `…_c1_c2.csv`: C-1 und C-2, für die Cap-Ablation
-   - `…_c1.csv`: nur C-1, für SINDy-Paarung und C-5
-   - `…_pretuning.csv`: C-1 ∩ exakte Systeme und C-3, für Abl-2
-
-   Jede Teilmenge wird über `variant_slug` **und** `use_pretuning` gebildet, nie über den Namen
-   allein. Die Zeilenzahlen werden gegen die Erwartung aus `phase_c_support.json` geprüft (mit
-   einer expliziten Option für unvollständige Kampagnen, die im Output vermerkt wird).
-2. **Cap-Ablation:** Metriken, die nur für exakte Systeme existieren (`system_expected_stage`,
-   Koeffizientenfehler, Strukturtreffer gegen die Wahrheit), dürfen bei Surrogaten leer sein. Ihre
-   Qualitäts-Deltas werden **nur auf exakten Paaren** berechnet und so ausgewiesen (Zahl der Paare
-   im Output). Kostenmetriken und R² laufen über alle Paare, stratifiziert wie bisher. Ein Leerwert
-   bei einem **exakten** System bleibt ein Abbruch.
-3. **SINDy-Paarung:** Im Modus für Claim D werden nur C-1-Records gepaart. Die erwartete Menge
-   (Seed, Bedingung) wird pro Arm aus dessen Umfang abgeleitet, nicht global. Abbruch, wenn ein
-   C-1-Record fehlt.
-4. **Pretuning-Collapse:** `analysis/configs/paper1_phaseC_v1.json` anlegen. Das Skript bekommt die
-   Variantenzuordnung aus der Konfiguration, nicht aus Konstanten. Die Phase-B-Konfiguration trägt
-   die bisherigen Werte, damit Phase B **bitgleich** bleibt. Erwartete Paarzahlen für Phase C aus
-   `phase_c_support.json` (180; exakt 180, Surrogat 0).
-5. `SCRIPTS.md`, Abschnitt Phase-C-Kette: den neuen Schritt einfügen, zwischen Strukturmetriken und
-   den Konsumenten. `docs/paper1_phaseC_benchmark_plan.md` §1a: bei Claim A "structural F1" mit dem
-   Zusatz "(micro; macro reported beside it, decided 2026-09-26)".
+1. `wp_n25_loss_eval_seconds` nimmt `elapsed_s` statt `total_parameter_optimization_time_s`.
+   Fehlt `elapsed_s`, ist es nicht endlich oder nicht positiv → Abbruch mit Zell-Schlüssel, wie
+   bisher bei `total_loss_evals`.
+2. Die Ausgabespalte `campaign_loss_eval_s` bekommt einen Namen, der die Quelle sagt, z. B.
+   `campaign_elapsed_s_per_loss_eval`. Die Kopfzeile „Planning cost estimate only; not runtime
+   evidence.“ bleibt, und die Ausgabe sagt zusätzlich in einer Zeile, dass die Quelle `elapsed_s`
+   ist (Kapazitätsplanung, keine Evidenz, Designprinzip 7).
+3. Prüfen, ob `wp_n5_ic_generalization.jl --estimate-cost` dieselbe Funktion oder eine eigene
+   Rechnung mit `total_parameter_optimization_time_s` benutzt. Wenn ja: gleich behandeln.
+   Sonst unverändert lassen und im Report sagen, was es rechnet.
+4. Im gesamten Repository nach weiteren Stellen suchen, an denen
+   `total_parameter_optimization_time_s` als Kosten pro Loss-Evaluation oder als Zellkosten
+   verwendet wird (außerhalb von `src/`, das das Feld nur schreibt). Nur **auflisten** im Report,
+   nicht ändern.
+5. `test/test_wp_n25_phase_c_c5.jl`: Test, dass die Schranke aus `elapsed_s` gerechnet wird. Der
+   Test-Record hat unterschiedliche Werte für `elapsed_s` und
+   `total_parameter_optimization_time_s`, und das Ergebnis muss dem `elapsed_s`-Wert folgen. Dazu
+   ein Test für den Abbruch bei fehlendem oder nicht positivem `elapsed_s`.
+6. `SCRIPTS.md`, Abschnitt C-5: ein Satz, dass `--estimate-cost` aus `elapsed_s` rechnet und eine
+   Obergrenze unter der Annahme ist, dass jeder Fit sein Budget ausschöpft.
 
 ## Verboten
 
 - Keine Git-Operationen.
-- Phase-A- und Phase-B-Ausgaben dürfen sich nicht ändern (bitgleich prüfen, wo ein Skript beide
-  bedient).
-- Keine Pruning-Schwelle, keine Metrikdefinition außer der micro/macro-Benennung ändern.
-- Nichts unter `analysis/data/` oder `analysis/tables/` schreiben. Probe-Ausgaben nur nach
-  `outputs/phase_c_dryrun_2026-09-25/agg_n28/`.
+- Nichts an `src/` ändern. Das Feld `total_parameter_optimization_time_s` bleibt, wie es ist.
+- Nichts an der Refit-Logik, an den Records oder an den Ausgaben außer dem Kostenmodus ändern.
+- Keine Refits starten. Nur `--estimate-cost` ist ein zulässiger Probelauf, und den macht Claude.
+- Nichts unter `analysis/data/` oder `analysis/tables/` schreiben.
 
-## Abnahme
+## Abnahme (führt Claude aus)
 
-1. Tests für jeden der fünf Punkte, einschließlich: fehlende oder doppelte `run_id` beim Join →
-   Abbruch; Teilmengen über `use_pretuning`; Surrogat-Leerwert erlaubt, exakter Leerwert → Abbruch;
-   SINDy-Paarung auf einem System ohne C-3 läuft; Pretuning-Zuordnung aus der Konfiguration.
-2. **Die ganze Kette auf der Probe-Registry** mit der Option für unvollständige Daten: Analyse-
-   Registry → Cap-Ablation → SINDy-Paarung (gegen
-   `analysis/data/paper1_phaseC_v1/phasec_sindy_baseline/details.csv`, EvoGrow-Records aus
-   `outputs/phase_c_dryrun_2026-09-25/tasks`) → Pretuning-Collapse. Alle laufen durch; Ausgaben nach
-   `agg_n28/`. Die Befehle stehen im Report.
-3. Phase-B-Bitgleichheit für `analyze_pretuning_distribution_collapse.py` mit der Phase-B-
-   Konfiguration gegen die vorhandenen Phase-B-Ausgaben.
-4. Report `codex/reports/REPORT_WP_N28.md`: geänderte Dateien, Befehle, Paarzahlen aus der Probe,
-   was nicht verifiziert ist.
+1. `julia --project=. --startup-file=no test/test_wp_n25_phase_c_c5.jl` grün.
+2. `--estimate-cost` für WP-N3 und WP-N4 (`--starts 10`) auf
+   `outputs/phase_c_dryrun_2026-09-25/history.jsonl` liefert Summen in der Größenordnung 92 h bzw.
+   305 h (Abweichung durch andere Zellmenge erlaubt, im Report zu erklären).
+3. Report `codex/reports/REPORT_WP_N25c.md`: geänderte Dateien, die Liste aus Punkt 4, die Befehle
+   für Claude, was nicht verifiziert ist.

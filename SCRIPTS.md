@@ -581,6 +581,7 @@ python analysis/scripts/aggregate/run_phasec_sindy_baseline.py pair \
   --allow-incomplete
 
 # C-5 Diag: cost estimate, sharded run, and collection.
+# --estimate-cost computes from elapsed_s / total_loss_evals and is an upper bound assuming every fit exhausts its loss-evaluation budget.
 julia --project=. --startup-file=no studies/regression/wp_n3_oracle_refit.jl \
   --campaign paper1_phaseC_v1 \
   --input outputs/studies/regression/phase_c/history.jsonl \
