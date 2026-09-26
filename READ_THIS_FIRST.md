@@ -57,13 +57,11 @@ macht der Nutzer. Die Freigabe erlischt morgen früh.
   `(Get-Content k8s\odeformer_reference_grid_smoke_job.yaml) -replace '<COMMIT_SHA>','<SHA>' | oc apply -f -`,
   dasselbe mit `odeformer_reference_grid_job.yaml` für den Grid.
 
-## 2b. Für den Nutzer zu entscheiden (Referenzraster)
+## 2b. Referenzraster — entschieden (26.09. vormittags)
 
-Die Zahlen stehen im DIARY vom 26.09. (Raten schwanken um ≤ 2 von 126 Zellen; 63 nicht bitgleiche
-Zellen, alle mit Timeout). Offen: (a) ob die eingesammelten Daten
-(`outputs/odeformer_grid_55e9c75/reference/`) nach `analysis/data/paper1_phaseC_v1/odeformer_baseline/`
-wandern und unter welchem Namen; (b) was mit `reference_wp_n23/` und `candidate_wp_n23/` passiert; (c)
-ob das Kandidaten-Image (torch 2.14) als Sensitivitätsprüfung ebenfalls 3 × auf Orion laufen soll.
+(a) Orion-Daten liegen jetzt unter `analysis/data/paper1_phaseC_v1/odeformer_baseline/reference_orion_55e9c75/`
+und sind die kanonische Claim-D-Quelle; (b) `_wp_n23`-Ordner committet (Beleg für den
+Nicht-Determinismus); (c) Kandidat (torch 2.14) läuft ebenfalls 3× auf Orion → WP-N29. Commit `8a2db1b`.
 
 ## 3. Warteschlange Codex (eine nach der anderen)
 
@@ -75,7 +73,10 @@ ob das Kandidaten-Image (torch 2.14) als Sensitivitätsprüfung ebenfalls 3 × a
    `structural_f1` = micro als Hauptzahl, macro daneben.**
 3. **WP-N25c:** `--estimate-cost` der C-5-Skripte nimmt `total_parameter_optimization_time_s`,
    das die ODE-Integrationen **nicht** enthält; richtig ist `elapsed_s / total_loss_evals`.
-   Korrigierte Schranke: Oracle ~92 h, Restart-Kurve ~305 h → Orion.
+   Korrigierte Schranke: Oracle ~92 h, Restart-Kurve ~305 h → Orion. **Codex fertig, Julia-Prüfung durch Claude läuft.**
+4. **WP-N29 (noch nicht spezifiziert):** Kandidaten-Image auf Orion — CI-Build + Trivy für
+   `odeformer-candidate`, Umgebungsparameter in `baselines/run_odeformer_grid_k8s.py` (heute fest
+   `reference`), Smoke- und Grid-Manifeste mit Ausgabe `…/candidate`. CI-Änderung → Eintrag in `CHANGELOG.md`.
 
 ## 4. Heute erledigt (25.09.), alles committet
 
@@ -85,5 +86,5 @@ Deadlock), CHANGELOG E7 (wandb-Befund), Plan-Korrekturen (Determinismus-Satz, C-
 
 ## 5. Git
 
-Uncommittet: nur die beiden `_wp_n23`-Datenordner (absichtlich) und was Codex gerade schreibt.
-Gepusht bis `55e9c75`.
+Uncommittet: nur was Codex gerade schreibt. Lokal committet, **nicht gepusht**: `2f87379`,
+`97e73d8`, `8a2db1b` und folgende. Gepusht bis `55e9c75`.

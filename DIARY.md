@@ -68,6 +68,19 @@ die kanonischen Claim-D-Daten gehören und was mit den `_wp_n23`-Ordnern passier
 Nutzer. Nebenbefund: Docker Desktop kann das Netzlaufwerk `S:` nicht einbinden (der Container sieht
 einen leeren Ordner). Eingesammelt wird deshalb aus einer lokalen Kopie.
 
+**Entschieden mit dem Nutzer, 26.09. vormittags:**
+<!-- 8a2db1b -->
+(a) Das Orion-Raster ist die kanonische Claim-D-Quelle für ODEFormer. Es liegt jetzt unter
+`analysis/data/paper1_phaseC_v1/odeformer_baseline/reference_orion_55e9c75/` (`records.jsonl`,
+`records.csv`, `cell_repetition_summary.csv`, `repetition_counts.csv`). Die `rep_00x`-Ordner
+enthalten dieselben Records noch einmal und bleiben auf dem NFS. `reference/` bleibt als
+Herkunftsnachweis unverändert. (b) Die `_wp_n23`-Ordner sind committet. Sie belegen den Befund vom
+24.09., dass ODEFormer nicht deterministisch ist, und lassen sich aus einer neuen Berechnung nicht
+wiederherstellen. (c) Das Kandidaten-Image (torch 2.14) läuft ebenfalls 3× auf Orion, damit beide
+Seiten der Sensitivitätsprüfung unter demselben Protokoll stehen. Dafür fehlen ein CI-Build des
+Kandidaten-Image, ein Umgebungsparameter im k8s-Runner (heute fest `reference`) und eigene
+Manifeste. Das wird WP-N29.
+
 ### WP-N28: Die Phase-C-Auswertungskette läuft durch
 <!-- 2f87379 -->
 
