@@ -1,4 +1,4 @@
-# WP-T1f-c — WP-T1f ohne Parameter-Kappung
+# WP-T1f-d — Kontrolle trennen: Zuordnungsprüfung bei Datentoleranz, Optimiererboden als Messung
 **Language: Julia**
 
 ## Ausführung
@@ -9,58 +9,49 @@ kein Lauf der Probe.
 
 ## Ausgangslage
 
-WP-T1f und WP-T1f-b sind umgesetzt und liegen uncommittet im Working Tree
-(`codex/reports/REPORT_WP_T1f.md`, `REPORT_WP_T1f_b.md`). Claude hat `--control-only` über alle 36
-Zellen laufen lassen: **12 dim-3-Zellen liegen über der Grenze 1e-4**, bis zu 2.800 (Lorenz 55).
+WP-T1f, -b und -c liegen uncommittet im Working Tree. Alle Tests grün. `--control-only` ohne Kappung:
+34 von 36 Zellen unter der Abbruchgrenze 1e-4, zwei chaotische Lorenz-Zellen darüber
+(55/IC 2: 7,5e-4; 56/IC 2: 1,2e-4).
 
-**Ursache:** Der Phase-C-Referenzoptimierer (`build_reference_optimizer` in
-`studies/regression/run_regression.jl`) setzt `clamp_val = BFGS_CLAMP_VAL = 10.0`, und die
-Simulation kappt jeden Parameter vorher auf [−10, 10] (`src/optimize/bfgs.jl`, `src/simulate/solve.jl`).
-Die Systeme 54, 55, 56, 57, 58 und 59 brauchen Koeffizienten mit |c| > 10 (12, 99,96, 28, −28,5).
-Die Koeffizienten-Zuordnung ist korrekt; sie wurde gegen die ODEBench-Gleichungen geprüft.
+**Claude hat die Ursache gemessen:** Die Kontrolle simuliert mit der Optimierer-Toleranz
+(`abstol = reltol = 1e-6`), die Daten sind mit 1e-9 integriert. Mit 1e-9 simuliert liegt der
+Kontroll-Loss für 55 und 56, beide ICs, bei ~1e-21; mit 1e-6 bei 1e-5 bis 7,5e-4 (Datenvarianz
+~200 bzw. ~2.500). Die Koeffizienten-Zuordnung ist also exakt; die Abweichung ist chaotisches
+Anwachsen des Toleranzfehlers.
 
-**Entscheidung des Nutzers (2026-09-28):** WP-T1f fragt, ob der **Loss** die Wahrheit identifiziert.
-Die Kappung ist eine Schranke des **Optimierers**. WP-T1f läuft deshalb **für alle 36 Zellen und alle
-Fit-Rollen ohne Kappung** (`clamp_val = Inf`), sonst identisch zum Phase-C-Optimierer. Ein Arm, kein
-Vergleichsarm mit Kappung.
+Die Kontrolle vermischt damit zwei Größen: ob die Zuordnung stimmt (ihr erklärter Zweck) und wie
+tief der Optimierer auf diesem System überhaupt kommen kann.
 
 ## Was zu tun ist
 
-1. **Optimierer:** WP-T1f baut seinen Optimierer als Kopie des Phase-C-Referenzoptimierers, bei der
-   **nur** `clamp_val` auf `Inf` gesetzt ist. Alle anderen Felder (Iterationen, Toleranzen,
-   `max_loss_evals`, `reject_nonfinite`, `divergence_limit`, `max_fit_attempts`) werden vom
-   Referenzoptimierer übernommen, nicht neu hingeschrieben, damit sie nicht auseinanderlaufen können.
-   Das gilt für Kontrolle, Boden, warme Nachbarn und `truth_cold`.
-2. **Durchreichen:** `fit_fixed_structure_phase_c` in `wp_t1d_neighbourhood_loss.jl` bekommt dafür
-   höchstens einen weiteren optionalen Parameter mit einem Default, der das bisherige Verhalten exakt
-   erhält (wie `p0` und `max_fit_attempts` in WP-T1f). Die Simulation für R² und Koeffizienten in
-   dieser Funktion muss denselben Optimierer und damit dieselbe Kappung verwenden wie der Fit.
-3. **Identität sichtbar machen:** Jede WP-T1f-Rohzeile trägt `clamp_val` (als Zahl bzw. `"Inf"`)
-   und ein Feld `optimizer_variant = "phase_c_reference_unclamped"`. Das bisherige Feld
-   `config_fingerprint` heißt in WP-T1f-Zeilen `phase_c_config_fingerprint` (derselbe Wert wie
-   bisher); dazu kommt `wp_t1f_config_fingerprint`, ein Hash über den Phase-C-Fingerprint, die
-   Optimierervariante, `clamp_val`, m, die Margins und die Schwellen. Die Aggregation liest beide
-   Namen, damit die alten `cold_reference`-Zeilen (Feld `config_fingerprint`) weiter funktionieren.
-4. **Kontrollmodus:** `--control-only` und die Kontrolle in jeder Zelle rechnen ebenfalls ohne
-   Kappung. Die Grenze 1e-4 bleibt.
-5. **Self-Test:** ein Fall, der prüft, dass der WP-T1f-Optimierer `clamp_val = Inf` hat und in allen
-   übrigen Feldern dem Referenzoptimierer gleicht.
-6. **`SCRIPTS.md`** und der Kommentar im Kampagnen-Manifest: ein Satz, dass WP-T1f ohne Kappung
-   läuft und warum.
+1. **Zwei Kontrollgrößen statt einer**, in jeder Zelle und in `--control-only`:
+   - `control_loss_data_tolerance`: Loss an den wahren Parametern, ohne Kappung, simuliert mit
+     `abstol = reltol = 1e-9` (die Toleranz der Trajektorien-Erzeugung; als Konstante mit Kommentar
+     auf ihre Herkunft, nicht als freie Zahl). **Nur diese Größe entscheidet über den Abbruch**, mit
+     unveränderter Grenze 1e-4.
+   - `control_loss_optimizer_tolerance`: derselbe Loss mit dem WP-T1f-Optimierer (ohne Kappung,
+     Optimierer-Toleranzen). Wird mitgeschrieben, bricht nichts ab. Er ist der Boden des Optimierers
+     auf dieser Zelle.
+   Die Kontrollzeile trägt beide Werte; `control_loss` im bisherigen Sinn entfällt zugunsten dieser
+   zwei eindeutigen Namen (die Aggregation muss damit umgehen).
+2. **Aggregation:** `control_and_floor_loss_by_cell.csv` zeigt beide Kontrollgrößen neben dem Boden.
+   Dazu je Zelle das Verhältnis Boden / `control_loss_optimizer_tolerance`, damit sichtbar ist, wo
+   der Boden am Optimierer-Limit liegt.
+3. **`--control-only`** schreibt beide Spalten in `control_only.csv`; Exit ≠ 0 nur, wenn
+   `control_loss_data_tolerance` eine Zelle über 1e-4 bringt.
+4. `SCRIPTS.md`, Abschnitt WP-T1f: ein Satz zur Trennung.
 
 ## Verboten
 
-- Keine Änderung an `src/`, an `run_regression.jl`, an `phase_c_config.jl` oder an
-  `BFGS_CLAMP_VAL`. Der Phase-C-Pfad bleibt bitgleich.
-- Keine Änderung an Schwellen, m, Margins, Budget, Retry-Regel, Toleranzen.
-- Das Verhalten von `wp_t1d_neighbourhood_loss.jl` bei Default-Aufruf bleibt unverändert.
+- Die Grenze 1e-4, m, Margins, Schwellen, Budget, Retry-Regel und die Optimierer-Toleranzen bleiben.
+- Keine Änderung an `src/`, `run_regression.jl`, `phase_c_config.jl`. Das Verhalten von
+  `wp_t1d_neighbourhood_loss.jl` bei Default-Aufruf bleibt unverändert.
 
 ## Abnahme
 
-1. `test/test_wp_t1f_warm_neighbourhood.jl` erweitert: Optimierer-Gleichheit bis auf `clamp_val`;
-   eine Rohzeile trägt `clamp_val`, `optimizer_variant` und beide Fingerprints; die Aggregation
-   verarbeitet alte und neue Feldnamen.
-2. Report `codex/reports/REPORT_WP_T1f_c.md` mit den Julia-Befehlen für Claude: WP-T1d-Test,
-   WP-T1f-Test, `--self-test`, `--control-only` (Erwartung: alle 36 Zellen unter 1e-4),
+1. Test: Der Abbruch hängt nur an `control_loss_data_tolerance`; ein hoher Wert der
+   Optimierer-Toleranz allein bricht nicht ab; beide Felder stehen in der Kontrollzeile.
+2. Report `codex/reports/REPORT_WP_T1f_d.md` mit den Julia-Befehlen für Claude: beide Tests,
+   `--self-test`, `--control-only` (Erwartung: Exit 0, alle 36 Zellen unter 1e-4 bei Datentoleranz),
    `--smoke --fresh`.
-3. `codex/STATUS.md`: `status: blocked`, WP-T1f-c, Report-Pfad.
+3. `codex/STATUS.md`: `status: blocked`, WP-T1f-d, Report-Pfad.
