@@ -1,4 +1,4 @@
-# WP-T1f-b — Korrektur nach dem Smoke: Vergleich trotz erschöpftem Budget, Kontrollmodus, Pfad-Label
+# WP-T1f-c — WP-T1f ohne Parameter-Kappung
 **Language: Julia**
 
 ## Ausführung
@@ -9,57 +9,58 @@ kein Lauf der Probe.
 
 ## Ausgangslage
 
-WP-T1f ist umgesetzt (`codex/reports/REPORT_WP_T1f.md`, uncommittet im Working Tree). Tests,
-Self-Test und ein lokaler Smoke (Systeme 24 und 52, IC 1) liefen bei Claude. Die Kontrolle stimmt
-(6e-14 bzw. 2e-15), der Boden liegt bei ~1e-15.
+WP-T1f und WP-T1f-b sind umgesetzt und liegen uncommittet im Working Tree
+(`codex/reports/REPORT_WP_T1f.md`, `REPORT_WP_T1f_b.md`). Claude hat `--control-only` über alle 36
+Zellen laufen lassen: **12 dim-3-Zellen liegen über der Grenze 1e-4**, bis zu 2.800 (Lorenz 55).
 
-**Der Defekt:** Ein Fit, der am Optimum startet, bricht nicht ab. BFGS sucht bei ~1e-15 im
-numerischen Rauschen weiter, bis `bfgs_max_loss_evals = 20000` erschöpft ist. Das trifft den Boden
-in **jeder** Zelle und alle `add_one`-Nachbarn. Die aus WP-T1d übernommene Regel in
-`log10_loss_ratio` (`wp_t1d_neighbourhood_loss.jl`) gibt `nothing` zurück, sobald eine Seite das
-Budget erschöpft hat. Im Smoke ist deshalb **jede** `log10_loss_ratio` leer und `beats_floor`
-überall `false` — ein leerer Befund, kein echter. Für kalte Fits bedeutete „Budget erschöpft“
-„nicht konvergiert“; für warme Fits ist es der Normalfall und kein Ungültigkeitsgrund.
+**Ursache:** Der Phase-C-Referenzoptimierer (`build_reference_optimizer` in
+`studies/regression/run_regression.jl`) setzt `clamp_val = BFGS_CLAMP_VAL = 10.0`, und die
+Simulation kappt jeden Parameter vorher auf [−10, 10] (`src/optimize/bfgs.jl`, `src/simulate/solve.jl`).
+Die Systeme 54, 55, 56, 57, 58 und 59 brauchen Koeffizienten mit |c| > 10 (12, 99,96, 28, −28,5).
+Die Koeffizienten-Zuordnung ist korrekt; sie wurde gegen die ODEBench-Gleichungen geprüft.
 
-## Die Korrektur (vorab festgelegt, nicht verändern)
+**Entscheidung des Nutzers (2026-09-28):** WP-T1f fragt, ob der **Loss** die Wahrheit identifiziert.
+Die Kappung ist eine Schranke des **Optimierers**. WP-T1f läuft deshalb **für alle 36 Zellen und alle
+Fit-Rollen ohne Kappung** (`clamp_val = Inf`), sonst identisch zum Phase-C-Optimierer. Ein Arm, kein
+Vergleichsarm mit Kappung.
 
-1. **Vergleich immer auf den rohen Losses.** In den WP-T1f-Rohzeilen wird das Verhältnis
-   Nachbar/Boden immer berechnet, solange beide Losses endlich sind und kein Wächterwert vorliegt.
-   `beats_floor` folgt daraus. Zusätzlich je Zeile ein Feld `comparison_budget_stratum` mit den
-   Werten `neither_exhausted`, `neighbour_exhausted`, `floor_exhausted`, `both_exhausted`.
-   Die Budget-Flags beider Seiten bleiben wie bisher in der Zeile.
-2. **Aggregation berichtet beides**, pro Dimension und Nachbarklasse, nie über Klassen summiert:
-   (a) alle vergleichbaren Zeilen, (b) nur `neither_exhausted`, (c) die Zählung je Schicht.
-   Das volle Margin-Raster (`WP_T1D_MARGIN_FACTORS`) und die Quantile gelten für (a) und (b).
-   Für die Variante `cold_reference` (alte WP-T1d-Rohzeilen) gilt dieselbe Aggregation: Die alten
-   Zeilen tragen `loss_true`, `loss_neighbor`, `budget_exhausted_true`, `budget_exhausted_neighbor`,
-   daraus werden Verhältnis und Schicht in der Aggregation neu berechnet. So stehen kalt und warm
-   nach identischer Regel nebeneinander.
-3. **`wp_t1d_neighbourhood_loss.jl` bleibt unverändert**, auch `log10_loss_ratio` dort. Die neue
-   Regel lebt in `wp_t1f_warm_neighbourhood.jl`.
-4. **Neuer Modus `--control-only`:** berechnet für **alle 36 Zellen** nur den Kontroll-Loss (ein
-   Loss-Aufruf an den wahren Parametern, keine Optimierung) und schreibt eine CSV mit System, IC,
-   Dimension und Kontroll-Loss nach `outputs/wp_t1f_warm_neighbourhood/control_only.csv`. Er bricht
-   **nicht** beim ersten Wert über `1e-4` ab, sondern schreibt alle 36 und meldet am Ende die Liste
-   der Zellen über der Grenze und einen Exit-Code ≠ 0, falls es solche gibt.
-5. **Pfad-Label:** `t1f_analysis_dir_for` liefert bei einem `--input-dir` mit abschließendem
-   Schrägstrich ein leeres Label und fällt auf `aggregate` zurück. Abschließende Trenner vor
-   `basename` entfernen.
+## Was zu tun ist
+
+1. **Optimierer:** WP-T1f baut seinen Optimierer als Kopie des Phase-C-Referenzoptimierers, bei der
+   **nur** `clamp_val` auf `Inf` gesetzt ist. Alle anderen Felder (Iterationen, Toleranzen,
+   `max_loss_evals`, `reject_nonfinite`, `divergence_limit`, `max_fit_attempts`) werden vom
+   Referenzoptimierer übernommen, nicht neu hingeschrieben, damit sie nicht auseinanderlaufen können.
+   Das gilt für Kontrolle, Boden, warme Nachbarn und `truth_cold`.
+2. **Durchreichen:** `fit_fixed_structure_phase_c` in `wp_t1d_neighbourhood_loss.jl` bekommt dafür
+   höchstens einen weiteren optionalen Parameter mit einem Default, der das bisherige Verhalten exakt
+   erhält (wie `p0` und `max_fit_attempts` in WP-T1f). Die Simulation für R² und Koeffizienten in
+   dieser Funktion muss denselben Optimierer und damit dieselbe Kappung verwenden wie der Fit.
+3. **Identität sichtbar machen:** Jede WP-T1f-Rohzeile trägt `clamp_val` (als Zahl bzw. `"Inf"`)
+   und ein Feld `optimizer_variant = "phase_c_reference_unclamped"`. Das bisherige Feld
+   `config_fingerprint` heißt in WP-T1f-Zeilen `phase_c_config_fingerprint` (derselbe Wert wie
+   bisher); dazu kommt `wp_t1f_config_fingerprint`, ein Hash über den Phase-C-Fingerprint, die
+   Optimierervariante, `clamp_val`, m, die Margins und die Schwellen. Die Aggregation liest beide
+   Namen, damit die alten `cold_reference`-Zeilen (Feld `config_fingerprint`) weiter funktionieren.
+4. **Kontrollmodus:** `--control-only` und die Kontrolle in jeder Zelle rechnen ebenfalls ohne
+   Kappung. Die Grenze 1e-4 bleibt.
+5. **Self-Test:** ein Fall, der prüft, dass der WP-T1f-Optimierer `clamp_val = Inf` hat und in allen
+   übrigen Feldern dem Referenzoptimierer gleicht.
+6. **`SCRIPTS.md`** und der Kommentar im Kampagnen-Manifest: ein Satz, dass WP-T1f ohne Kappung
+   läuft und warum.
 
 ## Verboten
 
-- Keine Änderung an Schwellen (`1e-4`, `1e-8`, `1e-3`), an m, an den Margins, am Optimierer, am
-  Loss-Budget oder an den Manifesten.
-- Keine Änderung an `wp_t1d_neighbourhood_loss.jl` und an `src/`.
+- Keine Änderung an `src/`, an `run_regression.jl`, an `phase_c_config.jl` oder an
+  `BFGS_CLAMP_VAL`. Der Phase-C-Pfad bleibt bitgleich.
+- Keine Änderung an Schwellen, m, Margins, Budget, Retry-Regel, Toleranzen.
+- Das Verhalten von `wp_t1d_neighbourhood_loss.jl` bei Default-Aufruf bleibt unverändert.
 
 ## Abnahme
 
-1. `test/test_wp_t1f_warm_neighbourhood.jl` erweitert: Ein Vergleich mit erschöpftem Boden-Budget
-   liefert ein Verhältnis und die richtige Schicht; ein Wächterwert liefert keins; die Aggregation
-   weist (a), (b), (c) getrennt aus; die `cold_reference`-Aggregation rechnet nach derselben Regel;
-   das Pfad-Label mit und ohne Schrägstrich ist gleich.
-2. Report `codex/reports/REPORT_WP_T1f_b.md` mit den Julia-Befehlen für Claude: Test, `--self-test`,
-   `--control-only`, `--smoke --fresh`, `--aggregate-only` auf
-   `outputs/wp_t1d_neighbourhood/orion_5a87efb`. `SCRIPTS.md`, Abschnitt WP-T1f, um
-   `--control-only` ergänzen.
-3. `codex/STATUS.md`: `status: blocked`, WP-T1f-b, Report-Pfad.
+1. `test/test_wp_t1f_warm_neighbourhood.jl` erweitert: Optimierer-Gleichheit bis auf `clamp_val`;
+   eine Rohzeile trägt `clamp_val`, `optimizer_variant` und beide Fingerprints; die Aggregation
+   verarbeitet alte und neue Feldnamen.
+2. Report `codex/reports/REPORT_WP_T1f_c.md` mit den Julia-Befehlen für Claude: WP-T1d-Test,
+   WP-T1f-Test, `--self-test`, `--control-only` (Erwartung: alle 36 Zellen unter 1e-4),
+   `--smoke --fresh`.
+3. `codex/STATUS.md`: `status: blocked`, WP-T1f-c, Report-Pfad.
