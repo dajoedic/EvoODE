@@ -4,6 +4,90 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ---
 
+## 2026-09-28
+
+### Die Parameter-Kappung auf [−10, 10] macht sechs exakte dim-3-Systeme unerreichbar
+
+<!-- 16cad92 d6dd7bd a763909 -->
+
+**Gefunden hat es die Kontrolle von WP-T1f, nicht eine Suche danach.** WP-T1f rechnet in jeder
+Zelle zuerst den Loss des wahren Trägers an den **wahren Parametern**, ohne Optimierung, als Prüfung
+der Koeffizienten-Zuordnung (Abbruchgrenze 1e-4). `--control-only` über alle 36 Zellen: 24 Zellen
+zwischen 3e-15 und 3e-6, **12 dim-3-Zellen zwischen 0,02 und 2.800.**
+
+**Die Zuordnung stimmt**, gegen die ODEBench-Gleichungen geprüft (Lorenz 55: −10, 10 / 99,96, −1, −1 /
+1, −2,667). Die Ursache ist `BFGS_CLAMP_VAL = 10.0` in `run_regression.jl`: Der Optimierer kappt
+**jeden Parameter vor der Simulation auf [−10, 10]** (`src/optimize/bfgs.jl:178`, `solve.jl:32`).
+Die Pipeline reskaliert die Daten nirgends; die Kappung wirkt auf der Originalskala. Sie steht seit
+dem Phase-1-Freeze (`c6cf86a`) im Code und über `bfgs_clamp_val` im Fingerprint. Eine Begründung
+ist nirgends dokumentiert, und ihre Wirkung auf die Erreichbarkeit hat niemand geprüft.
+
+| System | größter |Koeffizient| | Kontroll-Loss (gekappt) |
+|---|---|---|
+| 55 Lorenz komplex | 99,96 | 2.803 / 2.791 |
+| 56 Lorenz | 28 | 168 / 157 |
+| 59 Rössler chaotisch | 28,5 | 16,5 / 32,9 |
+| 58 Rössler periodisch | 28,5 | 10,6 / 16,6 |
+| 54 Lorenz periodisch | 12 | 2,50 / 1,94 |
+| 57 Rössler Fixpunkt | 28,5 | 0,019 / 0,021 |
+| 41, 48 (Surrogate, dim 2) | 15,3 / 18,3 | nicht gemessen |
+
+**6 der 8 exakten dim-3-Systeme** sind damit unter dem Phase-C-Optimierer prinzipiell nicht
+erreichbar, unabhängig von der Suche. Genau dort steht die Strukturfindung bei 0 von 50 exakten
+dim-3/4-Zellen (Phase B), und genau dort sitzt der „dim-3-Kollaps“, den dieses Projekt bisher der
+Suche zugeschrieben hat. Konsistent damit: Die gescheiterten dim-3-Referenzfits von WP-T1d liegen
+**unter** dem Kontroll-Loss (Lorenz 55: 944 / 410 gegen 2.803 / 2.791) — der Fit hat innerhalb der
+Box das Beste gefunden.
+
+**Was daraus folgt, und was nicht.** Die laufende Phase-C-Kampagne bleibt eingefroren und läuft zu
+Ende; die Kappung ist eine **zu erklärende Limitation**, kein Grund zum Neustart. Jede dim-3-Aussage
+in Paper 1 muss aber zwischen „unter der Kappung erreichbar“ (52, 61) und „nicht erreichbar“
+(54–59) trennen. Für Claim D ist sie ein struktureller Unterschied: SINDy und ODEFormer kennen
+keine solche Schranke. Offen: der Effekt auf die Surrogate 41 und 48, und ob der Orakel-Arm von
+C-5 mit Kappung laufen soll — er würde auf 54–59 per Konstruktion scheitern.
+
+### WP-T1d eingesammelt, als Instrument unbrauchbar, repariert als WP-T1f
+
+36/36 Zellen, 3.910 Nachbarzeilen, eine Identität (`5a87efb` / `0c9672de35c75a9d`), lokal unter
+`outputs/wp_t1d_neighbourhood/orion_5a87efb/`. Die Zwischensichtung vom 23.09. hält: Der Referenzfit
+scheitert in **30 von 36 Zellen** (dim 2: 16/20, dim 3: 14/16); in den 6 sauberen Zellen schlägt
+kein `swap_one` (0/386) und kein `remove_one` (0/30) die Wahrheit. Die Stopp-Regel des Gates
+(„nein → Zweig beenden“) greift damit nicht, die Frage ist aber auf 30 Zellen unbeantwortet.
+
+**Entscheidung des Nutzers: das Gate sauber schließen, bevor WP-T2a startet.** Begründung: Der
+Orakel-Arm von WP-T2a kann aus drei Gründen scheitern (Loss, Fit, Suche) und wäre ohne geschlossenes
+WP-T1d nicht zuzuordnen. Das ist eine Reparatur derselben Frage, kein neuer Schritt der
+eingefrorenen Reihe. **WP-T1f:** Kontrolle an den wahren Parametern; Boden = Fit ab den wahren
+Parametern; jeder Nachbar startet warm vom nächstgelegenen Punkt zur Wahrheit (gemeinsame Terme
+wahr, neuer Term 0); dazu m = 10 kalte Einzelfits der Wahrheit, vorab festgelegt.
+
+**Der Smoke hat einen Konstruktionsfehler gefangen (WP-T1f-b).** Ein Fit am Optimum bricht nicht
+ab, BFGS sucht bei ~1e-15 im Rauschen bis zum Budget von 20.000 Evaluationen. Die aus WP-T1d
+geerbte Regel „Budget erschöpft → Vergleich ungültig“ hätte damit **jeden** Vergleich gestrichen;
+der Smoke meldete „0 von 15 Swaps schlagen den Boden“, und das war leer. Korrektur vor jedem
+Ergebnis: Vergleich immer auf den rohen Losses, Budget-Erschöpfung als ausgewiesene Schicht.
+Nebenbefund des Smokes: System 24 bleibt kalt zweimal auf 0,1246 stehen, dem Wert des alten
+Referenzfits — der Mechanismus ist reproduziert.
+
+**Die Kappung (Eintrag oben) führt zu WP-T1f-c: WP-T1f läuft ohne Kappung**, für alle 36 Zellen und
+alle Fit-Rollen, sonst identisch zum Phase-C-Optimierer, mit eigenem Fingerprint und `clamp_val`
+in jeder Zeile. Kein zweiter Arm mit Kappung: Deren Wirkung ist durch die Kontrolle bereits ohne
+einen einzigen Fit gemessen. Folge für später: Identifiziert der Loss die Wahrheit auf dim 3, muss
+WP-T2a dieselbe Entscheidung zur Kappung treffen.
+
+### Nebenbei
+
+- ODEFormer-Kandidatenraster (torch 2.14): Der Smoke-Record stammte vom 26.09. und wurde nur neu
+  zusammengefasst; `_opt` = `success`. Grid vom Nutzer gestartet, **126/126 in 56 min**, noch nicht
+  eingesammelt.
+- `build_campaign_image` für `8e0e699` scheiterte **beim Push**, nicht beim Build: `write: broken
+  pipe` mitten im Upload einer Schicht. Nicht der bekannte `blob unknown`-Fehler vom 22.09.; vermutlich
+  eine Netzwerkstörung. Das Image brauchte niemand. Der nächste Push ist der Test.
+- Orion: C-1/C-2 755/756, C-3 175/180 (Lorenz 55/56, nicht System 59 wie in der Übergabe), WP-T1d
+  36/36.
+
+---
+
 ## 2026-09-26
 
 ### ODEFormer-Referenzraster auf Orion: drei Smokes, zwei echte Fehler, dann der Start

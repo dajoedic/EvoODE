@@ -822,6 +822,15 @@ the coupled search path 1e-6 is the cheaper, behaviour-equal tolerance; the Syst
 
 ## Known Gaps
 
+- **Every fitted parameter is clamped to [−10, 10] before simulation (found 2026-09-28).**
+  `BFGS_CLAMP_VAL = 10.0` in `run_regression.jl`, applied in `src/optimize/bfgs.jl:178`, on the
+  original data scale — nothing rescales. In place since the Phase 1 freeze, never justified in
+  writing. It makes **6 of the 8 exact dim-3 systems unreachable by construction** (54, 55, 56, 57,
+  58, 59 need |c| up to 99.96; the loss at the clamped true parameters reaches 2,800 on Lorenz 55),
+  plus surrogates 41 and 48 on dim 2. Part of the "dim-3 collapse" is therefore the optimizer box,
+  not the search. Phase C keeps it (frozen); every dim-3 statement must split reachable (52, 61)
+  from unreachable, and Claim D must name it — SINDy and ODEFormer have no such bound. Decide
+  before C-5 starts whether the oracle arm runs clamped. `DIARY.md` 2026-09-28
 - **structural recovery on coupled systems is unsolved**: `pruned_match = false` on every coupled
   regression cell, including ones with a loss of 6.8e-11 and the true structure available at the
   active stage — and confirmed on campaign breadth: **0 of 50 exact dim-3/dim-4 cells** recover the
