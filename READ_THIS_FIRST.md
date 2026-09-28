@@ -10,81 +10,48 @@ zweites davon. Alles Dauerhafte gehört dorthin, nach `PAPER_1.md` oder ins `DIA
 **Regeln:** wird immer **vollständig überschrieben**, nie angehängt. Was älter als ein paar Tage
 ist, ist vermutlich falsch — dann gilt `CLAUDE.md`.
 
-**Stand: 2026-09-26, vormittags.** Nachtfreigabe erloschen; Push und `oc apply` macht wieder der Nutzer.
-neu geschrieben; die Uhrzeit oben sagt, wie aktuell es ist.
+**Stand: 2026-09-28, nachmittags.** Push und `oc apply` macht der Nutzer.
 
 ---
 
-## 0. Freigabe für die Nacht 25./26.09. (einmalig, vom Nutzer: "A")
-
-Claude darf **heute Nacht** selbst: WP-N27c committen und nach `origin` + `gitlab` **pushen**, auf
-den Image-Bau warten, den ODEFormer-Smoke per `oc apply` starten und prüfen, und **nur wenn der
-Smoke sauber ist** (inklusive einer `_opt`-Zelle mit `odeformer_optimization_status = success`) den
-Grid-Job `k8s/odeformer_reference_grid_job.yaml` starten. Sonst gilt weiter: Push und `oc apply`
-macht der Nutzer. Die Freigabe erlischt morgen früh.
-
 ## 1. Was läuft
 
-| Lauf | Wo | Stand | Anmerkung |
+| Lauf | Wo | Stand 28.09. | Anmerkung |
 |---|---|---|---|
-| C-1/C-2 | Orion, `221a3a7` | 731 / 756 (25.09. abends) | nur noch Nachzügler |
-| C-3 | Orion, `221a3a7` | 172 / 180 | 8 × dim 3 (Lorenz, System 59), ~20–25 h pro Level |
-| WP-T1d | Orion, `5a87efb` | 34 / 36 | |
-| **ODEFormer-Referenzraster** | Orion, `55e9c75` | **fertig 02:30**: 126/126, 1.512 Records, 0 Fehler, alle `_opt` success; eingesammelt | Smoke 3 sauber (`_opt` = success, bitgleich zum lokalen Image). Job `evoode-odeformer-reference-grid`, Ausgabe `odeformer_grid_55e9c75…/reference/rep_00{1,2,3}/` |
-| Codex WP-N28 | — | **erledigt, geprüft, committet** | Offen: `analysis/configs/paper1_phaseC_v1.json` zeigt noch auf die Probe (`outputs/phase_c_dryrun_2026-09-25/`) und muss vor der endgültigen Auswertung auf die vollständige Registry umgestellt werden |
+| C-1/C-2 | Orion, `221a3a7` | 755 / 756 | Zelle 474 (System 40, ungecappt), Level 28/30 |
+| C-3 | Orion, `221a3a7` | 175 / 180 | 5 × Lorenz 55/56 `pretune_on`, Level 26–27/30, ~20–25 h/Level → Ende ~1./2.10. |
+| WP-T1d | Orion, `5a87efb` | **fertig 36/36, eingesammelt** | lokal `outputs/wp_t1d_neighbourhood/orion_5a87efb/` |
+| ODEFormer-Kandidat | Orion, `8e0e699` | **fertig 126/126**, nicht eingesammelt | `--collect` für `…/candidate`, Befehl in `SCRIPTS.md` |
 
-## 2. ODEFormer-Referenzraster — der Weg bis zum Start
+Status lesen ohne eigenen Pod: `oc exec` in einen laufenden Kampagnen-Pod, NFS unter `/outputs`.
 
-- **Entscheidung 25.09.:** kanonisch `faithful` (1 s), drei Wiederholungen, Rate mit Streuung
-  (`docs/paper1_phaseC_benchmark_plan.md`). Messung: jede nicht wiederholbare Zelle hat einen
-  Timeout; 10 s beseitigt es nicht (DIARY 25.09.).
-- **Smoke 1 (Image `9ff548e`):** hing mit 0 CPU. Ursache: `join()` vor `get()` in
-  `run_cell_with_hard_timeout` → Pipe-Deadlock. Behoben mit **WP-N27b** (`3ca31bb`).
-- **Smoke 2 (Image `3ca31bb`):** lief in 53 s durch, aber `beam10_opt` endete mit
-  `ModuleNotFoundError: param_optimizer`. Die Konstantenoptimierung kam lokal aus
-  `outputs/third_party/odeformer` (gitignored) und fehlt im CI-Image. Der Record sah gültig aus.
-  → **WP-N27c** (`55e9c75`, gepusht): Quellbaum ins Image, ein fehlendes Modul führt zum harten
-  Abbruch, Hash-Prüfung über LF-normalisierten Inhalt (mein erster Sollwert war ein CRLF-Hash aus
-  der Windows-Kopie). Lokal gebautes Image **ohne** eingebundene Ordner: `_opt` = `success`,
-  bitgleich zum lokalen Lauf. Tests im Linux-Container 38 grün, dazu die 2 bekannten Altlasten.
-  Trajektorien unter `odeformer_grid_55e9c75…/trajectory_export`, per Hash geprüft.
-- Trajektorien liegen auf dem NFS unter `odeformer_grid_<SHA>/trajectory_export`, jeweils per Hash
-  geprüft. Für den neuen SHA müssen sie neu hingelegt werden.
-- **Smoke 3 (`55e9c75`): sauber → Grid gestartet 01:29 (Claude, Freigabe A).** Nach Ende:
-  `--collect --repetitions 3` (Befehl in `SCRIPTS.md`, Abschnitt ODEFormer auf Orion).
-- Befehle (mit `<SHA>` des gebauten Commits):
-  `oc delete job evoode-odeformer-reference-grid-smoke`, dann
-  `(Get-Content k8s\odeformer_reference_grid_smoke_job.yaml) -replace '<COMMIT_SHA>','<SHA>' | oc apply -f -`,
-  dasselbe mit `odeformer_reference_grid_job.yaml` für den Grid.
+## 2. Offene Entscheidung (Nutzer)
 
-## 2b. Referenzraster — entschieden (26.09. vormittags)
+**WP-T1f zurückhalten oder starten?** Vorschlag Claude: bis zum Statusgespräch nach dem Ende von
+C-3 (~1./2.10.) zurückhalten, damit der Cluster dann leer ist und der Kappungsbefund (DIARY 28.09.)
+vorher besprochen wird. Er berührt: dim-3-Auswertung von Phase C (erreichbar 52/61 vs. unerreichbar
+54–59), ob der C-5-Orakel-Arm mit Kappung läuft, Claim D, die Deutung des „dim-3-Kollapses“.
+**C-5 nicht vor diesem Gespräch starten.**
 
-(a) Orion-Daten liegen jetzt unter `analysis/data/paper1_phaseC_v1/odeformer_baseline/reference_orion_55e9c75/`
-und sind die kanonische Claim-D-Quelle; (b) `_wp_n23`-Ordner committet (Beleg für den
-Nicht-Determinismus); (c) Kandidat (torch 2.14) läuft ebenfalls 3× auf Orion → WP-N29. Commit `8a2db1b`.
+## 3. WP-T1f — bereit, nicht gestartet
 
-## 3. Warteschlange Codex (eine nach der anderen)
+Committet `9941d7e` (Specs `16cad92`, `d765608` u. a.). Ohne Kappung, warmer Start, geteilte
+Kontrolle, Deadline 14 Tage. Lokal geprüft: alle Tests, Self-Test, `--control-only` (36/36 ≤ 2e-20),
+Smoke. Start-Ablauf: Push → Image-Build abwarten → Bootstrap → Smoke → Kampagne
+(`SCRIPTS.md`, Abschnitt WP-T1f).
 
-1. ~~WP-N27c~~ erledigt.
-2. ~~WP-N28~~ erledigt (26.09.). Befunde der Generalprobe vom 25.09., jetzt geschlossen:
-   Strukturmetriken nicht in die Registry eingemischt; Cap-Ablation braucht einen C-1/C-2-Filter und
-   kommt mit exakt-only-Metriken bei Surrogaten nicht klar; SINDy-Paarung verlangt C-3 für alle
-   Systeme; Pretuning-Collapse hat die Phase-B-Variantennamen fest verdrahtet. **Entschieden:
-   `structural_f1` = micro als Hauptzahl, macro daneben.**
-3. ~~WP-N25c~~ erledigt (`ee504bd`, 91,6 h / 305,4 h bestätigt). `--estimate-cost` der C-5-Skripte nimmt `total_parameter_optimization_time_s`,
-   das die ODE-Integrationen **nicht** enthält; richtig ist `elapsed_s / total_loss_evals`.
-   Korrigierte Schranke: Oracle ~92 h, Restart-Kurve ~305 h → Orion.
-4. ~~WP-N29~~ erledigt (`78a18e7`). **Nächster Schritt liegt beim Nutzer:** Push (baut
-   `odeformer-candidate`), dann Kandidaten-Smoke mit `<COMMIT_SHA>` = gebauter Commit und
-   `<TRAJECTORY_SHA>` = `55e9c753185ff6596913547cdf635bcc45d0bbfc`; Grid nur, wenn der Smoke eine
-   `_opt`-Zelle mit `success` zeigt. Befehle in `SCRIPTS.md`, Abschnitt ODEFormer auf Orion.
+## 4. CI
 
-## 4. Heute erledigt (25.09.), alles committet
+`build_campaign_image` für `8e0e699` scheiterte beim **Push** (`write: broken pipe` mitten im
+Upload), nicht beim Build. Vermutlich eine Netzwerkstörung; der nächste Push ist der Test. Tritt es
+wieder auf: Limit oder Timeout auf der Registry-Seite, Admin fragen.
 
-WP-N24-Auswertung (DIARY), Entscheidung für den ODEFormer-Modus, WP-N25/N25b (C-5 auf Phase C),
-WP-N26 (Phase-C-Wahrheit, Koeffizientenfehler, Heartbeat-Schutz), WP-N27/N27b (Orion-Grid,
-Deadlock), CHANGELOG E7 (wandb-Befund), Plan-Korrekturen (Determinismus-Satz, C-5-Kosten).
+## 5. Offen, nicht dringend
 
-## 5. Git
+- `analysis/configs/paper1_phaseC_v1.json` zeigt noch auf die Probe `outputs/phase_c_dryrun_2026-09-25/`;
+  nach dem Ende von C-1/C-2/C-3 auf die vollständige Registry umstellen (ohne `--allow-incomplete`).
 
-Uncommittet: nur was Codex gerade schreibt. Lokal committet, **nicht gepusht**: `2f87379` bis `78a18e7` und folgende. Gepusht bis `55e9c75`.
+## 6. Git
+
+Working Tree sauber bis auf diese Datei und `DIARY.md`. Lokal committet, **nicht gepusht** seit
+`8e0e699`.

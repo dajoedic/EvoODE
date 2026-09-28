@@ -75,6 +75,22 @@ in jeder Zeile. Kein zweiter Arm mit Kappung: Deren Wirkung ist durch die Kontro
 einen einzigen Fit gemessen. Folge für später: Identifiziert der Loss die Wahrheit auf dim 3, muss
 WP-T2a dieselbe Entscheidung zur Kappung treffen.
 
+<!-- d765608 9941d7e -->
+
+**Ohne Kappung blieben zwei Kontrollen über 1e-4 (WP-T1f-d)**: Lorenz 55/IC 2 bei 7,5e-4 und
+56/IC 2 bei 1,2e-4. Gemessen: Mit der Toleranz der Daten (1e-9) integriert liegen alle vier
+Lorenz-Zellen bei ~1e-21, mit der Optimierer-Toleranz (1e-6) bei 1e-5 bis 7,5e-4, gegen eine
+Datenvarianz von ~200 bzw. ~2.500. Die Zuordnung ist exakt; das ist chaotisch angewachsener
+Toleranzfehler. Die Kontrolle ist deshalb geteilt: Die Zuordnungsprüfung bei Datentoleranz
+entscheidet über den Abbruch (Grenze unverändert 1e-4, alle 36 Zellen ≤ 2e-20), der Wert bei
+Optimierer-Toleranz wird als **Boden des Optimierers** mitgeschrieben. Er sagt, dass auf Lorenz kein
+Fit unter ~1e-5 bis 1e-3 kommen kann — auch in Phase C nicht.
+
+**Smoke mit dem endgültigen Stand (24/IC 1, 52/IC 1):** alle Swap- und Remove-Nachbarn 10 bis 13
+Größenordnungen über dem Boden, `add_one` gleichauf (Verschachtelung). Implementierung committet,
+Deadline 14 Tage als obere Schranke (kalter Lauf: 358 Kernstunden, längste Zelle 59 h). Nicht
+gepusht, nicht gestartet.
+
 ### Nebenbei
 
 - ODEFormer-Kandidatenraster (torch 2.14): Der Smoke-Record stammte vom 26.09. und wurde nur neu
