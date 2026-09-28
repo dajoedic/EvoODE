@@ -60,6 +60,7 @@ analysis/data/*
 !analysis/data/wp_n1_dim2_probe/
 !analysis/data/wp_t1_term_relevance/
 !analysis/data/wp_t1b_standalone_ranking/
+!analysis/data/wp_t1d_neighbourhood/
 # ... but not the per-cell evaluation rows and the full selection path: both are
 # deterministic and rebuildable from the hashed inputs plus the configuration hash.
 analysis/data/wp_t1b_standalone_ranking/details.csv

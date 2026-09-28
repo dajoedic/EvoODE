@@ -1,0 +1,73 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: evoode-wp-t1f-indexed-campaign
+  namespace: scch-das
+  labels:
+    app.kubernetes.io/name: evoode
+    app.kubernetes.io/part-of: evoode-wp-t1f
+    app.kubernetes.io/component: indexed-campaign
+    app.kubernetes.io/managed-by: kubectl
+    hpc.scch.at/service: evoode-wp-t1f-cells
+    hpc.scch.at/responsibility: joedicke
+spec:
+  ttlSecondsAfterFinished: 3600
+  completionMode: Indexed
+  completions: 36
+  parallelism: 6
+  # WP-T1f intentionally uses the Phase-C reference optimizer with only
+  # clamp_val disabled, so the loss test is not bounded by the optimizer cap.
+  # Generous upper bound, not a point estimate: 14 days. The smoke projection
+  # (43 h serial) rests on two easy systems and undershoots; the cold WP-T1d run
+  # measured 358 core-hours with a longest cell of 59 h (system 58, IC 1), and
+  # warm starts at the optimum run add_one fits and the floor to the full
+  # loss-eval budget. Expected wall time at parallelism 6: roughly 4-6 days.
+  activeDeadlineSeconds: 1209600
+  backoffLimit: 10
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: evoode
+        app.kubernetes.io/part-of: evoode-wp-t1f
+        app.kubernetes.io/component: indexed-campaign
+        hpc.scch.at/service: evoode-wp-t1f-cells
+        hpc.scch.at/responsibility: joedicke
+    spec:
+      restartPolicy: Never
+      imagePullSecrets:
+        - name: evoode-gitlab-pull
+      containers:
+        - name: cell
+          image: registry.gitlab.scch.at:443/joedicke/evoode:<COMMIT_SHA>
+          imagePullPolicy: IfNotPresent
+          command:
+            - julia
+            - --project=/opt/EvoODE
+            - /opt/EvoODE/studies/regression/wp_t1f_warm_neighbourhood.jl
+          args:
+            - --fresh
+          env:
+            - name: JULIA_NUM_THREADS
+              value: "1"
+            - name: OPENBLAS_NUM_THREADS
+              value: "1"
+            - name: EVO_T1F_INDEX_LIST
+              value: /outputs/wp_t1f_<COMMIT_SHA>/indices_all.txt
+            - name: EVO_T1F_OUTPUT_DIR
+              value: /outputs/wp_t1f_campaign_<COMMIT_SHA>
+          resources:
+            requests:
+              cpu: "1"
+              memory: 2Gi
+            limits:
+              cpu: "1"
+              memory: 2Gi
+          volumeMounts:
+            - name: evoode-bigdata
+              mountPath: /outputs
+              subPath: data-science/joedicke
+      volumes:
+        - name: evoode-bigdata
+          nfs:
+            server: nfs.orion.scch.at
+            path: /bigdata

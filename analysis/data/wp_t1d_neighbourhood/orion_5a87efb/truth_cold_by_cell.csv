@@ -1,0 +1,1 @@
+dimension,system_id,initial_condition_set,n_starts,n_loss_lt_1e_8,n_loss_1e_8_to_1e_3,n_loss_ge_1e_3,n_sentinel

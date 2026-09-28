@@ -297,10 +297,19 @@ function projected_fit_counts(cells)
     return rows, total
 end
 
-function fit_fixed_structure_phase_c(structure_terms, system, basis, traj, seed::Int)
+function fit_fixed_structure_phase_c(
+    structure_terms,
+    system,
+    basis,
+    traj,
+    seed::Int;
+    p0 = nothing,
+    max_fit_attempts::Int = PHASE_C_MAX_FIT_ATTEMPTS,
+    optimizer = nothing,
+)
     structure = StructureSpec([sort(unique(Int[x for x in eq])) for eq in structure_terms])
     f!, n_params, _ = build_rhs(structure, basis)
-    optimizer = build_reference_optimizer(max_fit_attempts = PHASE_C_MAX_FIT_ATTEMPTS)
+    optimizer = optimizer === nothing ? build_reference_optimizer(max_fit_attempts = max_fit_attempts) : optimizer
     options = build_options(seed)
 
     params = Float64[]
@@ -308,7 +317,7 @@ function fit_fixed_structure_phase_c(structure_terms, system, basis, traj, seed:
     fit_meta = nothing
     Random.seed!(seed)
     if n_params > 0
-        params, fit_loss, fit_meta = fit_parameters(optimizer, f!, traj, n_params, MSELoss(), options)
+        params, fit_loss, fit_meta = fit_parameters(optimizer, f!, traj, n_params, MSELoss(), options; p0 = p0)
     end
 
     yhat = simulate(

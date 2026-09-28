@@ -1,0 +1,604 @@
+{
+  "basis_name": "staged_polynomial_basis_with_constant",
+  "classification_path": "analysis\\data\\paper1_phaseC_v1\\system_classification.csv",
+  "coefficient_source": "WP-N26 equation-column extraction with x_i -> u{i+1}",
+  "support_path": "studies\\regression\\phase_c_support.json",
+  "systems": {
+    "24": {
+      "dimension": 2,
+      "equations": [
+        {
+          "coefficients": {
+            "u2": 1.0
+          },
+          "equation_index": 1,
+          "support_terms": [
+            "u2"
+          ]
+        },
+        {
+          "coefficients": {
+            "u1": -2.1
+          },
+          "equation_index": 2,
+          "support_terms": [
+            "u1"
+          ]
+        }
+      ],
+      "system_id": 24
+    },
+    "25": {
+      "dimension": 2,
+      "equations": [
+        {
+          "coefficients": {
+            "u2": 1.0
+          },
+          "equation_index": 1,
+          "support_terms": [
+            "u2"
+          ]
+        },
+        {
+          "coefficients": {
+            "u1": -4.5,
+            "u2": -0.43
+          },
+          "equation_index": 2,
+          "support_terms": [
+            "u1",
+            "u2"
+          ]
+        }
+      ],
+      "system_id": 25
+    },
+    "26": {
+      "dimension": 2,
+      "equations": [
+        {
+          "coefficients": {
+            "u1": 3.0,
+            "u1*u2": -2.0,
+            "u1^2": -1.0
+          },
+          "equation_index": 1,
+          "support_terms": [
+            "u1",
+            "u1^2",
+            "u1*u2"
+          ]
+        },
+        {
+          "coefficients": {
+            "u1*u2": -1.0,
+            "u2": 2.0,
+            "u2^2": -1.0
+          },
+          "equation_index": 2,
+          "support_terms": [
+            "u2",
+            "u2^2",
+            "u1*u2"
+          ]
+        }
+      ],
+      "system_id": 26
+    },
+    "27": {
+      "dimension": 2,
+      "equations": [
+        {
+          "coefficients": {
+            "u1": 1.84,
+            "u1*u2": -1.45
+          },
+          "equation_index": 1,
+          "support_terms": [
+            "u1",
+            "u1*u2"
+          ]
+        },
+        {
+          "coefficients": {
+            "u1*u2": 1.62,
+            "u2": -3.0
+          },
+          "equation_index": 2,
+          "support_terms": [
+            "u2",
+            "u1*u2"
+          ]
+        }
+      ],
+      "system_id": 27
+    },
+    "28": {
+      "dimension": 2,
+      "equations": [
+        {
+          "coefficients": {
+            "u2": 1.0
+          },
+          "equation_index": 1,
+          "support_terms": [
+            "u2"
+          ]
+        },
+        {
+          "coefficients": {
+            "sin(u1)": -0.9
+          },
+          "equation_index": 2,
+          "support_terms": [
+            "sin(u1)"
+          ]
+        }
+      ],
+      "system_id": 28
+    },
+    "29": {
+      "dimension": 2,
+      "equations": [
+        {
+          "coefficients": {
+            "u1*u2": 0.65
+          },
+          "equation_index": 1,
+          "support_terms": [
+            "u1*u2"
+          ]
+        },
+        {
+          "coefficients": {
+            "u1^2": -1.0,
+            "u2^2": 1.0
+          },
+          "equation_index": 2,
+          "support_terms": [
+            "u1^2",
+            "u2^2"
+          ]
+        }
+      ],
+      "system_id": 29
+    },
+    "31": {
+      "dimension": 2,
+      "equations": [
+        {
+          "coefficients": {
+            "u1*u2": -0.4
+          },
+          "equation_index": 1,
+          "support_terms": [
+            "u1*u2"
+          ]
+        },
+        {
+          "coefficients": {
+            "u1*u2": 0.4,
+            "u2": -0.314
+          },
+          "equation_index": 2,
+          "support_terms": [
+            "u2",
+            "u1*u2"
+          ]
+        }
+      ],
+      "system_id": 31
+    },
+    "32": {
+      "dimension": 2,
+      "equations": [
+        {
+          "coefficients": {
+            "u2": 1.0
+          },
+          "equation_index": 1,
+          "support_terms": [
+            "u2"
+          ]
+        },
+        {
+          "coefficients": {
+            "u1": 1.0,
+            "u1^3": -1.0,
+            "u2": -0.18
+          },
+          "equation_index": 2,
+          "support_terms": [
+            "u1",
+            "u2",
+            "u1^3"
+          ]
+        }
+      ],
+      "system_id": 32
+    },
+    "38": {
+      "dimension": 2,
+      "equations": [
+        {
+          "coefficients": {
+            "u1": 3.37,
+            "u1^3": -1.12333333333333,
+            "u2": 3.37
+          },
+          "equation_index": 1,
+          "support_terms": [
+            "u1",
+            "u2",
+            "u1^3"
+          ]
+        },
+        {
+          "coefficients": {
+            "u1": -0.29673590504451
+          },
+          "equation_index": 2,
+          "support_terms": [
+            "u1"
+          ]
+        }
+      ],
+      "system_id": 38
+    },
+    "43": {
+      "dimension": 2,
+      "equations": [
+        {
+          "coefficients": {
+            "u2": 1.0
+          },
+          "equation_index": 1,
+          "support_terms": [
+            "u2"
+          ]
+        },
+        {
+          "coefficients": {
+            "1": 1.67,
+            "sin(u1)": -1.0,
+            "u2": -0.64
+          },
+          "equation_index": 2,
+          "support_terms": [
+            "1",
+            "u2",
+            "sin(u1)"
+          ]
+        }
+      ],
+      "system_id": 43
+    },
+    "52": {
+      "dimension": 3,
+      "equations": [
+        {
+          "coefficients": {
+            "u1": -0.1,
+            "u2": 0.1
+          },
+          "equation_index": 1,
+          "support_terms": [
+            "u1",
+            "u2"
+          ]
+        },
+        {
+          "coefficients": {
+            "u1*u3": 0.21,
+            "u2": -0.21
+          },
+          "equation_index": 2,
+          "support_terms": [
+            "u2",
+            "u1*u3"
+          ]
+        },
+        {
+          "coefficients": {
+            "1": 1.394,
+            "u1*u2": -1.054,
+            "u3": -0.34
+          },
+          "equation_index": 3,
+          "support_terms": [
+            "1",
+            "u3",
+            "u1*u2"
+          ]
+        }
+      ],
+      "system_id": 52
+    },
+    "54": {
+      "dimension": 3,
+      "equations": [
+        {
+          "coefficients": {
+            "u1": -5.1,
+            "u2": 5.1
+          },
+          "equation_index": 1,
+          "support_terms": [
+            "u1",
+            "u2"
+          ]
+        },
+        {
+          "coefficients": {
+            "u1": 12.0,
+            "u1*u3": -1.0,
+            "u2": -1.0
+          },
+          "equation_index": 2,
+          "support_terms": [
+            "u1",
+            "u2",
+            "u1*u3"
+          ]
+        },
+        {
+          "coefficients": {
+            "u1*u2": 1.0,
+            "u3": -1.67
+          },
+          "equation_index": 3,
+          "support_terms": [
+            "u3",
+            "u1*u2"
+          ]
+        }
+      ],
+      "system_id": 54
+    },
+    "55": {
+      "dimension": 3,
+      "equations": [
+        {
+          "coefficients": {
+            "u1": -10.0,
+            "u2": 10.0
+          },
+          "equation_index": 1,
+          "support_terms": [
+            "u1",
+            "u2"
+          ]
+        },
+        {
+          "coefficients": {
+            "u1": 99.96,
+            "u1*u3": -1.0,
+            "u2": -1.0
+          },
+          "equation_index": 2,
+          "support_terms": [
+            "u1",
+            "u2",
+            "u1*u3"
+          ]
+        },
+        {
+          "coefficients": {
+            "u1*u2": 1.0,
+            "u3": -2.66666666666667
+          },
+          "equation_index": 3,
+          "support_terms": [
+            "u3",
+            "u1*u2"
+          ]
+        }
+      ],
+      "system_id": 55
+    },
+    "56": {
+      "dimension": 3,
+      "equations": [
+        {
+          "coefficients": {
+            "u1": -10.0,
+            "u2": 10.0
+          },
+          "equation_index": 1,
+          "support_terms": [
+            "u1",
+            "u2"
+          ]
+        },
+        {
+          "coefficients": {
+            "u1": 28.0,
+            "u1*u3": -1.0,
+            "u2": -1.0
+          },
+          "equation_index": 2,
+          "support_terms": [
+            "u1",
+            "u2",
+            "u1*u3"
+          ]
+        },
+        {
+          "coefficients": {
+            "u1*u2": 1.0,
+            "u3": -2.66666666666667
+          },
+          "equation_index": 3,
+          "support_terms": [
+            "u3",
+            "u1*u2"
+          ]
+        }
+      ],
+      "system_id": 56
+    },
+    "57": {
+      "dimension": 3,
+      "equations": [
+        {
+          "coefficients": {
+            "u2": -5.0,
+            "u3": -5.0
+          },
+          "equation_index": 1,
+          "support_terms": [
+            "u2",
+            "u3"
+          ]
+        },
+        {
+          "coefficients": {
+            "u1": 5.0,
+            "u2": -1.0
+          },
+          "equation_index": 2,
+          "support_terms": [
+            "u1",
+            "u2"
+          ]
+        },
+        {
+          "coefficients": {
+            "1": 1.0,
+            "u1*u3": 5.0,
+            "u3": -28.5
+          },
+          "equation_index": 3,
+          "support_terms": [
+            "1",
+            "u3",
+            "u1*u3"
+          ]
+        }
+      ],
+      "system_id": 57
+    },
+    "58": {
+      "dimension": 3,
+      "equations": [
+        {
+          "coefficients": {
+            "u2": -5.0,
+            "u3": -5.0
+          },
+          "equation_index": 1,
+          "support_terms": [
+            "u2",
+            "u3"
+          ]
+        },
+        {
+          "coefficients": {
+            "u1": 5.0,
+            "u2": 0.5
+          },
+          "equation_index": 2,
+          "support_terms": [
+            "u1",
+            "u2"
+          ]
+        },
+        {
+          "coefficients": {
+            "1": 1.0,
+            "u1*u3": 5.0,
+            "u3": -28.5
+          },
+          "equation_index": 3,
+          "support_terms": [
+            "1",
+            "u3",
+            "u1*u3"
+          ]
+        }
+      ],
+      "system_id": 58
+    },
+    "59": {
+      "dimension": 3,
+      "equations": [
+        {
+          "coefficients": {
+            "u2": -5.0,
+            "u3": -5.0
+          },
+          "equation_index": 1,
+          "support_terms": [
+            "u2",
+            "u3"
+          ]
+        },
+        {
+          "coefficients": {
+            "u1": 5.0,
+            "u2": 1.0
+          },
+          "equation_index": 2,
+          "support_terms": [
+            "u1",
+            "u2"
+          ]
+        },
+        {
+          "coefficients": {
+            "1": 1.0,
+            "u1*u3": 5.0,
+            "u3": -28.5
+          },
+          "equation_index": 3,
+          "support_terms": [
+            "1",
+            "u3",
+            "u1*u3"
+          ]
+        }
+      ],
+      "system_id": 59
+    },
+    "61": {
+      "dimension": 3,
+      "equations": [
+        {
+          "coefficients": {
+            "u1": 5.0,
+            "u2*u3": -1.0
+          },
+          "equation_index": 1,
+          "support_terms": [
+            "u1",
+            "u2*u3"
+          ]
+        },
+        {
+          "coefficients": {
+            "u1*u3": 1.0,
+            "u2": -10.0
+          },
+          "equation_index": 2,
+          "support_terms": [
+            "u2",
+            "u1*u3"
+          ]
+        },
+        {
+          "coefficients": {
+            "u1*u2": 0.333333333333333,
+            "u3": -3.8
+          },
+          "equation_index": 3,
+          "support_terms": [
+            "u3",
+            "u1*u2"
+          ]
+        }
+      ],
+      "system_id": 61
+    }
+  }
+}

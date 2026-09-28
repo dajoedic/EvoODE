@@ -660,3 +660,54 @@ julia --project=. --startup-file=no studies/regression/wp_n5_ic_generalization.j
   --output-dir outputs/wp_n5_ic_generalization_phase_c \
   --shards TODO(Claude) --collect
 ```
+
+### WP-T1f warm-start neighbourhood repair
+
+WP-T1f repairs the WP-T1d neighbourhood probe by comparing neighbours against a true-support fit
+started at the true coefficients. It uses the Phase-C reference optimizer with only the parameter
+clamp disabled (`clamp_val = Inf`), because this package asks whether the loss identifies the truth
+rather than whether the optimizer's historical parameter bound does. The true coefficients are
+exported once from the WP-N26 `system_classification.csv` equation-column extraction and checked
+against `phase_c_support.json`. Its control separates the true-coefficient assignment check at the
+trajectory data tolerance (`control_loss_data_tolerance`) from the optimizer-tolerance measurement
+of the reachable floor (`control_loss_optimizer_tolerance`).
+
+```bash
+python studies/regression/export_wp_t1f_true_coefficients.py
+python -m pytest analysis/tests/test_wp_t1f_true_coefficients.py -q
+```
+
+Local Julia checks for Claude:
+
+```bash
+julia --project=. test/test_wp_t1f_warm_neighbourhood.jl
+julia --project=. studies/regression/wp_t1f_warm_neighbourhood.jl --self-test --fresh
+julia --project=. studies/regression/wp_t1f_warm_neighbourhood.jl --control-only --fresh
+julia --project=. studies/regression/wp_t1f_warm_neighbourhood.jl --smoke --fresh
+```
+
+Orion sequence:
+
+```bash
+# 1. Substitute <COMMIT_SHA>, apply bootstrap, and verify index files.
+kubectl apply -f k8s/wp_t1f_bootstrap_index_job.yaml
+
+# 2. Substitute <COMMIT_SHA>, apply smoke, inspect raw rows and projection.json.
+kubectl apply -f k8s/wp_t1f_indexed_smoke_job.yaml
+
+# 3. Replace <DEADLINE_SECONDS> in the campaign manifest with a generous upper
+#    bound from the smoke projection, then apply the campaign.
+kubectl apply -f k8s/wp_t1f_indexed_campaign_job.yaml
+```
+
+Collect and aggregate without recomputing fits:
+
+```bash
+julia --project=. studies/regression/wp_t1f_warm_neighbourhood.jl \
+  --aggregate-only \
+  --input-dir outputs/wp_t1f_campaign_<COMMIT_SHA>
+
+julia --project=. studies/regression/wp_t1f_warm_neighbourhood.jl \
+  --aggregate-only \
+  --input-dir outputs/wp_t1d_neighbourhood/orion_5a87efb
+```
