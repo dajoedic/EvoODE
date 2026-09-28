@@ -88,8 +88,15 @@ Fit unter ~1e-5 bis 1e-3 kommen kann — auch in Phase C nicht.
 
 **Smoke mit dem endgültigen Stand (24/IC 1, 52/IC 1):** alle Swap- und Remove-Nachbarn 10 bis 13
 Größenordnungen über dem Boden, `add_one` gleichauf (Verschachtelung). Implementierung committet,
-Deadline 14 Tage als obere Schranke (kalter Lauf: 358 Kernstunden, längste Zelle 59 h). Nicht
-gepusht, nicht gestartet.
+Deadline 14 Tage als obere Schranke (kalter Lauf: 358 Kernstunden, längste Zelle 59 h).
+
+**Gestartet 28.09. von Claude** (Nutzer unterwegs, einmalige Freigabe nur für WP-T1f). Push
+`1db1193`; der Image-Build lief diesmal durch, der `broken pipe` vom 26.09. war einmalig.
+Bootstrap sauber (36 + 2 Indizes). Orion-Smoke (24/IC 1, 25/IC 1, 28 min): Identität
+`1db1193` / `0c9672de35c75a9d` / WP-T1f `7919eb12bb6c10dd`, `clamp_val = Inf`, Kontrolle 0,
+keine leere Verhältniszahl, **0 von 53 Swaps und 0 von 5 Removes unter dem Boden**. Kaltstarts der
+Wahrheit: System 24 **0 von 10** unter 1e-8 (Plateaus 0,11–0,17), System 25 1 von 10. Kampagne
+`evoode-wp-t1f-indexed-campaign` gestartet, 36 Zellen, `parallelism: 6`.
 
 ### Nebenbei
 

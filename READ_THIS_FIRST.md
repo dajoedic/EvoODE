@@ -10,7 +10,9 @@ zweites davon. Alles Dauerhafte gehört dorthin, nach `PAPER_1.md` oder ins `DIA
 **Regeln:** wird immer **vollständig überschrieben**, nie angehängt. Was älter als ein paar Tage
 ist, ist vermutlich falsch — dann gilt `CLAUDE.md`.
 
-**Stand: 2026-09-28, nachmittags.** Push und `oc apply` macht der Nutzer.
+**Stand: 2026-09-28, nachmittags.** Push und `oc apply` macht der Nutzer — **Ausnahme 28.09.
+(Nutzer unterwegs):** Claude darf WP-T1f selbst starten: Push (erledigt, `1db1193`), Bootstrap,
+Smoke und, nur wenn der Smoke sauber ist, die Kampagne. Die Freigabe gilt nur dafür.
 
 ---
 
@@ -27,18 +29,18 @@ Status lesen ohne eigenen Pod: `oc exec` in einen laufenden Kampagnen-Pod, NFS u
 
 ## 2. Offene Entscheidung (Nutzer)
 
-**WP-T1f zurückhalten oder starten?** Vorschlag Claude: bis zum Statusgespräch nach dem Ende von
-C-3 (~1./2.10.) zurückhalten, damit der Cluster dann leer ist und der Kappungsbefund (DIARY 28.09.)
-vorher besprochen wird. Er berührt: dim-3-Auswertung von Phase C (erreichbar 52/61 vs. unerreichbar
+**WP-T1f startet sofort** (Entscheidung Nutzer 28.09.). Statusgespräch nach dem Ende von C-3
+(~1./2.10.), der Kappungsbefund (DIARY 28.09.) steht darin oben. Er berührt: dim-3-Auswertung von Phase C (erreichbar 52/61 vs. unerreichbar
 54–59), ob der C-5-Orakel-Arm mit Kappung läuft, Claim D, die Deutung des „dim-3-Kollapses“.
 **C-5 nicht vor diesem Gespräch starten.**
 
-## 3. WP-T1f — bereit, nicht gestartet
+## 3. WP-T1f — läuft auf Orion seit 28.09. nachmittags
 
-Committet `9941d7e` (Specs `16cad92`, `d765608` u. a.). Ohne Kappung, warmer Start, geteilte
-Kontrolle, Deadline 14 Tage. Lokal geprüft: alle Tests, Self-Test, `--control-only` (36/36 ≤ 2e-20),
-Smoke. Start-Ablauf: Push → Image-Build abwarten → Bootstrap → Smoke → Kampagne
-(`SCRIPTS.md`, Abschnitt WP-T1f).
+Image `1db1193`, Job `evoode-wp-t1f-indexed-campaign`, 36 Zellen, `parallelism: 6`, Deadline
+14 Tage. Ausgabe `/outputs/wp_t1f_campaign_1db11932c4335e480d374c7de1be35593b62b447/cell_*`.
+Orion-Smoke sauber (DIARY 28.09.), lokal unter `outputs/wp_t1f_warm_neighbourhood/orion_smoke_1db1193/`.
+Erwartet 4–6 Tage; dim-3-Zellen kommen zuletzt (Indexreihenfolge aufsteigend).
+Nach dem Ende: einsammeln (tar über `oc exec`), dann `--aggregate-only --input-dir <lokaler Ordner>`.
 
 ## 4. CI
 
@@ -53,5 +55,4 @@ wieder auf: Limit oder Timeout auf der Registry-Seite, Admin fragen.
 
 ## 6. Git
 
-Working Tree sauber bis auf diese Datei und `DIARY.md`. Lokal committet, **nicht gepusht** seit
-`8e0e699`.
+Gepusht bis `1db1193` (beide Remotes). Danach nur lokale Doku-Commits.
