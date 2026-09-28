@@ -688,24 +688,30 @@ julia --project=. studies/regression/wp_t1f_warm_neighbourhood.jl --smoke --fres
 
 Orion sequence:
 
-```bash
-# 1. Substitute <COMMIT_SHA>, apply bootstrap, and verify index files.
-kubectl apply -f k8s/wp_t1f_bootstrap_index_job.yaml
+Run on 2026-09-28 with `<COMMIT_SHA>` = `1db11932c4335e480d374c7de1be35593b62b447`. The campaign
+manifest carries its deadline (14 days, a generous upper bound; see the comment in the manifest).
 
-# 2. Substitute <COMMIT_SHA>, apply smoke, inspect raw rows and projection.json.
-kubectl apply -f k8s/wp_t1f_indexed_smoke_job.yaml
+```powershell
+# 1. Bootstrap: writes indices_all.txt (36) and the smoke list (2) to /outputs/wp_t1f_<COMMIT_SHA>/.
+(Get-Content k8s\wp_t1f_bootstrap_index_job.yaml) -replace '<COMMIT_SHA>','<SHA>' | oc apply -f -
 
-# 3. Replace <DEADLINE_SECONDS> in the campaign manifest with a generous upper
-#    bound from the smoke projection, then apply the campaign.
-kubectl apply -f k8s/wp_t1f_indexed_campaign_job.yaml
+# 2. Smoke (systems 24 and 25, IC 1): inspect the raw rows before continuing.
+(Get-Content k8s\wp_t1f_indexed_smoke_job.yaml) -replace '<COMMIT_SHA>','<SHA>' | oc apply -f -
+
+# 3. Campaign.
+(Get-Content k8s\wp_t1f_indexed_campaign_job.yaml) -replace '<COMMIT_SHA>','<SHA>' | oc apply -f -
 ```
 
-Collect and aggregate without recomputing fits:
+Collect through any running pod that mounts the NFS share (there is no local mount), then
+aggregate without recomputing fits:
 
 ```bash
+oc exec <running-pod> -- sh -c 'cd /outputs/wp_t1f_campaign_<SHA> && tar cf - cell_*' \
+  | tar xf - -C outputs/wp_t1f_campaign_<SHA>
+
 julia --project=. studies/regression/wp_t1f_warm_neighbourhood.jl \
   --aggregate-only \
-  --input-dir outputs/wp_t1f_campaign_<COMMIT_SHA>
+  --input-dir outputs/wp_t1f_campaign_<SHA>
 
 julia --project=. studies/regression/wp_t1f_warm_neighbourhood.jl \
   --aggregate-only \

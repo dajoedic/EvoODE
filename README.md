@@ -80,8 +80,9 @@ earlier 300-run study is frozen and **explicitly not used for final claims**; se
 campaign had not been designed to close, and closing them changed the picture more than the campaign
 did:
 
-- **The basis has no constant term.** It represents 20 of 63 systems exactly; SINDy's plain
-  polynomial library represents 40. Adding the constant is not a free improvement — it roughly
+- **The basis had no constant term.** It represented 20 of 63 systems exactly; SINDy's plain
+  polynomial library represents 40. Since 2026-09-13 the canonical basis carries the constant (30 of
+  63). Adding it was not a free improvement — it roughly
   halves structure recovery on dimension 1 (83 % → 39 %, the constant is a false-positive magnet)
   while markedly improving generalization (73 % → 88 %). Which basis is right depends on which
   metric counts, and that is a question about the method's purpose.
@@ -105,8 +106,11 @@ dimension-3/4 cells** recover the support, against 60 of 120 over all exact cell
 operators only add terms — a wrong term can never leave a candidate line, and selection is the sole
 corrective. Parameter fitting minimises MSE on the *integrated* trajectory, which is badly
 conditioned; a single start hits the failure sentinel in 15 of 102 cells even when handed the true
-structure. SINDy has no analogous failure mode because it fits in derivative space. These are stated
-as limitations, not worked around.
+structure. SINDy has no analogous failure mode because it fits in derivative space. The optimizer
+also clamps every parameter to [−10, 10] before simulation; six of the eight exact dimension-3 systems
+need larger coefficients (Lorenz up to 99.96) and are therefore unreachable by construction, so part
+of the dimension-3 failure is the optimizer's box rather than the search. These are stated as
+limitations, not worked around.
 
 ---
 
@@ -263,6 +267,8 @@ The properties below are enforced, not aspirational.
 | `docs/paper1_odebench_protocol_alignment.md` | ODEBench sampling protocol and the comparability audit |
 | `docs/diskussion_repraesentationsraum.md` | what the basis can and cannot represent, and what that costs |
 | `docs/hpc_deployment_guide.md` | how code reaches the compute cluster (German, for newcomers) |
+| `docs/phd_thesis_arc.md` | the paper roadmap Paper 1 hangs under, with its order and guardrails |
+| `CHANGELOG.md` | pipeline compliance record: CI/CD changes and documented policy exceptions |
 | `analysis/CONVENTIONS.md` | rules for the Python analysis pipeline |
 
 Start with `CLAUDE.md`. Where it and `PAPER_1.md` disagree, `PAPER_1.md` wins.

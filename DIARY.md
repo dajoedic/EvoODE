@@ -90,6 +90,8 @@ Fit unter ~1e-5 bis 1e-3 kommen kann — auch in Phase C nicht.
 Größenordnungen über dem Boden, `add_one` gleichauf (Verschachtelung). Implementierung committet,
 Deadline 14 Tage als obere Schranke (kalter Lauf: 358 Kernstunden, längste Zelle 59 h).
 
+<!-- 1db1193 14dc9b5 -->
+
 **Gestartet 28.09. von Claude** (Nutzer unterwegs, einmalige Freigabe nur für WP-T1f). Push
 `1db1193`; der Image-Build lief diesmal durch, der `broken pipe` vom 26.09. war einmalig.
 Bootstrap sauber (36 + 2 Indizes). Orion-Smoke (24/IC 1, 25/IC 1, 28 min): Identität
@@ -108,6 +110,13 @@ Wahrheit: System 24 **0 von 10** unter 1e-8 (Plateaus 0,11–0,17), System 25 1 
   eine Netzwerkstörung. Das Image brauchte niemand. Der nächste Push ist der Test.
 - Orion: C-1/C-2 755/756, C-3 175/180 (Lorenz 55/56, nicht System 59 wie in der Übergabe), WP-T1d
   36/36.
+- Aufräumen <!-- 8bf7769 -->: lokaler Müll gelöscht (alte Phase-B-Manifeste im Wurzelverzeichnis,
+  `debug_results/`, `__pycache__`); die pytest-Ordner löscht der Nutzer. `CLAUDE.md`, `README.md`
+  und `SCRIPTS.md` von nachweislich falschen Aussagen befreit (Phase C läuft, geschlossene Lücken,
+  Fingerprints, Kappung als Limitation, WP-T1f-Befehle wie tatsächlich ausgeführt). Die
+  Online-Statusseite war seit dem 26.09. nicht nachgezogen und ist es jetzt. Das Eindampfen von
+  `CLAUDE.md` (983 Zeilen) folgt beim Statusgespräch nach Phase C. Offen gefunden: Der Start der
+  Phase-C-Kampagne selbst steht nicht in `SCRIPTS.md`.
 
 ---
 
