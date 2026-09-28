@@ -158,7 +158,7 @@ ground truth, `STATUS.md` only the fast signal: a poll checks both.
 | 1 — stable core | DONE (2026-04-20) |
 | 2 — EvoGrow variants | **CLOSED 2026-08-03** |
 | 3 — benchmarking | infrastructure done; Phase B protocol decided and implemented. Planned next axes: noise, sampling density, coupling strength, dimensionality |
-| 4 — Paper 1 | **Scope decided 2026-09-09: method paper.** Phase B campaign complete and **demoted to diagnostics** (756/756, 5,248 core hours, analysis done WP-A5–A9). **Phase C — canonical evaluation — defined, not started**: `docs/paper1_phaseC_benchmark_plan.md` |
+| 4 — Paper 1 | **Scope decided 2026-09-09: method paper.** Phase B campaign complete and **demoted to diagnostics** (756/756, 5,248 core hours, analysis done WP-A5–A9). **Phase C — canonical evaluation — running on Orion** (`docs/paper1_phaseC_benchmark_plan.md`): as of 2026-09-28 C-1/C-2 755/756, C-3 175/180, end expected ~2026-10-02; C-4 SINDy and the ODEFormer reference grid done; C-5 not started (blocked on the clamp decision, Known Gaps) |
 | 5 — advanced methods | not started |
 
 ### Phase 2 outcome
@@ -184,11 +184,14 @@ over unchanged — a deliberate warm start; the accepted risk is anchoring, and 
 the counter-measure. A population reset on promotion is future work and **must not be implemented
 in the current phase.**
 
-## Active Studies (as of 2026-09-07)
+## Active Studies (as of 2026-09-28)
 
 | Artifact | Status | Note |
 |----------|--------|------|
-| `paper1_phaseB_v1` | **complete** (756/756) | Campaign records under `git 91f88c4` / `604e79733b22d64d` / `ffb0266c7913352c`, 0 errors, 756 unique identities. Analysis not yet run |
+| `paper1_phaseC_v1` | **running** on Orion, image `221a3a7`, identity `0c9672de35c75a9d` | C-1/C-2 755/756, C-3 175/180 (Lorenz 55/56 stragglers); the canonical Paper 1 evidence. Analysis config still points at the 2026-09-25 dry run and must be switched to the complete registry |
+| ODEFormer baseline | reference grid **done** (Orion `55e9c75`, 3 repetitions, 1,512 records); torch 2.14 candidate grid **done**, not yet collected | Claim D; reference is canonical, candidate is the sensitivity arm |
+| WP-T1d / WP-T1f | WP-T1d collected, unusable as an instrument; **WP-T1f running** on Orion (`1db1193`, unclamped, warm starts) | Gate 3 of the Paper 2 guidance branch (`docs/phd_thesis_arc.md`). Interim dim 2: 0/351 swaps, 0/35 removes below the floor |
+| `paper1_phaseB_v1` | **complete** (756/756), analysis done (WP-A5–A9) | Campaign records under `git 91f88c4` / `604e79733b22d64d` / `ffb0266c7913352c`, 0 errors, 756 unique identities. Demoted to diagnostics |
 | `paper1_phaseA_v1` | **frozen** (300/300) | H1 partial, H2 supported, H3 partial, H4 vacuous. Not used for final claims. `docs/paper1_freeze_memo_phaseA.md` |
 | `studies/lookahead/` | WP-L1–L5d, WP-G1/G1b done | Stage-firing look-ahead — **promoted from diagnostic to the paper's contribution** |
 | `studies/regression/` | 120 records on Orion, recomputed 2026-08-20 | Capped vs v2.2 over 30 cells on systems 3, 11, 26, 31, 63 under `git f6143eb` / `17fe7d9cfb8f1be3` / `ffb0266c7913352c`: loss **bit-identical 30/30**, `pruned_match` unchanged, **−25.4 %** loss evaluations, **no cell more expensive** |
@@ -198,8 +201,9 @@ in the current phase.**
 
 ## Current Priorities
 
-State as of 2026-09-07. `DIARY.md` holds the measurements; this section keeps only what still
-constrains a decision.
+Written 2026-09-07 and amended since; the dated paragraphs say when. `DIARY.md` holds the
+measurements; this section keeps only what still constrains a decision. A consolidation of this
+file is scheduled for the status review after Phase C ends.
 
 ### Settled — do not re-open
 
@@ -475,7 +479,7 @@ the coupled search path 1e-6 is the cheaper, behaviour-equal tolerance; the Syst
    in `PAPER_1.md` under "Superseded Claim Labels"; `DIARY.md` and the WP reports cite the old set,
    so the two must never be mixed.
 
-1. **The Phase B campaign is complete, and the analysis is the open work.** Ran 2026-08-22 to
+1. **The Phase B campaign is complete, and so is its analysis (WP-A5–A9).** Ran 2026-08-22 to
    2026-09-04 on Orion under `git 91f88c46063fa368101326cbfe1abcdfc9d857fc`; the Job has since
    removed itself from `scch-das`. **756/756 records, no `error`, 756 unique identities, one
    identity triple over every record** (`91f88c4` clean / `604e79733b22d64d` / `ffb0266c7913352c`),
@@ -643,8 +647,9 @@ the coupled search path 1e-6 is the cheaper, behaviour-equal tolerance; the Syst
    cannot express a saturating term whatever the method could carry in principle. Open question
    unchanged: if published numbers were computed on the shipped trajectories, we work on cleaner data
    than the comparison does, and that must be declared.
-3. **Representation is decided but not built** (2026-08-22). The basis represents 20 of 63 systems
-   exactly; four motif families would take that to 58, the remaining five need one family each. The
+3. **Representation is decided but not built** (2026-08-22). The basis then represented 20 of 63
+   systems exactly (30 since the P3 basis freeze added the constant); four motif families would take
+   the old count to 58, the remaining five need one family each. The
    expansion is a **bridge between Paper 2 and Paper 3**, not a fourth paper and not a Paper 1
    change. Steps A and B are paid for together, the tail stays out. Full reasoning and the four
    corrections to the first draft: `docs/diskussion_repraesentationsraum.md` §9,
@@ -678,7 +683,8 @@ the coupled search path 1e-6 is the cheaper, behaviour-equal tolerance; the Syst
    five-case probe draws out of `_cap_split_decision`. Publishability requires one git hash, one
    config/Phase B fingerprint **and** one behaviour fingerprint.
 
-   **Current values:** Phase B `604e79733b22d64d` — carrying all 756 campaign records under
+   **Current values:** Phase C `0c9672de35c75a9d` under `git 221a3a7` (basis name and
+   `max_fit_attempts = 3` inside). Phase B `604e79733b22d64d` — carrying all 756 campaign records under
    `git 91f88c4`, verified clean at campaign end. Regression `17fe7d9cfb8f1be3` with 120 records under `git f6143eb`.
    Behaviour `ffb0266c7913352c` (probe version 2). The 42 pilot records and the 3 probe cells
    predate all of it (`e361a2af49366670` / `61b6548ef0014593`, `git 88eaeb6`) and must never be
@@ -834,7 +840,9 @@ the coupled search path 1e-6 is the cheaper, behaviour-equal tolerance; the Syst
 - **structural recovery on coupled systems is unsolved**: `pruned_match = false` on every coupled
   regression cell, including ones with a loss of 6.8e-11 and the true structure available at the
   active stage — and confirmed on campaign breadth: **0 of 50 exact dim-3/dim-4 cells** recover the
-  support, against 60/120 (`pretune_off`) and 50/120 (`pretune_on`) over all exact cells
+  support, against 60/120 (`pretune_off`) and 50/120 (`pretune_on`) over all exact cells. On dim 3
+  this is partly the parameter clamp (first Known Gap): six of the eight exact dim-3 systems are
+  unreachable by construction, so dim-3 failure must not be attributed to the search wholesale
 - the stage cap is not stable across initial conditions where the trajectory carries little
   dynamics (System 31, IC set 2)
 - **the pruning threshold in `pruned_match` is a zero-sum dial (WP-N2, 2026-09-08).** Over a 24-rule
@@ -849,7 +857,9 @@ the coupled search path 1e-6 is the cheaper, behaviour-equal tolerance; the Syst
   measure does not need the truth and is fully recoverable from the heartbeat `best_loss` stream —
   rebuild it in the analysis pipeline, never in the campaign path
 - no train/validation split in discovery; no noise injection utilities
-- no systematic comparison against ODEBench baselines (SINDy, PySR) yet — Phase 5
+- no PySR baseline. SINDy (C-4, on the exported campaign trajectories) and ODEFormer (reference
+  grid on Orion) exist since September 2026; PySR and ProGED are placed only from the literature
+  (`docs/WP-N4.md`)
 - expression trees are not implemented
 - `utils/checks.jl` is effectively a placeholder; `simulate()` still returns NaNs on failed solves
 - `total_diverged_solves` and `total_solver_unstable_solves` are identical in all 756 campaign
@@ -861,15 +871,15 @@ the coupled search path 1e-6 is the cheaper, behaviour-equal tolerance; the Syst
   31 of 37 missed cells), and on dim 2 it lowers structure recovery. Expect a very low **raw**
   recovery rate in Phase C — on dim 2 the pruning rule already produces 77 % of the old basis's hits
   (30 pruned against 7 raw). Report raw and pruned everywhere; never retune the threshold
-- **fitted coefficients are not persisted** — discovered models cannot be rebuilt or re-simulated
-  (see Active 0b)
-- **no held-out evaluation anywhere** — both IC sets are training data, every number is in-sample,
-  the literature's generalization metric is unreachable without coefficients (see Active 0c)
+- ~~fitted coefficients are not persisted~~ — **closed** by plan step (2): Phase C records carry
+  `model_terms` with coefficients. The **756 Phase B cells still carry none**, so their models
+  cannot be rebuilt
+- ~~no held-out evaluation anywhere~~ — **closed** by WP-N5 (dim-1 probe) and Phase C Claim C
+  (both IC directions). Phase B remains in-sample only
 - ~~no structural F1, term precision, term recall or coefficient error anywhere in the codebase~~ —
   **closed by WP-N7/N7b (2026-09-09)**; `analysis/utils/metrics.py` and
   `aggregate_phaseb_structure_metrics.py` supply them, and the three-way representability class
-  exists. They are still hard-wired to `paper1_phaseB_v1` and need a campaign-id parameter for
-  Phase C (work package B6)
+  exists. The campaign-id parameter for Phase C exists since WP-N26 (`--campaign paper1_phaseC_v1`)
 - **36.4 % of the campaign's support hits exist only because of the pruning rule (WP-N7, 2026-09-09).**
   On the 240 exact Phase B cells: 119 carry every true term in the raw support, the reported
   (**pruned**) match is 110, the **raw** exact match is **70**, and **40 hits are owed entirely to
@@ -904,8 +914,8 @@ the coupled search path 1e-6 is the cheaper, behaviour-equal tolerance; the Syst
   `BFGSOptimizer.max_fit_attempts` defaults to **1**, so behaviour is unchanged and was verified
   bit-identical on a real regression cell across 84 fields. Attempt 1 uses the canonical start, later
   attempts fire only after the named predicate `fit_attempt_failed` and always draw a fresh random
-  start. **Still open:** the parameter is deliberately outside the Phase B fingerprint and must enter
-  the Phase C fingerprint (work package B1), where k = 3 is set — not in the optimizer default
+  start. The parameter is deliberately outside the Phase B fingerprint; it is inside the Phase C
+  identity `0c9672de35c75a9d` with k = 3, not in the optimizer default
 - nothing runs the Python tests; there is no CI for tests, GitLab CI builds the campaign image only
 - environment and test execution need cleanup and faster verification
 
@@ -962,13 +972,13 @@ risk register, frozen elements).
 precedence rule at the top of this file holds again: where the two documents drift, `PAPER_1.md`
 decides.
 
-**Current phase:** Phase 2 closed. Gate 1 decided 2026-05-30 (v2.2 fails, v3 triggered); Gate 2
-decided 2026-07-31 (v3 fails). Paper scope decided 2026-08-01, final variant settled 2026-08-03:
-the mechanistic Claim C study with `evogrow_v2_2_stage_capped`, and v2.2 → v3 → capped as a
-documented failure analysis. Phase 2b closed 2026-08-20. Phase 3 open only in its external audit
-columns; Phase B has no open scientific blocker.
+**Current phase:** Phase C, the canonical evaluation, is running (see Current Status). Its scope,
+arms, freeze list and claims A–D live in `docs/paper1_phaseC_benchmark_plan.md`; that document, not
+the Phase B block below, defines what the paper reports. History: Gate 1 decided 2026-05-30 (v2.2
+fails, v3 triggered); Gate 2 decided 2026-07-31 (v3 fails); final variant
+`evogrow_v2_2_stage_capped` settled 2026-08-03; scope decided 2026-09-09 as a method paper.
 
-**Final experiment scope** (`paper1_phaseB_v1`, all results from new runs):
+**Phase B experiment scope — historical, demoted to diagnostics** (`paper1_phaseB_v1`):
 
 - all 63 ODEBench systems (`benchmarks/data/strogatz_extended.json`)
 - two conditions only: `evogrow_v2_2_stage_capped` with `pretuning=true` vs `false`

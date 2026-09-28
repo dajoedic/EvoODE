@@ -50,6 +50,11 @@ wieder auf: Limit oder Timeout auf der Registry-Seite, Admin fragen.
 
 ## 5. Offen, nicht dringend
 
+- **CLAUDE.md eindampfen** (983 Zeilen, Anspruch „kept short“): beim Statusgespräch nach Phase C,
+  zusammen mit dem Claim-Tracing-Audit. Am 28.09. nur die nachweislich falschen Aussagen korrigiert.
+- Nutzer: `.pytest_tmp*`, `.pytest_cache` sowie die pytest-Reste in `.tmp/` und `.codex_tmp/`
+  löschen (Claude fehlt das Recht dazu).
+
 - `analysis/configs/paper1_phaseC_v1.json` zeigt noch auf die Probe `outputs/phase_c_dryrun_2026-09-25/`;
   nach dem Ende von C-1/C-2/C-3 auf die vollständige Registry umstellen (ohne `--allow-incomplete`).
 
