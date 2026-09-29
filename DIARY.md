@@ -174,7 +174,7 @@ Strafwert). WP-T1f läuft bereits ohne Kappung.
 
 ### ODEFormer-Kandidat eingesammelt, Phase-A-Test diagnostiziert
 
-<!-- cdc77ff 2035f51 -->
+<!-- cdc77ff 2035f51 9d12ee0 707f7a3 -->
 
 **Kandidatenraster (torch 2.14, Orion `8e0e699`).** Die 1.524 Dateien kamen vom NFS, per `tar`
 komprimiert und mit Zählung. Das Einsammeln mit `baselines.run_odeformer_grid --collect

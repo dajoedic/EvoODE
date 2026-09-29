@@ -21,6 +21,7 @@ wenn billig (erledigt).
 | Lauf | Wo | Stand 29.09. 18:15 | Anmerkung |
 |---|---|---|---|
 | C-3 | Orion, `221a3a7` | 175 / 180 | 5 × Lorenz 55/56 `pretune_on` (Zellen 897, 899, 904, 905, 906), Level 27–29/30, 15–48 h/Level → Ende ~1.–4.10.; keine Deadline |
+| C-5 Orakel | Orion, `1db1193` | 0 / 36 Shards | gestartet 29.09. abends, 180 exakte C-1-Zellen, mit Kappung, 54–59 vorab als unerreichbar markiert; höchstens 5,9 h je Shard, Deadline 48 h. Einsammeln: `SCRIPTS.md`, C-5 Diag |
 | WP-T1f | Orion, `1db1193` | 22 / 36 | dim 2 und System 52 fertig; 54/55/56 rechnen, 57/58/59/61 warten. Ende eher ~5./6.10.; Deadline 12.10. |
 
 **Fertig:** C-1/C-2 (756/756, 29.09. 15:10), eingesammelt nach `outputs/phase_c_campaign_221a3a7/`
@@ -38,15 +39,15 @@ jedem Statuswechsel neu veröffentlichen.
 ## 2. Nächster Meilenstein: Statusgespräch
 
 Wenn C-3 und WP-T1f fertig sind (~5./6.10.) und der Cluster leer ist. **Bis dahin nichts Neues auf
-dem Cluster starten, insbesondere nicht den C-5-Orakel-Arm.** Themen:
+dem Cluster starten.** Ausnahme, vom Nutzer freigegeben: der C-5-Orakel-Arm (läuft). Themen:
 
 1. **Rahmung von Paper 1.** Die Daten tragen Effizienz und Suchmechanik (Claim B, sauber und
    bedingt) deutlich besser als Strukturfindung. Die Generalisierung liegt bei 37 % gegen 82 %
    Rekonstruktion, auf dim 2 bei 26 %, gegen SINDy am unteren Rand. „Warum nicht einfach SINDy?“
    ist die offene Flanke.
-2. **Kappung:** Den Vorschlag bestätigen oder ändern, dass der Orakel-Arm mit Kappung läuft und die
-   Systeme 54–59 vorab als unerreichbar markiert sind. Zulässige Begründungen: DIARY 29.09.
-   Befund: Auch das erreichbare dim 3 (52, 61) trifft die Struktur in 0 von 12 Fällen.
+2. **Kappung:** Für den Orakel-Arm entschieden (mit Kappung, DIARY 29.09.). Offen: Wie wird sie in der
+   nächsten Methodenversion entfernt oder begründet? Auch das erreichbare dim 3 (52, 61) trifft die
+   Struktur in 0 von 12 Fällen; das Orakel sagt, ob es an der Suche liegt.
 3. WP-T1f-Tor.
 4. ODEFormer-Kandidat und **ODEFormer-Paarung gegen C-1**. Zeigt ODEFormer dieselbe Lücke
    zwischen Rekonstruktion und Generalisierung, ist das ein Befund über das Feld, kein Makel von
