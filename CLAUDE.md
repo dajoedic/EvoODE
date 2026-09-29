@@ -158,7 +158,7 @@ ground truth, `STATUS.md` only the fast signal: a poll checks both.
 | 1 — stable core | DONE (2026-04-20) |
 | 2 — EvoGrow variants | **CLOSED 2026-08-03** |
 | 3 — benchmarking | infrastructure done; Phase B protocol decided and implemented. Planned next axes: noise, sampling density, coupling strength, dimensionality |
-| 4 — Paper 1 | **Scope decided 2026-09-09: method paper.** Phase B campaign complete and **demoted to diagnostics** (756/756, 5,248 core hours, analysis done WP-A5–A9). **Phase C — canonical evaluation — running on Orion** (`docs/paper1_phaseC_benchmark_plan.md`): as of 2026-09-28 C-1/C-2 755/756, C-3 175/180, end expected ~2026-10-02; C-4 SINDy and the ODEFormer reference grid done; C-5 not started (blocked on the clamp decision, Known Gaps) |
+| 4 — Paper 1 | **Scope decided 2026-09-09: method paper.** Phase B campaign complete and **demoted to diagnostics** (756/756, 5,248 core hours, analysis done WP-A5–A9). **Phase C — canonical evaluation** (`docs/paper1_phaseC_benchmark_plan.md`): **C-1/C-2 complete 2026-09-29 (756/756) and evaluated as interim** (`DIARY.md` 2026-09-29); C-3 175/180 still running on Orion, end ~2026-10-01 to 10-04; C-4 SINDy and the ODEFormer reference grid done; C-5 generalization **done** (pulled forward, clamp-independent), C-5 oracle and restart curve not started (clamp decision pending, Known Gaps) |
 | 5 — advanced methods | not started |
 
 ### Phase 2 outcome
@@ -184,11 +184,11 @@ over unchanged — a deliberate warm start; the accepted risk is anchoring, and 
 the counter-measure. A population reset on promotion is future work and **must not be implemented
 in the current phase.**
 
-## Active Studies (as of 2026-09-28)
+## Active Studies (as of 2026-09-29)
 
 | Artifact | Status | Note |
 |----------|--------|------|
-| `paper1_phaseC_v1` | **running** on Orion, image `221a3a7`, identity `0c9672de35c75a9d` | C-1/C-2 755/756, C-3 175/180 (Lorenz 55/56 stragglers); the canonical Paper 1 evidence. Analysis config still points at the 2026-09-25 dry run and must be switched to the complete registry |
+| `paper1_phaseC_v1` | C-1/C-2 **complete** (756/756, 0 errors, one identity, 12,186 core hours); C-3 **running** on Orion, image `221a3a7`, identity `0c9672de35c75a9d` | C-3 175/180 (Lorenz 55/56 stragglers); the canonical Paper 1 evidence. Records collected to `outputs/phase_c_campaign_221a3a7/`, C-1/C-2 evaluated there as interim. Analysis config still points at the 2026-09-25 dry run and must be switched to the complete registry once C-3 ends |
 | ODEFormer baseline | reference grid **done** (Orion `55e9c75`, 3 repetitions, 1,512 records); torch 2.14 candidate grid **done**, not yet collected | Claim D; reference is canonical, candidate is the sensitivity arm |
 | WP-T1d / WP-T1f | WP-T1d collected, unusable as an instrument; **WP-T1f running** on Orion (`1db1193`, unclamped, warm starts) | Gate 3 of the Paper 2 guidance branch (`docs/phd_thesis_arc.md`). Interim dim 2: 0/351 swaps, 0/35 removes below the floor |
 | `paper1_phaseB_v1` | **complete** (756/756), analysis done (WP-A5–A9) | Campaign records under `git 91f88c4` / `604e79733b22d64d` / `ffb0266c7913352c`, 0 errors, 756 unique identities. Demoted to diagnostics |
@@ -589,6 +589,16 @@ the coupled search path 1e-6 is the cheaper, behaviour-equal tolerance; the Syst
    condition holds is known from the search-free counter-check: dim 1 32/46, dim 2 15/56, dim 3
    3/20, dim 4 0/4. Interim numbers over five clusters — not the final figure.
 
+   **Final over all 378 pairs (2026-09-29, strict, no `--allow-incomplete`).** Fully capped: 150
+   pairs on 32 systems, pooled **−21.6 %** `total_loss_evals` (−14.2 % fits, −14.6 % levels),
+   per-pair ratio q10 0.499 / median 1.0; uncapped: **129/129 identical**; partially capped: 99
+   pairs, pooled −1.5 %, 16 cheaper against 27 dearer. Result unchanged: `pruned_match` discordant in
+   **0 of 378** pairs, R² > 0.9 141/141 on the fully capped class; the cap changes the outcome in two
+   pairs only (system 27: loss one order worse, both R² > 0.9; system 57: R² 0.978 → 0.830). All
+   pairs pooled −7.2 %, cluster permutation over 63 systems p = 0.0057. The fully capped share is
+   **exactly** three times the search-free count, as it must be for a seed-independent cap. Claim B
+   stands, and it is conditional: 150 of 378 pairs.
+
    **The analysis is complete (WP-A9, 2026-09-07).** The level-waste measure and the 252-row
    per-system table close the last two items, and `PAPER_1.md`'s result placeholders are filled.
 
@@ -836,7 +846,32 @@ the coupled search path 1e-6 is the cheaper, behaviour-equal tolerance; the Syst
   plus surrogates 41 and 48 on dim 2. Part of the "dim-3 collapse" is therefore the optimizer box,
   not the search. Phase C keeps it (frozen); every dim-3 statement must split reachable (52, 61)
   from unreachable, and Claim D must name it — SINDy and ODEFormer have no such bound. Decide
-  before C-5 starts whether the oracle arm runs clamped. `DIARY.md` 2026-09-28
+  before C-5 starts whether the oracle arm runs clamped. `DIARY.md` 2026-09-28. **The admissible
+  criteria were fixed on 2026-09-29 before C-1 was looked at** (`150b0f4`): only facts independent
+  of C-1 results; proposal pending the user: oracle arm clamped, 54–59 pre-labelled unreachable.
+  **The clamp is not the whole dim-3 story:** in C-1 the reachable systems 52 and 61 also score 0 of
+  12 structure hits (R² > 0.9 in 3), against 0 of 36 on 54–59
+- **Generalization is the weak axis (C-5, 2026-09-29).** C-1, R² > 0.9 over 126 system × direction
+  units: **82.3 % reconstruction against 37.3 % generalization**; dim 1 97.8 % → 70.3 %, **dim 2
+  91.7 % → 25.6 %**, dim 3 28.3 % → 1.7 %; 40 of 378 generalization integrations diverge. Together
+  with a raw structure hit rate of 3 of 60 on exact dim-2 cells: EvoGrow fits trajectories far
+  better than it identifies mechanisms. Against SINDy like-for-like (WP-N30): ahead on
+  reconstruction in every dimension (dim 2 91.7 % vs 55.4–73.2 %), ahead on dim-1 generalization
+  (70.3 % vs 45.7–60.9 %), at the **lower edge** of the SINDy range on dim-2 generalization
+  (25.6 % vs 21.4–46.4 %). Whether ODEFormer shows the same gap decides how damaging this is — the
+  ODEFormer pairing against C-1 is not built yet
+- **The SINDy pairing of Claim D was defective until WP-N30 (`7173f7b`).** It set SINDy
+  **generalization** against EvoGrow **reconstruction** and joined on SINDy's target IC, so each row
+  compared models trained on different trajectories — systematically in EvoGrow's favour, and
+  unnoticed in the WP-N28 dry run. `analysis/data/paper1_phaseC_v1/phasec_sindy_paired.csv` predates
+  the fix and must not be cited; the corrected interim output is
+  `outputs/phase_c_campaign_221a3a7/agg/sindy_n30/`
+- **The three-way representability class does not exist for Phase C.** `phase_c_support.json` names
+  only the *first* non-representable equation of a surrogate, and
+  `aggregate_representability_threeway.py` requires the Phase B `representational_adequacy.csv`.
+  Claims A and D stratify by it — the next work package
+- `test_phase_a_evaluation_does_not_overwrite_frozen_artifacts` fails ("Reproduction matches frozen
+  diagnostics … yes" missing); independent of WP-N30, not yet diagnosed
 - **structural recovery on coupled systems is unsolved**: `pruned_match = false` on every coupled
   regression cell, including ones with a loss of 6.8e-11 and the true structure available at the
   active stage — and confirmed on campaign breadth: **0 of 50 exact dim-3/dim-4 cells** recover the
@@ -879,7 +914,7 @@ the coupled search path 1e-6 is the cheaper, behaviour-equal tolerance; the Syst
 - ~~no structural F1, term precision, term recall or coefficient error anywhere in the codebase~~ —
   **closed by WP-N7/N7b (2026-09-09)**; `analysis/utils/metrics.py` and
   `aggregate_phaseb_structure_metrics.py` supply them, and the three-way representability class
-  exists. The campaign-id parameter for Phase C exists since WP-N26 (`--campaign paper1_phaseC_v1`)
+  exists **for Phase B only** (see above). The campaign-id parameter for Phase C exists since WP-N26 (`--campaign paper1_phaseC_v1`)
 - **36.4 % of the campaign's support hits exist only because of the pruning rule (WP-N7, 2026-09-09).**
   On the 240 exact Phase B cells: 119 carry every true term in the raw support, the reported
   (**pruned**) match is 110, the **raw** exact match is **70**, and **40 hits are owed entirely to

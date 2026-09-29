@@ -1,10 +1,16 @@
 # Phase C — Canonical EvoGrow Evaluation: Benchmark Plan
 
-**Status: matrix complete (P8, 2026-09-10), not frozen. Nothing long-running starts from this
-document yet.** Every claim now names an arm, a script, an output path and a pass criterion, and the
-five questions this document left open are decided in section 7. What still blocks the freeze is
-listed in section 8: the canonical basis (P2/P3), and the declaration of the restart policy in the
-Phase C fingerprint (the code half of P6/B3 landed on 2026-09-10 with WP-N11).
+**Status (2026-09-29): frozen and running.** The campaign started on Orion on 2026-09-14 under
+`git 221a3a7` / `0c9672de35c75a9d` / `ffb0266c7913352c`. **C-1/C-2 complete** (756/756, 0 errors,
+evaluated as interim); **C-3** 175/180, running; **C-4** SINDy done, pairing corrected by WP-N30;
+**C-5 generalization done** (pulled forward, it refits nothing and is clamp-independent;
+reconstruction control exact on 378/378); **C-5 oracle and restart curve not started** — the clamp
+decision is pending, its admissible criteria fixed in `DIARY.md` 2026-09-29 before C-1 was looked
+at. Three-way representability (P5) is still missing for Phase C. Results: `DIARY.md` 2026-09-29.
+The paragraphs below describe the plan as frozen; they are kept, not rewritten.
+
+*Status as of 2026-09-10, superseded:* matrix complete (P8), not frozen; the canonical basis
+(P2/P3) and the restart declaration in the Phase C fingerprint still blocked the freeze.
 
 This is the operational authority for Phase C. `PAPER_1.md` holds the paper scope and the claims;
 this document holds the experiment matrix, the freeze list and the prerequisites. Where the two
