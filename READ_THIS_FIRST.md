@@ -50,8 +50,14 @@ dem Cluster starten, insbesondere nicht den C-5-Orakel-Arm.** Themen:
 4. ODEFormer-Kandidat und **ODEFormer-Paarung gegen C-1**. Zeigt ODEFormer dieselbe Lücke
    zwischen Rekonstruktion und Generalisierung, ist das ein Befund über das Feld, kein Makel von
    EvoGrow allein.
-5. Reihenfolge: C-5-Orakel und Restart-Kurve, WP-T2a.
-6. `CLAUDE.md` eindampfen, zusammen mit dem Claim-Tracing-Audit.
+5. **Richtung, vom Nutzer am 29.09. gesetzt: das Overfitting an die Trajektorie angehen.** Die
+   Rekonstruktion liegt bei 92 %, die Generalisierung bei 26 %, der rohe Strukturtreffer auf dim 2
+   bei 3 von 60. Die Suche belohnt nur die Passung der einen Kurve. Kandidaten: Validierung auf der
+   zweiten IC als Auswahlkriterium, ein stärkerer Komplexitätsterm, Sparsamkeit wie bei SINDy.
+   Einordnen in `docs/phd_thesis_arc.md` (Paper 2/3, nicht Paper 1) und klären, wie das zur
+   Leitlinie von Paper 2 (WP-T1f-Tor) passt.
+6. Reihenfolge: C-5-Orakel und Restart-Kurve, WP-T2a.
+7. `CLAUDE.md` eindampfen, zusammen mit dem Claim-Tracing-Audit.
 
 ## 3. Vorbereitung bis dahin (ohne Rechenlast)
 

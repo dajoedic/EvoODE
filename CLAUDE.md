@@ -720,6 +720,15 @@ the coupled search path 1e-6 is the cheaper, behaviour-equal tolerance; the Syst
 
 ### Open, not scheduled
 
+- **Trajectory overfitting is the next methodological direction (user, 2026-09-29).** C-1 fits the
+  one training trajectory far better than it identifies the mechanism (dim 2: 91.7 %
+  reconstruction, 25.6 % generalization, raw structure 3 of 60 exact cells). The selection signal
+  rewards trajectory fit only, and one trajectory does not pin down the equation. Candidate levers:
+  held-out-IC validation as a selection criterion, a stronger complexity penalty, SINDy-like
+  sparsity. Not a Paper 1 change; place it in `docs/phd_thesis_arc.md` at the status review.
+  ODEFormer shows the same gap (generalization 26–32 % overall), so it is a field-wide problem,
+  which makes it a contribution opportunity rather than only a defect
+
 - **The full claim-tracing audit, on a frozen evidence state — timing decided 2026-09-22.**
   Trigger, and not before all three hold: Phase C complete, baselines complete, the final Phase C
   evaluation produced — **but before the paper drafts are rewritten**. Running it earlier mixes
