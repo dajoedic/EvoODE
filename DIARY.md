@@ -38,7 +38,13 @@ länger als drei Tage läuft.
 
 ### C-1/C-2 ausgewertet: Claim B endgültig, Claim C ernüchternd, und die SINDy-Paarung war falsch
 
-<!-- 0941ee9 -->
+<!-- 0941ee9 e9f78d3 7173f7b 89ccb34 -->
+
+**Nachtrag: WP-N30 ist fertig (`7173f7b`).** Die korrigierte Paarung liefert auf allen vier
+Dimensionen dieselben Zahlen wie die ad-hoc-Gegenrechnung unten. Die 15 Tests für die
+SINDy-Paarung sind grün. In der gesamten Analyse-Testsuite schlägt ein Phase-A-Test fehl
+(`test_phase_a_evaluation_does_not_overwrite_frozen_artifacts`). Er hängt nicht vom SINDy-Code ab
+und ist noch nicht untersucht.
 
 **Datengrundlage.** Die 931 Records wurden per `tar` vom NFS geholt, der erste Versuch kam
 abgeschnitten an (781), der zweite vollständig. Sie liegen unter `outputs/phase_c_campaign_221a3a7/`.
