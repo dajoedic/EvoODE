@@ -71,6 +71,8 @@ dem Cluster starten, insbesondere nicht den C-5-Orakel-Arm.** Themen:
 
 ## 4. Offen, klein
 
+- **Codex ist ohne Tokens (Stand 29.09. abends).** Vorerst keine Codex-Pakete übergeben.
+
 - `test_phase_a_evaluation_does_not_overwrite_frozen_artifacts`: Die Ursache ist gefunden, es
   ist ein Umgebungsartefakt. Die lokale Datei `debug_results/generalization_summary.csv` fehlt,
   das Urteil bleibt `OMIT` wie eingefroren. Den Test von der Datei entkoppeln (kleines

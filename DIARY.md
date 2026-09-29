@@ -140,6 +140,36 @@ allein. Die Dreiwege-Klasse ließ sich für Phase C **nicht** bilden: Die Suppor
 Surrogat nur die erste nicht repräsentierbare Gleichung, und `aggregate_representability_threeway.py`
 verlangt die Phase-B-Datei `representational_adequacy.csv`. Das wird ein eigenes Paket.
 
+### ODEFormer-Kandidat eingesammelt, Phase-A-Test diagnostiziert
+
+<!-- cdc77ff 2035f51 -->
+
+**Kandidatenraster (torch 2.14, Orion `8e0e699`).** Die 1.524 Dateien kamen vom NFS, per `tar`
+komprimiert und mit Zählung. Das Einsammeln mit `baselines.run_odeformer_grid --collect
+--repetitions 3` läuft lokal ohne Docker und ergibt 1.512 Records (3 × 504). Abgelegt neben der
+Referenz unter `analysis/data/paper1_phaseC_v1/odeformer_baseline/candidate_orion_8e0e699/`.
+Anteil R² > 0,9, Referenz gegen Kandidat:
+
+| Konfiguration | Rekonstruktion | Generalisierung |
+|---|---|---|
+| beam10_noopt | 0,577 / 0,579 | 0,262 / 0,262 |
+| beam10_opt | 0,728 / 0,709 | 0,310 / 0,325 |
+| beam50_noopt | 0,648 / 0,640 | 0,278 / 0,262 |
+| beam50_opt | 0,775 / 0,746 | 0,323 / 0,320 |
+
+Die Raten halten auf höchstens 3 Punkte. Einzelne Einheiten kippen: 35 von 504 bei der
+Rekonstruktion, 25 von 504 bei der Generalisierung. Das passt zum bekannten Nicht-Determinismus
+durch den Timeout. Die Schlüsse aus WP-N31 hängen damit nicht an der torch-Version. Das deckt sich
+mit dem Befund vom 24.09.: Die Raten halten, die einzelnen Formeln nicht.
+
+**Der Phase-A-Test ist ein Umgebungsartefakt.**
+`test_phase_a_evaluation_does_not_overwrite_frozen_artifacts` liest die nicht versionierte, lokale
+`debug_results/generalization_summary.csv`, und die gibt es nicht mehr. Der einzige Unterschied zur
+eingefrorenen Diagnose ist die Meldung zur Generalisierungsstudie: eingefroren „columns do not match
+expected schema“, jetzt „not found“. Das Urteil ist beide Male `OMIT`, H1–H4 und das Freeze-Memo
+sind unverändert. Die Reparatur, den Test von der Datei zu entkoppeln, ist ein kleines Codex-Paket.
+Codex ist gerade ohne Tokens, deshalb liegt es.
+
 ## 2026-09-28
 
 ### Die Parameter-Kappung auf [−10, 10] macht sechs exakte dim-3-Systeme unerreichbar
