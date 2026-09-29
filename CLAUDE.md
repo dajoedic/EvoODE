@@ -884,8 +884,12 @@ the coupled search path 1e-6 is the cheaper, behaviour-equal tolerance; the Syst
   30/30 and 33/33. Stored under `analysis/data/paper1_phaseC_v1/representability_threeway/`; SINDy
   and ODEFormer pairings stratify by it since WP-N31. The `phasec_representability_threeway` column
   in the SINDy details is **not** this class (first non-representable equation only)
-- `test_phase_a_evaluation_does_not_overwrite_frozen_artifacts` fails ("Reproduction matches frozen
-  diagnostics … yes" missing); independent of WP-N30, not yet diagnosed
+- `test_phase_a_evaluation_does_not_overwrite_frozen_artifacts` fails — **diagnosed 2026-09-29, an
+  environment artefact, not a scientific change.** The test reads the gitignored, local
+  `debug_results/generalization_summary.csv`, which no longer exists. The only difference to the
+  frozen diagnostics is the generalization-study entry: frozen "columns do not match expected
+  schema", now "not found" — verdict `OMIT` in both, H1–H4 and the freeze memo unchanged. Fix: the
+  test must not depend on an untracked local file (small Codex task, not urgent)
 - **structural recovery on coupled systems is unsolved**: `pruned_match = false` on every coupled
   regression cell, including ones with a loss of 6.8e-11 and the true structure available at the
   active stage — and confirmed on campaign breadth: **0 of 50 exact dim-3/dim-4 cells** recover the

@@ -28,7 +28,8 @@ und als Zwischenstand ausgewertet (DIARY 29.09.). C-5-Generalisierung lokal gere
 (`outputs/wp_n5_ic_generalization_phase_c/`, Kontrolle 378/378 exakt). WP-N30 (SINDy-Paarung)
 committet als `7173f7b`.
 
-Fertig, noch nicht eingesammelt: **ODEFormer-Kandidatenraster** (`8e0e699`, 126/126).
+**ODEFormer-Kandidatenraster** (`8e0e699`) eingesammelt, `cdc77ff`: Die Raten liegen höchstens
+3 Punkte neben der Referenz, die Schlüsse bleiben gleich.
 
 Status lesen ohne eigenen Pod: `oc exec` in einen laufenden C-3-Pod, NFS unter `/outputs`.
 Online-Statusseite „EvoODE auf Orion“: https://claude.ai/artifact/4sq6HhRsnxgrFVqVF2trBx — bei
@@ -61,12 +62,8 @@ dem Cluster starten, insbesondere nicht den C-5-Orakel-Arm.** Themen:
 
 ## 3. Vorbereitung bis dahin (ohne Rechenlast)
 
-- **Nächstes Codex-Paket: die Dreiwege-Repräsentierbarkeit für Phase C.** Die Supporttabelle nennt
-  nur die erste nicht repräsentierbare Gleichung; nötig ist ein Status je Gleichung unter der
-  Konstanten-Basis (Julia, von Claude auszuführen), dazu `aggregate_representability_threeway.py`
-  ohne die Phase-B-Datei `representational_adequacy.csv`. Noch nicht geschrieben.
-- Die ODEFormer-Paarung gegen C-1 bauen (gleich gegen gleich wie WP-N30).
-- Den ODEFormer-Kandidaten einsammeln.
+- Erledigt am 29.09.: die Dreiwege-Klasse (`84be4ce`) und die ODEFormer-Paarung (WP-N31, `1f197dd`).
+  Auf den voll repräsentierbaren Systemen generalisiert EvoGrow am besten (DIARY 29.09.).
 - Nach dem Ende von C-3: die ganze Kette aus `SCRIPTS.md` („Campaign bridge …“) noch einmal strikt
   und in die versionierten Orte rechnen; `analysis/configs/paper1_phaseC_v1.json` umstellen. Die
   C-1/C-2-Zahlen müssen dabei identisch herauskommen.
@@ -74,8 +71,10 @@ dem Cluster starten, insbesondere nicht den C-5-Orakel-Arm.** Themen:
 
 ## 4. Offen, klein
 
-- `test_phase_a_evaluation_does_not_overwrite_frozen_artifacts` schlägt fehl, unabhängig von
-  WP-N30, noch nicht untersucht.
+- `test_phase_a_evaluation_does_not_overwrite_frozen_artifacts`: Die Ursache ist gefunden, es
+  ist ein Umgebungsartefakt. Die lokale Datei `debug_results/generalization_summary.csv` fehlt,
+  das Urteil bleibt `OMIT` wie eingefroren. Den Test von der Datei entkoppeln (kleines
+  Codex-Paket, nicht dringend).
 
 ## 5. Git
 
