@@ -38,13 +38,36 @@ länger als drei Tage läuft.
 
 ### C-1/C-2 ausgewertet: Claim B endgültig, Claim C ernüchternd, und die SINDy-Paarung war falsch
 
-<!-- 0941ee9 e9f78d3 7173f7b 89ccb34 -->
+<!-- 0941ee9 e9f78d3 7173f7b 89ccb34 2640f65 84be4ce 552de43 1f197dd -->
 
 **Nachtrag: WP-N30 ist fertig (`7173f7b`).** Die korrigierte Paarung liefert auf allen vier
 Dimensionen dieselben Zahlen wie die ad-hoc-Gegenrechnung unten. Die 15 Tests für die
 SINDy-Paarung sind grün. In der gesamten Analyse-Testsuite schlägt ein Phase-A-Test fehl
 (`test_phase_a_evaluation_does_not_overwrite_frozen_artifacts`). Er hängt nicht vom SINDy-Code ab
 und ist noch nicht untersucht.
+
+**Nachtrag: WP-N31 und die Dreiwege-Klasse (`84be4ce`, `1f197dd`).** Für die Dreiwege-Klasse
+war kein neuer Code nötig. `aggregate_representability_threeway.py` mit den Phase-B-Eingaben
+(symbolische Terme je Gleichung, die Konstanten-Regel steckt im Skript) ergibt 30 voll, 31
+teilweise und 2 nicht repräsentierbare Systeme. Das deckt sich 30/30 und 33/33 mit der numerisch
+abgeleiteten `phase_c_support.json`, also zwei unabhängige Herleitungen im Einklang. WP-N31 paart
+ODEFormer (Referenz `55e9c75`, 3 Wiederholungen) gleich gegen gleich gegen C-1 und schichtet SINDy
+und ODEFormer nach der echten Klasse. Die Gegenprobe stimmt auf drei Stellen überein, die 20 Tests
+sind grün (von Claude nachgeprüft). Anteil R² > 0,9 (ODEFormer beam50_opt, SINDy-Spanne über die
+zehn Bibliotheken):
+
+| Klasse | Einheiten | Regime | EvoGrow | ODEFormer | SINDy |
+|---|---|---|---|---|---|
+| voll | 60 | Rekonstruktion | 75,0 % | 70,0 % | 41,7–55,0 % |
+| voll | 60 | Generalisierung | **45,6 %** | 32,8 % | 31,7–43,3 % |
+| teilweise | 62 | Rekonstruktion | 88,2 % | 83,3 % | 61,3–82,3 % |
+| teilweise | 62 | Generalisierung | 30,1 % | 32,3 % | 21,0–43,5 % |
+
+**Auf den voll repräsentierbaren Systemen generalisiert EvoGrow am besten von allen drei
+Methoden.** Die Schwäche sitzt bei den Surrogaten, also dort, wo die Basis die Wahrheit nicht
+enthält und eine Näherung die Kurve nachzeichnet. ODEFormer zeigt dieselbe Lücke. Für die
+Richtung „Overfitting an die Trajektorie“ heißt das: Das Problem betrifft vor allem die
+Approximation, weniger die Strukturfindung auf darstellbaren Systemen.
 
 **Datengrundlage.** Die 931 Records wurden per `tar` vom NFS geholt, der erste Versuch kam
 abgeschnitten an (781), der zweite vollständig. Sie liegen unter `outputs/phase_c_campaign_221a3a7/`.
