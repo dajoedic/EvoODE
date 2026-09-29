@@ -867,18 +867,23 @@ the coupled search path 1e-6 is the cheaper, behaviour-equal tolerance; the Syst
   better than it identifies mechanisms. Against SINDy like-for-like (WP-N30): ahead on
   reconstruction in every dimension (dim 2 91.7 % vs 55.4–73.2 %), ahead on dim-1 generalization
   (70.3 % vs 45.7–60.9 %), at the **lower edge** of the SINDy range on dim-2 generalization
-  (25.6 % vs 21.4–46.4 %). Whether ODEFormer shows the same gap decides how damaging this is — the
-  ODEFormer pairing against C-1 is not built yet
+  (25.6 % vs 21.4–46.4 %). **ODEFormer shows the same gap** (WP-N31, like-for-like: 57.7–77.5 %
+  reconstruction, 26.2–32.3 % generalization over its four configurations). By true three-way class
+  the weakness sits in the surrogates: on the **30 fully representable systems EvoGrow generalizes
+  best of the three** (45.6 % vs ODEFormer 32.8 %, SINDy 31.7–43.3 %), on partially representable
+  ones it is mid-field (30.1 % vs 32.3 % and 21.0–43.5 %)
 - **The SINDy pairing of Claim D was defective until WP-N30 (`7173f7b`).** It set SINDy
   **generalization** against EvoGrow **reconstruction** and joined on SINDy's target IC, so each row
   compared models trained on different trajectories — systematically in EvoGrow's favour, and
   unnoticed in the WP-N28 dry run. `analysis/data/paper1_phaseC_v1/phasec_sindy_paired.csv` predates
   the fix and must not be cited; the corrected interim output is
   `outputs/phase_c_campaign_221a3a7/agg/sindy_n30/`
-- **The three-way representability class does not exist for Phase C.** `phase_c_support.json` names
-  only the *first* non-representable equation of a surrogate, and
-  `aggregate_representability_threeway.py` requires the Phase B `representational_adequacy.csv`.
-  Claims A and D stratify by it — the next work package
+- ~~The three-way representability class does not exist for Phase C~~ — **closed 2026-09-29**
+  (`84be4ce`): `aggregate_representability_threeway.py` run on the Phase B inputs yields 30 fully /
+  31 partially / 2 non-representable under the constant basis, matching `phase_c_support.json`
+  30/30 and 33/33. Stored under `analysis/data/paper1_phaseC_v1/representability_threeway/`; SINDy
+  and ODEFormer pairings stratify by it since WP-N31. The `phasec_representability_threeway` column
+  in the SINDy details is **not** this class (first non-representable equation only)
 - `test_phase_a_evaluation_does_not_overwrite_frozen_artifacts` fails ("Reproduction matches frozen
   diagnostics … yes" missing); independent of WP-N30, not yet diagnosed
 - **structural recovery on coupled systems is unsolved**: `pruned_match = false` on every coupled
