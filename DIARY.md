@@ -4,6 +4,36 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ---
 
+## 2026-09-29
+
+### C-1/C-2 komplett — und die Kappungsfrage für C-5 wird festgelegt, bevor jemand auf C-1 schaut
+
+C-1/C-2 ist am 29.09. um 15:10 fertig geworden (756/756, letzte Zelle 474, System 40 ungekappt).
+Über alle 931 Phase-C-Records, die bisher vorliegen: `error = null`, git `221a3a7`, Fingerprint
+`0c9672de35c75a9d`. C-3 steht bei 175/180 (Lorenz-Nachzügler), WP-T1f bei 22/36. Die Auswertung von
+C-1/C-2 wird vorgezogen, weil C-3 ein eigener Arm ist und an C-1/C-2 nichts mehr ändert.
+
+**Diese Festlegung steht vor dem ersten Blick auf die Ergebnisse von C-1.** Zu entscheiden ist
+noch, ob der Orakel-Arm von C-5 mit Kappung auf [−10, 10] läuft. Sonst wiederholt sich der Fehler
+aus WP-V1: eine Entscheidung, die sich nach dem Blick auf die Ergebnisse richtet. Deshalb gilt:
+
+- **Zulässig als Begründung** sind nur Tatsachen, die ohne C-1-Ergebnisse feststehen: die
+  Kontroll-Losses aus WP-T1f (28.09.), die Beträge der wahren Koeffizienten und die Frage, die der
+  Orakel-Arm laut Plan beantworten soll. Laut Plan trennt er das Scheitern der Suche vom Scheitern
+  der Optimierung, und zwar **für den Optimierer, den C-1 benutzt hat**.
+- **Nicht zulässig** sind Strukturtreffer von C-1, R²-Raten von C-1, Unterschiede zwischen den Armen
+  und alles, was dim 3 in C-1 aussehen lässt, wie es aussieht.
+- **Vorschlag, der noch vom Nutzer bestätigt werden muss:** Der Orakel-Arm läuft **mit Kappung**,
+  denn nur dann schreibt er ein Scheitern von C-1 der Suche oder dem Optimierer von C-1 zu. Ohne
+  Kappung würde er einen anderen Optimierer messen. Die Systeme 54–59 werden vorab als „per
+  Konstruktion unerreichbar“ gekennzeichnet; dass dort Fits scheitern, ist kein Befund. Die Frage,
+  ob die wahre Struktur ohne Box erreichbar ist, beantwortet WP-T1f (ungekappt) und nicht C-5.
+
+Die Generalisierung (C-5, Claim C) ist von dieser Frage nicht berührt: Sie integriert die
+gefundenen Parameter von der anderen Anfangsbedingung aus neu und fittet nichts. Der Nutzer hat
+sie freigegeben: vorziehen, wenn sie billig ist, und nur diskutieren, falls sie voraussichtlich
+länger als drei Tage läuft.
+
 ## 2026-09-28
 
 ### Die Parameter-Kappung auf [−10, 10] macht sechs exakte dim-3-Systeme unerreichbar
