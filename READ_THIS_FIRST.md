@@ -10,29 +10,29 @@ zweites davon. Alles Dauerhafte gehört dorthin, nach `PAPER_1.md` oder ins `DIA
 **Regeln:** wird immer **vollständig überschrieben**, nie angehängt. Was älter als ein paar Tage
 ist, ist vermutlich falsch — dann gilt `CLAUDE.md`.
 
-**Stand: 2026-09-28, 22:30.** Push und `oc apply` macht der Nutzer. Die einmalige Freigabe vom
+**Stand: 2026-09-29, 18:15.** Push und `oc apply` macht der Nutzer. Die einmalige Freigabe vom
 28.09. für den WP-T1f-Start ist verbraucht.
 
 ---
 
 ## 1. Was läuft
 
-| Lauf | Wo | Stand 28.09. 22:00 | Anmerkung |
+| Lauf | Wo | Stand 29.09. 18:15 | Anmerkung |
 |---|---|---|---|
-| C-1/C-2 | Orion, `221a3a7` | 755 / 756 | Zelle 474 (System 40, ungekappt), Level 29/30 |
-| C-3 | Orion, `221a3a7` | 175 / 180 | 5 × Lorenz 55/56 `pretune_on`, Level 26–27/30, ~20–25 h/Level → Ende ~1./2.10. |
-| WP-T1f | Orion, `1db1193` | 13 / 36 | ohne Kappung, `parallelism: 6`, Deadline 14 Tage; dim-3-Zellen zuletzt, Ende ~3./4.10. |
+| C-1/C-2 | Orion, `221a3a7` | **756 / 756, fertig** | Zelle 474 fertig 29.09. 15:10; 0 Fehler, eine Kennung über alle Records; 12.186 Kernstunden. Nicht eingesammelt; der Job ist schon weg, die Records liegen auf dem NFS |
+| C-3 | Orion, `221a3a7` | 175 / 180 | 5 × Lorenz 55/56 `pretune_on` (Zellen 897, 899, 904, 905, 906), Level 27–29/30, 15–48 h/Level → Ende ~1.–4.10.; keine Deadline |
+| WP-T1f | Orion, `1db1193` | 22 / 36 | dim 2 und System 52 fertig; 54/55/56 rechnen, 57/58/59/61 warten. Lorenz langsam → Ende eher ~5./6.10.; Deadline 12.10. |
 
 Fertig, noch nicht eingesammelt: **ODEFormer-Kandidatenraster** (`8e0e699`, 126/126). Einsammeln
 mit `--collect` für `…/candidate`, Befehl in `SCRIPTS.md`, Abschnitt ODEFormer auf Orion.
 
 Status lesen ohne eigenen Pod: `oc exec` in einen laufenden Kampagnen-Pod, NFS unter `/outputs`.
 Die Online-Statusseite „EvoODE auf Orion“ (https://claude.ai/artifact/4sq6HhRsnxgrFVqVF2trBx)
-steht auf 28.09. 22:00 und ist bei jedem Statuswechsel neu zu veröffentlichen.
+steht auf 29.09. 18:15 und ist bei jedem Statuswechsel neu zu veröffentlichen.
 
 ## 2. Nächster Meilenstein: Statusgespräch
 
-Wenn C-1/C-2, C-3 und WP-T1f fertig sind (~3./4.10.) und der Cluster leer ist. **Bis dahin nichts
+Wenn C-3 und WP-T1f fertig sind (~5./6.10.) und der Cluster leer ist. **Bis dahin nichts
 Neues starten, insbesondere nicht C-5.** Themen:
 
 1. Parameter-Kappung (DIARY 28.09., CLAUDE.md Known Gaps): dim-3-Auswertung (erreichbar 52/61 vs.
