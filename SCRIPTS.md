@@ -556,42 +556,87 @@ After C-3 ends the same sequence runs once more, strictly and into the tracked l
 ```bash
 # Collect records and heartbeats from the NFS. Pipe through gzip into a file and check the member
 # count: an uncompressed tar stream through `oc exec` arrived truncated once (781 of 931 records).
-oc exec <running-pod> -- sh -c 'cd /outputs/phase_c_campaign_221a3a72f0cb43164a22b09baac2d9ae82681a02   && tar czf - manifest.csv tasks' > $P/pc.tgz
+oc exec <running-pod> -- sh -c 'cd /outputs/phase_c_campaign_221a3a72f0cb43164a22b09baac2d9ae82681a02 \
+  && tar czf - manifest.csv tasks' > $P/pc.tgz
 tar tzf $P/pc.tgz | wc -l && tar xzf $P/pc.tgz -C $P
 
 # merge_batch_records.jl rejects heartbeat lines, so copy the final records into their own folder.
 mkdir -p $P/records && for f in $P/tasks/cell_*.jsonl; do case $f in *heartbeat*) ;; *) cp "$f" $P/records/;; esac; done
 
 # Merge into one history (appends: always write to a fresh path).
-julia --project=. --startup-file=no studies/regression/merge_batch_records.jl   --input-dir $P/records --history $P/history.jsonl
+julia --project=. --startup-file=no studies/regression/merge_batch_records.jl \
+  --input-dir $P/records --history $P/history.jsonl
 
 # Convert; --experiment-id is required, the default "campaign_history" fails verification.
-python analysis/scripts/aggregate/convert_campaign_history_to_run_registry.py   --input $P/history.jsonl --output $P/run_registry.csv --experiment-id paper1_phaseC_v1
+python analysis/scripts/aggregate/convert_campaign_history_to_run_registry.py \
+  --input $P/history.jsonl --output $P/run_registry.csv --experiment-id paper1_phaseC_v1
 
 # Verify. The script takes one rows-per-condition number, so while C-3 is incomplete verify the
 # C-1/C-2 subset (capped + uncapped rows only) with 756 / 378 / 360 exact / 396 surrogate.
 python -c "import pandas as pd; r=pd.read_csv('$P/run_registry.csv'); r[r.condition.isin(['capped','uncapped'])].to_csv('$P/run_registry_c1_c2_only.csv', index=False)"
-python analysis/scripts/aggregate/verify_campaign_registry.py   --campaign paper1_phaseC_v1 --input $P/run_registry_c1_c2_only.csv   --expected-row-count 756 --expected-unique-identities 756 --expected-rows-per-condition 378   --expected-exact-rows 360 --expected-surrogate-rows 396 --expected-git-hash 221a3a7   --expected-config-fingerprint 0c9672de35c75a9d --expected-stage-cap-behavior-fingerprint ffb0266c7913352c
+python analysis/scripts/aggregate/verify_campaign_registry.py \
+  --campaign paper1_phaseC_v1 --input $P/run_registry_c1_c2_only.csv \
+  --expected-row-count 756 --expected-unique-identities 756 --expected-rows-per-condition 378 \
+  --expected-exact-rows 360 --expected-surrogate-rows 396 --expected-git-hash 221a3a7 \
+  --expected-config-fingerprint 0c9672de35c75a9d --expected-stage-cap-behavior-fingerprint ffb0266c7913352c
 
 # Build the Phase-C structure truth from the constant-basis support table.
 python analysis/scripts/aggregate/build_phasec_system_classification.py
 
 # Structure metrics and the analysis registry (--allow-incomplete only while C-3 runs; the
 # C-1/C-2 and C-1 subsets must still report complete).
-python analysis/scripts/aggregate/aggregate_phaseb_structure_metrics.py   --campaign paper1_phaseC_v1 --registry $P/run_registry.csv   --classification analysis/data/paper1_phaseC_v1/system_classification.csv   --output-dir $P/agg/structure
-python analysis/scripts/aggregate/build_phasec_analysis_registry.py   --campaign paper1_phaseC_v1 --registry $P/run_registry.csv   --structure-metrics $P/agg/structure/phasec_structure_metrics_by_cell.csv   --output $P/agg/phasec_analysis_registry.csv --allow-incomplete
+python analysis/scripts/aggregate/aggregate_phaseb_structure_metrics.py \
+  --campaign paper1_phaseC_v1 --registry $P/run_registry.csv \
+  --classification analysis/data/paper1_phaseC_v1/system_classification.csv \
+  --output-dir $P/agg/structure
+python analysis/scripts/aggregate/build_phasec_analysis_registry.py \
+  --campaign paper1_phaseC_v1 --registry $P/run_registry.csv \
+  --structure-metrics $P/agg/structure/phasec_structure_metrics_by_cell.csv \
+  --output $P/agg/phasec_analysis_registry.csv --allow-incomplete
 
-# Three-way representability: NOT available for Phase C yet (CLAUDE.md, Known Gaps).
+# Three-way representability. Phase-B inputs are correct here because the script classifies the
+# symbolic true terms per equation; the Phase-C constant-basis rule is encoded inside the script.
+python analysis/scripts/aggregate/aggregate_representability_threeway.py \
+  --classification analysis/data/paper1_phaseB_v1/system_classification.csv \
+  --adequacy analysis/data/paper1_phaseB_v1/representational_adequacy.csv \
+  --output-dir analysis/data/paper1_phaseC_v1/representability_threeway
 
 # Claim B, strict: all 378 pairs, no --allow-incomplete.
-python analysis/scripts/aggregate/aggregate_phasec_cap_ablation.py   --campaign paper1_phaseC_v1 --input $P/agg/phasec_analysis_registry_c1_c2.csv   --output-dir $P/agg/cap_ablation --expected-total-pairs 378
+python analysis/scripts/aggregate/aggregate_phasec_cap_ablation.py \
+  --campaign paper1_phaseC_v1 --input $P/agg/phasec_analysis_registry_c1_c2.csv \
+  --output-dir $P/agg/cap_ablation --expected-total-pairs 378
 
 # Pretuning collapse (C-3): only after C-3 is complete.
-python analysis/scripts/aggregate/analyze_pretuning_distribution_collapse.py   --campaign paper1_phaseC_v1 --config analysis/configs/paper1_phaseC_v1.json   --expected-total-pairs 180 --expected-exact-pairs 180 --expected-surrogate-pairs 0   --expected-collapse-groups-per-condition 60
+python analysis/scripts/aggregate/analyze_pretuning_distribution_collapse.py \
+  --campaign paper1_phaseC_v1 --config analysis/configs/paper1_phaseC_v1.json \
+  --expected-total-pairs 180 --expected-exact-pairs 180 --expected-surrogate-pairs 0 \
+  --expected-collapse-groups-per-condition 60
 
 # Claim D, SINDy (WP-N30): needs the C-5 generalization cells below. Pairs each SINDy row with
 # EvoGrow on the same system, training IC, direction and regime (reconstruction/generalization).
-python analysis/scripts/aggregate/run_phasec_sindy_baseline.py pair   --sindy-details analysis/data/paper1_phaseC_v1/phasec_sindy_baseline/details.csv   --evogrow-records-dir $P/records   --evogrow-generalization outputs/wp_n5_ic_generalization_phase_c/cells.csv   --output $P/agg/sindy_n30/phasec_sindy_paired.csv   --summary-output $P/agg/sindy_n30/phasec_sindy_paired_summary.csv
+python analysis/scripts/aggregate/run_phasec_sindy_baseline.py pair \
+  --sindy-details analysis/data/paper1_phaseC_v1/phasec_sindy_baseline/details.csv \
+  --evogrow-records-dir $P/records \
+  --evogrow-generalization outputs/wp_n5_ic_generalization_phase_c/cells.csv \
+  --output $P/agg/sindy_n30/phasec_sindy_paired.csv \
+  --summary-output $P/agg/sindy_n30/phasec_sindy_paired_summary.csv
+
+# Claim D, ODEFormer and true three-way stratification (WP-N31). Uses the canonical reference grid,
+# not candidate runs, and keeps the legacy SINDy stratum column while summarizing by true class.
+python analysis/scripts/aggregate/run_phasec_sindy_baseline.py pair-odeformer \
+  --odeformer-records analysis/data/paper1_phaseC_v1/odeformer_baseline/reference_orion_55e9c75/records.csv \
+  --evogrow-records-dir $P/records \
+  --evogrow-generalization outputs/wp_n5_ic_generalization_phase_c/cells.csv \
+  --representability-threeway analysis/data/paper1_phaseC_v1/representability_threeway/representability_threeway_by_system.csv \
+  --output $P/agg/odeformer_n31/phasec_odeformer_paired.csv \
+  --summary-output $P/agg/odeformer_n31/phasec_odeformer_paired_summary.csv
+python analysis/scripts/aggregate/run_phasec_sindy_baseline.py pair \
+  --sindy-details analysis/data/paper1_phaseC_v1/phasec_sindy_baseline/details.csv \
+  --evogrow-records-dir $P/records \
+  --evogrow-generalization outputs/wp_n5_ic_generalization_phase_c/cells.csv \
+  --representability-threeway analysis/data/paper1_phaseC_v1/representability_threeway/representability_threeway_by_system.csv \
+  --output $P/agg/sindy_n31/phasec_sindy_paired.csv \
+  --summary-output $P/agg/sindy_n31/phasec_sindy_paired_summary.csv
 
 # C-5 Diag: cost estimate, sharded run, and collection.
 # --estimate-cost computes from elapsed_s / total_loss_evals and is an upper bound assuming every fit exhausts its loss-evaluation budget.

@@ -230,6 +230,97 @@ def pair_args(tmp_path: Path, records_dir: Path, sindy_path: Path, **updates: ob
         expected_git_hash = ""
         expected_config_fingerprint = ""
         expected_stage_cap_behavior_fingerprint = ""
+        representability_threeway = ""
+
+    args = Args()
+    for key, value in updates.items():
+        setattr(args, key, value)
+    return args
+
+
+def threeway_fixture(path: Path, systems: list[int] | None = None) -> Path:
+    systems = systems or PILOT_SYSTEMS
+    rows = []
+    for system_id in systems:
+        dim = 1 if system_id == 2 else 2 if system_id == 24 else 3 if system_id == 52 else 4
+        rows.append(
+            {
+                "basis_name": "staged_polynomial_basis_with_constant",
+                "system_id": system_id,
+                "dim": dim,
+                "description": f"system {system_id}",
+                "n_equations": dim,
+                "n_true_terms": dim,
+                "n_representable_true_terms": dim,
+                "n_nonrepresentable_true_terms": 0,
+                "representability_class": "fully_representable" if system_id != 52 else "partially_representable",
+                "phaseb_evoode_staged_matrix_flag": "Y",
+            }
+        )
+    pd.DataFrame(rows).to_csv(path, index=False)
+    return path
+
+
+def odeformer_fixture(path: Path, systems: list[int] | None = None, drop_last: bool = False, invalid_first: bool = False) -> Path:
+    systems = systems or PILOT_SYSTEMS
+    rows = []
+    for system_id in systems:
+        dim = 1 if system_id == 2 else 2 if system_id == 24 else 3 if system_id == 52 else 4
+        for source_ic, target_ic in [(1, 2), (2, 1)]:
+            for repetition in [1, 2, 3]:
+                rows.append(
+                    {
+                        "system_id": system_id,
+                        "dimension": dim,
+                        "fit_initial_condition_set": source_ic,
+                        "generalization_initial_condition_set": target_ic,
+                        "status": "success",
+                        "reconstruction_status": "success",
+                        "generalization_status": "success",
+                        "timeout_enforced": False,
+                        "odeformer_config_id": "beam10_noopt",
+                        "odeformer_grid_repetition": repetition,
+                        "odeformer_beam_size": 10,
+                        "odeformer_constant_optimization_enabled": False,
+                        "odeformer_candidates_evaluated": 10,
+                        "reconstruction_r2_arithmetic_mean": 0.95 if repetition != 3 else 0.4,
+                        "reconstruction_r2_arithmetic_mean_gt_0_9": repetition != 3,
+                        "reconstruction_r2_variance_weighted": 0.96 if repetition != 3 else 0.4,
+                        "reconstruction_r2_variance_weighted_gt_0_9": repetition != 3,
+                        "generalization_r2_arithmetic_mean": 0.2,
+                        "generalization_r2_arithmetic_mean_gt_0_9": False,
+                        "generalization_r2_variance_weighted": 0.3,
+                        "generalization_r2_variance_weighted_gt_0_9": False,
+                        "structure_hit_raw": True,
+                        "structure_hit_pruned": True,
+                    }
+                )
+    if invalid_first:
+        rows[0]["timeout_enforced"] = True
+        rows[1]["status"] = "error"
+        rows[1]["reconstruction_r2_arithmetic_mean"] = ""
+    if drop_last:
+        rows = rows[:-1]
+    pd.DataFrame(rows).to_csv(path, index=False)
+    return path
+
+
+def odeformer_args(tmp_path: Path, records_dir: Path, records_path: Path, threeway_path: Path, **updates: object):
+    class Args:
+        odeformer_records = str(records_path)
+        evogrow_records_dir = str(records_dir)
+        evogrow_generalization = str(tmp_path / "evogrow_cells.csv")
+        representability_threeway = str(threeway_path)
+        output = str(tmp_path / "odeformer_paired.csv")
+        summary_output = str(tmp_path / "odeformer_summary.csv")
+        expected_ic_sets = "1,2"
+        expected_seeds = ""
+        expected_repetitions = "1,2,3"
+        expected_configs = "beam10_noopt"
+        expected_git_hash = ""
+        expected_config_fingerprint = ""
+        expected_stage_cap_behavior_fingerprint = ""
+        allow_incomplete = False
 
     args = Args()
     for key, value in updates.items():
@@ -298,6 +389,129 @@ def test_pairing_runs_against_real_pilot_records_and_keeps_directions(tmp_path: 
     assert paired["git_hash"].nunique() == 1
     assert paired["config_fingerprint"].nunique() == 1
     assert paired["stage_cap_behavior_fingerprint"].nunique() == 1
+
+
+def test_pairing_adds_true_threeway_class_without_replacing_legacy_column(tmp_path: Path) -> None:
+    records = read_pilot_records()
+    records_dir = write_records(tmp_path, records)
+    cells_path = evogrow_cells_fixture(tmp_path / "evogrow_cells.csv", records)
+    sindy_path = sindy_fixture(tmp_path / "sindy.csv")
+    threeway_path = threeway_fixture(tmp_path / "threeway.csv")
+
+    output = phasec_sindy.pair_sindy_evogrow(
+        pair_args(
+            tmp_path,
+            records_dir,
+            sindy_path,
+            evogrow_generalization=str(cells_path),
+            representability_threeway=str(threeway_path),
+        )
+    )
+    paired = pd.read_csv(output)
+    summary = pd.read_csv(tmp_path / "paired_summary.csv")
+
+    assert "phasec_representability_threeway" in paired.columns
+    assert "phasec_true_threeway_class" in paired.columns
+    assert set(summary["aggregation_scope"]) == {"dimension_by_phasec_true_threeway_class"}
+
+
+def test_pairing_rejects_system_without_true_threeway_class(tmp_path: Path) -> None:
+    records = read_pilot_records()
+    records_dir = write_records(tmp_path, records)
+    cells_path = evogrow_cells_fixture(tmp_path / "evogrow_cells.csv", records)
+    sindy_path = sindy_fixture(tmp_path / "sindy.csv")
+    threeway_path = threeway_fixture(tmp_path / "threeway.csv", systems=PILOT_SYSTEMS[:-1])
+
+    try:
+        phasec_sindy.pair_sindy_evogrow(
+            pair_args(
+                tmp_path,
+                records_dir,
+                sindy_path,
+                evogrow_generalization=str(cells_path),
+                representability_threeway=str(threeway_path),
+            )
+        )
+    except ValueError as exc:
+        assert "without true three-way class" in str(exc)
+    else:
+        raise AssertionError("missing true three-way class should fail")
+
+
+def test_odeformer_pairing_matches_same_training_ic_direction_and_regime(tmp_path: Path) -> None:
+    records = read_pilot_records()
+    records_dir = write_records(tmp_path, records)
+    cells_path = evogrow_cells_fixture(tmp_path / "evogrow_cells.csv", records)
+    threeway_path = threeway_fixture(tmp_path / "threeway.csv")
+    odeformer_path = odeformer_fixture(tmp_path / "odeformer.csv")
+
+    output = phasec_sindy.pair_odeformer_evogrow(
+        odeformer_args(
+            tmp_path,
+            records_dir,
+            odeformer_path,
+            threeway_path,
+            evogrow_generalization=str(cells_path),
+        )
+    )
+    paired = pd.read_csv(output)
+
+    assert len(paired) == 16
+    assert set(paired["regime"]) == {"reconstruction", "generalization"}
+    assert (paired["source_initial_condition_set"] != paired["target_initial_condition_set"]).all()
+    ic1_gen = paired[(paired["source_initial_condition_set"] == 1) & (paired["regime"] == "generalization")]
+    assert set(ic1_gen["evogrow_r2_mean"]) == {0.25}
+    assert set(paired["odeformer_repetition_policy"]) == {"mean_rate_over_3_repetitions"}
+    assert set(paired["evogrow_seed_policy"]) == {"mean_rate_over_available_phasec_seeds"}
+
+
+def test_odeformer_pairing_rejects_missing_repetition(tmp_path: Path) -> None:
+    records = read_pilot_records()
+    records_dir = write_records(tmp_path, records)
+    cells_path = evogrow_cells_fixture(tmp_path / "evogrow_cells.csv", records)
+    threeway_path = threeway_fixture(tmp_path / "threeway.csv")
+    odeformer_path = odeformer_fixture(tmp_path / "odeformer.csv", drop_last=True)
+
+    try:
+        phasec_sindy.pair_odeformer_evogrow(
+            odeformer_args(
+                tmp_path,
+                records_dir,
+                odeformer_path,
+                threeway_path,
+                evogrow_generalization=str(cells_path),
+            )
+        )
+    except ValueError as exc:
+        assert "repetitions incomplete" in str(exc)
+    else:
+        raise AssertionError("missing ODEFormer repetition should fail")
+
+
+def test_odeformer_timeout_and_error_rows_count_as_failed_and_marked(tmp_path: Path) -> None:
+    records = read_pilot_records()
+    records_dir = write_records(tmp_path, records)
+    cells_path = evogrow_cells_fixture(tmp_path / "evogrow_cells.csv", records)
+    threeway_path = threeway_fixture(tmp_path / "threeway.csv")
+    odeformer_path = odeformer_fixture(tmp_path / "odeformer.csv", invalid_first=True)
+
+    output = phasec_sindy.pair_odeformer_evogrow(
+        odeformer_args(
+            tmp_path,
+            records_dir,
+            odeformer_path,
+            threeway_path,
+            evogrow_generalization=str(cells_path),
+        )
+    )
+    paired = pd.read_csv(output)
+    row = paired[(paired["system_id"] == PILOT_SYSTEMS[0]) & (paired["direction"] == "IC1_to_IC2") & (paired["regime"] == "reconstruction")].iloc[0]
+
+    assert row["odeformer_timeout_count"] == 1
+    assert row["odeformer_status_non_success_count"] == 1
+    assert row["odeformer_r2_invalid_or_timeout_repetition_count"] == 2
+    assert row["odeformer_r2_gt_0_9_repetition_count"] == 0
+    assert row["odeformer_r2_gt_0_9_rate_over_repetitions"] == 0.0
 
 
 def test_pairing_uses_c1_scope_and_does_not_require_c3_for_every_system(tmp_path: Path) -> None:

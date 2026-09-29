@@ -45,6 +45,7 @@ RECONSTRUCTION_CONTROL_TOL = 0.0
 EVOGROW_RECONSTRUCTION_R2_RECORD_TOL = 1.0e-12
 PAIR_OUTPUT = ANALYSIS_ROOT / "data" / CAMPAIGN_ID / "phasec_sindy_paired.csv"
 PAIR_TABLE_DIR = ANALYSIS_ROOT / "tables" / CAMPAIGN_ID / "phasec_sindy_pairing"
+TRUE_THREEWAY_BASIS = "staged_polynomial_basis_with_constant"
 WPN6_DETAILS_RUNTIME_COLUMNS = {"fit_elapsed_s_non_evidence"}
 WPN6_COST_RUNTIME_COLUMNS = {"elapsed_s_non_evidence_total"}
 
@@ -78,6 +79,11 @@ def parse_args() -> argparse.Namespace:
         help="Summary CSV output path.",
     )
     pair_parser.add_argument(
+        "--representability-threeway",
+        default="",
+        help="Optional true three-way representability CSV; when provided, summaries use it.",
+    )
+    pair_parser.add_argument(
         "--expected-systems",
         default="",
         help="Comma-separated system ids required in EvoGrow input; empty means derive from input.",
@@ -104,6 +110,42 @@ def parse_args() -> argparse.Namespace:
         action="store_true",
         help="Allow incomplete dry-run C-1 records; available keys are paired and full runs still abort by default.",
     )
+
+    odeformer_parser = subparsers.add_parser("pair-odeformer")
+    odeformer_parser.add_argument("--odeformer-records", required=True, help="Canonical ODEFormer records.csv.")
+    odeformer_parser.add_argument("--evogrow-records-dir", required=True, help="Directory with EvoGrow JSONL records.")
+    odeformer_parser.add_argument(
+        "--evogrow-generalization",
+        required=True,
+        help="WP-N5 cells.csv with EvoGrow reconstruction and generalization R2.",
+    )
+    odeformer_parser.add_argument("--representability-threeway", required=True, help="True three-way representability CSV.")
+    odeformer_parser.add_argument("--output", required=True, help="Paired ODEFormer/EvoGrow CSV output path.")
+    odeformer_parser.add_argument("--summary-output", required=True, help="Summary CSV output path.")
+    odeformer_parser.add_argument("--expected-ic-sets", default="1,2")
+    odeformer_parser.add_argument("--expected-seeds", default="", help="Comma-separated EvoGrow seed set; empty means derive.")
+    odeformer_parser.add_argument("--expected-repetitions", default="1,2,3")
+    odeformer_parser.add_argument(
+        "--expected-configs",
+        default="beam10_noopt,beam10_opt,beam50_noopt,beam50_opt",
+        help="Comma-separated ODEFormer config ids required for every system/direction.",
+    )
+    odeformer_parser.add_argument(
+        "--expected-git-hash",
+        default="",
+        help="Optional exact git_hash required for all EvoGrow records.",
+    )
+    odeformer_parser.add_argument(
+        "--expected-config-fingerprint",
+        default="",
+        help="Optional exact config_fingerprint required for all EvoGrow records.",
+    )
+    odeformer_parser.add_argument(
+        "--expected-stage-cap-behavior-fingerprint",
+        default="",
+        help="Optional exact stage_cap_behavior_fingerprint required for all EvoGrow records.",
+    )
+    odeformer_parser.set_defaults(allow_incomplete=False)
 
     check_parser = subparsers.add_parser("check-wpn6-bitidentical")
     check_parser.add_argument("--config", default="analysis/configs/wp_n6_sindy_baseline.json")
@@ -161,6 +203,51 @@ def load_phase_c_support(path: Path) -> pd.DataFrame:
     if counts.get("exact", 0) != 30 or counts.get("surrogate", 0) != 33:
         fail(f"unexpected Phase-C representability counts: {counts}")
     return frame
+
+
+def parse_str_set(text: str) -> set[str]:
+    if not text.strip():
+        return set()
+    return {piece.strip() for piece in text.split(",") if piece.strip()}
+
+
+def load_true_threeway(path: Path) -> pd.DataFrame:
+    if not path.is_file():
+        fail(f"true three-way representability file does not exist: {path}")
+    frame = pd.read_csv(path)
+    require_columns(frame, {"basis_name", "system_id", "dim", "representability_class"}, "true three-way representability")
+    frame = frame[frame["basis_name"].astype(str) == TRUE_THREEWAY_BASIS].copy()
+    if frame.empty:
+        fail(f"true three-way representability contains no {TRUE_THREEWAY_BASIS} rows")
+    if frame["system_id"].duplicated().any():
+        dupes = sorted(int(value) for value in frame.loc[frame["system_id"].duplicated(), "system_id"].unique())
+        fail(f"true three-way representability has duplicate system ids: {dupes}")
+    classes = set(frame["representability_class"].astype(str))
+    expected = {"fully_representable", "partially_representable", "non_representable"}
+    if not classes.issubset(expected):
+        fail(f"unexpected true three-way classes: {sorted(classes - expected)}")
+    return frame.rename(
+        columns={
+            "dim": "true_threeway_dimension",
+            "representability_class": "phasec_true_threeway_class",
+            "basis_name": "phasec_true_threeway_basis_name",
+        }
+    )[["system_id", "true_threeway_dimension", "phasec_true_threeway_class", "phasec_true_threeway_basis_name"]]
+
+
+def attach_true_threeway(frame: pd.DataFrame, threeway: pd.DataFrame, label: str) -> pd.DataFrame:
+    require_columns(frame, {"system_id", "dimension"}, label)
+    merged = frame.merge(threeway, on="system_id", how="left", validate="many_to_one")
+    missing = merged[merged["phasec_true_threeway_class"].isna()]["system_id"].drop_duplicates()
+    if not missing.empty:
+        fail(f"{label} contains systems without true three-way class: {sorted(int(value) for value in missing)}")
+    dim_mismatch = pd.to_numeric(merged["dimension"], errors="coerce") != pd.to_numeric(
+        merged["true_threeway_dimension"], errors="coerce"
+    )
+    if bool(dim_mismatch.any()):
+        sample = merged.loc[dim_mismatch, ["system_id", "dimension", "true_threeway_dimension"]].drop_duplicates().head(5)
+        fail(f"{label} true three-way dimension mismatch: {sample.to_dict('records')}")
+    return merged.drop(columns=["true_threeway_dimension"])
 
 
 def sha256_float64_le(array: np.ndarray) -> str:
@@ -818,6 +905,9 @@ def pair_sindy_evogrow(args: argparse.Namespace) -> Path:
     evogrow_cells = load_evogrow_generalization_cells(Path(args.evogrow_generalization))
     evogrow_pairs = build_evogrow_pair_rows(evogrow, evogrow_cells)
     sindy_pairs = sindy_for_pairing(sindy)
+    threeway_path = str(getattr(args, "representability_threeway", "") or "")
+    if threeway_path:
+        sindy_pairs = attach_true_threeway(sindy_pairs, load_true_threeway(Path(threeway_path)), "SINDy details")
     pair_keys = ["system_id", "source_initial_condition_set", "target_initial_condition_set", "direction", "regime"]
     available_keys = evogrow_pairs[pair_keys].drop_duplicates()
     sindy_for_keys = sindy_pairs.merge(available_keys, on=pair_keys, how="inner")
@@ -858,12 +948,17 @@ def pair_sindy_evogrow(args: argparse.Namespace) -> Path:
 
 
 def paired_summary(paired: pd.DataFrame) -> pd.DataFrame:
+    stratum_column = (
+        "phasec_true_threeway_class"
+        if "phasec_true_threeway_class" in paired.columns
+        else "phasec_representability_threeway"
+    )
     group_columns = [
         "library_id",
         "direction",
         "regime",
         "dimension",
-        "phasec_representability_threeway",
+        stratum_column,
         "evogrow_seed_policy",
     ]
     rows = []
@@ -878,7 +973,7 @@ def paired_summary(paired: pd.DataFrame) -> pd.DataFrame:
         rows.append(
             {
                 **dict(zip(group_columns, keys)),
-                "aggregation_scope": "dimension_by_phasec_representability_threeway",
+                "aggregation_scope": f"dimension_by_{stratum_column}",
                 "n_cells": n_cells,
                 "sindy_structure_hit_raw_rate": float(pd.to_numeric(group["sindy_structure_hit_raw"], errors="coerce").mean()),
                 "sindy_structure_hit_pruned_rate": float(
@@ -913,6 +1008,292 @@ def paired_summary(paired: pd.DataFrame) -> pd.DataFrame:
             }
         )
     return pd.DataFrame(rows)
+
+
+def load_c1_evogrow_pairs(args: argparse.Namespace) -> pd.DataFrame:
+    records = read_records_dir(Path(args.evogrow_records_dir))
+    evogrow = pd.DataFrame([row_from_record(record, CAMPAIGN_ID) for record in records])
+    if "variant_slug" not in evogrow.columns or "use_pretuning" not in evogrow.columns:
+        fail("EvoGrow records must expose variant_slug and use_pretuning for Claim-D C-1 pairing")
+    evogrow = evogrow.loc[evogrow.apply(is_c1_record, axis=1)].copy()
+    if evogrow.empty:
+        fail("EvoGrow input contains no C-1 records (capped, use_pretuning=false)")
+    validate_evogrow_registry(
+        evogrow,
+        set(),
+        parse_int_set(args.expected_ic_sets),
+        parse_int_set(args.expected_seeds),
+        args,
+    )
+    return build_evogrow_pair_rows(evogrow, load_evogrow_generalization_cells(Path(args.evogrow_generalization)))
+
+
+def odeformer_required_columns() -> set[str]:
+    return {
+        "system_id",
+        "dimension",
+        "fit_initial_condition_set",
+        "generalization_initial_condition_set",
+        "status",
+        "reconstruction_status",
+        "generalization_status",
+        "timeout_enforced",
+        "odeformer_config_id",
+        "odeformer_grid_repetition",
+        "odeformer_beam_size",
+        "odeformer_constant_optimization_enabled",
+        "odeformer_candidates_evaluated",
+        "reconstruction_r2_arithmetic_mean",
+        "reconstruction_r2_arithmetic_mean_gt_0_9",
+        "reconstruction_r2_variance_weighted",
+        "reconstruction_r2_variance_weighted_gt_0_9",
+        "generalization_r2_arithmetic_mean",
+        "generalization_r2_arithmetic_mean_gt_0_9",
+        "generalization_r2_variance_weighted",
+        "generalization_r2_variance_weighted_gt_0_9",
+        "structure_hit_raw",
+        "structure_hit_pruned",
+    }
+
+
+def validate_odeformer_repetitions(
+    records: pd.DataFrame,
+    expected_configs: set[str],
+    expected_repetitions: set[int],
+) -> None:
+    configs = expected_configs or {str(value) for value in records["odeformer_config_id"].dropna().unique()}
+    repetitions = expected_repetitions or {
+        int(value) for value in pd.to_numeric(records["odeformer_grid_repetition"], errors="raise").unique()
+    }
+    directions = {(1, 2), (2, 1)}
+    systems = {int(value) for value in records["system_id"].dropna().unique()}
+    expected = {
+        (config, system_id, source_ic, target_ic, repetition)
+        for config in configs
+        for system_id in systems
+        for source_ic, target_ic in directions
+        for repetition in repetitions
+    }
+    actual = {
+        (
+            str(row["odeformer_config_id"]),
+            int(row["system_id"]),
+            int(row["fit_initial_condition_set"]),
+            int(row["generalization_initial_condition_set"]),
+            int(row["odeformer_grid_repetition"]),
+        )
+        for _, row in records.iterrows()
+    }
+    missing = sorted(expected - actual)
+    extra = sorted(actual - expected)
+    if missing or extra:
+        fail(
+            "ODEFormer repetitions incomplete: "
+            f"missing={missing[:10]}{'...' if len(missing) > 10 else ''}, "
+            f"extra={extra[:10]}{'...' if len(extra) > 10 else ''}"
+        )
+    if records.duplicated(
+        [
+            "odeformer_config_id",
+            "system_id",
+            "fit_initial_condition_set",
+            "generalization_initial_condition_set",
+            "odeformer_grid_repetition",
+        ]
+    ).any():
+        fail("ODEFormer records contain duplicate config/system/direction/repetition rows")
+
+
+def r2_pass_series(group: pd.DataFrame, regime: str, weighted: bool = False) -> pd.Series:
+    kind = "variance_weighted" if weighted else "arithmetic_mean"
+    r2 = pd.to_numeric(group[f"{regime}_r2_{kind}"], errors="coerce")
+    status_ok = group["status"].astype(str).eq("success") & group[f"{regime}_status"].astype(str).eq("success")
+    timeout = group["timeout_enforced"].map(as_bool)
+    valid = status_ok & ~timeout & r2.apply(math.isfinite)
+    return valid & (r2 > R2_THRESHOLD)
+
+
+def build_odeformer_pair_rows(records: pd.DataFrame, evogrow_pairs: pd.DataFrame, threeway: pd.DataFrame) -> pd.DataFrame:
+    require_columns(records, odeformer_required_columns(), "ODEFormer records")
+    records = records.copy()
+    records["source_initial_condition_set"] = records["fit_initial_condition_set"].astype(int)
+    records["target_initial_condition_set"] = records["generalization_initial_condition_set"].astype(int)
+    records["direction"] = (
+        "IC"
+        + records["source_initial_condition_set"].astype(str)
+        + "_to_IC"
+        + records["target_initial_condition_set"].astype(str)
+    )
+    records = attach_true_threeway(records, threeway, "ODEFormer records")
+
+    pair_keys = ["system_id", "source_initial_condition_set", "target_initial_condition_set", "direction", "regime"]
+    evogrow_lookup = evogrow_pairs[pair_keys + [column for column in evogrow_pairs.columns if column.startswith("evogrow_")]]
+    rows = []
+    group_columns = [
+        "odeformer_config_id",
+        "system_id",
+        "source_initial_condition_set",
+        "target_initial_condition_set",
+        "direction",
+    ]
+    for keys, group in records.groupby(group_columns, dropna=False):
+        first = group.iloc[0]
+        base = dict(zip(group_columns, keys))
+        common = {
+            **base,
+            "system_name": single_value(group["system_id"].astype(str), "system_id"),
+            "dimension": int(single_value(group["dimension"].astype(str), "dimension")),
+            "phasec_true_threeway_class": first["phasec_true_threeway_class"],
+            "phasec_true_threeway_basis_name": first["phasec_true_threeway_basis_name"],
+            "odeformer_repetition_policy": "mean_rate_over_3_repetitions",
+            "odeformer_repetition_count": int(group["odeformer_grid_repetition"].nunique()),
+            "odeformer_repetitions": ",".join(str(int(value)) for value in sorted(group["odeformer_grid_repetition"].unique())),
+            "odeformer_beam_size": int(single_value(group["odeformer_beam_size"].astype(str), "odeformer_beam_size")),
+            "odeformer_constant_optimization_enabled": as_bool(
+                single_value(
+                    group["odeformer_constant_optimization_enabled"].astype(str),
+                    "odeformer_constant_optimization_enabled",
+                )
+            ),
+            "odeformer_candidates_evaluated_median": float(
+                pd.to_numeric(group["odeformer_candidates_evaluated"], errors="coerce").median()
+            ),
+            "odeformer_structure_hit_raw_rate": float(group["structure_hit_raw"].map(as_bool).mean()),
+            "odeformer_structure_hit_pruned_rate": float(group["structure_hit_pruned"].map(as_bool).mean()),
+        }
+        for regime in ["reconstruction", "generalization"]:
+            r2 = pd.to_numeric(group[f"{regime}_r2_arithmetic_mean"], errors="coerce")
+            r2_weighted = pd.to_numeric(group[f"{regime}_r2_variance_weighted"], errors="coerce")
+            timeout = group["timeout_enforced"].map(as_bool)
+            status_ok = group["status"].astype(str).eq("success") & group[f"{regime}_status"].astype(str).eq("success")
+            valid = status_ok & ~timeout & r2.apply(math.isfinite)
+            passed = valid & (r2 > R2_THRESHOLD)
+            weighted_valid = status_ok & ~timeout & r2_weighted.apply(math.isfinite)
+            weighted_passed = weighted_valid & (r2_weighted > R2_THRESHOLD)
+            pass_count = int(passed.sum())
+            fail_count = int((~passed).sum())
+            row = {
+                **common,
+                "regime": regime,
+                "odeformer_status_non_success_count": int((~status_ok).sum()),
+                "odeformer_timeout_count": int(timeout.sum()),
+                "odeformer_r2_valid_repetition_count": int(valid.sum()),
+                "odeformer_r2_invalid_or_timeout_repetition_count": int((~valid).sum()),
+                "odeformer_r2_gt_0_9_repetition_count": pass_count,
+                "odeformer_r2_gt_0_9_rate_over_repetitions": float(passed.mean()),
+                "odeformer_r2_gt_0_9_rate_over_valid": float(passed[valid].mean()) if bool(valid.any()) else float("nan"),
+                "odeformer_r2_gt_0_9_judgment_flip_count": min(pass_count, fail_count),
+                "odeformer_r2_arithmetic_mean": float(r2[valid].mean()) if bool(valid.any()) else float("nan"),
+                "odeformer_r2_variance_weighted_mean": float(r2_weighted[weighted_valid].mean())
+                if bool(weighted_valid.any())
+                else float("nan"),
+                "odeformer_r2_variance_weighted_gt_0_9_rate_over_repetitions": float(weighted_passed.mean()),
+            }
+            rows.append(row)
+    odeformer_units = pd.DataFrame(rows)
+    paired = odeformer_units.merge(evogrow_lookup, on=pair_keys, how="inner", validate="many_to_one")
+    if len(paired) != len(odeformer_units):
+        missing = odeformer_units.merge(evogrow_lookup, on=pair_keys, how="left", indicator=True)
+        missing = missing[missing["_merge"] == "left_only"][pair_keys].drop_duplicates()
+        fail(f"ODEFormer/EvoGrow pairing incomplete: missing {missing.to_dict('records')}")
+    return paired
+
+
+def odeformer_paired_summary(paired: pd.DataFrame) -> pd.DataFrame:
+    group_columns = [
+        "odeformer_config_id",
+        "odeformer_beam_size",
+        "odeformer_constant_optimization_enabled",
+        "regime",
+        "dimension",
+        "phasec_true_threeway_class",
+        "odeformer_repetition_policy",
+        "evogrow_seed_policy",
+    ]
+    rows = []
+    for keys, group in paired.groupby(group_columns, dropna=False):
+        row = dict(zip(group_columns, keys))
+        n_units = int(len(group))
+        regime = str(row["regime"])
+        fully = str(row["phasec_true_threeway_class"]) == "fully_representable"
+        evogrow_valid = pd.to_numeric(group["evogrow_r2_valid_seed_count"], errors="coerce") > 0
+        rows.append(
+            {
+                **row,
+                "aggregation_scope": "dimension_by_phasec_true_threeway_class",
+                "n_units": n_units,
+                "odeformer_candidates_evaluated_median": float(
+                    pd.to_numeric(group["odeformer_candidates_evaluated_median"], errors="coerce").median()
+                ),
+                "odeformer_timeout_count": int(pd.to_numeric(group["odeformer_timeout_count"], errors="coerce").sum()),
+                "odeformer_status_non_success_count": int(
+                    pd.to_numeric(group["odeformer_status_non_success_count"], errors="coerce").sum()
+                ),
+                "odeformer_invalid_or_timeout_repetition_count": int(
+                    pd.to_numeric(group["odeformer_r2_invalid_or_timeout_repetition_count"], errors="coerce").sum()
+                ),
+                "odeformer_r2_gt_0_9_rate_over_units": float(
+                    pd.to_numeric(group["odeformer_r2_gt_0_9_rate_over_repetitions"], errors="coerce").mean()
+                ),
+                "odeformer_r2_gt_0_9_rate_over_valid": float(
+                    pd.to_numeric(group["odeformer_r2_gt_0_9_rate_over_valid"], errors="coerce").mean()
+                ),
+                "odeformer_r2_variance_weighted_gt_0_9_rate_over_units": float(
+                    pd.to_numeric(
+                        group["odeformer_r2_variance_weighted_gt_0_9_rate_over_repetitions"], errors="coerce"
+                    ).mean()
+                ),
+                "odeformer_r2_gt_0_9_judgment_flip_count": int(
+                    pd.to_numeric(group["odeformer_r2_gt_0_9_judgment_flip_count"], errors="coerce").sum()
+                ),
+                "odeformer_structure_hit_raw_rate": float(
+                    pd.to_numeric(group["odeformer_structure_hit_raw_rate"], errors="coerce").mean()
+                )
+                if fully
+                else float("nan"),
+                "odeformer_structure_hit_pruned_rate": float(
+                    pd.to_numeric(group["odeformer_structure_hit_pruned_rate"], errors="coerce").mean()
+                )
+                if fully
+                else float("nan"),
+                "evogrow_structure_hit_raw_rate": float(
+                    pd.to_numeric(group["evogrow_structure_hit_raw_rate"], errors="coerce").mean()
+                )
+                if fully
+                else float("nan"),
+                "evogrow_structure_hit_pruned_rate": float(
+                    pd.to_numeric(group["evogrow_structure_hit_pruned_rate"], errors="coerce").mean()
+                )
+                if fully
+                else float("nan"),
+                f"evogrow_{regime}_invalid_or_diverged_units": int((~evogrow_valid).sum()),
+                f"evogrow_{regime}_r2_gt_0_9_rate_over_units": float(
+                    pd.to_numeric(group["evogrow_r2_gt_0_9_rate_over_seeds"], errors="coerce").mean()
+                ),
+                f"evogrow_{regime}_r2_gt_0_9_rate_over_valid": float(
+                    pd.to_numeric(group["evogrow_r2_gt_0_9_rate_over_valid_seeds"], errors="coerce").mean()
+                ),
+            }
+        )
+    return pd.DataFrame(rows)
+
+
+def pair_odeformer_evogrow(args: argparse.Namespace) -> Path:
+    records = pd.read_csv(args.odeformer_records)
+    validate_odeformer_repetitions(
+        records,
+        parse_str_set(args.expected_configs),
+        parse_int_set(args.expected_repetitions),
+    )
+    evogrow_pairs = load_c1_evogrow_pairs(args)
+    paired = build_odeformer_pair_rows(records, evogrow_pairs, load_true_threeway(Path(args.representability_threeway)))
+    output = Path(args.output)
+    output.parent.mkdir(parents=True, exist_ok=True)
+    paired.to_csv(output, index=False)
+    summary_output = Path(args.summary_output)
+    summary_output.parent.mkdir(parents=True, exist_ok=True)
+    odeformer_paired_summary(paired).to_csv(summary_output, index=False)
+    return output
 
 
 def values_equal(reference: Any, candidate: Any) -> bool:
@@ -1105,6 +1486,9 @@ def main() -> int:
             print(json.dumps({key: str(value) for key, value in paths.items()}, indent=2))
         elif args.command == "pair":
             path = pair_sindy_evogrow(args)
+            print(f"Wrote {path}")
+        elif args.command == "pair-odeformer":
+            path = pair_odeformer_evogrow(args)
             print(f"Wrote {path}")
         elif args.command == "check-wpn6-bitidentical":
             check_wpn6_bitidentical(args)
