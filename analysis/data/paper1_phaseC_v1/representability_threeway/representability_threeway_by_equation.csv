@@ -1,0 +1,235 @@
+basis_name,system_id,dim,description,equation_index,n_true_terms,n_representable_true_terms,n_nonrepresentable_true_terms,representability_class,matched_basis_terms,unmatched_terms
+default_staged_polynomial_basis,1,1,RC-circuit (charging capacitor),1,2,1,1,partially_representable,u1,0.303030303030303 [constant_offset]
+default_staged_polynomial_basis,2,1,Population growth (naive),1,1,1,0,fully_representable,u1,
+default_staged_polynomial_basis,3,1,Population growth with carrying capacity,1,2,2,0,fully_representable,u1|u1^2,
+default_staged_polynomial_basis,4,1,RC-circuit with non-linear resistor (charging capacitor),1,2,0,2,non_representable,,-0.500000000000000 [constant_offset]|1/(1 + 1.64872127070013*exp(-1.04166666666667*u1)) [unsupported_function]
+default_staged_polynomial_basis,5,1,Velocity of a falling object with air resistance,1,2,1,1,partially_representable,u1^2,9.81000000000000 [constant_offset]
+default_staged_polynomial_basis,6,1,Autocatalysis with one fixed abundant chemical,1,2,2,0,fully_representable,u1|u1^2,
+default_staged_polynomial_basis,7,1,Gompertz law for tumor growth,1,2,1,1,partially_representable,u1,0.032*u1*log(u1) [unsupported_function]
+default_staged_polynomial_basis,8,1,Logistic equation with Allee effect,1,3,3,0,fully_representable,u1|u1^2|u1^3,
+default_staged_polynomial_basis,9,1,Language death model for two languages,1,2,1,1,partially_representable,u1,0.320000000000000 [constant_offset]
+default_staged_polynomial_basis,10,1,Refined language death model for two languages,1,3,0,3,non_representable,,-0.8*u1*(1 - u1)^1.2 [unsupported_power]|0.2*u1^1.2 [unsupported_power]|-0.2*u1^2.2 [unsupported_power]
+default_staged_polynomial_basis,11,1,Naive critical slowing down (statistical mechanics),1,1,1,0,fully_representable,u1^3,
+default_staged_polynomial_basis,12,1,Photons in a laser (simple),1,2,2,0,fully_representable,u1|u1^2,
+default_staged_polynomial_basis,13,1,Overdamped bead on a rotating hoop,1,2,1,1,partially_representable,sin(u1),0.95157*sin(u1)*cos(u1) [unsupported_function]
+default_staged_polynomial_basis,14,1,Budworm outbreak model with predation,1,3,2,1,partially_representable,u1|u1^2,-0.9*u1^2/(u1^2 + 449.44) [unsupported_power]
+default_staged_polynomial_basis,15,1,Budworm outbreak with predation (dimensionless),1,3,2,1,partially_representable,u1|u1^2,-u1^2/(u1^2 + 1) [unsupported_power]
+default_staged_polynomial_basis,16,1,Landau equation (typical time scale tau = 1),1,3,2,1,partially_representable,u1|u1^3,u1^5 [unsupported_power]
+default_staged_polynomial_basis,17,1,Logistic equation with harvesting/fishing,1,3,2,1,partially_representable,u1|u1^2,-0.300000000000000 [constant_offset]
+default_staged_polynomial_basis,18,1,Improved logistic equation with harvesting/fishing,1,3,2,1,partially_representable,u1|u1^2,-0.24*u1/(u1 + 50.0) [unsupported_power]
+default_staged_polynomial_basis,19,1,Improved logistic equation with harvesting/fishing (dimensionless),1,3,2,1,partially_representable,u1|u1^2,-0.08*u1/(u1 + 0.8) [unsupported_power]
+default_staged_polynomial_basis,20,1,Autocatalytic gene switching (dimensionless),1,3,1,2,partially_representable,u1,u1^2/(u1^2 + 1) [unsupported_power]|0.100000000000000 [constant_offset]
+default_staged_polynomial_basis,21,1,Dimensionally reduced SIR infection model for dead people (dimensionless),1,3,1,2,partially_representable,u1,1.20000000000000 [constant_offset]|-exp(-u1) [unsupported_function]
+default_staged_polynomial_basis,22,1,"Hysteretic activation of a protein expression (positive feedback, basal promoter expression)",1,3,1,2,partially_representable,u1,0.4*u1^5/(u1^5 + 123.0) [unsupported_power]|1.40000000000000 [constant_offset]
+default_staged_polynomial_basis,23,1,Overdamped pendulum with constant driving torque/fireflies/Josephson junction (dimensionless),1,2,1,1,partially_representable,sin(u1),0.210000000000000 [constant_offset]
+default_staged_polynomial_basis,24,2,Harmonic oscillator without damping,1,1,1,0,fully_representable,u2,
+default_staged_polynomial_basis,24,2,Harmonic oscillator without damping,2,1,1,0,fully_representable,u1,
+default_staged_polynomial_basis,25,2,Harmonic oscillator with damping,1,1,1,0,fully_representable,u2,
+default_staged_polynomial_basis,25,2,Harmonic oscillator with damping,2,2,2,0,fully_representable,u1|u2,
+default_staged_polynomial_basis,26,2,Lotka-Volterra competition model (Strogatz version with sheeps and rabbits),1,3,3,0,fully_representable,u1|u1^2|u1*u2,
+default_staged_polynomial_basis,26,2,Lotka-Volterra competition model (Strogatz version with sheeps and rabbits),2,3,3,0,fully_representable,u2|u2^2|u1*u2,
+default_staged_polynomial_basis,27,2,Lotka-Volterra simple (as on Wikipedia),1,2,2,0,fully_representable,u1|u1*u2,
+default_staged_polynomial_basis,27,2,Lotka-Volterra simple (as on Wikipedia),2,2,2,0,fully_representable,u2|u1*u2,
+default_staged_polynomial_basis,28,2,Pendulum without friction,1,1,1,0,fully_representable,u2,
+default_staged_polynomial_basis,28,2,Pendulum without friction,2,1,1,0,fully_representable,sin(u1),
+default_staged_polynomial_basis,29,2,Dipole fixed point,1,1,1,0,fully_representable,u1*u2,
+default_staged_polynomial_basis,29,2,Dipole fixed point,2,2,2,0,fully_representable,u1^2|u2^2,
+default_staged_polynomial_basis,30,2,RNA molecules catalyzing each others replication,1,2,1,1,partially_representable,u1*u2,u1^2*u2 [mixed_higher_order_term]
+default_staged_polynomial_basis,30,2,RNA molecules catalyzing each others replication,2,2,1,1,partially_representable,u1*u2,u1*u2^2 [mixed_higher_order_term]
+default_staged_polynomial_basis,31,2,SIR infection model only for healthy and sick,1,1,1,0,fully_representable,u1*u2,
+default_staged_polynomial_basis,31,2,SIR infection model only for healthy and sick,2,2,2,0,fully_representable,u2|u1*u2,
+default_staged_polynomial_basis,32,2,Damped double well oscillator,1,1,1,0,fully_representable,u2,
+default_staged_polynomial_basis,32,2,Damped double well oscillator,2,3,3,0,fully_representable,u1|u2|u1^3,
+default_staged_polynomial_basis,33,2,Glider (dimensionless),1,2,2,0,fully_representable,u1^2|sin(u2),
+default_staged_polynomial_basis,33,2,Glider (dimensionless),2,2,1,1,partially_representable,u1,-cos(u2)/u1 [unsupported_function]
+default_staged_polynomial_basis,34,2,Frictionless bead on a rotating hoop (dimensionless),1,1,1,0,fully_representable,u2,
+default_staged_polynomial_basis,34,2,Frictionless bead on a rotating hoop (dimensionless),2,2,1,1,partially_representable,sin(u1),sin(u1)*cos(u1) [unsupported_function]
+default_staged_polynomial_basis,35,2,Rotational dynamics of an object in a shear flow,1,1,0,1,non_representable,,cos(u1)*cot(u2) [unsupported_function]
+default_staged_polynomial_basis,35,2,Rotational dynamics of an object in a shear flow,2,2,0,2,non_representable,,4.2*sin(u1)*sin(u2)^2 [unsupported_function]|sin(u1)*cos(u2)^2 [unsupported_function]
+default_staged_polynomial_basis,36,2,"Pendulum with non-linear damping, no driving (dimensionless)",1,1,1,0,fully_representable,u2,
+default_staged_polynomial_basis,36,2,"Pendulum with non-linear damping, no driving (dimensionless)",2,3,2,1,partially_representable,u2|sin(u1),-0.07*u2*cos(u1) [unsupported_function]
+default_staged_polynomial_basis,37,2,Van der Pol oscillator (standard form),1,1,1,0,fully_representable,u2,
+default_staged_polynomial_basis,37,2,Van der Pol oscillator (standard form),2,3,2,1,partially_representable,u1|u2,u1^2*u2 [mixed_higher_order_term]
+default_staged_polynomial_basis,38,2,Van der Pol oscillator (simplified form from Strogatz),1,3,3,0,fully_representable,u1|u2|u1^3,
+default_staged_polynomial_basis,38,2,Van der Pol oscillator (simplified form from Strogatz),2,1,1,0,fully_representable,u1,
+default_staged_polynomial_basis,39,2,"Glycolytic oscillator, e.g., ADP and F6P in yeast (dimensionless)",1,3,2,1,partially_representable,u1|u2,u1^2*u2 [mixed_higher_order_term]
+default_staged_polynomial_basis,39,2,"Glycolytic oscillator, e.g., ADP and F6P in yeast (dimensionless)",2,3,1,2,partially_representable,u1,u1^2*u2 [mixed_higher_order_term]|0.0700000000000000 [constant_offset]
+default_staged_polynomial_basis,40,2,Duffing equation (weakly non-linear oscillation),1,1,1,0,fully_representable,u2,
+default_staged_polynomial_basis,40,2,Duffing equation (weakly non-linear oscillation),2,3,2,1,partially_representable,u1|u2,u1^2*u2 [mixed_higher_order_term]
+default_staged_polynomial_basis,41,2,Cell cycle model by Tyson for interaction between protein cdc2 and cyclin (dimensionless),1,4,3,1,partially_representable,u1|u2|u1^3,u1^2*u2 [mixed_higher_order_term]
+default_staged_polynomial_basis,41,2,Cell cycle model by Tyson for interaction between protein cdc2 and cyclin (dimensionless),2,2,1,1,partially_representable,u1,0.300000000000000 [constant_offset]
+default_staged_polynomial_basis,42,2,Reduced model for chlorine dioxide-iodine-malonic acid rection (dimensionless),1,3,1,2,partially_representable,u1,-4.0*u1*u2/(u1^2 + 1) [unsupported_power]|8.90000000000000 [constant_offset]
+default_staged_polynomial_basis,42,2,Reduced model for chlorine dioxide-iodine-malonic acid rection (dimensionless),2,2,1,1,partially_representable,u1,-1.4*u1*u2/(u1^2 + 1) [unsupported_power]
+default_staged_polynomial_basis,43,2,Driven pendulum with linear damping / Josephson junction (dimensionless),1,1,1,0,fully_representable,u2,
+default_staged_polynomial_basis,43,2,Driven pendulum with linear damping / Josephson junction (dimensionless),2,3,2,1,partially_representable,u2|sin(u1),1.67000000000000 [constant_offset]
+default_staged_polynomial_basis,44,2,Driven pendulum with quadratic damping (dimensionless),1,1,1,0,fully_representable,u2,
+default_staged_polynomial_basis,44,2,Driven pendulum with quadratic damping (dimensionless),2,3,1,2,partially_representable,sin(u1),-0.64*u2*Abs(u2) [unsupported_function]|1.67000000000000 [constant_offset]
+default_staged_polynomial_basis,45,2,Isothermal autocatalytic reaction model by Gray and Scott 1985 (dimensionless),1,3,1,2,partially_representable,u1,u1*u2^2 [mixed_higher_order_term]|0.500000000000000 [constant_offset]
+default_staged_polynomial_basis,45,2,Isothermal autocatalytic reaction model by Gray and Scott 1985 (dimensionless),2,2,1,1,partially_representable,u2,u1*u2^2 [mixed_higher_order_term]
+default_staged_polynomial_basis,46,2,Interacting bar magnets,1,2,1,1,partially_representable,sin(u1),0.33*sin(u1 - u2) [unsupported_trigonometric_argument]
+default_staged_polynomial_basis,46,2,Interacting bar magnets,2,2,1,1,partially_representable,sin(u2),-0.33*sin(u1 - u2) [unsupported_trigonometric_argument]
+default_staged_polynomial_basis,47,2,Binocular rivalry model (no oscillations),1,2,1,1,partially_representable,u1,1/(0.246596963941606*exp(4.89*u2) + 1) [unsupported_function]
+default_staged_polynomial_basis,47,2,Binocular rivalry model (no oscillations),2,2,1,1,partially_representable,u2,1/(0.246596963941606*exp(4.89*u1) + 1) [unsupported_function]
+default_staged_polynomial_basis,48,2,Bacterial respiration model for nutrients and oxygen levels,1,3,1,2,partially_representable,u1,-u1*u2/(0.48*u1^2 + 1) [unsupported_power]|18.3000000000000 [constant_offset]
+default_staged_polynomial_basis,48,2,Bacterial respiration model for nutrients and oxygen levels,2,2,0,2,non_representable,,-u1*u2/(0.48*u1^2 + 1) [unsupported_power]|11.2300000000000 [constant_offset]
+default_staged_polynomial_basis,49,2,Brusselator: hypothetical chemical oscillation model (dimensionless),1,3,1,2,partially_representable,u1,u1^2*u2 [mixed_higher_order_term]|1 [constant_offset]
+default_staged_polynomial_basis,49,2,Brusselator: hypothetical chemical oscillation model (dimensionless),2,2,1,1,partially_representable,u1,u1^2*u2 [mixed_higher_order_term]
+default_staged_polynomial_basis,50,2,Chemical oscillator model by Schnackenberg 1979 (dimensionless),1,3,1,2,partially_representable,u1,u1^2*u2 [mixed_higher_order_term]|0.240000000000000 [constant_offset]
+default_staged_polynomial_basis,50,2,Chemical oscillator model by Schnackenberg 1979 (dimensionless),2,2,0,2,non_representable,,u1^2*u2 [mixed_higher_order_term]|1.43000000000000 [constant_offset]
+default_staged_polynomial_basis,51,2,Oscillator death model by Ermentrout and Kopell 1990,1,2,0,2,non_representable,,sin(u2)*cos(u1) [unsupported_function]|1.43200000000000 [constant_offset]
+default_staged_polynomial_basis,51,2,Oscillator death model by Ermentrout and Kopell 1990,2,2,0,2,non_representable,,sin(u2)*cos(u1) [unsupported_function]|0.972000000000000 [constant_offset]
+default_staged_polynomial_basis,52,3,Maxwell-Bloch equations (laser dynamics),1,2,2,0,fully_representable,u1|u2,
+default_staged_polynomial_basis,52,3,Maxwell-Bloch equations (laser dynamics),2,2,2,0,fully_representable,u2|u1*u3,
+default_staged_polynomial_basis,52,3,Maxwell-Bloch equations (laser dynamics),3,3,2,1,partially_representable,u3|u1*u2,1.39400000000000 [constant_offset]
+default_staged_polynomial_basis,53,3,Model for apoptosis (cell death),1,3,1,2,partially_representable,u1,-0.4*u1*u2/(u1 + 0.1) [unsupported_power]|0.100000000000000 [constant_offset]
+default_staged_polynomial_basis,53,3,Model for apoptosis (cell death),2,4,2,2,partially_representable,u3|u2*u3,-7.95*u1*u2/(u2 + 2.0) [unsupported_power]|-0.2*u2/(u2 + 0.1) [unsupported_power]
+default_staged_polynomial_basis,53,3,Model for apoptosis (cell death),3,4,2,2,partially_representable,u3|u2*u3,7.95*u1*u2/(u2 + 2.0) [unsupported_power]|0.2*u2/(u2 + 0.1) [unsupported_power]
+default_staged_polynomial_basis,54,3,Lorenz equations in well-behaved periodic regime,1,2,2,0,fully_representable,u1|u2,
+default_staged_polynomial_basis,54,3,Lorenz equations in well-behaved periodic regime,2,3,3,0,fully_representable,u1|u2|u1*u3,
+default_staged_polynomial_basis,54,3,Lorenz equations in well-behaved periodic regime,3,2,2,0,fully_representable,u3|u1*u2,
+default_staged_polynomial_basis,55,3,Lorenz equations in complex periodic regime,1,2,2,0,fully_representable,u1|u2,
+default_staged_polynomial_basis,55,3,Lorenz equations in complex periodic regime,2,3,3,0,fully_representable,u1|u2|u1*u3,
+default_staged_polynomial_basis,55,3,Lorenz equations in complex periodic regime,3,2,2,0,fully_representable,u3|u1*u2,
+default_staged_polynomial_basis,56,3,Lorenz equations standard parameters (chaotic),1,2,2,0,fully_representable,u1|u2,
+default_staged_polynomial_basis,56,3,Lorenz equations standard parameters (chaotic),2,3,3,0,fully_representable,u1|u2|u1*u3,
+default_staged_polynomial_basis,56,3,Lorenz equations standard parameters (chaotic),3,2,2,0,fully_representable,u3|u1*u2,
+default_staged_polynomial_basis,57,3,Rössler attractor (stable fixed point),1,2,2,0,fully_representable,u2|u3,
+default_staged_polynomial_basis,57,3,Rössler attractor (stable fixed point),2,2,2,0,fully_representable,u1|u2,
+default_staged_polynomial_basis,57,3,Rössler attractor (stable fixed point),3,3,2,1,partially_representable,u3|u1*u3,1.00000000000000 [constant_offset]
+default_staged_polynomial_basis,58,3,Rössler attractor (periodic),1,2,2,0,fully_representable,u2|u3,
+default_staged_polynomial_basis,58,3,Rössler attractor (periodic),2,2,2,0,fully_representable,u1|u2,
+default_staged_polynomial_basis,58,3,Rössler attractor (periodic),3,3,2,1,partially_representable,u3|u1*u3,1.00000000000000 [constant_offset]
+default_staged_polynomial_basis,59,3,Rössler attractor (chaotic),1,2,2,0,fully_representable,u2|u3,
+default_staged_polynomial_basis,59,3,Rössler attractor (chaotic),2,2,2,0,fully_representable,u1|u2,
+default_staged_polynomial_basis,59,3,Rössler attractor (chaotic),3,3,2,1,partially_representable,u3|u1*u3,1.00000000000000 [constant_offset]
+default_staged_polynomial_basis,60,3,Aizawa attractor (chaotic),1,3,3,0,fully_representable,u1|u2|u1*u3,
+default_staged_polynomial_basis,60,3,Aizawa attractor (chaotic),2,3,3,0,fully_representable,u1|u2|u2*u3,
+default_staged_polynomial_basis,60,3,Aizawa attractor (chaotic),3,8,4,4,partially_representable,u3|u1^2|u2^2|u3^3,u1^3*u3 [mixed_higher_order_term]|u1^2*u3 [mixed_higher_order_term]|u2^2*u3 [mixed_higher_order_term]|0.650000000000000 [constant_offset]
+default_staged_polynomial_basis,61,3,Chen-Lee attractor; system for gyro motion with feedback control of rigid body (chaotic),1,2,2,0,fully_representable,u1|u2*u3,
+default_staged_polynomial_basis,61,3,Chen-Lee attractor; system for gyro motion with feedback control of rigid body (chaotic),2,2,2,0,fully_representable,u2|u1*u3,
+default_staged_polynomial_basis,61,3,Chen-Lee attractor; system for gyro motion with feedback control of rigid body (chaotic),3,2,2,0,fully_representable,u3|u1*u2,
+default_staged_polynomial_basis,62,4,Binocular rivalry model with adaptation (oscillations),1,2,1,1,partially_representable,u1,1/(0.246596963941606*exp(0.4*u2)*exp(0.89*u3) + 1) [unsupported_function]
+default_staged_polynomial_basis,62,4,Binocular rivalry model with adaptation (oscillations),2,2,2,0,fully_representable,u1|u2,
+default_staged_polynomial_basis,62,4,Binocular rivalry model with adaptation (oscillations),3,2,1,1,partially_representable,u3,1/(0.246596963941606*exp(0.89*u1)*exp(0.4*u4) + 1) [unsupported_function]
+default_staged_polynomial_basis,62,4,Binocular rivalry model with adaptation (oscillations),4,2,2,0,fully_representable,u3|u4,
+default_staged_polynomial_basis,63,4,SEIR infection model (proportions),1,1,1,0,fully_representable,u1*u3,
+default_staged_polynomial_basis,63,4,SEIR infection model (proportions),2,2,2,0,fully_representable,u2|u1*u3,
+default_staged_polynomial_basis,63,4,SEIR infection model (proportions),3,2,2,0,fully_representable,u2|u3,
+default_staged_polynomial_basis,63,4,SEIR infection model (proportions),4,1,1,0,fully_representable,u3,
+staged_polynomial_basis_with_constant,1,1,RC-circuit (charging capacitor),1,2,2,0,fully_representable,u1,0.303030303030303 [constant_offset]
+staged_polynomial_basis_with_constant,2,1,Population growth (naive),1,1,1,0,fully_representable,u1,
+staged_polynomial_basis_with_constant,3,1,Population growth with carrying capacity,1,2,2,0,fully_representable,u1|u1^2,
+staged_polynomial_basis_with_constant,4,1,RC-circuit with non-linear resistor (charging capacitor),1,2,1,1,partially_representable,,-0.500000000000000 [constant_offset]|1/(1 + 1.64872127070013*exp(-1.04166666666667*u1)) [unsupported_function]
+staged_polynomial_basis_with_constant,5,1,Velocity of a falling object with air resistance,1,2,2,0,fully_representable,u1^2,9.81000000000000 [constant_offset]
+staged_polynomial_basis_with_constant,6,1,Autocatalysis with one fixed abundant chemical,1,2,2,0,fully_representable,u1|u1^2,
+staged_polynomial_basis_with_constant,7,1,Gompertz law for tumor growth,1,2,1,1,partially_representable,u1,0.032*u1*log(u1) [unsupported_function]
+staged_polynomial_basis_with_constant,8,1,Logistic equation with Allee effect,1,3,3,0,fully_representable,u1|u1^2|u1^3,
+staged_polynomial_basis_with_constant,9,1,Language death model for two languages,1,2,2,0,fully_representable,u1,0.320000000000000 [constant_offset]
+staged_polynomial_basis_with_constant,10,1,Refined language death model for two languages,1,3,0,3,non_representable,,-0.8*u1*(1 - u1)^1.2 [unsupported_power]|0.2*u1^1.2 [unsupported_power]|-0.2*u1^2.2 [unsupported_power]
+staged_polynomial_basis_with_constant,11,1,Naive critical slowing down (statistical mechanics),1,1,1,0,fully_representable,u1^3,
+staged_polynomial_basis_with_constant,12,1,Photons in a laser (simple),1,2,2,0,fully_representable,u1|u1^2,
+staged_polynomial_basis_with_constant,13,1,Overdamped bead on a rotating hoop,1,2,1,1,partially_representable,sin(u1),0.95157*sin(u1)*cos(u1) [unsupported_function]
+staged_polynomial_basis_with_constant,14,1,Budworm outbreak model with predation,1,3,2,1,partially_representable,u1|u1^2,-0.9*u1^2/(u1^2 + 449.44) [unsupported_power]
+staged_polynomial_basis_with_constant,15,1,Budworm outbreak with predation (dimensionless),1,3,2,1,partially_representable,u1|u1^2,-u1^2/(u1^2 + 1) [unsupported_power]
+staged_polynomial_basis_with_constant,16,1,Landau equation (typical time scale tau = 1),1,3,2,1,partially_representable,u1|u1^3,u1^5 [unsupported_power]
+staged_polynomial_basis_with_constant,17,1,Logistic equation with harvesting/fishing,1,3,3,0,fully_representable,u1|u1^2,-0.300000000000000 [constant_offset]
+staged_polynomial_basis_with_constant,18,1,Improved logistic equation with harvesting/fishing,1,3,2,1,partially_representable,u1|u1^2,-0.24*u1/(u1 + 50.0) [unsupported_power]
+staged_polynomial_basis_with_constant,19,1,Improved logistic equation with harvesting/fishing (dimensionless),1,3,2,1,partially_representable,u1|u1^2,-0.08*u1/(u1 + 0.8) [unsupported_power]
+staged_polynomial_basis_with_constant,20,1,Autocatalytic gene switching (dimensionless),1,3,2,1,partially_representable,u1,u1^2/(u1^2 + 1) [unsupported_power]|0.100000000000000 [constant_offset]
+staged_polynomial_basis_with_constant,21,1,Dimensionally reduced SIR infection model for dead people (dimensionless),1,3,2,1,partially_representable,u1,1.20000000000000 [constant_offset]|-exp(-u1) [unsupported_function]
+staged_polynomial_basis_with_constant,22,1,"Hysteretic activation of a protein expression (positive feedback, basal promoter expression)",1,3,2,1,partially_representable,u1,0.4*u1^5/(u1^5 + 123.0) [unsupported_power]|1.40000000000000 [constant_offset]
+staged_polynomial_basis_with_constant,23,1,Overdamped pendulum with constant driving torque/fireflies/Josephson junction (dimensionless),1,2,2,0,fully_representable,sin(u1),0.210000000000000 [constant_offset]
+staged_polynomial_basis_with_constant,24,2,Harmonic oscillator without damping,1,1,1,0,fully_representable,u2,
+staged_polynomial_basis_with_constant,24,2,Harmonic oscillator without damping,2,1,1,0,fully_representable,u1,
+staged_polynomial_basis_with_constant,25,2,Harmonic oscillator with damping,1,1,1,0,fully_representable,u2,
+staged_polynomial_basis_with_constant,25,2,Harmonic oscillator with damping,2,2,2,0,fully_representable,u1|u2,
+staged_polynomial_basis_with_constant,26,2,Lotka-Volterra competition model (Strogatz version with sheeps and rabbits),1,3,3,0,fully_representable,u1|u1^2|u1*u2,
+staged_polynomial_basis_with_constant,26,2,Lotka-Volterra competition model (Strogatz version with sheeps and rabbits),2,3,3,0,fully_representable,u2|u2^2|u1*u2,
+staged_polynomial_basis_with_constant,27,2,Lotka-Volterra simple (as on Wikipedia),1,2,2,0,fully_representable,u1|u1*u2,
+staged_polynomial_basis_with_constant,27,2,Lotka-Volterra simple (as on Wikipedia),2,2,2,0,fully_representable,u2|u1*u2,
+staged_polynomial_basis_with_constant,28,2,Pendulum without friction,1,1,1,0,fully_representable,u2,
+staged_polynomial_basis_with_constant,28,2,Pendulum without friction,2,1,1,0,fully_representable,sin(u1),
+staged_polynomial_basis_with_constant,29,2,Dipole fixed point,1,1,1,0,fully_representable,u1*u2,
+staged_polynomial_basis_with_constant,29,2,Dipole fixed point,2,2,2,0,fully_representable,u1^2|u2^2,
+staged_polynomial_basis_with_constant,30,2,RNA molecules catalyzing each others replication,1,2,1,1,partially_representable,u1*u2,u1^2*u2 [mixed_higher_order_term]
+staged_polynomial_basis_with_constant,30,2,RNA molecules catalyzing each others replication,2,2,1,1,partially_representable,u1*u2,u1*u2^2 [mixed_higher_order_term]
+staged_polynomial_basis_with_constant,31,2,SIR infection model only for healthy and sick,1,1,1,0,fully_representable,u1*u2,
+staged_polynomial_basis_with_constant,31,2,SIR infection model only for healthy and sick,2,2,2,0,fully_representable,u2|u1*u2,
+staged_polynomial_basis_with_constant,32,2,Damped double well oscillator,1,1,1,0,fully_representable,u2,
+staged_polynomial_basis_with_constant,32,2,Damped double well oscillator,2,3,3,0,fully_representable,u1|u2|u1^3,
+staged_polynomial_basis_with_constant,33,2,Glider (dimensionless),1,2,2,0,fully_representable,u1^2|sin(u2),
+staged_polynomial_basis_with_constant,33,2,Glider (dimensionless),2,2,1,1,partially_representable,u1,-cos(u2)/u1 [unsupported_function]
+staged_polynomial_basis_with_constant,34,2,Frictionless bead on a rotating hoop (dimensionless),1,1,1,0,fully_representable,u2,
+staged_polynomial_basis_with_constant,34,2,Frictionless bead on a rotating hoop (dimensionless),2,2,1,1,partially_representable,sin(u1),sin(u1)*cos(u1) [unsupported_function]
+staged_polynomial_basis_with_constant,35,2,Rotational dynamics of an object in a shear flow,1,1,0,1,non_representable,,cos(u1)*cot(u2) [unsupported_function]
+staged_polynomial_basis_with_constant,35,2,Rotational dynamics of an object in a shear flow,2,2,0,2,non_representable,,4.2*sin(u1)*sin(u2)^2 [unsupported_function]|sin(u1)*cos(u2)^2 [unsupported_function]
+staged_polynomial_basis_with_constant,36,2,"Pendulum with non-linear damping, no driving (dimensionless)",1,1,1,0,fully_representable,u2,
+staged_polynomial_basis_with_constant,36,2,"Pendulum with non-linear damping, no driving (dimensionless)",2,3,2,1,partially_representable,u2|sin(u1),-0.07*u2*cos(u1) [unsupported_function]
+staged_polynomial_basis_with_constant,37,2,Van der Pol oscillator (standard form),1,1,1,0,fully_representable,u2,
+staged_polynomial_basis_with_constant,37,2,Van der Pol oscillator (standard form),2,3,2,1,partially_representable,u1|u2,u1^2*u2 [mixed_higher_order_term]
+staged_polynomial_basis_with_constant,38,2,Van der Pol oscillator (simplified form from Strogatz),1,3,3,0,fully_representable,u1|u2|u1^3,
+staged_polynomial_basis_with_constant,38,2,Van der Pol oscillator (simplified form from Strogatz),2,1,1,0,fully_representable,u1,
+staged_polynomial_basis_with_constant,39,2,"Glycolytic oscillator, e.g., ADP and F6P in yeast (dimensionless)",1,3,2,1,partially_representable,u1|u2,u1^2*u2 [mixed_higher_order_term]
+staged_polynomial_basis_with_constant,39,2,"Glycolytic oscillator, e.g., ADP and F6P in yeast (dimensionless)",2,3,2,1,partially_representable,u1,u1^2*u2 [mixed_higher_order_term]|0.0700000000000000 [constant_offset]
+staged_polynomial_basis_with_constant,40,2,Duffing equation (weakly non-linear oscillation),1,1,1,0,fully_representable,u2,
+staged_polynomial_basis_with_constant,40,2,Duffing equation (weakly non-linear oscillation),2,3,2,1,partially_representable,u1|u2,u1^2*u2 [mixed_higher_order_term]
+staged_polynomial_basis_with_constant,41,2,Cell cycle model by Tyson for interaction between protein cdc2 and cyclin (dimensionless),1,4,3,1,partially_representable,u1|u2|u1^3,u1^2*u2 [mixed_higher_order_term]
+staged_polynomial_basis_with_constant,41,2,Cell cycle model by Tyson for interaction between protein cdc2 and cyclin (dimensionless),2,2,2,0,fully_representable,u1,0.300000000000000 [constant_offset]
+staged_polynomial_basis_with_constant,42,2,Reduced model for chlorine dioxide-iodine-malonic acid rection (dimensionless),1,3,2,1,partially_representable,u1,-4.0*u1*u2/(u1^2 + 1) [unsupported_power]|8.90000000000000 [constant_offset]
+staged_polynomial_basis_with_constant,42,2,Reduced model for chlorine dioxide-iodine-malonic acid rection (dimensionless),2,2,1,1,partially_representable,u1,-1.4*u1*u2/(u1^2 + 1) [unsupported_power]
+staged_polynomial_basis_with_constant,43,2,Driven pendulum with linear damping / Josephson junction (dimensionless),1,1,1,0,fully_representable,u2,
+staged_polynomial_basis_with_constant,43,2,Driven pendulum with linear damping / Josephson junction (dimensionless),2,3,3,0,fully_representable,u2|sin(u1),1.67000000000000 [constant_offset]
+staged_polynomial_basis_with_constant,44,2,Driven pendulum with quadratic damping (dimensionless),1,1,1,0,fully_representable,u2,
+staged_polynomial_basis_with_constant,44,2,Driven pendulum with quadratic damping (dimensionless),2,3,2,1,partially_representable,sin(u1),-0.64*u2*Abs(u2) [unsupported_function]|1.67000000000000 [constant_offset]
+staged_polynomial_basis_with_constant,45,2,Isothermal autocatalytic reaction model by Gray and Scott 1985 (dimensionless),1,3,2,1,partially_representable,u1,u1*u2^2 [mixed_higher_order_term]|0.500000000000000 [constant_offset]
+staged_polynomial_basis_with_constant,45,2,Isothermal autocatalytic reaction model by Gray and Scott 1985 (dimensionless),2,2,1,1,partially_representable,u2,u1*u2^2 [mixed_higher_order_term]
+staged_polynomial_basis_with_constant,46,2,Interacting bar magnets,1,2,1,1,partially_representable,sin(u1),0.33*sin(u1 - u2) [unsupported_trigonometric_argument]
+staged_polynomial_basis_with_constant,46,2,Interacting bar magnets,2,2,1,1,partially_representable,sin(u2),-0.33*sin(u1 - u2) [unsupported_trigonometric_argument]
+staged_polynomial_basis_with_constant,47,2,Binocular rivalry model (no oscillations),1,2,1,1,partially_representable,u1,1/(0.246596963941606*exp(4.89*u2) + 1) [unsupported_function]
+staged_polynomial_basis_with_constant,47,2,Binocular rivalry model (no oscillations),2,2,1,1,partially_representable,u2,1/(0.246596963941606*exp(4.89*u1) + 1) [unsupported_function]
+staged_polynomial_basis_with_constant,48,2,Bacterial respiration model for nutrients and oxygen levels,1,3,2,1,partially_representable,u1,-u1*u2/(0.48*u1^2 + 1) [unsupported_power]|18.3000000000000 [constant_offset]
+staged_polynomial_basis_with_constant,48,2,Bacterial respiration model for nutrients and oxygen levels,2,2,1,1,partially_representable,,-u1*u2/(0.48*u1^2 + 1) [unsupported_power]|11.2300000000000 [constant_offset]
+staged_polynomial_basis_with_constant,49,2,Brusselator: hypothetical chemical oscillation model (dimensionless),1,3,2,1,partially_representable,u1,u1^2*u2 [mixed_higher_order_term]|1 [constant_offset]
+staged_polynomial_basis_with_constant,49,2,Brusselator: hypothetical chemical oscillation model (dimensionless),2,2,1,1,partially_representable,u1,u1^2*u2 [mixed_higher_order_term]
+staged_polynomial_basis_with_constant,50,2,Chemical oscillator model by Schnackenberg 1979 (dimensionless),1,3,2,1,partially_representable,u1,u1^2*u2 [mixed_higher_order_term]|0.240000000000000 [constant_offset]
+staged_polynomial_basis_with_constant,50,2,Chemical oscillator model by Schnackenberg 1979 (dimensionless),2,2,1,1,partially_representable,,u1^2*u2 [mixed_higher_order_term]|1.43000000000000 [constant_offset]
+staged_polynomial_basis_with_constant,51,2,Oscillator death model by Ermentrout and Kopell 1990,1,2,1,1,partially_representable,,sin(u2)*cos(u1) [unsupported_function]|1.43200000000000 [constant_offset]
+staged_polynomial_basis_with_constant,51,2,Oscillator death model by Ermentrout and Kopell 1990,2,2,1,1,partially_representable,,sin(u2)*cos(u1) [unsupported_function]|0.972000000000000 [constant_offset]
+staged_polynomial_basis_with_constant,52,3,Maxwell-Bloch equations (laser dynamics),1,2,2,0,fully_representable,u1|u2,
+staged_polynomial_basis_with_constant,52,3,Maxwell-Bloch equations (laser dynamics),2,2,2,0,fully_representable,u2|u1*u3,
+staged_polynomial_basis_with_constant,52,3,Maxwell-Bloch equations (laser dynamics),3,3,3,0,fully_representable,u3|u1*u2,1.39400000000000 [constant_offset]
+staged_polynomial_basis_with_constant,53,3,Model for apoptosis (cell death),1,3,2,1,partially_representable,u1,-0.4*u1*u2/(u1 + 0.1) [unsupported_power]|0.100000000000000 [constant_offset]
+staged_polynomial_basis_with_constant,53,3,Model for apoptosis (cell death),2,4,2,2,partially_representable,u3|u2*u3,-7.95*u1*u2/(u2 + 2.0) [unsupported_power]|-0.2*u2/(u2 + 0.1) [unsupported_power]
+staged_polynomial_basis_with_constant,53,3,Model for apoptosis (cell death),3,4,2,2,partially_representable,u3|u2*u3,7.95*u1*u2/(u2 + 2.0) [unsupported_power]|0.2*u2/(u2 + 0.1) [unsupported_power]
+staged_polynomial_basis_with_constant,54,3,Lorenz equations in well-behaved periodic regime,1,2,2,0,fully_representable,u1|u2,
+staged_polynomial_basis_with_constant,54,3,Lorenz equations in well-behaved periodic regime,2,3,3,0,fully_representable,u1|u2|u1*u3,
+staged_polynomial_basis_with_constant,54,3,Lorenz equations in well-behaved periodic regime,3,2,2,0,fully_representable,u3|u1*u2,
+staged_polynomial_basis_with_constant,55,3,Lorenz equations in complex periodic regime,1,2,2,0,fully_representable,u1|u2,
+staged_polynomial_basis_with_constant,55,3,Lorenz equations in complex periodic regime,2,3,3,0,fully_representable,u1|u2|u1*u3,
+staged_polynomial_basis_with_constant,55,3,Lorenz equations in complex periodic regime,3,2,2,0,fully_representable,u3|u1*u2,
+staged_polynomial_basis_with_constant,56,3,Lorenz equations standard parameters (chaotic),1,2,2,0,fully_representable,u1|u2,
+staged_polynomial_basis_with_constant,56,3,Lorenz equations standard parameters (chaotic),2,3,3,0,fully_representable,u1|u2|u1*u3,
+staged_polynomial_basis_with_constant,56,3,Lorenz equations standard parameters (chaotic),3,2,2,0,fully_representable,u3|u1*u2,
+staged_polynomial_basis_with_constant,57,3,Rössler attractor (stable fixed point),1,2,2,0,fully_representable,u2|u3,
+staged_polynomial_basis_with_constant,57,3,Rössler attractor (stable fixed point),2,2,2,0,fully_representable,u1|u2,
+staged_polynomial_basis_with_constant,57,3,Rössler attractor (stable fixed point),3,3,3,0,fully_representable,u3|u1*u3,1.00000000000000 [constant_offset]
+staged_polynomial_basis_with_constant,58,3,Rössler attractor (periodic),1,2,2,0,fully_representable,u2|u3,
+staged_polynomial_basis_with_constant,58,3,Rössler attractor (periodic),2,2,2,0,fully_representable,u1|u2,
+staged_polynomial_basis_with_constant,58,3,Rössler attractor (periodic),3,3,3,0,fully_representable,u3|u1*u3,1.00000000000000 [constant_offset]
+staged_polynomial_basis_with_constant,59,3,Rössler attractor (chaotic),1,2,2,0,fully_representable,u2|u3,
+staged_polynomial_basis_with_constant,59,3,Rössler attractor (chaotic),2,2,2,0,fully_representable,u1|u2,
+staged_polynomial_basis_with_constant,59,3,Rössler attractor (chaotic),3,3,3,0,fully_representable,u3|u1*u3,1.00000000000000 [constant_offset]
+staged_polynomial_basis_with_constant,60,3,Aizawa attractor (chaotic),1,3,3,0,fully_representable,u1|u2|u1*u3,
+staged_polynomial_basis_with_constant,60,3,Aizawa attractor (chaotic),2,3,3,0,fully_representable,u1|u2|u2*u3,
+staged_polynomial_basis_with_constant,60,3,Aizawa attractor (chaotic),3,8,5,3,partially_representable,u3|u1^2|u2^2|u3^3,u1^3*u3 [mixed_higher_order_term]|u1^2*u3 [mixed_higher_order_term]|u2^2*u3 [mixed_higher_order_term]|0.650000000000000 [constant_offset]
+staged_polynomial_basis_with_constant,61,3,Chen-Lee attractor; system for gyro motion with feedback control of rigid body (chaotic),1,2,2,0,fully_representable,u1|u2*u3,
+staged_polynomial_basis_with_constant,61,3,Chen-Lee attractor; system for gyro motion with feedback control of rigid body (chaotic),2,2,2,0,fully_representable,u2|u1*u3,
+staged_polynomial_basis_with_constant,61,3,Chen-Lee attractor; system for gyro motion with feedback control of rigid body (chaotic),3,2,2,0,fully_representable,u3|u1*u2,
+staged_polynomial_basis_with_constant,62,4,Binocular rivalry model with adaptation (oscillations),1,2,1,1,partially_representable,u1,1/(0.246596963941606*exp(0.4*u2)*exp(0.89*u3) + 1) [unsupported_function]
+staged_polynomial_basis_with_constant,62,4,Binocular rivalry model with adaptation (oscillations),2,2,2,0,fully_representable,u1|u2,
+staged_polynomial_basis_with_constant,62,4,Binocular rivalry model with adaptation (oscillations),3,2,1,1,partially_representable,u3,1/(0.246596963941606*exp(0.89*u1)*exp(0.4*u4) + 1) [unsupported_function]
+staged_polynomial_basis_with_constant,62,4,Binocular rivalry model with adaptation (oscillations),4,2,2,0,fully_representable,u3|u4,
+staged_polynomial_basis_with_constant,63,4,SEIR infection model (proportions),1,1,1,0,fully_representable,u1*u3,
+staged_polynomial_basis_with_constant,63,4,SEIR infection model (proportions),2,2,2,0,fully_representable,u2|u1*u3,
+staged_polynomial_basis_with_constant,63,4,SEIR infection model (proportions),3,2,2,0,fully_representable,u2|u3,
+staged_polynomial_basis_with_constant,63,4,SEIR infection model (proportions),4,1,1,0,fully_representable,u3,
