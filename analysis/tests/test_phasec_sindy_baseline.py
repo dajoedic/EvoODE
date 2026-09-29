@@ -97,43 +97,85 @@ def sindy_fixture(path: Path, systems: list[int] | None = None, invalid_control:
     for system_id in systems:
         dim = 1 if system_id == 2 else 2 if system_id == 24 else 3 if system_id == 52 else 4
         for source_ic, target_ic, direction in [(1, 2, "IC1_to_IC2"), (2, 1, "IC2_to_IC1")]:
-            rows.append(
-                {
-                    "library_id": "poly_deg2_stlsq_0.01",
-                    "polynomial_degree": 2,
-                    "include_sin_cos": False,
-                    "stlsq_threshold": 0.01,
-                    "system_id": system_id,
-                    "system_name": f"system {system_id}",
-                    "dimension": dim,
-                    "source_initial_condition_set": source_ic,
-                    "target_initial_condition_set": target_ic,
-                    "initial_condition_set": target_ic,
-                    "direction": direction,
-                    "regime": "generalization",
-                    "fit_status": "success",
-                    "integration_status": "success",
-                    "diverged_or_nonfinite": False,
-                    "r2": 0.95,
-                    "r2_gt_0_9": True,
-                    "sindy_structure_hit_raw": True,
-                    "sindy_structure_hit_pruned": True,
-                    "n_library_terms": 3,
-                    "fit_elapsed_s_context": 0.01,
-                    "elapsed_s_evidence_role": "context_not_evidence",
-                    "n_target_regressions": dim,
-                    "n_evaluation_integrations": 1,
-                    "reconstruction_control_max_abs": 1.0 if invalid_control else 0.0,
-                    "reconstruction_control_valid": not invalid_control,
-                    "valid_for_analysis": not invalid_control,
-                    "phasec_representability": "exact",
-                    "phasec_representability_threeway": "exact",
-                    "phasec_support_status": "ok",
-                    "phasec_basis_name": "staged_polynomial_basis_with_constant",
-                }
-            )
+            for regime, eval_ic, r2 in [
+                ("reconstruction", source_ic, 0.99),
+                ("generalization", target_ic, 0.35 if source_ic == 1 else 0.45),
+            ]:
+                rows.append(
+                    {
+                        "library_id": "poly_deg2_stlsq_0.01",
+                        "polynomial_degree": 2,
+                        "include_sin_cos": False,
+                        "stlsq_threshold": 0.01,
+                        "system_id": system_id,
+                        "system_name": f"system {system_id}",
+                        "dimension": dim,
+                        "source_initial_condition_set": source_ic,
+                        "target_initial_condition_set": target_ic,
+                        "initial_condition_set": eval_ic,
+                        "direction": direction,
+                        "regime": regime,
+                        "fit_status": "success",
+                        "integration_status": "success",
+                        "diverged_or_nonfinite": False,
+                        "r2": r2,
+                        "r2_gt_0_9": r2 > phasec_sindy.R2_THRESHOLD,
+                        "sindy_structure_hit_raw": True,
+                        "sindy_structure_hit_pruned": True,
+                        "n_library_terms": 3,
+                        "fit_elapsed_s_context": 0.01,
+                        "elapsed_s_evidence_role": "context_not_evidence",
+                        "n_target_regressions": dim,
+                        "n_evaluation_integrations": 2 if regime == "reconstruction" else 1,
+                        "reconstruction_control_max_abs": 1.0 if invalid_control else 0.0,
+                        "reconstruction_control_valid": not invalid_control,
+                        "valid_for_analysis": not invalid_control,
+                        "phasec_representability": "exact",
+                        "phasec_representability_threeway": "exact",
+                        "phasec_support_status": "ok",
+                        "phasec_basis_name": "staged_polynomial_basis_with_constant",
+                    }
+                )
     frame = pd.DataFrame(rows)
     frame.to_csv(path, index=False)
+    return path
+
+
+def evogrow_cells_fixture(path: Path, records: list[dict[str, object]]) -> Path:
+    rows = []
+    for record in records:
+        row = phasec_sindy.row_from_record(record, phasec_sindy.CAMPAIGN_ID)
+        if row["variant_slug"] != phasec_sindy.C1_VARIANT or bool(row["use_pretuning"]):
+            continue
+        source_ic = int(row["initial_condition_set"])
+        target_ic = 2 if source_ic == 1 else 1
+        rows.append(
+            {
+                "cell_key": f"sys{int(row['system_id']):04d}_seed{int(row['seed'])}_ic{source_ic}",
+                "condition": "capped",
+                "variant": phasec_sindy.C1_VARIANT,
+                "basis_name": str(row["basis_name"]),
+                "system_id": int(row["system_id"]),
+                "system_name": str(row["system_name"]),
+                "dimension": int(row["system_dim"]),
+                "source_initial_condition_set": source_ic,
+                "target_initial_condition_set": target_ic,
+                "direction": f"IC{source_ic}_to_IC{target_ic}",
+                "seed": int(row["seed"]),
+                "structure_hit": bool(row["exact_support_match_pruned"]),
+                "stored_reconstruction_loss": float(row["loss"]),
+                "reconstruction_loss": float(row["loss"]),
+                "reconstruction_r2": float(row["r2"]),
+                "reconstruction_diverged_or_nonfinite": False,
+                "reconstruction_probe_ok": True,
+                "reconstruction_abs_loss_delta": 0.0,
+                "generalization_loss": 1.0,
+                "generalization_r2": 0.25 if source_ic == 1 else 0.75,
+                "generalization_diverged_or_nonfinite": False,
+                "generalization_error": "",
+            }
+        )
+    pd.DataFrame(rows).to_csv(path, index=False)
     return path
 
 
@@ -179,6 +221,7 @@ def pair_args(tmp_path: Path, records_dir: Path, sindy_path: Path, **updates: ob
     class Args:
         sindy_details = str(sindy_path)
         evogrow_records_dir = str(records_dir)
+        evogrow_generalization = str(tmp_path / "evogrow_cells.csv")
         output = str(tmp_path / "paired.csv")
         summary_output = str(tmp_path / "paired_summary.csv")
         expected_systems = ""
@@ -230,14 +273,27 @@ def test_load_exported_trajectories_rejects_hash_mismatch(tmp_path: Path) -> Non
 
 
 def test_pairing_runs_against_real_pilot_records_and_keeps_directions(tmp_path: Path) -> None:
-    records_dir = write_records(tmp_path, read_pilot_records())
+    records = read_pilot_records()
+    records_dir = write_records(tmp_path, records)
+    cells_path = evogrow_cells_fixture(tmp_path / "evogrow_cells.csv", records)
     sindy_path = sindy_fixture(tmp_path / "sindy.csv")
 
-    output = phasec_sindy.pair_sindy_evogrow(pair_args(tmp_path, records_dir, sindy_path))
+    output = phasec_sindy.pair_sindy_evogrow(pair_args(tmp_path, records_dir, sindy_path, evogrow_generalization=str(cells_path)))
     paired = pd.read_csv(output)
 
-    assert len(paired) == 8
+    assert len(paired) == 16
     assert set(paired["direction"]) == {"IC1_to_IC2", "IC2_to_IC1"}
+    assert set(paired["regime"]) == {"reconstruction", "generalization"}
+    assert (paired["source_initial_condition_set"] != paired["target_initial_condition_set"]).all()
+    assert paired.loc[paired["regime"] == "reconstruction", "sindy_r2_gt_0_9_for_pairing"].all()
+    assert not paired.loc[paired["regime"] == "generalization", "sindy_r2_gt_0_9_for_pairing"].any()
+    assert (
+        paired.loc[paired["regime"] == "generalization"]
+        .groupby("source_initial_condition_set")["evogrow_r2_mean"]
+        .first()
+        .to_dict()
+        == {1: 0.25, 2: 0.75}
+    )
     assert set(paired["evogrow_seed_policy"]) == {"mean_rate_over_available_phasec_seeds"}
     assert paired["git_hash"].nunique() == 1
     assert paired["config_fingerprint"].nunique() == 1
@@ -251,23 +307,31 @@ def test_pairing_uses_c1_scope_and_does_not_require_c3_for_every_system(tmp_path
     c3_record["variant"] = "evogrow_v2_2_stage_capped_pretune_on"
     c3_record["use_pretuning"] = True
     records_dir = write_records(tmp_path, records + [c3_record])
+    cells_path = evogrow_cells_fixture(tmp_path / "evogrow_cells.csv", records)
     sindy_path = sindy_fixture(tmp_path / "sindy.csv")
 
-    output = phasec_sindy.pair_sindy_evogrow(pair_args(tmp_path, records_dir, sindy_path))
+    output = phasec_sindy.pair_sindy_evogrow(pair_args(tmp_path, records_dir, sindy_path, evogrow_generalization=str(cells_path)))
     paired = pd.read_csv(output)
 
-    assert len(paired) == 8
+    assert len(paired) == 16
     assert (tmp_path / "paired_summary.csv").is_file()
 
 
 def test_pairing_rejects_incomplete_evogrow_input(tmp_path: Path) -> None:
     records = read_pilot_records()
     records_dir = write_records(tmp_path, records[1:])
+    cells_path = evogrow_cells_fixture(tmp_path / "evogrow_cells.csv", records[1:])
     sindy_path = sindy_fixture(tmp_path / "sindy.csv")
 
     try:
         phasec_sindy.pair_sindy_evogrow(
-            pair_args(tmp_path, records_dir, sindy_path, expected_systems="2,24,52,63")
+            pair_args(
+                tmp_path,
+                records_dir,
+                sindy_path,
+                evogrow_generalization=str(cells_path),
+                expected_systems="2,24,52,63",
+            )
         )
     except ValueError as exc:
         assert "incomplete" in str(exc)
@@ -280,18 +344,21 @@ def test_pairing_rejects_non_phasec_identity(tmp_path: Path) -> None:
     records[0] = copy.deepcopy(records[0])
     records[0]["basis_name"] = "staged_polynomial_basis"
     records_dir = write_records(tmp_path, records)
+    cells_path = evogrow_cells_fixture(tmp_path / "evogrow_cells.csv", records)
     sindy_path = sindy_fixture(tmp_path / "sindy.csv")
 
     try:
-        phasec_sindy.pair_sindy_evogrow(pair_args(tmp_path, records_dir, sindy_path))
+        phasec_sindy.pair_sindy_evogrow(pair_args(tmp_path, records_dir, sindy_path, evogrow_generalization=str(cells_path)))
     except ValueError as exc:
         assert "staged_polynomial_basis_with_constant" in str(exc)
     else:
         raise AssertionError("non-Phase-C identity should fail")
 
 
-def test_pairing_excludes_nonzero_reconstruction_control_rows(tmp_path: Path) -> None:
-    records_dir = write_records(tmp_path, read_pilot_records())
+def test_pairing_keeps_invalid_sindy_rows_as_failed_r2_units(tmp_path: Path) -> None:
+    records = read_pilot_records()
+    records_dir = write_records(tmp_path, records)
+    cells_path = evogrow_cells_fixture(tmp_path / "evogrow_cells.csv", records)
     sindy_path = sindy_fixture(tmp_path / "sindy.csv")
     frame = pd.read_csv(sindy_path)
     frame.loc[0, "reconstruction_control_max_abs"] = 1.0
@@ -299,11 +366,48 @@ def test_pairing_excludes_nonzero_reconstruction_control_rows(tmp_path: Path) ->
     frame.loc[0, "valid_for_analysis"] = False
     frame.to_csv(sindy_path, index=False)
 
-    output = phasec_sindy.pair_sindy_evogrow(pair_args(tmp_path, records_dir, sindy_path))
+    output = phasec_sindy.pair_sindy_evogrow(pair_args(tmp_path, records_dir, sindy_path, evogrow_generalization=str(cells_path)))
     paired = pd.read_csv(output)
 
-    assert len(paired) == 7
-    assert paired["reconstruction_control_valid"].all()
+    assert len(paired) == 16
+    invalid = paired[~paired["reconstruction_control_valid"].astype(bool)]
+    assert len(invalid) == 1
+    assert not invalid.iloc[0]["sindy_r2_gt_0_9_for_pairing"]
+
+
+def test_pairing_rejects_cells_reconstruction_r2_record_mismatch(tmp_path: Path) -> None:
+    records = read_pilot_records()
+    records_dir = write_records(tmp_path, records)
+    cells_path = evogrow_cells_fixture(tmp_path / "evogrow_cells.csv", records)
+    cells = pd.read_csv(cells_path)
+    cells.loc[0, "reconstruction_r2"] = 0.0
+    cells.to_csv(cells_path, index=False)
+    sindy_path = sindy_fixture(tmp_path / "sindy.csv")
+
+    try:
+        phasec_sindy.pair_sindy_evogrow(pair_args(tmp_path, records_dir, sindy_path, evogrow_generalization=str(cells_path)))
+    except ValueError as exc:
+        assert "reconstruction_r2" in str(exc)
+        assert "record r2" in str(exc)
+    else:
+        raise AssertionError("mismatched cells.csv reconstruction_r2 should fail")
+
+
+def test_pairing_rejects_missing_generalization_cell(tmp_path: Path) -> None:
+    records = read_pilot_records()
+    records_dir = write_records(tmp_path, records)
+    cells_path = evogrow_cells_fixture(tmp_path / "evogrow_cells.csv", records)
+    cells = pd.read_csv(cells_path).iloc[1:].copy()
+    cells.to_csv(cells_path, index=False)
+    sindy_path = sindy_fixture(tmp_path / "sindy.csv")
+
+    try:
+        phasec_sindy.pair_sindy_evogrow(pair_args(tmp_path, records_dir, sindy_path, evogrow_generalization=str(cells_path)))
+    except ValueError as exc:
+        assert "cover different cells" in str(exc)
+        assert "missing" in str(exc)
+    else:
+        raise AssertionError("missing cells.csv cell should fail")
 
 
 def test_summary_is_layered_by_dimension_and_phasec_representability(tmp_path: Path) -> None:

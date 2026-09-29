@@ -39,6 +39,10 @@ CAMPAIGN_ID = "paper1_phaseC_v1"
 C1_VARIANT = "evogrow_v2_2_stage_capped"
 R2_THRESHOLD = 0.9
 RECONSTRUCTION_CONTROL_TOL = 0.0
+# WP-N5 recomputes reconstruction R2 from exported trajectories. It should match
+# the record value to floating roundoff only; a larger delta means the cells are
+# not the same C-1 run.
+EVOGROW_RECONSTRUCTION_R2_RECORD_TOL = 1.0e-12
 PAIR_OUTPUT = ANALYSIS_ROOT / "data" / CAMPAIGN_ID / "phasec_sindy_paired.csv"
 PAIR_TABLE_DIR = ANALYSIS_ROOT / "tables" / CAMPAIGN_ID / "phasec_sindy_pairing"
 WPN6_DETAILS_RUNTIME_COLUMNS = {"fit_elapsed_s_non_evidence"}
@@ -62,6 +66,11 @@ def parse_args() -> argparse.Namespace:
     pair_parser = subparsers.add_parser("pair")
     pair_parser.add_argument("--sindy-details", required=True, help="SINDy details CSV from run-sindy.")
     pair_parser.add_argument("--evogrow-records-dir", required=True, help="Directory with EvoGrow JSONL records.")
+    pair_parser.add_argument(
+        "--evogrow-generalization",
+        required=True,
+        help="WP-N5 cells.csv with EvoGrow reconstruction and generalization R2.",
+    )
     pair_parser.add_argument("--output", default=str(PAIR_OUTPUT), help="Paired CSV output path.")
     pair_parser.add_argument(
         "--summary-output",
@@ -606,35 +615,6 @@ def validate_evogrow_registry(
                 )
 
 
-def build_evogrow_cell_rows(evogrow: pd.DataFrame) -> pd.DataFrame:
-    rows = []
-    metric_bool = ["exact_support_match_raw", "exact_support_match_pruned"]
-    for (system_id, ic_set), group in evogrow.groupby(["system_id", "initial_condition_set"], dropna=False):
-        r2_values = pd.to_numeric(group["r2"], errors="coerce")
-        rows.append(
-            {
-                "system_id": int(system_id),
-                "initial_condition_set": int(ic_set),
-                "evogrow_seed_policy": "mean_rate_over_available_phasec_seeds",
-                "evogrow_seed_count": int(group["seed"].nunique()),
-                "evogrow_seeds": ",".join(str(int(seed)) for seed in sorted(group["seed"].astype(int).unique())),
-                "evogrow_structure_hit_raw_rate": float(group["exact_support_match_raw"].map(as_bool).mean()),
-                "evogrow_structure_hit_pruned_rate": float(group["exact_support_match_pruned"].map(as_bool).mean()),
-                "evogrow_r2_gt_0_9_rate": float((r2_values > R2_THRESHOLD).mean()),
-                "evogrow_r2_mean": float(r2_values.mean()),
-                "git_hash": single_value(group["git_hash"], "git_hash"),
-                "config_fingerprint": single_value(group["config_fingerprint"], "config_fingerprint"),
-                "stage_cap_behavior_fingerprint": single_value(
-                    group["stage_cap_behavior_fingerprint"], "stage_cap_behavior_fingerprint"
-                ),
-            }
-        )
-        for column in metric_bool:
-            if column not in group.columns:
-                fail(f"EvoGrow records missing {column}")
-    return pd.DataFrame(rows)
-
-
 def single_value(series: pd.Series, column: str) -> str:
     values = {str(value) for value in series if str(value) != ""}
     if len(values) != 1:
@@ -642,15 +622,184 @@ def single_value(series: pd.Series, column: str) -> str:
     return next(iter(values))
 
 
-def valid_sindy_for_pairing(details: pd.DataFrame) -> pd.DataFrame:
-    generalization = details[
-        (details["regime"] == "generalization")
-        & (details["valid_for_analysis"].astype(bool))
-        & (details["reconstruction_control_valid"].astype(bool))
+def require_columns(frame: pd.DataFrame, columns: set[str], label: str) -> None:
+    missing = sorted(columns - set(frame.columns))
+    if missing:
+        fail(f"{label} missing columns: {missing}")
+
+
+def load_evogrow_generalization_cells(path: Path) -> pd.DataFrame:
+    if not path.is_file():
+        fail(f"EvoGrow generalization cells file does not exist: {path}")
+    cells = pd.read_csv(path)
+    require_columns(
+        cells,
+        {
+            "condition",
+            "variant",
+            "basis_name",
+            "system_id",
+            "system_name",
+            "dimension",
+            "source_initial_condition_set",
+            "target_initial_condition_set",
+            "direction",
+            "seed",
+            "reconstruction_r2",
+            "reconstruction_diverged_or_nonfinite",
+            "generalization_r2",
+            "generalization_diverged_or_nonfinite",
+        },
+        "EvoGrow generalization cells",
+    )
+    cells = cells[
+        (cells["condition"].astype(str) == "capped")
+        & (cells["variant"].astype(str) == C1_VARIANT)
+        & (cells["basis_name"].astype(str) == "staged_polynomial_basis_with_constant")
     ].copy()
-    if generalization.empty:
-        fail("SINDy details contain no valid generalization rows")
-    return generalization
+    if cells.empty:
+        fail("EvoGrow generalization cells contain no C-1 capped rows")
+    return cells
+
+
+def validate_evogrow_cells_against_records(evogrow: pd.DataFrame, cells: pd.DataFrame) -> pd.DataFrame:
+    record_key = ["system_id", "seed", "initial_condition_set"]
+    cell_key = ["system_id", "seed", "source_initial_condition_set"]
+    if evogrow.duplicated(record_key).any():
+        fail("EvoGrow records contain duplicate system/seed/initial_condition_set cells")
+    if cells.duplicated(cell_key).any():
+        fail("EvoGrow generalization cells contain duplicate system/seed/source_initial_condition_set cells")
+    record_keys = {
+        (int(row["system_id"]), int(row["seed"]), int(row["initial_condition_set"]))
+        for _, row in evogrow[record_key].iterrows()
+    }
+    cell_keys = {
+        (int(row["system_id"]), int(row["seed"]), int(row["source_initial_condition_set"]))
+        for _, row in cells[cell_key].iterrows()
+    }
+    if record_keys != cell_keys:
+        missing = sorted(record_keys - cell_keys)
+        extra = sorted(cell_keys - record_keys)
+        fail(f"EvoGrow records and generalization cells cover different cells: missing={missing}, extra={extra}")
+
+    record_columns = [
+        "system_id",
+        "seed",
+        "initial_condition_set",
+        "r2",
+        "exact_support_match_raw",
+        "exact_support_match_pruned",
+        "git_hash",
+        "config_fingerprint",
+        "stage_cap_behavior_fingerprint",
+        "total_parameter_fits",
+        "total_loss_evals",
+    ]
+    for column in record_columns:
+        if column not in evogrow.columns:
+            fail(f"EvoGrow records missing {column}")
+    merged = cells.merge(
+        evogrow[record_columns],
+        left_on=cell_key,
+        right_on=record_key,
+        how="inner",
+        validate="one_to_one",
+        suffixes=("", "_record"),
+    )
+    record_r2 = pd.to_numeric(merged["r2"], errors="coerce")
+    reconstruction_r2 = pd.to_numeric(merged["reconstruction_r2"], errors="coerce")
+    deltas = (reconstruction_r2 - record_r2).abs()
+    mismatch = deltas > EVOGROW_RECONSTRUCTION_R2_RECORD_TOL
+    mismatch = mismatch | (record_r2.isna() != reconstruction_r2.isna())
+    if bool(mismatch.any()):
+        sample = merged.loc[
+            mismatch,
+            ["system_id", "seed", "source_initial_condition_set", "reconstruction_r2", "r2"],
+        ].head(5)
+        fail(
+            "EvoGrow reconstruction_r2 from cells.csv does not match record r2 "
+            f"within {EVOGROW_RECONSTRUCTION_R2_RECORD_TOL}: {sample.to_dict('records')}"
+        )
+    merged = merged.drop(columns=["initial_condition_set"])
+    return merged
+
+
+def build_evogrow_pair_rows(evogrow: pd.DataFrame, cells: pd.DataFrame) -> pd.DataFrame:
+    merged = validate_evogrow_cells_against_records(evogrow, cells)
+    rows = []
+    group_columns = ["system_id", "source_initial_condition_set", "target_initial_condition_set", "direction"]
+    for keys, group in merged.groupby(group_columns, dropna=False):
+        base = dict(zip(group_columns, keys))
+        seed_values = sorted(int(seed) for seed in group["seed"].unique())
+        identity = {
+            "system_name": single_value(group["system_name"], "system_name"),
+            "dimension": int(single_value(group["dimension"].astype(str), "dimension")),
+            "evogrow_seed_policy": "mean_rate_over_available_phasec_seeds",
+            "evogrow_seed_count": int(group["seed"].nunique()),
+            "evogrow_seeds": ",".join(str(seed) for seed in seed_values),
+            "evogrow_structure_hit_raw_rate": float(group["exact_support_match_raw"].map(as_bool).mean()),
+            "evogrow_structure_hit_pruned_rate": float(group["exact_support_match_pruned"].map(as_bool).mean()),
+            "evogrow_total_parameter_fits_median": float(pd.to_numeric(group["total_parameter_fits"], errors="coerce").median()),
+            "evogrow_total_loss_evals_median": float(pd.to_numeric(group["total_loss_evals"], errors="coerce").median()),
+            "git_hash": single_value(group["git_hash"], "git_hash"),
+            "config_fingerprint": single_value(group["config_fingerprint"], "config_fingerprint"),
+            "stage_cap_behavior_fingerprint": single_value(
+                group["stage_cap_behavior_fingerprint"], "stage_cap_behavior_fingerprint"
+            ),
+        }
+        for regime in ["reconstruction", "generalization"]:
+            r2 = pd.to_numeric(group[f"{regime}_r2"], errors="coerce")
+            diverged = group[f"{regime}_diverged_or_nonfinite"].map(as_bool)
+            valid = r2.apply(math.isfinite) & ~diverged
+            passed = valid & (r2 > R2_THRESHOLD)
+            valid_count = int(valid.sum())
+            rows.append(
+                {
+                    **base,
+                    **identity,
+                    "regime": regime,
+                    "evogrow_r2_valid_seed_count": valid_count,
+                    "evogrow_r2_invalid_or_diverged_seed_count": int((~valid).sum()),
+                    "evogrow_r2_gt_0_9_seed_count": int(passed.sum()),
+                    "evogrow_r2_gt_0_9_rate_over_seeds": float(passed.mean()),
+                    "evogrow_r2_gt_0_9_rate_over_valid_seeds": float(passed.sum() / valid_count)
+                    if valid_count
+                    else float("nan"),
+                    "evogrow_r2_mean": float(r2[valid].mean()) if valid_count else float("nan"),
+                }
+            )
+    return pd.DataFrame(rows)
+
+
+def sindy_for_pairing(details: pd.DataFrame) -> pd.DataFrame:
+    require_columns(
+        details,
+        {
+            "library_id",
+            "system_id",
+            "dimension",
+            "source_initial_condition_set",
+            "target_initial_condition_set",
+            "direction",
+            "regime",
+            "r2",
+            "diverged_or_nonfinite",
+            "valid_for_analysis",
+            "sindy_structure_hit_raw",
+            "sindy_structure_hit_pruned",
+            "n_target_regressions",
+            "phasec_representability_threeway",
+        },
+        "SINDy details",
+    )
+    paired = details[details["regime"].isin(["reconstruction", "generalization"])].copy()
+    if paired.empty:
+        fail("SINDy details contain no reconstruction/generalization rows")
+    r2 = pd.to_numeric(paired["r2"], errors="coerce")
+    valid = paired["valid_for_analysis"].map(as_bool) & r2.apply(math.isfinite) & ~paired["diverged_or_nonfinite"].map(as_bool)
+    paired["sindy_valid_for_r2_rate"] = valid
+    paired["sindy_r2_gt_0_9_for_pairing"] = valid & (r2 > R2_THRESHOLD)
+    return paired
 
 
 def pair_sindy_evogrow(args: argparse.Namespace) -> Path:
@@ -666,18 +815,36 @@ def pair_sindy_evogrow(args: argparse.Namespace) -> Path:
     expected_ics = parse_int_set(args.expected_ic_sets)
     expected_seeds = parse_int_set(args.expected_seeds)
     validate_evogrow_registry(evogrow, expected_systems, expected_ics, expected_seeds, args)
-    evogrow_cells = build_evogrow_cell_rows(evogrow)
-    available_keys = evogrow_cells[["system_id", "initial_condition_set"]].drop_duplicates()
-    sindy_for_keys = sindy.merge(available_keys, on=["system_id", "initial_condition_set"], how="inner")
+    evogrow_cells = load_evogrow_generalization_cells(Path(args.evogrow_generalization))
+    evogrow_pairs = build_evogrow_pair_rows(evogrow, evogrow_cells)
+    sindy_pairs = sindy_for_pairing(sindy)
+    pair_keys = ["system_id", "source_initial_condition_set", "target_initial_condition_set", "direction", "regime"]
+    available_keys = evogrow_pairs[pair_keys].drop_duplicates()
+    sindy_for_keys = sindy_pairs.merge(available_keys, on=pair_keys, how="inner")
     if sindy_for_keys.empty:
         fail("no SINDy rows match the EvoGrow input keys")
-    sindy_gen = valid_sindy_for_pairing(sindy_for_keys)
-    paired = sindy_gen.merge(evogrow_cells, on=["system_id", "initial_condition_set"], how="inner", validate="many_to_one")
-    required = len(sindy_gen)
+    paired = sindy_for_keys.merge(
+        evogrow_pairs,
+        on=pair_keys,
+        how="inner",
+        validate="many_to_one",
+        suffixes=("", "_evogrow"),
+    )
+    required = len(sindy_for_keys)
     if len(paired) != required:
-        missing = sindy_gen.merge(evogrow_cells, on=["system_id", "initial_condition_set"], how="left", indicator=True)
-        missing = missing[missing["_merge"] == "left_only"][["system_id", "initial_condition_set"]].drop_duplicates()
+        missing = sindy_for_keys.merge(evogrow_pairs, on=pair_keys, how="left", indicator=True)
+        missing = missing[missing["_merge"] == "left_only"][pair_keys].drop_duplicates()
         fail(f"pairing incomplete: {len(paired)} paired rows for {required} SINDy rows; missing {missing.to_dict('records')}")
+    generalization_rows = paired["regime"].astype(str) == "generalization"
+    structure_columns = [
+        "sindy_structure_hit_raw",
+        "sindy_structure_hit_pruned",
+        "evogrow_structure_hit_raw_rate",
+        "evogrow_structure_hit_pruned_rate",
+    ]
+    for column in structure_columns:
+        paired[column] = paired[column].astype("object")
+    paired.loc[generalization_rows, structure_columns] = pd.NA
     output = Path(args.output)
     output.parent.mkdir(parents=True, exist_ok=True)
     paired.to_csv(output, index=False)
@@ -694,6 +861,7 @@ def paired_summary(paired: pd.DataFrame) -> pd.DataFrame:
     group_columns = [
         "library_id",
         "direction",
+        "regime",
         "dimension",
         "phasec_representability_threeway",
         "evogrow_seed_policy",
@@ -701,17 +869,47 @@ def paired_summary(paired: pd.DataFrame) -> pd.DataFrame:
     rows = []
     for keys, group in paired.groupby(group_columns, dropna=False):
         n_cells = int(len(group))
+        regime = str(dict(zip(group_columns, keys))["regime"])
+        sindy_valid = group["sindy_valid_for_r2_rate"].map(as_bool)
+        sindy_passed = group["sindy_r2_gt_0_9_for_pairing"].map(as_bool)
+        evogrow_valid = pd.to_numeric(group["evogrow_r2_valid_seed_count"], errors="coerce") > 0
+        evogrow_passed_rate = pd.to_numeric(group["evogrow_r2_gt_0_9_rate_over_seeds"], errors="coerce")
+        evogrow_passed_valid_rate = pd.to_numeric(group["evogrow_r2_gt_0_9_rate_over_valid_seeds"], errors="coerce")
         rows.append(
             {
                 **dict(zip(group_columns, keys)),
                 "aggregation_scope": "dimension_by_phasec_representability_threeway",
                 "n_cells": n_cells,
-                "sindy_structure_hit_raw_rate": float(group["sindy_structure_hit_raw"].mean()),
-                "sindy_structure_hit_pruned_rate": float(group["sindy_structure_hit_pruned"].mean()),
-                "sindy_r2_gt_0_9_rate": float(group["r2_gt_0_9"].mean()),
-                "evogrow_structure_hit_raw_rate": float(group["evogrow_structure_hit_raw_rate"].mean()),
-                "evogrow_structure_hit_pruned_rate": float(group["evogrow_structure_hit_pruned_rate"].mean()),
-                "evogrow_r2_gt_0_9_rate": float(group["evogrow_r2_gt_0_9_rate"].mean()),
+                "sindy_structure_hit_raw_rate": float(pd.to_numeric(group["sindy_structure_hit_raw"], errors="coerce").mean()),
+                "sindy_structure_hit_pruned_rate": float(
+                    pd.to_numeric(group["sindy_structure_hit_pruned"], errors="coerce").mean()
+                ),
+                "sindy_n_target_regressions_median": float(pd.to_numeric(group["n_target_regressions"], errors="coerce").median()),
+                f"sindy_{regime}_invalid_or_diverged_count": int((~sindy_valid).sum()),
+                f"sindy_{regime}_r2_valid_count": int(sindy_valid.sum()),
+                f"sindy_{regime}_r2_gt_0_9_count": int(sindy_passed.sum()),
+                f"sindy_{regime}_r2_gt_0_9_rate_over_cells": float(sindy_passed.mean()),
+                f"sindy_{regime}_r2_gt_0_9_rate_over_valid": float(sindy_passed[sindy_valid].mean())
+                if bool(sindy_valid.any())
+                else float("nan"),
+                "evogrow_structure_hit_raw_rate": float(
+                    pd.to_numeric(group["evogrow_structure_hit_raw_rate"], errors="coerce").mean()
+                ),
+                "evogrow_structure_hit_pruned_rate": float(
+                    pd.to_numeric(group["evogrow_structure_hit_pruned_rate"], errors="coerce").mean()
+                ),
+                "evogrow_total_parameter_fits_median": float(
+                    pd.to_numeric(group["evogrow_total_parameter_fits_median"], errors="coerce").median()
+                ),
+                "evogrow_total_loss_evals_median": float(
+                    pd.to_numeric(group["evogrow_total_loss_evals_median"], errors="coerce").median()
+                ),
+                f"evogrow_{regime}_invalid_or_diverged_units": int((~evogrow_valid).sum()),
+                f"evogrow_{regime}_invalid_or_diverged_seed_count": int(
+                    pd.to_numeric(group["evogrow_r2_invalid_or_diverged_seed_count"], errors="coerce").sum()
+                ),
+                f"evogrow_{regime}_r2_gt_0_9_rate_over_cells": float(evogrow_passed_rate.mean()),
+                f"evogrow_{regime}_r2_gt_0_9_rate_over_valid": float(evogrow_passed_valid_rate.mean()),
             }
         )
     return pd.DataFrame(rows)
