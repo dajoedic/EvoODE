@@ -857,7 +857,12 @@ the coupled search path 1e-6 is the cheaper, behaviour-equal tolerance; the Syst
   from unreachable, and Claim D must name it — SINDy and ODEFormer have no such bound. Decide
   before C-5 starts whether the oracle arm runs clamped. `DIARY.md` 2026-09-28. **The admissible
   criteria were fixed on 2026-09-29 before C-1 was looked at** (`150b0f4`): only facts independent
-  of C-1 results; proposal pending the user: oracle arm clamped, 54–59 pre-labelled unreachable.
+  of C-1 results. **Decided by the user 2026-09-29:** oracle arm clamped (the C-1 optimizer),
+  all 30 exact systems run, 54–59 pre-labelled unreachable and reported apart from 52/61, never
+  averaged. Manifest `k8s/phase_c_c5_oracle_job.yaml`, image `1db1193`. **For the next method
+  version the clamp is removed or justified** — normalisation helps only partly (it breaks
+  `sin(u)` → `sin(s·u)`, and Lorenz' 28 is a ratio of like-sized states); a data-scaled bound or
+  no clamp with the existing guards is the likelier route.
   **The clamp is not the whole dim-3 story:** in C-1 the reachable systems 52 and 61 also score 0 of
   12 structure hits (R² > 0.9 in 3), against 0 of 36 on 54–59
 - **Generalization is the weak axis (C-5, 2026-09-29).** C-1, R² > 0.9 over 126 system × direction

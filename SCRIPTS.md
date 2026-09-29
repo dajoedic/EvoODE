@@ -638,23 +638,22 @@ python analysis/scripts/aggregate/run_phasec_sindy_baseline.py pair \
   --output $P/agg/sindy_n31/phasec_sindy_paired.csv \
   --summary-output $P/agg/sindy_n31/phasec_sindy_paired_summary.csv
 
-# C-5 Diag: cost estimate, sharded run, and collection.
-# --estimate-cost computes from elapsed_s / total_loss_evals and is an upper bound assuming every fit exhausts its loss-evaluation budget.
+# C-5 Diag (oracle refit): runs on Orion, image 1db1193 (carries WP-N25; src/ identical to 221a3a7).
+# --estimate-cost is an upper bound assuming every fit exhausts its loss-evaluation budget:
+# 101 core-hours on the C-1 history, at most 5.9 h per shard at 36 round-robin shards.
 julia --project=. --startup-file=no studies/regression/wp_n3_oracle_refit.jl \
-  --campaign paper1_phaseC_v1 \
-  --input outputs/studies/regression/phase_c/history.jsonl \
-  --output-dir outputs/wp_n3_oracle_refit_phase_c \
-  --estimate-cost
+  --campaign paper1_phaseC_v1 --input $P/history.jsonl \
+  --output-dir outputs/wp_n3_oracle_refit_phase_c --estimate-cost
+# Upload the merged C-1 history to the NFS (any running EvoODE pod), then apply the indexed Job.
+oc exec <running-pod> -- mkdir -p /outputs/phase_c_c5_oracle_<SHA>/input
+oc cp $P/history.jsonl <running-pod>:/outputs/phase_c_c5_oracle_<SHA>/input/history.jsonl
+(Get-Content k8s\phase_c_c5_oracle_job.yaml) -replace '<COMMIT_SHA>','<SHA>' | oc apply -f -
+# Collect locally after all 36 shards finish: copy .../out (tar czf, count members) to
+# outputs/wp_n3_oracle_refit_phase_c, then collect. Collect checks cell keys only; the row-level
+# config_fingerprint (cluster input path) is the authoritative one, the local manifest's is not.
 julia --project=. --startup-file=no studies/regression/wp_n3_oracle_refit.jl \
-  --campaign paper1_phaseC_v1 \
-  --input outputs/studies/regression/phase_c/history.jsonl \
-  --output-dir outputs/wp_n3_oracle_refit_phase_c \
-  --shards TODO(Claude) --shard-index TODO(Claude)
-julia --project=. --startup-file=no studies/regression/wp_n3_oracle_refit.jl \
-  --campaign paper1_phaseC_v1 \
-  --input outputs/studies/regression/phase_c/history.jsonl \
-  --output-dir outputs/wp_n3_oracle_refit_phase_c \
-  --shards TODO(Claude) --collect
+  --campaign paper1_phaseC_v1 --input $P/history.jsonl \
+  --output-dir outputs/wp_n3_oracle_refit_phase_c --shards 36 --collect
 
 # C-5 Abl-3: cost estimate, sharded run, and collection.
 julia --project=. --startup-file=no studies/regression/wp_n4_multistart_refit.jl \

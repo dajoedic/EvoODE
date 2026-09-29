@@ -140,6 +140,38 @@ allein. Die Dreiwege-Klasse ließ sich für Phase C **nicht** bilden: Die Suppor
 Surrogat nur die erste nicht repräsentierbare Gleichung, und `aggregate_representability_threeway.py`
 verlangt die Phase-B-Datei `representational_adequacy.csv`. Das wird ein eigenes Paket.
 
+### C-5-Orakel: mit Kappung, 54–59 vorab als unerreichbar gekennzeichnet (vom Nutzer bestätigt)
+
+**Festgelegt vor dem Start, am 29.09. abends, und bewusst vor dem Nutzer-Statusgespräch
+vorgezogen.** Der Orakel-Arm fittet die wahre Struktur aller 180 exakten C-1-Zellen neu, und zwar
+**mit dem Optimierer von C-1, Kappung auf ±10 eingeschlossen**. Das Image ist `1db1193`; dessen
+`src/`, `run_regression.jl` und `phase_c_config.jl` sind mit dem Kampagnen-Image `221a3a7`
+identisch. Die Begründung ist die vom Vormittag: Der Arm soll das Scheitern von C-1 der Suche oder
+dem Optimierer von C-1 zuordnen. Ohne Kappung würde er einen anderen Optimierer messen.
+
+**Kennzeichnung, nicht Ausschluss.** Alle 30 Systeme laufen mit. Die Systeme 54–59 sind vorab als
+„per Konstruktion unerreichbar“ gekennzeichnet, weil ihre wahren Koeffizienten außerhalb von ±10
+liegen (Kontroll-Losses an den gekappten wahren Parametern: DIARY 28.09.). Sie werden getrennt von
+52 und 61 berichtet und nie gemittelt. System 57 ist der Grenzfall: Dort bindet die Box nur
+schwach (Kontroll-Loss 0,02). **Was der Arm entscheidet:** Fittet das Orakel auf 52 und 61 gut,
+während die C-1-Suche dort 0 von 12 Strukturtreffern hat, dann liegt das Scheitern auf dim 3 an der
+Suche. Fittet es dort schlecht, liegt es am Optimierer.
+
+**Kosten.** Die `--estimate-cost`-Obergrenze auf der vollständigen C-1-Historie liegt bei 101
+Kernstunden (dim 3: 76 h), die teuerste Zelle bei 5,1 h (55, Seed 42, IC 2). Bei 36
+Round-Robin-Shards sind es höchstens 5,9 h je Shard. Damit gehört der Lauf nach Orion. Das
+Manifest ist `k8s/phase_c_c5_oracle_job.yaml` mit `activeDeadlineSeconds` = 48 h, und das
+Loss-Eval-Budget je Fit ist das von C-1. Die Eingabe ist die lokal zusammengeführte
+`outputs/phase_c_campaign_221a3a7/history.jsonl`, kopiert auf das NFS.
+
+**Zur Kappung selbst, als Merkposten.** Sie bleibt in Phase C eine erklärte Limitation. Für die
+nächste Methodenversion wird sie entfernt oder begründet. Normalisieren hilft nur teilweise:
+Polynomterme bleiben Polynomterme, aber `sin(u)` wird zu `sin(s·u)`, und das ist nicht in der
+Basis. Lorenz' 28 ist ein Verhältnis zweier Zustände ähnlicher Größe und schrumpft erst, wenn man
+auch die Zeit umskaliert. Die bessere Richtung ist vermutlich eine Grenze aus der Skala der Daten
+oder gar keine Kappung mit den vorhandenen Schutzmechanismen (Loss-Eval-Budget, maxiters,
+Strafwert). WP-T1f läuft bereits ohne Kappung.
+
 ### ODEFormer-Kandidat eingesammelt, Phase-A-Test diagnostiziert
 
 <!-- cdc77ff 2035f51 -->
