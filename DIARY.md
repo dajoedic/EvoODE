@@ -8,6 +8,8 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ### C-1/C-2 komplett — und die Kappungsfrage für C-5 wird festgelegt, bevor jemand auf C-1 schaut
 
+<!-- beff30d 150b0f4 -->
+
 C-1/C-2 ist am 29.09. um 15:10 fertig geworden (756/756, letzte Zelle 474, System 40 ungekappt).
 Über alle 931 Phase-C-Records, die bisher vorliegen: `error = null`, git `221a3a7`, Fingerprint
 `0c9672de35c75a9d`. C-3 steht bei 175/180 (Lorenz-Nachzügler), WP-T1f bei 22/36. Die Auswertung von
@@ -33,6 +35,81 @@ Die Generalisierung (C-5, Claim C) ist von dieser Frage nicht berührt: Sie inte
 gefundenen Parameter von der anderen Anfangsbedingung aus neu und fittet nichts. Der Nutzer hat
 sie freigegeben: vorziehen, wenn sie billig ist, und nur diskutieren, falls sie voraussichtlich
 länger als drei Tage läuft.
+
+### C-1/C-2 ausgewertet: Claim B endgültig, Claim C ernüchternd, und die SINDy-Paarung war falsch
+
+<!-- 0941ee9 -->
+
+**Datengrundlage.** Die 931 Records wurden per `tar` vom NFS geholt, der erste Versuch kam
+abgeschnitten an (781), der zweite vollständig. Sie liegen unter `outputs/phase_c_campaign_221a3a7/`.
+Die Teilmenge C-1/C-2 ist verifiziert: 756 Zeilen, 378 je Arm, 360 exakt und 396 Surrogat, eine
+Kennung. Die Strukturmetriken stimmen roh und gepruned in 931 von 931 Zellen mit der Registry
+überein. Die Analyse-Registry meldet C-1/C-2 mit 756/756 und C-1 mit 378/378 als vollständig; nur
+die Pretuning-Teilmenge ist offen (355/360). Alles hier ist Zwischenstand vor der endgültigen
+Auswertung nach Ende von C-3. An C-1/C-2 ändert sich dadurch aber nichts mehr.
+
+**Claim B, alle 378 Paare, strikt gerechnet (ohne `--allow-incomplete`).**
+
+| Kappenklasse | Paare | Systeme | Loss-Evals gekappt/ungekappt (gepoolt) | gleich / billiger / teurer |
+|---|---|---|---|---|
+| keine | 129 | 30 | 1,000 | 129 / 0 / 0 |
+| teilweise | 99 | 20 | 0,985 | 56 / 16 / 27 |
+| voll | 150 | 32 | **0,784** | 82 / 67 / 1 |
+
+Die voll gekappten Paare sparen gepoolt **−21,6 %** `total_loss_evals`, −14,2 % Fits und −14,6 %
+Level. Das Verhältnis je Paar liegt bei q10 0,499 und im Median bei 1,0. Das Ergebnis bleibt dabei
+gleich: `pruned_match` weicht in keinem der 378 Paare ab, R² ist in 131 von 150 Paaren bitgleich,
+R² > 0,9 in 141 zu 141 Fällen. Über alle Paare gepoolt sind es −7,2 %; die clusterrobuste
+Permutation über 63 Systeme ergibt p = 0,0057. Der Anteil voll gekappter Zellen (dim 1 96/138,
+dim 2 45/168, dim 3 9/60, dim 4 0/12) ist **genau** das Dreifache der suchfreien Zählung (32/46,
+15/56, 3/20, 0/4). Das ist folgerichtig, denn die Kappe hängt nicht vom Seed ab. Die Kappe
+verändert das Ergebnis in genau zwei Paaren: System 27 (Seed 123, IC 1, voll gekappt) hat einen
+um eine Größenordnung schlechteren Loss bei gleichem Träger, beide Arme liegen aber über R² 0,9.
+System 57 (Seed 123, IC 2, teilweise gekappt) fällt von R² 0,978 auf 0,830. **Claim B gilt also,
+aber nur unter einer Bedingung:** Die Kappe spart dort und nur dort, wo sie jede Gleichung kappt,
+also in 150 von 378 Paaren.
+
+**Claim C (C-5-Generalisierung, vorgezogen).** Die Kostenschranke lag bei 9 s Integrationszeit;
+der Lauf war lokal nach etwa einer Minute durch. Die Rekonstruktionskontrolle ist in 378 von 378
+Zellen exakt. Zum ersten Mal steht damit eine Generalisierungszahl über alle Dimensionen:
+
+| dim | R² > 0,9 Rekonstr. IC1→2 / IC2→1 | R² > 0,9 Generalis. IC1→2 / IC2→1 | divergiert |
+|---|---|---|---|
+| 1 | 100 % / 95,7 % | 82,6 % / 58,0 % | 0 |
+| 2 | 94,0 % / 89,3 % | **26,2 % / 25,0 %** | 20 |
+| 3 | 30,0 % / 26,7 % | 0 % / 3,3 % | 19 |
+| 4 | 50 % / 33 % | 0 % / 0 % | 1 |
+
+Über die 126 Einheiten aus System und Richtung (Seeds gemittelt) sind es **82,3 % Rekonstruktion
+gegen 37,3 % Generalisierung**. Auf dim 1 hält sich das Bild von WP-N5 (70,3 %), auf dim 2 bricht
+es ein. Die Richtungsasymmetrie auf dim 1 ist wieder da.
+
+**Claim D: Die Paarung in `run_phasec_sindy_baseline.py pair` ist defekt.** Die Pipeline stellt
+SINDy-**Generalisierung** neben EvoGrow-**Rekonstruktion**. Zusätzlich verbindet sie über die
+Ziel-IC von SINDy, sodass die beiden Modelle einer Zeile auf verschiedenen Trajektorien trainiert
+sind. Das verzerrt systematisch zugunsten von EvoGrow. In der Generalprobe vom 25.09. (WP-N28) ist
+es niemandem aufgefallen. Die ad-hoc-Gegenrechnung, gleich gegen gleich, 126 Einheiten,
+SINDy-Spanne über die zehn Bibliotheken:
+
+| dim | EvoGrow Rekonstr. | SINDy Rekonstr. | EvoGrow Generalis. | SINDy Generalis. |
+|---|---|---|---|---|
+| 1 | 97,8 % | 67,4–95,7 % | **70,3 %** | 45,7–60,9 % |
+| 2 | 91,7 % | 55,4–73,2 % | **25,6 %** | 21,4–46,4 % |
+| 3 | 28,3 % | 0–15,0 % | 1,7 % | 0–10,0 % |
+| 4 | 41,7 % | 0–50 % | 0 % | 0 % |
+
+EvoGrow rekonstruiert deutlich besser als jede SINDy-Konfiguration. Bei der Generalisierung liegt
+es auf dim 1 vorn, auf dim 2 dagegen **am unteren Rand der SINDy-Spanne**. Die Reparatur ist
+WP-N30 (bei Codex). Die ODEFormer-Paarung gegen C-1 ist noch nicht gebaut.
+
+**Claim A, C-1, die 180 Zellen auf voll repräsentierbaren Systemen:** roh 24, gepruned 53, R² > 0,9
+in 135. Nach Dimension (roh / gepruned / R² > 0,9): dim 1 21 / 31 / 63 von 66, dim 2 3 / 22 / 57
+von 60, dim 3 0 / 0 / 14 von 48, dim 4 0 / 0 / 1 von 6. **Auf dim 3 scheitert auch der erreichbare
+Teil:** 52 und 61 kommen auf 0 von 12 Treffern (R² > 0,9 in 3), die per Konstruktion unerreichbaren
+Systeme 54–59 auf 0 von 36 (R² > 0,9 in 11). Die Kappung erklärt den dim-3-Kollaps also nicht
+allein. Die Dreiwege-Klasse ließ sich für Phase C **nicht** bilden: Die Supporttabelle nennt je
+Surrogat nur die erste nicht repräsentierbare Gleichung, und `aggregate_representability_threeway.py`
+verlangt die Phase-B-Datei `representational_adequacy.csv`. Das wird ein eigenes Paket.
 
 ## 2026-09-28
 
