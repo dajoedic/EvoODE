@@ -10,7 +10,7 @@ zweites davon. Alles Dauerhafte gehört dorthin, nach `PAPER_1.md` oder ins `DIA
 **Regeln:** wird immer **vollständig überschrieben**, nie angehängt. Was älter als ein paar Tage
 ist, ist vermutlich falsch — dann gilt `CLAUDE.md`.
 
-**Stand: 2026-09-29, Abend.** Push und `oc apply` macht der Nutzer. Die einmalige Freigabe vom
+**Stand: 2026-10-01, 01:35 (Clusterstatus); sonst 2026-09-29, Abend.** Push und `oc apply` macht der Nutzer. Die einmalige Freigabe vom
 28.09. für den WP-T1f-Start ist verbraucht. Freigabe vom 29.09.: C-5-Generalisierung vorziehen,
 wenn billig (erledigt).
 
@@ -18,11 +18,11 @@ wenn billig (erledigt).
 
 ## 1. Was läuft
 
-| Lauf | Wo | Stand 29.09. 18:15 | Anmerkung |
+| Lauf | Wo | Stand 01.10. 01:35 | Anmerkung |
 |---|---|---|---|
-| C-3 | Orion, `221a3a7` | 175 / 180 | 5 × Lorenz 55/56 `pretune_on` (Zellen 897, 899, 904, 905, 906), Level 27–29/30, 15–48 h/Level → Ende ~1.–4.10.; keine Deadline |
-| C-5 Orakel | Orion, `1db1193` | 0 / 36 Shards | gestartet 29.09. abends, 180 exakte C-1-Zellen, mit Kappung, 54–59 vorab als unerreichbar markiert; höchstens 5,9 h je Shard, Deadline 48 h. Einsammeln: `SCRIPTS.md`, C-5 Diag |
-| WP-T1f | Orion, `1db1193` | 22 / 36 | dim 2 und System 52 fertig; 54/55/56 rechnen, 57/58/59/61 warten. Ende eher ~5./6.10.; Deadline 12.10. |
+| C-3 | Orion, `221a3a7` | 176 / 180 | 906 fertig 30.09. 10:15 UTC. Offen: 897 (Level 28), 899 (29), 904 (29), 905 (28), alle Lorenz 55/56 `pretune_on`; letzte Level 22–51 h → 899/904 ~1.–2.10., 897/905 ~2.–5.10.; keine Deadline |
+| C-5 Orakel | Orion, `1db1193` | **fertig**, 36 / 36 Shards | 29.09. 17:51–20:00; 180 Zeilen, alle `error = null`, config `925e3957a7a884e2`. Job per TTL weg, Daten auf NFS `phase_c_c5_oracle_1db1193…/out`. **Noch nicht eingesammelt**: `SCRIPTS.md`, C-5 Diag (`--collect`) |
+| WP-T1f | Orion, `1db1193` | 26 / 36 | fertig 0–22, 24, 28, 29 (dim 2, 52, 54 IC1, 55 IC1, 57). Rechnen: 54 IC2, 55 IC2, 56 ×2, 58 ×2 (fertige Zelle = 185 Zeilen). Warten: 59, 61. Ende ~5.–7.10.; Deadline 12.10. |
 
 **Fertig:** C-1/C-2 (756/756, 29.09. 15:10), eingesammelt nach `outputs/phase_c_campaign_221a3a7/`
 und als Zwischenstand ausgewertet (DIARY 29.09.). C-5-Generalisierung lokal gerechnet
