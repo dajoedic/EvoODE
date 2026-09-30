@@ -8,6 +8,8 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ### C-5-Orakel eingesammelt: 52 scheitert an der Suche, 61 bleibt offen, und das Instrument ist nur einseitig beweiskräftig
 
+<!-- 112facd aa5bbba -->
+
 **Datengrundlage.** Der Job lief am 29.09. von 17:51 bis 20:00 (Obergrenze 5,9 h je Shard, gebraucht
 höchstens etwa 2 h) und war beim Nachsehen per TTL schon verschwunden. Die 36 Shards kamen per `tar` vom NFS: 72
 Dateien, SHA-256 auf beiden Seiten gleich. `--collect` meldet 180 Zellen. Alle 180 Zeilen tragen
