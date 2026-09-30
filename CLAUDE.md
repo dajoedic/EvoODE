@@ -158,7 +158,7 @@ ground truth, `STATUS.md` only the fast signal: a poll checks both.
 | 1 — stable core | DONE (2026-04-20) |
 | 2 — EvoGrow variants | **CLOSED 2026-08-03** |
 | 3 — benchmarking | infrastructure done; Phase B protocol decided and implemented. Planned next axes: noise, sampling density, coupling strength, dimensionality |
-| 4 — Paper 1 | **Scope decided 2026-09-09: method paper.** Phase B campaign complete and **demoted to diagnostics** (756/756, 5,248 core hours, analysis done WP-A5–A9). **Phase C — canonical evaluation** (`docs/paper1_phaseC_benchmark_plan.md`): **C-1/C-2 complete 2026-09-29 (756/756) and evaluated as interim** (`DIARY.md` 2026-09-29); C-3 175/180 still running on Orion, end ~2026-10-01 to 10-04; C-4 SINDy and the ODEFormer reference grid done; C-5 generalization **done** (pulled forward, clamp-independent), C-5 oracle and restart curve not started (clamp decision pending, Known Gaps) |
+| 4 — Paper 1 | **Scope decided 2026-09-09: method paper.** Phase B campaign complete and **demoted to diagnostics** (756/756, 5,248 core hours, analysis done WP-A5–A9). **Phase C — canonical evaluation** (`docs/paper1_phaseC_benchmark_plan.md`): **C-1/C-2 complete 2026-09-29 (756/756) and evaluated as interim** (`DIARY.md` 2026-09-29); C-3 175/180 still running on Orion, end ~2026-10-01 to 10-04; C-4 SINDy and the ODEFormer reference grid done; C-5 generalization **done** (pulled forward, clamp-independent); C-5 oracle **done and collected 2026-10-01** (180/180, clamped; `DIARY.md` 2026-10-01); restart curve not started |
 | 5 — advanced methods | not started |
 
 ### Phase 2 outcome
@@ -864,7 +864,14 @@ the coupled search path 1e-6 is the cheaper, behaviour-equal tolerance; the Syst
   `sin(u)` → `sin(s·u)`, and Lorenz' 28 is a ratio of like-sized states); a data-scaled bound or
   no clamp with the existing guards is the likelier route.
   **The clamp is not the whole dim-3 story:** in C-1 the reachable systems 52 and 61 also score 0 of
-  12 structure hits (R² > 0.9 in 3), against 0 of 36 on 54–59
+  12 structure hits (R² > 0.9 in 3), against 0 of 36 on 54–59. **The oracle splits them
+  (2026-10-01):** 52 is a search failure (true structure refits to ~1e-13 at the first attempt, 6/6);
+  61 is undecided (every refit stuck at loss ~140–150). **The oracle is one-sided evidence:** on the
+  53 cells the search solved exactly, a refit of the same true structure reaches R² > 0.9 in only 30,
+  because retry fires on `fit_attempt_failed` only, never on a bad local optimum — a good refit
+  proves reachability, a bad one proves nothing. System 63 (dim 4) refits perfectly 6/6: the search
+  fails there, so "identifiability limit" is too strong. The restart curve is what makes negative
+  refits readable
 - **Generalization is the weak axis (C-5, 2026-09-29).** C-1, R² > 0.9 over 126 system × direction
   units: **82.3 % reconstruction against 37.3 % generalization**; dim 1 97.8 % → 70.3 %, **dim 2
   91.7 % → 25.6 %**, dim 3 28.3 % → 1.7 %; 40 of 378 generalization integrations diverge. Together

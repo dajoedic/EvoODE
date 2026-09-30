@@ -4,7 +4,66 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ---
 
-## 2026-09-29
+## 2026-10-01
+
+### C-5-Orakel eingesammelt: 52 scheitert an der Suche, 61 bleibt offen, und das Instrument ist nur einseitig beweiskräftig
+
+**Datengrundlage.** Der Job lief am 29.09. von 17:51 bis 20:00 (Obergrenze 5,9 h je Shard, gebraucht
+höchstens etwa 2 h) und war beim Nachsehen per TTL schon verschwunden. Die 36 Shards kamen per `tar` vom NFS: 72
+Dateien, SHA-256 auf beiden Seiten gleich. `--collect` meldet 180 Zellen. Alle 180 Zeilen tragen
+`error = null` und den Zeilen-Fingerprint `925e3957a7a884e2`. Der lokale Manifest-Fingerprint
+`ebbb6691efef156f` weicht nur wegen des Eingabepfads ab, wie in `SCRIPTS.md` vermerkt. Die Eingabe
+hat eine einzige Kennung `221a3a7` / `0c9672de35c75a9d` / `ffb0266c7913352c`. Ablage:
+`outputs/wp_n3_oracle_refit_phase_c/`.
+
+**Zuerst der Maßstab, weil er die Lesart bestimmt.** Auf den 53 Zellen, in denen die C-1-Suche die
+exakte Struktur gefunden hat, erreicht der Referenzfit **derselben** Struktur R² > 0,9 nur in
+**30**. Die Suche kommt dort auf 53. Beispiele: System 24 hat 6 von 6 Treffern bei einem Suchloss
+um 8e-15, der Referenzfit landet bei 0,074 und in 0 von 6 Fällen über R² 0,9. System 1 (RC-Kreis)
+hat einen Suchloss um 7e-15 und einen Referenzloss von 1,86. Der Grund: Die Suche fittet dieselbe
+Struktur viele Male neu, der Referenzfit höchstens dreimal. Außerdem feuert der Retry nur bei
+`fit_attempt_failed`, nicht bei einem schlechten lokalen Optimum. Beim Referenzfit hat er in 180 Zellen nur
+21-mal gegriffen. **Folge:** Ein guter Referenzfit belegt, dass der C-1-Optimierer die Wahrheit erreicht.
+Ein schlechter belegt **nicht**, dass er sie nicht erreicht. Das ist die WP-N4-Beobachtung
+(15 von 102 Einzelfits scheitern), jetzt auf Phase-C-Breite. Die implizite Mehrfachstartwirkung
+der Suche ist also real und groß.
+
+| Gruppe | Zellen | Suche: Treffer | Suche: R² > 0,9 | Referenz: R² > 0,9 | Referenz besser als Suche |
+|---|---|---|---|---|---|
+| dim 1 | 66 | 31 | 63 | 56 | 31 |
+| dim 2 | 60 | 22 | 57 | **16** | 16 |
+| dim 3 erreichbar (52, 61) | 12 | 0 | 3 | 6 | 6 |
+| dim 3 unerreichbar (54–59) | 36 | 0 | 11 | 1 | 3 |
+| dim 4 (63) | 6 | 0 | 1 | **6** | 6 |
+
+**Die vorab festgelegte Frage (DIARY 29.09.) bekommt eine geteilte Antwort.**
+- **System 52: Die Suche scheitert.** Der Referenzfit trifft in 6 von 6 Zellen im ersten Versuch,
+  mit Loss 3e-14 bis 2e-13 und R² = 1,000. Die Suche kommt nie auf die Struktur, ihr Loss liegt bei
+  2e-4 bis 1e-3. Dieser Befund ist nach dem Maßstab oben schlüssig.
+- **System 61: nicht entschieden, spricht eher für den Fit.** Alle sechs Referenzfits landen bei
+  Loss 139–150 mit R² um −1,5. Das Optimierer-Retcode ist `Success`, es gibt keinen Strafwert, und
+  der Retry hat zweimal ausgelöst. Der Fit sitzt also in einem schlechten lokalen Optimum. Die Suche
+  ist dort mit Loss 54–95 sogar besser. Nach dem Maßstab oben ist das kein Beweis. Klären kann das
+  die Restart-Kurve (k = 1…10) auf 61, oder WP-T1f, das warm und ohne Kappung startet.
+- **dim 4, System 63:** Der Referenzfit ist in 6 von 6 Zellen perfekt (Loss ~6e-16), die Suche
+  erreicht R² > 0,9 in 1 von 6 Zellen und trifft die Struktur nie. Auch das ist ein schlüssiges
+  Scheitern der Suche. CLAUDE.md führt 63 bisher als Identifizierbarkeitsgrenze. Die Daten sagen
+  jetzt genauer: Die Wahrheit ist mit dem C-1-Optimierer erreichbar, aber die Suche findet sie nicht.
+- **54–59** verhalten sich wie vorab erwartet (1 von 36 über R² 0,9). System 57 ist wie erwartet der
+  Grenzfall mit einem Referenzloss um 0,07.
+
+**dim 2 ist der eigentlich neue Befund.** Mit der wahren Struktur kommt der Referenzfit nur in 16
+von 60 Zellen über R² 0,9, die Suche in 57. Nach dem Maßstab heißt das nicht, dass die Wahrheit
+unerreichbar ist. Es heißt, dass **ein einzelner Fit** der wahren Struktur auf gekoppelten Systemen
+meist scheitert. Die Suche gleicht das durch schiere Wiederholung aus oder weicht auf eine andere,
+leichter fittbare Struktur aus. Das passt zu WP-T1f auf dim 2: Kaltstarts treffen die Wahrheit in
+1 bis 11 von 20 Fällen, bei 0 Nachbarn unter dem Boden. Es passt auch zu Claim C: Eine
+ausweichende Struktur passt auf die Trainingskurve und generalisiert schlecht.
+
+**Was daraus nicht folgen darf:** eine Aussage über das Scheitern auf dim 1 und dim 2 aus den
+Referenz-R²-Raten. Das Instrument ist nur in einer Richtung beweiskräftig. Für das Statusgespräch
+bleibt: Die Restart-Kurve ist nicht mehr nur eine Ablation, sie ist das Instrument, das die
+Referenz-Misserfolge erst lesbar macht.
 
 ### C-1/C-2 komplett — und die Kappungsfrage für C-5 wird festgelegt, bevor jemand auf C-1 schaut
 

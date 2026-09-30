@@ -21,7 +21,7 @@ wenn billig (erledigt).
 | Lauf | Wo | Stand 01.10. 01:35 | Anmerkung |
 |---|---|---|---|
 | C-3 | Orion, `221a3a7` | 176 / 180 | 906 fertig 30.09. 10:15 UTC. Offen: 897 (Level 28), 899 (29), 904 (29), 905 (28), alle Lorenz 55/56 `pretune_on`; letzte Level 22–51 h → 899/904 ~1.–2.10., 897/905 ~2.–5.10.; keine Deadline |
-| C-5 Orakel | Orion, `1db1193` | **fertig**, 36 / 36 Shards | 29.09. 17:51–20:00; 180 Zeilen, alle `error = null`, config `925e3957a7a884e2`. Job per TTL weg, Daten auf NFS `phase_c_c5_oracle_1db1193…/out`. **Noch nicht eingesammelt**: `SCRIPTS.md`, C-5 Diag (`--collect`) |
+| C-5 Orakel | Orion, `1db1193` | **fertig und eingesammelt** (01.10.) | 180/180, `error = null`, Zeilen-config `925e3957a7a884e2`, lokal `outputs/wp_n3_oracle_refit_phase_c/`. Befund: 52 = Suche scheitert, 61 offen, 63 = Suche scheitert; Instrument nur einseitig beweiskräftig (DIARY 01.10.) |
 | WP-T1f | Orion, `1db1193` | 26 / 36 | fertig 0–22, 24, 28, 29 (dim 2, 52, 54 IC1, 55 IC1, 57). Rechnen: 54 IC2, 55 IC2, 56 ×2, 58 ×2 (fertige Zelle = 185 Zeilen). Warten: 59, 61. Ende ~5.–7.10.; Deadline 12.10. |
 
 **Fertig:** C-1/C-2 (756/756, 29.09. 15:10), eingesammelt nach `outputs/phase_c_campaign_221a3a7/`
