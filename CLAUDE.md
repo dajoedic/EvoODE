@@ -281,6 +281,14 @@ Mark items done here with date and commit; never delete them.
 | S-04 | **Diagnosis: the stage cap under noise** (offline, search-free): safety (truncation), cap shift, residual mechanism, and whether a filter-derived derivative-noise floor matches the measured one. User approved 2026-10-01; WP-S04 | Codex → Claude runs it on the laptop |
 | S-03 | ~~Design note~~ **drafted 2026-10-01: `docs/design_stopping_criterion.md`** — noise-floor stop + whiteness guard + BIC promotion; offline estimator study and full-heartbeat retrospective first. User decides | Claude, presented at the next gate |
 
+**Track I — image (pulled forward 2026-10-01, user)**
+
+| # | Item | Who |
+|---|---|---|
+| I-01 | Slim the campaign environment: `DifferentialEquations` → `OrdinaryDiffEq` at the **identical** version already in the Manifest (only `Tsit5` is used, 21 call sites); `Plots`/`CairoMakie` out of the core module into package extensions (`weakdeps`). Remove only, update nothing. Acceptance: stage 0, oracle at bound 10 and C-1 cells across all dimensions **bit-identical**. Manifest today: 443 packages, 58 of them heavy plotting/solver baggage | Codex (WP-N36, after S-04) → Claude verifies |
+
+Why now: C-6 builds new images anyway, so the 2026-09-23 reason for waiting (new image identity) no longer holds; the Phase C image `221a3a7` stays untouched for C-3. Expected: much shorter builds (Makie/Plots precompile), most Trivy findings gone. The **namespace move** itself is postponed by the user, probably to the Christmas period.
+
 **Small:** decouple `test_phase_a_evaluation_does_not_overwrite_frozen_artifacts` from the local
 file; five more tests read files under `outputs/` (`REPORT_WP_N33A3.md`) and should be frozen the
 same way. `run_phasec_noise_sindy_baselines.py` control: count rows diverged on both sides as equal (today exit 1 on three garbage R² values).
@@ -835,8 +843,8 @@ the coupled search path 1e-6 is the cheaper, behaviour-equal tolerance; the Syst
   recorded `evogrow_v3_stage_capped` measurements hang on today's semantics. Keep the old name as a
   deprecated alias for one transition period. Touches the export in `src/EvoODE.jl`,
   `studies/regression/run_regression.jl` and `test/test_stage_cap.jl`.
-- **The GitLab project moves to another namespace once the running Orion jobs finish (announced
-  2026-09-23).** That namespace has its own rules for where images are pushed; the CI image path
+- **The GitLab project moves to another namespace — postponed by the user (2026-10-01), probably to the
+  Christmas period; image hardening is pulled forward as Track I (announced 2026-09-23).** That namespace has its own rules for where images are pushed; the CI image path
   follows those rules, not today's `registry.gitlab.scch.at/joedicke/evoode`. Two things must be
   settled **before** the move, not after: (1) **the campaign images move with the project —
   decided 2026-09-23; the user must request this explicitly when the move is ordered.** They are
