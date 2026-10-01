@@ -6,6 +6,48 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ## 2026-10-01
 
+### Tor S1: System 1 unter Rauschen — billig gefittet, teuer gesucht, und bei 0,05 die falsche Struktur
+
+**WP-N33a abgenommen** (`2978497`). Die Auswertung gegen die saubere Wahrheit reproduziert auf den
+Stufe-0-Zellen die Rekonstruktion exakt (Abweichung 0,0) und die C-1-Generalisierung bitgleich (per
+Assertion und von Hand geprüft). Der Tor-Bericht läuft.
+
+**Stufe 1:** System 1, Seed 42, IC 1, Realisierung 1, auf dem Laptop. Beide Zellen enden ohne
+Fehler, nach 50 s und 143 s.
+
+| | C-1 (0, 0) | (0,01; 0) | (0,05; 0,5) |
+|---|---|---|---|
+| ausgeführte Level | 1 | 20 | 20 |
+| Endstufe | 1 | **5** | **5** |
+| Loss-Evals | 1.609 | 310.879 (**×193**) | 1.145.554 (**×712**) |
+| Parameterfits | 30 | 410 (×13,7) | 410 (×13,7) |
+| Kappe | `nothing` | `nothing` | `nothing` |
+| roher / geprunter Treffer | ja / ja | **ja / ja** | **nein / nein** |
+| gefundene Terme | `1, u1` | `1, u1` (0,287; −0,354) | `1, u1, u1², u1³, sin u1` |
+| sauberes Rekonstruktions-R² | 1,0 | 0,99988 | 0,966 |
+| sauberes Generalisierungs-R² | 1,0 | 0,99966 | 0,99908 |
+| beobachtete Punkte | 512 | 512 | 256 |
+
+**Harte Prüfungen.** Fehler, Methoden-Fingerprint und neue Felder: bestanden. Die Hash-Prüfung meldete
+„not_passed“. Ursache ist ein **Werkzeugfehler**: `index.csv` des Exports schreibt `[512,1]` ohne
+Anführungszeichen, dadurch verrutschen beim Einlesen alle folgenden Spalten. Von Hand auf den
+Rohzeilen geprüft: Zeit-Hash, Zustands-Hash und Datenbedingungs-Fingerprint stimmen in beiden Zellen
+überein. Den Fix bekommt Codex (WP-N33a2).
+
+**Lesart, vorsichtig, ein System und eine Realisierung.**
+- **Der Kostenhebel ist der fehlende Abbruch, nicht die Kappe.** System 1 hat auch in C-1 keine Kappe
+  (`nothing`). C-1 endete nach einem Level, weil `loss_tol = 1e-8` erreicht war. Unter Rauschen ist
+  das unerreichbar, also wächst die Suche bis Stufe 5. Das ist genau die Falle aus §9.4. Die Fits
+  steigen um ×13,7, die Loss-Evals um ×193 bis ×712, weil die späten Stufen teuer fitten.
+- **Bei σ = 0,01 trägt die Methode:** richtige Struktur roh und gepruned, Koeffizienten nahe an C-1,
+  sauberes R² in beiden Richtungen über 0,999.
+- **Bei σ = 0,05 mit ρ = 0,5 sieht man die Auswahl nach Fittbarkeit im Kleinen:** Fünf Terme statt
+  zwei, auch nach dem Pruning, und trotzdem ein sauberes Generalisierungs-R² von 0,999. R² allein
+  hätte das nicht gezeigt; deshalb gehören beide Metriken ins Paper.
+- **Eine Kostenhochrechnung aus System 1 ist nicht zulässig.** Seine C-1-Kosten waren durch den
+  frühen Abbruch künstlich klein, deshalb übertreibt der Faktor gegenüber C-1 bei billigen Systemen.
+  Wie sich das bei Systemen verhält, die schon in C-1 viele Level brauchten, beantwortet erst Stufe 2.
+
 ### WP-N32 abgenommen, Stufe 0 bestanden, B-01: Die Grenze wirkt auch dort, wo sie nicht bindet
 
 <!-- 86137f8 -->
