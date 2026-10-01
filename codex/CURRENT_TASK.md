@@ -1,48 +1,35 @@
-# WP-N35 — Beste Struktur je Level im Heartbeat (Track S, S-02), verhaltensneutral
-**Language: Julia** (plus Python-Test)
+# WP-N33c — Stufe-2-Orion-Job um System 24 erweitern
+**Language: YAML** (+ `SCRIPTS.md`)
 
-Backlog: `CLAUDE.md`, „Backlog Paper 1“, Track S, S-02. Vom Nutzer freigegeben am 2026-10-01.
-Anlass: die Rückschau auf das Abbruchkriterium (`DIARY.md` 2026-10-01). Die Heartbeats tragen je
-Level nur `best_loss` und `stage`, nicht die Struktur. Ohne Struktur je Level lässt sich nicht prüfen,
-welche Struktur eine Abbruchregel zurückgegeben hätte.
+## Anlass
 
-## Ausgangslage
-
-Der Level-Snapshot, den `src/structure/evogrow.jl` (ab Zeile ~979) an `level_callback` übergibt,
-enthält schon `best_structure`, `best_params`, `best_loss`, `best_objective`,
-`accepted_new_best`, `stage_transition`, `previous_stage` und `new_stage`. Der Heartbeat in
-`studies/regression/run_regression.jl` (`level_callback`, ab Zeile ~827) schreibt davon nur
-`level`, `stage` und `best_loss`.
+Stufe 2 lokal (`DIARY.md` 2026-10-01): System 24 hat bei `(0.01, 0)` und `(0.05, 0.5)` die
+55-Minuten-Grenze des Laptops gerissen (Exit 124). Nach der Laufort-Regel gehört es deshalb auf
+Orion, mit höchstens 24 h. System 18 war ohnehin für Orion vorgesehen
+(`k8s/phase_c_robustness_stage2_system18_job.yaml`, WP-N33b).
 
 ## Umsetzung
 
-Der Level-Heartbeat bekommt zusätzlich:
-- `best_terms`: aktive Termnamen je Gleichung. Verwende dieselbe Funktion wie `support_terms` im
-  Record (`active_term_names` o. ä.), keine zweite.
-- `best_params`: die Koeffizienten der besten Struktur, im selben Format wie `model_terms` im Record
-  (Term, Termindex, Koeffizient).
-- `best_objective`, `accepted_new_best`, `stage_transition`, `previous_stage`, `new_stage`.
-
-**Nur in `studies/regression/run_regression.jl`.** `src/` wird nicht angefasst. Die Suche, der
-Record, die Fingerprints und die Zufallsströme bleiben unverändert. Gelesen wird ausschließlich
-aus dem Snapshot, der ohnehin existiert.
+1. Ein Manifest `k8s/phase_c_robustness_stage2_orion_job.yaml` ersetzt das System-18-Manifest. Das
+   alte bleibt liegen, wird aber im Kopfkommentar als ersetzt markiert. Inhalt:
+   - Bootstrap und Smoke wie bisher. Smoke ist System 1 bei `(0.01, 0)`, bitgleich zu
+     `outputs/stage1/s0.01_r0/tasks/cell_000001.jsonl`.
+   - Die Stufenzellen: **System 18 und System 24**, je `(0.01, 0)` und `(0.05, 0.5)`, Seed 42,
+     IC-Set 1, Realisierung 1, `clamp_val = 10`. Das sind **4 Zellen**, `completions: 4`,
+     `parallelism: 4`, `activeDeadlineSeconds: 86400`.
+   - Image-Tag `eb630b5` oder später im Kopfkommentar. Dieses Image trägt die Heartbeats mit der
+     Struktur je Level (WP-N35).
+2. `SCRIPTS.md`: den Abschnitt für Stufe 2 auf das neue Manifest umstellen, Befehle als Vorlage,
+   nicht als „jetzt ausführen“. Dazu die lokalen Vergleichsdaten: Exportindex
+   `outputs/stage2/data_export/index.csv` (enthält 17, 18, 24). Der Tor-Bericht nach dem Einsammeln
+   läuft wie bei den lokalen Zellen.
 
 ## Verboten
 
-`src/` ändern; Record-Felder, Fingerprints oder Manifeste ändern; Läufe über 15 Minuten; Git;
-`codex/CURRENT_TASK.md` bearbeiten; `docs/` ändern.
+Jobs starten, `oc` ausführen, Code ändern, Git, `docs/`, `codex/CURRENT_TASK.md` bearbeiten.
 
 ## Abnahme
 
-1. Ein Python-Test prüft die neuen Heartbeat-Felder an einer Fixture, die aus einer echten
-   Heartbeat-Datei abgeleitet ist (`outputs/stage1/s0.05_r0.5/tasks/cell_000001.heartbeat.jsonl`
-   als Grundlage, um die neuen Felder erweitert).
-2. Für Claude im Report, mit erwarteter Dauer:
-   - (a) die Stufe-0-Kontrolle neu fahren (System 1, Seed 42, IC 1 und 2, (0, 0, 10)) und mit
-     `compare_phasec_controls.py` gegen C-1 vergleichen. **Bitgleich**, sonst ist das Paket nicht
-     verhaltensneutral;
-   - (b) eine Stufe-1-Zelle neu fahren, (0,05; 0,5) auf System 1, und zeigen, dass der Record
-     bitgleich zu `outputs/stage1/s0.05_r0.5/tasks/cell_000001.jsonl` ist und der Heartbeat die neuen
-     Felder trägt.
-3. Report `codex/reports/REPORT_WP_N35.md`, `STATUS.md` nach Protokoll. Weil Julia nicht ausführbar
-   ist, ist `blocked` mit dem Vermerk *Umgebung, nicht Sache* der erwartete Abschluss.
+YAML gültig (`yaml.safe_load_all` in deiner Sitzung), jede Deadline ≤ 86400, die vier Zellen im
+Report aufgelistet mit Manifest-Index. Report `codex/reports/REPORT_WP_N33C.md`, `STATUS.md` nach
+Protokoll.
