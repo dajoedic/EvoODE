@@ -16,6 +16,7 @@ const WP_N5_R2_THRESHOLD = 0.9
 const WP_N5_RECONSTRUCTION_ATOL = 1e-8
 const WP_N5_RECONSTRUCTION_RTOL = 1e-6
 const WP_N5_QUANTILES = [0.05, 0.10, 0.25, 0.50, 0.75, 0.90, 0.95]
+const WP_N33A_DEFAULT_OUTPUT_DIR = joinpath(@__DIR__, "..", "..", "outputs", "wp_n33a_clean_eval")
 
 function _arg_value(args::Vector{String}, name::String, default)
     idx = findfirst(==(name), args)
@@ -51,16 +52,50 @@ function _json_require(record, key::Symbol, context::AbstractString)
     return value
 end
 
+function _history_files(path::AbstractString)
+    if isfile(path)
+        return [path]
+    elseif isdir(joinpath(path, "tasks"))
+        return [
+            joinpath(path, name) for name in sort(readdir(joinpath(path, "tasks")))
+            if endswith(name, ".jsonl") && !endswith(name, ".heartbeat.jsonl")
+        ]
+    elseif isdir(path)
+        return [
+            joinpath(path, name) for name in sort(readdir(path))
+            if endswith(name, ".jsonl") && !endswith(name, ".heartbeat.jsonl")
+        ]
+    end
+    error("Input history not found: $(path)")
+end
+
+function _input_sha256(path::AbstractString)
+    if isfile(path)
+        return bytes2hex(sha256(read(path)))
+    end
+    files = _history_files(path)
+    payload = IOBuffer()
+    for file in files
+        write(payload, replace(relpath(file, path), Char(0x5c) => '/'))
+        write(payload, '\n')
+        write(payload, bytes2hex(sha256(read(file))))
+        write(payload, '\n')
+    end
+    return bytes2hex(sha256(take!(payload)))
+end
+
 function _read_history(path::AbstractString)
-    isfile(path) || error("Input history not found: $(path)")
+    files = _history_files(path)
     records = Any[]
-    open(path, "r") do io
-        for (line_no, line) in enumerate(eachline(io))
-            isempty(strip(line)) && continue
-            record = JSON3.read(line)
-            _json_get(record, :error) === nothing ||
-                error("Input line $(line_no) has error=$(_json_get(record, :error))")
-            push!(records, record)
+    for file in files
+        open(file, "r") do io
+            for (line_no, line) in enumerate(eachline(io))
+                isempty(strip(line)) && continue
+                record = JSON3.read(line)
+                _json_get(record, :error) === nothing ||
+                    error("Input $(file) line $(line_no) has error=$(_json_get(record, :error))")
+                push!(records, record)
+            end
         end
     end
     return records
@@ -176,7 +211,7 @@ function _simulate_fixed_model(structure::StructureSpec, basis, params::Vector{F
     loss_value = evaluate_loss(MSELoss(), yhat, traj.x)
     isfinite(Float64(loss_value)) || error("non-finite loss")
     r2_metrics = r2_summary(yhat, traj.x, loss_value)
-    return loss_value, r2_metrics
+    return loss_value, r2_metrics, yhat
 end
 
 function _evaluation_failure(err)
@@ -187,22 +222,133 @@ function _evaluation_failure(err)
         "r2_by_dim" => nothing,
         "diverged_or_nonfinite" => true,
         "error" => message,
+        "prediction" => nothing,
     )
 end
 
 function _evaluate_regime(structure, basis, params, traj)
     try
-        loss_value, r2_metrics = _simulate_fixed_model(structure, basis, params, traj)
+        loss_value, r2_metrics, yhat = _simulate_fixed_model(structure, basis, params, traj)
         return Dict{String, Any}(
             "loss" => loss_value,
             "r2" => r2_metrics.r2,
             "r2_by_dim" => r2_metrics.r2_by_dim,
             "diverged_or_nonfinite" => false,
             "error" => nothing,
+            "prediction" => yhat,
         )
     catch err
         return _evaluation_failure(err)
     end
+end
+
+function _variance_weighted_r2(yhat::AbstractMatrix, y::AbstractMatrix)
+    by_dim = r2_by_dimension(yhat, y)
+    by_dim === nothing && return nothing
+    any(value -> value === nothing, by_dim) && return nothing
+    weights = Float64[]
+    @inbounds for dim_idx in 1:size(y, 2)
+        observed = view(y, :, dim_idx)
+        mean_observed = sum(observed) / length(observed)
+        push!(weights, sum((value - mean_observed)^2 for value in observed))
+    end
+    total_weight = sum(weights)
+    total_weight > 0.0 || return nothing
+    numeric = Float64[value for value in by_dim]
+    return sum(weight * value for (weight, value) in zip(weights, numeric)) / total_weight
+end
+
+function _regime_weighted_r2(evaluation, traj::Trajectory)
+    prediction = evaluation["prediction"]
+    prediction === nothing && return nothing
+    return _variance_weighted_r2(prediction, traj.x)
+end
+
+function _clean_eval_no_data_condition(record)
+    sigma = Float64(_json_get(record, :noise_sigma, 0.0))
+    rho = Float64(_json_get(record, :subsample_rho, 0.0))
+    return sigma == 0.0 && rho == 0.0
+end
+
+function _export_prediction!(output_dir::AbstractString, cell_key::AbstractString, regime::AbstractString, system, ic_set::Int, traj::Trajectory, evaluation)
+    prediction = evaluation["prediction"]
+    prediction === nothing && return nothing
+    pred_traj = Trajectory(copy(traj.t), Matrix{Float64}(prediction))
+    export_dir = joinpath(output_dir, "predictions", regime, cell_key)
+    row = export_trajectory!(export_dir, system, ic_set, pred_traj)
+    row["export_dir"] = relpath(export_dir, output_dir)
+    return row
+end
+
+function _clean_eval_row_phase_c(record, systems_by_id, output_dir::AbstractString)
+    system_id = Int(_json_require(record, :system_id, "WP-N33a trajectory selection"))
+    haskey(systems_by_id, system_id) || error("Unknown Phase-C system_id=$(system_id)")
+    system = systems_by_id[system_id]
+    dim = Int(system[:dim])
+    source_ic_set = Int(_json_require(record, :initial_condition_set, "WP-N33a trajectory selection"))
+    target_ic_set = _target_ic_set(source_ic_set)
+    basis_name = String(_json_require(record, :basis_name, "WP-N33a basis reconstruction"))
+    basis_name == PHASE_C_BASIS_NAME || error("Record $(wp_n25_record_key(record)) basis_name=$(basis_name), expected $(PHASE_C_BASIS_NAME)")
+    basis = phase_c_basis(dim)
+    structure, params, term_names = _model_from_record(record, basis, dim)
+
+    source_traj = build_trajectory(system, source_ic_set)
+    target_traj = build_trajectory(system, target_ic_set)
+    reconstruction = _evaluate_regime(structure, basis, params, source_traj)
+    generalization = _evaluate_regime(structure, basis, params, target_traj)
+    key = wp_n25_record_key(record)
+    reconstruction_hash = _export_prediction!(output_dir, key, "reconstruction", system, source_ic_set, source_traj, reconstruction)
+    generalization_hash = _export_prediction!(output_dir, key, "generalization", system, target_ic_set, target_traj, generalization)
+
+    reconstruction_probe_status = "not_applicable_noisy_or_subsampled"
+    reconstruction_probe_ok = nothing
+    reconstruction_abs_r2_delta = nothing
+    if _clean_eval_no_data_condition(record)
+        stored_r2 = Float64(_json_require(record, :r2, "WP-N33a clean reconstruction probe"))
+        got_r2 = reconstruction["r2"]
+        reconstruction_probe_ok = got_r2 !== nothing && abs(Float64(got_r2) - stored_r2) <= WP_N5_RECONSTRUCTION_ATOL + WP_N5_RECONSTRUCTION_RTOL * abs(stored_r2)
+        reconstruction_abs_r2_delta = got_r2 === nothing ? nothing : abs(Float64(got_r2) - stored_r2)
+        reconstruction_probe_status = reconstruction_probe_ok ? "passed" : "failed"
+    end
+
+    return Dict{String, Any}(
+        "cell_key" => key,
+        "condition" => String(_json_require(record, :condition, "WP-N33a output row")),
+        "variant" => String(_json_require(record, :variant, "WP-N33a output row")),
+        "basis_name" => basis_name,
+        "system_id" => system_id,
+        "system_name" => String(_json_require(record, :system_name, "WP-N33a output row")),
+        "dimension" => dim,
+        "source_initial_condition_set" => source_ic_set,
+        "target_initial_condition_set" => target_ic_set,
+        "direction" => _direction(source_ic_set),
+        "seed" => Int(_json_require(record, :seed, "WP-N33a output row")),
+        "noise_sigma" => Float64(_json_get(record, :noise_sigma, 0.0)),
+        "subsample_rho" => Float64(_json_get(record, :subsample_rho, 0.0)),
+        "noise_realization" => Int(_json_get(record, :noise_realization, 0)),
+        "clamp_val" => Float64(_json_get(record, :clamp_val, BFGS_CLAMP_VAL)),
+        "model_terms" => term_names,
+        "stored_record_r2" => _json_get(record, :r2),
+        "reconstruction_loss" => reconstruction["loss"],
+        "reconstruction_r2_arithmetic_mean" => reconstruction["r2"],
+        "reconstruction_r2_variance_weighted" => _regime_weighted_r2(reconstruction, source_traj),
+        "reconstruction_r2_by_dim" => reconstruction["r2_by_dim"],
+        "reconstruction_diverged_or_nonfinite" => reconstruction["diverged_or_nonfinite"],
+        "reconstruction_error" => reconstruction["error"],
+        "reconstruction_probe_status" => reconstruction_probe_status,
+        "reconstruction_probe_ok" => reconstruction_probe_ok,
+        "reconstruction_abs_r2_delta" => reconstruction_abs_r2_delta,
+        "reconstruction_prediction_hash" => reconstruction_hash,
+        "reconstruction_prediction_state_sha256" => reconstruction_hash === nothing ? nothing : reconstruction_hash["state_sha256"],
+        "generalization_loss" => generalization["loss"],
+        "generalization_r2_arithmetic_mean" => generalization["r2"],
+        "generalization_r2_variance_weighted" => _regime_weighted_r2(generalization, target_traj),
+        "generalization_r2_by_dim" => generalization["r2_by_dim"],
+        "generalization_diverged_or_nonfinite" => generalization["diverged_or_nonfinite"],
+        "generalization_error" => generalization["error"],
+        "generalization_prediction_hash" => generalization_hash,
+        "generalization_prediction_state_sha256" => generalization_hash === nothing ? nothing : generalization_hash["state_sha256"],
+    )
 end
 
 function _reconstruction_ok(stored_loss, reconstructed_loss)
@@ -340,6 +486,21 @@ function _write_cells(path::AbstractString, results)
     _write_csv(path, header, results)
 end
 
+function _write_clean_eval_cells(path::AbstractString, results)
+    header = [
+        "cell_key", "condition", "variant", "basis_name", "system_id", "system_name",
+        "dimension", "source_initial_condition_set", "target_initial_condition_set",
+        "direction", "seed", "noise_sigma", "subsample_rho", "noise_realization", "clamp_val",
+        "stored_record_r2", "reconstruction_loss", "reconstruction_r2_arithmetic_mean",
+        "reconstruction_r2_variance_weighted", "reconstruction_diverged_or_nonfinite",
+        "reconstruction_probe_status", "reconstruction_probe_ok", "reconstruction_abs_r2_delta",
+        "reconstruction_prediction_state_sha256", "generalization_loss",
+        "generalization_r2_arithmetic_mean", "generalization_r2_variance_weighted",
+        "generalization_diverged_or_nonfinite", "generalization_prediction_state_sha256",
+    ]
+    _write_csv(path, header, results)
+end
+
 function _write_reconstruction_probe(path::AbstractString, results)
     header = [
         "cell_key", "basis_name", "dimension", "direction", "system_id", "seed",
@@ -442,7 +603,7 @@ function _wp_n5_fingerprint(input_path::AbstractString)
     payload = (
         task = "WP-N5",
         input_path = replace(abspath(input_path), Char(0x5c) => '/'),
-        input_sha256 = bytes2hex(sha256(read(input_path))),
+        input_sha256 = _input_sha256(input_path),
         target_ic = "1->2 and 2->1",
         parameter_policy = "record coefficients only; no refit",
         reconstruction_probe_atol = WP_N5_RECONSTRUCTION_ATOL,
@@ -459,7 +620,7 @@ function _wp_n5_phase_c_fingerprint(input_path::AbstractString)
         task = "WP-N5",
         campaign = WP_N25_PHASE_C_CAMPAIGN,
         input_path = replace(abspath(input_path), Char(0x5c) => '/'),
-        input_sha256 = bytes2hex(sha256(read(input_path))),
+        input_sha256 = _input_sha256(input_path),
         selected_arm = (variant = WP_N25_C1_VARIANT, use_pretuning = false),
         trajectory_source = "phase_c_systems/build_trajectory",
         parameter_policy = "record coefficients only; no refit",
@@ -626,14 +787,153 @@ function _wp_n5_write_phase_c_manifest(path, input_path, output_dir, fingerprint
     wp_n25_write_manifest(path, payload)
 end
 
+function _wp_n33a_fingerprint(input_path::AbstractString)
+    payload = (
+        task = "WP-N33a",
+        campaign = WP_N25_PHASE_C_CAMPAIGN,
+        input_path = replace(abspath(input_path), Char(0x5c) => '/'),
+        input_sha256 = _input_sha256(input_path),
+        selected_arm = (variant = WP_N25_C1_VARIANT, use_pretuning = false),
+        target = "clean full-grid reconstruction and clean other-IC generalization",
+        trajectory_export = HASH_FORMAT,
+        reconstruction_probe_atol = WP_N5_RECONSTRUCTION_ATOL,
+        reconstruction_probe_rtol = WP_N5_RECONSTRUCTION_RTOL,
+        r2_aggregations = ["arithmetic_mean", "variance_weighted_by_clean_reference_variance"],
+    )
+    return bytes2hex(sha256(codeunits(canonical_value(payload))))[1:16]
+end
+
+function _wp_n33a_clean_eval_manifest(path, input_path, output_dir, fingerprint, filter_counts, run_count, results = nothing; collect_mode = false)
+    payload = Dict{String, Any}(
+        "task" => "WP-N33a",
+        "campaign" => WP_N25_PHASE_C_CAMPAIGN,
+        "input" => input_path,
+        "output_dir" => output_dir,
+        "run_count" => run_count,
+        "config_fingerprint" => fingerprint,
+        "filter_counts" => filter_counts,
+        "collect_mode" => collect_mode,
+        "trajectory_hash_format" => HASH_FORMAT,
+        "reconstruction_probe" => Dict(
+            "applies_when" => "noise_sigma == 0 and subsample_rho == 0",
+            "atol" => WP_N5_RECONSTRUCTION_ATOL,
+            "rtol" => WP_N5_RECONSTRUCTION_RTOL,
+            "criterion" => "clean reconstruction arithmetic R2 reproduces stored record r2",
+        ),
+    )
+    if results !== nothing
+        payload["reconstruction_probe_failed_count"] = count(row -> row["reconstruction_probe_status"] == "failed", results)
+        payload["reconstruction_probe_not_applicable_count"] = count(row -> row["reconstruction_probe_status"] == "not_applicable_noisy_or_subsampled", results)
+    end
+    wp_n25_write_manifest(path, payload)
+end
+
+function _reference_row_key(row)
+    return (
+        String(row["variant"]),
+        Int(row["system_id"]),
+        Int(row["source_initial_condition_set"]),
+        Int(row["seed"]),
+    )
+end
+
+function _load_reference_generalization(path::AbstractString)
+    rows = wp_n25_read_jsonl(path)
+    if isempty(rows) && isfile(path)
+        rows = Dict{String, Any}[]
+        open(path, "r") do io
+            header = split(readline(io), ',')
+            for line in eachline(io)
+                isempty(strip(line)) && continue
+                values = split(line, ',')
+                push!(rows, Dict{String, Any}(header[idx] => strip(values[idx], '"') for idx in eachindex(header)))
+            end
+        end
+    end
+    return Dict(_reference_row_key(row) => row for row in rows)
+end
+
+function _assert_reference_generalization!(results, reference_path::AbstractString)
+    isempty(reference_path) && return nothing
+    reference = _load_reference_generalization(reference_path)
+    for row in results
+        key = _reference_row_key(row)
+        haskey(reference, key) || error("Reference generalization missing row for $(row["cell_key"])")
+        ref = reference[key]
+        for field in ("generalization_loss", "generalization_r2")
+            got_field = field == "generalization_r2" ? "generalization_r2_arithmetic_mean" : field
+            got = row[got_field]
+            want = ref[field]
+            got === nothing && want === nothing && continue
+            Float64(got) == Float64(want) ||
+                error("Reference generalization mismatch for $(row["cell_key"]) field $(field): got $(got), expected $(want)")
+        end
+    end
+    return nothing
+end
+
+function main_phase_c_clean_eval(args, records, filter_counts, input_path::AbstractString)
+    output_dir = _arg_value(args, "--output-dir", WP_N33A_DEFAULT_OUTPUT_DIR)
+    limit = wp_n25_parse_limit(args, length(records))
+    reference_generalization = _arg_value(args, "--reference-generalization", "")
+    fresh = _arg_flag(args, "--fresh")
+    records = records[1:limit]
+    result_path = joinpath(output_dir, "results.jsonl")
+    if fresh && isfile(result_path)
+        rm(result_path)
+    end
+    done = wp_n25_done_keys(result_path)
+    systems_by_id = wp_n25_phase_c_systems_by_id()
+    fingerprint = _wp_n33a_fingerprint(input_path)
+    results = wp_n25_read_jsonl(result_path)
+    println("WP-N33a clean-eval fingerprint: $(fingerprint)")
+    println("Input: $(input_path)")
+    println("Output: $(output_dir)")
+    println("Cells requested: $(length(records))")
+    for (idx, record) in enumerate(records)
+        key = wp_n25_record_key(record)
+        key in done && (println("[$(idx)/$(length(records))] $(key) skipped existing"); continue)
+        row = _clean_eval_row_phase_c(record, systems_by_id, output_dir)
+        row["config_fingerprint"] = fingerprint
+        push!(results, row)
+        _append_jsonl!(result_path, row)
+        println(@sprintf(
+            "[%d/%d] %s clean_recon_r2=%s clean_gen_r2=%s probe=%s",
+            idx,
+            length(records),
+            key,
+            row["reconstruction_r2_arithmetic_mean"] === nothing ? "null" : @sprintf("%.16g", row["reconstruction_r2_arithmetic_mean"]),
+            row["generalization_r2_arithmetic_mean"] === nothing ? "null" : @sprintf("%.16g", row["generalization_r2_arithmetic_mean"]),
+            row["reconstruction_probe_status"],
+        ))
+    end
+    _assert_reference_generalization!(results, reference_generalization)
+    failed_probe_count = count(row -> row["reconstruction_probe_status"] == "failed", results)
+    failed_probe_count == 0 || error("WP-N33a reconstruction probe failures: $(failed_probe_count)")
+    _write_clean_eval_cells(joinpath(output_dir, "cells.csv"), results)
+    _wp_n33a_clean_eval_manifest(joinpath(output_dir, "manifest.json"), input_path, output_dir, fingerprint, filter_counts, length(records), results)
+    open(joinpath(output_dir, "fingerprint.txt"), "w") do io
+        println(io, fingerprint)
+    end
+    println("Results: $(result_path)")
+    println("Cells CSV: $(joinpath(output_dir, "cells.csv"))")
+    println("Manifest: $(joinpath(output_dir, "manifest.json"))")
+    println("Reconstruction probe failures: $(failed_probe_count)")
+    return nothing
+end
+
 function main_phase_c(args)
     input_path = _arg_value(args, "--input", PHASE_C_HISTORY_PATH)
     output_dir = _arg_value(args, "--output-dir", joinpath(@__DIR__, "..", "..", "outputs", "wp_n5_ic_generalization_phase_c"))
     shards, shard_index = wp_n25_shard_options(args)
     collect_mode = _arg_flag(args, "--collect")
     estimate_cost = _arg_flag(args, "--estimate-cost")
+    clean_eval = _arg_flag(args, "--clean-eval")
     records_all = _read_history(input_path)
     records, filter_counts = wp_n25_phase_c_filter(records_all; require_exact_support = false)
+    if clean_eval
+        return main_phase_c_clean_eval(args, records, filter_counts, input_path)
+    end
     limit = wp_n25_parse_limit(args, length(records))
     records = records[1:limit]
     fingerprint = _wp_n5_phase_c_fingerprint(input_path)
