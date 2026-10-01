@@ -6,6 +6,42 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ## 2026-10-01
 
+### Abbruchkriterium, Rückschau auf Stufe 1: Ein Rauschboden aus den Daten hätte in Level 1 gestoppt, mit der richtigen Struktur
+
+**Anlass:** Der Nutzer fragt, ob das Abbruchkriterium dynamisch werden kann. Vorschläge (Chat
+01.10.): (1) Toleranz aus einem geschätzten Rauschboden σ̂², (2) Weißheitstest auf den Residuen,
+(3) Informationskriterium beim Freischalten der Stufe, (4) frühes Stoppen auf zurückgehaltenen
+Punkten. Eine feste Plateau-Regel nicht, denn WP-B1 hat sie verworfen. **Für Paper 1 bleibt der
+Abbruch eingefroren.** Das hier ist Design für die nächste Version.
+
+**Rückschau ohne Rechenzeit** auf den beiden Stufe-1-Zellen (System 1). Die Heartbeats tragen je
+Level `best_loss` und `stage`, aber **keine Struktur je Level**. Der Rauschboden wird zweifach
+bestimmt: (a) erwartet, σ²·E[x²]/(1+σ²) aus den Beobachtungen; (b) nur aus den Daten, als
+Residuenvarianz eines lokalen kubischen Fits über 9 Punkte (wie der Ableitungsschätzer der Kappe),
+mit Freiheitsgradkorrektur 9/5.
+
+| | `best_loss` Level 1 (Stufe 1) | Endwert (Stufe 5) | Boden erwartet | Boden aus Daten |
+|---|---|---|---|---|
+| σ 0,01, ρ 0 | 0,002222 | 0,002222 (nie verbessert) | 0,001657 | 0,002281 |
+| σ 0,05, ρ 0,5 | 0,04806 | **0,03589** | 0,04176 | 0,04693 |
+
+- **σ = 0,01:** Der Loss liegt schon in Level 1 unter dem Datenschätzer. Die Regel „Stopp bei
+  Loss ≤ σ̂²“ hätte nach Level 1 gestoppt, mit der richtigen Struktur, und die ×193 Loss-Evals
+  gespart.
+- **σ = 0,05, ρ = 0,5:** Stufe 1 enthält für dim 1 nur `1` und `u1`, also genau die wahren Terme.
+  Ihr Loss liegt 2,4 % über dem Datenschätzer. Der Endwert mit fünf Termen liegt **unter beiden
+  Böden**. Das ist der Nachweis, dass die Zusatzterme Rauschen fitten. Eine Regel mit einer
+  Toleranz von wenigen Prozent hätte in Level 1 gestoppt.
+- **Der Haken ist der Schätzer.** Bei σ = 0,05, ρ = 0 überschätzt er den Boden um den Faktor 1,77
+  (0,073 gegen 0,041). Ein überschätzter Boden stoppt zu früh, und zwar mit zu wenig Struktur. Die
+  Schätzergüte über viele Systeme ist deshalb die eigentliche Forschungsfrage, nicht die Regel.
+  Außerdem liegt der Loss der Wahrheit wegen der verrauschten Anfangsbedingung über σ²·E[x²]: Die
+  Methode startet am ersten beobachteten Punkt.
+
+**Zwei Zellen auf einem System entscheiden nichts.** Der Befund ist ein Anfangsverdacht, kein
+Ergebnis. Für eine echte Rückschau braucht es die Struktur je Level in den Records. Das wäre ein
+Instrumentierungs-Paket, verhaltensneutral wie WP-N10.
+
 ### Tor S1: System 1 unter Rauschen — billig gefittet, teuer gesucht, und bei 0,05 die falsche Struktur
 
 **WP-N33a abgenommen** (`2978497`). Die Auswertung gegen die saubere Wahrheit reproduziert auf den
