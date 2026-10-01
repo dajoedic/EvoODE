@@ -4,6 +4,16 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ---
 
+## 2026-10-02
+
+### Runner-Absturz, und das schlanke Image (WP-N36): 443 → 202 Pakete, bitgleich
+
+<!-- dc17a46 -->
+
+**Was am Abend schiefging.** Claude hat am 01.10. unter einer befristeten Push-Erlaubnis rund siebenmal nach GitLab gepusht. Jeder Push startet einen Image-Build von bis zu ~3 h. Die parallelen Julia-Precompiles haben den Runner überlastet. Gegen 21:35 hat er alle Jobs verloren („no activity for an extended period“, kein Log). Im letzten Log stehen `✗ Makie` und `✗ BoundaryValueDiffEqFIRK`. Vier Builds sind gescheitert, `9c0d9b7` wurde zur Leiche. **Konsequenz (Nutzer):** Claude pusht nie wieder nach GitLab, und GitHub nur mit ausdrücklicher Erlaubnis. Unabhängig davon hat Windows den Laptop um 00:11:57 per Software neu gestartet (Kernel-Power 109, „Reason: Kernel API“, kein Absturz). Das hat laufende lokale Prozesse beendet. Außerdem hing `codex exec` im Hintergrund, weil es auf stdin wartete. Seither wird es mit `< /dev/null` gestartet.
+
+**Gegenmaßnahme ist das schlanke Image (Track I, WP-N36, `dc17a46`).** `DifferentialEquations` ist durch `OrdinaryDiffEq` **6.104.0** ersetzt (dieselbe Version und derselbe Hash wie zuvor im Manifest; die Spec nannte fälschlich 5.64.0, Codex hat das gemeldet). Plots und CairoMakie sind Package Extensions. **Manifest von 443 auf 202 Pakete, 0 Versions- oder Hash-Änderungen** (maschineller Diff). **Bitgleichheit:** Julia-Tests grün (Fingerprint `0c9672de35c75a9d`), Stufe 0 (System 1, beide IC) bitgleich zu C-1, die C-1-Zelle System 24 (dim 2) bitgleich, das Orakel bei Grenze 10 auf System 1 (6 Zellen) und System 52 (dim 3) bitgleich zu C-5. **Einschränkung:** Plotten braucht künftig ein eigenes Environment mit Plots/CairoMakie. Die Kampagne plottet nie. Die Build-Zeit wird beim ersten Build gemessen.
+
 ## 2026-10-01
 
 ### Keine harten Zeit-Cuts mehr; WP-T1f-Deadline entfernt

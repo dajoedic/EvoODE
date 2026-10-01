@@ -285,7 +285,7 @@ Mark items done here with date and commit; never delete them.
 
 | # | Item | Who |
 |---|---|---|
-| I-01 | Slim the campaign environment: `DifferentialEquations` → `OrdinaryDiffEq` at the **identical** version already in the Manifest (only `Tsit5` is used, 21 call sites); `Plots`/`CairoMakie` out of the core module into package extensions (`weakdeps`). Remove only, update nothing. Acceptance: stage 0, oracle at bound 10 and C-1 cells across all dimensions **bit-identical**. Manifest today: 443 packages, 58 of them heavy plotting/solver baggage | Codex (WP-N36, after S-04) → Claude verifies |
+| I-01 | ~~Slim the campaign environment~~ **done 2026-10-02, `dc17a46`: 443 → 202 packages, 0 version/hash changes, bit-identity verified (stage 0, C-1 dim-2 cell, oracle sys 1 and 52). Build time to be measured at the first build.** Original item: `DifferentialEquations` → `OrdinaryDiffEq` at the **identical** version already in the Manifest (only `Tsit5` is used, 21 call sites); `Plots`/`CairoMakie` out of the core module into package extensions (`weakdeps`). Remove only, update nothing. Acceptance: stage 0, oracle at bound 10 and C-1 cells across all dimensions **bit-identical**. Manifest today: 443 packages, 58 of them heavy plotting/solver baggage | Codex (WP-N36, after S-04) → Claude verifies |
 
 Why now: C-6 builds new images anyway, so the 2026-09-23 reason for waiting (new image identity) no longer holds; the Phase C image `221a3a7` stays untouched for C-3. Expected: much shorter builds (Makie/Plots precompile), most Trivy findings gone. The **namespace move** itself is postponed by the user, probably to the Christmas period.
 
