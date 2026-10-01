@@ -6,6 +6,31 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ## 2026-10-01
 
+### WP-N34 (SINDy und Weak-SINDy auf Rausch-Daten): Weak-SINDy ist auf System 1 der stärkste Gegner, die Abnahme ist noch offen
+
+**Stand:** Der Lauf auf den vier Stufe-1-Datenbedingungen von System 1 funktioniert. Alle Hashes sind
+geprüft, und alle 80 Zeilen (2 Methoden × 10 Konfigurationen × 4 Bedingungen) sind `success` bzw.
+divergiert mit Grund. **Nicht abgenommen**, weil die verlangte C-4-Reproduktionskontrolle im Code
+nicht umgesetzt ist und Structural F1 fehlt. Beides ist in WP-N34b bei Codex. Die Zahlen unten sind
+deshalb vorläufig.
+
+**Was die Zahlen zeigen** (System 1, IC 1, eine Realisierung; R² gegen die saubere Wahrheit; über
+die zehn Konfigurationen):
+- **SINDy** bricht mit dem Rauschen ein. Bei (0,05; 0,5) liegt die Rekonstruktion bei 0,32–0,84, die
+  Generalisierung bei −5,3 bis 0,96, und zwei Konfigurationen divergieren.
+- **Weak-SINDy** bleibt bei (0,05; 0,5) in der Rekonstruktion bei 0,985–0,9992, in der
+  Generalisierung bei 0,51–0,9996, die meisten Konfigurationen über 0,98. pysindy 2.1.0,
+  `WeakPDELibrary`, Standardwerte K = 100, p = 4, echtes Zeitraster, keine Interpolation.
+- **EvoGrow** bei (0,05; 0,5): Rekonstruktion 0,966, Generalisierung 0,9991, aber falsche Struktur
+  (5 Terme).
+
+**Konsequenz für die These, ausdrücklich festgehalten:** Die Hypothese „der Fit auf der
+integrierten Trajektorie ist robuster als Ableitungsschätzung“ trifft gegen normales SINDy zu. Gegen
+Weak-SINDy, das die Ableitung ebenfalls umgeht, ist sie auf diesem System **nicht gestützt**.
+Weak-SINDy ist dabei um Größenordnungen billiger. Ein System entscheidet nichts. Aber die
+Robustheits-Achse wird nur dann zur Stärke, wenn EvoGrow dort gegen Weak-SINDy besteht, und das ist
+jetzt die eigentliche Frage von Stufe 2 und 3.
+
 ### Abbruchkriterium, Rückschau auf Stufe 1: Ein Rauschboden aus den Daten hätte in Level 1 gestoppt, mit der richtigen Struktur
 
 **Anlass:** Der Nutzer fragt, ob das Abbruchkriterium dynamisch werden kann. Vorschläge (Chat
