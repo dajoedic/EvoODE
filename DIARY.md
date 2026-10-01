@@ -6,6 +6,71 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ## 2026-10-01
 
+### Scheideweg nach dem Orakel: Was trägt, was offen ist, und was aus dem Juli wieder auf den Tisch gehört
+
+**Die Lesart, die der Nutzer und Claude nach dem Orakel teilen.** Drei Messungen ergeben ein Bild:
+Der Loss erkennt die Wahrheit (WP-T1f, 0 von 351 Nachbarn unter dem Boden). Die Wahrheit ist schwer
+zu fitten (Orakel dim 2: ein Einzelfit kommt in 16 von 60 Fällen über R² 0,9). Die Suche weicht auf
+Strukturen aus, die sich leicht fitten lassen (dim 2: R² > 0,9 in 57 von 60 Fällen, roh richtig in
+3 von 60, Generalisierung 26 %). **EvoGrow wählt Strukturen nach Fittbarkeit, nicht nach
+Wahrheit.** Ursache ist der nichtlineare Fit auf der integrierten Trajektorie: Er taugt als
+Richter, aber nicht als Wegweiser der Suche.
+
+**Was trotzdem trägt, damit es in der Ernüchterung nicht untergeht:** Die Rekonstruktion ist auf
+jeder Dimension besser als jede SINDy-Konfiguration. Auf dim 1 generalisiert EvoGrow besser. Auf den
+30 voll repräsentierbaren Systemen generalisiert es am besten von den drei Verfahren (45,6 % gegen
+32,8 % für ODEFormer und 31,7–43,3 % für SINDy). Claim B gilt, mit seiner Bedingung. Gegen EvoGrow
+spricht: etwa hundertmal mehr Rechenaufwand als SINDy und ein schwaches dim 2 bei der
+Generalisierung. Einen GP-Lauf gibt es nicht. „GP ist besser“ ist eine Annahme, kein Befund.
+
+**Das ODEFormer-Protokoll für Rauschen und Abtastrate steht im Repo** (`outputs/third_party/odeformer`):
+- **Rauschen:** `x + γ·x·N(0,1)`, also relativ. Die Werte für γ sind {0; 0,001; 0,01; 0,02; 0,03;
+  0,04; 0,05} (`envs/environment.py:539`, `scripts/run_baselines.sh`). Das Skript gibt
+  `eval_noise_type="additive"` an, das landet aber nur im Ordnernamen; der Code rechnet
+  multiplikativ.
+- **Abtastrate:** Zufällig werden 0 %, 25 % oder 50 % der Punkte entfernt. Danach ist das Raster
+  unregelmäßig (`environment.py:561`).
+- **Defekt im Original:** Das Rauschen kommt aus dem globalen `np.random`, nicht aus dem geseedeten
+  `rng`. Es ist also nicht reproduzierbar. Ein eigener Lauf muss selbst geseedet ziehen und das
+  ausweisen.
+- **Warum gerade die Abtastrate interessant ist:** Unregelmäßige Raster sind für einen Fit auf der
+  integrierten Trajektorie unproblematisch, für das Ableitungsschätzen von SINDy dagegen schwer.
+
+**Die Screening-Spur vom Juli (WP-P2.1–P2.4, WP-T2), neu gelesen.** `EvoGrowScreening` existiert. Es
+bewertet Kandidaten über das LS-Residuum im Ableitungsraum und integriert nur die besten k. Die
+Ergebnisse damals: System 11 mit ρ = +1, richtiger Struktur und Faktor 1,4. System 3 mit
+ρ = −0,78, weil das LS-Residuum bei verschachtelten Kandidaten monoton fällt und damit das größte
+Modell bevorzugt. System 26 mit Faktor 34, aber einem Median von ρ = −0,014. Eingestellt wurde die
+Spur **aus Aufwandsgründen**; das DIARY selbst nennt die Hypothese ungeprüft, nicht widerlegt. Die
+Formel „Screening ist nur Performance“ war eine Entscheidung über den Umfang von Paper 1, kein
+Befund. **Neu seit dem Orakel:** Gemessen wurde ρ gegen den Trajektorien-Loss während der Suche,
+also gegen einen Maßstab, der selbst unter scheiternden Fits leidet. Die eigentliche Frage wurde
+nie gestellt: Setzt der Ableitungs-Score die **wahre** Struktur weit nach oben? Auf den 30 exakten
+Systemen lässt sich das jetzt ohne Suche und ohne Cluster prüfen.
+
+**Pretuning, neu eingeordnet.** Als Startpunkt hat es geschadet: Auf System 3 führte der
+LS-Warmstart in ein Becken (WP-T1, Befund 3), und ein getrennter Start schlug dort die Referenz um
+Faktor 6,2 (WP-P2.4, Bedingung D). Als Bewertungssignal ist es ungeprüft. C-3 liefert den Warmstart
+auf der kanonischen Basis.
+
+**Nie versucht: Multiple Shooting.** Die Trajektorie wird abschnittsweise integriert, jeder
+Abschnitt setzt an den Daten neu an. Das ist das Standardmittel gegen schlecht konditionierte Fits
+über lange Horizonte, also gegen den Engpass, den das Orakel zeigt.
+
+**Zur Definition eines guten Ergebnisses.** Der Nutzer will Strukturfindung stärker gewichten. Eine
+Korrektur gehört dazu: „Richtige Struktur ergibt automatisch besseres R²“ stimmt für das Training
+nicht. Auf dim 2 erreichen Ersatzstrukturen ein höheres Trainings-R² als die Wahrheit im
+Einzelfit. Bei der Generalisierung gewinnt dagegen die Wahrheit. Vorschlag: primär der rohe
+Strukturtreffer auf den exakten Systemen und das Generalisierungs-R² (es funktioniert auch für
+Surrogate), sekundär das Rekonstruktions-R² für den Literaturvergleich. **Festlegen, bevor der erste
+neue Lauf rechnet.**
+
+**Das Anliegen des Nutzers, wörtlich genug, um es nicht zu verlieren:** ein Fundament statt zwanzig
+paralleler Versuche. Ein EvoGrow, das publizierbar ist („gut unterwegs, teilweise besser als andere,
+vor allem da und da stark“), und darauf aufbauend Warmstart, Multiple Shooting und Ranking als
+eigene Papers, so wie SINDy die Basis für seine Erweiterungen war. Entschieden wird im
+Statusgespräch, siehe `READ_THIS_FIRST.md`.
+
 ### C-5-Orakel eingesammelt: 52 scheitert an der Suche, 61 bleibt offen, und das Instrument ist nur einseitig beweiskräftig
 
 <!-- 112facd aa5bbba -->

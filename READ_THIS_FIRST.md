@@ -10,7 +10,7 @@ zweites davon. Alles Dauerhafte gehört dorthin, nach `PAPER_1.md` oder ins `DIA
 **Regeln:** wird immer **vollständig überschrieben**, nie angehängt. Was älter als ein paar Tage
 ist, ist vermutlich falsch — dann gilt `CLAUDE.md`.
 
-**Stand: 2026-10-01, 01:35 (Clusterstatus); sonst 2026-09-29, Abend.** Push und `oc apply` macht der Nutzer. Die einmalige Freigabe vom
+**Stand: 2026-10-01, nachts (nach dem Orakel).** Push und `oc apply` macht der Nutzer. Die einmalige Freigabe vom
 28.09. für den WP-T1f-Start ist verbraucht. Freigabe vom 29.09.: C-5-Generalisierung vorziehen,
 wenn billig (erledigt).
 
@@ -36,30 +36,40 @@ Status lesen ohne eigenen Pod: `oc exec` in einen laufenden C-3-Pod, NFS unter `
 Online-Statusseite „EvoODE auf Orion“: https://claude.ai/artifact/4sq6HhRsnxgrFVqVF2trBx — bei
 jedem Statuswechsel neu veröffentlichen.
 
-## 2. Nächster Meilenstein: Statusgespräch
+## 2. Nächster Meilenstein: Statusgespräch — der Scheideweg
 
-Wenn C-3 und WP-T1f fertig sind (~5./6.10.) und der Cluster leer ist. **Bis dahin nichts Neues auf
-dem Cluster starten.** Ausnahme, vom Nutzer freigegeben: der C-5-Orakel-Arm (läuft). Themen:
+Wenn C-3 und WP-T1f fertig sind (~5.–7.10.) und der Cluster leer ist. **Bis dahin nichts Neues auf
+dem Cluster starten.** Hintergrund und alle Zahlen: DIARY 01.10., beide Einträge.
 
-1. **Rahmung von Paper 1.** Die Daten tragen Effizienz und Suchmechanik (Claim B, sauber und
-   bedingt) deutlich besser als Strukturfindung. Die Generalisierung liegt bei 37 % gegen 82 %
-   Rekonstruktion, auf dim 2 bei 26 %, gegen SINDy am unteren Rand. „Warum nicht einfach SINDy?“
-   ist die offene Flanke.
-2. **Kappung:** Für den Orakel-Arm entschieden (mit Kappung, DIARY 29.09.). Offen: Wie wird sie in der
-   nächsten Methodenversion entfernt oder begründet? Auch das erreichbare dim 3 (52, 61) trifft die
-   Struktur in 0 von 12 Fällen; das Orakel sagt, ob es an der Suche liegt.
-3. WP-T1f-Tor.
-4. ODEFormer-Kandidat und **ODEFormer-Paarung gegen C-1**. Zeigt ODEFormer dieselbe Lücke
-   zwischen Rekonstruktion und Generalisierung, ist das ein Befund über das Feld, kein Makel von
-   EvoGrow allein.
-5. **Richtung, vom Nutzer am 29.09. gesetzt: das Overfitting an die Trajektorie angehen.** Die
-   Rekonstruktion liegt bei 92 %, die Generalisierung bei 26 %, der rohe Strukturtreffer auf dim 2
-   bei 3 von 60. Die Suche belohnt nur die Passung der einen Kurve. Kandidaten: Validierung auf der
-   zweiten IC als Auswahlkriterium, ein stärkerer Komplexitätsterm, Sparsamkeit wie bei SINDy.
-   Einordnen in `docs/phd_thesis_arc.md` (Paper 2/3, nicht Paper 1) und klären, wie das zur
-   Leitlinie von Paper 2 (WP-T1f-Tor) passt.
-6. Reihenfolge: C-5-Orakel und Restart-Kurve, WP-T2a.
-7. `CLAUDE.md` eindampfen, zusammen mit dem Claim-Tracing-Audit.
+**Die Leitfrage des Nutzers:** ein Fundament statt zwanzig Versuche. Paper 1 als publizierbares
+EvoGrow („gut unterwegs, teilweise besser, vor allem da und da stark“), dann Warmstart, Multiple
+Shooting und Ranking als eigene Papers obendrauf, so wie SINDy die Basis seiner Erweiterungen war.
+
+**Zu entscheiden, in dieser Reihenfolge:**
+
+1. **Rahmung von Paper 1 als Fundament-Paper.** Stärken: Rekonstruktion auf jeder Dimension besser
+   als SINDy; Generalisierung auf dim 1 vorn und auf den 30 voll repräsentierbaren Systemen die
+   beste der drei Methoden; Claim B gilt mit Bedingung. Schwächen: Strukturfindung auf gekoppelten
+   Systemen, dim-2-Generalisierung, etwa hundertmal mehr Rechenaufwand. Die Orakel-Diagnose
+   („Auswahl nach Fittbarkeit“) wird zum Befund, und die Limitations werden zur Roadmap der
+   Folgepapers.
+2. **Kommt genau eine Stärke-Messung noch in Paper 1?** Kandidat: Rauschen und/oder Abtastrate nach
+   dem ODEFormer-Protokoll, gegen SINDy **und** Weak-SINDy, vorab festgelegt, jedes Ergebnis wird
+   berichtet. Erst eine Kostenschätzung, dann die Entscheidung. Alles andere kommt nicht in
+   Paper 1.
+3. **Definition eines guten Ergebnisses für alle neuen Methodenversionen:** primär roher
+   Strukturtreffer und Generalisierungs-R², sekundär Rekonstruktions-R². Festlegen vor dem ersten
+   neuen Lauf.
+4. **Reihenfolge der Folgepapers** (gehört nach `docs/phd_thesis_arc.md`): (a) Ranking bzw.
+   Screening im Ableitungsraum, Spur vom Juli, ungeprüft statt widerlegt; (b) Warmstart bzw.
+   Pretuning als Startpunkt; (c) Multiple Shooting gegen die Fittbarkeit. Dazu klären, wie das zur
+   Paper-2-Leitlinie und zum WP-T1f-Tor passt.
+5. Kleinere Punkte: Kappung in der nächsten Methodenversion; System 61 (Restart-Kurve oder WP-T1f);
+   `CLAUDE.md` eindampfen samt Claim-Tracing-Audit.
+
+**Billigster nächster Schritt, lokal und ohne Cluster, erst nach Freigabe:** Wie hoch rankt der
+Ableitungs-Score die wahre Struktur unter ihren Nachbarn, auf den 30 exakten Systemen? Er
+entscheidet, ob Punkt 4a eine Grundlage hat.
 
 ## 3. Vorbereitung bis dahin (ohne Rechenlast)
 
