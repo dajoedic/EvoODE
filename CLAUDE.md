@@ -33,7 +33,22 @@ in one of the files above.
 All communication with the user happens in **German**.
 Code, comments, docstrings, and commit messages remain in **English**.
 
-**Where a run executes — decided 2026-09-22.** Anything that cannot be shown with certainty to
+**Where a run executes — revised 2026-10-01, for the staged start of the robustness work.**
+
+| Runtime, bounded by construction | Where | Who starts it |
+|---|---|---|
+| **< 1 h** | laptop | Claude, after the stage's gate is open |
+| **< 24 h** | Orion, `activeDeadlineSeconds` ≤ 24 h per pod | user (`oc apply`) |
+| **≥ 24 h** | nowhere without an explicit decision by the user for that run | user |
+
+"Bounded by construction" means a hard limit that ends the run — a process timeout on the laptop,
+`activeDeadlineSeconds` on Orion, plus the per-fit evaluation budget — not an estimate. A run that
+hits its limit is a **result** (it costs more than the stage allowed) and is reported, never
+silently re-run with more time. "For the start": the user revisits the limits once the staged
+robustness work has measured real costs. The paragraph below is the 2026-09-22 rule it replaces;
+its reasoning still holds.
+
+*Superseded rule of 2026-09-22:* anything that cannot be shown with certainty to
 finish in **under 8 hours** runs on the Orion cluster, never on the working laptop. The reason is
 risk asymmetry, not convenience: a wrong estimate on the cluster is an annoyance, the same wrong
 estimate on the laptop blocks the machine for days. A projection built from one average cost
@@ -206,6 +221,54 @@ in the current phase.**
 Written 2026-09-07 and amended since; the dated paragraphs say when. `DIARY.md` holds the
 measurements; this section keeps only what still constrains a decision. A consolidation of this
 file is scheduled for the status review after Phase C ends.
+
+### Backlog Paper 1 — the order of work (set 2026-10-01, user)
+
+**Principle: guided, not overgrown.** One system first, then the cheap ones, then one expensive one,
+and only then the grid. Every stage ends at a **gate**: Claude reports the stage's numbers against
+the questions written down *before* it ran, the user decides whether the next stage starts. No
+stage starts because the previous one "looked fine" by itself. Run locations follow the table in
+"Collaboration" (< 1 h laptop, < 24 h Orion, ≥ 24 h only on explicit decision). Specs:
+`docs/paper1_phaseC_benchmark_plan.md` §9; the stage questions: §9.4a.
+
+Mark items done here with date and commit; never delete them.
+
+**Track R — robustness (C-6), the critical path**
+
+| # | Item | Who | Where | Gate after? |
+|---|---|---|---|---|
+| R-01 | WP-N32: data condition (noise, subsampling) and `clamp_val` in the campaign path | Codex | — | — |
+| R-02 | Accept WP-N32: Julia tests; **stage 0** control, system 1 at (0, 0) through the new path, bit-identical to C-1 | Claude | laptop | hard stop if not bit-identical |
+| R-03 | Post-hoc clean evaluation (reconstruction + generalization against clean targets, predicted trajectories stored) | Codex (WP-N33a) | — | — |
+| R-04 | **Stage 1** — system 1, seed 42, IC 1, (0.01, 0) and (0.05, 0.5) | Claude | laptop, 1 h timeout | **gate S1** |
+| R-05 | **Stage 2** — the cheap ones: systems 17, 18 (dim 1), 24 (dim 2), same two conditions, seed 42, IC 1 | Claude / user | laptop if < 1 h by construction, else Orion ≤ 24 h | **gate S2** |
+| R-06 | **Stage 3** — one expensive: system 41 (dim 2), same two conditions, seed 42, IC 1 | user | Orion ≤ 24 h | **gate S3** |
+| R-07 | Confirm the noise-realization design (3 realizations, r ↔ seed r) | user | — | before any multi-seed run |
+| R-08 | **Grid decision** from measured costs: scope, seeds, and what happens to cells that would need ≥ 24 h | user | — | **gate G** |
+| R-09 | Baselines on the same data, same stages first: SINDy, Weak-SINDy, ODEFormer | Codex / Claude | laptop / Orion | with S2 |
+| R-10 | PySR work package (budget, harness, cost estimate) | Codex | — | before PySR runs |
+
+**Track B — bound diagnostic (C-8), parallel, staged the same way**
+
+| # | Item | Where | Gate after? |
+|---|---|---|---|
+| B-01 | Oracle, system 1, bounds 10 / 1000 / Inf; bound 10 bit-identical to C-5 | laptop | — |
+| B-02 | Oracle, all dim-1/2 exact systems (21), three bounds | laptop if < 1 h, else Orion | **gate B2** |
+| B-03 | Oracle, dim 3/4 (52, 54–59, 61, 63), three bounds — completes the 540 refits | Orion ≤ 24 h per shard | **gate B3**: stability criteria §9.6 |
+| B-04 | Search, systems 1 and 24, bounds 1000 / Inf | laptop | — |
+| B-05 | Search, system 52, then 57, bounds 1000 / Inf | Orion ≤ 24 h | **gate B5** |
+
+**Track P — Phase C to the end, independent of noise**
+
+| # | Item | Who |
+|---|---|---|
+| P-01 | C-3 finishes (3 Lorenz cells); collect | Claude |
+| P-02 | Final Phase C evaluation: strict chain from `SCRIPTS.md`, config switched to the complete registry, C-1/C-2 numbers must come out identical, then the §9.3 aggregation hierarchy for EvoGrow, SINDy and ODEFormer | Claude / Codex |
+| P-03 | WP-T1f finishes (deadline 12.10.; system 58 IC 1 at risk); collect, `--aggregate-only` | Claude |
+| P-04 | Restart curve (Abl-3), staged like Track B | later |
+| P-05 | Claim-tracing audit, then rewrite `paper/` — only on a frozen evidence state | later |
+
+**Small:** decouple `test_phase_a_evaluation_does_not_overwrite_frozen_artifacts` from the local file.
 
 ### Settled — do not re-open
 

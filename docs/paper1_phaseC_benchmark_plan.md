@@ -857,28 +857,42 @@ diagnostic. **This is a lower bound:** under noise the loss cannot fall below th
 `loss_tol = 1e-8` is presumably never reached, and cells run all 30 levels. Capacity planning, not
 evidence.
 
-**Pilot (before the grid), fixed now.** Systems chosen by per-system C-1 cost, nearest rank, per
-dimension — a rule on known cost, not on accuracy: **dim 1: 17 (median), 18 (q90); dim 2: 41
-(median), 44 (q90)**. Seed 42, IC set 1, conditions `(sigma, rho) = (0.01, 0)` and `(0.05, 0.5)` —
-the grid's two ends. 8 cells, realization 1. Plus **4 control cells** at `(0, 0)` through the new
-path: systems 1 and 24, seed 42, both IC sets. Per-cell `activeDeadlineSeconds` = 96 h (the
-longest dim-1/2 C-1 cell is 96.6 h). Go criterion, all of:
+**Superseded the same day (2026-10-01, user): the one-shot 12-cell pilot.** It started four
+systems at once, one of them at ~40 h per cell. Replaced by the staged entry of §9.4a. The systems
+it named were chosen by a cost rule (per-system C-1 cost, nearest rank: dim 1 17 median, 18 q90;
+dim 2 41 median, 44 q90) and are reused there.
 
-1. every cell completes with no `error` and no `failure_reason`;
-2. the four control cells reproduce their C-1 records **bit-identically** on `loss`,
-   `support_terms`, `model_terms` coefficients, `total_loss_evals` and `stage_caps` — the proof that
-   the data path does not touch the method;
-3. every new field is non-null: `sigma`, `rho`, realization, data hash, data-condition fingerprint,
-   and the method fingerprint equals `0c9672de35c75a9d`;
-4. the data hash in each record equals the hash of the exported corrupted trajectory;
-5. the post-hoc clean evaluation runs on all 12 cells and reproduces the C-1 reconstruction R²
-   exactly on the 4 controls.
+### 9.4a — Staged entry into C-6: one system, the cheap ones, one expensive, then the grid
 
-Reported, not gating: executed levels against C-1 (do noisy cells run all 30?), loss evaluations,
-reached stage, changed caps. **Decision point, not hard stop:** the pilot's measured cost ratio
-noisy/C-1 projects the grid cost; if the projection exceeds **1.5 × 21,400 h ≈ 32,000 h**, the user
-decides again before submission. The per-cell deadline of the full grid is set from the pilot and
-written here before submission.
+**Principle (user, 2026-10-01): guided, not overgrown.** Each stage answers questions written here
+**before** it runs. At its gate Claude reports exactly those numbers — every cell, nothing selected —
+and the user decides whether the next stage starts. Run locations: < 1 h laptop, < 24 h Orion,
+≥ 24 h only on explicit decision (`CLAUDE.md`, "Collaboration"); every limit is enforced by
+construction (process timeout, `activeDeadlineSeconds`), and a run that hits its limit is a result.
+All stages use seed 42, IC set 1, realization 1, method identity `0c9672de35c75a9d`, and the two
+grid ends `(sigma, rho) = (0.01, 0)` and `(0.05, 0.5)`.
+
+**Checked at every stage (hard stop if violated):** no `error`, no `failure_reason`; method
+fingerprint `0c9672de35c75a9d`; all new fields non-null (`noise_sigma`, `subsample_rho`,
+`noise_realization`, `data_condition_fingerprint`, `observed_data_sha256`, `n_observed_points`,
+`clamp_val`); the record's data hash equals the exported file's hash.
+
+**Reported at every stage, per cell, beside the C-1 cell of the same (system, IC set, seed):**
+executed levels (does it run all 30?), `total_loss_evals`, `total_parameter_fits`, final stage,
+`stage_caps` per equation, raw and pruned support against the truth (exact systems), clean
+reconstruction R² and clean generalization R² (both aggregations), elapsed time as capacity context.
+
+| Stage | Cells | Where | Questions — fixed before it runs |
+|---|---|---|---|
+| **0** | system 1 at `(0, 0)` through the new path | laptop | Does the new data path leave the method untouched? **Bit-identical** to C-1 on `loss`, `support_terms`, `model_terms` coefficients, `total_loss_evals`, `stage_caps`, and the clean evaluation reproduces C-1's reconstruction R² exactly. Otherwise hard stop. |
+| **1** | system 1 (RC circuit, dim 1, C-1 raw hit 6/6) at both conditions — **2 cells** | laptop, 1 h timeout | Does a noisy cell complete? How many levels instead of C-1's 1? By what factor do loss evals grow? Does the cap change? Is the raw structure still found at sigma 0.01, at 0.05 with rho 0.5? Does the clean generalization survive? |
+| **2** | the cheap ones: systems **17, 18** (dim 1) and **24** (dim 2, cheapest) at both conditions — **6 cells** | laptop if < 1 h by construction, else Orion ≤ 24 h | Is stage 1's cost factor typical or an outlier? Does the first coupled system behave like dim 1? First baseline comparison on identical data (SINDy, Weak-SINDy, ODEFormer are cheap and run on the same cells). |
+| **3** | one expensive: system **41** (dim 2, median per-system cost; its C-1 cell 11.3 h) at both conditions — **2 cells** | Orion, deadline 24 h | Does the cost factor of stages 1–2 carry over to an expensive cell, or does a noisy expensive cell hit 24 h? |
+| **G** | — | — | **Grid decision by the user**, on the costs measured in stages 1–3, not on the planning figure: scope, number of seeds (3 stays the default for final numbers), realization design (§9.4), and what happens to cells that would need ≥ 24 h — the longest dim-1/2 C-1 cell is already 96.6 h. |
+
+The `(0, 0)` controls for system 24 (both IC sets) run inside stage 2 and carry the same
+bit-identity requirement as stage 0. No stage runs a second seed or a second IC set; those belong to
+the grid.
 
 ### 9.5 C-7 — PySR, the GP / symbolic-regression representative
 
@@ -948,11 +962,16 @@ advance, each chosen by a rule on known facts:
 | truth fittable, search fails | **52** | named by the C-5 oracle |
 | dim 3 excluded by `[-10, 10]` | **57** | lowest C-1 cost among 54–59 (192.7 h) — a cost rule, not an accuracy pick |
 
-Seed 42, both IC sets, bounds B and C: **16 cells**. Arm A is C-1 itself (same identity); the four
-`(0,0)` control cells of 9.4 (systems 1 and 24) double as the bit-identity check of the new bound
+Seed 42, both IC sets, bounds B and C: **16 cells**. Arm A is C-1 itself (same identity); the
+`(0,0)` control cells of §9.4a (systems 1 and 24) double as the bit-identity check of the new bound
 parameter at A. Algorithmic budgets identical to Phase C; per-cell `activeDeadlineSeconds` =
-**72 h** (≈ 3 × the longest of these C-1 cells, 22.5 h on system 57). A cell that hits the deadline
-is reported as such, not re-run with more time. Cost bound 16 × 72 h; expected far lower.
+**24 h** (revised 2026-10-01 from 72 h by the run-location rule). The C-1 cells of system 57 took
+17.2 h and 22.5 h, so a looser bound may well hit 24 h — that is then the result for that cell,
+reported as such and not re-run with more time.
+
+**Staged like C-6 (2026-10-01).** Part A: system 1 on the laptop first (bound 10 bit-identical to
+C-5), then the 21 exact dim-1/2 systems, then dim 3/4 on Orion — gate after each. Part B: systems 1
+and 24 on the laptop, then 52, then 57 on Orion. The order is `CLAUDE.md`, Backlog, Track B.
 
 **Implementation note.** The bound is `BFGSOptimizer.clamp_val`; "unbounded" is `clamp_val = Inf`.
 It enters the config fingerprint of bound arms B and C, which therefore carry their own identity;
@@ -964,10 +983,10 @@ fingerprint and JSON serialisation (JSON has no `Inf`), checked by a test.
 | # | Work package | Blocks |
 |---|---|---|
 | R1 | **WP-N32** — data-condition path: seeded noise and subsampling in the campaign runner, export of the corrupted trajectories with hashes, data-condition fingerprint separate from the method fingerprint, records carrying the new fields; `clamp_val` selectable in the runner and in the oracle refit; tests including the bit-identity controls | everything below |
-| R2 | WP-N33 — manifests and k8s Jobs for the noise pilot, the bound diagnostic A and B, and the full C-6 grid; post-hoc clean evaluation (reconstruction and generalization against clean targets, predicted trajectories stored) | pilot, C-8 |
+| R2 | WP-N33a — post-hoc clean evaluation (reconstruction and generalization against clean targets, predicted trajectories stored). WP-N33b — k8s Jobs **only for the stage that is next** (2026-10-01: no grid manifest before gate G) | stages 1–3, C-8 |
 | R3 | baselines on the C-6 data: SINDy, Weak-SINDy, ODEFormer (reference image) | C-6 tables |
 | R4 | WP for PySR (9.5) | C-7 |
 | R5 | analysis: the 9.3 hierarchy for all methods, stage-cap change table, bound diagnostic tables | paper |
 
-Before the C-6 manifest is generated: the user confirms the realization design (9.4). Before any
-submission: the per-cell deadline of the full grid is written into 9.4 from the pilot.
+Before the C-6 grid manifest is generated: gate G (§9.4a), including the realization design (9.4).
+The working order with owners and gates is the backlog in `CLAUDE.md` ("Backlog Paper 1").

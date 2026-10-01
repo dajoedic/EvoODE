@@ -32,20 +32,20 @@ Scope-Erweiterung vom 01.10.: Paper 1 ist ein Fundament-Paper und genau das Phas
 sind `PAPER_1.md` („Scope Extension“) und `docs/paper1_phaseC_benchmark_plan.md` §9; die
 Zusammenfassung steht im DIARY vom 01.10. (oberster Eintrag).
 
-## 3. Nächste Schritte
+## 3. Nächste Schritte — die Reihenfolge steht im Backlog in `CLAUDE.md`
 
-1. **WP-N32 abnehmen:** `codex/STATUS.md` und `codex/reports/REPORT_WP_N32.md` lesen, die
-   Julia-Tests und die Kontrollzellen fahren (4 Zellen bei (0, 0, 10) bitgleich zu C-1, Orakel bei
-   10 bitgleich zu C-5), dann committen.
-2. **Vom Nutzer zu bestätigen**, bevor das C-6-Manifest entsteht: drei Rauschrealisierungen je
-   Bedingung, Realisierung r gekoppelt an Seed r (§9.4).
-3. **WP-N33 schreiben:** Manifeste und k8s-Jobs für den C-6-Piloten, für C-8 Teil A und B und das
-   C-6-Raster; dazu die nachträgliche saubere Auswertung.
-4. Die Arbeitspakete für die Baselines auf den C-6-Daten (SINDy, Weak-SINDy, ODEFormer) und für
-   PySR (§9.5).
-5. Nach dem Ende von C-3: die ganze Kette aus `SCRIPTS.md` strikt in die versionierten Orte rechnen,
-   `analysis/configs/paper1_phaseC_v1.json` umstellen, die endgültige Auswertung mit der neuen
-   Aggregationshierarchie (§9.3). WP-T1f nach dem Ende einsammeln.
+**Gestuft, mit Toren** (§9.4a). Laufort: unter 1 h auf dem Laptop, unter 24 h auf Orion, darüber
+nur auf ausdrückliche Entscheidung.
+
+1. **R-02:** WP-N32 abnehmen. `codex/STATUS.md` und den Report lesen, die Julia-Tests fahren, dann
+   **Stufe 0** (System 1 bei (0, 0) bitgleich zu C-1) und B-01 (Orakel System 1, Grenze 10 bitgleich
+   zu C-5), dann committen.
+2. **R-03:** WP-N33a an Codex: die nachträgliche saubere Auswertung.
+3. **R-04, Stufe 1:** System 1 mit beiden Bedingungen auf dem Laptop, 1 h Timeout. Danach **Tor S1**:
+   alle Zahlen an den Nutzer. Er entscheidet über Stufe 2.
+
+Parallel, unabhängig vom Rauschen: P-01 bis P-03 (C-3 und WP-T1f einsammeln, endgültige
+Phase-C-Auswertung).
 
 ## 4. Offen, klein
 

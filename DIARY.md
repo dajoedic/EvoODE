@@ -6,6 +6,32 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ## 2026-10-01
 
+### Gestufter Einstieg statt Hammer: Laufort-Regel neu, Backlog festgeschrieben
+
+**Der Nutzer, wörtlich genug:** „Stück für Stück. Erstmal an einem System testen, wie gut das läuft.
+Dann die billigen und vielleicht ein teureres. Nicht gleich mit dem Hammer draufhauen. Geleitet,
+nicht Wildwuchs.“ Und: „Wenn das nicht steht, stirbt das Paper.“ Der Pilot aus §9.4 (12 Zellen auf
+einmal, darunter System 44 mit ~40 h je Zelle) war genau der Hammer.
+
+**Neu festgeschrieben:**
+- **Laufort** (`CLAUDE.md`, „Collaboration“; ersetzt die 8-h-Regel vom 22.09.): unter 1 h auf dem
+  Laptop, unter 24 h auf Orion, 24 h und mehr nur auf ausdrückliche Entscheidung. Jede Grenze wird
+  per Konstruktion durchgesetzt. Ein Lauf, der an seine Grenze stößt, gilt als Ergebnis. „Für den
+  Anfang“ — der Nutzer prüft die Grenzen neu, sobald echte Kosten gemessen sind.
+- **Gestufter Einstieg in C-6** (§9.4a). Stufe 0 ist System 1 bei (0, 0), bitgleich zu C-1.
+  Stufe 1 ist System 1 bei (0,01; 0) und (0,05; 0,5). Stufe 2 sind 17, 18 und 24. Stufe 3 ist 41
+  auf Orion mit 24 h Deadline. Danach kommt Tor G, die Entscheidung über das Raster nach gemessenen
+  Kosten. Jede Stufe beantwortet vorab notierte Fragen. Am Tor berichtet Claude alle Zellen, und der
+  Nutzer entscheidet.
+- **C-8 genauso gestuft.** Die Deadline der Suchzellen sinkt von 72 h auf 24 h. Für System 57
+  (C-1: 17,2 h und 22,5 h) kann das knapp werden; das wäre dann der Befund.
+- **Backlog** in `CLAUDE.md` („Backlog Paper 1“) mit den Spuren R (Robustheit), B (Grenze) und
+  P (Phase C zu Ende), jeweils mit Zuständigkeit, Ort und Tor. Erledigtes wird datiert abgehakt und
+  nie gelöscht.
+- **WP-N33** schrumpft: die nachträgliche saubere Auswertung, und k8s-Jobs nur für die jeweils
+  nächste Stufe. Vor Tor G entsteht kein Manifest für das ganze Raster. WP-N32 (läuft bei Codex)
+  bleibt unverändert, es baut nur Werkzeuge.
+
 ### Entschieden: Paper 1 als Fundament-Paper, Phase C bleibt kanonisch mit [−10, 10], Robustheit, PySR und Grenzen-Diagnose sind eingefroren
 
 <!-- 9de62f4 -->
