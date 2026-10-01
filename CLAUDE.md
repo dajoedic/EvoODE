@@ -274,7 +274,7 @@ Mark items done here with date and commit; never delete them.
 |---|---|---|
 | S-01 | ~~Retrospective on stage-1 heartbeats~~ **done 2026-10-01** (`DIARY.md`): a data-estimated noise floor would have stopped at level 1 with the true structure in both cells; the estimator overshoots ×1.77 at sigma 0.05, rho 0 | Claude |
 | S-02 | Behaviour-neutral instrumentation: best structure per level in the heartbeat (precondition for any honest retrospective) — **done 2026-10-01, WP-N35, behaviour-neutral (stage 0 bit-identical)** | Codex |
-| S-03 | Design note: noise-floor stop + residual whiteness for termination, BIC for stage promotion; hypotheses and constants fixed before any run | Claude, presented at the next gate |
+| S-03 | ~~Design note~~ **drafted 2026-10-01: `docs/design_stopping_criterion.md`** — noise-floor stop + whiteness guard + BIC promotion; offline estimator study and full-heartbeat retrospective first. User decides | Claude, presented at the next gate |
 
 **Small:** decouple `test_phase_a_evaluation_does_not_overwrite_frozen_artifacts` from the local
 file; five more tests read files under `outputs/` (`REPORT_WP_N33A3.md`) and should be frozen the
