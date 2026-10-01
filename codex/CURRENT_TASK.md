@@ -1,38 +1,40 @@
-# WP-S04 (Fortsetzung) — Laufzeitfehler beheben
+# WP-S04 (Fortsetzung 2) — falsche Quelle der sauberen Trajektorie
 **Language: Julia**
 
-Der Auftrag und die Abnahme von WP-S04 gelten unverändert (Fragen F1–F4, Kontrollen, Report
-`codex/reports/REPORT_WP_S04.md`). Die Dateien liegen uncommittet im Working Tree. **Weiterarbeiten,
-nicht neu anfangen.**
+Auftrag und Abnahme von WP-S04 gelten unverändert. Die Dateien liegen uncommittet im Working Tree.
+**Weiterarbeiten, nicht neu anfangen.**
 
-## Befund (Claude, erster Lauf, 2026-10-02)
+## Befund (Claude, voller Lauf, 2026-10-02)
+
+Die eingebaute Kontrolle gegen C-1 hat angeschlagen, und zwar richtig:
 
 ```
-julia --project=. --startup-file=no studies/lookahead/wp_s04_stage_cap_noise_thinning.jl --limit 2
-ERROR: LoadError: UndefVarError: `_cap_estimate_derivatives` not defined in `Main`
-in expression starting at studies/lookahead/wp_s04_stage_cap_noise_thinning.jl:447 (Aufruf aus Zeile 448)
+ERROR: Clean cap mismatch against C-1 record for system 5, IC1: computed=[4], reference=[2]
 ```
 
-Die internen Funktionen der Kappe (`_cap_estimate_derivatives`, `_cap_splits`, `_cap_fit_eval`,
-`_cap_richardson_error_estimate`, `_cap_cumulative_stage_idxs` usw.) sind nicht exportiert. Sie müssen
-als `EvoODE.<name>` aufgerufen werden, so wie andere Skripte unter `studies/lookahead/` das tun (dort
-nachsehen und dieselbe Form verwenden).
-
-**Hinweis zum Environment:** Seit WP-N36 (`dc17a46`) gibt es `DifferentialEquations` nicht mehr, sondern
-`OrdinaryDiffEq`. Prüf, dass das Skript kein `using DifferentialEquations` enthält.
+Ursache: `diagnostic_rows()` in `studies/lookahead/wp_s04_stage_cap_noise_thinning.jl` baut die saubere
+Trajektorie mit `_phase_c_solution_trajectory(dataset_rows[system_id], ic_set)`. Das ist die **mit
+ODEBench ausgelieferte Lösung**. Die Kampagne rechnet mit **`build_trajectory(system, ic_set)`**
+(`studies/regression/run_regression.jl`), integriert selbst mit `Tsit5`, `abstol = reltol = 1e-9`,
+auf `system[:t_grid]`. Das ist das Phase-B/C-Protokoll (`CLAUDE.md`, „Phase B sampling protocol“).
+Gegenprobe von Claude auf dem Kampagnenpfad: System 5 IC 1 ergibt `[2]`, IC 2 `[nothing]`. Das
+stimmt mit C-1 überein.
 
 ## Umsetzung
 
-Geh das **ganze Skript** auf diese Fehlerklasse durch: jeder Aufruf eines nicht exportierten Namens aus
-`EvoODE`, jedes fehlende `include`, jeder Zugriff auf Felder, die fehlen können (siehe
-`codex/CODEX_PROTOCOL.md`, „Julia kann in dieser Umgebung nicht ausgeführt werden“). Korrigieren und im
-Report auflisten.
+1. Die saubere Trajektorie kommt aus `build_trajectory(phase_c_system(system_id), ic_set)`, genau
+   derselben Funktion, die der Kampagnenpfad und `apply_phase_c_data_condition` nutzen.
+   `_phase_c_solution_trajectory` wird im Skript nicht mehr verwendet.
+2. Prüf, ob das Skript an weiteren Stellen die ausgelieferte Lösung nutzt: wahre rechte Seite, F4,
+   Zeitraster. Alles muss auf dem selbst integrierten Raster beruhen.
+3. Die Kontrolle gegen C-1 bleibt unverändert hart.
 
 ## Verboten
 
-`src/` ändern, Policy-Parameter ändern, Git, `docs/`, `codex/CURRENT_TASK.md` bearbeiten.
+`src/` ändern, Policy ändern, die Kontrolle abschwächen, Git, `docs/`, `codex/CURRENT_TASK.md`
+bearbeiten.
 
 ## Abnahme
 
-Report ergänzt um die Liste der korrigierten Stellen. `STATUS.md` nach Protokoll (`blocked`,
-*Umgebung, nicht Sache*). Claude fährt danach `--limit 2` und den vollen Lauf.
+Report ergänzt. `STATUS.md` nach Protokoll (`blocked`, *Umgebung, nicht Sache*). Claude fährt den
+vollen Lauf.
