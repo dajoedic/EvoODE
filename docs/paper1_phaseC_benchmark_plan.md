@@ -896,6 +896,10 @@ The `(0, 0)` controls for system 24 (both IC sets) run inside stage 2 and carry 
 bit-identity requirement as stage 0. No stage runs a second seed or a second IC set; those belong to
 the grid.
 
+### 9.4b — Uncapped arm under noise (decided 2026-10-02, user)
+
+WP-S04 showed that the frozen stage cap truncates true terms in 317 of 1,860 noisy equation rows (17 %), already at sigma 0.01 (`DIARY.md` 2026-10-02). A structure miss under noise can therefore be the cap's or the search's. To separate them, every C-6 stage runs the **uncapped variant** (`evogrow_v2_2_stage_local`, the C-2 arm, otherwise identical) on the **same** exported data, cell for cell beside the capped one. It is a comparison arm, not a second method version, and it is staged like the rest: systems 1 and 17 on the laptop first, 18 and 24 with the stage-2 Orion job, 41 with stage 3. Whether the full grid carries it is part of gate G.
+
 ### 9.5 C-7 — PySR, the GP / symbolic-regression representative
 
 **Baselines for Paper 1, final: SINDy + ODEFormer + PySR against EvoGrow** — sparse regression,

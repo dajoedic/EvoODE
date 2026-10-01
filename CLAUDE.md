@@ -246,6 +246,7 @@ Mark items done here with date and commit; never delete them.
 | R-03 | ~~Post-hoc clean evaluation (reconstruction + generalization against clean targets, predicted trajectories stored)~~ **done 2026-10-01, `2978497`** — stage-0 controls exact | Codex (WP-N33a) | — | — |
 | R-04 | ~~**Stage 1** — system 1, seed 42, IC 1, (0.01, 0) and (0.05, 0.5)~~ **ran 2026-10-01**, numbers in `DIARY.md`; all four hard checks pass after WP-N33a2 (`49b0613`); **gate S1 opened by the user 2026-10-01** | Claude | laptop, 1 h timeout | **gate S1** |
 | R-05 | **Stage 2** — the cheap ones: systems 17, 18 (dim 1), 24 (dim 2), same two conditions, seed 42, IC 1. **2026-10-01: 17 done (laptop), 24 hit the 55-min limit twice → Orion; 18 → Orion; system-24 controls bit-identical** | Claude / user | laptop if < 1 h by construction, else Orion ≤ 24 h | **gate S2** |
+| R-05b | **Uncapped arm under noise** (plan §9.4b, user 2026-10-02): same cells, `evogrow_v2_2_stage_local`, beside every capped stage cell — 1 and 17 on the laptop (running 2026-10-02), 18 and 24 with the stage-2 Orion job | Claude / user | laptop / Orion | with gate S2 |
 | R-06 | **Stage 3** — one expensive: system 41 (dim 2), same two conditions, seed 42, IC 1 | user | Orion ≤ 24 h | **gate S3** |
 | R-07 | Confirm the noise-realization design (3 realizations, r ↔ seed r) | user | — | before any multi-seed run |
 | R-08 | **Grid decision** from measured costs: scope, seeds, and what happens to cells that would need ≥ 24 h | user | — | **gate G** |
