@@ -8,6 +8,8 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ### Gestufter Einstieg statt Hammer: Laufort-Regel neu, Backlog festgeschrieben
 
+<!-- 1c53bc4 -->
+
 **Der Nutzer, wörtlich genug:** „Stück für Stück. Erstmal an einem System testen, wie gut das läuft.
 Dann die billigen und vielleicht ein teureres. Nicht gleich mit dem Hammer draufhauen. Geleitet,
 nicht Wildwuchs.“ Und: „Wenn das nicht steht, stirbt das Paper.“ Der Pilot aus §9.4 (12 Zellen auf
