@@ -278,6 +278,7 @@ Mark items done here with date and commit; never delete them.
 |---|---|---|
 | S-01 | ~~Retrospective on stage-1 heartbeats~~ **done 2026-10-01** (`DIARY.md`): a data-estimated noise floor would have stopped at level 1 with the true structure in both cells; the estimator overshoots ×1.77 at sigma 0.05, rho 0 | Claude |
 | S-02 | Behaviour-neutral instrumentation: best structure per level in the heartbeat (precondition for any honest retrospective) — **done 2026-10-01, WP-N35, behaviour-neutral (stage 0 bit-identical)** | Codex |
+| S-04 | **Diagnosis: the stage cap under noise** (offline, search-free): safety (truncation), cap shift, residual mechanism, and whether a filter-derived derivative-noise floor matches the measured one. User approved 2026-10-01; WP-S04 | Codex → Claude runs it on the laptop |
 | S-03 | ~~Design note~~ **drafted 2026-10-01: `docs/design_stopping_criterion.md`** — noise-floor stop + whiteness guard + BIC promotion; offline estimator study and full-heartbeat retrospective first. User decides | Claude, presented at the next gate |
 
 **Small:** decouple `test_phase_a_evaluation_does_not_overwrite_frozen_artifacts` from the local
