@@ -1,35 +1,44 @@
-# WP-N33c — Stufe-2-Orion-Job um System 24 erweitern
-**Language: YAML** (+ `SCRIPTS.md`)
+# WP-N33c (Fortsetzung) — Stufe-2-Orion-Job: Bootstrap ohne Python
+**Language: YAML + Julia** (+ `SCRIPTS.md`)
 
-## Anlass
+Die erste Sitzung zu WP-N33c brach am Nutzungslimit ab. Im Working Tree liegen schon
+`k8s/phase_c_robustness_stage2_orion_job.yaml`, die Markierung im System-18-Manifest, eine
+Änderung an `SCRIPTS.md` und `codex/reports/REPORT_WP_N33C.md`. **Weiterarbeiten, nicht neu
+anfangen.** Der ursprüngliche Auftrag (System 18 und 24, je `(0.01, 0)` und `(0.05, 0.5)`, Seed 42,
+IC 1, Realisierung 1, `clamp_val = 10`, 4 Zellen, Deadline 86400, Smoke auf System 1) gilt
+unverändert.
 
-Stufe 2 lokal (`DIARY.md` 2026-10-01): System 24 hat bei `(0.01, 0)` und `(0.05, 0.5)` die
-55-Minuten-Grenze des Laptops gerissen (Exit 124). Nach der Laufort-Regel gehört es deshalb auf
-Orion, mit höchstens 24 h. System 18 war ohnehin für Orion vorgesehen
-(`k8s/phase_c_robustness_stage2_system18_job.yaml`, WP-N33b).
+## Befund (Claude, Abnahme)
+
+Der Bootstrap-Job ruft `python - <<'PY'` auf, um die vier Zeilen auszuwählen. Das Kampagnen-Image
+(`containers/Dockerfile`, Basis `julia:1.12.6-bookworm`) installiert **kein Python**. Der Bootstrap
+würde auf Orion sofort scheitern. Dasselbe gilt für das ersetzte
+`k8s/phase_c_robustness_stage2_system18_job.yaml`.
 
 ## Umsetzung
 
-1. Ein Manifest `k8s/phase_c_robustness_stage2_orion_job.yaml` ersetzt das System-18-Manifest. Das
-   alte bleibt liegen, wird aber im Kopfkommentar als ersetzt markiert. Inhalt:
-   - Bootstrap und Smoke wie bisher. Smoke ist System 1 bei `(0.01, 0)`, bitgleich zu
-     `outputs/stage1/s0.01_r0/tasks/cell_000001.jsonl`.
-   - Die Stufenzellen: **System 18 und System 24**, je `(0.01, 0)` und `(0.05, 0.5)`, Seed 42,
-     IC-Set 1, Realisierung 1, `clamp_val = 10`. Das sind **4 Zellen**, `completions: 4`,
-     `parallelism: 4`, `activeDeadlineSeconds: 86400`.
-   - Image-Tag `eb630b5` oder später im Kopfkommentar. Dieses Image trägt die Heartbeats mit der
-     Struktur je Level (WP-N35).
-2. `SCRIPTS.md`: den Abschnitt für Stufe 2 auf das neue Manifest umstellen, Befehle als Vorlage,
-   nicht als „jetzt ausführen“. Dazu die lokalen Vergleichsdaten: Exportindex
-   `outputs/stage2/data_export/index.csv` (enthält 17, 18, 24). Der Tor-Bericht nach dem Einsammeln
-   läuft wie bei den lokalen Zellen.
+Die Zeilenauswahl darf nur mit dem arbeiten, was das Image hat: Julia und `sh`. Zwei zulässige
+Wege, wähle einen und begründe ihn im Report:
+- (a) Die Auswahl erledigt Julia, zum Beispiel ein kleines Skript unter `studies/regression/`, das
+  aus einem Phase-C-Manifest die Zeilen zu gegebenen `system_id`, Seed, IC-Set und Variante
+  auswählt, neu nummeriert und schreibt. Es nutzt den vorhandenen CSV-Weg des Projekts und braucht
+  keine neue Abhängigkeit.
+- (b) Kein Bootstrap auf dem Cluster. Das 4-Zeilen-Manifest und das Smoke-Manifest entstehen lokal
+  und werden per `oc cp` aufs NFS gelegt. Die Befehle stehen in `SCRIPTS.md` als Vorlage.
+
+Danach greppst du alle Manifeste unter `k8s/` nach `python`. Jedes Manifest, das das
+Kampagnen-Image nutzt und Python aufruft, steht im Report. Repariert wird nur das Stufe-2-Manifest.
 
 ## Verboten
 
-Jobs starten, `oc` ausführen, Code ändern, Git, `docs/`, `codex/CURRENT_TASK.md` bearbeiten.
+Jobs starten, `oc` ausführen, Methoden- oder Runner-Code ändern, Git, `docs/`,
+`codex/CURRENT_TASK.md` bearbeiten.
 
 ## Abnahme
 
-YAML gültig (`yaml.safe_load_all` in deiner Sitzung), jede Deadline ≤ 86400, die vier Zellen im
-Report aufgelistet mit Manifest-Index. Report `codex/reports/REPORT_WP_N33C.md`, `STATUS.md` nach
-Protokoll.
+1. YAML gültig (`yaml.safe_load_all`), jede Deadline ≤ 86400. Kein `python`-Aufruf in einem Manifest,
+   das das Kampagnen-Image nutzt.
+2. Bei Weg (a): ein Julia-Test für die Zeilenauswahl. Das Kommando steht im Report, Claude führt es
+   aus. Bei Weg (b): Die Manifeste liegen erzeugt unter `outputs/stage2_orion/`, und ihre Zeilen sind
+   im Report aufgelistet.
+3. Report `codex/reports/REPORT_WP_N33C.md` vervollständigen, `STATUS.md` nach Protokoll.
