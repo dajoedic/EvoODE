@@ -8,6 +8,8 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ### Entschieden: Paper 1 als Fundament-Paper, Phase C bleibt kanonisch mit [−10, 10], Robustheit, PySR und Grenzen-Diagnose sind eingefroren
 
+<!-- 9de62f4 -->
+
 **Ablauf.** Der ehrliche Statusbericht (`docs/status_2026-10-01.md`) ging in eine externe
 Diskussion. Zurück kam `docs/EVOGROW_PAPER1_DECISIONS_2026-10-01.md`. Claude stellte acht
 Rückfragen, und der Nutzer hat entschieden und freigegeben. Die verbindliche Fassung steht in
