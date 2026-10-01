@@ -11,6 +11,8 @@ what to work on next. It is deliberately kept short. Detail lives in dedicated d
 | `PAPER_1.md` | authoritative Paper 1 execution plan; takes precedence over this file if the two drift |
 | `docs/paper1_phaseC_benchmark_plan.md` | **the Phase C claim → experiment → metric → output matrix, freeze list and blocking prerequisites** |
 | `docs/status_2026-09-09.md` | frozen status snapshot, written before the scope decision |
+| `docs/status_2026-10-01.md` | frozen status snapshot after C-1/C-2 and the oracle, written for the external discussion |
+| `docs/EVOGROW_PAPER1_DECISIONS_2026-10-01.md` | dated decision source of the 2026-10-01 scope extension; not maintained, superseded on the bound question by `PAPER_1.md` |
 | `docs/paper1_study_protocol.md` | frozen Phase A protocol — claims, hypotheses, evidence rules (historical) |
 | `docs/paper1_phaseA_reproducibility.md` | frozen Phase A configuration — systems, hyperparameters, seeds, metrics (historical) |
 | `docs/paper1_odebench_protocol_alignment.md` | Phase B sampling protocol and the comparability audit |
@@ -158,7 +160,7 @@ ground truth, `STATUS.md` only the fast signal: a poll checks both.
 | 1 — stable core | DONE (2026-04-20) |
 | 2 — EvoGrow variants | **CLOSED 2026-08-03** |
 | 3 — benchmarking | infrastructure done; Phase B protocol decided and implemented. Planned next axes: noise, sampling density, coupling strength, dimensionality |
-| 4 — Paper 1 | **Scope decided 2026-09-09: method paper.** Phase B campaign complete and **demoted to diagnostics** (756/756, 5,248 core hours, analysis done WP-A5–A9). **Phase C — canonical evaluation** (`docs/paper1_phaseC_benchmark_plan.md`): **C-1/C-2 complete 2026-09-29 (756/756) and evaluated as interim** (`DIARY.md` 2026-09-29); C-3 175/180 still running on Orion, end ~2026-10-01 to 10-04; C-4 SINDy and the ODEFormer reference grid done; C-5 generalization **done** (pulled forward, clamp-independent); C-5 oracle **done and collected 2026-10-01** (180/180, clamped; `DIARY.md` 2026-10-01); restart curve not started |
+| 4 — Paper 1 | **Scope decided 2026-09-09: method paper.** Phase B campaign complete and **demoted to diagnostics** (756/756, 5,248 core hours, analysis done WP-A5–A9). **Phase C — canonical evaluation** (`docs/paper1_phaseC_benchmark_plan.md`): **C-1/C-2 complete 2026-09-29 (756/756) and evaluated as interim** (`DIARY.md` 2026-09-29); C-3 175/180 still running on Orion, end ~2026-10-01 to 10-04; C-4 SINDy and the ODEFormer reference grid done; C-5 generalization **done** (pulled forward, clamp-independent); C-5 oracle **done and collected 2026-10-01** (180/180, clamped; `DIARY.md` 2026-10-01); restart curve not started. **Scope extended 2026-10-01** (`PAPER_1.md`, "Scope Extension"): foundation paper, Paper 1 = Phase C EvoGrow **with** `[-10, 10]`; new arms frozen in plan §9 — **C-6** robustness grid (noise × irregular subsampling, dim 1/2, 3 seeds, ≥ 21,400 h), **C-7** PySR, **C-8** bound diagnostic; WP-N32 (data-condition path) next |
 | 5 — advanced methods | not started |
 
 ### Phase 2 outcome
@@ -859,8 +861,12 @@ the coupled search path 1e-6 is the cheaper, behaviour-equal tolerance; the Syst
   criteria were fixed on 2026-09-29 before C-1 was looked at** (`150b0f4`): only facts independent
   of C-1 results. **Decided by the user 2026-09-29:** oracle arm clamped (the C-1 optimizer),
   all 30 exact systems run, 54–59 pre-labelled unreachable and reported apart from 52/61, never
-  averaged. Manifest `k8s/phase_c_c5_oracle_job.yaml`, image `1db1193`. **For the next method
-  version the clamp is removed or justified** — normalisation helps only partly (it breaks
+  averaged. Manifest `k8s/phase_c_c5_oracle_job.yaml`, image `1db1193`. **Decided 2026-10-01:
+  Paper 1 keeps the clamp** (removing it would split C-1/C-2 across two method versions); the label
+  pair is *basis-representable* (30) vs *feasible under the bound* (24; 54–59 not, 61 exactly at
+  10.0). The C-8 diagnostic (plan §9.6: oracle 540 refits + 16 search cells, bounds 10 / 1000 /
+  unbounded, frozen stability criteria) decides only the next version's starting point. **For the
+  next method version the clamp is removed or justified** — normalisation helps only partly (it breaks
   `sin(u)` → `sin(s·u)`, and Lorenz' 28 is a ratio of like-sized states); a data-scaled bound or
   no clamp with the existing guards is the likelier route.
   **The clamp is not the whole dim-3 story:** in C-1 the reachable systems 52 and 61 also score 0 of
@@ -921,10 +927,12 @@ the coupled search path 1e-6 is the cheaper, behaviour-equal tolerance; the Syst
   (`experiments/run_experiment.jl:385`), so they are `null` for 43 of 63 systems. The WP-B1 waste
   measure does not need the truth and is fully recoverable from the heartbeat `best_loss` stream —
   rebuild it in the analysis pipeline, never in the campaign path
-- no train/validation split in discovery; no noise injection utilities
-- no PySR baseline. SINDy (C-4, on the exported campaign trajectories) and ODEFormer (reference
-  grid on Orion) exist since September 2026; PySR and ProGED are placed only from the literature
-  (`docs/WP-N4.md`)
+- no train/validation split in discovery; no noise injection utilities yet — **WP-N32 builds them**
+  (seeded multiplicative noise and random subsampling, ODEFormer protocol, plan §9.4)
+- no PySR baseline yet — **decided 2026-10-01 as the GP representative (C-7, plan §9.5)**, its
+  budget and harness are a work package of their own. SINDy (C-4) and ODEFormer (reference grid)
+  exist since September 2026; ProGED is placed only from the literature (`docs/WP-N4.md`) and
+  added only on concrete need
 - expression trees are not implemented
 - `utils/checks.jl` is effectively a placeholder; `simulate()` still returns NaNs on failed solves
 - `total_diverged_solves` and `total_solver_unstable_solves` are identical in all 756 campaign

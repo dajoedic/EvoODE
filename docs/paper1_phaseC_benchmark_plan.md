@@ -1,5 +1,9 @@
 # Phase C — Canonical EvoGrow Evaluation: Benchmark Plan
 
+**Extension (2026-10-01):** section 9 adds the robustness grid C-6, PySR C-7 and the bound
+diagnostic C-8, frozen before any of them runs. C-1/C-2 complete, C-3 177/180, C-5 oracle collected.
+Paper 1 stays exactly the Phase C EvoGrow, bound `[-10, 10]` included (9.1).
+
 **Status (2026-09-29): frozen and running.** The campaign started on Orion on 2026-09-14 under
 `git 221a3a7` / `0c9672de35c75a9d` / `ffb0266c7913352c`. **C-1/C-2 complete** (756/756, 0 errors,
 evaluated as interim); **C-3** 175/180, running; **C-4** SINDy done, pairing corrected by WP-N30;
@@ -701,3 +705,269 @@ configuration where it can still be revised on C-1's own duplicate-rate distribu
 **The ordering remains a known defect of the plan and is declared rather than hidden:** if the
 duplicate rate on dim 2 and 3 turns out high, the honest reporting is that the explicit retry adds
 little on top of a large implicit multistart, and that statement is made from Phase C's own data.
+
+---
+
+## 9. Extension decided 2026-10-01: robustness grid, PySR, bound diagnostic
+
+**Status: frozen 2026-10-01, before any noisy or bound-varied run exists.** Decided by the user
+after an external discussion; the dated source is `docs/EVOGROW_PAPER1_DECISIONS_2026-10-01.md`
+(its §11 and §14.1 are superseded on the bound question — see 9.1). The paper scope lives in
+`PAPER_1.md`, "Scope Extension (2026-10-01)". Everything below is fixed **before** the first run and
+is not adjusted on observed results. A necessary change produces a new, declared identifier.
+
+### 9.1 What does not change
+
+**Paper 1 is exactly the Phase C EvoGrow, including the parameter bound `[-10, 10]`.** Removing the
+bound now would require re-running C-1 **and** the capped/uncapped mirror C-2, or the paper's
+central results would come from two different method versions; that would destroy the value of the
+frozen Phase C design. The bound was found after C-1/C-2 had run, and it is reported as a declared
+limitation, not repaired by a version switch.
+
+The method configuration of every new EvoGrow run in this section is the C-1 configuration,
+identity `0c9672de35c75a9d` — basis, cap, pruning, `pretuning = false`, retry-on-failure k = 3,
+30 levels, `loss_tol`, budgets. **No noise-specific stopping rule**, no adaptive bound, no other
+method change. Only the bound diagnostic (9.6) varies a method parameter, and it is outside the
+paper's canonical version by construction.
+
+**Wording correction, binding for the paper.** "EvoGrow needs no derivatives" is too strong. The
+precise statement: *the trajectory-based parameter fit and the structure evaluation use no
+numerically estimated derivatives; the stage-cap heuristic does* (`src/structure/stage_cap.jl`,
+look-ahead on estimated derivatives). Under noise and subsampling the cap is therefore exposed to
+the same estimation problem as SINDy, and 9.4 measures how much.
+
+### 9.2 Terminology: representable versus feasible
+
+Two labels, never merged:
+
+- **basis-representable** (exact): the true right-hand side is a linear combination of basis terms.
+  30 of 63 systems.
+- **feasible under bound B**: an exact system all of whose true coefficients lie in `[-B, B]`.
+  Defined **only** for the 30 exact systems. Classified from the true coefficients
+  (`true_coefficients_for_phasec_terms`, the extraction WP-T1f uses), never from fit behaviour.
+
+Computed 2026-10-01 over all 30 exact systems:
+
+| bound | feasible | infeasible |
+|---|---|---|
+| `[-10, 10]` | **24** | 54 (max abs 12.0), 55 (99.96), 56 (28.0), 57 (28.5), 58 (28.5), 59 (28.5) |
+| `[-1000, 1000]` | 30 | — |
+| unbounded | 30 | — |
+
+Two systems sit near the edge and are classified by the numbers, not by their oracle behaviour:
+**61 at exactly 10.0** (feasible: the clamp is inclusive) and **5 at 9.81** (feasible). The six
+infeasible systems are **not removed** from the benchmark; every dim-3 statement reports feasible
+(52, 61) and infeasible (54–59) apart.
+
+### 9.3 Metrics and aggregation (all methods, all arms of this section, and the final Phase C evaluation)
+
+**Structure — on the 30 exact systems only** (Design Principle 8; recall against terms the basis
+cannot generate would be unfair):
+
+1. raw exact recovery — raw support equals true support, no threshold;
+2. pruned exact recovery — frozen rule `tau = max(1e-6, 1e-3 * max_i |c_i|)`, unchanged by noise
+   level, method or result;
+3. structural F1 — term precision and recall on the **pruned** support, same threshold.
+
+For external methods (ODEFormer, PySR) term presence requires a canonical expansion into the same
+term set first; that mapping is part of each baseline's work package and is declared.
+
+**Dynamics — all systems:** generalization R² (primary), reconstruction R² (secondary, literature
+comparison). Both as the rate R² > 0.9 **and** as continuous values. Both aggregations of §6b
+(arithmetic per-dimension mean and variance-weighted), the variance-weighted one labelled as the
+literature comparison. Vector-field error is optional and diagnostic.
+
+**Aggregation hierarchy, fixed:**
+
+```text
+equation -> run -> seeds (or noise realizations) within a direction -> both directions -> system -> benchmark
+```
+
+Every system carries equal weight; a four-dimensional system does not count four times. The final
+Phase C evaluation is **recomputed** under this hierarchy for EvoGrow and every baseline
+identically, and the earlier figures in units of (system, direction) — 82.3 % / 37.3 % and the
+WP-N30 / WP-N31 tables — are **not** carried in parallel. Exact-recovery rates aggregate the same
+way, as the share of runs per system before averaging over systems.
+
+**Stored per run, beyond today's record:** found terms, all coefficients, raw and pruned support,
+true support, predicted reconstruction and generalization trajectories (stored although they are
+reconstructable), IC, seed, noise level, subsampling ratio, noise realization, data hash, method
+configuration. Primary metrics are fixed here; further diagnostics may be added later.
+
+### 9.4 C-6 — the robustness grid (noise and irregular subsampling)
+
+**Protocol: the published ODEFormer / ODEBench grid.**
+
+- **Noise:** multiplicative Gaussian, `x_obs = x + sigma * x * N(0,1)`, i.i.d. per time point and
+  state component, `sigma ∈ {0, 0.01, 0.02, 0.03, 0.04, 0.05}`. ODEFormer's `_create_noise`
+  (`envs/environment.py`) draws from the unseeded global `np.random`; **we seed** and declare the
+  deviation.
+- **Subsampling:** random removal of a fraction `rho ∈ {0, 0.5}` of the 512 points, without
+  replacement, any index eligible (ODEFormer's `_subsample_trajectory`). Applied **after** the
+  noise, as in ODEFormer's evaluation loop (`evaluate.py:252-272`). Called *irregular* or *random
+  subsampling* / *missing observations* in the paper, **never** a halved sampling rate.
+- **Declared superset:** ODEFormer's `scripts/run_baselines.sh` also sweeps `sigma = 0.001` and
+  `rho = 0.25`. The main comparison uses the published 6 × 2 subset.
+- **Evaluation targets are clean.** In ODEFormer's code the originals are deep-copied **before**
+  corruption, reconstruction is scored against the clean, full trajectory and the test trajectory
+  is integrated from the true equation and never corrupted (`evaluate.py:252-300`). Same here:
+  reconstruction integrates the identified model from the **clean** training IC on the **full clean
+  grid**; generalization integrates from the **clean second ODEBench IC** on its full clean grid.
+  **Declared deviation:** ODEFormer's `y0_generalization` draws a random `randn` IC; we keep the
+  second ODEBench IC, as in Claim C.
+- **What the method sees:** only the corrupted `(t, x)`. EvoGrow's simulation takes the first
+  *observed* point as its initial condition and integrates on the observed time points
+  (`src/simulate/solve.jl:27-39`), so under noise it starts from a noisy IC and under subsampling
+  possibly from `t > 0`. That is the method as it is; no access to the clean IC, no IC fitting.
+  The in-record `r2` is therefore measured against the **corrupted** data and is **never** a paper
+  metric for C-6; the paper metrics come from the post-hoc clean evaluation above.
+- **One data set for all methods.** Corrupted trajectories are generated once per (system, IC set,
+  sigma, rho, realization), exported with a hash, and consumed identically by EvoGrow, SINDy,
+  Weak-SINDy, ODEFormer and PySR — the C-4 rule, made checkable by recording the data hash in every
+  record. Each method treats an irregular grid with **its own documented default**; we do not
+  interpolate for any method. A method that cannot run on a cell records a failure; it is not
+  repaired.
+- **Noise realizations — Claude's proposal, to be confirmed by the user before the C-6 manifest is
+  generated:** three realizations per (system, IC set, sigma, rho), realization r paired with
+  EvoGrow seed index r. Deterministic baselines then also run three times (cheap), so every method
+  sees noise variability, and EvoGrow's seed spread is not confounded with a single draw. The noise
+  stream is seeded from (system, IC set, sigma, rho, r) only — independent of the method seed.
+
+**Scope.**
+
+| | EvoGrow | SINDy, Weak-SINDy, ODEFormer | PySR |
+|---|---|---|---|
+| systems | **dim 1 and 2 only** (51 systems) | all 63 | per C-7 |
+| conditions | the 11 new ones; `(0, 0)` **is C-1** and is reused | all 12 | all 12 |
+| seeds / realizations | **3** | 3 realizations | per C-7 |
+| cells per condition | 51 × 3 × 2 = **306** | | |
+
+**All direct robustness comparison tables are restricted to the same dim-1/2 systems, fixed now.**
+Baselines may report dim 3/4 separately, never beside an EvoGrow number. A 1-seed EvoGrow run is a
+pilot, never the final robustness campaign.
+
+**Stage caps under noise.** No noisy capped/uncapped mirror; Claim B stays the clean Phase C
+ablation. Instead, from the existing `stage_caps` field, per equation against the clean C-1 cell of
+the same (system, IC set, seed): share of changed caps, direction (tighter / looser / to `nothing`),
+distribution over dimension, sigma and rho.
+
+**Cost, accepted deliberately.** C-1 measured 1,946 core hours over the 306 dim-1/2 cells.
+11 conditions × 1,946 h ≈ **21,400 core hours ≈ 32,000 €** at 1.50 €/h, plus PySR, plus the bound
+diagnostic. **This is a lower bound:** under noise the loss cannot fall below the noise variance,
+`loss_tol = 1e-8` is presumably never reached, and cells run all 30 levels. Capacity planning, not
+evidence.
+
+**Pilot (before the grid), fixed now.** Systems chosen by per-system C-1 cost, nearest rank, per
+dimension — a rule on known cost, not on accuracy: **dim 1: 17 (median), 18 (q90); dim 2: 41
+(median), 44 (q90)**. Seed 42, IC set 1, conditions `(sigma, rho) = (0.01, 0)` and `(0.05, 0.5)` —
+the grid's two ends. 8 cells, realization 1. Plus **4 control cells** at `(0, 0)` through the new
+path: systems 1 and 24, seed 42, both IC sets. Per-cell `activeDeadlineSeconds` = 96 h (the
+longest dim-1/2 C-1 cell is 96.6 h). Go criterion, all of:
+
+1. every cell completes with no `error` and no `failure_reason`;
+2. the four control cells reproduce their C-1 records **bit-identically** on `loss`,
+   `support_terms`, `model_terms` coefficients, `total_loss_evals` and `stage_caps` — the proof that
+   the data path does not touch the method;
+3. every new field is non-null: `sigma`, `rho`, realization, data hash, data-condition fingerprint,
+   and the method fingerprint equals `0c9672de35c75a9d`;
+4. the data hash in each record equals the hash of the exported corrupted trajectory;
+5. the post-hoc clean evaluation runs on all 12 cells and reproduces the C-1 reconstruction R²
+   exactly on the 4 controls.
+
+Reported, not gating: executed levels against C-1 (do noisy cells run all 30?), loss evaluations,
+reached stage, changed caps. **Decision point, not hard stop:** the pilot's measured cost ratio
+noisy/C-1 projects the grid cost; if the projection exceeds **1.5 × 21,400 h ≈ 32,000 h**, the user
+decides again before submission. The per-cell deadline of the full grid is set from the pilot and
+written here before submission.
+
+### 9.5 C-7 — PySR, the GP / symbolic-regression representative
+
+**Baselines for Paper 1, final: SINDy + ODEFormer + PySR against EvoGrow** — sparse regression,
+pretrained transformer, genetic programming. **Weak-SINDy** is a noise-specific SINDy reference in
+C-6, not a fourth general baseline. **ProGED** is added only if a concrete argumentative need arises.
+No second GP method to fill a category twice.
+
+PySR gets its own small work package **before** it runs, which fixes: version and environment;
+operator set (at least able to express the canonical basis); the search budget per trajectory
+(iterations / populations / time — a fairness decision of the same kind as SINDy's ten
+configurations, declared and never chosen on results); how PySR is set up for ODE discovery,
+following ODEFormer's baseline harness; canonical expansion into basis terms for the structure
+metrics; and a cost estimate in core hours before submission. Same data files as C-6, all 12
+conditions.
+
+### 9.6 C-8 — the bound diagnostic (sensitivity, **not** a selection procedure)
+
+**Question:** how strongly does the known design decision `[-10, 10]` affect the results, and can
+the bound be removed without numerical instability? **It decides nothing about Paper 1.** Its
+go/no-go only decides whether unbounded or `[-1000, 1000]` is the starting point of the **next**
+EvoGrow version. If unbounded changes the picture fundamentally, a restart is a deliberate decision
+by the user, never an automatic consequence.
+
+Three bounds, otherwise identical: **A** `[-10, 10]`, **B** `[-1000, 1000]` (chosen a priori, not
+just above the largest known coefficient 99.96), **C** unbounded.
+
+**Part A — oracle, complete.** The true structure of every exact C-1 cell refitted with the C-1
+optimizer (`wp_n3_oracle_refit.jl`): 30 exact systems × 3 seeds × 2 IC sets × 3 bounds = **540
+refits**. Arm A must reproduce the C-5 oracle (`925e3957a7a884e2`,
+`outputs/wp_n3_oracle_refit_phase_c/`) bit-identically — the control. Cost bounded at roughly
+3 × 92 core hours by the per-fit evaluation budget (§2); unbounded may approach the bound on dim 3.
+
+**Stability criteria, frozen.** Per refit, from the existing `reference_fit_meta` fields:
+
+- **hard failure:** `result_valid == false` or a non-finite final loss;
+- **penalty:** final loss at the sentinel (`>= 1e6`) after all retry attempts;
+- **effort:** `loss_evals` per refit, summed over attempts.
+
+"Comparably numerically stable" against arm A means **all three**:
+
+```text
+Delta hard-failure rate  <= 2 percentage points
+Delta penalty rate       <= 5 percentage points
+median(loss_evals_new) / median(loss_evals_[-10,10])  <= 1.5
+```
+
+evaluated on the **144 refits of the 24 systems feasible under all three bounds** — like for like,
+so that the six infeasible systems, where a looser bound can only help, cannot mask an increase.
+The 36 refits of 54–59 are reported separately. The 95 % quantile of `loss_evals` and the rate of
+fits with any `diverged_solves` or `nonfinite_solves` are reported, not gating — a single
+pathological fit must not flip the verdict. Also reported per bound: reachable R² (both
+aggregations), oracle structure hit, and per system the change against arm A.
+
+**Decision rule:** unbounded comparably stable → **unbounded** is the next version's start; else
+`[-1000, 1000]` as a pure numerical guard. Not considered: adaptive, system-dependent or
+parameter-scaled bounds, or normalisation schemes.
+
+**Part B — search, very small, diagnostic.** Full EvoGrow searches, to see whether a looser bound
+changes search behaviour qualitatively. No hit rate is published from it. Four case types fixed in
+advance, each chosen by a rule on known facts:
+
+| case | system | rule |
+|---|---|---|
+| unproblematic dim-1 control | **1** | feasible, C-1 R² > 0.9 in 6/6, lowest C-1 cost in dim 1 |
+| unproblematic dim-2 control | **24** | same rule in dim 2 |
+| truth fittable, search fails | **52** | named by the C-5 oracle |
+| dim 3 excluded by `[-10, 10]` | **57** | lowest C-1 cost among 54–59 (192.7 h) — a cost rule, not an accuracy pick |
+
+Seed 42, both IC sets, bounds B and C: **16 cells**. Arm A is C-1 itself (same identity); the four
+`(0,0)` control cells of 9.4 (systems 1 and 24) double as the bit-identity check of the new bound
+parameter at A. Algorithmic budgets identical to Phase C; per-cell `activeDeadlineSeconds` =
+**72 h** (≈ 3 × the longest of these C-1 cells, 22.5 h on system 57). A cell that hits the deadline
+is reported as such, not re-run with more time. Cost bound 16 × 72 h; expected far lower.
+
+**Implementation note.** The bound is `BFGSOptimizer.clamp_val`; "unbounded" is `clamp_val = Inf`.
+It enters the config fingerprint of bound arms B and C, which therefore carry their own identity;
+at `clamp_val = 10` the fingerprint must remain `0c9672de35c75a9d`. `Inf` must survive the
+fingerprint and JSON serialisation (JSON has no `Inf`), checked by a test.
+
+### 9.7 Work packages and order
+
+| # | Work package | Blocks |
+|---|---|---|
+| R1 | **WP-N32** — data-condition path: seeded noise and subsampling in the campaign runner, export of the corrupted trajectories with hashes, data-condition fingerprint separate from the method fingerprint, records carrying the new fields; `clamp_val` selectable in the runner and in the oracle refit; tests including the bit-identity controls | everything below |
+| R2 | WP-N33 — manifests and k8s Jobs for the noise pilot, the bound diagnostic A and B, and the full C-6 grid; post-hoc clean evaluation (reconstruction and generalization against clean targets, predicted trajectories stored) | pilot, C-8 |
+| R3 | baselines on the C-6 data: SINDy, Weak-SINDy, ODEFormer (reference image) | C-6 tables |
+| R4 | WP for PySR (9.5) | C-7 |
+| R5 | analysis: the 9.3 hierarchy for all methods, stage-cap change table, bound diagnostic tables | paper |
+
+Before the C-6 manifest is generated: the user confirms the realization design (9.4). Before any
+submission: the per-cell deadline of the full grid is written into 9.4 from the pilot.

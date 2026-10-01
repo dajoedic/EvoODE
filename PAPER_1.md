@@ -60,6 +60,43 @@ analysis and failure-case collection. It is **not** the source of the paper's ma
 **4. The 5,248 core hours are sunk cost.** They must not shape the paper's scope. We do not fit the
 paper to the campaign; we define the paper and then compute exactly the experiments it needs.
 
+### Scope Extension (2026-10-01) — foundation paper, robustness, three baselines
+
+Decided by the user on 2026-10-01 after an external discussion of the honest status
+(`docs/status_2026-10-01.md`); dated source `docs/EVOGROW_PAPER1_DECISIONS_2026-10-01.md`. The
+operational specification is `docs/paper1_phaseC_benchmark_plan.md` §9, frozen before any run.
+
+**Paper 1 is a foundation paper for an EvoGrow series.** It establishes the simple base method —
+how it works, how well it does on clean data (reconstruction, generalization, structure), how
+robust it is under noise and irregular subsampling, and where it fails — and does **not** add
+mechanisms to cover its weaknesses. The weaknesses are reported and motivate later papers, the way
+SINDy was the base for Weak-SINDy and its other variants. Explicitly **not** in Paper 1: ranking in
+derivative space, structure pre-sorting, pretuning as an evaluation signal, multiple shooting,
+complex warm-start strategies, noise-specific search or stopping rules, adaptive bounds, additional
+metaheuristics.
+
+**Paper 1 is exactly the Phase C EvoGrow, including the parameter bound `[-10, 10]`.** Removing the
+bound would require re-running C-1 and C-2, or central results would come from two method versions.
+The bound is a declared limitation, with two labels kept apart: **basis-representable** (30 of 63)
+and **feasible under the Paper-1 coefficient bound** (24 of those 30; 54–59 are not). A bound
+diagnostic (C-8) measures its effect and decides only the starting point of the next version.
+
+**Robustness is part of Paper 1** (C-6): the published ODEFormer grid, noise
+`sigma ∈ {0, 0.01, …, 0.05}` × random subsampling `rho ∈ {0, 0.5}`, the clean condition being C-1.
+EvoGrow on dim 1/2 with three seeds, at an accepted lower bound of ~21,400 core hours (~32,000 €).
+
+**Baselines, final:** SINDy, ODEFormer and PySR (the GP representative); Weak-SINDy as a
+noise-specific SINDy reference in the robustness part; ProGED only on concrete need.
+
+**Metrics, primary set:** raw exact recovery, pruned exact recovery, structural F1 — on the 30 exact
+systems only — plus generalization R² (weighted above) and reconstruction R², each as the R² > 0.9
+rate and as continuous values. Aggregation equation → run → seeds within a direction → both
+directions → system → benchmark, identically for every method; the final evaluation is recomputed
+under it.
+
+**Wording correction:** the trajectory fit and the structure evaluation use no estimated
+derivatives; the stage cap does. "EvoGrow needs no derivatives" must not be written.
+
 ### What this decision replaces
 
 The scope decision of 2026-08-03 made the look-ahead stage cap the contribution and the
@@ -75,8 +112,10 @@ justification inside the Method section, not the paper's argument.
 Claim D now requires exactly what they forbade:
 
 - ~~"Paper 1 does not run new in-house baselines for GP, PySR, SINDy…"~~ — **SINDy is now a main-table
-  baseline**, computed in-house on identical trajectories (WP-N6, extended in Phase C). GP, PySR,
-  ODEFormer, GODE and Operon stay out.
+  baseline**, computed in-house on identical trajectories (WP-N6, extended in Phase C). ~~GP, PySR,
+  ODEFormer, GODE and Operon stay out.~~ **Superseded 2026-09-23 and 2026-10-01:** ODEFormer runs as
+  a baseline since WP-N21/N27, and PySR is the GP representative (`docs/paper1_phaseC_benchmark_plan.md`
+  §9.5). GODE, Operon and a second GP method stay out; ProGED only on concrete need.
 - ~~"Paper 1 makes no quantitative cross-method performance claim. Not a cautious one, not an
   approximate one — none."~~ — **Quantitative EvoGrow-versus-SINDy comparison is now in scope**, under
   the fairness conditions of Claim D: identical trajectories, identical train/test ICs, all SINDy
@@ -289,6 +328,10 @@ which is deliberately favourable to SINDy and is declared as such.
 
 Cost belongs beside every quality number: SINDy solves one linear regression per equation; EvoGrow
 runs a median of 410 nonlinear fits per cell, each with ODE integrations.
+
+**Extended 2026-10-01:** the comparison set is SINDy, ODEFormer and PySR, on clean data and on the
+C-6 robustness grid (Weak-SINDy added there), all on identical exported data and aggregated with the
+same hierarchy. See "Scope Extension (2026-10-01)".
 
 ### Superseded Claim Labels (pre-2026-09-09, for resolving older citations)
 
@@ -907,6 +950,11 @@ Where this must appear: Method (section 3, when the cap is introduced), Failure 
 (section 4, as the v3 lesson), and Limitations (section 8 — cap quality is bounded by derivative
 estimate quality, which is the documented mechanism behind the System 63 and low-dynamics IC
 cases).
+
+**Measured from 2026-10-01 on:** the robustness grid C-6 records per equation how the cap changes
+under noise and irregular subsampling against the clean C-1 cell
+(`docs/paper1_phaseC_benchmark_plan.md` §9.4) — the cap's derivative dependence becomes a number
+rather than a caveat.
 
 ### Published Reference Context
 

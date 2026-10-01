@@ -6,6 +6,66 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ## 2026-10-01
 
+### Entschieden: Paper 1 als Fundament-Paper, Phase C bleibt kanonisch mit [−10, 10], Robustheit, PySR und Grenzen-Diagnose sind eingefroren
+
+**Ablauf.** Der ehrliche Statusbericht (`docs/status_2026-10-01.md`) ging in eine externe
+Diskussion. Zurück kam `docs/EVOGROW_PAPER1_DECISIONS_2026-10-01.md`. Claude stellte acht
+Rückfragen, und der Nutzer hat entschieden und freigegeben. Die verbindliche Fassung steht in
+`PAPER_1.md` („Scope Extension (2026-10-01)“) und `docs/paper1_phaseC_benchmark_plan.md` §9. Die
+Entscheidungsdatei bleibt eine datierte Quelle.
+
+**Die wichtigste Entscheidung kippte gegenüber dem Diskussionsdokument.** Dort sollte die Grenze
+[−10, 10] nicht in Paper 1 übernommen werden. Dagegen sprach, dass ein Entfernen nicht nur die saubere
+Bedingung, sondern auch C-1 und den ungekappten Spiegel C-2 neu verlangt hätte. Sonst stammten die
+zentralen Ergebnisse aus zwei Methodenversionen. Ergebnis: **Paper 1 ist genau das Phase-C-EvoGrow
+mit [−10, 10].** Die Grenze wird als Limitation benannt. Zwei Begriffe werden getrennt geführt:
+*basis-darstellbar* (30) und *machbar unter der Grenze* (24).
+
+**Machbarkeit, berechnet aus den wahren Koeffizienten** (dieselbe Extraktion wie in WP-T1f, alle 30
+exakten Systeme). Nicht machbar unter [−10, 10] sind 54 (12,0), 55 (99,96), 56 (28,0) sowie 57, 58
+und 59 (je 28,5). Am Rand liegen **61 mit genau 10,0**, das wegen der inklusiven Grenze machbar ist,
+und **5 mit 9,81**. Unter [−1000, 1000] und ohne Grenze sind alle 30 machbar.
+
+**Eingefroren, bevor irgendetwas läuft:**
+- **C-6, Robustheit.** Das veröffentlichte ODEFormer-Raster mit σ ∈ {0; 0,01 … 0,05} × ρ ∈ {0; 0,5}.
+  ODEFormers Skript rechnet zusätzlich σ = 0,001 und ρ = 0,25; das wird ausgewiesen. EvoGrow läuft
+  nur auf dim 1/2 mit 3 Seeds. Die Bedingung (0, 0) ist C-1 und wird wiederverwendet. Mindestens
+  21.400 h, rund 32.000 €, bewusst in Kauf genommen. Die Vergleichstabellen werden vorab auf dim 1/2
+  beschränkt.
+- **Auswertung unter Rauschen: geschlossen, im ODEFormer-Code nachgeprüft.** `evaluate.py:252-300`
+  kopiert die Originale vor der Verfälschung. Rekonstruktion und Test laufen gegen die saubere
+  Wahrheit. Wir übernehmen das. Abweichung: Wir nutzen die zweite ODEBench-Anfangsbedingung statt
+  der `randn`-Anfangsbedingung aus `y0_generalization`.
+- **Was EvoGrow sieht:** Die Simulation startet am ersten *beobachteten* Punkt
+  (`solve.jl:27-39`). Unter Rauschen startet sie also von einer verrauschten Anfangsbedingung,
+  unter Ausdünnung eventuell bei t > 0. Das `r2` im Record misst gegen verrauschte Daten und ist
+  für C-6 nie eine Paper-Kennzahl.
+- **Formulierung:** Fit und Strukturbewertung brauchen keine geschätzten Ableitungen, die
+  Stufenkappe dagegen schon. C-6 misst, wie sich die Kappen unter Rauschen ändern.
+- **C-7, PySR** ist der GP-Vertreter mit eigenem Arbeitspaket für Budget und Harness.
+  Weak-SINDy dient im Rauschteil als Referenz, ProGED kommt nur bei Bedarf dazu.
+- **C-8, Grenzen-Diagnose.** Teil A ist das Orakel mit 540 Refits (30 Systeme × 3 Seeds × 2 IC × 3
+  Grenzen). Teil B sind 16 Suchzellen: System 1 und 24 als Kontrollen, 52, und 57 als billigstes
+  der ausgeschlossenen Systeme; Seed 42, beide IC, je 72 h Deadline. Die Stabilitätskriterien sind
+  eingefroren: Δ harter Fehler ≤ 2 Punkte, Δ Strafwert ≤ 5 Punkte, Median der Loss-Evals ≤ 1,5×.
+  Gemessen wird auf den 144 Refits der 24 unter allen Grenzen machbaren Systeme. C-8 entscheidet
+  nur über den Startpunkt der nächsten Version.
+- **Metriken und Aggregation.** Roher Treffer, Treffer nach Pruning und F1 nur auf den 30 exakten
+  Systemen. Generalisierungs-R² geht vor Rekonstruktions-R², beide als Rate und kontinuierlich.
+  Aggregiert wird Gleichung → Lauf → Seeds je Richtung → Richtungen → System → Benchmark, für alle
+  Methoden gleich. Die bisherigen Prozentwerte (Einheiten aus System und Richtung) werden nicht
+  parallel weitergeführt.
+- **Pilot für C-6**, ausgewählt nach C-1-Kosten je System (Median und q90 je Dimension): 17 und 18
+  (dim 1), 41 und 44 (dim 2). Seed 42, IC 1, Bedingungen (0,01; 0) und (0,05; 0,5). Dazu 4
+  Kontrollzellen bei (0, 0), die C-1 bitgleich reproduzieren müssen. Übersteigt die
+  Kostenprojektion 32.000 h, entscheidet der Nutzer neu.
+
+**Noch offen, vom Nutzer zu bestätigen, bevor das C-6-Manifest entsteht:** Claudes Vorschlag, je
+Bedingung drei Rauschrealisierungen zu ziehen und Realisierung r an Seed r zu koppeln (§9.4).
+
+**Nächster Schritt: WP-N32** (Datenbedingung im Kampagnenpfad, `clamp_val` wählbar, Kontrollen),
+an Codex übergeben.
+
 ### Plan: Rauschen und Abtastrate als nächster Schritt — Kosten, Falle beim Abbruch, kein Teilraster ohne Begründung
 
 <!-- e92f836 -->
