@@ -6,6 +6,18 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ## 2026-10-02
 
+### S-04: Die Kappe schneidet unter Rauschen in ~17 % der Gleichungen wahre Terme ab — die Vermutung war falsch; der Ableitungs-Rauschboden ist dagegen gut vorhersagbar
+
+**Lauf:** `studies/lookahead/wp_s04_stage_cap_noise_thinning.jl`, 21 exakte dim-1/2-Systeme × 2 IC × σ {0…0,05} × ρ {0; 0,5} × 3 Realisierungen = 2.108 Gleichungszeilen, offline, ohne Suche. Ausgabe `outputs/studies/lookahead/wp_s04_stage_cap_noise_thinning_20261002_011154/`. **Kontrollen:** In allen Zeilen reproduzieren die nachgebauten Residuen die Kappe von `estimate_stage_caps`, und ohne Rauschen stimmen alle Kappen mit C-1 überein. Der erste volle Lauf war an genau dieser Kontrolle gescheitert: Das Skript nahm die mit ODEBench ausgelieferte Lösung statt `build_trajectory`. Für System 5 ergab das `[4]` statt `[2]`. Auch das zeigt, wie empfindlich die Kappe auf die Datenqualität reagiert.
+
+**F1 Sicherheit — vorab vermutet war „fällt vorsichtig auf `nothing`, schneidet nicht ab“. Widerlegt.** Unter Rauschen schneiden **317 von 1.860** Gleichungszeilen (17 %) wahre Terme ab, auf **14 von 21** Systemen. Das geschieht **schon bei σ = 0,01** (15,6 % bzw. 18,3 %), und der Anteil hängt kaum von σ ab (14,5–19,9 %). dim 1: 18 %, dim 2: 16,5 %. Ausdünnung allein (σ = 0) schneidet nichts ab.
+
+**F2 Verhalten** je Bedingung (186 Zeilen): unverändert 87–114, **enger 24–34**, zu `nothing` 39–57 (steigt mit σ), aus `nothing` 4–18, weiter 0–2. Das Rauschen macht die Kappe also teils enger und damit gefährlich, teils hebt es sie auf.
+
+**F4 Machbarkeit des Ansatzes „Ableitungs-Rauschboden aus den Filtergewichten“ — gestützt.** Das Verhältnis aus vorhergesagtem zu gemessenem Fehler der geschätzten Ableitung liegt im Median bei **1,09** mit dem wahren σ und bei **1,01** mit dem aus den Daten geschätzten σ̂. Das 10.–90. Perzentil reicht von 0,46 bis 1,96. Die Vorhersage trifft also in 80 % der Fälle innerhalb eines Faktors 2, ohne getunte Konstante. Gegen das Residuum der **wahren Stufe** liegt der Median bei 1,14–1,20, aber mit schwerem Rand (q90 17–21): Das Residuum enthält mehr als nur Ableitungsrauschen. Was genau, ist offen.
+
+**Konsequenzen, ausdrücklich ohne Entscheidung:** (1) Für C-6 ist die eingefrorene Kappe unter Rauschen ein **Störfaktor der Strukturfindung**. In etwa jeder sechsten Gleichung kann die Suche die Wahrheit gar nicht erreichen. Das muss in die Auswertung von C-6 und ins Paper, und es betrifft die Lesart jedes Strukturtreffers unter Rauschen. (2) Für die nächste Version ist Ansatz 1 (Rauschboden im Ableitungsraum) jetzt mit Zahlen begründet. Der Rand bei der wahren Stufe muss vorher verstanden sein. (3) Ob C-6 deshalb einen ungekappten Arm unter Rauschen braucht, entscheidet der Nutzer am nächsten Tor.
+
 ### Runner-Absturz, und das schlanke Image (WP-N36): 443 → 202 Pakete, bitgleich
 
 <!-- dc17a46 -->
