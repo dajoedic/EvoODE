@@ -7,8 +7,6 @@ from pathlib import Path
 
 
 SCRIPT = Path("analysis/scripts/aggregate/compare_phasec_controls.py")
-REAL_STAGE0_TASKS = Path("outputs/wp_n32_stage0/tasks")
-REAL_C1_TASKS = Path("outputs/phase_c_campaign_221a3a7/tasks")
 
 
 def write_jsonl(path: Path, records: list[dict]) -> None:
@@ -70,14 +68,9 @@ def test_compare_phasec_controls_skips_heartbeats_in_directory_input(tmp_path: P
     reference = tmp_path / "reference"
     candidate.mkdir()
     reference.mkdir()
-    stage_record = json.loads((REAL_STAGE0_TASKS / "cell_000001.jsonl").read_text(encoding="utf-8").splitlines()[0])
-    c1_record = json.loads((REAL_C1_TASKS / "cell_000001.jsonl").read_text(encoding="utf-8").splitlines()[0])
-    write_jsonl(candidate / "cell_000001.jsonl", [stage_record])
-    write_jsonl(reference / "cell_000001.jsonl", [c1_record])
-    (candidate / "cell_000001.heartbeat.jsonl").write_text(
-        (REAL_STAGE0_TASKS / "cell_000001.heartbeat.jsonl").read_text(encoding="utf-8"),
-        encoding="utf-8",
-    )
+    write_jsonl(candidate / "cell_000001.jsonl", [record()])
+    write_jsonl(reference / "cell_000001.jsonl", [record()])
+    (candidate / "cell_000001.heartbeat.jsonl").write_text('{"heartbeat": true}\n', encoding="utf-8")
 
     result = run_compare(candidate, reference)
 

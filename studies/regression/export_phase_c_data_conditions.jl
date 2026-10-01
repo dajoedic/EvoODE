@@ -80,9 +80,17 @@ function _write_index(path::AbstractString, rows)
     open(path, "w") do io
         println(io, join(header, ","))
         for row in rows
-            println(io, join((get(row, key, "") for key in header), ","))
+            println(io, join((_csv_field(get(row, key, "")) for key in header), ","))
         end
     end
+end
+
+function _csv_field(value)
+    text = string(value)
+    if occursin(',', text) || occursin('"', text) || occursin('\n', text) || occursin('\r', text)
+        return "\"" * replace(text, "\"" => "\"\"") * "\""
+    end
+    return text
 end
 
 function main(args = ARGS)

@@ -3,12 +3,15 @@ from __future__ import annotations
 import argparse
 import csv
 import json
+import re
+import sys
 from pathlib import Path
 from typing import Any
 
 
 DEFAULT_OUTPUT_DIR = Path("outputs/wp_n33a_stage_report")
 EXPECTED_FINGERPRINT = "0c9672de35c75a9d"
+HEX_SHA256_RE = re.compile(r"^[0-9a-fA-F]{64}$")
 NEW_FIELDS = [
     "noise_sigma",
     "subsample_rho",
@@ -67,7 +70,7 @@ def load_export_index(path: Path | None) -> dict[tuple[int, int, str, str, int],
     if path is None or not path.exists():
         return {}
     with path.open("r", encoding="utf-8", newline="") as handle:
-        rows = list(csv.DictReader(handle))
+        rows = read_validated_export_index_rows(handle, path)
     return {
         (
             int(row["system_id"]),
@@ -78,6 +81,45 @@ def load_export_index(path: Path | None) -> dict[tuple[int, int, str, str, int],
         ): row
         for row in rows
     }
+
+
+def read_validated_export_index_rows(handle, path: Path) -> list[dict[str, str]]:
+    reader = csv.reader(handle)
+    try:
+        header = next(reader)
+    except StopIteration as exc:
+        raise ValueError(f"Invalid export index {path}: CSV has no header.") from exc
+
+    required = [
+        "system_id",
+        "initial_condition_set",
+        "noise_sigma",
+        "subsample_rho",
+        "noise_realization",
+        "time_sha256",
+        "state_sha256",
+    ]
+    missing = [column for column in required if column not in header]
+    if missing:
+        raise ValueError(f"Invalid export index {path}: missing required columns: {', '.join(missing)}.")
+
+    rows: list[dict[str, str]] = []
+    for line_number, fields in enumerate(reader, start=2):
+        if len(fields) != len(header):
+            raise ValueError(
+                f"Invalid export index {path}: line {line_number} has {len(fields)} fields, "
+                f"expected {len(header)} from the header. Regenerate the index with quoted CSV fields."
+            )
+        row = dict(zip(header, fields))
+        for column in ("time_sha256", "state_sha256"):
+            value = row.get(column, "")
+            if HEX_SHA256_RE.fullmatch(value) is None:
+                raise ValueError(
+                    f"Invalid export index {path}: line {line_number} column {column} "
+                    "must be a 64-character hexadecimal SHA-256 value."
+                )
+        rows.append(row)
+    return rows
 
 
 def ref_key(record: dict[str, Any]) -> tuple[str, int, int, int]:
@@ -298,9 +340,13 @@ def main() -> int:
     parser.add_argument("--output-dir", default=DEFAULT_OUTPUT_DIR, type=Path)
     args = parser.parse_args()
 
-    stage_records = read_jsonl_records(args.stage_records)
-    reference_records = read_jsonl_records(args.reference_c1)
-    rows = build_rows(stage_records, reference_records, load_clean_eval(args.clean_eval), load_export_index(args.export_index))
+    try:
+        stage_records = read_jsonl_records(args.stage_records)
+        reference_records = read_jsonl_records(args.reference_c1)
+        rows = build_rows(stage_records, reference_records, load_clean_eval(args.clean_eval), load_export_index(args.export_index))
+    except ValueError as exc:
+        print(str(exc), file=sys.stderr)
+        return 2
     csv_path = args.output_dir / "robustness_stage_report.csv"
     md_path = args.output_dir / "robustness_stage_report.md"
     write_csv(csv_path, rows)
