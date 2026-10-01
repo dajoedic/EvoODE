@@ -6,6 +6,10 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ## 2026-10-02
 
+### Orion: B-02 und Stufe 2 gestartet, der Smoke ist bitgleich
+
+Das schlanke Image `5dd1df8` war nach **13:27 min** gebaut. Der Nutzer hat B-02 (3 Grenzen × 18 Shards) und Stufe 2 gestartet. **Smoke (System 1, (0,01; 0)) auf Orion ist bitgleich zur lokalen Stufe-1-Zelle** in Loss, Struktur, Koeffizienten, Loss-Evals, Kappe und Datenhash. Nur der Git-Hash unterscheidet sich, wie erwartet. Damit rechnet das schlanke Image auf dem Cluster dasselbe wie das alte Environment lokal. Danach liefen die 4 Stufe-2-Zellen (System 18 und 24, gekappt) an. B-02 ist nach wenigen Minuten fast fertig, weit unter der Obergrenze von ~74 h. Belegung: 28 Kerne mit B-02, danach 13. NFS-Platz: 141 MB von uns. Die GitLab-Registry ist nicht gemessen und vermutlich der größere Posten. Lokal laufen die Zellen ohne Kappe für System 1 und 17 (R-05b).
+
 ### S-04: Die Kappe schneidet unter Rauschen in ~17 % der Gleichungen wahre Terme ab — die Vermutung war falsch; der Ableitungs-Rauschboden ist dagegen gut vorhersagbar
 
 **Lauf:** `studies/lookahead/wp_s04_stage_cap_noise_thinning.jl`, 21 exakte dim-1/2-Systeme × 2 IC × σ {0…0,05} × ρ {0; 0,5} × 3 Realisierungen = 2.108 Gleichungszeilen, offline, ohne Suche. Ausgabe `outputs/studies/lookahead/wp_s04_stage_cap_noise_thinning_20261002_011154/`. **Kontrollen:** In allen Zeilen reproduzieren die nachgebauten Residuen die Kappe von `estimate_stage_caps`, und ohne Rauschen stimmen alle Kappen mit C-1 überein. Der erste volle Lauf war an genau dieser Kontrolle gescheitert: Das Skript nahm die mit ODEBench ausgelieferte Lösung statt `build_trajectory`. Für System 5 ergab das `[4]` statt `[2]`. Auch das zeigt, wie empfindlich die Kappe auf die Datenqualität reagiert.

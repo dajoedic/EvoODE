@@ -10,48 +10,47 @@ zweites davon. Alles Dauerhafte gehört dorthin, nach `PAPER_1.md` oder ins `DIA
 **Regeln:** wird immer **vollständig überschrieben**, nie angehängt. Was älter als ein paar Tage
 ist, ist vermutlich falsch — dann gilt `CLAUDE.md`.
 
-**Stand: 2026-10-01, spät.** Push und `oc apply` macht der Nutzer. Die Reihenfolge der Arbeit steht
-im Backlog in `CLAUDE.md` („Backlog Paper 1“). Laufort: unter 1 h auf dem Laptop, unter 24 h auf
-Orion, darüber nur auf ausdrückliche Entscheidung.
+**Stand: 2026-10-02, ~01:45.** Arbeitsreihenfolge: Backlog in `CLAUDE.md` („Backlog Paper 1“).
+
+**Feste Regeln seit dieser Nacht:** Claude pusht **nie** nach GitLab und nach GitHub nur mit
+ausdrücklicher Erlaubnis, beides macht der Nutzer. **Keine harten Zeit-Cuts** (kein `timeout`, kein
+`activeDeadlineSeconds`). Stattdessen gibt es eine erwartete Laufzeit, und wird sie deutlich
+überschritten, wird diskutiert. `codex exec` wird immer mit `< /dev/null` gestartet.
 
 ---
 
 ## 1. Was läuft
 
-| Lauf | Wo | Stand | Anmerkung |
-|---|---|---|---|
-| C-3 | Orion, `221a3a7` | 177 / 180 | 897 (Level 28), 899 (29), 905 (28); Ende ~2.–5.10. |
-| WP-T1f | Orion, `1db1193` | 28 / 36 | **58 IC1 steht fast still (30/185)** → erreicht die Deadline 12.10. voraussichtlich nicht; die Zeilen bleiben erhalten. 61 ×2 wartet |
+| Lauf | Wo | Image | Stand | Anmerkung |
+|---|---|---|---|---|
+| C-3 | Orion | `221a3a7` | 177/180 | 3 Lorenz-Nachzügler, Ende ~2.–5.10. |
+| WP-T1f | Orion | `1db1193` | 28/36 | Deadline entfernt (01.10.). 58 IC1 läuft langsam, das kann Tage dauern |
+| B-02 (Grenzen-Orakel dim 1/2) | Orion | `5dd1df8` | fast fertig | 3 Jobs × 18 Shards, viel schneller als die Obergrenze |
+| Stufe 2, gekappt (System 18, 24) | Orion | `5dd1df8` | 4 Zellen gestartet 02.10. ~01:30 | Smoke bitgleich zur lokalen Zelle. Erwartet: Stunden je Zelle |
+| Ungekappt unter Rauschen, System 1 und 17 | Laptop | lokal | 1 von 4 fertig | R-05b |
 
-Statusseite „EvoODE auf Orion“: https://claude.ai/artifact/4sq6HhRsnxgrFVqVF2trBx (Version 21).
+Das schlanke Image `5dd1df8` (WP-N36: 202 statt 443 Pakete, bitgleich) baut in **13 min** statt bis zu ~3 h.
 
-## 2. Seit heute Abend erledigt (alles committet, nicht gepusht)
+## 2. Nächste Schritte (Claude)
 
-WP-N32 (Datenbedingung, `clamp_val`), WP-N33a/a2/a3 (Auswertung gegen die saubere Wahrheit,
-Tor-Bericht, CSV-Fix), WP-N33b (Orion-Manifeste, **nicht gestartet**), WP-N34/N34b (SINDy und
-Weak-SINDy auf Rausch-Daten). Stufe 0 und B-01 sind bestanden, Stufe 1 ist gelaufen. Alle Zahlen
-stehen im DIARY vom 01.10.
+1. Lokale Zellen ohne Kappe fertig rechnen, saubere Auswertung, Tor-Bericht.
+2. **Manifest für die ungekappten Zellen von System 18 und 24** auf Orion (R-05b), dann `apply` durch den Nutzer.
+3. **B-02 einsammeln und auswerten** (Tor B2, Stabilitätskriterien §9.6 auf dim 1/2), danach B-04 (Suche 1 und 24, lokal).
+4. Arbeitspakete schreiben: ODEFormer auf den Rausch-Daten (R-09), PySR (R-10).
+5. Wenn C-3 fertig ist: endgültige Phase-C-Auswertung mit der neuen Aggregation (P-02).
 
 ## 3. Wartet auf den Nutzer
 
-1. **Tor S1:** Startet Stufe 2? Vorschlag: 17 und 24 auf dem Laptop, 18 per
-   `k8s/phase_c_robustness_stage2_system18_job.yaml`.
-2. **Push auf GitLab** (Commit ≥ `49b0613`). Erst danach baut die CI das Image, das Stufe 2 / System
-   18 und B-02 (`k8s/phase_c_c8_oracle_b02_job.yaml`, Obergrenze ~74 h über drei Grenzen) brauchen.
-   B-02 hat vorab kein Tor. Es kann starten, sobald das Image da ist und die Eingabe auf dem NFS
-   liegt (`SCRIPTS.md`).
-3. **WP-T1f 58 IC1:** Teildaten hinnehmen, oder etwas anderes?
-4. **Track S (Abbruchkriterium):** S-02 (Struktur je Level in den Heartbeat, verhaltensneutral)
-   freigeben?
+- Tor S2, sobald System 18 und 24 (gekappt und ungekappt) fertig sind.
+- Pushes, wenn Claude sie als fällig meldet. Lokal sind derzeit nur Doku- und Spec-Commits, sie brauchen kein Image.
 
-## 4. Was auf den Tisch muss
+## 4. Befunde dieser Nacht (alle im DIARY 01./02.10.)
 
-**Weak-SINDy ist auf System 1 unter Rauschen der stärkste Gegner.** Bei (0,05; 0,5) trifft es in 5
-von 10 Konfigurationen die Struktur, EvoGrow nicht. Die Generalisierung ist bei beiden gut. Gegen
-normales SINDy trägt die Robustheits-These, gegen Weak-SINDy auf diesem System nicht. Ein System
-entscheidet nichts, aber Stufe 2 muss genau das klären.
+- **S-04:** Die Kappe schneidet unter Rauschen in 17 % der Gleichungen wahre Terme ab, schon bei σ = 0,01.
+  Deshalb gibt es den Vergleichsarm ohne Kappe (§9.4b).
+- **Weak-SINDy** ist auf System 1 unter Rauschen stark. Auf System 17 liegt EvoGrow vorn.
+- **Abbruchkriterium:** Ein Stopp am Rauschboden hätte überall Level gespart. Design-Notiz: `docs/design_stopping_criterion.md`.
 
 ## 5. Git
 
-Gepusht bis `1db1193`. Lokal sind alle Commits seit `14dc9b5`, zuletzt die WP-N32- bis
-WP-N34b-Arbeit vom 01.10.
+GitHub und GitLab stehen auf `5dd1df8`. Lokal liegen darüber nur Doku- und Spec-Commits.

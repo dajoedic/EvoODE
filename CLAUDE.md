@@ -179,7 +179,7 @@ ground truth, `STATUS.md` only the fast signal: a poll checks both.
 | 1 — stable core | DONE (2026-04-20) |
 | 2 — EvoGrow variants | **CLOSED 2026-08-03** |
 | 3 — benchmarking | infrastructure done; Phase B protocol decided and implemented. Planned next axes: noise, sampling density, coupling strength, dimensionality |
-| 4 — Paper 1 | **Scope decided 2026-09-09: method paper.** Phase B campaign complete and **demoted to diagnostics** (756/756, 5,248 core hours, analysis done WP-A5–A9). **Phase C — canonical evaluation** (`docs/paper1_phaseC_benchmark_plan.md`): **C-1/C-2 complete 2026-09-29 (756/756) and evaluated as interim** (`DIARY.md` 2026-09-29); C-3 175/180 still running on Orion, end ~2026-10-01 to 10-04; C-4 SINDy and the ODEFormer reference grid done; C-5 generalization **done** (pulled forward, clamp-independent); C-5 oracle **done and collected 2026-10-01** (180/180, clamped; `DIARY.md` 2026-10-01); restart curve not started. **Scope extended 2026-10-01** (`PAPER_1.md`, "Scope Extension"): foundation paper, Paper 1 = Phase C EvoGrow **with** `[-10, 10]`; new arms frozen in plan §9 — **C-6** robustness grid (noise × irregular subsampling, dim 1/2, 3 seeds, ≥ 21,400 h), **C-7** PySR, **C-8** bound diagnostic; WP-N32 (data-condition path) next |
+| 4 — Paper 1 | **Scope decided 2026-09-09: method paper.** Phase B campaign complete and **demoted to diagnostics** (756/756, 5,248 core hours, analysis done WP-A5–A9). **Phase C — canonical evaluation** (`docs/paper1_phaseC_benchmark_plan.md`): **C-1/C-2 complete 2026-09-29 (756/756) and evaluated as interim** (`DIARY.md` 2026-09-29); C-3 175/180 still running on Orion, end ~2026-10-01 to 10-04; C-4 SINDy and the ODEFormer reference grid done; C-5 generalization **done** (pulled forward, clamp-independent); C-5 oracle **done and collected 2026-10-01** (180/180, clamped; `DIARY.md` 2026-10-01); restart curve not started. **Scope extended 2026-10-01** (`PAPER_1.md`, "Scope Extension"): foundation paper, Paper 1 = Phase C EvoGrow **with** `[-10, 10]`; new arms frozen in plan §9 — **C-6** robustness grid (noise × irregular subsampling, dim 1/2, 3 seeds, ≥ 21,400 h), **C-7** PySR, **C-8** bound diagnostic. **State 2026-10-02:** staged entry under way — stages 0–1 done, stage 2 running on Orion (systems 18/24) with an uncapped comparison arm (§9.4b, after WP-S04 found the cap truncates true terms under noise); B-02 bound oracle running; slim image `5dd1df8` (WP-N36) in use |
 | 5 — advanced methods | not started |
 
 ### Phase 2 outcome
@@ -205,7 +205,7 @@ over unchanged — a deliberate warm start; the accepted risk is anchoring, and 
 the counter-measure. A population reset on promotion is future work and **must not be implemented
 in the current phase.**
 
-## Active Studies (as of 2026-09-29)
+## Active Studies (as of 2026-09-29; live run state 2026-10-02 in `READ_THIS_FIRST.md`)
 
 | Artifact | Status | Note |
 |----------|--------|------|
