@@ -1,60 +1,53 @@
-# WP-N34 — SINDy und Weak-SINDy auf den exportierten Rausch-Daten (C-6, gestuft)
+# WP-N34b — Nacharbeit WP-N34: C-4-Kontrolle umsetzen, Structural F1, mehrere Tor-Berichte
 **Language: Python**
 
-Spezifikation: `docs/paper1_phaseC_benchmark_plan.md` §9.3 und §9.4, besonders „One data set for
-all methods“, „Evaluation targets are clean“ und „Each method treats an irregular grid with its own
-documented default; we do not interpolate“. Backlog: `CLAUDE.md`, R-09.
+Abnahme von WP-N34 durch Claude (2026-10-01): Der Lauf auf System 1 funktioniert, und die Hashes
+sind geprüft. **Drei Punkte fehlen**, und die Abnahme bleibt offen, bis sie erledigt sind.
 
-## Ziel
+## 1. Die C-4-Kontrolle ist nicht umgesetzt
 
-Die SINDy-Baseline aus C-4 (`analysis/scripts/aggregate/run_phasec_sindy_baseline.py`, zehn
-Konfigurationen, alle berichtet) läuft auf **denselben verfälschten Daten**, die EvoGrow sieht.
-Dazu kommt **Weak-SINDy** als rauschspezifische SINDy-Referenz. Ausgewertet wird gegen die saubere
-Wahrheit, genau wie bei EvoGrow (WP-N33a).
+`control_status()` meldet auch mit vorhandenem Index nur `not_run: control execution is
+intentionally separate…`. Verlangt war, dass der neue Pfad die vorhandenen C-4-Ergebnisse
+**exakt reproduziert**. Claude hat den Kontrollindex jetzt erzeugt:
+`outputs/wp_n34_control_export/index.csv` (Systeme 1 und 24, IC-Sets 1 und 2, `(0, 0)`,
+Realisierung 0, gequotet).
 
-## Umsetzung
+Umsetzen: Mit `--control-export-index` laufen alle zehn SINDy-Konfigurationen auf diesen Zellen.
+Verglichen wird mit den bestehenden C-4-Ergebnissen. Den Pfad findest du über `SCRIPTS.md` bzw. die
+WP-N30-Ausgaben, zum Beispiel unter `outputs/phase_c_campaign_221a3a7/agg/sindy_n30/` oder
+`analysis/data/paper1_phaseC_v1/`; prüf, welche Datei die Einzelergebnisse je Konfiguration trägt.
+Verglichen werden aktive Terme, Koeffizienten, R² der Rekonstruktion und R² der Generalisierung.
+Jede Abweichung wird gemeldet, bei einer Abweichung ist der Exit-Code ungleich 0.
+**Vorher klären und im Report festhalten:** ob C-4 dieselbe Trajektorie verwendet. Laut `CLAUDE.md`
+(WP-C4b) konsumiert C-4 die exportierten Kampagnen-Trajektorien. Unser Export bei (0, 0) gibt die
+saubere `build_trajectory`-Trajektorie zurück. Prüf per Hash, dass beide identisch sind, bevor du
+Ergebnisse vergleichst. Sind sie es nicht, ist das der Befund, und die Kontrolle meldet es als
+solchen.
 
-1. **Eingabe:** der Exportindex von `studies/regression/export_phase_c_data_conditions.jl`
-   (gequotetes CSV, Hashes je Zelle). Jede Zelle wird über die Binärdateien gelesen, und vor der
-   Verwendung wird der Hash geprüft. Bei Abweichung bricht das Skript ab. Beispiel:
-   `outputs/stage1/data_export/index.csv` (System 1, vier Bedingungen).
-2. **SINDy:** die bestehenden zehn Konfigurationen **unverändert**, auf den verfälschten `(t, x)`.
-   Liegt ein unregelmäßiges Raster vor, bekommt SINDy die echten Zeitpunkte, also die
-   Zeitvektor-Schnittstelle von pysindy, so wie es pysindy dokumentiert. Wir interpolieren nicht.
-3. **Weak-SINDy:** pysindys schwache Formulierung mit ihren dokumentierten Standardwerten, über
-   denselben Bibliotheken wie die SINDy-Konfigurationen, soweit sinnvoll. Jede Konfiguration wird
-   berichtet, keine wird nachträglich ausgewählt. Kann die schwache Formulierung mit unregelmäßigen
-   Rastern nicht umgehen, wird die Zelle als **Fehler mit Grund** festgehalten. Nichts wird
-   repariert oder interpoliert. Halte im Report fest, was die pysindy-Version dazu sagt, und zwar
-   gelesen in Quelle oder Doku, nicht vermutet. Das Modell, das Weak-SINDy liefert, wird wie bei
-   SINDy als ODE integriert.
-4. **Auswertung gegen die saubere Wahrheit:** Rekonstruktion aus der sauberen
-   Trainings-Anfangsbedingung auf dem vollen sauberen Raster, Generalisierung aus der sauberen
-   anderen Anfangsbedingung. R² in beiden Aggregationen (§6b), Divergenz markiert. Dazu
-   Strukturmetriken (roh, gepruned, F1) nur auf exakten Systemen, mit derselben Pruning-Regel und
-   derselben Term-Zuordnung wie in C-4. Saubere Trajektorien und R²-Definition werden aus dem
-   bestehenden Pfad wiederverwendet (C-4 bzw. `phase_c_trajectory_hashes`), nicht neu gebaut.
-5. **Ausgabe:** eine Zeile je Zelle × Methode × Konfiguration mit Schlüssel (System, IC-Set,
-   `noise_sigma`, `subsample_rho`, `noise_realization`), Datenhash, Kennzahlen und Fehlergrund. Eine
-   Vergleichstabelle neben dem Tor-Bericht (`robustness_stage_report.py`): je Zelle EvoGrow gegen
-   alle Baseline-Konfigurationen, ohne Auswahl und ohne Urteil. Eigener Ausgabeordner unter
-   `outputs/`.
-6. **Kontrolle:** Auf C-1-Daten bei (0, 0) muss der neue Pfad die vorhandenen C-4-Ergebnisse der
-   zehn SINDy-Konfigurationen exakt reproduzieren, für mindestens System 1 und 24. Die Daten dafür
-   erzeugst du über den Export bei (0, 0), sofern er das kann; sonst sag, warum nicht.
+## 2. Structural F1, Precision und Recall fehlen
+
+§9.3 verlangt roh, gepruned und F1. `details.csv` hat bisher nur `sindy_structure_hit_raw` und
+`sindy_structure_hit_pruned`. Ergänze Precision, Recall und F1 auf dem geprunten Träger. Nutze dafür
+die bestehende Implementierung in `analysis/utils/metrics.py`, keine zweite. Nur exakte Systeme,
+sonst leer und als nicht exakt markiert.
+
+## 3. Mehrere Tor-Berichte
+
+`--stage-report` nimmt nur eine Datei. Die Stufe-1-Berichte liegen je Bedingung getrennt vor
+(`outputs/stage1/s0.01_r0/report/…`, `outputs/stage1/s0.05_r0.5/report/…`). Erlaube mehrere
+Dateien oder ein Verzeichnis-Glob, damit die Vergleichstabelle beide Stufe-1-Zellen findet. Kein
+Treffer bleibt sichtbar `missing_in_stage_report`.
 
 ## Verboten
 
-SINDy-Konfigurationen ändern, auswählen oder neu tunen. Für Weak-SINDy keine Parameter auf
-Ergebnisse hin wählen. Interpolation. Julia-, Methoden- oder Kampagnencode ändern. Git,
-`codex/CURRENT_TASK.md` bearbeiten, `docs/` ändern, Läufe über 15 Minuten.
+Wie in WP-N34: keine Änderung an SINDy-Konfigurationen, keine Auswahl, keine Interpolation, kein
+Julia- oder Methodencode, kein Git, kein `docs/`, `codex/CURRENT_TASK.md` nicht bearbeiten.
 
 ## Abnahme
 
-1. Läuft **in deiner Sitzung** auf `outputs/stage1/data_export/index.csv` (System 1, alle vier
-   Bedingungen) durch. Jede Konfiguration erscheint, Fehler mit Grund.
-2. Die Kontrolle aus Punkt 6 ist bestanden, oder der Report sagt genau, woran sie scheitert.
-3. Tests mit Fixtures aus den echten Exportdateien, grün in deiner Sitzung.
-4. Der Report nennt die pysindy-Version, die Weak-SINDy-Konfigurationen und ihre Quelle, und die
-   Zahlen für System 1 als Tabelle, ohne Bewertung.
-5. Report `codex/reports/REPORT_WP_N34.md`, `STATUS.md` nach Protokoll.
+1. Kontrolle auf `outputs/wp_n34_control_export/index.csv`: bestanden, oder ein klar benannter
+   Befund mit Hashes. Ausgeführt **in deiner Sitzung**.
+2. F1, Precision und Recall stehen in `details.csv`. Ein Test mit einer Fixture aus echtem Export
+   ist grün.
+3. Die Vergleichstabelle für Stufe 1 enthält beide EvoGrow-Zellen, also (0,01; 0) und (0,05; 0,5).
+4. Report `codex/reports/REPORT_WP_N34B.md`, `STATUS.md` nach Protokoll.
