@@ -29,6 +29,18 @@ die zehn Konfigurationen):
 - **EvoGrow** bei (0,05; 0,5): Rekonstruktion 0,966, Generalisierung 0,9991, aber falsche Struktur
   (5 Terme).
 
+**Beide Metriken** (Design-Prinzip 9), Stufe-1-Bedingungen, je Methode über die 10 Konfigurationen;
+EvoGrow ist eine Zelle:
+
+| Bedingung | Methode | Struktur roh / gepruned | F1 Median | Generalisierung R² > 0,9 |
+|---|---|---|---|---|
+| (0,01; 0) | SINDy | 7 / 7 von 10 | 1,0 | 8 von 10 |
+| (0,01; 0) | Weak-SINDy | 9 / 9 von 10 | 1,0 | 10 von 10 |
+| (0,01; 0) | EvoGrow | ja / ja | 1,0 | ja |
+| (0,05; 0,5) | SINDy | 0 / 0 von 10 | 0,73 | 2 von 10 |
+| (0,05; 0,5) | Weak-SINDy | **5 / 5 von 10** | 0,83 | 8 von 10 |
+| (0,05; 0,5) | EvoGrow | **nein / nein** | 0,57 (2 von 5 Termen richtig) | ja |
+
 **Konsequenz für die These, ausdrücklich festgehalten:** Die Hypothese „der Fit auf der
 integrierten Trajektorie ist robuster als Ableitungsschätzung“ trifft gegen normales SINDy zu. Gegen
 Weak-SINDy, das die Ableitung ebenfalls umgeht, ist sie auf diesem System **nicht gestützt**.

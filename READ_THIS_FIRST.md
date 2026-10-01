@@ -10,49 +10,48 @@ zweites davon. Alles Dauerhafte gehört dorthin, nach `PAPER_1.md` oder ins `DIA
 **Regeln:** wird immer **vollständig überschrieben**, nie angehängt. Was älter als ein paar Tage
 ist, ist vermutlich falsch — dann gilt `CLAUDE.md`.
 
-**Stand: 2026-10-01, Abend.** Push und `oc apply` macht der Nutzer.
+**Stand: 2026-10-01, spät.** Push und `oc apply` macht der Nutzer. Die Reihenfolge der Arbeit steht
+im Backlog in `CLAUDE.md` („Backlog Paper 1“). Laufort: unter 1 h auf dem Laptop, unter 24 h auf
+Orion, darüber nur auf ausdrückliche Entscheidung.
 
 ---
 
 ## 1. Was läuft
 
-| Lauf | Wo | Stand 01.10. 15:40 | Anmerkung |
+| Lauf | Wo | Stand | Anmerkung |
 |---|---|---|---|
-| C-3 | Orion, `221a3a7` | 177 / 180 | 904 fertig 01.10. 07:50 UTC. Offen: 897 (Level 28), 899 (29), 905 (28), Lorenz `pretune_on`; Ende ~2.–5.10.; keine Deadline |
-| WP-T1f | Orion, `1db1193` | 27 / 36 | rechnen: 54 IC2 (182/185), 55 IC2 (163), 56 IC2 (164), 58 IC1 (29), 58 IC2 (80), 59 IC1 (87); warten: 59 IC2, 61 ×2. **Risiko:** 58 IC1 schaffte 7 Zeilen in 11,5 h — bei dem Tempo reicht die Deadline 12.10. nicht. Morgen nachsehen |
-| WP-N32 | Codex, lokal | übergeben | Datenbedingung und `clamp_val` im Kampagnenpfad. Julia-Abnahme macht Claude (Kommandos im Report) |
+| C-3 | Orion, `221a3a7` | 177 / 180 | 897 (Level 28), 899 (29), 905 (28); Ende ~2.–5.10. |
+| WP-T1f | Orion, `1db1193` | 28 / 36 | **58 IC1 steht fast still (30/185)** → erreicht die Deadline 12.10. voraussichtlich nicht; die Zeilen bleiben erhalten. 61 ×2 wartet |
 
-Statusseite „EvoODE auf Orion“: https://claude.ai/artifact/4sq6HhRsnxgrFVqVF2trBx (Version 20) — bei
-jedem Statuswechsel neu veröffentlichen.
+Statusseite „EvoODE auf Orion“: https://claude.ai/artifact/4sq6HhRsnxgrFVqVF2trBx (Version 21).
 
-## 2. Was heute entschieden wurde
+## 2. Seit heute Abend erledigt (alles committet, nicht gepusht)
 
-Scope-Erweiterung vom 01.10.: Paper 1 ist ein Fundament-Paper und genau das Phase-C-EvoGrow **mit**
-[−10, 10]. Neu eingefroren sind C-6 (Robustheit), C-7 (PySR) und C-8 (Grenzen-Diagnose). Verbindlich
-sind `PAPER_1.md` („Scope Extension“) und `docs/paper1_phaseC_benchmark_plan.md` §9; die
-Zusammenfassung steht im DIARY vom 01.10. (oberster Eintrag).
+WP-N32 (Datenbedingung, `clamp_val`), WP-N33a/a2/a3 (Auswertung gegen die saubere Wahrheit,
+Tor-Bericht, CSV-Fix), WP-N33b (Orion-Manifeste, **nicht gestartet**), WP-N34/N34b (SINDy und
+Weak-SINDy auf Rausch-Daten). Stufe 0 und B-01 sind bestanden, Stufe 1 ist gelaufen. Alle Zahlen
+stehen im DIARY vom 01.10.
 
-## 3. Nächste Schritte — die Reihenfolge steht im Backlog in `CLAUDE.md`
+## 3. Wartet auf den Nutzer
 
-**Gestuft, mit Toren** (§9.4a). Laufort: unter 1 h auf dem Laptop, unter 24 h auf Orion, darüber
-nur auf ausdrückliche Entscheidung.
+1. **Tor S1:** Startet Stufe 2? Vorschlag: 17 und 24 auf dem Laptop, 18 per
+   `k8s/phase_c_robustness_stage2_system18_job.yaml`.
+2. **Push auf GitLab** (Commit ≥ `49b0613`). Erst danach baut die CI das Image, das Stufe 2 / System
+   18 und B-02 (`k8s/phase_c_c8_oracle_b02_job.yaml`, Obergrenze ~74 h über drei Grenzen) brauchen.
+   B-02 hat vorab kein Tor. Es kann starten, sobald das Image da ist und die Eingabe auf dem NFS
+   liegt (`SCRIPTS.md`).
+3. **WP-T1f 58 IC1:** Teildaten hinnehmen, oder etwas anderes?
+4. **Track S (Abbruchkriterium):** S-02 (Struktur je Level in den Heartbeat, verhaltensneutral)
+   freigeben?
 
-1. **R-02:** WP-N32 abnehmen. `codex/STATUS.md` und den Report lesen, die Julia-Tests fahren, dann
-   **Stufe 0** (System 1 bei (0, 0) bitgleich zu C-1) und B-01 (Orakel System 1, Grenze 10 bitgleich
-   zu C-5), dann committen.
-2. **R-03:** WP-N33a an Codex: die nachträgliche saubere Auswertung.
-3. **R-04, Stufe 1:** System 1 mit beiden Bedingungen auf dem Laptop, 1 h Timeout. Danach **Tor S1**:
-   alle Zahlen an den Nutzer. Er entscheidet über Stufe 2.
+## 4. Was auf den Tisch muss
 
-Parallel, unabhängig vom Rauschen: P-01 bis P-03 (C-3 und WP-T1f einsammeln, endgültige
-Phase-C-Auswertung).
-
-## 4. Offen, klein
-
-- `test_phase_a_evaluation_does_not_overwrite_frozen_artifacts`: ein Umgebungsartefakt, den Test
-  von der lokalen Datei entkoppeln (kleines Codex-Paket).
+**Weak-SINDy ist auf System 1 unter Rauschen der stärkste Gegner.** Bei (0,05; 0,5) trifft es in 5
+von 10 Konfigurationen die Struktur, EvoGrow nicht. Die Generalisierung ist bei beiden gut. Gegen
+normales SINDy trägt die Robustheits-These, gegen Weak-SINDy auf diesem System nicht. Ein System
+entscheidet nichts, aber Stufe 2 muss genau das klären.
 
 ## 5. Git
 
-Gepusht bis `1db1193`. Lokal und **nicht gepusht** sind alle Commits seit `14dc9b5`, darunter die
-Commits vom 01.10.
+Gepusht bis `1db1193`. Lokal sind alle Commits seit `14dc9b5`, zuletzt die WP-N32- bis
+WP-N34b-Arbeit vom 01.10.
