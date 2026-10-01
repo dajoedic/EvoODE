@@ -6,6 +6,52 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ## 2026-10-01
 
+### WP-N32 abgenommen, Stufe 0 bestanden, B-01: Die Grenze wirkt auch dort, wo sie nicht bindet
+
+<!-- 86137f8 -->
+
+**WP-N32 (Codex) abgenommen.** Alle 31 Julia-Tests sind grün, darunter
+`phase_c_fingerprint() == "0c9672de35c75a9d"` bei `clamp_val = 10`. Die Screening-Grenze war
+schon vorher an `BFGS_CLAMP_VAL` gekoppelt (`SCREENING_BFGS_CLAMP_VAL = BFGS_CLAMP_VAL`), der
+Standardpfad bleibt also unberührt. Die Prüfung auf unregelmäßige Raster findet keinen Pfad, der
+einen Fehler wirft. Es gibt aber einen Unterschied in der Bedeutung: Die Richardson-Schätzung der
+Kappe vergröbert nach **Index** (`_cap_coarsened_trajectory`, jeder zweite Punkt) und nicht nach
+Zeit. Unter Ausdünnung misst sie also etwas anderes als auf dem gleichmäßigen Raster. Das wird
+ausgewiesen, nicht repariert.
+
+**Stufe 0 bestanden.** System 1, Seed 42, beide IC-Sets, über den neuen Pfad bei (0, 0, 10):
+`loss`, `support_terms`, Koeffizienten (hex-genau), `total_loss_evals` (1.609 und 43.758) und
+`stage_caps` sind **bitgleich** zu C-1. Das mitgelieferte Vergleichsskript stürzt dabei ab, weil es
+die Heartbeat-Dateien mitliest. Es hätte nichts fälschlich als bestanden gemeldet. Geprüft wurde von
+Hand, der Fix ist Teil von WP-N33a.
+
+**B-01: Orakel auf System 1, Grenzen 10 / 1000 / unbeschränkt.** Grenze 10 ist auf allen 6 Zellen
+**bitgleich zum C-5-Orakel**, die Kontrolle ist also bestanden. Die Kennung `f2a560caf05efe51` statt
+`925e3957a7a884e2` ist erwartet, weil der Orakel-Fingerprint Pfad und Hash der Eingabe enthält und
+die Eingabe auf System 1 gefiltert war.
+
+| Zelle | 10 | 1000 | unbeschränkt |
+|---|---|---|---|
+| seed 123, IC 1 | 1,51e-14 | 1,51e-14 (4 Evals mehr) | wie 1000 |
+| seed 123, IC 2 | 2,65e-15 | bitgleich | bitgleich |
+| seed 42, IC 1 | **3,72 (R² 0,33)** | **8,6e-15 (R² 1,0)**, nach 20.000 Evals = Budgetgrenze | wie 1000 |
+| seed 42, IC 2 | 2,65e-15 | 2,72e-15 | wie 1000 |
+| seed 7, IC 1 | 22,3 (R² −3,0) | 10,8 (R² −0,94) | 15,7 (R² −1,8) |
+| seed 7, IC 2 | 6,77 (R² −13) | 0,79 (R² −0,65) | 0,48 (R² 0,02) |
+
+**Lesart, vorsichtig.** Alle wahren Koeffizienten von System 1 liegen unter 0,4, die Grenze schließt
+die Wahrheit also nicht aus. Trotzdem ändert sie 5 von 6 Fits. Der Grund: Die Grenze projiziert
+**Zwischeniterationen** des Optimierers, nicht nur das Ergebnis, und lenkt damit den Pfad in ein
+anderes Becken. Die Grenze ist also kein reiner Machbarkeitsrand, sondern greift in die Dynamik des
+Fits ein, auch auf machbaren Systemen. Für C-8 heißt das: Die 144 Refits der überall machbaren
+Systeme messen nicht „nichts“, sie messen genau diesen Effekt. Seed 7 bleibt unter allen Grenzen in
+einem schlechten Optimum. Das ist die bekannte Einseitigkeit des Orakels (Retry nur bei
+`fit_attempt_failed`). **6 Fits auf einem System entscheiden nichts.** Die Stabilitätskriterien
+werden erst an Tor B2 ausgewertet.
+
+**B-02 kann nicht auf den Laptop.** Dass 126 Orakel-Zellen × 3 Grenzen unter 1 h bleiben, ist
+nicht beweisbar. B-02 läuft deshalb auf Orion, mit Manifest aus WP-N33b.
+
 ### Gestufter Einstieg statt Hammer: Laufort-Regel neu, Backlog festgeschrieben
 
 <!-- 1c53bc4 -->

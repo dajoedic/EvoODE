@@ -237,8 +237,8 @@ Mark items done here with date and commit; never delete them.
 
 | # | Item | Who | Where | Gate after? |
 |---|---|---|---|---|
-| R-01 | WP-N32: data condition (noise, subsampling) and `clamp_val` in the campaign path | Codex | — | — |
-| R-02 | Accept WP-N32: Julia tests; **stage 0** control, system 1 at (0, 0) through the new path, bit-identical to C-1 | Claude | laptop | hard stop if not bit-identical |
+| R-01 | ~~WP-N32: data condition (noise, subsampling) and `clamp_val` in the campaign path~~ **done 2026-10-01, `86137f8`** | Codex | — | — |
+| R-02 | ~~Accept WP-N32: Julia tests; **stage 0** control, system 1 at (0, 0) through the new path, bit-identical to C-1~~ **done 2026-10-01**: 31/31 tests, system 1 seed 42 both ICs bit-identical on all five fields | Claude | laptop | hard stop if not bit-identical |
 | R-03 | Post-hoc clean evaluation (reconstruction + generalization against clean targets, predicted trajectories stored) | Codex (WP-N33a) | — | — |
 | R-04 | **Stage 1** — system 1, seed 42, IC 1, (0.01, 0) and (0.05, 0.5) | Claude | laptop, 1 h timeout | **gate S1** |
 | R-05 | **Stage 2** — the cheap ones: systems 17, 18 (dim 1), 24 (dim 2), same two conditions, seed 42, IC 1 | Claude / user | laptop if < 1 h by construction, else Orion ≤ 24 h | **gate S2** |
@@ -252,8 +252,8 @@ Mark items done here with date and commit; never delete them.
 
 | # | Item | Where | Gate after? |
 |---|---|---|---|
-| B-01 | Oracle, system 1, bounds 10 / 1000 / Inf; bound 10 bit-identical to C-5 | laptop | — |
-| B-02 | Oracle, all dim-1/2 exact systems (21), three bounds | laptop if < 1 h, else Orion | **gate B2** |
+| B-01 | ~~Oracle, system 1, bounds 10 / 1000 / Inf; bound 10 bit-identical to C-5~~ **done 2026-10-01**: bound 10 bit-identical 6/6; looser bounds change 5 of 6 fits although all true coefficients are < 1 (`DIARY.md`) | laptop | — |
+| B-02 | Oracle, all dim-1/2 exact systems (21), three bounds — **< 1 h not provable, so Orion via WP-N33b** | Orion ≤ 24 h | **gate B2** |
 | B-03 | Oracle, dim 3/4 (52, 54–59, 61, 63), three bounds — completes the 540 refits | Orion ≤ 24 h per shard | **gate B3**: stability criteria §9.6 |
 | B-04 | Search, systems 1 and 24, bounds 1000 / Inf | laptop | — |
 | B-05 | Search, system 52, then 57, bounds 1000 / Inf | Orion ≤ 24 h | **gate B5** |
