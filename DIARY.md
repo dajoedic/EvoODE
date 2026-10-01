@@ -10,9 +10,14 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 **Stand:** Der Lauf auf den vier Stufe-1-Datenbedingungen von System 1 funktioniert. Alle Hashes sind
 geprüft, und alle 80 Zeilen (2 Methoden × 10 Konfigurationen × 4 Bedingungen) sind `success` bzw.
-divergiert mit Grund. **Nicht abgenommen**, weil die verlangte C-4-Reproduktionskontrolle im Code
-nicht umgesetzt ist und Structural F1 fehlt. Beides ist in WP-N34b bei Codex. Die Zahlen unten sind
-deshalb vorläufig.
+divergiert mit Grund. **Abgenommen nach WP-N34b.** C-4-Kontrolle (Systeme 1 und 24, beide IC-Sets, (0, 0)): Trajektorien
+per Hash 4/4 identisch mit C-4, Fit- und Integrationsstatus 80/80, aktive Terme roh und gepruned
+80/80, R² 77/80 bis 1e-12. **Dokumentierte Ausnahme:** Die 3 abweichenden R²-Werte sind Zeilen, die
+in **beiden** Läufen divergieren (R² zwischen −8e17 und −2e48). Dort ist der Wert numerischer Müll.
+Das Skript endet deshalb streng mit Exit 1. Die Regel wird nicht still aufgeweicht. Die
+Nachschärfung „beidseitig divergiert gilt als gleich“ steht als kleiner Punkt im Backlog.
+Koeffizienten sind nicht vergleichbar, weil C-4 keine speichert; die identischen aktiven Terme
+decken das ab. Structural F1, Precision und Recall stehen jetzt in `details.csv`.
 
 **Was die Zahlen zeigen** (System 1, IC 1, eine Realisierung; R² gegen die saubere Wahrheit; über
 die zehn Konfigurationen):

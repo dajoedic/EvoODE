@@ -1,4 +1,5 @@
 status: done
-task:   WP-N33b
-report: codex/reports/REPORT_WP_N33B.md
-note:   Orion templates, B-02 input filter, generated input, script docs, and local validation are complete.
+task:   WP-N34b
+report: codex/reports/REPORT_WP_N34B.md
+note:   Implemented; C-4 control reports matched hashes and reference_missing_coefficients with 3 diverged-row R2 deltas.
+

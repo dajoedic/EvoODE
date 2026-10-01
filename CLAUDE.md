@@ -245,7 +245,7 @@ Mark items done here with date and commit; never delete them.
 | R-06 | **Stage 3** — one expensive: system 41 (dim 2), same two conditions, seed 42, IC 1 | user | Orion ≤ 24 h | **gate S3** |
 | R-07 | Confirm the noise-realization design (3 realizations, r ↔ seed r) | user | — | before any multi-seed run |
 | R-08 | **Grid decision** from measured costs: scope, seeds, and what happens to cells that would need ≥ 24 h | user | — | **gate G** |
-| R-09 | Baselines on the same data, same stages first: SINDy, Weak-SINDy, ODEFormer | Codex / Claude | laptop / Orion | with S2 |
+| R-09 | Baselines on the same data, same stages first: ~~SINDy, Weak-SINDy~~ **built 2026-10-01 (WP-N34/N34b), C-4 control passed with one documented exception; ran on stage 1**; ODEFormer still open | Codex / Claude | laptop / Orion | with S2 |
 | R-10 | PySR work package (budget, harness, cost estimate) | Codex | — | before PySR runs |
 
 **Track B — bound diagnostic (C-8), parallel, staged the same way**
@@ -278,7 +278,7 @@ Mark items done here with date and commit; never delete them.
 
 **Small:** decouple `test_phase_a_evaluation_does_not_overwrite_frozen_artifacts` from the local
 file; five more tests read files under `outputs/` (`REPORT_WP_N33A3.md`) and should be frozen the
-same way.
+same way. `run_phasec_noise_sindy_baselines.py` control: count rows diverged on both sides as equal (today exit 1 on three garbage R² values).
 
 ### Settled — do not re-open
 
