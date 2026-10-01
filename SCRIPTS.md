@@ -701,6 +701,77 @@ python analysis/scripts/aggregate/compare_phasec_controls.py \
   --reference-oracle outputs/wp_n3_oracle_refit_phase_c
 ```
 
+### WP-N33b Orion templates
+
+These are command templates, not commands to run during a Codex session. Substitute `<SHA>` with
+the pushed image commit that includes WP-N32 and WP-N33a, commit `49b0613` or later.
+
+Preparation:
+
+```powershell
+python analysis/scripts/aggregate/prepare_phasec_b02_oracle_input.py `
+  --input outputs/phase_c_campaign_221a3a7/history.jsonl `
+  --output outputs/phase_c_c8_oracle_b02_input/history.jsonl
+
+julia --project=. --startup-file=no studies/regression/wp_n3_oracle_refit.jl `
+  --campaign paper1_phaseC_v1 `
+  --input outputs/phase_c_c8_oracle_b02_input/history.jsonl `
+  --output-dir outputs/phase_c_c8_oracle_b02_bound10 `
+  --clamp-val 10 `
+  --estimate-cost
+```
+
+Upload the B-02 input to NFS through a running pod before the B-02 Jobs:
+
+```powershell
+oc exec <running-pod> -- mkdir -p /outputs/phase_c_c8_oracle_b02_<SHA>/input
+oc cp outputs/phase_c_c8_oracle_b02_input/history.jsonl `
+  <running-pod>:/outputs/phase_c_c8_oracle_b02_<SHA>/input/history.jsonl
+```
+
+Apply templates:
+
+```powershell
+(Get-Content k8s\phase_c_robustness_stage2_system18_job.yaml) -replace '<COMMIT_SHA>','<SHA>' | oc apply -f -
+(Get-Content k8s\phase_c_c8_oracle_b02_job.yaml) -replace '<COMMIT_SHA>','<SHA>' | oc apply -f -
+```
+
+Read progress:
+
+```powershell
+oc -n scch-das get jobs,pods -l hpc.scch.at/service=evoode-phase-c-robustness-stage2
+oc -n scch-das get jobs,pods -l hpc.scch.at/service=evoode-phase-c-c8-oracle-b02
+oc -n scch-das logs job/evoode-phase-c-robustness-stage2-bootstrap
+```
+
+Collect and compare:
+
+```bash
+oc exec <running-pod> -- sh -c 'cd /outputs/phase_c_robustness_stage2_<SHA> && tar czf - manifest.csv smoke_manifest.csv tasks smoke' \
+  > outputs/phase_c_robustness_stage2_<SHA>.tgz
+tar xzf outputs/phase_c_robustness_stage2_<SHA>.tgz -C outputs/phase_c_robustness_stage2_<SHA>
+
+python - <<'PY'
+import json, math
+from pathlib import Path
+
+candidate = json.loads(Path("outputs/phase_c_robustness_stage2_<SHA>/smoke/tasks/cell_000001.jsonl").read_text())
+reference = json.loads(Path("outputs/stage1/s0.01_r0/tasks/cell_000001.jsonl").read_text())
+fields = ["loss", "support_terms", "total_loss_evals", "stage_caps", "observed_data_sha256"]
+for field in fields:
+    if candidate.get(field) != reference.get(field):
+        raise SystemExit(f"{field} differs")
+if candidate.get("model_terms") != reference.get("model_terms"):
+    raise SystemExit("coefficients differ")
+print("smoke record matches reference fields")
+PY
+
+for bound in 10 1000 Inf; do
+  oc exec <running-pod> -- sh -c "cd /outputs/phase_c_c8_oracle_b02_<SHA>/bound_$bound && tar czf - ." \
+    > outputs/phase_c_c8_oracle_b02_<SHA>_bound_$bound.tgz
+done
+```
+
 ### WP-T1f warm-start neighbourhood repair
 
 WP-T1f repairs the WP-T1d neighbourhood probe by comparing neighbours against a true-support fit
