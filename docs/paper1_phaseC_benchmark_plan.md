@@ -864,6 +864,8 @@ dim 2 41 median, 44 q90) and are reused there.
 
 ### 9.4a — Staged entry into C-6: one system, the cheap ones, one expensive, then the grid
 
+**Revised 2026-10-01 (evening, user): no hard time cuts.** Wherever this section and §9.6 name a timeout, a deadline or a run that "hits its limit", read instead: the run gets a written expected runtime and is raised with the user when it clearly exceeds it; the user decides whether it continues, moves or stops. A cut burns the compute it was meant to save. The run-location table in `CLAUDE.md` decides where a run starts, not when it ends. The paragraphs below are kept as frozen.
+
 **Principle (user, 2026-10-01): guided, not overgrown.** Each stage answers questions written here
 **before** it runs. At its gate Claude reports exactly those numbers — every cell, nothing selected —
 and the user decides whether the next stage starts. Run locations: < 1 h laptop, < 24 h Orion,

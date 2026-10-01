@@ -701,10 +701,16 @@ python analysis/scripts/aggregate/compare_phasec_controls.py \
   --reference-oracle outputs/wp_n3_oracle_refit_phase_c
 ```
 
-### WP-N33b Orion templates
+### WP-N33c Orion templates
 
 These are command templates, not commands to run during a Codex session. Substitute `<SHA>` with
-the pushed image commit that includes WP-N32 and WP-N33a, commit `49b0613` or later.
+the pushed image commit that includes WP-N32, WP-N33a, and WP-N35, commit `eb630b5` or later. The
+stage-2 Orion template runs Systems 18 and 24 at `(sigma,rho)=(0.01,0)` and `(0.05,0.5)` with seed
+42, IC set 1, realization 1, and `clamp_val = 10`. Local comparison data are indexed in
+`outputs/stage2/data_export/index.csv`, which contains Systems 17, 18, and 24. The bootstrap stays
+inside the campaign image's dependency set: `generate_phase_c_manifest.jl` writes the two full
+robustness manifests, and `select_phase_c_stage2_manifest.jl` selects and renumbers the four Orion
+rows plus the System 1 smoke row.
 
 Preparation:
 
@@ -732,7 +738,7 @@ oc cp outputs/phase_c_c8_oracle_b02_input/history.jsonl `
 Apply templates:
 
 ```powershell
-(Get-Content k8s\phase_c_robustness_stage2_system18_job.yaml) -replace '<COMMIT_SHA>','<SHA>' | oc apply -f -
+(Get-Content k8s\phase_c_robustness_stage2_orion_job.yaml) -replace '<COMMIT_SHA>','<SHA>' | oc apply -f -
 (Get-Content k8s\phase_c_c8_oracle_b02_job.yaml) -replace '<COMMIT_SHA>','<SHA>' | oc apply -f -
 ```
 
@@ -765,6 +771,12 @@ if candidate.get("model_terms") != reference.get("model_terms"):
     raise SystemExit("coefficients differ")
 print("smoke record matches reference fields")
 PY
+
+python analysis/scripts/aggregate/robustness_stage_report.py \
+  --stage-records outputs/phase_c_robustness_stage2_<SHA>/tasks \
+  --reference-c1 outputs/phase_c_campaign_221a3a7 \
+  --export-index outputs/stage2/data_export/index.csv \
+  --output-dir outputs/phase_c_robustness_stage2_<SHA>/robustness_stage_report
 
 for bound in 10 1000 Inf; do
   oc exec <running-pod> -- sh -c "cd /outputs/phase_c_c8_oracle_b02_<SHA>/bound_$bound && tar czf - ." \

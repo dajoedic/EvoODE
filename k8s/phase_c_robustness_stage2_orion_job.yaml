@@ -1,10 +1,12 @@
-# WP-N33b / R-05 Stage 2, System 18. Replaced by phase_c_robustness_stage2_orion_job.yaml in WP-N33c.
-# Purpose: build two Phase-C robustness rows on Orion, smoke the new WP-N32/WP-N33a path,
-# then run System 18 for (sigma,rho)=(0.01,0) and (0.05,0.5), seed 42, IC set 1,
-# realization 1, clamp_val=10. The stage2 run has 2 cells; the smoke has 1 cell.
-# Deadline rationale: bootstrap is capped at 1 h, smoke at 1 h, and the 2-cell dim-1
-# run is capped at the Orion maximum allowed here, 24 h. Backlog: R-05.
-# Image <COMMIT_SHA> must include WP-N32 and WP-N33a; commit 49b0613 or later.
+# WP-N33c / R-05 Stage 2, Orion Systems 18 and 24.
+# Purpose: build four Phase-C robustness rows on Orion, smoke the new WP-N32/WP-N33a
+# path, then run Systems 18 and 24 for (sigma,rho)=(0.01,0) and (0.05,0.5),
+# seed 42, IC set 1, realization 1, clamp_val=10. The stage2 run has 4 cells;
+# the smoke has 1 cell and matches outputs/stage1/s0.01_r0/tasks/cell_000001.jsonl.
+# No activeDeadlineSeconds (user, 2026-10-01: no hard time cuts). Expected runtime: bootstrap
+# minutes, smoke < 5 min, the 4 cells hours each (system 24 exceeded 55 min on the laptop);
+# Claude raises it with the user if a cell clearly exceeds ~24 h. Backlog: R-05.
+# Image <COMMIT_SHA> must include WP-N32, WP-N33a, and WP-N35; commit eb630b5 or later.
 apiVersion: batch/v1
 kind: Job
 metadata:
@@ -19,7 +21,6 @@ metadata:
     hpc.scch.at/responsibility: joedicke
 spec:
   ttlSecondsAfterFinished: 3600
-  activeDeadlineSeconds: 3600
   backoffLimit: 1
   template:
     metadata:
@@ -58,7 +59,7 @@ spec:
                 --stage2-indices "$BASE/indices_stage2.txt" \
                 --smoke-output "$BASE/smoke_manifest.csv" \
                 --smoke-indices "$BASE/indices_smoke.txt" \
-                --stage2-systems 18 \
+                --stage2-systems 18,24 \
                 --smoke-system 1 \
                 --initial-condition-set 1 \
                 --seed 42
@@ -84,11 +85,11 @@ spec:
             server: nfs.orion.scch.at
             path: /bigdata
 ---
-# WP-N33b / R-05 Stage 2 smoke.
+# WP-N33c / R-05 Stage 2 smoke.
 # Purpose: run one System 1 robustness cell at (sigma,rho)=(0.01,0), seed 42,
 # IC set 1, realization 1, clamp_val=10, proving the image carries the new path.
-# Deadline rationale: one dim-1 smoke cell is capped at 1 h. Backlog: R-05.
-# Image <COMMIT_SHA> must include WP-N32 and WP-N33a; commit 49b0613 or later.
+# No deadline. Expected: one dim-1 smoke cell, < 5 min. Backlog: R-05.
+# Image <COMMIT_SHA> must include WP-N32, WP-N33a, and WP-N35; commit eb630b5 or later.
 apiVersion: batch/v1
 kind: Job
 metadata:
@@ -106,7 +107,6 @@ spec:
   completionMode: Indexed
   completions: 1
   parallelism: 1
-  activeDeadlineSeconds: 3600
   backoffLimit: 2
   template:
     metadata:
@@ -156,37 +156,36 @@ spec:
             server: nfs.orion.scch.at
             path: /bigdata
 ---
-# WP-N33b / R-05 Stage 2, System 18.
-# Purpose: run exactly two robustness cells for System 18, variant
+# WP-N33c / R-05 Stage 2, Systems 18 and 24.
+# Purpose: run exactly four robustness cells for Systems 18 and 24, variant
 # evogrow_v2_2_stage_capped, seed 42, IC set 1, realization 1, clamp_val=10:
-# (sigma,rho)=(0.01,0) and (0.05,0.5).
-# Deadline rationale: 2 dim-1 cells, bounded by Orion's requested 24 h limit. Backlog: R-05.
-# Image <COMMIT_SHA> must include WP-N32 and WP-N33a; commit 49b0613 or later.
+# each system at (sigma,rho)=(0.01,0) and (0.05,0.5).
+# No deadline. Expected: hours per cell; raised with the user if a cell clearly exceeds ~24 h. Backlog: R-05.
+# Image <COMMIT_SHA> must include WP-N32, WP-N33a, and WP-N35; commit eb630b5 or later.
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: evoode-phase-c-robustness-stage2-system18
+  name: evoode-phase-c-robustness-stage2-orion
   namespace: scch-das
   labels:
     app.kubernetes.io/name: evoode
     app.kubernetes.io/part-of: evoode-phase-c
-    app.kubernetes.io/component: robustness-stage2-system18
+    app.kubernetes.io/component: robustness-stage2-orion
     app.kubernetes.io/managed-by: kubectl
     hpc.scch.at/service: evoode-phase-c-robustness-stage2
     hpc.scch.at/responsibility: joedicke
 spec:
   ttlSecondsAfterFinished: 3600
   completionMode: Indexed
-  completions: 2
-  parallelism: 2
-  activeDeadlineSeconds: 86400
+  completions: 4
+  parallelism: 4
   backoffLimit: 4
   template:
     metadata:
       labels:
         app.kubernetes.io/name: evoode
         app.kubernetes.io/part-of: evoode-phase-c
-        app.kubernetes.io/component: robustness-stage2-system18
+        app.kubernetes.io/component: robustness-stage2-orion
         hpc.scch.at/service: evoode-phase-c-robustness-stage2
         hpc.scch.at/responsibility: joedicke
     spec:

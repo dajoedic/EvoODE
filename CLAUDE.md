@@ -33,20 +33,24 @@ in one of the files above.
 All communication with the user happens in **German**.
 Code, comments, docstrings, and commit messages remain in **English**.
 
-**Where a run executes — revised 2026-10-01, for the staged start of the robustness work.**
+**Where a run executes — revised 2026-10-01 (evening, user): no hard time cuts.**
 
-| Runtime, bounded by construction | Where | Who starts it |
+| Expected runtime | Where it starts | Who starts it |
 |---|---|---|
 | **< 1 h** | laptop | Claude, after the stage's gate is open |
-| **< 24 h** | Orion, `activeDeadlineSeconds` ≤ 24 h per pod | user (`oc apply`) |
-| **≥ 24 h** | nowhere without an explicit decision by the user for that run | user |
+| **< 24 h** | Orion | user (`oc apply`) |
+| **≥ 24 h** | only after a discussion with the user for that run | user |
 
-"Bounded by construction" means a hard limit that ends the run — a process timeout on the laptop,
-`activeDeadlineSeconds` on Orion, plus the per-fit evaluation budget — not an estimate. A run that
-hits its limit is a **result** (it costs more than the stage allowed) and is reported, never
-silently re-run with more time. "For the start": the user revisits the limits once the staged
-robustness work has measured real costs. The paragraph below is the 2026-09-22 rule it replaces;
-its reasoning still holds.
+The table decides **where a run starts, not when it is ended.** There are **no hard time limits** —
+no `timeout` on the laptop, no `activeDeadlineSeconds` on Orion — unless agreed in a discussion for
+that specific run. Reason (user): a cut just before the finish burns exactly the compute it was
+meant to save (system 24, stage 2: twice 55 min of laptop time, no record). Instead, every run gets
+a **written expected runtime** before it starts; when a run clearly exceeds it, Claude raises it and
+the user decides: let it run, move it, or stop it. The per-fit loss-evaluation budget is part of the
+frozen method, not a time cut, and stays.
+
+*Superseded the same day:* a "bounded by construction" rule with hard limits (laptop timeout 1 h,
+Orion deadline 24 h, a run hitting its limit counted as a result).
 
 *Superseded rule of 2026-09-22:* anything that cannot be shown with certainty to
 finish in **under 8 hours** runs on the Orion cluster, never on the working laptop. The reason is
@@ -228,7 +232,7 @@ file is scheduled for the status review after Phase C ends.
 and only then the grid. Every stage ends at a **gate**: Claude reports the stage's numbers against
 the questions written down *before* it ran, the user decides whether the next stage starts. No
 stage starts because the previous one "looked fine" by itself. Run locations follow the table in
-"Collaboration" (< 1 h laptop, < 24 h Orion, ≥ 24 h only on explicit decision). Specs:
+"Collaboration" (< 1 h laptop, < 24 h Orion, ≥ 24 h only after discussion; no hard time cuts). Specs:
 `docs/paper1_phaseC_benchmark_plan.md` §9; the stage questions: §9.4a.
 
 Mark items done here with date and commit; never delete them.

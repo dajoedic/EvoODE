@@ -1,8 +1,8 @@
 # WP-N33b / B-02 bound oracle, clamp_val=10.
 # Purpose: refit all 126 exact dim-1/2 C-1 cells from the filtered B-02 input.
 # This Job runs one of the three requested bounds; the full B-02 set is 378 refits.
-# Deadline rationale: 18 shards keep the inherited C-5 upper-bound shard size below
-# the 24 h Orion limit; Claude should confirm with --estimate-cost before apply.
+# No activeDeadlineSeconds (user, 2026-10-01: no hard time cuts). Expected runtime from
+# --estimate-cost (bound 10): upper bound 24.7 core-h over 126 cells, <= ~1.5 h per shard.
 # Backlog: B-02. Image <COMMIT_SHA> must include WP-N32 and WP-N33a; commit 49b0613 or later.
 apiVersion: batch/v1
 kind: Job
@@ -21,7 +21,6 @@ spec:
   completionMode: Indexed
   completions: 18
   parallelism: 18
-  activeDeadlineSeconds: 86400
   backoffLimit: 10
   template:
     metadata:
@@ -75,8 +74,8 @@ spec:
 # WP-N33b / B-02 bound oracle, clamp_val=1000.
 # Purpose: refit all 126 exact dim-1/2 C-1 cells from the filtered B-02 input.
 # This Job runs one of the three requested bounds; the full B-02 set is 378 refits.
-# Deadline rationale: 18 shards keep the inherited C-5 upper-bound shard size below
-# the 24 h Orion limit; Claude should confirm with --estimate-cost before apply.
+# No activeDeadlineSeconds (user, 2026-10-01: no hard time cuts). Expected runtime from
+# --estimate-cost (bound 10): upper bound 24.7 core-h over 126 cells, <= ~1.5 h per shard.
 # Backlog: B-02. Image <COMMIT_SHA> must include WP-N32 and WP-N33a; commit 49b0613 or later.
 apiVersion: batch/v1
 kind: Job
@@ -95,7 +94,6 @@ spec:
   completionMode: Indexed
   completions: 18
   parallelism: 18
-  activeDeadlineSeconds: 86400
   backoffLimit: 10
   template:
     metadata:
@@ -149,8 +147,8 @@ spec:
 # WP-N33b / B-02 bound oracle, clamp_val=Inf.
 # Purpose: refit all 126 exact dim-1/2 C-1 cells from the filtered B-02 input.
 # This Job runs one of the three requested bounds; the full B-02 set is 378 refits.
-# Deadline rationale: 18 shards keep the inherited C-5 upper-bound shard size below
-# the 24 h Orion limit; Claude should confirm with --estimate-cost before apply.
+# No activeDeadlineSeconds (user, 2026-10-01: no hard time cuts). Expected runtime from
+# --estimate-cost (bound 10): upper bound 24.7 core-h over 126 cells, <= ~1.5 h per shard.
 # Backlog: B-02. Image <COMMIT_SHA> must include WP-N32 and WP-N33a; commit 49b0613 or later.
 apiVersion: batch/v1
 kind: Job
@@ -169,7 +167,6 @@ spec:
   completionMode: Indexed
   completions: 18
   parallelism: 18
-  activeDeadlineSeconds: 86400
   backoffLimit: 10
   template:
     metadata:
