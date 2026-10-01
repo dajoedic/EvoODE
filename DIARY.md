@@ -8,6 +8,8 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ### Scheideweg nach dem Orakel: Was trägt, was offen ist, und was aus dem Juli wieder auf den Tisch gehört
 
+<!-- dbab970 -->
+
 **Die Lesart, die der Nutzer und Claude nach dem Orakel teilen.** Drei Messungen ergeben ein Bild:
 Der Loss erkennt die Wahrheit (WP-T1f, 0 von 351 Nachbarn unter dem Boden). Die Wahrheit ist schwer
 zu fitten (Orakel dim 2: ein Einzelfit kommt in 16 von 60 Fällen über R² 0,9). Die Suche weicht auf
