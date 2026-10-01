@@ -89,6 +89,8 @@ mit Freiheitsgradkorrektur 9/5.
   Außerdem liegt der Loss der Wahrheit wegen der verrauschten Anfangsbedingung über σ²·E[x²]: Die
   Methode startet am ersten beobachteten Punkt.
 
+**Bestätigt durch WP-N35 (Struktur je Level im Heartbeat, verhaltensneutral: Stufe 0 bitgleich zu C-1, Stufe-1-Record bis auf `git_hash`/`git_dirty` identisch):** Bei (0,05; 0,5) ist die beste Struktur in Level 1 genau `{1, u1}` (Loss 0,04806); Stufe 2 nimmt `u1²` hinzu (0,04059), Stufe 5 endet bei fünf Termen (0,03589). Ein Stopp am Rauschboden hätte die Wahrheit zurückgegeben.
+
 **Zwei Zellen auf einem System entscheiden nichts.** Der Befund ist ein Anfangsverdacht, kein
 Ergebnis. Für eine echte Rückschau braucht es die Struktur je Level in den Records. Das wäre ein
 Instrumentierungs-Paket, verhaltensneutral wie WP-N10.

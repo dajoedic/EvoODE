@@ -659,6 +659,21 @@ function active_model_terms(structure::StructureSpec, basis::AbstractBasis, para
     return terms_by_eq
 end
 
+function level_heartbeat_fields(snapshot, basis::AbstractBasis)
+    return Dict{Symbol, Any}(
+        :level => snapshot.level,
+        :stage => snapshot.stage,
+        :best_loss => snapshot.best_loss,
+        :best_terms => active_term_names(snapshot.best_structure, basis),
+        :best_params => active_model_terms(snapshot.best_structure, basis, snapshot.best_params),
+        :best_objective => snapshot.best_objective,
+        :accepted_new_best => snapshot.accepted_new_best,
+        :stage_transition => snapshot.stage_transition,
+        :previous_stage => snapshot.previous_stage,
+        :new_stage => snapshot.new_stage,
+    )
+end
+
 function r2_by_dimension(yhat::AbstractMatrix, y::AbstractMatrix)
     size(yhat) == size(y) || return nothing
     all(isfinite, yhat) || return nothing
@@ -824,6 +839,7 @@ function run_one(variant,
         showspeed = true,
         offset = 1,
     ) : nothing
+    basis = nothing
     level_callback = snapshot -> begin
         if inner_progress !== nothing
             next!(
@@ -838,13 +854,7 @@ function run_one(variant,
                 ],
             )
         end
-        write_heartbeat!(
-            heartbeat,
-            "level";
-            level = snapshot.level,
-            stage = snapshot.stage,
-            best_loss = snapshot.best_loss,
-        )
+        write_heartbeat!(heartbeat, "level"; level_heartbeat_fields(snapshot, basis)...)
     end
 
     write_heartbeat!(heartbeat, "start")
@@ -856,8 +866,8 @@ function run_one(variant,
         base_record["derivative_active_fractions"] = derivative_active_fractions(system, traj)
         optimizer = build_reference_optimizer(max_fit_attempts = max_fit_attempts, clamp_val = clamp_value)
         screening_optimizer = SCREENING_BUDGETS_ENABLED ? build_screening_optimizer(clamp_val = clamp_value) : nothing
-        strategy = variant.constructor(level_callback, screening_optimizer)
         basis = build_variant_basis(variant, dim)
+        strategy = variant.constructor(level_callback, screening_optimizer)
         options = build_options(seed)
 
         result = nothing
