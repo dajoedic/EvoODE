@@ -27,7 +27,7 @@ ausdrücklicher Erlaubnis, beides macht der Nutzer. **Keine harten Zeit-Cuts** (
 | WP-T1f | Orion | `1db1193` | 28/36 | Deadline entfernt (01.10.). 58 IC1 läuft langsam, das kann Tage dauern |
 | B-02 (Grenzen-Orakel dim 1/2) | Orion | `5dd1df8` | fast fertig | 3 Jobs × 18 Shards, viel schneller als die Obergrenze |
 | Stufe 2, gekappt (System 18, 24) | Orion | `5dd1df8` | 4 Zellen gestartet 02.10. ~01:30 | Smoke bitgleich zur lokalen Zelle. Erwartet: Stunden je Zelle |
-| Ungekappt unter Rauschen, System 1 und 17 | Laptop | lokal | 1 von 4 fertig | R-05b |
+| Ungekappt unter Rauschen, System 1 und 17 | Laptop | lokal | 2 von 4 fertig (σ 0,01: 1 und 17) | R-05b. Die Zellen bei (0,05; 0,5) liefen beim Archivieren des Chats noch. **Fehlt `outputs/uncapped_noise/s0.05_r0.5/cell_000002.jsonl` oder `cell_000194.jsonl`, nachrechnen:** `julia --project=. studies/regression/run_batch_cell.jl --manifest outputs/stage1/s0.05_r0.5/manifest.csv --output-dir outputs/uncapped_noise/s0.05_r0.5 2` bzw. mit `outputs/stage2/s0.05_r0.5/manifest.csv … 194` (Minuten) |
 
 Das schlanke Image `5dd1df8` (WP-N36: 202 statt 443 Pakete, bitgleich) baut in **13 min** statt bis zu ~3 h.
 
