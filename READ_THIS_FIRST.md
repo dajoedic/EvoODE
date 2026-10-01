@@ -36,6 +36,20 @@ Status lesen ohne eigenen Pod: `oc exec` in einen laufenden C-3-Pod, NFS unter `
 Online-Statusseite „EvoODE auf Orion“: https://claude.ai/artifact/4sq6HhRsnxgrFVqVF2trBx — bei
 jedem Statuswechsel neu veröffentlichen.
 
+## 2a. Morgen (02.10.): Rauschen und Abtastrate — vom Nutzer entschieden
+
+Plan, Kosten und Optionen: DIARY 01.10., „Plan: Rauschen und Abtastrate …“.
+
+1. **Claude** schreibt die vorab festgelegte Protokoll-Spezifikation: ODEFormer-Protokoll,
+   dim 1 und dim 2, Gegner SINDy, Weak-SINDy und ODEFormer auf dem vollständigen Raster, primäre
+   Metriken, geseedete Rauschziehung, Pilot mit Go-Kriterium. **Alles wird berichtet.**
+2. **Codex** baut Rauschen und Ausdünnung in den Kampagnenpfad ein (`codex/CURRENT_TASK.md`, mit
+   `codex exec` starten).
+3. **Pilot** auf Orion: Läuft jede Zelle unter Rauschen alle 30 Level durch? Danach entscheidet der
+   Nutzer über das EvoGrow-Raster: vollständig mit 3 Seeds ~39.000 h, vollständig mit 1 Seed
+   ~13.000 h, oder 3 Bedingungen ~5.900 h. Das ist jeweils eine Untergrenze. Ein Teilraster nur mit
+   vorab geschriebener Begründung.
+
 ## 2. Nächster Meilenstein: Statusgespräch — der Scheideweg
 
 Wenn C-3 und WP-T1f fertig sind (~5.–7.10.) und der Cluster leer ist. **Bis dahin nichts Neues auf
@@ -82,7 +96,7 @@ entscheidet, ob Punkt 4a eine Grundlage hat.
 
 ## 4. Offen, klein
 
-- **Codex ist ohne Tokens (Stand 29.09. abends).** Vorerst keine Codex-Pakete übergeben.
+- **Codex ist wieder verfügbar (Stand 01.10.).**
 
 - `test_phase_a_evaluation_does_not_overwrite_frozen_artifacts`: Die Ursache ist gefunden, es
   ist ein Umgebungsartefakt. Die lokale Datei `debug_results/generalization_summary.csv` fehlt,

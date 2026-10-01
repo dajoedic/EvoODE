@@ -6,6 +6,59 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ## 2026-10-01
 
+### Plan: Rauschen und Abtastrate als nächster Schritt — Kosten, Falle beim Abbruch, kein Teilraster ohne Begründung
+
+**Entschieden vom Nutzer:** Der nächste Schritt sind Rauschen und Abtastrate nach dem
+ODEFormer-Protokoll. C-3 und WP-T1f laufen zu Ende, ändern aber am Bild für Paper 1 nichts:
+C-3 fehlen noch vier Lorenz-Zellen, die per Konstruktion unerreichbar sind, und WP-T1f kann
+höchstens System 61 klären. Codex ist wieder verfügbar und setzt um, Start morgen.
+
+**Grundsatz des Nutzers: Alles wird berichtet, nichts wird herausgepickt.** Das Raster wird vor
+dem ersten Lauf vollständig festgelegt, und jede Zelle erscheint im Ergebnis. Rechnen wir vom
+Literaturraster (7 Rauschstufen × 3 Ausdünnungen) nur einen Teil, muss die Begründung **vor** dem
+Lauf dastehen, sonst ist schon die Auswahl angreifbar.
+
+**Bisheriger Rechenaufwand auf Orion: rund 23.100 Kernstunden** (Phase B 5.529 inkl. Pilot,
+dim-2-Probe 2.000, C-1 5.870, C-2 6.316, C-3 bisher ~3.026, WP-T1f bisher ~338, Kleinkram ~15).
+Nicht enthalten sind WP-T1d/T1e, die ODEFormer-Raster, das Regressionsraster und die
+August-Pilote, für die lokal keine Laufzeiten vorliegen. Bei 1,50 € pro Kernstunde sind das etwa
+**34.700 €**. Die Quelle ist `elapsed_s`, für laufende Zellen die Pod-Zeiten. Das ist Planung,
+keine Evidenz.
+
+**Kostengrundlage für das Raster.** C-1 nach Dimension: dim 1 **11 h**, dim 2 1.935 h, dim 3
+3.852 h, dim 4 72 h. dim 3 trägt zwei Drittel, scheitert aber ohnehin. Eine Bedingung auf dim 1
+und dim 2 (306 Zellen, 3 Seeds, beide IC) kostet bei unverändertem Abbruchverhalten also etwa
+**1.950 h, rund 2.900 €, knapp 2 Tage** auf Orion. Die Optionen:
+
+| Raster | neue Bedingungen | Kernstunden (ohne Zuschlag für Rauschen) | € |
+|---|---|---|---|
+| vollständig, 3 Seeds | 20 | ~39.000 | ~58.500 |
+| vollständig, 1 Seed | 20 | ~13.000 | ~19.500 |
+| 2 Rauschstufen + 1 Ausdünnung, 3 Seeds | 3 | ~5.900 | ~8.800 |
+
+Die Bedingung ohne Rauschen und ohne Ausdünnung ist C-1 selbst. SINDy, Weak-SINDy und ODEFormer
+kosten im Vergleich fast nichts. Deshalb laufen sie **immer auf dem vollständigen Raster**, egal
+welche EvoGrow-Variante gewählt wird.
+
+**Die Falle, die zuerst ein Pilot klären muss.** Mit Rauschen kann der Loss nicht unter die
+Rauschvarianz fallen, und `loss_tol = 1e-8` greift nie. Jede Zelle läuft dann vermutlich alle 30
+Level durch, und die Tabelle oben wird zur Untergrenze. Eine rauschabhängige Abbruchregel wäre
+eine Methodenänderung und gehört nicht in die eingefrorene Version. Der Pilot misst deshalb
+zuerst: wenige Zellen auf dim 1 und dim 2, eine Rauschstufe, und als Zielgrößen ausgeführte
+Level, Loss-Evals und Endstufe gegen C-1.
+
+**Das ODEFormer-Protokoll** steht im vorigen Eintrag: relatives Rauschen `γ·x·N(0,1)`,
+Ausdünnung durch zufälliges Entfernen von Punkten. Das Original zieht das Rauschen ungeseedet,
+also ziehen wir es selbst und mit Seed.
+
+**Reihenfolge ab morgen:**
+1. Vorab festgelegte Protokoll-Spezifikation (Claude): Raster, Gegner, primäre und sekundäre
+   Metriken, Rauschziehung, Pilot mit Go-Kriterium, Berichtsregel „alles“.
+2. Rauschen und Ausdünnung in den Kampagnenpfad bringen (Codex). Dabei bleibt die
+   Methodenkonfiguration der Phase-C-Kennung unverändert, die Datenbedingung kommt neu in den
+   Fingerprint.
+3. Pilot auf Orion mit Deadline im Manifest, danach die Rasterentscheidung samt Kostenrechnung.
+
 ### Scheideweg nach dem Orakel: Was trägt, was offen ist, und was aus dem Juli wieder auf den Tisch gehört
 
 <!-- dbab970 -->
