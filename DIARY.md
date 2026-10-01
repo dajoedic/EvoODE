@@ -8,6 +8,8 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ### Plan: Rauschen und Abtastrate als nächster Schritt — Kosten, Falle beim Abbruch, kein Teilraster ohne Begründung
 
+<!-- e92f836 -->
+
 **Entschieden vom Nutzer:** Der nächste Schritt sind Rauschen und Abtastrate nach dem
 ODEFormer-Protokoll. C-3 und WP-T1f laufen zu Ende, ändern aber am Bild für Paper 1 nichts:
 C-3 fehlen noch vier Lorenz-Zellen, die per Konstruktion unerreichbar sind, und WP-T1f kann
