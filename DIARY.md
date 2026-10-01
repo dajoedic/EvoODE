@@ -6,6 +6,10 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ## 2026-10-01
 
+### Keine harten Zeit-Cuts mehr; WP-T1f-Deadline entfernt
+
+Der Nutzer: harte Zeitlimits verbrennen genau die Rechenzeit, die sie sparen sollen (System 24 auf dem Laptop: zweimal 55 min ohne Record). Neue Regel in `CLAUDE.md`: Die Laufort-Tabelle entscheidet, **wo** ein Lauf startet, nicht wann er endet. Statt eines Timeouts gibt es eine aufgeschriebene erwartete Laufzeit, und bei deutlicher Überschreitung wird diskutiert. Aus den neuen Manifesten (Stufe 2, B-02) sind alle `activeDeadlineSeconds` entfernt (`9180013`). Auf Wunsch des Nutzers wurde außerdem die laufende **WP-T1f-Deadline entfernt**: Vorher stand `activeDeadlineSeconds = 1209600` (14 Tage ab 28.09. 15:54 UTC, also 12.10.), entfernt per `oc patch` am 01.10. abends. Keiner der laufenden Pods trägt eine eigene Deadline. C-3 hatte nie eine. **Damit ist die Entscheidung „58 IC1 Teildaten akzeptieren“ überholt**: Die Zelle darf zu Ende laufen. Ihr Tempo (~0,5 Zeilen/h) heißt aber noch Tage. Das wird bei deutlicher Überschreitung erneut besprochen.
+
 ### Abbruch-Rückschau, erweitert auf Stufe 2: Der Rauschboden spart überall, repariert aber keine Auswahl innerhalb einer Stufe
 
 Gleiche Methode wie bei Stufe 1: Rauschboden erwartet und aus den Daten geschätzt (lokal kubisch, 9

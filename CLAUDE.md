@@ -268,7 +268,7 @@ Mark items done here with date and commit; never delete them.
 |---|---|---|
 | P-01 | C-3 finishes (3 Lorenz cells); collect | Claude |
 | P-02 | Final Phase C evaluation: strict chain from `SCRIPTS.md`, config switched to the complete registry, C-1/C-2 numbers must come out identical, then the §9.3 aggregation hierarchy for EvoGrow, SINDy and ODEFormer | Claude / Codex |
-| P-03 | WP-T1f finishes (deadline 12.10.); collect, `--aggregate-only`. **System 58 IC 1 will not finish — partial rows accepted by the user 2026-10-01, reported as an incomplete cell** | Claude |
+| P-03 | WP-T1f finishes (deadline 12.10.); collect, `--aggregate-only`. **Job deadline removed 2026-10-01 (no hard cuts), so system 58 IC 1 may finish; at ~0.5 rows/h that is days — raise if it drags** | Claude |
 | P-04 | Restart curve (Abl-3), staged like Track B | later |
 | P-05 | Claim-tracing audit, then rewrite `paper/` — only on a frozen evidence state | later |
 
