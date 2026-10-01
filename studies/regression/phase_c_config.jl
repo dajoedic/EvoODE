@@ -1,6 +1,7 @@
 using LinearAlgebra
 
 const PHASE_C_ID = "paper1_phaseC_v1"
+const PHASE_C_ROBUSTNESS_ID = "paper1_phaseC_robustness_v1"
 const PHASE_C_OUTPUT_DIR = joinpath(@__DIR__, "..", "..", "outputs", "studies", "regression", "phase_c")
 const PHASE_C_MANIFEST_PATH = joinpath(PHASE_C_OUTPUT_DIR, "manifest.csv")
 const PHASE_C_HISTORY_PATH = joinpath(PHASE_C_OUTPUT_DIR, "history.jsonl")
@@ -257,7 +258,7 @@ end
 
 phase_c_validate_variants()
 
-function phase_c_fingerprint()
+function phase_c_fingerprint(; clamp_val::Real = BFGS_CLAMP_VAL)
     system_payload = [
         (
             system_id = Int(system[:system_id]),
@@ -293,7 +294,7 @@ function phase_c_fingerprint()
         bfgs_reltol = BFGS_RELTOL,
         bfgs_maxiters_solve = BFGS_MAXITERS_SOLVE,
         bfgs_max_loss_evals = BFGS_MAX_LOSS_EVALS,
-        bfgs_clamp_val = BFGS_CLAMP_VAL,
+        bfgs_clamp_val = clamp_val_json(clamp_val),
         bfgs_time_limit_s = BFGS_TIME_LIMIT_S,
         bfgs_reject_nonfinite = BFGS_REJECT_NONFINITE,
         bfgs_divergence_limit = BFGS_DIVERGENCE_LIMIT,
@@ -303,7 +304,7 @@ function phase_c_fingerprint()
         screening_bfgs_reltol = SCREENING_BFGS_RELTOL,
         screening_bfgs_maxiters_solve = SCREENING_BFGS_MAXITERS_SOLVE,
         screening_bfgs_max_loss_evals = SCREENING_BFGS_MAX_LOSS_EVALS,
-        screening_bfgs_clamp_val = SCREENING_BFGS_CLAMP_VAL,
+        screening_bfgs_clamp_val = clamp_val_json(clamp_val),
         screening_bfgs_time_limit_s = SCREENING_BFGS_TIME_LIMIT_S,
         screening_reject_nonfinite = SCREENING_REJECT_NONFINITE,
         screening_divergence_limit = SCREENING_DIVERGENCE_LIMIT,

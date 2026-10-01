@@ -35,12 +35,18 @@ function _has_flag(args::Vector{String}, name::String)
     return any(==(name), args)
 end
 
+function _has_option(args::Vector{String}, name::String)
+    return any(==(name), args)
+end
+
 function _phase_c_arm_variants(condition::String)
     return [variant for variant in PHASE_C_VARIANTS if String(variant.condition) == condition]
 end
 
-function phase_c_manifest_rows()
-    fingerprint = phase_c_fingerprint()
+function phase_c_manifest_rows(; noise_sigma::Real = 0.0, subsample_rho::Real = 0.0,
+                               noise_realization::Integer = 0, clamp_val::Real = BFGS_CLAMP_VAL,
+                               campaign::AbstractString = PHASE_C_ID)
+    fingerprint = phase_c_fingerprint(clamp_val = clamp_val)
     rows = NamedTuple[]
     index = 1
     capped = only(_phase_c_arm_variants("capped"))
@@ -58,7 +64,7 @@ function phase_c_manifest_rows()
                         rows,
                         (
                             index = index,
-                            campaign = PHASE_C_ID,
+                            campaign = String(campaign),
                             config_fingerprint = fingerprint,
                             variant = String(variant.label),
                             condition = String(variant.condition),
@@ -70,6 +76,10 @@ function phase_c_manifest_rows()
                             initial_condition_set = ic_set,
                             seed = seed,
                             representability = String(system[:representability]),
+                            noise_sigma = Float64(noise_sigma),
+                            subsample_rho = Float64(subsample_rho),
+                            noise_realization = Int(noise_realization),
+                            clamp_val = clamp_val_json(clamp_val),
                         ),
                     )
                     index += 1
@@ -85,7 +95,7 @@ function phase_c_manifest_rows()
                     rows,
                     (
                         index = index,
-                        campaign = PHASE_C_ID,
+                        campaign = String(campaign),
                         config_fingerprint = fingerprint,
                         variant = String(pretune.label),
                         condition = String(pretune.condition),
@@ -97,6 +107,10 @@ function phase_c_manifest_rows()
                         initial_condition_set = ic_set,
                         seed = seed,
                         representability = String(system[:representability]),
+                        noise_sigma = Float64(noise_sigma),
+                        subsample_rho = Float64(subsample_rho),
+                        noise_realization = Int(noise_realization),
+                        clamp_val = clamp_val_json(clamp_val),
                     ),
                 )
                 index += 1
@@ -123,7 +137,7 @@ end
 function write_phase_c_manifest(path::AbstractString, rows)
     mkpath(dirname(path))
     open(path, "w") do io
-        println(io, "index,campaign,config_fingerprint,variant,condition,use_pretuning,basis_name,max_fit_attempts,system_id,system_dim,initial_condition_set,seed,representability")
+        println(io, "index,campaign,config_fingerprint,variant,condition,use_pretuning,basis_name,max_fit_attempts,system_id,system_dim,initial_condition_set,seed,representability,noise_sigma,subsample_rho,noise_realization,clamp_val")
         for row in rows
             println(
                 io,
@@ -142,6 +156,10 @@ function write_phase_c_manifest(path::AbstractString, rows)
                         row.initial_condition_set,
                         row.seed,
                         row.representability,
+                        row.noise_sigma,
+                        row.subsample_rho,
+                        row.noise_realization,
+                        row.clamp_val,
                     ),
                     ",",
                 ),
@@ -264,12 +282,24 @@ function main(args = ARGS)
 
     dimension = _parse_optional_int(_arg_value(args, "--dimension"))
     limit = _parse_optional_int(_arg_value(args, "--limit"))
+    noise_sigma = parse(Float64, something(_arg_value(args, "--noise-sigma"), "0"))
+    subsample_rho = parse(Float64, something(_arg_value(args, "--subsample-rho"), "0"))
+    noise_realization = parse(Int, something(_arg_value(args, "--noise-realization"), "0"))
+    clamp_val = parse_clamp_val(something(_arg_value(args, "--clamp-val"), "10"))
+    explicit_data_condition = any(_has_option(args, name) for name in ("--noise-sigma", "--subsample-rho", "--noise-realization", "--clamp-val"))
+    campaign = explicit_data_condition || noise_sigma != 0.0 || subsample_rho != 0.0 || clamp_val != 10.0 ? PHASE_C_ROBUSTNESS_ID : PHASE_C_ID
     all_dimensions = _has_flag(args, "--all-dimensions")
     dimension !== nothing && all_dimensions && error("Use either --dimension or --all-dimensions, not both")
     index_output = _arg_value(args, "--index-output")
     index_output !== nothing && all_dimensions && error("--index-output is only valid with --dimension")
 
-    rows = phase_c_limit_rows(phase_c_manifest_rows(), limit)
+    rows = phase_c_limit_rows(phase_c_manifest_rows(
+        noise_sigma = noise_sigma,
+        subsample_rho = subsample_rho,
+        noise_realization = noise_realization,
+        clamp_val = clamp_val,
+        campaign = campaign,
+    ), limit)
     unique_identities = phase_c_unique_identity_count(rows)
     unique_identities == length(rows) || error("Phase C manifest identities are not unique")
     write_phase_c_manifest(output, rows)
@@ -301,7 +331,12 @@ function main(args = ARGS)
     arm_counts = Dict(condition => count(row -> row.condition == condition, rows) for condition in unique(row.condition for row in rows))
     missing_expected_stage = count(system -> system[:expected_stage] === nothing, PHASE_C_SYSTEMS)
     println("manifest=$(output)")
-    println("phase_c_fingerprint=$(phase_c_fingerprint())")
+    println("phase_c_fingerprint=$(phase_c_fingerprint(clamp_val = clamp_val))")
+    println("campaign=$(campaign)")
+    println("noise_sigma=$(noise_sigma)")
+    println("subsample_rho=$(subsample_rho)")
+    println("noise_realization=$(noise_realization)")
+    println("clamp_val=$(clamp_val_json(clamp_val))")
     println("regression_fingerprint=$(config_fingerprint())")
     println("rows=$(length(rows))")
     limit !== nothing && println("limit=$(limit)")

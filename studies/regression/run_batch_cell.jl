@@ -71,7 +71,7 @@ function _is_phase_b_row(row)
 end
 
 function _is_phase_c_row(row)
-    return get(row, "campaign", "") == "paper1_phaseC_v1"
+    return get(row, "campaign", "") in ("paper1_phaseC_v1", "paper1_phaseC_robustness_v1")
 end
 
 function _is_wp_n1_row(row)
@@ -88,7 +88,7 @@ function _batch_fingerprint(row)
     elseif _is_phase_b_row(row)
         return phase_b_fingerprint()
     elseif _is_phase_c_row(row)
-        return phase_c_fingerprint()
+        return phase_c_fingerprint(clamp_val = parse_clamp_val(get(row, "clamp_val", "10")))
     end
     return config_fingerprint()
 end
@@ -164,6 +164,11 @@ function run_batch_cell(index::Int, manifest_path::AbstractString, output_dir::A
             "manifest_path" => _portable_path(manifest_path),
             "batch_output_file" => _portable_path(output_path),
         ),
+        noise_sigma = parse(Float64, get(row, "noise_sigma", "0")),
+        subsample_rho = parse(Float64, get(row, "subsample_rho", "0")),
+        noise_realization = parse(Int, get(row, "noise_realization", "0")),
+        clamp_val = parse_clamp_val(get(row, "clamp_val", "10")),
+        experiment_id = get(row, "campaign", ""),
     )
     if _is_wp_n1_row(row)
         record["base_config_fingerprint"] = phase_b_fingerprint()

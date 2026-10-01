@@ -687,6 +687,18 @@ julia --project=. --startup-file=no studies/regression/wp_n5_ic_generalization.j
 julia --project=. --startup-file=no studies/regression/wp_n5_ic_generalization.jl \
   --campaign paper1_phaseC_v1 --input $P/history.jsonl \
   --output-dir outputs/wp_n5_ic_generalization_phase_c --shards 1 --collect
+
+# C-6/C-8 support added in WP-N32: export the canonical corrupted trajectories and compare control
+# cells against frozen C-1 / C-5 records. Existing Phase-C manifests without the new columns still
+# default to sigma=0, rho=0, realization=0, clamp_val=10.
+julia --project=. --startup-file=no studies/regression/export_phase_c_data_conditions.jl \
+  --systems 1,24 --ic-sets 1,2 --sigmas 0,0.05 --rhos 0,0.5 --realizations 0,1 \
+  --output-dir outputs/phase_c_data_conditions/wp_n32_pilot
+python analysis/scripts/aggregate/compare_phasec_controls.py \
+  --candidate outputs/phase_c_robustness_control/tasks \
+  --reference-c1 outputs/phase_c_campaign_221a3a7 \
+  --candidate-oracle outputs/wp_n3_oracle_refit_phase_c_bound10 \
+  --reference-oracle outputs/wp_n3_oracle_refit_phase_c
 ```
 
 ### WP-T1f warm-start neighbourhood repair

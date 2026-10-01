@@ -26,7 +26,7 @@ function _arg_flag(args::Vector{String}, name::String)
     return name in args
 end
 
-function _wp_n3_fingerprint(input_path::AbstractString)
+function _wp_n3_fingerprint(input_path::AbstractString; clamp_val::Real = BFGS_CLAMP_VAL)
     payload = (
         task = "WP-N3",
         input_path = replace(abspath(input_path), Char(0x5c) => '/'),
@@ -37,7 +37,7 @@ function _wp_n3_fingerprint(input_path::AbstractString)
             reltol = BFGS_RELTOL,
             maxiters_solve = BFGS_MAXITERS_SOLVE,
             max_loss_evals = BFGS_MAX_LOSS_EVALS,
-            clamp_val = BFGS_CLAMP_VAL,
+            clamp_val = clamp_val_json(clamp_val),
             reject_nonfinite = BFGS_REJECT_NONFINITE,
             divergence_limit = BFGS_DIVERGENCE_LIMIT,
         ),
@@ -200,10 +200,11 @@ function _category_flags(found, pruned, truth)
     )
 end
 
-function _fit_fixed_structure(structure_terms, system, basis, traj, seed::Int; max_fit_attempts::Int = 1)
+function _fit_fixed_structure(structure_terms, system, basis, traj, seed::Int; max_fit_attempts::Int = 1,
+                              clamp_val::Real = BFGS_CLAMP_VAL)
     structure = StructureSpec([sort(unique(Int[x for x in eq])) for eq in structure_terms])
     f!, n_params, _ = build_rhs(structure, basis)
-    optimizer = build_reference_optimizer(max_fit_attempts = max_fit_attempts)
+    optimizer = build_reference_optimizer(max_fit_attempts = max_fit_attempts, clamp_val = clamp_val)
     options = build_options(seed)
 
     params = Float64[]
@@ -241,23 +242,39 @@ function _fit_fixed_structure(structure_terms, system, basis, traj, seed::Int; m
     )
 end
 
-function _wp_n3_phase_c_fingerprint(input_path::AbstractString)
-    payload = (
-        task = "WP-N3",
-        campaign = WP_N25_PHASE_C_CAMPAIGN,
-        input_path = replace(abspath(input_path), Char(0x5c) => '/'),
-        input_sha256 = bytes2hex(sha256(read(input_path))),
-        selected_arm = (variant = WP_N25_C1_VARIANT, use_pretuning = false),
-        support_source = PHASE_C_SUPPORT_PATH,
-        trajectory_source = "phase_c_systems/build_trajectory",
-        max_fit_attempts = PHASE_C_MAX_FIT_ATTEMPTS,
-        bfgs_max_loss_evals = BFGS_MAX_LOSS_EVALS,
-        r2_threshold = WP_N3_R2_THRESHOLD,
-    )
+function _wp_n3_phase_c_fingerprint(input_path::AbstractString; clamp_val::Real = BFGS_CLAMP_VAL)
+    payload = if Float64(clamp_val) == BFGS_CLAMP_VAL
+        (
+            task = "WP-N3",
+            campaign = WP_N25_PHASE_C_CAMPAIGN,
+            input_path = replace(abspath(input_path), Char(0x5c) => '/'),
+            input_sha256 = bytes2hex(sha256(read(input_path))),
+            selected_arm = (variant = WP_N25_C1_VARIANT, use_pretuning = false),
+            support_source = PHASE_C_SUPPORT_PATH,
+            trajectory_source = "phase_c_systems/build_trajectory",
+            max_fit_attempts = PHASE_C_MAX_FIT_ATTEMPTS,
+            bfgs_max_loss_evals = BFGS_MAX_LOSS_EVALS,
+            r2_threshold = WP_N3_R2_THRESHOLD,
+        )
+    else
+        (
+            task = "WP-N3",
+            campaign = WP_N25_PHASE_C_CAMPAIGN,
+            input_path = replace(abspath(input_path), Char(0x5c) => '/'),
+            input_sha256 = bytes2hex(sha256(read(input_path))),
+            selected_arm = (variant = WP_N25_C1_VARIANT, use_pretuning = false),
+            support_source = PHASE_C_SUPPORT_PATH,
+            trajectory_source = "phase_c_systems/build_trajectory",
+            max_fit_attempts = PHASE_C_MAX_FIT_ATTEMPTS,
+            bfgs_max_loss_evals = BFGS_MAX_LOSS_EVALS,
+            clamp_val = clamp_val_json(clamp_val),
+            r2_threshold = WP_N3_R2_THRESHOLD,
+        )
+    end
     return bytes2hex(sha256(codeunits(canonical_value(payload))))[1:16]
 end
 
-function _run_record_phase_c(record, systems_by_id, support_table)
+function _run_record_phase_c(record, systems_by_id, support_table; clamp_val::Real = BFGS_CLAMP_VAL)
     system_id = Int(_json_require(record, :system_id, "Phase-C trajectory selection"))
     haskey(systems_by_id, system_id) || error("Unknown Phase-C system_id=$(system_id)")
     system = systems_by_id[system_id]
@@ -277,8 +294,8 @@ function _run_record_phase_c(record, systems_by_id, support_table)
     oracle_terms = _intersect_terms(original_terms, true_terms)
     flags = _category_flags(original_terms, original_pruned_terms, true_terms)
 
-    oracle_result = _fit_fixed_structure(oracle_terms, system, basis, traj, seed; max_fit_attempts = PHASE_C_MAX_FIT_ATTEMPTS)
-    reference_result = _fit_fixed_structure(true_terms, system, basis, traj, seed; max_fit_attempts = PHASE_C_MAX_FIT_ATTEMPTS)
+    oracle_result = _fit_fixed_structure(oracle_terms, system, basis, traj, seed; max_fit_attempts = PHASE_C_MAX_FIT_ATTEMPTS, clamp_val = clamp_val)
+    reference_result = _fit_fixed_structure(true_terms, system, basis, traj, seed; max_fit_attempts = PHASE_C_MAX_FIT_ATTEMPTS, clamp_val = clamp_val)
     exact_original = _same_terms(original_pruned_terms, true_terms)
 
     return Dict{String, Any}(
@@ -317,6 +334,7 @@ function _run_record_phase_c(record, systems_by_id, support_table)
         "reference_coefficients" => reference_result["coefficients"],
         "oracle_fit_meta" => oracle_result["fit_meta"],
         "reference_fit_meta" => reference_result["fit_meta"],
+        "clamp_val" => clamp_val_json(clamp_val),
         "exact_original_structure_deviation" => exact_original && !_same_terms(oracle_terms, true_terms),
         "error" => nothing,
     )
@@ -346,11 +364,12 @@ function main_phase_c(args)
     shards, shard_index = wp_n25_shard_options(args)
     collect_mode = _arg_flag(args, "--collect")
     estimate_cost = _arg_flag(args, "--estimate-cost")
+    clamp_val = parse_clamp_val(_arg_value(args, "--clamp-val", "10"))
     records_all = _read_history(input_path)
     records, filter_counts = wp_n25_phase_c_filter(records_all; require_exact_support = true)
     limit = wp_n25_parse_limit(args, length(records))
     records = records[1:limit]
-    fingerprint = _wp_n3_phase_c_fingerprint(input_path)
+    fingerprint = _wp_n3_phase_c_fingerprint(input_path; clamp_val = clamp_val)
 
     if estimate_cost
         wp_n25_write_cost_estimate(wp_n25_estimate_rows(records, "WP-N3", 2 * PHASE_C_MAX_FIT_ATTEMPTS))
@@ -388,7 +407,7 @@ function main_phase_c(args)
     for (idx, record) in enumerate(shard_records)
         key = wp_n25_record_key(record)
         key in done && (println("[$(idx)/$(length(shard_records))] $(key) skipped existing"); continue)
-        result = _run_record_phase_c(record, systems_by_id, support_table)
+        result = _run_record_phase_c(record, systems_by_id, support_table; clamp_val = clamp_val)
         result["config_fingerprint"] = fingerprint
         _append_jsonl!(result_path, result)
         println(@sprintf("[%d/%d] %s oracle=%.3e reference=%.3e", idx, length(shard_records), key, result["oracle_loss"], result["reference_loss"]))

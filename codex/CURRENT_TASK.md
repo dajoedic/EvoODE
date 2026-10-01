@@ -1,141 +1,106 @@
-# WP-N32 — Datenbedingung (Rauschen, Ausdünnung) und wählbare Parametergrenze im Kampagnenpfad
-**Language: Julia** (plus ein kleines Python-Vergleichsskript, siehe Punkt 7)
+# WP-N33a — Auswertung gegen die saubere Wahrheit, Tor-Bericht, Fix am Kontrollvergleich
+**Language: Julia** (Auswertung) **und Python** (Tor-Bericht, Fix)
 
-Verbindliche Spezifikation: `docs/paper1_phaseC_benchmark_plan.md` **§9** (eingefroren am 2026-10-01).
-Lies §9.1, §9.4 und §9.6 vollständig, bevor du anfängst. Wo dieser Auftrag und §9 sich zu
-widersprechen scheinen, gilt §9, und der Widerspruch gehört in den Report.
+Verbindliche Spezifikation: `docs/paper1_phaseC_benchmark_plan.md` **§9.3, §9.4 und §9.4a**.
+Vorarbeit: WP-N32 (`codex/reports/REPORT_WP_N32.md`). Stufe 0 ist bestanden: System 1, Seed 42,
+beide IC-Sets, bitgleich zu C-1 (Records unter `outputs/wp_n32_stage0/tasks/`).
 
 ## Ziel
 
-Der bestehende Phase-C-Kampagnenpfad bekommt zwei neue, voneinander unabhängige Stellschrauben:
+Jede Stufe des gestuften Einstiegs endet an einem Tor. Dort berichtet Claude je Zelle eine fest
+vorgegebene Liste von Zahlen (§9.4a). Dieses Paket baut die beiden Werkzeuge dafür und behebt einen
+Fehler im Kontrollvergleich.
 
-1. eine **Datenbedingung**: geseedetes multiplikatives Rauschen und zufällige Ausdünnung der
-   Trainingstrajektorie nach dem ODEFormer-Protokoll;
-2. eine **wählbare Parametergrenze** `clamp_val` (10, 1000 oder unbeschränkt) im Kampagnenlauf und im
-   Orakel-Refit.
+## 1. Fix: `analysis/scripts/aggregate/compare_phasec_controls.py`
 
-**Die Methode selbst ändert sich nicht.** Bei Rauschen 0, Ausdünnung 0 und `clamp_val = 10` muss der
-neue Pfad die C-1-Records **bitgleich** reproduzieren. Das ist das wichtigste Abnahmekriterium.
+Gefunden bei der Abnahme von WP-N32: Das Skript liest beim Verzeichnis-Eingang auch
+`*.heartbeat.jsonl` mit ein. Heartbeat-Zeilen haben kein `loss`, also stürzt
+`normalize_campaign_field` mit `TypeError: float() argument must be ... not 'NoneType'` ab.
+Reproduktion:
 
-## Ausgangslage im Code (geprüft von Claude)
+```
+python analysis/scripts/aggregate/compare_phasec_controls.py --candidate outputs/wp_n32_stage0/tasks --reference-c1 outputs/phase_c_campaign_221a3a7
+```
 
-- Die saubere Trajektorie entsteht in `build_trajectory` (`studies/regression/run_regression.jl:571`)
-  und wird bei `run_regression.jl:819` an die Suche übergeben. Der Orakel-Refit holt sie bei
-  `studies/regression/wp_n3_oracle_refit.jl:270`.
-- `simulate` nimmt den **ersten Datenpunkt** als Anfangsbedingung und integriert auf `traj.t`
-  (`src/simulate/solve.jl:27-39`). Ein unregelmäßiges Raster ist dort also schon zulässig.
-- Die Grenze ist `BFGSOptimizer.clamp_val`. Sie wird an `src/optimize/bfgs.jl:178`, `:354` und
-  `:676` angewendet und über `src/core/discover.jl:150` an `simulate` weitergereicht. In der
-  Phase-C-Konfiguration steht sie als `BFGS_CLAMP_VAL` und geht über `phase_c_config.jl:296` in den
-  Fingerprint ein.
-- Phase-C-Methodenkennung `0c9672de35c75a9d` (`phase_c_fingerprint()`), Orakel-Kennung
-  `925e3957a7a884e2`, Verhaltens-Fingerprint `ffb0266c7913352c`.
-- Hash-Format für Trajektorien: `studies/regression/phase_c_trajectory_hash_lib.jl`
-  (`sha256_raw_little_endian_float64`, Export über `export_trajectory!`). **Wiederverwenden, nicht
-  neu bauen.**
+Erwartet ist danach: Exit 0, beide Zellen bitgleich. Claude hat das von Hand geprüft. Zusätzlich
+gilt: Ein fehlendes Feld auf einer Seite ist eine **gemeldete Abweichung** mit Feldnamen und Seite,
+nie ein Absturz und nie ein stilles Bestehen. Kandidaten-Records anderer Varianten als der des
+Referenz-Schlüssels werden nicht verglichen. Der Schlüssel enthält die Variante, nicht nur System,
+IC und Seed. Ein Test dafür nutzt eine Fixture, die aus den echten Dateien unter
+`outputs/wp_n32_stage0/tasks/` abgeleitet ist, einschließlich der Heartbeat-Datei.
 
-## Umsetzung
+## 2. Saubere Auswertung (Julia)
 
-**1. Datenbedingungs-Modul (neue Datei unter `studies/regression/`).**
-Eingabe: saubere Trajektorie, `system_id`, `ic_set`, `noise_sigma`, `subsample_rho`,
-`noise_realization`. Ausgabe: die verfälschte Trajektorie, die die Methode sieht.
-- Rauschen: `x_obs = x + sigma * x * eps`, `eps` i.i.d. standardnormal je Zeitpunkt und
-  Zustandskomponente.
-- Ausdünnung **nach** dem Rauschen: `floor(n * rho)` Indizes gleichverteilt ohne Zurücklegen
-  entfernen, jeder Index ist zulässig (auch der erste). Die verbleibenden Zeitpunkte bleiben
-  aufsteigend sortiert.
-- Getrennte RNG-Ströme für Rauschen und Ausdünnung. Der Seed wird deterministisch **nur** aus
-  `(system_id, ic_set, sigma, rho, realization)` abgeleitet, nie aus dem Methoden-Seed. Das
-  Ableitungsschema wird dokumentiert und trägt eine Versionskennung.
-- `sigma == 0 && rho == 0`: Die saubere Trajektorie wird **unverändert** zurückgegeben, ohne
-  RNG-Aufruf, der irgendetwas beeinflussen könnte.
-- Keine neue Abhängigkeit ohne Begründung im Report. Die exportierten Dateien mit Hash sind die
-  kanonischen Daten, deshalb genügt ein RNG aus der Standardbibliothek. Halte im Report fest,
-  welcher es ist und dass seine Ausgabe nur innerhalb von Julia 1.12.6 als stabil gilt.
+Ausgangspunkt ist `studies/regression/wp_n5_ic_generalization.jl` mit `main_phase_c`. Dort sind
+Modellrekonstruktion aus `model_terms`, Integration und die Rekonstruktionskontrolle schon
+vorhanden. **Erweitern oder wiederverwenden, nicht neu bauen.**
 
-**2. Einbindung in den Kampagnenlauf.** Neue optionale Manifest-Spalten `noise_sigma`,
-`subsample_rho`, `noise_realization` und `clamp_val`. **Fehlen sie, gilt 0 / 0 / 0 / 10**, damit
-bestehende Phase-C-Manifeste unverändert laufen. Die Verfälschung greift nach `build_trajectory` und
-vor der Suche. Stufenkappe und Fit sehen die verfälschte Trajektorie, sonst ändert sich nichts.
+Für jeden Kampagnen-Record, ob mit oder ohne Datenbedingung:
+- **Rekonstruktion:** das identifizierte Modell aus der **sauberen** Trainings-Anfangsbedingung auf
+  dem **vollen sauberen** 512-Punkte-Raster integrieren (`build_trajectory(system, ic_set)`) und
+  gegen die saubere Trajektorie messen. **Nicht** gegen die verrauschten Beobachtungen und **nicht**
+  auf dem ausgedünnten Raster.
+- **Generalisierung:** aus der sauberen **anderen** ODEBench-Anfangsbedingung auf deren vollem
+  sauberen Raster integrieren, gemessen gegen die saubere Trajektorie.
+- R² in **beiden** Aggregationen, das arithmetische Mittel über die Dimensionen (wie `r2` im Record)
+  und das varianzgewichtete (§6b; die Gewichte sind die Varianzen der sauberen Referenz). Divergenz
+  bzw. nicht-endliche Vorhersagen werden als solche markiert, nicht als R² = −∞ gemittelt.
+- **Vorhersagen speichern** (§9.3): rekonstruierte und generalisierte Trajektorie je Zelle als
+  Dateien im bestehenden Exportformat (`phase_c_trajectory_hash_lib.jl`), mit Hash in der
+  Ergebniszeile.
+- Ergebniszeile je Zelle mit Schlüssel (Variante, System, IC-Set, Seed, `noise_sigma`,
+  `subsample_rho`, `noise_realization`, `clamp_val`), den vier R²-Werten, Divergenz-Flags und den
+  Hashes der Vorhersagen. Jedes Skript schreibt in einen eigenen Unterordner unter `outputs/`.
 
-**3. Identität und Record-Felder.**
-- `phase_c_fingerprint()` bleibt bei `clamp_val = 10` exakt `0c9672de35c75a9d` und hängt **nicht**
-  von der Datenbedingung ab. Bei `clamp_val ≠ 10` ändert er sich, weil die Grenze schon heute im
-  Fingerprint steckt. Das ist gewollt.
-- Neu ist `data_condition_fingerprint`. Er hasht `sigma`, `rho`, `realization`, den
-  Rauschmodellnamen, die Ausdünnungsregel und die Version des Seed-Schemas, und er ist getrennt vom
-  Methoden-Fingerprint.
-- Neue Experiment-ID für verrauschte bzw. ausgedünnte Records: `paper1_phaseC_robustness_v1`.
-  Records bei (0, 0, 10) behalten die C-1-ID **nicht**. Begründe die Wahl im Report.
-- Neue Record-Felder: `noise_sigma`, `subsample_rho`, `noise_realization`, `noise_model`,
-  `data_condition_fingerprint`, `observed_data_sha256` (Zeit- und Zustandshash der verfälschten
-  Trajektorie im bestehenden Hash-Format), `n_observed_points` und `clamp_val`.
+**Kontrollen, im Code fest eingebaut und als Kommando für Claude:**
+- Auf Records **ohne** Datenbedingung muss die Rekonstruktion das gespeicherte `r2` des Records
+  **exakt** reproduzieren, mit derselben Toleranz wie die bestehende WP-N5-Kontrolle. Bei
+  verrauschten Records gilt diese Kontrolle nicht, weil das `r2` im Record gegen die verrauschten
+  Daten misst (§9.4). Das Skript darf sie dort nicht anwenden und auch nicht als bestanden melden.
+- Auf den beiden Stufe-0-Records muss die Generalisierung bitgleich zu den C-1-Zahlen in
+  `outputs/wp_n5_ic_generalization_phase_c/` sein.
 
-**4. Export.** Ein Skript schreibt für eine Liste von (system, ic_set, sigma, rho, realization) die
-verfälschten Trajektorien im bestehenden Exportformat samt Indexdatei mit Hashes. Der Hash im
-Kampagnen-Record muss identisch sein, sonst ist die C-4-Regel nicht prüfbar. Ausgabe in einen eigenen
-Unterordner unter `outputs/`.
+## 3. Tor-Bericht (Python)
 
-**5. Unbeschränkt.** „Unbeschränkt“ heißt `clamp_val = Inf`. Prüfe jede Stelle aus der Ausgangslage
-darauf, dass `Inf` korrekt durchläuft. JSON kennt kein `Inf`: Lege eine eindeutige Kodierung für
-Records und Fingerprint-Eingabe fest und dokumentiere sie.
+Ein Skript `analysis/scripts/aggregate/robustness_stage_report.py`. Eingabe: ein Verzeichnis mit
+Stufen-Records, die Ausgabe von Punkt 2 und die C-1-Referenz. Ausgabe: eine CSV und eine kurze
+Markdown-Tabelle mit **einer Zeile je Zelle, ohne Auswahl**. Neben jeder Zelle steht die C-1-Zelle
+mit gleicher Variante, gleichem System, IC-Set und Seed. Spalten genau nach §9.4a, „Reported at
+every stage“:
 
-**6. Orakel-Refit.** `wp_n3_oracle_refit.jl` bekommt `--clamp-val` (10 | 1000 | Inf, Standard 10).
-Bei 10 bleibt die Orakel-Kennung `925e3957a7a884e2`, und die Ausgaben bleiben bitgleich.
+`executed_levels` (gegen C-1), `total_loss_evals`, `total_parameter_fits`, `final_stage`,
+`stage_caps` je Gleichung samt Änderung gegenüber C-1 (gleich / enger / weiter / zu `nothing`),
+roher und geprunter Treffer gegen die Wahrheit (nur exakte Systeme, sonst leer und als Surrogat
+markiert), saubere Rekonstruktion und Generalisierung in beiden Aggregationen, `elapsed_s` als
+Kapazitätskontext (in der Kopfzeile als *keine Evidenz* markiert). Dazu die Faktoren gegen C-1 für
+Loss-Evals und Fits.
 
-**7. Kontrollvergleich (Python).** Ein Skript vergleicht neu erzeugte Records mit den
-C-1-Records unter `outputs/phase_c_campaign_221a3a7/`, und zwar Feld für Feld auf `loss`,
-`support_terms`, `model_terms` (Koeffizienten bitgenau), `total_loss_evals` und `stage_caps`. Es
-meldet jede Abweichung und endet bei Abweichung mit einem Fehlercode. Dasselbe Skript vergleicht
-optional Orakel-Ergebnisse mit `outputs/wp_n3_oracle_refit_phase_c/` auf `reference_loss`,
-`reference_coefficients` und `reference_fit_meta.loss_evals`.
+Dazu die **harten Prüfungen aus §9.4a** als eigener Block mit bestanden / nicht bestanden je Zelle:
+kein `error` und kein `failure_reason`; Methoden-Fingerprint `0c9672de35c75a9d` (bei
+`clamp_val = 10`); alle neuen Felder nicht null; `observed_data_sha256` gleich dem Hash der
+exportierten Datei, wenn ein Exportindex angegeben ist. Das Skript fasst nicht zusammen, mittelt
+nicht und bewertet nicht. Es zeigt die Zahlen.
 
-**8. Prüfung auf unregelmäßige Raster, nur berichten, nichts ändern.** Geh jeden Codepfad durch,
-den der Kampagnenlauf mit `evogrow_v2_2_stage_capped` berührt: Stufenkappe einschließlich
-`_cap_uniform_step`, `_cap_coarsened_trajectory` und `_cap_interpolate_to_full`, die
-Ableitungsschätzer, Loss, `simulate` und R². Liste jede Annahme eines gleichmäßigen Rasters mit
-`Datei:Zeile` auf und sag, ob das Verhalten auf einem unregelmäßigen Raster definiert bleibt oder
-einen Fehler wirft. **Methodencode wird nicht angepasst.** Er ist eingefroren, und sein Verhalten
-auf unregelmäßigen Rastern gehört zur Methode. Wirft ein Pfad einen Fehler, meldest du `blocked`
-mit der Fundstelle.
-
-**9. Tests** (Julia, je Datei unter `test/`, Python unter `analysis/tests/` bzw. neben dem Skript):
-- (0, 0) liefert eine bitgleiche Trajektorie;
-- gleicher Schlüssel → gleiche Daten; andere Realisierung → andere Daten; der Methoden-Seed hat
-  keinen Einfluss;
-- die Rauschskala ist relativ, geprüft an einem festen Array;
-- die Ausdünnung entfernt genau `floor(n*rho)` Punkte, Zeiten bleiben aufsteigend, keine Duplikate;
-- `phase_c_fingerprint()` ist bei 10 `0c9672de35c75a9d` und invariant gegenüber der Datenbedingung;
-- `Inf` übersteht Fingerprint und JSON in beiden Richtungen;
-- die Record-Felder werden an einer Fixture geprüft, die **aus einem echten C-1-Record abgeleitet**
-  ist (`CODEX_PROTOCOL.md`, „Fixtures werden abgeleitet“).
+Die Wahrheit für die Trefferprüfung kommt aus dem bestehenden Pfad, `phase_c_support.json` bzw.
+`exact_support_match_raw` / `exact_support_match_pruned` im Record. Nicht neu ableiten.
 
 ## Verboten
 
-- Methodenverhalten ändern: Basis, Kappe, Pruning, Optimierer, Budgets, `loss_tol`, Level, Defaults.
-  Der Standardwert von `clamp_val` bleibt 10.
-- Bestehende Fingerprints oder deren Eingaben ändern, ausgenommen die oben beschriebene, gewollte
-  Wirkung von `clamp_val ≠ 10`.
-- Rauschspezifische Abbruch- oder Suchregeln.
-- k8s-Manifeste, Kampagnen-Manifeste oder Cluster-Jobs erzeugen; das ist WP-N33.
-- Läufe über 15 Minuten, Git-Operationen, `codex/CURRENT_TASK.md` bearbeiten, Dateien unter
-  `docs/` ändern. Einen Eintrag in `SCRIPTS.md` darfst du anlegen.
+- Methodencode, Kampagnen-Runner, Fingerprints oder Manifeste ändern.
+- Läufe über 15 Minuten, Cluster, Git-Operationen, `codex/CURRENT_TASK.md` bearbeiten, Dateien
+  unter `docs/` ändern. Einen Eintrag in `SCRIPTS.md` darfst du anlegen.
+- Zusammenfassende Urteile im Tor-Bericht („gut“, „bestanden“ für die Stufe als Ganzes).
 
 ## Abnahme
 
-1. Alle Punkte 1–9 sind umgesetzt. Der Report nennt für jedes neue Record-Feld die Herkunft
-   (bestehendes Recordfeld, neues Recordfeld oder Analysepipeline).
-2. Die Python-Tests laufen grün **in deiner Sitzung**. Julia-Tests und Kontrollläufe stehen als
-   Kommandos im Report, weil Julia in deiner Umgebung nicht läuft.
-3. Der Report enthält Kommandos für Claude, jedes mit Zweck und erwarteter Dauer:
-   - (a) die Julia-Tests;
-   - (b) die vier Kontrollzellen über den neuen Pfad bei (0, 0, 10): Systeme 1 und 24, Seed 42,
-     beide IC-Sets, jeweils mit anschließendem Kontrollvergleich gegen C-1. Erwartet ist eine
-     bitgleiche Übereinstimmung;
-   - (c) eine verrauschte Zelle auf System 1 bei (0.05, 0.5) als Durchstich, mit Prüfung, dass
-     `observed_data_sha256` dem Export entspricht;
-   - (d) drei Orakelzellen bei `--clamp-val 10` mit Vergleich gegen die C-5-Orakel-Ergebnisse,
-     dazu dieselben drei bei `1000` und `Inf` als reiner Durchlauftest.
-4. Die Prüfung auf unregelmäßige Raster (Punkt 8) steht vollständig im Report.
-5. Report: `codex/reports/REPORT_WP_N32.md`. `STATUS.md` nach Protokoll. Weil Julia nicht
-   ausführbar ist, ist `blocked` mit dem Vermerk *Umgebung, nicht Sache* der erwartete Abschluss.
+1. Der Fix aus Punkt 1 ist umgesetzt. Das Reproduktionskommando endet mit Exit 0, und die Tests
+   sind grün. Python läuft in deiner Sitzung, also führst du beides selbst aus.
+2. Der Tor-Bericht läuft **in deiner Sitzung** auf `outputs/wp_n32_stage0/tasks/` gegen C-1. Fehlt
+   noch die Ausgabe von Punkt 2, bleiben die R²-Spalten leer und sind als fehlend markiert. Die
+   Python-Tests sind grün, mit Fixtures aus echten Records.
+3. Für Punkt 2 stehen im Report Kommandos für Claude, mit Zweck und erwarteter Dauer:
+   - die saubere Auswertung auf `outputs/wp_n32_stage0/tasks/` mit beiden Kontrollen;
+   - danach der Tor-Bericht mit gefüllten R²-Spalten.
+4. Report: `codex/reports/REPORT_WP_N33A.md`. `STATUS.md` nach Protokoll. Weil Julia nicht
+   ausführbar ist, ist `blocked` mit dem Vermerk *Umgebung, nicht Sache* der erwartete Abschluss,
+   sofern Punkte 1 und 3 fertig sind.

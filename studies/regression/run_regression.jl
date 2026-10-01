@@ -11,6 +11,7 @@ using SHA
 include(joinpath(@__DIR__, "..", "..", "src", "EvoODE.jl"))
 using .EvoODE
 include(joinpath(@__DIR__, "diagnostic_systems.jl"))
+include(joinpath(@__DIR__, "phase_c_trajectory_hash_lib.jl"))
 
 const HISTORY_PATH = get(ENV, "EVO_REGRESSION_HISTORY_PATH", joinpath(@__DIR__, "history.jsonl"))
 const OUTPUT_DIR = joinpath(@__DIR__, "..", "..", "outputs", "studies", "regression")
@@ -181,28 +182,28 @@ function build_options(seed::Int)
     )
 end
 
-function build_reference_optimizer(; max_fit_attempts::Int = 1)
+function build_reference_optimizer(; max_fit_attempts::Int = 1, clamp_val::Real = BFGS_CLAMP_VAL)
     return BFGSOptimizer(
         maxiters = BFGS_MAXITERS,
         abstol = BFGS_ABSTOL,
         reltol = BFGS_RELTOL,
         maxiters_solve = BFGS_MAXITERS_SOLVE,
         max_loss_evals = BFGS_MAX_LOSS_EVALS,
-        clamp_val = BFGS_CLAMP_VAL,
+        clamp_val = Float64(clamp_val),
         reject_nonfinite = BFGS_REJECT_NONFINITE,
         divergence_limit = BFGS_DIVERGENCE_LIMIT,
         max_fit_attempts = max_fit_attempts,
     )
 end
 
-function build_screening_optimizer()
+function build_screening_optimizer(; clamp_val::Real = SCREENING_BFGS_CLAMP_VAL)
     return BFGSOptimizer(
         maxiters = BFGS_MAXITERS,
         abstol = SCREENING_BFGS_ABSTOL,
         reltol = SCREENING_BFGS_RELTOL,
         maxiters_solve = SCREENING_BFGS_MAXITERS_SOLVE,
         max_loss_evals = SCREENING_BFGS_MAX_LOSS_EVALS,
-        clamp_val = SCREENING_BFGS_CLAMP_VAL,
+        clamp_val = Float64(clamp_val),
         reject_nonfinite = SCREENING_REJECT_NONFINITE,
         divergence_limit = SCREENING_DIVERGENCE_LIMIT,
     )
@@ -228,6 +229,22 @@ function canonical_value(x)
     else
         return repr(x)
     end
+end
+
+include(joinpath(@__DIR__, "phase_c_data_condition.jl"))
+
+function clamp_val_json(value::Real)
+    numeric = Float64(value)
+    return isfinite(numeric) ? numeric : "Inf"
+end
+
+function parse_clamp_val(value)
+    if value isa AbstractString
+        stripped = strip(value)
+        lowercase(stripped) == "inf" && return Inf
+        return parse(Float64, stripped)
+    end
+    return Float64(value)
 end
 
 function config_fingerprint()
@@ -682,11 +699,18 @@ function run_one(variant,
                  fingerprint::String,
                  provenance;
                  heartbeat_path::Union{Nothing, AbstractString} = nothing,
-                 heartbeat_extra::AbstractDict = Dict{String, Any}())
+                 heartbeat_extra::AbstractDict = Dict{String, Any}(),
+                 noise_sigma::Real = 0.0,
+                 subsample_rho::Real = 0.0,
+                 noise_realization::Integer = 0,
+                 clamp_val::Real = BFGS_CLAMP_VAL,
+                 experiment_id::AbstractString = "")
     timestamp = iso_timestamp()
     system_id = Int(system[:system_id])
     system_name = String(system[:system_name])
     dim = Int(system[:dim])
+    clamp_value = Float64(clamp_val)
+    condition_fingerprint = data_condition_fingerprint(noise_sigma, subsample_rho, noise_realization)
     expected_stage = system_expected_stage(system)
     use_pretuning = variant_use_pretuning(variant)
     max_fit_attempts = variant_max_fit_attempts(variant)
@@ -711,7 +735,16 @@ function run_one(variant,
         "T" => Int(system[:T]),
         "seed" => seed,
         "condition" => haskey(variant, :condition) ? String(variant.condition) : String(variant.label),
+        "experiment_id" => isempty(experiment_id) ? nothing : String(experiment_id),
         "basis_name" => basis_name,
+        "noise_sigma" => Float64(noise_sigma),
+        "subsample_rho" => Float64(subsample_rho),
+        "noise_realization" => Int(noise_realization),
+        "noise_model" => DATA_CONDITION_NOISE_MODEL,
+        "data_condition_fingerprint" => condition_fingerprint,
+        "observed_data_sha256" => nothing,
+        "n_observed_points" => nothing,
+        "clamp_val" => clamp_val_json(clamp_value),
         "loss" => nothing,
         "r2" => nothing,
         "r2_by_dim" => nothing,
@@ -816,10 +849,13 @@ function run_one(variant,
 
     write_heartbeat!(heartbeat, "start")
     try
-        traj = build_trajectory(system, ic_set)
+        clean_traj = build_trajectory(system, ic_set)
+        traj = apply_phase_c_data_condition(clean_traj, system_id, ic_set, noise_sigma, subsample_rho, noise_realization)
+        base_record["observed_data_sha256"] = observed_data_sha256(traj)
+        base_record["n_observed_points"] = length(traj.t)
         base_record["derivative_active_fractions"] = derivative_active_fractions(system, traj)
-        optimizer = build_reference_optimizer(max_fit_attempts = max_fit_attempts)
-        screening_optimizer = SCREENING_BUDGETS_ENABLED ? build_screening_optimizer() : nothing
+        optimizer = build_reference_optimizer(max_fit_attempts = max_fit_attempts, clamp_val = clamp_value)
+        screening_optimizer = SCREENING_BUDGETS_ENABLED ? build_screening_optimizer(clamp_val = clamp_value) : nothing
         strategy = variant.constructor(level_callback, screening_optimizer)
         basis = build_variant_basis(variant, dim)
         options = build_options(seed)

@@ -1,4 +1,4 @@
-status: done
-task:   WP-N31
-report: codex/reports/REPORT_WP_N31.md
-note:   ODEFormer C-1 pairing, true three-way stratification, outputs, docs and tests are complete.
+status: blocked
+task:   WP-N32
+report: codex/reports/REPORT_WP_N32.md
+note:   Umgebung, nicht Sache: Julia kann in dieser Sitzung nicht ausgeführt werden; Python-Tests sind grün.
