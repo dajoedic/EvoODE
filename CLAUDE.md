@@ -240,7 +240,7 @@ Mark items done here with date and commit; never delete them.
 | R-01 | ~~WP-N32: data condition (noise, subsampling) and `clamp_val` in the campaign path~~ **done 2026-10-01, `86137f8`** | Codex | — | — |
 | R-02 | ~~Accept WP-N32: Julia tests; **stage 0** control, system 1 at (0, 0) through the new path, bit-identical to C-1~~ **done 2026-10-01**: 31/31 tests, system 1 seed 42 both ICs bit-identical on all five fields | Claude | laptop | hard stop if not bit-identical |
 | R-03 | ~~Post-hoc clean evaluation (reconstruction + generalization against clean targets, predicted trajectories stored)~~ **done 2026-10-01, `2978497`** — stage-0 controls exact | Codex (WP-N33a) | — | — |
-| R-04 | ~~**Stage 1** — system 1, seed 42, IC 1, (0.01, 0) and (0.05, 0.5)~~ **ran 2026-10-01**, numbers in `DIARY.md`; all four hard checks pass after WP-N33a2 (`49b0613`); **gate S1 open — user decides on stage 2** | Claude | laptop, 1 h timeout | **gate S1** |
+| R-04 | ~~**Stage 1** — system 1, seed 42, IC 1, (0.01, 0) and (0.05, 0.5)~~ **ran 2026-10-01**, numbers in `DIARY.md`; all four hard checks pass after WP-N33a2 (`49b0613`); **gate S1 opened by the user 2026-10-01** | Claude | laptop, 1 h timeout | **gate S1** |
 | R-05 | **Stage 2** — the cheap ones: systems 17, 18 (dim 1), 24 (dim 2), same two conditions, seed 42, IC 1 | Claude / user | laptop if < 1 h by construction, else Orion ≤ 24 h | **gate S2** |
 | R-06 | **Stage 3** — one expensive: system 41 (dim 2), same two conditions, seed 42, IC 1 | user | Orion ≤ 24 h | **gate S3** |
 | R-07 | Confirm the noise-realization design (3 realizations, r ↔ seed r) | user | — | before any multi-seed run |
@@ -264,7 +264,7 @@ Mark items done here with date and commit; never delete them.
 |---|---|---|
 | P-01 | C-3 finishes (3 Lorenz cells); collect | Claude |
 | P-02 | Final Phase C evaluation: strict chain from `SCRIPTS.md`, config switched to the complete registry, C-1/C-2 numbers must come out identical, then the §9.3 aggregation hierarchy for EvoGrow, SINDy and ODEFormer | Claude / Codex |
-| P-03 | WP-T1f finishes (deadline 12.10.; system 58 IC 1 at risk); collect, `--aggregate-only` | Claude |
+| P-03 | WP-T1f finishes (deadline 12.10.); collect, `--aggregate-only`. **System 58 IC 1 will not finish — partial rows accepted by the user 2026-10-01, reported as an incomplete cell** | Claude |
 | P-04 | Restart curve (Abl-3), staged like Track B | later |
 | P-05 | Claim-tracing audit, then rewrite `paper/` — only on a frozen evidence state | later |
 
@@ -273,7 +273,7 @@ Mark items done here with date and commit; never delete them.
 | # | Item | Who |
 |---|---|---|
 | S-01 | ~~Retrospective on stage-1 heartbeats~~ **done 2026-10-01** (`DIARY.md`): a data-estimated noise floor would have stopped at level 1 with the true structure in both cells; the estimator overshoots ×1.77 at sigma 0.05, rho 0 | Claude |
-| S-02 | Behaviour-neutral instrumentation: best structure per level in the heartbeat (precondition for any honest retrospective) | Codex, after user OK |
+| S-02 | Behaviour-neutral instrumentation: best structure per level in the heartbeat (precondition for any honest retrospective) — **approved 2026-10-01, WP-N35** | Codex |
 | S-03 | Design note: noise-floor stop + residual whiteness for termination, BIC for stage promotion; hypotheses and constants fixed before any run | Claude, presented at the next gate |
 
 **Small:** decouple `test_phase_a_evaluation_does_not_overwrite_frozen_artifacts` from the local

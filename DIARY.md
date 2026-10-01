@@ -6,6 +6,15 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ## 2026-10-01
 
+### Nutzer: „Zu allem Go“ — Tor S1 offen, S-02 frei, WP-T1f 58 IC1 Teildaten akzeptiert, Push-Erlaubnis bis zur Rückkehr
+
+Entschieden auf die vier offenen Punkte: (1) **Tor S1 ist offen.** Stufe 2 läuft: 17 und 24 auf dem
+Laptop, 18 per Orion-Job. (2) **Push freigegeben**, bis der Nutzer zurück ist. Gepusht wurde `f36e01e`
+auf GitHub und GitLab, die CI baut damit das Image für Stufe 2 / System 18 und B-02. `oc apply` ist
+davon **nicht** gedeckt und bleibt beim Nutzer. (3) **WP-T1f 58 IC1:** Die Teildaten bis zur
+Deadline am 12.10. werden akzeptiert und als unvollständige Zelle berichtet. (4) **S-02**
+(beste Struktur je Level im Heartbeat) ist als WP-N35 an Codex gegangen.
+
 ### WP-N34 (SINDy und Weak-SINDy auf Rausch-Daten): Weak-SINDy ist auf System 1 der stärkste Gegner, die Abnahme ist noch offen
 
 **Stand:** Der Lauf auf den vier Stufe-1-Datenbedingungen von System 1 funktioniert. Alle Hashes sind
