@@ -6,6 +6,47 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ## 2026-10-01
 
+### Stufe 2, lokaler Teil: System 17 trägt, System 24 reißt die Stunde, und das Rauschen löscht die Kappe
+
+**Gelaufen** (Laptop, je Zelle hart auf 55 min begrenzt, Seed 42, IC 1, Realisierung 1): System 17
+bei beiden Bedingungen, System 24 bei beiden Bedingungen, Kontrollen von System 24 bei (0, 0) in
+beiden IC-Sets. **Kontrollen bitgleich zu C-1.** Alle vier harten Prüfungen sind auf den fertigen
+Zellen bestanden. Herkunft: Die Zellen nach 16:50 liefen mit dem damals uncommitteten,
+verhaltensneutralen WP-N35-Heartbeat. Die fertigen Records von System 17 tragen `git_dirty = false`.
+
+**System 17** (dim 1, exakt, Wahrheit `1, u1, u1²`):
+
+| | C-1 | (0,01; 0) | (0,05; 0,5) |
+|---|---|---|---|
+| Level / Endstufe | 8 / 2 | 20 / 5 | 23 / 5 |
+| Loss-Evals, Fits gegenüber C-1 | — | ×2,1 / ×2,4 | ×3,2 / ×2,8 |
+| Kappe Gleichung 1 | endlich | **→ `nothing`** | **→ `nothing`** |
+| Struktur roh / gepruned | — | **richtig / richtig** | falsch (`+u1³`) |
+| R² Rekonstruktion / Generalisierung, sauber | — | 0,999993 / 0,999986 | 0,9967 / 0,9934 |
+| SINDy: Struktur / Generalisierung > 0,9 | 0 Treffer schon in C-4 | 0/10 / 10/10 | 0/10 / 0/10 |
+| Weak-SINDy | — | 0/10 / 8/10 | 0/10 / 5/10 |
+
+**System 24** (dim 2, exakt, Wahrheit `u2` | `u1`): **Beide verrauschten Zellen reißen die 55 min**
+(Exit 124). In C-1 dauerte die Zelle 33 s. Die Heartbeats (WP-N35) zeigen dasselbe Muster wie bei
+System 1: Die beste Struktur steht in Level 1 bzw. 2 fest. Bei σ 0,01 ist das `u1, u2` | `u1`, also
+ein Zusatzterm. Bei (0,05; 0,5) ist es `u1, u2` | `1, u1`. Danach folgen nur noch teure Level ohne
+Verbesserung, mit 5 bis 19 min je Level in den Stufen 2 und 3. SINDy trifft 24 auf sauberen Daten
+(C-4), unter Rauschen in 0/10, Weak-SINDy in 0/10 bzw. 1/10.
+
+**Lesart.**
+- **Kosten:** Für ein System, das schon in C-1 viele Level brauchte (17: 8 Level), steigt der Aufwand
+  nur um ×2–3. Die ×193–712 von System 1 waren ein Artefakt seines sofortigen Abbruchs, wie vorab
+  vermutet. Ein einfaches dim-2-System mit 33 s in C-1 braucht dagegen über eine Stunde. Ein
+  einheitlicher Kostenfaktor existiert also nicht, er hängt am Abbruch.
+- **Das Rauschen löscht die Kappe.** Bei System 17 wird die endliche Kappe von C-1 zu `nothing`.
+  Das ist die Ableitungsabhängigkeit der Kappe, jetzt gemessen. Claim B (Kosten sparen) gilt also nur
+  auf sauberen Daten.
+- **Gegen die Baselines:** Bei System 17 ist EvoGrow bei σ 0,01 die einzige Methode mit richtiger
+  Struktur. Bei (0,05; 0,5) treffen alle drei nicht, und EvoGrow generalisiert dort besser als beide
+  SINDy-Varianten. Das Bild von System 1 (Weak-SINDy vorn) dreht sich hier also.
+- **System 18** steht noch aus und wartet auf den Orion-Job. **System 24** gehört nach der
+  Laufort-Regel ebenfalls nach Orion. Beides wird vorbereitet, gestartet wird es vom Nutzer.
+
 ### Nutzer: „Zu allem Go“ — Tor S1 offen, S-02 frei, WP-T1f 58 IC1 Teildaten akzeptiert, Push-Erlaubnis bis zur Rückkehr
 
 Entschieden auf die vier offenen Punkte: (1) **Tor S1 ist offen.** Stufe 2 läuft: 17 und 24 auf dem
