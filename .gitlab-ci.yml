@@ -118,6 +118,7 @@ build_odeformer_reference_image:
         - baselines/**/*
     - if: '$CI_COMMIT_BRANCH == "main"'
       when: manual
+      allow_failure: true
     - when: never
   variables:
     DOCKER_BUILDKIT: "1"
@@ -146,6 +147,7 @@ build_odeformer_candidate_image:
         - baselines/**/*
     - if: '$CI_COMMIT_BRANCH == "main"'
       when: manual
+      allow_failure: true
     - when: never
   variables:
     DOCKER_BUILDKIT: "1"
@@ -180,6 +182,7 @@ trivy-odeformer-reference-image:
         - baselines/**/*
     - if: '$CI_COMMIT_BRANCH == "main"'
       when: manual
+      allow_failure: true
     - when: never
   needs:
     - job: build_odeformer_reference_image
@@ -192,6 +195,7 @@ trivy-odeformer-candidate-image:
         - baselines/**/*
     - if: '$CI_COMMIT_BRANCH == "main"'
       when: manual
+      allow_failure: true
     - when: never
   needs:
     - job: build_odeformer_candidate_image

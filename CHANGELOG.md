@@ -10,6 +10,17 @@ project**. Scientific history belongs in `DIARY.md`, not here.
 
 ## [Unreleased]
 
+### Fixed - 2026-10-01
+
+- The four manual jobs (`build_odeformer_reference_image`, `build_odeformer_candidate_image`,
+  `trivy-odeformer-reference-image`, `trivy-odeformer-candidate-image`) now carry
+  `allow_failure: true` on their `when: manual` rule. Without it GitLab treats a manual job from
+  `rules` as blocking (`allow_failure` defaults to `false` there), so the `build` stage never
+  completed, the stage-ordered jobs of `security` without `needs` never started, and no pipeline
+  since the ODEFormer jobs were added reached a final status. The jobs stay manual and run only
+  when triggered or when `baselines/**/*` changes; nothing about what is built or scanned changes.
+  Effect: pipeline notifications (enabled by the user 2026-10-01) report a real final status.
+
 ### Added - 2026-09-26
 
 - `build_odeformer_candidate_image` builds
