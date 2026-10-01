@@ -6,6 +6,31 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ## 2026-10-01
 
+### Abbruch-Rückschau, erweitert auf Stufe 2: Der Rauschboden spart überall, repariert aber keine Auswahl innerhalb einer Stufe
+
+Gleiche Methode wie bei Stufe 1: Rauschboden erwartet und aus den Daten geschätzt (lokal kubisch, 9
+Punkte, Korrektur 9/5, gemittelt über die Dimensionen). Gesucht ist das erste Level mit
+`best_loss ≤ σ̂²`. Die Heartbeats von System 17 stammen aus der Zeit **vor** WP-N35 und tragen
+keine Struktur. Die von System 24 tragen sie.
+
+| Zelle | Boden erwartet / geschätzt | Stopp bei Level (Stufe) | gelaufen | Loss am Stopp / am Ende | Struktur am Stopp |
+|---|---|---|---|---|---|
+| 17, (0,01; 0) | 0,332 / 0,434 | 5 (2) | 20 | 0,361 / 0,361 | Endstruktur ist richtig, Loss identisch |
+| 17, (0,05; 0,5) | 7,91 / 10,2 | 5 (2) | 23 | 8,65 / 8,54 | unbekannt; am Ende `+u1³` |
+| 24, (0,01; 0) | 1,26e-5 / 1,69e-5 | 1 (1) | 9 bis Timeout | 1,63e-5 / 1,63e-5 | `u1, u2` \| `u1`: ein Zusatzterm |
+| 24, (0,05; 0,5) | 3,18e-4 / 4,17e-4 | 2 (1) | 8 bis Timeout | 4,04e-4 / 4,04e-4 | `u1, u2` \| `1, u1`: zwei Zusatzterme |
+
+**Was das sagt (6 Zellen, 3 Systeme):** Der Stopp am Rauschboden hätte in allen sechs Zellen den
+größten Teil der Level gespart. In keiner Zelle verschlechtert er das Ergebnis gegenüber dem
+Endstand. **Er repariert aber keine Auswahl innerhalb einer Stufe:** Bei System 24 liegt der
+Zusatzterm schon in Stufe 1. Das ist das Muster „Auswahl nach Fittbarkeit“ aus dem Orakel, nur auf
+kleinerer Skala. Ein Abbruchkriterium allein macht EvoGrow also billiger, aber nicht richtiger.
+Gegen die Zusatzterme braucht es den Komplexitätsterm, also Vorschlag 3 (BIC beim Freischalten),
+gegebenenfalls auch innerhalb einer Stufe. **Der Schätzer liegt konsistent etwa 1,3-fach zu hoch**
+(6 von 6), einmal 1,77-fach. Für eine Regel ist das eher gutmütig, weil die Suche dann früher
+stoppt. Bei einem stärker verrauschten oder steilen System kann es aber zu früh greifen. Das ist zu
+prüfen, bevor eine Konstante festgelegt wird.
+
 ### Stufe 2, lokaler Teil: System 17 trägt, System 24 reißt die Stunde, und das Rauschen löscht die Kappe
 
 **Gelaufen** (Laptop, je Zelle hart auf 55 min begrenzt, Seed 42, IC 1, Realisierung 1): System 17
