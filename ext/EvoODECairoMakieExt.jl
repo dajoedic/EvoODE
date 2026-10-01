@@ -1,3 +1,8 @@
+module EvoODECairoMakieExt
+
+using EvoODE
+import EvoODE: render_all_frames, render_frame, structure_to_string
+using Printf
 import CairoMakie as CM
 
 """
@@ -418,4 +423,6 @@ function render_all_frames(
     end
 
     return (n_frames = n_frames, n_skipped_simulations = n_skipped)
+end
+
 end

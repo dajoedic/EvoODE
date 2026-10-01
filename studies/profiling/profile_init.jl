@@ -1,7 +1,7 @@
 import Pkg
 Pkg.activate(dirname(dirname(@__DIR__)))
 
-using DifferentialEquations
+using OrdinaryDiffEq
 using Dates
 using Printf
 

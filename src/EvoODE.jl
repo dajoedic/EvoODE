@@ -63,6 +63,11 @@ export save_comparison_csv
 export solve_and_save_plot
 export render_all_frames, render_frame, structure_to_string
 
+function solve_and_save_plot end
+function render_all_frames end
+function render_frame end
+function structure_to_string end
+
 # ============================================================
 # Core types first
 # ============================================================
@@ -116,8 +121,6 @@ include("optimize/pretune.jl")
 # ============================================================
 include("simulate/solve.jl")
 include("simulate/export.jl")
-include("plotting/plot_solution.jl")
-include("plotting/search_animation.jl")
 
 # ============================================================
 # Structure search algorithms

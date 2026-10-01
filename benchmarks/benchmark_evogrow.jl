@@ -15,7 +15,7 @@
 import Pkg
 Pkg.activate(joinpath(@__DIR__, ".."))
 
-using DifferentialEquations
+using OrdinaryDiffEq
 using Dates
 using Plots
 using Printf

@@ -1,6 +1,6 @@
 # src/optimize/bfgs.jl
 
-using DifferentialEquations
+using OrdinaryDiffEq
 using SciMLBase
 using Optimization, OptimizationOptimJL
 using Logging

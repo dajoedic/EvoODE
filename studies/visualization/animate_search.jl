@@ -2,7 +2,7 @@ using Pkg
 Pkg.activate(joinpath(@__DIR__, "..", ".."))
 using EvoODE
 import EvoODE: _simulate_candidate
-using DifferentialEquations
+using OrdinaryDiffEq
 using Printf
 
 # ============================================================

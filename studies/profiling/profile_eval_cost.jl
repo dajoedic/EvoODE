@@ -2,7 +2,7 @@ import Pkg
 Pkg.activate(dirname(dirname(@__DIR__)))
 
 using Dates
-using DifferentialEquations
+using OrdinaryDiffEq
 using JSON3
 using Printf
 

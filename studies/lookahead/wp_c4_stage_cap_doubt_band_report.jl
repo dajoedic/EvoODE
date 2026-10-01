@@ -2,7 +2,7 @@ import Pkg
 Pkg.activate(joinpath(@__DIR__, "..", ".."))
 
 using Dates
-using DifferentialEquations
+using OrdinaryDiffEq
 using Printf
 using Statistics
 

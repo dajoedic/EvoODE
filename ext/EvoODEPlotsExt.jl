@@ -1,3 +1,7 @@
+module EvoODEPlotsExt
+
+using EvoODE
+import EvoODE: solve_and_save_plot
 using Plots
 
 # --- formatting helpers for German-style CSV output ---
@@ -17,13 +21,13 @@ with decimal comma.
 """
 function solve_and_save_plot(f!::Function,
                              params::Vector{Float64},
-                             traj::Trajectory;
+                             traj::EvoODE.Trajectory;
                              filename::String,
                              title::String = "",
                              csv_filename::Union{Nothing,String} = nothing)
 
-    # Use package simulate() to stay consistent
-    Ŷ = EvoODE.simulate(f!, params, traj)
+    # Use package simulate() to stay consistent.
+    Yhat = EvoODE.simulate(f!, params, traj)
 
     t = traj.t
     X = traj.x
@@ -33,7 +37,7 @@ function solve_and_save_plot(f!::Function,
 
     for k in 1:dim
         scatter!(plt[k], t, X[:, k], label="data u$k", markersize=3)
-        plot!(plt[k], t, Ŷ[:, k], label="model u$k", linewidth=2)
+        plot!(plt[k], t, Yhat[:, k], label="model u$k", linewidth=2)
     end
 
     if title != ""
@@ -44,7 +48,6 @@ function solve_and_save_plot(f!::Function,
 
     if csv_filename !== nothing
         open(csv_filename, "w") do io
-            # header
             cols = ["t"]
             append!(cols, ["x$k" for k in 1:dim])
             append!(cols, ["yhat$k" for k in 1:dim])
@@ -57,7 +60,7 @@ function solve_and_save_plot(f!::Function,
                     push!(row, _format_de(X[i, k]))
                 end
                 for k in 1:dim
-                    push!(row, _format_de(Ŷ[i, k]))
+                    push!(row, _format_de(Yhat[i, k]))
                 end
                 println(io, join(row, ";"))
             end
@@ -65,4 +68,6 @@ function solve_and_save_plot(f!::Function,
     end
 
     return filename
+end
+
 end
