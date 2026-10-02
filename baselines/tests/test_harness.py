@@ -335,6 +335,43 @@ def test_odeformer_adapter_preserves_none_prediction_for_outcome_and_r2() -> Non
     assert fields["reconstruction_prediction_outcome"] == "none"
 
 
+def test_symbolic_active_terms_expand_to_phase_c_support_names() -> None:
+    raw, pruned, outside = harness.symbolic_active_terms_by_equation("0.2812 - 0.3557*x_0", 1)
+
+    assert raw == [{"1", "u1"}]
+    assert pruned == [{"1", "u1"}]
+    assert outside == [[]]
+
+
+def test_symbolic_active_terms_expand_product_terms() -> None:
+    raw, pruned, outside = harness.symbolic_active_terms_by_equation("x_0*(0.3965 - 0.0041*x_0)", 1)
+
+    assert raw == [{"u1", "u1^2"}]
+    assert pruned == [{"u1", "u1^2"}]
+    assert outside == [[]]
+    assert harness.support_hit(raw, [{"u1", "u1^2"}])
+    assert harness.support_hit(pruned, [{"u1", "u1^2"}])
+
+
+def test_symbolic_active_terms_reject_fraction_without_crashing() -> None:
+    raw, pruned, outside = harness.symbolic_active_terms_by_equation(
+        "(-7.64*x_0**2 + 2.02*x_0 - 0.0284)/(1 + x_0)",
+        1,
+    )
+
+    assert raw == [set()]
+    assert pruned == [set()]
+    assert outside == [["1/(x_0 + 1)", "x_0**2/(x_0 + 1)", "x_0/(x_0 + 1)"]]
+
+
+def test_symbolic_active_terms_recognize_sin_cos_support_terms() -> None:
+    raw, pruned, outside = harness.symbolic_active_terms_by_equation("0.2*sin(x_0) | -0.3*cos(x_1)", 2)
+
+    assert raw == [{"sin(u1)"}, {"cos(u2)"}]
+    assert pruned == [{"sin(u1)"}, {"cos(u2)"}]
+    assert outside == [[], []]
+
+
 def test_odeformer_constant_optimization_preserves_none_fit_prediction(tmp_path: Path, monkeypatch) -> None:
     cell = first_multidimensional_cell()
     source_root = write_fake_odeformer_source(

@@ -124,6 +124,21 @@ def read_jsonl(path: Path) -> list[dict[str, Any]]:
     return [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines() if line.strip()]
 
 
+def phase_c_support_terms(path: Path) -> dict[int, dict[str, Any]]:
+    payload = load_json(path)
+    if payload.get("basis_name") != "staged_polynomial_basis_with_constant":
+        fail(f"unexpected Phase-C basis_name: {payload.get('basis_name')!r}")
+    result: dict[int, dict[str, Any]] = {}
+    for system in payload.get("systems", []):
+        dim = int(system["dim"])
+        support_terms = system.get("support_terms")
+        result[int(system["system_id"])] = {
+            "exact": str(system.get("representability", "")) == "exact",
+            "true_terms": [set(items) for items in support_terms] if support_terms is not None else [set() for _ in range(dim)],
+        }
+    return result
+
+
 def int_field(record: dict[str, Any], *names: str) -> int:
     for name in names:
         if name in record:
@@ -239,6 +254,7 @@ def compare_noise_control(reference_path: Path, candidate_path: Path) -> dict[st
 def structural_fields(record: dict[str, Any], true_terms: list[set[str]], exact: bool) -> dict[str, Any]:
     raw = json.loads(str(record.get("active_terms_raw", "[]") or "[]"))
     pruned = json.loads(str(record.get("active_terms_pruned", "[]") or "[]"))
+    outside_count = int(record.get("odeformer_outside_basis_term_count", 0) or 0)
     if len(raw) != len(true_terms):
         raw = [[] for _ in true_terms]
     if len(pruned) != len(true_terms):
@@ -256,8 +272,8 @@ def structural_fields(record: dict[str, Any], true_terms: list[set[str]], exact:
     }
     if not exact:
         return fields
-    fields["odeformer_structure_hit_raw"] = harness.support_hit([set(item) for item in raw], true_terms)
-    fields["odeformer_structure_hit_pruned"] = harness.support_hit([set(item) for item in pruned], true_terms)
+    fields["odeformer_structure_hit_raw"] = outside_count == 0 and harness.support_hit([set(item) for item in raw], true_terms)
+    fields["odeformer_structure_hit_pruned"] = outside_count == 0 and harness.support_hit([set(item) for item in pruned], true_terms)
     for label, terms in [("raw", raw), ("pruned", pruned)]:
         metrics = aggregate_equation_metrics(
             [term_set_metrics(found, truth) for found, truth in zip([set(item) for item in terms], true_terms)]
@@ -265,6 +281,46 @@ def structural_fields(record: dict[str, Any], true_terms: list[set[str]], exact:
         fields[f"odeformer_structure_precision_{label}"] = metrics["term_precision_micro"]
         fields[f"odeformer_structure_recall_{label}"] = metrics["term_recall_micro"]
         fields[f"odeformer_structure_f1_{label}"] = metrics["structural_f1_micro"]
+    return fields
+
+
+def expression_for_structure(record: dict[str, Any]) -> str:
+    for field in ["odeformer_expression_after_optimization", "odeformer_model_canonical", "model"]:
+        value = str(record.get(field, "") or "").strip()
+        if value:
+            return value
+    return ""
+
+
+def recompute_record_structure_fields(
+    record: dict[str, Any],
+    support_terms_by_id: dict[int, dict[str, Any]],
+) -> dict[str, Any]:
+    system_id = int(record["system_id"])
+    dim = int(record["dimension"])
+    support = support_terms_by_id.get(system_id, {"exact": False, "true_terms": [set() for _ in range(dim)]})
+    true_terms = list(support["true_terms"])
+    exact = bool(support["exact"])
+    expression = expression_for_structure(record)
+    raw_terms: list[set[str]] = [set() for _ in range(dim)]
+    pruned_terms: list[set[str]] = [set() for _ in range(dim)]
+    outside_terms: list[list[str]] = [[] for _ in range(dim)]
+    if str(record.get("status", "")) == "success" and expression:
+        try:
+            raw_terms, pruned_terms, outside_terms = harness.symbolic_active_terms_by_equation(expression, dim)
+        except Exception as exc:
+            outside_terms = [[f"{type(exc).__name__}: {exc}"] for _ in range(dim)]
+    outside_count = int(sum(len(items) for items in outside_terms))
+    fields = {
+        "active_terms_raw": json.dumps([sorted(terms) for terms in raw_terms], separators=(",", ":")),
+        "active_terms_pruned": json.dumps([sorted(terms) for terms in pruned_terms], separators=(",", ":")),
+        "true_terms": json.dumps([sorted(terms) for terms in true_terms], separators=(",", ":")),
+        "structure_hit_raw": exact and outside_count == 0 and harness.support_hit(raw_terms, true_terms),
+        "structure_hit_pruned": exact and outside_count == 0 and harness.support_hit(pruned_terms, true_terms),
+        "odeformer_outside_basis_terms": json.dumps(outside_terms, separators=(",", ":")),
+        "odeformer_outside_basis_term_count": outside_count,
+    }
+    fields.update(structural_fields({**record, **fields}, true_terms, exact))
     return fields
 
 
@@ -382,6 +438,41 @@ def build_comparison(details: pd.DataFrame, stage_reports: list[Path], sindy_pat
     return out
 
 
+def recompute_structure_outputs(
+    output_dir: Path,
+    stage_reports: list[Path],
+    sindy_paths: list[Path],
+    support_path: Path = REPO_ROOT / "studies/regression/phase_c_support.json",
+) -> dict[str, Path]:
+    output_dir = resolve_repo_path(output_dir)
+    records_path = output_dir / "records.jsonl"
+    if not records_path.is_file():
+        fail(f"records.jsonl does not exist: {records_path}")
+    support_terms_by_id = phase_c_support_terms(resolve_repo_path(support_path))
+    records = read_jsonl(records_path)
+    updated: list[dict[str, Any]] = []
+    for record in records:
+        item = dict(record)
+        item.update(recompute_record_structure_fields(item, support_terms_by_id))
+        updated.append(item)
+    paths = {
+        "details": output_dir / "details.csv",
+        "records": records_path,
+        "summary": output_dir / "summary.csv",
+        "comparison_with_robustness_stage_report": output_dir / "comparison_with_robustness_stage_report.csv",
+    }
+    paths["records"].write_text(
+        "\n".join(json.dumps(record, sort_keys=True) for record in updated) + ("\n" if updated else ""),
+        encoding="utf-8",
+    )
+    details = pd.DataFrame(updated)
+    details.to_csv(paths["details"], index=False)
+    build_summary(details).to_csv(paths["summary"], index=False)
+    comparison = build_comparison(details, stage_reports, sindy_paths)
+    comparison.to_csv(paths["comparison_with_robustness_stage_report"], index=False)
+    return paths
+
+
 def run_noise_odeformer(
     config_path: Path,
     export_indices: list[Path],
@@ -395,6 +486,7 @@ def run_noise_odeformer(
     benchmark = load_benchmark(resolve_repo_path(load_json(config_path)["benchmark_path"]))
     systems = {int(system["id"]): system for system in benchmark}
     support = load_phase_c_support(REPO_ROOT / "studies/regression/phase_c_support.json").set_index("system_id")
+    support_terms_by_id = phase_c_support_terms(REPO_ROOT / "studies/regression/phase_c_support.json")
     configs = selected_config_objects(config_path, config_ids)
     clean_t = clean_time_grid(config_path)
     clean_states = {
@@ -476,11 +568,7 @@ def run_noise_odeformer(
                             "code_origin_path": str(REPO_ROOT),
                             "code_origin_git_hash": harness.git_hash(),
                             "elapsed_s_non_evidence": time.perf_counter() - started,
-                            **structural_fields(
-                                record,
-                                polynomial_true_terms(system),
-                                str(support.loc[system_id, "phasec_representability"]) == "exact",
-                            ),
+                            **recompute_record_structure_fields(record, support_terms_by_id),
                             **support.loc[system_id].to_dict(),
                         }
                     )
@@ -529,6 +617,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--stage-report", action="append", default=None)
     parser.add_argument("--sindy-details", action="append", default=None)
     parser.add_argument("--control-reference", default="")
+    parser.add_argument("--recompute-structure-fields", action="store_true")
     return parser.parse_args()
 
 
@@ -537,22 +626,26 @@ def main() -> int:
     try:
         export_indices = [Path(value) for value in args.export_index] if args.export_index else DEFAULT_EXPORT_INDICES
         output_dir = resolve_repo_path(args.output_dir)
-        paths = run_noise_odeformer(
-            Path(args.config),
-            export_indices,
-            output_dir,
-            repetitions=args.repetitions,
-            config_ids=run_odeformer_grid.parse_str_set(args.config_ids),
-            limit=args.limit,
-        )
-        comparison = build_comparison(
-            pd.read_csv(paths["details"]),
-            expand_comparison_sources(args.stage_report),
-            [resolve_repo_path(path) for path in (args.sindy_details or ["outputs/stage2/baselines/details.csv", "outputs/wp_n34_noise_sindy_baselines/details.csv"])],
-        )
-        comparison_path = output_dir / "comparison_with_robustness_stage_report.csv"
-        comparison.to_csv(comparison_path, index=False)
-        paths["comparison_with_robustness_stage_report"] = comparison_path
+        stage_reports = expand_comparison_sources(args.stage_report)
+        sindy_paths = [
+            resolve_repo_path(path)
+            for path in (args.sindy_details or ["outputs/stage2/baselines/details.csv", "outputs/wp_n34_noise_sindy_baselines/details.csv"])
+        ]
+        if args.recompute_structure_fields:
+            paths = recompute_structure_outputs(output_dir, stage_reports, sindy_paths)
+        else:
+            paths = run_noise_odeformer(
+                Path(args.config),
+                export_indices,
+                output_dir,
+                repetitions=args.repetitions,
+                config_ids=run_odeformer_grid.parse_str_set(args.config_ids),
+                limit=args.limit,
+            )
+            comparison = build_comparison(pd.read_csv(paths["details"]), stage_reports, sindy_paths)
+            comparison_path = output_dir / "comparison_with_robustness_stage_report.csv"
+            comparison.to_csv(comparison_path, index=False)
+            paths["comparison_with_robustness_stage_report"] = comparison_path
         if args.control_reference:
             control_path, control_ok = compare_control(paths["records"], output_dir, resolve_repo_path(args.control_reference))
             paths["control_equivalence"] = control_path

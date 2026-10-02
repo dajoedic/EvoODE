@@ -168,6 +168,53 @@ def test_comparison_join_marks_missing_sources(tmp_path: Path) -> None:
     assert joined.loc[0, "sindy_source_path"] == "missing"
 
 
+def test_recompute_structure_outputs_updates_records_without_adapter(tmp_path: Path) -> None:
+    out = tmp_path / "stages"
+    out.mkdir()
+    record = {
+        "system_id": 1,
+        "dimension": 1,
+        "status": "success",
+        "source_initial_condition_set": 1,
+        "target_initial_condition_set": 2,
+        "fit_initial_condition_set": 1,
+        "generalization_initial_condition_set": 2,
+        "noise_sigma": 0.01,
+        "subsample_rho": 0.0,
+        "noise_realization": 1,
+        "odeformer_config_id": "beam10_noopt",
+        "odeformer_expression_after_optimization": "0.2812 - 0.3557*x_0",
+        "reconstruction_r2_arithmetic_mean": 0.95,
+        "reconstruction_r2_variance_weighted": 0.95,
+        "reconstruction_r2_arithmetic_mean_gt_0_9": True,
+        "reconstruction_r2_variance_weighted_gt_0_9": True,
+        "generalization_r2_arithmetic_mean": 0.94,
+        "generalization_r2_variance_weighted": 0.94,
+        "generalization_r2_arithmetic_mean_gt_0_9": True,
+        "generalization_r2_variance_weighted_gt_0_9": True,
+        "active_terms_raw": "[]",
+        "active_terms_pruned": "[]",
+        "true_terms": "[]",
+    }
+    write_jsonl(out / "records.jsonl", [record])
+
+    paths = noise_odeformer.recompute_structure_outputs(out, [], [])
+    records = read_jsonl(paths["records"])
+    details = pd.read_csv(paths["details"])
+    summary = pd.read_csv(paths["summary"])
+
+    assert records[0]["active_terms_raw"] == '[["1","u1"]]'
+    assert records[0]["active_terms_pruned"] == '[["1","u1"]]'
+    assert records[0]["true_terms"] == '[["1","u1"]]'
+    assert records[0]["structure_hit_raw"] is True
+    assert records[0]["structure_hit_pruned"] is True
+    assert records[0]["odeformer_structure_hit_raw"] is True
+    assert records[0]["odeformer_outside_basis_term_count"] == 0
+    assert bool(details.loc[0, "structure_hit_raw"])
+    assert summary.loc[0, "repetition_count"] == 1
+    assert paths["comparison_with_robustness_stage_report"].is_file()
+
+
 def odeformer_equivalence_record(
     system_id: int,
     config_id: str,
@@ -195,6 +242,10 @@ def odeformer_equivalence_record(
 def write_jsonl(path: Path, records: list[dict[str, object]]) -> Path:
     path.write_text("\n".join(json.dumps(record, sort_keys=True) for record in records) + "\n", encoding="utf-8")
     return path
+
+
+def read_jsonl(path: Path) -> list[dict[str, object]]:
+    return [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines() if line.strip()]
 
 
 def reference_grid_records() -> list[dict[str, object]]:

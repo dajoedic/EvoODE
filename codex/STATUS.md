@@ -1,4 +1,4 @@
 status: done
-task:   WP-N38
-report: codex/reports/REPORT_WP_N38.md
-note:   Legacy comparison restored to HEAD; noise control moved to runner; tests pass.
+task:   WP-N39
+report: codex/reports/REPORT_WP_N39.md
+note:   PySR baseline harness, pinned image files, decisions, cost formula, and fake-adapter tests are complete.

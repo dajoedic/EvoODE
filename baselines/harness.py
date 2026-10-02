@@ -32,6 +32,7 @@ from scripts.aggregate.run_wp_n6_sindy_baseline import (  # noqa: E402
     active_terms_by_equation,
     fit_sindy,
     load_benchmark,
+    parse_expr,
     polynomial_true_terms,
     simulate_model,
     support_hit,
@@ -41,6 +42,8 @@ from scripts.aggregate.run_wp_n6_sindy_baseline import (  # noqa: E402
 ODEFORMER_COMMIT = "c9193012ad07a97186290b98d8290d1a177f4609"
 ODEFORMER_PARAM_OPTIMIZER_NORMALIZED_SHA256 = "31e4a6cabf2b180118c6ee47286a537968720710b420c1dc17bc8d670ceb0bea"
 R2_THRESHOLD = 0.9
+SUPPORT_ABS = 1e-6
+SUPPORT_REL = 1e-3
 PREDICTION_OUTCOMES = {
     "finite",
     "none",
@@ -63,7 +66,6 @@ R2_ZERO_REASONS = {
 }
 ERROR_MESSAGE_LIMIT = 240
 REGISTERED_INACTIVE = {
-    "pysr": "PySR dependency is not installed; it carries an isolated Julia runtime.",
     "proged": "ProGED dependency is not installed in the baseline image.",
     "ffx": "FFX dependency is not installed in the baseline image.",
     "ellyn": "ellyn dependency is not installed in the baseline image.",
@@ -437,7 +439,7 @@ def aggregate_r2(reference: np.ndarray, prediction: np.ndarray | None) -> dict[s
 
 
 def package_versions() -> dict[str, str]:
-    names = ["numpy", "pandas", "scipy", "sympy", "pysindy", "torch", "gdown", "scikit-learn"]
+    names = ["numpy", "pandas", "scipy", "sympy", "pysindy", "torch", "gdown", "scikit-learn", "pysr"]
     versions: dict[str, str] = {}
     for name in names:
         try:
@@ -615,6 +617,390 @@ def numeric_constants(expression: str) -> list[float]:
     for match in re.finditer(r"(?<![_A-Za-z])[-+]?(?:(?:\d*\.\d+)|(?:\d+\.?))(?:[Ee][+-]?\d+)?", expression):
         constants.append(float(match.group(0)))
     return constants
+
+
+def pysr_default_config(seed: int = 1, output_dir: str | Path | None = None) -> dict[str, Any]:
+    config: dict[str, Any] = {
+        "config_id": "odeformer_pysr_faithful",
+        "finite_difference_order": 2,
+        "smoother_window_length": None,
+        "niterations": 50,
+        "binary_operators": ["plus", "sub", "mult", "pow", "div"],
+        "unary_operators": ["cos", "exp", "sin", "neg", "log", "sqrt"],
+        "loss": "loss(x, y) = (x - y)^2",
+        "maxsize": None,
+        "model_selection": "score",
+        "sorting_metric": "r2",
+        "optimize_hyperparams": False,
+        "hyper_opt_eval_fraction": 0.3,
+        "deterministic": True,
+        "parallelism": "serial",
+        "procs": 0,
+        "random_state": int(seed),
+        "precision": 64,
+        "warm_start": False,
+    }
+    if output_dir is not None:
+        config["output_dir"] = str(output_dir)
+    return config
+
+
+def pysr_finite_difference_targets(time_values: np.ndarray, state_values: np.ndarray) -> np.ndarray:
+    if len(time_values) < 3:
+        raise ValueError("PySR finite differences require at least three observed time points")
+    if not np.all(np.diff(time_values) > 0):
+        raise ValueError("PySR finite differences require a strictly increasing time grid")
+    edge_order = 2 if len(time_values) >= 3 else 1
+    derivatives = [
+        np.gradient(state_values[:, idx], time_values, edge_order=edge_order)
+        for idx in range(state_values.shape[1])
+    ]
+    return np.column_stack(derivatives)
+
+
+def pysr_sympy_context(dim: int) -> dict[str, Any]:
+    import sympy as sp
+
+    context: dict[str, Any] = {
+        "sin": sp.sin,
+        "cos": sp.cos,
+        "tan": sp.tan,
+        "exp": sp.exp,
+        "log": sp.log,
+        "sqrt": sp.sqrt,
+        "Abs": sp.Abs,
+        "abs": sp.Abs,
+    }
+    for idx in range(dim):
+        symbol = sp.Symbol(f"x_{idx}")
+        context[f"x_{idx}"] = symbol
+        context[f"x{idx}"] = symbol
+    return context
+
+
+def parse_pysr_expr(text: str, dim: int) -> Any:
+    import sympy as sp
+
+    return sp.sympify(str(text).replace("^", "**"), locals=pysr_sympy_context(dim))
+
+
+def pysr_expression_parts(expression: str | list[str], dim: int) -> list[str]:
+    if isinstance(expression, list):
+        parts = [str(item) for item in expression]
+    else:
+        parts = [part.strip() for part in str(expression).split("|")]
+    if len(parts) != dim:
+        raise ValueError(f"PySR expression count {len(parts)} does not match dimension {dim}")
+    return parts
+
+
+def canonicalize_pysr_expression(expression: str | list[str], dim: int) -> str:
+    import sympy as sp
+
+    parts = []
+    for part in pysr_expression_parts(expression, dim):
+        parsed = parse_pysr_expr(part, dim)
+        parts.append(str(sp.expand(parsed)))
+    return " | ".join(parts)
+
+
+def pysr_basis_symbols(dim: int) -> list[Any]:
+    import sympy as sp
+
+    return [sp.Symbol(f"x_{idx}") for idx in range(dim)]
+
+
+def support_term_name_from_body(body: Any, symbols: list[Any]) -> str | None:
+    import sympy as sp
+
+    if body == 1:
+        return "1"
+    for idx, symbol in enumerate(symbols):
+        variable = f"u{idx + 1}"
+        if body == symbol:
+            return variable
+        if body == symbol**2:
+            return f"{variable}^2"
+        if body == symbol**3:
+            return f"{variable}^3"
+        if body == sp.sin(symbol):
+            return f"sin({variable})"
+        if body == sp.cos(symbol):
+            return f"cos({variable})"
+    powers = body.as_powers_dict()
+    if len(powers) == 2 and all(powers.get(symbol, 0) in {0, 1} for symbol in symbols):
+        active = [idx for idx, symbol in enumerate(symbols) if powers.get(symbol, 0) == 1]
+        if len(active) == 2:
+            return f"u{active[0] + 1}*u{active[1] + 1}"
+    return None
+
+
+def pysr_canonical_term(term: Any, symbols: list[Any]) -> tuple[str | None, str | None]:
+    import sympy as sp
+
+    core = sp.expand(term)
+    _coeff, body = core.as_coeff_Mul()
+    name = support_term_name_from_body(body, symbols)
+    if name is None:
+        return None, str(body)
+    return name, None
+
+
+def _float_coefficient(value: Any) -> float:
+    try:
+        numeric = float(value)
+    except (TypeError, ValueError):
+        return 1.0
+    return numeric if math.isfinite(numeric) else 1.0
+
+
+def symbolic_active_terms_by_equation(
+    expression: str | list[str],
+    dim: int,
+) -> tuple[list[set[str]], list[set[str]], list[list[str]]]:
+    import sympy as sp
+
+    symbols = pysr_basis_symbols(dim)
+    raw_active: list[set[str]] = []
+    pruned_active: list[set[str]] = []
+    outside: list[list[str]] = []
+    for part in pysr_expression_parts(expression, dim):
+        terms_with_coefficients: list[tuple[str, float]] = []
+        outside_terms: list[str] = []
+        outside_coefficients: list[float] = []
+        expr = sp.expand(parse_pysr_expr(part, dim))
+        addends = expr.as_ordered_terms() if expr != 0 else []
+        for term in addends:
+            coeff, body = sp.expand(term).as_coeff_Mul()
+            coefficient = _float_coefficient(coeff)
+            name = support_term_name_from_body(body, symbols)
+            if name is None:
+                outside_terms.append(str(body))
+                outside_coefficients.append(abs(coefficient))
+            elif coefficient != 0.0:
+                terms_with_coefficients.append((name, coefficient))
+        max_abs = max([abs(coefficient) for _name, coefficient in terms_with_coefficients] + outside_coefficients + [0.0])
+        threshold = max(SUPPORT_ABS, SUPPORT_REL * max_abs)
+        raw_active.append({name for name, coefficient in terms_with_coefficients if coefficient != 0.0})
+        pruned_active.append({name for name, coefficient in terms_with_coefficients if abs(coefficient) > threshold})
+        outside.append(sorted(set(outside_terms)))
+    return raw_active, pruned_active, outside
+
+
+def support_true_terms_from_system(system: dict[str, Any]) -> list[set[str]]:
+    if "substituted" not in system:
+        dim = int(system.get("dim", 0) or 0)
+        return [set() for _ in range(dim)]
+    return symbolic_active_terms_by_equation(list(system["substituted"][0]), int(system["dim"]))[0]
+
+
+def pysr_active_terms_by_equation(expression: str | list[str], dim: int) -> tuple[list[set[str]], list[list[str]]]:
+    raw_active, _pruned_active, outside = symbolic_active_terms_by_equation(expression, dim)
+    return raw_active, outside
+
+
+def integrate_pysr_expression(expression: str | list[str], cell: TrajectoryCell) -> tuple[np.ndarray | None, str]:
+    from scipy.integrate import solve_ivp
+
+    dim = cell.dimension
+    parts = pysr_expression_parts(expression, dim)
+    exprs = [parse_pysr_expr(part, dim) for part in parts]
+    variables = pysr_basis_symbols(dim)
+    funcs = []
+    for expr in exprs:
+        funcs.append(__import__("sympy").lambdify(variables, expr, modules=["numpy", "math"]))
+
+    def rhs(_t: float, y: np.ndarray) -> np.ndarray:
+        if not np.all(np.isfinite(y)) or float(np.max(np.abs(y))) > 1e9:
+            raise FloatingPointError("diverged")
+        with np.errstate(over="raise", invalid="raise", divide="raise"):
+            values = np.asarray([func(*y) for func in funcs], dtype=float)
+        if not np.all(np.isfinite(values)):
+            raise FloatingPointError("nonfinite_rhs")
+        return values
+
+    try:
+        solution = solve_ivp(
+            rhs,
+            (float(cell.time[0]), float(cell.time[-1])),
+            np.asarray(cell.state[0, :], dtype=float),
+            t_eval=np.asarray(cell.time, dtype=float),
+            rtol=1e-9,
+            atol=1e-9,
+            method="DOP853",
+        )
+    except FloatingPointError as exc:
+        return None, "diverged" if str(exc) == "diverged" else "nonfinite"
+    except Exception as exc:
+        return None, type(exc).__name__
+    if not solution.success or solution.y.shape != (dim, len(cell.time)):
+        return None, "integration_failed"
+    prediction = solution.y.T
+    if not np.all(np.isfinite(prediction)):
+        return prediction, "nonfinite"
+    if float(np.max(np.abs(prediction))) > 1e9:
+        return prediction, "diverged"
+    return prediction, "success"
+
+
+class PySRAdapter:
+    def __init__(self, config: dict[str, Any]):
+        from pysr import PySRRegressor
+
+        self.config = dict(config)
+        self.PySRRegressor = PySRRegressor
+        self.models: list[Any] = []
+
+    def close(self) -> None:
+        self.models.clear()
+
+    def fit_equations(self, fit_cell: TrajectoryCell) -> dict[str, Any]:
+        derivatives = pysr_finite_difference_targets(fit_cell.time, fit_cell.state)
+        expressions: list[str] = []
+        candidate_count = 0
+        model_dir = Path(str(self.config.get("output_dir", REPO_ROOT / "outputs" / "wp_n39_pysr_model")))
+        model_dir.mkdir(parents=True, exist_ok=True)
+        for idx in range(fit_cell.dimension):
+            kwargs: dict[str, Any] = {
+                "niterations": int(self.config.get("niterations", 50)),
+                "binary_operators": list(self.config.get("binary_operators", ["plus", "sub", "mult", "pow", "div"])),
+                "unary_operators": list(self.config.get("unary_operators", ["cos", "exp", "sin", "neg", "log", "sqrt"])),
+                "loss": str(self.config.get("loss", "loss(x, y) = (x - y)^2")),
+                "procs": int(self.config.get("procs", 0)),
+                "parallelism": str(self.config.get("parallelism", "serial")),
+                "deterministic": bool(self.config.get("deterministic", True)),
+                "random_state": int(self.config.get("random_state", 1)),
+                "warm_start": bool(self.config.get("warm_start", False)),
+                "model_selection": str(self.config.get("model_selection", "score")),
+                "precision": int(self.config.get("precision", 64)),
+                "equation_file": str(model_dir / f"pysr_hof_dim{idx}.csv"),
+            }
+            if self.config.get("maxsize") is not None:
+                kwargs["maxsize"] = int(self.config["maxsize"])
+            model = self.PySRRegressor(**kwargs)
+            model.fit(
+                X=np.asarray(fit_cell.state, dtype=float),
+                y=np.asarray(derivatives[:, idx], dtype=float),
+                variable_names=[f"x_{j}" for j in range(fit_cell.dimension)],
+            )
+            self.models.append(model)
+            equation = getattr(model, "sympy_", None)
+            if equation is None and hasattr(model, "get_best"):
+                best = model.get_best()
+                equation = best.get("sympy_format", best.get("equation", "0"))
+            expressions.append(str(equation if equation is not None else "0"))
+            equations = getattr(model, "equations_", None)
+            if equations is not None:
+                candidate_count += int(len(equations))
+        expression = canonicalize_pysr_expression(expressions, fit_cell.dimension)
+        return {
+            "expression": expression,
+            "candidate_count": candidate_count,
+            "derivative_target_shape": list(derivatives.shape),
+        }
+
+    def integrate_expression(self, cell: TrajectoryCell, expression: str | list[str]) -> tuple[np.ndarray | None, str]:
+        return integrate_pysr_expression(expression, cell)
+
+
+def build_pysr_adapter(config: dict[str, Any]) -> PySRAdapter:
+    return PySRAdapter(config)
+
+
+def pysr_schema_defaults(config: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "pysr_config_id": str(config.get("config_id", "")),
+        "pysr_niterations": int(config.get("niterations", 0) or 0),
+        "pysr_binary_operators": json.dumps(list(config.get("binary_operators", [])), separators=(",", ":")),
+        "pysr_unary_operators": json.dumps(list(config.get("unary_operators", [])), separators=(",", ":")),
+        "pysr_maxsize": "" if config.get("maxsize") is None else int(config["maxsize"]),
+        "pysr_model_selection": str(config.get("model_selection", "")),
+        "pysr_sorting_metric": str(config.get("sorting_metric", "")),
+        "pysr_deterministic": bool(config.get("deterministic", False)),
+        "pysr_parallelism": str(config.get("parallelism", "")),
+        "pysr_procs": int(config.get("procs", 0) or 0),
+        "pysr_random_state": int(config.get("random_state", 0) or 0),
+        "pysr_precision": int(config.get("precision", 0) or 0),
+        "pysr_finite_difference_order": config.get("finite_difference_order", ""),
+        "pysr_smoother_window_length": "" if config.get("smoother_window_length") is None else config["smoother_window_length"],
+        "pysr_optimize_hyperparams": bool(config.get("optimize_hyperparams", False)),
+        "pysr_hyper_opt_eval_fraction": config.get("hyper_opt_eval_fraction", ""),
+    }
+
+
+def run_pysr_record_with_adapter(
+    system: dict[str, Any],
+    fit_cell: TrajectoryCell,
+    target_cell: TrajectoryCell,
+    config: dict[str, Any],
+    adapter: Any,
+) -> dict[str, Any]:
+    record = base_record("pysr", config, fit_cell, target_cell)
+    record.update(pysr_schema_defaults(config))
+    start = time.perf_counter()
+    try:
+        fitted = adapter.fit_equations(fit_cell)
+        expression = canonicalize_pysr_expression(str(fitted["expression"]), fit_cell.dimension)
+        raw_terms, pruned_terms, outside_terms = symbolic_active_terms_by_equation(expression, fit_cell.dimension)
+        true_terms = support_true_terms_from_system(system)
+        reconstruction, reconstruction_status = adapter.integrate_expression(fit_cell, expression)
+        generalization, generalization_status = adapter.integrate_expression(target_cell, expression)
+        reconstruction_r2 = aggregate_r2(fit_cell.state, reconstruction)
+        generalization_r2 = aggregate_r2(target_cell.state, generalization)
+        reconstruction_error = RuntimeError(reconstruction_status) if reconstruction_status != "success" else None
+        generalization_error = RuntimeError(generalization_status) if generalization_status != "success" else None
+        in_basis = all(not terms for terms in outside_terms)
+        record.update(
+            {
+                "model": expression,
+                "active_terms_raw": json.dumps([sorted(terms) for terms in raw_terms], separators=(",", ":")),
+                "active_terms_pruned": json.dumps([sorted(terms) for terms in pruned_terms], separators=(",", ":")),
+                "true_terms": json.dumps([sorted(terms) for terms in true_terms], separators=(",", ":")),
+                "structure_hit_raw": in_basis and support_hit(raw_terms, true_terms),
+                "structure_hit_pruned": in_basis and support_hit(pruned_terms, true_terms),
+                "reconstruction_status": reconstruction_status,
+                "generalization_status": generalization_status,
+                "pysr_model_canonical": expression,
+                "pysr_candidates_evaluated": int(fitted.get("candidate_count", 0)),
+                "pysr_derivative_target_shape": json.dumps(fitted.get("derivative_target_shape", []), separators=(",", ":")),
+                "pysr_outside_basis_terms": json.dumps(outside_terms, separators=(",", ":")),
+                "pysr_outside_basis_term_count": int(sum(len(terms) for terms in outside_terms)),
+                "fit_elapsed_s_context": time.perf_counter() - start,
+                **{f"reconstruction_{key}": value for key, value in reconstruction_r2.items()},
+                **{f"generalization_{key}": value for key, value in generalization_r2.items()},
+                **r2_diagnostic_fields("reconstruction", fit_cell.state, reconstruction),
+                **r2_diagnostic_fields("generalization", target_cell.state, generalization),
+                **integration_error_fields("reconstruction", reconstruction_error),
+                **integration_error_fields("generalization", generalization_error),
+                **r2_threshold_flags("reconstruction", reconstruction_r2),
+                **r2_threshold_flags("generalization", generalization_r2),
+            }
+        )
+        return record
+    except Exception as exc:
+        failed = record_failure(record, exc)
+        failed.update(pysr_schema_defaults(config))
+        failed.setdefault("pysr_model_canonical", "")
+        failed.setdefault("pysr_candidates_evaluated", 0)
+        failed.setdefault("pysr_derivative_target_shape", "[]")
+        failed.setdefault("pysr_outside_basis_terms", "[]")
+        failed.setdefault("pysr_outside_basis_term_count", 0)
+        return failed
+
+
+def run_pysr_record(system: dict[str, Any], fit_cell: TrajectoryCell, target_cell: TrajectoryCell, config: dict[str, Any]) -> dict[str, Any]:
+    try:
+        adapter = build_pysr_adapter(config)
+    except Exception as exc:
+        record = base_record("pysr", config, fit_cell, target_cell)
+        record.update(pysr_schema_defaults(config))
+        return record_failure(record, RuntimeError(f"PySR is not importable in this environment: {exc}"))
+    try:
+        return run_pysr_record_with_adapter(system, fit_cell, target_cell, config, adapter)
+    finally:
+        close = getattr(adapter, "close", None)
+        if callable(close):
+            close()
 
 
 class ODEFormerAdapter:
@@ -921,14 +1307,24 @@ def run_odeformer_record_with_adapter(
                 optimization_status = "error_unoptimized_expression_retained"
                 optimization_error_type = type(exc).__name__
                 optimization_error_message = str(exc)
+        try:
+            raw_terms, pruned_terms, outside_terms = symbolic_active_terms_by_equation(expression_after, fit_cell.dimension)
+        except Exception as exc:
+            raw_terms = [set() for _ in range(fit_cell.dimension)]
+            pruned_terms = [set() for _ in range(fit_cell.dimension)]
+            outside_terms = [[f"{type(exc).__name__}: {exc}"] for _ in range(fit_cell.dimension)]
+        true_terms = support_true_terms_from_system(_system)
+        in_basis = all(not terms for terms in outside_terms)
         record.update(
             {
                 "model": expression_after,
-                "active_terms_raw": "[]",
-                "active_terms_pruned": "[]",
-                "true_terms": "[]",
-                "structure_hit_raw": False,
-                "structure_hit_pruned": False,
+                "active_terms_raw": json.dumps([sorted(terms) for terms in raw_terms], separators=(",", ":")),
+                "active_terms_pruned": json.dumps([sorted(terms) for terms in pruned_terms], separators=(",", ":")),
+                "true_terms": json.dumps([sorted(terms) for terms in true_terms], separators=(",", ":")),
+                "structure_hit_raw": in_basis and support_hit(raw_terms, true_terms),
+                "structure_hit_pruned": in_basis and support_hit(pruned_terms, true_terms),
+                "odeformer_outside_basis_terms": json.dumps(outside_terms, separators=(",", ":")),
+                "odeformer_outside_basis_term_count": int(sum(len(terms) for terms in outside_terms)),
                 "reconstruction_status": "success",
                 "generalization_status": "success",
                 "odeformer_model_raw": model_raw,
@@ -1141,6 +1537,8 @@ def run(config_path: Path, output_dir: str | None = None, corrupt_manifest_hash:
                     records.append(run_sindy_record(system, fit_cell, target_cell, method_config))
                 elif method == "odeformer":
                     records.append(run_odeformer_record(system, fit_cell, target_cell, config["odeformer"]))
+                elif method == "pysr":
+                    records.append(run_pysr_record(system, fit_cell, target_cell, config.get("pysr", pysr_default_config())))
                 elif method in REGISTERED_INACTIVE:
                     records.append(inactive_record(method, fit_cell, target_cell))
                 else:
