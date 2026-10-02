@@ -8,6 +8,8 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ### B-02 komplett, Stufe 2 komplett, der ungekappte Arm ist auf allen vier Stufen-Systemen identisch, weil die Kappe unter Rauschen `nothing` ist
 
+<!-- 8e186cd -->
+
 **Eingesammelt** direkt vom NFS-Laufwerk (`S:\BigDataOrion\data-science\joedicke\…_5dd1df8…`) nach
 `outputs/phase_c_robustness_stage2_5dd1df8/` und `outputs/phase_c_c8_oracle_b02_5dd1df8/`. Die Jobs
 hatten sich per TTL schon selbst entfernt.
