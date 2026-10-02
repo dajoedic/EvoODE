@@ -6,6 +6,24 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ## 2026-10-03
 
+### Unterlage Tor G: Rauschzellen laufen immer 20–26 Level; das C-6-Raster kostet eher 25–35 Tsd. Kernstunden als 21,4 Tsd.
+
+**Gemessen an allen 10 Rausch-Stufenzellen** (Systeme 1, 17, 18, 24, 41 × zwei Bedingungen): Jede
+läuft **20–26 Level**, unabhängig von C-1 (dort 1, 8, 16, 2 bzw. 24 Level). Das Verhältnis der
+Loss-Evals zu C-1 folgt daraus: System 1 ×193 bzw. ×712 (C-1: 1 Level), 24 ×13,7 (2), 17 ×2,1/×3,2
+(8), 18 ×0,72/×0,97 (16), 41 ×1,06/×1,15 (24). Ohne erreichbare Loss-Toleranz gibt es keinen frühen
+Stopp. Das ist der Befund der Abbruch-Rückschau (S-01/S-03) als Kostenposten.
+
+**Planungsrechnung** (Kernstunden aus `elapsed_s` auf Orion, nur Kapazität, keine Evidenz): Jede
+Rauschzelle kostet mindestens so viel wie ihre C-1-Zelle **und** mindestens den Median (bzw. das
+75-%-Quantil) der C-1-Zellen derselben Dimension mit ≥ 20 Leveln. dim 1: 58 von 138 Zellen unter
+20 Leveln, Median der langen Zellen 0,07 h. dim 2: 32 von 168, Median 6,0 h, q75 13,6 h. Je
+Bedingung ergibt das 2.313–3.195 h statt 1.946 h. **Bei 11 Bedingungen sind es 25.400–35.100
+Kernstunden ≈ 38.000–53.000 €**, gegen die Planungszahl 21.400 h. Der Zuschlag liegt fast
+vollständig auf dim 2. Das Modell ist grob: System 18 und 41 liegen darin, System 24 (×13,7 in
+Evals) eher am oberen Rand. Ein Abbruchkriterium am Rauschboden (`docs/design_stopping_criterion.md`)
+würde genau diesen Posten treffen. Es ist aber nicht Teil der Paper-1-Methode.
+
 ### Stufe 3 (System 41): billig wie C-1, gleiche Struktur, aber das Modell divergiert von der sauberen IC
 
 Orion `5dd1df8`, 2/2 fehlerfrei, harte Prüfungen bestanden, Datenhashes gleich dem lokalen Export
