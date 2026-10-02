@@ -10,12 +10,12 @@ zweites davon. Alles Dauerhafte gehört dorthin, nach `PAPER_1.md` oder ins `DIA
 **Regeln:** wird immer **vollständig überschrieben**, nie angehängt. Was älter als ein paar Tage
 ist, ist vermutlich falsch — dann gilt `CLAUDE.md`.
 
-**Stand: 2026-10-02, ~01:45.** Arbeitsreihenfolge: Backlog in `CLAUDE.md` („Backlog Paper 1“).
+**Stand: 2026-10-02, ~13:00.** Arbeitsreihenfolge: Backlog in `CLAUDE.md` („Backlog Paper 1“).
 
-**Feste Regeln seit dieser Nacht:** Claude pusht **nie** nach GitLab und nach GitHub nur mit
-ausdrücklicher Erlaubnis, beides macht der Nutzer. **Keine harten Zeit-Cuts** (kein `timeout`, kein
-`activeDeadlineSeconds`). Stattdessen gibt es eine erwartete Laufzeit, und wird sie deutlich
-überschritten, wird diskutiert. `codex exec` wird immer mit `< /dev/null` gestartet.
+**Feste Regeln:** Claude pusht **nie** nach GitLab und nach GitHub nur mit ausdrücklicher Erlaubnis,
+beides macht der Nutzer. **Keine harten Zeit-Cuts.** `codex exec` immer mit `< /dev/null`.
+Orion-Ergebnisse liegen lokal lesbar unter `S:\BigDataOrion\data-science\joedicke\` (Git Bash:
+`/s/BigDataOrion/...`). Einsammeln geht ohne `oc exec`, der Jobstatus braucht `oc login`.
 
 ---
 
@@ -23,34 +23,33 @@ ausdrücklicher Erlaubnis, beides macht der Nutzer. **Keine harten Zeit-Cuts** (
 
 | Lauf | Wo | Image | Stand | Anmerkung |
 |---|---|---|---|---|
-| C-3 | Orion | `221a3a7` | 177/180 | 3 Lorenz-Nachzügler, Ende ~2.–5.10. |
-| WP-T1f | Orion | `1db1193` | 28/36 | Deadline entfernt (01.10.). 58 IC1 läuft langsam, das kann Tage dauern |
-| B-02 (Grenzen-Orakel dim 1/2) | Orion | `5dd1df8` | fast fertig | 3 Jobs × 18 Shards, viel schneller als die Obergrenze |
-| Stufe 2, gekappt (System 18, 24) | Orion | `5dd1df8` | 4 Zellen gestartet 02.10. ~01:30 | Smoke bitgleich zur lokalen Zelle. Erwartet: Stunden je Zelle |
-| Ungekappt unter Rauschen, System 1 und 17 | Laptop | lokal | 2 von 4 fertig (σ 0,01: 1 und 17) | R-05b. Die Zellen bei (0,05; 0,5) liefen beim Archivieren des Chats noch. **Fehlt `outputs/uncapped_noise/s0.05_r0.5/cell_000002.jsonl` oder `cell_000194.jsonl`, nachrechnen:** `julia --project=. studies/regression/run_batch_cell.jl --manifest outputs/stage1/s0.05_r0.5/manifest.csv --output-dir outputs/uncapped_noise/s0.05_r0.5 2` bzw. mit `outputs/stage2/s0.05_r0.5/manifest.csv … 194` (Minuten) |
+| C-3 | Orion | `221a3a7` | 178/180 | 2 Lorenz-Nachzügler (Index 14, 22), seit 14 d |
+| WP-T1f | Orion | `1db1193` | 28/36 | 6 Pods laufen, 58 IC1 langsam |
 
-Das schlanke Image `5dd1df8` (WP-N36: 202 statt 443 Pakete, bitgleich) baut in **13 min** statt bis zu ~3 h.
+Lokal läuft nichts.
 
-## 2. Nächste Schritte (Claude)
+**Fertig und eingesammelt am 02.10.:** Stufe 2 gekappt (`outputs/phase_c_robustness_stage2_5dd1df8/`,
+Clean-Auswertung je Bedingung unter `clean_eval/`), B-02 (`outputs/phase_c_c8_oracle_b02_5dd1df8/`),
+R-05b lokal (`outputs/uncapped_noise/`). Zahlen im DIARY 02.10. Die vorläufige B-02-Auswertung kommt
+aus einem Wegwerf-Skript, nicht aus dem Repo. Für das Tor B3 braucht es ein richtiges Skript
+(Codex-WP).
 
-1. Lokale Zellen ohne Kappe fertig rechnen, saubere Auswertung, Tor-Bericht.
-2. **Manifest für die ungekappten Zellen von System 18 und 24** auf Orion (R-05b), dann `apply` durch den Nutzer.
-3. **B-02 einsammeln und auswerten** (Tor B2, Stabilitätskriterien §9.6 auf dim 1/2), danach B-04 (Suche 1 und 24, lokal).
-4. Arbeitspakete schreiben: ODEFormer auf den Rausch-Daten (R-09), PySR (R-10).
-5. Wenn C-3 fertig ist: endgültige Phase-C-Auswertung mit der neuen Aggregation (P-02).
+## 2. Wartet auf den Nutzer
 
-## 3. Wartet auf den Nutzer
+- **Ungekappter Arm für 18/24 auf Orion: laufen lassen oder streichen?** Die Kappe ist dort unter
+  Rauschen `nothing`, das Ergebnis wäre per Konstruktion identisch. Empfehlung: streichen.
+- **Tor S2** (Stufe 2 komplett): weiter zu Stufe 3 (System 41)?
+- **Tor B2:** weiter zu B-03 (Orakel dim 3/4)? Vorläufig auf dim 1/2: Inf reißt das Aufwandskriterium
+  (×1,61), 1000 hält knapp (×1,47).
+- `codex/reports/Manifest_WP_N36_before.toml` untracked: archivieren oder löschen?
 
-- Tor S2, sobald System 18 und 24 (gekappt und ungekappt) fertig sind.
-- Pushes, wenn Claude sie als fällig meldet. Lokal sind derzeit nur Doku- und Spec-Commits, sie brauchen kein Image.
+## 3. Nächste Schritte (Claude)
 
-## 4. Befunde dieser Nacht (alle im DIARY 01./02.10.)
+1. Nach den Toren: Manifeste für Stufe 3 bzw. B-03.
+2. Arbeitspakete: B-02/B-03-Auswertungsskript nach §9.6, ODEFormer auf Rausch-Daten (R-09), PySR (R-10).
+3. Statusseite „EvoODE auf Orion“ nach jedem Statuswechsel neu veröffentlichen.
+4. Wenn C-3 fertig ist: endgültige Phase-C-Auswertung (P-02).
 
-- **S-04:** Die Kappe schneidet unter Rauschen in 17 % der Gleichungen wahre Terme ab, schon bei σ = 0,01.
-  Deshalb gibt es den Vergleichsarm ohne Kappe (§9.4b).
-- **Weak-SINDy** ist auf System 1 unter Rauschen stark. Auf System 17 liegt EvoGrow vorn.
-- **Abbruchkriterium:** Ein Stopp am Rauschboden hätte überall Level gespart. Design-Notiz: `docs/design_stopping_criterion.md`.
-
-## 5. Git
+## 4. Git
 
 GitHub und GitLab stehen auf `5dd1df8`. Lokal liegen darüber nur Doku- und Spec-Commits.

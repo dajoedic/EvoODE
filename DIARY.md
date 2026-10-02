@@ -6,6 +6,62 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ## 2026-10-02
 
+### B-02 komplett, Stufe 2 komplett, der ungekappte Arm ist auf allen vier Stufen-Systemen identisch, weil die Kappe unter Rauschen `nothing` ist
+
+**Eingesammelt** direkt vom NFS-Laufwerk (`S:\BigDataOrion\data-science\joedicke\…_5dd1df8…`) nach
+`outputs/phase_c_robustness_stage2_5dd1df8/` und `outputs/phase_c_c8_oracle_b02_5dd1df8/`. Die Jobs
+hatten sich per TTL schon selbst entfernt.
+
+**Stufe 2 gekappt (System 18, 24), 4/4.** Alle harten Prüfungen bestanden (kein Fehler,
+Methoden-Fingerprint, neue Felder gefüllt, Datenhash). Der Orion-Smoke ist bitgleich zur lokalen
+Zelle (Loss, Struktur, Koeffizienten, Evals, Kappe, Datenhash). Die Clean-Auswertung (WP-N33a)
+musste je Bedingung getrennt laufen, weil ein Ordner mit beiden Bedingungen doppelte Zellschlüssel
+hat. Probe-Fehler: 0.
+
+| System | (σ; ρ) | Struktur roh/gepr. | Clean-R² Rek. / Gen. | Loss-Evals (× C-1) | Level |
+|---|---|---|---|---|---|
+| 18 (Surrogat) | (0,01; 0) | – | 0,99999 / 0,99998 | 1,79 M (0,72) | 20 |
+| 18 | (0,05; 0,5) | – | 0,9992 / 0,9974 | 2,41 M (0,97) | 23 |
+| 24 (exakt) | (0,01; 0) | nein / nein | 0,99992 / 0,99998 | 1,31 M (**13,7**) | 20 |
+| 24 | (0,05; 0,5) | nein / nein | 0,9979 / 0,9984 | 1,29 M (**13,6**) | 21 |
+
+System 24 findet bei σ = 0,01 dieselbe Rohstruktur wie C-1, `[[u1,u2],[u1]]`. In C-1 entfernt die
+Pruning-Regel den Überschussterm, unter Rauschen überlebt er sie. Kosten: C-1 stoppt auf System 24
+früh an der Loss-Toleranz, unter Rauschen gibt es einen Boden, und die Suche läuft 20 Level. Das
+ist der Faktor 13,7, und es ist dasselbe Argument wie in der Abbruch-Rückschau (S-01/S-03).
+
+**R-05b lokal (System 1, 17 ohne Kappe), 4/4: in allen vier Paaren identisch zum gekappten Arm**,
+in Koeffizienten, Loss, Evals, Fits und Leveln. Der Grund liegt in den Records: **In allen 8
+Stufenzellen unter Rauschen ist `stage_caps` gleich `nothing`**, auch bei System 17 (sauber `[2]`)
+und System 18 (sauber `[4]`). Ohne endliche Kappe ist die gekappte Variante per Konstruktion die
+ungekappte (C-2: 129/129 identisch). **Folge: Ein ungekappter Orion-Lauf für 18 und 24 würde
+vorhersagbar nichts Neues liefern.** Der Vergleichsarm aus §9.4b hat nur dort Information, wo die
+Kappe unter Rauschen endlich bleibt. Nach S-04 sind das die Zeilen „unverändert“ und „enger“, und
+nur dort kann sie wahre Terme abschneiden. Ob 18/24 trotzdem laufen, entscheidet der Nutzer.
+
+**B-02 (Orakel, 21 exakte dim-1/2-Systeme × 3 Seeds × 2 IC, je Grenze 126 Refits), komplett.**
+**Kontrolle: Grenze 10 bitgleich zu C-5 auf 126/126** (Referenz-Loss, Koeffizienten, R²,
+Loss-Evals). Die Kriterien aus §9.6 sind vorläufig, weil die Gate-Menge (144 Refits auf 24
+Systemen) erst mit B-03 vollständig ist. Hier gilt die dim-1/2-Teilmenge, alle 21 Systeme sind
+unter allen drei Grenzen machbar:
+
+| Grenze | harte Fehler | Strafe (≥ 1e6) | Median Evals (× Grenze 10) | q95 Evals | mit Divergenz | R² > 0,9 | Retry |
+|---|---|---|---|---|---|---|---|
+| 10 | 0 | 2 (1,6 %) | 743,5 | 20.000 | 69 | 72/126 | 16 |
+| 1000 | 0 | 2 (1,6 %) | 1.093 (**1,47**) | 20.000 | 76 | 83/126 | 16 |
+| Inf | 0 | 2 (1,6 %) | 1.197 (**1,61**) | 20.000 | 77 | 83/126 | 18 |
+
+**Nach der eingefrorenen Regel ist „unbeschränkt“ auf dim 1/2 nicht „vergleichbar stabil“.** Das
+Aufwandskriterium (≤ 1,5) reißt mit 1,61, `[-1000, 1000]` hält es knapp mit 1,47. Harte Fehler und
+Strafen sind unverändert. Die lockerere Grenze ändert 86/126 Fits. Der Loss wird dabei 55-mal
+besser und 31-mal schlechter (1000), bei Inf 54/32. R² > 0,9 kippt bei 1000 in 13 Fällen nach oben
+und in 2 nach unten (System/Seed/IC 3/42/2 und 8/7/1). Bei Inf sind es 14 nach oben (zusätzlich
+31/42/1) und 3 nach unten (zusätzlich 17/42/1, Loss 1,8e-6 → 562). Wie bei B-01 sind alle wahren Koeffizienten auf dim 1/2
+kleiner als 10, und die Grenze verändert trotzdem den Optimierungspfad. **Vorläufig, keine
+Entscheidung:** Das Gate rechnet über die 144 Refits einschließlich dim 3/4, und dort kann das
+Aufwandsverhältnis anders liegen. B-03 ist der nächste Schritt dieses Tracks (Tor B2 durch den
+Nutzer).
+
 ### Orion: B-02 und Stufe 2 gestartet, der Smoke ist bitgleich
 
 Das schlanke Image `5dd1df8` war nach **13:27 min** gebaut. Der Nutzer hat B-02 (3 Grenzen × 18 Shards) und Stufe 2 gestartet. **Smoke (System 1, (0,01; 0)) auf Orion ist bitgleich zur lokalen Stufe-1-Zelle** in Loss, Struktur, Koeffizienten, Loss-Evals, Kappe und Datenhash. Nur der Git-Hash unterscheidet sich, wie erwartet. Damit rechnet das schlanke Image auf dem Cluster dasselbe wie das alte Environment lokal. Danach liefen die 4 Stufe-2-Zellen (System 18 und 24, gekappt) an. B-02 ist nach wenigen Minuten fast fertig, weit unter der Obergrenze von ~74 h. Belegung: 28 Kerne mit B-02, danach 13. NFS-Platz: 141 MB von uns. Die GitLab-Registry ist nicht gemessen und vermutlich der größere Posten. Lokal laufen die Zellen ohne Kappe für System 1 und 17 (R-05b).
