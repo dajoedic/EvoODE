@@ -16,7 +16,7 @@
     "maxsize": null,
     "model_selection": "score",
     "sorting_metric": "r2",
-    "optimize_hyperparams": false,
+    "optimize_hyperparams": true,
     "hyper_opt_eval_fraction": 0.3,
     "deterministic": true,
     "parallelism": "serial",

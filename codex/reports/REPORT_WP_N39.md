@@ -8,6 +8,14 @@
 - Added fake-adapter tests for PySR structure expansion, exact-system R2=1, output files, and comparison-join behavior.
 - Added frozen decisions and cost formula in `docs/WP-N39.md`.
 
+## Continuation 2026-10-02
+
+- Changed the faithful PySR config to `optimize_hyperparams=true`, `hyper_opt_eval_fraction=0.3`, and `sorting_metric=r2`.
+- Added the ODEFormer PySR hyperparameter grid from `pysr_wrapper.py:64-68`: `finite_difference_order in {2,3,4}` x `smoother_window_length in {None,15}`.
+- The adapter selects hyperparameters on the held-out fraction of the observed training trajectory and records the selected pair per equation in `pysr_selected_hyperparams`. Clean source/target trajectories are evaluated only after fitting.
+- The runner now emits both ODEFormer variants for every cell and seed: `method=pysr` and `method=pysr_poly`; `pysr_poly` has `pysr_unary_operators=[]`.
+- Updated `docs/WP-N39.md` A.3 and the cost formula to the `6 hyper-fits x 2 configurations` factor. The old `optimize_hyperparams=false` freeze is retained there as discarded on 2026-10-02.
+
 ## Local Verification
 
 Command:
@@ -19,8 +27,16 @@ python -m pytest baselines/tests/test_run_pysr_noise.py baselines/tests/test_run
 Result:
 
 ```text
-58 passed, 5 skipped in 27.09s
+60 passed, 5 skipped in 28.26s
 ```
+
+Additional command:
+
+```text
+python -m compileall -q baselines
+```
+
+Result: exit code 0.
 
 No PySR run was started.
 
@@ -50,9 +66,9 @@ Command:
 docker run --rm -v "%cd%:/workspace/EvoODE" evocode-pysr:wp-n39 --export-index outputs/stage1/data_export/index.csv --output-dir outputs/wp_n39_pysr_smoke_system1_sigma001_rho0 --seeds 1 --limit 1
 ```
 
-Expected duration: one PySR cell; this is the measurement that fills `T_cell` in `docs/WP-N39.md`.
+Expected duration: one PySR cell with both variants and all six hyper-fits per equation; this is the measurement that fills `T_cell` in `docs/WP-N39.md`.
 
-Pass criterion: command exits 0 and writes `details.csv`, `records.jsonl`, `summary.csv`, `export_checks.csv`, and `comparison_with_external_baselines.csv`; `export_checks.csv` has `hash_verified=True`; `details.csv` contains one `method=pysr` row for system 1 with either `status=success` or a recorded error row.
+Pass criterion: command exits 0 and writes `details.csv`, `records.jsonl`, `summary.csv`, `export_checks.csv`, and `comparison_with_external_baselines.csv`; `export_checks.csv` has `hash_verified=True`; `details.csv` contains both `method=pysr` and `method=pysr_poly` rows for system 1 with either `status=success` or recorded error rows.
 
 ### 3. Full run after smoke approval
 
@@ -64,9 +80,9 @@ Command:
 docker run --rm -v "%cd%:/workspace/EvoODE" evocode-pysr:wp-n39 --export-index outputs/stage1/data_export/index.csv --export-index outputs/stage2/data_export/index.csv --export-index outputs/stage3/data_export/index.csv --output-dir outputs/wp_n39_noise_pysr --seeds 1,2,3
 ```
 
-Expected duration: `4,536 * T_cell / parallel_cell_count` wall-clock seconds, with `4,536 * T_cell / 3,600` core-hours at one core per cell.
+Expected duration: `4,536 * T_cell / parallel_cell_count` wall-clock seconds, with `4,536 * T_cell / 3,600` core-hours at one core per cell, where one `T_cell` already includes both PySR variants and the six-point hyperparameter grid.
 
-Pass criterion: command exits 0 and writes all five output files; `export_checks.csv` has all hashes verified; `records.jsonl` has one record per exported cell and seed.
+Pass criterion: command exits 0 and writes all five output files; `export_checks.csv` has all hashes verified; `records.jsonl` has two records per exported cell and seed, one for `pysr` and one for `pysr_poly`.
 
 ## Notes
 

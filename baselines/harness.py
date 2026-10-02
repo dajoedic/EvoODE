@@ -619,6 +619,13 @@ def numeric_constants(expression: str) -> list[float]:
     return constants
 
 
+PYSR_HYPERPARAMETER_GRID: list[dict[str, Any]] = [
+    {"finite_difference_order": order, "smoother_window_length": window}
+    for order in [2, 3, 4]
+    for window in [None, 15]
+]
+
+
 def pysr_default_config(seed: int = 1, output_dir: str | Path | None = None) -> dict[str, Any]:
     config: dict[str, Any] = {
         "config_id": "odeformer_pysr_faithful",
@@ -631,7 +638,7 @@ def pysr_default_config(seed: int = 1, output_dir: str | Path | None = None) -> 
         "maxsize": None,
         "model_selection": "score",
         "sorting_metric": "r2",
-        "optimize_hyperparams": False,
+        "optimize_hyperparams": True,
         "hyper_opt_eval_fraction": 0.3,
         "deterministic": True,
         "parallelism": "serial",
@@ -643,6 +650,19 @@ def pysr_default_config(seed: int = 1, output_dir: str | Path | None = None) -> 
     if output_dir is not None:
         config["output_dir"] = str(output_dir)
     return config
+
+
+def pysr_hyperparameter_grid(config: dict[str, Any] | None = None) -> list[dict[str, Any]]:
+    """Faithful ODEFormer PySR grid: pysr_wrapper.py:get_hyper_grid lines 64-68."""
+    base = dict(config or {})
+    grid = [dict(item) for item in PYSR_HYPERPARAMETER_GRID]
+    current = {
+        "finite_difference_order": base.get("finite_difference_order", 2),
+        "smoother_window_length": base.get("smoother_window_length", None),
+    }
+    if current not in grid:
+        grid.append(current)
+    return grid
 
 
 def pysr_finite_difference_targets(time_values: np.ndarray, state_values: np.ndarray) -> np.ndarray:
@@ -854,49 +874,136 @@ class PySRAdapter:
     def close(self) -> None:
         self.models.clear()
 
+    def _model_kwargs(self, model_dir: Path, idx: int, hyperparams: dict[str, Any]) -> dict[str, Any]:
+        kwargs: dict[str, Any] = {
+            "niterations": int(self.config.get("niterations", 50)),
+            "binary_operators": list(self.config.get("binary_operators", ["plus", "sub", "mult", "pow", "div"])),
+            "unary_operators": list(self.config.get("unary_operators", ["cos", "exp", "sin", "neg", "log", "sqrt"])),
+            "loss": str(self.config.get("loss", "loss(x, y) = (x - y)^2")),
+            "procs": int(self.config.get("procs", 0)),
+            "parallelism": str(self.config.get("parallelism", "serial")),
+            "deterministic": bool(self.config.get("deterministic", True)),
+            "random_state": int(self.config.get("random_state", 1)),
+            "warm_start": bool(self.config.get("warm_start", False)),
+            "model_selection": str(self.config.get("model_selection", "score")),
+            "precision": int(self.config.get("precision", 64)),
+            "equation_file": str(model_dir / f"pysr_hof_dim{idx}_fd{hyperparams['finite_difference_order']}_sw{hyperparams['smoother_window_length']}.csv"),
+        }
+        if self.config.get("maxsize") is not None:
+            kwargs["maxsize"] = int(self.config["maxsize"])
+        return kwargs
+
+    def _fit_one_model(
+        self,
+        idx: int,
+        time_values: np.ndarray,
+        state_values: np.ndarray,
+        model_dir: Path,
+        hyperparams: dict[str, Any],
+    ) -> tuple[Any, str, int, list[int]]:
+        derivatives = pysr_finite_difference_targets(time_values, state_values)
+        model = self.PySRRegressor(**self._model_kwargs(model_dir, idx, hyperparams))
+        model.fit(
+            X=np.asarray(state_values, dtype=float),
+            y=np.asarray(derivatives[:, idx], dtype=float),
+            variable_names=[f"x_{j}" for j in range(state_values.shape[1])],
+        )
+        equation = getattr(model, "sympy_", None)
+        if equation is None and hasattr(model, "get_best"):
+            best = model.get_best()
+            equation = best.get("sympy_format", best.get("equation", "0"))
+        candidate_count = 0
+        equations = getattr(model, "equations_", None)
+        if equations is not None:
+            candidate_count = int(len(equations))
+        return model, str(equation if equation is not None else "0"), candidate_count, list(derivatives.shape)
+
+    def _score_expression_on_training_holdout(self, expression: str, idx: int, eval_time: np.ndarray, eval_state: np.ndarray) -> float:
+        derivatives = pysr_finite_difference_targets(eval_time, eval_state)
+        parsed = parse_pysr_expr(expression, eval_state.shape[1])
+        variables = pysr_basis_symbols(eval_state.shape[1])
+        func = __import__("sympy").lambdify(variables, parsed, modules=["numpy", "math"])
+        try:
+            prediction = np.asarray([func(*row) for row in eval_state], dtype=float)
+        except Exception:
+            return float("-inf")
+        if prediction.shape == ():
+            prediction = np.full_like(derivatives[:, idx], float(prediction), dtype=float)
+        if prediction.shape != derivatives[:, idx].shape or not np.all(np.isfinite(prediction)):
+            return float("-inf")
+        target = derivatives[:, idx]
+        denom = float(np.sum((target - np.mean(target)) ** 2))
+        if denom == 0.0:
+            return float("-inf")
+        score = 1.0 - float(np.sum((target - prediction) ** 2)) / denom
+        return score if math.isfinite(score) else float("-inf")
+
+    def _split_hyperopt_training_data(self, fit_cell: TrajectoryCell) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+        fraction = float(self.config.get("hyper_opt_eval_fraction", 0.3))
+        fraction = min(max(fraction, 0.0), 0.9)
+        n_total = len(fit_cell.time)
+        n_eval = max(3, int(round(n_total * fraction)))
+        n_train = n_total - n_eval
+        if n_train < 3:
+            raise ValueError("PySR hyperparameter optimization requires at least six observed time points")
+        return (
+            fit_cell.time[:n_train],
+            fit_cell.state[:n_train, :],
+            fit_cell.time[n_train:],
+            fit_cell.state[n_train:, :],
+        )
+
     def fit_equations(self, fit_cell: TrajectoryCell) -> dict[str, Any]:
-        derivatives = pysr_finite_difference_targets(fit_cell.time, fit_cell.state)
         expressions: list[str] = []
         candidate_count = 0
         model_dir = Path(str(self.config.get("output_dir", REPO_ROOT / "outputs" / "wp_n39_pysr_model")))
         model_dir.mkdir(parents=True, exist_ok=True)
+        selected_hyperparams: list[dict[str, Any]] = []
+        hyper_scores: list[list[dict[str, Any]]] = []
+        optimize = bool(self.config.get("optimize_hyperparams", False))
+        train_time, train_state, eval_time, eval_state = (
+            self._split_hyperopt_training_data(fit_cell)
+            if optimize
+            else (fit_cell.time, fit_cell.state, fit_cell.time, fit_cell.state)
+        )
         for idx in range(fit_cell.dimension):
-            kwargs: dict[str, Any] = {
-                "niterations": int(self.config.get("niterations", 50)),
-                "binary_operators": list(self.config.get("binary_operators", ["plus", "sub", "mult", "pow", "div"])),
-                "unary_operators": list(self.config.get("unary_operators", ["cos", "exp", "sin", "neg", "log", "sqrt"])),
-                "loss": str(self.config.get("loss", "loss(x, y) = (x - y)^2")),
-                "procs": int(self.config.get("procs", 0)),
-                "parallelism": str(self.config.get("parallelism", "serial")),
-                "deterministic": bool(self.config.get("deterministic", True)),
-                "random_state": int(self.config.get("random_state", 1)),
-                "warm_start": bool(self.config.get("warm_start", False)),
-                "model_selection": str(self.config.get("model_selection", "score")),
-                "precision": int(self.config.get("precision", 64)),
-                "equation_file": str(model_dir / f"pysr_hof_dim{idx}.csv"),
+            best_model = None
+            best_expression = "0"
+            best_score = float("-inf")
+            best_hyperparams = {
+                "finite_difference_order": self.config.get("finite_difference_order", 2),
+                "smoother_window_length": self.config.get("smoother_window_length", None),
             }
-            if self.config.get("maxsize") is not None:
-                kwargs["maxsize"] = int(self.config["maxsize"])
-            model = self.PySRRegressor(**kwargs)
-            model.fit(
-                X=np.asarray(fit_cell.state, dtype=float),
-                y=np.asarray(derivatives[:, idx], dtype=float),
-                variable_names=[f"x_{j}" for j in range(fit_cell.dimension)],
-            )
-            self.models.append(model)
-            equation = getattr(model, "sympy_", None)
-            if equation is None and hasattr(model, "get_best"):
-                best = model.get_best()
-                equation = best.get("sympy_format", best.get("equation", "0"))
-            expressions.append(str(equation if equation is not None else "0"))
-            equations = getattr(model, "equations_", None)
-            if equations is not None:
-                candidate_count += int(len(equations))
+            equation_scores: list[dict[str, Any]] = []
+            grid = pysr_hyperparameter_grid(self.config) if optimize else [best_hyperparams]
+            for hyperparams in grid:
+                model, equation, count, derivative_shape = self._fit_one_model(idx, train_time, train_state, model_dir, hyperparams)
+                candidate_count += count
+                score = (
+                    self._score_expression_on_training_holdout(equation, idx, eval_time, eval_state)
+                    if optimize
+                    else 0.0
+                )
+                equation_scores.append({**hyperparams, "score": score, "derivative_target_shape": derivative_shape})
+                if best_model is None or score > best_score:
+                    best_model = model
+                    best_expression = equation
+                    best_score = score
+                    best_hyperparams = dict(hyperparams)
+                else:
+                    self.models.append(model)
+            if best_model is not None:
+                self.models.append(best_model)
+            expressions.append(best_expression)
+            selected_hyperparams.append({**best_hyperparams, "score": best_score})
+            hyper_scores.append(equation_scores)
         expression = canonicalize_pysr_expression(expressions, fit_cell.dimension)
         return {
             "expression": expression,
             "candidate_count": candidate_count,
-            "derivative_target_shape": list(derivatives.shape),
+            "derivative_target_shape": [len(train_time), fit_cell.dimension],
+            "selected_hyperparams": selected_hyperparams,
+            "hyper_scores": hyper_scores,
         }
 
     def integrate_expression(self, cell: TrajectoryCell, expression: str | list[str]) -> tuple[np.ndarray | None, str]:
@@ -925,6 +1032,7 @@ def pysr_schema_defaults(config: dict[str, Any]) -> dict[str, Any]:
         "pysr_smoother_window_length": "" if config.get("smoother_window_length") is None else config["smoother_window_length"],
         "pysr_optimize_hyperparams": bool(config.get("optimize_hyperparams", False)),
         "pysr_hyper_opt_eval_fraction": config.get("hyper_opt_eval_fraction", ""),
+        "pysr_hyper_grid": json.dumps(pysr_hyperparameter_grid(config), separators=(",", ":")),
     }
 
 
@@ -963,6 +1071,8 @@ def run_pysr_record_with_adapter(
                 "pysr_model_canonical": expression,
                 "pysr_candidates_evaluated": int(fitted.get("candidate_count", 0)),
                 "pysr_derivative_target_shape": json.dumps(fitted.get("derivative_target_shape", []), separators=(",", ":")),
+                "pysr_selected_hyperparams": json.dumps(fitted.get("selected_hyperparams", []), separators=(",", ":")),
+                "pysr_hyper_scores": json.dumps(fitted.get("hyper_scores", []), separators=(",", ":")),
                 "pysr_outside_basis_terms": json.dumps(outside_terms, separators=(",", ":")),
                 "pysr_outside_basis_term_count": int(sum(len(terms) for terms in outside_terms)),
                 "fit_elapsed_s_context": time.perf_counter() - start,
@@ -983,6 +1093,8 @@ def run_pysr_record_with_adapter(
         failed.setdefault("pysr_model_canonical", "")
         failed.setdefault("pysr_candidates_evaluated", 0)
         failed.setdefault("pysr_derivative_target_shape", "[]")
+        failed.setdefault("pysr_selected_hyperparams", "[]")
+        failed.setdefault("pysr_hyper_scores", "[]")
         failed.setdefault("pysr_outside_basis_terms", "[]")
         failed.setdefault("pysr_outside_basis_term_count", 0)
         return failed

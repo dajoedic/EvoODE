@@ -135,6 +135,32 @@ def clean_eval_fields(adapter: Any, expression: str, source_clean: harness.Traje
     return fields
 
 
+def pysr_variant_configs(base_config: dict[str, Any], seed: int, output_dir: Path, system_id: int, source_ic: int) -> list[dict[str, Any]]:
+    variants = [
+        ("pysr", list(base_config.get("unary_operators", ["cos", "exp", "sin", "neg", "log", "sqrt"]))),
+        ("pysr_poly", []),
+    ]
+    configs: list[dict[str, Any]] = []
+    for variant_id, unary_operators in variants:
+        variant_config = harness.pysr_default_config(
+            seed=int(seed),
+            output_dir=output_dir / "models" / f"seed_{int(seed):03d}" / variant_id,
+        )
+        variant_config.update(base_config)
+        variant_config["config_id"] = variant_id
+        variant_config["unary_operators"] = unary_operators
+        variant_config["random_state"] = int(seed)
+        variant_config["output_dir"] = str(
+            output_dir
+            / "models"
+            / f"seed_{int(seed):03d}"
+            / variant_id
+            / f"system_{system_id:03d}_ic_{source_ic}"
+        )
+        configs.append(variant_config)
+    return configs
+
+
 def structural_metric_fields(record: dict[str, Any], true_terms: list[set[str]], exact: bool) -> dict[str, Any]:
     raw = json.loads(str(record.get("active_terms_raw", "[]") or "[]"))
     pruned = json.loads(str(record.get("active_terms_pruned", "[]") or "[]"))
@@ -170,7 +196,7 @@ def structural_metric_fields(record: dict[str, Any], true_terms: list[set[str]],
 
 def build_summary(details: pd.DataFrame) -> pd.DataFrame:
     rows: list[dict[str, Any]] = []
-    group_columns = ["system_id", "source_initial_condition_set", "noise_sigma", "subsample_rho", "noise_realization", "pysr_seed"]
+    group_columns = ["method", "system_id", "source_initial_condition_set", "noise_sigma", "subsample_rho", "noise_realization", "pysr_seed"]
     for keys, group in details.groupby(group_columns, dropna=False):
         row = dict(zip(group_columns, keys))
         row["repetition_count"] = int(len(group))
@@ -287,54 +313,53 @@ def run_noise_pysr(
             }
         )
         for seed in requested_seeds:
-            pysr_config = harness.pysr_default_config(seed=int(seed), output_dir=output_dir / "models" / f"seed_{int(seed):03d}")
-            pysr_config.update(config.get("pysr", {}))
-            pysr_config["random_state"] = int(seed)
-            pysr_config["output_dir"] = str(output_dir / "models" / f"seed_{int(seed):03d}" / f"system_{system_id:03d}_ic_{source_ic}")
-            adapter = None
-            started = time.perf_counter()
-            try:
-                adapter = harness.build_pysr_adapter(pysr_config)
-                record = harness.run_pysr_record_with_adapter(system, fit_cell, clean_target, pysr_config, adapter)
-                expression = str(record.get("pysr_model_canonical") or record.get("model") or "")
-                if record.get("status") == "success":
-                    record.update(clean_eval_fields(adapter, expression, clean_source, clean_target))
-            except Exception as exc:
-                record = harness.record_failure(harness.base_record("pysr", pysr_config, fit_cell, clean_target), exc)
-                record.update(harness.pysr_schema_defaults(pysr_config))
-            finally:
-                close = getattr(adapter, "close", None)
-                if callable(close):
-                    close()
-            for regime in ["reconstruction", "generalization"]:
-                record.setdefault(f"{regime}_clean_integration_status", "not_run_fit_failed")
-                record.setdefault(f"{regime}_clean_prediction_outcome", "none")
-                record.setdefault(f"{regime}_clean_diverged_or_nonfinite", True)
-            true_terms = harness.support_true_terms_from_system(system)
-            exact = str(support.loc[system_id].get("phasec_representability", "")) == "exact"
-            record.update(
-                {
-                    "method": "pysr",
-                    "pysr_seed": int(seed),
-                    "pysr_realization": int(seed),
-                    "export_index": str(index_path),
-                    "source_initial_condition_set": source_ic,
-                    "target_initial_condition_set": target_ic,
-                    "noise_sigma": float(row["noise_sigma"]),
-                    "subsample_rho": float(row["subsample_rho"]),
-                    "noise_realization": int(row["noise_realization"]),
-                    "data_condition_fingerprint": str(row["data_condition_fingerprint"]),
-                    "observed_data_sha256": data_sha(row),
-                    "n_observed_points": int(row["n_observed_points"]),
-                    "clean_grid_points": int(len(clean_t)),
-                    "code_origin_path": str(REPO_ROOT),
-                    "code_origin_git_hash": harness.git_hash(),
-                    "elapsed_s_non_evidence": time.perf_counter() - started,
-                    **structural_metric_fields(record, true_terms, exact),
-                    **support.loc[system_id].to_dict(),
-                }
-            )
-            rows.append(record)
+            variant_configs = pysr_variant_configs(config.get("pysr", {}), int(seed), output_dir, system_id, source_ic)
+            for pysr_config in variant_configs:
+                variant_id = str(pysr_config["config_id"])
+                adapter = None
+                started = time.perf_counter()
+                try:
+                    adapter = harness.build_pysr_adapter(pysr_config)
+                    record = harness.run_pysr_record_with_adapter(system, fit_cell, clean_target, pysr_config, adapter)
+                    expression = str(record.get("pysr_model_canonical") or record.get("model") or "")
+                    if record.get("status") == "success":
+                        record.update(clean_eval_fields(adapter, expression, clean_source, clean_target))
+                except Exception as exc:
+                    record = harness.record_failure(harness.base_record("pysr", pysr_config, fit_cell, clean_target), exc)
+                    record.update(harness.pysr_schema_defaults(pysr_config))
+                finally:
+                    close = getattr(adapter, "close", None)
+                    if callable(close):
+                        close()
+                for regime in ["reconstruction", "generalization"]:
+                    record.setdefault(f"{regime}_clean_integration_status", "not_run_fit_failed")
+                    record.setdefault(f"{regime}_clean_prediction_outcome", "none")
+                    record.setdefault(f"{regime}_clean_diverged_or_nonfinite", True)
+                true_terms = harness.support_true_terms_from_system(system)
+                exact = str(support.loc[system_id].get("phasec_representability", "")) == "exact"
+                record.update(
+                    {
+                        "method": variant_id,
+                        "pysr_seed": int(seed),
+                        "pysr_realization": int(seed),
+                        "export_index": str(index_path),
+                        "source_initial_condition_set": source_ic,
+                        "target_initial_condition_set": target_ic,
+                        "noise_sigma": float(row["noise_sigma"]),
+                        "subsample_rho": float(row["subsample_rho"]),
+                        "noise_realization": int(row["noise_realization"]),
+                        "data_condition_fingerprint": str(row["data_condition_fingerprint"]),
+                        "observed_data_sha256": data_sha(row),
+                        "n_observed_points": int(row["n_observed_points"]),
+                        "clean_grid_points": int(len(clean_t)),
+                        "code_origin_path": str(REPO_ROOT),
+                        "code_origin_git_hash": harness.git_hash(),
+                        "elapsed_s_non_evidence": time.perf_counter() - started,
+                        **structural_metric_fields(record, true_terms, exact),
+                        **support.loc[system_id].to_dict(),
+                    }
+                )
+                rows.append(record)
 
     output_dir.mkdir(parents=True, exist_ok=True)
     details = pd.DataFrame(rows)

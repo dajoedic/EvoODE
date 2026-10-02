@@ -30,13 +30,17 @@ The frozen operator set is ODEFormer's set:
 - binary: `plus, sub, mult, pow, div`
 - unary: `cos, exp, sin, neg, log, sqrt`
 
-This is implemented in `pysr_default_config` (`baselines/harness.py:622-645`) and traces to ODEFormer's wrapper defaults (`pysr_wrapper.py:38-48`). The set is larger than the canonical EvoODE basis. The canonical basis requires `1, u_i, u_i^2, u_i*u_j, u_i^3, sin(u_i), cos(u_i)`, all expressible by constants, variables, multiplication, powers, sine, and cosine. Extra operators (`div`, `exp`, `log`, `sqrt`, `neg`) stay because the source harness uses them; expressions using them are counted as outside-basis terms during structure scoring rather than treated as harness failures.
+This is implemented in `pysr_default_config` (`baselines/harness.py`) and traces to ODEFormer's wrapper defaults (`pysr_wrapper.py:38-48`). The set is larger than the canonical EvoODE basis. The canonical basis requires `1, u_i, u_i^2, u_i*u_j, u_i^3, sin(u_i), cos(u_i)`, all expressible by constants, variables, multiplication, powers, sine, and cosine. Extra operators (`div`, `exp`, `log`, `sqrt`, `neg`) stay because the source harness uses them; expressions using them are counted as outside-basis terms during structure scoring rather than treated as harness failures.
+
+ODEFormer also runs `pysr_poly`, which uses the same binary operators and an empty unary set (`scripts/run_baselines.py:101-115`). The EvoODE runner therefore writes both `method=pysr` and `method=pysr_poly` rows for every cell and seed. They are reported side by side; neither variant is selected based on outcomes.
 
 ### A.3 Budget
 
-The per-trajectory search budget is ODEFormer's `niterations=50` with no `maxsize` limit and no fixed wall-clock timeout (`pysr_wrapper.py:23-48`). The harness records `pysr_niterations`, operator sets, `pysr_maxsize`, `pysr_candidates_evaluated`, derivative target shape, and elapsed seconds as context, not evidence.
+The per-trajectory search budget is ODEFormer's `niterations=50` with no `maxsize` limit and no fixed wall-clock timeout (`pysr_wrapper.py:23-48`). The harness records `pysr_niterations`, operator sets, `pysr_maxsize`, `pysr_candidates_evaluated`, derivative target shape, selected hyperparameters, and elapsed seconds as context, not evidence.
 
-ODEFormer enables hyperparameter optimization by default for its PySR baseline (`scripts/run_baselines.py:101-115`). This work package freezes the faithful EvoODE run to a single declared configuration (`optimize_hyperparams=false`, `finite_difference_order=2`, `smoother_window_length=null`) so the paper grid is not selected after seeing outcomes. The ODEFormer difference is declared in the record fields.
+ODEFormer enables hyperparameter optimization by default for its PySR baseline (`scripts/run_baselines.py:101-115`). The faithful EvoODE run therefore uses `optimize_hyperparams=true`, `hyper_opt_eval_fraction=0.3`, and `sorting_metric=r2`, matching `scripts/run_baselines.py:213-223`. The hyperparameter grid is the wrapper grid from `pysr_wrapper.py:64-68`: `finite_difference_order in {2,3,4}` crossed with `smoother_window_length in {None,15}`. Selection is performed only on the held-out fraction of the observed training trajectory; clean reconstruction and clean generalization targets are evaluated after fitting and are not visible to the hyperparameter choice. The selected pair per equation is serialized in `pysr_selected_hyperparams`.
+
+Discarded 2026-10-02: the previous WP-N39 freeze set `optimize_hyperparams=false`, `finite_difference_order=2`, and `smoother_window_length=null` to avoid choosing after seeing outcomes. This was rejected because ODEFormer's own harness makes the hyperparameter search part of the method and scores it on held-out training data, not on this paper's clean targets or reported outcomes.
 
 ### A.4 Determinism and Seeds
 
@@ -86,7 +90,9 @@ PySR is fit once per equation. The equation-fit count is:
 
 `(23*1 + 28*2 + 10*3 + 2*4) systems/equations x 12 x 3 x 2 = 8,424 equation fits`.
 
-With budget `50 iterations/equation`, the full grid has `8,424 x 50 = 421,200 PySR equation-iterations`. The dim 1/2 subset has `(23*1 + 28*2) x 12 x 3 x 2 x 50 = 284,400 equation-iterations`.
+Each reported row now runs ODEFormer's 6-point hyperparameter grid. ODEFormer has two PySR variants, `pysr` and `pysr_poly`, so the budget factor is `6 hyper-fits x 2 configurations = 12` per equation.
+
+With budget `50 iterations/equation/hyper-fit`, the full grid has `8,424 x 6 x 2 x 50 = 5,054,400 PySR equation-iterations`. The dim 1/2 subset has `(23*1 + 28*2) x 12 x 3 x 2 x 6 x 2 x 50 = 3,412,800 equation-iterations`.
 
 Let `T_cell` be the smoke-measured seconds per full cell at one core. Then:
 
@@ -95,4 +101,4 @@ Let `T_cell` be the smoke-measured seconds per full cell at one core. Then:
 - dim 1/2 core-hours: `3,672 * T_cell / 3,600 = 1.02 * T_cell`
 - dim 1/2 cost at 1.50 EUR/core-hour: `1.53 * T_cell` EUR
 
-Equivalently, with `T_eq` as seconds per equation fit, full-grid core-hours are `8,424 * T_eq / 3,600 = 2.34 * T_eq`, cost `3.51 * T_eq` EUR. The uncertainty is entirely the unmeasured PySR runtime per cell/equation; Claude fills `T_cell` from the smoke. This is not a time-limit upper bound because the frozen budget is iteration-count based, not wall-clock based.
+Here `T_cell` is the smoke-measured seconds for one complete cell including both variants and all hyper-fits. Equivalently, with `T_eq` as seconds per single equation hyper-fit, full-grid core-hours are `8,424 * 6 * 2 * T_eq / 3,600 = 28.08 * T_eq`, cost `42.12 * T_eq` EUR. The uncertainty is entirely the unmeasured PySR runtime per cell/equation; Claude fills `T_cell` from the smoke. This is not a time-limit upper bound because the frozen budget is iteration-count based, not wall-clock based.
