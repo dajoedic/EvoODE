@@ -34,7 +34,7 @@ Cache geleert, alte Images gelöscht (`evoode-regression:h2/h5`, `odeformer-*:wp
 vhdx hat der Nutzer als Admin kompaktiert (57 → 13 GB). **Jetzt 57 GB frei.** Regel: vor jedem Build
 `df -h /c` (unter 30 GB erst aufräumen), danach `docker builder prune -af`.
 
-Uncommittet: `baselines/requirements-pysr-legacy.txt` (`juliacall` 0.9.24 → 0.9.23, Pflicht für PySR
+Committet (`a30382b`): `baselines/requirements-pysr-legacy.txt` (`juliacall` 0.9.24 → 0.9.23, Pflicht für PySR
 0.19.4). `docs/WP-N39.md` nennt an zwei Stellen noch 0.9.24 für Legacy und muss nachgezogen werden.
 
 ## 2. Wartet auf den Nutzer
