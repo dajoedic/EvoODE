@@ -4,6 +4,28 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ---
 
+## 2026-10-03
+
+### Stufe 3 (System 41): billig wie C-1, gleiche Struktur, aber das Modell divergiert von der sauberen IC
+
+Orion `5dd1df8`, 2/2 fehlerfrei, harte Prüfungen bestanden, Datenhashes gleich dem lokalen Export
+`outputs/stage3/data_export/`. Eingesammelt nach `outputs/phase_c_robustness_stage3_5dd1df8/`.
+Unter Rauschen ist die Kappe `[nothing, nothing]` (sauber `[5, nothing]`), wie suchfrei vorhergesagt.
+
+| (σ; ρ) | Level | Loss-Evals (× C-1) | Fits (× C-1) | R² gegen Rauschdaten | Clean Rek. / Gen. |
+|---|---|---|---|---|---|
+| (0,01; 0) | 25 | 6,94 M (1,06) | 510 (1,04) | 0,979 | **divergiert / divergiert** |
+| (0,05; 0,5) | 26 | 7,53 M (1,15) | 530 (1,08) | 0,961 | **divergiert / divergiert** |
+
+`elapsed_s` 2,2 h und 3,9 h (Kontext; erwartet waren 8–17 h). Die gefundene Struktur ist
+dieselbe wie in C-1 (`[[1,u1,u2,u1²,u1u2],[1,u1,u2,u2²]]`, bei 0,05 zusätzlich `u1²` in Gleichung 2).
+**Von der sauberen Trainings-IC aus divergiert das Modell schon in der Rekonstruktion.** In C-1
+divergierte es von der zweiten IC aus (C-5). Das Modell ist so fragil, dass schon der Abstand
+zwischen verrauschtem und sauberem Startwert reicht. ODEFormer scheitert auf 41 ebenfalls (0/3).
+**Kostenbild aller Stufen:** Wo C-1 schon die meisten Level lief (18: 16 Level, 41: 24), kostet das
+Rauschen 0,7–1,15 × C-1. Wo C-1 früh an der Toleranz stoppte (24: 2 Level), wird es ×13,7. Für
+Tor G heißt das: Die Rauschkosten folgen aus der C-1-Levelzahl, nicht aus einem festen Faktor.
+
 ## 2026-10-02
 
 ### ODEFormer auf den Rausch-Stufenzellen (WP-N38): stark auf dim 1, bricht auf 24 und 41 ein; und die ODEFormer-Strukturtreffer waren nie berechnet
