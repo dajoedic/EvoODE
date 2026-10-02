@@ -784,6 +784,90 @@ for bound in 10 1000 Inf; do
 done
 ```
 
+### WP-N37 Stage 3 and B-03 templates
+
+These are command templates, not commands to run during a Codex session. Substitute `<SHA>` with the
+pushed image commit, `5dd1df8` or later (WP-N37 changes no in-image script). The Orion NFS share is mounted locally on Windows as
+`S:\BigDataOrion\data-science\joedicke\...`; in Git Bash the same path is
+`/s/BigDataOrion/data-science/joedicke/...`. Prefer direct copies to that mounted NFS path over
+`oc cp` when the mount is available.
+
+Preparation:
+
+```powershell
+# B-03 input: exact dim-3/4 systems, 54 records.
+python analysis/scripts/aggregate/prepare_phasec_b02_oracle_input.py `
+  --input outputs/phase_c_campaign_221a3a7/history.jsonl `
+  --dims 3,4 `
+  --output outputs/phase_c_c8_oracle_b03_input/history.jsonl
+
+# Upload/copy input directly to the mounted NFS.
+New-Item -ItemType Directory -Force `
+  S:\BigDataOrion\data-science\joedicke\phase_c_c8_oracle_b03_<SHA>\input
+Copy-Item outputs\phase_c_c8_oracle_b03_input\history.jsonl `
+  S:\BigDataOrion\data-science\joedicke\phase_c_c8_oracle_b03_<SHA>\input\history.jsonl
+
+# Cost estimate for Claude to fill into k8s/phase_c_c8_oracle_b03_job.yaml.
+julia --project=. --startup-file=no studies/regression/wp_n3_oracle_refit.jl `
+  --campaign paper1_phaseC_v1 `
+  --input outputs/phase_c_c8_oracle_b03_input/history.jsonl `
+  --output-dir outputs/phase_c_c8_oracle_b03_bound10 `
+  --clamp-val 10 `
+  --estimate-cost
+```
+
+Apply templates:
+
+```powershell
+(Get-Content k8s\phase_c_robustness_stage3_orion_job.yaml) -replace '<COMMIT_SHA>','<SHA>' | oc apply -f -
+(Get-Content k8s\phase_c_c8_oracle_b03_job.yaml) -replace '<COMMIT_SHA>','<SHA>' | oc apply -f -
+```
+
+Before applying the uncapped Stage-3 template, run the search-free cap precheck on the generated
+Stage-3 manifest. Apply the uncapped template only when System 41 under noisy conditions has a
+finite cap below 5.
+
+```powershell
+julia --project=. --startup-file=no studies/regression/print_phase_c_stage_caps.jl `
+  --manifest S:\BigDataOrion\data-science\joedicke\phase_c_robustness_stage3_<SHA>\manifest.csv `
+  --rows 1,2
+
+(Get-Content k8s\phase_c_robustness_stage3_uncapped_job.yaml) -replace '<COMMIT_SHA>','<SHA>' | oc apply -f -
+```
+
+Read progress:
+
+```powershell
+oc -n scch-das get jobs,pods -l hpc.scch.at/service=evoode-phase-c-robustness-stage3
+oc -n scch-das get jobs,pods -l hpc.scch.at/service=evoode-phase-c-robustness-stage3-uncapped
+oc -n scch-das get jobs,pods -l hpc.scch.at/service=evoode-phase-c-c8-oracle-b03
+oc -n scch-das logs job/evoode-phase-c-robustness-stage3-bootstrap
+```
+
+Collect directly from the mounted NFS:
+
+```bash
+mkdir -p outputs/phase_c_robustness_stage3_<SHA>
+cp -r /s/BigDataOrion/data-science/joedicke/phase_c_robustness_stage3_<SHA>/manifest.csv \
+  /s/BigDataOrion/data-science/joedicke/phase_c_robustness_stage3_<SHA>/smoke_manifest.csv \
+  /s/BigDataOrion/data-science/joedicke/phase_c_robustness_stage3_<SHA>/tasks \
+  /s/BigDataOrion/data-science/joedicke/phase_c_robustness_stage3_<SHA>/smoke \
+  outputs/phase_c_robustness_stage3_<SHA>/
+
+for bound in 10 1000 Inf; do
+  mkdir -p outputs/phase_c_c8_oracle_b03_<SHA>/bound_$bound
+  cp -r /s/BigDataOrion/data-science/joedicke/phase_c_c8_oracle_b03_<SHA>/bound_$bound/shard_* \
+    outputs/phase_c_c8_oracle_b03_<SHA>/bound_$bound/
+done
+
+python analysis/scripts/aggregate/aggregate_c8_oracle_bounds.py \
+  --bound10 outputs/phase_c_c8_oracle_b02_5dd1df8/bound_10 outputs/phase_c_c8_oracle_b03_<SHA>/bound_10 \
+  --bound1000 outputs/phase_c_c8_oracle_b02_5dd1df8/bound_1000 outputs/phase_c_c8_oracle_b03_<SHA>/bound_1000 \
+  --bound-inf outputs/phase_c_c8_oracle_b02_5dd1df8/bound_Inf outputs/phase_c_c8_oracle_b03_<SHA>/bound_Inf \
+  --reference-c5 outputs/wp_n3_oracle_refit_phase_c \
+  --output-dir outputs/phase_c_c8_oracle_bounds_<SHA>
+```
+
 ### WP-T1f warm-start neighbourhood repair
 
 WP-T1f repairs the WP-T1d neighbourhood probe by comparing neighbours against a true-support fit

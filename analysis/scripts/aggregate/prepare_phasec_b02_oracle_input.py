@@ -13,6 +13,10 @@ DEFAULT_INPUT = Path("outputs/phase_c_campaign_221a3a7/history.jsonl")
 DEFAULT_SUPPORT = Path("studies/regression/phase_c_support.json")
 DEFAULT_OUTPUT = Path("outputs/phase_c_c8_oracle_b02_input/history.jsonl")
 EXPECTED_RECORDS = 126
+EXPECTED_RECORDS_BY_DIMS = {
+    (1, 2): 126,
+    (3, 4): 54,
+}
 
 
 def read_jsonl(path: Path) -> list[dict[str, Any]]:
@@ -28,16 +32,24 @@ def read_jsonl(path: Path) -> list[dict[str, Any]]:
     return records
 
 
-def exact_dim12_systems(path: Path) -> set[int]:
+def parse_dims(value: str) -> tuple[int, ...]:
+    dims = tuple(sorted({int(item.strip()) for item in value.split(",") if item.strip()}))
+    if not dims:
+        raise argparse.ArgumentTypeError("--dims must contain at least one dimension")
+    return dims
+
+
+def exact_systems_for_dims(path: Path, dims: tuple[int, ...]) -> set[int]:
     with path.open("r", encoding="utf-8") as handle:
         support = json.load(handle)
     systems = {
         int(system["system_id"])
         for system in support["systems"]
-        if system.get("representability") == "exact" and int(system["dim"]) <= 2
+        if system.get("representability") == "exact" and int(system["dim"]) in dims
     }
-    if len(systems) != 21:
-        raise SystemExit(f"Expected 21 exact dim<=2 systems in {path}, got {len(systems)}")
+    expected_systems = 21 if dims == (1, 2) else 9 if dims == (3, 4) else None
+    if expected_systems is not None and len(systems) != expected_systems:
+        raise SystemExit(f"Expected {expected_systems} exact dim {dims} systems in {path}, got {len(systems)}")
     return systems
 
 
@@ -87,17 +99,22 @@ def main() -> None:
     parser.add_argument("--input", default=DEFAULT_INPUT, type=Path)
     parser.add_argument("--support", default=DEFAULT_SUPPORT, type=Path)
     parser.add_argument("--output", default=DEFAULT_OUTPUT, type=Path)
-    parser.add_argument("--expected-records", default=EXPECTED_RECORDS, type=int)
+    parser.add_argument("--dims", default=(1, 2), type=parse_dims)
+    parser.add_argument("--expected-records", default=None, type=int)
     args = parser.parse_args()
 
-    systems = exact_dim12_systems(args.support)
+    systems = exact_systems_for_dims(args.support, args.dims)
     records = filter_records(read_jsonl(args.input), systems)
-    if len(records) != args.expected_records:
-        raise SystemExit(f"Expected {args.expected_records} B-02 records, got {len(records)}")
+    expected_records = args.expected_records
+    if expected_records is None:
+        expected_records = EXPECTED_RECORDS_BY_DIMS.get(args.dims, len(systems) * 3 * 2)
+    if len(records) != expected_records:
+        raise SystemExit(f"Expected {expected_records} oracle input records, got {len(records)}")
     digest = write_jsonl(args.output, records)
     print(f"input={args.input.as_posix()}")
     print(f"support={args.support.as_posix()}")
     print(f"output={args.output.as_posix()}")
+    print(f"dims={','.join(str(dim) for dim in args.dims)}")
     print(f"records={len(records)}")
     print(f"systems={len(systems)}")
     print(f"sha256={digest}")
