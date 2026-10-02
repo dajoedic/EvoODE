@@ -6,6 +6,41 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ## 2026-10-02
 
+### ODEFormer auf den Rausch-Stufenzellen (WP-N38): stark auf dim 1, bricht auf 24 und 41 ein; und die ODEFormer-Strukturtreffer waren nie berechnet
+
+**Lauf:** lokal in Docker, Image `evoode/odeformer-reference:wp-n27c` (gebaut aus dem
+Dockerfile-Stand `55e9c75`, dieselbe Paketumgebung wie die Orion-Referenzrecords). Code als Volume
+gemountet. Systeme 1, 17, 18, 24, 41, IC 1, Realisierung 1, alle vier Exportbedingungen je System,
+4 Konfigurationen × 3 Wiederholungen = **240 Fits, 240 `success`, alle 20 Datenhashes verifiziert**.
+Ausgabe `outputs/wp_n38_noise_odeformer/stages/`. Summe `elapsed_s` 0,78 h (Kontext). **Kontrolle:**
+System 1 sauber, `beam10_noopt`, identisch zum Orion-Referenzraster (Gleichung, Datenhash,
+Umgebung, R² bis ~2e-13). Bis die Kontrolle hielt, brauchte es zwei Korrekturen.
+
+**R² > 0,9 gegen saubere Ziele** (je Konfiguration n von 3, in den beiden Stufenbedingungen):
+System 1, 17, 18: Rekonstruktion und Generalisierung 3/3 in allen Konfigurationen. **System 24:
+Rekonstruktion 3/3, Generalisierung 0/3.** Einzige Ausnahme ist beam50_opt bei (0,05; 0,5) mit 3/3.
+ODEFormer liefert dort rationale Ausdrücke außerhalb der Basis. **System 41: 0/3 überall, auch in
+der Rekonstruktion.**
+
+**Struktur** (nachberechnet, WP-N38 Fortsetzung 3, gemeinsame Expansion für ODEFormer und PySR):
+System 1 trifft 48/48 roh und gepruned. System 17 trifft 0/48: Gefunden wird `x_0*(a - b*x_0)`, die
+Wahrheit hat zusätzlich die Konstante −0,3. System 24 trifft 0/48 (180 Terme außerhalb der Basis),
+System 41 ebenfalls 0/48 (168). Surrogat 18 bekommt keinen Treffer.
+
+**Defekt, der Claim D betrifft:** Die ODEFormer-Records haben `active_terms_raw` leer und
+`structure_hit_raw = structure_hit_pruned = False`, **auch im Orion-Referenzraster, 1512/1512**.
+WP-N31 liest diese Felder direkt (`run_phasec_sindy_baseline.py::build_odeformer_pair_rows`).
+**Jede ODEFormer-Strukturrate aus WP-N31 ist damit ungültig.** Sie steht auf „0“, ist aber nie
+berechnet worden. Zitiert ist keine solche Rate (CLAUDE.md, PAPER_1, Plan), die R²-Raten sind nicht
+betroffen. Reparatur: das Referenz- und Kandidatenraster mit dem Nachberechnungsmodus neu
+auswerten, ohne ODEFormer neu zu rechnen, danach WP-N31 neu aggregieren.
+
+**Nebenbefund:** `baselines/compare_odeformer_equivalence.py` (WP-N21) schlüsselt ohne
+Konfiguration und verdichtet volle Raster auf eine Konfiguration je Zelle. Für die zitierten
+Ergebnisse war das folgenlos: WP-N21 hatte eine Konfiguration je Zelle, und die Raten von
+WP-N27/N29 laufen über `summarize_odeformer_grid.py`. Das Skript bleibt unverändert, siehe
+`REPORT_WP_N38.md`.
+
 ### WP-N37: Stufe 3 und B-03 vorbereitet; die Kappe von System 41 ist unter Rauschen ebenfalls `nothing`
 
 <!-- d3e95c4 -->

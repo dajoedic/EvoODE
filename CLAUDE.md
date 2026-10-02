@@ -250,7 +250,7 @@ Mark items done here with date and commit; never delete them.
 | R-06 | **Stage 3** — one expensive: system 41 (dim 2), same two conditions, seed 42, IC 1. **Gate S2 opened 2026-10-02; manifest `k8s/phase_c_robustness_stage3_orion_job.yaml` (WP-N37), expected ~8–17 h per cell** | user | Orion ≤ 24 h | **gate S3** |
 | R-07 | Confirm the noise-realization design (3 realizations, r ↔ seed r) | user | — | before any multi-seed run |
 | R-08 | **Grid decision** from measured costs: scope, seeds, and what happens to cells that would need ≥ 24 h | user | — | **gate G** |
-| R-09 | Baselines on the same data, same stages first: ~~SINDy, Weak-SINDy~~ **built 2026-10-01 (WP-N34/N34b), C-4 control passed with one documented exception; ran on stage 1**; ODEFormer still open | Codex / Claude | laptop / Orion | with S2 |
+| R-09 | Baselines on the same data, same stages first: ~~SINDy, Weak-SINDy~~ **built 2026-10-01 (WP-N34/N34b), C-4 control passed with one documented exception; ran on stage 1**; ~~ODEFormer~~ **ran 2026-10-02 on all stage cells (WP-N38, 240/240, control identical to the Orion reference)** | Codex / Claude | laptop / Orion | with S2 |
 | R-10 | PySR work package (budget, harness, cost estimate) | Codex | — | before PySR runs |
 
 **Track B — bound diagnostic (C-8), parallel, staged the same way**
@@ -977,6 +977,11 @@ the coupled search path 1e-6 is the cheaper, behaviour-equal tolerance; the Syst
   the weakness sits in the surrogates: on the **30 fully representable systems EvoGrow generalizes
   best of the three** (45.6 % vs ODEFormer 32.8 %, SINDy 31.7–43.3 %), on partially representable
   ones it is mid-field (30.1 % vs 32.3 % and 21.0–43.5 %)
+- **ODEFormer structure hits were never computed (found 2026-10-02, WP-N38).** All 1,512 Orion
+  reference records carry empty `active_terms_raw` and `structure_hit_* = False`, and WP-N31 reads
+  those fields directly, so **every ODEFormer structure rate from WP-N31 is invalid** (not zero —
+  uncomputed). R² rates are unaffected; no structure rate is cited. Repair: recompute the reference
+  and candidate grids with the WP-N38 recompute mode (no ODEFormer re-run), then re-aggregate WP-N31
 - **The SINDy pairing of Claim D was defective until WP-N30 (`7173f7b`).** It set SINDy
   **generalization** against EvoGrow **reconstruction** and joined on SINDy's target IC, so each row
   compared models trained on different trajectories — systematically in EvoGrow's favour, and
