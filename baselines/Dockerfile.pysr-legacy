@@ -10,19 +10,19 @@ ENV PYTHONUNBUFFERED=1 \
     JULIA_NUM_THREADS=1 \
     OPENBLAS_NUM_THREADS=1 \
     OMP_NUM_THREADS=1 \
-    EVOODE_PYSR_API_LABEL=pysr_v1
+    EVOODE_PYSR_API_LABEL=pysr_legacy_0x
 
-LABEL org.opencontainers.image.title="EvoODE PySR baseline" \
-      org.opencontainers.image.description="PySR 1.5.9 baseline with JuliaCall/JuliaPkg backend preinstalled at build time" \
-      org.evoode.pysr.version="1.5.9" \
-      org.evoode.pysr.symbolic_regression_constraint="~1.11.0"
+LABEL org.opencontainers.image.title="EvoODE PySR legacy baseline" \
+      org.opencontainers.image.description="PySR 0.19.4 baseline with JuliaCall/JuliaPkg backend preinstalled at build time" \
+      org.evoode.pysr.version="0.19.4" \
+      org.evoode.pysr.symbolic_regression_constraint="=0.24.5"
 
 RUN apt-get update \
     && apt-get install -y --no-install-recommends git build-essential curl ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
-COPY baselines/requirements-pysr.txt /tmp/requirements-pysr.txt
-RUN pip install --no-cache-dir -r /tmp/requirements-pysr.txt
+COPY baselines/requirements-pysr-legacy.txt /tmp/requirements-pysr-legacy.txt
+RUN pip install --no-cache-dir -r /tmp/requirements-pysr-legacy.txt
 
 RUN python - <<'PY'
 import json

@@ -632,6 +632,22 @@ PYSR_HYPERPARAMETER_GRID: list[dict[str, Any]] = [
     for order in [2, 3, 4]
     for window in [None, 15]
 ]
+PYSR_LEGACY_API = "legacy_0x"
+PYSR_V1_API = "v1"
+
+
+def parse_version_tuple(version: str) -> tuple[int, ...]:
+    parts = []
+    for item in str(version).split("."):
+        match = re.match(r"(\d+)", item)
+        if match is None:
+            break
+        parts.append(int(match.group(1)))
+    return tuple(parts or [0])
+
+
+def pysr_api_from_version(version: str) -> str:
+    return PYSR_LEGACY_API if parse_version_tuple(version) < (1, 0) else PYSR_V1_API
 
 
 def pysr_default_config(seed: int = 1, output_dir: str | Path | None = None) -> dict[str, Any]:
@@ -648,12 +664,7 @@ def pysr_default_config(seed: int = 1, output_dir: str | Path | None = None) -> 
         "sorting_metric": "r2",
         "optimize_hyperparams": True,
         "hyper_opt_eval_fraction": 0.3,
-        "deterministic": True,
-        "parallelism": "serial",
-        "procs": 0,
-        "random_state": int(seed),
-        "precision": 64,
-        "warm_start": False,
+        "procs": 1,
     }
     if output_dir is not None:
         config["output_dir"] = str(output_dir)
@@ -872,33 +883,44 @@ def integrate_pysr_expression(expression: str | list[str], cell: TrajectoryCell)
 
 
 class PySRAdapter:
-    def __init__(self, config: dict[str, Any]):
-        from pysr import PySRRegressor
+    def __init__(self, config: dict[str, Any], regressor_class: Any | None = None, pysr_version: str | None = None):
+        if regressor_class is None:
+            from pysr import PySRRegressor
+
+            regressor_class = PySRRegressor
 
         self.config = dict(config)
-        self.PySRRegressor = PySRRegressor
+        self.PySRRegressor = regressor_class
+        self.pysr_version = pysr_version or package_versions().get("pysr", "0")
+        self.pysr_api = pysr_api_from_version(self.pysr_version)
         self.models: list[Any] = []
 
     def close(self) -> None:
         self.models.clear()
 
-    def _model_kwargs(self, model_dir: Path, idx: int, hyperparams: dict[str, Any]) -> dict[str, Any]:
-        kwargs: dict[str, Any] = {
+    def _odeformer_model_kwargs(self, equation_file: Path) -> dict[str, Any]:
+        return {
             "niterations": int(self.config.get("niterations", 50)),
             "binary_operators": list(self.config.get("binary_operators", ["plus", "sub", "mult", "pow", "div"])),
             "unary_operators": list(self.config.get("unary_operators", ["cos", "exp", "sin", "neg", "log", "sqrt"])),
             "loss": str(self.config.get("loss", "loss(x, y) = (x - y)^2")),
             "procs": int(self.config.get("procs", 0)),
-            "parallelism": str(self.config.get("parallelism", "serial")),
-            "deterministic": bool(self.config.get("deterministic", True)),
-            "random_state": int(self.config.get("random_state", 1)),
-            "warm_start": bool(self.config.get("warm_start", False)),
-            "model_selection": str(self.config.get("model_selection", "score")),
-            "precision": int(self.config.get("precision", 64)),
-            "equation_file": str(model_dir / f"pysr_hof_dim{idx}_fd{hyperparams['finite_difference_order']}_sw{hyperparams['smoother_window_length']}.csv"),
+            "equation_file": str(equation_file),
         }
-        if self.config.get("maxsize") is not None:
-            kwargs["maxsize"] = int(self.config["maxsize"])
+
+    def _model_kwargs(self, model_dir: Path, idx: int, hyperparams: dict[str, Any]) -> dict[str, Any]:
+        equation_stem = f"pysr_hof_dim{idx}_fd{hyperparams['finite_difference_order']}_sw{hyperparams['smoother_window_length']}"
+        equation_file = model_dir / f"{equation_stem}.csv"
+        kwargs = self._odeformer_model_kwargs(equation_file)
+        if self.pysr_api == PYSR_V1_API:
+            kwargs.pop("equation_file")
+            kwargs.update(
+                {
+                    "output_directory": str(model_dir),
+                    "run_id": equation_stem,
+                }
+            )
+            return kwargs
         return kwargs
 
     def _fit_one_model(
@@ -1012,6 +1034,8 @@ class PySRAdapter:
             "derivative_target_shape": [len(train_time), fit_cell.dimension],
             "selected_hyperparams": selected_hyperparams,
             "hyper_scores": hyper_scores,
+            "pysr_api": self.pysr_api,
+            "pysr_api_renamed_arguments": ["equation_file->output_directory+run_id"] if self.pysr_api == PYSR_V1_API else [],
         }
 
     def integrate_expression(self, cell: TrajectoryCell, expression: str | list[str]) -> tuple[np.ndarray | None, str]:
@@ -1041,6 +1065,8 @@ def pysr_schema_defaults(config: dict[str, Any]) -> dict[str, Any]:
         "pysr_optimize_hyperparams": bool(config.get("optimize_hyperparams", False)),
         "pysr_hyper_opt_eval_fraction": config.get("hyper_opt_eval_fraction", ""),
         "pysr_hyper_grid": json.dumps(pysr_hyperparameter_grid(config), separators=(",", ":")),
+        "pysr_api": str(config.get("pysr_api", "")),
+        "pysr_api_renamed_arguments": json.dumps(list(config.get("pysr_api_renamed_arguments", [])), separators=(",", ":")),
     }
 
 
@@ -1081,6 +1107,8 @@ def run_pysr_record_with_adapter(
                 "pysr_derivative_target_shape": json.dumps(fitted.get("derivative_target_shape", []), separators=(",", ":")),
                 "pysr_selected_hyperparams": json.dumps(fitted.get("selected_hyperparams", []), separators=(",", ":")),
                 "pysr_hyper_scores": json.dumps(fitted.get("hyper_scores", []), separators=(",", ":")),
+                "pysr_api": str(fitted.get("pysr_api", record.get("pysr_api", ""))),
+                "pysr_api_renamed_arguments": json.dumps(fitted.get("pysr_api_renamed_arguments", []), separators=(",", ":")),
                 "pysr_outside_basis_terms": json.dumps(outside_terms, separators=(",", ":")),
                 "pysr_outside_basis_term_count": int(sum(len(terms) for terms in outside_terms)),
                 "fit_elapsed_s_context": time.perf_counter() - start,
@@ -1103,6 +1131,11 @@ def run_pysr_record_with_adapter(
         failed.setdefault("pysr_derivative_target_shape", "[]")
         failed.setdefault("pysr_selected_hyperparams", "[]")
         failed.setdefault("pysr_hyper_scores", "[]")
+        failed.setdefault("pysr_api", getattr(adapter, "pysr_api", str(config.get("pysr_api", ""))))
+        failed.setdefault(
+            "pysr_api_renamed_arguments",
+            json.dumps(["equation_file->output_directory+run_id"] if failed["pysr_api"] == PYSR_V1_API else [], separators=(",", ":")),
+        )
         failed.setdefault("pysr_outside_basis_terms", "[]")
         failed.setdefault("pysr_outside_basis_term_count", 0)
         return failed

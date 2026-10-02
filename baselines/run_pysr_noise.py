@@ -4,6 +4,7 @@ import argparse
 import glob
 import json
 import math
+import os
 import sys
 import time
 from pathlib import Path
@@ -266,6 +267,9 @@ def run_noise_pysr(
     config_path = resolve_repo_path(config_path)
     config = load_json(config_path)
     output_dir = resolve_repo_path(output_dir)
+    api_label = os.environ.get("EVOODE_PYSR_API_LABEL", "").strip()
+    if api_label and Path(output_dir).resolve() == resolve_repo_path(DEFAULT_OUTPUT_DIR):
+        output_dir = output_dir.with_name(f"{output_dir.name}_{api_label}")
     benchmark = load_benchmark(resolve_repo_path(config["benchmark_path"]))
     systems = {int(system["id"]): system for system in benchmark}
     support = load_phase_c_support(REPO_ROOT / "studies/regression/phase_c_support.json").set_index("system_id")

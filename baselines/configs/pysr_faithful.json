@@ -18,10 +18,6 @@
     "sorting_metric": "r2",
     "optimize_hyperparams": true,
     "hyper_opt_eval_fraction": 0.3,
-    "deterministic": true,
-    "parallelism": "serial",
-    "procs": 0,
-    "precision": 64,
-    "warm_start": false
+    "procs": 1
   }
 }

@@ -68,6 +68,41 @@ def test_pysr_hyper_grid_matches_odeformer_wrapper_shape() -> None:
     assert {item["smoother_window_length"] for item in grid} == {None, 15}
 
 
+def test_pysr_legacy_argument_mapping_keeps_odeformer_equation_file(tmp_path: Path) -> None:
+    adapter = harness.PySRAdapter(harness.pysr_default_config(), regressor_class=object, pysr_version="0.19.4")
+
+    kwargs = adapter._model_kwargs(tmp_path, 0, {"finite_difference_order": 2, "smoother_window_length": None})
+
+    assert adapter.pysr_api == "legacy_0x"
+    assert kwargs["equation_file"].endswith("pysr_hof_dim0_fd2_swNone.csv")
+    assert kwargs["niterations"] == 50
+    assert kwargs["binary_operators"] == ["plus", "sub", "mult", "pow", "div"]
+    assert kwargs["unary_operators"] == ["cos", "exp", "sin", "neg", "log", "sqrt"]
+    assert kwargs["loss"] == "loss(x, y) = (x - y)^2"
+    assert kwargs["procs"] == 1
+    assert "output_directory" not in kwargs
+    assert "run_id" not in kwargs
+
+
+def test_pysr_v1_argument_mapping_renames_only_output_location(tmp_path: Path) -> None:
+    adapter = harness.PySRAdapter(harness.pysr_default_config(), regressor_class=object, pysr_version="1.5.9")
+
+    kwargs = adapter._model_kwargs(tmp_path, 1, {"finite_difference_order": 4, "smoother_window_length": 15})
+
+    assert adapter.pysr_api == "v1"
+    assert "equation_file" not in kwargs
+    assert kwargs["output_directory"] == str(tmp_path)
+    assert kwargs["run_id"] == "pysr_hof_dim1_fd4_sw15"
+    assert kwargs["niterations"] == 50
+    assert kwargs["binary_operators"] == ["plus", "sub", "mult", "pow", "div"]
+    assert kwargs["unary_operators"] == ["cos", "exp", "sin", "neg", "log", "sqrt"]
+    assert kwargs["loss"] == "loss(x, y) = (x - y)^2"
+    assert kwargs["procs"] == 1
+    assert "parallelism" not in kwargs
+    assert "deterministic" not in kwargs
+    assert "random_state" not in kwargs
+
+
 def test_pysr_record_fits_only_observed_training_cell() -> None:
     fit_time = np.linspace(0.0, 1.0, 512)
     fit_state = np.exp(-fit_time).reshape((-1, 1))
@@ -113,6 +148,29 @@ def test_noise_runner_writes_required_outputs_with_fake_adapter(tmp_path: Path, 
     assert bool(checks.loc[0, "hash_verified"])
     assert set(summary["method"]) == {"pysr", "pysr_poly"}
     assert set(summary["success_count"]) == {1}
+
+
+def test_noise_runner_appends_api_label_to_default_output_dir(tmp_path: Path, monkeypatch) -> None:
+    index_path = copy_real_export_fixture(tmp_path)
+    config_path = tmp_path / "pysr_config.json"
+    config = json.loads((REPO_ROOT / "baselines" / "configs" / "pysr_faithful.json").read_text(encoding="utf-8"))
+    config["seeds"] = [1]
+    config_path.write_text(json.dumps(config), encoding="utf-8")
+    default_output = tmp_path / "wp_n39_noise_pysr"
+    monkeypatch.chdir(REPO_ROOT)
+    monkeypatch.setattr(run_pysr_noise, "DEFAULT_OUTPUT_DIR", default_output)
+    monkeypatch.setenv("EVOODE_PYSR_API_LABEL", "pysr_legacy_0x")
+    monkeypatch.setattr(harness, "build_pysr_adapter", lambda config: TrueEquationAdapter(config))
+
+    paths = run_pysr_noise.run_noise_pysr(
+        config_path,
+        [index_path],
+        default_output,
+        seeds=[1],
+        limit=1,
+    )
+
+    assert paths["details"].parent.name == "wp_n39_noise_pysr_pysr_legacy_0x"
 
 
 def test_build_comparison_marks_missing_odeformer_source(tmp_path: Path) -> None:

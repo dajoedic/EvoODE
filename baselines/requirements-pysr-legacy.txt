@@ -1,0 +1,8 @@
+numpy==1.26.4
+pandas==2.2.2
+scipy==1.13.1
+sympy==1.12
+scikit-learn==1.5.1
+pysindy==1.7.5
+pysr==0.19.4
+juliacall==0.9.24

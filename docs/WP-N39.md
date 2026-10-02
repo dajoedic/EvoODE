@@ -11,9 +11,76 @@ Its wrapper constructs `PySRRegressor` with `finite_difference_order=2`, `smooth
 
 ODEFormer's script enables `pysr` and `pysr_poly` as baseline models (`scripts/run_baselines.py:101-115`, `scripts/run_baselines.py:198-205`). It passes `optimize_hyperparams=True`, `hyper_opt_eval_fraction`, and `sorting_metric` to the PySR wrapper (`scripts/run_baselines.py:101-115`), with defaults `hyper_opt_eval_fraction=0.3` and `sorting_metric=r2` (`scripts/run_baselines.py:213-223`). Its shell grid runs `pysr` and `pysr_poly` over subsample ratios `0.0, 0.25, 0.5` and additive noise gammas `0.0, 0.001, 0.01, 0.02, 0.03, 0.04, 0.05` (`scripts/run_baselines.sh:7-43`). It evaluates through ODEFormer's evaluator (`scripts/run_baselines.py:172-176`) and records standard validation metrics including R2 (`scripts/run_baselines.py:245-290`).
 
-PySR's own API documentation states that deterministic searches require `deterministic=True`, `parallelism="serial"`, and a fixed `random_state`: https://pysr.ai/v1.5.9/api/.
-
 PySR documents its Julia backend as `SymbolicRegression.jl`, accessed through `juliacall`, and states that the backend version associated with a PySR checkout is in `pysr/juliapkg.json`: https://pysr.ai/v2.4.0/backend.
+
+## Two PySR APIs
+
+WP-N39 now has two pinned Docker variants:
+
+| Variant | Image tag in report commands | Python package | PySR API | Backend source |
+|---|---:|---:|---|---|
+| current | `evoode-pysr:wp-n39` | `pysr==1.5.9`, `juliacall==0.9.24` | `v1` | PySR `v1.5.9` `pysr/juliapkg.json`: Julia `=1.10.0, 1.10.3`, SymbolicRegression.jl `~1.11.0` |
+| legacy | `evoode-pysr-legacy:wp-n39` | `pysr==0.19.4`, `juliacall==0.9.24` | `legacy_0x` | PySR `v0.19.4` `pysr/juliapkg.json`: Julia `~1.6.7, ~1.7, ~1.8, ~1.9, =1.10.0, ~1.10.3`, SymbolicRegression.jl `=0.24.5` |
+
+Version basis:
+
+- PyPI lists `0.19.4` as the last 0.x release before `1.0.0` and gives its release date as 2024-08-23: https://pypi.org/project/pysr/0.19.4/
+- PySR `v0.19.4` `PySRRegressor.__init__` accepts `equation_file` (`pysr/sr.py:699-788`): https://raw.githubusercontent.com/MilesCranmer/PySR/v0.19.4/pysr/sr.py
+- PySR `v1.0.0` release notes list the breaking rename `equation_file -> output_directory + run_id`: https://github.com/astroautomata/PySR/discussions/755
+- PySR `v1.5.9` API documents `output_directory` and `run_id` as the result-export controls: https://pysr.ai/v1.5.9/api/
+
+The adapter detects the installed PySR version. For `legacy_0x`, it passes the ODEFormer wrapper arguments unchanged, including `equation_file`. For `v1`, it renames only the non-algorithmic result-location argument: `equation_file` becomes `output_directory` plus `run_id`. Every record carries `pysr_api` and `pysr_api_renamed_arguments`.
+
+The Docker images set `EVOODE_PYSR_API_LABEL`, so a default run writes to separate output roots:
+
+- v1: `outputs/wp_n39_noise_pysr_pysr_v1`
+- legacy: `outputs/wp_n39_noise_pysr_pysr_legacy_0x`
+
+Explicit `--output-dir` values override this default separation.
+
+## Default Differences
+
+The table below lists `PySRRegressor` parameters not explicitly set by ODEFormer's wrapper and whose defaults differ between PySR 0.19.4 and 1.5.9. Source: `PySRRegressor.__init__` defaults in PySR `v0.19.4` (`pysr/sr.py:699-788`) and `v1.5.9` (`pysr/sr.py:796-897`). These defaults are not aligned; each image runs with its own package defaults unless ODEFormer's wrapper already sets the parameter.
+
+| Parameter | PySR 0.19.4 default | PySR 1.5.9 default |
+|---|---:|---:|
+| `populations` | `15` | `31` |
+| `population_size` | `33` | `27` |
+| `maxsize` | `20` | `30` |
+| `complexity_of_constants` | `1` | `None` |
+| `parsimony` | `0.0032` | `0.0` |
+| `adaptive_parsimony_scaling` | `20.0` | `1040.0` |
+| `alpha` | `0.1` | `3.17` |
+| `ncycles_per_iteration` | `550` | `380` |
+| `fraction_replaced` | `0.000364` | `0.00036` |
+| `fraction_replaced_hof` | `0.035` | `0.0614` |
+| `weight_add_node` | `0.79` | `2.47` |
+| `weight_insert_node` | `5.1` | `0.0112` |
+| `weight_delete_node` | `1.7` | `0.870` |
+| `weight_do_nothing` | `0.21` | `0.273` |
+| `weight_mutate_constant` | `0.048` | `0.0346` |
+| `weight_mutate_operator` | `0.47` | `0.293` |
+| `weight_swap_operands` | `0.1` | `0.198` |
+| `weight_rotate_tree` | absent | `4.26` |
+| `weight_randomize` | `0.00023` | `0.000502` |
+| `weight_simplify` | `0.0020` | `0.00209` |
+| `crossover_probability` | `0.066` | `0.0259` |
+| `should_simplify` | `None` | `True` |
+| `optimizer_f_calls_limit` | absent | `None` |
+| `perturbation_factor` | `0.076` | `0.129` |
+| `probability_negate_constant` | absent | `0.00743` |
+| `tournament_selection_n` | `10` | `15` |
+| `tournament_selection_p` | `0.86` | `0.982` |
+| `parallelism` | absent | `None` |
+| `autodiff_backend` | absent | `None` |
+| `logger_spec` | absent | `None` |
+| `input_stream` | absent | `"stdin"` |
+| `run_id` | absent | `None` |
+| `output_directory` | absent | `None` |
+| `loss_function_expression` | absent | `None` |
+| `loss_scale` | absent | `"log"` |
+| `complexity_mapping` | absent | `None` |
+| `expression_spec` | absent | `None` |
 
 ## Frozen Decisions
 
@@ -42,21 +109,27 @@ ODEFormer enables hyperparameter optimization by default for its PySR baseline (
 
 Discarded 2026-10-02: the previous WP-N39 freeze set `optimize_hyperparams=false`, `finite_difference_order=2`, and `smoother_window_length=null` to avoid choosing after seeing outcomes. This was rejected because ODEFormer's own harness makes the hyperparameter search part of the method and scores it on held-out training data, not on this paper's clean targets or reported outcomes.
 
-### A.4 Determinism and Seeds
+### A.4 Seeds
 
-PySR runs with `deterministic=true`, `parallelism=serial`, `procs=0`, `warm_start=false`, `precision=64`, and `random_state=r`. This follows PySR's API requirement for deterministic runs with a fixed seed. Three realizations are frozen: realization 1 uses seed 1, realization 2 uses seed 2, realization 3 uses seed 3.
+PySR runs with ODEFormer's wrapper arguments, including `procs=1`, and does not receive PySR-specific `random_state`, `deterministic`, `parallelism`, `warm_start`, or `precision` arguments. This is deliberate: the two PySR versions are compared through the ODEFormer wrapper surface, with only the non-algorithmic output-location rename applied for PySR 1.x. The runner still records `pysr_seed` and `pysr_realization` as grid/repetition labels and uses the seed in output paths, but PySR's own RNG default is the package default in each image.
 
-### A.5 Version and Environment
+### A.5 Versions and Environment
 
-PySR is isolated in `baselines/Dockerfile.pysr`; it is not installed into the existing baseline image. The pinned requirements are in `baselines/requirements-pysr.txt`:
+PySR is isolated in two Dockerfiles; it is not installed into the existing baseline image. The current-API pinned requirements are in `baselines/requirements-pysr.txt`:
 
 - `pysr==1.5.9`
 - `juliacall==0.9.24`
 - Python numerical stack pinned with NumPy, pandas, SciPy, SymPy, scikit-learn, and PySINDy
 
-The Julia search backend is pinned transitively by `pysr==1.5.9`: PySR's `juliapkg.json` declares the exact compatible `SymbolicRegression.jl` backend for that PySR package. The image must not update PySR independently of this requirements file.
+The legacy pinned requirements are in `baselines/requirements-pysr-legacy.txt`:
 
-The Dockerfile sets `JULIA_NUM_THREADS=1`, `OPENBLAS_NUM_THREADS=1`, and `OMP_NUM_THREADS=1` to keep the cell budget single-core. The image is built by Claude or the user, not by this package.
+- `pysr==0.19.4`
+- `juliacall==0.9.24`
+- the same Python numerical stack pins as the current image
+
+The Julia search backend is pinned transitively by each PySR package: PySR's `juliapkg.json` declares the compatible `SymbolicRegression.jl` backend. The images must not update PySR independently of their requirements files.
+
+Both Dockerfiles set `JULIA_NUM_THREADS=1`, `OPENBLAS_NUM_THREADS=1`, and `OMP_NUM_THREADS=1` to keep the cell budget single-core. The images are built by Claude or the user, not by this package.
 
 ### A.6 Canonical Expansion
 
