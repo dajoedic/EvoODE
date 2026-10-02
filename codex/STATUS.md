@@ -1,4 +1,4 @@
-status: blocked
-task:   WP-N37
-report: codex/reports/REPORT_WP_N37.md
-note:   Umgebung, nicht Sache: Julia-Laeufe muessen von Claude ausgefuehrt werden.
+status: done
+task:   WP-N38
+report: codex/reports/REPORT_WP_N38.md
+note:   Legacy comparison restored to HEAD; noise control moved to runner; tests pass.
