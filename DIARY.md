@@ -6,6 +6,27 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ## 2026-10-02
 
+### WP-N37: Stufe 3 und B-03 vorbereitet; die Kappe von System 41 ist unter Rauschen ebenfalls `nothing`
+
+<!-- d3e95c4 -->
+
+Der Nutzer hat am 02.10. alles freigegeben: den ungekappten Arm für 18/24 gestrichen, Tor S2
+(Stufe 3) und Tor B2 (B-03) geöffnet. WP-N37 (Codex) baut die Manifeste, eine `--dims`-Option für
+die Orakel-Eingabe (dim ≤ 2 byte-identisch), das Auswertungsskript nach §9.6
+(`aggregate_c8_oracle_bounds.py`, reproduziert die vorläufigen B-02-Zahlen exakt) und eine suchfreie
+Kappenprüfung (`print_phase_c_stage_caps.jl`).
+
+**Die Kappenprüfung reproduziert C-1 sauber** (17 → `[2]`, 18 → `[4]`, 24 → `[nothing, nothing]`,
+41 → `[5, nothing]`) und die Stufe-2-Records unter Rauschen (alle `nothing`). **System 41 ist unter
+beiden Rauschbedingungen `[nothing, nothing]`**, der ungekappte Arm entfällt also auch für
+Stufe 3. Damit ist die Kappe auf allen fünf Stufen-Systemen unter Rauschen abgeschaltet, und schon
+σ = 0,01 reicht dafür.
+
+**B-03-Kosten** aus `--estimate-cost`: höchstens 76,6 Kernstunden je Grenze, für alle drei Grenzen
+gleich, also ≤ 230 h ≈ 345 € insgesamt. Teuerste Zelle ist Lorenz 55 mit ≤ 5,1 h, je Shard ≤ ~15 h.
+B-02 blieb weit unter seiner Schranke. Eingabe (54 Records, sha256 `e7e902eb…`) liegt auf dem NFS.
+Die Skripte im Image sind seit `5dd1df8` unverändert, ein neuer Image-Build ist nicht nötig.
+
 ### B-02 komplett, Stufe 2 komplett, der ungekappte Arm ist auf allen vier Stufen-Systemen identisch, weil die Kappe unter Rauschen `nothing` ist
 
 <!-- 8e186cd -->
