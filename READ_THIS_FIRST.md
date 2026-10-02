@@ -24,10 +24,11 @@ als `run_in_background`. **Diese Datei bei jedem Statuswechsel aktualisieren.**
 
 | Lauf | Wo | Image | Stand | Anmerkung |
 |---|---|---|---|---|
-| PySR-Smoke, beide Versionen | Laptop, Docker | `evoode-pysr:wp-n39` (1.5.9, Julia 1.13.1) und `evoode-pysr-legacy:wp-n39` (0.19.4, Julia 1.10.12) | läuft | System 1, (σ 0,01; ρ 0), Seed 1, offline. Ausgabe `outputs/wp_n39_pysr_smoke/<image>/` |
 | B-03 (Orakel dim 3/4) | Orion | `5dd1df8` | 10: 54/54, 1000: 54/54, ∞: 52/54 | Letzter Shard seit 11 h, Schranke ~15 h |
 | C-3 | Orion | `221a3a7` | 179/180 | |
 | WP-T1f | Orion | `1db1193` | 30/36 | |
+
+**PySR-Smoke fertig (03.10.):** beide Versionen dasselbe Modell (`-0,2993·x_0`, Konstante fehlt), 1.5.9 doppelt so teuer. Ausgabe `outputs/wp_n39_pysr_smoke/`. **Wartet auf den Nutzer: welche PySR-Version für C-7** (DIARY 03.10.).
 
 **Plattenvorfall 03.10.:** C: lief auf 0 Byte voll (Docker-vhdx 57 GB, davon 37 GB Build-Cache). Behoben:
 Cache geleert, alte Images gelöscht (`evoode-regression:h2/h5`, `odeformer-*:wp-n21`, Nutzer-OK), die
@@ -41,7 +42,7 @@ Committet (`a30382b`): `baselines/requirements-pysr-legacy.txt` (`juliacall` 0.9
 
 - **Tor S3:** Stufe 3 ist fertig. Danach kommt Tor G (Rasterentscheidung C-6) mit den Kostenfaktoren aller Stufen.
 - **Tor B3**, sobald B-03 komplett ist.
-- Die Entscheidung zur PySR-Version fällt nach dem Smoke beider Varianten.
+- **PySR-Version für C-7:** 0.19.4 (wie ODEFormer, halb so teuer) oder 1.5.9. Der Smoke zeigt dasselbe Modell.
 
 ## 3. Nächste Schritte (Claude)
 
