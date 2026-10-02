@@ -6,6 +6,30 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ## 2026-10-03
 
+### PySR-Smoke (WP-N39), beide Versionen: dasselbe Modell, beide verfehlen die Konstante; und C: lief voll
+
+**Versionsfrage:** ODEFormer pinnt PySR nicht, sein Wrapper nutzt aber die API vor 1.0
+(`equation_file`). Der Nutzer hat entschieden: beide Versionen testen. Gebaut wurden
+`evoode-pysr-legacy:wp-n39` (PySR 0.19.4, letzte 0.x-Version, Julia 1.10.12, SymbolicRegression.jl
+0.24.5) und `evoode-pysr:wp-n39` (1.5.9, Julia 1.13.1, SR.jl 1.11.3), beide faithful nach
+ODEFormers Harness: Ableitungsziele, Hyper-Grid FD-Ordnung × Glättung auf einem zurückgehaltenen
+Trainingsanteil, `pysr` und `pysr_poly`, 50 Iterationen. Zwei Fehlstarts gab es vorher: Erst
+existierte `equation_file` in 1.5.9 nicht mehr, dann verlangte PySR 0.19.4 genau `juliacall` 0.9.23.
+
+**Smoke** (System 1, σ 0,01, ρ 0, Seed 1, offline): 4/4 erfolgreich, Hashes verifiziert. **Alle
+vier finden `-0,2993·x_0`**, Koeffizienten bis ~1e-7 gleich. Rekonstruktion R² 0,984,
+Generalisierung 0,488, **die Konstante der Wahrheit `[1, u1]` fehlt**. Kein Strukturtreffer, wie bei
+ODEFormer auf System 17 und bei EvoGrow mit der alten Basis. Die Version ändert auf dieser Zelle
+nichts. 1.5.9 braucht etwa doppelt so lang (1.013 s gegen 527 s je Zelle, Kontext).
+**Kosten** (Planung): volles C-7-Raster 1.230–2.370 Kernstunden ≈ 1.850–3.560 €, dim 1/2
+830–1.600 h. Das ist eine Untergrenze, weil eine Zelle wenig Basis ist (`docs/WP-N39.md`).
+
+**Plattenvorfall:** Beim ersten Legacy-Build lief C: auf 0 Byte voll. Die Docker-vhdx war 57 GB
+groß, davon 37 GB Build-Cache. Docker ging read-only. Behoben: Build-Cache geleert, vier alte lokale
+Images gelöscht (`evoode-regression:h2/h5`, `odeformer-*:wp-n21`, mit Nutzer-OK), die vhdx hat der
+Nutzer als Admin kompaktiert (57 → 13 GB). 57 GB frei. Neue Regel: Vor jedem Build wird der Platz
+geprüft (unter 30 GB erst aufräumen), danach `docker builder prune -af`.
+
 ### Unterlage Tor G: Rauschzellen laufen immer 20–26 Level; das C-6-Raster kostet eher 25–35 Tsd. Kernstunden als 21,4 Tsd.
 
 **Gemessen an allen 10 Rausch-Stufenzellen** (Systeme 1, 17, 18, 24, 41 × zwei Bedingungen): Jede

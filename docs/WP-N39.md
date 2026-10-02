@@ -20,7 +20,7 @@ WP-N39 now has two pinned Docker variants:
 | Variant | Image tag in report commands | Python package | PySR API | Backend source |
 |---|---:|---:|---|---|
 | current | `evoode-pysr:wp-n39` | `pysr==1.5.9`, `juliacall==0.9.24` | `v1` | PySR `v1.5.9` `pysr/juliapkg.json`: Julia `=1.10.0, 1.10.3`, SymbolicRegression.jl `~1.11.0` |
-| legacy | `evoode-pysr-legacy:wp-n39` | `pysr==0.19.4`, `juliacall==0.9.24` | `legacy_0x` | PySR `v0.19.4` `pysr/juliapkg.json`: Julia `~1.6.7, ~1.7, ~1.8, ~1.9, =1.10.0, ~1.10.3`, SymbolicRegression.jl `=0.24.5` |
+| legacy | `evoode-pysr-legacy:wp-n39` | `pysr==0.19.4`, `juliacall==0.9.23` | `legacy_0x` | PySR `v0.19.4` `pysr/juliapkg.json`: Julia `~1.6.7, ~1.7, ~1.8, ~1.9, =1.10.0, ~1.10.3`, SymbolicRegression.jl `=0.24.5` |
 
 Version basis:
 
@@ -124,7 +124,7 @@ PySR is isolated in two Dockerfiles; it is not installed into the existing basel
 The legacy pinned requirements are in `baselines/requirements-pysr-legacy.txt`:
 
 - `pysr==0.19.4`
-- `juliacall==0.9.24`
+- `juliacall==0.9.23` (required exactly by `pysr==0.19.4`; corrected 2026-10-03 after the first build failed on 0.9.24)
 - the same Python numerical stack pins as the current image
 
 The Julia search backend is pinned transitively by each PySR package: PySR's `juliapkg.json` declares the compatible `SymbolicRegression.jl` backend. The images must not update PySR independently of their requirements files.
@@ -175,3 +175,27 @@ Let `T_cell` be the smoke-measured seconds per full cell at one core. Then:
 - dim 1/2 cost at 1.50 EUR/core-hour: `1.53 * T_cell` EUR
 
 Here `T_cell` is the smoke-measured seconds for one complete cell including both variants and all hyper-fits. Equivalently, with `T_eq` as seconds per single equation hyper-fit, full-grid core-hours are `8,424 * 6 * 2 * T_eq / 3,600 = 28.08 * T_eq`, cost `42.12 * T_eq` EUR. The uncertainty is entirely the unmeasured PySR runtime per cell/equation; Claude fills `T_cell` from the smoke. This is not a time-limit upper bound because the frozen budget is iteration-count based, not wall-clock based.
+
+
+## Smoke Measurement (Claude, 2026-10-03)
+
+System 1, IC 1, (σ 0.01; ρ 0), realization/seed 1, both images offline (`--network none`, `--cpus=1`),
+laptop. Elapsed time is capacity context only, never evidence (Design Principle 7).
+
+| image | variant | model | rec. R² | gen. R² | support | candidates | elapsed s |
+|---|---|---|---|---|---|---|---|
+| legacy 0.19.4 | `pysr` | `-0.29927826*x_0` | 0.98365 | 0.48810 | `[u1]` | 68 | 280 |
+| legacy 0.19.4 | `pysr_poly` | `-0.29927826*x_0` | 0.98365 | 0.48810 | `[u1]` | 49 | 247 |
+| 1.5.9 | `pysr` | `-0.299278197849644*x_0` | 0.98365 | 0.48810 | `[u1]` | 81 | 526 |
+| 1.5.9 | `pysr_poly` | `-0.29927832*x_0` | 0.98365 | 0.48810 | `[u1]` | 74 | 487 |
+
+All four miss the constant of the true support `[1, u1]` (no structure hit). The four models agree to
+about 1e-7 in the coefficient, so the version choice changes nothing on this cell; the 1.5.9 search
+costs about twice the elapsed time (different defaults, see the table above).
+
+**Measured `T_cell`** for a one-equation cell, both variants and the six-point hyper grid included:
+527 s (legacy) and 1,013 s (1.5.9). Taking this as `T_eq` (seconds per equation): full grid
+`8,424 × T_eq / 3,600` = **1,230 h (legacy) to 2,370 h (1.5.9) ≈ 1,850–3,560 EUR**; dim 1/2 subset
+(`(23 + 56) × 72 = 5,688` equation fits) = **830–1,600 h ≈ 1,250–2,400 EUR**. One cell is a weak basis:
+`T_eq` will grow with noise level and dimension (larger candidate expressions), so treat these as the
+lower end.
