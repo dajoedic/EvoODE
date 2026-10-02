@@ -1,41 +1,54 @@
-# WP-N39 (Fortsetzung 2) — das PySR-Image baut nicht
-**Language: Python** (Docker-Build-Dateien)
+# WP-N39 (Fortsetzung 3) — zwei PySR-Versionen: 0.19.x (wie ODEFormer) und 1.5.9
+**Language: Python** (Docker-Build-Dateien und Harness)
 
-WP-N39 ist abgenommen und committet (`4987ce2`). Dieses Paket betrifft nur den Build.
+WP-N39 ist committet (`093cbe4`). **Weiterarbeiten, nicht neu anfangen.**
 
-## Befund (Claude, `docker build -f baselines/Dockerfile.pysr -t evoode-pysr:wp-n39 .`, 2026-10-02)
+## Befund (Claude, Smoke, 2026-10-03)
+
+Das Image `evoode-pysr:wp-n39` baut, startet ohne Netzwerk und schreibt die Metadaten (PySR 1.5.9,
+Julia 1.13.1, SymbolicRegression.jl 1.11.3). Jeder Fit bricht aber ab mit:
 
 ```
-ERROR: failed to compute cache key: "/baselines/requirements-pysr.txt": not found
+TypeError: `equation_file` is not a valid keyword argument for PySRRegressor.
 ```
 
-Die Ursache ist die Root-`.dockerignore`, die nur das Julia-Kampagnen-Image freigibt. Die
-ODEFormer-Images haben dafür je eine eigene `baselines/Dockerfile.odeformer-*.dockerignore`
-(BuildKit-Konvention `<Dockerfile>.dockerignore`). Für PySR fehlt sie.
-
-Zweiter Punkt: Das Dockerfile installiert nur die Python-Pakete. `juliacall`/`juliapkg` lädt Julia und
-`SymbolicRegression.jl` erst beim ersten `import pysr` herunter und kompiliert sie. Das würde in
-jedem Container-Lauf neu passieren, mit Netzwerkzugriff und ungepinnter Laufzeit des
-Ersteinrichtens.
+ODEFormer pinnt PySR nirgends (`outputs/third_party/odeformer/requirements.txt`, `setup.cfg`). Sein
+Wrapper (`pysr_wrapper.py:23-55`) benutzt aber die API von **vor PySR 1.0**. Der Nutzer hat
+entschieden: **beide Varianten testen und berichten.**
 
 ## Umsetzung
 
-1. `baselines/Dockerfile.pysr.dockerignore` nach dem Muster von
-   `baselines/Dockerfile.odeformer-reference.dockerignore`. Freigegeben wird nur, was der Runner
-   braucht (`baselines/`, `analysis/`, `benchmarks/data/`), ohne `__pycache__`.
-2. Im Dockerfile nach der Paketinstallation ein Build-Schritt, der Julia und das PySR-Backend
-   installiert und vorkompiliert, sodass ein Container-Lauf **ohne Netzwerk** startet. Wie PySR
-   1.5.9 das vorsieht (z. B. `python -c "import pysr"` bzw. die dokumentierte Install-Routine):
-   Quelle zitieren. Julia-Version und Backend-Version ins Image-Label oder in eine Datei schreiben,
-   der Runner übernimmt sie in jeden Record.
-3. Im Report den Image-Tag `evoode-pysr:wp-n39` verwenden (bisher `evocode-…`) und die
-   `docker run`-Befehle für Git Bash auf Windows angeben: `MSYS_NO_PATHCONV=1`, Volume als
-   `C:/…:/workspace/EvoODE`, `--cpus=1`.
+1. **Zwei Images, beide gepinnt:**
+   - `baselines/Dockerfile.pysr` mit `baselines/requirements-pysr.txt`: PySR 1.5.9, wie bisher.
+   - `baselines/Dockerfile.pysr-legacy` mit `baselines/requirements-pysr-legacy.txt` und eigener
+     `.dockerignore`: die **letzte PySR-0.x-Version, die alle Argumente aus ODEFormers Wrapper
+     akzeptiert**. Bestimme sie aus PySRs Changelog bzw. Quelltext und zitiere die Quelle (vermutlich
+     0.19.4). Dazu passende Julia/juliacall-Pins, sodass der Build reproduzierbar bleibt. Genauso
+     mit Backend-Vorkompilierung, Offline-Start und Metadatei.
+2. **Harness für beide APIs.** Der Adapter erkennt die installierte PySR-Version. Unter 0.x gehen
+   die Argumente **wörtlich wie in ODEFormers Wrapper** hinein. Unter 1.x werden nur
+   **nicht-algorithmische** Argumente umbenannt (`equation_file` → `output_directory`/`run_id` bzw.
+   das 1.x-Äquivalent, Quelle zitieren). Alles Algorithmische bleibt gleich. Jeder Record trägt
+   `pysr_api` (`legacy_0x` / `v1`) und die Liste der umbenannten Argumente.
+3. **Default-Differenzen deklarieren:** In `docs/WP-N39.md` eine Tabelle aller
+   `PySRRegressor`-Parameter, die ODEFormer **nicht** explizit setzt und deren Default sich zwischen
+   der Legacy-Version und 1.5.9 unterscheidet (Populationen, Populationsgröße, Parsimony,
+   `maxsize`, `ncycles_per_iteration`, Optimizer-Einstellungen usw.). Beide Werte mit Quelle
+   (Quelltext der jeweiligen Version). Keine dieser Defaults wird angeglichen, beide Varianten
+   laufen mit ihren eigenen Defaults.
+4. Der Output-Pfad der Varianten wird über eine Option bzw. den Image-Tag getrennt. Records beider
+   Versionen dürfen nicht im selben Ausgabeordner landen, ohne dass `pysr_api` sie unterscheidet.
+5. Im Report die Build- und Smoke-Befehle für **beide** Images (Git Bash: `MSYS_NO_PATHCONV=1`,
+   `C:/…`-Volume, `--cpus=1`, `--network none`). Smoke auf System 1, (σ 0,01; ρ 0), Seed 1,
+   `--limit 1`.
 
 ## Verboten
 
-Wie WP-N39. Keine PySR-Läufe, keine Builds (die fährt Claude). Git, `oc`.
+Wie WP-N39. Algorithmische Argumente zwischen den Versionen angleichen. Keine Builds, keine
+PySR-Läufe (die fährt Claude). Git, `oc`.
 
 ## Abnahme
 
-Report ergänzt, `STATUS.md` nach Protokoll. Claude baut und fährt den Smoke.
+Tests grün, und zwar auch ein Test, der die Argumentabbildung für beide API-Varianten ohne
+installiertes PySR prüft. `docs/WP-N39.md` mit Versionsbegründung und Default-Tabelle, Report,
+`STATUS.md` nach Protokoll.
