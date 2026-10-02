@@ -446,6 +446,14 @@ def package_versions() -> dict[str, str]:
             versions[name] = importlib.metadata.version(name)
         except importlib.metadata.PackageNotFoundError:
             versions[name] = "not_installed"
+    metadata_path = Path(os.environ.get("EVOODE_PYSR_IMAGE_METADATA", "/opt/evoode-pysr-image-metadata.json"))
+    if metadata_path.is_file():
+        try:
+            metadata = json.loads(metadata_path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            metadata = {}
+        for key, value in metadata.items():
+            versions[f"pysr_image_{key}"] = str(value)
     return versions
 
 
