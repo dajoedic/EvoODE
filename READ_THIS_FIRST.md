@@ -10,7 +10,7 @@ zweites davon. Alles Dauerhafte gehört dorthin, nach `PAPER_1.md` oder ins `DIA
 **Regeln:** wird immer **vollständig überschrieben**, nie angehängt. Was älter als ein paar Tage
 ist, ist vermutlich falsch — dann gilt `CLAUDE.md`.
 
-**Stand: 2026-10-03, vormittags.** Arbeitsreihenfolge: Backlog in `CLAUDE.md` („Backlog Paper 1“).
+**Stand: 2026-10-03, nachmittags.** Arbeitsreihenfolge: Backlog in `CLAUDE.md` („Backlog Paper 1“).
 
 **Feste Regeln:** Claude pusht **nie** nach GitLab und nach GitHub nur mit ausdrücklicher Erlaubnis.
 **Keine harten Zeit-Cuts.** Orion-Ergebnisse liegen lokal unter `S:\BigDataOrion\data-science\joedicke\`
@@ -24,13 +24,18 @@ als `run_in_background`. **Diese Datei bei jedem Statuswechsel aktualisieren.**
 
 | Lauf | Wo | Image | Stand | Anmerkung |
 |---|---|---|---|---|
-| WP-N39 Fortsetzung 3 (PySR 0.19.x **und** 1.5.9) | Codex, lokal | — | `working` | Danach baut Claude beide Images und fährt den Smoke auf beiden (Nutzer: „beides testen und reporten“) |
-| B-03 (Orakel dim 3/4) | Orion | `5dd1df8` | 10 und 1000 komplett, ∞ 17/18 | Danach einsammeln und Tor-B3-Bericht |
-| C-3 | Orion | `221a3a7` | 179/180 | 1 Lorenz-Nachzügler |
+| PySR-Smoke, beide Versionen | Laptop, Docker | `evoode-pysr:wp-n39` (1.5.9, Julia 1.13.1) und `evoode-pysr-legacy:wp-n39` (0.19.4, Julia 1.10.12) | läuft | System 1, (σ 0,01; ρ 0), Seed 1, offline. Ausgabe `outputs/wp_n39_pysr_smoke/<image>/` |
+| B-03 (Orakel dim 3/4) | Orion | `5dd1df8` | 10: 54/54, 1000: 54/54, ∞: 52/54 | Letzter Shard seit 11 h, Schranke ~15 h |
+| C-3 | Orion | `221a3a7` | 179/180 | |
 | WP-T1f | Orion | `1db1193` | 30/36 | |
 
-**Fertig seit gestern:** Stufe 3 (System 41) eingesammelt und ausgewertet (DIARY 03.10.).
-ODEFormer auf allen Stufenzellen (WP-N38, `outputs/wp_n38_noise_odeformer/stages/`).
+**Plattenvorfall 03.10.:** C: lief auf 0 Byte voll (Docker-vhdx 57 GB, davon 37 GB Build-Cache). Behoben:
+Cache geleert, alte Images gelöscht (`evoode-regression:h2/h5`, `odeformer-*:wp-n21`, Nutzer-OK), die
+vhdx hat der Nutzer als Admin kompaktiert (57 → 13 GB). **Jetzt 57 GB frei.** Regel: vor jedem Build
+`df -h /c` (unter 30 GB erst aufräumen), danach `docker builder prune -af`.
+
+Uncommittet: `baselines/requirements-pysr-legacy.txt` (`juliacall` 0.9.24 → 0.9.23, Pflicht für PySR
+0.19.4). `docs/WP-N39.md` nennt an zwei Stellen noch 0.9.24 für Legacy und muss nachgezogen werden.
 
 ## 2. Wartet auf den Nutzer
 
