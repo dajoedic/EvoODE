@@ -10,7 +10,7 @@ zweites davon. Alles Dauerhafte gehört dorthin, nach `PAPER_1.md` oder ins `DIA
 **Regeln:** wird immer **vollständig überschrieben**, nie angehängt. Was älter als ein paar Tage
 ist, ist vermutlich falsch — dann gilt `CLAUDE.md`.
 
-**Stand: 2026-10-02, ~13:00.** Arbeitsreihenfolge: Backlog in `CLAUDE.md` („Backlog Paper 1“).
+**Stand: 2026-10-02, ~14:30.** Arbeitsreihenfolge: Backlog in `CLAUDE.md` („Backlog Paper 1“).
 
 **Feste Regeln:** Claude pusht **nie** nach GitLab und nach GitHub nur mit ausdrücklicher Erlaubnis,
 beides macht der Nutzer. **Keine harten Zeit-Cuts.** `codex exec` immer mit `< /dev/null`.
@@ -23,33 +23,27 @@ Orion-Ergebnisse liegen lokal lesbar unter `S:\BigDataOrion\data-science\joedick
 
 | Lauf | Wo | Image | Stand | Anmerkung |
 |---|---|---|---|---|
-| C-3 | Orion | `221a3a7` | 178/180 | 2 Lorenz-Nachzügler (Index 14, 22), seit 14 d |
-| WP-T1f | Orion | `1db1193` | 28/36 | 6 Pods laufen, 58 IC1 langsam |
+| C-3 | Orion | `221a3a7` | 178/180 | 2 Lorenz-Nachzügler (Index 14, 22) |
+| WP-T1f | Orion | `1db1193` | 28/36 | 58 IC1 langsam |
+| Stufe 3 (System 41, gekappt) | Orion | `5dd1df8` | 0/2, seit ~14:20 | Smoke bitgleich. Erwartet ~8–17 h je Zelle. Kappe unter Rauschen `nothing`, deshalb kein ungekappter Arm |
+| B-03 (Orakel dim 3/4, 3 Grenzen) | Orion | `5dd1df8` | läuft | 3 × 18 Shards, Schranke ≤ 76,6 h je Grenze |
 
-Lokal läuft nichts.
-
-**Fertig und eingesammelt am 02.10.:** Stufe 2 gekappt (`outputs/phase_c_robustness_stage2_5dd1df8/`,
-Clean-Auswertung je Bedingung unter `clean_eval/`), B-02 (`outputs/phase_c_c8_oracle_b02_5dd1df8/`),
-R-05b lokal (`outputs/uncapped_noise/`). Zahlen im DIARY 02.10. Die vorläufige B-02-Auswertung kommt
-aus einem Wegwerf-Skript, nicht aus dem Repo. Für das Tor B3 braucht es ein richtiges Skript
-(Codex-WP).
+Die Pods starten kurz mit `Error` (Index-Datei fehlt), solange der Bootstrap läuft. Das ist harmlos,
+der Backoff fängt es auf.
 
 ## 2. Wartet auf den Nutzer
 
-- **Ungekappter Arm für 18/24 auf Orion: laufen lassen oder streichen?** Die Kappe ist dort unter
-  Rauschen `nothing`, das Ergebnis wäre per Konstruktion identisch. Empfehlung: streichen.
-- **Tor S2** (Stufe 2 komplett): weiter zu Stufe 3 (System 41)?
-- **Tor B2:** weiter zu B-03 (Orakel dim 3/4)? Vorläufig auf dim 1/2: Inf reißt das Aufwandskriterium
-  (×1,61), 1000 hält knapp (×1,47).
-- `codex/reports/Manifest_WP_N36_before.toml` untracked: archivieren oder löschen?
+- Tor S3, sobald Stufe 3 fertig ist. Tor B3, sobald B-03 fertig ist.
 
 ## 3. Nächste Schritte (Claude)
 
-1. Nach den Toren: Manifeste für Stufe 3 bzw. B-03.
-2. Arbeitspakete: B-02/B-03-Auswertungsskript nach §9.6, ODEFormer auf Rausch-Daten (R-09), PySR (R-10).
-3. Statusseite „EvoODE auf Orion“ nach jedem Statuswechsel neu veröffentlichen.
-4. Wenn C-3 fertig ist: endgültige Phase-C-Auswertung (P-02).
+1. Stufe 3 einsammeln (NFS), Clean-Auswertung je Bedingung (`by_condition/`), Stufenbericht → Tor S3.
+2. B-03 einsammeln, `aggregate_c8_oracle_bounds.py` über B-02 und B-03 (n = 144) → Tor B3.
+3. Arbeitspakete ODEFormer auf Rausch-Daten (R-09) und PySR (R-10).
+4. Wenn C-3 fertig ist: P-02.
+5. Statusseite nach jedem Statuswechsel.
 
 ## 4. Git
 
-GitHub und GitLab stehen auf `5dd1df8`. Lokal liegen darüber nur Doku- und Spec-Commits.
+GitHub und GitLab stehen auf `5dd1df8`. Lokal liegen darüber Doku, Spezifikationen und WP-N37
+(Manifeste und Python, kein Skript im Image geändert). Ein neuer Image-Build ist nicht nötig.
