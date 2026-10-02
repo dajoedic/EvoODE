@@ -1,38 +1,41 @@
-# WP-N39 (Fortsetzung) — PySR genau wie ODEFormers Harness: Hyperparameter-Suche an, beide Varianten
-**Language: Python**
+# WP-N39 (Fortsetzung 2) — das PySR-Image baut nicht
+**Language: Python** (Docker-Build-Dateien)
 
-WP-N39 ist abgenommen und committet, bis auf eine Festlegung. **Weiterarbeiten, nicht neu anfangen.**
+WP-N39 ist abgenommen und committet (`4987ce2`). Dieses Paket betrifft nur den Build.
 
-## Befund (Claude, 2026-10-02)
+## Befund (Claude, `docker build -f baselines/Dockerfile.pysr -t evoode-pysr:wp-n39 .`, 2026-10-02)
 
-`docs/WP-N39.md` A.3 friert `optimize_hyperparams=false` ein, mit der Begründung „damit nichts nach
-Ergebnissen gewählt wird“. Das trägt nicht. ODEFormers Wrapper
-(`outputs/third_party/odeformer/odeformer/baselines/pysr_wrapper.py:64-68, 90-102`) sucht mit
-`optimize_hyperparams=True` über `finite_difference_order ∈ {2,3,4}` × `smoother_window_length ∈
-{None, 15}`. Ausgewählt wird auf einem zurückgehaltenen Teil (`hyper_opt_eval_fraction`) **der
-Trainingstrajektorie**. Das ist Teil des Verfahrens, keine Auswahl nach unseren Ergebnissen. Plan
-§9.5 und WP-N39 A.3 verlangen ODEFormers Budget **unverändert**. Außerdem rechnet ODEFormer zwei
-PySR-Baselines: `pysr` und `pysr_poly` (`unary_operators=[]`, `scripts/run_baselines.py:101-115`).
+```
+ERROR: failed to compute cache key: "/baselines/requirements-pysr.txt": not found
+```
+
+Die Ursache ist die Root-`.dockerignore`, die nur das Julia-Kampagnen-Image freigibt. Die
+ODEFormer-Images haben dafür je eine eigene `baselines/Dockerfile.odeformer-*.dockerignore`
+(BuildKit-Konvention `<Dockerfile>.dockerignore`). Für PySR fehlt sie.
+
+Zweiter Punkt: Das Dockerfile installiert nur die Python-Pakete. `juliacall`/`juliapkg` lädt Julia und
+`SymbolicRegression.jl` erst beim ersten `import pysr` herunter und kompiliert sie. Das würde in
+jedem Container-Lauf neu passieren, mit Netzwerkzugriff und ungepinnter Laufzeit des
+Ersteinrichtens.
 
 ## Umsetzung
 
-1. Faithful: `optimize_hyperparams=True`, `hyper_opt_eval_fraction=0.3`, `sorting_metric="r2"`
-   (ODEFormers Defaults, `run_baselines.py:213-223`). Das Hyper-Raster kommt aus dem Wrapper,
-   nachgebaut oder per Import, mit Zeilenangabe. Das gewählte Hyper-Paar je Gleichung steht im Record.
-   Die Auswahl darf **nur** die zurückgehaltenen Trainingsdaten sehen, niemals die sauberen Ziele.
-   Ein Test prüft das.
-2. Zwei Konfigurationen wie bei ODEFormer: `pysr` (Operatoren wie jetzt) und `pysr_poly`
-   (`unary_operators=[]`). **Beide werden immer gerechnet und beide berichtet**, keine wird gewählt,
-   wie bei SINDys zehn Konfigurationen.
-3. `docs/WP-N39.md`: A.3 und die Kostenformel anpassen (6 Hyper-Fits × 2 Konfigurationen je
-   Gleichung, als Faktor ausgewiesen). Die alte Festlegung als „verworfen 2026-10-02“ stehen lassen,
-   mit Grund.
-4. Der Smoke-Befehl im Report rechnet beide Konfigurationen auf System 1, (σ 0,01; ρ 0).
+1. `baselines/Dockerfile.pysr.dockerignore` nach dem Muster von
+   `baselines/Dockerfile.odeformer-reference.dockerignore`. Freigegeben wird nur, was der Runner
+   braucht (`baselines/`, `analysis/`, `benchmarks/data/`), ohne `__pycache__`.
+2. Im Dockerfile nach der Paketinstallation ein Build-Schritt, der Julia und das PySR-Backend
+   installiert und vorkompiliert, sodass ein Container-Lauf **ohne Netzwerk** startet. Wie PySR
+   1.5.9 das vorsieht (z. B. `python -c "import pysr"` bzw. die dokumentierte Install-Routine):
+   Quelle zitieren. Julia-Version und Backend-Version ins Image-Label oder in eine Datei schreiben,
+   der Runner übernimmt sie in jeden Record.
+3. Im Report den Image-Tag `evoode-pysr:wp-n39` verwenden (bisher `evocode-…`) und die
+   `docker run`-Befehle für Git Bash auf Windows angeben: `MSYS_NO_PATHCONV=1`, Volume als
+   `C:/…:/workspace/EvoODE`, `--cpus=1`.
 
 ## Verboten
 
-Wie WP-N39. Hyper-Raster, Iterationen oder Operatoren über das Vorbild hinaus ändern.
+Wie WP-N39. Keine PySR-Läufe, keine Builds (die fährt Claude). Git, `oc`.
 
 ## Abnahme
 
-Tests grün, Doku und Report angepasst, `STATUS.md` nach Protokoll.
+Report ergänzt, `STATUS.md` nach Protokoll. Claude baut und fährt den Smoke.
