@@ -85,3 +85,9 @@ Integralgültigkeit, die Fenster-Idee die zeitliche Invarianz. Weitere Kandidate
 
 Organisation: ein Git-Worktree `..\EvoODE-next` (Branch `evogrow-next`, eigenes VS-Code-Fenster).
 `main` bleibt im alten Ordner für die Paper-1-Ergebnisse.
+
+## 6. Weitere Idee (Nutzer, 04.10.): strukturelle Diagnostik über Differentialrelationen
+
+Festgehalten in **`docs/idea_structural_diagnostics.md`**: Funktionsklassen haben charakteristische
+Differentialrelationen (z. B. exp: g·g'' − g'² = 0). Diese werden aus den Daten getestet, bevor gesucht
+wird. Ergebnis kann auch `AMBIGUOUS` sein (Identifizierbarkeit als Teil der Discovery). Noch nicht bewertet.

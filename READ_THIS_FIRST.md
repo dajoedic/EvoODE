@@ -56,6 +56,8 @@ den Parametern sind), was der Nutzer will (genial einfach, schnell, genau; kein 
 Kronberger) und die zwei billigen Tests, sobald es losgeht (Multiple-Shooting-Orakel, entschieden
 als erster Test; Invarianztest).
 
+**Neue Idee 04.10.:** strukturelle Diagnostik über Differentialrelationen vor der Suche, festgehalten in `docs/idea_structural_diagnostics.md` (noch nicht bewertet).
+
 Systeme: Entwicklung 7 / 40 / 56 / 63, verschlossenes Prüfset 4 / 49 / 59 / 62.
 Organisation, wenn es losgeht: Worktree `..\EvoODE-next`, Branch `evogrow-next`, eigenes VS-Code-Fenster.
 `codex/CURRENT_TASK.md` auf `main`: „Kein aktiver Task“.
