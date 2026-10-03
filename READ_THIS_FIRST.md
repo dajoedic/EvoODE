@@ -10,64 +10,44 @@ zweites davon. Alles Dauerhafte gehört dorthin, nach `PAPER_1.md` oder ins `DIA
 **Regeln:** wird immer **vollständig überschrieben**, nie angehängt. Was älter als ein paar Tage
 ist, ist vermutlich falsch — dann gilt `CLAUDE.md`.
 
-**Stand: 2026-10-03, abends.** Arbeitsreihenfolge: Backlog in `CLAUDE.md` („Backlog Paper 1“).
+**Stand: 2026-10-03, ~22:00. Paper-1-Spur im WARTEZUSTAND: alles läuft, nichts ist offen, nichts muss angefasst werden.**
 
 **Feste Regeln:** Claude pusht **nie** nach GitLab und nach GitHub nur mit ausdrücklicher Erlaubnis.
-**Keine harten Zeit-Cuts.** Orion-Ergebnisse liegen lokal unter `S:\BigDataOrion\data-science\joedicke\`
-(Git Bash `/s/BigDataOrion/...`, nur mit VPN). **Codex startet Claude immer selbst:**
-`codex exec -C "C:/Users/joedicke/Documents/reps/EvoODE" -s workspace-write "Lies codex/CODEX_PROTOCOL.md und arbeite den Auftrag in codex/CURRENT_TASK.md ab." < /dev/null`
-als `run_in_background`. **Diese Datei bei jedem Statuswechsel aktualisieren.**
+**Keine harten Zeit-Cuts.** Orion-Ergebnisse unter `S:\BigDataOrion\data-science\joedicke\` (nur mit VPN).
+**Codex startet Claude selbst:** `codex exec -C "C:/Users/joedicke/Documents/reps/EvoODE" -s workspace-write "Lies codex/CODEX_PROTOCOL.md und arbeite den Auftrag in codex/CURRENT_TASK.md ab." < /dev/null`
+(`run_in_background`). **Vor jedem Docker-Build `df -h /c` (< 30 GB → erst aufräumen).** Diese Datei bei
+jedem Statuswechsel aktualisieren.
 
 ---
 
-## 1. Was läuft
+## 1. Was läuft (Paper 1), alles auf Orion, Image `5dd1df8` außer C-3/T1f
 
-| Lauf | Wo | Image | Stand | Anmerkung |
-|---|---|---|---|---|
-| **C-6-Raster gekappt** | Orion | `5dd1df8` | 0/3.366, gestartet 03.10. von Claude (Nutzer: 32 Pods voll) | 24 Pods. Erwartet 40–55 Tage. Erste Heartbeats korrekt (Fingerprint `0c9672de35c75a9d`). Reihenfolge nach Dimension (dim 2 zuerst), wie C-1 |
-| **C-6-Raster ungekappt, Seed 42** | Orion | `5dd1df8` | 0/461 | 8 Pods. NFS-Indexliste = `indices_seed42_cost_desc.txt` (als `indices_cost_desc.txt`), die volle Liste der 1.378 als `indices_all_finite_cap_cost_desc.txt` |
-| **B-04-Rest + B-05** (Suche, Grenzen 1000/∞, Systeme 24/52/57) | Orion | `5dd1df8` | 0/10, gestartet 03.10. von Claude (Nutzer-OK) | Smoke bitgleich zur lokalen B-04-Zelle. Manifest lokal erzeugt und aufs NFS gelegt, Bootstrap ausgelassen. 57 kann 1–3 Tage je Zelle dauern. Ausgabe `/outputs/phase_c_c8_search_b05_5dd1df8…/tasks` |
-| C-3 | Orion | `221a3a7` | 179/180 | |
-| WP-T1f | Orion | `1db1193` | 30/36 | |
+| Lauf | Stand 03.10. 22:00 | Erwartetes Ende | Wenn fertig |
+|---|---|---|---|
+| **C-6-Raster gekappt** (3.366 Zellen, 24 Pods) | 5 | Mitte/Ende Nov. | einsammeln (NFS `phase_c_c6_grid_<SHA>/tasks`), Clean-Auswertung, Aggregation |
+| **C-6-Raster ungekappt, Seed 42** (461, 8 Pods) | 4 | ähnlich | danach entscheidet der Nutzer über Seed 123/7 (Plan §9.4c Punkt 5) |
+| **B-04-Rest + B-05** (10 Zellen) | 3/10 | 57: 1–3 Tage je Zelle | Tor B5. Bisher: gleiches Ergebnis wie C-1 (24 ∞, 52/1000) |
+| C-3 | 179/180 | offen (Lorenz) | P-02: endgültige Phase-C-Auswertung |
+| WP-T1f | 31/36 | offen (58 IC1) | `--aggregate-only`, Tor 3 Paper 2 |
 
-**Tor G entschieden (03.10., Plan §9.4c):** volles Raster (3.366 Zellen), r ↔ Seed r, ungekappt nur bei endlicher Kappe, keine Cuts. **WP-N42 abgenommen (`b4cbce2`), alles lokal vorbereitet:** Manifest `outputs/phase_c_c6_grid_5dd1df8/` (3.366 Zellen, Kontrollzelle bitgleich zu Stufe 1), Kappenprüfung `stage_caps.csv` (**1.378 Zellen mit endlicher Kappe**), ungekappt erst nur Seed 42 (`outputs/phase_c_c6_grid_uncapped_5dd1df8/indices_seed42_cost_desc.txt`, 461 Zellen, Plan §9.4c Punkt 5), Baseline-Export `outputs/phase_c_c6_data_conditions_5dd1df8/` (4.536 Zeilen, 50 MB). **Gestartet 03.10. mit 32 Pods** (`outputs/phase_c_c6_grid_5dd1df8/rendered_job.yaml`). Baseline-Export wird aufs NFS kopiert (`phase_c_c6_data_conditions_<FULL_SHA>/`).
+Lokal läuft nichts. 55 GB frei. Working Tree sauber, ~56 Commits nicht gepusht (pusht der Nutzer).
 
-**B-04 lokal 6/8 (DIARY 03.10.):** dasselbe Ergebnis wie C-1, ∞ macht einzelne Evals extrem langsam. Rest (System 24, ∞) und B-05 (52, 57) laufen seit 03.10. auf Orion (WP-N41).
+## 2. Fertig liegt (zum Weitermachen, wenn Ergebnisse kommen)
 
-**B-03 fertig und ausgewertet (03.10.), Tor-B3-Bericht im DIARY:** 1000 vergleichbar stabil, ∞ nicht (×1,61). Ausgabe `outputs/phase_c_c8_oracle_bounds_b02_b03/`.
+- Baseline-Export des Rasters auf dem NFS: `phase_c_c6_data_conditions_<SHA>/` (4.536 Zellen, vollständig).
+- Harness für SINDy/Weak-SINDy (WP-N34), ODEFormer (WP-N38), PySR 0.19.4 (WP-N39, gewählt). **Noch nicht
+  auf dem Raster gestartet.** ODEFormer auf Orion bräuchte ein neues Image (Push durch den Nutzer).
+- Auswertungsskripte: `robustness_stage_report.py`, `aggregate_c8_oracle_bounds.py`, Clean-Eval (WP-N33a).
 
-**PySR-Smoke fertig (03.10.):** beide Versionen dasselbe Modell (`-0,2993·x_0`, Konstante fehlt), 1.5.9 doppelt so teuer. Ausgabe `outputs/wp_n39_pysr_smoke/`. **PySR 0.19.4 für C-7 gewählt (Nutzer).**
+## 3. Offene Paper-1-Punkte, nicht eilig
 
-**Plattenvorfall 03.10.:** C: lief auf 0 Byte voll (Docker-vhdx 57 GB, davon 37 GB Build-Cache). Behoben:
-Cache geleert, alte Images gelöscht (`evoode-regression:h2/h5`, `odeformer-*:wp-n21`, Nutzer-OK), die
-vhdx hat der Nutzer als Admin kompaktiert (57 → 13 GB). **Jetzt 57 GB frei.** Regel: vor jedem Build
-`df -h /c` (unter 30 GB erst aufräumen), danach `docker builder prune -af`.
+- Baselines auf dem Raster starten (SINDy/Weak-SINDy billig und lokal).
+- Restart-Kurve (P-04), Claim-Tracing-Audit, `paper/` neu schreiben, Story-Entscheidung (Gespräch).
+- Einschätzung (Gespräch 03.10.): Das Versuchsdesign hält. Ob die Methode überzeugt, ist offen. Der einzige
+  strukturelle Vorteil ist „integrieren statt differenzieren“ unter Rauschen.
 
-Committet (`a30382b`): `baselines/requirements-pysr-legacy.txt` (`juliacall` 0.9.24 → 0.9.23, Pflicht für PySR
-0.19.4). `docs/WP-N39.md` nennt an zwei Stellen noch 0.9.24 für Legacy und muss nachgezogen werden.
+## 4. Neue Spur ab 03.10. (Nutzer): Methode radikal verbessern
 
-## 2. Wartet auf den Nutzer
-
-- **Tor B3:** Bericht liegt vor (DIARY 03.10.). Nach der Regel startet die nächste Version mit `[-1000, 1000]`. B-04/B-05 freigegeben.
-
-## 3. Nächste Schritte (Claude)
-
-2. WP-N39 abnehmen, beide PySR-Images bauen, Smoke System 1 (σ 0,01; ρ 0) auf beiden, Bericht.
-3. Gemeinsame Tabelle der Stufenzellen: EvoGrow / SINDy / Weak-SINDy / ODEFormer (/ PySR), beide Metriken.
-4. ODEFormer-Strukturtreffer im Referenz- und Kandidatenraster nachrechnen (WP-N38-Modus), dann WP-N31 neu aggregieren.
-5. Wenn C-3 fertig ist: P-02. Statusseite und diese Datei nach jedem Statuswechsel.
-
-## 4. Befunde (DIARY 02./03.10.)
-
-- Unter Rauschen ist die Stufenkappe auf allen fünf Stufen-Systemen `nothing`. Der ungekappte Arm entfällt.
-- Rauschkosten folgen der C-1-Levelzahl: ×0,7–1,15, wo C-1 viele Level lief, ×13,7 bei System 24.
-- System 41 divergiert unter Rauschen von der sauberen IC aus, ODEFormer scheitert dort auch.
-- ODEFormer-Strukturtreffer waren nie berechnet (WP-N31-Strukturraten ungültig, R² nicht betroffen).
-- B-02 vorläufig: ∞ reißt das Aufwandskriterium (×1,61), 1000 hält es (×1,47).
-
-**Kleiner Defekt:** `select_phase_c_stage2_manifest.jl --stage2-cells` vergleicht `clamp_val` als Zeichenkette (`1000` trifft `1000.0` nicht). Der Bootstrap in `k8s/phase_c_c8_search_b05_job.yaml` würde daran scheitern, das Image `5dd1df8` kennt die Option ohnehin nicht. Für später: numerischer Vergleich.
-
-## 5. Git
-
-GitHub und GitLab stehen auf `5dd1df8`. Lokal liegen darüber Doku, Spezifikationen und WP-N37–N39
-(Manifeste, Python, Dockerfiles; kein Skript im Kampagnen-Image geändert).
+Parallel und unabhängig von Paper 1, auf einem Mini-Datensatz (ein System je Dimension), ohne
+Methoden-Einschränkung. Details in `docs/evogrow_next.md`, sobald angelegt. **Phase C, die Images und
+die laufenden Kampagnen werden davon nicht berührt.**
