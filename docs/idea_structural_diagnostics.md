@@ -159,7 +159,7 @@ Die abschließende ODE-Integration dient der Validierung und liegt außerhalb de
 Differentialoperator mit Polynomkoeffizienten aus den Daten rekonstruieren:
 
 $$
-L=\sum_{k=0}^{r}p_k(x)D^k,\qquad L[f]pprox 0.
+L=\sum_{k=0}^{r}p_k(x)D^k,\qquad L[f]\approx 0.
 $$
 
 Rahmen: holonome (D-finite) Funktionen. Polynome, exp, sin/cos, log, Potenzen, einfache rationale
