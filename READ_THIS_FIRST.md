@@ -10,7 +10,7 @@ zweites davon. Alles Dauerhafte gehört dorthin, nach `PAPER_1.md` oder ins `DIA
 **Regeln:** wird immer **vollständig überschrieben**, nie angehängt. Was älter als ein paar Tage
 ist, ist vermutlich falsch — dann gilt `CLAUDE.md`.
 
-**Stand: 2026-10-03, nachmittags.** Arbeitsreihenfolge: Backlog in `CLAUDE.md` („Backlog Paper 1“).
+**Stand: 2026-10-03, abends.** Arbeitsreihenfolge: Backlog in `CLAUDE.md` („Backlog Paper 1“).
 
 **Feste Regeln:** Claude pusht **nie** nach GitLab und nach GitHub nur mit ausdrücklicher Erlaubnis.
 **Keine harten Zeit-Cuts.** Orion-Ergebnisse liegen lokal unter `S:\BigDataOrion\data-science\joedicke\`
@@ -24,9 +24,10 @@ als `run_in_background`. **Diese Datei bei jedem Statuswechsel aktualisieren.**
 
 | Lauf | Wo | Image | Stand | Anmerkung |
 |---|---|---|---|---|
-| B-03 (Orakel dim 3/4) | Orion | `5dd1df8` | 10: 54/54, 1000: 54/54, ∞: 52/54 | Letzter Shard seit 11 h, Schranke ~15 h |
 | C-3 | Orion | `221a3a7` | 179/180 | |
 | WP-T1f | Orion | `1db1193` | 30/36 | |
+
+**B-03 fertig und ausgewertet (03.10.), Tor-B3-Bericht im DIARY:** 1000 vergleichbar stabil, ∞ nicht (×1,61). Ausgabe `outputs/phase_c_c8_oracle_bounds_b02_b03/`.
 
 **PySR-Smoke fertig (03.10.):** beide Versionen dasselbe Modell (`-0,2993·x_0`, Konstante fehlt), 1.5.9 doppelt so teuer. Ausgabe `outputs/wp_n39_pysr_smoke/`. **Wartet auf den Nutzer: welche PySR-Version für C-7** (DIARY 03.10.).
 
@@ -41,12 +42,11 @@ Committet (`a30382b`): `baselines/requirements-pysr-legacy.txt` (`juliacall` 0.9
 ## 2. Wartet auf den Nutzer
 
 - **Tor S3:** Stufe 3 ist fertig. Danach kommt Tor G (Rasterentscheidung C-6) mit den Kostenfaktoren aller Stufen.
-- **Tor B3**, sobald B-03 komplett ist.
+- **Tor B3:** Bericht liegt vor (DIARY 03.10.). Nach der Regel startet die nächste Version mit `[-1000, 1000]`. Offen: B-04/B-05 (Suche mit 1000/∞) ja oder nein.
 - **PySR-Version für C-7:** 0.19.4 (wie ODEFormer, halb so teuer) oder 1.5.9. Der Smoke zeigt dasselbe Modell.
 
 ## 3. Nächste Schritte (Claude)
 
-1. B-03 einsammeln (NFS), `aggregate_c8_oracle_bounds.py` über B-02 + B-03 (n = 144) → Bericht Tor B3.
 2. WP-N39 abnehmen, beide PySR-Images bauen, Smoke System 1 (σ 0,01; ρ 0) auf beiden, Bericht.
 3. Gemeinsame Tabelle der Stufenzellen: EvoGrow / SINDy / Weak-SINDy / ODEFormer (/ PySR), beide Metriken.
 4. ODEFormer-Strukturtreffer im Referenz- und Kandidatenraster nachrechnen (WP-N38-Modus), dann WP-N31 neu aggregieren.
