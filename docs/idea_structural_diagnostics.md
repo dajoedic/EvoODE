@@ -152,3 +152,63 @@ Die abschließende ODE-Integration dient der Validierung und liegt außerhalb de
 - Wie wirken sich Rauschen und Differentiation höherer Ordnung auf die Relationen aus?
 - Wie wird das „Vektorfeld als Funktion des Zustands“ aus Trajektoriendaten gewonnen (Abdeckung, mehrere ICs)?
 - Wie werden Mehrvariablen-Strukturen (Interaktionen, Summen von Familien) zerlegt?
+
+## Verfeinerung 04.10. (Diskussion Nutzer ↔ Claude): minimaler Annihilator statt Signaturkatalog
+
+**Kern:** keine handgebauten Signaturen je Familie, sondern direkt einen möglichst einfachen linearen
+Differentialoperator mit Polynomkoeffizienten aus den Daten rekonstruieren:
+
+$$
+L=\sum_{k=0}^{r}p_k(x)D^k,\qquad L[f]pprox 0.
+$$
+
+Rahmen: holonome (D-finite) Funktionen. Polynome, exp, sin/cos, log, Potenzen, einfache rationale
+Funktionen, e^{-x^2}, sin(ax+b), x·log x (Gompertz) sind enthalten, und die Klasse ist **unter Summe und
+Produkt abgeschlossen**, anders als Einzelsignaturen. Der Hypothesenraum wird nicht vorgegeben, er entsteht
+aus dem Lösungsraum des gefundenen Operators. Später: D-algebraisch/kompositionell als natürliche
+Erweiterung.
+
+**Pipeline:**
+trajectory data → weak operator matrix → nullspace / minimal annihilator → operator
+factorization/classification → solution space → symbolic f.
+
+**Schwache Form in x** (nicht in t): ∫ φ·L[f] dx = Σ_k (−1)^k ∫ (p_k φ)^{(k)} f dx, linear in den
+Koeffizienten der p_k → Matrix über viele Testfunktionen φ_m → Nullraum per SVD.
+
+**Festgehaltene Vorsichtspunkte:**
+1. Operator → schöne Basis ist ein eigener Schritt (Faktorisierung bzw. Klassifikation). Für den
+   eingeschränkten Scope genügt vermutlich eine Klassifikation: konstante Koeffizienten → exp/Polynom/
+   sin/cos; Euler-Typ → Potenzen/log; erste Ordnung → exp(∫ rational).
+2. Die Kette von x(t) zum Operator im Zustandsraum ist der **wichtigste technische Engpass unter Rauschen**.
+3. Mehrere Dimensionen: Ein Attraktor liefert keine transversale Information. Mehrere ICs helfen nur, wenn
+   sie relevante Regionen und Richtungen abdecken. Identifizierbarkeit bleibt zentral.
+4. Nullraum-Mehrdeutigkeit ist eingebaut: Mit L annulliert auch Q·L. Deshalb (r, d) von klein nach groß
+   durchlaufen. Der erste Operator mit Residuum unter dem Rauschboden ist der minimale (zugleich das
+   Abbruchkriterium).
+5. **`AMBIGUOUS` mathematisch begründet, nicht als Konfidenzschwelle:** mehr als eine Nullraumrichtung
+   unter dem Rauschboden bei minimalem (r, d), oder mehrere (r, d) gleicher Komplexität innerhalb des
+   Rauschbodens. Den Rauschboden aus dem Singulärwertspektrum ableiten (vgl. S-04: Rauschboden
+   vorhersagbar).
+6. Normierung ‖c‖ = 1 und Skalierung von x und f, vorab festgelegt.
+
+**Gates (vorab festgelegt):**
+- **Gate 2A, noch keine ODE:** verrauschte Samples (x_i, f_i) bekannter Funktionen: x², e^{ax}, x^p,
+  log x, x·log x, e^{−x²}, sin(ax+b), x/(K+x), dazu zwei **Summen** (z. B. x² + e^x, Gompertz +
+  Konstante). Rauschen 0 / 1 % / 5 %, schmaler und breiter x-Bereich. Daraus blind den minimalen Operator
+  rekonstruieren. **Bestanden:** ohne Rauschen immer der minimale Operator (bis auf Skalierung), unter
+  Rauschen der richtige oder ein begründetes `AMBIGUOUS`, **nie selbstbewusst ein falscher**. **Idee tot**,
+  wenn schon ohne Rauschen falsche Operatoren kommen oder bei 1 % falsche mit Konfidenz.
+- **Gate 2B, erst danach:** echte 1D-Zeitreihen x(t), insbesondere Gompertz (7). Komplette Pipeline bis
+  zur Generalisierung auf neue ICs, erst sauber, dann mit Rauschen.
+
+**Umsetzung:** Gate 2A ist reine Lineare Algebra → **Python** (numpy/scipy). Codex kann Python selbst
+ausführen, Julia nicht, das macht schnelle Iterationen möglich.
+
+**Einschätzung (Claude, 04.10.):** 1D sauber ~80 %, 1D bei 5 % Rauschen ~45 %, 2D/3D polynomial sauber
+mit mehreren ICs ~50 %, alles zusammen schneller und besser als E-WSINDy ~25 %. Nächste Verwandte in der
+Literatur (noch zu prüfen): AI Feynman (Udrescu & Tegmark, Diagnostik vor der Suche), „Guessing“ von
+Annihilatoren aus exakten Reihen in der Computeralgebra (z. B. Kauers). Die Kombination aus verrauschten
+Trajektorien, schwacher Form und `AMBIGUOUS` ist Claude nicht bekannt.
+
+**Namenshinweis:** „Paper 1“ in diesem Dokument meint das erste Paper *dieser* Idee, nicht das laufende
+EvoGrow-Paper 1.
