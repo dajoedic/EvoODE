@@ -28,6 +28,8 @@ als `run_in_background`. **Diese Datei bei jedem Statuswechsel aktualisieren.**
 | C-3 | Orion | `221a3a7` | 179/180 | |
 | WP-T1f | Orion | `1db1193` | 30/36 | |
 
+**Tor G entschieden (03.10., Plan §9.4c):** volles Raster (3.366 Zellen), r ↔ Seed r, ungekappt nur bei endlicher Kappe, keine Cuts. **WP-N42 (Codex) bereitet den Rasterlauf vor.** Danach: Manifeste lokal erzeugen, Vorprüfung, aufs NFS, Startzeitpunkt und `parallelism` mit dem Nutzer klären (25–35 Tsd. Kernstunden).
+
 **B-04 lokal 6/8 (DIARY 03.10.):** dasselbe Ergebnis wie C-1, ∞ macht einzelne Evals extrem langsam. Rest (System 24, ∞) und B-05 (52, 57) laufen seit 03.10. auf Orion (WP-N41).
 
 **B-03 fertig und ausgewertet (03.10.), Tor-B3-Bericht im DIARY:** 1000 vergleichbar stabil, ∞ nicht (×1,61). Ausgabe `outputs/phase_c_c8_oracle_bounds_b02_b03/`.
@@ -44,7 +46,7 @@ Committet (`a30382b`): `baselines/requirements-pysr-legacy.txt` (`juliacall` 0.9
 
 ## 2. Wartet auf den Nutzer
 
-- **Tor S3:** Stufe 3 ist fertig. Danach kommt Tor G (Rasterentscheidung C-6) mit den Kostenfaktoren aller Stufen.
+- Startzeitpunkt und Parallelität des C-6-Rasters, sobald WP-N42 fertig ist.
 - **Tor B3:** Bericht liegt vor (DIARY 03.10.). Nach der Regel startet die nächste Version mit `[-1000, 1000]`. B-04/B-05 freigegeben.
 
 ## 3. Nächste Schritte (Claude)
