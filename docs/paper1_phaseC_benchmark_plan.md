@@ -912,6 +912,11 @@ hours ≈ 38–53 k€**, not the 21,400 h planning figure.
    cells with at least one finite cap < 5. Where every cap is `nothing`, the uncapped arm is identical by
    construction and is not run.
 4. **Cells needing ≥ 24 h: run them, no cuts.** Claude reports outliers; the user decides per case.
+5. **Amendment 2026-10-03 (user), after the pre-check:** the noisy cap stays finite (< 5) in **1,378 of
+   3,366** cells (41 %, 1,027 on dim 2), not in a few as assumed. A full uncapped arm would add
+   ~15,400–20,400 core hours. **First step: the uncapped arm runs on seed 42 only (461 cells,
+   ~5,600–7,300 h)**; whether seeds 123 and 7 follow is decided on its result (how often the cap actually
+   truncates true terms under noise).
 
 ### 9.4b — Uncapped arm under noise (decided 2026-10-02, user)
 
