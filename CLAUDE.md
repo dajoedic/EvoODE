@@ -259,7 +259,7 @@ Mark items done here with date and commit; never delete them.
 |---|---|---|---|
 | B-01 | ~~Oracle, system 1, bounds 10 / 1000 / Inf; bound 10 bit-identical to C-5~~ **done 2026-10-01**: bound 10 bit-identical 6/6; looser bounds change 5 of 6 fits although all true coefficients are < 1 (`DIARY.md`) | laptop | — |
 | B-02 | ~~Oracle, all dim-1/2 exact systems (21), three bounds~~ **done 2026-10-02** (Orion `5dd1df8`, 3 × 126): bound 10 bit-identical to C-5 126/126; preliminary §9.6 on dim 1/2: hard 0/0/0, penalty 1.6 % each, median evals ×1.47 (1000) / **×1.61 (Inf, above 1.5)**, R² > 0.9 72 → 83 → 83 (`DIARY.md`) | Orion ≤ 24 h | **gate B2** |
-| B-03 | Oracle, dim 3/4 (52, 54–59, 61, 63), three bounds — completes the 540 refits. **Gate B2 opened 2026-10-02; manifest `k8s/phase_c_c8_oracle_b03_job.yaml`, input on NFS, bound ≤ 76.6 core-h per bound; evaluation `aggregate_c8_oracle_bounds.py`** | Orion ≤ 24 h per shard | **gate B3**: stability criteria §9.6 |
+| B-03 | Oracle, dim 3/4 (52, 54–59, 61, 63), three bounds — completes the 540 refits. **done 2026-10-03** (Orion `5dd1df8`, 3 × 54; bound 10 bit-identical to C-5 180/180). §9.6 over n = 144: 1000 comparably stable (×1.48), **unbounded not (×1.61)** → `[-1000, 1000]` is the next version's start by the frozen rule; 61, 55, 56, 59 fail even unbounded (`DIARY.md`) | Orion ≤ 24 h per shard | **gate B3**: stability criteria §9.6 |
 | B-04 | Search, systems 1 and 24, bounds 1000 / Inf | laptop | — |
 | B-05 | Search, system 52, then 57, bounds 1000 / Inf | Orion ≤ 24 h | **gate B5** |
 

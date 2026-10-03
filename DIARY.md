@@ -6,6 +6,38 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ## 2026-10-03
 
+### Tor B3: C-8-Orakel komplett (540 Refits). Nach der eingefrorenen Regel ist `[-1000, 1000]` der Start der nächsten Version, nicht „unbeschränkt“
+
+B-02 (dim 1/2) und B-03 (dim 3/4) sind komplett, je Grenze 180 Refits, Orion `5dd1df8`.
+Ausgewertet mit `aggregate_c8_oracle_bounds.py` nach `outputs/phase_c_c8_oracle_bounds_b02_b03/`.
+**Kontrolle: Grenze 10 ist bitgleich zu C-5 auf 180/180.** Ein Shard bei ∞ lief über 12 h
+(geschätzte Schranke ~15 h je Shard, 5,1 h je Zelle). Der Nutzer hat entschieden: weiterlaufen lassen.
+Danach war er fertig.
+
+**Gate-Menge (24 unter allen Grenzen machbare Systeme, n = 144), Kriterien §9.6:**
+
+| Grenze | harte Fehler | Strafen | Median Evals (× 10) | q95 | mit Divergenz | R² > 0,9 |
+|---|---|---|---|---|---|---|
+| 10 | 0 | 2 | 740,5 | 20.000 | 81 | 84/144 |
+| 1000 | 0 | 2 | 1.093 (**1,48**) | 20.000 | 88 | 95/144 |
+| ∞ | 0 | 2 | 1.195 (**1,61**) | 20.000 | 89 | 95/144 |
+
+**Befund nach der vorab eingefrorenen Regel:** „unbeschränkt“ ist **nicht** vergleichbar stabil
+(Aufwand ×1,61 > 1,5), `[-1000, 1000]` schon. **Nach der Entscheidungsregel ist
+`[-1000, 1000]` als reiner numerischer Schutz der Startpunkt der nächsten EvoGrow-Version.** Paper 1
+bleibt bei `[-10, 10]`. Die lockerere Grenze ändert 95/144 Fits (64 besser, 31 schlechter bei 1000),
+und R² > 0,9 steigt von 84 auf 95, obwohl auf diesen 24 Systemen alle wahren Koeffizienten
+innerhalb von 10 liegen. Die Grenze verbiegt also den Optimierungspfad, nicht nur das Ziel.
+
+**dim 3/4 einzeln (R² > 0,9, je System n von 6, Grenzen 10/1000/∞):** 52: 6/6/6. 63: 6/6/6.
+**61: 0/0/0. Auch ohne Grenze bleibt 61 hängen.** Der C-5-Befund (Refits bei Loss ~140–150) liegt
+also nicht an der Grenze, sondern an lokalen Optima. **Unter `[-10, 10]` unerreichbar (54–59):**
+54: 1/1/1. **55 und 56 (Lorenz): 0/0/0, auch ohne Grenze.** 57: 0/5/4. 58: 0/2/2. 59: 0/0/0. Zusammen
+1 → 8 → 7 von 36. Die Grenze erklärt also nur einen Teil des dim-3-Einbruchs: Lorenz und 59 lassen
+sich selbst mit wahrer Struktur und ohne Grenze aus drei Starts nicht fitten. Das betrifft die
+Lesart des Known Gap „clamp makes 6 of 8 dim-3 systems unreachable“: unerreichbar wegen der
+Grenze sind nachweislich 57 und 58, für 54–56 und 59 reicht das Entfernen der Grenze nicht.
+
 ### PySR-Smoke (WP-N39), beide Versionen: dasselbe Modell, beide verfehlen die Konstante; und C: lief voll
 
 **Versionsfrage:** ODEFormer pinnt PySR nicht, sein Wrapper nutzt aber die API vor 1.0
