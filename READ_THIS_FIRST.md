@@ -27,9 +27,11 @@ als `run_in_background`. **Diese Datei bei jedem Statuswechsel aktualisieren.**
 | C-3 | Orion | `221a3a7` | 179/180 | |
 | WP-T1f | Orion | `1db1193` | 30/36 | |
 
+**B-04 lokal 6/8 (DIARY 03.10.):** dasselbe Ergebnis wie C-1, ∞ macht einzelne Evals extrem langsam. Rest (System 24, ∞) und B-05 (52, 57) kommen als Orion-Job (WP-N41, Codex arbeitet daran). Danach Apply durch den Nutzer, vorher die Laufzeit besprechen (57 kann > 24 h dauern).
+
 **B-03 fertig und ausgewertet (03.10.), Tor-B3-Bericht im DIARY:** 1000 vergleichbar stabil, ∞ nicht (×1,61). Ausgabe `outputs/phase_c_c8_oracle_bounds_b02_b03/`.
 
-**PySR-Smoke fertig (03.10.):** beide Versionen dasselbe Modell (`-0,2993·x_0`, Konstante fehlt), 1.5.9 doppelt so teuer. Ausgabe `outputs/wp_n39_pysr_smoke/`. **Wartet auf den Nutzer: welche PySR-Version für C-7** (DIARY 03.10.).
+**PySR-Smoke fertig (03.10.):** beide Versionen dasselbe Modell (`-0,2993·x_0`, Konstante fehlt), 1.5.9 doppelt so teuer. Ausgabe `outputs/wp_n39_pysr_smoke/`. **PySR 0.19.4 für C-7 gewählt (Nutzer).**
 
 **Plattenvorfall 03.10.:** C: lief auf 0 Byte voll (Docker-vhdx 57 GB, davon 37 GB Build-Cache). Behoben:
 Cache geleert, alte Images gelöscht (`evoode-regression:h2/h5`, `odeformer-*:wp-n21`, Nutzer-OK), die
@@ -42,8 +44,7 @@ Committet (`a30382b`): `baselines/requirements-pysr-legacy.txt` (`juliacall` 0.9
 ## 2. Wartet auf den Nutzer
 
 - **Tor S3:** Stufe 3 ist fertig. Danach kommt Tor G (Rasterentscheidung C-6) mit den Kostenfaktoren aller Stufen.
-- **Tor B3:** Bericht liegt vor (DIARY 03.10.). Nach der Regel startet die nächste Version mit `[-1000, 1000]`. Offen: B-04/B-05 (Suche mit 1000/∞) ja oder nein.
-- **PySR-Version für C-7:** 0.19.4 (wie ODEFormer, halb so teuer) oder 1.5.9. Der Smoke zeigt dasselbe Modell.
+- **Tor B3:** Bericht liegt vor (DIARY 03.10.). Nach der Regel startet die nächste Version mit `[-1000, 1000]`. B-04/B-05 freigegeben.
 
 ## 3. Nächste Schritte (Claude)
 

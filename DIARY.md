@@ -6,6 +6,17 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ## 2026-10-03
 
+### B-04 (Suche, System 1 und 24, Grenzen 1000/∞): gleiche Ergebnisse wie C-1, aber ohne Grenze explodiert die Zeit je Eval
+
+Lokal, saubere Daten, Seed 42, beide IC. Ausgabe `outputs/b04_search_bounds/`. 6 von 8 Zellen fertig,
+**in allen sechs dasselbe Ergebnis wie C-1** (Support gleich, `pruned_match` wahr, R² = 1). Aufwand
+gegen C-1 in Loss-Evals: Grenze 1000: System 1 IC 1 ×17 (27.675 gegen 1.609), IC 2 ×1,06, System 24
+×1,11 und ×1,00. Grenze ∞: System 1 IC 1 ×6,7, IC 2 ×1,09. **Zeit (Kontext):** System 1 IC 1 bei ∞
+brauchte 2.801 s statt 15 s, bei weniger Evals als mit 1000. Große Parameter machen einzelne
+ODE-Lösungen steif, wie beim B-03-Shard. Die zwei Zellen System 24 bei ∞ wurden vom 2-h-Limit der
+Hintergrundaufgabe abgebrochen (Zelle 277 lief über 1 h, noch in Stufe 1). Sie gehen nach Orion,
+zusammen mit B-05 (52, 57), Manifest WP-N41.
+
 ### WP-N40: ODEFormer-Strukturtreffer im Referenzraster nachgerechnet
 
 Mit derselben kanonischen Expansion wie WP-N38, als Sidecar neben den unveränderten Rohdaten
