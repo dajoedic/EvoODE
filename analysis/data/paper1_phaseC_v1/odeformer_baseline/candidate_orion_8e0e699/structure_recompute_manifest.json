@@ -1,0 +1,15 @@
+{
+  "code_hash_sha256": "9a8420592f03db186a90c8091d364e2122c89b60c7bb4ce4a6f75aa3d7022962",
+  "created_at_utc": "2026-10-03T08:45:28+00:00",
+  "input_records": "C:\\Users\\joedicke\\Documents\\reps\\EvoODE\\analysis\\data\\paper1_phaseC_v1\\odeformer_baseline\\candidate_orion_8e0e699\\records.jsonl",
+  "input_records_sha256": "2c972005040d8c4366896ff16d57b034cb5a7ceaee87a65c317aef32bb2211e7",
+  "output_csv": "C:\\Users\\joedicke\\Documents\\reps\\EvoODE\\analysis\\data\\paper1_phaseC_v1\\odeformer_baseline\\candidate_orion_8e0e699\\records_structure_recomputed.csv",
+  "output_jsonl": "C:\\Users\\joedicke\\Documents\\reps\\EvoODE\\analysis\\data\\paper1_phaseC_v1\\odeformer_baseline\\candidate_orion_8e0e699\\records_structure_recomputed.jsonl",
+  "outside_basis_record_count": 824,
+  "reason": "WP-N40 recomputed ODEFormer structure fields from canonical expressions; original grid files were not overwritten.",
+  "record_count": 1512,
+  "structure_hit_pruned_count": 132,
+  "structure_hit_raw_count": 132,
+  "support_path": "C:\\Users\\joedicke\\Documents\\reps\\EvoODE\\studies\\regression\\phase_c_support.json",
+  "support_sha256": "ad8594f47399c1c5ef03e26bfe93f680bf7e866cb37e3d0462ce1e7b1c767e75"
+}

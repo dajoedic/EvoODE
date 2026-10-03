@@ -1,5 +1,5 @@
-status: done
-task:   WP-N39
-report: codex/reports/REPORT_WP_N39.md
-note:   PySR 1.5.9 and legacy 0.19.4 image paths, API mapping, docs, and tests updated; no Docker build or PySR run started.
+status: working
+task:   WP-N40
+report: codex/reports/REPORT_WP_N40.md
+note:   Recomputed reference and candidate ODEFormer grid structure sidecars, reaggregated WP-N31 outputs, and verified R2 rates unchanged.
 

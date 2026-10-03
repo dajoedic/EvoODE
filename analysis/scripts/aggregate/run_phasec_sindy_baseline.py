@@ -112,7 +112,7 @@ def parse_args() -> argparse.Namespace:
     )
 
     odeformer_parser = subparsers.add_parser("pair-odeformer")
-    odeformer_parser.add_argument("--odeformer-records", required=True, help="Canonical ODEFormer records.csv.")
+    odeformer_parser.add_argument("--odeformer-records", required=True, help="Canonical ODEFormer records.csv or records.jsonl.")
     odeformer_parser.add_argument("--evogrow-records-dir", required=True, help="Directory with EvoGrow JSONL records.")
     odeformer_parser.add_argument(
         "--evogrow-generalization",
@@ -1279,7 +1279,11 @@ def odeformer_paired_summary(paired: pd.DataFrame) -> pd.DataFrame:
 
 
 def pair_odeformer_evogrow(args: argparse.Namespace) -> Path:
-    records = pd.read_csv(args.odeformer_records)
+    records_path = Path(args.odeformer_records)
+    if records_path.suffix.lower() == ".jsonl":
+        records = pd.read_json(records_path, lines=True)
+    else:
+        records = pd.read_csv(records_path)
     validate_odeformer_repetitions(
         records,
         parse_str_set(args.expected_configs),

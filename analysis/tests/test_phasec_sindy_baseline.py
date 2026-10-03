@@ -465,6 +465,34 @@ def test_odeformer_pairing_matches_same_training_ic_direction_and_regime(tmp_pat
     assert set(paired["evogrow_seed_policy"]) == {"mean_rate_over_available_phasec_seeds"}
 
 
+def test_odeformer_pairing_accepts_jsonl_records(tmp_path: Path) -> None:
+    records = read_pilot_records()
+    records_dir = write_records(tmp_path, records)
+    cells_path = evogrow_cells_fixture(tmp_path / "evogrow_cells.csv", records)
+    threeway_path = threeway_fixture(tmp_path / "threeway.csv")
+    odeformer_csv = odeformer_fixture(tmp_path / "odeformer.csv")
+    odeformer_jsonl = tmp_path / "odeformer.jsonl"
+    odeformer_records = pd.read_csv(odeformer_csv).to_dict("records")
+    odeformer_jsonl.write_text(
+        "\n".join(json.dumps(record, sort_keys=True) for record in odeformer_records) + "\n",
+        encoding="utf-8",
+    )
+
+    output = phasec_sindy.pair_odeformer_evogrow(
+        odeformer_args(
+            tmp_path,
+            records_dir,
+            odeformer_jsonl,
+            threeway_path,
+            evogrow_generalization=str(cells_path),
+        )
+    )
+    paired = pd.read_csv(output)
+
+    assert len(paired) == 16
+    assert set(paired["odeformer_repetitions"]) == {"1,2,3"}
+
+
 def test_odeformer_pairing_rejects_missing_repetition(tmp_path: Path) -> None:
     records = read_pilot_records()
     records_dir = write_records(tmp_path, records)
