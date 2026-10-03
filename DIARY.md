@@ -6,6 +6,14 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ## 2026-10-03
 
+### Tor G entschieden (Nutzer): volles Raster, r ↔ Seed r, ungekappt nur bei endlicher Kappe, keine Cuts
+
+Plan §9.4c. Volles ODEFormer-Raster mit 11 neuen Bedingungen × 306 Zellen = 3.366 EvoGrow-Zellen,
+erwartet 25.400–35.100 Kernstunden. Drei Rausch-Realisierungen, Realisierung r ↔ Seed r (R-07).
+Ungekappter Arm nur für Zellen, deren suchfrei geprüfte Kappe irgendwo endlich und < 5 ist. Zellen
+über 24 h laufen ohne Cut. Nebenbei behoben: `--stage2-cells` vergleicht `clamp_val` jetzt
+numerisch (`e58009d`, Fingerprints unverändert).
+
 ### B-04 (Suche, System 1 und 24, Grenzen 1000/∞): gleiche Ergebnisse wie C-1, aber ohne Grenze explodiert die Zeit je Eval
 
 Lokal, saubere Daten, Seed 42, beide IC. Ausgabe `outputs/b04_search_bounds/`. 6 von 8 Zellen fertig,

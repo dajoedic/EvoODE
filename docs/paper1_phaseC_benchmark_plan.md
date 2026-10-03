@@ -896,6 +896,23 @@ The `(0, 0)` controls for system 24 (both IC sets) run inside stage 2 and carry 
 bit-identity requirement as stage 0. No stage runs a second seed or a second IC set; those belong to
 the grid.
 
+### 9.4c Gate G — decided 2026-10-03 (user)
+
+Measured basis: stages 0–3 (systems 1, 17, 18, 24, 41) and the cost model in `DIARY.md` 2026-10-03
+("Unterlage Tor G"): every noisy cell runs 20–26 levels, so the grid costs **~25,400–35,100 core
+hours ≈ 38–53 k€**, not the 21,400 h planning figure.
+
+1. **Scope: the full published ODEFormer grid.** σ ∈ {0, 0.01, 0.02, 0.03, 0.04, 0.05} × ρ ∈ {0, 0.5},
+   i.e. 11 new conditions; (0, 0) is C-1. EvoGrow on the 51 dim-1/2 systems, 3 seeds, both IC sets =
+   306 cells per condition, **3,366 cells**.
+2. **Realizations (R-07): 3 per (system, IC set, σ, ρ), realization r ↔ EvoGrow seed index r**; the
+   noise stream is seeded from (system, IC set, σ, ρ, r) only. Baselines run on all 3 realizations.
+3. **Uncapped comparison arm (§9.4b): only where the cap is finite.** A search-free pre-check
+   (`studies/regression/print_phase_c_stage_caps.jl`) on every grid cell; the uncapped arm runs only for
+   cells with at least one finite cap < 5. Where every cap is `nothing`, the uncapped arm is identical by
+   construction and is not run.
+4. **Cells needing ≥ 24 h: run them, no cuts.** Claude reports outliers; the user decides per case.
+
 ### 9.4b — Uncapped arm under noise (decided 2026-10-02, user)
 
 WP-S04 showed that the frozen stage cap truncates true terms in 317 of 1,860 noisy equation rows (17 %), already at sigma 0.01 (`DIARY.md` 2026-10-02). A structure miss under noise can therefore be the cap's or the search's. To separate them, every C-6 stage runs the **uncapped variant** (`evogrow_v2_2_stage_local`, the C-2 arm, otherwise identical) on the **same** exported data, cell for cell beside the capped one. It is a comparison arm, not a second method version, and it is staged like the rest: systems 1 and 17 on the laptop first, 18 and 24 with the stage-2 Orion job, 41 with stage 3. Whether the full grid carries it is part of gate G.
