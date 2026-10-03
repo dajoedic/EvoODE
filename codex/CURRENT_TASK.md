@@ -1,54 +1,42 @@
-# WP-N39 (Fortsetzung 3) — zwei PySR-Versionen: 0.19.x (wie ODEFormer) und 1.5.9
-**Language: Python** (Docker-Build-Dateien und Harness)
+# WP-N40 — ODEFormer-Strukturtreffer im Referenz- und Kandidatenraster nachrechnen, WP-N31 neu aggregieren
+**Language: Python**
 
-WP-N39 ist committet (`093cbe4`). **Weiterarbeiten, nicht neu anfangen.**
+## Hintergrund
 
-## Befund (Claude, Smoke, 2026-10-03)
-
-Das Image `evoode-pysr:wp-n39` baut, startet ohne Netzwerk und schreibt die Metadaten (PySR 1.5.9,
-Julia 1.13.1, SymbolicRegression.jl 1.11.3). Jeder Fit bricht aber ab mit:
-
-```
-TypeError: `equation_file` is not a valid keyword argument for PySRRegressor.
-```
-
-ODEFormer pinnt PySR nirgends (`outputs/third_party/odeformer/requirements.txt`, `setup.cfg`). Sein
-Wrapper (`pysr_wrapper.py:23-55`) benutzt aber die API von **vor PySR 1.0**. Der Nutzer hat
-entschieden: **beide Varianten testen und berichten.**
+WP-N38 Fortsetzung 3 hat gezeigt: Alle 1.512 Records des Orion-Referenzrasters
+(`analysis/data/paper1_phaseC_v1/odeformer_baseline/reference_orion_55e9c75/records.jsonl`) und
+vermutlich auch des Kandidatenrasters (`candidate_orion_8e0e699`) haben leere `active_terms_*` und
+`structure_hit_* = False`. WP-N31 liest diese Felder direkt
+(`analysis/scripts/aggregate/run_phasec_sindy_baseline.py::build_odeformer_pair_rows`). Damit ist
+**jede ODEFormer-Strukturrate aus WP-N31 ungültig**. Die R²-Raten sind nicht betroffen. Die
+gemeinsame kanonische Expansion existiert seit WP-N38 (`baselines/harness.py`,
+`symbolic_active_terms_by_equation` u. a.). Der Nachberechnungsmodus
+`run_odeformer_noise.py --recompute-structure-fields` scheitert auf dem Rasterformat
+(`KeyError: 'source_initial_condition_set'`).
 
 ## Umsetzung
 
-1. **Zwei Images, beide gepinnt:**
-   - `baselines/Dockerfile.pysr` mit `baselines/requirements-pysr.txt`: PySR 1.5.9, wie bisher.
-   - `baselines/Dockerfile.pysr-legacy` mit `baselines/requirements-pysr-legacy.txt` und eigener
-     `.dockerignore`: die **letzte PySR-0.x-Version, die alle Argumente aus ODEFormers Wrapper
-     akzeptiert**. Bestimme sie aus PySRs Changelog bzw. Quelltext und zitiere die Quelle (vermutlich
-     0.19.4). Dazu passende Julia/juliacall-Pins, sodass der Build reproduzierbar bleibt. Genauso
-     mit Backend-Vorkompilierung, Offline-Start und Metadatei.
-2. **Harness für beide APIs.** Der Adapter erkennt die installierte PySR-Version. Unter 0.x gehen
-   die Argumente **wörtlich wie in ODEFormers Wrapper** hinein. Unter 1.x werden nur
-   **nicht-algorithmische** Argumente umbenannt (`equation_file` → `output_directory`/`run_id` bzw.
-   das 1.x-Äquivalent, Quelle zitieren). Alles Algorithmische bleibt gleich. Jeder Record trägt
-   `pysr_api` (`legacy_0x` / `v1`) und die Liste der umbenannten Argumente.
-3. **Default-Differenzen deklarieren:** In `docs/WP-N39.md` eine Tabelle aller
-   `PySRRegressor`-Parameter, die ODEFormer **nicht** explizit setzt und deren Default sich zwischen
-   der Legacy-Version und 1.5.9 unterscheidet (Populationen, Populationsgröße, Parsimony,
-   `maxsize`, `ncycles_per_iteration`, Optimizer-Einstellungen usw.). Beide Werte mit Quelle
-   (Quelltext der jeweiligen Version). Keine dieser Defaults wird angeglichen, beide Varianten
-   laufen mit ihren eigenen Defaults.
-4. Der Output-Pfad der Varianten wird über eine Option bzw. den Image-Tag getrennt. Records beider
-   Versionen dürfen nicht im selben Ausgabeordner landen, ohne dass `pysr_api` sie unterscheidet.
-5. Im Report die Build- und Smoke-Befehle für **beide** Images (Git Bash: `MSYS_NO_PATHCONV=1`,
-   `C:/…`-Volume, `--cpus=1`, `--network none`). Smoke auf System 1, (σ 0,01; ρ 0), Seed 1,
-   `--limit 1`.
+1. Nachberechnung für das **Rasterformat** (Referenz und Kandidat): dieselbe Expansion, dieselbe
+   Pruning-Regel und dieselben `true_terms` aus `phase_c_support.json` wie in WP-N38. Am besten ein
+   gemeinsamer Kern, den beide Formate aufrufen. Die Rohdateien unter `analysis/data/…` werden
+   **nicht überschrieben**. Die nachberechneten Records gehen in neue Dateien, z. B.
+   `…/reference_orion_55e9c75/records_structure_recomputed.jsonl`, plus eine Manifest-Notiz mit
+   Datum, Code-Hash und Grund.
+2. WP-N31 neu aggregieren (`run_phasec_sindy_baseline.py`, ODEFormer-Paarung) auf den
+   nachberechneten Records, in ein **neues** Ausgabeverzeichnis. Die alten Ausgaben bleiben liegen.
+   Im Report die alten gegen die neuen Strukturraten je Konfiguration, Dimension und Dreiwege-Klasse,
+   die R²-Raten als Kontrolle (müssen identisch bleiben).
+3. Tests: Ein Rasterrecord für System 1 mit `0.2835 - 0.3557*x_0` ergibt Treffer `[1, u1]`. Ein
+   rationaler Ausdruck wird außerhalb der Basis gezählt, ohne Absturz. Die R²-Felder bleiben
+   unverändert.
 
 ## Verboten
 
-Wie WP-N39. Algorithmische Argumente zwischen den Versionen angleichen. Keine Builds, keine
-PySR-Läufe (die fährt Claude). Git, `oc`.
+ODEFormer laufen lassen. Rohdateien des Referenz- oder Kandidatenrasters ändern. Pruning-Regel
+anpassen. Git, `oc`, `codex/CURRENT_TASK.md` bearbeiten.
 
 ## Abnahme
 
-Tests grün, und zwar auch ein Test, der die Argumentabbildung für beide API-Varianten ohne
-installiertes PySR prüft. `docs/WP-N39.md` mit Versionsbegründung und Default-Tabelle, Report,
-`STATUS.md` nach Protokoll.
+Nachberechnung und Neuaggregation ausgeführt (Python). R²-Raten identisch zur alten Ausgabe.
+Report `codex/reports/REPORT_WP_N40.md` mit der Vergleichstabelle. Tests grün. `STATUS.md` nach
+Protokoll.

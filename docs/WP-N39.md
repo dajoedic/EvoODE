@@ -199,3 +199,10 @@ costs about twice the elapsed time (different defaults, see the table above).
 (`(23 + 56) × 72 = 5,688` equation fits) = **830–1,600 h ≈ 1,250–2,400 EUR**. One cell is a weak basis:
 `T_eq` will grow with noise level and dimension (larger candidate expressions), so treat these as the
 lower end.
+
+## Version Decision (user, 2026-10-03)
+
+**C-7 runs PySR 0.19.4** (`evoode-pysr-legacy:wp-n39`, API `legacy_0x`): the API ODEFormer's wrapper
+was written for, so the harness is faithful without any argument renaming, and it costs about half of
+1.5.9 per cell. The smoke showed the same model under both versions. The 1.5.9 image stays built and
+documented; it is not part of the C-7 grid unless a reviewer requires a current-version sensitivity arm.

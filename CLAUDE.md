@@ -251,7 +251,7 @@ Mark items done here with date and commit; never delete them.
 | R-07 | Confirm the noise-realization design (3 realizations, r ↔ seed r) | user | — | before any multi-seed run |
 | R-08 | **Grid decision** from measured costs: scope, seeds, and what happens to cells that would need ≥ 24 h | user | — | **gate G** |
 | R-09 | Baselines on the same data, same stages first: ~~SINDy, Weak-SINDy~~ **built 2026-10-01 (WP-N34/N34b), C-4 control passed with one documented exception; ran on stage 1**; ~~ODEFormer~~ **ran 2026-10-02 on all stage cells (WP-N38, 240/240, control identical to the Orion reference)** | Codex / Claude | laptop / Orion | with S2 |
-| R-10 | PySR work package (budget, harness, cost estimate) | Codex | — | before PySR runs |
+| R-10 | ~~PySR work package (budget, harness, cost estimate)~~ **done 2026-10-03 (WP-N39)**: faithful to ODEFormer's harness, smoke on both versions identical; **user chose PySR 0.19.4**; cost 1,230–2,370 core-h full grid (lower bound) | Codex | — | before PySR runs |
 
 **Track B — bound diagnostic (C-8), parallel, staged the same way**
 
