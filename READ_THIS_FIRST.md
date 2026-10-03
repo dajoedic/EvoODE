@@ -46,8 +46,16 @@ Lokal läuft nichts. 55 GB frei. Working Tree sauber, ~56 Commits nicht gepusht 
 - Einschätzung (Gespräch 03.10.): Das Versuchsdesign hält. Ob die Methode überzeugt, ist offen. Der einzige
   strukturelle Vorteil ist „integrieren statt differenzieren“ unter Rauschen.
 
-## 4. Neue Spur ab 03.10. (Nutzer): Methode radikal verbessern
+## 4. Neue Spur ab 03.10. (Nutzer): Methode radikal verbessern. DENKPAUSE, nichts gebaut
 
-Parallel und unabhängig von Paper 1, auf einem Mini-Datensatz (ein System je Dimension), ohne
-Methoden-Einschränkung. Details in `docs/evogrow_next.md`, sobald angelegt. **Phase C, die Images und
-die laufenden Kampagnen werden davon nicht berührt.**
+**Der Nutzer denkt in Ruhe nach. Nichts starten, bis er sich meldet.** Der vollständige Denkstand steht in
+**`docs/evogrow_next.md`**: woran die Methode krankt, die Fenster-Idee („Random Forest für ODEs“),
+warum sie als E-SINDy/E-WSINDy schon existiert, was davon offen bleibt (Invarianz der Koeffizienten
+über Zeitfenster als Auswahlkriterium; kurze Fenster integrieren auch für Terme, die nichtlinear in
+den Parametern sind), was der Nutzer will (genial einfach, schnell, genau; kein GP, nichts mit
+Kronberger) und die zwei billigen Tests, sobald es losgeht (Multiple-Shooting-Orakel, entschieden
+als erster Test; Invarianztest).
+
+Systeme: Entwicklung 7 / 40 / 56 / 63, verschlossenes Prüfset 4 / 49 / 59 / 62.
+Organisation, wenn es losgeht: Worktree `..\EvoODE-next`, Branch `evogrow-next`, eigenes VS-Code-Fenster.
+`codex/CURRENT_TASK.md` auf `main`: „Kein aktiver Task“.
