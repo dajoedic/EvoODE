@@ -5,6 +5,10 @@
 # clamp_val=1000 and Inf. The smoke is System 1, IC 1, clamp_val=1000 and
 # must match outputs/b04_search_bounds/bound_1000/tasks/cell_000001.jsonl
 # in loss, support_terms, total_loss_evals, model_terms, and config_fingerprint.
+# Operational note 2026-10-03: the job was started without this bootstrap
+# because image 5dd1df8 did not know --stage2-cells; Claude generated the
+# manifest locally and placed it on NFS. This bootstrap needs an image at or
+# after the clamp_val numeric-matching fix.
 # No hard time cuts. Expected runtime: bootstrap minutes, smoke < 5 min.
 # C-1 needed 1.8 h and 1.0 h for System 52, and 17.2 h and 22.5 h for
 # System 57. Without the parameter clamp the time per eval can rise by a

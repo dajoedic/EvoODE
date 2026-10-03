@@ -10,6 +10,7 @@ using SHA
 
 include(joinpath(@__DIR__, "..", "..", "src", "EvoODE.jl"))
 using .EvoODE
+include(joinpath(@__DIR__, "clamp_val.jl"))
 include(joinpath(@__DIR__, "diagnostic_systems.jl"))
 include(joinpath(@__DIR__, "phase_c_trajectory_hash_lib.jl"))
 
@@ -232,20 +233,6 @@ function canonical_value(x)
 end
 
 include(joinpath(@__DIR__, "phase_c_data_condition.jl"))
-
-function clamp_val_json(value::Real)
-    numeric = Float64(value)
-    return isfinite(numeric) ? numeric : "Inf"
-end
-
-function parse_clamp_val(value)
-    if value isa AbstractString
-        stripped = strip(value)
-        lowercase(stripped) == "inf" && return Inf
-        return parse(Float64, stripped)
-    end
-    return Float64(value)
-end
 
 function config_fingerprint()
     system_payload = [

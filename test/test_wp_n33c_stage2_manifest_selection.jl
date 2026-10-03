@@ -74,18 +74,18 @@ end
     mkpath(dirname(source_1000))
     mkpath(dirname(source_inf))
 
-    header = "index,campaign,variant,condition,system_id,initial_condition_set,seed,noise_sigma,subsample_rho,noise_realization,clamp_val"
+    header = "index,campaign,config_fingerprint,variant,condition,use_pretuning,basis_name,max_fit_attempts,system_id,system_dim,initial_condition_set,seed,representability,noise_sigma,subsample_rho,noise_realization,clamp_val"
     write(
         source_1000,
         join(
             [
                 header,
-                "1,paper1_phaseC_robustness_v1,evogrow_v2_2_stage_capped,capped,1,1,42,0.0,0.0,0,1000",
-                "2,paper1_phaseC_robustness_v1,evogrow_v2_2_stage_capped,capped,24,1,42,0.0,0.0,0,1000",
-                "3,paper1_phaseC_robustness_v1,evogrow_v2_2_stage_capped,capped,52,1,42,0.0,0.0,0,1000",
-                "4,paper1_phaseC_robustness_v1,evogrow_v2_2_stage_capped,capped,52,2,42,0.0,0.0,0,1000",
-                "5,paper1_phaseC_robustness_v1,evogrow_v2_2_stage_capped,capped,57,1,42,0.0,0.0,0,1000",
-                "6,paper1_phaseC_robustness_v1,evogrow_v2_2_stage_capped,capped,57,2,42,0.0,0.0,0,1000",
+                "1,paper1_phaseC_robustness_v1,fp1000,evogrow_v2_2_stage_capped,capped,false,staged_polynomial_basis_with_constant,3,1,1,1,42,exact,0.0,0.0,0,1000.0",
+                "2,paper1_phaseC_robustness_v1,fp1000,evogrow_v2_2_stage_capped,capped,false,staged_polynomial_basis_with_constant,3,24,2,1,42,exact,0.0,0.0,0,1000.0",
+                "3,paper1_phaseC_robustness_v1,fp1000,evogrow_v2_2_stage_capped,capped,false,staged_polynomial_basis_with_constant,3,52,3,1,42,exact,0.0,0.0,0,1000.0",
+                "4,paper1_phaseC_robustness_v1,fp1000,evogrow_v2_2_stage_capped,capped,false,staged_polynomial_basis_with_constant,3,52,3,2,42,exact,0.0,0.0,0,1000.0",
+                "5,paper1_phaseC_robustness_v1,fp1000,evogrow_v2_2_stage_capped,capped,false,staged_polynomial_basis_with_constant,3,57,4,1,42,exact,0.0,0.0,0,1000.0",
+                "6,paper1_phaseC_robustness_v1,fp1000,evogrow_v2_2_stage_capped,capped,false,staged_polynomial_basis_with_constant,3,57,4,2,42,exact,0.0,0.0,0,1000.0",
                 "",
             ],
             "\n",
@@ -96,12 +96,12 @@ end
         join(
             [
                 header,
-                "1,paper1_phaseC_robustness_v1,evogrow_v2_2_stage_capped,capped,24,1,42,0.0,0.0,0,Inf",
-                "2,paper1_phaseC_robustness_v1,evogrow_v2_2_stage_capped,capped,24,2,42,0.0,0.0,0,Inf",
-                "3,paper1_phaseC_robustness_v1,evogrow_v2_2_stage_capped,capped,52,1,42,0.0,0.0,0,Inf",
-                "4,paper1_phaseC_robustness_v1,evogrow_v2_2_stage_capped,capped,52,2,42,0.0,0.0,0,Inf",
-                "5,paper1_phaseC_robustness_v1,evogrow_v2_2_stage_capped,capped,57,1,42,0.0,0.0,0,Inf",
-                "6,paper1_phaseC_robustness_v1,evogrow_v2_2_stage_capped,capped,57,2,42,0.0,0.0,0,Inf",
+                "1,paper1_phaseC_robustness_v1,fpInf,evogrow_v2_2_stage_capped,capped,false,staged_polynomial_basis_with_constant,3,24,2,1,42,exact,0.0,0.0,0,Inf",
+                "2,paper1_phaseC_robustness_v1,fpInf,evogrow_v2_2_stage_capped,capped,false,staged_polynomial_basis_with_constant,3,24,2,2,42,exact,0.0,0.0,0,Inf",
+                "3,paper1_phaseC_robustness_v1,fpInf,evogrow_v2_2_stage_capped,capped,false,staged_polynomial_basis_with_constant,3,52,3,1,42,exact,0.0,0.0,0,Inf",
+                "4,paper1_phaseC_robustness_v1,fpInf,evogrow_v2_2_stage_capped,capped,false,staged_polynomial_basis_with_constant,3,52,3,2,42,exact,0.0,0.0,0,Inf",
+                "5,paper1_phaseC_robustness_v1,fpInf,evogrow_v2_2_stage_capped,capped,false,staged_polynomial_basis_with_constant,3,57,4,1,42,exact,0.0,0.0,0,Inf",
+                "6,paper1_phaseC_robustness_v1,fpInf,evogrow_v2_2_stage_capped,capped,false,staged_polynomial_basis_with_constant,3,57,4,2,42,exact,0.0,0.0,0,Inf",
                 "",
             ],
             "\n",
@@ -120,7 +120,7 @@ end
         "--stage2-indices", stage2_indices,
         "--smoke-output", smoke_output,
         "--smoke-indices", smoke_indices,
-        "--stage2-cells", "24:1:Inf,24:2:Inf,52:1:1000,52:2:1000,52:1:Inf,52:2:Inf,57:1:1000,57:2:1000,57:1:Inf,57:2:Inf",
+        "--stage2-cells", "24:1:inf,24:2:Inf,52:1:1000,52:2:1e3,52:1:Inf,52:2:Inf,57:1:1000,57:2:1000,57:1:Inf,57:2:Inf",
         "--smoke-system", "1",
     ])
 
@@ -131,18 +131,18 @@ end
     @test [(row["system_id"], row["initial_condition_set"], row["clamp_val"]) for row in stage2_rows] == [
         ("24", "1", "Inf"),
         ("24", "2", "Inf"),
-        ("52", "1", "1000"),
-        ("52", "2", "1000"),
+        ("52", "1", "1000.0"),
+        ("52", "2", "1000.0"),
         ("52", "1", "Inf"),
         ("52", "2", "Inf"),
-        ("57", "1", "1000"),
-        ("57", "2", "1000"),
+        ("57", "1", "1000.0"),
+        ("57", "2", "1000.0"),
         ("57", "1", "Inf"),
         ("57", "2", "Inf"),
     ]
     @test read(stage2_indices, String) == join(string.(1:10), "\n") * "\n"
     @test length(smoke_rows) == 1
     @test smoke_rows[1]["system_id"] == "1"
-    @test smoke_rows[1]["clamp_val"] == "1000"
+    @test smoke_rows[1]["clamp_val"] == "1000.0"
     @test read(smoke_indices, String) == "1\n"
 end

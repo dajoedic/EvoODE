@@ -1,3 +1,5 @@
+include(joinpath(@__DIR__, "clamp_val.jl"))
+
 function _arg_values(args::Vector{String}, name::String)
     values = String[]
     idx = 1
@@ -44,7 +46,7 @@ function _parse_cell_specs(value::AbstractString)
             (
                 system_id = parse(Int, strip(parts[1])),
                 initial_condition_set = parse(Int, strip(parts[2])),
-                clamp_val = strip(parts[3]),
+                clamp_val = parse_clamp_val(strip(parts[3])),
             ),
         )
     end
@@ -91,6 +93,11 @@ function write_indices(path::AbstractString, count::Integer)
     end
 end
 
+function _clamp_val_matches(row, clamp_val)
+    clamp_val === nothing && return true
+    return parse_clamp_val(row["clamp_val"]) == Float64(clamp_val)
+end
+
 function selected_row(rows, path::AbstractString; system_id::Integer, variant::AbstractString,
                       condition::AbstractString, initial_condition_set::Integer, seed::Integer,
                       clamp_val = nothing)
@@ -101,7 +108,7 @@ function selected_row(rows, path::AbstractString; system_id::Integer, variant::A
            row["condition"] == condition &&
            row["initial_condition_set"] == string(initial_condition_set) &&
            row["seed"] == string(seed) &&
-           (clamp_val === nothing || row["clamp_val"] == string(clamp_val))
+           _clamp_val_matches(row, clamp_val)
     ]
     length(matches) == 1 ||
         error("$(path): expected one match for system $(system_id), got $(length(matches))")
@@ -118,7 +125,7 @@ function matching_rows(rows; system_id::Integer, variant::AbstractString,
            row["condition"] == condition &&
            row["initial_condition_set"] == string(initial_condition_set) &&
            row["seed"] == string(seed) &&
-           (clamp_val === nothing || row["clamp_val"] == string(clamp_val))
+           _clamp_val_matches(row, clamp_val)
     ]
 end
 

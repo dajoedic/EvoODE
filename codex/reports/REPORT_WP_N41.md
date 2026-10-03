@@ -8,9 +8,26 @@ environment, not by the change itself.
 Files changed:
 
 - `k8s/phase_c_c8_search_b05_job.yaml`
+- `studies/regression/clamp_val.jl`
+- `studies/regression/run_regression.jl`
 - `studies/regression/select_phase_c_stage2_manifest.jl`
 - `test/test_wp_n33c_stage2_manifest_selection.jl`
 - `SCRIPTS.md`
+
+Continuation fix after Claude's 2026-10-03 bootstrap dry run:
+
+- `clamp_val_json` and `parse_clamp_val` are now in `studies/regression/clamp_val.jl`.
+- `run_regression.jl` includes that helper, preserving the parser used by the campaign path.
+- `select_phase_c_stage2_manifest.jl` includes the same helper and parses both the `--stage2-cells`
+  value and manifest row values before comparing them. `1000`, `1000.0`, and `1e3` compare equal;
+  `Inf` and `inf` compare equal. Invalid values abort through `parse(Float64, ...)`.
+- The WP-N41 test fixture now uses the generator's manifest header:
+  `index,campaign,config_fingerprint,variant,condition,use_pretuning,basis_name,max_fit_attempts,system_id,system_dim,initial_condition_set,seed,representability,noise_sigma,subsample_rho,noise_realization,clamp_val`.
+  Its bound-1000 source rows use `1000.0`, while the selector request includes `52:1:1000`
+  and `52:2:1e3`.
+- `k8s/phase_c_c8_search_b05_job.yaml` has only a head-comment addition: the 2026-10-03 job was
+  started without bootstrap because image `5dd1df8` lacked `--stage2-cells`; this bootstrap needs
+  an image at or after this numeric-matching fix.
 
 ## Implementation
 
@@ -88,12 +105,12 @@ Pass criterion: the table has exactly 10 rows, with `index` 1 through 10 and thi
 ```text
 24,1,Inf
 24,2,Inf
-52,1,1000
-52,2,1000
+52,1,1000.0
+52,2,1000.0
 52,1,Inf
 52,2,Inf
-57,1,1000
-57,2,1000
+57,1,1000.0
+57,2,1000.0
 57,1,Inf
 57,2,Inf
 ```
@@ -134,6 +151,47 @@ Output:
 ```
 
 ```text
+rg -n -F 'row["clamp_val"] == string(clamp_val)' studies/regression test
+```
+
+Output: no matches.
+
+```text
+rg -n -F 'row["clamp_val"] ==' studies/regression/select_phase_c_stage2_manifest.jl test/test_wp_n33c_stage2_manifest_selection.jl
+```
+
+Output: no matches.
+
+```text
+rg -n -F 'parse_clamp_val' studies/regression test/test_wp_n33c_stage2_manifest_selection.jl
+```
+
+Output:
+
+```text
+studies/regression\clamp_val.jl:6:function parse_clamp_val(value)
+studies/regression\generate_phase_c_manifest.jl:288:    clamp_val = parse_clamp_val(something(_arg_value(args, "--clamp-val"), "10"))
+studies/regression\run_batch_cell.jl:91:        return phase_c_fingerprint(clamp_val = parse_clamp_val(get(row, "clamp_val", "10")))
+studies/regression\run_batch_cell.jl:170:        clamp_val = parse_clamp_val(get(row, "clamp_val", "10")),
+studies/regression\select_phase_c_stage2_manifest.jl:49:                clamp_val = parse_clamp_val(strip(parts[3])),
+studies/regression\select_phase_c_stage2_manifest.jl:98:    return parse_clamp_val(row["clamp_val"]) == Float64(clamp_val)
+studies/regression\wp_n3_oracle_refit.jl:367:    clamp_val = parse_clamp_val(_arg_value(args, "--clamp-val", "10"))
+```
+
+```text
+python -c "from pathlib import Path; text=Path('test/test_wp_n33c_stage2_manifest_selection.jl').read_text(); print('1000.0 rows', text.count('1000.0')); print('stage2 cells line contains 1e3', '52:2:1e3' in text); print('lower inf', '24:1:inf' in text); print('generator header', 'config_fingerprint,variant,condition,use_pretuning,basis_name,max_fit_attempts' in text)"
+```
+
+Output:
+
+```text
+1000.0 rows 11
+stage2 cells line contains 1e3 True
+lower inf True
+generator header True
+```
+
+```text
 rg -n "activeDeadlineSeconds|timeout" k8s/phase_c_c8_search_b05_job.yaml studies/regression/select_phase_c_stage2_manifest.jl test/test_wp_n33c_stage2_manifest_selection.jl
 ```
 
@@ -156,7 +214,18 @@ Blocked check:
 julia --project=. --startup-file=no test/test_wp_n33c_stage2_manifest_selection.jl
 ```
 
-Output:
+Codex did not execute this Julia command. Per `codex/CODEX_PROTOCOL.md`, Julia execution is an
+environment blocker in this sandbox, so Claude must run it.
+
+Short dry-run command for Claude:
+
+```text
+julia --project=. --startup-file=no studies/regression/select_phase_c_stage2_manifest.jl --source <generator-bound-1000-manifest.csv> --source <generator-bound-Inf-manifest.csv> --stage2-output <tmp>/manifest.csv --stage2-indices <tmp>/indices_c8_search_b05.txt --smoke-output <tmp>/smoke_manifest.csv --smoke-indices <tmp>/indices_smoke.txt --stage2-cells 52:1:1000 --smoke-system 1 --initial-condition-set 1 --seed 42
+```
+
+Full dry-run command remains the Local Bootstrap Dry Run above.
+
+Observed earlier in this Codex environment for WP-N41 before the continuation:
 
 ```text
 Program 'julia.exe' failed to run: The file cannot be accessed by the system
