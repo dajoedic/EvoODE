@@ -7,6 +7,7 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 ## 2026-10-04
 
 ### Idee #1 (Annihilator-Discovery): eigener Branch, Gate 2A eingefroren
+<!-- 4d15c29 (IDEA_01, Nutzer), f706b25 (GATE_2A eingefroren) -->
 
 Branch `annihilator-discovery`, Worktree `..\EvoODE-next`. Der Name `evogrow-next` wurde verworfen, weil die
 Methode keine Weiterentwicklung von EvoGrow ist. Leitdokument `docs/IDEA_01_ANNIHILATOR_DISCOVERY.md`, das
