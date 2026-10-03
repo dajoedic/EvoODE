@@ -868,6 +868,55 @@ python analysis/scripts/aggregate/aggregate_c8_oracle_bounds.py \
   --output-dir outputs/phase_c_c8_oracle_bounds_<SHA>
 ```
 
+### WP-N41 C-8 Part B search B-05 template
+
+This is a command template, not a command to run during a Codex session. Substitute `<SHA>` with the
+pushed image commit that contains WP-N41. The Orion NFS share is mounted locally on Windows as
+`S:\BigDataOrion\data-science\joedicke\...`; in Git Bash the same path is
+`/s/BigDataOrion/data-science/joedicke/...`. Prefer direct copies to that mounted NFS path when the
+mount is available.
+
+Apply template:
+
+```powershell
+(Get-Content k8s\phase_c_c8_search_b05_job.yaml) -replace '<COMMIT_SHA>','<SHA>' | oc apply -f -
+```
+
+Read progress:
+
+```powershell
+oc -n scch-das get jobs,pods -l hpc.scch.at/service=evoode-phase-c-c8-search-b05
+oc -n scch-das logs job/evoode-phase-c-c8-search-b05-bootstrap
+```
+
+Collect directly from the mounted NFS:
+
+```bash
+mkdir -p outputs/phase_c_c8_search_b05_<SHA>
+cp -r /s/BigDataOrion/data-science/joedicke/phase_c_c8_search_b05_<SHA>/manifest.csv \
+  /s/BigDataOrion/data-science/joedicke/phase_c_c8_search_b05_<SHA>/smoke_manifest.csv \
+  /s/BigDataOrion/data-science/joedicke/phase_c_c8_search_b05_<SHA>/tasks \
+  /s/BigDataOrion/data-science/joedicke/phase_c_c8_search_b05_<SHA>/smoke \
+  outputs/phase_c_c8_search_b05_<SHA>/
+```
+
+Compare the smoke against the completed local B-04 bound-1000 cell:
+
+```bash
+python - <<'PY'
+import json
+from pathlib import Path
+
+candidate = json.loads(Path("outputs/phase_c_c8_search_b05_<SHA>/smoke/tasks/cell_000001.jsonl").read_text())
+reference = json.loads(Path("outputs/b04_search_bounds/bound_1000/tasks/cell_000001.jsonl").read_text())
+fields = ["loss", "support_terms", "total_loss_evals", "model_terms", "config_fingerprint"]
+for field in fields:
+    if candidate.get(field) != reference.get(field):
+        raise SystemExit(f"{field} differs")
+print("WP-N41 smoke record matches B-04 bound-1000 reference fields")
+PY
+```
+
 ### WP-T1f warm-start neighbourhood repair
 
 WP-T1f repairs the WP-T1d neighbourhood probe by comparing neighbours against a true-support fit

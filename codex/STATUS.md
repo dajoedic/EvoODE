@@ -1,5 +1,5 @@
-status: working
-task:   WP-N40
-report: codex/reports/REPORT_WP_N40.md
-note:   Recomputed reference and candidate ODEFormer grid structure sidecars, reaggregated WP-N31 outputs, and verified R2 rates unchanged.
+status: blocked
+task:   WP-N41
+report: codex/reports/REPORT_WP_N41.md
+note:   Umgebung, nicht Sache: Julia cannot be executed in the Codex sandbox, so the Julia test and dry run remain for Claude.
 
