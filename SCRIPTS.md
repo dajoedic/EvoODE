@@ -701,6 +701,99 @@ python analysis/scripts/aggregate/compare_phasec_controls.py \
   --reference-oracle outputs/wp_n3_oracle_refit_phase_c
 ```
 
+### WP-N42 C-6 full grid
+
+These are command templates, not commands to run during a Codex session. Substitute `<SHA>` with
+the pushed image commit, `5dd1df8` or later. The C-6 manifests are generated locally and copied to
+the Orion NFS share before `oc apply`; `k8s/phase_c_c6_grid_job.yaml` contains no bootstrap job.
+The capped grid has 3,366 cells. The baseline data export has 63 systems x 2 IC sets x 12
+conditions x 3 realizations = 4,536 trajectory exports; raw arrays are about 0.05 GiB, so the
+30 GB free-space guard on C: is dominated by later records, not this export.
+
+Generate the capped manifest and its cost-descending index:
+
+```powershell
+julia --project=. --startup-file=no studies/regression/generate_phase_c_manifest.jl `
+  --c6-grid `
+  --output outputs\phase_c_c6_grid_<SHA>\manifest.csv
+```
+
+Run the local control cell first, then compare it against the Stage-1 reference. The pass criterion
+is that the manifest payload, Phase-C fingerprint, data-condition fingerprint and observed data hash
+match `outputs/stage1/s0.01_r0` row 1.
+
+```powershell
+julia --project=. --startup-file=no studies/regression/run_batch_cell.jl `
+  --manifest outputs\phase_c_c6_grid_<SHA>\manifest.csv `
+  --output-dir outputs\phase_c_c6_grid_<SHA>\control `
+  2
+
+python analysis/scripts/aggregate/compare_phasec_c6_control.py `
+  --grid-manifest outputs\phase_c_c6_grid_<SHA>\manifest.csv `
+  --grid-index 2 `
+  --grid-record outputs\phase_c_c6_grid_<SHA>\control\cell_000002.jsonl
+```
+
+Run the search-free cap precheck over all capped grid rows and write the selected uncapped
+manifest. The pass criterion is 3,366 CSV rows and an uncapped manifest whose row count equals
+`indices_cost_desc.txt`.
+
+```powershell
+julia --project=. --startup-file=no studies/regression/print_phase_c_stage_caps.jl `
+  --manifest outputs\phase_c_c6_grid_<SHA>\manifest.csv `
+  --all-rows `
+  --output-csv outputs\phase_c_c6_grid_<SHA>\stage_caps.csv `
+  --uncapped-manifest-output outputs\phase_c_c6_grid_uncapped_<SHA>\manifest.csv `
+  --uncapped-index-output outputs\phase_c_c6_grid_uncapped_<SHA>\indices_cost_desc.txt
+```
+
+Export the shared data for SINDy, Weak-SINDy and ODEFormer, including `(0,0)`:
+
+```powershell
+julia --project=. --startup-file=no studies/regression/export_phase_c_data_conditions.jl `
+  --c6-grid `
+  --output-dir outputs\phase_c_c6_data_conditions_<SHA>
+```
+
+Copy manifests and exported data to the mounted NFS path:
+
+```powershell
+New-Item -ItemType Directory -Force -Path `
+  S:\BigDataOrion\data-science\joedicke\phase_c_c6_grid_<SHA>, `
+  S:\BigDataOrion\data-science\joedicke\phase_c_c6_grid_uncapped_<SHA>, `
+  S:\BigDataOrion\data-science\joedicke\phase_c_c6_data_conditions_<SHA>
+
+Copy-Item outputs\phase_c_c6_grid_<SHA>\manifest.csv,outputs\phase_c_c6_grid_<SHA>\indices_cost_desc.txt `
+  S:\BigDataOrion\data-science\joedicke\phase_c_c6_grid_<SHA>\
+Copy-Item outputs\phase_c_c6_grid_uncapped_<SHA>\manifest.csv,outputs\phase_c_c6_grid_uncapped_<SHA>\indices_cost_desc.txt `
+  S:\BigDataOrion\data-science\joedicke\phase_c_c6_grid_uncapped_<SHA>\
+Copy-Item -Recurse outputs\phase_c_c6_data_conditions_<SHA>\* `
+  S:\BigDataOrion\data-science\joedicke\phase_c_c6_data_conditions_<SHA>\
+```
+
+Apply after replacing `<UNCAPPED_COMPLETIONS>` with the uncapped index-list line count and
+`<PARALLELISM>` after the capacity check:
+
+```powershell
+(Get-Content k8s\phase_c_c6_grid_job.yaml) `
+  -replace '<COMMIT_SHA>','<SHA>' `
+  -replace '<UNCAPPED_COMPLETIONS>','<N_UNCAPPED_ROWS>' `
+  -replace '<PARALLELISM>','<PARALLELISM>' | oc apply -f -
+```
+
+Read progress and collect results directly from NFS:
+
+```powershell
+oc -n scch-das get jobs,pods -l hpc.scch.at/service=evoode-phase-c-c6-grid
+oc -n scch-das get jobs,pods -l hpc.scch.at/service=evoode-phase-c-c6-grid-uncapped
+
+New-Item -ItemType Directory -Force outputs\phase_c_c6_grid_<SHA>,outputs\phase_c_c6_grid_uncapped_<SHA>
+Copy-Item -Recurse S:\BigDataOrion\data-science\joedicke\phase_c_c6_grid_<SHA>\tasks `
+  outputs\phase_c_c6_grid_<SHA>\
+Copy-Item -Recurse S:\BigDataOrion\data-science\joedicke\phase_c_c6_grid_uncapped_<SHA>\tasks `
+  outputs\phase_c_c6_grid_uncapped_<SHA>\
+```
+
 ### WP-N33c Orion templates
 
 These are command templates, not commands to run during a Codex session. Substitute `<SHA>` with

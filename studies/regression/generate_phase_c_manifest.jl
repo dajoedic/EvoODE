@@ -18,6 +18,8 @@ const PHASE_C_DIMENSION_MEAN_SECONDS = Dict(
 const PHASE_C_P9_PILOT_SYSTEM_IDS = Set([2, 24, 52, 63])
 const PHASE_C_P9_PILOT_SEED = 42
 const PHASE_C_P9_PILOT_CONDITIONS = Set(["capped", "uncapped"])
+const PHASE_C_C6_SIGMAS = (0.0, 0.01, 0.02, 0.03, 0.04, 0.05)
+const PHASE_C_C6_RHOS = (0.0, 0.5)
 
 function _arg_value(args::Vector{String}, name::String)
     idx = findfirst(==(name), args)
@@ -120,6 +122,62 @@ function phase_c_manifest_rows(; noise_sigma::Real = 0.0, subsample_rho::Real = 
     return rows
 end
 
+function phase_c_c6_grid_conditions(; include_clean::Bool = false)
+    conditions = NamedTuple[]
+    for sigma in PHASE_C_C6_SIGMAS
+        for rho in PHASE_C_C6_RHOS
+            if !include_clean && sigma == 0.0 && rho == 0.0
+                continue
+            end
+            push!(conditions, (noise_sigma = sigma, subsample_rho = rho))
+        end
+    end
+    return conditions
+end
+
+function phase_c_c6_grid_rows(; clamp_val::Real = BFGS_CLAMP_VAL,
+                              campaign::AbstractString = PHASE_C_ROBUSTNESS_ID)
+    fingerprint = phase_c_fingerprint(clamp_val = clamp_val)
+    rows = NamedTuple[]
+    index = 1
+    capped = only(_phase_c_arm_variants("capped"))
+    systems = [system for system in sort(PHASE_C_SYSTEMS; by = s -> Int(s[:system_id])) if Int(system[:dim]) <= 2]
+    conditions = phase_c_c6_grid_conditions()
+
+    for system in systems
+        for ic_set in PHASE_C_IC_SETS
+            for (realization, seed) in enumerate(PHASE_C_SEEDS)
+                for condition in conditions
+                    push!(
+                        rows,
+                        (
+                            index = index,
+                            campaign = String(campaign),
+                            config_fingerprint = fingerprint,
+                            variant = String(capped.label),
+                            condition = String(capped.condition),
+                            use_pretuning = Bool(capped.use_pretuning),
+                            basis_name = String(capped.basis_name),
+                            max_fit_attempts = Int(capped.max_fit_attempts),
+                            system_id = Int(system[:system_id]),
+                            system_dim = Int(system[:dim]),
+                            initial_condition_set = ic_set,
+                            seed = seed,
+                            representability = String(system[:representability]),
+                            noise_sigma = Float64(condition.noise_sigma),
+                            subsample_rho = Float64(condition.subsample_rho),
+                            noise_realization = Int(realization),
+                            clamp_val = clamp_val_json(clamp_val),
+                        ),
+                    )
+                    index += 1
+                end
+            end
+        end
+    end
+    return rows
+end
+
 function phase_c_identity(row)
     return (
         row.campaign,
@@ -127,6 +185,10 @@ function phase_c_identity(row)
         row.system_id,
         row.initial_condition_set,
         row.seed,
+        row.noise_sigma,
+        row.subsample_rho,
+        row.noise_realization,
+        row.clamp_val,
     )
 end
 
@@ -280,6 +342,7 @@ function main(args = ARGS)
     arg_output = _arg_value(args, "--output")
     arg_output !== nothing && (output = arg_output)
 
+    c6_grid = _has_flag(args, "--c6-grid")
     dimension = _parse_optional_int(_arg_value(args, "--dimension"))
     limit = _parse_optional_int(_arg_value(args, "--limit"))
     noise_sigma = parse(Float64, something(_arg_value(args, "--noise-sigma"), "0"))
@@ -287,24 +350,33 @@ function main(args = ARGS)
     noise_realization = parse(Int, something(_arg_value(args, "--noise-realization"), "0"))
     clamp_val = parse_clamp_val(something(_arg_value(args, "--clamp-val"), "10"))
     explicit_data_condition = any(_has_option(args, name) for name in ("--noise-sigma", "--subsample-rho", "--noise-realization", "--clamp-val"))
-    campaign = explicit_data_condition || noise_sigma != 0.0 || subsample_rho != 0.0 || clamp_val != 10.0 ? PHASE_C_ROBUSTNESS_ID : PHASE_C_ID
+    campaign = c6_grid || explicit_data_condition || noise_sigma != 0.0 || subsample_rho != 0.0 || clamp_val != 10.0 ? PHASE_C_ROBUSTNESS_ID : PHASE_C_ID
     all_dimensions = _has_flag(args, "--all-dimensions")
+    c6_grid && dimension !== nothing && error("Use either --c6-grid or --dimension, not both")
     dimension !== nothing && all_dimensions && error("Use either --dimension or --all-dimensions, not both")
     index_output = _arg_value(args, "--index-output")
     index_output !== nothing && all_dimensions && error("--index-output is only valid with --dimension")
 
-    rows = phase_c_limit_rows(phase_c_manifest_rows(
-        noise_sigma = noise_sigma,
-        subsample_rho = subsample_rho,
-        noise_realization = noise_realization,
-        clamp_val = clamp_val,
-        campaign = campaign,
-    ), limit)
+    rows = if c6_grid
+        base_rows = phase_c_c6_grid_rows(clamp_val = clamp_val, campaign = campaign)
+        limit === nothing ? base_rows : base_rows[1:min(limit, length(base_rows))]
+    else
+        phase_c_limit_rows(phase_c_manifest_rows(
+            noise_sigma = noise_sigma,
+            subsample_rho = subsample_rho,
+            noise_realization = noise_realization,
+            clamp_val = clamp_val,
+            campaign = campaign,
+        ), limit)
+    end
     unique_identities = phase_c_unique_identity_count(rows)
     unique_identities == length(rows) || error("Phase C manifest identities are not unique")
     write_phase_c_manifest(output, rows)
 
-    if dimension !== nothing
+    if c6_grid
+        write_phase_c_all_index_list(joinpath(dirname(output), "indices_all.txt"), rows)
+        write_phase_c_cost_desc_index_list(joinpath(dirname(output), "indices_cost_desc.txt"), rows)
+    elseif dimension !== nothing
         index_output === nothing && (index_output = joinpath(dirname(output), "indices_dim$(dimension).txt"))
         write_phase_c_dimension_index_list(index_output, rows, dimension)
     elseif all_dimensions
@@ -333,6 +405,7 @@ function main(args = ARGS)
     println("manifest=$(output)")
     println("phase_c_fingerprint=$(phase_c_fingerprint(clamp_val = clamp_val))")
     println("campaign=$(campaign)")
+    c6_grid && println("c6_grid=true")
     println("noise_sigma=$(noise_sigma)")
     println("subsample_rho=$(subsample_rho)")
     println("noise_realization=$(noise_realization)")
@@ -350,7 +423,19 @@ function main(args = ARGS)
     end
     println("basis_name=$(PHASE_C_BASIS_NAME)")
     println("max_fit_attempts=$(PHASE_C_MAX_FIT_ATTEMPTS)")
-    if dimension !== nothing
+    if c6_grid
+        c6_systems = sort(unique(row.system_id for row in rows))
+        c6_conditions = sort(unique((row.noise_sigma, row.subsample_rho) for row in rows))
+        c6_realizations = sort(unique(row.noise_realization for row in rows))
+        println("c6_systems=$(length(c6_systems))")
+        println("c6_conditions=$(length(c6_conditions))")
+        println("c6_realizations=$(join(c6_realizations, ","))")
+        println("c6_seed_realization_pairs=$(join(["$(idx):$(seed)" for (idx, seed) in enumerate(PHASE_C_SEEDS)], ","))")
+        println("all_index_output=$(joinpath(dirname(output), "indices_all.txt"))")
+        println("all_index_rows=$(length(rows))")
+        println("cost_desc_index_output=$(joinpath(dirname(output), "indices_cost_desc.txt"))")
+        println("cost_desc_index_rows=$(length(rows))")
+    elseif dimension !== nothing
         count_dim = count(row -> row.system_dim == dimension, rows)
         println("dimension=$(dimension)")
         println("dimension_rows=$(count_dim)")

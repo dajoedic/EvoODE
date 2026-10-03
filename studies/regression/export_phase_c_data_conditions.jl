@@ -8,6 +8,8 @@ include(joinpath(@__DIR__, "run_regression.jl"))
 include(joinpath(@__DIR__, "phase_c_config.jl"))
 
 const DEFAULT_EXPORT_DIR = joinpath(@__DIR__, "..", "..", "outputs", "phase_c_data_conditions")
+const PHASE_C_C6_EXPORT_SIGMAS = (0.0, 0.01, 0.02, 0.03, 0.04, 0.05)
+const PHASE_C_C6_EXPORT_RHOS = (0.0, 0.5)
 
 function _arg_value(args::Vector{String}, name::String, default = nothing)
     idx = findfirst(==(name), args)
@@ -37,6 +39,10 @@ end
 
 function _parse_csv_floats(text::AbstractString)
     return Float64[parse(Float64, strip(part)) for part in split(text, ",") if !isempty(strip(part))]
+end
+
+function _has_flag(args::Vector{String}, name::String)
+    return any(==(name), args)
 end
 
 function _condition_stem(system_id::Int, ic_set::Int, sigma::Real, rho::Real, realization::Int)
@@ -94,12 +100,14 @@ function _csv_field(value)
 end
 
 function main(args = ARGS)
+    c6_grid = _has_flag(args, "--c6-grid")
     output_dir = _arg_value(args, "--output-dir", DEFAULT_EXPORT_DIR)
-    system_ids = _parse_csv_ints(_arg_value(args, "--systems", join(string.(sort([Int(s[:system_id]) for s in PHASE_C_SYSTEMS])), ",")))
+    default_systems = join(string.(sort([Int(s[:system_id]) for s in PHASE_C_SYSTEMS])), ",")
+    system_ids = _parse_csv_ints(_arg_value(args, "--systems", default_systems))
     ic_sets = _parse_csv_ints(_arg_value(args, "--ic-sets", join(string.(PHASE_C_IC_SETS), ",")))
-    sigmas = _parse_csv_floats(_arg_value(args, "--sigmas", "0"))
-    rhos = _parse_csv_floats(_arg_value(args, "--rhos", "0"))
-    realizations = _parse_csv_ints(_arg_value(args, "--realizations", "0"))
+    sigmas = _parse_csv_floats(_arg_value(args, "--sigmas", c6_grid ? join(string.(PHASE_C_C6_EXPORT_SIGMAS), ",") : "0"))
+    rhos = _parse_csv_floats(_arg_value(args, "--rhos", c6_grid ? join(string.(PHASE_C_C6_EXPORT_RHOS), ",") : "0"))
+    realizations = _parse_csv_ints(_arg_value(args, "--realizations", c6_grid ? "1,2,3" : "0"))
 
     rows = Dict{String, String}[]
     for system_id in system_ids
@@ -112,6 +120,7 @@ function main(args = ARGS)
     println("output_dir=$(output_dir)")
     println("index=$(joinpath(output_dir, "index.csv"))")
     println("rows=$(length(rows))")
+    c6_grid && println("c6_grid=true")
 end
 
 if abspath(PROGRAM_FILE) == @__FILE__

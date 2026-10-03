@@ -6,6 +6,19 @@ using Printf
 
 include(joinpath(@__DIR__, "run_batch_cell.jl"))
 
+const CAP_PRECHECK_DIMENSION_MEAN_SECONDS = Dict(
+    1 => 250.0,
+    2 => 10_440.0,
+    3 => 63_800.0,
+    4 => 2_300.0,
+)
+const CAP_PRECHECK_MANIFEST_HEADER = [
+    "index", "campaign", "config_fingerprint", "variant", "condition", "use_pretuning",
+    "basis_name", "max_fit_attempts", "system_id", "system_dim", "initial_condition_set",
+    "seed", "representability", "noise_sigma", "subsample_rho", "noise_realization",
+    "clamp_val",
+]
+
 function _cap_arg_values(args::Vector{String}, name::String)
     values = String[]
     idx = 1
@@ -35,6 +48,11 @@ function _parse_int_list(value::AbstractString)
 end
 
 function _row_indices(args::Vector{String})
+    manifest_path = _cap_arg_value(args, "--manifest"; default = nothing)
+    if _has_cap_flag(args, "--all-rows")
+        manifest_path === nothing && error("Missing required argument --manifest")
+        return sort([parse(Int, row["index"]) for row in _read_manifest(manifest_path)])
+    end
     value = _cap_arg_value(args, "--rows"; default = nothing)
     if value !== nothing
         return _parse_int_list(value)
@@ -51,6 +69,10 @@ function _row_indices(args::Vector{String})
     end
     isempty(positional) && error("Pass --rows i,j,k or positional row indices")
     return parse.(Int, positional)
+end
+
+function _has_cap_flag(args::Vector{String}, name::String)
+    return any(==(name), args)
 end
 
 function _basis_for_variant(variant, dim::Int)
@@ -87,13 +109,100 @@ function _stage_caps_for_row(manifest_path::AbstractString, index::Int)
     return row, stage_caps
 end
 
+function _json_string(value)
+    return sprint(io -> JSON3.write(io, json_safe(value)))
+end
+
+function _csv_field(value)
+    text = string(value)
+    if occursin(',', text) || occursin('"', text) || occursin('\n', text) || occursin('\r', text)
+        return "\"" * replace(text, "\"" => "\"\"") * "\""
+    end
+    return text
+end
+
+function _has_finite_cap_lt5(stage_caps)
+    return any(cap -> cap !== nothing && Int(cap) < 5, stage_caps)
+end
+
+function _write_cap_csv(path::AbstractString, rows)
+    mkpath(dirname(path))
+    header = [
+        "index", "system_id", "initial_condition_set", "seed", "noise_sigma",
+        "subsample_rho", "noise_realization", "stage_caps", "has_finite_cap_lt5",
+    ]
+    open(path, "w") do io
+        println(io, join(header, ","))
+        for item in rows
+            row = item.row
+            values = [
+                item.index,
+                row["system_id"],
+                row["initial_condition_set"],
+                row["seed"],
+                get(row, "noise_sigma", "0"),
+                get(row, "subsample_rho", "0"),
+                get(row, "noise_realization", "0"),
+                _json_string(item.stage_caps),
+                item.has_finite_cap_lt5,
+            ]
+            println(io, join((_csv_field(value) for value in values), ","))
+        end
+    end
+end
+
+function _uncapped_manifest_rows(cap_rows)
+    selected = [item for item in cap_rows if item.has_finite_cap_lt5]
+    sorted = sort(
+        selected;
+        by = item -> CAP_PRECHECK_DIMENSION_MEAN_SECONDS[parse(Int, item.row["system_dim"])],
+        rev = true,
+        alg = MergeSort,
+    )
+    rows = Dict{String, String}[]
+    for (idx, item) in enumerate(sorted)
+        row = copy(item.row)
+        row["index"] = string(idx)
+        row["variant"] = "evogrow_v2_2_stage_local"
+        row["condition"] = "uncapped"
+        row["use_pretuning"] = "false"
+        push!(rows, row)
+    end
+    return rows
+end
+
+function _write_manifest(path::AbstractString, rows)
+    mkpath(dirname(path))
+    open(path, "w") do io
+        println(io, join(CAP_PRECHECK_MANIFEST_HEADER, ","))
+        for row in rows
+            println(io, join((row[column] for column in CAP_PRECHECK_MANIFEST_HEADER), ","))
+        end
+    end
+end
+
+function _write_indices(path::AbstractString, rows)
+    mkpath(dirname(path))
+    open(path, "w") do io
+        for row in rows
+            println(io, row["index"])
+        end
+    end
+end
+
 function main(args = ARGS)
     manifest_path = _cap_arg_value(args, "--manifest"; default = nothing)
     manifest_path === nothing && error("Missing required argument --manifest")
     rows = _row_indices(args)
+    output_csv = _cap_arg_value(args, "--output-csv"; default = nothing)
+    uncapped_manifest = _cap_arg_value(args, "--uncapped-manifest-output"; default = nothing)
+    uncapped_indices = _cap_arg_value(args, "--uncapped-index-output"; default = nothing)
     println("manifest=$(manifest_path)")
+    cap_rows = NamedTuple[]
     for index in rows
         row, stage_caps = _stage_caps_for_row(manifest_path, index)
+        has_finite_cap_lt5 = _has_finite_cap_lt5(stage_caps)
+        push!(cap_rows, (index = index, row = row, stage_caps = stage_caps, has_finite_cap_lt5 = has_finite_cap_lt5))
         payload = Dict{String, Any}(
             "manifest_index" => index,
             "system_id" => parse(Int, row["system_id"]),
@@ -106,9 +215,24 @@ function main(args = ARGS)
             "noise_realization" => parse(Int, get(row, "noise_realization", "0")),
             "clamp_val" => get(row, "clamp_val", "10"),
             "stage_caps" => stage_caps,
+            "has_finite_cap_lt5" => has_finite_cap_lt5,
         )
         JSON3.write(stdout, json_safe(payload))
         write(stdout, '\n')
+    end
+    if output_csv !== nothing
+        _write_cap_csv(output_csv, cap_rows)
+        println("output_csv=$(output_csv)")
+        println("output_csv_rows=$(length(cap_rows))")
+    end
+    if uncapped_manifest !== nothing
+        uncapped_rows = _uncapped_manifest_rows(cap_rows)
+        _write_manifest(uncapped_manifest, uncapped_rows)
+        uncapped_indices === nothing && (uncapped_indices = joinpath(dirname(uncapped_manifest), "indices_cost_desc.txt"))
+        _write_indices(uncapped_indices, uncapped_rows)
+        println("uncapped_manifest=$(uncapped_manifest)")
+        println("uncapped_rows=$(length(uncapped_rows))")
+        println("uncapped_index_output=$(uncapped_indices)")
     end
 end
 
