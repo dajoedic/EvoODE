@@ -964,7 +964,10 @@ the coupled search path 1e-6 is the cheaper, behaviour-equal tolerance; the Syst
   because retry fires on `fit_attempt_failed` only, never on a bad local optimum — a good refit
   proves reachability, a bad one proves nothing. System 63 (dim 4) refits perfectly 6/6: the search
   fails there, so "identifiability limit" is too strong. The restart curve is what makes negative
-  refits readable
+  refits readable. **C-8 oracle, 2026-10-03:** without any bound the true structure of 57 (5/6) and 58 (2/6)
+  becomes fittable, but **54, 55, 56, 59 and 61 stay at ≤ 1/6 even unbounded** — for those the bound is not the
+  cause, local optima under three starts are. "Unreachable by construction" stays true for the bounded optimizer;
+  it is not the whole explanation of the dim-3 collapse
 - **Generalization is the weak axis (C-5, 2026-09-29).** C-1, R² > 0.9 over 126 system × direction
   units: **82.3 % reconstruction against 37.3 % generalization**; dim 1 97.8 % → 70.3 %, **dim 2
   91.7 % → 25.6 %**, dim 3 28.3 % → 1.7 %; 40 of 378 generalization integrations diverge. Together
