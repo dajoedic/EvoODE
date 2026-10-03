@@ -24,10 +24,11 @@ als `run_in_background`. **Diese Datei bei jedem Statuswechsel aktualisieren.**
 
 | Lauf | Wo | Image | Stand | Anmerkung |
 |---|---|---|---|---|
+| **B-04-Rest + B-05** (Suche, Grenzen 1000/∞, Systeme 24/52/57) | Orion | `5dd1df8` | 0/10, gestartet 03.10. von Claude (Nutzer-OK) | Smoke bitgleich zur lokalen B-04-Zelle. Manifest lokal erzeugt und aufs NFS gelegt, Bootstrap ausgelassen. 57 kann 1–3 Tage je Zelle dauern. Ausgabe `/outputs/phase_c_c8_search_b05_5dd1df8…/tasks` |
 | C-3 | Orion | `221a3a7` | 179/180 | |
 | WP-T1f | Orion | `1db1193` | 30/36 | |
 
-**B-04 lokal 6/8 (DIARY 03.10.):** dasselbe Ergebnis wie C-1, ∞ macht einzelne Evals extrem langsam. Rest (System 24, ∞) und B-05 (52, 57) kommen als Orion-Job (WP-N41, Codex arbeitet daran). Danach Apply durch den Nutzer, vorher die Laufzeit besprechen (57 kann > 24 h dauern).
+**B-04 lokal 6/8 (DIARY 03.10.):** dasselbe Ergebnis wie C-1, ∞ macht einzelne Evals extrem langsam. Rest (System 24, ∞) und B-05 (52, 57) laufen seit 03.10. auf Orion (WP-N41).
 
 **B-03 fertig und ausgewertet (03.10.), Tor-B3-Bericht im DIARY:** 1000 vergleichbar stabil, ∞ nicht (×1,61). Ausgabe `outputs/phase_c_c8_oracle_bounds_b02_b03/`.
 
@@ -60,6 +61,8 @@ Committet (`a30382b`): `baselines/requirements-pysr-legacy.txt` (`juliacall` 0.9
 - System 41 divergiert unter Rauschen von der sauberen IC aus, ODEFormer scheitert dort auch.
 - ODEFormer-Strukturtreffer waren nie berechnet (WP-N31-Strukturraten ungültig, R² nicht betroffen).
 - B-02 vorläufig: ∞ reißt das Aufwandskriterium (×1,61), 1000 hält es (×1,47).
+
+**Kleiner Defekt:** `select_phase_c_stage2_manifest.jl --stage2-cells` vergleicht `clamp_val` als Zeichenkette (`1000` trifft `1000.0` nicht). Der Bootstrap in `k8s/phase_c_c8_search_b05_job.yaml` würde daran scheitern, das Image `5dd1df8` kennt die Option ohnehin nicht. Für später: numerischer Vergleich.
 
 ## 5. Git
 
