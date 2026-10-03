@@ -24,11 +24,13 @@ als `run_in_background`. **Diese Datei bei jedem Statuswechsel aktualisieren.**
 
 | Lauf | Wo | Image | Stand | Anmerkung |
 |---|---|---|---|---|
+| **C-6-Raster gekappt** | Orion | `5dd1df8` | 0/3.366, gestartet 03.10. von Claude (Nutzer: 32 Pods voll) | 24 Pods. Erwartet 40–55 Tage. Erste Heartbeats korrekt (Fingerprint `0c9672de35c75a9d`). Reihenfolge nach Dimension (dim 2 zuerst), wie C-1 |
+| **C-6-Raster ungekappt, Seed 42** | Orion | `5dd1df8` | 0/461 | 8 Pods. NFS-Indexliste = `indices_seed42_cost_desc.txt` (als `indices_cost_desc.txt`), die volle Liste der 1.378 als `indices_all_finite_cap_cost_desc.txt` |
 | **B-04-Rest + B-05** (Suche, Grenzen 1000/∞, Systeme 24/52/57) | Orion | `5dd1df8` | 0/10, gestartet 03.10. von Claude (Nutzer-OK) | Smoke bitgleich zur lokalen B-04-Zelle. Manifest lokal erzeugt und aufs NFS gelegt, Bootstrap ausgelassen. 57 kann 1–3 Tage je Zelle dauern. Ausgabe `/outputs/phase_c_c8_search_b05_5dd1df8…/tasks` |
 | C-3 | Orion | `221a3a7` | 179/180 | |
 | WP-T1f | Orion | `1db1193` | 30/36 | |
 
-**Tor G entschieden (03.10., Plan §9.4c):** volles Raster (3.366 Zellen), r ↔ Seed r, ungekappt nur bei endlicher Kappe, keine Cuts. **WP-N42 abgenommen (`b4cbce2`), alles lokal vorbereitet:** Manifest `outputs/phase_c_c6_grid_5dd1df8/` (3.366 Zellen, Kontrollzelle bitgleich zu Stufe 1), Kappenprüfung `stage_caps.csv` (**1.378 Zellen mit endlicher Kappe**), ungekappt erst nur Seed 42 (`outputs/phase_c_c6_grid_uncapped_5dd1df8/indices_seed42_cost_desc.txt`, 461 Zellen, Plan §9.4c Punkt 5), Baseline-Export `outputs/phase_c_c6_data_conditions_5dd1df8/` (4.536 Zeilen, 50 MB). **Nutzer: 32 Pods** (24 gekappt + 8 ungekappt). Fertig gerendert: `outputs/phase_c_c6_grid_5dd1df8/rendered_job.yaml`. **Start sobald VPN da ist:** (1) aufs NFS kopieren nach `phase_c_c6_grid_<FULL_SHA>/` (manifest.csv, indices_cost_desc.txt) und `phase_c_c6_grid_uncapped_<FULL_SHA>/` (manifest.csv, und `indices_seed42_cost_desc.txt` **als** `indices_cost_desc.txt`), Baseline-Export nach `phase_c_c6_data_conditions_<FULL_SHA>/`; (2) `oc apply -f outputs/phase_c_c6_grid_5dd1df8/rendered_job.yaml`.
+**Tor G entschieden (03.10., Plan §9.4c):** volles Raster (3.366 Zellen), r ↔ Seed r, ungekappt nur bei endlicher Kappe, keine Cuts. **WP-N42 abgenommen (`b4cbce2`), alles lokal vorbereitet:** Manifest `outputs/phase_c_c6_grid_5dd1df8/` (3.366 Zellen, Kontrollzelle bitgleich zu Stufe 1), Kappenprüfung `stage_caps.csv` (**1.378 Zellen mit endlicher Kappe**), ungekappt erst nur Seed 42 (`outputs/phase_c_c6_grid_uncapped_5dd1df8/indices_seed42_cost_desc.txt`, 461 Zellen, Plan §9.4c Punkt 5), Baseline-Export `outputs/phase_c_c6_data_conditions_5dd1df8/` (4.536 Zeilen, 50 MB). **Gestartet 03.10. mit 32 Pods** (`outputs/phase_c_c6_grid_5dd1df8/rendered_job.yaml`). Baseline-Export wird aufs NFS kopiert (`phase_c_c6_data_conditions_<FULL_SHA>/`).
 
 **B-04 lokal 6/8 (DIARY 03.10.):** dasselbe Ergebnis wie C-1, ∞ macht einzelne Evals extrem langsam. Rest (System 24, ∞) und B-05 (52, 57) laufen seit 03.10. auf Orion (WP-N41).
 
@@ -46,7 +48,6 @@ Committet (`a30382b`): `baselines/requirements-pysr-legacy.txt` (`juliacall` 0.9
 
 ## 2. Wartet auf den Nutzer
 
-- Startzeitpunkt und Parallelität des C-6-Rasters, sobald WP-N42 fertig ist.
 - **Tor B3:** Bericht liegt vor (DIARY 03.10.). Nach der Regel startet die nächste Version mit `[-1000, 1000]`. B-04/B-05 freigegeben.
 
 ## 3. Nächste Schritte (Claude)

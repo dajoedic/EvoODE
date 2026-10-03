@@ -250,6 +250,7 @@ Mark items done here with date and commit; never delete them.
 | R-06 | **Stage 3** — one expensive: system 41 (dim 2), same two conditions, seed 42, IC 1. **Gate S2 opened 2026-10-02; ran 2026-10-03 on Orion (2/2, ×1.06/×1.15 C-1 loss evals; model diverges from the clean IC, `DIARY.md`)** | user | Orion ≤ 24 h | **gate S3** |
 | R-07 | ~~Confirm the noise-realization design~~ **confirmed 2026-10-03: 3 realizations, r ↔ seed r** | user | — | — |
 | R-08 | ~~**Grid decision**~~ **gate G decided 2026-10-03** (plan §9.4c): full ODEFormer grid (11 conditions × 306 cells), uncapped arm only where the noisy cap is finite, ≥ 24 h cells run without cuts; ~25–35 k core-h | user | — | — |
+| R-08b | **C-6 grid running since 2026-10-03** on Orion `5dd1df8`: 3,366 capped cells (24 pods) + uncapped seed 42 on the 461 finite-cap cells (8 pods); expected 40–55 days | Claude / user | Orion | — |
 | R-09 | Baselines on the same data, same stages first: ~~SINDy, Weak-SINDy~~ **built 2026-10-01 (WP-N34/N34b), C-4 control passed with one documented exception; ran on stage 1**; ~~ODEFormer~~ **ran 2026-10-02 on all stage cells (WP-N38, 240/240, control identical to the Orion reference)** | Codex / Claude | laptop / Orion | with S2 |
 | R-10 | ~~PySR work package (budget, harness, cost estimate)~~ **done 2026-10-03 (WP-N39)**: faithful to ODEFormer's harness, smoke on both versions identical; **user chose PySR 0.19.4**; cost 1,230–2,370 core-h full grid (lower bound) | Codex | — | before PySR runs |
 

@@ -6,6 +6,20 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ## 2026-10-03
 
+### C-6-Raster gestartet: 3.366 gekappte + 461 ungekappte Zellen, 32 Pods
+
+Vorbereitung WP-N42 (`b4cbce2`): Die bisherigen Generator-Aufrufe sind byte-identisch, 15/15 Tests
+grün. **Die Kontrollzelle (System 1, IC 1, Seed 42, σ 0,01) ist bitgleich zur Stufe-1-Zelle.**
+Kappenprüfung über alle 3.366 Zellen (1 h, lokal): **1.378 Zellen (41 %) haben unter Rauschen eine
+endliche Kappe < 5**, davon 1.027 auf dim 2. Die Vermutung „wenige“ aus den fünf Stufen-Systemen
+war falsch. Nutzer: der ungekappte Arm zuerst nur auf Seed 42 (461 Zellen, Plan §9.4c Punkt 5).
+Gestartet am 03.10. von Claude (Nutzer: volle 32 Pods): 24 Pods gekappt, 8 ungekappt. Die Manifeste
+sind lokal erzeugt und aufs NFS gelegt, kein Bootstrap. Die ersten Heartbeats sind korrekt.
+Erwartet: 31.000–42.400 Kernstunden, bei 32 Pods 40–55 Tage. Mit B-05, WP-T1f und C-3 laufen für
+einige Tage ~48 Pods. Die Indexliste ist nach Dimension sortiert (dim 2 zuerst, wie C-1), nicht nach
+Zellkosten. Teure dim-2-Zellen können spät starten. Die Liste wird im laufenden Job bewusst nicht
+umgeschrieben.
+
 ### Tor G entschieden (Nutzer): volles Raster, r ↔ Seed r, ungekappt nur bei endlicher Kappe, keine Cuts
 
 Plan §9.4c. Volles ODEFormer-Raster mit 11 neuen Bedingungen × 306 Zellen = 3.366 EvoGrow-Zellen,
