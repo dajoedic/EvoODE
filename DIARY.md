@@ -4,6 +4,30 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ---
 
+## 2026-10-04
+
+### Idee #1 (Annihilator-Discovery): eigener Branch, Gate 2A eingefroren
+
+Branch `annihilator-discovery`, Worktree `..\EvoODE-next`. Der Name `evogrow-next` wurde verworfen, weil die
+Methode keine Weiterentwicklung von EvoGrow ist. Leitdokument `docs/IDEA_01_ANNIHILATOR_DISCOVERY.md`, das
+`docs/idea_structural_diagnostics.md` ablöst. Kill-Test `docs/GATE_2A.md`, vom Nutzer abgenommen (E1–E4).
+
+**Exakte Vorab-Kontrolle der Referenzklassen** (Claude, Scratchpad, mpmath mit 60 Stellen, 120 Punkte, alle
+42 Klassen bis (6,6), etwa 4 min). Unter $C = (r+1)(d+1)$ mit Tie-Break $r$, dann $d$:
+- $x^2$ (1,1), $e^{1.5x}$ (1,0), $x^{1.5}$ (1,1), $\log x$ (2,1), $x\log x$ (3,1) mit $C = 8$, also nicht
+  $(xD-1)^2$ mit $C = 9$;
+- $e^{-x^2}$ (1,1), $\sin(2x+\tfrac12)$ (2,0), $x/(2+x)$ (1,2), $x^2+e^x$ (4,0) mit $C = 5$;
+- $\sin x + e^{-x^2}$ (5,1) mit $C = 12$.
+
+In jeder Referenzklasse hat der Nullraum Dimension 1. **Befund, der die Spezifikation geformt hat:** Höhere
+Klassen enthalten fast immer weitere wahre, nicht-äquivalente Annihilatoren, für $x^2$ und $x/(2+x)$ sogar
+bei gleichem $C$. „Eine zweite Klasse besteht auch“ kann deshalb kein Ambiguitätskriterium sein. Es wäre
+schon auf exakten Daten wahr. `AMBIGUOUS` entsteht nur noch über A1 (mehrdimensionaler Nullraum in der
+gewählten Klasse) und A2 (instabile Auswahl im Bootstrap). Dazu kommen die Zustände `TRUE_NOT_REF` (wahrer,
+nicht minimaler Annihilator, weder `CORRECT` noch `WRONG`) und `NONE`.
+
+---
+
 ## 2026-10-03
 
 ### C-6-Raster gestartet: 3.366 gekappte + 461 ungekappte Zellen, 32 Pods

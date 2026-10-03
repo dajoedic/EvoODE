@@ -1,5 +1,8 @@
 # Idee: Strukturelle Diagnostik vor der symbolischen Rekonstruktion
 
+> **Superseded by `IDEA_01_ANNIHILATOR_DISCOVERY.md` (2026-10-04).** Wird nicht weiter gepflegt; bleibt als
+> Denkstand der Entstehung stehen.
+
 Idee des Nutzers, festgehalten am 2026-10-04. Bisher nur Denkstand, nichts gebaut oder bewertet.
 Kontext: `docs/evogrow_next.md`.
 

@@ -119,7 +119,9 @@ dieselbe Hypothese. Mehrere **wahre** Annihilatoren mit gleichem $C$, aber unter
 (z. B. $xD - 2$ und $D^3$ für $x^2$, beide $C = 4$) sind keine Ambiguität der Daten. Sie werden durch die
 vorab festgelegte Tie-Regel geordnet, hier zugunsten von $xD - 2$. Bleiben dagegen zwei nicht-proportionale
 Operatoren mit **identischem** $(r,d)$ nach allen Tests bestehen, kann die Tie-Regel nicht helfen. Genau dann
-ist `AMBIGUOUS` relevant (in `docs/GATE_2A.md` Kriterium A1). `AMBIGUOUS` ist kein Fehlerzustand.
+ist `AMBIGUOUS` relevant (in `docs/GATE_2A.md` Kriterium A1). Die zweite Quelle ist eine instabile Auswahl:
+Wechselt die gewählte Klasse unter einem parametrischen Bootstrap, stützen die Daten die Wahl nicht
+(Kriterium A2). `AMBIGUOUS` ist kein Fehlerzustand.
 Die vollständige, operationale Zustandsdefinition steht in `docs/GATE_2A.md`.
 
 ## 8. Gate-Folge
