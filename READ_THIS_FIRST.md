@@ -10,7 +10,7 @@ zweites davon. Alles Dauerhafte gehört dorthin, nach `PAPER_1.md` oder ins `DIA
 **Regeln:** wird immer **vollständig überschrieben**, nie angehängt. Was älter als ein paar Tage
 ist, ist vermutlich falsch — dann gilt `CLAUDE.md`.
 
-**Stand: 2026-10-03, ~22:00. Paper-1-Spur im WARTEZUSTAND: alles läuft, nichts ist offen, nichts muss angefasst werden.**
+**Stand: 2026-10-04. Paper-1-Spur im WARTEZUSTAND (Tabelle Stand 03.10.). Methodenspur: Gate 2A eingefroren, Codex baut (WP-G2A).**
 
 **Feste Regeln:** Claude pusht **nie** nach GitLab und nach GitHub nur mit ausdrücklicher Erlaubnis.
 **Keine harten Zeit-Cuts.** Orion-Ergebnisse unter `S:\BigDataOrion\data-science\joedicke\` (nur mit VPN).
@@ -46,28 +46,18 @@ Lokal läuft nichts. 55 GB frei. Working Tree sauber, ~56 Commits nicht gepusht 
 - Einschätzung (Gespräch 03.10.): Das Versuchsdesign hält. Ob die Methode überzeugt, ist offen. Der einzige
   strukturelle Vorteil ist „integrieren statt differenzieren“ unter Rauschen.
 
-## 4. Methodenspur „EvoGrow-next“: Stand 04.10. Übergabe an einen neuen Chat
+## 4. Methodenspur „Idee #1 – Annihilator-Discovery“: Stand 04.10.
 
-**Nichts gebaut, nichts gestartet. Der Worktree ist noch nicht angelegt.** Der Nutzer setzt im neuen Chat fort.
+**Eigener Branch `annihilator-discovery`, Worktree `..\EvoODE-next`** (eigenes VS-Code-Fenster). `main` bleibt hier
+für die Paper-1-Ergebnisse. Der Name `evogrow-next` ist verworfen, weil die Methode keine EvoGrow-Weiterentwicklung ist.
 
-**Führende Idee: minimale Annihilator-Discovery** (Nutzer, verfeinert in der Diskussion mit Claude).
-Aus den Daten wird direkt ein möglichst einfacher linearer Differentialoperator L = Σ p_k(x) D^k mit
-Polynomkoeffizienten rekonstruiert, sodass L[f] ≈ 0. Der symbolische Hypothesenraum entsteht aus dem
-Lösungsraum (D-finite Funktionen, abgeschlossen unter Summe und Produkt). Pipeline: weak operator matrix
-in x → Nullraum per SVD → minimaler Operator ((r, d) von klein nach groß) → Klassifikation → Lösungsraum
-→ symbolisches f. `AMBIGUOUS` ist mathematisch begründet (mehrere Operatoren innerhalb des Rauschbodens).
-**Vollständig in `docs/idea_structural_diagnostics.md`** (Abschnitt „Verfeinerung 04.10.“, mit
-Vorsichtspunkten, Gates, Einschätzung).
+- Leitdokument `docs/IDEA_01_ANNIHILATOR_DISCOVERY.md` (nur auf dem Branch). Löst `idea_structural_diagnostics.md` ab.
+- **`docs/GATE_2A.md` eingefroren**, vom Nutzer abgenommen (E1–E4). Dazu die exakte Vorab-Kontrolle der
+  Referenzklassen (DIARY auf dem Branch, 04.10.).
+- **Codex arbeitet an WP-G2A**: Gate 2A bauen und mit Abnahmetests beweisen, ohne den Gate-Lauf.
+  Danach prüft Claude, und der Gate-Lauf (Hauptlauf + Sensitivitätsraster) läuft lokal. Kein HPC.
+- Kein Gate 2B, bevor 2A bestanden ist. Multiple Shooting und Invarianztest bleiben geparkt (`docs/evogrow_next.md`).
 
-**Nächster Schritt, wenn der Nutzer startet:**
-1. Worktree anlegen: `git worktree add ..\EvoODE-next -b evogrow-next` (eigenes VS-Code-Fenster).
-   `main` bleibt hier für die Paper-1-Ergebnisse.
-2. **Gate 2A** (noch keine ODE, Python/numpy, Codex kann es selbst ausführen): verrauschte Samples
-   bekannter Funktionen inkl. zweier Summen → minimalen Operator blind rekonstruieren. Bestanden/tot laut Dokument.
-3. **Gate 2B** erst danach: 1D-Zeitreihen (Gompertz 7), komplette Pipeline bis zur Generalisierung.
-
-**Zurückgestellt** (in `docs/evogrow_next.md`): Multiple-Shooting-Orakel und Invarianztest
-(Fenster-Ensemble, als E-SINDy/E-WSINDy schon vorhanden; offen bleibt das Invarianzkriterium).
 **Regeln dieser Spur:** von einfach zu komplex; kein GP; nichts mit Gabriel Kronberger (Autorenschaft prüfen).
 Systeme für spätere Gates: Entwicklung 7 / 40 / 56 / 63, verschlossenes Prüfset 4 / 49 / 59 / 62.
-`codex/CURRENT_TASK.md` auf `main`: „Kein aktiver Task“.
+`codex/CURRENT_TASK.md` auf `main`: „Kein aktiver Task“. Der aktive Auftrag liegt auf dem Branch.
