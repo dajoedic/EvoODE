@@ -1,42 +1,45 @@
-# WP-N40 — ODEFormer-Strukturtreffer im Referenz- und Kandidatenraster nachrechnen, WP-N31 neu aggregieren
-**Language: Python**
+# WP-N41 — Orion-Manifest für den Rest von B-04 und für B-05 (C-8 Teil B, Suche mit lockerer Grenze)
+**Language: Julia** (Manifest-YAML, ggf. kleine Erweiterung des Auswahlskripts)
 
 ## Hintergrund
 
-WP-N38 Fortsetzung 3 hat gezeigt: Alle 1.512 Records des Orion-Referenzrasters
-(`analysis/data/paper1_phaseC_v1/odeformer_baseline/reference_orion_55e9c75/records.jsonl`) und
-vermutlich auch des Kandidatenrasters (`candidate_orion_8e0e699`) haben leere `active_terms_*` und
-`structure_hit_* = False`. WP-N31 liest diese Felder direkt
-(`analysis/scripts/aggregate/run_phasec_sindy_baseline.py::build_odeformer_pair_rows`). Damit ist
-**jede ODEFormer-Strukturrate aus WP-N31 ungültig**. Die R²-Raten sind nicht betroffen. Die
-gemeinsame kanonische Expansion existiert seit WP-N38 (`baselines/harness.py`,
-`symbolic_active_terms_by_equation` u. a.). Der Nachberechnungsmodus
-`run_odeformer_noise.py --recompute-structure-fields` scheitert auf dem Rasterformat
-(`KeyError: 'source_initial_condition_set'`).
+Plan §9.6 Teil B: volle EvoGrow-Suchen mit Grenze 1000 bzw. ∞, Seed 42, beide IC-Sets, **saubere
+Daten** (σ = 0, ρ = 0). Die Grenze 10 ist C-1 selbst. Lokal gelaufen sind 6 von 8 Zellen von B-04
+(System 1 komplett, System 24 bei Grenze 1000), Ausgabe `outputs/b04_search_bounds/`. Die beiden
+Zellen **System 24, Grenze ∞, IC 1 und IC 2** wurden vom Laufzeitlimit abgebrochen: Ohne Grenze steigt
+die Zeit je Eval stark, z. B. System 1 IC 1 mit 2.801 s statt 15 s in C-1. Sie gehen deshalb nach Orion,
+zusammen mit **B-05: System 52 und 57, Grenzen 1000 und ∞, IC 1 und 2**.
+
+Der Job umfasst **10 Zellen**: 24 × {IC1, IC2} × ∞ (2), 52 × {IC1, IC2} × {1000, ∞} (4) und
+57 × {IC1, IC2} × {1000, ∞} (4).
 
 ## Umsetzung
 
-1. Nachberechnung für das **Rasterformat** (Referenz und Kandidat): dieselbe Expansion, dieselbe
-   Pruning-Regel und dieselben `true_terms` aus `phase_c_support.json` wie in WP-N38. Am besten ein
-   gemeinsamer Kern, den beide Formate aufrufen. Die Rohdateien unter `analysis/data/…` werden
-   **nicht überschrieben**. Die nachberechneten Records gehen in neue Dateien, z. B.
-   `…/reference_orion_55e9c75/records_structure_recomputed.jsonl`, plus eine Manifest-Notiz mit
-   Datum, Code-Hash und Grund.
-2. WP-N31 neu aggregieren (`run_phasec_sindy_baseline.py`, ODEFormer-Paarung) auf den
-   nachberechneten Records, in ein **neues** Ausgabeverzeichnis. Die alten Ausgaben bleiben liegen.
-   Im Report die alten gegen die neuen Strukturraten je Konfiguration, Dimension und Dreiwege-Klasse,
-   die R²-Raten als Kontrolle (müssen identisch bleiben).
-3. Tests: Ein Rasterrecord für System 1 mit `0.2835 - 0.3557*x_0` ergibt Treffer `[1, u1]`. Ein
-   rationaler Ausdruck wird außerhalb der Basis gezählt, ohne Absturz. Die R²-Felder bleiben
-   unverändert.
+1. Neue Datei `k8s/phase_c_c8_search_b05_job.yaml`. Vorlage ist
+   `k8s/phase_c_robustness_stage3_orion_job.yaml` (Bootstrap → Smoke → indizierter Lauf). Der
+   Bootstrap erzeugt mit `generate_phase_c_manifest.jl --clamp-val <b> --all-dimensions` je Grenze ein
+   sauberes Manifest und wählt daraus die 10 Zeilen aus (Variante `evogrow_v2_2_stage_capped`, Seed 42).
+   Kann `select_phase_c_stage2_manifest.jl` mehrere IC-Sets oder Grenzen noch nicht, erweitern. Die
+   Erweiterung muss für die bisherigen Aufrufe (Stufe 2 und 3) **byte-identisch** dasselbe liefern,
+   mit Test. Die Indizes bleiben wie bisher, die Zellen werden zusammengeführt und neu nummeriert.
+2. **Smoke:** System 1, IC 1, Grenze 1000 (lokal fertig: `outputs/b04_search_bounds/bound_1000/tasks/cell_000001.jsonl`).
+   Er muss bitgleich zu dieser Zelle sein in `loss`, `support_terms`, `total_loss_evals`,
+   `model_terms` und `config_fingerprint`. Die Vergleichsanweisung steht im Report.
+3. Eigene Job-Namen und Labels (`…-c8-search-b05…`), Ausgabebasis
+   `/outputs/phase_c_c8_search_b05_<COMMIT_SHA>`. Kein `activeDeadlineSeconds`.
+4. **Kopfkommentar mit erwarteter Laufzeit:** C-1 brauchte für 52 1,8 h und 1,0 h, für 57 17,2 h und
+   22,5 h. Ohne Grenze kann die Zeit je Eval um ein Vielfaches steigen (Messung oben, B-03-Shard über
+   12 h). **Zellen von System 57 können 24 h deutlich überschreiten.** Steht so im Kommentar, Claude
+   bespricht es vor dem Apply mit dem Nutzer.
+5. `SCRIPTS.md`: Abschnitt mit Apply, Fortschritt und Einsammeln vom NFS, wie bei WP-N37.
 
 ## Verboten
 
-ODEFormer laufen lassen. Rohdateien des Referenz- oder Kandidatenrasters ändern. Pruning-Regel
-anpassen. Git, `oc`, `codex/CURRENT_TASK.md` bearbeiten.
+`src/`, Such- oder Fitpfad ändern. Bestehende Manifeste ändern. `activeDeadlineSeconds`/`timeout`.
+Julia-Läufe über einen Smoke hinaus. Git, `oc`, `codex/CURRENT_TASK.md` bearbeiten.
 
 ## Abnahme
 
-Nachberechnung und Neuaggregation ausgeführt (Python). R²-Raten identisch zur alten Ausgabe.
-Report `codex/reports/REPORT_WP_N40.md` mit der Vergleichstabelle. Tests grün. `STATUS.md` nach
-Protokoll.
+YAML und gegebenenfalls Skripterweiterung samt Test. Report `codex/reports/REPORT_WP_N41.md` mit
+dem Befehl, den Claude ausführen soll: ein lokaler Bootstrap-Trockenlauf, der die 10 ausgewählten
+Zeilen ausgibt (System, IC, Grenze), mit Pass-Kriterium. `STATUS.md` nach Protokoll.
