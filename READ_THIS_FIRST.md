@@ -28,7 +28,7 @@ als `run_in_background`. **Diese Datei bei jedem Statuswechsel aktualisieren.**
 | C-3 | Orion | `221a3a7` | 179/180 | |
 | WP-T1f | Orion | `1db1193` | 30/36 | |
 
-**Tor G entschieden (03.10., Plan §9.4c):** volles Raster (3.366 Zellen), r ↔ Seed r, ungekappt nur bei endlicher Kappe, keine Cuts. **WP-N42 (Codex) bereitet den Rasterlauf vor.** Danach: Manifeste lokal erzeugen, Vorprüfung, aufs NFS, Startzeitpunkt und `parallelism` mit dem Nutzer klären (25–35 Tsd. Kernstunden).
+**Tor G entschieden (03.10., Plan §9.4c):** volles Raster (3.366 Zellen), r ↔ Seed r, ungekappt nur bei endlicher Kappe, keine Cuts. **WP-N42 abgenommen (`b4cbce2`), alles lokal vorbereitet:** Manifest `outputs/phase_c_c6_grid_5dd1df8/` (3.366 Zellen, Kontrollzelle bitgleich zu Stufe 1), Kappenprüfung `stage_caps.csv` (**1.378 Zellen mit endlicher Kappe**), ungekappt erst nur Seed 42 (`outputs/phase_c_c6_grid_uncapped_5dd1df8/indices_seed42_cost_desc.txt`, 461 Zellen, Plan §9.4c Punkt 5), Baseline-Export `outputs/phase_c_c6_data_conditions_5dd1df8/` (4.536 Zeilen, 50 MB). **Noch nicht auf dem NFS, nicht gestartet: Startzeitpunkt und Parallelität entscheidet der Nutzer.** Im Job-YAML Platzhalter `<PARALLELISM>`, `<UNCAPPED_COMPLETIONS>` = 461, und die Indexliste des ungekappten Jobs muss auf `indices_seed42_cost_desc.txt` zeigen.
 
 **B-04 lokal 6/8 (DIARY 03.10.):** dasselbe Ergebnis wie C-1, ∞ macht einzelne Evals extrem langsam. Rest (System 24, ∞) und B-05 (52, 57) laufen seit 03.10. auf Orion (WP-N41).
 
