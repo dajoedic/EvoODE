@@ -980,7 +980,7 @@ the coupled search path 1e-6 is the cheaper, behaviour-equal tolerance; the Syst
   the weakness sits in the surrogates: on the **30 fully representable systems EvoGrow generalizes
   best of the three** (45.6 % vs ODEFormer 32.8 %, SINDy 31.7–43.3 %), on partially representable
   ones it is mid-field (30.1 % vs 32.3 % and 21.0–43.5 %)
-- **ODEFormer structure hits were never computed (found 2026-10-02, WP-N38).** All 1,512 Orion
+- ~~**ODEFormer structure hits were never computed (found 2026-10-02, WP-N38).**~~ **Repaired 2026-10-03 (WP-N40, `bec1e5c`):** recomputed into sidecars next to the raw grids, WP-N31 re-aggregated to `outputs/phase_c_campaign_221a3a7/agg/odeformer_n40_{reference,candidate}/`, R² rates identical. ODEFormer structure hit on fully representable systems: dim 1 36–41 %, dim 2 10 %, per configuration. Original note: All 1,512 Orion
   reference records carry empty `active_terms_raw` and `structure_hit_* = False`, and WP-N31 reads
   those fields directly, so **every ODEFormer structure rate from WP-N31 is invalid** (not zero —
   uncomputed). R² rates are unaffected; no structure rate is cited. Repair: recompute the reference

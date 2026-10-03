@@ -6,6 +6,15 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ## 2026-10-03
 
+### WP-N40: ODEFormer-Strukturtreffer im Referenzraster nachgerechnet
+
+Mit derselben kanonischen Expansion wie WP-N38, als Sidecar neben den unveränderten Rohdaten
+(`records_structure_recomputed.*`). Referenzraster: 126 rohe bzw. 129 geprunte Treffer von 1.512
+Records, 852 Records mit Termen außerhalb der Basis. Kandidatenraster: 132/132, 824. WP-N31 ist
+neu aggregiert, die R²-Raten sind identisch (max. Delta 0). Strukturtreffer auf den voll
+repräsentierbaren Systemen, je Konfiguration: **dim 1 36–41 %, dim 2 10 %**, in Rekonstruktion und
+Generalisierung gleich, weil die Struktur nicht von der Richtung abhängt. Bisher stand dort überall 0.
+
 ### Tor B3: C-8-Orakel komplett (540 Refits). Nach der eingefrorenen Regel ist `[-1000, 1000]` der Start der nächsten Version, nicht „unbeschränkt“
 
 B-02 (dim 1/2) und B-03 (dim 3/4) sind komplett, je Grenze 180 Refits, Orion `5dd1df8`.
