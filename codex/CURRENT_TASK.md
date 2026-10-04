@@ -28,6 +28,11 @@ hat Claude bereits gebaut, der Cache liegt unter `results/oracle_reference.json`
      Referenzklasse mit 60 Stellen), $|L^*[\tilde f]|$ auf 200 Punkten unter $10^{-25}$ relativ zu
      $\max_k \|c_k \tilde f^{(k)}\|$.
 
+   **Bekannt (Claude, aus dem Cache):** Für F10 weicht $n_{\text{exact}}$ zwischen breit und schmal in
+   (4,6), (5,6) und (6,6) um je 1 ab, vermutlich ein Präzisionsartefakt der schmalen Domäne.
+   $n_{\text{exact}} > 0$ ist überall gleich. Das wird im JSON und im Report als nicht bestandener
+   Teilpunkt ausgewiesen, mit den Zahlen. Allein deshalb wird **nicht** `blocked` gemeldet. Die
+   Entscheidung darüber trifft der Nutzer.
    Alle Einzelergebnisse und ein Gesamt-`passed` gehen ins JSON. Die schwächere Prüfung in
    `oracle._verify_reference` darf bleiben, ersetzt den Abnahmepunkt aber nicht.
 2. **`accept_02_weak_strong.py`** prüft bisher nur die Annihilation. Verlangt ist der Vergleich mit der
