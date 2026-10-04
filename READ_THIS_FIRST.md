@@ -66,6 +66,8 @@ für die Paper-1-Ergebnisse. Der Name `evogrow-next` ist verworfen, weil die Met
   - **04.10.: v2 eingefroren und vom Nutzer abgenommen** (`docs/GATE_2A_v2.md`, Begründung `docs/GATE_2A_v2_RATIONALE.md`,
     Branch `7609529`). Vor dem Einfrieren auf K5 gemessen: Der Matrixfehler hatte zwei Ursachen, Rundung der Monomdarstellung
     und Quadratur. Beide sind in v2 behoben.
+  - **Externes Review 04.10. eingearbeitet, vor jedem Lauf** (Branch `50bdf57`): FNS/AML-Begriffe, A3 als projektive
+    Winkelunsicherheit, Kalibrier-Set um K7/K8 (Ordnung 5/6) erweitert, Hold-out-Hinweis. Codex wurde dafür angehalten und neu gestartet.
   - **Läuft: Codex WP-G2A2-a** im Worktree `EvoODE-next`: Code unter `experiments/annihilator_gate2a_v2/`, Orakel mit 100
     Stellen, Stufe K → Anhang A, dann Stopp. **Nächster Schritt danach: Der Nutzer nimmt Anhang A ab.** Erst dann Abnahme
     auf F1–F10 und Gate-Lauf (eigenes Arbeitspaket).
