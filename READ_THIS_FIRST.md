@@ -10,7 +10,7 @@ zweites davon. Alles Dauerhafte gehört dorthin, nach `PAPER_1.md` oder ins `DIA
 **Regeln:** wird immer **vollständig überschrieben**, nie angehängt. Was älter als ein paar Tage
 ist, ist vermutlich falsch — dann gilt `CLAUDE.md`.
 
-**Stand: 2026-10-04. Paper-1-Spur im WARTEZUSTAND (Tabelle Stand 03.10.). Methodenspur: **GATE_2A_v2 eingefroren, WP-G2A2-a (Implementierung + Kalibrierstufe K) läuft bei Codex** (§4).**
+**Stand: 2026-10-05. Paper-1-Spur im WARTEZUSTAND (Tabelle Stand 03.10.). Methodenspur: **Gate 2A v2 an K-c gescheitert (FNS-Fehler), v3 freigegeben, Codex baut WP-G2A3-a** (§4).**
 
 **Feste Regeln:** Claude pusht **nie** nach GitLab und nach GitHub nur mit ausdrücklicher Erlaubnis.
 **Keine harten Zeit-Cuts.** Orion-Ergebnisse unter `S:\BigDataOrion\data-science\joedicke\` (nur mit VPN).
@@ -68,6 +68,11 @@ für die Paper-1-Ergebnisse. Der Name `evogrow-next` ist verworfen, weil die Met
     und Quadratur. Beide sind in v2 behoben.
   - **Externes Review 04.10. eingearbeitet, vor jedem Lauf** (Branch `50bdf57`): FNS/AML-Begriffe, A3 als projektive
     Winkelunsicherheit, Kalibrier-Set um K7/K8 (Ordnung 5/6) erweitert, Hold-out-Hinweis. Codex wurde dafür angehalten und neu gestartet.
+  - **05.10. nachts:** v2-Stufe K: K-a/K-b bestanden ($\ell_{\max}=4$, $\tau=3.4\cdot10^{-7}$), **K-c gescheitert**, weil FNS
+    Sattelpunkte findet statt Minima. Mit L-BFGS sind Ordnung 1–3 repariert. Ab Ordnung 4 sind die Koeffizienten bei 1 % nicht
+    identifizierbar. Airy/Bessel sind schon breit N1, **bei F4/F5 droht K6**. **v3 vom Nutzer freigegeben** (`docs/GATE_2A_v3.md`,
+    Branch `140430a`). Codex baut WP-G2A3-a. Danach startet Claude Stufe K ohne Zeitgrenze (Nutzer), dann Abnahme Anhang A durch
+    den Nutzer, dann Anhang B (erstes echtes Signal zu K6).
   - **04.10. mittags: Codex-Nutzungslimit erreicht** (wieder frei ab 15:02). WP-G2A2-a ist angefangen, der Code liegt uncommittet unter
     `experiments/annihilator_gate2a_v2/`, noch kein Lauf. Danach denselben `codex exec`-Befehl im Worktree `EvoODE-next` neu starten.
   - **Angehalten: Codex WP-G2A2-a** im Worktree `EvoODE-next`: Code unter `experiments/annihilator_gate2a_v2/`, Orakel mit 100
