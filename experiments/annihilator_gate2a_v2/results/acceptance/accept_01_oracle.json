@@ -1,0 +1,5 @@
+{
+  "limit": true,
+  "note": "Limit mode validates the acceptance entry point only; the full oracle command builds the 100-digit cache.",
+  "passed": true
+}
