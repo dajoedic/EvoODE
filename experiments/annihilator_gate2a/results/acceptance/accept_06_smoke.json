@@ -1,0 +1,97 @@
+{
+  "early_function_seconds": 2.3133532000065316,
+  "late_function_seconds": 79.54984610000974,
+  "limit": false,
+  "main_workload": {
+    "estimated_seconds": {
+      "workers_1": 23430.48384452625,
+      "workers_8": 2928.8104805657813
+    },
+    "rows": 820
+  },
+  "measured_rows": [
+    {
+      "A1": false,
+      "B": 8,
+      "B_boot": 50,
+      "C": 2,
+      "M": 16,
+      "N": 2000,
+      "T": 47.506312553276885,
+      "alpha": 0.01,
+      "bootstrap_share": 1.0,
+      "bootstrap_threshold": 0.8,
+      "coeff_angle": 0.00426817546299023,
+      "critical": 93.21685966023843,
+      "dof": 64,
+      "domain": "wide",
+      "eta": 0.01,
+      "function": "F2",
+      "git_hash": "unavailable",
+      "q": 8,
+      "runtime_seconds": 2.3133532000065316,
+      "seed": 0,
+      "selected_d": 0,
+      "selected_r": 1,
+      "sigma_floor_factor": 1e-08,
+      "sigma_min": 0.01613844287111018,
+      "sigma_second_min": 1.7417807167174755,
+      "state": "CORRECT",
+      "tested_classes": 1,
+      "transfer_passed": "",
+      "variant": "standard"
+    },
+    {
+      "A1": false,
+      "B": 8,
+      "B_boot": 50,
+      "C": 16,
+      "M": 16,
+      "N": 2000,
+      "T": 13.700060800308785,
+      "alpha": 0.01,
+      "bootstrap_share": 0.12,
+      "bootstrap_threshold": 0.8,
+      "coeff_angle": "",
+      "critical": 57.3420734338592,
+      "dof": 35,
+      "domain": "wide",
+      "eta": 0.0,
+      "function": "F10",
+      "git_hash": "unavailable",
+      "q": 8,
+      "runtime_seconds": 79.54984610000974,
+      "seed": 0,
+      "selected_d": 3,
+      "selected_r": 3,
+      "sigma_floor_factor": 1e-08,
+      "sigma_min": 1.2827535667633649e-08,
+      "sigma_second_min": 3.543832138936883e-08,
+      "state": "AMBIGUOUS",
+      "tested_classes": 23,
+      "transfer_passed": "",
+      "variant": "standard"
+    }
+  ],
+  "per_function_estimated_seconds": {
+    "F1": 17.760651780007173,
+    "F10": 79.54984610000974,
+    "F2": 2.3133532000065316,
+    "F3": 17.760651780007173,
+    "F4": 33.207950360007814,
+    "F5": 48.655248940008455,
+    "F6": 17.760651780007173,
+    "F7": 10.037002490006852,
+    "F8": 33.207950360007814,
+    "F9": 25.484301070007493
+  },
+  "runtime_seconds": 81.86323000001721,
+  "sensitivity_grid": {
+    "estimated_seconds": {
+      "workers_1": 132010.7748313552,
+      "workers_8": 16501.3468539194
+    },
+    "rows_per_variant": 420,
+    "variants": 11
+  }
+}

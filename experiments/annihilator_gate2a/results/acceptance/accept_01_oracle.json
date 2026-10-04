@@ -1,0 +1,477 @@
+{
+  "expected_metadata": {
+    "method": "sympy_derivatives_mpmath_svd",
+    "points": 120,
+    "precision_digits": 60,
+    "relative_threshold": 1e-35
+  },
+  "f10_high_precision": {
+    "narrow": {
+      "coeffs_30_digits": [
+        "0.0010627290244668325127438629204546",
+        "0.0010627290244668325127438629204546",
+        "0.053136451223341625637193146022728",
+        "2.4136733705193257342628353670377e-52",
+        "0.023616200543707389172085842676768",
+        "0.023616200543707389172085842676768",
+        "0.65600557065853858811349562991022",
+        "1.8365953714679105458228391891558e-51",
+        "0.13120111413170771762269912598204",
+        "0.13120111413170771762269912598204",
+        "0.7288950785094873201261062554558",
+        "-2.4274233219290184423810463526944e-53"
+      ],
+      "max_relative_residual": "6.5358037367225088134e-60",
+      "passed": true,
+      "threshold": 1e-25,
+      "worst_z": "-1.0"
+    },
+    "wide": {
+      "coeffs_30_digits": [
+        "0.0",
+        "0.87593148827928283589567895024594",
+        "0.43796574413964141794783947512297",
+        "-9.1399777248165858039778642930514e-59",
+        "-1.9048260827078088444211283564618e-59",
+        "0.19465144183984063019903976672132",
+        "0.054069844955511286166399935200367",
+        "-1.1454237495813163954712042898989e-59",
+        "-4.6672614583958562803580480403351e-61",
+        "0.010813968991102257233279987040073",
+        "0.00060077605506123651295999928000407",
+        "-7.7787690973264271339300800672252e-62"
+      ],
+      "max_relative_residual": "1.147028509148724702e-58",
+      "passed": true,
+      "threshold": 1e-25,
+      "worst_z": "0.025125628140703517588"
+    }
+  },
+  "f10_high_precision_passed": true,
+  "f10_presence_differences": {
+    "F10": []
+  },
+  "limit": false,
+  "metadata": {
+    "method": "sympy_derivatives_mpmath_svd",
+    "points": 120,
+    "precision_digits": 60,
+    "relative_threshold": 1e-35
+  },
+  "metadata_ok": true,
+  "n_exact_table_differences": {
+    "F1": [],
+    "F10": [
+      {
+        "class": [
+          4,
+          6
+        ],
+        "narrow": 11,
+        "wide": 10
+      },
+      {
+        "class": [
+          5,
+          6
+        ],
+        "narrow": 17,
+        "wide": 16
+      },
+      {
+        "class": [
+          6,
+          6
+        ],
+        "narrow": 23,
+        "wide": 22
+      }
+    ],
+    "F2": [],
+    "F3": [],
+    "F4": [],
+    "F5": [],
+    "F6": [],
+    "F7": [],
+    "F8": [],
+    "F9": []
+  },
+  "n_exact_table_passed": false,
+  "passed": false,
+  "reference_records": {
+    "F1": {
+      "narrow": {
+        "expected_reference_class": [
+          1,
+          1
+        ],
+        "reference_class": [
+          1,
+          1
+        ],
+        "reference_class_ok": true,
+        "reference_n_exact": 1,
+        "reference_n_exact_one": true
+      },
+      "wide": {
+        "expected_reference_class": [
+          1,
+          1
+        ],
+        "reference_class": [
+          1,
+          1
+        ],
+        "reference_class_ok": true,
+        "reference_n_exact": 1,
+        "reference_n_exact_one": true
+      }
+    },
+    "F10": {
+      "narrow": {
+        "expected_reference_class": [
+          5,
+          1
+        ],
+        "reference_class": [
+          5,
+          1
+        ],
+        "reference_class_ok": true,
+        "reference_n_exact": 1,
+        "reference_n_exact_one": true
+      },
+      "wide": {
+        "expected_reference_class": [
+          5,
+          1
+        ],
+        "reference_class": [
+          5,
+          1
+        ],
+        "reference_class_ok": true,
+        "reference_n_exact": 1,
+        "reference_n_exact_one": true
+      }
+    },
+    "F2": {
+      "narrow": {
+        "expected_reference_class": [
+          1,
+          0
+        ],
+        "reference_class": [
+          1,
+          0
+        ],
+        "reference_class_ok": true,
+        "reference_n_exact": 1,
+        "reference_n_exact_one": true
+      },
+      "wide": {
+        "expected_reference_class": [
+          1,
+          0
+        ],
+        "reference_class": [
+          1,
+          0
+        ],
+        "reference_class_ok": true,
+        "reference_n_exact": 1,
+        "reference_n_exact_one": true
+      }
+    },
+    "F3": {
+      "narrow": {
+        "expected_reference_class": [
+          1,
+          1
+        ],
+        "reference_class": [
+          1,
+          1
+        ],
+        "reference_class_ok": true,
+        "reference_n_exact": 1,
+        "reference_n_exact_one": true
+      },
+      "wide": {
+        "expected_reference_class": [
+          1,
+          1
+        ],
+        "reference_class": [
+          1,
+          1
+        ],
+        "reference_class_ok": true,
+        "reference_n_exact": 1,
+        "reference_n_exact_one": true
+      }
+    },
+    "F4": {
+      "narrow": {
+        "expected_reference_class": [
+          2,
+          1
+        ],
+        "reference_class": [
+          2,
+          1
+        ],
+        "reference_class_ok": true,
+        "reference_n_exact": 1,
+        "reference_n_exact_one": true
+      },
+      "wide": {
+        "expected_reference_class": [
+          2,
+          1
+        ],
+        "reference_class": [
+          2,
+          1
+        ],
+        "reference_class_ok": true,
+        "reference_n_exact": 1,
+        "reference_n_exact_one": true
+      }
+    },
+    "F5": {
+      "narrow": {
+        "expected_reference_class": [
+          3,
+          1
+        ],
+        "reference_class": [
+          3,
+          1
+        ],
+        "reference_class_ok": true,
+        "reference_n_exact": 1,
+        "reference_n_exact_one": true
+      },
+      "wide": {
+        "expected_reference_class": [
+          3,
+          1
+        ],
+        "reference_class": [
+          3,
+          1
+        ],
+        "reference_class_ok": true,
+        "reference_n_exact": 1,
+        "reference_n_exact_one": true
+      }
+    },
+    "F6": {
+      "narrow": {
+        "expected_reference_class": [
+          1,
+          1
+        ],
+        "reference_class": [
+          1,
+          1
+        ],
+        "reference_class_ok": true,
+        "reference_n_exact": 1,
+        "reference_n_exact_one": true
+      },
+      "wide": {
+        "expected_reference_class": [
+          1,
+          1
+        ],
+        "reference_class": [
+          1,
+          1
+        ],
+        "reference_class_ok": true,
+        "reference_n_exact": 1,
+        "reference_n_exact_one": true
+      }
+    },
+    "F7": {
+      "narrow": {
+        "expected_reference_class": [
+          2,
+          0
+        ],
+        "reference_class": [
+          2,
+          0
+        ],
+        "reference_class_ok": true,
+        "reference_n_exact": 1,
+        "reference_n_exact_one": true
+      },
+      "wide": {
+        "expected_reference_class": [
+          2,
+          0
+        ],
+        "reference_class": [
+          2,
+          0
+        ],
+        "reference_class_ok": true,
+        "reference_n_exact": 1,
+        "reference_n_exact_one": true
+      }
+    },
+    "F8": {
+      "narrow": {
+        "expected_reference_class": [
+          1,
+          2
+        ],
+        "reference_class": [
+          1,
+          2
+        ],
+        "reference_class_ok": true,
+        "reference_n_exact": 1,
+        "reference_n_exact_one": true
+      },
+      "wide": {
+        "expected_reference_class": [
+          1,
+          2
+        ],
+        "reference_class": [
+          1,
+          2
+        ],
+        "reference_class_ok": true,
+        "reference_n_exact": 1,
+        "reference_n_exact_one": true
+      }
+    },
+    "F9": {
+      "narrow": {
+        "expected_reference_class": [
+          4,
+          0
+        ],
+        "reference_class": [
+          4,
+          0
+        ],
+        "reference_class_ok": true,
+        "reference_n_exact": 1,
+        "reference_n_exact_one": true
+      },
+      "wide": {
+        "expected_reference_class": [
+          4,
+          0
+        ],
+        "reference_class": [
+          4,
+          0
+        ],
+        "reference_class_ok": true,
+        "reference_n_exact": 1,
+        "reference_n_exact_one": true
+      }
+    }
+  },
+  "runtime_seconds": 1.617171399993822,
+  "symbolic_verification": {
+    "F1": {
+      "narrow": {
+        "passed": true,
+        "residual": "0"
+      },
+      "wide": {
+        "passed": true,
+        "residual": "0"
+      }
+    },
+    "F2": {
+      "narrow": {
+        "passed": true,
+        "residual": "0"
+      },
+      "wide": {
+        "passed": true,
+        "residual": "0"
+      }
+    },
+    "F3": {
+      "narrow": {
+        "passed": true,
+        "residual": "0"
+      },
+      "wide": {
+        "passed": true,
+        "residual": "0"
+      }
+    },
+    "F4": {
+      "narrow": {
+        "passed": true,
+        "residual": "0"
+      },
+      "wide": {
+        "passed": true,
+        "residual": "0"
+      }
+    },
+    "F5": {
+      "narrow": {
+        "passed": true,
+        "residual": "0"
+      },
+      "wide": {
+        "passed": true,
+        "residual": "0"
+      }
+    },
+    "F6": {
+      "narrow": {
+        "passed": true,
+        "residual": "0"
+      },
+      "wide": {
+        "passed": true,
+        "residual": "0"
+      }
+    },
+    "F7": {
+      "narrow": {
+        "passed": true,
+        "residual": "0"
+      },
+      "wide": {
+        "passed": true,
+        "residual": "0"
+      }
+    },
+    "F8": {
+      "narrow": {
+        "passed": true,
+        "residual": "0"
+      },
+      "wide": {
+        "passed": true,
+        "residual": "0"
+      }
+    },
+    "F9": {
+      "narrow": {
+        "passed": true,
+        "residual": "0"
+      },
+      "wide": {
+        "passed": true,
+        "residual": "0"
+      }
+    }
+  },
+  "symbolic_verification_passed": true
+}

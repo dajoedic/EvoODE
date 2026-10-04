@@ -1,0 +1,77 @@
+{
+  "limit": false,
+  "n": 200000,
+  "passed": false,
+  "records": {
+    "F2": {
+      "class": [
+        1,
+        0
+      ],
+      "oracle": {
+        "difference_norm": 6.385615341286876e-10,
+        "passed": true,
+        "strong_norm": 1.2966734278492653e-16,
+        "strong_relative_error": 4924613.402372572,
+        "weak_annihilation_relative": 1.709590073253837e-10,
+        "weak_norm": 6.385615341118857e-10
+      },
+      "passed": true,
+      "random_seed_0": {
+        "difference_norm": 1.4627221999891058e-09,
+        "passed": true,
+        "strong_norm": 1.752482793368472,
+        "strong_relative_error": 8.346570965056877e-10,
+        "weak_annihilation_relative": 0.46918378684649814,
+        "weak_norm": 1.7524827933686729
+      }
+    },
+    "F4": {
+      "class": [
+        2,
+        1
+      ],
+      "oracle": {
+        "difference_norm": 7.440055041465006e-09,
+        "passed": false,
+        "strong_norm": 3.607616348515994e-17,
+        "strong_relative_error": 206231880.6301424,
+        "weak_annihilation_relative": 1.3969531743861472e-08,
+        "weak_norm": 7.440055041470671e-09
+      },
+      "passed": false,
+      "random_seed_0": {
+        "difference_norm": 3.843624480426012e-09,
+        "passed": true,
+        "strong_norm": 0.4263382196286775,
+        "strong_relative_error": 9.015434937486124e-09,
+        "weak_annihilation_relative": 0.8004974774420524,
+        "weak_norm": 0.4263382196288995
+      }
+    },
+    "F9": {
+      "class": [
+        4,
+        0
+      ],
+      "oracle": {
+        "difference_norm": 0.000437387965966481,
+        "passed": false,
+        "strong_norm": 0.0,
+        "strong_relative_error": 4.37387965966481e+296,
+        "weak_annihilation_relative": 4.411116825849872e-05,
+        "weak_norm": 0.000437387965966481
+      },
+      "passed": false,
+      "random_seed_0": {
+        "difference_norm": 0.0005879104783159624,
+        "passed": false,
+        "strong_norm": 2.62462211541923,
+        "strong_relative_error": 0.00022399814238479646,
+        "weak_annihilation_relative": 0.2646967103900687,
+        "weak_norm": 2.6246222969446045
+      }
+    }
+  },
+  "runtime_seconds": 50.4380766999966
+}

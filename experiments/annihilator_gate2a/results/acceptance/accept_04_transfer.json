@@ -1,0 +1,56 @@
+{
+  "limit": false,
+  "records": {
+    "F1": {
+      "angle": 0.0,
+      "class_matches": true,
+      "passed": true
+    },
+    "F10": {
+      "angle": 0.0,
+      "class_matches": true,
+      "passed": true
+    },
+    "F2": {
+      "angle": 0.0,
+      "class_matches": true,
+      "passed": true
+    },
+    "F3": {
+      "angle": 0.0,
+      "class_matches": true,
+      "passed": true
+    },
+    "F4": {
+      "angle": 0.0,
+      "class_matches": true,
+      "passed": true
+    },
+    "F5": {
+      "angle": 0.0,
+      "class_matches": true,
+      "passed": true
+    },
+    "F6": {
+      "angle": 0.0,
+      "class_matches": true,
+      "passed": true
+    },
+    "F7": {
+      "angle": 0.0,
+      "class_matches": true,
+      "passed": true
+    },
+    "F8": {
+      "angle": 0.0,
+      "class_matches": true,
+      "passed": true
+    },
+    "F9": {
+      "angle": 0.0,
+      "class_matches": true,
+      "passed": true
+    }
+  },
+  "runtime_seconds": 0.0328610000142362
+}
