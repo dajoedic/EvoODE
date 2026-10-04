@@ -7,6 +7,7 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 ## 2026-10-04
 
 ### Gate 2A v2 entworfen (Nutzer: Option (a)), wartet auf Abnahme
+<!-- 5f6ac25 -->
 
 `docs/GATE_2A_v2.md`, v1 bleibt eingefroren. Jede Änderung folgt aus einem Befund der v1-Abnahme. Keine wird an
 F1–F10 eingestellt:
