@@ -10,7 +10,7 @@ zweites davon. Alles Dauerhafte gehört dorthin, nach `PAPER_1.md` oder ins `DIA
 **Regeln:** wird immer **vollständig überschrieben**, nie angehängt. Was älter als ein paar Tage
 ist, ist vermutlich falsch — dann gilt `CLAUDE.md`.
 
-**Stand: 2026-10-04. Paper-1-Spur im WARTEZUSTAND (Tabelle Stand 03.10.). Methodenspur: Gate 2A eingefroren, Codex baut (WP-G2A).**
+**Stand: 2026-10-04. Paper-1-Spur im WARTEZUSTAND (Tabelle Stand 03.10.). Methodenspur: Gate 2A eingefroren, Implementierung in Abnahme (§4).**
 
 **Feste Regeln:** Claude pusht **nie** nach GitLab und nach GitHub nur mit ausdrücklicher Erlaubnis.
 **Keine harten Zeit-Cuts.** Orion-Ergebnisse unter `S:\BigDataOrion\data-science\joedicke\` (nur mit VPN).
@@ -54,8 +54,17 @@ für die Paper-1-Ergebnisse. Der Name `evogrow-next` ist verworfen, weil die Met
 - Leitdokument `docs/IDEA_01_ANNIHILATOR_DISCOVERY.md` (nur auf dem Branch). Löst `idea_structural_diagnostics.md` ab.
 - **`docs/GATE_2A.md` eingefroren**, vom Nutzer abgenommen (E1–E4). Dazu die exakte Vorab-Kontrolle der
   Referenzklassen (DIARY auf dem Branch, 04.10.).
-- **Codex arbeitet an WP-G2A**: Gate 2A bauen und mit Abnahmetests beweisen, ohne den Gate-Lauf.
-  Danach prüft Claude, und der Gate-Lauf (Hauptlauf + Sensitivitätsraster) läuft lokal. Kein HPC.
+- **Stand Gate 2A, 04.10. ~02:05: Implementierung im Worktree, uncommittet, noch nicht abgenommen.**
+  - WP-G2A (`blocked`): nur ein Gerüst, zu langsam (Tensor pro Klasse neu gebaut), Orakel in Doppelpräzision.
+  - WP-G2A-b (`blocked` am 15-min-Limit): Tensor gecacht, Orakel mit 60 Stellen, Transfer und K1–K4 eingebaut.
+    Claudes Code-Prüfung: Die Kernformeln (Kandidat, Störungspropagation, Kovarianz, A1/A2, Transfer-Matrix)
+    entsprechen der Spezifikation. **Aber die Abnahmeskripte prüfen nicht, was verlangt ist:** Test 2 ohne starke
+    Form, Test 3 (Kovarianz-Monte-Carlo) mit wahrem c* statt geschätztem ĉ, Test 5 nicht 1 gegen 4 Worker. Dazu
+    kommen K2, das 5-%-Zellen mitzählt, und der Transfer ohne Kovarianz.
+  - **Claude baut das Orakel lokal** (`accept_01_oracle`, Hintergrund). Danach geht **WP-G2A-c** an Codex
+    (Auftrag liegt im Worktree, noch nicht gestartet): genau diese sieben Korrekturen, alle Abnahmetests ausführen.
+  - Noch kein Gate-Lauf. Erst wenn die Abnahme steht, startet Claude den Hauptlauf und das Raster lokal.
+    Liegt die Hochrechnung über 1 h, fragt Claude vorher.
 - Kein Gate 2B, bevor 2A bestanden ist. Multiple Shooting und Invarianztest bleiben geparkt (`docs/evogrow_next.md`).
 
 **Regeln dieser Spur:** von einfach zu komplex; kein GP; nichts mit Gabriel Kronberger (Autorenschaft prüfen).
