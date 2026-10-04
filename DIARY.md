@@ -14,7 +14,10 @@ Orakel v2 (100 Stellen, 7 min mit 8 Workern nach dem Airy-Fix WP-G2A2-c):
 - **Neue** Artefakte bei K7/K8 schmal in hohen Klassen.
 - Die Verifikation der v2-Implementierung rechnet in float. Deshalb scheitern F10 und K4 formal.
 
-Stufe K v2 (N = 2000, 1.000 Realisierungen, 8 Teile, Teile 1–7 je ~1 h, Teil 0 mit Clean-Suche läuft noch):
+Stufe K v2 (N = 2000, 1.000 Realisierungen, 8 Teile, Teile 1–7 je ~1 h). **Teil 0 mit der Clean-Suche wurde
+nach 2 h vom Zeitlimit der Werkzeugumgebung beendet, ohne Ausgabe.** Es gibt keinen zusammengeführten Anhang A von
+v2. Der K-c-Befund steht in den Teildateien 1–7. Die Teildateien, der Orakel-Cache und die Orakel-Abnahme sind
+committet. Teil 0 wird nicht nachgerechnet, weil v2 abgelöst ist:
 - **K-a:** $\ell_{\max} = 4$, max. Fehler $8\cdot10^{-10}$.
 - **K-b:** $\tau = 3.4\cdot10^{-7}$ (K8).
 - **Ex-ante, breit, 1 %:** K1, K2, K6, K8 I; **K3 und K4 N1** (ein Operator (4,0) ist datenkonsistent, Güte 0,27
