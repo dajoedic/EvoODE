@@ -6,6 +6,23 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ## 2026-10-04
 
+### Gate 2A v2 nach externem Review ergänzt, vor jedem Lauf; Codex neu gestartet
+
+Das Review (Nutzer, 04.10.) hält v2 für überzeugend und nicht für Schönrechnen. Vor dem Freeze verlangte es drei
+Punkte, alle umgesetzt:
+1. FNS heißt FNS/AML (heteroskedastischer Errors-in-Variables-Schätzer). Die Kovarianz ist eine asymptotische
+   Näherung erster Ordnung, nicht exakt.
+2. A3 ist als projektive Winkelunsicherheit $\theta_{\hat c}$ definiert: Repräsentant $\|c\|_2 = 1$ zur Basis
+   $z^jD_z^k$, Tangentialraum, basisabhängig und deshalb festgeschrieben. 0,1 rad ist eine operative Heuristik.
+3. Das Kalibrier-Set reicht jetzt bis Ordnung 6: K7 $= 1+\sin x+\cos 2x$ (5,0) und K8 $= \sin x+\sin 2x+\sin 3x$ (6,0),
+   vorab von Claude mit 50 Stellen bestätigt (beide Domänen, Nullraumdimension 1). Beide dienen nur der numerischen
+   Infrastruktur.
+
+Dazu: „v2 ist strenger“ abgeschwächt zu „in mehreren Richtungen strengere Kill-Kriterien“, und für eine spätere
+Erfolgsbehauptung ist ein neues, versiegeltes Funktions-Hold-out-Set nötig. Die laufende Codex-Sitzung (WP-G2A2-a)
+wurde dafür angehalten, Stufe K war noch nicht gerechnet. Die Kindprozess-Geistersitzung wurde gezielt beendet.
+Neustart mit ergänztem Auftrag, der auf dem angefangenen Code aufsetzt.
+
 ### Gate 2A v2 eingefroren, WP-G2A2-a an Codex; zweite Ursache des Matrixfehlers gefunden
 <!-- 7609529 -->
 

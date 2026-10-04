@@ -5,6 +5,15 @@ Grundlage, **wörtlich verbindlich:** `docs/GATE_2A_v2.md` (eingefroren am 2026-
 gegenüber v1: `docs/GATE_2A_v2_RATIONALE.md`. Wo dieser Auftrag und die Spezifikation voneinander abweichen, gilt
 die Spezifikation. Melde jede solche Stelle im Report.
 
+**Neustart nach Ergänzung (04.10.):** Eine erste Sitzung zu diesem Auftrag wurde angehalten, weil die Spezifikation
+nach einem externen Review vor jedem Lauf ergänzt wurde (Begründung §3.11). Geändert hat sich: das Kalibrier-Set ist
+jetzt **K1–K8** (K7, K8 neu, nur für die numerische Infrastruktur, siehe §2b und §10); A3 heißt jetzt projektive
+Winkelunsicherheit $\theta_{\hat c}$ mit festgelegtem Repräsentanten und festgelegter Basis (§6); FNS heißt
+FNS/AML, die Kovarianz asymptotisch erster Ordnung (§6). **Ein angefangener Stand liegt bereits unter
+`experiments/annihilator_gate2a_v2/` (uncommittet).** Lies ihn, prüfe ihn gegen die aktuelle Spezifikation und baue
+darauf weiter. Alles, was dort schon unter `results/` liegt, ist vor der Ergänzung entstanden und wird verworfen und
+neu erzeugt.
+
 Dieser Auftrag umfasst die Stufen **Orakel → Stufe K → Anhang A** aus §14 E9 und endet dort. Die Abnahme auf dem
 Gate-Set (§11), Anhang B und der Gate-Lauf sind ein späteres Arbeitspaket. **F1–F10 werden in diesem Auftrag nicht
 gerechnet**, außer im Orakel (§3).
@@ -19,11 +28,11 @@ gerechnet**, außer im Orakel (§3).
 
 ## Umzusetzen
 
-1. **Konfiguration:** alle Konstanten aus §4–§6 und §13 der Spezifikation, das Kalibrier-Set K1–K6 aus §2b mit
+1. **Konfiguration:** alle Konstanten aus §4–§6 und §13 der Spezifikation, das Kalibrier-Set K1–K8 aus §2b mit
    Domänen, und die Varianten S1–S16. $\ell_{\max}$ und $\tau$ sind **keine** Konstanten im Code. Sie werden aus
    Anhang A gelesen, sobald dieser existiert. Vorher wird nur Stufe K gerechnet, die beide Größen erst bestimmt.
-2. **Funktionen:** K1–K6 numerisch (SciPy für Ai und $J_0$) und symbolisch (SymPy) wie F1–F10.
-3. **Orakel (§3):** 100 Stellen, mindestens 200 Punkte, Schwelle $10^{-60}$, für F1–F10 und K1–K6 auf beiden
+2. **Funktionen:** K1–K8 numerisch (SciPy für Ai und $J_0$) und symbolisch (SymPy) wie F1–F10.
+3. **Orakel (§3):** 100 Stellen, mindestens 200 Punkte, Schwelle $10^{-60}$, für F1–F10 und K1–K8 auf beiden
    Domänen. Eigener Cache `results/oracle_reference_v2.json` mit Metadaten zu Präzision, Punkten, Schwelle und
    Laufzeit. Die Pflichtprüfungen aus §3 kommen als `acceptance/accept_01_oracle.py` mit JSON. Darin steht auch der
    Vergleich mit dem v1-Cache (`experiments/annihilator_gate2a/results/oracle_reference.json`), mit den drei
@@ -35,8 +44,9 @@ gerechnet**, außer im Orakel (§3).
    eine Ursache des Scheiterns). Trapezregel pro Teilgitter. Die Gewichtsstruktur $W(c)$ muss für FNS und für die
    Kovarianz zugänglich sein. Achte auf Speicher: Bei $R$ Zeilen, 49 Spalten und 1.000 Samples darf der volle
    Tensor nicht pro Klasse und Replikat neu entstehen.
-5. **Suche (§6):** FNS-Kandidat mit SVD-Start, Abbruchregel, Konvergenz-Flag; KCR-Kovarianz; Val-Test; A1 über
-   $c_2$ aus $M(\hat c)$; A2 Bootstrap; A3. Der Gradient $\nabla J = 2X(c)c$ wird in einem pytest-Fall gegen finite
+5. **Suche (§6):** FNS/AML-Kandidat mit SVD-Start, Abbruchregel, Konvergenz-Flag; Kovarianz erster Ordnung;
+   Val-Test; A1 über $c_2$ aus $M(\hat c)$; A2 Bootstrap; A3 über $\theta_{\hat c}$, und $\theta_{\hat c}$ wird pro Lauf
+   als Kennzahl geschrieben. In Code und Ausgaben heißt der Schätzer nicht „ML“, sondern „FNS/AML“. Der Gradient $\nabla J = 2X(c)c$ wird in einem pytest-Fall gegen finite
    Differenzen geprüft, auf einer kleinen zufälligen Instanz.
 6. **Ergebniszustände, Kennzahlen, Transfer (§7, §8)** wie spezifiziert, Lauf-CLI und Auswertung analog zu v1,
    noch ohne Anhang B.
@@ -46,7 +56,8 @@ gerechnet**, außer im Orakel (§3).
      Regel: Stopp und `blocked`.
    - **K-b:** $\tau$ nach der Formel aus §10. Bei $\tau > 10^{-4}$: Stopp und `blocked`.
    - **Ex-ante-Klassen (§9) nur für die K-Zellen**, weil K-c sie braucht.
-   - **K-c 1–4** mit den Schwellen aus §10. 1.000 Realisierungen pro Zelle, Seeds 0–999.
+   - **K-c 1–4** mit den Schwellen aus §10: Punkte 1–3 nur K1–K6 in Klasse I, Punkt 4 alle K1–K8. 1.000
+     Realisierungen pro Zelle, Seeds 0–999.
    - Ausgabe `results/calibration/appendix_A.json` und `appendix_A.md`: $\ell_{\max}$, $\tau$, alle Einzelzahlen,
      jede Prüfung mit Bestanden/Nicht bestanden, ein Gesamtverdikt.
 8. **Smoke und Laufzeit:** Eine K-Zelle bei 1 %, eine Realisierung, volle Suche mit Bootstrap. Daraus eine

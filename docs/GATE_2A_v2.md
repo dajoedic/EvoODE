@@ -2,7 +2,9 @@
 
 **Status: EINGEFROREN, vom Nutzer abgenommen am 2026-10-04** („Setz das um“, E5–E9 in §14). Vor dem Einfrieren
 ergänzt: die numerisch stabile Auswertung in §5 und die Schwelle $10^{-8}$ in K-a, beides nach einer Messung auf dem
-Kalibrier-Set (Begründung: `docs/GATE_2A_v2_RATIONALE.md`). Es gilt dieselbe Regel wie für v1: Keine Regel wird nach dem ersten Lauf geändert. Eine Änderung braucht eine neue Version.
+Kalibrier-Set (Begründung: `docs/GATE_2A_v2_RATIONALE.md`). **Ergänzt nach dem externen Review vom 04.10., vor jedem
+Lauf:** Terminologie FNS/AML und KCR (§6), A3 als projektive Winkelunsicherheit definiert (§6), Kalibrier-Set um die
+Ordnungen 5 und 6 erweitert (K7, K8, §2b). Es gilt dieselbe Regel wie für v1: Keine Regel wird nach dem ersten Lauf geändert. Eine Änderung braucht eine neue Version.
 `docs/GATE_2A.md` (v1) bleibt eingefroren und unverändert stehen, ebenso seine Abnahme-JSONs (Branch `9d6a4d0`).
 Kontext: `docs/IDEA_01_ANNIHILATOR_DISCOVERY.md`, Diagnose im `DIARY.md` vom 04.10.
 
@@ -27,9 +29,9 @@ eingefroren und vom Nutzer abgenommen ist.
 |---|---|---|
 | Matrixfehler wächst mit der Ableitungsordnung (F9: $3\cdot10^{-3}$ bei $N = 1000$) | (i) **Numerisch stabile Auswertung** der Testfunktionsableitungen statt Monomdarstellung vom Grad ~40 (§5). (ii) $q = 14$ statt 8: Jeder Integrand ist global $C^7$, auch bei $k = 6$. In v1 war er bei $k = 6$ nur $C^1$ | Gemessen auf K5 (Kalibrier-Set, Ordnung 4). Monomdarstellung: Fehler flach in $N$, also Rundung. Stabil mit $q = 8$: Konvergenz etwa 5. Ordnung, also Quadratur. Stabil mit $q = 14$: $\sim10^{-10}$ bei Blockbreite 0,25 und $\sim10^{-13}$ bei Breite 1. Beide Änderungen sind nötig |
 | Konstanter Boden $\sigma_{\text{floor}} = 10^{-8}$ lag unter dem Matrixfehler. F2 clean wurde `AMBIGUOUS` | $\sigma_{\text{floor}}$ wird aus dem gemessenen Quadraturfehler auf dem Kalibrier-Set festgelegt (§10) | Kalibrier-Set, nicht Gate-Set |
-| Die SVD ist bei heteroskedastischen, korrelierten Fehlern in $A$ verzerrt (F4: Bias = 47 Streuungen) | Maximum-Likelihood-Schätzer (FNS): Er minimiert genau die Statistik, mit der das Gate testet (§6) | Folgt aus dem eigenen Rauschmodell $A c = W(c)\tilde f$. Es gibt keinen freien Parameter |
+| Die SVD ist bei heteroskedastischen, korrelierten Fehlern in $A$ verzerrt (F4: Bias = 47 Streuungen) | Approximierter Maximum-Likelihood-Schätzer (FNS/AML, ein heteroskedastischer Errors-in-Variables-Schätzer): Er minimiert genau die Statistik, mit der das Gate testet (§6) | Folgt aus dem eigenen Rauschmodell $A c = W(c)\tilde f$. Es gibt keinen freien Parameter |
 | Schmale Testfunktionen verstärken das Rauschen bei hoher Ordnung, Faktor $\sim w^{-k}$ (F9 bei 1 % nicht identifizierbar) | Multiskalige Testfunktionen von domänenbreit bis $2^{-\ell_{\max}}$. Die ML-Gewichtung wertet verrauschte schmale Zeilen selbst ab. Fit/Val werden über verschränkte Samples getrennt statt über Blöcke (§4–5) | Die Breite wird nicht gewählt, alle Skalen sind gleichzeitig drin. Nur $\ell_{\max}$ ist frei, und das wird über ein Genauigkeitskriterium bestimmt, nicht über ein Ergebnis (§10) |
-| Die Erste-Ordnung-Kovarianz unterschätzt die Streuung bei F9 um etwa das 15-Fache, weil die Lücke im Spektrum klein ist | Neue Ambiguitätsquelle A3: Ist die propagierte Unsicherheit von $\hat c$ zu groß für eine Linearisierung, lautet das Ergebnis `AMBIGUOUS` (§6) | Feste Schwelle vorab, im Sensitivitätsraster variiert |
+| Die Erste-Ordnung-Kovarianz unterschätzt die Streuung bei F9 um etwa das 15-Fache, weil die Lücke im Spektrum klein ist | Neue Ambiguitätsquelle A3: Ist die projektive Winkelunsicherheit von $\hat c$ zu groß, lautet das Ergebnis `AMBIGUOUS` (§6) | Feste operative Heuristik, vorab gesetzt und im Sensitivitätsraster variiert. Keine allgemeine mathematische Gültigkeitsgrenze |
 | Unklar war, ob ein Scheitern an der Methode liegt oder daran, dass die Daten die Unterscheidung gar nicht tragen | Ex-ante-Identifizierbarkeit pro Zelle, berechnet aus exakten Daten und dem Rauschmodell und vor dem Lauf eingefroren (§9) | Kommt aus exakten Daten, nicht aus Laufergebnissen |
 | Orakel F10 schmal: $n_{\text{exact}}$ in (4,6), (5,6), (6,6) um 1 zu hoch | Orakel mit 100 Stellen. Abnahme: identisch zu 60 Stellen bis auf diese drei Einträge, die verschwinden müssen (§3) | Reine Präzision |
 
@@ -37,6 +39,15 @@ eingefroren und vom Nutzer abgenommen ist.
 beseitigt die Rauschverstärkung aber nicht. Sie bleibt ein Bias-Varianz-Konflikt in der Testfunktionsbreite. v2
 macht diesen Konflikt so gut wie möglich handhabbar. Wenn das bei Operatoren ab Ordnung 2 auf breiten Domänen
 nicht reicht, ist das ein Kill (K5, K6), keine Einladung zu v3.
+
+**v2 ist nicht monoton strenger als v1, sondern anders gebaut.** K5 und K6 sind strenger. Gleichzeitig nehmen die
+N-Zellen (§9) Fälle aus der Entscheidung, die v1 gewertet hätte.
+
+**F1–F10 sind nicht mehr vollständig unberührt.** Die Diagnose der v1-Abnahme hat F4 und F9 angesehen. Für einen
+internen Kill-Test ist das vertretbar, weil daraus nur Mechanismen benannt und Parameter ausschließlich auf K
+festgelegt wurden. **Folgt aus einem bestandenen Gate 2A v2 eine wissenschaftliche Erfolgsbehauptung, wird sie auf
+einem neuen, versiegelten Funktions-Hold-out-Set bestätigt**, das vor diesem Schritt festgelegt wird und bis dahin
+ungesehen bleibt.
 
 ## 1. Hypothesenraum und Komplexitätsordnung
 
@@ -62,10 +73,11 @@ Gleichstände (E4 gilt weiter).
 | F9 | $x^2 + e^x$ | $[-2, 2]$ | $[0.0, 0.4]$ | (4,0) | 5 |
 | F10 | $\sin x + e^{-x^2}$ | $[-3, 3]$ | $[0.0, 0.6]$ | (5,1) | 12 |
 
-## 2b. Kalibrier-Set K1–K6 (neu, disjunkt zum Gate-Set)
+## 2b. Kalibrier-Set K1–K8 (neu, disjunkt zum Gate-Set)
 
 Das Set dient nur der Festlegung von $\ell_{\max}$ und $\sigma_{\text{floor}}$ und den Prüfungen in §10. Es deckt
-die Ordnungen 1 bis 4 und die Koeffizientengrade 0 und 1 ab. Die schmale Domäne folgt derselben Regel wie im
+die Ordnungen 1 bis 6 und die Koeffizientengrade 0 und 1 ab. **K7 und K8 prüfen ausschließlich die numerische
+Infrastruktur bei Ordnung 5 und 6** (K-a, K-b, K-c Punkt 4), nicht die statistischen Regeln (K-c Punkte 1–3). Die schmale Domäne folgt derselben Regel wie im
 Gate-Set: 10 % der Breite der breiten Domäne. Die erwarteten Referenzklassen stammen aus einer Handrechnung. Es
 gilt die Klasse, die das Orakel liefert. Weicht es ab, wird das berichtet. Das Set wird deshalb **nicht**
 geändert.
@@ -78,12 +90,17 @@ geändert.
 | K4 | $J_0(x)$ | $[0.5, 8]$ | $[2.0, 2.75]$ | (2,1) | $xD^2 + D + x$ |
 | K5 | $x + \sin x$ | $[-3, 3]$ | $[0.5, 1.1]$ | (4,0) | $D^4 + D^2$ |
 | K6 | $x e^{x} + e^{-x}$ | $[-2, 2]$ | $[-0.2, 0.2]$ | (3,0) | $(D-1)^2(D+1)$ |
+| K7 | $1 + \sin x + \cos 2x$ | $[-3, 3]$ | $[0.3, 0.9]$ | (5,0) | $D(D^2+1)(D^2+4)$ |
+| K8 | $\sin x + \sin 2x + \sin 3x$ | $[-3, 3]$ | $[0.3, 0.9]$ | (6,0) | $(D^2+1)(D^2+4)(D^2+9)$ |
+
+K7 und K8 sind vorab vom Hochpräzisions-Orakel bestätigt (Claude, 04.10.: 50 Stellen, 120 Punkte, beide Domänen,
+Nullraumdimension 1 in der Referenzklasse).
 
 ## 3. Orakel
 
 Das Verfahren ist dasselbe wie in v1 §3, mit drei Änderungen: **100 Stellen** statt 60, **mindestens 200 Punkte**
 statt 120, Nullraumschwelle $10^{-60}$ relativ zum größten Singulärwert statt $10^{-35}$. Es läuft für F1–F10
-und K1–K6, beide Domänen. Pflichtprüfungen:
+und K1–K8, beide Domänen. Pflichtprüfungen:
 
 - Die Referenzklassen von F1–F10 stimmen mit v1 überein, und $n_{\text{exact}} = 1$ in der Referenzklasse.
 - Die $n_{\text{exact}}$-Tabelle über alle 42 Klassen ist für breit und schmal derselben Funktion identisch,
@@ -91,7 +108,7 @@ und K1–K6, beide Domänen. Pflichtprüfungen:
   abgenommen, und der Nutzer entscheidet.
 - Die $n_{\text{exact}}$-Tabelle stimmt mit dem 60-Stellen-Cache von v1 überein, ausgenommen genau die drei
   bekannten F10-Einträge.
-- Die symbolische bzw. hochpräzise Verifikation von $c^*$ erfolgt wie in v1, für K1–K6 analog. Ai und $J_0$
+- Die symbolische bzw. hochpräzise Verifikation von $c^*$ erfolgt wie in v1, für K1–K8 analog. Ai und $J_0$
   gelten als symbolisch verifiziert, wenn SymPy $L^*[f]$ über die Definitions-ODE zu 0 vereinfacht.
 
 ## 4. Daten, Skalierung, Noise und Fit/Val-Trennung
@@ -131,10 +148,12 @@ und K1–K6, beide Domänen. Pflichtprüfungen:
 
 Für jede Klasse in der Ordnung von §1, mit $S(c) = W_{\text{fit}}(c)\,W_{\text{fit}}(c)^\top$:
 
-1. **Kandidat, Maximum Likelihood.** $\hat c$ minimiert
+1. **Kandidat, approximierte Maximum Likelihood (AML).** $\hat c$ minimiert
    $J(c) = (A_{\text{fit}}c)^\top S(c)^{+} (A_{\text{fit}}c)$ auf $\|c\| = 1$. Das ist genau die
    Teststatistik bis auf den Faktor $\sigma_{\text{eff}}^{-2}$. Der Kandidat wird also nach demselben Kriterium
-   gewählt, nach dem er getestet wird. Berechnet wird er mit FNS (fundamental numerical scheme, Chojnacki et al.
+   gewählt, nach dem er getestet wird. $J$ ist die AML-Kostenfunktion eines heteroskedastischen
+   Errors-in-Variables-Modells: eine Näherung erster Ordnung an die volle Likelihood, nicht die Likelihood selbst.
+   FNS findet einen stationären Punkt von $J$. Berechnet wird er mit FNS (fundamental numerical scheme, Chojnacki et al.
    2000):
    - $\eta(c) = S(c)^{+} A_{\text{fit}}\, c$ und $Q(c) = [\,W_{1}^\top \eta,\ \dots,\ W_{n}^\top \eta\,]$, also
      eine Spalte pro Koeffizient;
@@ -144,7 +163,8 @@ Für jede Klasse in der Ordnung von §1, mit $S(c) = W_{\text{fit}}(c)\,W_{\text
      unter $10^{-12}$ liegt, spätestens nach 100 Iterationen. Nicht-Konvergenz wird pro Lauf protokolliert, und
      das letzte Iterat wird verwendet;
    - Pseudoinverse von $S$ mit fester relativer Schwelle $10^{-12}$.
-2. **Schätzunsicherheit** (KCR-Schranke, erste Ordnung):
+2. **Schätzunsicherheit**, asymptotische Kovarianz erster Ordnung in KCR-Form. Das ist eine Näherung, keine
+   exakte Kovarianz. Sie gilt für kleine Störungen, und genau das prüft A3:
    $\Sigma_{\hat c} = \sigma_{\text{eff}}^2\,\big(P\,M(\hat c)\,P\big)^{+}$ mit
    $M(c) = A_{\text{fit}}^\top S(c)^{+} A_{\text{fit}}$ und $P = I - \hat c\hat c^\top$.
 3. **Residuum, Kovarianz und Test auf Val** wie in v1 §6, Schritte 2–4:
@@ -161,8 +181,18 @@ Für jede Klasse in der Ordnung von §1, mit $S(c) = W_{\text{fit}}(c)\,W_{\text
   orthogonal zu $\hat c$.
 - **A2, instabile Auswahl:** parametrischer Bootstrap wie in v1 ($B_{\text{boot}} = 50$, $\sqrt2\,\sigma_{\text{eff}}$,
   Schwelle 80 %). Die vollständige Suche einschließlich FNS läuft auf jedem Replikat.
-- **A3, Linearisierung ungültig (neu):** $\sqrt{\operatorname{tr}\Sigma_{\hat c}} > 0.1$ in der ausgewählten
-  Klasse. Dann ist die Erste-Ordnung-Kovarianz nicht vertrauenswürdig, und der Test kann nicht kalibriert sein.
+- **A3, projektive Unsicherheit zu groß (neu):** $\theta_{\hat c} > 0.1$ in der ausgewählten Klasse, mit
+  $\theta_{\hat c} := \sqrt{\operatorname{tr}\Sigma_{\hat c}}$. Die Größe ist eindeutig definiert:
+  - Ein Operator ist projektiv, $c \sim \alpha c$. Repräsentant ist $c$ mit $\|c\|_2 = 1$ in den Koordinaten
+    $c_{kj}$ zur Basis $z^j D_z^k$, mit $z \in [-1, 1]$ aus §4 und ohne Spaltenskalierung. Das Vorzeichen spielt
+    keine Rolle.
+  - $\Sigma_{\hat c}$ liegt durch die Projektion $P$ im Tangentialraum der Einheitssphäre bei $\hat c$. Dort ist
+    $\theta_{\hat c}$ dimensionslos und für kleine Werte die mittlere quadratische Winkelabweichung (in Radiant)
+    zwischen $\hat c$ und seinen Störungen, also eine projektive Winkelunsicherheit.
+  - Die Größe hängt von der gewählten Koeffizientenbasis ab. Eine andere Basis, etwa Legendre statt Monome in $z$,
+    ergäbe einen anderen Wert. Deshalb ist die Basis hier festgeschrieben.
+  - **Die Schwelle 0,1 rad ist eine vorab festgelegte operative Heuristik**, keine allgemeine mathematische Grenze
+    für die Gültigkeit der Linearisierung. Ihre Wirkung prüfen S15 und S16 im Raster (0,05 und 0,2).
 
 ## 7. Ergebniszustände
 
@@ -186,17 +216,17 @@ für dieses $\eta$:
 - Für jede Klasse vor der Referenzklasse wird $\hat c$ per FNS auf den exakten Fit-Daten berechnet. Daraus folgt
   die Nichtzentralität $\lambda = T$ des Val-Tests auf exakten Val-Daten. Die Güte ist
   $\beta = P\big(\chi^2_{\text{dof}}(\lambda) > \chi^2_{\text{dof},\,0.99}\big)$.
-- Für die Referenzklasse wird $\sqrt{\operatorname{tr}\Sigma_{\hat c}}$ aus exakten Daten berechnet.
+- Für die Referenzklasse wird $\theta_{\hat c}$ aus exakten Daten berechnet.
 - **Klasse der Zelle:**
-  - **I** (identifizierbar): $\beta \ge 0.9$ für alle früheren Klassen und $\sqrt{\operatorname{tr}\Sigma_{\hat c}} \le 0.1$.
+  - **I** (identifizierbar): $\beta \ge 0.9$ für alle früheren Klassen und $\theta_{\hat c} \le 0.1$.
   - **N1** (eine einfachere Klasse ist datenkonsistent): Eine frühere Klasse hat $\beta < 0.9$.
-  - **N2** (Koeffizienten unbestimmt): nicht N1, aber $\sqrt{\operatorname{tr}\Sigma_{\hat c}} > 0.1$.
+  - **N2** (Koeffizienten unbestimmt): nicht N1, aber $\theta_{\hat c} > 0.1$.
 
 **Grenze:** Das ist die Identifizierbarkeit **unter diesem Messdesign** (diese Testfunktionen, dieses $N$, dieser
 Test), keine designfreie Informationsschranke. Eine N-Zelle sagt deshalb: „Mit diesem Aufbau nicht unterscheidbar“.
 Ob irgendein Verfahren es könnte, sagt sie nicht.
 
-## 10. Kalibrierung (Stufe K, nur K1–K6, vor jedem Kontakt mit F1–F10)
+## 10. Kalibrierung (Stufe K, nur K1–K8, vor jedem Kontakt mit F1–F10)
 
 Die Kalibrierung legt genau zwei Größen fest, beide über Kriterien, die nicht von Suchergebnissen abhängen.
 Danach folgen Prüfungen, die nur bestehen oder scheitern. Bei einem Scheitern wird nichts nachgestellt.
@@ -217,8 +247,8 @@ $\tau = \max(10 \cdot \max_{\text{cells}} \tau_{\text{cell}},\; 10^{-12})$. Dami
 Clean-Test in jeder K-Zelle mit dem Faktor 10 Puffer in $\sigma$. Gilt $\tau > 10^{-4}$, wäre der Boden mit 1 %
 Rauschen vergleichbar. Dann folgt Stopp und Bericht.
 
-**K-c: Prüfungen (bestehen oder scheitern, ohne Nachstellen).** Breite Domäne, $\eta = 0.01$, nur K-Zellen, die
-nach §9 in Klasse I fallen:
+**K-c: Prüfungen (bestehen oder scheitern, ohne Nachstellen).** Punkte 1–3: breite Domäne, $\eta = 0.01$, nur
+K1–K6 und nur Zellen, die nach §9 in Klasse I fallen. Punkt 4: K1–K8.
 
 1. Kovarianz-Monte-Carlo mit 1.000 Realisierungen pro Zelle, wahrer Operator fest, getestet wie in §6 Schritt 3
    (mit $\hat c$ aus FNS). Die Ablehnungsrate muss $\le 0.03$ sein, und der Median von $T/\text{dof}$ muss in
@@ -226,7 +256,7 @@ nach §9 in Klasse I fallen:
 2. Bias des Schätzers über dieselben Realisierungen: $\|\bar{\hat c} - c^*\| \le 0.5 \cdot \sqrt{\operatorname{tr}
    \widehat{\operatorname{Cov}}(\hat c)}$, mit Vorzeichen ausgerichtet an $c^*$.
 3. Kalibrierte Unsicherheit: Das Verhältnis empirische zu propagierter Spur liegt in $[0.5, 2]$.
-4. Clean, alle K-Zellen: Die volle Suche aus §6 liefert auf der breiten Domäne `CORRECT` und auf der schmalen nie
+4. Clean, alle K-Zellen K1–K8: Die volle Suche aus §6 liefert auf der breiten Domäne `CORRECT` und auf der schmalen nie
    `WRONG`.
 
 **Ergebnis:** Anhang A mit $\ell_{\max}$, $\tau$, allen Zahlen aus K-a bis K-c und einem Gesamtverdikt. Gegen
@@ -299,7 +329,7 @@ für alle Varianten unverändert.
 
 ## 14. Zur Abnahme: Entscheidungen des Nutzers
 
-- **E5, Kalibrier-Set K1–K6 und seine Domänen.** Das Set muss vor dem ersten Lauf fest sein.
+- **E5, Kalibrier-Set K1–K8 und seine Domänen** (K7, K8 nach dem Review ergänzt). Das Set muss vor dem ersten Lauf fest sein.
 - **E6, Fit/Val-Trennung über verschränkte Samples statt über Blöcke.** Damit sind breite Testfunktionen möglich.
   Der Preis: Der Test prüft keine Extrapolation mehr zwischen Regionen, das macht nur noch der Transfer.
 - **E7, Ex-ante-Klassen I/N** und die Regel, dass `WRONG` in N-Zellen nicht entscheidet. Das ist die
