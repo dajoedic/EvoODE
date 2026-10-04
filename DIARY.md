@@ -7,6 +7,7 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 ## 2026-10-04
 
 ### Gate 2A v2 nach externem Review ergänzt, vor jedem Lauf; Codex neu gestartet
+<!-- 50bdf57 -->
 
 Das Review (Nutzer, 04.10.) hält v2 für überzeugend und nicht für Schönrechnen. Vor dem Freeze verlangte es drei
 Punkte, alle umgesetzt:
