@@ -10,7 +10,7 @@ zweites davon. Alles Dauerhafte gehört dorthin, nach `PAPER_1.md` oder ins `DIA
 **Regeln:** wird immer **vollständig überschrieben**, nie angehängt. Was älter als ein paar Tage
 ist, ist vermutlich falsch — dann gilt `CLAUDE.md`.
 
-**Stand: 2026-10-04. Paper-1-Spur im WARTEZUSTAND (Tabelle Stand 03.10.). Methodenspur: Gate 2A v1 blockiert; Nutzer wählte (a), **GATE_2A_v2 als Entwurf zur Abnahme** (§4).**
+**Stand: 2026-10-04. Paper-1-Spur im WARTEZUSTAND (Tabelle Stand 03.10.). Methodenspur: **GATE_2A_v2 eingefroren, WP-G2A2-a (Implementierung + Kalibrierstufe K) läuft bei Codex** (§4).**
 
 **Feste Regeln:** Claude pusht **nie** nach GitLab und nach GitHub nur mit ausdrücklicher Erlaubnis.
 **Keine harten Zeit-Cuts.** Orion-Ergebnisse unter `S:\BigDataOrion\data-science\joedicke\` (nur mit VPN).
@@ -63,11 +63,12 @@ für die Paper-1-Ergebnisse. Der Name `evogrow-next` ist verworfen, weil die Met
     erreichbar, F2 clean wird AMBIGUOUS. (2) Die SVD-Schätzung ist bei heteroskedastischem Rauschen verzerrt
     (F4: Bias = 47 × Streuung). (3) Schmale Testfunktionen verstärken das Rauschen so stark, dass F9 bei 1 % nicht
     identifizierbar ist.
-  - **Entscheidung 04.10. (Nutzer): Option (a).** `docs/GATE_2A_v2.md` liegt als ENTWURF auf dem Branch (`5f6ac25`):
-    $q = 14$, FNS-ML-Schätzer, multiskalige Testfunktionen mit verschränktem Fit/Val, A3, ex-ante-Identifizierbarkeit
-    I/N1/N2, Orakel mit 100 Stellen, Kalibrier-Set K1–K6 (legt nur $\ell_{\max}$ und $\tau$ fest), neue Kills K5/K6.
-    **Nächster Schritt: Abnahme durch den Nutzer (E5–E9 in §14).** Erst danach Codex-Auftrag. Ablauf: Orakel → Stufe K →
-    Anhang A (Nutzer nimmt ab) → Abnahme auf dem Gate-Set → Gate-Lauf.
+  - **04.10.: v2 eingefroren und vom Nutzer abgenommen** (`docs/GATE_2A_v2.md`, Begründung `docs/GATE_2A_v2_RATIONALE.md`,
+    Branch `7609529`). Vor dem Einfrieren auf K5 gemessen: Der Matrixfehler hatte zwei Ursachen, Rundung der Monomdarstellung
+    und Quadratur. Beide sind in v2 behoben.
+  - **Läuft: Codex WP-G2A2-a** im Worktree `EvoODE-next`: Code unter `experiments/annihilator_gate2a_v2/`, Orakel mit 100
+    Stellen, Stufe K → Anhang A, dann Stopp. **Nächster Schritt danach: Der Nutzer nimmt Anhang A ab.** Erst dann Abnahme
+    auf F1–F10 und Gate-Lauf (eigenes Arbeitspaket).
 - Kein Gate 2B, bevor 2A bestanden ist. Multiple Shooting und Invarianztest bleiben geparkt (`docs/evogrow_next.md`).
 
 **Regeln dieser Spur:** von einfach zu komplex; kein GP; nichts mit Gabriel Kronberger (Autorenschaft prüfen).
