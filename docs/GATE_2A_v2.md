@@ -1,7 +1,8 @@
 # Gate 2A v2 – Spezifikation
 
-**Status: ENTWURF zur Abnahme durch den Nutzer (2026-10-04).** Nach der Abnahme eingefroren. Ab dann gilt dieselbe
-Regel wie für v1: Keine Regel wird nach dem ersten Lauf geändert. Eine Änderung braucht eine neue Version.
+**Status: EINGEFROREN, vom Nutzer abgenommen am 2026-10-04** („Setz das um“, E5–E9 in §14). Vor dem Einfrieren
+ergänzt: die numerisch stabile Auswertung in §5 und die Schwelle $10^{-8}$ in K-a, beides nach einer Messung auf dem
+Kalibrier-Set (Begründung: `docs/GATE_2A_v2_RATIONALE.md`). Es gilt dieselbe Regel wie für v1: Keine Regel wird nach dem ersten Lauf geändert. Eine Änderung braucht eine neue Version.
 `docs/GATE_2A.md` (v1) bleibt eingefroren und unverändert stehen, ebenso seine Abnahme-JSONs (Branch `9d6a4d0`).
 Kontext: `docs/IDEA_01_ANNIHILATOR_DISCOVERY.md`, Diagnose im `DIARY.md` vom 04.10.
 
@@ -24,7 +25,7 @@ eingefroren und vom Nutzer abgenommen ist.
 
 | Befund in v1 | Änderung in v2 | Warum das keine Kalibrierung am Gate-Set ist |
 |---|---|---|
-| Matrixfehler wächst mit der Ableitungsordnung (F9: $3\cdot10^{-3}$ bei $N = 1000$). Konvergenz nur etwa zweiter Ordnung | $q = 14$ statt 8: Jeder Integrand ist global $C^7$, auch bei $k = 6$. In v1 war er bei $k = 6$ nur $C^1$ | Folgt aus der Glattheitsordnung der Trapezregel für kompakt getragene Integranden. Geprüft wird auf dem Kalibrier-Set |
+| Matrixfehler wächst mit der Ableitungsordnung (F9: $3\cdot10^{-3}$ bei $N = 1000$) | (i) **Numerisch stabile Auswertung** der Testfunktionsableitungen statt Monomdarstellung vom Grad ~40 (§5). (ii) $q = 14$ statt 8: Jeder Integrand ist global $C^7$, auch bei $k = 6$. In v1 war er bei $k = 6$ nur $C^1$ | Gemessen auf K5 (Kalibrier-Set, Ordnung 4). Monomdarstellung: Fehler flach in $N$, also Rundung. Stabil mit $q = 8$: Konvergenz etwa 5. Ordnung, also Quadratur. Stabil mit $q = 14$: $\sim10^{-10}$ bei Blockbreite 0,25 und $\sim10^{-13}$ bei Breite 1. Beide Änderungen sind nötig |
 | Konstanter Boden $\sigma_{\text{floor}} = 10^{-8}$ lag unter dem Matrixfehler. F2 clean wurde `AMBIGUOUS` | $\sigma_{\text{floor}}$ wird aus dem gemessenen Quadraturfehler auf dem Kalibrier-Set festgelegt (§10) | Kalibrier-Set, nicht Gate-Set |
 | Die SVD ist bei heteroskedastischen, korrelierten Fehlern in $A$ verzerrt (F4: Bias = 47 Streuungen) | Maximum-Likelihood-Schätzer (FNS): Er minimiert genau die Statistik, mit der das Gate testet (§6) | Folgt aus dem eigenen Rauschmodell $A c = W(c)\tilde f$. Es gibt keinen freien Parameter |
 | Schmale Testfunktionen verstärken das Rauschen bei hoher Ordnung, Faktor $\sim w^{-k}$ (F9 bei 1 % nicht identifizierbar) | Multiskalige Testfunktionen von domänenbreit bis $2^{-\ell_{\max}}$. Die ML-Gewichtung wertet verrauschte schmale Zeilen selbst ab. Fit/Val werden über verschränkte Samples getrennt statt über Blöcke (§4–5) | Die Breite wird nicht gewählt, alle Skalen sind gleichzeitig drin. Nur $\ell_{\max}$ ist frei, und das wird über ein Genauigkeitskriterium bestimmt, nicht über ein Ergebnis (§10) |
@@ -117,7 +118,10 @@ und K1–K6, beide Domänen. Pflichtprüfungen:
   $\ell_{\max} \ge 3$ (120 Zeilen).
 - Für den Eintrag gilt dieselbe Formel wie in v1:
   $A_{(\ell,k,m),(k',j)} = (-1)^{k'} \int (z^j\varphi)^{(k')}(z)\, \tilde f(z)\,dz$. Die Ableitungen sind
-  analytisch. Das Integral ist die Trapezregel auf dem **jeweiligen Teilgitter** (Fit: gerade Indizes, Val:
+  analytisch und **numerisch stabil**: keine Darstellung als Monom-Polynom in $u$ oder $z$. Stattdessen
+  Leibniz-Regel über die Faktoren $(z_c + w u)^j$, $(1-u)^q$, $(1+u)^q$ und $P_m(u)$. Jeder Faktor wird direkt
+  abgeleitet (Potenzen über fallende Fakultäten, Legendre-Ableitungen in der Legendre-Basis mit Clenshaw-Auswertung).
+  Das Integral ist die Trapezregel auf dem **jeweiligen Teilgitter** (Fit: gerade Indizes, Val:
   ungerade), mit dem außerhalb des Trägers durch 0 fortgesetzten Integranden. Die Trägerränder müssen nicht auf
   Gitterpunkten liegen, weil der Integrand dort von Ordnung $q - k' \ge 8$ verschwindet.
 - Wie in v1 gilt $A c = W(c)\,\tilde f$ mit bekannter Gewichtsmatrix $W(c) = \sum_{kj} c_{kj} W_{kj}$, getrennt
@@ -202,7 +206,8 @@ Zeile von $A c^*$ mit exakten Daten berechnet und mit dem hochpräzisen Integral
 Funktion, 30 Stellen) verglichen. Fehlermaß: $e = \max_{\text{Zeilen}} |\,(Ac^*)_{\text{Trapez}} -
 (Ac^*)_{\text{exakt}}\,| \,/\, (\|W(c^*)\|_{\text{Zeile}} \cdot \operatorname{RMS} f)$, also der Fehler in Einheiten
 der Rauschwirkung eines Rauschens der Größe 1·RMS f. Festgelegt wird
-$\ell_{\max}$ = das größte $\ell \in \{3, 4, 5\}$, für das $e \le 10^{-10}$ in allen K-Zellen gilt. Erfüllt
+$\ell_{\max}$ = das größte $\ell \in \{3, 4, 5\}$, für das $e \le 10^{-8}$ in allen K-Zellen gilt. Das ist sechs
+Größenordnungen unter der Rauschwirkung bei 1 %. Den Clean-Fall deckt $\tau$ aus K-b ab. Erfüllt
 nicht einmal $\ell = 3$ das Kriterium: Stopp, Bericht an den Nutzer.
 
 **K-b: $\tau$ (numerischer Boden).** Clean, mit dem gewählten $\ell_{\max}$ und dem wahren $c^*$: Pro K-Zelle wird
@@ -234,7 +239,7 @@ Hier wird nur noch Numerik und Infrastruktur geprüft. Die statistischen Prüfun
 F1–F10 nicht noch einmal zum Nachjustieren einladen.
 
 1. Orakel nach §3.
-2. Weak gegen stark: Kriterium K-a ($e \le 10^{-10}$) für alle 20 F-Zellen. Ein Scheitern wird berichtet, die
+2. Weak gegen stark: Kriterium K-a ($e \le 10^{-8}$) für alle 20 F-Zellen. Ein Scheitern wird berichtet, die
    betroffene Zelle bekommt keinen anderen Parameter.
 3. Transfer (Winkel unter $10^{-10}$ bei exakter Transformation) und Determinismus (1 gegen 4 Worker bitgleich),
    wie in v1.

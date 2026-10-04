@@ -6,7 +6,23 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ## 2026-10-04
 
-### Gate 2A v2 entworfen (Nutzer: Option (a)), wartet auf Abnahme
+### Gate 2A v2 eingefroren, WP-G2A2-a an Codex; zweite Ursache des Matrixfehlers gefunden
+
+Der Nutzer hat v2 abgenommen („Setz das um“, E5–E9). Vor dem Einfrieren hat Claude die Matrixgenauigkeit auf **K5**
+($x + \sin x$, Ordnung 4, Kalibrier-Set, also nicht F9) nachgemessen. Relatives Residuum $\|Ac^*\|/\|A\|$ bei
+$N$ = 1.000 → 8.000, Blockbreite 0,25:
+- v1-Monomdarstellung, $q = 8$: $3\cdot10^{-4}$ → $7\cdot10^{-6}$; mit $q = 14$ **schlechter**, $5\cdot10^{-3}$ → $3\cdot10^{-3}$
+  und flach in $N$, also Rundung;
+- stabile Leibniz-Auswertung, $q = 8$: $3\cdot10^{-4}$ → $7\cdot10^{-9}$, etwa 5. Ordnung, also Quadratur;
+- stabil, $q = 14$: $2\cdot10^{-10}$ → $8\cdot10^{-11}$; stabil, $q = 14$ bei Trägerbreite 1: $\sim10^{-13}$.
+
+Zwei Defekte haben sich also überlagert: die Rundung der Monomdarstellung vom Grad ~37 und die Quadratur bei geringer
+Randglattheit. Der Entwurf hatte nur die Quadratur erkannt. Vor dem Einfrieren ergänzt: die stabile Auswertung (§5)
+und die K-a-Schwelle $10^{-8}$ statt $10^{-10}$ (sechs Größenordnungen unter 1 % Rauschen, Clean deckt $\tau$ ab).
+Detaillierte Begründung aller Änderungen: `docs/GATE_2A_v2_RATIONALE.md`. Auftrag WP-G2A2-a: Implementierung,
+Orakel mit 100 Stellen, Stufe K bis Anhang A, dann Stopp. Kein Kontakt mit F1–F10 außer dem Orakel.
+
+### Gate 2A v2 entworfen (Nutzer: Option (a))
 <!-- 5f6ac25 -->
 
 `docs/GATE_2A_v2.md`, v1 bleibt eingefroren. Jede Änderung folgt aus einem Befund der v1-Abnahme. Keine wird an
