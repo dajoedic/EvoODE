@@ -4,6 +4,33 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ---
 
+## 2026-10-05
+
+### Gate 2A v2: Stufe K scheitert an K-c, Ursache ist die FNS-Iteration; v3 entworfen
+
+Orakel v2 (100 Stellen, 7 min mit 8 Workern nach dem Airy-Fix WP-G2A2-c):
+- Das F10-Artefakt ist verschwunden. Die einzigen Abweichungen zu v1 sind genau die drei bekannten Einträge.
+- Alle 32 Referenzklassen stimmen, $n_{\text{exact}} = 1$.
+- **Neue** Artefakte bei K7/K8 schmal in hohen Klassen.
+- Die Verifikation der v2-Implementierung rechnet in float. Deshalb scheitern F10 und K4 formal.
+
+Stufe K v2 (N = 2000, 1.000 Realisierungen, 8 Teile, Teile 1–7 je ~1 h, Teil 0 mit Clean-Suche läuft noch):
+- **K-a:** $\ell_{\max} = 4$, max. Fehler $8\cdot10^{-10}$.
+- **K-b:** $\tau = 3.4\cdot10^{-7}$ (K8).
+- **Ex-ante, breit, 1 %:** K1, K2, K6, K8 I; **K3 und K4 N1** (ein Operator (4,0) ist datenkonsistent, Güte 0,27
+  bzw. 0,01); K5 und K7 N2.
+- **K-c (Teil 1, 125 Seeds):** K2 besteht (Ablehnung 1,6 %, $T$/dof 1,01, Spur-Verhältnis 0,95). **K1 und K6
+  scheitern total:** 100 % Ablehnung, $\hat c$ bis zu 90° daneben.
+
+Diagnose auf dem Kalibrier-Set: FNS nimmt den betragskleinsten Eigenwert von $X$ und landet auf Punkten mit
+verschwindendem Gradienten, die keine Minima sind (K1: $J = 548$ gegen $J(c^*) = 0.099$). L-BFGS auf der Sphäre vom
+SVD-Start trifft K1, K2 und K6 auf 0,02–4,4°. Ein Multistart über alle Singulärvektoren bringt nichts. Bei K5 und K8
+gibt es Punkte fern von $c^*$ mit **kleinerem** $J$ als $c^*$: Ab Ordnung 4 sind die Koeffizienten bei 1 % nicht
+identifizierbar. Das ist die w^{-k}-Grenze, jetzt direkt gemessen.
+
+`docs/GATE_2A_v3.md` (Entwurf): L-BFGS statt FNS, $n_{\text{exact}}$ domänenunabhängig (Identitätssatz), Verifikation
+in echter Präzision. Sonst bleibt alles wie in v2. Die Erwartung ist vorab notiert: Bei F4 und F5 droht K6.
+
 ## 2026-10-04
 
 ### WP-G2A2-a `blocked`, Claudes Code-Prüfung, Folgeauftrag WP-G2A2-b
