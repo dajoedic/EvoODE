@@ -1,5 +1,4 @@
 status: done
-task:   WP-G2A2-c
-report: codex/reports/REPORT_WP_G2A2_C.md
-note:   Implemented oracle mappings, worker-cache resume, Stage K part clean gating, merge invariants, and K3 smoke.
-
+task:   WP-G2A3-a
+report: codex/reports/REPORT_WP_G2A3_A.md
+note:   Implemented Gate 2A v3 AML, oracle promotion/verification, distributed Stage K clean cells, and smoke/tests passed.

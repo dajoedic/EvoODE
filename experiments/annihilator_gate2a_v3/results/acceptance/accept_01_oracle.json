@@ -1,0 +1,1071 @@
+{
+  "complete": true,
+  "direct_narrow_references_match": true,
+  "expected_metadata": {
+    "method": "sympy_derivatives_mpmath_svd_gate2a_v3",
+    "n_exact_policy": "wide_table_used_for_both_domains; narrow_table_retained_as_diagnostic",
+    "points": 220,
+    "precision_digits": 100,
+    "relative_threshold": 1e-60
+  },
+  "k_reference_comparison": {
+    "passed": true,
+    "records": [
+      {
+        "coeff_angle": 0.0,
+        "domain": "wide",
+        "expected_class": [
+          2,
+          0
+        ],
+        "function": "K1",
+        "oracle_class": [
+          2,
+          0
+        ],
+        "passed": true,
+        "threshold": "< 1e-20"
+      },
+      {
+        "coeff_angle": 0.0,
+        "domain": "narrow",
+        "expected_class": [
+          2,
+          0
+        ],
+        "function": "K1",
+        "oracle_class": [
+          2,
+          0
+        ],
+        "passed": true,
+        "threshold": "< 1e-20"
+      },
+      {
+        "coeff_angle": 0.0,
+        "domain": "wide",
+        "expected_class": [
+          1,
+          1
+        ],
+        "function": "K2",
+        "oracle_class": [
+          1,
+          1
+        ],
+        "passed": true,
+        "threshold": "< 1e-20"
+      },
+      {
+        "coeff_angle": 0.0,
+        "domain": "narrow",
+        "expected_class": [
+          1,
+          1
+        ],
+        "function": "K2",
+        "oracle_class": [
+          1,
+          1
+        ],
+        "passed": true,
+        "threshold": "< 1e-20"
+      },
+      {
+        "coeff_angle": 0.0,
+        "domain": "wide",
+        "expected_class": [
+          2,
+          1
+        ],
+        "function": "K3",
+        "oracle_class": [
+          2,
+          1
+        ],
+        "passed": true,
+        "threshold": "< 1e-20"
+      },
+      {
+        "coeff_angle": 0.0,
+        "domain": "narrow",
+        "expected_class": [
+          2,
+          1
+        ],
+        "function": "K3",
+        "oracle_class": [
+          2,
+          1
+        ],
+        "passed": true,
+        "threshold": "< 1e-20"
+      },
+      {
+        "coeff_angle": 0.0,
+        "domain": "wide",
+        "expected_class": [
+          2,
+          1
+        ],
+        "function": "K4",
+        "oracle_class": [
+          2,
+          1
+        ],
+        "passed": true,
+        "threshold": "< 1e-20"
+      },
+      {
+        "coeff_angle": 0.0,
+        "domain": "narrow",
+        "expected_class": [
+          2,
+          1
+        ],
+        "function": "K4",
+        "oracle_class": [
+          2,
+          1
+        ],
+        "passed": true,
+        "threshold": "< 1e-20"
+      },
+      {
+        "coeff_angle": 0.0,
+        "domain": "wide",
+        "expected_class": [
+          4,
+          0
+        ],
+        "function": "K5",
+        "oracle_class": [
+          4,
+          0
+        ],
+        "passed": true,
+        "threshold": "< 1e-20"
+      },
+      {
+        "coeff_angle": 0.0,
+        "domain": "narrow",
+        "expected_class": [
+          4,
+          0
+        ],
+        "function": "K5",
+        "oracle_class": [
+          4,
+          0
+        ],
+        "passed": true,
+        "threshold": "< 1e-20"
+      },
+      {
+        "coeff_angle": 0.0,
+        "domain": "wide",
+        "expected_class": [
+          3,
+          0
+        ],
+        "function": "K6",
+        "oracle_class": [
+          3,
+          0
+        ],
+        "passed": true,
+        "threshold": "< 1e-20"
+      },
+      {
+        "coeff_angle": 0.0,
+        "domain": "narrow",
+        "expected_class": [
+          3,
+          0
+        ],
+        "function": "K6",
+        "oracle_class": [
+          3,
+          0
+        ],
+        "passed": true,
+        "threshold": "< 1e-20"
+      },
+      {
+        "coeff_angle": 0.0,
+        "domain": "wide",
+        "expected_class": [
+          5,
+          0
+        ],
+        "function": "K7",
+        "oracle_class": [
+          5,
+          0
+        ],
+        "passed": true,
+        "threshold": "< 1e-20"
+      },
+      {
+        "coeff_angle": 0.0,
+        "domain": "narrow",
+        "expected_class": [
+          5,
+          0
+        ],
+        "function": "K7",
+        "oracle_class": [
+          5,
+          0
+        ],
+        "passed": true,
+        "threshold": "< 1e-20"
+      },
+      {
+        "coeff_angle": 0.0,
+        "domain": "wide",
+        "expected_class": [
+          6,
+          0
+        ],
+        "function": "K8",
+        "oracle_class": [
+          6,
+          0
+        ],
+        "passed": true,
+        "threshold": "< 1e-20"
+      },
+      {
+        "coeff_angle": 0.0,
+        "domain": "narrow",
+        "expected_class": [
+          6,
+          0
+        ],
+        "function": "K8",
+        "oracle_class": [
+          6,
+          0
+        ],
+        "passed": true,
+        "threshold": "< 1e-20"
+      }
+    ]
+  },
+  "limit": false,
+  "metadata": {
+    "method": "sympy_derivatives_mpmath_svd_gate2a_v3",
+    "n_exact_policy": "wide_table_used_for_both_domains; narrow_table_retained_as_diagnostic",
+    "points": 220,
+    "precision_digits": 100,
+    "relative_threshold": 1e-60,
+    "source_cache": "experiments\\annihilator_gate2a_v2\\results\\oracle_reference_v2.json"
+  },
+  "metadata_ok": true,
+  "passed": true,
+  "reference_records": {
+    "F1": {
+      "narrow": {
+        "expected_reference_class": [
+          1,
+          1
+        ],
+        "reference_class": [
+          1,
+          1
+        ],
+        "reference_class_ok": true,
+        "reference_n_exact": 1,
+        "reference_n_exact_one": true,
+        "verification": {
+          "mode": "symbolic_nsimplify",
+          "passed": true,
+          "symbolic_zero": true
+        }
+      },
+      "wide": {
+        "expected_reference_class": [
+          1,
+          1
+        ],
+        "reference_class": [
+          1,
+          1
+        ],
+        "reference_class_ok": true,
+        "reference_n_exact": 1,
+        "reference_n_exact_one": true,
+        "verification": {
+          "mode": "symbolic_nsimplify",
+          "passed": true,
+          "symbolic_zero": true
+        }
+      }
+    },
+    "F10": {
+      "narrow": {
+        "expected_reference_class": [
+          5,
+          1
+        ],
+        "reference_class": [
+          5,
+          1
+        ],
+        "reference_class_ok": true,
+        "reference_n_exact": 1,
+        "reference_n_exact_one": true,
+        "verification": {
+          "max_abs_on_sample": 0.0,
+          "mode": "numeric",
+          "passed": true
+        }
+      },
+      "wide": {
+        "expected_reference_class": [
+          5,
+          1
+        ],
+        "reference_class": [
+          5,
+          1
+        ],
+        "reference_class_ok": true,
+        "reference_n_exact": 1,
+        "reference_n_exact_one": true,
+        "verification": {
+          "max_abs_on_sample": 0.0,
+          "mode": "numeric",
+          "passed": true
+        }
+      }
+    },
+    "F2": {
+      "narrow": {
+        "expected_reference_class": [
+          1,
+          0
+        ],
+        "reference_class": [
+          1,
+          0
+        ],
+        "reference_class_ok": true,
+        "reference_n_exact": 1,
+        "reference_n_exact_one": true,
+        "verification": {
+          "mode": "symbolic_nsimplify",
+          "passed": true,
+          "symbolic_zero": true
+        }
+      },
+      "wide": {
+        "expected_reference_class": [
+          1,
+          0
+        ],
+        "reference_class": [
+          1,
+          0
+        ],
+        "reference_class_ok": true,
+        "reference_n_exact": 1,
+        "reference_n_exact_one": true,
+        "verification": {
+          "mode": "symbolic_nsimplify",
+          "passed": true,
+          "symbolic_zero": true
+        }
+      }
+    },
+    "F3": {
+      "narrow": {
+        "expected_reference_class": [
+          1,
+          1
+        ],
+        "reference_class": [
+          1,
+          1
+        ],
+        "reference_class_ok": true,
+        "reference_n_exact": 1,
+        "reference_n_exact_one": true,
+        "verification": {
+          "mode": "symbolic_nsimplify",
+          "passed": true,
+          "symbolic_zero": true
+        }
+      },
+      "wide": {
+        "expected_reference_class": [
+          1,
+          1
+        ],
+        "reference_class": [
+          1,
+          1
+        ],
+        "reference_class_ok": true,
+        "reference_n_exact": 1,
+        "reference_n_exact_one": true,
+        "verification": {
+          "mode": "symbolic_nsimplify",
+          "passed": true,
+          "symbolic_zero": true
+        }
+      }
+    },
+    "F4": {
+      "narrow": {
+        "expected_reference_class": [
+          2,
+          1
+        ],
+        "reference_class": [
+          2,
+          1
+        ],
+        "reference_class_ok": true,
+        "reference_n_exact": 1,
+        "reference_n_exact_one": true,
+        "verification": {
+          "mode": "symbolic_nsimplify",
+          "passed": true,
+          "symbolic_zero": true
+        }
+      },
+      "wide": {
+        "expected_reference_class": [
+          2,
+          1
+        ],
+        "reference_class": [
+          2,
+          1
+        ],
+        "reference_class_ok": true,
+        "reference_n_exact": 1,
+        "reference_n_exact_one": true,
+        "verification": {
+          "mode": "symbolic_nsimplify",
+          "passed": true,
+          "symbolic_zero": true
+        }
+      }
+    },
+    "F5": {
+      "narrow": {
+        "expected_reference_class": [
+          3,
+          1
+        ],
+        "reference_class": [
+          3,
+          1
+        ],
+        "reference_class_ok": true,
+        "reference_n_exact": 1,
+        "reference_n_exact_one": true,
+        "verification": {
+          "mode": "symbolic_nsimplify",
+          "passed": true,
+          "symbolic_zero": true
+        }
+      },
+      "wide": {
+        "expected_reference_class": [
+          3,
+          1
+        ],
+        "reference_class": [
+          3,
+          1
+        ],
+        "reference_class_ok": true,
+        "reference_n_exact": 1,
+        "reference_n_exact_one": true,
+        "verification": {
+          "mode": "symbolic_nsimplify",
+          "passed": true,
+          "symbolic_zero": true
+        }
+      }
+    },
+    "F6": {
+      "narrow": {
+        "expected_reference_class": [
+          1,
+          1
+        ],
+        "reference_class": [
+          1,
+          1
+        ],
+        "reference_class_ok": true,
+        "reference_n_exact": 1,
+        "reference_n_exact_one": true,
+        "verification": {
+          "mode": "symbolic_nsimplify",
+          "passed": true,
+          "symbolic_zero": true
+        }
+      },
+      "wide": {
+        "expected_reference_class": [
+          1,
+          1
+        ],
+        "reference_class": [
+          1,
+          1
+        ],
+        "reference_class_ok": true,
+        "reference_n_exact": 1,
+        "reference_n_exact_one": true,
+        "verification": {
+          "mode": "symbolic_nsimplify",
+          "passed": true,
+          "symbolic_zero": true
+        }
+      }
+    },
+    "F7": {
+      "narrow": {
+        "expected_reference_class": [
+          2,
+          0
+        ],
+        "reference_class": [
+          2,
+          0
+        ],
+        "reference_class_ok": true,
+        "reference_n_exact": 1,
+        "reference_n_exact_one": true,
+        "verification": {
+          "mode": "symbolic_nsimplify",
+          "passed": true,
+          "symbolic_zero": true
+        }
+      },
+      "wide": {
+        "expected_reference_class": [
+          2,
+          0
+        ],
+        "reference_class": [
+          2,
+          0
+        ],
+        "reference_class_ok": true,
+        "reference_n_exact": 1,
+        "reference_n_exact_one": true,
+        "verification": {
+          "mode": "symbolic_nsimplify",
+          "passed": true,
+          "symbolic_zero": true
+        }
+      }
+    },
+    "F8": {
+      "narrow": {
+        "expected_reference_class": [
+          1,
+          2
+        ],
+        "reference_class": [
+          1,
+          2
+        ],
+        "reference_class_ok": true,
+        "reference_n_exact": 1,
+        "reference_n_exact_one": true,
+        "verification": {
+          "mode": "symbolic_nsimplify",
+          "passed": true,
+          "symbolic_zero": true
+        }
+      },
+      "wide": {
+        "expected_reference_class": [
+          1,
+          2
+        ],
+        "reference_class": [
+          1,
+          2
+        ],
+        "reference_class_ok": true,
+        "reference_n_exact": 1,
+        "reference_n_exact_one": true,
+        "verification": {
+          "mode": "symbolic_nsimplify",
+          "passed": true,
+          "symbolic_zero": true
+        }
+      }
+    },
+    "F9": {
+      "narrow": {
+        "expected_reference_class": [
+          4,
+          0
+        ],
+        "reference_class": [
+          4,
+          0
+        ],
+        "reference_class_ok": true,
+        "reference_n_exact": 1,
+        "reference_n_exact_one": true,
+        "verification": {
+          "mode": "symbolic_nsimplify",
+          "passed": true,
+          "symbolic_zero": true
+        }
+      },
+      "wide": {
+        "expected_reference_class": [
+          4,
+          0
+        ],
+        "reference_class": [
+          4,
+          0
+        ],
+        "reference_class_ok": true,
+        "reference_n_exact": 1,
+        "reference_n_exact_one": true,
+        "verification": {
+          "mode": "symbolic_nsimplify",
+          "passed": true,
+          "symbolic_zero": true
+        }
+      }
+    },
+    "K1": {
+      "narrow": {
+        "expected_reference_class": [
+          2,
+          0
+        ],
+        "reference_class": [
+          2,
+          0
+        ],
+        "reference_class_ok": true,
+        "reference_n_exact": 1,
+        "reference_n_exact_one": true,
+        "verification": {
+          "mode": "symbolic_nsimplify",
+          "passed": true,
+          "symbolic_zero": true
+        }
+      },
+      "wide": {
+        "expected_reference_class": [
+          2,
+          0
+        ],
+        "reference_class": [
+          2,
+          0
+        ],
+        "reference_class_ok": true,
+        "reference_n_exact": 1,
+        "reference_n_exact_one": true,
+        "verification": {
+          "mode": "symbolic_nsimplify",
+          "passed": true,
+          "symbolic_zero": true
+        }
+      }
+    },
+    "K2": {
+      "narrow": {
+        "expected_reference_class": [
+          1,
+          1
+        ],
+        "reference_class": [
+          1,
+          1
+        ],
+        "reference_class_ok": true,
+        "reference_n_exact": 1,
+        "reference_n_exact_one": true,
+        "verification": {
+          "mode": "symbolic_nsimplify",
+          "passed": true,
+          "symbolic_zero": true
+        }
+      },
+      "wide": {
+        "expected_reference_class": [
+          1,
+          1
+        ],
+        "reference_class": [
+          1,
+          1
+        ],
+        "reference_class_ok": true,
+        "reference_n_exact": 1,
+        "reference_n_exact_one": true,
+        "verification": {
+          "mode": "symbolic_nsimplify",
+          "passed": true,
+          "symbolic_zero": true
+        }
+      }
+    },
+    "K3": {
+      "narrow": {
+        "expected_reference_class": [
+          2,
+          1
+        ],
+        "reference_class": [
+          2,
+          1
+        ],
+        "reference_class_ok": true,
+        "reference_n_exact": 1,
+        "reference_n_exact_one": true,
+        "verification": {
+          "mode": "definition_ode_symbolic",
+          "passed": true,
+          "symbolic_zero": true
+        }
+      },
+      "wide": {
+        "expected_reference_class": [
+          2,
+          1
+        ],
+        "reference_class": [
+          2,
+          1
+        ],
+        "reference_class_ok": true,
+        "reference_n_exact": 1,
+        "reference_n_exact_one": true,
+        "verification": {
+          "mode": "definition_ode_symbolic",
+          "passed": true,
+          "symbolic_zero": true
+        }
+      }
+    },
+    "K4": {
+      "narrow": {
+        "expected_reference_class": [
+          2,
+          1
+        ],
+        "reference_class": [
+          2,
+          1
+        ],
+        "reference_class_ok": true,
+        "reference_n_exact": 1,
+        "reference_n_exact_one": true,
+        "verification": {
+          "mode": "definition_ode_symbolic",
+          "passed": true,
+          "symbolic_zero": true
+        }
+      },
+      "wide": {
+        "expected_reference_class": [
+          2,
+          1
+        ],
+        "reference_class": [
+          2,
+          1
+        ],
+        "reference_class_ok": true,
+        "reference_n_exact": 1,
+        "reference_n_exact_one": true,
+        "verification": {
+          "mode": "definition_ode_symbolic",
+          "passed": true,
+          "symbolic_zero": true
+        }
+      }
+    },
+    "K5": {
+      "narrow": {
+        "expected_reference_class": [
+          4,
+          0
+        ],
+        "reference_class": [
+          4,
+          0
+        ],
+        "reference_class_ok": true,
+        "reference_n_exact": 1,
+        "reference_n_exact_one": true,
+        "verification": {
+          "mode": "symbolic_nsimplify",
+          "passed": true,
+          "symbolic_zero": true
+        }
+      },
+      "wide": {
+        "expected_reference_class": [
+          4,
+          0
+        ],
+        "reference_class": [
+          4,
+          0
+        ],
+        "reference_class_ok": true,
+        "reference_n_exact": 1,
+        "reference_n_exact_one": true,
+        "verification": {
+          "mode": "symbolic_nsimplify",
+          "passed": true,
+          "symbolic_zero": true
+        }
+      }
+    },
+    "K6": {
+      "narrow": {
+        "expected_reference_class": [
+          3,
+          0
+        ],
+        "reference_class": [
+          3,
+          0
+        ],
+        "reference_class_ok": true,
+        "reference_n_exact": 1,
+        "reference_n_exact_one": true,
+        "verification": {
+          "mode": "symbolic_nsimplify",
+          "passed": true,
+          "symbolic_zero": true
+        }
+      },
+      "wide": {
+        "expected_reference_class": [
+          3,
+          0
+        ],
+        "reference_class": [
+          3,
+          0
+        ],
+        "reference_class_ok": true,
+        "reference_n_exact": 1,
+        "reference_n_exact_one": true,
+        "verification": {
+          "mode": "symbolic_nsimplify",
+          "passed": true,
+          "symbolic_zero": true
+        }
+      }
+    },
+    "K7": {
+      "narrow": {
+        "expected_reference_class": [
+          5,
+          0
+        ],
+        "reference_class": [
+          5,
+          0
+        ],
+        "reference_class_ok": true,
+        "reference_n_exact": 1,
+        "reference_n_exact_one": true,
+        "verification": {
+          "mode": "symbolic_nsimplify",
+          "passed": true,
+          "symbolic_zero": true
+        }
+      },
+      "wide": {
+        "expected_reference_class": [
+          5,
+          0
+        ],
+        "reference_class": [
+          5,
+          0
+        ],
+        "reference_class_ok": true,
+        "reference_n_exact": 1,
+        "reference_n_exact_one": true,
+        "verification": {
+          "mode": "symbolic_nsimplify",
+          "passed": true,
+          "symbolic_zero": true
+        }
+      }
+    },
+    "K8": {
+      "narrow": {
+        "expected_reference_class": [
+          6,
+          0
+        ],
+        "reference_class": [
+          6,
+          0
+        ],
+        "reference_class_ok": true,
+        "reference_n_exact": 1,
+        "reference_n_exact_one": true,
+        "verification": {
+          "mode": "symbolic_nsimplify",
+          "passed": true,
+          "symbolic_zero": true
+        }
+      },
+      "wide": {
+        "expected_reference_class": [
+          6,
+          0
+        ],
+        "reference_class": [
+          6,
+          0
+        ],
+        "reference_class_ok": true,
+        "reference_n_exact": 1,
+        "reference_n_exact_one": true,
+        "verification": {
+          "mode": "symbolic_nsimplify",
+          "passed": true,
+          "symbolic_zero": true
+        }
+      }
+    }
+  },
+  "runtime_seconds": 1.0741797999980918,
+  "v1_cache_comparison": {
+    "available": true,
+    "difference_count": 3,
+    "known_f10_exceptions": [
+      {
+        "class": [
+          4,
+          6
+        ],
+        "domain": "narrow",
+        "function": "F10",
+        "v1": 11,
+        "v2": 10
+      },
+      {
+        "class": [
+          5,
+          6
+        ],
+        "domain": "narrow",
+        "function": "F10",
+        "v1": 17,
+        "v2": 16
+      },
+      {
+        "class": [
+          6,
+          6
+        ],
+        "domain": "narrow",
+        "function": "F10",
+        "v1": 23,
+        "v2": 22
+      }
+    ],
+    "passed": true,
+    "unexpected_differences": []
+  },
+  "wide_narrow_n_exact_differences": {
+    "F1": [],
+    "F10": [],
+    "F2": [],
+    "F3": [],
+    "F4": [],
+    "F5": [],
+    "F6": [],
+    "F7": [],
+    "F8": [],
+    "F9": [],
+    "K1": [],
+    "K2": [],
+    "K3": [],
+    "K4": [],
+    "K5": [],
+    "K6": [],
+    "K7": [
+      {
+        "class": [
+          4,
+          6
+        ],
+        "diagnostic_direct_narrow": 2,
+        "wide": 0
+      },
+      {
+        "class": [
+          5,
+          6
+        ],
+        "diagnostic_direct_narrow": 9,
+        "wide": 7
+      },
+      {
+        "class": [
+          6,
+          6
+        ],
+        "diagnostic_direct_narrow": 16,
+        "wide": 14
+      }
+    ],
+    "K8": [
+      {
+        "class": [
+          5,
+          5
+        ],
+        "diagnostic_direct_narrow": 2,
+        "wide": 0
+      },
+      {
+        "class": [
+          5,
+          6
+        ],
+        "diagnostic_direct_narrow": 6,
+        "wide": 0
+      },
+      {
+        "class": [
+          6,
+          5
+        ],
+        "diagnostic_direct_narrow": 8,
+        "wide": 6
+      },
+      {
+        "class": [
+          6,
+          6
+        ],
+        "diagnostic_direct_narrow": 13,
+        "wide": 7
+      }
+    ]
+  },
+  "wide_narrow_n_exact_policy": "wide table is decisive; direct narrow differences are diagnostic"
+}
