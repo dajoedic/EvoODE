@@ -1,6 +1,6 @@
 # Gate 2A v3 – Änderungen gegenüber v2
 
-**Status: ENTWURF zur Freigabe durch den Nutzer (2026-10-05).** v3 ist `docs/GATE_2A_v2.md` mit genau den hier
+**Status: EINGEFROREN, vom Nutzer freigegeben am 2026-10-05.** v3 ist `docs/GATE_2A_v2.md` mit genau den hier
 aufgeführten Änderungen. Alles andere gilt wörtlich weiter: Fragestellung, Hypothesenraum, F1–F10, Kalibrier-Set
 K1–K8, Daten, Weak-Matrix, Test, A1–A3, Ergebniszustände, ex-ante-Klassen, Stufe K, Abnahme, Gate-Kriterien,
 Kill-Kriterien, Raster und Ablauf. v2 bleibt eingefroren, und ihr Ergebnis bleibt als Befund stehen.
