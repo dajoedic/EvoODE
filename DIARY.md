@@ -6,6 +6,29 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ## 2026-10-04
 
+### Gate 2A v2 entworfen (Nutzer: Option (a)), wartet auf Abnahme
+
+`docs/GATE_2A_v2.md`, v1 bleibt eingefroren. Jede Änderung folgt aus einem Befund der v1-Abnahme. Keine wird an
+F1–F10 eingestellt:
+- $q = 14$, damit jeder Integrand global $C^7$ ist (in v1 war er bei $k = 6$ nur $C^1$). Das passt zur beobachteten
+  Konvergenz zweiter Ordnung bei F9.
+- ML-Schätzer (FNS): Er minimiert genau die Teststatistik, ein freier Parameter entfällt.
+- Multiskalige Testfunktionen. Fit/Val werden über verschränkte Samples getrennt statt über Blöcke, und die
+  ML-Gewichtung entscheidet über die Breite.
+- A3: `AMBIGUOUS`, wenn die Linearisierung ungültig ist.
+- Ex-ante-Identifizierbarkeit I/N1/N2 aus exakten Daten, vor dem Lauf eingefroren.
+- Orakel mit 100 Stellen.
+
+$\ell_{\max}$ und $\tau$ werden nur auf dem disjunkten Kalibrier-Set K1–K6 festgelegt, über Genauigkeitskriterien
+statt über Suchergebnisse. Die statistischen Prüfungen laufen nur dort. Neue Kills: K5 (breite Operatoren ab
+Ordnung 2 bei 1 % mehrheitlich nicht `CORRECT`) und K6 (das Messdesign selbst kann moderate Operatoren nicht
+unterscheiden).
+
+Einordnung der Idee nach v1: Der Kern (minimaler Annihilator, statistisch begründete Entscheidung inklusive „die
+Daten reichen nicht“) ist unberührt, der Statistikteil ist durch F2 sogar bestätigt. Abgeschwächt ist die
+Erwartung, dass die schwache Form das Rauschproblem *qualitativ* löst. Die Rauschverstärkung $\sim w^{-k}$ bleibt
+ein Bias-Varianz-Konflikt. Der Vorteil gegenüber differenzierenden Methoden kann nur noch quantitativ sein.
+
 ### Gate 2A: Abnahme `blocked` an F4/F9. Die eingefrorene Spezifikation hat drei Schwächen, der Gate-Lauf ist nicht gestartet
 <!-- 9d6a4d0 (Implementierung + Abnahme-JSONs) -->
 
