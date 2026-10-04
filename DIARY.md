@@ -7,6 +7,7 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 ## 2026-10-04
 
 ### WP-G2A2-a `blocked`, Claudes Code-Prüfung, Folgeauftrag WP-G2A2-b
+<!-- 240f041, task 04c9c45 -->
 
 Codex hat das v2-Gerüst gebaut. Zwischendurch unterbrach ein Nutzungslimit, Neustart gegen 15:30. 8/8 Tests v2,
 8/8 v1. Orakel und Stufe K liefen nicht voll. Claudes Prüfung:
