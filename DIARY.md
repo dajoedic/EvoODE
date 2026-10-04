@@ -7,6 +7,7 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 ## 2026-10-04
 
 ### Gate 2A v2 eingefroren, WP-G2A2-a an Codex; zweite Ursache des Matrixfehlers gefunden
+<!-- 7609529 -->
 
 Der Nutzer hat v2 abgenommen („Setz das um“, E5–E9). Vor dem Einfrieren hat Claude die Matrixgenauigkeit auf **K5**
 ($x + \sin x$, Ordnung 4, Kalibrier-Set, also nicht F9) nachgemessen. Relatives Residuum $\|Ac^*\|/\|A\|$ bei
