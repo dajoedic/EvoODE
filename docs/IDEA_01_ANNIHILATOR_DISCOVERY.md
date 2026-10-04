@@ -4,8 +4,9 @@ Leitdokument der Methodenspur auf dem Branch `annihilator-discovery` (Worktree `
 Festgehalten am 2026-10-04 aus dem Text des Nutzers. Die in der Abnahmediskussion vom selben Tag vereinbarten
 Korrekturen sind eingearbeitet: Referenzoperatoren, Mischformen, Skalierung, statistischer Test, `AMBIGUOUS`
 und Branch-Name. Löst `docs/idea_structural_diagnostics.md` ab. Geparkte Ideen (Multiple Shooting,
-Invarianztest) stehen weiterhin in `docs/evogrow_next.md`. Die eingefrorene Spezifikation des ersten Kill-Tests
-steht in `docs/GATE_2A.md`.
+Invarianztest) stehen weiterhin in `docs/evogrow_next.md`. Der erste Kill-Test: `docs/GATE_2A.md` (v1, an der
+Abnahme gescheitert, nie gelaufen) und **`docs/GATE_2A_v2.md` (gültig)**, mit Begründung in
+`docs/GATE_2A_v2_RATIONALE.md`.
 
 **Namensregel:** Das laufende EvoGrow-Paper bleibt Paper 1 des bisherigen PhD-Pfads. Diese Linie heißt intern
 „Idee #1“ und **nicht** ebenfalls „Paper 1“.
@@ -74,9 +75,18 @@ linear in den beobachteten $f_i$. Unter einem festen additiven Rauschmodell ist 
 **für eine feste Operatorhypothese** deshalb analytisch berechenbar. Die Annahme eines Operators wird so zu
 einem vorab festgelegten statistischen Test statt zu einem frei gewählten Schwellwert. Werden die
 Operator-Koeffizienten aus denselben Daten geschätzt, gilt diese Nullverteilung für das anschließend minimierte
-Residuum nicht mehr. `docs/GATE_2A.md` fängt das ab: Koeffizienten aus den Fit-Blöcken, Test auf disjunkten
-Validation-Blöcken mit unabhängigem Noise, und die Schätzunsicherheit von $\hat c$ wird in die
-Residualkovarianz propagiert (§5–6 dort).
+Residuum nicht mehr. Gate 2A fängt das ab: Die Koeffizienten werden auf den Fit-Samples geschätzt und auf
+disjunkten Validation-Samples mit unabhängigem Noise getestet. Die Schätzunsicherheit von $\hat c$ wird in die
+Residualkovarianz propagiert (`docs/GATE_2A_v2.md` §4–6). In v2 schätzt FNS/AML die Koeffizienten nach genau
+der Statistik, mit der getestet wird.
+
+**Was die v1-Abnahme am 04.10. gezeigt hat (Details in `docs/GATE_2A_v2_RATIONALE.md`):**
+- *Gestützt:* Der statistische Test ist kalibriert, wo die Numerik sauber ist. Auf F2 verwirft er den wahren
+  Operator mit 0,8 % bei Soll 1 %.
+- *Abgeschwächt:* Die schwache Form löst das Rauschproblem nicht grundsätzlich. Sie verschiebt die Ableitungen
+  auf die Testfunktionen, die Verstärkung $\sim w^{-k}$ bleibt (wie bei Weak-SINDy). Gegenüber differenzierenden
+  Methoden ist nur ein quantitativer Vorteil möglich: breite Träger und eine optimale Gewichtung. Das entscheidende
+  Risiko der Idee sind Operatoren ab Ordnung 2 unter 1 % Rauschen. Dafür hat v2 eigene Kill-Kriterien (K5, K6).
 
 ## 5. Novelty-Abgrenzung
 
@@ -122,13 +132,15 @@ Operatoren mit **identischem** $(r,d)$ nach allen Tests bestehen, kann die Tie-R
 ist `AMBIGUOUS` relevant (in `docs/GATE_2A.md` Kriterium A1). Die zweite Quelle ist eine instabile Auswahl:
 Wechselt die gewählte Klasse unter einem parametrischen Bootstrap, stützen die Daten die Wahl nicht
 (Kriterium A2). `AMBIGUOUS` ist kein Fehlerzustand.
-Die vollständige, operationale Zustandsdefinition steht in `docs/GATE_2A.md`.
+Seit v2 gibt es eine dritte Quelle: Die projektive Winkelunsicherheit von $\hat c$ ist zu groß (A3).
+Die vollständige, operationale Zustandsdefinition steht in `docs/GATE_2A_v2.md`.
 
 ## 8. Gate-Folge
 
-- **Gate 2A** (Kill-Test, Python, Laptop, Sekunden bis Minuten): Rekonstruiert man aus verrauschten Samples
-  $(x_i, f_i)$ einer unbekannten skalaren Funktion ihren minimalen Operator? Keine ODE, kein $\dot x$, keine
-  Integration, keine Symbolic Regression. Spezifikation: `docs/GATE_2A.md`.
+- **Gate 2A** (Kill-Test, Python, Laptop): Rekonstruiert man aus verrauschten Samples $(x_i, f_i)$ einer
+  unbekannten skalaren Funktion ihren minimalen Operator? Keine ODE, kein $\dot x$, keine Integration, keine
+  Symbolic Regression. Spezifikation: `docs/GATE_2A_v2.md`. Die Annahme „Sekunden bis Minuten“ galt für v1. Mit
+  FNS und Bootstrap liegt der Hauptlauf in v2 eher bei Stunden, die Hochrechnung steht noch aus.
 - **Gate 2B** (erst nach bestandenem 2A): die vollständige 1D-Kette
   $x(t) \rightarrow f(x) = \dot x \rightarrow L \rightarrow$ Funktionsraum $\rightarrow \hat f(x) \rightarrow$
   Generalisierung auf neue Anfangsbedingungen. Zentraler Testfall Gompertz (System 7). Der technische
@@ -156,7 +168,7 @@ Systeme für spätere Gates: Entwicklung 7 / 40 / 56 / 63, verschlossenes Prüfs
   nicht `evogrow-next`, weil es methodisch nicht um eine Weiterentwicklung von EvoGrow geht.
 - Bestehender EvoGrow-Code wird nicht verändert, Paper-1-Ergebnisse auf `main` bleiben unangetastet, keine
   Refactorings alten Codes ohne zwingenden Grund.
-- Experimente liegen unter `experiments/annihilator_gate2a/`.
+- Experimente liegen unter `experiments/annihilator_gate2a/` (v1) und `experiments/annihilator_gate2a_v2/` (v2).
 - Ein neues Repository mit eigenem Namen, eigener Architektur und eigener Paper-Linie entsteht **erst, wenn
   Gate 2A und Gate 2B überzeugend bestanden sind.**
 
