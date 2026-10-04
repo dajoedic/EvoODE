@@ -6,6 +6,25 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ## 2026-10-04
 
+### WP-G2A2-a `blocked`, Claudes Code-Prüfung, Folgeauftrag WP-G2A2-b
+
+Codex hat das v2-Gerüst gebaut. Zwischendurch unterbrach ein Nutzungslimit, Neustart gegen 15:30. 8/8 Tests v2,
+8/8 v1. Orakel und Stufe K liefen nicht voll. Claudes Prüfung:
+- **Korrekt:** stabile Leibniz-Auswertung, FNS/AML mit Gradiententest, Kovarianz erster Ordnung, Test, A1–A3.
+- **Defekt:** K-c wertet keine Schwelle aus, und das Gesamtverdikt war „reps == 1000“. Das hätte ein falsches
+  Bestanden in Anhang A geschrieben. Ambige Ergebnisse in der richtigen Klasse wurden als `WRONG` gezählt.
+  `--part` überschreibt Anhang A. Dazu kommen aus v1 kopierte, stale Abnahmeskripte und Ergebnisse.
+- **Akzeptierte Abweichung:** K-a vergleicht $Ac^*$ mit null statt mit einem mpmath-Integral. Das ist exakt
+  gleichwertig, weil $\int\varphi\,L^*[f] = 0$ ist und die Randterme verschwinden.
+- **Laufzeit (gemessen, Laptop, kein Beleg):** Tensoraufbau 13/27/59 s für $\ell_{\max}$ = 3/4/5, bisher pro
+  Realisierung neu, obwohl der Tensor für alle Funktionen identisch ist ($z \in [-1,1]$). Eine volle Suche mit 5
+  Bootstrap-Replikaten dauert 27 s. Mit 50 Replikaten wären es grob 4–5 min pro Realisierung, der Gate-Hauptlauf
+  also in der Größenordnung eines Tages auf einem Kern. Damit ist er kein Laptop-Lauf unter 1 h, solange die
+  Optimierung das nicht deutlich drückt. Vor dem Gate-Lauf ist eine Laufort-Entscheidung nötig.
+
+WP-G2A2-b: Verdikt, Ergebniszustände, Merge der Teile, verhaltensneutrale Wiederverwendung des Tensors mit
+Bitgleichheitsnachweis, parallelisiertes Orakel, Aufräumen. Danach Orakel und Stufe K ausführen.
+
 ### Gate 2A v2 nach externem Review ergänzt, vor jedem Lauf; Codex neu gestartet
 <!-- 50bdf57 -->
 
