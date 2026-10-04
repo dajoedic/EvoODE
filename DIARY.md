@@ -6,6 +6,34 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ## 2026-10-04
 
+### Gate 2A: Abnahme `blocked` an F4/F9. Die eingefrorene Spezifikation hat drei Schwächen, der Gate-Lauf ist nicht gestartet
+<!-- 9d6a4d0 (Implementierung + Abnahme-JSONs) -->
+
+Die Implementierung hat drei Codex-Runden gebraucht (WP-G2A, -b, -c), das Orakel mit 60 Stellen hat Claude lokal
+gebaut (9 min). Abnahme: Orakel (alle 20 Referenzklassen, F1–F9 symbolisch exakt, F10 auf 1e-58), Transfer
+(Winkel 0) und Determinismus (1 gegen 4 Worker bitgleich) bestanden. Bei F10 schmal ist in (4,6), (5,6) und (6,6)
+die Nullraumdimension um 1 zu hoch, ein Präzisionsartefakt. $n_{\text{exact}} > 0$ ist überall gleich.
+**Nicht bestanden:** Weak-gegen-stark und Kovarianz-Monte-Carlo für F4 ($\log x$, (2,1)) und F9 ($x^2+e^x$,
+(4,0)). F2 ($e^{1.5x}$, (1,0)) besteht exakt: Ablehnungsrate 0,008, $T$/dof 1,00, Spur-Verhältnis 0,99. Ohne den
+$\Sigma_{\hat c}$-Term läge die Ablehnungsrate bei 0,30, der Term ist also nötig.
+
+Diagnose (Claude, Scratchpad):
+- **Genauigkeit der Weak-Matrix.** Relative Annihilation $\|Ac^*\|/\|A\|$ für $N$ = 1.000/2.000/4.000/8.000:
+  F2 $3.6\cdot10^{-10}$ → $1.9\cdot10^{-10}$ (flach, Rundungsboden der Monom-Polynome), F4 $1.9\cdot10^{-8}$ →
+  $6.6\cdot10^{-9}$, **F9 $3.0\cdot10^{-3}$ → $6.8\cdot10^{-5}$**. Die Genauigkeit fällt mit der Ableitungsordnung
+  steil ab. Folge: Der Clean-Boden $\sigma_{\text{floor}} = 10^{-8}$ liegt unter dem numerischen Fehler, F2 clean
+  wird `AMBIGUOUS` statt `CORRECT`. Clean-Ergebnisse wären Numerik-Artefakte.
+- **Schätzer-Bias.** Bei 1 % ist der kleinste Singulärvektor von $A_{\text{fit}}$ für F4 um das **47-Fache**
+  seiner Streuung verschoben (Total Least Squares bei spaltenweise heteroskedastischem Rauschen). Der
+  rauschgewichtete Eigenwertansatz (GTLS) senkt das auf das 2,3-Fache, die Streuung steigt dabei auf 0,5.
+- **Identifizierbarkeit.** F9 bei 1 %: $\hat c$ praktisch zufällig (Bias ≈ Streuung ≈ 1). Schon clean ist der
+  Abstand $\sigma_2/\sigma_{\min}$ nur 22. Die Erste-Ordnung-Kovarianz unterschätzt die Streuung um Faktor ~15.
+  Ursache ist die Rauschverstärkung schmaler Testfunktionen (Blockbreite 0,25 in $z$) bei Ableitungsordnung 4.
+
+Einordnung: Das sind Schwächen des Testaufbaus (Matrixgenauigkeit, Schätzer, Testfunktionsbreite). Über die
+Idee sagen sie noch nichts. Die Methode scheitert so aber schon bei 1 % an Operatoren der Ordnung ≥ 2.
+Hochrechnung der Laufzeit: Hauptlauf ~49 min mit 8 Workern, Raster ~4,6 h. Entscheidung beim Nutzer.
+
 ### Idee #1 (Annihilator-Discovery): eigener Branch, Gate 2A eingefroren
 <!-- 4d15c29 (IDEA_01, Nutzer), f706b25 (GATE_2A eingefroren) -->
 
