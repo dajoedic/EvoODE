@@ -1,90 +1,88 @@
-# WP-G2A2-a — Gate 2A v2: Implementierung, Orakel mit 100 Stellen, Kalibrierstufe K
+# WP-G2A2-b — Gate 2A v2: Kalibrierstufe K korrigieren, Laufzeit, Orakel und Stufe K ausführen
 **Language: Python**
 
-Grundlage, **wörtlich verbindlich:** `docs/GATE_2A_v2.md` (eingefroren am 2026-10-04). Begründung der Änderungen
-gegenüber v1: `docs/GATE_2A_v2_RATIONALE.md`. Wo dieser Auftrag und die Spezifikation voneinander abweichen, gilt
-die Spezifikation. Melde jede solche Stelle im Report.
+Fortsetzung von WP-G2A2-a (`codex/reports/REPORT_WP_G2A2_A.md`). Grundlage, **wörtlich verbindlich:**
+`docs/GATE_2A_v2.md`. Der Code unter `experiments/annihilator_gate2a_v2/` wird **gezielt korrigiert**, nicht neu
+geschrieben.
 
-**Neustart nach Ergänzung (04.10.):** Eine erste Sitzung zu diesem Auftrag wurde angehalten, weil die Spezifikation
-nach einem externen Review vor jedem Lauf ergänzt wurde (Begründung §3.11). Geändert hat sich: das Kalibrier-Set ist
-jetzt **K1–K8** (K7, K8 neu, nur für die numerische Infrastruktur, siehe §2b und §10); A3 heißt jetzt projektive
-Winkelunsicherheit $\theta_{\hat c}$ mit festgelegtem Repräsentanten und festgelegter Basis (§6); FNS heißt
-FNS/AML, die Kovarianz asymptotisch erster Ordnung (§6). **Ein angefangener Stand liegt bereits unter
-`experiments/annihilator_gate2a_v2/` (uncommittet).** Lies ihn, prüfe ihn gegen die aktuelle Spezifikation und baue
-darauf weiter. Alles, was dort schon unter `results/` liegt, ist vor der Ergänzung entstanden und wird verworfen und
-neu erzeugt.
+## Ausgangslage (Claudes Prüfung des Codes)
 
-Dieser Auftrag umfasst die Stufen **Orakel → Stufe K → Anhang A** aus §14 E9 und endet dort. Die Abnahme auf dem
-Gate-Set (§11), Anhang B und der Gate-Lauf sind ein späteres Arbeitspaket. **F1–F10 werden in diesem Auftrag nicht
-gerechnet**, außer im Orakel (§3).
+In Ordnung, nicht anfassen außer für die Laufzeit (Punkt 4): die stabile Leibniz-Auswertung in
+`weak_operator.py`, FNS/AML, die Kovarianz erster Ordnung, der Val-Test, A1, A2, A3 und der Gradiententest.
 
-## Ort und Verhältnis zu v1
+**Akzeptierte Abweichung:** K-a vergleicht $Ac^*$ mit null statt mit einem mpmath-Integral. Das ist exakt
+gleichwertig: $\int \varphi\, L^*[f]\,dz = 0$, weil $L^* f \equiv 0$ ist und alle Randterme verschwinden. Ein
+hochpräzises Integral würde nur null reproduzieren. Im Report als akzeptierte Abweichung mit dieser Begründung
+nennen.
 
-- Neuer Code unter `experiments/annihilator_gate2a_v2/`, gleiche Gliederung wie v1: Konfiguration, Funktionen,
-  Orakel, Weak-Matrix, Suche, Transfer, Lauf, Auswertung, `acceptance/`, `tests/`, `results/`, README.
-- `experiments/annihilator_gate2a/` (v1) bleibt **verhaltensgleich**. Funktionsdefinitionen und Orakel dürfen
-  importiert werden. Wird dort etwas geändert, müssen die v1-Tests unverändert grün bleiben, und der Report nennt die
-  Änderung. Die Ergebnisse von v1 unter `experiments/annihilator_gate2a/results/` werden nicht angefasst.
+Gemessen von Claude bei $N = 2000$: Der Aufbau des Gewichtstensors dauert 13 s ($\ell_{\max} = 3$), 27 s (4) und
+59 s (5). `with_values` dauert 0,02 s. Eine volle Suche mit 5 Bootstrap-Replikaten dauert 27 s.
 
-## Umzusetzen
+## Zu korrigieren
 
-1. **Konfiguration:** alle Konstanten aus §4–§6 und §13 der Spezifikation, das Kalibrier-Set K1–K8 aus §2b mit
-   Domänen, und die Varianten S1–S16. $\ell_{\max}$ und $\tau$ sind **keine** Konstanten im Code. Sie werden aus
-   Anhang A gelesen, sobald dieser existiert. Vorher wird nur Stufe K gerechnet, die beide Größen erst bestimmt.
-2. **Funktionen:** K1–K8 numerisch (SciPy für Ai und $J_0$) und symbolisch (SymPy) wie F1–F10.
-3. **Orakel (§3):** 100 Stellen, mindestens 200 Punkte, Schwelle $10^{-60}$, für F1–F10 und K1–K8 auf beiden
-   Domänen. Eigener Cache `results/oracle_reference_v2.json` mit Metadaten zu Präzision, Punkten, Schwelle und
-   Laufzeit. Die Pflichtprüfungen aus §3 kommen als `acceptance/accept_01_oracle.py` mit JSON. Darin steht auch der
-   Vergleich mit dem v1-Cache (`experiments/annihilator_gate2a/results/oracle_reference.json`), mit den drei
-   bekannten F10-Einträgen ausdrücklich ausgewiesen. Ai und $J_0$ werden über ihre Definitions-ODE verifiziert.
-   Weicht eine K-Referenzklasse von der erwarteten Klasse in §2b ab, wird das berichtet. Das Set wird nicht
-   geändert.
-4. **Weak-Matrix (§4–§5):** verschränkte Fit/Val-Teilgitter, multiskalige Träger, $M = 8$, $q = 14$.
-   **Numerisch stabile Auswertung nach §5**, ausdrücklich keine Monomdarstellung (v1 tut das, und genau das war
-   eine Ursache des Scheiterns). Trapezregel pro Teilgitter. Die Gewichtsstruktur $W(c)$ muss für FNS und für die
-   Kovarianz zugänglich sein. Achte auf Speicher: Bei $R$ Zeilen, 49 Spalten und 1.000 Samples darf der volle
-   Tensor nicht pro Klasse und Replikat neu entstehen.
-5. **Suche (§6):** FNS/AML-Kandidat mit SVD-Start, Abbruchregel, Konvergenz-Flag; Kovarianz erster Ordnung;
-   Val-Test; A1 über $c_2$ aus $M(\hat c)$; A2 Bootstrap; A3 über $\theta_{\hat c}$, und $\theta_{\hat c}$ wird pro Lauf
-   als Kennzahl geschrieben. In Code und Ausgaben heißt der Schätzer nicht „ML“, sondern „FNS/AML“. Der Gradient $\nabla J = 2X(c)c$ wird in einem pytest-Fall gegen finite
-   Differenzen geprüft, auf einer kleinen zufälligen Instanz.
-6. **Ergebniszustände, Kennzahlen, Transfer (§7, §8)** wie spezifiziert, Lauf-CLI und Auswertung analog zu v1,
-   noch ohne Anhang B.
-7. **Stufe K (§10)** als `acceptance/stage_k_calibration.py`:
-   - **K-a:** Fehlermaß $e$ gegen das hochpräzise Integral (mpmath, 30 Stellen) für alle K-Zellen, beide Teilgitter,
-     $\ell \in \{3, 4, 5\}$. Daraus $\ell_{\max}$ nach der Regel aus §10. Erfüllt nicht einmal $\ell = 3$ die
-     Regel: Stopp und `blocked`.
-   - **K-b:** $\tau$ nach der Formel aus §10. Bei $\tau > 10^{-4}$: Stopp und `blocked`.
-   - **Ex-ante-Klassen (§9) nur für die K-Zellen**, weil K-c sie braucht.
-   - **K-c 1–4** mit den Schwellen aus §10: Punkte 1–3 nur K1–K6 in Klasse I, Punkt 4 alle K1–K8. 1.000
-     Realisierungen pro Zelle, Seeds 0–999.
-   - Ausgabe `results/calibration/appendix_A.json` und `appendix_A.md`: $\ell_{\max}$, $\tau$, alle Einzelzahlen,
-     jede Prüfung mit Bestanden/Nicht bestanden, ein Gesamtverdikt.
-8. **Smoke und Laufzeit:** Eine K-Zelle bei 1 %, eine Realisierung, volle Suche mit Bootstrap. Daraus eine
-   Hochrechnung für den späteren Gate-Hauptlauf (20 clean + 400 bei 1 % + 400 bei 5 %) und das Raster
-   (16 Varianten × (20 clean + 400 bei 1 %)), getrennt nach früh und spät stoppenden Referenzklassen, mit 1 und
-   8 Workern. Die Hochrechnung ist eine Projektion, kein Beleg. Sie wird nur so berichtet.
+1. **K-c wird nicht bewertet, und das Gesamtverdikt ist falsch.** `stage_k_c` sammelt Zahlen, prüft aber keine
+   Schwelle. `payload["passed"]` ist „reps == 1000“. Das würde ein falsches Bestanden in Anhang A schreiben.
+   Verlangt ist exakt §10 K-c:
+   - Punkte 1–3 nur für K1–K6 **und nur für Zellen der Klasse I** aus `ex_ante_k_classes` (breit, $\eta = 0.01$).
+     Zellen außerhalb von I werden mit ihrer Klasse als „nicht geprüft“ ausgewiesen, nicht stillschweigend
+     übersprungen.
+   - (1) Ablehnungsrate $\le 0.03$ und Median $T/\text{dof}$ in $[0.8, 1.25]$.
+   - (2) $\|\bar{\hat c} - c^*\| \le 0.5\sqrt{\operatorname{tr}\widehat{\operatorname{Cov}}(\hat c)}$, mit an $c^*$
+     ausgerichteten Vorzeichen.
+   - (3) Verhältnis empirische Spur zu mittlerer **propagierter** Spur $\operatorname{tr}\Sigma_{\hat c}$ in
+     $[0.5, 2]$. Die propagierte Spur wird pro Realisierung erfasst.
+   - (4) Clean auf K1–K8, beide Domänen, mit der **vollen Suche aus §6 einschließlich Bootstrap**. Breit muss
+     `CORRECT` herauskommen, schmal nie `WRONG`.
+   - Jeder Punkt bekommt Zahlen und `passed`. Gesamtverdikt = K-a ∧ K-b ∧ alle K-c-Punkte.
+2. **Ergebniszustände in K-c (4)** genau nach §7: `CORRECT`, `AMBIGUOUS` (A1/A2/A3, mit Quelle), `TRUE_NOT_REF`
+   (über $n_{\text{exact}}$ der gewählten Klasse aus dem v2-Orakel), `WRONG`, `NONE`. Heute wird ein ambiges
+   Ergebnis in der richtigen Klasse als `WRONG` gezählt. Ohne das v2-Orakel lässt sich `TRUE_NOT_REF` nicht
+   bestimmen. Dann bricht Stufe K mit einer klaren Meldung ab.
+3. **`--part` überschreibt Anhang A.** Jeder Teil schreibt in eine eigene Datei, und ein eigener Merge-Schritt
+   setzt die Teile zusammen. Der Merge verweigert ein unvollständiges Set (fehlende Seeds) und schreibt erst dann
+   `appendix_A.json` und `.md`. Die Markdown-Datei enthält die Tabellen aller Prüfungen, nicht nur drei Zeilen.
+4. **Laufzeit, verhaltensneutral.** Der Gewichtstensor hängt nur vom $z$-Gitter, $N$, $\ell_{\max}$, $q$ und $M$
+   ab. Er hängt **nicht** von der Funktion oder Domäne ab, weil jede Domäne auf dasselbe $z \in [-1, 1]$ skaliert
+   wird. Er wird pro Prozess **einmal je Konfiguration** gebaut und wiederverwendet (für K-a, K-b, ex-ante, K-c
+   und `run_gate2a`). Ein Festplatten-Cache ist erlaubt, wenn sein Schlüssel alle diese Größen enthält. Ebenso
+   werden die spaltenindizierten Kopien in `WeightContext.split` pro Klasse höchstens einmal angelegt und nicht pro
+   Aufruf. Danach wird die volle Suche profiliert und der größte verbleibende Posten benannt. Zulässig sind nur
+   Optimierungen, die das Ergebnis **bitgleich** lassen. Nachweis: Auf einer K-Zelle bei 1 %, Seed 0, mit 5
+   Bootstrap-Replikaten sind alle Felder vor und nach der Optimierung bitgleich (ohne Laufzeit). Der Nachweis kommt
+   als pytest-Fall oder Abnahmeskript, mit Zahlen im Report.
+5. **Orakel lauffähig machen.** `accept_01_oracle` ohne `--limit` muss sich parallelisieren (`--workers`) und in
+   Teile zerlegen lassen (`--part`, mit Merge wie in Punkt 3). Zusätzlich prüft es für K1–K8: Die
+   Referenzkoeffizienten in `config.calibration_reference_coeffs` stimmen mit $c^*$ aus dem Orakel überein
+   (Winkel $< 10^{-20}$). Stufe K liest $n_{\text{exact}}$ für `TRUE_NOT_REF` aus dem v2-Orakel-Cache.
+6. **Aufräumen:** Aus `experiments/annihilator_gate2a_v2/` entfernen, was aus v1 kopiert wurde und nicht zu v2
+   gehört: `acceptance/accept_02` bis `accept_06` (die Abnahme auf dem Gate-Set nach §11 ist ein späteres
+   Arbeitspaket), `results/acceptance/accept_02` bis `06*.json`, das kopierte `results/oracle_reference.json` und
+   das leere `results/standard/`.
+
+## Ausführen
+
+Erst `pytest` für v2 und v1. Dann, jeweils unter 15 Minuten pro Einzelkommando:
+- Orakel voll, in Teilen und mit Workern, danach Merge;
+- Stufe K: K-a, K-b, ex-ante und K-c (4) voll; K-c (1–3) in Teilen über die Seeds, danach Merge.
+
+Was nicht in 15 Minuten pro Kommando passt, steht als exakter Befehl im Report. Claude führt es aus.
+**Hochrechnung** aus gemessenen Zeiten, nach der Optimierung, für den späteren Gate-Hauptlauf (20 clean +
+400 × 1 % + 400 × 5 %, je 50 Bootstrap-Replikate) und das Raster (16 Varianten × (20 + 400)), mit 1 und 8
+Workern. Das ist eine Projektion, kein Beleg.
 
 ## Verboten
 
-- Keinen Gate-Lauf, kein Raster, **keine Rechnung auf F1–F10 außer dem Orakel**, auch nicht „zur Kontrolle“.
-- Keine Konstante, Schwelle oder Regel aus `docs/GATE_2A_v2.md` ändern und keine Toleranz lockern. Scheitert eine
-  Prüfung an der Sache, lautet der Status `blocked`, mit den Zahlen. Nicht an der Formel drehen, bis es passt.
-- Nichts außerhalb von `experiments/annihilator_gate2a_v2/`, `codex/STATUS.md` und `codex/reports/` schreiben
-  (Ausnahme: die oben erlaubte, verhaltensgleiche Änderung an v1). Kein `docs/`, kein Julia, kein `src/`.
-- Keine ODE-Integration, keine nichtlineare Optimierung außer der FNS-Iteration, keine SR, kein GP. Nur NumPy,
-  SciPy, SymPy, mpmath, pytest, optional pandas.
-- Kein Git außer lesend.
-- **Kein Einzelkommando über 15 Minuten.** Das Orakel und der K-c-Monte-Carlo dürfen parallelisiert und in Teile
-  zerlegt werden (`--part`). Wird etwas nicht fertig, steht der Befehl im Report, und Claude führt ihn aus.
+Wie in WP-G2A2-a. Insbesondere: keine Rechnung auf F1–F10 außer im Orakel, keine Konstante, Schwelle oder Regel
+aus der Spezifikation ändern, keine Toleranz lockern, kein Git außer lesend, nichts außerhalb von
+`experiments/annihilator_gate2a_v2/`, `codex/STATUS.md` und `codex/reports/`.
 
 ## Abnahme
 
-- Die Punkte 1–8 sind umgesetzt. `pytest experiments/annihilator_gate2a_v2/tests` und
-  `pytest experiments/annihilator_gate2a/tests` sind grün.
-- `accept_01_oracle` und `stage_k_calibration` sind **ausgeführt**, oder sie haben einen Befehl im Report, falls
-  sie länger als 15 Minuten brauchen. Ihre JSONs liegen unter `experiments/annihilator_gate2a_v2/results/`.
-- Report `codex/reports/REPORT_WP_G2A2_A.md` mit den Zahlen aus **diesen** Läufen: Orakel, K-a, K-b, ex-ante-Klassen
-  der K-Zellen, K-c 1–4, Smoke-Hochrechnung, Abweichungen von der Spezifikation.
-- `codex/STATUS.md` mit der Kennung `WP-G2A2-a`. `done` heißt: Anhang A existiert und alle Prüfungen sind bestanden.
-  `blocked` heißt: eine Prüfung ist gescheitert oder ein Stopp aus §10 ist eingetreten.
+- Die Punkte 1–6 sind umgesetzt, und `pytest` für v2 und v1 ist grün.
+- Bitgleichheitsnachweis aus Punkt 4 mit Zahlen.
+- Orakel-JSON und Anhang A existieren, oder der Report nennt die exakten Befehle für die fehlenden Teile.
+- Report `codex/reports/REPORT_WP_G2A2_B.md` mit allen Zahlen aus **diesen** Läufen, je Prüfpunkt bestanden oder
+  nicht, plus Hochrechnung.
+- `codex/STATUS.md` mit der Kennung `WP-G2A2-b`. `done` = Anhang A vollständig erzeugt (egal ob er besteht oder
+  scheitert; ein Scheitern ist ein Ergebnis und kein Blocker). `blocked` = etwas ließ sich nicht ausführen, oder
+  die Implementierung kommt nicht weiter.
