@@ -68,7 +68,9 @@ für die Paper-1-Ergebnisse. Der Name `evogrow-next` ist verworfen, weil die Met
     und Quadratur. Beide sind in v2 behoben.
   - **Externes Review 04.10. eingearbeitet, vor jedem Lauf** (Branch `50bdf57`): FNS/AML-Begriffe, A3 als projektive
     Winkelunsicherheit, Kalibrier-Set um K7/K8 (Ordnung 5/6) erweitert, Hold-out-Hinweis. Codex wurde dafür angehalten und neu gestartet.
-  - **Läuft: Codex WP-G2A2-a** im Worktree `EvoODE-next`: Code unter `experiments/annihilator_gate2a_v2/`, Orakel mit 100
+  - **04.10. mittags: Codex-Nutzungslimit erreicht** (wieder frei ab 15:02). WP-G2A2-a ist angefangen, der Code liegt uncommittet unter
+    `experiments/annihilator_gate2a_v2/`, noch kein Lauf. Danach denselben `codex exec`-Befehl im Worktree `EvoODE-next` neu starten.
+  - **Angehalten: Codex WP-G2A2-a** im Worktree `EvoODE-next`: Code unter `experiments/annihilator_gate2a_v2/`, Orakel mit 100
     Stellen, Stufe K → Anhang A, dann Stopp. **Nächster Schritt danach: Der Nutzer nimmt Anhang A ab.** Erst dann Abnahme
     auf F1–F10 und Gate-Lauf (eigenes Arbeitspaket).
 - Kein Gate 2B, bevor 2A bestanden ist. Multiple Shooting und Invarianztest bleiben geparkt (`docs/evogrow_next.md`).
