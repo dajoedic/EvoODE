@@ -1,8 +1,10 @@
 import numpy as np
 
+from experiments.annihilator_gate2a_v2.acceptance import accept_01_oracle
 from experiments.annihilator_gate2a_v2.acceptance import stage_k_calibration as stage_k
-from experiments.annihilator_gate2a_v2.config import APPENDIX_A_JSON, FUNCTIONS, Settings, domain_for
+from experiments.annihilator_gate2a_v2.config import APPENDIX_A_JSON, CLASSES, FUNCTIONS, Settings, domain_for
 from experiments.annihilator_gate2a_v2.functions import grid, numeric_values
+from experiments.annihilator_gate2a_v2.oracle import ORACLE_METADATA
 from experiments.annihilator_gate2a_v2.weak_operator import WeightContext
 
 
@@ -30,6 +32,37 @@ def test_stage_k_mc_non_identifiable_cell_is_not_checked():
     record = stage_k._finish_mc_record(acc, np.asarray([1.0, 0.0]))
     assert record["checked"] is False
     assert record["passed"] is None
+
+
+def test_stage_k_clean_runs_only_in_part_zero(monkeypatch):
+    monkeypatch.setattr(stage_k, "_mc_accumulators", lambda *args, **kwargs: {"K1": {"function": "K1"}})
+    monkeypatch.setattr(stage_k, "_reference", lambda *args, **kwargs: ((1, 0), np.asarray([1.0])))
+    monkeypatch.setattr(stage_k, "_finish_mc_record", lambda acc, coeffs: {"function": acc["function"], "passed": True})
+    monkeypatch.setattr(stage_k, "_clean_records", lambda *args, **kwargs: {"K1_wide": {"passed": True}})
+
+    part0 = stage_k.stage_k_c(3, 1e-12, 20, 4, "0/2", {}, True)
+    part1 = stage_k.stage_k_c(3, 1e-12, 20, 4, "1/2", {}, True)
+
+    assert part0["clean_search_executed"] is True
+    assert part0["clean"] == {"K1_wide": {"passed": True}}
+    assert part1["clean_search_executed"] is False
+    assert part1["clean"] == {}
+
+
+def test_oracle_worker_cache_requires_matching_function_list():
+    classes = {_class_key: {"n_exact": 0} for _class_key in (f"{r},{d}" for r, d in CLASSES)}
+    data = {
+        "metadata": ORACLE_METADATA,
+        "classes": [list(c) for c in CLASSES],
+        "functions": {
+            "K3": {
+                "wide": {"classes": classes},
+                "narrow": {"classes": classes},
+            }
+        },
+    }
+    assert accept_01_oracle._worker_cache_is_complete(data, ["K3"])
+    assert not accept_01_oracle._worker_cache_is_complete(data, ["K3", "K4"])
 
 
 def test_weight_context_reuses_split_arrays():

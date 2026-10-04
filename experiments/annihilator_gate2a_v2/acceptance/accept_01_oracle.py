@@ -43,7 +43,30 @@ def _selected_keys(part: str | None) -> list[str]:
 
 def _build_part(args: tuple[list[str], Path]) -> dict:
     keys, cache_path = args
+    if cache_path.exists():
+        data = json.loads(cache_path.read_text())
+        if _worker_cache_is_complete(data, keys):
+            return data
     return build_reference(cache_path=cache_path, force=True, function_keys=keys)
+
+
+def _worker_cache_is_complete(data: dict, keys: list[str]) -> bool:
+    if data.get("metadata") != ORACLE_METADATA:
+        return False
+    if data.get("classes") != [list(c) for c in CLASSES]:
+        return False
+    functions = data.get("functions")
+    if not isinstance(functions, dict) or set(functions) != set(keys):
+        return False
+    for function_key in keys:
+        function_data = functions.get(function_key)
+        if not isinstance(function_data, dict) or set(function_data) != {"wide", "narrow"}:
+            return False
+        for domain_data in function_data.values():
+            classes = domain_data.get("classes")
+            if not isinstance(classes, dict) or set(classes) != {_class_key(r, d) for r, d in CLASSES}:
+                return False
+    return True
 
 
 def _v1_comparison(v2_data: dict) -> dict:

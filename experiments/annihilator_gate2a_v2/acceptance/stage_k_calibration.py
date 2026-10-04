@@ -183,12 +183,17 @@ def _selected_seeds(reps: int, part: str | None) -> list[int]:
     seeds = list(range(reps))
     if not part:
         return seeds
+    index, count = _part_index(part)
+    return [seed for seed in seeds if seed % count == index]
+
+
+def _part_index(part: str) -> tuple[int, int]:
     index_text, count_text = part.split("/")
     index = int(index_text)
     count = int(count_text)
     if index < 0 or index >= count:
         raise ValueError(f"invalid part {part!r}")
-    return [seed for seed in seeds if seed % count == index]
+    return index, count
 
 
 def _empty_mc_accumulator(function_key: str, class_name: str) -> dict:
@@ -321,11 +326,13 @@ def stage_k_c(ell_max: int, tau: float, n: int, reps: int, part: str | None, ex_
     for function_key, acc in accumulators.items():
         _, true_coeffs = _reference(function_key, "wide")
         mc_records[function_key] = _finish_mc_record(acc, true_coeffs)
-    clean = _clean_records(ell_max, tau, n, limit)
+    runs_clean = part is None or _part_index(part)[0] == 0
+    clean = _clean_records(ell_max, tau, n, limit) if runs_clean else {}
     clean_passed = all(record["passed"] for record in clean.values())
     mc_passed = all(record["passed"] is not False for record in mc_records.values())
     return {
         "part": part,
+        "clean_search_executed": runs_clean,
         "mc_accumulators": accumulators,
         "mc": mc_records,
         "clean": clean,
@@ -367,6 +374,22 @@ def _combine_accumulators(parts: list[dict]) -> dict:
     return combined
 
 
+def _require_same_across_parts(part_payloads: list[dict]) -> None:
+    base = part_payloads[0]
+    for payload in part_payloads[1:]:
+        path = payload.get("settings", {}).get("part")
+        if payload.get("K_a") != base.get("K_a"):
+            raise RuntimeError(f"Stage K part invariant mismatch in K-a: {path}")
+        if payload.get("ell_max") != base.get("ell_max"):
+            raise RuntimeError(f"Stage K part invariant mismatch in ell_max: {path}")
+        if payload.get("K_b") != base.get("K_b"):
+            raise RuntimeError(f"Stage K part invariant mismatch in K-b: {path}")
+        if payload.get("tau") != base.get("tau"):
+            raise RuntimeError(f"Stage K part invariant mismatch in tau: {path}")
+        if payload.get("ex_ante_classes") != base.get("ex_ante_classes"):
+            raise RuntimeError(f"Stage K part invariant mismatch in ex-ante classes: {path}")
+
+
 def merge_parts(reps: int, count: int, limit: bool) -> dict:
     part_payloads = []
     missing = []
@@ -378,6 +401,19 @@ def merge_parts(reps: int, count: int, limit: bool) -> dict:
             part_payloads.append(json.loads(path.read_text()))
     if missing:
         raise RuntimeError(f"incomplete Stage K part set; missing {missing}")
+    _require_same_across_parts(part_payloads)
+    part0 = part_payloads[0]
+    if part0.get("settings", {}).get("part") != f"0/{count}":
+        raise RuntimeError("Stage K part 0 is not first in the part set")
+    if not part0.get("K_c", {}).get("clean_search_executed"):
+        raise RuntimeError("Stage K part 0 did not include K-c clean results")
+    if not part0.get("K_c", {}).get("clean"):
+        raise RuntimeError("Stage K part 0 has no K-c clean records")
+    for payload in part_payloads[1:]:
+        if payload.get("K_c", {}).get("clean_search_executed"):
+            raise RuntimeError(f"Stage K clean search ran outside part 0: {payload.get('settings', {}).get('part')}")
+        if payload.get("K_c", {}).get("clean"):
+            raise RuntimeError(f"Stage K clean records present outside part 0: {payload.get('settings', {}).get('part')}")
     base = dict(part_payloads[0])
     combined_acc = _combine_accumulators(part_payloads)
     mc_records = {}
@@ -390,6 +426,7 @@ def merge_parts(reps: int, count: int, limit: bool) -> dict:
     base["settings"] = dict(base["settings"], part=None, merged_parts=count)
     base["K_c"] = {
         "part": None,
+        "clean_search_executed": True,
         "mc_accumulators": combined_acc,
         "mc": mc_records,
         "clean": base["K_c"]["clean"],

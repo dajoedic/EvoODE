@@ -11,6 +11,7 @@ from pathlib import Path
 import mpmath as mp
 import numpy as np
 import sympy as sp
+from scipy import special
 
 from .config import ALL_FUNCTIONS, CLASSES, ORACLE_DIGITS, ORACLE_POINTS, ORACLE_REL_TOL, RESULTS, class_columns, domain_for
 from .functions import symbolic_z
@@ -34,12 +35,36 @@ def _cache_is_valid(data: dict) -> bool:
     return data.get("metadata") == ORACLE_METADATA
 
 
+def _mp_airyaiprime(x):
+    return mp.airyai(x, derivative=1)
+
+
+def _scipy_airyai(x):
+    return special.airy(x)[0]
+
+
+def _scipy_airyaiprime(x):
+    return special.airy(x)[1]
+
+
+MPMATH_MODULES = [{"airyai": mp.airyai, "airyaiprime": _mp_airyaiprime, "besselj": mp.besselj}, "mpmath"]
+SCIPY_MODULES = [{"airyai": _scipy_airyai, "airyaiprime": _scipy_airyaiprime, "besselj": special.jv}, "scipy", "numpy"]
+
+
+def lambdify_mpmath_derivative(symbol: sp.Symbol, expr: sp.Expr, order: int):
+    return sp.lambdify(symbol, sp.diff(expr, symbol, order), MPMATH_MODULES)
+
+
+def lambdify_scipy_derivative(symbol: sp.Symbol, expr: sp.Expr, order: int):
+    return sp.lambdify(symbol, sp.diff(expr, symbol, order), SCIPY_MODULES)
+
+
 @lru_cache(maxsize=None)
 def _mp_derivatives(function_key: str, domain_name: str):
     spec = ALL_FUNCTIONS[function_key]
     domain = domain_for(spec, domain_name)
     z, expr = symbolic_z(function_key, domain)
-    return tuple(sp.lambdify(z, sp.diff(expr, z, k), "mpmath") for k in range(max(r for r, _ in CLASSES) + 1))
+    return tuple(lambdify_mpmath_derivative(z, expr, k) for k in range(max(r for r, _ in CLASSES) + 1))
 
 
 @lru_cache(maxsize=None)
@@ -76,13 +101,32 @@ def _nullspace(function_key: str, domain_name: str, r: int, d: int) -> tuple[int
     return n_exact, coeffs
 
 
+def _definition_residual(function_key: str, domain_name: str) -> sp.Expr:
+    domain = domain_for(ALL_FUNCTIONS[function_key], domain_name)
+    z, expr = symbolic_z(function_key, domain)
+    mu = sp.Rational(str(domain.mu))
+    scale = sp.Rational(str(domain.scale))
+    if function_key == "K3":
+        coeffs = [-(scale**2) * mu, -(scale**3), 0, 0, 1, 0]
+    elif function_key == "K4":
+        coeffs = [(scale**2) * mu, scale**3, scale, 0, mu, scale]
+    else:
+        raise KeyError(function_key)
+    total = 0
+    for c, (k, j) in zip(coeffs, class_columns(2, 1)):
+        total += c * z**j * sp.diff(expr, z, k)
+    return sp.simplify(total)
+
+
 def _verify_reference(function_key: str, domain_name: str, r: int, d: int, coeffs: list[float]) -> dict:
-    residual = symbolic_residual(function_key, domain_name, r, d, np.asarray(coeffs, dtype=float))
     if function_key in {"K3", "K4"}:
+        residual = _definition_residual(function_key, domain_name)
         mode = "definition_ode_numeric"
     elif function_key == "F10":
+        residual = symbolic_residual(function_key, domain_name, r, d, np.asarray(coeffs, dtype=float))
         mode = "numeric"
     else:
+        residual = symbolic_residual(function_key, domain_name, r, d, np.asarray(coeffs, dtype=float))
         mode = "symbolic"
     sample = np.linspace(-0.9, 0.9, 19)
     values = [float(abs(sp.N(residual.subs({"z": z}), 80))) for z in sample]
