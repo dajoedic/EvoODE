@@ -7,7 +7,7 @@ nicht hier.
 
 **Stand: 2026-10-05 nachmittags. Gate 2A v3 ist gescheitert (Anhang A nicht bestanden, Anhang B löst K6 aus). Neue,
 eingefrorene Diagnose: Trennt `AMBIGUOUS` nicht identifizierbare von identifizierbaren Fällen? Das Skript
-ist fertig (WP-DIAG-AMB-a), als Nächstes kommt der Pilot.**
+ist fertig (WP-DIAG-AMB-a), der Pilot läuft (Ende gegen 17–18 Uhr).**
 
 ## 1. Wo wir stehen
 
@@ -29,18 +29,27 @@ ist fertig (WP-DIAG-AMB-a), als Nächstes kommt der Pilot.**
 2. **Pilot** (2 Realisierungen je Zelle, 12 Aufgaben) starten, Befehl:
    `python -m experiments.annihilator_gate2a_v3.diagnostics.ambiguity_diagnostic --pilot --workers 6`.
    Eine Realisierung sind 51 Suchen (Haupt plus 50 Bootstrap), F2 allein brauchte über 13 min.
-3. **Vor dem Hauptlauf an Codex (WP-DIAG-AMB-b):** Der Nullraum-Cache wird bei mehreren Workern von jedem Prozess
-   ganz neu geschrieben (Wettlauf, möglicher Abbruch, fortsetzbar). Außerdem die 4 übersprungenen Tests mit einem
-   echten Pilot-Record füllen.
-4. Aus den Zählgrößen $N$ und den Laufort festlegen, in `docs/DIAGNOSTIC_AMBIGUITY.md` §6 eintragen und committen,
-   **bevor** der Hauptlauf startet.
+3. **Vor dem Hauptlauf an Codex (WP-DIAG-AMB-b):**
+   - Der Nullraum-Cache wird bei mehreren Workern von jedem Prozess ganz neu geschrieben (Wettlauf, möglicher
+     Abbruch, fortsetzbar).
+   - Die 4 übersprungenen Tests mit einem echten Pilot-Record füllen.
+   - `run.log` darf den Zustand nicht mehr enthalten, nur Funktion, Seed und Zählgrößen. Grund: Der Zustand von
+     F2/50000 war in `run.log` sichtbar, bevor $N$ festgelegt war. Das ist offenzulegen, ändert aber nichts, weil $N$
+     und der Laufort nur nach Kosten festgelegt werden. Ab dann blendet die Überwachung den Zustand aus.
+4. **Erst nach dem Ende des Pilots** (Nutzer: nicht schon bei einer Realisierung pro Funktion) aus den Zählgrößen
+   $N$ und den Laufort festlegen, in `docs/DIAGNOSTIC_AMBIGUITY.md` §6 eintragen und committen, **bevor** der
+   Hauptlauf startet. Erste Schätzung: Bei $N = 100$ sind es 600 Realisierungen zu je 40 min oder mehr, auf
+   6 Workern also über 60 h. Das ist nichts für den Laptop.
 5. Hauptlauf, `--summarize`, Ergebnis in §7.
 
 ## 3. Was noch läuft oder liegt
 
-- **Der Pilot läuft lokal**, losgelöst gestartet am 05.10. um 12:53 (Haupt-PID 40720, 6 Worker), erwartet 1–3 h.
-  Fortschritt in `results/diagnostic_ambiguity/run.log`, Fehler in `pilot.err`, am Ende die Datei `DONE`. Kein
-  aktiver Codex-Auftrag.
+- **Der Pilot läuft lokal**, losgelöst gestartet am 05.10. um 12:53 (Haupt-PID 40720, 6 Worker). Ende erwartet
+  gegen **17–18 Uhr**, das ist mehr als die ursprünglich geschätzten 1–3 h. Stand 13:31: 2 von 12 fertig. F2/50000
+  mit 2 Klassen, 19 AML-Iterationen, 18 min; F1/50000 mit 5 Klassen, 19 AML-Iterationen, 37 min. F5 (Referenz
+  (3,1)) dürfte 2–3 h pro Realisierung brauchen und bestimmt das Ende. Fortschritt in
+  `results/diagnostic_ambiguity/run.log` (enthält Zustände, nicht ansehen), Fehler in `pilot.err`, am Ende die
+  Datei `DONE`. Kein aktiver Codex-Auftrag.
 - `PRACTICAL_ANNIHILATOR_BENCHMARK.md` ist uncommittet (Entwurf des Nutzers).
 - Uncommittet liegen noch Orakel-Teil 12/18 und Worker-Caches der v2-Abnahme
   (`experiments/annihilator_gate2a_v2/results/acceptance/`). v2 ist abgelöst. Ob sie committet oder gelöscht werden,
