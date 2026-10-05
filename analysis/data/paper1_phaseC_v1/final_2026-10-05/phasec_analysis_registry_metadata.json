@@ -1,0 +1,30 @@
+{
+  "allow_incomplete": false,
+  "counts": {
+    "analysis_registry": {
+      "actual": 936,
+      "complete": true,
+      "expected": 936
+    },
+    "c1": {
+      "actual": 378,
+      "complete": true,
+      "expected": 378
+    },
+    "c1_c2": {
+      "actual": 756,
+      "complete": true,
+      "expected": 756
+    },
+    "pretuning": {
+      "actual": 360,
+      "complete": true,
+      "expected": 360
+    }
+  },
+  "micro_aliases": {
+    "structural_f1": "structural_f1_micro",
+    "term_precision": "term_precision_micro",
+    "term_recall": "term_recall_micro"
+  }
+}

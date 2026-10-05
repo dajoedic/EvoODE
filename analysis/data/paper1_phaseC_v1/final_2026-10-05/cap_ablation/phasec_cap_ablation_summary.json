@@ -1,0 +1,2513 @@
+{
+  "condition_diff_allowlist": [
+    "campaign_manifest_index",
+    "coefficient_errors",
+    "coefficient_relative_error_max",
+    "coefficient_relative_error_mean",
+    "coefficients",
+    "condition",
+    "core_hours",
+    "elapsed_s",
+    "eq_final_stages",
+    "eq_overshoot",
+    "exact_support_match",
+    "exact_support_match_definition",
+    "exact_support_match_pruned",
+    "exact_support_match_raw",
+    "executed_levels",
+    "failure_reason",
+    "final_stage",
+    "finished_at",
+    "generalization_loss",
+    "generalization_mse",
+    "generalization_r2",
+    "inferred_status",
+    "loss",
+    "metrics_available",
+    "model_terms",
+    "n_coefficient_terms",
+    "n_equations",
+    "n_extra_found_terms",
+    "n_found_terms_micro",
+    "n_missing_true_terms",
+    "n_true_positive_terms_micro",
+    "n_true_terms_micro",
+    "objective",
+    "optimizer_retcodes",
+    "partial",
+    "pruned_support_terms",
+    "r2",
+    "r2_by_dim",
+    "run_id",
+    "solver_retcodes",
+    "stage_cap_policy_active",
+    "stage_caps",
+    "stage_overshoot",
+    "started_at",
+    "status",
+    "structural_f1",
+    "structural_f1_macro",
+    "structural_f1_micro",
+    "success",
+    "support_terms",
+    "term_precision",
+    "term_precision_macro",
+    "term_precision_micro",
+    "term_recall",
+    "term_recall_macro",
+    "term_recall_micro",
+    "test_loss",
+    "test_mse",
+    "test_r2",
+    "total_diverged_solves",
+    "total_invalid_evals",
+    "total_invalid_solves",
+    "total_loss_evals",
+    "total_nonfinite_solves",
+    "total_ode_solves",
+    "total_optimizer_budget_stop_fits",
+    "total_optimizer_limit_hits",
+    "total_parameter_fit_attempts",
+    "total_parameter_fits",
+    "total_solver_unstable_solves",
+    "total_step_limit_solves",
+    "variant",
+    "variant_slug",
+    "wasted_levels"
+  ],
+  "core_hours_note": "Core hours, if present, are capacity context only; evidence for saving is reported from counters and executed levels.",
+  "cost_savings": [
+    {
+      "counter": "total_parameter_fits",
+      "saving": {
+        "cluster_bootstrap_quantile_ci95": {
+          "q25": [
+            0.0,
+            0.0
+          ],
+          "q75": [
+            0.0,
+            75.0
+          ]
+        },
+        "cluster_permutation_p": 5.999940000599994e-05,
+        "difference_column": "total_parameter_fits_saving_uncapped_minus_capped",
+        "n_pairs": 378,
+        "n_systems": 63,
+        "quantiles": [
+          {
+            "probability": 0.05,
+            "value": 0.0
+          },
+          {
+            "probability": 0.1,
+            "value": 0.0
+          },
+          {
+            "probability": 0.25,
+            "value": 0.0
+          },
+          {
+            "probability": 0.75,
+            "value": 0.0
+          },
+          {
+            "probability": 0.9,
+            "value": 126.00000000000023
+          },
+          {
+            "probability": 0.95,
+            "value": 160.0
+          }
+        ],
+        "sign_counts": {
+          "capped_higher": 71,
+          "exact_zero": 305,
+          "uncapped_higher": 2
+        },
+        "threshold_grid": [
+          {
+            "capped_higher_cluster_bootstrap_ci95": [
+              0.9867724867724867,
+              1.0
+            ],
+            "capped_higher_count": 376,
+            "capped_higher_share": 0.9947089947089947,
+            "threshold": 0.0,
+            "uncapped_higher_cluster_bootstrap_ci95": [
+              0.7248677248677249,
+              0.8915343915343915
+            ],
+            "uncapped_higher_count": 307,
+            "uncapped_higher_share": 0.8121693121693122
+          },
+          {
+            "capped_higher_cluster_bootstrap_ci95": [
+              0.10846560846560846,
+              0.2751322751322751
+            ],
+            "capped_higher_count": 71,
+            "capped_higher_share": 0.18783068783068782,
+            "threshold": 0.1,
+            "uncapped_higher_cluster_bootstrap_ci95": [
+              0.0,
+              0.013227513227513227
+            ],
+            "uncapped_higher_count": 2,
+            "uncapped_higher_share": 0.005291005291005291
+          },
+          {
+            "capped_higher_cluster_bootstrap_ci95": [
+              0.10846560846560846,
+              0.2751322751322751
+            ],
+            "capped_higher_count": 71,
+            "capped_higher_share": 0.18783068783068782,
+            "threshold": 0.25,
+            "uncapped_higher_cluster_bootstrap_ci95": [
+              0.0,
+              0.013227513227513227
+            ],
+            "uncapped_higher_count": 2,
+            "uncapped_higher_share": 0.005291005291005291
+          },
+          {
+            "capped_higher_cluster_bootstrap_ci95": [
+              0.10846560846560846,
+              0.2777777777777778
+            ],
+            "capped_higher_count": 71,
+            "capped_higher_share": 0.18783068783068782,
+            "threshold": 0.5,
+            "uncapped_higher_cluster_bootstrap_ci95": [
+              0.0,
+              0.013227513227513227
+            ],
+            "uncapped_higher_count": 2,
+            "uncapped_higher_share": 0.005291005291005291
+          },
+          {
+            "capped_higher_cluster_bootstrap_ci95": [
+              0.10846560846560846,
+              0.2777777777777778
+            ],
+            "capped_higher_count": 71,
+            "capped_higher_share": 0.18783068783068782,
+            "threshold": 0.75,
+            "uncapped_higher_cluster_bootstrap_ci95": [
+              0.0,
+              0.013227513227513227
+            ],
+            "uncapped_higher_count": 2,
+            "uncapped_higher_share": 0.005291005291005291
+          }
+        ]
+      },
+      "saving_definition": "uncapped - capped; positive values favor the capped arm",
+      "saving_fraction_of_uncapped": {
+        "cluster_bootstrap_quantile_ci95": {
+          "q25": [
+            0.0,
+            0.0
+          ],
+          "q75": [
+            0.0,
+            0.14754098360655737
+          ]
+        },
+        "cluster_permutation_p": 5.999940000599994e-05,
+        "difference_column": "total_parameter_fits_saving_fraction_of_uncapped",
+        "n_pairs": 378,
+        "n_systems": 63,
+        "quantiles": [
+          {
+            "probability": 0.05,
+            "value": 0.0
+          },
+          {
+            "probability": 0.1,
+            "value": 0.0
+          },
+          {
+            "probability": 0.25,
+            "value": 0.0
+          },
+          {
+            "probability": 0.75,
+            "value": 0.0
+          },
+          {
+            "probability": 0.9,
+            "value": 0.2065573770491807
+          },
+          {
+            "probability": 0.95,
+            "value": 0.35555555555555557
+          }
+        ],
+        "sign_counts": {
+          "capped_higher": 71,
+          "exact_zero": 305,
+          "uncapped_higher": 2
+        },
+        "threshold_grid": [
+          {
+            "capped_higher_cluster_bootstrap_ci95": [
+              0.9867724867724867,
+              1.0
+            ],
+            "capped_higher_count": 376,
+            "capped_higher_share": 0.9947089947089947,
+            "threshold": 0.0,
+            "uncapped_higher_cluster_bootstrap_ci95": [
+              0.7248677248677249,
+              0.8941798941798942
+            ],
+            "uncapped_higher_count": 307,
+            "uncapped_higher_share": 0.8121693121693122
+          },
+          {
+            "capped_higher_cluster_bootstrap_ci95": [
+              0.09788359788359788,
+              0.25396825396825395
+            ],
+            "capped_higher_count": 65,
+            "capped_higher_share": 0.17195767195767195,
+            "threshold": 0.1,
+            "uncapped_higher_cluster_bootstrap_ci95": [
+              0.0,
+              0.0
+            ],
+            "uncapped_higher_count": 0,
+            "uncapped_higher_share": 0.0
+          },
+          {
+            "capped_higher_cluster_bootstrap_ci95": [
+              0.03968253968253968,
+              0.164021164021164
+            ],
+            "capped_higher_count": 37,
+            "capped_higher_share": 0.09788359788359788,
+            "threshold": 0.25,
+            "uncapped_higher_cluster_bootstrap_ci95": [
+              0.0,
+              0.0
+            ],
+            "uncapped_higher_count": 0,
+            "uncapped_higher_share": 0.0
+          },
+          {
+            "capped_higher_cluster_bootstrap_ci95": [
+              0.0,
+              0.08465608465608465
+            ],
+            "capped_higher_count": 14,
+            "capped_higher_share": 0.037037037037037035,
+            "threshold": 0.5,
+            "uncapped_higher_cluster_bootstrap_ci95": [
+              0.0,
+              0.0
+            ],
+            "uncapped_higher_count": 0,
+            "uncapped_higher_share": 0.0
+          },
+          {
+            "capped_higher_cluster_bootstrap_ci95": [
+              0.0,
+              0.0
+            ],
+            "capped_higher_count": 0,
+            "capped_higher_share": 0.0,
+            "threshold": 0.75,
+            "uncapped_higher_cluster_bootstrap_ci95": [
+              0.0,
+              0.0
+            ],
+            "uncapped_higher_count": 0,
+            "uncapped_higher_share": 0.0
+          }
+        ]
+      }
+    },
+    {
+      "counter": "total_parameter_fit_attempts",
+      "saving": {
+        "cluster_bootstrap_quantile_ci95": {
+          "q25": [
+            0.0,
+            0.0
+          ],
+          "q75": [
+            0.0,
+            98.75
+          ]
+        },
+        "cluster_permutation_p": 2.999970000299997e-05,
+        "difference_column": "total_parameter_fit_attempts_saving_uncapped_minus_capped",
+        "n_pairs": 378,
+        "n_systems": 63,
+        "quantiles": [
+          {
+            "probability": 0.05,
+            "value": 0.0
+          },
+          {
+            "probability": 0.1,
+            "value": 0.0
+          },
+          {
+            "probability": 0.25,
+            "value": 0.0
+          },
+          {
+            "probability": 0.75,
+            "value": 2.75
+          },
+          {
+            "probability": 0.9,
+            "value": 169.3
+          },
+          {
+            "probability": 0.95,
+            "value": 303.9499999999997
+          }
+        ],
+        "sign_counts": {
+          "capped_higher": 98,
+          "exact_zero": 268,
+          "uncapped_higher": 12
+        },
+        "threshold_grid": [
+          {
+            "capped_higher_cluster_bootstrap_ci95": [
+              0.9391534391534392,
+              0.9894179894179894
+            ],
+            "capped_higher_count": 366,
+            "capped_higher_share": 0.9682539682539683,
+            "threshold": 0.0,
+            "uncapped_higher_cluster_bootstrap_ci95": [
+              0.6507936507936508,
+              0.8253968253968254
+            ],
+            "uncapped_higher_count": 280,
+            "uncapped_higher_share": 0.7407407407407407
+          },
+          {
+            "capped_higher_cluster_bootstrap_ci95": [
+              0.1746031746031746,
+              0.35185185185185186
+            ],
+            "capped_higher_count": 98,
+            "capped_higher_share": 0.25925925925925924,
+            "threshold": 0.1,
+            "uncapped_higher_cluster_bootstrap_ci95": [
+              0.010582010582010581,
+              0.0582010582010582
+            ],
+            "uncapped_higher_count": 12,
+            "uncapped_higher_share": 0.031746031746031744
+          },
+          {
+            "capped_higher_cluster_bootstrap_ci95": [
+              0.17195767195767195,
+              0.3492063492063492
+            ],
+            "capped_higher_count": 98,
+            "capped_higher_share": 0.25925925925925924,
+            "threshold": 0.25,
+            "uncapped_higher_cluster_bootstrap_ci95": [
+              0.010582010582010581,
+              0.06084656084656084
+            ],
+            "uncapped_higher_count": 12,
+            "uncapped_higher_share": 0.031746031746031744
+          },
+          {
+            "capped_higher_cluster_bootstrap_ci95": [
+              0.17195767195767195,
+              0.35185185185185186
+            ],
+            "capped_higher_count": 98,
+            "capped_higher_share": 0.25925925925925924,
+            "threshold": 0.5,
+            "uncapped_higher_cluster_bootstrap_ci95": [
+              0.010582010582010581,
+              0.06084656084656084
+            ],
+            "uncapped_higher_count": 12,
+            "uncapped_higher_share": 0.031746031746031744
+          },
+          {
+            "capped_higher_cluster_bootstrap_ci95": [
+              0.1746031746031746,
+              0.35185185185185186
+            ],
+            "capped_higher_count": 98,
+            "capped_higher_share": 0.25925925925925924,
+            "threshold": 0.75,
+            "uncapped_higher_cluster_bootstrap_ci95": [
+              0.010582010582010581,
+              0.06084656084656084
+            ],
+            "uncapped_higher_count": 12,
+            "uncapped_higher_share": 0.031746031746031744
+          }
+        ]
+      },
+      "saving_definition": "uncapped - capped; positive values favor the capped arm",
+      "saving_fraction_of_uncapped": {
+        "cluster_bootstrap_quantile_ci95": {
+          "q25": [
+            0.0,
+            0.0
+          ],
+          "q75": [
+            0.0,
+            0.1478060664991193
+          ]
+        },
+        "cluster_permutation_p": 1.999980000199998e-05,
+        "difference_column": "total_parameter_fit_attempts_saving_fraction_of_uncapped",
+        "n_pairs": 378,
+        "n_systems": 63,
+        "quantiles": [
+          {
+            "probability": 0.05,
+            "value": 0.0
+          },
+          {
+            "probability": 0.1,
+            "value": 0.0
+          },
+          {
+            "probability": 0.25,
+            "value": 0.0
+          },
+          {
+            "probability": 0.75,
+            "value": 0.004536116817500417
+          },
+          {
+            "probability": 0.9,
+            "value": 0.24111031727130855
+          },
+          {
+            "probability": 0.95,
+            "value": 0.38081637372802957
+          }
+        ],
+        "sign_counts": {
+          "capped_higher": 98,
+          "exact_zero": 268,
+          "uncapped_higher": 12
+        },
+        "threshold_grid": [
+          {
+            "capped_higher_cluster_bootstrap_ci95": [
+              0.9391534391534392,
+              0.9894179894179894
+            ],
+            "capped_higher_count": 366,
+            "capped_higher_share": 0.9682539682539683,
+            "threshold": 0.0,
+            "uncapped_higher_cluster_bootstrap_ci95": [
+              0.6481481481481481,
+              0.828042328042328
+            ],
+            "uncapped_higher_count": 280,
+            "uncapped_higher_share": 0.7407407407407407
+          },
+          {
+            "capped_higher_cluster_bootstrap_ci95": [
+              0.10317460317460317,
+              0.26455026455026454
+            ],
+            "capped_higher_count": 68,
+            "capped_higher_share": 0.17989417989417988,
+            "threshold": 0.1,
+            "uncapped_higher_cluster_bootstrap_ci95": [
+              0.0,
+              0.0
+            ],
+            "uncapped_higher_count": 0,
+            "uncapped_higher_share": 0.0
+          },
+          {
+            "capped_higher_cluster_bootstrap_ci95": [
+              0.042328042328042326,
+              0.1693121693121693
+            ],
+            "capped_higher_count": 38,
+            "capped_higher_share": 0.10052910052910052,
+            "threshold": 0.25,
+            "uncapped_higher_cluster_bootstrap_ci95": [
+              0.0,
+              0.0
+            ],
+            "uncapped_higher_count": 0,
+            "uncapped_higher_share": 0.0
+          },
+          {
+            "capped_higher_cluster_bootstrap_ci95": [
+              0.0026455026455026454,
+              0.0873015873015873
+            ],
+            "capped_higher_count": 15,
+            "capped_higher_share": 0.03968253968253968,
+            "threshold": 0.5,
+            "uncapped_higher_cluster_bootstrap_ci95": [
+              0.0,
+              0.0
+            ],
+            "uncapped_higher_count": 0,
+            "uncapped_higher_share": 0.0
+          },
+          {
+            "capped_higher_cluster_bootstrap_ci95": [
+              0.0,
+              0.0
+            ],
+            "capped_higher_count": 0,
+            "capped_higher_share": 0.0,
+            "threshold": 0.75,
+            "uncapped_higher_cluster_bootstrap_ci95": [
+              0.0,
+              0.0
+            ],
+            "uncapped_higher_count": 0,
+            "uncapped_higher_share": 0.0
+          }
+        ]
+      }
+    },
+    {
+      "counter": "total_loss_evals",
+      "saving": {
+        "cluster_bootstrap_quantile_ci95": {
+          "q25": [
+            0.0,
+            0.0
+          ],
+          "q75": [
+            0.0,
+            310036.0
+          ]
+        },
+        "cluster_permutation_p": 0.005699943000569994,
+        "difference_column": "total_loss_evals_saving_uncapped_minus_capped",
+        "n_pairs": 378,
+        "n_systems": 63,
+        "quantiles": [
+          {
+            "probability": 0.05,
+            "value": -52678.45
+          },
+          {
+            "probability": 0.1,
+            "value": 0.0
+          },
+          {
+            "probability": 0.25,
+            "value": 0.0
+          },
+          {
+            "probability": 0.75,
+            "value": 0.0
+          },
+          {
+            "probability": 0.9,
+            "value": 839100.1000000013
+          },
+          {
+            "probability": 0.95,
+            "value": 1715739.0499999986
+          }
+        ],
+        "sign_counts": {
+          "capped_higher": 83,
+          "exact_zero": 267,
+          "uncapped_higher": 28
+        },
+        "threshold_grid": [
+          {
+            "capped_higher_cluster_bootstrap_ci95": [
+              0.8783068783068783,
+              0.9656084656084656
+            ],
+            "capped_higher_count": 350,
+            "capped_higher_share": 0.9259259259259259,
+            "threshold": 0.0,
+            "uncapped_higher_cluster_bootstrap_ci95": [
+              0.6931216931216931,
+              0.8624338624338624
+            ],
+            "uncapped_higher_count": 295,
+            "uncapped_higher_share": 0.7804232804232805
+          },
+          {
+            "capped_higher_cluster_bootstrap_ci95": [
+              0.13756613756613756,
+              0.30694444444444346
+            ],
+            "capped_higher_count": 83,
+            "capped_higher_share": 0.21957671957671956,
+            "threshold": 0.1,
+            "uncapped_higher_cluster_bootstrap_ci95": [
+              0.03439153439153439,
+              0.11904761904761904
+            ],
+            "uncapped_higher_count": 28,
+            "uncapped_higher_share": 0.07407407407407407
+          },
+          {
+            "capped_higher_cluster_bootstrap_ci95": [
+              0.1402116402116402,
+              0.30687830687830686
+            ],
+            "capped_higher_count": 83,
+            "capped_higher_share": 0.21957671957671956,
+            "threshold": 0.25,
+            "uncapped_higher_cluster_bootstrap_ci95": [
+              0.03439153439153439,
+              0.11904761904761904
+            ],
+            "uncapped_higher_count": 28,
+            "uncapped_higher_share": 0.07407407407407407
+          },
+          {
+            "capped_higher_cluster_bootstrap_ci95": [
+              0.13756613756613756,
+              0.30687830687830686
+            ],
+            "capped_higher_count": 83,
+            "capped_higher_share": 0.21957671957671956,
+            "threshold": 0.5,
+            "uncapped_higher_cluster_bootstrap_ci95": [
+              0.03439153439153439,
+              0.11904761904761904
+            ],
+            "uncapped_higher_count": 28,
+            "uncapped_higher_share": 0.07407407407407407
+          },
+          {
+            "capped_higher_cluster_bootstrap_ci95": [
+              0.1349206349206349,
+              0.30952380952380953
+            ],
+            "capped_higher_count": 83,
+            "capped_higher_share": 0.21957671957671956,
+            "threshold": 0.75,
+            "uncapped_higher_cluster_bootstrap_ci95": [
+              0.03439153439153439,
+              0.11904761904761904
+            ],
+            "uncapped_higher_count": 28,
+            "uncapped_higher_share": 0.07407407407407407
+          }
+        ]
+      },
+      "saving_definition": "uncapped - capped; positive values favor the capped arm",
+      "saving_fraction_of_uncapped": {
+        "cluster_bootstrap_quantile_ci95": {
+          "q25": [
+            0.0,
+            0.0
+          ],
+          "q75": [
+            0.0,
+            0.12170539384455568
+          ]
+        },
+        "cluster_permutation_p": 0.0065599344006559935,
+        "difference_column": "total_loss_evals_saving_fraction_of_uncapped",
+        "n_pairs": 378,
+        "n_systems": 63,
+        "quantiles": [
+          {
+            "probability": 0.05,
+            "value": -0.014460177290170708
+          },
+          {
+            "probability": 0.1,
+            "value": 0.0
+          },
+          {
+            "probability": 0.25,
+            "value": 0.0
+          },
+          {
+            "probability": 0.75,
+            "value": 0.0
+          },
+          {
+            "probability": 0.9,
+            "value": 0.3130080667087176
+          },
+          {
+            "probability": 0.95,
+            "value": 0.4732412053371695
+          }
+        ],
+        "sign_counts": {
+          "capped_higher": 83,
+          "exact_zero": 267,
+          "uncapped_higher": 28
+        },
+        "threshold_grid": [
+          {
+            "capped_higher_cluster_bootstrap_ci95": [
+              0.8809523809523809,
+              0.9656084656084656
+            ],
+            "capped_higher_count": 350,
+            "capped_higher_share": 0.9259259259259259,
+            "threshold": 0.0,
+            "uncapped_higher_cluster_bootstrap_ci95": [
+              0.6931216931216931,
+              0.8624338624338624
+            ],
+            "uncapped_higher_count": 295,
+            "uncapped_higher_share": 0.7804232804232805
+          },
+          {
+            "capped_higher_cluster_bootstrap_ci95": [
+              0.10582010582010581,
+              0.2671957671957672
+            ],
+            "capped_higher_count": 69,
+            "capped_higher_share": 0.18253968253968253,
+            "threshold": 0.1,
+            "uncapped_higher_cluster_bootstrap_ci95": [
+              0.0,
+              0.013227513227513227
+            ],
+            "uncapped_higher_count": 2,
+            "uncapped_higher_share": 0.005291005291005291
+          },
+          {
+            "capped_higher_cluster_bootstrap_ci95": [
+              0.05026455026455026,
+              0.17989417989417988
+            ],
+            "capped_higher_count": 42,
+            "capped_higher_share": 0.1111111111111111,
+            "threshold": 0.25,
+            "uncapped_higher_cluster_bootstrap_ci95": [
+              0.0,
+              0.007936507936507936
+            ],
+            "uncapped_higher_count": 1,
+            "uncapped_higher_share": 0.0026455026455026454
+          },
+          {
+            "capped_higher_cluster_bootstrap_ci95": [
+              0.0026455026455026454,
+              0.0873015873015873
+            ],
+            "capped_higher_count": 15,
+            "capped_higher_share": 0.03968253968253968,
+            "threshold": 0.5,
+            "uncapped_higher_cluster_bootstrap_ci95": [
+              0.0,
+              0.0
+            ],
+            "uncapped_higher_count": 0,
+            "uncapped_higher_share": 0.0
+          },
+          {
+            "capped_higher_cluster_bootstrap_ci95": [
+              0.0,
+              0.026455026455026454
+            ],
+            "capped_higher_count": 4,
+            "capped_higher_share": 0.010582010582010581,
+            "threshold": 0.75,
+            "uncapped_higher_cluster_bootstrap_ci95": [
+              0.0,
+              0.0
+            ],
+            "uncapped_higher_count": 0,
+            "uncapped_higher_share": 0.0
+          }
+        ]
+      }
+    },
+    {
+      "counter": "total_ode_solves",
+      "saving": {
+        "cluster_bootstrap_quantile_ci95": {
+          "q25": [
+            0.0,
+            0.0
+          ],
+          "q75": [
+            0.0,
+            299601.25
+          ]
+        },
+        "cluster_permutation_p": 0.006099939000609994,
+        "difference_column": "total_ode_solves_saving_uncapped_minus_capped",
+        "n_pairs": 378,
+        "n_systems": 63,
+        "quantiles": [
+          {
+            "probability": 0.05,
+            "value": -52678.45
+          },
+          {
+            "probability": 0.1,
+            "value": 0.0
+          },
+          {
+            "probability": 0.25,
+            "value": 0.0
+          },
+          {
+            "probability": 0.75,
+            "value": 0.0
+          },
+          {
+            "probability": 0.9,
+            "value": 839100.1000000013
+          },
+          {
+            "probability": 0.95,
+            "value": 1715739.0499999986
+          }
+        ],
+        "sign_counts": {
+          "capped_higher": 83,
+          "exact_zero": 267,
+          "uncapped_higher": 28
+        },
+        "threshold_grid": [
+          {
+            "capped_higher_cluster_bootstrap_ci95": [
+              0.8809523809523809,
+              0.9656084656084656
+            ],
+            "capped_higher_count": 350,
+            "capped_higher_share": 0.9259259259259259,
+            "threshold": 0.0,
+            "uncapped_higher_cluster_bootstrap_ci95": [
+              0.6904761904761905,
+              0.8624338624338624
+            ],
+            "uncapped_higher_count": 295,
+            "uncapped_higher_share": 0.7804232804232805
+          },
+          {
+            "capped_higher_cluster_bootstrap_ci95": [
+              0.1349206349206349,
+              0.30687830687830686
+            ],
+            "capped_higher_count": 83,
+            "capped_higher_share": 0.21957671957671956,
+            "threshold": 0.1,
+            "uncapped_higher_cluster_bootstrap_ci95": [
+              0.03439153439153439,
+              0.11904761904761904
+            ],
+            "uncapped_higher_count": 28,
+            "uncapped_higher_share": 0.07407407407407407
+          },
+          {
+            "capped_higher_cluster_bootstrap_ci95": [
+              0.1349206349206349,
+              0.31216931216931215
+            ],
+            "capped_higher_count": 83,
+            "capped_higher_share": 0.21957671957671956,
+            "threshold": 0.25,
+            "uncapped_higher_cluster_bootstrap_ci95": [
+              0.03439153439153439,
+              0.11904761904761904
+            ],
+            "uncapped_higher_count": 28,
+            "uncapped_higher_share": 0.07407407407407407
+          },
+          {
+            "capped_higher_cluster_bootstrap_ci95": [
+              0.13756613756613756,
+              0.30952380952380953
+            ],
+            "capped_higher_count": 83,
+            "capped_higher_share": 0.21957671957671956,
+            "threshold": 0.5,
+            "uncapped_higher_cluster_bootstrap_ci95": [
+              0.03439153439153439,
+              0.12169312169312169
+            ],
+            "uncapped_higher_count": 28,
+            "uncapped_higher_share": 0.07407407407407407
+          },
+          {
+            "capped_higher_cluster_bootstrap_ci95": [
+              0.1349206349206349,
+              0.30952380952380953
+            ],
+            "capped_higher_count": 83,
+            "capped_higher_share": 0.21957671957671956,
+            "threshold": 0.75,
+            "uncapped_higher_cluster_bootstrap_ci95": [
+              0.03439153439153439,
+              0.11904761904761904
+            ],
+            "uncapped_higher_count": 28,
+            "uncapped_higher_share": 0.07407407407407407
+          }
+        ]
+      },
+      "saving_definition": "uncapped - capped; positive values favor the capped arm",
+      "saving_fraction_of_uncapped": {
+        "cluster_bootstrap_quantile_ci95": {
+          "q25": [
+            0.0,
+            0.0
+          ],
+          "q75": [
+            0.0,
+            0.12252323004716426
+          ]
+        },
+        "cluster_permutation_p": 0.006459935400645994,
+        "difference_column": "total_ode_solves_saving_fraction_of_uncapped",
+        "n_pairs": 378,
+        "n_systems": 63,
+        "quantiles": [
+          {
+            "probability": 0.05,
+            "value": -0.014460177290170708
+          },
+          {
+            "probability": 0.1,
+            "value": 0.0
+          },
+          {
+            "probability": 0.25,
+            "value": 0.0
+          },
+          {
+            "probability": 0.75,
+            "value": 0.0
+          },
+          {
+            "probability": 0.9,
+            "value": 0.3130080667087176
+          },
+          {
+            "probability": 0.95,
+            "value": 0.4732412053371695
+          }
+        ],
+        "sign_counts": {
+          "capped_higher": 83,
+          "exact_zero": 267,
+          "uncapped_higher": 28
+        },
+        "threshold_grid": [
+          {
+            "capped_higher_cluster_bootstrap_ci95": [
+              0.8783068783068783,
+              0.9656084656084656
+            ],
+            "capped_higher_count": 350,
+            "capped_higher_share": 0.9259259259259259,
+            "threshold": 0.0,
+            "uncapped_higher_cluster_bootstrap_ci95": [
+              0.6904761904761905,
+              0.8624338624338624
+            ],
+            "uncapped_higher_count": 295,
+            "uncapped_higher_share": 0.7804232804232805
+          },
+          {
+            "capped_higher_cluster_bootstrap_ci95": [
+              0.10846560846560846,
+              0.2671957671957672
+            ],
+            "capped_higher_count": 69,
+            "capped_higher_share": 0.18253968253968253,
+            "threshold": 0.1,
+            "uncapped_higher_cluster_bootstrap_ci95": [
+              0.0,
+              0.013227513227513227
+            ],
+            "uncapped_higher_count": 2,
+            "uncapped_higher_share": 0.005291005291005291
+          },
+          {
+            "capped_higher_cluster_bootstrap_ci95": [
+              0.05291005291005291,
+              0.17989417989417988
+            ],
+            "capped_higher_count": 42,
+            "capped_higher_share": 0.1111111111111111,
+            "threshold": 0.25,
+            "uncapped_higher_cluster_bootstrap_ci95": [
+              0.0,
+              0.007936507936507936
+            ],
+            "uncapped_higher_count": 1,
+            "uncapped_higher_share": 0.0026455026455026454
+          },
+          {
+            "capped_higher_cluster_bootstrap_ci95": [
+              0.0026455026455026454,
+              0.0873015873015873
+            ],
+            "capped_higher_count": 15,
+            "capped_higher_share": 0.03968253968253968,
+            "threshold": 0.5,
+            "uncapped_higher_cluster_bootstrap_ci95": [
+              0.0,
+              0.0
+            ],
+            "uncapped_higher_count": 0,
+            "uncapped_higher_share": 0.0
+          },
+          {
+            "capped_higher_cluster_bootstrap_ci95": [
+              0.0,
+              0.026455026455026454
+            ],
+            "capped_higher_count": 4,
+            "capped_higher_share": 0.010582010582010581,
+            "threshold": 0.75,
+            "uncapped_higher_cluster_bootstrap_ci95": [
+              0.0,
+              0.0
+            ],
+            "uncapped_higher_count": 0,
+            "uncapped_higher_share": 0.0
+          }
+        ]
+      }
+    },
+    {
+      "counter": "final_stage",
+      "saving": {
+        "cluster_bootstrap_quantile_ci95": {
+          "q25": [
+            0.0,
+            0.0
+          ],
+          "q75": [
+            0.0,
+            1.0
+          ]
+        },
+        "cluster_permutation_p": 4.999950000499995e-05,
+        "difference_column": "final_stage_saving_uncapped_minus_capped",
+        "n_pairs": 378,
+        "n_systems": 63,
+        "quantiles": [
+          {
+            "probability": 0.05,
+            "value": 0.0
+          },
+          {
+            "probability": 0.1,
+            "value": 0.0
+          },
+          {
+            "probability": 0.25,
+            "value": 0.0
+          },
+          {
+            "probability": 0.75,
+            "value": 0.0
+          },
+          {
+            "probability": 0.9,
+            "value": 2.0
+          },
+          {
+            "probability": 0.95,
+            "value": 2.0
+          }
+        ],
+        "sign_counts": {
+          "capped_higher": 68,
+          "exact_zero": 309,
+          "uncapped_higher": 1
+        },
+        "threshold_grid": [
+          {
+            "capped_higher_cluster_bootstrap_ci95": [
+              0.9920634920634921,
+              1.0
+            ],
+            "capped_higher_count": 377,
+            "capped_higher_share": 0.9973544973544973,
+            "threshold": 0.0,
+            "uncapped_higher_cluster_bootstrap_ci95": [
+              0.7354497354497355,
+              0.9021164021164021
+            ],
+            "uncapped_higher_count": 310,
+            "uncapped_higher_share": 0.8201058201058201
+          },
+          {
+            "capped_higher_cluster_bootstrap_ci95": [
+              0.10052910052910052,
+              0.2671957671957672
+            ],
+            "capped_higher_count": 68,
+            "capped_higher_share": 0.17989417989417988,
+            "threshold": 0.1,
+            "uncapped_higher_cluster_bootstrap_ci95": [
+              0.0,
+              0.007936507936507936
+            ],
+            "uncapped_higher_count": 1,
+            "uncapped_higher_share": 0.0026455026455026454
+          },
+          {
+            "capped_higher_cluster_bootstrap_ci95": [
+              0.10052910052910052,
+              0.2671957671957672
+            ],
+            "capped_higher_count": 68,
+            "capped_higher_share": 0.17989417989417988,
+            "threshold": 0.25,
+            "uncapped_higher_cluster_bootstrap_ci95": [
+              0.0,
+              0.007936507936507936
+            ],
+            "uncapped_higher_count": 1,
+            "uncapped_higher_share": 0.0026455026455026454
+          },
+          {
+            "capped_higher_cluster_bootstrap_ci95": [
+              0.10052910052910052,
+              0.2671957671957672
+            ],
+            "capped_higher_count": 68,
+            "capped_higher_share": 0.17989417989417988,
+            "threshold": 0.5,
+            "uncapped_higher_cluster_bootstrap_ci95": [
+              0.0,
+              0.007936507936507936
+            ],
+            "uncapped_higher_count": 1,
+            "uncapped_higher_share": 0.0026455026455026454
+          },
+          {
+            "capped_higher_cluster_bootstrap_ci95": [
+              0.10052910052910052,
+              0.2671957671957672
+            ],
+            "capped_higher_count": 68,
+            "capped_higher_share": 0.17989417989417988,
+            "threshold": 0.75,
+            "uncapped_higher_cluster_bootstrap_ci95": [
+              0.0,
+              0.007936507936507936
+            ],
+            "uncapped_higher_count": 1,
+            "uncapped_higher_share": 0.0026455026455026454
+          }
+        ]
+      },
+      "saving_definition": "uncapped - capped; positive values favor the capped arm",
+      "saving_fraction_of_uncapped": {
+        "cluster_bootstrap_quantile_ci95": {
+          "q25": [
+            0.0,
+            0.0
+          ],
+          "q75": [
+            0.0,
+            0.2
+          ]
+        },
+        "cluster_permutation_p": 6.999930000699993e-05,
+        "difference_column": "final_stage_saving_fraction_of_uncapped",
+        "n_pairs": 378,
+        "n_systems": 63,
+        "quantiles": [
+          {
+            "probability": 0.05,
+            "value": 0.0
+          },
+          {
+            "probability": 0.1,
+            "value": 0.0
+          },
+          {
+            "probability": 0.25,
+            "value": 0.0
+          },
+          {
+            "probability": 0.75,
+            "value": 0.0
+          },
+          {
+            "probability": 0.9,
+            "value": 0.4
+          },
+          {
+            "probability": 0.95,
+            "value": 0.4
+          }
+        ],
+        "sign_counts": {
+          "capped_higher": 68,
+          "exact_zero": 309,
+          "uncapped_higher": 1
+        },
+        "threshold_grid": [
+          {
+            "capped_higher_cluster_bootstrap_ci95": [
+              0.9920634920634921,
+              1.0
+            ],
+            "capped_higher_count": 377,
+            "capped_higher_share": 0.9973544973544973,
+            "threshold": 0.0,
+            "uncapped_higher_cluster_bootstrap_ci95": [
+              0.7301587301587301,
+              0.8968253968253969
+            ],
+            "uncapped_higher_count": 310,
+            "uncapped_higher_share": 0.8201058201058201
+          },
+          {
+            "capped_higher_cluster_bootstrap_ci95": [
+              0.10052910052910052,
+              0.2671957671957672
+            ],
+            "capped_higher_count": 68,
+            "capped_higher_share": 0.17989417989417988,
+            "threshold": 0.1,
+            "uncapped_higher_cluster_bootstrap_ci95": [
+              0.0,
+              0.007936507936507936
+            ],
+            "uncapped_higher_count": 1,
+            "uncapped_higher_share": 0.0026455026455026454
+          },
+          {
+            "capped_higher_cluster_bootstrap_ci95": [
+              0.05291005291005291,
+              0.19047619047619047
+            ],
+            "capped_higher_count": 44,
+            "capped_higher_share": 0.1164021164021164,
+            "threshold": 0.25,
+            "uncapped_higher_cluster_bootstrap_ci95": [
+              0.0,
+              0.007936507936507936
+            ],
+            "uncapped_higher_count": 1,
+            "uncapped_higher_share": 0.0026455026455026454
+          },
+          {
+            "capped_higher_cluster_bootstrap_ci95": [
+              0.0,
+              0.08465608465608465
+            ],
+            "capped_higher_count": 14,
+            "capped_higher_share": 0.037037037037037035,
+            "threshold": 0.5,
+            "uncapped_higher_cluster_bootstrap_ci95": [
+              0.0,
+              0.0
+            ],
+            "uncapped_higher_count": 0,
+            "uncapped_higher_share": 0.0
+          },
+          {
+            "capped_higher_cluster_bootstrap_ci95": [
+              0.0,
+              0.0
+            ],
+            "capped_higher_count": 0,
+            "capped_higher_share": 0.0,
+            "threshold": 0.75,
+            "uncapped_higher_cluster_bootstrap_ci95": [
+              0.0,
+              0.0
+            ],
+            "uncapped_higher_count": 0,
+            "uncapped_higher_share": 0.0
+          }
+        ]
+      }
+    },
+    {
+      "counter": "executed_levels",
+      "saving": {
+        "cluster_bootstrap_quantile_ci95": {
+          "q25": [
+            0.0,
+            0.0
+          ],
+          "q75": [
+            0.0,
+            3.75
+          ]
+        },
+        "cluster_permutation_p": 5.999940000599994e-05,
+        "difference_column": "executed_levels_saving_uncapped_minus_capped",
+        "n_pairs": 378,
+        "n_systems": 63,
+        "quantiles": [
+          {
+            "probability": 0.05,
+            "value": 0.0
+          },
+          {
+            "probability": 0.1,
+            "value": 0.0
+          },
+          {
+            "probability": 0.25,
+            "value": 0.0
+          },
+          {
+            "probability": 0.75,
+            "value": 0.0
+          },
+          {
+            "probability": 0.9,
+            "value": 6.300000000000011
+          },
+          {
+            "probability": 0.95,
+            "value": 8.0
+          }
+        ],
+        "sign_counts": {
+          "capped_higher": 71,
+          "exact_zero": 305,
+          "uncapped_higher": 2
+        },
+        "threshold_grid": [
+          {
+            "capped_higher_cluster_bootstrap_ci95": [
+              0.9867724867724867,
+              1.0
+            ],
+            "capped_higher_count": 376,
+            "capped_higher_share": 0.9947089947089947,
+            "threshold": 0.0,
+            "uncapped_higher_cluster_bootstrap_ci95": [
+              0.7248677248677249,
+              0.8915343915343915
+            ],
+            "uncapped_higher_count": 307,
+            "uncapped_higher_share": 0.8121693121693122
+          },
+          {
+            "capped_higher_cluster_bootstrap_ci95": [
+              0.10846560846560846,
+              0.2751322751322751
+            ],
+            "capped_higher_count": 71,
+            "capped_higher_share": 0.18783068783068782,
+            "threshold": 0.1,
+            "uncapped_higher_cluster_bootstrap_ci95": [
+              0.0,
+              0.013227513227513227
+            ],
+            "uncapped_higher_count": 2,
+            "uncapped_higher_share": 0.005291005291005291
+          },
+          {
+            "capped_higher_cluster_bootstrap_ci95": [
+              0.10846560846560846,
+              0.2751322751322751
+            ],
+            "capped_higher_count": 71,
+            "capped_higher_share": 0.18783068783068782,
+            "threshold": 0.25,
+            "uncapped_higher_cluster_bootstrap_ci95": [
+              0.0,
+              0.013227513227513227
+            ],
+            "uncapped_higher_count": 2,
+            "uncapped_higher_share": 0.005291005291005291
+          },
+          {
+            "capped_higher_cluster_bootstrap_ci95": [
+              0.10846560846560846,
+              0.2724867724867725
+            ],
+            "capped_higher_count": 71,
+            "capped_higher_share": 0.18783068783068782,
+            "threshold": 0.5,
+            "uncapped_higher_cluster_bootstrap_ci95": [
+              0.0,
+              0.013227513227513227
+            ],
+            "uncapped_higher_count": 2,
+            "uncapped_higher_share": 0.005291005291005291
+          },
+          {
+            "capped_higher_cluster_bootstrap_ci95": [
+              0.10846560846560846,
+              0.2751322751322751
+            ],
+            "capped_higher_count": 71,
+            "capped_higher_share": 0.18783068783068782,
+            "threshold": 0.75,
+            "uncapped_higher_cluster_bootstrap_ci95": [
+              0.0,
+              0.013227513227513227
+            ],
+            "uncapped_higher_count": 2,
+            "uncapped_higher_share": 0.005291005291005291
+          }
+        ]
+      },
+      "saving_definition": "uncapped - capped; positive values favor the capped arm",
+      "saving_fraction_of_uncapped": {
+        "cluster_bootstrap_quantile_ci95": {
+          "q25": [
+            0.0,
+            0.0
+          ],
+          "q75": [
+            0.0,
+            0.16376811594202897
+          ]
+        },
+        "cluster_permutation_p": 5.999940000599994e-05,
+        "difference_column": "executed_levels_saving_fraction_of_uncapped",
+        "n_pairs": 378,
+        "n_systems": 63,
+        "quantiles": [
+          {
+            "probability": 0.05,
+            "value": 0.0
+          },
+          {
+            "probability": 0.1,
+            "value": 0.0
+          },
+          {
+            "probability": 0.25,
+            "value": 0.0
+          },
+          {
+            "probability": 0.75,
+            "value": 0.0
+          },
+          {
+            "probability": 0.9,
+            "value": 0.2100000000000004
+          },
+          {
+            "probability": 0.95,
+            "value": 0.36363636363636365
+          }
+        ],
+        "sign_counts": {
+          "capped_higher": 71,
+          "exact_zero": 305,
+          "uncapped_higher": 2
+        },
+        "threshold_grid": [
+          {
+            "capped_higher_cluster_bootstrap_ci95": [
+              0.9867724867724867,
+              1.0
+            ],
+            "capped_higher_count": 376,
+            "capped_higher_share": 0.9947089947089947,
+            "threshold": 0.0,
+            "uncapped_higher_cluster_bootstrap_ci95": [
+              0.7248677248677249,
+              0.8915343915343915
+            ],
+            "uncapped_higher_count": 307,
+            "uncapped_higher_share": 0.8121693121693122
+          },
+          {
+            "capped_higher_cluster_bootstrap_ci95": [
+              0.10317460317460317,
+              0.26455026455026454
+            ],
+            "capped_higher_count": 68,
+            "capped_higher_share": 0.17989417989417988,
+            "threshold": 0.1,
+            "uncapped_higher_cluster_bootstrap_ci95": [
+              0.0,
+              0.0
+            ],
+            "uncapped_higher_count": 0,
+            "uncapped_higher_share": 0.0
+          },
+          {
+            "capped_higher_cluster_bootstrap_ci95": [
+              0.03968253968253968,
+              0.16666666666666666
+            ],
+            "capped_higher_count": 37,
+            "capped_higher_share": 0.09788359788359788,
+            "threshold": 0.25,
+            "uncapped_higher_cluster_bootstrap_ci95": [
+              0.0,
+              0.0
+            ],
+            "uncapped_higher_count": 0,
+            "uncapped_higher_share": 0.0
+          },
+          {
+            "capped_higher_cluster_bootstrap_ci95": [
+              0.0,
+              0.08465608465608465
+            ],
+            "capped_higher_count": 14,
+            "capped_higher_share": 0.037037037037037035,
+            "threshold": 0.5,
+            "uncapped_higher_cluster_bootstrap_ci95": [
+              0.0,
+              0.0
+            ],
+            "uncapped_higher_count": 0,
+            "uncapped_higher_share": 0.0
+          },
+          {
+            "capped_higher_cluster_bootstrap_ci95": [
+              0.0,
+              0.0
+            ],
+            "capped_higher_count": 0,
+            "capped_higher_share": 0.0,
+            "threshold": 0.75,
+            "uncapped_higher_cluster_bootstrap_ci95": [
+              0.0,
+              0.0
+            ],
+            "uncapped_higher_count": 0,
+            "uncapped_higher_share": 0.0
+          }
+        ]
+      }
+    }
+  ],
+  "executed_levels_column": "executed_levels",
+  "experiment_id": "paper1_phaseC_v1",
+  "input_path": "C:\\Users\\joedicke\\Documents\\reps\\EvoODE\\outputs\\phase_c_campaign_221a3a7_final\\agg\\phasec_analysis_registry_c1_c2.csv",
+  "pair_counts": {
+    "allow_incomplete": false,
+    "by_representability": {
+      "exact": 180,
+      "surrogate": 198
+    },
+    "exact_quality_pairs": 180,
+    "exact_quality_systems": 30,
+    "expected_total": 378,
+    "systems": 63,
+    "total": 378
+  },
+  "paired_csv": "C:\\Users\\joedicke\\Documents\\reps\\EvoODE\\outputs\\phase_c_campaign_221a3a7_final\\agg\\cap_ablation\\phasec_cap_ablation_paired.csv",
+  "quality": [
+    {
+      "cluster_permutation_p": 0.13897861021389787,
+      "difference": "log10(loss_capped) - log10(loss_uncapped); negative values favor capped",
+      "n_pairs": 378,
+      "n_systems": 63,
+      "quantiles": [
+        {
+          "probability": 0.05,
+          "value": 0.0
+        },
+        {
+          "probability": 0.1,
+          "value": 0.0
+        },
+        {
+          "probability": 0.25,
+          "value": 0.0
+        },
+        {
+          "probability": 0.75,
+          "value": 0.0
+        },
+        {
+          "probability": 0.9,
+          "value": 0.0
+        },
+        {
+          "probability": 0.95,
+          "value": 0.04542802728649474
+        }
+      ],
+      "sign_counts": {
+        "capped_better": 14,
+        "exact_zero": 337,
+        "uncapped_better": 27
+      },
+      "target": "log10_loss",
+      "threshold_grid": [
+        {
+          "capped_better_cluster_bootstrap_ci95": [
+            0.0,
+            0.023809523809523808
+          ],
+          "capped_better_count": 4,
+          "capped_better_share": 0.010582010582010581,
+          "capped_worse_cluster_bootstrap_ci95": [
+            0.023809523809523808,
+            0.08994708994708994
+          ],
+          "capped_worse_count": 21,
+          "capped_worse_share": 0.05555555555555555,
+          "fold_threshold": 1.1
+        },
+        {
+          "capped_better_cluster_bootstrap_ci95": [
+            0.0,
+            0.007936507936507936
+          ],
+          "capped_better_count": 1,
+          "capped_better_share": 0.0026455026455026454,
+          "capped_worse_cluster_bootstrap_ci95": [
+            0.0026455026455026454,
+            0.03968253968253968
+          ],
+          "capped_worse_count": 7,
+          "capped_worse_share": 0.018518518518518517,
+          "fold_threshold": 2.0
+        },
+        {
+          "capped_better_cluster_bootstrap_ci95": [
+            0.0,
+            0.0
+          ],
+          "capped_better_count": 0,
+          "capped_better_share": 0.0,
+          "capped_worse_cluster_bootstrap_ci95": [
+            0.0,
+            0.007936507936507936
+          ],
+          "capped_worse_count": 1,
+          "capped_worse_share": 0.0026455026455026454,
+          "fold_threshold": 10.0
+        },
+        {
+          "capped_better_cluster_bootstrap_ci95": [
+            0.0,
+            0.0
+          ],
+          "capped_better_count": 0,
+          "capped_better_share": 0.0,
+          "capped_worse_cluster_bootstrap_ci95": [
+            0.0,
+            0.0
+          ],
+          "capped_worse_count": 0,
+          "capped_worse_share": 0.0,
+          "fold_threshold": 100.0
+        }
+      ]
+    },
+    {
+      "cluster_bootstrap_quantile_ci95": {
+        "q25": [
+          0.0,
+          0.0
+        ],
+        "q75": [
+          0.0,
+          0.0
+        ]
+      },
+      "cluster_permutation_p": 0.024939750602493975,
+      "difference_column": "r2_delta_capped_minus_uncapped",
+      "n_pairs": 378,
+      "n_systems": 63,
+      "quantiles": [
+        {
+          "probability": 0.05,
+          "value": -0.00011794701234479336
+        },
+        {
+          "probability": 0.1,
+          "value": 0.0
+        },
+        {
+          "probability": 0.25,
+          "value": 0.0
+        },
+        {
+          "probability": 0.75,
+          "value": 0.0
+        },
+        {
+          "probability": 0.9,
+          "value": 0.0
+        },
+        {
+          "probability": 0.95,
+          "value": 0.0
+        }
+      ],
+      "sign_counts": {
+        "capped_higher": 11,
+        "exact_zero": 336,
+        "uncapped_higher": 31
+      },
+      "threshold_grid": [
+        {
+          "capped_higher_cluster_bootstrap_ci95": [
+            0.005291005291005291,
+            0.05555555555555555
+          ],
+          "capped_higher_count": 10,
+          "capped_higher_share": 0.026455026455026454,
+          "threshold": 0.001,
+          "uncapped_higher_cluster_bootstrap_ci95": [
+            0.018518518518518517,
+            0.07671957671957672
+          ],
+          "uncapped_higher_count": 17,
+          "uncapped_higher_share": 0.04497354497354497
+        },
+        {
+          "capped_higher_cluster_bootstrap_ci95": [
+            0.005291005291005291,
+            0.05555555555555555
+          ],
+          "capped_higher_count": 10,
+          "capped_higher_share": 0.026455026455026454,
+          "threshold": 0.01,
+          "uncapped_higher_cluster_bootstrap_ci95": [
+            0.007936507936507936,
+            0.047619047619047616
+          ],
+          "uncapped_higher_count": 10,
+          "uncapped_higher_share": 0.026455026455026454
+        },
+        {
+          "capped_higher_cluster_bootstrap_ci95": [
+            0.0,
+            0.021164021164021163
+          ],
+          "capped_higher_count": 3,
+          "capped_higher_share": 0.007936507936507936,
+          "threshold": 0.05,
+          "uncapped_higher_cluster_bootstrap_ci95": [
+            0.0026455026455026454,
+            0.021164021164021163
+          ],
+          "uncapped_higher_count": 4,
+          "uncapped_higher_share": 0.010582010582010581
+        },
+        {
+          "capped_higher_cluster_bootstrap_ci95": [
+            0.0,
+            0.007936507936507936
+          ],
+          "capped_higher_count": 1,
+          "capped_higher_share": 0.0026455026455026454,
+          "threshold": 0.1,
+          "uncapped_higher_cluster_bootstrap_ci95": [
+            0.0,
+            0.007936507936507936
+          ],
+          "uncapped_higher_count": 1,
+          "uncapped_higher_share": 0.0026455026455026454
+        }
+      ]
+    },
+    {
+      "cluster_bootstrap_quantile_ci95": {
+        "q25": [
+          0.0,
+          0.0
+        ],
+        "q75": [
+          0.0,
+          0.0
+        ]
+      },
+      "cluster_permutation_p": 1.0,
+      "difference_column": "exact_support_match_raw_delta_capped_minus_uncapped",
+      "n_pairs": 180,
+      "n_systems": 30,
+      "quantiles": [
+        {
+          "probability": 0.05,
+          "value": 0.0
+        },
+        {
+          "probability": 0.1,
+          "value": 0.0
+        },
+        {
+          "probability": 0.25,
+          "value": 0.0
+        },
+        {
+          "probability": 0.75,
+          "value": 0.0
+        },
+        {
+          "probability": 0.9,
+          "value": 0.0
+        },
+        {
+          "probability": 0.95,
+          "value": 0.0
+        }
+      ],
+      "sign_counts": {
+        "capped_higher": 0,
+        "exact_zero": 180,
+        "uncapped_higher": 0
+      },
+      "threshold_grid": [
+        {
+          "capped_higher_cluster_bootstrap_ci95": [
+            0.0,
+            0.0
+          ],
+          "capped_higher_count": 0,
+          "capped_higher_share": 0.0,
+          "threshold": 0.001,
+          "uncapped_higher_cluster_bootstrap_ci95": [
+            0.0,
+            0.0
+          ],
+          "uncapped_higher_count": 0,
+          "uncapped_higher_share": 0.0
+        },
+        {
+          "capped_higher_cluster_bootstrap_ci95": [
+            0.0,
+            0.0
+          ],
+          "capped_higher_count": 0,
+          "capped_higher_share": 0.0,
+          "threshold": 0.01,
+          "uncapped_higher_cluster_bootstrap_ci95": [
+            0.0,
+            0.0
+          ],
+          "uncapped_higher_count": 0,
+          "uncapped_higher_share": 0.0
+        },
+        {
+          "capped_higher_cluster_bootstrap_ci95": [
+            0.0,
+            0.0
+          ],
+          "capped_higher_count": 0,
+          "capped_higher_share": 0.0,
+          "threshold": 0.05,
+          "uncapped_higher_cluster_bootstrap_ci95": [
+            0.0,
+            0.0
+          ],
+          "uncapped_higher_count": 0,
+          "uncapped_higher_share": 0.0
+        },
+        {
+          "capped_higher_cluster_bootstrap_ci95": [
+            0.0,
+            0.0
+          ],
+          "capped_higher_count": 0,
+          "capped_higher_share": 0.0,
+          "threshold": 0.1,
+          "uncapped_higher_cluster_bootstrap_ci95": [
+            0.0,
+            0.0
+          ],
+          "uncapped_higher_count": 0,
+          "uncapped_higher_share": 0.0
+        }
+      ]
+    },
+    {
+      "cluster_bootstrap_quantile_ci95": {
+        "q25": [
+          0.0,
+          0.0
+        ],
+        "q75": [
+          0.0,
+          0.0
+        ]
+      },
+      "cluster_permutation_p": 1.0,
+      "difference_column": "exact_support_match_pruned_delta_capped_minus_uncapped",
+      "n_pairs": 180,
+      "n_systems": 30,
+      "quantiles": [
+        {
+          "probability": 0.05,
+          "value": 0.0
+        },
+        {
+          "probability": 0.1,
+          "value": 0.0
+        },
+        {
+          "probability": 0.25,
+          "value": 0.0
+        },
+        {
+          "probability": 0.75,
+          "value": 0.0
+        },
+        {
+          "probability": 0.9,
+          "value": 0.0
+        },
+        {
+          "probability": 0.95,
+          "value": 0.0
+        }
+      ],
+      "sign_counts": {
+        "capped_higher": 0,
+        "exact_zero": 180,
+        "uncapped_higher": 0
+      },
+      "threshold_grid": [
+        {
+          "capped_higher_cluster_bootstrap_ci95": [
+            0.0,
+            0.0
+          ],
+          "capped_higher_count": 0,
+          "capped_higher_share": 0.0,
+          "threshold": 0.001,
+          "uncapped_higher_cluster_bootstrap_ci95": [
+            0.0,
+            0.0
+          ],
+          "uncapped_higher_count": 0,
+          "uncapped_higher_share": 0.0
+        },
+        {
+          "capped_higher_cluster_bootstrap_ci95": [
+            0.0,
+            0.0
+          ],
+          "capped_higher_count": 0,
+          "capped_higher_share": 0.0,
+          "threshold": 0.01,
+          "uncapped_higher_cluster_bootstrap_ci95": [
+            0.0,
+            0.0
+          ],
+          "uncapped_higher_count": 0,
+          "uncapped_higher_share": 0.0
+        },
+        {
+          "capped_higher_cluster_bootstrap_ci95": [
+            0.0,
+            0.0
+          ],
+          "capped_higher_count": 0,
+          "capped_higher_share": 0.0,
+          "threshold": 0.05,
+          "uncapped_higher_cluster_bootstrap_ci95": [
+            0.0,
+            0.0
+          ],
+          "uncapped_higher_count": 0,
+          "uncapped_higher_share": 0.0
+        },
+        {
+          "capped_higher_cluster_bootstrap_ci95": [
+            0.0,
+            0.0
+          ],
+          "capped_higher_count": 0,
+          "capped_higher_share": 0.0,
+          "threshold": 0.1,
+          "uncapped_higher_cluster_bootstrap_ci95": [
+            0.0,
+            0.0
+          ],
+          "uncapped_higher_count": 0,
+          "uncapped_higher_share": 0.0
+        }
+      ]
+    },
+    {
+      "cluster_bootstrap_quantile_ci95": {
+        "q25": [
+          0.0,
+          0.0
+        ],
+        "q75": [
+          0.0,
+          0.0
+        ]
+      },
+      "cluster_permutation_p": 0.0037899621003789964,
+      "difference_column": "structural_f1_delta_capped_minus_uncapped",
+      "n_pairs": 180,
+      "n_systems": 30,
+      "quantiles": [
+        {
+          "probability": 0.05,
+          "value": 0.0
+        },
+        {
+          "probability": 0.1,
+          "value": 0.0
+        },
+        {
+          "probability": 0.25,
+          "value": 0.0
+        },
+        {
+          "probability": 0.75,
+          "value": 0.0
+        },
+        {
+          "probability": 0.9,
+          "value": 0.0019138755980860256
+        },
+        {
+          "probability": 0.95,
+          "value": 0.04569444444444398
+        }
+      ],
+      "sign_counts": {
+        "capped_higher": 18,
+        "exact_zero": 162,
+        "uncapped_higher": 0
+      },
+      "threshold_grid": [
+        {
+          "capped_higher_cluster_bootstrap_ci95": [
+            0.03888888888888889,
+            0.17222222222222222
+          ],
+          "capped_higher_count": 18,
+          "capped_higher_share": 0.1,
+          "threshold": 0.001,
+          "uncapped_higher_cluster_bootstrap_ci95": [
+            0.0,
+            0.0
+          ],
+          "uncapped_higher_count": 0,
+          "uncapped_higher_share": 0.0
+        },
+        {
+          "capped_higher_cluster_bootstrap_ci95": [
+            0.03888888888888889,
+            0.17222222222222222
+          ],
+          "capped_higher_count": 18,
+          "capped_higher_share": 0.1,
+          "threshold": 0.01,
+          "uncapped_higher_cluster_bootstrap_ci95": [
+            0.0,
+            0.0
+          ],
+          "uncapped_higher_count": 0,
+          "uncapped_higher_share": 0.0
+        },
+        {
+          "capped_higher_cluster_bootstrap_ci95": [
+            0.016666666666666666,
+            0.08888888888888889
+          ],
+          "capped_higher_count": 9,
+          "capped_higher_share": 0.05,
+          "threshold": 0.05,
+          "uncapped_higher_cluster_bootstrap_ci95": [
+            0.0,
+            0.0
+          ],
+          "uncapped_higher_count": 0,
+          "uncapped_higher_share": 0.0
+        },
+        {
+          "capped_higher_cluster_bootstrap_ci95": [
+            0.011111111111111112,
+            0.07222222222222222
+          ],
+          "capped_higher_count": 7,
+          "capped_higher_share": 0.03888888888888889,
+          "threshold": 0.1,
+          "uncapped_higher_cluster_bootstrap_ci95": [
+            0.0,
+            0.0
+          ],
+          "uncapped_higher_count": 0,
+          "uncapped_higher_share": 0.0
+        }
+      ]
+    },
+    {
+      "cluster_bootstrap_quantile_ci95": {
+        "q25": [
+          0.0,
+          0.0
+        ],
+        "q75": [
+          0.0,
+          0.0
+        ]
+      },
+      "cluster_permutation_p": 0.01993980060199398,
+      "difference_column": "term_precision_delta_capped_minus_uncapped",
+      "n_pairs": 180,
+      "n_systems": 30,
+      "quantiles": [
+        {
+          "probability": 0.05,
+          "value": 0.0
+        },
+        {
+          "probability": 0.1,
+          "value": 0.0
+        },
+        {
+          "probability": 0.25,
+          "value": 0.0
+        },
+        {
+          "probability": 0.75,
+          "value": 0.0
+        },
+        {
+          "probability": 0.9,
+          "value": 0.0
+        },
+        {
+          "probability": 0.95,
+          "value": 0.06764705882352912
+        }
+      ],
+      "sign_counts": {
+        "capped_higher": 17,
+        "exact_zero": 162,
+        "uncapped_higher": 1
+      },
+      "threshold_grid": [
+        {
+          "capped_higher_cluster_bootstrap_ci95": [
+            0.03333333333333333,
+            0.16666666666666666
+          ],
+          "capped_higher_count": 17,
+          "capped_higher_share": 0.09444444444444444,
+          "threshold": 0.001,
+          "uncapped_higher_cluster_bootstrap_ci95": [
+            0.0,
+            0.016666666666666666
+          ],
+          "uncapped_higher_count": 1,
+          "uncapped_higher_share": 0.005555555555555556
+        },
+        {
+          "capped_higher_cluster_bootstrap_ci95": [
+            0.03333333333333333,
+            0.15555555555555556
+          ],
+          "capped_higher_count": 16,
+          "capped_higher_share": 0.08888888888888889,
+          "threshold": 0.01,
+          "uncapped_higher_cluster_bootstrap_ci95": [
+            0.0,
+            0.016666666666666666
+          ],
+          "uncapped_higher_count": 1,
+          "uncapped_higher_share": 0.005555555555555556
+        },
+        {
+          "capped_higher_cluster_bootstrap_ci95": [
+            0.027777777777777776,
+            0.11666666666666667
+          ],
+          "capped_higher_count": 12,
+          "capped_higher_share": 0.06666666666666667,
+          "threshold": 0.05,
+          "uncapped_higher_cluster_bootstrap_ci95": [
+            0.0,
+            0.0
+          ],
+          "uncapped_higher_count": 0,
+          "uncapped_higher_share": 0.0
+        },
+        {
+          "capped_higher_cluster_bootstrap_ci95": [
+            0.011111111111111112,
+            0.06666666666666667
+          ],
+          "capped_higher_count": 6,
+          "capped_higher_share": 0.03333333333333333,
+          "threshold": 0.1,
+          "uncapped_higher_cluster_bootstrap_ci95": [
+            0.0,
+            0.0
+          ],
+          "uncapped_higher_count": 0,
+          "uncapped_higher_share": 0.0
+        }
+      ]
+    },
+    {
+      "cluster_bootstrap_quantile_ci95": {
+        "q25": [
+          0.0,
+          0.0
+        ],
+        "q75": [
+          0.0,
+          0.0
+        ]
+      },
+      "cluster_permutation_p": 0.03145968540314597,
+      "difference_column": "term_recall_delta_capped_minus_uncapped",
+      "n_pairs": 180,
+      "n_systems": 30,
+      "quantiles": [
+        {
+          "probability": 0.05,
+          "value": 0.0
+        },
+        {
+          "probability": 0.1,
+          "value": 0.0
+        },
+        {
+          "probability": 0.25,
+          "value": 0.0
+        },
+        {
+          "probability": 0.75,
+          "value": 0.0
+        },
+        {
+          "probability": 0.9,
+          "value": 0.0
+        },
+        {
+          "probability": 0.95,
+          "value": 0.0
+        }
+      ],
+      "sign_counts": {
+        "capped_higher": 8,
+        "exact_zero": 172,
+        "uncapped_higher": 0
+      },
+      "threshold_grid": [
+        {
+          "capped_higher_cluster_bootstrap_ci95": [
+            0.011111111111111112,
+            0.08888888888888889
+          ],
+          "capped_higher_count": 8,
+          "capped_higher_share": 0.044444444444444446,
+          "threshold": 0.001,
+          "uncapped_higher_cluster_bootstrap_ci95": [
+            0.0,
+            0.0
+          ],
+          "uncapped_higher_count": 0,
+          "uncapped_higher_share": 0.0
+        },
+        {
+          "capped_higher_cluster_bootstrap_ci95": [
+            0.011111111111111112,
+            0.08333333333333333
+          ],
+          "capped_higher_count": 8,
+          "capped_higher_share": 0.044444444444444446,
+          "threshold": 0.01,
+          "uncapped_higher_cluster_bootstrap_ci95": [
+            0.0,
+            0.0
+          ],
+          "uncapped_higher_count": 0,
+          "uncapped_higher_share": 0.0
+        },
+        {
+          "capped_higher_cluster_bootstrap_ci95": [
+            0.011111111111111112,
+            0.08888888888888889
+          ],
+          "capped_higher_count": 8,
+          "capped_higher_share": 0.044444444444444446,
+          "threshold": 0.05,
+          "uncapped_higher_cluster_bootstrap_ci95": [
+            0.0,
+            0.0
+          ],
+          "uncapped_higher_count": 0,
+          "uncapped_higher_share": 0.0
+        },
+        {
+          "capped_higher_cluster_bootstrap_ci95": [
+            0.011111111111111112,
+            0.08888888888888889
+          ],
+          "capped_higher_count": 8,
+          "capped_higher_share": 0.044444444444444446,
+          "threshold": 0.1,
+          "uncapped_higher_cluster_bootstrap_ci95": [
+            0.0,
+            0.0
+          ],
+          "uncapped_higher_count": 0,
+          "uncapped_higher_share": 0.0
+        }
+      ]
+    },
+    {
+      "cluster_bootstrap_quantile_ci95": {
+        "q25": [
+          0.0,
+          0.0
+        ],
+        "q75": [
+          0.0,
+          0.0
+        ]
+      },
+      "cluster_permutation_p": 0.43382566174338255,
+      "difference_column": "coefficient_relative_error_mean_delta_capped_minus_uncapped",
+      "n_pairs": 180,
+      "n_systems": 30,
+      "quantiles": [
+        {
+          "probability": 0.05,
+          "value": -0.013989499095956748
+        },
+        {
+          "probability": 0.1,
+          "value": 0.0
+        },
+        {
+          "probability": 0.25,
+          "value": 0.0
+        },
+        {
+          "probability": 0.75,
+          "value": 0.0
+        },
+        {
+          "probability": 0.9,
+          "value": 2.0096983476509423e-06
+        },
+        {
+          "probability": 0.95,
+          "value": 0.012455170592504592
+        }
+      ],
+      "sign_counts": {
+        "capped_higher": 19,
+        "exact_zero": 148,
+        "uncapped_higher": 13
+      },
+      "threshold_grid": [
+        {
+          "capped_higher_cluster_bootstrap_ci95": [
+            0.027777777777777776,
+            0.12222222222222222
+          ],
+          "capped_higher_count": 13,
+          "capped_higher_share": 0.07222222222222222,
+          "threshold": 0.001,
+          "uncapped_higher_cluster_bootstrap_ci95": [
+            0.016666666666666666,
+            0.11666666666666667
+          ],
+          "uncapped_higher_count": 11,
+          "uncapped_higher_share": 0.06111111111111111
+        },
+        {
+          "capped_higher_cluster_bootstrap_ci95": [
+            0.022222222222222223,
+            0.09444444444444444
+          ],
+          "capped_higher_count": 10,
+          "capped_higher_share": 0.05555555555555555,
+          "threshold": 0.01,
+          "uncapped_higher_cluster_bootstrap_ci95": [
+            0.016666666666666666,
+            0.10555555555555556
+          ],
+          "uncapped_higher_count": 10,
+          "uncapped_higher_share": 0.05555555555555555
+        },
+        {
+          "capped_higher_cluster_bootstrap_ci95": [
+            0.016666666666666666,
+            0.08333333333333333
+          ],
+          "capped_higher_count": 8,
+          "capped_higher_share": 0.044444444444444446,
+          "threshold": 0.05,
+          "uncapped_higher_cluster_bootstrap_ci95": [
+            0.011111111111111112,
+            0.09444444444444444
+          ],
+          "uncapped_higher_count": 9,
+          "uncapped_higher_share": 0.05
+        },
+        {
+          "capped_higher_cluster_bootstrap_ci95": [
+            0.011111111111111112,
+            0.08333333333333333
+          ],
+          "capped_higher_count": 8,
+          "capped_higher_share": 0.044444444444444446,
+          "threshold": 0.1,
+          "uncapped_higher_cluster_bootstrap_ci95": [
+            0.011111111111111112,
+            0.08888888888888889
+          ],
+          "uncapped_higher_count": 8,
+          "uncapped_higher_share": 0.044444444444444446
+        }
+      ]
+    }
+  ],
+  "r2_gt_0_9": {
+    "capped_count": 311,
+    "cluster_permutation_p": 1.0,
+    "paired_delta_capped_minus_uncapped": -1,
+    "threshold": 0.9,
+    "uncapped_count": 312
+  },
+  "randomization": {
+    "bootstrap_replicates": 10000,
+    "bootstrap_unit": "system_id",
+    "permutation_count": 100000,
+    "permutation_unit": "system_id",
+    "seed": 20260910
+  },
+  "required_phasec_record_columns": [
+    "experiment_id",
+    "variant_slug",
+    "system_id",
+    "system_name",
+    "system_dim",
+    "system_representability",
+    "system_expected_stage",
+    "seed",
+    "initial_condition_set",
+    "loss",
+    "r2",
+    "exact_support_match_raw",
+    "exact_support_match_pruned",
+    "structural_f1",
+    "term_precision",
+    "term_recall",
+    "coefficient_relative_error_mean",
+    "total_parameter_fits",
+    "total_parameter_fit_attempts",
+    "total_loss_evals",
+    "total_ode_solves",
+    "final_stage",
+    "executed_levels"
+  ]
+}

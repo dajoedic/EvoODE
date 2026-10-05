@@ -1,0 +1,579 @@
+{
+  "collapse_group_counts": {
+    "pretune_off": 60,
+    "pretune_on": 60
+  },
+  "collapse_tolerance": {
+    "absolute": 0.0,
+    "numeric_rule": "abs(value - first) <= absolute + relative * abs(first)",
+    "relative": 1e-12,
+    "support_rule": "JSON is parsed, equation order is preserved, and terms within each equation are sorted before exact comparison."
+  },
+  "distributions": [
+    {
+      "n_pairs": 0,
+      "n_systems": 0,
+      "skip_reason": "empty stratum",
+      "skipped": true,
+      "system_representability": "surrogate",
+      "target": "r2"
+    },
+    {
+      "difference": "log10(loss_on) - log10(loss_off)",
+      "n_pairs": 180,
+      "n_systems": 30,
+      "quantiles": [
+        {
+          "probability": 0.05,
+          "value": -3.0732733817225832
+        },
+        {
+          "probability": 0.1,
+          "value": -1.0781855271964713
+        },
+        {
+          "probability": 0.25,
+          "value": -0.1489662210329904
+        },
+        {
+          "probability": 0.5,
+          "value": 9.059419880941277e-14
+        },
+        {
+          "probability": 0.75,
+          "value": 0.08536271173570575
+        },
+        {
+          "probability": 0.9,
+          "value": 0.9047132511879148
+        },
+        {
+          "probability": 0.95,
+          "value": 2.8471374750334957
+        }
+      ],
+      "sign_asymmetry": {
+        "cluster_permutation_p": 0.7970720292797072,
+        "exact_zero": 0,
+        "favor_pretune_off": 94,
+        "favor_pretune_on": 86
+      },
+      "system_representability": "exact",
+      "target": "log10_loss",
+      "threshold_grid": [
+        {
+          "favor_pretune_off_cluster_bootstrap_ci95": [
+            0.17777777777777778,
+            0.37222222222222223
+          ],
+          "favor_pretune_off_count": 49,
+          "favor_pretune_off_share": 0.2722222222222222,
+          "favor_pretune_on_cluster_bootstrap_ci95": [
+            0.25,
+            0.4888888888888889
+          ],
+          "favor_pretune_on_count": 66,
+          "favor_pretune_on_share": 0.36666666666666664,
+          "threshold": 1.1
+        },
+        {
+          "favor_pretune_off_cluster_bootstrap_ci95": [
+            0.09444444444444444,
+            0.25555555555555554
+          ],
+          "favor_pretune_off_count": 31,
+          "favor_pretune_off_share": 0.17222222222222222,
+          "favor_pretune_on_cluster_bootstrap_ci95": [
+            0.09444444444444444,
+            0.3111111111111111
+          ],
+          "favor_pretune_on_count": 36,
+          "favor_pretune_on_share": 0.2,
+          "threshold": 2.0
+        },
+        {
+          "favor_pretune_off_cluster_bootstrap_ci95": [
+            0.03888888888888889,
+            0.16111111111111112
+          ],
+          "favor_pretune_off_count": 17,
+          "favor_pretune_off_share": 0.09444444444444444,
+          "favor_pretune_on_cluster_bootstrap_ci95": [
+            0.03333333333333333,
+            0.19444444444444445
+          ],
+          "favor_pretune_on_count": 19,
+          "favor_pretune_on_share": 0.10555555555555556,
+          "threshold": 10.0
+        },
+        {
+          "favor_pretune_off_cluster_bootstrap_ci95": [
+            0.022222222222222223,
+            0.13333333333333333
+          ],
+          "favor_pretune_off_count": 13,
+          "favor_pretune_off_share": 0.07222222222222222,
+          "favor_pretune_on_cluster_bootstrap_ci95": [
+            0.016666666666666666,
+            0.12777777777777777
+          ],
+          "favor_pretune_on_count": 12,
+          "favor_pretune_on_share": 0.06666666666666667,
+          "threshold": 100.0
+        }
+      ]
+    },
+    {
+      "n_pairs": 0,
+      "n_systems": 0,
+      "skip_reason": "empty stratum",
+      "skipped": true,
+      "system_representability": "surrogate",
+      "target": "log10_loss"
+    }
+  ],
+  "experiment_id": "paper1_phaseC_v1",
+  "input_path": "C:\\Users\\joedicke\\Documents\\reps\\EvoODE\\outputs\\phase_c_campaign_221a3a7_final\\agg\\phasec_analysis_registry_pretuning.csv",
+  "pair_counts": {
+    "exact": 180,
+    "surrogate": 0,
+    "total": 180
+  },
+  "randomization": {
+    "bootstrap_replicates": 10000,
+    "bootstrap_unit": "system_id",
+    "permutation_count": 100000,
+    "permutation_unit": "system_id",
+    "seed": 20260907
+  },
+  "seed_collapse": [
+    {
+      "by_condition": {
+        "pretune_off": {
+          "collapsed_groups": 14,
+          "groups": 60,
+          "max_range": 0.9762885545445362,
+          "range_quantiles": [
+            {
+              "probability": 0.05,
+              "value": 0.0
+            },
+            {
+              "probability": 0.1,
+              "value": 1.153521722585538e-14
+            },
+            {
+              "probability": 0.25,
+              "value": 3.601313691703467e-12
+            },
+            {
+              "probability": 0.5,
+              "value": 2.9910912235364684e-06
+            },
+            {
+              "probability": 0.75,
+              "value": 0.05295589677594238
+            },
+            {
+              "probability": 0.9,
+              "value": 0.23034245386248103
+            },
+            {
+              "probability": 0.95,
+              "value": 0.5530981564100117
+            }
+          ],
+          "share": 0.23333333333333334
+        },
+        "pretune_on": {
+          "collapsed_groups": 32,
+          "groups": 60,
+          "max_range": 0.5504077624068546,
+          "range_quantiles": [
+            {
+              "probability": 0.05,
+              "value": 0.0
+            },
+            {
+              "probability": 0.1,
+              "value": 0.0
+            },
+            {
+              "probability": 0.25,
+              "value": 0.0
+            },
+            {
+              "probability": 0.5,
+              "value": 8.099076964640517e-14
+            },
+            {
+              "probability": 0.75,
+              "value": 0.01762585048324794
+            },
+            {
+              "probability": 0.9,
+              "value": 0.12473561176726072
+            },
+            {
+              "probability": 0.95,
+              "value": 0.18594936983878763
+            }
+          ],
+          "share": 0.5333333333333333
+        }
+      },
+      "cluster_permutation_p": 0.0005499945000549994,
+      "n_condition_pairs": 60,
+      "n_systems": 30,
+      "naive_exact_mcnemar_p": 7.62939453125e-06,
+      "paired_contingency": {
+        "off_no_on_no": 28,
+        "off_no_on_yes": 18,
+        "off_yes_on_no": 0,
+        "off_yes_on_yes": 14
+      },
+      "system_representability": "exact",
+      "target": "r2"
+    },
+    {
+      "n_condition_pairs": 0,
+      "n_systems": 0,
+      "skip_reason": "empty stratum",
+      "skipped": true,
+      "system_representability": "surrogate",
+      "target": "r2"
+    },
+    {
+      "by_condition": {
+        "pretune_off": {
+          "collapsed_groups": 14,
+          "groups": 60,
+          "max_range": 0.9762885545445362,
+          "range_quantiles": [
+            {
+              "probability": 0.05,
+              "value": 0.0
+            },
+            {
+              "probability": 0.1,
+              "value": 1.153521722585538e-14
+            },
+            {
+              "probability": 0.25,
+              "value": 3.601313691703467e-12
+            },
+            {
+              "probability": 0.5,
+              "value": 2.9910912235364684e-06
+            },
+            {
+              "probability": 0.75,
+              "value": 0.05295589677594238
+            },
+            {
+              "probability": 0.9,
+              "value": 0.23034245386248103
+            },
+            {
+              "probability": 0.95,
+              "value": 0.5530981564100117
+            }
+          ],
+          "share": 0.23333333333333334
+        },
+        "pretune_on": {
+          "collapsed_groups": 32,
+          "groups": 60,
+          "max_range": 0.5504077624068546,
+          "range_quantiles": [
+            {
+              "probability": 0.05,
+              "value": 0.0
+            },
+            {
+              "probability": 0.1,
+              "value": 0.0
+            },
+            {
+              "probability": 0.25,
+              "value": 0.0
+            },
+            {
+              "probability": 0.5,
+              "value": 8.099076964640517e-14
+            },
+            {
+              "probability": 0.75,
+              "value": 0.01762585048324794
+            },
+            {
+              "probability": 0.9,
+              "value": 0.12473561176726072
+            },
+            {
+              "probability": 0.95,
+              "value": 0.18594936983878763
+            }
+          ],
+          "share": 0.5333333333333333
+        }
+      },
+      "cluster_permutation_p": 0.0005499945000549994,
+      "n_condition_pairs": 60,
+      "n_systems": 30,
+      "naive_exact_mcnemar_p": 7.62939453125e-06,
+      "paired_contingency": {
+        "off_no_on_no": 28,
+        "off_no_on_yes": 18,
+        "off_yes_on_no": 0,
+        "off_yes_on_yes": 14
+      },
+      "system_representability": "all",
+      "target": "r2"
+    },
+    {
+      "by_condition": {
+        "pretune_off": {
+          "collapsed_groups": 3,
+          "groups": 60,
+          "log10_range_quantiles": [
+            {
+              "probability": 0.05,
+              "value": 1.5458079261065906e-12
+            },
+            {
+              "probability": 0.1,
+              "value": 1.7376100558408325e-11
+            },
+            {
+              "probability": 0.25,
+              "value": 0.037502425369373316
+            },
+            {
+              "probability": 0.5,
+              "value": 0.26410706417636454
+            },
+            {
+              "probability": 0.75,
+              "value": 0.679915215479527
+            },
+            {
+              "probability": 0.9,
+              "value": 2.3040321787440576
+            },
+            {
+              "probability": 0.95,
+              "value": 6.651348223012971
+            }
+          ],
+          "max_log10_range": 10.894439933300598,
+          "share": 0.05
+        },
+        "pretune_on": {
+          "collapsed_groups": 29,
+          "groups": 60,
+          "log10_range_quantiles": [
+            {
+              "probability": 0.05,
+              "value": 0.0
+            },
+            {
+              "probability": 0.1,
+              "value": 0.0
+            },
+            {
+              "probability": 0.25,
+              "value": 0.0
+            },
+            {
+              "probability": 0.5,
+              "value": 0.015292054606283245
+            },
+            {
+              "probability": 0.75,
+              "value": 0.18462293847226452
+            },
+            {
+              "probability": 0.9,
+              "value": 0.9105052165318024
+            },
+            {
+              "probability": 0.95,
+              "value": 2.6279393478484896
+            }
+          ],
+          "max_log10_range": 10.887629608525218,
+          "share": 0.48333333333333334
+        }
+      },
+      "cluster_permutation_p": 6.999930000699993e-05,
+      "n_condition_pairs": 60,
+      "n_systems": 30,
+      "naive_exact_mcnemar_p": 2.9802322387695312e-08,
+      "paired_contingency": {
+        "off_no_on_no": 31,
+        "off_no_on_yes": 26,
+        "off_yes_on_no": 0,
+        "off_yes_on_yes": 3
+      },
+      "system_representability": "exact",
+      "target": "loss"
+    },
+    {
+      "n_condition_pairs": 0,
+      "n_systems": 0,
+      "skip_reason": "empty stratum",
+      "skipped": true,
+      "system_representability": "surrogate",
+      "target": "loss"
+    },
+    {
+      "by_condition": {
+        "pretune_off": {
+          "collapsed_groups": 3,
+          "groups": 60,
+          "log10_range_quantiles": [
+            {
+              "probability": 0.05,
+              "value": 1.5458079261065906e-12
+            },
+            {
+              "probability": 0.1,
+              "value": 1.7376100558408325e-11
+            },
+            {
+              "probability": 0.25,
+              "value": 0.037502425369373316
+            },
+            {
+              "probability": 0.5,
+              "value": 0.26410706417636454
+            },
+            {
+              "probability": 0.75,
+              "value": 0.679915215479527
+            },
+            {
+              "probability": 0.9,
+              "value": 2.3040321787440576
+            },
+            {
+              "probability": 0.95,
+              "value": 6.651348223012971
+            }
+          ],
+          "max_log10_range": 10.894439933300598,
+          "share": 0.05
+        },
+        "pretune_on": {
+          "collapsed_groups": 29,
+          "groups": 60,
+          "log10_range_quantiles": [
+            {
+              "probability": 0.05,
+              "value": 0.0
+            },
+            {
+              "probability": 0.1,
+              "value": 0.0
+            },
+            {
+              "probability": 0.25,
+              "value": 0.0
+            },
+            {
+              "probability": 0.5,
+              "value": 0.015292054606283245
+            },
+            {
+              "probability": 0.75,
+              "value": 0.18462293847226452
+            },
+            {
+              "probability": 0.9,
+              "value": 0.9105052165318024
+            },
+            {
+              "probability": 0.95,
+              "value": 2.6279393478484896
+            }
+          ],
+          "max_log10_range": 10.887629608525218,
+          "share": 0.48333333333333334
+        }
+      },
+      "cluster_permutation_p": 1.999980000199998e-05,
+      "n_condition_pairs": 60,
+      "n_systems": 30,
+      "naive_exact_mcnemar_p": 2.9802322387695312e-08,
+      "paired_contingency": {
+        "off_no_on_no": 31,
+        "off_no_on_yes": 26,
+        "off_yes_on_no": 0,
+        "off_yes_on_yes": 3
+      },
+      "system_representability": "all",
+      "target": "loss"
+    },
+    {
+      "by_condition": {
+        "pretune_off": {
+          "collapsed_groups": 24,
+          "groups": 60,
+          "share": 0.4
+        },
+        "pretune_on": {
+          "collapsed_groups": 29,
+          "groups": 60,
+          "share": 0.48333333333333334
+        }
+      },
+      "cluster_permutation_p": 0.06200937990620094,
+      "n_condition_pairs": 60,
+      "n_systems": 30,
+      "naive_exact_mcnemar_p": 0.0625,
+      "paired_contingency": {
+        "off_no_on_no": 31,
+        "off_no_on_yes": 5,
+        "off_yes_on_no": 0,
+        "off_yes_on_yes": 24
+      },
+      "system_representability": "exact",
+      "target": "support_terms"
+    },
+    {
+      "n_condition_pairs": 0,
+      "n_systems": 0,
+      "skip_reason": "empty stratum",
+      "skipped": true,
+      "system_representability": "surrogate",
+      "target": "support_terms"
+    },
+    {
+      "by_condition": {
+        "pretune_off": {
+          "collapsed_groups": 24,
+          "groups": 60,
+          "share": 0.4
+        },
+        "pretune_on": {
+          "collapsed_groups": 29,
+          "groups": 60,
+          "share": 0.48333333333333334
+        }
+      },
+      "cluster_permutation_p": 0.06356936430635694,
+      "n_condition_pairs": 60,
+      "n_systems": 30,
+      "naive_exact_mcnemar_p": 0.0625,
+      "paired_contingency": {
+        "off_no_on_no": 31,
+        "off_no_on_yes": 5,
+        "off_yes_on_no": 0,
+        "off_yes_on_yes": 24
+      },
+      "system_representability": "all",
+      "target": "support_terms"
+    }
+  ]
+}
