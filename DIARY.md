@@ -4,6 +4,41 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ---
 
+## 2026-10-05
+
+### Phase C vollständig: C-3 eingesammelt, strikte Auswertung, C-1/C-2 identisch
+<!-- ac64ccc -->
+
+C-3 war am 05.10. um 06:55 fertig (letzte Lorenz-Zelle, 55 / IC 1 / Seed 7). 180/180, 0 Fehler, eine Identität
+(`221a3a7` / `0c9672de35c75a9d` / `ffb0266c7913352c`). Eingesammelt direkt vom eingehängten NFS (`S:`), weil
+`oc exec` dafür nicht mehr nötig ist. Die 1.872 Dateien brauchten 33 min.
+
+Strikte Kette aus `SCRIPTS.md`, ohne `--allow-incomplete`, in `outputs/phase_c_campaign_221a3a7_final/`:
+- Merge 936 → Registry 936. Verifikation C-1/C-2: 756 / 378 pro Bedingung / 360 exakt / 396 Surrogat. C-3: 180 exakt.
+- Analyse-Registry 936/936, C-1/C-2 756/756, C-1 378/378, Pretuning 360/360.
+- **C-1/C-2-Identität:** `phasec_analysis_registry_c1_c2.csv`, `..._c1.csv` und `phasec_cap_ablation_paired.csv`
+  sind byte-identisch zur Zwischenauswertung vom 29.09. Die Claim-B-Zusammenfassung unterscheidet sich nur in zwei
+  Pfadfeldern.
+- `analysis/configs/paper1_phaseC_v1.json` zeigt jetzt auf die vollständige Registry statt auf den Dry Run vom 25.09.
+- Versioniert: `experiments/paper1_phaseC_v1/` (History, Registry, Manifest) und
+  `analysis/data/paper1_phaseC_v1/final_2026-10-05/`.
+
+**C-3 gegen C-1, 180 gepaarte Zellen auf 30 exakten Systemen** (schnelle Zählung, beide Metriken):
+
+| | Struktur roh | Struktur gepruned | R² > 0,9 | Loss-Evals |
+|---|---|---|---|---|
+| Pretuning an (C-3) | 29 | 52 | 136 | 4,11e8 |
+| Pretuning aus (C-1) | 24 | 53 | 135 | 4,55e8 |
+
+Gepaart: gepruned 7 nur mit Pretuning gegen 8 nur ohne, R² > 0,9 9 gegen 8. **Unentschieden.** Der Phase-B-Hinweis
+(60 gegen 50) bestätigt sich nicht, und `pretuning = false` als kanonische Wahl ist abgesichert. Log-Loss-Richtung
+94 gegen 86, Cluster-p 0,80. **Der Kollaps-Mechanismus aus WP-A7 reproduziert sich auf der kanonischen Basis:**
+Seed-Kollaps bei R² 32 gegen 14 von 60 Gruppen (18 nur mit Pretuning, 0 nur ohne, Cluster-p 0,00055), beim Loss 29
+gegen 3 (p 7e-5). Bei der Struktur ist er schwächer, 29 gegen 24 (p 0,06).
+
+Offen aus P-02: die §9.3-Aggregationshierarchie für EvoGrow, SINDy und ODEFormer. Die SINDy- und ODEFormer-Paarungen
+(WP-N30/N31) verwenden nur C-1 und sind durch C-3 unberührt.
+
 ## 2026-10-03
 
 ### C-6-Raster gestartet: 3.366 gekappte + 461 ungekappte Zellen, 32 Pods
