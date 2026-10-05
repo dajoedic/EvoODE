@@ -68,6 +68,10 @@ für die Paper-1-Ergebnisse. Der Name `evogrow-next` ist verworfen, weil die Met
     und Quadratur. Beide sind in v2 behoben.
   - **Externes Review 04.10. eingearbeitet, vor jedem Lauf** (Branch `50bdf57`): FNS/AML-Begriffe, A3 als projektive
     Winkelunsicherheit, Kalibrier-Set um K7/K8 (Ordnung 5/6) erweitert, Hold-out-Hinweis. Codex wurde dafür angehalten und neu gestartet.
+  - **05.10. 03:32: Stufe K v3 läuft** (losgelöst, Logs unter `experiments/annihilator_gate2a_v3/results/calibration/logs/`,
+    fertig, wenn dort `DONE` liegt; erwartet ~06:00). Davor zwei Implementierungsfehler von Codex behoben (Vorzeichen im
+    AML-Gradienten, WP-G2A3-b). **Das Ergebnisdokument für den Nutzer schreibt Claude nach dem Lauf:**
+    `docs/GATE_2A_v3_STAGE_K_RESULT.md` auf dem Branch.
   - **05.10. nachts:** v2-Stufe K: K-a/K-b bestanden ($\ell_{\max}=4$, $\tau=3.4\cdot10^{-7}$), **K-c gescheitert**, weil FNS
     Sattelpunkte findet statt Minima. Mit L-BFGS sind Ordnung 1–3 repariert. Ab Ordnung 4 sind die Koeffizienten bei 1 % nicht
     identifizierbar. Airy/Bessel sind schon breit N1, **bei F4/F5 droht K6**. **v3 vom Nutzer freigegeben** (`docs/GATE_2A_v3.md`,
