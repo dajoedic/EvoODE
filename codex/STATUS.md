@@ -1,4 +1,4 @@
 status: done
-task:   WP-N43
-report: codex/reports/REPORT_WP_N43.md
-note:   Implemented hierarchy aggregation; outputs and controls written under outputs/phase_c_campaign_221a3a7/agg/hierarchy_n43.
+task:   WP-N43b
+report: codex/reports/REPORT_WP_N43B.md
+note:   Implemented N43b hierarchy, merged C-6 SINDy shards, wrote controls and report; all hard controls passed.

@@ -2,7 +2,9 @@ import math
 import sys
 from pathlib import Path
 
+import numpy as np
 import pandas as pd
+import pytest
 
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
@@ -130,3 +132,114 @@ def test_missing_variance_weighted_metric_sets_nan_and_available_false() -> None
     assert per_run["generalization_r2_variance_weighted"].isna().all()
     assert not per_run["generalization_r2_variance_weighted_available"].any()
     assert per_run["generalization_r2_variance_weighted_gt_0_9"].isna().all()
+
+
+def test_c6_sindy_loader_asserts_clean_realization_identity() -> None:
+    rows = []
+    for realization, gen_r2 in [(1, 0.95), (2, 0.95), (3, 0.80)]:
+        rows.append(
+            {
+                "method": "sindy",
+                "library_id": "poly",
+                "system_id": 1,
+                "system_name": "system 1",
+                "dimension": 1,
+                "source_initial_condition_set": 1,
+                "target_initial_condition_set": 2,
+                "noise_sigma": 0.0,
+                "subsample_rho": 0.0,
+                "noise_realization": realization,
+                "fit_status": "success",
+                "reconstruction_integration_status": "success",
+                "generalization_integration_status": "success",
+                "reconstruction_diverged_or_nonfinite": False,
+                "generalization_diverged_or_nonfinite": False,
+                "reconstruction_r2_arithmetic_mean": 0.99,
+                "reconstruction_r2_variance_weighted": 0.99,
+                "generalization_r2_arithmetic_mean": gen_r2,
+                "generalization_r2_variance_weighted": gen_r2,
+                "reconstruction_r2_arithmetic_mean_gt_0_9": True,
+                "reconstruction_r2_variance_weighted_gt_0_9": True,
+                "generalization_r2_arithmetic_mean_gt_0_9": gen_r2 > 0.9,
+                "generalization_r2_variance_weighted_gt_0_9": gen_r2 > 0.9,
+                "sindy_structure_hit_raw": True,
+                "sindy_structure_hit_pruned": True,
+                "active_terms_raw": '[["x0"]]',
+                "active_terms_pruned": '[["x0"]]',
+                "sindy_structure_precision_pruned": 1.0,
+                "sindy_structure_recall_pruned": 1.0,
+                "sindy_structure_f1_pruned": 1.0,
+            }
+        )
+
+    with pytest.raises(ValueError, match="realizations differ"):
+        n43.assert_clean_realization_identity(pd.DataFrame(rows))
+
+
+def test_evogrow_generalization_variance_weighted_control(tmp_path: Path) -> None:
+    registry = pd.DataFrame(
+        [
+            {
+                "system_id": 1,
+                "system_name": "system 1",
+                "system_dim": 2,
+                "dimension": 2,
+                "variant_slug": n43.C1_VARIANT,
+                "condition": "capped",
+                "use_pretuning": False,
+                "seed": 123,
+                "initial_condition_set": 1,
+                "r2": 0.8,
+                "r2_by_dim": "[0.6,1.0]",
+                "exact_support_match_raw": True,
+                "exact_support_match_pruned": True,
+                "structural_f1_micro": 1.0,
+                "term_precision_micro": 1.0,
+                "term_recall_micro": 1.0,
+                "total_diverged_solves": 0,
+            }
+        ]
+    )
+    cells = pd.DataFrame(
+        [
+            {
+                "system_id": 1,
+                "source_initial_condition_set": 1,
+                "target_initial_condition_set": 2,
+                "direction": "IC1_to_IC2",
+                "seed": 123,
+                "variant": n43.C1_VARIANT,
+                "condition": "capped",
+                "reconstruction_r2": 0.8,
+                "reconstruction_diverged_or_nonfinite": False,
+                "generalization_r2": 0.7,
+                "generalization_r2_by_dim": "[0.5,0.9]",
+                "generalization_diverged_or_nonfinite": False,
+            }
+        ]
+    )
+    classes = pd.DataFrame(
+        [
+            {
+                "system_id": 1,
+                "threeway_class": "fully_representable",
+                "phasec_true_threeway_basis_name": n43.TRUE_BASIS,
+            }
+        ]
+    )
+    registry_path = tmp_path / "registry.csv"
+    cells_path = tmp_path / "cells.csv"
+    registry.to_csv(registry_path, index=False)
+    cells.to_csv(cells_path, index=False)
+
+    loaded = n43.load_evogrow(
+        registry_path,
+        cells_path,
+        {(1, 1): np.asarray([1.0, 3.0]), (1, 2): np.asarray([1.0, 3.0])},
+        classes,
+    )
+
+    row = loaded.iloc[0]
+    assert row["reconstruction_r2_variance_weighted"] == pytest.approx(0.9)
+    assert row["generalization_r2_variance_weighted"] == pytest.approx(0.8)
+    assert bool(row["generalization_r2_variance_weighted_available"])

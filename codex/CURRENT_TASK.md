@@ -1,109 +1,81 @@
-# WP-N43 — §9.3 aggregation hierarchy for EvoGrow, SINDy and ODEFormer (Phase C, clean data)
+# WP-N43b — close the variance-weighted gaps in the §9.3 hierarchy, and switch SINDy to the canonical source
 **Language: Python**
 
 ## Why
 
-`docs/paper1_phaseC_benchmark_plan.md` §9.3 fixes one aggregation hierarchy for every method:
+WP-N43 (`60a4393`, `codex/reports/REPORT_WP_N43.md`) built the plan §9.3 hierarchy and passed its
+controls, but the §9.3 headline — **variance-weighted generalization R²** — is `NaN` for EvoGrow
+and SINDy, and SINDy has no pruned structural F1. All three are recoverable without new runs.
 
-```text
-equation -> run -> seeds (or noise realizations) within a direction -> both directions -> system -> benchmark
-```
+A second defect was found by Claude on 2026-10-05: WP-N43 (default `--sindy-details`) and the
+WP-N30 / WP-N31 pairing commands in `SCRIPTS.md` read
+`analysis/data/paper1_phaseC_v1/phasec_sindy_baseline/details.csv`. That file is the **old,
+self-integrated** SINDy run (DOP853). The canonical C-4 run consumes the campaign's exported bytes
+(WP-C4c, `DIARY.md`): `analysis/data/paper1_phaseC_v1/phasec_sindy_baseline_wp_c4c_export/details.csv`.
+Against the canonical file the old one differs in 66 of 2,520 raw/pruned supports and 4 of 2,520
+R² > 0.9 verdicts.
 
-Every system carries equal weight. The final Phase C evaluation must be **recomputed** under this
-hierarchy for EvoGrow and every baseline identically. Today's figures are in units of
-(system, direction) — 82.3 % / 37.3 % and the WP-N30 / WP-N31 / WP-N40 tables — and §9.3 says they
-are **not** carried in parallel. This is the open rest of backlog item P-02 in `CLAUDE.md`.
+## Inputs
 
-Read §9.2, §9.3 and §6b of the plan before starting. Claim D context: `CLAUDE.md`, Known Gaps,
-"Generalization is the weak axis".
+1. **SINDy, C-6 run, done 2026-10-05 by Claude** — ten shard outputs
+   `outputs/c6_sindy_baselines_5dd1df8/shard_{0..9}/details.csv` over all 4,536 exported cells of
+   `outputs/phase_c_c6_data_conditions_5dd1df8/index.csv` (63 systems × 2 IC sets × 12 conditions ×
+   3 realizations), ten configurations each. They carry per-dimension R², variance-weighted R² and
+   pruned structural F1 / precision / recall. Shard 9 additionally holds
+   `control_c4_reproduction/`: on the (0,0) data it reproduces the canonical WP-C4c file in
+   2,520 / 2,520 rows on status, raw and pruned support and the R² > 0.9 verdict, with R² identical
+   to 1e-12 except 40 diverged rows. Its scripted control status says "failed" only because the
+   script's reference has 80 rows; ignore that status, verify the above yourself and report it.
+2. **EvoGrow generalization per dimension** —
+   `outputs/wp_n5_ic_generalization_phase_c/shard_001_of_001/results.jsonl` carries
+   `generalization_r2_by_dim` (non-null in 337 of 378; check that the rest are exactly the diverged
+   / non-finite cells). The variance weights are the per-dimension variances of the **clean target
+   trajectory** (the second IC's reference trajectory), as defined in plan §6b and implemented in
+   `analysis/scripts/aggregate/aggregate_variance_weighted_r2.py` — reuse that code and its weight
+   source rather than writing a second one.
 
-## Inputs (verify each path; report any that differs)
+## What to do
 
-- **EvoGrow C-1, reconstruction:** the final strict registry
-  `analysis/data/paper1_phaseC_v1/final_2026-10-05/phasec_analysis_registry_c1.csv` and/or the
-  records under `outputs/phase_c_campaign_221a3a7/records`. Only the canonical C-1 arm enters the
-  headline; C-2 (uncapped) and C-3 (pretuning) may be produced as additional rows, labelled.
-- **EvoGrow C-1, generalization:** `outputs/wp_n5_ic_generalization_phase_c/cells.csv`.
-- **SINDy (C-4):** `analysis/data/paper1_phaseC_v1/phasec_sindy_baseline/details.csv`, ten
-  configurations, reconstruction and generalization rows.
-- **ODEFormer:** reference grid
-  `analysis/data/paper1_phaseC_v1/odeformer_baseline/reference_orion_55e9c75/records_structure_recomputed.csv`
-  (canonical) and candidate grid `.../candidate_orion_8e0e699/records_structure_recomputed.csv`
-  (sensitivity arm only). Structure fields come from these WP-N40 sidecars, never from the raw
-  grid records (their structure fields are empty — `CLAUDE.md`, Known Gaps).
-- **Classes:** `analysis/data/paper1_phaseC_v1/representability_threeway/representability_threeway_by_system.csv`
-  (three-way class) and the feasible-under-bound-10 label of plan §9.2 (24 feasible, 54–59
-  infeasible, derived from true coefficients — reuse the existing extraction, do not re-derive by
-  hand).
+1. **Merge the SINDy shards** into one table under `outputs/c6_sindy_baselines_5dd1df8/merged/`
+   (`details.csv`, plus a summary built with the harness's own `build_summary` from
+   `analysis/scripts/aggregate/run_phasec_noise_sindy_baselines.py`). Check: 4,536 distinct cells,
+   no duplicate keys, every configuration present for every cell, the export hash check passed for
+   every row. This merged table is the C-6 SINDy/Weak-SINDy deliverable.
+2. **SINDy source in the hierarchy.** Give `aggregate_phasec_hierarchy_n43.py` the ability to read
+   the clean SINDy rows from the merged C-6 table, condition (σ, ρ) = (0, 0). The three realizations
+   of (0,0) are the same data; assert that the results are identical across them and then use one,
+   so a deterministic method is not counted three times. Make this the default SINDy source.
+   Keep the WP-C4c file loadable as a cross-check.
+3. **EvoGrow variance-weighted generalization** from input 2. Control: the arithmetic mean of
+   `generalization_r2_by_dim` reproduces the stored `generalization_r2` in every non-diverged cell
+   (same tolerance as WP-N20); on dim 1 variance-weighted equals arithmetic exactly.
+4. **SINDy pruned structural F1 / precision / recall** from the merged table (exact systems only).
+5. Re-run the hierarchy into `outputs/phase_c_campaign_221a3a7/agg/hierarchy_n43b/` (do not
+   overwrite `hierarchy_n43/`).
 
-Reuse the existing pairing / loading code in `analysis/scripts/aggregate/run_phasec_sindy_baseline.py`
-and `analysis/utils/metrics.py` where it fits; do not duplicate it.
+## Controls (report each with numbers)
 
-## What to build
+- EvoGrow back-compatibility from WP-N43 still passes unchanged.
+- ODEFormer back-compatibility still passes unchanged.
+- SINDy: the old back-compatibility target (`sindy_n31`) was built on the old source. **Do not force
+  it to pass.** Report, per configuration and regime, the old unit-level rate, the new one, and the
+  difference, and list every row whose R² > 0.9 verdict or structure hit changed. This is a finding
+  for Claude, not a failure.
+- SINDy new source vs WP-C4c: identical R² > 0.9 verdicts and supports on all 2,520 rows.
+- Equal system weight and dim-1 equality hold for all three methods, now including variance-weighted
+  generalization.
 
-A new aggregation script under `analysis/scripts/aggregate/` (name it after its purpose) that
-produces, for each method and each method configuration separately (SINDy: all ten configurations;
-ODEFormer: every configuration of each grid; **no maximum over configurations is taken anywhere**):
+A failed control other than the SINDy back-compatibility one is a stop: `blocked`, with numbers.
 
-1. **Per-run table** — one row per (method, configuration, system, direction, seed or repetition):
-   reconstruction R² and generalization R² under **both** aggregations of §6b (arithmetic per-dim
-   mean and variance-weighted), raw and pruned exact support match, structural F1 / precision /
-   recall on the pruned support (exact systems only), divergence flag, IC, seed, noise level, subsampling ratio, realization (zero
-   for this clean data).
-2. **Per-system table** — aggregated through the hierarchy: within a direction over seeds or
-   repetitions (share of runs for the rates, plus the median of continuous R²), then over both
-   directions, giving one value per system.
-3. **Benchmark table** — equal weight per system, reported overall and stratified by dimension,
-   by three-way class, and (dim 3 only) feasible vs infeasible under bound 10. Rates: R² > 0.9
-   reconstruction and generalization (both aggregations), raw and pruned exact recovery and mean
-   structural F1 (exact systems only). Always both metric families together (Design Principle 9).
-   Report the number of systems in every cell.
-4. **Sensitivity table** — the number of runs that cross the 0.9 threshold between the arithmetic
-   and variance-weighted aggregation, per method and dimension (§6b says this is published).
+## Rules
 
-The script must take the inputs as arguments so that the same code later runs on the C-6 grid,
-where the "seeds" level becomes seeds × noise realizations within one data condition and the
-benchmark table gains (noise sigma, subsampling rho) as stratifying keys. Do not implement the C-6
-loading now; make the hierarchy generic over these keys and state in the report what C-6 will need.
-
-## Hard rules
-
-- Exact and surrogate systems are never mixed in a structure metric (Design Principle 8).
-- Divergent integrations count as R² ≤ 0.9, never as missing. Report how many there are.
-- The pruning threshold is the frozen rule `tau = max(1e-6, 1e-3 * max_i |c_i|)`. Do not change it.
-- If a method's input lacks per-dimension R² (needed for the variance-weighted figure), **do not
-  approximate it**. Report the gap in the report with the exact missing field, and fill that column
-  with NaN plus an explicit `*_available = False` flag. Claude decides whether to extend the
-  producer.
-- No new experiments, no re-running of SINDy, ODEFormer or Julia. Python only.
-
-## Controls (must pass; report each)
-
-1. **EvoGrow back-compatibility:** collapsing the per-run table to (system, direction) units with
-   the arithmetic aggregation reproduces the published C-1 rates 82.3 % reconstruction and 37.3 %
-   generalization over 126 units, and the per-dimension figures in `CLAUDE.md`
-   (dim 1 97.8 / 70.3, dim 2 91.7 / 25.6, dim 3 28.3 / 1.7).
-2. **SINDy and ODEFormer back-compatibility:** the same collapse reproduces the per-configuration
-   rates in `outputs/phase_c_campaign_221a3a7/agg/sindy_n31/phasec_sindy_paired_summary.csv` and
-   `outputs/phase_c_campaign_221a3a7/agg/odeformer_n40_reference/phasec_odeformer_paired_summary.csv`.
-3. **Variance weighting on dim 1** equals the arithmetic figure exactly for every method.
-4. **Equal system weight:** the benchmark rate equals the unweighted mean of the per-system values.
-
-A failed control is a stop: report `blocked` with the numbers, do not adjust the aggregation.
-
-## Outputs
-
-`outputs/phase_c_campaign_221a3a7/agg/hierarchy_n43/` — per-run, per-system, benchmark and
-sensitivity CSVs, plus a `metadata.json` listing input paths and their SHA-256.
-
-## Tests
-
-`analysis/tests/test_<script name>.py`: hierarchy order on a synthetic fixture (a system with two
-directions and three seeds where the naive pooled rate and the hierarchical rate differ), equal
-system weight, divergent run counted as failure, NaN flag when per-dim R² is missing.
+No SINDy, ODEFormer or Julia runs. Python only. Pruning rule and §6b definitions unchanged. Do not
+edit `SCRIPTS.md` command blocks beyond adding the new command; Claude updates the WP-N30/N31
+references after reviewing the deltas. Tests for the new loader paths (realization-identity assert,
+variance-weight control) in the existing WP-N43 test file.
 
 ## Report
 
-`codex/reports/REPORT_WP_N43.md`: commands, control results with numbers, the benchmark table for
-the canonical configurations, the list of missing fields, and what C-6 will need. Do not commit;
-leave the files uncommitted and write the status into `codex/STATUS.md`.
+`codex/reports/REPORT_WP_N43B.md`: merge checks, all controls, the SINDy old-vs-new delta table,
+and the updated overall benchmark table (all methods, all configurations, both aggregations,
+structure). Leave everything uncommitted; status into `codex/STATUS.md`.

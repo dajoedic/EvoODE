@@ -6,6 +6,43 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ## 2026-10-05
 
+### §9.3-Hierarchie (WP-N43/N43b) und SINDy/Weak-SINDy auf dem ganzen C-6-Export
+<!-- 60a4393 -->
+
+**SINDy/Weak-SINDy auf C-6, lokal.** Alle 4.536 Exportzellen (63 Systeme × 2 IC × 12 Bedingungen × 3 Realisierungen),
+zehn Konfigurationen, 10 Shards parallel, 40 min (11:55–12:35). Ein erster Versuch mit 6 Shards wurde vom
+Hintergrund-Zeitlimit des Tools nach 30 min ohne Ergebnis beendet — die Harness schreibt erst am Ende. Seitdem
+gilt (Nutzer): **auch Tool-Limits sind Cuts**, lange Läufe werden abgekoppelt gestartet. Zusammengeführt:
+90.720 Zeilen, 4.536 Zellen, 0 Duplikate, Hash-Prüfung 4.536/4.536. Die (0,0)-Kontrolle gegen die kanonische
+C-4-Datei (WP-C4c, Kampagnen-Bytes): Status, rohe und geprunte Struktur **2.520/2.520**, R² > 0,9 **2.520/2.520**,
+R² bit-gleich bis auf 40 divergierte Zeilen. Der skriptinterne Status „failed“ ist ein Artefakt: seine Referenz
+hat nur 80 Zeilen. Abgelegt: `analysis/data/paper1_phaseC_v1/c6_sindy_5dd1df8/` (Summary, Merge-Checks,
+Shard-Indizes); `details.csv` (236 MB) bleibt in `outputs/`, reproduzierbar aus Export + Harness.
+
+**Gefundener Quellenfehler.** WP-N43 und die WP-N30/N31-Paarung in `SCRIPTS.md` lasen
+`phasec_sindy_baseline/details.csv` — den **alten, selbst integrierten** SINDy-Lauf (DOP853), nicht den kanonischen
+WP-C4c-Lauf. Wirkung: 4 von 2.520 R²-Urteilen und 2 Strukturtreffer anders; auf Einheitenebene 5 von 400 Raten
+verschoben, alle in partiell darstellbaren Zellen mit 2–17 Einheiten. WP-N43b liest SINDy jetzt aus der
+(0,0)-Bedingung des C-6-Laufs (identisch zu WP-C4c). Die in `CLAUDE.md` zitierten SINDy-Spannen aus WP-N30/N31
+stammen aus der alten Quelle und sind ab jetzt durch `hierarchy_n43b` ersetzt.
+
+**Die Hierarchie (Plan §9.3), Gesamtbenchmark, gleiches Gewicht je System, 63 Systeme:**
+
+| | Rek. arith. | Rek. varw. | Gen. arith. | **Gen. varw.** | roh exakt | gepruned exakt | F1 gepruned |
+|---|---|---|---|---|---|---|---|
+| EvoGrow C-1 | 82,3 % | 88,6 % | 37,3 % | **41,4 %** | 13,3 % | 29,4 % | 0,58 |
+| SINDy (Spanne 10 Konf.) | 52,4–65,1 % | 54,0–65,9 % | 26,2–41,3 % | **27,0–42,9 %** | 16,7–43,3 % | 16,7–43,3 % | 0,54–0,72 |
+| ODEFormer Referenz (4 Konf.) | 57,7–77,5 % | 60,8–79,9 % | 26,2–32,3 % | **27,0–33,6 %** | 16,7–18,3 % | 16,7–18,3 % | 0,54–0,55 |
+
+Kontrollen 571/571: EvoGrow reproduziert 82,3 / 37,3 % und alle Dimensionswerte exakt, ODEFormer unverändert,
+dim 1 varw. = arith. für alle drei Methoden. EvoGrow-Generalisierung varianzgewichtet aus `generalization_r2_by_dim`
+(337/378; 41 nicht endlich, eine davon mit Flag `false`, aber R² NaN).
+
+**Lesart.** Rekonstruktion: EvoGrow klar vorn. Generalisierung (die §9.3-Primärgröße): EvoGrow 41,4 % liegt
+**im oberen Bereich der SINDy-Spanne, nicht darüber** (beste SINDy-Konfiguration 42,9 %), vor ODEFormer.
+**Struktur: SINDy ist besser** — die besten Konfigurationen (STLSQ 0,1) treffen 40–43 % exakt, EvoGrow roh 13,3 %,
+gepruned 29,4 %. Das ist der saubere Datenfall; ob sich das unter Rauschen dreht, entscheidet C-6.
+
 ### Phase C vollständig: C-3 eingesammelt, strikte Auswertung, C-1/C-2 identisch
 <!-- ac64ccc -->
 

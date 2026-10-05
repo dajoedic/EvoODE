@@ -1,0 +1,51 @@
+{
+  "hierarchy": "equation -> run -> seeds/repetitions within direction -> both directions -> system -> benchmark",
+  "inputs": {
+    "evogrow_generalization": {
+      "path": "C:\\Users\\joedicke\\Documents\\reps\\EvoODE\\outputs\\wp_n5_ic_generalization_phase_c\\shard_001_of_001\\results.jsonl",
+      "sha256": "f4048bb8437bf70712902fac15bf9d1add6ff457f5282e684bec70ff86e06a36"
+    },
+    "evogrow_registry": {
+      "path": "C:\\Users\\joedicke\\Documents\\reps\\EvoODE\\analysis\\data\\paper1_phaseC_v1\\final_2026-10-05\\phasec_analysis_registry_c1.csv",
+      "sha256": "28c7a0efc7d32bfba754ca80b3e37a064f37ff2b1a30258edfb469c30ba359b1"
+    },
+    "odeformer_candidate": {
+      "path": "C:\\Users\\joedicke\\Documents\\reps\\EvoODE\\analysis\\data\\paper1_phaseC_v1\\odeformer_baseline\\candidate_orion_8e0e699\\records_structure_recomputed.csv",
+      "sha256": "f9523cf6c92b65d8dc5b922b36954371fd5f08af58b7537bc46433afcec5d41d"
+    },
+    "odeformer_control_summary": {
+      "path": "C:\\Users\\joedicke\\Documents\\reps\\EvoODE\\outputs\\phase_c_campaign_221a3a7\\agg\\odeformer_n40_reference\\phasec_odeformer_paired_summary.csv",
+      "sha256": "c002cab3f5a0865d91b7ff58c17abf3a8a5eaeb8d8e0eab2f2933ddc68f0cd47"
+    },
+    "odeformer_reference": {
+      "path": "C:\\Users\\joedicke\\Documents\\reps\\EvoODE\\analysis\\data\\paper1_phaseC_v1\\odeformer_baseline\\reference_orion_55e9c75\\records_structure_recomputed.csv",
+      "sha256": "4f16305818d76b9a573afc95a01a937c1d498304685e297425dc18c792f7d43c"
+    },
+    "representability_threeway": {
+      "path": "C:\\Users\\joedicke\\Documents\\reps\\EvoODE\\analysis\\data\\paper1_phaseC_v1\\representability_threeway\\representability_threeway_by_system.csv",
+      "sha256": "bc196535e414704ccc2bcdd39fcd64027240145dfa6d3bbf9195115e8d8daba4"
+    },
+    "sindy_c4c_details": {
+      "path": "C:\\Users\\joedicke\\Documents\\reps\\EvoODE\\analysis\\data\\paper1_phaseC_v1\\phasec_sindy_baseline_wp_c4c_export\\details.csv",
+      "sha256": "8ddebad159ffb4d2b346a0c0f81ceded1a48549916b98b617fd1d67431ee66c1"
+    },
+    "sindy_control_summary": {
+      "path": "C:\\Users\\joedicke\\Documents\\reps\\EvoODE\\outputs\\phase_c_campaign_221a3a7\\agg\\sindy_n31\\phasec_sindy_paired_summary.csv",
+      "sha256": "65439bf5ef38274153a547bb0607617b6752f1a782ad231595bf0d41b9bee69c"
+    },
+    "sindy_details": {
+      "path": "C:\\Users\\joedicke\\Documents\\reps\\EvoODE\\outputs\\c6_sindy_baselines_5dd1df8\\merged\\details.csv",
+      "sha256": "1939f4819a2ed43981969b7eb9728f312291fd48c1e6a429a9ad93efc661742c"
+    },
+    "sindy_old_details": {
+      "path": "C:\\Users\\joedicke\\Documents\\reps\\EvoODE\\analysis\\data\\paper1_phaseC_v1\\phasec_sindy_baseline\\details.csv",
+      "sha256": "c638368290504694cf388c8478c9d6e6b376a04dfabd30d6cd37c026e73b1503"
+    },
+    "trajectory_export_manifest": {
+      "path": "C:\\Users\\joedicke\\Documents\\reps\\EvoODE\\outputs\\phase_c_trajectory_hashes\\wp_c4c\\trajectory_export\\trajectory_manifest.csv",
+      "sha256": "c92ec60a3453c18d123e29b10c63f28a2cc67a67e5ea6021f014d9847ccb63b0"
+    }
+  },
+  "missing_fields": [],
+  "r2_threshold": 0.9
+}

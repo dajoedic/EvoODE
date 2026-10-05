@@ -1,0 +1,572 @@
+control,n_checked,expected,actual,abs_error,passed,note
+evogrow_backcompat_overall_reconstruction,126,0.823,0.8227513227513227,0.0002486772486772759,True,rounded published percentage
+evogrow_backcompat_overall_generalization,126,0.373,0.373015873015873,1.58730158730247e-05,True,rounded published percentage
+evogrow_backcompat_dim1_reconstruction,126,0.978,0.9782608695652174,0.0002608695652174253,True,rounded published percentage
+evogrow_backcompat_dim1_generalization,126,0.703,0.7028985507246376,0.00010144927536237525,True,rounded published percentage
+evogrow_backcompat_dim2_reconstruction,126,0.917,0.9166666666666667,0.0003333333333332966,True,rounded published percentage
+evogrow_backcompat_dim2_generalization,126,0.256,0.25595238095238093,4.7619047619074095e-05,True,rounded published percentage
+evogrow_backcompat_dim3_reconstruction,126,0.283,0.2833333333333333,0.00033333333333335213,True,rounded published percentage
+evogrow_backcompat_dim3_generalization,126,0.017,0.016666666666666666,0.0003333333333333348,True,rounded published percentage
+dim1_variance_equals_arithmetic_EvoGrow_reconstruction,138,0.0,1.1102230246251565e-16,1.1102230246251565e-16,True,no rows checked means variance-weighted input unavailable
+dim1_variance_equals_arithmetic_EvoGrow_generalization,138,0.0,1.4210854715202004e-14,1.4210854715202004e-14,True,no rows checked means variance-weighted input unavailable
+dim1_variance_equals_arithmetic_ODEFormer_reconstruction,1104,0.0,3.3306690738754696e-16,3.3306690738754696e-16,True,no rows checked means variance-weighted input unavailable
+dim1_variance_equals_arithmetic_ODEFormer_generalization,1104,0.0,3.552713678800501e-15,3.552713678800501e-15,True,no rows checked means variance-weighted input unavailable
+dim1_variance_equals_arithmetic_SINDy_reconstruction,460,0.0,2.220446049250313e-16,2.220446049250313e-16,True,no rows checked means variance-weighted input unavailable
+dim1_variance_equals_arithmetic_SINDy_generalization,460,0.0,2.2737367544323206e-13,2.2737367544323206e-13,True,no rows checked means variance-weighted input unavailable
+equal_system_weight_EvoGrow_C-1_capped_canonical_reconstruction_r2_arithmetic_gt_0_9,63,0.8227513227513226,0.8227513227513226,0.0,True,benchmark equals unweighted mean of per-system rows
+equal_system_weight_EvoGrow_C-1_capped_canonical_reconstruction_r2_variance_weighted_gt_0_9,63,0.8862433862433862,0.8862433862433862,0.0,True,benchmark equals unweighted mean of per-system rows
+equal_system_weight_EvoGrow_C-1_capped_canonical_generalization_r2_arithmetic_gt_0_9,63,0.373015873015873,0.373015873015873,0.0,True,benchmark equals unweighted mean of per-system rows
+equal_system_weight_EvoGrow_C-1_capped_canonical_generalization_r2_variance_weighted_gt_0_9,63,0.414021164021164,0.414021164021164,0.0,True,benchmark equals unweighted mean of per-system rows
+equal_system_weight_ODEFormer_beam10_noopt_candidate_reconstruction_r2_arithmetic_gt_0_9,63,0.5793650793650794,0.5793650793650794,0.0,True,benchmark equals unweighted mean of per-system rows
+equal_system_weight_ODEFormer_beam10_noopt_candidate_reconstruction_r2_variance_weighted_gt_0_9,63,0.5873015873015873,0.5873015873015873,0.0,True,benchmark equals unweighted mean of per-system rows
+equal_system_weight_ODEFormer_beam10_noopt_candidate_generalization_r2_arithmetic_gt_0_9,63,0.2619047619047619,0.2619047619047619,0.0,True,benchmark equals unweighted mean of per-system rows
+equal_system_weight_ODEFormer_beam10_noopt_candidate_generalization_r2_variance_weighted_gt_0_9,63,0.2777777777777778,0.2777777777777778,0.0,True,benchmark equals unweighted mean of per-system rows
+equal_system_weight_ODEFormer_beam10_noopt_reference_reconstruction_r2_arithmetic_gt_0_9,63,0.5767195767195767,0.5767195767195767,0.0,True,benchmark equals unweighted mean of per-system rows
+equal_system_weight_ODEFormer_beam10_noopt_reference_reconstruction_r2_variance_weighted_gt_0_9,63,0.6084656084656085,0.6084656084656085,0.0,True,benchmark equals unweighted mean of per-system rows
+equal_system_weight_ODEFormer_beam10_noopt_reference_generalization_r2_arithmetic_gt_0_9,63,0.2619047619047619,0.2619047619047619,0.0,True,benchmark equals unweighted mean of per-system rows
+equal_system_weight_ODEFormer_beam10_noopt_reference_generalization_r2_variance_weighted_gt_0_9,63,0.2698412698412698,0.2698412698412698,0.0,True,benchmark equals unweighted mean of per-system rows
+equal_system_weight_ODEFormer_beam10_opt_candidate_reconstruction_r2_arithmetic_gt_0_9,63,0.7089947089947091,0.7089947089947091,0.0,True,benchmark equals unweighted mean of per-system rows
+equal_system_weight_ODEFormer_beam10_opt_candidate_reconstruction_r2_variance_weighted_gt_0_9,63,0.7407407407407408,0.7407407407407408,0.0,True,benchmark equals unweighted mean of per-system rows
+equal_system_weight_ODEFormer_beam10_opt_candidate_generalization_r2_arithmetic_gt_0_9,63,0.3253968253968254,0.3253968253968254,0.0,True,benchmark equals unweighted mean of per-system rows
+equal_system_weight_ODEFormer_beam10_opt_candidate_generalization_r2_variance_weighted_gt_0_9,63,0.3412698412698413,0.3412698412698413,0.0,True,benchmark equals unweighted mean of per-system rows
+equal_system_weight_ODEFormer_beam10_opt_reference_reconstruction_r2_arithmetic_gt_0_9,63,0.7275132275132276,0.7275132275132276,0.0,True,benchmark equals unweighted mean of per-system rows
+equal_system_weight_ODEFormer_beam10_opt_reference_reconstruction_r2_variance_weighted_gt_0_9,63,0.753968253968254,0.753968253968254,0.0,True,benchmark equals unweighted mean of per-system rows
+equal_system_weight_ODEFormer_beam10_opt_reference_generalization_r2_arithmetic_gt_0_9,63,0.30952380952380953,0.30952380952380953,0.0,True,benchmark equals unweighted mean of per-system rows
+equal_system_weight_ODEFormer_beam10_opt_reference_generalization_r2_variance_weighted_gt_0_9,63,0.31746031746031744,0.31746031746031744,0.0,True,benchmark equals unweighted mean of per-system rows
+equal_system_weight_ODEFormer_beam50_noopt_candidate_reconstruction_r2_arithmetic_gt_0_9,63,0.6402116402116402,0.6402116402116402,0.0,True,benchmark equals unweighted mean of per-system rows
+equal_system_weight_ODEFormer_beam50_noopt_candidate_reconstruction_r2_variance_weighted_gt_0_9,63,0.6878306878306879,0.6878306878306879,0.0,True,benchmark equals unweighted mean of per-system rows
+equal_system_weight_ODEFormer_beam50_noopt_candidate_generalization_r2_arithmetic_gt_0_9,63,0.2619047619047619,0.2619047619047619,0.0,True,benchmark equals unweighted mean of per-system rows
+equal_system_weight_ODEFormer_beam50_noopt_candidate_generalization_r2_variance_weighted_gt_0_9,63,0.2619047619047619,0.2619047619047619,0.0,True,benchmark equals unweighted mean of per-system rows
+equal_system_weight_ODEFormer_beam50_noopt_reference_reconstruction_r2_arithmetic_gt_0_9,63,0.648148148148148,0.648148148148148,0.0,True,benchmark equals unweighted mean of per-system rows
+equal_system_weight_ODEFormer_beam50_noopt_reference_reconstruction_r2_variance_weighted_gt_0_9,63,0.7037037037037036,0.7037037037037036,0.0,True,benchmark equals unweighted mean of per-system rows
+equal_system_weight_ODEFormer_beam50_noopt_reference_generalization_r2_arithmetic_gt_0_9,63,0.2777777777777778,0.2777777777777778,0.0,True,benchmark equals unweighted mean of per-system rows
+equal_system_weight_ODEFormer_beam50_noopt_reference_generalization_r2_variance_weighted_gt_0_9,63,0.2857142857142857,0.2857142857142857,0.0,True,benchmark equals unweighted mean of per-system rows
+equal_system_weight_ODEFormer_beam50_opt_candidate_reconstruction_r2_arithmetic_gt_0_9,63,0.746031746031746,0.746031746031746,0.0,True,benchmark equals unweighted mean of per-system rows
+equal_system_weight_ODEFormer_beam50_opt_candidate_reconstruction_r2_variance_weighted_gt_0_9,63,0.7962962962962963,0.7962962962962963,0.0,True,benchmark equals unweighted mean of per-system rows
+equal_system_weight_ODEFormer_beam50_opt_candidate_generalization_r2_arithmetic_gt_0_9,63,0.32010582010582006,0.32010582010582006,0.0,True,benchmark equals unweighted mean of per-system rows
+equal_system_weight_ODEFormer_beam50_opt_candidate_generalization_r2_variance_weighted_gt_0_9,63,0.328042328042328,0.328042328042328,0.0,True,benchmark equals unweighted mean of per-system rows
+equal_system_weight_ODEFormer_beam50_opt_reference_reconstruction_r2_arithmetic_gt_0_9,63,0.775132275132275,0.775132275132275,0.0,True,benchmark equals unweighted mean of per-system rows
+equal_system_weight_ODEFormer_beam50_opt_reference_reconstruction_r2_variance_weighted_gt_0_9,63,0.7989417989417988,0.7989417989417988,0.0,True,benchmark equals unweighted mean of per-system rows
+equal_system_weight_ODEFormer_beam50_opt_reference_generalization_r2_arithmetic_gt_0_9,63,0.3227513227513228,0.3227513227513228,0.0,True,benchmark equals unweighted mean of per-system rows
+equal_system_weight_ODEFormer_beam50_opt_reference_generalization_r2_variance_weighted_gt_0_9,63,0.335978835978836,0.335978835978836,0.0,True,benchmark equals unweighted mean of per-system rows
+equal_system_weight_SINDy_poly_deg2_stlsq_0.01_canonical_reconstruction_r2_arithmetic_gt_0_9,63,0.6031746031746031,0.6031746031746031,0.0,True,benchmark equals unweighted mean of per-system rows
+equal_system_weight_SINDy_poly_deg2_stlsq_0.01_canonical_reconstruction_r2_variance_weighted_gt_0_9,63,0.626984126984127,0.626984126984127,0.0,True,benchmark equals unweighted mean of per-system rows
+equal_system_weight_SINDy_poly_deg2_stlsq_0.01_canonical_generalization_r2_arithmetic_gt_0_9,63,0.31746031746031744,0.31746031746031744,0.0,True,benchmark equals unweighted mean of per-system rows
+equal_system_weight_SINDy_poly_deg2_stlsq_0.01_canonical_generalization_r2_variance_weighted_gt_0_9,63,0.3412698412698413,0.3412698412698413,0.0,True,benchmark equals unweighted mean of per-system rows
+equal_system_weight_SINDy_poly_deg2_stlsq_0.1_canonical_reconstruction_r2_arithmetic_gt_0_9,63,0.5238095238095238,0.5238095238095238,0.0,True,benchmark equals unweighted mean of per-system rows
+equal_system_weight_SINDy_poly_deg2_stlsq_0.1_canonical_reconstruction_r2_variance_weighted_gt_0_9,63,0.5396825396825397,0.5396825396825397,0.0,True,benchmark equals unweighted mean of per-system rows
+equal_system_weight_SINDy_poly_deg2_stlsq_0.1_canonical_generalization_r2_arithmetic_gt_0_9,63,0.2619047619047619,0.2619047619047619,0.0,True,benchmark equals unweighted mean of per-system rows
+equal_system_weight_SINDy_poly_deg2_stlsq_0.1_canonical_generalization_r2_variance_weighted_gt_0_9,63,0.2698412698412698,0.2698412698412698,0.0,True,benchmark equals unweighted mean of per-system rows
+equal_system_weight_SINDy_poly_deg3_sin_cos_stlsq_0.01_canonical_reconstruction_r2_arithmetic_gt_0_9,63,0.6507936507936508,0.6507936507936508,0.0,True,benchmark equals unweighted mean of per-system rows
+equal_system_weight_SINDy_poly_deg3_sin_cos_stlsq_0.01_canonical_reconstruction_r2_variance_weighted_gt_0_9,63,0.6507936507936508,0.6507936507936508,0.0,True,benchmark equals unweighted mean of per-system rows
+equal_system_weight_SINDy_poly_deg3_sin_cos_stlsq_0.01_canonical_generalization_r2_arithmetic_gt_0_9,63,0.4126984126984127,0.4126984126984127,0.0,True,benchmark equals unweighted mean of per-system rows
+equal_system_weight_SINDy_poly_deg3_sin_cos_stlsq_0.01_canonical_generalization_r2_variance_weighted_gt_0_9,63,0.4126984126984127,0.4126984126984127,0.0,True,benchmark equals unweighted mean of per-system rows
+equal_system_weight_SINDy_poly_deg3_sin_cos_stlsq_0.1_canonical_reconstruction_r2_arithmetic_gt_0_9,63,0.6031746031746031,0.6031746031746031,0.0,True,benchmark equals unweighted mean of per-system rows
+equal_system_weight_SINDy_poly_deg3_sin_cos_stlsq_0.1_canonical_reconstruction_r2_variance_weighted_gt_0_9,63,0.6031746031746031,0.6031746031746031,0.0,True,benchmark equals unweighted mean of per-system rows
+equal_system_weight_SINDy_poly_deg3_sin_cos_stlsq_0.1_canonical_generalization_r2_arithmetic_gt_0_9,63,0.4126984126984127,0.4126984126984127,0.0,True,benchmark equals unweighted mean of per-system rows
+equal_system_weight_SINDy_poly_deg3_sin_cos_stlsq_0.1_canonical_generalization_r2_variance_weighted_gt_0_9,63,0.42857142857142855,0.42857142857142855,0.0,True,benchmark equals unweighted mean of per-system rows
+equal_system_weight_SINDy_poly_deg3_stlsq_0.01_canonical_reconstruction_r2_arithmetic_gt_0_9,63,0.6349206349206349,0.6349206349206349,0.0,True,benchmark equals unweighted mean of per-system rows
+equal_system_weight_SINDy_poly_deg3_stlsq_0.01_canonical_reconstruction_r2_variance_weighted_gt_0_9,63,0.6587301587301587,0.6587301587301587,0.0,True,benchmark equals unweighted mean of per-system rows
+equal_system_weight_SINDy_poly_deg3_stlsq_0.01_canonical_generalization_r2_arithmetic_gt_0_9,63,0.35714285714285715,0.35714285714285715,0.0,True,benchmark equals unweighted mean of per-system rows
+equal_system_weight_SINDy_poly_deg3_stlsq_0.01_canonical_generalization_r2_variance_weighted_gt_0_9,63,0.36507936507936506,0.36507936507936506,0.0,True,benchmark equals unweighted mean of per-system rows
+equal_system_weight_SINDy_poly_deg3_stlsq_0.1_canonical_reconstruction_r2_arithmetic_gt_0_9,63,0.5952380952380952,0.5952380952380952,0.0,True,benchmark equals unweighted mean of per-system rows
+equal_system_weight_SINDy_poly_deg3_stlsq_0.1_canonical_reconstruction_r2_variance_weighted_gt_0_9,63,0.6190476190476191,0.6190476190476191,0.0,True,benchmark equals unweighted mean of per-system rows
+equal_system_weight_SINDy_poly_deg3_stlsq_0.1_canonical_generalization_r2_arithmetic_gt_0_9,63,0.35714285714285715,0.35714285714285715,0.0,True,benchmark equals unweighted mean of per-system rows
+equal_system_weight_SINDy_poly_deg3_stlsq_0.1_canonical_generalization_r2_variance_weighted_gt_0_9,63,0.373015873015873,0.373015873015873,0.0,True,benchmark equals unweighted mean of per-system rows
+equal_system_weight_SINDy_poly_deg4_stlsq_0.01_canonical_reconstruction_r2_arithmetic_gt_0_9,63,0.5793650793650794,0.5793650793650794,0.0,True,benchmark equals unweighted mean of per-system rows
+equal_system_weight_SINDy_poly_deg4_stlsq_0.01_canonical_reconstruction_r2_variance_weighted_gt_0_9,63,0.6031746031746031,0.6031746031746031,0.0,True,benchmark equals unweighted mean of per-system rows
+equal_system_weight_SINDy_poly_deg4_stlsq_0.01_canonical_generalization_r2_arithmetic_gt_0_9,63,0.3412698412698413,0.3412698412698413,0.0,True,benchmark equals unweighted mean of per-system rows
+equal_system_weight_SINDy_poly_deg4_stlsq_0.01_canonical_generalization_r2_variance_weighted_gt_0_9,63,0.3492063492063492,0.3492063492063492,0.0,True,benchmark equals unweighted mean of per-system rows
+equal_system_weight_SINDy_poly_deg4_stlsq_0.1_canonical_reconstruction_r2_arithmetic_gt_0_9,63,0.5714285714285714,0.5714285714285714,0.0,True,benchmark equals unweighted mean of per-system rows
+equal_system_weight_SINDy_poly_deg4_stlsq_0.1_canonical_reconstruction_r2_variance_weighted_gt_0_9,63,0.6031746031746031,0.6031746031746031,0.0,True,benchmark equals unweighted mean of per-system rows
+equal_system_weight_SINDy_poly_deg4_stlsq_0.1_canonical_generalization_r2_arithmetic_gt_0_9,63,0.3333333333333333,0.3333333333333333,0.0,True,benchmark equals unweighted mean of per-system rows
+equal_system_weight_SINDy_poly_deg4_stlsq_0.1_canonical_generalization_r2_variance_weighted_gt_0_9,63,0.35714285714285715,0.35714285714285715,0.0,True,benchmark equals unweighted mean of per-system rows
+equal_system_weight_SINDy_poly_deg5_stlsq_0.01_canonical_reconstruction_r2_arithmetic_gt_0_9,63,0.5634920634920635,0.5634920634920635,0.0,True,benchmark equals unweighted mean of per-system rows
+equal_system_weight_SINDy_poly_deg5_stlsq_0.01_canonical_reconstruction_r2_variance_weighted_gt_0_9,63,0.5793650793650794,0.5793650793650794,0.0,True,benchmark equals unweighted mean of per-system rows
+equal_system_weight_SINDy_poly_deg5_stlsq_0.01_canonical_generalization_r2_arithmetic_gt_0_9,63,0.3412698412698413,0.3412698412698413,0.0,True,benchmark equals unweighted mean of per-system rows
+equal_system_weight_SINDy_poly_deg5_stlsq_0.01_canonical_generalization_r2_variance_weighted_gt_0_9,63,0.3412698412698413,0.3412698412698413,0.0,True,benchmark equals unweighted mean of per-system rows
+equal_system_weight_SINDy_poly_deg5_stlsq_0.1_canonical_reconstruction_r2_arithmetic_gt_0_9,63,0.5555555555555556,0.5555555555555556,0.0,True,benchmark equals unweighted mean of per-system rows
+equal_system_weight_SINDy_poly_deg5_stlsq_0.1_canonical_reconstruction_r2_variance_weighted_gt_0_9,63,0.5793650793650794,0.5793650793650794,0.0,True,benchmark equals unweighted mean of per-system rows
+equal_system_weight_SINDy_poly_deg5_stlsq_0.1_canonical_generalization_r2_arithmetic_gt_0_9,63,0.31746031746031744,0.31746031746031744,0.0,True,benchmark equals unweighted mean of per-system rows
+equal_system_weight_SINDy_poly_deg5_stlsq_0.1_canonical_generalization_r2_variance_weighted_gt_0_9,63,0.3253968253968254,0.3253968253968254,0.0,True,benchmark equals unweighted mean of per-system rows
+"sindy_backcompat_('poly_deg2_stlsq_0.01', 'IC1_to_IC2', 1, 'fully_representable')_generalization",11,0.6363636363636364,0.6363636363636364,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg2_stlsq_0.01', 'IC1_to_IC2', 1, 'non_representable')_generalization",1,1.0,1.0,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg2_stlsq_0.01', 'IC1_to_IC2', 1, 'partially_representable')_generalization",11,0.5454545454545454,0.6363636363636364,0.09090909090909094,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg2_stlsq_0.01', 'IC1_to_IC2', 2, 'fully_representable')_generalization",10,0.4,0.4,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg2_stlsq_0.01', 'IC1_to_IC2', 2, 'non_representable')_generalization",1,0.0,0.0,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg2_stlsq_0.01', 'IC1_to_IC2', 2, 'partially_representable')_generalization",17,0.1176470588235294,0.11764705882352941,1.3877787807814457e-17,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg2_stlsq_0.01', 'IC1_to_IC2', 3, 'fully_representable')_generalization",8,0.125,0.125,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg2_stlsq_0.01', 'IC1_to_IC2', 3, 'partially_representable')_generalization",2,0.0,0.0,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg2_stlsq_0.01', 'IC1_to_IC2', 4, 'fully_representable')_generalization",1,0.0,0.0,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg2_stlsq_0.01', 'IC1_to_IC2', 4, 'partially_representable')_generalization",1,0.0,0.0,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg2_stlsq_0.01', 'IC1_to_IC2', 1, 'fully_representable')_reconstruction",11,0.7272727272727273,0.7272727272727273,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg2_stlsq_0.01', 'IC1_to_IC2', 1, 'non_representable')_reconstruction",1,1.0,1.0,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg2_stlsq_0.01', 'IC1_to_IC2', 1, 'partially_representable')_reconstruction",11,0.9090909090909092,0.9090909090909091,1.1102230246251565e-16,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg2_stlsq_0.01', 'IC1_to_IC2', 2, 'fully_representable')_reconstruction",10,0.7,0.7,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg2_stlsq_0.01', 'IC1_to_IC2', 2, 'non_representable')_reconstruction",1,0.0,0.0,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg2_stlsq_0.01', 'IC1_to_IC2', 2, 'partially_representable')_reconstruction",17,0.6470588235294118,0.6470588235294118,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg2_stlsq_0.01', 'IC1_to_IC2', 3, 'fully_representable')_reconstruction",8,0.125,0.125,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg2_stlsq_0.01', 'IC1_to_IC2', 3, 'partially_representable')_reconstruction",2,0.0,0.0,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg2_stlsq_0.01', 'IC1_to_IC2', 4, 'fully_representable')_reconstruction",1,0.0,0.0,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg2_stlsq_0.01', 'IC1_to_IC2', 4, 'partially_representable')_reconstruction",1,0.0,0.0,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg2_stlsq_0.01', 'IC2_to_IC1', 1, 'fully_representable')_generalization",11,0.6363636363636364,0.6363636363636364,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg2_stlsq_0.01', 'IC2_to_IC1', 1, 'non_representable')_generalization",1,0.0,0.0,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg2_stlsq_0.01', 'IC2_to_IC1', 1, 'partially_representable')_generalization",11,0.3636363636363636,0.36363636363636365,5.551115123125783e-17,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg2_stlsq_0.01', 'IC2_to_IC1', 2, 'fully_representable')_generalization",10,0.3,0.3,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg2_stlsq_0.01', 'IC2_to_IC1', 2, 'non_representable')_generalization",1,0.0,0.0,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg2_stlsq_0.01', 'IC2_to_IC1', 2, 'partially_representable')_generalization",17,0.1764705882352941,0.17647058823529413,2.7755575615628914e-17,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg2_stlsq_0.01', 'IC2_to_IC1', 3, 'fully_representable')_generalization",8,0.125,0.125,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg2_stlsq_0.01', 'IC2_to_IC1', 3, 'partially_representable')_generalization",2,0.0,0.0,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg2_stlsq_0.01', 'IC2_to_IC1', 4, 'fully_representable')_generalization",1,0.0,0.0,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg2_stlsq_0.01', 'IC2_to_IC1', 4, 'partially_representable')_generalization",1,0.0,0.0,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg2_stlsq_0.01', 'IC2_to_IC1', 1, 'fully_representable')_reconstruction",11,0.9090909090909092,0.9090909090909091,1.1102230246251565e-16,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg2_stlsq_0.01', 'IC2_to_IC1', 1, 'non_representable')_reconstruction",1,1.0,1.0,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg2_stlsq_0.01', 'IC2_to_IC1', 1, 'partially_representable')_reconstruction",11,0.9090909090909092,0.9090909090909091,1.1102230246251565e-16,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg2_stlsq_0.01', 'IC2_to_IC1', 2, 'fully_representable')_reconstruction",10,0.5,0.5,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg2_stlsq_0.01', 'IC2_to_IC1', 2, 'non_representable')_reconstruction",1,0.0,0.0,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg2_stlsq_0.01', 'IC2_to_IC1', 2, 'partially_representable')_reconstruction",17,0.5294117647058824,0.5294117647058824,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg2_stlsq_0.01', 'IC2_to_IC1', 3, 'fully_representable')_reconstruction",8,0.125,0.125,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg2_stlsq_0.01', 'IC2_to_IC1', 3, 'partially_representable')_reconstruction",2,0.5,0.5,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg2_stlsq_0.01', 'IC2_to_IC1', 4, 'fully_representable')_reconstruction",1,1.0,1.0,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg2_stlsq_0.01', 'IC2_to_IC1', 4, 'partially_representable')_reconstruction",1,0.0,0.0,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg2_stlsq_0.1', 'IC1_to_IC2', 1, 'fully_representable')_generalization",11,0.5454545454545454,0.5454545454545454,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg2_stlsq_0.1', 'IC1_to_IC2', 1, 'non_representable')_generalization",1,1.0,1.0,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg2_stlsq_0.1', 'IC1_to_IC2', 1, 'partially_representable')_generalization",11,0.4545454545454545,0.45454545454545453,5.551115123125783e-17,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg2_stlsq_0.1', 'IC1_to_IC2', 2, 'fully_representable')_generalization",10,0.4,0.4,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg2_stlsq_0.1', 'IC1_to_IC2', 2, 'non_representable')_generalization",1,0.0,0.0,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg2_stlsq_0.1', 'IC1_to_IC2', 2, 'partially_representable')_generalization",17,0.1176470588235294,0.11764705882352941,1.3877787807814457e-17,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg2_stlsq_0.1', 'IC1_to_IC2', 3, 'fully_representable')_generalization",8,0.0,0.0,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg2_stlsq_0.1', 'IC1_to_IC2', 3, 'partially_representable')_generalization",2,0.0,0.0,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg2_stlsq_0.1', 'IC1_to_IC2', 4, 'fully_representable')_generalization",1,0.0,0.0,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg2_stlsq_0.1', 'IC1_to_IC2', 4, 'partially_representable')_generalization",1,0.0,0.0,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg2_stlsq_0.1', 'IC1_to_IC2', 1, 'fully_representable')_reconstruction",11,0.6363636363636364,0.6363636363636364,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg2_stlsq_0.1', 'IC1_to_IC2', 1, 'non_representable')_reconstruction",1,1.0,1.0,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg2_stlsq_0.1', 'IC1_to_IC2', 1, 'partially_representable')_reconstruction",11,0.5454545454545454,0.5454545454545454,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg2_stlsq_0.1', 'IC1_to_IC2', 2, 'fully_representable')_reconstruction",10,0.6,0.6,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg2_stlsq_0.1', 'IC1_to_IC2', 2, 'non_representable')_reconstruction",1,0.0,0.0,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg2_stlsq_0.1', 'IC1_to_IC2', 2, 'partially_representable')_reconstruction",17,0.7058823529411765,0.7058823529411765,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg2_stlsq_0.1', 'IC1_to_IC2', 3, 'fully_representable')_reconstruction",8,0.0,0.0,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg2_stlsq_0.1', 'IC1_to_IC2', 3, 'partially_representable')_reconstruction",2,0.5,0.5,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg2_stlsq_0.1', 'IC1_to_IC2', 4, 'fully_representable')_reconstruction",1,0.0,0.0,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg2_stlsq_0.1', 'IC1_to_IC2', 4, 'partially_representable')_reconstruction",1,1.0,1.0,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg2_stlsq_0.1', 'IC2_to_IC1', 1, 'fully_representable')_generalization",11,0.5454545454545454,0.5454545454545454,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg2_stlsq_0.1', 'IC2_to_IC1', 1, 'non_representable')_generalization",1,0.0,0.0,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg2_stlsq_0.1', 'IC2_to_IC1', 1, 'partially_representable')_generalization",11,0.2727272727272727,0.2727272727272727,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg2_stlsq_0.1', 'IC2_to_IC1', 2, 'fully_representable')_generalization",10,0.3,0.3,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg2_stlsq_0.1', 'IC2_to_IC1', 2, 'non_representable')_generalization",1,0.0,0.0,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg2_stlsq_0.1', 'IC2_to_IC1', 2, 'partially_representable')_generalization",17,0.1764705882352941,0.17647058823529413,2.7755575615628914e-17,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg2_stlsq_0.1', 'IC2_to_IC1', 3, 'fully_representable')_generalization",8,0.0,0.0,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg2_stlsq_0.1', 'IC2_to_IC1', 3, 'partially_representable')_generalization",2,0.0,0.0,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg2_stlsq_0.1', 'IC2_to_IC1', 4, 'fully_representable')_generalization",1,0.0,0.0,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg2_stlsq_0.1', 'IC2_to_IC1', 4, 'partially_representable')_generalization",1,0.0,0.0,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg2_stlsq_0.1', 'IC2_to_IC1', 1, 'fully_representable')_reconstruction",11,0.7272727272727273,0.7272727272727273,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg2_stlsq_0.1', 'IC2_to_IC1', 1, 'non_representable')_reconstruction",1,1.0,1.0,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg2_stlsq_0.1', 'IC2_to_IC1', 1, 'partially_representable')_reconstruction",11,0.7272727272727273,0.7272727272727273,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg2_stlsq_0.1', 'IC2_to_IC1', 2, 'fully_representable')_reconstruction",10,0.5,0.5,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg2_stlsq_0.1', 'IC2_to_IC1', 2, 'non_representable')_reconstruction",1,0.0,0.0,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg2_stlsq_0.1', 'IC2_to_IC1', 2, 'partially_representable')_reconstruction",17,0.4705882352941176,0.47058823529411764,5.551115123125783e-17,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg2_stlsq_0.1', 'IC2_to_IC1', 3, 'fully_representable')_reconstruction",8,0.0,0.0,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg2_stlsq_0.1', 'IC2_to_IC1', 3, 'partially_representable')_reconstruction",2,0.5,0.5,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg2_stlsq_0.1', 'IC2_to_IC1', 4, 'fully_representable')_reconstruction",1,0.0,0.0,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg2_stlsq_0.1', 'IC2_to_IC1', 4, 'partially_representable')_reconstruction",1,1.0,1.0,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg3_sin_cos_stlsq_0.01', 'IC1_to_IC2', 1, 'fully_representable')_generalization",11,0.8181818181818182,0.8181818181818182,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg3_sin_cos_stlsq_0.01', 'IC1_to_IC2', 1, 'non_representable')_generalization",1,1.0,1.0,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg3_sin_cos_stlsq_0.01', 'IC1_to_IC2', 1, 'partially_representable')_generalization",11,0.5454545454545454,0.5454545454545454,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg3_sin_cos_stlsq_0.01', 'IC1_to_IC2', 2, 'fully_representable')_generalization",10,0.5,0.5,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg3_sin_cos_stlsq_0.01', 'IC1_to_IC2', 2, 'non_representable')_generalization",1,0.0,0.0,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg3_sin_cos_stlsq_0.01', 'IC1_to_IC2', 2, 'partially_representable')_generalization",17,0.5294117647058824,0.5294117647058824,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg3_sin_cos_stlsq_0.01', 'IC1_to_IC2', 3, 'fully_representable')_generalization",8,0.0,0.0,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg3_sin_cos_stlsq_0.01', 'IC1_to_IC2', 3, 'partially_representable')_generalization",2,0.0,0.0,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg3_sin_cos_stlsq_0.01', 'IC1_to_IC2', 4, 'fully_representable')_generalization",1,0.0,0.0,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg3_sin_cos_stlsq_0.01', 'IC1_to_IC2', 4, 'partially_representable')_generalization",1,0.0,0.0,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg3_sin_cos_stlsq_0.01', 'IC1_to_IC2', 1, 'fully_representable')_reconstruction",11,0.8181818181818182,0.8181818181818182,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg3_sin_cos_stlsq_0.01', 'IC1_to_IC2', 1, 'non_representable')_reconstruction",1,1.0,1.0,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg3_sin_cos_stlsq_0.01', 'IC1_to_IC2', 1, 'partially_representable')_reconstruction",11,1.0,1.0,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg3_sin_cos_stlsq_0.01', 'IC1_to_IC2', 2, 'fully_representable')_reconstruction",10,0.5,0.5,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg3_sin_cos_stlsq_0.01', 'IC1_to_IC2', 2, 'non_representable')_reconstruction",1,0.0,0.0,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg3_sin_cos_stlsq_0.01', 'IC1_to_IC2', 2, 'partially_representable')_reconstruction",17,0.7058823529411765,0.7058823529411765,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg3_sin_cos_stlsq_0.01', 'IC1_to_IC2', 3, 'fully_representable')_reconstruction",8,0.0,0.0,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg3_sin_cos_stlsq_0.01', 'IC1_to_IC2', 3, 'partially_representable')_reconstruction",2,0.5,0.5,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg3_sin_cos_stlsq_0.01', 'IC1_to_IC2', 4, 'fully_representable')_reconstruction",1,0.0,0.0,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg3_sin_cos_stlsq_0.01', 'IC1_to_IC2', 4, 'partially_representable')_reconstruction",1,0.0,0.0,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg3_sin_cos_stlsq_0.01', 'IC2_to_IC1', 1, 'fully_representable')_generalization",11,0.6363636363636364,0.6363636363636364,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg3_sin_cos_stlsq_0.01', 'IC2_to_IC1', 1, 'non_representable')_generalization",1,0.0,0.0,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg3_sin_cos_stlsq_0.01', 'IC2_to_IC1', 1, 'partially_representable')_generalization",11,0.4545454545454545,0.45454545454545453,5.551115123125783e-17,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg3_sin_cos_stlsq_0.01', 'IC2_to_IC1', 2, 'fully_representable')_generalization",10,0.3,0.3,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg3_sin_cos_stlsq_0.01', 'IC2_to_IC1', 2, 'non_representable')_generalization",1,0.0,0.0,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg3_sin_cos_stlsq_0.01', 'IC2_to_IC1', 2, 'partially_representable')_generalization",17,0.3529411764705882,0.35294117647058826,5.551115123125783e-17,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg3_sin_cos_stlsq_0.01', 'IC2_to_IC1', 3, 'fully_representable')_generalization",8,0.0,0.0,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg3_sin_cos_stlsq_0.01', 'IC2_to_IC1', 3, 'partially_representable')_generalization",2,0.5,0.5,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg3_sin_cos_stlsq_0.01', 'IC2_to_IC1', 4, 'fully_representable')_generalization",1,0.0,0.0,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg3_sin_cos_stlsq_0.01', 'IC2_to_IC1', 4, 'partially_representable')_generalization",1,0.0,0.0,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg3_sin_cos_stlsq_0.01', 'IC2_to_IC1', 1, 'fully_representable')_reconstruction",11,1.0,1.0,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg3_sin_cos_stlsq_0.01', 'IC2_to_IC1', 1, 'non_representable')_reconstruction",1,1.0,1.0,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg3_sin_cos_stlsq_0.01', 'IC2_to_IC1', 1, 'partially_representable')_reconstruction",11,1.0,1.0,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg3_sin_cos_stlsq_0.01', 'IC2_to_IC1', 2, 'fully_representable')_reconstruction",10,0.4,0.4,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg3_sin_cos_stlsq_0.01', 'IC2_to_IC1', 2, 'non_representable')_reconstruction",1,0.0,0.0,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg3_sin_cos_stlsq_0.01', 'IC2_to_IC1', 2, 'partially_representable')_reconstruction",17,0.8235294117647058,0.8235294117647058,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg3_sin_cos_stlsq_0.01', 'IC2_to_IC1', 3, 'fully_representable')_reconstruction",8,0.0,0.0,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg3_sin_cos_stlsq_0.01', 'IC2_to_IC1', 3, 'partially_representable')_reconstruction",2,1.0,1.0,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg3_sin_cos_stlsq_0.01', 'IC2_to_IC1', 4, 'fully_representable')_reconstruction",1,0.0,0.0,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg3_sin_cos_stlsq_0.01', 'IC2_to_IC1', 4, 'partially_representable')_reconstruction",1,0.0,0.0,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg3_sin_cos_stlsq_0.1', 'IC1_to_IC2', 1, 'fully_representable')_generalization",11,0.7272727272727273,0.7272727272727273,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg3_sin_cos_stlsq_0.1', 'IC1_to_IC2', 1, 'non_representable')_generalization",1,1.0,1.0,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg3_sin_cos_stlsq_0.1', 'IC1_to_IC2', 1, 'partially_representable')_generalization",11,0.5454545454545454,0.5454545454545454,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg3_sin_cos_stlsq_0.1', 'IC1_to_IC2', 2, 'fully_representable')_generalization",10,0.6,0.6,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg3_sin_cos_stlsq_0.1', 'IC1_to_IC2', 2, 'non_representable')_generalization",1,0.0,0.0,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg3_sin_cos_stlsq_0.1', 'IC1_to_IC2', 2, 'partially_representable')_generalization",17,0.4705882352941176,0.47058823529411764,5.551115123125783e-17,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg3_sin_cos_stlsq_0.1', 'IC1_to_IC2', 3, 'fully_representable')_generalization",8,0.0,0.0,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg3_sin_cos_stlsq_0.1', 'IC1_to_IC2', 3, 'partially_representable')_generalization",2,0.0,0.0,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg3_sin_cos_stlsq_0.1', 'IC1_to_IC2', 4, 'fully_representable')_generalization",1,0.0,0.0,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg3_sin_cos_stlsq_0.1', 'IC1_to_IC2', 4, 'partially_representable')_generalization",1,0.0,0.0,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg3_sin_cos_stlsq_0.1', 'IC1_to_IC2', 1, 'fully_representable')_reconstruction",11,0.7272727272727273,0.7272727272727273,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg3_sin_cos_stlsq_0.1', 'IC1_to_IC2', 1, 'non_representable')_reconstruction",1,1.0,1.0,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg3_sin_cos_stlsq_0.1', 'IC1_to_IC2', 1, 'partially_representable')_reconstruction",11,0.8181818181818182,0.8181818181818182,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg3_sin_cos_stlsq_0.1', 'IC1_to_IC2', 2, 'fully_representable')_reconstruction",10,0.6,0.6,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg3_sin_cos_stlsq_0.1', 'IC1_to_IC2', 2, 'non_representable')_reconstruction",1,0.0,0.0,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg3_sin_cos_stlsq_0.1', 'IC1_to_IC2', 2, 'partially_representable')_reconstruction",17,0.7647058823529411,0.7647058823529411,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg3_sin_cos_stlsq_0.1', 'IC1_to_IC2', 3, 'fully_representable')_reconstruction",8,0.0,0.0,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg3_sin_cos_stlsq_0.1', 'IC1_to_IC2', 3, 'partially_representable')_reconstruction",2,0.5,0.0,0.5,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg3_sin_cos_stlsq_0.1', 'IC1_to_IC2', 4, 'fully_representable')_reconstruction",1,0.0,0.0,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg3_sin_cos_stlsq_0.1', 'IC1_to_IC2', 4, 'partially_representable')_reconstruction",1,0.0,0.0,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg3_sin_cos_stlsq_0.1', 'IC2_to_IC1', 1, 'fully_representable')_generalization",11,0.5454545454545454,0.5454545454545454,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg3_sin_cos_stlsq_0.1', 'IC2_to_IC1', 1, 'non_representable')_generalization",1,0.0,0.0,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg3_sin_cos_stlsq_0.1', 'IC2_to_IC1', 1, 'partially_representable')_generalization",11,0.4545454545454545,0.45454545454545453,5.551115123125783e-17,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg3_sin_cos_stlsq_0.1', 'IC2_to_IC1', 2, 'fully_representable')_generalization",10,0.6,0.6,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg3_sin_cos_stlsq_0.1', 'IC2_to_IC1', 2, 'non_representable')_generalization",1,0.0,0.0,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg3_sin_cos_stlsq_0.1', 'IC2_to_IC1', 2, 'partially_representable')_generalization",17,0.3529411764705882,0.35294117647058826,5.551115123125783e-17,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg3_sin_cos_stlsq_0.1', 'IC2_to_IC1', 3, 'fully_representable')_generalization",8,0.0,0.0,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg3_sin_cos_stlsq_0.1', 'IC2_to_IC1', 3, 'partially_representable')_generalization",2,0.0,0.0,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg3_sin_cos_stlsq_0.1', 'IC2_to_IC1', 4, 'fully_representable')_generalization",1,0.0,0.0,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg3_sin_cos_stlsq_0.1', 'IC2_to_IC1', 4, 'partially_representable')_generalization",1,0.0,0.0,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg3_sin_cos_stlsq_0.1', 'IC2_to_IC1', 1, 'fully_representable')_reconstruction",11,0.7272727272727273,0.7272727272727273,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg3_sin_cos_stlsq_0.1', 'IC2_to_IC1', 1, 'non_representable')_reconstruction",1,1.0,1.0,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg3_sin_cos_stlsq_0.1', 'IC2_to_IC1', 1, 'partially_representable')_reconstruction",11,0.6363636363636364,0.6363636363636364,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg3_sin_cos_stlsq_0.1', 'IC2_to_IC1', 2, 'fully_representable')_reconstruction",10,0.7,0.7,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg3_sin_cos_stlsq_0.1', 'IC2_to_IC1', 2, 'non_representable')_reconstruction",1,0.0,0.0,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg3_sin_cos_stlsq_0.1', 'IC2_to_IC1', 2, 'partially_representable')_reconstruction",17,0.8823529411764706,0.8823529411764706,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg3_sin_cos_stlsq_0.1', 'IC2_to_IC1', 3, 'fully_representable')_reconstruction",8,0.0,0.0,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg3_sin_cos_stlsq_0.1', 'IC2_to_IC1', 3, 'partially_representable')_reconstruction",2,0.0,0.0,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg3_sin_cos_stlsq_0.1', 'IC2_to_IC1', 4, 'fully_representable')_reconstruction",1,0.0,0.0,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg3_sin_cos_stlsq_0.1', 'IC2_to_IC1', 4, 'partially_representable')_reconstruction",1,1.0,1.0,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg3_stlsq_0.01', 'IC1_to_IC2', 1, 'fully_representable')_generalization",11,0.6363636363636364,0.6363636363636364,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg3_stlsq_0.01', 'IC1_to_IC2', 1, 'non_representable')_generalization",1,1.0,1.0,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg3_stlsq_0.01', 'IC1_to_IC2', 1, 'partially_representable')_generalization",11,0.6363636363636364,0.6363636363636364,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg3_stlsq_0.01', 'IC1_to_IC2', 2, 'fully_representable')_generalization",10,0.3,0.3,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg3_stlsq_0.01', 'IC1_to_IC2', 2, 'non_representable')_generalization",1,0.0,0.0,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg3_stlsq_0.01', 'IC1_to_IC2', 2, 'partially_representable')_generalization",17,0.4117647058823529,0.4117647058823529,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg3_stlsq_0.01', 'IC1_to_IC2', 3, 'fully_representable')_generalization",8,0.0,0.0,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg3_stlsq_0.01', 'IC1_to_IC2', 3, 'partially_representable')_generalization",2,0.0,0.0,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg3_stlsq_0.01', 'IC1_to_IC2', 4, 'fully_representable')_generalization",1,0.0,0.0,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg3_stlsq_0.01', 'IC1_to_IC2', 4, 'partially_representable')_generalization",1,0.0,0.0,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg3_stlsq_0.01', 'IC1_to_IC2', 1, 'fully_representable')_reconstruction",11,0.8181818181818182,0.8181818181818182,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg3_stlsq_0.01', 'IC1_to_IC2', 1, 'non_representable')_reconstruction",1,1.0,1.0,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg3_stlsq_0.01', 'IC1_to_IC2', 1, 'partially_representable')_reconstruction",11,1.0,1.0,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg3_stlsq_0.01', 'IC1_to_IC2', 2, 'fully_representable')_reconstruction",10,0.5,0.5,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg3_stlsq_0.01', 'IC1_to_IC2', 2, 'non_representable')_reconstruction",1,0.0,0.0,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg3_stlsq_0.01', 'IC1_to_IC2', 2, 'partially_representable')_reconstruction",17,0.7647058823529411,0.7647058823529411,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg3_stlsq_0.01', 'IC1_to_IC2', 3, 'fully_representable')_reconstruction",8,0.0,0.0,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg3_stlsq_0.01', 'IC1_to_IC2', 3, 'partially_representable')_reconstruction",2,0.0,0.0,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg3_stlsq_0.01', 'IC1_to_IC2', 4, 'fully_representable')_reconstruction",1,0.0,0.0,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg3_stlsq_0.01', 'IC1_to_IC2', 4, 'partially_representable')_reconstruction",1,0.0,0.0,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg3_stlsq_0.01', 'IC2_to_IC1', 1, 'fully_representable')_generalization",11,0.6363636363636364,0.6363636363636364,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg3_stlsq_0.01', 'IC2_to_IC1', 1, 'non_representable')_generalization",1,0.0,0.0,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg3_stlsq_0.01', 'IC2_to_IC1', 1, 'partially_representable')_generalization",11,0.3636363636363636,0.36363636363636365,5.551115123125783e-17,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg3_stlsq_0.01', 'IC2_to_IC1', 2, 'fully_representable')_generalization",10,0.3,0.3,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg3_stlsq_0.01', 'IC2_to_IC1', 2, 'non_representable')_generalization",1,0.0,0.0,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg3_stlsq_0.01', 'IC2_to_IC1', 2, 'partially_representable')_generalization",17,0.3529411764705882,0.35294117647058826,5.551115123125783e-17,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg3_stlsq_0.01', 'IC2_to_IC1', 3, 'fully_representable')_generalization",8,0.0,0.0,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg3_stlsq_0.01', 'IC2_to_IC1', 3, 'partially_representable')_generalization",2,0.0,0.0,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg3_stlsq_0.01', 'IC2_to_IC1', 4, 'fully_representable')_generalization",1,0.0,0.0,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg3_stlsq_0.01', 'IC2_to_IC1', 4, 'partially_representable')_generalization",1,0.0,0.0,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg3_stlsq_0.01', 'IC2_to_IC1', 1, 'fully_representable')_reconstruction",11,1.0,1.0,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg3_stlsq_0.01', 'IC2_to_IC1', 1, 'non_representable')_reconstruction",1,1.0,1.0,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg3_stlsq_0.01', 'IC2_to_IC1', 1, 'partially_representable')_reconstruction",11,1.0,1.0,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg3_stlsq_0.01', 'IC2_to_IC1', 2, 'fully_representable')_reconstruction",10,0.4,0.4,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg3_stlsq_0.01', 'IC2_to_IC1', 2, 'non_representable')_reconstruction",1,0.0,0.0,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg3_stlsq_0.01', 'IC2_to_IC1', 2, 'partially_representable')_reconstruction",17,0.7647058823529411,0.7647058823529411,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg3_stlsq_0.01', 'IC2_to_IC1', 3, 'fully_representable')_reconstruction",8,0.0,0.0,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg3_stlsq_0.01', 'IC2_to_IC1', 3, 'partially_representable')_reconstruction",2,0.5,0.5,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg3_stlsq_0.01', 'IC2_to_IC1', 4, 'fully_representable')_reconstruction",1,0.0,0.0,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg3_stlsq_0.01', 'IC2_to_IC1', 4, 'partially_representable')_reconstruction",1,0.0,0.0,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg3_stlsq_0.1', 'IC1_to_IC2', 1, 'fully_representable')_generalization",11,0.5454545454545454,0.5454545454545454,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg3_stlsq_0.1', 'IC1_to_IC2', 1, 'non_representable')_generalization",1,1.0,1.0,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg3_stlsq_0.1', 'IC1_to_IC2', 1, 'partially_representable')_generalization",11,0.5454545454545454,0.5454545454545454,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg3_stlsq_0.1', 'IC1_to_IC2', 2, 'fully_representable')_generalization",10,0.4,0.4,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg3_stlsq_0.1', 'IC1_to_IC2', 2, 'non_representable')_generalization",1,0.0,0.0,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg3_stlsq_0.1', 'IC1_to_IC2', 2, 'partially_representable')_generalization",17,0.4705882352941176,0.47058823529411764,5.551115123125783e-17,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg3_stlsq_0.1', 'IC1_to_IC2', 3, 'fully_representable')_generalization",8,0.0,0.0,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg3_stlsq_0.1', 'IC1_to_IC2', 3, 'partially_representable')_generalization",2,0.0,0.0,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg3_stlsq_0.1', 'IC1_to_IC2', 4, 'fully_representable')_generalization",1,0.0,0.0,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg3_stlsq_0.1', 'IC1_to_IC2', 4, 'partially_representable')_generalization",1,0.0,0.0,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg3_stlsq_0.1', 'IC1_to_IC2', 1, 'fully_representable')_reconstruction",11,0.7272727272727273,0.7272727272727273,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg3_stlsq_0.1', 'IC1_to_IC2', 1, 'non_representable')_reconstruction",1,1.0,1.0,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg3_stlsq_0.1', 'IC1_to_IC2', 1, 'partially_representable')_reconstruction",11,0.8181818181818182,0.8181818181818182,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg3_stlsq_0.1', 'IC1_to_IC2', 2, 'fully_representable')_reconstruction",10,0.6,0.6,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg3_stlsq_0.1', 'IC1_to_IC2', 2, 'non_representable')_reconstruction",1,0.0,0.0,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg3_stlsq_0.1', 'IC1_to_IC2', 2, 'partially_representable')_reconstruction",17,0.7647058823529411,0.7647058823529411,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg3_stlsq_0.1', 'IC1_to_IC2', 3, 'fully_representable')_reconstruction",8,0.0,0.0,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg3_stlsq_0.1', 'IC1_to_IC2', 3, 'partially_representable')_reconstruction",2,0.5,0.5,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg3_stlsq_0.1', 'IC1_to_IC2', 4, 'fully_representable')_reconstruction",1,0.0,0.0,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg3_stlsq_0.1', 'IC1_to_IC2', 4, 'partially_representable')_reconstruction",1,0.0,0.0,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg3_stlsq_0.1', 'IC2_to_IC1', 1, 'fully_representable')_generalization",11,0.5454545454545454,0.5454545454545454,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg3_stlsq_0.1', 'IC2_to_IC1', 1, 'non_representable')_generalization",1,0.0,0.0,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg3_stlsq_0.1', 'IC2_to_IC1', 1, 'partially_representable')_generalization",11,0.2727272727272727,0.2727272727272727,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg3_stlsq_0.1', 'IC2_to_IC1', 2, 'fully_representable')_generalization",10,0.4,0.4,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg3_stlsq_0.1', 'IC2_to_IC1', 2, 'non_representable')_generalization",1,0.0,0.0,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg3_stlsq_0.1', 'IC2_to_IC1', 2, 'partially_representable')_generalization",17,0.4117647058823529,0.4117647058823529,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg3_stlsq_0.1', 'IC2_to_IC1', 3, 'fully_representable')_generalization",8,0.0,0.0,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg3_stlsq_0.1', 'IC2_to_IC1', 3, 'partially_representable')_generalization",2,0.0,0.0,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg3_stlsq_0.1', 'IC2_to_IC1', 4, 'fully_representable')_generalization",1,0.0,0.0,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg3_stlsq_0.1', 'IC2_to_IC1', 4, 'partially_representable')_generalization",1,0.0,0.0,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg3_stlsq_0.1', 'IC2_to_IC1', 1, 'fully_representable')_reconstruction",11,0.8181818181818182,0.8181818181818182,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg3_stlsq_0.1', 'IC2_to_IC1', 1, 'non_representable')_reconstruction",1,1.0,1.0,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg3_stlsq_0.1', 'IC2_to_IC1', 1, 'partially_representable')_reconstruction",11,0.7272727272727273,0.7272727272727273,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg3_stlsq_0.1', 'IC2_to_IC1', 2, 'fully_representable')_reconstruction",10,0.5,0.5,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg3_stlsq_0.1', 'IC2_to_IC1', 2, 'non_representable')_reconstruction",1,0.0,0.0,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg3_stlsq_0.1', 'IC2_to_IC1', 2, 'partially_representable')_reconstruction",17,0.7058823529411765,0.7058823529411765,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg3_stlsq_0.1', 'IC2_to_IC1', 3, 'fully_representable')_reconstruction",8,0.0,0.0,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg3_stlsq_0.1', 'IC2_to_IC1', 3, 'partially_representable')_reconstruction",2,0.5,0.5,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg3_stlsq_0.1', 'IC2_to_IC1', 4, 'fully_representable')_reconstruction",1,0.0,0.0,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg3_stlsq_0.1', 'IC2_to_IC1', 4, 'partially_representable')_reconstruction",1,1.0,1.0,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg4_stlsq_0.01', 'IC1_to_IC2', 1, 'fully_representable')_generalization",11,0.7272727272727273,0.7272727272727273,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg4_stlsq_0.01', 'IC1_to_IC2', 1, 'non_representable')_generalization",1,1.0,1.0,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg4_stlsq_0.01', 'IC1_to_IC2', 1, 'partially_representable')_generalization",11,0.5454545454545454,0.5454545454545454,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg4_stlsq_0.01', 'IC1_to_IC2', 2, 'fully_representable')_generalization",10,0.3,0.3,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg4_stlsq_0.01', 'IC1_to_IC2', 2, 'non_representable')_generalization",1,0.0,0.0,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg4_stlsq_0.01', 'IC1_to_IC2', 2, 'partially_representable')_generalization",17,0.4117647058823529,0.4117647058823529,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg4_stlsq_0.01', 'IC1_to_IC2', 3, 'fully_representable')_generalization",8,0.0,0.0,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg4_stlsq_0.01', 'IC1_to_IC2', 3, 'partially_representable')_generalization",2,0.0,0.0,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg4_stlsq_0.01', 'IC1_to_IC2', 4, 'fully_representable')_generalization",1,0.0,0.0,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg4_stlsq_0.01', 'IC1_to_IC2', 4, 'partially_representable')_generalization",1,0.0,0.0,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg4_stlsq_0.01', 'IC1_to_IC2', 1, 'fully_representable')_reconstruction",11,0.8181818181818182,0.8181818181818182,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg4_stlsq_0.01', 'IC1_to_IC2', 1, 'non_representable')_reconstruction",1,1.0,1.0,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg4_stlsq_0.01', 'IC1_to_IC2', 1, 'partially_representable')_reconstruction",11,0.9090909090909092,0.9090909090909091,1.1102230246251565e-16,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg4_stlsq_0.01', 'IC1_to_IC2', 2, 'fully_representable')_reconstruction",10,0.5,0.5,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg4_stlsq_0.01', 'IC1_to_IC2', 2, 'non_representable')_reconstruction",1,0.0,0.0,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg4_stlsq_0.01', 'IC1_to_IC2', 2, 'partially_representable')_reconstruction",17,0.5882352941176471,0.5882352941176471,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg4_stlsq_0.01', 'IC1_to_IC2', 3, 'fully_representable')_reconstruction",8,0.0,0.0,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg4_stlsq_0.01', 'IC1_to_IC2', 3, 'partially_representable')_reconstruction",2,0.0,0.5,0.5,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg4_stlsq_0.01', 'IC1_to_IC2', 4, 'fully_representable')_reconstruction",1,0.0,0.0,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg4_stlsq_0.01', 'IC1_to_IC2', 4, 'partially_representable')_reconstruction",1,0.0,0.0,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg4_stlsq_0.01', 'IC2_to_IC1', 1, 'fully_representable')_generalization",11,0.5454545454545454,0.5454545454545454,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg4_stlsq_0.01', 'IC2_to_IC1', 1, 'non_representable')_generalization",1,0.0,0.0,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg4_stlsq_0.01', 'IC2_to_IC1', 1, 'partially_representable')_generalization",11,0.3636363636363636,0.36363636363636365,5.551115123125783e-17,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg4_stlsq_0.01', 'IC2_to_IC1', 2, 'fully_representable')_generalization",10,0.2,0.2,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg4_stlsq_0.01', 'IC2_to_IC1', 2, 'non_representable')_generalization",1,0.0,0.0,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg4_stlsq_0.01', 'IC2_to_IC1', 2, 'partially_representable')_generalization",17,0.3529411764705882,0.35294117647058826,5.551115123125783e-17,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg4_stlsq_0.01', 'IC2_to_IC1', 3, 'fully_representable')_generalization",8,0.0,0.0,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg4_stlsq_0.01', 'IC2_to_IC1', 3, 'partially_representable')_generalization",2,0.0,0.0,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg4_stlsq_0.01', 'IC2_to_IC1', 4, 'fully_representable')_generalization",1,0.0,0.0,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg4_stlsq_0.01', 'IC2_to_IC1', 4, 'partially_representable')_generalization",1,0.0,0.0,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg4_stlsq_0.01', 'IC2_to_IC1', 1, 'fully_representable')_reconstruction",11,0.9090909090909092,0.9090909090909091,1.1102230246251565e-16,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg4_stlsq_0.01', 'IC2_to_IC1', 1, 'non_representable')_reconstruction",1,1.0,1.0,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg4_stlsq_0.01', 'IC2_to_IC1', 1, 'partially_representable')_reconstruction",11,1.0,1.0,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg4_stlsq_0.01', 'IC2_to_IC1', 2, 'fully_representable')_reconstruction",10,0.3,0.3,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg4_stlsq_0.01', 'IC2_to_IC1', 2, 'non_representable')_reconstruction",1,0.0,0.0,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg4_stlsq_0.01', 'IC2_to_IC1', 2, 'partially_representable')_reconstruction",17,0.7647058823529411,0.7058823529411765,0.05882352941176461,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg4_stlsq_0.01', 'IC2_to_IC1', 3, 'fully_representable')_reconstruction",8,0.0,0.0,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg4_stlsq_0.01', 'IC2_to_IC1', 3, 'partially_representable')_reconstruction",2,0.0,0.0,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg4_stlsq_0.01', 'IC2_to_IC1', 4, 'fully_representable')_reconstruction",1,0.0,0.0,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg4_stlsq_0.01', 'IC2_to_IC1', 4, 'partially_representable')_reconstruction",1,0.0,0.0,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg4_stlsq_0.1', 'IC1_to_IC2', 1, 'fully_representable')_generalization",11,0.6363636363636364,0.6363636363636364,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg4_stlsq_0.1', 'IC1_to_IC2', 1, 'non_representable')_generalization",1,1.0,1.0,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg4_stlsq_0.1', 'IC1_to_IC2', 1, 'partially_representable')_generalization",11,0.5454545454545454,0.5454545454545454,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg4_stlsq_0.1', 'IC1_to_IC2', 2, 'fully_representable')_generalization",10,0.4,0.4,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg4_stlsq_0.1', 'IC1_to_IC2', 2, 'non_representable')_generalization",1,0.0,0.0,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg4_stlsq_0.1', 'IC1_to_IC2', 2, 'partially_representable')_generalization",17,0.4117647058823529,0.4117647058823529,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg4_stlsq_0.1', 'IC1_to_IC2', 3, 'fully_representable')_generalization",8,0.0,0.0,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg4_stlsq_0.1', 'IC1_to_IC2', 3, 'partially_representable')_generalization",2,0.0,0.0,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg4_stlsq_0.1', 'IC1_to_IC2', 4, 'fully_representable')_generalization",1,0.0,0.0,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg4_stlsq_0.1', 'IC1_to_IC2', 4, 'partially_representable')_generalization",1,0.0,0.0,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg4_stlsq_0.1', 'IC1_to_IC2', 1, 'fully_representable')_reconstruction",11,0.7272727272727273,0.7272727272727273,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg4_stlsq_0.1', 'IC1_to_IC2', 1, 'non_representable')_reconstruction",1,1.0,1.0,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg4_stlsq_0.1', 'IC1_to_IC2', 1, 'partially_representable')_reconstruction",11,0.7272727272727273,0.7272727272727273,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg4_stlsq_0.1', 'IC1_to_IC2', 2, 'fully_representable')_reconstruction",10,0.6,0.6,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg4_stlsq_0.1', 'IC1_to_IC2', 2, 'non_representable')_reconstruction",1,0.0,0.0,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg4_stlsq_0.1', 'IC1_to_IC2', 2, 'partially_representable')_reconstruction",17,0.7058823529411765,0.7058823529411765,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg4_stlsq_0.1', 'IC1_to_IC2', 3, 'fully_representable')_reconstruction",8,0.0,0.0,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg4_stlsq_0.1', 'IC1_to_IC2', 3, 'partially_representable')_reconstruction",2,0.0,0.0,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg4_stlsq_0.1', 'IC1_to_IC2', 4, 'fully_representable')_reconstruction",1,0.0,0.0,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg4_stlsq_0.1', 'IC1_to_IC2', 4, 'partially_representable')_reconstruction",1,0.0,0.0,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg4_stlsq_0.1', 'IC2_to_IC1', 1, 'fully_representable')_generalization",11,0.5454545454545454,0.5454545454545454,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg4_stlsq_0.1', 'IC2_to_IC1', 1, 'non_representable')_generalization",1,0.0,0.0,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg4_stlsq_0.1', 'IC2_to_IC1', 1, 'partially_representable')_generalization",11,0.2727272727272727,0.2727272727272727,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg4_stlsq_0.1', 'IC2_to_IC1', 2, 'fully_representable')_generalization",10,0.3,0.3,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg4_stlsq_0.1', 'IC2_to_IC1', 2, 'non_representable')_generalization",1,0.0,0.0,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg4_stlsq_0.1', 'IC2_to_IC1', 2, 'partially_representable')_generalization",17,0.2941176470588235,0.29411764705882354,5.551115123125783e-17,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg4_stlsq_0.1', 'IC2_to_IC1', 3, 'fully_representable')_generalization",8,0.0,0.0,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg4_stlsq_0.1', 'IC2_to_IC1', 3, 'partially_representable')_generalization",2,0.0,0.0,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg4_stlsq_0.1', 'IC2_to_IC1', 4, 'fully_representable')_generalization",1,0.0,0.0,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg4_stlsq_0.1', 'IC2_to_IC1', 4, 'partially_representable')_generalization",1,0.0,0.0,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg4_stlsq_0.1', 'IC2_to_IC1', 1, 'fully_representable')_reconstruction",11,0.7272727272727273,0.7272727272727273,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg4_stlsq_0.1', 'IC2_to_IC1', 1, 'non_representable')_reconstruction",1,1.0,1.0,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg4_stlsq_0.1', 'IC2_to_IC1', 1, 'partially_representable')_reconstruction",11,0.7272727272727273,0.7272727272727273,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg4_stlsq_0.1', 'IC2_to_IC1', 2, 'fully_representable')_reconstruction",10,0.6,0.6,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg4_stlsq_0.1', 'IC2_to_IC1', 2, 'non_representable')_reconstruction",1,0.0,0.0,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg4_stlsq_0.1', 'IC2_to_IC1', 2, 'partially_representable')_reconstruction",17,0.7647058823529411,0.7647058823529411,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg4_stlsq_0.1', 'IC2_to_IC1', 3, 'fully_representable')_reconstruction",8,0.0,0.0,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg4_stlsq_0.1', 'IC2_to_IC1', 3, 'partially_representable')_reconstruction",2,0.0,0.0,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg4_stlsq_0.1', 'IC2_to_IC1', 4, 'fully_representable')_reconstruction",1,0.0,0.0,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg4_stlsq_0.1', 'IC2_to_IC1', 4, 'partially_representable')_reconstruction",1,1.0,1.0,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg5_stlsq_0.01', 'IC1_to_IC2', 1, 'fully_representable')_generalization",11,0.8181818181818182,0.8181818181818182,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg5_stlsq_0.01', 'IC1_to_IC2', 1, 'non_representable')_generalization",1,1.0,1.0,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg5_stlsq_0.01', 'IC1_to_IC2', 1, 'partially_representable')_generalization",11,0.3636363636363636,0.36363636363636365,5.551115123125783e-17,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg5_stlsq_0.01', 'IC1_to_IC2', 2, 'fully_representable')_generalization",10,0.3,0.3,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg5_stlsq_0.01', 'IC1_to_IC2', 2, 'non_representable')_generalization",1,0.0,0.0,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg5_stlsq_0.01', 'IC1_to_IC2', 2, 'partially_representable')_generalization",17,0.4705882352941176,0.47058823529411764,5.551115123125783e-17,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg5_stlsq_0.01', 'IC1_to_IC2', 3, 'fully_representable')_generalization",8,0.0,0.0,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg5_stlsq_0.01', 'IC1_to_IC2', 3, 'partially_representable')_generalization",2,0.0,0.0,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg5_stlsq_0.01', 'IC1_to_IC2', 4, 'fully_representable')_generalization",1,0.0,0.0,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg5_stlsq_0.01', 'IC1_to_IC2', 4, 'partially_representable')_generalization",1,0.0,0.0,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg5_stlsq_0.01', 'IC1_to_IC2', 1, 'fully_representable')_reconstruction",11,0.8181818181818182,0.8181818181818182,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg5_stlsq_0.01', 'IC1_to_IC2', 1, 'non_representable')_reconstruction",1,1.0,1.0,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg5_stlsq_0.01', 'IC1_to_IC2', 1, 'partially_representable')_reconstruction",11,0.8181818181818182,0.8181818181818182,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg5_stlsq_0.01', 'IC1_to_IC2', 2, 'fully_representable')_reconstruction",10,0.4,0.4,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg5_stlsq_0.01', 'IC1_to_IC2', 2, 'non_representable')_reconstruction",1,0.0,0.0,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg5_stlsq_0.01', 'IC1_to_IC2', 2, 'partially_representable')_reconstruction",17,0.7058823529411765,0.7058823529411765,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg5_stlsq_0.01', 'IC1_to_IC2', 3, 'fully_representable')_reconstruction",8,0.0,0.0,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg5_stlsq_0.01', 'IC1_to_IC2', 3, 'partially_representable')_reconstruction",2,0.0,0.0,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg5_stlsq_0.01', 'IC1_to_IC2', 4, 'fully_representable')_reconstruction",1,0.0,0.0,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg5_stlsq_0.01', 'IC1_to_IC2', 4, 'partially_representable')_reconstruction",1,0.0,0.0,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg5_stlsq_0.01', 'IC2_to_IC1', 1, 'fully_representable')_generalization",11,0.5454545454545454,0.5454545454545454,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg5_stlsq_0.01', 'IC2_to_IC1', 1, 'non_representable')_generalization",1,0.0,0.0,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg5_stlsq_0.01', 'IC2_to_IC1', 1, 'partially_representable')_generalization",11,0.4545454545454545,0.45454545454545453,5.551115123125783e-17,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg5_stlsq_0.01', 'IC2_to_IC1', 2, 'fully_representable')_generalization",10,0.2,0.2,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg5_stlsq_0.01', 'IC2_to_IC1', 2, 'non_representable')_generalization",1,0.0,0.0,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg5_stlsq_0.01', 'IC2_to_IC1', 2, 'partially_representable')_generalization",17,0.2941176470588235,0.29411764705882354,5.551115123125783e-17,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg5_stlsq_0.01', 'IC2_to_IC1', 3, 'fully_representable')_generalization",8,0.0,0.0,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg5_stlsq_0.01', 'IC2_to_IC1', 3, 'partially_representable')_generalization",2,0.0,0.0,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg5_stlsq_0.01', 'IC2_to_IC1', 4, 'fully_representable')_generalization",1,0.0,0.0,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg5_stlsq_0.01', 'IC2_to_IC1', 4, 'partially_representable')_generalization",1,0.0,0.0,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg5_stlsq_0.01', 'IC2_to_IC1', 1, 'fully_representable')_reconstruction",11,0.9090909090909092,0.9090909090909091,1.1102230246251565e-16,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg5_stlsq_0.01', 'IC2_to_IC1', 1, 'non_representable')_reconstruction",1,1.0,1.0,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg5_stlsq_0.01', 'IC2_to_IC1', 1, 'partially_representable')_reconstruction",11,0.9090909090909092,0.9090909090909091,1.1102230246251565e-16,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg5_stlsq_0.01', 'IC2_to_IC1', 2, 'fully_representable')_reconstruction",10,0.2,0.2,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg5_stlsq_0.01', 'IC2_to_IC1', 2, 'non_representable')_reconstruction",1,0.0,0.0,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg5_stlsq_0.01', 'IC2_to_IC1', 2, 'partially_representable')_reconstruction",17,0.7647058823529411,0.7647058823529411,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg5_stlsq_0.01', 'IC2_to_IC1', 3, 'fully_representable')_reconstruction",8,0.0,0.0,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg5_stlsq_0.01', 'IC2_to_IC1', 3, 'partially_representable')_reconstruction",2,0.5,0.0,0.5,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg5_stlsq_0.01', 'IC2_to_IC1', 4, 'fully_representable')_reconstruction",1,0.0,0.0,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg5_stlsq_0.01', 'IC2_to_IC1', 4, 'partially_representable')_reconstruction",1,0.0,0.0,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg5_stlsq_0.1', 'IC1_to_IC2', 1, 'fully_representable')_generalization",11,0.6363636363636364,0.6363636363636364,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg5_stlsq_0.1', 'IC1_to_IC2', 1, 'non_representable')_generalization",1,1.0,1.0,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg5_stlsq_0.1', 'IC1_to_IC2', 1, 'partially_representable')_generalization",11,0.4545454545454545,0.45454545454545453,5.551115123125783e-17,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg5_stlsq_0.1', 'IC1_to_IC2', 2, 'fully_representable')_generalization",10,0.2,0.2,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg5_stlsq_0.1', 'IC1_to_IC2', 2, 'non_representable')_generalization",1,0.0,0.0,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg5_stlsq_0.1', 'IC1_to_IC2', 2, 'partially_representable')_generalization",17,0.4117647058823529,0.4117647058823529,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg5_stlsq_0.1', 'IC1_to_IC2', 3, 'fully_representable')_generalization",8,0.0,0.0,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg5_stlsq_0.1', 'IC1_to_IC2', 3, 'partially_representable')_generalization",2,0.0,0.0,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg5_stlsq_0.1', 'IC1_to_IC2', 4, 'fully_representable')_generalization",1,0.0,0.0,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg5_stlsq_0.1', 'IC1_to_IC2', 4, 'partially_representable')_generalization",1,0.0,0.0,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg5_stlsq_0.1', 'IC1_to_IC2', 1, 'fully_representable')_reconstruction",11,0.7272727272727273,0.7272727272727273,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg5_stlsq_0.1', 'IC1_to_IC2', 1, 'non_representable')_reconstruction",1,1.0,1.0,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg5_stlsq_0.1', 'IC1_to_IC2', 1, 'partially_representable')_reconstruction",11,0.6363636363636364,0.6363636363636364,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg5_stlsq_0.1', 'IC1_to_IC2', 2, 'fully_representable')_reconstruction",10,0.5,0.5,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg5_stlsq_0.1', 'IC1_to_IC2', 2, 'non_representable')_reconstruction",1,0.0,0.0,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg5_stlsq_0.1', 'IC1_to_IC2', 2, 'partially_representable')_reconstruction",17,0.7058823529411765,0.7058823529411765,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg5_stlsq_0.1', 'IC1_to_IC2', 3, 'fully_representable')_reconstruction",8,0.0,0.0,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg5_stlsq_0.1', 'IC1_to_IC2', 3, 'partially_representable')_reconstruction",2,0.0,0.0,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg5_stlsq_0.1', 'IC1_to_IC2', 4, 'fully_representable')_reconstruction",1,0.0,0.0,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg5_stlsq_0.1', 'IC1_to_IC2', 4, 'partially_representable')_reconstruction",1,0.0,0.0,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg5_stlsq_0.1', 'IC2_to_IC1', 1, 'fully_representable')_generalization",11,0.5454545454545454,0.5454545454545454,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg5_stlsq_0.1', 'IC2_to_IC1', 1, 'non_representable')_generalization",1,0.0,0.0,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg5_stlsq_0.1', 'IC2_to_IC1', 1, 'partially_representable')_generalization",11,0.2727272727272727,0.2727272727272727,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg5_stlsq_0.1', 'IC2_to_IC1', 2, 'fully_representable')_generalization",10,0.4,0.4,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg5_stlsq_0.1', 'IC2_to_IC1', 2, 'non_representable')_generalization",1,0.0,0.0,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg5_stlsq_0.1', 'IC2_to_IC1', 2, 'partially_representable')_generalization",17,0.2941176470588235,0.29411764705882354,5.551115123125783e-17,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg5_stlsq_0.1', 'IC2_to_IC1', 3, 'fully_representable')_generalization",8,0.0,0.0,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg5_stlsq_0.1', 'IC2_to_IC1', 3, 'partially_representable')_generalization",2,0.0,0.0,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg5_stlsq_0.1', 'IC2_to_IC1', 4, 'fully_representable')_generalization",1,0.0,0.0,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg5_stlsq_0.1', 'IC2_to_IC1', 4, 'partially_representable')_generalization",1,0.0,0.0,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg5_stlsq_0.1', 'IC2_to_IC1', 1, 'fully_representable')_reconstruction",11,0.7272727272727273,0.7272727272727273,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg5_stlsq_0.1', 'IC2_to_IC1', 1, 'non_representable')_reconstruction",1,1.0,1.0,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg5_stlsq_0.1', 'IC2_to_IC1', 1, 'partially_representable')_reconstruction",11,0.6363636363636364,0.6363636363636364,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg5_stlsq_0.1', 'IC2_to_IC1', 2, 'fully_representable')_reconstruction",10,0.6,0.6,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg5_stlsq_0.1', 'IC2_to_IC1', 2, 'non_representable')_reconstruction",1,0.0,0.0,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg5_stlsq_0.1', 'IC2_to_IC1', 2, 'partially_representable')_reconstruction",17,0.8235294117647058,0.8235294117647058,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg5_stlsq_0.1', 'IC2_to_IC1', 3, 'fully_representable')_reconstruction",8,0.0,0.0,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg5_stlsq_0.1', 'IC2_to_IC1', 3, 'partially_representable')_reconstruction",2,0.0,0.0,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg5_stlsq_0.1', 'IC2_to_IC1', 4, 'fully_representable')_reconstruction",1,0.0,0.0,0.0,True,"old source comparison reported as delta, not a stop condition"
+"sindy_backcompat_('poly_deg5_stlsq_0.1', 'IC2_to_IC1', 4, 'partially_representable')_reconstruction",1,1.0,1.0,0.0,True,"old source comparison reported as delta, not a stop condition"
+"odeformer_backcompat_('beam10_noopt', 1, 'fully_representable')_generalization",22,0.5454545454545454,0.5454545454545454,0.0,True,compared with WP-N40 reference paired summary
+"odeformer_backcompat_('beam10_noopt', 1, 'non_representable')_generalization",2,0.5,0.5,0.0,True,compared with WP-N40 reference paired summary
+"odeformer_backcompat_('beam10_noopt', 1, 'partially_representable')_generalization",22,0.4545454545454545,0.45454545454545453,5.551115123125783e-17,True,compared with WP-N40 reference paired summary
+"odeformer_backcompat_('beam10_noopt', 2, 'fully_representable')_generalization",20,0.15,0.15,0.0,True,compared with WP-N40 reference paired summary
+"odeformer_backcompat_('beam10_noopt', 2, 'non_representable')_generalization",2,0.0,0.0,0.0,True,compared with WP-N40 reference paired summary
+"odeformer_backcompat_('beam10_noopt', 2, 'partially_representable')_generalization",34,0.2058823529411764,0.20588235294117646,5.551115123125783e-17,True,compared with WP-N40 reference paired summary
+"odeformer_backcompat_('beam10_noopt', 3, 'fully_representable')_generalization",16,0.0,0.0,0.0,True,compared with WP-N40 reference paired summary
+"odeformer_backcompat_('beam10_noopt', 3, 'partially_representable')_generalization",4,0.0,0.0,0.0,True,compared with WP-N40 reference paired summary
+"odeformer_backcompat_('beam10_noopt', 4, 'fully_representable')_generalization",2,0.0,0.0,0.0,True,compared with WP-N40 reference paired summary
+"odeformer_backcompat_('beam10_noopt', 4, 'partially_representable')_generalization",2,0.0,0.0,0.0,True,compared with WP-N40 reference paired summary
+"odeformer_backcompat_('beam10_noopt', 1, 'fully_representable')_reconstruction",22,0.8636363636363636,0.8636363636363636,0.0,True,compared with WP-N40 reference paired summary
+"odeformer_backcompat_('beam10_noopt', 1, 'non_representable')_reconstruction",2,1.0,1.0,0.0,True,compared with WP-N40 reference paired summary
+"odeformer_backcompat_('beam10_noopt', 1, 'partially_representable')_reconstruction",22,0.8636363636363636,0.8636363636363636,0.0,True,compared with WP-N40 reference paired summary
+"odeformer_backcompat_('beam10_noopt', 2, 'fully_representable')_reconstruction",20,0.6,0.6,0.0,True,compared with WP-N40 reference paired summary
+"odeformer_backcompat_('beam10_noopt', 2, 'non_representable')_reconstruction",2,0.5,0.5,0.0,True,compared with WP-N40 reference paired summary
+"odeformer_backcompat_('beam10_noopt', 2, 'partially_representable')_reconstruction",34,0.4705882352941176,0.47058823529411764,5.551115123125783e-17,True,compared with WP-N40 reference paired summary
+"odeformer_backcompat_('beam10_noopt', 3, 'fully_representable')_reconstruction",16,0.0,0.0,0.0,True,compared with WP-N40 reference paired summary
+"odeformer_backcompat_('beam10_noopt', 3, 'partially_representable')_reconstruction",4,0.25,0.25,0.0,True,compared with WP-N40 reference paired summary
+"odeformer_backcompat_('beam10_noopt', 4, 'fully_representable')_reconstruction",2,0.5,0.5,0.0,True,compared with WP-N40 reference paired summary
+"odeformer_backcompat_('beam10_noopt', 4, 'partially_representable')_reconstruction",2,0.8333333333333333,0.8333333333333333,0.0,True,compared with WP-N40 reference paired summary
+"odeformer_backcompat_('beam10_opt', 1, 'fully_representable')_generalization",22,0.6818181818181818,0.6818181818181818,0.0,True,compared with WP-N40 reference paired summary
+"odeformer_backcompat_('beam10_opt', 1, 'non_representable')_generalization",2,0.5,0.5,0.0,True,compared with WP-N40 reference paired summary
+"odeformer_backcompat_('beam10_opt', 1, 'partially_representable')_generalization",22,0.5,0.5,0.0,True,compared with WP-N40 reference paired summary
+"odeformer_backcompat_('beam10_opt', 2, 'fully_representable')_generalization",20,0.25,0.25,0.0,True,compared with WP-N40 reference paired summary
+"odeformer_backcompat_('beam10_opt', 2, 'non_representable')_generalization",2,0.0,0.0,0.0,True,compared with WP-N40 reference paired summary
+"odeformer_backcompat_('beam10_opt', 2, 'partially_representable')_generalization",34,0.2058823529411764,0.20588235294117646,5.551115123125783e-17,True,compared with WP-N40 reference paired summary
+"odeformer_backcompat_('beam10_opt', 3, 'fully_representable')_generalization",16,0.0,0.0,0.0,True,compared with WP-N40 reference paired summary
+"odeformer_backcompat_('beam10_opt', 3, 'partially_representable')_generalization",4,0.0,0.0,0.0,True,compared with WP-N40 reference paired summary
+"odeformer_backcompat_('beam10_opt', 4, 'fully_representable')_generalization",2,0.0,0.0,0.0,True,compared with WP-N40 reference paired summary
+"odeformer_backcompat_('beam10_opt', 4, 'partially_representable')_generalization",2,0.0,0.0,0.0,True,compared with WP-N40 reference paired summary
+"odeformer_backcompat_('beam10_opt', 1, 'fully_representable')_reconstruction",22,0.9090909090909092,0.9090909090909091,1.1102230246251565e-16,True,compared with WP-N40 reference paired summary
+"odeformer_backcompat_('beam10_opt', 1, 'non_representable')_reconstruction",2,1.0,1.0,0.0,True,compared with WP-N40 reference paired summary
+"odeformer_backcompat_('beam10_opt', 1, 'partially_representable')_reconstruction",22,0.9393939393939392,0.9393939393939393,1.1102230246251565e-16,True,compared with WP-N40 reference paired summary
+"odeformer_backcompat_('beam10_opt', 2, 'fully_representable')_reconstruction",20,0.6833333333333333,0.6833333333333333,0.0,True,compared with WP-N40 reference paired summary
+"odeformer_backcompat_('beam10_opt', 2, 'non_representable')_reconstruction",2,1.0,1.0,0.0,True,compared with WP-N40 reference paired summary
+"odeformer_backcompat_('beam10_opt', 2, 'partially_representable')_reconstruction",34,0.7549019607843137,0.7549019607843137,0.0,True,compared with WP-N40 reference paired summary
+"odeformer_backcompat_('beam10_opt', 3, 'fully_representable')_reconstruction",16,0.2291666666666666,0.22916666666666666,5.551115123125783e-17,True,compared with WP-N40 reference paired summary
+"odeformer_backcompat_('beam10_opt', 3, 'partially_representable')_reconstruction",4,0.0,0.0,0.0,True,compared with WP-N40 reference paired summary
+"odeformer_backcompat_('beam10_opt', 4, 'fully_representable')_reconstruction",2,1.0,1.0,0.0,True,compared with WP-N40 reference paired summary
+"odeformer_backcompat_('beam10_opt', 4, 'partially_representable')_reconstruction",2,1.0,1.0,0.0,True,compared with WP-N40 reference paired summary
+"odeformer_backcompat_('beam50_noopt', 1, 'fully_representable')_generalization",22,0.6363636363636364,0.6363636363636364,0.0,True,compared with WP-N40 reference paired summary
+"odeformer_backcompat_('beam50_noopt', 1, 'non_representable')_generalization",2,0.5,0.5,0.0,True,compared with WP-N40 reference paired summary
+"odeformer_backcompat_('beam50_noopt', 1, 'partially_representable')_generalization",22,0.4545454545454545,0.45454545454545453,5.551115123125783e-17,True,compared with WP-N40 reference paired summary
+"odeformer_backcompat_('beam50_noopt', 2, 'fully_representable')_generalization",20,0.15,0.15,0.0,True,compared with WP-N40 reference paired summary
+"odeformer_backcompat_('beam50_noopt', 2, 'non_representable')_generalization",2,0.0,0.0,0.0,True,compared with WP-N40 reference paired summary
+"odeformer_backcompat_('beam50_noopt', 2, 'partially_representable')_generalization",34,0.2058823529411764,0.20588235294117646,5.551115123125783e-17,True,compared with WP-N40 reference paired summary
+"odeformer_backcompat_('beam50_noopt', 3, 'fully_representable')_generalization",16,0.0,0.0,0.0,True,compared with WP-N40 reference paired summary
+"odeformer_backcompat_('beam50_noopt', 3, 'partially_representable')_generalization",4,0.0,0.0,0.0,True,compared with WP-N40 reference paired summary
+"odeformer_backcompat_('beam50_noopt', 4, 'fully_representable')_generalization",2,0.0,0.0,0.0,True,compared with WP-N40 reference paired summary
+"odeformer_backcompat_('beam50_noopt', 4, 'partially_representable')_generalization",2,0.0,0.0,0.0,True,compared with WP-N40 reference paired summary
+"odeformer_backcompat_('beam50_noopt', 1, 'fully_representable')_reconstruction",22,0.8484848484848484,0.8484848484848484,0.0,True,compared with WP-N40 reference paired summary
+"odeformer_backcompat_('beam50_noopt', 1, 'non_representable')_reconstruction",2,1.0,1.0,0.0,True,compared with WP-N40 reference paired summary
+"odeformer_backcompat_('beam50_noopt', 1, 'partially_representable')_reconstruction",22,0.9545454545454546,0.9545454545454546,0.0,True,compared with WP-N40 reference paired summary
+"odeformer_backcompat_('beam50_noopt', 2, 'fully_representable')_reconstruction",20,0.75,0.75,0.0,True,compared with WP-N40 reference paired summary
+"odeformer_backcompat_('beam50_noopt', 2, 'non_representable')_reconstruction",2,1.0,1.0,0.0,True,compared with WP-N40 reference paired summary
+"odeformer_backcompat_('beam50_noopt', 2, 'partially_representable')_reconstruction",34,0.5294117647058824,0.5294117647058824,0.0,True,compared with WP-N40 reference paired summary
+"odeformer_backcompat_('beam50_noopt', 3, 'fully_representable')_reconstruction",16,0.0625,0.0625,0.0,True,compared with WP-N40 reference paired summary
+"odeformer_backcompat_('beam50_noopt', 3, 'partially_representable')_reconstruction",4,0.25,0.25,0.0,True,compared with WP-N40 reference paired summary
+"odeformer_backcompat_('beam50_noopt', 4, 'fully_representable')_reconstruction",2,0.5,0.5,0.0,True,compared with WP-N40 reference paired summary
+"odeformer_backcompat_('beam50_noopt', 4, 'partially_representable')_reconstruction",2,1.0,1.0,0.0,True,compared with WP-N40 reference paired summary
+"odeformer_backcompat_('beam50_opt', 1, 'fully_representable')_generalization",22,0.6818181818181818,0.6818181818181818,0.0,True,compared with WP-N40 reference paired summary
+"odeformer_backcompat_('beam50_opt', 1, 'non_representable')_generalization",2,0.5,0.5,0.0,True,compared with WP-N40 reference paired summary
+"odeformer_backcompat_('beam50_opt', 1, 'partially_representable')_generalization",22,0.5,0.5,0.0,True,compared with WP-N40 reference paired summary
+"odeformer_backcompat_('beam50_opt', 2, 'fully_representable')_generalization",20,0.2333333333333333,0.2333333333333333,0.0,True,compared with WP-N40 reference paired summary
+"odeformer_backcompat_('beam50_opt', 2, 'non_representable')_generalization",2,0.0,0.0,0.0,True,compared with WP-N40 reference paired summary
+"odeformer_backcompat_('beam50_opt', 2, 'partially_representable')_generalization",34,0.2647058823529412,0.2647058823529412,0.0,True,compared with WP-N40 reference paired summary
+"odeformer_backcompat_('beam50_opt', 3, 'fully_representable')_generalization",16,0.0,0.0,0.0,True,compared with WP-N40 reference paired summary
+"odeformer_backcompat_('beam50_opt', 3, 'partially_representable')_generalization",4,0.0,0.0,0.0,True,compared with WP-N40 reference paired summary
+"odeformer_backcompat_('beam50_opt', 4, 'fully_representable')_generalization",2,0.0,0.0,0.0,True,compared with WP-N40 reference paired summary
+"odeformer_backcompat_('beam50_opt', 4, 'partially_representable')_generalization",2,0.0,0.0,0.0,True,compared with WP-N40 reference paired summary
+"odeformer_backcompat_('beam50_opt', 1, 'fully_representable')_reconstruction",22,0.9090909090909092,0.9090909090909091,1.1102230246251565e-16,True,compared with WP-N40 reference paired summary
+"odeformer_backcompat_('beam50_opt', 1, 'non_representable')_reconstruction",2,1.0,1.0,0.0,True,compared with WP-N40 reference paired summary
+"odeformer_backcompat_('beam50_opt', 1, 'partially_representable')_reconstruction",22,0.9545454545454546,0.9545454545454546,0.0,True,compared with WP-N40 reference paired summary
+"odeformer_backcompat_('beam50_opt', 2, 'fully_representable')_reconstruction",20,0.8,0.8,0.0,True,compared with WP-N40 reference paired summary
+"odeformer_backcompat_('beam50_opt', 2, 'non_representable')_reconstruction",2,1.0,1.0,0.0,True,compared with WP-N40 reference paired summary
+"odeformer_backcompat_('beam50_opt', 2, 'partially_representable')_reconstruction",34,0.784313725490196,0.784313725490196,0.0,True,compared with WP-N40 reference paired summary
+"odeformer_backcompat_('beam50_opt', 3, 'fully_representable')_reconstruction",16,0.25,0.25,0.0,True,compared with WP-N40 reference paired summary
+"odeformer_backcompat_('beam50_opt', 3, 'partially_representable')_reconstruction",4,0.5,0.5,0.0,True,compared with WP-N40 reference paired summary
+"odeformer_backcompat_('beam50_opt', 4, 'fully_representable')_reconstruction",2,1.0,1.0,0.0,True,compared with WP-N40 reference paired summary
+"odeformer_backcompat_('beam50_opt', 4, 'partially_representable')_reconstruction",2,1.0,1.0,0.0,True,compared with WP-N40 reference paired summary
+sindy_new_source_matches_wp_c4c_verdicts_and_supports,2520,0.0,0.0,0.0,True,compares C-6 clean sindy realization 1 against WP-C4c

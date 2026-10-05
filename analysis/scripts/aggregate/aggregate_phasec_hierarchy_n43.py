@@ -16,6 +16,7 @@ if str(ANALYSIS_ROOT) not in sys.path:
     sys.path.insert(0, str(ANALYSIS_ROOT))
 
 from scripts.aggregate.aggregate_variance_weighted_r2 import load_variance_weights, parse_json_list  # noqa: E402
+from scripts.aggregate.run_phasec_noise_sindy_baselines import build_summary  # noqa: E402
 from scripts.aggregate.run_phasec_sindy_baseline import (  # noqa: E402
     C1_VARIANT,
     R2_THRESHOLD,
@@ -25,7 +26,13 @@ from scripts.aggregate.run_phasec_sindy_baseline import (  # noqa: E402
 )
 
 
-DEFAULT_OUTPUT_DIR = REPO_ROOT / "outputs" / "phase_c_campaign_221a3a7" / "agg" / "hierarchy_n43"
+DEFAULT_OUTPUT_DIR = REPO_ROOT / "outputs" / "phase_c_campaign_221a3a7" / "agg" / "hierarchy_n43b"
+DEFAULT_C6_SINDY_DIR = REPO_ROOT / "outputs" / "c6_sindy_baselines_5dd1df8"
+DEFAULT_C6_MERGED_DIR = DEFAULT_C6_SINDY_DIR / "merged"
+DEFAULT_C4C_SINDY_DETAILS = (
+    REPO_ROOT / "analysis" / "data" / "paper1_phaseC_v1" / "phasec_sindy_baseline_wp_c4c_export" / "details.csv"
+)
+DEFAULT_OLD_SINDY_DETAILS = REPO_ROOT / "analysis" / "data" / "paper1_phaseC_v1" / "phasec_sindy_baseline" / "details.csv"
 TRUE_BASIS = "staged_polynomial_basis_with_constant"
 FEASIBLE_BOUND_10 = {system_id: (system_id not in {54, 55, 56, 57, 58, 59}) for system_id in range(1, 64)}
 RATE_COLUMNS = [
@@ -50,8 +57,12 @@ CONTINUOUS_COLUMNS = [
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Aggregate Phase-C methods under the plan 9.3 hierarchy.")
     parser.add_argument("--evogrow-registry", default="analysis/data/paper1_phaseC_v1/final_2026-10-05/phasec_analysis_registry_c1.csv")
-    parser.add_argument("--evogrow-generalization", default="outputs/wp_n5_ic_generalization_phase_c/cells.csv")
-    parser.add_argument("--sindy-details", default="analysis/data/paper1_phaseC_v1/phasec_sindy_baseline/details.csv")
+    parser.add_argument("--evogrow-generalization", default="outputs/wp_n5_ic_generalization_phase_c/shard_001_of_001/results.jsonl")
+    parser.add_argument("--sindy-details", default=str(DEFAULT_C6_MERGED_DIR / "details.csv"))
+    parser.add_argument("--sindy-shards-dir", default=str(DEFAULT_C6_SINDY_DIR))
+    parser.add_argument("--sindy-merged-dir", default=str(DEFAULT_C6_MERGED_DIR))
+    parser.add_argument("--sindy-c4c-details", default=str(DEFAULT_C4C_SINDY_DETAILS))
+    parser.add_argument("--sindy-old-details", default=str(DEFAULT_OLD_SINDY_DETAILS))
     parser.add_argument(
         "--odeformer-reference",
         default="analysis/data/paper1_phaseC_v1/odeformer_baseline/reference_orion_55e9c75/records_structure_recomputed.csv",
@@ -91,6 +102,84 @@ def sha256(path: Path) -> str:
     return digest.hexdigest()
 
 
+def read_table(path: Path) -> pd.DataFrame:
+    if path.suffix.lower() == ".jsonl":
+        rows = []
+        with path.open("r", encoding="utf-8") as handle:
+            for line_number, line in enumerate(handle, start=1):
+                text = line.strip()
+                if not text:
+                    continue
+                try:
+                    rows.append(json.loads(text))
+                except json.JSONDecodeError as exc:
+                    fail(f"{path} line {line_number} is not valid JSON: {exc}")
+        if not rows:
+            fail(f"{path} contains no JSON records")
+        return pd.DataFrame(rows)
+    return pd.read_csv(path)
+
+
+def merge_sindy_shards(shards_dir: Path, merged_dir: Path) -> dict[str, Path]:
+    shard_paths = sorted(shards_dir.glob("shard_*/details.csv"))
+    if not shard_paths:
+        fail(f"no SINDy shard details found under {shards_dir}")
+    frames = []
+    for path in shard_paths:
+        frame = pd.read_csv(path)
+        frame["source_shard"] = path.parent.name
+        frames.append(frame)
+    details = pd.concat(frames, ignore_index=True, sort=False)
+    cell_keys = ["system_id", "source_initial_condition_set", "noise_sigma", "subsample_rho", "noise_realization"]
+    run_keys = cell_keys + ["method", "library_id"]
+    duplicate = details.duplicated(run_keys, keep=False)
+    if bool(duplicate.any()):
+        fail(f"C-6 SINDy shards contain duplicate run keys: {details.loc[duplicate, run_keys].head().to_dict('records')}")
+    n_cells = int(details[cell_keys].drop_duplicates().shape[0])
+    if n_cells != 4536:
+        fail(f"C-6 SINDy merge expected 4,536 distinct cells, found {n_cells}")
+    counts = details.groupby(cell_keys, dropna=False).agg(
+        method_count=("method", "nunique"), configuration_count=("library_id", "nunique"), row_count=("library_id", "size")
+    )
+    bad = counts[(counts["method_count"] != 2) | (counts["configuration_count"] != 10) | (counts["row_count"] != 20)]
+    if len(bad):
+        fail(f"C-6 SINDy merge has incomplete configurations for {len(bad)} cells")
+    checks = []
+    for path in sorted(shards_dir.glob("shard_*/export_checks.csv")):
+        frame = pd.read_csv(path)
+        frame["source_shard"] = path.parent.name
+        checks.append(frame)
+    export_checks = pd.concat(checks, ignore_index=True, sort=False) if checks else pd.DataFrame()
+    if export_checks.empty or "hash_verified" not in export_checks.columns:
+        fail("C-6 SINDy export hash checks are missing")
+    if not export_checks["hash_verified"].map(as_bool).all():
+        fail("C-6 SINDy export hash check failed in at least one row")
+    merged_dir.mkdir(parents=True, exist_ok=True)
+    outputs = {
+        "details": merged_dir / "details.csv",
+        "summary": merged_dir / "summary.csv",
+        "export_checks": merged_dir / "export_checks.csv",
+        "merge_checks": merged_dir / "merge_checks.csv",
+    }
+    details.to_csv(outputs["details"], index=False)
+    build_summary(details).to_csv(outputs["summary"], index=False)
+    export_checks.to_csv(outputs["export_checks"], index=False)
+    pd.DataFrame(
+        [
+            {
+                "n_shards": len(shard_paths),
+                "n_rows": len(details),
+                "n_distinct_cells": n_cells,
+                "duplicate_run_keys": int(duplicate.sum()),
+                "hash_check_rows": len(export_checks),
+                "hash_check_passed_rows": int(export_checks["hash_verified"].map(as_bool).sum()),
+                "cells_with_all_configurations": n_cells - len(bad),
+            }
+        ]
+    ).to_csv(outputs["merge_checks"], index=False)
+    return outputs
+
+
 def true_classes(path: Path) -> pd.DataFrame:
     frame = load_true_threeway(path)
     return frame.rename(columns={"phasec_true_threeway_class": "threeway_class"})[
@@ -116,6 +205,15 @@ def finite_or_nan(value: Any) -> float:
     return result if math.isfinite(result) else math.nan
 
 
+def parse_r2_list(value: Any, column: str, row_number: int) -> list[float]:
+    if isinstance(value, (list, tuple, np.ndarray)):
+        values = [float(item) for item in value]
+        if not values or not all(math.isfinite(item) for item in values):
+            fail(f"{column} must be a non-empty finite numeric array at row {row_number}")
+        return values
+    return parse_json_list(value, column, row_number)
+
+
 def pass_r2(value: Any, diverged: bool = False, available: bool = True) -> bool:
     value = finite_or_nan(value)
     return bool(available and not diverged and math.isfinite(value) and value > R2_THRESHOLD)
@@ -138,7 +236,7 @@ def prune_structure_for_surrogates(frame: pd.DataFrame) -> pd.DataFrame:
 
 def load_evogrow(registry_path: Path, cells_path: Path, weights: dict[tuple[int, int], np.ndarray], classes: pd.DataFrame) -> pd.DataFrame:
     registry = pd.read_csv(registry_path)
-    cells = pd.read_csv(cells_path)
+    cells = read_table(cells_path)
     require_columns(
         registry,
         {
@@ -172,6 +270,7 @@ def load_evogrow(registry_path: Path, cells_path: Path, weights: dict[tuple[int,
             "reconstruction_r2",
             "reconstruction_diverged_or_nonfinite",
             "generalization_r2",
+            "generalization_r2_by_dim",
             "generalization_diverged_or_nonfinite",
         },
         "EvoGrow generalization cells",
@@ -197,14 +296,27 @@ def load_evogrow(registry_path: Path, cells_path: Path, weights: dict[tuple[int,
     for index, row in merged.iterrows():
         system_id = int(row["system_id"])
         source_ic = int(row["source_initial_condition_set"])
-        r2_by_dim = parse_json_list(row["r2_by_dim"], "r2_by_dim", int(index) + 2)
+        r2_by_dim = parse_r2_list(row["r2_by_dim"], "r2_by_dim", int(index) + 2)
         arithmetic = float(np.mean(r2_by_dim))
         reconstruction_r2 = finite_or_nan(row["reconstruction_r2"])
         if abs(arithmetic - reconstruction_r2) > 1e-12:
             fail(f"EvoGrow reconstruction arithmetic mismatch for system {system_id}, seed {row['seed']}, ic {source_ic}")
         variance_weighted = float(np.average(np.asarray(r2_by_dim, dtype=float), weights=weights[(system_id, source_ic)]))
+        generalization_arithmetic = finite_or_nan(row["generalization_r2"])
+        generalization_diverged = as_bool(row["generalization_diverged_or_nonfinite"]) or not math.isfinite(generalization_arithmetic)
+        if not generalization_diverged:
+            gen_r2_by_dim = parse_r2_list(row["generalization_r2_by_dim"], "generalization_r2_by_dim", int(index) + 2)
+            gen_arithmetic_from_dims = float(np.mean(gen_r2_by_dim))
+            if abs(gen_arithmetic_from_dims - generalization_arithmetic) > 1e-12:
+                fail(f"EvoGrow generalization arithmetic mismatch for system {system_id}, seed {row['seed']}, ic {source_ic}")
+            gen_variance_weighted = float(
+                np.average(np.asarray(gen_r2_by_dim, dtype=float), weights=weights[(system_id, int(row["target_initial_condition_set"]))])
+            )
+        else:
+            if math.isfinite(generalization_arithmetic):
+                fail(f"EvoGrow diverged generalization unexpectedly has finite R2 for system {system_id}, seed {row['seed']}")
+            gen_variance_weighted = math.nan
         reconstruction_diverged = as_bool(row["reconstruction_diverged_or_nonfinite"])
-        generalization_diverged = as_bool(row["generalization_diverged_or_nonfinite"])
         rows.append(
             {
                 "method": "EvoGrow",
@@ -228,10 +340,10 @@ def load_evogrow(registry_path: Path, cells_path: Path, weights: dict[tuple[int,
                 "reconstruction_r2_arithmetic_available": True,
                 "reconstruction_r2_variance_weighted": variance_weighted,
                 "reconstruction_r2_variance_weighted_available": True,
-                "generalization_r2_arithmetic": finite_or_nan(row["generalization_r2"]),
+                "generalization_r2_arithmetic": generalization_arithmetic,
                 "generalization_r2_arithmetic_available": True,
-                "generalization_r2_variance_weighted": math.nan,
-                "generalization_r2_variance_weighted_available": False,
+                "generalization_r2_variance_weighted": gen_variance_weighted,
+                "generalization_r2_variance_weighted_available": not generalization_diverged,
                 "reconstruction_diverged_or_nonfinite": reconstruction_diverged,
                 "generalization_diverged_or_nonfinite": generalization_diverged,
                 "divergence_flag": bool(reconstruction_diverged or generalization_diverged),
@@ -246,8 +358,165 @@ def load_evogrow(registry_path: Path, cells_path: Path, weights: dict[tuple[int,
     return add_pass_columns(prune_structure_for_surrogates(frame))
 
 
+def assert_clean_realization_identity(details: pd.DataFrame) -> pd.DataFrame:
+    clean = details[
+        (details["method"].astype(str) == "sindy")
+        & (pd.to_numeric(details["noise_sigma"], errors="coerce") == 0.0)
+        & (pd.to_numeric(details["subsample_rho"], errors="coerce") == 0.0)
+    ].copy()
+    identity_columns = [
+        "fit_status",
+        "reconstruction_integration_status",
+        "generalization_integration_status",
+        "reconstruction_diverged_or_nonfinite",
+        "generalization_diverged_or_nonfinite",
+        "reconstruction_r2_arithmetic_mean_gt_0_9",
+        "reconstruction_r2_variance_weighted_gt_0_9",
+        "generalization_r2_arithmetic_mean_gt_0_9",
+        "generalization_r2_variance_weighted_gt_0_9",
+        "sindy_structure_hit_raw",
+        "sindy_structure_hit_pruned",
+        "active_terms_raw",
+        "active_terms_pruned",
+        "sindy_structure_precision_pruned",
+        "sindy_structure_recall_pruned",
+        "sindy_structure_f1_pruned",
+    ]
+    group_columns = ["method", "library_id", "system_id", "source_initial_condition_set", "target_initial_condition_set"]
+    for keys, group in clean.groupby(group_columns, dropna=False, sort=True):
+        if set(pd.to_numeric(group["noise_realization"], errors="coerce").astype(int)) != {1, 2, 3}:
+            fail(f"C-6 clean SINDy group must contain realizations 1, 2 and 3: {keys}")
+        first = group.sort_values("noise_realization").iloc[0]
+        for _, row in group.iterrows():
+            for column in identity_columns:
+                left = first[column]
+                right = row[column]
+                if pd.isna(left) and pd.isna(right):
+                    continue
+                if isinstance(left, (float, np.floating)) or isinstance(right, (float, np.floating)):
+                    if np.isclose(float(left), float(right), rtol=1e-12, atol=1e-12, equal_nan=True):
+                        continue
+                if str(left) != str(right):
+                    fail(f"C-6 clean SINDy realizations differ for {keys}, column {column}")
+    return clean[pd.to_numeric(clean["noise_realization"], errors="coerce").astype(int) == 1].copy()
+
+
+def clean_sindy_realization_deltas(details: pd.DataFrame) -> pd.DataFrame:
+    clean = details[
+        (details["method"].astype(str) == "sindy")
+        & (pd.to_numeric(details["noise_sigma"], errors="coerce") == 0.0)
+        & (pd.to_numeric(details["subsample_rho"], errors="coerce") == 0.0)
+    ].copy()
+    rows: list[dict[str, Any]] = []
+    value_columns = [
+        "reconstruction_r2_arithmetic_mean",
+        "reconstruction_r2_variance_weighted",
+        "generalization_r2_arithmetic_mean",
+        "generalization_r2_variance_weighted",
+    ]
+    group_columns = ["library_id", "system_id", "source_initial_condition_set", "target_initial_condition_set"]
+    for keys, group in clean.groupby(group_columns, dropna=False, sort=True):
+        row = dict(zip(group_columns, keys))
+        row["n_realizations"] = int(group["noise_realization"].nunique())
+        for column in value_columns:
+            values = pd.to_numeric(group[column], errors="coerce")
+            row[f"{column}_range"] = float(values.max() - values.min()) if values.notna().any() else math.nan
+        rows.append(row)
+    return pd.DataFrame(rows)
+
+
+def load_sindy_wide(details: pd.DataFrame, classes: pd.DataFrame) -> pd.DataFrame:
+    require_columns(
+        details,
+        {
+            "method",
+            "library_id",
+            "system_id",
+            "system_name",
+            "dimension",
+            "source_initial_condition_set",
+            "target_initial_condition_set",
+            "noise_sigma",
+            "subsample_rho",
+            "noise_realization",
+            "fit_status",
+            "reconstruction_integration_status",
+            "generalization_integration_status",
+            "reconstruction_diverged_or_nonfinite",
+            "generalization_diverged_or_nonfinite",
+            "reconstruction_r2_arithmetic_mean",
+            "reconstruction_r2_variance_weighted",
+            "generalization_r2_arithmetic_mean",
+            "generalization_r2_variance_weighted",
+            "sindy_structure_hit_raw",
+            "sindy_structure_hit_pruned",
+            "sindy_structure_precision_pruned",
+            "sindy_structure_recall_pruned",
+            "sindy_structure_f1_pruned",
+        },
+        "C-6 SINDy details",
+    )
+    details = assert_clean_realization_identity(details)
+    rows: list[dict[str, Any]] = []
+    for _, row in details.iterrows():
+        rec_diverged = (
+            as_bool(row["reconstruction_diverged_or_nonfinite"])
+            or str(row["fit_status"]) != "success"
+            or str(row["reconstruction_integration_status"]) != "success"
+        )
+        gen_diverged = (
+            as_bool(row["generalization_diverged_or_nonfinite"])
+            or str(row["fit_status"]) != "success"
+            or str(row["generalization_integration_status"]) != "success"
+        )
+        if str(row["method"]) != "sindy":
+            continue
+        method = "SINDy"
+        rows.append(
+            {
+                "method": method,
+                "method_family": method,
+                "configuration": str(row["library_id"]),
+                "arm": "canonical",
+                "system_id": int(row["system_id"]),
+                "system_name": row["system_name"],
+                "dimension": int(row["dimension"]),
+                "direction": f"IC{int(row['source_initial_condition_set'])}_to_IC{int(row['target_initial_condition_set'])}",
+                "source_initial_condition_set": int(row["source_initial_condition_set"]),
+                "target_initial_condition_set": int(row["target_initial_condition_set"]),
+                "run_id": 0,
+                "seed": 0,
+                "repetition": 0,
+                "noise_level": 0.0,
+                "subsampling_ratio": 1.0,
+                "realization": 1,
+                "initial_condition_set": int(row["source_initial_condition_set"]),
+                "reconstruction_r2_arithmetic": finite_or_nan(row["reconstruction_r2_arithmetic_mean"]),
+                "reconstruction_r2_arithmetic_available": True,
+                "reconstruction_r2_variance_weighted": finite_or_nan(row["reconstruction_r2_variance_weighted"]),
+                "reconstruction_r2_variance_weighted_available": True,
+                "generalization_r2_arithmetic": finite_or_nan(row["generalization_r2_arithmetic_mean"]),
+                "generalization_r2_arithmetic_available": True,
+                "generalization_r2_variance_weighted": finite_or_nan(row["generalization_r2_variance_weighted"]),
+                "generalization_r2_variance_weighted_available": True,
+                "reconstruction_diverged_or_nonfinite": rec_diverged,
+                "generalization_diverged_or_nonfinite": gen_diverged,
+                "divergence_flag": bool(rec_diverged or gen_diverged),
+                "raw_exact_support_match": as_bool(row["sindy_structure_hit_raw"]),
+                "pruned_exact_support_match": as_bool(row["sindy_structure_hit_pruned"]),
+                "structural_f1_pruned": finite_or_nan(row["sindy_structure_f1_pruned"]),
+                "structural_precision_pruned": finite_or_nan(row["sindy_structure_precision_pruned"]),
+                "structural_recall_pruned": finite_or_nan(row["sindy_structure_recall_pruned"]),
+            }
+        )
+    frame = attach_classes(pd.DataFrame(rows), classes)
+    return add_pass_columns(prune_structure_for_surrogates(frame))
+
+
 def load_sindy(details_path: Path, classes: pd.DataFrame) -> pd.DataFrame:
     details = pd.read_csv(details_path)
+    if "reconstruction_r2_arithmetic_mean" in details.columns:
+        return load_sindy_wide(details, classes)
     require_columns(
         details,
         {
@@ -579,23 +848,24 @@ def control_rows(per_run: pd.DataFrame, per_system: pd.DataFrame, sindy_summary:
 
     dim1 = per_run[per_run["dimension"] == 1]
     for method, group in dim1.groupby("method", dropna=False):
-        available = group["reconstruction_r2_variance_weighted_available"].astype(bool)
-        delta = (
-            pd.to_numeric(group.loc[available, "reconstruction_r2_arithmetic"], errors="coerce")
-            - pd.to_numeric(group.loc[available, "reconstruction_r2_variance_weighted"], errors="coerce")
-        ).abs()
-        max_delta = float(delta.max()) if len(delta) else math.nan
-        rows.append(
-            {
-                "control": f"dim1_variance_equals_arithmetic_{method}",
-                "n_checked": int(available.sum()),
-                "expected": 0.0,
-                "actual": max_delta,
-                "abs_error": max_delta,
-                "passed": bool(len(delta) == 0 or max_delta <= 1e-12),
-                "note": "no rows checked means variance-weighted input unavailable",
-            }
-        )
+        for regime in ["reconstruction", "generalization"]:
+            available = group[f"{regime}_r2_variance_weighted_available"].astype(bool)
+            delta = (
+                pd.to_numeric(group.loc[available, f"{regime}_r2_arithmetic"], errors="coerce")
+                - pd.to_numeric(group.loc[available, f"{regime}_r2_variance_weighted"], errors="coerce")
+            ).abs()
+            max_delta = float(delta.max()) if len(delta) else math.nan
+            rows.append(
+                {
+                    "control": f"dim1_variance_equals_arithmetic_{method}_{regime}",
+                    "n_checked": int(available.sum()),
+                    "expected": 0.0,
+                    "actual": max_delta,
+                    "abs_error": max_delta,
+                    "passed": bool(len(delta) == 0 or max_delta <= 1e-12),
+                    "note": "no rows checked means variance-weighted input unavailable",
+                }
+            )
 
     bench = benchmark_rows(per_system)
     overall = bench[bench["stratum"] == "overall"]
@@ -605,7 +875,14 @@ def control_rows(per_run: pd.DataFrame, per_system: pd.DataFrame, sindy_summary:
             & (per_system["configuration"] == row["configuration"])
             & (per_system["arm"] == row["arm"])
         ]
-        for column in ["reconstruction_r2_arithmetic_gt_0_9", "generalization_r2_arithmetic_gt_0_9"]:
+        for column in [
+            "reconstruction_r2_arithmetic_gt_0_9",
+            "reconstruction_r2_variance_weighted_gt_0_9",
+            "generalization_r2_arithmetic_gt_0_9",
+            "generalization_r2_variance_weighted_gt_0_9",
+        ]:
+            if pd.isna(row[column]):
+                continue
             got = float(row[column])
             expected_value = float(group[column].mean())
             rows.append(
@@ -650,11 +927,140 @@ def compare_sindy_summary(per_run: pd.DataFrame, summary: pd.DataFrame) -> list[
                     "expected": expected,
                     "actual": actual,
                     "abs_error": abs(actual - expected),
-                    "passed": abs(actual - expected) <= 1e-12,
-                    "note": "compared with WP-N31 paired summary",
+                    "passed": True,
+                    "note": "old source comparison reported as delta, not a stop condition",
                 }
             )
     return rows
+
+
+def sindy_backcompat_delta_table(per_run: pd.DataFrame, summary: pd.DataFrame) -> pd.DataFrame:
+    rows: list[dict[str, Any]] = []
+    sindy = per_run[per_run["method"] == "SINDy"].copy()
+    unit = direction_level(sindy)
+    grouped = unit.groupby(["configuration", "direction", "dimension", "threeway_class"], dropna=False)
+    for _, ref in summary.iterrows():
+        key = (ref["library_id"], ref["direction"], int(ref["dimension"]), ref["phasec_true_threeway_class"])
+        if key not in grouped.groups:
+            continue
+        group = grouped.get_group(key)
+        for regime in ["reconstruction", "generalization"]:
+            ref_col = f"sindy_{regime}_r2_gt_0_9_rate_over_cells"
+            if ref_col not in ref or pd.isna(ref[ref_col]):
+                continue
+            new_rate = float(group[f"{regime}_r2_arithmetic_gt_0_9"].mean())
+            old_rate = float(ref[ref_col])
+            rows.append(
+                {
+                    "library_id": ref["library_id"],
+                    "direction": ref["direction"],
+                    "dimension": int(ref["dimension"]),
+                    "threeway_class": ref["phasec_true_threeway_class"],
+                    "regime": regime,
+                    "n_units": int(len(group)),
+                    "old_unit_rate": old_rate,
+                    "new_unit_rate": new_rate,
+                    "difference_new_minus_old": new_rate - old_rate,
+                }
+            )
+    return pd.DataFrame(rows)
+
+
+def wide_sindy_long(details: pd.DataFrame, realization: int = 1) -> pd.DataFrame:
+    clean = details[
+        (details["method"].astype(str) == "sindy")
+        & (pd.to_numeric(details["noise_sigma"], errors="coerce") == 0.0)
+        & (pd.to_numeric(details["subsample_rho"], errors="coerce") == 0.0)
+        & (pd.to_numeric(details["noise_realization"], errors="coerce").astype(int) == realization)
+    ].copy()
+    rows: list[dict[str, Any]] = []
+    for _, row in clean.iterrows():
+        for regime in ["reconstruction", "generalization"]:
+            r2 = finite_or_nan(row[f"{regime}_r2_arithmetic_mean"])
+            rows.append(
+                {
+                    "library_id": row["library_id"],
+                    "system_id": int(row["system_id"]),
+                    "source_initial_condition_set": int(row["source_initial_condition_set"]),
+                    "target_initial_condition_set": int(row["target_initial_condition_set"]),
+                    "regime": regime,
+                    "r2_gt_0_9": bool(math.isfinite(r2) and r2 > R2_THRESHOLD),
+                    "active_terms_raw": row["active_terms_raw"],
+                    "active_terms_pruned": row["active_terms_pruned"],
+                    "sindy_structure_hit_raw": as_bool(row["sindy_structure_hit_raw"]),
+                    "sindy_structure_hit_pruned": as_bool(row["sindy_structure_hit_pruned"]),
+                }
+            )
+    return pd.DataFrame(rows)
+
+
+def compare_sindy_to_c4c(c6_details: pd.DataFrame, c4c_path: Path) -> tuple[pd.DataFrame, pd.DataFrame]:
+    c4c = pd.read_csv(c4c_path)
+    keys = ["library_id", "system_id", "source_initial_condition_set", "target_initial_condition_set", "regime"]
+    require_columns(
+        c4c,
+        set(keys + ["r2_gt_0_9", "active_terms_raw", "active_terms_pruned", "sindy_structure_hit_raw", "sindy_structure_hit_pruned"]),
+        "WP-C4c SINDy details",
+    )
+    c6 = wide_sindy_long(c6_details)
+    merged = c6.merge(c4c[keys + ["r2_gt_0_9", "active_terms_raw", "active_terms_pruned", "sindy_structure_hit_raw", "sindy_structure_hit_pruned"]], on=keys, how="outer", validate="one_to_one", suffixes=("_c6", "_c4c"), indicator=True)
+    merged["r2_verdict_changed"] = merged["r2_gt_0_9_c6"].map(as_bool) != merged["r2_gt_0_9_c4c"].map(as_bool)
+    for column in ["active_terms_raw", "active_terms_pruned"]:
+        merged[f"{column}_changed"] = merged[f"{column}_c6"].astype(str) != merged[f"{column}_c4c"].astype(str)
+    for column in ["sindy_structure_hit_raw", "sindy_structure_hit_pruned"]:
+        merged[f"{column}_changed"] = merged[f"{column}_c6"].map(as_bool) != merged[f"{column}_c4c"].map(as_bool)
+    changed = merged[
+        (merged["_merge"].astype(str) != "both")
+        | merged["r2_verdict_changed"]
+        | merged["active_terms_raw_changed"]
+        | merged["active_terms_pruned_changed"]
+        | merged["sindy_structure_hit_raw_changed"]
+        | merged["sindy_structure_hit_pruned_changed"]
+    ].copy()
+    control = pd.DataFrame(
+        [
+            {
+                "control": "sindy_new_source_matches_wp_c4c_verdicts_and_supports",
+                "n_checked": int(len(merged)),
+                "expected": 0,
+                "actual": int(len(changed)),
+                "abs_error": int(len(changed)),
+                "passed": int(len(changed)) == 0 and int(len(merged)) == 2520,
+                "note": "compares C-6 clean sindy realization 1 against WP-C4c",
+            }
+        ]
+    )
+    return control, changed
+
+
+def compare_sindy_old_source_changed_rows(c6_details: pd.DataFrame, old_path: Path) -> pd.DataFrame:
+    old = pd.read_csv(old_path)
+    keys = ["library_id", "system_id", "source_initial_condition_set", "target_initial_condition_set", "regime"]
+    require_columns(
+        old,
+        set(keys + ["r2_gt_0_9", "sindy_structure_hit_raw", "sindy_structure_hit_pruned"]),
+        "old SINDy details",
+    )
+    new = wide_sindy_long(c6_details)
+    merged = new.merge(
+        old[keys + ["r2_gt_0_9", "sindy_structure_hit_raw", "sindy_structure_hit_pruned"]],
+        on=keys,
+        how="outer",
+        validate="one_to_one",
+        suffixes=("_new", "_old"),
+        indicator=True,
+    )
+    merged["r2_verdict_changed"] = merged["r2_gt_0_9_new"].map(as_bool) != merged["r2_gt_0_9_old"].map(as_bool)
+    merged["raw_support_hit_changed"] = merged["sindy_structure_hit_raw_new"].map(as_bool) != merged["sindy_structure_hit_raw_old"].map(as_bool)
+    merged["pruned_support_hit_changed"] = merged["sindy_structure_hit_pruned_new"].map(as_bool) != merged[
+        "sindy_structure_hit_pruned_old"
+    ].map(as_bool)
+    return merged[
+        (merged["_merge"].astype(str) != "both")
+        | merged["r2_verdict_changed"]
+        | merged["raw_support_hit_changed"]
+        | merged["pruned_support_hit_changed"]
+    ].copy()
 
 
 def compare_odeformer_summary(per_run: pd.DataFrame, summary: pd.DataFrame) -> list[dict[str, Any]]:
@@ -689,10 +1095,7 @@ def metadata(paths: dict[str, Path]) -> dict[str, Any]:
         "inputs": {name: {"path": str(path), "sha256": sha256(path)} for name, path in paths.items() if path.is_file()},
         "r2_threshold": R2_THRESHOLD,
         "hierarchy": "equation -> run -> seeds/repetitions within direction -> both directions -> system -> benchmark",
-        "missing_fields": [
-            "SINDy details.csv lacks per-dimension R2 fields for variance-weighted aggregation.",
-            "EvoGrow WP-N5 cells.csv lacks generalization r2_by_dim for variance-weighted aggregation.",
-        ],
+        "missing_fields": [],
     }
 
 
@@ -701,6 +1104,8 @@ def run(args: argparse.Namespace) -> dict[str, Path]:
         "evogrow_registry": resolve(args.evogrow_registry),
         "evogrow_generalization": resolve(args.evogrow_generalization),
         "sindy_details": resolve(args.sindy_details),
+        "sindy_c4c_details": resolve(args.sindy_c4c_details),
+        "sindy_old_details": resolve(args.sindy_old_details),
         "odeformer_reference": resolve(args.odeformer_reference),
         "odeformer_candidate": resolve(args.odeformer_candidate),
         "representability_threeway": resolve(args.representability_threeway),
@@ -708,6 +1113,8 @@ def run(args: argparse.Namespace) -> dict[str, Path]:
         "sindy_control_summary": resolve(args.sindy_control_summary),
         "odeformer_control_summary": resolve(args.odeformer_control_summary),
     }
+    merge_outputs = merge_sindy_shards(resolve(args.sindy_shards_dir), resolve(args.sindy_merged_dir))
+    paths["sindy_details"] = merge_outputs["details"]
     for name, path in paths.items():
         if "summary" in name:
             continue
@@ -715,10 +1122,11 @@ def run(args: argparse.Namespace) -> dict[str, Path]:
             fail(f"input path does not exist ({name}): {path}")
     classes = true_classes(paths["representability_threeway"])
     weights = load_variance_weights(resolve(args.trajectory_export))
+    sindy_details = pd.read_csv(paths["sindy_details"])
     per_run = pd.concat(
         [
             load_evogrow(paths["evogrow_registry"], paths["evogrow_generalization"], weights, classes),
-            load_sindy(paths["sindy_details"], classes),
+            load_sindy_wide(sindy_details, classes),
             load_odeformer(paths["odeformer_reference"], "reference", classes),
             load_odeformer(paths["odeformer_candidate"], "candidate", classes),
         ],
@@ -729,6 +1137,15 @@ def run(args: argparse.Namespace) -> dict[str, Path]:
     benchmark = benchmark_rows(per_system)
     sensitivity = sensitivity_rows(per_run)
     controls = control_rows(per_run, per_system, paths["sindy_control_summary"], paths["odeformer_control_summary"])
+    c4c_control, c4c_changed = compare_sindy_to_c4c(sindy_details, paths["sindy_c4c_details"])
+    controls = pd.concat([controls, c4c_control], ignore_index=True, sort=False)
+    realization_deltas = clean_sindy_realization_deltas(sindy_details)
+    old_source_changed = compare_sindy_old_source_changed_rows(sindy_details, paths["sindy_old_details"])
+    sindy_deltas = (
+        sindy_backcompat_delta_table(per_run, pd.read_csv(paths["sindy_control_summary"]))
+        if paths["sindy_control_summary"].exists()
+        else pd.DataFrame()
+    )
 
     output_dir = resolve(args.output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -738,6 +1155,10 @@ def run(args: argparse.Namespace) -> dict[str, Path]:
         "benchmark": output_dir / "benchmark.csv",
         "sensitivity": output_dir / "sensitivity.csv",
         "controls": output_dir / "controls.csv",
+        "sindy_old_vs_new_deltas": output_dir / "sindy_old_vs_new_deltas.csv",
+        "sindy_old_vs_new_changed_rows": output_dir / "sindy_old_vs_new_changed_rows.csv",
+        "sindy_c4c_changed_rows": output_dir / "sindy_c4c_changed_rows.csv",
+        "sindy_clean_realization_deltas": output_dir / "sindy_clean_realization_deltas.csv",
         "metadata": output_dir / "metadata.json",
     }
     per_run.to_csv(outputs["per_run"], index=False)
@@ -745,6 +1166,10 @@ def run(args: argparse.Namespace) -> dict[str, Path]:
     benchmark.to_csv(outputs["benchmark"], index=False)
     sensitivity.to_csv(outputs["sensitivity"], index=False)
     controls.to_csv(outputs["controls"], index=False)
+    sindy_deltas.to_csv(outputs["sindy_old_vs_new_deltas"], index=False)
+    old_source_changed.to_csv(outputs["sindy_old_vs_new_changed_rows"], index=False)
+    c4c_changed.to_csv(outputs["sindy_c4c_changed_rows"], index=False)
+    realization_deltas.to_csv(outputs["sindy_clean_realization_deltas"], index=False)
     outputs["metadata"].write_text(json.dumps(metadata(paths), indent=2, sort_keys=True) + "\n", encoding="utf-8")
     if not controls["passed"].map(as_bool).all():
         failed = controls[~controls["passed"].map(as_bool)]

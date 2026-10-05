@@ -612,6 +612,9 @@ python analysis/scripts/aggregate/analyze_pretuning_distribution_collapse.py \
   --expected-total-pairs 180 --expected-exact-pairs 180 --expected-surrogate-pairs 0 \
   --expected-collapse-groups-per-condition 60
 
+# SUPERSEDED SOURCE (2026-10-05): the --sindy-details path below is the old self-integrated SINDy run;
+# the canonical C-4 source is phasec_sindy_baseline_wp_c4c_export/ (identical to the C-6 (0,0) rows).
+# Paper numbers come from the WP-N43b hierarchy further down, not from these pairings.
 # Claim D, SINDy (WP-N30): needs the C-5 generalization cells below. Pairs each SINDy row with
 # EvoGrow on the same system, training IC, direction and regime (reconstruction/generalization).
 python analysis/scripts/aggregate/run_phasec_sindy_baseline.py pair \
@@ -637,6 +640,10 @@ python analysis/scripts/aggregate/run_phasec_sindy_baseline.py pair \
   --representability-threeway analysis/data/paper1_phaseC_v1/representability_threeway/representability_threeway_by_system.csv \
   --output $P/agg/sindy_n31/phasec_sindy_paired.csv \
   --summary-output $P/agg/sindy_n31/phasec_sindy_paired_summary.csv
+
+# Plan §9.3 hierarchy with canonical C-6 SINDy source and variance-weighted generalization (WP-N43b).
+python analysis/scripts/aggregate/aggregate_phasec_hierarchy_n43.py \
+  --output-dir $P/agg/hierarchy_n43b
 
 # C-5 Diag (oracle refit): runs on Orion, image 1db1193 (carries WP-N25; src/ identical to 221a3a7).
 # --estimate-cost is an upper bound assuming every fit exhausts its loss-evaluation budget:
