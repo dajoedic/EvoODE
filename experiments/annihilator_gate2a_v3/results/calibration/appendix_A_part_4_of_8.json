@@ -1,0 +1,3401 @@
+{
+  "K_a": {
+    "by_ell": {
+      "3": {
+        "max_error": 2.829412503689627e-12,
+        "passed": true,
+        "records": [
+          {
+            "accepted_deviation": "compared against Ac*=0; equivalent because L*f is identically zero and boundary terms vanish",
+            "class": [
+              2,
+              0
+            ],
+            "domain": "wide",
+            "function": "K1",
+            "max_scaled_error": 4.637666742683391e-15,
+            "passed": true,
+            "split": "fit"
+          },
+          {
+            "accepted_deviation": "compared against Ac*=0; equivalent because L*f is identically zero and boundary terms vanish",
+            "class": [
+              2,
+              0
+            ],
+            "domain": "wide",
+            "function": "K1",
+            "max_scaled_error": 4.350300274523237e-15,
+            "passed": true,
+            "split": "val"
+          },
+          {
+            "accepted_deviation": "compared against Ac*=0; equivalent because L*f is identically zero and boundary terms vanish",
+            "class": [
+              2,
+              0
+            ],
+            "domain": "narrow",
+            "function": "K1",
+            "max_scaled_error": 5.8619874322177666e-15,
+            "passed": true,
+            "split": "fit"
+          },
+          {
+            "accepted_deviation": "compared against Ac*=0; equivalent because L*f is identically zero and boundary terms vanish",
+            "class": [
+              2,
+              0
+            ],
+            "domain": "narrow",
+            "function": "K1",
+            "max_scaled_error": 3.788907276568407e-15,
+            "passed": true,
+            "split": "val"
+          },
+          {
+            "accepted_deviation": "compared against Ac*=0; equivalent because L*f is identically zero and boundary terms vanish",
+            "class": [
+              1,
+              1
+            ],
+            "domain": "wide",
+            "function": "K2",
+            "max_scaled_error": 2.623615734388132e-15,
+            "passed": true,
+            "split": "fit"
+          },
+          {
+            "accepted_deviation": "compared against Ac*=0; equivalent because L*f is identically zero and boundary terms vanish",
+            "class": [
+              1,
+              1
+            ],
+            "domain": "wide",
+            "function": "K2",
+            "max_scaled_error": 1.777618299390358e-15,
+            "passed": true,
+            "split": "val"
+          },
+          {
+            "accepted_deviation": "compared against Ac*=0; equivalent because L*f is identically zero and boundary terms vanish",
+            "class": [
+              1,
+              1
+            ],
+            "domain": "narrow",
+            "function": "K2",
+            "max_scaled_error": 5.262863587320605e-15,
+            "passed": true,
+            "split": "fit"
+          },
+          {
+            "accepted_deviation": "compared against Ac*=0; equivalent because L*f is identically zero and boundary terms vanish",
+            "class": [
+              1,
+              1
+            ],
+            "domain": "narrow",
+            "function": "K2",
+            "max_scaled_error": 4.8141191888763e-15,
+            "passed": true,
+            "split": "val"
+          },
+          {
+            "accepted_deviation": "compared against Ac*=0; equivalent because L*f is identically zero and boundary terms vanish",
+            "class": [
+              2,
+              1
+            ],
+            "domain": "wide",
+            "function": "K3",
+            "max_scaled_error": 5.642090556403988e-15,
+            "passed": true,
+            "split": "fit"
+          },
+          {
+            "accepted_deviation": "compared against Ac*=0; equivalent because L*f is identically zero and boundary terms vanish",
+            "class": [
+              2,
+              1
+            ],
+            "domain": "wide",
+            "function": "K3",
+            "max_scaled_error": 8.734193989060563e-15,
+            "passed": true,
+            "split": "val"
+          },
+          {
+            "accepted_deviation": "compared against Ac*=0; equivalent because L*f is identically zero and boundary terms vanish",
+            "class": [
+              2,
+              1
+            ],
+            "domain": "narrow",
+            "function": "K3",
+            "max_scaled_error": 5.664328500918532e-15,
+            "passed": true,
+            "split": "fit"
+          },
+          {
+            "accepted_deviation": "compared against Ac*=0; equivalent because L*f is identically zero and boundary terms vanish",
+            "class": [
+              2,
+              1
+            ],
+            "domain": "narrow",
+            "function": "K3",
+            "max_scaled_error": 5.4136027093395725e-15,
+            "passed": true,
+            "split": "val"
+          },
+          {
+            "accepted_deviation": "compared against Ac*=0; equivalent because L*f is identically zero and boundary terms vanish",
+            "class": [
+              2,
+              1
+            ],
+            "domain": "wide",
+            "function": "K4",
+            "max_scaled_error": 2.497361411204243e-14,
+            "passed": true,
+            "split": "fit"
+          },
+          {
+            "accepted_deviation": "compared against Ac*=0; equivalent because L*f is identically zero and boundary terms vanish",
+            "class": [
+              2,
+              1
+            ],
+            "domain": "wide",
+            "function": "K4",
+            "max_scaled_error": 2.3083718990050057e-14,
+            "passed": true,
+            "split": "val"
+          },
+          {
+            "accepted_deviation": "compared against Ac*=0; equivalent because L*f is identically zero and boundary terms vanish",
+            "class": [
+              2,
+              1
+            ],
+            "domain": "narrow",
+            "function": "K4",
+            "max_scaled_error": 3.894911330158266e-15,
+            "passed": true,
+            "split": "fit"
+          },
+          {
+            "accepted_deviation": "compared against Ac*=0; equivalent because L*f is identically zero and boundary terms vanish",
+            "class": [
+              2,
+              1
+            ],
+            "domain": "narrow",
+            "function": "K4",
+            "max_scaled_error": 6.029465940171699e-15,
+            "passed": true,
+            "split": "val"
+          },
+          {
+            "accepted_deviation": "compared against Ac*=0; equivalent because L*f is identically zero and boundary terms vanish",
+            "class": [
+              4,
+              0
+            ],
+            "domain": "wide",
+            "function": "K5",
+            "max_scaled_error": 4.830823559646084e-14,
+            "passed": true,
+            "split": "fit"
+          },
+          {
+            "accepted_deviation": "compared against Ac*=0; equivalent because L*f is identically zero and boundary terms vanish",
+            "class": [
+              4,
+              0
+            ],
+            "domain": "wide",
+            "function": "K5",
+            "max_scaled_error": 4.334148260924707e-14,
+            "passed": true,
+            "split": "val"
+          },
+          {
+            "accepted_deviation": "compared against Ac*=0; equivalent because L*f is identically zero and boundary terms vanish",
+            "class": [
+              4,
+              0
+            ],
+            "domain": "narrow",
+            "function": "K5",
+            "max_scaled_error": 3.2894175502788063e-14,
+            "passed": true,
+            "split": "fit"
+          },
+          {
+            "accepted_deviation": "compared against Ac*=0; equivalent because L*f is identically zero and boundary terms vanish",
+            "class": [
+              4,
+              0
+            ],
+            "domain": "narrow",
+            "function": "K5",
+            "max_scaled_error": 3.4437490613838223e-14,
+            "passed": true,
+            "split": "val"
+          },
+          {
+            "accepted_deviation": "compared against Ac*=0; equivalent because L*f is identically zero and boundary terms vanish",
+            "class": [
+              3,
+              0
+            ],
+            "domain": "wide",
+            "function": "K6",
+            "max_scaled_error": 2.3612713457447366e-14,
+            "passed": true,
+            "split": "fit"
+          },
+          {
+            "accepted_deviation": "compared against Ac*=0; equivalent because L*f is identically zero and boundary terms vanish",
+            "class": [
+              3,
+              0
+            ],
+            "domain": "wide",
+            "function": "K6",
+            "max_scaled_error": 1.978711338564073e-14,
+            "passed": true,
+            "split": "val"
+          },
+          {
+            "accepted_deviation": "compared against Ac*=0; equivalent because L*f is identically zero and boundary terms vanish",
+            "class": [
+              3,
+              0
+            ],
+            "domain": "narrow",
+            "function": "K6",
+            "max_scaled_error": 1.1102218447265513e-14,
+            "passed": true,
+            "split": "fit"
+          },
+          {
+            "accepted_deviation": "compared against Ac*=0; equivalent because L*f is identically zero and boundary terms vanish",
+            "class": [
+              3,
+              0
+            ],
+            "domain": "narrow",
+            "function": "K6",
+            "max_scaled_error": 1.4928256491565957e-14,
+            "passed": true,
+            "split": "val"
+          },
+          {
+            "accepted_deviation": "compared against Ac*=0; equivalent because L*f is identically zero and boundary terms vanish",
+            "class": [
+              5,
+              0
+            ],
+            "domain": "wide",
+            "function": "K7",
+            "max_scaled_error": 8.532737094509363e-14,
+            "passed": true,
+            "split": "fit"
+          },
+          {
+            "accepted_deviation": "compared against Ac*=0; equivalent because L*f is identically zero and boundary terms vanish",
+            "class": [
+              5,
+              0
+            ],
+            "domain": "wide",
+            "function": "K7",
+            "max_scaled_error": 1.3390241248051962e-13,
+            "passed": true,
+            "split": "val"
+          },
+          {
+            "accepted_deviation": "compared against Ac*=0; equivalent because L*f is identically zero and boundary terms vanish",
+            "class": [
+              5,
+              0
+            ],
+            "domain": "narrow",
+            "function": "K7",
+            "max_scaled_error": 1.0511370588051301e-13,
+            "passed": true,
+            "split": "fit"
+          },
+          {
+            "accepted_deviation": "compared against Ac*=0; equivalent because L*f is identically zero and boundary terms vanish",
+            "class": [
+              5,
+              0
+            ],
+            "domain": "narrow",
+            "function": "K7",
+            "max_scaled_error": 1.0864673151470941e-13,
+            "passed": true,
+            "split": "val"
+          },
+          {
+            "accepted_deviation": "compared against Ac*=0; equivalent because L*f is identically zero and boundary terms vanish",
+            "class": [
+              6,
+              0
+            ],
+            "domain": "wide",
+            "function": "K8",
+            "max_scaled_error": 2.779970544380704e-12,
+            "passed": true,
+            "split": "fit"
+          },
+          {
+            "accepted_deviation": "compared against Ac*=0; equivalent because L*f is identically zero and boundary terms vanish",
+            "class": [
+              6,
+              0
+            ],
+            "domain": "wide",
+            "function": "K8",
+            "max_scaled_error": 2.5881441022044317e-12,
+            "passed": true,
+            "split": "val"
+          },
+          {
+            "accepted_deviation": "compared against Ac*=0; equivalent because L*f is identically zero and boundary terms vanish",
+            "class": [
+              6,
+              0
+            ],
+            "domain": "narrow",
+            "function": "K8",
+            "max_scaled_error": 2.8094067063949046e-12,
+            "passed": true,
+            "split": "fit"
+          },
+          {
+            "accepted_deviation": "compared against Ac*=0; equivalent because L*f is identically zero and boundary terms vanish",
+            "class": [
+              6,
+              0
+            ],
+            "domain": "narrow",
+            "function": "K8",
+            "max_scaled_error": 2.829412503689627e-12,
+            "passed": true,
+            "split": "val"
+          }
+        ]
+      },
+      "4": {
+        "max_error": 8.355221697426189e-10,
+        "passed": true,
+        "records": [
+          {
+            "accepted_deviation": "compared against Ac*=0; equivalent because L*f is identically zero and boundary terms vanish",
+            "class": [
+              2,
+              0
+            ],
+            "domain": "wide",
+            "function": "K1",
+            "max_scaled_error": 1.4254972193899732e-14,
+            "passed": true,
+            "split": "fit"
+          },
+          {
+            "accepted_deviation": "compared against Ac*=0; equivalent because L*f is identically zero and boundary terms vanish",
+            "class": [
+              2,
+              0
+            ],
+            "domain": "wide",
+            "function": "K1",
+            "max_scaled_error": 1.2308858034574461e-14,
+            "passed": true,
+            "split": "val"
+          },
+          {
+            "accepted_deviation": "compared against Ac*=0; equivalent because L*f is identically zero and boundary terms vanish",
+            "class": [
+              2,
+              0
+            ],
+            "domain": "narrow",
+            "function": "K1",
+            "max_scaled_error": 1.7173461705711447e-14,
+            "passed": true,
+            "split": "fit"
+          },
+          {
+            "accepted_deviation": "compared against Ac*=0; equivalent because L*f is identically zero and boundary terms vanish",
+            "class": [
+              2,
+              0
+            ],
+            "domain": "narrow",
+            "function": "K1",
+            "max_scaled_error": 1.4581934480798256e-14,
+            "passed": true,
+            "split": "val"
+          },
+          {
+            "accepted_deviation": "compared against Ac*=0; equivalent because L*f is identically zero and boundary terms vanish",
+            "class": [
+              1,
+              1
+            ],
+            "domain": "wide",
+            "function": "K2",
+            "max_scaled_error": 2.623615734388132e-15,
+            "passed": true,
+            "split": "fit"
+          },
+          {
+            "accepted_deviation": "compared against Ac*=0; equivalent because L*f is identically zero and boundary terms vanish",
+            "class": [
+              1,
+              1
+            ],
+            "domain": "wide",
+            "function": "K2",
+            "max_scaled_error": 1.777618299390358e-15,
+            "passed": true,
+            "split": "val"
+          },
+          {
+            "accepted_deviation": "compared against Ac*=0; equivalent because L*f is identically zero and boundary terms vanish",
+            "class": [
+              1,
+              1
+            ],
+            "domain": "narrow",
+            "function": "K2",
+            "max_scaled_error": 6.6911194999045895e-15,
+            "passed": true,
+            "split": "fit"
+          },
+          {
+            "accepted_deviation": "compared against Ac*=0; equivalent because L*f is identically zero and boundary terms vanish",
+            "class": [
+              1,
+              1
+            ],
+            "domain": "narrow",
+            "function": "K2",
+            "max_scaled_error": 6.941209388351958e-15,
+            "passed": true,
+            "split": "val"
+          },
+          {
+            "accepted_deviation": "compared against Ac*=0; equivalent because L*f is identically zero and boundary terms vanish",
+            "class": [
+              2,
+              1
+            ],
+            "domain": "wide",
+            "function": "K3",
+            "max_scaled_error": 9.99043390593557e-15,
+            "passed": true,
+            "split": "fit"
+          },
+          {
+            "accepted_deviation": "compared against Ac*=0; equivalent because L*f is identically zero and boundary terms vanish",
+            "class": [
+              2,
+              1
+            ],
+            "domain": "wide",
+            "function": "K3",
+            "max_scaled_error": 8.854097935445143e-15,
+            "passed": true,
+            "split": "val"
+          },
+          {
+            "accepted_deviation": "compared against Ac*=0; equivalent because L*f is identically zero and boundary terms vanish",
+            "class": [
+              2,
+              1
+            ],
+            "domain": "narrow",
+            "function": "K3",
+            "max_scaled_error": 8.892947710225769e-15,
+            "passed": true,
+            "split": "fit"
+          },
+          {
+            "accepted_deviation": "compared against Ac*=0; equivalent because L*f is identically zero and boundary terms vanish",
+            "class": [
+              2,
+              1
+            ],
+            "domain": "narrow",
+            "function": "K3",
+            "max_scaled_error": 8.74214594474161e-15,
+            "passed": true,
+            "split": "val"
+          },
+          {
+            "accepted_deviation": "compared against Ac*=0; equivalent because L*f is identically zero and boundary terms vanish",
+            "class": [
+              2,
+              1
+            ],
+            "domain": "wide",
+            "function": "K4",
+            "max_scaled_error": 3.234414979531372e-14,
+            "passed": true,
+            "split": "fit"
+          },
+          {
+            "accepted_deviation": "compared against Ac*=0; equivalent because L*f is identically zero and boundary terms vanish",
+            "class": [
+              2,
+              1
+            ],
+            "domain": "wide",
+            "function": "K4",
+            "max_scaled_error": 2.5626819518075737e-14,
+            "passed": true,
+            "split": "val"
+          },
+          {
+            "accepted_deviation": "compared against Ac*=0; equivalent because L*f is identically zero and boundary terms vanish",
+            "class": [
+              2,
+              1
+            ],
+            "domain": "narrow",
+            "function": "K4",
+            "max_scaled_error": 1.53751922335268e-14,
+            "passed": true,
+            "split": "fit"
+          },
+          {
+            "accepted_deviation": "compared against Ac*=0; equivalent because L*f is identically zero and boundary terms vanish",
+            "class": [
+              2,
+              1
+            ],
+            "domain": "narrow",
+            "function": "K4",
+            "max_scaled_error": 1.5792868560199243e-14,
+            "passed": true,
+            "split": "val"
+          },
+          {
+            "accepted_deviation": "compared against Ac*=0; equivalent because L*f is identically zero and boundary terms vanish",
+            "class": [
+              4,
+              0
+            ],
+            "domain": "wide",
+            "function": "K5",
+            "max_scaled_error": 2.556192351194321e-12,
+            "passed": true,
+            "split": "fit"
+          },
+          {
+            "accepted_deviation": "compared against Ac*=0; equivalent because L*f is identically zero and boundary terms vanish",
+            "class": [
+              4,
+              0
+            ],
+            "domain": "wide",
+            "function": "K5",
+            "max_scaled_error": 2.5597694240649004e-12,
+            "passed": true,
+            "split": "val"
+          },
+          {
+            "accepted_deviation": "compared against Ac*=0; equivalent because L*f is identically zero and boundary terms vanish",
+            "class": [
+              4,
+              0
+            ],
+            "domain": "narrow",
+            "function": "K5",
+            "max_scaled_error": 2.37040745894603e-12,
+            "passed": true,
+            "split": "fit"
+          },
+          {
+            "accepted_deviation": "compared against Ac*=0; equivalent because L*f is identically zero and boundary terms vanish",
+            "class": [
+              4,
+              0
+            ],
+            "domain": "narrow",
+            "function": "K5",
+            "max_scaled_error": 2.473464406589605e-12,
+            "passed": true,
+            "split": "val"
+          },
+          {
+            "accepted_deviation": "compared against Ac*=0; equivalent because L*f is identically zero and boundary terms vanish",
+            "class": [
+              3,
+              0
+            ],
+            "domain": "wide",
+            "function": "K6",
+            "max_scaled_error": 2.4460912982101283e-13,
+            "passed": true,
+            "split": "fit"
+          },
+          {
+            "accepted_deviation": "compared against Ac*=0; equivalent because L*f is identically zero and boundary terms vanish",
+            "class": [
+              3,
+              0
+            ],
+            "domain": "wide",
+            "function": "K6",
+            "max_scaled_error": 2.470794961541752e-13,
+            "passed": true,
+            "split": "val"
+          },
+          {
+            "accepted_deviation": "compared against Ac*=0; equivalent because L*f is identically zero and boundary terms vanish",
+            "class": [
+              3,
+              0
+            ],
+            "domain": "narrow",
+            "function": "K6",
+            "max_scaled_error": 1.1969020058937884e-13,
+            "passed": true,
+            "split": "fit"
+          },
+          {
+            "accepted_deviation": "compared against Ac*=0; equivalent because L*f is identically zero and boundary terms vanish",
+            "class": [
+              3,
+              0
+            ],
+            "domain": "narrow",
+            "function": "K6",
+            "max_scaled_error": 1.186595849893173e-13,
+            "passed": true,
+            "split": "val"
+          },
+          {
+            "accepted_deviation": "compared against Ac*=0; equivalent because L*f is identically zero and boundary terms vanish",
+            "class": [
+              5,
+              0
+            ],
+            "domain": "wide",
+            "function": "K7",
+            "max_scaled_error": 4.573939835366776e-11,
+            "passed": true,
+            "split": "fit"
+          },
+          {
+            "accepted_deviation": "compared against Ac*=0; equivalent because L*f is identically zero and boundary terms vanish",
+            "class": [
+              5,
+              0
+            ],
+            "domain": "wide",
+            "function": "K7",
+            "max_scaled_error": 4.609328092599303e-11,
+            "passed": true,
+            "split": "val"
+          },
+          {
+            "accepted_deviation": "compared against Ac*=0; equivalent because L*f is identically zero and boundary terms vanish",
+            "class": [
+              5,
+              0
+            ],
+            "domain": "narrow",
+            "function": "K7",
+            "max_scaled_error": 3.4380419315746845e-11,
+            "passed": true,
+            "split": "fit"
+          },
+          {
+            "accepted_deviation": "compared against Ac*=0; equivalent because L*f is identically zero and boundary terms vanish",
+            "class": [
+              5,
+              0
+            ],
+            "domain": "narrow",
+            "function": "K7",
+            "max_scaled_error": 3.2872605404429375e-11,
+            "passed": true,
+            "split": "val"
+          },
+          {
+            "accepted_deviation": "compared against Ac*=0; equivalent because L*f is identically zero and boundary terms vanish",
+            "class": [
+              6,
+              0
+            ],
+            "domain": "wide",
+            "function": "K8",
+            "max_scaled_error": 8.354786027518841e-10,
+            "passed": true,
+            "split": "fit"
+          },
+          {
+            "accepted_deviation": "compared against Ac*=0; equivalent because L*f is identically zero and boundary terms vanish",
+            "class": [
+              6,
+              0
+            ],
+            "domain": "wide",
+            "function": "K8",
+            "max_scaled_error": 8.355221697426189e-10,
+            "passed": true,
+            "split": "val"
+          },
+          {
+            "accepted_deviation": "compared against Ac*=0; equivalent because L*f is identically zero and boundary terms vanish",
+            "class": [
+              6,
+              0
+            ],
+            "domain": "narrow",
+            "function": "K8",
+            "max_scaled_error": 5.907085587235993e-10,
+            "passed": true,
+            "split": "fit"
+          },
+          {
+            "accepted_deviation": "compared against Ac*=0; equivalent because L*f is identically zero and boundary terms vanish",
+            "class": [
+              6,
+              0
+            ],
+            "domain": "narrow",
+            "function": "K8",
+            "max_scaled_error": 5.145928848228346e-10,
+            "passed": true,
+            "split": "val"
+          }
+        ]
+      },
+      "5": {
+        "max_error": 3.154197461948009e-07,
+        "passed": false,
+        "records": [
+          {
+            "accepted_deviation": "compared against Ac*=0; equivalent because L*f is identically zero and boundary terms vanish",
+            "class": [
+              2,
+              0
+            ],
+            "domain": "wide",
+            "function": "K1",
+            "max_scaled_error": 7.22165478358113e-11,
+            "passed": true,
+            "split": "fit"
+          },
+          {
+            "accepted_deviation": "compared against Ac*=0; equivalent because L*f is identically zero and boundary terms vanish",
+            "class": [
+              2,
+              0
+            ],
+            "domain": "wide",
+            "function": "K1",
+            "max_scaled_error": 7.221621741477323e-11,
+            "passed": true,
+            "split": "val"
+          },
+          {
+            "accepted_deviation": "compared against Ac*=0; equivalent because L*f is identically zero and boundary terms vanish",
+            "class": [
+              2,
+              0
+            ],
+            "domain": "narrow",
+            "function": "K1",
+            "max_scaled_error": 5.829179915311302e-11,
+            "passed": true,
+            "split": "fit"
+          },
+          {
+            "accepted_deviation": "compared against Ac*=0; equivalent because L*f is identically zero and boundary terms vanish",
+            "class": [
+              2,
+              0
+            ],
+            "domain": "narrow",
+            "function": "K1",
+            "max_scaled_error": 5.829173067218142e-11,
+            "passed": true,
+            "split": "val"
+          },
+          {
+            "accepted_deviation": "compared against Ac*=0; equivalent because L*f is identically zero and boundary terms vanish",
+            "class": [
+              1,
+              1
+            ],
+            "domain": "wide",
+            "function": "K2",
+            "max_scaled_error": 1.0730910867989406e-11,
+            "passed": true,
+            "split": "fit"
+          },
+          {
+            "accepted_deviation": "compared against Ac*=0; equivalent because L*f is identically zero and boundary terms vanish",
+            "class": [
+              1,
+              1
+            ],
+            "domain": "wide",
+            "function": "K2",
+            "max_scaled_error": 1.0733589878102047e-11,
+            "passed": true,
+            "split": "val"
+          },
+          {
+            "accepted_deviation": "compared against Ac*=0; equivalent because L*f is identically zero and boundary terms vanish",
+            "class": [
+              1,
+              1
+            ],
+            "domain": "narrow",
+            "function": "K2",
+            "max_scaled_error": 7.306806783943352e-12,
+            "passed": true,
+            "split": "fit"
+          },
+          {
+            "accepted_deviation": "compared against Ac*=0; equivalent because L*f is identically zero and boundary terms vanish",
+            "class": [
+              1,
+              1
+            ],
+            "domain": "narrow",
+            "function": "K2",
+            "max_scaled_error": 7.309429981209955e-12,
+            "passed": true,
+            "split": "val"
+          },
+          {
+            "accepted_deviation": "compared against Ac*=0; equivalent because L*f is identically zero and boundary terms vanish",
+            "class": [
+              2,
+              1
+            ],
+            "domain": "wide",
+            "function": "K3",
+            "max_scaled_error": 7.026561067520393e-11,
+            "passed": true,
+            "split": "fit"
+          },
+          {
+            "accepted_deviation": "compared against Ac*=0; equivalent because L*f is identically zero and boundary terms vanish",
+            "class": [
+              2,
+              1
+            ],
+            "domain": "wide",
+            "function": "K3",
+            "max_scaled_error": 7.027558778643551e-11,
+            "passed": true,
+            "split": "val"
+          },
+          {
+            "accepted_deviation": "compared against Ac*=0; equivalent because L*f is identically zero and boundary terms vanish",
+            "class": [
+              2,
+              1
+            ],
+            "domain": "narrow",
+            "function": "K3",
+            "max_scaled_error": 5.746978536930797e-11,
+            "passed": true,
+            "split": "fit"
+          },
+          {
+            "accepted_deviation": "compared against Ac*=0; equivalent because L*f is identically zero and boundary terms vanish",
+            "class": [
+              2,
+              1
+            ],
+            "domain": "narrow",
+            "function": "K3",
+            "max_scaled_error": 5.746227176894497e-11,
+            "passed": true,
+            "split": "val"
+          },
+          {
+            "accepted_deviation": "compared against Ac*=0; equivalent because L*f is identically zero and boundary terms vanish",
+            "class": [
+              2,
+              1
+            ],
+            "domain": "wide",
+            "function": "K4",
+            "max_scaled_error": 1.0656907331817143e-10,
+            "passed": true,
+            "split": "fit"
+          },
+          {
+            "accepted_deviation": "compared against Ac*=0; equivalent because L*f is identically zero and boundary terms vanish",
+            "class": [
+              2,
+              1
+            ],
+            "domain": "wide",
+            "function": "K4",
+            "max_scaled_error": 1.0654717153559113e-10,
+            "passed": true,
+            "split": "val"
+          },
+          {
+            "accepted_deviation": "compared against Ac*=0; equivalent because L*f is identically zero and boundary terms vanish",
+            "class": [
+              2,
+              1
+            ],
+            "domain": "narrow",
+            "function": "K4",
+            "max_scaled_error": 7.94335592158801e-11,
+            "passed": true,
+            "split": "fit"
+          },
+          {
+            "accepted_deviation": "compared against Ac*=0; equivalent because L*f is identically zero and boundary terms vanish",
+            "class": [
+              2,
+              1
+            ],
+            "domain": "narrow",
+            "function": "K4",
+            "max_scaled_error": 7.946559694232207e-11,
+            "passed": true,
+            "split": "val"
+          },
+          {
+            "accepted_deviation": "compared against Ac*=0; equivalent because L*f is identically zero and boundary terms vanish",
+            "class": [
+              4,
+              0
+            ],
+            "domain": "wide",
+            "function": "K5",
+            "max_scaled_error": 4.227600448756572e-09,
+            "passed": true,
+            "split": "fit"
+          },
+          {
+            "accepted_deviation": "compared against Ac*=0; equivalent because L*f is identically zero and boundary terms vanish",
+            "class": [
+              4,
+              0
+            ],
+            "domain": "wide",
+            "function": "K5",
+            "max_scaled_error": 4.2275980139588605e-09,
+            "passed": true,
+            "split": "val"
+          },
+          {
+            "accepted_deviation": "compared against Ac*=0; equivalent because L*f is identically zero and boundary terms vanish",
+            "class": [
+              4,
+              0
+            ],
+            "domain": "narrow",
+            "function": "K5",
+            "max_scaled_error": 4.138540255579612e-09,
+            "passed": true,
+            "split": "fit"
+          },
+          {
+            "accepted_deviation": "compared against Ac*=0; equivalent because L*f is identically zero and boundary terms vanish",
+            "class": [
+              4,
+              0
+            ],
+            "domain": "narrow",
+            "function": "K5",
+            "max_scaled_error": 4.1371038412292725e-09,
+            "passed": true,
+            "split": "val"
+          },
+          {
+            "accepted_deviation": "compared against Ac*=0; equivalent because L*f is identically zero and boundary terms vanish",
+            "class": [
+              3,
+              0
+            ],
+            "domain": "wide",
+            "function": "K6",
+            "max_scaled_error": 1.0109808655814678e-09,
+            "passed": true,
+            "split": "fit"
+          },
+          {
+            "accepted_deviation": "compared against Ac*=0; equivalent because L*f is identically zero and boundary terms vanish",
+            "class": [
+              3,
+              0
+            ],
+            "domain": "wide",
+            "function": "K6",
+            "max_scaled_error": 1.012782794902092e-09,
+            "passed": true,
+            "split": "val"
+          },
+          {
+            "accepted_deviation": "compared against Ac*=0; equivalent because L*f is identically zero and boundary terms vanish",
+            "class": [
+              3,
+              0
+            ],
+            "domain": "narrow",
+            "function": "K6",
+            "max_scaled_error": 4.6309608030569105e-10,
+            "passed": true,
+            "split": "fit"
+          },
+          {
+            "accepted_deviation": "compared against Ac*=0; equivalent because L*f is identically zero and boundary terms vanish",
+            "class": [
+              3,
+              0
+            ],
+            "domain": "narrow",
+            "function": "K6",
+            "max_scaled_error": 4.6326876594175063e-10,
+            "passed": true,
+            "split": "val"
+          },
+          {
+            "accepted_deviation": "compared against Ac*=0; equivalent because L*f is identically zero and boundary terms vanish",
+            "class": [
+              5,
+              0
+            ],
+            "domain": "wide",
+            "function": "K7",
+            "max_scaled_error": 3.20109376440415e-08,
+            "passed": false,
+            "split": "fit"
+          },
+          {
+            "accepted_deviation": "compared against Ac*=0; equivalent because L*f is identically zero and boundary terms vanish",
+            "class": [
+              5,
+              0
+            ],
+            "domain": "wide",
+            "function": "K7",
+            "max_scaled_error": 3.199361693527927e-08,
+            "passed": false,
+            "split": "val"
+          },
+          {
+            "accepted_deviation": "compared against Ac*=0; equivalent because L*f is identically zero and boundary terms vanish",
+            "class": [
+              5,
+              0
+            ],
+            "domain": "narrow",
+            "function": "K7",
+            "max_scaled_error": 2.8147790260559217e-08,
+            "passed": false,
+            "split": "fit"
+          },
+          {
+            "accepted_deviation": "compared against Ac*=0; equivalent because L*f is identically zero and boundary terms vanish",
+            "class": [
+              5,
+              0
+            ],
+            "domain": "narrow",
+            "function": "K7",
+            "max_scaled_error": 2.818932372718922e-08,
+            "passed": false,
+            "split": "val"
+          },
+          {
+            "accepted_deviation": "compared against Ac*=0; equivalent because L*f is identically zero and boundary terms vanish",
+            "class": [
+              6,
+              0
+            ],
+            "domain": "wide",
+            "function": "K8",
+            "max_scaled_error": 3.154197461948009e-07,
+            "passed": false,
+            "split": "fit"
+          },
+          {
+            "accepted_deviation": "compared against Ac*=0; equivalent because L*f is identically zero and boundary terms vanish",
+            "class": [
+              6,
+              0
+            ],
+            "domain": "wide",
+            "function": "K8",
+            "max_scaled_error": 3.1541973402957256e-07,
+            "passed": false,
+            "split": "val"
+          },
+          {
+            "accepted_deviation": "compared against Ac*=0; equivalent because L*f is identically zero and boundary terms vanish",
+            "class": [
+              6,
+              0
+            ],
+            "domain": "narrow",
+            "function": "K8",
+            "max_scaled_error": 1.99740429117205e-07,
+            "passed": false,
+            "split": "fit"
+          },
+          {
+            "accepted_deviation": "compared against Ac*=0; equivalent because L*f is identically zero and boundary terms vanish",
+            "class": [
+              6,
+              0
+            ],
+            "domain": "narrow",
+            "function": "K8",
+            "max_scaled_error": 1.9991950705735902e-07,
+            "passed": false,
+            "split": "val"
+          }
+        ]
+      }
+    },
+    "ell_max": 4,
+    "passed": true
+  },
+  "K_b": {
+    "passed": true,
+    "records": [
+      {
+        "T1": 3.5710179691680816e-20,
+        "critical": 283.92288189774496,
+        "dof": 231,
+        "domain": "wide",
+        "function": "K1",
+        "tau_cell": 1.1214910717342981e-11
+      },
+      {
+        "T1": 2.2589505767214768e-20,
+        "critical": 283.92288189774496,
+        "dof": 231,
+        "domain": "narrow",
+        "function": "K1",
+        "tau_cell": 8.919759961469903e-12
+      },
+      {
+        "T1": 1.360216329953463e-20,
+        "critical": 271.71723373519524,
+        "dof": 220,
+        "domain": "wide",
+        "function": "K2",
+        "tau_cell": 7.075308810884604e-12
+      },
+      {
+        "T1": 9.59286745476115e-21,
+        "critical": 273.9386494350343,
+        "dof": 222,
+        "domain": "narrow",
+        "function": "K2",
+        "tau_cell": 5.917626721347737e-12
+      },
+      {
+        "T1": 5.793497155314984e-20,
+        "critical": 283.92288189774496,
+        "dof": 231,
+        "domain": "wide",
+        "function": "K3",
+        "tau_cell": 1.42846696659022e-11
+      },
+      {
+        "T1": 1.9653219534388958e-20,
+        "critical": 283.92288189774496,
+        "dof": 231,
+        "domain": "narrow",
+        "function": "K3",
+        "tau_cell": 8.319872203810531e-12
+      },
+      {
+        "T1": 1.868100263268657e-20,
+        "critical": 276.1590689351993,
+        "dof": 224,
+        "domain": "wide",
+        "function": "K4",
+        "tau_cell": 8.224707009109801e-12
+      },
+      {
+        "T1": 8.933998698041803e-21,
+        "critical": 280.5969723525623,
+        "dof": 228,
+        "domain": "narrow",
+        "function": "K4",
+        "tau_cell": 5.642628422102156e-12
+      },
+      {
+        "T1": 6.173163473230783e-17,
+        "critical": 283.92288189774496,
+        "dof": 231,
+        "domain": "wide",
+        "function": "K5",
+        "tau_cell": 4.662874123297059e-10
+      },
+      {
+        "T1": 4.909557790888043e-17,
+        "critical": 283.92288189774496,
+        "dof": 231,
+        "domain": "narrow",
+        "function": "K5",
+        "tau_cell": 4.1583495283368004e-10
+      },
+      {
+        "T1": 2.714526699699933e-19,
+        "critical": 285.0310471275878,
+        "dof": 232,
+        "domain": "wide",
+        "function": "K6",
+        "tau_cell": 3.086035905425458e-11
+      },
+      {
+        "T1": 5.318943609922394e-19,
+        "critical": 285.0310471275878,
+        "dof": 232,
+        "domain": "narrow",
+        "function": "K6",
+        "tau_cell": 4.3198295295052276e-11
+      },
+      {
+        "T1": 4.2011396446621e-15,
+        "critical": 278.3785055633457,
+        "dof": 226,
+        "domain": "wide",
+        "function": "K7",
+        "tau_cell": 3.884773560323952e-09
+      },
+      {
+        "T1": 4.146448441395751e-15,
+        "critical": 278.3785055633457,
+        "dof": 226,
+        "domain": "narrow",
+        "function": "K7",
+        "tau_cell": 3.859404378791862e-09
+      },
+      {
+        "T1": 2.1865022955284623e-13,
+        "critical": 273.9386494350343,
+        "dof": 222,
+        "domain": "wide",
+        "function": "K8",
+        "tau_cell": 2.8251942499692865e-08
+      },
+      {
+        "T1": 3.167112769479024e-13,
+        "critical": 276.1590689351993,
+        "dof": 224,
+        "domain": "narrow",
+        "function": "K8",
+        "tau_cell": 3.386508022297224e-08
+      }
+    ],
+    "tau": 3.386508022297224e-07
+  },
+  "K_c": {
+    "clean": {
+      "K3_wide": {
+        "ambiguity_sources": [],
+        "domain": "wide",
+        "expected_class": [
+          2,
+          1
+        ],
+        "function": "K3",
+        "passed": true,
+        "selected_class": [
+          2,
+          1
+        ],
+        "state": "CORRECT",
+        "threshold": "wide CORRECT; narrow not WRONG"
+      },
+      "K7_wide": {
+        "ambiguity_sources": [
+          "A2"
+        ],
+        "domain": "wide",
+        "expected_class": [
+          5,
+          0
+        ],
+        "function": "K7",
+        "passed": false,
+        "selected_class": [
+          5,
+          0
+        ],
+        "state": "AMBIGUOUS",
+        "threshold": "wide CORRECT; narrow not WRONG"
+      }
+    },
+    "clean_search_executed": true,
+    "limit_mc_gate_disabled": false,
+    "mc": {
+      "K1": {
+        "checked": true,
+        "domain": "wide",
+        "ex_ante_class": "I",
+        "function": "K1",
+        "n": 125,
+        "passed": true,
+        "points": {
+          "1": {
+            "median_T_over_dof": 1.01534185521567,
+            "passed": true,
+            "rejection_rate": 0.0,
+            "threshold": "rejection_rate <= 0.03 and median_T_over_dof in [0.8, 1.25]"
+          },
+          "2": {
+            "bias_norm": 0.00014186073849138626,
+            "passed": true,
+            "threshold": 0.0007549585971357477
+          },
+          "3": {
+            "empirical_trace": 2.2798499335567047e-06,
+            "mean_propagated_trace": 2.4082351957164806e-06,
+            "passed": true,
+            "ratio": 0.9466890682487599,
+            "threshold": "0.5 <= ratio <= 2"
+          }
+        },
+        "seeds": [
+          4,
+          12,
+          20,
+          28,
+          36,
+          44,
+          52,
+          60,
+          68,
+          76,
+          84,
+          92,
+          100,
+          108,
+          116,
+          124,
+          132,
+          140,
+          148,
+          156,
+          164,
+          172,
+          180,
+          188,
+          196,
+          204,
+          212,
+          220,
+          228,
+          236,
+          244,
+          252,
+          260,
+          268,
+          276,
+          284,
+          292,
+          300,
+          308,
+          316,
+          324,
+          332,
+          340,
+          348,
+          356,
+          364,
+          372,
+          380,
+          388,
+          396,
+          404,
+          412,
+          420,
+          428,
+          436,
+          444,
+          452,
+          460,
+          468,
+          476,
+          484,
+          492,
+          500,
+          508,
+          516,
+          524,
+          532,
+          540,
+          548,
+          556,
+          564,
+          572,
+          580,
+          588,
+          596,
+          604,
+          612,
+          620,
+          628,
+          636,
+          644,
+          652,
+          660,
+          668,
+          676,
+          684,
+          692,
+          700,
+          708,
+          716,
+          724,
+          732,
+          740,
+          748,
+          756,
+          764,
+          772,
+          780,
+          788,
+          796,
+          804,
+          812,
+          820,
+          828,
+          836,
+          844,
+          852,
+          860,
+          868,
+          876,
+          884,
+          892,
+          900,
+          908,
+          916,
+          924,
+          932,
+          940,
+          948,
+          956,
+          964,
+          972,
+          980,
+          988,
+          996
+        ]
+      },
+      "K2": {
+        "checked": true,
+        "domain": "wide",
+        "ex_ante_class": "I",
+        "function": "K2",
+        "n": 125,
+        "passed": true,
+        "points": {
+          "1": {
+            "median_T_over_dof": 1.0101283980432492,
+            "passed": true,
+            "rejection_rate": 0.016,
+            "threshold": "rejection_rate <= 0.03 and median_T_over_dof in [0.8, 1.25]"
+          },
+          "2": {
+            "bias_norm": 0.00045623061640753137,
+            "passed": true,
+            "threshold": 0.0017568457958041586
+          },
+          "3": {
+            "empirical_trace": 1.234602860093899e-05,
+            "mean_propagated_trace": 1.2218436307977898e-05,
+            "passed": true,
+            "ratio": 1.010442604089836,
+            "threshold": "0.5 <= ratio <= 2"
+          }
+        },
+        "seeds": [
+          4,
+          12,
+          20,
+          28,
+          36,
+          44,
+          52,
+          60,
+          68,
+          76,
+          84,
+          92,
+          100,
+          108,
+          116,
+          124,
+          132,
+          140,
+          148,
+          156,
+          164,
+          172,
+          180,
+          188,
+          196,
+          204,
+          212,
+          220,
+          228,
+          236,
+          244,
+          252,
+          260,
+          268,
+          276,
+          284,
+          292,
+          300,
+          308,
+          316,
+          324,
+          332,
+          340,
+          348,
+          356,
+          364,
+          372,
+          380,
+          388,
+          396,
+          404,
+          412,
+          420,
+          428,
+          436,
+          444,
+          452,
+          460,
+          468,
+          476,
+          484,
+          492,
+          500,
+          508,
+          516,
+          524,
+          532,
+          540,
+          548,
+          556,
+          564,
+          572,
+          580,
+          588,
+          596,
+          604,
+          612,
+          620,
+          628,
+          636,
+          644,
+          652,
+          660,
+          668,
+          676,
+          684,
+          692,
+          700,
+          708,
+          716,
+          724,
+          732,
+          740,
+          748,
+          756,
+          764,
+          772,
+          780,
+          788,
+          796,
+          804,
+          812,
+          820,
+          828,
+          836,
+          844,
+          852,
+          860,
+          868,
+          876,
+          884,
+          892,
+          900,
+          908,
+          916,
+          924,
+          932,
+          940,
+          948,
+          956,
+          964,
+          972,
+          980,
+          988,
+          996
+        ]
+      },
+      "K3": {
+        "checked": false,
+        "domain": "wide",
+        "ex_ante_class": "N1",
+        "function": "K3",
+        "not_checked_reason": "ex-ante class N1",
+        "passed": null
+      },
+      "K4": {
+        "checked": false,
+        "domain": "wide",
+        "ex_ante_class": "N1",
+        "function": "K4",
+        "not_checked_reason": "ex-ante class N1",
+        "passed": null
+      },
+      "K5": {
+        "checked": false,
+        "domain": "wide",
+        "ex_ante_class": "N2",
+        "function": "K5",
+        "not_checked_reason": "ex-ante class N2",
+        "passed": null
+      },
+      "K6": {
+        "checked": true,
+        "domain": "wide",
+        "ex_ante_class": "I",
+        "function": "K6",
+        "n": 125,
+        "passed": false,
+        "points": {
+          "1": {
+            "median_T_over_dof": 0.6968070867087122,
+            "passed": false,
+            "rejection_rate": 0.0,
+            "threshold": "rejection_rate <= 0.03 and median_T_over_dof in [0.8, 1.25]"
+          },
+          "2": {
+            "bias_norm": 0.0017856821480775945,
+            "passed": true,
+            "threshold": 0.02710473996432191
+          },
+          "3": {
+            "empirical_trace": 0.0029386677141340373,
+            "mean_propagated_trace": 0.0011427154991051356,
+            "passed": false,
+            "ratio": 2.5716529761216314,
+            "threshold": "0.5 <= ratio <= 2"
+          }
+        },
+        "seeds": [
+          4,
+          12,
+          20,
+          28,
+          36,
+          44,
+          52,
+          60,
+          68,
+          76,
+          84,
+          92,
+          100,
+          108,
+          116,
+          124,
+          132,
+          140,
+          148,
+          156,
+          164,
+          172,
+          180,
+          188,
+          196,
+          204,
+          212,
+          220,
+          228,
+          236,
+          244,
+          252,
+          260,
+          268,
+          276,
+          284,
+          292,
+          300,
+          308,
+          316,
+          324,
+          332,
+          340,
+          348,
+          356,
+          364,
+          372,
+          380,
+          388,
+          396,
+          404,
+          412,
+          420,
+          428,
+          436,
+          444,
+          452,
+          460,
+          468,
+          476,
+          484,
+          492,
+          500,
+          508,
+          516,
+          524,
+          532,
+          540,
+          548,
+          556,
+          564,
+          572,
+          580,
+          588,
+          596,
+          604,
+          612,
+          620,
+          628,
+          636,
+          644,
+          652,
+          660,
+          668,
+          676,
+          684,
+          692,
+          700,
+          708,
+          716,
+          724,
+          732,
+          740,
+          748,
+          756,
+          764,
+          772,
+          780,
+          788,
+          796,
+          804,
+          812,
+          820,
+          828,
+          836,
+          844,
+          852,
+          860,
+          868,
+          876,
+          884,
+          892,
+          900,
+          908,
+          916,
+          924,
+          932,
+          940,
+          948,
+          956,
+          964,
+          972,
+          980,
+          988,
+          996
+        ]
+      }
+    },
+    "mc_accumulators": {
+      "K1": {
+        "checked": true,
+        "coeff_cross": [
+          [
+            117.64940420359105,
+            -0.016338164858398892,
+            -29.406795476310744
+          ],
+          [
+            -0.016338164858398892,
+            0.00027554504243287533,
+            0.004080225445282745
+          ],
+          [
+            -29.406795476310744,
+            0.004080225445282745,
+            7.350320251366513
+          ]
+        ],
+        "coeff_sum": [
+          121.26902100823466,
+          -0.016840036792667667,
+          -30.311531179462555
+        ],
+        "domain": "wide",
+        "ex_ante_class": "I",
+        "function": "K1",
+        "propagated_trace_sum": 0.0003010293994645601,
+        "rejects": 0,
+        "seeds": [
+          4,
+          12,
+          20,
+          28,
+          36,
+          44,
+          52,
+          60,
+          68,
+          76,
+          84,
+          92,
+          100,
+          108,
+          116,
+          124,
+          132,
+          140,
+          148,
+          156,
+          164,
+          172,
+          180,
+          188,
+          196,
+          204,
+          212,
+          220,
+          228,
+          236,
+          244,
+          252,
+          260,
+          268,
+          276,
+          284,
+          292,
+          300,
+          308,
+          316,
+          324,
+          332,
+          340,
+          348,
+          356,
+          364,
+          372,
+          380,
+          388,
+          396,
+          404,
+          412,
+          420,
+          428,
+          436,
+          444,
+          452,
+          460,
+          468,
+          476,
+          484,
+          492,
+          500,
+          508,
+          516,
+          524,
+          532,
+          540,
+          548,
+          556,
+          564,
+          572,
+          580,
+          588,
+          596,
+          604,
+          612,
+          620,
+          628,
+          636,
+          644,
+          652,
+          660,
+          668,
+          676,
+          684,
+          692,
+          700,
+          708,
+          716,
+          724,
+          732,
+          740,
+          748,
+          756,
+          764,
+          772,
+          780,
+          788,
+          796,
+          804,
+          812,
+          820,
+          828,
+          836,
+          844,
+          852,
+          860,
+          868,
+          876,
+          884,
+          892,
+          900,
+          908,
+          916,
+          924,
+          932,
+          940,
+          948,
+          956,
+          964,
+          972,
+          980,
+          988,
+          996
+        ],
+        "stats": [
+          1.0200945070152145,
+          1.1720850656213264,
+          1.015251222861325,
+          1.0628611992779917,
+          0.9148765094535338,
+          1.0826691552919323,
+          0.8725372170577687,
+          0.9763625646642854,
+          0.9790009166942496,
+          1.0827388901448884,
+          1.0658061491098942,
+          1.1897674238554252,
+          0.9168751060313205,
+          1.041115643920271,
+          0.9845231765503165,
+          0.9205002575814668,
+          0.9307193357647403,
+          0.9738129921260631,
+          0.9962656158075608,
+          1.0570263527802464,
+          0.8489349709958014,
+          1.01534185521567,
+          1.0871783965432444,
+          0.9709160445189736,
+          1.087915837770194,
+          0.8862593100009367,
+          1.0739909458998878,
+          1.0253692719563352,
+          1.0231077597065248,
+          1.002930239403997,
+          1.0230429528407288,
+          0.8918521166457924,
+          0.9330385041214838,
+          1.003212984084167,
+          0.9558743189577732,
+          1.0476402222486085,
+          0.9138157589904314,
+          1.0962694910775717,
+          1.035904642679205,
+          0.8586740584538644,
+          0.8510266195831786,
+          1.035086326109829,
+          1.0759081615263881,
+          0.9505941948631269,
+          1.1580785604221429,
+          0.9924193674705327,
+          1.0833911264619516,
+          0.8725334136149748,
+          0.9388260109747685,
+          1.2151012828863843,
+          1.1458155664411214,
+          0.8918950129414507,
+          0.9209084981092792,
+          0.912728755829443,
+          0.9690978889170453,
+          1.06139365014822,
+          0.8308478434734123,
+          0.9058801764010896,
+          1.0384609348018463,
+          1.1165766161677637,
+          0.897551012933351,
+          1.0826512436891338,
+          1.024202984441491,
+          0.8902080011357032,
+          1.1673601292616023,
+          0.9593067832274004,
+          1.0549480769228052,
+          0.9670721487946912,
+          1.0111991818433144,
+          1.0675733198423403,
+          0.9357583909361176,
+          1.1624737078494147,
+          1.1857316320358073,
+          1.019725736524634,
+          0.7893160621821403,
+          1.0226868478497695,
+          0.8912562295595502,
+          1.078994206998433,
+          1.0327362668372853,
+          0.8642207885420381,
+          0.9521178865598395,
+          0.961080144219213,
+          1.017544231040091,
+          1.0191303912446616,
+          1.0121081162168655,
+          0.9393989644358428,
+          0.9709176910545955,
+          0.9641509467344606,
+          1.0608990453641112,
+          0.8481216293914284,
+          1.0113402321979428,
+          1.0705925298037002,
+          1.1881444295136567,
+          1.1164847896036316,
+          1.0479596136778357,
+          0.9614526246861085,
+          1.1444402102722842,
+          1.1426732432268751,
+          1.0486816241701375,
+          1.0658435401374344,
+          1.0636212390580826,
+          1.054702112617351,
+          0.9892900742876607,
+          0.819423011502245,
+          1.04606070600988,
+          1.1036881897037591,
+          0.9284005630680748,
+          0.9728349327357958,
+          1.0420043782705048,
+          0.9382562903671804,
+          0.8542287021425234,
+          0.8697749963709638,
+          1.0011454747216617,
+          1.0577615444048567,
+          1.056834239446592,
+          0.827676025150686,
+          1.033827224351779,
+          1.104032285134397,
+          0.9100480531236078,
+          1.0748731618102125,
+          0.9957762989807376,
+          1.1978169423293796,
+          1.131216719399204,
+          0.9405143650588328,
+          1.1223129808216394
+        ]
+      },
+      "K2": {
+        "checked": true,
+        "coeff_cross": [
+          [
+            112.4972373091347,
+            -0.05317649872589487,
+            0.009693190239492116,
+            -37.50134713909439
+          ],
+          [
+            -0.05317649872589487,
+            0.001505405336573062,
+            -0.00024830632567605465,
+            0.01772727392454818
+          ],
+          [
+            0.009693190239492116,
+            -0.00024830632567605465,
+            4.5023621149296236e-05,
+            -0.0032319180300909725
+          ],
+          [
+            -37.50134713909439,
+            0.01772727392454818,
+            -0.0032319180300909725,
+            12.50121226190754
+          ]
+        ],
+        "coeff_sum": [
+          118.5839558319505,
+          -0.05605461836764869,
+          0.010217970841810435,
+          -39.53037830928924
+        ],
+        "domain": "wide",
+        "ex_ante_class": "I",
+        "function": "K2",
+        "propagated_trace_sum": 0.0015273045384972372,
+        "rejects": 2,
+        "seeds": [
+          4,
+          12,
+          20,
+          28,
+          36,
+          44,
+          52,
+          60,
+          68,
+          76,
+          84,
+          92,
+          100,
+          108,
+          116,
+          124,
+          132,
+          140,
+          148,
+          156,
+          164,
+          172,
+          180,
+          188,
+          196,
+          204,
+          212,
+          220,
+          228,
+          236,
+          244,
+          252,
+          260,
+          268,
+          276,
+          284,
+          292,
+          300,
+          308,
+          316,
+          324,
+          332,
+          340,
+          348,
+          356,
+          364,
+          372,
+          380,
+          388,
+          396,
+          404,
+          412,
+          420,
+          428,
+          436,
+          444,
+          452,
+          460,
+          468,
+          476,
+          484,
+          492,
+          500,
+          508,
+          516,
+          524,
+          532,
+          540,
+          548,
+          556,
+          564,
+          572,
+          580,
+          588,
+          596,
+          604,
+          612,
+          620,
+          628,
+          636,
+          644,
+          652,
+          660,
+          668,
+          676,
+          684,
+          692,
+          700,
+          708,
+          716,
+          724,
+          732,
+          740,
+          748,
+          756,
+          764,
+          772,
+          780,
+          788,
+          796,
+          804,
+          812,
+          820,
+          828,
+          836,
+          844,
+          852,
+          860,
+          868,
+          876,
+          884,
+          892,
+          900,
+          908,
+          916,
+          924,
+          932,
+          940,
+          948,
+          956,
+          964,
+          972,
+          980,
+          988,
+          996
+        ],
+        "stats": [
+          1.0445367066909788,
+          1.1453932919463858,
+          1.019673942709782,
+          0.9853237839241127,
+          0.8993398052757847,
+          1.0871212487925193,
+          0.8696783715851556,
+          0.9728340063342585,
+          1.0054527987604465,
+          1.0885777686131257,
+          1.109173228679685,
+          1.2074328237909588,
+          0.9438976659919288,
+          1.0351343090307226,
+          0.9815137061027751,
+          0.9511328904616844,
+          0.9610990479191945,
+          0.9366601622772389,
+          0.9926304522270829,
+          1.0569696137707938,
+          0.863985842830006,
+          1.0077982898557902,
+          1.027532433081299,
+          0.9590280663909837,
+          1.1000893377311673,
+          0.8352158958109361,
+          1.0782257059827784,
+          1.0154139952976222,
+          1.0250850381922114,
+          0.9990312244394436,
+          1.0465992572847793,
+          0.9074816268663258,
+          0.9502227585014287,
+          0.9356855082194118,
+          0.9855491105408334,
+          1.0629155698158097,
+          0.9411696179129765,
+          1.128571049503742,
+          1.0664514205682947,
+          0.8480720227038391,
+          0.8367335818812134,
+          1.0732953959435578,
+          1.0734211824526325,
+          0.9545058395541325,
+          1.1974838100490535,
+          1.0492096232331263,
+          1.1271010484077995,
+          0.8955176480740004,
+          0.9707520261902736,
+          1.2662902130573104,
+          1.124926358142477,
+          0.8985117846584258,
+          0.9027337408072978,
+          0.9253917751874956,
+          0.9698651165235853,
+          1.0079577425376816,
+          0.8426492319670738,
+          0.9271366936329503,
+          1.038581637292876,
+          1.0762005394772174,
+          0.8973465302428634,
+          1.0861535006874694,
+          1.0176029347468325,
+          0.8886809008986143,
+          1.1752632166563506,
+          0.96589343809249,
+          1.0629881301183672,
+          0.9697439882147866,
+          1.009200872024649,
+          1.0443882774592967,
+          0.9748823777606423,
+          1.1730734407776209,
+          1.213680670644408,
+          1.0386059913130998,
+          0.7728931344049539,
+          1.0101283980432492,
+          0.9095003172507002,
+          1.1043156299300956,
+          1.0753550546856276,
+          0.8615573324468329,
+          0.9405707159120748,
+          0.9347742160247463,
+          1.062443119186127,
+          0.996570052625086,
+          1.0379070487524102,
+          0.9741229172835708,
+          0.9295660133598546,
+          0.9687224686992835,
+          1.0655486382948371,
+          0.8730813661427311,
+          1.022199181475719,
+          1.0703692682704855,
+          1.2189097246567315,
+          1.1170485787549067,
+          1.0883799414197228,
+          0.9840851481584619,
+          1.160631139547231,
+          1.1431809080544084,
+          1.057521179479253,
+          1.0540629068438356,
+          1.0852641377796026,
+          1.0573441465613773,
+          0.9963502221514432,
+          0.8158903525793572,
+          1.0372854754662661,
+          1.15755571151749,
+          0.9342995344947834,
+          0.9953493267274297,
+          1.0954350299752798,
+          0.9253675765510356,
+          0.8447229641197169,
+          0.8712874627265499,
+          0.9904428476659826,
+          1.0575746040367133,
+          1.0375777412127691,
+          0.8457988373103128,
+          1.0451107846324663,
+          1.0634919474371265,
+          0.872749800605672,
+          1.0833914880871396,
+          0.9924332723535648,
+          1.2443906803330724,
+          1.119696980079862,
+          0.92681052637794,
+          1.108384897419785
+        ]
+      },
+      "K3": {
+        "checked": false,
+        "coeff_cross": null,
+        "coeff_sum": null,
+        "domain": "wide",
+        "ex_ante_class": "N1",
+        "function": "K3",
+        "propagated_trace_sum": 0.0,
+        "rejects": 0,
+        "seeds": [],
+        "stats": []
+      },
+      "K4": {
+        "checked": false,
+        "coeff_cross": null,
+        "coeff_sum": null,
+        "domain": "wide",
+        "ex_ante_class": "N1",
+        "function": "K4",
+        "propagated_trace_sum": 0.0,
+        "rejects": 0,
+        "seeds": [],
+        "stats": []
+      },
+      "K5": {
+        "checked": false,
+        "coeff_cross": null,
+        "coeff_sum": null,
+        "domain": "wide",
+        "ex_ante_class": "N2",
+        "function": "K5",
+        "propagated_trace_sum": 0.0,
+        "rejects": 0,
+        "seeds": [],
+        "stats": []
+      },
+      "K6": {
+        "checked": true,
+        "coeff_cross": [
+          [
+            94.034035670623,
+            -46.70244384246065,
+            -23.437227688840466,
+            11.697136767096042
+          ],
+          [
+            -46.70244384246065,
+            23.626238324864023,
+            11.74118237787916,
+            -5.900018799697841
+          ],
+          [
+            -23.437227688840466,
+            11.74118237787916,
+            5.865523293659782,
+            -2.936833859368394
+          ],
+          [
+            11.697136767096042,
+            -5.900018799697841,
+            -2.936833859368394,
+            1.4742027108531581
+          ]
+        ],
+        "coeff_sum": [
+          108.36803549008788,
+          -54.041888207410956,
+          -27.061540479753507,
+          13.526525063383165
+        ],
+        "domain": "wide",
+        "ex_ante_class": "I",
+        "function": "K6",
+        "propagated_trace_sum": 0.14283943738814195,
+        "rejects": 0,
+        "seeds": [
+          4,
+          12,
+          20,
+          28,
+          36,
+          44,
+          52,
+          60,
+          68,
+          76,
+          84,
+          92,
+          100,
+          108,
+          116,
+          124,
+          132,
+          140,
+          148,
+          156,
+          164,
+          172,
+          180,
+          188,
+          196,
+          204,
+          212,
+          220,
+          228,
+          236,
+          244,
+          252,
+          260,
+          268,
+          276,
+          284,
+          292,
+          300,
+          308,
+          316,
+          324,
+          332,
+          340,
+          348,
+          356,
+          364,
+          372,
+          380,
+          388,
+          396,
+          404,
+          412,
+          420,
+          428,
+          436,
+          444,
+          452,
+          460,
+          468,
+          476,
+          484,
+          492,
+          500,
+          508,
+          516,
+          524,
+          532,
+          540,
+          548,
+          556,
+          564,
+          572,
+          580,
+          588,
+          596,
+          604,
+          612,
+          620,
+          628,
+          636,
+          644,
+          652,
+          660,
+          668,
+          676,
+          684,
+          692,
+          700,
+          708,
+          716,
+          724,
+          732,
+          740,
+          748,
+          756,
+          764,
+          772,
+          780,
+          788,
+          796,
+          804,
+          812,
+          820,
+          828,
+          836,
+          844,
+          852,
+          860,
+          868,
+          876,
+          884,
+          892,
+          900,
+          908,
+          916,
+          924,
+          932,
+          940,
+          948,
+          956,
+          964,
+          972,
+          980,
+          988,
+          996
+        ],
+        "stats": [
+          0.6285442062748914,
+          0.7362013142777776,
+          0.7003182993281809,
+          0.7006732235142825,
+          0.6037316690596866,
+          0.6993163510613138,
+          0.6545320355925407,
+          0.608551561534182,
+          0.6429988710528712,
+          0.7907477252298826,
+          0.7172056906525379,
+          0.821502757128532,
+          0.6615934521649214,
+          0.682484824646209,
+          0.656666879769163,
+          0.6337399275774032,
+          0.6424714520501082,
+          0.7634798631414847,
+          0.689097697255086,
+          0.7633063929370948,
+          0.5927771574479241,
+          0.6486018047835561,
+          0.759329744132146,
+          0.6118708918969087,
+          0.7487423457846374,
+          0.6478003314894012,
+          0.7221677011707692,
+          0.6751601515810564,
+          0.7790573698382637,
+          0.8173389234642755,
+          0.6449552712303073,
+          0.7002579862180316,
+          0.6849689715214613,
+          0.6991786391082211,
+          0.6765869228511892,
+          0.7964082444319281,
+          0.5948489310506062,
+          0.7424769258096956,
+          0.7069306520991776,
+          0.657070150883012,
+          0.6152300134691445,
+          0.713436001508057,
+          0.6792746724601307,
+          0.7081515886422027,
+          0.7323134210791329,
+          0.8078639049880252,
+          0.7543432627638682,
+          0.5632267238904537,
+          0.6776779670245512,
+          0.7791588097511162,
+          0.7922035452999019,
+          0.6110384782675763,
+          0.5965441553346085,
+          0.6409073161335692,
+          0.7287970687725018,
+          0.7251950989608889,
+          0.6883652632211864,
+          0.6740995076997411,
+          0.6994930579308417,
+          0.7618574999914695,
+          0.6370054503383504,
+          0.7906188969356124,
+          0.6441090420805172,
+          0.6945356554776578,
+          0.7164005503479135,
+          0.6826218584410015,
+          0.7240284398931542,
+          0.7479929308988984,
+          0.6556951522843059,
+          0.7585352475920414,
+          0.6449702858626424,
+          0.7739739136354185,
+          0.7686982648936825,
+          0.7181509725678146,
+          0.647714475113185,
+          0.7642546826977236,
+          0.6484055295729675,
+          0.7807013182628292,
+          0.7373394799135355,
+          0.6968070867087122,
+          0.6943422493355935,
+          0.6496981666482987,
+          0.8166630019294715,
+          0.6829801268543306,
+          0.7914507554851383,
+          0.8070938562652075,
+          0.6632236477183846,
+          0.6544741831705457,
+          0.7361955573746205,
+          0.6700730999464573,
+          0.6764707292894143,
+          0.69282477056604,
+          0.7541727355605865,
+          0.7348610810537305,
+          0.7193565568485115,
+          0.7483550700885552,
+          0.7405196672504348,
+          0.7956395575239238,
+          0.7215321438430969,
+          0.7103386581410184,
+          0.737111847788553,
+          0.7413745196855565,
+          0.7042971783560745,
+          0.6096666772465317,
+          0.6770201607285414,
+          0.7852207210050135,
+          0.634974990959483,
+          0.6771229324063285,
+          0.6744813199374321,
+          0.673963834224647,
+          0.6869381946921161,
+          0.6357856371207022,
+          0.670547999547849,
+          0.6706187118563672,
+          0.6925706289876107,
+          0.6268743206373864,
+          0.7786627501172434,
+          0.7683317931269792,
+          0.6413580467181719,
+          0.7850439873712162,
+          0.6850147058029296,
+          0.7547232575796389,
+          0.8175352059953632,
+          0.6781230995799231,
+          0.6936198481576168
+        ]
+      }
+    },
+    "part": "4/8",
+    "passed": false,
+    "points_passed": {
+      "1_3": false,
+      "4": false
+    }
+  },
+  "ell_max": 4,
+  "ex_ante_classes": {
+    "K1": {
+      "narrow": {
+        "class": "N2",
+        "earlier": [
+          {
+            "beta": 0.9953416999566885,
+            "class": [
+              1,
+              0
+            ]
+          }
+        ],
+        "theta_hat_c": 0.5347901539206983
+      },
+      "wide": {
+        "class": "I",
+        "earlier": [
+          {
+            "beta": 1.0,
+            "class": [
+              1,
+              0
+            ]
+          }
+        ],
+        "theta_hat_c": 0.0015522608634490713
+      }
+    },
+    "K2": {
+      "narrow": {
+        "class": "N1",
+        "earlier": [
+          {
+            "beta": 1.0,
+            "class": [
+              1,
+              0
+            ]
+          },
+          {
+            "beta": 0.010033870851216454,
+            "class": [
+              2,
+              0
+            ]
+          }
+        ],
+        "theta_hat_c": 0.06176766209990064
+      },
+      "wide": {
+        "class": "I",
+        "earlier": [
+          {
+            "beta": 1.0,
+            "class": [
+              1,
+              0
+            ]
+          },
+          {
+            "beta": 1.0,
+            "class": [
+              2,
+              0
+            ]
+          }
+        ],
+        "theta_hat_c": 0.0035497984864395725
+      }
+    },
+    "K3": {
+      "narrow": {
+        "class": "N1",
+        "earlier": [
+          {
+            "beta": 1.0,
+            "class": [
+              1,
+              0
+            ]
+          },
+          {
+            "beta": 0.01000389107511433,
+            "class": [
+              2,
+              0
+            ]
+          },
+          {
+            "beta": 0.010000713140313795,
+            "class": [
+              1,
+              1
+            ]
+          },
+          {
+            "beta": 0.010000000016163612,
+            "class": [
+              3,
+              0
+            ]
+          },
+          {
+            "beta": 0.010000000001054452,
+            "class": [
+              4,
+              0
+            ]
+          },
+          {
+            "beta": 0.010000000000037418,
+            "class": [
+              1,
+              2
+            ]
+          }
+        ],
+        "theta_hat_c": 65.52108837569276
+      },
+      "wide": {
+        "class": "N1",
+        "earlier": [
+          {
+            "beta": 1.0,
+            "class": [
+              1,
+              0
+            ]
+          },
+          {
+            "beta": 1.0,
+            "class": [
+              2,
+              0
+            ]
+          },
+          {
+            "beta": 1.0,
+            "class": [
+              1,
+              1
+            ]
+          },
+          {
+            "beta": 1.0,
+            "class": [
+              3,
+              0
+            ]
+          },
+          {
+            "beta": 0.2732202353604107,
+            "class": [
+              4,
+              0
+            ]
+          },
+          {
+            "beta": 1.0,
+            "class": [
+              1,
+              2
+            ]
+          }
+        ],
+        "theta_hat_c": 0.007756714198404987
+      }
+    },
+    "K4": {
+      "narrow": {
+        "class": "N1",
+        "earlier": [
+          {
+            "beta": 1.0,
+            "class": [
+              1,
+              0
+            ]
+          },
+          {
+            "beta": 0.010043342243908234,
+            "class": [
+              2,
+              0
+            ]
+          },
+          {
+            "beta": 0.18449107736015088,
+            "class": [
+              1,
+              1
+            ]
+          },
+          {
+            "beta": 0.010000000004451396,
+            "class": [
+              3,
+              0
+            ]
+          },
+          {
+            "beta": 0.010000000000818743,
+            "class": [
+              4,
+              0
+            ]
+          },
+          {
+            "beta": 0.010000044127039249,
+            "class": [
+              1,
+              2
+            ]
+          }
+        ],
+        "theta_hat_c": 3.9714766328760294
+      },
+      "wide": {
+        "class": "N1",
+        "earlier": [
+          {
+            "beta": 1.0,
+            "class": [
+              1,
+              0
+            ]
+          },
+          {
+            "beta": 1.0,
+            "class": [
+              2,
+              0
+            ]
+          },
+          {
+            "beta": 1.0,
+            "class": [
+              1,
+              1
+            ]
+          },
+          {
+            "beta": 0.9999999999999977,
+            "class": [
+              3,
+              0
+            ]
+          },
+          {
+            "beta": 0.010167964471769339,
+            "class": [
+              4,
+              0
+            ]
+          },
+          {
+            "beta": 1.0,
+            "class": [
+              1,
+              2
+            ]
+          }
+        ],
+        "theta_hat_c": 0.008833298729557479
+      }
+    },
+    "K5": {
+      "narrow": {
+        "class": "N1",
+        "earlier": [
+          {
+            "beta": 1.0,
+            "class": [
+              1,
+              0
+            ]
+          },
+          {
+            "beta": 0.010000464151885389,
+            "class": [
+              2,
+              0
+            ]
+          },
+          {
+            "beta": 0.010011667165833989,
+            "class": [
+              1,
+              1
+            ]
+          },
+          {
+            "beta": 0.010000000000750691,
+            "class": [
+              3,
+              0
+            ]
+          }
+        ],
+        "theta_hat_c": 5114.30371723
+      },
+      "wide": {
+        "class": "N2",
+        "earlier": [
+          {
+            "beta": 1.0,
+            "class": [
+              1,
+              0
+            ]
+          },
+          {
+            "beta": 1.0,
+            "class": [
+              2,
+              0
+            ]
+          },
+          {
+            "beta": 1.0,
+            "class": [
+              1,
+              1
+            ]
+          },
+          {
+            "beta": 1.0,
+            "class": [
+              3,
+              0
+            ]
+          }
+        ],
+        "theta_hat_c": 1.5291416286768362
+      }
+    },
+    "K6": {
+      "narrow": {
+        "class": "N1",
+        "earlier": [
+          {
+            "beta": 1.0,
+            "class": [
+              1,
+              0
+            ]
+          },
+          {
+            "beta": 0.0100078188870296,
+            "class": [
+              2,
+              0
+            ]
+          },
+          {
+            "beta": 0.010156096915032565,
+            "class": [
+              1,
+              1
+            ]
+          }
+        ],
+        "theta_hat_c": 127.16716189299748
+      },
+      "wide": {
+        "class": "I",
+        "earlier": [
+          {
+            "beta": 1.0,
+            "class": [
+              1,
+              0
+            ]
+          },
+          {
+            "beta": 1.0,
+            "class": [
+              2,
+              0
+            ]
+          },
+          {
+            "beta": 1.0,
+            "class": [
+              1,
+              1
+            ]
+          }
+        ],
+        "theta_hat_c": 0.052258254197455785
+      }
+    },
+    "K7": {
+      "narrow": {
+        "class": "N1",
+        "earlier": [
+          {
+            "beta": 1.0,
+            "class": [
+              1,
+              0
+            ]
+          },
+          {
+            "beta": 0.010543110944680384,
+            "class": [
+              2,
+              0
+            ]
+          },
+          {
+            "beta": 0.010257172856683431,
+            "class": [
+              1,
+              1
+            ]
+          },
+          {
+            "beta": 0.010000000078055946,
+            "class": [
+              3,
+              0
+            ]
+          },
+          {
+            "beta": 0.010000000000003737,
+            "class": [
+              4,
+              0
+            ]
+          },
+          {
+            "beta": 0.010000043576651298,
+            "class": [
+              1,
+              2
+            ]
+          },
+          {
+            "beta": 0.010000000001804914,
+            "class": [
+              2,
+              1
+            ]
+          }
+        ],
+        "theta_hat_c": 55428.84511984866
+      },
+      "wide": {
+        "class": "N2",
+        "earlier": [
+          {
+            "beta": 1.0,
+            "class": [
+              1,
+              0
+            ]
+          },
+          {
+            "beta": 1.0,
+            "class": [
+              2,
+              0
+            ]
+          },
+          {
+            "beta": 1.0,
+            "class": [
+              1,
+              1
+            ]
+          },
+          {
+            "beta": 1.0,
+            "class": [
+              3,
+              0
+            ]
+          },
+          {
+            "beta": 1.0,
+            "class": [
+              4,
+              0
+            ]
+          },
+          {
+            "beta": 1.0,
+            "class": [
+              1,
+              2
+            ]
+          },
+          {
+            "beta": 1.0,
+            "class": [
+              2,
+              1
+            ]
+          }
+        ],
+        "theta_hat_c": 2.4141315809154436
+      }
+    },
+    "K8": {
+      "narrow": {
+        "class": "N1",
+        "earlier": [
+          {
+            "beta": 1.0,
+            "class": [
+              1,
+              0
+            ]
+          },
+          {
+            "beta": 0.01126165334129603,
+            "class": [
+              2,
+              0
+            ]
+          },
+          {
+            "beta": 0.0436623629486291,
+            "class": [
+              1,
+              1
+            ]
+          },
+          {
+            "beta": 0.010000013231291249,
+            "class": [
+              3,
+              0
+            ]
+          },
+          {
+            "beta": 0.010000000000018,
+            "class": [
+              4,
+              0
+            ]
+          },
+          {
+            "beta": 0.010000384409005377,
+            "class": [
+              1,
+              2
+            ]
+          },
+          {
+            "beta": 0.010000000037167268,
+            "class": [
+              2,
+              1
+            ]
+          },
+          {
+            "beta": 0.010000000000017712,
+            "class": [
+              5,
+              0
+            ]
+          }
+        ],
+        "theta_hat_c": 3850.1705578036426
+      },
+      "wide": {
+        "class": "I",
+        "earlier": [
+          {
+            "beta": 1.0,
+            "class": [
+              1,
+              0
+            ]
+          },
+          {
+            "beta": 1.0,
+            "class": [
+              2,
+              0
+            ]
+          },
+          {
+            "beta": 1.0,
+            "class": [
+              1,
+              1
+            ]
+          },
+          {
+            "beta": 1.0,
+            "class": [
+              3,
+              0
+            ]
+          },
+          {
+            "beta": 1.0,
+            "class": [
+              4,
+              0
+            ]
+          },
+          {
+            "beta": 1.0,
+            "class": [
+              1,
+              2
+            ]
+          },
+          {
+            "beta": 1.0,
+            "class": [
+              2,
+              1
+            ]
+          },
+          {
+            "beta": 1.0,
+            "class": [
+              5,
+              0
+            ]
+          }
+        ],
+        "theta_hat_c": 0.012077986454842994
+      }
+    }
+  },
+  "passed": false,
+  "runtime_seconds": 16469.9063641,
+  "settings": {
+    "limit": false,
+    "n": 2000,
+    "part": "4/8",
+    "reps": 1000
+  },
+  "tau": 3.386508022297224e-07
+}

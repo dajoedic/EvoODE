@@ -86,6 +86,43 @@ Gate-Set deshalb nicht „verbrauchen“. Die Gate-Kriterien selbst würden dabe
 - Abgebrochener Lauf mit dem Vorzeichenfehler: `results/calibration/aborted_2026-10-05_sign_bug/`
 - Chronologie: `DIARY.md` vom 04. und 05.10.
 
-## Nachtrag
+## Nachtrag 1: Anhang B (Option A, vom Nutzer gewählt am 05.10.)
 
-*(wird ergänzt, sobald K7 breit und K8 breit fertig sind)*
+**Ergebnis: Das Kill-Kriterium K6 würde auslösen.** Anhang A ist nicht bestanden. Anhang B ist deshalb eine Diagnose
+und kein Gate-Ergebnis, die Antwort ist aber eindeutig. Gerechnet wurde am 05.10. von 09:18 bis 09:46 mit
+$\ell_{\max} = 4$, $\tau = 3.4\cdot10^{-7}$ und AML (L-BFGS). Daten:
+`experiments/annihilator_gate2a_v3/results/appendix_B/appendix_B.{json,md}`.
+
+**Breite Domäne, 1 % Rauschen:**
+
+| | F1 $x^2$ | F2 $e^{1.5x}$ | F3 $x^{1.5}$ | F4 $\log x$ | F5 $x\log x$ | F6 $e^{-x^2}$ | F7 $\sin$ | F8 $x/(2+x)$ | F9 $x^2+e^x$ | F10 |
+|---|---|---|---|---|---|---|---|---|---|---|
+| Referenz $(r,d)$ | (1,1) | (1,0) | (1,1) | (2,1) | (3,1) | (1,1) | (2,0) | (1,2) | (4,0) | (5,1) |
+| Klasse | I | I | I | **N1** | **N1** | I | I | **N1** | **N1** | **N1** |
+| konkurrierende falsche Klasse | | | | (4,0) | (6,0) | | | (4,0) | (3,0) | (3,2) |
+
+K6 zählt die breiten Zellen mit $r_{\text{ref}} \le 3$ (F1–F8), die in N1 oder N2 fallen. Das sind **3** (F4, F5, F8),
+erlaubt ist höchstens 1.
+
+**Bei 5 %** fällt zusätzlich F3 auf N1. **Schmal** ist fast alles N1, nur F2 bleibt bei 1 % und 5 % I, F7 bei 1 % I.
+
+**Lesart.** In allen N1-Zellen hat die konkurrierende falsche Klasse eine Güte von $\beta \approx 0.01$, also gleich
+$\alpha$. Der ideale Test kann sie auf exakten Daten praktisch gar nicht verwerfen. Ein Operator mit **konstanten**
+Koeffizienten höherer Ordnung, etwa (4,0), approximiert $\log x$, $x\log x$ und $x/(2+x)$ im Rahmen von 1 % Rauschen
+genauso gut wie der wahre Operator mit **polynomialen** Koeffizienten. Bei 1 % Rauschen tragen die Daten keine
+Information darüber, ob die Koeffizienten von $x$ abhängen. Genau diese Abhängigkeit war aber der Kern der Idee
+(Funktionsfamilien jenseits von Exponentialpolynomen erkennen).
+
+**Was bleibt:** Bei Operatoren erster Ordnung (Potenzen, Exponentialfunktionen, Gauß) und bei Sinus funktioniert das
+Verfahren. Dort hat es auch einen kalibrierten Test (K1, K2 in Anhang A). Das ist aber gerade der Bereich, den
+bestehende Methoden schon gut abdecken.
+
+**Nach den eigenen, vorab festgelegten Regeln** (v2 §12, K6): Gate 2A ist in dieser Form nicht bestehbar. K6 ist ein
+Kill, gemeint als „beendet oder zwingt zur grundsätzlichen Neubewertung“. Die Neubewertung müsste beim
+Messdesign ansetzen, also bei mehr Daten, weniger Rauschen oder anderen Testfunktionen, nicht bei einer v4 des
+Schätzers. Ob das lohnt, entscheidet der Nutzer.
+
+## Nachtrag 2: Clean-Zellen K7 und K8 breit
+
+K7 breit ist fertig (Teil 4). K8 breit lief um 09:45 seit fast vier Stunden noch. Beide ändern weder das Verdikt
+zu Anhang A noch Anhang B.
