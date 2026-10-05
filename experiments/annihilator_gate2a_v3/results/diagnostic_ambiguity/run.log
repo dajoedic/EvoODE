@@ -1,0 +1,12 @@
+[2026-10-05T13:11:26] F2 seed=50000 state=AMBIGUOUS tested=2 aml=19 seconds=1096.325
+[2026-10-05T13:30:13] F1 seed=50000 state=AMBIGUOUS tested=5 aml=19 seconds=2223.228
+[2026-10-05T13:38:02] F8 seed=50000 state=AMBIGUOUS tested=4 aml=33 seconds=2691.659
+[2026-10-05T13:39:24] F2 seed=50001 state=CORRECT tested=1 aml=4 seconds=550.102
+[2026-10-05T13:42:19] F1 seed=50001 state=CORRECT tested=3 aml=9 seconds=1851.931
+[2026-10-05T13:43:17] F5 seed=50000 state=AMBIGUOUS tested=4 aml=27 seconds=3007.247
+[2026-10-05T13:43:43] F6 seed=50000 state=AMBIGUOUS tested=7 aml=26 seconds=3032.868
+[2026-10-05T13:44:27] F4 seed=50000 state=AMBIGUOUS tested=5 aml=59 seconds=3076.786
+[2026-10-05T14:08:07] F8 seed=50001 state=AMBIGUOUS tested=4 aml=53 seconds=1489.515
+[2026-10-05T14:11:18] F6 seed=50001 state=CORRECT tested=3 aml=10 seconds=1739.106
+[2026-10-05T14:20:58] F4 seed=50001 state=WRONG tested=4 aml=29 seconds=2576.061
+[2026-10-05T14:21:29] F5 seed=50001 state=AMBIGUOUS tested=4 aml=23 seconds=2524.759

@@ -9,6 +9,7 @@ from dataclasses import asdict
 from datetime import datetime
 import json
 import math
+import os
 import time
 from pathlib import Path
 from typing import Iterable
@@ -47,6 +48,19 @@ SUMMARY_MD = OUTDIR / "summary.md"
 DONE_PATH = OUTDIR / "DONE"
 LOG_PATH = OUTDIR / "run.log"
 NULLSPACE_CACHE_PATH = OUTDIR / "nullspace_cache.json"
+
+
+def output_paths(outdir: Path = OUTDIR) -> dict[str, Path]:
+    return {
+        "outdir": outdir,
+        "records": outdir / "records.jsonl",
+        "records_merged": outdir / "records_merged.jsonl",
+        "summary_json": outdir / "summary.json",
+        "summary_md": outdir / "summary.md",
+        "done": outdir / "DONE",
+        "log": outdir / "run.log",
+        "nullspace_cache": outdir / "nullspace_cache.json",
+    }
 
 
 def load_oracle_cache() -> dict:
@@ -129,29 +143,60 @@ def nullspace_basis(function_key: str, cls: tuple[int, int]) -> np.ndarray:
     return np.vstack(rows) if rows else np.empty((0, (r + 1) * (d + 1)), dtype=float)
 
 
-def load_nullspace_cache() -> dict:
-    if not NULLSPACE_CACHE_PATH.exists():
+def warn_log(message: str, log_path: Path = LOG_PATH) -> None:
+    log_path.parent.mkdir(parents=True, exist_ok=True)
+    with log_path.open("a", encoding="utf-8") as handle:
+        handle.write(f"[{datetime.now().isoformat(timespec='seconds')}] WARNING {message}\n")
+
+
+def load_nullspace_cache(path: Path = NULLSPACE_CACHE_PATH, log_path: Path = LOG_PATH) -> dict:
+    if not path.exists():
         return {}
-    return json.loads(NULLSPACE_CACHE_PATH.read_text())
+    try:
+        return json.loads(path.read_text())
+    except (OSError, json.JSONDecodeError) as exc:
+        warn_log(f"ignoring unreadable nullspace cache {path}: {exc}", log_path)
+        return {}
 
 
-def save_nullspace_cache(cache: dict) -> None:
-    NULLSPACE_CACHE_PATH.write_text(json.dumps(cache, indent=2, sort_keys=True))
+def save_nullspace_cache(cache: dict, path: Path = NULLSPACE_CACHE_PATH, log_path: Path = LOG_PATH) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    merged = load_nullspace_cache(path, log_path)
+    merged.update(cache)
+    tmp_path = path.with_name(f".{path.name}.{os.getpid()}.{time.time_ns()}.tmp")
+    tmp_path.write_text(json.dumps(merged, indent=2, sort_keys=True))
+    os.replace(tmp_path, path)
+    cache.clear()
+    cache.update(merged)
 
 
-def cached_nullspace(function_key: str, cls: tuple[int, int], cache: dict) -> np.ndarray:
+def cached_nullspace(
+    function_key: str,
+    cls: tuple[int, int],
+    cache: dict,
+    cache_path: Path = NULLSPACE_CACHE_PATH,
+    log_path: Path = LOG_PATH,
+) -> np.ndarray:
     key = f"{function_key}:{cls[0]},{cls[1]}"
     if key not in cache:
         basis = nullspace_basis(function_key, cls)
         cache[key] = {"basis": basis.tolist(), "n_exact": int(basis.shape[0])}
-        save_nullspace_cache(cache)
+        save_nullspace_cache(cache, cache_path, log_path)
     return np.asarray(cache[key]["basis"], dtype=float)
 
 
-def principal_angle_degrees(coeffs: np.ndarray | None, function_key: str, cls: tuple[int, int] | None, n_exact_value: int | None, cache: dict) -> float | None:
+def principal_angle_degrees(
+    coeffs: np.ndarray | None,
+    function_key: str,
+    cls: tuple[int, int] | None,
+    n_exact_value: int | None,
+    cache: dict,
+    cache_path: Path = NULLSPACE_CACHE_PATH,
+    log_path: Path = LOG_PATH,
+) -> float | None:
     if coeffs is None or cls is None or not n_exact_value:
         return None
-    basis = cached_nullspace(function_key, cls, cache)
+    basis = cached_nullspace(function_key, cls, cache, cache_path, log_path)
     if basis.shape[0] != n_exact_value:
         raise RuntimeError(f"cached basis dimension mismatch for {function_key}/{cls}: {basis.shape[0]} != {n_exact_value}")
     q_mat, _ = np.linalg.qr(basis.T)
@@ -183,10 +228,19 @@ def selection_payload(selection: Selection) -> dict:
     }
 
 
-def run_one(function_key: str, seed: int, *, settings: Settings | None = None, cache: dict | None = None, null_cache: dict | None = None) -> dict:
+def run_one(
+    function_key: str,
+    seed: int,
+    *,
+    settings: Settings | None = None,
+    cache: dict | None = None,
+    null_cache: dict | None = None,
+    null_cache_path: Path = NULLSPACE_CACHE_PATH,
+    log_path: Path = LOG_PATH,
+) -> dict:
     settings = settings or diagnostic_settings()
     cache = cache or load_oracle_cache()
-    null_cache = null_cache if null_cache is not None else load_nullspace_cache()
+    null_cache = null_cache if null_cache is not None else load_nullspace_cache(null_cache_path, log_path)
     spec = FUNCTIONS[function_key]
     start = time.perf_counter()
     _, z, values, _ = noisy_sample(function_key, domain_for(spec, DOMAIN_NAME), settings.n, ETA, seed)
@@ -195,7 +249,7 @@ def run_one(function_key: str, seed: int, *, settings: Settings | None = None, c
     state, sources = _state_for_clean(cache, function_key, DOMAIN_NAME, selection, expected, False)
     selected = None if selection.selected_class is None else tuple(selection.selected_class)
     n_exact_value = _n_exact(cache, function_key, selected)
-    angle = principal_angle_degrees(selection.coeffs, function_key, selected, n_exact_value, null_cache)
+    angle = principal_angle_degrees(selection.coeffs, function_key, selected, n_exact_value, null_cache, null_cache_path, log_path)
     record = {
         "function": function_key,
         "group": FUNCTION_GROUP[function_key],
@@ -237,20 +291,22 @@ def completed_keys(path: Path = RECORDS_PATH) -> set[tuple[str, int]]:
     return {(record["function"], int(record["seed"])) for record in iter_records(path)}
 
 
-def append_record(record: dict) -> None:
-    with RECORDS_PATH.open("a", encoding="utf-8") as handle:
+def append_record(record: dict, path: Path = RECORDS_PATH) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("a", encoding="utf-8") as handle:
         handle.write(json.dumps(record, sort_keys=True) + "\n")
         handle.flush()
 
 
-def log_progress(record: dict) -> None:
+def log_progress(record: dict, path: Path = LOG_PATH) -> None:
     line = (
         f"[{datetime.now().isoformat(timespec='seconds')}] "
-        f"{record['function']} seed={record['seed']} state={record['state']} "
+        f"{record['function']} seed={record['seed']} "
         f"tested={record['tested_classes']} aml={record['aml_iterations']} "
         f"seconds={record['wall_clock_seconds']:.3f}"
     )
-    with LOG_PATH.open("a", encoding="utf-8") as handle:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("a", encoding="utf-8") as handle:
         handle.write(line + "\n")
 
 
@@ -258,29 +314,100 @@ def tasks_for_reps(reps: int) -> list[tuple[str, int]]:
     return [(function_key, SEED_BASE + k) for k in range(reps) for function_key in FUNCTION_KEYS]
 
 
-def run_reps(reps: int, workers: int) -> None:
+def parse_part(value: str) -> tuple[int, int]:
+    try:
+        left, right = value.split("/", 1)
+        index = int(left)
+        count = int(right)
+    except ValueError as exc:
+        raise SystemExit("--part must have form i/k") from exc
+    if count < 1:
+        raise SystemExit("--part k must be positive")
+    if index < 0 or index >= count:
+        raise SystemExit("--part requires 0 <= i < k")
+    return index, count
+
+
+def tasks_for_part(reps: int, part: tuple[int, int], base_records_path: Path = RECORDS_PATH) -> list[tuple[str, int]]:
+    done_in_base = completed_keys(base_records_path)
+    open_tasks = [task for task in tasks_for_reps(reps) if task not in done_in_base]
+    index, count = part
+    return [task for j, task in enumerate(open_tasks) if j % count == index]
+
+
+def run_reps(reps: int, workers: int, *, outdir: Path = OUTDIR, part: tuple[int, int] | None = None) -> None:
     if workers < 1 or workers > 6:
         raise SystemExit("--workers must be between 1 and 6")
-    OUTDIR.mkdir(parents=True, exist_ok=True)
+    base_paths = output_paths(outdir)
+    if part is None:
+        run_paths = base_paths
+        tasks = tasks_for_reps(reps)
+    else:
+        index, count = part
+        run_paths = output_paths(outdir / "parts" / f"part_{index}_of_{count}")
+        tasks = tasks_for_part(reps, part, base_paths["records"])
+    run_paths["outdir"].mkdir(parents=True, exist_ok=True)
     cache = load_oracle_cache()
     validate_references(cache)
     settings = diagnostic_settings()
-    done = completed_keys()
-    tasks = [task for task in tasks_for_reps(reps) if task not in done]
+    done = completed_keys(run_paths["records"])
+    tasks = [task for task in tasks if task not in done]
     if workers == 1:
-        null_cache = load_nullspace_cache()
+        null_cache = load_nullspace_cache(run_paths["nullspace_cache"], run_paths["log"])
         for function_key, seed in tasks:
-            record = run_one(function_key, seed, settings=settings, cache=cache, null_cache=null_cache)
-            append_record(record)
-            log_progress(record)
+            record = run_one(
+                function_key,
+                seed,
+                settings=settings,
+                cache=cache,
+                null_cache=null_cache,
+                null_cache_path=run_paths["nullspace_cache"],
+                log_path=run_paths["log"],
+            )
+            append_record(record, run_paths["records"])
+            log_progress(record, run_paths["log"])
     else:
         with ProcessPoolExecutor(max_workers=workers) as pool:
-            futures = {pool.submit(run_one, function_key, seed): (function_key, seed) for function_key, seed in tasks}
+            futures = {
+                pool.submit(
+                    run_one,
+                    function_key,
+                    seed,
+                    settings=settings,
+                    cache=cache,
+                    null_cache_path=run_paths["nullspace_cache"],
+                    log_path=run_paths["log"],
+                ): (function_key, seed)
+                for function_key, seed in tasks
+            }
             for future in as_completed(futures):
                 record = future.result()
-                append_record(record)
-                log_progress(record)
-    DONE_PATH.write_text(datetime.now().isoformat(timespec="seconds") + "\n")
+                append_record(record, run_paths["records"])
+                log_progress(record, run_paths["log"])
+    run_paths["done"].write_text(datetime.now().isoformat(timespec="seconds") + "\n")
+
+
+def merge_records(outdir: Path = OUTDIR, reps: int | None = None) -> list[dict]:
+    paths = output_paths(outdir)
+    records: list[dict] = []
+    seen: set[tuple[str, int]] = set()
+    min_seed = SEED_BASE
+    max_seed = SEED_BASE + reps - 1 if reps is not None else None
+    sources = [paths["records"]]
+    parts_dir = outdir / "parts"
+    if parts_dir.exists():
+        sources.extend(sorted(parts_dir.glob("*/records.jsonl")))
+    for source in sources:
+        for record in iter_records(source):
+            key = (record["function"], int(record["seed"]))
+            if key in seen:
+                raise SystemExit(f"duplicate record for {key[0]} seed {key[1]} in {source}")
+            if max_seed is not None and not (min_seed <= key[1] <= max_seed):
+                raise SystemExit(f"seed {key[1]} in {source} outside {min_seed}..{max_seed}")
+            seen.add(key)
+            records.append(record)
+    paths["records_merged"].write_text("".join(json.dumps(record, sort_keys=True) + "\n" for record in records))
+    return records
 
 
 def _rate(count: int, total: int) -> float | None:
@@ -398,8 +525,10 @@ def summarize_records(records: list[dict]) -> dict:
     }
 
 
-def write_summary(summary: dict) -> None:
-    SUMMARY_JSON.write_text(json.dumps(summary, indent=2, sort_keys=True))
+def write_summary(summary: dict, outdir: Path = OUTDIR) -> None:
+    paths = output_paths(outdir)
+    paths["outdir"].mkdir(parents=True, exist_ok=True)
+    paths["summary_json"].write_text(json.dumps(summary, indent=2, sort_keys=True))
     lines = [
         "# Diagnostic Ambiguity Summary",
         "",
@@ -428,14 +557,15 @@ def write_summary(summary: dict) -> None:
             f"{states['CORRECT']['count']} | {states['TRUE_NOT_REF']['count']} | {states['WRONG']['count']} | "
             f"{payload['wrong_given_unambiguous']} |"
         )
-    SUMMARY_MD.write_text("\n".join(lines) + "\n")
+    paths["summary_md"].write_text("\n".join(lines) + "\n")
 
 
-def summarize() -> dict:
-    OUTDIR.mkdir(parents=True, exist_ok=True)
-    records = list(iter_records())
+def summarize(records_path: Path = RECORDS_PATH, outdir: Path | None = None) -> dict:
+    summary_outdir = records_path.parent if outdir is None else outdir
+    summary_outdir.mkdir(parents=True, exist_ok=True)
+    records = list(iter_records(records_path))
     summary = summarize_records(records)
-    write_summary(summary)
+    write_summary(summary, summary_outdir)
     return summary
 
 
@@ -445,16 +575,25 @@ def main() -> None:
     parser.add_argument("--pilot", action="store_true")
     parser.add_argument("--workers", type=int, default=1)
     parser.add_argument("--summarize", action="store_true")
+    parser.add_argument("--records", type=Path, default=None)
+    parser.add_argument("--outdir", type=Path, default=OUTDIR)
+    parser.add_argument("--part", type=str, default=None)
+    parser.add_argument("--merge", action="store_true")
     args = parser.parse_args()
+    if args.merge:
+        merge_records(args.outdir, args.reps)
+        return
     if args.summarize:
-        summarize()
+        records_path = args.records if args.records is not None else output_paths(args.outdir)["records"]
+        summarize(records_path, args.outdir)
         return
     reps = 2 if args.pilot else args.reps
     if reps is None:
-        raise SystemExit("use --reps N, --pilot, or --summarize")
+        raise SystemExit("use --reps N, --pilot, --merge, or --summarize")
     if reps < 0:
         raise SystemExit("--reps must be non-negative")
-    run_reps(reps, args.workers)
+    part = parse_part(args.part) if args.part is not None else None
+    run_reps(reps, args.workers, outdir=args.outdir, part=part)
 
 
 if __name__ == "__main__":
