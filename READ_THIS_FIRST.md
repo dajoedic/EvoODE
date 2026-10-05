@@ -38,7 +38,9 @@ ist fertig (WP-DIAG-AMB-a), als Nächstes kommt der Pilot.**
 
 ## 3. Was noch läuft oder liegt
 
-- Es läuft nichts. Kein aktiver Codex-Auftrag.
+- **Der Pilot läuft lokal**, losgelöst gestartet am 05.10. um 12:53 (Haupt-PID 40720, 6 Worker), erwartet 1–3 h.
+  Fortschritt in `results/diagnostic_ambiguity/run.log`, Fehler in `pilot.err`, am Ende die Datei `DONE`. Kein
+  aktiver Codex-Auftrag.
 - `PRACTICAL_ANNIHILATOR_BENCHMARK.md` ist uncommittet (Entwurf des Nutzers).
 - Uncommittet liegen noch Orakel-Teil 12/18 und Worker-Caches der v2-Abnahme
   (`experiments/annihilator_gate2a_v2/results/acceptance/`). v2 ist abgelöst. Ob sie committet oder gelöscht werden,
