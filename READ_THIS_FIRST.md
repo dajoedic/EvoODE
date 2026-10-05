@@ -10,10 +10,10 @@ zweites davon. Alles Dauerhafte gehört dorthin, nach `PAPER_1.md` oder ins `DIA
 **Regeln:** wird immer **vollständig überschrieben**, nie angehängt. Was älter als ein paar Tage
 ist, ist vermutlich falsch — dann gilt `CLAUDE.md`.
 
-**Stand: 2026-10-05 mittags. Phase C abgeschlossen (P-01/P-02 strikte Kette erledigt). Paper-1-Spur: C-6-Raster läuft, nächste Schritte in `docs/status_2026-10-05.md`.**
+**Stand: 2026-10-05, 12:35. Phase C abgeschlossen. Heute: SINDy/Weak-SINDy auf den C-6-Daten läuft lokal, WP-N43 (§9.3-Hierarchie) committet, Entscheidungsregel für Story-Linie (b) wartet auf den Nutzer. Nächste Schritte in `docs/status_2026-10-05.md`.**
 
 **Feste Regeln:** Claude pusht **nie** nach GitLab und nach GitHub nur mit ausdrücklicher Erlaubnis.
-**Keine harten Zeit-Cuts.** Orion-Ergebnisse unter `S:\BigDataOrion\data-science\joedicke\` (nur mit VPN).
+**Keine harten Zeit-Cuts — auch keine Tool-Zeitlimits** (Nutzer 05.10.: lange Läufe abgekoppelt starten, Abbruch nur gemeinsam). Orion-Ergebnisse unter `S:\BigDataOrion\data-science\joedicke\` (nur mit VPN).
 **Codex startet Claude selbst:** `codex exec -C "C:/Users/joedicke/Documents/reps/EvoODE" -s workspace-write "Lies codex/CODEX_PROTOCOL.md und arbeite den Auftrag in codex/CURRENT_TASK.md ab." < /dev/null`
 (`run_in_background`). **Vor jedem Docker-Build `df -h /c` (< 30 GB → erst aufräumen).** Diese Datei bei
 jedem Statuswechsel aktualisieren.
@@ -30,7 +30,13 @@ jedem Statuswechsel aktualisieren.
 | C-3 | **180/180, fertig 05.10.** | — | **P-01/P-02 erledigt 05.10. (`ac64ccc`)**: strikt 936/936, C-1/C-2 identisch; offen: §9.3-Hierarchie |
 | WP-T1f | 35/36 | offen (58 IC1) | `--aggregate-only`, Tor 3 Paper 2 |
 
-Lokal läuft nichts. 55 GB frei. Working Tree sauber, ~56 Commits nicht gepusht (pusht der Nutzer).
+**Lokal läuft (05.10., gestartet ~11:40): SINDy/Weak-SINDy auf allen 4.536 C-6-Exportzellen**, 10 Shards
+parallel, Ausgabe `outputs/c6_sindy_baselines_5dd1df8/shard_<k>/`, Shard 9 trägt die (0,0)-Kontrolle gegen C-4
+(126 Zellen). ~50 min je Shard; erwartetes Ende ~12:45–13:10. Hängt noch an einem Tool-Prozess mit 2-h-Limit
+(~13:40) — falls nicht fertig, vorher mit dem Nutzer entscheiden. Ein erster Versuch mit 6 Shards wurde nach
+30 min vom Tool-Limit ohne Ergebnis beendet. Danach: Shards zusammenführen, Kontrolle prüfen.
+
+55 GB frei. Working Tree sauber bis auf `output/`, `tmp/` (ungetrackt). Commits nicht gepusht (pusht der Nutzer).
 
 ## 2. Fertig liegt (zum Weitermachen, wenn Ergebnisse kommen)
 
@@ -39,12 +45,18 @@ Lokal läuft nichts. 55 GB frei. Working Tree sauber, ~56 Commits nicht gepusht 
   auf dem Raster gestartet.** ODEFormer auf Orion bräuchte ein neues Image (Push durch den Nutzer).
 - Auswertungsskripte: `robustness_stage_report.py`, `aggregate_c8_oracle_bounds.py`, Clean-Eval (WP-N33a).
 
-## 3. Offene Paper-1-Punkte, nicht eilig
+## 3. Heute begonnen / als Nächstes
 
-- Baselines auf dem Raster starten (SINDy/Weak-SINDy billig und lokal).
-- Restart-Kurve (P-04), Claim-Tracing-Audit, `paper/` neu schreiben, Story-Entscheidung (Gespräch).
-- Einschätzung (Gespräch 03.10.): Das Versuchsdesign hält. Ob die Methode überzeugt, ist offen. Der einzige
-  strukturelle Vorteil ist „integrieren statt differenzieren“ unter Rauschen.
+- **WP-N43 committet (`60a4393`)**: Aggregation nach Plan §9.3 für EvoGrow, SINDy, ODEFormer; Kontrollen 529/529,
+  reproduziert 82,3 / 37,3 % exakt. **Lücke:** varianzgewichtete Generalisierung fehlt für EvoGrow und SINDy.
+- **WP-N43b (als Nächstes, Codex):** EvoGrow-Wert aus `outputs/wp_n5_ic_generalization_phase_c/shard_001_of_001/results.jsonl`
+  (`generalization_r2_by_dim`, 337/378; Rest divergiert) plus Varianzgewichte aus dem Trajektorien-Export;
+  SINDy aus der (0,0)-Bedingung des C-6-SINDy-Laufs (hat by-dim, varianzgewichtet, F1), sofern dessen C-4-Kontrolle hält.
+- **Story-Entscheidung vorbereitet:** Claude hat eine Entscheidungsregel für Linie (b) vorgeschlagen (Endpunkt
+  Generalisierung R² > 0,9 varianzgewichtet auf dim 1/2; B1: ≥ 10 pp vor der besten Konfiguration jeder Baseline,
+  Cluster-p < 0,05; B2: flacherer Abfall σ 0 → 0,05; (b) Hauptbotschaft bei B1 in ≥ 4 von 6 Bedingungen mit σ ≥ 0,03
+  und B2). **Wartet auf den Nutzer;** danach als §9.4d im Plan einfrieren, **bevor** C-6-Ergebnisse vorliegen.
+- Später (Nutzer): PySR-Freigabe, ODEFormer-Image; Restart-Kurve (P-04), Claim-Tracing-Audit, `paper/` neu schreiben.
 
 ## 4. Annihilator-Spur: getrennt (Nutzer, 05.10.)
 
