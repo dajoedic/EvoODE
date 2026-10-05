@@ -1,62 +1,39 @@
-# WP-G2A3-a — Gate 2A v3: AML-Schätzer mit L-BFGS, Orakel-Korrekturen, Stufe K verteilbar
+# WP-G2A3-b — Gate 2A v3: Vorzeichenfehler im AML-Gradienten
 **Language: Python**
 
-Grundlage, **wörtlich verbindlich:** `docs/GATE_2A_v3.md` (eingefroren am 2026-10-05) zusammen mit
-`docs/GATE_2A_v2.md`. v3 ist v2 mit den Änderungen Ä1–Ä3. Hintergrund steht im `DIARY.md` vom 05.10.
+Fortsetzung von WP-G2A3-a. Grundlage unverändert: `docs/GATE_2A_v3.md` mit `docs/GATE_2A_v2.md`.
 
-## Ort
+## Befund (Claude, 05.10. nachts)
 
-Neues Verzeichnis `experiments/annihilator_gate2a_v3/`, ausgehend von einer Kopie von
-`experiments/annihilator_gate2a_v2/` **ohne** dessen `results/`. v2 bleibt unverändert, einschließlich seiner
-Ergebnisse. Der v2-Orakel-Cache (`experiments/annihilator_gate2a_v2/results/oracle_reference_v2.json`) darf für die
-Nullraumrechnung übernommen werden, weil sich daran nichts ändert. Er wird nach `annihilator_gate2a_v3/results/`
-kopiert, und die Herkunft wird in den Metadaten vermerkt.
+Stufe K v3 lief und wurde von Claude abgebrochen. Bei K1 breit, 1 %, landet `aml_candidate` in 10 von 12 geprüften
+Seeds (2, 10, …, 90) bei etwa 35° und $J \approx 290$, obwohl $J(c^*) \approx 0.09$ ist. In den übrigen Seeds
+liegt sie bei 0,02–0,05°. Ursache: `aml_cost` und `aml_projected_gradient` rufen `normalize_coeffs(coeffs)` auf.
+Diese Funktion dreht das Vorzeichen so, dass der betragsgrößte Eintrag positiv ist. $J$ ist gerade in $c$ und bleibt
+davon unberührt. Der Gradient ist dagegen ungerade und kehrt sich um, sobald der betragsgrößte Eintrag von $x$
+negativ ist. L-BFGS bekommt dann einen falschen Gradienten, und die Liniensuche bricht ab.
 
-## Umzusetzen
+## Zu tun
 
-1. **Ä1, Schätzer:** FNS wird ersetzt durch die Minimierung von $J(x/\|x\|)$ mit SciPy `L-BFGS-B` ohne Schranken.
-   Einzelheiten:
-   - analytischer Gradient $2X(c)c$, auf den Tangentialraum projiziert und durch $\|x\|$ geteilt;
-   - Start ist der SVD-Kandidat;
-   - feste Werte: `gtol` 1e-12, `ftol` 1e-15, `maxiter` 2000; kein Multistart;
-   - Nicht-Konvergenz wird je Lauf protokolliert (Flag, Iterationen, Meldung), das Ergebnis trotzdem verwendet;
-   - Name in Code und Ausgaben: „AML (L-BFGS)“.
-
-   Kovarianz, Test, A1, A2 und A3 bleiben unverändert und arbeiten am neuen $\hat c$. Ein pytest-Fall prüft:
-   $J(\hat c) \le J(\text{SVD-Start})$, und der Gradient verschwindet am Ergebnis (projizierte Norm klein). Ein
-   zweiter Fall prüft auf **K1 breit, 1 %, Seed 0**: Der Winkel zu $c^*$ liegt unter 1°. Claude hat dort 0,25°
-   gemessen.
-2. **Ä2, Orakel:** Die $n_{\text{exact}}$-Tabelle der breiten Domäne gilt für beide Domänen. Die schmale
-   Rechnung bleibt eine Diagnose, ihre Abweichungen werden ausgewiesen, blockieren aber nicht. Für die schmale
-   Domäne werden $c^*$ und die Referenzklasse aus der breiten Domäne transformiert, wie beim Transfer in v2 §8. Die
-   direkt berechnete schmale Referenzklasse muss trotzdem übereinstimmen. Alles, was $n_{\text{exact}}$ liest
-   (Zustand `TRUE_NOT_REF`), nimmt den breiten Wert.
-3. **Ä3, Verifikation in echter Präzision:**
-   - F1–F9 und alle K-Funktionen mit rationalen Parametern: `nsimplify`, danach vereinfacht $L^*[f]$ in SymPy
-     exakt zu 0;
-   - F10 und alles, was sich nicht rationalisieren lässt: mpmath mit mindestens 50 Stellen, Koeffizienten und
-     Stützstellen als `mpf`, relativ unter 1e-45;
-   - K3 und K4: Definitions-ODE symbolisch.
-
-   Die bisherige float-Prüfung entfällt als Abnahmekriterium.
-4. **Stufe K verteilbar ohne Zeitproblem:** Die Clean-Suche (K-c Punkt 4, 16 Zellen mit Bootstrap) wird **über die
-   Teile verteilt**: Zelle $i$ läuft in Teil $i \bmod n$. Bisher lief sie ganz in Teil 0, das dauerte über 2 h und
-   brach ab. Der Merge prüft, dass jede Clean-Zelle genau einmal vorkommt. Jeder Teil schreibt beim Start und nach
-   jeder abgeschlossenen Einheit eine Fortschrittszeile auf stdout, mit Zeitstempel, damit sich ein laufender Teil
-   beobachten lässt.
-5. **Smoke:** pytest für v3, v2 und v1 grün; Orakel-Verifikation (nur Ä3, ohne Nullraum-Neurechnung) voll
-   ausgeführt, denn sie ist billig; Stufe K mit `--limit`.
+1. `_aml_objective` und alles, was es aufruft, rechnen mit $c = x/\|x\|$ **ohne** Vorzeichennormierung. Eine
+   Normierung des Vorzeichens ist nur für Ausgabe und Vergleich erlaubt, nach der Optimierung.
+2. **pytest:** Der Gradient aus `_aml_objective` stimmt mit zentralen finiten Differenzen von $J(x/\|x\|)$ überein,
+   und zwar an mindestens einem $x$ mit **negativem** betragsgrößtem Eintrag und an einem mit positivem.
+   Zusätzlich gilt für K1 breit, 1 %, die Seeds 2, 10, 18, 26: Winkel zu $c^*$ unter 1°, $J(\hat c) \le J(c^*)
+   \cdot 1.01$, `converged` gleich True.
+3. Prüfe, ob dieselbe Vorzeichennormierung noch an anderer Stelle einen Gradienten oder eine Iteration verfälscht,
+   etwa in der Kovarianz, bei A1 oder in der Ausrichtung im Monte-Carlo. Jede gefundene Stelle kommt mit Begründung
+   in den Report. Ändere sie nur, wenn sie ebenfalls falsch rechnet.
+4. Die Ausgaben des abgebrochenen Laufs unter
+   `experiments/annihilator_gate2a_v3/results/calibration/` (`appendix_A_part_*`, `logs/`) werden nach
+   `results/calibration/aborted_2026-10-05_sign_bug/` verschoben, nicht gelöscht.
+5. Smoke: Stufe K mit `--limit`, und pytest für v3, v2 und v1.
 
 ## Verboten
 
-Wie in WP-G2A2-b. Insbesondere: keine Konstante, Schwelle oder Regel ändern, nichts auf F1–F10 rechnen außer der
-Orakel-Verifikation, kein Multistart und keine Regularisierung, kein Git außer lesend, nichts außerhalb von
-`experiments/annihilator_gate2a_v3/`, `codex/STATUS.md` und `codex/reports/`. **Stufe K nicht voll ausführen**, das
-macht Claude.
+Wie in WP-G2A3-a. Insbesondere: Stufe K nicht voll ausführen, keine Konstante, Schwelle oder Regel ändern, nichts
+auf F1–F10 rechnen, kein Git außer lesend.
 
 ## Abnahme
 
-- Die Punkte 1–5 sind umgesetzt, die Tests sind grün, und der K1-Winkeltest besteht.
-- Report `codex/reports/REPORT_WP_G2A3_A.md` mit den Zahlen, der Orakel-Verifikation pro Zelle, den Abweichungen
-  und den **exakten Befehlen** für Stufe K in 8 Teilen und den Merge, jeweils mit `--n 2000 --reps 1000`.
-- `codex/STATUS.md` mit `WP-G2A3-a`, `done` oder `blocked`.
+Die Tests sind grün, auch die neuen Fälle aus Punkt 2. Report `codex/reports/REPORT_WP_G2A3_B.md` mit den Zahlen
+der vier Seeds und den Befehlen für Stufe K. `codex/STATUS.md` mit `WP-G2A3-b`.
