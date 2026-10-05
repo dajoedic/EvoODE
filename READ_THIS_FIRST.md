@@ -6,8 +6,8 @@ welche Entscheidung ansteht. Wird **immer vollständig überschrieben**. Dauerha
 nicht hier.
 
 **Stand: 2026-10-05 nachmittags. Gate 2A v3 ist gescheitert (Anhang A nicht bestanden, Anhang B löst K6 aus). Neue,
-eingefrorene Diagnose: Trennt `AMBIGUOUS` nicht identifizierbare von identifizierbaren Fällen? Codex baut das
-Skript (WP-DIAG-AMB-a).**
+eingefrorene Diagnose: Trennt `AMBIGUOUS` nicht identifizierbare von identifizierbaren Fällen? Das Skript
+ist fertig (WP-DIAG-AMB-a), als Nächstes kommt der Pilot.**
 
 ## 1. Wo wir stehen
 
@@ -22,16 +22,23 @@ Skript (WP-DIAG-AMB-a).**
 
 ## 2. Nächste Schritte
 
-1. Codex-Abgabe von WP-DIAG-AMB-a prüfen und committen.
-2. **Pilot** (2 Realisierungen je Zelle) starten. Kosten sind unbekannt: eine Realisierung sind 51 Suchen (Haupt
-   plus 50 Bootstrap). Clean-Zellen in Stufe K brauchten 40–50 min.
-3. Aus den Zählgrößen $N$ und den Laufort festlegen, in `docs/DIAGNOSTIC_AMBIGUITY.md` §6 eintragen und committen,
+1. ~~Codex-Abgabe von WP-DIAG-AMB-a prüfen und committen.~~ Erledigt (`ba83120`). Codex meldete `blocked`, weil der
+   eine echte Aufruf (F2, Seed 50000) nach 13 min nicht fertig war (vorgesehener Fall). Die Prüfung der
+   Koeffizientenreihenfolge ist bestanden (alle 6 Funktionen, Skalarprodukt 1,0). Tests: 2 grün, 4 übersprungen
+   (warten auf einen echten Record).
+2. **Pilot** (2 Realisierungen je Zelle, 12 Aufgaben) starten, Befehl:
+   `python -m experiments.annihilator_gate2a_v3.diagnostics.ambiguity_diagnostic --pilot --workers 6`.
+   Eine Realisierung sind 51 Suchen (Haupt plus 50 Bootstrap), F2 allein brauchte über 13 min.
+3. **Vor dem Hauptlauf an Codex (WP-DIAG-AMB-b):** Der Nullraum-Cache wird bei mehreren Workern von jedem Prozess
+   ganz neu geschrieben (Wettlauf, möglicher Abbruch, fortsetzbar). Außerdem die 4 übersprungenen Tests mit einem
+   echten Pilot-Record füllen.
+4. Aus den Zählgrößen $N$ und den Laufort festlegen, in `docs/DIAGNOSTIC_AMBIGUITY.md` §6 eintragen und committen,
    **bevor** der Hauptlauf startet.
-4. Hauptlauf, `--summarize`, Ergebnis in §7.
+5. Hauptlauf, `--summarize`, Ergebnis in §7.
 
 ## 3. Was noch läuft oder liegt
 
-- Codex arbeitet an WP-DIAG-AMB-a (`codex/STATUS.md`).
+- Es läuft nichts. Kein aktiver Codex-Auftrag.
 - `PRACTICAL_ANNIHILATOR_BENCHMARK.md` ist uncommittet (Entwurf des Nutzers).
 - Uncommittet liegen noch Orakel-Teil 12/18 und Worker-Caches der v2-Abnahme
   (`experiments/annihilator_gate2a_v2/results/acceptance/`). v2 ist abgelöst. Ob sie committet oder gelöscht werden,
