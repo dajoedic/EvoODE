@@ -26,6 +26,11 @@ what to work on next. It is deliberately kept short. Detail lives in dedicated d
 | `codex/CURRENT_TASK.md` | the one active task spec for an AI coding assistant |
 | `CHANGELOG.md` | **pipeline compliance record** — CI/CD changes, and the documented exceptions from the SCCH Pipeline Policy required by its §11.1. No scientific history |
 
+**Track separation (user, 2026-10-05):** the method track "Idea #1 – annihilator discovery" lives only in the
+worktree `..\EvoODE-next` on branch `annihilator-discovery`, with its own `CLAUDE.md`, `READ_THIS_FIRST.md`,
+`DIARY.md` and Codex handshake. Sessions in this folder work on EvoGrow / Paper 1 only and do not edit, run or cite
+that track.
+
 Do not start a second planning document. Planning and status belong here; everything else belongs
 in one of the files above.
 
