@@ -12,6 +12,7 @@ what to work on next. It is deliberately kept short. Detail lives in dedicated d
 | `docs/paper1_phaseC_benchmark_plan.md` | **the Phase C claim → experiment → metric → output matrix, freeze list and blocking prerequisites** |
 | `docs/status_2026-09-09.md` | frozen status snapshot, written before the scope decision |
 | `docs/status_2026-10-01.md` | frozen status snapshot after C-1/C-2 and the oracle, written for the external discussion |
+| `docs/status_2026-10-05.md` | frozen status snapshot after Phase C completed (C-3, strict final evaluation) — EvoGrow/Paper 1 only, with the ordered next steps |
 | `docs/EVOGROW_PAPER1_DECISIONS_2026-10-01.md` | dated decision source of the 2026-10-01 scope extension; not maintained, superseded on the bound question by `PAPER_1.md` |
 | `docs/paper1_study_protocol.md` | frozen Phase A protocol — claims, hypotheses, evidence rules (historical) |
 | `docs/paper1_phaseA_reproducibility.md` | frozen Phase A configuration — systems, hyperparameters, seeds, metrics (historical) |
