@@ -71,6 +71,14 @@ def normalize_coeffs(vec: np.ndarray, align_to: np.ndarray | None = None) -> np.
     return out
 
 
+def _unit_coeffs(vec: np.ndarray) -> np.ndarray:
+    out = np.asarray(vec, dtype=float).copy()
+    norm = np.linalg.norm(out)
+    if norm == 0:
+        raise ValueError("zero coefficient vector")
+    return out / norm
+
+
 def _pinv(cov: np.ndarray) -> tuple[np.ndarray, int]:
     vals, vecs = np.linalg.eigh(0.5 * (cov + cov.T))
     vmax = float(np.max(vals)) if vals.size else 0.0
@@ -92,6 +100,7 @@ def _pinv_quadratic(cov: np.ndarray, rho: np.ndarray, alpha: float) -> TestResul
 
 
 def aml_matrices(a_fit: np.ndarray, k_fit: np.ndarray, coeffs: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
+    coeffs = _unit_coeffs(coeffs)
     w = residual_weights(k_fit, coeffs)
     s_mat = w @ w.T
     s_pinv, _ = _pinv(s_mat)
@@ -106,7 +115,7 @@ def aml_matrices(a_fit: np.ndarray, k_fit: np.ndarray, coeffs: np.ndarray) -> tu
 
 
 def aml_cost(a_fit: np.ndarray, k_fit: np.ndarray, coeffs: np.ndarray) -> float:
-    coeffs = normalize_coeffs(coeffs)
+    coeffs = _unit_coeffs(coeffs)
     w = residual_weights(k_fit, coeffs)
     s_mat = w @ w.T
     s_pinv, _ = _pinv(s_mat)
@@ -120,7 +129,7 @@ def aml_gradient_on_sphere(a_fit: np.ndarray, k_fit: np.ndarray, coeffs: np.ndar
 
 
 def aml_projected_gradient(a_fit: np.ndarray, k_fit: np.ndarray, coeffs: np.ndarray) -> np.ndarray:
-    coeffs = normalize_coeffs(coeffs)
+    coeffs = _unit_coeffs(coeffs)
     gradient = aml_gradient_on_sphere(a_fit, k_fit, coeffs)
     return gradient - coeffs * float(np.dot(coeffs, gradient))
 
@@ -150,7 +159,7 @@ def aml_candidate(a_fit: np.ndarray, k_fit: np.ndarray, start: np.ndarray | None
         start_coeffs,
         jac=gradient,
         method="L-BFGS-B",
-        options={"gtol": AML_GTOL, "ftol": AML_FTOL, "maxiter": AML_MAX_ITER},
+        options={"gtol": AML_GTOL, "ftol": AML_FTOL, "maxiter": AML_MAX_ITER, "maxls": 40},
     )
     coeffs = normalize_coeffs(result.x, align_to=start_coeffs)
     m_mat, _ = aml_matrices(a_fit, k_fit, coeffs)

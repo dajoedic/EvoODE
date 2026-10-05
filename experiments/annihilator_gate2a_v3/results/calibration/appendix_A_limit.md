@@ -1,9 +1,9 @@
 # Appendix A - Gate 2A v3 Stage K
 
 - ell_max: 3
-- tau: 1.0161964895394882e-10
+- tau: 5.5449993463420965e-06
 - overall_passed: True
-- runtime_seconds: 41.65392880000218
+- runtime_seconds: 23.600724900003115
 
 ## K-c Monte Carlo
 

@@ -1,0 +1,4 @@
+[2026-10-05T02:20:07] K-c start part=0/8 n=2000 reps=1000 limit=False
+[2026-10-05T02:59:17] K-c clean completed K1/wide
+[2026-10-05T03:19:32] K-c clean completed K5/wide
+wrote C:\Users\joedicke\Documents\reps\EvoODE-next\experiments\annihilator_gate2a_v3\results\calibration\appendix_A_part_0_of_8.json
