@@ -1,0 +1,54 @@
+# Ambiguity diagnostic main run (docs/DIAGNOSTIC_AMBIGUITY.md §6): N = 100, 11 disjoint parts, 1 core each.
+# Each index runs part <index>/11; parts resume from their own records.jsonl after a restart.
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: annihilator-diag-amb
+  labels:
+    app: annihilator-diag-amb
+spec:
+  completionMode: Indexed
+  completions: 11
+  parallelism: 11
+  backoffLimit: 22
+  ttlSecondsAfterFinished: 1209600
+  template:
+    metadata:
+      labels:
+        app: annihilator-diag-amb
+    spec:
+      restartPolicy: OnFailure
+      containers:
+        - name: part
+          image: python:3.12-slim
+          command: ["sh", "-c"]
+          args:
+            - >-
+              set -e;
+              pip install --quiet --no-index --target /tmp/pylib
+              --find-links /outputs/annihilator_diag_amb/wheels
+              numpy==2.2.6 scipy==1.13.1 sympy==1.13.1 mpmath==1.3.0;
+              cd /outputs/annihilator_diag_amb/code;
+              exec python -m experiments.annihilator_gate2a_v3.diagnostics.ambiguity_diagnostic
+              --reps 100 --part ${JOB_COMPLETION_INDEX}/11
+              --outdir /outputs/annihilator_diag_amb/results
+          env:
+            - {name: PYTHONPATH, value: /tmp/pylib}
+            - {name: PYTHONDONTWRITEBYTECODE, value: "1"}
+            - {name: PYTHONUNBUFFERED, value: "1"}
+            - {name: HOME, value: /tmp}
+            - {name: OMP_NUM_THREADS, value: "1"}
+            - {name: OPENBLAS_NUM_THREADS, value: "1"}
+            - {name: MKL_NUM_THREADS, value: "1"}
+            - name: JOB_COMPLETION_INDEX
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.labels['batch.kubernetes.io/job-completion-index']
+          resources:
+            requests: {cpu: "1", memory: 1Gi}
+            limits: {cpu: "1", memory: 2Gi}
+          volumeMounts:
+            - {name: bigdata, mountPath: /outputs, subPath: data-science/joedicke}
+      volumes:
+        - name: bigdata
+          nfs: {server: nfs.orion.scch.at, path: /bigdata}

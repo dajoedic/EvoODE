@@ -1,0 +1,22 @@
+# Helper pod for staging code/wheels onto NFS and collecting results.
+# Mounts the same NFS subpath as the job; does no computation.
+apiVersion: v1
+kind: Pod
+metadata:
+  name: annihilator-diag-amb-helper
+  labels:
+    app: annihilator-diag-amb
+spec:
+  restartPolicy: Never
+  containers:
+    - name: helper
+      image: python:3.12-slim
+      command: ["sleep", "infinity"]
+      resources:
+        requests: {cpu: 100m, memory: 256Mi}
+        limits: {cpu: 500m, memory: 512Mi}
+      volumeMounts:
+        - {name: bigdata, mountPath: /outputs, subPath: data-science/joedicke}
+  volumes:
+    - name: bigdata
+      nfs: {server: nfs.orion.scch.at, path: /bigdata}
