@@ -22,13 +22,13 @@ jedem Statuswechsel aktualisieren.
 
 ## 1. Was läuft (Paper 1), alles auf Orion, Image `5dd1df8` außer C-3/T1f
 
-| Lauf | Stand 03.10. 22:00 | Erwartetes Ende | Wenn fertig |
+| Lauf | Stand 05.10. 09:15 | Erwartetes Ende | Wenn fertig |
 |---|---|---|---|
-| **C-6-Raster gekappt** (3.366 Zellen, 24 Pods) | 5 | Mitte/Ende Nov. | einsammeln (NFS `phase_c_c6_grid_<SHA>/tasks`), Clean-Auswertung, Aggregation |
-| **C-6-Raster ungekappt, Seed 42** (461, 8 Pods) | 4 | ähnlich | danach entscheidet der Nutzer über Seed 123/7 (Plan §9.4c Punkt 5) |
-| **B-04-Rest + B-05** (10 Zellen) | 3/10 | 57: 1–3 Tage je Zelle | Tor B5. Bisher: gleiches Ergebnis wie C-1 (24 ∞, 52/1000) |
-| C-3 | 179/180 | offen (Lorenz) | P-02: endgültige Phase-C-Auswertung |
-| WP-T1f | 31/36 | offen (58 IC1) | `--aggregate-only`, Tor 3 Paper 2 |
+| **C-6-Raster gekappt** (3.366 Zellen, 24 Pods) | 216 | Mitte/Ende Nov. | einsammeln (NFS `phase_c_c6_grid_<SHA>/tasks`), Clean-Auswertung, Aggregation |
+| **C-6-Raster ungekappt, Seed 42** (461, 8 Pods) | 42 | ähnlich | danach entscheidet der Nutzer über Seed 123/7 (Plan §9.4c Punkt 5) |
+| **B-04-Rest + B-05** (10 Zellen) | 6/10 | 57: 1–3 Tage je Zelle | Tor B5. Bisher: gleiches Ergebnis wie C-1 (24 ∞, 52/1000) |
+| C-3 | **180/180, fertig 05.10.** | — | **P-01/P-02 erledigt 05.10. (`ac64ccc`)**: strikt 936/936, C-1/C-2 identisch; offen: §9.3-Hierarchie |
+| WP-T1f | 35/36 | offen (58 IC1) | `--aggregate-only`, Tor 3 Paper 2 |
 
 Lokal läuft nichts. 55 GB frei. Working Tree sauber, ~56 Commits nicht gepusht (pusht der Nutzer).
 
