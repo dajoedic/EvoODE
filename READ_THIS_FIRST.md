@@ -10,7 +10,13 @@ zweites davon. Alles Dauerhafte gehört dorthin, nach `PAPER_1.md` oder ins `DIA
 **Regeln:** wird immer **vollständig überschrieben**, nie angehängt. Was älter als ein paar Tage
 ist, ist vermutlich falsch — dann gilt `CLAUDE.md`.
 
-**Stand: 2026-10-05, nachmittags. Phase C abgeschlossen. Heute erledigt: SINDy/Weak-SINDy auf dem ganzen C-6-Export, §9.3-Hierarchie (WP-N43/N43b). Offen beim Nutzer: Entscheidungsregel für Story-Linie (b).**
+**Stand: 2026-10-05, nachmittags. PAUSE bis alles auf Orion durch ist (Nutzer, 05.10.). Phase C abgeschlossen; heute SINDy/Weak-SINDy auf C-6 und §9.3-Hierarchie erledigt.**
+
+> **BLINDREGEL C-6 (Nutzer, 05.10., „Weg 2“):** Bis die Entscheidungsregel für Story-Linie (b) mit dem Nutzer
+> festgelegt und als Plan §9.4d eingefroren ist, sieht sich Claude **keine C-6-EvoGrow-Ergebnisse** an — weder
+> R², noch Struktur, noch Vergleiche mit SINDy. Erlaubt ist nur Einsammeln und **technische** Prüfung (Zellenzahl,
+> `error`/`failure_reason`, Fingerprint, Daten-Hashes). Die Story-Diskussion folgt, wenn **alles** vom Cluster
+> durchgelaufen ist; zuerst die Regel festlegen, dann die Zahlen öffnen.
 
 **Feste Regeln:** Claude pusht **nie** nach GitLab und nach GitHub nur mit ausdrücklicher Erlaubnis.
 **Keine harten Zeit-Cuts — auch keine Tool-Zeitlimits** (Nutzer 05.10.: lange Läufe abgekoppelt starten, Abbruch nur gemeinsam). Orion-Ergebnisse unter `S:\BigDataOrion\data-science\joedicke\` (nur mit VPN).
@@ -50,10 +56,11 @@ in `outputs/c6_sindy_baselines_5dd1df8/merged/`. Der Vergleich mit EvoGrow unter
   ODEFormer 27,0–33,6 %. Struktur: SINDy besser (gepruned exakt bis 43,3 % vs. EvoGrow 29,4 %). Zahlen in `DIARY.md` 05.10.
 - **Quellenfehler gefunden und behoben:** WP-N30/N31 lasen die alte, selbst integrierte SINDy-Datei; 4 R²-Urteile,
   2 Strukturtreffer anders. In `SCRIPTS.md` als überholt markiert.
-- **Wartet auf den Nutzer: Entscheidungsregel für Linie (b)** (Endpunkt Generalisierung R² > 0,9 varianzgewichtet auf
+- **Entscheidungsregel für Linie (b): vertagt bis nach dem Cluster (Blindregel oben). Entwurf zum Wiedervorlegen:** (Endpunkt Generalisierung R² > 0,9 varianzgewichtet auf
   dim 1/2; B1: ≥ 10 pp vor der besten Konfiguration jeder Baseline, Cluster-p < 0,05; B2: flacherer Abfall σ 0 → 0,05;
   (b) Hauptbotschaft bei B1 in ≥ 4 von 6 Bedingungen mit σ ≥ 0,03 und B2). Danach als §9.4d einfrieren, **bevor**
   C-6-Ergebnisse vorliegen.
+- B-05 (Tor B5) und WP-T1f (Paper 2) werden früher fertig; ob ihre Tore einzeln oder erst am Ende angesehen werden, hat der Nutzer noch nicht gesagt — bei Fertigstellung fragen.
 - Später (Nutzer): PySR-Freigabe, ODEFormer-Image; Restart-Kurve (P-04), Claim-Tracing-Audit, `paper/` neu schreiben.
 
 ## 4. Annihilator-Spur: getrennt (Nutzer, 05.10.)

@@ -243,6 +243,11 @@ stage starts because the previous one "looked fine" by itself. Run locations fol
 
 Mark items done here with date and commit; never delete them.
 
+**Pause and blind rule (user, 2026-10-05).** Paper 1 work pauses until every Orion run has finished. Until the
+decision rule for story line (b) is fixed with the user and frozen as plan §9.4d, **no C-6 EvoGrow result is
+looked at** (no R², no structure, no comparison with the baselines) — only collection and technical checks (cell
+count, errors, fingerprint, data hashes). Draft rule: `READ_THIS_FIRST.md` / `DIARY.md` 2026-10-05.
+
 **Track R — robustness (C-6), the critical path**
 
 | # | Item | Who | Where | Gate after? |
