@@ -1,9 +1,9 @@
 # Gate 2A v3 – Ergebnis der Kalibrierstufe K (Anhang A)
 
-**Stand: 2026-10-05, 07:45. Für den Nutzer, zur Entscheidung.** Die Zahlen stammen aus 6 von 8 Teilen
-(750 von 1.000 Realisierungen pro Zelle). Zwei Clean-Zellen fehlen noch: K7 breit und K8 breit (Ordnung 5 und 6).
-Sie rechnen seit über 1,5 h, der Abschnitt „Nachtrag“ unten wird ergänzt, sobald sie fertig sind. **Das Gesamtverdikt
-hängt nicht mehr von ihnen ab** (siehe 2.).
+**Stand: 2026-10-05, 07:45, ergänzt nach Abschluss aller 8 Teile (11:15). Für den Nutzer, zur Entscheidung.**
+Abschnitte 1–5 entstanden aus 6 von 8 Teilen (750 von 1.000 Realisierungen pro Zelle). Der zusammengeführte Lauf
+(`appendix_A.json/.md`, 1.000 Realisierungen) bestätigt die Zahlen, siehe Nachtrag 2. Dort steht auch, dass zusätzlich
+die Clean-Zellen K7 breit und K8 breit durchfallen.
 
 ## 1. In einem Satz
 
@@ -21,11 +21,10 @@ weitergeht.
 | K-c 1–3, K1 ($\cosh x$, Ordnung 2) | Test kalibriert, Schätzer unverzerrt, Unsicherheit stimmt | Ablehnung 0–2,4 %, $T$/dof 0,98–1,01, Bias $\le 2\cdot10^{-4}$, Spur-Verhältnis 0,74–1,14 | **ja** |
 | K-c 1–3, K2 ($x^3$, Ordnung 1) | dito | Ablehnung 0–1,6 %, $T$/dof 0,99–1,01, Spur-Verhältnis 0,94–1,15 | **ja** |
 | K-c 1–3, K6 (Ordnung 3) | dito | Ablehnung 0 %, Bias $\le 0.02$ (ok), aber $T$/dof **0,68–0,70** (Soll 0,8–1,25) und Spur-Verhältnis **2,2–7,0** (Soll 0,5–2) | **nein** |
-| K-c 4, Clean | breit `CORRECT`, schmal nie `WRONG` | breit: K1, K2, K5, K6 `CORRECT`; schmal: **K7 `WRONG`** ((3,0) statt (5,0)), sonst `CORRECT` oder `AMBIGUOUS` | **nein** |
+| K-c 4, Clean | breit `CORRECT`, schmal nie `WRONG` | breit: K1–K6 `CORRECT`, **K7 und K8 `AMBIGUOUS`** (richtige Klasse gewählt, Mehrdeutigkeit A2); schmal: **K7 `WRONG`** ((3,0) statt (5,0)), sonst `CORRECT` oder `AMBIGUOUS` | **nein** |
 
-Die Werte stehen pro Teil (je 125 Realisierungen) in den JSON-Dateien. Sie schwanken zwischen den Teilen kaum. Das
-Verdikt ändert sich durch die beiden fehlenden Teile nicht, weil K6 in allen sechs fertigen Teilen durchfällt und
-K7 schmal schon `WRONG` ist.
+Die Werte stehen pro Teil (je 125 Realisierungen) in den JSON-Dateien. Sie schwanken zwischen den Teilen kaum. Der
+zusammengeführte Lauf über alle 1.000 Realisierungen steht in `appendix_A.json` (Nachtrag 2).
 
 **Vorab-Einstufung, breit, 1 %** (unverändert gegenüber v2):
 
@@ -122,7 +121,19 @@ Kill, gemeint als „beendet oder zwingt zur grundsätzlichen Neubewertung“. D
 Messdesign ansetzen, also bei mehr Daten, weniger Rauschen oder anderen Testfunktionen, nicht bei einer v4 des
 Schätzers. Ob das lohnt, entscheidet der Nutzer.
 
-## Nachtrag 2: Clean-Zellen K7 und K8 breit
+## Nachtrag 2: vollständiger Lauf (alle 8 Teile, 05.10. 11:15)
 
-K7 breit ist fertig (Teil 4). K8 breit lief um 09:45 seit fast vier Stunden noch. Beide ändern weder das Verdikt
-zu Anhang A noch Anhang B.
+Alle 8 Teile endeten mit Exit-Code 0 und wurden zusammengeführt (`results/calibration/appendix_A.{json,md}`,
+Logs in `results/calibration/logs/`). Gesamtverdikt: `overall_passed: False`.
+
+**Monte Carlo, 1.000 Realisierungen pro Zelle (breit):**
+
+| | Ablehnung | $T$/dof (Median) | Bias / Grenze | Spur-Verhältnis | bestanden |
+|---|---:|---:|---:|---:|---|
+| K1 | 0,9 % | 1,00 | $1.8\cdot10^{-5}$ / $7.5\cdot10^{-4}$ | 0,94 | ja |
+| K2 | 0,9 % | 1,00 | $7.6\cdot10^{-5}$ / $1.8\cdot10^{-3}$ | 1,04 | ja |
+| K6 | 0 % | **0,70** | $6.4\cdot10^{-3}$ / $3.3\cdot10^{-2}$ | **3,58** | nein (Punkte 1 und 3) |
+
+**Clean-Zellen K7 und K8 breit:** Beide wählen die richtige Klasse ((5,0) bzw. (6,0)), sind aber `AMBIGUOUS`
+(Quelle A2). Verlangt war breit `CORRECT`, beide fallen also durch. Das ist ein weiterer Fehlschlag von K-c 4, ändert
+aber weder das Verdikt zu Anhang A noch zu Anhang B.

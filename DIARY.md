@@ -6,6 +6,15 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ## 2026-10-05
 
+### Gate 2A v3: Stufe K vollständig, Anhang A zusammengeführt
+<!-- commit pending -->
+
+Teil 6 (Clean K8 breit) endete um 11:15, alle 8 Teile mit Exit-Code 0, Zusammenführung automatisch
+(`results/calibration/appendix_A.{json,md}`). Über 1.000 Realisierungen: K1 und K2 bestanden (Ablehnung 0,9 %,
+$T$/dof 1,00), K6 nicht ($T$/dof 0,70, Spur-Verhältnis 3,58). Neu: Clean K7 und K8 breit sind `AMBIGUOUS` (A2)
+statt `CORRECT`, beide mit richtiger Klasse. Ein weiterer K-c-4-Fehlschlag, das Verdikt bleibt gleich.
+Ergebnisdokument, Nachtrag 2, aktualisiert.
+
 ### Gate 2A v3: Anhang A nicht bestanden, Anhang B (Diagnose) löst K6 aus
 <!-- 4dd384b, 188b768 -->
 

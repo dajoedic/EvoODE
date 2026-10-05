@@ -5,7 +5,7 @@ welche Entscheidung ansteht. Wird **immer vollständig überschrieben**. Dauerha
 `docs/IDEA_01_ANNIHILATOR_DISCOVERY.md` oder `DIARY.md`. EvoGrow und Paper 1 stehen in `..\EvoODE\READ_THIS_FIRST.md`,
 nicht hier.
 
-**Stand: 2026-10-05 mittags. Gate 2A v3: Anhang A nicht bestanden, Anhang B (Diagnose) löst Kill-Kriterium K6 aus.
+**Stand: 2026-10-05 nachmittags. Gate 2A v3: Anhang A nicht bestanden, Anhang B (Diagnose) löst Kill-Kriterium K6 aus.
 Grundsatzentscheidung beim Nutzer offen.**
 
 ## 1. Wo wir stehen
@@ -18,7 +18,8 @@ Grundsatzentscheidung beim Nutzer offen.**
 - **v3:** AML mit L-BFGS. Zwei Implementierungsfehler von Codex wurden behoben (Vorzeichen im Gradienten). Stufe K:
   - Ordnung 1–2 kalibriert (K1, K2 bestanden);
   - K6 (Ordnung 3): Kovarianz unterschätzt die Streuung um das 2- bis 7-Fache;
-  - Clean K7 schmal ist `WRONG`. **Anhang A besteht nicht.**
+  - Clean K7 schmal ist `WRONG`, K7 und K8 breit sind `AMBIGUOUS` statt `CORRECT`. **Anhang A besteht nicht.**
+  - Alle 8 Teile sind fertig (11:15), `appendix_A.{json,md}` ist zusammengeführt (1.000 Realisierungen).
 - **Anhang B** als Diagnose (Nutzer: Option A): Bei 1 % Rauschen auf der breiten Domäne sind F4, F5, F8, F9 und F10
   nicht identifizierbar (N1). Eine Klasse mit **konstanten** Koeffizienten passt jeweils so gut wie der wahre
   Operator mit **polynomialen** Koeffizienten, Güte $\beta \approx \alpha$. **K6 würde auslösen** (3 Zellen > 1).
@@ -38,9 +39,8 @@ Schätzers allein ändert an K6 nichts.
 
 ## 3. Was noch läuft oder liegt
 
-- **Lokal läuft noch Stufe K v3, Teil 6** (Clean-Zelle K8 breit, Ordnung 6), losgelöst gestartet um 03:32, um 12:00
-  noch aktiv. Ist er fertig, führt der Treiber die 8 Teile automatisch zusammen und schreibt
-  `experiments/annihilator_gate2a_v3/results/calibration/logs/DONE` sowie `appendix_A.json/.md`. Am Verdikt ändert
-  das nichts. Danach Anhang A und die Logs committen.
+- **Es läuft nichts.** Stufe K v3 ist vollständig, Anhang A, die Logs und die Lauf-Hilfsdateien von Anhang B sind
+  committet.
 - `codex/CURRENT_TASK.md` enthält noch den erledigten WP-G2A3-c (`STATUS.md`: `done`). Kein aktiver Auftrag.
-- Uncommittet: nur Lauf-Hilfsdateien von Anhang B (`DONE`, `run.log`).
+- Uncommittet liegen noch Orakel-Teil 12/18 und Worker-Caches der v2-Abnahme
+  (`experiments/annihilator_gate2a_v2/results/acceptance/`). v2 ist abgelöst. Ob sie committet oder gelöscht werden, entscheidet der Nutzer.
