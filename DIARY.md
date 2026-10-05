@@ -6,6 +6,23 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ## 2026-10-05
 
+### Gate 2A v3: zwei Implementierungsfehler behoben, Stufe K läuft
+<!-- f2196ca WP-G2A3-a, 71be691 WP-G2A3-b -->
+
+Nach der Freigabe (`140430a`) hat Codex v3 gebaut (WP-G2A3-a). Der erste Stufe-K-Lauf (01:16) wurde um 03:20 von
+Claude abgebrochen: Bei K1 blieb L-BFGS in 10 von 12 Seeds bei 35° und $J \approx 290$ hängen, obwohl
+$J(c^*) \approx 0.09$ ist. Ursache: Zielfunktion und Gradient normalisierten das Vorzeichen von $c$ intern. $J$ ist
+gerade, der Gradient ungerade, also bekam L-BFGS einen falschen Gradienten. Das war ein reiner
+Implementierungsfehler, Claudes Prototyp hatte ihn nicht. WP-G2A3-b hat ihn behoben, mit
+Finite-Differenzen-Test bei negativem Maximum. K1, Seeds 2/10/18/26: 0,01–0,06°. Codex hat dabei `maxls` von
+20 auf 40 gesetzt. Die Spezifikation legt diesen Wert nicht fest, keine Schwelle ist betroffen. Ausgaben des
+Abbruchs unter `results/calibration/aborted_2026-10-05_sign_bug/`. Neustart von Stufe K um 03:32, losgelöst
+von der Werkzeugumgebung, ohne Zeitgrenze (Nutzer).
+
+Aus dem abgebrochenen Lauf, unabhängig vom Fehler: Gegenüber v2 unverändert sind K-a ($\ell_{\max} = 4$),
+K-b ($\tau = 3.4\cdot10^{-7}$) und die ex-ante-Klassen (K3/K4 breit N1, K5/K7 breit N2). Die Clean-Suche fand K2
+und K6 breit `CORRECT`. Ein Teil braucht etwa 1 h für K-a/K-b/ex-ante, eine Clean-Zelle mit Bootstrap 40–50 min.
+
 ### Gate 2A v2: Stufe K scheitert an K-c, Ursache ist die FNS-Iteration; v3 entworfen
 
 Orakel v2 (100 Stellen, 7 min mit 8 Workern nach dem Airy-Fix WP-G2A2-c):
