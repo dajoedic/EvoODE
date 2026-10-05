@@ -6,6 +6,14 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ## 2026-10-05
 
+### Diagnose AMBIGUOUS: Hauptlauf auf Orion gestartet
+<!-- 81f8773 Job/Runbook -->
+
+WP-DIAG-AMB-b abgenommen: Teile, Merge, atomarer Nullraum-Cache, `run.log` ohne Zustand, echter Record als Fixture,
+10 Tests grün. Orion ohne eigenes Image: `python:3.12-slim`, Wheels (numpy 2.2.6, scipy 1.13.1, sympy 1.13.1,
+mpmath 1.3.0) offline vom NFS, Code per `git archive` aus `c71841f`. Probelauf im Hilfs-Pod bestanden. Der Nutzer
+startete den Job am 05.10. um 15:15 (11 Pods, 588 Realisierungen, rund 32 h).
+
 ### Diagnose AMBIGUOUS: Pilot fertig, N = 100 auf Orion festgelegt, Pilot-Zustände
 <!-- ba83120 Skript, a22804b §6 -->
 

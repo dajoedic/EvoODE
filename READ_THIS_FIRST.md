@@ -7,7 +7,7 @@ nicht hier.
 
 **Stand: 2026-10-05 nachmittags. Gate 2A v3 ist gescheitert (Anhang A nicht bestanden, Anhang B löst K6 aus). Neue,
 eingefrorene Diagnose: Trennt `AMBIGUOUS` nicht identifizierbare von identifizierbaren Fällen? Das Skript
-ist fertig (WP-DIAG-AMB-a), Pilot fertig, Hauptlauf mit N = 100 auf Orion (11 Pods) startbereit.**
+ist fertig (WP-DIAG-AMB-a), Hauptlauf mit N = 100 läuft auf Orion seit 05.10. 15:15, Ende etwa 06.10. Mitternacht.**
 
 ## 1. Wo wir stehen
 
@@ -22,20 +22,18 @@ ist fertig (WP-DIAG-AMB-a), Pilot fertig, Hauptlauf mit N = 100 auf Orion (11 Po
 
 ## 2. Nächste Schritte
 
-1. **Hauptlauf auf Orion starten (Nutzer).** Anleitung: `experiments/annihilator_gate2a_v3/orion/RUNBOOK.md`
-   (Bereitstellen über den Hilfs-Pod, Probelauf, `job.yaml`). Das Archiv `stage.tar` (Code aus `c71841f`, Wheels,
-   Pilot-Records) liegt im Scratchpad der Sitzung vom 05.10. unter `orion/` und lässt sich aus dem Repository neu
-   bauen (RUNBOOK §1). 11 Pods à 1 Kern, 588 offene Realisierungen, 53–54 pro Teil, rund 32 h.
-2. Überwachen mit RUNBOOK §5. Das Fortschrittsprotokoll enthält keine Zustände mehr.
-3. Danach einsammeln, `--merge --reps 100`, `--summarize`, Ergebnis in `docs/DIAGNOSTIC_AMBIGUITY.md` §7.
-   Verdikt nach B1–B4, keine Schwellenänderung.
+1. Überwachen mit `experiments/annihilator_gate2a_v3/orion/RUNBOOK.md` §5. Das Fortschrittsprotokoll enthält keine
+   Zustände. Bei Neustarts von Pods: Die Teile setzen fort, doppelte Records verhindert `--merge`.
+2. Nach `DONE` in allen 11 Teilen: einsammeln (RUNBOOK §6), `--merge --reps 100`, `--summarize`, Ergebnis in
+   `docs/DIAGNOSTIC_AMBIGUITY.md` §7. Verdikt nach B1–B4, keine Schwellenänderung. Danach den Hilfs-Pod löschen.
 
 ## 3. Was noch läuft oder liegt
 
-- **Pilot fertig und ausgewertet** (`c71841f`, Zustände im DIARY). Festgelegt in `docs/DIAGNOSTIC_AMBIGUITY.md`
-  §6, **vor** Ansicht der Zustände: $N = 100$, Orion mit 11 Pods. WP-DIAG-AMB-b ist abgenommen (Teile, Merge,
-  atomarer Cache, Log ohne Zustand, 10 Tests grün). Manifeste per Dry-Run gegen Orion geprüft. **Der Hauptlauf ist
-  noch nicht gestartet.** Kein aktiver Codex-Auftrag.
+- **Der Hauptlauf läuft auf Orion** (Job `annihilator-diag-amb`), gestartet vom Nutzer am 05.10. um 15:15.
+  11 Pods à 1 Kern, Code aus `c71841f`, NFS `/bigdata/data-science/joedicke/annihilator_diag_amb/`. 588 offene
+  Realisierungen, 53–54 pro Teil. **Ende erwartet am 06.10. gegen Mitternacht** (rund 32 h, Streuung einige
+  Stunden). Der Hilfs-Pod `annihilator-diag-amb-helper` läuft mit, für Überwachung und Einsammeln. Kein aktiver
+  Codex-Auftrag.
 - `.codex_tmp/` im Wurzelverzeichnis: leerer Temp-Ordner aus der Codex-Sandbox, gesperrt durch Rechte. Nicht
   committen, später löschen.
 - `PRACTICAL_ANNIHILATOR_BENCHMARK.md` ist uncommittet (Entwurf des Nutzers).
