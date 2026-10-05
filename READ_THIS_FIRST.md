@@ -68,12 +68,11 @@ für die Paper-1-Ergebnisse. Der Name `evogrow-next` ist verworfen, weil die Met
     und Quadratur. Beide sind in v2 behoben.
   - **Externes Review 04.10. eingearbeitet, vor jedem Lauf** (Branch `50bdf57`): FNS/AML-Begriffe, A3 als projektive
     Winkelunsicherheit, Kalibrier-Set um K7/K8 (Ordnung 5/6) erweitert, Hold-out-Hinweis. Codex wurde dafür angehalten und neu gestartet.
-  - **05.10. morgens: Stufe K v3 ausgewertet, Anhang A BESTEHT NICHT. Lies zuerst `docs/GATE_2A_v3_STAGE_K_RESULT.md`
-    auf dem Branch.** Kurz: Der reparierte Schätzer funktioniert bei Ordnung 1–2 einwandfrei (Test kalibriert). Bei Ordnung 3 (K6)
-    unterschätzt die Kovarianz die Streuung um das 2- bis 7-Fache. Clean K7 schmal ist `WRONG`, weil der Boden zu großzügig ist.
-    Airy/Bessel sind breit bei 1 % nicht identifizierbar. **Entscheidung beim Nutzer: A (Anhang B als Diagnose, Claudes
-    Empfehlung), B (v4) oder C (Spur beenden).** Zwei Clean-Zellen (K7/K8 breit) liefen um 07:45 noch und ändern das Verdikt
-    nicht.
+  - **05.10. vormittags: Methodenspur faktisch am Kill-Kriterium K6.** Anhang A von v3 besteht nicht (K6-Kovarianz,
+    K7 schmal `WRONG`). Anhang B als Diagnose (Nutzer: Option A): Bei 1 % breit sind F4, F5, F8, F9 und F10 N1, **K6 würde
+    auslösen** (3 > 1). Bei 1 % unterscheiden die Daten polynomiale nicht von konstanten Koeffizienten. **Lies
+    `docs/GATE_2A_v3_STAGE_K_RESULT.md` auf dem Branch (Nachtrag 1).** Entscheidung beim Nutzer: Spur beenden oder
+    grundsätzlich neu bewerten (Messdesign, nicht Schätzer).
   - **05.10. nachts:** v2-Stufe K: K-a/K-b bestanden ($\ell_{\max}=4$, $\tau=3.4\cdot10^{-7}$), **K-c gescheitert**, weil FNS
     Sattelpunkte findet statt Minima. Mit L-BFGS sind Ordnung 1–3 repariert. Ab Ordnung 4 sind die Koeffizienten bei 1 % nicht
     identifizierbar. Airy/Bessel sind schon breit N1, **bei F4/F5 droht K6**. **v3 vom Nutzer freigegeben** (`docs/GATE_2A_v3.md`,
