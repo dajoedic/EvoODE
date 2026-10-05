@@ -6,6 +6,18 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ## 2026-10-05
 
+### Gate 2A v3: Anhang A nicht bestanden, Anhang B (Diagnose) löst K6 aus
+<!-- 4dd384b, 188b768 -->
+
+Die Stufe K v3 (03:32 bis etwa 06:00, K8 breit lief länger) ergab:
+- **bestanden:** K-a, K-b, K-c 1–3 für K1 und K2 (Test kalibriert, Bias ≤ 2e-4);
+- **nicht bestanden:** K6 hat $T$/dof 0,68–0,70 und ein Spur-Verhältnis von 2,2–7,0; Clean K7 schmal ist `WRONG`.
+
+Der Nutzer wählte Option A: Anhang B als Diagnose (WP-G2A3-c, 28 min). **Bei 1 % breit sind F4, F5, F8, F9 und F10
+N1**, mit einer konkurrierenden Klasse konstanter Koeffizienten bei $\beta \approx \alpha$. **K6 würde auslösen**
+(3 > 1). Bei 1 % unterscheiden die Daten polynomiale nicht von konstanten Koeffizienten. Identifizierbar bleiben nur
+Operatoren erster Ordnung und der Sinus. Ergebnisdokument: `docs/GATE_2A_v3_STAGE_K_RESULT.md`.
+
 ### Gate 2A v3: zwei Implementierungsfehler behoben, Stufe K läuft
 <!-- f2196ca WP-G2A3-a, 71be691 WP-G2A3-b -->
 
