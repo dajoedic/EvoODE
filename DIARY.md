@@ -7,7 +7,7 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 ## 2026-10-05
 
 ### Gate 2A v3: Stufe K vollständig, Anhang A zusammengeführt
-<!-- commit pending -->
+<!-- 9d20151 -->
 
 Teil 6 (Clean K8 breit) endete um 11:15, alle 8 Teile mit Exit-Code 0, Zusammenführung automatisch
 (`results/calibration/appendix_A.{json,md}`). Über 1.000 Realisierungen: K1 und K2 bestanden (Ablehnung 0,9 %,
