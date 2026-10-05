@@ -6,6 +6,15 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ## 2026-10-05
 
+### Diagnose AMBIGUOUS vs. WRONG eingefroren, WP-DIAG-AMB-a an Codex
+<!-- commit pending -->
+
+Der Nutzer entwarf `PRACTICAL_ANNIHILATOR_BENCHMARK.md`: die neue Frage, ob die Methode als Selective Prediction
+taugt, also bei unzureichender Evidenz abstainiert statt falsch zu entscheiden. Vorher eine billige Diagnose:
+Reagiert v3 in den N1-Fällen F4, F5 und F8 (breit, 1 %) mit `AMBIGUOUS` oder mit `WRONG`? Als Kontrollgruppe dienen
+die I-Fälle F1, F2 und F6. Eingefrorene Regel mit B1–B4 (Nutzer) in `docs/DIAGNOSTIC_AMBIGUITY.md`. Erst Pilot mit
+2 Realisierungen, dann $N$ und Laufort nach Kosten. Ab diesem Lauf sind F1–F10 Entwicklungsset. Kein Gate 2A v4.
+
 ### Gate 2A v3: Stufe K vollständig, Anhang A zusammengeführt
 <!-- 9d20151 -->
 

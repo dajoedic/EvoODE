@@ -1,46 +1,80 @@
-# WP-G2A3-c — Gate 2A v3: Anhang B (ex-ante-Identifizierbarkeit F1–F10) als Diagnose
+# WP-DIAG-AMB-a — Diagnose AMBIGUOUS vs. WRONG (Skript, Tests, kein langer Lauf)
 **Language: Python**
 
-Grundlage: `docs/GATE_2A_v3.md` mit `docs/GATE_2A_v2.md` §9 (ex-ante-Identifizierbarkeit) und §12 (K6).
-Kontext: `docs/GATE_2A_v3_STAGE_K_RESULT.md`. Anhang A ist **nicht** bestanden. Der Nutzer hat am 05.10.
-entschieden (Option A), Anhang B trotzdem zu berechnen, **ausschließlich als Diagnose**. Kein Gate-Lauf, keine
-Gate-Kriterien außer der K6-Diagnose unten.
+Grundlage und eingefrorene Regeln: `docs/DIAGNOSTIC_AMBIGUITY.md`. Lies es vollständig. **Kein Gate 2A v4.** Die
+Methode von v3 wird unverändert benutzt. Bestehende Dateien unter `experiments/annihilator_gate2a_v3/` werden
+**nicht verändert**. Neu entsteht nur ein Skript, das sie importiert.
 
 ## Zu bauen
 
-`experiments/annihilator_gate2a_v3/acceptance/appendix_b.py`:
+`experiments/annihilator_gate2a_v3/diagnostics/ambiguity_diagnostic.py` (mit `__init__.py`), Ausgabe nach
+`experiments/annihilator_gate2a_v3/results/diagnostic_ambiguity/`.
 
-1. **Parameter:** $\ell_{\max}$ und $\tau$ aus der Stufe K von v3 (`results/calibration/appendix_A_part_0_of_8.json`,
-   Felder `K_a.ell_max` und `K_b.tau`). Prüfe, dass alle vorhandenen Teildateien dieselben Werte tragen, sonst Abbruch.
-   Schreibe die Werte und ihre Herkunft in die Ausgabe.
-2. **Rechnung genau nach v2 §9 mit dem v3-Schätzer (AML, L-BFGS):** für F1–F10, beide Domänen,
-   $\eta \in \{0.01, 0.05\}$, exakte Funktionswerte, $\sigma_{\text{eff}}$ für das jeweilige $\eta$. Für jede Klasse
-   **vor** der Referenzklasse: $\hat c$ auf den exakten Fit-Daten, Nichtzentralität $\lambda = T$ des Val-Tests,
-   Güte $\beta$. Für die Referenzklasse: $\theta_{\hat c}$. Daraus folgt die Klasse I, N1 oder N2. Die Logik ist
-   dieselbe wie bei `ex_ante_k_classes`. Teile sie, statt sie zu kopieren, sofern das ohne Verhaltensänderung für K
-   geht.
-3. **Ausgabe** `results/appendix_B/appendix_B.json` und `.md`, pro Zelle: Klasse, $\theta_{\hat c}$, alle früheren
-   Klassen mit $\beta$, die schwächste frühere Klasse.
-4. **K6-Diagnose** (v2 §12): Zähle bei $\eta = 0.01$ die breiten Zellen mit $r_{\text{ref}} \le 3$ (F1–F8), die
-   in N1 oder N2 fallen. Liegt die Zahl über 1, ist „K6 würde auslösen“ = ja. Dazu die Liste der betroffenen Zellen.
-   Die Markdown-Datei sagt oben in einem Satz, dass Anhang A nicht bestanden ist und dies eine Diagnose ist, kein
-   Gate-Ergebnis.
-5. `--workers N` (parallel über Zellen) und eine Fortschrittszeile mit Zeitstempel pro fertiger Zelle.
-6. pytest: ein kleiner Fall (eine F-Zelle, eine frühere Klasse) prüft, dass die Ausgabe die Felder enthält und dass
-   eine I-Zelle der K-Rechnung (K2 breit) mit der neuen Funktion dasselbe Ergebnis liefert wie in Stufe K.
+1. **Zellen:** genau F1, F2, F4, F5, F6, F8, Domäne `wide`, $\eta = 0.01$. Gruppen N1 = {F4, F5, F8},
+   I = {F1, F2, F6}. Fest im Code, nicht per Argument erweiterbar.
+2. **Parameter:** $\ell_{\max}$ und $\tau$ so beschaffen, wie `run_gate2a.py` sie für einen Lauf beschafft (aus den
+   Stufe-K-Ergebnissen von v3). Prüfe, dass $\ell_{\max} = 4$ und $\tau$ dem Wert in
+   `results/calibration/appendix_A.json` (`tau`) entspricht, sonst Abbruch. Sonst Standard-`Settings()`. Keine
+   Variante, kein Überschreiben von Feldern außer denen, die `run_gate2a.py` für einen Standardlauf ebenfalls setzt.
+   Schreibe alle verwendeten Settings-Felder in die Ausgabe.
+3. **Eine Realisierung:** Daten mit `noisy_sample(function_key, wide, settings.n, 0.01, seed)`, dann
+   `full_search(..., with_bootstrap=True)`. Zustand und Quellen durch **Aufruf** von `_state_for_clean` aus
+   `acceptance/stage_k_calibration.py` (nicht kopieren), erwartete Klasse und Orakel aus
+   `results/oracle_reference_v3.json` wie dort. Prüfe, dass die erwartete Klasse für F4, F5 und F8 der Referenz aus
+   Anhang B entspricht ((2,1), (3,1), (1,2)).
+4. **Seeds:** Realisierung $k$ hat Seed $50000 + k$. Argumente `--reps N` (Realisierungen $k = 0 \ldots N-1$) und
+   `--pilot` (gleichbedeutend mit `--reps 2`).
+5. **Pro Realisierung ein Record** (eine JSON-Zeile, angehängt an `records.jsonl`, sofort nach Fertigstellung
+   geschrieben): Funktion, Gruppe, Seed, gewählte Klasse oder `null`, Zustand, Quellen (A1/A2/A3), `bootstrap_share`,
+   ob die gewählte Klasse die Referenzklasse ist, `n_exact` der gewählten Klasse, $T$, dof, kritischer Wert, Zahl
+   geprüfter Klassen, AML-Iterationen und Konvergenz der Hauptsuche, `boot_reps`, Winkel (Punkt 6), Wall-Clock in
+   Sekunden (nur Logistik). Nimm die Feldnamen aus `Selection` in `operator_search.py`. Nenne im Report für jedes
+   Feld die Herkunft: bestehendes `Selection`-Feld, Orakel oder neu berechnet.
+6. **Winkel (diagnostisch):** Ist `n_exact` der gewählten Klasse > 0, der Hauptwinkel in Grad zwischen $\hat c$ und
+   dem exakten Nullraum dieser Klasse, also $\arccos(\lVert P\hat c\rVert / \lVert\hat c\rVert)$ mit $P$ als Projektor
+   auf den Nullraum. Den Nullraum mit derselben Rechnung wie `_nullspace` in `oracle.py` bestimmen (mpmath-SVD,
+   gleiche Schwelle), aber **alle** `n_exact` Basisvektoren nehmen, nicht nur einen. Ergebnis pro (Funktion, Klasse)
+   in `nullspace_cache.json` zwischenspeichern. **Vorher prüfen**, dass Koeffizientenreihenfolge und Skalierung von
+   $\hat c$ und der Orakel-Spalten übereinstimmen: Für die Referenzklasse jeder der sechs Funktionen muss der
+   Orakel-Vektor mit dem Referenzkoeffizientenvektor aus `reference_for` bis auf Vorzeichen übereinstimmen. Gelingt
+   das nicht, `blocked`. Ist `n_exact = 0`, ist der Winkel `null`. Der Winkel geht nicht in den Zustand ein.
+7. **Fortsetzbar:** Beim Start `records.jsonl` lesen und erledigte (Funktion, Seed) überspringen. `--workers N`
+   (höchstens 6, parallel über Realisierungen), Fortschrittszeile mit Zeitstempel pro Record nach `run.log`. Am Ende
+   eine Datei `DONE`.
+8. **Auswertung** (`--summarize`, liest nur `records.jsonl`, rechnet nichts neu):
+   - pro Funktion und pro Gruppe die Tabelle der Zustände (Anzahl, Anteil) und die AMBIGUOUS-Quellen (A1, A2, A3,
+     mehrere);
+   - $P(\texttt{WRONG} \mid \text{eindeutig})$ je Funktion und Gruppe;
+   - B1–B4 genau nach `docs/DIAGNOSTIC_AMBIGUITY.md` §5 mit Wert, Schwelle und erfüllt ja/nein, dazu das Verdikt
+     „interessant“ oder „negativ“. Das Verdikt wird nur ausgegeben, wenn alle sechs Zellen dieselbe Zahl $N$ an
+     Records haben, sonst „unvollständig“;
+   - Winkel: Median und Maximum je Funktion und Zustand;
+   - Kosten pro Funktion: Mittelwert und Maximum von geprüften Klassen, AML-Iterationen, Wall-Clock.
+   Ausgabe `summary.json` und `summary.md`. Die Markdown-Datei sagt oben in einem Satz, dass dies eine Diagnose mit
+   v3 ist und kein Gate-Lauf.
+9. **pytest** unter `experiments/annihilator_gate2a_v3/tests/`:
+   - die Auswertung auf Records, die aus einem **echten** Record abgeleitet sind (erzeuge ihn mit einem echten
+     Aufruf, siehe „Ausführen“), mit Fällen für jedes der vier Kriterien an und knapp neben der Schwelle, für „keine
+     eindeutige Ausgabe in N1“ und für ungleiches $N$;
+   - Winkel: für den Referenzvektor selbst etwa 0°, für einen senkrecht zum Nullraum konstruierten Vektor 90°;
+   - Fortsetzen: ein vorhandener Record wird nicht erneut gerechnet.
 
 ## Ausführen
 
-Wenn die Hochrechnung aus einer Zelle unter 15 Minuten mit 4 Workern liegt, führe das Skript selbst voll aus.
-Sonst schreib den exakten Befehl in den Report. **Achtung:** Auf dem Laptop laufen noch zwei Stufe-K-Teile, beide
-nicht anfassen. Mehr als 6 Worker sind nicht erlaubt.
+Nur Tests und **ein** echter Aufruf für den Record der Fixture: F2, Seed 50000, mit Bootstrap. Dauert er nach
+Hochrechnung länger als 15 Minuten, abbrechen und im Report sagen, wie weit er kam. Den Pilot **nicht** starten. Der
+Report nennt die exakten Befehle für Pilot, Hauptlauf und `--summarize`.
 
 ## Verboten
 
-Kein Gate-Lauf, keine Suche auf verrauschten F-Daten, keine Konstante, Schwelle oder Regel ändern, nichts außerhalb
-von `experiments/annihilator_gate2a_v3/`, `codex/STATUS.md` und `codex/reports/`, kein Git außer lesend.
+Keine bestehende Datei unter `experiments/` ändern. Keine Konstante, Schwelle, Regel oder Settings-Variante ändern
+oder hinzufügen. Keine anderen Funktionen, Domänen, Rauschstufen oder Seeds außer den oben genannten. Keine
+schmale Domäne. Kein Pilot- oder Hauptlauf. Nichts außerhalb von `experiments/annihilator_gate2a_v3/diagnostics/`,
+`experiments/annihilator_gate2a_v3/tests/`, `experiments/annihilator_gate2a_v3/results/diagnostic_ambiguity/`,
+`codex/STATUS.md` und `codex/reports/`. Kein Git außer lesend.
 
 ## Abnahme
 
-Tests grün. Anhang B erzeugt, oder der Befehl steht im Report. Report `codex/reports/REPORT_WP_G2A3_C.md` mit der
-Klassentabelle und der K6-Diagnose. `codex/STATUS.md` mit `WP-G2A3-c`.
+Tests grün. Prüfung der Koeffizientenreihenfolge (Punkt 6) bestanden und im Report mit Zahlen belegt. Report
+`codex/reports/REPORT_WP_DIAG_AMB_A.md` mit Feldherkunft, Ergebnis des einen echten Aufrufs (Zustand, Zählgrößen,
+Dauer) und den drei Befehlen. `codex/STATUS.md` mit `WP-DIAG-AMB-a`.

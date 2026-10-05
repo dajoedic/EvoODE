@@ -28,6 +28,8 @@ Spur sind sie **ohne Bedeutung**: nicht lesen, nicht ändern, nicht zitieren.
 | `docs/GATE_2A_v2.md`, `docs/GATE_2A_v2_RATIONALE.md` | v2 und die Begründung jeder Änderung gegenüber v1; Stufe K gescheitert (FNS-Fehler) |
 | `docs/GATE_2A_v3.md` | v3 = v2 mit AML (L-BFGS), $n_{\text{exact}}$ breit, exakter Verifikation |
 | `docs/GATE_2A_v3_STAGE_K_RESULT.md` | **aktueller Stand:** Anhang A nicht bestanden, Anhang B (Diagnose) löst K6 aus |
+| `PRACTICAL_ANNIHILATOR_BENCHMARK.md` | Entwurf (Nutzer): praktischer Benchmark nach Gate 2A, Selective Prediction; noch ohne eingefrorene Kriterien |
+| `docs/DIAGNOSTIC_AMBIGUITY.md` | **eingefrorene Diagnose:** trennt `AMBIGUOUS` N1- von I-Fällen? Entscheidet, ob der praktische Benchmark weiterverfolgt wird |
 | `DIARY.md` | Chronologie (die Einträge ab 2026-10-04 betreffen diese Spur, ältere sind EvoGrow-Erbe) |
 | `codex/CODEX_PROTOCOL.md`, `codex/CURRENT_TASK.md`, `codex/STATUS.md`, `codex/reports/` | Codex-Handshake |
 | `experiments/annihilator_gate2a/`, `_v2/`, `_v3/` | Code und Ergebnisse je Version, alte Versionen verhaltensgleich eingefroren |

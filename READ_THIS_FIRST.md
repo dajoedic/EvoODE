@@ -5,42 +5,34 @@ welche Entscheidung ansteht. Wird **immer vollständig überschrieben**. Dauerha
 `docs/IDEA_01_ANNIHILATOR_DISCOVERY.md` oder `DIARY.md`. EvoGrow und Paper 1 stehen in `..\EvoODE\READ_THIS_FIRST.md`,
 nicht hier.
 
-**Stand: 2026-10-05 nachmittags. Gate 2A v3: Anhang A nicht bestanden, Anhang B (Diagnose) löst Kill-Kriterium K6 aus.
-Grundsatzentscheidung beim Nutzer offen.**
+**Stand: 2026-10-05 nachmittags. Gate 2A v3 ist gescheitert (Anhang A nicht bestanden, Anhang B löst K6 aus). Neue,
+eingefrorene Diagnose: Trennt `AMBIGUOUS` nicht identifizierbare von identifizierbaren Fällen? Codex baut das
+Skript (WP-DIAG-AMB-a).**
 
 ## 1. Wo wir stehen
 
-**Zuerst lesen: `docs/GATE_2A_v3_STAGE_K_RESULT.md`**, vor allem „Nachtrag 1“.
+- **Gate 2A v3:** `docs/GATE_2A_v3_STAGE_K_RESULT.md`. Ordnung 1–2 kalibriert, K6 (Ordnung 3) nicht; Clean K7
+  schmal `WRONG`, K7 und K8 breit `AMBIGUOUS`. Anhang B: F4, F5, F8, F9 und F10 bei 1 % breit N1, K6 würde
+  auslösen. Das Ergebnis bleibt so stehen, **keine v4**.
+- **Neue Frage** (Nutzer, `PRACTICAL_ANNIHILATOR_BENCHMARK.md`, Entwurf): Taugt die Methode als Selective Prediction,
+  also mit Abstention bei unzureichender Evidenz?
+- **Vorher die Diagnose** `docs/DIAGNOSTIC_AMBIGUITY.md` (eingefroren): N1 = F4, F5, F8 und I = F1, F2, F6, breit,
+  1 %, v3 unverändert. Interessant nur, wenn B1–B4 alle erfüllt sind, sonst ist die Abstention-Story negativ.
+  Ab diesem Lauf sind F1–F10 Entwicklungsset.
 
-- **v1** (04.10.): an der Abnahme gescheitert. Ursachen: Matrixnumerik, SVD-Bias, schmale Testfunktionen. Nie
-  gelaufen.
-- **v2:** Stufe K scheiterte, weil FNS Sattelpunkte statt Minima fand.
-- **v3:** AML mit L-BFGS. Zwei Implementierungsfehler von Codex wurden behoben (Vorzeichen im Gradienten). Stufe K:
-  - Ordnung 1–2 kalibriert (K1, K2 bestanden);
-  - K6 (Ordnung 3): Kovarianz unterschätzt die Streuung um das 2- bis 7-Fache;
-  - Clean K7 schmal ist `WRONG`, K7 und K8 breit sind `AMBIGUOUS` statt `CORRECT`. **Anhang A besteht nicht.**
-  - Alle 8 Teile sind fertig (11:15), `appendix_A.{json,md}` ist zusammengeführt (1.000 Realisierungen).
-- **Anhang B** als Diagnose (Nutzer: Option A): Bei 1 % Rauschen auf der breiten Domäne sind F4, F5, F8, F9 und F10
-  nicht identifizierbar (N1). Eine Klasse mit **konstanten** Koeffizienten passt jeweils so gut wie der wahre
-  Operator mit **polynomialen** Koeffizienten, Güte $\beta \approx \alpha$. **K6 würde auslösen** (3 Zellen > 1).
-  Identifizierbar bleiben nur Operatoren erster Ordnung und der Sinus.
+## 2. Nächste Schritte
 
-## 2. Offene Entscheidung des Nutzers (in dieser Sitzung zu treffen)
-
-Spur **beenden** (Ergebnis dokumentieren) oder das **Messdesign grundsätzlich neu denken**. Im zweiten Fall muss
-der Nutzer festlegen, welche Annahme sich ändern darf:
-- weniger Rauschen als Zielbereich (etwa 0,1 %);
-- mehr Daten (größeres N, mehrere Trajektorien);
-- eine schmalere Fragestellung (Ordnung und Koeffizientenstruktur, ohne polynomiale von konstanten Koeffizienten
-  zu unterscheiden).
-
-Jede Variante ändert das Versprechen der Idee. Das ist eine inhaltliche Entscheidung, keine technische. Eine v4 des
-Schätzers allein ändert an K6 nichts.
+1. Codex-Abgabe von WP-DIAG-AMB-a prüfen und committen.
+2. **Pilot** (2 Realisierungen je Zelle) starten. Kosten sind unbekannt: eine Realisierung sind 51 Suchen (Haupt
+   plus 50 Bootstrap). Clean-Zellen in Stufe K brauchten 40–50 min.
+3. Aus den Zählgrößen $N$ und den Laufort festlegen, in `docs/DIAGNOSTIC_AMBIGUITY.md` §6 eintragen und committen,
+   **bevor** der Hauptlauf startet.
+4. Hauptlauf, `--summarize`, Ergebnis in §7.
 
 ## 3. Was noch läuft oder liegt
 
-- **Es läuft nichts.** Stufe K v3 ist vollständig, Anhang A, die Logs und die Lauf-Hilfsdateien von Anhang B sind
-  committet.
-- `codex/CURRENT_TASK.md` enthält noch den erledigten WP-G2A3-c (`STATUS.md`: `done`). Kein aktiver Auftrag.
+- Codex arbeitet an WP-DIAG-AMB-a (`codex/STATUS.md`).
+- `PRACTICAL_ANNIHILATOR_BENCHMARK.md` ist uncommittet (Entwurf des Nutzers).
 - Uncommittet liegen noch Orakel-Teil 12/18 und Worker-Caches der v2-Abnahme
-  (`experiments/annihilator_gate2a_v2/results/acceptance/`). v2 ist abgelöst. Ob sie committet oder gelöscht werden, entscheidet der Nutzer.
+  (`experiments/annihilator_gate2a_v2/results/acceptance/`). v2 ist abgelöst. Ob sie committet oder gelöscht werden,
+  entscheidet der Nutzer.
