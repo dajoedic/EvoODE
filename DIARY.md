@@ -7,7 +7,7 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 ## 2026-10-05
 
 ### §9.3-Hierarchie (WP-N43/N43b) und SINDy/Weak-SINDy auf dem ganzen C-6-Export
-<!-- 60a4393 -->
+<!-- 60a4393, 27673c1 -->
 
 **SINDy/Weak-SINDy auf C-6, lokal.** Alle 4.536 Exportzellen (63 Systeme × 2 IC × 12 Bedingungen × 3 Realisierungen),
 zehn Konfigurationen, 10 Shards parallel, 40 min (11:55–12:35). Ein erster Versuch mit 6 Shards wurde vom
