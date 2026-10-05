@@ -7,7 +7,7 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 ## 2026-10-05
 
 ### Diagnose AMBIGUOUS vs. WRONG eingefroren, WP-DIAG-AMB-a an Codex
-<!-- commit pending -->
+<!-- ba4d7d8 -->
 
 Der Nutzer entwarf `PRACTICAL_ANNIHILATOR_BENCHMARK.md`: die neue Frage, ob die Methode als Selective Prediction
 taugt, also bei unzureichender Evidenz abstainiert statt falsch zu entscheiden. Vorher eine billige Diagnose:
