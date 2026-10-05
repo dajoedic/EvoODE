@@ -71,11 +71,16 @@ nachzujustieren.
 
 ## 6. Festlegung nach dem Pilot
 
-*(wird vor dem Hauptlauf ausgefüllt)*
+Festgelegt am 2026-10-05 um ca. 14:45 vom Nutzer, **bevor die Pilot-Zustände angesehen wurden.**
 
-- $N$:
-- Laufort:
-- Grundlage (Zählgrößen aus dem Pilot):
+- $N = 100$ je Zelle, Seeds 50000–50099. Die 12 Pilot-Records (Seeds 50000, 50001) zählen mit, offen sind 588.
+- Laufort: Orion, 11 Pods à 1 Kern, disjunkte Teile. Erwartete Laufzeit rund 32 h. Der Nutzer erlaubt die
+  Überschreitung der 24-h-Grenze.
+- Grundlage, nur Kosten aus dem Pilot (12 Realisierungen, Laptop, 6 Worker): 1–7 geprüfte Klassen, 4–59
+  AML-Iterationen, im Mittel 36 min, höchstens 51 min pro Realisierung; hochgerechnet 359 Kernstunden.
+- Offengelegt: Im Pilot schrieb `run.log` den Zustand mit. Der Zustand **einer** Realisierung (F2, Seed 50000)
+  war deshalb vor dieser Festlegung sichtbar. Die Zahl der geprüften Klassen verrät den Zustand indirekt. Beides
+  ging nicht in die Festlegung ein.
 
 ## 7. Ergebnis
 
