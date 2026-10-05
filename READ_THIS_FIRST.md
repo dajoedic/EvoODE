@@ -7,7 +7,7 @@ nicht hier.
 
 **Stand: 2026-10-05 nachmittags. Gate 2A v3 ist gescheitert (Anhang A nicht bestanden, Anhang B löst K6 aus). Neue,
 eingefrorene Diagnose: Trennt `AMBIGUOUS` nicht identifizierbare von identifizierbaren Fällen? Das Skript
-ist fertig (WP-DIAG-AMB-a), der Pilot läuft (Ende gegen 17–18 Uhr).**
+ist fertig (WP-DIAG-AMB-a), der Pilot ist fertig, N und Laufort sind offen.**
 
 ## 1. Wo wir stehen
 
@@ -44,12 +44,13 @@ ist fertig (WP-DIAG-AMB-a), der Pilot läuft (Ende gegen 17–18 Uhr).**
 
 ## 3. Was noch läuft oder liegt
 
-- **Der Pilot läuft lokal**, losgelöst gestartet am 05.10. um 12:53 (Haupt-PID 40720, 6 Worker). Ende erwartet
-  gegen **17–18 Uhr**, das ist mehr als die ursprünglich geschätzten 1–3 h. Stand 13:31: 2 von 12 fertig. F2/50000
-  mit 2 Klassen, 19 AML-Iterationen, 18 min; F1/50000 mit 5 Klassen, 19 AML-Iterationen, 37 min. F5 (Referenz
-  (3,1)) dürfte 2–3 h pro Realisierung brauchen und bestimmt das Ende. Fortschritt in
-  `results/diagnostic_ambiguity/run.log` (enthält Zustände, nicht ansehen), Fehler in `pilot.err`, am Ende die
-  Datei `DONE`. Kein aktiver Codex-Auftrag.
+- **Der Pilot ist fertig** (12:53–14:21, 12 Records, keine Fehler, uncommittet in
+  `results/diagnostic_ambiguity/`). Kosten: 1–7 geprüfte Klassen, 4–59 AML-Iterationen, im Mittel 36 min pro
+  Realisierung, höchstens 51 min (Laptop, 6 Worker parallel). Hochgerechnet auf $N = 100$: 359 Kernstunden,
+  auf dem Laptop mit 6 Workern rund 60 h, mit 32 parallelen Prozessen rund 11 h. Bei $N = 50$ die Hälfte.
+  **Die Zustände sind noch nicht angesehen.** `run.log` und `records.jsonl` enthalten sie. Erst nach der
+  Festlegung von $N$ und Laufort in §6 ansehen. **Offen: Entscheidung des Nutzers zu $N$ und Laufort.** Kein aktiver
+  Codex-Auftrag.
 - `PRACTICAL_ANNIHILATOR_BENCHMARK.md` ist uncommittet (Entwurf des Nutzers).
 - Uncommittet liegen noch Orakel-Teil 12/18 und Worker-Caches der v2-Abnahme
   (`experiments/annihilator_gate2a_v2/results/acceptance/`). v2 ist abgelöst. Ob sie committet oder gelöscht werden,
