@@ -6,6 +6,21 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ## 2026-10-05
 
+### Diagnose AMBIGUOUS: Pilot fertig, N = 100 auf Orion festgelegt, Pilot-Zustände
+<!-- ba83120 Skript, a22804b §6 -->
+
+Pilot 12:53–14:21, 12 Records, im Mittel 36 min pro Realisierung. Danach legte der Nutzer **vor** Ansicht der
+Zustände fest: $N = 100$, Orion mit 11 Pods, rund 32 h. Offengelegt: Der Zustand von F2/50000 stand in `run.log`.
+Pilot-Zustände (6 pro Gruppe, **nicht belastbar**):
+- **N1:** 5 `AMBIGUOUS`, 1 `WRONG`. F4/50001 wählte (3,0) stabil, Bootstrap 1,0, ohne Warnung. F5 wählte zweimal
+  (3,0) stabil und wurde nur durch A1 als `AMBIGUOUS` markiert.
+- **I:** 3 `CORRECT`, 3 `AMBIGUOUS`. In allen drei `AMBIGUOUS`-Fällen verwarf der Test die Referenzklasse, und die
+  Methode wählte eine Oberklasse mit wahrem Annihilator. Die Ambiguität war dabei jeweils angezeigt.
+- Vorläufig: B1 und B3 nicht erfüllt, B2 und B4 erfüllt.
+
+Auffällig: Die Referenzklasse wird in I in 3 von 6 Fällen verworfen, nominal sollte das in 1 % der Fälle passieren.
+Das wird im Hauptlauf beobachtet, nicht jetzt untersucht.
+
 ### Diagnose AMBIGUOUS vs. WRONG eingefroren, WP-DIAG-AMB-a an Codex
 <!-- ba4d7d8 -->
 

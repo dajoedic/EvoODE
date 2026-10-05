@@ -7,7 +7,7 @@ nicht hier.
 
 **Stand: 2026-10-05 nachmittags. Gate 2A v3 ist gescheitert (Anhang A nicht bestanden, Anhang B löst K6 aus). Neue,
 eingefrorene Diagnose: Trennt `AMBIGUOUS` nicht identifizierbare von identifizierbaren Fällen? Das Skript
-ist fertig (WP-DIAG-AMB-a), der Pilot ist fertig, N und Laufort sind offen.**
+ist fertig (WP-DIAG-AMB-a), Pilot fertig, Hauptlauf mit N = 100 auf Orion (11 Pods) in Vorbereitung.**
 
 ## 1. Wo wir stehen
 
@@ -44,12 +44,9 @@ ist fertig (WP-DIAG-AMB-a), der Pilot ist fertig, N und Laufort sind offen.**
 
 ## 3. Was noch läuft oder liegt
 
-- **Der Pilot ist fertig** (12:53–14:21, 12 Records, keine Fehler, uncommittet in
-  `results/diagnostic_ambiguity/`). Kosten: 1–7 geprüfte Klassen, 4–59 AML-Iterationen, im Mittel 36 min pro
-  Realisierung, höchstens 51 min (Laptop, 6 Worker parallel). Hochgerechnet auf $N = 100$: 359 Kernstunden,
-  auf dem Laptop mit 6 Workern rund 60 h, mit 32 parallelen Prozessen rund 11 h. Bei $N = 50$ die Hälfte.
-  **Die Zustände sind noch nicht angesehen.** `run.log` und `records.jsonl` enthalten sie. Erst nach der
-  Festlegung von $N$ und Laufort in §6 ansehen. **Offen: Entscheidung des Nutzers zu $N$ und Laufort.** Kein aktiver
+- **Der Pilot ist fertig und ausgewertet** (12 Records, uncommittet in `results/diagnostic_ambiguity/`). Festgelegt
+  in `docs/DIAGNOSTIC_AMBIGUITY.md` §6, **vor** Ansicht der Zustände: $N = 100$, Orion mit 11 Pods à 1 Kern, rund 32 h
+  (Nutzer erlaubt die Laufzeit). Pilot-Zustände in `DIARY.md` (6 pro Gruppe, nicht belastbar). Kein aktiver
   Codex-Auftrag.
 - `PRACTICAL_ANNIHILATOR_BENCHMARK.md` ist uncommittet (Entwurf des Nutzers).
 - Uncommittet liegen noch Orakel-Teil 12/18 und Worker-Caches der v2-Abnahme
