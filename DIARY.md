@@ -6,6 +6,19 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ## 2026-10-05
 
+### Pause bis zum Ende aller Orion-Läufe, Blindregel für C-6 (Nutzer, „Weg 2“)
+<!-- a0a5982 -->
+
+Die Story-Entscheidung fällt erst, wenn alles vom Cluster durch ist. Damit die Messlatte nicht nach dem Blick
+auf die Daten gesetzt wird, sieht Claude bis zur eingefrorenen Regel **keine C-6-EvoGrow-Ergebnisse** an; erlaubt
+sind nur Einsammeln und technische Prüfung. Entwurf der Regel, zum Wiedervorlegen (nicht beschlossen): primärer
+Endpunkt Generalisierung R² > 0,9 varianzgewichtet auf den 51 dim-1/2-Systemen, Hierarchie §9.3; Gegner je die
+beste Konfiguration von SINDy, Weak-SINDy, ODEFormer (später PySR) pro Bedingung. **B1:** ≥ 10 pp Vorsprung vor
+jedem Gegner und gepaarte Cluster-Permutation über Systeme p < 0,05. **B2:** Abfall σ 0 → 0,05 bei EvoGrow kleiner
+als bei jedem Gegner, für ρ = 0 und 0,5. (b) Hauptbotschaft bei B1 in ≥ 4 der 6 Bedingungen mit σ ≥ 0,03 und B2;
+B1 nirgends → (b) entfällt; dazwischen → (a) mit Robustheit als Nebenbefund. 10 pp, σ ≥ 0,03 und „4 von 6“ sind
+menschliche Setzungen. Bereits bekannt und zu deklarieren: die Stufenzellen 1–3 (Systeme 1, 17, 18, 24, 41).
+
 ### §9.3-Hierarchie (WP-N43/N43b) und SINDy/Weak-SINDy auf dem ganzen C-6-Export
 <!-- 60a4393, 27673c1 -->
 
