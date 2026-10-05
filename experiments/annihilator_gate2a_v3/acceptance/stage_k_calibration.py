@@ -14,6 +14,8 @@ from scipy.stats import ncx2
 from experiments.annihilator_gate2a_v3.config import (
     APPENDIX_A_JSON,
     CALIBRATION_FUNCTIONS,
+    CLASSES,
+    FunctionSpec,
     K_MATRIX_THRESHOLD,
     RESULTS,
     TAU_MAX,
@@ -151,38 +153,81 @@ def stage_k_b(ell_max: int, n: int, limit: bool = False) -> dict:
     return {"tau": tau, "records": records, "passed": tau <= TAU_MAX}
 
 
-def ex_ante_k_classes(ell_max: int, tau: float, n: int) -> dict:
-    from experiments.annihilator_gate2a_v3.config import CLASSES
+def ex_ante_cell(
+    function_key: str,
+    spec: FunctionSpec,
+    domain_name: str,
+    eta: float,
+    ell_max: int,
+    tau: float,
+    n: int,
+) -> dict:
+    domain = domain_for(spec, domain_name)
+    x, z = grid(domain, n)
+    values = numeric_values(function_key, x)
+    sigma = sigma_eff(values, eta, tau)
+    ref_class = tuple(spec.reference_class)
+    settings = _settings(ell_max, tau, n=n, boot_reps=1)
+    context = WeightContext(z, values, settings)
+    earlier = []
+    identifiable = True
+    for cls in CLASSES:
+        if cls == ref_class:
+            break
+        r, d = cls
+        k_fit, k_val, a_fit, a_val = context.split(r, d)
+        evaluation = evaluate_class(a_fit, k_fit, a_val, k_val, sigma, settings)
+        beta = float(ncx2.sf(evaluation.test.critical, evaluation.test.dof, evaluation.test.statistic)) if evaluation.test.dof > 0 else 0.0
+        earlier.append(
+            {
+                "class": [r, d],
+                "beta": beta,
+                "lambda": float(evaluation.test.statistic),
+                "dof": int(evaluation.test.dof),
+                "critical": float(evaluation.test.critical),
+            }
+        )
+        if beta < 0.9:
+            identifiable = False
+    r, d = ref_class
+    k_fit, k_val, a_fit, a_val = context.split(r, d)
+    ref_eval = evaluate_class(a_fit, k_fit, a_val, k_val, sigma, settings)
+    theta = float(np.sqrt(max(0.0, np.trace(ref_eval.coeff_cov))))
+    cls_name = "I" if identifiable and theta <= 0.1 else ("N1" if not identifiable else "N2")
+    weakest = min(earlier, key=lambda item: item["beta"]) if earlier else None
+    return {
+        "function": function_key,
+        "domain": domain_name,
+        "eta": eta,
+        "reference_class": [r, d],
+        "class": cls_name,
+        "theta_hat_c": theta,
+        "earlier": earlier,
+        "weakest_earlier": weakest,
+        "sigma_eff": sigma,
+    }
 
+
+def ex_ante_classes_for_specs(specs: dict[str, FunctionSpec], ell_max: int, tau: float, n: int, etas: tuple[float, ...]) -> dict:
     records = {}
-    for function_key, spec in CALIBRATION_FUNCTIONS.items():
+    for function_key, spec in specs.items():
         records[function_key] = {}
         for domain_name in ("wide", "narrow"):
-            domain = domain_for(spec, domain_name)
-            x, z = grid(domain, n)
-            values = numeric_values(function_key, x)
-            sigma = sigma_eff(values, 0.01, tau)
-            ref_class, _ = _reference(function_key, domain_name)
-            context = WeightContext(z, values, _settings(ell_max, tau, n=n, boot_reps=1))
-            earlier = []
-            identifiable = True
-            for cls in CLASSES:
-                if cls == ref_class:
-                    break
-                r, d = cls
-                k_fit, k_val, a_fit, a_val = context.split(r, d)
-                evaluation = evaluate_class(a_fit, k_fit, a_val, k_val, sigma, _settings(ell_max, tau, n=n, boot_reps=1))
-                beta = float(ncx2.sf(evaluation.test.critical, evaluation.test.dof, evaluation.test.statistic)) if evaluation.test.dof > 0 else 0.0
-                earlier.append({"class": [r, d], "beta": beta})
-                if beta < 0.9:
-                    identifiable = False
-            r, d = ref_class
-            k_fit, k_val, a_fit, a_val = context.split(r, d)
-            ref_eval = evaluate_class(a_fit, k_fit, a_val, k_val, sigma, _settings(ell_max, tau, n=n, boot_reps=1))
-            theta = float(np.sqrt(max(0.0, np.trace(ref_eval.coeff_cov))))
-            cls_name = "I" if identifiable and theta <= 0.1 else ("N1" if not identifiable else "N2")
-            records[function_key][domain_name] = {"class": cls_name, "theta_hat_c": theta, "earlier": earlier}
+            records[function_key][domain_name] = {}
+            for eta in etas:
+                records[function_key][domain_name][str(eta)] = ex_ante_cell(function_key, spec, domain_name, eta, ell_max, tau, n)
     return records
+
+
+def ex_ante_k_classes(ell_max: int, tau: float, n: int) -> dict:
+    records = ex_ante_classes_for_specs(CALIBRATION_FUNCTIONS, ell_max, tau, n, (0.01,))
+    return {
+        function_key: {
+            domain_name: eta_records["0.01"]
+            for domain_name, eta_records in domain_records.items()
+        }
+        for function_key, domain_records in records.items()
+    }
 
 
 def _selected_seeds(reps: int, part: str | None) -> list[int]:

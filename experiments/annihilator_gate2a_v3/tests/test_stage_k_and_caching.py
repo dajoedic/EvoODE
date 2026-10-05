@@ -1,8 +1,9 @@
 import numpy as np
 
 from experiments.annihilator_gate2a_v3.acceptance import accept_01_oracle
+from experiments.annihilator_gate2a_v3.acceptance import appendix_b
 from experiments.annihilator_gate2a_v3.acceptance import stage_k_calibration as stage_k
-from experiments.annihilator_gate2a_v3.config import APPENDIX_A_JSON, CLASSES, FUNCTIONS, Settings, domain_for
+from experiments.annihilator_gate2a_v3.config import APPENDIX_A_JSON, CALIBRATION_FUNCTIONS, CLASSES, FUNCTIONS, Settings, domain_for
 from experiments.annihilator_gate2a_v3.functions import grid, numeric_values
 from experiments.annihilator_gate2a_v3.oracle import ORACLE_METADATA
 from experiments.annihilator_gate2a_v3.weak_operator import WeightContext
@@ -79,3 +80,49 @@ def test_weight_context_reuses_split_arrays():
     second = context.split(1, 0)
     assert first[0] is second[0]
     assert first[2] is second[2]
+
+
+def test_appendix_b_cell_contains_required_fields():
+    record = stage_k.ex_ante_cell("F1", FUNCTIONS["F1"], "wide", 0.01, 3, 1e-8, 80)
+
+    assert record["function"] == "F1"
+    assert record["domain"] == "wide"
+    assert record["eta"] == 0.01
+    assert record["class"] in {"I", "N1", "N2"}
+    assert isinstance(record["theta_hat_c"], float)
+    assert record["earlier"]
+    assert {"class", "beta", "lambda", "dof", "critical"} <= set(record["earlier"][0])
+    assert record["weakest_earlier"] in record["earlier"]
+
+
+def test_appendix_b_shared_function_matches_stage_k_for_k2_wide(monkeypatch):
+    monkeypatch.setattr(stage_k, "CALIBRATION_FUNCTIONS", {"K2": CALIBRATION_FUNCTIONS["K2"]})
+    from_shared = stage_k.ex_ante_cell("K2", CALIBRATION_FUNCTIONS["K2"], "wide", 0.01, 3, 1e-8, 80)
+    from_stage_k = stage_k.ex_ante_k_classes(3, 1e-8, 80)["K2"]["wide"]
+
+    assert from_shared["class"] == from_stage_k["class"]
+    assert np.isclose(from_shared["theta_hat_c"], from_stage_k["theta_hat_c"])
+    assert [item["class"] for item in from_shared["earlier"]] == [item["class"] for item in from_stage_k["earlier"]]
+    assert np.allclose(
+        [item["beta"] for item in from_shared["earlier"]],
+        [item["beta"] for item in from_stage_k["earlier"]],
+    )
+
+
+def test_appendix_b_k6_diagnostic_counts_wide_low_order_n_cells():
+    records = {
+        function_key: {
+            "wide": {"0.01": {"class": "I", "reference_class": list(FUNCTIONS[function_key].reference_class), "theta_hat_c": 0.0, "weakest_earlier": None}},
+            "narrow": {"0.01": {"class": "N2", "reference_class": list(FUNCTIONS[function_key].reference_class), "theta_hat_c": 1.0, "weakest_earlier": None}},
+        }
+        for function_key in FUNCTIONS
+    }
+    records["F1"]["wide"]["0.01"]["class"] = "N1"
+    records["F4"]["wide"]["0.01"]["class"] = "N2"
+    records["F9"]["wide"]["0.01"]["class"] = "N1"
+
+    diagnostic = appendix_b.k6_diagnostic(records)
+
+    assert diagnostic["affected_count"] == 2
+    assert diagnostic["would_trigger"] is True
+    assert [cell["function"] for cell in diagnostic["affected_cells"]] == ["F1", "F4"]

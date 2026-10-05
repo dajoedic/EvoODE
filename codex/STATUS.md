@@ -1,4 +1,4 @@
 status: done
-task:   WP-G2A3-b
-report: codex/reports/REPORT_WP_G2A3_B.md
-note:   Fixed AML sign normalization, added regression coverage, moved aborted v3 outputs, and all required smoke/tests passed.
+task:   WP-G2A3-c
+report: codex/reports/REPORT_WP_G2A3_C.md
+note:   Implemented Appendix B diagnostic, shared ex-ante logic, tests passed; full Appendix B command is in the report due runtime estimate.
