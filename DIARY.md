@@ -6,6 +6,19 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ## 2026-10-06
 
+### ODEBench-Smoke-Test: v1-Pilot gescheitert (Aufbau), v2 eingefroren
+<!-- 1615fc7, cf8400b, a438a2a -->
+
+Der Pilot von v1 ($\eta = 0$, Systeme 7 und 3, etwa 3 h) ergab für den Annihilator `NONE` auf beiden Systemen, mit
+allen 42 Klassen verworfen. Die Diagnose zeigt: Der exakte Referenzoperator wird auf den 1024 Trajektorienpunkten mit
+$T \approx 5\cdot10^{14}$ verworfen, auf 2000 gleichmäßigen Punkten derselben Domäne besteht er mit
+$T \approx 10^{-5}$. Die Trapezquadratur auf Trajektoriengittern mit Lücken passt nicht zum Boden $\tau$, der für
+gleichmäßige Punkte kalibriert wurde. Das ist ein Aufbaufehler, kein Ergebnis. Zweiter Mangel: Ohne Rauschen wählt
+die AICc-Auswahl alle 9 Terme, und das zählte als `STRUCT_OK`. Der Hauptlauf von v1 wurde nicht gestartet.
+
+Der Nutzer wählte für v2 (`docs/ODEBENCH_SMOKE_TEST_v2.md`) 2000 gleichmäßige Punkte für Oracle-$f$ und
+`STRUCT_OK` nur bei exakter Struktur. Codex setzt das in WP-OB-B um.
+
 ### ODEBench-Smoke-Test: Pipeline abgenommen, wartet auf Einfrieren
 <!-- f177c8f -->
 

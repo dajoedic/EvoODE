@@ -5,9 +5,10 @@ welche Entscheidung ansteht. Wird **immer vollständig überschrieben**. Dauerha
 `docs/IDEA_01_ANNIHILATOR_DISCOVERY.md` oder `DIARY.md`. EvoGrow und Paper 1 stehen in `..\EvoODE\READ_THIS_FIRST.md`,
 nicht hier.
 
-**Stand: 2026-10-06 abends. Reality-Check Stufe A: `STRONG_NEGATIVE`. ODEBench-Smoke-Test: Pipeline abgenommen
-(`f177c8f`), Plausibilität bestanden. **Wartet auf das Einfrieren von `docs/ODEBENCH_SMOKE_TEST.md` durch den
-Nutzer.** Danach Pilot (η = 0, Systeme 7 und 3), Laufort, Hauptlauf.**
+**Stand: 2026-10-06 spät. Reality-Check Stufe A: `STRONG_NEGATIVE`. ODEBench-Smoke-Test: v1 im Pilot an einem
+Aufbaufehler gescheitert (Trajektoriengitter gegen den $\tau$-Boden), Befund in v1 §12. v2 eingefroren
+(`docs/ODEBENCH_SMOKE_TEST_v2.md`); Codex baut WP-OB-B. Danach Pilot v2, Hauptlauf (losgelöst, wohl über 2 h),
+Auswertung.**
 
 ## 1. Wo wir stehen
 
@@ -36,7 +37,7 @@ Nutzer.** Danach Pilot (η = 0, Systeme 7 und 3), Laufort, Hauptlauf.**
 
 ## 3. Was noch liegt
 
-- Kein Codex-Auftrag aktiv. Kein Job, kein Pod auf Orion aktiv. Die Originaldaten der Diagnose bleiben auf dem NFS unter
+- Codex-Auftrag WP-OB-B aktiv. Kein Job, kein Pod auf Orion aktiv. Die Originaldaten der Diagnose bleiben auf dem NFS unter
   `/bigdata/data-science/joedicke/annihilator_diag_amb/`. Eine lokale Kopie ist committet.
 - Auf Orion stehen noch der abgeschlossene Job `annihilator-diag-amb` und seine Pods (`Completed`, ohne
   Ressourcen). Löschen mit `oc delete job annihilator-diag-amb`.
