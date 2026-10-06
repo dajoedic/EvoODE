@@ -2,8 +2,11 @@
 
 **Eingefroren am 2026-10-06, vor jedem Lauf.** Auftrag und Entscheidungsregel vom Nutzer (Entwurf im Chat vom
 06.10.), Auswahlregel, Kategorie `TRUE_PLUS` und Durchführung trotz absehbarem Ausgang vom Nutzer gewählt. Library,
-Zulässigkeitsregel, Gültigkeitsprüfung und Fehlermaße von Claude ausgearbeitet. Änderungen nach dem ersten Lauf
-brauchen eine neue Version dieses Dokuments, dieses bleibt mit seinem Ergebnis stehen.
+Zulässigkeitsregel, Gültigkeitsprüfung und Fehlermaße von Claude ausgearbeitet. **Vom Nutzer am 06.10. freigegeben**,
+mit zwei Änderungen vor dem ersten Rauschlauf: §8.1 ist eine Implementierungs- und Spezifikationsprüfung mit Stopp,
+§9 enthält keine quantitative Erwartung mehr. Die Prüfung auf exakten Daten (§8.1) war zu diesem Zeitpunkt schon
+gelaufen und bestanden (WP-RC-A). Die Änderung betrifft nur die Folge eines Scheiterns. Änderungen nach dem ersten
+Lauf brauchen eine neue Version dieses Dokuments, dieses bleibt mit seinem Ergebnis stehen.
 
 **Was das ist:** eine letzte, begrenzte Diagnose vor dem Abschluss von Idee #1. **Kein Gate 2A v4**, keine Änderung
 an Annihilator v3, kein Paper-Benchmark. Code und Ergebnisse von v3 bleiben unverändert.
@@ -152,9 +155,11 @@ $\#\texttt{SURROGATE} / \#(\texttt{TRUE\_STRUCTURE} + \texttt{TRUE\_PLUS} + \tex
 
 ## 8. Ablauf
 
-1. **Implementierungsprüfung auf exakten Daten** ($\eta = 0$, $\sigma = $ `sigma_eff(values, 0, tau)`): BS muss für
-   alle F1–F10 `TRUE_STRUCTURE` liefern. Das ist ein Code-Test, keine Kalibrierung. Schlägt er fehl, wird der Befund
-   gemeldet und nichts an Library oder Regel geändert.
+1. **Implementierungs- und Spezifikationsprüfung auf exakten Daten** ($\eta = 0$,
+   $\sigma = $ `sigma_eff(values, 0, tau)`): BS muss für F1–F10 `TRUE_STRUCTURE` liefern. Wegen $\tau > 0$ gibt es
+   auch hier einen numerischen Boden. Ein Scheitern kann also an der eingefrorenen BS-Regel selbst liegen, nicht nur
+   an der Implementierung. Scheitert die Prüfung, wird vor jedem Rauschlauf gestoppt und der Befund dokumentiert. In
+   dieser Version werden weder Library noch Auswahlregel geändert, die Version ist dann nicht aussagefähig.
 2. **Pilot:** Seeds 50000 und 50001 für alle zehn Funktionen. Erfasst werden nur Zählgrößen (Zahl der Fits). Die
    Pilot-Records zählen im Hauptlauf mit. Ihre Kategorien beeinflussen nichts.
 3. **Hauptlauf:** Seeds 50000–50019. Liegt die hochgerechnete Laufzeit unter 1 h, läuft er auf dem Laptop direkt im
@@ -166,7 +171,8 @@ $\#\texttt{SURROGATE} / \#(\texttt{TRUE\_STRUCTURE} + \texttt{TRUE\_PLUS} + \tex
 In der Library ist $\log x$ ein Term, $x\log x$ ein Term und $x/(2+x)$ zwei Terme. Das Annihilator-Surrogat (3,0)
 entspricht dagegen einer Summe von drei Exponentialfunktionen mit freien Raten. Die feste Library bietet so etwas
 nicht, und ihre Polynome und festen Exponentialfunktionen brauchen dafür voraussichtlich mehr Terme. Erwartet wird
-deshalb $P_{\text{true}}$ nahe 0,99 bei F4, F5 und F8 und damit `STRONG_NEGATIVE`.
+deshalb, dass die direkte Repräsentation F4, F5 und F8 deutlich häufiger strukturell korrekt identifiziert als der
+Annihilator. Das ist eine Hypothese, keine Schwelle. Entscheidend sind allein die Werte in §6.
 
 Die inhaltliche Lesart wäre dann: Die Komplexitätsordnung $(r+1)(d+1)$ des Annihilators stuft das Surrogat als
 einfacher ein als den wahren Operator. Im Funktionsraum ist es umgekehrt. Das Surrogatproblem liegt an der
