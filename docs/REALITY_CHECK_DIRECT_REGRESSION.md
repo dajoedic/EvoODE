@@ -180,4 +180,56 @@ Repräsentation, nicht an den Daten allein.
 
 ## 10. Ergebnis
 
-*(nach dem Hauptlauf)*
+Gerechnet am 2026-10-06 auf dem Laptop, Code aus `eb77334`, Spezifikation freigegeben in `084fcfc`. §8.1 bestanden
+(F1–F10 auf exakten Daten `TRUE_STRUCTURE` mit kleinstem $k$). Der Pilot (Seeds 50000–50001) kostete 17–276 Fits pro
+Realisierung, der Hauptlauf folgte direkt. 400 Records (10 Funktionen × 20 Seeds × 2 Verfahren). Daten:
+`experiments/annihilator_gate2a_v3/results/reality_check_direct/` (`records.jsonl`, `summary.{json,md}`,
+`exact_check.json`).
+
+**Verdikt: `STRONG_NEGATIVE`.**
+
+| Größe | Wert | Schwelle |
+|---|---:|---|
+| Gültigkeit, $P_{\text{true}}$ Kontrollen (F1, F2, F6) | 1,00 (60/60) | ≥ 0,70 |
+| $P_{\text{true}}$ primär (F4, F5, F8) | **1,00 (60/60)** | ≥ 0,70 |
+| $P_{\text{surr}}$ primär | **0,00 (0/60)** | ≤ 0,20 |
+
+**Vergleich auf denselben Samples** (strukturell falsche eindeutige Ausgaben / alle eindeutigen Ausgaben):
+
+| Gruppe | Annihilator gepaart (Seeds 50000–50019) | Annihilator Referenz (100 Seeds) | BS | STLSQ |
+|---|---:|---:|---:|---:|
+| N1 (F4, F5, F8) | 25/25, dazu 35 `AMBIGUOUS` | 118/118, dazu 182 `AMBIGUOUS` | 0/60 | 0/60 (alle `TRUE_PLUS`) |
+| I (F1, F2, F6) | 0/57, dazu 3 `AMBIGUOUS` | 0/297, dazu 3 `AMBIGUOUS` | 0/60 | 2/60 |
+
+**BS im Einzelnen:**
+- Alle 200 Realisierungen über F1–F10 sind `TRUE_STRUCTURE`, auch die sekundären F3, F7, F9, F10.
+- Gewählt wird immer beim kleinstmöglichen $k$ (1, bei F7, F8, F9, F10 genau 2). Bei diesem $k$ ist in jeder
+  Realisierung **genau eine** Teilmenge akzeptiert, eine Mehrdeutigkeit tritt also nie auf.
+- Der relative Fehler auf der Domäne liegt je Funktion im Median bei $1{,}4$–$2{,}9\cdot10^{-4}$, höchstens
+  $5{,}5\cdot10^{-4}$. Auf der rechten Erweiterung liegt er im Median bei $1{,}3$–$2{,}9\cdot10^{-4}$, höchstens
+  $6{,}5\cdot10^{-4}$. Der relative Koeffizientenfehler liegt im Median bei $1{,}4$–$5{,}3\cdot10^{-4}$, höchstens
+  $1{,}2\cdot10^{-3}$ (F8).
+
+**STLSQ (nur berichtet) ist in der eingefrorenen Form entartet:**
+- Die gewählte Menge hat 14–23 Terme. In 194 von 200 Fällen enthält sie alle wahren Terme (`TRUE_PLUS`). In
+  6 Fällen (F6: 2, F7: 3, F10: 1) fehlt ein wahrer Term (`SURROGATE`). `TRUE_STRUCTURE` kommt nie vor.
+- Die Library ist auf diesen Domänen stark kollinear. Die normierten Kleinste-Quadrate-Koeffizienten aller Terme
+  liegen dadurch weit über der Schwelle $0{,}1$, und nach 1–3 Iterationen wird nichts mehr entfernt.
+- Auf der Domäne passt das Modell gut (Fehler ≈ $10^{-3}$, also im Rauschen). Die Koeffizienten weichen aber um
+  Größenordnungen ab (relativer Fehler bis $2\cdot10^7$). Auf der Erweiterung liegt der relative Fehler zwischen 15
+  und $7\cdot10^7$.
+- Das sagt nichts über das Verdikt. Es zeigt nur, dass ein ungetuntes STLSQ mit fester Schwelle hier keine
+  brauchbare Vergleichsmethode ist. Eine Schwellenwahl nach Sichtung wäre Kalibrierung am Ergebnis und ist nach §4
+  ausgeschlossen.
+
+**Lesart.** Auf exakt denselben verrauschten Samples und mit derselben Entscheidungsregel (kleinstes Modell, das der
+$\chi^2$-Test bei $\alpha = 1\,\%$ nicht verwirft) findet die direkte Repräsentation F4, F5 und F8 in jeder
+Realisierung richtig. Die Annihilator-Methode trifft dort nie, und wenn sie eindeutig antwortet, liegt sie immer
+falsch. Die Daten tragen die Information also. Das Surrogatproblem entsteht durch die Annihilator-Repräsentation und
+ihre Komplexitätsordnung, nicht durch das Rauschen allein. Die Hypothese aus §9 hat sich bestätigt.
+
+Der Vorbehalt aus §1 gilt uneingeschränkt: Die Baseline bekommt die wahre Funktionsfamilie in der Library,
+F4 und F5 sind jeweils ein einzelner Term. Das Ergebnis zeigt, dass das Surrogatproblem **nicht unvermeidlich** ist.
+Es zeigt nicht, dass Sparse-Regression allgemein überlegen ist.
+
+**Folge nach §6:** Idee #1 beenden, kein W-SINDy, kein ODEFormer.

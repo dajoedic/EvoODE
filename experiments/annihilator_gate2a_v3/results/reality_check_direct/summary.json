@@ -1,0 +1,273 @@
+{
+  "annihilator": {
+    "paired": {
+      "I": {
+        "states": {
+          "AMBIGUOUS": 3,
+          "CORRECT": 57,
+          "NONE": 0,
+          "TRUE_NOT_REF": 0,
+          "WRONG": 0
+        },
+        "total": 60,
+        "wrong_given_unambiguous": 0.0,
+        "wrong_over_unambiguous": "0/57"
+      },
+      "N1": {
+        "states": {
+          "AMBIGUOUS": 35,
+          "CORRECT": 0,
+          "NONE": 0,
+          "TRUE_NOT_REF": 0,
+          "WRONG": 25
+        },
+        "total": 60,
+        "wrong_given_unambiguous": 1.0,
+        "wrong_over_unambiguous": "25/25"
+      }
+    },
+    "reference": {
+      "I": {
+        "states": {
+          "AMBIGUOUS": 3,
+          "CORRECT": 297,
+          "NONE": 0,
+          "TRUE_NOT_REF": 0,
+          "WRONG": 0
+        },
+        "total": 300,
+        "wrong_given_unambiguous": 0.0,
+        "wrong_over_unambiguous": "0/297"
+      },
+      "N1": {
+        "states": {
+          "AMBIGUOUS": 182,
+          "CORRECT": 0,
+          "NONE": 0,
+          "TRUE_NOT_REF": 0,
+          "WRONG": 118
+        },
+        "total": 300,
+        "wrong_given_unambiguous": 1.0,
+        "wrong_over_unambiguous": "118/118"
+      }
+    }
+  },
+  "baseline_false_unique": {
+    "I": {
+      "BS": 0.0,
+      "STLSQ": 0.03333333333333333
+    },
+    "N1": {
+      "BS": 0.0,
+      "STLSQ": 0.0
+    }
+  },
+  "by_function": {
+    "F1": {
+      "BS": {
+        "FAIL": 0,
+        "SURROGATE": 0,
+        "TRUE_PLUS": 0,
+        "TRUE_STRUCTURE": 20
+      },
+      "STLSQ": {
+        "FAIL": 0,
+        "SURROGATE": 0,
+        "TRUE_PLUS": 20,
+        "TRUE_STRUCTURE": 0
+      }
+    },
+    "F10": {
+      "BS": {
+        "FAIL": 0,
+        "SURROGATE": 0,
+        "TRUE_PLUS": 0,
+        "TRUE_STRUCTURE": 20
+      },
+      "STLSQ": {
+        "FAIL": 0,
+        "SURROGATE": 1,
+        "TRUE_PLUS": 19,
+        "TRUE_STRUCTURE": 0
+      }
+    },
+    "F2": {
+      "BS": {
+        "FAIL": 0,
+        "SURROGATE": 0,
+        "TRUE_PLUS": 0,
+        "TRUE_STRUCTURE": 20
+      },
+      "STLSQ": {
+        "FAIL": 0,
+        "SURROGATE": 0,
+        "TRUE_PLUS": 20,
+        "TRUE_STRUCTURE": 0
+      }
+    },
+    "F3": {
+      "BS": {
+        "FAIL": 0,
+        "SURROGATE": 0,
+        "TRUE_PLUS": 0,
+        "TRUE_STRUCTURE": 20
+      },
+      "STLSQ": {
+        "FAIL": 0,
+        "SURROGATE": 0,
+        "TRUE_PLUS": 20,
+        "TRUE_STRUCTURE": 0
+      }
+    },
+    "F4": {
+      "BS": {
+        "FAIL": 0,
+        "SURROGATE": 0,
+        "TRUE_PLUS": 0,
+        "TRUE_STRUCTURE": 20
+      },
+      "STLSQ": {
+        "FAIL": 0,
+        "SURROGATE": 0,
+        "TRUE_PLUS": 20,
+        "TRUE_STRUCTURE": 0
+      }
+    },
+    "F5": {
+      "BS": {
+        "FAIL": 0,
+        "SURROGATE": 0,
+        "TRUE_PLUS": 0,
+        "TRUE_STRUCTURE": 20
+      },
+      "STLSQ": {
+        "FAIL": 0,
+        "SURROGATE": 0,
+        "TRUE_PLUS": 20,
+        "TRUE_STRUCTURE": 0
+      }
+    },
+    "F6": {
+      "BS": {
+        "FAIL": 0,
+        "SURROGATE": 0,
+        "TRUE_PLUS": 0,
+        "TRUE_STRUCTURE": 20
+      },
+      "STLSQ": {
+        "FAIL": 0,
+        "SURROGATE": 2,
+        "TRUE_PLUS": 18,
+        "TRUE_STRUCTURE": 0
+      }
+    },
+    "F7": {
+      "BS": {
+        "FAIL": 0,
+        "SURROGATE": 0,
+        "TRUE_PLUS": 0,
+        "TRUE_STRUCTURE": 20
+      },
+      "STLSQ": {
+        "FAIL": 0,
+        "SURROGATE": 3,
+        "TRUE_PLUS": 17,
+        "TRUE_STRUCTURE": 0
+      }
+    },
+    "F8": {
+      "BS": {
+        "FAIL": 0,
+        "SURROGATE": 0,
+        "TRUE_PLUS": 0,
+        "TRUE_STRUCTURE": 20
+      },
+      "STLSQ": {
+        "FAIL": 0,
+        "SURROGATE": 0,
+        "TRUE_PLUS": 20,
+        "TRUE_STRUCTURE": 0
+      }
+    },
+    "F9": {
+      "BS": {
+        "FAIL": 0,
+        "SURROGATE": 0,
+        "TRUE_PLUS": 0,
+        "TRUE_STRUCTURE": 20
+      },
+      "STLSQ": {
+        "FAIL": 0,
+        "SURROGATE": 0,
+        "TRUE_PLUS": 20,
+        "TRUE_STRUCTURE": 0
+      }
+    }
+  },
+  "control_count": 60,
+  "p_control_true": 1.0,
+  "p_surr": 0.0,
+  "p_true": 1.0,
+  "primary_count": 60,
+  "records": 400,
+  "secondary_functions": {
+    "F10": {
+      "BS": {
+        "FAIL": 0,
+        "SURROGATE": 0,
+        "TRUE_PLUS": 0,
+        "TRUE_STRUCTURE": 20
+      },
+      "STLSQ": {
+        "FAIL": 0,
+        "SURROGATE": 1,
+        "TRUE_PLUS": 19,
+        "TRUE_STRUCTURE": 0
+      }
+    },
+    "F3": {
+      "BS": {
+        "FAIL": 0,
+        "SURROGATE": 0,
+        "TRUE_PLUS": 0,
+        "TRUE_STRUCTURE": 20
+      },
+      "STLSQ": {
+        "FAIL": 0,
+        "SURROGATE": 0,
+        "TRUE_PLUS": 20,
+        "TRUE_STRUCTURE": 0
+      }
+    },
+    "F7": {
+      "BS": {
+        "FAIL": 0,
+        "SURROGATE": 0,
+        "TRUE_PLUS": 0,
+        "TRUE_STRUCTURE": 20
+      },
+      "STLSQ": {
+        "FAIL": 0,
+        "SURROGATE": 3,
+        "TRUE_PLUS": 17,
+        "TRUE_STRUCTURE": 0
+      }
+    },
+    "F9": {
+      "BS": {
+        "FAIL": 0,
+        "SURROGATE": 0,
+        "TRUE_PLUS": 0,
+        "TRUE_STRUCTURE": 20
+      },
+      "STLSQ": {
+        "FAIL": 0,
+        "SURROGATE": 0,
+        "TRUE_PLUS": 20,
+        "TRUE_STRUCTURE": 0
+      }
+    }
+  },
+  "verdict": "STRONG_NEGATIVE"
+}

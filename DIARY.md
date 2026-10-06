@@ -6,6 +6,22 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ## 2026-10-06
 
+### Reality-Check Stufe A: `STRONG_NEGATIVE`
+<!-- commit: folgt -->
+
+Der Nutzer gab die Spezifikation mit zwei Änderungen frei: §8.1 ist eine Implementierungs- und
+Spezifikationsprüfung mit Stopp, §9 enthält keine Zahl mehr (`084fcfc`). Pilot und Hauptlauf liefen auf dem Laptop,
+400 Records, 17–276 Fits pro Realisierung.
+- **BS:** 200 von 200 `TRUE_STRUCTURE` über F1–F10. Primär $P_{\text{true}} = 1{,}00$, $P_{\text{surr}} = 0{,}00$,
+  Kontrollen 1,00. Beim gewählten $k$ ist immer genau eine Teilmenge akzeptiert. Fehler auf Domäne und Erweiterung
+  ≈ $2\cdot10^{-4}$.
+- **Annihilator gepaart** (dieselben Samples): N1 25/25 eindeutige Ausgaben falsch.
+- **STLSQ** (nur berichtet) ist entartet: 14–23 Terme wegen der kollinearen Library, Extrapolation unbrauchbar.
+  Keine Nachjustierung.
+
+Lesart: Die Daten tragen die Struktur. Das Surrogatproblem kommt aus der Annihilator-Repräsentation und ihrer
+Komplexitätsordnung. Vorbehalt: Die Library enthält die wahren Familien. **Folge nach §6: Idee #1 beenden.**
+
 ### Reality-Check Stufe A eingefroren, WP-RC-A an Codex
 <!-- 64c295f -->
 
