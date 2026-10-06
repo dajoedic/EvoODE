@@ -7,7 +7,7 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 ## 2026-10-06
 
 ### Reality-Check Stufe A: `STRONG_NEGATIVE`
-<!-- commit: folgt -->
+<!-- 69923fc -->
 
 Der Nutzer gab die Spezifikation mit zwei Änderungen frei: §8.1 ist eine Implementierungs- und
 Spezifikationsprüfung mit Stopp, §9 enthält keine Zahl mehr (`084fcfc`). Pilot und Hauptlauf liefen auf dem Laptop,
