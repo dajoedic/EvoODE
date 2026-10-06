@@ -6,6 +6,27 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ## 2026-10-06
 
+### ODEBench-Smoke-Test: Pipeline abgenommen, wartet auf Einfrieren
+<!-- f177c8f -->
+
+WP-OB-A wurde nicht abgenommen. Befunde:
+- Die Baselines waren kein pysindy, liefen aber in den Records mit pysindy-Parametern; W-SINDy war identisch mit
+  SINDy.
+- Beide Trainingstrajektorien bekamen dasselbe Rauschen.
+- $L \to \hat f$ scheiterte für 7 und 19 schon mit dem exakten Operator, weil über die Nullstelle des
+  Leitkoeffizienten integriert wurde; die Plausibilitätsprüfung prüfte einen anderen Pfad.
+- `TRUE_NOT_REF` war komponentenweise statt über $n_{\text{exact}}$ definiert.
+
+WP-OB-A2 behebt alles. Selbst nachgeprüft: `Theta_` liegt in Originaleinheiten vor, und SINDy und W-SINDy finden
+eine synthetische Logistik exakt. Plausibilität bestanden: Nachintegration ≤ $1{,}04\cdot10^{-5}$, die Spezifikation
+wurde vor dem Einfrieren von $10^{-6}$ auf $10^{-4}$ geändert, weil die ODEBench-Speicherung selbst nur so genau
+ist. Exakte Kette $L \to \hat f$ ≤ $1{,}8\cdot10^{-11}$ auf dem Produktivintervall. Referenzklassen: 3 (3,0),
+7 (3,1), 19 (2,2), 21 (3,0).
+
+Offengelegt: Codex' Feldlisten-Test erzeugt einen SINDy-Record auf System 3 bei $\eta = 0$ im Temp-Ordner, also
+einen Fit auf Systemdaten vor dem Einfrieren. Die Kategorie wurde nicht angesehen; der Report nennt nur die gewählte
+Schwelle 0,001.
+
 ### ODEBench-Smoke-Test: Entwurf, WP-OB-A an Codex
 <!-- e8a1ba2 -->
 
