@@ -19,6 +19,12 @@ $\chi^2$-Test bei 1 % nicht verwirft). STLSQ wird nur berichtet. Obermengen zäh
 `STRONG_NEGATIVE`, weil $\log x$ in der Library ein Term ist, das Surrogat (3,0) aber drei Exponentialfunktionen mit
 freien Raten bräuchte.
 
+WP-RC-A abgenommen nach einer Nachbesserung (WP-RC-A2). Der Annihilator-Vergleich hatte N1 und I zusammengefasst
+(118/415 statt 118/118). Der alte Test hatte das umgangen, weil er die Gruppen selbst vorfilterte. Prüfung auf
+exakten Daten: F1–F10 alle `TRUE_STRUCTURE`, mit kleinstem $k$. 54 Tests grün. Gepaarte Annihilator-Zahlen
+(Seeds 50000–50019): N1 25/25 eindeutige Ausgaben `WRONG`, 35 `AMBIGUOUS`; I 57 `CORRECT`, 3 `AMBIGUOUS`.
+Pilot wartet auf die Freigabe der Spezifikation durch den Nutzer. <!-- eb77334 -->
+
 ### Diagnose AMBIGUOUS: Hauptlauf fertig, Verdikt negativ
 <!-- 0c3feb2 -->
 
