@@ -1,0 +1,111 @@
+{
+  "exact_reference_operator_to_fhat": {
+    "19": {
+      "effective_interval": [
+        -0.7990761813719883,
+        10.192004908121675
+      ],
+      "fail_reason": null,
+      "nrmse_f": 1.4606673783188972e-12,
+      "passed": true,
+      "reference_class": [
+        2,
+        2
+      ],
+      "reference_n_exact": 1,
+      "train_nrmse_x": [
+        5.468798012438156e-06,
+        9.496198892428076e-06
+      ],
+      "train_r2": [
+        0.9999999997312315,
+        0.9999999996438127
+      ]
+    },
+    "21": {
+      "effective_interval": [
+        -10.281314623500906,
+        56.54723042925498
+      ],
+      "fail_reason": null,
+      "nrmse_f": 1.8304504643305894e-11,
+      "passed": true,
+      "reference_class": [
+        3,
+        0
+      ],
+      "reference_n_exact": 1,
+      "train_nrmse_x": [
+        2.651734939127827e-06,
+        6.3345857486618265e-06
+      ],
+      "train_r2": [
+        0.9999999999736215,
+        0.9999999996692172
+      ]
+    },
+    "3": {
+      "effective_interval": [
+        -126.56040202664802,
+        743.5322111465641
+      ],
+      "fail_reason": null,
+      "nrmse_f": 1.1803431313232e-15,
+      "passed": true,
+      "reference_class": [
+        3,
+        0
+      ],
+      "reference_n_exact": 1,
+      "train_nrmse_x": [
+        2.6943749022998507e-06,
+        5.8340189573698015e-06
+      ],
+      "train_r2": [
+        0.9999999999541214,
+        0.9999999994184449
+      ]
+    },
+    "7": {
+      "effective_interval": [
+        0.028620102406074748,
+        316.55112646690037
+      ],
+      "fail_reason": null,
+      "nrmse_f": 3.6600578934468034e-12,
+      "passed": true,
+      "reference_class": [
+        3,
+        1
+      ],
+      "reference_n_exact": 1,
+      "train_nrmse_x": [
+        2.4781926328669766e-06,
+        1.0360086504400062e-05
+      ],
+      "train_r2": [
+        0.9999999997243506,
+        0.9999999989537497
+      ]
+    }
+  },
+  "passed": true,
+  "training_reintegration": {
+    "19": {
+      "max_nrmse_x": 9.505100566055208e-06,
+      "passed": true
+    },
+    "21": {
+      "max_nrmse_x": 6.3312201173321975e-06,
+      "passed": true
+    },
+    "3": {
+      "max_nrmse_x": 5.838768295014274e-06,
+      "passed": true
+    },
+    "7": {
+      "max_nrmse_x": 1.0385631862527078e-05,
+      "passed": true
+    }
+  }
+}
