@@ -6,6 +6,19 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ## 2026-10-06
 
+### Reality-Check Stufe A eingefroren, WP-RC-A an Codex
+<!-- 64c295f -->
+
+Vor dem Abschluss eine letzte Frage (Nutzer): Ist das Surrogatproblem außergewöhnlich stark, oder scheitert eine
+direkte Sparse-Regression auf denselben $(x, f)$-Samples ähnlich? Spezifikation `docs/REALITY_CHECK_DIRECT_REGRESSION.md`:
+Seeds 50000–50019 (gepaart mit der Diagnose), Library mit 23 festen Termen (enthält die wahren Familien, bewusst
+günstig für die Baseline). Entscheidend ist Best-Subset mit der Annihilator-Suchregel (sparsestes Modell, das der
+$\chi^2$-Test bei 1 % nicht verwirft). STLSQ wird nur berichtet. Obermengen zählen als `TRUE_PLUS`. Verdikt
+`STRONG_NEGATIVE` bei $P_{	ext{true}} \ge 0{,}70$ und $P_{	ext{surr}} \le 0{,}20$ auf F4/F5/F8, sonst `OPEN`
+(Stufe B nur mit eigener Spezifikation). Symbolic Regression entfällt (GP). Erwartung vorab notiert:
+`STRONG_NEGATIVE`, weil $\log x$ in der Library ein Term ist, das Surrogat (3,0) aber drei Exponentialfunktionen mit
+freien Raten bräuchte.
+
 ### Diagnose AMBIGUOUS: Hauptlauf fertig, Verdikt negativ
 <!-- 0c3feb2 -->
 

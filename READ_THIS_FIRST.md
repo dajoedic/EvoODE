@@ -5,8 +5,9 @@ welche Entscheidung ansteht. Wird **immer vollständig überschrieben**. Dauerha
 `docs/IDEA_01_ANNIHILATOR_DISCOVERY.md` oder `DIARY.md`. EvoGrow und Paper 1 stehen in `..\EvoODE\READ_THIS_FIRST.md`,
 nicht hier.
 
-**Stand: 2026-10-06 nachmittags. Die Diagnose `AMBIGUOUS` ist abgeschlossen, Verdikt negativ (B1 verfehlt). Nichts
-läuft. Offen ist nur die Entscheidung des Nutzers, ob die Spur endet.**
+**Stand: 2026-10-06 abends. Die Diagnose `AMBIGUOUS` ist abgeschlossen, Verdikt negativ (B1 verfehlt). Vor dem
+Abschluss läuft ein letzter Reality-Check (Stufe A, `docs/REALITY_CHECK_DIRECT_REGRESSION.md`, eingefroren): Codex
+baut WP-RC-A, danach rechnet Claude Pilot und Hauptlauf auf dem Laptop (Minuten).**
 
 ## 1. Wo wir stehen
 
@@ -26,7 +27,10 @@ läuft. Offen ist nur die Entscheidung des Nutzers, ob die Spur endet.**
 
 ## 2. Nächste Schritte
 
-1. **Entscheidung des Nutzers:**
+0. **WP-RC-A abnehmen** (Codex, `codex/STATUS.md`), dann Pilot (Seeds 50000–50001) und Hauptlauf (50000–50019)
+   auf dem Laptop, `--summarize`, Ergebnis in §10 der Spezifikation. `STRONG_NEGATIVE` heißt Spur beenden, `OPEN`
+   heißt Stufe B (W-SINDy) erst spezifizieren und mit dem Nutzer besprechen.
+1. **Entscheidung des Nutzers** (nach Stufe A):
    - **A, Spur beenden (Empfehlung):** Abschluss in `docs/IDEA_01_ANNIHILATOR_DISCOVERY.md` festhalten.
    - **B, grundsätzliche Neubewertung:** Messdesign oder eingebaute Identifizierbarkeitsprüfung. Das wäre eine neue
      Idee mit eigener, vorab eingefrorener Spezifikation und neuen Testfunktionen, keine Fortsetzung von Gate 2A.
@@ -34,7 +38,7 @@ läuft. Offen ist nur die Entscheidung des Nutzers, ob die Spur endet.**
 
 ## 3. Was noch liegt
 
-- Kein Job, kein Pod, kein Codex-Auftrag aktiv. Der Hilfs-Pod `annihilator-diag-amb-helper` ist gelöscht. Die
+- Codex-Auftrag WP-RC-A aktiv (gestartet 06.10.). Kein Job, kein Pod auf Orion aktiv. Der Hilfs-Pod `annihilator-diag-amb-helper` ist gelöscht. Die
   Originaldaten bleiben auf dem NFS unter `/bigdata/data-science/joedicke/annihilator_diag_amb/`. Eine lokale Kopie
   ist committet unter `experiments/annihilator_gate2a_v3/results/diagnostic_ambiguity/orion/`.
 - Die abgeschlossenen Job-Pods (`annihilator-diag-amb-*`, `Completed`) und der Job selbst stehen noch auf Orion. Sie
