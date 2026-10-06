@@ -30,7 +30,8 @@ Spur sind sie **ohne Bedeutung**: nicht lesen, nicht ändern, nicht zitieren.
 | `docs/GATE_2A_v3_STAGE_K_RESULT.md` | Anhang A nicht bestanden, Anhang B (Diagnose) löst K6 aus |
 | `PRACTICAL_ANNIHILATOR_BENCHMARK.md` | Entwurf (Nutzer): praktischer Benchmark nach Gate 2A, Selective Prediction; noch ohne eingefrorene Kriterien |
 | `docs/DIAGNOSTIC_AMBIGUITY.md` | eingefrorene Diagnose: trennt `AMBIGUOUS` N1- von I-Fällen? Entscheidet, ob der praktische Benchmark weiterverfolgt wird |
-| `docs/DIAGNOSTIC_AMBIGUITY_RESULT.md` | **aktueller Stand:** Ergebnis der Diagnose, Verdikt negativ (B1), Lesart und offene Entscheidung, ob die Spur endet |
+| `docs/DIAGNOSTIC_AMBIGUITY_RESULT.md` | Ergebnis der Diagnose, Verdikt negativ (B1), Lesart |
+| `docs/REALITY_CHECK_DIRECT_REGRESSION.md` | **aktueller Stand, eingefroren:** Stufe A, direkte Sparse-Regression auf denselben Samples; letzte Prüfung vor dem Abschluss von Idee #1 |
 | `DIARY.md` | Chronologie (die Einträge ab 2026-10-04 betreffen diese Spur, ältere sind EvoGrow-Erbe) |
 | `codex/CODEX_PROTOCOL.md`, `codex/CURRENT_TASK.md`, `codex/STATUS.md`, `codex/reports/` | Codex-Handshake |
 | `experiments/annihilator_gate2a/`, `_v2/`, `_v3/` | Code und Ergebnisse je Version, alte Versionen verhaltensgleich eingefroren |
