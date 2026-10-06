@@ -4,6 +4,18 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ---
 
+## 2026-10-07
+
+### ODEBench-Smoke-Test v2: Pilot technisch sauber, Hauptlauf gestartet
+<!-- f3faa77 -->
+
+WP-OB-B abgenommen: Mit dem exakten Operator besteht der v3-Test auf allen vier Systemen bei 2000 gleichmäßigen
+Punkten ($T \approx 10^{-6}$ bis $10^{-8}$, kritischer Wert ≈ 280). Pilot v2 ($\eta = 0$, Systeme 7 und 3) von 00:07
+bis 01:27, 6 Records. Kosten Annihilator: System 3 mit 4 Klassen 23 min, System 7 mit 10 Klassen 81 min; SINDy etwa
+2 s, W-SINDy etwa 20 s. f̂ und alle Trajektorien wurden ohne Fehlschlag gebildet. Der Hauptlauf startete wie vom
+Nutzer gewünscht am 07.10. um 01:27 losgelöst (PID 13124, 6 Worker, `--detach-marker`, Log
+`results_v2/main.{out,err}`). Erwartetes Ende 04:00–06:00.
+
 ## 2026-10-06
 
 ### ODEBench-Smoke-Test: v1-Pilot gescheitert (Aufbau), v2 eingefroren
