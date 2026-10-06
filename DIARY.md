@@ -14,7 +14,7 @@ direkte Sparse-Regression auf denselben $(x, f)$-Samples ähnlich? Spezifikation
 Seeds 50000–50019 (gepaart mit der Diagnose), Library mit 23 festen Termen (enthält die wahren Familien, bewusst
 günstig für die Baseline). Entscheidend ist Best-Subset mit der Annihilator-Suchregel (sparsestes Modell, das der
 $\chi^2$-Test bei 1 % nicht verwirft). STLSQ wird nur berichtet. Obermengen zählen als `TRUE_PLUS`. Verdikt
-`STRONG_NEGATIVE` bei $P_{	ext{true}} \ge 0{,}70$ und $P_{	ext{surr}} \le 0{,}20$ auf F4/F5/F8, sonst `OPEN`
+`STRONG_NEGATIVE` bei $P_{\text{true}} \ge 0{,}70$ und $P_{\text{surr}} \le 0{,}20$ auf F4/F5/F8, sonst `OPEN`
 (Stufe B nur mit eigener Spezifikation). Symbolic Regression entfällt (GP). Erwartung vorab notiert:
 `STRONG_NEGATIVE`, weil $\log x$ in der Library ein Term ist, das Surrogat (3,0) aber drei Exponentialfunktionen mit
 freien Raten bräuchte.
