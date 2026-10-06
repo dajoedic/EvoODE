@@ -1,9 +1,10 @@
 # ODEBench-Smoke-Test: Annihilator end-to-end auf vier skalaren Systemen
 
-**Entwurf vom 2026-10-06, noch nicht eingefroren.** Auftrag und Entscheidungsregel vom Nutzer (Chat vom 06.10.).
-Vom Nutzer gewählt sind die Systeme 7, 3, 21, 19, die 5 Realisierungen mit Mehrheitsregel bei 1 %, der Verzicht auf
-Variante B und pysindy 2.1 als Baseline. Die Operationalisierung von §5 bis §9 hat Claude ausgearbeitet. **Der Nutzer
-friert das Dokument vor dem ersten Discovery-Lauf ein.** Danach braucht jede Änderung eine neue Version.
+**Eingefroren am 2026-10-06 vom Nutzer, vor dem ersten Discovery-Lauf.** Code: `f177c8f`. Werte aus `setup.json` und
+`reference.json` lagen dabei vor. Auftrag und Entscheidungsregel vom Nutzer (Chat vom 06.10.). Vom Nutzer gewählt
+sind die Systeme 7, 3, 21, 19, die 5 Realisierungen mit Mehrheitsregel bei 1 %, der Verzicht auf Variante B und
+pysindy 2.1 als Baseline. Die Operationalisierung von §5 bis §9 hat Claude ausgearbeitet. Jede Änderung braucht ab
+jetzt eine neue Version.
 
 **Was das ist:** ein letzter Reality-Check vor dem Abschluss von Idee #1. Es ist **kein Gate 2A v4**, keine Reparatur
 und kein Paper-Benchmark. Die Annihilator-Suche aus v3 bleibt unverändert.
