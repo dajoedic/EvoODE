@@ -6,6 +6,17 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ## 2026-10-06
 
+### ODEBench-Smoke-Test: Entwurf, WP-OB-A an Codex
+<!-- e8a1ba2 -->
+
+Vor dem Abschluss will der Nutzer die Methode einmal end-to-end auf echten ODEBench-Systemen sehen. Entwurf
+`docs/ODEBENCH_SMOKE_TEST.md`, noch nicht eingefroren. Gewählt (Nutzer): Systeme 7 Gompertz, 3 Logistik, 21 SIR und
+19 Logistik mit Ernte, 5 Seeds bei 1 % mit Mehrheitsregel, nur Oracle-f (keine Variante B), pysindy 2.1 neu
+eingefroren statt Paper-1-Einstellungen (Spurtrennung). 40/56/63 sind nicht skalar. Rauschkonvention von ODEBench
+geprüft: multiplikativ $x(1+\xi)$ (ODEFormer-Paper). Die Test-Anfangsbedingungen liegen bewusst auch außerhalb des
+Trainingsbereichs, weil im 1D-Fall jede innere Anfangsbedingung nur eine Zeitverschiebung eines Trainingsorbits ist.
+Erwartung vorab: Gompertz entspricht F5, 19 entspricht F8.
+
 ### Reality-Check Stufe A: `STRONG_NEGATIVE`
 <!-- 69923fc -->
 

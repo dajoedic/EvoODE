@@ -5,9 +5,10 @@ welche Entscheidung ansteht. Wird **immer vollständig überschrieben**. Dauerha
 `docs/IDEA_01_ANNIHILATOR_DISCOVERY.md` oder `DIARY.md`. EvoGrow und Paper 1 stehen in `..\EvoODE\READ_THIS_FIRST.md`,
 nicht hier.
 
-**Stand: 2026-10-06 abends. Der Reality-Check Stufe A ergibt `STRONG_NEGATIVE`. Nach der eingefrorenen Regel wird
-Idee #1 beendet. Der Nutzer hatte vorab zugesagt, die Spur in diesem Fall zu schließen. Offen ist nur noch das
-Abschlussdokument. Nichts läuft.**
+**Stand: 2026-10-06 abends. Reality-Check Stufe A: `STRONG_NEGATIVE`. Vor dem endgültigen Abschluss will der Nutzer
+einen kleinen ODEBench-Smoke-Test sehen (`docs/ODEBENCH_SMOKE_TEST.md`, Entwurf). Codex baut WP-OB-A: Pipeline,
+Orakel, `setup.json`, `reference.json`, Plausibilitätsprüfungen, kein Discovery-Lauf. Danach friert der Nutzer die
+Spezifikation ein, dann Pilot und Hauptlauf.**
 
 ## 1. Wo wir stehen
 
@@ -27,14 +28,16 @@ Abschlussdokument. Nichts läuft.**
 
 ## 2. Nächste Schritte
 
-1. **Abschluss schreiben** (nach Bestätigung durch den Nutzer): Abschlussabschnitt in
+0. **ODEBench-Smoke-Test:** WP-OB-A abnehmen, dem Nutzer `setup.json`/`reference.json` zeigen, Einfrieren durch den
+   Nutzer, Pilot (η = 0, Systeme 7 und 3), Laufort festlegen, Hauptlauf, Auswertung nach §9.
+1. **Abschluss schreiben** (nach dem Smoke-Test, falls §9 „beenden“ ergibt): Abschlussabschnitt in
    `docs/IDEA_01_ANNIHILATOR_DISCOVERY.md` mit Ergebnis, Gate-Folge, Lesart und dem, was übertragbar bleibt.
    Danach in `CLAUDE.md` die Spur als abgeschlossen markieren. Kein W-SINDy, kein ODEFormer, kein eigenes Repository.
 2. Aufräumen (§3).
 
 ## 3. Was noch liegt
 
-- Kein Job, kein Pod, kein Codex-Auftrag aktiv. Die Originaldaten der Diagnose bleiben auf dem NFS unter
+- Codex-Auftrag WP-OB-A aktiv (06.10.). Kein Job, kein Pod auf Orion aktiv. Die Originaldaten der Diagnose bleiben auf dem NFS unter
   `/bigdata/data-science/joedicke/annihilator_diag_amb/`. Eine lokale Kopie ist committet.
 - Auf Orion stehen noch der abgeschlossene Job `annihilator-diag-amb` und seine Pods (`Completed`, ohne
   Ressourcen). Löschen mit `oc delete job annihilator-diag-amb`.
