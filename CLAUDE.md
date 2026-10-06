@@ -31,7 +31,8 @@ Spur sind sie **ohne Bedeutung**: nicht lesen, nicht ändern, nicht zitieren.
 | `PRACTICAL_ANNIHILATOR_BENCHMARK.md` | Entwurf (Nutzer): praktischer Benchmark nach Gate 2A, Selective Prediction; noch ohne eingefrorene Kriterien |
 | `docs/DIAGNOSTIC_AMBIGUITY.md` | eingefrorene Diagnose: trennt `AMBIGUOUS` N1- von I-Fällen? Entscheidet, ob der praktische Benchmark weiterverfolgt wird |
 | `docs/DIAGNOSTIC_AMBIGUITY_RESULT.md` | Ergebnis der Diagnose, Verdikt negativ (B1), Lesart |
-| `docs/REALITY_CHECK_DIRECT_REGRESSION.md` | **aktueller Stand, eingefroren:** Stufe A, direkte Sparse-Regression auf denselben Samples; letzte Prüfung vor dem Abschluss von Idee #1 |
+| `docs/REALITY_CHECK_DIRECT_REGRESSION.md` | eingefroren: Stufe A, direkte Sparse-Regression auf denselben Samples, Ergebnis in §10 |
+| `docs/REALITY_CHECK_DIRECT_REGRESSION_RESULT.md` | **aktueller Stand:** Ergebnis und Übergabe, Verdikt `STRONG_NEGATIVE`, Idee #1 wird beendet |
 | `DIARY.md` | Chronologie (die Einträge ab 2026-10-04 betreffen diese Spur, ältere sind EvoGrow-Erbe) |
 | `codex/CODEX_PROTOCOL.md`, `codex/CURRENT_TASK.md`, `codex/STATUS.md`, `codex/reports/` | Codex-Handshake |
 | `experiments/annihilator_gate2a/`, `_v2/`, `_v3/` | Code und Ergebnisse je Version, alte Versionen verhaltensgleich eingefroren |

@@ -11,6 +11,7 @@ Abschlussdokument. Nichts läuft.**
 
 ## 1. Wo wir stehen
 
+- **Ausführlich:** `docs/REALITY_CHECK_DIRECT_REGRESSION_RESULT.md` (Ergebnis, Lesart, Gesamtbild, Datenablage).
 - **Reality-Check Stufe A** (`docs/REALITY_CHECK_DIRECT_REGRESSION.md` §10): Auf exakt denselben Samples und mit
   derselben Auswahlregel (kleinstes Modell, das der $\chi^2$-Test bei 1 % nicht verwirft) findet eine direkte
   Best-Subset-Regression F4, F5 und F8 in 60 von 60 Realisierungen richtig, eindeutig und mit Fehler
