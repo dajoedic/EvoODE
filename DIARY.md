@@ -7,7 +7,7 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 ## 2026-10-06
 
 ### Diagnose AMBIGUOUS: Hauptlauf fertig, Verdikt negativ
-<!-- commit: folgt -->
+<!-- 0c3feb2 -->
 
 Orion-Job `annihilator-diag-amb` vollständig: 11/11 Pods `Completed`, keine Neustarts, 588 Records (5 × 54 +
 6 × 53), mit Pilot 600, je Funktion 100. Eingesammelt nach RUNBOOK §6, `--merge --reps 100` und `--summarize`
