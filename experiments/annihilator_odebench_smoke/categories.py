@@ -5,7 +5,7 @@ from __future__ import annotations
 import statistics
 from collections import Counter, defaultdict
 
-from .config import STRUCT_NRMSE_F_MAX, TRUE_BASELINE_TERMS
+from .config import SPEC_VERSION, STRUCT_NRMSE_F_MAX, TRUE_BASELINE_TERMS
 
 
 ANNIHILATOR_EXACT = {"CORRECT"}
@@ -15,7 +15,7 @@ BASELINE_SUPERSET = {"TRUE_PLUS"}
 
 
 def annihilator_struct_ok(state: str, nrmse_f: float) -> bool:
-    return state in ANNIHILATOR_EXACT | ANNIHILATOR_SUPERSET and nrmse_f <= STRUCT_NRMSE_F_MAX
+    return state in ANNIHILATOR_EXACT and nrmse_f <= STRUCT_NRMSE_F_MAX
 
 
 def baseline_category(system_id: int, selected_terms: set[str] | None, failed: bool = False) -> str:
@@ -32,13 +32,19 @@ def baseline_category(system_id: int, selected_terms: set[str] | None, failed: b
 
 
 def baseline_struct_ok(category: str, nrmse_f: float) -> bool:
-    return category in BASELINE_EXACT | BASELINE_SUPERSET and nrmse_f <= STRUCT_NRMSE_F_MAX
+    return category in BASELINE_EXACT and nrmse_f <= STRUCT_NRMSE_F_MAX
 
 
 def record_struct_ok(record: dict) -> bool:
     if record["method"] == "annihilator":
-        return bool(record.get("struct_ok", annihilator_struct_ok(record.get("state", "NONE"), float(record.get("nrmse_f", float("inf"))))))
-    return bool(record.get("struct_ok", baseline_struct_ok(record.get("category", "FAIL"), float(record.get("nrmse_f", float("inf"))))))
+        return annihilator_struct_ok(record.get("state", "NONE"), float(record.get("nrmse_f", float("inf"))))
+    return baseline_struct_ok(record.get("category", "FAIL"), float(record.get("nrmse_f", float("inf"))))
+
+
+def require_spec_version_2(records: list[dict]) -> None:
+    bad = [index for index, record in enumerate(records, start=1) if record.get("spec_version") != SPEC_VERSION]
+    if bad:
+        raise ValueError(f"record(s) without spec_version == {SPEC_VERSION}: lines {bad[:5]}")
 
 
 def system_ok(records: list[dict], method: str, eta: float, system_id: int) -> bool:
@@ -56,6 +62,7 @@ def median_value(records: list[dict], key: str) -> float:
 
 
 def evaluate_decision(records: list[dict]) -> dict:
+    require_spec_version_2(records)
     systems = sorted({int(r["system_id"]) for r in records})
     counts = {
         method: {
@@ -95,6 +102,7 @@ def evaluate_decision(records: list[dict]) -> dict:
 
 
 def grouped_table(records: list[dict]) -> list[dict]:
+    require_spec_version_2(records)
     groups = defaultdict(list)
     for record in records:
         groups[(record["method"], float(record["eta"]), int(record["system_id"]))].append(record)
@@ -110,4 +118,3 @@ def grouped_table(records: list[dict]) -> list[dict]:
             "median_test_nrmse_x": median_value(subset, "test_nrmse_x_median"),
         })
     return rows
-

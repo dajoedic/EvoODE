@@ -4,19 +4,25 @@ from __future__ import annotations
 
 import argparse
 import concurrent.futures
+import hashlib
 import json
 import math
+import shutil
 import time
+import traceback
+from datetime import datetime
 from pathlib import Path
 
 import numpy as np
 
-from experiments.annihilator_gate2a_v3.operator_search import full_search
+from experiments.annihilator_gate2a_v3.functions import sigma_eff
+from experiments.annihilator_gate2a_v3.operator_search import evaluate_class, full_search
+from experiments.annihilator_gate2a_v3.weak_operator import WeightContext
 
 from .baselines import PYSINDY_PARAMETERS, fit_pysindy_baseline, library_matrix
 from .catalog import build_setup, load_systems, training_domain
-from .categories import baseline_category, baseline_struct_ok, evaluate_decision, grouped_table
-from .config import CLEAN_SEEDS, METHODS, NOISY_SEEDS, RESULTS, SEARCH_SETTINGS, SYSTEM_IDS
+from .categories import baseline_category, baseline_struct_ok, evaluate_decision, grouped_table, require_spec_version_2
+from .config import ANNIHILATOR_SAMPLE_POINTS, CLEAN_SEEDS, METHODS, NOISY_SEEDS, RESULTS_V1, RESULTS_V2, SEARCH_SETTINGS, SPEC_VERSION, SYSTEM_IDS
 from .fhat import basis_ivp_fhat
 from .metrics import nrmse, trajectory_metrics
 from .oracle import build_reference, nullspace, reference_for_system
@@ -30,16 +36,42 @@ def write_json(path: Path, data: dict) -> None:
     path.write_text(json.dumps(data, indent=2, sort_keys=True, allow_nan=True))
 
 
+def _sha256(path: Path) -> str:
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def _load_setup_reference_from_v1(source: Path = RESULTS_V1) -> tuple[dict, dict, dict]:
+    setup_path = source / "setup.json"
+    reference_path = source / "reference.json"
+    if not setup_path.exists() or not reference_path.exists():
+        raise FileNotFoundError(f"missing frozen v1 setup/reference under {source}")
+    hashes = {"setup.json": _sha256(setup_path), "reference.json": _sha256(reference_path)}
+    return json.loads(setup_path.read_text()), json.loads(reference_path.read_text()), hashes
+
+
+def _uniform_training_sample(setup_row: dict, system) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    domain_row = setup_row["training_domain"]
+    x_values = np.linspace(float(domain_row["xmin"]), float(domain_row["xmax"]), ANNIHILATOR_SAMPLE_POINTS)
+    z_values = (x_values - float(domain_row["mu"])) / float(domain_row["scale"])
+    exact_f = system.numeric_rhs(x_values)
+    return x_values, z_values, exact_f
+
+
 def setup_command(results: Path) -> dict:
     start = time.perf_counter()
-    setup = build_setup()
-    reference = build_reference()
+    source_setup = RESULTS_V1 / "setup.json"
+    source_reference = RESULTS_V1 / "reference.json"
+    setup, reference, source_hashes = _load_setup_reference_from_v1()
+    results.mkdir(parents=True, exist_ok=True)
+    shutil.copy2(source_setup, results / "setup.json")
+    shutil.copy2(source_reference, results / "reference.json")
+    copied_hashes = {"setup.json": _sha256(results / "setup.json"), "reference.json": _sha256(results / "reference.json")}
+    if copied_hashes != source_hashes:
+        raise RuntimeError(f"copied setup/reference hashes differ: {copied_hashes} != {source_hashes}")
     sanity = run_sanity(setup, reference)
-    write_json(results / "setup.json", setup)
-    write_json(results / "reference.json", reference)
     write_json(results / "sanity.json", sanity)
     with (results / "run.log").open("a") as handle:
-        handle.write(json.dumps({"event": "setup", "systems": len(setup["systems"]), "seconds": time.perf_counter() - start}) + "\n")
+        handle.write(json.dumps({"event": "setup", "systems": len(setup["systems"]), "seconds": time.perf_counter() - start, "copied_hashes": copied_hashes}) + "\n")
     return {"setup": setup, "reference": reference, "sanity": sanity}
 
 
@@ -55,26 +87,39 @@ def run_sanity(setup: dict, reference: dict) -> dict:
         integration[str(sid)] = {"max_nrmse_x": max(rows), "passed": max(rows) < 1e-4}
         domain = training_domain(system)
         ref_class, coeffs, n_exact = reference_for_system(system, reference)
-        x_train = np.concatenate(system.x_train)
-        f_train = system.numeric_rhs(x_train)
+        x_train, z_train, f_train = _uniform_training_sample(setup["systems"][str(sid)], system)
         width = domain.b - domain.a
         fhat, fail = basis_ivp_fhat(coeffs, ref_class[0], ref_class[1], domain, x_train, f_train, (domain.a - 2.0 * width, domain.b + 10.0 * width))
         if fhat is None:
             value = math.inf
             train_metrics = []
+            v3_test = None
         else:
-            grid = np.linspace(domain.a, domain.b, 2000)
+            grid = np.linspace(domain.a, domain.b, ANNIHILATOR_SAMPLE_POINTS)
             value = nrmse(fhat(grid), system.numeric_rhs(grid))
             train_metrics = [trajectory_metrics(system, fhat, float(x0), truth) for x0, truth in zip(system.init, system.x_train)]
+            context = WeightContext(z_train, f_train, SEARCH_SETTINGS)
+            k_fit, k_val, a_fit, a_val = context.split(ref_class[0], ref_class[1])
+            sigma = sigma_eff(f_train, 0.0, SEARCH_SETTINGS.sigma_floor_factor)
+            evaluation = evaluate_class(a_fit, k_fit, a_val, k_val, sigma, SEARCH_SETTINGS, start=np.asarray(coeffs, dtype=float))
+            v3_test = {
+                "passed": bool(evaluation.test.passed),
+                "T": evaluation.test.statistic,
+                "critical": evaluation.test.critical,
+                "dof": evaluation.test.dof,
+                "rank": evaluation.test.rank,
+            }
         exact_chain[str(sid)] = {
             "reference_class": list(ref_class),
             "reference_n_exact": n_exact,
+            "sample_points": ANNIHILATOR_SAMPLE_POINTS,
             "nrmse_f": value,
             "effective_interval": list(fhat.effective_interval) if fhat is not None else None,
             "train_nrmse_x": [row["nrmse_x"] for row in train_metrics],
             "train_r2": [row["r2"] for row in train_metrics],
+            "v3_test": v3_test,
             "fail_reason": fail,
-            "passed": value < 1e-6 and all(np.isfinite(row["nrmse_x"]) for row in train_metrics),
+            "passed": value < 1e-6 and all(np.isfinite(row["nrmse_x"]) for row in train_metrics) and bool(v3_test and v3_test["passed"]),
         }
     return {
         "training_reintegration": integration,
@@ -137,11 +182,7 @@ def _trajectory_summary(system, fhat, setup_row: dict) -> dict:
 
 def _annihilator_record(system, setup_row: dict, reference: dict, eta: float, seed: int) -> dict:
     domain = training_domain(system)
-    x_values = np.concatenate(system.x_train)
-    order = np.argsort(x_values)
-    x_sorted = x_values[order]
-    z_sorted = (x_sorted - domain.mu) / domain.scale
-    exact_f = system.numeric_rhs(x_sorted)
+    x_sorted, z_sorted, exact_f = _uniform_training_sample(setup_row, system)
     sigma = eta * float(np.sqrt(np.mean(exact_f**2)))
     observed_f = exact_f if eta == 0.0 else exact_f + sigma * _rng(seed, system.system_id, "annihilator").standard_normal(exact_f.size)
     selection = full_search(z_sorted, observed_f, eta, seed, SEARCH_SETTINGS, with_bootstrap=True)
@@ -153,6 +194,9 @@ def _annihilator_record(system, setup_row: dict, reference: dict, eta: float, se
         "eta": eta,
         "seed": seed,
         "method": "annihilator",
+        "spec_version": SPEC_VERSION,
+        "annihilator_sample_points": ANNIHILATOR_SAMPLE_POINTS,
+        "sample_grid": "uniform_training_domain",
         "reference_class": list(ref_class),
         "reference_n_exact": n_exact,
         "selected_n_exact": selected_n_exact,
@@ -183,7 +227,7 @@ def _annihilator_record(system, setup_row: dict, reference: dict, eta: float, se
     record.update({
         "fhat_fail": None,
         "nrmse_f": nrmse_f,
-        "struct_ok": state in {"CORRECT", "TRUE_NOT_REF"} and nrmse_f <= 0.05,
+        "struct_ok": state == "CORRECT" and nrmse_f <= 0.05,
         "fhat_effective_interval": list(fhat.effective_interval),
         "fhat_fit_coefficients": fhat.fit_coefficients,
     })
@@ -216,6 +260,7 @@ def _baseline_record(system, setup_row: dict, eta: float, seed: int, method: str
         "eta": eta,
         "seed": seed,
         "method": method,
+        "spec_version": SPEC_VERSION,
         "category": category,
         "selected_terms": [{"term": name, "coefficient": float(value)} for name, value, keep in zip(names, coef, active) if keep],
         "selected_term_names": sorted(selected_terms),
@@ -234,12 +279,20 @@ def _baseline_record(system, setup_row: dict, eta: float, seed: int, method: str
 
 def _compute_record_task(task: tuple[int, float, int, str, Path]) -> dict:
     sid, eta, seed, method, results = task
-    setup = json.loads((results / "setup.json").read_text()) if (results / "setup.json").exists() else setup_command(results)["setup"]
-    reference = json.loads((results / "reference.json").read_text()) if (results / "reference.json").exists() else build_reference()
+    if not (results / "setup.json").exists() or not (results / "reference.json").exists():
+        setup_command(results)
+    setup = json.loads((results / "setup.json").read_text())
+    reference = json.loads((results / "reference.json").read_text())
     system = load_systems()[sid]
     if method == "annihilator":
         return _annihilator_record(system, setup["systems"][str(sid)], reference, float(eta), int(seed))
     return _baseline_record(system, setup["systems"][str(sid)], float(eta), int(seed), method)
+
+
+def _compute_record_task_with_seconds(task: tuple[int, float, int, str, Path]) -> tuple[dict, float]:
+    start = time.perf_counter()
+    record = _compute_record_task(task)
+    return record, time.perf_counter() - start
 
 
 def run_command(results: Path, system_ids: list[int], etas: list[float], seeds: list[int], methods: list[str], workers: int = 1) -> int:
@@ -249,8 +302,10 @@ def run_command(results: Path, system_ids: list[int], etas: list[float], seeds: 
         raise ValueError(f"unknown method in {methods}; allowed: {METHODS}")
     setup_path = results / "setup.json"
     reference_path = results / "reference.json"
-    setup = json.loads(setup_path.read_text()) if setup_path.exists() else setup_command(results)["setup"]
-    reference = json.loads(reference_path.read_text()) if reference_path.exists() else build_reference()
+    if not setup_path.exists() or not reference_path.exists():
+        setup_command(results)
+    setup = json.loads(setup_path.read_text())
+    reference = json.loads(reference_path.read_text())
     systems = load_systems()
     records_path = results / "records.jsonl"
     existing = load_records(records_path)
@@ -267,22 +322,21 @@ def run_command(results: Path, system_ids: list[int], etas: list[float], seeds: 
     with records_path.open("a") as handle, (results / "run.log").open("a") as log:
         if workers <= 1:
             for task in tasks:
-                start = time.perf_counter()
-                record = _compute_record_task(task)
+                record, seconds = _compute_record_task_with_seconds(task)
                 handle.write(json.dumps(record, sort_keys=True, allow_nan=True) + "\n")
                 handle.flush()
-                log.write(json.dumps({"event": "record", "system_id": task[0], "eta": task[1], "seed": task[2], "method": task[3], "seconds": time.perf_counter() - start}) + "\n")
+                log.write(json.dumps({"event": "record", "system_id": task[0], "eta": task[1], "seed": task[2], "method": task[3], "seconds": seconds}) + "\n")
                 log.flush()
                 written += 1
         else:
             with concurrent.futures.ProcessPoolExecutor(max_workers=int(workers)) as pool:
-                future_to_task = {pool.submit(_compute_record_task, task): task for task in tasks}
+                future_to_task = {pool.submit(_compute_record_task_with_seconds, task): task for task in tasks}
                 for future in concurrent.futures.as_completed(future_to_task):
                     task = future_to_task[future]
-                    record = future.result()
+                    record, seconds = future.result()
                     handle.write(json.dumps(record, sort_keys=True, allow_nan=True) + "\n")
                     handle.flush()
-                    log.write(json.dumps({"event": "record", "system_id": task[0], "eta": task[1], "seed": task[2], "method": task[3], "seconds": None}) + "\n")
+                    log.write(json.dumps({"event": "record", "system_id": task[0], "eta": task[1], "seed": task[2], "method": task[3], "seconds": seconds}) + "\n")
                     log.flush()
                     written += 1
     return written
@@ -296,6 +350,7 @@ def load_records(path: Path) -> list[dict]:
 
 def summarize_command(results: Path) -> dict:
     records = load_records(results / "records.jsonl")
+    require_spec_version_2(records)
     summary = {"decision": evaluate_decision(records), "table": grouped_table(records), "n_records": len(records), "pysindy_parameters": PYSINDY_PARAMETERS}
     write_json(results / "summary.json", summary)
     lines = ["# ODEBench smoke summary", "", f"Records: {len(records)}", "", "| method | eta | system | n | struct_ok | median NRMSE_f | median test NRMSE_x |", "|---|---:|---:|---:|---:|---:|---:|"]
@@ -305,12 +360,26 @@ def summarize_command(results: Path) -> dict:
     return summary
 
 
+def _write_done_marker(results: Path, records_written: int) -> None:
+    payload = {"timestamp": datetime.now().isoformat(timespec="seconds"), "records_written": int(records_written), "total_records": len(load_records(results / "records.jsonl"))}
+    (results / "DONE").write_text(json.dumps(payload, sort_keys=True) + "\n")
+    failed = results / "FAILED"
+    if failed.exists():
+        failed.unlink()
+
+
+def _write_failed_marker(results: Path) -> None:
+    payload = {"timestamp": datetime.now().isoformat(timespec="seconds"), "traceback": traceback.format_exc()}
+    (results / "FAILED").write_text(json.dumps(payload, sort_keys=True) + "\n")
+
+
 def main(argv: list[str] | None = None) -> None:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--results", type=Path, default=RESULTS)
+    parser.add_argument("--results", type=Path, default=RESULTS_V2)
     parser.add_argument("--setup", action="store_true")
     parser.add_argument("--run", action="store_true")
     parser.add_argument("--summarize", action="store_true")
+    parser.add_argument("--detach-marker", action="store_true")
     parser.add_argument("--systems", nargs="*", type=int, default=list(SYSTEM_IDS))
     parser.add_argument("--eta", nargs="*", type=float, default=[0.0, 0.01])
     parser.add_argument("--seeds", nargs="*", type=int, default=[])
@@ -318,12 +387,20 @@ def main(argv: list[str] | None = None) -> None:
     parser.add_argument("--workers", type=int, default=1)
     args = parser.parse_args(argv)
     args.results.mkdir(parents=True, exist_ok=True)
-    if args.setup:
-        setup_command(args.results)
-    if args.run:
-        run_command(args.results, args.systems, args.eta, args.seeds, args.methods, args.workers)
-    if args.summarize:
-        summarize_command(args.results)
+    try:
+        if args.setup:
+            setup_command(args.results)
+        written = 0
+        if args.run:
+            written = run_command(args.results, args.systems, args.eta, args.seeds, args.methods, args.workers)
+            if args.detach_marker:
+                _write_done_marker(args.results, written)
+        if args.summarize:
+            summarize_command(args.results)
+    except Exception:
+        if args.run and args.detach_marker:
+            _write_failed_marker(args.results)
+        raise
 
 
 if __name__ == "__main__":

@@ -8,7 +8,11 @@ from experiments.annihilator_gate2a_v3.config import CLASSES, Settings
 
 
 ROOT = Path(__file__).resolve().parent
-RESULTS = ROOT / "results"
+RESULTS_V1 = ROOT / "results"
+RESULTS_V2 = ROOT / "results_v2"
+RESULTS = RESULTS_V2
+SPEC_VERSION = 2
+ANNIHILATOR_SAMPLE_POINTS = 2000
 CATALOG = Path("benchmarks/data/strogatz_extended.json")
 
 SYSTEM_IDS = (3, 7, 19, 21)
@@ -39,4 +43,3 @@ TRUE_BASELINE_TERMS = {
     21: {"1", "x", "exp(-x)"},
     19: None,
 }
-

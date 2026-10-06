@@ -4,6 +4,7 @@ from experiments.annihilator_odebench_smoke.run import annihilator_state_for_sys
 
 def record(method, system_id, eta, seed, *, ok=False, state="CORRECT", category="TRUE_STRUCTURE", train=0.01, test=0.01):
     return {
+        "spec_version": 2,
         "method": method,
         "system_id": system_id,
         "eta": eta,
@@ -18,11 +19,25 @@ def record(method, system_id, eta, seed, *, ok=False, state="CORRECT", category=
 
 
 def test_method_categories_and_struct_ok():
-    assert record_struct_ok(record("annihilator", 3, 0.0, 0, ok=True, state="TRUE_NOT_REF"))
+    assert not record_struct_ok(record("annihilator", 3, 0.0, 0, ok=True, state="TRUE_NOT_REF"))
     assert not record_struct_ok(record("annihilator", 3, 0.0, 0, ok=False, state="AMBIGUOUS"))
+    assert record_struct_ok({**record("annihilator", 3, 0.0, 0, ok=True, state="CORRECT"), "struct_ok": False})
     assert baseline_category(3, {"x", "x^2"}) == "TRUE_STRUCTURE"
     assert baseline_category(3, {"x", "x^2", "1"}) == "TRUE_PLUS"
+    assert not record_struct_ok(record("sindy", 3, 0.0, 0, ok=True, category="TRUE_PLUS"))
+    assert record_struct_ok({**record("sindy", 3, 0.0, 0, ok=True, category="TRUE_STRUCTURE"), "struct_ok": False})
     assert baseline_category(19, {"x", "x^2"}) == "SURROGATE"
+
+
+def test_decision_rejects_unversioned_records():
+    bad = record("annihilator", 3, 0.0, 0, ok=True)
+    bad.pop("spec_version")
+    try:
+        evaluate_decision([bad])
+    except ValueError as exc:
+        assert "spec_version == 2" in str(exc)
+    else:
+        raise AssertionError("unversioned records must be rejected")
 
 
 def test_decision_rule_a_b_c_discuss_and_otherwise_from_derived_records():
