@@ -24,7 +24,7 @@ Prüfset und ist ausgeschlossen. Die Konstanten stammen aus ODEBench.
 | 7 | Pflicht, nicht-polynomial | $0.032\,x\log(2.29\,x)$ (Gompertz) | (3,1): $x D^3 + D^2$, wie F5 |
 | 3 | polynomiale Positivkontrolle | $0.79\,x(1 - x/74.3)$ (Logistik) | (3,0): $D^3$ |
 | 21 | weitere nicht-polynomiale | $1.2 - 0.2x - e^{-x}$ (reduziertes SIR) | (3,0): $D^3 + D^2$ |
-| 19 | strukturell schwieriger, darstellbar | $x(1-x) - 0.08\,x/(0.8 + x)$ (Logistik mit Ernte) | ≤ (4,1): $((0.8 + x) D + 4) D^3$ |
+| 19 | strukturell schwieriger, darstellbar | $x(1-x) - 0.08\,x/(0.8 + x)$ (Logistik mit Ernte) | ≤ (4,1): $((0.8 + x) D + 4) D^3$; das Orakel liefert (2,2) |
 
 Die tatsächliche Referenzklasse und $n_{\text{exact}}$ bestimmt die exakte Orakel-Logik aus v3 auf der
 Trainingsdomäne (§3), **vor** jedem Discovery-Lauf. Sie wird in `reference.json` festgehalten.
@@ -129,9 +129,14 @@ Bei $\eta = 0{,}01$ ist ein System `STRUCT_OK`, wenn das in mindestens 3 von 5 S
   Evidenz.
 - **Plausibilitätsprüfungen vor dem Lauf (Stopp bei Fehlschlag, keine Reparatur in dieser Version):**
   1. Die eigene Integration der Trainings-Anfangsbedingungen stimmt mit den ODEBench-Lösungen überein
-     ($\mathrm{NRMSE}_x < 10^{-6}$).
+     ($\mathrm{NRMSE}_x < 10^{-4}$). *Korrigiert am 06.10. vor dem Einfrieren:* Der Entwurf verlangte $10^{-6}$.
+     Die gespeicherten ODEBench-Lösungen weichen aber bei jeder eigenen Toleranz (rtol $10^{-6}$ bis $10^{-10}$)
+     gleichbleibend um $0{,}6$–$1{,}0\cdot10^{-5}$ ab. Sie sind selbst nur so genau. Die Prüfung soll nur zeigen,
+     dass Gleichung und Konstanten richtig gelesen werden; ein Lesefehler ergäbe Abweichungen in Prozentgröße.
   2. Die Kette $L \to \hat f$ mit dem **exakten** Referenzoperator aus dem Orakel und exakten Daten reproduziert
-     $f$ mit $\mathrm{NRMSE}_f < 10^{-6}$ auf allen vier Systemen.
+     $f$ mit $\mathrm{NRMSE}_f < 10^{-6}$ auf allen vier Systemen. Geprüft wird **derselbe Codepfad wie im Lauf**,
+     mit dem vollen Auswertungsintervall aus §5. Zusätzlich muss die Integration der Trainingstrajektorien mit
+     diesem $\hat f$ gelingen.
 
 ## 9. Entscheidungsregel (wird mit dem Dokument eingefroren)
 

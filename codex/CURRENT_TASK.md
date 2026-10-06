@@ -1,81 +1,92 @@
-# WP-OB-A — ODEBench-Smoke-Test: Pipeline, Orakel, Setup, Plausibilitätsprüfungen
+# WP-OB-A2 — ODEBench-Smoke-Test: Nachbesserung nach der Abnahme von WP-OB-A
 **Language: Python**
 
-Grundlage: `docs/ODEBENCH_SMOKE_TEST.md` (Entwurf, vollständig lesen). Dort stehen Systeme, Trajektorien,
-Test-Anfangsbedingungen, Rauschmodelle, die Kette $L \to \hat f$, die Baselines, die Kategorien, die Metriken und die
-Entscheidungsregel verbindlich. Dieser Auftrag sagt nur, was jetzt gebaut und ausgeführt wird. Bei Widerspruch oder
-Unklarheit gilt das Dokument; dann `blocked` melden und nicht selbst entscheiden.
+Grundlage: `docs/ODEBENCH_SMOKE_TEST.md` (Entwurf, am 06.10. in §2 und §8 nachgeführt, **neu lesen**) und
+`codex/reports/REPORT_WP_OB_A.md`. Die Arbeit aus WP-OB-A liegt uncommittet in
+`experiments/annihilator_odebench_smoke/`. Die Abnahme hat die folgenden Abweichungen von der Spezifikation
+gefunden. Alle sind zu beheben. Was hier nicht genannt ist, bleibt wie es ist.
 
-## Zu bauen
+## Befunde und geforderte Änderungen
 
-Neuer Ordner `experiments/annihilator_odebench_smoke/` (Paket mit `__init__.py`), Ergebnisse unter
-`experiments/annihilator_odebench_smoke/results/`.
+1. **Die Baselines sind kein pysindy, und W-SINDy fehlt.** `_baseline_record` rechnet die Ableitungen mit
+   `np.gradient`, schneidet ohne Spaltennormierung nur einmal ab, und „wsindy“ ist derselbe Code wie „sindy“. Jeder
+   Record trägt trotzdem `pysindy_parameters` mit `SmoothedFiniteDifference`, `normalize_columns = True` und
+   `WeakPDELibrary`. **Das ist eine falsche Angabe in den Daten** und darf nicht vorkommen. Gefordert nach §6:
+   - SINDy mit `pysindy.SINDy`, `differentiation_method = SmoothedFiniteDifference()` (Standardwerte), Library als
+     `CustomLibrary` oder gleichwertig mit genau den Termen aus §6, Optimierer `STLSQ(threshold = s,
+     normalize_columns = True)` (übrige STLSQ-Parameter Standard) je Schwelle $s$ aus dem Gitter. Beide
+     Trainingstrajektorien gehen als Liste mehrerer Trajektorien in ein `fit`.
+   - W-SINDy mit `pysindy.WeakPDELibrary` über derselben Funktions-Library, `spatiotemporal_grid = t`, $K = 200$,
+     sonst Standardwerte, gleiche STLSQ-Schwellen.
+   - AICc-Auswahl über das Gitter auf dem Regressionsresiduum des jeweiligen Verfahrens (bei W-SINDy auf der
+     schwachen Form). Ist das in pysindy nicht direkt zugänglich, wird die Residuumsquelle im Report genannt.
+   - `pysindy_parameters` wird **aus den tatsächlich instanziierten Objekten** gelesen (`get_params()` o. ä.), nicht
+     als Konstante geschrieben.
+   - Zulässigkeit der Library-Terme nach §6 auf den **verrauschten** Trainingszuständen.
+2. **Gleiches Rauschen auf beiden Trainingstrajektorien.** `_rng(...)` wird innerhalb der Schleife je Trajektorie neu
+   erzeugt, beide Trajektorien bekommen damit denselben Rauschvektor. Ein Generator je (Seed, System, Methode),
+   aus dem nacheinander gezogen wird.
+3. **Kette $L \to \hat f$ (§5).** Mit dem **exakten** Referenzoperator liefert `basis_ivp_fhat` auf dem
+   Produktivintervall $[x_{\min} - 2R,\ x_{\max} + 10R]$ für die Systeme 7 und 19 `BASIS_INTEGRATION_FAILED`,
+   weil über die Nullstelle des Leitkoeffizienten bei $x = 0$ integriert wird. §5 verlangt, das Intervall an der
+   ersten reellen Nullstelle des Leitkoeffizienten außerhalb der Trainingsdomäne zu begrenzen. Umsetzung:
+   - Die Grenzen sind die Nullstellen mit einem festen relativen Abstand, $10^{-3}\,R$ vor der Nullstelle.
+   - Das wirksame Intervall wird im Record festgehalten.
+   - Eine Trajektorie, die es verlässt, zählt nach §5 als gescheitert ($\infty$), **ohne Ausnahme im Lauf**:
+     `fhat` darf beim Integrieren keinen Abbruch des ganzen Laufs auslösen.
+4. **Plausibilitätsprüfung 2 (§8) prüft nicht den Lauf-Pfad.** `run_sanity` ruft `basis_ivp_fhat` nur mit der
+   Trainingsdomäne als Auswertungsintervall auf. Gefordert:
+   - derselbe Aufruf wie im Lauf, mit dem vollen Intervall;
+   - zusätzlich die Integration der beiden Trainingstrajektorien mit diesem $\hat f$
+     ($\mathrm{NRMSE}_x$ wird berichtet).
 
-1. **Systeme und Daten** (§2, §3):
-   - Die vier Systeme 3, 7, 19, 21 werden aus `benchmarks/data/strogatz_extended.json` per ID gelesen (Gleichung,
-     Konstanten, gespeicherte Lösungen, `init_constraints`). Numerische und sympy-Ausdrücke für $f$ werden **aus
-     den Katalogfeldern** erzeugt, nicht abgetippt; ein Test vergleicht sie mit den Formeln aus §2.
-   - Andere IDs werden nicht geladen oder ausgegeben (Prüfset 4/49/59/62 bleibt ungesehen).
-   - Daraus entstehen die Trainingsdomäne und die drei Test-Anfangsbedingungen nach der Regel aus §3, samt
-     Prüfung der `init_constraints`.
-   - Die Ground-Truth-Testtrajektorien werden erzeugt wie in §3.
-2. **Orakel** (§2): Referenzklasse und $n_{\text{exact}}$ je System auf der Trainingsdomäne, mit derselben Logik wie
-   `experiments/annihilator_gate2a_v3/oracle.py`: Kollokation, Nullraum in mpmath, Klassenordnung aus v3, symbolische
-   Verifikation. Die nötigen Teile werden **kopiert und auf beliebige sympy-Ausdrücke und Domänen verallgemeinert**,
-   denn v3 ist an seine Funktionsliste gebunden und bleibt unverändert. Ein Test zeigt, dass die Kopie für F4 und F5
-   auf der v3-Domäne dieselbe Referenzklasse liefert wie v3.
-3. **Annihilator, Oracle-$f$** (§4, §5): die Daten wie in §4, Suche mit `full_search` aus v3 (nur Import), Zustand
-   gegen die Referenz, Kette $L \to \hat f$ mit Basisintegration, Auswertungsintervall, Kleinste-Quadrate-Fit und
-   `FHAT_FAIL`-Gründen genau nach §5.
-4. **Baselines** (§6): SINDy und W-SINDy mit pysindy 2.1, gemeinsame Library mit Zulässigkeitsregel, STLSQ mit
-   `normalize_columns = True` über das Schwellengitter und AICc-Auswahl. Die im Code verwendeten pysindy-Parameter
-   (auch die Standardwerte) werden in jeden Record geschrieben und im Report genannt.
-5. **Kategorien und Metriken** (§7, §8) für alle drei Methoden, inklusive `STRUCT_OK`, $\mathrm{NRMSE}_f$,
-   $\mathrm{NRMSE}_x$ und $R^2$ für Training und Test, Fehlschlagregeln ($\infty$) und Zählgrößen.
-6. **Auswertung** (§9): eine Funktion, die aus den Records die Entscheidungsregel A, B, C, „weiter diskutieren“ und
-   „sonst beenden“ berechnet, dazu die Ergebnistabelle aus §10.5 als `summary.md` und `summary.json`.
-7. **CLI** `python -m experiments.annihilator_odebench_smoke.run` mit:
-   - `--setup`: schreibt `setup.json` und `reference.json` und führt die beiden Plausibilitätsprüfungen aus §8 aus
-     (`sanity.json`);
-   - `--run --systems … --eta … --seeds … --methods …`: ein Record je (System, $\eta$, Seed, Methode) nach
-     `records.jsonl`, Fortsetzen ohne Duplikate, `--workers N` für parallele Prozesse;
-   - `--summarize`.
-
-   `run.log` enthält keine Zustände, Kategorien oder Gleichungen, nur Zählgrößen und Sekunden.
-8. **Tests** in `experiments/annihilator_odebench_smoke/tests/`:
-   - Katalogparser gegen §2;
-   - Regel für die Test-Anfangsbedingungen inklusive Ersatzfall;
-   - Orakelkopie gegen v3 (F4, F5);
-   - $L \to \hat f$ mit einem bekannten Operator, etwa $D^3$ auf einem Polynom zweiten Grades: exakte
-     Reproduktion; Leitkoeffizient mit Nullstelle in der Domäne ergibt `FHAT_FAIL`;
-   - Kategorien und `STRUCT_OK` je Methode;
-   - Entscheidungsregel an Fixtures: jede Bedingung A, B, C einzeln auslösend, „weiter diskutieren“, Restfall. Die
-     Fixtures werden aus einem echten Record abgeleitet, den der Test mit dem Modul erzeugt (Protokoll);
-   - kein Ergebnis-Record aus einem Discovery-Lauf als Fixture.
+   Plausibilitätsprüfung 1 hat jetzt die Schwelle $10^{-4}$ (§8).
+5. **Zustandslogik.** `annihilator_state` setzt `TRUE_NOT_REF` bei komponentenweise $r \ge r_{\text{ref}}$ und
+   $d \ge d_{\text{ref}}$. In v3 (`run_gate2a.state_for`, `stage_k_calibration._state_for_clean`) gilt
+   `TRUE_NOT_REF` genau dann, wenn $n_{\text{exact}}$ der **gewählten** Klasse für das wahre $f$ größer null ist.
+   Genau so umsetzen, mit dem verallgemeinerten Orakel. Das Ergebnis wird je (System, Klasse) gecacht.
+   $n_{\text{exact}}$ der gewählten Klasse steht im Record.
+6. **Records unvollständig (§8 Komplexität).** In jeden Record kommen:
+   - Annihilator: Koeffizienten von $\hat L$ (in $z$), $(r, d)$, die Fit-Koeffizienten $a_j$, das wirksame
+     Intervall und gegebenenfalls `fhat_fail` mit Grund;
+   - Baselines: die gewählten Terme **mit Koeffizienten**, die gewählte Schwelle, AICc;
+   - alle Methoden: je Trainings- und Test-Anfangsbedingung $\mathrm{NRMSE}_x$, $R^2$ und gegebenenfalls den
+     Fehlschlaggrund.
+7. **`--workers` wird ignoriert.** Umsetzen: parallele Prozesse über (System, $\eta$, Seed, Methode), jeder Record
+   wird sofort angehängt (Dateisperre oder ein Ausgabeteil je Worker plus Zusammenführung), Fortsetzen ohne
+   Duplikate.
+8. **Tests prüfen nicht den Produktivpfad.** `test_fhat.py` testet `polynomial_nullspace_fhat`, der im Lauf nie
+   aufgerufen wird. Gefordert:
+   - Tests auf `basis_ivp_fhat` mit dem Produktivintervall: (a) $D^3$ auf einem Polynom; (b) $xD^3 + D^2$ (Gompertz-
+     Struktur) auf $a\,x\log x + b\,x$ über $[1.7, 30]$ mit Intervall über $x = 0$ hinaus, Erwartung: Begrenzung
+     an der Nullstelle, exakte Reproduktion; (c) Nullstelle in der Trainingsdomäne ergibt `FHAT_FAIL`.
+   - `polynomial_nullspace_fhat` entfernen, falls unbenutzt.
+   - Ein Test, der für jede Baseline nachweist, dass pysindy tatsächlich aufgerufen wird und die Records die
+     instanziierten Parameter tragen.
+   - Ein Test, dass die beiden Trainingstrajektorien verschiedenes Rauschen bekommen.
+   - Ein Test der Zustandslogik mit einem Fall, in dem die komponentenweise Regel und die $n_{\text{exact}}$-Regel
+     verschieden entscheiden.
+   - Die Record-Feldliste im Report stammt aus einem **echten** Record des Lauf-Pfads auf einer synthetischen
+     Kleinstfunktion (nicht aus `run_one_synthetic_record`, das entfernt wird).
 
 ## Ausführen
 
-Alle neuen Tests, die bestehenden Tests in `experiments/annihilator_gate2a_v3/tests/` (mit `--basetemp` wie in
-WP-RC-A) und `--setup`. **Kein** `--run`, auch nicht für einzelne Systeme oder $\eta = 0$. Den Pilot startet Claude
-nach dem Einfrieren durch den Nutzer. Schlägt eine Plausibilitätsprüfung aus §8 fehl, wird der Befund mit Zahlen im
-Report genannt und nichts an Methode oder Regel geändert.
+Alle Tests (neu und v3, mit `--basetemp`), dann `--setup` neu (überschreibt `setup.json`, `reference.json`,
+`sanity.json`). **Kein** `--run` auf den vier Systemen.
 
 ## Verboten
 
-- Änderungen an irgendeiner Datei unter `experiments/annihilator_gate2a_v3/` und an `docs/`.
-- Discovery-Läufe (`full_search` auf Systemdaten, SINDy- oder W-SINDy-Fits auf Systemdaten). Erlaubt sind
-  `full_search` bzw. Fits nur in Unit-Tests auf synthetischen Kleinstdaten.
-- Andere System-IDs aus dem Katalog lesen oder ausgeben.
-- Library, Schwellengitter, Seeds, Toleranzen, Regeln oder Schwellen anders als im Dokument.
-- Neue Abhängigkeiten außer numpy, scipy, sympy, mpmath, pysindy (vorhanden).
-- Git-Operationen. Nichts, was länger als 15 Minuten läuft.
+- Änderungen unter `experiments/annihilator_gate2a_v3/` und `docs/`.
+- Discovery-Läufe auf den vier Systemen.
+- Library, Gitter, Seeds, Regeln oder Schwellen anders als im Dokument.
+- Andere Katalog-IDs lesen oder ausgeben.
+- Git-Operationen. Nichts über 15 Minuten.
 
 ## Abnahme
 
-1. Alle neuen Tests und alle v3-Tests grün, kein `skip`.
-2. `setup.json`, `reference.json` und `sanity.json` liegen vor. Der Report nennt je System die Trainingsdomäne, die
-   drei Test-Anfangsbedingungen (mit Ersatzregel, falls gegriffen), die Referenzklasse und $n_{\text{exact}}$, beide
-   Plausibilitätsprüfungen mit Zahlen und die geschätzten Kosten (Zahl der Klassen, die die Suche bis zur Referenz
-   prüft).
-3. Report `codex/reports/REPORT_WP_OB_A.md` mit Dateien, Kommandos, Testausgabe aus diesem Lauf und der Feldliste
-   eines Records (aus einem Testlauf auf synthetischen Daten) mit Herkunft je Feld.
+1. Alle Tests grün, kein `skip`.
+2. `sanity.json`: Prüfung 1 mit Schwelle $10^{-4}$, Prüfung 2 auf dem Produktivintervall mit Trainingstrajektorien.
+   Der Report nennt je System die Zahlen. Scheitert etwas, steht es mit Zahlen im Report, und es wird nichts
+   geändert.
+3. Report `codex/reports/REPORT_WP_OB_A2.md`: je Befund 1–8, was geändert wurde (Datei, Funktion), Testausgabe aus
+   diesem Lauf, die echte Record-Feldliste mit Herkunft und die tatsächlich instanziierten pysindy-Parameter.
