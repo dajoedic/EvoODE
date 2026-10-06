@@ -4,6 +4,30 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ---
 
+## 2026-10-06
+
+### Diagnose AMBIGUOUS: Hauptlauf fertig, Verdikt negativ
+<!-- commit: folgt -->
+
+Orion-Job `annihilator-diag-amb` vollständig: 11/11 Pods `Completed`, keine Neustarts, 588 Records (5 × 54 +
+6 × 53), mit Pilot 600, je Funktion 100. Eingesammelt nach RUNBOOK §6, `--merge --reps 100` und `--summarize`
+lokal. Details und Lesart in `docs/DIAGNOSTIC_AMBIGUITY_RESULT.md`.
+
+- **B1 = 1,000** (118 von 118 eindeutigen N1-Ausgaben `WRONG`, Schwelle < 0,20): **nicht erfüllt.**
+- B2 = 0,607, B3 = 0,990, B4 = 0,597: erfüllt.
+- F4: 99 `WRONG` mit (3,0), Bootstrap 1,0. F5: 100 `AMBIGUOUS`, nur über A1. F8: 81 `AMBIGUOUS` mit (3,0), 19 `WRONG`
+  mit (2,0). F1, F2, F6: je 99 `CORRECT`.
+- Die Fehlwahlen folgen fast exakt der Teststärke aus Anhang B: F8 (2,0) mit $eta = 0{,}80$ ergibt 20 % erwartet,
+  19 % beobachtet; F4 (3,0) mit $eta = 0{,}14$ ergibt ≈ 86 % erwartet, 99 % beobachtet. Ob `AMBIGUOUS` oder
+  `WRONG` herauskommt, hängt an der Nullraumdimension der gewählten falschen Klasse (A1), nicht an der
+  Identifizierbarkeit. A2 erkennt stabile Fehlwahlen nicht.
+- Pilot-Warnsignal 1 (stabil falsche Wahl bei F4) bestätigt. Warnsignal 2 (Referenz in I verworfen) nicht
+  bestätigt: 3 von 300 = nominal 1 %, alle bei Seed 50000.
+
+**Verdikt nach §5: negativ.** Kein `PRACTICAL_BENCHMARK_v1.md`, kein Hold-out-Set, kein größerer Benchmark, keine
+Nachjustierung. Offene Entscheidung des Nutzers: Spur beenden (Empfehlung) oder grundsätzliche Neubewertung als neue
+Idee. Hilfs-Pod gelöscht, Daten bleiben auf dem NFS.
+
 ## 2026-10-05
 
 ### Diagnose AMBIGUOUS: Hauptlauf auf Orion gestartet

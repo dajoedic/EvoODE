@@ -84,4 +84,21 @@ Festgelegt am 2026-10-05 um ca. 14:45 vom Nutzer, **bevor die Pilot-Zustände an
 
 ## 7. Ergebnis
 
-*(nach dem Hauptlauf)*
+Hauptlauf auf Orion (Job `annihilator-diag-amb`, Code `c71841f`), ausgewertet am 2026-10-06. 600 Records, je
+Funktion 100. Ausführlich mit Lesart: `docs/DIAGNOSTIC_AMBIGUITY_RESULT.md`. Daten:
+`experiments/annihilator_gate2a_v3/results/diagnostic_ambiguity/orion/results/`.
+
+| | Wert | Schwelle | erfüllt? |
+|---|---:|---|---|
+| B1 | 1,000 (118/118) | < 0,20 | **nein** |
+| B2 | 0,607 | ≥ 0,50 | ja |
+| B3 | 0,990 | ≥ 0,70 | ja |
+| B4 | 0,597 | ≥ 0,25 | ja |
+
+| Gruppe | `AMBIGUOUS` | `CORRECT` | `WRONG` |
+|---|---:|---:|---:|
+| N1 | 182 | 0 | 118 |
+| I | 3 | 297 | 0 |
+
+**Verdikt: negativ.** Nach §5 wird kein `docs/PRACTICAL_BENCHMARK_v1.md` ausgearbeitet, kein Hold-out-Set gebaut und
+kein größerer Benchmark gestartet.

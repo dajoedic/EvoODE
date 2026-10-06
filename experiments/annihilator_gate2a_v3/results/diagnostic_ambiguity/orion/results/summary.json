@@ -1,0 +1,507 @@
+{
+  "angles": {
+    "F1": {
+      "AMBIGUOUS": {
+        "max": 24.82304076051438,
+        "median": 24.82304076051438
+      },
+      "CORRECT": {
+        "max": 0.4340772404842179,
+        "median": 0.12217330629309699
+      },
+      "NONE": {
+        "max": null,
+        "median": null
+      },
+      "TRUE_NOT_REF": {
+        "max": null,
+        "median": null
+      },
+      "WRONG": {
+        "max": null,
+        "median": null
+      }
+    },
+    "F2": {
+      "AMBIGUOUS": {
+        "max": 0.005588694752670741,
+        "median": 0.005588694752670741
+      },
+      "CORRECT": {
+        "max": 0.032084227587443837,
+        "median": 0.008014202867549246
+      },
+      "NONE": {
+        "max": null,
+        "median": null
+      },
+      "TRUE_NOT_REF": {
+        "max": null,
+        "median": null
+      },
+      "WRONG": {
+        "max": null,
+        "median": null
+      }
+    },
+    "F4": {
+      "AMBIGUOUS": {
+        "max": null,
+        "median": null
+      },
+      "CORRECT": {
+        "max": null,
+        "median": null
+      },
+      "NONE": {
+        "max": null,
+        "median": null
+      },
+      "TRUE_NOT_REF": {
+        "max": null,
+        "median": null
+      },
+      "WRONG": {
+        "max": null,
+        "median": null
+      }
+    },
+    "F5": {
+      "AMBIGUOUS": {
+        "max": null,
+        "median": null
+      },
+      "CORRECT": {
+        "max": null,
+        "median": null
+      },
+      "NONE": {
+        "max": null,
+        "median": null
+      },
+      "TRUE_NOT_REF": {
+        "max": null,
+        "median": null
+      },
+      "WRONG": {
+        "max": null,
+        "median": null
+      }
+    },
+    "F6": {
+      "AMBIGUOUS": {
+        "max": 0.00834705925912026,
+        "median": 0.00834705925912026
+      },
+      "CORRECT": {
+        "max": 0.05865218259015439,
+        "median": 0.016821904140794746
+      },
+      "NONE": {
+        "max": null,
+        "median": null
+      },
+      "TRUE_NOT_REF": {
+        "max": null,
+        "median": null
+      },
+      "WRONG": {
+        "max": null,
+        "median": null
+      }
+    },
+    "F8": {
+      "AMBIGUOUS": {
+        "max": null,
+        "median": null
+      },
+      "CORRECT": {
+        "max": null,
+        "median": null
+      },
+      "NONE": {
+        "max": null,
+        "median": null
+      },
+      "TRUE_NOT_REF": {
+        "max": null,
+        "median": null
+      },
+      "WRONG": {
+        "max": null,
+        "median": null
+      }
+    }
+  },
+  "by_function": {
+    "F1": {
+      "ambiguous_sources": {
+        "A1": 0,
+        "A2": 0,
+        "A3": 0,
+        "multiple": 1
+      },
+      "states": {
+        "AMBIGUOUS": {
+          "count": 1,
+          "share": 0.01
+        },
+        "CORRECT": {
+          "count": 99,
+          "share": 0.99
+        },
+        "NONE": {
+          "count": 0,
+          "share": 0.0
+        },
+        "TRUE_NOT_REF": {
+          "count": 0,
+          "share": 0.0
+        },
+        "WRONG": {
+          "count": 0,
+          "share": 0.0
+        }
+      },
+      "wrong_given_unambiguous": 0.0
+    },
+    "F2": {
+      "ambiguous_sources": {
+        "A1": 0,
+        "A2": 1,
+        "A3": 0,
+        "multiple": 0
+      },
+      "states": {
+        "AMBIGUOUS": {
+          "count": 1,
+          "share": 0.01
+        },
+        "CORRECT": {
+          "count": 99,
+          "share": 0.99
+        },
+        "NONE": {
+          "count": 0,
+          "share": 0.0
+        },
+        "TRUE_NOT_REF": {
+          "count": 0,
+          "share": 0.0
+        },
+        "WRONG": {
+          "count": 0,
+          "share": 0.0
+        }
+      },
+      "wrong_given_unambiguous": 0.0
+    },
+    "F4": {
+      "ambiguous_sources": {
+        "A1": 0,
+        "A2": 0,
+        "A3": 0,
+        "multiple": 1
+      },
+      "states": {
+        "AMBIGUOUS": {
+          "count": 1,
+          "share": 0.01
+        },
+        "CORRECT": {
+          "count": 0,
+          "share": 0.0
+        },
+        "NONE": {
+          "count": 0,
+          "share": 0.0
+        },
+        "TRUE_NOT_REF": {
+          "count": 0,
+          "share": 0.0
+        },
+        "WRONG": {
+          "count": 99,
+          "share": 0.99
+        }
+      },
+      "wrong_given_unambiguous": 1.0
+    },
+    "F5": {
+      "ambiguous_sources": {
+        "A1": 100,
+        "A2": 0,
+        "A3": 0,
+        "multiple": 0
+      },
+      "states": {
+        "AMBIGUOUS": {
+          "count": 100,
+          "share": 1.0
+        },
+        "CORRECT": {
+          "count": 0,
+          "share": 0.0
+        },
+        "NONE": {
+          "count": 0,
+          "share": 0.0
+        },
+        "TRUE_NOT_REF": {
+          "count": 0,
+          "share": 0.0
+        },
+        "WRONG": {
+          "count": 0,
+          "share": 0.0
+        }
+      },
+      "wrong_given_unambiguous": null
+    },
+    "F6": {
+      "ambiguous_sources": {
+        "A1": 0,
+        "A2": 1,
+        "A3": 0,
+        "multiple": 0
+      },
+      "states": {
+        "AMBIGUOUS": {
+          "count": 1,
+          "share": 0.01
+        },
+        "CORRECT": {
+          "count": 99,
+          "share": 0.99
+        },
+        "NONE": {
+          "count": 0,
+          "share": 0.0
+        },
+        "TRUE_NOT_REF": {
+          "count": 0,
+          "share": 0.0
+        },
+        "WRONG": {
+          "count": 0,
+          "share": 0.0
+        }
+      },
+      "wrong_given_unambiguous": 0.0
+    },
+    "F8": {
+      "ambiguous_sources": {
+        "A1": 0,
+        "A2": 0,
+        "A3": 0,
+        "multiple": 81
+      },
+      "states": {
+        "AMBIGUOUS": {
+          "count": 81,
+          "share": 0.81
+        },
+        "CORRECT": {
+          "count": 0,
+          "share": 0.0
+        },
+        "NONE": {
+          "count": 0,
+          "share": 0.0
+        },
+        "TRUE_NOT_REF": {
+          "count": 0,
+          "share": 0.0
+        },
+        "WRONG": {
+          "count": 19,
+          "share": 0.19
+        }
+      },
+      "wrong_given_unambiguous": 1.0
+    }
+  },
+  "by_group": {
+    "I": {
+      "ambiguous_sources": {
+        "A1": 0,
+        "A2": 2,
+        "A3": 0,
+        "multiple": 1
+      },
+      "states": {
+        "AMBIGUOUS": {
+          "count": 3,
+          "share": 0.01
+        },
+        "CORRECT": {
+          "count": 297,
+          "share": 0.99
+        },
+        "NONE": {
+          "count": 0,
+          "share": 0.0
+        },
+        "TRUE_NOT_REF": {
+          "count": 0,
+          "share": 0.0
+        },
+        "WRONG": {
+          "count": 0,
+          "share": 0.0
+        }
+      },
+      "wrong_given_unambiguous": 0.0
+    },
+    "N1": {
+      "ambiguous_sources": {
+        "A1": 100,
+        "A2": 0,
+        "A3": 0,
+        "multiple": 82
+      },
+      "states": {
+        "AMBIGUOUS": {
+          "count": 182,
+          "share": 0.6066666666666667
+        },
+        "CORRECT": {
+          "count": 0,
+          "share": 0.0
+        },
+        "NONE": {
+          "count": 0,
+          "share": 0.0
+        },
+        "TRUE_NOT_REF": {
+          "count": 0,
+          "share": 0.0
+        },
+        "WRONG": {
+          "count": 118,
+          "share": 0.3933333333333333
+        }
+      },
+      "wrong_given_unambiguous": 1.0
+    }
+  },
+  "complete_equal_n": true,
+  "costs": {
+    "F1": {
+      "aml_iterations": {
+        "max": 19.0,
+        "mean": 13.23
+      },
+      "tested_classes": {
+        "max": 5.0,
+        "mean": 3.02
+      },
+      "wall_clock_seconds": {
+        "max": 2223.2277409000017,
+        "mean": 351.573833523466
+      }
+    },
+    "F2": {
+      "aml_iterations": {
+        "max": 19.0,
+        "mean": 4.58
+      },
+      "tested_classes": {
+        "max": 2.0,
+        "mean": 1.01
+      },
+      "wall_clock_seconds": {
+        "max": 1096.3254687000008,
+        "mean": 116.70466151324086
+      }
+    },
+    "F4": {
+      "aml_iterations": {
+        "max": 63.0,
+        "mean": 44.08
+      },
+      "tested_classes": {
+        "max": 5.0,
+        "mean": 4.01
+      },
+      "wall_clock_seconds": {
+        "max": 3076.7858494999964,
+        "mean": 559.8911629519179
+      }
+    },
+    "F5": {
+      "aml_iterations": {
+        "max": 48.0,
+        "mean": 24.53
+      },
+      "tested_classes": {
+        "max": 4.0,
+        "mean": 4.0
+      },
+      "wall_clock_seconds": {
+        "max": 3007.2467181999964,
+        "mean": 559.0233330356832
+      }
+    },
+    "F6": {
+      "aml_iterations": {
+        "max": 26.0,
+        "mean": 10.01
+      },
+      "tested_classes": {
+        "max": 7.0,
+        "mean": 3.04
+      },
+      "wall_clock_seconds": {
+        "max": 3032.8683774999954,
+        "mean": 376.2009088157432
+      }
+    },
+    "F8": {
+      "aml_iterations": {
+        "max": 74.0,
+        "mean": 44.32
+      },
+      "tested_classes": {
+        "max": 4.0,
+        "mean": 3.62
+      },
+      "wall_clock_seconds": {
+        "max": 2691.6585782999973,
+        "mean": 334.248733751219
+      }
+    }
+  },
+  "criteria": {
+    "B1": {
+      "passed": false,
+      "threshold": "< 0.20",
+      "value": 1.0
+    },
+    "B2": {
+      "passed": true,
+      "threshold": ">= 0.50",
+      "value": 0.6066666666666667
+    },
+    "B3": {
+      "passed": true,
+      "threshold": ">= 0.70",
+      "value": 0.99
+    },
+    "B4": {
+      "passed": true,
+      "threshold": ">= 0.25",
+      "value": 0.5966666666666667
+    }
+  },
+  "records": 600,
+  "records_per_function": {
+    "F1": 100,
+    "F2": 100,
+    "F4": 100,
+    "F5": 100,
+    "F6": 100,
+    "F8": 100
+  },
+  "verdict": "negative"
+}
