@@ -199,4 +199,27 @@ treffen. Entscheidend ist allein §9.
 
 ## 12. Ergebnis
 
-*(nach dem Hauptlauf)*
+**Version 1 nicht aussagefähig, Hauptlauf nicht gestartet.** Der Pilot (06.10., $\eta = 0$, Systeme 7 und 3,
+`results/v1_pilot/`) zeigte einen technischen Fehler im Versuchsaufbau.
+
+- **Annihilator:** auf beiden rauschfreien Systemen `NONE`, alle 42 Klassen verworfen, auch bei der Logistik mit
+  exaktem Annihilator $D^3$.
+- **Diagnose** (`v1_pilot/diag_none.{py,out}`): Der exakte Referenzoperator wurde auf vier Punktgittern derselben
+  Domäne getestet.
+
+  | Punkte | Logistik (3,0): $T$ / kritischer Wert | Gompertz (3,1): $T$ / kritischer Wert |
+  |---|---|---|
+  | Trajektorie (1024 Punkte) | $4{,}6\cdot10^{14}$ / 273, verworfen | $4{,}8\cdot10^{14}$ / 219, verworfen |
+  | gleichmäßig, 1024 Punkte | 12,5 / 285, besteht | 172 / 278, besteht |
+  | gleichmäßig, 2000 Punkte | $7\cdot10^{-6}$ / 285, besteht | $4\cdot10^{-6}$ / 281, besteht |
+
+  Die Trapezquadratur der schwachen Form ist auf Trajektoriengittern ungenau, weil dort große Lücken entstehen, wo
+  die Dynamik schnell ist. Der numerische Boden $\tau$ wurde in v3 für 2000 gleichmäßige Punkte kalibriert. Das ist
+  ein Fehler im Aufbau, kein Ergebnis über die Methode.
+- **Zweiter Mangel in §7:** Ohne Rauschen wählt die AICc-Auswahl der Baselines die kleinste Schwelle, also alle
+  9 Terme. Als Obermenge mit $\mathrm{NRMSE}_f \approx 10^{-5}$ zählt das nach §7 als `STRUCT_OK`, obwohl keine
+  Struktur identifiziert wurde.
+- **Kosten:** Der Pilot lief etwa 3 h für zwei Annihilator-Läufe ohne Bootstrap, weil die Suche alle 42 Klassen
+  prüfte.
+
+Die Fortsetzung braucht eine Version 2 dieses Dokuments. Die Entscheidung darüber liegt beim Nutzer.

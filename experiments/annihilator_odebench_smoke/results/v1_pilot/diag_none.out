@@ -1,0 +1,10 @@
+3 (3, 0) trajectory(1024)   n=1024 min dz=1.5e-05 T=4.62e+14 crit=273 passed=False
+3 (3, 0) trajectory dedup   n=1024 min dz=1.5e-05 T=4.62e+14 crit=273 passed=False
+3 (3, 0) equispaced 1024    n=1024 min dz=2.0e-03 T=12.5 crit=285 passed=True
+3 (3, 0) equispaced 2000    n=2000 min dz=1.0e-03 T=6.76e-06 crit=285 passed=True
+7 (3, 1) trajectory(1024)   n=1024 min dz=1.0e-04 T=4.76e+14 crit=219 passed=False
+7 (3, 1) trajectory dedup   n=1024 min dz=1.0e-04 T=4.76e+14 crit=219 passed=False
+7 (3, 1) equispaced 1024    n=1024 min dz=2.0e-03 T=172 crit=278 passed=True
+7 (3, 1) equispaced 2000    n=2000 min dz=1.0e-03 T=4.47e-06 crit=281 passed=True
+
+[exited with code 0]
