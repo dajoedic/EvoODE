@@ -19,8 +19,8 @@ von v1). Morgen: Ergebnis prüfen, Bericht schreiben, der Nutzer entscheidet üb
      fehlende Records, Ergebnisordner `results_e2e/`, fertig bei `results_e2e/DONE`. **Erwartet gegen 06:30–07:00.** Der
      v1-Pfad im heutigen Code ist bitgleich zum Stand beim Anhalten (`2bbc6b7`), von Claude geprüft am 07.10.
 - **Standby:** Der Laptop war von 17:02 bis 22:03 zugeklappt (Modern Standby), der Lauf stand still. Seit 22:03
-  rechnet er wieder. `keep_awake.ps1` (PID 46016) hält System und Display wach, solange die Kette läuft. **Den Deckel
-  nicht schließen**, das kann das Skript nicht verhindern.
+  rechnet er wieder. Wachhalte-Skript und Wächter hat der Nutzer abbestellt (00:00); `keep_awake.ps1` liegt nur noch
+  im Repository. Geht der Laptop wieder in den Standby, steht der Lauf still und setzt beim Aufwachen fort.
 - **Wenn morgen etwas nicht fertig ist:** In `chain.log` steht, welche Stufe läuft, in `run.log` die Records mit
   Sekunden. Gescheiterte Einzel-Fits stehen in `failed_tasks.jsonl` der jeweiligen Stufe. Ein erneutes `--run` mit
   derselben `--spec` setzt fort und überspringt fertige Records:
