@@ -1,0 +1,318 @@
+C:\Users\joedicke\AppData\Local\Programs\Python\Python312\Lib\site-packages\pysindy\optimizers\stlsq.py:224: UserWarning: Sparsity parameter is too big (0.3359818286283781) and eliminated all coefficients
+  warnings.warn(
+C:\Users\joedicke\AppData\Local\Programs\Python\Python312\Lib\site-packages\pysindy\optimizers\stlsq.py:224: UserWarning: Sparsity parameter is too big (0.4832930238571752) and eliminated all coefficients
+  warnings.warn(
+C:\Users\joedicke\AppData\Local\Programs\Python\Python312\Lib\site-packages\pysindy\optimizers\stlsq.py:224: UserWarning: Sparsity parameter is too big (0.6951927961775606) and eliminated all coefficients
+  warnings.warn(
+C:\Users\joedicke\AppData\Local\Programs\Python\Python312\Lib\site-packages\pysindy\optimizers\stlsq.py:224: UserWarning: Sparsity parameter is too big (1.0) and eliminated all coefficients
+  warnings.warn(
+C:\Users\joedicke\AppData\Local\Programs\Python\Python312\Lib\site-packages\pysindy\utils\_axes.py:126: AxesWarning: 2 axes labeled for array with 1 axes
+  warnings.warn(
+C:\Users\joedicke\AppData\Local\Programs\Python\Python312\Lib\site-packages\pysindy\utils\_axes.py:126: AxesWarning: 2 axes labeled for array with 1 axes
+  warnings.warn(
+C:\Users\joedicke\AppData\Local\Programs\Python\Python312\Lib\site-packages\pysindy\utils\_axes.py:126: AxesWarning: 2 axes labeled for array with 1 axes
+  warnings.warn(
+C:\Users\joedicke\AppData\Local\Programs\Python\Python312\Lib\site-packages\pysindy\utils\_axes.py:126: AxesWarning: 2 axes labeled for array with 1 axes
+  warnings.warn(
+C:\Users\joedicke\AppData\Local\Programs\Python\Python312\Lib\site-packages\pysindy\utils\_axes.py:126: AxesWarning: 2 axes labeled for array with 1 axes
+  warnings.warn(
+C:\Users\joedicke\AppData\Local\Programs\Python\Python312\Lib\site-packages\pysindy\utils\_axes.py:126: AxesWarning: 2 axes labeled for array with 1 axes
+  warnings.warn(
+C:\Users\joedicke\AppData\Local\Programs\Python\Python312\Lib\site-packages\pysindy\utils\_axes.py:126: AxesWarning: 2 axes labeled for array with 1 axes
+  warnings.warn(
+C:\Users\joedicke\AppData\Local\Programs\Python\Python312\Lib\site-packages\pysindy\utils\_axes.py:126: AxesWarning: 2 axes labeled for array with 1 axes
+  warnings.warn(
+C:\Users\joedicke\AppData\Local\Programs\Python\Python312\Lib\site-packages\pysindy\utils\_axes.py:126: AxesWarning: 2 axes labeled for array with 1 axes
+  warnings.warn(
+C:\Users\joedicke\AppData\Local\Programs\Python\Python312\Lib\site-packages\pysindy\utils\_axes.py:126: AxesWarning: 2 axes labeled for array with 1 axes
+  warnings.warn(
+C:\Users\joedicke\AppData\Local\Programs\Python\Python312\Lib\site-packages\pysindy\utils\_axes.py:126: AxesWarning: 2 axes labeled for array with 1 axes
+  warnings.warn(
+C:\Users\joedicke\AppData\Local\Programs\Python\Python312\Lib\site-packages\pysindy\utils\_axes.py:126: AxesWarning: 2 axes labeled for array with 1 axes
+  warnings.warn(
+C:\Users\joedicke\AppData\Local\Programs\Python\Python312\Lib\site-packages\pysindy\utils\_axes.py:126: AxesWarning: 2 axes labeled for array with 1 axes
+  warnings.warn(
+C:\Users\joedicke\AppData\Local\Programs\Python\Python312\Lib\site-packages\pysindy\utils\_axes.py:126: AxesWarning: 2 axes labeled for array with 1 axes
+  warnings.warn(
+C:\Users\joedicke\AppData\Local\Programs\Python\Python312\Lib\site-packages\pysindy\utils\_axes.py:126: AxesWarning: 2 axes labeled for array with 1 axes
+  warnings.warn(
+C:\Users\joedicke\AppData\Local\Programs\Python\Python312\Lib\site-packages\pysindy\utils\_axes.py:126: AxesWarning: 2 axes labeled for array with 1 axes
+  warnings.warn(
+C:\Users\joedicke\AppData\Local\Programs\Python\Python312\Lib\site-packages\pysindy\utils\_axes.py:126: AxesWarning: 2 axes labeled for array with 1 axes
+  warnings.warn(
+C:\Users\joedicke\AppData\Local\Programs\Python\Python312\Lib\site-packages\pysindy\utils\_axes.py:126: AxesWarning: 2 axes labeled for array with 1 axes
+  warnings.warn(
+C:\Users\joedicke\AppData\Local\Programs\Python\Python312\Lib\site-packages\pysindy\utils\_axes.py:126: AxesWarning: 2 axes labeled for array with 1 axes
+  warnings.warn(
+C:\Users\joedicke\AppData\Local\Programs\Python\Python312\Lib\site-packages\pysindy\utils\_axes.py:126: AxesWarning: 2 axes labeled for array with 1 axes
+  warnings.warn(
+C:\Users\joedicke\AppData\Local\Programs\Python\Python312\Lib\site-packages\pysindy\utils\_axes.py:126: AxesWarning: 2 axes labeled for array with 1 axes
+  warnings.warn(
+C:\Users\joedicke\AppData\Local\Programs\Python\Python312\Lib\site-packages\pysindy\utils\_axes.py:126: AxesWarning: 2 axes labeled for array with 1 axes
+  warnings.warn(
+C:\Users\joedicke\AppData\Local\Programs\Python\Python312\Lib\site-packages\pysindy\utils\_axes.py:126: AxesWarning: 2 axes labeled for array with 1 axes
+  warnings.warn(
+C:\Users\joedicke\AppData\Local\Programs\Python\Python312\Lib\site-packages\pysindy\utils\_axes.py:126: AxesWarning: 2 axes labeled for array with 1 axes
+  warnings.warn(
+C:\Users\joedicke\AppData\Local\Programs\Python\Python312\Lib\site-packages\pysindy\utils\_axes.py:126: AxesWarning: 2 axes labeled for array with 1 axes
+  warnings.warn(
+C:\Users\joedicke\AppData\Local\Programs\Python\Python312\Lib\site-packages\pysindy\optimizers\stlsq.py:224: UserWarning: Sparsity parameter is too big (0.07847599703514611) and eliminated all coefficients
+  warnings.warn(
+C:\Users\joedicke\AppData\Local\Programs\Python\Python312\Lib\site-packages\pysindy\utils\_axes.py:126: AxesWarning: 2 axes labeled for array with 1 axes
+  warnings.warn(
+C:\Users\joedicke\AppData\Local\Programs\Python\Python312\Lib\site-packages\pysindy\utils\_axes.py:126: AxesWarning: 2 axes labeled for array with 1 axes
+  warnings.warn(
+C:\Users\joedicke\AppData\Local\Programs\Python\Python312\Lib\site-packages\pysindy\optimizers\stlsq.py:224: UserWarning: Sparsity parameter is too big (0.11288378916846895) and eliminated all coefficients
+  warnings.warn(
+C:\Users\joedicke\AppData\Local\Programs\Python\Python312\Lib\site-packages\pysindy\utils\_axes.py:126: AxesWarning: 2 axes labeled for array with 1 axes
+  warnings.warn(
+C:\Users\joedicke\AppData\Local\Programs\Python\Python312\Lib\site-packages\pysindy\utils\_axes.py:126: AxesWarning: 2 axes labeled for array with 1 axes
+  warnings.warn(
+C:\Users\joedicke\AppData\Local\Programs\Python\Python312\Lib\site-packages\pysindy\optimizers\stlsq.py:224: UserWarning: Sparsity parameter is too big (0.16237767391887226) and eliminated all coefficients
+  warnings.warn(
+capi_return is NULL
+Call-back cb_f_in_lsoda__user__routines failed.
+C:\Users\joedicke\AppData\Local\Programs\Python\Python312\Lib\site-packages\pysindy\utils\_axes.py:126: AxesWarning: 2 axes labeled for array with 1 axes
+  warnings.warn(
+C:\Users\joedicke\AppData\Local\Programs\Python\Python312\Lib\site-packages\pysindy\utils\_axes.py:126: AxesWarning: 2 axes labeled for array with 1 axes
+  warnings.warn(
+C:\Users\joedicke\AppData\Local\Programs\Python\Python312\Lib\site-packages\pysindy\optimizers\stlsq.py:224: UserWarning: Sparsity parameter is too big (0.23357214690901212) and eliminated all coefficients
+  warnings.warn(
+C:\Users\joedicke\AppData\Local\Programs\Python\Python312\Lib\site-packages\pysindy\utils\_axes.py:126: AxesWarning: 2 axes labeled for array with 1 axes
+  warnings.warn(
+C:\Users\joedicke\AppData\Local\Programs\Python\Python312\Lib\site-packages\pysindy\utils\_axes.py:126: AxesWarning: 2 axes labeled for array with 1 axes
+  warnings.warn(
+C:\Users\joedicke\AppData\Local\Programs\Python\Python312\Lib\site-packages\pysindy\utils\_axes.py:126: AxesWarning: 2 axes labeled for array with 1 axes
+  warnings.warn(
+C:\Users\joedicke\AppData\Local\Programs\Python\Python312\Lib\site-packages\pysindy\optimizers\stlsq.py:224: UserWarning: Sparsity parameter is too big (0.3359818286283781) and eliminated all coefficients
+  warnings.warn(
+C:\Users\joedicke\AppData\Local\Programs\Python\Python312\Lib\site-packages\pysindy\utils\_axes.py:126: AxesWarning: 2 axes labeled for array with 1 axes
+  warnings.warn(
+C:\Users\joedicke\AppData\Local\Programs\Python\Python312\Lib\site-packages\pysindy\utils\_axes.py:126: AxesWarning: 2 axes labeled for array with 1 axes
+  warnings.warn(
+C:\Users\joedicke\AppData\Local\Programs\Python\Python312\Lib\site-packages\pysindy\optimizers\stlsq.py:224: UserWarning: Sparsity parameter is too big (0.4832930238571752) and eliminated all coefficients
+  warnings.warn(
+C:\Users\joedicke\AppData\Local\Programs\Python\Python312\Lib\site-packages\pysindy\utils\_axes.py:126: AxesWarning: 2 axes labeled for array with 1 axes
+  warnings.warn(
+C:\Users\joedicke\AppData\Local\Programs\Python\Python312\Lib\site-packages\pysindy\utils\_axes.py:126: AxesWarning: 2 axes labeled for array with 1 axes
+  warnings.warn(
+C:\Users\joedicke\AppData\Local\Programs\Python\Python312\Lib\site-packages\pysindy\utils\_axes.py:126: AxesWarning: 2 axes labeled for array with 1 axes
+  warnings.warn(
+C:\Users\joedicke\AppData\Local\Programs\Python\Python312\Lib\site-packages\pysindy\optimizers\stlsq.py:224: UserWarning: Sparsity parameter is too big (0.6951927961775606) and eliminated all coefficients
+  warnings.warn(
+C:\Users\joedicke\AppData\Local\Programs\Python\Python312\Lib\site-packages\pysindy\utils\_axes.py:126: AxesWarning: 2 axes labeled for array with 1 axes
+  warnings.warn(
+C:\Users\joedicke\AppData\Local\Programs\Python\Python312\Lib\site-packages\pysindy\utils\_axes.py:126: AxesWarning: 2 axes labeled for array with 1 axes
+  warnings.warn(
+C:\Users\joedicke\AppData\Local\Programs\Python\Python312\Lib\site-packages\pysindy\utils\_axes.py:126: AxesWarning: 2 axes labeled for array with 1 axes
+  warnings.warn(
+C:\Users\joedicke\AppData\Local\Programs\Python\Python312\Lib\site-packages\pysindy\optimizers\stlsq.py:224: UserWarning: Sparsity parameter is too big (1.0) and eliminated all coefficients
+  warnings.warn(
+C:\Users\joedicke\AppData\Local\Programs\Python\Python312\Lib\site-packages\pysindy\utils\_axes.py:126: AxesWarning: 2 axes labeled for array with 1 axes
+  warnings.warn(
+C:\Users\joedicke\AppData\Local\Programs\Python\Python312\Lib\site-packages\pysindy\utils\_axes.py:126: AxesWarning: 2 axes labeled for array with 1 axes
+  warnings.warn(
+C:\Users\joedicke\AppData\Local\Programs\Python\Python312\Lib\site-packages\pysindy\utils\_axes.py:126: AxesWarning: 2 axes labeled for array with 1 axes
+  warnings.warn(
+C:\Users\joedicke\AppData\Local\Programs\Python\Python312\Lib\site-packages\pysindy\utils\_axes.py:126: AxesWarning: 2 axes labeled for array with 1 axes
+  warnings.warn(
+C:\Users\joedicke\AppData\Local\Programs\Python\Python312\Lib\site-packages\pysindy\utils\_axes.py:126: AxesWarning: 2 axes labeled for array with 1 axes
+  warnings.warn(
+C:\Users\joedicke\AppData\Local\Programs\Python\Python312\Lib\site-packages\pysindy\utils\_axes.py:126: AxesWarning: 2 axes labeled for array with 1 axes
+  warnings.warn(
+C:\Users\joedicke\AppData\Local\Programs\Python\Python312\Lib\site-packages\pysindy\utils\_axes.py:126: AxesWarning: 2 axes labeled for array with 1 axes
+  warnings.warn(
+C:\Users\joedicke\AppData\Local\Programs\Python\Python312\Lib\site-packages\pysindy\utils\_axes.py:126: AxesWarning: 2 axes labeled for array with 1 axes
+  warnings.warn(
+C:\Users\joedicke\AppData\Local\Programs\Python\Python312\Lib\site-packages\pysindy\utils\_axes.py:126: AxesWarning: 2 axes labeled for array with 1 axes
+  warnings.warn(
+C:\Users\joedicke\AppData\Local\Programs\Python\Python312\Lib\site-packages\pysindy\utils\_axes.py:126: AxesWarning: 2 axes labeled for array with 1 axes
+  warnings.warn(
+C:\Users\joedicke\AppData\Local\Programs\Python\Python312\Lib\site-packages\pysindy\utils\_axes.py:126: AxesWarning: 2 axes labeled for array with 1 axes
+  warnings.warn(
+C:\Users\joedicke\AppData\Local\Programs\Python\Python312\Lib\site-packages\pysindy\utils\_axes.py:126: AxesWarning: 2 axes labeled for array with 1 axes
+  warnings.warn(
+capi_return is NULL
+Call-back cb_f_in_lsoda__user__routines failed.
+C:\Users\joedicke\AppData\Local\Programs\Python\Python312\Lib\site-packages\pysindy\utils\_axes.py:126: AxesWarning: 2 axes labeled for array with 1 axes
+  warnings.warn(
+C:\Users\joedicke\AppData\Local\Programs\Python\Python312\Lib\site-packages\pysindy\utils\_axes.py:126: AxesWarning: 2 axes labeled for array with 1 axes
+  warnings.warn(
+C:\Users\joedicke\AppData\Local\Programs\Python\Python312\Lib\site-packages\pysindy\utils\_axes.py:126: AxesWarning: 2 axes labeled for array with 1 axes
+  warnings.warn(
+C:\Users\joedicke\AppData\Local\Programs\Python\Python312\Lib\site-packages\pysindy\utils\_axes.py:126: AxesWarning: 2 axes labeled for array with 1 axes
+  warnings.warn(
+C:\Users\joedicke\AppData\Local\Programs\Python\Python312\Lib\site-packages\pysindy\utils\_axes.py:126: AxesWarning: 2 axes labeled for array with 1 axes
+  warnings.warn(
+C:\Users\joedicke\AppData\Local\Programs\Python\Python312\Lib\site-packages\pysindy\utils\_axes.py:126: AxesWarning: 2 axes labeled for array with 1 axes
+  warnings.warn(
+C:\Users\joedicke\AppData\Local\Programs\Python\Python312\Lib\site-packages\pysindy\utils\_axes.py:126: AxesWarning: 2 axes labeled for array with 1 axes
+  warnings.warn(
+C:\Users\joedicke\AppData\Local\Programs\Python\Python312\Lib\site-packages\pysindy\utils\_axes.py:126: AxesWarning: 2 axes labeled for array with 1 axes
+  warnings.warn(
+C:\Users\joedicke\AppData\Local\Programs\Python\Python312\Lib\site-packages\pysindy\utils\_axes.py:126: AxesWarning: 2 axes labeled for array with 1 axes
+  warnings.warn(
+C:\Users\joedicke\Documents\reps\EvoODE-next\experiments\annihilator_odebench_smoke\fhat.py:95: RuntimeWarning: invalid value encountered in scalar add
+  out[-1] = -sum(coeff_for(k, z) * y[k] for k in range(r)) / denom
+capi_return is NULL
+Call-back cb_f_in_lsoda__user__routines failed.
+C:\Users\joedicke\AppData\Local\Programs\Python\Python312\Lib\site-packages\pysindy\utils\_axes.py:126: AxesWarning: 2 axes labeled for array with 1 axes
+  warnings.warn(
+C:\Users\joedicke\AppData\Local\Programs\Python\Python312\Lib\site-packages\pysindy\utils\_axes.py:126: AxesWarning: 2 axes labeled for array with 1 axes
+  warnings.warn(
+C:\Users\joedicke\AppData\Local\Programs\Python\Python312\Lib\site-packages\pysindy\utils\_axes.py:126: AxesWarning: 2 axes labeled for array with 1 axes
+  warnings.warn(
+C:\Users\joedicke\AppData\Local\Programs\Python\Python312\Lib\site-packages\pysindy\utils\_axes.py:126: AxesWarning: 2 axes labeled for array with 1 axes
+  warnings.warn(
+C:\Users\joedicke\AppData\Local\Programs\Python\Python312\Lib\site-packages\pysindy\utils\_axes.py:126: AxesWarning: 2 axes labeled for array with 1 axes
+  warnings.warn(
+C:\Users\joedicke\AppData\Local\Programs\Python\Python312\Lib\site-packages\pysindy\utils\_axes.py:126: AxesWarning: 2 axes labeled for array with 1 axes
+  warnings.warn(
+C:\Users\joedicke\AppData\Local\Programs\Python\Python312\Lib\site-packages\pysindy\utils\_axes.py:126: AxesWarning: 2 axes labeled for array with 1 axes
+  warnings.warn(
+C:\Users\joedicke\AppData\Local\Programs\Python\Python312\Lib\site-packages\pysindy\utils\_axes.py:126: AxesWarning: 2 axes labeled for array with 1 axes
+  warnings.warn(
+C:\Users\joedicke\AppData\Local\Programs\Python\Python312\Lib\site-packages\pysindy\utils\_axes.py:126: AxesWarning: 2 axes labeled for array with 1 axes
+  warnings.warn(
+C:\Users\joedicke\AppData\Local\Programs\Python\Python312\Lib\site-packages\pysindy\utils\_axes.py:126: AxesWarning: 2 axes labeled for array with 1 axes
+  warnings.warn(
+C:\Users\joedicke\AppData\Local\Programs\Python\Python312\Lib\site-packages\pysindy\utils\_axes.py:126: AxesWarning: 2 axes labeled for array with 1 axes
+  warnings.warn(
+C:\Users\joedicke\AppData\Local\Programs\Python\Python312\Lib\site-packages\pysindy\utils\_axes.py:126: AxesWarning: 2 axes labeled for array with 1 axes
+  warnings.warn(
+C:\Users\joedicke\AppData\Local\Programs\Python\Python312\Lib\site-packages\pysindy\utils\_axes.py:126: AxesWarning: 2 axes labeled for array with 1 axes
+  warnings.warn(
+C:\Users\joedicke\AppData\Local\Programs\Python\Python312\Lib\site-packages\pysindy\utils\_axes.py:126: AxesWarning: 2 axes labeled for array with 1 axes
+  warnings.warn(
+C:\Users\joedicke\AppData\Local\Programs\Python\Python312\Lib\site-packages\pysindy\utils\_axes.py:126: AxesWarning: 2 axes labeled for array with 1 axes
+  warnings.warn(
+C:\Users\joedicke\AppData\Local\Programs\Python\Python312\Lib\site-packages\pysindy\utils\_axes.py:126: AxesWarning: 2 axes labeled for array with 1 axes
+  warnings.warn(
+C:\Users\joedicke\AppData\Local\Programs\Python\Python312\Lib\site-packages\pysindy\utils\_axes.py:126: AxesWarning: 2 axes labeled for array with 1 axes
+  warnings.warn(
+C:\Users\joedicke\AppData\Local\Programs\Python\Python312\Lib\site-packages\pysindy\utils\_axes.py:126: AxesWarning: 2 axes labeled for array with 1 axes
+  warnings.warn(
+C:\Users\joedicke\AppData\Local\Programs\Python\Python312\Lib\site-packages\pysindy\utils\_axes.py:126: AxesWarning: 2 axes labeled for array with 1 axes
+  warnings.warn(
+C:\Users\joedicke\AppData\Local\Programs\Python\Python312\Lib\site-packages\pysindy\utils\_axes.py:126: AxesWarning: 2 axes labeled for array with 1 axes
+  warnings.warn(
+C:\Users\joedicke\AppData\Local\Programs\Python\Python312\Lib\site-packages\pysindy\utils\_axes.py:126: AxesWarning: 2 axes labeled for array with 1 axes
+  warnings.warn(
+C:\Users\joedicke\AppData\Local\Programs\Python\Python312\Lib\site-packages\pysindy\utils\_axes.py:126: AxesWarning: 2 axes labeled for array with 1 axes
+  warnings.warn(
+C:\Users\joedicke\AppData\Local\Programs\Python\Python312\Lib\site-packages\pysindy\utils\_axes.py:126: AxesWarning: 2 axes labeled for array with 1 axes
+  warnings.warn(
+C:\Users\joedicke\AppData\Local\Programs\Python\Python312\Lib\site-packages\pysindy\utils\_axes.py:126: AxesWarning: 2 axes labeled for array with 1 axes
+  warnings.warn(
+C:\Users\joedicke\AppData\Local\Programs\Python\Python312\Lib\site-packages\pysindy\utils\_axes.py:126: AxesWarning: 2 axes labeled for array with 1 axes
+  warnings.warn(
+C:\Users\joedicke\AppData\Local\Programs\Python\Python312\Lib\site-packages\pysindy\utils\_axes.py:126: AxesWarning: 2 axes labeled for array with 1 axes
+  warnings.warn(
+C:\Users\joedicke\AppData\Local\Programs\Python\Python312\Lib\site-packages\pysindy\utils\_axes.py:126: AxesWarning: 2 axes labeled for array with 1 axes
+  warnings.warn(
+C:\Users\joedicke\AppData\Local\Programs\Python\Python312\Lib\site-packages\pysindy\utils\_axes.py:126: AxesWarning: 2 axes labeled for array with 1 axes
+  warnings.warn(
+C:\Users\joedicke\AppData\Local\Programs\Python\Python312\Lib\site-packages\pysindy\utils\_axes.py:126: AxesWarning: 2 axes labeled for array with 1 axes
+  warnings.warn(
+C:\Users\joedicke\AppData\Local\Programs\Python\Python312\Lib\site-packages\pysindy\utils\_axes.py:126: AxesWarning: 2 axes labeled for array with 1 axes
+  warnings.warn(
+C:\Users\joedicke\AppData\Local\Programs\Python\Python312\Lib\site-packages\pysindy\utils\_axes.py:126: AxesWarning: 2 axes labeled for array with 1 axes
+  warnings.warn(
+C:\Users\joedicke\AppData\Local\Programs\Python\Python312\Lib\site-packages\pysindy\utils\_axes.py:126: AxesWarning: 2 axes labeled for array with 1 axes
+  warnings.warn(
+C:\Users\joedicke\AppData\Local\Programs\Python\Python312\Lib\site-packages\pysindy\utils\_axes.py:126: AxesWarning: 2 axes labeled for array with 1 axes
+  warnings.warn(
+C:\Users\joedicke\AppData\Local\Programs\Python\Python312\Lib\site-packages\pysindy\utils\_axes.py:126: AxesWarning: 2 axes labeled for array with 1 axes
+  warnings.warn(
+C:\Users\joedicke\AppData\Local\Programs\Python\Python312\Lib\site-packages\pysindy\utils\_axes.py:126: AxesWarning: 2 axes labeled for array with 1 axes
+  warnings.warn(
+C:\Users\joedicke\AppData\Local\Programs\Python\Python312\Lib\site-packages\pysindy\utils\_axes.py:126: AxesWarning: 2 axes labeled for array with 1 axes
+  warnings.warn(
+C:\Users\joedicke\AppData\Local\Programs\Python\Python312\Lib\site-packages\pysindy\utils\_axes.py:126: AxesWarning: 2 axes labeled for array with 1 axes
+  warnings.warn(
+C:\Users\joedicke\AppData\Local\Programs\Python\Python312\Lib\site-packages\pysindy\utils\_axes.py:126: AxesWarning: 2 axes labeled for array with 1 axes
+  warnings.warn(
+C:\Users\joedicke\AppData\Local\Programs\Python\Python312\Lib\site-packages\pysindy\utils\_axes.py:126: AxesWarning: 2 axes labeled for array with 1 axes
+  warnings.warn(
+C:\Users\joedicke\AppData\Local\Programs\Python\Python312\Lib\site-packages\pysindy\utils\_axes.py:126: AxesWarning: 2 axes labeled for array with 1 axes
+  warnings.warn(
+C:\Users\joedicke\AppData\Local\Programs\Python\Python312\Lib\site-packages\pysindy\utils\_axes.py:126: AxesWarning: 2 axes labeled for array with 1 axes
+  warnings.warn(
+C:\Users\joedicke\AppData\Local\Programs\Python\Python312\Lib\site-packages\pysindy\utils\_axes.py:126: AxesWarning: 2 axes labeled for array with 1 axes
+  warnings.warn(
+C:\Users\joedicke\AppData\Local\Programs\Python\Python312\Lib\site-packages\pysindy\utils\_axes.py:126: AxesWarning: 2 axes labeled for array with 1 axes
+  warnings.warn(
+C:\Users\joedicke\AppData\Local\Programs\Python\Python312\Lib\site-packages\pysindy\utils\_axes.py:126: AxesWarning: 2 axes labeled for array with 1 axes
+  warnings.warn(
+C:\Users\joedicke\AppData\Local\Programs\Python\Python312\Lib\site-packages\pysindy\utils\_axes.py:126: AxesWarning: 2 axes labeled for array with 1 axes
+  warnings.warn(
+C:\Users\joedicke\AppData\Local\Programs\Python\Python312\Lib\site-packages\pysindy\utils\_axes.py:126: AxesWarning: 2 axes labeled for array with 1 axes
+  warnings.warn(
+C:\Users\joedicke\AppData\Local\Programs\Python\Python312\Lib\site-packages\pysindy\utils\_axes.py:126: AxesWarning: 2 axes labeled for array with 1 axes
+  warnings.warn(
+C:\Users\joedicke\AppData\Local\Programs\Python\Python312\Lib\site-packages\pysindy\utils\_axes.py:126: AxesWarning: 2 axes labeled for array with 1 axes
+  warnings.warn(
+C:\Users\joedicke\AppData\Local\Programs\Python\Python312\Lib\site-packages\pysindy\utils\_axes.py:126: AxesWarning: 2 axes labeled for array with 1 axes
+  warnings.warn(
+C:\Users\joedicke\AppData\Local\Programs\Python\Python312\Lib\site-packages\pysindy\utils\_axes.py:126: AxesWarning: 2 axes labeled for array with 1 axes
+  warnings.warn(
+C:\Users\joedicke\AppData\Local\Programs\Python\Python312\Lib\site-packages\pysindy\utils\_axes.py:126: AxesWarning: 2 axes labeled for array with 1 axes
+  warnings.warn(
+C:\Users\joedicke\AppData\Local\Programs\Python\Python312\Lib\site-packages\pysindy\utils\_axes.py:126: AxesWarning: 2 axes labeled for array with 1 axes
+  warnings.warn(
+C:\Users\joedicke\AppData\Local\Programs\Python\Python312\Lib\site-packages\pysindy\utils\_axes.py:126: AxesWarning: 2 axes labeled for array with 1 axes
+  warnings.warn(
+capi_return is NULL
+Call-back cb_f_in_lsoda__user__routines failed.
+C:\Users\joedicke\AppData\Local\Programs\Python\Python312\Lib\site-packages\pysindy\utils\_axes.py:126: AxesWarning: 2 axes labeled for array with 1 axes
+  warnings.warn(
+C:\Users\joedicke\AppData\Local\Programs\Python\Python312\Lib\site-packages\pysindy\utils\_axes.py:126: AxesWarning: 2 axes labeled for array with 1 axes
+  warnings.warn(
+C:\Users\joedicke\AppData\Local\Programs\Python\Python312\Lib\site-packages\pysindy\utils\_axes.py:126: AxesWarning: 2 axes labeled for array with 1 axes
+  warnings.warn(
+C:\Users\joedicke\AppData\Local\Programs\Python\Python312\Lib\site-packages\pysindy\utils\_axes.py:126: AxesWarning: 2 axes labeled for array with 1 axes
+  warnings.warn(
+C:\Users\joedicke\AppData\Local\Programs\Python\Python312\Lib\site-packages\pysindy\utils\_axes.py:126: AxesWarning: 2 axes labeled for array with 1 axes
+  warnings.warn(
+C:\Users\joedicke\AppData\Local\Programs\Python\Python312\Lib\site-packages\pysindy\utils\_axes.py:126: AxesWarning: 2 axes labeled for array with 1 axes
+  warnings.warn(
+C:\Users\joedicke\AppData\Local\Programs\Python\Python312\Lib\site-packages\pysindy\utils\_axes.py:126: AxesWarning: 2 axes labeled for array with 1 axes
+  warnings.warn(
+C:\Users\joedicke\AppData\Local\Programs\Python\Python312\Lib\site-packages\pysindy\utils\_axes.py:126: AxesWarning: 2 axes labeled for array with 1 axes
+  warnings.warn(
+C:\Users\joedicke\AppData\Local\Programs\Python\Python312\Lib\site-packages\pysindy\utils\_axes.py:126: AxesWarning: 2 axes labeled for array with 1 axes
+  warnings.warn(
+C:\Users\joedicke\AppData\Local\Programs\Python\Python312\Lib\site-packages\pysindy\utils\_axes.py:126: AxesWarning: 2 axes labeled for array with 1 axes
+  warnings.warn(
+concurrent.futures.process._RemoteTraceback: 
+"""
+Traceback (most recent call last):
+  File "C:\Users\joedicke\AppData\Local\Programs\Python\Python312\Lib\concurrent\futures\process.py", line 220, in _sendback_result
+    result_queue.put(_ResultItem(work_id, result=result,
+  File "C:\Users\joedicke\AppData\Local\Programs\Python\Python312\Lib\multiprocessing\queues.py", line 393, in put
+    obj = _ForkingPickler.dumps(obj)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\joedicke\AppData\Local\Programs\Python\Python312\Lib\multiprocessing\reduction.py", line 51, in dumps
+    cls(buf, protocol).dump(obj)
+AttributeError: Can't get local object '_fit_baseline_arrays.<locals>.fhat'
+"""
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "C:\Users\joedicke\Documents\reps\EvoODE-next\experiments\annihilator_odebench_smoke\end2end.py", line 665, in <module>
+    main()
+  File "C:\Users\joedicke\Documents\reps\EvoODE-next\experiments\annihilator_odebench_smoke\end2end.py", line 653, in main
+    written = run_command(args.results, args.systems, args.eta, args.seeds, args.methods, args.workers)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\joedicke\Documents\reps\EvoODE-next\experiments\annihilator_odebench_smoke\end2end.py", line 499, in run_command
+    record, seconds = future.result()
+                      ^^^^^^^^^^^^^^^
+  File "C:\Users\joedicke\AppData\Local\Programs\Python\Python312\Lib\concurrent\futures\_base.py", line 449, in result
+    return self.__get_result()
+           ^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\joedicke\AppData\Local\Programs\Python\Python312\Lib\concurrent\futures\_base.py", line 401, in __get_result
+    raise self._exception
+AttributeError: Can't get local object '_fit_baseline_arrays.<locals>.fhat'
