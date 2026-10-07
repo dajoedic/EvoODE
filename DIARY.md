@@ -6,6 +6,19 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ## 2026-10-07
 
+### End-to-End-Vergleich: Entwurf, WP-E2E-A an Codex
+<!-- ae34040 -->
+
+Der Nutzer stellt das Smoke-Verdikt infrage: Der Testfehler-Vorsprung des Annihilators kam vom Oracle-$f$-Vorteil.
+Geklärt wurde: Die schwache Form des Annihilators integriert in $x$ und beseitigt die Ableitungen von $f$, nicht die
+Zeitableitung $\dot x$, die nötig ist, um $f$ aus $x(t)$ zu bekommen. Das stand im Leitdokument schon als
+Engpass von Gate 2B. End-to-End braucht der Annihilator also eine Ableitungsschätzung wie SINDy, während W-SINDy sie
+vermeidet. Neue Frage (Nutzer): ein fairer Vergleich rein aus denselben Trajektorien, berichtet werden R² ≥ 0,9,
+Generalisierung und Strukturtreffer. Gewählt: beide Protokolle (ODEBench-Standard P1 und Extrapolation P2) und eine
+gemeinsame Auswahl über den Validierungsfehler für alle drei Methoden. Beim Annihilator entfallen $\chi^2$-Test und
+A1–A3, weil $\sigma$ bei geschätzten Ableitungen unbekannt und das Rauschen korreliert ist; das Risiko eines
+v1-artigen Scheiterns war zu groß. Entwurf `docs/ODEBENCH_END2END.md`; §9 legt der Nutzer fest.
+
 ### ODEBench-Smoke-Test v2: Verdikt „beenden“ (Bedingung A)
 <!-- 21b1c73 -->
 

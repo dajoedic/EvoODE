@@ -5,9 +5,10 @@ welche Entscheidung ansteht. Wird **immer vollständig überschrieben**. Dauerha
 `docs/IDEA_01_ANNIHILATOR_DISCOVERY.md` oder `DIARY.md`. EvoGrow und Paper 1 stehen in `..\EvoODE\READ_THIS_FIRST.md`,
 nicht hier.
 
-**Stand: 2026-10-07 morgens. Der ODEBench-Smoke-Test v2 ist abgeschlossen: Verdikt „Idee #1 beenden“
-(Bedingung A; Annihilator rauschfrei 2/4, bei 1 % 0/4 exakt). Übergabe: `docs/ODEBENCH_SMOKE_TEST_RESULT.md`. Nichts
-läuft. Offen ist nur noch der Abschluss der Idee und das Aufräumen.**
+**Stand: 2026-10-07. Das Verdikt des Smoke-Tests („beenden“, A) steht, aber der Nutzer will vor dem Abschluss einen
+fairen End-to-End-Vergleich: SINDy, W-SINDy und Annihilator auf denselben verrauschten Trajektorien
+(`docs/ODEBENCH_END2END.md`, Entwurf). Codex baut WP-E2E-A. Danach legt der Nutzer §9 fest und friert ein; dann
+Pilot und Hauptlauf.**
 
 ## 1. Wo wir stehen
 
@@ -36,7 +37,7 @@ läuft. Offen ist nur noch der Abschluss der Idee und das Aufräumen.**
 
 ## 3. Was noch liegt
 
-- Kein Codex-Auftrag, kein Lauf aktiv. Auf Orion liegt nur der abgeschlossene Job `annihilator-diag-amb`. Die Originaldaten der Diagnose bleiben auf dem NFS unter
+- Codex-Auftrag WP-E2E-A aktiv. Auf Orion liegt nur der abgeschlossene Job `annihilator-diag-amb`. Die Originaldaten der Diagnose bleiben auf dem NFS unter
   `/bigdata/data-science/joedicke/annihilator_diag_amb/`. Eine lokale Kopie ist committet.
 - Auf Orion stehen noch der abgeschlossene Job `annihilator-diag-amb` und seine Pods (`Completed`, ohne
   Ressourcen). Löschen mit `oc delete job annihilator-diag-amb`.
