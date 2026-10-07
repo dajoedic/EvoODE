@@ -23,15 +23,36 @@ Ursachen:
 
 ## Die einzige Änderung (ersetzt v1 §5 Punkt 2, nur Annihilator)
 
-- Die Paare $(\tilde x_i, \hat{\dot x}_i)$ werden nach $\tilde x$ sortiert, Paare mit gleichem $\tilde x$ gemittelt.
-- Durch diese Punkte wird ein **Glättungsspline** gelegt: `scipy.interpolate.make_smoothing_spline`, kubisch.
-  Die Glättungsstärke `lam=None` wählt das Verfahren selbst über GCV, also rein aus den Daten und ohne
-  Tuning-Parameter.
-- Er wird auf 2000 gleichmäßigen Punkten über $[\min \tilde x, \max \tilde x]$ ausgewertet.
-- Domäne und $z$-Normierung bleiben wie in v1.
+1. **Abschnitte:** $[\min \tilde x, \max \tilde x]$ der Lerndaten wird in **200 gleich breite Abschnitte** geteilt.
+   Je nicht leerem Abschnitt werden der Mittelwert von $\tilde x$, der Mittelwert von $\hat{\dot x}$ und die Zahl
+   der Punkte gebildet.
+2. **Glättungsspline:** Durch diese Mittelwerte wird ein Glättungsspline gelegt, `scipy.interpolate.make_smoothing_spline`
+   (kubisch). Gewichte sind die Punktzahlen, die Glättungsstärke `lam=None` wählt das Verfahren selbst über GCV.
+3. **Gitter:** Ausgewertet wird auf 2000 gleichmäßigen Punkten über $[\min \tilde x, \max \tilde x]$. Domäne und
+   $z$-Normierung bleiben wie in v1.
 
-Bei exakten Daten wählt GCV eine sehr kleine Glättung; die Prüfung 2 (v1 §8) wird mit dieser Änderung wiederholt
-und muss für 3, 19 und 21 wieder bestehen (7 bleibt dokumentierte Ausnahme).
+**Warum Abschnitte vor dem Glätten** (Diagnose am 07.10. vor dem v2-Lauf, `results_e2e/diag/diag_smooth*.py`, nur
+Datenqualität, keine Discovery):
+
+- GCV direkt auf den Rohpunkten stürzte bei System 19 numerisch ab („ill-posed“). Ursache sind fast gleiche $x$-Werte
+  am Gleichgewicht.
+- Bei Gompertz (P2) schwang der Spline über die Datenlücke zwischen $x = 2{,}9$ und $9{,}5$.
+
+Die Abschnitte entfernen die fast doppelten Punkte. Die Zahl 200 ist eine feste Wahl, nicht an Discovery-Ergebnissen
+abgestimmt. Relativer Fehler auf $f$ nach dem Resampling:
+
+| | Logistik | Gompertz | Ernte | SIR |
+|---|---|---|---|---|
+| 1 % (vorher linear 32–145 %) | 1,7–1,9 % | 10–15 % | 2,5–3,1 % | 3,3–3,5 % |
+| exakte Ableitung | $4$–$9\cdot10^{-6}$ | $2\cdot10^{-7}$–$6\cdot10^{-4}$ | $4$–$8\cdot10^{-5}$ | $1$–$2\cdot10^{-5}$ |
+
+**Zielkonflikt:** Auch auf exakten Daten glättet das Verfahren etwas. Der Operator (2,2) von System 19 kippte schon
+bei $5\cdot10^{-6}$ Datenfehler (v1-Diagnose). Prüfung 2 (v1 §8) wird wiederholt:
+
+- 3 und 21 müssen bestehen;
+- 7 und 19 werden mit Zahlen als bekannte Ausnahmen dokumentiert.
+
+Scheitert der Annihilator dort im Lauf, zählt das als sein Ergebnis.
 
 ## Was übernommen wird
 

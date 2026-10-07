@@ -1,4 +1,4 @@
-status: done
-task:   WP-E2E-A3
-report: codex/reports/REPORT_WP_E2E_A3.md
-note:   Worker-Records serialisierbar, Task-Fehler werden protokolliert; Tests gruen.
+status: working
+task:   WP-E2E-B
+report: -
+note:   implementing end2end_v2 smoothing spline and baseline reuse
