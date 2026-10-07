@@ -6,6 +6,17 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ## 2026-10-07
 
+### End-to-End v2 gestartet, danach Fortsetzung von v1 (Kette)
+<!-- c3b1bd1, e3ff8fb -->
+
+Zwischenstand v1 (113/216): Bei 1 % bricht der Annihilator ein. Diagnose: Der Fehler der geschätzten Ableitung liegt
+bei 56–63 % (Logistik) und 140–190 % (Gompertz), und der interpolierende Spline vervielfacht das (bis zum
+3400-Fachen des wahren Maximums). v1 wurde um 16:40 angehalten (fortsetzbar). v2 (`docs/ODEBENCH_END2END_v2.md`):
+200 Abschnitte plus GCV-Glättungsspline, Fehler auf $f$ bei 1 % danach 1,7–3,5 % (Gompertz 10–15 %). WP-E2E-B
+abgenommen; der v1-Pfad ist bitgleich zum alten Code (selbst geprüft). Die Kette `run_chain_e2e.ps1` startete um
+16:37 losgelöst: v2 mit 7 Workern und übernommenen Baselines, danach Fortsetzung von v1. Erwartet: v2 gegen 22–23 Uhr,
+v1 gegen 1–2 Uhr. Außerdem `docs/IDEA_01_RETROSPECTIVE.md` geschrieben (vorläufig).
+
 ### End-to-End: Spezifikation eingefroren, Pilot sauber, Hauptlauf gestartet
 <!-- 47d5b07, 15bc333, 9800fa3, 2bbc6b7 -->
 

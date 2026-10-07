@@ -5,10 +5,11 @@ welche Entscheidung ansteht. Wird **immer vollständig überschrieben**. Dauerha
 `docs/IDEA_01_ANNIHILATOR_DISCOVERY.md` oder `DIARY.md`. EvoGrow und Paper 1 stehen in `..\EvoODE\READ_THIS_FIRST.md`,
 nicht hier.
 
-**Stand: 2026-10-07, 14:00. Der End-to-End-Vergleich (`docs/ODEBENCH_END2END.md`, eingefroren, deskriptiv, ohne
-Entscheidungsregel) läuft losgelöst auf dem Laptop (PID 20176, 6 Worker, Start 13:54, Ende erwartet gegen 18:00).
-Fertig, wenn `experiments/annihilator_odebench_smoke/results_e2e/DONE` existiert. Danach `--summarize` und den
-vollständigen Bericht nach §9 in `docs/ODEBENCH_END2END_RESULT.md`. Der Nutzer entscheidet danach.**
+**Stand: 2026-10-07, 16:40. Auf dem Laptop läuft losgelöst die Kette `experiments/annihilator_odebench_smoke/run_chain_e2e.ps1`
+(Protokoll `results_e2e_v2/chain.log`): erst End-to-End v2 (7 Worker, `results_e2e_v2/DONE` erwartet gegen 22–23 Uhr),
+danach die Fortsetzung von v1 (`results_e2e/DONE` erwartet gegen 1–2 Uhr). Danach: `--summarize` für beide, Bericht
+in `docs/ODEBENCH_END2END_RESULT.md` und §9 von `docs/IDEA_01_RETROSPECTIVE.md`. Der Nutzer entscheidet dann über
+den Abschluss. Gescheiterte Einzel-Fits stehen in `failed_tasks.jsonl` und werden mit erneutem `--run` nachgerechnet.**
 
 ## 1. Wo wir stehen
 
