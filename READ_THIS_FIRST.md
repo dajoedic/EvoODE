@@ -14,9 +14,9 @@ von v1). Morgen: Ergebnis prüfen, Bericht schreiben, der Nutzer entscheidet üb
   07.10. um 16:37. Protokoll: `experiments/annihilator_odebench_smoke/results_e2e_v2/chain.log`.
   1. **End-to-End v2** (`docs/ODEBENCH_END2END_v2.md`): 7 Worker, Annihilator mit Abschnitten und
      GCV-Glättungsspline, Baselines aus v1 übernommen (78 Records). Ergebnisordner `results_e2e_v2/`, fertig bei
-     `results_e2e_v2/DONE`, bei Fehler `FAILED`. **Erwartet gegen 02:30.**
+     `results_e2e_v2/DONE`, bei Fehler `FAILED`. **Erwartet gegen 03:45** (Stand 23:55: 20 von 72 Annihilator-Fits, 12–41 min je Fit nach dem Standby).
   2. Danach automatisch die **Fortsetzung von v1** (`docs/ODEBENCH_END2END.md`, interpolierender Spline): 103
-     fehlende Records, Ergebnisordner `results_e2e/`, fertig bei `results_e2e/DONE`. **Erwartet gegen 05:00.** Der
+     fehlende Records, Ergebnisordner `results_e2e/`, fertig bei `results_e2e/DONE`. **Erwartet gegen 06:30–07:00.** Der
      v1-Pfad im heutigen Code ist bitgleich zum Stand beim Anhalten (`2bbc6b7`), von Claude geprüft am 07.10.
 - **Standby:** Der Laptop war von 17:02 bis 22:03 zugeklappt (Modern Standby), der Lauf stand still. Seit 22:03
   rechnet er wieder. `keep_awake.ps1` (PID 46016) hält System und Display wach, solange die Kette läuft. **Den Deckel
