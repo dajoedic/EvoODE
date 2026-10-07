@@ -1,0 +1,11 @@
+system 7 class (3, 1) domain [1.730,23.286]  interp err rel 8.62e-03
+   interpolated   iters=90 conv=True sv_small=[0.00891536 0.03967178] lead roots z=[-0.268] coeffs=[ 0.3603 -0.017  -0.369  -0.3386  0.244   0.7477  0.0061  0.0226]
+   exact uniform  iters=1 conv=True sv_small=[4.50246753e-09 3.59419272e-06] lead roots z=[-1.161] coeffs=[-0.      0.      0.      0.      0.5466  0.      0.6344  0.5466]
+system 19 class (2, 2) domain [0.030,0.951]  interp err rel 4.79e-06
+   interpolated   iters=22 conv=True sv_small=[4.32010767e-07 8.33307664e-06] lead roots z=[-0.663  0.521] coeffs=[ 0.0759  0.7986 -0.0012  0.4358  0.0371 -0.3947  0.0312 -0.0129 -0.0904]
+   exact uniform  iters=0 conv=True sv_small=[7.51750182e-14 2.80737648e-08] lead roots z=[-6.263 -2.803] coeffs=[ 0.7519  0.2131 -0.     -0.1157 -0.3967 -0.1065  0.4039  0.2086  0.023 ]
+system 3 class (3, 0) domain [7.300,73.958]  interp err rel 6.74e-06
+   interpolated   iters=23 conv=True sv_small=[0.20694668 1.38095541] lead roots z=[] coeffs=[-4.e-04  0.e+00 -2.e-04  1.e+00]
+   exact uniform  iters=1 conv=True sv_small=[3.98238080e-08 1.38087584e+00] lead roots z=[] coeffs=[-0.  0. -0.  1.]
+
+[exited with code 0]

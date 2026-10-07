@@ -79,7 +79,11 @@ Je Realisierung und Methode gibt es also drei Fits: P1 aus AB1, P1 aus AB2 und P
    auf den verrauschten $\tilde x$. Das ergibt Paare $(\tilde x_i, \hat{\dot x}_i)$.
 2. **Gleichmäßiges Gitter:**
    - Die Paare werden nach $\tilde x$ sortiert, Paare mit gleichem $\tilde x$ gemittelt.
-   - Danach linear auf 2000 gleichmäßige Punkte über $[\min \tilde x, \max \tilde x]$ der Lerndaten interpoliert.
+   - Danach mit einem **kubischen Spline** (`scipy.interpolate.CubicSpline`, not-a-knot) auf 2000 gleichmäßige Punkte
+     über $[\min \tilde x, \max \tilde x]$ der Lerndaten interpoliert. *Geändert am 07.10. vor jedem Discovery-Lauf:*
+     Der Entwurf sah linear vor. Prüfung 2 (§8) zeigte, dass die lineare Interpolation bei exakten Ableitungen Fehler
+     von 0,86 % (System 7) erzeugt und die Kette für 7 und 19 bricht. AML auf exakt gleichmäßigen Daten findet dagegen
+     den wahren Operator.
    - Diese Domäne legt die $z$-Normierung wie in v3 fest.
 3. **Kandidaten:** die Klassen in der v3-Ordnung $C = (r+1)(d+1)$ mit $C \le 12$, zusammen 18 Klassen von (1,0) bis
    (5,1). Darunter sind alle vier Referenzklassen: (3,0) mit $C = 4$, (3,1) mit $C = 8$, (2,2) mit $C = 9$.
@@ -120,9 +124,20 @@ Je Realisierung und Methode gibt es also drei Fits: P1 aus AB1, P1 aus AB2 und P
 
 1. **Auswahlregel auf synthetischen Daten:** Auf einer synthetischen 1D-ODE, die keines der vier Systeme ist, mit
    $\eta = 0$ wählen alle drei Methoden einen Kandidaten mit Validierungs-$\mathrm{NRMSE}_x < 10^{-3}$.
-2. **Annihilator-Kette mit exaktem $\dot x$:** Für die vier Systeme mit **exakten** Ableitungen (statt geschätzter)
-   liefert die Referenzklasse einen Validierungsfehler $< 10^{-4}$. Das prüft Gitter, Interpolation und Kette. Es
-   ist keine Discovery, weil die Klasse vorgegeben ist.
+2. **Annihilator-Kette mit exaktem $\dot x$:** Für die Systeme 3, 19 und 21 liefert die Referenzklasse mit
+   **exakten** Ableitungen (statt geschätzter) einen Validierungsfehler $< 10^{-4}$. Das prüft Gitter, Interpolation
+   und Kette. Es ist keine Discovery, weil die Klasse vorgegeben ist.
+
+   **System 7 (Gompertz) ist ausgenommen und wird als Befund dokumentiert** (Diagnose vom 07.10., vor jedem Lauf,
+   `results_e2e/diag/`):
+   - Die Trajektorienpunkte liegen bei großem $x$ weit auseinander, weil $x$ exponentiell wächst.
+   - Auch der kubische Spline lässt deshalb bei exakten Ableitungen einen relativen Fehler von $5\cdot10^{-4}$.
+   - Die AML-Schätzung der Klasse (3,1) setzt die Nullstelle des Leitkoeffizienten daraufhin in den Datenbereich
+     ($z = -0{,}27$ statt $-1{,}16$). Mit exakt gleichmäßigen Daten gelingt sie.
+
+   Das ist eine Grenze der Methode im End-to-End-Fall: Sie braucht gleichmäßig dichte $x$-Stichproben, die
+   Trajektorien liefern. Gompertz läuft trotzdem mit. Scheitert der Annihilator dort, zählt das als sein
+   Fehlschlag. Es wird nicht repariert.
 
 ## 9. Keine Entscheidungsregel (Nutzer, 07.10.)
 

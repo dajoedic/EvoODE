@@ -1,0 +1,6 @@
+7 (3, 1) spline interp err 5.3e-04  fail=LEADING_ZERO_IN_TRAINING_DOMAIN validation NRMSE=inf
+19 (2, 2) spline interp err 3.7e-13  fail=None validation NRMSE=1.27e-06
+3 (3, 0) spline interp err 2.4e-16  fail=None validation NRMSE=5.23e-07
+21 (3, 0) spline interp err 1.3e-11  fail=None validation NRMSE=3.06e-06
+
+[exited with code 0]
