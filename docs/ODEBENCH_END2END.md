@@ -1,6 +1,6 @@
 # ODEBench End-to-End: SINDy, W-SINDy und Annihilator rein aus Trajektorien
 
-**Entwurf vom 2026-10-07, noch nicht eingefroren.** Frage und Kriterien vom Nutzer (Chat vom 07.10.). Vom Nutzer
+**Eingefroren am 2026-10-07 vor dem ersten Discovery-Lauf** (Freigabe des Nutzers: „Lass knallen“ / „Check das und starte dann“). Code: WP-E2E-A/A2, Plausibilität bestanden (3, 19, 21; 7 als dokumentierte Ausnahme). Frage und Kriterien vom Nutzer (Chat vom 07.10.). Vom Nutzer
 gewählt:
 
 - beide Protokolle berichten;

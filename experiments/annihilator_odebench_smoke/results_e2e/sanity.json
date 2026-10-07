@@ -1,0 +1,81 @@
+{
+  "exact_derivative_reference_class": {
+    "19": {
+      "counts": {
+        "aml_iterations": 1,
+        "classes": 1,
+        "sample_points": 2000
+      },
+      "fail_reason": null,
+      "passed": true,
+      "reference_class": [
+        2,
+        2
+      ],
+      "seconds": 28.866915700025856,
+      "validation_nrmse_x": 1.2686126456014222e-06
+    },
+    "21": {
+      "counts": {
+        "aml_iterations": 1,
+        "classes": 1,
+        "sample_points": 2000
+      },
+      "fail_reason": null,
+      "passed": true,
+      "reference_class": [
+        3,
+        0
+      ],
+      "seconds": 30.670484600006603,
+      "validation_nrmse_x": 3.06157799821987e-06
+    },
+    "3": {
+      "counts": {
+        "aml_iterations": 1,
+        "classes": 1,
+        "sample_points": 2000
+      },
+      "fail_reason": null,
+      "passed": true,
+      "reference_class": [
+        3,
+        0
+      ],
+      "seconds": 28.011702699994203,
+      "validation_nrmse_x": 5.225989326623184e-07
+    },
+    "7": {
+      "counts": {
+        "aml_iterations": 90,
+        "classes": 1,
+        "sample_points": 2000
+      },
+      "documented_exception": true,
+      "fail_reason": "LEADING_ZERO_IN_TRAINING_DOMAIN",
+      "passed": false,
+      "reference_class": [
+        3,
+        1
+      ],
+      "seconds": 34.331259300000966,
+      "validation_nrmse_x": Infinity
+    }
+  },
+  "passed": true,
+  "seconds": 590.1524760000175,
+  "synthetic_selection": {
+    "annihilator": {
+      "passed": true,
+      "validation_nrmse_x": 1.5791940095116773e-07
+    },
+    "sindy": {
+      "passed": true,
+      "validation_nrmse_x": 1.960490741024021e-07
+    },
+    "wsindy": {
+      "passed": true,
+      "validation_nrmse_x": 7.172187082240551e-09
+    }
+  }
+}
