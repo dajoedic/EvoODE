@@ -6,6 +6,15 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ## 2026-10-07
 
+### End-to-End: Laptop im Standby, Lauf verzögert
+<!-- commit: folgt -->
+
+Um 22:05 gefunden: Seit 16:37 waren keine neuen Records dazugekommen. Laut Ereignisprotokoll war das System von
+17:02 bis 22:03 im Modern Standby, die Prozesse waren eingefroren. Die Einstellung „Standby nie“ verhindert Modern
+Standby bei Bildschirm-aus bzw. Deckel nicht. Die Worker rechnen seit 22:03 wieder (100 % CPU). Gegenmaßnahme:
+`keep_awake.ps1` setzt `SetThreadExecutionState` (System und Display erforderlich), solange die Kette läuft.
+Neue Erwartung: v2 gegen 02:30, v1 gegen 05:00. Der Deckel darf nicht geschlossen werden.
+
 ### End-to-End v2 gestartet, danach Fortsetzung von v1 (Kette)
 <!-- c3b1bd1, e3ff8fb -->
 
