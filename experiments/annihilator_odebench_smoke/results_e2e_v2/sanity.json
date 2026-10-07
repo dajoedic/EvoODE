@@ -1,0 +1,107 @@
+{
+  "exact_derivative_reference_class": {
+    "19": {
+      "counts": {
+        "aml_iterations": 49,
+        "classes": 1,
+        "sample_points": 2000
+      },
+      "documented_exception": true,
+      "fail_reason": "LEADING_ZERO_IN_TRAINING_DOMAIN",
+      "passed": false,
+      "reference_class": [
+        2,
+        2
+      ],
+      "resampling": {
+        "bins": 200,
+        "method": "binned_smoothing_spline",
+        "nonempty_bins": 200,
+        "smoothing_lambda": "gcv_lam_none"
+      },
+      "seconds": 80.78350900000078,
+      "validation_nrmse_x": Infinity
+    },
+    "21": {
+      "counts": {
+        "aml_iterations": 34,
+        "classes": 1,
+        "sample_points": 2000
+      },
+      "fail_reason": null,
+      "passed": true,
+      "reference_class": [
+        3,
+        0
+      ],
+      "resampling": {
+        "bins": 200,
+        "method": "binned_smoothing_spline",
+        "nonempty_bins": 200,
+        "smoothing_lambda": "gcv_lam_none"
+      },
+      "seconds": 78.3206865999964,
+      "validation_nrmse_x": 5.23360463297658e-06
+    },
+    "3": {
+      "counts": {
+        "aml_iterations": 33,
+        "classes": 1,
+        "sample_points": 2000
+      },
+      "fail_reason": null,
+      "passed": true,
+      "reference_class": [
+        3,
+        0
+      ],
+      "resampling": {
+        "bins": 200,
+        "method": "binned_smoothing_spline",
+        "nonempty_bins": 200,
+        "smoothing_lambda": "gcv_lam_none"
+      },
+      "seconds": 50.829039300006116,
+      "validation_nrmse_x": 1.6108850158907617e-06
+    },
+    "7": {
+      "counts": {
+        "aml_iterations": 115,
+        "classes": 1,
+        "sample_points": 2000
+      },
+      "documented_exception": true,
+      "fail_reason": "LEADING_ZERO_IN_TRAINING_DOMAIN",
+      "passed": false,
+      "reference_class": [
+        3,
+        1
+      ],
+      "resampling": {
+        "bins": 200,
+        "method": "binned_smoothing_spline",
+        "nonempty_bins": 136,
+        "smoothing_lambda": "gcv_lam_none"
+      },
+      "seconds": 99.53423480002675,
+      "validation_nrmse_x": Infinity
+    }
+  },
+  "passed": true,
+  "seconds": 443.0694841000077,
+  "spec": "end2end_v2",
+  "synthetic_selection": {
+    "annihilator": {
+      "passed": true,
+      "validation_nrmse_x": 3.7552970699009865e-06
+    },
+    "sindy": {
+      "passed": true,
+      "validation_nrmse_x": 1.960490741024021e-07
+    },
+    "wsindy": {
+      "passed": true,
+      "validation_nrmse_x": 7.368356039749292e-09
+    }
+  }
+}

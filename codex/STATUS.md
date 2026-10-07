@@ -1,4 +1,4 @@
-status: working
+status: done
 task:   WP-E2E-B
-report: -
-note:   implementing end2end_v2 smoothing spline and baseline reuse
+report: codex/reports/REPORT_WP_E2E_B.md
+note:   end2end_v2 implemented; 34 tests passed and v2 sanity passed with systems 7 and 19 documented as exceptions

@@ -17,7 +17,7 @@ from typing import Callable, Iterable
 import numpy as np
 import pysindy as ps
 import sympy as sp
-from scipy.interpolate import CubicSpline
+from scipy.interpolate import CubicSpline, make_smoothing_spline
 from scipy.integrate import solve_ivp
 
 from experiments.annihilator_gate2a_v3.config import class_order
@@ -34,7 +34,11 @@ from .oracle import nullspace, reference_for_system
 
 ROOT = Path(__file__).resolve().parent
 RESULTS_E2E = ROOT / "results_e2e"
+RESULTS_E2E_V2 = ROOT / "results_e2e_v2"
 SPEC = "end2end_v1"
+SPEC_V2 = "end2end_v2"
+SPECS = (SPEC, SPEC_V2)
+ANNIHILATOR_BIN_COUNT_V2 = 200
 METHODS = ("annihilator", "sindy", "wsindy")
 PROTOCOLS = ("P1_from_AB1", "P1_from_AB2", "P2")
 NOISY_SEEDS = (70000, 70001, 70002, 70003, 70004)
@@ -47,6 +51,14 @@ R2_SUCCESS_THRESHOLD = 0.9
 DISCUSS_G_SYSTEMS = 3
 _DROP_FROM_JSON = object()
 _LAST_RUN_FAILED_TASKS = 0
+
+
+def results_for_spec(spec: str) -> Path:
+    if spec == SPEC:
+        return RESULTS_E2E
+    if spec == SPEC_V2:
+        return RESULTS_E2E_V2
+    raise ValueError(f"unknown spec: {spec}; allowed: {SPECS}")
 
 
 @dataclass(frozen=True)
@@ -266,7 +278,22 @@ def refit_baseline_full(system: ODESystem, noisy: TrajectorySet, train_indices: 
     return _fit_baseline_arrays([np.asarray(row, dtype=float) for row in trajectories], system.t, method, float(selected.candidate["threshold"]), terms)
 
 
-def resample_state_derivative(x_values: np.ndarray, f_values: np.ndarray, points: int = ANNIHILATOR_SAMPLE_POINTS) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+def _z_normalize_grid(grid: np.ndarray) -> np.ndarray:
+    return (grid - 0.5 * (grid[0] + grid[-1])) / (0.5 * (grid[-1] - grid[0]))
+
+
+def _smoothing_lambda_info(spline) -> float | str:
+    for name in ("lam", "lambda_", "smoothing_parameter"):
+        if hasattr(spline, name):
+            value = getattr(spline, name)
+            if isinstance(value, np.generic):
+                return float(value)
+            if isinstance(value, (int, float)):
+                return float(value)
+    return "gcv_lam_none"
+
+
+def resample_state_derivative_v1(x_values: np.ndarray, f_values: np.ndarray, points: int = ANNIHILATOR_SAMPLE_POINTS) -> tuple[np.ndarray, np.ndarray, np.ndarray, dict]:
     x = np.asarray(x_values, dtype=float).reshape(-1)
     f = np.asarray(f_values, dtype=float).reshape(-1)
     order = np.argsort(x)
@@ -278,8 +305,48 @@ def resample_state_derivative(x_values: np.ndarray, f_values: np.ndarray, points
     mean_f = sums / counts
     grid = np.linspace(float(unique[0]), float(unique[-1]), int(points))
     values = CubicSpline(unique, mean_f)(grid)
-    z = (grid - 0.5 * (grid[0] + grid[-1])) / (0.5 * (grid[-1] - grid[0]))
-    return grid, z, values
+    return grid, _z_normalize_grid(grid), values, {"method": "cubic_spline_unique_x", "unique_points": int(unique.size)}
+
+
+def resample_state_derivative_v2(x_values: np.ndarray, f_values: np.ndarray, points: int = ANNIHILATOR_SAMPLE_POINTS, bins: int = ANNIHILATOR_BIN_COUNT_V2) -> tuple[np.ndarray, np.ndarray, np.ndarray, dict]:
+    x = np.asarray(x_values, dtype=float).reshape(-1)
+    f = np.asarray(f_values, dtype=float).reshape(-1)
+    if x.size != f.size:
+        raise ValueError("x_values and f_values must have the same size")
+    if x.size == 0:
+        raise ValueError("empty state-derivative sample")
+    xmin = float(np.min(x))
+    xmax = float(np.max(x))
+    if not np.isfinite(xmin) or not np.isfinite(xmax) or xmin == xmax:
+        raise ValueError("invalid resampling domain")
+    edges = np.linspace(xmin, xmax, int(bins) + 1)
+    bin_index = np.clip(np.digitize(x, edges) - 1, 0, int(bins) - 1)
+    counts = np.bincount(bin_index, minlength=int(bins))
+    nonempty = counts > 0
+    xb = np.bincount(bin_index, weights=x, minlength=int(bins))[nonempty] / counts[nonempty]
+    fb = np.bincount(bin_index, weights=f, minlength=int(bins))[nonempty] / counts[nonempty]
+    if xb.size < 5:
+        raise ValueError("not enough non-empty bins for smoothing spline")
+    spline = make_smoothing_spline(xb, fb, w=counts[nonempty].astype(float), lam=None)
+    grid = np.linspace(xmin, xmax, int(points))
+    values = spline(grid)
+    info = {
+        "method": "binned_smoothing_spline",
+        "bins": int(bins),
+        "nonempty_bins": int(xb.size),
+        "smoothing_lambda": _smoothing_lambda_info(spline),
+    }
+    return grid, _z_normalize_grid(grid), values, info
+
+
+def resample_state_derivative(x_values: np.ndarray, f_values: np.ndarray, points: int = ANNIHILATOR_SAMPLE_POINTS, spec: str = SPEC) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    if spec == SPEC:
+        x_grid, z_grid, f_grid, _info = resample_state_derivative_v1(x_values, f_values, points=points)
+    elif spec == SPEC_V2:
+        x_grid, z_grid, f_grid, _info = resample_state_derivative_v2(x_values, f_values, points=points)
+    else:
+        raise ValueError(f"unknown spec: {spec}; allowed: {SPECS}")
+    return x_grid, z_grid, f_grid
 
 
 def estimate_derivatives(t: np.ndarray, trajectories: list[np.ndarray]) -> list[np.ndarray]:
@@ -292,7 +359,7 @@ def estimate_derivatives(t: np.ndarray, trajectories: list[np.ndarray]) -> list[
     return out
 
 
-def annihilator_grid_from_training(system: ODESystem, noisy: TrajectorySet, train_indices: tuple[int, ...], fit_only: bool, exact_f: bool = False) -> tuple[Domain, np.ndarray, np.ndarray, np.ndarray]:
+def annihilator_grid_from_training(system: ODESystem, noisy: TrajectorySet, train_indices: tuple[int, ...], fit_only: bool, exact_f: bool = False, spec: str = SPEC) -> tuple[Domain, np.ndarray, np.ndarray, np.ndarray, dict]:
     fit_mask, _val_mask = split_mask(system.t)
     x_rows = []
     f_rows = []
@@ -303,9 +370,14 @@ def annihilator_grid_from_training(system: ODESystem, noisy: TrajectorySet, trai
         f_use = system.numeric_rhs(x_use) if exact_f else estimate_derivatives(system.t[mask], [x_use])[0]
         x_rows.append(x_use)
         f_rows.append(f_use)
-    x_grid, z_grid, f_grid = resample_state_derivative(np.concatenate(x_rows), np.concatenate(f_rows))
+    if spec == SPEC:
+        x_grid, z_grid, f_grid, resampling = resample_state_derivative_v1(np.concatenate(x_rows), np.concatenate(f_rows))
+    elif spec == SPEC_V2:
+        x_grid, z_grid, f_grid, resampling = resample_state_derivative_v2(np.concatenate(x_rows), np.concatenate(f_rows))
+    else:
+        raise ValueError(f"unknown spec: {spec}; allowed: {SPECS}")
     domain = Domain("learned", float(x_grid[0]), float(x_grid[-1]))
-    return domain, x_grid, z_grid, f_grid
+    return domain, x_grid, z_grid, f_grid, resampling
 
 
 def fit_annihilator_candidate(domain: Domain, x_grid: np.ndarray, z_grid: np.ndarray, f_grid: np.ndarray, cls: tuple[int, int]) -> tuple[Callable | None, dict, str | None]:
@@ -328,10 +400,10 @@ def fit_annihilator_candidate(domain: Domain, x_grid: np.ndarray, z_grid: np.nda
     return fhat, info, fail
 
 
-def annihilator_candidates(system: ODESystem, noisy: TrajectorySet, train_indices: tuple[int, ...]) -> list[CandidateResult]:
+def annihilator_candidates(system: ODESystem, noisy: TrajectorySet, train_indices: tuple[int, ...], spec: str = SPEC) -> list[CandidateResult]:
     out = []
     try:
-        domain, x_grid, z_grid, f_grid = annihilator_grid_from_training(system, noisy, train_indices, fit_only=True)
+        domain, x_grid, z_grid, f_grid, resampling = annihilator_grid_from_training(system, noisy, train_indices, fit_only=True, spec=spec)
     except Exception as exc:
         return [CandidateResult({"kind": "annihilator", "class": list(cls), "complexity": (cls[0] + 1) * (cls[1] + 1)}, None, math.inf, type(exc).__name__, {"classes": 0}) for cls in e2e_classes()]
     for cls in e2e_classes():
@@ -342,16 +414,16 @@ def annihilator_candidates(system: ODESystem, noisy: TrajectorySet, train_indice
                 out.append(CandidateResult(candidate | info, None, math.inf, fail, {"classes": 1, "integrations": 0}))
                 continue
             value, val_fail = validation_error(system, fhat, noisy, train_indices)
-            out.append(CandidateResult(candidate | info, fhat, value, val_fail, {"classes": 1, "integrations": len(train_indices)}))
+            out.append(CandidateResult(candidate | info | {"resampling": resampling}, fhat, value, val_fail, {"classes": 1, "integrations": len(train_indices)}))
         except Exception as exc:
             out.append(CandidateResult(candidate, None, math.inf, type(exc).__name__, {"classes": 1, "integrations": 0}))
     return out
 
 
-def refit_annihilator_full(system: ODESystem, noisy: TrajectorySet, train_indices: tuple[int, ...], selected: CandidateResult):
+def refit_annihilator_full(system: ODESystem, noisy: TrajectorySet, train_indices: tuple[int, ...], selected: CandidateResult, spec: str = SPEC):
     cls = tuple(selected.candidate["class"])
-    domain, x_grid, z_grid, f_grid = annihilator_grid_from_training(system, noisy, train_indices, fit_only=False)
-    return fit_annihilator_candidate(domain, x_grid, z_grid, f_grid, cls) + ((domain, x_grid, f_grid),)
+    domain, x_grid, z_grid, f_grid, resampling = annihilator_grid_from_training(system, noisy, train_indices, fit_only=False, spec=spec)
+    return fit_annihilator_candidate(domain, x_grid, z_grid, f_grid, cls) + ((domain, x_grid, f_grid, resampling),)
 
 
 def n_exact_for_class(system: ODESystem, selected: tuple[int, int]) -> int:
@@ -391,10 +463,10 @@ def nrmse_f_on_domain(system: ODESystem, fhat: Callable) -> float:
         return math.inf
 
 
-def fit_record(system: ODESystem, setup_row: dict, reference: dict, eta: float, seed: int, method: str, protocol: str) -> dict:
+def fit_record(system: ODESystem, setup_row: dict, reference: dict, eta: float, seed: int, method: str, protocol: str, spec: str = SPEC) -> dict:
     noisy = shared_noisy_trajectories(system, eta, seed)
     train_indices = protocol_training_indices(protocol)
-    candidates = annihilator_candidates(system, noisy, train_indices) if method == "annihilator" else baseline_candidates(system, noisy, train_indices, method)
+    candidates = annihilator_candidates(system, noisy, train_indices, spec=spec) if method == "annihilator" else baseline_candidates(system, noisy, train_indices, method)
     selected = select_candidate(candidates)
     validation_candidates = [
         {"candidate": row.candidate, "validation_nrmse_x": row.validation_error, "fail_reason": row.fail_reason}
@@ -406,21 +478,30 @@ def fit_record(system: ODESystem, setup_row: dict, reference: dict, eta: float, 
         "selection_integrations": sum(int(row.counts.get("integrations", 0)) for row in candidates),
     }
     if method == "annihilator":
-        fhat, fit_info, fail, full_payload = refit_annihilator_full(system, noisy, train_indices, selected)
         selected_class = tuple(selected.candidate["class"])
         ref_class, _ref_coeffs, ref_n_exact = reference_for_system(system, reference)
         selected_n_exact = n_exact_for_class(system, selected_class)
         struct_exact = selected_class == ref_class
         struct_superset = selected_n_exact > 0 and not struct_exact
-        domain, _x_grid, f_grid = full_payload
-        selected_model = fit_info | {
+        try:
+            fhat, fit_info, fail, full_payload = refit_annihilator_full(system, noisy, train_indices, selected, spec=spec)
+            domain, _x_grid, f_grid, resampling = full_payload
+            refit_payload = {
+                "fit_domain": {"xmin": domain.a, "xmax": domain.b, "mu": domain.mu, "scale": domain.scale},
+                "resampled_points": int(f_grid.size),
+                "resampling": resampling,
+            }
+        except Exception as exc:
+            fhat = None
+            fit_info = {}
+            fail = f"refit_{type(exc).__name__}"
+            refit_payload = {"refit_fail_reason": fail}
+        selected_model = fit_info | refit_payload | {
             "selected_class": list(selected_class),
             "reference_class": list(ref_class),
             "reference_n_exact": ref_n_exact,
             "selected_n_exact": selected_n_exact,
             "operator_coefficients_z": fit_info.get("operator_coefficients_z"),
-            "fit_domain": {"xmin": domain.a, "xmax": domain.b, "mu": domain.mu, "scale": domain.scale},
-            "resampled_points": int(f_grid.size),
         }
     else:
         fit = refit_baseline_full(system, noisy, train_indices, method, selected)
@@ -446,7 +527,7 @@ def fit_record(system: ODESystem, setup_row: dict, reference: dict, eta: float, 
         generalization = evaluate_items(system, fhat, generalization_items)
         nrmse_f = nrmse_f_on_domain(system, fhat)
     record = {
-        "spec": SPEC,
+        "spec": spec,
         "system_id": int(system.system_id),
         "eta": float(eta),
         "seed": int(seed),
@@ -483,28 +564,60 @@ def _record_key(record: dict) -> tuple:
     return (int(record["system_id"]), float(record["eta"]), int(record["seed"]), str(record["method"]), str(record["protocol"]))
 
 
-def _compute_record_task(task: tuple[int, float, int, str, str, Path]) -> dict:
-    sid, eta, seed, method, protocol, results = task
+def _is_reusable_baseline_record(record: dict) -> bool:
+    try:
+        if str(record["method"]) not in {"sindy", "wsindy"}:
+            return False
+        _record_key(record)
+        return True
+    except (KeyError, TypeError, ValueError):
+        return False
+
+
+def reuse_baselines(results: Path, source_results: Path, spec: str) -> int:
+    results.mkdir(parents=True, exist_ok=True)
+    source_records = load_records(source_results / "records.jsonl")
+    existing = load_records(results / "records.jsonl")
+    seen = {_record_key(record) for record in existing if _is_reusable_baseline_record(record) or str(record.get("method")) == "annihilator"}
+    copied = 0
+    with (results / "records.jsonl").open("a") as handle:
+        for record in source_records:
+            if not _is_reusable_baseline_record(record):
+                continue
+            key = _record_key(record)
+            if key in seen:
+                continue
+            copied_record = dict(record)
+            copied_record["spec"] = spec
+            copied_record["reused_from"] = "end2end_v1"
+            handle.write(json.dumps(_json_safe_record(copied_record), sort_keys=True, allow_nan=True) + "\n")
+            seen.add(key)
+            copied += 1
+    return copied
+
+
+def _compute_record_task(task: tuple[int, float, int, str, str, Path, str]) -> dict:
+    sid, eta, seed, method, protocol, results, spec = task
     if int(sid) == 999:
         system, setup_row, reference = synthetic_system()
-        return fit_record(system, setup_row, reference, float(eta), int(seed), method, protocol)
+        return fit_record(system, setup_row, reference, float(eta), int(seed), method, protocol, spec=spec)
     setup = load_json(results / "setup.json")
     reference = load_json(results / "reference.json")
     system = load_systems()[int(sid)]
-    return fit_record(system, setup["systems"][str(sid)], reference, float(eta), int(seed), method, protocol)
+    return fit_record(system, setup["systems"][str(sid)], reference, float(eta), int(seed), method, protocol, spec=spec)
 
 
-def _compute_record_task_with_seconds(task: tuple[int, float, int, str, str, Path]) -> tuple[dict, float]:
+def _compute_record_task_with_seconds(task: tuple[int, float, int, str, str, Path, str]) -> tuple[dict, float]:
     start = time.perf_counter()
     record = _compute_record_task(task)
     return record, time.perf_counter() - start
 
 
-def _task_log_payload(task: tuple[int, float, int, str, str, Path]) -> dict:
+def _task_log_payload(task: tuple[int, float, int, str, str, Path, str]) -> dict:
     return {"system_id": task[0], "eta": task[1], "seed": task[2], "method": task[3], "protocol": task[4]}
 
 
-def _write_task_failure(results: Path, task: tuple[int, float, int, str, str, Path], log, tb: str) -> None:
+def _write_task_failure(results: Path, task: tuple[int, float, int, str, str, Path, str], log, tb: str) -> None:
     payload = _task_log_payload(task) | {"event": "task_failed", "traceback": tb}
     log.write(json.dumps(payload, sort_keys=True) + "\n")
     log.flush()
@@ -512,10 +625,12 @@ def _write_task_failure(results: Path, task: tuple[int, float, int, str, str, Pa
         failed.write(json.dumps(payload, sort_keys=True) + "\n")
 
 
-def run_command(results: Path, systems: list[int], etas: list[float], seeds: list[int], methods: list[str], workers: int) -> int:
+def run_command(results: Path, systems: list[int], etas: list[float], seeds: list[int], methods: list[str], workers: int, spec: str = SPEC, reuse_baselines_from: Path | None = None) -> int:
     global _LAST_RUN_FAILED_TASKS
     _LAST_RUN_FAILED_TASKS = 0
     _copy_setup_reference(results)
+    if reuse_baselines_from is not None:
+        reuse_baselines(results, reuse_baselines_from, spec)
     if any(int(sid) not in SYSTEM_IDS for sid in systems):
         raise ValueError(f"only ODEBench smoke system IDs are allowed: {SYSTEM_IDS}")
     if any(method not in METHODS for method in methods):
@@ -531,7 +646,7 @@ def run_command(results: Path, systems: list[int], etas: list[float], seeds: lis
                     for protocol in PROTOCOLS:
                         key = (int(sid), float(eta), int(seed), method, protocol)
                         if key not in seen:
-                            tasks.append((int(sid), float(eta), int(seed), method, protocol, results))
+                            tasks.append((int(sid), float(eta), int(seed), method, protocol, results, spec))
     written = 0
     failed = 0
     with (results / "records.jsonl").open("a") as handle, (results / "run.log").open("a") as log:
@@ -642,13 +757,13 @@ def synthetic_system() -> tuple[ODESystem, dict, dict]:
     return system, setup_row, reference
 
 
-def sanity_command(results: Path) -> dict:
+def sanity_command(results: Path, spec: str = SPEC) -> dict:
     _copy_setup_reference(results)
     start = time.perf_counter()
     system, setup_row, reference = synthetic_system()
     synthetic = {}
     for method in METHODS:
-        record = fit_record(system, setup_row, reference, 0.0, 0, method, "P2")
+        record = fit_record(system, setup_row, reference, 0.0, 0, method, "P2", spec=spec)
         synthetic[method] = {"validation_nrmse_x": record["selected_validation_nrmse_x"], "passed": record["selected_validation_nrmse_x"] < 1e-3}
     systems = load_systems()
     setup = load_json(results / "setup.json")
@@ -658,22 +773,23 @@ def sanity_command(results: Path) -> dict:
         row_start = time.perf_counter()
         ref_class, _coeffs, _n_exact = reference_for_system(ode_system, ref)
         noisy = shared_noisy_trajectories(ode_system, 0.0, 0)
-        domain, x_grid, z_grid, f_grid = annihilator_grid_from_training(ode_system, noisy, (0, 1), fit_only=True, exact_f=True)
+        domain, x_grid, z_grid, f_grid, resampling = annihilator_grid_from_training(ode_system, noisy, (0, 1), fit_only=True, exact_f=True, spec=spec)
         fhat, info, fail = fit_annihilator_candidate(domain, x_grid, z_grid, f_grid, ref_class)
         value, val_fail = validation_error(ode_system, fhat, noisy, (0, 1)) if fhat is not None else (math.inf, fail)
-        documented_exception = int(sid) == 7
+        documented_exception = int(sid) in ({7, 19} if spec == SPEC_V2 else {7})
         exact_chain[str(sid)] = {
             "reference_class": list(ref_class),
             "validation_nrmse_x": value,
             "fail_reason": val_fail,
             "seconds": time.perf_counter() - row_start,
             "counts": {"classes": 1, "sample_points": int(f_grid.size), "aml_iterations": info.get("aml_iterations")},
+            "resampling": resampling,
             "passed": value < 1e-4,
         }
         if documented_exception:
             exact_chain[str(sid)]["documented_exception"] = True
-    sanity = {"synthetic_selection": synthetic, "exact_derivative_reference_class": exact_chain, "seconds": time.perf_counter() - start}
-    checked_exact_chain = [row for sid, row in exact_chain.items() if int(sid) != 7]
+    sanity = {"spec": spec, "synthetic_selection": synthetic, "exact_derivative_reference_class": exact_chain, "seconds": time.perf_counter() - start}
+    checked_exact_chain = [row for sid, row in exact_chain.items() if not row.get("documented_exception")]
     sanity["passed"] = all(row["passed"] for row in synthetic.values()) and all(row["passed"] for row in checked_exact_chain)
     write_json(results / "sanity.json", sanity)
     return sanity
@@ -699,7 +815,9 @@ def _write_failed_marker(results: Path) -> None:
 
 def main(argv: list[str] | None = None) -> None:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--results", type=Path, default=RESULTS_E2E)
+    parser.add_argument("--spec", choices=SPECS, default=SPEC)
+    parser.add_argument("--results", type=Path, default=None)
+    parser.add_argument("--reuse-baselines-from", type=Path, default=None)
     parser.add_argument("--sanity", action="store_true")
     parser.add_argument("--run", action="store_true")
     parser.add_argument("--summarize", action="store_true")
@@ -710,13 +828,15 @@ def main(argv: list[str] | None = None) -> None:
     parser.add_argument("--methods", nargs="*", default=list(METHODS))
     parser.add_argument("--workers", type=int, default=1)
     args = parser.parse_args(argv)
+    if args.results is None:
+        args.results = results_for_spec(args.spec)
     args.results.mkdir(parents=True, exist_ok=True)
     try:
         if args.sanity:
-            sanity_command(args.results)
+            sanity_command(args.results, spec=args.spec)
         written = 0
         if args.run:
-            written = run_command(args.results, args.systems, args.eta, args.seeds, args.methods, args.workers)
+            written = run_command(args.results, args.systems, args.eta, args.seeds, args.methods, args.workers, spec=args.spec, reuse_baselines_from=args.reuse_baselines_from)
             if args.detach_marker:
                 _write_done_marker(args.results, written, _LAST_RUN_FAILED_TASKS)
         if args.summarize:

@@ -1,0 +1,19 @@
+{
+  "decision": {
+    "G": 0,
+    "S": true,
+    "decision": "beenden",
+    "generalization": {},
+    "structure_system_counts": {
+      "annihilator": 0,
+      "sindy": 0,
+      "wsindy": 0
+    }
+  },
+  "n_records": 0,
+  "thresholds": {
+    "G_systems": 3,
+    "eta": 0.01,
+    "r2": 0.9
+  }
+}
