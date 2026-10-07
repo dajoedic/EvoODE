@@ -1,0 +1,4 @@
+sys 3 P1_AB1: deriv err 0.564 | spline-grid err 3.5 (max/true 23.4) | linear-grid err 0.320
+sys 3 P2: deriv err 0.626 | spline-grid err 37 (max/true 665) | linear-grid err 0.319
+sys 7 P1_AB1: deriv err 1.912 | spline-grid err 239 (max/true 3.39e+03) | linear-grid err 1.449
+sys 7 P2: deriv err 1.432 | spline-grid err 44.2 (max/true 186) | linear-grid err 0.838
