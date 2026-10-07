@@ -7,7 +7,7 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 ## 2026-10-07
 
 ### End-to-End: Laptop im Standby, Lauf verzögert
-<!-- commit: folgt -->
+<!-- e1d257e -->
 
 Um 22:05 gefunden: Seit 16:37 waren keine neuen Records dazugekommen. Laut Ereignisprotokoll war das System von
 17:02 bis 22:03 im Modern Standby, die Prozesse waren eingefroren. Die Einstellung „Standby nie“ verhindert Modern
