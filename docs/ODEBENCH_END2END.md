@@ -7,8 +7,8 @@ gewählt:
 - eine gemeinsame, datenbasierte Auswahlregel für alle drei Methoden, auch für den Annihilator;
 - R² und Strukturtreffer als Kriterien, Generalisierung als zweite Metrik.
 
-Die Ausarbeitung stammt von Claude. **Der Nutzer legt die Entscheidungsregel (§9) fest und friert das Dokument vor
-dem ersten Lauf ein.**
+Die Ausarbeitung stammt von Claude. **Der Nutzer friert das Dokument vor dem ersten Lauf ein. Eine Entscheidungsregel gibt es auf seinen Wunsch nicht
+(§9).**
 
 **Warum ein neues Dokument:** Der Smoke-Test (`docs/ODEBENCH_SMOKE_TEST_RESULT.md`) gab dem Annihilator $f$ direkt
 (Oracle-$f$), den Baselines nur verrauschte Trajektorien. Sein Testfehler-Vorsprung misst deshalb vor allem den
@@ -124,27 +124,26 @@ Je Realisierung und Methode gibt es also drei Fits: P1 aus AB1, P1 aus AB2 und P
    liefert die Referenzklasse einen Validierungsfehler $< 10^{-4}$. Das prüft Gitter, Interpolation und Kette. Es
    ist keine Discovery, weil die Klasse vorgegeben ist.
 
-## 9. Entscheidungsregel (Vorschlag, der Nutzer legt fest)
+## 9. Keine Entscheidungsregel (Nutzer, 07.10.)
 
-Ausgewertet wird $\eta = 0{,}01$, Mehrheit über die 5 Seeds je System.
+Der Nutzer hat entschieden: **Es gibt keine vorab festgelegte Entscheidungsregel.** Berichtet werden die Ergebnisse
+nach §7; über das weitere Vorgehen entscheidet der Nutzer nach Sichtung. Das ist eine bewusste Abweichung von der
+Spurregel „Entscheidungsregel vor dem ersten Lauf einfrieren“. Der Vergleich ist damit **deskriptiv**, kein Gate.
 
-- **Generalisierungserfolg** eines Systems für eine Methode: Anteil $R^2 \ge 0{,}9$ über alle
-  Generalisierungstrajektorien (P1: 2, P2: 3, also 5 je Seed, 25 je System).
-- **Weiter diskutieren** (ein echter Benchmark wird erwogen), nur wenn beides gilt:
-  - **G:** Der Generalisierungserfolg des Annihilators ist auf mindestens 3 von 4 Systemen **mindestens so hoch**
-    wie der der besten Baseline auf diesem System.
-  - **S:** Die Strukturtreffer des Annihilators (Systeme mit Mehrheit der Seeds bei der Referenzklasse) sind
-    **mindestens so viele** wie bei der besten Baseline.
-- **Sonst: Idee #1 beenden.**
-
-Rekonstruktion und NRMSE werden berichtet, entscheiden aber nicht. Keine Schwellenänderung nach dem Lauf.
+Was trotzdem vor dem Lauf eingefroren wird, damit nichts nachträglich verschoben werden kann:
+- Daten, Rauschen, Seeds, Protokolle;
+- die gemeinsame Auswahlregel und die Kandidatenlisten;
+- die Metriken und ihre Definitionen, insbesondere R² ≥ 0,9 und der Strukturtreffer;
+- die Form des Ergebnisberichts: je System, $\eta$ und Methode die Anteile $R^2 \ge 0{,}9$ (Rekonstruktion,
+  Generalisierung P1, Generalisierung P2), die Mediane sowie die Strukturtreffer und Obermengen. Berichtet wird
+  **vollständig**, nicht ausgewählt.
 
 ## 10. Ablauf und Kosten
 
 1. Code (Codex): neues Modul `experiments/annihilator_odebench_smoke/end2end.py` mit Tests. Es verwendet Katalog,
    Orakel, Kette $L \to \hat f$ und Metriken des Smoke-Tests wieder; v3 und die Smoke-Ergebnisse bleiben
    unverändert. Dazu kommen die Plausibilitätsprüfungen aus §8.
-2. **Einfrieren** durch den Nutzer, einschließlich §9.
+2. **Einfrieren** durch den Nutzer.
 3. **Pilot:** $\eta = 0$, Systeme 7 und 3, alle Methoden, alle Protokolle. Erfasst werden nur Technik und Kosten,
    die Records zählen mit.
 4. **Hauptlauf:** 4 Systeme × 6 Realisierungen × 3 Fits × 3 Methoden. Grob geschätzt dominiert der Annihilator mit
