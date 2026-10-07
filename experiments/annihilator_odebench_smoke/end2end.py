@@ -45,6 +45,8 @@ END_LABEL = "beenden"
 DECISION_ETA = 0.01
 R2_SUCCESS_THRESHOLD = 0.9
 DISCUSS_G_SYSTEMS = 3
+_DROP_FROM_JSON = object()
+_LAST_RUN_FAILED_TASKS = 0
 
 
 @dataclass(frozen=True)
@@ -70,6 +72,38 @@ def write_json(path: Path, data: dict) -> None:
 
 def load_json(path: Path) -> dict:
     return json.loads(path.read_text())
+
+
+def _json_safe_value(value):
+    if value is None or isinstance(value, (bool, str)):
+        return value
+    if isinstance(value, (int, float)):
+        return value
+    if isinstance(value, np.generic):
+        return value.item()
+    if isinstance(value, np.ndarray):
+        return _json_safe_value(value.tolist())
+    if callable(value):
+        return _DROP_FROM_JSON
+    if isinstance(value, dict):
+        out = {}
+        for key, item in value.items():
+            safe_item = _json_safe_value(item)
+            if safe_item is not _DROP_FROM_JSON:
+                out[str(key)] = safe_item
+        return out
+    if isinstance(value, (list, tuple)):
+        out = []
+        for item in value:
+            safe_item = _json_safe_value(item)
+            if safe_item is not _DROP_FROM_JSON:
+                out.append(safe_item)
+        return out
+    return str(value)
+
+
+def _json_safe_record(record: dict) -> dict:
+    return _json_safe_value(record)
 
 
 def e2e_classes() -> tuple[tuple[int, int], ...]:
@@ -436,7 +470,7 @@ def fit_record(system: ODESystem, setup_row: dict, reference: dict, eta: float, 
         "selected_model": selected_model,
         "counts": counts,
     }
-    return record
+    return _json_safe_record(record)
 
 
 def load_records(path: Path) -> list[dict]:
@@ -451,6 +485,9 @@ def _record_key(record: dict) -> tuple:
 
 def _compute_record_task(task: tuple[int, float, int, str, str, Path]) -> dict:
     sid, eta, seed, method, protocol, results = task
+    if int(sid) == 999:
+        system, setup_row, reference = synthetic_system()
+        return fit_record(system, setup_row, reference, float(eta), int(seed), method, protocol)
     setup = load_json(results / "setup.json")
     reference = load_json(results / "reference.json")
     system = load_systems()[int(sid)]
@@ -463,7 +500,21 @@ def _compute_record_task_with_seconds(task: tuple[int, float, int, str, str, Pat
     return record, time.perf_counter() - start
 
 
+def _task_log_payload(task: tuple[int, float, int, str, str, Path]) -> dict:
+    return {"system_id": task[0], "eta": task[1], "seed": task[2], "method": task[3], "protocol": task[4]}
+
+
+def _write_task_failure(results: Path, task: tuple[int, float, int, str, str, Path], log, tb: str) -> None:
+    payload = _task_log_payload(task) | {"event": "task_failed", "traceback": tb}
+    log.write(json.dumps(payload, sort_keys=True) + "\n")
+    log.flush()
+    with (results / "failed_tasks.jsonl").open("a") as failed:
+        failed.write(json.dumps(payload, sort_keys=True) + "\n")
+
+
 def run_command(results: Path, systems: list[int], etas: list[float], seeds: list[int], methods: list[str], workers: int) -> int:
+    global _LAST_RUN_FAILED_TASKS
+    _LAST_RUN_FAILED_TASKS = 0
     _copy_setup_reference(results)
     if any(int(sid) not in SYSTEM_IDS for sid in systems):
         raise ValueError(f"only ODEBench smoke system IDs are allowed: {SYSTEM_IDS}")
@@ -482,26 +533,36 @@ def run_command(results: Path, systems: list[int], etas: list[float], seeds: lis
                         if key not in seen:
                             tasks.append((int(sid), float(eta), int(seed), method, protocol, results))
     written = 0
+    failed = 0
     with (results / "records.jsonl").open("a") as handle, (results / "run.log").open("a") as log:
         if workers <= 1:
             for task in tasks:
-                record, seconds = _compute_record_task_with_seconds(task)
-                handle.write(json.dumps(record, sort_keys=True, allow_nan=True) + "\n")
-                handle.flush()
-                log.write(json.dumps({"event": "record", "system_id": task[0], "eta": task[1], "seed": task[2], "method": task[3], "protocol": task[4], "seconds": seconds}) + "\n")
-                log.flush()
-                written += 1
+                try:
+                    record, seconds = _compute_record_task_with_seconds(task)
+                    handle.write(json.dumps(record, sort_keys=True, allow_nan=True) + "\n")
+                    handle.flush()
+                    log.write(json.dumps({"event": "record", **_task_log_payload(task), "seconds": seconds}) + "\n")
+                    log.flush()
+                    written += 1
+                except Exception:
+                    failed += 1
+                    _write_task_failure(results, task, log, traceback.format_exc())
         else:
             with concurrent.futures.ProcessPoolExecutor(max_workers=int(workers)) as pool:
                 future_to_task = {pool.submit(_compute_record_task_with_seconds, task): task for task in tasks}
                 for future in concurrent.futures.as_completed(future_to_task):
                     task = future_to_task[future]
-                    record, seconds = future.result()
-                    handle.write(json.dumps(record, sort_keys=True, allow_nan=True) + "\n")
-                    handle.flush()
-                    log.write(json.dumps({"event": "record", "system_id": task[0], "eta": task[1], "seed": task[2], "method": task[3], "protocol": task[4], "seconds": seconds}) + "\n")
-                    log.flush()
-                    written += 1
+                    try:
+                        record, seconds = future.result()
+                        handle.write(json.dumps(record, sort_keys=True, allow_nan=True) + "\n")
+                        handle.flush()
+                        log.write(json.dumps({"event": "record", **_task_log_payload(task), "seconds": seconds}) + "\n")
+                        log.flush()
+                        written += 1
+                    except Exception:
+                        failed += 1
+                        _write_task_failure(results, task, log, "".join(traceback.format_exception(future.exception())))
+    _LAST_RUN_FAILED_TASKS = failed
     return written
 
 
@@ -618,8 +679,13 @@ def sanity_command(results: Path) -> dict:
     return sanity
 
 
-def _write_done_marker(results: Path, records_written: int) -> None:
-    payload = {"timestamp": datetime.now().isoformat(timespec="seconds"), "records_written": int(records_written), "total_records": len(load_records(results / "records.jsonl"))}
+def _write_done_marker(results: Path, records_written: int, failed_tasks: int = 0) -> None:
+    payload = {
+        "timestamp": datetime.now().isoformat(timespec="seconds"),
+        "records_written": int(records_written),
+        "failed_tasks": int(failed_tasks),
+        "total_records": len(load_records(results / "records.jsonl")),
+    }
     (results / "DONE").write_text(json.dumps(payload, sort_keys=True) + "\n")
     failed = results / "FAILED"
     if failed.exists():
@@ -652,7 +718,7 @@ def main(argv: list[str] | None = None) -> None:
         if args.run:
             written = run_command(args.results, args.systems, args.eta, args.seeds, args.methods, args.workers)
             if args.detach_marker:
-                _write_done_marker(args.results, written)
+                _write_done_marker(args.results, written, _LAST_RUN_FAILED_TASKS)
         if args.summarize:
             summarize_command(args.results)
     except Exception:

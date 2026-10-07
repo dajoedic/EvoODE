@@ -1,9 +1,44 @@
+import json
 import math
+import pickle
 from types import SimpleNamespace
 
 import numpy as np
 
 from experiments.annihilator_odebench_smoke import end2end
+
+
+def _fake_worker_task_with_one_failure(task):
+    sid, eta, seed, method, protocol, _results = task
+    if method == "sindy":
+        raise RuntimeError("synthetic worker failure")
+    return (
+        {
+            "spec": end2end.SPEC,
+            "system_id": int(sid),
+            "eta": float(eta),
+            "seed": int(seed),
+            "method": method,
+            "protocol": protocol,
+        },
+        0.01,
+    )
+
+
+def _fake_worker_task_success(task):
+    sid, eta, seed, method, protocol, _results = task
+    return (
+        {
+            "spec": end2end.SPEC,
+            "system_id": int(sid),
+            "eta": float(eta),
+            "seed": int(seed),
+            "method": method,
+            "protocol": protocol,
+            "payload": {"array_as_list": [1.0, 2.0], "finite": True},
+        },
+        0.01,
+    )
 
 
 def synthetic_system(system_id=3):
@@ -65,6 +100,41 @@ def test_refit_on_full_time_flag_is_recorded(monkeypatch):
     record = end2end.fit_record(system, setup, reference, 0.0, 0, "sindy", "P1_from_AB1")
     assert record["refit_on_full_time"] is True
     assert np.array_equal(full_t_seen[0], system.t)
+
+
+def test_fit_record_removes_non_serializable_candidate_payload(monkeypatch):
+    system = synthetic_system()
+    setup = {"test_initial_conditions": {"mid": 1.0, "hi": 2.0, "lo": 3.0}, "test_trajectories": {"mid": system.x_train[0].tolist(), "hi": system.x_train[0].tolist(), "lo": system.x_train[0].tolist()}}
+    reference = {"systems": {"3": {"reference_class": [1, 0], "reference_coeffs": [1.0, 0.0], "reference_n_exact": 1}}}
+    selected = end2end.CandidateResult(
+        {"threshold": 0.1, "complexity": 1, "fit": {"fhat": lambda x: x, "coefficients": np.array([1.0])}},
+        lambda x: np.ones_like(np.asarray(x, dtype=float)),
+        0.0,
+        None,
+        {},
+    )
+
+    monkeypatch.setattr(end2end, "baseline_candidates", lambda *_args: [selected])
+    monkeypatch.setattr(
+        end2end,
+        "refit_baseline_full",
+        lambda *_args: {
+            "fhat": lambda x: np.ones_like(np.asarray(x, dtype=float)),
+            "coefficients": np.array([1.0]),
+            "terms": ("1",),
+            "active": np.array([True]),
+            "threshold": 0.1,
+            "parameters": {},
+        },
+    )
+
+    record = end2end.fit_record(system, setup, reference, 0.0, 0, "sindy", "P1_from_AB1")
+
+    candidate = record["candidate_validations"][0]["candidate"]
+    assert "fhat" not in candidate["fit"]
+    assert candidate["fit"]["coefficients"] == [1.0]
+    pickle.dumps(record)
+    json.dumps(record, allow_nan=True)
 
 
 def test_resampling_averages_equal_x_values_and_uses_2000_points():
@@ -169,3 +239,42 @@ def test_failed_integration_maps_to_infinity_metrics():
     rows = end2end.evaluate_items(system, bad_fhat, [("bad", 1.0, np.ones_like(t))])
     assert rows[0]["nrmse_x"] == math.inf
     assert rows[0]["r2"] == -math.inf
+
+
+def test_run_command_real_process_pool_writes_serializable_synthetic_records(monkeypatch, tmp_path):
+    monkeypatch.setattr(end2end, "SYSTEM_IDS", (999,))
+    monkeypatch.setattr(end2end, "PROTOCOLS", ("P2",))
+    monkeypatch.setattr(end2end, "_compute_record_task_with_seconds", _fake_worker_task_success)
+    written = end2end.run_command(tmp_path, [999], [0.0], [0], list(end2end.METHODS), workers=2)
+    records = end2end.load_records(tmp_path / "records.jsonl")
+
+    assert written == 3
+    assert len(records) == 3
+    assert {record["method"] for record in records} == set(end2end.METHODS)
+    for record in records:
+        pickle.dumps(record)
+        json.dumps(record, allow_nan=True)
+
+
+def test_run_command_real_process_pool_records_failed_task_and_continues(monkeypatch, tmp_path):
+    monkeypatch.setattr(end2end, "SYSTEM_IDS", (999,))
+    monkeypatch.setattr(end2end, "PROTOCOLS", ("P2",))
+    monkeypatch.setattr(end2end, "_compute_record_task_with_seconds", _fake_worker_task_with_one_failure)
+
+    written = end2end.run_command(tmp_path, [999], [0.0], [0], ["sindy", "wsindy"], workers=2)
+    end2end._write_done_marker(tmp_path, written, end2end._LAST_RUN_FAILED_TASKS)
+
+    records = end2end.load_records(tmp_path / "records.jsonl")
+    failed = [json.loads(line) for line in (tmp_path / "failed_tasks.jsonl").read_text().splitlines()]
+    done = json.loads((tmp_path / "DONE").read_text())
+    run_log = (tmp_path / "run.log").read_text()
+
+    assert written == 1
+    assert len(records) == 1
+    assert records[0]["method"] == "wsindy"
+    assert len(failed) == 1
+    assert failed[0]["method"] == "sindy"
+    assert failed[0]["event"] == "task_failed"
+    assert "synthetic worker failure" in failed[0]["traceback"]
+    assert "synthetic worker failure" in run_log
+    assert done["failed_tasks"] == 1
