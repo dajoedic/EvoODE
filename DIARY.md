@@ -7,7 +7,7 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 ## 2026-10-07
 
 ### ODEBench-Smoke-Test v2: Verdikt „beenden“ (Bedingung A)
-<!-- commit: folgt -->
+<!-- 21b1c73 -->
 
 Hauptlauf 01:27–03:49, 72 Records, `DONE`. `STRUCT_OK`: Annihilator rauschfrei 2/4 (3 und 21 `CORRECT`), bei 1 %
 0/4. SINDy und W-SINDy 0/4 in beiden Fällen, weil die AICc-Auswahl dichte Modelle mit 6–9 Termen wählt (Schwäche
