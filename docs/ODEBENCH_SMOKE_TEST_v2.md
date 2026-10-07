@@ -62,4 +62,14 @@ Obermengen (`TRUE_NOT_REF`, `TRUE_PLUS`) werden berichtet, zählen aber nicht. I
 
 ## Ergebnis
 
-*(nach dem Hauptlauf)*
+Hauptlauf am 07.10. von 01:27 bis 03:49 auf dem Laptop, Code `f3faa77`, 72 Records, `DONE`. Ausführlich mit Tabelle,
+Gleichungen und Lesart: `docs/ODEBENCH_SMOKE_TEST_RESULT.md`.
+
+| `STRUCT_OK` | rauschfrei | 1 % |
+|---|---:|---:|
+| Annihilator | 2/4 (3, 21) | 0/4 |
+| SINDy | 0/4 | 0/4 |
+| W-SINDy | 0/4 | 0/4 |
+
+**Verdikt: Idee #1 beenden, ausgelöst durch Bedingung A** (Annihilator rauschfrei 2/4 < 3/4). B, C und „weiter
+diskutieren“ greifen nicht.

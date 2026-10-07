@@ -5,14 +5,14 @@ welche Entscheidung ansteht. Wird **immer vollständig überschrieben**. Dauerha
 `docs/IDEA_01_ANNIHILATOR_DISCOVERY.md` oder `DIARY.md`. EvoGrow und Paper 1 stehen in `..\EvoODE\READ_THIS_FIRST.md`,
 nicht hier.
 
-**Stand: 2026-10-07, 01:30. Reality-Check Stufe A: `STRONG_NEGATIVE`. ODEBench-Smoke-Test v2: Pilot technisch
-sauber. **Der Hauptlauf läuft losgelöst auf dem Laptop** (PID 13124 plus 6 Worker, gestartet 01:27, Ende erwartet
-04:00–06:00). Fertig, wenn `experiments/annihilator_odebench_smoke/results_v2/DONE` existiert (`FAILED` bei Fehler).
-Danach `--summarize`, Auswertung nach v1 §9 mit v2-Änderung 2, Ergebnis in v2 und
-`docs/ODEBENCH_SMOKE_TEST_RESULT.md`.**
+**Stand: 2026-10-07 morgens. Der ODEBench-Smoke-Test v2 ist abgeschlossen: Verdikt „Idee #1 beenden“
+(Bedingung A; Annihilator rauschfrei 2/4, bei 1 % 0/4 exakt). Übergabe: `docs/ODEBENCH_SMOKE_TEST_RESULT.md`. Nichts
+läuft. Offen ist nur noch der Abschluss der Idee und das Aufräumen.**
 
 ## 1. Wo wir stehen
 
+- **ODEBench-Smoke-Test v2:** `docs/ODEBENCH_SMOKE_TEST_RESULT.md`. Gompertz schon rauschfrei verfehlt; 3 und 21 bei 1 % mit
+  richtiger Klasse, aber `AMBIGUOUS`; 19 Surrogat. Baselines als Strukturvergleich schwach (dichte AICc-Modelle).
 - **Ausführlich:** `docs/REALITY_CHECK_DIRECT_REGRESSION_RESULT.md` (Ergebnis, Lesart, Gesamtbild, Datenablage).
 - **Reality-Check Stufe A** (`docs/REALITY_CHECK_DIRECT_REGRESSION.md` §10): Auf exakt denselben Samples und mit
   derselben Auswahlregel (kleinstes Modell, das der $\chi^2$-Test bei 1 % nicht verwirft) findet eine direkte
@@ -29,16 +29,14 @@ Danach `--summarize`, Auswertung nach v1 §9 mit v2-Änderung 2, Ergebnis in v2 
 
 ## 2. Nächste Schritte
 
-0. **ODEBench-Smoke-Test:** WP-OB-A abnehmen, dem Nutzer `setup.json`/`reference.json` zeigen, Einfrieren durch den
-   Nutzer, Pilot (η = 0, Systeme 7 und 3), Laufort festlegen, Hauptlauf, Auswertung nach §9.
-1. **Abschluss schreiben** (nach dem Smoke-Test, falls §9 „beenden“ ergibt): Abschlussabschnitt in
+1. **Abschluss schreiben** (Smoke-Test ergab „beenden“): Abschlussabschnitt in
    `docs/IDEA_01_ANNIHILATOR_DISCOVERY.md` mit Ergebnis, Gate-Folge, Lesart und dem, was übertragbar bleibt.
    Danach in `CLAUDE.md` die Spur als abgeschlossen markieren. Kein W-SINDy, kein ODEFormer, kein eigenes Repository.
 2. Aufräumen (§3).
 
 ## 3. Was noch liegt
 
-- Kein Codex-Auftrag aktiv. Kein Job, kein Pod auf Orion aktiv. Laptop: ODEBench-Hauptlauf v2 (s. o.). Die Originaldaten der Diagnose bleiben auf dem NFS unter
+- Kein Codex-Auftrag, kein Lauf aktiv. Auf Orion liegt nur der abgeschlossene Job `annihilator-diag-amb`. Die Originaldaten der Diagnose bleiben auf dem NFS unter
   `/bigdata/data-science/joedicke/annihilator_diag_amb/`. Eine lokale Kopie ist committet.
 - Auf Orion stehen noch der abgeschlossene Job `annihilator-diag-amb` und seine Pods (`Completed`, ohne
   Ressourcen). Löschen mit `oc delete job annihilator-diag-amb`.

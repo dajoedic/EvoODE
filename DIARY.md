@@ -6,6 +6,17 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ## 2026-10-07
 
+### ODEBench-Smoke-Test v2: Verdikt „beenden“ (Bedingung A)
+<!-- commit: folgt -->
+
+Hauptlauf 01:27–03:49, 72 Records, `DONE`. `STRUCT_OK`: Annihilator rauschfrei 2/4 (3 und 21 `CORRECT`), bei 1 %
+0/4. SINDy und W-SINDy 0/4 in beiden Fällen, weil die AICc-Auswahl dichte Modelle mit 6–9 Termen wählt (Schwäche
+der Baseline-Spezifikation, offen benannt). Gompertz verfehlt der Annihilator schon rauschfrei ((1,3), `AMBIGUOUS`);
+bei 1 % wählt er 3/5 stabil (2,0) (`WRONG`, Bootstrap ≈ 1). 19 landet auf Surrogaten mit konstanten Koeffizienten.
+3 und 21 werden bei 1 % in 10/10 Fällen mit der richtigen Klasse gefunden, aber alle als `AMBIGUOUS` markiert
+(A1/A3). Die Funktionsgüte von $\hat f$ ist gut, mit Oracle-$f$ aber kein Beleg. Verdikt nach v1 §9: **Idee #1
+beenden (A)**. Übergabe: `docs/ODEBENCH_SMOKE_TEST_RESULT.md`.
+
 ### ODEBench-Smoke-Test v2: Pilot technisch sauber, Hauptlauf gestartet
 <!-- f3faa77 -->
 

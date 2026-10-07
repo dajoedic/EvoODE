@@ -1,0 +1,269 @@
+{
+  "decision": {
+    "decision": "end",
+    "rule": "A",
+    "struct_ok_counts": {
+      "annihilator": {
+        "0.0": 2,
+        "0.01": 0
+      },
+      "sindy": {
+        "0.0": 0,
+        "0.01": 0
+      },
+      "wsindy": {
+        "0.0": 0,
+        "0.01": 0
+      }
+    }
+  },
+  "n_records": 72,
+  "pysindy_parameters": {
+    "model_selection": "minimum AICc on regression residual",
+    "normalize_columns": true,
+    "optimizer": "STLSQ",
+    "sindy_derivative": "SmoothedFiniteDifference(defaults)",
+    "threshold_grid": [
+      0.001,
+      0.0014384498882876629,
+      0.00206913808111479,
+      0.002976351441631319,
+      0.004281332398719396,
+      0.006158482110660267,
+      0.008858667904100823,
+      0.012742749857031341,
+      0.018329807108324356,
+      0.026366508987303583,
+      0.0379269019073225,
+      0.0545559478116852,
+      0.07847599703514611,
+      0.11288378916846895,
+      0.16237767391887226,
+      0.23357214690901212,
+      0.3359818286283781,
+      0.4832930238571752,
+      0.6951927961775606,
+      1.0
+    ],
+    "version_requirement": "pysindy 2.1",
+    "wsindy_library": "WeakPDELibrary(defaults, K=200, spatiotemporal_grid=t)"
+  },
+  "table": [
+    {
+      "eta": 0.0,
+      "median_nrmse_f": 5.899103231283725e-13,
+      "median_test_nrmse_x": 5.827251800334397e-09,
+      "method": "annihilator",
+      "n": 1,
+      "struct_ok": 1,
+      "system_id": 3
+    },
+    {
+      "eta": 0.0,
+      "median_nrmse_f": 6.523349553874354e-08,
+      "median_test_nrmse_x": 0.00038274078963806133,
+      "method": "annihilator",
+      "n": 1,
+      "struct_ok": 0,
+      "system_id": 7
+    },
+    {
+      "eta": 0.0,
+      "median_nrmse_f": 1.6319197438529634e-07,
+      "median_test_nrmse_x": 8.413999008477752e-07,
+      "method": "annihilator",
+      "n": 1,
+      "struct_ok": 0,
+      "system_id": 19
+    },
+    {
+      "eta": 0.0,
+      "median_nrmse_f": 1.833267447154503e-11,
+      "median_test_nrmse_x": 6.24918224521936e-09,
+      "method": "annihilator",
+      "n": 1,
+      "struct_ok": 1,
+      "system_id": 21
+    },
+    {
+      "eta": 0.01,
+      "median_nrmse_f": 0.0005543618354607655,
+      "median_test_nrmse_x": 0.0005615458517526475,
+      "method": "annihilator",
+      "n": 5,
+      "struct_ok": 0,
+      "system_id": 3
+    },
+    {
+      "eta": 0.01,
+      "median_nrmse_f": 0.0024680818866234452,
+      "median_test_nrmse_x": 0.3943805210444349,
+      "method": "annihilator",
+      "n": 5,
+      "struct_ok": 0,
+      "system_id": 7
+    },
+    {
+      "eta": 0.01,
+      "median_nrmse_f": 0.0006970736131851983,
+      "median_test_nrmse_x": 0.00044267189691652955,
+      "method": "annihilator",
+      "n": 5,
+      "struct_ok": 0,
+      "system_id": 19
+    },
+    {
+      "eta": 0.01,
+      "median_nrmse_f": 0.0006129052233743122,
+      "median_test_nrmse_x": 0.0011696447713688103,
+      "method": "annihilator",
+      "n": 5,
+      "struct_ok": 0,
+      "system_id": 21
+    },
+    {
+      "eta": 0.0,
+      "median_nrmse_f": 2.9034322807195407e-05,
+      "median_test_nrmse_x": 3.307280320349135e-06,
+      "method": "sindy",
+      "n": 1,
+      "struct_ok": 0,
+      "system_id": 3
+    },
+    {
+      "eta": 0.0,
+      "median_nrmse_f": 1.7952863488233495e-05,
+      "median_test_nrmse_x": 0.0038985301246260255,
+      "method": "sindy",
+      "n": 1,
+      "struct_ok": 0,
+      "system_id": 7
+    },
+    {
+      "eta": 0.0,
+      "median_nrmse_f": 3.6482607311930584e-05,
+      "median_test_nrmse_x": 4.8340181806278916e-05,
+      "method": "sindy",
+      "n": 1,
+      "struct_ok": 0,
+      "system_id": 19
+    },
+    {
+      "eta": 0.0,
+      "median_nrmse_f": 8.950077706206779e-06,
+      "median_test_nrmse_x": 0.00015106368927258213,
+      "method": "sindy",
+      "n": 1,
+      "struct_ok": 0,
+      "system_id": 21
+    },
+    {
+      "eta": 0.01,
+      "median_nrmse_f": 0.022350387402635733,
+      "median_test_nrmse_x": 0.009204155694108459,
+      "method": "sindy",
+      "n": 5,
+      "struct_ok": 0,
+      "system_id": 3
+    },
+    {
+      "eta": 0.01,
+      "median_nrmse_f": 0.1129689668833658,
+      "median_test_nrmse_x": 0.7152026851048817,
+      "method": "sindy",
+      "n": 5,
+      "struct_ok": 0,
+      "system_id": 7
+    },
+    {
+      "eta": 0.01,
+      "median_nrmse_f": 0.007104027191382949,
+      "median_test_nrmse_x": 0.0032899085856631077,
+      "method": "sindy",
+      "n": 5,
+      "struct_ok": 0,
+      "system_id": 19
+    },
+    {
+      "eta": 0.01,
+      "median_nrmse_f": 0.023299250132350936,
+      "median_test_nrmse_x": 0.11419853059003855,
+      "method": "sindy",
+      "n": 5,
+      "struct_ok": 0,
+      "system_id": 21
+    },
+    {
+      "eta": 0.0,
+      "median_nrmse_f": 0.00021595375572871576,
+      "median_test_nrmse_x": 8.112373631901956e-06,
+      "method": "wsindy",
+      "n": 1,
+      "struct_ok": 0,
+      "system_id": 3
+    },
+    {
+      "eta": 0.0,
+      "median_nrmse_f": 2.0089636149416795e-05,
+      "median_test_nrmse_x": 0.0025310741436134357,
+      "method": "wsindy",
+      "n": 1,
+      "struct_ok": 0,
+      "system_id": 7
+    },
+    {
+      "eta": 0.0,
+      "median_nrmse_f": 5.766329389100591e-05,
+      "median_test_nrmse_x": 6.1001467434266655e-05,
+      "method": "wsindy",
+      "n": 1,
+      "struct_ok": 0,
+      "system_id": 19
+    },
+    {
+      "eta": 0.0,
+      "median_nrmse_f": 1.3952140773403457e-05,
+      "median_test_nrmse_x": 0.0002687974032160436,
+      "method": "wsindy",
+      "n": 1,
+      "struct_ok": 0,
+      "system_id": 21
+    },
+    {
+      "eta": 0.01,
+      "median_nrmse_f": 0.06883325413564029,
+      "median_test_nrmse_x": 0.0030080076290526113,
+      "method": "wsindy",
+      "n": 5,
+      "struct_ok": 0,
+      "system_id": 3
+    },
+    {
+      "eta": 0.01,
+      "median_nrmse_f": 0.04854648691558557,
+      "median_test_nrmse_x": 0.6789309330845709,
+      "method": "wsindy",
+      "n": 5,
+      "struct_ok": 0,
+      "system_id": 7
+    },
+    {
+      "eta": 0.01,
+      "median_nrmse_f": 0.006755518227818271,
+      "median_test_nrmse_x": 0.007361670445414896,
+      "method": "wsindy",
+      "n": 5,
+      "struct_ok": 0,
+      "system_id": 19
+    },
+    {
+      "eta": 0.01,
+      "median_nrmse_f": 0.011872714992130625,
+      "median_test_nrmse_x": Infinity,
+      "method": "wsindy",
+      "n": 5,
+      "struct_ok": 0,
+      "system_id": 21
+    }
+  ]
+}
