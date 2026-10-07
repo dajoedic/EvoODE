@@ -6,6 +6,18 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ## 2026-10-07
 
+### End-to-End: Spezifikation eingefroren, Pilot sauber, Hauptlauf gestartet
+<!-- 47d5b07, 15bc333, 9800fa3, 2bbc6b7 -->
+
+WP-E2E-A war `blocked`: Die Kette mit exaktem $\dot x$ brach für 7 und 19. Diagnose: Die lineare Interpolation auf
+das Gitter erzeugte bei 7 einen Fehler von 0,86 %; AML auf exakt gleichmäßigen Daten findet den wahren Operator.
+Mit kubischem Spline (Änderung vor jedem Lauf) bestehen 3, 19 und 21. Bei 7 bleiben $5\cdot10^{-4}$, weil die
+Trajektorienpunkte bei großem $x$ dünn liegen; das ist als Grenze der Methode im End-to-End-Fall dokumentiert und
+blockiert den Lauf nicht. Danach Einfrieren mit Freigabe des Nutzers. Der erste Pilot stürzte an einem
+nicht serialisierbaren Worker-Record ab (WP-E2E-A3 behoben). Zweiter Pilot ($\eta = 0$, 7 und 3) von 13:25 bis
+13:53: 18 Records, keine Fehlschläge. Annihilator 15–28 min pro Fit, Baselines unter 1 min. Der Hauptlauf startete
+um 13:54 losgelöst (PID 20176, 6 Worker); Ende erwartet gegen 18:00.
+
 ### End-to-End-Vergleich: Entwurf, WP-E2E-A an Codex
 <!-- ae34040 -->
 
