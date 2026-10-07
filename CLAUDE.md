@@ -35,6 +35,8 @@ Spur sind sie **ohne Bedeutung**: nicht lesen, nicht ändern, nicht zitieren.
 | `docs/REALITY_CHECK_DIRECT_REGRESSION_RESULT.md` | Ergebnis und Übergabe, Verdikt `STRONG_NEGATIVE` |
 | `docs/ODEBENCH_SMOKE_TEST.md`, `docs/ODEBENCH_SMOKE_TEST_v2.md` | ODEBench-Smoke-Test: v1 (im Pilot am Aufbau gescheitert), v2 eingefroren mit Ergebnis |
 | `docs/ODEBENCH_SMOKE_TEST_RESULT.md` | **aktueller Stand:** Ergebnis und Übergabe, Verdikt „beenden“ (Bedingung A); letzte Prüfung vor dem Abschluss von Idee #1 |
+| `docs/ODEBENCH_END2END.md`, `docs/ODEBENCH_END2END_v2.md` | End-to-End-Vergleich (alle Methoden aus denselben Trajektorien), deskriptiv; v1 angehalten, v2 läuft |
+| `docs/IDEA_01_RETROSPECTIVE.md` | **Rückblick:** Motivation, Idee, Entwicklung, Gründe des Scheiterns, Lehren (vorläufig bis End-to-End v2) |
 | `DIARY.md` | Chronologie (die Einträge ab 2026-10-04 betreffen diese Spur, ältere sind EvoGrow-Erbe) |
 | `codex/CODEX_PROTOCOL.md`, `codex/CURRENT_TASK.md`, `codex/STATUS.md`, `codex/reports/` | Codex-Handshake |
 | `experiments/annihilator_gate2a/`, `_v2/`, `_v3/` | Code und Ergebnisse je Version, alte Versionen verhaltensgleich eingefroren |
