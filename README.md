@@ -1,3 +1,55 @@
+# Branch `annihilator-discovery` — Idea #1: Annihilator-Guided ODE Discovery (closed, failed)
+
+> **This branch is an archive of a closed research track, not EvoGrow.** Everything below the line
+> "Inherited from `main`" is the EvoGrow README as it stood when this branch was created and does not describe
+> this branch. Status: **closed on 2026-10-08, the idea failed.** Final state: tag `idea01-annihilator-closed`.
+
+**The idea.** Do not guess symbolic formulas for the right-hand side $f$ of a 1D ODE $\dot x = f(x)$. First
+identify, from data, the simplest linear differential operator $L = \sum_k p_k(x) D^k$ with polynomial
+coefficients that annihilates $f$ ($Lf = 0$). Its solution space then becomes a data-driven hypothesis space
+for $f$:
+
+- exponentials, powers, logarithms, Gompertz-type terms and rational functions all have such annihilators;
+- a weak form moves the derivatives onto test functions;
+- a $\chi^2$ test decides which operator class the data support, searching from simple to complex;
+- an explicit `AMBIGUOUS` outcome flags non-identifiability.
+
+**What was tested.** Seven pre-registered checks, each with its decision rule frozen before the first run:
+
+1. Gate 2A, versions v1–v3: operator recovery from noisy $(x, f)$ samples.
+2. A diagnostic of the `AMBIGUOUS` outcome.
+3. A reality check against direct sparse regression on the same samples.
+4. An ODEBench smoke test with oracle $f$.
+5. A descriptive end-to-end comparison against SINDy and Weak SINDy on identical noisy trajectories (ODEBench
+   systems 3, 7, 19, 21).
+
+**Why it failed.** The core promise was not met in any of the checks:
+
+- *Structure first:* at 1 % noise the true structure was recovered only for the logistic equation. Elsewhere
+  the complexity ordering over operator classes picked surrogates with constant coefficients (exponential
+  polynomials), which mimic $\log x$, $x\log x$ or $x/(K+x)$ within the noise.
+- *Gompertz,* the motivating case, was missed even without noise.
+- *The abstention* (`AMBIGUOUS`) did not detect stable wrong answers: 118 of 118 confident answers in the
+  non-identifiable cases were wrong.
+- *Trajectories:* the weak form integrates in $x$, so from trajectories the method still needs an estimate
+  of $\dot x$, unlike Weak SINDy.
+- *What did work:* with careful smoothing, end-to-end function accuracy was competitive with the baselines.
+  It is unresolved whether that comes from the operator or from the smoothing, and it was never the goal.
+
+**Where to read** (documents are in German):
+
+| What | Where |
+|---|---|
+| Original plan and closure with evidence table | `docs/IDEA_01_ANNIHILATOR_DISCOVERY.md` (§12) |
+| Full retrospective: motivation, development, reasons for failure, lessons | `docs/IDEA_01_RETROSPECTIVE.md` |
+| Last check (end-to-end) | `docs/ODEBENCH_END2END_RESULT.md` |
+| Code and records | `experiments/annihilator_gate2a*/`, `experiments/annihilator_odebench_smoke/` |
+| Chronology | `DIARY.md`, entries from 2026-10-04 |
+
+---
+
+*Inherited from `main` (EvoGrow), unchanged and not related to this branch:*
+
 # EvoODE — Evolutionary ODE Discovery
 
 A Julia research framework for **data-driven discovery of interpretable ODE systems** from
