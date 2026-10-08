@@ -1,0 +1,7 @@
+# Python environment in which all results on this branch were produced (Windows 11, Python 3.12.10).
+numpy==2.2.6
+scipy==1.13.1
+sympy==1.13.1
+mpmath==1.3.0
+pysindy==2.1.0
+pytest==9.0.2

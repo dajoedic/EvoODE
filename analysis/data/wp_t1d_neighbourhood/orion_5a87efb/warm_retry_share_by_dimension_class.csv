@@ -1,7 +1,0 @@
-variant,dimension,neighbor_class,n_warm_neighbour_rows,n_not_from_warm_attempt,share_not_from_warm_attempt
-cold_reference,2,add_one,0,0,
-cold_reference,2,remove_one,0,0,
-cold_reference,2,swap_one,0,0,
-cold_reference,3,add_one,0,0,
-cold_reference,3,remove_one,0,0,
-cold_reference,3,swap_one,0,0,

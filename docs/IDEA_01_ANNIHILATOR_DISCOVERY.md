@@ -8,7 +8,7 @@ Leitdokument der Methodenspur auf dem Branch `annihilator-discovery` (Worktree `
 Festgehalten am 2026-10-04 aus dem Text des Nutzers. Die in der Abnahmediskussion vom selben Tag vereinbarten
 Korrekturen sind eingearbeitet: Referenzoperatoren, Mischformen, Skalierung, statistischer Test, `AMBIGUOUS`
 und Branch-Name. Löst `docs/idea_structural_diagnostics.md` ab. Geparkte Ideen (Multiple Shooting,
-Invarianztest) stehen weiterhin in `docs/evogrow_next.md`. Der erste Kill-Test: `docs/GATE_2A.md` (v1, an der
+Invarianztest) stehen weiterhin in `docs/evogrow_next.md` auf `main`. Der erste Kill-Test: `docs/GATE_2A.md` (v1, an der
 Abnahme gescheitert, nie gelaufen) und **`docs/GATE_2A_v2.md` (gültig)**, mit Begründung in
 `docs/GATE_2A_v2_RATIONALE.md`.
 
@@ -220,9 +220,13 @@ war deskriptiv, ohne Entscheidungsregel. Ein eigenes Repository entsteht nicht (
 | ODEBench-Smoke-Test | `ODEBENCH_SMOKE_TEST.md`, `…_v2.md`, `…_RESULT.md` | `experiments/annihilator_odebench_smoke/` |
 | End-to-End v1/v2 | `ODEBENCH_END2END.md`, `…_v2.md`, `…_RESULT.md` | `experiments/annihilator_odebench_smoke/end2end.py`, `results_e2e*/records_compact.jsonl` |
 
-- **Rohdaten:** Die End-to-End-Rohdaten (2 × 910 MB) liegen nicht in Git. Sie werden auf dem Orion-NFS
-  archiviert, Prüfsummen in `experiments/annihilator_odebench_smoke/RAW_RECORDS_SHA256.txt`. Die Originaldaten der
-  Diagnose liegen unter `/bigdata/data-science/joedicke/annihilator_diag_amb/`.
-- **Endstand im Git:** Tag `idea01-annihilator-closed` auf dem Branch `annihilator-discovery`.
+- **Rohdaten:** Die End-to-End-Rohdaten (2 × 910 MB) liegen nicht in Git. Sie sind auf dem Orion-NFS unter
+  `/bigdata/data-science/joedicke/annihilator_e2e_raw/` archiviert, die Prüfsummen
+  (`experiments/annihilator_odebench_smoke/RAW_RECORDS_SHA256.txt`) wurden dort am 08.10. bestätigt. Die
+  Originaldaten der Diagnose liegen unter `/bigdata/data-science/joedicke/annihilator_diag_amb/`.
+- **Endstand im Git:** auf dem Branch `annihilator-discovery`.
+  - Tag `idea01-annihilator-closed`: Stand bei der Abschlussentscheidung.
+  - Tag `idea01-annihilator-archive`: die aufgeräumte Akte, ohne den EvoGrow-Bestand aus der Abzweigung.
+  - Kein Merge nach `main`.
 - **Was eine Wiederaufnahme bräuchte:** `docs/IDEA_01_RETROSPECTIVE.md` §8. Das wäre eine neue Idee mit eigener
   Gate-Folge, keine Fortsetzung.

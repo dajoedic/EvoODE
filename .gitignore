@@ -1,95 +1,18 @@
-# The rule this file follows
-#
-# Tracked:   everything a result can be rebuilt or checked from — manifests, run registries,
-#            campaign histories, and the derived tables and figures a document cites by name.
-# Ignored:   per-run scratch output, logs, caches, environments, and derived artefacts of probes
-#            and fixtures that no document refers to.
-#
-# The distinction is deliberately not "generated vs. handwritten". A run registry is generated and
-# is tracked, because regenerating it costs 5,248 core hours. A probe figure is generated and is
-# ignored, because regenerating it costs a minute.
-
-# ---------------------------------------------------------------------------
 # Tooling and environments
-# ---------------------------------------------------------------------------
 .claude/
-analysis/.venv/
-analysis/__pycache__/
+**/__pycache__/
 **/*.pyc
-analysis/notebooks/.ipynb_checkpoints/
 
-# Python test artefacts
+# Test and Codex scratch
 .pytest_cache/
 .pytest_tmp*/
-**/__pycache__/
-
-# Codex session scratch (codex exec logs)
+.pytest-tmp/
 .codex_tmp/
-
-# ---------------------------------------------------------------------------
-# Scratch output
-# ---------------------------------------------------------------------------
-outputs/
-debug_results/
-fit*.csv
-fit*.png
-benchmarks/results/
-benchmarks/odeformer/results/
-
-# ---------------------------------------------------------------------------
-# experiments/ — the per-run files are scratch, the registry and history are evidence
-#
-# runs/ holds one directory per cell and reaches 16 MB for Phase B alone; it is reproducible
-# from the registry plus the image. run_registry.csv and history.jsonl are NOT reproducible
-# without re-running the campaign and are therefore tracked.
-# ---------------------------------------------------------------------------
-experiments/*/runs/
-experiments/*/run.log
-
-# ---------------------------------------------------------------------------
-# analysis/ — derived data, tables and figures
-#
-# Ignored by default; the two named experiment identifiers are tracked because CLAUDE.md,
-# PAPER_1.md and the paper sections cite those artefacts by name. Probe and fixture outputs
-# (wp_a2_*, wp_a4_*, wp_n2_*, ...) stay out.
-# ---------------------------------------------------------------------------
-analysis/data/*
-!analysis/data/.gitkeep
-!analysis/data/paper1_phaseB_v1/
-!analysis/data/paper1_phaseC_v1/
-!analysis/data/wp_n1_dim2_probe/
-!analysis/data/wp_t1_term_relevance/
-!analysis/data/wp_t1b_standalone_ranking/
-!analysis/data/wp_t1d_neighbourhood/
-# ... but not the per-cell evaluation rows and the full selection path: both are
-# deterministic and rebuildable from the hashed inputs plus the configuration hash.
-analysis/data/wp_t1b_standalone_ranking/details.csv
-analysis/data/wp_t1b_standalone_ranking/selection_path.csv
-# ... but not its 11 MB per-equation records: deterministic, and rebuildable from
-# the hashed inputs plus the configuration hash in run_metadata.json.
-analysis/data/wp_t1_term_relevance/records.csv
-
-analysis/figures/*
-!analysis/figures/.gitkeep
-!analysis/figures/paper1_phaseA_v1/
-!analysis/figures/paper1_phaseB_v1/
-!analysis/figures/paper1_phaseC_v1/
-
-analysis/tables/*
-!analysis/tables/.gitkeep
-!analysis/tables/paper1_phaseA_v1/
-!analysis/tables/paper1_phaseB_v1/
-!analysis/tables/paper1_phaseC_v1/
-
-# ---------------------------------------------------------------------------
-# Kubernetes manifests with a substituted commit SHA, produced at launch time from k8s/
-# ---------------------------------------------------------------------------
-/phase_b_bootstrap.yaml
-/phase_b_cells.yaml
-
-# pytest scratch
 .tmp/
 
-# Annihilator end-to-end raw records (~910 MB each); compact versions records_compact.jsonl are committed
+# End-to-end raw records (~910 MB each). Archived on the Orion NFS under
+# /bigdata/data-science/joedicke/annihilator_e2e_raw/, checksums in
+# experiments/annihilator_odebench_smoke/RAW_RECORDS_SHA256.txt. The compact
+# versions records_compact.jsonl next to them are committed.
 experiments/annihilator_odebench_smoke/results_e2e/records.jsonl
 experiments/annihilator_odebench_smoke/results_e2e_v2/records.jsonl

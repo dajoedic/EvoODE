@@ -1,9 +1,0 @@
-*
-!baselines/
-!baselines/**
-!analysis/
-!analysis/**
-!benchmarks/data/
-!benchmarks/data/**
-**/__pycache__/
-**/*.pyc

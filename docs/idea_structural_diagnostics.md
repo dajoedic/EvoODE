@@ -4,7 +4,7 @@
 > Denkstand der Entstehung stehen.
 
 Idee des Nutzers, festgehalten am 2026-10-04. Bisher nur Denkstand, nichts gebaut oder bewertet.
-Kontext: `docs/evogrow_next.md`.
+Kontext: `docs/evogrow_next.md` auf `main`.
 
 ## Grundproblem
 

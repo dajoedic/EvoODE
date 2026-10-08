@@ -1,88 +1,83 @@
-# CLAUDE.md — Annihilator-Spur (Idee #1)
+# CLAUDE.md — Annihilator-Spur (Idee #1), Akte
 
-> **Spur abgeschlossen am 2026-10-08: Idee #1 ist gescheitert** (Entscheidung des Nutzers). Der Branch ist die
-> Akte: Dokumente, Code und Records bleiben unverändert stehen, Endstand mit Git-Tag `idea01-annihilator-closed`.
-> Keine neuen Läufe und kein Codex-Auftrag mehr auf diesem Branch. Eine Wiederaufnahme wäre eine neue Idee mit
-> eigener Gate-Folge (`docs/IDEA_01_RETROSPECTIVE.md` §8). Einstieg: `docs/IDEA_01_ANNIHILATOR_DISCOVERY.md` §12
-> und `docs/IDEA_01_RETROSPECTIVE.md`.
+> **Spur abgeschlossen am 2026-10-08: Idee #1 ist gescheitert** (Entscheidung des Nutzers). Dieser Branch ist
+> die Akte. Dokumente, Code und Records bleiben unverändert stehen.
+>
+> - Keine neuen Läufe, kein Codex-Auftrag, keine inhaltlichen Änderungen.
+> - Erlaubt sind nur Korrekturen sachlich falscher Aussagen, und die mit DIARY-Eintrag.
+> - Eine Wiederaufnahme wäre eine neue Idee mit eigener Gate-Folge (`docs/IDEA_01_RETROSPECTIVE.md` §8).
 
-Dieser Ordner (`EvoODE-next`) ist ein Git-Worktree auf dem Branch **`annihilator-discovery`** und ein eigenes
-VS-Code-Projekt. Er gehört **ausschließlich** zur Methodenspur „Idee #1 – Annihilator-Guided ODE Discovery“.
-**EvoGrow und Paper 1 leben im Ordner `..\EvoODE` auf `main`** und werden hier weder bearbeitet noch zitiert.
+Dieser Ordner (`EvoODE-next`) ist ein Git-Worktree auf dem Branch **`annihilator-discovery`** des
+EvoODE-Repositorys.
 
-Ersetzt auf diesem Branch seit 2026-10-05 die EvoGrow-CLAUDE.md. Die Dateien `PAPER_1.md`, `SCRIPTS.md`,
-`CHANGELOG.md`, `src/`, `studies/`, `analysis/`, `k8s/` sind Erbstücke aus der Abzweigung von `main`. Für diese
-Spur sind sie **ohne Bedeutung**: nicht lesen, nicht ändern, nicht zitieren.
+- **Inhalt:** ausschließlich die Methodenspur „Idee #1 – Annihilator-Guided ODE Discovery“. Der EvoGrow-Bestand
+  aus der Abzweigung von `main` wurde am 08.10. entfernt.
+- **EvoGrow und Paper 1** leben im Ordner `..\EvoODE` auf `main`. Sie werden hier weder bearbeitet noch zitiert.
+- **Kein Merge** dieses Branches nach `main`.
+- **Tags:**
+  - `idea01-annihilator-closed`: Stand bei der Abschlussentscheidung;
+  - `idea01-annihilator-archive`: die aufgeräumte Akte.
 
-## Trennung der Spuren (Nutzer, 2026-10-05)
+## Einstieg
 
-- **Eine Chat-Sitzung pro Spur.** Annihilator-Arbeit nur in einer Sitzung in diesem Ordner, EvoGrow-Arbeit nur in
-  `..\EvoODE`.
-- Kein Merge dieses Branches nach `main`. Ein eigenes Repository entsteht erst, wenn Gate 2A und Gate 2B
-  überzeugend bestanden sind (`docs/IDEA_01_ANNIHILATOR_DISCOVERY.md` §10).
-- Eigene Übergabe (`READ_THIS_FIRST.md` hier), eigenes `DIARY.md`, eigenes `codex/CURRENT_TASK.md` und
-  `codex/STATUS.md`. Auf `main` steht zu dieser Spur höchstens ein Verweis-Satz.
-- EvoGrow-Zahlen erscheinen hier nicht als Argument, Annihilator-Zahlen nicht in Paper-1-Dokumenten.
+1. `README.md`: Idee, Prüfungen, Gründe des Scheiterns, Wegweiser (Englisch).
+2. `docs/IDEA_01_ANNIHILATOR_DISCOVERY.md` §12: Abschluss mit Belegtabelle.
+3. `docs/IDEA_01_RETROSPECTIVE.md`: ausführlicher Rückblick mit Lehren.
 
 ## Dokumente
 
 | Dokument | enthält |
 |---|---|
-| `READ_THIS_FIRST.md` | flüchtige Übergabe: was läuft, was offen ist; wird überschrieben, nie angehängt |
-| `docs/IDEA_01_ANNIHILATOR_DISCOVERY.md` | **Leitdokument** der Idee: Motivation, Kernidee, Pipeline, Novelty, Gate-Folge, Regeln; §12 Abschluss mit Belegtabelle |
+| `READ_THIS_FIRST.md` | Endstand der Übergabe |
+| `docs/IDEA_01_ANNIHILATOR_DISCOVERY.md` | **Leitdokument:** Motivation, Kernidee, Pipeline, Novelty, Gate-Folge, Regeln; §12 Abschluss mit Belegtabelle |
+| `docs/IDEA_01_RETROSPECTIVE.md` | **Rückblick, endgültig:** Motivation, Idee, Entwicklung, Gründe des Scheiterns, Lehren, Abschluss (§10) |
+| `docs/idea_structural_diagnostics.md` | Ursprungsnotiz der Idee (überholt, Denkstand der Entstehung) |
 | `docs/GATE_2A.md` | v1, eingefroren, an der Abnahme gescheitert (nie gelaufen) |
 | `docs/GATE_2A_v2.md`, `docs/GATE_2A_v2_RATIONALE.md` | v2 und die Begründung jeder Änderung gegenüber v1; Stufe K gescheitert (FNS-Fehler) |
 | `docs/GATE_2A_v3.md` | v3 = v2 mit AML (L-BFGS), $n_{\text{exact}}$ breit, exakter Verifikation |
 | `docs/GATE_2A_v3_STAGE_K_RESULT.md` | Anhang A nicht bestanden, Anhang B (Diagnose) löst K6 aus |
-| `PRACTICAL_ANNIHILATOR_BENCHMARK.md` | Entwurf (Nutzer): praktischer Benchmark nach Gate 2A, Selective Prediction; mit dem Abschluss gegenstandslos, liegt als Akte |
-| `docs/DIAGNOSTIC_AMBIGUITY.md` | eingefrorene Diagnose: trennt `AMBIGUOUS` N1- von I-Fällen? Entscheidet, ob der praktische Benchmark weiterverfolgt wird |
-| `docs/DIAGNOSTIC_AMBIGUITY_RESULT.md` | Ergebnis der Diagnose, Verdikt negativ (B1), Lesart |
-| `docs/REALITY_CHECK_DIRECT_REGRESSION.md` | eingefroren: Stufe A, direkte Sparse-Regression auf denselben Samples, Ergebnis in §10 |
-| `docs/REALITY_CHECK_DIRECT_REGRESSION_RESULT.md` | Ergebnis und Übergabe, Verdikt `STRONG_NEGATIVE` |
-| `docs/ODEBENCH_SMOKE_TEST.md`, `docs/ODEBENCH_SMOKE_TEST_v2.md` | ODEBench-Smoke-Test: v1 (im Pilot am Aufbau gescheitert), v2 eingefroren mit Ergebnis |
-| `docs/ODEBENCH_SMOKE_TEST_RESULT.md` | Ergebnis und Übergabe, Verdikt „beenden“ (Bedingung A) |
-| `docs/ODEBENCH_END2END.md`, `docs/ODEBENCH_END2END_v2.md` | End-to-End-Vergleich (alle Methoden aus denselben Trajektorien), deskriptiv; v1 mit interpolierendem Spline, v2 mit Glättung, beide vollständig |
-| `docs/ODEBENCH_END2END_RESULT.md` | **letzte Prüfung:** Ergebnis von v1 und v2, Grundlage der Abschlussentscheidung |
-| `docs/IDEA_01_RETROSPECTIVE.md` | **Rückblick, endgültig:** Motivation, Idee, Entwicklung, Gründe des Scheiterns, Lehren, Abschluss (§10) |
-| `DIARY.md` | Chronologie (die Einträge ab 2026-10-04 betreffen diese Spur, ältere sind EvoGrow-Erbe) |
-| `codex/CODEX_PROTOCOL.md`, `codex/CURRENT_TASK.md`, `codex/STATUS.md`, `codex/reports/` | Codex-Handshake |
-| `experiments/annihilator_gate2a/`, `_v2/`, `_v3/` | Code und Ergebnisse je Version, alte Versionen verhaltensgleich eingefroren; Diagnose und Reality-Check unter `_v3/diagnostics/` |
-| `experiments/annihilator_odebench_smoke/` | Smoke-Test und End-to-End (`end2end.py`), Records kompakt; Rohdaten auf dem Orion-NFS, Prüfsummen in `RAW_RECORDS_SHA256.txt` |
+| `docs/DIAGNOSTIC_AMBIGUITY.md`, `…_RESULT.md` | Diagnose `AMBIGUOUS` gegen `WRONG`, Verdikt negativ |
+| `docs/PRACTICAL_ANNIHILATOR_BENCHMARK.md` | Entwurf des Nutzers (Selective Prediction), nach der Diagnose gegenstandslos |
+| `docs/REALITY_CHECK_DIRECT_REGRESSION.md`, `…_RESULT.md` | direkte Sparse-Regression auf denselben Samples, `STRONG_NEGATIVE` |
+| `docs/ODEBENCH_SMOKE_TEST.md`, `…_v2.md`, `…_RESULT.md` | ODEBench-Smoke-Test mit Oracle-$f$, Verdikt „beenden“ (A) |
+| `docs/ODEBENCH_END2END.md`, `…_v2.md`, `…_RESULT.md` | End-to-End-Vergleich aus denselben Trajektorien, deskriptiv; Grundlage der Abschlussentscheidung |
+| `DIARY.md` | Chronologie 04.–08.10. |
+| `codex/` | Codex-Handshake: Protokoll (enthält noch Julia-Abschnitte aus der EvoGrow-Zeit), letzter Status, Berichte der Annihilator-Arbeitspakete |
 
-## Arbeitsweise (übernommen aus den Nutzerregeln; das Gedächtnis aus `..\EvoODE` gilt hier nicht automatisch)
+## Code und Daten
+
+| Ordner | Inhalt |
+|---|---|
+| `experiments/annihilator_gate2a/`, `_v2/`, `_v3/` | Gate 2A je Version, alte Versionen verhaltensgleich eingefroren; Diagnose und Reality-Check unter `_v3/diagnostics/`, Orion-Runbook unter `_v3/orion/` |
+| `experiments/annihilator_odebench_smoke/` | Smoke-Test (`run.py`) und End-to-End (`end2end.py`), baut auf `_v3` auf; Records kompakt |
+| `benchmarks/data/strogatz_extended.json` | ODEBench-Systemdefinitionen, einzige Datei aus dem EvoGrow-Bestand, die der Code braucht |
+| `requirements.txt` | Python-Umgebung aller Läufe (Python 3.12.10) |
+
+- **Rohdaten End-to-End** (2 × 910 MB): nicht in Git. Archiviert auf dem Orion-NFS unter
+  `/bigdata/data-science/joedicke/annihilator_e2e_raw/`, Prüfsummen in
+  `experiments/annihilator_odebench_smoke/RAW_RECORDS_SHA256.txt`, Kopie dort am 08.10. geprüft.
+- **Originaldaten der Diagnose:** `/bigdata/data-science/joedicke/annihilator_diag_amb/`, lokale Kopie committet.
+- **Tests:** je Ordner aufrufen, weil gleichnamige Testdateien in mehreren Versionen liegen. Stand bei der
+  Archivierung 8 + 16 + 54 + 34 bestanden.
+
+## Arbeitsweise (falls hier doch noch etwas korrigiert wird)
 
 - **Kommunikation mit dem Nutzer auf Deutsch.** Code, Kommentare, Docstrings und Commit-Messages auf Englisch.
-- **Commits ohne `Co-Authored-By` oder sonstige KI-Attribution** (akademischer Kontext).
-- **Claude committet, der Nutzer pusht.** Nie nach GitLab pushen, nach GitHub nur mit ausdrücklicher Erlaubnis. Nie
-  `git add -A`, weil Codex parallel im Working Tree arbeitet. Nur gezielte Pfade stagen.
-- **Code schreibt Codex, nicht Claude.** Claude schreibt den Auftrag nach `codex/CURRENT_TASK.md` (immer
-  überschreiben, zweite Zeile `**Language: Python**`, kein Code im Auftrag, nur Spezifikation) und startet Codex
-  **selbst** aus diesem Ordner, im Hintergrund:
-  `codex exec -C "C:/Users/joedicke/Documents/reps/EvoODE-next" -s workspace-write "Lies codex/CODEX_PROTOCOL.md und arbeite den Auftrag in codex/CURRENT_TASK.md ab." < /dev/null`
-  Nie `--full-auto`, nie `nohup … &`. Nach einem Abbruch prüfen, ob der Kindprozess weiterläuft
-  (Geistersitzungen), und ihn gezielt beenden. `done` heißt: Dateien uncommittet im Working Tree, Claude prüft und
-  committet. Claude-Diagnosen in Wegwerf-Skripten im Scratchpad sind erlaubt.
-- **Laufort nach erwarteter Laufzeit:** unter 1 h startet Claude auf dem Laptop, unter 24 h Orion (startet der
-  Nutzer), sonst Gespräch. **Keine harten Zeit-Cuts.** Erwartete Laufzeit vorher nennen, eine deutliche
-  Überschreitung melden. Läufe über 2 h losgelöst starten (eigener Prozess, Logs, `DONE`-Datei), weil
-  Hintergrundbefehle der Werkzeugumgebung nach 2 h beendet werden.
-- **Wall-Clock ist nie Evidenz.** Kosten- und Effizienzaussagen nur aus Zählgrößen.
-- **Veraltete Aussagen in Projektdokumenten sofort korrigieren**, nicht erst fragen. Nach jedem Commit den Hash als
-  HTML-Kommentar in den aktuellen DIARY-Eintrag. READ_THIS_FIRST bei jedem Statuswechsel überschreiben und
-  committen.
-- **Befehle für den Nutzer** direkt im Chat, mit Zweck, Dauer und Pass-Kriterium, erst wenn sie fällig sind.
-- **Token abgelaufen** (Orion): „TOKEN ABGELAUFEN“ melden, `oc login --web https://api.orion.scch.at:6443`
-  ausgeben, warten.
+- **Commits ohne `Co-Authored-By`** oder sonstige KI-Attribution (akademischer Kontext).
+- **Claude committet, der Nutzer pusht.**
+  - Nie nach GitLab pushen, nach GitHub nur mit ausdrücklicher Erlaubnis.
+  - Nur gezielte Pfade stagen, nie `git add -A`.
+- **Veraltete Aussagen** in Projektdokumenten sofort korrigieren. Nach jedem Commit den Hash als HTML-Kommentar in
+  den DIARY-Eintrag.
 
-## Regeln dieser Spur
+## Regeln, die für die Spur galten
 
 - Erst billig versuchen, die Idee zu zerstören. Entwicklungszeit oder Compute bekommt sie erst nach mehreren
   harten Gates.
-- **Jede Entscheidungsregel wird vor dem ersten Lauf eingefroren.** Eine Änderung danach braucht eine neue Version,
-  alte Versionen und Ergebnisse bleiben stehen. Nichts wird am Gate-Set kalibriert, Kalibrierung nur auf einem
-  disjunkten Set.
-- Von einfach zu komplex. **Kein GP.** Nichts aufbauen auf Arbeiten mit Gabriel Kronberger (Operon,
-  shape-constrained SR, E-Graph-SR mit de França u. a.). Autorenschaft prüfen, bevor eine Methode übernommen wird.
+- **Jede Entscheidungsregel wird vor dem ersten Lauf eingefroren.**
+  - Eine Änderung danach braucht eine neue Version; alte Versionen und Ergebnisse bleiben stehen.
+  - Nichts wird am Gate-Set kalibriert, Kalibrierung nur auf einem disjunkten Set.
+- Von einfach zu komplex. **Kein GP.** Nichts aufbauen auf Arbeiten mit Gabriel Kronberger.
 - Kein HPC, solange ein Gate auf dem Laptop machbar ist.
-- Systeme für spätere Gates: Entwicklung 7 / 40 / 56 / 63, verschlossenes Prüfset 4 / 49 / 59 / 62. Das Prüfset
-  wird nie angesehen, bevor ein Gate es verlangt.
+- **Wall-Clock ist nie Evidenz.** Kosten- und Effizienzaussagen nur aus Zählgrößen.
+- **Prüfset:** ODEBench 4/49/59/62 wurde nie angesehen und bleibt für künftige Ideen verschlossen.
