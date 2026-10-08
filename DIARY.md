@@ -27,7 +27,7 @@ deskriptiv in `docs/ODEBENCH_END2END_RESULT.md`.
 (je etwa 3 MB, ohne pysindy-Parameter und Trajektorien). Außerdem §9 im Rückblick nachgetragen.
 
 ### Git: v1-Rohdatei aus der lokalen Historie entfernt
-<!-- hash -->
+<!-- 6678ab2 -->
 
 Die v1-Rohdatei (490 MB) steckte im lokalen, ungepushten Commit `2dfd44b`. Die zwölf Commits ab dort wurden ohne
 diese Datei neu geschrieben (`commit-tree` mit temporärem Index, Nachrichten, Autoren und Daten unverändert), im
