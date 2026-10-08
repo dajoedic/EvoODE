@@ -1,5 +1,9 @@
 # Idee #1 – Annihilator-Guided ODE Discovery
 
+> **Abgeschlossen am 2026-10-08: gescheitert** (Entscheidung des Nutzers). Begründung in §12, ausführlicher
+> Rückblick in `docs/IDEA_01_RETROSPECTIVE.md`. Der Text ab hier ist der Planungsstand und bleibt als Akte
+> unverändert.
+
 Leitdokument der Methodenspur auf dem Branch `annihilator-discovery` (Worktree `..\EvoODE-next`).
 Festgehalten am 2026-10-04 aus dem Text des Nutzers. Die in der Abnahmediskussion vom selben Tag vereinbarten
 Korrekturen sind eingearbeitet: Referenzoperatoren, Mischformen, Skalierung, statistischer Test, `AMBIGUOUS`
@@ -180,3 +184,45 @@ Systeme für spätere Gates: Entwicklung 7 / 40 / 56 / 63, verschlossenes Prüfs
   angepasst.
 - Von einfach zu komplex. Kein GP. Nichts mit Gabriel Kronberger (Autorenschaft prüfen).
 - Kein HPC, solange ein Gate auf dem Laptop in Minuten läuft.
+
+## 12. Abschluss (2026-10-08)
+
+**Entscheidung des Nutzers am 08.10.: Idee #1 ist gescheitert und wird beendet.** Grundlage ist der
+End-to-End-Vergleich (`docs/ODEBENCH_END2END_RESULT.md`) zusammen mit allen vorherigen Prüfungen.
+
+**Warum:** Das Kernversprechen ist in allen sieben Prüfungen verfehlt.
+
+| Versprechen (§2, §4) | Befund |
+|---|---|
+| Struktur vor Parametern | Bei 1 % Rauschen nur bei der Logistik getroffen; sonst wählt die Komplexitätsordnung Surrogate mit konstanten Koeffizienten |
+| Funktionsfamilien jenseits fester Libraries, Gompertz als zentraler Fall (§8) | Gompertz schon rauschfrei verfehlt, end-to-end das schwächste System |
+| begründetes `AMBIGUOUS` | 118/118 eindeutige N1-Antworten falsch; die Abstention erkennt stabile Fehlwahlen nicht |
+| lineare Algebra statt Suche | AML ist nichtlinear und teuer; end-to-end ist zusätzlich eine Ableitungsschätzung nötig, die schwache Form in $x$ vermeidet $\dot x$ nicht |
+
+**Positiv, aber nicht das Ziel:** Mit Glättung ist der Annihilator end-to-end in der Funktionsgüte konkurrenzfähig.
+Ob das am Operator oder an der Glättung liegt, ist ungeklärt. Diese Frage hätte am Scheitern des Kernversprechens
+nichts geändert und wird deshalb nicht weiter verfolgt.
+
+**Gate-Stand:** Gate 2A wurde in keiner Version bestanden, Gate 2B nie formal eröffnet. Der End-to-End-Vergleich
+war deskriptiv, ohne Entscheidungsregel. Ein eigenes Repository entsteht nicht (§10).
+
+**Prüfset:** ODEBench 4/49/59/62 wurde nie angesehen und bleibt für künftige Ideen verschlossen.
+
+### Belege im Repository
+
+| Prüfung | Spezifikation und Ergebnis | Code und Records |
+|---|---|---|
+| Gate 2A v1 | `GATE_2A.md` | `experiments/annihilator_gate2a/` |
+| Gate 2A v2 | `GATE_2A_v2.md`, `GATE_2A_v2_RATIONALE.md` | `experiments/annihilator_gate2a_v2/` |
+| Gate 2A v3, Stufe K | `GATE_2A_v3.md`, `GATE_2A_v3_STAGE_K_RESULT.md` | `experiments/annihilator_gate2a_v3/` |
+| Diagnose `AMBIGUOUS` | `DIAGNOSTIC_AMBIGUITY.md`, `…_RESULT.md` | `experiments/annihilator_gate2a_v3/diagnostics/ambiguity_diagnostic.py`, Orion-Runbook unter `…_v3/orion/` |
+| Reality-Check A | `REALITY_CHECK_DIRECT_REGRESSION.md`, `…_RESULT.md` | `experiments/annihilator_gate2a_v3/diagnostics/direct_regression_check.py` |
+| ODEBench-Smoke-Test | `ODEBENCH_SMOKE_TEST.md`, `…_v2.md`, `…_RESULT.md` | `experiments/annihilator_odebench_smoke/` |
+| End-to-End v1/v2 | `ODEBENCH_END2END.md`, `…_v2.md`, `…_RESULT.md` | `experiments/annihilator_odebench_smoke/end2end.py`, `results_e2e*/records_compact.jsonl` |
+
+- **Rohdaten:** Die End-to-End-Rohdaten (2 × 910 MB) liegen nicht in Git. Sie werden auf dem Orion-NFS
+  archiviert, Prüfsummen in `experiments/annihilator_odebench_smoke/RAW_RECORDS_SHA256.txt`. Die Originaldaten der
+  Diagnose liegen unter `/bigdata/data-science/joedicke/annihilator_diag_amb/`.
+- **Endstand im Git:** Tag `idea01-annihilator-closed` auf dem Branch `annihilator-discovery`.
+- **Was eine Wiederaufnahme bräuchte:** `docs/IDEA_01_RETROSPECTIVE.md` §8. Das wäre eine neue Idee mit eigener
+  Gate-Folge, keine Fortsetzung.

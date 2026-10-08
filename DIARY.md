@@ -6,6 +6,29 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ## 2026-10-08
 
+### Idee #1 abgeschlossen: gescheitert
+<!-- hash -->
+
+**Entscheidung des Nutzers** nach Sichtung der Ergebnisübersicht: Die Annihilator-Spur ist gescheitert und wird
+beendet. Das Kernversprechen (Struktur vor Parametern, Familien jenseits fester Libraries, begründete Abstention) ist
+in keiner der sieben Prüfungen eingelöst.
+
+Die konkurrenzfähige Funktionsgüte im End-to-End-Lauf wird nicht weiter aufgeklärt; der Klärungslauf (SINDy auf
+denselben geglätteten Paaren) entfällt.
+
+**Dokumentiert in:**
+- `docs/IDEA_01_ANNIHILATOR_DISCOVERY.md` §12 (Abschluss und Belegtabelle);
+- `docs/IDEA_01_RETROSPECTIVE.md` §10 (Rückblick jetzt endgültig);
+- `CLAUDE.md` mit Abschlussvermerk;
+- READ_THIS_FIRST mit dem Endstand.
+
+**Aufgeräumt:**
+- Codex-Handshake geschlossen.
+- Restdateien committet: der verworfene Entwurf `PRACTICAL_ANNIHILATOR_BENCHMARK.md`, der Orakel-Teil 12/18 und die
+  Worker-Caches der v2-Abnahme, die stderr-Protokolle der End-to-End-Läufe.
+- Rohdaten: Prüfsummen in `RAW_RECORDS_SHA256.txt`; die Archivierung auf dem Orion-NFS übernimmt der Nutzer.
+- Endstand getaggt: `idea01-annihilator-closed`.
+
 ### End-to-End v1 und v2: Ergebnis
 <!-- a08e647 -->
 

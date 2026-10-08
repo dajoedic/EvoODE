@@ -1,9 +1,9 @@
 # Idee #1 – Annihilator-Guided ODE Discovery: Rückblick
 
-**Stand: 2026-10-08.** Zusammenfassung aller Erkenntnisse der Spur, vom Auftauchen der Idee bis zum
-voraussichtlichen Abschluss. Für den Nutzer und für die eigene Akte (PhD-Verlauf). Das Ergebnis des
-End-to-End-Vergleichs steht in §9; die Entscheidung des Nutzers über den Abschluss steht noch aus. Alle Zahlen
-stammen aus den verlinkten Dokumenten und Records dieses Branches.
+**Stand: 2026-10-08, endgültig. Idee #1 ist gescheitert und abgeschlossen** (Entscheidung des Nutzers, §10).
+Zusammenfassung aller Erkenntnisse der Spur, vom Auftauchen der Idee bis zum Abschluss. Für den Nutzer und für die
+eigene Akte (PhD-Verlauf). Alle Zahlen stammen aus den verlinkten Dokumenten und Records dieses Branches; der
+Endstand trägt den Git-Tag `idea01-annihilator-closed`.
 
 ## 1. Kurzfassung
 
@@ -303,3 +303,17 @@ Keine Reparatur der bisherigen Form, sondern neue Ideen mit eigener, eingefroren
 **Eigener Fehler, offen benannt:** Die Annahme „Baselines deterministisch“ in v2 stimmte für W-SINDy nicht, weil
 pysindy die Testfunktionen ohne Seed zieht. Die beiden vorhandenen Ziehungen schwanken um bis zu drei Fälle je
 Zelle.
+
+## 10. Abschluss
+
+Am 2026-10-08 hat der Nutzer nach Sichtung des End-to-End-Ergebnisses entschieden: **Idee #1 ist gescheitert.**
+
+- **Ausschlaggebend:** Das Kernversprechen, also Struktur vor Parametern, Familien jenseits fester Libraries mit
+  Gompertz als zentralem Fall und eine begründete Abstention, ist in keiner der sieben Prüfungen eingelöst.
+- **Nicht weiterverfolgt:** die offene Frage aus §9, ob die konkurrenzfähige Funktionsgüte vom Operator oder von
+  der Glättung kommt. Sie hätte am Scheitern des Kernversprechens nichts geändert.
+- **Abschlussabschnitt:** `docs/IDEA_01_ANNIHILATOR_DISCOVERY.md` §12, mit Belegtabelle (Dokumente, Code und
+  Records je Prüfung).
+- **Prüfset:** ODEBench 4/49/59/62 bleibt ungesehen und steht künftigen Ideen zur Verfügung.
+- **Verworfen:** Der Entwurf `PRACTICAL_ANNIHILATOR_BENCHMARK.md` (Nutzer, Selective Prediction) wird mit dem
+  Abschluss gegenstandslos. Er liegt als Akte im Repository.

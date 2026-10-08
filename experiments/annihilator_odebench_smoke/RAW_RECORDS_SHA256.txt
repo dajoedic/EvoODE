@@ -1,0 +1,6 @@
+# SHA-256 of the raw end-to-end record files (not in git, ~910 MB each; archived on Orion NFS
+# under /bigdata/data-science/joedicke/annihilator_e2e_raw/). Verify from this directory with:
+#   sha256sum -c RAW_RECORDS_SHA256.txt
+# Compact versions (records_compact.jsonl) are committed next to each file.
+2f1023fb7ba1fc8b9706f73e4afe4866307067136bd126fcdb7c055fc008b7a3 *results_e2e/records.jsonl
+afe2c6d76f466e3ea2d92f304ad3729ed355a7eb0d84731f00d50c07226c5f05 *results_e2e_v2/records.jsonl

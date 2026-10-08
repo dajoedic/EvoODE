@@ -1,5 +1,11 @@
 # CLAUDE.md — Annihilator-Spur (Idee #1)
 
+> **Spur abgeschlossen am 2026-10-08: Idee #1 ist gescheitert** (Entscheidung des Nutzers). Der Branch ist die
+> Akte: Dokumente, Code und Records bleiben unverändert stehen, Endstand mit Git-Tag `idea01-annihilator-closed`.
+> Keine neuen Läufe und kein Codex-Auftrag mehr auf diesem Branch. Eine Wiederaufnahme wäre eine neue Idee mit
+> eigener Gate-Folge (`docs/IDEA_01_RETROSPECTIVE.md` §8). Einstieg: `docs/IDEA_01_ANNIHILATOR_DISCOVERY.md` §12
+> und `docs/IDEA_01_RETROSPECTIVE.md`.
+
 Dieser Ordner (`EvoODE-next`) ist ein Git-Worktree auf dem Branch **`annihilator-discovery`** und ein eigenes
 VS-Code-Projekt. Er gehört **ausschließlich** zur Methodenspur „Idee #1 – Annihilator-Guided ODE Discovery“.
 **EvoGrow und Paper 1 leben im Ordner `..\EvoODE` auf `main`** und werden hier weder bearbeitet noch zitiert.
@@ -23,23 +29,25 @@ Spur sind sie **ohne Bedeutung**: nicht lesen, nicht ändern, nicht zitieren.
 | Dokument | enthält |
 |---|---|
 | `READ_THIS_FIRST.md` | flüchtige Übergabe: was läuft, was offen ist; wird überschrieben, nie angehängt |
-| `docs/IDEA_01_ANNIHILATOR_DISCOVERY.md` | **Leitdokument** der Idee: Motivation, Kernidee, Pipeline, Novelty, Gate-Folge, Regeln |
+| `docs/IDEA_01_ANNIHILATOR_DISCOVERY.md` | **Leitdokument** der Idee: Motivation, Kernidee, Pipeline, Novelty, Gate-Folge, Regeln; §12 Abschluss mit Belegtabelle |
 | `docs/GATE_2A.md` | v1, eingefroren, an der Abnahme gescheitert (nie gelaufen) |
 | `docs/GATE_2A_v2.md`, `docs/GATE_2A_v2_RATIONALE.md` | v2 und die Begründung jeder Änderung gegenüber v1; Stufe K gescheitert (FNS-Fehler) |
 | `docs/GATE_2A_v3.md` | v3 = v2 mit AML (L-BFGS), $n_{\text{exact}}$ breit, exakter Verifikation |
 | `docs/GATE_2A_v3_STAGE_K_RESULT.md` | Anhang A nicht bestanden, Anhang B (Diagnose) löst K6 aus |
-| `PRACTICAL_ANNIHILATOR_BENCHMARK.md` | Entwurf (Nutzer): praktischer Benchmark nach Gate 2A, Selective Prediction; noch ohne eingefrorene Kriterien |
+| `PRACTICAL_ANNIHILATOR_BENCHMARK.md` | Entwurf (Nutzer): praktischer Benchmark nach Gate 2A, Selective Prediction; mit dem Abschluss gegenstandslos, liegt als Akte |
 | `docs/DIAGNOSTIC_AMBIGUITY.md` | eingefrorene Diagnose: trennt `AMBIGUOUS` N1- von I-Fällen? Entscheidet, ob der praktische Benchmark weiterverfolgt wird |
 | `docs/DIAGNOSTIC_AMBIGUITY_RESULT.md` | Ergebnis der Diagnose, Verdikt negativ (B1), Lesart |
 | `docs/REALITY_CHECK_DIRECT_REGRESSION.md` | eingefroren: Stufe A, direkte Sparse-Regression auf denselben Samples, Ergebnis in §10 |
 | `docs/REALITY_CHECK_DIRECT_REGRESSION_RESULT.md` | Ergebnis und Übergabe, Verdikt `STRONG_NEGATIVE` |
 | `docs/ODEBENCH_SMOKE_TEST.md`, `docs/ODEBENCH_SMOKE_TEST_v2.md` | ODEBench-Smoke-Test: v1 (im Pilot am Aufbau gescheitert), v2 eingefroren mit Ergebnis |
-| `docs/ODEBENCH_SMOKE_TEST_RESULT.md` | **aktueller Stand:** Ergebnis und Übergabe, Verdikt „beenden“ (Bedingung A); letzte Prüfung vor dem Abschluss von Idee #1 |
-| `docs/ODEBENCH_END2END.md`, `docs/ODEBENCH_END2END_v2.md` | End-to-End-Vergleich (alle Methoden aus denselben Trajektorien), deskriptiv; v1 angehalten, v2 läuft |
-| `docs/IDEA_01_RETROSPECTIVE.md` | **Rückblick:** Motivation, Idee, Entwicklung, Gründe des Scheiterns, Lehren (vorläufig bis End-to-End v2) |
+| `docs/ODEBENCH_SMOKE_TEST_RESULT.md` | Ergebnis und Übergabe, Verdikt „beenden“ (Bedingung A) |
+| `docs/ODEBENCH_END2END.md`, `docs/ODEBENCH_END2END_v2.md` | End-to-End-Vergleich (alle Methoden aus denselben Trajektorien), deskriptiv; v1 mit interpolierendem Spline, v2 mit Glättung, beide vollständig |
+| `docs/ODEBENCH_END2END_RESULT.md` | **letzte Prüfung:** Ergebnis von v1 und v2, Grundlage der Abschlussentscheidung |
+| `docs/IDEA_01_RETROSPECTIVE.md` | **Rückblick, endgültig:** Motivation, Idee, Entwicklung, Gründe des Scheiterns, Lehren, Abschluss (§10) |
 | `DIARY.md` | Chronologie (die Einträge ab 2026-10-04 betreffen diese Spur, ältere sind EvoGrow-Erbe) |
 | `codex/CODEX_PROTOCOL.md`, `codex/CURRENT_TASK.md`, `codex/STATUS.md`, `codex/reports/` | Codex-Handshake |
-| `experiments/annihilator_gate2a/`, `_v2/`, `_v3/` | Code und Ergebnisse je Version, alte Versionen verhaltensgleich eingefroren |
+| `experiments/annihilator_gate2a/`, `_v2/`, `_v3/` | Code und Ergebnisse je Version, alte Versionen verhaltensgleich eingefroren; Diagnose und Reality-Check unter `_v3/diagnostics/` |
+| `experiments/annihilator_odebench_smoke/` | Smoke-Test und End-to-End (`end2end.py`), Records kompakt; Rohdaten auf dem Orion-NFS, Prüfsummen in `RAW_RECORDS_SHA256.txt` |
 
 ## Arbeitsweise (übernommen aus den Nutzerregeln; das Gedächtnis aus `..\EvoODE` gilt hier nicht automatisch)
 

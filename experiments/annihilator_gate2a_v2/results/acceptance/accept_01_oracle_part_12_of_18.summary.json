@@ -1,0 +1,73 @@
+{
+  "complete": false,
+  "expected_metadata": {
+    "method": "sympy_derivatives_mpmath_svd",
+    "points": 220,
+    "precision_digits": 100,
+    "relative_threshold": 1e-60
+  },
+  "k_reference_comparison": {
+    "partial": true,
+    "passed": true,
+    "records": []
+  },
+  "limit": false,
+  "metadata": {
+    "method": "sympy_derivatives_mpmath_svd",
+    "points": 220,
+    "precision_digits": 100,
+    "relative_threshold": 1e-60
+  },
+  "metadata_ok": true,
+  "passed": true,
+  "reference_records": {
+    "K3": {
+      "narrow": {
+        "expected_reference_class": [
+          2,
+          1
+        ],
+        "reference_class": [
+          2,
+          1
+        ],
+        "reference_class_ok": true,
+        "reference_n_exact": 1,
+        "reference_n_exact_one": true,
+        "verification": {
+          "max_abs_on_sample": 0.0,
+          "mode": "definition_ode_numeric",
+          "passed": true
+        }
+      },
+      "wide": {
+        "expected_reference_class": [
+          2,
+          1
+        ],
+        "reference_class": [
+          2,
+          1
+        ],
+        "reference_class_ok": true,
+        "reference_n_exact": 1,
+        "reference_n_exact_one": true,
+        "verification": {
+          "max_abs_on_sample": 0.0,
+          "mode": "definition_ode_numeric",
+          "passed": true
+        }
+      }
+    }
+  },
+  "runtime_seconds": 144.02837949999957,
+  "v1_cache_comparison": {
+    "available": false,
+    "partial": true,
+    "passed": true
+  },
+  "wide_narrow_n_exact_differences": {
+    "K3": []
+  },
+  "wide_narrow_n_exact_passed": true
+}
