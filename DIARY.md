@@ -7,7 +7,7 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 ## 2026-10-08
 
 ### End-to-End v1 und v2: Ergebnis
-<!-- hash -->
+<!-- 27ce365 -->
 
 Die Kette lief ohne Fehler: v2 fertig um 02:18, die Fortsetzung von v1 um 03:29, je 216/216 Records. Ergebnis
 deskriptiv in `docs/ODEBENCH_END2END_RESULT.md`.
