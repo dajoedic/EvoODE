@@ -7,7 +7,7 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 ## 2026-10-08
 
 ### Idee #1 abgeschlossen: gescheitert
-<!-- hash -->
+<!-- 5c840b3 -->
 
 **Entscheidung des Nutzers** nach Sichtung der Ergebnisübersicht: Die Annihilator-Spur ist gescheitert und wird
 beendet. Das Kernversprechen (Struktur vor Parametern, Familien jenseits fester Libraries, begründete Abstention) ist
