@@ -8,7 +8,7 @@ im `DIARY.md` auf `main`.
 ## 2026-10-08
 
 ### Branch zur Akte aufgeräumt, Rohdaten archiviert
-<!-- hash -->
+<!-- b8a1847 -->
 
 Auf Wunsch des Nutzers enthält der Branch nur noch die Idee: Plan, Code, Ergebnisse und Weg.
 
