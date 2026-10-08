@@ -167,4 +167,12 @@ Was trotzdem vor dem Lauf eingefroren wird, damit nichts nachträglich verschobe
 
 ## 11. Ergebnis
 
-*(nach dem Hauptlauf)*
+**Vollständiger Bericht:** `docs/ODEBENCH_END2END_RESULT.md` (2026-10-08).
+
+- Der Lauf ist vollständig: 216/216 Records. Er wurde am 07.10. bei 113 angehalten und in der Nacht zum 08.10.
+  fortgesetzt.
+- Der Annihilator bricht bei 1 % ein. Rekonstruktion $R^2 \ge 0{,}9$: 4/20, 0/20, 5/20 und 4/20 auf den Systemen
+  3, 7, 19 und 21, gegen 14–20/20 bei den Baselines. Ursache ist der interpolierende Spline (Diagnose in
+  `ODEBENCH_END2END_v2.md`); v2 behebt ihn.
+- **Nachtrag 08.10.:** W-SINDy ist nicht reproduzierbar, weil pysindy die Testfunktionen ohne Seed zieht. Die
+  W-SINDy-Zahlen sind je eine Ziehung (Bericht §2).

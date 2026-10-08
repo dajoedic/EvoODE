@@ -1,9 +1,9 @@
 # Idee #1 – Annihilator-Guided ODE Discovery: Rückblick
 
-**Stand: 2026-10-07, vorläufig.** Zusammenfassung aller Erkenntnisse der Spur, vom Auftauchen der Idee bis zum
+**Stand: 2026-10-08.** Zusammenfassung aller Erkenntnisse der Spur, vom Auftauchen der Idee bis zum
 voraussichtlichen Abschluss. Für den Nutzer und für die eigene Akte (PhD-Verlauf). Das Ergebnis des
-End-to-End-Vergleichs v2 steht noch aus; es wird in §9 nachgetragen. Alle Zahlen stammen aus den verlinkten
-Dokumenten und Records dieses Branches.
+End-to-End-Vergleichs steht in §9; die Entscheidung des Nutzers über den Abschluss steht noch aus. Alle Zahlen
+stammen aus den verlinkten Dokumenten und Records dieses Branches.
 
 ## 1. Kurzfassung
 
@@ -21,7 +21,10 @@ Dokumenten und Records dieses Branches.
   3. Die Abstention erkennt stabile Fehlwahlen nicht.
   4. Im End-to-End-Fall braucht die Methode die Zeitableitung $\dot x$, die sie nicht vermeiden kann.
 - **Sechs Prüfungen** (Gate 2A in drei Versionen, Diagnose `AMBIGUOUS`, Reality-Check, ODEBench-Smoke-Test) zeigen
-  dieselbe Grenze. Ein fairer End-to-End-Vergleich gegen SINDy und W-SINDy läuft noch.
+  dieselbe Grenze.
+- **End-to-End-Vergleich** gegen SINDy und W-SINDy (§9): Mit Glättung ist der Annihilator in der Funktionsgüte
+  konkurrenzfähig. Ob das am Operator oder an der Glättung liegt, ist offen. Die Struktur trifft er bei 1 % nur bei
+  der Logistik.
 
 ## 2. Warum wir die Idee hatten
 
@@ -111,7 +114,7 @@ $\dot x$. Erst Gate 2B hätte die volle Kette aus Trajektorien geprüft.
 | 05./06.10. | Diagnose `AMBIGUOUS` (N = 100, Orion) | **negativ:** 118 von 118 eindeutigen N1-Antworten falsch; F4 zu 99 % stabil falsch (3,0) mit Bootstrap 1,0 | `DIAGNOSTIC_AMBIGUITY_RESULT.md` |
 | 06.10. | Reality-Check A | `STRONG_NEGATIVE`: Best-Subset-Regression auf denselben Samples und mit derselben Suchregel trifft F4/F5/F8 in 60/60 | `REALITY_CHECK_DIRECT_REGRESSION_RESULT.md` |
 | 06./07.10. | ODEBench-Smoke-Test (Oracle-$f$) | v1: Aufbaufehler (Trajektoriengitter gegen $\tau$-Boden); v2: **beenden (A)**, rauschfrei 2/4 exakt, bei 1 % 0/4; Gompertz schon rauschfrei verfehlt | `ODEBENCH_SMOKE_TEST_RESULT.md` |
-| 07.10. | End-to-End-Vergleich (alle Methoden aus denselben Trajektorien) | v1 angehalten: Der interpolierende Spline ließ das Ableitungsrauschen explodieren; v2 mit Glättung **läuft** | `ODEBENCH_END2END*.md` |
+| 07.10. | End-to-End-Vergleich (alle Methoden aus denselben Trajektorien) | v1: Der interpolierende Spline ließ das Ableitungsrauschen explodieren. v2 mit Glättung (08.10.): Funktionsgüte konkurrenzfähig, Struktur bei 1 % nur bei der Logistik | `ODEBENCH_END2END_RESULT.md` |
 
 **Wendepunkte im Verständnis:**
 
@@ -257,14 +260,46 @@ Keine Reparatur der bisherigen Form, sondern neue Ideen mit eigener, eingefroren
    offen; das $1/f$-Argument (§6.4) spricht dagegen.
 4. Neue, versiegelte Testfunktionen. F1–F10 sind Entwicklungsset, das Prüfset 4/49/59/62 ist weiterhin ungesehen.
 
-## 9. Ausstehend: End-to-End-Vergleich v2
+## 9. End-to-End-Vergleich (v1 und v2)
 
-`docs/ODEBENCH_END2END_v2.md`: SINDy, W-SINDy und Annihilator auf denselben verrauschten Trajektorien, gemeinsame
-Auswahl über den Validierungsfehler, R² ≥ 0,9 für Rekonstruktion und Generalisierung (ODEBench-Standard und
-Extrapolation), Strukturtreffer. Keine Entscheidungsregel; der Nutzer entscheidet nach Sichtung.
+**Bericht:** `docs/ODEBENCH_END2END_RESULT.md`.
 
-**Zwischenstand v1** (angehalten, Spline-Artefakt): Ohne Rauschen liegen die Methoden auf Logistik und Gompertz
-etwa gleichauf. Bei 1 % bricht der Annihilator ein, etwa Logistik-Rekonstruktion 4/20 gegen SINDy 20/20. Zum Teil
-liegt das am Aufbaufehler.
+**Aufbau:** SINDy, W-SINDy und Annihilator auf denselben verrauschten Trajektorien der Systeme 3, 7, 19 und 21.
 
-*(Ergebnis v2 wird hier nachgetragen.)*
+- Auswahl: gemeinsam über den Validierungsfehler.
+- Gemessen: R² ≥ 0,9 für Rekonstruktion und Generalisierung (ODEBench-Standard P1, Extrapolation P2), dazu die
+  Strukturtreffer.
+- Keine Entscheidungsregel. Beide Läufe sind vollständig (je 216 Records).
+
+**Ergebnis bei 1 % Rauschen:**
+
+| | Logistik (3) | Gompertz (7) | Ernte (19) | SIR (21) |
+|---|---|---|---|---|
+| Rekonstruktion, Annihilator v1 / v2 | 4 / 17 von 20 | 0 / 14 | 5 / 20 | 4 / 19 |
+| Rekonstruktion, SINDy / W-SINDy | 20 / 14 | 17 / 20 | 16 / 18 | 20 / 20 |
+| Gen. P1, Annihilator v2 / bester Baseline | 8 / 5 von 10 | 0 / 0 | 10 / 6 | 8 / 5 |
+| Gen. P2, Annihilator v2 / bester Baseline | 10 / 12 von 15 | 0 / 5 | 13 / 13 | 5 / 5 |
+| Struktur exakt, Annihilator v2 | 4/15 | 0/15 | 0/15 | 0/15 |
+
+**Lesart:**
+
+1. **Der Einbruch in v1 war ein Aufbaufehler.** Mit Glättung (v2) ist der Annihilator in der Funktionsgüte
+   konkurrenzfähig und bei P1-Generalisierung vorn.
+2. **Woher der P1-Vorsprung kommt, ist offen.**
+   - Nur der Annihilator bekommt eine eigens entworfene Glättung von $(x, \dot x)$.
+   - Die meist gewählten Klassen mit konstanten Koeffizienten sind flexible Exponentialpolynome, also glatte
+     Approximatoren.
+   - Ein Vorteil des Operatoransatzes ist damit nicht belegt. Belegen könnte ihn SINDy auf denselben geglätteten
+     Daten; das ist nicht gelaufen.
+3. **Die Struktur, also das eigentliche Versprechen, bleibt aus.**
+   - Exakt trifft der Annihilator nur die Logistik.
+   - Bei SIR wählt er bei 1 % meist (1,1) ohne die wahre Funktion.
+   - Bei Gompertz und Ernte landet er auf Surrogaten.
+   - Das ist dasselbe Muster wie in §6.2.
+   - Die Baselines treffen die exakte Struktur nie, weil die Auswahl über den Validierungsfehler dichte Modelle
+     bevorzugt.
+4. **Gompertz** generalisiert bei 1 % keine Methode. Der Annihilator ist dort am schwächsten (P2 0/15, W-SINDy 5/15).
+
+**Eigener Fehler, offen benannt:** Die Annahme „Baselines deterministisch“ in v2 stimmte für W-SINDy nicht, weil
+pysindy die Testfunktionen ohne Seed zieht. Die beiden vorhandenen Ziehungen schwanken um bis zu drei Fälle je
+Zelle.

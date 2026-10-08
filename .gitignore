@@ -89,3 +89,7 @@ analysis/tables/*
 
 # pytest scratch
 .tmp/
+
+# Annihilator end-to-end raw records (~910 MB each); compact versions records_compact.jsonl are committed
+experiments/annihilator_odebench_smoke/results_e2e/records.jsonl
+experiments/annihilator_odebench_smoke/results_e2e_v2/records.jsonl

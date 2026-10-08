@@ -4,6 +4,32 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ---
 
+## 2026-10-08
+
+### End-to-End v1 und v2: Ergebnis
+<!-- hash -->
+
+Die Kette lief ohne Fehler: v2 fertig um 02:18, die Fortsetzung von v1 um 03:29, je 216/216 Records. Ergebnis
+deskriptiv in `docs/ODEBENCH_END2END_RESULT.md`.
+
+- **Rekonstruktion bei 1 %:** Mit Glättung (v2) steigt der Annihilator von 4/0/5/4 auf 17/14/20/19 von 20 (Systeme
+  3/7/19/21). Damit liegt er im Feld der Baselines.
+- **Generalisierung P1:** Der Annihilator ist vorn, mit 8/10, 10/10 und 8/10 gegen 4–6/10 auf 3, 19 und 21.
+- **Generalisierung P2:** etwa gleichauf. Gompertz generalisiert keine Methode.
+- **Struktur bei 1 %:** Exakt trifft der Annihilator nur die Logistik (4/15). Sonst wählt er Surrogate, die Baselines
+  dichte Modelle.
+- **Offen:** Der P1-Vorsprung kann von der Glättung stammen, die nur der Annihilator bekommt.
+
+**Neuer Befund:** W-SINDy ist nicht reproduzierbar. pysindy 2.1.0 zieht die Testfunktionen über das globale
+`np.random` ohne Seed. Alle 33 von v2 neu gerechneten W-SINDy-Records weichen von v1 ab.
+
+**Daten:** Die Rohdateien sind je etwa 910 MB groß, in Git kommen nur die Kompaktfassungen `records_compact.jsonl`
+(je etwa 3 MB, ohne pysindy-Parameter und Trajektorien). Die v1-Rohdatei steckt noch im lokalen Commit `2dfd44b`. Sie
+muss vor dem nächsten Push aus der Historie, und das Umschreiben ist im Auto-Modus gesperrt. Außerdem §9 im Rückblick
+nachgetragen.
+
+---
+
 ## 2026-10-07
 
 ### End-to-End: Laptop im Standby, Lauf verzögert

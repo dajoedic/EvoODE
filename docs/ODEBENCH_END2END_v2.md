@@ -65,8 +65,9 @@ Scheitert der Annihilator dort im Lauf, zählt das als sein Ergebnis.
 ## Status von v1
 
 Der Lauf von v1 wurde am 07.10. gegen 16:40 bei 113 von 216 Records angehalten (35 Annihilator, 39 SINDy,
-39 W-SINDy), um Rechenzeit für v2 freizumachen. Er lässt sich mit `--run` jederzeit fortsetzen. Seine
-Annihilator-Ergebnisse bei $\eta = 0{,}01$ gelten nach der Diagnose als Artefakt des Splines und werden so berichtet.
+39 W-SINDy), um Rechenzeit für v2 freizumachen. In der Nacht zum 08.10. wurde er vollständig fortgesetzt (216/216).
+Seine Annihilator-Ergebnisse bei $\eta = 0{,}01$ gelten nach der Diagnose als Artefakt des Splines und werden so
+berichtet.
 
 ## Ablauf
 
@@ -76,4 +77,18 @@ Annihilator-Ergebnisse bei $\eta = 0{,}01$ gelten nach der Diagnose als Artefakt
 
 ## Ergebnis
 
-*(nach dem Lauf)*
+**Vollständiger Bericht:** `docs/ODEBENCH_END2END_RESULT.md` (2026-10-08). 216/216 Records, keine gescheiterten
+Tasks.
+
+- **Funktionsgüte bei 1 %:** Der Annihilator liegt im Feld der Baselines.
+  - Rekonstruktion: 17/20, 14/20, 20/20 und 19/20 auf den Systemen 3, 7, 19 und 21.
+  - Generalisierung P1: vorn mit 8/10, 0/10, 10/10 und 8/10, gegen 4–6/10 bei den Baselines; bei 7 liegen alle bei
+    0/10.
+  - Generalisierung P2: etwa gleichauf.
+  - Gompertz generalisiert keine Methode.
+- **Offen** ist, ob der P1-Vorsprung vom Operator oder von der Glättung kommt, die nur der Annihilator bekommt.
+- **Struktur bei 1 %:** Exakt trifft der Annihilator nur die Logistik (4/15, alle 15 gewählten Klassen enthalten die
+  wahre Funktion). Bei 7, 19 und 21 landet er auf Surrogaten. Die Baselines wählen dichte Modelle und treffen nie
+  exakt.
+- **Nachtrag 08.10.:** Die Annahme „Baselines deterministisch“ (oben) stimmt für W-SINDy nicht, weil pysindy die
+  Testfunktionen ohne Seed zieht. Die 33 neu gerechneten W-SINDy-Records weichen von v1 ab (Bericht §2).
