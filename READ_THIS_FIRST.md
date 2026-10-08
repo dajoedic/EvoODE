@@ -9,9 +9,8 @@ nicht hier.
 
 - Der End-to-End-Vergleich ist fertig und ausgewertet.
 - Es läuft nichts.
-- **Offen:**
-  - die große Datei aus der lokalen Git-Historie entfernen (§2);
-  - die Entscheidung des Nutzers über den Abschluss von Idee #1 (§3).
+- Die Git-Historie ist bereinigt und pushbereit (§2).
+- **Offen:** die Entscheidung des Nutzers über den Abschluss von Idee #1 (§3).
 
 ## 1. Ergebnis End-to-End (v1 und v2)
 
@@ -29,22 +28,19 @@ nicht hier.
 - **Befund:** W-SINDy ist nicht reproduzierbar, weil pysindy 2.1.0 die Testfunktionen über das globale `np.random`
   ohne Seed zieht. Zwei Ziehungen liegen für 19 und 21 vor.
 
-## 2. Große Datei in der Git-Historie (vor dem nächsten Push lösen)
+## 2. Große Datei: erledigt, Push möglich
 
-- `experiments/annihilator_odebench_smoke/results_e2e/records.jsonl` (v1, damals 490 MB) steckt im lokalen Commit
-  `2dfd44b`. Der Branch ist gegenüber `origin` noch nicht gepusht; GitHub lehnt Dateien über 100 MB ab.
-- **Lösung:** Die Commits seit `2dfd44b` werden ohne diese Datei neu geschrieben, mit `commit-tree` und einem
-  temporären Index. Danach wird die Datei aus dem Index genommen. Working Tree und Rohdatei bleiben unberührt.
-- Im Auto-Modus wird das als „Git Destructive“ gesperrt. Es läuft im manuellen Modus oder durch den Nutzer.
-- Vorher eine Sicherungsreferenz setzen: `git update-ref refs/backup/pre-bigfile-rewrite-20261008 HEAD`.
+- Die v1-Rohdatei ist aus der lokalen Historie entfernt (08.10., manueller Modus). Die Commits ab dem alten
+  `2dfd44b` haben neue Hashes (`04a927e` …).
+- Sicherung des alten Stands: `refs/backup/pre-bigfile-rewrite-20261008`. Nach einem erfolgreichen Push löschen
+  mit `git update-ref -d refs/backup/pre-bigfile-rewrite-20261008`.
 - Die Rohdateien (je etwa 910 MB) bleiben lokal und stehen in `.gitignore`. Committet sind die Kompaktfassungen
   `records_compact.jsonl` in `results_e2e/` und `results_e2e_v2/`.
+- Der Branch ist **pushbereit** (GitHub, nur durch den Nutzer).
 
 ## 3. Nächste Schritte
 
-1. **Historie bereinigen** (§2), danach prüfen:
-   `git rev-list --objects origin/annihilator-discovery..HEAD | git cat-file --batch-check` zeigt keinen Blob über
-   100 MB mehr.
+1. **Push** durch den Nutzer: `git push origin annihilator-discovery`.
 2. **Entscheidung des Nutzers:** Idee #1 abschließen oder nicht.
    - Bei Abschluss: Abschlussabschnitt in `docs/IDEA_01_ANNIHILATOR_DISCOVERY.md`, `CLAUDE.md` als abgeschlossen
      markieren, aufräumen (§4).

@@ -7,7 +7,7 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 ## 2026-10-08
 
 ### End-to-End v1 und v2: Ergebnis
-<!-- 27ce365 -->
+<!-- a08e647 -->
 
 Die Kette lief ohne Fehler: v2 fertig um 02:18, die Fortsetzung von v1 um 03:29, je 216/216 Records. Ergebnis
 deskriptiv in `docs/ODEBENCH_END2END_RESULT.md`.
@@ -24,16 +24,24 @@ deskriptiv in `docs/ODEBENCH_END2END_RESULT.md`.
 `np.random` ohne Seed. Alle 33 von v2 neu gerechneten W-SINDy-Records weichen von v1 ab.
 
 **Daten:** Die Rohdateien sind je etwa 910 MB groß, in Git kommen nur die Kompaktfassungen `records_compact.jsonl`
-(je etwa 3 MB, ohne pysindy-Parameter und Trajektorien). Die v1-Rohdatei steckt noch im lokalen Commit `2dfd44b`. Sie
-muss vor dem nächsten Push aus der Historie, und das Umschreiben ist im Auto-Modus gesperrt. Außerdem §9 im Rückblick
-nachgetragen.
+(je etwa 3 MB, ohne pysindy-Parameter und Trajektorien). Außerdem §9 im Rückblick nachgetragen.
+
+### Git: v1-Rohdatei aus der lokalen Historie entfernt
+<!-- hash -->
+
+Die v1-Rohdatei (490 MB) steckte im lokalen, ungepushten Commit `2dfd44b`. Die zwölf Commits ab dort wurden ohne
+diese Datei neu geschrieben (`commit-tree` mit temporärem Index, Nachrichten, Autoren und Daten unverändert), im
+manuellen Modus mit Freigabe des Nutzers. Das ist der einzige Unterschied zum alten Stand. Neue Hashes: `2dfd44b` →
+`04a927e`, …, `41cf0bf` → `c97c6be`; die Kommentare in diesem DIARY sind angepasst. Sicherung des alten Stands:
+`refs/backup/pre-bigfile-rewrite-20261008`. Kein Blob über 50 MB mehr vor dem Push. Die Rohdatei liegt weiter lokal
+und ist über `.gitignore` ausgeschlossen.
 
 ---
 
 ## 2026-10-07
 
 ### End-to-End: Laptop im Standby, Lauf verzögert
-<!-- e1d257e -->
+<!-- 1057df0 -->
 
 Um 22:05 gefunden: Seit 16:37 waren keine neuen Records dazugekommen. Laut Ereignisprotokoll war das System von
 17:02 bis 22:03 im Modern Standby, die Prozesse waren eingefroren. Die Einstellung „Standby nie“ verhindert Modern
@@ -42,7 +50,7 @@ Standby bei Bildschirm-aus bzw. Deckel nicht. Die Worker rechnen seit 22:03 wied
 Neue Erwartung: v2 gegen 02:30, v1 gegen 05:00. Der Deckel darf nicht geschlossen werden.
 
 ### End-to-End v2 gestartet, danach Fortsetzung von v1 (Kette)
-<!-- c3b1bd1, e3ff8fb -->
+<!-- 6b48ede, 106d5d5 -->
 
 Zwischenstand v1 (113/216): Bei 1 % bricht der Annihilator ein. Diagnose: Der Fehler der geschätzten Ableitung liegt
 bei 56–63 % (Logistik) und 140–190 % (Gompertz), und der interpolierende Spline vervielfacht das (bis zum
