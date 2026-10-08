@@ -7,7 +7,7 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 ## 2026-10-08
 
 ### Idee #1 abgeschlossen: gescheitert
-<!-- 5c840b3 -->
+<!-- 5c840b3, 7111a78 -->
 
 **Entscheidung des Nutzers** nach Sichtung der Ergebnisübersicht: Die Annihilator-Spur ist gescheitert und wird
 beendet. Das Kernversprechen (Struktur vor Parametern, Familien jenseits fester Libraries, begründete Abstention) ist
@@ -28,6 +28,7 @@ denselben geglätteten Paaren) entfällt.
   Worker-Caches der v2-Abnahme, die stderr-Protokolle der End-to-End-Läufe.
 - Rohdaten: Prüfsummen in `RAW_RECORDS_SHA256.txt`; die Archivierung auf dem Orion-NFS übernimmt der Nutzer.
 - Endstand getaggt: `idea01-annihilator-closed`.
+- README mit Branch-Hinweis: Idee, Scheitern, Wegweiser zur Akte (EvoGrow-Text darunter als Erbe markiert).
 
 ### End-to-End v1 und v2: Ergebnis
 <!-- a08e647 -->
