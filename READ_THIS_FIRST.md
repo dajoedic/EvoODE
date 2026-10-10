@@ -10,7 +10,7 @@ zweites davon. Alles Dauerhafte gehört dorthin, nach `PAPER_1.md` oder ins `DIA
 **Regeln:** wird immer **vollständig überschrieben**, nie angehängt. Was älter als ein paar Tage
 ist, ist vermutlich falsch — dann gilt `CLAUDE.md`.
 
-**Stand: 2026-10-05, nachmittags. PAUSE bis alles auf Orion durch ist (Nutzer, 05.10.). Phase C abgeschlossen; heute SINDy/Weak-SINDy auf C-6 und §9.3-Hierarchie erledigt.**
+**Stand: 2026-10-10, 13:05. PAUSE bis alles auf Orion durch ist (Nutzer, 05.10.). Phase C abgeschlossen; seit 05.10. nur Statusabfragen.**
 
 > **BLINDREGEL C-6 (Nutzer, 05.10., „Weg 2“):** Bis die Entscheidungsregel für Story-Linie (b) mit dem Nutzer
 > festgelegt und als Plan §9.4d eingefroren ist, sieht sich Claude **keine C-6-EvoGrow-Ergebnisse** an — weder
@@ -28,19 +28,22 @@ jedem Statuswechsel aktualisieren.
 
 ## 1. Was läuft (Paper 1), alles auf Orion, Image `5dd1df8` außer C-3/T1f
 
-| Lauf | Stand 05.10. 09:15 | Erwartetes Ende | Wenn fertig |
+| Lauf | Stand 10.10. 13:05 (05.10.) | Erwartetes Ende | Wenn fertig |
 |---|---|---|---|
-| **C-6-Raster gekappt** (3.366 Zellen, 24 Pods) | 216 | Mitte/Ende Nov. | einsammeln (NFS `phase_c_c6_grid_<SHA>/tasks`), Clean-Auswertung, Aggregation |
-| **C-6-Raster ungekappt, Seed 42** (461, 8 Pods) | 42 | ähnlich | danach entscheidet der Nutzer über Seed 123/7 (Plan §9.4c Punkt 5) |
-| **B-04-Rest + B-05** (10 Zellen) | 6/10 | 57: 1–3 Tage je Zelle | Tor B5. Bisher: gleiches Ergebnis wie C-1 (24 ∞, 52/1000) |
-| C-3 | **180/180, fertig 05.10.** | — | **P-01/P-02 erledigt 05.10. (`ac64ccc`)**: strikt 936/936, C-1/C-2 identisch; offen: §9.3-Hierarchie |
-| WP-T1f | 35/36 | offen (58 IC1) | `--aggregate-only`, Tor 3 Paper 2 |
+| **C-6-Raster gekappt** (3.366 Zellen, 24 Pods) | **591** (216) | ~88/Tag fortgeschrieben → ~Mitte Nov.; teuerste zuerst, also eher früher | einsammeln (NFS `phase_c_c6_grid_<SHA>/tasks`), Clean-Auswertung, Aggregation |
+| **C-6-Raster ungekappt, Seed 42** (461, 8 Pods) | **141** (42) | ~21/Tag → ~Ende Okt. | danach entscheidet der Nutzer über Seed 123/7 (Plan §9.4c Punkt 5) |
+| **B-04-Rest + B-05** (10 Zellen) | **9/10** (6/10) | letzte Zelle (Index 9) läuft seit 6 d 19 h, erwartet waren 1–3 Tage | Tor B5. Bisher: gleiches Ergebnis wie C-1 (24 ∞, 52/1000) |
+| WP-T1f | 35/36 | 58 IC 1 läuft **seit 9 Tagen** — dem Nutzer am 10.10. gemeldet, Entscheidung offen (weiterlaufen oder abbrechen + `--aggregate-only`) | `--aggregate-only`, Tor 3 Paper 2 |
+
+C-3 ist fertig und eingesammelt (05.10., `ac64ccc`). 0 fehlgeschlagene Pods/Jobs am 10.10. Auf dem NFS liegen für das
+gekappte Raster 1.204 `.jsonl` gegenüber 591 Job-Completions (vermutlich Heartbeats mitgezählt; beim Einsammeln prüfen,
+Inhalt wegen Blindregel nicht geöffnet). Statusseite „EvoODE auf Orion“ am 10.10. neu veröffentlicht.
 
 Lokal läuft nichts. **SINDy/Weak-SINDy auf C-6 fertig** (4.536 Zellen × 10 Konf., 40 min, 10 Shards; (0,0)-Kontrolle
 gegen WP-C4c 2.520/2.520). Getrackt unter `analysis/data/paper1_phaseC_v1/c6_sindy_5dd1df8/`, `details.csv` (236 MB)
 in `outputs/c6_sindy_baselines_5dd1df8/merged/`. Der Vergleich mit EvoGrow unter Rauschen wartet auf die C-6-EvoGrow-Zellen.
 
-55 GB frei. Working Tree sauber bis auf `output/`, `tmp/` (ungetrackt). Commits nicht gepusht (pusht der Nutzer).
+**Nur noch 27 GB frei (10.10.) — vor dem nächsten Docker-Build aufräumen.** Working Tree sauber bis auf `output/`, `tmp/` (ungetrackt). Commits nicht gepusht (pusht der Nutzer).
 
 ## 2. Fertig liegt (zum Weitermachen, wenn Ergebnisse kommen)
 
@@ -60,7 +63,7 @@ in `outputs/c6_sindy_baselines_5dd1df8/merged/`. Der Vergleich mit EvoGrow unter
   dim 1/2; B1: ≥ 10 pp vor der besten Konfiguration jeder Baseline, Cluster-p < 0,05; B2: flacherer Abfall σ 0 → 0,05;
   (b) Hauptbotschaft bei B1 in ≥ 4 von 6 Bedingungen mit σ ≥ 0,03 und B2). Danach als §9.4d einfrieren, **bevor**
   C-6-Ergebnisse vorliegen.
-- B-05 (Tor B5) und WP-T1f (Paper 2) werden früher fertig; ob ihre Tore einzeln oder erst am Ende angesehen werden, hat der Nutzer noch nicht gesagt — bei Fertigstellung fragen.
+- B-05 (Tor B5) und WP-T1f (Paper 2) werden früher fertig; ob ihre Tore einzeln oder erst am Ende angesehen werden, hat der Nutzer noch nicht gesagt — am 10.10. erneut gefragt, zusammen mit der Frage, ob die 9-Tage-Zelle von WP-T1f weiterlaufen soll.
 - Später (Nutzer): PySR-Freigabe, ODEFormer-Image; Restart-Kurve (P-04), Claim-Tracing-Audit, `paper/` neu schreiben.
 
 ## 4. Annihilator-Spur: getrennt (Nutzer, 05.10.)
