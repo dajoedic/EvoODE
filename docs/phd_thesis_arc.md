@@ -331,6 +331,73 @@ truth ranked first). The oracle arm is what makes the pilot conclusive in both d
 - both work → guidance is established, and the distance between them says how much is left in the
   generator.
 
+**Step 3 is closed (2026-10-12, WP-T1f): the true support is a local optimum.** 0 of 2,479 same-size swaps and 0 of
+179 removals fall below the floor on dim 2 and 3, by at least five orders of magnitude (`DIARY.md` 2026-10-12). The
+stop rule does not fire; step 4 is open.
+
+#### Step 4 specified 2026-10-13 — draft until the user freezes it
+
+**Precondition: P-04, the restart curve** (`docs/paper1_phaseC_benchmark_plan.md` §9.8). Two reasons, both binding:
+§4 places the restart budget before any guided comparison, and the fittability definition below is read from it.
+
+**Why the stop rule needs a restriction.** "Oracle prior fails → stop" assumes a failure means guidance is not the
+lever. On cells whose truth cannot be fitted, the oracle prior fails because the *fit* fails (dim 3: 54–56, 58, 59,
+61 reach 0–1 of 20 cold starts even unbounded), and the branch would stop for the wrong reason. **The stop rule is
+therefore evaluated only on fittable cells**, defined before the pilot runs: a cell is fittable if the P-04 reference
+fit reaches **R² > 0.9 at k = 10** under the pilot's bound. Oracle failures on non-fittable cells are reported, never
+counted toward the rule.
+
+**Arms.** All three on identical data and configuration, so that the control costs nothing:
+
+| arm | candidate distribution | source |
+|---|---|---|
+| control | uniform (today's `rand(candidates)`) | **C-1 itself**, no new run |
+| oracle prior | ranking with the true terms first, remaining terms in `forward` order | `phase_c_support.json` |
+| guided | WP-T1 `weak` signal, `forward` ranking, **per equation**, computed on the training trajectory only | WP-T1c kept `forward` (`no_winner`) |
+
+Both prior arms map rank to probability with **the same rule**, so the arms differ only in the ordering:
+`P(φ_j) = (1−ε)·P_rank(φ_j) + ε·P_uniform(φ_j)`, applied to every draw of a basis term for an equation (population
+initialisation and child generation, `src/structure/evogrow.jl`). Soft guidance only; no candidate becomes
+unreachable.
+
+**Fixed conditions.** Clean data, bound `[-10, 10]` (the control is C-1 only under C-1's bound), `pretuning = false`,
+`max_fit_attempts = 3`, stage cap as in C-1, seeds 42/123/7, both IC sets, the exact systems of dim 1 and 2
+(11 + 10 systems, **126 cells per arm**). dim 3 is step 5 and, by the restriction above, carries information only on
+52 and 57.
+
+**Endpoint and decision, pre-declared.** Primary: **pruned exact-support rate on the fittable dim-2 cells**, prior arm
+minus control. An arm "works" if the difference is **≥ 10 percentage points** and a cluster permutation over systems
+gives **p < 0.05**. dim 1 is reported, never evidence (§5, point 4). Raw support, R² > 0.9 (reconstruction and
+generalization) are reported beside it (Design Principle 9). The three outcomes stay as frozen above: oracle fails →
+stop; oracle works, guided not → the generator is the problem; both work → guidance established.
+
+**Confounder reporting, mandatory** (§5 "The confounder"): unique structures, duplicate rate, fits per unique
+structure, `max_fit_attempts`, total fits, loss evaluations, ODE solves. Δ loss evaluations alone is uninterpretable.
+
+**Staged, like C-6.**
+
+1. **S1 — oracle prior, dim 2, seed 42, both IC: 20 cells.** The cheapest decisive test: if the oracle prior does not
+   help on fittable cells, the branch stops here. ~200 core hours (~300 €). Gate T2a-1.
+2. **S2 — the rest:** oracle prior on the remaining 106 cells and the guided arm on all 126: ~1,000 core hours
+   (~1,500 €). Only after gate T2a-1, and as a ≥ 24 h run only after a discussion (`CLAUDE.md` run-location table).
+
+**Cost basis (capacity planning, not evidence).** C-1 on these cells: dim 2 exact 586 core hours over 60 cells
+(~9.8 h per cell), dim 1 exact 3.6 h over 66. The "130–420 h, local" in the table above predates the constant basis
+and the run-location rule and is **superseded**.
+
+**Work package (Julia; Codex writes, Claude runs the tests).** A prior hook in the EvoGrow candidate draw, configured
+per equation and inert by default: **without a prior the code must reproduce C-1 bit-identically** on cells of every
+dimension (hard stop). The prior parameters enter the config fingerprint only when active. A generator for the
+per-cell prior files (weak/forward from the training trajectory; oracle from the support table). A new image → push
+by the user.
+
+**Open decisions for the user before the freeze.**
+
+1. **ε** — recommended **0.2**: four of five draws follow the prior, every term stays reachable.
+2. **Rank → probability** — recommended `P_rank ∝ 1/rank` (harmonic): monotone, no tuned constant, the top term gets
+   the largest share without silencing the tail.
+3. **S2 after S1** — recommended: only through gate T2a-1, never automatically.
+
 **Step 3 comes first because it can make steps 4 and 5 unnecessary.** It costs about 12 h — derived,
 not guessed: roughly 2,900 fixed-structure fits at the measured 9.48 s per dim-2 fit, from
 add-one (p−s), remove-one (s) and same-size swap (s·(p−s)) neighbours over 18 exact systems and both

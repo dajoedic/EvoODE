@@ -58,6 +58,20 @@ bei 0/20 bzw. 1/20. **Das Bild vom 01.10. ist jetzt vollständig:** Der Loss erk
 
 <!-- 3d5849e -->
 
+### Folgen für das Vorgehen: zwei Spezifikationen, beide Entwurf bis zur Freigabe
+
+Der Nutzer wollte nach Tor B5 und Tor 3 wissen, was folgt, und gab beide Spezifikationen frei. **P-04 (Restart-Kurve)**
+steht als Plan §9.8: 180 exakte C-1-Zellen, 10 Starts mit je einem Versuch, Grenze 10, Kontrolle bitgleich gegen C-5,
+Kostenachse in kumulierten Loss-Evals, Loss-Schwellenraster vorab fixiert, Lesart „k = 3 genügt“ bei ≤ 5 pp Abstand zu
+k = 10 vorab gesetzt. ~100 Kernstunden (Schranke 338 h, neu gerechnet; §2 hatte 305 h). Kein neues Image: Der Runner
+speichert `fit_meta.loss_evals` je Start schon. **WP-T2a-Pilot** steht in `docs/phd_thesis_arc.md` §5, Schritt 4: Die
+Stopp-Regel des Orakel-Priors gilt nur auf fittbaren Zellen (P-04-Referenzfit R² > 0,9 bei k = 10), sonst würde ein
+Fit-Versagen den Zweig aus dem falschen Grund beenden. Kontrolle = C-1, beide Prior-Arme mit derselben
+Rang-Wahrscheinlichkeits-Abbildung, Endpunkt geprunter exakter Support auf fittbaren dim-2-Zellen, ≥ 10 pp und
+Cluster-p < 0,05. Gestuft: S1 nur Orakel-Prior, dim 2, Seed 42 (20 Zellen, ~200 h), dann S2 (~1.000 h). **Die alte
+Schätzung „130–420 h, lokal“ ist überholt**: Eine exakte dim-2-Zelle kostet in C-1 ~9,8 Kernstunden. Offen beim
+Nutzer: Grenze und Image für P-04, ε und Rang-Abbildung für T2a, S2 nur über ein Tor.
+
 ---
 
 ## 2026-10-05

@@ -1018,3 +1018,68 @@ fingerprint and JSON serialisation (JSON has no `Inf`), checked by a test.
 
 Before the C-6 grid manifest is generated: gate G (§9.4a), including the realization design (9.4).
 The working order with owners and gates is the backlog in `CLAUDE.md` ("Backlog Paper 1").
+
+### 9.8 P-04 — the restart curve (Abl-3), specified 2026-10-13, **draft until the user freezes it**
+
+**Why now.** The 2026-10-12 results (`DIARY.md`) attribute every exact dim-3 failure: the loss identifies the truth
+(WP-T1f), the truth is hard to fit (cold single starts reach loss < 1e-8 in 24.5 % on dim 2, 13.8 % on dim 3), and the
+search misses it on 52 and 57 although it is fittable there (B-05). The retry policy fires on `fit_attempt_failed`
+only, never on a bad local optimum, so the restart curve is the measurement that makes a *negative* oracle refit
+readable. It is also the conference insert of `docs/phd_thesis_arc.md` §4, which must precede any guided-search
+comparison (Paper 2) — the second reason it comes first.
+
+**What runs.** `studies/regression/wp_n4_multistart_refit.jl` in Phase C mode, unchanged:
+
+- input: the C-1 arm (`evogrow_v2_2_stage_capped`, `pretuning = false`), exact systems only → **180 cells**
+  (30 systems × 3 seeds × 2 IC sets), the same filter as the C-5 oracle;
+- **10 starts per structure, one attempt each** (`per_start_max_fit_attempts = 1`); start 1 is the cell seed, starts
+  2–10 are hashed (`WP-N4:start:<cell_seed>:<start_index>`), so the curve is nested: the best of the first k starts;
+- two structures per cell: **reference** (the true support) and **oracle** (found ∩ true, fitted only where it
+  differs from the truth);
+- optimizer: the C-1 reference optimizer, **bound `[-10, 10]`** (Paper 1's frozen method; see open decision 1);
+- curve points k ∈ {1, 2, 3, 5, 10}.
+
+**Control (hard stop).** On every cell where the C-5 oracle accepted attempt 1, the reference start 1 must reproduce
+the C-5 reference loss **bit-identically** (same seed, same optimizer, same trajectory hash). Any deviation stops the
+evaluation before a curve is read.
+
+**Metrics, all per k, reported in full, nothing selected afterwards.**
+
+1. Cost axis: **cumulative `loss_evals`** over the first k starts (summed from `fit_meta`), beside k. Recovery is
+   plotted against loss evaluations, never against k alone (§1b, Abl-3).
+2. R² > 0.9 rate of the best-of-k fit; sentinel rate (loss ≥ 1e6); `reaches_or_beats_original` (best-of-k loss ≤
+   the C-1 search loss).
+3. Loss threshold grid, fixed now: share of cells with best-of-k loss < 1e-12, 1e-10, 1e-8, 1e-6, 1e-4 — the full
+   grid, no threshold picked after seeing it.
+4. Per cell: the smallest k at which R² > 0.9 is first reached (or "not within 10").
+5. Strata, never averaged across: dimension; **feasible under the bound (24 systems)** versus **infeasible
+   (54–59, 36 cells)**, reported apart exactly as in C-5; within dim 3, 52/57 (fittable) versus the rest.
+6. Beside the curve, not merged: the C-1 `StructureSpec` duplicate-rate distribution (`structure_repeat_quantiles`)
+   as the implicit multistart, and the WP-T1f cold-start rates (bound ∞, m = 10, 18 systems) as an independent
+   reference at a different bound. The text states that k is a **per-structure parameter start count, not a beam
+   size**.
+
+**Pre-declared reading (descriptive, no gate for Paper 1, whose k = 3 is frozen).** "k = 3 captures the attainable
+gain" is stated if, on the feasible cells, the R² > 0.9 rate at k = 3 is within **5 percentage points** of k = 10;
+otherwise the paper states how much a larger k would have bought and at how many extra loss evaluations. The 5 pp is
+set here, before any start is run.
+
+**Cost (capacity planning, not evidence).** Scaled from the measured C-5 oracle loss evaluations and the C-1 per-eval
+cost: **~100 core hours** (dim 3 ~75 h, dim 2 ~21 h, dim 1/4 < 1 h); the all-budgets-exhausted upper bound is
+**338 h** (recomputed 2026-10-13 from the fitted structures per cell; §2 said 305 h). ~150 € expected, ≤ 510 € bound. Runs on Orion, 36 round-robin shards like C-5; the largest single cell is
+bounded at ~17 h (system 55, seed 42, IC 2; expected ~2.5 h), so every shard is expected **< 24 h** → user starts it (`CLAUDE.md` run-location table). No time
+cut.
+
+**Work package (WP-N44, Codex, Python + YAML only).** (a) `k8s/phase_c_c5_restart_curve_job.yaml`, modelled on the
+C-5 oracle manifest, no `activeDeadlineSeconds`; (b) `analysis/scripts/aggregate/aggregate_phasec_restart_curve.py`
+reading the collected `starts.jsonl`, computing items 1–6 and the control; (c) tests on synthetic input; (d)
+`SCRIPTS.md`. **No image rebuild:** the runner already stores `fit_meta.loss_evals` per start and is contained in
+`5dd1df8` and `1db1193`.
+
+**Open decisions for the user before the freeze.**
+
+1. **Bound.** `[-10, 10]` only (recommended: it is Paper 1's method, and the control against C-5 exists only there),
+   or additionally `[-1000, 1000]`, the next version's start (+~100–300 h). The insert can add the second arm later
+   without touching this one.
+2. **Image.** `5dd1df8` (recommended: slim, already on the nodes, verified bit-identical to C-5 at bound 10 in
+   B-02/B-03) or `1db1193` (the C-5 oracle image).
