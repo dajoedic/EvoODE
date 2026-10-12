@@ -58,6 +58,17 @@ bei 0/20 bzw. 1/20. **Das Bild vom 01.10. ist jetzt vollständig:** Der Loss erk
 
 <!-- 3d5849e -->
 
+### Kern-Limit 40, P-04 läuft
+
+Der Nutzer: EvoODE darf auf Orion höchstens 32 Pods nutzen — C-6 belegte sie alle. Damit lagen wir am 10.10. mit 34
+(C-6 + B-05 + WP-T1f) kurz darüber; keine Quota im Namespace erzwingt das Limit. Clusterweit laufen 446 Pods mit
+136,8 angeforderten CPUs auf 5 sichtbaren Knoten; EvoODE ist mit 32 Kernen knapp ein Viertel davon (die
+Knotenkapazität ist für unseren Account nicht abfragbar). Danach hob der Nutzer das Limit auf **40 Kerne gesamt**
+(„die 8 weiteren, aber nicht einen mehr“). P-04-Manifest auf `parallelism: 8` (`b5b9790`); Job vom Nutzer gestartet,
+40 EvoODE-Pods laufen. Erwartete Dauer mit 8 Pods aus der Shard-Simulation: ~23 h (Schranke ~53 h, größter Shard
+~12 h erwartet / ~20 h Schranke). Laufende Jobs werden nie heruntergedreht, um Platz zu schaffen — der Controller
+beendet dabei aktive Pods.
+
 ### E-SINDy und Weak-SINDy werden Pflicht-Baselines; P-04 startbereit
 
 Der Nutzer: E-SINDy und W-SINDy müssen in Paper 1, frühere Arbeiten von ihm sind daran gescheitert. Plan §9.5a:

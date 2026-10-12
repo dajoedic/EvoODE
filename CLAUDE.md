@@ -243,6 +243,8 @@ stage starts because the previous one "looked fine" by itself. Run locations fol
 
 Mark items done here with date and commit; never delete them.
 
+**Core limit (user, 2026-10-13): EvoODE uses at most 40 cores on Orion in total** (C-6 32 + 8); never shrink a running Job to make room.
+
 **Pause and blind rule (user, 2026-10-05).** Paper 1 work pauses until every Orion run has finished. Until the
 decision rule for story line (b) is fixed with the user and frozen as plan §9.4d, **no C-6 EvoGrow result is
 looked at** (no R², no structure, no comparison with the baselines) — only collection and technical checks (cell
@@ -283,7 +285,7 @@ count, errors, fingerprint, data hashes). Draft rule: `DIARY.md` 2026-10-05.
 | P-01 | ~~C-3 finishes (3 Lorenz cells); collect~~ **done 2026-10-05, `ac64ccc`**: 180/180, 0 errors, one identity; collected from the mounted NFS | Claude |
 | P-02 | Final Phase C evaluation: ~~strict chain from `SCRIPTS.md`, config switched to the complete registry, C-1/C-2 numbers must come out identical~~ **done 2026-10-05, `ac64ccc`** (936/936 strict, C-1/C-2 analysis registry and Claim-B pairs byte-identical to the interim; tracked under `experiments/paper1_phaseC_v1/` and `analysis/data/paper1_phaseC_v1/final_2026-10-05/`); ~~the §9.3 aggregation hierarchy~~ **done 2026-10-05 (WP-N43/N43b, `60a4393`)**: one table for EvoGrow, SINDy, ODEFormer, `analysis/data/paper1_phaseC_v1/hierarchy_n43b/`; generalization variance-weighted EvoGrow 41.4 %, SINDy 27.0–42.9 %, ODEFormer 27.0–33.6 %; SINDy ahead on structure (pruned exact 16.7–43.3 % vs EvoGrow 29.4 %). The WP-N30/N31 SINDy pairings read the old self-integrated SINDy file and are superseded (`DIARY.md` 2026-10-05) | Claude / Codex |
 | P-03 | ~~WP-T1f finishes; collect, `--aggregate-only`~~ **done 2026-10-12**: 36/36, swap neighbours below the floor **0 of 2,479** (dim 2 and 3), remove 0 of 179 — gate 3 of Paper 2 passes, the true support is a local optimum (`DIARY.md`). Original: **Job deadline removed 2026-10-01 (no hard cuts), so system 58 IC 1 may finish; at ~0.5 rows/h that is days — raise if it drags** | Claude |
-| P-04 | Restart curve (Abl-3) — **frozen 2026-10-13, plan §9.8**: C-1 exact cells (180), 10 single-attempt starts, bound 10, control against C-5, ~100 core-h (bound 338 h), no image rebuild; WP-N44 (manifest + Python aggregator) handed to Codex 2026-10-13. Precondition for the WP-T2a pilot (`docs/phd_thesis_arc.md` §5, step 4, frozen the same day: ε = 0.2, P ∝ 1/rank, S2 via gate) | Codex / user |
+| P-04 | Restart curve (Abl-3) — **frozen 2026-10-13, plan §9.8**: C-1 exact cells (180), 10 single-attempt starts, bound 10, control against C-5, ~100 core-h (bound 338 h), no image rebuild; WP-N44 done (`f6e0887`), laptop smoke bit-identical to C-5; **running on Orion since 2026-10-13** (8 pods, expected ~23 h). Precondition for the WP-T2a pilot (`docs/phd_thesis_arc.md` §5, step 4, frozen the same day: ε = 0.2, P ∝ 1/rank, S2 via gate) | Codex / user |
 | P-05 | Claim-tracing audit, then rewrite `paper/` — only on a frozen evidence state | later |
 
 **Track S — stopping criterion for the next EvoGrow version (design only, not Paper 1)**

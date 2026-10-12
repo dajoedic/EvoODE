@@ -10,7 +10,7 @@ zweites davon. Alles Dauerhafte gehört dorthin, nach `PAPER_1.md` oder ins `DIA
 **Regeln:** wird immer **vollständig überschrieben**, nie angehängt. Was älter als ein paar Tage
 ist, ist vermutlich falsch — dann gilt `CLAUDE.md`.
 
-**Stand: 2026-10-12, 23:50. PAUSE bis alles auf Orion durch ist (Nutzer, 05.10.). Phase C abgeschlossen; seit 05.10. nur Statusabfragen.**
+**Stand: 2026-10-13, 01:10. Paper-1-Pause gelockert: Auswertungen, die nicht C-6-EvoGrow betreffen, laufen (Nutzer 12./13.10.).**
 
 > **BLINDREGEL C-6 (Nutzer, 05.10., „Weg 2“):** Bis die Entscheidungsregel für Story-Linie (b) mit dem Nutzer
 > festgelegt und als Plan §9.4d eingefroren ist, sieht sich Claude **keine C-6-EvoGrow-Ergebnisse** an — weder
@@ -26,12 +26,20 @@ jedem Statuswechsel aktualisieren.
 
 ---
 
-## 1. Was läuft (Paper 1), alles auf Orion, Image `5dd1df8`
+## 1. Was läuft — Orion, Image `5dd1df8`, **40 Kerne belegt = Limit (Nutzer 13.10.)**
 
-| Lauf | Stand 12.10. 23:36 (10.10. 13:05) | Erwartetes Ende | Wenn fertig |
+| Lauf | Stand | Erwartetes Ende | Wenn fertig |
 |---|---|---|---|
-| **C-6-Raster gekappt** (3.366 Zellen, 24 Pods) | **666** (591) | zuletzt nur ~31/Tag (davor ~75/Tag) → bei diesem Tempo ~Jan.; zwei Tage sind noch kein Trend | einsammeln (NFS `phase_c_c6_grid_<SHA>/tasks`), Clean-Auswertung, Aggregation |
-| **C-6-Raster ungekappt, Seed 42** (461, 8 Pods) | **180** (141) | ~16/Tag → ~Ende Okt. | danach entscheidet der Nutzer über Seed 123/7 (Plan §9.4c Punkt 5) |
+| **C-6-Raster gekappt** (3.366 Zellen, 24 Pods) | **670** (13.10. 01:10) | zuletzt ~31/Tag → evtl. erst ~Jan.; beobachten | einsammeln (NFS `phase_c_c6_grid_<SHA>/tasks`), Clean-Auswertung, Aggregation |
+| **C-6-Raster ungekappt, Seed 42** (461, 8 Pods) | **180** | ~16/Tag → ~Ende Okt. | Nutzer entscheidet über Seed 123/7 (Plan §9.4c Punkt 5); 8 Kerne werden frei |
+| **P-04 Restart-Kurve** (36 Shards, 8 Pods) | gestartet 13.10. ~01:05 | erwartet ~23 h (Schranke ~53 h); melden, wenn > 2 Tage | einsammeln vom NFS `phase_c_c5_restart_curve_5dd1df8…/out`, `aggregate_phasec_restart_curve.py` (Kontrolle gegen C-5 = harter Stopp), dann Fittbarkeit für WP-T2a |
+
+**Kern-Limit:** EvoODE max. **40 Kerne gesamt** (vorher 32). Kein Kern mehr. Laufende Jobs nie herunterdrehen (tötet
+Pods); neue Jobs warten auf frei werdende Kerne. Wenn P-04 endet, sind 8 Kerne frei (Kandidat: WP-T2a S1, braucht
+erst Implementierung + Image).
+
+**Lokal:** Codex arbeitet an **WP-N45** (E-SINDy-Arm + Weak-SINDy/E-SINDy in der §9.3-Hierarchie). Danach: prüfen,
+committen, vollen E-SINDy-Lauf auf dem C-6-Export lokal starten (Codex rechnet die Dauer hoch).
 
 **Fertig, eingesammelt und ausgewertet am 12.10. (`DIARY.md` 12.10.):**
 - **B-05 (Tor B5):** 1/24/52 gleicher Support wie C-1; 57 wechselt den Support, findet die Wahrheit aber mit keiner
@@ -41,16 +49,9 @@ jedem Statuswechsel aktualisieren.
   wahrer Support ist lokales Optimum, Stopp-Regel greift nicht. Nächster Schritt des Zweigs wäre der WP-T2a-Pilot
   (Paper 2, nicht Paper 1) — Nutzer entscheidet, wann.
 
-**13.10. — neu in Arbeit:**
-- **P-04 Restart-Kurve startbereit** (Plan §9.8, eingefroren): WP-N44 committet (`f6e0887`), Laptop-Smoke auf 2 Zellen
-  bitgleich gegen C-5, Eingabe liegt auf dem NFS (`phase_c_c5_restart_curve_5dd1df8…/input/history.jsonl`, sha
-  identisch zur C-5-Eingabe). **Start durch den Nutzer** mit `k8s/phase_c_c5_restart_curve_job.yaml`, Image `5dd1df8`,
-  ~130 Kernstunden erwartet (Schranke 338 h).
-  **Kern-Limit (Nutzer 13.10.): EvoODE max. 40 Kerne gesamt** (vorher 32) = C-6 32 + P-04 8 (`parallelism: 8`, 1 CPU je Pod).
-  Kein Kern mehr; laufende Jobs nie herunterdrehen (tötet Pods).
-- **WP-T2a-Pilot** spezifiziert und eingefroren (`docs/phd_thesis_arc.md` §5 Schritt 4): wartet auf P-04.
-- **E-SINDy + Weak-SINDy Pflicht in Paper 1** (Nutzer, Plan §9.5a). **WP-N45 läuft bei Codex** (E-SINDy-Arm,
-  beide in der §9.3-Hierarchie); den vollen E-SINDy-Lauf macht danach Claude lokal.
+**13.10.:** P-04 und WP-T2a-Pilot eingefroren (Plan §9.8, `docs/phd_thesis_arc.md` §5 Schritt 4; ε = 0,2, P ∝ 1/Rang,
+S2 nur über Tor T2a-1). E-SINDy + Weak-SINDy Pflicht in Paper 1 (Plan §9.5a). WP-T2a-Implementierung (Codex, Julia,
+neues Image) ist der nächste Auftrag nach WP-N45.
 
 0 fehlgeschlagene Pods am 12.10.
 
