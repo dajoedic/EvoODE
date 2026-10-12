@@ -335,7 +335,7 @@ truth ranked first). The oracle arm is what makes the pilot conclusive in both d
 179 removals fall below the floor on dim 2 and 3, by at least five orders of magnitude (`DIARY.md` 2026-10-12). The
 stop rule does not fire; step 4 is open.
 
-#### Step 4 specified 2026-10-13 — draft until the user freezes it
+#### Step 4 — frozen 2026-10-13 (user)
 
 **Precondition: P-04, the restart curve** (`docs/paper1_phaseC_benchmark_plan.md` §9.8). Two reasons, both binding:
 §4 places the restart budget before any guided comparison, and the fittability definition below is read from it.
@@ -391,12 +391,10 @@ dimension (hard stop). The prior parameters enter the config fingerprint only wh
 per-cell prior files (weak/forward from the training trajectory; oracle from the support table). A new image → push
 by the user.
 
-**Open decisions for the user before the freeze.**
-
-1. **ε** — recommended **0.2**: four of five draws follow the prior, every term stays reachable.
-2. **Rank → probability** — recommended `P_rank ∝ 1/rank` (harmonic): monotone, no tuned constant, the top term gets
-   the largest share without silencing the tail.
-3. **S2 after S1** — recommended: only through gate T2a-1, never automatically.
+**Decided by the user 2026-10-13, frozen:** **ε = 0.2**, **`P_rank ∝ 1/rank`**, S2 only through gate T2a-1. One ε, no
+grid search: a search over ε would tune against the outcome, and ε = 1 is the control itself. If the result is
+positive, an ε sensitivity check (e.g. ε = 0.5 on the S1 cells) may follow, declared as robustness, never as
+selection.
 
 **Step 3 comes first because it can make steps 4 and 5 unnecessary.** It costs about 12 h — derived,
 not guessed: roughly 2,900 fixed-structure fits at the measured 9.48 s per dim-2 fit, from

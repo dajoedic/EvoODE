@@ -1,81 +1,93 @@
-# WP-N43b — close the variance-weighted gaps in the §9.3 hierarchy, and switch SINDy to the canonical source
+# WP-N44 — P-04 restart curve: Orion manifest and Python aggregator
 **Language: Python**
 
 ## Why
 
-WP-N43 (`60a4393`, `codex/reports/REPORT_WP_N43.md`) built the plan §9.3 hierarchy and passed its
-controls, but the §9.3 headline — **variance-weighted generalization R²** — is `NaN` for EvoGrow
-and SINDy, and SINDy has no pruned structural F1. All three are recoverable without new runs.
+Plan `docs/paper1_phaseC_benchmark_plan.md` §9.8 was frozen by the user on 2026-10-13. It specifies the restart
+curve (Abl-3): the existing Julia runner `studies/regression/wp_n4_multistart_refit.jl` in Phase C mode refits the
+true structure (and the found ∩ true structure) of every exact C-1 cell from 10 seeded starts with one attempt each.
+The runner needs **no change**: it already stores, per start, `loss`, `r2`, `start_index`, `start_seed` and `fit_meta`
+(including `loss_evals`). What is missing is the Orion manifest and an aggregator that computes the §9.8 metrics
+from the raw shard outputs. Read §9.8 in full before starting; it is the specification, this file only assigns the
+work.
 
-A second defect was found by Claude on 2026-10-05: WP-N43 (default `--sindy-details`) and the
-WP-N30 / WP-N31 pairing commands in `SCRIPTS.md` read
-`analysis/data/paper1_phaseC_v1/phasec_sindy_baseline/details.csv`. That file is the **old,
-self-integrated** SINDy run (DOP853). The canonical C-4 run consumes the campaign's exported bytes
-(WP-C4c, `DIARY.md`): `analysis/data/paper1_phaseC_v1/phasec_sindy_baseline_wp_c4c_export/details.csv`.
-Against the canonical file the old one differs in 66 of 2,520 raw/pruned supports and 4 of 2,520
-R² > 0.9 verdicts.
+The Julia `--collect` mode of the runner writes some CSVs, but it lacks the cost axis, the threshold grid, the strata
+and the control. Do not extend the Julia script; build the aggregation in Python so that it can be run and tested here.
 
 ## Inputs
 
-1. **SINDy, C-6 run, done 2026-10-05 by Claude** — ten shard outputs
-   `outputs/c6_sindy_baselines_5dd1df8/shard_{0..9}/details.csv` over all 4,536 exported cells of
-   `outputs/phase_c_c6_data_conditions_5dd1df8/index.csv` (63 systems × 2 IC sets × 12 conditions ×
-   3 realizations), ten configurations each. They carry per-dimension R², variance-weighted R² and
-   pruned structural F1 / precision / recall. Shard 9 additionally holds
-   `control_c4_reproduction/`: on the (0,0) data it reproduces the canonical WP-C4c file in
-   2,520 / 2,520 rows on status, raw and pruned support and the R² > 0.9 verdict, with R² identical
-   to 1e-12 except 40 diverged rows. Its scripted control status says "failed" only because the
-   script's reference has 80 rows; ignore that status, verify the above yourself and report it.
-2. **EvoGrow generalization per dimension** —
-   `outputs/wp_n5_ic_generalization_phase_c/shard_001_of_001/results.jsonl` carries
-   `generalization_r2_by_dim` (non-null in 337 of 378; check that the rest are exactly the diverged
-   / non-finite cells). The variance weights are the per-dimension variances of the **clean target
-   trajectory** (the second IC's reference trajectory), as defined in plan §6b and implemented in
-   `analysis/scripts/aggregate/aggregate_variance_weighted_r2.py` — reuse that code and its weight
-   source rather than writing a second one.
+1. **Raw runner output** (after the Orion run, not available yet): one `starts.jsonl` per shard under
+   `<output-dir>/shard_<i>_of_036/`, written by `wp_n25_shard_path`. One JSON row per cell, fields as built in
+   `_base_record_phase_c` and `_run_record_phase_c` of `wp_n4_multistart_refit.jl`: cell metadata
+   (`cell_key`, `system_id`, `initial_condition_set`, `seed`, `original_loss`, `oracle_structure`,
+   `true_structure`, `oracle_structure_hit`, `error`, …), `reference_starts` and `oracle_starts` (lists of per-start
+   dicts as returned by `_fit_fixed_structure_once`). Read the Julia code to get the exact field names; do not guess.
+   Note that the runner fits the oracle structure for every cell, also where it equals the truth.
+2. **C-5 oracle output (control reference):** `outputs/wp_n3_oracle_refit_phase_c/shard_*_of_036/results.jsonl`,
+   fields `reference_loss` / `reference_fit_meta` (with `accepted_attempt`, `fit_attempts`, `loss_evals`). Present
+   locally.
+3. **C-1 search records** for the duplicate-rate distribution: `experiments/paper1_phaseC_v1/run_registry.csv`
+   and the records it points to; the per-cell field is `structure_repeat_quantiles` (also present in the raw C-1
+   records under `outputs/phase_c_campaign_221a3a7/`). Use whichever is tracked or present; say which in the report.
+4. **WP-T1f cold starts** (independent reference, bound ∞):
+   `analysis/data/wp_t1d_neighbourhood/wp_t1f_campaign_1db11932c4335e480d374c7de1be35593b62b447/truth_cold_by_cell.csv`.
+5. **Feasibility labels:** systems 54, 55, 56, 57, 58, 59 are infeasible under the bound `[-10, 10]`; all other exact
+   systems are feasible (plan §9.2, §9.8). Take the system dimension from the Phase C support / classification
+   files the existing aggregators use; do not hard-code dimensions.
 
-## What to do
+## Deliverables
 
-1. **Merge the SINDy shards** into one table under `outputs/c6_sindy_baselines_5dd1df8/merged/`
-   (`details.csv`, plus a summary built with the harness's own `build_summary` from
-   `analysis/scripts/aggregate/run_phasec_noise_sindy_baselines.py`). Check: 4,536 distinct cells,
-   no duplicate keys, every configuration present for every cell, the export hash check passed for
-   every row. This merged table is the C-6 SINDy/Weak-SINDy deliverable.
-2. **SINDy source in the hierarchy.** Give `aggregate_phasec_hierarchy_n43.py` the ability to read
-   the clean SINDy rows from the merged C-6 table, condition (σ, ρ) = (0, 0). The three realizations
-   of (0,0) are the same data; assert that the results are identical across them and then use one,
-   so a deterministic method is not counted three times. Make this the default SINDy source.
-   Keep the WP-C4c file loadable as a cross-check.
-3. **EvoGrow variance-weighted generalization** from input 2. Control: the arithmetic mean of
-   `generalization_r2_by_dim` reproduces the stored `generalization_r2` in every non-diverged cell
-   (same tolerance as WP-N20); on dim 1 variance-weighted equals arithmetic exactly.
-4. **SINDy pruned structural F1 / precision / recall** from the merged table (exact systems only).
-5. Re-run the hierarchy into `outputs/phase_c_campaign_221a3a7/agg/hierarchy_n43b/` (do not
-   overwrite `hierarchy_n43/`).
+1. **`k8s/phase_c_c5_restart_curve_job.yaml`** — modelled on `k8s/phase_c_c5_oracle_job.yaml`: indexed Job,
+   36 completions, round-robin shards via `JOB_COMPLETION_INDEX`, image placeholder `<COMMIT_SHA>`, input
+   `/outputs/phase_c_c5_restart_curve_<COMMIT_SHA>/input/history.jsonl`, output
+   `/outputs/phase_c_c5_restart_curve_<COMMIT_SHA>/out`, `--campaign paper1_phaseC_v1 --starts 10`.
+   **No `activeDeadlineSeconds`** (project rule: no hard time cuts). Keep `ttlSecondsAfterFinished`, labels in the
+   same scheme with component `c5-restart-curve`. A header comment states the cost from §9.8 (expected ~100
+   core hours, upper bound 338 h, largest cell bound ~17 h) and that the figures are capacity planning, not evidence.
+2. **`analysis/scripts/aggregate/aggregate_phasec_restart_curve.py`** — reads all shard `starts.jsonl` files from
+   `--input-dir`, refuses to run if the cell set is not exactly the 180 expected exact C-1 cells (no duplicates, no
+   missing cells, no row with a non-null `error`) unless `--allow-incomplete` is given, and writes to `--output-dir`:
+   - **control:** for every cell where the C-5 oracle accepted attempt 1, reference start 1 loss compared with the
+     C-5 reference loss; bit-identical required. Output a per-cell control table and exit non-zero on any deviation
+     (hard stop, §9.8). Cells where C-5 accepted a later attempt are listed as "not comparable", not as failures.
+   - **curve table:** per k ∈ {1, 2, 3, 5, 10} × structure (reference, oracle) × stratum: n cells, cumulative
+     `loss_evals` over the first k starts (sum and quantiles q10/q50/q90 per cell), R² > 0.9 count and rate of the
+     best-of-k fit, sentinel count (loss ≥ 1e6), `reaches_or_beats_original` count, and the full loss threshold grid
+     1e-12, 1e-10, 1e-8, 1e-6, 1e-4 (count and share below each). Best-of-k = the start with minimal loss among
+     `start_index ≤ k`, exactly as `_best_result` in the Julia script.
+   - **strata (§9.8 item 5), never averaged across:** dimension; feasible versus infeasible; within dimension 3,
+     systems 52 and 57 versus the other dimension-3 systems; plus an `all_feasible` stratum.
+   - **per-cell first-hit table:** smallest k at which the best-of-k reference fit reaches R² > 0.9, or "not within
+     10".
+   - **k = 3 reading (§9.8, pre-declared):** on the feasible reference cells, R² > 0.9 rate at k = 3 and at k = 10,
+     their difference in percentage points, and a boolean "within 5 pp". Also the extra cumulative loss evaluations
+     from k = 3 to k = 10. Do not add any other threshold.
+   - **beside-tables, not merged:** C-1 duplicate-rate quantiles per dimension; WP-T1f cold-start hit rates (loss
+     < 1e-8, best of m = 10) per system, labelled "bound ∞".
+   - a `manifest.json` with input paths, their SHA-256, row counts and the script's own version string.
+3. **Tests** `analysis/tests/test_aggregate_phasec_restart_curve.py` on synthetic `starts.jsonl` input (no real
+   data): nested best-of-k, cumulative cost, threshold grid boundaries, strata separation, incomplete-set refusal,
+   control pass, control failure → non-zero exit, "not comparable" handling.
+4. **`SCRIPTS.md`:** replace the `TODO(Claude)` C-5 Abl-3 block with the real sequence: upload of the input history
+   to the NFS, `oc apply` with the manifest, collection from the NFS (mounted locally as
+   `/s/BigDataOrion/data-science/joedicke/...`), and the aggregator call. Output directory for tracked results:
+   `analysis/data/paper1_phaseC_v1/restart_curve/`.
+5. **Report** `codex/reports/REPORT_WP_N44.md`: what was built, which input files and fields were used, test
+   results, and anything in §9.8 that turned out to be ambiguous against the actual record format.
 
-## Controls (report each with numbers)
+## Verboten
 
-- EvoGrow back-compatibility from WP-N43 still passes unchanged.
-- ODEFormer back-compatibility still passes unchanged.
-- SINDy: the old back-compatibility target (`sindy_n31`) was built on the old source. **Do not force
-  it to pass.** Report, per configuration and regime, the old unit-level rate, the new one, and the
-  difference, and list every row whose R² > 0.9 verdict or structure hit changed. This is a finding
-  for Claude, not a failure.
-- SINDy new source vs WP-C4c: identical R² > 0.9 verdicts and supports on all 2,520 rows.
-- Equal system weight and dim-1 equality hold for all three methods, now including variance-weighted
-  generalization.
+- Running Julia, running any refit, or launching anything on Orion. Codex cannot run Julia here anyway; do not try.
+- Changing `studies/regression/wp_n4_multistart_refit.jl` or anything under `src/`.
+- Choosing, adding or changing any threshold, k value, stratum or reading beyond §9.8.
+- Reporting means or medians as effect sizes; quantiles and counts only.
+- Committing. Editing `codex/CURRENT_TASK.md`.
 
-A failed control other than the SINDy back-compatibility one is a stop: `blocked`, with numbers.
+## Abnahme
 
-## Rules
-
-No SINDy, ODEFormer or Julia runs. Python only. Pruning rule and §6b definitions unchanged. Do not
-edit `SCRIPTS.md` command blocks beyond adding the new command; Claude updates the WP-N30/N31
-references after reviewing the deltas. Tests for the new loader paths (realization-identity assert,
-variance-weight control) in the existing WP-N43 test file.
-
-## Report
-
-`codex/reports/REPORT_WP_N43B.md`: merge checks, all controls, the SINDy old-vs-new delta table,
-and the updated overall benchmark table (all methods, all configurations, both aggregations,
-structure). Leave everything uncommitted; status into `codex/STATUS.md`.
+- `python -m pytest analysis/tests/test_aggregate_phasec_restart_curve.py -q` passes.
+- The aggregator run on an empty or partial directory without `--allow-incomplete` exits non-zero with a clear
+  message.
+- The manifest parses as YAML, has 36 completions, no `activeDeadlineSeconds`, and differs from the C-5 oracle
+  manifest only in names, labels, script, paths, `--starts 10` and the header comment.
+- `STATUS.md` set to `done` with WP-N44 and the report path, or `blocked` with the reason.

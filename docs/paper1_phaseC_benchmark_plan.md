@@ -1019,7 +1019,7 @@ fingerprint and JSON serialisation (JSON has no `Inf`), checked by a test.
 Before the C-6 grid manifest is generated: gate G (§9.4a), including the realization design (9.4).
 The working order with owners and gates is the backlog in `CLAUDE.md` ("Backlog Paper 1").
 
-### 9.8 P-04 — the restart curve (Abl-3), specified 2026-10-13, **draft until the user freezes it**
+### 9.8 P-04 — the restart curve (Abl-3), **frozen 2026-10-13 (user)**
 
 **Why now.** The 2026-10-12 results (`DIARY.md`) attribute every exact dim-3 failure: the loss identifies the truth
 (WP-T1f), the truth is hard to fit (cold single starts reach loss < 1e-8 in 24.5 % on dim 2, 13.8 % on dim 3), and the
@@ -1076,10 +1076,6 @@ reading the collected `starts.jsonl`, computing items 1–6 and the control; (c)
 `SCRIPTS.md`. **No image rebuild:** the runner already stores `fit_meta.loss_evals` per start and is contained in
 `5dd1df8` and `1db1193`.
 
-**Open decisions for the user before the freeze.**
-
-1. **Bound.** `[-10, 10]` only (recommended: it is Paper 1's method, and the control against C-5 exists only there),
-   or additionally `[-1000, 1000]`, the next version's start (+~100–300 h). The insert can add the second arm later
-   without touching this one.
-2. **Image.** `5dd1df8` (recommended: slim, already on the nodes, verified bit-identical to C-5 at bound 10 in
-   B-02/B-03) or `1db1193` (the C-5 oracle image).
+**Decided by the user 2026-10-13, frozen:** bound `[-10, 10]` only (a `[-1000, 1000]` arm, ~+150 core hours by the
+B-02/B-03 fit-time ratio ×1.5, is left to the next version and can be added without touching this arm); image
+`5dd1df8`.
