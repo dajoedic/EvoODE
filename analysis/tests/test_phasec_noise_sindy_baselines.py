@@ -117,6 +117,40 @@ def test_e_sindy_is_deterministic_and_records_ensemble_defaults() -> None:
     assert metadata["base_optimizer"]["normalize_columns"] is False
 
 
+def test_weak_sindy_is_deterministic_and_seed_differs_from_e_sindy() -> None:
+    tmp_path = fresh_workspace("weak_sindy_determinism")
+    index_path = copy_real_export_fixture(tmp_path)
+    output_dir_1 = tmp_path / "out1"
+    output_dir_2 = tmp_path / "out2"
+
+    paths_1 = noise_sindy.run_baselines(minimal_config(tmp_path), index_path, output_dir_1, [], methods=["weak_sindy", "e_sindy"])
+    paths_2 = noise_sindy.run_baselines(minimal_config(tmp_path), index_path, output_dir_2, [], methods=["weak_sindy"])
+    details_1 = pd.read_csv(paths_1["details"]).sort_values(["method", "library_id"]).reset_index(drop=True)
+    details_2 = pd.read_csv(paths_2["details"]).sort_values(["method", "library_id"]).reset_index(drop=True)
+
+    weak_1 = details_1.loc[details_1["method"] == "weak_sindy"].sort_values("library_id").reset_index(drop=True)
+    weak_2 = details_2.sort_values("library_id").reset_index(drop=True)
+    e_sindy = details_1.loc[details_1["method"] == "e_sindy"].sort_values("library_id").reset_index(drop=True)
+
+    assert weak_1["weak_seed"].tolist() == weak_2["weak_seed"].tolist()
+    assert weak_1["sindy_coefficients_active"].tolist() == weak_2["sindy_coefficients_active"].tolist()
+    assert weak_1["weak_seed"].tolist() != e_sindy["ensemble_seed"].tolist()
+
+
+def test_sindy_only_output_does_not_gain_seed_columns() -> None:
+    tmp_path = fresh_workspace("sindy_no_seed_columns")
+    index_path = copy_real_export_fixture(tmp_path)
+    output_dir = tmp_path / "out"
+
+    paths = noise_sindy.run_baselines(minimal_config(tmp_path), index_path, output_dir, [], methods=["sindy"])
+    details = pd.read_csv(paths["details"])
+
+    assert set(details["method"]) == {"sindy"}
+    assert "weak_seed" not in details.columns
+    assert details["ensemble_seed"].isna().all()
+    assert details["ensemble_optimizer_metadata"].isna().all()
+
+
 def test_stage_report_glob_matches_available_real_stage_reports() -> None:
     tmp_path = fresh_workspace("stage_report_glob")
     index_path = copy_real_export_fixture(tmp_path, n_rows=4)

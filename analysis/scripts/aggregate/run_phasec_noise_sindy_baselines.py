@@ -184,8 +184,8 @@ def weak_source_note() -> str:
     )
 
 
-def esindy_seed(row: pd.Series, library_id: str) -> int:
-    key = {
+def sindy_seed_key(row: pd.Series, library_id: str) -> dict[str, Any]:
+    return {
         "system_id": int(row["system_id"]),
         "initial_condition_set": int(row["initial_condition_set"]),
         "noise_sigma": float(row["noise_sigma"]),
@@ -194,8 +194,21 @@ def esindy_seed(row: pd.Series, library_id: str) -> int:
         "data_condition_fingerprint": str(row["data_condition_fingerprint"]),
         "library_id": library_id,
     }
+
+
+def hash_seed(key: dict[str, Any]) -> int:
     text = json.dumps(key, sort_keys=True, separators=(",", ":"))
     return int(hashlib.sha256(text.encode("utf-8")).hexdigest()[:8], 16)
+
+
+def esindy_seed(row: pd.Series, library_id: str) -> int:
+    return hash_seed(sindy_seed_key(row, library_id))
+
+
+def weak_sindy_seed(row: pd.Series, library_id: str) -> int:
+    key = sindy_seed_key(row, library_id)
+    key["method"] = "weak_sindy"
+    return hash_seed(key)
 
 
 def esindy_metadata(seed: int | None, threshold: float) -> str:
@@ -258,9 +271,10 @@ def structural_metrics_pruned(
     }
 
 
-def fit_weak_sindy(train_x: np.ndarray, t_grid: np.ndarray, names: list[str], cfg: Any):
+def fit_weak_sindy(train_x: np.ndarray, t_grid: np.ndarray, names: list[str], cfg: Any, seed: int):
     import pysindy as ps
 
+    np.random.seed(seed)
     library = ps.WeakPDELibrary(
         function_library=build_library(cfg),
         derivative_order=0,
@@ -323,12 +337,14 @@ def run_one_model(
     fit_error = ""
     model = None
     ensemble_seed: int | None = None
+    weak_seed: int | None = None
     started = time.perf_counter()
     try:
         if method == "sindy":
             model = fit_sindy(observed_x, observed_t, names, cfg)
         elif method == "weak_sindy":
-            model = fit_weak_sindy(observed_x, observed_t, names, cfg)
+            weak_seed = weak_sindy_seed(export_row, cfg.library_id)
+            model = fit_weak_sindy(observed_x, observed_t, names, cfg, weak_seed)
         elif method == "e_sindy":
             ensemble_seed = esindy_seed(export_row, cfg.library_id)
             model = fit_e_sindy(observed_x, observed_t, names, cfg, ensemble_seed)
@@ -395,6 +411,8 @@ def run_one_model(
         "ensemble_optimizer_metadata": esindy_metadata(ensemble_seed, float(cfg.threshold)) if method == "e_sindy" else "",
         **support,
     }
+    if method == "weak_sindy":
+        row["weak_seed"] = weak_seed if weak_seed is not None else ""
     for regime, (prediction, status, eval_ic) in predictions.items():
         reference = clean_by_ic[eval_ic]
         arithmetic, variance_weighted, by_dim = r2_scores(reference, prediction)

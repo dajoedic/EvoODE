@@ -780,18 +780,33 @@ Copy-Item -Recurse outputs\phase_c_c6_data_conditions_<SHA>\* `
   S:\BigDataOrion\data-science\joedicke\phase_c_c6_data_conditions_<SHA>\
 ```
 
-Run SINDy-family baselines on the exported data. Existing SINDy/Weak-SINDy commands keep their
-default method list; E-SINDy is requested explicitly and sharded the same way:
+Run seeded Weak-SINDy and E-SINDy on the exported data into a new directory. Do not overwrite
+`outputs\c6_sindy_baselines_5dd1df8\` or tracked paper data:
 
 ```powershell
-python -c "import pandas as pd; from pathlib import Path; df=pd.read_csv(r'outputs\phase_c_c6_data_conditions_<SHA>\index.csv'); out=Path(r'outputs\c6_esindy_baselines_<SHA>\shard_indexes'); out.mkdir(parents=True, exist_ok=True); [df.iloc[i::10].to_csv(out / f'shard_{i}.csv', index=False) for i in range(10)]"
+python -c "import pandas as pd; from pathlib import Path; df=pd.read_csv(r'outputs\phase_c_c6_data_conditions_<SHA>\index.csv'); out=Path(r'outputs\c6_seeded_weak_esindy_baselines_<SHA>\shard_indexes'); out.mkdir(parents=True, exist_ok=True); [df.iloc[i::10].to_csv(out / f'shard_{i}.csv', index=False) for i in range(10)]"
 
 for ($i = 0; $i -lt 10; $i++) {
   python analysis/scripts/aggregate/run_phasec_noise_sindy_baselines.py `
-    --export-index outputs\c6_esindy_baselines_<SHA>\shard_indexes\shard_$i.csv `
-    --output-dir outputs\c6_esindy_baselines_<SHA>\shard_$i `
-    --methods e_sindy
+    --export-index outputs\c6_seeded_weak_esindy_baselines_<SHA>\shard_indexes\shard_$i.csv `
+    --output-dir outputs\c6_seeded_weak_esindy_baselines_<SHA>\shard_$i `
+    --methods weak_sindy,e_sindy
 }
+```
+
+Prepare merge-compatible shard directories: SINDy remains the byte-identical existing
+`outputs\c6_sindy_baselines_5dd1df8\` source, Weak-SINDy comes from the seeded re-run, and
+E-SINDy is kept in its own shard tree for the hierarchy `--esindy-*` inputs:
+
+```powershell
+python -c "import pandas as pd, shutil; from pathlib import Path; old=Path(r'outputs\c6_sindy_baselines_5dd1df8'); new=Path(r'outputs\c6_seeded_weak_esindy_baselines_<SHA>'); sw=Path(r'outputs\c6_seeded_sindy_weak_baselines_<SHA>'); eo=Path(r'outputs\c6_seeded_esindy_baselines_<SHA>'); [((sw/f'shard_{i}').mkdir(parents=True, exist_ok=True), (eo/f'shard_{i}').mkdir(parents=True, exist_ok=True), pd.concat([pd.read_csv(old/f'shard_{i}'/'details.csv').loc[lambda d: d['method'].eq('sindy')], pd.read_csv(new/f'shard_{i}'/'details.csv').loc[lambda d: d['method'].eq('weak_sindy')]], ignore_index=True, sort=False).to_csv(sw/f'shard_{i}'/'details.csv', index=False), pd.read_csv(new/f'shard_{i}'/'details.csv').loc[lambda d: d['method'].eq('e_sindy')].to_csv(eo/f'shard_{i}'/'details.csv', index=False), shutil.copy2(new/f'shard_{i}'/'export_checks.csv', sw/f'shard_{i}'/'export_checks.csv'), shutil.copy2(new/f'shard_{i}'/'export_checks.csv', eo/f'shard_{i}'/'export_checks.csv')) for i in range(10)]"
+
+python analysis/scripts/aggregate/aggregate_phasec_hierarchy_n43.py `
+  --sindy-shards-dir outputs\c6_seeded_sindy_weak_baselines_<SHA> `
+  --sindy-merged-dir outputs\c6_seeded_sindy_weak_baselines_<SHA>\merged `
+  --esindy-shards-dir outputs\c6_seeded_esindy_baselines_<SHA> `
+  --esindy-merged-dir outputs\c6_seeded_esindy_baselines_<SHA>\merged `
+  --output-dir outputs\phase_c_campaign_221a3a7\agg\hierarchy_seeded_weak_esindy_<SHA>
 ```
 
 After the shards are present, include E-SINDy in the §9.3 hierarchy. If the E-SINDy directory is
@@ -801,8 +816,8 @@ absent, the command still runs and records `esindy_status: absent` in `metadata.
 python analysis/scripts/aggregate/aggregate_phasec_hierarchy_n43.py `
   --sindy-shards-dir outputs\c6_sindy_baselines_5dd1df8 `
   --sindy-merged-dir outputs\c6_sindy_baselines_5dd1df8\merged `
-  --esindy-shards-dir outputs\c6_esindy_baselines_<SHA> `
-  --esindy-merged-dir outputs\c6_esindy_baselines_<SHA>\merged `
+  --esindy-shards-dir outputs\c6_seeded_esindy_baselines_<SHA> `
+  --esindy-merged-dir outputs\c6_seeded_esindy_baselines_<SHA>\merged `
   --output-dir outputs\phase_c_campaign_221a3a7\agg\hierarchy_n45
 ```
 
