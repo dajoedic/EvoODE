@@ -1,0 +1,7 @@
+variant,dimension,neighbor_class,n_warm_neighbour_rows,n_not_from_warm_attempt,share_not_from_warm_attempt
+warm_reference,2,add_one,410,0,0.0
+warm_reference,2,remove_one,70,16,0.22857142857142856
+warm_reference,2,swap_one,690,157,0.22753623188405797
+warm_reference,3,add_one,802,0,0.0
+warm_reference,3,remove_one,110,33,0.3
+warm_reference,3,swap_one,1828,565,0.30908096280087527

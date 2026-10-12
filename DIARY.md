@@ -4,6 +4,60 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ---
 
+## 2026-10-12
+
+### Orion: B-05 und WP-T1f fertig, eingesammelt und ausgewertet; C-6 langsamer
+
+Stand 12.10. 23:36: C-6 gekappt 666/3.366, ungekappt 180/461, 32 Pods, 0 fehlgeschlagen. Das gekappte Raster schaffte
+vom 10.10. bis zum 12.10. nur ~31 Zellen/Tag (davor ~75); hält das an, endet es erst etwa im Januar. B-05 (10/10, letzte
+Zelle 11.10.) und WP-T1f (36/36, letzte Zelle 10.10.) sind durch; die Jobs wurden per TTL abgeräumt. Beide vom NFS nach
+`outputs/` eingesammelt. Der Nutzer wollte die Auswertung sofort, nicht erst nach dem Cluster (die Blindregel betrifft nur C-6).
+
+**Tor B5 (C-8 Teil B, Suche), §9.6: Ändert eine lockerere Grenze das Suchverhalten qualitativ?** 10 Records, `error`
+leer, `git 5dd1df8`, Verhalten `ffb0266c7913352c`, Config `bdd0d2785f776487` (1000) / `500f861e26f07f59` (∞). Vergleich
+gegen die C-1-Zelle (Grenze 10, Seed 42, gleiche IC), zusammen mit B-04:
+`analysis/data/paper1_phaseC_v1/c8_search_b04_b05/comparison_vs_c1.csv`.
+
+- **1 und 24 (Kontrollen):** 8/8 gleicher Support, gleicher `pruned_match`, R² = 1. Loss-Evals ×1,00–1,48, Ausreißer
+  System 1 IC 1 (×17 bei 1000, ×6,7 bei ∞, bekannt aus B-04).
+- **52:** 4/4 **identischer Support**, Loss auf drei Stellen gleich, R² unverändert (0,975 / 0,573). Die Grenze greift
+  auf dem Suchpfad von 52 nicht; das Suchversagen ist grenzunabhängig.
+- **57 (Rössler):** 4/4 **anderer Support, keiner wahr und keiner näher an der Wahrheit**; R² in beide Richtungen
+  (IC 1: 0,953 → 0,987 bei 1000, → 0,823 bei ∞; IC 2: 0,939 → 0,965 / 0,966). Das B-03-Orakel hatte die wahre
+  Struktur von 57 ohne Grenze in 5/6 Refits gefittet. **Damit ist auch 57 ein Suchversagen**; die Grenze erklärt den
+  dim-3-Kollaps für 57 nicht.
+- Aufwand: Loss-Evals ×0,78–1,54; `step_limit`-Lösungen auf 52/57 ×1,8–3,8, divergierte bis ×2,8 — dieselbe
+  Steifigkeit wie bei B-03/B-04. Zeit nur als Kontext: 57 ohne Grenze 88 h / 184 h statt 17 h / 22 h.
+- Die Entscheidung aus Teil A (`[-1000, 1000]` als Start der nächsten Version) bleibt; Teil B gibt keinen Grund dagegen.
+  Kein Trefferanteil wird daraus publiziert (§9.6).
+- Nebenbefund: zwei lokale B-04-Records tragen `git_dirty = true` (System 1 IC 2 und System 24 IC 1, beide Grenze 1000).
+
+**Tor 3 Paper 2 (WP-T1f, Schritt 3 in `docs/phd_thesis_arc.md`): Ist der wahre Support ein lokales Optimum des
+Trajektorien-Losses? Ja, ohne Ausnahme.** 4.342 Nachbarzeilen, 36 Zellen (dim 2: 20, dim 3: 16), `--aggregate-only`
+nach `analysis/data/wp_t1d_neighbourhood/wp_t1f_campaign_1db1193…/`. Zuordnungskontrolle bei Datentoleranz in allen
+36 Zellen ≤ 1e-20.
+
+| dim | Klasse | unter dem Boden (alle vergleichbar) | davon kein Budget erschöpft | kleinster Abstand (log10 Verhältnis) |
+|---|---|---|---|---|
+| 2 | swap_one | **0 / 689** | 0 / 349 | 5,3 (q05 10,1) |
+| 2 | remove_one | **0 / 70** | 0 / 37 | 10,1 |
+| 3 | swap_one | **0 / 1.790** | 0 / 187 | 5,0 (q05 8,6) |
+| 3 | remove_one | **0 / 109** | 0 / 11 | 8,1 |
+| 2 / 3 | add_one | 215/410, 455/802 | — | Verschachtelung, per Konstruktion kein Befund |
+
+Die entscheidende Klasse (gleich große Vertauschung) schlägt die Wahrheit in **keinem von 2.479 Fällen**, und der
+Abstand ist mindestens fünf Größenordnungen. Die Stopp-Regel von Schritt 3 („nein → Zweig beenden“) greift nicht; der
+Zweig darf zu Schritt 4 (WP-T2a-Pilot mit Orakel-Prior). Einschränkungen: Auf dim 3 hat bei 1.135 der 1.790 Swaps der
+Boden-Fit das Budget erschöpft (der Boden liegt trotzdem ≤ 1,1e-6, Lorenz an der Optimierergrenze); 23–31 % der
+Swap-/Remove-Zeilen stammen nicht aus dem Warmstart, sondern aus einem Retry.
+
+**Kaltstarts der Wahrheit (m = 10, ohne Grenze):** ein Einzelstart erreicht Loss < 1e-8 auf dim 2 in 49/200 (24,5 %), auf
+dim 3 in 22/160 (13,8 %) — und auf dim 3 ausschließlich bei 52 (13/20) und 57 (8/20); 54, 55, 56, 58, 59, 61 bleiben
+bei 0/20 bzw. 1/20. **Das Bild vom 01.10. ist jetzt vollständig:** Der Loss erkennt die Wahrheit überall, auch auf dim
+3; die Wahrheit ist schwer zu fitten; und die Suche findet sie auf 52 und 57 nicht, obwohl sie dort fittbar ist.
+
+---
+
 ## 2026-10-05
 
 ### Pause bis zum Ende aller Orion-Läufe, Blindregel für C-6 (Nutzer, „Weg 2“)

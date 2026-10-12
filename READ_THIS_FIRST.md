@@ -33,14 +33,15 @@ jedem Statuswechsel aktualisieren.
 | **C-6-Raster gekappt** (3.366 Zellen, 24 Pods) | **666** (591) | zuletzt nur ~31/Tag (davor ~75/Tag) → bei diesem Tempo ~Jan.; zwei Tage sind noch kein Trend | einsammeln (NFS `phase_c_c6_grid_<SHA>/tasks`), Clean-Auswertung, Aggregation |
 | **C-6-Raster ungekappt, Seed 42** (461, 8 Pods) | **180** (141) | ~16/Tag → ~Ende Okt. | danach entscheidet der Nutzer über Seed 123/7 (Plan §9.4c Punkt 5) |
 
-**Fertig seit dem 10.10. (Jobs per TTL abgeräumt, technisch geprüft, Inhalte nicht ausgewertet):**
-- **B-04-Rest + B-05: 10/10**, letzte Zelle (57, unbeschränkt) am 11.10. 09:52. Alle 10 Records `error = None`,
-  `git 5dd1df8`, Verhaltens-Fingerprint `ffb0266c7913352c`, Config `bdd0d2785f776487` (1000) / `500f861e26f07f59` (Inf).
-  NFS `phase_c_c8_search_b05_5dd1df8…/tasks`. → **Tor B5** offen.
-- **WP-T1f: 36/36**, letzte Zelle 58 IC 1 am 10.10. 17:39 (185 Zeilen, so viele wie IC 2). NFS
-  `wp_t1f_campaign_1db1193…/`. → einsammeln, `--aggregate-only`, **Tor 3 Paper 2**.
+**Fertig, eingesammelt und ausgewertet am 12.10. (`DIARY.md` 12.10.):**
+- **B-05 (Tor B5):** 1/24/52 gleicher Support wie C-1; 57 wechselt den Support, findet die Wahrheit aber mit keiner
+  Grenze, obwohl das Orakel sie ohne Grenze fittet → Suchversagen. `[-1000, 1000]` bleibt Start der nächsten Version.
+  Tabelle `analysis/data/paper1_phaseC_v1/c8_search_b04_b05/`.
+- **WP-T1f (Tor 3 Paper 2):** 0 von 2.479 Swaps und 0 von 179 Removes unter dem Boden, Abstand ≥ 5 Größenordnungen →
+  wahrer Support ist lokales Optimum, Stopp-Regel greift nicht. Nächster Schritt des Zweigs wäre der WP-T2a-Pilot
+  (Paper 2, nicht Paper 1) — Nutzer entscheidet, wann.
 
-0 fehlgeschlagene Pods am 12.10. Ob die Tore B5/3 einzeln oder erst am Ende angesehen werden, hat der Nutzer noch nicht gesagt.
+0 fehlgeschlagene Pods am 12.10.
 
 Lokal läuft nichts. **SINDy/Weak-SINDy auf C-6 fertig** (4.536 Zellen × 10 Konf., 40 min, 10 Shards; (0,0)-Kontrolle
 gegen WP-C4c 2.520/2.520). Getrackt unter `analysis/data/paper1_phaseC_v1/c6_sindy_5dd1df8/`, `details.csv` (236 MB)

@@ -1,0 +1,13 @@
+variant,dimension,neighbor_class,comparison_scope,n_neighbor_rows,n_valid_margins,n_neighbors_below_floor,share_neighbors_below_floor
+warm_reference,2,add_one,all_comparable,410,410,215,0.524390243902439
+warm_reference,2,add_one,neither_exhausted,410,133,72,0.5413533834586466
+warm_reference,2,remove_one,all_comparable,70,70,0,0.0
+warm_reference,2,remove_one,neither_exhausted,70,37,0,0.0
+warm_reference,2,swap_one,all_comparable,690,689,0,0.0
+warm_reference,2,swap_one,neither_exhausted,690,349,0,0.0
+warm_reference,3,add_one,all_comparable,802,802,455,0.5673316708229427
+warm_reference,3,add_one,neither_exhausted,802,52,28,0.5384615384615384
+warm_reference,3,remove_one,all_comparable,110,109,0,0.0
+warm_reference,3,remove_one,neither_exhausted,110,11,0,0.0
+warm_reference,3,swap_one,all_comparable,1828,1790,0,0.0
+warm_reference,3,swap_one,neither_exhausted,1828,187,0,0.0
