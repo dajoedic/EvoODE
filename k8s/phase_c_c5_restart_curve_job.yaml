@@ -18,7 +18,7 @@ spec:
   # 36 round-robin shards. The image <COMMIT_SHA> must carry
   # studies/regression/wp_n4_multistart_refit.jl with Phase-C mode.
   completions: 36
-  parallelism: 30
+  parallelism: 8
   backoffLimit: 10
   template:
     metadata:

@@ -46,6 +46,8 @@ jedem Statuswechsel aktualisieren.
   bitgleich gegen C-5, Eingabe liegt auf dem NFS (`phase_c_c5_restart_curve_5dd1df8…/input/history.jsonl`, sha
   identisch zur C-5-Eingabe). **Start durch den Nutzer** mit `k8s/phase_c_c5_restart_curve_job.yaml`, Image `5dd1df8`,
   ~130 Kernstunden erwartet (Schranke 338 h).
+  **Pod-Limit (Nutzer 13.10.): EvoODE max. 32 Pods gesamt — C-6 belegt alle 32.** P-04 (`parallelism: 8`) startet erst,
+  wenn Slots frei werden (ungekapptes C-6-Raster, ~Ende Okt.); laufende Jobs nicht herunterdrehen (tötet Pods).
 - **WP-T2a-Pilot** spezifiziert und eingefroren (`docs/phd_thesis_arc.md` §5 Schritt 4): wartet auf P-04.
 - **E-SINDy + Weak-SINDy Pflicht in Paper 1** (Nutzer, Plan §9.5a). **WP-N45 läuft bei Codex** (E-SINDy-Arm,
   beide in der §9.3-Hierarchie); den vollen E-SINDy-Lauf macht danach Claude lokal.
