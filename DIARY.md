@@ -56,6 +56,8 @@ dim 3 in 22/160 (13,8 %) — und auf dim 3 ausschließlich bei 52 (13/20) und 57
 bei 0/20 bzw. 1/20. **Das Bild vom 01.10. ist jetzt vollständig:** Der Loss erkennt die Wahrheit überall, auch auf dim
 3; die Wahrheit ist schwer zu fitten; und die Suche findet sie auf 52 und 57 nicht, obwohl sie dort fittbar ist.
 
+<!-- 3d5849e -->
+
 ---
 
 ## 2026-10-05
