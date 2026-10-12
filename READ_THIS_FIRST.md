@@ -10,7 +10,7 @@ zweites davon. Alles Dauerhafte gehört dorthin, nach `PAPER_1.md` oder ins `DIA
 **Regeln:** wird immer **vollständig überschrieben**, nie angehängt. Was älter als ein paar Tage
 ist, ist vermutlich falsch — dann gilt `CLAUDE.md`.
 
-**Stand: 2026-10-10, 13:05. PAUSE bis alles auf Orion durch ist (Nutzer, 05.10.). Phase C abgeschlossen; seit 05.10. nur Statusabfragen.**
+**Stand: 2026-10-12, 23:50. PAUSE bis alles auf Orion durch ist (Nutzer, 05.10.). Phase C abgeschlossen; seit 05.10. nur Statusabfragen.**
 
 > **BLINDREGEL C-6 (Nutzer, 05.10., „Weg 2“):** Bis die Entscheidungsregel für Story-Linie (b) mit dem Nutzer
 > festgelegt und als Plan §9.4d eingefroren ist, sieht sich Claude **keine C-6-EvoGrow-Ergebnisse** an — weder
@@ -26,18 +26,21 @@ jedem Statuswechsel aktualisieren.
 
 ---
 
-## 1. Was läuft (Paper 1), alles auf Orion, Image `5dd1df8` außer C-3/T1f
+## 1. Was läuft (Paper 1), alles auf Orion, Image `5dd1df8`
 
-| Lauf | Stand 10.10. 13:05 (05.10.) | Erwartetes Ende | Wenn fertig |
+| Lauf | Stand 12.10. 23:36 (10.10. 13:05) | Erwartetes Ende | Wenn fertig |
 |---|---|---|---|
-| **C-6-Raster gekappt** (3.366 Zellen, 24 Pods) | **591** (216) | ~88/Tag fortgeschrieben → ~Mitte Nov.; teuerste zuerst, also eher früher | einsammeln (NFS `phase_c_c6_grid_<SHA>/tasks`), Clean-Auswertung, Aggregation |
-| **C-6-Raster ungekappt, Seed 42** (461, 8 Pods) | **141** (42) | ~21/Tag → ~Ende Okt. | danach entscheidet der Nutzer über Seed 123/7 (Plan §9.4c Punkt 5) |
-| **B-04-Rest + B-05** (10 Zellen) | **9/10** (6/10) | letzte Zelle (Index 9) läuft seit 6 d 19 h, erwartet waren 1–3 Tage | Tor B5. Bisher: gleiches Ergebnis wie C-1 (24 ∞, 52/1000) |
-| WP-T1f | 35/36 | 58 IC 1 läuft **seit 9 Tagen** — dem Nutzer am 10.10. gemeldet, Entscheidung offen (weiterlaufen oder abbrechen + `--aggregate-only`) | `--aggregate-only`, Tor 3 Paper 2 |
+| **C-6-Raster gekappt** (3.366 Zellen, 24 Pods) | **666** (591) | zuletzt nur ~31/Tag (davor ~75/Tag) → bei diesem Tempo ~Jan.; zwei Tage sind noch kein Trend | einsammeln (NFS `phase_c_c6_grid_<SHA>/tasks`), Clean-Auswertung, Aggregation |
+| **C-6-Raster ungekappt, Seed 42** (461, 8 Pods) | **180** (141) | ~16/Tag → ~Ende Okt. | danach entscheidet der Nutzer über Seed 123/7 (Plan §9.4c Punkt 5) |
 
-C-3 ist fertig und eingesammelt (05.10., `ac64ccc`). 0 fehlgeschlagene Pods/Jobs am 10.10. Auf dem NFS liegen für das
-gekappte Raster 1.204 `.jsonl` gegenüber 591 Job-Completions (vermutlich Heartbeats mitgezählt; beim Einsammeln prüfen,
-Inhalt wegen Blindregel nicht geöffnet). Statusseite „EvoODE auf Orion“ am 10.10. neu veröffentlicht.
+**Fertig seit dem 10.10. (Jobs per TTL abgeräumt, technisch geprüft, Inhalte nicht ausgewertet):**
+- **B-04-Rest + B-05: 10/10**, letzte Zelle (57, unbeschränkt) am 11.10. 09:52. Alle 10 Records `error = None`,
+  `git 5dd1df8`, Verhaltens-Fingerprint `ffb0266c7913352c`, Config `bdd0d2785f776487` (1000) / `500f861e26f07f59` (Inf).
+  NFS `phase_c_c8_search_b05_5dd1df8…/tasks`. → **Tor B5** offen.
+- **WP-T1f: 36/36**, letzte Zelle 58 IC 1 am 10.10. 17:39 (185 Zeilen, so viele wie IC 2). NFS
+  `wp_t1f_campaign_1db1193…/`. → einsammeln, `--aggregate-only`, **Tor 3 Paper 2**.
+
+0 fehlgeschlagene Pods am 12.10. Ob die Tore B5/3 einzeln oder erst am Ende angesehen werden, hat der Nutzer noch nicht gesagt.
 
 Lokal läuft nichts. **SINDy/Weak-SINDy auf C-6 fertig** (4.536 Zellen × 10 Konf., 40 min, 10 Shards; (0,0)-Kontrolle
 gegen WP-C4c 2.520/2.520). Getrackt unter `analysis/data/paper1_phaseC_v1/c6_sindy_5dd1df8/`, `details.csv` (236 MB)
