@@ -176,6 +176,62 @@ def test_c6_sindy_loader_asserts_clean_realization_identity() -> None:
         n43.assert_clean_realization_identity(pd.DataFrame(rows))
 
 
+def test_c6_loader_keeps_sindy_family_methods_separate() -> None:
+    rows = []
+    for method in ["sindy", "weak_sindy", "e_sindy"]:
+        for realization in [1, 2, 3]:
+            rows.append(
+                {
+                    "method": method,
+                    "library_id": "poly",
+                    "system_id": 1,
+                    "system_name": "system 1",
+                    "dimension": 1,
+                    "source_initial_condition_set": 1,
+                    "target_initial_condition_set": 2,
+                    "noise_sigma": 0.0,
+                    "subsample_rho": 0.0,
+                    "noise_realization": realization,
+                    "fit_status": "success",
+                    "reconstruction_integration_status": "success",
+                    "generalization_integration_status": "success",
+                    "reconstruction_diverged_or_nonfinite": False,
+                    "generalization_diverged_or_nonfinite": False,
+                    "reconstruction_r2_arithmetic_mean": 0.99,
+                    "reconstruction_r2_variance_weighted": 0.99,
+                    "generalization_r2_arithmetic_mean": 0.95,
+                    "generalization_r2_variance_weighted": 0.95,
+                    "reconstruction_r2_arithmetic_mean_gt_0_9": True,
+                    "reconstruction_r2_variance_weighted_gt_0_9": True,
+                    "generalization_r2_arithmetic_mean_gt_0_9": True,
+                    "generalization_r2_variance_weighted_gt_0_9": True,
+                    "sindy_structure_hit_raw": True,
+                    "sindy_structure_hit_pruned": True,
+                    "active_terms_raw": '[["x0"]]',
+                    "active_terms_pruned": '[["x0"]]',
+                    "sindy_structure_precision_pruned": 1.0,
+                    "sindy_structure_recall_pruned": 1.0,
+                    "sindy_structure_f1_pruned": 1.0,
+                }
+            )
+    classes = pd.DataFrame(
+        [
+            {
+                "system_id": 1,
+                "threeway_class": "fully_representable",
+                "phasec_true_threeway_basis_name": n43.TRUE_BASIS,
+            }
+        ]
+    )
+
+    loaded = n43.load_sindy_wide(pd.DataFrame(rows), classes)
+
+    assert set(loaded["method"]) == {"SINDy", "Weak-SINDy", "E-SINDy"}
+    assert len(loaded[loaded["method"].eq("SINDy")]) == 1
+    assert len(loaded[loaded["method"].eq("Weak-SINDy")]) == 3
+    assert len(loaded[loaded["method"].eq("E-SINDy")]) == 3
+
+
 def test_evogrow_generalization_variance_weighted_control(tmp_path: Path) -> None:
     registry = pd.DataFrame(
         [

@@ -1,4 +1,4 @@
 status: done
-task:   WP-N44
-report: codex/reports/REPORT_WP_N44.md
-note:   restart curve manifest, aggregator, tests, scripts docs, and report completed; tests pass with workspace basetemp
+task:   WP-N45
+report: codex/reports/REPORT_WP_N45.md
+note:   E-SINDy runner, Weak/E hierarchy support, tests, smoke, scripts docs, and report completed

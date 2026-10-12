@@ -71,6 +71,11 @@ def parse_args() -> argparse.Namespace:
         default="",
         help="Optional export index for the (noise_sigma=0, subsample_rho=0) C-1 reproduction check.",
     )
+    parser.add_argument(
+        "--methods",
+        default="sindy,weak_sindy",
+        help="Comma-separated methods to run. Valid values: sindy, weak_sindy, e_sindy.",
+    )
     return parser.parse_args()
 
 
@@ -179,6 +184,42 @@ def weak_source_note() -> str:
     )
 
 
+def esindy_seed(row: pd.Series, library_id: str) -> int:
+    key = {
+        "system_id": int(row["system_id"]),
+        "initial_condition_set": int(row["initial_condition_set"]),
+        "noise_sigma": float(row["noise_sigma"]),
+        "subsample_rho": float(row["subsample_rho"]),
+        "noise_realization": int(row["noise_realization"]),
+        "data_condition_fingerprint": str(row["data_condition_fingerprint"]),
+        "library_id": library_id,
+    }
+    text = json.dumps(key, sort_keys=True, separators=(",", ":"))
+    return int(hashlib.sha256(text.encode("utf-8")).hexdigest()[:8], 16)
+
+
+def esindy_metadata(seed: int | None, threshold: float) -> str:
+    payload = {
+        "optimizer": "pysindy.EnsembleOptimizer",
+        "base_optimizer": {
+            "optimizer": "pysindy.STLSQ",
+            "threshold": threshold,
+            "alpha": 1e-6,
+            "normalize_columns": False,
+        },
+        "bagging": True,
+        "library_ensemble": False,
+        "n_models": 20,
+        "n_subset": None,
+        "n_candidates_to_drop": 1,
+        "replace": True,
+        "ensemble_aggregator": None,
+        "ensemble_aggregator_effective": "median",
+        "seed": seed,
+    }
+    return json.dumps(payload, sort_keys=True, separators=(",", ":"))
+
+
 def serialize_coefficients(coefficients: np.ndarray, feature_names: list[str]) -> str:
     payload = []
     for row in coefficients:
@@ -234,6 +275,33 @@ def fit_weak_sindy(train_x: np.ndarray, t_grid: np.ndarray, names: list[str], cf
     return model
 
 
+def fit_e_sindy(train_x: np.ndarray, t_grid: np.ndarray, names: list[str], cfg: Any, seed: int):
+    import pysindy as ps
+
+    np.random.seed(seed)
+    model = ps.SINDy(
+        optimizer=ps.EnsembleOptimizer(
+            ps.STLSQ(threshold=cfg.threshold, alpha=1e-6, normalize_columns=False),
+            bagging=True,
+        ),
+        feature_library=build_library(cfg),
+        differentiation_method=ps.FiniteDifference(order=2),
+    )
+    model.fit(train_x, t=t_grid, feature_names=names)
+    return model
+
+
+def parse_methods(value: str) -> list[str]:
+    valid = {"sindy", "weak_sindy", "e_sindy"}
+    methods = [item.strip() for item in value.split(",") if item.strip()]
+    if not methods:
+        fail("at least one method must be selected")
+    unknown = sorted(set(methods) - valid)
+    if unknown:
+        fail(f"unknown method(s): {unknown}; valid methods are {sorted(valid)}")
+    return methods
+
+
 def run_one_model(
     method: str,
     cfg: Any,
@@ -254,12 +322,16 @@ def run_one_model(
     fit_status = "success"
     fit_error = ""
     model = None
+    ensemble_seed: int | None = None
     started = time.perf_counter()
     try:
         if method == "sindy":
             model = fit_sindy(observed_x, observed_t, names, cfg)
         elif method == "weak_sindy":
             model = fit_weak_sindy(observed_x, observed_t, names, cfg)
+        elif method == "e_sindy":
+            ensemble_seed = esindy_seed(export_row, cfg.library_id)
+            model = fit_e_sindy(observed_x, observed_t, names, cfg, ensemble_seed)
         else:
             fail(f"unknown method: {method}")
     except Exception as exc:
@@ -319,6 +391,8 @@ def run_one_model(
         "sindy_coefficients_active": serialize_coefficients(coefficients, feature_names),
         **structural_metrics_pruned(pruned_terms, true_terms, support),
         "weak_sindy_source_note": weak_source_note() if method == "weak_sindy" else "",
+        "ensemble_seed": ensemble_seed if ensemble_seed is not None else "",
+        "ensemble_optimizer_metadata": esindy_metadata(ensemble_seed, float(cfg.threshold)) if method == "e_sindy" else "",
         **support,
     }
     for regime, (prediction, status, eval_ic) in predictions.items():
@@ -444,6 +518,7 @@ def run_baselines(
     clean_t = np.linspace(float(config.get("t_start", 0.0)), float(config.get("t_end", 10.0)), int(config.get("time_points", 512)))
     configs = library_grid(config)
     requested_methods = methods if methods is not None else ["sindy", "weak_sindy"]
+    parse_methods(",".join(requested_methods))
     detail_rows: list[dict[str, Any]] = []
     checks: list[dict[str, Any]] = []
     exported_cells: dict[tuple[int, int], tuple[np.ndarray, np.ndarray]] = {}
@@ -661,6 +736,7 @@ def main() -> int:
             Path(args.export_index).resolve(),
             output_dir,
             expand_stage_report_paths(args.stage_report),
+            methods=parse_methods(args.methods),
         )
         printable = {key: str(value) for key, value in paths.items()}
         control_paths, control_note, control_ok = control_status(args.control_export_index, config_path, output_dir)

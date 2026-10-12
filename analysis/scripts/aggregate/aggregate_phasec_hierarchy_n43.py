@@ -1,5 +1,6 @@
 import argparse
 import hashlib
+import io
 import json
 import math
 import sys
@@ -29,6 +30,7 @@ from scripts.aggregate.run_phasec_sindy_baseline import (  # noqa: E402
 DEFAULT_OUTPUT_DIR = REPO_ROOT / "outputs" / "phase_c_campaign_221a3a7" / "agg" / "hierarchy_n43b"
 DEFAULT_C6_SINDY_DIR = REPO_ROOT / "outputs" / "c6_sindy_baselines_5dd1df8"
 DEFAULT_C6_MERGED_DIR = DEFAULT_C6_SINDY_DIR / "merged"
+DEFAULT_N43B_REFERENCE = REPO_ROOT / "analysis" / "data" / "paper1_phaseC_v1" / "hierarchy_n43b" / "benchmark.csv"
 DEFAULT_C4C_SINDY_DETAILS = (
     REPO_ROOT / "analysis" / "data" / "paper1_phaseC_v1" / "phasec_sindy_baseline_wp_c4c_export" / "details.csv"
 )
@@ -61,6 +63,9 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--sindy-details", default=str(DEFAULT_C6_MERGED_DIR / "details.csv"))
     parser.add_argument("--sindy-shards-dir", default=str(DEFAULT_C6_SINDY_DIR))
     parser.add_argument("--sindy-merged-dir", default=str(DEFAULT_C6_MERGED_DIR))
+    parser.add_argument("--esindy-details", default="", help="Optional merged E-SINDy details.csv.")
+    parser.add_argument("--esindy-shards-dir", default="", help="Optional E-SINDy shard directory.")
+    parser.add_argument("--esindy-merged-dir", default="", help="Optional output directory for merged E-SINDy shards.")
     parser.add_argument("--sindy-c4c-details", default=str(DEFAULT_C4C_SINDY_DETAILS))
     parser.add_argument("--sindy-old-details", default=str(DEFAULT_OLD_SINDY_DETAILS))
     parser.add_argument(
@@ -82,6 +87,11 @@ def parse_args() -> argparse.Namespace:
         default="outputs/phase_c_campaign_221a3a7/agg/odeformer_n40_reference/phasec_odeformer_paired_summary.csv",
     )
     parser.add_argument("--output-dir", default=str(DEFAULT_OUTPUT_DIR))
+    parser.add_argument(
+        "--n43b-reference-benchmark",
+        default=str(DEFAULT_N43B_REFERENCE),
+        help="Reference benchmark.csv for byte-identity control of pre-existing N43b methods.",
+    )
     return parser.parse_args()
 
 
@@ -120,10 +130,16 @@ def read_table(path: Path) -> pd.DataFrame:
     return pd.read_csv(path)
 
 
-def merge_sindy_shards(shards_dir: Path, merged_dir: Path) -> dict[str, Path]:
+def merge_sindy_shards(
+    shards_dir: Path,
+    merged_dir: Path,
+    expected_methods: set[str] | None = None,
+    label: str = "C-6 SINDy",
+) -> dict[str, Path]:
+    expected_methods = expected_methods or {"sindy", "weak_sindy"}
     shard_paths = sorted(shards_dir.glob("shard_*/details.csv"))
     if not shard_paths:
-        fail(f"no SINDy shard details found under {shards_dir}")
+        fail(f"no {label} shard details found under {shards_dir}")
     frames = []
     for path in shard_paths:
         frame = pd.read_csv(path)
@@ -134,16 +150,24 @@ def merge_sindy_shards(shards_dir: Path, merged_dir: Path) -> dict[str, Path]:
     run_keys = cell_keys + ["method", "library_id"]
     duplicate = details.duplicated(run_keys, keep=False)
     if bool(duplicate.any()):
-        fail(f"C-6 SINDy shards contain duplicate run keys: {details.loc[duplicate, run_keys].head().to_dict('records')}")
+        fail(f"{label} shards contain duplicate run keys: {details.loc[duplicate, run_keys].head().to_dict('records')}")
+    present_methods = set(details["method"].astype(str).unique())
+    if present_methods != expected_methods:
+        fail(f"{label} methods mismatch: expected {sorted(expected_methods)}, found {sorted(present_methods)}")
     n_cells = int(details[cell_keys].drop_duplicates().shape[0])
     if n_cells != 4536:
-        fail(f"C-6 SINDy merge expected 4,536 distinct cells, found {n_cells}")
+        fail(f"{label} merge expected 4,536 distinct cells, found {n_cells}")
     counts = details.groupby(cell_keys, dropna=False).agg(
         method_count=("method", "nunique"), configuration_count=("library_id", "nunique"), row_count=("library_id", "size")
     )
-    bad = counts[(counts["method_count"] != 2) | (counts["configuration_count"] != 10) | (counts["row_count"] != 20)]
+    expected_method_count = len(expected_methods)
+    bad = counts[
+        (counts["method_count"] != expected_method_count)
+        | (counts["configuration_count"] != 10)
+        | (counts["row_count"] != 10 * expected_method_count)
+    ]
     if len(bad):
-        fail(f"C-6 SINDy merge has incomplete configurations for {len(bad)} cells")
+        fail(f"{label} merge has incomplete configurations for {len(bad)} cells")
     checks = []
     for path in sorted(shards_dir.glob("shard_*/export_checks.csv")):
         frame = pd.read_csv(path)
@@ -151,9 +175,9 @@ def merge_sindy_shards(shards_dir: Path, merged_dir: Path) -> dict[str, Path]:
         checks.append(frame)
     export_checks = pd.concat(checks, ignore_index=True, sort=False) if checks else pd.DataFrame()
     if export_checks.empty or "hash_verified" not in export_checks.columns:
-        fail("C-6 SINDy export hash checks are missing")
+        fail(f"{label} export hash checks are missing")
     if not export_checks["hash_verified"].map(as_bool).all():
-        fail("C-6 SINDy export hash check failed in at least one row")
+        fail(f"{label} export hash check failed in at least one row")
     merged_dir.mkdir(parents=True, exist_ok=True)
     outputs = {
         "details": merged_dir / "details.csv",
@@ -358,9 +382,10 @@ def load_evogrow(registry_path: Path, cells_path: Path, weights: dict[tuple[int,
     return add_pass_columns(prune_structure_for_surrogates(frame))
 
 
-def assert_clean_realization_identity(details: pd.DataFrame) -> pd.DataFrame:
+def assert_clean_realization_identity(details: pd.DataFrame, identity_methods: set[str] | None = None) -> pd.DataFrame:
+    identity_methods = identity_methods or {"sindy"}
     clean = details[
-        (details["method"].astype(str) == "sindy")
+        (details["method"].astype(str).isin(identity_methods))
         & (pd.to_numeric(details["noise_sigma"], errors="coerce") == 0.0)
         & (pd.to_numeric(details["subsample_rho"], errors="coerce") == 0.0)
     ].copy()
@@ -385,7 +410,7 @@ def assert_clean_realization_identity(details: pd.DataFrame) -> pd.DataFrame:
     group_columns = ["method", "library_id", "system_id", "source_initial_condition_set", "target_initial_condition_set"]
     for keys, group in clean.groupby(group_columns, dropna=False, sort=True):
         if set(pd.to_numeric(group["noise_realization"], errors="coerce").astype(int)) != {1, 2, 3}:
-            fail(f"C-6 clean SINDy group must contain realizations 1, 2 and 3: {keys}")
+            fail(f"C-6 clean SINDy-family group must contain realizations 1, 2 and 3: {keys}")
         first = group.sort_values("noise_realization").iloc[0]
         for _, row in group.iterrows():
             for column in identity_columns:
@@ -397,8 +422,14 @@ def assert_clean_realization_identity(details: pd.DataFrame) -> pd.DataFrame:
                     if np.isclose(float(left), float(right), rtol=1e-12, atol=1e-12, equal_nan=True):
                         continue
                 if str(left) != str(right):
-                    fail(f"C-6 clean SINDy realizations differ for {keys}, column {column}")
-    return clean[pd.to_numeric(clean["noise_realization"], errors="coerce").astype(int) == 1].copy()
+                    fail(f"C-6 clean SINDy-family realizations differ for {keys}, column {column}")
+    identity_clean = clean[pd.to_numeric(clean["noise_realization"], errors="coerce").astype(int) == 1].copy()
+    non_identity_clean = details[
+        (~details["method"].astype(str).isin(identity_methods))
+        & (pd.to_numeric(details["noise_sigma"], errors="coerce") == 0.0)
+        & (pd.to_numeric(details["subsample_rho"], errors="coerce") == 0.0)
+    ].copy()
+    return pd.concat([identity_clean, non_identity_clean], ignore_index=True, sort=False)
 
 
 def clean_sindy_realization_deltas(details: pd.DataFrame) -> pd.DataFrame:
@@ -423,6 +454,13 @@ def clean_sindy_realization_deltas(details: pd.DataFrame) -> pd.DataFrame:
             row[f"{column}_range"] = float(values.max() - values.min()) if values.notna().any() else math.nan
         rows.append(row)
     return pd.DataFrame(rows)
+
+
+def method_display_name(method: str) -> str:
+    names = {"sindy": "SINDy", "weak_sindy": "Weak-SINDy", "e_sindy": "E-SINDy"}
+    if method not in names:
+        fail(f"unsupported SINDy-family method in hierarchy input: {method}")
+    return names[method]
 
 
 def load_sindy_wide(details: pd.DataFrame, classes: pd.DataFrame) -> pd.DataFrame:
@@ -459,6 +497,7 @@ def load_sindy_wide(details: pd.DataFrame, classes: pd.DataFrame) -> pd.DataFram
     details = assert_clean_realization_identity(details)
     rows: list[dict[str, Any]] = []
     for _, row in details.iterrows():
+        method = method_display_name(str(row["method"]))
         rec_diverged = (
             as_bool(row["reconstruction_diverged_or_nonfinite"])
             or str(row["fit_status"]) != "success"
@@ -469,9 +508,6 @@ def load_sindy_wide(details: pd.DataFrame, classes: pd.DataFrame) -> pd.DataFram
             or str(row["fit_status"]) != "success"
             or str(row["generalization_integration_status"]) != "success"
         )
-        if str(row["method"]) != "sindy":
-            continue
-        method = "SINDy"
         rows.append(
             {
                 "method": method,
@@ -489,7 +525,7 @@ def load_sindy_wide(details: pd.DataFrame, classes: pd.DataFrame) -> pd.DataFram
                 "repetition": 0,
                 "noise_level": 0.0,
                 "subsampling_ratio": 1.0,
-                "realization": 1,
+                "realization": int(row["noise_realization"]),
                 "initial_condition_set": int(row["source_initial_condition_set"]),
                 "reconstruction_r2_arithmetic": finite_or_nan(row["reconstruction_r2_arithmetic_mean"]),
                 "reconstruction_r2_arithmetic_available": True,
@@ -810,7 +846,58 @@ def backcompat_unit_rates(per_run: pd.DataFrame) -> pd.DataFrame:
     return pd.DataFrame(rows)
 
 
-def control_rows(per_run: pd.DataFrame, per_system: pd.DataFrame, sindy_summary: Path, odeformer_summary: Path) -> pd.DataFrame:
+def reference_benchmark_control(benchmark: pd.DataFrame, reference_path: Path) -> pd.DataFrame:
+    if not reference_path.exists():
+        return pd.DataFrame(
+            [
+                {
+                    "control": "n43b_existing_methods_benchmark_byte_identity",
+                    "n_checked": 0,
+                    "expected": "reference_exists",
+                    "actual": "missing",
+                    "abs_error": math.nan,
+                    "passed": False,
+                    "note": f"reference benchmark missing: {reference_path}",
+                }
+            ]
+        )
+    reference = pd.read_csv(reference_path)
+    existing_methods = {"EvoGrow", "SINDy", "ODEFormer"}
+    candidate = benchmark[benchmark["method"].astype(str).isin(existing_methods)].reset_index(drop=True)
+    reference = reference[reference["method"].astype(str).isin(existing_methods)].reset_index(drop=True)
+    same_columns = list(candidate.columns) == list(reference.columns)
+    candidate_roundtrip = pd.read_csv(io.StringIO(candidate.to_csv(index=False))) if same_columns else pd.DataFrame()
+    reference_roundtrip = pd.read_csv(io.StringIO(reference.to_csv(index=False))) if same_columns else pd.DataFrame()
+    same_rows = False
+    if same_columns and candidate_roundtrip.shape == reference_roundtrip.shape:
+        try:
+            pd.testing.assert_frame_equal(candidate_roundtrip, reference_roundtrip, check_dtype=False, check_exact=False, rtol=1e-14, atol=1e-14)
+            same_rows = True
+        except AssertionError:
+            same_rows = False
+    return pd.DataFrame(
+        [
+            {
+                "control": "n43b_existing_methods_benchmark_byte_identity",
+                "n_checked": int(len(reference)),
+                "expected": "byte_identical",
+                "actual": "byte_identical" if same_rows else "different",
+                "abs_error": 0 if same_rows else 1,
+                "passed": bool(same_rows),
+                "note": "compares EvoGrow/SINDy/ODEFormer benchmark rows against analysis/data/paper1_phaseC_v1/hierarchy_n43b/benchmark.csv",
+            }
+        ]
+    )
+
+
+def control_rows(
+    per_run: pd.DataFrame,
+    per_system: pd.DataFrame,
+    benchmark: pd.DataFrame,
+    sindy_summary: Path,
+    odeformer_summary: Path,
+    n43b_reference_benchmark: Path,
+) -> pd.DataFrame:
     rows: list[dict[str, Any]] = []
     units = direction_level(per_run)
     evogrow = units[(units["method"] == "EvoGrow") & (units["arm"] == "canonical")]
@@ -846,7 +933,7 @@ def control_rows(per_run: pd.DataFrame, per_system: pd.DataFrame, sindy_summary:
             }
         )
 
-    dim1 = per_run[per_run["dimension"] == 1]
+    dim1 = per_run[(per_run["dimension"] == 1) & (per_run["method"].astype(str).isin({"EvoGrow", "SINDy", "ODEFormer"}))]
     for method, group in dim1.groupby("method", dropna=False):
         for regime in ["reconstruction", "generalization"]:
             available = group[f"{regime}_r2_variance_weighted_available"].astype(bool)
@@ -901,7 +988,11 @@ def control_rows(per_run: pd.DataFrame, per_system: pd.DataFrame, sindy_summary:
         rows.extend(compare_sindy_summary(per_run, pd.read_csv(sindy_summary)))
     if odeformer_summary.exists():
         rows.extend(compare_odeformer_summary(per_run, pd.read_csv(odeformer_summary)))
-    return pd.DataFrame(rows)
+    return pd.concat(
+        [pd.DataFrame(rows), reference_benchmark_control(benchmark, n43b_reference_benchmark)],
+        ignore_index=True,
+        sort=False,
+    )
 
 
 def compare_sindy_summary(per_run: pd.DataFrame, summary: pd.DataFrame) -> list[dict[str, Any]]:
@@ -1090,11 +1181,12 @@ def compare_odeformer_summary(per_run: pd.DataFrame, summary: pd.DataFrame) -> l
     return rows
 
 
-def metadata(paths: dict[str, Path]) -> dict[str, Any]:
+def metadata(paths: dict[str, Path], esindy_status: str) -> dict[str, Any]:
     return {
         "inputs": {name: {"path": str(path), "sha256": sha256(path)} for name, path in paths.items() if path.is_file()},
         "r2_threshold": R2_THRESHOLD,
         "hierarchy": "equation -> run -> seeds/repetitions within direction -> both directions -> system -> benchmark",
+        "esindy_status": esindy_status,
         "missing_fields": [],
     }
 
@@ -1112,6 +1204,7 @@ def run(args: argparse.Namespace) -> dict[str, Path]:
         "trajectory_export_manifest": resolve(args.trajectory_export) / "trajectory_manifest.csv",
         "sindy_control_summary": resolve(args.sindy_control_summary),
         "odeformer_control_summary": resolve(args.odeformer_control_summary),
+        "n43b_reference_benchmark": resolve(args.n43b_reference_benchmark),
     }
     merge_outputs = merge_sindy_shards(resolve(args.sindy_shards_dir), resolve(args.sindy_merged_dir))
     paths["sindy_details"] = merge_outputs["details"]
@@ -1123,10 +1216,25 @@ def run(args: argparse.Namespace) -> dict[str, Path]:
     classes = true_classes(paths["representability_threeway"])
     weights = load_variance_weights(resolve(args.trajectory_export))
     sindy_details = pd.read_csv(paths["sindy_details"])
+    esindy_status = "absent"
+    esindy_details = pd.DataFrame()
+    esindy_details_path = resolve(args.esindy_details) if args.esindy_details else None
+    esindy_shards_dir = resolve(args.esindy_shards_dir) if args.esindy_shards_dir else None
+    if esindy_shards_dir is not None and esindy_shards_dir.exists():
+        esindy_merged_dir = resolve(args.esindy_merged_dir) if args.esindy_merged_dir else esindy_shards_dir / "merged"
+        esindy_merge_outputs = merge_sindy_shards(esindy_shards_dir, esindy_merged_dir, {"e_sindy"}, "C-6 E-SINDy")
+        esindy_details_path = esindy_merge_outputs["details"]
+    if esindy_details_path is not None and esindy_details_path.exists():
+        paths["esindy_details"] = esindy_details_path
+        esindy_details = pd.read_csv(esindy_details_path)
+        esindy_status = "present"
+    combined_sindy_details = (
+        pd.concat([sindy_details, esindy_details], ignore_index=True, sort=False) if not esindy_details.empty else sindy_details
+    )
     per_run = pd.concat(
         [
             load_evogrow(paths["evogrow_registry"], paths["evogrow_generalization"], weights, classes),
-            load_sindy_wide(sindy_details, classes),
+            load_sindy_wide(combined_sindy_details, classes),
             load_odeformer(paths["odeformer_reference"], "reference", classes),
             load_odeformer(paths["odeformer_candidate"], "candidate", classes),
         ],
@@ -1136,7 +1244,14 @@ def run(args: argparse.Namespace) -> dict[str, Path]:
     per_system = system_level(per_run)
     benchmark = benchmark_rows(per_system)
     sensitivity = sensitivity_rows(per_run)
-    controls = control_rows(per_run, per_system, paths["sindy_control_summary"], paths["odeformer_control_summary"])
+    controls = control_rows(
+        per_run,
+        per_system,
+        benchmark,
+        paths["sindy_control_summary"],
+        paths["odeformer_control_summary"],
+        paths["n43b_reference_benchmark"],
+    )
     c4c_control, c4c_changed = compare_sindy_to_c4c(sindy_details, paths["sindy_c4c_details"])
     controls = pd.concat([controls, c4c_control], ignore_index=True, sort=False)
     realization_deltas = clean_sindy_realization_deltas(sindy_details)
@@ -1170,7 +1285,7 @@ def run(args: argparse.Namespace) -> dict[str, Path]:
     old_source_changed.to_csv(outputs["sindy_old_vs_new_changed_rows"], index=False)
     c4c_changed.to_csv(outputs["sindy_c4c_changed_rows"], index=False)
     realization_deltas.to_csv(outputs["sindy_clean_realization_deltas"], index=False)
-    outputs["metadata"].write_text(json.dumps(metadata(paths), indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    outputs["metadata"].write_text(json.dumps(metadata(paths, esindy_status), indent=2, sort_keys=True) + "\n", encoding="utf-8")
     if not controls["passed"].map(as_bool).all():
         failed = controls[~controls["passed"].map(as_bool)]
         fail(f"controls failed: {failed[['control', 'expected', 'actual']].to_dict('records')[:10]}")

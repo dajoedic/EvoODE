@@ -86,6 +86,37 @@ def test_run_baselines_reports_sindy_and_weak_sindy_on_real_export_fixture() -> 
     assert (pd.read_csv(paths["export_checks"])["hash_verified"]).all()
 
 
+def test_default_method_selection_stays_sindy_and_weak_sindy() -> None:
+    assert noise_sindy.parse_methods("sindy,weak_sindy") == ["sindy", "weak_sindy"]
+
+
+def test_e_sindy_is_deterministic_and_records_ensemble_defaults() -> None:
+    tmp_path = fresh_workspace("esindy_determinism")
+    index_path = copy_real_export_fixture(tmp_path)
+    output_dir_1 = tmp_path / "out1"
+    output_dir_2 = tmp_path / "out2"
+
+    paths_1 = noise_sindy.run_baselines(minimal_config(tmp_path), index_path, output_dir_1, [], methods=["e_sindy"])
+    paths_2 = noise_sindy.run_baselines(minimal_config(tmp_path), index_path, output_dir_2, [], methods=["e_sindy"])
+    details_1 = pd.read_csv(paths_1["details"]).sort_values("library_id").reset_index(drop=True)
+    details_2 = pd.read_csv(paths_2["details"]).sort_values("library_id").reset_index(drop=True)
+
+    assert set(details_1["method"]) == {"e_sindy"}
+    assert details_1["ensemble_seed"].tolist() == details_2["ensemble_seed"].tolist()
+    assert details_1["sindy_coefficients_active"].tolist() == details_2["sindy_coefficients_active"].tolist()
+    metadata = json.loads(details_1.loc[0, "ensemble_optimizer_metadata"])
+    assert metadata["bagging"] is True
+    assert metadata["library_ensemble"] is False
+    assert metadata["n_models"] == 20
+    assert metadata["n_subset"] is None
+    assert metadata["n_candidates_to_drop"] == 1
+    assert metadata["replace"] is True
+    assert metadata["ensemble_aggregator"] is None
+    assert metadata["ensemble_aggregator_effective"] == "median"
+    assert metadata["base_optimizer"]["alpha"] == 1e-6
+    assert metadata["base_optimizer"]["normalize_columns"] is False
+
+
 def test_stage_report_glob_matches_available_real_stage_reports() -> None:
     tmp_path = fresh_workspace("stage_report_glob")
     index_path = copy_real_export_fixture(tmp_path, n_rows=4)

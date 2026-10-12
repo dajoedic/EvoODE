@@ -643,6 +643,8 @@ python analysis/scripts/aggregate/run_phasec_sindy_baseline.py pair \
 
 # Plan §9.3 hierarchy with canonical C-6 SINDy source and variance-weighted generalization (WP-N43b).
 python analysis/scripts/aggregate/aggregate_phasec_hierarchy_n43.py \
+  --esindy-shards-dir outputs/c6_esindy_baselines_<SHA> \
+  --esindy-merged-dir outputs/c6_esindy_baselines_<SHA>/merged \
   --output-dir $P/agg/hierarchy_n43b
 
 # C-5 Diag (oracle refit): runs on Orion, image 1db1193 (carries WP-N25; src/ identical to 221a3a7).
@@ -776,6 +778,32 @@ Copy-Item outputs\phase_c_c6_grid_uncapped_<SHA>\manifest.csv,outputs\phase_c_c6
   S:\BigDataOrion\data-science\joedicke\phase_c_c6_grid_uncapped_<SHA>\
 Copy-Item -Recurse outputs\phase_c_c6_data_conditions_<SHA>\* `
   S:\BigDataOrion\data-science\joedicke\phase_c_c6_data_conditions_<SHA>\
+```
+
+Run SINDy-family baselines on the exported data. Existing SINDy/Weak-SINDy commands keep their
+default method list; E-SINDy is requested explicitly and sharded the same way:
+
+```powershell
+python -c "import pandas as pd; from pathlib import Path; df=pd.read_csv(r'outputs\phase_c_c6_data_conditions_<SHA>\index.csv'); out=Path(r'outputs\c6_esindy_baselines_<SHA>\shard_indexes'); out.mkdir(parents=True, exist_ok=True); [df.iloc[i::10].to_csv(out / f'shard_{i}.csv', index=False) for i in range(10)]"
+
+for ($i = 0; $i -lt 10; $i++) {
+  python analysis/scripts/aggregate/run_phasec_noise_sindy_baselines.py `
+    --export-index outputs\c6_esindy_baselines_<SHA>\shard_indexes\shard_$i.csv `
+    --output-dir outputs\c6_esindy_baselines_<SHA>\shard_$i `
+    --methods e_sindy
+}
+```
+
+After the shards are present, include E-SINDy in the §9.3 hierarchy. If the E-SINDy directory is
+absent, the command still runs and records `esindy_status: absent` in `metadata.json`:
+
+```powershell
+python analysis/scripts/aggregate/aggregate_phasec_hierarchy_n43.py `
+  --sindy-shards-dir outputs\c6_sindy_baselines_5dd1df8 `
+  --sindy-merged-dir outputs\c6_sindy_baselines_5dd1df8\merged `
+  --esindy-shards-dir outputs\c6_esindy_baselines_<SHA> `
+  --esindy-merged-dir outputs\c6_esindy_baselines_<SHA>\merged `
+  --output-dir outputs\phase_c_campaign_221a3a7\agg\hierarchy_n45
 ```
 
 Apply after replacing `<UNCAPPED_COMPLETIONS>` with the uncapped index-list line count and
