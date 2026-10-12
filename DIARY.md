@@ -72,6 +72,8 @@ Cluster-p < 0,05. Gestuft: S1 nur Orakel-Prior, dim 2, Seed 42 (20 Zellen, ~200 
 Schätzung „130–420 h, lokal“ ist überholt**: Eine exakte dim-2-Zelle kostet in C-1 ~9,8 Kernstunden. Offen beim
 Nutzer: Grenze und Image für P-04, ε und Rang-Abbildung für T2a, S2 nur über ein Tor.
 
+<!-- 2b71657 -->
+
 ---
 
 ## 2026-10-05
