@@ -58,6 +58,18 @@ bei 0/20 bzw. 1/20. **Das Bild vom 01.10. ist jetzt vollständig:** Der Loss erk
 
 <!-- 3d5849e -->
 
+### E-SINDy und Weak-SINDy werden Pflicht-Baselines; P-04 startbereit
+
+Der Nutzer: E-SINDy und W-SINDy müssen in Paper 1, frühere Arbeiten von ihm sind daran gescheitert. Plan §9.5a:
+Weak-SINDy liegt seit WP-N34 vor (sauber und verrauscht) und fehlte nur in der §9.3-Tabelle; E-SINDy ist neu, als
+pysindy-`EnsembleOptimizer` um die zehn SINDy-Konfigurationen, `bagging=True`, sonst Bibliotheksvorgaben (20 Modelle,
+Median) — keine eigene Zahl. WP-N45 an Codex. **P-04:** WP-N44 abgenommen (Manifest, Python-Auswertung, Tests).
+Der Runner fittet die Orakel-Struktur in jeder Zelle, daher erwartete Kosten ~130 h statt ~100 h (Schranke 338 h
+unverändert). Laptop-Smoke auf System 1, Seed 123, beide ICs: Start 1 **bitgleich** zum C-5-Orakel, Auswertung
+vollständig. Eingabe auf dem NFS, sha-gleich mit der C-5-Eingabe.
+
+<!-- f6e0887 -->
+
 ### Folgen für das Vorgehen: zwei Spezifikationen, beide Entwurf bis zur Freigabe
 
 Der Nutzer wollte nach Tor B5 und Tor 3 wissen, was folgt, und gab beide Spezifikationen frei. **P-04 (Restart-Kurve)**
