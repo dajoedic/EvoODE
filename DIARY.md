@@ -69,6 +69,8 @@ Knotenkapazität ist für unseren Account nicht abfragbar). Danach hob der Nutze
 ~12 h erwartet / ~20 h Schranke). Laufende Jobs werden nie heruntergedreht, um Platz zu schaffen — der Controller
 beendet dabei aktive Pods.
 
+<!-- b5b9790 2e7ae8e -->
+
 ### E-SINDy und Weak-SINDy werden Pflicht-Baselines; P-04 startbereit
 
 Der Nutzer: E-SINDy und W-SINDy müssen in Paper 1, frühere Arbeiten von ihm sind daran gescheitert. Plan §9.5a:
