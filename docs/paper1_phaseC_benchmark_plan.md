@@ -925,8 +925,9 @@ WP-S04 showed that the frozen stage cap truncates true terms in 317 of 1,860 noi
 ### 9.5 C-7 — PySR, the GP / symbolic-regression representative
 
 **Baselines for Paper 1, final: SINDy + ODEFormer + PySR against EvoGrow** — sparse regression,
-pretrained transformer, genetic programming. **Weak-SINDy** is a noise-specific SINDy reference in
-C-6, not a fourth general baseline. **ProGED** is added only if a concrete argumentative need arises.
+pretrained transformer, genetic programming. ~~**Weak-SINDy** is a noise-specific SINDy reference in
+C-6, not a fourth general baseline.~~ **Superseded 2026-10-13 (user), §9.5a: Weak-SINDy and E-SINDy are full
+baselines in every Paper 1 table, clean and noisy.** **ProGED** is added only if a concrete argumentative need arises.
 No second GP method to fill a category twice.
 
 PySR gets its own small work package **before** it runs, which fixes: version and environment;
@@ -936,6 +937,33 @@ configurations, declared and never chosen on results); how PySR is set up for OD
 following ODEFormer's baseline harness; canonical expansion into basis terms for the structure
 metrics; and a cost estimate in core hours before submission. Same data files as C-6, all 12
 conditions.
+
+### 9.5a E-SINDy and Weak-SINDy as full baselines (decided 2026-10-13, user)
+
+**Why.** Reviewers in this field expect both; earlier work of the user was rejected for lacking them. They are
+therefore not side references but rows in every Paper 1 table — the clean §9.3 hierarchy (Claims A, C, D) and the C-6
+robustness tables.
+
+**Weak-SINDy — exists, needs only aggregation.** WP-N34 ran it with `pysindy.WeakPDELibrary` on all 4,536 exported
+cells × the ten SINDy configurations, the clean `(0, 0)` condition included (`c6_sindy_5dd1df8`). Missing: its rows in
+the clean §9.3 hierarchy (WP-N43b carries EvoGrow, SINDy, ODEFormer only). No new run.
+
+**E-SINDy — new, specified here and frozen before it runs.** Ensemble SINDy (Fasel et al. 2022) as pysindy 2.1.0's
+`EnsembleOptimizer` around the **same** STLSQ of each of the ten SINDy configurations, with **bagging = True** and every
+other argument at the **library default**: `library_ensemble = False`, `n_models = 20`, `n_subset` = all time
+points, `replace = True` (bootstrap), aggregation **median** ("bragging"; with 20 models a coefficient survives roughly when it is nonzero in
+more than half of them). Same library, same derivative estimate, same data bytes, same
+post-fit integration and metrics as the SINDy arm; the bootstrap seed is derived per cell from its key, so the run is
+reproducible. Nothing is tuned: every value above is either SINDy's existing configuration or pysindy's default.
+Runs on the clean `(0, 0)` export and on every C-6 condition — **10 configurations, reported in full, none selected**,
+exactly like SINDy.
+
+**Blind rule.** E-SINDy is a baseline; running and technically checking it is allowed now. Any comparison with C-6
+EvoGrow cells waits for §9.4d like every other comparison.
+
+**Work package WP-N45 (Codex, Python):** the E-SINDy arm in the existing C-6 SINDy runner, the Weak-SINDy and
+E-SINDy rows in the §9.3 hierarchy, a smoke on a few cells; the full run is executed by Claude locally (SINDy took
+40 min for 10 configurations on 10 shards; E-SINDy is ~20× the regression work, the integration once).
 
 ### 9.6 C-8 — the bound diagnostic (sensitivity, **not** a selection procedure)
 
@@ -1034,8 +1062,8 @@ comparison (Paper 2) — the second reason it comes first.
   (30 systems × 3 seeds × 2 IC sets), the same filter as the C-5 oracle;
 - **10 starts per structure, one attempt each** (`per_start_max_fit_attempts = 1`); start 1 is the cell seed, starts
   2–10 are hashed (`WP-N4:start:<cell_seed>:<start_index>`), so the curve is nested: the best of the first k starts;
-- two structures per cell: **reference** (the true support) and **oracle** (found ∩ true, fitted only where it
-  differs from the truth);
+- two structures per cell: **reference** (the true support) and **oracle** (found ∩ true); the runner fits both in
+  every cell, also where they coincide (WP-N44 report);
 - optimizer: the C-1 reference optimizer, **bound `[-10, 10]`** (Paper 1's frozen method; see open decision 1);
 - curve points k ∈ {1, 2, 3, 5, 10}.
 
@@ -1065,8 +1093,8 @@ otherwise the paper states how much a larger k would have bought and at how many
 set here, before any start is run.
 
 **Cost (capacity planning, not evidence).** Scaled from the measured C-5 oracle loss evaluations and the C-1 per-eval
-cost: **~100 core hours** (dim 3 ~75 h, dim 2 ~21 h, dim 1/4 < 1 h); the all-budgets-exhausted upper bound is
-**338 h** (recomputed 2026-10-13 from the fitted structures per cell; §2 said 305 h). ~150 € expected, ≤ 510 € bound. Runs on Orion, 36 round-robin shards like C-5; the largest single cell is
+cost: **~130 core hours** (corrected 2026-10-13 from ~100 h: both structures are fitted in every cell); the all-budgets-exhausted upper bound is
+**338 h** (recomputed 2026-10-13 from the fitted structures per cell; §2 said 305 h). ~195 € expected, ≤ 510 € bound. Runs on Orion, 36 round-robin shards like C-5; the largest single cell is
 bounded at ~17 h (system 55, seed 42, IC 2; expected ~2.5 h), so every shard is expected **< 24 h** → user starts it (`CLAUDE.md` run-location table). No time
 cut.
 

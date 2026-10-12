@@ -264,6 +264,7 @@ count, errors, fingerprint, data hashes). Draft rule: `DIARY.md` 2026-10-05.
 | R-08b | **C-6 grid running since 2026-10-03** on Orion `5dd1df8`: 3,366 capped cells (24 pods) + uncapped seed 42 on the 461 finite-cap cells (8 pods); expected 40–55 days | Claude / user | Orion | — |
 | R-09 | Baselines on the same data, same stages first: ~~SINDy, Weak-SINDy~~ **built 2026-10-01 (WP-N34/N34b), C-4 control passed with one documented exception; ran on stage 1**; ~~ODEFormer~~ **ran 2026-10-02 on all stage cells (WP-N38, 240/240, control identical to the Orion reference)**; **SINDy/Weak-SINDy on the full C-6 export done 2026-10-05** (4,536 cells × 10 configurations, local, (0,0) control identical to WP-C4c 2,520/2,520; `analysis/data/paper1_phaseC_v1/c6_sindy_5dd1df8/`) | Codex / Claude | laptop / Orion | with S2 |
 | R-10 | ~~PySR work package (budget, harness, cost estimate)~~ **done 2026-10-03 (WP-N39)**: faithful to ODEFormer's harness, smoke on both versions identical; **user chose PySR 0.19.4**; cost 1,230–2,370 core-h full grid (lower bound) | Codex | — | before PySR runs |
+| R-11 | **E-SINDy and Weak-SINDy as full Paper 1 baselines (user, 2026-10-13, plan §9.5a)** — earlier work of the user failed review without them. Weak-SINDy exists (WP-N34, clean + noisy), only the §9.3 hierarchy rows are missing; E-SINDy is new: pysindy `EnsembleOptimizer`, bagging, library defaults (20 models, median), the ten SINDy configurations; WP-N45 after WP-N44 | Codex / Claude | laptop | — |
 
 **Track B — bound diagnostic (C-8), parallel, staged the same way**
 

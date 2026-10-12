@@ -1,4 +1,4 @@
 status: done
-task:   WP-N43b
-report: codex/reports/REPORT_WP_N43B.md
-note:   Implemented N43b hierarchy, merged C-6 SINDy shards, wrote controls and report; all hard controls passed.
+task:   WP-N44
+report: codex/reports/REPORT_WP_N44.md
+note:   restart curve manifest, aggregator, tests, scripts docs, and report completed; tests pass with workspace basetemp

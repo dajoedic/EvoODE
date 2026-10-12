@@ -662,25 +662,25 @@ julia --project=. --startup-file=no studies/regression/wp_n3_oracle_refit.jl \
   --campaign paper1_phaseC_v1 --input $P/history.jsonl \
   --output-dir outputs/wp_n3_oracle_refit_phase_c --shards 36 --collect
 
-# C-5 Abl-3: cost estimate, sharded run, and collection.
-julia --project=. --startup-file=no studies/regression/wp_n4_multistart_refit.jl \
-  --campaign paper1_phaseC_v1 \
-  --input outputs/studies/regression/phase_c/history.jsonl \
-  --output-dir outputs/wp_n4_multistart_refit_phase_c \
-  --starts 10 \
-  --estimate-cost
-julia --project=. --startup-file=no studies/regression/wp_n4_multistart_refit.jl \
-  --campaign paper1_phaseC_v1 \
-  --input outputs/studies/regression/phase_c/history.jsonl \
-  --output-dir outputs/wp_n4_multistart_refit_phase_c \
-  --starts 10 \
-  --shards TODO(Claude) --shard-index TODO(Claude)
-julia --project=. --startup-file=no studies/regression/wp_n4_multistart_refit.jl \
-  --campaign paper1_phaseC_v1 \
-  --input outputs/studies/regression/phase_c/history.jsonl \
-  --output-dir outputs/wp_n4_multistart_refit_phase_c \
-  --starts 10 \
-  --shards TODO(Claude) --collect
+# C-5 Abl-3 / P-04 restart curve: runs on Orion, 36 indexed round-robin shards,
+# image <SHA> carrying wp_n4_multistart_refit.jl. No active deadline; cost figures
+# in the manifest header are capacity planning, not evidence.
+# Upload the merged C-1 history to the NFS (any running EvoODE pod), then apply the indexed Job.
+oc exec <running-pod> -- mkdir -p /outputs/phase_c_c5_restart_curve_<SHA>/input
+oc cp $P/history.jsonl <running-pod>:/outputs/phase_c_c5_restart_curve_<SHA>/input/history.jsonl
+(Get-Content k8s\phase_c_c5_restart_curve_job.yaml) -replace '<COMMIT_SHA>','<SHA>' | oc apply -f -
+# Collect locally after all 36 shards finish from the Orion NFS mount:
+mkdir -p outputs/wp_n4_multistart_refit_phase_c
+rsync -a /s/BigDataOrion/data-science/joedicke/phase_c_c5_restart_curve_<SHA>/out/ \
+  outputs/wp_n4_multistart_refit_phase_c/
+python analysis/scripts/aggregate/aggregate_phasec_restart_curve.py \
+  --input-dir outputs/wp_n4_multistart_refit_phase_c \
+  --c5-oracle-dir outputs/wp_n3_oracle_refit_phase_c \
+  --registry experiments/paper1_phaseC_v1/run_registry.csv \
+  --support studies/regression/phase_c_support.json \
+  --duplicate-source outputs/phase_c_campaign_221a3a7/history.jsonl \
+  --cold-starts analysis/data/wp_t1d_neighbourhood/wp_t1f_campaign_1db11932c4335e480d374c7de1be35593b62b447/truth_cold_by_cell.csv \
+  --output-dir analysis/data/paper1_phaseC_v1/restart_curve/
 
 # C-5 held-out IC generalization (C-1 only, 378 cells, two integrations each, no refit). Ran
 # 2026-09-29 on the laptop: cost bound 9 s of integration, about one minute with compilation, so
