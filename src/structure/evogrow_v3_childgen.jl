@@ -113,7 +113,8 @@ function _expand_equation_aware_passive(
     dim::Int,
     allowed_by_eq::Vector{Vector{Int}};
     n_children::Int,
-    max_terms_per_eq::Int
+    max_terms_per_eq::Int,
+    candidate_prior::Union{Nothing, CandidatePrior} = nothing
 )
     children = Individual[]
 
@@ -125,7 +126,7 @@ function _expand_equation_aware_passive(
         candidates = setdiff(allowed_by_eq[k], existing)
 
         if !isempty(candidates) && length(existing) < max_terms_per_eq
-            push!(new_idxs[k], rand(candidates))
+            push!(new_idxs[k], _draw_candidate(candidate_prior, k, candidates))
             new_idxs[k] = sort!(unique(new_idxs[k]))
         end
 
@@ -141,7 +142,8 @@ function _expand_equation_aware_hard(
     allowed_by_eq::Vector{Vector{Int}},
     current_by_eq::Vector{Vector{Int}};
     n_children::Int,
-    max_terms_per_eq::Int
+    max_terms_per_eq::Int,
+    candidate_prior::Union{Nothing, CandidatePrior} = nothing
 )
     children = Individual[]
     effective_current_by_eq = _evogrow_v3_effective_current_terms(allowed_by_eq, current_by_eq)
@@ -166,13 +168,13 @@ function _expand_equation_aware_hard(
         if !isempty(eqs_with_new_terms)
             k = rand(eqs_with_new_terms)
             candidates_new = setdiff(effective_current_by_eq[k], new_idxs[k])
-            push!(new_idxs[k], rand(candidates_new))
+            push!(new_idxs[k], _draw_candidate(candidate_prior, k, candidates_new))
             new_idxs[k] = sort!(unique(new_idxs[k]))
         else
             k = rand(growable_eqs)
             candidates = setdiff(allowed_by_eq[k], new_idxs[k])
             if !isempty(candidates)
-                push!(new_idxs[k], rand(candidates))
+                push!(new_idxs[k], _draw_candidate(candidate_prior, k, candidates))
                 new_idxs[k] = sort!(unique(new_idxs[k]))
             end
         end
@@ -190,7 +192,8 @@ function _expand_equation_aware_soft(
     current_by_eq::Vector{Vector{Int}};
     n_children::Int,
     max_terms_per_eq::Int,
-    bias_prob::Float64
+    bias_prob::Float64,
+    candidate_prior::Union{Nothing, CandidatePrior} = nothing
 )
     children = Individual[]
     effective_current_by_eq = _evogrow_v3_effective_current_terms(allowed_by_eq, current_by_eq)
@@ -217,7 +220,7 @@ function _expand_equation_aware_soft(
             if !isempty(eqs_with_new_terms)
                 k = rand(eqs_with_new_terms)
                 candidates_new = setdiff(effective_current_by_eq[k], new_idxs[k])
-                push!(new_idxs[k], rand(candidates_new))
+                push!(new_idxs[k], _draw_candidate(candidate_prior, k, candidates_new))
                 new_idxs[k] = sort!(unique(new_idxs[k]))
 
                 push!(children, Individual(StructureSpec(new_idxs), Float64[], Inf, Inf))
@@ -228,7 +231,7 @@ function _expand_equation_aware_soft(
         k = rand(growable_eqs)
         candidates = setdiff(allowed_by_eq[k], new_idxs[k])
         if !isempty(candidates)
-            push!(new_idxs[k], rand(candidates))
+            push!(new_idxs[k], _draw_candidate(candidate_prior, k, candidates))
             new_idxs[k] = sort!(unique(new_idxs[k]))
         end
 
@@ -249,7 +252,8 @@ function _expand_equation_aware_with_usage_policy(
     n_children::Int,
     max_terms_per_eq::Int,
     stage_caps = nothing,
-    coupling_coherence::Bool = true
+    coupling_coherence::Bool = true,
+    candidate_prior::Union{Nothing, CandidatePrior} = nothing
 )
     if _evogrow_v3_uniform_stages(eq_stages)
         return _expand_with_usage_policy(
@@ -259,7 +263,8 @@ function _expand_equation_aware_with_usage_policy(
             current_stage_terms,
             usage;
             n_children = n_children,
-            max_terms_per_eq = max_terms_per_eq
+            max_terms_per_eq = max_terms_per_eq,
+            candidate_prior = candidate_prior
         )
     end
 
@@ -276,7 +281,8 @@ function _expand_equation_aware_with_usage_policy(
             dim,
             allowed_by_eq;
             n_children = n_children,
-            max_terms_per_eq = max_terms_per_eq
+            max_terms_per_eq = max_terms_per_eq,
+            candidate_prior = candidate_prior
         )
     elseif usage.mode == :hard
         return _expand_equation_aware_hard(
@@ -285,7 +291,8 @@ function _expand_equation_aware_with_usage_policy(
             allowed_by_eq,
             current_by_eq;
             n_children = n_children,
-            max_terms_per_eq = max_terms_per_eq
+            max_terms_per_eq = max_terms_per_eq,
+            candidate_prior = candidate_prior
         )
     else
         return _expand_equation_aware_soft(
@@ -295,7 +302,8 @@ function _expand_equation_aware_with_usage_policy(
             current_by_eq;
             n_children = n_children,
             max_terms_per_eq = max_terms_per_eq,
-            bias_prob = usage.new_term_bias_prob
+            bias_prob = usage.new_term_bias_prob,
+            candidate_prior = candidate_prior
         )
     end
 end

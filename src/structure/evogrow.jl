@@ -29,6 +29,107 @@ Base.@kwdef struct StageUsagePolicy
 end
 
 """
+Equation-specific ranking prior for EvoGrow candidate term draws.
+
+`rankings[k]` is a full permutation of basis term indices for equation `k`;
+the first element has rank 1. The harmonic mapping uses weight `1 / rank`.
+"""
+struct CandidatePrior
+    rankings::Vector{Vector{Int}}
+    epsilon::Float64
+    mapping::String
+    arm::String
+    source_tag::String
+    source_hash::String
+    rank_by_equation::Vector{Dict{Int, Int}}
+
+    function CandidatePrior(
+        rankings::Vector{Vector{Int}};
+        epsilon::Real = 0.2,
+        mapping::AbstractString = "harmonic",
+        arm::AbstractString = "unknown",
+        source_tag::AbstractString = "",
+        source_hash::AbstractString = "",
+    )
+        isempty(rankings) && error("CandidatePrior requires at least one equation ranking")
+        0.0 <= Float64(epsilon) <= 1.0 ||
+            error("CandidatePrior epsilon must lie in [0, 1], got $(epsilon)")
+        String(mapping) == "harmonic" ||
+            error("CandidatePrior mapping must be harmonic, got $(mapping)")
+        n_terms = length(rankings[1])
+        n_terms >= 1 || error("CandidatePrior rankings must not be empty")
+        expected = collect(1:n_terms)
+        rank_maps = Vector{Dict{Int, Int}}(undef, length(rankings))
+        for (eq_idx, ranking) in enumerate(rankings)
+            sort(ranking) == expected ||
+                error("CandidatePrior equation $(eq_idx) ranking is not a permutation of 1:$(n_terms)")
+            ranks = Dict{Int, Int}()
+            for (rank, term_idx) in enumerate(ranking)
+                ranks[Int(term_idx)] = rank
+            end
+            rank_maps[eq_idx] = ranks
+        end
+        return new(
+            [Int[x for x in ranking] for ranking in rankings],
+            Float64(epsilon),
+            String(mapping),
+            String(arm),
+            String(source_tag),
+            String(source_hash),
+            rank_maps,
+        )
+    end
+end
+
+function _validate_candidate_prior(prior::Union{Nothing, CandidatePrior}, dim::Int, n_terms::Int)
+    prior === nothing && return nothing
+    length(prior.rankings) == dim ||
+        error("CandidatePrior has $(length(prior.rankings)) equation rankings, expected $(dim)")
+    expected = collect(1:n_terms)
+    for (eq_idx, ranking) in enumerate(prior.rankings)
+        sort(ranking) == expected ||
+            error("CandidatePrior equation $(eq_idx) ranking is not a permutation of 1:$(n_terms)")
+    end
+    return nothing
+end
+
+function candidate_prior_draw(prior::CandidatePrior, eq_idx::Int, candidates::Vector{Int})
+    isempty(candidates) && error("candidate_prior_draw requires non-empty candidates")
+    ranks = prior.rank_by_equation[eq_idx]
+    weights = [1.0 / ranks[Int(term_idx)] for term_idx in candidates]
+    total = sum(weights)
+    threshold = rand()
+    cumulative = 0.0
+    n = length(candidates)
+    for (idx, term_idx) in enumerate(candidates)
+        p_rank = weights[idx] / total
+        probability = (1.0 - prior.epsilon) * p_rank + prior.epsilon / n
+        cumulative += probability
+        if threshold <= cumulative || idx == n
+            return term_idx
+        end
+    end
+    return candidates[end]
+end
+
+function _draw_candidate(prior::Union{Nothing, CandidatePrior}, eq_idx::Int, candidates::Vector{Int})
+    prior === nothing && return rand(candidates)
+    return candidate_prior_draw(prior, eq_idx, candidates)
+end
+
+function candidate_prior_payload(prior::Union{Nothing, CandidatePrior})
+    prior === nothing && return nothing
+    return (
+        arm = prior.arm,
+        epsilon = prior.epsilon,
+        mapping = prior.mapping,
+        rankings = [copy(ranking) for ranking in prior.rankings],
+        source_tag = prior.source_tag,
+        source_hash = prior.source_hash,
+    )
+end
+
+"""
 EvoGrow structure search strategy.
 
 - pop_size: population size
@@ -57,6 +158,7 @@ Base.@kwdef struct EvoGrow <: AbstractStructureSearch
     level_callback::Union{Nothing, Function} = nothing
     stage_caps::Union{Nothing,Vector{Union{Nothing,Int}}} = nothing
     stage_cap_policy::Union{Nothing,LookAheadStageCapPolicy} = nothing
+    candidate_prior::Union{Nothing,CandidatePrior} = nothing
 end
 
 """
@@ -251,7 +353,9 @@ function _init_population(strategy::EvoGrow, dim::Int, allowed_terms::Vector{Int
     for _ in 1:strategy.pop_size
         active = Vector{Vector{Int}}(undef, dim)
         for k in 1:dim
-            active[k] = [rand(allowed_terms)]
+            active[k] = strategy.candidate_prior === nothing ?
+                [rand(allowed_terms)] :
+                [candidate_prior_draw(strategy.candidate_prior, k, allowed_terms)]
         end
         push!(pop, Individual(StructureSpec(active), Float64[], Inf, Inf))
     end
@@ -272,7 +376,8 @@ function _expand(ind::Individual,
                  dim::Int,
                  allowed_terms::Vector{Int};
                  n_children::Int,
-                 max_terms_per_eq::Int)
+                 max_terms_per_eq::Int,
+                 candidate_prior::Union{Nothing, CandidatePrior} = nothing)
 
     children = Individual[]
 
@@ -284,7 +389,7 @@ function _expand(ind::Individual,
         candidates = setdiff(allowed_terms, existing)
 
         if !isempty(candidates) && length(existing) < max_terms_per_eq
-            push!(new_idxs[k], rand(candidates))
+            push!(new_idxs[k], _draw_candidate(candidate_prior, k, candidates))
             new_idxs[k] = sort!(unique(new_idxs[k]))
         end
 
@@ -306,7 +411,8 @@ function _expand_stage_aware(ind::Individual,
                              allowed_terms::Vector{Int},
                              new_stage_terms::Vector{Int};
                              n_children::Int,
-                             max_terms_per_eq::Int)
+                             max_terms_per_eq::Int,
+                             candidate_prior::Union{Nothing, CandidatePrior} = nothing)
 
     children = Individual[]
 
@@ -334,7 +440,7 @@ function _expand_stage_aware(ind::Individual,
             existing = new_idxs[k]
             candidates_new = setdiff(new_stage_terms, existing)
 
-            push!(new_idxs[k], rand(candidates_new))
+            push!(new_idxs[k], _draw_candidate(candidate_prior, k, candidates_new))
             new_idxs[k] = sort!(unique(new_idxs[k]))
         else
             k = rand(growable_eqs)
@@ -342,7 +448,7 @@ function _expand_stage_aware(ind::Individual,
             candidates = setdiff(allowed_terms, existing)
 
             if !isempty(candidates)
-                push!(new_idxs[k], rand(candidates))
+                push!(new_idxs[k], _draw_candidate(candidate_prior, k, candidates))
                 new_idxs[k] = sort!(unique(new_idxs[k]))
             end
         end
@@ -366,7 +472,8 @@ function _expand_stage_soft(ind::Individual,
                             new_stage_terms::Vector{Int};
                             n_children::Int,
                             max_terms_per_eq::Int,
-                            bias_prob::Float64)
+                            bias_prob::Float64,
+                            candidate_prior::Union{Nothing, CandidatePrior} = nothing)
 
     children = Individual[]
 
@@ -395,7 +502,7 @@ function _expand_stage_soft(ind::Individual,
                 k = rand(eqs_with_new_terms)
                 existing = new_idxs[k]
                 candidates_new = setdiff(new_stage_terms, existing)
-                push!(new_idxs[k], rand(candidates_new))
+                push!(new_idxs[k], _draw_candidate(candidate_prior, k, candidates_new))
                 new_idxs[k] = sort!(unique(new_idxs[k]))
 
                 push!(children, Individual(StructureSpec(new_idxs), Float64[], Inf, Inf))
@@ -408,7 +515,7 @@ function _expand_stage_soft(ind::Individual,
         candidates = setdiff(allowed_terms, existing)
 
         if !isempty(candidates)
-            push!(new_idxs[k], rand(candidates))
+            push!(new_idxs[k], _draw_candidate(candidate_prior, k, candidates))
             new_idxs[k] = sort!(unique(new_idxs[k]))
         end
 
@@ -424,7 +531,8 @@ function _expand_with_usage_policy(ind::Individual,
                                    current_stage_terms::Vector{Int},
                                    usage::StageUsagePolicy;
                                    n_children::Int,
-                                   max_terms_per_eq::Int)
+                                   max_terms_per_eq::Int,
+                                   candidate_prior::Union{Nothing, CandidatePrior} = nothing)
 
     if usage.mode == :passive || current_stage_terms == allowed_terms
         return _expand(
@@ -432,7 +540,8 @@ function _expand_with_usage_policy(ind::Individual,
             dim,
             allowed_terms;
             n_children = n_children,
-            max_terms_per_eq = max_terms_per_eq
+            max_terms_per_eq = max_terms_per_eq,
+            candidate_prior = candidate_prior
         )
     elseif usage.mode == :hard
         return _expand_stage_aware(
@@ -441,7 +550,8 @@ function _expand_with_usage_policy(ind::Individual,
             allowed_terms,
             current_stage_terms;
             n_children = n_children,
-            max_terms_per_eq = max_terms_per_eq
+            max_terms_per_eq = max_terms_per_eq,
+            candidate_prior = candidate_prior
         )
     else
         return _expand_stage_soft(
@@ -451,7 +561,8 @@ function _expand_with_usage_policy(ind::Individual,
             current_stage_terms;
             n_children = n_children,
             max_terms_per_eq = max_terms_per_eq,
-            bias_prob = usage.new_term_bias_prob
+            bias_prob = usage.new_term_bias_prob,
+            candidate_prior = candidate_prior
         )
     end
 end
@@ -586,6 +697,7 @@ function search_structure(strategy::EvoGrow,
     _validate_policy(strategy)
 
     dim = size(traj.x, 2)
+    _validate_candidate_prior(strategy.candidate_prior, dim, basis_num_terms(basis))
 
     current_stage = 1
     basis_max_stage = _max_stage(basis)
@@ -596,6 +708,7 @@ function search_structure(strategy::EvoGrow,
     _validate_stage_caps(stage_caps, dim, basis_max_stage)
     max_stage = _effective_max_stage(basis_max_stage, stage_caps)
     cap_metrics_active = stage_caps !== nothing || strategy.stage_cap_policy !== nothing
+    prior_payload = candidate_prior_payload(strategy.candidate_prior)
 
     allowed_terms = _allowed_terms(basis, current_stage)
     pop = _init_population(strategy, dim, allowed_terms)
@@ -804,7 +917,8 @@ function search_structure(strategy::EvoGrow,
                     n_children = strategy.children_per_parent,
                     max_terms_per_eq = strategy.max_terms_per_eq,
                     stage_caps = stage_caps,
-                    coupling_coherence = false
+                    coupling_coherence = false,
+                    candidate_prior = strategy.candidate_prior
                 )
             )
         end
@@ -1254,7 +1368,8 @@ function search_structure(strategy::EvoGrow,
             stage_cap_policy_active = strategy.stage_cap_policy !== nothing,
             termination_reason = termination_reason,
             progression_mode = strategy.progression.mode,
-            usage_mode = strategy.usage.mode
+            usage_mode = strategy.usage.mode,
+            candidate_prior = prior_payload
         )
     )
 end

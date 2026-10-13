@@ -127,6 +127,54 @@ list before submitting a job.
 > one and refuses an index beyond the end of the list. Slurm array IDs were 1-based, so the Slurm
 > and Kubernetes paths are not interchangeable.
 
+### `studies/regression/generate_phase_c_manifest.jl --paper2-t2a-pilot`
+
+Builds the Paper 2 T2a prior-arm manifest after the prior JSON files exist. It reuses the Phase-C
+C-1 configuration and writes the S1 index list for the first oracle-prior run.
+
+```
+julia studies/regression/generate_phase_c_manifest.jl --paper2-t2a-pilot --output experiments/paper2_t2a_pilot_v1/manifest.csv
+```
+
+Outputs next to the manifest:
+
+- `indices_all.txt` - all oracle and guided prior cells
+- `indices_s1_oracle_dim2_seed42.txt` - the frozen S1 slice: oracle prior, dim 2, seed 42, both IC sets
+- `priors/` - candidate-prior JSON files referenced by `candidate_prior_path` as manifest-relative
+  forward-slash paths
+
+Cluster entry: `k8s/paper2_t2a_s1_job.yaml`, an indexed Kubernetes Job over the S1 index list.
+
+Control checks before S1:
+
+```
+julia --project=. --startup-file=no test/test_candidate_prior.jl
+julia --project=. --startup-file=no test/test_stage_cap.jl
+```
+
+Then run the bit-identity controls listed in `codex/reports/REPORT_WP_T2A_IMPL.md` against selected
+C-1 records before submitting `k8s/paper2_t2a_s1_job.yaml`.
+
+S1 Orion sequence after substituting `<SHA>` with the pushed image commit:
+
+```powershell
+julia --project=. --startup-file=no studies/regression/generate_phase_c_manifest.jl `
+  --paper2-t2a-pilot `
+  --output experiments\paper2_t2a_pilot_v1\manifest.csv
+
+New-Item -ItemType Directory -Force `
+  S:\BigDataOrion\data-science\joedicke\paper2_t2a_pilot_v1_<SHA>\priors
+
+Copy-Item experiments\paper2_t2a_pilot_v1\manifest.csv,experiments\paper2_t2a_pilot_v1\indices_s1_oracle_dim2_seed42.txt `
+  S:\BigDataOrion\data-science\joedicke\paper2_t2a_pilot_v1_<SHA>\
+Copy-Item -Recurse experiments\paper2_t2a_pilot_v1\priors\* `
+  S:\BigDataOrion\data-science\joedicke\paper2_t2a_pilot_v1_<SHA>\priors\
+
+(Get-Content k8s\paper2_t2a_s1_job.yaml) -replace '<COMMIT_SHA>','<SHA>' | oc apply -f -
+```
+
+Collect S1 task records from `/paper2_t2a_s1_<SHA>/tasks` on the same NFS share.
+
 ### `studies/regression/merge_batch_records.jl`
 
 Consolidates per-cell records into the campaign history after all cells have finished.
@@ -526,6 +574,7 @@ Conventions and environment: `analysis/CONVENTIONS.md`, dependencies in
 |---|---|
 | `analysis/scripts/aggregate/aggregate_run_registry.py` | Builds the analysis table from an experiment's run registry |
 | `analysis/scripts/aggregate/analyze_pretuning_contrast.py` | Paired Phase-B pretuning contrast with naive and cluster-robust tests |
+| `analysis/scripts/aggregate/build_t2a_candidate_priors.py` | Builds Paper 2 T2a guided/oracle candidate-prior JSON files from WP-T1 weak/forward clean rankings |
 | `analysis/scripts/aggregate/classify_odebench_systems.py` | Exact / surrogate classification of the ODEBench systems |
 | `analysis/scripts/aggregate/verify_campaign_registry.py` | Checks converted campaign registry invariants before aggregation |
 | `analysis/scripts/aggregate/evaluate_hypotheses.py` | Evaluates H1–H4 against the aggregated data |

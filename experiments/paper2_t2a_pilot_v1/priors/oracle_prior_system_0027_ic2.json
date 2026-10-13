@@ -1,0 +1,56 @@
+{
+  "arm": "oracle_prior",
+  "basis_name": "staged_polynomial_basis_with_constant",
+  "dimension": 2,
+  "epsilon": 0.2,
+  "initial_condition_set": 2,
+  "mapping": "harmonic",
+  "rankings": [
+    [
+      6,
+      2,
+      5,
+      12,
+      7,
+      9,
+      4,
+      11,
+      10,
+      1,
+      8,
+      3
+    ],
+    [
+      6,
+      3,
+      7,
+      10,
+      8,
+      11,
+      5,
+      9,
+      4,
+      1,
+      12,
+      2
+    ]
+  ],
+  "rows": [
+    {
+      "equation_idx": 1,
+      "row_id": "system=27 ic=ic2 eq=1 signal=weak method=forward sigma=0.0",
+      "trajectory_sha256": "1924b11ad9cc3f14a58c59652af51911d9eb547ea7cc16e82b46ccd4ba4ea717"
+    },
+    {
+      "equation_idx": 2,
+      "row_id": "system=27 ic=ic2 eq=2 signal=weak method=forward sigma=0.0",
+      "trajectory_sha256": "1924b11ad9cc3f14a58c59652af51911d9eb547ea7cc16e82b46ccd4ba4ea717"
+    }
+  ],
+  "source_records_path": "analysis/data/wp_t1_term_relevance/records.csv",
+  "source_sha256": "4583525902d6b20d022490a14b05d448a62d290c622cf277ed089eb3d2bfb506",
+  "source_tag": "wp_t1_term_relevance_weak_forward_clean_training_ic",
+  "study_id": "paper2_t2a_pilot_v1",
+  "system_id": 27,
+  "trajectory_manifest_path": "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/trajectory_manifest.csv"
+}

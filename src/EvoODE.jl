@@ -32,6 +32,7 @@ export fit_parameters
 # ------------------------
 export EvoGrow, EvoGrowScreening, EvoGrowV3, EvoGrowStageCapped
 export GPStructureSearch
+export CandidatePrior, candidate_prior_draw, candidate_prior_payload
 export StageProgressionPolicy, StageUsagePolicy, LookAheadStageCapPolicy, estimate_stage_caps
 export stage_cap_behavior_fingerprint
 export eq_overshoot, eq_wasted_levels

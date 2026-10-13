@@ -7,6 +7,7 @@ using Printf
 include(joinpath(@__DIR__, "run_regression.jl"))
 include(joinpath(@__DIR__, "phase_b_config.jl"))
 include(joinpath(@__DIR__, "phase_c_config.jl"))
+include(joinpath(@__DIR__, "paper2_t2a_pilot_v1.jl"))
 include(joinpath(@__DIR__, "wp_n1_basis_probe.jl"))
 
 const DEFAULT_BATCH_DIR = joinpath(@__DIR__, "..", "..", "outputs", "studies", "regression", "wp_b2")
@@ -74,6 +75,10 @@ function _is_phase_c_row(row)
     return get(row, "campaign", "") in ("paper1_phaseC_v1", "paper1_phaseC_robustness_v1")
 end
 
+function _is_t2a_row(row)
+    return is_t2a_row(row)
+end
+
 function _is_wp_n1_row(row)
     return get(row, "campaign", "") == "wp_n1_basis_probe"
 end
@@ -82,20 +87,24 @@ function _uses_phase_b_config(row)
     return _is_phase_b_row(row) || _is_wp_n1_row(row)
 end
 
-function _batch_fingerprint(row)
+function _batch_fingerprint(row, manifest_dir::AbstractString)
     if _is_wp_n1_row(row)
         return _wp_n1_fingerprint(parse(Int, row["system_dim"]))
     elseif _is_phase_b_row(row)
         return phase_b_fingerprint()
     elseif _is_phase_c_row(row)
         return phase_c_fingerprint(clamp_val = parse_clamp_val(get(row, "clamp_val", "10")))
+    elseif _is_t2a_row(row)
+        return t2a_fingerprint_from_row(row, manifest_dir)
     end
     return config_fingerprint()
 end
 
-function _batch_variant(row)
+function _batch_variant(row, manifest_dir::AbstractString)
     if _is_phase_c_row(row)
         return phase_c_variant(row["variant"])
+    elseif _is_t2a_row(row)
+        return t2a_variant_from_row(row, manifest_dir)
     end
     return _uses_phase_b_config(row) ? phase_b_variant(row["variant"]) : _variant(row["variant"])
 end
@@ -108,6 +117,8 @@ function _batch_system(row, variant)
     elseif _is_phase_b_row(row)
         return phase_b_system(system_id)
     elseif _is_phase_c_row(row)
+        return phase_c_system(system_id)
+    elseif _is_t2a_row(row)
         return phase_c_system(system_id)
     end
     return _system(system_id)
@@ -137,12 +148,13 @@ end
 
 function run_batch_cell(index::Int, manifest_path::AbstractString, output_dir::AbstractString)
     row = _manifest_row(manifest_path, index)
-    current_fingerprint = _batch_fingerprint(row)
+    manifest_dir = dirname(abspath(manifest_path))
+    current_fingerprint = _batch_fingerprint(row, manifest_dir)
     manifest_fingerprint = row["config_fingerprint"]
     manifest_fingerprint == current_fingerprint ||
         error("Fingerprint mismatch for manifest $(manifest_path): manifest=$(manifest_fingerprint), runtime=$(current_fingerprint)")
 
-    variant = _batch_variant(row)
+    variant = _batch_variant(row, manifest_dir)
     system = _batch_system(row, variant)
     ic_set = parse(Int, row["initial_condition_set"])
     seed = parse(Int, row["seed"])

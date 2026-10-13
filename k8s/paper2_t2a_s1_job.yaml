@@ -1,0 +1,67 @@
+# Paper 2 T2a S1: oracle prior, dim 2, seed 42, both IC sets.
+# Expected cost is approximately 200 core hours: C-1 dim-2 cells averaged about
+# 9.8 h per cell, and S1 has 20 cells. This is capacity planning, not evidence.
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: evoode-paper2-t2a-s1
+  namespace: scch-das
+  labels:
+    app.kubernetes.io/name: evoode
+    app.kubernetes.io/part-of: evoode-paper2-t2a
+    app.kubernetes.io/component: indexed-cell-s1
+    app.kubernetes.io/managed-by: kubectl
+    hpc.scch.at/service: evoode-paper2-t2a-cells
+    hpc.scch.at/responsibility: joedicke
+spec:
+  completionMode: Indexed
+  completions: 20
+  parallelism: 8
+  backoffLimit: 2
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: evoode
+        app.kubernetes.io/part-of: evoode-paper2-t2a
+        app.kubernetes.io/component: indexed-cell-s1
+        hpc.scch.at/service: evoode-paper2-t2a-cells
+        hpc.scch.at/responsibility: joedicke
+    spec:
+      restartPolicy: Never
+      imagePullSecrets:
+        - name: evoode-gitlab-pull
+      containers:
+        - name: cell
+          image: registry.gitlab.scch.at:443/joedicke/evoode:<COMMIT_SHA>
+          imagePullPolicy: IfNotPresent
+          command:
+            - julia
+            - --project=/opt/EvoODE
+            - /opt/EvoODE/studies/regression/run_k8s_indexed_cell.jl
+          env:
+            - name: JULIA_NUM_THREADS
+              value: "1"
+            - name: OPENBLAS_NUM_THREADS
+              value: "1"
+            - name: EVO_BATCH_MANIFEST
+              value: /outputs/paper2_t2a_pilot_v1_<COMMIT_SHA>/manifest.csv
+            - name: EVO_BATCH_INDEX_LIST
+              value: /outputs/paper2_t2a_pilot_v1_<COMMIT_SHA>/indices_s1_oracle_dim2_seed42.txt
+            - name: EVO_BATCH_OUTPUT_DIR
+              value: /outputs/paper2_t2a_s1_<COMMIT_SHA>/tasks
+          resources:
+            requests:
+              cpu: "1"
+              memory: 2Gi
+            limits:
+              cpu: "1"
+              memory: 2Gi
+          volumeMounts:
+            - name: evoode-bigdata
+              mountPath: /outputs
+              subPath: data-science/joedicke
+      volumes:
+        - name: evoode-bigdata
+          nfs:
+            server: nfs.orion.scch.at
+            path: /bigdata

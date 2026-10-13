@@ -812,6 +812,12 @@ function run_one(variant,
         "rejected_diagnostic_samples" => nothing,
         "solver_retcodes" => nothing,
         "optimizer_retcodes" => nothing,
+        "candidate_prior_arm" => nothing,
+        "candidate_prior_epsilon" => nothing,
+        "candidate_prior_mapping" => nothing,
+        "candidate_prior_rankings" => nothing,
+        "candidate_prior_source_tag" => nothing,
+        "candidate_prior_source_hash" => nothing,
         "error" => nothing,
     )
 
@@ -855,6 +861,15 @@ function run_one(variant,
         screening_optimizer = SCREENING_BUDGETS_ENABLED ? build_screening_optimizer(clamp_val = clamp_value) : nothing
         basis = build_variant_basis(variant, dim)
         strategy = variant.constructor(level_callback, screening_optimizer)
+        prior_payload = strategy isa EvoGrow ? candidate_prior_payload(strategy.candidate_prior) : nothing
+        if prior_payload !== nothing
+            base_record["candidate_prior_arm"] = prior_payload.arm
+            base_record["candidate_prior_epsilon"] = prior_payload.epsilon
+            base_record["candidate_prior_mapping"] = prior_payload.mapping
+            base_record["candidate_prior_rankings"] = prior_payload.rankings
+            base_record["candidate_prior_source_tag"] = prior_payload.source_tag
+            base_record["candidate_prior_source_hash"] = prior_payload.source_hash
+        end
         options = build_options(seed)
 
         result = nothing

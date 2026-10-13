@@ -84,11 +84,12 @@ end
 function _stage_caps_for_row(manifest_path::AbstractString, index::Int)
     row = _manifest_row(manifest_path, index)
     _is_phase_c_row(row) || error("Manifest row $(index) is not a Phase-C row")
-    current_fingerprint = _batch_fingerprint(row)
+    manifest_dir = dirname(abspath(manifest_path))
+    current_fingerprint = _batch_fingerprint(row, manifest_dir)
     current_fingerprint == row["config_fingerprint"] ||
         error("Fingerprint mismatch for manifest $(manifest_path): manifest=$(row["config_fingerprint"]), runtime=$(current_fingerprint)")
 
-    variant = _batch_variant(row)
+    variant = _batch_variant(row, manifest_dir)
     system = _batch_system(row, variant)
     dim = Int(system[:dim])
     ic_set = parse(Int, row["initial_condition_set"])

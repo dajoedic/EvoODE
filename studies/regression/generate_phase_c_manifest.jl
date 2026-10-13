@@ -3,6 +3,7 @@ Pkg.activate(joinpath(@__DIR__, "..", ".."))
 
 include(joinpath(@__DIR__, "run_regression.jl"))
 include(joinpath(@__DIR__, "phase_c_config.jl"))
+include(joinpath(@__DIR__, "paper2_t2a_pilot_v1.jl"))
 
 # Measured dimension-class means in seconds per cell, from docs/hpc_requirements.md Section 2.
 const PHASE_C_DIMENSION_MEAN_SECONDS = Dict(
@@ -196,6 +197,26 @@ function phase_c_unique_identity_count(rows)
     return length(Set(phase_c_identity(row) for row in rows))
 end
 
+function t2a_manifest_identity(row)
+    return (
+        row.campaign,
+        row.variant,
+        row.system_id,
+        row.initial_condition_set,
+        row.seed,
+        row.noise_sigma,
+        row.subsample_rho,
+        row.noise_realization,
+        row.clamp_val,
+        row.candidate_prior_arm,
+        row.candidate_prior_path,
+    )
+end
+
+function t2a_unique_identity_count(rows)
+    return length(Set(t2a_manifest_identity(row) for row in rows))
+end
+
 function write_phase_c_manifest(path::AbstractString, rows)
     mkpath(dirname(path))
     open(path, "w") do io
@@ -343,6 +364,7 @@ function main(args = ARGS)
     arg_output !== nothing && (output = arg_output)
 
     c6_grid = _has_flag(args, "--c6-grid")
+    t2a_pilot = _has_flag(args, "--paper2-t2a-pilot")
     dimension = _parse_optional_int(_arg_value(args, "--dimension"))
     limit = _parse_optional_int(_arg_value(args, "--limit"))
     noise_sigma = parse(Float64, something(_arg_value(args, "--noise-sigma"), "0"))
@@ -350,14 +372,19 @@ function main(args = ARGS)
     noise_realization = parse(Int, something(_arg_value(args, "--noise-realization"), "0"))
     clamp_val = parse_clamp_val(something(_arg_value(args, "--clamp-val"), "10"))
     explicit_data_condition = any(_has_option(args, name) for name in ("--noise-sigma", "--subsample-rho", "--noise-realization", "--clamp-val"))
-    campaign = c6_grid || explicit_data_condition || noise_sigma != 0.0 || subsample_rho != 0.0 || clamp_val != 10.0 ? PHASE_C_ROBUSTNESS_ID : PHASE_C_ID
+    campaign = t2a_pilot ? PAPER2_T2A_ID : c6_grid || explicit_data_condition || noise_sigma != 0.0 || subsample_rho != 0.0 || clamp_val != 10.0 ? PHASE_C_ROBUSTNESS_ID : PHASE_C_ID
     all_dimensions = _has_flag(args, "--all-dimensions")
     c6_grid && dimension !== nothing && error("Use either --c6-grid or --dimension, not both")
+    t2a_pilot && c6_grid && error("Use either --paper2-t2a-pilot or --c6-grid, not both")
+    t2a_pilot && dimension !== nothing && error("Use either --paper2-t2a-pilot or --dimension, not both")
     dimension !== nothing && all_dimensions && error("Use either --dimension or --all-dimensions, not both")
     index_output = _arg_value(args, "--index-output")
     index_output !== nothing && all_dimensions && error("--index-output is only valid with --dimension")
 
-    rows = if c6_grid
+    rows = if t2a_pilot
+        base_rows = t2a_manifest_rows()
+        limit === nothing ? base_rows : base_rows[1:min(limit, length(base_rows))]
+    elseif c6_grid
         base_rows = phase_c_c6_grid_rows(clamp_val = clamp_val, campaign = campaign)
         limit === nothing ? base_rows : base_rows[1:min(limit, length(base_rows))]
     else
@@ -369,11 +396,19 @@ function main(args = ARGS)
             campaign = campaign,
         ), limit)
     end
-    unique_identities = phase_c_unique_identity_count(rows)
-    unique_identities == length(rows) || error("Phase C manifest identities are not unique")
-    write_phase_c_manifest(output, rows)
+    unique_identities = t2a_pilot ? t2a_unique_identity_count(rows) : phase_c_unique_identity_count(rows)
+    unique_identities == length(rows) ||
+        error(t2a_pilot ? "T2a manifest identities are not unique" : "Phase C manifest identities are not unique")
+    if t2a_pilot
+        write_t2a_manifest(output, rows)
+    else
+        write_phase_c_manifest(output, rows)
+    end
 
-    if c6_grid
+    if t2a_pilot
+        write_phase_c_all_index_list(joinpath(dirname(output), "indices_all.txt"), rows)
+        write_t2a_s1_index_list(joinpath(dirname(output), "indices_s1_oracle_dim2_seed42.txt"), rows)
+    elseif c6_grid
         write_phase_c_all_index_list(joinpath(dirname(output), "indices_all.txt"), rows)
         write_phase_c_cost_desc_index_list(joinpath(dirname(output), "indices_cost_desc.txt"), rows)
     elseif dimension !== nothing
@@ -423,7 +458,20 @@ function main(args = ARGS)
     end
     println("basis_name=$(PHASE_C_BASIS_NAME)")
     println("max_fit_attempts=$(PHASE_C_MAX_FIT_ATTEMPTS)")
-    if c6_grid
+    if t2a_pilot
+        arm_counts = Dict(arm => count(row -> row.candidate_prior_arm == arm, rows) for arm in PAPER2_T2A_ARMS)
+        println("paper2_t2a_pilot=true")
+        println("epsilon=$(PAPER2_T2A_EPSILON)")
+        println("prior_mapping=$(PAPER2_T2A_PRIOR_MAPPING)")
+        for arm in PAPER2_T2A_ARMS
+            println("arm_$(arm)_rows=$(arm_counts[arm])")
+        end
+        s1_rows = t2a_s1_rows(rows)
+        println("s1_index_output=$(joinpath(dirname(output), "indices_s1_oracle_dim2_seed42.txt"))")
+        println("s1_index_rows=$(length(s1_rows))")
+        println("all_index_output=$(joinpath(dirname(output), "indices_all.txt"))")
+        println("all_index_rows=$(length(rows))")
+    elseif c6_grid
         c6_systems = sort(unique(row.system_id for row in rows))
         c6_conditions = sort(unique((row.noise_sigma, row.subsample_rho) for row in rows))
         c6_realizations = sort(unique(row.noise_realization for row in rows))
