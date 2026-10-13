@@ -1,4 +1,4 @@
 status: done
-task:   WP-N45b
-report: codex/reports/REPORT_WP_N45B.md
-note:   Weak-SINDy subdomain sampling is seeded; tests and 4-cell two-run smoke passed.
+task:   WP-N44b
+report: codex/reports/REPORT_WP_N44B.md
+note:   Zero-parameter fitless starts are accepted with 0 evals and counted; focused tests pass.

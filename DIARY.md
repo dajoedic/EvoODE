@@ -58,6 +58,38 @@ bei 0/20 bzw. 1/20. **Das Bild vom 01.10. ist jetzt vollständig:** Der Loss erk
 
 <!-- 3d5849e -->
 
+### P-04 Restart-Kurve: k = 3 schöpft den Gewinn nicht aus; auf dim 2 trifft ein Einzelstart die Wahrheit nur in 25 %
+
+Orion, 8 Pods, 180/180 Zellen in ~13 h, eingesammelt nach `outputs/phase_c_c5_restart_curve_5dd1df8/`, Auswertung
+`analysis/data/paper1_phaseC_v1/restart_curve/` (WP-N44 + WP-N44b). **Kontrolle: 159 von 159 vergleichbaren Zellen
+bitgleich zu C-5** (21 nicht vergleichbar, weil C-5 dort einen späteren Versuch annahm), 0 Fehler. Sonderfall: Auf
+System 11 enthält die gefundene Struktur in allen sechs Zellen keinen wahren Term, die Orakel-Struktur ist leer und
+wird nicht gefittet (WP-N44b zählt sie mit 0 Evals).
+
+Wahre Struktur, Best-of-k aus Einzelversuchen, Anteil R² > 0,9:
+
+| Schicht | k = 1 | k = 2 | k = 3 | k = 5 | k = 10 |
+|---|---|---|---|---|---|
+| zulässig (144) | 52,1 % | 57,6 % | **63,9 %** | 70,8 % | **79,9 %** |
+| dim 1 (66) | 72,7 % | 80,3 % | 90,9 % | 92,4 % | 97,0 % |
+| **dim 2 (60)** | **25,0 %** | 30,0 % | **33,3 %** | 48,3 % | **65,0 %** |
+| dim 3, 52/57 (12) | 50,0 % | 50,0 % | 58,3 % | 75,0 % | 75,0 % |
+| dim 3, übrige (36) | 2,8 % | 2,8 % | 2,8 % | 5,6 % | 11,1 % |
+| dim 4 (6) | 100 % | 100 % | 100 % | 100 % | 100 % |
+| unzulässig 54–59 (36) | 2,8 % | 2,8 % | 5,6 % | 13,9 % | 19,4 % |
+
+**Vorab festgelegte Lesart (§9.8): nicht erfüllt.** k = 3 → k = 10 bringt auf den zulässigen Zellen +16,0 pp
+(Grenze 5 pp), für 3,77 Mio. zusätzliche Loss-Evals (×3,0). Paper 1 behält k = 3 (eingefroren) und berichtet, was
+mehr Starts gebracht hätten.
+
+**Lesart.** Auf dim 2 trifft ein einzelner Start die wahre Struktur nur in einem von vier Fällen — dieselbe Rate wie die
+WP-T1f-Kaltstarts ohne Grenze (24,5 %) — und die Kurve steigt bei k = 10 noch. Die Suche kann die Wahrheit dort kaum
+wählen, selbst wenn sie sie vorschlägt: Das ist der mechanische Kern von „Fittbarkeit statt Wahrheit“. Für den
+WP-T2a-Pilot sind auf dim 2 **39 von 60 Zellen fittbar** (Definition: Referenzfit R² > 0,9 bei k = 10); nur dort gilt
+die Stopp-Regel. Und es spricht dafür, dass die Restart-Zahl ein mindestens so starker Hebel ist wie die
+Kandidatenreihenfolge — genau die Konfundierung, wegen der `docs/phd_thesis_arc.md` §4 die Restart-Frage vor Paper 2
+stellt. Kosten: Laufzeit P-04 ~13 h statt erwarteter ~23 h.
+
 ### Kern-Limit 40, P-04 läuft
 
 Der Nutzer: EvoODE darf auf Orion höchstens 32 Pods nutzen — C-6 belegte sie alle. Damit lagen wir am 10.10. mit 34

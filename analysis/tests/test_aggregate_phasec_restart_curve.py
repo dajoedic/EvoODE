@@ -5,12 +5,14 @@ import subprocess
 import sys
 from pathlib import Path
 
+import pytest
+
 REPO_ROOT = Path(__file__).resolve().parents[2]
 ANALYSIS_ROOT = REPO_ROOT / "analysis"
 if str(ANALYSIS_ROOT) not in sys.path:
     sys.path.insert(0, str(ANALYSIS_ROOT))
 
-from scripts.aggregate.aggregate_phasec_restart_curve import aggregate
+from scripts.aggregate.aggregate_phasec_restart_curve import AggregationError, aggregate
 
 
 def start(index: int, loss: float, r2: float, evals: int) -> dict:
@@ -20,6 +22,16 @@ def start(index: int, loss: float, r2: float, evals: int) -> dict:
         "loss": loss,
         "r2": r2,
         "fit_meta": {"loss_evals": evals},
+    }
+
+
+def fitless_start(index: int, loss: float, r2: float) -> dict:
+    return {
+        "start_index": index,
+        "start_seed": 1000 + index,
+        "loss": loss,
+        "r2": r2,
+        "fit_meta": None,
     }
 
 
@@ -34,6 +46,8 @@ def restart_record(system_id: int, seed: int, ic: int, reference: list[dict], or
         "basis_name": "staged_polynomial_basis_with_constant",
         "support_status": "exact",
         "original_loss": original_loss,
+        "true_structure": [["u1"]],
+        "oracle_structure": [["u1"]],
         "reference_starts": reference,
         "oracle_starts": oracle,
         "error": None,
@@ -42,6 +56,10 @@ def restart_record(system_id: int, seed: int, ic: int, reference: list[dict], or
 
 def flat_starts(loss: float, r2: float, evals: int = 10) -> list[dict]:
     return [start(i, loss, r2, evals) for i in range(1, 11)]
+
+
+def fitless_starts(loss: float, r2: float) -> list[dict]:
+    return [fitless_start(i, loss, r2) for i in range(1, 11)]
 
 
 def write_jsonl(path: Path, rows: list[dict]) -> None:
@@ -203,6 +221,29 @@ def test_nested_best_of_k_cumulative_cost_thresholds_and_strata(tmp_path: Path) 
     first_hit = read_rows(args.output_dir / "reference_first_hit_by_cell.csv")
     assert next(row for row in first_hit if row["system_id"] == "1")["first_reference_r2_gt_0_9_k"] == "2"
     assert next(row for row in first_hit if row["system_id"] == "52")["first_reference_r2_gt_0_9_k"] == "not within 10"
+
+
+def test_zero_parameter_oracle_null_fit_meta_counts_zero_evals(tmp_path: Path) -> None:
+    row = restart_record(1, 42, 1, flat_starts(1.0, 0.0, 5), fitless_starts(0.0, 1.0), original_loss=2.0)
+    row["oracle_structure"] = [[]]
+    args = write_fixture(tmp_path, [row])
+
+    aggregate(args)
+
+    curve = read_rows(args.output_dir / "restart_curve.csv")
+    oracle_k10 = next(row for row in curve if row["k"] == "10" and row["structure"] == "oracle" and row["stratum"] == "dimension_1")
+    assert oracle_k10["loss_evals_sum"] == "0"
+    assert oracle_k10["zero_parameter_fitless_cells"] == "1"
+    assert oracle_k10["r2_gt_0_9_count"] == "1"
+
+
+def test_nonempty_null_fit_meta_remains_error(tmp_path: Path) -> None:
+    row = restart_record(1, 42, 1, flat_starts(1.0, 0.0, 5), fitless_starts(0.0, 1.0))
+    row["oracle_structure"] = [["u1"]]
+    args = write_fixture(tmp_path, [row])
+
+    with pytest.raises(AggregationError, match="missing oracle fit_meta.loss_evals"):
+        aggregate(args)
 
 
 def test_incomplete_set_refusal(tmp_path: Path) -> None:

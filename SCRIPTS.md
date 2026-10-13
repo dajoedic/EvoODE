@@ -784,7 +784,9 @@ Run seeded Weak-SINDy and E-SINDy on the exported data into a new directory. Do 
 `outputs\c6_sindy_baselines_5dd1df8\` or tracked paper data:
 
 ```powershell
-python -c "import pandas as pd; from pathlib import Path; df=pd.read_csv(r'outputs\phase_c_c6_data_conditions_<SHA>\index.csv'); out=Path(r'outputs\c6_seeded_weak_esindy_baselines_<SHA>\shard_indexes'); out.mkdir(parents=True, exist_ok=True); [df.iloc[i::10].to_csv(out / f'shard_{i}.csv', index=False) for i in range(10)]"
+# cell_dir in the export index is relative to the index file; the shard indexes live elsewhere, so it must be made
+# absolute first (the 2026-10-13 run failed on every cell without this).
+python -c "import pandas as pd; from pathlib import Path; src=Path(r'outputs\phase_c_c6_data_conditions_<SHA>').resolve(); df=pd.read_csv(src/'index.csv'); df['cell_dir']=df['cell_dir'].map(lambda p: str((src/str(p)).resolve())); out=Path(r'outputs\c6_seeded_weak_esindy_baselines_<SHA>\shard_indexes'); out.mkdir(parents=True, exist_ok=True); [df.iloc[i::10].to_csv(out / f'shard_{i}.csv', index=False) for i in range(10)]"
 
 for ($i = 0; $i -lt 10; $i++) {
   python analysis/scripts/aggregate/run_phasec_noise_sindy_baselines.py `

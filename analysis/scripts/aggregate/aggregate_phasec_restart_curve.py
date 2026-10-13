@@ -221,14 +221,45 @@ def best_start(record: dict[str, Any], structure: str, k: int) -> dict[str, Any]
     return min(usable, key=lambda row: float(row["loss"]))
 
 
+def structure_field(record: dict[str, Any], structure: str) -> Any:
+    candidates = [f"{structure}_structure"]
+    if structure == "reference":
+        candidates.append("true_structure")
+    for key in candidates:
+        if key in record:
+            return record[key]
+    fail(f"{record.get('cell_key')}: missing {structure} structure for null fit_meta")
+
+
+def is_zero_parameter_structure(record: dict[str, Any], structure: str) -> bool:
+    terms_by_equation = structure_field(record, structure)
+    if not isinstance(terms_by_equation, list):
+        fail(f"{record.get('cell_key')}: {structure} structure is not a list")
+    return bool(terms_by_equation) and all(isinstance(equation_terms, list) and len(equation_terms) == 0 for equation_terms in terms_by_equation)
+
+
+def start_loss_evals(record: dict[str, Any], structure: str, row: dict[str, Any]) -> int:
+    if "fit_meta" not in row:
+        fail(f"{record.get('cell_key')}: missing {structure} fit_meta.loss_evals")
+    meta = row["fit_meta"]
+    if meta is None:
+        if is_zero_parameter_structure(record, structure):
+            return 0
+        fail(f"{record.get('cell_key')}: missing {structure} fit_meta.loss_evals")
+    if not isinstance(meta, dict) or "loss_evals" not in meta:
+        fail(f"{record.get('cell_key')}: missing {structure} fit_meta.loss_evals")
+    return int(meta["loss_evals"])
+
+
 def cumulative_evals(record: dict[str, Any], structure: str, k: int) -> int:
     total = 0
     for row in checked_starts(record, structure, k):
-        meta = row.get("fit_meta") or {}
-        if "loss_evals" not in meta:
-            fail(f"{record.get('cell_key')}: missing {structure} fit_meta.loss_evals")
-        total += int(meta["loss_evals"])
+        total += start_loss_evals(record, structure, row)
     return total
+
+
+def has_zero_parameter_fitless_start(record: dict[str, Any], structure: str, k: int) -> bool:
+    return any(row.get("fit_meta") is None and is_zero_parameter_structure(record, structure) for row in checked_starts(record, structure, k))
 
 
 def strata_for(record: dict[str, Any], support: dict[int, dict[str, Any]]) -> list[str]:
@@ -287,6 +318,7 @@ def curve_rows(records: dict[str, dict[str, Any]], support: dict[int, dict[str, 
                             "loss": float(best["loss"]),
                             "r2": finite_float(best.get("r2")),
                             "cost": cumulative_evals(record, structure, k),
+                            "zero_parameter_fitless": has_zero_parameter_fitless_start(record, structure, k),
                             "original_loss": finite_float(record.get("original_loss")),
                         }
                     )
@@ -302,6 +334,7 @@ def curve_rows(records: dict[str, dict[str, Any]], support: dict[int, dict[str, 
             "loss_evals_q10_per_cell": q_value(costs, 0.10),
             "loss_evals_q50_per_cell": q_value(costs, 0.50),
             "loss_evals_q90_per_cell": q_value(costs, 0.90),
+            "zero_parameter_fitless_cells": sum(1 for item in group if item["zero_parameter_fitless"]),
             "r2_gt_0_9_count": sum(1 for item in group if item["r2"] is not None and item["r2"] > R2_THRESHOLD),
             "sentinel_count": sum(1 for item in group if item["loss"] >= SENTINEL_LOSS),
             "reaches_or_beats_original_count": sum(
@@ -569,6 +602,7 @@ def curve_fieldnames() -> list[str]:
         "loss_evals_q10_per_cell",
         "loss_evals_q50_per_cell",
         "loss_evals_q90_per_cell",
+        "zero_parameter_fitless_cells",
         "r2_gt_0_9_count",
         "r2_gt_0_9_rate",
         "sentinel_count",

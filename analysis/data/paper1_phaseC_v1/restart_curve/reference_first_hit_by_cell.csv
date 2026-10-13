@@ -1,0 +1,181 @@
+cell_key,system_id,dimension,initial_condition_set,seed,first_reference_r2_gt_0_9_k
+sys0001_seed7_ic1,1,1,1,7,10
+sys0001_seed7_ic2,1,1,2,7,3
+sys0001_seed42_ic1,1,1,1,42,not within 10
+sys0001_seed42_ic2,1,1,2,42,1
+sys0001_seed123_ic1,1,1,1,123,1
+sys0001_seed123_ic2,1,1,2,123,1
+sys0002_seed7_ic1,2,1,1,7,1
+sys0002_seed7_ic2,2,1,2,7,1
+sys0002_seed42_ic1,2,1,1,42,1
+sys0002_seed42_ic2,2,1,2,42,1
+sys0002_seed123_ic1,2,1,1,123,1
+sys0002_seed123_ic2,2,1,2,123,1
+sys0003_seed7_ic1,3,1,1,7,3
+sys0003_seed7_ic2,3,1,2,7,3
+sys0003_seed42_ic1,3,1,1,42,1
+sys0003_seed42_ic2,3,1,2,42,1
+sys0003_seed123_ic1,3,1,1,123,1
+sys0003_seed123_ic2,3,1,2,123,1
+sys0005_seed7_ic1,5,1,1,7,1
+sys0005_seed7_ic2,5,1,2,7,3
+sys0005_seed42_ic1,5,1,1,42,1
+sys0005_seed42_ic2,5,1,2,42,1
+sys0005_seed123_ic1,5,1,1,123,1
+sys0005_seed123_ic2,5,1,2,123,1
+sys0006_seed7_ic1,6,1,1,7,1
+sys0006_seed7_ic2,6,1,2,7,3
+sys0006_seed42_ic1,6,1,1,42,1
+sys0006_seed42_ic2,6,1,2,42,1
+sys0006_seed123_ic1,6,1,1,123,2
+sys0006_seed123_ic2,6,1,2,123,1
+sys0008_seed7_ic1,8,1,1,7,1
+sys0008_seed7_ic2,8,1,2,7,1
+sys0008_seed42_ic1,8,1,1,42,1
+sys0008_seed42_ic2,8,1,2,42,1
+sys0008_seed123_ic1,8,1,1,123,1
+sys0008_seed123_ic2,8,1,2,123,1
+sys0009_seed7_ic1,9,1,1,7,1
+sys0009_seed7_ic2,9,1,2,7,1
+sys0009_seed42_ic1,9,1,1,42,1
+sys0009_seed42_ic2,9,1,2,42,1
+sys0009_seed123_ic1,9,1,1,123,1
+sys0009_seed123_ic2,9,1,2,123,1
+sys0011_seed7_ic1,11,1,1,7,2
+sys0011_seed7_ic2,11,1,2,7,1
+sys0011_seed42_ic1,11,1,1,42,not within 10
+sys0011_seed42_ic2,11,1,2,42,10
+sys0011_seed123_ic1,11,1,1,123,10
+sys0011_seed123_ic2,11,1,2,123,1
+sys0012_seed7_ic1,12,1,1,7,3
+sys0012_seed7_ic2,12,1,2,7,2
+sys0012_seed42_ic1,12,1,1,42,1
+sys0012_seed42_ic2,12,1,2,42,1
+sys0012_seed123_ic1,12,1,1,123,1
+sys0012_seed123_ic2,12,1,2,123,2
+sys0017_seed7_ic1,17,1,1,7,1
+sys0017_seed7_ic2,17,1,2,7,1
+sys0017_seed42_ic1,17,1,1,42,1
+sys0017_seed42_ic2,17,1,2,42,1
+sys0017_seed123_ic1,17,1,1,123,1
+sys0017_seed123_ic2,17,1,2,123,1
+sys0023_seed7_ic1,23,1,1,7,1
+sys0023_seed7_ic2,23,1,2,7,2
+sys0023_seed42_ic1,23,1,1,42,3
+sys0023_seed42_ic2,23,1,2,42,1
+sys0023_seed123_ic1,23,1,1,123,5
+sys0023_seed123_ic2,23,1,2,123,1
+sys0024_seed7_ic1,24,2,1,7,10
+sys0024_seed7_ic2,24,2,2,7,not within 10
+sys0024_seed42_ic1,24,2,1,42,10
+sys0024_seed42_ic2,24,2,2,42,not within 10
+sys0024_seed123_ic1,24,2,1,123,not within 10
+sys0024_seed123_ic2,24,2,2,123,not within 10
+sys0025_seed7_ic1,25,2,1,7,10
+sys0025_seed7_ic2,25,2,2,7,10
+sys0025_seed42_ic1,25,2,1,42,10
+sys0025_seed42_ic2,25,2,2,42,1
+sys0025_seed123_ic1,25,2,1,123,not within 10
+sys0025_seed123_ic2,25,2,2,123,1
+sys0026_seed7_ic1,26,2,1,7,10
+sys0026_seed7_ic2,26,2,2,7,1
+sys0026_seed42_ic1,26,2,1,42,1
+sys0026_seed42_ic2,26,2,2,42,5
+sys0026_seed123_ic1,26,2,1,123,not within 10
+sys0026_seed123_ic2,26,2,2,123,10
+sys0027_seed7_ic1,27,2,1,7,not within 10
+sys0027_seed7_ic2,27,2,2,7,not within 10
+sys0027_seed42_ic1,27,2,1,42,not within 10
+sys0027_seed42_ic2,27,2,2,42,not within 10
+sys0027_seed123_ic1,27,2,1,123,not within 10
+sys0027_seed123_ic2,27,2,2,123,not within 10
+sys0028_seed7_ic1,28,2,1,7,10
+sys0028_seed7_ic2,28,2,2,7,5
+sys0028_seed42_ic1,28,2,1,42,not within 10
+sys0028_seed42_ic2,28,2,2,42,5
+sys0028_seed123_ic1,28,2,1,123,not within 10
+sys0028_seed123_ic2,28,2,2,123,5
+sys0029_seed7_ic1,29,2,1,7,not within 10
+sys0029_seed7_ic2,29,2,2,7,10
+sys0029_seed42_ic1,29,2,1,42,not within 10
+sys0029_seed42_ic2,29,2,2,42,1
+sys0029_seed123_ic1,29,2,1,123,5
+sys0029_seed123_ic2,29,2,2,123,2
+sys0031_seed7_ic1,31,2,1,7,1
+sys0031_seed7_ic2,31,2,2,7,1
+sys0031_seed42_ic1,31,2,1,42,5
+sys0031_seed42_ic2,31,2,2,42,5
+sys0031_seed123_ic1,31,2,1,123,1
+sys0031_seed123_ic2,31,2,2,123,1
+sys0032_seed7_ic1,32,2,1,7,1
+sys0032_seed7_ic2,32,2,2,7,not within 10
+sys0032_seed42_ic1,32,2,1,42,not within 10
+sys0032_seed42_ic2,32,2,2,42,not within 10
+sys0032_seed123_ic1,32,2,1,123,not within 10
+sys0032_seed123_ic2,32,2,2,123,not within 10
+sys0038_seed7_ic1,38,2,1,7,1
+sys0038_seed7_ic2,38,2,2,7,1
+sys0038_seed42_ic1,38,2,1,42,3
+sys0038_seed42_ic2,38,2,2,42,5
+sys0038_seed123_ic1,38,2,1,123,5
+sys0038_seed123_ic2,38,2,2,123,10
+sys0043_seed7_ic1,43,2,1,7,1
+sys0043_seed7_ic2,43,2,2,7,1
+sys0043_seed42_ic1,43,2,1,42,2
+sys0043_seed42_ic2,43,2,2,42,1
+sys0043_seed123_ic1,43,2,1,123,2
+sys0043_seed123_ic2,43,2,2,123,3
+sys0052_seed7_ic1,52,3,1,7,1
+sys0052_seed7_ic2,52,3,2,7,1
+sys0052_seed42_ic1,52,3,1,42,1
+sys0052_seed42_ic2,52,3,2,42,1
+sys0052_seed123_ic1,52,3,1,123,1
+sys0052_seed123_ic2,52,3,2,123,1
+sys0054_seed7_ic1,54,3,1,7,1
+sys0054_seed7_ic2,54,3,2,7,not within 10
+sys0054_seed42_ic1,54,3,1,42,10
+sys0054_seed42_ic2,54,3,2,42,not within 10
+sys0054_seed123_ic1,54,3,1,123,10
+sys0054_seed123_ic2,54,3,2,123,not within 10
+sys0055_seed7_ic1,55,3,1,7,not within 10
+sys0055_seed7_ic2,55,3,2,7,not within 10
+sys0055_seed42_ic1,55,3,1,42,not within 10
+sys0055_seed42_ic2,55,3,2,42,not within 10
+sys0055_seed123_ic1,55,3,1,123,not within 10
+sys0055_seed123_ic2,55,3,2,123,not within 10
+sys0056_seed7_ic1,56,3,1,7,not within 10
+sys0056_seed7_ic2,56,3,2,7,not within 10
+sys0056_seed42_ic1,56,3,1,42,not within 10
+sys0056_seed42_ic2,56,3,2,42,not within 10
+sys0056_seed123_ic1,56,3,1,123,not within 10
+sys0056_seed123_ic2,56,3,2,123,not within 10
+sys0057_seed7_ic1,57,3,1,7,10
+sys0057_seed7_ic2,57,3,2,7,not within 10
+sys0057_seed42_ic1,57,3,1,42,5
+sys0057_seed42_ic2,57,3,2,42,not within 10
+sys0057_seed123_ic1,57,3,1,123,3
+sys0057_seed123_ic2,57,3,2,123,5
+sys0058_seed7_ic1,58,3,1,7,5
+sys0058_seed7_ic2,58,3,2,7,not within 10
+sys0058_seed42_ic1,58,3,1,42,not within 10
+sys0058_seed42_ic2,58,3,2,42,not within 10
+sys0058_seed123_ic1,58,3,1,123,not within 10
+sys0058_seed123_ic2,58,3,2,123,not within 10
+sys0059_seed7_ic1,59,3,1,7,not within 10
+sys0059_seed7_ic2,59,3,2,7,not within 10
+sys0059_seed42_ic1,59,3,1,42,not within 10
+sys0059_seed42_ic2,59,3,2,42,not within 10
+sys0059_seed123_ic1,59,3,1,123,not within 10
+sys0059_seed123_ic2,59,3,2,123,not within 10
+sys0061_seed7_ic1,61,3,1,7,not within 10
+sys0061_seed7_ic2,61,3,2,7,not within 10
+sys0061_seed42_ic1,61,3,1,42,not within 10
+sys0061_seed42_ic2,61,3,2,42,not within 10
+sys0061_seed123_ic1,61,3,1,123,not within 10
+sys0061_seed123_ic2,61,3,2,123,not within 10
+sys0063_seed7_ic1,63,4,1,7,1
+sys0063_seed7_ic2,63,4,2,7,1
+sys0063_seed42_ic1,63,4,1,42,1
+sys0063_seed42_ic2,63,4,2,42,1
+sys0063_seed123_ic1,63,4,1,123,1
+sys0063_seed123_ic2,63,4,2,123,1

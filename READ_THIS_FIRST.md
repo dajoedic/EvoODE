@@ -32,7 +32,7 @@ jedem Statuswechsel aktualisieren.
 |---|---|---|---|
 | **C-6-Raster gekappt** (3.366 Zellen, 24 Pods) | **670** (13.10. 01:10) | zuletzt ~31/Tag → evtl. erst ~Jan.; beobachten | einsammeln (NFS `phase_c_c6_grid_<SHA>/tasks`), Clean-Auswertung, Aggregation |
 | **C-6-Raster ungekappt, Seed 42** (461, 8 Pods) | **180** | ~16/Tag → ~Ende Okt. | Nutzer entscheidet über Seed 123/7 (Plan §9.4c Punkt 5); 8 Kerne werden frei |
-| **P-04 Restart-Kurve** (36 Shards, 8 Pods) | gestartet 13.10. ~01:05 | erwartet ~23 h (Schranke ~53 h); melden, wenn > 2 Tage | einsammeln vom NFS `phase_c_c5_restart_curve_5dd1df8…/out`, `aggregate_phasec_restart_curve.py` (Kontrolle gegen C-5 = harter Stopp), dann Fittbarkeit für WP-T2a |
+| ~~P-04 Restart-Kurve~~ | **fertig 13.10.**, eingesammelt und ausgewertet (DIARY 13.10.): Kontrolle 159/159 bitgleich; k=3 64 % → k=10 80 %, dim 2 33 % → 65 % | — | 8 Kerne wieder frei (32 belegt) |
 
 **Kern-Limit:** EvoODE max. **40 Kerne gesamt** (vorher 32). Kein Kern mehr. Laufende Jobs nie herunterdrehen (tötet
 Pods); neue Jobs warten auf frei werdende Kerne. Wenn P-04 endet, sind 8 Kerne frei (Kandidat: WP-T2a S1, braucht

@@ -1,0 +1,419 @@
+{
+  "curve_k": [
+    1,
+    2,
+    3,
+    5,
+    10
+  ],
+  "inputs": {
+    "c5_files": [
+      {
+        "path": "C:\\Users\\joedicke\\Documents\\reps\\EvoODE\\outputs\\wp_n3_oracle_refit_phase_c\\shard_001_of_036\\results.jsonl",
+        "row_count": null,
+        "sha256": "839263057c5d2a2b45663c3b33184ec2a052abc3c70183ab02c2b8d2d029e858"
+      },
+      {
+        "path": "C:\\Users\\joedicke\\Documents\\reps\\EvoODE\\outputs\\wp_n3_oracle_refit_phase_c\\shard_002_of_036\\results.jsonl",
+        "row_count": null,
+        "sha256": "288ee17c543d49fc383102b5eab1e382ff0b3d8b75c66b382581d06e58fd800d"
+      },
+      {
+        "path": "C:\\Users\\joedicke\\Documents\\reps\\EvoODE\\outputs\\wp_n3_oracle_refit_phase_c\\shard_003_of_036\\results.jsonl",
+        "row_count": null,
+        "sha256": "8c3a04318ed523f8fc319a0f6bcb5210fe1b824087b3f7d284aa8f46da5a38aa"
+      },
+      {
+        "path": "C:\\Users\\joedicke\\Documents\\reps\\EvoODE\\outputs\\wp_n3_oracle_refit_phase_c\\shard_004_of_036\\results.jsonl",
+        "row_count": null,
+        "sha256": "6ff3ef997fd4f400d0c70f9840e3e7c8fab475809b1a45241c51135a3332bb38"
+      },
+      {
+        "path": "C:\\Users\\joedicke\\Documents\\reps\\EvoODE\\outputs\\wp_n3_oracle_refit_phase_c\\shard_005_of_036\\results.jsonl",
+        "row_count": null,
+        "sha256": "060f118bc318f8a79908948ec7230a084114178826df6a7d15db545005519976"
+      },
+      {
+        "path": "C:\\Users\\joedicke\\Documents\\reps\\EvoODE\\outputs\\wp_n3_oracle_refit_phase_c\\shard_006_of_036\\results.jsonl",
+        "row_count": null,
+        "sha256": "9c83e8acea41f43c3e872ad79e816200eb4f085119389ecf615885a53c55b134"
+      },
+      {
+        "path": "C:\\Users\\joedicke\\Documents\\reps\\EvoODE\\outputs\\wp_n3_oracle_refit_phase_c\\shard_007_of_036\\results.jsonl",
+        "row_count": null,
+        "sha256": "7c636335b265f175e4cff61558287158b426386f05b741c91f791d1f01ee7252"
+      },
+      {
+        "path": "C:\\Users\\joedicke\\Documents\\reps\\EvoODE\\outputs\\wp_n3_oracle_refit_phase_c\\shard_008_of_036\\results.jsonl",
+        "row_count": null,
+        "sha256": "60ffd36c43a9dbbd3daa89092a5d915c83dd74d5100b07c462f81a120f7bbd8f"
+      },
+      {
+        "path": "C:\\Users\\joedicke\\Documents\\reps\\EvoODE\\outputs\\wp_n3_oracle_refit_phase_c\\shard_009_of_036\\results.jsonl",
+        "row_count": null,
+        "sha256": "a9bf3b4942e127a5c14f429eb4f7191fd52332e4f67b149144089fef39f0d3c2"
+      },
+      {
+        "path": "C:\\Users\\joedicke\\Documents\\reps\\EvoODE\\outputs\\wp_n3_oracle_refit_phase_c\\shard_010_of_036\\results.jsonl",
+        "row_count": null,
+        "sha256": "ebd3a04156088b1fee4f7bf21581ec877d3bbb450deee1c720b5590852dacdb2"
+      },
+      {
+        "path": "C:\\Users\\joedicke\\Documents\\reps\\EvoODE\\outputs\\wp_n3_oracle_refit_phase_c\\shard_011_of_036\\results.jsonl",
+        "row_count": null,
+        "sha256": "0a67a863e606bda545a433fc32bc2c21ba0c9142cea04f43209095f5ee6ff353"
+      },
+      {
+        "path": "C:\\Users\\joedicke\\Documents\\reps\\EvoODE\\outputs\\wp_n3_oracle_refit_phase_c\\shard_012_of_036\\results.jsonl",
+        "row_count": null,
+        "sha256": "589aad805240d11455d190c4f7246bba7390be21484e433b284542f54f9577dc"
+      },
+      {
+        "path": "C:\\Users\\joedicke\\Documents\\reps\\EvoODE\\outputs\\wp_n3_oracle_refit_phase_c\\shard_013_of_036\\results.jsonl",
+        "row_count": null,
+        "sha256": "2d266f9d882f651964e9494b1dd20da5d6d8e500aa2e5c3651910461ed6ec8a8"
+      },
+      {
+        "path": "C:\\Users\\joedicke\\Documents\\reps\\EvoODE\\outputs\\wp_n3_oracle_refit_phase_c\\shard_014_of_036\\results.jsonl",
+        "row_count": null,
+        "sha256": "d42c314bf6bc694593293abd2784932a24af3dec2c5b1e347d597ce0111448bd"
+      },
+      {
+        "path": "C:\\Users\\joedicke\\Documents\\reps\\EvoODE\\outputs\\wp_n3_oracle_refit_phase_c\\shard_015_of_036\\results.jsonl",
+        "row_count": null,
+        "sha256": "418226f4246437d3416232ffaac6b7ccc8b762dcf71839072a6a11ebf96c037e"
+      },
+      {
+        "path": "C:\\Users\\joedicke\\Documents\\reps\\EvoODE\\outputs\\wp_n3_oracle_refit_phase_c\\shard_016_of_036\\results.jsonl",
+        "row_count": null,
+        "sha256": "9ba5351cb94c5267bda4332e9f4ecdaa9fa4e134f547945e1c1ba796e4916f81"
+      },
+      {
+        "path": "C:\\Users\\joedicke\\Documents\\reps\\EvoODE\\outputs\\wp_n3_oracle_refit_phase_c\\shard_017_of_036\\results.jsonl",
+        "row_count": null,
+        "sha256": "95dfc9d1c4ee2e0c77fa62c5b42f14da76b442149356b965f18f32d1871c052e"
+      },
+      {
+        "path": "C:\\Users\\joedicke\\Documents\\reps\\EvoODE\\outputs\\wp_n3_oracle_refit_phase_c\\shard_018_of_036\\results.jsonl",
+        "row_count": null,
+        "sha256": "c2438aa89947f831435831be148d62afeee212d2b5ed21ed16e40084c6cfe922"
+      },
+      {
+        "path": "C:\\Users\\joedicke\\Documents\\reps\\EvoODE\\outputs\\wp_n3_oracle_refit_phase_c\\shard_019_of_036\\results.jsonl",
+        "row_count": null,
+        "sha256": "15923879b2114a6fbe071af99c9c78349aa287032d0f3fd6272a19135f1af688"
+      },
+      {
+        "path": "C:\\Users\\joedicke\\Documents\\reps\\EvoODE\\outputs\\wp_n3_oracle_refit_phase_c\\shard_020_of_036\\results.jsonl",
+        "row_count": null,
+        "sha256": "5b7c1c058d5602a19f3b595d1a84f57c4a6a46f7d93186f883106e4e9cc0baed"
+      },
+      {
+        "path": "C:\\Users\\joedicke\\Documents\\reps\\EvoODE\\outputs\\wp_n3_oracle_refit_phase_c\\shard_021_of_036\\results.jsonl",
+        "row_count": null,
+        "sha256": "1916e2c1ad9110650d86b495e762b7352a5a74746304ec1aa5c99fee2399e96c"
+      },
+      {
+        "path": "C:\\Users\\joedicke\\Documents\\reps\\EvoODE\\outputs\\wp_n3_oracle_refit_phase_c\\shard_022_of_036\\results.jsonl",
+        "row_count": null,
+        "sha256": "220a4e5417e95c9b4208461b387f470008448f15e5666f31b76b441b776114f1"
+      },
+      {
+        "path": "C:\\Users\\joedicke\\Documents\\reps\\EvoODE\\outputs\\wp_n3_oracle_refit_phase_c\\shard_023_of_036\\results.jsonl",
+        "row_count": null,
+        "sha256": "0b0e0525cefbc128b23f0becb2f3e49b3a73e1ab5499121c0aea7bb85516f120"
+      },
+      {
+        "path": "C:\\Users\\joedicke\\Documents\\reps\\EvoODE\\outputs\\wp_n3_oracle_refit_phase_c\\shard_024_of_036\\results.jsonl",
+        "row_count": null,
+        "sha256": "1bcb481065839a01e260d18c129da9ad3e4c9f32cca9d5214c6563d038db4d2c"
+      },
+      {
+        "path": "C:\\Users\\joedicke\\Documents\\reps\\EvoODE\\outputs\\wp_n3_oracle_refit_phase_c\\shard_025_of_036\\results.jsonl",
+        "row_count": null,
+        "sha256": "0e5e01eaf8289c63ef94f9b798ea9493da4e9e3266a9e159d60b8529fc316b10"
+      },
+      {
+        "path": "C:\\Users\\joedicke\\Documents\\reps\\EvoODE\\outputs\\wp_n3_oracle_refit_phase_c\\shard_026_of_036\\results.jsonl",
+        "row_count": null,
+        "sha256": "20c6559c7454c1e1764e2da7088a849672d98993b51c2bfad67cc93106b0bd8c"
+      },
+      {
+        "path": "C:\\Users\\joedicke\\Documents\\reps\\EvoODE\\outputs\\wp_n3_oracle_refit_phase_c\\shard_027_of_036\\results.jsonl",
+        "row_count": null,
+        "sha256": "ad4b4dbb12228255ba6b852e5286d2bb2ee36d50a3f86ff75893f66fe26d6690"
+      },
+      {
+        "path": "C:\\Users\\joedicke\\Documents\\reps\\EvoODE\\outputs\\wp_n3_oracle_refit_phase_c\\shard_028_of_036\\results.jsonl",
+        "row_count": null,
+        "sha256": "ca62312f40b59f50113a83bda8544923721341847640c7e11f42bf70f2eefce5"
+      },
+      {
+        "path": "C:\\Users\\joedicke\\Documents\\reps\\EvoODE\\outputs\\wp_n3_oracle_refit_phase_c\\shard_029_of_036\\results.jsonl",
+        "row_count": null,
+        "sha256": "e6b900a49cfc119ac392598db67a8d263657ca0aca76cf238218e4c59e403bcf"
+      },
+      {
+        "path": "C:\\Users\\joedicke\\Documents\\reps\\EvoODE\\outputs\\wp_n3_oracle_refit_phase_c\\shard_030_of_036\\results.jsonl",
+        "row_count": null,
+        "sha256": "2f71ae54d3d9eaf97d1670cdada7e84735b521c80ed8368035c9164dd8b99562"
+      },
+      {
+        "path": "C:\\Users\\joedicke\\Documents\\reps\\EvoODE\\outputs\\wp_n3_oracle_refit_phase_c\\shard_031_of_036\\results.jsonl",
+        "row_count": null,
+        "sha256": "91c3dc36a38b4dce47db93c0d2db590995d522e96b8d086a4befaebdfdf619d4"
+      },
+      {
+        "path": "C:\\Users\\joedicke\\Documents\\reps\\EvoODE\\outputs\\wp_n3_oracle_refit_phase_c\\shard_032_of_036\\results.jsonl",
+        "row_count": null,
+        "sha256": "71f3c478688dcc7daea5f18f3b7577db96e369fe4d635f4bc386fe6ebf1e16be"
+      },
+      {
+        "path": "C:\\Users\\joedicke\\Documents\\reps\\EvoODE\\outputs\\wp_n3_oracle_refit_phase_c\\shard_033_of_036\\results.jsonl",
+        "row_count": null,
+        "sha256": "ea5feaea4406bc19937e2c59df090b0b2dec14ec2142f3aad8728eb7f67ca5ad"
+      },
+      {
+        "path": "C:\\Users\\joedicke\\Documents\\reps\\EvoODE\\outputs\\wp_n3_oracle_refit_phase_c\\shard_034_of_036\\results.jsonl",
+        "row_count": null,
+        "sha256": "a3390d535d87a724d769ca55887623bf059bf5b0d867b47bf9fa386f71a823c0"
+      },
+      {
+        "path": "C:\\Users\\joedicke\\Documents\\reps\\EvoODE\\outputs\\wp_n3_oracle_refit_phase_c\\shard_035_of_036\\results.jsonl",
+        "row_count": null,
+        "sha256": "fbeacbaf1685f21e6d360ba5606a335d642cfa7e14f9227e262e03895f85b2b9"
+      },
+      {
+        "path": "C:\\Users\\joedicke\\Documents\\reps\\EvoODE\\outputs\\wp_n3_oracle_refit_phase_c\\shard_036_of_036\\results.jsonl",
+        "row_count": null,
+        "sha256": "2f684b33a14bd5094b4f249e336a259eb543a9fd031c827f9198af98f8a42c08"
+      }
+    ],
+    "c5_oracle_dir": {
+      "path": "C:\\Users\\joedicke\\Documents\\reps\\EvoODE\\outputs\\wp_n3_oracle_refit_phase_c",
+      "row_count": 180,
+      "sha256": "43a80f82064f8abf19cc238f9bfc4027fd8d1200105d691b48468503e2778841"
+    },
+    "cold_starts": {
+      "path": "C:\\Users\\joedicke\\Documents\\reps\\EvoODE\\analysis\\data\\wp_t1d_neighbourhood\\wp_t1f_campaign_1db11932c4335e480d374c7de1be35593b62b447\\truth_cold_by_cell.csv",
+      "row_count": 18,
+      "sha256": "eb0b8366f7b1eadce1ad6ee7be6952881ff3ed7727437c6f2d2e5e771038f3d7"
+    },
+    "duplicate_source": {
+      "path": "C:\\Users\\joedicke\\Documents\\reps\\EvoODE\\outputs\\phase_c_campaign_221a3a7\\history.jsonl",
+      "row_count": 28,
+      "sha256": "4be256a2c247e49c047e405a9d06b4413b2523c7597bfe0bafa3cabdacb354fa"
+    },
+    "registry": {
+      "path": "C:\\Users\\joedicke\\Documents\\reps\\EvoODE\\experiments\\paper1_phaseC_v1\\run_registry.csv",
+      "row_count": 936,
+      "sha256": "5221024914772bd7dd246ca7d5bca2f46675466f7c92f2db123b7085c24c78ac"
+    },
+    "restart_files": [
+      {
+        "path": "C:\\Users\\joedicke\\Documents\\reps\\EvoODE\\outputs\\phase_c_c5_restart_curve_5dd1df8\\out\\shard_001_of_036\\starts.jsonl",
+        "row_count": null,
+        "sha256": "9a086d6d7aa965f8c50aea22654c1766916407810ba08403cf7e186fe611caaf"
+      },
+      {
+        "path": "C:\\Users\\joedicke\\Documents\\reps\\EvoODE\\outputs\\phase_c_c5_restart_curve_5dd1df8\\out\\shard_002_of_036\\starts.jsonl",
+        "row_count": null,
+        "sha256": "f3c60d5f4f55f85f2163324789fc834d690390e462e17905082f33b0c9d4d129"
+      },
+      {
+        "path": "C:\\Users\\joedicke\\Documents\\reps\\EvoODE\\outputs\\phase_c_c5_restart_curve_5dd1df8\\out\\shard_003_of_036\\starts.jsonl",
+        "row_count": null,
+        "sha256": "9df1e3eb6cebe71aa36de12ce07d034dfd4322a6b07f5f72d710fc5cab00d8ed"
+      },
+      {
+        "path": "C:\\Users\\joedicke\\Documents\\reps\\EvoODE\\outputs\\phase_c_c5_restart_curve_5dd1df8\\out\\shard_004_of_036\\starts.jsonl",
+        "row_count": null,
+        "sha256": "dc612d2084bfd1c3405628e0dec2b740d067972cf12cccd1fd3572c47259d164"
+      },
+      {
+        "path": "C:\\Users\\joedicke\\Documents\\reps\\EvoODE\\outputs\\phase_c_c5_restart_curve_5dd1df8\\out\\shard_005_of_036\\starts.jsonl",
+        "row_count": null,
+        "sha256": "737f344fdb887bcd99d61177554a255307e6b08763952bd0c7a433c29de56302"
+      },
+      {
+        "path": "C:\\Users\\joedicke\\Documents\\reps\\EvoODE\\outputs\\phase_c_c5_restart_curve_5dd1df8\\out\\shard_006_of_036\\starts.jsonl",
+        "row_count": null,
+        "sha256": "de4d302574c6fc23a27a2feb86e259b901fdebf7ed963c15499944057cf266b3"
+      },
+      {
+        "path": "C:\\Users\\joedicke\\Documents\\reps\\EvoODE\\outputs\\phase_c_c5_restart_curve_5dd1df8\\out\\shard_007_of_036\\starts.jsonl",
+        "row_count": null,
+        "sha256": "4d68657be4e8c9ea76208ca8e290bd62be0e7a8732fb6b0d50e284e576bac556"
+      },
+      {
+        "path": "C:\\Users\\joedicke\\Documents\\reps\\EvoODE\\outputs\\phase_c_c5_restart_curve_5dd1df8\\out\\shard_008_of_036\\starts.jsonl",
+        "row_count": null,
+        "sha256": "ece77a3d2d2ab1c40b12fb810c2a56be415ae19509ded4c49ed80bcfa114f3ee"
+      },
+      {
+        "path": "C:\\Users\\joedicke\\Documents\\reps\\EvoODE\\outputs\\phase_c_c5_restart_curve_5dd1df8\\out\\shard_009_of_036\\starts.jsonl",
+        "row_count": null,
+        "sha256": "73f5355858940ace53b7ea6ff89df71383c20ea11e2e5adaa4ab80f0274f84bd"
+      },
+      {
+        "path": "C:\\Users\\joedicke\\Documents\\reps\\EvoODE\\outputs\\phase_c_c5_restart_curve_5dd1df8\\out\\shard_010_of_036\\starts.jsonl",
+        "row_count": null,
+        "sha256": "4489959fdf777b3e9580369e11c301611a00fed8dfe39afc464bee7d757dcf84"
+      },
+      {
+        "path": "C:\\Users\\joedicke\\Documents\\reps\\EvoODE\\outputs\\phase_c_c5_restart_curve_5dd1df8\\out\\shard_011_of_036\\starts.jsonl",
+        "row_count": null,
+        "sha256": "4986697df27b8097fbe8025da46a3873f773b2123cfebb967cd7782b886a4b6f"
+      },
+      {
+        "path": "C:\\Users\\joedicke\\Documents\\reps\\EvoODE\\outputs\\phase_c_c5_restart_curve_5dd1df8\\out\\shard_012_of_036\\starts.jsonl",
+        "row_count": null,
+        "sha256": "998f18a366efa204fe335e04aaa3690c091b612dabdba59f32a071050af93f71"
+      },
+      {
+        "path": "C:\\Users\\joedicke\\Documents\\reps\\EvoODE\\outputs\\phase_c_c5_restart_curve_5dd1df8\\out\\shard_013_of_036\\starts.jsonl",
+        "row_count": null,
+        "sha256": "a3a20363c7c515e9b63afb78c793cc92391cf0f7a78e1dcef16f15bc837c02b2"
+      },
+      {
+        "path": "C:\\Users\\joedicke\\Documents\\reps\\EvoODE\\outputs\\phase_c_c5_restart_curve_5dd1df8\\out\\shard_014_of_036\\starts.jsonl",
+        "row_count": null,
+        "sha256": "d9cf616d6ff8867a3ed7751c39cb92bf7b25af376f40dee772c1efa5eaa932fc"
+      },
+      {
+        "path": "C:\\Users\\joedicke\\Documents\\reps\\EvoODE\\outputs\\phase_c_c5_restart_curve_5dd1df8\\out\\shard_015_of_036\\starts.jsonl",
+        "row_count": null,
+        "sha256": "f7edfa3785ee644c5e606eba5889e254108fc8bae4e42ef5acd0f7ef0cf0e3b8"
+      },
+      {
+        "path": "C:\\Users\\joedicke\\Documents\\reps\\EvoODE\\outputs\\phase_c_c5_restart_curve_5dd1df8\\out\\shard_016_of_036\\starts.jsonl",
+        "row_count": null,
+        "sha256": "a82724f066e42441bbfb0ea05ec9980f4e25c112419479d6a585eeb02b3ed569"
+      },
+      {
+        "path": "C:\\Users\\joedicke\\Documents\\reps\\EvoODE\\outputs\\phase_c_c5_restart_curve_5dd1df8\\out\\shard_017_of_036\\starts.jsonl",
+        "row_count": null,
+        "sha256": "d4864444232974a780b660761d0a8534be26c858dbaeb3d848201db1c7f03339"
+      },
+      {
+        "path": "C:\\Users\\joedicke\\Documents\\reps\\EvoODE\\outputs\\phase_c_c5_restart_curve_5dd1df8\\out\\shard_018_of_036\\starts.jsonl",
+        "row_count": null,
+        "sha256": "24ade09b98513b50e262c870435ff25cf4cbc622d92ecf6a4ef017e5f6b12172"
+      },
+      {
+        "path": "C:\\Users\\joedicke\\Documents\\reps\\EvoODE\\outputs\\phase_c_c5_restart_curve_5dd1df8\\out\\shard_019_of_036\\starts.jsonl",
+        "row_count": null,
+        "sha256": "055e8e11eb06cf3dab281d589ea6754ecc886a60fb56d690e612241b3da33d25"
+      },
+      {
+        "path": "C:\\Users\\joedicke\\Documents\\reps\\EvoODE\\outputs\\phase_c_c5_restart_curve_5dd1df8\\out\\shard_020_of_036\\starts.jsonl",
+        "row_count": null,
+        "sha256": "aa16f016f0224353474ea3b90ae9716a9f859983380627d70903b78b3bd1986d"
+      },
+      {
+        "path": "C:\\Users\\joedicke\\Documents\\reps\\EvoODE\\outputs\\phase_c_c5_restart_curve_5dd1df8\\out\\shard_021_of_036\\starts.jsonl",
+        "row_count": null,
+        "sha256": "0df1da5b5ffc8ccfe69a8300f620ce5be4bcd0f4ba306ad1f523ea63c382973c"
+      },
+      {
+        "path": "C:\\Users\\joedicke\\Documents\\reps\\EvoODE\\outputs\\phase_c_c5_restart_curve_5dd1df8\\out\\shard_022_of_036\\starts.jsonl",
+        "row_count": null,
+        "sha256": "0f9a49923cbbcf4befd0705abb7a7390ec61039e5e189a8c4d18790fcb346e78"
+      },
+      {
+        "path": "C:\\Users\\joedicke\\Documents\\reps\\EvoODE\\outputs\\phase_c_c5_restart_curve_5dd1df8\\out\\shard_023_of_036\\starts.jsonl",
+        "row_count": null,
+        "sha256": "872404718b5e55fc3de2f69a147de5812691df686043ba1b62a6c9d51412af12"
+      },
+      {
+        "path": "C:\\Users\\joedicke\\Documents\\reps\\EvoODE\\outputs\\phase_c_c5_restart_curve_5dd1df8\\out\\shard_024_of_036\\starts.jsonl",
+        "row_count": null,
+        "sha256": "ffa87f160e7459c2ed6ec15a22c5491f37432179301395ac68298f3df2301eea"
+      },
+      {
+        "path": "C:\\Users\\joedicke\\Documents\\reps\\EvoODE\\outputs\\phase_c_c5_restart_curve_5dd1df8\\out\\shard_025_of_036\\starts.jsonl",
+        "row_count": null,
+        "sha256": "4c8a90a1f4b037c835d87a4b467d051127d747a33648bdd413cfaf5235994e21"
+      },
+      {
+        "path": "C:\\Users\\joedicke\\Documents\\reps\\EvoODE\\outputs\\phase_c_c5_restart_curve_5dd1df8\\out\\shard_026_of_036\\starts.jsonl",
+        "row_count": null,
+        "sha256": "f477267dd1ec2e3141f0a504c5de19a221a406ea7eaba1f8f586bbca69e073b5"
+      },
+      {
+        "path": "C:\\Users\\joedicke\\Documents\\reps\\EvoODE\\outputs\\phase_c_c5_restart_curve_5dd1df8\\out\\shard_027_of_036\\starts.jsonl",
+        "row_count": null,
+        "sha256": "409eec5d89cc4f7506e33648a4ff1b408e39d6c5447376c93296f853da02dbac"
+      },
+      {
+        "path": "C:\\Users\\joedicke\\Documents\\reps\\EvoODE\\outputs\\phase_c_c5_restart_curve_5dd1df8\\out\\shard_028_of_036\\starts.jsonl",
+        "row_count": null,
+        "sha256": "2886a888d6a0fbae651cadfec2c06ae9f3b1f786a0d0195ea83db8a3d06adb43"
+      },
+      {
+        "path": "C:\\Users\\joedicke\\Documents\\reps\\EvoODE\\outputs\\phase_c_c5_restart_curve_5dd1df8\\out\\shard_029_of_036\\starts.jsonl",
+        "row_count": null,
+        "sha256": "70a7a671cec935c30ff00b5d27c14f1f63fdf98bf43b83d8a52f6ad20d515126"
+      },
+      {
+        "path": "C:\\Users\\joedicke\\Documents\\reps\\EvoODE\\outputs\\phase_c_c5_restart_curve_5dd1df8\\out\\shard_030_of_036\\starts.jsonl",
+        "row_count": null,
+        "sha256": "508f26f1249b15db56d2c9438408ea7be10398ec45b51d8cb3022474da2932a0"
+      },
+      {
+        "path": "C:\\Users\\joedicke\\Documents\\reps\\EvoODE\\outputs\\phase_c_c5_restart_curve_5dd1df8\\out\\shard_031_of_036\\starts.jsonl",
+        "row_count": null,
+        "sha256": "9a362703834fd8399cc304ac7e0bec4981bd1cd37cbb70bcddf28f97be94dd1b"
+      },
+      {
+        "path": "C:\\Users\\joedicke\\Documents\\reps\\EvoODE\\outputs\\phase_c_c5_restart_curve_5dd1df8\\out\\shard_032_of_036\\starts.jsonl",
+        "row_count": null,
+        "sha256": "d5afa8ed9c80f70f260b4567cf40d5e7ad72638f353fb14d0e5a7cb261012725"
+      },
+      {
+        "path": "C:\\Users\\joedicke\\Documents\\reps\\EvoODE\\outputs\\phase_c_c5_restart_curve_5dd1df8\\out\\shard_033_of_036\\starts.jsonl",
+        "row_count": null,
+        "sha256": "f4ab9de811a1a4e61ca6cb2c6498e44f6a3fa5d1e5aab5d8240c7cf753786237"
+      },
+      {
+        "path": "C:\\Users\\joedicke\\Documents\\reps\\EvoODE\\outputs\\phase_c_c5_restart_curve_5dd1df8\\out\\shard_034_of_036\\starts.jsonl",
+        "row_count": null,
+        "sha256": "4c3a83f5f9b2bce13b0fa0b360de01a6a66c01ea700c9875a87ae6936c47873a"
+      },
+      {
+        "path": "C:\\Users\\joedicke\\Documents\\reps\\EvoODE\\outputs\\phase_c_c5_restart_curve_5dd1df8\\out\\shard_035_of_036\\starts.jsonl",
+        "row_count": null,
+        "sha256": "e0355a402741f50e5fa7a32fd3ba074e312012189f5775d46c16f920a36f4ef4"
+      },
+      {
+        "path": "C:\\Users\\joedicke\\Documents\\reps\\EvoODE\\outputs\\phase_c_c5_restart_curve_5dd1df8\\out\\shard_036_of_036\\starts.jsonl",
+        "row_count": null,
+        "sha256": "7397f79fa1b2727791201c0f136f593f2ba8fee93317e8d99f9e3b724766b2ab"
+      }
+    ],
+    "restart_input_dir": {
+      "path": "C:\\Users\\joedicke\\Documents\\reps\\EvoODE\\outputs\\phase_c_c5_restart_curve_5dd1df8\\out",
+      "row_count": 180,
+      "sha256": "b769bb262afa49678a2f719bc33bc6da1b10d682c001db45f96cbdcfcb066aed"
+    },
+    "script": {
+      "path": "C:\\Users\\joedicke\\Documents\\reps\\EvoODE\\analysis\\scripts\\aggregate\\aggregate_phasec_restart_curve.py",
+      "row_count": null,
+      "sha256": "12954f6272d1f1d6cc7ce89e1e71dfc516c5dc7d8aa43eea767f2791fb90f4ab"
+    },
+    "support": {
+      "path": "C:\\Users\\joedicke\\Documents\\reps\\EvoODE\\studies\\regression\\phase_c_support.json",
+      "row_count": 63,
+      "sha256": "ad8594f47399c1c5ef03e26bfe93f680bf7e866cb37e3d0462ce1e7b1c767e75"
+    }
+  },
+  "r2_threshold": 0.9,
+  "script_version": "WP-N44.restart_curve.v1",
+  "thresholds": [
+    1e-12,
+    1e-10,
+    1e-08,
+    1e-06,
+    0.0001
+  ]
+}

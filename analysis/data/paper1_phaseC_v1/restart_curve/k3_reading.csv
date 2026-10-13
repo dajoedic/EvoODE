@@ -1,0 +1,2 @@
+stratum,n_cells,k3_r2_gt_0_9_count,k3_r2_gt_0_9_rate,k10_r2_gt_0_9_count,k10_r2_gt_0_9_rate,k10_minus_k3_pp,within_5_pp,extra_loss_evals_k3_to_k10
+all_feasible_reference,144,92,0.6388888888888888,115,0.7986111111111112,15.972222222222232,False,3765883
