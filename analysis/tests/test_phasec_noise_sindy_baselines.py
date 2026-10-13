@@ -79,6 +79,8 @@ def test_run_baselines_reports_sindy_and_weak_sindy_on_real_export_fixture() -> 
     assert set(details["library_id"]) == {"poly_deg2_stlsq_0.01", "poly_deg2_sin_cos_stlsq_0.01"}
     assert len(details) == 4
     assert details["fit_status"].notna().all()
+    assert set(details["integrator"]) == {"dop853"}
+    assert "sindy_coefficients_full" in details.columns
     assert details["observed_data_sha256"].str.contains("state_sha256").all()
     assert {"sindy_structure_precision_pruned", "sindy_structure_recall_pruned", "sindy_structure_f1_pruned"} <= set(details.columns)
     assert details["sindy_structure_metrics_exact_system"].all()
@@ -186,3 +188,33 @@ def test_control_hash_check_matches_c4_reference_for_real_control_export() -> No
     assert len(frame) == 4
     assert frame["time_hash_matches_c4"].all()
     assert frame["state_hash_matches_c4"].all()
+
+
+def test_run_baselines_resumes_completed_cells_without_duplicate_rows() -> None:
+    tmp_path = fresh_workspace("resume_completed")
+    index_path = copy_real_export_fixture(tmp_path)
+    output_dir = tmp_path / "out"
+
+    paths_1 = noise_sindy.run_baselines(
+        minimal_config(tmp_path),
+        index_path,
+        output_dir,
+        [],
+        methods=["sindy"],
+        integrator="euler",
+    )
+    paths_2 = noise_sindy.run_baselines(
+        minimal_config(tmp_path),
+        index_path,
+        output_dir,
+        [],
+        methods=["sindy"],
+        integrator="euler",
+    )
+    details_1 = pd.read_csv(paths_1["details"])
+    details_2 = pd.read_csv(paths_2["details"])
+    checks = pd.read_csv(paths_2["export_checks"])
+
+    assert len(details_1) == 2
+    assert len(details_2) == 2
+    assert len(checks) == 1

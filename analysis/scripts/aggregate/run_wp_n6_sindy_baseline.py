@@ -24,6 +24,7 @@ R2_THRESHOLD = 0.9
 SUPPORT_ABS = 1e-6
 SUPPORT_REL = 1e-3
 INTEGRATION_LIMIT = 1e9
+ACCURATE_MAX_RHS_EVALS = 1_200_000
 
 
 @dataclass(frozen=True)
@@ -226,6 +227,47 @@ def polynomial_true_terms(system: dict[str, Any]) -> list[set[str]]:
     return true_terms
 
 
+def _linear_trig_term(expr: sp.Expr, variables: list[sp.Symbol]) -> str | None:
+    coeff, rest = expr.as_coeff_Mul()
+    if coeff == 0:
+        return None
+    if rest.func not in {sp.sin, sp.cos} or len(rest.args) != 1:
+        return None
+    arg = rest.args[0]
+    arg_coeff, arg_rest = arg.as_coeff_Mul()
+    if arg_coeff != 1 or arg_rest not in variables:
+        return None
+    idx = variables.index(arg_rest)
+    return normalize_feature_name(f"{rest.func.__name__}(1 x{idx})")
+
+
+def library_true_terms(system: dict[str, Any]) -> list[set[str]]:
+    """Map true equations onto the SINDy library terms used by Phase C."""
+    dim = int(system["dim"])
+    variables = [sp.Symbol(f"x_{idx}") for idx in range(dim)]
+    true_terms: list[set[str]] = []
+    for expr_text in system["substituted"][0]:
+        expr = sp.expand(parse_expr(str(expr_text), dim))
+        terms = expr.as_ordered_terms()
+        eq_terms: set[str] = set()
+        supported = True
+        for term in terms:
+            trig_name = _linear_trig_term(term, variables)
+            if trig_name is not None:
+                eq_terms.add(trig_name)
+                continue
+            try:
+                poly = sp.Poly(term, *variables)
+            except sp.PolynomialError:
+                supported = False
+                break
+            for monom, coeff in poly.terms():
+                if coeff != 0:
+                    eq_terms.add(term_name_from_monomial(tuple(int(v) for v in monom)))
+        true_terms.append(eq_terms if supported else set())
+    return true_terms
+
+
 def active_terms_by_equation(coef: np.ndarray, feature_names: list[str]) -> list[set[str]]:
     active: list[set[str]] = []
     for row in coef:
@@ -280,6 +322,131 @@ def feature_value(name: str, y: np.ndarray) -> float:
             raise ValueError(f"unsupported feature name: {name}")
         value *= float(y[int(var[1:])]) ** power
     return value
+
+
+def compile_feature_evaluator(raw_feature_names: list[str]):
+    evaluators = []
+    for name in raw_feature_names:
+        if name == "1":
+            evaluators.append(lambda y: 1.0)
+            continue
+        if name.startswith("sin(1 x") and name.endswith(")"):
+            idx = int(name[len("sin(1 x") : -1])
+            evaluators.append(lambda y, idx=idx: np.sin(y[idx]))
+            continue
+        if name.startswith("cos(1 x") and name.endswith(")"):
+            idx = int(name[len("cos(1 x") : -1])
+            evaluators.append(lambda y, idx=idx: np.cos(y[idx]))
+            continue
+        factors: list[tuple[int, int]] = []
+        for piece in name.split(" "):
+            if not piece:
+                continue
+            if "^" in piece:
+                var, power_text = piece.split("^", 1)
+                power = int(power_text)
+            else:
+                var, power = piece, 1
+            if not var.startswith("x"):
+                raise ValueError(f"unsupported feature name: {name}")
+            factors.append((int(var[1:]), power))
+
+        def polynomial(y: np.ndarray, factors: list[tuple[int, int]] = factors) -> float:
+            value = 1.0
+            for idx, power in factors:
+                value *= float(y[idx]) ** power
+            return value
+
+        evaluators.append(polynomial)
+
+    def evaluate(y: np.ndarray) -> np.ndarray:
+        return np.asarray([func(y) for func in evaluators], dtype=float)
+
+    return evaluate
+
+
+class MaxRhsEvaluations(RuntimeError):
+    pass
+
+
+def compiled_model_rhs(coefficients: np.ndarray, raw_feature_names: list[str], max_evals: int | None = None):
+    feature_evaluator = compile_feature_evaluator(raw_feature_names)
+    counter = {"n": 0}
+
+    def rhs(_t: float, y: np.ndarray) -> np.ndarray:
+        counter["n"] += 1
+        if max_evals is not None and counter["n"] > max_evals:
+            raise MaxRhsEvaluations("max_evals")
+        if not np.all(np.isfinite(y)) or float(np.max(np.abs(y))) > INTEGRATION_LIMIT:
+            raise FloatingPointError("diverged")
+        with np.errstate(over="raise", invalid="raise", divide="raise"):
+            features = feature_evaluator(y)
+            values = features @ coefficients.T
+        if not np.all(np.isfinite(values)):
+            raise FloatingPointError("nonfinite_rhs")
+        return np.asarray(values, dtype=float)
+
+    rhs.eval_count = counter  # type: ignore[attr-defined]
+    return rhs
+
+
+def simulate_model_accurate(
+    coefficients: np.ndarray,
+    raw_feature_names: list[str],
+    y0: np.ndarray,
+    t_grid: np.ndarray,
+) -> tuple[np.ndarray | None, str]:
+    rhs = compiled_model_rhs(coefficients, raw_feature_names, max_evals=ACCURATE_MAX_RHS_EVALS)
+
+    def divergence_event(_t: float, y: np.ndarray) -> float:
+        if not np.all(np.isfinite(y)):
+            return 0.0
+        return INTEGRATION_LIMIT - float(np.max(np.abs(y)))
+
+    divergence_event.terminal = True  # type: ignore[attr-defined]
+    divergence_event.direction = -1  # type: ignore[attr-defined]
+    try:
+        sol = solve_ivp(
+            rhs,
+            (float(t_grid[0]), float(t_grid[-1])),
+            np.asarray(y0, dtype=float),
+            t_eval=t_grid,
+            method="DOP853",
+            rtol=1e-9,
+            atol=1e-9,
+            events=divergence_event,
+        )
+    except MaxRhsEvaluations:
+        return None, "max_evals"
+    except FloatingPointError as exc:
+        return None, "diverged" if str(exc) == "diverged" else "nonfinite"
+    except Exception as exc:
+        return None, type(exc).__name__
+    if rhs.eval_count["n"] > ACCURATE_MAX_RHS_EVALS:  # type: ignore[attr-defined]
+        return None, "max_evals"
+    if sol.t_events and len(sol.t_events[0]) > 0:
+        return None, "diverged"
+    if not sol.success or sol.y.shape[1] != len(t_grid):
+        return None, "max_evals" if "maximum number" in str(sol.message).lower() else "diverged"
+    prediction = sol.y.T
+    if not np.all(np.isfinite(prediction)):
+        return prediction, "nonfinite"
+    if float(np.max(np.abs(prediction))) > INTEGRATION_LIMIT:
+        return prediction, "diverged"
+    return prediction, "success"
+
+
+def serialize_full_coefficients(coefficients: np.ndarray, feature_names: list[str]) -> str:
+    payload = []
+    normalized = [normalize_feature_name(feature) for feature in feature_names]
+    for row in coefficients:
+        payload.append(
+            [
+                {"term": feature, "coefficient": float(value)}
+                for feature, value in zip(normalized, row)
+            ]
+        )
+    return json.dumps(payload, sort_keys=True, separators=(",", ":"))
 
 
 def simulate_model(

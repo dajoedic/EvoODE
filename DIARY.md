@@ -36,6 +36,7 @@ E-SINDy 16,7 → 21,7 % / 34,4 → 44,4 %, **Weak-SINDy 61,7 → 71,7 %** / 55,6
 **Folge.** Die Baseline-Seite von `hierarchy_n45` ist zu ersetzen, bevor die Entscheidungsregel (b) als §9.4d
 eingefroren wird. Weak-SINDy liegt nach beiden Korrekturen auf Rekonstruktion etwa gleichauf mit EvoGrow und auf
 Generalisierung und Struktur klar vorn. WP-N46 an Codex (`7bfa373`).
+<!-- commits: 7bfa373 (WP-N46 spec), 7e12ab1 (this entry) -->
 
 ## 2026-10-12
 

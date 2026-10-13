@@ -16,6 +16,7 @@ if str(ANALYSIS_ROOT) not in sys.path:
     sys.path.insert(0, str(ANALYSIS_ROOT))
 
 from scripts.aggregate import run_phasec_sindy_baseline as phasec_sindy  # noqa: E402
+from scripts.aggregate import run_wp_n6_sindy_baseline as wpn6_sindy  # noqa: E402
 
 
 PILOT_DIR = REPO_ROOT / "outputs" / "phase_c_p9_pilot_records"
@@ -719,3 +720,39 @@ def test_wpn6_reported_measure_check_rejects_reported_column_flip(tmp_path: Path
 
     assert len(failures) == 1
     assert "r2_gt_0_9" in failures[0]
+
+
+def test_compiled_rhs_matches_feature_value_evaluation() -> None:
+    coefficients = np.asarray([[1.5, -2.0, 0.25, 3.0]], dtype=float)
+    feature_names = ["1", "x0", "x0^2 x1", "sin(1 x0)"]
+    rhs = wpn6_sindy.compiled_model_rhs(coefficients, feature_names)
+    rng = np.random.default_rng(123)
+
+    for _ in range(10):
+        y = rng.normal(size=2)
+        features = np.asarray([wpn6_sindy.feature_value(name, y) for name in feature_names], dtype=float)
+        expected = features @ coefficients.T
+        np.testing.assert_allclose(rhs(0.0, y), expected)
+
+
+def test_library_true_terms_adds_linear_trig_without_changing_polynomial_systems() -> None:
+    benchmark = wpn6_sindy.load_benchmark(REPO_ROOT / "benchmarks" / "data" / "strogatz_extended.json")
+    by_id = {int(system["id"]): system for system in benchmark}
+
+    assert wpn6_sindy.library_true_terms(by_id[23]) == [{"1", "sin(1*x0)"}]
+    assert wpn6_sindy.library_true_terms(by_id[28]) == [{"x1"}, {"sin(1*x0)"}]
+    assert wpn6_sindy.library_true_terms(by_id[43]) == [{"x1"}, {"1", "x1", "sin(1*x0)"}]
+
+    changed = [
+        int(system["id"])
+        for system in benchmark
+        if wpn6_sindy.library_true_terms(system) != wpn6_sindy.polynomial_true_terms(system)
+    ]
+    assert changed == [23, 28, 33, 43]
+
+
+def test_full_coefficients_serializer_keeps_zero_terms() -> None:
+    coefficients = np.asarray([[0.0, 2.5]], dtype=float)
+    payload = json.loads(wpn6_sindy.serialize_full_coefficients(coefficients, ["1", "x0"]))
+
+    assert payload == [[{"term": "1", "coefficient": 0.0}, {"term": "x0", "coefficient": 2.5}]]

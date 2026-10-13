@@ -299,3 +299,37 @@ def test_evogrow_generalization_variance_weighted_control(tmp_path: Path) -> Non
     assert row["reconstruction_r2_variance_weighted"] == pytest.approx(0.9)
     assert row["generalization_r2_variance_weighted"] == pytest.approx(0.8)
     assert bool(row["generalization_r2_variance_weighted_available"])
+
+
+def test_old_hierarchy_delta_table_reports_r2_and_structure_columns(tmp_path: Path) -> None:
+    old = pd.DataFrame(
+        [
+            {
+                "method": "SINDy",
+                "configuration": "poly",
+                "stratum": "overall",
+                "reconstruction_r2_arithmetic_gt_0_9": 0.4,
+                "generalization_r2_arithmetic_gt_0_9": 0.2,
+                "raw_exact_support_match": 0.1,
+                "pruned_exact_support_match": 0.1,
+            }
+        ]
+    )
+    new = old.copy()
+    new.loc[0, "reconstruction_r2_arithmetic_gt_0_9"] = 0.7
+    new.loc[0, "raw_exact_support_match"] = 0.3
+    old_path = tmp_path / "old.csv"
+    old.to_csv(old_path, index=False)
+
+    deltas = n43.old_hierarchy_delta_table(new, old_path)
+
+    assert set(deltas["metric"]) == {
+        "reconstruction_r2_arithmetic_gt_0_9",
+        "generalization_r2_arithmetic_gt_0_9",
+        "raw_exact_support_match",
+        "pruned_exact_support_match",
+    }
+    rec = deltas[deltas["metric"].eq("reconstruction_r2_arithmetic_gt_0_9")].iloc[0]
+    raw = deltas[deltas["metric"].eq("raw_exact_support_match")].iloc[0]
+    assert rec["difference_new_minus_old"] == pytest.approx(0.3)
+    assert raw["difference_new_minus_old"] == pytest.approx(0.2)

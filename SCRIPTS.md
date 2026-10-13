@@ -872,6 +872,61 @@ python analysis/scripts/aggregate/aggregate_phasec_hierarchy_n43.py `
   --output-dir outputs\phase_c_campaign_221a3a7\agg\hierarchy_n45
 ```
 
+WP-N46 accurate SINDy-family reruns use DOP853 by default and write full coefficients plus
+incremental shard details. The clean rerun keeps only `(sigma=0, rho=0)` and uses the existing
+seeds:
+
+```powershell
+python -c "import pandas as pd; from pathlib import Path; src=Path(r'outputs\phase_c_c6_data_conditions_5dd1df8').resolve(); df=pd.read_csv(src/'index.csv'); df=df[(df['noise_sigma'].eq(0.0)) & (df['subsample_rho'].eq(0.0))].copy(); df['cell_dir']=df['cell_dir'].map(lambda p: str((src/str(p)).resolve())); out=Path(r'outputs\c6_n46_clean_dop853\shard_indexes'); out.mkdir(parents=True, exist_ok=True); [df.iloc[i::10].to_csv(out / f'shard_{i}.csv', index=False) for i in range(10)]"
+
+for ($i = 0; $i -lt 10; $i++) {
+  python analysis/scripts/aggregate/run_phasec_noise_sindy_baselines.py `
+    --config analysis/configs/paper1_phaseC_sindy_baseline.json `
+    --export-index outputs\c6_n46_clean_dop853\shard_indexes\shard_$i.csv `
+    --output-dir outputs\c6_n46_clean_dop853\shard_$i `
+    --methods sindy,weak_sindy,e_sindy `
+    --integrator dop853
+}
+```
+
+C-4c rerun with the same DOP853 integrator:
+
+```powershell
+python analysis/scripts/aggregate/run_phasec_sindy_baseline.py run-sindy `
+  --config analysis/configs/paper1_phaseC_sindy_baseline.json `
+  --trajectory-export-dir outputs\phase_c_trajectory_hashes\wp_c4c\trajectory_export `
+  --output-data-dir analysis\data\paper1_phaseC_v1\phasec_sindy_baseline_wp_c4c_export_n46 `
+  --output-table-dir analysis\tables\paper1_phaseC_v1\phasec_sindy_baseline_wp_c4c_export_n46 `
+  --integrator dop853
+```
+
+Hierarchy output `hierarchy_n46`, comparing C-6 and C-4c with DOP853 on both sides:
+
+```powershell
+python analysis/scripts/aggregate/aggregate_phasec_hierarchy_n43.py `
+  --sindy-shards-dir outputs\c6_n46_clean_dop853 `
+  --sindy-merged-dir outputs\c6_n46_clean_dop853\merged `
+  --sindy-c4c-details analysis\data\paper1_phaseC_v1\phasec_sindy_baseline_wp_c4c_export_n46\details.csv `
+  --output-dir outputs\phase_c_campaign_221a3a7\agg\hierarchy_n46
+```
+
+Full noisy-grid rerun, if approved. The WP-N46 smoke ran 48 model rows in about 7 s with DOP853;
+the full grid is `4536 cells * 10 configs * 3 methods = 136080` model rows, so the linear wall-time
+estimate is about 5.5 h on this local smoke rate before cluster parallelism and filesystem overhead:
+
+```powershell
+python -c "import pandas as pd; from pathlib import Path; src=Path(r'outputs\phase_c_c6_data_conditions_5dd1df8').resolve(); df=pd.read_csv(src/'index.csv'); df['cell_dir']=df['cell_dir'].map(lambda p: str((src/str(p)).resolve())); out=Path(r'outputs\c6_n46_full_noisy_dop853\shard_indexes'); out.mkdir(parents=True, exist_ok=True); [df.iloc[i::10].to_csv(out / f'shard_{i}.csv', index=False) for i in range(10)]"
+
+for ($i = 0; $i -lt 10; $i++) {
+  python analysis/scripts/aggregate/run_phasec_noise_sindy_baselines.py `
+    --config analysis/configs/paper1_phaseC_sindy_baseline.json `
+    --export-index outputs\c6_n46_full_noisy_dop853\shard_indexes\shard_$i.csv `
+    --output-dir outputs\c6_n46_full_noisy_dop853\shard_$i `
+    --methods sindy,weak_sindy,e_sindy `
+    --integrator dop853
+}
+```
+
 Apply after replacing `<UNCAPPED_COMPLETIONS>` with the uncapped index-list line count and
 `<PARALLELISM>` after the capacity check:
 

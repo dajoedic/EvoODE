@@ -32,11 +32,13 @@ from scripts.aggregate.run_wp_n6_sindy_baseline import (  # noqa: E402
     build_library,
     fit_sindy,
     integrate_truth,
+    library_true_terms,
     library_grid,
     load_benchmark,
     load_config,
-    polynomial_true_terms,
+    serialize_full_coefficients,
     simulate_model,
+    simulate_model_accurate,
 )
 from utils.metrics import aggregate_equation_metrics, term_set_metrics  # noqa: E402
 
@@ -76,6 +78,7 @@ def parse_args() -> argparse.Namespace:
         default="sindy,weak_sindy",
         help="Comma-separated methods to run. Valid values: sindy, weak_sindy, e_sindy.",
     )
+    parser.add_argument("--integrator", choices=["dop853", "euler"], default="dop853")
     return parser.parse_args()
 
 
@@ -326,13 +329,15 @@ def run_one_model(
     observed_x: np.ndarray,
     clean_t: np.ndarray,
     clean_by_ic: dict[int, np.ndarray],
+    integrator: str = "dop853",
 ) -> dict[str, Any]:
     system_id = int(system["id"])
     dim = int(system["dim"])
     source_ic = int(export_row["initial_condition_set"])
     target_ic = 2 if source_ic == 1 else 1
     names = [f"x{idx}" for idx in range(dim)]
-    true_terms = polynomial_true_terms(system)
+    true_terms = library_true_terms(system)
+    simulate = simulate_model_accurate if integrator == "dop853" else simulate_model
     fit_status = "success"
     fit_error = ""
     model = None
@@ -370,7 +375,7 @@ def run_one_model(
         if model is None:
             predictions[regime] = (None, "fit_failed", eval_ic)
             continue
-        prediction, status = simulate_model(coefficients, feature_names, clean_by_ic[eval_ic][0, :], clean_t)
+        prediction, status = simulate(coefficients, feature_names, clean_by_ic[eval_ic][0, :], clean_t)
         predictions[regime] = (prediction, status, eval_ic)
 
     row: dict[str, Any] = {
@@ -395,6 +400,7 @@ def run_one_model(
         "n_observed_points": int(export_row["n_observed_points"]),
         "fit_status": fit_status,
         "fit_error": fit_error,
+        "integrator": integrator,
         "fit_elapsed_s_context": elapsed,
         "elapsed_s_evidence_role": "context_not_evidence",
         "n_library_terms": len(feature_names),
@@ -405,6 +411,7 @@ def run_one_model(
         "active_terms_pruned": json.dumps([sorted(terms) for terms in pruned_terms], separators=(",", ":")),
         "true_terms": json.dumps([sorted(terms) for terms in true_terms], separators=(",", ":")),
         "sindy_coefficients_active": serialize_coefficients(coefficients, feature_names),
+        "sindy_coefficients_full": serialize_full_coefficients(coefficients, feature_names),
         **structural_metrics_pruned(pruned_terms, true_terms, support),
         "weak_sindy_source_note": weak_source_note() if method == "weak_sindy" else "",
         "ensemble_seed": ensemble_seed if ensemble_seed is not None else "",
@@ -416,7 +423,7 @@ def run_one_model(
     for regime, (prediction, status, eval_ic) in predictions.items():
         reference = clean_by_ic[eval_ic]
         arithmetic, variance_weighted, by_dim = r2_scores(reference, prediction)
-        diverged = status in {"diverged", "nonfinite"} or not math.isfinite(arithmetic)
+        diverged = status in {"diverged", "nonfinite", "max_evals"} or not math.isfinite(arithmetic)
         row.update(
             {
                 f"{regime}_initial_condition_set": eval_ic,
@@ -447,6 +454,48 @@ def build_summary(details: pd.DataFrame) -> pd.DataFrame:
             row[f"{regime}_diverged_or_nonfinite_count"] = int(group[f"{regime}_diverged_or_nonfinite"].astype(bool).sum())
         rows.append(row)
     return pd.DataFrame(rows)
+
+
+def append_csv_rows(path: Path, rows: list[dict[str, Any]]) -> None:
+    if not rows:
+        return
+    frame = pd.DataFrame(rows)
+    frame.to_csv(path, mode="a", header=not path.exists(), index=False)
+
+
+def completed_cell_keys(details_path: Path, methods: list[str], configs: list[Any]) -> set[tuple[int, int, float, float, int]]:
+    if not details_path.is_file():
+        return set()
+    details = pd.read_csv(details_path)
+    if details.empty:
+        return set()
+    keys = ["system_id", "source_initial_condition_set", "noise_sigma", "subsample_rho", "noise_realization"]
+    required_rows = len(methods) * len(configs)
+    complete: set[tuple[int, int, float, float, int]] = set()
+    for key, group in details.groupby(keys, dropna=False):
+        if len(group) < required_rows:
+            continue
+        method_configs = {
+            (str(row["method"]), str(row["library_id"]))
+            for _, row in group[["method", "library_id"]].drop_duplicates().iterrows()
+        }
+        expected = {(method, cfg.library_id) for method in methods for cfg in configs}
+        if expected.issubset(method_configs):
+            complete.add((int(key[0]), int(key[1]), float(key[2]), float(key[3]), int(key[4])))
+    return complete
+
+
+def sort_details(details: pd.DataFrame) -> pd.DataFrame:
+    columns = [
+        "system_id",
+        "source_initial_condition_set",
+        "noise_sigma",
+        "subsample_rho",
+        "noise_realization",
+        "library_id",
+        "method",
+    ]
+    return details.sort_values(columns).reset_index(drop=True)
 
 
 def expand_stage_report_paths(stage_reports: list[str] | None) -> list[Path]:
@@ -525,6 +574,7 @@ def run_baselines(
     stage_report_paths: list[Path],
     methods: list[str] | None = None,
     use_export_trajectories_for_evaluation: bool = False,
+    integrator: str = "dop853",
 ) -> dict[str, Path]:
     config = load_config(config_path)
     benchmark = load_benchmark(resolve_path(config.get("benchmark_path", "../benchmarks/data/strogatz_extended.json"), config_path))
@@ -537,7 +587,10 @@ def run_baselines(
     configs = library_grid(config)
     requested_methods = methods if methods is not None else ["sindy", "weak_sindy"]
     parse_methods(",".join(requested_methods))
-    detail_rows: list[dict[str, Any]] = []
+    output_dir.mkdir(parents=True, exist_ok=True)
+    details_path = output_dir / "details.csv"
+    checks_path = output_dir / "export_checks.csv"
+    completed = completed_cell_keys(details_path, requested_methods, configs)
     checks: list[dict[str, Any]] = []
     exported_cells: dict[tuple[int, int], tuple[np.ndarray, np.ndarray]] = {}
     if use_export_trajectories_for_evaluation:
@@ -547,6 +600,15 @@ def run_baselines(
             )
     for _, export_row in index.iterrows():
         system_id = int(export_row["system_id"])
+        cell_key = (
+            system_id,
+            int(export_row["initial_condition_set"]),
+            float(export_row["noise_sigma"]),
+            float(export_row["subsample_rho"]),
+            int(export_row["noise_realization"]),
+        )
+        if cell_key in completed:
+            continue
         if system_id not in systems:
             fail(f"export index references unknown system_id={system_id}")
         system = systems[system_id]
@@ -567,39 +629,91 @@ def run_baselines(
                 2: integrate_truth(system, 1, clean_t)[0],
             }
             clean_t_for_cell = clean_t
-        checks.append(
-            {
-                "system_id": system_id,
-                "initial_condition_set": int(export_row["initial_condition_set"]),
-                "noise_sigma": float(export_row["noise_sigma"]),
-                "subsample_rho": float(export_row["subsample_rho"]),
-                "noise_realization": int(export_row["noise_realization"]),
-                "n_observed_points": int(export_row["n_observed_points"]),
-                "time_sha256": str(export_row["time_sha256"]),
-                "state_sha256": str(export_row["state_sha256"]),
-                "hash_verified": True,
-            }
-        )
+        check_row = {
+            "system_id": system_id,
+            "initial_condition_set": int(export_row["initial_condition_set"]),
+            "noise_sigma": float(export_row["noise_sigma"]),
+            "subsample_rho": float(export_row["subsample_rho"]),
+            "noise_realization": int(export_row["noise_realization"]),
+            "n_observed_points": int(export_row["n_observed_points"]),
+            "time_sha256": str(export_row["time_sha256"]),
+            "state_sha256": str(export_row["state_sha256"]),
+            "hash_verified": True,
+        }
+        checks.append(check_row)
         support_row = support_by_id.loc[system_id].to_dict()
+        cell_rows: list[dict[str, Any]] = []
         for cfg in configs:
             for method in requested_methods:
-                detail_rows.append(
-                    run_one_model(method, cfg, system, support_row, export_row, observed_t, observed_x, clean_t_for_cell, clean_by_ic)
+                cell_rows.append(
+                    run_one_model(
+                        method,
+                        cfg,
+                        system,
+                        support_row,
+                        export_row,
+                        observed_t,
+                        observed_x,
+                        clean_t_for_cell,
+                        clean_by_ic,
+                        integrator=integrator,
+                    )
                 )
+        append_csv_rows(details_path, cell_rows)
+        append_csv_rows(checks_path, [check_row])
 
-    details = pd.DataFrame(detail_rows)
-    output_dir.mkdir(parents=True, exist_ok=True)
+    if not details_path.is_file():
+        details = pd.DataFrame()
+    else:
+        details = pd.read_csv(details_path)
+        if completed:
+            details = sort_details(details)
+            details.to_csv(details_path, index=False)
+    if checks_path.is_file():
+        export_checks = pd.read_csv(checks_path).drop_duplicates(
+            ["system_id", "initial_condition_set", "noise_sigma", "subsample_rho", "noise_realization"],
+            keep="last",
+        )
+        export_checks = export_checks.sort_values(
+            ["system_id", "initial_condition_set", "noise_sigma", "subsample_rho", "noise_realization"]
+        ).reset_index(drop=True)
+        export_checks.to_csv(checks_path, index=False)
+    else:
+        export_checks = pd.DataFrame(checks)
     paths: dict[str, Path] = {}
     frames = {
         "details": details,
         "summary": build_summary(details),
-        "export_checks": pd.DataFrame(checks),
+        "export_checks": export_checks,
     }
     frames["comparison_with_robustness_stage_report"] = build_comparison(details, stage_report_paths)
     for name, frame in frames.items():
         path = output_dir / f"{name}.csv"
         frame.to_csv(path, index=False)
         paths[name] = path
+    metadata_path = output_dir / "metadata.json"
+    metadata_path.write_text(
+        json.dumps(
+            {
+                "integrator": integrator,
+                "resumed_completed_cells": len(completed),
+                "details_sort_order": [
+                    "system_id",
+                    "source_initial_condition_set",
+                    "noise_sigma",
+                    "subsample_rho",
+                    "noise_realization",
+                    "library_id",
+                    "method",
+                ],
+            },
+            indent=2,
+            sort_keys=True,
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    paths["metadata"] = metadata_path
     return paths
 
 
@@ -755,6 +869,7 @@ def main() -> int:
             output_dir,
             expand_stage_report_paths(args.stage_report),
             methods=parse_methods(args.methods),
+            integrator=args.integrator,
         )
         printable = {key: str(value) for key, value in paths.items()}
         control_paths, control_note, control_ok = control_status(args.control_export_index, config_path, output_dir)

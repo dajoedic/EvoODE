@@ -31,6 +31,7 @@ DEFAULT_OUTPUT_DIR = REPO_ROOT / "outputs" / "phase_c_campaign_221a3a7" / "agg" 
 DEFAULT_C6_SINDY_DIR = REPO_ROOT / "outputs" / "c6_sindy_baselines_5dd1df8"
 DEFAULT_C6_MERGED_DIR = DEFAULT_C6_SINDY_DIR / "merged"
 DEFAULT_N43B_REFERENCE = REPO_ROOT / "analysis" / "data" / "paper1_phaseC_v1" / "hierarchy_n43b" / "benchmark.csv"
+DEFAULT_N45_BENCHMARK = REPO_ROOT / "analysis" / "data" / "paper1_phaseC_v1" / "hierarchy_n45" / "benchmark.csv"
 DEFAULT_C4C_SINDY_DETAILS = (
     REPO_ROOT / "analysis" / "data" / "paper1_phaseC_v1" / "phasec_sindy_baseline_wp_c4c_export" / "details.csv"
 )
@@ -92,6 +93,11 @@ def parse_args() -> argparse.Namespace:
         default=str(DEFAULT_N43B_REFERENCE),
         help="Reference benchmark.csv for byte-identity control of pre-existing N43b methods.",
     )
+    parser.add_argument(
+        "--old-hierarchy-benchmark",
+        default=str(DEFAULT_N45_BENCHMARK),
+        help="Old hierarchy benchmark.csv used for N46 old-vs-new deltas.",
+    )
     return parser.parse_args()
 
 
@@ -136,7 +142,7 @@ def merge_sindy_shards(
     expected_methods: set[str] | None = None,
     label: str = "C-6 SINDy",
 ) -> dict[str, Path]:
-    expected_methods = expected_methods or {"sindy", "weak_sindy"}
+    allowed_methods = {"sindy", "weak_sindy", "e_sindy"}
     shard_paths = sorted(shards_dir.glob("shard_*/details.csv"))
     if not shard_paths:
         fail(f"no {label} shard details found under {shards_dir}")
@@ -152,15 +158,17 @@ def merge_sindy_shards(
     if bool(duplicate.any()):
         fail(f"{label} shards contain duplicate run keys: {details.loc[duplicate, run_keys].head().to_dict('records')}")
     present_methods = set(details["method"].astype(str).unique())
-    if present_methods != expected_methods:
+    if expected_methods is not None and present_methods != expected_methods:
         fail(f"{label} methods mismatch: expected {sorted(expected_methods)}, found {sorted(present_methods)}")
+    if expected_methods is None and (not present_methods or not present_methods.issubset(allowed_methods)):
+        fail(f"{label} methods mismatch: expected subset of {sorted(allowed_methods)}, found {sorted(present_methods)}")
     n_cells = int(details[cell_keys].drop_duplicates().shape[0])
     if n_cells != 4536:
         fail(f"{label} merge expected 4,536 distinct cells, found {n_cells}")
     counts = details.groupby(cell_keys, dropna=False).agg(
         method_count=("method", "nunique"), configuration_count=("library_id", "nunique"), row_count=("library_id", "size")
     )
-    expected_method_count = len(expected_methods)
+    expected_method_count = len(present_methods)
     bad = counts[
         (counts["method_count"] != expected_method_count)
         | (counts["configuration_count"] != 10)
@@ -1057,6 +1065,50 @@ def sindy_backcompat_delta_table(per_run: pd.DataFrame, summary: pd.DataFrame) -
     return pd.DataFrame(rows)
 
 
+def old_hierarchy_delta_table(new_benchmark: pd.DataFrame, old_benchmark_path: Path) -> pd.DataFrame:
+    if not old_benchmark_path.exists():
+        return pd.DataFrame()
+    old = pd.read_csv(old_benchmark_path)
+    keys = ["method", "configuration", "stratum"]
+    columns = [
+        "reconstruction_r2_arithmetic_gt_0_9",
+        "reconstruction_r2_variance_weighted_gt_0_9",
+        "generalization_r2_arithmetic_gt_0_9",
+        "generalization_r2_variance_weighted_gt_0_9",
+        "raw_exact_support_match",
+        "pruned_exact_support_match",
+    ]
+    available = [column for column in columns if column in old.columns and column in new_benchmark.columns]
+    if not available or not set(keys).issubset(old.columns) or not set(keys).issubset(new_benchmark.columns):
+        return pd.DataFrame()
+    merged = new_benchmark[keys + available].merge(
+        old[keys + available],
+        on=keys,
+        how="inner",
+        validate="one_to_one",
+        suffixes=("_new", "_old"),
+    )
+    rows: list[dict[str, Any]] = []
+    for _, row in merged.iterrows():
+        for column in available:
+            old_value = finite_or_nan(row[f"{column}_old"])
+            new_value = finite_or_nan(row[f"{column}_new"])
+            rows.append(
+                {
+                    "method": row["method"],
+                    "configuration": row["configuration"],
+                    "stratum": row["stratum"],
+                    "metric": column,
+                    "old_value": old_value,
+                    "new_value": new_value,
+                    "difference_new_minus_old": new_value - old_value
+                    if math.isfinite(old_value) and math.isfinite(new_value)
+                    else math.nan,
+                }
+            )
+    return pd.DataFrame(rows)
+
+
 def wide_sindy_long(details: pd.DataFrame, realization: int = 1) -> pd.DataFrame:
     clean = details[
         (details["method"].astype(str) == "sindy")
@@ -1205,6 +1257,7 @@ def run(args: argparse.Namespace) -> dict[str, Path]:
         "sindy_control_summary": resolve(args.sindy_control_summary),
         "odeformer_control_summary": resolve(args.odeformer_control_summary),
         "n43b_reference_benchmark": resolve(args.n43b_reference_benchmark),
+        "old_hierarchy_benchmark": resolve(args.old_hierarchy_benchmark),
     }
     merge_outputs = merge_sindy_shards(resolve(args.sindy_shards_dir), resolve(args.sindy_merged_dir))
     paths["sindy_details"] = merge_outputs["details"]
@@ -1274,6 +1327,7 @@ def run(args: argparse.Namespace) -> dict[str, Path]:
         "sindy_old_vs_new_changed_rows": output_dir / "sindy_old_vs_new_changed_rows.csv",
         "sindy_c4c_changed_rows": output_dir / "sindy_c4c_changed_rows.csv",
         "sindy_clean_realization_deltas": output_dir / "sindy_clean_realization_deltas.csv",
+        "hierarchy_n45_old_vs_new_deltas": output_dir / "hierarchy_n45_old_vs_new_deltas.csv",
         "metadata": output_dir / "metadata.json",
     }
     per_run.to_csv(outputs["per_run"], index=False)
@@ -1282,6 +1336,9 @@ def run(args: argparse.Namespace) -> dict[str, Path]:
     sensitivity.to_csv(outputs["sensitivity"], index=False)
     controls.to_csv(outputs["controls"], index=False)
     sindy_deltas.to_csv(outputs["sindy_old_vs_new_deltas"], index=False)
+    old_hierarchy_delta_table(benchmark, paths["old_hierarchy_benchmark"]).to_csv(
+        outputs["hierarchy_n45_old_vs_new_deltas"], index=False
+    )
     old_source_changed.to_csv(outputs["sindy_old_vs_new_changed_rows"], index=False)
     c4c_changed.to_csv(outputs["sindy_c4c_changed_rows"], index=False)
     realization_deltas.to_csv(outputs["sindy_clean_realization_deltas"], index=False)

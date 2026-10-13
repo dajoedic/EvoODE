@@ -24,13 +24,15 @@ from scripts.aggregate.run_wp_n6_sindy_baseline import (  # noqa: E402
     active_terms_by_equation,
     fit_sindy,
     integrate_truth,
+    library_true_terms,
     library_grid,
     load_benchmark,
     load_config,
-    polynomial_true_terms,
     r2_score,
     resolve_path,
+    serialize_full_coefficients,
     simulate_model,
+    simulate_model_accurate,
     support_hit,
 )
 
@@ -63,6 +65,7 @@ def parse_args() -> argparse.Namespace:
     )
     run_parser.add_argument("--output-data-dir", default="", help="Optional override for config output_data_dir.")
     run_parser.add_argument("--output-table-dir", default="", help="Optional override for config output_table_dir.")
+    run_parser.add_argument("--integrator", choices=["dop853", "euler"], default="dop853")
 
     pair_parser = subparsers.add_parser("pair")
     pair_parser.add_argument("--sindy-details", required=True, help="SINDy details CSV from run-sindy.")
@@ -416,12 +419,14 @@ def fit_eval_rows(
     t_grid: np.ndarray,
     trajectories: dict[tuple[int, int], np.ndarray],
     support_by_id: pd.DataFrame,
+    integrator: str = "dop853",
 ) -> list[dict[str, Any]]:
     system_id = int(system["id"])
     dim = int(system["dim"])
     names = [f"x{idx}" for idx in range(dim)]
-    true_terms = polynomial_true_terms(system)
+    true_terms = library_true_terms(system)
     support = support_by_id.loc[system_id].to_dict()
+    simulate = simulate_model_accurate if integrator == "dop853" else simulate_model
     rows: list[dict[str, Any]] = []
     for source_ic, target_ic, direction in [(1, 2, "IC1_to_IC2"), (2, 1, "IC2_to_IC1")]:
         train_x = trajectories[(system_id, source_ic)]
@@ -439,14 +444,17 @@ def fit_eval_rows(
         pruned_terms: list[set[str]] = [set() for _ in range(dim)]
         if model is not None:
             feature_names = model.get_feature_names()
-            raw_terms = active_terms_by_equation(model.coefficients(), feature_names)
+            coefficients = model.coefficients()
+            raw_terms = active_terms_by_equation(coefficients, feature_names)
             pruned_terms = raw_terms
+        else:
+            coefficients = np.empty((dim, 0))
 
         train_prediction, train_status = (None, "fit_failed")
         control_prediction, control_status = (None, "fit_failed")
         if model is not None:
-            train_prediction, train_status = simulate_model(model.coefficients(), feature_names, train_x[0, :], t_grid)
-            control_prediction, control_status = simulate_model(model.coefficients(), feature_names, train_x[0, :], t_grid)
+            train_prediction, train_status = simulate(coefficients, feature_names, train_x[0, :], t_grid)
+            control_prediction, control_status = simulate(coefficients, feature_names, train_x[0, :], t_grid)
         if train_prediction is None or control_prediction is None:
             control_abs_max = float("nan")
             valid_reconstruction_control = False
@@ -461,7 +469,7 @@ def fit_eval_rows(
             else:
                 prediction, sim_status = (None, "fit_failed")
                 if model is not None:
-                    prediction, sim_status = simulate_model(model.coefficients(), feature_names, reference[0, :], t_grid)
+                    prediction, sim_status = simulate(coefficients, feature_names, reference[0, :], t_grid)
             score = float("nan") if prediction is None else r2_score(reference, prediction)
             rows.append(
                 {
@@ -478,8 +486,9 @@ def fit_eval_rows(
                     "direction": direction,
                     "regime": regime,
                     "fit_status": fit_status,
+                    "integrator": integrator,
                     "integration_status": sim_status,
-                    "diverged_or_nonfinite": sim_status in {"diverged", "nonfinite"},
+                    "diverged_or_nonfinite": sim_status in {"diverged", "nonfinite", "max_evals"},
                     "r2": score,
                     "r2_gt_0_9": bool(math.isfinite(score) and score > R2_THRESHOLD),
                     "sindy_structure_hit_raw": support_hit(raw_terms, true_terms),
@@ -487,6 +496,7 @@ def fit_eval_rows(
                     "active_terms_raw": json.dumps([sorted(terms) for terms in raw_terms], separators=(",", ":")),
                     "active_terms_pruned": json.dumps([sorted(terms) for terms in pruned_terms], separators=(",", ":")),
                     "true_terms": json.dumps([sorted(terms) for terms in true_terms], separators=(",", ":")),
+                    "sindy_coefficients_full": serialize_full_coefficients(coefficients, feature_names),
                     "n_library_terms": len(feature_names),
                     "fit_elapsed_s_context": elapsed,
                     "elapsed_s_evidence_role": "context_not_evidence",
@@ -576,6 +586,7 @@ def run_sindy(
     trajectory_export_dir: Path,
     output_data_dir: str = "",
     output_table_dir: str = "",
+    integrator: str = "dop853",
 ) -> dict[str, Path]:
     config = load_config(config_path)
     if output_data_dir:
@@ -590,7 +601,7 @@ def run_sindy(
     detail_rows: list[dict[str, Any]] = []
     for cfg in library_grid(config):
         for system in benchmark:
-            detail_rows.extend(fit_eval_rows(system, cfg, t_grid, trajectories, support_by_id))
+            detail_rows.extend(fit_eval_rows(system, cfg, t_grid, trajectories, support_by_id, integrator=integrator))
 
     details = pd.DataFrame(detail_rows)
     frames = {
@@ -609,6 +620,21 @@ def run_sindy(
         path = data_dir / f"{name}.csv"
         frame.to_csv(path, index=False)
         paths[name] = path
+    metadata_path = data_dir / "metadata.json"
+    metadata_path.write_text(
+        json.dumps(
+            {
+                "integrator": integrator,
+                "r2_threshold": R2_THRESHOLD,
+                "trajectory_export_dir": str(trajectory_export_dir),
+            },
+            indent=2,
+            sort_keys=True,
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    paths["metadata"] = metadata_path
     for name in ["summary", "costs", "trajectory_hashes"]:
         csv_path = table_dir / f"phasec_sindy_{name}.csv"
         tex_path = table_dir / f"phasec_sindy_{name}.tex"
@@ -1486,6 +1512,7 @@ def main() -> int:
                 Path(args.trajectory_export_dir).resolve(),
                 args.output_data_dir,
                 args.output_table_dir,
+                args.integrator,
             )
             print(json.dumps({key: str(value) for key, value in paths.items()}, indent=2))
         elif args.command == "pair":
