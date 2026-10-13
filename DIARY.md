@@ -4,6 +4,38 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ---
 
+## 2026-10-14
+
+### Paper-1-Rahmen offen; Gesprächsstand nach `hierarchy_n46` (Nutzer, 13./14.10. nachts)
+
+Der Nutzer hält Paper 1 in der jetzigen Form nicht für publizierfähig; „fix“ ist es erst, wenn es das ist. Eine bessere
+Methodenversion darf deshalb in Paper 1 einfließen (Preis: neuer Kampagnenlauf, C-1…C-6 werden Vorgeschichte).
+Rekonstruktion gilt dem Nutzer als die schwächste Metrik (Auswendiglernen der Trainingskurve); **Ziel ist
+Generalisierung**. Festgehalten als Kandidat für eine einfache Grundgeschichte (Claude, zum Durchdenken, nicht
+entschieden): *Simulationsfehler-basierte Struktursuche überpasst die eine Trainingstrajektorie, Schwache-Form-Methoden
+nicht — Mechanismus und Messung —, darauf baut eine verbesserte Version auf.* Belege: dim 2 Rekonstruktion 96 % vs
+Generalisierung 30 %; Einzelstart-Fit der Wahrheit 25 % (P-04); Struktur fast immer Obermenge (raw 13 % vs pruned 29 %).
+
+Hebel, vom Nutzer gewichtet: (1) **Auswahl gegen Überanpassung — sehr hohe Priorität** (interne Validierung, z. B.
+zeitlich, oder BIC-artige Strafe; die zweite IC bleibt Testmenge und darf nie in die Auswahl); (2) Parameterfit in der
+schwachen Form (linear, ohne Restarts/Schranke/Integration) — „charmant“, Mehrwert wäre dann die gestufte Suche;
+(3) Entfernen-Operator zur Laufzeit (kein GP: schrittweise Vorwärts-Rückwärts-Auswahl über fester Bibliothek);
+(4) mehr Restarts — zurückgestellt.
+
+Literatur, die wir bisher nicht zitieren und die uns nahe ist: **FROLS** (Billings, Chen & Korenberg 1989, IJC 49:
+2157–2189 — gestuftes Hinzufügen nach Fehlerreduktion); **Piroddi & Spinelli 2003** (IJC 76(17): 1767–1781 —
+Termauswahl nach *Simulationsfehler* plus Pruning für Polynom-NARX; Volltext zugangsbeschränkt, Nutzer holt ihn);
+**MIOSR** (Bertsimas & Gurnee 2023 — exakte Best-Subset-Auswahl, auch in schwacher Form). Unterschied von EvoGrow,
+falls er trägt: Population statt greedy, gestufte Freischaltung mit Look-ahead-Cap, kontinuierliche gekoppelte ODEs.
+PDFs von FROLS und Piroddi & Lovera 2008 liegen im Repo-Wurzelverzeichnis (nicht getrackt).
+
+### C-6-Baselines mit DOP853 auf Orion (WP-N47)
+
+Image `sindy-baselines` (`e935c37`, Pakete exakt wie der lokale saubere Referenzlauf), 240 Shards, **24 Pods —
+einmalige Ausnahme vom 40-Kerne-Limit, vom Nutzer für diesen Lauf freigegeben**, Bedingung ≥ 16 freie Kerne: auf
+alnilam01/02 (je 96 Kerne) waren 132 angefordert, mit +24 bleiben ~36 frei. Erwartet 7–10 h (Schätzung aus dem
+lokalen Lauf, keine Evidenz). Abnahme: saubere Zeilen identisch zu `outputs/c6_n46_clean_dop853`.
+
 ## 2026-10-13
 
 ### Die SINDy-Familie wurde zweifach zu ihren Ungunsten bewertet: Euler-Integration und leere sin-Wahrheit

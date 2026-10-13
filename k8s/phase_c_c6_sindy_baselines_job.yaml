@@ -1,5 +1,7 @@
 # Phase-C C-6 full noisy-grid SINDy-family baselines with DOP853.
 # Expected cost is approximately 200-250 core-hours for capacity planning only.
+# 2026-10-14: 240 shards (~1 core-h each, shorter tail) and parallelism 24, approved by the user for this run
+# only, as a temporary exception to the 40-core EvoODE limit; >= 16 cores stayed free on alnilam01/02.
 apiVersion: batch/v1
 kind: Job
 metadata:
@@ -15,8 +17,8 @@ metadata:
 spec:
   ttlSecondsAfterFinished: 3600
   completionMode: Indexed
-  completions: 80
-  parallelism: 8
+  completions: 240
+  parallelism: 24
   backoffLimit: 50
   template:
     metadata:
@@ -40,7 +42,7 @@ spec:
             - name: EVO_SINDY_OUTPUT_DIR
               value: /outputs/c6_sindy_baselines_dop853_<COMMIT_SHA>
             - name: EVO_SINDY_N_SHARDS
-              value: "80"
+              value: "240"
             - name: OMP_NUM_THREADS
               value: "1"
             - name: OPENBLAS_NUM_THREADS
