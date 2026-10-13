@@ -94,20 +94,20 @@ end
         write_t2a_manifest(repo_manifest, rows)
         cp(repo_manifest, copied_manifest)
 
-        row = _t2a_test_manifest_row(repo_manifest) do row
+        row = _t2a_test_manifest_row(repo_manifest, row ->
             row["candidate_prior_arm"] == "oracle_prior" &&
                 parse(Int, row["system_id"]) == 24 &&
                 parse(Int, row["seed"]) == 42 &&
                 parse(Int, row["initial_condition_set"]) == 1
-        end
+        )
         target_index = row["index"]
-        copied_row = _t2a_test_manifest_row(copied_manifest) do row
+        copied_row = _t2a_test_manifest_row(copied_manifest, row ->
             row["index"] == target_index &&
                 row["candidate_prior_arm"] == "oracle_prior" &&
                 parse(Int, row["system_id"]) == 24 &&
                 parse(Int, row["seed"]) == 42 &&
                 parse(Int, row["initial_condition_set"]) == 1
-        end
+        )
 
         resolved = resolve_t2a_candidate_prior_path(row["candidate_prior_path"], dirname(repo_manifest))
         @test isfile(resolved)
