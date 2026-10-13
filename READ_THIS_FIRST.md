@@ -10,7 +10,7 @@ zweites davon. Alles Dauerhafte gehört dorthin, nach `PAPER_1.md` oder ins `DIA
 **Regeln:** wird immer **vollständig überschrieben**, nie angehängt. Was älter als ein paar Tage
 ist, ist vermutlich falsch — dann gilt `CLAUDE.md`.
 
-**Stand: 2026-10-13, ~22:30. Baseline-Auswertung korrigiert (WP-N46/N46b); nächster Schritt Entscheidungsregel (b).**
+**Stand: 2026-10-14, 00:30. Baseline-Auswertung korrigiert (WP-N46/N46b); C-6-Baselines mit DOP853 laufen auf Orion (WP-N47).**
 
 > **BLINDREGEL C-6 (Nutzer, 05.10., „Weg 2“):** Bis die Entscheidungsregel für Story-Linie (b) mit dem Nutzer
 > festgelegt und als Plan §9.4d eingefroren ist, sieht sich Claude **keine C-6-EvoGrow-Ergebnisse** an — weder
@@ -26,13 +26,14 @@ jedem Statuswechsel aktualisieren.
 
 ---
 
-## 1. Was läuft — Orion, Image `5dd1df8` / `e483f83`, **40 Kerne belegt = Limit**
+## 1. Was läuft — Orion, **63 Kerne: 39 + 24 (einmalige Ausnahme des Nutzers für den Baseline-Lauf)**
 
 | Lauf | Stand (13.10. ~19:00) | Erwartetes Ende | Wenn fertig |
 |---|---|---|---|
 | **C-6-Raster gekappt** (3.366, 24 Pods) | 723 | ~31/Tag → evtl. ~Jan. | einsammeln (NFS `phase_c_c6_grid_<SHA>/tasks`), technische Prüfung (Blindregel) |
 | **C-6-Raster ungekappt, Seed 42** (461, 8 Pods) | 185 | ~Ende Okt. | Nutzer entscheidet Seed 123/7; 8 Kerne frei |
-| **WP-T2a S1** (Orakel-Prior, dim 2, 20 Zellen, 8 Pods) | 5/20 nach 70 min | schneller als die ~50–60 h geschätzt | einsammeln `paper2_t2a_s1_e483f83…/tasks`; Tor T2a-1 auf den 39 fittbaren dim-2-Zellen |
+| **C-6-Baselines DOP853** (WP-N47, Image `sindy-baselines:e935c37`, 240 Shards, 24 Pods) | gestartet 14.10. 00:25; 6.060 von 136.080 Zeilen nach 3 min | vermutlich wenige Stunden | einsammeln von NFS `c6_sindy_baselines_dop853_e935c37…/shard_*`; Abnahme: saubere Zeilen identisch zu `outputs/c6_n46_clean_dop853`; Hierarchie ohne `--clean-only`; danach Limit wieder 40 |
+| **WP-T2a S1** (Orakel-Prior, dim 2, 20 Zellen, 8 Pods) | 14/20 (14.10. 00:30) | schneller als die ~50–60 h geschätzt | einsammeln `paper2_t2a_s1_e483f83…/tasks`; Tor T2a-1 auf den 39 fittbaren dim-2-Zellen |
 
 Lokal läuft nichts. oc war zuletzt nicht erreichbar (VPN). Platte: 109 GB frei.
 
@@ -51,9 +52,8 @@ Lokal läuft nichts. oc war zuletzt nicht erreichbar (VPN). Platte: 109 GB frei.
    = SINDy, Weak-SINDy, E-SINDy, ODEFormer (später PySR). Alter Entwurf (B1 ≥ 10 pp vor der besten Konfiguration
    jeder Baseline auf dim 1/2 Generalisierung, Cluster-p < 0,05; B2 flacherer Abfall σ 0 → 0,05) ist auf sauberen
    Daten bereits verfehlt (dim 2: 29,8 vs 61,3 %); die Regel betrifft das Rauschverhalten.
-2. **Verrauschte C-6-Baselines mit DOP853 neu rechnen** (136.080 Modellzeilen; der frühere Lauf brauchte ~15,5 h lokal,
-   Codex' 5,5 h ist zu optimistisch) — Laufort entscheidet der Nutzer. Befehl in `SCRIPTS.md` (WP-N46).
-3. Erst dann C-6-EvoGrow öffnen. Story-Diskussion nach C-6.
+2. **Verrauschte C-6-Baselines** laufen auf Orion (oben); danach einsammeln, Kontrolle, Hierarchie.
+3. Erst dann C-6-EvoGrow öffnen. Story-Diskussion nach C-6. **Paper 1 ist nicht fix (Nutzer 14.10.)** — Rahmen und Hebel in DIARY 14.10.; Nutzer liest Piroddi & Spinelli 2003.
 4. Später: PySR und ODEFormer auf C-6, wenn Kerne frei sind.
 
 ## 4. Annihilator-Spur: getrennt (Nutzer, 05.10.)
