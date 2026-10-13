@@ -90,6 +90,8 @@ die Stopp-Regel. Und es spricht dafür, dass die Restart-Zahl ein mindestens so 
 Kandidatenreihenfolge — genau die Konfundierung, wegen der `docs/phd_thesis_arc.md` §4 die Restart-Frage vor Paper 2
 stellt. Kosten: Laufzeit P-04 ~13 h statt erwarteter ~23 h.
 
+<!-- fc3019e -->
+
 ### Kern-Limit 40, P-04 läuft
 
 Der Nutzer: EvoODE darf auf Orion höchstens 32 Pods nutzen — C-6 belegte sie alle. Damit lagen wir am 10.10. mit 34
