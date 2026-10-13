@@ -895,10 +895,13 @@ C-4c rerun with the same DOP853 integrator:
 python analysis/scripts/aggregate/run_phasec_sindy_baseline.py run-sindy `
   --config analysis/configs/paper1_phaseC_sindy_baseline.json `
   --trajectory-export-dir outputs\phase_c_trajectory_hashes\wp_c4c\trajectory_export `
-  --output-data-dir analysis\data\paper1_phaseC_v1\phasec_sindy_baseline_wp_c4c_export_n46 `
-  --output-table-dir analysis\tables\paper1_phaseC_v1\phasec_sindy_baseline_wp_c4c_export_n46 `
+  --output-data-dir data\paper1_phaseC_v1\phasec_sindy_baseline_wp_c4c_export_n46 `
+  --output-table-dir tables\paper1_phaseC_v1\phasec_sindy_baseline_wp_c4c_export_n46 `
   --integrator dop853
 ```
+
+The two output directories resolve relative to `analysis/`; with an `analysis\` prefix the files land in
+`analysis\analysis\...`.
 
 Hierarchy output `hierarchy_n46`, comparing C-6 and C-4c with DOP853 on both sides:
 
