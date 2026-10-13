@@ -58,6 +58,40 @@ bei 0/20 bzw. 1/20. **Das Bild vom 01.10. ist jetzt vollständig:** Der Loss erk
 
 <!-- 3d5849e -->
 
+### Weak-SINDy (mit Seed) und E-SINDy auf dem ganzen Export; saubere §9.3-Tabelle mit allen fünf Verfahren
+
+**Weak-SINDy war nicht reproduzierbar.** pysindys `WeakPDELibrary` zieht die Integrations-Teilgebiete mit
+`np.random.uniform`, und der WP-N34-Runner hat nie geseedet. WP-N45b (`f1724ed`) seedet pro Zelle und Konfiguration.
+Wirkung auf den sauberen Zeilen, alt gegen neu: R² > 0,9 kippt in 141 (Rekonstruktion) bzw. 120 (Generalisierung) von
+3.780 Zeilen, die Raten bleiben fast gleich (2.354 → 2.359, 1.508 → 1.502); der geprunte Support ändert sich in 824 von
+3.780. Auch mit Seed bleibt Weak-SINDy seedabhängig: In 57 von 1.260 sauberen Gruppen sind sich die drei Realisierungen
+(gleiche Daten, verschiedene Seeds) beim Generalisierungsurteil uneinig.
+
+**Lauf:** lokal, 10 Shards, 00:55 bis 16:28 (~15,5 h statt der von WP-N45 hochgerechneten 39 min; der Testlauf zählte
+vier leichte Zellen). Ursache ist der **E-SINDy-Fit selbst**: Median 0,32 s, q99 408 s, max 3.056 s; Weak-SINDy Median
+0,44 s, max 52 s (Zeit nur Kontext). 90.720 Zeilen = 4.536 Zellen × 10 Konfigurationen × 2 Methoden, alle
+`fit_status = success`, 4.536/4.536 Daten-Hashes verifiziert. Erster Startversuch scheiterte am Aufteilungsbefehl in
+`SCRIPTS.md` (relative `cell_dir`), korrigiert.
+
+**Saubere §9.3-Hierarchie mit SINDy, Weak-SINDy, E-SINDy, ODEFormer und EvoGrow** (`analysis/data/paper1_phaseC_v1/hierarchy_n45/`;
+652/652 Kontrollen bestanden, EvoGrow/SINDy/ODEFormer bytegleich zu WP-N43b). Spanne über die zehn bzw. vier
+Konfigurationen, überall:
+
+| Verfahren | Rekonstruktion R² > 0,9 (varianzgew.) | Generalisierung R² > 0,9 (varianzgew.) | Struktur exakt geprunt |
+|---|---|---|---|
+| EvoGrow (C-1) | **88,6 %** | 41,4 % | 29,4 % |
+| SINDy | 54,0–65,9 % | 27,0–42,9 % | 16,7–43,3 % |
+| **Weak-SINDy** | 54,2–72,5 % | **30,4–50,3 %** | **38,9–65,0 %** |
+| E-SINDy | 48,9–61,1 % | 28,0–40,5 % | 16,7–45,6 % |
+| ODEFormer | 58,7–79,9 % | 26,2–34,1 % | 16,7–20,0 % |
+
+**Das verschiebt Claim D.** EvoGrow bleibt bei der Rekonstruktion klar vorn. Bei der Generalisierung liegt die beste
+Weak-SINDy-Konfiguration aber **9 pp vor EvoGrow**, und bei der Struktur ist Weak-SINDy in **jeder** Konfiguration
+besser als EvoGrow (38,9 % gegen 29,4 %). Die Formulierung „EvoGrow generalisiert vorn oder gleichauf mit der besten
+Baseline“ gilt damit nicht mehr; sie gilt nur gegen SINDy, E-SINDy und ODEFormer. Vorbehalt: Das Maximum über zehn
+Konfigurationen ist bewusst zugunsten der Baseline, und die Weak-SINDy-Zeilen sind drei Seeds je Zelle. Die Aufteilung
+nach Dimension und Repräsentierbarkeit steht in `benchmark.csv`, noch nicht ausgewertet.
+
 ### P-04 Restart-Kurve: k = 3 schöpft den Gewinn nicht aus; auf dim 2 trifft ein Einzelstart die Wahrheit nur in 25 %
 
 Orion, 8 Pods, 180/180 Zellen in ~13 h, eingesammelt nach `outputs/phase_c_c5_restart_curve_5dd1df8/`, Auswertung
