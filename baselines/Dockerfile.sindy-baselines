@@ -1,0 +1,16 @@
+FROM python:3.12-slim
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PYTHONPATH=/workspace/EvoODE/analysis
+
+WORKDIR /workspace/EvoODE
+
+COPY baselines/requirements-sindy-baselines.txt /tmp/requirements.txt
+RUN pip install --no-cache-dir -r /tmp/requirements.txt
+
+COPY analysis/ /workspace/EvoODE/analysis/
+COPY benchmarks/data/strogatz_extended.json /workspace/EvoODE/benchmarks/data/strogatz_extended.json
+COPY studies/regression/phase_c_support.json /workspace/EvoODE/studies/regression/phase_c_support.json
+
+ENTRYPOINT ["python", "-m", "scripts.aggregate.run_k8s_sindy_shard"]

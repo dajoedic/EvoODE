@@ -931,6 +931,34 @@ for ($i = 0; $i -lt 10; $i++) {
 }
 ```
 
+Orion SINDy-family baseline run (WP-N47) uses the dedicated Python image and an 80-shard indexed
+Job. Substitute `<SHA>` with the pushed commit that built
+`registry.gitlab.scch.at:443/joedicke/evoode/sindy-baselines:<SHA>`:
+
+```powershell
+(Get-Content k8s\phase_c_c6_sindy_baselines_job.yaml) -replace '<COMMIT_SHA>','<SHA>' | oc apply -f -
+
+oc -n scch-das get jobs,pods -l hpc.scch.at/service=evoode-phase-c-c6-sindy-baselines
+```
+
+Collect and merge the Orion shards after all 80 completions finish:
+
+```powershell
+New-Item -ItemType Directory -Force outputs\c6_sindy_baselines_dop853_<SHA>
+Copy-Item -Recurse S:\BigDataOrion\data-science\joedicke\c6_sindy_baselines_dop853_<SHA>\shard_* `
+  outputs\c6_sindy_baselines_dop853_<SHA>\
+
+python analysis/scripts/aggregate/aggregate_phasec_hierarchy_n43.py `
+  --sindy-shards-dir outputs\c6_sindy_baselines_dop853_<SHA> `
+  --sindy-merged-dir outputs\c6_sindy_baselines_dop853_<SHA>\merged `
+  --output-dir outputs\phase_c_campaign_221a3a7\agg\hierarchy_n47_<SHA>
+```
+
+Acceptance control: the Orion clean rows `(noise_sigma=0, subsample_rho=0)` must match
+`outputs\c6_n46_clean_dop853\merged\details.csv` on row keys, status columns, active terms,
+R2 columns, and `sindy_coefficients_full`. The local WP-N47 smoke was bit-identical on those fields;
+if Orion differs only by floating roundoff, report the maximum absolute delta per R2 column.
+
 Apply after replacing `<UNCAPPED_COMPLETIONS>` with the uncapped index-list line count and
 `<PARALLELISM>` after the capacity check:
 

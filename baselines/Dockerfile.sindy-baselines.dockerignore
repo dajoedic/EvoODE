@@ -1,0 +1,13 @@
+*
+!analysis/
+!analysis/**
+!benchmarks/
+!benchmarks/data/
+!benchmarks/data/strogatz_extended.json
+!studies/
+!studies/regression/
+!studies/regression/phase_c_support.json
+!baselines/
+!baselines/requirements-sindy-baselines.txt
+**/__pycache__/
+**/*.pyc
