@@ -232,6 +232,86 @@ def test_c6_loader_keeps_sindy_family_methods_separate() -> None:
     assert len(loaded[loaded["method"].eq("E-SINDy")]) == 3
 
 
+def write_clean_shard_tree(tmp_path: Path, *, drop_last_cell: bool = False, noisy_row: bool = False) -> Path:
+    rows = []
+    cells = [
+        (system_id, source_ic, realization)
+        for system_id in range(1, 64)
+        for source_ic in [1, 2]
+        for realization in [1, 2, 3]
+    ]
+    if drop_last_cell:
+        cells = cells[:-1]
+    for system_id, source_ic, realization in cells:
+        for method in ["sindy", "weak_sindy", "e_sindy"]:
+            for library_id in [f"lib_{index}" for index in range(10)]:
+                rows.append(
+                    {
+                        "system_id": system_id,
+                        "source_initial_condition_set": source_ic,
+                        "noise_sigma": 0.0,
+                        "subsample_rho": 0.0,
+                        "noise_realization": realization,
+                        "method": method,
+                        "library_id": library_id,
+                    }
+                )
+    if noisy_row:
+        row = rows[0].copy()
+        row["noise_sigma"] = 0.01
+        rows.append(row)
+    shard = tmp_path / "shard_0"
+    shard.mkdir(parents=True)
+    pd.DataFrame(rows).to_csv(shard / "details.csv", index=False)
+    pd.DataFrame([{"hash_verified": True}]).to_csv(shard / "export_checks.csv", index=False)
+    return tmp_path
+
+
+def test_clean_only_merge_accepts_378_clean_cells(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(n43, "build_summary", lambda details: pd.DataFrame([{"n_rows": len(details)}]))
+    shards = write_clean_shard_tree(tmp_path / "shards")
+
+    outputs = n43.merge_sindy_shards(
+        shards,
+        tmp_path / "merged",
+        expected_methods={"sindy", "weak_sindy", "e_sindy"},
+        expected_cell_count=378,
+        clean_only=True,
+    )
+
+    checks = pd.read_csv(outputs["merge_checks"])
+    assert int(checks.loc[0, "n_distinct_cells"]) == 378
+    assert bool(checks.loc[0, "clean_only"])
+
+
+def test_clean_only_merge_rejects_noisy_row(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(n43, "build_summary", lambda details: pd.DataFrame([{"n_rows": len(details)}]))
+    shards = write_clean_shard_tree(tmp_path / "shards", noisy_row=True)
+
+    with pytest.raises(ValueError, match="clean-only merge found 1 non-clean rows"):
+        n43.merge_sindy_shards(
+            shards,
+            tmp_path / "merged",
+            expected_methods={"sindy", "weak_sindy", "e_sindy"},
+            expected_cell_count=378,
+            clean_only=True,
+        )
+
+
+def test_clean_only_merge_rejects_missing_cell(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(n43, "build_summary", lambda details: pd.DataFrame([{"n_rows": len(details)}]))
+    shards = write_clean_shard_tree(tmp_path / "shards", drop_last_cell=True)
+
+    with pytest.raises(ValueError, match="expected 378 distinct cells, found 377"):
+        n43.merge_sindy_shards(
+            shards,
+            tmp_path / "merged",
+            expected_methods={"sindy", "weak_sindy", "e_sindy"},
+            expected_cell_count=378,
+            clean_only=True,
+        )
+
+
 def test_evogrow_generalization_variance_weighted_control(tmp_path: Path) -> None:
     registry = pd.DataFrame(
         [

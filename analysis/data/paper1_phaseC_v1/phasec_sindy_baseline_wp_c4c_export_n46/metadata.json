@@ -1,0 +1,5 @@
+{
+  "integrator": "dop853",
+  "r2_threshold": 0.9,
+  "trajectory_export_dir": "C:\\Users\\joedicke\\Documents\\reps\\EvoODE\\outputs\\phase_c_trajectory_hashes\\wp_c4c\\trajectory_export"
+}

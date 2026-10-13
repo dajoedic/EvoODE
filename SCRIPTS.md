@@ -910,7 +910,8 @@ python analysis/scripts/aggregate/aggregate_phasec_hierarchy_n43.py `
   --sindy-shards-dir outputs\c6_n46_clean_dop853 `
   --sindy-merged-dir outputs\c6_n46_clean_dop853\merged `
   --sindy-c4c-details analysis\data\paper1_phaseC_v1\phasec_sindy_baseline_wp_c4c_export_n46\details.csv `
-  --output-dir outputs\phase_c_campaign_221a3a7\agg\hierarchy_n46
+  --output-dir outputs\phase_c_campaign_221a3a7\agg\hierarchy_n46 `
+  --clean-only
 ```
 
 Full noisy-grid rerun, if approved. The WP-N46 smoke ran 48 model rows in about 7 s with DOP853;

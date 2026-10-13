@@ -38,6 +38,34 @@ eingefroren wird. Weak-SINDy liegt nach beiden Korrekturen auf Rekonstruktion et
 Generalisierung und Struktur klar vorn. WP-N46 an Codex (`7bfa373`).
 <!-- commits: 7bfa373 (WP-N46 spec), 7e12ab1 (this entry) -->
 
+### Korrigierte §9.3-Tabelle `hierarchy_n46`: Weak-SINDy deg3 0,01 liegt auf allen drei Achsen vor EvoGrow
+
+WP-N46 (`da83040`): DOP853 (rtol = atol = 1e-9, Budget 1,2e6 RHS-Auswertungen) als Standard in den Phase-C-Pfaden,
+volle Koeffizientenmatrix gespeichert, bibliotheksgerechte sin/cos-Wahrheit (geändert: 23, 28, 43, dazu 33 Gl. 1),
+inkrementelles Schreiben mit Wiederaufnahme. WP-N46b: `--clean-only` für die Hierarchie. Lokal neu gefittet und
+integriert: die sauberen 378 Zellen × 3 Verfahren × 10 Konfigurationen (11.340 Zeilen) und C-4c mit DOP853. Kontrollen
+652/652; C-6 sauber gegen C-4c 2.520 Zeilen, 0 geändert; Realisierungen identisch. Daten:
+`analysis/data/paper1_phaseC_v1/hierarchy_n46/` (inkl. Alt-gegen-Neu-Tabelle).
+
+Gesamt, varianzgewichtet R² > 0,9 (Rekonstruktion / Generalisierung), Struktur pruned / raw über 30 exakte Systeme:
+
+| | Rek. | Gen. | Struktur pruned | raw |
+|---|---|---|---|---|
+| EvoGrow C-1 | 88,6 % | 41,4 % | 29,4 % | 13,3 % |
+| Weak-SINDy deg3 0,01 | **89,4 %** | **61,9 %** | **65,0 %** | 65,0 % |
+| Weak-SINDy deg3 sin/cos 0,01 | 87,8 % | **63,8 %** | **71,7 %** | 71,7 % |
+| SINDy deg3 0,01 | 77,0 % | 47,6 % | 28,3 % | 28,3 % |
+| E-SINDy deg3 0,01 | 71,4 % | 48,1 % | 28,9 % | 28,9 % |
+| ODEFormer beam50 opt (Referenz) | 79,9 % | 33,6 % | 18,3 % | 16,7 % |
+
+Nach Dimension (Weak-SINDy deg3 0,01 gegen EvoGrow): dim 1 Rek. 94,2 / 97,8, Gen. 62,3 / **70,3**, Struktur 63,6 /
+47,0; dim 2 89,3 / 96,4, Gen. **61,3 / 29,8**, Struktur **65,0 / 36,7**; dim 3 90,0 / 46,7, Gen. 75,0 / 15,8,
+Struktur **75,0 / 0** (Weak-SINDy hat keine Parameterschranke). EvoGrow liegt nur noch bei dim-1-Generalisierung und
+Rekonstruktion auf dim 2 und den teilweise darstellbaren Systemen vorn. Die Generalisierungs-Spanne über alle
+SINDy-Familien-Konfigurationen: 34,9–63,8 %; EvoGrow (41,4 %) liegt darin im unteren Drittel. Die Entscheidungsregel (b)
+wird gegen diese Tabelle formuliert, nicht gegen `hierarchy_n45`. Offen: die verrauschten C-6-Baselines mit DOP853
+(~15 h lokal nach dem früheren Lauf, die Codex-Schätzung von 5,5 h ist zu optimistisch) — Entscheidung des Nutzers.
+
 ## 2026-10-12
 
 ### Orion: B-05 und WP-T1f fertig, eingesammelt und ausgewertet; C-6 langsamer
