@@ -33,14 +33,13 @@ jedem Statuswechsel aktualisieren.
 | **C-6-Raster gekappt** (3.366 Zellen, 24 Pods) | **670** (13.10. 01:10) | zuletzt ~31/Tag → evtl. erst ~Jan.; beobachten | einsammeln (NFS `phase_c_c6_grid_<SHA>/tasks`), Clean-Auswertung, Aggregation |
 | **C-6-Raster ungekappt, Seed 42** (461, 8 Pods) | **180** | ~16/Tag → ~Ende Okt. | Nutzer entscheidet über Seed 123/7 (Plan §9.4c Punkt 5); 8 Kerne werden frei |
 | ~~P-04 Restart-Kurve~~ | **fertig 13.10.**, eingesammelt und ausgewertet (DIARY 13.10.): Kontrolle 159/159 bitgleich; k=3 64 % → k=10 80 %, dim 2 33 % → 65 % | — | 8 Kerne wieder frei (32 belegt) |
+| **WP-T2a S1** (Orakel-Prior, dim 2, Seed 42, 20 Zellen, 8 Pods) | gestartet 13.10. abends, Image `e483f83` | erwartet ~50–60 h (2–3 Zellen ~50 h in C-1) | einsammeln von NFS `paper2_t2a_s1_e483f83…/tasks`; Tor T2a-1 nur auf fittbaren dim-2-Zellen (P-04: 39/60) |
 
 **Kern-Limit:** EvoODE max. **40 Kerne gesamt** (vorher 32). Kein Kern mehr. Laufende Jobs nie herunterdrehen (tötet
 Pods); neue Jobs warten auf frei werdende Kerne. Wenn P-04 endet, sind 8 Kerne frei (Kandidat: WP-T2a S1, braucht
 erst Implementierung + Image).
 
-**Lokal:** nichts läuft. **WP-T2a S1 ist startbereit** (`eb74ecf`, DIARY 13.10.): wartet auf Push/Image-Build durch
-den Nutzer, dann Upload von Manifest + Indizes + `priors/` nach `S:\…\paper2_t2a_pilot_v1_<SHA>\` und `oc apply` von
-`k8s/paper2_t2a_s1_job.yaml` (8 Pods = die freien 8 Kerne, erwartet ~50–60 h). Weak-SINDy (mit Seed) + E-SINDy fertig,
+**Lokal:** nichts läuft. **WP-T2a S1 läuft** (Eingaben auf dem NFS unter `paper2_t2a_pilot_v1_e483f83…/`, bytegleich geprüft). Weak-SINDy (mit Seed) + E-SINDy fertig,
 saubere §9.3-Tabelle mit allen fünf Verfahren committet (`021a654`): Weak-SINDy schlägt EvoGrow bei Struktur und bei
 bester Generalisierung → Claim D umformulieren.
 
