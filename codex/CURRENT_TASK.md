@@ -1,45 +1,49 @@
-# WP-N46b — clean-only mode for the §9.3 hierarchy
-**Language: Python**
+# WP-N47 — Orion image and indexed Job for the SINDy-family baselines on the full C-6 export (DOP853)
+**Language: Python** (plus Dockerfile, CI, k8s YAML)
 
 ## Why
 
-Claude ran the WP-N46 clean re-run (`outputs/c6_n46_clean_dop853/shard_0..9`, 378 cells, 11,340 model rows, all three
-methods, DOP853) and the C-4c re-run (`analysis/data/paper1_phaseC_v1/phasec_sindy_baseline_wp_c4c_export_n46/`). The
-`hierarchy_n46` command from `SCRIPTS.md` then fails:
-
-```
-Error: C-6 SINDy merge expected 4,536 distinct cells, found 378
-```
-
-The §9.3 hierarchy reads only the clean (σ = 0, ρ = 0) rows, but the merge check demands the full noisy export. The
-noisy re-run is a separate decision; the clean table is needed now.
+WP-N46 (`da83040`) made DOP853 the default and Claude re-ran the clean 378 cells locally
+(`outputs/c6_n46_clean_dop853/`, `hierarchy_n46`). The full noisy grid (4,536 cells × 10 configurations × SINDy,
+Weak-SINDy, E-SINDy = 136,080 model rows; ~23 h at 10 local processes) must run on Orion: the laptop is needed for
+other work. Orion has no Python/pysindy image yet. **Time matters: the user wants to push tonight.** Keep it minimal.
 
 ## Deliverables
 
-- A flag on `aggregate_phasec_hierarchy_n43.py` (e.g. `--clean-only`) under which the merge and its checks expect exactly
-  the 378 clean cells (σ = 0, ρ = 0) and fail on anything else — no silent acceptance of partial data. Without the flag,
-  behaviour unchanged.
-- Under `--clean-only`, SINDy, Weak-SINDy and E-SINDy all come from the one shard tree (the N46 shards hold all three
-  methods); E-SINDy rows must reach the hierarchy (do not drop them because `--esindy-*` is empty). If your WP-N46
-  changes already route E-SINDy from the main shard tree, say so in the report.
-- Every control that compares the C-6 clean rows against C-4c must keep working (both DOP853 now). Record the flag in
-  `metadata.json`.
-- Run it yourself — the aggregation is cheap and reads existing files:
-  `--sindy-shards-dir outputs\c6_n46_clean_dop853 --sindy-merged-dir outputs\c6_n46_clean_dop853\merged
-  --sindy-c4c-details analysis\data\paper1_phaseC_v1\phasec_sindy_baseline_wp_c4c_export_n46\details.csv
-  --output-dir outputs\phase_c_campaign_221a3a7\agg\hierarchy_n46 --clean-only`, and the old-vs-new delta table against
-  `analysis/data/paper1_phaseC_v1/hierarchy_n45/`.
-- Update the `hierarchy_n46` command in `SCRIPTS.md`. Test for the flag (accepts 378 clean cells, rejects a noisy row
-  and a missing cell).
+1. **`baselines/Dockerfile.sindy-baselines`** + `.dockerignore` (allowlist style like `baselines/Dockerfile.dockerignore`).
+   Base `python:3.12-slim`. Pin exactly the versions of Claude's laptop, which produced the clean reference:
+   Python 3.12, pysindy 2.1.0, scipy 1.13.1, numpy 2.2.6, pandas 2.2.2, scikit-learn 1.5.1, sympy 1.13.1 — plus
+   whatever else `run_phasec_noise_sindy_baselines.py` imports, pinned to the laptop's installed versions
+   (`pip show` / `importlib.metadata`; list them in the report). Copy only what the runner needs (`analysis/`,
+   `benchmarks/data/strogatz_extended.json`, the config). No build-essential unless a wheel is missing.
+2. **CI job** `build_sindy_baselines_image` in `.gitlab-ci.yml`, same pattern as `build_odeformer_reference_image`
+   (tag `$CI_REGISTRY_IMAGE/sindy-baselines:$CI_COMMIT_SHA`). It must build on the next push (rules: changes on its
+   Dockerfile/dockerignore/requirements and on the three runner scripts). Add the matching trivy job like the others.
+   Do not change the existing build jobs.
+3. **Entry script** (e.g. `analysis/scripts/aggregate/run_k8s_sindy_shard.py`): reads `JOB_COMPLETION_INDEX` and
+   env `EVO_SINDY_EXPORT_DIR`, `EVO_SINDY_OUTPUT_DIR`, `EVO_SINDY_N_SHARDS`; builds shard `i` as
+   `index.csv.iloc[i::N]` with `cell_dir` resolved absolutely against the export dir (the same split rule as
+   `SCRIPTS.md`); calls the noise runner with `--methods sindy,weak_sindy,e_sindy --integrator dop853`, output
+   `<OUTPUT>/shard_<i>`. Resume (WP-N46 D) must work so a restarted pod continues.
+4. **`k8s/phase_c_c6_sindy_baselines_job.yaml`**: indexed Job, `completions: 80` (80 shards for load balancing),
+   **`parallelism: 8`**, 1 CPU / 2Gi request = limit, `OMP_NUM_THREADS`, `OPENBLAS_NUM_THREADS`, `MKL_NUM_THREADS` = 1,
+   **no `activeDeadlineSeconds`**, `backoffLimit` like the others, `imagePullSecrets` and NFS volume exactly as
+   `k8s/paper2_t2a_s1_job.yaml`. Export: `/outputs/phase_c_c6_data_conditions_5dd1df839f8ece98f2bb3bbff78d15d8c433d9d3`;
+   output `/outputs/c6_sindy_baselines_dop853_<COMMIT_SHA>`. Image placeholder `<COMMIT_SHA>` as in the other manifests.
+   Header comment: purpose, expected cost (~200–250 core-h, capacity planning only).
+5. **Smoke (allowed):** run the entry script locally with `JOB_COMPLETION_INDEX=0`, `EVO_SINDY_N_SHARDS=4536` (one
+   cell), against the local export `outputs/phase_c_c6_data_conditions_5dd1df8` — pick N so shard 0 is a clean cell, or
+   add an optional filter env for the smoke only; the 30 rows must equal the matching rows of
+   `outputs/c6_n46_clean_dop853` (R² columns, statuses, active terms, full coefficients). Do not run docker.
+6. `SCRIPTS.md`: the `oc apply` substitution command, the collect/merge command afterwards, and the acceptance
+   control: the clean rows from Orion must be identical to `outputs/c6_n46_clean_dop853` (cross-machine; report
+   numeric tolerance if not bit-identical).
 
 ## Verboten
 
-- Changing metrics, thresholds, the variance weighting, strata, or the EvoGrow/ODEFormer inputs. Re-running any fit.
-  Committing. Editing this file.
+- Running anything beyond the smoke. Docker builds. Pushing. Committing. Editing this file.
+- Changing the runner's science (methods, thresholds, seeds, integrator settings).
 
 ## Abnahme
 
-- `outputs/phase_c_campaign_221a3a7/agg/hierarchy_n46/` written, all controls pass (report the count), delta table
-  present; tests pass; report `codex/reports/REPORT_WP_N46B.md` with the control count and the overall rows per method
-  and configuration (old → new, both regimes, pruned and raw structure).
-- `STATUS.md` `done` or `blocked`.
+- Report `codex/reports/REPORT_WP_N47.md` (pinned versions, smoke comparison, files). `STATUS.md` `done` / `blocked`.
