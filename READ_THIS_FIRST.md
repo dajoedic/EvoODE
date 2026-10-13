@@ -35,7 +35,7 @@ jedem Statuswechsel aktualisieren.
 | **C-6-Baselines DOP853** (WP-N47, Image `sindy-baselines:e935c37`, 240 Shards, 24 Pods) | gestartet 14.10. 00:25; 6.060 von 136.080 Zeilen nach 3 min | vermutlich wenige Stunden | einsammeln von NFS `c6_sindy_baselines_dop853_e935c37…/shard_*`; Abnahme: saubere Zeilen identisch zu `outputs/c6_n46_clean_dop853`; Hierarchie ohne `--clean-only`; danach Limit wieder 40 |
 | **WP-T2a S1** (Orakel-Prior, dim 2, 20 Zellen, 8 Pods) | 14/20 (14.10. 00:30) | schneller als die ~50–60 h geschätzt | einsammeln `paper2_t2a_s1_e483f83…/tasks`; Tor T2a-1 auf den 39 fittbaren dim-2-Zellen |
 
-Lokal läuft nichts. oc war zuletzt nicht erreichbar (VPN). Platte: 109 GB frei.
+Lokal läuft nichts. Platte: 109 GB frei. **Ungepusht:** `744b4d3`, `e06f640` und dieser Commit (pusht der Nutzer). Ungetrackt im Repo-Wurzelverzeichnis: zwei Literatur-PDFs (FROLS, Piroddi & Lovera 2008), bewusst nicht committet.
 
 ## 2. Heute erledigt (DIARY 13.10.)
 
