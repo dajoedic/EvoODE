@@ -4,6 +4,39 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ---
 
+## 2026-10-13
+
+### Die SINDy-Familie wurde zweifach zu ihren Ungunsten bewertet: Euler-Integration und leere sin-Wahrheit
+
+**Integration.** Alle R²-Werte von SINDy, Weak-SINDy und E-SINDy (C-4c und C-6) kommen aus explizitem Euler auf dem
+512-Punkt-Gitter (`simulate_model`, Δt ≈ 0,02); EvoGrow integriert mit Tsit5 bei 1e-9. Neu-Integration der sauberen
+C-6-Zeilen (σ = 0, ρ = 0; 3 Verfahren × 10 Konfigurationen × 378 Zeilen × 2 Regime = 22.680) mit DOP853, rtol = atol =
+1e-9, Abbruch bei |y| > 1e9 oder 1,2e6 RHS-Auswertungen (≈ Tsit5 maxiters 1e5), kein Zeitlimit. Statuswechsel: Euler
+divergiert 4.133, DOP853 2.427 (+259 Budget-Stopps). Anteil R² > 0,9 auf Zellebene (nicht die §9.3-Aggregation):
+
+| Verfahren | Rekonstruktion Euler → DOP853 | Generalisierung Euler → DOP853 |
+|---|---|---|
+| SINDy | 60,6 → 69,1 % | 35,6 → 43,7 % |
+| E-SINDy | 55,3 → 64,1 % | 34,9 → 43,1 % |
+| Weak-SINDy | 62,4 → 74,0 % | 39,7 → 51,6 % |
+
+Pro Konfiguration +2 bis +15 pp; bestes Beispiel Weak-SINDy deg3 0,01: 71,7 → 87,0 % / 46,8 → 61,4 % (EvoGrow §9.3:
+88,6 % / 41,4 %). Kippen fast nur nach oben (z. B. 63 hoch, 5 runter). Einschränkung: integriert wurden die
+gespeicherten, bei `max(1e-6, 1e-3·max)` ausgedünnten Koeffizienten — die vollständige Matrix ist nirgends gespeichert;
+für STLSQ-SINDy praktisch gleich, für E-SINDy (Median) nicht sicher. Der saubere Neulauf fittet daher neu (WP-N46).
+Erster Probelauf hing: `AsyncResult.get(timeout)` bricht den Worker nicht ab, steife Modelle blockierten den Pool —
+ersetzt durch ein Auswertungsbudget im Worker. Daten: Scratchpad `reint_clean.csv` (nicht im Repo; WP-N46 ersetzt sie).
+
+**Struktur.** `polynomial_true_terms` setzt jede Gleichung, die `sp.Poly` ablehnt, auf die leere Wahrheit — auch die
+exakt darstellbaren sin-Gleichungen der Systeme 23, 28, 43. Die `sin_cos`-Konfigurationen treffen dort die exakte
+Struktur (Schwelle 0,1: 18/18 in jedem Verfahren; 0,01: SINDy/E-SINDy 9/18, Weak-SINDy 18/18) und wurden als Fehlschlag
+gezählt. Korrigierte Strukturquote (pruned, Mittel über 30 exakte Systeme): SINDy 16,7 → 21,7 % / 31,7 → 41,7 %,
+E-SINDy 16,7 → 21,7 % / 34,4 → 44,4 %, **Weak-SINDy 61,7 → 71,7 %** / 55,6 → 65,6 % (EvoGrow 29,4 %).
+
+**Folge.** Die Baseline-Seite von `hierarchy_n45` ist zu ersetzen, bevor die Entscheidungsregel (b) als §9.4d
+eingefroren wird. Weak-SINDy liegt nach beiden Korrekturen auf Rekonstruktion etwa gleichauf mit EvoGrow und auf
+Generalisierung und Struktur klar vorn. WP-N46 an Codex (`7bfa373`).
+
 ## 2026-10-12
 
 ### Orion: B-05 und WP-T1f fertig, eingesammelt und ausgewertet; C-6 langsamer
