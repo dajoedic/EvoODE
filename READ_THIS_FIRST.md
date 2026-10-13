@@ -63,6 +63,13 @@ in `outputs/c6_sindy_baselines_5dd1df8/merged/`. Der Vergleich mit EvoGrow unter
 
 **Nur noch 27 GB frei (10.10.) — vor dem nächsten Docker-Build aufräumen.** Working Tree sauber bis auf `output/`, `tmp/` (ungetrackt). Commits nicht gepusht (pusht der Nutzer).
 
+**Reihenfolge Paper 1 (Nutzer 13.10.):** Rauschen gehört in Paper 1, Story-Entscheidung erst nach C-6. (1) Euler-Fehler
+der SINDy-Familie beheben — R² der Baselines wurde seit WP-N6 mit explizitem Euler auf dem Datengitter integriert
+(nur in REPORT_WP_N6 dokumentiert), Neu-Integration mit DOP853 läuft lokal; (2) Entscheidungsregel (b) mit dem
+Nutzer festlegen und als §9.4d einfrieren — jetzt inkl. Weak-SINDy/E-SINDy als „jede Baseline“; (3) erst dann C-6
+öffnen. Außerdem offen: SINDy-Strukturabbildung setzt sin/cos-Systeme auf „leer“ (prüfen); Runner soll laufend
+schreiben (kleiner Codex-Auftrag).
+
 ## 2. Fertig liegt (zum Weitermachen, wenn Ergebnisse kommen)
 
 - Baseline-Export des Rasters auf dem NFS: `phase_c_c6_data_conditions_<SHA>/` (4.536 Zellen, vollständig).
