@@ -38,8 +38,11 @@ jedem Statuswechsel aktualisieren.
 Pods); neue Jobs warten auf frei werdende Kerne. Wenn P-04 endet, sind 8 Kerne frei (Kandidat: WP-T2a S1, braucht
 erst Implementierung + Image).
 
-**Lokal:** Codex arbeitet an **WP-N45** (E-SINDy-Arm + Weak-SINDy/E-SINDy in der §9.3-Hierarchie). Danach: prüfen,
-committen, vollen E-SINDy-Lauf auf dem C-6-Export lokal starten (Codex rechnet die Dauer hoch).
+**Lokal:** nichts läuft. **WP-T2a S1 ist startbereit** (`eb74ecf`, DIARY 13.10.): wartet auf Push/Image-Build durch
+den Nutzer, dann Upload von Manifest + Indizes + `priors/` nach `S:\…\paper2_t2a_pilot_v1_<SHA>\` und `oc apply` von
+`k8s/paper2_t2a_s1_job.yaml` (8 Pods = die freien 8 Kerne, erwartet ~50–60 h). Weak-SINDy (mit Seed) + E-SINDy fertig,
+saubere §9.3-Tabelle mit allen fünf Verfahren committet (`021a654`): Weak-SINDy schlägt EvoGrow bei Struktur und bei
+bester Generalisierung → Claim D umformulieren.
 
 **Fertig, eingesammelt und ausgewertet am 12.10. (`DIARY.md` 12.10.):**
 - **B-05 (Tor B5):** 1/24/52 gleicher Support wie C-1; 57 wechselt den Support, findet die Wahrheit aber mit keiner

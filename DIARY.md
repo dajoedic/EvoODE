@@ -58,6 +58,24 @@ bei 0/20 bzw. 1/20. **Das Bild vom 01.10. ist jetzt vollständig:** Der Loss erk
 
 <!-- 3d5849e -->
 
+### WP-T2a-Implementierung: Prior in EvoGrow, geprüft, bereit für S1
+
+Codex (WP-T2a-impl, -b, -c), Claude prüfte (`eb74ecf`). Der Prior wirkt an allen neun Termziehungen des C-1-Pfads
+(Initialisierung und Kindererzeugung, `evogrow.jl` und `evogrow_v3_childgen.jl`); Gleichungswahl und Münzwurf der
+Usage-Policy bleiben uniform. 84 Prior-Dateien (21 Systeme × 2 ICs × 2 Arme) aus den WP-T1-Ranglisten (`weak`/`forward`,
+σ = 0, je Trainings-IC), Trajektorien-Hash gegen den C-1-Export geprüft; Orakel = wahre Terme zuerst, dann geführte
+Reihenfolge.
+
+Kontrollen: **ohne Prior bitgleich zu C-1 in 3/3 Zellen** (System 1, 24, 53 — dim 1/2/3; Loss, Support, Koeffizienten,
+Loss-Evals, Fingerprint `0c9672de35c75a9d`); Gewichtungstest 120.000 Prüfungen grün; Phase-C-Manifest in allen 13
+eingefrorenen Spalten identisch (die 4 Zusatzspalten sind WP-N32-Standardwerte); T2a-Manifest 252 Zeilen, 126 je Arm,
+20 S1-Zellen. **Orakel-Smoke** System 24 Seed 42 IC 1: Prior geladen und protokolliert, Fingerprint `52edf2893b9d9e70`,
+gleicher richtiger Support wie C-1 bei 74.296 statt 95.179 Loss-Evals. Gefundene Fehler vor dem Push: (b) Manifest-
+Eindeutigkeit kannte den Arm nicht; (c) der Prior-Pfad stand absolut als Windows-Pfad im Manifest und `experiments/`
+ist nicht im Image — S1 wäre auf Orion in allen 20 Zellen gescheitert. Lösung ohne Image-Änderung: Prior-Dateien
+reisen mit dem Manifest aufs NFS, relativer Pfad; Smoke aus einer Kopie identisch, absoluter Pfad wird abgelehnt.
+Offen: ein Testfall in `test/test_candidate_prior.jl` vertauscht Argumente (Testgerüst, nicht Code).
+
 ### Weak-SINDy (mit Seed) und E-SINDy auf dem ganzen Export; saubere §9.3-Tabelle mit allen fünf Verfahren
 
 **Weak-SINDy war nicht reproduzierbar.** pysindys `WeakPDELibrary` zieht die Integrations-Teilgebiete mit
