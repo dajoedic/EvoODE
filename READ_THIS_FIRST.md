@@ -10,7 +10,7 @@ zweites davon. Alles Dauerhafte gehört dorthin, nach `PAPER_1.md` oder ins `DIA
 **Regeln:** wird immer **vollständig überschrieben**, nie angehängt. Was älter als ein paar Tage
 ist, ist vermutlich falsch — dann gilt `CLAUDE.md`.
 
-**Stand: 2026-10-14, 00:30. Baseline-Auswertung korrigiert (WP-N46/N46b); C-6-Baselines mit DOP853 laufen auf Orion (WP-N47).**
+**Stand: 2026-10-15, 15:10. C-6-Baselines DOP853 auf Orion fertig, noch nicht eingesammelt; gekapptes C-6-Raster verlangsamt.**
 
 > **BLINDREGEL C-6 (Nutzer, 05.10., „Weg 2“):** Bis die Entscheidungsregel für Story-Linie (b) mit dem Nutzer
 > festgelegt und als Plan §9.4d eingefroren ist, sieht sich Claude **keine C-6-EvoGrow-Ergebnisse** an — weder
@@ -26,16 +26,16 @@ jedem Statuswechsel aktualisieren.
 
 ---
 
-## 1. Was läuft — Orion, **63 Kerne: 39 + 24 (einmalige Ausnahme des Nutzers für den Baseline-Lauf)**
+## 1. Was läuft — Orion, **33 Kerne (24 + 8 + 1), Limit 40**
 
-| Lauf | Stand (13.10. ~19:00) | Erwartetes Ende | Wenn fertig |
+| Lauf | Stand (15.10. 15:10) | Erwartetes Ende | Wenn fertig |
 |---|---|---|---|
-| **C-6-Raster gekappt** (3.366, 24 Pods) | 723 | ~31/Tag → evtl. ~Jan. | einsammeln (NFS `phase_c_c6_grid_<SHA>/tasks`), technische Prüfung (Blindregel) |
-| **C-6-Raster ungekappt, Seed 42** (461, 8 Pods) | 185 | ~Ende Okt. | Nutzer entscheidet Seed 123/7; 8 Kerne frei |
-| **C-6-Baselines DOP853** (WP-N47, Image `sindy-baselines:e935c37`, 240 Shards, 24 Pods) | gestartet 14.10. 00:25; 6.060 von 136.080 Zeilen nach 3 min | vermutlich wenige Stunden | einsammeln von NFS `c6_sindy_baselines_dop853_e935c37…/shard_*`; Abnahme: saubere Zeilen identisch zu `outputs/c6_n46_clean_dop853`; Hierarchie ohne `--clean-only`; danach Limit wieder 40 |
-| **WP-T2a S1** (Orakel-Prior, dim 2, 20 Zellen, 8 Pods) | 14/20 (14.10. 00:30) | schneller als die ~50–60 h geschätzt | einsammeln `paper2_t2a_s1_e483f83…/tasks`; Tor T2a-1 auf den 39 fittbaren dim-2-Zellen |
+| **C-6-Raster gekappt** (3.366, 24 Pods) | 752 (+29 seit 13.10. abends, ~16/Tag; viele Pods 1–3 Tage alt) | bei diesem Tempo deutlich nach Jan. — mit Nutzer besprechen | einsammeln (NFS `phase_c_c6_grid_<SHA>/tasks`), technische Prüfung (Blindregel) |
+| **C-6-Raster ungekappt, Seed 42** (461, 8 Pods) | 207 | ~Anfang Nov. | Nutzer entscheidet Seed 123/7; 8 Kerne frei |
+| **WP-T2a S1** (Orakel-Prior, dim 2, 20 Zellen) | 19/20, letzter Pod (Index 15) läuft seit 43 h | offen | einsammeln `paper2_t2a_s1_e483f83…/tasks`; Tor T2a-1 auf den 39 fittbaren dim-2-Zellen |
+| ~~C-6-Baselines DOP853~~ (WP-N47, `sindy-baselines:e935c37`) | **fertig** (Job per TTL entfernt): 240/240 Shards, 136.080 Zeilen, 136.079 `success`, 1 `LinAlgError` (SVD) | — | **noch nicht eingesammelt/abgenommen**: saubere Zeilen identisch zu `outputs/c6_n46_clean_dop853`; Hierarchie ohne `--clean-only` |
 
-Lokal läuft nichts. Platte: 109 GB frei. **Ungepusht:** `744b4d3`, `e06f640` und dieser Commit (pusht der Nutzer). Ungetrackt im Repo-Wurzelverzeichnis: zwei Literatur-PDFs (FROLS, Piroddi & Lovera 2008), bewusst nicht committet.
+Lokal läuft nichts. Platte: 109 GB frei. **Ungepusht:** `744b4d3`, `e06f640`, `58b3a7b` und dieser Commit (pusht der Nutzer). Ungetrackt im Repo-Wurzelverzeichnis: zwei Literatur-PDFs (FROLS, Piroddi & Lovera 2008), bewusst nicht committet.
 
 ## 2. Heute erledigt (DIARY 13.10.)
 
