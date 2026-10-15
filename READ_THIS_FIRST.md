@@ -46,6 +46,16 @@ Lokal läuft nichts. Platte: 109 GB frei. **Ungepusht:** `744b4d3`, `e06f640`, `
 - Ergebnis: Weak-SINDy deg3 0,01 liegt **auf allen drei Achsen** vor EvoGrow (Rek. 89,4 vs 88,6 %, Gen. 61,9 vs
   41,4 %, Struktur 65,0 vs 29,4 %). EvoGrow vorn nur bei dim-1-Generalisierung (70,3 vs 62,3 %) und Rekonstruktion dim 2.
 
+## 2a. Offen aus der Sitzung vom 15.10. (Fenster geschlossen, nichts angefangen)
+
+- **Nächster Schritt:** C-6-Baselines DOP853 von NFS `c6_sindy_baselines_dop853_e935c37…/shard_*` einsammeln,
+  Abnahme (saubere Zeilen identisch zu `outputs/c6_n46_clean_dop853`), die eine `LinAlgError`-Zeile benennen,
+  dann Hierarchie ohne `--clean-only`.
+- **Nutzerentscheidung:** gekapptes C-6-Raster nur noch ~16 Zellen/Tag (752/3.366) → Rest ~160 Tage statt ~Jan.
+  Weiterlaufen lassen oder umplanen? 7 Kerne bis zum 40er-Limit frei.
+- **Statusseite „EvoODE auf Orion“** (`claude.ai/artifact/4sq6HhRsnxgrFVqVF2trBx`) ist nicht mehr lesbar
+  („artifact not found“) und deshalb nicht nachgezogen. Nutzer: neuen Link nennen oder Neuanlage freigeben.
+
 ## 3. Als Nächstes
 
 1. **Entscheidungsregel (b) mit dem Nutzer festlegen und als §9.4d einfrieren** — gegen `hierarchy_n46`, „jede Baseline“
