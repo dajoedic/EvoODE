@@ -10,7 +10,7 @@ zweites davon. Alles Dauerhafte gehört dorthin, nach `PAPER_1.md` oder ins `DIA
 **Regeln:** wird immer **vollständig überschrieben**, nie angehängt. Was älter als ein paar Tage
 ist, ist vermutlich falsch — dann gilt `CLAUDE.md`.
 
-**Stand: 2026-10-15, 15:10. C-6-Baselines DOP853 auf Orion fertig, noch nicht eingesammelt; gekapptes C-6-Raster verlangsamt.**
+**Stand: 2026-10-15, 22:35. C-6-Baselines DOP853 auf Orion fertig, noch nicht eingesammelt; gekapptes C-6-Raster verlangsamt.**
 
 > **BLINDREGEL C-6 (Nutzer, 05.10., „Weg 2“):** Bis die Entscheidungsregel für Story-Linie (b) mit dem Nutzer
 > festgelegt und als Plan §9.4d eingefroren ist, sieht sich Claude **keine C-6-EvoGrow-Ergebnisse** an — weder
@@ -28,11 +28,11 @@ jedem Statuswechsel aktualisieren.
 
 ## 1. Was läuft — Orion, **33 Kerne (24 + 8 + 1), Limit 40**
 
-| Lauf | Stand (15.10. 15:10) | Erwartetes Ende | Wenn fertig |
+| Lauf | Stand (15.10. 22:35) | Erwartetes Ende | Wenn fertig |
 |---|---|---|---|
-| **C-6-Raster gekappt** (3.366, 24 Pods) | 752 (+29 seit 13.10. abends, ~16/Tag; viele Pods 1–3 Tage alt) | bei diesem Tempo deutlich nach Jan. — mit Nutzer besprechen | einsammeln (NFS `phase_c_c6_grid_<SHA>/tasks`), technische Prüfung (Blindregel) |
+| **C-6-Raster gekappt** (3.366, 24 Pods) | 770 (+18 seit 15:10; 16 der 24 Pods 1–2,5 Tage alt, Indizes 731–758) | bei diesem Tempo deutlich nach Jan. — mit Nutzer besprechen | einsammeln (NFS `phase_c_c6_grid_<SHA>/tasks`), technische Prüfung (Blindregel) |
 | **C-6-Raster ungekappt, Seed 42** (461, 8 Pods) | 207 | ~Anfang Nov. | Nutzer entscheidet Seed 123/7; 8 Kerne frei |
-| **WP-T2a S1** (Orakel-Prior, dim 2, 20 Zellen) | 19/20, letzter Pod (Index 15) läuft seit 43 h | offen | einsammeln `paper2_t2a_s1_e483f83…/tasks`; Tor T2a-1 auf den 39 fittbaren dim-2-Zellen |
+| **WP-T2a S1** (Orakel-Prior, dim 2, 20 Zellen) | 19/20, letzter Pod (Index 15) läuft seit 50 h | offen | einsammeln `paper2_t2a_s1_e483f83…/tasks`; Tor T2a-1 auf den 39 fittbaren dim-2-Zellen |
 | ~~C-6-Baselines DOP853~~ (WP-N47, `sindy-baselines:e935c37`) | **fertig** (Job per TTL entfernt): 240/240 Shards, 136.080 Zeilen, 136.079 `success`, 1 `LinAlgError` (SVD) | — | **noch nicht eingesammelt/abgenommen**: saubere Zeilen identisch zu `outputs/c6_n46_clean_dop853`; Hierarchie ohne `--clean-only` |
 
 Lokal läuft nichts. Platte: 109 GB frei. **Ungepusht:** `744b4d3`, `e06f640`, `58b3a7b` und dieser Commit (pusht der Nutzer). Ungetrackt im Repo-Wurzelverzeichnis: zwei Literatur-PDFs (FROLS, Piroddi & Lovera 2008), bewusst nicht committet.
@@ -51,7 +51,7 @@ Lokal läuft nichts. Platte: 109 GB frei. **Ungepusht:** `744b4d3`, `e06f640`, `
 - **Nächster Schritt:** C-6-Baselines DOP853 von NFS `c6_sindy_baselines_dop853_e935c37…/shard_*` einsammeln,
   Abnahme (saubere Zeilen identisch zu `outputs/c6_n46_clean_dop853`), die eine `LinAlgError`-Zeile benennen,
   dann Hierarchie ohne `--clean-only`.
-- **Nutzerentscheidung:** gekapptes C-6-Raster nur noch ~16 Zellen/Tag (752/3.366) → Rest ~160 Tage statt ~Jan.
+- **Nutzerentscheidung:** gekapptes C-6-Raster nur noch ~16 Zellen/Tag (770/3.366) → Rest ~160 Tage statt ~Jan.
   Weiterlaufen lassen oder umplanen? 7 Kerne bis zum 40er-Limit frei.
 - **Statusseite „EvoODE auf Orion“** (`claude.ai/artifact/4sq6HhRsnxgrFVqVF2trBx`) ist nicht mehr lesbar
   („artifact not found“) und deshalb nicht nachgezogen. Nutzer: neuen Link nennen oder Neuanlage freigeben.
