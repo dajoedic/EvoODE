@@ -1,0 +1,6 @@
+comparison,scope,rows,active_terms_pruned_differ,coefficients_full_differ,reconstruction_r2_vw_differ,note
+orion_vs_laptop_n46,clean all systems,11340,120,9308,4252,coef rel. deviation median 4.4e-16; R2>0.9 recon 7999 vs 7999; gen 5254 vs 5255; pruned hits 2928 vs 2928
+laptop_rerun_vs_laptop_n46,clean systems 62/63,360,0,0,3,same machine same BLAS kernel
+laptop_sandybridge_vs_laptop_n46,clean systems 62/63,360,88,334,181,same machine OPENBLAS_CORETYPE=Sandybridge
+orion_vs_laptop_n46,clean systems 62/63,360,63,335,102,
+laptop_sandybridge_vs_orion,clean systems 62/63,360,92,342,175,

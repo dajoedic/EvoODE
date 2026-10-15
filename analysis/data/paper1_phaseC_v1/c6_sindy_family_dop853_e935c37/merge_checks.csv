@@ -1,0 +1,2 @@
+n_shards,n_rows,n_distinct_cells,expected_distinct_cells,clean_only,duplicate_run_keys,hash_check_rows,hash_check_passed_rows,cells_with_all_configurations
+240,136080,4536,4536,False,0,4536,4536,4536

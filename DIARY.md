@@ -4,6 +4,68 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ---
 
+## 2026-10-16
+
+### C-6-Baselines DOP853 eingesammelt; Abnahme nicht bit-identisch, Ursache OpenBLAS-Kernel
+
+240/240 Shards von NFS nach `outputs/c6_sindy_baselines_dop853_e935c37/`: 136.080 Zeilen (je 45.360 SINDy,
+Weak-SINDy, E-SINDy), keine doppelten Schlüssel, 136.079 `success`. Die eine Ausnahme: E-SINDy
+`poly_deg5_stlsq_0.1`, System 57, IC 2, σ 0,02, ρ 0, Realisierung 3 — `LinAlgError: SVD did not converge in Linear
+Least Squares`.
+
+**Abnahme (saubere Zeilen gegen `outputs/c6_n46_clean_dop853`) nicht bit-identisch.** 11.340/11.340 gepaart, aber
+Koeffizienten weichen in 9.308 Zeilen ab (relativ: Median 4,4e-16, q90 2,2e-11, q99 0,068, max 15), die
+geprunten Terme kippen in **120** Zeilen — fast nur deg4/deg5 bei Schwelle 0,01, gehäuft auf 62 (42), 63 (21), 54 (18),
+47 (11). Wirkung auf die Kennzahlen klein: Rekonstruktion R² > 0,9 7.999 vs 7.999, Generalisierung 5.254 vs 5.255,
+Strukturtreffer pruned 2.928 vs 2.928 (4 Zeilen kippen gegenläufig).
+
+**Mechanismus lokal bestätigt** (Systeme 62/63 sauber, 360 Zeilen, lokal ~2 h statt der erwarteten Minuten — dim 4
+mit deg5 ist teuer): Wiederholung auf dem Laptop gibt 0 Term- und 0 Koeffizientenabweichungen; **derselbe Laptop mit
+`OPENBLAS_CORETYPE=Sandybridge` kippt 88 Termzeilen** (Orion: 63). Es ist also kein Orion-Fehler, sondern die
+Empfindlichkeit von STLSQ auf schlecht konditionierten Bibliotheken: Rundung im BLAS-Kern entscheidet über Term
+drin/raus, wenn ein Koeffizient nahe an der Schwelle liegt. Das gehört als Eigenschaft der Baseline in die
+Limitations, nicht als Defekt unseres Laufs. Zahlen: `analysis/data/paper1_phaseC_v1/c6_sindy_family_dop853_e935c37/platform_control.csv`.
+
+**Entscheidung des Nutzers: (a)** — die Orion-Zeilen sind die kanonische Quelle für sauber **und** verrauscht, eine
+Plattform statt zwei. Hierarchie neu: `analysis/data/paper1_phaseC_v1/hierarchy_n47_e935c37/` ersetzt
+`hierarchy_n46`. Zwei Kontrollen schlagen erwartungsgemäß an (`n43b_existing_methods_benchmark_byte_identity`,
+`sindy_new_source_matches_wp_c4c_verdicts_and_supports` mit 22 Zeilen — dieselben 22 abweichenden
+Integrationsstatus), 650/652 bestehen. Verschiebungen gegen `hierarchy_n46`: höchstens 3 von 378 Zellen (SINDy deg5
+0,01 und deg3-sin-cos 0,1 Rekonstruktion ±0,8 pp), sonst ≤ 1 Zelle. Kopfzeile Weak-SINDy deg3 0,01: Rekonstruktion
+89,2 % (vorher 89,4), Generalisierung 61,9 %, Struktur 65,0 % — unverändert in der Aussage.
+
+Erster Blick auf das Rauschverhalten der Baselines (nur SINDy-Familie, keine C-6-EvoGrow-Zahl — Blindregel gewahrt;
+Anteil R² > 0,9 über 378 Läufe, arithmetisch, `summary.csv`; Bestwert über die zehn Konfigurationen):
+
+| | σ 0 / ρ 0 | σ 0,01 / ρ 0 | σ 0,05 / ρ 0 | σ 0,05 / ρ 0,5 |
+|---|---|---|---|---|
+| SINDy Rek. / Gen. | 74,6 / 50,0 | 63,2 / 26,5 | 38,6 / 14,8 | 3,7 / 1,3 |
+| Weak-SINDy Rek. / Gen. | 87,8 / 63,5 | 62,4 / 33,1 | 48,7 / 23,0 | 46,8 / 21,2 |
+| E-SINDy Rek. / Gen. | 68,8 / 48,4 | 47,4 / 25,7 | 20,4 / 9,3 | 2,9 / 1,3 |
+
+Schon σ = 0,01 halbiert die Generalisierung aller drei; Weak-SINDy ist als einzige robust gegen Ausdünnung. Das ist
+die Messlatte für die Entscheidungsregel §9.4d.
+
+### C-6-Raster: Reihenfolge ist nach Dimension, nicht nach Kosten — Hochrechnung
+
+`indices_cost_desc.txt` legt alle 1.848 dim-2-Zellen (Systeme 24–51, je 66) vor die 1.518 dim-1-Zellen und ordnet
+innerhalb nach System-ID. Die teuersten Systeme liegen also nicht am Anfang. Stand 15.10. abends: 771 Zellen fertig
+(24–34 vollständig, 35 zu 46/66), 6.272 Kern-h. Die fertigen Systeme kosten in C-6 das 0,92-Fache ihrer C-1-Laufzeit
+(gepoolt; je System 0,6–200-fach, also sehr breit — System 24 sauber 0,01 h, verrauscht 2,2 h). Mit diesem Faktor:
+**Rest ~13.300 Kern-h dim 2 + ~110 dim 1**, auf 24 Pods ~23 Tage, Ende ~8.–15. November plus Nachlauf. Der Großteil
+steckt in 37, 40, 43, 44 (C-1 31–43 h je Zelle, × 66 ≈ 9.800 Kern-h). Die frühere „160-Tage“-Schätzung hatte das
+Tempo der teuren Systeme 32–35 auf das ganze Raster übertragen. Ungekappter Arm (461 Zellen): 207 fertig, 2.064
+Kern-h; Rest ~2.100 Kern-h auf 8 Pods ≈ 11 Tage, Ende ~27. Oktober bis Anfang November. Laufzeit hier nur zur
+Planung, keine Evidenz.
+
+Pro System (Zellen fertig / gesamt, C-6 h je Zelle, C-1 h je Zelle), gekappt: 24 66/66 2,24/0,01 · 25 2,52/1,83 ·
+26 6,16/1,67 · 27 6,29/7,72 · 28 5,68/8,35 · 29 2,76/1,02 · 30 0,06/0,09 · 31 12,69/4,12 · 32 18,45/23,33 ·
+33 24,73/40,59 · 34 4,00/4,60 · 35 46/66 13,57/13,18 · offen (C-1): 36 2,17 · 37 34,89 · 38 6,32 · 39 3,27 ·
+40 31,17 · 41 5,34 · 42 6,39 · 43 43,36 · 44 38,70 · 45 7,53 · 46 0,61 · 47 4,37 · 48 17,39 · 49 2,40 · 50 4,73 ·
+51 7,37.
+
+WP-T2a S1 ist am 15.10. abends fertig geworden (20/20, letzte Zelle System 32, 51 h); noch nicht eingesammelt.
+
 ## 2026-10-14
 
 ### Paper-1-Rahmen offen; Gesprächsstand nach `hierarchy_n46` (Nutzer, 13./14.10. nachts)
