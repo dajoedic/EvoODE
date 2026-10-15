@@ -7,6 +7,7 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 ## 2026-10-16
 
 ### C-6-Baselines DOP853 eingesammelt; Abnahme nicht bit-identisch, Ursache OpenBLAS-Kernel
+<!-- commit 90bd849 -->
 
 240/240 Shards von NFS nach `outputs/c6_sindy_baselines_dop853_e935c37/`: 136.080 Zeilen (je 45.360 SINDy,
 Weak-SINDy, E-SINDy), keine doppelten Schlüssel, 136.079 `success`. Die eine Ausnahme: E-SINDy
