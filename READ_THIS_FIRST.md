@@ -10,7 +10,7 @@ zweites davon. Alles Dauerhafte gehört dorthin, nach `PAPER_1.md` oder ins `DIA
 **Regeln:** wird immer **vollständig überschrieben**, nie angehängt. Was älter als ein paar Tage
 ist, ist vermutlich falsch — dann gilt `CLAUDE.md`.
 
-**Stand: 2026-10-17, 00:30. WP-T2a S1 eingesammelt, Tor T2a-1 nach eingefrorener Regel nicht bestanden (Entscheidung offen); Statusseite neu angelegt.**
+**Stand: 2026-10-17. WP-T2a S1 eingesammelt, Tor T2a-1 nach eingefrorener Regel nicht bestanden. Vorschlag Fokuswechsel „ob → warum“ (Diskussionspapier), Nutzer diskutiert ihn extern; bis zur Rückkehr wird nichts Neues gestartet.**
 
 > **BLINDREGEL C-6 (Nutzer, 05.10., „Weg 2“):** Bis die Entscheidungsregel für Story-Linie (b) mit dem Nutzer
 > festgelegt und als Plan §9.4d eingefroren ist, sieht sich Claude **keine C-6-EvoGrow-Ergebnisse** an — weder
@@ -33,7 +33,7 @@ jedem Statuswechsel aktualisieren.
 | **C-6-Raster gekappt** (3.366, 24 Pods) | 855; Reihenfolge = erst dim 2 (Sys. 24–51), dann dim 1, **nicht nach Kosten**; die teuersten (37, 40, 43, 44) kommen noch | ~8.–15. Nov. + Nachlauf (Rest ~13.400 Kern-h, DIARY 16.10.) | einsammeln (NFS `phase_c_c6_grid_<SHA>/tasks`), technische Prüfung (Blindregel) |
 | **C-6-Raster ungekappt, Seed 42** (461, 8 Pods) | 211 | ~27. Okt. bis Anfang Nov. (Rest ~2.100 Kern-h) | Nutzer entscheidet Seed 123/7; dann 16 Kerne frei |
 
-Lokal läuft nichts. **Ungepusht:** `744b4d3`, `e06f640`, `58b3a7b`, `fee92a9`, `094d7a3`, `90bd849`, `4a5f87b`, `727db7f` und
+Lokal läuft nichts. **Ungepusht:** `744b4d3`, `e06f640`, `58b3a7b`, `fee92a9`, `094d7a3`, `90bd849`, `4a5f87b`, `727db7f`, `13b0457`, `bca37c7`, `7addd72`, `5cc3d8a`, `ba046d5` und
 dieser Commit (pusht der Nutzer). Ungetrackt im Repo-Wurzelverzeichnis: zwei Literatur-PDFs, bewusst nicht committet.
 
 **Statusseite „EvoODE auf Orion“ neu:** https://claude.ai/artifact/9zzJsoGCBahPsuNkaaf3DN (die alte ist weg). Quelle lokal
@@ -45,12 +45,19 @@ im Scratchpad dieser Sitzung; sonst per Artifact `read` holen und darauf aufbaue
 - **WP-T2a S1 eingesammelt** (`outputs/paper2_t2a_s1_e483f83/`, 20/20, technisch sauber). Fittbare dim-2-Zellen
   (13/20, 8 Systeme): geprunt 3 → 5 (+15,4 pp), roh 0 → 2, R² > 0,9 13 → 13, Aufwand ×0,997. **Cluster-p = 0,25 →
   Tor T2a-1 nach eingefrorener Regel nicht bestanden.** Vorläufig, inline gerechnet; Generalisierung und Konfounder fehlen.
+- **Diskussionspapier** `docs/diskussion_warum_scheitert_die_suche.md` (`5cc3d8a`): Fokuswechsel von „ob“ zu „warum“,
+  fünf Fehlerklassen A–E (nicht erreicht / schlecht gefittet / Obermenge / nicht identifizierbar / absolutes λ = 1e-3),
+  Schritt 1 ohne Rechenzeit. Der Nutzer hat es mitgenommen und diskutiert extern.
+- **Idee des Nutzers behalten:** Terme schrittweise auf den Restfehler (FROLS-Familie). Tragfähig nur im Ableitungsraum
+  oder in der schwachen Form, gemeinsam nachfitten. Steht in `CLAUDE.md` „Open, not scheduled“ und DIARY 17.10.
 
-## 3. Als Nächstes
+## 3. Als Nächstes — wartet auf den Nutzer
 
-1. **Nutzer entscheidet Tor T2a-1:** Stopp der Führungsspur oder S2. Beobachtung (keine Umdeutung): p < 0,05 war auf
-   S1 nur mit ≥ 5 gewinnenden Systemen ohne Verlierer erreichbar.
-2. Falls weiter: Codex-WP für ein getracktes T2a-Auswerteskript (Generalisierung, Pflicht-Konfounder).
+1. **Ergebnis der externen Diskussion** zum Fokuswechsel. Bei Zustimmung: Schritt 1 der Fehleranatomie (C-1-Objective
+   gegen das Objective der Wahrheit aus P-04 bei k = 3 und k = 10), vorher die zwei Code-Annahmen prüfen (gemeldet wird
+   das globale Objective-Minimum; λ wirkt pro Koeffizient).
+2. **Tor T2a-1:** Stopp der Führungsspur oder S2. Beobachtung (keine Umdeutung): p < 0,05 war auf S1 nur mit ≥ 5
+   gewinnenden Systemen ohne Verlierer erreichbar.
 3. **Mit dem Nutzer genauer anschauen:** (i) 8 freie Kerne (PySR/ODEFormer auf C-6?); (ii) Entscheidungsregel (b) als
    §9.4d — Messlatte: Rauschtabelle der SINDy-Familie in DIARY 16.10.
 4. Erst dann C-6-EvoGrow öffnen. **Paper 1 ist nicht fix (Nutzer 14.10.).**
