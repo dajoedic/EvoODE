@@ -17,6 +17,7 @@ das Residuum gebildet wird (Ableitung: additiv, linear; Trajektorie: nicht addit
 `r_k` von v3.
 
 ### Fokuswechsel vorgeschlagen (Nutzer): von „ob“ zu „warum“ die Suche falsche Terme wählt
+<!-- commit bca37c7 -->
 
 Anlass: S1 (unten). Vermutung des Nutzers: Ein einzelner Term sagt in einer ODE wenig, erst die Kombination ist die
 Lösung, deshalb hilft eine Reihenfolge der Terme nicht. Vorschlag Claude: Fehlschläge pro Zelle in vier Klassen
