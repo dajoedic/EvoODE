@@ -7,6 +7,7 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 ## 2026-10-17
 
 ### WP-T2a S1 eingesammelt: Orakel-Prior +2 Treffer auf fittbaren Zellen, Tor T2a-1 nach der eingefrorenen Regel nicht bestanden
+<!-- commit 727db7f -->
 
 20/20 Records von NFS nach `outputs/paper2_t2a_s1_e483f83/tasks/` (mit Heartbeats). Technisch sauber: ein Git-Hash
 `e483f83`, `git_dirty = false`, kein `error`/`failure_reason`, Verhaltens-Fingerprint `ffb0266c7913352c`; Arm

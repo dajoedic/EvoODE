@@ -10,7 +10,7 @@ zweites davon. Alles Dauerhafte gehört dorthin, nach `PAPER_1.md` oder ins `DIA
 **Regeln:** wird immer **vollständig überschrieben**, nie angehängt. Was älter als ein paar Tage
 ist, ist vermutlich falsch — dann gilt `CLAUDE.md`.
 
-**Stand: 2026-10-16, früh. C-6-Baselines DOP853 eingesammelt und ausgewertet (`hierarchy_n47_e935c37`); WP-T2a S1 fertig, nicht eingesammelt.**
+**Stand: 2026-10-17, 00:30. WP-T2a S1 eingesammelt, Tor T2a-1 nach eingefrorener Regel nicht bestanden (Entscheidung offen); Statusseite neu angelegt.**
 
 > **BLINDREGEL C-6 (Nutzer, 05.10., „Weg 2“):** Bis die Entscheidungsregel für Story-Linie (b) mit dem Nutzer
 > festgelegt und als Plan §9.4d eingefroren ist, sieht sich Claude **keine C-6-EvoGrow-Ergebnisse** an — weder
@@ -28,30 +28,32 @@ jedem Statuswechsel aktualisieren.
 
 ## 1. Was läuft — Orion, **32 Kerne (24 + 8), Limit 40 → 8 frei**
 
-| Lauf | Stand (15.10. 22:35) | Erwartetes Ende | Wenn fertig |
+| Lauf | Stand (17.10. 00:15) | Erwartetes Ende | Wenn fertig |
 |---|---|---|---|
-| **C-6-Raster gekappt** (3.366, 24 Pods) | 771; Reihenfolge = erst dim 2 (Sys. 24–51), dann dim 1, **nicht nach Kosten**; die teuersten (37, 40, 43, 44) kommen noch | ~8.–15. Nov. + Nachlauf (Rest ~13.400 Kern-h, DIARY 16.10.) | einsammeln (NFS `phase_c_c6_grid_<SHA>/tasks`), technische Prüfung (Blindregel) |
-| **C-6-Raster ungekappt, Seed 42** (461, 8 Pods) | 207 | ~27. Okt. bis Anfang Nov. (Rest ~2.100 Kern-h) | Nutzer entscheidet Seed 123/7; dann 16 Kerne frei |
-| ~~WP-T2a S1~~ | **fertig 15.10. abends** (20/20) | — | **noch einsammeln** `paper2_t2a_s1_e483f83…/tasks`; Tor T2a-1 auf den 39 fittbaren dim-2-Zellen |
+| **C-6-Raster gekappt** (3.366, 24 Pods) | 855; Reihenfolge = erst dim 2 (Sys. 24–51), dann dim 1, **nicht nach Kosten**; die teuersten (37, 40, 43, 44) kommen noch | ~8.–15. Nov. + Nachlauf (Rest ~13.400 Kern-h, DIARY 16.10.) | einsammeln (NFS `phase_c_c6_grid_<SHA>/tasks`), technische Prüfung (Blindregel) |
+| **C-6-Raster ungekappt, Seed 42** (461, 8 Pods) | 211 | ~27. Okt. bis Anfang Nov. (Rest ~2.100 Kern-h) | Nutzer entscheidet Seed 123/7; dann 16 Kerne frei |
 
-Lokal läuft nichts. **Ungepusht:** `744b4d3`, `e06f640`, `58b3a7b`, `fee92a9`, `094d7a3` und dieser Commit (pusht der Nutzer).
-Ungetrackt im Repo-Wurzelverzeichnis: zwei Literatur-PDFs, bewusst nicht committet.
+Lokal läuft nichts. **Ungepusht:** `744b4d3`, `e06f640`, `58b3a7b`, `fee92a9`, `094d7a3`, `90bd849`, `4a5f87b`, `727db7f` und
+dieser Commit (pusht der Nutzer). Ungetrackt im Repo-Wurzelverzeichnis: zwei Literatur-PDFs, bewusst nicht committet.
 
-## 2. Erledigt (DIARY 16.10.)
+**Statusseite „EvoODE auf Orion“ neu:** https://claude.ai/artifact/9zzJsoGCBahPsuNkaaf3DN (die alte ist weg). Quelle lokal
+im Scratchpad dieser Sitzung; sonst per Artifact `read` holen und darauf aufbauen.
 
-- **C-6-Baselines DOP853 eingesammelt** (`outputs/c6_sindy_baselines_dop853_e935c37/`, 240/240, 1 `LinAlgError` E-SINDy
-  Sys. 57). Abnahme **nicht bit-identisch**: 120/11.340 saubere Zeilen kippen Terme — OpenBLAS-Kernel, lokal mit
-  `OPENBLAS_CORETYPE` reproduziert. **Nutzer: Option (a)** — Orion ist kanonische Quelle für sauber und verrauscht.
-- **Neue Tabelle `analysis/data/paper1_phaseC_v1/hierarchy_n47_e935c37/` ersetzt `hierarchy_n46`** (Verschiebungen ≤ 3/378 Zellen).
+## 2. Erledigt (DIARY 16.10. und 17.10.)
+
+- **C-6-Baselines DOP853** eingesammelt, Option (a), `hierarchy_n47_e935c37` ersetzt `hierarchy_n46`.
+- **WP-T2a S1 eingesammelt** (`outputs/paper2_t2a_s1_e483f83/`, 20/20, technisch sauber). Fittbare dim-2-Zellen
+  (13/20, 8 Systeme): geprunt 3 → 5 (+15,4 pp), roh 0 → 2, R² > 0,9 13 → 13, Aufwand ×0,997. **Cluster-p = 0,25 →
+  Tor T2a-1 nach eingefrorener Regel nicht bestanden.** Vorläufig, inline gerechnet; Generalisierung und Konfounder fehlen.
 
 ## 3. Als Nächstes
 
-1. **Statusseite „EvoODE auf Orion“ neu anlegen** (Nutzer: Neuanlage freigegeben).
-2. **WP-T2a S1 einsammeln**, Tor T2a-1.
-3. **Mit dem Nutzer genauer anschauen:** (i) Umgang mit dem gekappten Raster (Ende ~Mitte Nov., 8 freie Kerne);
-   (ii) Entscheidungsregel (b) als §9.4d — Messlatte: Rauschtabelle der SINDy-Familie in DIARY 16.10.
+1. **Nutzer entscheidet Tor T2a-1:** Stopp der Führungsspur oder S2. Beobachtung (keine Umdeutung): p < 0,05 war auf
+   S1 nur mit ≥ 5 gewinnenden Systemen ohne Verlierer erreichbar.
+2. Falls weiter: Codex-WP für ein getracktes T2a-Auswerteskript (Generalisierung, Pflicht-Konfounder).
+3. **Mit dem Nutzer genauer anschauen:** (i) 8 freie Kerne (PySR/ODEFormer auf C-6?); (ii) Entscheidungsregel (b) als
+   §9.4d — Messlatte: Rauschtabelle der SINDy-Familie in DIARY 16.10.
 4. Erst dann C-6-EvoGrow öffnen. **Paper 1 ist nicht fix (Nutzer 14.10.).**
-5. Später: PySR und ODEFormer auf C-6, wenn Kerne frei sind.
 
 ## 4. Annihilator-Spur: getrennt (Nutzer, 05.10.)
 
