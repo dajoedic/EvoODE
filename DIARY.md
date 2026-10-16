@@ -6,6 +6,23 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ## 2026-10-17
 
+### Idee (Nutzer), nur notiert, Diskussion folgt: Terme schrittweise auf den Restfehler
+
+Stufe 1 wird trainiert, bis sie gut passt; danach wird der nächste Term auf den verbleibenden Fehler gefittet, usw.
+Erste Einordnung (Claude): Das ist die Familie der vorwärts gerichteten Regression auf das Residuum — FROLS
+(Billings, Chen & Korenberg 1989), Matching Pursuit, Boosting. Bekannte Schwäche: Gieriges Vorgehen wählt bei
+korrelierten Kandidaten früh falsche Terme. Piroddi & Lovera (2008) setzen genau dort mit simulationsfehlerbasierter
+Auswahl und Pruning an. Beide PDFs liegen im Repo-Wurzelverzeichnis. Offene Frage für die Diskussion: in welchem Raum
+das Residuum gebildet wird (Ableitung: additiv, linear; Trajektorie: nicht additiv). Verwandt mit dem gescheiterten
+`r_k` von v3.
+
+### Fokuswechsel vorgeschlagen (Nutzer): von „ob“ zu „warum“ die Suche falsche Terme wählt
+
+Anlass: S1 (unten). Vermutung des Nutzers: Ein einzelner Term sagt in einer ODE wenig, erst die Kombination ist die
+Lösung, deshalb hilft eine Reihenfolge der Terme nicht. Vorschlag Claude: Fehlschläge pro Zelle in vier Klassen
+einordnen — Wahrheit nie ausgewertet / ausgewertet, aber schlecht gefittet / von einer Obermenge geschlagen
+(Verschachtelung) / von einer nicht verschachtelten falschen Struktur geschlagen. Noch nicht entschieden.
+
 ### WP-T2a S1 eingesammelt: Orakel-Prior +2 Treffer auf fittbaren Zellen, Tor T2a-1 nach der eingefrorenen Regel nicht bestanden
 <!-- commit 727db7f -->
 
