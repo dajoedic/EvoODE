@@ -4,7 +4,37 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ---
 
-## 2026-10-16
+## 2026-10-17
+
+### WP-T2a S1 eingesammelt: Orakel-Prior +2 Treffer auf fittbaren Zellen, Tor T2a-1 nach der eingefrorenen Regel nicht bestanden
+
+20/20 Records von NFS nach `outputs/paper2_t2a_s1_e483f83/tasks/` (mit Heartbeats). Technisch sauber: ein Git-Hash
+`e483f83`, `git_dirty = false`, kein `error`/`failure_reason`, Verhaltens-Fingerprint `ffb0266c7913352c`; Arm
+`oracle_prior`, ε = 0,2, Abbildung `harmonic` (∝ 1/Rang), k = 3, Schranke 10, sauber, `pretuning = false` — wie in
+`docs/phd_thesis_arc.md` §5 eingefroren. Die `config_fingerprint`s sind pro Zelle verschieden (20 Werte), weil die
+zellspezifischen Rankings bei aktivem Prior in den Fingerprint eingehen.
+
+Kontrolle C-1 (`run_registry.csv`, `capped`, Seed 42), gepaart über System × IC. Fittbar (P-04, R² > 0,9 bei k ≤ 10):
+**13 der 20 Zellen auf 8 Systemen** (24, 25, 26, 28, 29, 31, 38, 43).
+
+| fittbar, n = 13 | C-1 | Orakel | Δ |
+|---|---|---|---|
+| geprunter exakter Support | 3 | 5 | +15,4 pp |
+| roher exakter Support | 0 | 2 | +15,4 pp |
+| R² > 0,9 (Rekonstruktion) | 13 | 13 | 0 |
+
+Gewinne: 25/IC 2 (auch roh) und 43/IC 2; kein fittbares Paar verliert. Auf den 7 nicht fittbaren Zellen ein Gewinn
+(32/IC 2) und ein Verlust (28/IC 1). Alle 20: geprunt 6 → 8, roh 0 → 2 — die ersten rohen dim-2-Treffer auf Seed 42.
+Aufwand unverändert: Summe `total_loss_evals` ×0,997.
+
+**Tor T2a-1 nach der eingefrorenen Regel (≥ 10 pp und Cluster-Permutation p < 0,05): nicht bestanden.** Die
+Differenz erfüllt die 10 pp, aber der exakte einseitige Vorzeichen-Flip über die 8 Systeme gibt **p = 0,25** (zwei
+Systeme mit +1, sechs mit 0). Beobachtung, keine Umdeutung: Bei 8 Systemen braucht p < 0,05 mindestens fünf
+gewinnende Systeme ohne Verlierer — auf S1 war die Regel damit nur bei einem sehr großen Effekt erreichbar. Das stand
+vor dem Lauf nicht im Plan. Entscheidung (Stopp oder S2) beim Nutzer.
+
+Vorläufig: inline gerechnet, kein getracktes Skript; Generalisierung und die Pflicht-Konfounder (Duplikatrate, Fits je
+eindeutiger Struktur) fehlen noch.
 
 ### C-6-Baselines DOP853 eingesammelt; Abnahme nicht bit-identisch, Ursache OpenBLAS-Kernel
 <!-- commit 90bd849 -->
