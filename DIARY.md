@@ -16,6 +16,14 @@ Auswahl und Pruning an. Beide PDFs liegen im Repo-Wurzelverzeichnis. Offene Frag
 das Residuum gebildet wird (Ableitung: additiv, linear; Trajektorie: nicht additiv). Verwandt mit dem gescheiterten
 `r_k` von v3.
 
+Nachtrag nach Rückfrage des Nutzer: Im **Ableitungsraum oder in der schwachen Form** ist das additive Aufbauen auch bei
+nichtlinearen ODEs unproblematisch. Das Modell ist linear in den Koeffizienten, also ist der Restfehler exakt additiv,
+und jeder Schritt ist eine lineare Regression. Im **Trajektorienraum** ist es nicht tragfähig, weil ein neuer Term die
+ganze simulierte Kurve verändert. Bedingungen, falls verfolgt: nach jedem Term alle Koeffizienten gemeinsam neu fitten
+(nicht einfrieren); bei korrelierten Kandidaten Rückwärts-Pruning. Nutzer: **Idee behalten.** Ob sie trägt, hängt am
+Ergebnis der Fehleranatomie (`docs/diskussion_warum_scheitert_die_suche.md`): Klasse B (Fit) spricht dafür, Klasse D
+(nicht identifizierbar) dagegen.
+
 ### Fokuswechsel vorgeschlagen (Nutzer): von „ob“ zu „warum“ die Suche falsche Terme wählt
 <!-- commit bca37c7 -->
 

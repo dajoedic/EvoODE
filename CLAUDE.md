@@ -824,6 +824,15 @@ the coupled search path 1e-6 is the cheaper, behaviour-equal tolerance; the Syst
 
 ### Open, not scheduled
 
+- **Failure anatomy before the next method version (user, 2026-10-17, under external discussion).** Shift from
+  *whether* the search finds the structure to *why* it picks wrong terms: classes A not reached / B badly fitted /
+  C beaten by a superset / D not identifiable / E absolute λ = 1e-3 favours a smaller wrong structure. Step 1 needs no
+  compute (C-1 objective vs the P-04 truth objective at k = 3 and k = 10). Discussion paper:
+  `docs/diskussion_warum_scheitert_die_suche.md`. Waiting for the user's return from the discussion.
+- **Keep: term-wise fitting on the residual (user idea, 2026-10-17).** FROLS family (Billings, Chen & Korenberg 1989;
+  Piroddi & Lovera 2008). Sound in derivative/weak-form space (linear in coefficients, residual additive), not in
+  trajectory space; refit all coefficients jointly after each term, prune backwards against correlated candidates.
+  Whether to pursue depends on the failure anatomy: class B favours it, class D does not. `DIARY.md` 2026-10-17.
 - **Trajectory overfitting is the next methodological direction (user, 2026-09-29).** C-1 fits the
   one training trajectory far better than it identifies the mechanism (dim 2: 91.7 %
   reconstruction, 25.6 % generalization, raw structure 3 of 60 exact cells). The selection signal
