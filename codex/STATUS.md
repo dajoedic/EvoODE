@@ -1,4 +1,4 @@
 status: done
-task: WP-FA2
-report: codex/reports/REPORT_WP_FA2.md
-note: Implemented; full run and controls passed; 8 targeted tests passed; full suite 168 passed with only the 2 known failures; files uncommitted.
+task: WP-FA3c
+report: codex/reports/REPORT_WP_FA3.md
+note: Renamed export binding and 8 references; reviewed all 203 lines statically; Julia not executed as instructed.

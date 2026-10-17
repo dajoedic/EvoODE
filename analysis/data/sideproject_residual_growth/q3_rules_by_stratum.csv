@@ -1,0 +1,11 @@
+stratum,rule,numerator,denominator,rate,reference_numerator,reference_denominator,reference_rate,passed,decision,W0_numerator,W0_denominator,W0_rate,W1_loss_evals_median,P04_loss_evals_median,weak_abs_gt_10_count,W1_sentinel_units
+dim1,R5,22,22,1.0,64,66,0.9696969696969697,True,pass,22,22,1.0,33.0,31310.5,0,0
+dim1,R6,22,22,1.0,60,66,0.9090909090909091,True,pass,22,22,1.0,33.0,3887.0,0,0
+dim2,R5,20,20,1.0,39,60,0.65,True,pass,20,20,1.0,106.0,32430.0,0,0
+dim2,R6,20,20,1.0,20,60,0.3333333333333333,True,pass,20,20,1.0,106.0,9098.0,0,0
+dim3_feasible,R5,4,4,1.0,6,12,0.5,True,pass,2,4,0.5,20000.0,59116.0,2,0
+dim3_feasible,R6,4,4,1.0,6,12,0.5,True,pass,2,4,0.5,20000.0,8922.0,2,0
+dim3_bound_infeasible,R5,4,12,0.3333333333333333,7,36,0.19444444444444445,,reported_only,0,12,0.0,5459.5,89055.0,20,0
+dim3_bound_infeasible,R6,4,12,0.3333333333333333,2,36,0.05555555555555555,,reported_only,0,12,0.0,5459.5,21739.0,20,0
+dim4,R5,2,2,1.0,6,6,1.0,,reported_only,2,2,1.0,165.0,10738.0,0,0
+dim4,R6,2,2,1.0,6,6,1.0,,reported_only,2,2,1.0,165.0,3843.0,0,0

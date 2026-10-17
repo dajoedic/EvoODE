@@ -1,0 +1,4774 @@
+{
+  "protocol_commit": "c81e7c6",
+  "basis_name": "staged_polynomial_basis_with_constant",
+  "units": [
+    {
+      "unit_id": "sys0001_ic1",
+      "system_id": 1,
+      "initial_condition_set": 1,
+      "dim": 1,
+      "stratum": "dim1",
+      "active_idxs": [
+        [
+          1,
+          2
+        ]
+      ],
+      "equations": [
+        {
+          "equation_index": 1,
+          "basis_indices": [
+            1,
+            2
+          ],
+          "term_names": [
+            "1",
+            "u1"
+          ],
+          "coefficients": [
+            0.3030290445079259,
+            -0.36074886247543714
+          ],
+          "weak_sse": 2.607328438434248e-17
+        }
+      ],
+      "p0": [
+        0.3030290445079259,
+        -0.36074886247543714
+      ],
+      "trajectory_sha256": "0ee16225ff89698a75ca1dd4d2560af9956e8ab3b3b0058633eb0205457986e8",
+      "export": {
+        "system_id": "1",
+        "initial_condition_set": "1",
+        "dimension": "1",
+        "hash_format": "sha256_raw_little_endian_float64",
+        "dtype": "float64",
+        "byte_order": "little_endian",
+        "time_axis_order": "time",
+        "state_axis_order": "time_by_dimension_c_order",
+        "time_shape": "[512]",
+        "state_shape": "[512,1]",
+        "time_min": "0.0",
+        "time_max": "10.0",
+        "state_min": "1.0884142834867072",
+        "state_max": "10.0",
+        "time_sha256": "ffad3499269c08c6bd22e9e5c5d2ab32bbf827e2037cbdd6e73571aeab04432f",
+        "state_sha256": "0ee16225ff89698a75ca1dd4d2560af9956e8ab3b3b0058633eb0205457986e8",
+        "time_path": "cells\\system_0001_ic1_time_f64le.bin",
+        "state_path": "cells\\system_0001_ic1_state_f64le_c_order.bin"
+      }
+    },
+    {
+      "unit_id": "sys0001_ic2",
+      "system_id": 1,
+      "initial_condition_set": 2,
+      "dim": 1,
+      "stratum": "dim1",
+      "active_idxs": [
+        [
+          1,
+          2
+        ]
+      ],
+      "equations": [
+        {
+          "equation_index": 1,
+          "basis_indices": [
+            1,
+            2
+          ],
+          "term_names": [
+            "1",
+            "u1"
+          ],
+          "coefficients": [
+            0.3030290444959278,
+            -0.3607488624819386
+          ],
+          "weak_sse": 9.54947527999758e-18
+        }
+      ],
+      "p0": [
+        0.3030290444959278,
+        -0.3607488624819386
+      ],
+      "trajectory_sha256": "6906ca0a07a887c83ae9cc220226eb21a137b4de61d699f78de1a2ac458d7470",
+      "export": {
+        "system_id": "1",
+        "initial_condition_set": "2",
+        "dimension": "1",
+        "hash_format": "sha256_raw_little_endian_float64",
+        "dtype": "float64",
+        "byte_order": "little_endian",
+        "time_axis_order": "time",
+        "state_axis_order": "time_by_dimension_c_order",
+        "time_shape": "[512]",
+        "state_shape": "[512,1]",
+        "time_min": "0.0",
+        "time_max": "10.0",
+        "state_min": "0.9132225508334256",
+        "state_max": "3.54",
+        "time_sha256": "ffad3499269c08c6bd22e9e5c5d2ab32bbf827e2037cbdd6e73571aeab04432f",
+        "state_sha256": "6906ca0a07a887c83ae9cc220226eb21a137b4de61d699f78de1a2ac458d7470",
+        "time_path": "cells\\system_0001_ic2_time_f64le.bin",
+        "state_path": "cells\\system_0001_ic2_state_f64le_c_order.bin"
+      }
+    },
+    {
+      "unit_id": "sys0002_ic1",
+      "system_id": 2,
+      "initial_condition_set": 1,
+      "dim": 1,
+      "stratum": "dim1",
+      "active_idxs": [
+        [
+          2
+        ]
+      ],
+      "equations": [
+        {
+          "equation_index": 1,
+          "basis_indices": [
+            2
+          ],
+          "term_names": [
+            "u1"
+          ],
+          "coefficients": [
+            0.2299996117069148
+          ],
+          "weak_sse": 1.4216769810452186e-15
+        }
+      ],
+      "p0": [
+        0.2299996117069148
+      ],
+      "trajectory_sha256": "4536cb1543f6d4039af77e870645d52f3ff6e0b757f0bd98f2cf78d7258188cc",
+      "export": {
+        "system_id": "2",
+        "initial_condition_set": "1",
+        "dimension": "1",
+        "hash_format": "sha256_raw_little_endian_float64",
+        "dtype": "float64",
+        "byte_order": "little_endian",
+        "time_axis_order": "time",
+        "state_axis_order": "time_by_dimension_c_order",
+        "time_shape": "[512]",
+        "state_shape": "[512,1]",
+        "time_min": "0.0",
+        "time_max": "10.0",
+        "state_min": "4.78",
+        "state_max": "47.67659213530342",
+        "time_sha256": "ffad3499269c08c6bd22e9e5c5d2ab32bbf827e2037cbdd6e73571aeab04432f",
+        "state_sha256": "4536cb1543f6d4039af77e870645d52f3ff6e0b757f0bd98f2cf78d7258188cc",
+        "time_path": "cells\\system_0002_ic1_time_f64le.bin",
+        "state_path": "cells\\system_0002_ic1_state_f64le_c_order.bin"
+      }
+    },
+    {
+      "unit_id": "sys0002_ic2",
+      "system_id": 2,
+      "initial_condition_set": 2,
+      "dim": 1,
+      "stratum": "dim1",
+      "active_idxs": [
+        [
+          2
+        ]
+      ],
+      "equations": [
+        {
+          "equation_index": 1,
+          "basis_indices": [
+            2
+          ],
+          "term_names": [
+            "u1"
+          ],
+          "coefficients": [
+            0.22999961170391414
+          ],
+          "weak_sse": 6.195743227337222e-17
+        }
+      ],
+      "p0": [
+        0.22999961170391414
+      ],
+      "trajectory_sha256": "13411f5aa9fe886a381b2f1a81ffdccdc160888eee96023853d23e5a3f63f578",
+      "export": {
+        "system_id": "2",
+        "initial_condition_set": "2",
+        "dimension": "1",
+        "hash_format": "sha256_raw_little_endian_float64",
+        "dtype": "float64",
+        "byte_order": "little_endian",
+        "time_axis_order": "time",
+        "state_axis_order": "time_by_dimension_c_order",
+        "time_shape": "[512]",
+        "state_shape": "[512,1]",
+        "time_min": "0.0",
+        "time_max": "10.0",
+        "state_min": "0.87",
+        "state_max": "8.67753873598339",
+        "time_sha256": "ffad3499269c08c6bd22e9e5c5d2ab32bbf827e2037cbdd6e73571aeab04432f",
+        "state_sha256": "13411f5aa9fe886a381b2f1a81ffdccdc160888eee96023853d23e5a3f63f578",
+        "time_path": "cells\\system_0002_ic2_time_f64le.bin",
+        "state_path": "cells\\system_0002_ic2_state_f64le_c_order.bin"
+      }
+    },
+    {
+      "unit_id": "sys0003_ic1",
+      "system_id": 3,
+      "initial_condition_set": 1,
+      "dim": 1,
+      "stratum": "dim1",
+      "active_idxs": [
+        [
+          2,
+          3
+        ]
+      ],
+      "equations": [
+        {
+          "equation_index": 1,
+          "basis_indices": [
+            2,
+            3
+          ],
+          "term_names": [
+            "u1",
+            "u1^2"
+          ],
+          "coefficients": [
+            0.7900046438963497,
+            -0.010632640275926437
+          ],
+          "weak_sse": 1.135812341757723e-07
+        }
+      ],
+      "p0": [
+        0.7900046438963497,
+        -0.010632640275926437
+      ],
+      "trajectory_sha256": "185351f6341f86f0048146a9d58072c60cd55320915d8fdba0e7054c865c689c",
+      "export": {
+        "system_id": "3",
+        "initial_condition_set": "1",
+        "dimension": "1",
+        "hash_format": "sha256_raw_little_endian_float64",
+        "dtype": "float64",
+        "byte_order": "little_endian",
+        "time_axis_order": "time",
+        "state_axis_order": "time_by_dimension_c_order",
+        "time_shape": "[512]",
+        "state_shape": "[512,1]",
+        "time_min": "0.0",
+        "time_max": "10.0",
+        "state_min": "7.3",
+        "state_max": "74.04803566025623",
+        "time_sha256": "ffad3499269c08c6bd22e9e5c5d2ab32bbf827e2037cbdd6e73571aeab04432f",
+        "state_sha256": "185351f6341f86f0048146a9d58072c60cd55320915d8fdba0e7054c865c689c",
+        "time_path": "cells\\system_0003_ic1_time_f64le.bin",
+        "state_path": "cells\\system_0003_ic1_state_f64le_c_order.bin"
+      }
+    },
+    {
+      "unit_id": "sys0003_ic2",
+      "system_id": 3,
+      "initial_condition_set": 2,
+      "dim": 1,
+      "stratum": "dim1",
+      "active_idxs": [
+        [
+          2,
+          3
+        ]
+      ],
+      "equations": [
+        {
+          "equation_index": 1,
+          "basis_indices": [
+            2,
+            3
+          ],
+          "term_names": [
+            "u1",
+            "u1^2"
+          ],
+          "coefficients": [
+            0.7900055494132101,
+            -0.010632651506711227
+          ],
+          "weak_sse": 7.70107662980971e-08
+        }
+      ],
+      "p0": [
+        0.7900055494132101,
+        -0.010632651506711227
+      ],
+      "trajectory_sha256": "0f67c12b2a959a9ddb6de5989bda10e30f86bff744e4336113614e8d81173dba",
+      "export": {
+        "system_id": "3",
+        "initial_condition_set": "2",
+        "dimension": "1",
+        "hash_format": "sha256_raw_little_endian_float64",
+        "dtype": "float64",
+        "byte_order": "little_endian",
+        "time_axis_order": "time",
+        "state_axis_order": "time_by_dimension_c_order",
+        "time_shape": "[512]",
+        "state_shape": "[512,1]",
+        "time_min": "0.0",
+        "time_max": "10.0",
+        "state_min": "21.0",
+        "state_max": "74.23015073225298",
+        "time_sha256": "ffad3499269c08c6bd22e9e5c5d2ab32bbf827e2037cbdd6e73571aeab04432f",
+        "state_sha256": "0f67c12b2a959a9ddb6de5989bda10e30f86bff744e4336113614e8d81173dba",
+        "time_path": "cells\\system_0003_ic2_time_f64le.bin",
+        "state_path": "cells\\system_0003_ic2_state_f64le_c_order.bin"
+      }
+    },
+    {
+      "unit_id": "sys0005_ic1",
+      "system_id": 5,
+      "initial_condition_set": 1,
+      "dim": 1,
+      "stratum": "dim1",
+      "active_idxs": [
+        [
+          1,
+          3
+        ]
+      ],
+      "equations": [
+        {
+          "equation_index": 1,
+          "basis_indices": [
+            1,
+            3
+          ],
+          "term_names": [
+            "1",
+            "u1^2"
+          ],
+          "coefficients": [
+            9.810009903213338,
+            -0.00211750475511887
+          ],
+          "weak_sse": 2.695286109511806e-10
+        }
+      ],
+      "p0": [
+        9.810009903213338,
+        -0.00211750475511887
+      ],
+      "trajectory_sha256": "1c76ef00643f647efef6756b408dacb403d25aa8b579a042e3a79f13ce0746d1",
+      "export": {
+        "system_id": "5",
+        "initial_condition_set": "1",
+        "dimension": "1",
+        "hash_format": "sha256_raw_little_endian_float64",
+        "dtype": "float64",
+        "byte_order": "little_endian",
+        "time_axis_order": "time",
+        "state_axis_order": "time_by_dimension_c_order",
+        "time_shape": "[512]",
+        "state_shape": "[512,1]",
+        "time_min": "0.0",
+        "time_max": "10.0",
+        "state_min": "0.5",
+        "state_max": "60.946577111693934",
+        "time_sha256": "ffad3499269c08c6bd22e9e5c5d2ab32bbf827e2037cbdd6e73571aeab04432f",
+        "state_sha256": "1c76ef00643f647efef6756b408dacb403d25aa8b579a042e3a79f13ce0746d1",
+        "time_path": "cells\\system_0005_ic1_time_f64le.bin",
+        "state_path": "cells\\system_0005_ic1_state_f64le_c_order.bin"
+      }
+    },
+    {
+      "unit_id": "sys0005_ic2",
+      "system_id": 5,
+      "initial_condition_set": 2,
+      "dim": 1,
+      "stratum": "dim1",
+      "active_idxs": [
+        [
+          1,
+          3
+        ]
+      ],
+      "equations": [
+        {
+          "equation_index": 1,
+          "basis_indices": [
+            1,
+            3
+          ],
+          "term_names": [
+            "1",
+            "u1^2"
+          ],
+          "coefficients": [
+            9.809968838383256,
+            -0.002117493294900291
+          ],
+          "weak_sse": 1.7033075735177148e-13
+        }
+      ],
+      "p0": [
+        9.809968838383256,
+        -0.002117493294900291
+      ],
+      "trajectory_sha256": "8f9595e852b62dc8b253e409bb4eacea142f89d621865c03e279ae525a183bf6",
+      "export": {
+        "system_id": "5",
+        "initial_condition_set": "2",
+        "dimension": "1",
+        "hash_format": "sha256_raw_little_endian_float64",
+        "dtype": "float64",
+        "byte_order": "little_endian",
+        "time_axis_order": "time",
+        "state_axis_order": "time_by_dimension_c_order",
+        "time_shape": "[512]",
+        "state_shape": "[512,1]",
+        "time_min": "0.0",
+        "time_max": "10.0",
+        "state_min": "68.33202063773236",
+        "state_max": "73.0",
+        "time_sha256": "ffad3499269c08c6bd22e9e5c5d2ab32bbf827e2037cbdd6e73571aeab04432f",
+        "state_sha256": "8f9595e852b62dc8b253e409bb4eacea142f89d621865c03e279ae525a183bf6",
+        "time_path": "cells\\system_0005_ic2_time_f64le.bin",
+        "state_path": "cells\\system_0005_ic2_state_f64le_c_order.bin"
+      }
+    },
+    {
+      "unit_id": "sys0006_ic1",
+      "system_id": 6,
+      "initial_condition_set": 1,
+      "dim": 1,
+      "stratum": "dim1",
+      "active_idxs": [
+        [
+          2,
+          3
+        ]
+      ],
+      "equations": [
+        {
+          "equation_index": 1,
+          "basis_indices": [
+            2,
+            3
+          ],
+          "term_names": [
+            "u1",
+            "u1^2"
+          ],
+          "coefficients": [
+            2.1000637951039547,
+            -0.5000156664275641
+          ],
+          "weak_sse": 7.295130187808267e-08
+        }
+      ],
+      "p0": [
+        2.1000637951039547,
+        -0.5000156664275641
+      ],
+      "trajectory_sha256": "ad98ecf9e889528a03227e4c7ff51c98627117c4600d7ecc478e829b576fd33c",
+      "export": {
+        "system_id": "6",
+        "initial_condition_set": "1",
+        "dimension": "1",
+        "hash_format": "sha256_raw_little_endian_float64",
+        "dtype": "float64",
+        "byte_order": "little_endian",
+        "time_axis_order": "time",
+        "state_axis_order": "time_by_dimension_c_order",
+        "time_shape": "[512]",
+        "state_shape": "[512,1]",
+        "time_min": "0.0",
+        "time_max": "10.0",
+        "state_min": "0.13",
+        "state_max": "4.19999990024935",
+        "time_sha256": "ffad3499269c08c6bd22e9e5c5d2ab32bbf827e2037cbdd6e73571aeab04432f",
+        "state_sha256": "ad98ecf9e889528a03227e4c7ff51c98627117c4600d7ecc478e829b576fd33c",
+        "time_path": "cells\\system_0006_ic1_time_f64le.bin",
+        "state_path": "cells\\system_0006_ic1_state_f64le_c_order.bin"
+      }
+    },
+    {
+      "unit_id": "sys0006_ic2",
+      "system_id": 6,
+      "initial_condition_set": 2,
+      "dim": 1,
+      "stratum": "dim1",
+      "active_idxs": [
+        [
+          2,
+          3
+        ]
+      ],
+      "equations": [
+        {
+          "equation_index": 1,
+          "basis_indices": [
+            2,
+            3
+          ],
+          "term_names": [
+            "u1",
+            "u1^2"
+          ],
+          "coefficients": [
+            2.1000323630254427,
+            -0.500008038152525
+          ],
+          "weak_sse": 2.6286679336815405e-08
+        }
+      ],
+      "p0": [
+        2.1000323630254427,
+        -0.500008038152525
+      ],
+      "trajectory_sha256": "4286f6d1704d7f0f7fbaaf99923ce92cfa33be596ce5afd13e1be3b904d47bb7",
+      "export": {
+        "system_id": "6",
+        "initial_condition_set": "2",
+        "dimension": "1",
+        "hash_format": "sha256_raw_little_endian_float64",
+        "dtype": "float64",
+        "byte_order": "little_endian",
+        "time_axis_order": "time",
+        "state_axis_order": "time_by_dimension_c_order",
+        "time_shape": "[512]",
+        "state_shape": "[512,1]",
+        "time_min": "0.0",
+        "time_max": "10.0",
+        "state_min": "2.24",
+        "state_max": "4.199999997182731",
+        "time_sha256": "ffad3499269c08c6bd22e9e5c5d2ab32bbf827e2037cbdd6e73571aeab04432f",
+        "state_sha256": "4286f6d1704d7f0f7fbaaf99923ce92cfa33be596ce5afd13e1be3b904d47bb7",
+        "time_path": "cells\\system_0006_ic2_time_f64le.bin",
+        "state_path": "cells\\system_0006_ic2_state_f64le_c_order.bin"
+      }
+    },
+    {
+      "unit_id": "sys0008_ic1",
+      "system_id": 8,
+      "initial_condition_set": 1,
+      "dim": 1,
+      "stratum": "dim1",
+      "active_idxs": [
+        [
+          2,
+          3,
+          4
+        ]
+      ],
+      "equations": [
+        {
+          "equation_index": 1,
+          "basis_indices": [
+            2,
+            3,
+            4
+          ],
+          "term_names": [
+            "u1",
+            "u1^2",
+            "u1^3"
+          ],
+          "coefficients": [
+            -0.139953514919325,
+            0.032890016008159904,
+            -0.00024468334663089195
+          ],
+          "weak_sse": 2.2895369841636203e-06
+        }
+      ],
+      "p0": [
+        -0.139953514919325,
+        0.032890016008159904,
+        -0.00024468334663089195
+      ],
+      "trajectory_sha256": "2b69ca839bdb926ba833c061f64217c625040c43315417053cca3d235f10e059",
+      "export": {
+        "system_id": "8",
+        "initial_condition_set": "1",
+        "dimension": "1",
+        "hash_format": "sha256_raw_little_endian_float64",
+        "dtype": "float64",
+        "byte_order": "little_endian",
+        "time_axis_order": "time",
+        "state_axis_order": "time_by_dimension_c_order",
+        "time_shape": "[512]",
+        "state_shape": "[512,1]",
+        "time_min": "0.0",
+        "time_max": "10.0",
+        "state_min": "6.123",
+        "state_max": "93.06565049146899",
+        "time_sha256": "ffad3499269c08c6bd22e9e5c5d2ab32bbf827e2037cbdd6e73571aeab04432f",
+        "state_sha256": "2b69ca839bdb926ba833c061f64217c625040c43315417053cca3d235f10e059",
+        "time_path": "cells\\system_0008_ic1_time_f64le.bin",
+        "state_path": "cells\\system_0008_ic1_state_f64le_c_order.bin"
+      }
+    },
+    {
+      "unit_id": "sys0008_ic2",
+      "system_id": 8,
+      "initial_condition_set": 2,
+      "dim": 1,
+      "stratum": "dim1",
+      "active_idxs": [
+        [
+          2,
+          3,
+          4
+        ]
+      ],
+      "equations": [
+        {
+          "equation_index": 1,
+          "basis_indices": [
+            2,
+            3,
+            4
+          ],
+          "term_names": [
+            "u1",
+            "u1^2",
+            "u1^3"
+          ],
+          "coefficients": [
+            -0.139999933696094,
+            0.032895007734686545,
+            -0.00024472880039799424
+          ],
+          "weak_sse": 7.867425034811201e-17
+        }
+      ],
+      "p0": [
+        -0.139999933696094,
+        0.032895007734686545,
+        -0.00024472880039799424
+      ],
+      "trajectory_sha256": "2d5286c6c4748e3515190d92b577c3ca122911f4582b87a26000f636501df908",
+      "export": {
+        "system_id": "8",
+        "initial_condition_set": "2",
+        "dimension": "1",
+        "hash_format": "sha256_raw_little_endian_float64",
+        "dtype": "float64",
+        "byte_order": "little_endian",
+        "time_axis_order": "time",
+        "state_axis_order": "time_by_dimension_c_order",
+        "time_shape": "[512]",
+        "state_shape": "[512,1]",
+        "time_min": "0.0",
+        "time_max": "10.0",
+        "state_min": "0.8186702912373286",
+        "state_max": "2.1",
+        "time_sha256": "ffad3499269c08c6bd22e9e5c5d2ab32bbf827e2037cbdd6e73571aeab04432f",
+        "state_sha256": "2d5286c6c4748e3515190d92b577c3ca122911f4582b87a26000f636501df908",
+        "time_path": "cells\\system_0008_ic2_time_f64le.bin",
+        "state_path": "cells\\system_0008_ic2_state_f64le_c_order.bin"
+      }
+    },
+    {
+      "unit_id": "sys0009_ic1",
+      "system_id": 9,
+      "initial_condition_set": 1,
+      "dim": 1,
+      "stratum": "dim1",
+      "active_idxs": [
+        [
+          1,
+          2
+        ]
+      ],
+      "equations": [
+        {
+          "equation_index": 1,
+          "basis_indices": [
+            1,
+            2
+          ],
+          "term_names": [
+            "1",
+            "u1"
+          ],
+          "coefficients": [
+            0.31999632362904556,
+            -0.599993106809122
+          ],
+          "weak_sse": 2.8562832372989015e-18
+        }
+      ],
+      "p0": [
+        0.31999632362904556,
+        -0.599993106809122
+      ],
+      "trajectory_sha256": "b683606907329b3b664416a4d0fbcb360d9b55a73cdbfcb25fbf3c7a8af878f2",
+      "export": {
+        "system_id": "9",
+        "initial_condition_set": "1",
+        "dimension": "1",
+        "hash_format": "sha256_raw_little_endian_float64",
+        "dtype": "float64",
+        "byte_order": "little_endian",
+        "time_axis_order": "time",
+        "state_axis_order": "time_by_dimension_c_order",
+        "time_shape": "[512]",
+        "state_shape": "[512,1]",
+        "time_min": "0.0",
+        "time_max": "10.0",
+        "state_min": "0.14",
+        "state_max": "0.5323583574490287",
+        "time_sha256": "ffad3499269c08c6bd22e9e5c5d2ab32bbf827e2037cbdd6e73571aeab04432f",
+        "state_sha256": "b683606907329b3b664416a4d0fbcb360d9b55a73cdbfcb25fbf3c7a8af878f2",
+        "time_path": "cells\\system_0009_ic1_time_f64le.bin",
+        "state_path": "cells\\system_0009_ic1_state_f64le_c_order.bin"
+      }
+    },
+    {
+      "unit_id": "sys0009_ic2",
+      "system_id": 9,
+      "initial_condition_set": 2,
+      "dim": 1,
+      "stratum": "dim1",
+      "active_idxs": [
+        [
+          1,
+          2
+        ]
+      ],
+      "equations": [
+        {
+          "equation_index": 1,
+          "basis_indices": [
+            1,
+            2
+          ],
+          "term_names": [
+            "1",
+            "u1"
+          ],
+          "coefficients": [
+            0.3199963243890176,
+            -0.5999931082238731
+          ],
+          "weak_sse": 1.6731348515570756e-18
+        }
+      ],
+      "p0": [
+        0.3199963243890176,
+        -0.5999931082238731
+      ],
+      "trajectory_sha256": "db3a2be1a9808f2dec4c6c5b77ff7c59495a14114e8f0320802d562f44b2c2ea",
+      "export": {
+        "system_id": "9",
+        "initial_condition_set": "2",
+        "dimension": "1",
+        "hash_format": "sha256_raw_little_endian_float64",
+        "dtype": "float64",
+        "byte_order": "little_endian",
+        "time_axis_order": "time",
+        "state_axis_order": "time_by_dimension_c_order",
+        "time_shape": "[512]",
+        "state_shape": "[512,1]",
+        "time_min": "0.0",
+        "time_max": "10.0",
+        "state_min": "0.533374645897023",
+        "state_max": "0.55",
+        "time_sha256": "ffad3499269c08c6bd22e9e5c5d2ab32bbf827e2037cbdd6e73571aeab04432f",
+        "state_sha256": "db3a2be1a9808f2dec4c6c5b77ff7c59495a14114e8f0320802d562f44b2c2ea",
+        "time_path": "cells\\system_0009_ic2_time_f64le.bin",
+        "state_path": "cells\\system_0009_ic2_state_f64le_c_order.bin"
+      }
+    },
+    {
+      "unit_id": "sys0011_ic1",
+      "system_id": 11,
+      "initial_condition_set": 1,
+      "dim": 1,
+      "stratum": "dim1",
+      "active_idxs": [
+        [
+          4
+        ]
+      ],
+      "equations": [
+        {
+          "equation_index": 1,
+          "basis_indices": [
+            4
+          ],
+          "term_names": [
+            "u1^3"
+          ],
+          "coefficients": [
+            -0.9877240970093839
+          ],
+          "weak_sse": 0.0031019158119634602
+        }
+      ],
+      "p0": [
+        -0.9877240970093839
+      ],
+      "trajectory_sha256": "cdc13858122785454f6151a9501ad6371cdf981cbe371f76125ca52d6fd250b4",
+      "export": {
+        "system_id": "11",
+        "initial_condition_set": "1",
+        "dimension": "1",
+        "hash_format": "sha256_raw_little_endian_float64",
+        "dtype": "float64",
+        "byte_order": "little_endian",
+        "time_axis_order": "time",
+        "state_axis_order": "time_by_dimension_c_order",
+        "time_shape": "[512]",
+        "state_shape": "[512,1]",
+        "time_min": "0.0",
+        "time_max": "10.0",
+        "state_min": "0.223124782335635",
+        "state_max": "3.4",
+        "time_sha256": "ffad3499269c08c6bd22e9e5c5d2ab32bbf827e2037cbdd6e73571aeab04432f",
+        "state_sha256": "cdc13858122785454f6151a9501ad6371cdf981cbe371f76125ca52d6fd250b4",
+        "time_path": "cells\\system_0011_ic1_time_f64le.bin",
+        "state_path": "cells\\system_0011_ic1_state_f64le_c_order.bin"
+      }
+    },
+    {
+      "unit_id": "sys0011_ic2",
+      "system_id": 11,
+      "initial_condition_set": 2,
+      "dim": 1,
+      "stratum": "dim1",
+      "active_idxs": [
+        [
+          4
+        ]
+      ],
+      "equations": [
+        {
+          "equation_index": 1,
+          "basis_indices": [
+            4
+          ],
+          "term_names": [
+            "u1^3"
+          ],
+          "coefficients": [
+            -0.9991409298869879
+          ],
+          "weak_sse": 1.5676747764303552e-06
+        }
+      ],
+      "p0": [
+        -0.9991409298869879
+      ],
+      "trajectory_sha256": "0e152754f68b3dc29b226238769ff02dfeb4845df1be84ebd6b0999f881db5df",
+      "export": {
+        "system_id": "11",
+        "initial_condition_set": "2",
+        "dimension": "1",
+        "hash_format": "sha256_raw_little_endian_float64",
+        "dtype": "float64",
+        "byte_order": "little_endian",
+        "time_axis_order": "time",
+        "state_axis_order": "time_by_dimension_c_order",
+        "time_shape": "[512]",
+        "state_shape": "[512,1]",
+        "time_min": "0.0",
+        "time_max": "10.0",
+        "state_min": "0.22145461316095374",
+        "state_max": "1.6",
+        "time_sha256": "ffad3499269c08c6bd22e9e5c5d2ab32bbf827e2037cbdd6e73571aeab04432f",
+        "state_sha256": "0e152754f68b3dc29b226238769ff02dfeb4845df1be84ebd6b0999f881db5df",
+        "time_path": "cells\\system_0011_ic2_time_f64le.bin",
+        "state_path": "cells\\system_0011_ic2_state_f64le_c_order.bin"
+      }
+    },
+    {
+      "unit_id": "sys0012_ic1",
+      "system_id": 12,
+      "initial_condition_set": 1,
+      "dim": 1,
+      "stratum": "dim1",
+      "active_idxs": [
+        [
+          2,
+          3
+        ]
+      ],
+      "equations": [
+        {
+          "equation_index": 1,
+          "basis_indices": [
+            2,
+            3
+          ],
+          "term_names": [
+            "u1",
+            "u1^2"
+          ],
+          "coefficients": [
+            1.799978856594624,
+            -0.11069873820943428
+          ],
+          "weak_sse": 7.26794932133298e-08
+        }
+      ],
+      "p0": [
+        1.799978856594624,
+        -0.11069873820943428
+      ],
+      "trajectory_sha256": "9464d56b1a1aeda4204bd5f831a8f5436b1541a2ae4ed255433d7b2423623841",
+      "export": {
+        "system_id": "12",
+        "initial_condition_set": "1",
+        "dimension": "1",
+        "hash_format": "sha256_raw_little_endian_float64",
+        "dtype": "float64",
+        "byte_order": "little_endian",
+        "time_axis_order": "time",
+        "state_axis_order": "time_by_dimension_c_order",
+        "time_shape": "[512]",
+        "state_shape": "[512,1]",
+        "time_min": "0.0",
+        "time_max": "10.0",
+        "state_min": "11.0",
+        "state_max": "16.26016248308837",
+        "time_sha256": "ffad3499269c08c6bd22e9e5c5d2ab32bbf827e2037cbdd6e73571aeab04432f",
+        "state_sha256": "9464d56b1a1aeda4204bd5f831a8f5436b1541a2ae4ed255433d7b2423623841",
+        "time_path": "cells\\system_0012_ic1_time_f64le.bin",
+        "state_path": "cells\\system_0012_ic1_state_f64le_c_order.bin"
+      }
+    },
+    {
+      "unit_id": "sys0012_ic2",
+      "system_id": 12,
+      "initial_condition_set": 2,
+      "dim": 1,
+      "stratum": "dim1",
+      "active_idxs": [
+        [
+          2,
+          3
+        ]
+      ],
+      "equations": [
+        {
+          "equation_index": 1,
+          "basis_indices": [
+            2,
+            3
+          ],
+          "term_names": [
+            "u1",
+            "u1^2"
+          ],
+          "coefficients": [
+            1.8000443985289203,
+            -0.1107028257140548
+          ],
+          "weak_sse": 4.223560040893009e-07
+        }
+      ],
+      "p0": [
+        1.8000443985289203,
+        -0.1107028257140548
+      ],
+      "trajectory_sha256": "23ec22839f2f22bf501bc68829d7fa906ef2a708445ba2545da9114f83909c17",
+      "export": {
+        "system_id": "12",
+        "initial_condition_set": "2",
+        "dimension": "1",
+        "hash_format": "sha256_raw_little_endian_float64",
+        "dtype": "float64",
+        "byte_order": "little_endian",
+        "time_axis_order": "time",
+        "state_axis_order": "time_by_dimension_c_order",
+        "time_shape": "[512]",
+        "state_shape": "[512,1]",
+        "time_min": "0.0",
+        "time_max": "10.0",
+        "state_min": "1.3",
+        "state_max": "16.260159751604196",
+        "time_sha256": "ffad3499269c08c6bd22e9e5c5d2ab32bbf827e2037cbdd6e73571aeab04432f",
+        "state_sha256": "23ec22839f2f22bf501bc68829d7fa906ef2a708445ba2545da9114f83909c17",
+        "time_path": "cells\\system_0012_ic2_time_f64le.bin",
+        "state_path": "cells\\system_0012_ic2_state_f64le_c_order.bin"
+      }
+    },
+    {
+      "unit_id": "sys0017_ic1",
+      "system_id": 17,
+      "initial_condition_set": 1,
+      "dim": 1,
+      "stratum": "dim1",
+      "active_idxs": [
+        [
+          1,
+          2,
+          3
+        ]
+      ],
+      "equations": [
+        {
+          "equation_index": 1,
+          "basis_indices": [
+            1,
+            2,
+            3
+          ],
+          "term_names": [
+            "1",
+            "u1",
+            "u1^2"
+          ],
+          "coefficients": [
+            -0.3000404810978182,
+            0.40000246638547676,
+            -0.004000024469403704
+          ],
+          "weak_sse": 2.3006445926773717e-10
+        }
+      ],
+      "p0": [
+        -0.3000404810978182,
+        0.40000246638547676,
+        -0.004000024469403704
+      ],
+      "trajectory_sha256": "4756e9cb1aad3ac5698d8e2380b106c5d6c6e7fdcf482d06e53c8d5c19d6d4f0",
+      "export": {
+        "system_id": "17",
+        "initial_condition_set": "1",
+        "dimension": "1",
+        "hash_format": "sha256_raw_little_endian_float64",
+        "dtype": "float64",
+        "byte_order": "little_endian",
+        "time_axis_order": "time",
+        "state_axis_order": "time_by_dimension_c_order",
+        "time_shape": "[512]",
+        "state_shape": "[512,1]",
+        "time_min": "0.0",
+        "time_max": "10.0",
+        "state_min": "14.3",
+        "state_max": "88.53307559334867",
+        "time_sha256": "ffad3499269c08c6bd22e9e5c5d2ab32bbf827e2037cbdd6e73571aeab04432f",
+        "state_sha256": "4756e9cb1aad3ac5698d8e2380b106c5d6c6e7fdcf482d06e53c8d5c19d6d4f0",
+        "time_path": "cells\\system_0017_ic1_time_f64le.bin",
+        "state_path": "cells\\system_0017_ic1_state_f64le_c_order.bin"
+      }
+    },
+    {
+      "unit_id": "sys0017_ic2",
+      "system_id": 17,
+      "initial_condition_set": 2,
+      "dim": 1,
+      "stratum": "dim1",
+      "active_idxs": [
+        [
+          1,
+          2,
+          3
+        ]
+      ],
+      "equations": [
+        {
+          "equation_index": 1,
+          "basis_indices": [
+            1,
+            2,
+            3
+          ],
+          "term_names": [
+            "1",
+            "u1",
+            "u1^2"
+          ],
+          "coefficients": [
+            -0.2999803708897992,
+            0.4000003939887502,
+            -0.004000007595158191
+          ],
+          "weak_sse": 8.138384792775859e-10
+        }
+      ],
+      "p0": [
+        -0.2999803708897992,
+        0.4000003939887502,
+        -0.004000007595158191
+      ],
+      "trajectory_sha256": "4ce0eea86a7d476d182bfbfc499fa992cd72e05a8c7952b7ee4aca56d8f1103b",
+      "export": {
+        "system_id": "17",
+        "initial_condition_set": "2",
+        "dimension": "1",
+        "hash_format": "sha256_raw_little_endian_float64",
+        "dtype": "float64",
+        "byte_order": "little_endian",
+        "time_axis_order": "time",
+        "state_axis_order": "time_by_dimension_c_order",
+        "time_shape": "[512]",
+        "state_shape": "[512,1]",
+        "time_min": "0.0",
+        "time_max": "10.0",
+        "state_min": "34.2",
+        "state_max": "95.65324847176127",
+        "time_sha256": "ffad3499269c08c6bd22e9e5c5d2ab32bbf827e2037cbdd6e73571aeab04432f",
+        "state_sha256": "4ce0eea86a7d476d182bfbfc499fa992cd72e05a8c7952b7ee4aca56d8f1103b",
+        "time_path": "cells\\system_0017_ic2_time_f64le.bin",
+        "state_path": "cells\\system_0017_ic2_state_f64le_c_order.bin"
+      }
+    },
+    {
+      "unit_id": "sys0023_ic1",
+      "system_id": 23,
+      "initial_condition_set": 1,
+      "dim": 1,
+      "stratum": "dim1",
+      "active_idxs": [
+        [
+          1,
+          5
+        ]
+      ],
+      "equations": [
+        {
+          "equation_index": 1,
+          "basis_indices": [
+            1,
+            5
+          ],
+          "term_names": [
+            "1",
+            "sin(u1)"
+          ],
+          "coefficients": [
+            0.21000021662711665,
+            -1.0000205096999217
+          ],
+          "weak_sse": 5.936077654640586e-09
+        }
+      ],
+      "p0": [
+        0.21000021662711665,
+        -1.0000205096999217
+      ],
+      "trajectory_sha256": "23439dcce1325c814f14af6cdb1b359c5c73aaff830ee17a7b36e647ea5e5830",
+      "export": {
+        "system_id": "23",
+        "initial_condition_set": "1",
+        "dimension": "1",
+        "hash_format": "sha256_raw_little_endian_float64",
+        "dtype": "float64",
+        "byte_order": "little_endian",
+        "time_axis_order": "time",
+        "state_axis_order": "time_by_dimension_c_order",
+        "time_shape": "[512]",
+        "state_shape": "[512,1]",
+        "time_min": "0.0",
+        "time_max": "10.0",
+        "state_min": "-2.74",
+        "state_max": "0.2112089751740903",
+        "time_sha256": "ffad3499269c08c6bd22e9e5c5d2ab32bbf827e2037cbdd6e73571aeab04432f",
+        "state_sha256": "23439dcce1325c814f14af6cdb1b359c5c73aaff830ee17a7b36e647ea5e5830",
+        "time_path": "cells\\system_0023_ic1_time_f64le.bin",
+        "state_path": "cells\\system_0023_ic1_state_f64le_c_order.bin"
+      }
+    },
+    {
+      "unit_id": "sys0023_ic2",
+      "system_id": 23,
+      "initial_condition_set": 2,
+      "dim": 1,
+      "stratum": "dim1",
+      "active_idxs": [
+        [
+          1,
+          5
+        ]
+      ],
+      "equations": [
+        {
+          "equation_index": 1,
+          "basis_indices": [
+            1,
+            5
+          ],
+          "term_names": [
+            "1",
+            "sin(u1)"
+          ],
+          "coefficients": [
+            0.21000409189786468,
+            -1.0000116399400576
+          ],
+          "weak_sse": 9.020264392916497e-10
+        }
+      ],
+      "p0": [
+        0.21000409189786468,
+        -1.0000116399400576
+      ],
+      "trajectory_sha256": "ad928dbfb7a9dea663c07b6844b5ee6c1584d6359f63ae1202ba376f02154491",
+      "export": {
+        "system_id": "23",
+        "initial_condition_set": "2",
+        "dimension": "1",
+        "hash_format": "sha256_raw_little_endian_float64",
+        "dtype": "float64",
+        "byte_order": "little_endian",
+        "time_axis_order": "time",
+        "state_axis_order": "time_by_dimension_c_order",
+        "time_shape": "[512]",
+        "state_shape": "[512,1]",
+        "time_min": "0.0",
+        "time_max": "10.0",
+        "state_min": "0.21169735213977303",
+        "state_max": "1.65",
+        "time_sha256": "ffad3499269c08c6bd22e9e5c5d2ab32bbf827e2037cbdd6e73571aeab04432f",
+        "state_sha256": "ad928dbfb7a9dea663c07b6844b5ee6c1584d6359f63ae1202ba376f02154491",
+        "time_path": "cells\\system_0023_ic2_time_f64le.bin",
+        "state_path": "cells\\system_0023_ic2_state_f64le_c_order.bin"
+      }
+    },
+    {
+      "unit_id": "sys0024_ic1",
+      "system_id": 24,
+      "initial_condition_set": 1,
+      "dim": 2,
+      "stratum": "dim2",
+      "active_idxs": [
+        [
+          3
+        ],
+        [
+          2
+        ]
+      ],
+      "equations": [
+        {
+          "equation_index": 1,
+          "basis_indices": [
+            3
+          ],
+          "term_names": [
+            "u2"
+          ],
+          "coefficients": [
+            1.0000670241551612
+          ],
+          "weak_sse": 4.590682905221423e-18
+        },
+        {
+          "equation_index": 2,
+          "basis_indices": [
+            2
+          ],
+          "term_names": [
+            "u1"
+          ],
+          "coefficients": [
+            -2.1001407507247136
+          ],
+          "weak_sse": 6.247769819014584e-18
+        }
+      ],
+      "p0": [
+        1.0000670241551612,
+        -2.1001407507247136
+      ],
+      "trajectory_sha256": "7a0cb065a725ce6f96bb42f2513fe021f726e088c0090ed0db0b96fbcf902391",
+      "export": {
+        "system_id": "24",
+        "initial_condition_set": "1",
+        "dimension": "2",
+        "hash_format": "sha256_raw_little_endian_float64",
+        "dtype": "float64",
+        "byte_order": "little_endian",
+        "time_axis_order": "time",
+        "state_axis_order": "time_by_dimension_c_order",
+        "time_shape": "[512]",
+        "state_shape": "[512,2]",
+        "time_min": "0.0",
+        "time_max": "10.0",
+        "state_min": "-0.5804271406799938",
+        "state_max": "0.580428830003751",
+        "time_sha256": "ffad3499269c08c6bd22e9e5c5d2ab32bbf827e2037cbdd6e73571aeab04432f",
+        "state_sha256": "7a0cb065a725ce6f96bb42f2513fe021f726e088c0090ed0db0b96fbcf902391",
+        "time_path": "cells\\system_0024_ic1_time_f64le.bin",
+        "state_path": "cells\\system_0024_ic1_state_f64le_c_order.bin"
+      }
+    },
+    {
+      "unit_id": "sys0024_ic2",
+      "system_id": 24,
+      "initial_condition_set": 2,
+      "dim": 2,
+      "stratum": "dim2",
+      "active_idxs": [
+        [
+          3
+        ],
+        [
+          2
+        ]
+      ],
+      "equations": [
+        {
+          "equation_index": 1,
+          "basis_indices": [
+            3
+          ],
+          "term_names": [
+            "u2"
+          ],
+          "coefficients": [
+            1.0000670242065541
+          ],
+          "weak_sse": 3.542912851346012e-18
+        },
+        {
+          "equation_index": 2,
+          "basis_indices": [
+            2
+          ],
+          "term_names": [
+            "u1"
+          ],
+          "coefficients": [
+            -2.100140750824411
+          ],
+          "weak_sse": 5.739793496572068e-18
+        }
+      ],
+      "p0": [
+        1.0000670242065541,
+        -2.100140750824411
+      ],
+      "trajectory_sha256": "33ed2a81e4f4e66426a0dc51832715f1c58dce189922fbe2014a3b0a2920f08c",
+      "export": {
+        "system_id": "24",
+        "initial_condition_set": "2",
+        "dimension": "2",
+        "hash_format": "sha256_raw_little_endian_float64",
+        "dtype": "float64",
+        "byte_order": "little_endian",
+        "time_axis_order": "time",
+        "state_axis_order": "time_by_dimension_c_order",
+        "time_shape": "[512]",
+        "state_shape": "[512,2]",
+        "time_min": "0.0",
+        "time_max": "10.0",
+        "state_min": "-0.19999610537980508",
+        "state_max": "0.2",
+        "time_sha256": "ffad3499269c08c6bd22e9e5c5d2ab32bbf827e2037cbdd6e73571aeab04432f",
+        "state_sha256": "33ed2a81e4f4e66426a0dc51832715f1c58dce189922fbe2014a3b0a2920f08c",
+        "time_path": "cells\\system_0024_ic2_time_f64le.bin",
+        "state_path": "cells\\system_0024_ic2_state_f64le_c_order.bin"
+      }
+    },
+    {
+      "unit_id": "sys0025_ic1",
+      "system_id": 25,
+      "initial_condition_set": 1,
+      "dim": 2,
+      "stratum": "dim2",
+      "active_idxs": [
+        [
+          3
+        ],
+        [
+          2,
+          3
+        ]
+      ],
+      "equations": [
+        {
+          "equation_index": 1,
+          "basis_indices": [
+            3
+          ],
+          "term_names": [
+            "u2"
+          ],
+          "coefficients": [
+            1.0001436259488332
+          ],
+          "weak_sse": 4.029160161620566e-10
+        },
+        {
+          "equation_index": 2,
+          "basis_indices": [
+            2,
+            3
+          ],
+          "term_names": [
+            "u1",
+            "u2"
+          ],
+          "coefficients": [
+            -4.500619796377225,
+            -0.4301209993033243
+          ],
+          "weak_sse": 4.832861829750165e-18
+        }
+      ],
+      "p0": [
+        1.0001436259488332,
+        -4.500619796377225,
+        -0.4301209993033243
+      ],
+      "trajectory_sha256": "a7dceadbe022cc4ee282ada4fa0da21a10871e46887dc09f15ddfcd413760e52",
+      "export": {
+        "system_id": "25",
+        "initial_condition_set": "1",
+        "dimension": "2",
+        "hash_format": "sha256_raw_little_endian_float64",
+        "dtype": "float64",
+        "byte_order": "little_endian",
+        "time_axis_order": "time",
+        "state_axis_order": "time_by_dimension_c_order",
+        "time_shape": "[512]",
+        "state_shape": "[512,2]",
+        "time_min": "0.0",
+        "time_max": "10.0",
+        "state_min": "-0.22216600966595773",
+        "state_max": "0.16132492277188626",
+        "time_sha256": "ffad3499269c08c6bd22e9e5c5d2ab32bbf827e2037cbdd6e73571aeab04432f",
+        "state_sha256": "a7dceadbe022cc4ee282ada4fa0da21a10871e46887dc09f15ddfcd413760e52",
+        "time_path": "cells\\system_0025_ic1_time_f64le.bin",
+        "state_path": "cells\\system_0025_ic1_state_f64le_c_order.bin"
+      }
+    },
+    {
+      "unit_id": "sys0025_ic2",
+      "system_id": 25,
+      "initial_condition_set": 2,
+      "dim": 2,
+      "stratum": "dim2",
+      "active_idxs": [
+        [
+          3
+        ],
+        [
+          2,
+          3
+        ]
+      ],
+      "equations": [
+        {
+          "equation_index": 1,
+          "basis_indices": [
+            3
+          ],
+          "term_names": [
+            "u2"
+          ],
+          "coefficients": [
+            1.0001381055496297
+          ],
+          "weak_sse": 5.654004389673948e-10
+        },
+        {
+          "equation_index": 2,
+          "basis_indices": [
+            2,
+            3
+          ],
+          "term_names": [
+            "u1",
+            "u2"
+          ],
+          "coefficients": [
+            -4.500619796189909,
+            -0.4301209992589791
+          ],
+          "weak_sse": 4.725955916080425e-18
+        }
+      ],
+      "p0": [
+        1.0001381055496297,
+        -4.500619796189909,
+        -0.4301209992589791
+      ],
+      "trajectory_sha256": "99bf42da31a6c29b1e47aedb5b323b84b8cfc5ca33584d07ae772bec9f0c2349",
+      "export": {
+        "system_id": "25",
+        "initial_condition_set": "2",
+        "dimension": "2",
+        "hash_format": "sha256_raw_little_endian_float64",
+        "dtype": "float64",
+        "byte_order": "little_endian",
+        "time_axis_order": "time",
+        "state_axis_order": "time_by_dimension_c_order",
+        "time_shape": "[512]",
+        "state_shape": "[512,2]",
+        "time_min": "0.0",
+        "time_max": "10.0",
+        "state_min": "-0.3",
+        "state_max": "0.22238144208962451",
+        "time_sha256": "ffad3499269c08c6bd22e9e5c5d2ab32bbf827e2037cbdd6e73571aeab04432f",
+        "state_sha256": "99bf42da31a6c29b1e47aedb5b323b84b8cfc5ca33584d07ae772bec9f0c2349",
+        "time_path": "cells\\system_0025_ic2_time_f64le.bin",
+        "state_path": "cells\\system_0025_ic2_state_f64le_c_order.bin"
+      }
+    },
+    {
+      "unit_id": "sys0026_ic1",
+      "system_id": 26,
+      "initial_condition_set": 1,
+      "dim": 2,
+      "stratum": "dim2",
+      "active_idxs": [
+        [
+          2,
+          4,
+          6
+        ],
+        [
+          3,
+          5,
+          6
+        ]
+      ],
+      "equations": [
+        {
+          "equation_index": 1,
+          "basis_indices": [
+            2,
+            4,
+            6
+          ],
+          "term_names": [
+            "u1",
+            "u1^2",
+            "u1*u2"
+          ],
+          "coefficients": [
+            2.953447854862848,
+            -0.9964434712824372,
+            -1.9716172026998922
+          ],
+          "weak_sse": 0.0008639177078282247
+        },
+        {
+          "equation_index": 2,
+          "basis_indices": [
+            3,
+            5,
+            6
+          ],
+          "term_names": [
+            "u2",
+            "u2^2",
+            "u1*u2"
+          ],
+          "coefficients": [
+            1.9876553725467954,
+            -0.9937027610762845,
+            -0.9948783437888066
+          ],
+          "weak_sse": 0.0003734003397217837
+        }
+      ],
+      "p0": [
+        2.953447854862848,
+        -0.9964434712824372,
+        -1.9716172026998922,
+        1.9876553725467954,
+        -0.9937027610762845,
+        -0.9948783437888066
+      ],
+      "trajectory_sha256": "f6d3ae3e04b3230a1f565ad8369ebb166ef052fb0929f2a208013935246a327d",
+      "export": {
+        "system_id": "26",
+        "initial_condition_set": "1",
+        "dimension": "2",
+        "hash_format": "sha256_raw_little_endian_float64",
+        "dtype": "float64",
+        "byte_order": "little_endian",
+        "time_axis_order": "time",
+        "state_axis_order": "time_by_dimension_c_order",
+        "time_shape": "[512]",
+        "state_shape": "[512,2]",
+        "time_min": "0.0",
+        "time_max": "10.0",
+        "state_min": "0.000866774776438768",
+        "state_max": "5.0",
+        "time_sha256": "ffad3499269c08c6bd22e9e5c5d2ab32bbf827e2037cbdd6e73571aeab04432f",
+        "state_sha256": "f6d3ae3e04b3230a1f565ad8369ebb166ef052fb0929f2a208013935246a327d",
+        "time_path": "cells\\system_0026_ic1_time_f64le.bin",
+        "state_path": "cells\\system_0026_ic1_state_f64le_c_order.bin"
+      }
+    },
+    {
+      "unit_id": "sys0026_ic2",
+      "system_id": 26,
+      "initial_condition_set": 2,
+      "dim": 2,
+      "stratum": "dim2",
+      "active_idxs": [
+        [
+          2,
+          4,
+          6
+        ],
+        [
+          3,
+          5,
+          6
+        ]
+      ],
+      "equations": [
+        {
+          "equation_index": 1,
+          "basis_indices": [
+            2,
+            4,
+            6
+          ],
+          "term_names": [
+            "u1",
+            "u1^2",
+            "u1*u2"
+          ],
+          "coefficients": [
+            2.971204340522695,
+            -1.0023692648942293,
+            -1.9831588831278715
+          ],
+          "weak_sse": 1.5213189714415572e-05
+        },
+        {
+          "equation_index": 2,
+          "basis_indices": [
+            3,
+            5,
+            6
+          ],
+          "term_names": [
+            "u2",
+            "u2^2",
+            "u1*u2"
+          ],
+          "coefficients": [
+            1.9946026167360962,
+            -0.9972725215283756,
+            -0.9979102786805562
+          ],
+          "weak_sse": 2.115562074401999e-05
+        }
+      ],
+      "p0": [
+        2.971204340522695,
+        -1.0023692648942293,
+        -1.9831588831278715,
+        1.9946026167360962,
+        -0.9972725215283756,
+        -0.9979102786805562
+      ],
+      "trajectory_sha256": "2b0b9d3bee6e268ae51b85313da38d2024fcc464b242ac7c1a62e9ec15b08c9f",
+      "export": {
+        "system_id": "26",
+        "initial_condition_set": "2",
+        "dimension": "2",
+        "hash_format": "sha256_raw_little_endian_float64",
+        "dtype": "float64",
+        "byte_order": "little_endian",
+        "time_axis_order": "time",
+        "state_axis_order": "time_by_dimension_c_order",
+        "time_shape": "[512]",
+        "state_shape": "[512,2]",
+        "time_min": "0.0",
+        "time_max": "10.0",
+        "state_min": "0.00011930578949375374",
+        "state_max": "3.6",
+        "time_sha256": "ffad3499269c08c6bd22e9e5c5d2ab32bbf827e2037cbdd6e73571aeab04432f",
+        "state_sha256": "2b0b9d3bee6e268ae51b85313da38d2024fcc464b242ac7c1a62e9ec15b08c9f",
+        "time_path": "cells\\system_0026_ic2_time_f64le.bin",
+        "state_path": "cells\\system_0026_ic2_state_f64le_c_order.bin"
+      }
+    },
+    {
+      "unit_id": "sys0027_ic1",
+      "system_id": 27,
+      "initial_condition_set": 1,
+      "dim": 2,
+      "stratum": "dim2",
+      "active_idxs": [
+        [
+          2,
+          6
+        ],
+        [
+          3,
+          6
+        ]
+      ],
+      "equations": [
+        {
+          "equation_index": 1,
+          "basis_indices": [
+            2,
+            6
+          ],
+          "term_names": [
+            "u1",
+            "u1*u2"
+          ],
+          "coefficients": [
+            1.8422081279631661,
+            -1.4517566977128575
+          ],
+          "weak_sse": 0.010812677544931482
+        },
+        {
+          "equation_index": 2,
+          "basis_indices": [
+            3,
+            6
+          ],
+          "term_names": [
+            "u2",
+            "u1*u2"
+          ],
+          "coefficients": [
+            -3.0043231127602077,
+            1.6223021964840836
+          ],
+          "weak_sse": 0.012225235647061421
+        }
+      ],
+      "p0": [
+        1.8422081279631661,
+        -1.4517566977128575,
+        -3.0043231127602077,
+        1.6223021964840836
+      ],
+      "trajectory_sha256": "8e397c0a0e10c1af32d8c1271f0d082edbd6f1f9f6a8199f27bc9b012e2a99e3",
+      "export": {
+        "system_id": "27",
+        "initial_condition_set": "1",
+        "dimension": "2",
+        "hash_format": "sha256_raw_little_endian_float64",
+        "dtype": "float64",
+        "byte_order": "little_endian",
+        "time_axis_order": "time",
+        "state_axis_order": "time_by_dimension_c_order",
+        "time_shape": "[512]",
+        "state_shape": "[512,2]",
+        "time_min": "0.0",
+        "time_max": "10.0",
+        "state_min": "0.009282575593634521",
+        "state_max": "9.298204244447481",
+        "time_sha256": "ffad3499269c08c6bd22e9e5c5d2ab32bbf827e2037cbdd6e73571aeab04432f",
+        "state_sha256": "8e397c0a0e10c1af32d8c1271f0d082edbd6f1f9f6a8199f27bc9b012e2a99e3",
+        "time_path": "cells\\system_0027_ic1_time_f64le.bin",
+        "state_path": "cells\\system_0027_ic1_state_f64le_c_order.bin"
+      }
+    },
+    {
+      "unit_id": "sys0027_ic2",
+      "system_id": 27,
+      "initial_condition_set": 2,
+      "dim": 2,
+      "stratum": "dim2",
+      "active_idxs": [
+        [
+          2,
+          6
+        ],
+        [
+          3,
+          6
+        ]
+      ],
+      "equations": [
+        {
+          "equation_index": 1,
+          "basis_indices": [
+            2,
+            6
+          ],
+          "term_names": [
+            "u1",
+            "u1*u2"
+          ],
+          "coefficients": [
+            1.8410883933460607,
+            -1.4508581662778768
+          ],
+          "weak_sse": 0.0006198878685997263
+        },
+        {
+          "equation_index": 2,
+          "basis_indices": [
+            3,
+            6
+          ],
+          "term_names": [
+            "u2",
+            "u1*u2"
+          ],
+          "coefficients": [
+            -3.002095567871197,
+            1.6211325043522438
+          ],
+          "weak_sse": 0.0006627951263753665
+        }
+      ],
+      "p0": [
+        1.8410883933460607,
+        -1.4508581662778768,
+        -3.002095567871197,
+        1.6211325043522438
+      ],
+      "trajectory_sha256": "1924b11ad9cc3f14a58c59652af51911d9eb547ea7cc16e82b46ccd4ba4ea717",
+      "export": {
+        "system_id": "27",
+        "initial_condition_set": "2",
+        "dimension": "2",
+        "hash_format": "sha256_raw_little_endian_float64",
+        "dtype": "float64",
+        "byte_order": "little_endian",
+        "time_axis_order": "time",
+        "state_axis_order": "time_by_dimension_c_order",
+        "time_shape": "[512]",
+        "state_shape": "[512,2]",
+        "time_min": "0.0",
+        "time_max": "10.0",
+        "state_min": "0.12704176240430207",
+        "state_max": "5.438807996343963",
+        "time_sha256": "ffad3499269c08c6bd22e9e5c5d2ab32bbf827e2037cbdd6e73571aeab04432f",
+        "state_sha256": "1924b11ad9cc3f14a58c59652af51911d9eb547ea7cc16e82b46ccd4ba4ea717",
+        "time_path": "cells\\system_0027_ic2_time_f64le.bin",
+        "state_path": "cells\\system_0027_ic2_state_f64le_c_order.bin"
+      }
+    },
+    {
+      "unit_id": "sys0028_ic1",
+      "system_id": 28,
+      "initial_condition_set": 1,
+      "dim": 2,
+      "stratum": "dim2",
+      "active_idxs": [
+        [
+          3
+        ],
+        [
+          9
+        ]
+      ],
+      "equations": [
+        {
+          "equation_index": 1,
+          "basis_indices": [
+            3
+          ],
+          "term_names": [
+            "u2"
+          ],
+          "coefficients": [
+            1.0000171225527472
+          ],
+          "weak_sse": 6.666519245854091e-09
+        },
+        {
+          "equation_index": 2,
+          "basis_indices": [
+            9
+          ],
+          "term_names": [
+            "sin(u1)"
+          ],
+          "coefficients": [
+            -0.9000199604992504
+          ],
+          "weak_sse": 3.184649786281657e-08
+        }
+      ],
+      "p0": [
+        1.0000171225527472,
+        -0.9000199604992504
+      ],
+      "trajectory_sha256": "db6505ac3c4858e6784210d5a65988709c2922b167a0bbdac4de5ef01f7b75a1",
+      "export": {
+        "system_id": "28",
+        "initial_condition_set": "1",
+        "dimension": "2",
+        "hash_format": "sha256_raw_little_endian_float64",
+        "dtype": "float64",
+        "byte_order": "little_endian",
+        "time_axis_order": "time",
+        "state_axis_order": "time_by_dimension_c_order",
+        "time_shape": "[512]",
+        "state_shape": "[512,2]",
+        "time_min": "0.0",
+        "time_max": "10.0",
+        "state_min": "-1.9",
+        "state_max": "1.8999972451052962",
+        "time_sha256": "ffad3499269c08c6bd22e9e5c5d2ab32bbf827e2037cbdd6e73571aeab04432f",
+        "state_sha256": "db6505ac3c4858e6784210d5a65988709c2922b167a0bbdac4de5ef01f7b75a1",
+        "time_path": "cells\\system_0028_ic1_time_f64le.bin",
+        "state_path": "cells\\system_0028_ic1_state_f64le_c_order.bin"
+      }
+    },
+    {
+      "unit_id": "sys0028_ic2",
+      "system_id": 28,
+      "initial_condition_set": 2,
+      "dim": 2,
+      "stratum": "dim2",
+      "active_idxs": [
+        [
+          3
+        ],
+        [
+          9
+        ]
+      ],
+      "equations": [
+        {
+          "equation_index": 1,
+          "basis_indices": [
+            3
+          ],
+          "term_names": [
+            "u2"
+          ],
+          "coefficients": [
+            1.0000253922240652
+          ],
+          "weak_sse": 1.7583673093684506e-10
+        },
+        {
+          "equation_index": 2,
+          "basis_indices": [
+            9
+          ],
+          "term_names": [
+            "sin(u1)"
+          ],
+          "coefficients": [
+            -0.900023317147629
+          ],
+          "weak_sse": 1.367852079948563e-09
+        }
+      ],
+      "p0": [
+        1.0000253922240652,
+        -0.900023317147629
+      ],
+      "trajectory_sha256": "cd1984c237edb4621aeaa1bb4fc0c2d684c0863053ea86fff62b5cfa83751d4a",
+      "export": {
+        "system_id": "28",
+        "initial_condition_set": "2",
+        "dimension": "2",
+        "hash_format": "sha256_raw_little_endian_float64",
+        "dtype": "float64",
+        "byte_order": "little_endian",
+        "time_axis_order": "time",
+        "state_axis_order": "time_by_dimension_c_order",
+        "time_shape": "[512]",
+        "state_shape": "[512,2]",
+        "time_min": "0.0",
+        "time_max": "10.0",
+        "state_min": "-0.9275620243985205",
+        "state_max": "0.9275689700006522",
+        "time_sha256": "ffad3499269c08c6bd22e9e5c5d2ab32bbf827e2037cbdd6e73571aeab04432f",
+        "state_sha256": "cd1984c237edb4621aeaa1bb4fc0c2d684c0863053ea86fff62b5cfa83751d4a",
+        "time_path": "cells\\system_0028_ic2_time_f64le.bin",
+        "state_path": "cells\\system_0028_ic2_state_f64le_c_order.bin"
+      }
+    },
+    {
+      "unit_id": "sys0029_ic1",
+      "system_id": 29,
+      "initial_condition_set": 1,
+      "dim": 2,
+      "stratum": "dim2",
+      "active_idxs": [
+        [
+          6
+        ],
+        [
+          4,
+          5
+        ]
+      ],
+      "equations": [
+        {
+          "equation_index": 1,
+          "basis_indices": [
+            6
+          ],
+          "term_names": [
+            "u1*u2"
+          ],
+          "coefficients": [
+            0.6502285214464862
+          ],
+          "weak_sse": 9.124089045881767e-06
+        },
+        {
+          "equation_index": 2,
+          "basis_indices": [
+            4,
+            5
+          ],
+          "term_names": [
+            "u1^2",
+            "u2^2"
+          ],
+          "coefficients": [
+            -1.000586071543999,
+            1.000877775976138
+          ],
+          "weak_sse": 4.05946990205106e-05
+        }
+      ],
+      "p0": [
+        0.6502285214464862,
+        -1.000586071543999,
+        1.000877775976138
+      ],
+      "trajectory_sha256": "822cec6dfe225bd940e8ccf42dd975b850022b4b943e102fbaeb71f002f03f65",
+      "export": {
+        "system_id": "29",
+        "initial_condition_set": "1",
+        "dimension": "2",
+        "hash_format": "sha256_raw_little_endian_float64",
+        "dtype": "float64",
+        "byte_order": "little_endian",
+        "time_axis_order": "time",
+        "state_axis_order": "time_by_dimension_c_order",
+        "time_shape": "[512]",
+        "state_shape": "[512,2]",
+        "time_min": "0.0",
+        "time_max": "10.0",
+        "state_min": "-2.287455018380646",
+        "state_max": "3.4127114885604164",
+        "time_sha256": "ffad3499269c08c6bd22e9e5c5d2ab32bbf827e2037cbdd6e73571aeab04432f",
+        "state_sha256": "822cec6dfe225bd940e8ccf42dd975b850022b4b943e102fbaeb71f002f03f65",
+        "time_path": "cells\\system_0029_ic1_time_f64le.bin",
+        "state_path": "cells\\system_0029_ic1_state_f64le_c_order.bin"
+      }
+    },
+    {
+      "unit_id": "sys0029_ic2",
+      "system_id": 29,
+      "initial_condition_set": 2,
+      "dim": 2,
+      "stratum": "dim2",
+      "active_idxs": [
+        [
+          6
+        ],
+        [
+          4,
+          5
+        ]
+      ],
+      "equations": [
+        {
+          "equation_index": 1,
+          "basis_indices": [
+            6
+          ],
+          "term_names": [
+            "u1*u2"
+          ],
+          "coefficients": [
+            0.6500372763763457
+          ],
+          "weak_sse": 1.5717865993933797e-08
+        },
+        {
+          "equation_index": 2,
+          "basis_indices": [
+            4,
+            5
+          ],
+          "term_names": [
+            "u1^2",
+            "u2^2"
+          ],
+          "coefficients": [
+            -1.0000887529621925,
+            1.0001403376167393
+          ],
+          "weak_sse": 7.203536045030068e-08
+        }
+      ],
+      "p0": [
+        0.6500372763763457,
+        -1.0000887529621925,
+        1.0001403376167393
+      ],
+      "trajectory_sha256": "f4d9d5e00c481855196197ce0bcce07ab81f95f576d0a9d61af472818b236eab",
+      "export": {
+        "system_id": "29",
+        "initial_condition_set": "2",
+        "dimension": "2",
+        "hash_format": "sha256_raw_little_endian_float64",
+        "dtype": "float64",
+        "byte_order": "little_endian",
+        "time_axis_order": "time",
+        "state_axis_order": "time_by_dimension_c_order",
+        "time_shape": "[512]",
+        "state_shape": "[512,2]",
+        "time_min": "0.0",
+        "time_max": "10.0",
+        "state_min": "-0.8781580975677677",
+        "state_max": "1.3100802282341493",
+        "time_sha256": "ffad3499269c08c6bd22e9e5c5d2ab32bbf827e2037cbdd6e73571aeab04432f",
+        "state_sha256": "f4d9d5e00c481855196197ce0bcce07ab81f95f576d0a9d61af472818b236eab",
+        "time_path": "cells\\system_0029_ic2_time_f64le.bin",
+        "state_path": "cells\\system_0029_ic2_state_f64le_c_order.bin"
+      }
+    },
+    {
+      "unit_id": "sys0031_ic1",
+      "system_id": 31,
+      "initial_condition_set": 1,
+      "dim": 2,
+      "stratum": "dim2",
+      "active_idxs": [
+        [
+          6
+        ],
+        [
+          3,
+          6
+        ]
+      ],
+      "equations": [
+        {
+          "equation_index": 1,
+          "basis_indices": [
+            6
+          ],
+          "term_names": [
+            "u1*u2"
+          ],
+          "coefficients": [
+            -0.40002707802384196
+          ],
+          "weak_sse": 9.977939967400082e-07
+        },
+        {
+          "equation_index": 2,
+          "basis_indices": [
+            3,
+            6
+          ],
+          "term_names": [
+            "u2",
+            "u1*u2"
+          ],
+          "coefficients": [
+            -0.314025493562156,
+            0.4000346076411061
+          ],
+          "weak_sse": 8.788015254054109e-07
+        }
+      ],
+      "p0": [
+        -0.40002707802384196,
+        -0.314025493562156,
+        0.4000346076411061
+      ],
+      "trajectory_sha256": "9da092858c971ab0dd92fc3591efacc6d64a01cd5807018f5f8880a7f2c37cd0",
+      "export": {
+        "system_id": "31",
+        "initial_condition_set": "1",
+        "dimension": "2",
+        "hash_format": "sha256_raw_little_endian_float64",
+        "dtype": "float64",
+        "byte_order": "little_endian",
+        "time_axis_order": "time",
+        "state_axis_order": "time_by_dimension_c_order",
+        "time_shape": "[512]",
+        "state_shape": "[512,2]",
+        "time_min": "0.0",
+        "time_max": "10.0",
+        "state_min": "0.00038243530027740817",
+        "state_max": "7.2",
+        "time_sha256": "ffad3499269c08c6bd22e9e5c5d2ab32bbf827e2037cbdd6e73571aeab04432f",
+        "state_sha256": "9da092858c971ab0dd92fc3591efacc6d64a01cd5807018f5f8880a7f2c37cd0",
+        "time_path": "cells\\system_0031_ic1_time_f64le.bin",
+        "state_path": "cells\\system_0031_ic1_state_f64le_c_order.bin"
+      }
+    },
+    {
+      "unit_id": "sys0031_ic2",
+      "system_id": 31,
+      "initial_condition_set": 2,
+      "dim": 2,
+      "stratum": "dim2",
+      "active_idxs": [
+        [
+          6
+        ],
+        [
+          3,
+          6
+        ]
+      ],
+      "equations": [
+        {
+          "equation_index": 1,
+          "basis_indices": [
+            6
+          ],
+          "term_names": [
+            "u1*u2"
+          ],
+          "coefficients": [
+            -0.4000722521311634
+          ],
+          "weak_sse": 0.005601899593254461
+        },
+        {
+          "equation_index": 2,
+          "basis_indices": [
+            3,
+            6
+          ],
+          "term_names": [
+            "u2",
+            "u1*u2"
+          ],
+          "coefficients": [
+            -0.3141976706409788,
+            0.4000916910181653
+          ],
+          "weak_sse": 0.005422955192500586
+        }
+      ],
+      "p0": [
+        -0.4000722521311634,
+        -0.3141976706409788,
+        0.4000916910181653
+      ],
+      "trajectory_sha256": "a8940691d41394980a6a66709e71b0024bc760e247d8245aff0dc6a21c8f5320",
+      "export": {
+        "system_id": "31",
+        "initial_condition_set": "2",
+        "dimension": "2",
+        "hash_format": "sha256_raw_little_endian_float64",
+        "dtype": "float64",
+        "byte_order": "little_endian",
+        "time_axis_order": "time",
+        "state_axis_order": "time_by_dimension_c_order",
+        "time_shape": "[512]",
+        "state_shape": "[512,2]",
+        "time_min": "0.0",
+        "time_max": "10.0",
+        "state_min": "1.4851388359569527e-16",
+        "state_max": "29.072939049290163",
+        "time_sha256": "ffad3499269c08c6bd22e9e5c5d2ab32bbf827e2037cbdd6e73571aeab04432f",
+        "state_sha256": "a8940691d41394980a6a66709e71b0024bc760e247d8245aff0dc6a21c8f5320",
+        "time_path": "cells\\system_0031_ic2_time_f64le.bin",
+        "state_path": "cells\\system_0031_ic2_state_f64le_c_order.bin"
+      }
+    },
+    {
+      "unit_id": "sys0032_ic1",
+      "system_id": 32,
+      "initial_condition_set": 1,
+      "dim": 2,
+      "stratum": "dim2",
+      "active_idxs": [
+        [
+          3
+        ],
+        [
+          2,
+          3,
+          7
+        ]
+      ],
+      "equations": [
+        {
+          "equation_index": 1,
+          "basis_indices": [
+            3
+          ],
+          "term_names": [
+            "u2"
+          ],
+          "coefficients": [
+            1.0000664825603252
+          ],
+          "weak_sse": 7.896267926524593e-07
+        },
+        {
+          "equation_index": 2,
+          "basis_indices": [
+            2,
+            3,
+            7
+          ],
+          "term_names": [
+            "u1",
+            "u2",
+            "u1^3"
+          ],
+          "coefficients": [
+            1.0007592706411645,
+            -0.18008916651961082,
+            -1.0003812087288695
+          ],
+          "weak_sse": 4.9112238633120515e-06
+        }
+      ],
+      "p0": [
+        1.0000664825603252,
+        1.0007592706411645,
+        -0.18008916651961082,
+        -1.0003812087288695
+      ],
+      "trajectory_sha256": "e71d9da3348a5cfd7f351f23896df3e3f40c9a70dcb268285ab6242c057a5e6b",
+      "export": {
+        "system_id": "32",
+        "initial_condition_set": "1",
+        "dimension": "2",
+        "hash_format": "sha256_raw_little_endian_float64",
+        "dtype": "float64",
+        "byte_order": "little_endian",
+        "time_axis_order": "time",
+        "state_axis_order": "time_by_dimension_c_order",
+        "time_shape": "[512]",
+        "state_shape": "[512,2]",
+        "time_min": "0.0",
+        "time_max": "10.0",
+        "state_min": "-2.0862319485409304",
+        "state_max": "2.2256069365862143",
+        "time_sha256": "ffad3499269c08c6bd22e9e5c5d2ab32bbf827e2037cbdd6e73571aeab04432f",
+        "state_sha256": "e71d9da3348a5cfd7f351f23896df3e3f40c9a70dcb268285ab6242c057a5e6b",
+        "time_path": "cells\\system_0032_ic1_time_f64le.bin",
+        "state_path": "cells\\system_0032_ic1_state_f64le_c_order.bin"
+      }
+    },
+    {
+      "unit_id": "sys0032_ic2",
+      "system_id": 32,
+      "initial_condition_set": 2,
+      "dim": 2,
+      "stratum": "dim2",
+      "active_idxs": [
+        [
+          3
+        ],
+        [
+          2,
+          3,
+          7
+        ]
+      ],
+      "equations": [
+        {
+          "equation_index": 1,
+          "basis_indices": [
+            3
+          ],
+          "term_names": [
+            "u2"
+          ],
+          "coefficients": [
+            1.000548352024434
+          ],
+          "weak_sse": 0.0013378951463158084
+        },
+        {
+          "equation_index": 2,
+          "basis_indices": [
+            2,
+            3,
+            7
+          ],
+          "term_names": [
+            "u1",
+            "u2",
+            "u1^3"
+          ],
+          "coefficients": [
+            1.0333493007590677,
+            -0.18046279481281727,
+            -1.002639418068603
+          ],
+          "weak_sse": 0.11049098785560307
+        }
+      ],
+      "p0": [
+        1.000548352024434,
+        1.0333493007590677,
+        -0.18046279481281727,
+        -1.002639418068603
+      ],
+      "trajectory_sha256": "f896099628b573e9a345f4b4199d5fcfc1f5062b8e48ba7b23fb9d1df084110e",
+      "export": {
+        "system_id": "32",
+        "initial_condition_set": "2",
+        "dimension": "2",
+        "hash_format": "sha256_raw_little_endian_float64",
+        "dtype": "float64",
+        "byte_order": "little_endian",
+        "time_axis_order": "time",
+        "state_axis_order": "time_by_dimension_c_order",
+        "time_shape": "[512]",
+        "state_shape": "[512,2]",
+        "time_min": "0.0",
+        "time_max": "10.0",
+        "state_min": "-22.430800427765323",
+        "state_max": "20.656630986353957",
+        "time_sha256": "ffad3499269c08c6bd22e9e5c5d2ab32bbf827e2037cbdd6e73571aeab04432f",
+        "state_sha256": "f896099628b573e9a345f4b4199d5fcfc1f5062b8e48ba7b23fb9d1df084110e",
+        "time_path": "cells\\system_0032_ic2_time_f64le.bin",
+        "state_path": "cells\\system_0032_ic2_state_f64le_c_order.bin"
+      }
+    },
+    {
+      "unit_id": "sys0038_ic1",
+      "system_id": 38,
+      "initial_condition_set": 1,
+      "dim": 2,
+      "stratum": "dim2",
+      "active_idxs": [
+        [
+          2,
+          3,
+          7
+        ],
+        [
+          2
+        ]
+      ],
+      "equations": [
+        {
+          "equation_index": 1,
+          "basis_indices": [
+            2,
+            3,
+            7
+          ],
+          "term_names": [
+            "u1",
+            "u2",
+            "u1^3"
+          ],
+          "coefficients": [
+            3.371773177148266,
+            3.370998858234287,
+            -1.1239337160638445
+          ],
+          "weak_sse": 3.497278602045613e-05
+        },
+        {
+          "equation_index": 2,
+          "basis_indices": [
+            2
+          ],
+          "term_names": [
+            "u1"
+          ],
+          "coefficients": [
+            -0.296745932196538
+          ],
+          "weak_sse": 1.0324268227867853e-07
+        }
+      ],
+      "p0": [
+        3.371773177148266,
+        3.370998858234287,
+        -1.1239337160638445,
+        -0.296745932196538
+      ],
+      "trajectory_sha256": "3c0888d3c690c652c0b2e114db7f23fb9850b6ef2ce61c9509e866879ec823ec",
+      "export": {
+        "system_id": "38",
+        "initial_condition_set": "1",
+        "dimension": "2",
+        "hash_format": "sha256_raw_little_endian_float64",
+        "dtype": "float64",
+        "byte_order": "little_endian",
+        "time_axis_order": "time",
+        "state_axis_order": "time_by_dimension_c_order",
+        "time_shape": "[512]",
+        "state_shape": "[512,2]",
+        "time_min": "0.0",
+        "time_max": "10.0",
+        "state_min": "-2.0232766626829424",
+        "state_max": "2.023408842518888",
+        "time_sha256": "ffad3499269c08c6bd22e9e5c5d2ab32bbf827e2037cbdd6e73571aeab04432f",
+        "state_sha256": "3c0888d3c690c652c0b2e114db7f23fb9850b6ef2ce61c9509e866879ec823ec",
+        "time_path": "cells\\system_0038_ic1_time_f64le.bin",
+        "state_path": "cells\\system_0038_ic1_state_f64le_c_order.bin"
+      }
+    },
+    {
+      "unit_id": "sys0038_ic2",
+      "system_id": 38,
+      "initial_condition_set": 2,
+      "dim": 2,
+      "stratum": "dim2",
+      "active_idxs": [
+        [
+          2,
+          3,
+          7
+        ],
+        [
+          2
+        ]
+      ],
+      "equations": [
+        {
+          "equation_index": 1,
+          "basis_indices": [
+            2,
+            3,
+            7
+          ],
+          "term_names": [
+            "u1",
+            "u2",
+            "u1^3"
+          ],
+          "coefficients": [
+            3.3719097798865945,
+            3.3709970421283395,
+            -1.1239811614885704
+          ],
+          "weak_sse": 3.649926830665213e-05
+        },
+        {
+          "equation_index": 2,
+          "basis_indices": [
+            2
+          ],
+          "term_names": [
+            "u1"
+          ],
+          "coefficients": [
+            -0.2967465995561997
+          ],
+          "weak_sse": 1.1462751688862485e-07
+        }
+      ],
+      "p0": [
+        3.3719097798865945,
+        3.3709970421283395,
+        -1.1239811614885704,
+        -0.2967465995561997
+      ],
+      "trajectory_sha256": "9e6c9b57c0eec22fdeb99e43f8df155434283e5ca1c143e3118d4394d13dbfe2",
+      "export": {
+        "system_id": "38",
+        "initial_condition_set": "2",
+        "dimension": "2",
+        "hash_format": "sha256_raw_little_endian_float64",
+        "dtype": "float64",
+        "byte_order": "little_endian",
+        "time_axis_order": "time",
+        "state_axis_order": "time_by_dimension_c_order",
+        "time_shape": "[512]",
+        "state_shape": "[512,2]",
+        "time_min": "0.0",
+        "time_max": "10.0",
+        "state_min": "-2.023383229075731",
+        "state_max": "2.023411511688607",
+        "time_sha256": "ffad3499269c08c6bd22e9e5c5d2ab32bbf827e2037cbdd6e73571aeab04432f",
+        "state_sha256": "9e6c9b57c0eec22fdeb99e43f8df155434283e5ca1c143e3118d4394d13dbfe2",
+        "time_path": "cells\\system_0038_ic2_time_f64le.bin",
+        "state_path": "cells\\system_0038_ic2_state_f64le_c_order.bin"
+      }
+    },
+    {
+      "unit_id": "sys0043_ic1",
+      "system_id": 43,
+      "initial_condition_set": 1,
+      "dim": 2,
+      "stratum": "dim2",
+      "active_idxs": [
+        [
+          3
+        ],
+        [
+          1,
+          3,
+          9
+        ]
+      ],
+      "equations": [
+        {
+          "equation_index": 1,
+          "basis_indices": [
+            3
+          ],
+          "term_names": [
+            "u2"
+          ],
+          "coefficients": [
+            1.0000051268012984
+          ],
+          "weak_sse": 1.225584635177609e-07
+        },
+        {
+          "equation_index": 2,
+          "basis_indices": [
+            1,
+            3,
+            9
+          ],
+          "term_names": [
+            "1",
+            "u2",
+            "sin(u1)"
+          ],
+          "coefficients": [
+            1.670160683940356,
+            -0.6400686985010547,
+            -1.0001725555180023
+          ],
+          "weak_sse": 1.2953475176818217e-07
+        }
+      ],
+      "p0": [
+        1.0000051268012984,
+        1.670160683940356,
+        -0.6400686985010547,
+        -1.0001725555180023
+      ],
+      "trajectory_sha256": "40af7305c0c7c18152b589b624bbf8a15d2d60f92d6a4b94e27ee78531ae6f23",
+      "export": {
+        "system_id": "43",
+        "initial_condition_set": "1",
+        "dimension": "2",
+        "hash_format": "sha256_raw_little_endian_float64",
+        "dtype": "float64",
+        "byte_order": "little_endian",
+        "time_axis_order": "time",
+        "state_axis_order": "time_by_dimension_c_order",
+        "time_shape": "[512]",
+        "state_shape": "[512,2]",
+        "time_min": "0.0",
+        "time_max": "10.0",
+        "state_min": "-0.2",
+        "state_max": "20.17946708336562",
+        "time_sha256": "ffad3499269c08c6bd22e9e5c5d2ab32bbf827e2037cbdd6e73571aeab04432f",
+        "state_sha256": "40af7305c0c7c18152b589b624bbf8a15d2d60f92d6a4b94e27ee78531ae6f23",
+        "time_path": "cells\\system_0043_ic1_time_f64le.bin",
+        "state_path": "cells\\system_0043_ic1_state_f64le_c_order.bin"
+      }
+    },
+    {
+      "unit_id": "sys0043_ic2",
+      "system_id": 43,
+      "initial_condition_set": 2,
+      "dim": 2,
+      "stratum": "dim2",
+      "active_idxs": [
+        [
+          3
+        ],
+        [
+          1,
+          3,
+          9
+        ]
+      ],
+      "equations": [
+        {
+          "equation_index": 1,
+          "basis_indices": [
+            3
+          ],
+          "term_names": [
+            "u2"
+          ],
+          "coefficients": [
+            1.000005800245111
+          ],
+          "weak_sse": 1.661354121981133e-07
+        },
+        {
+          "equation_index": 2,
+          "basis_indices": [
+            1,
+            3,
+            9
+          ],
+          "term_names": [
+            "1",
+            "u2",
+            "sin(u1)"
+          ],
+          "coefficients": [
+            1.669919351501957,
+            -0.6399700150600507,
+            -1.0001589095333676
+          ],
+          "weak_sse": 2.339965137753457e-07
+        }
+      ],
+      "p0": [
+        1.000005800245111,
+        1.669919351501957,
+        -0.6399700150600507,
+        -1.0001589095333676
+      ],
+      "trajectory_sha256": "d82d4af218a2e2bca5e6c5a5bef6967131b3a16fd9803c2f36a51cd285a46029",
+      "export": {
+        "system_id": "43",
+        "initial_condition_set": "2",
+        "dimension": "2",
+        "hash_format": "sha256_raw_little_endian_float64",
+        "dtype": "float64",
+        "byte_order": "little_endian",
+        "time_axis_order": "time",
+        "state_axis_order": "time_by_dimension_c_order",
+        "time_shape": "[512]",
+        "state_shape": "[512,2]",
+        "time_min": "0.0",
+        "time_max": "10.0",
+        "state_min": "-1.9",
+        "state_max": "20.903572569126744",
+        "time_sha256": "ffad3499269c08c6bd22e9e5c5d2ab32bbf827e2037cbdd6e73571aeab04432f",
+        "state_sha256": "d82d4af218a2e2bca5e6c5a5bef6967131b3a16fd9803c2f36a51cd285a46029",
+        "time_path": "cells\\system_0043_ic2_time_f64le.bin",
+        "state_path": "cells\\system_0043_ic2_state_f64le_c_order.bin"
+      }
+    },
+    {
+      "unit_id": "sys0052_ic1",
+      "system_id": 52,
+      "initial_condition_set": 1,
+      "dim": 3,
+      "stratum": "dim3_feasible",
+      "active_idxs": [
+        [
+          2,
+          3
+        ],
+        [
+          3,
+          9
+        ],
+        [
+          1,
+          4,
+          8
+        ]
+      ],
+      "equations": [
+        {
+          "equation_index": 1,
+          "basis_indices": [
+            2,
+            3
+          ],
+          "term_names": [
+            "u1",
+            "u2"
+          ],
+          "coefficients": [
+            -0.10000090068011966,
+            0.10000114466490473
+          ],
+          "weak_sse": 2.7877752110661175e-13
+        },
+        {
+          "equation_index": 2,
+          "basis_indices": [
+            3,
+            9
+          ],
+          "term_names": [
+            "u2",
+            "u1*u3"
+          ],
+          "coefficients": [
+            -0.21000303365287215,
+            0.21000283404307432
+          ],
+          "weak_sse": 2.375716788469907e-11
+        },
+        {
+          "equation_index": 3,
+          "basis_indices": [
+            1,
+            4,
+            8
+          ],
+          "term_names": [
+            "1",
+            "u3",
+            "u1*u2"
+          ],
+          "coefficients": [
+            1.3940117328215547,
+            -0.34000657224323083,
+            -1.0540059168519358
+          ],
+          "weak_sse": 5.248855095848039e-12
+        }
+      ],
+      "p0": [
+        -0.10000090068011966,
+        0.10000114466490473,
+        -0.21000303365287215,
+        0.21000283404307432,
+        1.3940117328215547,
+        -0.34000657224323083,
+        -1.0540059168519358
+      ],
+      "trajectory_sha256": "88e74aa50cb078f28d92cfd1f3bd61d684e54c07f13a3c732a1218e39cc74674",
+      "export": {
+        "system_id": "52",
+        "initial_condition_set": "1",
+        "dimension": "3",
+        "hash_format": "sha256_raw_little_endian_float64",
+        "dtype": "float64",
+        "byte_order": "little_endian",
+        "time_axis_order": "time",
+        "state_axis_order": "time_by_dimension_c_order",
+        "time_shape": "[512]",
+        "state_shape": "[512,3]",
+        "time_min": "0.0",
+        "time_max": "10.0",
+        "state_min": "0.4209787293598044",
+        "state_max": "1.3",
+        "time_sha256": "ffad3499269c08c6bd22e9e5c5d2ab32bbf827e2037cbdd6e73571aeab04432f",
+        "state_sha256": "88e74aa50cb078f28d92cfd1f3bd61d684e54c07f13a3c732a1218e39cc74674",
+        "time_path": "cells\\system_0052_ic1_time_f64le.bin",
+        "state_path": "cells\\system_0052_ic1_state_f64le_c_order.bin"
+      }
+    },
+    {
+      "unit_id": "sys0052_ic2",
+      "system_id": 52,
+      "initial_condition_set": 2,
+      "dim": 3,
+      "stratum": "dim3_feasible",
+      "active_idxs": [
+        [
+          2,
+          3
+        ],
+        [
+          3,
+          9
+        ],
+        [
+          1,
+          4,
+          8
+        ]
+      ],
+      "equations": [
+        {
+          "equation_index": 1,
+          "basis_indices": [
+            2,
+            3
+          ],
+          "term_names": [
+            "u1",
+            "u2"
+          ],
+          "coefficients": [
+            -0.10000002345948655,
+            0.09999998574872757
+          ],
+          "weak_sse": 4.7160528524900124e-14
+        },
+        {
+          "equation_index": 2,
+          "basis_indices": [
+            3,
+            9
+          ],
+          "term_names": [
+            "u2",
+            "u1*u3"
+          ],
+          "coefficients": [
+            -0.21000107054542017,
+            0.21000119513705698
+          ],
+          "weak_sse": 4.0001009937921487e-13
+        },
+        {
+          "equation_index": 3,
+          "basis_indices": [
+            1,
+            4,
+            8
+          ],
+          "term_names": [
+            "1",
+            "u3",
+            "u1*u2"
+          ],
+          "coefficients": [
+            1.3940048251116646,
+            -0.34000379804253955,
+            -1.0540009359068176
+          ],
+          "weak_sse": 5.5661201201699835e-14
+        }
+      ],
+      "p0": [
+        -0.10000002345948655,
+        0.09999998574872757,
+        -0.21000107054542017,
+        0.21000119513705698,
+        1.3940048251116646,
+        -0.34000379804253955,
+        -1.0540009359068176
+      ],
+      "trajectory_sha256": "e6125403daf636e9b2ddc7ac67ad4a266415d6ee519c277067159218f6e27c69",
+      "export": {
+        "system_id": "52",
+        "initial_condition_set": "2",
+        "dimension": "3",
+        "hash_format": "sha256_raw_little_endian_float64",
+        "dtype": "float64",
+        "byte_order": "little_endian",
+        "time_axis_order": "time",
+        "state_axis_order": "time_by_dimension_c_order",
+        "time_shape": "[512]",
+        "state_shape": "[512,3]",
+        "time_min": "0.0",
+        "time_max": "10.0",
+        "state_min": "0.8304996379782192",
+        "state_max": "1.3",
+        "time_sha256": "ffad3499269c08c6bd22e9e5c5d2ab32bbf827e2037cbdd6e73571aeab04432f",
+        "state_sha256": "e6125403daf636e9b2ddc7ac67ad4a266415d6ee519c277067159218f6e27c69",
+        "time_path": "cells\\system_0052_ic2_time_f64le.bin",
+        "state_path": "cells\\system_0052_ic2_state_f64le_c_order.bin"
+      }
+    },
+    {
+      "unit_id": "sys0054_ic1",
+      "system_id": 54,
+      "initial_condition_set": 1,
+      "dim": 3,
+      "stratum": "dim3_bound_infeasible",
+      "active_idxs": [
+        [
+          2,
+          3
+        ],
+        [
+          2,
+          3,
+          9
+        ],
+        [
+          4,
+          8
+        ]
+      ],
+      "equations": [
+        {
+          "equation_index": 1,
+          "basis_indices": [
+            2,
+            3
+          ],
+          "term_names": [
+            "u1",
+            "u2"
+          ],
+          "coefficients": [
+            -5.103461647989965,
+            5.103349441790003
+          ],
+          "weak_sse": 0.0004196676029811797
+        },
+        {
+          "equation_index": 2,
+          "basis_indices": [
+            2,
+            3,
+            9
+          ],
+          "term_names": [
+            "u1",
+            "u2",
+            "u1*u3"
+          ],
+          "coefficients": [
+            12.009483076452987,
+            -1.000914859209518,
+            -1.0007767856887542
+          ],
+          "weak_sse": 0.0002652633578989024
+        },
+        {
+          "equation_index": 3,
+          "basis_indices": [
+            4,
+            8
+          ],
+          "term_names": [
+            "u3",
+            "u1*u2"
+          ],
+          "coefficients": [
+            -1.671416717301505,
+            1.0008664506412843
+          ],
+          "weak_sse": 0.0006856675659745931
+        }
+      ],
+      "p0": [
+        -5.103461647989965,
+        5.103349441790003,
+        12.009483076452987,
+        -1.000914859209518,
+        -1.0007767856887542,
+        -1.671416717301505,
+        1.0008664506412843
+      ],
+      "trajectory_sha256": "c3f821ba213a31e637437e1b75bc79ee56d234438524d86cc808c591900550a6",
+      "export": {
+        "system_id": "54",
+        "initial_condition_set": "1",
+        "dimension": "3",
+        "hash_format": "sha256_raw_little_endian_float64",
+        "dtype": "float64",
+        "byte_order": "little_endian",
+        "time_axis_order": "time",
+        "state_axis_order": "time_by_dimension_c_order",
+        "time_shape": "[512]",
+        "state_shape": "[512,3]",
+        "time_min": "0.0",
+        "time_max": "10.0",
+        "state_min": "2.138535066134114",
+        "state_max": "14.14694279726958",
+        "time_sha256": "ffad3499269c08c6bd22e9e5c5d2ab32bbf827e2037cbdd6e73571aeab04432f",
+        "state_sha256": "c3f821ba213a31e637437e1b75bc79ee56d234438524d86cc808c591900550a6",
+        "time_path": "cells\\system_0054_ic1_time_f64le.bin",
+        "state_path": "cells\\system_0054_ic1_state_f64le_c_order.bin"
+      }
+    },
+    {
+      "unit_id": "sys0054_ic2",
+      "system_id": 54,
+      "initial_condition_set": 2,
+      "dim": 3,
+      "stratum": "dim3_bound_infeasible",
+      "active_idxs": [
+        [
+          2,
+          3
+        ],
+        [
+          2,
+          3,
+          9
+        ],
+        [
+          4,
+          8
+        ]
+      ],
+      "equations": [
+        {
+          "equation_index": 1,
+          "basis_indices": [
+            2,
+            3
+          ],
+          "term_names": [
+            "u1",
+            "u2"
+          ],
+          "coefficients": [
+            -5.11049059764561,
+            5.109763937660793
+          ],
+          "weak_sse": 0.017574167820422835
+        },
+        {
+          "equation_index": 2,
+          "basis_indices": [
+            2,
+            3,
+            9
+          ],
+          "term_names": [
+            "u1",
+            "u2",
+            "u1*u3"
+          ],
+          "coefficients": [
+            12.06273317567566,
+            -1.0227828823689462,
+            -1.0035199638977104
+          ],
+          "weak_sse": 0.05464377147696872
+        },
+        {
+          "equation_index": 3,
+          "basis_indices": [
+            4,
+            8
+          ],
+          "term_names": [
+            "u3",
+            "u1*u2"
+          ],
+          "coefficients": [
+            -1.6730052131829563,
+            1.0016976441138121
+          ],
+          "weak_sse": 0.12329939343775283
+        }
+      ],
+      "p0": [
+        -5.11049059764561,
+        5.109763937660793,
+        12.06273317567566,
+        -1.0227828823689462,
+        -1.0035199638977104,
+        -1.6730052131829563,
+        1.0016976441138121
+      ],
+      "trajectory_sha256": "0e462496560df0f27d7f9b60ee0013a8a875ce2f443905fc16a4a2341a0165c8",
+      "export": {
+        "system_id": "54",
+        "initial_condition_set": "2",
+        "dimension": "3",
+        "hash_format": "sha256_raw_little_endian_float64",
+        "dtype": "float64",
+        "byte_order": "little_endian",
+        "time_axis_order": "time",
+        "state_axis_order": "time_by_dimension_c_order",
+        "time_shape": "[512]",
+        "state_shape": "[512,3]",
+        "time_min": "0.0",
+        "time_max": "10.0",
+        "state_min": "-11.62919442397209",
+        "state_max": "34.9986437756721",
+        "time_sha256": "ffad3499269c08c6bd22e9e5c5d2ab32bbf827e2037cbdd6e73571aeab04432f",
+        "state_sha256": "0e462496560df0f27d7f9b60ee0013a8a875ce2f443905fc16a4a2341a0165c8",
+        "time_path": "cells\\system_0054_ic2_time_f64le.bin",
+        "state_path": "cells\\system_0054_ic2_state_f64le_c_order.bin"
+      }
+    },
+    {
+      "unit_id": "sys0055_ic1",
+      "system_id": 55,
+      "initial_condition_set": 1,
+      "dim": 3,
+      "stratum": "dim3_bound_infeasible",
+      "active_idxs": [
+        [
+          2,
+          3
+        ],
+        [
+          2,
+          3,
+          9
+        ],
+        [
+          4,
+          8
+        ]
+      ],
+      "equations": [
+        {
+          "equation_index": 1,
+          "basis_indices": [
+            2,
+            3
+          ],
+          "term_names": [
+            "u1",
+            "u2"
+          ],
+          "coefficients": [
+            -10.061814629411877,
+            10.061862880292924
+          ],
+          "weak_sse": 37.45155356223192
+        },
+        {
+          "equation_index": 2,
+          "basis_indices": [
+            2,
+            3,
+            9
+          ],
+          "term_names": [
+            "u1",
+            "u2",
+            "u1*u3"
+          ],
+          "coefficients": [
+            102.26794139113082,
+            -1.1703931236858514,
+            -1.0208380925777745
+          ],
+          "weak_sse": 475.5424847436787
+        },
+        {
+          "equation_index": 3,
+          "basis_indices": [
+            4,
+            8
+          ],
+          "term_names": [
+            "u3",
+            "u1*u2"
+          ],
+          "coefficients": [
+            -2.7032856900217292,
+            1.0136975508430381
+          ],
+          "weak_sse": 583.2358191153289
+        }
+      ],
+      "p0": [
+        -10.061814629411877,
+        10.061862880292924,
+        102.26794139113082,
+        -1.1703931236858514,
+        -1.0208380925777745,
+        -2.7032856900217292,
+        1.0136975508430381
+      ],
+      "trajectory_sha256": "d4e1900669ed840e4981c2314e79007159c935999837262341864d32e1fa8089",
+      "export": {
+        "system_id": "55",
+        "initial_condition_set": "1",
+        "dimension": "3",
+        "hash_format": "sha256_raw_little_endian_float64",
+        "dtype": "float64",
+        "byte_order": "little_endian",
+        "time_axis_order": "time",
+        "state_axis_order": "time_by_dimension_c_order",
+        "time_shape": "[512]",
+        "state_shape": "[512,3]",
+        "time_min": "0.0",
+        "time_max": "10.0",
+        "state_min": "-62.55815525450968",
+        "state_max": "178.40901510734508",
+        "time_sha256": "ffad3499269c08c6bd22e9e5c5d2ab32bbf827e2037cbdd6e73571aeab04432f",
+        "state_sha256": "d4e1900669ed840e4981c2314e79007159c935999837262341864d32e1fa8089",
+        "time_path": "cells\\system_0055_ic1_time_f64le.bin",
+        "state_path": "cells\\system_0055_ic1_state_f64le_c_order.bin"
+      }
+    },
+    {
+      "unit_id": "sys0055_ic2",
+      "system_id": 55,
+      "initial_condition_set": 2,
+      "dim": 3,
+      "stratum": "dim3_bound_infeasible",
+      "active_idxs": [
+        [
+          2,
+          3
+        ],
+        [
+          2,
+          3,
+          9
+        ],
+        [
+          4,
+          8
+        ]
+      ],
+      "equations": [
+        {
+          "equation_index": 1,
+          "basis_indices": [
+            2,
+            3
+          ],
+          "term_names": [
+            "u1",
+            "u2"
+          ],
+          "coefficients": [
+            -10.051817286886969,
+            10.051511234096102
+          ],
+          "weak_sse": 33.49705106793072
+        },
+        {
+          "equation_index": 2,
+          "basis_indices": [
+            2,
+            3,
+            9
+          ],
+          "term_names": [
+            "u1",
+            "u2",
+            "u1*u3"
+          ],
+          "coefficients": [
+            102.40933101154914,
+            -1.1883771508931302,
+            -1.0217870569180822
+          ],
+          "weak_sse": 318.5588895516736
+        },
+        {
+          "equation_index": 3,
+          "basis_indices": [
+            4,
+            8
+          ],
+          "term_names": [
+            "u3",
+            "u1*u2"
+          ],
+          "coefficients": [
+            -2.7018459329585576,
+            1.0131750656873955
+          ],
+          "weak_sse": 403.46137316847586
+        }
+      ],
+      "p0": [
+        -10.051817286886969,
+        10.051511234096102,
+        102.40933101154914,
+        -1.1883771508931302,
+        -1.0217870569180822,
+        -2.7018459329585576,
+        1.0131750656873955
+      ],
+      "trajectory_sha256": "d38700c068fd7fd4dd042ca8673b1c09f8473cb39873a70acc3df6e08b2e0b97",
+      "export": {
+        "system_id": "55",
+        "initial_condition_set": "2",
+        "dimension": "3",
+        "hash_format": "sha256_raw_little_endian_float64",
+        "dtype": "float64",
+        "byte_order": "little_endian",
+        "time_axis_order": "time",
+        "state_axis_order": "time_by_dimension_c_order",
+        "time_shape": "[512]",
+        "state_shape": "[512,3]",
+        "time_min": "0.0",
+        "time_max": "10.0",
+        "state_min": "-47.931452550824524",
+        "state_max": "163.18969512755623",
+        "time_sha256": "ffad3499269c08c6bd22e9e5c5d2ab32bbf827e2037cbdd6e73571aeab04432f",
+        "state_sha256": "d38700c068fd7fd4dd042ca8673b1c09f8473cb39873a70acc3df6e08b2e0b97",
+        "time_path": "cells\\system_0055_ic2_time_f64le.bin",
+        "state_path": "cells\\system_0055_ic2_state_f64le_c_order.bin"
+      }
+    },
+    {
+      "unit_id": "sys0056_ic1",
+      "system_id": 56,
+      "initial_condition_set": 1,
+      "dim": 3,
+      "stratum": "dim3_bound_infeasible",
+      "active_idxs": [
+        [
+          2,
+          3
+        ],
+        [
+          2,
+          3,
+          9
+        ],
+        [
+          4,
+          8
+        ]
+      ],
+      "equations": [
+        {
+          "equation_index": 1,
+          "basis_indices": [
+            2,
+            3
+          ],
+          "term_names": [
+            "u1",
+            "u2"
+          ],
+          "coefficients": [
+            -10.024330711943396,
+            10.024241695824294
+          ],
+          "weak_sse": 0.5523664791239521
+        },
+        {
+          "equation_index": 2,
+          "basis_indices": [
+            2,
+            3,
+            9
+          ],
+          "term_names": [
+            "u1",
+            "u2",
+            "u1*u3"
+          ],
+          "coefficients": [
+            28.24304193612034,
+            -1.0497959501247098,
+            -1.0068011787296207
+          ],
+          "weak_sse": 1.8634577408743147
+        },
+        {
+          "equation_index": 3,
+          "basis_indices": [
+            4,
+            8
+          ],
+          "term_names": [
+            "u3",
+            "u1*u2"
+          ],
+          "coefficients": [
+            -2.6751277971823786,
+            1.0031948028416722
+          ],
+          "weak_sse": 2.3475552494263927
+        }
+      ],
+      "p0": [
+        -10.024330711943396,
+        10.024241695824294,
+        28.24304193612034,
+        -1.0497959501247098,
+        -1.0068011787296207,
+        -2.6751277971823786,
+        1.0031948028416722
+      ],
+      "trajectory_sha256": "10276e28a124639ae6e9f81ddcd1cd8e3921af744c596f98846fb0d1d125cc3b",
+      "export": {
+        "system_id": "56",
+        "initial_condition_set": "1",
+        "dimension": "3",
+        "hash_format": "sha256_raw_little_endian_float64",
+        "dtype": "float64",
+        "byte_order": "little_endian",
+        "time_axis_order": "time",
+        "state_axis_order": "time_by_dimension_c_order",
+        "time_shape": "[512]",
+        "state_shape": "[512,3]",
+        "time_min": "0.0",
+        "time_max": "10.0",
+        "state_min": "-20.52501998524339",
+        "state_max": "41.95205514252138",
+        "time_sha256": "ffad3499269c08c6bd22e9e5c5d2ab32bbf827e2037cbdd6e73571aeab04432f",
+        "state_sha256": "10276e28a124639ae6e9f81ddcd1cd8e3921af744c596f98846fb0d1d125cc3b",
+        "time_path": "cells\\system_0056_ic1_time_f64le.bin",
+        "state_path": "cells\\system_0056_ic1_state_f64le_c_order.bin"
+      }
+    },
+    {
+      "unit_id": "sys0056_ic2",
+      "system_id": 56,
+      "initial_condition_set": 2,
+      "dim": 3,
+      "stratum": "dim3_bound_infeasible",
+      "active_idxs": [
+        [
+          2,
+          3
+        ],
+        [
+          2,
+          3,
+          9
+        ],
+        [
+          4,
+          8
+        ]
+      ],
+      "equations": [
+        {
+          "equation_index": 1,
+          "basis_indices": [
+            2,
+            3
+          ],
+          "term_names": [
+            "u1",
+            "u2"
+          ],
+          "coefficients": [
+            -10.024935800314966,
+            10.024765741988228
+          ],
+          "weak_sse": 0.5425801441195153
+        },
+        {
+          "equation_index": 2,
+          "basis_indices": [
+            2,
+            3,
+            9
+          ],
+          "term_names": [
+            "u1",
+            "u2",
+            "u1*u3"
+          ],
+          "coefficients": [
+            28.23290930477731,
+            -1.0477242048988835,
+            -1.0065445815946938
+          ],
+          "weak_sse": 1.8488072017922068
+        },
+        {
+          "equation_index": 3,
+          "basis_indices": [
+            4,
+            8
+          ],
+          "term_names": [
+            "u3",
+            "u1*u2"
+          ],
+          "coefficients": [
+            -2.6751274877291755,
+            1.0032064957562108
+          ],
+          "weak_sse": 2.3139413659471804
+        }
+      ],
+      "p0": [
+        -10.024935800314966,
+        10.024765741988228,
+        28.23290930477731,
+        -1.0477242048988835,
+        -1.0065445815946938,
+        -2.6751274877291755,
+        1.0032064957562108
+      ],
+      "trajectory_sha256": "959a49cc2561f63ad336254e5b57cdb8365e14e68ee35dca91ef86ec26a37f7d",
+      "export": {
+        "system_id": "56",
+        "initial_condition_set": "2",
+        "dimension": "3",
+        "hash_format": "sha256_raw_little_endian_float64",
+        "dtype": "float64",
+        "byte_order": "little_endian",
+        "time_axis_order": "time",
+        "state_axis_order": "time_by_dimension_c_order",
+        "time_shape": "[512]",
+        "state_shape": "[512,3]",
+        "time_min": "0.0",
+        "time_max": "10.0",
+        "state_min": "-22.229779372216452",
+        "state_max": "42.64615583530381",
+        "time_sha256": "ffad3499269c08c6bd22e9e5c5d2ab32bbf827e2037cbdd6e73571aeab04432f",
+        "state_sha256": "959a49cc2561f63ad336254e5b57cdb8365e14e68ee35dca91ef86ec26a37f7d",
+        "time_path": "cells\\system_0056_ic2_time_f64le.bin",
+        "state_path": "cells\\system_0056_ic2_state_f64le_c_order.bin"
+      }
+    },
+    {
+      "unit_id": "sys0057_ic1",
+      "system_id": 57,
+      "initial_condition_set": 1,
+      "dim": 3,
+      "stratum": "dim3_bound_infeasible",
+      "active_idxs": [
+        [
+          3,
+          4
+        ],
+        [
+          2,
+          3
+        ],
+        [
+          1,
+          4,
+          9
+        ]
+      ],
+      "equations": [
+        {
+          "equation_index": 1,
+          "basis_indices": [
+            3,
+            4
+          ],
+          "term_names": [
+            "u2",
+            "u3"
+          ],
+          "coefficients": [
+            -5.003431786201717,
+            -4.9982067500721445
+          ],
+          "weak_sse": 2.1737684355385538e-05
+        },
+        {
+          "equation_index": 2,
+          "basis_indices": [
+            2,
+            3
+          ],
+          "term_names": [
+            "u1",
+            "u2"
+          ],
+          "coefficients": [
+            5.003776585520213,
+            -1.001725898813721
+          ],
+          "weak_sse": 2.07715812412243e-06
+        },
+        {
+          "equation_index": 3,
+          "basis_indices": [
+            1,
+            4,
+            9
+          ],
+          "term_names": [
+            "1",
+            "u3",
+            "u1*u3"
+          ],
+          "coefficients": [
+            0.9919864044610122,
+            -28.270905816129424,
+            4.955587129843712
+          ],
+          "weak_sse": 6.0207400450178945e-06
+        }
+      ],
+      "p0": [
+        -5.003431786201717,
+        -4.9982067500721445,
+        5.003776585520213,
+        -1.001725898813721,
+        0.9919864044610122,
+        -28.270905816129424,
+        4.955587129843712
+      ],
+      "trajectory_sha256": "9502decd7c0310446897b904a13ef3580064fa4b793d7602319a276cf96a24e9",
+      "export": {
+        "system_id": "57",
+        "initial_condition_set": "1",
+        "dimension": "3",
+        "hash_format": "sha256_raw_little_endian_float64",
+        "dtype": "float64",
+        "byte_order": "little_endian",
+        "time_axis_order": "time",
+        "state_axis_order": "time_by_dimension_c_order",
+        "time_shape": "[512]",
+        "state_shape": "[512,3]",
+        "time_min": "0.0",
+        "time_max": "10.0",
+        "state_min": "-1.7824429451117272",
+        "state_max": "2.3",
+        "time_sha256": "ffad3499269c08c6bd22e9e5c5d2ab32bbf827e2037cbdd6e73571aeab04432f",
+        "state_sha256": "9502decd7c0310446897b904a13ef3580064fa4b793d7602319a276cf96a24e9",
+        "time_path": "cells\\system_0057_ic1_time_f64le.bin",
+        "state_path": "cells\\system_0057_ic1_state_f64le_c_order.bin"
+      }
+    },
+    {
+      "unit_id": "sys0057_ic2",
+      "system_id": 57,
+      "initial_condition_set": 2,
+      "dim": 3,
+      "stratum": "dim3_bound_infeasible",
+      "active_idxs": [
+        [
+          3,
+          4
+        ],
+        [
+          2,
+          3
+        ],
+        [
+          1,
+          4,
+          9
+        ]
+      ],
+      "equations": [
+        {
+          "equation_index": 1,
+          "basis_indices": [
+            3,
+            4
+          ],
+          "term_names": [
+            "u2",
+            "u3"
+          ],
+          "coefficients": [
+            -5.004562685530766,
+            -4.977894946912256
+          ],
+          "weak_sse": 0.0003859620313768268
+        },
+        {
+          "equation_index": 2,
+          "basis_indices": [
+            2,
+            3
+          ],
+          "term_names": [
+            "u1",
+            "u2"
+          ],
+          "coefficients": [
+            5.003730602712404,
+            -1.0014234806288933
+          ],
+          "weak_sse": 1.4271127254061043e-05
+        },
+        {
+          "equation_index": 3,
+          "basis_indices": [
+            1,
+            4,
+            9
+          ],
+          "term_names": [
+            "1",
+            "u3",
+            "u1*u3"
+          ],
+          "coefficients": [
+            0.9751170633234254,
+            -27.79303879714127,
+            4.879929787660697
+          ],
+          "weak_sse": 0.00011841378455003066
+        }
+      ],
+      "p0": [
+        -5.004562685530766,
+        -4.977894946912256,
+        5.003730602712404,
+        -1.0014234806288933,
+        0.9751170633234254,
+        -27.79303879714127,
+        4.879929787660697
+      ],
+      "trajectory_sha256": "9d3cd2297b9d73beffac59869633ae5efa5029f9345ccbe7a8a5cba23ffda309",
+      "export": {
+        "system_id": "57",
+        "initial_condition_set": "2",
+        "dimension": "3",
+        "hash_format": "sha256_raw_little_endian_float64",
+        "dtype": "float64",
+        "byte_order": "little_endian",
+        "time_axis_order": "time",
+        "state_axis_order": "time_by_dimension_c_order",
+        "time_shape": "[512]",
+        "state_shape": "[512,3]",
+        "time_min": "0.0",
+        "time_max": "10.0",
+        "state_min": "-3.481580268196351",
+        "state_max": "4.1",
+        "time_sha256": "ffad3499269c08c6bd22e9e5c5d2ab32bbf827e2037cbdd6e73571aeab04432f",
+        "state_sha256": "9d3cd2297b9d73beffac59869633ae5efa5029f9345ccbe7a8a5cba23ffda309",
+        "time_path": "cells\\system_0057_ic2_time_f64le.bin",
+        "state_path": "cells\\system_0057_ic2_state_f64le_c_order.bin"
+      }
+    },
+    {
+      "unit_id": "sys0058_ic1",
+      "system_id": 58,
+      "initial_condition_set": 1,
+      "dim": 3,
+      "stratum": "dim3_bound_infeasible",
+      "active_idxs": [
+        [
+          3,
+          4
+        ],
+        [
+          2,
+          3
+        ],
+        [
+          1,
+          4,
+          9
+        ]
+      ],
+      "equations": [
+        {
+          "equation_index": 1,
+          "basis_indices": [
+            3,
+            4
+          ],
+          "term_names": [
+            "u2",
+            "u3"
+          ],
+          "coefficients": [
+            -5.004064405083721,
+            -5.009105567713608
+          ],
+          "weak_sse": 0.003781330572862657
+        },
+        {
+          "equation_index": 2,
+          "basis_indices": [
+            2,
+            3
+          ],
+          "term_names": [
+            "u1",
+            "u2"
+          ],
+          "coefficients": [
+            5.004238266247377,
+            0.5005459654996558
+          ],
+          "weak_sse": 0.0005382566316223582
+        },
+        {
+          "equation_index": 3,
+          "basis_indices": [
+            1,
+            4,
+            9
+          ],
+          "term_names": [
+            "1",
+            "u3",
+            "u1*u3"
+          ],
+          "coefficients": [
+            1.0047441088507467,
+            -28.644216217021164,
+            5.025389786300673
+          ],
+          "weak_sse": 0.03606348097672281
+        }
+      ],
+      "p0": [
+        -5.004064405083721,
+        -5.009105567713608,
+        5.004238266247377,
+        0.5005459654996558,
+        1.0047441088507467,
+        -28.644216217021164,
+        5.025389786300673
+      ],
+      "trajectory_sha256": "7826234290aae87558458194073c3f9665cf80911bd013db3de00487ad06b2c0",
+      "export": {
+        "system_id": "58",
+        "initial_condition_set": "1",
+        "dimension": "3",
+        "hash_format": "sha256_raw_little_endian_float64",
+        "dtype": "float64",
+        "byte_order": "little_endian",
+        "time_axis_order": "time",
+        "state_axis_order": "time_by_dimension_c_order",
+        "time_shape": "[512]",
+        "state_shape": "[512,3]",
+        "time_min": "0.0",
+        "time_max": "10.0",
+        "state_min": "-8.416022905841334",
+        "state_max": "8.762560914848978",
+        "time_sha256": "ffad3499269c08c6bd22e9e5c5d2ab32bbf827e2037cbdd6e73571aeab04432f",
+        "state_sha256": "7826234290aae87558458194073c3f9665cf80911bd013db3de00487ad06b2c0",
+        "time_path": "cells\\system_0058_ic1_time_f64le.bin",
+        "state_path": "cells\\system_0058_ic1_state_f64le_c_order.bin"
+      }
+    },
+    {
+      "unit_id": "sys0058_ic2",
+      "system_id": 58,
+      "initial_condition_set": 2,
+      "dim": 3,
+      "stratum": "dim3_bound_infeasible",
+      "active_idxs": [
+        [
+          3,
+          4
+        ],
+        [
+          2,
+          3
+        ],
+        [
+          1,
+          4,
+          9
+        ]
+      ],
+      "equations": [
+        {
+          "equation_index": 1,
+          "basis_indices": [
+            3,
+            4
+          ],
+          "term_names": [
+            "u2",
+            "u3"
+          ],
+          "coefficients": [
+            -5.004081101651364,
+            -5.008971586433899
+          ],
+          "weak_sse": 0.005815504027887006
+        },
+        {
+          "equation_index": 2,
+          "basis_indices": [
+            2,
+            3
+          ],
+          "term_names": [
+            "u1",
+            "u2"
+          ],
+          "coefficients": [
+            5.004259697795981,
+            0.5004889024905107
+          ],
+          "weak_sse": 0.0007754688187814608
+        },
+        {
+          "equation_index": 3,
+          "basis_indices": [
+            1,
+            4,
+            9
+          ],
+          "term_names": [
+            "1",
+            "u3",
+            "u1*u3"
+          ],
+          "coefficients": [
+            1.0019320970563679,
+            -28.629726262640737,
+            5.023150207750445
+          ],
+          "weak_sse": 0.07080407853104684
+        }
+      ],
+      "p0": [
+        -5.004081101651364,
+        -5.008971586433899,
+        5.004259697795981,
+        0.5004889024905107,
+        1.0019320970563679,
+        -28.629726262640737,
+        5.023150207750445
+      ],
+      "trajectory_sha256": "f258d81ec92a8f4dc69b21c812cdb2e976a5627e399435d21ff2c349144a4957",
+      "export": {
+        "system_id": "58",
+        "initial_condition_set": "2",
+        "dimension": "3",
+        "hash_format": "sha256_raw_little_endian_float64",
+        "dtype": "float64",
+        "byte_order": "little_endian",
+        "time_axis_order": "time",
+        "state_axis_order": "time_by_dimension_c_order",
+        "time_shape": "[512]",
+        "state_shape": "[512,3]",
+        "time_min": "0.0",
+        "time_max": "10.0",
+        "state_min": "-8.30878377434931",
+        "state_max": "8.660013793719619",
+        "time_sha256": "ffad3499269c08c6bd22e9e5c5d2ab32bbf827e2037cbdd6e73571aeab04432f",
+        "state_sha256": "f258d81ec92a8f4dc69b21c812cdb2e976a5627e399435d21ff2c349144a4957",
+        "time_path": "cells\\system_0058_ic2_time_f64le.bin",
+        "state_path": "cells\\system_0058_ic2_state_f64le_c_order.bin"
+      }
+    },
+    {
+      "unit_id": "sys0059_ic1",
+      "system_id": 59,
+      "initial_condition_set": 1,
+      "dim": 3,
+      "stratum": "dim3_bound_infeasible",
+      "active_idxs": [
+        [
+          3,
+          4
+        ],
+        [
+          2,
+          3
+        ],
+        [
+          1,
+          4,
+          9
+        ]
+      ],
+      "equations": [
+        {
+          "equation_index": 1,
+          "basis_indices": [
+            3,
+            4
+          ],
+          "term_names": [
+            "u2",
+            "u3"
+          ],
+          "coefficients": [
+            -5.004671495608331,
+            -5.014348211773746
+          ],
+          "weak_sse": 0.1328360247954288
+        },
+        {
+          "equation_index": 2,
+          "basis_indices": [
+            2,
+            3
+          ],
+          "term_names": [
+            "u1",
+            "u2"
+          ],
+          "coefficients": [
+            5.0047734800437835,
+            1.0010457854543826
+          ],
+          "weak_sse": 0.010143092446969903
+        },
+        {
+          "equation_index": 3,
+          "basis_indices": [
+            1,
+            4,
+            9
+          ],
+          "term_names": [
+            "1",
+            "u3",
+            "u1*u3"
+          ],
+          "coefficients": [
+            1.0112894171941358,
+            -28.815918527274903,
+            5.05542038785406
+          ],
+          "weak_sse": 3.6918605701514435
+        }
+      ],
+      "p0": [
+        -5.004671495608331,
+        -5.014348211773746,
+        5.0047734800437835,
+        1.0010457854543826,
+        1.0112894171941358,
+        -28.815918527274903,
+        5.05542038785406
+      ],
+      "trajectory_sha256": "c29655fc0d92b2c872776c1db49cb70f7bd4b445cb39a011ad5104c7fede651c",
+      "export": {
+        "system_id": "59",
+        "initial_condition_set": "1",
+        "dimension": "3",
+        "hash_format": "sha256_raw_little_endian_float64",
+        "dtype": "float64",
+        "byte_order": "little_endian",
+        "time_axis_order": "time",
+        "state_axis_order": "time_by_dimension_c_order",
+        "time_shape": "[512]",
+        "state_shape": "[512,3]",
+        "time_min": "0.0",
+        "time_max": "10.0",
+        "state_min": "-10.764509287636422",
+        "state_max": "22.235772134130116",
+        "time_sha256": "ffad3499269c08c6bd22e9e5c5d2ab32bbf827e2037cbdd6e73571aeab04432f",
+        "state_sha256": "c29655fc0d92b2c872776c1db49cb70f7bd4b445cb39a011ad5104c7fede651c",
+        "time_path": "cells\\system_0059_ic1_time_f64le.bin",
+        "state_path": "cells\\system_0059_ic1_state_f64le_c_order.bin"
+      }
+    },
+    {
+      "unit_id": "sys0059_ic2",
+      "system_id": 59,
+      "initial_condition_set": 2,
+      "dim": 3,
+      "stratum": "dim3_bound_infeasible",
+      "active_idxs": [
+        [
+          3,
+          4
+        ],
+        [
+          2,
+          3
+        ],
+        [
+          1,
+          4,
+          9
+        ]
+      ],
+      "equations": [
+        {
+          "equation_index": 1,
+          "basis_indices": [
+            3,
+            4
+          ],
+          "term_names": [
+            "u2",
+            "u3"
+          ],
+          "coefficients": [
+            -5.004388572359274,
+            -5.012762389156124
+          ],
+          "weak_sse": 0.09195258594967762
+        },
+        {
+          "equation_index": 2,
+          "basis_indices": [
+            2,
+            3
+          ],
+          "term_names": [
+            "u1",
+            "u2"
+          ],
+          "coefficients": [
+            5.004689618961838,
+            1.0010130579419991
+          ],
+          "weak_sse": 0.008121861646925637
+        },
+        {
+          "equation_index": 3,
+          "basis_indices": [
+            1,
+            4,
+            9
+          ],
+          "term_names": [
+            "1",
+            "u3",
+            "u1*u3"
+          ],
+          "coefficients": [
+            1.007144944533947,
+            -28.758690790753814,
+            5.045475528844882
+          ],
+          "weak_sse": 2.0287719837051266
+        }
+      ],
+      "p0": [
+        -5.004388572359274,
+        -5.012762389156124,
+        5.004689618961838,
+        1.0010130579419991,
+        1.007144944533947,
+        -28.758690790753814,
+        5.045475528844882
+      ],
+      "trajectory_sha256": "7b580b1d4821abfa1424f7348d9baa068f2dbe0252ade52e8134d20151707b21",
+      "export": {
+        "system_id": "59",
+        "initial_condition_set": "2",
+        "dimension": "3",
+        "hash_format": "sha256_raw_little_endian_float64",
+        "dtype": "float64",
+        "byte_order": "little_endian",
+        "time_axis_order": "time",
+        "state_axis_order": "time_by_dimension_c_order",
+        "time_shape": "[512]",
+        "state_shape": "[512,3]",
+        "time_min": "0.0",
+        "time_max": "10.0",
+        "state_min": "-10.045212292550906",
+        "state_max": "17.06561663878337",
+        "time_sha256": "ffad3499269c08c6bd22e9e5c5d2ab32bbf827e2037cbdd6e73571aeab04432f",
+        "state_sha256": "7b580b1d4821abfa1424f7348d9baa068f2dbe0252ade52e8134d20151707b21",
+        "time_path": "cells\\system_0059_ic2_time_f64le.bin",
+        "state_path": "cells\\system_0059_ic2_state_f64le_c_order.bin"
+      }
+    },
+    {
+      "unit_id": "sys0061_ic1",
+      "system_id": 61,
+      "initial_condition_set": 1,
+      "dim": 3,
+      "stratum": "dim3_feasible",
+      "active_idxs": [
+        [
+          2,
+          10
+        ],
+        [
+          3,
+          9
+        ],
+        [
+          4,
+          8
+        ]
+      ],
+      "equations": [
+        {
+          "equation_index": 1,
+          "basis_indices": [
+            2,
+            10
+          ],
+          "term_names": [
+            "u1",
+            "u2*u3"
+          ],
+          "coefficients": [
+            5.01846919409134,
+            -1.003723919484872
+          ],
+          "weak_sse": 11.438388938796317
+        },
+        {
+          "equation_index": 2,
+          "basis_indices": [
+            3,
+            9
+          ],
+          "term_names": [
+            "u2",
+            "u1*u3"
+          ],
+          "coefficients": [
+            -10.045883621218604,
+            1.0045463204322966
+          ],
+          "weak_sse": 9.798140793642967
+        },
+        {
+          "equation_index": 3,
+          "basis_indices": [
+            4,
+            8
+          ],
+          "term_names": [
+            "u3",
+            "u1*u2"
+          ],
+          "coefficients": [
+            -3.82371255016358,
+            0.33542109342202964
+          ],
+          "weak_sse": 3.3114361707286193
+        }
+      ],
+      "p0": [
+        5.01846919409134,
+        -1.003723919484872,
+        -10.045883621218604,
+        1.0045463204322966,
+        -3.82371255016358,
+        0.33542109342202964
+      ],
+      "trajectory_sha256": "65c06eabaf8d55ef89e2b4f2b9226ed0f6eec60fec36da597ca514ab25f29081",
+      "export": {
+        "system_id": "61",
+        "initial_condition_set": "1",
+        "dimension": "3",
+        "hash_format": "sha256_raw_little_endian_float64",
+        "dtype": "float64",
+        "byte_order": "little_endian",
+        "time_axis_order": "time",
+        "state_axis_order": "time_by_dimension_c_order",
+        "time_shape": "[512]",
+        "state_shape": "[512,3]",
+        "time_min": "0.0",
+        "time_max": "10.0",
+        "state_min": "-34.78488865845702",
+        "state_max": "38.40588679132215",
+        "time_sha256": "ffad3499269c08c6bd22e9e5c5d2ab32bbf827e2037cbdd6e73571aeab04432f",
+        "state_sha256": "65c06eabaf8d55ef89e2b4f2b9226ed0f6eec60fec36da597ca514ab25f29081",
+        "time_path": "cells\\system_0061_ic1_time_f64le.bin",
+        "state_path": "cells\\system_0061_ic1_state_f64le_c_order.bin"
+      }
+    },
+    {
+      "unit_id": "sys0061_ic2",
+      "system_id": 61,
+      "initial_condition_set": 2,
+      "dim": 3,
+      "stratum": "dim3_feasible",
+      "active_idxs": [
+        [
+          2,
+          10
+        ],
+        [
+          3,
+          9
+        ],
+        [
+          4,
+          8
+        ]
+      ],
+      "equations": [
+        {
+          "equation_index": 1,
+          "basis_indices": [
+            2,
+            10
+          ],
+          "term_names": [
+            "u1",
+            "u2*u3"
+          ],
+          "coefficients": [
+            5.0172904877362425,
+            -1.0035327638780922
+          ],
+          "weak_sse": 8.95740590691564
+        },
+        {
+          "equation_index": 2,
+          "basis_indices": [
+            3,
+            9
+          ],
+          "term_names": [
+            "u2",
+            "u1*u3"
+          ],
+          "coefficients": [
+            -10.041762583019496,
+            1.0041306263258962
+          ],
+          "weak_sse": 7.921632045292866
+        },
+        {
+          "equation_index": 3,
+          "basis_indices": [
+            4,
+            8
+          ],
+          "term_names": [
+            "u3",
+            "u1*u2"
+          ],
+          "coefficients": [
+            -3.823750469063991,
+            0.3354230434943247
+          ],
+          "weak_sse": 2.723258567745185
+        }
+      ],
+      "p0": [
+        5.0172904877362425,
+        -1.0035327638780922,
+        -10.041762583019496,
+        1.0041306263258962,
+        -3.823750469063991,
+        0.3354230434943247
+      ],
+      "trajectory_sha256": "af35cc8103aee5b295742c25bbf92522fbcc333c33577707f230f3eda826db56",
+      "export": {
+        "system_id": "61",
+        "initial_condition_set": "2",
+        "dimension": "3",
+        "hash_format": "sha256_raw_little_endian_float64",
+        "dtype": "float64",
+        "byte_order": "little_endian",
+        "time_axis_order": "time",
+        "state_axis_order": "time_by_dimension_c_order",
+        "time_shape": "[512]",
+        "state_shape": "[512,3]",
+        "time_min": "0.0",
+        "time_max": "10.0",
+        "state_min": "-30.140618766556777",
+        "state_max": "30.113735049515657",
+        "time_sha256": "ffad3499269c08c6bd22e9e5c5d2ab32bbf827e2037cbdd6e73571aeab04432f",
+        "state_sha256": "af35cc8103aee5b295742c25bbf92522fbcc333c33577707f230f3eda826db56",
+        "time_path": "cells\\system_0061_ic2_time_f64le.bin",
+        "state_path": "cells\\system_0061_ic2_state_f64le_c_order.bin"
+      }
+    },
+    {
+      "unit_id": "sys0063_ic1",
+      "system_id": 63,
+      "initial_condition_set": 1,
+      "dim": 4,
+      "stratum": "dim4",
+      "active_idxs": [
+        [
+          11
+        ],
+        [
+          3,
+          11
+        ],
+        [
+          3,
+          4
+        ],
+        [
+          4
+        ]
+      ],
+      "equations": [
+        {
+          "equation_index": 1,
+          "basis_indices": [
+            11
+          ],
+          "term_names": [
+            "u1*u3"
+          ],
+          "coefficients": [
+            -0.2800008842246416
+          ],
+          "weak_sse": 8.5629414786476e-13
+        },
+        {
+          "equation_index": 2,
+          "basis_indices": [
+            3,
+            11
+          ],
+          "term_names": [
+            "u2",
+            "u1*u3"
+          ],
+          "coefficients": [
+            -0.4699930257346464,
+            0.27999392645814836
+          ],
+          "weak_sse": 3.3236634535575176e-15
+        },
+        {
+          "equation_index": 3,
+          "basis_indices": [
+            3,
+            4
+          ],
+          "term_names": [
+            "u2",
+            "u3"
+          ],
+          "coefficients": [
+            0.4699925541579973,
+            -0.29999705283336014
+          ],
+          "weak_sse": 4.5605107967389403e-14
+        },
+        {
+          "equation_index": 4,
+          "basis_indices": [
+            4
+          ],
+          "term_names": [
+            "u3"
+          ],
+          "coefficients": [
+            0.3000007195952406
+          ],
+          "weak_sse": 2.3658595768957266e-12
+        }
+      ],
+      "p0": [
+        -0.2800008842246416,
+        -0.4699930257346464,
+        0.27999392645814836,
+        0.4699925541579973,
+        -0.29999705283336014,
+        0.3000007195952406
+      ],
+      "trajectory_sha256": "c260eda10dd542ff304045970c8ba0a7865eb34eff31db77f5bdd9f18efa3c32",
+      "export": {
+        "system_id": "63",
+        "initial_condition_set": "1",
+        "dimension": "4",
+        "hash_format": "sha256_raw_little_endian_float64",
+        "dtype": "float64",
+        "byte_order": "little_endian",
+        "time_axis_order": "time",
+        "state_axis_order": "time_by_dimension_c_order",
+        "time_shape": "[512]",
+        "state_shape": "[512,4]",
+        "time_min": "0.0",
+        "time_max": "10.0",
+        "state_min": "0.01",
+        "state_max": "0.6",
+        "time_sha256": "ffad3499269c08c6bd22e9e5c5d2ab32bbf827e2037cbdd6e73571aeab04432f",
+        "state_sha256": "c260eda10dd542ff304045970c8ba0a7865eb34eff31db77f5bdd9f18efa3c32",
+        "time_path": "cells\\system_0063_ic1_time_f64le.bin",
+        "state_path": "cells\\system_0063_ic1_state_f64le_c_order.bin"
+      }
+    },
+    {
+      "unit_id": "sys0063_ic2",
+      "system_id": 63,
+      "initial_condition_set": 2,
+      "dim": 4,
+      "stratum": "dim4",
+      "active_idxs": [
+        [
+          11
+        ],
+        [
+          3,
+          11
+        ],
+        [
+          3,
+          4
+        ],
+        [
+          4
+        ]
+      ],
+      "equations": [
+        {
+          "equation_index": 1,
+          "basis_indices": [
+            11
+          ],
+          "term_names": [
+            "u1*u3"
+          ],
+          "coefficients": [
+            -0.28000051286124433
+          ],
+          "weak_sse": 2.0559367059316362e-13
+        },
+        {
+          "equation_index": 2,
+          "basis_indices": [
+            3,
+            11
+          ],
+          "term_names": [
+            "u2",
+            "u1*u3"
+          ],
+          "coefficients": [
+            -0.46999386494915885,
+            0.2799934492410863
+          ],
+          "weak_sse": 5.123278114579922e-16
+        },
+        {
+          "equation_index": 3,
+          "basis_indices": [
+            3,
+            4
+          ],
+          "term_names": [
+            "u2",
+            "u3"
+          ],
+          "coefficients": [
+            0.46999340222500885,
+            -0.2999980474154369
+          ],
+          "weak_sse": 2.4142212240357103e-14
+        },
+        {
+          "equation_index": 4,
+          "basis_indices": [
+            4
+          ],
+          "term_names": [
+            "u3"
+          ],
+          "coefficients": [
+            0.30000047790624235
+          ],
+          "weak_sse": 1.2845461368265617e-12
+        }
+      ],
+      "p0": [
+        -0.28000051286124433,
+        -0.46999386494915885,
+        0.2799934492410863,
+        0.46999340222500885,
+        -0.2999980474154369,
+        0.30000047790624235
+      ],
+      "trajectory_sha256": "f5f6ee38b7f9b01bd9078cc1597df308e3f62c05d550fac638eec2446c7233a6",
+      "export": {
+        "system_id": "63",
+        "initial_condition_set": "2",
+        "dimension": "4",
+        "hash_format": "sha256_raw_little_endian_float64",
+        "dtype": "float64",
+        "byte_order": "little_endian",
+        "time_axis_order": "time",
+        "state_axis_order": "time_by_dimension_c_order",
+        "time_shape": "[512]",
+        "state_shape": "[512,4]",
+        "time_min": "0.0",
+        "time_max": "10.0",
+        "state_min": "0.02277110288796026",
+        "state_max": "0.6599728217015214",
+        "time_sha256": "ffad3499269c08c6bd22e9e5c5d2ab32bbf827e2037cbdd6e73571aeab04432f",
+        "state_sha256": "f5f6ee38b7f9b01bd9078cc1597df308e3f62c05d550fac638eec2446c7233a6",
+        "time_path": "cells\\system_0063_ic2_time_f64le.bin",
+        "state_path": "cells\\system_0063_ic2_state_f64le_c_order.bin"
+      }
+    }
+  ],
+  "parameter_order": "src/basis/interface.jl:24 build_rhs; equation then stored active_idxs order",
+  "solver": "FA2 WeakFit augmented QR, subset SVD lstsq, undo unit-column scaling",
+  "input_sha256": {
+    "analysis/exploratory/term_relevance/term_relevance.py": "bc2e99595c262ea590f24baa1d4880ad6d9418cdd2908f0803817a9a53e941cb",
+    "analysis/scripts/aggregate/build_sideproject_q3_weak_starts.py": "6c4b636e4dfb283cfee71dc61073b43d31f02f04350c105542887ce2875fbf8d",
+    "analysis/scripts/aggregate/run_sideproject_residual_growth.py": "a960f9f4888492e1d7b707fdaba60c39c601dbe2d6ee0a0ba995ca268fb70f41",
+    "docs/sideproject_residual_growth_protocol_q3.md": "6e15588cd1cb75e07f9dac60dede324cd011bbba5201c008a3ed0a48ded4ac44",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0001_ic1_state_f64le_c_order.bin": "0ee16225ff89698a75ca1dd4d2560af9956e8ab3b3b0058633eb0205457986e8",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0001_ic1_time_f64le.bin": "ffad3499269c08c6bd22e9e5c5d2ab32bbf827e2037cbdd6e73571aeab04432f",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0001_ic2_state_f64le_c_order.bin": "6906ca0a07a887c83ae9cc220226eb21a137b4de61d699f78de1a2ac458d7470",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0001_ic2_time_f64le.bin": "ffad3499269c08c6bd22e9e5c5d2ab32bbf827e2037cbdd6e73571aeab04432f",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0002_ic1_state_f64le_c_order.bin": "4536cb1543f6d4039af77e870645d52f3ff6e0b757f0bd98f2cf78d7258188cc",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0002_ic1_time_f64le.bin": "ffad3499269c08c6bd22e9e5c5d2ab32bbf827e2037cbdd6e73571aeab04432f",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0002_ic2_state_f64le_c_order.bin": "13411f5aa9fe886a381b2f1a81ffdccdc160888eee96023853d23e5a3f63f578",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0002_ic2_time_f64le.bin": "ffad3499269c08c6bd22e9e5c5d2ab32bbf827e2037cbdd6e73571aeab04432f",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0003_ic1_state_f64le_c_order.bin": "185351f6341f86f0048146a9d58072c60cd55320915d8fdba0e7054c865c689c",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0003_ic1_time_f64le.bin": "ffad3499269c08c6bd22e9e5c5d2ab32bbf827e2037cbdd6e73571aeab04432f",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0003_ic2_state_f64le_c_order.bin": "0f67c12b2a959a9ddb6de5989bda10e30f86bff744e4336113614e8d81173dba",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0003_ic2_time_f64le.bin": "ffad3499269c08c6bd22e9e5c5d2ab32bbf827e2037cbdd6e73571aeab04432f",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0005_ic1_state_f64le_c_order.bin": "1c76ef00643f647efef6756b408dacb403d25aa8b579a042e3a79f13ce0746d1",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0005_ic1_time_f64le.bin": "ffad3499269c08c6bd22e9e5c5d2ab32bbf827e2037cbdd6e73571aeab04432f",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0005_ic2_state_f64le_c_order.bin": "8f9595e852b62dc8b253e409bb4eacea142f89d621865c03e279ae525a183bf6",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0005_ic2_time_f64le.bin": "ffad3499269c08c6bd22e9e5c5d2ab32bbf827e2037cbdd6e73571aeab04432f",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0006_ic1_state_f64le_c_order.bin": "ad98ecf9e889528a03227e4c7ff51c98627117c4600d7ecc478e829b576fd33c",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0006_ic1_time_f64le.bin": "ffad3499269c08c6bd22e9e5c5d2ab32bbf827e2037cbdd6e73571aeab04432f",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0006_ic2_state_f64le_c_order.bin": "4286f6d1704d7f0f7fbaaf99923ce92cfa33be596ce5afd13e1be3b904d47bb7",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0006_ic2_time_f64le.bin": "ffad3499269c08c6bd22e9e5c5d2ab32bbf827e2037cbdd6e73571aeab04432f",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0008_ic1_state_f64le_c_order.bin": "2b69ca839bdb926ba833c061f64217c625040c43315417053cca3d235f10e059",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0008_ic1_time_f64le.bin": "ffad3499269c08c6bd22e9e5c5d2ab32bbf827e2037cbdd6e73571aeab04432f",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0008_ic2_state_f64le_c_order.bin": "2d5286c6c4748e3515190d92b577c3ca122911f4582b87a26000f636501df908",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0008_ic2_time_f64le.bin": "ffad3499269c08c6bd22e9e5c5d2ab32bbf827e2037cbdd6e73571aeab04432f",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0009_ic1_state_f64le_c_order.bin": "b683606907329b3b664416a4d0fbcb360d9b55a73cdbfcb25fbf3c7a8af878f2",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0009_ic1_time_f64le.bin": "ffad3499269c08c6bd22e9e5c5d2ab32bbf827e2037cbdd6e73571aeab04432f",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0009_ic2_state_f64le_c_order.bin": "db3a2be1a9808f2dec4c6c5b77ff7c59495a14114e8f0320802d562f44b2c2ea",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0009_ic2_time_f64le.bin": "ffad3499269c08c6bd22e9e5c5d2ab32bbf827e2037cbdd6e73571aeab04432f",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0011_ic1_state_f64le_c_order.bin": "cdc13858122785454f6151a9501ad6371cdf981cbe371f76125ca52d6fd250b4",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0011_ic1_time_f64le.bin": "ffad3499269c08c6bd22e9e5c5d2ab32bbf827e2037cbdd6e73571aeab04432f",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0011_ic2_state_f64le_c_order.bin": "0e152754f68b3dc29b226238769ff02dfeb4845df1be84ebd6b0999f881db5df",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0011_ic2_time_f64le.bin": "ffad3499269c08c6bd22e9e5c5d2ab32bbf827e2037cbdd6e73571aeab04432f",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0012_ic1_state_f64le_c_order.bin": "9464d56b1a1aeda4204bd5f831a8f5436b1541a2ae4ed255433d7b2423623841",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0012_ic1_time_f64le.bin": "ffad3499269c08c6bd22e9e5c5d2ab32bbf827e2037cbdd6e73571aeab04432f",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0012_ic2_state_f64le_c_order.bin": "23ec22839f2f22bf501bc68829d7fa906ef2a708445ba2545da9114f83909c17",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0012_ic2_time_f64le.bin": "ffad3499269c08c6bd22e9e5c5d2ab32bbf827e2037cbdd6e73571aeab04432f",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0017_ic1_state_f64le_c_order.bin": "4756e9cb1aad3ac5698d8e2380b106c5d6c6e7fdcf482d06e53c8d5c19d6d4f0",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0017_ic1_time_f64le.bin": "ffad3499269c08c6bd22e9e5c5d2ab32bbf827e2037cbdd6e73571aeab04432f",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0017_ic2_state_f64le_c_order.bin": "4ce0eea86a7d476d182bfbfc499fa992cd72e05a8c7952b7ee4aca56d8f1103b",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0017_ic2_time_f64le.bin": "ffad3499269c08c6bd22e9e5c5d2ab32bbf827e2037cbdd6e73571aeab04432f",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0023_ic1_state_f64le_c_order.bin": "23439dcce1325c814f14af6cdb1b359c5c73aaff830ee17a7b36e647ea5e5830",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0023_ic1_time_f64le.bin": "ffad3499269c08c6bd22e9e5c5d2ab32bbf827e2037cbdd6e73571aeab04432f",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0023_ic2_state_f64le_c_order.bin": "ad928dbfb7a9dea663c07b6844b5ee6c1584d6359f63ae1202ba376f02154491",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0023_ic2_time_f64le.bin": "ffad3499269c08c6bd22e9e5c5d2ab32bbf827e2037cbdd6e73571aeab04432f",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0024_ic1_state_f64le_c_order.bin": "7a0cb065a725ce6f96bb42f2513fe021f726e088c0090ed0db0b96fbcf902391",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0024_ic1_time_f64le.bin": "ffad3499269c08c6bd22e9e5c5d2ab32bbf827e2037cbdd6e73571aeab04432f",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0024_ic2_state_f64le_c_order.bin": "33ed2a81e4f4e66426a0dc51832715f1c58dce189922fbe2014a3b0a2920f08c",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0024_ic2_time_f64le.bin": "ffad3499269c08c6bd22e9e5c5d2ab32bbf827e2037cbdd6e73571aeab04432f",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0025_ic1_state_f64le_c_order.bin": "a7dceadbe022cc4ee282ada4fa0da21a10871e46887dc09f15ddfcd413760e52",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0025_ic1_time_f64le.bin": "ffad3499269c08c6bd22e9e5c5d2ab32bbf827e2037cbdd6e73571aeab04432f",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0025_ic2_state_f64le_c_order.bin": "99bf42da31a6c29b1e47aedb5b323b84b8cfc5ca33584d07ae772bec9f0c2349",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0025_ic2_time_f64le.bin": "ffad3499269c08c6bd22e9e5c5d2ab32bbf827e2037cbdd6e73571aeab04432f",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0026_ic1_state_f64le_c_order.bin": "f6d3ae3e04b3230a1f565ad8369ebb166ef052fb0929f2a208013935246a327d",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0026_ic1_time_f64le.bin": "ffad3499269c08c6bd22e9e5c5d2ab32bbf827e2037cbdd6e73571aeab04432f",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0026_ic2_state_f64le_c_order.bin": "2b0b9d3bee6e268ae51b85313da38d2024fcc464b242ac7c1a62e9ec15b08c9f",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0026_ic2_time_f64le.bin": "ffad3499269c08c6bd22e9e5c5d2ab32bbf827e2037cbdd6e73571aeab04432f",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0027_ic1_state_f64le_c_order.bin": "8e397c0a0e10c1af32d8c1271f0d082edbd6f1f9f6a8199f27bc9b012e2a99e3",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0027_ic1_time_f64le.bin": "ffad3499269c08c6bd22e9e5c5d2ab32bbf827e2037cbdd6e73571aeab04432f",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0027_ic2_state_f64le_c_order.bin": "1924b11ad9cc3f14a58c59652af51911d9eb547ea7cc16e82b46ccd4ba4ea717",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0027_ic2_time_f64le.bin": "ffad3499269c08c6bd22e9e5c5d2ab32bbf827e2037cbdd6e73571aeab04432f",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0028_ic1_state_f64le_c_order.bin": "db6505ac3c4858e6784210d5a65988709c2922b167a0bbdac4de5ef01f7b75a1",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0028_ic1_time_f64le.bin": "ffad3499269c08c6bd22e9e5c5d2ab32bbf827e2037cbdd6e73571aeab04432f",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0028_ic2_state_f64le_c_order.bin": "cd1984c237edb4621aeaa1bb4fc0c2d684c0863053ea86fff62b5cfa83751d4a",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0028_ic2_time_f64le.bin": "ffad3499269c08c6bd22e9e5c5d2ab32bbf827e2037cbdd6e73571aeab04432f",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0029_ic1_state_f64le_c_order.bin": "822cec6dfe225bd940e8ccf42dd975b850022b4b943e102fbaeb71f002f03f65",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0029_ic1_time_f64le.bin": "ffad3499269c08c6bd22e9e5c5d2ab32bbf827e2037cbdd6e73571aeab04432f",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0029_ic2_state_f64le_c_order.bin": "f4d9d5e00c481855196197ce0bcce07ab81f95f576d0a9d61af472818b236eab",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0029_ic2_time_f64le.bin": "ffad3499269c08c6bd22e9e5c5d2ab32bbf827e2037cbdd6e73571aeab04432f",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0031_ic1_state_f64le_c_order.bin": "9da092858c971ab0dd92fc3591efacc6d64a01cd5807018f5f8880a7f2c37cd0",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0031_ic1_time_f64le.bin": "ffad3499269c08c6bd22e9e5c5d2ab32bbf827e2037cbdd6e73571aeab04432f",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0031_ic2_state_f64le_c_order.bin": "a8940691d41394980a6a66709e71b0024bc760e247d8245aff0dc6a21c8f5320",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0031_ic2_time_f64le.bin": "ffad3499269c08c6bd22e9e5c5d2ab32bbf827e2037cbdd6e73571aeab04432f",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0032_ic1_state_f64le_c_order.bin": "e71d9da3348a5cfd7f351f23896df3e3f40c9a70dcb268285ab6242c057a5e6b",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0032_ic1_time_f64le.bin": "ffad3499269c08c6bd22e9e5c5d2ab32bbf827e2037cbdd6e73571aeab04432f",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0032_ic2_state_f64le_c_order.bin": "f896099628b573e9a345f4b4199d5fcfc1f5062b8e48ba7b23fb9d1df084110e",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0032_ic2_time_f64le.bin": "ffad3499269c08c6bd22e9e5c5d2ab32bbf827e2037cbdd6e73571aeab04432f",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0038_ic1_state_f64le_c_order.bin": "3c0888d3c690c652c0b2e114db7f23fb9850b6ef2ce61c9509e866879ec823ec",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0038_ic1_time_f64le.bin": "ffad3499269c08c6bd22e9e5c5d2ab32bbf827e2037cbdd6e73571aeab04432f",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0038_ic2_state_f64le_c_order.bin": "9e6c9b57c0eec22fdeb99e43f8df155434283e5ca1c143e3118d4394d13dbfe2",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0038_ic2_time_f64le.bin": "ffad3499269c08c6bd22e9e5c5d2ab32bbf827e2037cbdd6e73571aeab04432f",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0043_ic1_state_f64le_c_order.bin": "40af7305c0c7c18152b589b624bbf8a15d2d60f92d6a4b94e27ee78531ae6f23",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0043_ic1_time_f64le.bin": "ffad3499269c08c6bd22e9e5c5d2ab32bbf827e2037cbdd6e73571aeab04432f",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0043_ic2_state_f64le_c_order.bin": "d82d4af218a2e2bca5e6c5a5bef6967131b3a16fd9803c2f36a51cd285a46029",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0043_ic2_time_f64le.bin": "ffad3499269c08c6bd22e9e5c5d2ab32bbf827e2037cbdd6e73571aeab04432f",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0052_ic1_state_f64le_c_order.bin": "88e74aa50cb078f28d92cfd1f3bd61d684e54c07f13a3c732a1218e39cc74674",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0052_ic1_time_f64le.bin": "ffad3499269c08c6bd22e9e5c5d2ab32bbf827e2037cbdd6e73571aeab04432f",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0052_ic2_state_f64le_c_order.bin": "e6125403daf636e9b2ddc7ac67ad4a266415d6ee519c277067159218f6e27c69",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0052_ic2_time_f64le.bin": "ffad3499269c08c6bd22e9e5c5d2ab32bbf827e2037cbdd6e73571aeab04432f",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0054_ic1_state_f64le_c_order.bin": "c3f821ba213a31e637437e1b75bc79ee56d234438524d86cc808c591900550a6",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0054_ic1_time_f64le.bin": "ffad3499269c08c6bd22e9e5c5d2ab32bbf827e2037cbdd6e73571aeab04432f",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0054_ic2_state_f64le_c_order.bin": "0e462496560df0f27d7f9b60ee0013a8a875ce2f443905fc16a4a2341a0165c8",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0054_ic2_time_f64le.bin": "ffad3499269c08c6bd22e9e5c5d2ab32bbf827e2037cbdd6e73571aeab04432f",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0055_ic1_state_f64le_c_order.bin": "d4e1900669ed840e4981c2314e79007159c935999837262341864d32e1fa8089",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0055_ic1_time_f64le.bin": "ffad3499269c08c6bd22e9e5c5d2ab32bbf827e2037cbdd6e73571aeab04432f",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0055_ic2_state_f64le_c_order.bin": "d38700c068fd7fd4dd042ca8673b1c09f8473cb39873a70acc3df6e08b2e0b97",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0055_ic2_time_f64le.bin": "ffad3499269c08c6bd22e9e5c5d2ab32bbf827e2037cbdd6e73571aeab04432f",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0056_ic1_state_f64le_c_order.bin": "10276e28a124639ae6e9f81ddcd1cd8e3921af744c596f98846fb0d1d125cc3b",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0056_ic1_time_f64le.bin": "ffad3499269c08c6bd22e9e5c5d2ab32bbf827e2037cbdd6e73571aeab04432f",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0056_ic2_state_f64le_c_order.bin": "959a49cc2561f63ad336254e5b57cdb8365e14e68ee35dca91ef86ec26a37f7d",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0056_ic2_time_f64le.bin": "ffad3499269c08c6bd22e9e5c5d2ab32bbf827e2037cbdd6e73571aeab04432f",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0057_ic1_state_f64le_c_order.bin": "9502decd7c0310446897b904a13ef3580064fa4b793d7602319a276cf96a24e9",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0057_ic1_time_f64le.bin": "ffad3499269c08c6bd22e9e5c5d2ab32bbf827e2037cbdd6e73571aeab04432f",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0057_ic2_state_f64le_c_order.bin": "9d3cd2297b9d73beffac59869633ae5efa5029f9345ccbe7a8a5cba23ffda309",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0057_ic2_time_f64le.bin": "ffad3499269c08c6bd22e9e5c5d2ab32bbf827e2037cbdd6e73571aeab04432f",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0058_ic1_state_f64le_c_order.bin": "7826234290aae87558458194073c3f9665cf80911bd013db3de00487ad06b2c0",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0058_ic1_time_f64le.bin": "ffad3499269c08c6bd22e9e5c5d2ab32bbf827e2037cbdd6e73571aeab04432f",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0058_ic2_state_f64le_c_order.bin": "f258d81ec92a8f4dc69b21c812cdb2e976a5627e399435d21ff2c349144a4957",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0058_ic2_time_f64le.bin": "ffad3499269c08c6bd22e9e5c5d2ab32bbf827e2037cbdd6e73571aeab04432f",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0059_ic1_state_f64le_c_order.bin": "c29655fc0d92b2c872776c1db49cb70f7bd4b445cb39a011ad5104c7fede651c",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0059_ic1_time_f64le.bin": "ffad3499269c08c6bd22e9e5c5d2ab32bbf827e2037cbdd6e73571aeab04432f",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0059_ic2_state_f64le_c_order.bin": "7b580b1d4821abfa1424f7348d9baa068f2dbe0252ade52e8134d20151707b21",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0059_ic2_time_f64le.bin": "ffad3499269c08c6bd22e9e5c5d2ab32bbf827e2037cbdd6e73571aeab04432f",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0061_ic1_state_f64le_c_order.bin": "65c06eabaf8d55ef89e2b4f2b9226ed0f6eec60fec36da597ca514ab25f29081",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0061_ic1_time_f64le.bin": "ffad3499269c08c6bd22e9e5c5d2ab32bbf827e2037cbdd6e73571aeab04432f",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0061_ic2_state_f64le_c_order.bin": "af35cc8103aee5b295742c25bbf92522fbcc333c33577707f230f3eda826db56",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0061_ic2_time_f64le.bin": "ffad3499269c08c6bd22e9e5c5d2ab32bbf827e2037cbdd6e73571aeab04432f",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0063_ic1_state_f64le_c_order.bin": "c260eda10dd542ff304045970c8ba0a7865eb34eff31db77f5bdd9f18efa3c32",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0063_ic1_time_f64le.bin": "ffad3499269c08c6bd22e9e5c5d2ab32bbf827e2037cbdd6e73571aeab04432f",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0063_ic2_state_f64le_c_order.bin": "f5f6ee38b7f9b01bd9078cc1597df308e3f62c05d550fac638eec2446c7233a6",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0063_ic2_time_f64le.bin": "ffad3499269c08c6bd22e9e5c5d2ab32bbf827e2037cbdd6e73571aeab04432f",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/trajectory_manifest.csv": "c92ec60a3453c18d123e29b10c63f28a2cc67a67e5ea6021f014d9847ccb63b0",
+    "src/basis/interface.jl": "907ed26745a12a0a43501d48ddb1f41e04d8054453ee1c71667923766cd52209",
+    "src/structure/interface.jl": "7f997214b14dd61e358ad877921f7ae6be3c6bfeb1f5507c224c669df26c83a9",
+    "studies/regression/phase_c_support.json": "ad8594f47399c1c5ef03e26bfe93f680bf7e866cb37e3d0462ce1e7b1c767e75"
+  }
+}

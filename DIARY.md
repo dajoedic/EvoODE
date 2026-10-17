@@ -6,6 +6,47 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ## 2026-10-17
 
+### Side-Projekt Q3 (WP-FA3): Ein Fit vom schwachen Start schlägt zehn Zufallsstarts — Klasse B ist auf der Wahrheit entschärft
+
+Protokoll vor der Rechnung eingefroren: `docs/sideproject_residual_growth_protocol_q3.md` (`c81e7c6`). Codex schrieb
+Builder, Julia-Runner und Aggregation (WP-FA3), zwei Nachbesserungen: WP-FA3b entfernt einen 15-Minuten-Timer, den
+Codex aus seinem eigenen Sitzungsprotokoll in den Runner übernommen hatte (Verstoß gegen „keine harten Cuts“);
+WP-FA3c behebt einen Parse-Fehler (`export` als Variablenname). Abweichung von der Spec, protokollkonform: Vergleich
+gegen P-04 `reference_starts` (wahre Struktur), nicht `oracle_starts` — Letztere fitten die Schnittmenge aus
+C-1-Struktur und Wahrheit, in 101/180 Zellen nicht die Wahrheit. Lauf auf dem Laptop, 60/60 Einheiten, ~35 min.
+Kontrollen: Trajektorien bit-identisch zum WP-C4c-Export (Hash), P-04-Start 1 bit-identisch reproduziert auf
+sys 1, 24, 52. Die Referenzraten treffen die kanonische Restart-Kurve (dim 2: k = 3 33,3 %, k = 10 65,0 %).
+
+**R5 und R6 bestehen in allen drei primären Schichten:**
+
+| Schicht | W0 schwach, ohne Fit | W1 ein Fit vom schwachen Start | P-04 bestes von 3 | P-04 bestes von 10 | Loss-Evals W1 / P-04 k=10 (Median) |
+|---|---|---|---|---|---|
+| dim 1 | 22/22 | **22/22** | 60/66 | 64/66 | 33 / 31.311 |
+| dim 2 | 20/20 | **20/20** | 20/60 | 39/60 | 106 / 32.430 |
+| dim 3 fittbar | 2/4 | **4/4** | 6/12 | 6/12 | 20.000 / 59.116 |
+| *dim 3 54–59* | *0/12* | *4/12* | *2/36* | *7/36* | *5.460 / 89.055* |
+| *dim 4* | *2/2* | *2/2* | *6/6* | *6/6* | *165 / 10.738* |
+
+Lesart nach Protokoll §5 (R5 besteht): **Auf der wahren Struktur ist Klasse B bei σ = 0 entschärft; ein schwacher
+Warmstart in EvoGrow ist begründet.** Auf dim 1/2 braucht es den Optimierer nicht einmal (W0 100 %), und W1 kostet
+rund ein Dreihundertstel der Loss-Evaluationen von zehn Zufallsstarts.
+
+Was dazugehört:
+- **System 61 ändert eine Aussage in CLAUDE.md.** Bisher: jeder Refit hängt bei Loss ~140–150, auch unbeschränkt
+  ≤ 1/6 (C-8). Vom schwachen Start: R² = 1,0 auf beiden ICs **unter Schranke 10**. Der wahre Koeffizient −10 liegt
+  auf der Schranke, der schwache Schätzer −10,05 wird geklemmt, deshalb scheitert W0 (R² 0,82/0,61), W1 rettet es.
+  Bei 61 war es also der Start, nicht die Schranke und nicht die Identifizierbarkeit.
+- **System 52** erreicht schon mit W0 R² = 1,0, W1 läuft trotzdem ins volle Budget von 20.000 Evals — BFGS findet
+  kein Abbruchkriterium nahe dem Optimum. Kostenaussage auf dim 3 deshalb schwach.
+- **54–59 (nur berichtet):** 54, 57, 58 erreichen R² > 0,9 trotz geklemmter Koeffizienten; 55, 56, 59 nicht.
+- Loss-Vergleich W1 gegen P-04 bestes von 10 auf dim 1/2 „besser/schlechter“ etwa hälftig — beide liegen bei
+  ~1e-13, das ist Rundungsrauschen, kein Unterschied.
+- Grenzen: nur wahre Strukturen, nur σ = 0, nur Rekonstruktion auf der Trainingstrajektorie. Daten:
+  `analysis/data/sideproject_residual_growth/q3_*`; Rohzeilen `outputs/sideproject_q3_weak_start/results.jsonl`
+  (SHA256 in `q3_run_metadata.json`).
+
+Nächster Schritt laut Reihenfolge des Nutzers: Modellgrößenwahl ohne Orakel.
+
 ### Entscheidung des Nutzers: Reihenfolge des Side-Projekts, und wo die Neuheit liegen würde
 
 R1–R4 (Q1/Q2) sind abgeschlossen: Es gibt Hinweise, dass eine residualgesteuerte Reparatur möglich ist. Reihenfolge,

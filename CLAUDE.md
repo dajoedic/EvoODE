@@ -996,7 +996,10 @@ the coupled search path 1e-6 is the cheaper, behaviour-equal tolerance; the Syst
   refits readable. **C-8 oracle, 2026-10-03:** without any bound the true structure of 57 (5/6) and 58 (2/6)
   becomes fittable, but **54, 55, 56, 59 and 61 stay at ≤ 1/6 even unbounded** — for those the bound is not the
   cause, local optima under three starts are. "Unreachable by construction" stays true for the bounded optimizer;
-  it is not the whole explanation of the dim-3 collapse
+  it is not the whole explanation of the dim-3 collapse. **Side project Q3, 2026-10-17:** from the weak-form
+  least-squares start, one fit reaches R² = 1.0 on **system 61 under bound 10** (both ICs) — its true coefficient −10
+  sits on the bound; it was the start, not the bound. Over dim 1/2/52/61 one weak-start fit reaches R² > 0.9 in
+  46/46 units against P-04 best-of-10 109/138 cells (`DIARY.md` 2026-10-17)
 - **Generalization is the weak axis (C-5, 2026-09-29).** C-1, R² > 0.9 over 126 system × direction
   units: **82.3 % reconstruction against 37.3 % generalization**; dim 1 97.8 % → 70.3 %, **dim 2
   91.7 % → 25.6 %**, dim 3 28.3 % → 1.7 %; 40 of 378 generalization integrations diverge. Together
