@@ -1,0 +1,35 @@
+{
+  "class_definition": "missing=|T\\F|; extra=|F\\T|; tp=|T intersection F|. In order: exact if missing=0 and extra=0; disjoint if tp=0; subset if extra=0; superset if missing=0; mixed otherwise. needs_add=missing>0; needs_remove=extra>0. Cell supports are (1-based equation index, term) pairs.",
+  "controls": {
+    "equation_counts_match": true,
+    "exact_rows": 180,
+    "pruned_exact_flag_agreements": 180,
+    "raw_exact_flag_agreements": 180
+  },
+  "equation_index_base": 1,
+  "git_hash": "22bcf4cb5ef8fe6970e07164431f8d8b3c1aa0c8",
+  "git_hash_source": "read-only HEAD/ref files; no Git command",
+  "inputs": [
+    {
+      "path": "analysis/data/paper1_phaseC_v1/final_2026-10-05/phasec_analysis_registry_c1.csv",
+      "sha256": "28c7a0efc7d32bfba754ca80b3e37a064f37ff2b1a30258edfb469c30ba359b1"
+    },
+    {
+      "path": "studies/regression/phase_c_support.json",
+      "sha256": "ad8594f47399c1c5ef03e26bfe93f680bf7e866cb37e3d0462ce1e7b1c767e75"
+    }
+  ],
+  "row_counts": {
+    "cells.csv": 180,
+    "equations.csv": 708,
+    "exact_systems": 30,
+    "input_registry": 378,
+    "r2_by_class_cells.csv": 25,
+    "summary_by_system.csv": 600,
+    "summary_cells_by_stratum.csv": 50,
+    "summary_equations_by_stratum.csv": 90,
+    "transition_raw_to_pruned_cells.csv": 125
+  },
+  "stratum_source": "CLAUDE.md Known Gaps, 2026-10-01 bound feasibility decision",
+  "summary_layout": "Long format, zero counts included. Transition and r2 tables are stratified; sum strata for pooled counts."
+}

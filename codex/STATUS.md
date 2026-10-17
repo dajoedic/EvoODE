@@ -1,4 +1,4 @@
-status: done
-task:   WP-N47
-report: codex/reports/REPORT_WP_N47.md
-note:   SINDy baseline image, CI/trivy, indexed Job, shard runner, docs, and one-cell smoke are complete
+status: blocked
+task: WP-FA1
+report: codex/reports/REPORT_WP_FA1.md
+note: Implementierung und Zahlenabnahme vollständig; Blindregel durch versehentliche Anzeige zweier E-SINDy-Aggregatzeilen verletzt; Gesamtsuite 160 bestanden, 2 bestehende Tests fehlgeschlagen.

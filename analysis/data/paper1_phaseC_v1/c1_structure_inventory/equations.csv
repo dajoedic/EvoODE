@@ -1,0 +1,709 @@
+run_id,system_id,system_dim,seed,initial_condition_set,stratum,r2,equation_index,kind,class,n_true,missing,extra,needs_add,needs_remove,missing_terms,extra_terms
+5_evogrow_v2_2_stage_capped_1_1_7,1,1,7,1,dim1,0.999999999999998,1,raw,exact,2,0,0,False,False,[],[]
+5_evogrow_v2_2_stage_capped_1_1_7,1,1,7,1,dim1,0.999999999999998,1,pruned,exact,2,0,0,False,False,[],[]
+11_evogrow_v2_2_stage_capped_1_2_7,1,1,7,2,dim1,0.9999999999999946,1,raw,exact,2,0,0,False,False,[],[]
+11_evogrow_v2_2_stage_capped_1_2_7,1,1,7,2,dim1,0.9999999999999946,1,pruned,exact,2,0,0,False,False,[],[]
+1_evogrow_v2_2_stage_capped_1_1_42,1,1,42,1,dim1,0.9999999999999972,1,raw,exact,2,0,0,False,False,[],[]
+1_evogrow_v2_2_stage_capped_1_1_42,1,1,42,1,dim1,0.9999999999999972,1,pruned,exact,2,0,0,False,False,[],[]
+7_evogrow_v2_2_stage_capped_1_2_42,1,1,42,2,dim1,0.999999999999998,1,raw,exact,2,0,0,False,False,[],[]
+7_evogrow_v2_2_stage_capped_1_2_42,1,1,42,2,dim1,0.999999999999998,1,pruned,exact,2,0,0,False,False,[],[]
+3_evogrow_v2_2_stage_capped_1_1_123,1,1,123,1,dim1,0.9999999999999972,1,raw,exact,2,0,0,False,False,[],[]
+3_evogrow_v2_2_stage_capped_1_1_123,1,1,123,1,dim1,0.9999999999999972,1,pruned,exact,2,0,0,False,False,[],[]
+9_evogrow_v2_2_stage_capped_1_2_123,1,1,123,2,dim1,0.999999999999996,1,raw,exact,2,0,0,False,False,[],[]
+9_evogrow_v2_2_stage_capped_1_2_123,1,1,123,2,dim1,0.999999999999996,1,pruned,exact,2,0,0,False,False,[],[]
+17_evogrow_v2_2_stage_capped_2_1_7,2,1,7,1,dim1,0.9999999999999862,1,raw,exact,1,0,0,False,False,[],[]
+17_evogrow_v2_2_stage_capped_2_1_7,2,1,7,1,dim1,0.9999999999999862,1,pruned,exact,1,0,0,False,False,[],[]
+23_evogrow_v2_2_stage_capped_2_2_7,2,1,7,2,dim1,0.999999999999986,1,raw,exact,1,0,0,False,False,[],[]
+23_evogrow_v2_2_stage_capped_2_2_7,2,1,7,2,dim1,0.999999999999986,1,pruned,exact,1,0,0,False,False,[],[]
+13_evogrow_v2_2_stage_capped_2_1_42,2,1,42,1,dim1,0.9999999999999862,1,raw,exact,1,0,0,False,False,[],[]
+13_evogrow_v2_2_stage_capped_2_1_42,2,1,42,1,dim1,0.9999999999999862,1,pruned,exact,1,0,0,False,False,[],[]
+19_evogrow_v2_2_stage_capped_2_2_42,2,1,42,2,dim1,0.999999999999986,1,raw,exact,1,0,0,False,False,[],[]
+19_evogrow_v2_2_stage_capped_2_2_42,2,1,42,2,dim1,0.999999999999986,1,pruned,exact,1,0,0,False,False,[],[]
+15_evogrow_v2_2_stage_capped_2_1_123,2,1,123,1,dim1,0.9999999999999862,1,raw,exact,1,0,0,False,False,[],[]
+15_evogrow_v2_2_stage_capped_2_1_123,2,1,123,1,dim1,0.9999999999999862,1,pruned,exact,1,0,0,False,False,[],[]
+21_evogrow_v2_2_stage_capped_2_2_123,2,1,123,2,dim1,0.999999999999986,1,raw,exact,1,0,0,False,False,[],[]
+21_evogrow_v2_2_stage_capped_2_2_123,2,1,123,2,dim1,0.999999999999986,1,pruned,exact,1,0,0,False,False,[],[]
+29_evogrow_v2_2_stage_capped_3_1_7,3,1,7,1,dim1,0.9999999999164508,1,raw,superset,2,0,1,False,True,[],"[""1""]"
+29_evogrow_v2_2_stage_capped_3_1_7,3,1,7,1,dim1,0.9999999999164508,1,pruned,exact,2,0,0,False,False,[],[]
+35_evogrow_v2_2_stage_capped_3_2_7,3,1,7,2,dim1,0.9999999993328608,1,raw,superset,2,0,1,False,True,[],"[""1""]"
+35_evogrow_v2_2_stage_capped_3_2_7,3,1,7,2,dim1,0.9999999993328608,1,pruned,superset,2,0,1,False,True,[],"[""1""]"
+25_evogrow_v2_2_stage_capped_3_1_42,3,1,42,1,dim1,0.9999999999149451,1,raw,superset,2,0,1,False,True,[],"[""1""]"
+25_evogrow_v2_2_stage_capped_3_1_42,3,1,42,1,dim1,0.9999999999149451,1,pruned,exact,2,0,0,False,False,[],[]
+31_evogrow_v2_2_stage_capped_3_2_42,3,1,42,2,dim1,0.999999999525648,1,raw,superset,2,0,1,False,True,[],"[""1""]"
+31_evogrow_v2_2_stage_capped_3_2_42,3,1,42,2,dim1,0.999999999525648,1,pruned,superset,2,0,1,False,True,[],"[""1""]"
+27_evogrow_v2_2_stage_capped_3_1_123,3,1,123,1,dim1,0.9999999999971676,1,raw,superset,2,0,1,False,True,[],"[""1""]"
+27_evogrow_v2_2_stage_capped_3_1_123,3,1,123,1,dim1,0.9999999999971676,1,pruned,exact,2,0,0,False,False,[],[]
+33_evogrow_v2_2_stage_capped_3_2_123,3,1,123,2,dim1,0.9999999996781292,1,raw,superset,2,0,1,False,True,[],"[""1""]"
+33_evogrow_v2_2_stage_capped_3_2_123,3,1,123,2,dim1,0.9999999996781292,1,pruned,superset,2,0,1,False,True,[],"[""1""]"
+53_evogrow_v2_2_stage_capped_5_1_7,5,1,7,1,dim1,0.9999999996396974,1,raw,superset,2,0,1,False,True,[],"[""u1""]"
+53_evogrow_v2_2_stage_capped_5_1_7,5,1,7,1,dim1,0.9999999996396974,1,pruned,subset,2,1,0,True,False,"[""u1^2""]",[]
+59_evogrow_v2_2_stage_capped_5_2_7,5,1,7,2,dim1,0.9999938474605096,1,raw,superset,2,0,1,False,True,[],"[""u1""]"
+59_evogrow_v2_2_stage_capped_5_2_7,5,1,7,2,dim1,0.9999938474605096,1,pruned,superset,2,0,1,False,True,[],"[""u1""]"
+49_evogrow_v2_2_stage_capped_5_1_42,5,1,42,1,dim1,0.9999999993644568,1,raw,superset,2,0,1,False,True,[],"[""u1""]"
+49_evogrow_v2_2_stage_capped_5_1_42,5,1,42,1,dim1,0.9999999993644568,1,pruned,subset,2,1,0,True,False,"[""u1^2""]",[]
+55_evogrow_v2_2_stage_capped_5_2_42,5,1,42,2,dim1,0.9999977769245244,1,raw,superset,2,0,1,False,True,[],"[""u1""]"
+55_evogrow_v2_2_stage_capped_5_2_42,5,1,42,2,dim1,0.9999977769245244,1,pruned,mixed,2,1,1,True,True,"[""u1^2""]","[""u1""]"
+51_evogrow_v2_2_stage_capped_5_1_123,5,1,123,1,dim1,0.9999999998031168,1,raw,superset,2,0,1,False,True,[],"[""u1""]"
+51_evogrow_v2_2_stage_capped_5_1_123,5,1,123,1,dim1,0.9999999998031168,1,pruned,subset,2,1,0,True,False,"[""u1^2""]",[]
+57_evogrow_v2_2_stage_capped_5_2_123,5,1,123,2,dim1,0.9999940015378964,1,raw,superset,2,0,1,False,True,[],"[""u1""]"
+57_evogrow_v2_2_stage_capped_5_2_123,5,1,123,2,dim1,0.9999940015378964,1,pruned,superset,2,0,1,False,True,[],"[""u1""]"
+65_evogrow_v2_2_stage_capped_6_1_7,6,1,7,1,dim1,0.999999999999982,1,raw,superset,2,0,1,False,True,[],"[""1""]"
+65_evogrow_v2_2_stage_capped_6_1_7,6,1,7,1,dim1,0.999999999999982,1,pruned,exact,2,0,0,False,False,[],[]
+71_evogrow_v2_2_stage_capped_6_2_7,6,1,7,2,dim1,0.995378976079374,1,raw,mixed,2,1,1,True,True,"[""u1^2""]","[""1""]"
+71_evogrow_v2_2_stage_capped_6_2_7,6,1,7,2,dim1,0.995378976079374,1,pruned,mixed,2,1,1,True,True,"[""u1^2""]","[""1""]"
+61_evogrow_v2_2_stage_capped_6_1_42,6,1,42,1,dim1,0.9999999999999676,1,raw,superset,2,0,1,False,True,[],"[""1""]"
+61_evogrow_v2_2_stage_capped_6_1_42,6,1,42,1,dim1,0.9999999999999676,1,pruned,exact,2,0,0,False,False,[],[]
+67_evogrow_v2_2_stage_capped_6_2_42,6,1,42,2,dim1,0.995378976079374,1,raw,mixed,2,1,1,True,True,"[""u1^2""]","[""1""]"
+67_evogrow_v2_2_stage_capped_6_2_42,6,1,42,2,dim1,0.995378976079374,1,pruned,mixed,2,1,1,True,True,"[""u1^2""]","[""1""]"
+63_evogrow_v2_2_stage_capped_6_1_123,6,1,123,1,dim1,0.9999999999999756,1,raw,superset,2,0,1,False,True,[],"[""1""]"
+63_evogrow_v2_2_stage_capped_6_1_123,6,1,123,1,dim1,0.9999999999999756,1,pruned,exact,2,0,0,False,False,[],[]
+69_evogrow_v2_2_stage_capped_6_2_123,6,1,123,2,dim1,0.995378976079374,1,raw,mixed,2,1,1,True,True,"[""u1^2""]","[""1""]"
+69_evogrow_v2_2_stage_capped_6_2_123,6,1,123,2,dim1,0.995378976079374,1,pruned,mixed,2,1,1,True,True,"[""u1^2""]","[""1""]"
+89_evogrow_v2_2_stage_capped_8_1_7,8,1,7,1,dim1,0.9999993183215348,1,raw,superset,3,0,1,False,True,[],"[""1""]"
+89_evogrow_v2_2_stage_capped_8_1_7,8,1,7,1,dim1,0.9999993183215348,1,pruned,superset,3,0,1,False,True,[],"[""1""]"
+95_evogrow_v2_2_stage_capped_8_2_7,8,1,7,2,dim1,0.9932632212038452,1,raw,subset,3,2,0,True,False,"[""u1^2"", ""u1^3""]",[]
+95_evogrow_v2_2_stage_capped_8_2_7,8,1,7,2,dim1,0.9932632212038452,1,pruned,subset,3,2,0,True,False,"[""u1^2"", ""u1^3""]",[]
+85_evogrow_v2_2_stage_capped_8_1_42,8,1,42,1,dim1,0.9999994936098238,1,raw,superset,3,0,1,False,True,[],"[""1""]"
+85_evogrow_v2_2_stage_capped_8_1_42,8,1,42,1,dim1,0.9999994936098238,1,pruned,superset,3,0,1,False,True,[],"[""1""]"
+91_evogrow_v2_2_stage_capped_8_2_42,8,1,42,2,dim1,0.9932632212036752,1,raw,subset,3,2,0,True,False,"[""u1^2"", ""u1^3""]",[]
+91_evogrow_v2_2_stage_capped_8_2_42,8,1,42,2,dim1,0.9932632212036752,1,pruned,subset,3,2,0,True,False,"[""u1^2"", ""u1^3""]",[]
+87_evogrow_v2_2_stage_capped_8_1_123,8,1,123,1,dim1,0.9999997293295366,1,raw,superset,3,0,1,False,True,[],"[""1""]"
+87_evogrow_v2_2_stage_capped_8_1_123,8,1,123,1,dim1,0.9999997293295366,1,pruned,superset,3,0,1,False,True,[],"[""1""]"
+93_evogrow_v2_2_stage_capped_8_2_123,8,1,123,2,dim1,0.9932632212037824,1,raw,subset,3,2,0,True,False,"[""u1^2"", ""u1^3""]",[]
+93_evogrow_v2_2_stage_capped_8_2_123,8,1,123,2,dim1,0.9932632212037824,1,pruned,subset,3,2,0,True,False,"[""u1^2"", ""u1^3""]",[]
+101_evogrow_v2_2_stage_capped_9_1_7,9,1,7,1,dim1,0.999999999999972,1,raw,exact,2,0,0,False,False,[],[]
+101_evogrow_v2_2_stage_capped_9_1_7,9,1,7,1,dim1,0.999999999999972,1,pruned,exact,2,0,0,False,False,[],[]
+107_evogrow_v2_2_stage_capped_9_2_7,9,1,7,2,dim1,-0.3972495547347618,1,raw,subset,2,1,0,True,False,"[""1""]",[]
+107_evogrow_v2_2_stage_capped_9_2_7,9,1,7,2,dim1,-0.3972495547347618,1,pruned,subset,2,1,0,True,False,"[""1""]",[]
+97_evogrow_v2_2_stage_capped_9_1_42,9,1,42,1,dim1,0.9999999999998256,1,raw,exact,2,0,0,False,False,[],[]
+97_evogrow_v2_2_stage_capped_9_1_42,9,1,42,1,dim1,0.9999999999998256,1,pruned,exact,2,0,0,False,False,[],[]
+103_evogrow_v2_2_stage_capped_9_2_42,9,1,42,2,dim1,-0.397249554734741,1,raw,subset,2,1,0,True,False,"[""1""]",[]
+103_evogrow_v2_2_stage_capped_9_2_42,9,1,42,2,dim1,-0.397249554734741,1,pruned,subset,2,1,0,True,False,"[""1""]",[]
+99_evogrow_v2_2_stage_capped_9_1_123,9,1,123,1,dim1,0.9999999999999768,1,raw,exact,2,0,0,False,False,[],[]
+99_evogrow_v2_2_stage_capped_9_1_123,9,1,123,1,dim1,0.9999999999999768,1,pruned,exact,2,0,0,False,False,[],[]
+105_evogrow_v2_2_stage_capped_9_2_123,9,1,123,2,dim1,-0.3972495547347516,1,raw,subset,2,1,0,True,False,"[""1""]",[]
+105_evogrow_v2_2_stage_capped_9_2_123,9,1,123,2,dim1,-0.3972495547347516,1,pruned,subset,2,1,0,True,False,"[""1""]",[]
+125_evogrow_v2_2_stage_capped_11_1_7,11,1,7,1,dim1,0.9908722739568746,1,raw,disjoint,1,1,3,True,True,"[""u1^3""]","[""1"", ""u1"", ""u1^2""]"
+125_evogrow_v2_2_stage_capped_11_1_7,11,1,7,1,dim1,0.9908722739568746,1,pruned,disjoint,1,1,3,True,True,"[""u1^3""]","[""1"", ""u1"", ""u1^2""]"
+131_evogrow_v2_2_stage_capped_11_2_7,11,1,7,2,dim1,0.998408729340631,1,raw,disjoint,1,1,3,True,True,"[""u1^3""]","[""1"", ""u1"", ""u1^2""]"
+131_evogrow_v2_2_stage_capped_11_2_7,11,1,7,2,dim1,0.998408729340631,1,pruned,disjoint,1,1,3,True,True,"[""u1^3""]","[""1"", ""u1"", ""u1^2""]"
+121_evogrow_v2_2_stage_capped_11_1_42,11,1,42,1,dim1,0.9908722739564942,1,raw,disjoint,1,1,3,True,True,"[""u1^3""]","[""1"", ""u1"", ""u1^2""]"
+121_evogrow_v2_2_stage_capped_11_1_42,11,1,42,1,dim1,0.9908722739564942,1,pruned,disjoint,1,1,3,True,True,"[""u1^3""]","[""1"", ""u1"", ""u1^2""]"
+127_evogrow_v2_2_stage_capped_11_2_42,11,1,42,2,dim1,0.9984087293380384,1,raw,disjoint,1,1,3,True,True,"[""u1^3""]","[""1"", ""u1"", ""u1^2""]"
+127_evogrow_v2_2_stage_capped_11_2_42,11,1,42,2,dim1,0.9984087293380384,1,pruned,disjoint,1,1,3,True,True,"[""u1^3""]","[""1"", ""u1"", ""u1^2""]"
+123_evogrow_v2_2_stage_capped_11_1_123,11,1,123,1,dim1,0.9908722739565704,1,raw,disjoint,1,1,3,True,True,"[""u1^3""]","[""1"", ""u1"", ""u1^2""]"
+123_evogrow_v2_2_stage_capped_11_1_123,11,1,123,1,dim1,0.9908722739565704,1,pruned,disjoint,1,1,3,True,True,"[""u1^3""]","[""1"", ""u1"", ""u1^2""]"
+129_evogrow_v2_2_stage_capped_11_2_123,11,1,123,2,dim1,0.9984087293428509,1,raw,disjoint,1,1,3,True,True,"[""u1^3""]","[""1"", ""u1"", ""u1^2""]"
+129_evogrow_v2_2_stage_capped_11_2_123,11,1,123,2,dim1,0.9984087293428509,1,pruned,disjoint,1,1,3,True,True,"[""u1^3""]","[""1"", ""u1"", ""u1^2""]"
+137_evogrow_v2_2_stage_capped_12_1_7,12,1,7,1,dim1,0.9999999705431226,1,raw,superset,2,0,1,False,True,[],"[""1""]"
+137_evogrow_v2_2_stage_capped_12_1_7,12,1,7,1,dim1,0.9999999705431226,1,pruned,superset,2,0,1,False,True,[],"[""1""]"
+143_evogrow_v2_2_stage_capped_12_2_7,12,1,7,2,dim1,0.999999999998788,1,raw,superset,2,0,1,False,True,[],"[""1""]"
+143_evogrow_v2_2_stage_capped_12_2_7,12,1,7,2,dim1,0.999999999998788,1,pruned,exact,2,0,0,False,False,[],[]
+133_evogrow_v2_2_stage_capped_12_1_42,12,1,42,1,dim1,0.9999999853108192,1,raw,superset,2,0,1,False,True,[],"[""1""]"
+133_evogrow_v2_2_stage_capped_12_1_42,12,1,42,1,dim1,0.9999999853108192,1,pruned,exact,2,0,0,False,False,[],[]
+139_evogrow_v2_2_stage_capped_12_2_42,12,1,42,2,dim1,0.9999999999994272,1,raw,superset,2,0,1,False,True,[],"[""1""]"
+139_evogrow_v2_2_stage_capped_12_2_42,12,1,42,2,dim1,0.9999999999994272,1,pruned,exact,2,0,0,False,False,[],[]
+135_evogrow_v2_2_stage_capped_12_1_123,12,1,123,1,dim1,0.999999999595149,1,raw,superset,2,0,1,False,True,[],"[""1""]"
+135_evogrow_v2_2_stage_capped_12_1_123,12,1,123,1,dim1,0.999999999595149,1,pruned,superset,2,0,1,False,True,[],"[""1""]"
+141_evogrow_v2_2_stage_capped_12_2_123,12,1,123,2,dim1,0.9999999999972722,1,raw,superset,2,0,1,False,True,[],"[""1""]"
+141_evogrow_v2_2_stage_capped_12_2_123,12,1,123,2,dim1,0.9999999999972722,1,pruned,exact,2,0,0,False,False,[],[]
+197_evogrow_v2_2_stage_capped_17_1_7,17,1,7,1,dim1,0.9999999990206614,1,raw,exact,3,0,0,False,False,[],[]
+197_evogrow_v2_2_stage_capped_17_1_7,17,1,7,1,dim1,0.9999999990206614,1,pruned,exact,3,0,0,False,False,[],[]
+203_evogrow_v2_2_stage_capped_17_2_7,17,1,7,2,dim1,0.9999999961215892,1,raw,exact,3,0,0,False,False,[],[]
+203_evogrow_v2_2_stage_capped_17_2_7,17,1,7,2,dim1,0.9999999961215892,1,pruned,exact,3,0,0,False,False,[],[]
+193_evogrow_v2_2_stage_capped_17_1_42,17,1,42,1,dim1,0.9999999998670892,1,raw,exact,3,0,0,False,False,[],[]
+193_evogrow_v2_2_stage_capped_17_1_42,17,1,42,1,dim1,0.9999999998670892,1,pruned,exact,3,0,0,False,False,[],[]
+199_evogrow_v2_2_stage_capped_17_2_42,17,1,42,2,dim1,0.9999999986037442,1,raw,exact,3,0,0,False,False,[],[]
+199_evogrow_v2_2_stage_capped_17_2_42,17,1,42,2,dim1,0.9999999986037442,1,pruned,exact,3,0,0,False,False,[],[]
+195_evogrow_v2_2_stage_capped_17_1_123,17,1,123,1,dim1,0.9999999993256828,1,raw,exact,3,0,0,False,False,[],[]
+195_evogrow_v2_2_stage_capped_17_1_123,17,1,123,1,dim1,0.9999999993256828,1,pruned,exact,3,0,0,False,False,[],[]
+201_evogrow_v2_2_stage_capped_17_2_123,17,1,123,2,dim1,0.9999999966972978,1,raw,exact,3,0,0,False,False,[],[]
+201_evogrow_v2_2_stage_capped_17_2_123,17,1,123,2,dim1,0.9999999966972978,1,pruned,exact,3,0,0,False,False,[],[]
+269_evogrow_v2_2_stage_capped_23_1_7,23,1,7,1,dim1,0.9997147066476464,1,raw,mixed,2,1,2,True,True,"[""sin(u1)""]","[""u1"", ""u1^2""]"
+269_evogrow_v2_2_stage_capped_23_1_7,23,1,7,1,dim1,0.9997147066476464,1,pruned,mixed,2,1,2,True,True,"[""sin(u1)""]","[""u1"", ""u1^2""]"
+275_evogrow_v2_2_stage_capped_23_2_7,23,1,7,2,dim1,0.9957497969886252,1,raw,mixed,2,1,1,True,True,"[""sin(u1)""]","[""u1""]"
+275_evogrow_v2_2_stage_capped_23_2_7,23,1,7,2,dim1,0.9957497969886252,1,pruned,mixed,2,1,1,True,True,"[""sin(u1)""]","[""u1""]"
+265_evogrow_v2_2_stage_capped_23_1_42,23,1,42,1,dim1,0.9997147066476536,1,raw,mixed,2,1,2,True,True,"[""sin(u1)""]","[""u1"", ""u1^2""]"
+265_evogrow_v2_2_stage_capped_23_1_42,23,1,42,1,dim1,0.9997147066476536,1,pruned,mixed,2,1,2,True,True,"[""sin(u1)""]","[""u1"", ""u1^2""]"
+271_evogrow_v2_2_stage_capped_23_2_42,23,1,42,2,dim1,0.9957497969886252,1,raw,mixed,2,1,1,True,True,"[""sin(u1)""]","[""u1""]"
+271_evogrow_v2_2_stage_capped_23_2_42,23,1,42,2,dim1,0.9957497969886252,1,pruned,mixed,2,1,1,True,True,"[""sin(u1)""]","[""u1""]"
+267_evogrow_v2_2_stage_capped_23_1_123,23,1,123,1,dim1,0.9997147066476588,1,raw,mixed,2,1,2,True,True,"[""sin(u1)""]","[""u1"", ""u1^2""]"
+267_evogrow_v2_2_stage_capped_23_1_123,23,1,123,1,dim1,0.9997147066476588,1,pruned,mixed,2,1,2,True,True,"[""sin(u1)""]","[""u1"", ""u1^2""]"
+273_evogrow_v2_2_stage_capped_23_2_123,23,1,123,2,dim1,0.9957497969886252,1,raw,mixed,2,1,1,True,True,"[""sin(u1)""]","[""u1""]"
+273_evogrow_v2_2_stage_capped_23_2_123,23,1,123,2,dim1,0.9957497969886252,1,pruned,mixed,2,1,1,True,True,"[""sin(u1)""]","[""u1""]"
+281_evogrow_v2_2_stage_capped_24_1_7,24,2,7,1,dim2,0.999999999999922,1,raw,exact,1,0,0,False,False,[],[]
+281_evogrow_v2_2_stage_capped_24_1_7,24,2,7,1,dim2,0.999999999999922,2,raw,exact,1,0,0,False,False,[],[]
+281_evogrow_v2_2_stage_capped_24_1_7,24,2,7,1,dim2,0.999999999999922,1,pruned,exact,1,0,0,False,False,[],[]
+281_evogrow_v2_2_stage_capped_24_1_7,24,2,7,1,dim2,0.999999999999922,2,pruned,exact,1,0,0,False,False,[],[]
+287_evogrow_v2_2_stage_capped_24_2_7,24,2,7,2,dim2,0.9999999999996438,1,raw,exact,1,0,0,False,False,[],[]
+287_evogrow_v2_2_stage_capped_24_2_7,24,2,7,2,dim2,0.9999999999996438,2,raw,superset,1,0,1,False,True,[],"[""u2""]"
+287_evogrow_v2_2_stage_capped_24_2_7,24,2,7,2,dim2,0.9999999999996438,1,pruned,exact,1,0,0,False,False,[],[]
+287_evogrow_v2_2_stage_capped_24_2_7,24,2,7,2,dim2,0.9999999999996438,2,pruned,exact,1,0,0,False,False,[],[]
+277_evogrow_v2_2_stage_capped_24_1_42,24,2,42,1,dim2,0.999999999999789,1,raw,superset,1,0,1,False,True,[],"[""u1""]"
+277_evogrow_v2_2_stage_capped_24_1_42,24,2,42,1,dim2,0.999999999999789,2,raw,exact,1,0,0,False,False,[],[]
+277_evogrow_v2_2_stage_capped_24_1_42,24,2,42,1,dim2,0.999999999999789,1,pruned,exact,1,0,0,False,False,[],[]
+277_evogrow_v2_2_stage_capped_24_1_42,24,2,42,1,dim2,0.999999999999789,2,pruned,exact,1,0,0,False,False,[],[]
+283_evogrow_v2_2_stage_capped_24_2_42,24,2,42,2,dim2,0.9999999999994886,1,raw,superset,1,0,1,False,True,[],"[""u1""]"
+283_evogrow_v2_2_stage_capped_24_2_42,24,2,42,2,dim2,0.9999999999994886,2,raw,exact,1,0,0,False,False,[],[]
+283_evogrow_v2_2_stage_capped_24_2_42,24,2,42,2,dim2,0.9999999999994886,1,pruned,exact,1,0,0,False,False,[],[]
+283_evogrow_v2_2_stage_capped_24_2_42,24,2,42,2,dim2,0.9999999999994886,2,pruned,exact,1,0,0,False,False,[],[]
+279_evogrow_v2_2_stage_capped_24_1_123,24,2,123,1,dim2,0.99999999999976,1,raw,superset,1,0,1,False,True,[],"[""u1""]"
+279_evogrow_v2_2_stage_capped_24_1_123,24,2,123,1,dim2,0.99999999999976,2,raw,exact,1,0,0,False,False,[],[]
+279_evogrow_v2_2_stage_capped_24_1_123,24,2,123,1,dim2,0.99999999999976,1,pruned,exact,1,0,0,False,False,[],[]
+279_evogrow_v2_2_stage_capped_24_1_123,24,2,123,1,dim2,0.99999999999976,2,pruned,exact,1,0,0,False,False,[],[]
+285_evogrow_v2_2_stage_capped_24_2_123,24,2,123,2,dim2,0.9999999999994882,1,raw,superset,1,0,1,False,True,[],"[""u1""]"
+285_evogrow_v2_2_stage_capped_24_2_123,24,2,123,2,dim2,0.9999999999994882,2,raw,exact,1,0,0,False,False,[],[]
+285_evogrow_v2_2_stage_capped_24_2_123,24,2,123,2,dim2,0.9999999999994882,1,pruned,exact,1,0,0,False,False,[],[]
+285_evogrow_v2_2_stage_capped_24_2_123,24,2,123,2,dim2,0.9999999999994882,2,pruned,exact,1,0,0,False,False,[],[]
+293_evogrow_v2_2_stage_capped_25_1_7,25,2,7,1,dim2,0.999999999998428,1,raw,superset,1,0,1,False,True,[],"[""u1""]"
+293_evogrow_v2_2_stage_capped_25_1_7,25,2,7,1,dim2,0.999999999998428,2,raw,exact,2,0,0,False,False,[],[]
+293_evogrow_v2_2_stage_capped_25_1_7,25,2,7,1,dim2,0.999999999998428,1,pruned,exact,1,0,0,False,False,[],[]
+293_evogrow_v2_2_stage_capped_25_1_7,25,2,7,1,dim2,0.999999999998428,2,pruned,exact,2,0,0,False,False,[],[]
+299_evogrow_v2_2_stage_capped_25_2_7,25,2,7,2,dim2,0.9999999999984408,1,raw,exact,1,0,0,False,False,[],[]
+299_evogrow_v2_2_stage_capped_25_2_7,25,2,7,2,dim2,0.9999999999984408,2,raw,exact,2,0,0,False,False,[],[]
+299_evogrow_v2_2_stage_capped_25_2_7,25,2,7,2,dim2,0.9999999999984408,1,pruned,exact,1,0,0,False,False,[],[]
+299_evogrow_v2_2_stage_capped_25_2_7,25,2,7,2,dim2,0.9999999999984408,2,pruned,exact,2,0,0,False,False,[],[]
+289_evogrow_v2_2_stage_capped_25_1_42,25,2,42,1,dim2,0.984539746051658,1,raw,superset,1,0,1,False,True,[],"[""u1""]"
+289_evogrow_v2_2_stage_capped_25_1_42,25,2,42,1,dim2,0.984539746051658,2,raw,subset,2,1,0,True,False,"[""u2""]",[]
+289_evogrow_v2_2_stage_capped_25_1_42,25,2,42,1,dim2,0.984539746051658,1,pruned,superset,1,0,1,False,True,[],"[""u1""]"
+289_evogrow_v2_2_stage_capped_25_1_42,25,2,42,1,dim2,0.984539746051658,2,pruned,subset,2,1,0,True,False,"[""u2""]",[]
+295_evogrow_v2_2_stage_capped_25_2_42,25,2,42,2,dim2,0.9832307343069384,1,raw,superset,1,0,1,False,True,[],"[""u1""]"
+295_evogrow_v2_2_stage_capped_25_2_42,25,2,42,2,dim2,0.9832307343069384,2,raw,subset,2,1,0,True,False,"[""u2""]",[]
+295_evogrow_v2_2_stage_capped_25_2_42,25,2,42,2,dim2,0.9832307343069384,1,pruned,superset,1,0,1,False,True,[],"[""u1""]"
+295_evogrow_v2_2_stage_capped_25_2_42,25,2,42,2,dim2,0.9832307343069384,2,pruned,subset,2,1,0,True,False,"[""u2""]",[]
+291_evogrow_v2_2_stage_capped_25_1_123,25,2,123,1,dim2,0.9999999999984068,1,raw,superset,1,0,1,False,True,[],"[""u1""]"
+291_evogrow_v2_2_stage_capped_25_1_123,25,2,123,1,dim2,0.9999999999984068,2,raw,exact,2,0,0,False,False,[],[]
+291_evogrow_v2_2_stage_capped_25_1_123,25,2,123,1,dim2,0.9999999999984068,1,pruned,exact,1,0,0,False,False,[],[]
+291_evogrow_v2_2_stage_capped_25_1_123,25,2,123,1,dim2,0.9999999999984068,2,pruned,exact,2,0,0,False,False,[],[]
+297_evogrow_v2_2_stage_capped_25_2_123,25,2,123,2,dim2,0.9999999999975208,1,raw,exact,1,0,0,False,False,[],[]
+297_evogrow_v2_2_stage_capped_25_2_123,25,2,123,2,dim2,0.9999999999975208,2,raw,exact,2,0,0,False,False,[],[]
+297_evogrow_v2_2_stage_capped_25_2_123,25,2,123,2,dim2,0.9999999999975208,1,pruned,exact,1,0,0,False,False,[],[]
+297_evogrow_v2_2_stage_capped_25_2_123,25,2,123,2,dim2,0.9999999999975208,2,pruned,exact,2,0,0,False,False,[],[]
+305_evogrow_v2_2_stage_capped_26_1_7,26,2,7,1,dim2,0.9980022711917468,1,raw,superset,3,0,1,False,True,[],"[""u2""]"
+305_evogrow_v2_2_stage_capped_26_1_7,26,2,7,1,dim2,0.9980022711917468,2,raw,disjoint,3,3,3,True,True,"[""u1*u2"", ""u2"", ""u2^2""]","[""1"", ""u1"", ""u1^2""]"
+305_evogrow_v2_2_stage_capped_26_1_7,26,2,7,1,dim2,0.9980022711917468,1,pruned,exact,3,0,0,False,False,[],[]
+305_evogrow_v2_2_stage_capped_26_1_7,26,2,7,1,dim2,0.9980022711917468,2,pruned,disjoint,3,3,3,True,True,"[""u1*u2"", ""u2"", ""u2^2""]","[""1"", ""u1"", ""u1^2""]"
+311_evogrow_v2_2_stage_capped_26_2_7,26,2,7,2,dim2,0.9830366978718704,1,raw,mixed,3,2,2,True,True,"[""u1*u2"", ""u1^2""]","[""1"", ""u2""]"
+311_evogrow_v2_2_stage_capped_26_2_7,26,2,7,2,dim2,0.9830366978718704,2,raw,mixed,3,2,2,True,True,"[""u1*u2"", ""u2^2""]","[""1"", ""u1""]"
+311_evogrow_v2_2_stage_capped_26_2_7,26,2,7,2,dim2,0.9830366978718704,1,pruned,mixed,3,2,2,True,True,"[""u1*u2"", ""u1^2""]","[""1"", ""u2""]"
+311_evogrow_v2_2_stage_capped_26_2_7,26,2,7,2,dim2,0.9830366978718704,2,pruned,mixed,3,2,2,True,True,"[""u1*u2"", ""u2^2""]","[""1"", ""u1""]"
+301_evogrow_v2_2_stage_capped_26_1_42,26,2,42,1,dim2,0.9980083532577442,1,raw,superset,3,0,1,False,True,[],"[""1""]"
+301_evogrow_v2_2_stage_capped_26_1_42,26,2,42,1,dim2,0.9980083532577442,2,raw,disjoint,3,3,3,True,True,"[""u1*u2"", ""u2"", ""u2^2""]","[""1"", ""u1"", ""u1^2""]"
+301_evogrow_v2_2_stage_capped_26_1_42,26,2,42,1,dim2,0.9980083532577442,1,pruned,superset,3,0,1,False,True,[],"[""1""]"
+301_evogrow_v2_2_stage_capped_26_1_42,26,2,42,1,dim2,0.9980083532577442,2,pruned,disjoint,3,3,3,True,True,"[""u1*u2"", ""u2"", ""u2^2""]","[""1"", ""u1"", ""u1^2""]"
+307_evogrow_v2_2_stage_capped_26_2_42,26,2,42,2,dim2,0.9830366963774124,1,raw,mixed,3,2,2,True,True,"[""u1*u2"", ""u1^2""]","[""1"", ""u2""]"
+307_evogrow_v2_2_stage_capped_26_2_42,26,2,42,2,dim2,0.9830366963774124,2,raw,mixed,3,2,2,True,True,"[""u1*u2"", ""u2^2""]","[""1"", ""u1""]"
+307_evogrow_v2_2_stage_capped_26_2_42,26,2,42,2,dim2,0.9830366963774124,1,pruned,mixed,3,2,2,True,True,"[""u1*u2"", ""u1^2""]","[""1"", ""u2""]"
+307_evogrow_v2_2_stage_capped_26_2_42,26,2,42,2,dim2,0.9830366963774124,2,pruned,mixed,3,2,2,True,True,"[""u1*u2"", ""u2^2""]","[""1"", ""u1""]"
+303_evogrow_v2_2_stage_capped_26_1_123,26,2,123,1,dim2,0.9980083549640502,1,raw,superset,3,0,1,False,True,[],"[""1""]"
+303_evogrow_v2_2_stage_capped_26_1_123,26,2,123,1,dim2,0.9980083549640502,2,raw,disjoint,3,3,3,True,True,"[""u1*u2"", ""u2"", ""u2^2""]","[""1"", ""u1"", ""u1^2""]"
+303_evogrow_v2_2_stage_capped_26_1_123,26,2,123,1,dim2,0.9980083549640502,1,pruned,superset,3,0,1,False,True,[],"[""1""]"
+303_evogrow_v2_2_stage_capped_26_1_123,26,2,123,1,dim2,0.9980083549640502,2,pruned,disjoint,3,3,3,True,True,"[""u1*u2"", ""u2"", ""u2^2""]","[""1"", ""u1"", ""u1^2""]"
+309_evogrow_v2_2_stage_capped_26_2_123,26,2,123,2,dim2,0.9830367021795752,1,raw,mixed,3,2,2,True,True,"[""u1*u2"", ""u1^2""]","[""1"", ""u2""]"
+309_evogrow_v2_2_stage_capped_26_2_123,26,2,123,2,dim2,0.9830367021795752,2,raw,mixed,3,2,2,True,True,"[""u1*u2"", ""u2^2""]","[""1"", ""u1""]"
+309_evogrow_v2_2_stage_capped_26_2_123,26,2,123,2,dim2,0.9830367021795752,1,pruned,mixed,3,2,2,True,True,"[""u1*u2"", ""u1^2""]","[""1"", ""u2""]"
+309_evogrow_v2_2_stage_capped_26_2_123,26,2,123,2,dim2,0.9830367021795752,2,pruned,mixed,3,2,2,True,True,"[""u1*u2"", ""u2^2""]","[""1"", ""u1""]"
+317_evogrow_v2_2_stage_capped_27_1_7,27,2,7,1,dim2,0.997955042851146,1,raw,superset,2,0,4,False,True,[],"[""1"", ""u1^2"", ""u2"", ""u2^2""]"
+317_evogrow_v2_2_stage_capped_27_1_7,27,2,7,1,dim2,0.997955042851146,2,raw,superset,2,0,4,False,True,[],"[""1"", ""u1"", ""u1^2"", ""u2^2""]"
+317_evogrow_v2_2_stage_capped_27_1_7,27,2,7,1,dim2,0.997955042851146,1,pruned,superset,2,0,4,False,True,[],"[""1"", ""u1^2"", ""u2"", ""u2^2""]"
+317_evogrow_v2_2_stage_capped_27_1_7,27,2,7,1,dim2,0.997955042851146,2,pruned,superset,2,0,4,False,True,[],"[""1"", ""u1"", ""u1^2"", ""u2^2""]"
+323_evogrow_v2_2_stage_capped_27_2_7,27,2,7,2,dim2,0.9999982573409144,1,raw,superset,2,0,3,False,True,[],"[""1"", ""u2"", ""u2^2""]"
+323_evogrow_v2_2_stage_capped_27_2_7,27,2,7,2,dim2,0.9999982573409144,2,raw,superset,2,0,4,False,True,[],"[""1"", ""u1"", ""u1^2"", ""u2^2""]"
+323_evogrow_v2_2_stage_capped_27_2_7,27,2,7,2,dim2,0.9999982573409144,1,pruned,superset,2,0,2,False,True,[],"[""u2"", ""u2^2""]"
+323_evogrow_v2_2_stage_capped_27_2_7,27,2,7,2,dim2,0.9999982573409144,2,pruned,superset,2,0,2,False,True,[],"[""u1"", ""u1^2""]"
+313_evogrow_v2_2_stage_capped_27_1_42,27,2,42,1,dim2,0.998959613928606,1,raw,superset,2,0,4,False,True,[],"[""1"", ""u1^2"", ""u2"", ""u2^2""]"
+313_evogrow_v2_2_stage_capped_27_1_42,27,2,42,1,dim2,0.998959613928606,2,raw,superset,2,0,4,False,True,[],"[""1"", ""u1"", ""u1^2"", ""u2^2""]"
+313_evogrow_v2_2_stage_capped_27_1_42,27,2,42,1,dim2,0.998959613928606,1,pruned,superset,2,0,4,False,True,[],"[""1"", ""u1^2"", ""u2"", ""u2^2""]"
+313_evogrow_v2_2_stage_capped_27_1_42,27,2,42,1,dim2,0.998959613928606,2,pruned,superset,2,0,4,False,True,[],"[""1"", ""u1"", ""u1^2"", ""u2^2""]"
+319_evogrow_v2_2_stage_capped_27_2_42,27,2,42,2,dim2,0.9999999347917508,1,raw,superset,2,0,4,False,True,[],"[""1"", ""u1^2"", ""u2"", ""u2^2""]"
+319_evogrow_v2_2_stage_capped_27_2_42,27,2,42,2,dim2,0.9999999347917508,2,raw,superset,2,0,4,False,True,[],"[""1"", ""u1"", ""u1^2"", ""u2^2""]"
+319_evogrow_v2_2_stage_capped_27_2_42,27,2,42,2,dim2,0.9999999347917508,1,pruned,superset,2,0,2,False,True,[],"[""1"", ""u2""]"
+319_evogrow_v2_2_stage_capped_27_2_42,27,2,42,2,dim2,0.9999999347917508,2,pruned,superset,2,0,2,False,True,[],"[""1"", ""u1""]"
+315_evogrow_v2_2_stage_capped_27_1_123,27,2,123,1,dim2,0.9950577873565124,1,raw,superset,2,0,3,False,True,[],"[""1"", ""u1^2"", ""u2""]"
+315_evogrow_v2_2_stage_capped_27_1_123,27,2,123,1,dim2,0.9950577873565124,2,raw,superset,2,0,3,False,True,[],"[""1"", ""u1"", ""u2^2""]"
+315_evogrow_v2_2_stage_capped_27_1_123,27,2,123,1,dim2,0.9950577873565124,1,pruned,superset,2,0,3,False,True,[],"[""1"", ""u1^2"", ""u2""]"
+315_evogrow_v2_2_stage_capped_27_1_123,27,2,123,1,dim2,0.9950577873565124,2,pruned,superset,2,0,3,False,True,[],"[""1"", ""u1"", ""u2^2""]"
+321_evogrow_v2_2_stage_capped_27_2_123,27,2,123,2,dim2,0.999963588798908,1,raw,superset,2,0,4,False,True,[],"[""1"", ""u1^2"", ""u2"", ""u2^2""]"
+321_evogrow_v2_2_stage_capped_27_2_123,27,2,123,2,dim2,0.999963588798908,2,raw,superset,2,0,4,False,True,[],"[""1"", ""u1"", ""u1^2"", ""u2^2""]"
+321_evogrow_v2_2_stage_capped_27_2_123,27,2,123,2,dim2,0.999963588798908,1,pruned,superset,2,0,4,False,True,[],"[""1"", ""u1^2"", ""u2"", ""u2^2""]"
+321_evogrow_v2_2_stage_capped_27_2_123,27,2,123,2,dim2,0.999963588798908,2,pruned,superset,2,0,4,False,True,[],"[""1"", ""u1"", ""u1^2"", ""u2^2""]"
+329_evogrow_v2_2_stage_capped_28_1_7,28,2,7,1,dim2,0.999999999999385,1,raw,exact,1,0,0,False,False,[],[]
+329_evogrow_v2_2_stage_capped_28_1_7,28,2,7,1,dim2,0.999999999999385,2,raw,superset,1,0,2,False,True,[],"[""u1"", ""u2""]"
+329_evogrow_v2_2_stage_capped_28_1_7,28,2,7,1,dim2,0.999999999999385,1,pruned,exact,1,0,0,False,False,[],[]
+329_evogrow_v2_2_stage_capped_28_1_7,28,2,7,1,dim2,0.999999999999385,2,pruned,exact,1,0,0,False,False,[],[]
+335_evogrow_v2_2_stage_capped_28_2_7,28,2,7,2,dim2,0.999863118279588,1,raw,exact,1,0,0,False,False,[],[]
+335_evogrow_v2_2_stage_capped_28_2_7,28,2,7,2,dim2,0.999863118279588,2,raw,disjoint,1,1,2,True,True,"[""sin(u1)""]","[""u1"", ""u2""]"
+335_evogrow_v2_2_stage_capped_28_2_7,28,2,7,2,dim2,0.999863118279588,1,pruned,exact,1,0,0,False,False,[],[]
+335_evogrow_v2_2_stage_capped_28_2_7,28,2,7,2,dim2,0.999863118279588,2,pruned,disjoint,1,1,2,True,True,"[""sin(u1)""]","[""u1"", ""u2""]"
+325_evogrow_v2_2_stage_capped_28_1_42,28,2,42,1,dim2,0.9999999999992064,1,raw,superset,1,0,2,False,True,[],"[""u1"", ""u2^3""]"
+325_evogrow_v2_2_stage_capped_28_1_42,28,2,42,1,dim2,0.9999999999992064,2,raw,superset,1,0,2,False,True,[],"[""1"", ""u1""]"
+325_evogrow_v2_2_stage_capped_28_1_42,28,2,42,1,dim2,0.9999999999992064,1,pruned,exact,1,0,0,False,False,[],[]
+325_evogrow_v2_2_stage_capped_28_1_42,28,2,42,1,dim2,0.9999999999992064,2,pruned,exact,1,0,0,False,False,[],[]
+331_evogrow_v2_2_stage_capped_28_2_42,28,2,42,2,dim2,0.9998674794811324,1,raw,superset,1,0,2,False,True,[],"[""1"", ""u1""]"
+331_evogrow_v2_2_stage_capped_28_2_42,28,2,42,2,dim2,0.9998674794811324,2,raw,disjoint,1,1,1,True,True,"[""sin(u1)""]","[""u1""]"
+331_evogrow_v2_2_stage_capped_28_2_42,28,2,42,2,dim2,0.9998674794811324,1,pruned,superset,1,0,2,False,True,[],"[""1"", ""u1""]"
+331_evogrow_v2_2_stage_capped_28_2_42,28,2,42,2,dim2,0.9998674794811324,2,pruned,disjoint,1,1,1,True,True,"[""sin(u1)""]","[""u1""]"
+327_evogrow_v2_2_stage_capped_28_1_123,28,2,123,1,dim2,0.9999979472809528,1,raw,superset,1,0,1,False,True,[],"[""1""]"
+327_evogrow_v2_2_stage_capped_28_1_123,28,2,123,1,dim2,0.9999979472809528,2,raw,disjoint,1,1,3,True,True,"[""sin(u1)""]","[""u1"", ""u1^3"", ""u2""]"
+327_evogrow_v2_2_stage_capped_28_1_123,28,2,123,1,dim2,0.9999979472809528,1,pruned,exact,1,0,0,False,False,[],[]
+327_evogrow_v2_2_stage_capped_28_1_123,28,2,123,1,dim2,0.9999979472809528,2,pruned,disjoint,1,1,2,True,True,"[""sin(u1)""]","[""u1"", ""u1^3""]"
+333_evogrow_v2_2_stage_capped_28_2_123,28,2,123,2,dim2,0.9998646267276968,1,raw,superset,1,0,1,False,True,[],"[""u1""]"
+333_evogrow_v2_2_stage_capped_28_2_123,28,2,123,2,dim2,0.9998646267276968,2,raw,disjoint,1,1,1,True,True,"[""sin(u1)""]","[""u1""]"
+333_evogrow_v2_2_stage_capped_28_2_123,28,2,123,2,dim2,0.9998646267276968,1,pruned,superset,1,0,1,False,True,[],"[""u1""]"
+333_evogrow_v2_2_stage_capped_28_2_123,28,2,123,2,dim2,0.9998646267276968,2,pruned,disjoint,1,1,1,True,True,"[""sin(u1)""]","[""u1""]"
+341_evogrow_v2_2_stage_capped_29_1_7,29,2,7,1,dim2,0.9990419451087172,1,raw,disjoint,1,1,5,True,True,"[""u1*u2""]","[""1"", ""u1"", ""u1^2"", ""u2"", ""u2^2""]"
+341_evogrow_v2_2_stage_capped_29_1_7,29,2,7,1,dim2,0.9990419451087172,2,raw,superset,2,0,2,False,True,[],"[""u1"", ""u2""]"
+341_evogrow_v2_2_stage_capped_29_1_7,29,2,7,1,dim2,0.9990419451087172,1,pruned,disjoint,1,1,5,True,True,"[""u1*u2""]","[""1"", ""u1"", ""u1^2"", ""u2"", ""u2^2""]"
+341_evogrow_v2_2_stage_capped_29_1_7,29,2,7,1,dim2,0.9990419451087172,2,pruned,superset,2,0,2,False,True,[],"[""u1"", ""u2""]"
+347_evogrow_v2_2_stage_capped_29_2_7,29,2,7,2,dim2,0.997990771679958,1,raw,superset,1,0,1,False,True,[],"[""u1""]"
+347_evogrow_v2_2_stage_capped_29_2_7,29,2,7,2,dim2,0.997990771679958,2,raw,disjoint,2,2,3,True,True,"[""u1^2"", ""u2^2""]","[""1"", ""u1"", ""u2""]"
+347_evogrow_v2_2_stage_capped_29_2_7,29,2,7,2,dim2,0.997990771679958,1,pruned,superset,1,0,1,False,True,[],"[""u1""]"
+347_evogrow_v2_2_stage_capped_29_2_7,29,2,7,2,dim2,0.997990771679958,2,pruned,disjoint,2,2,3,True,True,"[""u1^2"", ""u2^2""]","[""1"", ""u1"", ""u2""]"
+337_evogrow_v2_2_stage_capped_29_1_42,29,2,42,1,dim2,0.9981944102696954,1,raw,superset,1,0,4,False,True,[],"[""1"", ""u1"", ""u1^2"", ""u2""]"
+337_evogrow_v2_2_stage_capped_29_1_42,29,2,42,1,dim2,0.9981944102696954,2,raw,mixed,2,1,2,True,True,"[""u1^2""]","[""u1"", ""u2""]"
+337_evogrow_v2_2_stage_capped_29_1_42,29,2,42,1,dim2,0.9981944102696954,1,pruned,superset,1,0,3,False,True,[],"[""u1"", ""u1^2"", ""u2""]"
+337_evogrow_v2_2_stage_capped_29_1_42,29,2,42,1,dim2,0.9981944102696954,2,pruned,mixed,2,1,2,True,True,"[""u1^2""]","[""u1"", ""u2""]"
+343_evogrow_v2_2_stage_capped_29_2_42,29,2,42,2,dim2,0.99799077157047,1,raw,superset,1,0,1,False,True,[],"[""u1""]"
+343_evogrow_v2_2_stage_capped_29_2_42,29,2,42,2,dim2,0.99799077157047,2,raw,disjoint,2,2,3,True,True,"[""u1^2"", ""u2^2""]","[""1"", ""u1"", ""u2""]"
+343_evogrow_v2_2_stage_capped_29_2_42,29,2,42,2,dim2,0.99799077157047,1,pruned,superset,1,0,1,False,True,[],"[""u1""]"
+343_evogrow_v2_2_stage_capped_29_2_42,29,2,42,2,dim2,0.99799077157047,2,pruned,disjoint,2,2,3,True,True,"[""u1^2"", ""u2^2""]","[""1"", ""u1"", ""u2""]"
+339_evogrow_v2_2_stage_capped_29_1_123,29,2,123,1,dim2,0.9982223801749832,1,raw,superset,1,0,4,False,True,[],"[""1"", ""u1"", ""u1^2"", ""u2""]"
+339_evogrow_v2_2_stage_capped_29_1_123,29,2,123,1,dim2,0.9982223801749832,2,raw,mixed,2,1,3,True,True,"[""u1^2""]","[""1"", ""u1"", ""u2""]"
+339_evogrow_v2_2_stage_capped_29_1_123,29,2,123,1,dim2,0.9982223801749832,1,pruned,superset,1,0,4,False,True,[],"[""1"", ""u1"", ""u1^2"", ""u2""]"
+339_evogrow_v2_2_stage_capped_29_1_123,29,2,123,1,dim2,0.9982223801749832,2,pruned,mixed,2,1,3,True,True,"[""u1^2""]","[""1"", ""u1"", ""u2""]"
+345_evogrow_v2_2_stage_capped_29_2_123,29,2,123,2,dim2,0.9979907715950598,1,raw,superset,1,0,1,False,True,[],"[""u1""]"
+345_evogrow_v2_2_stage_capped_29_2_123,29,2,123,2,dim2,0.9979907715950598,2,raw,disjoint,2,2,3,True,True,"[""u1^2"", ""u2^2""]","[""1"", ""u1"", ""u2""]"
+345_evogrow_v2_2_stage_capped_29_2_123,29,2,123,2,dim2,0.9979907715950598,1,pruned,superset,1,0,1,False,True,[],"[""u1""]"
+345_evogrow_v2_2_stage_capped_29_2_123,29,2,123,2,dim2,0.9979907715950598,2,pruned,disjoint,2,2,3,True,True,"[""u1^2"", ""u2^2""]","[""1"", ""u1"", ""u2""]"
+365_evogrow_v2_2_stage_capped_31_1_7,31,2,7,1,dim2,0.9999557402033246,1,raw,disjoint,1,1,4,True,True,"[""u1*u2""]","[""1"", ""u1"", ""u1^2"", ""u2""]"
+365_evogrow_v2_2_stage_capped_31_1_7,31,2,7,1,dim2,0.9999557402033246,2,raw,mixed,2,1,2,True,True,"[""u1*u2""]","[""u1"", ""u1^2""]"
+365_evogrow_v2_2_stage_capped_31_1_7,31,2,7,1,dim2,0.9999557402033246,1,pruned,disjoint,1,1,4,True,True,"[""u1*u2""]","[""1"", ""u1"", ""u1^2"", ""u2""]"
+365_evogrow_v2_2_stage_capped_31_1_7,31,2,7,1,dim2,0.9999557402033246,2,pruned,mixed,2,1,2,True,True,"[""u1*u2""]","[""u1"", ""u1^2""]"
+371_evogrow_v2_2_stage_capped_31_2_7,31,2,7,2,dim2,0.9999999991253548,1,raw,superset,1,0,4,False,True,[],"[""1"", ""u1"", ""u1^2"", ""u2""]"
+371_evogrow_v2_2_stage_capped_31_2_7,31,2,7,2,dim2,0.9999999991253548,2,raw,superset,2,0,2,False,True,[],"[""1"", ""u1""]"
+371_evogrow_v2_2_stage_capped_31_2_7,31,2,7,2,dim2,0.9999999991253548,1,pruned,superset,1,0,2,False,True,[],"[""u1"", ""u1^2""]"
+371_evogrow_v2_2_stage_capped_31_2_7,31,2,7,2,dim2,0.9999999991253548,2,pruned,exact,2,0,0,False,False,[],[]
+361_evogrow_v2_2_stage_capped_31_1_42,31,2,42,1,dim2,0.9999739867995792,1,raw,disjoint,1,1,4,True,True,"[""u1*u2""]","[""1"", ""u1"", ""u1^2"", ""u2^2""]"
+361_evogrow_v2_2_stage_capped_31_1_42,31,2,42,1,dim2,0.9999739867995792,2,raw,mixed,2,1,3,True,True,"[""u1*u2""]","[""1"", ""u1"", ""u1^2""]"
+361_evogrow_v2_2_stage_capped_31_1_42,31,2,42,1,dim2,0.9999739867995792,1,pruned,disjoint,1,1,4,True,True,"[""u1*u2""]","[""1"", ""u1"", ""u1^2"", ""u2^2""]"
+361_evogrow_v2_2_stage_capped_31_1_42,31,2,42,1,dim2,0.9999739867995792,2,pruned,mixed,2,1,3,True,True,"[""u1*u2""]","[""1"", ""u1"", ""u1^2""]"
+367_evogrow_v2_2_stage_capped_31_2_42,31,2,42,2,dim2,0.999999999705095,1,raw,superset,1,0,3,False,True,[],"[""u1"", ""u1^2"", ""u2""]"
+367_evogrow_v2_2_stage_capped_31_2_42,31,2,42,2,dim2,0.999999999705095,2,raw,superset,2,0,3,False,True,[],"[""1"", ""u1"", ""u1^2""]"
+367_evogrow_v2_2_stage_capped_31_2_42,31,2,42,2,dim2,0.999999999705095,1,pruned,superset,1,0,2,False,True,[],"[""u1"", ""u1^2""]"
+367_evogrow_v2_2_stage_capped_31_2_42,31,2,42,2,dim2,0.999999999705095,2,pruned,superset,2,0,1,False,True,[],"[""u1""]"
+363_evogrow_v2_2_stage_capped_31_1_123,31,2,123,1,dim2,0.9999506921093322,1,raw,disjoint,1,1,3,True,True,"[""u1*u2""]","[""u1"", ""u1^2"", ""u2""]"
+363_evogrow_v2_2_stage_capped_31_1_123,31,2,123,1,dim2,0.9999506921093322,2,raw,mixed,2,1,3,True,True,"[""u1*u2""]","[""1"", ""u1"", ""u1^2""]"
+363_evogrow_v2_2_stage_capped_31_1_123,31,2,123,1,dim2,0.9999506921093322,1,pruned,disjoint,1,1,3,True,True,"[""u1*u2""]","[""u1"", ""u1^2"", ""u2""]"
+363_evogrow_v2_2_stage_capped_31_1_123,31,2,123,1,dim2,0.9999506921093322,2,pruned,mixed,2,1,3,True,True,"[""u1*u2""]","[""1"", ""u1"", ""u1^2""]"
+369_evogrow_v2_2_stage_capped_31_2_123,31,2,123,2,dim2,0.9999999916955578,1,raw,superset,1,0,3,False,True,[],"[""1"", ""u1"", ""u1^2""]"
+369_evogrow_v2_2_stage_capped_31_2_123,31,2,123,2,dim2,0.9999999916955578,2,raw,superset,2,0,3,False,True,[],"[""u1"", ""u1^2"", ""u2^2""]"
+369_evogrow_v2_2_stage_capped_31_2_123,31,2,123,2,dim2,0.9999999916955578,1,pruned,superset,1,0,2,False,True,[],"[""u1"", ""u1^2""]"
+369_evogrow_v2_2_stage_capped_31_2_123,31,2,123,2,dim2,0.9999999916955578,2,pruned,superset,2,0,2,False,True,[],"[""u1"", ""u1^2""]"
+377_evogrow_v2_2_stage_capped_32_1_7,32,2,7,1,dim2,0.8259907053119785,1,raw,superset,1,0,5,False,True,[],"[""1"", ""u1"", ""u1*u2"", ""u1^2"", ""u2^2""]"
+377_evogrow_v2_2_stage_capped_32_1_7,32,2,7,1,dim2,0.8259907053119785,2,raw,mixed,3,1,4,True,True,"[""u1^3""]","[""1"", ""u1*u2"", ""u1^2"", ""u2^2""]"
+377_evogrow_v2_2_stage_capped_32_1_7,32,2,7,1,dim2,0.8259907053119785,1,pruned,superset,1,0,5,False,True,[],"[""1"", ""u1"", ""u1*u2"", ""u1^2"", ""u2^2""]"
+377_evogrow_v2_2_stage_capped_32_1_7,32,2,7,1,dim2,0.8259907053119785,2,pruned,mixed,3,1,4,True,True,"[""u1^3""]","[""1"", ""u1*u2"", ""u1^2"", ""u2^2""]"
+383_evogrow_v2_2_stage_capped_32_2_7,32,2,7,2,dim2,0.4474284334794563,1,raw,superset,1,0,4,False,True,[],"[""1"", ""u1"", ""u1*u2"", ""u1^2""]"
+383_evogrow_v2_2_stage_capped_32_2_7,32,2,7,2,dim2,0.4474284334794563,2,raw,mixed,3,1,3,True,True,"[""u1^3""]","[""u1*u2"", ""u1^2"", ""u2^2""]"
+383_evogrow_v2_2_stage_capped_32_2_7,32,2,7,2,dim2,0.4474284334794563,1,pruned,superset,1,0,4,False,True,[],"[""1"", ""u1"", ""u1*u2"", ""u1^2""]"
+383_evogrow_v2_2_stage_capped_32_2_7,32,2,7,2,dim2,0.4474284334794563,2,pruned,mixed,3,1,3,True,True,"[""u1^3""]","[""u1*u2"", ""u1^2"", ""u2^2""]"
+373_evogrow_v2_2_stage_capped_32_1_42,32,2,42,1,dim2,0.9999999999971704,1,raw,superset,1,0,5,False,True,[],"[""1"", ""u1"", ""u1*u2"", ""u1^2"", ""u2^2""]"
+373_evogrow_v2_2_stage_capped_32_1_42,32,2,42,1,dim2,0.9999999999971704,2,raw,superset,3,0,3,False,True,[],"[""u1*u2"", ""u1^2"", ""u2^2""]"
+373_evogrow_v2_2_stage_capped_32_1_42,32,2,42,1,dim2,0.9999999999971704,1,pruned,exact,1,0,0,False,False,[],[]
+373_evogrow_v2_2_stage_capped_32_1_42,32,2,42,1,dim2,0.9999999999971704,2,pruned,exact,3,0,0,False,False,[],[]
+379_evogrow_v2_2_stage_capped_32_2_42,32,2,42,2,dim2,0.9990780430519046,1,raw,superset,1,0,1,False,True,[],"[""u1""]"
+379_evogrow_v2_2_stage_capped_32_2_42,32,2,42,2,dim2,0.9990780430519046,2,raw,mixed,3,1,3,True,True,"[""u2""]","[""1"", ""u1*u2"", ""u2^2""]"
+379_evogrow_v2_2_stage_capped_32_2_42,32,2,42,2,dim2,0.9990780430519046,1,pruned,superset,1,0,1,False,True,[],"[""u1""]"
+379_evogrow_v2_2_stage_capped_32_2_42,32,2,42,2,dim2,0.9990780430519046,2,pruned,mixed,3,1,1,True,True,"[""u2""]","[""1""]"
+375_evogrow_v2_2_stage_capped_32_1_123,32,2,123,1,dim2,0.9999999999978108,1,raw,superset,1,0,5,False,True,[],"[""1"", ""u1"", ""u1*u2"", ""u1^2"", ""u2^2""]"
+375_evogrow_v2_2_stage_capped_32_1_123,32,2,123,1,dim2,0.9999999999978108,2,raw,superset,3,0,3,False,True,[],"[""1"", ""u1*u2"", ""u1^2""]"
+375_evogrow_v2_2_stage_capped_32_1_123,32,2,123,1,dim2,0.9999999999978108,1,pruned,exact,1,0,0,False,False,[],[]
+375_evogrow_v2_2_stage_capped_32_1_123,32,2,123,1,dim2,0.9999999999978108,2,pruned,exact,3,0,0,False,False,[],[]
+381_evogrow_v2_2_stage_capped_32_2_123,32,2,123,2,dim2,0.8055902853149378,1,raw,superset,1,0,3,False,True,[],"[""u1"", ""u1*u2"", ""u2^3""]"
+381_evogrow_v2_2_stage_capped_32_2_123,32,2,123,2,dim2,0.8055902853149378,2,raw,mixed,3,2,1,True,True,"[""u1^3"", ""u2""]","[""u1^2""]"
+381_evogrow_v2_2_stage_capped_32_2_123,32,2,123,2,dim2,0.8055902853149378,1,pruned,superset,1,0,3,False,True,[],"[""u1"", ""u1*u2"", ""u2^3""]"
+381_evogrow_v2_2_stage_capped_32_2_123,32,2,123,2,dim2,0.8055902853149378,2,pruned,mixed,3,2,1,True,True,"[""u1^3"", ""u2""]","[""u1^2""]"
+449_evogrow_v2_2_stage_capped_38_1_7,38,2,7,1,dim2,0.9999999999756106,1,raw,superset,3,0,3,False,True,[],"[""1"", ""u1^2"", ""u2^2""]"
+449_evogrow_v2_2_stage_capped_38_1_7,38,2,7,1,dim2,0.9999999999756106,2,raw,superset,1,0,5,False,True,[],"[""1"", ""u1*u2"", ""u1^2"", ""u2^2"", ""u2^3""]"
+449_evogrow_v2_2_stage_capped_38_1_7,38,2,7,1,dim2,0.9999999999756106,1,pruned,exact,3,0,0,False,False,[],[]
+449_evogrow_v2_2_stage_capped_38_1_7,38,2,7,1,dim2,0.9999999999756106,2,pruned,exact,1,0,0,False,False,[],[]
+455_evogrow_v2_2_stage_capped_38_2_7,38,2,7,2,dim2,0.9999999999883438,1,raw,exact,3,0,0,False,False,[],[]
+455_evogrow_v2_2_stage_capped_38_2_7,38,2,7,2,dim2,0.9999999999883438,2,raw,superset,1,0,2,False,True,[],"[""1"", ""u2^2""]"
+455_evogrow_v2_2_stage_capped_38_2_7,38,2,7,2,dim2,0.9999999999883438,1,pruned,exact,3,0,0,False,False,[],[]
+455_evogrow_v2_2_stage_capped_38_2_7,38,2,7,2,dim2,0.9999999999883438,2,pruned,exact,1,0,0,False,False,[],[]
+445_evogrow_v2_2_stage_capped_38_1_42,38,2,42,1,dim2,0.9999999999950616,1,raw,superset,3,0,3,False,True,[],"[""1"", ""u1^2"", ""u2^2""]"
+445_evogrow_v2_2_stage_capped_38_1_42,38,2,42,1,dim2,0.9999999999950616,2,raw,superset,1,0,2,False,True,[],"[""1"", ""u1*u2""]"
+445_evogrow_v2_2_stage_capped_38_1_42,38,2,42,1,dim2,0.9999999999950616,1,pruned,exact,3,0,0,False,False,[],[]
+445_evogrow_v2_2_stage_capped_38_1_42,38,2,42,1,dim2,0.9999999999950616,2,pruned,exact,1,0,0,False,False,[],[]
+451_evogrow_v2_2_stage_capped_38_2_42,38,2,42,2,dim2,0.9999999999924272,1,raw,superset,3,0,1,False,True,[],"[""u2^3""]"
+451_evogrow_v2_2_stage_capped_38_2_42,38,2,42,2,dim2,0.9999999999924272,2,raw,exact,1,0,0,False,False,[],[]
+451_evogrow_v2_2_stage_capped_38_2_42,38,2,42,2,dim2,0.9999999999924272,1,pruned,exact,3,0,0,False,False,[],[]
+451_evogrow_v2_2_stage_capped_38_2_42,38,2,42,2,dim2,0.9999999999924272,2,pruned,exact,1,0,0,False,False,[],[]
+447_evogrow_v2_2_stage_capped_38_1_123,38,2,123,1,dim2,0.9999999999928408,1,raw,superset,3,0,3,False,True,[],"[""1"", ""u1^2"", ""u2^2""]"
+447_evogrow_v2_2_stage_capped_38_1_123,38,2,123,1,dim2,0.9999999999928408,2,raw,superset,1,0,2,False,True,[],"[""1"", ""u1*u2""]"
+447_evogrow_v2_2_stage_capped_38_1_123,38,2,123,1,dim2,0.9999999999928408,1,pruned,exact,3,0,0,False,False,[],[]
+447_evogrow_v2_2_stage_capped_38_1_123,38,2,123,1,dim2,0.9999999999928408,2,pruned,exact,1,0,0,False,False,[],[]
+453_evogrow_v2_2_stage_capped_38_2_123,38,2,123,2,dim2,0.99999999999054,1,raw,superset,3,0,2,False,True,[],"[""1"", ""u1*u2""]"
+453_evogrow_v2_2_stage_capped_38_2_123,38,2,123,2,dim2,0.99999999999054,2,raw,exact,1,0,0,False,False,[],[]
+453_evogrow_v2_2_stage_capped_38_2_123,38,2,123,2,dim2,0.99999999999054,1,pruned,exact,3,0,0,False,False,[],[]
+453_evogrow_v2_2_stage_capped_38_2_123,38,2,123,2,dim2,0.99999999999054,2,pruned,exact,1,0,0,False,False,[],[]
+509_evogrow_v2_2_stage_capped_43_1_7,43,2,7,1,dim2,0.9805004371805774,1,raw,superset,1,0,4,False,True,[],"[""1"", ""cos(u1)"", ""sin(u2)"", ""u1""]"
+509_evogrow_v2_2_stage_capped_43_1_7,43,2,7,1,dim2,0.9805004371805774,2,raw,mixed,3,1,4,True,True,"[""sin(u1)""]","[""u1"", ""u1*u2"", ""u1^2"", ""u2^2""]"
+509_evogrow_v2_2_stage_capped_43_1_7,43,2,7,1,dim2,0.9805004371805774,1,pruned,superset,1,0,4,False,True,[],"[""1"", ""cos(u1)"", ""sin(u2)"", ""u1""]"
+509_evogrow_v2_2_stage_capped_43_1_7,43,2,7,1,dim2,0.9805004371805774,2,pruned,mixed,3,1,4,True,True,"[""sin(u1)""]","[""u1"", ""u1*u2"", ""u1^2"", ""u2^2""]"
+515_evogrow_v2_2_stage_capped_43_2_7,43,2,7,2,dim2,0.999999995795524,1,raw,superset,1,0,1,False,True,[],"[""1""]"
+515_evogrow_v2_2_stage_capped_43_2_7,43,2,7,2,dim2,0.999999995795524,2,raw,superset,3,0,3,False,True,[],"[""u1"", ""u1^2"", ""u2^2""]"
+515_evogrow_v2_2_stage_capped_43_2_7,43,2,7,2,dim2,0.999999995795524,1,pruned,exact,1,0,0,False,False,[],[]
+515_evogrow_v2_2_stage_capped_43_2_7,43,2,7,2,dim2,0.999999995795524,2,pruned,exact,3,0,0,False,False,[],[]
+505_evogrow_v2_2_stage_capped_43_1_42,43,2,42,1,dim2,0.9805003540731894,1,raw,superset,1,0,4,False,True,[],"[""1"", ""cos(u1)"", ""sin(u2)"", ""u1""]"
+505_evogrow_v2_2_stage_capped_43_1_42,43,2,42,1,dim2,0.9805003540731894,2,raw,mixed,3,1,4,True,True,"[""sin(u1)""]","[""u1"", ""u1*u2"", ""u1^2"", ""u2^2""]"
+505_evogrow_v2_2_stage_capped_43_1_42,43,2,42,1,dim2,0.9805003540731894,1,pruned,superset,1,0,4,False,True,[],"[""1"", ""cos(u1)"", ""sin(u2)"", ""u1""]"
+505_evogrow_v2_2_stage_capped_43_1_42,43,2,42,1,dim2,0.9805003540731894,2,pruned,mixed,3,1,4,True,True,"[""sin(u1)""]","[""u1"", ""u1*u2"", ""u1^2"", ""u2^2""]"
+511_evogrow_v2_2_stage_capped_43_2_42,43,2,42,2,dim2,0.9999999939710712,1,raw,superset,1,0,4,False,True,[],"[""1"", ""cos(u1)"", ""cos(u2)"", ""sin(u1)""]"
+511_evogrow_v2_2_stage_capped_43_2_42,43,2,42,2,dim2,0.9999999939710712,2,raw,superset,3,0,3,False,True,[],"[""u1"", ""u1^2"", ""u2^2""]"
+511_evogrow_v2_2_stage_capped_43_2_42,43,2,42,2,dim2,0.9999999939710712,1,pruned,superset,1,0,2,False,True,[],"[""1"", ""cos(u2)""]"
+511_evogrow_v2_2_stage_capped_43_2_42,43,2,42,2,dim2,0.9999999939710712,2,pruned,exact,3,0,0,False,False,[],[]
+507_evogrow_v2_2_stage_capped_43_1_123,43,2,123,1,dim2,0.9805558973335472,1,raw,superset,1,0,3,False,True,[],"[""1"", ""cos(u1)"", ""u1""]"
+507_evogrow_v2_2_stage_capped_43_1_123,43,2,123,1,dim2,0.9805558973335472,2,raw,mixed,3,1,4,True,True,"[""sin(u1)""]","[""u1"", ""u1*u2"", ""u1^2"", ""u2^2""]"
+507_evogrow_v2_2_stage_capped_43_1_123,43,2,123,1,dim2,0.9805558973335472,1,pruned,superset,1,0,3,False,True,[],"[""1"", ""cos(u1)"", ""u1""]"
+507_evogrow_v2_2_stage_capped_43_1_123,43,2,123,1,dim2,0.9805558973335472,2,pruned,mixed,3,1,4,True,True,"[""sin(u1)""]","[""u1"", ""u1*u2"", ""u1^2"", ""u2^2""]"
+513_evogrow_v2_2_stage_capped_43_2_123,43,2,123,2,dim2,0.999999996108158,1,raw,exact,1,0,0,False,False,[],[]
+513_evogrow_v2_2_stage_capped_43_2_123,43,2,123,2,dim2,0.999999996108158,2,raw,superset,3,0,3,False,True,[],"[""u1"", ""u1^2"", ""u2^2""]"
+513_evogrow_v2_2_stage_capped_43_2_123,43,2,123,2,dim2,0.999999996108158,1,pruned,exact,1,0,0,False,False,[],[]
+513_evogrow_v2_2_stage_capped_43_2_123,43,2,123,2,dim2,0.999999996108158,2,pruned,exact,3,0,0,False,False,[],[]
+617_evogrow_v2_2_stage_capped_52_1_7,52,3,7,1,dim3_feasible,0.9652749172691808,1,raw,disjoint,2,2,1,True,True,"[""u1"", ""u2""]","[""u3""]"
+617_evogrow_v2_2_stage_capped_52_1_7,52,3,7,1,dim3_feasible,0.9652749172691808,2,raw,mixed,2,1,1,True,True,"[""u1*u3""]","[""u3""]"
+617_evogrow_v2_2_stage_capped_52_1_7,52,3,7,1,dim3_feasible,0.9652749172691808,3,raw,disjoint,3,3,3,True,True,"[""1"", ""u1*u2"", ""u3""]","[""u1"", ""u2"", ""u2^3""]"
+617_evogrow_v2_2_stage_capped_52_1_7,52,3,7,1,dim3_feasible,0.9652749172691808,1,pruned,disjoint,2,2,1,True,True,"[""u1"", ""u2""]","[""u3""]"
+617_evogrow_v2_2_stage_capped_52_1_7,52,3,7,1,dim3_feasible,0.9652749172691808,2,pruned,mixed,2,1,1,True,True,"[""u1*u3""]","[""u3""]"
+617_evogrow_v2_2_stage_capped_52_1_7,52,3,7,1,dim3_feasible,0.9652749172691808,3,pruned,disjoint,3,3,3,True,True,"[""1"", ""u1*u2"", ""u3""]","[""u1"", ""u2"", ""u2^3""]"
+623_evogrow_v2_2_stage_capped_52_2_7,52,3,7,2,dim3_feasible,0.373989550734305,1,raw,disjoint,2,2,1,True,True,"[""u1"", ""u2""]","[""u3""]"
+623_evogrow_v2_2_stage_capped_52_2_7,52,3,7,2,dim3_feasible,0.373989550734305,2,raw,mixed,2,1,1,True,True,"[""u1*u3""]","[""u3""]"
+623_evogrow_v2_2_stage_capped_52_2_7,52,3,7,2,dim3_feasible,0.373989550734305,3,raw,mixed,3,2,1,True,True,"[""1"", ""u1*u2""]","[""u1""]"
+623_evogrow_v2_2_stage_capped_52_2_7,52,3,7,2,dim3_feasible,0.373989550734305,1,pruned,disjoint,2,2,1,True,True,"[""u1"", ""u2""]","[""u3""]"
+623_evogrow_v2_2_stage_capped_52_2_7,52,3,7,2,dim3_feasible,0.373989550734305,2,pruned,mixed,2,1,1,True,True,"[""u1*u3""]","[""u3""]"
+623_evogrow_v2_2_stage_capped_52_2_7,52,3,7,2,dim3_feasible,0.373989550734305,3,pruned,mixed,3,2,1,True,True,"[""1"", ""u1*u2""]","[""u1""]"
+613_evogrow_v2_2_stage_capped_52_1_42,52,3,42,1,dim3_feasible,0.9752764322277324,1,raw,subset,2,1,0,True,False,"[""u1""]",[]
+613_evogrow_v2_2_stage_capped_52_1_42,52,3,42,1,dim3_feasible,0.9752764322277324,2,raw,mixed,2,1,2,True,True,"[""u1*u3""]","[""1"", ""u3""]"
+613_evogrow_v2_2_stage_capped_52_1_42,52,3,42,1,dim3_feasible,0.9752764322277324,3,raw,mixed,3,2,1,True,True,"[""u1*u2"", ""u3""]","[""u2""]"
+613_evogrow_v2_2_stage_capped_52_1_42,52,3,42,1,dim3_feasible,0.9752764322277324,1,pruned,subset,2,1,0,True,False,"[""u1""]",[]
+613_evogrow_v2_2_stage_capped_52_1_42,52,3,42,1,dim3_feasible,0.9752764322277324,2,pruned,mixed,2,1,2,True,True,"[""u1*u3""]","[""1"", ""u3""]"
+613_evogrow_v2_2_stage_capped_52_1_42,52,3,42,1,dim3_feasible,0.9752764322277324,3,pruned,mixed,3,2,1,True,True,"[""u1*u2"", ""u3""]","[""u2""]"
+619_evogrow_v2_2_stage_capped_52_2_42,52,3,42,2,dim3_feasible,0.5726793383947749,1,raw,disjoint,2,2,1,True,True,"[""u1"", ""u2""]","[""u3""]"
+619_evogrow_v2_2_stage_capped_52_2_42,52,3,42,2,dim3_feasible,0.5726793383947749,2,raw,disjoint,2,2,2,True,True,"[""u1*u3"", ""u2""]","[""1"", ""u1""]"
+619_evogrow_v2_2_stage_capped_52_2_42,52,3,42,2,dim3_feasible,0.5726793383947749,3,raw,mixed,3,2,1,True,True,"[""u1*u2"", ""u3""]","[""u2""]"
+619_evogrow_v2_2_stage_capped_52_2_42,52,3,42,2,dim3_feasible,0.5726793383947749,1,pruned,disjoint,2,2,1,True,True,"[""u1"", ""u2""]","[""u3""]"
+619_evogrow_v2_2_stage_capped_52_2_42,52,3,42,2,dim3_feasible,0.5726793383947749,2,pruned,disjoint,2,2,2,True,True,"[""u1*u3"", ""u2""]","[""1"", ""u1""]"
+619_evogrow_v2_2_stage_capped_52_2_42,52,3,42,2,dim3_feasible,0.5726793383947749,3,pruned,mixed,3,2,1,True,True,"[""u1*u2"", ""u3""]","[""u2""]"
+615_evogrow_v2_2_stage_capped_52_1_123,52,3,123,1,dim3_feasible,0.9761214788196604,1,raw,disjoint,2,2,1,True,True,"[""u1"", ""u2""]","[""1""]"
+615_evogrow_v2_2_stage_capped_52_1_123,52,3,123,1,dim3_feasible,0.9761214788196604,2,raw,mixed,2,1,1,True,True,"[""u1*u3""]","[""u3""]"
+615_evogrow_v2_2_stage_capped_52_1_123,52,3,123,1,dim3_feasible,0.9761214788196604,3,raw,mixed,3,2,1,True,True,"[""u1*u2"", ""u3""]","[""u2""]"
+615_evogrow_v2_2_stage_capped_52_1_123,52,3,123,1,dim3_feasible,0.9761214788196604,1,pruned,disjoint,2,2,1,True,True,"[""u1"", ""u2""]","[""1""]"
+615_evogrow_v2_2_stage_capped_52_1_123,52,3,123,1,dim3_feasible,0.9761214788196604,2,pruned,mixed,2,1,1,True,True,"[""u1*u3""]","[""u3""]"
+615_evogrow_v2_2_stage_capped_52_1_123,52,3,123,1,dim3_feasible,0.9761214788196604,3,pruned,mixed,3,2,1,True,True,"[""u1*u2"", ""u3""]","[""u2""]"
+621_evogrow_v2_2_stage_capped_52_2_123,52,3,123,2,dim3_feasible,0.59091215224084,1,raw,disjoint,2,2,1,True,True,"[""u1"", ""u2""]","[""1""]"
+621_evogrow_v2_2_stage_capped_52_2_123,52,3,123,2,dim3_feasible,0.59091215224084,2,raw,mixed,2,1,1,True,True,"[""u1*u3""]","[""u3""]"
+621_evogrow_v2_2_stage_capped_52_2_123,52,3,123,2,dim3_feasible,0.59091215224084,3,raw,mixed,3,2,1,True,True,"[""u1*u2"", ""u3""]","[""u2""]"
+621_evogrow_v2_2_stage_capped_52_2_123,52,3,123,2,dim3_feasible,0.59091215224084,1,pruned,disjoint,2,2,1,True,True,"[""u1"", ""u2""]","[""1""]"
+621_evogrow_v2_2_stage_capped_52_2_123,52,3,123,2,dim3_feasible,0.59091215224084,2,pruned,mixed,2,1,1,True,True,"[""u1*u3""]","[""u3""]"
+621_evogrow_v2_2_stage_capped_52_2_123,52,3,123,2,dim3_feasible,0.59091215224084,3,pruned,mixed,3,2,1,True,True,"[""u1*u2"", ""u3""]","[""u2""]"
+641_evogrow_v2_2_stage_capped_54_1_7,54,3,7,1,dim3_bound_infeasible,0.9900739270592452,1,raw,mixed,2,1,2,True,True,"[""u2""]","[""1"", ""u2^2""]"
+641_evogrow_v2_2_stage_capped_54_1_7,54,3,7,1,dim3_bound_infeasible,0.9900739270592452,2,raw,superset,3,0,3,False,True,[],"[""1"", ""u2^2"", ""u3""]"
+641_evogrow_v2_2_stage_capped_54_1_7,54,3,7,1,dim3_bound_infeasible,0.9900739270592452,3,raw,mixed,2,1,5,True,True,"[""u1*u2""]","[""1"", ""u1"", ""u2"", ""u2^2"", ""u3^2""]"
+641_evogrow_v2_2_stage_capped_54_1_7,54,3,7,1,dim3_bound_infeasible,0.9900739270592452,1,pruned,mixed,2,1,2,True,True,"[""u2""]","[""1"", ""u2^2""]"
+641_evogrow_v2_2_stage_capped_54_1_7,54,3,7,1,dim3_bound_infeasible,0.9900739270592452,2,pruned,superset,3,0,3,False,True,[],"[""1"", ""u2^2"", ""u3""]"
+641_evogrow_v2_2_stage_capped_54_1_7,54,3,7,1,dim3_bound_infeasible,0.9900739270592452,3,pruned,mixed,2,1,5,True,True,"[""u1*u2""]","[""1"", ""u1"", ""u2"", ""u2^2"", ""u3^2""]"
+647_evogrow_v2_2_stage_capped_54_2_7,54,3,7,2,dim3_bound_infeasible,0.9354621446136836,1,raw,superset,2,0,3,False,True,[],"[""1"", ""u1^2"", ""u3""]"
+647_evogrow_v2_2_stage_capped_54_2_7,54,3,7,2,dim3_bound_infeasible,0.9354621446136836,2,raw,mixed,3,1,4,True,True,"[""u1*u3""]","[""1"", ""u2*u3"", ""u3"", ""u3^2""]"
+647_evogrow_v2_2_stage_capped_54_2_7,54,3,7,2,dim3_bound_infeasible,0.9354621446136836,3,raw,disjoint,2,2,6,True,True,"[""u1*u2"", ""u3""]","[""1"", ""u1"", ""u1*u3"", ""u1^2"", ""u2"", ""u3^2""]"
+647_evogrow_v2_2_stage_capped_54_2_7,54,3,7,2,dim3_bound_infeasible,0.9354621446136836,1,pruned,superset,2,0,3,False,True,[],"[""1"", ""u1^2"", ""u3""]"
+647_evogrow_v2_2_stage_capped_54_2_7,54,3,7,2,dim3_bound_infeasible,0.9354621446136836,2,pruned,mixed,3,1,4,True,True,"[""u1*u3""]","[""1"", ""u2*u3"", ""u3"", ""u3^2""]"
+647_evogrow_v2_2_stage_capped_54_2_7,54,3,7,2,dim3_bound_infeasible,0.9354621446136836,3,pruned,disjoint,2,2,6,True,True,"[""u1*u2"", ""u3""]","[""1"", ""u1"", ""u1*u3"", ""u1^2"", ""u2"", ""u3^2""]"
+637_evogrow_v2_2_stage_capped_54_1_42,54,3,42,1,dim3_bound_infeasible,0.9971170621935128,1,raw,superset,2,0,2,False,True,[],"[""1"", ""u1*u3""]"
+637_evogrow_v2_2_stage_capped_54_1_42,54,3,42,1,dim3_bound_infeasible,0.9971170621935128,2,raw,mixed,3,1,4,True,True,"[""u1*u3""]","[""1"", ""u2^2"", ""u3"", ""u3^2""]"
+637_evogrow_v2_2_stage_capped_54_1_42,54,3,42,1,dim3_bound_infeasible,0.9971170621935128,3,raw,superset,2,0,3,False,True,[],"[""1"", ""u1"", ""u2""]"
+637_evogrow_v2_2_stage_capped_54_1_42,54,3,42,1,dim3_bound_infeasible,0.9971170621935128,1,pruned,superset,2,0,2,False,True,[],"[""1"", ""u1*u3""]"
+637_evogrow_v2_2_stage_capped_54_1_42,54,3,42,1,dim3_bound_infeasible,0.9971170621935128,2,pruned,mixed,3,1,4,True,True,"[""u1*u3""]","[""1"", ""u2^2"", ""u3"", ""u3^2""]"
+637_evogrow_v2_2_stage_capped_54_1_42,54,3,42,1,dim3_bound_infeasible,0.9971170621935128,3,pruned,superset,2,0,3,False,True,[],"[""1"", ""u1"", ""u2""]"
+643_evogrow_v2_2_stage_capped_54_2_42,54,3,42,2,dim3_bound_infeasible,0.9420071096060996,1,raw,superset,2,0,1,False,True,[],"[""1""]"
+643_evogrow_v2_2_stage_capped_54_2_42,54,3,42,2,dim3_bound_infeasible,0.9420071096060996,2,raw,mixed,3,1,4,True,True,"[""u1*u3""]","[""1"", ""u2^2"", ""u3"", ""u3^2""]"
+643_evogrow_v2_2_stage_capped_54_2_42,54,3,42,2,dim3_bound_infeasible,0.9420071096060996,3,raw,mixed,2,1,5,True,True,"[""u1*u2""]","[""1"", ""u1"", ""u2"", ""u2^2"", ""u3^2""]"
+643_evogrow_v2_2_stage_capped_54_2_42,54,3,42,2,dim3_bound_infeasible,0.9420071096060996,1,pruned,superset,2,0,1,False,True,[],"[""1""]"
+643_evogrow_v2_2_stage_capped_54_2_42,54,3,42,2,dim3_bound_infeasible,0.9420071096060996,2,pruned,mixed,3,1,4,True,True,"[""u1*u3""]","[""1"", ""u2^2"", ""u3"", ""u3^2""]"
+643_evogrow_v2_2_stage_capped_54_2_42,54,3,42,2,dim3_bound_infeasible,0.9420071096060996,3,pruned,mixed,2,1,5,True,True,"[""u1*u2""]","[""1"", ""u1"", ""u2"", ""u2^2"", ""u3^2""]"
+639_evogrow_v2_2_stage_capped_54_1_123,54,3,123,1,dim3_bound_infeasible,0.993554829962508,1,raw,mixed,2,1,4,True,True,"[""u1""]","[""1"", ""u1*u3"", ""u2*u3"", ""u3""]"
+639_evogrow_v2_2_stage_capped_54_1_123,54,3,123,1,dim3_bound_infeasible,0.993554829962508,2,raw,mixed,3,2,2,True,True,"[""u1"", ""u1*u3""]","[""u3"", ""u3^2""]"
+639_evogrow_v2_2_stage_capped_54_1_123,54,3,123,1,dim3_bound_infeasible,0.993554829962508,3,raw,mixed,2,1,4,True,True,"[""u1*u2""]","[""1"", ""u1"", ""u1^2"", ""u2""]"
+639_evogrow_v2_2_stage_capped_54_1_123,54,3,123,1,dim3_bound_infeasible,0.993554829962508,1,pruned,mixed,2,1,4,True,True,"[""u1""]","[""1"", ""u1*u3"", ""u2*u3"", ""u3""]"
+639_evogrow_v2_2_stage_capped_54_1_123,54,3,123,1,dim3_bound_infeasible,0.993554829962508,2,pruned,mixed,3,2,2,True,True,"[""u1"", ""u1*u3""]","[""u3"", ""u3^2""]"
+639_evogrow_v2_2_stage_capped_54_1_123,54,3,123,1,dim3_bound_infeasible,0.993554829962508,3,pruned,mixed,2,1,4,True,True,"[""u1*u2""]","[""1"", ""u1"", ""u1^2"", ""u2""]"
+645_evogrow_v2_2_stage_capped_54_2_123,54,3,123,2,dim3_bound_infeasible,0.9787287731317564,1,raw,superset,2,0,3,False,True,[],"[""u1*u2"", ""u1^2"", ""u3^2""]"
+645_evogrow_v2_2_stage_capped_54_2_123,54,3,123,2,dim3_bound_infeasible,0.9787287731317564,2,raw,superset,3,0,3,False,True,[],"[""1"", ""u1^2"", ""u3""]"
+645_evogrow_v2_2_stage_capped_54_2_123,54,3,123,2,dim3_bound_infeasible,0.9787287731317564,3,raw,mixed,2,1,3,True,True,"[""u1*u2""]","[""u1"", ""u1^2"", ""u3^2""]"
+645_evogrow_v2_2_stage_capped_54_2_123,54,3,123,2,dim3_bound_infeasible,0.9787287731317564,1,pruned,superset,2,0,3,False,True,[],"[""u1*u2"", ""u1^2"", ""u3^2""]"
+645_evogrow_v2_2_stage_capped_54_2_123,54,3,123,2,dim3_bound_infeasible,0.9787287731317564,2,pruned,superset,3,0,3,False,True,[],"[""1"", ""u1^2"", ""u3""]"
+645_evogrow_v2_2_stage_capped_54_2_123,54,3,123,2,dim3_bound_infeasible,0.9787287731317564,3,pruned,mixed,2,1,3,True,True,"[""u1*u2""]","[""u1"", ""u1^2"", ""u3^2""]"
+653_evogrow_v2_2_stage_capped_55_1_7,55,3,7,1,dim3_bound_infeasible,0.1544711583710739,1,raw,superset,2,0,3,False,True,[],"[""1"", ""u2^2"", ""u3""]"
+653_evogrow_v2_2_stage_capped_55_1_7,55,3,7,1,dim3_bound_infeasible,0.1544711583710739,2,raw,mixed,3,1,3,True,True,"[""u1*u3""]","[""1"", ""u3"", ""u3^2""]"
+653_evogrow_v2_2_stage_capped_55_1_7,55,3,7,1,dim3_bound_infeasible,0.1544711583710739,3,raw,mixed,2,1,5,True,True,"[""u1*u2""]","[""1"", ""u1"", ""u1^2"", ""u2"", ""u2^2""]"
+653_evogrow_v2_2_stage_capped_55_1_7,55,3,7,1,dim3_bound_infeasible,0.1544711583710739,1,pruned,superset,2,0,3,False,True,[],"[""1"", ""u2^2"", ""u3""]"
+653_evogrow_v2_2_stage_capped_55_1_7,55,3,7,1,dim3_bound_infeasible,0.1544711583710739,2,pruned,mixed,3,1,3,True,True,"[""u1*u3""]","[""1"", ""u3"", ""u3^2""]"
+653_evogrow_v2_2_stage_capped_55_1_7,55,3,7,1,dim3_bound_infeasible,0.1544711583710739,3,pruned,mixed,2,1,5,True,True,"[""u1*u2""]","[""1"", ""u1"", ""u1^2"", ""u2"", ""u2^2""]"
+659_evogrow_v2_2_stage_capped_55_2_7,55,3,7,2,dim3_bound_infeasible,0.1807061523553327,1,raw,mixed,2,1,3,True,True,"[""u1""]","[""1"", ""u3"", ""u3^2""]"
+659_evogrow_v2_2_stage_capped_55_2_7,55,3,7,2,dim3_bound_infeasible,0.1807061523553327,2,raw,mixed,3,1,1,True,True,"[""u1*u3""]","[""u3""]"
+659_evogrow_v2_2_stage_capped_55_2_7,55,3,7,2,dim3_bound_infeasible,0.1807061523553327,3,raw,superset,2,0,4,False,True,[],"[""u1"", ""u1*u3"", ""u2"", ""u2*u3""]"
+659_evogrow_v2_2_stage_capped_55_2_7,55,3,7,2,dim3_bound_infeasible,0.1807061523553327,1,pruned,mixed,2,1,3,True,True,"[""u1""]","[""1"", ""u3"", ""u3^2""]"
+659_evogrow_v2_2_stage_capped_55_2_7,55,3,7,2,dim3_bound_infeasible,0.1807061523553327,2,pruned,mixed,3,1,1,True,True,"[""u1*u3""]","[""u3""]"
+659_evogrow_v2_2_stage_capped_55_2_7,55,3,7,2,dim3_bound_infeasible,0.1807061523553327,3,pruned,superset,2,0,4,False,True,[],"[""u1"", ""u1*u3"", ""u2"", ""u2*u3""]"
+649_evogrow_v2_2_stage_capped_55_1_42,55,3,42,1,dim3_bound_infeasible,0.1273642665656356,1,raw,superset,2,0,3,False,True,[],"[""u1*u2"", ""u3"", ""u3^2""]"
+649_evogrow_v2_2_stage_capped_55_1_42,55,3,42,1,dim3_bound_infeasible,0.1273642665656356,2,raw,mixed,3,1,2,True,True,"[""u1*u3""]","[""u1*u2"", ""u3""]"
+649_evogrow_v2_2_stage_capped_55_1_42,55,3,42,1,dim3_bound_infeasible,0.1273642665656356,3,raw,mixed,2,1,5,True,True,"[""u1*u2""]","[""1"", ""u1"", ""u2"", ""u2^2"", ""u3^2""]"
+649_evogrow_v2_2_stage_capped_55_1_42,55,3,42,1,dim3_bound_infeasible,0.1273642665656356,1,pruned,superset,2,0,3,False,True,[],"[""u1*u2"", ""u3"", ""u3^2""]"
+649_evogrow_v2_2_stage_capped_55_1_42,55,3,42,1,dim3_bound_infeasible,0.1273642665656356,2,pruned,mixed,3,1,2,True,True,"[""u1*u3""]","[""u1*u2"", ""u3""]"
+649_evogrow_v2_2_stage_capped_55_1_42,55,3,42,1,dim3_bound_infeasible,0.1273642665656356,3,pruned,mixed,2,1,5,True,True,"[""u1*u2""]","[""1"", ""u1"", ""u2"", ""u2^2"", ""u3^2""]"
+655_evogrow_v2_2_stage_capped_55_2_42,55,3,42,2,dim3_bound_infeasible,0.1916227392792346,1,raw,superset,2,0,2,False,True,[],"[""u2^3"", ""u3""]"
+655_evogrow_v2_2_stage_capped_55_2_42,55,3,42,2,dim3_bound_infeasible,0.1916227392792346,2,raw,mixed,3,1,3,True,True,"[""u2""]","[""1"", ""u2*u3"", ""u3""]"
+655_evogrow_v2_2_stage_capped_55_2_42,55,3,42,2,dim3_bound_infeasible,0.1916227392792346,3,raw,mixed,2,1,5,True,True,"[""u1*u2""]","[""u1"", ""u2"", ""u2*u3"", ""u2^2"", ""u3^2""]"
+655_evogrow_v2_2_stage_capped_55_2_42,55,3,42,2,dim3_bound_infeasible,0.1916227392792346,1,pruned,superset,2,0,2,False,True,[],"[""u2^3"", ""u3""]"
+655_evogrow_v2_2_stage_capped_55_2_42,55,3,42,2,dim3_bound_infeasible,0.1916227392792346,2,pruned,mixed,3,1,3,True,True,"[""u2""]","[""1"", ""u2*u3"", ""u3""]"
+655_evogrow_v2_2_stage_capped_55_2_42,55,3,42,2,dim3_bound_infeasible,0.1916227392792346,3,pruned,mixed,2,1,5,True,True,"[""u1*u2""]","[""u1"", ""u2"", ""u2*u3"", ""u2^2"", ""u3^2""]"
+651_evogrow_v2_2_stage_capped_55_1_123,55,3,123,1,dim3_bound_infeasible,0.1699249050160327,1,raw,superset,2,0,1,False,True,[],"[""u3""]"
+651_evogrow_v2_2_stage_capped_55_1_123,55,3,123,1,dim3_bound_infeasible,0.1699249050160327,2,raw,mixed,3,1,4,True,True,"[""u1*u3""]","[""1"", ""u2^2"", ""u3"", ""u3^2""]"
+651_evogrow_v2_2_stage_capped_55_1_123,55,3,123,1,dim3_bound_infeasible,0.1699249050160327,3,raw,disjoint,2,2,6,True,True,"[""u1*u2"", ""u3""]","[""1"", ""u1"", ""u1^2"", ""u2"", ""u2^2"", ""u3^2""]"
+651_evogrow_v2_2_stage_capped_55_1_123,55,3,123,1,dim3_bound_infeasible,0.1699249050160327,1,pruned,superset,2,0,1,False,True,[],"[""u3""]"
+651_evogrow_v2_2_stage_capped_55_1_123,55,3,123,1,dim3_bound_infeasible,0.1699249050160327,2,pruned,mixed,3,1,4,True,True,"[""u1*u3""]","[""1"", ""u2^2"", ""u3"", ""u3^2""]"
+651_evogrow_v2_2_stage_capped_55_1_123,55,3,123,1,dim3_bound_infeasible,0.1699249050160327,3,pruned,disjoint,2,2,6,True,True,"[""u1*u2"", ""u3""]","[""1"", ""u1"", ""u1^2"", ""u2"", ""u2^2"", ""u3^2""]"
+657_evogrow_v2_2_stage_capped_55_2_123,55,3,123,2,dim3_bound_infeasible,0.0857797487047754,1,raw,superset,2,0,4,False,True,[],"[""1"", ""u1*u3"", ""u1^3"", ""u3""]"
+657_evogrow_v2_2_stage_capped_55_2_123,55,3,123,2,dim3_bound_infeasible,0.0857797487047754,2,raw,mixed,3,1,3,True,True,"[""u2""]","[""u1*u2"", ""u2*u3"", ""u3""]"
+657_evogrow_v2_2_stage_capped_55_2_123,55,3,123,2,dim3_bound_infeasible,0.0857797487047754,3,raw,superset,2,0,4,False,True,[],"[""1"", ""u1"", ""u1^2"", ""u2""]"
+657_evogrow_v2_2_stage_capped_55_2_123,55,3,123,2,dim3_bound_infeasible,0.0857797487047754,1,pruned,superset,2,0,4,False,True,[],"[""1"", ""u1*u3"", ""u1^3"", ""u3""]"
+657_evogrow_v2_2_stage_capped_55_2_123,55,3,123,2,dim3_bound_infeasible,0.0857797487047754,2,pruned,mixed,3,1,3,True,True,"[""u2""]","[""u1*u2"", ""u2*u3"", ""u3""]"
+657_evogrow_v2_2_stage_capped_55_2_123,55,3,123,2,dim3_bound_infeasible,0.0857797487047754,3,pruned,superset,2,0,4,False,True,[],"[""1"", ""u1"", ""u1^2"", ""u2""]"
+665_evogrow_v2_2_stage_capped_56_1_7,56,3,7,1,dim3_bound_infeasible,0.2090725455188926,1,raw,superset,2,0,1,False,True,[],"[""u3""]"
+665_evogrow_v2_2_stage_capped_56_1_7,56,3,7,1,dim3_bound_infeasible,0.2090725455188926,2,raw,mixed,3,1,2,True,True,"[""u1*u3""]","[""1"", ""u3""]"
+665_evogrow_v2_2_stage_capped_56_1_7,56,3,7,1,dim3_bound_infeasible,0.2090725455188926,3,raw,mixed,2,1,5,True,True,"[""u1*u2""]","[""1"", ""u1"", ""u1^2"", ""u2"", ""u2^2""]"
+665_evogrow_v2_2_stage_capped_56_1_7,56,3,7,1,dim3_bound_infeasible,0.2090725455188926,1,pruned,superset,2,0,1,False,True,[],"[""u3""]"
+665_evogrow_v2_2_stage_capped_56_1_7,56,3,7,1,dim3_bound_infeasible,0.2090725455188926,2,pruned,mixed,3,1,2,True,True,"[""u1*u3""]","[""1"", ""u3""]"
+665_evogrow_v2_2_stage_capped_56_1_7,56,3,7,1,dim3_bound_infeasible,0.2090725455188926,3,pruned,mixed,2,1,5,True,True,"[""u1*u2""]","[""1"", ""u1"", ""u1^2"", ""u2"", ""u2^2""]"
+671_evogrow_v2_2_stage_capped_56_2_7,56,3,7,2,dim3_bound_infeasible,0.2185526523028961,1,raw,mixed,2,1,4,True,True,"[""u1""]","[""1"", ""u2^2"", ""u3"", ""u3^2""]"
+671_evogrow_v2_2_stage_capped_56_2_7,56,3,7,2,dim3_bound_infeasible,0.2185526523028961,2,raw,mixed,3,1,2,True,True,"[""u1*u3""]","[""1"", ""u3""]"
+671_evogrow_v2_2_stage_capped_56_2_7,56,3,7,2,dim3_bound_infeasible,0.2185526523028961,3,raw,mixed,2,1,3,True,True,"[""u1*u2""]","[""1"", ""u1"", ""u2""]"
+671_evogrow_v2_2_stage_capped_56_2_7,56,3,7,2,dim3_bound_infeasible,0.2185526523028961,1,pruned,mixed,2,1,4,True,True,"[""u1""]","[""1"", ""u2^2"", ""u3"", ""u3^2""]"
+671_evogrow_v2_2_stage_capped_56_2_7,56,3,7,2,dim3_bound_infeasible,0.2185526523028961,2,pruned,mixed,3,1,2,True,True,"[""u1*u3""]","[""1"", ""u3""]"
+671_evogrow_v2_2_stage_capped_56_2_7,56,3,7,2,dim3_bound_infeasible,0.2185526523028961,3,pruned,mixed,2,1,3,True,True,"[""u1*u2""]","[""1"", ""u1"", ""u2""]"
+661_evogrow_v2_2_stage_capped_56_1_42,56,3,42,1,dim3_bound_infeasible,0.2289484298019556,1,raw,superset,2,0,2,False,True,[],"[""u3"", ""u3^3""]"
+661_evogrow_v2_2_stage_capped_56_1_42,56,3,42,1,dim3_bound_infeasible,0.2289484298019556,2,raw,mixed,3,1,3,True,True,"[""u1*u3""]","[""1"", ""u2*u3"", ""u3""]"
+661_evogrow_v2_2_stage_capped_56_1_42,56,3,42,1,dim3_bound_infeasible,0.2289484298019556,3,raw,mixed,2,1,4,True,True,"[""u1*u2""]","[""1"", ""u1"", ""u2"", ""u2^2""]"
+661_evogrow_v2_2_stage_capped_56_1_42,56,3,42,1,dim3_bound_infeasible,0.2289484298019556,1,pruned,superset,2,0,1,False,True,[],"[""u3""]"
+661_evogrow_v2_2_stage_capped_56_1_42,56,3,42,1,dim3_bound_infeasible,0.2289484298019556,2,pruned,mixed,3,1,3,True,True,"[""u1*u3""]","[""1"", ""u2*u3"", ""u3""]"
+661_evogrow_v2_2_stage_capped_56_1_42,56,3,42,1,dim3_bound_infeasible,0.2289484298019556,3,pruned,mixed,2,1,4,True,True,"[""u1*u2""]","[""1"", ""u1"", ""u2"", ""u2^2""]"
+667_evogrow_v2_2_stage_capped_56_2_42,56,3,42,2,dim3_bound_infeasible,0.2505406942382631,1,raw,superset,2,0,4,False,True,[],"[""1"", ""u1^2"", ""u3"", ""u3^2""]"
+667_evogrow_v2_2_stage_capped_56_2_42,56,3,42,2,dim3_bound_infeasible,0.2505406942382631,2,raw,subset,3,1,0,True,False,"[""u1*u3""]",[]
+667_evogrow_v2_2_stage_capped_56_2_42,56,3,42,2,dim3_bound_infeasible,0.2505406942382631,3,raw,mixed,2,1,3,True,True,"[""u1*u2""]","[""1"", ""u1"", ""u2""]"
+667_evogrow_v2_2_stage_capped_56_2_42,56,3,42,2,dim3_bound_infeasible,0.2505406942382631,1,pruned,superset,2,0,4,False,True,[],"[""1"", ""u1^2"", ""u3"", ""u3^2""]"
+667_evogrow_v2_2_stage_capped_56_2_42,56,3,42,2,dim3_bound_infeasible,0.2505406942382631,2,pruned,subset,3,1,0,True,False,"[""u1*u3""]",[]
+667_evogrow_v2_2_stage_capped_56_2_42,56,3,42,2,dim3_bound_infeasible,0.2505406942382631,3,pruned,mixed,2,1,3,True,True,"[""u1*u2""]","[""1"", ""u1"", ""u2""]"
+663_evogrow_v2_2_stage_capped_56_1_123,56,3,123,1,dim3_bound_infeasible,0.2575099440067282,1,raw,superset,2,0,3,False,True,[],"[""1"", ""u1*u2"", ""u3""]"
+663_evogrow_v2_2_stage_capped_56_1_123,56,3,123,1,dim3_bound_infeasible,0.2575099440067282,2,raw,mixed,3,1,4,True,True,"[""u1*u3""]","[""u1^2"", ""u2*u3"", ""u3"", ""u3^2""]"
+663_evogrow_v2_2_stage_capped_56_1_123,56,3,123,1,dim3_bound_infeasible,0.2575099440067282,3,raw,mixed,2,1,5,True,True,"[""u1*u2""]","[""1"", ""u1"", ""u1*u3"", ""u2"", ""u2*u3""]"
+663_evogrow_v2_2_stage_capped_56_1_123,56,3,123,1,dim3_bound_infeasible,0.2575099440067282,1,pruned,superset,2,0,3,False,True,[],"[""1"", ""u1*u2"", ""u3""]"
+663_evogrow_v2_2_stage_capped_56_1_123,56,3,123,1,dim3_bound_infeasible,0.2575099440067282,2,pruned,mixed,3,1,4,True,True,"[""u1*u3""]","[""u1^2"", ""u2*u3"", ""u3"", ""u3^2""]"
+663_evogrow_v2_2_stage_capped_56_1_123,56,3,123,1,dim3_bound_infeasible,0.2575099440067282,3,pruned,mixed,2,1,5,True,True,"[""u1*u2""]","[""1"", ""u1"", ""u1*u3"", ""u2"", ""u2*u3""]"
+669_evogrow_v2_2_stage_capped_56_2_123,56,3,123,2,dim3_bound_infeasible,0.1323921852714432,1,raw,superset,2,0,2,False,True,[],"[""cos(u1)"", ""u2^2""]"
+669_evogrow_v2_2_stage_capped_56_2_123,56,3,123,2,dim3_bound_infeasible,0.1323921852714432,2,raw,mixed,3,1,1,True,True,"[""u1*u3""]","[""u2*u3""]"
+669_evogrow_v2_2_stage_capped_56_2_123,56,3,123,2,dim3_bound_infeasible,0.1323921852714432,3,raw,disjoint,2,2,3,True,True,"[""u1*u2"", ""u3""]","[""1"", ""u1"", ""u2*u3""]"
+669_evogrow_v2_2_stage_capped_56_2_123,56,3,123,2,dim3_bound_infeasible,0.1323921852714432,1,pruned,superset,2,0,2,False,True,[],"[""cos(u1)"", ""u2^2""]"
+669_evogrow_v2_2_stage_capped_56_2_123,56,3,123,2,dim3_bound_infeasible,0.1323921852714432,2,pruned,mixed,3,1,1,True,True,"[""u1*u3""]","[""u2*u3""]"
+669_evogrow_v2_2_stage_capped_56_2_123,56,3,123,2,dim3_bound_infeasible,0.1323921852714432,3,pruned,disjoint,2,2,3,True,True,"[""u1*u2"", ""u3""]","[""1"", ""u1"", ""u2*u3""]"
+677_evogrow_v2_2_stage_capped_57_1_7,57,3,7,1,dim3_bound_infeasible,0.8038915724120036,1,raw,superset,2,0,1,False,True,[],"[""1""]"
+677_evogrow_v2_2_stage_capped_57_1_7,57,3,7,1,dim3_bound_infeasible,0.8038915724120036,2,raw,exact,2,0,0,False,False,[],[]
+677_evogrow_v2_2_stage_capped_57_1_7,57,3,7,1,dim3_bound_infeasible,0.8038915724120036,3,raw,mixed,3,2,1,True,True,"[""1"", ""u1*u3""]","[""u2""]"
+677_evogrow_v2_2_stage_capped_57_1_7,57,3,7,1,dim3_bound_infeasible,0.8038915724120036,1,pruned,superset,2,0,1,False,True,[],"[""1""]"
+677_evogrow_v2_2_stage_capped_57_1_7,57,3,7,1,dim3_bound_infeasible,0.8038915724120036,2,pruned,exact,2,0,0,False,False,[],[]
+677_evogrow_v2_2_stage_capped_57_1_7,57,3,7,1,dim3_bound_infeasible,0.8038915724120036,3,pruned,mixed,3,2,1,True,True,"[""1"", ""u1*u3""]","[""u2""]"
+683_evogrow_v2_2_stage_capped_57_2_7,57,3,7,2,dim3_bound_infeasible,0.9993869690976436,1,raw,exact,2,0,0,False,False,[],[]
+683_evogrow_v2_2_stage_capped_57_2_7,57,3,7,2,dim3_bound_infeasible,0.9993869690976436,2,raw,superset,2,0,1,False,True,[],"[""1""]"
+683_evogrow_v2_2_stage_capped_57_2_7,57,3,7,2,dim3_bound_infeasible,0.9993869690976436,3,raw,mixed,3,1,3,True,True,"[""u1*u3""]","[""u2"", ""u2*u3"", ""u2^2""]"
+683_evogrow_v2_2_stage_capped_57_2_7,57,3,7,2,dim3_bound_infeasible,0.9993869690976436,1,pruned,exact,2,0,0,False,False,[],[]
+683_evogrow_v2_2_stage_capped_57_2_7,57,3,7,2,dim3_bound_infeasible,0.9993869690976436,2,pruned,exact,2,0,0,False,False,[],[]
+683_evogrow_v2_2_stage_capped_57_2_7,57,3,7,2,dim3_bound_infeasible,0.9993869690976436,3,pruned,mixed,3,1,2,True,True,"[""u1*u3""]","[""u2"", ""u2*u3""]"
+673_evogrow_v2_2_stage_capped_57_1_42,57,3,42,1,dim3_bound_infeasible,0.9532956327487576,1,raw,subset,2,1,0,True,False,"[""u3""]",[]
+673_evogrow_v2_2_stage_capped_57_1_42,57,3,42,1,dim3_bound_infeasible,0.9532956327487576,2,raw,superset,2,0,1,False,True,[],"[""u3""]"
+673_evogrow_v2_2_stage_capped_57_1_42,57,3,42,1,dim3_bound_infeasible,0.9532956327487576,3,raw,mixed,3,1,1,True,True,"[""u1*u3""]","[""u2""]"
+673_evogrow_v2_2_stage_capped_57_1_42,57,3,42,1,dim3_bound_infeasible,0.9532956327487576,1,pruned,subset,2,1,0,True,False,"[""u3""]",[]
+673_evogrow_v2_2_stage_capped_57_1_42,57,3,42,1,dim3_bound_infeasible,0.9532956327487576,2,pruned,superset,2,0,1,False,True,[],"[""u3""]"
+673_evogrow_v2_2_stage_capped_57_1_42,57,3,42,1,dim3_bound_infeasible,0.9532956327487576,3,pruned,mixed,3,1,1,True,True,"[""u1*u3""]","[""u2""]"
+679_evogrow_v2_2_stage_capped_57_2_42,57,3,42,2,dim3_bound_infeasible,0.938980233685076,1,raw,mixed,2,1,1,True,True,"[""u3""]","[""u3^3""]"
+679_evogrow_v2_2_stage_capped_57_2_42,57,3,42,2,dim3_bound_infeasible,0.938980233685076,2,raw,superset,2,0,1,False,True,[],"[""1""]"
+679_evogrow_v2_2_stage_capped_57_2_42,57,3,42,2,dim3_bound_infeasible,0.938980233685076,3,raw,superset,3,0,1,False,True,[],"[""u1""]"
+679_evogrow_v2_2_stage_capped_57_2_42,57,3,42,2,dim3_bound_infeasible,0.938980233685076,1,pruned,mixed,2,1,1,True,True,"[""u3""]","[""u3^3""]"
+679_evogrow_v2_2_stage_capped_57_2_42,57,3,42,2,dim3_bound_infeasible,0.938980233685076,2,pruned,superset,2,0,1,False,True,[],"[""1""]"
+679_evogrow_v2_2_stage_capped_57_2_42,57,3,42,2,dim3_bound_infeasible,0.938980233685076,3,pruned,superset,3,0,1,False,True,[],"[""u1""]"
+675_evogrow_v2_2_stage_capped_57_1_123,57,3,123,1,dim3_bound_infeasible,0.9396370248603964,1,raw,exact,2,0,0,False,False,[],[]
+675_evogrow_v2_2_stage_capped_57_1_123,57,3,123,1,dim3_bound_infeasible,0.9396370248603964,2,raw,exact,2,0,0,False,False,[],[]
+675_evogrow_v2_2_stage_capped_57_1_123,57,3,123,1,dim3_bound_infeasible,0.9396370248603964,3,raw,subset,3,1,0,True,False,"[""u1*u3""]",[]
+675_evogrow_v2_2_stage_capped_57_1_123,57,3,123,1,dim3_bound_infeasible,0.9396370248603964,1,pruned,exact,2,0,0,False,False,[],[]
+675_evogrow_v2_2_stage_capped_57_1_123,57,3,123,1,dim3_bound_infeasible,0.9396370248603964,2,pruned,exact,2,0,0,False,False,[],[]
+675_evogrow_v2_2_stage_capped_57_1_123,57,3,123,1,dim3_bound_infeasible,0.9396370248603964,3,pruned,subset,3,1,0,True,False,"[""u1*u3""]",[]
+681_evogrow_v2_2_stage_capped_57_2_123,57,3,123,2,dim3_bound_infeasible,0.8299161640019186,1,raw,mixed,2,1,2,True,True,"[""u3""]","[""1"", ""u3^2""]"
+681_evogrow_v2_2_stage_capped_57_2_123,57,3,123,2,dim3_bound_infeasible,0.8299161640019186,2,raw,superset,2,0,2,False,True,[],"[""1"", ""u3""]"
+681_evogrow_v2_2_stage_capped_57_2_123,57,3,123,2,dim3_bound_infeasible,0.8299161640019186,3,raw,mixed,3,1,1,True,True,"[""u1*u3""]","[""u2""]"
+681_evogrow_v2_2_stage_capped_57_2_123,57,3,123,2,dim3_bound_infeasible,0.8299161640019186,1,pruned,mixed,2,1,2,True,True,"[""u3""]","[""1"", ""u3^2""]"
+681_evogrow_v2_2_stage_capped_57_2_123,57,3,123,2,dim3_bound_infeasible,0.8299161640019186,2,pruned,superset,2,0,1,False,True,[],"[""u3""]"
+681_evogrow_v2_2_stage_capped_57_2_123,57,3,123,2,dim3_bound_infeasible,0.8299161640019186,3,pruned,mixed,3,1,1,True,True,"[""u1*u3""]","[""u2""]"
+689_evogrow_v2_2_stage_capped_58_1_7,58,3,7,1,dim3_bound_infeasible,0.5540713410496682,1,raw,superset,2,0,1,False,True,[],"[""u1""]"
+689_evogrow_v2_2_stage_capped_58_1_7,58,3,7,1,dim3_bound_infeasible,0.5540713410496682,2,raw,subset,2,1,0,True,False,"[""u2""]",[]
+689_evogrow_v2_2_stage_capped_58_1_7,58,3,7,1,dim3_bound_infeasible,0.5540713410496682,3,raw,mixed,3,2,1,True,True,"[""u1*u3"", ""u3""]","[""u2*u3""]"
+689_evogrow_v2_2_stage_capped_58_1_7,58,3,7,1,dim3_bound_infeasible,0.5540713410496682,1,pruned,superset,2,0,1,False,True,[],"[""u1""]"
+689_evogrow_v2_2_stage_capped_58_1_7,58,3,7,1,dim3_bound_infeasible,0.5540713410496682,2,pruned,subset,2,1,0,True,False,"[""u2""]",[]
+689_evogrow_v2_2_stage_capped_58_1_7,58,3,7,1,dim3_bound_infeasible,0.5540713410496682,3,pruned,mixed,3,2,1,True,True,"[""u1*u3"", ""u3""]","[""u2*u3""]"
+695_evogrow_v2_2_stage_capped_58_2_7,58,3,7,2,dim3_bound_infeasible,-0.1415665219833575,1,raw,mixed,2,1,2,True,True,"[""u2""]","[""u2*u3"", ""u2^2""]"
+695_evogrow_v2_2_stage_capped_58_2_7,58,3,7,2,dim3_bound_infeasible,-0.1415665219833575,2,raw,superset,2,0,1,False,True,[],"[""u1*u3""]"
+695_evogrow_v2_2_stage_capped_58_2_7,58,3,7,2,dim3_bound_infeasible,-0.1415665219833575,3,raw,mixed,3,1,1,True,True,"[""1""]","[""u1""]"
+695_evogrow_v2_2_stage_capped_58_2_7,58,3,7,2,dim3_bound_infeasible,-0.1415665219833575,1,pruned,mixed,2,1,2,True,True,"[""u2""]","[""u2*u3"", ""u2^2""]"
+695_evogrow_v2_2_stage_capped_58_2_7,58,3,7,2,dim3_bound_infeasible,-0.1415665219833575,2,pruned,superset,2,0,1,False,True,[],"[""u1*u3""]"
+695_evogrow_v2_2_stage_capped_58_2_7,58,3,7,2,dim3_bound_infeasible,-0.1415665219833575,3,pruned,subset,3,1,0,True,False,"[""1""]",[]
+685_evogrow_v2_2_stage_capped_58_1_42,58,3,42,1,dim3_bound_infeasible,0.6555194602672759,1,raw,mixed,2,1,4,True,True,"[""u3""]","[""sin(u2)"", ""u1"", ""u1^3"", ""u2*u3""]"
+685_evogrow_v2_2_stage_capped_58_1_42,58,3,42,1,dim3_bound_infeasible,0.6555194602672759,2,raw,superset,2,0,1,False,True,[],"[""1""]"
+685_evogrow_v2_2_stage_capped_58_1_42,58,3,42,1,dim3_bound_infeasible,0.6555194602672759,3,raw,disjoint,3,3,3,True,True,"[""1"", ""u1*u3"", ""u3""]","[""u1*u2"", ""u2"", ""u2^2""]"
+685_evogrow_v2_2_stage_capped_58_1_42,58,3,42,1,dim3_bound_infeasible,0.6555194602672759,1,pruned,mixed,2,1,4,True,True,"[""u3""]","[""sin(u2)"", ""u1"", ""u1^3"", ""u2*u3""]"
+685_evogrow_v2_2_stage_capped_58_1_42,58,3,42,1,dim3_bound_infeasible,0.6555194602672759,2,pruned,superset,2,0,1,False,True,[],"[""1""]"
+685_evogrow_v2_2_stage_capped_58_1_42,58,3,42,1,dim3_bound_infeasible,0.6555194602672759,3,pruned,disjoint,3,3,3,True,True,"[""1"", ""u1*u3"", ""u3""]","[""u1*u2"", ""u2"", ""u2^2""]"
+691_evogrow_v2_2_stage_capped_58_2_42,58,3,42,2,dim3_bound_infeasible,0.5964257184611809,1,raw,superset,2,0,3,False,True,[],"[""1"", ""sin(u2)"", ""u1""]"
+691_evogrow_v2_2_stage_capped_58_2_42,58,3,42,2,dim3_bound_infeasible,0.5964257184611809,2,raw,superset,2,0,2,False,True,[],"[""1"", ""u3""]"
+691_evogrow_v2_2_stage_capped_58_2_42,58,3,42,2,dim3_bound_infeasible,0.5964257184611809,3,raw,disjoint,3,3,3,True,True,"[""1"", ""u1*u3"", ""u3""]","[""u1"", ""u2"", ""u3^2""]"
+691_evogrow_v2_2_stage_capped_58_2_42,58,3,42,2,dim3_bound_infeasible,0.5964257184611809,1,pruned,superset,2,0,3,False,True,[],"[""1"", ""sin(u2)"", ""u1""]"
+691_evogrow_v2_2_stage_capped_58_2_42,58,3,42,2,dim3_bound_infeasible,0.5964257184611809,2,pruned,superset,2,0,2,False,True,[],"[""1"", ""u3""]"
+691_evogrow_v2_2_stage_capped_58_2_42,58,3,42,2,dim3_bound_infeasible,0.5964257184611809,3,pruned,disjoint,3,3,3,True,True,"[""1"", ""u1*u3"", ""u3""]","[""u1"", ""u2"", ""u3^2""]"
+687_evogrow_v2_2_stage_capped_58_1_123,58,3,123,1,dim3_bound_infeasible,0.9140492852455456,1,raw,superset,2,0,1,False,True,[],"[""u2*u3""]"
+687_evogrow_v2_2_stage_capped_58_1_123,58,3,123,1,dim3_bound_infeasible,0.9140492852455456,2,raw,exact,2,0,0,False,False,[],[]
+687_evogrow_v2_2_stage_capped_58_1_123,58,3,123,1,dim3_bound_infeasible,0.9140492852455456,3,raw,exact,3,0,0,False,False,[],[]
+687_evogrow_v2_2_stage_capped_58_1_123,58,3,123,1,dim3_bound_infeasible,0.9140492852455456,1,pruned,superset,2,0,1,False,True,[],"[""u2*u3""]"
+687_evogrow_v2_2_stage_capped_58_1_123,58,3,123,1,dim3_bound_infeasible,0.9140492852455456,2,pruned,exact,2,0,0,False,False,[],[]
+687_evogrow_v2_2_stage_capped_58_1_123,58,3,123,1,dim3_bound_infeasible,0.9140492852455456,3,pruned,exact,3,0,0,False,False,[],[]
+693_evogrow_v2_2_stage_capped_58_2_123,58,3,123,2,dim3_bound_infeasible,0.8347220325611787,1,raw,superset,2,0,3,False,True,[],"[""1"", ""u1"", ""u1*u3""]"
+693_evogrow_v2_2_stage_capped_58_2_123,58,3,123,2,dim3_bound_infeasible,0.8347220325611787,2,raw,mixed,2,1,1,True,True,"[""u2""]","[""1""]"
+693_evogrow_v2_2_stage_capped_58_2_123,58,3,123,2,dim3_bound_infeasible,0.8347220325611787,3,raw,mixed,3,1,3,True,True,"[""u1*u3""]","[""u1"", ""u2"", ""u3^2""]"
+693_evogrow_v2_2_stage_capped_58_2_123,58,3,123,2,dim3_bound_infeasible,0.8347220325611787,1,pruned,superset,2,0,3,False,True,[],"[""1"", ""u1"", ""u1*u3""]"
+693_evogrow_v2_2_stage_capped_58_2_123,58,3,123,2,dim3_bound_infeasible,0.8347220325611787,2,pruned,mixed,2,1,1,True,True,"[""u2""]","[""1""]"
+693_evogrow_v2_2_stage_capped_58_2_123,58,3,123,2,dim3_bound_infeasible,0.8347220325611787,3,pruned,mixed,3,1,3,True,True,"[""u1*u3""]","[""u1"", ""u2"", ""u3^2""]"
+701_evogrow_v2_2_stage_capped_59_1_7,59,3,7,1,dim3_bound_infeasible,0.5895094733030457,1,raw,superset,2,0,3,False,True,[],"[""1"", ""u1"", ""u1^3""]"
+701_evogrow_v2_2_stage_capped_59_1_7,59,3,7,1,dim3_bound_infeasible,0.5895094733030457,2,raw,superset,2,0,2,False,True,[],"[""u2*u3"", ""u3""]"
+701_evogrow_v2_2_stage_capped_59_1_7,59,3,7,1,dim3_bound_infeasible,0.5895094733030457,3,raw,disjoint,3,3,2,True,True,"[""1"", ""u1*u3"", ""u3""]","[""u1^2"", ""u2""]"
+701_evogrow_v2_2_stage_capped_59_1_7,59,3,7,1,dim3_bound_infeasible,0.5895094733030457,1,pruned,superset,2,0,3,False,True,[],"[""1"", ""u1"", ""u1^3""]"
+701_evogrow_v2_2_stage_capped_59_1_7,59,3,7,1,dim3_bound_infeasible,0.5895094733030457,2,pruned,superset,2,0,2,False,True,[],"[""u2*u3"", ""u3""]"
+701_evogrow_v2_2_stage_capped_59_1_7,59,3,7,1,dim3_bound_infeasible,0.5895094733030457,3,pruned,disjoint,3,3,2,True,True,"[""1"", ""u1*u3"", ""u3""]","[""u1^2"", ""u2""]"
+707_evogrow_v2_2_stage_capped_59_2_7,59,3,7,2,dim3_bound_infeasible,0.6467424138488408,1,raw,mixed,2,1,3,True,True,"[""u2""]","[""cos(u3)"", ""u2*u3"", ""u2^3""]"
+707_evogrow_v2_2_stage_capped_59_2_7,59,3,7,2,dim3_bound_infeasible,0.6467424138488408,2,raw,mixed,2,1,1,True,True,"[""u2""]","[""u3""]"
+707_evogrow_v2_2_stage_capped_59_2_7,59,3,7,2,dim3_bound_infeasible,0.6467424138488408,3,raw,mixed,3,1,1,True,True,"[""u1*u3""]","[""u1""]"
+707_evogrow_v2_2_stage_capped_59_2_7,59,3,7,2,dim3_bound_infeasible,0.6467424138488408,1,pruned,mixed,2,1,3,True,True,"[""u2""]","[""cos(u3)"", ""u2*u3"", ""u2^3""]"
+707_evogrow_v2_2_stage_capped_59_2_7,59,3,7,2,dim3_bound_infeasible,0.6467424138488408,2,pruned,mixed,2,1,1,True,True,"[""u2""]","[""u3""]"
+707_evogrow_v2_2_stage_capped_59_2_7,59,3,7,2,dim3_bound_infeasible,0.6467424138488408,3,pruned,mixed,3,1,1,True,True,"[""u1*u3""]","[""u1""]"
+697_evogrow_v2_2_stage_capped_59_1_42,59,3,42,1,dim3_bound_infeasible,0.4995642862511405,1,raw,mixed,2,1,1,True,True,"[""u3""]","[""u2*u3""]"
+697_evogrow_v2_2_stage_capped_59_1_42,59,3,42,1,dim3_bound_infeasible,0.4995642862511405,2,raw,mixed,2,1,2,True,True,"[""u2""]","[""u1^2"", ""u2*u3""]"
+697_evogrow_v2_2_stage_capped_59_1_42,59,3,42,1,dim3_bound_infeasible,0.4995642862511405,3,raw,mixed,3,2,2,True,True,"[""1"", ""u3""]","[""u1"", ""u1^2""]"
+697_evogrow_v2_2_stage_capped_59_1_42,59,3,42,1,dim3_bound_infeasible,0.4995642862511405,1,pruned,mixed,2,1,1,True,True,"[""u3""]","[""u2*u3""]"
+697_evogrow_v2_2_stage_capped_59_1_42,59,3,42,1,dim3_bound_infeasible,0.4995642862511405,2,pruned,mixed,2,1,2,True,True,"[""u2""]","[""u1^2"", ""u2*u3""]"
+697_evogrow_v2_2_stage_capped_59_1_42,59,3,42,1,dim3_bound_infeasible,0.4995642862511405,3,pruned,mixed,3,2,1,True,True,"[""1"", ""u3""]","[""u1""]"
+703_evogrow_v2_2_stage_capped_59_2_42,59,3,42,2,dim3_bound_infeasible,0.7615550826939429,1,raw,superset,2,0,2,False,True,[],"[""1"", ""u1""]"
+703_evogrow_v2_2_stage_capped_59_2_42,59,3,42,2,dim3_bound_infeasible,0.7615550826939429,2,raw,exact,2,0,0,False,False,[],[]
+703_evogrow_v2_2_stage_capped_59_2_42,59,3,42,2,dim3_bound_infeasible,0.7615550826939429,3,raw,exact,3,0,0,False,False,[],[]
+703_evogrow_v2_2_stage_capped_59_2_42,59,3,42,2,dim3_bound_infeasible,0.7615550826939429,1,pruned,superset,2,0,2,False,True,[],"[""1"", ""u1""]"
+703_evogrow_v2_2_stage_capped_59_2_42,59,3,42,2,dim3_bound_infeasible,0.7615550826939429,2,pruned,exact,2,0,0,False,False,[],[]
+703_evogrow_v2_2_stage_capped_59_2_42,59,3,42,2,dim3_bound_infeasible,0.7615550826939429,3,pruned,exact,3,0,0,False,False,[],[]
+699_evogrow_v2_2_stage_capped_59_1_123,59,3,123,1,dim3_bound_infeasible,0.6790040537783905,1,raw,superset,2,0,2,False,True,[],"[""1"", ""u1""]"
+699_evogrow_v2_2_stage_capped_59_1_123,59,3,123,1,dim3_bound_infeasible,0.6790040537783905,2,raw,superset,2,0,4,False,True,[],"[""1"", ""u1*u3"", ""u2*u3"", ""u3""]"
+699_evogrow_v2_2_stage_capped_59_1_123,59,3,123,1,dim3_bound_infeasible,0.6790040537783905,3,raw,mixed,3,2,2,True,True,"[""u1*u3"", ""u3""]","[""u1*u2"", ""u3^2""]"
+699_evogrow_v2_2_stage_capped_59_1_123,59,3,123,1,dim3_bound_infeasible,0.6790040537783905,1,pruned,superset,2,0,2,False,True,[],"[""1"", ""u1""]"
+699_evogrow_v2_2_stage_capped_59_1_123,59,3,123,1,dim3_bound_infeasible,0.6790040537783905,2,pruned,superset,2,0,4,False,True,[],"[""1"", ""u1*u3"", ""u2*u3"", ""u3""]"
+699_evogrow_v2_2_stage_capped_59_1_123,59,3,123,1,dim3_bound_infeasible,0.6790040537783905,3,pruned,mixed,3,2,2,True,True,"[""u1*u3"", ""u3""]","[""u1*u2"", ""u3^2""]"
+705_evogrow_v2_2_stage_capped_59_2_123,59,3,123,2,dim3_bound_infeasible,0.7076266028068826,1,raw,mixed,2,1,2,True,True,"[""u3""]","[""1"", ""u1""]"
+705_evogrow_v2_2_stage_capped_59_2_123,59,3,123,2,dim3_bound_infeasible,0.7076266028068826,2,raw,superset,2,0,2,False,True,[],"[""1"", ""u3""]"
+705_evogrow_v2_2_stage_capped_59_2_123,59,3,123,2,dim3_bound_infeasible,0.7076266028068826,3,raw,superset,3,0,3,False,True,[],"[""u2"", ""u2*u3"", ""u3^2""]"
+705_evogrow_v2_2_stage_capped_59_2_123,59,3,123,2,dim3_bound_infeasible,0.7076266028068826,1,pruned,mixed,2,1,2,True,True,"[""u3""]","[""1"", ""u1""]"
+705_evogrow_v2_2_stage_capped_59_2_123,59,3,123,2,dim3_bound_infeasible,0.7076266028068826,2,pruned,superset,2,0,2,False,True,[],"[""1"", ""u3""]"
+705_evogrow_v2_2_stage_capped_59_2_123,59,3,123,2,dim3_bound_infeasible,0.7076266028068826,3,pruned,superset,3,0,3,False,True,[],"[""u2"", ""u2*u3"", ""u3^2""]"
+725_evogrow_v2_2_stage_capped_61_1_7,61,3,7,1,dim3_feasible,0.149827826750683,1,raw,disjoint,2,2,4,True,True,"[""u1"", ""u2*u3""]","[""1"", ""u1*u2"", ""u2"", ""u3""]"
+725_evogrow_v2_2_stage_capped_61_1_7,61,3,7,1,dim3_feasible,0.149827826750683,2,raw,mixed,2,1,4,True,True,"[""u1*u3""]","[""u1"", ""u1*u2"", ""u1^2"", ""u3^2""]"
+725_evogrow_v2_2_stage_capped_61_1_7,61,3,7,1,dim3_feasible,0.149827826750683,3,raw,disjoint,2,2,3,True,True,"[""u1*u2"", ""u3""]","[""1"", ""u2"", ""u3^2""]"
+725_evogrow_v2_2_stage_capped_61_1_7,61,3,7,1,dim3_feasible,0.149827826750683,1,pruned,disjoint,2,2,4,True,True,"[""u1"", ""u2*u3""]","[""1"", ""u1*u2"", ""u2"", ""u3""]"
+725_evogrow_v2_2_stage_capped_61_1_7,61,3,7,1,dim3_feasible,0.149827826750683,2,pruned,mixed,2,1,4,True,True,"[""u1*u3""]","[""u1"", ""u1*u2"", ""u1^2"", ""u3^2""]"
+725_evogrow_v2_2_stage_capped_61_1_7,61,3,7,1,dim3_feasible,0.149827826750683,3,pruned,disjoint,2,2,3,True,True,"[""u1*u2"", ""u3""]","[""1"", ""u2"", ""u3^2""]"
+731_evogrow_v2_2_stage_capped_61_2_7,61,3,7,2,dim3_feasible,0.1730282635954965,1,raw,mixed,2,1,5,True,True,"[""u2*u3""]","[""1"", ""u2"", ""u2^2"", ""u3"", ""u3^2""]"
+731_evogrow_v2_2_stage_capped_61_2_7,61,3,7,2,dim3_feasible,0.1730282635954965,2,raw,disjoint,2,2,1,True,True,"[""u1*u3"", ""u2""]","[""u1""]"
+731_evogrow_v2_2_stage_capped_61_2_7,61,3,7,2,dim3_feasible,0.1730282635954965,3,raw,disjoint,2,2,3,True,True,"[""u1*u2"", ""u3""]","[""1"", ""u1"", ""u2""]"
+731_evogrow_v2_2_stage_capped_61_2_7,61,3,7,2,dim3_feasible,0.1730282635954965,1,pruned,mixed,2,1,5,True,True,"[""u2*u3""]","[""1"", ""u2"", ""u2^2"", ""u3"", ""u3^2""]"
+731_evogrow_v2_2_stage_capped_61_2_7,61,3,7,2,dim3_feasible,0.1730282635954965,2,pruned,disjoint,2,2,1,True,True,"[""u1*u3"", ""u2""]","[""u1""]"
+731_evogrow_v2_2_stage_capped_61_2_7,61,3,7,2,dim3_feasible,0.1730282635954965,3,pruned,disjoint,2,2,3,True,True,"[""u1*u2"", ""u3""]","[""1"", ""u1"", ""u2""]"
+721_evogrow_v2_2_stage_capped_61_1_42,61,3,42,1,dim3_feasible,-0.6249461940969665,1,raw,disjoint,2,2,3,True,True,"[""u1"", ""u2*u3""]","[""1"", ""u2"", ""u3""]"
+721_evogrow_v2_2_stage_capped_61_1_42,61,3,42,1,dim3_feasible,-0.6249461940969665,2,raw,mixed,2,1,2,True,True,"[""u1*u3""]","[""u1"", ""u3""]"
+721_evogrow_v2_2_stage_capped_61_1_42,61,3,42,1,dim3_feasible,-0.6249461940969665,3,raw,mixed,2,1,3,True,True,"[""u1*u2""]","[""1"", ""u1"", ""u2""]"
+721_evogrow_v2_2_stage_capped_61_1_42,61,3,42,1,dim3_feasible,-0.6249461940969665,1,pruned,disjoint,2,2,3,True,True,"[""u1"", ""u2*u3""]","[""1"", ""u2"", ""u3""]"
+721_evogrow_v2_2_stage_capped_61_1_42,61,3,42,1,dim3_feasible,-0.6249461940969665,2,pruned,mixed,2,1,2,True,True,"[""u1*u3""]","[""u1"", ""u3""]"
+721_evogrow_v2_2_stage_capped_61_1_42,61,3,42,1,dim3_feasible,-0.6249461940969665,3,pruned,mixed,2,1,3,True,True,"[""u1*u2""]","[""1"", ""u1"", ""u2""]"
+727_evogrow_v2_2_stage_capped_61_2_42,61,3,42,2,dim3_feasible,0.0800903223389766,1,raw,superset,2,0,2,False,True,[],"[""u1^2"", ""u2""]"
+727_evogrow_v2_2_stage_capped_61_2_42,61,3,42,2,dim3_feasible,0.0800903223389766,2,raw,mixed,2,1,2,True,True,"[""u1*u3""]","[""1"", ""u1""]"
+727_evogrow_v2_2_stage_capped_61_2_42,61,3,42,2,dim3_feasible,0.0800903223389766,3,raw,disjoint,2,2,3,True,True,"[""u1*u2"", ""u3""]","[""1"", ""u1"", ""u1^2""]"
+727_evogrow_v2_2_stage_capped_61_2_42,61,3,42,2,dim3_feasible,0.0800903223389766,1,pruned,superset,2,0,2,False,True,[],"[""u1^2"", ""u2""]"
+727_evogrow_v2_2_stage_capped_61_2_42,61,3,42,2,dim3_feasible,0.0800903223389766,2,pruned,mixed,2,1,2,True,True,"[""u1*u3""]","[""1"", ""u1""]"
+727_evogrow_v2_2_stage_capped_61_2_42,61,3,42,2,dim3_feasible,0.0800903223389766,3,pruned,disjoint,2,2,3,True,True,"[""u1*u2"", ""u3""]","[""1"", ""u1"", ""u1^2""]"
+723_evogrow_v2_2_stage_capped_61_1_123,61,3,123,1,dim3_feasible,-0.0161216946544807,1,raw,mixed,2,1,3,True,True,"[""u2*u3""]","[""1"", ""u2"", ""u3^2""]"
+723_evogrow_v2_2_stage_capped_61_1_123,61,3,123,1,dim3_feasible,-0.0161216946544807,2,raw,mixed,2,1,4,True,True,"[""u1*u3""]","[""1"", ""u1"", ""u1^2"", ""u3""]"
+723_evogrow_v2_2_stage_capped_61_1_123,61,3,123,1,dim3_feasible,-0.0161216946544807,3,raw,disjoint,2,2,1,True,True,"[""u1*u2"", ""u3""]","[""u1""]"
+723_evogrow_v2_2_stage_capped_61_1_123,61,3,123,1,dim3_feasible,-0.0161216946544807,1,pruned,mixed,2,1,3,True,True,"[""u2*u3""]","[""1"", ""u2"", ""u3^2""]"
+723_evogrow_v2_2_stage_capped_61_1_123,61,3,123,1,dim3_feasible,-0.0161216946544807,2,pruned,mixed,2,1,4,True,True,"[""u1*u3""]","[""1"", ""u1"", ""u1^2"", ""u3""]"
+723_evogrow_v2_2_stage_capped_61_1_123,61,3,123,1,dim3_feasible,-0.0161216946544807,3,pruned,disjoint,2,2,1,True,True,"[""u1*u2"", ""u3""]","[""u1""]"
+729_evogrow_v2_2_stage_capped_61_2_123,61,3,123,2,dim3_feasible,0.4312114474049698,1,raw,mixed,2,1,3,True,True,"[""u2*u3""]","[""1"", ""u2"", ""u3""]"
+729_evogrow_v2_2_stage_capped_61_2_123,61,3,123,2,dim3_feasible,0.4312114474049698,2,raw,mixed,2,1,4,True,True,"[""u2""]","[""u1"", ""u1*u2"", ""u2*u3"", ""u3""]"
+729_evogrow_v2_2_stage_capped_61_2_123,61,3,123,2,dim3_feasible,0.4312114474049698,3,raw,mixed,2,1,1,True,True,"[""u1*u2""]","[""u1""]"
+729_evogrow_v2_2_stage_capped_61_2_123,61,3,123,2,dim3_feasible,0.4312114474049698,1,pruned,mixed,2,1,3,True,True,"[""u2*u3""]","[""1"", ""u2"", ""u3""]"
+729_evogrow_v2_2_stage_capped_61_2_123,61,3,123,2,dim3_feasible,0.4312114474049698,2,pruned,mixed,2,1,4,True,True,"[""u2""]","[""u1"", ""u1*u2"", ""u2*u3"", ""u3""]"
+729_evogrow_v2_2_stage_capped_61_2_123,61,3,123,2,dim3_feasible,0.4312114474049698,3,pruned,mixed,2,1,1,True,True,"[""u1*u2""]","[""u1""]"
+749_evogrow_v2_2_stage_capped_63_1_7,63,4,7,1,dim4,0.843184867440691,1,raw,disjoint,1,1,1,True,True,"[""u1*u3""]","[""u1""]"
+749_evogrow_v2_2_stage_capped_63_1_7,63,4,7,1,dim4,0.843184867440691,2,raw,disjoint,2,2,1,True,True,"[""u1*u3"", ""u2""]","[""u1""]"
+749_evogrow_v2_2_stage_capped_63_1_7,63,4,7,1,dim4,0.843184867440691,3,raw,disjoint,2,2,2,True,True,"[""u2"", ""u3""]","[""u2^3"", ""u4""]"
+749_evogrow_v2_2_stage_capped_63_1_7,63,4,7,1,dim4,0.843184867440691,4,raw,exact,1,0,0,False,False,[],[]
+749_evogrow_v2_2_stage_capped_63_1_7,63,4,7,1,dim4,0.843184867440691,1,pruned,disjoint,1,1,1,True,True,"[""u1*u3""]","[""u1""]"
+749_evogrow_v2_2_stage_capped_63_1_7,63,4,7,1,dim4,0.843184867440691,2,pruned,disjoint,2,2,1,True,True,"[""u1*u3"", ""u2""]","[""u1""]"
+749_evogrow_v2_2_stage_capped_63_1_7,63,4,7,1,dim4,0.843184867440691,3,pruned,disjoint,2,2,2,True,True,"[""u2"", ""u3""]","[""u2^3"", ""u4""]"
+749_evogrow_v2_2_stage_capped_63_1_7,63,4,7,1,dim4,0.843184867440691,4,pruned,exact,1,0,0,False,False,[],[]
+755_evogrow_v2_2_stage_capped_63_2_7,63,4,7,2,dim4,0.8777210737257095,1,raw,disjoint,1,1,1,True,True,"[""u1*u3""]","[""u1""]"
+755_evogrow_v2_2_stage_capped_63_2_7,63,4,7,2,dim4,0.8777210737257095,2,raw,disjoint,2,2,1,True,True,"[""u1*u3"", ""u2""]","[""u1""]"
+755_evogrow_v2_2_stage_capped_63_2_7,63,4,7,2,dim4,0.8777210737257095,3,raw,disjoint,2,2,1,True,True,"[""u2"", ""u3""]","[""u4""]"
+755_evogrow_v2_2_stage_capped_63_2_7,63,4,7,2,dim4,0.8777210737257095,4,raw,exact,1,0,0,False,False,[],[]
+755_evogrow_v2_2_stage_capped_63_2_7,63,4,7,2,dim4,0.8777210737257095,1,pruned,disjoint,1,1,1,True,True,"[""u1*u3""]","[""u1""]"
+755_evogrow_v2_2_stage_capped_63_2_7,63,4,7,2,dim4,0.8777210737257095,2,pruned,disjoint,2,2,1,True,True,"[""u1*u3"", ""u2""]","[""u1""]"
+755_evogrow_v2_2_stage_capped_63_2_7,63,4,7,2,dim4,0.8777210737257095,3,pruned,disjoint,2,2,1,True,True,"[""u2"", ""u3""]","[""u4""]"
+755_evogrow_v2_2_stage_capped_63_2_7,63,4,7,2,dim4,0.8777210737257095,4,pruned,exact,1,0,0,False,False,[],[]
+745_evogrow_v2_2_stage_capped_63_1_42,63,4,42,1,dim4,0.4688865646555332,1,raw,disjoint,1,1,1,True,True,"[""u1*u3""]","[""u3""]"
+745_evogrow_v2_2_stage_capped_63_1_42,63,4,42,1,dim4,0.4688865646555332,2,raw,subset,2,1,0,True,False,"[""u1*u3""]",[]
+745_evogrow_v2_2_stage_capped_63_1_42,63,4,42,1,dim4,0.4688865646555332,3,raw,subset,2,1,0,True,False,"[""u3""]",[]
+745_evogrow_v2_2_stage_capped_63_1_42,63,4,42,1,dim4,0.4688865646555332,4,raw,exact,1,0,0,False,False,[],[]
+745_evogrow_v2_2_stage_capped_63_1_42,63,4,42,1,dim4,0.4688865646555332,1,pruned,disjoint,1,1,1,True,True,"[""u1*u3""]","[""u3""]"
+745_evogrow_v2_2_stage_capped_63_1_42,63,4,42,1,dim4,0.4688865646555332,2,pruned,subset,2,1,0,True,False,"[""u1*u3""]",[]
+745_evogrow_v2_2_stage_capped_63_1_42,63,4,42,1,dim4,0.4688865646555332,3,pruned,subset,2,1,0,True,False,"[""u3""]",[]
+745_evogrow_v2_2_stage_capped_63_1_42,63,4,42,1,dim4,0.4688865646555332,4,pruned,exact,1,0,0,False,False,[],[]
+751_evogrow_v2_2_stage_capped_63_2_42,63,4,42,2,dim4,0.8957450961617202,1,raw,disjoint,1,1,1,True,True,"[""u1*u3""]","[""1""]"
+751_evogrow_v2_2_stage_capped_63_2_42,63,4,42,2,dim4,0.8957450961617202,2,raw,subset,2,1,0,True,False,"[""u1*u3""]",[]
+751_evogrow_v2_2_stage_capped_63_2_42,63,4,42,2,dim4,0.8957450961617202,3,raw,disjoint,2,2,1,True,True,"[""u2"", ""u3""]","[""1""]"
+751_evogrow_v2_2_stage_capped_63_2_42,63,4,42,2,dim4,0.8957450961617202,4,raw,exact,1,0,0,False,False,[],[]
+751_evogrow_v2_2_stage_capped_63_2_42,63,4,42,2,dim4,0.8957450961617202,1,pruned,disjoint,1,1,1,True,True,"[""u1*u3""]","[""1""]"
+751_evogrow_v2_2_stage_capped_63_2_42,63,4,42,2,dim4,0.8957450961617202,2,pruned,subset,2,1,0,True,False,"[""u1*u3""]",[]
+751_evogrow_v2_2_stage_capped_63_2_42,63,4,42,2,dim4,0.8957450961617202,3,pruned,disjoint,2,2,1,True,True,"[""u2"", ""u3""]","[""1""]"
+751_evogrow_v2_2_stage_capped_63_2_42,63,4,42,2,dim4,0.8957450961617202,4,pruned,exact,1,0,0,False,False,[],[]
+747_evogrow_v2_2_stage_capped_63_1_123,63,4,123,1,dim4,0.2625643211169729,1,raw,disjoint,1,1,1,True,True,"[""u1*u3""]","[""1""]"
+747_evogrow_v2_2_stage_capped_63_1_123,63,4,123,1,dim4,0.2625643211169729,2,raw,subset,2,1,0,True,False,"[""u1*u3""]",[]
+747_evogrow_v2_2_stage_capped_63_1_123,63,4,123,1,dim4,0.2625643211169729,3,raw,disjoint,2,2,1,True,True,"[""u2"", ""u3""]","[""u1""]"
+747_evogrow_v2_2_stage_capped_63_1_123,63,4,123,1,dim4,0.2625643211169729,4,raw,disjoint,1,1,1,True,True,"[""u3""]","[""1""]"
+747_evogrow_v2_2_stage_capped_63_1_123,63,4,123,1,dim4,0.2625643211169729,1,pruned,disjoint,1,1,1,True,True,"[""u1*u3""]","[""1""]"
+747_evogrow_v2_2_stage_capped_63_1_123,63,4,123,1,dim4,0.2625643211169729,2,pruned,subset,2,1,0,True,False,"[""u1*u3""]",[]
+747_evogrow_v2_2_stage_capped_63_1_123,63,4,123,1,dim4,0.2625643211169729,3,pruned,disjoint,2,2,1,True,True,"[""u2"", ""u3""]","[""u1""]"
+747_evogrow_v2_2_stage_capped_63_1_123,63,4,123,1,dim4,0.2625643211169729,4,pruned,disjoint,1,1,1,True,True,"[""u3""]","[""1""]"
+753_evogrow_v2_2_stage_capped_63_2_123,63,4,123,2,dim4,0.9442324653659722,1,raw,disjoint,1,1,1,True,True,"[""u1*u3""]","[""u2""]"
+753_evogrow_v2_2_stage_capped_63_2_123,63,4,123,2,dim4,0.9442324653659722,2,raw,subset,2,1,0,True,False,"[""u1*u3""]",[]
+753_evogrow_v2_2_stage_capped_63_2_123,63,4,123,2,dim4,0.9442324653659722,3,raw,disjoint,2,2,1,True,True,"[""u2"", ""u3""]","[""u4""]"
+753_evogrow_v2_2_stage_capped_63_2_123,63,4,123,2,dim4,0.9442324653659722,4,raw,disjoint,1,1,1,True,True,"[""u3""]","[""1""]"
+753_evogrow_v2_2_stage_capped_63_2_123,63,4,123,2,dim4,0.9442324653659722,1,pruned,disjoint,1,1,1,True,True,"[""u1*u3""]","[""u2""]"
+753_evogrow_v2_2_stage_capped_63_2_123,63,4,123,2,dim4,0.9442324653659722,2,pruned,subset,2,1,0,True,False,"[""u1*u3""]",[]
+753_evogrow_v2_2_stage_capped_63_2_123,63,4,123,2,dim4,0.9442324653659722,3,pruned,disjoint,2,2,1,True,True,"[""u2"", ""u3""]","[""u4""]"
+753_evogrow_v2_2_stage_capped_63_2_123,63,4,123,2,dim4,0.9442324653659722,4,pruned,disjoint,1,1,1,True,True,"[""u3""]","[""1""]"
