@@ -6,6 +6,28 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ## 2026-10-17
 
+### Side-Projekt Q4 (Modellgröße ohne Orakel): Protokoll eingefroren, dim 1/2 gerechnet, dim 3/4 für Orion vorbereitet
+
+Protokoll vom Nutzer freigegeben und eingefroren (`docs/sideproject_residual_growth_protocol_q4.md`, `24ede2d`):
+Wachstumspfad (FROLS + FoBa-Rückwärtsschritt ν = 0,5), pro Kandidat ein Fit vom schwachen Start, Größenwahl (c)
+Trajektorien-BIC primär, (a) schwaches BIC, (b) EvoGrow-λ; Regeln R7 (gegen C-1), R8 (gegen Weak-SINDy-Median,
+entscheidet), R9 (bringt die Simulation etwas). Codex WP-FA4: 769 Pfadkandidaten auf 60 Einheiten + 60
+Obergrenzen-Fits + 1 Kontrolle. **dim 1/2 auf dem Laptop fertig** (42 Einheiten, 404 Datensätze; Kontrolle wahre
+Struktur = Q3-W1-Loss bit-identisch). Ausgewertet wird erst, wenn dim 3/4 vorliegt.
+
+dim 3/4 (18 Einheiten, 426 Fits, ~19 Kern-h, längste Einheit ~6 h, Schätzung aus Q3-Fitzeiten; sys 61 ~15 min je Fit)
+gehen nach Orion (Nutzer): WP-FA4b (CLI-Pfade, eine Ausgabedatei pro Index, `k8s/sideproject_q4_job.yaml`, 19 Pods
+inkl. `sys0024_ic1` als Plattformkontrolle, 8 parallel, 4 Gi, kein Deadline). Lokal geprüft: Job-identischer Aufruf
+aus nachgebautem NFS-Verzeichnis und einer Image-Kopie ohne `analysis/` — bit-identisch zum Laptop.
+
+**Befund am Rand: 20 Dateien unter `src/`, `studies/`, `benchmarks/` haben im Working Tree CRLF oder gemischte
+Zeilenenden**, obwohl der Index LF hält und `.gitattributes` LF vorschreibt (`git status` sauber, Inhalt gleich).
+Rechnerisch folgenlos (Q3 reproduzierte das Orion-P-04 bit-identisch), aber die Herkunfts-Hashes der Laptop-Datensätze
+sind CRLF-Hashes, die des Images LF-Hashes. WP-FA4c: die Auswertung akzeptiert pro Quelldatei genau diese zwei
+Varianten und zählt sie. Den Working Tree normalisieren — erst nach der Q4-Auswertung, sonst sind die Laptop-Hashes
+nicht mehr prüfbar. Ebenso tragen `q3_weak_starts.json` und `q4_paths.json` im Working Tree CRLF; ihre in den
+Datensätzen festgehaltenen Hashes gelten für diese Bytes, das Repo-Blob ist LF.
+
 ### Side-Projekt Q3 (WP-FA3): Ein Fit vom schwachen Start schlägt zehn Zufallsstarts — Klasse B ist auf der Wahrheit entschärft
 <!-- commit 988767b -->
 
