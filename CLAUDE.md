@@ -833,6 +833,11 @@ the coupled search path 1e-6 is the cheaper, behaviour-equal tolerance; the Syst
   Piroddi & Lovera 2008). Sound in derivative/weak-form space (linear in coefficients, residual additive), not in
   trajectory space; refit all coefficients jointly after each term, prune backwards against correlated candidates.
   Whether to pursue depends on the failure anatomy: class B favours it, class D does not. `DIARY.md` 2026-10-17.
+  **Side project started 2026-10-17** (protocols `docs/sideproject_residual_growth_protocol.md` and `_q3.md`, data
+  `analysis/data/sideproject_residual_growth/`): at σ = 0 with oracle sizes the weak space identifies the truth on one
+  trajectory and add + refit + remove reaches it from C-1's wrong end structures (R1–R4 pass). Order (user): Q3 weak
+  warm start → size selection without oracle → noise. Novelty, if any, lies in the combination of incremental growth,
+  weak regression and simulation check — not in the residual ranking (that is FROLS).
 - **Trajectory overfitting is the next methodological direction (user, 2026-09-29).** C-1 fits the
   one training trajectory far better than it identifies the mechanism (dim 2: 91.7 %
   reconstruction, 25.6 % generalization, raw structure 3 of 60 exact cells). The selection signal

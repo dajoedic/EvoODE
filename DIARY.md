@@ -6,6 +6,20 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ## 2026-10-17
 
+### Entscheidung des Nutzers: Reihenfolge des Side-Projekts, und wo die Neuheit liegen würde
+
+R1–R4 (Q1/Q2) sind abgeschlossen: Es gibt Hinweise, dass eine residualgesteuerte Reparatur möglich ist. Reihenfolge,
+festgelegt vom Nutzer: **(1) Q3** — entschärft der schwache Koeffizientenfit das Optimierungsproblem? Protokoll
+`docs/sideproject_residual_growth_protocol_q3.md` (`c81e7c6`), Umsetzung WP-FA3. **(2) Modellgrößenwahl ohne
+Orakel** — residualgesteuertes Hinzufügen und Entfernen mit realistischen Stoppregeln. **(3) Rauschen und
+Robustheit** — erst wenn die Methode rauschfrei ohne Orakel funktioniert.
+
+Festgehalten auf ausdrücklichen Wunsch des Nutzers: Die Idee hat durch Q1/Q2 an Substanz gewonnen. **Die Neuheit
+liegt vermutlich nicht im Residual-Ranking selbst** (das ist FROLS), sondern — falls es gelingt — in einer
+einfachen, zuverlässigen **Kombination aus inkrementeller Struktursuche, schwacher Regression und simulativer
+Überprüfung**. Das ist wieder der ursprüngliche EvoGrow-Gedanke: mit wenigen Termen beginnen, gezielt wachsen und
+rechtzeitig erkennen, welche Struktur richtig ist.
+
 ### Side-Projekt Q1/Q2 (WP-FA2): Die Information liegt im schwachen Raum, und EvoGrows falsche Strukturen sind gute Startpunkte
 <!-- commit 9ef8ba3 -->
 
