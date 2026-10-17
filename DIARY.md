@@ -6,6 +6,57 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ## 2026-10-17
 
+### Side-Projekt Residual-Wachstum: Bestandsaufnahme der C-1-Endstrukturen — Hinzufügen allein hilft fast nie
+
+Anlass: Konzeptskizze des Nutzers `sideprojekt_residualgesteuertes_strukturwachstum.md` (ungetrackt, Repo-Wurzel):
+fehlende Terme aus dem schwachen Residuum ranken und als Wachstumshinweis für EvoGrow nutzen. Kritische Prüfung
+(Claude): Der Einzelterm-Score mit gemeinsamem Refit ist exakt die FROLS/OLS-ERR, nach dem schwachen Refit hängt das
+Residuum nur noch von der Termmenge S ab, nicht von EvoGrows Koeffizienten; der Drop-one-Positivfall ist bei σ = 0
+fast tautologisch; im schwachen Raum ist erschöpfende Best-Subset-Suche billig (p = 6/12/19/27) und die Obergrenze
+jeder gierigen Regel; WP-T1/T1b/T1c/T2a S1 haben den ungebedingten Fall schon gemessen. Vorgeschlagen: Q1
+Identifizierbarkeit (Best-Subset-Rang von S*), Q2 Führung ab realistischen falschen Strukturen, Q3 schwacher Fit als
+Warmstart gegen P-04.
+
+**Entscheidungen des Nutzers (17.10.):** Ziel langfristig ein Wachstumsoperator, kurzfristig Identifizierbarkeit und
+Information im Residuum. Schwache Form wie WP-T1 (Integralform, Kastenfenster). Erst σ = 0. Q3 gehört zur
+Fehleranatomie, Ergebnisse gemeinsam deuten. Keine Go-Schwellen, bevor Fälle und Vergleichsgruppen feststehen. **Zuerst
+die Bestandsaufnahme**, welche Art falscher Strukturen EvoGrow produziert. Danach: **Q2 wird als „Hinzufügen +
+gemeinsamer schwacher Refit“ formuliert**, nicht als reines Hinzufügen; **dim 3 (52, 61) gehört in die
+Hauptanalyse**, als eigene Schicht, nie gepoolt. Begründung (Claude, vom Nutzer übernommen): Ein Befund auf dim 1/2
+überträgt sich nicht von selbst — die WP-T1-Rangliste ist auf dim 3 schwächer (18/24 gegen 19/20 Gleichungen mit
+≤ 3 falschen vor dem letzten wahren), die Bibliothek wächst von 12 auf 19 Spalten, und das Fehlerprofil ist ein
+anderes (unten). 54–59 bleiben eine eigene Schicht: Im schwachen Raum gibt es keine Schranke, ihre C-1-Startmengen
+sind aber vom Clamp geprägt.
+
+**Bestandsaufnahme** (vorläufig, inline gerechnet; getracktes Skript folgt als WP-FA1). 180 C-1-Zellen auf den 30
+exakten Systemen, `final_2026-10-05/phasec_analysis_registry_c1.csv` gegen `studies/regression/phase_c_support.json`.
+Kontrolle: Klasse „exakt“ stimmt in 180/180 Zellen mit `exact_support_match_raw`/`_pruned` überein (53 geprunt, 24
+roh). Gleichungsebene, geprunt (roh in Klammern):
+
+| Schicht | exakt | nur Entfernen nötig | nur Hinzufügen nötig | beides nötig | Σ |
+|---|---|---|---|---|---|
+| dim 1 | 31 (21) | 10 (24) | 9 (6) | 16 (15) | 66 |
+| dim 2 | 49 (19) | 37 (67) | 2 (2) | 32 (32) | 120 |
+| dim 3 fittbar (52, 61) | 0 | 1 | 1 | 34 | 36 |
+| dim 3 nicht fittbar (54–59) | 9 (8) | 38 (39) | 5 (4) | 56 (57) | 108 |
+| dim 4 (63) | 4 | 0 | 5 | 15 | 24 |
+| Σ | 93 (52) | 86 (131) | 22 (18) | 153 (153) | 354 |
+
+„Beides“ = gemischt + disjunkt. Reines Hinzufügen würde 22 von 354 Gleichungen reparieren, auf dim 2 zwei. Die
+Pruning-Schwelle wirkt schon heute als Entfernungsoperator (29 rohe Obermengen-Zellen werden exakt). Muster auf
+dim 1/2: Es fehlt fast immer ein Kopplungs- oder höherer Term (`u1*u2` in 26/29/31, `sin(u1)` in 23/28/43, `u1^3` in
+32/11), an seiner Stelle stehen Terme niedrigen Grades (`1`, `u1`, `u1^2`). System 11 ist in 6/6 Zellen disjunkt
+(`1, u1, u1^2` statt `u1^3`) und in 6/6 bei R² > 0,9; insgesamt 48 der 89 gemischten Zellen über 0,9. Das sieht nach
+Ersatz entlang der einen Trajektorie aus — Beobachtung, nicht Befund; A gegen D entscheiden erst Q1 und Schritt 1 der
+Fehleranatomie. Obermengen sind die Negativkontrolle für Q2: dort darf das Residuum nach dem Refit nichts fordern.
+
+**Zwischenstrukturen sind in C-1 nicht gespeichert — geprüft, nicht vermutet.** Am Commit `221a3a7` lebt die beste
+Struktur pro Level nur in `vis_history` im Speicher; der Level-Heartbeat schreibt `level`, `stage`, `best_loss`.
+WP-N35 (`eb630b5`) ist kein Vorfahr von `221a3a7`. Gescannt: alle 936 Heartbeat-Dateien (Level-Events nur diese drei
+Felder) und alle 931 Record-Zeilen unter `tasks/` (Duplikatstatistik nur als Zählung, keine Strukturen). Die beste
+Struktur pro Level gibt es nur in Läufen nach WP-N35: T2a S1 (Orakel-Prior), C-6 (Blindregel), B-04/B-05. Für Q2 sind
+also nur die C-1-Endstrukturen verfügbar.
+
 ### Idee (Nutzer), nur notiert, Diskussion folgt: Terme schrittweise auf den Restfehler
 
 Stufe 1 wird trainiert, bis sie gut passt; danach wird der nächste Term auf den verbleibenden Fehler gefittet, usw.
