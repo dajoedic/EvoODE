@@ -1,72 +1,48 @@
-# WP-FA4 — Side project Q4: growth path, trajectory check, model size without oracle
-**Language: Python + Julia**
+# WP-FA4b — Run the Q4 dim-3/dim-4 candidate fits on Orion
+**Language: Julia** (plus k8s YAML)
 
 ## Why
 
-`docs/sideproject_residual_growth_protocol_q4.md` (frozen at `24ede2d`) is the specification: growth path with FoBa
-backward check, one weak-start fit per candidate, size rules (c) primary / (a) / (b), metrics, references, rules
-R7–R9, controls. Implement it exactly; where this task and the protocol differ, the protocol wins — report the
-difference. Nothing may be tuned after seeing a number.
+WP-FA4's runner `studies/regression/sideproject_q4_path_fits.jl` runs dim 1/2 on the laptop (in progress, do not
+touch its output). The 18 units of dim 3 and dim 4 (459 fits; system 61 fits take ~15 min each) go to Orion. The image
+contains only `Project.toml`, `Manifest.toml`, `src/`, `studies/`, `benchmarks/`, `containers/` (`.dockerignore`), so
+the runner's inputs outside `studies/` must come from the NFS share, and parallel pods must not append to one file.
 
-**You cannot execute Julia.** Write the Julia part, test the Python parts, report `blocked` with "Julia run pending
-(Claude)" when the rest is done. Claude runs Julia and the final aggregation.
+## Changes
 
-**Lessons from WP-FA3, binding here:**
-- No session timer, deadline or time-based exit in any script you write. The 15-minute rule in
-  `CODEX_PROTOCOL.md` limits your own session only. (`CLAUDE.md`: no hard time cuts in runs.)
-- The Julia file has never been parsed by you: avoid reserved words as identifiers (`export`, `import`, `module`,
-  `type`, `end`, `local`, `global`, `public`, `outer`, …) and Python syntax. Claude will run `Meta.parseall` first.
-
-## Deliverables
-
-1. **Python, path builder** — `analysis/scripts/aggregate/build_sideproject_q4_paths.py`. For each of the 60
-   (system, training IC) units: the growth path per protocol §3.1 on the weak design of the **training** trajectory
-   (reuse WP-FA2/WP-FA3 code by import: design, `WeakFit`/QR solver, basis, loaders; do not modify them). For every
-   candidate: per-equation term lists (names and 1-based basis indices), the weak coefficients as the flat `p0` in
-   `build_rhs` order (reuse the WP-FA3 flattening), per-equation weak SSE, n rows, the weak BIC of rule (a), the path
-   step and whether it arose from an addition or a removal. Record the full step log (gains, removal checks). Output
-   `analysis/data/sideproject_residual_growth/q4_paths.json`. **Run it.** Control: run the builder twice in-process
-   and assert identical candidate lists (protocol §7).
-2. **Julia, candidate fits** — `studies/regression/sideproject_q4_path_fits.jl`. Reuse the WP-FA3 runner's machinery
-   (`sideproject_q3_weak_start.jl` may be `include`d or its approach copied; no edits to it, nothing under `src/`).
-   Per candidate: one `fit_parameters` call with `build_reference_optimizer(max_fit_attempts = 1)`, `p0` = weak
-   vector; simulate on the training trajectory (MSE, R², R² by dim, loss evaluations, sentinel/divergence flags) and
-   from the **test IC** (`build_trajectory(system, other_ic)`) for generalisation, storing the predicted and target
-   states needed for the canonical R² definitions or computing them in Julia exactly as the canonical pipeline does
-   (find where EvoGrow's `generalization_r2_variance_weighted` / `_arithmetic` are produced and match that definition;
-   name the source in the report). Control (protocol §7): for one unit, the true structure as the only candidate
-   reproduces the Q3 W1 loss in `outputs/sideproject_q3_weak_start/results.jsonl` bit-identically. Append-only JSONL
-   with resume (skip finished candidates), default `outputs/sideproject_q4_path_fits/results.jsonl`, `--units` for a
-   smoke run.
-3. **Python, aggregation** — `analysis/scripts/aggregate/aggregate_sideproject_q4.py`: applies rules (c), (a), (b)
-   per unit (sentinel/diverged candidates never chosen by (b)/(c)); the pruning rule `max(1e-6, 1e-3·max_abs)` per
-   equation exactly as the campaign (find and reuse the existing implementation); raw/pruned exact structure,
-   reconstruction and generalisation R² > 0.9 (variance-weighted primary, arithmetic reported); upper bounds of §3.4;
-   references from `analysis/data/paper1_phaseC_v1/hierarchy_n47_e935c37/per_run.csv` (clean rows only: noise 0,
-   subsampling 1; methods `EvoGrow` configuration `C-1_capped`, and `Weak-SINDy` per configuration over its
-   realisations), joined on (system, training IC) — verify the column semantics of `source_/target_initial_condition_set`
-   and `direction` against the hierarchy script before joining. Outputs in
-   `analysis/data/sideproject_residual_growth/`: `q4_units.csv` (one row per unit × size rule, plus the upper-bound
-   rows), `q4_candidates.csv` (one row per candidate), `q4_rules_by_stratum.csv` (R7, R8, R9 with numerators,
-   denominators, reference rates incl. Weak-SINDy median and min–max over configurations, pass/fail;
-   `reported_only` for non-primary strata), `q4_run_metadata.json` (input hashes, protocol commit `24ede2d`).
-   Abort if any unit or candidate is missing.
-4. Tests `analysis/tests/test_sideproject_q4.py`: FoBa path on a constructed design (a correlated decoy is added
-   first and later removed); normalised cross-equation gain; length cap; determinism; size rules on a hand-built
-   candidate table incl. a sentinel candidate; reference join on a fixture derived from real `per_run.csv` rows.
+1. **Runner CLI, defaults unchanged.** Add options overriding the input paths the runner (and the included Q3 machinery
+   it uses) reads: the Q4 paths JSON, the Q3 results JSONL, the Q3 weak-starts JSON, the WP-C4c trajectory export
+   directory, and the output JSONL. Without the options, behaviour, paths and outputs stay exactly as now. Add
+   `--unit-list <file> --index <i>` (0-based) as an alternative to `--units`: pick the i-th unit id from a one-id-per-line
+   file. **No change to fits, settings, controls, record format or provenance fields beyond recording the override
+   paths.** If a source-file hash enters provenance, the changed runner hash is expected: the aggregation must accept
+   records from exactly the two runner versions (pre- and post-WP-FA4b, both hashes listed as constants) and must still
+   require one identical optimizer-settings fingerprint across all records; record both hashes in the run metadata.
+   Respect the WP-FA3 lessons: no time limits, no reserved words as identifiers.
+2. **Aggregation:** accept several result files (glob or list) in addition to the default file; duplicates of the same
+   (unit, candidate) must be bit-identical in loss, else abort; report how many duplicates were compared.
+3. **Unit list** `studies/regression/sideproject_q4_orion_units.txt`: the 18 dim-3/dim-4 unit ids plus `sys0024_ic1`
+   (platform control: already run on the laptop, must come out bit-identical), ordered by expected cost descending —
+   use the Q3 W1 `fit_meta.fit_time_s` in `outputs/sideproject_q3_weak_start/results.jsonl` times the unit's candidate
+   count from `q4_paths.json`; put the order and the numbers in the report.
+4. **Manifest** `k8s/sideproject_q4_job.yaml`, modelled on `k8s/phase_c_c5_restart_curve_job.yaml`: indexed Job,
+   `completions` = 19, `parallelism: 8` (project core limit: 40 in total, 32 in use), 1 CPU / 2 Gi per pod (state why
+   2 Gi suffices or raise it), `JULIA_NUM_THREADS=1`, `OPENBLAS_NUM_THREADS=1`, **no `activeDeadlineSeconds`**,
+   `backoffLimit` as in the model, image `registry.gitlab.scch.at:443/joedicke/evoode:<COMMIT_SHA>`. Inputs under
+   `/outputs/sideproject_q4_<COMMIT_SHA>/input/` (paths JSON, Q3 results, Q3 weak starts, the export subset for the
+   needed systems with its manifest), one output file per index under `/outputs/sideproject_q4_<COMMIT_SHA>/out/`.
+   Header comment with the expected runtime (~5–8 h wall, longest unit ~5 h, ~15–20 core-h, uncertainty up to ×2).
+5. **Input staging list** in the report: exactly which local files must be copied to which NFS path (including the
+   export binaries of systems 24, 52, 54–59, 61, 63 and a manifest restricted to them, or the full manifest if the
+   loader requires it — check), with SHA256 of each.
 
 ## Forbidden
 
-- No changes to existing files; nothing under `src/`, `experiments/`, `k8s/`, `containers/`, `benchmarks/`.
-- No C-6 data (the hierarchy table: clean rows only). Under `outputs/` read only the WP-C4c trajectory export and the
-  Q3 results file.
-- No thresholds or rules beyond the protocol; no re-runs with changed settings after seeing results. No commit.
+No change to fit behaviour or to `src/`; do not touch `outputs/sideproject_q4_path_fits/` (a run is writing there).
+No commit, no push, no cluster command.
 
 ## Verification
 
-- `python -m pytest analysis/tests/test_sideproject_q4.py -q`; the path builder once with defaults;
-  `python -m pytest analysis/tests -q` (two known pre-existing failures).
-- In the report: number of candidates per unit and stratum (needed for the runtime estimate), and the exact Julia
-  commands (smoke on two units incl. the control unit, full run, aggregation).
-
-Report: `codex/reports/REPORT_WP_FA4.md`.
+Python tests for the aggregation change (multi-file, duplicate check, two runner hashes); the full analysis suite (two
+known failures). Julia cannot be run by you — Claude parses and smoke-tests the CLI locally after the laptop run
+finishes. Report: append "WP-FA4b" to `codex/reports/REPORT_WP_FA4.md`.
