@@ -1,0 +1,75 @@
+# Q4 capacity estimate: ~5–8 h wall, longest unit ~5 h, ~15–20 core-h;
+# uncertainty up to x2. No activeDeadlineSeconds (no wall-clock stopping rule).
+# 8 pods use the 8 remaining cores of the project limit (32 + 8 = 40).
+# 4 Gi reserves headroom for Julia JIT and solver allocations; peak RSS is
+# unmeasured, so the reference job's 2 Gi is not asserted sufficient.
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: evoode-sideproject-q4
+  namespace: scch-das
+  labels:
+    app.kubernetes.io/name: evoode
+    app.kubernetes.io/part-of: evoode-phase-c
+    app.kubernetes.io/component: sideproject-q4
+    app.kubernetes.io/managed-by: kubectl
+    hpc.scch.at/service: evoode-sideproject-q4
+    hpc.scch.at/responsibility: joedicke
+spec:
+  ttlSecondsAfterFinished: 3600
+  completionMode: Indexed
+  # The image must carry the post-WP-FA4b runner and 19-line unit list.
+  completions: 19
+  parallelism: 8
+  backoffLimit: 10
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: evoode
+        app.kubernetes.io/part-of: evoode-phase-c
+        app.kubernetes.io/component: sideproject-q4
+        hpc.scch.at/service: evoode-sideproject-q4
+        hpc.scch.at/responsibility: joedicke
+    spec:
+      restartPolicy: Never
+      imagePullSecrets:
+        - name: evoode-gitlab-pull
+      containers:
+        - name: shard
+          image: registry.gitlab.scch.at:443/joedicke/evoode:<COMMIT_SHA>
+          imagePullPolicy: IfNotPresent
+          command:
+            - sh
+            - -c
+            - >-
+              exec julia --project=/opt/EvoODE
+              /opt/EvoODE/studies/regression/sideproject_q4_path_fits.jl
+              --paths /outputs/sideproject_q4_<COMMIT_SHA>/input/q4_paths.json
+              --q3-results /outputs/sideproject_q4_<COMMIT_SHA>/input/q3_results.jsonl
+              --q3-weak-starts /outputs/sideproject_q4_<COMMIT_SHA>/input/q3_weak_starts.json
+              --export-dir /outputs/sideproject_q4_<COMMIT_SHA>/input/trajectory_export
+              --input-root /outputs/sideproject_q4_<COMMIT_SHA>/input
+              --unit-list /opt/EvoODE/studies/regression/sideproject_q4_orion_units.txt
+              --index "${JOB_COMPLETION_INDEX}"
+              --output /outputs/sideproject_q4_<COMMIT_SHA>/out/index_${JOB_COMPLETION_INDEX}.jsonl
+          env:
+            - name: JULIA_NUM_THREADS
+              value: "1"
+            - name: OPENBLAS_NUM_THREADS
+              value: "1"
+          resources:
+            requests:
+              cpu: "1"
+              memory: 4Gi
+            limits:
+              cpu: "1"
+              memory: 4Gi
+          volumeMounts:
+            - name: evoode-bigdata
+              mountPath: /outputs
+              subPath: data-science/joedicke
+      volumes:
+        - name: evoode-bigdata
+          nfs:
+            server: nfs.orion.scch.at
+            path: /bigdata

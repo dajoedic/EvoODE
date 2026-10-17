@@ -1,0 +1,69 @@
+..............................................F......................... [ 34%]
+........................................................................ [ 69%]
+............................F...................................         [100%]
+================================== FAILURES ===================================
+_________ test_phase_a_evaluation_does_not_overwrite_frozen_artifacts _________
+
+>   ???
+E   assert 'Reproduction matches frozen diagnostics excluding generated_at: yes' in 'Generalization summary columns: <not available>\nEvaluated paper1_phaseA_v1\n  H1: PARTIAL (1/6)\n  H2: SUPPORTED (7/...\EvoODE\\\\debug_results\\\\generalization_summary.csv.",\n       "verdict": "OMIT"\n     },\n     "profile_init": {\n'
+E    +  where 'Generalization summary columns: <not available>\nEvaluated paper1_phaseA_v1\n  H1: PARTIAL (1/6)\n  H2: SUPPORTED (7/...\EvoODE\\\\debug_results\\\\generalization_summary.csv.",\n       "verdict": "OMIT"\n     },\n     "profile_init": {\n' = CompletedProcess(args=['C:\\Users\\joedicke\\AppData\\Local\\Programs\\Python\\Python312\\python.exe', 'C:\\Users\\joe...ebug_results\\\\generalization_summary.csv.",\n       "verdict": "OMIT"\n     },\n     "profile_init": {\n', stderr='').stdout
+
+C:\Users\joedicke\Documents\reps\EvoODE\analysis\tests\test_evaluate_hypotheses_dataset_classification.py:106: AssertionError
+______________ test_build_priors_from_minimal_real_shape_fixture ______________
+
+tmp_path = WindowsPath('C:/Users/joedicke/AppData/Local/Temp/pytest-of-unknown/pytest-15/test_build_priors_from_minimal0')
+
+>   ???
+
+C:\Users\joedicke\Documents\reps\EvoODE\analysis\tests\test_t2a_candidate_priors.py:112: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+analysis\scripts\aggregate\build_t2a_candidate_priors.py:198: in build_priors
+    priors[("guided_prior", system_id, ic_set)] = prior_payload(
+analysis\scripts\aggregate\build_t2a_candidate_priors.py:153: in prior_payload
+    "source_records_path": str(records_path.relative_to(REPO_ROOT)).replace("\\", "/"),
+                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = WindowsPath('C:/Users/joedicke/AppData/Local/Temp/pytest-of-unknown/pytest-15/test_build_priors_from_minimal0/records.csv')
+other = WindowsPath('C:/Users/joedicke/Documents/Repositories/EvoODE')
+walk_up = False, _deprecated = (), step = 0
+
+    def relative_to(self, other, /, *_deprecated, walk_up=False):
+        """Return the relative path to another path identified by the passed
+        arguments.  If the operation is not possible (because this is not
+        related to the other path), raise ValueError.
+    
+        The *walk_up* parameter controls whether `..` may be used to resolve
+        the path.
+        """
+        if _deprecated:
+            msg = ("support for supplying more than one positional argument "
+                   "to pathlib.PurePath.relative_to() is deprecated and "
+                   "scheduled for removal in Python {remove}")
+            warnings._deprecated("pathlib.PurePath.relative_to(*args)", msg,
+                                 remove=(3, 14))
+        other = self.with_segments(other, *_deprecated)
+        for step, path in enumerate([other] + list(other.parents)):
+            if self.is_relative_to(path):
+                break
+            elif not walk_up:
+>               raise ValueError(f"{str(self)!r} is not in the subpath of {str(other)!r}")
+E               ValueError: 'C:\\Users\\joedicke\\AppData\\Local\\Temp\\pytest-of-unknown\\pytest-15\\test_build_priors_from_minimal0\\records.csv' is not in the subpath of 'C:\\Users\\joedicke\\Documents\\Repositories\\EvoODE'
+
+..\..\..\AppData\Local\Programs\Python\Python312\Lib\pathlib.py:682: ValueError
+============================== warnings summary ===============================
+analysis/tests/test_phasec_noise_sindy_baselines.py: 14 warnings
+  C:\Users\joedicke\AppData\Local\Programs\Python\Python312\Lib\site-packages\pysindy\utils\_axes.py:126: AxesWarning: 2 axes labeled for array with 1 axes
+    warnings.warn(
+
+analysis/tests/test_sideproject_q3.py: 2508 warnings
+analysis/tests/test_sideproject_residual_growth.py: 15174 warnings
+analysis/tests/test_wp_t1c_prior_generator.py: 222552 warnings
+  C:\Users\joedicke\Documents\Repositories\EvoODE\analysis\exploratory\term_relevance\term_relevance.py:198: DeprecationWarning: `trapz` is deprecated. Use `trapezoid` instead, or one of the numerical integration functions in `scipy.integrate`.
+    rows.append(np.trapz(phi[start : stop + 1], x=time[start : stop + 1], axis=0))
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ===========================
+FAILED analysis/tests/test_evaluate_hypotheses_dataset_classification.py::test_phase_a_evaluation_does_not_overwrite_frozen_artifacts
+FAILED analysis/tests/test_t2a_candidate_priors.py::test_build_priors_from_minimal_real_shape_fixture
+2 failed, 206 passed, 240248 warnings in 64.06s (0:01:04)
