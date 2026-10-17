@@ -10,7 +10,9 @@ zweites davon. Alles Dauerhafte gehört dorthin, nach `PAPER_1.md` oder ins `DIA
 **Regeln:** wird immer **vollständig überschrieben**, nie angehängt. Was älter als ein paar Tage
 ist, ist vermutlich falsch — dann gilt `CLAUDE.md`.
 
-**Stand: 2026-10-17 (Nachmittag). Side-Projekt „Residual-Wachstum“ (Skizze `sideprojekt_residualgesteuertes_strukturwachstum.md`, ungetrackt) diskutiert; C-1-Strukturinventur gemacht (DIARY 17.10.); WP-FA1 (`e00f2c7`) und WP-FA2 (`9ef8ba3`) abgenommen; Protokoll `docs/sideproject_residual_growth_protocol.md`. Q1/Q2 bei σ = 0: R1–R4 bestehen in dim 1, dim 2, dim 3 fittbar (DIARY 17.10.). Q3 (WP-FA3) abgenommen: ein Fit vom schwachen Start schlägt zehn Zufallsstarts (R5/R6 bestehen, DIARY 17.10.). Q4 (Modellgröße ohne Orakel, Protokoll `24ede2d`): dim 1/2 auf dem Laptop fertig, dim 3/4 als Orion-Job `k8s/sideproject_q4_job.yaml` (19 Pods, 8 parallel, ~6 h) — wartet auf Push + oc apply durch den Nutzer; Eingaben unter `sideproject_q4_<SHA>/input/` auf dem NFS. Danach Rauschen.**
+**Stand: 2026-10-17, 23:15. Side-Projekt „Residual-Wachstum“: Q1–Q3 abgeschlossen und positiv (σ = 0); Q4
+(Modellgröße ohne Orakel) läuft — dim 1/2 auf dem Laptop fertig, dim 3/4 seit 22:56 als Orion-Job. Nutzer hat
+Feierabend gemacht; Auswertung von Q4 gemeinsam und in Ruhe.**
 
 > **BLINDREGEL C-6 (Nutzer, 05.10., „Weg 2“):** Bis die Entscheidungsregel für Story-Linie (b) mit dem Nutzer
 > festgelegt und als Plan §9.4d eingefroren ist, sieht sich Claude **keine C-6-EvoGrow-Ergebnisse** an — weder
@@ -19,48 +21,65 @@ ist, ist vermutlich falsch — dann gilt `CLAUDE.md`.
 > durchgelaufen ist; zuerst die Regel festlegen, dann die Zahlen öffnen.
 
 **Feste Regeln:** Claude pusht **nie** nach GitLab und nach GitHub nur mit ausdrücklicher Erlaubnis.
-**Keine harten Zeit-Cuts — auch keine Tool-Zeitlimits** (Nutzer 05.10.: lange Läufe abgekoppelt starten, Abbruch nur gemeinsam). Orion-Ergebnisse unter `S:\BigDataOrion\data-science\joedicke\` (nur mit VPN).
-**Codex startet Claude selbst:** `codex exec -C "C:/Users/joedicke/Documents/Repositories/EvoODE" -s workspace-write "Lies codex/CODEX_PROTOCOL.md und arbeite den Auftrag in codex/CURRENT_TASK.md ab." < /dev/null`
-(`run_in_background`). **Vor jedem Docker-Build `df -h /c` (< 30 GB → erst aufräumen).** Diese Datei bei
+**Keine harten Zeit-Cuts — auch keine Tool-Zeitlimits** (Nutzer 05.10.: lange Läufe abgekoppelt starten, Abbruch nur
+gemeinsam). Gilt auch für Skripte, die Codex schreibt (WP-FA3 hatte einen 15-min-Timer eingebaut). Orion-Ergebnisse
+unter `S:\BigDataOrion\data-science\joedicke\` (nur mit VPN). Orion-Login abgelaufen → `oc login --web
+https://api.orion.scch.at:6443`.
+**Codex startet Claude selbst:** `codex exec -s workspace-write "Lies codex/CODEX_PROTOCOL.md und arbeite den Auftrag
+in codex/CURRENT_TASK.md ab." < /dev/null` (`run_in_background`). Modell seit 17.10. **`gpt-6.1-sol`** in
+`~/.codex/config.toml` (`gpt-5.5` ist ausgelaufen). Codex kann kein Julia ausführen: Julia-Teile parst und startet
+Claude (`Meta.parseall` zuerst). **Vor jedem Docker-Build `df -h /c` (< 30 GB → erst aufräumen).** Diese Datei bei
 jedem Statuswechsel aktualisieren.
 
 ---
 
-## 1. Was läuft — Orion, **32 Kerne (24 + 8), Limit 40 → 8 frei**
+## 1. Was läuft — Orion, **40 / 40 Kerne** (24 + 8 C-6, 8 Side-Projekt Q4)
 
-| Lauf | Stand (17.10. 00:15) | Erwartetes Ende | Wenn fertig |
+| Lauf | Stand | Erwartetes Ende | Wenn fertig |
 |---|---|---|---|
-| **C-6-Raster gekappt** (3.366, 24 Pods) | 855; Reihenfolge = erst dim 2 (Sys. 24–51), dann dim 1, **nicht nach Kosten**; die teuersten (37, 40, 43, 44) kommen noch | ~8.–15. Nov. + Nachlauf (Rest ~13.400 Kern-h, DIARY 16.10.) | einsammeln (NFS `phase_c_c6_grid_<SHA>/tasks`), technische Prüfung (Blindregel) |
-| **C-6-Raster ungekappt, Seed 42** (461, 8 Pods) | 211 | ~27. Okt. bis Anfang Nov. (Rest ~2.100 Kern-h) | Nutzer entscheidet Seed 123/7; dann 16 Kerne frei |
+| **Side-Projekt Q4, dim 3/4** — Job `evoode-sideproject-q4`, Image `e70eeea`, 19 indizierte Pods, 8 parallel, 4 Gi, kein Deadline | Start 17.10. 22:56; nach 1 min 33 Datensätze, technisch sauber | ~5–8 h → 18.10. früh (~19 Kern-h, Unsicherheit bis ×2; längste Einheiten sys 61, 55) | 429 Datensätze in `sideproject_q4_e70eeeaa…/out/index_*.jsonl` → nach `outputs/sideproject_q4_e70eeea/out/` kopieren; Plattformkontrolle `sys0024_ic1` (3 Fits, muss bit-identisch zum Laptop sein); dann Aggregation (Befehl unten) |
+| **C-6-Raster gekappt** (3.366, 24 Pods) | 855 (Zählung 17.10. 00:15) | ~8.–15. Nov. + Nachlauf | einsammeln, technische Prüfung (Blindregel) |
+| **C-6-Raster ungekappt, Seed 42** (461, 8 Pods) | 211 (Zählung 17.10. 00:15) | ~27. Okt. bis Anfang Nov. | Nutzer entscheidet Seed 123/7; dann 16 Kerne frei |
 
-Lokal läuft nichts. **Ungepusht:** `744b4d3`, `e06f640`, `58b3a7b`, `fee92a9`, `094d7a3`, `90bd849`, `4a5f87b`, `727db7f`, `13b0457`, `bca37c7`, `7addd72`, `5cc3d8a`, `ba046d5` und
-dieser Commit (pusht der Nutzer). Ungetrackt im Repo-Wurzelverzeichnis: zwei Literatur-PDFs, bewusst nicht committet.
+Q4-Aggregation nach dem Einsammeln (Laptop-Datei + Orion-Dateien, erwartet `duplicates_compared = 3`):
+`python analysis/scripts/aggregate/aggregate_sideproject_q4.py --input outputs/sideproject_q4_path_fits/results.jsonl "outputs/sideproject_q4_e70eeea/out/index_*.jsonl"`
+— prüfen, wie das Skript den Ausgabeort wählt und dass es keine vorhandenen Tabellen überschreibt.
 
-**Statusseite „EvoODE auf Orion“ neu:** https://claude.ai/artifact/9zzJsoGCBahPsuNkaaf3DN (die alte ist weg). Quelle lokal
-im Scratchpad dieser Sitzung; sonst per Artifact `read` holen und darauf aufbauen.
+Lokal läuft nichts. **Ungepusht:** `e72d3bb` und dieser Commit (pusht der Nutzer; GitHub reicht, kein neues Image
+nötig). Ungetrackt im Repo-Wurzelverzeichnis: zwei Literatur-PDFs und die Skizze
+`sideprojekt_residualgesteuertes_strukturwachstum.md` des Nutzers, bewusst nicht committet.
 
-## 2. Erledigt (DIARY 16.10. und 17.10.)
+**Statusseite „EvoODE auf Orion“:** https://claude.ai/artifact/9zzJsoGCBahPsuNkaaf3DN — Version 2 (17.10. 22:56) mit Q4.
+Quelle im Scratchpad dieser Sitzung; sonst per Artifact `read` holen und darauf aufbauen. Nach dem Q4-Ende neu
+veröffentlichen (Q4 fertig, 8 Kerne frei).
 
-- **C-6-Baselines DOP853** eingesammelt, Option (a), `hierarchy_n47_e935c37` ersetzt `hierarchy_n46`.
-- **WP-T2a S1 eingesammelt** (`outputs/paper2_t2a_s1_e483f83/`, 20/20, technisch sauber). Fittbare dim-2-Zellen
-  (13/20, 8 Systeme): geprunt 3 → 5 (+15,4 pp), roh 0 → 2, R² > 0,9 13 → 13, Aufwand ×0,997. **Cluster-p = 0,25 →
-  Tor T2a-1 nach eingefrorener Regel nicht bestanden.** Vorläufig, inline gerechnet; Generalisierung und Konfounder fehlen.
-- **Diskussionspapier** `docs/diskussion_warum_scheitert_die_suche.md` (`5cc3d8a`): Fokuswechsel von „ob“ zu „warum“,
-  fünf Fehlerklassen A–E (nicht erreicht / schlecht gefittet / Obermenge / nicht identifizierbar / absolutes λ = 1e-3),
-  Schritt 1 ohne Rechenzeit. Der Nutzer hat es mitgenommen und diskutiert extern.
-- **Idee des Nutzers behalten:** Terme schrittweise auf den Restfehler (FROLS-Familie). Tragfähig nur im Ableitungsraum
-  oder in der schwachen Form, gemeinsam nachfitten. Steht in `CLAUDE.md` „Open, not scheduled“ und DIARY 17.10.
+## 2. Side-Projekt „Residual-Wachstum“ — Stand (Details DIARY 17.10.)
+
+Protokolle (eingefroren vor jeder Rechnung): `docs/sideproject_residual_growth_protocol.md` (Q1/Q2, `e61f48f`),
+`_q3.md` (`c81e7c6`), `_q4.md` (`24ede2d`, vom Nutzer freigegeben). Daten: `analysis/data/sideproject_residual_growth/`.
+
+- **WP-FA1** C-1-Strukturinventur: reines Hinzufügen würde 22 von 354 Gleichungen reparieren; meist fehlt etwas
+  **und** ist etwas Falsches da. Zwischenstrukturen speichert C-1 nicht.
+- **Q1/Q2 (WP-FA2), R1–R4 bestehen** in dim 1, 2, 3 fittbar: Wahrheit im schwachen Raum auf einer Trajektorie
+  identifizierbar; von C-1-Endstrukturen aus mit Hinzufügen + Refit + Entfernen erreichbar (Orakelgrößen).
+- **Q3 (WP-FA3), R5/R6 bestehen:** ein Fit vom schwachen Start schlägt zehn Zufallsstarts auf der wahren Struktur
+  (dim 2: 20/20 gegen 39/60); System 61 unter Schranke 10 lösbar (in CLAUDE.md nachgetragen).
+- **Q4 (WP-FA4/4b/4c) läuft:** Wachstumspfad + Trajektorien-BIC (primär); R7 gegen C-1, **R8 gegen Weak-SINDy-Median
+  entscheidet**, R9 = bringt die Simulation etwas. dim 1/2: `outputs/sideproject_q4_path_fits/results.jsonl` (404
+  Datensätze, nicht ausgewertet).
+- **Neuheit (Nutzer):** nicht das Residual-Ranking (FROLS), sondern falls es gelingt die Kombination aus inkrementellem
+  Wachstum, schwacher Regression und simulativer Prüfung. Reihenfolge: Q3 → Q4 → Rauschen.
+
+**Nicht vergessen:** 20 Dateien unter `src/`, `studies/`, `benchmarks/` haben im Working Tree CRLF/gemischte
+Zeilenenden (Index LF). Erst **nach** der Q4-Auswertung normalisieren, sonst sind die Laptop-Hashes nicht mehr prüfbar.
 
 ## 3. Als Nächstes — wartet auf den Nutzer
 
-1. **Ergebnis der externen Diskussion** zum Fokuswechsel. Bei Zustimmung: Schritt 1 der Fehleranatomie (C-1-Objective
-   gegen das Objective der Wahrheit aus P-04 bei k = 3 und k = 10), vorher die zwei Code-Annahmen prüfen (gemeldet wird
-   das globale Objective-Minimum; λ wirkt pro Koeffizient).
-2. **Tor T2a-1:** Stopp der Führungsspur oder S2. Beobachtung (keine Umdeutung): p < 0,05 war auf S1 nur mit ≥ 5
-   gewinnenden Systemen ohne Verlierer erreichbar.
-3. **Mit dem Nutzer genauer anschauen:** (i) 8 freie Kerne (PySR/ODEFormer auf C-6?); (ii) Entscheidungsregel (b) als
-   §9.4d — Messlatte: Rauschtabelle der SINDy-Familie in DIARY 16.10.
-4. Erst dann C-6-EvoGrow öffnen. **Paper 1 ist nicht fix (Nutzer 14.10.).**
+1. **Q4 gemeinsam auswerten** (R7–R9, dann Entscheidung über Rauschen).
+2. **Fehleranatomie** (Diskussionspapier `docs/diskussion_warum_scheitert_die_suche.md`): Ergebnis der externen
+   Diskussion steht aus; Q3 hat Klasse B auf der Wahrheit bereits beantwortet.
+3. **Tor T2a-1:** Stopp der Führungsspur oder S2 (S1: p = 0,25 nach eingefrorener Regel).
+4. **Entscheidungsregel (b) als §9.4d**, erst dann C-6-EvoGrow öffnen. **Paper 1 ist nicht fix (Nutzer 14.10.).**
 
 ## 4. Annihilator-Spur: getrennt (Nutzer, 05.10.)
 
