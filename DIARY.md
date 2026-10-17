@@ -58,6 +58,16 @@ Felder) und alle 931 Record-Zeilen unter `tasks/` (Duplikatstatistik nur als Zä
 Struktur pro Level gibt es nur in Läufen nach WP-N35: T2a S1 (Orakel-Prior), C-6 (Blindregel), B-04/B-05. Für Q2 sind
 also nur die C-1-Endstrukturen verfügbar.
 
+**WP-FA1 abgenommen** (`e00f2c7`): `analysis/scripts/aggregate/aggregate_c1_structure_inventory.py`, Daten unter
+`analysis/data/paper1_phaseC_v1/c1_structure_inventory/`, 15 Tests grün. Alle Abnahmezahlen identisch; Claude hat
+das Skript neu laufen lassen (alle sieben CSVs byte-identisch) und die 708 Gleichungszeilen gegen die eigene
+Inline-Rechnung gepaart (0 Klassenabweichungen). Codex meldete `blocked`, weil es beim Suchen nach Schichtlabels
+Kopf und zwei Zeilen von `hierarchy_n47_e935c37/benchmark.csv` (E-SINDy-Aggregate) angezeigt hatte. Einordnung
+(Claude): **keine Verletzung der Blindregel** — die gilt für C-6-*EvoGrow*-Ergebnisse; die SINDy-Familie ist offen
+und kanonisch ausgewertet (DIARY 16.10.). Das Verbot in der Spec war breiter formuliert als die Regel. Die Werte gehen
+in nichts ein. Zwei vorbestehende Testfehler außerhalb des WP: der bekannte Phase-A-Test (lokale Datei) und
+`test_t2a_candidate_priors.py` (`relative_to(REPO_ROOT)` auf einem pytest-Temp-Pfad) — der zweite ist neu notiert.
+
 ### Idee (Nutzer), nur notiert, Diskussion folgt: Terme schrittweise auf den Restfehler
 
 Stufe 1 wird trainiert, bis sie gut passt; danach wird der nächste Term auf den verbleibenden Fehler gefittet, usw.
