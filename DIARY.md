@@ -7,6 +7,7 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 ## 2026-10-17
 
 ### Side-Projekt Q3 (WP-FA3): Ein Fit vom schwachen Start schlägt zehn Zufallsstarts — Klasse B ist auf der Wahrheit entschärft
+<!-- commit 988767b -->
 
 Protokoll vor der Rechnung eingefroren: `docs/sideproject_residual_growth_protocol_q3.md` (`c81e7c6`). Codex schrieb
 Builder, Julia-Runner und Aggregation (WP-FA3), zwei Nachbesserungen: WP-FA3b entfernt einen 15-Minuten-Timer, den
