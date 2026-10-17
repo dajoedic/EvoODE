@@ -7,6 +7,7 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 ## 2026-10-17
 
 ### Side-Projekt Residual-Wachstum: Bestandsaufnahme der C-1-Endstrukturen — Hinzufügen allein hilft fast nie
+<!-- commit 871669c -->
 
 Anlass: Konzeptskizze des Nutzers `sideprojekt_residualgesteuertes_strukturwachstum.md` (ungetrackt, Repo-Wurzel):
 fehlende Terme aus dem schwachen Residuum ranken und als Wachstumshinweis für EvoGrow nutzen. Kritische Prüfung

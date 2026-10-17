@@ -10,7 +10,7 @@ zweites davon. Alles Dauerhafte gehört dorthin, nach `PAPER_1.md` oder ins `DIA
 **Regeln:** wird immer **vollständig überschrieben**, nie angehängt. Was älter als ein paar Tage
 ist, ist vermutlich falsch — dann gilt `CLAUDE.md`.
 
-**Stand: 2026-10-17. WP-T2a S1 eingesammelt, Tor T2a-1 nach eingefrorener Regel nicht bestanden. Vorschlag Fokuswechsel „ob → warum“ (Diskussionspapier), Nutzer diskutiert ihn extern; bis zur Rückkehr wird nichts Neues gestartet.**
+**Stand: 2026-10-17 (Nachmittag). Side-Projekt „Residual-Wachstum“ (Skizze `sideprojekt_residualgesteuertes_strukturwachstum.md`, ungetrackt) diskutiert; C-1-Strukturinventur gemacht (DIARY 17.10.); Codex läuft auf WP-FA1 (getracktes Inventurskript, nur Python, keine Läufe). Danach: Abnahme gegen die DIARY-Zahlen, dann Vergleichsgruppen und Go-Regeln für Q1/Q2 mit dem Nutzer festlegen, bevor gerechnet wird.**
 
 > **BLINDREGEL C-6 (Nutzer, 05.10., „Weg 2“):** Bis die Entscheidungsregel für Story-Linie (b) mit dem Nutzer
 > festgelegt und als Plan §9.4d eingefroren ist, sieht sich Claude **keine C-6-EvoGrow-Ergebnisse** an — weder
