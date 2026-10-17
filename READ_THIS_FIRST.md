@@ -46,8 +46,10 @@ Q4-Aggregation nach dem Einsammeln (Laptop-Datei + Orion-Dateien, erwartet `dupl
 — prüfen, wie das Skript den Ausgabeort wählt und dass es keine vorhandenen Tabellen überschreibt.
 
 Lokal läuft nichts. **Ungepusht:** `e72d3bb` und dieser Commit (pusht der Nutzer; GitHub reicht, kein neues Image
-nötig). Ungetrackt im Repo-Wurzelverzeichnis: zwei Literatur-PDFs und die Skizze
-`sideprojekt_residualgesteuertes_strukturwachstum.md` des Nutzers, bewusst nicht committet.
+nötig). Aufgeräumt 17.10.: Skizze jetzt `docs/sideproject_residual_growth_concept.md` (getrackt), `docs/ideas/` getrackt,
+Literatur-PDFs in `literature/` (ignoriert), `.obsidian/` und `tmp/` ignoriert. **Offen für den Nutzer:** sieben
+schreibgeschützte pytest-Ordner unter `tmp/` (Codex-Sandbox, nur mit Admin-Rechten löschbar) und die
+Annihilator-Dateien `output/pdf/` und `tmp/pdfs/` → gehören nach `..\EvoODE-next`.
 
 **Statusseite „EvoODE auf Orion“:** https://claude.ai/artifact/9zzJsoGCBahPsuNkaaf3DN — Version 2 (17.10. 22:56) mit Q4.
 Quelle im Scratchpad dieser Sitzung; sonst per Artifact `read` holen und darauf aufbauen. Nach dem Q4-Ende neu

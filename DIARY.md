@@ -6,6 +6,14 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ## 2026-10-17
 
+### Ablage aufgeräumt
+
+Die Konzeptskizze des Nutzers liegt jetzt getrackt unter `docs/sideproject_residual_growth_concept.md` (vorher
+`sideprojekt_residualgesteuertes_strukturwachstum.md`, ungetrackt, Repo-Wurzel — so zitieren sie die Einträge unten und
+das eingefrorene Protokoll `docs/sideproject_residual_growth_protocol.md`, das wegen seines festgehaltenen Hashes nicht
+geändert wird). `docs/ideas/` (Ideen 02–04 des Nutzers) committet. Literatur-PDFs nach `literature/`, ignoriert, wie
+`.obsidian/` und `tmp/`.
+
 ### Side-Projekt Q4 (Modellgröße ohne Orakel): Protokoll eingefroren, dim 1/2 gerechnet, dim 3/4 für Orion vorbereitet
 
 Protokoll vom Nutzer freigegeben und eingefroren (`docs/sideproject_residual_growth_protocol_q4.md`, `24ede2d`):

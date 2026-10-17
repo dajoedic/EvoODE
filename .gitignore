@@ -90,3 +90,12 @@ analysis/tables/*
 
 # pytest scratch
 .tmp/
+/tmp/
+
+# ---------------------------------------------------------------------------
+# Local, not part of the project record
+# ---------------------------------------------------------------------------
+# Literature PDFs (copyrighted; cite, do not version)
+/literature/
+# Obsidian vault settings of the user's editor
+/.obsidian/
