@@ -7,6 +7,7 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 ## 2026-10-17
 
 ### Side-Projekt Q1/Q2 (WP-FA2): Die Information liegt im schwachen Raum, und EvoGrows falsche Strukturen sind gute Startpunkte
+<!-- commit 9ef8ba3 -->
 
 Protokoll vor jeder Rechnung eingefroren: `docs/sideproject_residual_growth_protocol.md` (`e61f48f`), Schwellen von
 Claude im Auftrag des Nutzers („arbeite weiter, bis du fertig bist“) gesetzt, als menschliche Wahl deklariert.
