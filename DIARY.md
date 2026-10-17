@@ -28,6 +28,10 @@ Varianten und zählt sie. Den Working Tree normalisieren — erst nach der Q4-Au
 nicht mehr prüfbar. Ebenso tragen `q3_weak_starts.json` und `q4_paths.json` im Working Tree CRLF; ihre in den
 Datensätzen festgehaltenen Hashes gelten für diese Bytes, das Repo-Blob ist LF.
 
+**Orion-Job gestartet 17.10., 22:56** (Nutzer): `evoode-sideproject-q4`, Image `e70eeea`, Eingaben auf dem NFS unter
+`sideproject_q4_e70eeeaa…/input/` (50 Dateien, SHA256 geprüft). Nach einer Minute 33 Datensätze, Trajektorienkontrollen
+bestanden, Runner-Hash und Einstellungs-Fingerprint identisch mit dem Laptop. Statusseite „EvoODE auf Orion“ aktualisiert.
+
 ### Side-Projekt Q3 (WP-FA3): Ein Fit vom schwachen Start schlägt zehn Zufallsstarts — Klasse B ist auf der Wahrheit entschärft
 <!-- commit 988767b -->
 
