@@ -6,6 +6,52 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ## 2026-10-17
 
+### Side-Projekt Q1/Q2 (WP-FA2): Die Information liegt im schwachen Raum, und EvoGrows falsche Strukturen sind gute Startpunkte
+
+Protokoll vor jeder Rechnung eingefroren: `docs/sideproject_residual_growth_protocol.md` (`e61f48f`), Schwellen von
+Claude im Auftrag des Nutzers („arbeite weiter, bis du fertig bist“) gesetzt, als menschliche Wahl deklariert.
+Codex hat es umgesetzt (WP-FA2), ein Lauf, 5 s, σ = 0, nur der WP-C4c-Trajektorienexport und die WP-FA1-Inventur.
+Kontrollen (Claude): alle 138 geführten Schrittfolgen der geprunten Startmengen mit eigenem Code nachgerechnet,
+0 Abweichungen; Q1-Abstände geprüft. Daten: `analysis/data/sideproject_residual_growth/`.
+
+**Ergebnis nach den eingefrorenen Regeln: R1–R4 bestehen in allen drei primären Schichten** (geprunt; roh identisch
+bis auf Nenner):
+
+| Schicht | R1 Wahrheit Rang 1 | R2 fehlende Terme gefunden | R3 G+B exakt vs. F0 | R4 AUC ρ | OMP Q2a | Zufall (erw.) |
+|---|---|---|---|---|---|---|
+| dim 1 | 22/22 | 9/9 | 9 vs 4 | 1,00 | 2/9 | 2,3 |
+| dim 2 | 40/40 | 19/22 | 19 vs 14 | 1,00 | 4/22 | 2,2 |
+| dim 3 fittbar | 12/12 | 22/30 (73 %) | 22 vs 15 | 1,00 | 6/30 | 1,0 |
+| *dim 3 54–59* | *36/36* | *53/60* | *53 vs 24* | *1,00* | *8/60* | — |
+| *dim 4* | *8/8* | *11/17 (fail)* | *11 vs 8* | *1,00* | *0/17* | — |
+
+Lesart nach Protokoll §6 (R1, R2, R3 bestehen): **Die Information ist auf einer Trajektorie im schwachen Raum da, und
+sie ist von EvoGrows tatsächlichen falschen Strukturen aus mit Hinzufügen + gemeinsamem Refit + Entfernen
+erreichbar. EvoGrow verliert sie in Suche oder Fit im Trajektorienraum.** Das passt zur Erwartung Klasse B/A aus
+dem Diskussionspapier, beweist sie aber nicht.
+
+Was dazugehört, damit es nicht größer gelesen wird, als es ist:
+- **σ = 0.** Rauschfrei ist die schwache Form fast exakt; Q1-Abstand Wahrheit zur besten falschen Teilmenge in den
+  primären Schichten ≥ 1 Größenordnung (dim 2 Minimum 1,0). Knapp nur auf Lorenz-artigen 55, 57–59 (0,1–0,9). Rauschen
+  ist der eigentliche Test.
+- **Orakelgrößen.** m und k* stammen aus der Wahrheit. Das ist ein Informations-, kein Verfahrensbefund. R4 zeigt,
+  dass ρ „wachsen oder nicht“ bei σ = 0 perfekt trennt, eine Schwelle ist nicht festgelegt. Zusammen mit WP-T1b
+  (`weak` + BIC auf dim 2 nur 30 %) heißt das: **Im schwachen Raum ist die Größenwahl das Problem, nicht die
+  Rangfolge.**
+- **Die Projektion macht den Unterschied:** OMP (unprojizierte Spalten) findet die fehlenden Terme nur in 4/22 (dim 2),
+  OLS/FROLS in 19/22.
+- **EvoGrows Startmengen helfen:** von ihnen aus G+B 19/22 exakt gegen 14/22 von ∅ (dim 2), 22 gegen 15 (dim 3). Sie
+  tragen wahre Terme, die gieriges Vorwärts ab ∅ verpasst.
+- **Fehlschläge sitzen auf disjunkten Starts** (nur falsche Terme): dim 2 2 von 9 disjunkten, 1 von 11 gemischten,
+  0 Untermengen. dim 3 fittbar hängt an System 52 (5/13), 61 ist 17/17 — der Pass dort ist dünn und von einem System
+  getragen.
+- **Strategische Konsequenz, unbequem:** Schwacher Best-Subset mit bekannter Größe findet die Wahrheit in 100 % der
+  primären Einheiten. Eine EvoGrow-Integration muss sich gegen „schwacher Best-Subset + Größenkriterium“ messen, nicht
+  nur gegen EvoGrow.
+
+Nächster Schritt laut Protokoll: ein Integrationsexperiment — **eigene Entscheidung mit dem Nutzer**, nicht
+angestoßen. Davor sinnvoll: Q3 (schwacher Fit als Warmstart) in der Fehleranatomie und die Größenwahl ohne Orakel.
+
 ### Side-Projekt Residual-Wachstum: Bestandsaufnahme der C-1-Endstrukturen — Hinzufügen allein hilft fast nie
 <!-- commit 871669c -->
 

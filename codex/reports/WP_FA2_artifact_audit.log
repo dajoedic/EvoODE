@@ -1,0 +1,15 @@
+{
+  "q1_units": 118,
+  "q2_by_kind": {
+    "pruned": 251,
+    "raw": 257
+  },
+  "cells_collapsed": {
+    "pruned": 354,
+    "raw": 354
+  },
+  "rules_rows": 40,
+  "by_system_rows": 240,
+  "subsets_total": 24306,
+  "all_controls_passed": true
+}

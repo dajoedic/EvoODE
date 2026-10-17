@@ -1,0 +1,265 @@
+{"unit": 1, "total_units": 118, "elapsed_seconds": 0.36008259997470304, "estimated_seconds": 583.4778449990088}
+{"unit": 2, "total_units": 118, "elapsed_seconds": 0.3941134000197053, "estimated_seconds": 319.31067669596524}
+{"unit": 3, "total_units": 118, "elapsed_seconds": 0.429462100029923, "estimated_seconds": 289.9584945368697}
+{"unit": 4, "total_units": 118, "elapsed_seconds": 0.46645469998475164, "estimated_seconds": 269.94399851974697}
+{"unit": 5, "total_units": 118, "elapsed_seconds": 0.5048901999834925, "estimated_seconds": 215.29581054032928}
+{"unit": 6, "total_units": 118, "elapsed_seconds": 0.5434398999786936, "estimated_seconds": 183.45625290114063}
+{"unit": 7, "total_units": 118, "elapsed_seconds": 0.5810082000098191, "estimated_seconds": 162.3216702234329}
+{"unit": 8, "total_units": 118, "elapsed_seconds": 0.619507200026419, "estimated_seconds": 147.6249216062955}
+{"unit": 9, "total_units": 118, "elapsed_seconds": 0.6702189000207, "estimated_seconds": 139.23368020430027}
+{"unit": 10, "total_units": 118, "elapsed_seconds": 0.7155479000066407, "estimated_seconds": 131.75838831485916}
+{"unit": 11, "total_units": 118, "elapsed_seconds": 0.7515681000077166, "estimated_seconds": 120.18167262360237}
+{"unit": 12, "total_units": 118, "elapsed_seconds": 0.7873278000042774, "estimated_seconds": 111.26040410990677}
+{"unit": 13, "total_units": 118, "elapsed_seconds": 0.8255329999956302, "estimated_seconds": 107.30163153953897}
+{"unit": 14, "total_units": 118, "elapsed_seconds": 0.869072099972982, "estimated_seconds": 104.57260624724405}
+{"unit": 15, "total_units": 118, "elapsed_seconds": 0.9066235999925993, "estimated_seconds": 105.94419817990442}
+{"unit": 16, "total_units": 118, "elapsed_seconds": 0.9446476000011899, "estimated_seconds": 107.29254469920056}
+{"unit": 17, "total_units": 118, "elapsed_seconds": 0.9796557999798097, "estimated_seconds": 103.98040993148146}
+{"unit": 18, "total_units": 118, "elapsed_seconds": 1.012556699977722, "estimated_seconds": 100.86558667892832}
+{"unit": 19, "total_units": 118, "elapsed_seconds": 1.0475858999998309, "estimated_seconds": 96.44932911134806}
+{"unit": 20, "total_units": 118, "elapsed_seconds": 1.0791568999993615, "estimated_seconds": 92.35911130769183}
+{"unit": 21, "total_units": 118, "elapsed_seconds": 1.1114836999913678, "estimated_seconds": 90.35358799996717}
+{"unit": 22, "total_units": 118, "elapsed_seconds": 1.1426334999850951, "estimated_seconds": 88.44856640330485}
+{"unit": 23, "total_units": 118, "elapsed_seconds": 1.1797677000286058, "estimated_seconds": 87.9614531193107}
+{"unit": 24, "total_units": 118, "elapsed_seconds": 1.2205218999879435, "estimated_seconds": 87.76924645297916}
+{"unit": 25, "total_units": 118, "elapsed_seconds": 1.2712419999879785, "estimated_seconds": 88.28230871916516}
+{"unit": 26, "total_units": 118, "elapsed_seconds": 1.317253899993375, "estimated_seconds": 88.44523009182036}
+{"unit": 27, "total_units": 118, "elapsed_seconds": 1.3520973999984562, "estimated_seconds": 87.87187006514031}
+{"unit": 28, "total_units": 118, "elapsed_seconds": 1.3911146000027657, "estimated_seconds": 76.84643515378914}
+{"unit": 29, "total_units": 118, "elapsed_seconds": 1.4250324000022374, "estimated_seconds": 76.63017149215571}
+{"unit": 30, "total_units": 118, "elapsed_seconds": 1.4609137999941595, "estimated_seconds": 68.55013672327807}
+{"unit": 31, "total_units": 118, "elapsed_seconds": 1.502133000001777, "estimated_seconds": 49.47268929274145}
+{"unit": 32, "total_units": 118, "elapsed_seconds": 1.5389626999967732, "estimated_seconds": 39.045957605554875}
+{"unit": 33, "total_units": 118, "elapsed_seconds": 1.5806819000281394, "estimated_seconds": 32.61464708156533}
+{"unit": 34, "total_units": 118, "elapsed_seconds": 1.6307234999840148, "estimated_seconds": 28.352192697146968}
+{"unit": 35, "total_units": 118, "elapsed_seconds": 1.6693910000030883, "estimated_seconds": 27.715995659887337}
+{"unit": 36, "total_units": 118, "elapsed_seconds": 1.7206237000063993, "estimated_seconds": 27.33430042637617}
+{"unit": 37, "total_units": 118, "elapsed_seconds": 1.7649018000229262, "estimated_seconds": 26.878260119898023}
+{"unit": 38, "total_units": 118, "elapsed_seconds": 1.8042233000160195, "estimated_seconds": 26.38595158254475}
+{"unit": 39, "total_units": 118, "elapsed_seconds": 1.8429701999993995, "estimated_seconds": 26.75939885375472}
+{"unit": 40, "total_units": 118, "elapsed_seconds": 1.8794342000037432, "estimated_seconds": 27.0946190185593}
+{"unit": 41, "total_units": 118, "elapsed_seconds": 1.9124511000118218, "estimated_seconds": 27.37575761889714}
+{"unit": 42, "total_units": 118, "elapsed_seconds": 1.944891799998004, "estimated_seconds": 27.64476028698917}
+{"unit": 43, "total_units": 118, "elapsed_seconds": 1.9799747000215575, "estimated_seconds": 27.94730839647153}
+{"unit": 44, "total_units": 118, "elapsed_seconds": 2.01722580002388, "estimated_seconds": 27.422086294955495}
+{"unit": 45, "total_units": 118, "elapsed_seconds": 2.054022399999667, "estimated_seconds": 27.736149141328838}
+{"unit": 46, "total_units": 118, "elapsed_seconds": 2.0947417999850586, "estimated_seconds": 27.285527433245893}
+{"unit": 47, "total_units": 118, "elapsed_seconds": 2.136573199997656, "estimated_seconds": 27.65258157568851}
+{"unit": 48, "total_units": 118, "elapsed_seconds": 2.1721857999800704, "estimated_seconds": 27.15902677691131}
+{"unit": 49, "total_units": 118, "elapsed_seconds": 2.2047085000085644, "estimated_seconds": 27.396546421885567}
+{"unit": 50, "total_units": 118, "elapsed_seconds": 2.2369487999822013, "estimated_seconds": 26.889850411655484}
+{"unit": 51, "total_units": 118, "elapsed_seconds": 2.268632300023455, "estimated_seconds": 27.109821378746364}
+{"unit": 52, "total_units": 118, "elapsed_seconds": 2.3160951000172645, "estimated_seconds": 24.975602263096555}
+{"unit": 53, "total_units": 118, "elapsed_seconds": 2.3495130999945104, "estimated_seconds": 25.20179409023238}
+{"unit": 54, "total_units": 118, "elapsed_seconds": 2.390626600012183, "estimated_seconds": 23.3735197666517}
+{"unit": 55, "total_units": 118, "elapsed_seconds": 2.4265770000056364, "estimated_seconds": 21.796149505593863}
+{"unit": 56, "total_units": 118, "elapsed_seconds": 2.4587789999786764, "estimated_seconds": 21.987889026299378}
+{"unit": 57, "total_units": 118, "elapsed_seconds": 2.4959914999781176, "estimated_seconds": 20.64927481227642}
+{"unit": 58, "total_units": 118, "elapsed_seconds": 2.5308001000084914, "estimated_seconds": 20.852077027391996}
+{"unit": 59, "total_units": 118, "elapsed_seconds": 2.563302399998065, "estimated_seconds": 21.034310646304178}
+{"unit": 60, "total_units": 118, "elapsed_seconds": 2.6024623999837786, "estimated_seconds": 19.879148678191616}
+{"unit": 61, "total_units": 118, "elapsed_seconds": 2.636610399989877, "estimated_seconds": 20.06432447781902}
+{"unit": 62, "total_units": 118, "elapsed_seconds": 2.6777798000257462, "estimated_seconds": 19.064474463803688}
+{"unit": 63, "total_units": 118, "elapsed_seconds": 2.71572560002096, "estimated_seconds": 18.41239231076972}
+{"unit": 64, "total_units": 118, "elapsed_seconds": 2.7524071999941953, "estimated_seconds": 17.811504100920903}
+{"unit": 65, "total_units": 118, "elapsed_seconds": 2.8131327999872155, "estimated_seconds": 14.471112346346933}
+{"unit": 66, "total_units": 118, "elapsed_seconds": 2.851715700002387, "estimated_seconds": 14.157230760673615}
+{"unit": 67, "total_units": 118, "elapsed_seconds": 2.900308199983556, "estimated_seconds": 13.912550051075648}
+{"unit": 68, "total_units": 118, "elapsed_seconds": 2.9657200999790803, "estimated_seconds": 11.942477261446575}
+{"unit": 69, "total_units": 118, "elapsed_seconds": 3.00629150000168, "estimated_seconds": 11.772341098604937}
+{"unit": 70, "total_units": 118, "elapsed_seconds": 3.0787334999768063, "estimated_seconds": 10.428051344821105}
+{"unit": 71, "total_units": 118, "elapsed_seconds": 3.146037200000137, "estimated_seconds": 10.408000569375709}
+{"unit": 72, "total_units": 118, "elapsed_seconds": 3.1929545999737456, "estimated_seconds": 10.322952182357257}
+{"unit": 73, "total_units": 118, "elapsed_seconds": 3.256966100016143, "estimated_seconds": 9.3276561832205}
+{"unit": 74, "total_units": 118, "elapsed_seconds": 3.3013485000119545, "estimated_seconds": 9.26802687009593}
+{"unit": 75, "total_units": 118, "elapsed_seconds": 3.344417500018608, "estimated_seconds": 9.20709160215792}
+{"unit": 76, "total_units": 118, "elapsed_seconds": 3.4044663999811746, "estimated_seconds": 8.445495031429111}
+{"unit": 77, "total_units": 118, "elapsed_seconds": 3.4452752000070177, "estimated_seconds": 8.400126292644254}
+{"unit": 78, "total_units": 118, "elapsed_seconds": 3.4837030000053346, "estimated_seconds": 8.350580386403319}
+{"unit": 79, "total_units": 118, "elapsed_seconds": 3.54302749998169, "estimated_seconds": 7.751987254888375}
+{"unit": 80, "total_units": 118, "elapsed_seconds": 3.5915403999970295, "estimated_seconds": 7.739005404461684}
+{"unit": 81, "total_units": 118, "elapsed_seconds": 3.6372426000307314, "estimated_seconds": 7.720445256863764}
+{"unit": 82, "total_units": 118, "elapsed_seconds": 3.694707799993921, "estimated_seconds": 7.230561013418055}
+{"unit": 83, "total_units": 118, "elapsed_seconds": 3.734503499988932, "estimated_seconds": 7.209184502480421}
+{"unit": 84, "total_units": 118, "elapsed_seconds": 3.771073499985505, "estimated_seconds": 7.1822373053320545}
+{"unit": 85, "total_units": 118, "elapsed_seconds": 3.8238718999782577, "estimated_seconds": 6.768846435137392}
+{"unit": 86, "total_units": 118, "elapsed_seconds": 3.8595101999817416, "estimated_seconds": 6.747896340149346}
+{"unit": 87, "total_units": 118, "elapsed_seconds": 3.893110400007572, "estimated_seconds": 6.723935293298092}
+{"unit": 88, "total_units": 118, "elapsed_seconds": 3.9282505000010133, "estimated_seconds": 6.703177243262049}
+{"unit": 89, "total_units": 118, "elapsed_seconds": 3.9811984000261873, "estimated_seconds": 6.360810380006344}
+{"unit": 90, "total_units": 118, "elapsed_seconds": 4.014396200014744, "estimated_seconds": 6.342558114765884}
+{"unit": 91, "total_units": 118, "elapsed_seconds": 4.046823300013784, "estimated_seconds": 6.3235028691825805}
+{"unit": 92, "total_units": 118, "elapsed_seconds": 4.095323899993673, "estimated_seconds": 6.02402219276484}
+{"unit": 93, "total_units": 118, "elapsed_seconds": 4.134911999979522, "estimated_seconds": 6.019956338514661}
+{"unit": 94, "total_units": 118, "elapsed_seconds": 4.1672469999757595, "estimated_seconds": 6.005520311953682}
+{"unit": 95, "total_units": 118, "elapsed_seconds": 4.214167499972973, "estimated_seconds": 5.743176633268465}
+{"unit": 96, "total_units": 118, "elapsed_seconds": 4.2461588000296615, "estimated_seconds": 5.73181915992008}
+{"unit": 97, "total_units": 118, "elapsed_seconds": 4.27782620000653, "estimated_seconds": 5.720242263154465}
+{"unit": 98, "total_units": 118, "elapsed_seconds": 4.32635059999302, "estimated_seconds": 5.492336659533603}
+{"unit": 99, "total_units": 118, "elapsed_seconds": 4.3582627000287175, "estimated_seconds": 5.483870848832531}
+{"unit": 100, "total_units": 118, "elapsed_seconds": 4.3944595999782905, "estimated_seconds": 5.480897733839918}
+{"unit": 101, "total_units": 118, "elapsed_seconds": 4.443709500017576, "estimated_seconds": 5.279796798525062}
+{"unit": 102, "total_units": 118, "elapsed_seconds": 4.478855099994689, "estimated_seconds": 5.277440956974545}
+{"unit": 103, "total_units": 118, "elapsed_seconds": 4.510528600018006, "estimated_seconds": 5.271066308574338}
+{"unit": 104, "total_units": 118, "elapsed_seconds": 4.5588841999997385, "estimated_seconds": 5.090418934453953}
+{"unit": 105, "total_units": 118, "elapsed_seconds": 4.594909299979918, "estimated_seconds": 5.090654334532653}
+{"unit": 106, "total_units": 118, "elapsed_seconds": 4.636481499997899, "estimated_seconds": 5.0969841401605125}
+{"unit": 107, "total_units": 118, "elapsed_seconds": 4.6713275000220165, "estimated_seconds": 5.09587927900611}
+{"unit": 108, "total_units": 118, "elapsed_seconds": 4.709267300029751, "estimated_seconds": 5.098140521758557}
+{"unit": 109, "total_units": 118, "elapsed_seconds": 4.743162200029474, "estimated_seconds": 5.0960217669591295}
+{"unit": 110, "total_units": 118, "elapsed_seconds": 4.7770952000282705, "estimated_seconds": 5.09397542914307}
+{"unit": 111, "total_units": 118, "elapsed_seconds": 4.807651499984786, "estimated_seconds": 5.1204932894540205}
+{"unit": 112, "total_units": 118, "elapsed_seconds": 4.843123900005594, "estimated_seconds": 5.080138508265836}
+{"unit": 113, "total_units": 118, "elapsed_seconds": 4.8844110000063665, "estimated_seconds": 5.046996291551024}
+{"unit": 114, "total_units": 118, "elapsed_seconds": 4.915444399986882, "estimated_seconds": 5.073239557795378}
+{"unit": 115, "total_units": 118, "elapsed_seconds": 4.946939799992833, "estimated_seconds": 5.099899002359325}
+{"unit": 116, "total_units": 118, "elapsed_seconds": 4.984350299986545, "estimated_seconds": 5.063090036420635}
+{"unit": 117, "total_units": 118, "elapsed_seconds": 5.023056800011545, "estimated_seconds": 5.028642801642597}
+{"unit": 118, "total_units": 118, "elapsed_seconds": 5.055099999997765, "estimated_seconds": 5.055099999997765}
+{
+  "protocol_commit": "e61f48f",
+  "git_head": "3f4c008c7ce6056d899a44baf94766257b90e6fa",
+  "git_head_source": "Read-only HEAD/ref files; no Git command",
+  "input_sha256": {
+    "analysis/data/paper1_phaseC_v1/c1_structure_inventory/equations.csv": "a1094bac96a564d75ae4594838d9f06bcf722103943aea9aa0a391013762459d",
+    "analysis/exploratory/term_relevance/term_relevance.py": "bc2e99595c262ea590f24baa1d4880ad6d9418cdd2908f0803817a9a53e941cb",
+    "docs/sideproject_residual_growth_protocol.md": "c4b2cfc0e35eae88a92c544ad7b4849fc64731b60bd6854bf5e6cd10ed7dd64d",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0001_ic1_state_f64le_c_order.bin": "0ee16225ff89698a75ca1dd4d2560af9956e8ab3b3b0058633eb0205457986e8",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0001_ic1_time_f64le.bin": "ffad3499269c08c6bd22e9e5c5d2ab32bbf827e2037cbdd6e73571aeab04432f",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0001_ic2_state_f64le_c_order.bin": "6906ca0a07a887c83ae9cc220226eb21a137b4de61d699f78de1a2ac458d7470",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0001_ic2_time_f64le.bin": "ffad3499269c08c6bd22e9e5c5d2ab32bbf827e2037cbdd6e73571aeab04432f",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0002_ic1_state_f64le_c_order.bin": "4536cb1543f6d4039af77e870645d52f3ff6e0b757f0bd98f2cf78d7258188cc",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0002_ic1_time_f64le.bin": "ffad3499269c08c6bd22e9e5c5d2ab32bbf827e2037cbdd6e73571aeab04432f",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0002_ic2_state_f64le_c_order.bin": "13411f5aa9fe886a381b2f1a81ffdccdc160888eee96023853d23e5a3f63f578",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0002_ic2_time_f64le.bin": "ffad3499269c08c6bd22e9e5c5d2ab32bbf827e2037cbdd6e73571aeab04432f",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0003_ic1_state_f64le_c_order.bin": "185351f6341f86f0048146a9d58072c60cd55320915d8fdba0e7054c865c689c",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0003_ic1_time_f64le.bin": "ffad3499269c08c6bd22e9e5c5d2ab32bbf827e2037cbdd6e73571aeab04432f",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0003_ic2_state_f64le_c_order.bin": "0f67c12b2a959a9ddb6de5989bda10e30f86bff744e4336113614e8d81173dba",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0003_ic2_time_f64le.bin": "ffad3499269c08c6bd22e9e5c5d2ab32bbf827e2037cbdd6e73571aeab04432f",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0005_ic1_state_f64le_c_order.bin": "1c76ef00643f647efef6756b408dacb403d25aa8b579a042e3a79f13ce0746d1",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0005_ic1_time_f64le.bin": "ffad3499269c08c6bd22e9e5c5d2ab32bbf827e2037cbdd6e73571aeab04432f",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0005_ic2_state_f64le_c_order.bin": "8f9595e852b62dc8b253e409bb4eacea142f89d621865c03e279ae525a183bf6",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0005_ic2_time_f64le.bin": "ffad3499269c08c6bd22e9e5c5d2ab32bbf827e2037cbdd6e73571aeab04432f",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0006_ic1_state_f64le_c_order.bin": "ad98ecf9e889528a03227e4c7ff51c98627117c4600d7ecc478e829b576fd33c",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0006_ic1_time_f64le.bin": "ffad3499269c08c6bd22e9e5c5d2ab32bbf827e2037cbdd6e73571aeab04432f",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0006_ic2_state_f64le_c_order.bin": "4286f6d1704d7f0f7fbaaf99923ce92cfa33be596ce5afd13e1be3b904d47bb7",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0006_ic2_time_f64le.bin": "ffad3499269c08c6bd22e9e5c5d2ab32bbf827e2037cbdd6e73571aeab04432f",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0008_ic1_state_f64le_c_order.bin": "2b69ca839bdb926ba833c061f64217c625040c43315417053cca3d235f10e059",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0008_ic1_time_f64le.bin": "ffad3499269c08c6bd22e9e5c5d2ab32bbf827e2037cbdd6e73571aeab04432f",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0008_ic2_state_f64le_c_order.bin": "2d5286c6c4748e3515190d92b577c3ca122911f4582b87a26000f636501df908",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0008_ic2_time_f64le.bin": "ffad3499269c08c6bd22e9e5c5d2ab32bbf827e2037cbdd6e73571aeab04432f",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0009_ic1_state_f64le_c_order.bin": "b683606907329b3b664416a4d0fbcb360d9b55a73cdbfcb25fbf3c7a8af878f2",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0009_ic1_time_f64le.bin": "ffad3499269c08c6bd22e9e5c5d2ab32bbf827e2037cbdd6e73571aeab04432f",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0009_ic2_state_f64le_c_order.bin": "db3a2be1a9808f2dec4c6c5b77ff7c59495a14114e8f0320802d562f44b2c2ea",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0009_ic2_time_f64le.bin": "ffad3499269c08c6bd22e9e5c5d2ab32bbf827e2037cbdd6e73571aeab04432f",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0011_ic1_state_f64le_c_order.bin": "cdc13858122785454f6151a9501ad6371cdf981cbe371f76125ca52d6fd250b4",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0011_ic1_time_f64le.bin": "ffad3499269c08c6bd22e9e5c5d2ab32bbf827e2037cbdd6e73571aeab04432f",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0011_ic2_state_f64le_c_order.bin": "0e152754f68b3dc29b226238769ff02dfeb4845df1be84ebd6b0999f881db5df",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0011_ic2_time_f64le.bin": "ffad3499269c08c6bd22e9e5c5d2ab32bbf827e2037cbdd6e73571aeab04432f",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0012_ic1_state_f64le_c_order.bin": "9464d56b1a1aeda4204bd5f831a8f5436b1541a2ae4ed255433d7b2423623841",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0012_ic1_time_f64le.bin": "ffad3499269c08c6bd22e9e5c5d2ab32bbf827e2037cbdd6e73571aeab04432f",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0012_ic2_state_f64le_c_order.bin": "23ec22839f2f22bf501bc68829d7fa906ef2a708445ba2545da9114f83909c17",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0012_ic2_time_f64le.bin": "ffad3499269c08c6bd22e9e5c5d2ab32bbf827e2037cbdd6e73571aeab04432f",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0017_ic1_state_f64le_c_order.bin": "4756e9cb1aad3ac5698d8e2380b106c5d6c6e7fdcf482d06e53c8d5c19d6d4f0",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0017_ic1_time_f64le.bin": "ffad3499269c08c6bd22e9e5c5d2ab32bbf827e2037cbdd6e73571aeab04432f",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0017_ic2_state_f64le_c_order.bin": "4ce0eea86a7d476d182bfbfc499fa992cd72e05a8c7952b7ee4aca56d8f1103b",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0017_ic2_time_f64le.bin": "ffad3499269c08c6bd22e9e5c5d2ab32bbf827e2037cbdd6e73571aeab04432f",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0023_ic1_state_f64le_c_order.bin": "23439dcce1325c814f14af6cdb1b359c5c73aaff830ee17a7b36e647ea5e5830",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0023_ic1_time_f64le.bin": "ffad3499269c08c6bd22e9e5c5d2ab32bbf827e2037cbdd6e73571aeab04432f",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0023_ic2_state_f64le_c_order.bin": "ad928dbfb7a9dea663c07b6844b5ee6c1584d6359f63ae1202ba376f02154491",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0023_ic2_time_f64le.bin": "ffad3499269c08c6bd22e9e5c5d2ab32bbf827e2037cbdd6e73571aeab04432f",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0024_ic1_state_f64le_c_order.bin": "7a0cb065a725ce6f96bb42f2513fe021f726e088c0090ed0db0b96fbcf902391",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0024_ic1_time_f64le.bin": "ffad3499269c08c6bd22e9e5c5d2ab32bbf827e2037cbdd6e73571aeab04432f",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0024_ic2_state_f64le_c_order.bin": "33ed2a81e4f4e66426a0dc51832715f1c58dce189922fbe2014a3b0a2920f08c",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0024_ic2_time_f64le.bin": "ffad3499269c08c6bd22e9e5c5d2ab32bbf827e2037cbdd6e73571aeab04432f",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0025_ic1_state_f64le_c_order.bin": "a7dceadbe022cc4ee282ada4fa0da21a10871e46887dc09f15ddfcd413760e52",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0025_ic1_time_f64le.bin": "ffad3499269c08c6bd22e9e5c5d2ab32bbf827e2037cbdd6e73571aeab04432f",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0025_ic2_state_f64le_c_order.bin": "99bf42da31a6c29b1e47aedb5b323b84b8cfc5ca33584d07ae772bec9f0c2349",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0025_ic2_time_f64le.bin": "ffad3499269c08c6bd22e9e5c5d2ab32bbf827e2037cbdd6e73571aeab04432f",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0026_ic1_state_f64le_c_order.bin": "f6d3ae3e04b3230a1f565ad8369ebb166ef052fb0929f2a208013935246a327d",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0026_ic1_time_f64le.bin": "ffad3499269c08c6bd22e9e5c5d2ab32bbf827e2037cbdd6e73571aeab04432f",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0026_ic2_state_f64le_c_order.bin": "2b0b9d3bee6e268ae51b85313da38d2024fcc464b242ac7c1a62e9ec15b08c9f",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0026_ic2_time_f64le.bin": "ffad3499269c08c6bd22e9e5c5d2ab32bbf827e2037cbdd6e73571aeab04432f",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0027_ic1_state_f64le_c_order.bin": "8e397c0a0e10c1af32d8c1271f0d082edbd6f1f9f6a8199f27bc9b012e2a99e3",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0027_ic1_time_f64le.bin": "ffad3499269c08c6bd22e9e5c5d2ab32bbf827e2037cbdd6e73571aeab04432f",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0027_ic2_state_f64le_c_order.bin": "1924b11ad9cc3f14a58c59652af51911d9eb547ea7cc16e82b46ccd4ba4ea717",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0027_ic2_time_f64le.bin": "ffad3499269c08c6bd22e9e5c5d2ab32bbf827e2037cbdd6e73571aeab04432f",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0028_ic1_state_f64le_c_order.bin": "db6505ac3c4858e6784210d5a65988709c2922b167a0bbdac4de5ef01f7b75a1",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0028_ic1_time_f64le.bin": "ffad3499269c08c6bd22e9e5c5d2ab32bbf827e2037cbdd6e73571aeab04432f",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0028_ic2_state_f64le_c_order.bin": "cd1984c237edb4621aeaa1bb4fc0c2d684c0863053ea86fff62b5cfa83751d4a",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0028_ic2_time_f64le.bin": "ffad3499269c08c6bd22e9e5c5d2ab32bbf827e2037cbdd6e73571aeab04432f",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0029_ic1_state_f64le_c_order.bin": "822cec6dfe225bd940e8ccf42dd975b850022b4b943e102fbaeb71f002f03f65",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0029_ic1_time_f64le.bin": "ffad3499269c08c6bd22e9e5c5d2ab32bbf827e2037cbdd6e73571aeab04432f",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0029_ic2_state_f64le_c_order.bin": "f4d9d5e00c481855196197ce0bcce07ab81f95f576d0a9d61af472818b236eab",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0029_ic2_time_f64le.bin": "ffad3499269c08c6bd22e9e5c5d2ab32bbf827e2037cbdd6e73571aeab04432f",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0031_ic1_state_f64le_c_order.bin": "9da092858c971ab0dd92fc3591efacc6d64a01cd5807018f5f8880a7f2c37cd0",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0031_ic1_time_f64le.bin": "ffad3499269c08c6bd22e9e5c5d2ab32bbf827e2037cbdd6e73571aeab04432f",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0031_ic2_state_f64le_c_order.bin": "a8940691d41394980a6a66709e71b0024bc760e247d8245aff0dc6a21c8f5320",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0031_ic2_time_f64le.bin": "ffad3499269c08c6bd22e9e5c5d2ab32bbf827e2037cbdd6e73571aeab04432f",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0032_ic1_state_f64le_c_order.bin": "e71d9da3348a5cfd7f351f23896df3e3f40c9a70dcb268285ab6242c057a5e6b",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0032_ic1_time_f64le.bin": "ffad3499269c08c6bd22e9e5c5d2ab32bbf827e2037cbdd6e73571aeab04432f",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0032_ic2_state_f64le_c_order.bin": "f896099628b573e9a345f4b4199d5fcfc1f5062b8e48ba7b23fb9d1df084110e",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0032_ic2_time_f64le.bin": "ffad3499269c08c6bd22e9e5c5d2ab32bbf827e2037cbdd6e73571aeab04432f",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0038_ic1_state_f64le_c_order.bin": "3c0888d3c690c652c0b2e114db7f23fb9850b6ef2ce61c9509e866879ec823ec",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0038_ic1_time_f64le.bin": "ffad3499269c08c6bd22e9e5c5d2ab32bbf827e2037cbdd6e73571aeab04432f",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0038_ic2_state_f64le_c_order.bin": "9e6c9b57c0eec22fdeb99e43f8df155434283e5ca1c143e3118d4394d13dbfe2",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0038_ic2_time_f64le.bin": "ffad3499269c08c6bd22e9e5c5d2ab32bbf827e2037cbdd6e73571aeab04432f",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0043_ic1_state_f64le_c_order.bin": "40af7305c0c7c18152b589b624bbf8a15d2d60f92d6a4b94e27ee78531ae6f23",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0043_ic1_time_f64le.bin": "ffad3499269c08c6bd22e9e5c5d2ab32bbf827e2037cbdd6e73571aeab04432f",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0043_ic2_state_f64le_c_order.bin": "d82d4af218a2e2bca5e6c5a5bef6967131b3a16fd9803c2f36a51cd285a46029",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0043_ic2_time_f64le.bin": "ffad3499269c08c6bd22e9e5c5d2ab32bbf827e2037cbdd6e73571aeab04432f",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0052_ic1_state_f64le_c_order.bin": "88e74aa50cb078f28d92cfd1f3bd61d684e54c07f13a3c732a1218e39cc74674",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0052_ic1_time_f64le.bin": "ffad3499269c08c6bd22e9e5c5d2ab32bbf827e2037cbdd6e73571aeab04432f",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0052_ic2_state_f64le_c_order.bin": "e6125403daf636e9b2ddc7ac67ad4a266415d6ee519c277067159218f6e27c69",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0052_ic2_time_f64le.bin": "ffad3499269c08c6bd22e9e5c5d2ab32bbf827e2037cbdd6e73571aeab04432f",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0054_ic1_state_f64le_c_order.bin": "c3f821ba213a31e637437e1b75bc79ee56d234438524d86cc808c591900550a6",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0054_ic1_time_f64le.bin": "ffad3499269c08c6bd22e9e5c5d2ab32bbf827e2037cbdd6e73571aeab04432f",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0054_ic2_state_f64le_c_order.bin": "0e462496560df0f27d7f9b60ee0013a8a875ce2f443905fc16a4a2341a0165c8",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0054_ic2_time_f64le.bin": "ffad3499269c08c6bd22e9e5c5d2ab32bbf827e2037cbdd6e73571aeab04432f",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0055_ic1_state_f64le_c_order.bin": "d4e1900669ed840e4981c2314e79007159c935999837262341864d32e1fa8089",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0055_ic1_time_f64le.bin": "ffad3499269c08c6bd22e9e5c5d2ab32bbf827e2037cbdd6e73571aeab04432f",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0055_ic2_state_f64le_c_order.bin": "d38700c068fd7fd4dd042ca8673b1c09f8473cb39873a70acc3df6e08b2e0b97",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0055_ic2_time_f64le.bin": "ffad3499269c08c6bd22e9e5c5d2ab32bbf827e2037cbdd6e73571aeab04432f",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0056_ic1_state_f64le_c_order.bin": "10276e28a124639ae6e9f81ddcd1cd8e3921af744c596f98846fb0d1d125cc3b",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0056_ic1_time_f64le.bin": "ffad3499269c08c6bd22e9e5c5d2ab32bbf827e2037cbdd6e73571aeab04432f",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0056_ic2_state_f64le_c_order.bin": "959a49cc2561f63ad336254e5b57cdb8365e14e68ee35dca91ef86ec26a37f7d",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0056_ic2_time_f64le.bin": "ffad3499269c08c6bd22e9e5c5d2ab32bbf827e2037cbdd6e73571aeab04432f",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0057_ic1_state_f64le_c_order.bin": "9502decd7c0310446897b904a13ef3580064fa4b793d7602319a276cf96a24e9",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0057_ic1_time_f64le.bin": "ffad3499269c08c6bd22e9e5c5d2ab32bbf827e2037cbdd6e73571aeab04432f",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0057_ic2_state_f64le_c_order.bin": "9d3cd2297b9d73beffac59869633ae5efa5029f9345ccbe7a8a5cba23ffda309",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0057_ic2_time_f64le.bin": "ffad3499269c08c6bd22e9e5c5d2ab32bbf827e2037cbdd6e73571aeab04432f",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0058_ic1_state_f64le_c_order.bin": "7826234290aae87558458194073c3f9665cf80911bd013db3de00487ad06b2c0",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0058_ic1_time_f64le.bin": "ffad3499269c08c6bd22e9e5c5d2ab32bbf827e2037cbdd6e73571aeab04432f",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0058_ic2_state_f64le_c_order.bin": "f258d81ec92a8f4dc69b21c812cdb2e976a5627e399435d21ff2c349144a4957",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0058_ic2_time_f64le.bin": "ffad3499269c08c6bd22e9e5c5d2ab32bbf827e2037cbdd6e73571aeab04432f",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0059_ic1_state_f64le_c_order.bin": "c29655fc0d92b2c872776c1db49cb70f7bd4b445cb39a011ad5104c7fede651c",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0059_ic1_time_f64le.bin": "ffad3499269c08c6bd22e9e5c5d2ab32bbf827e2037cbdd6e73571aeab04432f",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0059_ic2_state_f64le_c_order.bin": "7b580b1d4821abfa1424f7348d9baa068f2dbe0252ade52e8134d20151707b21",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0059_ic2_time_f64le.bin": "ffad3499269c08c6bd22e9e5c5d2ab32bbf827e2037cbdd6e73571aeab04432f",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0061_ic1_state_f64le_c_order.bin": "65c06eabaf8d55ef89e2b4f2b9226ed0f6eec60fec36da597ca514ab25f29081",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0061_ic1_time_f64le.bin": "ffad3499269c08c6bd22e9e5c5d2ab32bbf827e2037cbdd6e73571aeab04432f",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0061_ic2_state_f64le_c_order.bin": "af35cc8103aee5b295742c25bbf92522fbcc333c33577707f230f3eda826db56",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0061_ic2_time_f64le.bin": "ffad3499269c08c6bd22e9e5c5d2ab32bbf827e2037cbdd6e73571aeab04432f",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0063_ic1_state_f64le_c_order.bin": "c260eda10dd542ff304045970c8ba0a7865eb34eff31db77f5bdd9f18efa3c32",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0063_ic1_time_f64le.bin": "ffad3499269c08c6bd22e9e5c5d2ab32bbf827e2037cbdd6e73571aeab04432f",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0063_ic2_state_f64le_c_order.bin": "f5f6ee38b7f9b01bd9078cc1597df308e3f62c05d550fac638eec2446c7233a6",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/cells/system_0063_ic2_time_f64le.bin": "ffad3499269c08c6bd22e9e5c5d2ab32bbf827e2037cbdd6e73571aeab04432f",
+    "outputs/phase_c_trajectory_hashes/wp_c4c/trajectory_export/trajectory_manifest.csv": "c92ec60a3453c18d123e29b10c63f28a2cc67a67e5ea6021f014d9847ccb63b0",
+    "studies/regression/phase_c_support.json": "ad8594f47399c1c5ef03e26bfe93f680bf7e866cb37e3d0462ce1e7b1c767e75"
+  },
+  "runtime_seconds": 5.102783999987878,
+  "controls": {
+    "exact_systems": 30,
+    "basis_consistency": true,
+    "trajectory_hashes": true,
+    "q1_units": 118,
+    "q2_units": 508,
+    "q2_identity": true,
+    "pruned_exact_consistency": true
+  },
+  "solver": "Unit-norm columns; augmented QR; subset SVD lstsq; no centering or Gram matrix",
+  "ties": "Exact floating-point equality; lowest basis index for selection; Q1 ties against truth",
+  "r3_counting": "Addition-needing Q2 units, F0 evaluated on each same unit (repeated across distinct S0)",
+  "no_addition_units": "m=0; Q2a vacuously true, backward elimination still runs; excluded from R2/R3",
+  "undefined_metrics": "NaN for zero denominators or AUC lacking either class; nonfinite AUC input yields NaN"
+}

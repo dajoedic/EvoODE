@@ -1,0 +1,8 @@
+........                                                                 [100%]
+============================== warnings summary ===============================
+analysis/tests/test_sideproject_residual_growth.py: 15174 warnings
+  C:\Users\joedicke\Documents\Repositories\EvoODE\analysis\exploratory\term_relevance\term_relevance.py:198: DeprecationWarning: `trapz` is deprecated. Use `trapezoid` instead, or one of the numerical integration functions in `scipy.integrate`.
+    rows.append(np.trapz(phi[start : stop + 1], x=time[start : stop + 1], axis=0))
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+8 passed, 15174 warnings in 4.38s
