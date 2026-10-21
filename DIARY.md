@@ -6,6 +6,19 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ## 2026-10-21
 
+### WP-N48: ODEFormer und PySR auf dem C-6-Export für Orion vorbereitet — PySR kostet dreimal so viel wie geplant
+<!-- 837d751 -->
+
+Für die 8 freien Kerne, Reihenfolge ODEFormer → PySR 0.19.4. Codex hat Folgendes gebaut: einen Shard-Einstieg mit dim 1/2
+vorn, Wiederaufnahme pro Fit (die Runner konnten das vorher nicht) und ein striktes Zusammenführen. Dazu kommen vier
+Manifeste (≤ 8 Pods, keine Deadline) und der CI-Job `build_pysr_legacy_image` (CHANGELOG). Die Smoke-Kontrollen sind
+WP-N38 System 1 sauber (identisch auf 2e-12) und verrauscht sowie WP-N39 legacy (Support gleich, Koeffizienten 1e-6).
+Methode unverändert, Tests 289/5/1 (nur der bekannte Phase-A-Fehler). Der lokale Export-Index ist byte-gleich mit dem NFS.
+**Planungskosten:** ODEFormer 326–349 Kern-h (~40–44 h Wand bei 8 Pods), PySR **3.700 Kern-h ≈ 5.550 €, ~19 Tage
+Untergrenze**. Der Grund: Der Runner rechnet drei Seed-Labels je Zelle, die WP-N39-Schätzung (1.233 h) zählte nur eins.
+Weil PySR ohne `random_state` läuft, sind die Labels reine Wiederholungen. Beide Läufe sind ≥ 24 h und brauchen deshalb
+eine Absprache.
+
 ### Side-Projekt Q4: Orion-Teil eingesammelt und aggregiert (nur technisch)
 <!-- a6f1f18 -->
 
