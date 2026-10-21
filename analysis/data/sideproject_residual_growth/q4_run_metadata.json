@@ -1,0 +1,313 @@
+{
+  "protocol_commit": "24ede2d",
+  "units": 60,
+  "path_candidates": 769,
+  "upper_path_policy": "all matching-size states reported individually, no new oracle tie rule; upper_path summary denominator counts states",
+  "duplicates_compared": 3,
+  "source_sha256": {
+    "src/structure/utils.jl": {
+      "raw_sha256": "a1e7f03b7dc0fe9a9995c04e874ea11afd7cc46f7c7fa7dbe4452274e8c773fc",
+      "lf_sha256": "5e6850094fd94761c0a6b7df311cc342926dcff5b7f41ef87e66a9b26bb7e1a7",
+      "raw_matches": 404,
+      "lf_matches": 429
+    },
+    "src/structure/evogrow.jl": {
+      "raw_sha256": "3bddfc7b5923779d222b9e5e85ba9e724d7065bf3595ac143dc1b416217d7192",
+      "lf_sha256": "3bddfc7b5923779d222b9e5e85ba9e724d7065bf3595ac143dc1b416217d7192",
+      "raw_matches": 833,
+      "lf_matches": 833
+    },
+    "studies/regression/phase_c_trajectory_hash_lib.jl": {
+      "raw_sha256": "64a32086e5c525f3ef02a4382180b585161186c11c0282c62c4666425ba3ad1b",
+      "lf_sha256": "64a32086e5c525f3ef02a4382180b585161186c11c0282c62c4666425ba3ad1b",
+      "raw_matches": 833,
+      "lf_matches": 833
+    },
+    "src/utils/checks.jl": {
+      "raw_sha256": "7ae7c7a2b2e038b573c31b5c570205731fbadc05af6937bef42b2735f4251878",
+      "lf_sha256": "7ae7c7a2b2e038b573c31b5c570205731fbadc05af6937bef42b2735f4251878",
+      "raw_matches": 833,
+      "lf_matches": 833
+    },
+    "src/utils/logging.jl": {
+      "raw_sha256": "29076adf3984da48dce80fd6516d6659e80178d16dc687c7a45ab01bbfaf8d3f",
+      "lf_sha256": "31a68e2c2bfd9d4801cf5ac8c31853ab83774ff013b96c3f64dc27e36d08e568",
+      "raw_matches": 404,
+      "lf_matches": 429
+    },
+    "src/structure/evogrow_v3_childgen.jl": {
+      "raw_sha256": "6299d35243e330a813960836317b2f595ba9dc5a2a4c46ef2eb19268755c039d",
+      "lf_sha256": "6299d35243e330a813960836317b2f595ba9dc5a2a4c46ef2eb19268755c039d",
+      "raw_matches": 833,
+      "lf_matches": 833
+    },
+    "src/loss/mse.jl": {
+      "raw_sha256": "2bd659c60f5d9582d643745731c91626f9ff3f9038eda3894672fe7ddabd6dff",
+      "lf_sha256": "5bacbd8c6b5490e36c1f6189ff8822cb2d9646fb6a09725c9f4b581218d8793d",
+      "raw_matches": 404,
+      "lf_matches": 429
+    },
+    "src/optimize/dummy.jl": {
+      "raw_sha256": "bc09326b4a7a981e547793397a64a8da0b618f84b156170a9401d382cc241c6a",
+      "lf_sha256": "bc09326b4a7a981e547793397a64a8da0b618f84b156170a9401d382cc241c6a",
+      "raw_matches": 833,
+      "lf_matches": 833
+    },
+    "studies/regression/clamp_val.jl": {
+      "raw_sha256": "f93860e9078f2ce2c854d7a45ff571a0fb9a28bbc51c2a56686df668345f2f07",
+      "lf_sha256": "f93860e9078f2ce2c854d7a45ff571a0fb9a28bbc51c2a56686df668345f2f07",
+      "raw_matches": 833,
+      "lf_matches": 833
+    },
+    "src/optimize/bfgs.jl": {
+      "raw_sha256": "b3767f1aebd91c382adff7a56bdb221f5472d9f4972de139a2eede84bda55687",
+      "lf_sha256": "6ab2509fd6a8ab0aceb26ad72590e79208843fce0d9158edd566c42d90f49c1a",
+      "raw_matches": 404,
+      "lf_matches": 429
+    },
+    "src/core/types.jl": {
+      "raw_sha256": "7a0d558d8c62c7783885bf8f58a519baf36fad495566aa016cf11a0a69bfecfc",
+      "lf_sha256": "1b8e97fe150980d52db9e6ff807ce4195d30d2978b3d035660d3e2a85b121edb",
+      "raw_matches": 404,
+      "lf_matches": 429
+    },
+    "studies/regression/wp_n25_phase_c_c5_common.jl": {
+      "raw_sha256": "235b5ce5b7069ab931fe4fef7852ef4bbb3fed0afc27b7dc71a134a2b4f8a8c0",
+      "lf_sha256": "235b5ce5b7069ab931fe4fef7852ef4bbb3fed0afc27b7dc71a134a2b4f8a8c0",
+      "raw_matches": 833,
+      "lf_matches": 833
+    },
+    "src/structure/evogrow_v3_promote.jl": {
+      "raw_sha256": "48b301818de3ec8dc864202864577cbc71c4c5b0dad11cc5c7007be152bc2158",
+      "lf_sha256": "48b301818de3ec8dc864202864577cbc71c4c5b0dad11cc5c7007be152bc2158",
+      "raw_matches": 833,
+      "lf_matches": 833
+    },
+    "src/structure/gp.jl": {
+      "raw_sha256": "c836db431d62df2693eca6fa599acc47b7449f68390a422f1db29e1dd4c6f561",
+      "lf_sha256": "beb56ed285cbcee9aba82190731e956e1d3581c19f7dccf7258b0565dd249918",
+      "raw_matches": 404,
+      "lf_matches": 429
+    },
+    "src/core/stopping.jl": {
+      "raw_sha256": "5f99a1559a961a303d04919f6740ed52324b38897c7a9ab7ddbb34d391ea4785",
+      "lf_sha256": "a4f343c0c318437daab553021672a2987e631c8d4fc22ba131f08762d6cebc85",
+      "raw_matches": 404,
+      "lf_matches": 429
+    },
+    "studies/regression/phase_c_config.jl": {
+      "raw_sha256": "8a72354414e75f49fa1285598275c2e159f7f28700ceb1a76cf5f86857b9a8e3",
+      "lf_sha256": "8a72354414e75f49fa1285598275c2e159f7f28700ceb1a76cf5f86857b9a8e3",
+      "raw_matches": 833,
+      "lf_matches": 833
+    },
+    "src/optimize/pretune.jl": {
+      "raw_sha256": "50ccb3482eebcf76ee46755194976750934a06c9635c338a0f612cfbab4607d2",
+      "lf_sha256": "50ccb3482eebcf76ee46755194976750934a06c9635c338a0f612cfbab4607d2",
+      "raw_matches": 833,
+      "lf_matches": 833
+    },
+    "studies/regression/sideproject_q3_weak_start.jl": {
+      "raw_sha256": "b5ef7cd5aae962b3d7f5edeafd9335e6fd07fc00b50660f961e227fb8c3f77a8",
+      "lf_sha256": "b5ef7cd5aae962b3d7f5edeafd9335e6fd07fc00b50660f961e227fb8c3f77a8",
+      "raw_matches": 833,
+      "lf_matches": 833
+    },
+    "src/optimize/interface.jl": {
+      "raw_sha256": "5fdea85731e70e1a8d69ec816289b50c2e9b5919c2a2bc971f79882f41982fad",
+      "lf_sha256": "11b113f936be0599430cf900e2f8e84bffbfc645629a049d7b32d9597396e72b",
+      "raw_matches": 404,
+      "lf_matches": 429
+    },
+    "src/simulate/export.jl": {
+      "raw_sha256": "cbca9ce163c9bca77d9abc0c39b78d6c0ea5d91228bb5c06208ff9db62dd7cda",
+      "lf_sha256": "860ca1ada467d2104fcf2bfdded632153574133eef833eb777e78cec364c4de3",
+      "raw_matches": 404,
+      "lf_matches": 429
+    },
+    "src/basis/staged_polynomial.jl": {
+      "raw_sha256": "8c08d03db4aeeb8ec101323345141d0fd5735f1ecd40aecf66b36df6f5299c62",
+      "lf_sha256": "77610d909bf21d47e51219f9a3af3b2c466652710a34c3e1c45ac54ecb030b03",
+      "raw_matches": 404,
+      "lf_matches": 429
+    },
+    "src/structure/interface.jl": {
+      "raw_sha256": "7f997214b14dd61e358ad877921f7ae6be3c6bfeb1f5507c224c669df26c83a9",
+      "lf_sha256": "d10983d95b5ba5f34ed52769c2f54629ee57cb2aed062585bec900c8c56e0331",
+      "raw_matches": 404,
+      "lf_matches": 429
+    },
+    "src/structure/null.jl": {
+      "raw_sha256": "764e0da72f0c5f16782c9e11cbe514fa30c700095255ceb716196df9496f3e73",
+      "lf_sha256": "764e0da72f0c5f16782c9e11cbe514fa30c700095255ceb716196df9496f3e73",
+      "raw_matches": 833,
+      "lf_matches": 833
+    },
+    "src/structure/stage_cap_fingerprint.jl": {
+      "raw_sha256": "abb651e29a589dc9b647fda67b64a45492d8e2669f0d9b0bcf3d7f4c803da59b",
+      "lf_sha256": "abb651e29a589dc9b647fda67b64a45492d8e2669f0d9b0bcf3d7f4c803da59b",
+      "raw_matches": 833,
+      "lf_matches": 833
+    },
+    "src/simulate/solve.jl": {
+      "raw_sha256": "59094ba75a1f3e3cf1beb2c23e644399c0b0b1f1d60db72e8f7ef87be4a7bc02",
+      "lf_sha256": "607cc0596f579b1732d810dd74d0309204e24357e582950ddea7f01b4a3d3318",
+      "raw_matches": 404,
+      "lf_matches": 429
+    },
+    "Project.toml": {
+      "raw_sha256": "d91ad680cbb3d2c7ff076072a8ae442cd6af1981a2d2706134af7db2b004dd47",
+      "lf_sha256": "d91ad680cbb3d2c7ff076072a8ae442cd6af1981a2d2706134af7db2b004dd47",
+      "raw_matches": 833,
+      "lf_matches": 833
+    },
+    "Manifest.toml": {
+      "raw_sha256": "ecd34433449fb4ae8f3065f509e87ce18ba175d98cb612a5876652432e0f5924",
+      "lf_sha256": "ecd34433449fb4ae8f3065f509e87ce18ba175d98cb612a5876652432e0f5924",
+      "raw_matches": 833,
+      "lf_matches": 833
+    },
+    "src/structure/evogrow_v3.jl": {
+      "raw_sha256": "a47cae7df3ea7c21c9096c004fe3478cad5932bc01d84c8809cfdabf23db6f24",
+      "lf_sha256": "a47cae7df3ea7c21c9096c004fe3478cad5932bc01d84c8809cfdabf23db6f24",
+      "raw_matches": 833,
+      "lf_matches": 833
+    },
+    "src/EvoODE.jl": {
+      "raw_sha256": "579a83ad0c01969037d2c50be837a146bcc629c216322d0320ae2cba5b401aa7",
+      "lf_sha256": "4e238839b3d90965d49b886c68a94ee81f579a416ab98ac9eee2eb4adfbbfb9b",
+      "raw_matches": 404,
+      "lf_matches": 429
+    },
+    "src/basis/polynomial.jl": {
+      "raw_sha256": "aaaa4dd95f96516025dde37467dab40f17ce741550f04fb0dae134447b8a4f10",
+      "lf_sha256": "49297c07565bc83d76f9e5c5f4aa1d47e3215c26960c29f25dea48a7c9ab9389",
+      "raw_matches": 404,
+      "lf_matches": 429
+    },
+    "src/basis/interface.jl": {
+      "raw_sha256": "907ed26745a12a0a43501d48ddb1f41e04d8054453ee1c71667923766cd52209",
+      "lf_sha256": "5208059f7348327c3959b480a0036e6f53cf72b5e2f17277f0fc4a40afa97ba9",
+      "raw_matches": 404,
+      "lf_matches": 429
+    },
+    "studies/regression/phase_b_config.jl": {
+      "raw_sha256": "842627bfc2d368f3f1eaed18055e6e26343b16e7e75a4554d35b232fcaa5d429",
+      "lf_sha256": "842627bfc2d368f3f1eaed18055e6e26343b16e7e75a4554d35b232fcaa5d429",
+      "raw_matches": 833,
+      "lf_matches": 833
+    },
+    "src/utils/strings.jl": {
+      "raw_sha256": "9a6ca8aa7d657f47634de8e1f3e917a7e596623f9cbadfedff587d223e484c11",
+      "lf_sha256": "9a6ca8aa7d657f47634de8e1f3e917a7e596623f9cbadfedff587d223e484c11",
+      "raw_matches": 833,
+      "lf_matches": 833
+    },
+    "src/structure/stage_cap.jl": {
+      "raw_sha256": "1bf8badbae0a4b338c134c6f8293b6152985bd3692296669a78acbc12585efe0",
+      "lf_sha256": "1bf8badbae0a4b338c134c6f8293b6152985bd3692296669a78acbc12585efe0",
+      "raw_matches": 833,
+      "lf_matches": 833
+    },
+    "studies/regression/run_regression.jl": {
+      "raw_sha256": "cf6fed4ba78db6f818552d9c33d2a236d3b7cd76403b74842632de81d76bdb42",
+      "lf_sha256": "cf6fed4ba78db6f818552d9c33d2a236d3b7cd76403b74842632de81d76bdb42",
+      "raw_matches": 833,
+      "lf_matches": 833
+    },
+    "studies/regression/diagnostic_systems.jl": {
+      "raw_sha256": "3c01ca596abbc01c865d6f65156e5036dffde752a3af4044826aee0459ad8d80",
+      "lf_sha256": "3c01ca596abbc01c865d6f65156e5036dffde752a3af4044826aee0459ad8d80",
+      "raw_matches": 833,
+      "lf_matches": 833
+    },
+    "benchmarks/data/strogatz_extended.json": {
+      "raw_sha256": "b11f8bda01ceee5c5c9445521ac74c8819361af4251bb90c0be398aaeb1a1136",
+      "lf_sha256": "b11f8bda01ceee5c5c9445521ac74c8819361af4251bb90c0be398aaeb1a1136",
+      "raw_matches": 833,
+      "lf_matches": 833
+    },
+    "studies/regression/wp_n4_multistart_refit.jl": {
+      "raw_sha256": "3ef317e52436c9f76fd3688a73416220eb873379e1afbd24196583d0aca9c037",
+      "lf_sha256": "3ef317e52436c9f76fd3688a73416220eb873379e1afbd24196583d0aca9c037",
+      "raw_matches": 833,
+      "lf_matches": 833
+    },
+    "src/core/discover.jl": {
+      "raw_sha256": "d7c51bab64ee47b7d6dd6dd8598d0361caf45b397a7f8a9d60e774d64079ccce",
+      "lf_sha256": "ba4ea052a59b6f5054a29dd2c8ce11448c26ec678be709f9d42bfa0c13943b16",
+      "raw_matches": 404,
+      "lf_matches": 429
+    },
+    "src/structure/evogrow_screening.jl": {
+      "raw_sha256": "204e902f62901c602ec5bb6a6d2274538738b08e15d9521f18aed54c297273c2",
+      "lf_sha256": "204e902f62901c602ec5bb6a6d2274538738b08e15d9521f18aed54c297273c2",
+      "raw_matches": 833,
+      "lf_matches": 833
+    },
+    "src/loss/interface.jl": {
+      "raw_sha256": "efb94ae5a28878241dba62cb2a7d3f4ad4a4c9cac38b10daebf6b5c6abc1a1b5",
+      "lf_sha256": "0bf1e7bb790484a7867cd7ed91cd374c027937a8ccffc1b0939dcd72c2bb901d",
+      "raw_matches": 404,
+      "lf_matches": 429
+    }
+  },
+  "runner_sha256_accepted": [
+    "dfce09c938459c318250be60f792e9b46264e702628a902cbb0a79d1202cf648",
+    "2725a2927c9197fe103a4b21d8a9aad0dea111220ace5eaf99bbcd6ac56933e4"
+  ],
+  "runner_sha256_observed": [
+    "2725a2927c9197fe103a4b21d8a9aad0dea111220ace5eaf99bbcd6ac56933e4",
+    "dfce09c938459c318250be60f792e9b46264e702628a902cbb0a79d1202cf648"
+  ],
+  "settings_fingerprint": "608ac81047860684035841955cf944a50f8dad6a5a6d669775d7c9b51b31fa90",
+  "result_files": [
+    "outputs\\sideproject_q4_path_fits\\results.jsonl",
+    "outputs\\sideproject_q4_e70eeea\\out\\index_0.jsonl",
+    "outputs\\sideproject_q4_e70eeea\\out\\index_1.jsonl",
+    "outputs\\sideproject_q4_e70eeea\\out\\index_10.jsonl",
+    "outputs\\sideproject_q4_e70eeea\\out\\index_11.jsonl",
+    "outputs\\sideproject_q4_e70eeea\\out\\index_12.jsonl",
+    "outputs\\sideproject_q4_e70eeea\\out\\index_13.jsonl",
+    "outputs\\sideproject_q4_e70eeea\\out\\index_14.jsonl",
+    "outputs\\sideproject_q4_e70eeea\\out\\index_15.jsonl",
+    "outputs\\sideproject_q4_e70eeea\\out\\index_16.jsonl",
+    "outputs\\sideproject_q4_e70eeea\\out\\index_17.jsonl",
+    "outputs\\sideproject_q4_e70eeea\\out\\index_18.jsonl",
+    "outputs\\sideproject_q4_e70eeea\\out\\index_2.jsonl",
+    "outputs\\sideproject_q4_e70eeea\\out\\index_3.jsonl",
+    "outputs\\sideproject_q4_e70eeea\\out\\index_4.jsonl",
+    "outputs\\sideproject_q4_e70eeea\\out\\index_5.jsonl",
+    "outputs\\sideproject_q4_e70eeea\\out\\index_6.jsonl",
+    "outputs\\sideproject_q4_e70eeea\\out\\index_7.jsonl",
+    "outputs\\sideproject_q4_e70eeea\\out\\index_8.jsonl",
+    "outputs\\sideproject_q4_e70eeea\\out\\index_9.jsonl"
+  ],
+  "input_sha256": {
+    "analysis\\data\\sideproject_residual_growth\\q4_paths.json": "7b0b882e3f3cd61287db92289263b1fc927f3b12a05055374a3abe74d6a95e17",
+    "outputs\\sideproject_q4_path_fits\\results.jsonl": "158f8c3e3a94b0fefbf5a27ceb8deebaba06c1395b8d4fa4486f904efa7a0474",
+    "outputs\\sideproject_q4_e70eeea\\out\\index_0.jsonl": "d57196d0c649ef3b2771e33faf441c8a6a20eaeb162553aff53e1239b4e24d6a",
+    "outputs\\sideproject_q4_e70eeea\\out\\index_1.jsonl": "1ea93ad08b8e1c8534a4df839142a06fe9bb9ab22a71230fc38ea561301de8cc",
+    "outputs\\sideproject_q4_e70eeea\\out\\index_10.jsonl": "27845b1b9249b51f3144883ee4f2ced790a827b14783ccc34c32945eafb476bc",
+    "outputs\\sideproject_q4_e70eeea\\out\\index_11.jsonl": "f8127aba78ac2e009e0c65cd24f8760d4c6391b8621dac3469e60402a85d5ebe",
+    "outputs\\sideproject_q4_e70eeea\\out\\index_12.jsonl": "31c8795ceb4b4f7cb822af9536d75c5188a5c7da800e0aadc0349b46f0d169be",
+    "outputs\\sideproject_q4_e70eeea\\out\\index_13.jsonl": "f5252cb40a4d7b99bb032e54e8e00b87a36976696d7a63e054433d26b8c7da90",
+    "outputs\\sideproject_q4_e70eeea\\out\\index_14.jsonl": "1773005ca2778d09c0262795bff5a6a4f38fb7169d429892bee2f94088f69c3a",
+    "outputs\\sideproject_q4_e70eeea\\out\\index_15.jsonl": "f48cec0df13bc8bb5f3b96465b609635f9ac14d9e56295e3bf6337d6f66b433a",
+    "outputs\\sideproject_q4_e70eeea\\out\\index_16.jsonl": "990ecddc7d95357e7b914bfcb83dfbd8f768db62a63ecad2bd2c45945b06032f",
+    "outputs\\sideproject_q4_e70eeea\\out\\index_17.jsonl": "d77ea91a6443bba334ef46dd8859afd9268929373899ecee7e5eb3280d05cb87",
+    "outputs\\sideproject_q4_e70eeea\\out\\index_18.jsonl": "f1b02742a9f1ac85e0c82b17517a7bddf156502eba81e8fe830791ad5a917ee4",
+    "outputs\\sideproject_q4_e70eeea\\out\\index_2.jsonl": "1a97dfc782c7219a398199da36dada4dcb02fce14fd76297f57a83e751bc6609",
+    "outputs\\sideproject_q4_e70eeea\\out\\index_3.jsonl": "8932e932480e5045556e7b5b923a9eaad70b5f7132efbd334d3bf6159461eb66",
+    "outputs\\sideproject_q4_e70eeea\\out\\index_4.jsonl": "245862e8ded50e25eea6bbb6601d1ebb80fc30c170dc40a945befe647e815d50",
+    "outputs\\sideproject_q4_e70eeea\\out\\index_5.jsonl": "81f562c35ecd3435bc09c6650288ff95b74b563cafa6df3851506e9a98ad770a",
+    "outputs\\sideproject_q4_e70eeea\\out\\index_6.jsonl": "6b378cca342f838c5ab14575ccfdb74c19208a172ca6c158e65e848c5e48ae96",
+    "outputs\\sideproject_q4_e70eeea\\out\\index_7.jsonl": "665ca8846f0bd4229d5a915452803c5e344ad1aff3f0a32e00ab80af7196b6b0",
+    "outputs\\sideproject_q4_e70eeea\\out\\index_8.jsonl": "6fb65ffe3c31ce664bf7228528ec98a8ea3943e8338a3d03711d536e0fad727e",
+    "outputs\\sideproject_q4_e70eeea\\out\\index_9.jsonl": "21809f386f4cf49dcdeadfd1163a40d4b72354499ce2dc452aeff35ab5e3691f",
+    "analysis\\data\\paper1_phaseC_v1\\hierarchy_n47_e935c37\\per_run.csv": "d331e9c79e216ced2787a1512bfee94507fdedf735ac98b313714b1c5dade182",
+    "studies\\regression\\phase_c_support.json": "ad8594f47399c1c5ef03e26bfe93f680bf7e866cb37e3d0462ce1e7b1c767e75",
+    "analysis\\scripts\\aggregate\\aggregate_sideproject_q4.py": "72ac5f213a3e11adc7764e5816c22a469fedf972ff692154065538352a8baff2",
+    "docs\\sideproject_residual_growth_protocol_q4.md": "83f88a2826c68f9936d2379e860c140c82920a5bc76deaca39448e5cca813478"
+  }
+}

@@ -10,9 +10,9 @@ zweites davon. Alles Dauerhafte gehört dorthin, nach `PAPER_1.md` oder ins `DIA
 **Regeln:** wird immer **vollständig überschrieben**, nie angehängt. Was älter als ein paar Tage
 ist, ist vermutlich falsch — dann gilt `CLAUDE.md`.
 
-**Stand: 2026-10-17, 23:15. Side-Projekt „Residual-Wachstum“: Q1–Q3 abgeschlossen und positiv (σ = 0); Q4
-(Modellgröße ohne Orakel) läuft — dim 1/2 auf dem Laptop fertig, dim 3/4 seit 22:56 als Orion-Job. Nutzer hat
-Feierabend gemacht; Auswertung von Q4 gemeinsam und in Ruhe.**
+**Stand: 2026-10-21, 14:45. Side-Projekt „Residual-Wachstum“: Q1–Q3 abgeschlossen und positiv (σ = 0); Q4
+(Modellgröße ohne Orakel) vollständig gerechnet und aggregiert — alle Kontrollen bestanden, Plattformkontrolle
+bit-identisch. R7–R9 noch nicht angesehen; Auswertung gemeinsam und in Ruhe.**
 
 > **BLINDREGEL C-6 (Nutzer, 05.10., „Weg 2“):** Bis die Entscheidungsregel für Story-Linie (b) mit dem Nutzer
 > festgelegt und als Plan §9.4d eingefroren ist, sieht sich Claude **keine C-6-EvoGrow-Ergebnisse** an — weder
@@ -33,27 +33,24 @@ jedem Statuswechsel aktualisieren.
 
 ---
 
-## 1. Was läuft — Orion, **40 / 40 Kerne** (24 + 8 C-6, 8 Side-Projekt Q4)
+## 1. Was läuft — Orion, **32 / 40 Kerne** (24 + 8 C-6), 8 frei seit 18.10.
 
-| Lauf | Stand | Erwartetes Ende | Wenn fertig |
+| Lauf | Stand (21.10. 14:30) | Erwartetes Ende | Wenn fertig |
 |---|---|---|---|
-| **Side-Projekt Q4, dim 3/4** — Job `evoode-sideproject-q4`, Image `e70eeea`, 19 indizierte Pods, 8 parallel, 4 Gi, kein Deadline | Start 17.10. 22:56; nach 1 min 33 Datensätze, technisch sauber | ~5–8 h → 18.10. früh (~19 Kern-h, Unsicherheit bis ×2; längste Einheiten sys 61, 55) | 429 Datensätze in `sideproject_q4_e70eeeaa…/out/index_*.jsonl` → nach `outputs/sideproject_q4_e70eeea/out/` kopieren; Plattformkontrolle `sys0024_ic1` (3 Fits, muss bit-identisch zum Laptop sein); dann Aggregation (Befehl unten) |
-| **C-6-Raster gekappt** (3.366, 24 Pods) | 855 (Zählung 17.10. 00:15) | ~8.–15. Nov. + Nachlauf | einsammeln, technische Prüfung (Blindregel) |
-| **C-6-Raster ungekappt, Seed 42** (461, 8 Pods) | 211 (Zählung 17.10. 00:15) | ~27. Okt. bis Anfang Nov. | Nutzer entscheidet Seed 123/7; dann 16 Kerne frei |
+| **C-6-Raster gekappt** (3.366, 24 Pods) | 1.049; 24 Pods laufen, 0 Fehler, 0 Neustarts; ~42 Zellen/Tag seit 17.10. | ~8.–15. Nov. + Nachlauf (beim aktuellen Tempo knapp) | einsammeln, technische Prüfung (Blindregel) |
+| **C-6-Raster ungekappt, Seed 42** (461, 8 Pods) | 250; 8 Pods laufen, 0 Fehler; ~8 Zellen/Tag; Pod 220 läuft seit 3 d 20 h | eher Mitte Nov. (ursprünglich ~27. Okt.) | Nutzer entscheidet Seed 123/7; dann 16 Kerne frei |
 
-Q4-Aggregation nach dem Einsammeln (Laptop-Datei + Orion-Dateien, erwartet `duplicates_compared = 3`):
-`python analysis/scripts/aggregate/aggregate_sideproject_q4.py --input outputs/sideproject_q4_path_fits/results.jsonl "outputs/sideproject_q4_e70eeea/out/index_*.jsonl"`
-— prüfen, wie das Skript den Ausgabeort wählt und dass es keine vorhandenen Tabellen überschreibt.
+**Q4 ist fertig und eingesammelt:** 429/429 Datensätze unter `outputs/sideproject_q4_e70eeea/out/`, Job vom Cluster
+entfernt. Aggregiert nach `analysis/data/sideproject_residual_growth/q4_*.csv` + `q4_run_metadata.json`; alle
+Kontrollen bestanden, `duplicates_compared = 3` bit-identisch (DIARY 21.10.). Das Skript weigert sich, vorhandene
+Tabellen zu überschreiben — ein erneuter Lauf braucht `--output-dir`.
 
-Lokal läuft nichts. **Ungepusht:** `e72d3bb` und dieser Commit (pusht der Nutzer; GitHub reicht, kein neues Image
-nötig). Aufgeräumt 17.10.: Skizze jetzt `docs/sideproject_residual_growth_concept.md` (getrackt), `docs/ideas/` getrackt,
-Literatur-PDFs in `literature/` (ignoriert), `.obsidian/` und `tmp/` ignoriert. **Offen für den Nutzer:** sieben
-schreibgeschützte pytest-Ordner unter `tmp/` (Codex-Sandbox, nur mit Admin-Rechten löschbar) und die
-Annihilator-Dateien `output/pdf/` und `tmp/pdfs/` → gehören nach `..\EvoODE-next`.
+Lokal läuft nichts. Alles bis `a9e94ed` ist gepusht; der Commit vom 21.10. ist ungepusht (pusht der Nutzer).
+**Offen für den Nutzer:** sieben schreibgeschützte pytest-Ordner unter `tmp/` (Codex-Sandbox, nur mit Admin-Rechten
+löschbar) und die Annihilator-Dateien `output/pdf/` und `tmp/pdfs/` → gehören nach `..\EvoODE-next`.
 
-**Statusseite „EvoODE auf Orion“:** https://claude.ai/artifact/9zzJsoGCBahPsuNkaaf3DN — Version 2 (17.10. 22:56) mit Q4.
-Quelle im Scratchpad dieser Sitzung; sonst per Artifact `read` holen und darauf aufbauen. Nach dem Q4-Ende neu
-veröffentlichen (Q4 fertig, 8 Kerne frei).
+**Statusseite „EvoODE auf Orion“:** https://claude.ai/artifact/9zzJsoGCBahPsuNkaaf3DN — Version 3 (21.10. 14:40), Q4
+fertig, 8 Kerne frei. Bei jeder Änderung per Artifact `read` holen und darauf aufbauen.
 
 ## 2. Side-Projekt „Residual-Wachstum“ — Stand (Details DIARY 17.10.)
 
@@ -66,7 +63,7 @@ Protokolle (eingefroren vor jeder Rechnung): `docs/sideproject_residual_growth_p
   identifizierbar; von C-1-Endstrukturen aus mit Hinzufügen + Refit + Entfernen erreichbar (Orakelgrößen).
 - **Q3 (WP-FA3), R5/R6 bestehen:** ein Fit vom schwachen Start schlägt zehn Zufallsstarts auf der wahren Struktur
   (dim 2: 20/20 gegen 39/60); System 61 unter Schranke 10 lösbar (in CLAUDE.md nachgetragen).
-- **Q4 (WP-FA4/4b/4c) läuft:** Wachstumspfad + Trajektorien-BIC (primär); R7 gegen C-1, **R8 gegen Weak-SINDy-Median
+- **Q4 (WP-FA4/4b/4c) gerechnet und aggregiert, nicht ausgewertet:** Wachstumspfad + Trajektorien-BIC (primär); R7 gegen C-1, **R8 gegen Weak-SINDy-Median
   entscheidet**, R9 = bringt die Simulation etwas. dim 1/2: `outputs/sideproject_q4_path_fits/results.jsonl` (404
   Datensätze, nicht ausgewertet).
 - **Neuheit (Nutzer):** nicht das Residual-Ranking (FROLS), sondern falls es gelingt die Kombination aus inkrementellem

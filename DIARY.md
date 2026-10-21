@@ -4,6 +4,25 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ---
 
+## 2026-10-21
+
+### Side-Projekt Q4: Orion-Teil eingesammelt und aggregiert (nur technisch)
+
+Job `evoode-sideproject-q4` (Image `e70eeea`) ist fertig und vom Cluster entfernt; letzte Index-Datei 18.10. 11:15,
+also ~12 h Wand statt der erwarteten 5–8 h (innerhalb der deklarierten Unsicherheit ×2). 19 Dateien, **429 / 429
+Datensätze**, kopiert nach `outputs/sideproject_q4_e70eeea/out/`. Aggregation über Laptop (404) + Orion (429) mit
+`aggregate_sideproject_q4.py`: alle Provenienz-, Trajektorien- und W1-Kontrollen bestehen, Kandidatenmenge vollständig
+(60 Einheiten, 769 Pfadkandidaten), ein Settings-Fingerprint, **`duplicates_compared = 3`, die drei Fits von
+`sys0024_ic1` bit-identisch Laptop ↔ Orion**. Die Quell-Hashes tragen auf dem Laptop CRLF (404 roh) und auf Orion LF
+(429 LF) — erwartet, die CRLF-Normalisierung bleibt deshalb bis nach der Auswertung zurückgestellt. Tabellen unter
+`analysis/data/sideproject_residual_growth/q4_*.csv` und `q4_run_metadata.json`. **R7–R9 noch nicht angesehen** —
+Auswertung gemeinsam mit dem Nutzer.
+
+Orion 21.10. 14:30: C-6 gekappt 1.049 / 3.366, ungekappt 250 / 461; 24 + 8 Pods laufend, 0 Fehler, 0 Neustarts;
+8 Kerne frei. Tempo seit 17.10. ~42 bzw. ~8 Zellen/Tag — beim ungekappten Arm passt „Ende Oktober“ nicht mehr.
+
+---
+
 ## 2026-10-17
 
 ### Ablage aufgeräumt
