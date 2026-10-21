@@ -7,3 +7,8 @@
 !benchmarks/data/**
 **/__pycache__/
 **/*.pyc
+
+# Noise runners read the frozen Phase-C support registry.
+!studies/
+!studies/regression/
+!studies/regression/phase_c_support.json

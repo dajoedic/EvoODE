@@ -31,6 +31,10 @@ from pathlib import Path
 import pysr
 from pysr import jl
 
+assert pysr.__version__ == "0.19.4"
+# Fail the build if the backend cannot be precompiled; runtime stays offline.
+jl.seval("import Pkg; Pkg.precompile()")
+
 metadata_path = Path("/opt/evoode-pysr-image-metadata.json")
 metadata_path.parent.mkdir(parents=True, exist_ok=True)
 metadata = {

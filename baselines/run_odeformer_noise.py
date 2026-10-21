@@ -13,6 +13,7 @@ from typing import Any
 import numpy as np
 import pandas as pd
 
+from baselines.noise_execution import export_failure
 from baselines import harness
 from baselines import run_odeformer_grid
 
@@ -480,6 +481,7 @@ def run_noise_odeformer(
     repetitions: int = 3,
     config_ids: set[str] | None = None,
     limit: int | None = None,
+    execution: Any = None,
 ) -> dict[str, Path]:
     config_path = resolve_repo_path(config_path)
     output_dir = resolve_repo_path(output_dir)
@@ -489,11 +491,7 @@ def run_noise_odeformer(
     support_terms_by_id = phase_c_support_terms(REPO_ROOT / "studies/regression/phase_c_support.json")
     configs = selected_config_objects(config_path, config_ids)
     clean_t = clean_time_grid(config_path)
-    clean_states = {
-        (int(system["id"]), ic + 1): integrate_truth(system, ic, clean_t)[0]
-        for system in benchmark
-        for ic in (0, 1)
-    }
+
     rows: list[dict[str, Any]] = []
     checks: list[dict[str, Any]] = []
     work: list[tuple[Path, pd.Series]] = []
@@ -504,11 +502,26 @@ def run_noise_odeformer(
             work.append((index_path, row))
     if limit is not None:
         work = work[: int(limit)]
+    selected_systems = {int(row["system_id"]) for _, row in work}
+    clean_states = {
+        (int(system["id"]), ic + 1): integrate_truth(system, ic, clean_t)[0]
+        for system in benchmark
+        if execution is None or int(system["id"]) in selected_systems
+        for ic in (0, 1)
+    }
 
     adapters: dict[str, Any] = {}
     try:
         for index_path, row in work:
-            observed_t, observed_x = read_index_cell(index_path.parent, row)
+            export_error = None
+            try:
+                observed_t, observed_x = read_index_cell(index_path.parent, row)
+            except (OSError, ValueError) as exc:
+                if execution is None:
+                    raise
+                export_error = exc
+                observed_t = np.empty(0)
+                observed_x = np.empty((0, int(row["dimension"])))
             system_id = int(row["system_id"])
             source_ic = int(row["initial_condition_set"])
             target_ic = 2 if source_ic == 1 else 1
@@ -527,18 +540,29 @@ def run_noise_odeformer(
                     "n_observed_points": int(row["n_observed_points"]),
                     "time_sha256": str(row["time_sha256"]),
                     "state_sha256": str(row["state_sha256"]),
-                    "hash_verified": True,
+                    "hash_verified": export_error is None,
+                    **({"error_message": str(export_error)} if export_error else {}),
                 }
             )
             for repetition in range(1, int(repetitions) + 1):
                 for ode_config in configs:
                     config_id = str(ode_config["config_id"])
-                    if config_id not in adapters:
-                        adapters[config_id] = harness.build_odeformer_adapter(ode_config)
-                    adapter = adapters[config_id]
+                    if execution is not None:
+                        restored = execution.restore(row, config_id, repetition)
+                        if restored is not None:
+                            rows.append(restored)
+                            continue
                     started = time.perf_counter()
-                    target_for_harness = clean_target
-                    record = harness.run_odeformer_record_with_adapter(system, fit_cell, target_for_harness, ode_config, adapter)
+                    if export_error is not None:
+                        record = export_failure(harness, "odeformer", ode_config, fit_cell, clean_target, export_error)
+                    else:
+                        if config_id not in adapters:
+                            adapters[config_id] = harness.build_odeformer_adapter(ode_config)
+                        adapter = adapters[config_id]
+                        if execution is not None:
+                            execution.before_fit(config_id)
+                        target_for_harness = clean_target
+                        record = harness.run_odeformer_record_with_adapter(system, fit_cell, target_for_harness, ode_config, adapter)
                     expression = str(record.get("odeformer_expression_after_optimization") or record.get("odeformer_model_canonical") or "")
                     record.update(
                         clean_eval_fields(adapter, expression, clean_source, clean_target)
@@ -572,6 +596,8 @@ def run_noise_odeformer(
                             **support.loc[system_id].to_dict(),
                         }
                     )
+                    if execution is not None:
+                        execution.save(row, config_id, repetition, record, checks[-1])
                     rows.append(record)
     finally:
         for adapter in adapters.values():

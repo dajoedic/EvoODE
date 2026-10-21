@@ -10,6 +10,19 @@ project**. Scientific history belongs in `DIARY.md`, not here.
 
 ## [Unreleased]
 
+### Added - 2026-10-21
+
+- `build_pysr_legacy_image` builds `pysr-legacy:$CI_COMMIT_SHA` and
+  `pysr-legacy:$CI_COMMIT_REF_SLUG` from `baselines/Dockerfile.pysr-legacy`.
+  It uses the reference image's pinned Docker-in-Docker digest, disabled provenance/SBOM
+  attestations, three-hour build budget, and automatic `baselines/**/*` change rule on `main`;
+  other `main` builds remain optional manual jobs. Package versions stay pinned for C-7.
+- `trivy-pysr-legacy-image` scans the SHA-tagged legacy image for HIGH/CRITICAL findings
+  through the pinned Trivy v3.2.0 component with `allow-failure: true` and a build dependency.
+  Findings have not been measured; no new vulnerability exception is asserted (§11.1).
+  The PySR 1.5.9 image has no CI job.
+
+
 ### Fixed - 2026-10-01
 
 - The four manual jobs (`build_odeformer_reference_image`, `build_odeformer_candidate_image`,

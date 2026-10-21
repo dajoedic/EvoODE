@@ -1,0 +1,87 @@
+# C-6 pysr: planning only, no runtime evidence.
+# Full-grid estimate: at least 3699.54 core-h, 5549.31 EUR, 462.44 h at eight pods (all 3 labels).
+# 1 shards; platform controls only.
+# Dimension 1/2 shards first, then dimension 3/4; fixed system/IC/condition/realization order.
+# ODEFormer first; PySR only after ODEFormer has ended. Never run both jobs together.
+# Start the full job only after its smoke comparisons all PASS.
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: evoode-phase-c-c6-pysr-legacy-smoke
+  namespace: scch-das
+  labels:
+    app.kubernetes.io/name: evoode
+    app.kubernetes.io/part-of: evoode-phase-c
+    app.kubernetes.io/component: c6-pysr-legacy-smoke
+    hpc.scch.at/service: evoode-phase-c-c6-pysr-legacy-smoke
+    hpc.scch.at/responsibility: joedicke
+    app.kubernetes.io/managed-by: kubectl
+spec:
+  ttlSecondsAfterFinished: 3600
+  completionMode: Indexed
+  completions: 1
+  parallelism: 1
+  backoffLimit: 50
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: evoode
+        app.kubernetes.io/part-of: evoode-phase-c
+        app.kubernetes.io/component: c6-pysr-legacy-smoke
+        hpc.scch.at/service: evoode-phase-c-c6-pysr-legacy-smoke
+        hpc.scch.at/responsibility: joedicke
+    spec:
+      restartPolicy: Never
+      imagePullSecrets:
+        - name: evoode-gitlab-pull
+      containers:
+        - name: cell
+          image: registry.gitlab.scch.at:443/joedicke/evoode/pysr-legacy:<COMMIT_SHA>
+          imagePullPolicy: IfNotPresent
+          command: [python, -m, analysis.scripts.aggregate.run_k8s_symbolic_shard]
+          env:
+            - name: EVO_SYMBOLIC_METHOD
+              value: "pysr"
+            - name: EVO_SYMBOLIC_EXPORT_DIR
+              value: "/export"
+            - name: EVO_SYMBOLIC_OUTPUT_DIR
+              value: "/outputs/c6_pysr_legacy_<COMMIT_SHA>/smoke"
+            - name: EVO_SYMBOLIC_N_SHARDS
+              value: "1"
+            - name: EVO_SYMBOLIC_SMOKE
+              value: "1"
+            - name: EVOODE_GIT_SHA
+              value: "<COMMIT_SHA>"
+            - name: EVOODE_IMAGE_ID
+              value: "registry.gitlab.scch.at:443/joedicke/evoode/pysr-legacy:<COMMIT_SHA>"
+            - name: OMP_NUM_THREADS
+              value: "1"
+            - name: MKL_NUM_THREADS
+              value: "1"
+            - name: OPENBLAS_NUM_THREADS
+              value: "1"
+            - name: ODEFORMER_TORCH_THREADS
+              value: "1"
+            - name: JULIA_NUM_THREADS
+              value: "1"
+          resources:
+            requests:
+              cpu: "1"
+              # WP-N39 smoke has no measured memory watermark; use requested 4 Gi fallback.
+              memory: 4Gi
+            limits:
+              cpu: "1"
+              memory: 4Gi
+          volumeMounts:
+            - name: evoode-bigdata
+              mountPath: /outputs
+              subPath: data-science/joedicke
+            - name: evoode-bigdata
+              mountPath: /export
+              subPath: data-science/joedicke/phase_c_c6_data_conditions_5dd1df839f8ece98f2bb3bbff78d15d8c433d9d3
+              readOnly: true
+      volumes:
+        - name: evoode-bigdata
+          nfs:
+            server: nfs.orion.scch.at
+            path: /bigdata

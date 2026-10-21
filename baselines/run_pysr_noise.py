@@ -13,6 +13,7 @@ from typing import Any
 import numpy as np
 import pandas as pd
 
+from baselines.noise_execution import export_failure
 from baselines import harness
 from baselines import run_odeformer_noise
 
@@ -263,6 +264,7 @@ def run_noise_pysr(
     output_dir: Path,
     seeds: list[int] | None = None,
     limit: int | None = None,
+    execution: Any = None,
 ) -> dict[str, Path]:
     config_path = resolve_repo_path(config_path)
     config = load_json(config_path)
@@ -274,11 +276,7 @@ def run_noise_pysr(
     systems = {int(system["id"]): system for system in benchmark}
     support = load_phase_c_support(REPO_ROOT / "studies/regression/phase_c_support.json").set_index("system_id")
     clean_t = clean_time_grid(config_path)
-    clean_states = {
-        (int(system["id"]), ic + 1): integrate_truth(system, ic, clean_t)[0]
-        for system in benchmark
-        for ic in (0, 1)
-    }
+
     work: list[tuple[Path, pd.Series]] = []
     checks: list[dict[str, Any]] = []
     for index_path in export_indices:
@@ -288,11 +286,26 @@ def run_noise_pysr(
             work.append((index_path, row))
     if limit is not None:
         work = work[: int(limit)]
+    selected_systems = {int(row["system_id"]) for _, row in work}
+    clean_states = {
+        (int(system["id"]), ic + 1): integrate_truth(system, ic, clean_t)[0]
+        for system in benchmark
+        if execution is None or int(system["id"]) in selected_systems
+        for ic in (0, 1)
+    }
 
     rows: list[dict[str, Any]] = []
     requested_seeds = seeds if seeds is not None else list(config.get("seeds", [1, 2, 3]))
     for index_path, row in work:
-        observed_t, observed_x = read_index_cell(index_path.parent, row)
+        export_error = None
+        try:
+            observed_t, observed_x = read_index_cell(index_path.parent, row)
+        except (OSError, ValueError) as exc:
+            if execution is None:
+                raise
+            export_error = exc
+            observed_t = np.empty(0)
+            observed_x = np.empty((0, int(row["dimension"])))
         system_id = int(row["system_id"])
         source_ic = int(row["initial_condition_set"])
         target_ic = 2 if source_ic == 1 else 1
@@ -313,16 +326,24 @@ def run_noise_pysr(
                 "n_observed_points": int(row["n_observed_points"]),
                 "time_sha256": str(row["time_sha256"]),
                 "state_sha256": str(row["state_sha256"]),
-                "hash_verified": True,
+                "hash_verified": export_error is None,
+                **({"error_message": str(export_error)} if export_error else {}),
             }
         )
         for seed in requested_seeds:
             variant_configs = pysr_variant_configs(config.get("pysr", {}), int(seed), output_dir, system_id, source_ic)
             for pysr_config in variant_configs:
                 variant_id = str(pysr_config["config_id"])
+                if execution is not None:
+                    restored = execution.restore(row, variant_id, seed)
+                    if restored is not None:
+                        rows.append(restored)
+                        continue
                 adapter = None
                 started = time.perf_counter()
                 try:
+                    if export_error is not None:
+                        raise export_error
                     adapter = harness.build_pysr_adapter(pysr_config)
                     record = harness.run_pysr_record_with_adapter(system, fit_cell, clean_target, pysr_config, adapter)
                     expression = str(record.get("pysr_model_canonical") or record.get("model") or "")
@@ -331,6 +352,8 @@ def run_noise_pysr(
                 except Exception as exc:
                     record = harness.record_failure(harness.base_record("pysr", pysr_config, fit_cell, clean_target), exc)
                     record.update(harness.pysr_schema_defaults(pysr_config))
+                    if export_error is not None:
+                        record["export_validation_error"] = str(export_error)
                 finally:
                     close = getattr(adapter, "close", None)
                     if callable(close):
@@ -363,6 +386,8 @@ def run_noise_pysr(
                         **support.loc[system_id].to_dict(),
                     }
                 )
+                if execution is not None:
+                    execution.save(row, variant_id, seed, record, checks[-1])
                 rows.append(record)
 
     output_dir.mkdir(parents=True, exist_ok=True)
