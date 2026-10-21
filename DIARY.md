@@ -7,6 +7,7 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 ## 2026-10-21
 
 ### Side-Projekt Q4: Orion-Teil eingesammelt und aggregiert (nur technisch)
+<!-- a6f1f18 -->
 
 Job `evoode-sideproject-q4` (Image `e70eeea`) ist fertig und vom Cluster entfernt; letzte Index-Datei 18.10. 11:15,
 also ~12 h Wand statt der erwarteten 5–8 h (innerhalb der deklarierten Unsicherheit ×2). 19 Dateien, **429 / 429
