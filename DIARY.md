@@ -7,7 +7,7 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 ## 2026-10-27
 
 ### Side-Projekt Q4 ausgewertet: R7, R8, R9 bestehen in allen drei Primärstrata — weiter zum Rauschen
-<!-- 9e8580f -->
+<!-- 9e8580f, 8131872 -->
 
 Ausgewertet nach dem eingefrorenen Protokoll `docs/sideproject_residual_growth_protocol_q4.md` (`24ede2d`), Tabellen
 `analysis/data/sideproject_residual_growth/q4_*.csv` (aggregiert 21.10., `a6f1f18`). **Getestet wurde nicht EvoGrow**,
@@ -56,6 +56,14 @@ SINDy und E-SINDy mit derselben Bibliothek: Struktur höchstens 45 % (dim1) und 
 der eingefrorenen Regel, aber **gegen die passende Bibliothek ist dim 2 ein Gleichstand** (Struktur +1 Einheit,
 Generalisierung −3 pp), dim 1 ein klarer Vorsprung, dim 3 zu dünn. Für Q5 wird die Referenz die passende Bibliothek,
 nicht der Median über alle zehn.
+
+**Literatur (Rechercheagent, Web-geprüft, 27.10.; `docs/sideproject_residual_growth_literature.md`):** Keine Arbeit
+macht die ganze Kombination. Nächster Verwandter **Mangan et al. 2017** (λ-Reihe, LS-Refit im Ableitungsraum, Simulation,
+AIC über 100 Validierungs-ICs); schwache Form + Vorwärtsregression bei **Guo et al. 2016**; Auswahl per Simulationsfehler
+in der NARX-Linie (**Piroddi & Spinelli 2003**); WeakIdent 2023 bleibt im Regressionsraum. Erwartete Gutachterlesart:
+„Mangan 2017 mit schwacher Form und anderem Pfadgenerator“ — Antwort nur über eine Ablation Pfadgenerator ×
+Auswahlraum × Refit. Warnung für Q5: Auf sauberen Daten ist Trajektorien-BIC faktisch „kleinstes Modell am
+Integratorboden“; ob das unter Rauschen trägt, ist offen.
 
 **Lesart nach §6: R8 besteht → Rauschen.** Nutzer 27.10.: weiter zum Rauschen (Protokoll Q5 zuerst, eingefroren vor
 jeder Rechnung). Die CRLF-Normalisierung unter `src/`, `studies/`, `benchmarks/` ist damit freigegeben.
