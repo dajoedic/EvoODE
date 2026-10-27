@@ -41,6 +41,22 @@ Trajektorien-BIC (Regel (c)). σ = 0, 30 exakte Systeme, Einheit = (System, Trai
 Seeds, Weak-SINDy drei Realisierungen) wie im Protokoll vorgesehen; der Pfaddeckel 6 Terme ist die einzige deklarierte
 Nutzung der Wahrheit; σ = 0, genau dort, wo Weak-SINDy seinen Vorteil nicht ausspielt.
 
+**Korrektur am selben Tag — der Weak-SINDy-Median ist ein zu schwacher Maßstab.** Nur 2 der 10 Konfigurationen
+(`poly_deg3_sin_cos`, Schwelle 0,01 / 0,1) enthalten sin/cos; die anderen acht können die sin/cos-Systeme gar nicht
+darstellen, und der Median über alle zehn drückt die Referenz. Gegen die Bibliothek, die unserer Basis entspricht
+(Weak-SINDy `poly_deg3_sin_cos`, besser der beiden Schwellen; die Bibliothek enthält zusätzlich gemischte Kubiken):
+
+| Stratum | Struktur Q4 / WS | Gen. R² > 0,9 Q4 / WS |
+|---|---|---|
+| dim1 | 82 % / 68 % (0,01) | 100 % / 73 % (0,01) |
+| dim2 | 90 % / 85 % (0,1) — **1 Einheit** | 90 % / **93 %** (0,01) |
+| dim3_feasible | 3/4 / 50 % | 4/4 / 58 % |
+
+SINDy und E-SINDy mit derselben Bibliothek: Struktur höchstens 45 % (dim1) und 65–67 % (dim2). Damit: R8 besteht nach
+der eingefrorenen Regel, aber **gegen die passende Bibliothek ist dim 2 ein Gleichstand** (Struktur +1 Einheit,
+Generalisierung −3 pp), dim 1 ein klarer Vorsprung, dim 3 zu dünn. Für Q5 wird die Referenz die passende Bibliothek,
+nicht der Median über alle zehn.
+
 **Lesart nach §6: R8 besteht → Rauschen.** Nutzer 27.10.: weiter zum Rauschen (Protokoll Q5 zuerst, eingefroren vor
 jeder Rechnung). Die CRLF-Normalisierung unter `src/`, `studies/`, `benchmarks/` ist damit freigegeben.
 
