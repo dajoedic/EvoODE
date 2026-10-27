@@ -10,7 +10,7 @@ zweites davon. Alles Dauerhafte gehört dorthin, nach `PAPER_1.md` oder ins `DIA
 **Regeln:** wird immer **vollständig überschrieben**, nie angehängt. Was älter als ein paar Tage
 ist, ist vermutlich falsch — dann gilt `CLAUDE.md`.
 
-**Stand: 2026-10-27, 15:15 (Cluster-Check; Rest unverändert seit 21.10.). Side-Projekt „Residual-Wachstum“: Q1–Q3 abgeschlossen und positiv (σ = 0); Q4
+**Stand: 2026-10-27, abends. Q4 ausgewertet (DIARY 27.10.: gegen die passende Weak-SINDy-Bibliothek dim 1 vorn, dim 2 gleichauf); Literaturlage `docs/sideproject_residual_growth_literature.md`; **Q5 (Rauschen) eingefroren** (`f737939`, nur Berichten, keine Regeln) — **Codex arbeitet an WP-FA5** (Runner, Probe- und Raster-Manifest; Julia-Teile parst und testet Claude). Danach: Probe auf Orion (neues Image nötig → Nutzer pusht), dann Raster auf den 8 freien Kernen, ODEFormer/PySR (WP-N48b, ungeprüft im Working Tree) danach. Diskussionspunkt: Pfadende ohne Deckel (Protokoll Q5 §10).** Älter: Side-Projekt „Residual-Wachstum“: Q1–Q3 abgeschlossen und positiv (σ = 0); Q4
 (Modellgröße ohne Orakel) vollständig gerechnet und aggregiert — alle Kontrollen bestanden, Plattformkontrolle
 bit-identisch. R7–R9 noch nicht angesehen; Auswertung gemeinsam und in Ruhe.**
 
