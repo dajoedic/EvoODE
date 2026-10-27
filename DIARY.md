@@ -7,6 +7,7 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 ## 2026-10-27
 
 ### Side-Projekt Q4 ausgewertet: R7, R8, R9 bestehen in allen drei Primärstrata — weiter zum Rauschen
+<!-- 9e8580f -->
 
 Ausgewertet nach dem eingefrorenen Protokoll `docs/sideproject_residual_growth_protocol_q4.md` (`24ede2d`), Tabellen
 `analysis/data/sideproject_residual_growth/q4_*.csv` (aggregiert 21.10., `a6f1f18`). **Getestet wurde nicht EvoGrow**,
