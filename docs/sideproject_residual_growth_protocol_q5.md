@@ -1,23 +1,24 @@
 # Side project "residual-guided growth" — protocol for Q5 (noise)
 
-**DRAFT 2026-10-27 — not frozen, not approved.** Part 4 of the side project; parts 1–3:
+**Frozen 2026-10-27, approved by the user, before any Q5 number was computed.** Part 4 of the side project; parts 1–3:
 `docs/sideproject_residual_growth_protocol.md` (`e61f48f`), `_q3.md` (`c81e7c6`), `_q4.md` (`24ede2d`). Q4 result and
 the reference correction: `DIARY.md` 2026-10-27. Literature position: `docs/sideproject_residual_growth_literature.md`.
 User decisions 2026-10-27: reference is the matching-library Weak-SINDy at its better threshold; full C-6 grid; Orion on
-the 8 free cores before ODEFormer; finish within 7 days; bound-infeasible dim-3 systems dropped for cost; a probe first.
+the 8 free cores before ODEFormer; finish within 7 days; bound-infeasible dim-3 systems dropped for cost; a probe first;
+**no pass/fail rules and no pre-written reading** — Q5 reports, the interpretation is made jointly after the numbers.
+Frozen are what is measured, against what, on which data, and the controls.
 Thresholds are human design choices, not derived from data.
 
 ## 1. Question
 
-Does the Q4 pipeline, unchanged, keep its standing against Weak-SINDy when the training trajectory is noisy and
-irregularly subsampled? At which noise level, if any, does it break, and is the break in the path (truth not among the
-candidates) or in the size choice (truth among them, not chosen)?
+How does the Q4 pipeline, unchanged, compare with Weak-SINDy when the training trajectory is noisy and irregularly
+subsampled, per noise level? Where it loses, is the loss in the path (truth not among the candidates) or in the size
+choice (truth among them, not chosen)?
 
 ## 2. Units, data, strata
 
-- Unit: (system, training IC) of the 30 exact systems, as Q4. **Primary strata:** `dim1` (22 units), `dim2` (20).
-  **Reported with the rules, not decision-carrying:** `dim3_feasible` (52, 61; 4 units — too thin). **Reported only:**
-  `dim4` (63; 2 units). **Not run:** `dim3_bound_infeasible` (54–59) — ~1,250–3,800 core-h projected, and Q4 already
+- Unit: (system, training IC) of the 30 exact systems, as Q4. **Strata, all reported alike with their unit count:**
+  `dim1` (22 units), `dim2` (20), `dim3_feasible` (52, 61; 4 units), `dim4` (63; 2 units). **Not run:** `dim3_bound_infeasible` (54–59) — ~1,250–3,800 core-h projected, and Q4 already
   loses there on clean data (2/12); declared exclusion for cost, not for result.
 - Data: the C-6 export `phase_c_c6_data_conditions_5dd1df8` — the same observed data the C-6 baselines consumed
   (per-cell `observed_data_sha256` must match the baseline rows). Noise multiplicative Gaussian,
@@ -56,21 +57,21 @@ candidates; total loss evaluations and ODE solves.
 
 Source: `outputs/c6_sindy_baselines_dop853_e935c37/merged/details.csv` (WP-N47, canonical; tracked summary
 `analysis/data/paper1_phaseC_v1/c6_sindy_family_dop853_e935c37/`).
-- **Decision reference:** Weak-SINDy, library `poly_deg3_sin_cos`, thresholds 0.01 and 0.1. Per stratum × σ and **per
+- **Primary reference:** Weak-SINDy, library `poly_deg3_sin_cos`, thresholds 0.01 and 0.1. Per stratum × σ and **per
   metric separately**, the better threshold — deliberately in Weak-SINDy's favour.
 - Reported: SINDy and E-SINDy with the same library, same selection; Weak-SINDy all ten configurations (median, range).
 - **EvoGrow C-6 is not read** (blind rule until §9.4d of the Phase C plan).
 
-## 6. Rules (per stratum × σ, pooled over ρ and the three realizations; primary size rule (c))
+## 6. What is reported
 
-| Rule | Criterion | Question |
-|---|---|---|
-| R10 — standing under noise (decision) | pruned exact structure ≥ Weak-SINDy reference **and** generalization rate ≥ Weak-SINDy reference | Still on par with Weak-SINDy at this σ? |
-| R11 — value of simulation | (c) pruned exact structure ≥ (a) pruned exact structure | Does the trajectory check still add anything under noise? |
+Per stratum × σ ∈ {0.01, …, 0.05}, pooled over ρ and the three realizations, and per ρ separately; the
+subsampling-only condition (0, 0.5) as its own row. Unit counts beside every rate.
+- Size rule (c): pruned and raw exact structure, R² > 0.9 reconstruction and generalization — beside the Weak-SINDy
+  reference, SINDy and E-SINDy (same library), and the Weak-SINDy median and range over all ten configurations.
+- Size rules (a) and (b) on the same metrics — whether the trajectory check still adds over the weak space.
+- Upper bounds; cost (loss evaluations, ODE solves, candidates).
 
-σ ranges over {0.01, …, 0.05}; the subsampling-only condition (0, 0.5) gets its own row with the same rules. Decision
-carried by `dim1` and `dim2`. Counting rules, no p-values. Every rule also reported per ρ separately, with raw
-structure, reconstruction, rules (a)/(b), SINDy/E-SINDy and cost beside it.
+No pass/fail rule, no pre-written reading.
 
 ## 7. Diagnostics fixed in advance (the path end)
 
@@ -81,18 +82,7 @@ Per stratum × σ:
   failure);
 - **D4** size error k_chosen − k_true, distribution.
 
-## 8. Reading (fixed in advance)
-
-- **R10 passes at all five σ in dim1 and dim2** → the standing survives noise → next: the ablation path generator ×
-  selection space × refit (Mangan-type candidates), see the literature note.
-- **R10 passes at low σ only** → report the σ where it breaks; D3 says whether path or size choice breaks; no further
-  noise work until diagnosed.
-- **R10 fails at σ = 0.01** → the clean advantage does not transfer; back to design (size selection under noise).
-- **D2 high** (the cap, not BIC, decides the size) → any pass is conditional on the truth-derived cap and must be
-  reported as such; a principled path end becomes the next design question (see §10).
-- **R11 fails** → under noise the simulation step no longer justifies its cost for structure recovery.
-
-## 9. Controls
+## 8. Controls
 
 - (0, 0): the pipeline on the export's clean cells reproduces Q4 — candidate lists, chosen models and losses —
   bit-identically (laptop vs Orion was bit-identical in Q4 for `sys0024_ic1`).
@@ -100,7 +90,7 @@ Per stratum × σ:
 - Per-cell `observed_data_sha256` equal to the WP-N47 baseline rows.
 - Optimizer settings fingerprint equal to Q4.
 
-## 10. Execution and cost
+## 9. Execution and cost
 
 - **Probe first** (Orion, one Job, before the grid): one unit each of dim1, dim2, `dim3_feasible` at (σ, ρ) = (0.05, 0)
   and (0.05, 0.5), realization 1, plus the (0, 0) control of the same units. Purpose: bound the noise cost factor and
@@ -109,7 +99,7 @@ Per stratum × σ:
   deadline. Planning estimate from Q4 fit times (wall-clock, planning only): ~230–700 core-h ≈ 350–1,050 €, ~1.5–4 days
   on 8 pods; raised to the user if the probe projects more than 7 days.
 
-## 11. Open, not decided by Q5 — for discussion
+## 10. Open, not decided by Q5 — for discussion
 
 **The path end is not principled.** On clean data the path stops when the weak residual reaches numerical zero; under
 noise only the truth-derived cap stops it. The cap does not choose the size — BIC does — but it bounds the candidate
