@@ -32,7 +32,7 @@ spec:
         - name: evoode-gitlab-pull
       containers:
         - name: shard
-          image: registry.gitlab.scch.at:443/joedicke/evoode:<COMMIT_SHA>
+          image: registry.gitlab.scch.at:443/joedicke/evoode:354106398d5e67ffa72c237e2ba83e3feeb25b31
           imagePullPolicy: IfNotPresent
           command:
             - sh
@@ -40,11 +40,11 @@ spec:
             - >-
               exec julia --project=/opt/EvoODE
               /opt/EvoODE/studies/regression/sideproject_q5_noise_fits.jl
-              --paths /outputs/sideproject_q5_<COMMIT_SHA>/input/q5_probe_paths.json
-              --export-dir /outputs/sideproject_q5_<COMMIT_SHA>/input/export
-              --unit-list /outputs/sideproject_q5_<COMMIT_SHA>/input/q5_probe_paths.shards.txt
+              --paths /outputs/sideproject_q5_354106398d5e67ffa72c237e2ba83e3feeb25b31/input/q5_probe_paths.json
+              --export-dir /outputs/sideproject_q5_354106398d5e67ffa72c237e2ba83e3feeb25b31/input/export
+              --unit-list /outputs/sideproject_q5_354106398d5e67ffa72c237e2ba83e3feeb25b31/input/q5_probe_paths.shards.txt
               --index "${JOB_COMPLETION_INDEX}"
-              --output /outputs/sideproject_q5_<COMMIT_SHA>/out/probe_index_${JOB_COMPLETION_INDEX}.jsonl
+              --output /outputs/sideproject_q5_354106398d5e67ffa72c237e2ba83e3feeb25b31/out/probe_index_${JOB_COMPLETION_INDEX}.jsonl
           env:
             - name: JULIA_NUM_THREADS
               value: "1"
