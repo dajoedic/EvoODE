@@ -68,6 +68,30 @@ Integratorboden“; ob das unter Rauschen trägt, ist offen.
 **Lesart nach §6: R8 besteht → Rauschen.** Nutzer 27.10.: weiter zum Rauschen (Protokoll Q5 zuerst, eingefroren vor
 jeder Rechnung). Die CRLF-Normalisierung unter `src/`, `studies/`, `benchmarks/` ist damit freigegeben.
 
+### WP-FA5: Q5-Runner gebaut, saubere Kontrolle bit-identisch zu Q4; Deckel schon auf sauberen Daten bindend
+<!-- 156314d -->
+
+Zwei Codex-Sitzungen gingen an die Umgebung verloren (Windows-Sandbox „elevated“, `setup refresh had errors`); Start
+mit `-c 'windows.sandbox="unelevated"'` behebt es. Die erste Sitzung stoppte vorher korrekt an der Anfangswert-Bindung
+→ Protokoll-Nachtrag (`f454a32`, vor jeder Q5-Zahl): Fit/Auswahl ab erstem Messpunkt, Bewertung ab sauberer IC, D5,
+**Verpflichtung auf IC-Schätzung (Variante C) für das Paper**.
+
+Gebaut (`156314d`): Python-Pfadbauer auf dem C-6-Export (Quadratur nutzt bereits die echten Messzeiten), Julia-Runner
+`sideproject_q5_noise_fits.jl` mit eigenem Exportleser und Hashprüfung (Q4-Runner byte-gleich), Probe- und
+Raster-Manifest (8 Pods, keine Deadline), Aggregation. 16 Python-Tests grün; 1.632/1.632 Daten-Hashes gleich den
+WP-N47-Baselinezeilen; 48/48 saubere Pfade und Startkoeffizienten gleich Q4. Raster: 1.632 Zellen, 22.882 Fits;
+Planung bei Q4-Kosten 244 Kern-h (366 €), ~32 h Wand auf 8 Pods, mit Rauschfaktor ×1–3 1,3–4 Tage. Probe 9 Zellen,
+~9 Kern-h, ~3 h Wand.
+
+Laptop (Julia 1.12.6): Parse ok; Rauchtest System 6 IC1 auf (0,0), (0,05; 0), (0,05; 0,5) läuft, Wiederaufnahme
+schreibt nichts doppelt; **(0,0) reproduziert Q4 11/11 Fits bit-identisch** (Verlust und Koeffizienten).
+
+**Deckel, Befund für die Diskussion:** Schon in Q4 (sauber) enden 31 von 48 Pfaden am 6-Term-Deckel, nicht am
+SSE-Stopp (dim1 11/22, dim2 15/20). Gewählt (c) wurde der letzte Zustand eines Deckel-Pfads aber nur in 5 Einheiten —
+dim1 0/22, dim2 1/20 (26 IC1), sonst 54 ×2, 57, 63 — **alle fünf strukturell falsch**. Auf sauberen Daten bremst also
+das BIC, nicht der Deckel; wo der Deckel „entscheidet“, ist das Modell falsch (D2 wirkt als Fehlerindikator). Unter
+Rauschen enden 1.584/1.584 Pfade am Deckel.
+
 ---
 
 ## 2026-10-21
