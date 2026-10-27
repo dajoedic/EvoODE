@@ -9,6 +9,22 @@ the 8 free cores before ODEFormer; finish within 7 days; bound-infeasible dim-3 
 Frozen are what is measured, against what, on which data, and the controls.
 Thresholds are human design choices, not derived from data.
 
+## Amendment 2026-10-27 (user, before any Q5 number was computed)
+
+WP-FA5 binding audit (`codex/reports/REPORT_WP_FA5.md`): the C-6 baselines simulate only for evaluation, from the
+clean IC; the Q4 machinery simulates inside fit and selection from the **first observed sample** at its time. §3's
+"same convention as the baselines for fit, selection and reconstruction" would put the clean IC — oracle information —
+into the method. Decided:
+- **Fit and selection: first observed sample at the first observed time** (Q4 machinery unchanged; also what EvoGrow
+  does in C-6). **Reconstruction and generalization: evaluated from the clean IC on the clean grid**, exactly as the
+  baselines. The IC noise is a declared handicap of this Q5.
+- **D5 (added to §7):** for every chosen (c) model, the training-data MSE simulated from the first observed sample and
+  from the clean training IC with the same fitted coefficients — how much of the trajectory error the noisy start carries.
+  Evaluation only; never used for any choice.
+- **Commitment (user): the paper version estimates the initial state jointly with the coefficients (variant C),**
+  initial state unbounded, coefficients bound as before. Every Q5 result is re-checked under C, a failure under A in
+  particular; a Q5 result alone is never a paper claim. C gets its own frozen protocol.
+
 ## 1. Question
 
 How does the Q4 pipeline, unchanged, compare with Weak-SINDy when the training trajectory is noisy and irregularly
@@ -80,7 +96,9 @@ Per stratum × σ:
 - **D2** share of units whose (c) choice is the **last** path state (the cap, not BIC, limited the size);
 - **D3** truth on the path: share of units where the true structure is among the candidates (path failure vs selection
   failure);
-- **D4** size error k_chosen − k_true, distribution.
+- **D4** size error k_chosen − k_true, distribution;
+- **D5** initial-state cost (amendment): training MSE of the chosen model from the first observed sample vs from the
+  clean training IC, same coefficients.
 
 ## 8. Controls
 

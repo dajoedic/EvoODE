@@ -6,6 +6,24 @@ first, then the Q4 protocol `_q4.md` and `codex/reports/REPORT_WP_FA4.md` (how Q
 Julia runner, Orion job, aggregation). Q5 = the Q4 pipeline **unchanged**, applied to the C-6 export instead of the clean
 WP-C4c trajectories.
 
+## Resumed 2026-10-27 after the scope-1 stop — the binding is decided
+
+Read the amendment at the top of the protocol. Scope 1 is done (`codex/reports/REPORT_WP_FA5.md`); do not repeat it.
+- **Fit and selection use the Q4 machinery unchanged**: the observed trajectory is passed as is, so the simulation
+  starts from the first observed sample at the first observed time. Do not overwrite or prepend any state.
+- **Reconstruction and generalization** are evaluated from the clean IC on the clean grid, as the baselines
+  (`run_phasec_noise_sindy_baselines.py:373–379`); the clean trajectories come from the export's (0, 0) cells or the
+  same integration the baselines use — state which, and check they agree.
+- **D5**: per chosen (c) model also the training-data MSE simulated from the clean training IC with the same
+  coefficients (evaluation only).
+- **Julia export reader**: there is none (report binding 3); write one for the runner that reads `index.csv` and the
+  binaries and verifies the per-cell hashes exactly as `read_index_cell` does, and records `observed_data_sha256` in the
+  Python representation (`data_sha`) so the aggregation can join on it.
+- The shell helper failed in your last session: if it fails again, report `blocked` with the error instead of working
+  around it — tests must actually run.
+
+Continue with scopes 2–7.
+
 ## Why
 
 Q4 (clean data) put the pipeline on par with / ahead of Weak-SINDy. Q5 measures it on the same noisy and subsampled
