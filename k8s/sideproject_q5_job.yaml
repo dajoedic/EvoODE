@@ -1,0 +1,70 @@
+# Q5 grid: 244.50 core-h at Q4 cost; 30.6h ideal / 31.95h ordered scheduling
+# on 8 pods; EUR 366.75 at EUR 1.50/core-h. Noise cost unmeasured: x1-x3
+# gives ~244-734 core-h, EUR 367-1100, ~1.3-4.0 days plus startup overhead.
+# The user decides the grid after the probe.
+# 1632 whole-cell shards; maximum planning estimate 3.69h (25 exceed 3h).
+# 4Gi matches Q4 for Julia JIT/solver headroom; observations are no larger.
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: evoode-sideproject-q5
+  namespace: scch-das
+  labels:
+    app.kubernetes.io/name: evoode
+    app.kubernetes.io/part-of: evoode-phase-c
+    app.kubernetes.io/component: sideproject-q5
+    hpc.scch.at/service: evoode-sideproject-q5
+    hpc.scch.at/responsibility: joedicke
+spec:
+  ttlSecondsAfterFinished: 3600
+  completionMode: Indexed
+  completions: 1632
+  parallelism: 8
+  backoffLimit: 10
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: evoode
+        app.kubernetes.io/component: sideproject-q5
+        hpc.scch.at/service: evoode-sideproject-q5
+        hpc.scch.at/responsibility: joedicke
+    spec:
+      restartPolicy: Never
+      imagePullSecrets:
+        - name: evoode-gitlab-pull
+      containers:
+        - name: shard
+          image: registry.gitlab.scch.at:443/joedicke/evoode:<COMMIT_SHA>
+          imagePullPolicy: IfNotPresent
+          command:
+            - sh
+            - -c
+            - >-
+              exec julia --project=/opt/EvoODE
+              /opt/EvoODE/studies/regression/sideproject_q5_noise_fits.jl
+              --paths /outputs/sideproject_q5_<COMMIT_SHA>/input/q5_grid_paths.json
+              --export-dir /outputs/sideproject_q5_<COMMIT_SHA>/input/export
+              --unit-list /outputs/sideproject_q5_<COMMIT_SHA>/input/q5_grid_paths.shards.txt
+              --index "${JOB_COMPLETION_INDEX}"
+              --output /outputs/sideproject_q5_<COMMIT_SHA>/out/index_${JOB_COMPLETION_INDEX}.jsonl
+          env:
+            - name: JULIA_NUM_THREADS
+              value: "1"
+            - name: OPENBLAS_NUM_THREADS
+              value: "1"
+          resources:
+            requests:
+              cpu: "1"
+              memory: 4Gi
+            limits:
+              cpu: "1"
+              memory: 4Gi
+          volumeMounts:
+            - name: evoode-bigdata
+              mountPath: /outputs
+              subPath: data-science/joedicke
+      volumes:
+        - name: evoode-bigdata
+          nfs:
+            server: nfs.orion.scch.at
+            path: /bigdata

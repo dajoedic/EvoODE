@@ -1,0 +1,68 @@
+# Q5 probe: 8.947 core-h at Q4 cost, EUR 13.42 at EUR 1.50/core-h.
+# ~3.04h wall on 8 pods; unmeasured noise factor x1-x3: 3-9h,
+# 9-27 core-h, EUR 13-40. User decides the grid after this probe.
+# 4Gi matches Q4 for Julia JIT/solver headroom; no larger observations.
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: evoode-sideproject-q5-probe
+  namespace: scch-das
+  labels:
+    app.kubernetes.io/name: evoode
+    app.kubernetes.io/part-of: evoode-phase-c
+    app.kubernetes.io/component: sideproject-q5-probe
+    hpc.scch.at/service: evoode-sideproject-q5-probe
+    hpc.scch.at/responsibility: joedicke
+spec:
+  ttlSecondsAfterFinished: 3600
+  completionMode: Indexed
+  completions: 9
+  parallelism: 8
+  backoffLimit: 10
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: evoode
+        app.kubernetes.io/component: sideproject-q5-probe
+        hpc.scch.at/service: evoode-sideproject-q5-probe
+        hpc.scch.at/responsibility: joedicke
+    spec:
+      restartPolicy: Never
+      imagePullSecrets:
+        - name: evoode-gitlab-pull
+      containers:
+        - name: shard
+          image: registry.gitlab.scch.at:443/joedicke/evoode:<COMMIT_SHA>
+          imagePullPolicy: IfNotPresent
+          command:
+            - sh
+            - -c
+            - >-
+              exec julia --project=/opt/EvoODE
+              /opt/EvoODE/studies/regression/sideproject_q5_noise_fits.jl
+              --paths /outputs/sideproject_q5_<COMMIT_SHA>/input/q5_probe_paths.json
+              --export-dir /outputs/sideproject_q5_<COMMIT_SHA>/input/export
+              --unit-list /outputs/sideproject_q5_<COMMIT_SHA>/input/q5_probe_paths.shards.txt
+              --index "${JOB_COMPLETION_INDEX}"
+              --output /outputs/sideproject_q5_<COMMIT_SHA>/out/probe_index_${JOB_COMPLETION_INDEX}.jsonl
+          env:
+            - name: JULIA_NUM_THREADS
+              value: "1"
+            - name: OPENBLAS_NUM_THREADS
+              value: "1"
+          resources:
+            requests:
+              cpu: "1"
+              memory: 4Gi
+            limits:
+              cpu: "1"
+              memory: 4Gi
+          volumeMounts:
+            - name: evoode-bigdata
+              mountPath: /outputs
+              subPath: data-science/joedicke
+      volumes:
+        - name: evoode-bigdata
+          nfs:
+            server: nfs.orion.scch.at
+            path: /bigdata
