@@ -311,3 +311,15 @@ Die entscheidende Frage lautet:
 Wenn die Antwort ja ist, könnte daraus ein neuer Typ datengetriebener symbolischer Struktursuche entstehen:
 
 > **Nicht blind suchen, sondern aus jedem Fehler lernen, wie der Ausdruck wachsen muss.**
+
+---
+
+## 12. Einschätzung 2026-10-27 (nach Phase C)
+
+**Bleibt im Ideenpool, Rang 1 von 3.** Am besten abgesichert der drei Ideen.
+
+- Der Kern ist teilweise bestätigt: Im Nebenprojekt Residual Growth (`docs/sideproject_residual_growth_protocol.md`, `DIARY.md` 2026-10-17) erreicht „Term hinzufügen, alle Koeffizienten neu fitten, rückwärts entfernen“ im Weak-Form-Raum bei σ = 0 und vorgegebener Modellgröße die wahre Struktur, sogar aus den falschen Endstrukturen von C-1 heraus.
+- Die Residuen-Rangfolge selbst ist FROLS (Billings, Chen & Korenberg 1989). Neu kann nur die Kombination aus inkrementellem Wachstum, Weak-Regression und Simulationsprüfung sein.
+- **Schwachstelle: der Fingerabdruck.** WP-R1 zeigt, dass die Polynombasis auch Surrogat-Systeme im Ableitungsraum fast perfekt annähert (Median 0.999993). Fehlt eine sättigende oder transzendente Familie, absorbieren die Polynome auf dem beobachteten Zustandsbereich das meiste davon, und im Residuum bleibt wenig Unterscheidbares. Der Kill-Test aus Abschnitt 10 zielt genau auf diese Stelle und ist der wichtigste der drei Kill-Tests.
+
+**Wann wieder aufnehmen:** wenn Q5 des Nebenprojekts abgeschlossen ist **und** die Fehleranatomie (`docs/diskussion_warum_scheitert_die_suche.md`) überwiegend Klasse B zeigt (Struktur erreicht, schlecht gefittet). Kein paralleler Strang neben dem Nebenprojekt.

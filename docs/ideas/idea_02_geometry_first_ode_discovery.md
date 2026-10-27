@@ -251,3 +251,15 @@ Der wichtigste offene Punkt ist derzeit nicht die Implementierung, sondern:
 > **Ist die Richtung des beobachteten Flusses informationsreich genug, um ODE-Strukturen zuverlässig voneinander zu unterscheiden?**
 
 Genau das sollte als erstes getestet werden.
+
+---
+
+## 11. Einschätzung 2026-10-27 (nach Phase C)
+
+**Bleibt im Ideenpool, Rang 3 von 3 (hinter #3 und #4).** Die riskanteste der drei Ideen.
+
+- Das Identifizierbarkeitsproblem aus Abschnitt 4 ist grundsätzlich, nicht technisch: Die Geometrie allein legt das Vektorfeld nur bis auf einen positiven Faktor \(a(x)\) fest. Eine Struktur kann sie daher nur zusammen mit der Sparsamkeitsannahme auszeichnen, und der eigentliche Strukturentscheid fällt erst in Schritt 2 (Zeitinformation).
+- Neuheitsrisiko: Verfahren, die mit Differenzen \(\Delta x\) statt mit Ableitungsschätzungen arbeiten, liegen nahe an Integral- und Weak-SINDy. Der Mehrwert gegenüber der Weak Form (seit dem Nebenprojekt Residual Growth ohnehin im Haus) müsste konkret gezeigt werden.
+- Der Kill-Test aus Abschnitt 9 ist richtig gebaut; er ist hier vor allem ein schneller Ausschluss. Erwartung: Die Idee scheitert eher als #3 und #4.
+
+**Wann wieder aufnehmen:** wenn die Fehleranatomie (`docs/diskussion_warum_scheitert_die_suche.md`) zeigt, dass die Ableitungsschätzung der Engpass ist. Bis dahin nicht anfassen.

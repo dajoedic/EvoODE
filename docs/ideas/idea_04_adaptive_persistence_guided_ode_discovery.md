@@ -325,3 +325,15 @@ Die Fenstergröße wird dabei selbst Teil des Discovery-Prozesses.
 Oder bildlich:
 
 > **Ein Wurm kriecht durch die Trajektorie, wird größer oder kleiner und fragt immer wieder: Welche ODE-Struktur überlebt?**
+
+---
+
+## 13. Einschätzung 2026-10-27 (nach Phase C)
+
+**Bleibt im Ideenpool, Rang 2 von 3.** Trifft das in Phase C gemessene Kernproblem am direktesten.
+
+- EvoGrow fittet Trajektorien deutlich besser, als es Mechanismen identifiziert (C-1, dim 2: 91.7 % Rekonstruktion gegen 25.6 % Generalisierung, R² > 0.9); ODEFormer zeigt dieselbe Lücke. Persistenz als Auswahlsignal setzt genau an diesem Trajektorien-Overfitting an.
+- Neuheitsrisiko E-SINDy: Abgrenzung nur über zusammenhängende Zustandsbereiche statt Zufallsteilstichproben und über ganze Strukturen statt Einzelterme (Abschnitt 6). Das muss empirisch gegen E-SINDy gezeigt werden, das seit WP-N47 ohnehin als Baseline vorliegt.
+- Zum Risiko aus Abschnitt 10 kommt eines hinzu: Eine einzelne Trajektorie überdeckt nur einen kleinen Zustandsbereich. Ein guter Surrogat kann dort in jedem Fenster genauso persistent sein wie die Wahrheit. Fenster über eine Trajektorie ersetzen keine zweite Anfangsbedingung.
+
+**Wann wieder aufnehmen:** wenn die Fehleranatomie (`docs/diskussion_warum_scheitert_die_suche.md`) überwiegend Klasse C/D zeigt (falsche Strukturen, die gleich gut oder besser passen).
