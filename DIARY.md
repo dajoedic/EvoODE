@@ -4,6 +4,47 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ---
 
+## 2026-10-27
+
+### Side-Projekt Q4 ausgewertet: R7, R8, R9 bestehen in allen drei Primärstrata — weiter zum Rauschen
+
+Ausgewertet nach dem eingefrorenen Protokoll `docs/sideproject_residual_growth_protocol_q4.md` (`24ede2d`), Tabellen
+`analysis/data/sideproject_residual_growth/q4_*.csv` (aggregiert 21.10., `a6f1f18`). **Getestet wurde nicht EvoGrow**,
+sondern die Side-Projekt-Pipeline ohne Orakel: Wachstumspfad im schwachen Raum (FROLS-Schritt + FoBa-Rückwärtsprüfung,
+ν = 0,5), jeder Pfadzustand ein Kandidat, ein BFGS-Fit vom schwachen Start (Schranke 10, ein Versuch), Größe per
+Trajektorien-BIC (Regel (c)). σ = 0, 30 exakte Systeme, Einheit = (System, Trainings-IC), Test auf der anderen IC.
+
+| Stratum | (c) pruned exakt | C-1 | Weak-SINDy Median [min–max] | (c) Gen. R² > 0,9 (var.-gew.) | C-1 | Weak-SINDy Median [min–max] |
+|---|---|---|---|---|---|---|
+| dim1 (22) | 18/22 | 31/66 = 47,0 % | 54,5 % [40,9–68,2] | 22/22 | 52/66 = 78,8 % | 63,6 % [51,5–77,3] |
+| dim2 (20) | 18/20 | 22/60 = 36,7 % | 59,2 % [45,0–85,0] | 18/20 | 29/60 = 48,3 % | 66,7 % [50,0–93,3] |
+| dim3_feasible (4) | 3/4 | 0/12 | 50,0 % [33,3–100] | 4/4 | 0/12 | 50,0 % [33,3–100] |
+
+- **R7 besteht** (+35 / +53 / +75 pp Struktur gegenüber C-1, Generalisierung ebenfalls darüber).
+- **R8 (Entscheidung) besteht**; in dim 1 und 2 liegt die Struktur über dem *Maximum* der zehn Weak-SINDy-Konfigurationen,
+  die Generalisierung in dim 2 innerhalb der Spanne.
+- **R9 besteht deutlich:** Regel (a) Weak-BIC 12/22, 8/20, 1/4. Weak-BIC wählt im Median +4 Terme über der wahren
+  Größe; Trajektorien-BIC trifft die wahre Größe in 35 von 46 Primäreinheiten exakt. Der Simulationsschritt trägt das
+  Ergebnis.
+- Roh exakt: 17/22, 16/20, 2/4 — kaum Abstand zu pruned (C-1 dim 2: 3/60 roh). Regel (b) EvoGrow-Ziel: 17/22, 18/20, 2/4.
+- Kosten: `total_loss_evals` je Einheit gegen C-1-Median derselben (System, IC): Median-Verhältnis dim1 0,064, dim2
+  0,032, dim3_feasible 0,088; gepoolt ~4 % von C-1.
+- Fehlschläge (c) in den Primärstrata, 7: System 5 beide ICs (roh exakt, Pruning löscht einen wahren Term — WP-N2),
+  8 IC1 und 9 IC2 (+1/+2 Terme, R² 1,0), **26 beide ICs (7 bzw. 12 statt 6 Terme, Generalisierung divergiert,
+  R² −3,8 / −60)**, 52 IC1 (17 statt 7 Terme, Gen. R² 0,95).
+- Nur berichtet: dim3_bound_infeasible 2/12 gegen Weak-SINDy-Median 75 %, dim4 0/2 — dort verliert die Pipeline klar.
+- Obergrenzen: Best-Subset bei wahrer Größe 20/22, 20/20, 4/4. `upper_path` zählt Pfadzustände, nicht Einheiten
+  (Nenner 38/36/7) und ist nicht mit den Einheitenraten vergleichbar.
+
+**Vorbehalte:** dim3_feasible sind 4 Einheiten aus 2 Systemen; Einheiten (deterministisch) gegen Zellen (C-1 drei
+Seeds, Weak-SINDy drei Realisierungen) wie im Protokoll vorgesehen; der Pfaddeckel 6 Terme ist die einzige deklarierte
+Nutzung der Wahrheit; σ = 0, genau dort, wo Weak-SINDy seinen Vorteil nicht ausspielt.
+
+**Lesart nach §6: R8 besteht → Rauschen.** Nutzer 27.10.: weiter zum Rauschen (Protokoll Q5 zuerst, eingefroren vor
+jeder Rechnung). Die CRLF-Normalisierung unter `src/`, `studies/`, `benchmarks/` ist damit freigegeben.
+
+---
+
 ## 2026-10-21
 
 ### WP-N48: ODEFormer und PySR auf dem C-6-Export für Orion vorbereitet — PySR kostet dreimal so viel wie geplant
