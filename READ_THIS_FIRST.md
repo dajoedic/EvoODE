@@ -10,7 +10,7 @@ zweites davon. Alles Dauerhafte gehört dorthin, nach `PAPER_1.md` oder ins `DIA
 **Regeln:** wird immer **vollständig überschrieben**, nie angehängt. Was älter als ein paar Tage
 ist, ist vermutlich falsch — dann gilt `CLAUDE.md`.
 
-**Stand: 2026-10-21, 14:45. Side-Projekt „Residual-Wachstum“: Q1–Q3 abgeschlossen und positiv (σ = 0); Q4
+**Stand: 2026-10-27, 15:15 (Cluster-Check; Rest unverändert seit 21.10.). Side-Projekt „Residual-Wachstum“: Q1–Q3 abgeschlossen und positiv (σ = 0); Q4
 (Modellgröße ohne Orakel) vollständig gerechnet und aggregiert — alle Kontrollen bestanden, Plattformkontrolle
 bit-identisch. R7–R9 noch nicht angesehen; Auswertung gemeinsam und in Ruhe.**
 
@@ -35,10 +35,13 @@ jedem Statuswechsel aktualisieren.
 
 ## 1. Was läuft — Orion, **32 / 40 Kerne** (24 + 8 C-6), 8 frei seit 18.10.
 
-| Lauf | Stand (21.10. 14:30) | Erwartetes Ende | Wenn fertig |
+| Lauf | Stand (27.10. 15:10, Job-Zähler) | Erwartetes Ende | Wenn fertig |
 |---|---|---|---|
-| **C-6-Raster gekappt** (3.366, 24 Pods) | 1.049; 24 Pods laufen, 0 Fehler, 0 Neustarts; ~42 Zellen/Tag seit 17.10. | ~8.–15. Nov. + Nachlauf (beim aktuellen Tempo knapp) | einsammeln, technische Prüfung (Blindregel) |
-| **C-6-Raster ungekappt, Seed 42** (461, 8 Pods) | 250; 8 Pods laufen, 0 Fehler; ~8 Zellen/Tag; Pod 220 läuft seit 3 d 20 h | eher Mitte Nov. (ursprünglich ~27. Okt.) | Nutzer entscheidet Seed 123/7; dann 16 Kerne frei |
+| **C-6-Raster gekappt** (3.366, 24 Pods) | 1.248; 24 Pods laufen, 0 Fehler, 0 Neustarts; ~33 Zellen/Tag seit 21.10. (davor ~42) | beim aktuellen Tempo ~Ende Dez. (Nov. nicht mehr haltbar) | einsammeln, technische Prüfung (Blindregel) |
+| **C-6-Raster ungekappt, Seed 42** (461, 8 Pods) | 351; 8 Pods laufen, 0 Fehler; ~17 Zellen/Tag seit 21.10.; Pod 273 läuft seit 3 d 8 h | ~3.–5. Nov. + Nachlauf | Nutzer entscheidet Seed 123/7; dann 16 Kerne frei |
+
+**WP-N48b (PySR auf C-6, für die 8 freien Kerne):** Codex meldet `blocked` — Umsetzung fertig, 48 gezielte Tests
+grün, aber Testlaufzeit > 15-min-Protokollgrenze. Änderungen liegen uncommittet im Working Tree; noch nicht geprüft.
 
 **Q4 ist fertig und eingesammelt:** 429/429 Datensätze unter `outputs/sideproject_q4_e70eeea/out/`, Job vom Cluster
 entfernt. Aggregiert nach `analysis/data/sideproject_residual_growth/q4_*.csv` + `q4_run_metadata.json`; alle
@@ -49,7 +52,7 @@ Lokal läuft nichts. Alles bis `a9e94ed` ist gepusht; der Commit vom 21.10. ist 
 **Offen für den Nutzer:** sieben schreibgeschützte pytest-Ordner unter `tmp/` (Codex-Sandbox, nur mit Admin-Rechten
 löschbar) und die Annihilator-Dateien `output/pdf/` und `tmp/pdfs/` → gehören nach `..\EvoODE-next`.
 
-**Statusseite „EvoODE auf Orion“:** https://claude.ai/artifact/9zzJsoGCBahPsuNkaaf3DN — Version 3 (21.10. 14:40), Q4
+**Statusseite „EvoODE auf Orion“:** https://claude.ai/artifact/9zzJsoGCBahPsuNkaaf3DN — Version 4 (27.10. 15:12); V3: Q4
 fertig, 8 Kerne frei. Bei jeder Änderung per Artifact `read` holen und darauf aufbauen.
 
 ## 2. Side-Projekt „Residual-Wachstum“ — Stand (Details DIARY 17.10.)
