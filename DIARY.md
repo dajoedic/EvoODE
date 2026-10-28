@@ -6,6 +6,27 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ## 2026-10-28
 
+### C-6 Zwischenblick auf Wunsch des Nutzers — Kriterium festgeschrieben, bevor eine Zahl geöffnet ist
+<!-- C6PEEK -->
+
+Der Nutzer hebt die Blindregel für einen **einmaligen Zwischenblick** auf (28.10., Anlass: Kosten, ~36.000 Kern-h
+offen). §9.4d bleibt unverändert und wird erst auf dem vollständigen Raster angewendet; der Zwischenblick ist kein
+B1-Test und ersetzt keinen. Festgelegt **vor** dem Einsammeln:
+
+- **Daten:** alle bis zum Einsammeln vorliegenden gekappten C-6-Datensätze, nur Systeme mit **allen 66 Zellen**
+  (gepaart über Seeds, IC, Bedingungen); saubere Generalisierung per `wp_n5_ic_generalization.jl --clean-eval`.
+- **Gegner, Endpunkt, Aggregation wie §9.4d:** SINDy `poly_deg3_sin_cos_stlsq_0.1`, Weak-SINDy `…_0.01`, E-SINDy
+  `…_0.1` (WP-N47, `e935c37`); Generalisierung R² > 0,9 gegen saubere Ziele; `d_s` je System und Bedingung, gepoolt
+  über Seeds/Realisierungen und beide Richtungen; Mittel über Systeme (arithmetisch über Systeme, falls die
+  Varianzgewichtung der §9.3-Hierarchie nicht direkt anwendbar ist — wird dann so benannt).
+- **Abbruchsignal für Story (b):** in **≥ 3 der 6 Bedingungen** σ ∈ {0,03; 0,04; 0,05} × ρ ∈ {0; 0,5} liegt der
+  Punktschätzer von `d_s` gegen **mindestens einen** Gegner bei **≤ −5 pp**. Dann kann B1 dort auf dieser Teilmenge
+  nicht bestehen, und (b) braucht ≥ 4 von 6. Kein Signal heißt nicht, dass (b) erreicht wird.
+- **Erklärter Vorbehalt:** Das Raster läuft dim 2 vor dim 1; dim 1 (23 der 51 Systeme, sauber EvoGrows stärkste
+  Dimension) fehlt im Zwischenblick vollständig. Das Signal ist deshalb nur für dim 2 belastbar.
+- **Entscheidung über einen Abbruch trifft der Nutzer**, nicht das Kriterium. Abbrechen hieße auch: kein
+  vollständiges C-6 für die Robustheitsaussagen in (a).
+
 ### Q5-Probe fertig (9/9), aggregiert; Kostenfaktor ×3,2 gesamt, ×4,2 auf dim 3, Streuung 0,2–19
 <!-- 661f647 -->
 
