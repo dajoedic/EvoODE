@@ -10,7 +10,7 @@ zweites davon. Alles Dauerhafte gehört dorthin, nach `PAPER_1.md` oder ins `DIA
 **Regeln:** wird immer **vollständig überschrieben**, nie angehängt. Was älter als ein paar Tage
 ist, ist vermutlich falsch — dann gilt `CLAUDE.md`.
 
-**Stand: 2026-10-28, 16:10. Q5-Probe fertig: 9/9** (Pod 7 letzter Schreibzugriff 14:48, Job per TTL entfernt), eingesammelt nach `outputs/sideproject_q5_354106398d5e67ffa72c237e2ba83e3feeb25b31/out/` (SHA-256 gleich NFS), aggregiert nach `analysis/data/sideproject_residual_growth/q5_probe/`, alle Kontrollen bestanden. **D1–D5 nicht ausgewertet** (gemeinsam). **Kostenfaktor ×3,16 gesamt** (Plan 8,9 → 28,3 Kern-h), verrauscht dim 1 ×0,74, dim 2 ×8,0, dim 3 ×4,2; Einzelzellen 0,18–19 (Tabelle DIARY 28.10.). Raster hochgerechnet ~1.100 Kern-h (~1.650 €) statt 244. **Nutzer entscheidet über das Q5-Raster.** Belegung jetzt **24/40 Kerne** (nur C-6 gekappt, 1.271/3.366 um 16:01). C-6 ungekappt (Seed 42) fertig 461/461, technisch geprüft, noch nicht lokal eingesammelt. §9.4d eingefroren (`f012fd0`). Q5 eingefroren (`f737939` + `f454a32`). Codex nur mit `-c 'windows.sandbox="unelevated"'`. WP-N48b (PySR) liegt pausiert und ungeprüft im Working Tree. Älter: Side-Projekt „Residual-Wachstum“: Q1–Q3 abgeschlossen und positiv (σ = 0); Q4
+**Stand: 2026-10-28, 17:15. Q5-Raster läuft** seit 16:19 auf Orion (`evoode-sideproject-q5`, 16 Pods, teuerste Zellen zuerst, Nachtrag `ecc8bac`; erwartet ~63 h + Nachzügler, ~1.000–1.100 Kern-h); **Belegung 40/40**. Wenn fertig: `out/index_*.jsonl` einsammeln, `aggregate_sideproject_q5.py --paths outputs/sideproject_q5_inputs/q5_grid_paths.json` (REPORT_WP_FA5). **C-6-Zwischenblick auf Nutzerwunsch** (Kriterium `4001c21`, Ergebnis `04e07eb`): kein Abbruchsignal, EvoGrow auf 18 dim-2-Systemen unter Rauschen vor der SINDy-Familie; **C-6 läuft weiter** (Nutzer). Blindheit für C-6 ist damit aufgehoben und im Paper offenzulegen. **Stand: 2026-10-28, 16:10. Q5-Probe fertig: 9/9** (Pod 7 letzter Schreibzugriff 14:48, Job per TTL entfernt), eingesammelt nach `outputs/sideproject_q5_354106398d5e67ffa72c237e2ba83e3feeb25b31/out/` (SHA-256 gleich NFS), aggregiert nach `analysis/data/sideproject_residual_growth/q5_probe/`, alle Kontrollen bestanden. **D1–D5 nicht ausgewertet** (gemeinsam). **Kostenfaktor ×3,16 gesamt** (Plan 8,9 → 28,3 Kern-h), verrauscht dim 1 ×0,74, dim 2 ×8,0, dim 3 ×4,2; Einzelzellen 0,18–19 (Tabelle DIARY 28.10.). Raster hochgerechnet ~1.100 Kern-h (~1.650 €) statt 244. **Nutzer entscheidet über das Q5-Raster.** Belegung jetzt **24/40 Kerne** (nur C-6 gekappt, 1.271/3.366 um 16:01). C-6 ungekappt (Seed 42) fertig 461/461, technisch geprüft, noch nicht lokal eingesammelt. §9.4d eingefroren (`f012fd0`). Q5 eingefroren (`f737939` + `f454a32`). Codex nur mit `-c 'windows.sandbox="unelevated"'`. WP-N48b (PySR) liegt pausiert und ungeprüft im Working Tree. Älter: Side-Projekt „Residual-Wachstum“: Q1–Q3 abgeschlossen und positiv (σ = 0); Q4
 (Modellgröße ohne Orakel) vollständig gerechnet und aggregiert — alle Kontrollen bestanden, Plattformkontrolle
 bit-identisch. R7–R9 noch nicht angesehen; Auswertung gemeinsam und in Ruhe.**
 
@@ -33,7 +33,7 @@ jedem Statuswechsel aktualisieren.
 
 ---
 
-## 1. Was läuft — Orion, **24 / 40 Kerne** (C-6 gekappt), Stand 28.10. 16:01
+## 1. Was läuft — Orion, **40 / 40 Kerne** (24 C-6 gekappt + 16 Q5-Raster), Stand 28.10. 17:15
 
 | Lauf | Stand (27.10. 15:10, Job-Zähler) | Erwartetes Ende | Wenn fertig |
 |---|---|---|---|
