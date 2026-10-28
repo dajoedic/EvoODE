@@ -7,7 +7,7 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 ## 2026-10-28
 
 ### Q5-Probe fertig (9/9), aggregiert; Kostenfaktor ×3,2 gesamt, ×4,2 auf dim 3, Streuung 0,2–19
-<!-- Q5PROBE -->
+<!-- 661f647 -->
 
 Pod 7 (System 61, IC 2, σ 0,05, ρ 0) letzter Schreibzugriff 28.10. 14:48, Job per TTL entfernt. Neun
 `probe_index_*.jsonl` (Image `3541063`) nach `outputs/sideproject_q5_3541063…/out/` kopiert, SHA-256 gleich dem NFS.
