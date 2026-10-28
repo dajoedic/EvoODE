@@ -1,8 +1,8 @@
-# Q5 grid: 244.50 core-h at Q4 cost; 30.6h ideal / 31.95h ordered scheduling
-# on 8 pods; EUR 366.75 at EUR 1.50/core-h. Noise cost unmeasured: x1-x3
-# gives ~244-734 core-h, EUR 367-1100, ~1.3-4.0 days plus startup overhead.
-# The user decides the grid after the probe.
-# 1632 whole-cell shards; maximum planning estimate 3.69h (25 exceed 3h).
+# Q5 grid, 1632 whole-cell shards on 16 pods (protocol amendment 2026-10-28).
+# Probe-measured noise factor (dim1 x0.74, dim2 x8.0, dim3 x4.2; single cells 0.18-19)
+# projects ~1,000-1,100 core-h (~EUR 1,500-1,650), ~63 h on 16 pods plus stragglers.
+# Shards run in descending planned cost (q5_grid_paths.shards_cost_desc.txt, a pure
+# reordering of q5_grid_paths.shards.txt). No deadline. Wall-clock is planning only.
 # 4Gi matches Q4 for Julia JIT/solver headroom; observations are no larger.
 apiVersion: batch/v1
 kind: Job
@@ -19,7 +19,7 @@ spec:
   ttlSecondsAfterFinished: 3600
   completionMode: Indexed
   completions: 1632
-  parallelism: 8
+  parallelism: 16
   backoffLimit: 10
   template:
     metadata:
@@ -44,7 +44,7 @@ spec:
               /opt/EvoODE/studies/regression/sideproject_q5_noise_fits.jl
               --paths /outputs/sideproject_q5_354106398d5e67ffa72c237e2ba83e3feeb25b31/input/q5_grid_paths.json
               --export-dir /outputs/sideproject_q5_354106398d5e67ffa72c237e2ba83e3feeb25b31/input/export
-              --unit-list /outputs/sideproject_q5_354106398d5e67ffa72c237e2ba83e3feeb25b31/input/q5_grid_paths.shards.txt
+              --unit-list /outputs/sideproject_q5_354106398d5e67ffa72c237e2ba83e3feeb25b31/input/q5_grid_paths.shards_cost_desc.txt
               --index "${JOB_COMPLETION_INDEX}"
               --output /outputs/sideproject_q5_354106398d5e67ffa72c237e2ba83e3feeb25b31/out/index_${JOB_COMPLETION_INDEX}.jsonl
           env:

@@ -25,6 +25,16 @@ into the method. Decided:
   initial state unbounded, coefficients bound as before. Every Q5 result is re-checked under C, a failure under A in
   particular; a Q5 result alone is never a paper claim. C gets its own frozen protocol.
 
+## Amendment 2026-10-28 (user, after the probe, before the grid; execution only)
+
+The probe (9/9, `DIARY.md` 2026-10-28) measured a noise cost factor of ×3.16 overall, above the planned ×1–3; the
+grid projects to ~1,000–1,100 core-h. Two execution changes, neither touches what is measured, on which data or the
+controls:
+- **16 pods instead of ≤ 8** (§9). The uncapped C-6 arm has ended; 24 of the 40 EvoODE cores are in use.
+- **Shards run in descending planned cost** instead of dim1/dim2 first: `q5_grid_paths.shards_cost_desc.txt`, a
+  pure reordering of `q5_grid_paths.shards.txt` (same 1,632 cells, ties in the original order). The runner reads only
+  the line at its index and the aggregation joins on `cell_id`, so results do not depend on the order.
+
 ## 1. Question
 
 How does the Q4 pipeline, unchanged, compare with Weak-SINDy when the training trajectory is noisy and irregularly
