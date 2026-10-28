@@ -46,7 +46,7 @@ Punktschätzer gegen jeden Gegner positiv (+12 bis +35 pp). Die Nullen der Gegne
 ein monotoner Zerfall auf denselben 18 Systemen (sauber 61–74 % → σ 0,01 14–25 % → 0–22 %; 40–68 % der
 Generalisierungen divergieren). EvoGrow sauber (C-5, arithmetisches R²) auf denselben Systemen 36,1 % — **hinter**
 allen drei Gegnern sauber, **vorn** unter Rauschen, fast ohne Verlust. Kein B1-Test, nur dim 2, 18 von 51 Systemen;
-dim 1 fehlt. Daten: `outputs/phase_c_c6_interim_2026-10-28/` (nicht versioniert).
+dim 1 fehlt. Daten: `outputs/phase_c_c6_interim_2026-10-28/` (nicht versioniert). <!-- 04e07eb -->
 
 ### Q5-Probe fertig (9/9), aggregiert; Kostenfaktor ×3,2 gesamt, ×4,2 auf dim 3, Streuung 0,2–19
 <!-- 661f647 -->
