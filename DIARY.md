@@ -30,7 +30,7 @@ Verrauschte Zellen je Schicht: dim 1 ×0,74, dim 2 ×8,0, dim 3 ×4,2. Je Schich
 Er liegt über der geplanten Spanne ×1–3. Übertragen auf das Raster (Plan 244,5 Kern-h): dim 1 10,3 → ~8, dim 2
 29,1 → ~233, dim 3 204,9 → ~860 → **~1.100 Kern-h (~1.650 €)**; einzelne dim-3-Zellen können 20+ h dauern.
 
-**Nutzer 28.10.: Raster mit 16 Pods, teuerste Zellen zuerst** (Protokoll-Nachtrag 28.10.). Die Shard-Liste ist nur umsortiert (`q5_grid_paths.shards_cost_desc.txt`, gleiche 1.632 Zellen); Runner liest nur die Zeile seines Index, die Aggregation verknüpft über `cell_id`. Planung mit den Probe-Faktoren: ~1.000 Kern-h, auf 16 Pods ~63 h (ursprüngliche Reihenfolge ~67 h) plus Nachzügler. Belegung danach 40/40.
+**Nutzer 28.10.: Raster mit 16 Pods, teuerste Zellen zuerst** (Protokoll-Nachtrag 28.10.). Die Shard-Liste ist nur umsortiert (`q5_grid_paths.shards_cost_desc.txt`, gleiche 1.632 Zellen); Runner liest nur die Zeile seines Index, die Aggregation verknüpft über `cell_id`. Planung mit den Probe-Faktoren: ~1.000 Kern-h, auf 16 Pods ~63 h (ursprüngliche Reihenfolge ~67 h) plus Nachzügler. Belegung danach 40/40. <!-- ecc8bac -->
 
 ### C-6 ungekappt fertig; Entscheidungsregel (b) als §9.4d eingefroren (Nutzer)
 <!-- f012fd0 -->
