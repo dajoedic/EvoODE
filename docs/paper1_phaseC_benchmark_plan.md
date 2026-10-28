@@ -917,12 +917,92 @@ hours ≈ 38–53 k€**, not the 21,400 h planning figure.
    ~15,400–20,400 core hours. **First step: the uncapped arm runs on seed 42 only (461 cells,
    ~5,600–7,300 h)**; whether seeds 123 and 7 follow is decided on its result (how often the cap actually
    truncates true terms under noise).
+6. **Amendment 2026-10-28 (user, §9.4d):** seed 42 is complete (461/461, technical check passed). Seeds 123 and 7
+   are **not** run; the uncapped arm stays a seed-42 diagnostic and is reopened only on a concrete finding.
 
 ### 9.4b — Uncapped arm under noise (decided 2026-10-02, user)
 
 WP-S04 showed that the frozen stage cap truncates true terms in 317 of 1,860 noisy equation rows (17 %), already at sigma 0.01 (`DIARY.md` 2026-10-02). A structure miss under noise can therefore be the cap's or the search's. To separate them, every C-6 stage runs the **uncapped variant** (`evogrow_v2_2_stage_local`, the C-2 arm, otherwise identical) on the **same** exported data, cell for cell beside the capped one. It is a comparison arm, not a second method version, and it is staged like the rest: systems 1 and 17 on the laptop first, 18 and 24 with the stage-2 Orion job, 41 with stage 3. Whether the full grid carries it is part of gate G.
 
+### 9.4d — Decision rule for story line (b), **FROZEN 2026-10-28 (user)**
+
+Written before any C-6 EvoGrow result has been looked at (blind rule, `DIARY.md` 2026-10-05). Replaces the draft of
+2026-10-05. Story lines as in `docs/status_2026-10-05.md` §3.5: (a) honest method paper, (b) robustness under noise
+as the main message, (c) trajectory fitting does not identify mechanisms.
+
+**When it is applied.** Only after the capped C-6 grid is complete (3,366 / 3,366) and has passed the technical
+check of §9.4a. Until then the blind rule stands. Nothing below is changed after the numbers are opened.
+
+**EvoGrow.** The capped variant `evogrow_v2_2_stage_capped`, i.e. the C-6 grid plus C-1 for `(0, 0)`: 51 dim-1/2
+systems, 3 seeds, both IC sets. It is the Paper 1 method. The uncapped arm (§9.4b) is a diagnostic of cap truncation
+under noise only; it is never substituted for the capped arm, whatever it shows.
+
+**Opponents: the SINDy family only** — SINDy, Weak-SINDy, E-SINDy, canonical source the DOP853 Orion run
+(`e935c37`, WP-N47), 3 noise realizations. **One configuration per method, fixed now on clean data:** the one with the
+highest variance-weighted clean generalization rate R² > 0.9 in `hierarchy_n47_e935c37/benchmark.csv`, stratum
+`overall`, arm `canonical`:
+
+| method | fixed configuration | clean generalization (overall, variance-weighted) |
+|---|---|---|
+| SINDy | `poly_deg3_sin_cos_stlsq_0.1` | 50.8 % |
+| Weak-SINDy | `poly_deg3_sin_cos_stlsq_0.01` | 63.8 % |
+| E-SINDy | `poly_deg3_sin_cos_stlsq_0.1` | 50.3 % |
+
+The per-condition best of all ten configurations is reported beside it as an oracle upper bound that no user could
+pick in advance; it does not enter the rule. ODEFormer and PySR are **not** opponents in this rule (see below).
+
+**Primary endpoint.** Generalization, share of R² > 0.9 against clean targets (§9.4), aggregated by the §9.3
+hierarchy; the variance-weighted aggregate is primary, the arithmetic one is reported. Per system s and condition,
+`d_s` = EvoGrow rate minus opponent rate, each rate pooled over seeds / realizations and both directions.
+
+**Test.** One-sided sign-flip permutation over the 51 systems as clusters, 100,000 permutations, fixed seed
+`20261028`. The statistic is the primary aggregate of the per-system values; each permutation flips the signs of the
+per-system values and recomputes it with the same weights. Same procedure as Claim B and WP-T2a.
+
+**B1 — non-inferiority, per condition.** Against an opponent: H0 "EvoGrow is worse by 5 percentage points or more",
+tested on `d_s + 0.05`, rejected at p < 0.05. B1 holds in a condition if it holds against **all three** opponents.
+Counted over the six conditions σ ∈ {0.03, 0.04, 0.05} × ρ ∈ {0, 0.5}.
+
+**Superiority, reported as a grade, not a gate.** The same test on `d_s` (H0 "EvoGrow is not better").
+
+**B2 — reference measure, not a gate.** Relative retention per method, `rate(σ = 0.05, ρ) / rate(σ = 0, ρ)` for
+ρ ∈ {0, 0.5}. Relative, not absolute, because an absolute drop favours the method that starts lower. Reported beside
+every B1 result; it decides nothing.
+
+**Multiple testing.** No Holm correction. Requiring B1 in at least four of six conditions is the control, and the
+paper says so.
+
+**Mapping to the story line.**
+
+| outcome | story line |
+|---|---|
+| B1 in ≥ 4 of 6 conditions | **(b)**. Wording "more robust than the SINDy family" only if superiority also holds in at least four of the six conditions, otherwise "robust at the level of the SINDy family" |
+| B1 in 1–3 of 6 conditions | **(a)**, robustness as a side finding |
+| B1 in 0 of 6 conditions, and EvoGrow ahead of all three fixed opponents on clean generalization in at least one stratum (dimension × three-way class, `hierarchy_n47`, point estimate) | **(a)**, without a robustness claim |
+| B1 in 0 of 6 conditions, and no such clean stratum | **(c)** |
+
+**Always reported, never decisive.** Structure recovery, raw and pruned, on the exact dim-1/2 systems for every
+method and condition (Design Principle 9); no claim about identification under noise beyond what that table shows.
+Reconstruction R² > 0.9. Cost (`total_parameter_fits`, `total_loss_evals`) beside every EvoGrow number (Claim D).
+
+**ODEFormer and PySR.** Only if the outcome is (b) do both run on the full C-6 export before submission and enter the
+robustness tables; otherwise neither runs on C-6 (user, 2026-10-28). WP-N48b is paused until then. The clean
+ODEFormer reference grid and the stage-cell runs (WP-N38) are unaffected. This amends §9.5.
+
+**Uncapped arm, seeds 123 / 7.** Not run (user, 2026-10-28); seed 42 is the diagnostic. Reopened only on a concrete
+finding about cap truncation. This settles §9.4c point 5.
+
+**Already known before the rule, declared.** The stage cells of §9.4a (systems 1, 17, 18, 24, 41; seed 42, IC 1;
+`(0.01, 0)` and `(0.05, 0.5)`) and the SINDy-family noise table in `DIARY.md` 2026-10-16.
+
+**Human settings, named as such.** The 5-point non-inferiority margin, the conditions σ ≥ 0.03, "four of six", and
+choosing the fixed opponent configuration on the `overall` clean stratum (63 systems) although the comparison runs on
+dim 1/2.
+
 ### 9.5 C-7 — PySR, the GP / symbolic-regression representative
+
+**Amended 2026-10-28 (user, §9.4d):** PySR and ODEFormer run on the C-6 export only if the §9.4d outcome is (b);
+WP-N48b is paused until then.
 
 **Baselines for Paper 1, final: SINDy + ODEFormer + PySR against EvoGrow** — sparse regression,
 pretrained transformer, genetic programming. ~~**Weak-SINDy** is a noise-specific SINDy reference in

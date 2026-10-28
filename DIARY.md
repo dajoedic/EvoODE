@@ -4,6 +4,25 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ---
 
+## 2026-10-28
+
+### C-6 ungekappt fertig; Entscheidungsregel (b) als §9.4d eingefroren (Nutzer)
+
+**Ungekappter Arm, Seed 42: 461/461**, letzter Datensatz 27.10. 20:15, Job per TTL vom Cluster entfernt. Technische
+Prüfung auf dem NFS (Blindregel, keine Ergebnisfelder): ein Datensatz je Zelle, IDs = `indices_cost_desc.txt`,
+`error` 0, `failure_reason` leer, `git 5dd1df8` sauber, `0c9672de35c75a9d` / `ffb0266c7913352c`, Variante
+`evogrow_v2_2_stage_local`, Seed 42, 11 Datenbedingungen. Noch nicht lokal eingesammelt.
+
+**§9.4d eingefroren**, bevor eine C-6-EvoGrow-Zahl angesehen wurde. Gegenüber dem Entwurf vom 05.10.: Gegner nur die
+SINDy-Familie, je **eine** auf sauberen Daten gewählte Konfiguration (SINDy deg3 sin/cos 0,1 · Weak-SINDy deg3
+sin/cos 0,01 · E-SINDy deg3 sin/cos 0,1, aus `hierarchy_n47`, overall); B1 als **Nicht-Unterlegenheit** (−5 pp,
+einseitige Vorzeichen-Permutation über 51 Systeme, gegen alle drei) in ≥ 4 der 6 Bedingungen σ ≥ 0,03 → (b);
+Überlegenheit nur als Abstufung der Formulierung; B2 als relativer Erhalt, nur Messlatte (Bodeneffekt des absoluten
+Abfalls); kein Holm; Struktur und Kosten immer berichtet, nie entscheidend; Abbildung auf (a)/(b)/(c) inkl. (c).
+Folgen (Nutzer): ODEFormer und PySR auf C-6 nur bei (b) — „warum die Arbeit machen, wenn wir vermutlich eh schlechter
+sind“; WP-N48b pausiert; Seeds 123/7 des ungekappten Arms entfallen, die gekappte Variante bleibt die Methode, kein
+nachträglicher Wechsel. Die Regel wird angewandt, wenn das gekappte Raster vollständig ist (Stand 1.262/3.366).
+
 ## 2026-10-27
 
 ### Side-Projekt Q4 ausgewertet: R7, R8, R9 bestehen in allen drei Primärstrata — weiter zum Rauschen
