@@ -10,7 +10,7 @@ zweites davon. Alles Dauerhafte gehört dorthin, nach `PAPER_1.md` oder ins `DIA
 **Regeln:** wird immer **vollständig überschrieben**, nie angehängt. Was älter als ein paar Tage
 ist, ist vermutlich falsch — dann gilt `CLAUDE.md`.
 
-**Stand: 2026-10-28, 10:45. C-6 ungekappt (Seed 42) ist fertig: 461/461** auf dem NFS (`phase_c_c6_grid_uncapped_5dd1df8…/tasks`, letzter Schreibzugriff 27.10. 20:15; Job per TTL vom Cluster entfernt). Technische Prüfung bestanden: 1 Datensatz je Zelle, IDs = `indices_cost_desc.txt`, `error` 0, `failure_reason` leer, `git 5dd1df8` sauber, `0c9672de35c75a9d` / `ffb0266c7913352c`, Variante `evogrow_v2_2_stage_local`, Seed 42, 11 Datenbedingungen. Noch nicht lokal eingesammelt. **§9.4d eingefroren 28.10. (`f012fd0`)**: Seeds 123/7 entfallen, WP-N48b (PySR) pausiert, ODEFormer/PySR auf C-6 nur bei Ausgang (b); C-6-Zahlen werden geöffnet, wenn das gekappte Raster vollständig ist. **Q5-Probe 8/9** (`evoode-sideproject-q5-probe`, Image `3541063`): Pod 7 (System 61, IC 2, σ 0,05, ρ 0) läuft seit 16 h (erwartet 3–9 h), 1 Kern voll, kein Neustart. Fertig: path_001–019 (letzter 05:09); offen: `path_020` und `upper_subset` (die anderen beiden System-61-Zellen enden mit `upper_subset`). Mehr Kerne helfen nicht (1 Thread, Neustart verwirft den laufenden Pfad). **Nutzer meldet sich am Abend des 28.10.:** fertig → einsammeln, aggregieren, Kostenfaktor; sonst gemeinsam entscheiden, ob abbrechen und Kostenfaktor aus 8 Zellen als Untergrenze. Kein Alarm aktiv. **Belegung 25/40 Kerne** (24 C-6 gekappt + 1 Q5). **Wenn Q5 fertig:** `out/probe_index_*.jsonl` einsammeln, `aggregate_sideproject_q5.py --paths outputs/sideproject_q5_inputs/q5_probe_paths.json` (Befehl in `codex/reports/REPORT_WP_FA5.md`), Kostenfaktor messen, Nutzer entscheidet über das Raster (Ziel ≤ 7 Tage). Q5 eingefroren (`f737939` + `f454a32`). Codex nur mit `-c 'windows.sandbox="unelevated"'`. WP-N48b (PySR) liegt pausiert und ungeprüft im Working Tree. Älter: Side-Projekt „Residual-Wachstum“: Q1–Q3 abgeschlossen und positiv (σ = 0); Q4
+**Stand: 2026-10-28, 16:10. Q5-Probe fertig: 9/9** (Pod 7 letzter Schreibzugriff 14:48, Job per TTL entfernt), eingesammelt nach `outputs/sideproject_q5_354106398d5e67ffa72c237e2ba83e3feeb25b31/out/` (SHA-256 gleich NFS), aggregiert nach `analysis/data/sideproject_residual_growth/q5_probe/`, alle Kontrollen bestanden. **D1–D5 nicht ausgewertet** (gemeinsam). **Kostenfaktor ×3,16 gesamt** (Plan 8,9 → 28,3 Kern-h), verrauscht dim 1 ×0,74, dim 2 ×8,0, dim 3 ×4,2; Einzelzellen 0,18–19 (Tabelle DIARY 28.10.). Raster hochgerechnet ~1.100 Kern-h (~1.650 €) statt 244. **Nutzer entscheidet über das Q5-Raster.** Belegung jetzt **24/40 Kerne** (nur C-6 gekappt, 1.271/3.366 um 16:01). C-6 ungekappt (Seed 42) fertig 461/461, technisch geprüft, noch nicht lokal eingesammelt. §9.4d eingefroren (`f012fd0`). Q5 eingefroren (`f737939` + `f454a32`). Codex nur mit `-c 'windows.sandbox="unelevated"'`. WP-N48b (PySR) liegt pausiert und ungeprüft im Working Tree. Älter: Side-Projekt „Residual-Wachstum“: Q1–Q3 abgeschlossen und positiv (σ = 0); Q4
 (Modellgröße ohne Orakel) vollständig gerechnet und aggregiert — alle Kontrollen bestanden, Plattformkontrolle
 bit-identisch. R7–R9 noch nicht angesehen; Auswertung gemeinsam und in Ruhe.**
 
@@ -33,11 +33,11 @@ jedem Statuswechsel aktualisieren.
 
 ---
 
-## 1. Was läuft — Orion, **25 / 40 Kerne** (24 C-6 gekappt + 1 Q5), Stand 28.10. 08:35
+## 1. Was läuft — Orion, **24 / 40 Kerne** (C-6 gekappt), Stand 28.10. 16:01
 
 | Lauf | Stand (27.10. 15:10, Job-Zähler) | Erwartetes Ende | Wenn fertig |
 |---|---|---|---|
-| **C-6-Raster gekappt** (3.366, 24 Pods) | 1.248; 24 Pods laufen, 0 Fehler, 0 Neustarts; ~33 Zellen/Tag seit 21.10. (davor ~42) | beim aktuellen Tempo ~Ende Dez. (Nov. nicht mehr haltbar) | einsammeln, technische Prüfung (Blindregel) |
+| **C-6-Raster gekappt** (3.366, 24 Pods) | 1.271 (28.10. 16:01); 24 Pods laufen, 0 Fehler, 0 Neustarts; ~33 Zellen/Tag seit 21.10. (davor ~42) | beim aktuellen Tempo ~Ende Dez. (Nov. nicht mehr haltbar) | einsammeln, technische Prüfung (Blindregel) |
 | **C-6-Raster ungekappt, Seed 42** (461) | **fertig 27.10. 20:15**, 461/461, technisch geprüft (siehe oben) | — | einsammeln (Seeds 123/7 entfallen, §9.4d) |
 
 **WP-N48b (PySR auf C-6, für die 8 freien Kerne):** Codex meldet `blocked` — Umsetzung fertig, 48 gezielte Tests
@@ -52,8 +52,7 @@ Lokal läuft nichts. Alles bis `a9e94ed` ist gepusht; der Commit vom 21.10. ist 
 **Offen für den Nutzer:** sieben schreibgeschützte pytest-Ordner unter `tmp/` (Codex-Sandbox, nur mit Admin-Rechten
 löschbar) und die Annihilator-Dateien `output/pdf/` und `tmp/pdfs/` → gehören nach `..\EvoODE-next`.
 
-**Statusseite „EvoODE auf Orion“:** https://claude.ai/artifact/9zzJsoGCBahPsuNkaaf3DN — Version 4 (27.10. 15:12); V3: Q4
-fertig, 8 Kerne frei. Bei jeder Änderung per Artifact `read` holen und darauf aufbauen.
+**Statusseite „EvoODE auf Orion“:** https://claude.ai/artifact/9zzJsoGCBahPsuNkaaf3DN — Version 8 (28.10. 16:05): Q5-Probe fertig, Kostenfaktor, 16 Kerne frei. Bei jeder Änderung per Artifact `read` holen und darauf aufbauen.
 
 ## 2. Side-Projekt „Residual-Wachstum“ — Stand (Details DIARY 17.10.)
 

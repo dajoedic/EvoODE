@@ -6,6 +6,30 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ## 2026-10-28
 
+### Q5-Probe fertig (9/9), aggregiert; Kostenfaktor ×3,2 gesamt, ×4,2 auf dim 3, Streuung 0,2–19
+<!-- Q5PROBE -->
+
+Pod 7 (System 61, IC 2, σ 0,05, ρ 0) letzter Schreibzugriff 28.10. 14:48, Job per TTL entfernt. Neun
+`probe_index_*.jsonl` (Image `3541063`) nach `outputs/sideproject_q5_3541063…/out/` kopiert, SHA-256 gleich dem NFS.
+Aggregation (`aggregate_sideproject_q5.py`, Probe-Pfade `8c4641a4…`, Protokoll `f737939`, Settings `608ac810…`):
+alle Kontrollen bestanden, Tabellen unter `analysis/data/sideproject_residual_growth/q5_probe/`. **D1–D5 noch nicht
+ausgewertet** — gemeinsam mit dem Nutzer.
+
+**Kostenfaktor** = Σ `fit_meta.fit_time_s` je Zelle gegen die Q4-Planschätzung (Wand-Zeit; nur Planungsgröße, kein
+Beleg, Prinzip 7):
+
+| Zelle | Plan h | gemessen h | Faktor |
+|---|---:|---:|---:|
+| sys 6, (0,0) / (0,05; 0) / (0,05; 0,5) | 0,006 / 0,004 / 0,004 | 0,004 / 0,003 / 0,003 | 0,70 / 0,75 / 0,73 |
+| sys 26, (0,0) / (0,05; 0) / (0,05; 0,5) | 0,031 / 0,027 / 0,039 | 0,012 / **0,520** / 0,007 | 0,38 / **19,2** / 0,18 |
+| sys 61, (0,0) / (0,05; 0) / (0,05; 0,5) | 2,90 / 2,90 / 3,04 | 2,75 / **20,76** / 4,25 | 0,95 / **7,16** / 1,40 |
+| **gesamt** | 8,95 | 28,31 | **3,16** |
+
+Verrauschte Zellen je Schicht: dim 1 ×0,74, dim 2 ×8,0, dim 3 ×4,2. Je Schicht **eine** Einheit — die Streuung
+(0,18 bis 19 innerhalb derselben Einheit) ist größer als jeder Mittelwert, der Faktor ist eine grobe Größenordnung.
+Er liegt über der geplanten Spanne ×1–3. Übertragen auf das Raster (Plan 244,5 Kern-h): dim 1 10,3 → ~8, dim 2
+29,1 → ~233, dim 3 204,9 → ~860 → **~1.100 Kern-h (~1.650 €)**; einzelne dim-3-Zellen können 20+ h dauern.
+
 ### C-6 ungekappt fertig; Entscheidungsregel (b) als §9.4d eingefroren (Nutzer)
 <!-- f012fd0 -->
 
