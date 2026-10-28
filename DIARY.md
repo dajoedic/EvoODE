@@ -7,6 +7,7 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 ## 2026-10-28
 
 ### C-6 ungekappt fertig; Entscheidungsregel (b) als §9.4d eingefroren (Nutzer)
+<!-- f012fd0 -->
 
 **Ungekappter Arm, Seed 42: 461/461**, letzter Datensatz 27.10. 20:15, Job per TTL vom Cluster entfernt. Technische
 Prüfung auf dem NFS (Blindregel, keine Ergebnisfelder): ein Datensatz je Zelle, IDs = `indices_cost_desc.txt`,
