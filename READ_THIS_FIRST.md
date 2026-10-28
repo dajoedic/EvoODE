@@ -10,7 +10,7 @@ zweites davon. Alles Dauerhafte gehört dorthin, nach `PAPER_1.md` oder ins `DIA
 **Regeln:** wird immer **vollständig überschrieben**, nie angehängt. Was älter als ein paar Tage
 ist, ist vermutlich falsch — dann gilt `CLAUDE.md`.
 
-**Stand: 2026-10-27, 18:05. Q5-Probe läuft auf Orion** (`evoode-sideproject-q5-probe`, Image `3541063`, 9 Zellen, 8 Pods → **40/40 Kerne**; erwartet 3–9 h). Eingaben unter `sideproject_q5_3541063…/input/` (3.269 Dateien, Hashes geprüft; erster Start scheiterte an falsch abgelegten Eingaben — UNC-Backslash in der Shell verloren —, Job gelöscht und neu angelegt). **Wenn fertig:** `out/probe_index_*.jsonl` einsammeln, `aggregate_sideproject_q5.py --paths outputs/sideproject_q5_inputs/q5_probe_paths.json` (Befehl in `codex/reports/REPORT_WP_FA5.md`), Kostenfaktor messen, Nutzer entscheidet über das Raster (Ziel ≤ 7 Tage). Q4 ausgewertet, Q5 eingefroren (`f737939` + Nachtrag `f454a32`: Verpflichtung auf IC-Schätzung C fürs Paper). Codex nur mit `-c 'windows.sandbox="unelevated"'`. WP-N48b (PySR) weiter ungeprüft im Working Tree. Älter: Side-Projekt „Residual-Wachstum“: Q1–Q3 abgeschlossen und positiv (σ = 0); Q4
+**Stand: 2026-10-28, 08:35. C-6 ungekappt (Seed 42) ist fertig: 461/461** auf dem NFS (`phase_c_c6_grid_uncapped_5dd1df8…/tasks`, letzter Schreibzugriff 27.10. 20:15; Job per TTL vom Cluster entfernt). Technische Prüfung bestanden: 1 Datensatz je Zelle, IDs = `indices_cost_desc.txt`, `error` 0, `failure_reason` leer, `git 5dd1df8` sauber, `0c9672de35c75a9d` / `ffb0266c7913352c`, Variante `evogrow_v2_2_stage_local`, Seed 42, 11 Datenbedingungen. Noch nicht lokal eingesammelt; **Nutzer entscheidet Seeds 123/7**. **Q5-Probe 8/9** (`evoode-sideproject-q5-probe`, Image `3541063`): Pod 7 (System 61, IC 2, σ 0,05, ρ 0) läuft seit 14 h (erwartet 3–9 h), 19/20 Pfade, späte Pfade 1,5–3 h je Pfad. **Belegung 25/40 Kerne** (24 C-6 gekappt + 1 Q5). **Wenn Q5 fertig:** `out/probe_index_*.jsonl` einsammeln, `aggregate_sideproject_q5.py --paths outputs/sideproject_q5_inputs/q5_probe_paths.json` (Befehl in `codex/reports/REPORT_WP_FA5.md`), Kostenfaktor messen, Nutzer entscheidet über das Raster (Ziel ≤ 7 Tage). Q5 eingefroren (`f737939` + `f454a32`). Codex nur mit `-c 'windows.sandbox="unelevated"'`. WP-N48b (PySR) weiter ungeprüft im Working Tree. Älter: Side-Projekt „Residual-Wachstum“: Q1–Q3 abgeschlossen und positiv (σ = 0); Q4
 (Modellgröße ohne Orakel) vollständig gerechnet und aggregiert — alle Kontrollen bestanden, Plattformkontrolle
 bit-identisch. R7–R9 noch nicht angesehen; Auswertung gemeinsam und in Ruhe.**
 
@@ -33,12 +33,12 @@ jedem Statuswechsel aktualisieren.
 
 ---
 
-## 1. Was läuft — Orion, **32 / 40 Kerne** (24 + 8 C-6), 8 frei seit 18.10.
+## 1. Was läuft — Orion, **25 / 40 Kerne** (24 C-6 gekappt + 1 Q5), Stand 28.10. 08:35
 
 | Lauf | Stand (27.10. 15:10, Job-Zähler) | Erwartetes Ende | Wenn fertig |
 |---|---|---|---|
 | **C-6-Raster gekappt** (3.366, 24 Pods) | 1.248; 24 Pods laufen, 0 Fehler, 0 Neustarts; ~33 Zellen/Tag seit 21.10. (davor ~42) | beim aktuellen Tempo ~Ende Dez. (Nov. nicht mehr haltbar) | einsammeln, technische Prüfung (Blindregel) |
-| **C-6-Raster ungekappt, Seed 42** (461, 8 Pods) | 351; 8 Pods laufen, 0 Fehler; ~17 Zellen/Tag seit 21.10.; Pod 273 läuft seit 3 d 8 h | ~3.–5. Nov. + Nachlauf | Nutzer entscheidet Seed 123/7; dann 16 Kerne frei |
+| **C-6-Raster ungekappt, Seed 42** (461) | **fertig 27.10. 20:15**, 461/461, technisch geprüft (siehe oben) | — | einsammeln; Nutzer entscheidet Seed 123/7 |
 
 **WP-N48b (PySR auf C-6, für die 8 freien Kerne):** Codex meldet `blocked` — Umsetzung fertig, 48 gezielte Tests
 grün, aber Testlaufzeit > 15-min-Protokollgrenze. Änderungen liegen uncommittet im Working Tree; noch nicht geprüft.
