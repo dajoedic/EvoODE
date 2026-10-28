@@ -27,6 +27,27 @@ B1-Test und ersetzt keinen. Festgelegt **vor** dem Einsammeln:
 - **Entscheidung über einen Abbruch trifft der Nutzer**, nicht das Kriterium. Abbrechen hieße auch: kein
   vollständiges C-6 für die Robustheitsaussagen in (a).
 
+**Ergebnis (28.10. abends): kein Abbruchsignal, 0 von 6.** 1.271 Datensätze eingesammelt (0 Fehler, eine Identität
+`5dd1df8` / `0c9672de35c75a9d` / `ffb0266c7913352c`); vollständig sind **18 Systeme, alle dim 2 (24–41)**. Saubere
+Generalisierung per `--campaign paper1_phaseC_v1 --clean-eval` je Bedingung, Rekonstruktionsprobe 0 Fehler
+(erster Lauf ohne `--campaign` nahm den WP-N5-Pfad, verworfen). Generalisierung R² > 0,9 (varianzgewichtet), Mittel
+über Systeme (arithmetisch über Systeme):
+
+| σ, ρ | EvoGrow | SINDy 0,1 | Weak-SINDy 0,01 | E-SINDy 0,1 | `d_s` + / − (gegen Weak-SINDy) |
+|---|---:|---:|---:|---:|---|
+| 0,03; 0 | 35,2 % | 17,6 % | 20,4 % | 0 % | 6 / 3 |
+| 0,03; 0,5 | 32,4 % | 0 % | 16,7 % | 0 % | 8 / 2 |
+| 0,04; 0 | 34,3 % | 13,9 % | 22,2 % | 0 % | 8 / 3 |
+| 0,04; 0,5 | 33,3 % | 0 % | 16,7 % | 0 % | 7 / 1 |
+| 0,05; 0 | 32,4 % | 8,3 % | 17,6 % | 0 % | 8 / 2 |
+| 0,05; 0,5 | 32,4 % | 0 % | 11,1 % | 0 % | 7 / 0 |
+
+Punktschätzer gegen jeden Gegner positiv (+12 bis +35 pp). Die Nullen der Gegner sind kein Pipelinefehler, sondern
+ein monotoner Zerfall auf denselben 18 Systemen (sauber 61–74 % → σ 0,01 14–25 % → 0–22 %; 40–68 % der
+Generalisierungen divergieren). EvoGrow sauber (C-5, arithmetisches R²) auf denselben Systemen 36,1 % — **hinter**
+allen drei Gegnern sauber, **vorn** unter Rauschen, fast ohne Verlust. Kein B1-Test, nur dim 2, 18 von 51 Systemen;
+dim 1 fehlt. Daten: `outputs/phase_c_c6_interim_2026-10-28/` (nicht versioniert).
+
 ### Q5-Probe fertig (9/9), aggregiert; Kostenfaktor ×3,2 gesamt, ×4,2 auf dim 3, Streuung 0,2–19
 <!-- 661f647 -->
 
