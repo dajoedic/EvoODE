@@ -7,7 +7,7 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 ## 2026-10-28
 
 ### C-6 Zwischenblick auf Wunsch des Nutzers — Kriterium festgeschrieben, bevor eine Zahl geöffnet ist
-<!-- C6PEEK -->
+<!-- 4001c21 -->
 
 Der Nutzer hebt die Blindregel für einen **einmaligen Zwischenblick** auf (28.10., Anlass: Kosten, ~36.000 Kern-h
 offen). §9.4d bleibt unverändert und wird erst auf dem vollständigen Raster angewendet; der Zwischenblick ist kein
