@@ -7,6 +7,7 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 ## 2026-10-29
 
 ### C-6 ungekappter Arm, Seed 42 — eingesammelt, nicht ausgewertet
+<!-- 2a1f502 -->
 
 Vom NFS nach `outputs/phase_c_c6_grid_uncapped_5dd1df839f8ece98f2bb3bbff78d15d8c433d9d3/` kopiert (925 Dateien,
 19 MB, SHA-256 aller Dateien gleich NFS). Technische Prüfung an der lokalen Kopie: **461 Datensätze, 461 eindeutige
