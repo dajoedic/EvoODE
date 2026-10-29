@@ -7,6 +7,7 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 ## 2026-10-30
 
 ### Q5-W: published WSINDy as the reference — implementation built, acceptance 1(ii) fails, port verified faithful
+<!-- 9b49329 -->
 
 Protocol draft `docs/sideproject_residual_growth_protocol_q5w.md` (`374e553`, not yet frozen). Reference = the official
 code MathBioCU/WSINDy_ODE `72d8d6e` (read-only, gitignored, "All Rights Reserved" → re-implemented, not copied), with

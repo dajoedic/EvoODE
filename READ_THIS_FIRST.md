@@ -10,6 +10,13 @@ zweites davon. Alles Dauerhafte gehört dorthin, nach `PAPER_1.md` oder ins `DIA
 **Regeln:** wird immer **vollständig überschrieben**, nie angehängt. Was älter als ein paar Tage
 ist, ist vermutlich falsch — dann gilt `CLAUDE.md`.
 
+**Stand: 2026-10-30, ~01:30 — wartet auf den Nutzer.** Code-Audit fertig: **Nachbau = Original** auf gleichmäßigem
+Raster (DIARY 30.10., `9b49329`); 6/20 ist WSINDys eigenes Verhalten, die 15/20-Schwelle war falsch angesetzt.
+WP-FA6-Code committet. **Morgens zu entscheiden:** (1) Abnahme 1(ii) ersetzen — Treue per Audit genügt, oder zusätzlich
+Octave-Gegenlauf freigeben (Rechteregel für `docker run` mit fremdem Code); (2) Protokoll einfrieren; (3) dann
+Determinismus + Smoke (Minuten) und voller Lauf 6 × 4.536 auf dem Laptop (Hochrechnung aus dem Smoke). Q5-Raster
+(49/1.632) läuft weiter, der Q5-Vergleich braucht sein Ende (~31.10. abends).
+
 **Stand: 2026-10-30, ~01:00. WP-FA6 `blocked`, Abnahme Lorenz 1(ii) 6/20 statt ≥ 15/20.** Muster: in allen 14
 Fehlschlägen sind **alle wahren Terme da** (Koeffizientenfehler 1–3 %), dazu 1–3 kleine Störterme (|c| ≈ 0,01–0,05).
 Die 15/20 waren von Claude gesetzt, ohne veröffentlichte Vergleichszahl — **nicht nachträglich gesenkt**. Klärung, ob
