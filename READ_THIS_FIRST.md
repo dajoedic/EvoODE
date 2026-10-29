@@ -10,6 +10,16 @@ zweites davon. Alles Dauerhafte gehört dorthin, nach `PAPER_1.md` oder ins `DIA
 **Regeln:** wird immer **vollständig überschrieben**, nie angehängt. Was älter als ein paar Tage
 ist, ist vermutlich falsch — dann gilt `CLAUDE.md`.
 
+**Stand: 2026-10-30, 00:15. Q5-W läuft (Nacht, Nutzer schläft, will morgen ein Ergebnis).** Anlass: Zwischenblick
+29.10. auf System 61 — Q5 (c) 16/44 Struktur gepruned gegen Weak-SINDy 0/44 (DIARY 29.10., `6aeb014`); Weak-SINDy verliert
+dort nur an der festen Schwelle. Daher fairer Gegner: **WSINDy wie veröffentlicht** (offizieller Code MathBioCU/WSINDy_ODE
+`72d8d6e`, lokal gitignored unter `outputs/reference_wsindy_ode_72d8d6e/`, „All Rights Reserved“ → nur nachbauen).
+Protokoll-**Entwurf** `docs/sideproject_residual_growth_protocol_q5w.md` (`374e553`; A, B und Grenzen-Arm vom Nutzer
+gebilligt, Einfrieren der Details steht aus). **Codex WP-FA6 gestartet 30.10. 00:04** (Implementierung, Abnahme gegen
+das Lorenz-Beispiel des Originalcodes, Smoke nur auf sauberen Surrogat-Zellen). Danach: Claude prüft, voller Lauf auf dem
+Laptop nur bei Hochrechnung < 1 h. Neuer offener Punkt in CLAUDE.md: datengetriebenes Pfadende statt 6-Term-Grenze.
+Chaos-Befund System 61: schon 1 % Koeffizientenfehler → R² ≈ 0,06 beim wahren Modell (Chen-Lee, chaotisch).
+
 **Stand: 2026-10-28, 17:15. Q5-Raster läuft** seit 16:19 auf Orion (`evoode-sideproject-q5`, 16 Pods, teuerste Zellen zuerst, Nachtrag `ecc8bac`; erwartet ~63 h + Nachzügler, ~1.000–1.100 Kern-h); **Belegung 40/40**. Wenn fertig: `out/index_*.jsonl` einsammeln, `aggregate_sideproject_q5.py --paths outputs/sideproject_q5_inputs/q5_grid_paths.json` (REPORT_WP_FA5). **C-6-Zwischenblick auf Nutzerwunsch** (Kriterium `4001c21`, Ergebnis `04e07eb`): kein Abbruchsignal, EvoGrow auf 18 dim-2-Systemen unter Rauschen vor der SINDy-Familie; **C-6 läuft weiter** (Nutzer). Blindheit für C-6 ist damit aufgehoben und im Paper offenzulegen. **Stand: 2026-10-28, 16:10. Q5-Probe fertig: 9/9** (Pod 7 letzter Schreibzugriff 14:48, Job per TTL entfernt), eingesammelt nach `outputs/sideproject_q5_354106398d5e67ffa72c237e2ba83e3feeb25b31/out/` (SHA-256 gleich NFS), aggregiert nach `analysis/data/sideproject_residual_growth/q5_probe/`, alle Kontrollen bestanden. **D1–D5 nicht ausgewertet** (gemeinsam). **Kostenfaktor ×3,16 gesamt** (Plan 8,9 → 28,3 Kern-h), verrauscht dim 1 ×0,74, dim 2 ×8,0, dim 3 ×4,2; Einzelzellen 0,18–19 (Tabelle DIARY 28.10.). Raster hochgerechnet ~1.100 Kern-h (~1.650 €) statt 244. **Nutzer entscheidet über das Q5-Raster.** Belegung jetzt **24/40 Kerne** (nur C-6 gekappt, 1.271/3.366 um 16:01). C-6 ungekappt (Seed 42) fertig 461/461, technisch geprüft, noch nicht lokal eingesammelt. §9.4d eingefroren (`f012fd0`). Q5 eingefroren (`f737939` + `f454a32`). Codex nur mit `-c 'windows.sandbox="unelevated"'`. WP-N48b (PySR) liegt pausiert und ungeprüft im Working Tree. Älter: Side-Projekt „Residual-Wachstum“: Q1–Q3 abgeschlossen und positiv (σ = 0); Q4
 (Modellgröße ohne Orakel) vollständig gerechnet und aggregiert — alle Kontrollen bestanden, Plattformkontrolle
 bit-identisch. R7–R9 noch nicht angesehen; Auswertung gemeinsam und in Ruhe.**
@@ -37,8 +47,8 @@ jedem Statuswechsel aktualisieren.
 
 | Lauf | Stand (Job-Zähler) | Erwartetes Ende | Wenn fertig |
 |---|---|---|---|
-| **C-6-Raster gekappt** (3.366, 24 Pods) | 1.293 (29.10.); 24 Pods laufen, 0 Fehler, 0 Neustarts; ~33 Zellen/Tag seit 21.10. (davor ~42) | beim aktuellen Tempo ~Ende Dez. (Nov. nicht mehr haltbar) | einsammeln, technische Prüfung; dann Abgleich mit dem ungekappten Arm (§9.4b) |
-| **Q5-Raster** (1.632, 16 Pods) | 33 (29.10.), teuerste zuerst; laut Kostenschätzung ~42 % der Last erledigt, 0 Fehler, 0 Neustarts | ~31.10. abends + Nachzügler | einsammeln, aggregieren (REPORT_WP_FA5) |
+| **C-6-Raster gekappt** (3.366, 24 Pods) | 1.302 (29.10. 23:15) / 1.293 (29.10.); 24 Pods laufen, 0 Fehler, 0 Neustarts; ~33 Zellen/Tag seit 21.10. (davor ~42) | beim aktuellen Tempo ~Ende Dez. (Nov. nicht mehr haltbar) | einsammeln, technische Prüfung; dann Abgleich mit dem ungekappten Arm (§9.4b) |
+| **Q5-Raster** (1.632, 16 Pods) | 46 (29.10. 23:15, alle System 61) / 33 (29.10.), teuerste zuerst; laut Kostenschätzung ~42 % der Last erledigt, 0 Fehler, 0 Neustarts | ~31.10. abends + Nachzügler | einsammeln, aggregieren (REPORT_WP_FA5) |
 | C-6-Raster ungekappt, Seed 42 (461) | **fertig und eingesammelt 29.10.** nach `outputs/phase_c_c6_grid_uncapped_5dd1df8…/`, SHA-256 gleich NFS, technisch geprüft (DIARY 29.10.) | — | Abgleich erst nach dem gekappten Raster: heute 259 Paare, nur dim 2 |
 
 **WP-N48b (PySR auf C-6, für die 8 freien Kerne):** Codex meldet `blocked` — Umsetzung fertig, 48 gezielte Tests
