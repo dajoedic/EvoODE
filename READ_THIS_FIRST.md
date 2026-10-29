@@ -10,6 +10,15 @@ zweites davon. Alles Dauerhafte gehört dorthin, nach `PAPER_1.md` oder ins `DIA
 **Regeln:** wird immer **vollständig überschrieben**, nie angehängt. Was älter als ein paar Tage
 ist, ist vermutlich falsch — dann gilt `CLAUDE.md`.
 
+**Stand: 2026-10-30, ~01:00. WP-FA6 `blocked`, Abnahme Lorenz 1(ii) 6/20 statt ≥ 15/20.** Muster: in allen 14
+Fehlschlägen sind **alle wahren Terme da** (Koeffizientenfehler 1–3 %), dazu 1–3 kleine Störterme (|c| ≈ 0,01–0,05).
+Die 15/20 waren von Claude gesetzt, ohne veröffentlichte Vergleichszahl — **nicht nachträglich gesenkt**. Klärung, ob
+Nachbau-Fehler oder echtes Verhalten des Originals: (1) Octave-Gegenlauf des Originalcodes auf denselben Daten ist
+vorbereitet (`gnuoctave/octave:9.2.0` gezogen, Daten + Treiber im Scratchpad), aber **vom Rechteprüfer blockiert
+(„Code from External“) → Nutzerentscheidung**; (2) unabhängige Code-Prüfung Nachbau vs. Original läuft (Agent).
+Abnahme 3 (Auswertung): 36/100 bit-identisch, Rest nur R²-Gleitkomma (Laptop vs. Orion), alle Strukturfelder und
+R²>0,9-Entscheidungen gleich → benannte Ausnahme. Kein C-6-Lauf, keine Vergleichszahl. WP-FA6-Dateien uncommittet.
+
 **Stand: 2026-10-30, 00:15. Q5-W läuft (Nacht, Nutzer schläft, will morgen ein Ergebnis).** Anlass: Zwischenblick
 29.10. auf System 61 — Q5 (c) 16/44 Struktur gepruned gegen Weak-SINDy 0/44 (DIARY 29.10., `6aeb014`); Weak-SINDy verliert
 dort nur an der festen Schwelle. Daher fairer Gegner: **WSINDy wie veröffentlicht** (offizieller Code MathBioCU/WSINDy_ODE
