@@ -840,6 +840,14 @@ the coupled search path 1e-6 is the cheaper, behaviour-equal tolerance; the Syst
   trajectory and add + refit + remove reaches it from C-1's wrong end structures (R1–R4 pass). Order (user): Q3 weak
   warm start → size selection without oracle → noise. Novelty, if any, lies in the combination of incremental growth,
   weak regression and simulation check — not in the residual ranking (that is FROLS).
+- **A data-derived path end instead of the truth-derived 6-term cap (user, 2026-10-29).** The side project's growth
+  path ends at 6 terms per equation — twice the largest true equation size, i.e. taken from the truth — and under noise
+  that cap is the only path end (Q5 interim, system 61: 44/44). Wanted: a stop that follows from the data. Preferred
+  candidate: a noise-floor (discrepancy) stop — estimate the noise level from the data, propagate it into the weak space
+  (as WENDy does), stop when the residual is at that floor; same idea as Track S's design note
+  (`docs/design_stopping_criterion.md`). Acceptance as for the stage cap: search-free, on all exact systems and noise
+  levels, **never truncates a true term**; stop only on positive evidence. Until then the cap stays, declared, and the
+  WSINDy comparison gives the opponent the same cap (`docs/sideproject_residual_growth_protocol_q5w.md`).
 - **Trajectory overfitting is the next methodological direction (user, 2026-09-29).** C-1 fits the
   one training trajectory far better than it identifies the mechanism (dim 2: 91.7 %
   reconstruction, 25.6 % generalization, raw structure 3 of 60 exact cells). The selection signal
