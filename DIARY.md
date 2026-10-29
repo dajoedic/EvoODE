@@ -4,6 +4,23 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ---
 
+## 2026-10-29
+
+### C-6 ungekappter Arm, Seed 42 — eingesammelt, nicht ausgewertet
+
+Vom NFS nach `outputs/phase_c_c6_grid_uncapped_5dd1df839f8ece98f2bb3bbff78d15d8c433d9d3/` kopiert (925 Dateien,
+19 MB, SHA-256 aller Dateien gleich NFS). Technische Prüfung an der lokalen Kopie: **461 Datensätze, 461 eindeutige
+`manifest_index`, Menge gleich `indices_cost_desc.txt`**, eine Identität `5dd1df8` / `0c9672de35c75a9d` /
+`ffb0266c7913352c`, Variante `evogrow_v2_2_stage_local`, Seed 42, `error` und `failure_reason` leer in 461/461.
+Kein Ergebnisfeld geöffnet.
+
+**Paarbarkeit heute:** 259 der 461 Zellen haben einen fertigen gekappten Partner, alle dim 2 (von 340); dim 1 (121)
+hat **keinen**, weil das gekappte Raster die teuren Zellen zuerst rechnet. Der Abgleich gekappt/ungekappt (§9.4b,
+Diagnose der Kappen-Trunkierung) wartet deshalb auf das Ende des gekappten Rasters (~Ende Dez.); ein vorgezogener
+dim-2-Blick bräuchte zuerst ein eingefrorenes Kriterium wie der Zwischenblick vom 28.10.
+
+---
+
 ## 2026-10-28
 
 ### C-6 Zwischenblick auf Wunsch des Nutzers — Kriterium festgeschrieben, bevor eine Zahl geöffnet ist

@@ -33,12 +33,13 @@ jedem Statuswechsel aktualisieren.
 
 ---
 
-## 1. Was läuft — Orion, **40 / 40 Kerne** (24 C-6 gekappt + 16 Q5-Raster), Stand 28.10. 17:15
+## 1. Was läuft — Orion, **40 / 40 Kerne** (24 C-6 gekappt + 16 Q5-Raster), Stand 29.10.
 
-| Lauf | Stand (27.10. 15:10, Job-Zähler) | Erwartetes Ende | Wenn fertig |
+| Lauf | Stand (Job-Zähler) | Erwartetes Ende | Wenn fertig |
 |---|---|---|---|
-| **C-6-Raster gekappt** (3.366, 24 Pods) | 1.271 (28.10. 16:01); 24 Pods laufen, 0 Fehler, 0 Neustarts; ~33 Zellen/Tag seit 21.10. (davor ~42) | beim aktuellen Tempo ~Ende Dez. (Nov. nicht mehr haltbar) | einsammeln, technische Prüfung (Blindregel) |
-| **C-6-Raster ungekappt, Seed 42** (461) | **fertig 27.10. 20:15**, 461/461, technisch geprüft (siehe oben) | — | einsammeln (Seeds 123/7 entfallen, §9.4d) |
+| **C-6-Raster gekappt** (3.366, 24 Pods) | 1.293 (29.10.); 24 Pods laufen, 0 Fehler, 0 Neustarts; ~33 Zellen/Tag seit 21.10. (davor ~42) | beim aktuellen Tempo ~Ende Dez. (Nov. nicht mehr haltbar) | einsammeln, technische Prüfung; dann Abgleich mit dem ungekappten Arm (§9.4b) |
+| **Q5-Raster** (1.632, 16 Pods) | 33 (29.10.), teuerste zuerst; laut Kostenschätzung ~42 % der Last erledigt, 0 Fehler, 0 Neustarts | ~31.10. abends + Nachzügler | einsammeln, aggregieren (REPORT_WP_FA5) |
+| C-6-Raster ungekappt, Seed 42 (461) | **fertig und eingesammelt 29.10.** nach `outputs/phase_c_c6_grid_uncapped_5dd1df8…/`, SHA-256 gleich NFS, technisch geprüft (DIARY 29.10.) | — | Abgleich erst nach dem gekappten Raster: heute 259 Paare, nur dim 2 |
 
 **WP-N48b (PySR auf C-6, für die 8 freien Kerne):** Codex meldet `blocked` — Umsetzung fertig, 48 gezielte Tests
 grün, aber Testlaufzeit > 15-min-Protokollgrenze. Änderungen liegen uncommittet im Working Tree; noch nicht geprüft.
