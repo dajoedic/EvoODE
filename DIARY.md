@@ -4,6 +4,37 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ---
 
+## 2026-10-30
+
+### Q5-W: published WSINDy as the reference — implementation built, acceptance 1(ii) fails, port verified faithful
+
+Protocol draft `docs/sideproject_residual_growth_protocol_q5w.md` (`374e553`, not yet frozen). Reference = the official
+code MathBioCU/WSINDy_ODE `72d8d6e` (read-only, gitignored, "All Rights Reserved" → re-implemented, not copied), with
+its documented `DEFAULT` settings; the ODE paper itself sets λ = ¼·min|w*| from the truth and is therefore not the
+reference for thresholding. Codex WP-FA6 built it (`wsindy_reference.py`, runner, acceptance, 9 tests).
+
+**Acceptance:** 1(i) clean Lorenz exact, E∞ 5.1e-13 ✔. **1(ii) 10 % noise: 6/20 exact supports, required ≥ 15/20 ✘.**
+In all 14 misses **every true term is present** (coefficient error 1–3 %) plus 1–3 small spurious terms
+(|c| ≈ 0.01–0.05, e.g. `x0²` beside the true `x0·x1`). Point 2 (library mapping, dim 1–4) ✔. Point 3 (evaluation
+identity vs WP-N47): 36/100 bit-identical, the rest R² floating point only (reconstruction ≤ 1e-11; generalization up
+to 0.15 on diverging cells), every structure field, integration status and R² > 0.9 decision equal — laptop vs Orion,
+as known since WP-N47; a named exception. Point 4 not run (gated).
+
+**The 15/20 bar had no published basis** (no recovery rate in any source read); it was set by Claude. Not lowered.
+
+**Fidelity, two routes:** (1) an Octave run of the original code on the identical noisy data was prepared (image
+`gnuoctave/octave:9.2.0`, data + driver in the session scratchpad) and **refused by the auto-mode permission check
+("Code from External")** — user decision. (2) An independent, unanchored code audit of the port against the MATLAB
+source, step by step: **no material deviation on uniform grids**; scaling, smoothing (incl. boundary mirroring and
+root finding), corner point, test functions/weak matrices, MSTLS bounds and iteration, loss and λ ties all identical.
+Differences that can change support: (a) `K_frac` — the script's literal 1000 vs its documented default 1; irrelevant
+at 512 points, but on the 10,001-point Lorenz check the stride 10 flipped 1 of 9 probed equations to the true support;
+(b) irregular grids (ρ = 0.5): the port's trapezoidal path is our declared extension, MATLAB has none; (c) `gelsy` vs
+backslash — no effect at cond ≈ 1e7. Reading: 6/20 is WSINDy's own behaviour at these settings, not a port defect.
+Decision for the user: how to replace acceptance 1(ii) (fidelity by audit / Octave run instead of a recovery bar).
+
+---
+
 ## 2026-10-29
 
 ### C-6 ungekappter Arm, Seed 42 — eingesammelt, nicht ausgewertet
