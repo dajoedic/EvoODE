@@ -21,6 +21,7 @@ Diagnose der Kappen-Trunkierung) wartet deshalb auf das Ende des gekappten Raste
 dim-2-Blick bräuchte zuerst ein eingefrorenes Kriterium wie der Zwischenblick vom 28.10.
 
 ### Q5-Raster — Zwischenblick auf Wunsch des Nutzers, nur System 61
+<!-- 6aeb014 -->
 
 Auf Wunsch des Nutzers (abends, Job bei 46/1.632) die fertigen Zellen schreibgeschützt vom NFS kopiert und gegen
 Weak-SINDy gestellt. **Kein Bericht, nichts ins Repo geschrieben**; das Q5-Protokoll hat keine Blind- und keine
