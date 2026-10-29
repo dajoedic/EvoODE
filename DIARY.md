@@ -20,6 +20,31 @@ hat **keinen**, weil das gekappte Raster die teuren Zellen zuerst rechnet. Der A
 Diagnose der Kappen-Trunkierung) wartet deshalb auf das Ende des gekappten Rasters (~Ende Dez.); ein vorgezogener
 dim-2-Blick bräuchte zuerst ein eingefrorenes Kriterium wie der Zwischenblick vom 28.10.
 
+### Q5-Raster — Zwischenblick auf Wunsch des Nutzers, nur System 61
+
+Auf Wunsch des Nutzers (abends, Job bei 46/1.632) die fertigen Zellen schreibgeschützt vom NFS kopiert und gegen
+Weak-SINDy gestellt. **Kein Bericht, nichts ins Repo geschrieben**; das Q5-Protokoll hat keine Blind- und keine
+Bestanden-Regel, der Blick ändert nichts an §6/§7. Alle 46 fertigen Zellen sind **System 61** (beide IC; die teuersten
+Zellen laufen zuerst) — 2 von 48 Einheiten, ein System, nicht verallgemeinerbar. Technisch: 1.257 eindeutige
+Datensätze, keine abweichenden Duplikate, ein Fingerprint, Trajektorienkontrollen bestanden.
+
+Die eingefrorenen Funktionen `rows_for_cells` (Regel c) auf 44 verrauschte/ausgedünnte Zellen; Weak-SINDy auf
+denselben Zellen (`poly_deg3_sin_cos`, bessere der zwei Schwellen, in Klammern alle zehn Konfigurationen):
+Struktur gepruned **16/44 gegen 0/44 (0–3)**, roh **11/44 gegen 0/44 (0–3)**; R² > 0,9 Rekonstruktion 4/44 gegen
+0/44 (0–5), Generalisierung 3/44 gegen 0/44 (0–3). D3: Wahrheit auf dem Pfad 43/44, D1: Kappe 44/44.
+
+**Leakage-Prüfung (Code gelesen):** Pfad (`build_sideproject_q5_paths.py`) liest nur die beobachteten Daten der Zelle;
+Fit (`sideproject_q5_noise_fits.jl`) nur `observed`, saubere Trajektorien nur in der Bewertung; Regel c wählt auf dem
+Trainings-MSE gegen die Beobachtungen; die `upper_*`-Kandidaten (wahre Größe) sind nicht im Auswahlpool. Einzige
+Wahrheitsnutzung bleibt die deklarierte 6-Term-Kappe. **Kein Leck gefunden.**
+
+**Warum Weak-SINDy 0 hat:** auf sauberen Daten trifft es System 61 in allen zehn Konfigurationen (6/6). Unter Rauschen
+findet es die wahren Terme mit fast exakten Koeffizienten (5,0 / −10,0 / −3,8 / 0,33), behält aber zusätzlich
+sin/cos-Terme bis ~13 — Schwellen 0,01/0,1 sind gegen Koeffizienten der Größe 10 zu klein. Q5 begrenzt die Größe per
+Trajektorien-BIC und Kappe. Ein gepruneter Q5-Treffer ist z. B. Wahrheit + `u3^3` mit Koeffizient ≈ 0
+(`sys0061_ic1_s0.01_r0_n1`, path_007, R² 0,71). Der Vorsprung ist damit eine Aussage über die Schwellenwahl von
+Weak-SINDy und die Größenwahl von Q5 auf einem System, keine über die Methode.
+
 ---
 
 ## 2026-10-28
