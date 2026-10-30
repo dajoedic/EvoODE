@@ -7,6 +7,7 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 ## 2026-10-30
 
 ### Q5-Raster — zweiter Zwischenblick auf Wunsch des Nutzers, 1.144 / 1.632 Zellen
+<!-- 3835e11 -->
 
 Records per `oc exec` aus einem Q5-Pod (NFS-Laufwerk hing): 17.931 Zeilen, keine nicht-identischen Duplikate, ein
 Protokoll-Commit `f737939`, ein Settings-Fingerprint, Trajektorienkontrolle 0 Fehler. Regel (c), nur verrauschte bzw.
