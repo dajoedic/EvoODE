@@ -7,6 +7,7 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 ## 2026-10-31
 
 ### T2a-Führungsspur geparkt bis nach Q5-W (Nutzer)
+<!-- a6270e9 -->
 
 Tor T2a-1 nach eingefrorener Regel nicht bestanden (S1: +15,4 pp auf 13 fittbaren Zellen, Cluster-Permutation über 8
 Systeme p = 0,25; nur 2 Systeme mit Änderung, p < 0,05 hätte ≥ 5 gewinnende Systeme ohne Verlierer verlangt — S1 war

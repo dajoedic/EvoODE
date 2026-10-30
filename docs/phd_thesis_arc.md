@@ -378,7 +378,7 @@ structure, `max_fit_attempts`, total fits, loss evaluations, ODE solves. Δ loss
 
 1. **S1 — oracle prior, dim 2, seed 42, both IC: 20 cells.** The cheapest decisive test: if the oracle prior does not
    help on fittable cells, the branch stops here. ~200 core hours (~300 €). Gate T2a-1.
-   **Ran 2026-10-15/16: gate T2a-1 not passed (p = 0.25 over 8 systems, +15.4 pp); parked by the user 2026-10-31 until
+   **Finished 2026-10-15: gate T2a-1 not passed (p = 0.25 over 8 systems, +15.4 pp); parked by the user 2026-10-31 until
    the Q5-W comparison is unsealed — neither stopped nor S2 (`DIARY.md` 2026-10-31).**
 2. **S2 — the rest:** oracle prior on the remaining 106 cells and the guided arm on all 126: ~1,000 core hours
    (~1,500 €). Only after gate T2a-1, and as a ≥ 24 h run only after a discussion (`CLAUDE.md` run-location table).
