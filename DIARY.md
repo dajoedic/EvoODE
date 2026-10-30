@@ -4,6 +4,19 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ---
 
+## 2026-10-31
+
+### T2a-Führungsspur geparkt bis nach Q5-W (Nutzer)
+
+Tor T2a-1 nach eingefrorener Regel nicht bestanden (S1: +15,4 pp auf 13 fittbaren Zellen, Cluster-Permutation über 8
+Systeme p = 0,25; nur 2 Systeme mit Änderung, p < 0,05 hätte ≥ 5 gewinnende Systeme ohne Verlierer verlangt — S1 war
+für die Regel zu klein, das stand vorher nicht im Plan). **Entscheidung: weder Stopp noch S2, sondern geparkt.**
+Begründung: (1) schon das Orakel, die obere Schranke jeder datengeschätzten Führung, bringt nur +2 Treffer (roh 0 → 2);
+(2) Q5 greift dasselbe Problem (falsche Termwahl) direkter an und liegt im Zwischenstand (Eintrag 30.10.) deutlich
+höher, wenn auch nicht vergleichbar (Rauschen, Wahrheits-Grenze); (3) Q5-W gegen das veröffentlichte WSINDy entscheidet
+die Richtung für Paper 2 kostenlos in den nächsten Tagen. S2 (~1.000 Kernstunden, ~1.500 €) würde zudem eine bewusste
+Ausnahme von der eingefrorenen Torregel verlangen. Wiedervorlage, sobald Q5-W entsiegelt ist.
+
 ## 2026-10-30
 
 ### Q5-Raster — zweiter Zwischenblick auf Wunsch des Nutzers, 1.144 / 1.632 Zellen

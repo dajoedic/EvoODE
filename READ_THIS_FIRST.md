@@ -143,7 +143,7 @@ Zeilenenden (Index LF). Erst **nach** der Q4-Auswertung normalisieren, sonst sin
 1. **Q4 gemeinsam auswerten** (R7–R9, dann Entscheidung über Rauschen).
 2. **Fehleranatomie** (Diskussionspapier `docs/diskussion_warum_scheitert_die_suche.md`): Ergebnis der externen
    Diskussion steht aus; Q3 hat Klasse B auf der Wahrheit bereits beantwortet.
-3. **Tor T2a-1:** Stopp der Führungsspur oder S2 (S1: p = 0,25 nach eingefrorener Regel).
+3. ~~Tor T2a-1~~ **geparkt bis nach Q5-W (Nutzer, 31.10.)**: weder Stopp noch S2; Entscheidung, wenn der WSINDy-Vergleich steht.
 4. **Entscheidungsregel (b) als §9.4d**, erst dann C-6-EvoGrow öffnen. **Paper 1 ist nicht fix (Nutzer 14.10.).**
 
 ## 4. Annihilator-Spur: getrennt (Nutzer, 05.10.)
