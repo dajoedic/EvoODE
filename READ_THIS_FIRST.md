@@ -10,6 +10,12 @@ zweites davon. Alles Dauerhafte gehört dorthin, nach `PAPER_1.md` oder ins `DIA
 **Regeln:** wird immer **vollständig überschrieben**, nie angehängt. Was älter als ein paar Tage
 ist, ist vermutlich falsch — dann gilt `CLAUDE.md`.
 
+**Stand: 2026-10-30, Vormittag — Q5-W läuft weiter.** Nutzer hat entschieden: Protokoll **eingefroren** (`83139f0`),
+Abnahme 1(ii) nur berichtet; neuer Punkt 5 = **Identität mit dem Originalcode in MATLAB** (SCCH hat Lizenzen, Installation
+über IT-Helpdesk beantragt; Octave entfällt) auf allen ρ = 0-Zellen. **WP-FA6b bei Codex** (Abnahme umstellen, Smoke,
+MATLAB-Export/-Treiber/-Vergleich). Danach startet Claude den vollen Lauf; **Ergebnisse versiegelt bis Punkt 5
+bestanden**. Sobald MATLAB da ist: Claude startet den Original-Lauf (< 1 h-Regel).
+
 **Stand: 2026-10-30, ~01:30 — wartet auf den Nutzer.** Code-Audit fertig: **Nachbau = Original** auf gleichmäßigem
 Raster (DIARY 30.10., `9b49329`); 6/20 ist WSINDys eigenes Verhalten, die 15/20-Schwelle war falsch angesetzt.
 WP-FA6-Code committet. **Morgens zu entscheiden:** (1) Abnahme 1(ii) ersetzen — Treue per Audit genügt, oder zusätzlich
