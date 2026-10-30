@@ -1,74 +1,64 @@
-# WP-FA6 — Side project Q5-W: the published WSINDy as reference (implementation, acceptance, smoke)
+# WP-FA6b — Q5-W: revised acceptance, smoke, and the MATLAB identity check (infrastructure only)
 **Language: Python**
 
-Stand 2026-10-30. Authority: `docs/sideproject_residual_growth_protocol_q5w.md` (`374e553`). Read it in full first; this
-spec only adds the work split. Background: Q5 compared against pysindy's fixed-threshold Weak-SINDy; the published
-WSINDy (Messenger & Bortz) selects its threshold from the data (MSTLS). Q5-W builds that opponent faithfully so the
-comparison is fair: same data, same library, same size prior.
-
-## Sources you must use
-
-- The official MATLAB code, read-only, at `outputs/reference_wsindy_ode_72d8d6e/` (commit `72d8d6e`, archive SHA-256 in
-  `ARCHIVE_SHA256.txt` there). It is "All Rights Reserved": **read it and re-implement the algorithm; never copy code,
-  comments or text from it into the repository.** Entry points: `wsindy_ode_script.m` (settings and their `DEFAULT`
-  comments), `wsindy_ode_fun.m` (pipeline), `wsindy_pde_RGLS_seq.m` (λ loop and loss), `sparsifyDynamics.m` (MSTLS with
-  per-term bounds), `findcorners.m` / `findcornerpts.m` (corner point → test-function support and degree),
-  `get_optimal_SMAF.m` / `estimate_sigma.m` (smoothing decision), `phi_int_weights.m` (test functions and derivatives),
-  `build_theta.m`, `gen_noise.m`, `gen_data.m`, `sim_ode.m` (the Lorenz example of the acceptance).
-- The paper PDF in that folder and Messenger & Bortz, J. Comput. Phys. 443 (2021), eqs. (4.4)–(4.8) and Appendix A, for
-  anything the code leaves open. Where code and paper differ, the code wins (protocol §3); list every such place in the
-  report.
-- Existing project code to **reuse, not re-implement**: export reading, data hashes, library construction for L-C6,
-  the pysindy weak design, evaluation (clean-IC simulation with DOP853, R², raw/pruned structure hits, pruning rule),
-  truth terms — all in `analysis/scripts/aggregate/run_phasec_noise_sindy_baselines.py` and its imports. L-Q5 term names
-  come from the canonical Phase C basis (see how Q5's path builder names terms:
-  `analysis/scripts/aggregate/build_sideproject_q5_paths.py` → `phasec_basis`).
+Stand 2026-10-30. Authority: `docs/sideproject_residual_growth_protocol_q5w.md`, **frozen today with a revised §5**.
+Read §5 (points 1–5 and the "Revision" paragraph) and §7 in full first. Builds on WP-FA6
+(`codex/reports/REPORT_WP_FA6.md`, commit `9b49329`), which was `blocked` only on the old gate 1(ii) ≥ 15/20 — that
+gate no longer exists.
 
 ## Scope
 
-1. **WSINDy module** (Python, numpy/scipy only, no MATLAB): the published pipeline with the protocol's settings —
-   corner-point test-function selection, piecewise-polynomial test functions, `K_frac = 1`, column scaling
-   `scale_Theta = 2`, the automatic smoothing decision, MSTLS with the per-term bounds, the λ grid, the
-   `alpha_loss = 0.8` loss, per-equation λ selection with ties to the smallest λ. Library passed in as a list of named
-   column functions. The irregular-grid binding of protocol §3 (trapezoidal weak integrals on the actual observed
-   times). Watch the point the code review flagged: in `wsindy_pde_RGLS_seq.m` the λ sweep divides by the scale vector
-   but the final re-solve at λ̂ does not — determine from the code what the returned coefficients are and make sure the
-   coefficients you report are on the original data scale; state in the report how you verified it.
-2. **Arms**: W1, W1-cap (per equation: loss minimiser among grid λ with ≤ 6 terms in that equation; none → equation
-   unselected), W2 (MSTLS + λ grid + loss + scaling on the existing pysindy weak design of WP-N34/N47, seeded as
-   WP-N45b), each on L-C6 and L-Q5 — six configurations. Record per equation: λ̂, the full loss curve, whether λ̂ sits
-   at a grid end, the chosen test-function support and degree, the smoothing window actually used.
-3. **Runner** over the C-6 export with the WP-N47 row schema extended by the fields above, writing to its own folder
-   `outputs/sideproject_q5w_wsindy/`, resumable, cells selectable (`--limit`, `--cells`), configuration selectable.
-   Data hash per cell checked against the WP-N47 rows. A projection of the full-run cost from the smoke (counts; time as
-   context).
-4. **Acceptance (protocol §5)**, all four points, each with its numbers in the report. Point 1(ii) runs 20 numpy seeds
-   0–19 for the noise.
-5. **Smoke**: 20 **(0, 0)** cells of **surrogate** systems only (not one of the 30 exact systems), all six
-   configurations; report technical facts only (completed, errors, runtime, counts).
-6. Focused tests for the new code (fixtures derived from real export rows, `CODEX_PROTOCOL.md`), fast enough to stay
-   well inside the 15-minute limit; run only those plus the existing tests of the files you touch.
+1. **Acceptance gate.** In `analysis/scripts/aggregate/accept_sideproject_q5w_wsindy.py` the pre-smoke verdict follows
+   the frozen §5: points 1(i), 2, 3, 4 gate; 1(ii) is reported in full but does not gate. Point 5 is a separate verdict
+   (`matlab_identity_passed`, absent/`null` until the MATLAB outputs exist) and does **not** block the smoke or the full
+   run — it unseals the results (§7). Re-evaluate from the preserved `acceptance/lorenz.jsonl` (stage `complete-pre`);
+   never rerun or overwrite the preserved Lorenz run. Then run the smoke stage (20 clean surrogate cells × 6
+   configurations, twice, determinism) and put its technical facts and the full-run cost projection in the report.
+2. **Port output for the comparison.** Make sure every W1 equation record carries what point 5 compares: the λ̂ grid
+   **index** (not only its value), the support, and the coefficients on the original data scale. If WP-FA6 rows already
+   carry it, say so; otherwise add it without changing any existing field.
+3. **MATLAB input export.** A script that writes, for (a) the 21 Lorenz data sets of point 1 and (b) every C-6 cell with
+   ρ = 0, the exact arrays the port receives (observed times, observed states, as written/read losslessly — 17
+   significant digits or binary) plus a per-cell manifest (cell key, data hash, library name). Output under
+   `outputs/sideproject_q5w_wsindy/matlab_inputs/`. State the number of cells.
+4. **Library expressibility (point 5(b)).** Decide from the original code's library inputs (`polys`, `trigs`,
+   `custom_tags`/`custom_fcns`, see `build_theta.m`, `get_tags.m`, `build_poly_lib.m`) whether L-C6 and L-Q5 can be
+   expressed **exactly** — same columns, same order or a fixed permutation. Extend the mapping test of point 2 to prove
+   it numerically. Report per library: expressible yes/no, and how.
+5. **MATLAB driver** (`analysis/matlab/run_wsindy_original_q5w.m`, new folder): calls the **unmodified** original code
+   from `outputs/reference_wsindy_ode_72d8d6e/` via `addpath` and `wsindy_ode_fun` with the §3 settings on every exported
+   input, writes per cell the coefficients (17 digits), the selected λ̂ and its grid index per equation, and the tags /
+   column order. Resumable, one file per cell. Base MATLAB only. The driver calls the original; it must not contain any
+   code, comment or text copied from it. A working reference for the call signature, written by Claude, is
+   `C:\Users\joedicke\AppData\Local\Temp\claude\c--Users-joedicke-Documents-Repositories-EvoODE\0d123bc4-4199-4b50-8574-de7ebd1aefc0\scratchpad\octave_check\run_reference.m`
+   (Octave, Lorenz only) — check every setting in it against §3 rather than trusting it. If the original returns λ̂
+   only implicitly, derive the index from the original's own outputs and say how.
+6. **Comparison script** for point 5: reads the MATLAB outputs and the port's rows, applies the frozen criterion (same
+   support and λ̂ index in every equation, max |Δc| ≤ 1e-6·max |c| per equation), writes per-cell verdicts and a summary
+   (`cells`, `passed`, list of failing cells with the first differing equation). It prints **no** rate, structure hit,
+   R² or comparison — identity verdicts only. Test it on synthetic fixtures (an identical and a deliberately perturbed
+   case).
+7. Focused tests for the changed and new Python code; run only those plus the existing WP-FA6 tests.
 
 ## Verboten
 
-- Running any configuration on the C-6 cells beyond the smoke of scope 5; running anything on noisy cells; computing or
-  reporting any rate, comparison or table against Q5 or the existing baselines. The full run is Claude's, after the user.
-- Copying code, comments or text from `outputs/reference_wsindy_ode_72d8d6e/`.
-- Tuning anything so that acceptance 1 passes. If 1(ii) gives fewer than 15 of 20, report `blocked` with the numbers.
-- Changing any frozen file: the Q5 scripts and runner, `run_phasec_noise_sindy_baselines.py` behaviour (adding an
-  importable helper is fine if WP-N47 output stays identical — then show it), the export, WP-N47 outputs.
-- Touching the uncommitted WP-N48b files in the working tree: `analysis/scripts/aggregate/aggregate_c6_symbolic_baselines.py`,
+- Running MATLAB (not installed yet) or Octave; the full run over all 4,536 cells; any fit on noisy cells. Claude runs
+  those.
+- Computing, printing or reporting any rate, structure hit, R², or comparison against Q5 or other baselines — the full
+  run's results are sealed until point 5 passes.
+- Copying code, comments or text from `outputs/reference_wsindy_ode_72d8d6e/` into the repository.
+- Changing the WSINDy algorithm in `wsindy_reference.py` (output fields only, scope 2), the frozen Q5 files,
+  `run_phasec_noise_sindy_baselines.py` behaviour, the export, WP-N47 outputs, or the preserved `acceptance/lorenz.jsonl`.
+- Touching the uncommitted WP-N48b files: `analysis/scripts/aggregate/aggregate_c6_symbolic_baselines.py`,
   `analysis/scripts/aggregate/run_k8s_symbolic_shard.py`, `baselines/c6_shards.py`,
   `baselines/tests/test_c6_symbolic_execution.py`, `codex/reports/REPORT_WP_N48.md`, `k8s/phase_c_c6_pysr*.yaml`.
-- Git operations of any kind; cluster jobs; anything running longer than 15 minutes; time cuts inside the runner.
+- Git operations; cluster jobs; anything running longer than 15 minutes.
 
 ## Abnahme
 
-- Protocol §5 points 1–4 pass with numbers in `codex/reports/REPORT_WP_FA6.md`, or the WP is `blocked` with the
-  failing numbers.
-- Every setting of protocol §3 appears in the report with the code file/line or paper equation it comes from; every
-  code/paper discrepancy and every place you had to decide something the sources leave open is listed.
-- The six configurations complete on the 20 smoke cells without error; the cost projection for all 4,536 cells × 6 is
-  in the report.
-- The new tests pass; their command and output are in the report.
-- `codex/STATUS.md` set as `CODEX_PROTOCOL.md` prescribes.
+- `summary.json` shows points 1(i), 2, 3, 4 passed and 1(ii) reported; smoke complete on 20 × 6 without error,
+  deterministic; projection for 4,536 × 6 in counts, wall-clock as context.
+- MATLAB inputs exported (Lorenz 21 + all ρ = 0 cells, count stated), driver and comparison script in place, tests pass;
+  the exact MATLAB command Claude has to run is in the report.
+- Expressibility of L-C6 and L-Q5 decided and proven numerically.
+- Report `codex/reports/REPORT_WP_FA6B.md`; `codex/STATUS.md` as `CODEX_PROTOCOL.md` prescribes.

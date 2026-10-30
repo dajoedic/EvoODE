@@ -1,6 +1,6 @@
 # Side project "residual-guided growth" — protocol Q5-W (published WSINDy as the reference)
 
-**Drafted 2026-10-30, to be frozen by the user before any Q5-W number exists.** Companion to Q5
+**Drafted 2026-10-30; frozen 2026-10-30 by the user, with acceptance §5 revised the same day (see §5, "Revision") before any C-6 cell was run.** Companion to Q5
 (`docs/sideproject_residual_growth_protocol_q5.md`, `f737939`). Reason: Q5's primary reference is pysindy's
 `WeakPDELibrary` + `STLSQ` at two fixed thresholds — **not** the published WSINDy, which selects its threshold from the
 data. An interim look at system 61 (`DIARY.md` 2026-10-29) showed the fixed-threshold Weak-SINDy finding the true terms
@@ -84,13 +84,28 @@ Q5 side: Q5 rule (c) as frozen; Q5 rules (a), (b) reported beside it as in Q5 §
 1. **Published example:** the official script's own example — Lorenz (σ = 10, β = 8/3, ρ = 28), x0 = (−8, 7, 27),
    t = 0:0.001:10, ode tolerance 1e-12, code defaults with `polys = 0:5`. (i) Noise-free: exact support, relative
    coefficient error E∞ ≤ 1e-4. (ii) 10 % additive white noise as `gen_noise.m` (σ = 0.1·rms), 20 numpy seeds:
-   reported in full (support hits, E∞, E2, λ̂); **exact support in ≥ 15 of 20** is required. Below that the
-   implementation is not accepted (`blocked`), never tuned to pass.
+   reported in full (support hits, E∞, E2, λ̂). **Reported only, not a gate** (revision below).
 2. **Library mapping:** L-C6 column names and order identical to the pysindy library of WP-N47; L-Q5 term names
    identical to Q5's basis names after mapping.
 3. **Evaluation identity:** fed WP-N47's stored `weak_sindy_poly_deg3_sin_cos_stlsq_0.1` coefficients, the evaluation
    path reproduces WP-N47's R² and structure fields on ≥ 100 cells bit-identically (or names the exception).
 4. **Determinism:** two runs on 20 cells, identical output.
+5. **Identity with the original code, run in MATLAB** (base MATLAB, no toolbox; the code's own noise generator is not
+   used, every input is passed in). The unmodified official code (§3, commit `72d8d6e`) is called through
+   `wsindy_ode_fun` with the §3 settings on:
+   (a) the 21 Lorenz data sets of point 1 (clean + 20 noisy seeds, identical arrays), and
+   (b) **every C-6 cell with a uniform time grid (ρ = 0)**, arm W1, library L-C6; L-Q5 as well if the code's
+   `polys`/`trigs`/`custom` inputs express it exactly (decided by the mapping test of point 2, not by results).
+   Pass: in every equation of every cell the same support and the same λ̂ grid index as the port, and coefficients
+   equal up to max |Δc| ≤ 1e-6·max |c| per equation. Any cell outside this is a failure: the port is not accepted, the
+   cause is investigated and reported to the user, nothing is tuned. Irregular-grid cells (ρ = 0.5), W1-cap and W2 have
+   no counterpart in the original code and are covered by the port only — declared.
+
+**Revision 2026-10-30 (user), before any C-6 cell was run.** The draft's gate "exact support in ≥ 15 of 20" for point
+1(ii) had no published basis (the paper reports no such rate) and was set by Claude. The port gave 6/20 — all true
+terms present in all 20, 1–3 small extra terms in the 14 misses — and a line-by-line audit against the original found
+no deviation on uniform grids (`DIARY.md` 2026-10-30). The gate is replaced by point 5: fidelity is shown by identity
+with the original code on the same data, not by a hit rate. Point 1(ii) stays reported in full.
 
 ## 6. What is reported
 
@@ -104,8 +119,10 @@ All 63 systems separately for the Paper 1 baseline row, exact and surrogate syst
 ## 7. Execution
 
 Laptop, Python. Codex implements and runs the acceptance (§5) and a smoke on 20 cells; the full run (6 arm × library
-combinations × 4,536 cells) is started by Claude after the user has seen the acceptance, on the laptop if the smoke
-projects < 1 h, otherwise discussed. The Q5 comparison table is produced once the Q5 grid has finished; until then only
+combinations × 4,536 cells) is started by Claude after points 1–4 pass, on the laptop if the smoke projects < 1 h,
+otherwise discussed. **Its results stay sealed until point 5 passes:** before that only technical checks (cell count,
+errors, data hashes, determinism) — no rate, no structure, no comparison. The MATLAB run of point 5 is started by
+Claude on the laptop once MATLAB is installed, under the same < 1 h rule. The Q5 comparison table is produced once the Q5 grid has finished; until then only
 the W-arms are aggregated.
 
 ## 8. Open, not decided by Q5-W
