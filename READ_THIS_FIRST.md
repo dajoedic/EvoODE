@@ -10,6 +10,23 @@ zweites davon. Alles Dauerhafte gehört dorthin, nach `PAPER_1.md` oder ins `DIA
 **Regeln:** wird immer **vollständig überschrieben**, nie angehängt. Was älter als ein paar Tage
 ist, ist vermutlich falsch — dann gilt `CLAUDE.md`.
 
+**Stand: 2026-10-30, 12:50 — Sitzung beendet, voller Q5-W-Portlauf rechnet weiter auf dem Laptop.**
+- **Prozesse:** 6 × `python …/run_sideproject_q5w_wsindy.py`, gestartet 10:04 (PIDs 9956, 11728, 28768, 29452, 32168,
+  48584), **15.997 / 27.216** Zeilen, 0 Fehler; dim 1 fertig, dim 2 bei Systemen 35–42, dim 3/4 (52–63, 5.184 Zeilen)
+  kommt noch. Hochrechnung: dim 2 Rest ~3 h, dim 3/4 grob 11–20+ h (Simulationsbudget-Ausreißer, 2–6 min/Zeile) →
+  fertig zwischen Freitagnacht und Wochenende (Nutzerwette: reicht nicht).
+- **Zuklappen** = Ruhezustand, Prozesse frieren ein und laufen weiter. **Falls sie tot sind** (Neustart/Update), aus dem
+  Repo-Root für i = 0…5 neu starten — setzt an den fertigen Zeilen fort:
+  `python analysis/scripts/aggregate/run_sideproject_q5w_wsindy.py --all-cells --cells outputs/sideproject_q5w_wsindy/full_shards/cells_$i.csv --output-dir outputs/sideproject_q5w_wsindy/full_shards/shard_$i`
+  (Fortschritt: `grep -c '^completed' outputs/sideproject_q5w_wsindy/full_shards/shard_*.log`).
+- **Offen beim Nutzer:** ob auf 11 Prozesse umgeshardet wird (halbiert dim 3/4); MATLAB-Lizenz (IT-Helpdesk, ~14 Tage).
+- **Danach, in dieser Reihenfolge:** Shards zu `outputs/sideproject_q5w_wsindy/full/details.csv` zusammenführen
+  (technische Prüfung: 27.216 Zeilen, 0 Fehler, Hashes) → MATLAB-Lauf (`matlab -batch "addpath('analysis/matlab');
+  run_wsindy_original_q5w(pwd, 2)"`, dann ohne Limit; < 1 h-Regel) → `compare_sideproject_q5w_matlab.py --port-rows
+  outputs/sideproject_q5w_wsindy/full/details.csv` → **erst bei bestandenem §5.5 entsiegeln** und Q5-W-Tabellen bauen.
+  **Bis dahin keine Rate, keine Struktur, kein Vergleich aus dem Portlauf ansehen.** Q5-Raster läuft auf Orion, Ende
+  ~31.10. abends.
+
 **Stand: 2026-10-30, ~11:00 — voller Q5-W-Portlauf rechnet auf dem Laptop** (6 Prozesse, Zell-Shards unter
 `outputs/sideproject_q5w_wsindy/full_shards/shard_{0..5}/`, Logs daneben; resumable — Neustart mit derselben
 `--cells`/`--output-dir`-Kombination setzt fort). Dim 1 fertig, dim 2 läuft; einzelne Auswertungen schöpfen das
