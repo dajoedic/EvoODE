@@ -10,6 +10,13 @@ zweites davon. Alles Dauerhafte gehört dorthin, nach `PAPER_1.md` oder ins `DIA
 **Regeln:** wird immer **vollständig überschrieben**, nie angehängt. Was älter als ein paar Tage
 ist, ist vermutlich falsch — dann gilt `CLAUDE.md`.
 
+**Stand: 2026-10-30, ~11:00 — voller Q5-W-Portlauf rechnet auf dem Laptop** (6 Prozesse, Zell-Shards unter
+`outputs/sideproject_q5w_wsindy/full_shards/shard_{0..5}/`, Logs daneben; resumable — Neustart mit derselben
+`--cells`/`--output-dir`-Kombination setzt fort). Dim 1 fertig, dim 2 läuft; einzelne Auswertungen schöpfen das
+eingefrorene Simulationsbudget (1,2 Mio. RHS-Evals) aus → 2–6 min pro Zeile, Hochrechnung ≥ 10–18 h. **Nutzer: tagsüber
+laufen lassen, am Abend entscheiden** (Option: auf 11 Prozesse umshardeln, Q5-Zellen zuerst). Ergebnisse versiegelt bis
+MATLAB-Abgleich (§5.5); MATLAB-Lizenz beim IT-Helpdesk angefragt. WP-FA6b committet (`8aa6eec`).
+
 **Stand: 2026-10-30, Vormittag — Q5-W läuft weiter.** Nutzer hat entschieden: Protokoll **eingefroren** (`83139f0`),
 Abnahme 1(ii) nur berichtet; neuer Punkt 5 = **Identität mit dem Originalcode in MATLAB** (SCCH hat Lizenzen, Installation
 über IT-Helpdesk beantragt; Octave entfällt) auf allen ρ = 0-Zellen. **WP-FA6b bei Codex** (Abnahme umstellen, Smoke,
