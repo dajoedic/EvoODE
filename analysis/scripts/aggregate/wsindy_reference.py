@@ -189,6 +189,9 @@ def select_model(g, b, scaling, cap=None, lambdas=LAMBDAS):
     eligible = [i for i, count in enumerate(counts) if cap is None or count <= cap]
     chosen = min(eligible, key=lambda i: (losses[i], lambdas[i])) if eligible else None
     return (models[chosen] if chosen is not None else np.zeros(g.shape[1])), dict(
+        lambda_grid_index=chosen, lambda_grid_index_base=0,
+        support_indices=[] if chosen is None else np.flatnonzero(models[chosen]).tolist(),
+        coefficients_original_scale=(np.zeros(g.shape[1]) if chosen is None else models[chosen]).tolist(),
         lambda_hat=None if chosen is None else float(lambdas[chosen]),
         lambda_at_grid_end=chosen in (0, len(lambdas)-1), selected=chosen is not None,
         lambda_grid=np.asarray(lambdas).tolist(), loss_curve=losses, term_counts=counts,

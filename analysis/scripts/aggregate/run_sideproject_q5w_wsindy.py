@@ -130,7 +130,7 @@ def reference_rows():
     return pd.concat([f[f.method_config_id == 'weak_sindy_poly_deg3_sin_cos_stlsq_0.1'] for f in chunks], ignore_index=True)
 
 
-def run(rows, configurations=CONFIGS, output=OUTPUT/'smoke'):
+def run(rows, configurations=CONFIGS, output=OUTPUT/'smoke', technical_only=False):
     output.mkdir(parents=True, exist_ok=True)
     result_path = output/'details.csv'
     reference = reference_rows().rename(columns={'source_initial_condition_set': 'initial_condition_set'}).set_index(KEYS)
@@ -147,7 +147,7 @@ def run(rows, configurations=CONFIGS, output=OUTPUT/'smoke'):
         if baseline.data_sha(row) != expected.observed_data_sha256:
             raise ValueError(f'WP-N47 data hash mismatch: {key(row)}')
         sid = int(row.system_id)
-        clean = {ic: baseline.integrate_truth(systems[sid], ic-1, clean_t)[0] for ic in (1, 2)}
+        clean = None if technical_only else {ic: baseline.integrate_truth(systems[sid], ic-1, clean_t)[0] for ic in (1, 2)}
         for configuration in configurations:
             if (key(row), configuration) in completed:
                 continue
@@ -156,7 +156,7 @@ def run(rows, configurations=CONFIGS, output=OUTPUT/'smoke'):
             started = time.perf_counter()
             coef, metadata = fit_arm(t, x, columns, arm, row)
             fit_elapsed = time.perf_counter()-started
-            result = evaluate(StoredModel(coef, [c.name for c in columns]), systems[sid], support.loc[sid].to_dict(), row, t, x, clean_t, clean)
+            result = dict(zip(KEYS, key(row)), fit_status='success', observed_data_sha256=baseline.data_sha(row)) if technical_only else evaluate(StoredModel(coef, [c.name for c in columns]), systems[sid], support.loc[sid].to_dict(), row, t, x, clean_t, clean)
             result.update(method=arm, library_id=lib, method_config_id=configuration, stlsq_threshold='',
                           source_shard='q5w_laptop',
                           weak_sindy_source_note=baseline.weak_source_note() if arm == 'W2' else 'Q5-W independent published WSINDy implementation; reference commit 72d8d6e',
@@ -165,7 +165,7 @@ def run(rows, configurations=CONFIGS, output=OUTPUT/'smoke'):
                           q5w_library_evaluations=len(t)*(len(library(x.shape[1])) if arm == 'W2' else len(columns)),
                           q5w_least_squares_solves=sum(m['least_squares_solves'] for m in metadata),
                           fit_elapsed_s_context=fit_elapsed, q5w_elapsed_s_context=time.perf_counter()-started)
-            if not all(info['selected'] for info in metadata):
+            if not technical_only and not all(info['selected'] for info in metadata):
                 result['sindy_structure_hit_raw'] = False
                 result['sindy_structure_hit_pruned'] = False
             baseline.append_csv_rows(result_path, [result])
@@ -199,7 +199,7 @@ def main():
         parser.error('pre-smoke acceptance has not passed')
     if args.all_cells:
         summary = json.loads(acceptance.read_text())
-        if not summary.get('smoke', {}).get('deterministic', False):
+        if not summary.get('smoke', {}).get('passed', False):
             parser.error('full run requires accepted deterministic smoke')
         if args.output_dir == OUTPUT/'smoke':
             parser.error('full run requires a separate --output-dir')

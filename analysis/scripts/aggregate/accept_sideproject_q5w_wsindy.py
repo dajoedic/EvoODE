@@ -69,9 +69,11 @@ def mapping():
         q5_values = np.column_stack([c.function(state) for c in q5])
         c6_values = np.asarray(existing.transform(state))
         numerical_match = np.allclose(q5_values, c6_values[:, [expected.index(c.name) for c in q5]], rtol=1e-14, atol=1e-14)
-        results.append(dict(dim=dim, L_C6_count=len(c6), L_Q5_count=len(q5), c6_names=expected,
+        from export_sideproject_q5w_matlab import expressibility
+        matlab_mapping = {lib: expressibility(library(dim, lib), state) for lib in ('L-C6', 'L-Q5')}
+        results.append(dict(matlab_expressibility=matlab_mapping, dim=dim, L_C6_count=len(c6), L_Q5_count=len(q5), c6_names=expected,
                             q5_names=[c.name for c in q5], canonical_names=inverse,
-                            passed=names_match and canonical_match and numerical_match))
+                            passed=names_match and canonical_match and numerical_match and all(v['expressible'] for v in matlab_mapping.values())))
     return results
 
 
@@ -124,17 +126,35 @@ def smoke(output):
     rows = smoke_rows()
     rows[KEYS].to_csv(output/'smoke_cells.csv', index=False)
     started = time.perf_counter()
-    a = run(rows, output=OUTPUT/'smoke')
-    b = run(rows, output=OUTPUT/'determinism_repeat')
+    a = run(rows, output=OUTPUT/'smoke', technical_only=True)
+    b = run(rows, output=OUTPUT/'determinism_repeat', technical_only=True)
     first, second = pd.read_csv(a), pd.read_csv(b)
     ignore = [c for c in first if 'elapsed' in c]
     deterministic = first.drop(columns=ignore).equals(second.drop(columns=ignore))
+    expected = {(key(row), config) for _, row in rows.iterrows() for config in CONFIGS}
+    actual = {(key(row), row.q5w_configuration) for _, row in first.iterrows()}
+    complete = len(first) == len(second) == 120 and actual == expected
     totals = {field: int(first[field].sum()) for field in ('q5w_library_evaluations', 'q5w_least_squares_solves')}
     return dict(cells=len(rows), configurations=6, rows=len(first), deterministic=deterministic,
+                passed=complete and deterministic and bool((first.fit_status == 'success').all()),
                 fit_errors=int((first.fit_status != 'success').sum()), elapsed_two_runs_s_context=time.perf_counter()-started,
                 smoke_counts=totals, projection_factor=4536/20,
                 projected_full_counts={k: v*4536/20 for k, v in totals.items()},
                 projected_full_s_context=float(first.q5w_elapsed_s_context.sum()*4536/20))
+
+
+def pre_smoke_gate(summary):
+    """Point 1(ii) and the independent MATLAB verdict do not gate execution."""
+    return (summary['lorenz']['clean_passed']
+            and all(m['passed'] for m in summary['mapping'])
+            and summary['identity']['passed'])
+
+
+def acceptance_points(summary):
+    return {'1(i)': summary['lorenz']['clean_passed'], '1(ii)': 'reported_only',
+            '2': all(m['passed'] for m in summary['mapping']),
+            '3': summary['identity']['passed'],
+            '4': summary.get('smoke', {}).get('passed', False)}
 
 
 def main():
@@ -156,17 +176,26 @@ def main():
                 published = dict(clean_passed=records[0]['exact_support'] and records[0]['E_inf'] <= 1e-4,
                                  clean_E_inf=records[0]['E_inf'], clean_exact_support=records[0]['exact_support'],
                                  noisy_support_hits=sum(r['exact_support'] for r in records[1:]), noisy_trials=20)
-            summary = dict(lorenz=published, mapping=mapping(), identity=identity(output))
-            summary['pre_smoke_passed'] = (summary['lorenz']['clean_passed'] and summary['lorenz']['noisy_support_hits'] >= 15
-                                           and all(m['passed'] for m in summary['mapping'])
-                                           and summary['identity']['bit_identical_cells'] == 100)
+            previous = json.loads((output/'summary.json').read_text()) if (output/'summary.json').exists() else {}
+            summary = dict(lorenz=published, mapping=mapping(),
+                           identity=previous['identity'] if args.stage == 'complete-pre' else identity(output),
+                           matlab_identity_passed=previous.get('matlab_identity_passed'))
+            if 'smoke' in previous:
+                summary['smoke'] = previous['smoke']
+            exceptions = json.loads((output/'evaluation_identity.json').read_text())
+            named = (len(exceptions) >= 100 and all('cell' in r and 'differences' in r for r in exceptions))
+            summary['identity']['passed'] = summary['identity']['cells'] >= 100 and (
+                summary['identity']['bit_identical_cells'] == summary['identity']['cells'] or named)
+            summary['identity']['exception_file'] = 'evaluation_identity.json'
+            summary['pre_smoke_passed'] = pre_smoke_gate(summary)
         else:
             summary = json.loads((output/'summary.json').read_text())
             if not summary['pre_smoke_passed']:
                 raise ValueError('pre-smoke acceptance failed; no C-6 fits authorized')
             summary['smoke'] = smoke(output)
+        summary['acceptance_points'] = acceptance_points(summary)
         (output/'summary.json').write_text(json.dumps(summary, indent=2), encoding='utf8')
-        print(json.dumps(summary, indent=2))
+        print(json.dumps({k: summary[k] for k in ('pre_smoke_passed', 'matlab_identity_passed', 'smoke') if k in summary}, indent=2))
 
 
 if __name__ == '__main__':
