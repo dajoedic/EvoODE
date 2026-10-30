@@ -6,6 +6,25 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ## 2026-10-30
 
+### Q5-Raster — zweiter Zwischenblick auf Wunsch des Nutzers, 1.144 / 1.632 Zellen
+
+Records per `oc exec` aus einem Q5-Pod (NFS-Laufwerk hing): 17.931 Zeilen, keine nicht-identischen Duplikate, ein
+Protokoll-Commit `f737939`, ein Settings-Fingerprint, Trajektorienkontrolle 0 Fehler. Regel (c), nur verrauschte bzw.
+ausgedünnte Zellen (1.112), gegen WP-N47 (Spanne über die zehn Konfigurationen je Methode, das Maximum ist eine
+nachträgliche Bestwahl zugunsten der Baseline). Inline gerechnet (Scratchpad), kein getracktes Skript, **vorläufig**:
+die Shards laufen teuer-zuerst, der Rest ist nicht repräsentativ verteilt.
+
+| Stratum | n | Q5 Struktur geprunt / roh | Weak-SINDy | SINDy | E-SINDy | Q5 R²>0,9 Rek. / Gen. | Weak-SINDy Rek. / Gen. |
+|---|---|---|---|---|---|---|---|
+| dim 1 | 429 | 145 / 136 | 11–96 | 16–37 | 13–31 | 385 / 303 | 222–361 / 113–217 |
+| dim 2 | 499 | 146 / 118 | 1–126 | 3–64 | 4–57 | 429 / 284 | 86–291 / 31–173 |
+| dim 3 machbar (52, 61) | 130 | 23 / 14 (alle 61) | 0–4 | 0 | 0 | 41 / 12 | 0–9 / 0–7 |
+| dim 4 (63) | 54 | 0 / 0 | 0 | 0 | 0 | 48 / 7 | 0–2 / 0 |
+
+Pfadende an der Wahrheits-abgeleiteten 6-Term-Grenze in 1.112 / 1.112 Zellen; wahre Struktur auf dem Pfad 526 / 1.112.
+Einschränkungen unverändert: die Grenze stammt aus der Wahrheit, der Gegner ist Weak-SINDy mit festem Schwellwert — der
+faire Gegner (WSINDy mit MSTLS, Q5-W) ist gerechnet, aber bis zum MATLAB-Abgleich versiegelt.
+
 ### Q5-W: published WSINDy as the reference — implementation built, acceptance 1(ii) fails, port verified faithful
 <!-- 9b49329 -->
 
