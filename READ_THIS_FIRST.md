@@ -10,6 +10,13 @@ zweites davon. Alles Dauerhafte gehört dorthin, nach `PAPER_1.md` oder ins `DIA
 **Regeln:** wird immer **vollständig überschrieben**, nie angehängt. Was älter als ein paar Tage
 ist, ist vermutlich falsch — dann gilt `CLAUDE.md`.
 
+**Stand: 2026-10-30, 23:45 — Q5-W-Portlauf umverteilt, 12 Prozesse.** 19.913 / 27.216 Zeilen, 0 Fehler. Teuer ist ρ = 0,5
+(dim-2-Systeme 37–39 je ~10 CPU-h), nicht dim 3 (~16 s/Zeile). Shards 0–2 (ρ = 0) laufen unverändert (dim 3). Shards 3–5
+(ρ = 0,5) gestoppt (CSV-Integrität geprüft, 67 Spalten in allen Zeilen) und ihr Rest auf 9 Prozesse verteilt:
+`cells_{k}_{j}.csv` für k = 3–5, j = 0–2; j = 0 schreibt weiter nach `shard_{k}/` (Log `shard_{k}_r0.log`), j = 1, 2 nach
+`shard_{k}_{j}/`. **Merge = alle `shard_*/details.csv`, Schlüssel (Zelle, Konfiguration) eindeutig prüfen.** Neustart
+eines Teils: gleiche `--cells`/`--output-dir`-Kombination. Laptop muss wach bleiben. Orion-Token abgelaufen (23:36).
+
 **Stand: 2026-10-30, 12:50 — Sitzung beendet, voller Q5-W-Portlauf rechnet weiter auf dem Laptop.**
 - **Prozesse:** 6 × `python …/run_sideproject_q5w_wsindy.py`, gestartet 10:04 (PIDs 9956, 11728, 28768, 29452, 32168,
   48584), **15.997 / 27.216** Zeilen, 0 Fehler; dim 1 fertig, dim 2 bei Systemen 35–42, dim 3/4 (52–63, 5.184 Zeilen)
