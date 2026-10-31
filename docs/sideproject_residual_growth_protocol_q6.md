@@ -9,6 +9,18 @@ this text before the first Q6 evaluation and is a human choice where it is one. 
 variance estimated locally without a noise model; primary floor without the right-hand-side term, the floor with it as
 a secondary rule; Q6 before variant C.
 
+## Amendment 2026-10-31 (controls only, before any Q6 number was computed)
+
+WP-FA7 (`codex/reports/REPORT_WP_FA7.md`) found two defects in §6, both in the protocol, not in the data:
+- **The reference-prefix control is wrong by construction.** The path is joint over equations: without the cap, an
+  equation at six terms keeps competing for the next forward step, so the uncapped joint path legitimately departs from
+  Q5's capped one (`sys0024_ic1_s0.01_r0_n1`, step 14: `[7, 5]` against `[6, 6]`). Replaced by: **the Q6 path function
+  with the end condition "Q5 (cap 6 or numerical zero)" reproduces the Q5 candidate list and weak coefficients on all
+  1,632 cells** — an implementation identity check. §4's classification is unaffected: T / R / P are judged on each
+  path's own states.
+- **The Q5 protocol digest** recorded in `q5_grid_paths.json` is that of `f454a32`; the execution-only amendment
+  `ecc8bac` changed the file afterwards. The digest is checked against the blob at `f454a32`, not the working copy.
+
 ## 1. Question
 
 Can the truth-derived path end (6 terms per equation) be replaced by a stop that follows from the observed data alone,
@@ -76,8 +88,8 @@ always both — D1–D5, and cost in counts. Cost projected in counts before the
 
 - **σ = ρ = 0 cells:** stopped primary path identical to the Q5 path (candidate list and weak coefficients); any
   deviation is reported per cell and, if it truncates, counts as T.
-- **Reference path vs Q5:** on every cell, the reference path's first states up to Q5's end are identical to the Q5
-  candidate list where Q5 ended by `sse`; where Q5 ended at the cap, its prefix up to the cap is identical.
+- ~~Reference path vs Q5 prefix~~ (superseded by the amendment): the Q6 path function with the Q5 end condition
+  reproduces the Q5 candidate list and weak coefficients on every cell.
 - Determinism: two runs bit-identical; `observed_data_sha256` per cell equal to the Q5 records.
 
 ## 7. Not in Q6
