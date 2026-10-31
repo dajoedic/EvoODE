@@ -1,13 +1,15 @@
 """Lossless inputs and explicit library tags for the sealed MATLAB identity check."""
 from __future__ import annotations
 import hashlib
+import argparse
 import json
 import re
 from pathlib import Path
 import numpy as np
 from scipy.integrate import solve_ivp
 from scipy.io import savemat, loadmat
-from run_sideproject_q5w_wsindy import OUTPUT, EXPORT, KEYS, baseline, key, library
+from run_sideproject_q5w_wsindy import (OUTPUT, EXPORT, KEYS, baseline, key, library,
+                                      interpolate_uniform, interpolation_facts)
 
 
 def tags_for(columns):
@@ -57,7 +59,35 @@ def write_cell(folder, cell_id, cell_key, t, x, lib, columns):
     return payload
 
 
+def export_interpolated():
+    """Export only the addendum arm, keeping the original manifest untouched."""
+    folder = OUTPUT/'matlab_inputs/w1_interp'
+    index = baseline.read_export_index(EXPORT/'index.csv')
+    rows = index[index.subsample_rho == .5]
+    entries = []
+    for _, row in rows.iterrows():
+        t, x = interpolate_uniform(*baseline.read_index_cell(EXPORT, row))
+        cell_key = dict(zip(KEYS, key(row)))
+        slug = '_'.join(format(v, 'g') for v in key(row))
+        for lib in ('L-C6', 'L-Q5'):
+            payload = write_cell(folder, f'c6_interp_{slug}_{lib}', cell_key,
+                                 t, x, lib, library(x.shape[1], lib))
+            payload.update(arm='W1-interp', **interpolation_facts(t, x))
+            (folder/f"{payload['cell_id']}.json").write_text(json.dumps(payload, indent=2), encoding='utf8')
+            entries.append(payload)
+    manifest = dict(arm='W1-interp', lorenz_cells=0, c6_interpolated_cells=len(rows),
+                    tasks=len(entries), cells=entries)
+    (folder/'manifest.json').write_text(json.dumps(manifest, indent=2), encoding='utf8')
+    print(json.dumps({k: v for k, v in manifest.items() if k != 'cells'}))
+
+
 def main():
+    parser = argparse.ArgumentParser(__doc__)
+    parser.add_argument('--interpolated', action='store_true', help='Export only rho=0.5 W1-interp inputs')
+    args = parser.parse_args()
+    if args.interpolated:
+        export_interpolated()
+        return
     folder = OUTPUT/'matlab_inputs'
     entries = []
     t = np.linspace(0, 10, 10001)

@@ -1,10 +1,10 @@
-function run_wsindy_original_q5w(root, limit)
+function run_wsindy_original_q5w(root, limit, input_dir, output_dir)
 % Execute the external reference on binary inputs without modifying its files.
 if nargin < 1, root = pwd; end
 if nargin < 2, limit = inf; end
 addpath(fullfile(root, 'outputs', 'reference_wsindy_ode_72d8d6e'));
-input_dir = fullfile(root, 'outputs', 'sideproject_q5w_wsindy', 'matlab_inputs');
-output_dir = fullfile(root, 'outputs', 'sideproject_q5w_wsindy', 'matlab_outputs');
+if nargin < 3, input_dir = fullfile(root, 'outputs', 'sideproject_q5w_wsindy', 'matlab_inputs'); end
+if nargin < 4, output_dir = fullfile(root, 'outputs', 'sideproject_q5w_wsindy', 'matlab_outputs'); end
 if ~exist(output_dir, 'dir'), mkdir(output_dir); end
 manifest = jsondecode(fileread(fullfile(input_dir, 'manifest.json')));
 grid = 10.^linspace(-4, 0, 100);

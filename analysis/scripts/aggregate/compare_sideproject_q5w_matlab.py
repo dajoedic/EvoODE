@@ -44,26 +44,37 @@ def main():
     parser.add_argument('--port-rows', type=Path, default=OUTPUT/'full/details.csv')
     parser.add_argument('--matlab-dir', type=Path, default=OUTPUT/'matlab_outputs')
     parser.add_argument('--output-dir', type=Path, default=OUTPUT/'matlab_identity')
+    parser.add_argument('--interpolated', action='store_true', help='Check the W1-interp manifest and rows')
     args = parser.parse_args()
-    manifest = json.loads((OUTPUT/'matlab_inputs/manifest.json').read_text())
-    lorenz = {r['seed']: r for r in map(json.loads, (OUTPUT/'acceptance/lorenz.jsonl').read_text().splitlines())}
+    if args.interpolated:
+        if args.matlab_dir == OUTPUT/'matlab_outputs':
+            args.matlab_dir = OUTPUT/'matlab_outputs/w1_interp'
+        if args.output_dir == OUTPUT/'matlab_identity':
+            args.output_dir = OUTPUT/'matlab_identity/w1_interp'
+    manifest_path = OUTPUT/('matlab_inputs/w1_interp/manifest.json' if args.interpolated else 'matlab_inputs/manifest.json')
+    manifest = json.loads(manifest_path.read_text())
+    arm = 'W1-interp' if args.interpolated else 'W1'
+    lorenz = {} if args.interpolated else {r['seed']: r for r in map(json.loads, (OUTPUT/'acceptance/lorenz.jsonl').read_text().splitlines())}
     rows = {}
     if args.port_rows.exists():
         for _, row in pd.read_csv(args.port_rows, float_precision='round_trip').iterrows():
-            if row.q5w_configuration.startswith('W1:'):
+            if row.q5w_configuration.startswith(arm + ':'):
                 row_key = (key(row), row.q5w_configuration.split(':')[1])
                 if row_key in rows:
                     raise ValueError('duplicate port cell')
-                rows[row_key] = json.loads(row.q5w_equations)
+                rows[row_key] = row
     verdicts = []
     for cell in manifest['cells']:
         path = args.matlab_dir/f"{cell['cell_id']}.json"
-        port = lorenz_equations(lorenz[cell['cell_key']['seed']]) if 'seed' in cell['cell_key'] else rows.get((key(cell['cell_key']), cell['library']))
+        row = rows.get((key(cell['cell_key']), cell['library'])) if 'seed' not in cell['cell_key'] else None
+        port = lorenz_equations(lorenz[cell['cell_key']['seed']]) if 'seed' in cell['cell_key'] else (json.loads(row.q5w_equations) if row is not None else None)
         if not path.exists() or port is None:
             verdict = dict(passed=False, first_differing_equation=None, reason='missing_matlab' if not path.exists() else 'missing_port')
         else:
             original = json.loads(path.read_text())
-            if any(original.get(k) != cell[k] for k in ('cell_id', 'library', 'time_sha256', 'state_sha256', 'column_names')):
+            if args.interpolated and row.q5w_interpolated_sha256 != cell['q5w_interpolated_sha256']:
+                verdict = dict(passed=False, first_differing_equation=None, reason='port_input_identity')
+            elif any(original.get(k) != cell[k] for k in ('cell_id', 'library', 'time_sha256', 'state_sha256', 'column_names')):
                 verdict = dict(passed=False, first_differing_equation=None, reason='manifest_identity')
             else:
                 verdict = compare_equations(port, original['equations'])
@@ -75,7 +86,7 @@ def main():
     (args.output_dir/'summary.json').write_text(json.dumps(summary, indent=2), encoding='utf8')
     acceptance_path = OUTPUT/'acceptance/summary.json'
     acceptance = json.loads(acceptance_path.read_text())
-    acceptance['matlab_identity_passed'] = None if not any(args.matlab_dir.glob('*.json')) else all(v['passed'] for v in verdicts)
+    acceptance['matlab_interp_identity_passed' if args.interpolated else 'matlab_identity_passed'] = None if not any(args.matlab_dir.glob('*.json')) else all(v['passed'] for v in verdicts)
     acceptance_path.write_text(json.dumps(acceptance, indent=2), encoding='utf8')
     print(json.dumps(summary, indent=2))
 

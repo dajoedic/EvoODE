@@ -1,6 +1,7 @@
 """Q5-W runner; evaluation is delegated unchanged to the WP-N47 path."""
 from __future__ import annotations
 import argparse
+import hashlib
 import json
 import re
 import sys
@@ -23,6 +24,7 @@ EXPORT = ROOT/'outputs/phase_c_c6_data_conditions_5dd1df8'
 REFERENCE = ROOT/'outputs/c6_sindy_baselines_dop853_e935c37/merged/details.csv'
 OUTPUT = ROOT/'outputs/sideproject_q5w_wsindy'
 CONFIGS = tuple(f'{arm}:{lib}' for arm in ('W1', 'W1-cap', 'W2') for lib in ('L-C6', 'L-Q5'))
+INTERP_CONFIGS = ('W1-interp:L-C6', 'W1-interp:L-Q5')
 KEYS = ['system_id', 'initial_condition_set', 'noise_sigma', 'subsample_rho', 'noise_realization']
 CFG = LibraryConfig('poly_deg3_sin_cos_stlsq_0.1', 3, True, .1)
 
@@ -75,7 +77,34 @@ def evaluate(model, system, support, row, t, x, clean_t, clean):
         return baseline.run_one_model('weak_sindy', CFG, system, support, row, t, x, clean_t, clean, integrator='dop853')
 
 
+def interpolate_uniform(t, x):
+    """Linear interpolation per state; preserve already-uniform inputs exactly."""
+    t, x = np.asarray(t, dtype=float), np.asarray(x, dtype=float)
+    if (t.ndim != 1 or len(t) < 2 or x.ndim != 2 or len(x) != len(t)
+            or not np.all(np.isfinite(t)) or not np.all(np.isfinite(x))
+            or not np.all(np.diff(t) > 0)):
+        raise ValueError('interpolation requires finite states and increasing times')
+    dt = float(np.mean(np.diff(t)))
+    if not np.allclose(np.diff(t), dt, rtol=1e-10, atol=1e-14):
+        uniform = np.linspace(t[0], t[-1], len(t))
+        x = np.column_stack([np.interp(uniform, t, state) for state in x.T])
+        t = uniform
+    return t, x
+
+
+def interpolation_facts(t, x):
+    """Hash little-endian float64 C-order time bytes followed by state bytes."""
+    digest = hashlib.sha256()
+    for array in (t, x):
+        digest.update(np.asarray(array, dtype='<f8').tobytes(order='C'))
+    return dict(q5w_interpolation_points=len(t),
+                q5w_interpolation_dt=float((t[-1]-t[0])/(len(t)-1)),
+                q5w_interpolated_sha256=digest.hexdigest())
+
+
 def fit_arm(t, x, columns, arm, row):
+    if arm == 'W1-interp':
+        t, x = interpolate_uniform(t, x)
     if arm != 'W2':
         return fit(t, x, columns, cap=6 if arm == 'W1-cap' else None)
     seed = baseline.weak_sindy_seed(row, CFG.library_id)
@@ -165,6 +194,8 @@ def run(rows, configurations=CONFIGS, output=OUTPUT/'smoke', technical_only=Fals
                           q5w_library_evaluations=len(t)*(len(library(x.shape[1])) if arm == 'W2' else len(columns)),
                           q5w_least_squares_solves=sum(m['least_squares_solves'] for m in metadata),
                           fit_elapsed_s_context=fit_elapsed, q5w_elapsed_s_context=time.perf_counter()-started)
+            if arm == 'W1-interp':
+                result.update(interpolation_facts(*interpolate_uniform(t, x)))
             if not technical_only and not all(info['selected'] for info in metadata):
                 result['sindy_structure_hit_raw'] = False
                 result['sindy_structure_hit_pruned'] = False
@@ -182,9 +213,9 @@ def main():
     parser.add_argument('--output-dir', type=Path, default=OUTPUT/'smoke')
     args = parser.parse_args()
     configs = tuple(args.configurations.split(','))
-    if not configs or set(configs)-set(CONFIGS):
+    if not configs or set(configs)-set(CONFIGS + INTERP_CONFIGS):
         parser.error('unknown configuration')
-    rows = baseline.read_export_index(EXPORT/'index.csv') if args.all_cells else smoke_rows()
+    rows = baseline.read_export_index(EXPORT/'index.csv') if args.all_cells or args.cells else smoke_rows()
     if args.cells:
         requested = pd.read_csv(args.cells)
         rows = rows.merge(requested[KEYS], on=KEYS, validate='one_to_one')
