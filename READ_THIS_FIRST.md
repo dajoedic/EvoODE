@@ -10,17 +10,21 @@ zweites davon. Alles Dauerhafte gehört dorthin, nach `PAPER_1.md` oder ins `DIA
 **Regeln:** wird immer **vollständig überschrieben**, nie angehängt. Was älter als ein paar Tage
 ist, ist vermutlich falsch — dann gilt `CLAUDE.md`.
 
-**Stand: 2026-10-31, 03:20 — Q5-W-Portlauf fertig und zusammengeführt; wartet auf MATLAB.**
+**Stand: 2026-10-31, Mittag — Q5-W vorläufig ausgewertet (DIARY 31.10.); W1-interp läuft lokal; wartet auf MATLAB und Q5-Nachzügler.**
 - **Portlauf:** 27.216 / 27.216 Zeilen (4.536 Zellen × 6 Konfigurationen W1/W1-cap/W2 × L-C6/L-Q5), Schlüssel
   (Zelle, Konfiguration) eindeutig, `fit_status = success` überall, 0 `fit_error`. Zusammengeführt aus 12 Shards
   (`outputs/sideproject_q5w_wsindy/full_shards/shard_*/details.csv`) nach `outputs/sideproject_q5w_wsindy/full/details.csv`.
-  Letzte Zeile Sa 03:18; lokal läuft nichts mehr.
+  Letzte Zeile Sa 03:18.
 - **Vorläufig geöffnet (Nutzer, 31.10. morgens, Abweichung von §7):** Auswertung gegen Q5 (1.626/1.632 Zellen) im
   DIARY 31.10.; gilt erst mit bestandenem §5.5. Fair lesbar nur ρ = 0 (W1 auf ρ = 0,5 = unsere Rasteranbindung).
 - **Sobald MATLAB installiert ist (IT-Helpdesk, Lizenz ~14 Tage):** Claude startet (< 1 h-Regel)
   `matlab -batch "addpath('analysis/matlab'); run_wsindy_original_q5w(pwd, 2)"` (Probe), dann ohne Limit, dann
   `python analysis/scripts/aggregate/compare_sideproject_q5w_matlab.py --port-rows outputs/sideproject_q5w_wsindy/full/details.csv`
   → bei Bestehen entsiegeln, Q5-W-Tabellen bauen, Q5 gegen W1 vergleichen.
+- **W1-interp läuft lokal (seit 31.10. Mittag, 12 Prozesse):** Protokoll §4a (Sensitivitätsarm, W1 bleibt Primärzeile auf
+  ρ = 0,5; Literatur DIARY 31.10.), WP-FA6c `9439a05`. Shards `outputs/sideproject_q5w_wsindy/w1_interp_shards/cells_{0..11}.csv`
+  → `shard_{i}/`, Logs daneben, 4.536 Zeilen erwartet. Neustart eines Teils: `python analysis/scripts/aggregate/run_sideproject_q5w_wsindy.py
+  --all-cells --cells …/cells_$i.csv --configurations W1-interp:L-C6,W1-interp:L-Q5 --output-dir …/shard_$i` (setzt fort).
 - **Q5-Raster auf Orion** (16 Pods): Ende ~31.10. abends erwartet; Zwischenblick 1.144 / 1.632 im DIARY 30.10.
 - **Kochbuch-PDFs** (Stand 27.10., ohne Q5) liegen nur im Sitzungs-Scratchpad; Nutzer kopiert sie.
 
@@ -59,7 +63,7 @@ entfernt. Aggregiert nach `analysis/data/sideproject_residual_growth/q4_*.csv` +
 Kontrollen bestanden, `duplicates_compared = 3` bit-identisch (DIARY 21.10.). Das Skript weigert sich, vorhandene
 Tabellen zu überschreiben — ein erneuter Lauf braucht `--output-dir`.
 
-Lokal läuft nichts (Stand 31.10. 03:20).
+Lokal läuft W1-interp (siehe oben).
 **Offen für den Nutzer:** sieben schreibgeschützte pytest-Ordner unter `tmp/` (Codex-Sandbox, nur mit Admin-Rechten
 löschbar) und die Annihilator-Dateien `output/pdf/` und `tmp/pdfs/` → gehören nach `..\EvoODE-next`.
 
