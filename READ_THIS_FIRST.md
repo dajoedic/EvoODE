@@ -12,8 +12,10 @@ ist, ist vermutlich falsch — dann gilt `CLAUDE.md`.
 
 **Stand: 2026-10-31, Nachmittag — Q5-W vorläufig ausgewertet; W1-interp fertig und Primärzeile auf ρ = 0,5 (§4a,
 `9ffea6b`); Methode heißt WISP; **Q6 Stufe 1 gerechnet: Noise-Floor-Regel verworfen (T = 591/2.788), Schätzer
-unverzerrt; Stufe 2 entfällt; Entscheidung über das weitere Vorgehen beim Nutzer (DIARY 31.10., `683429b`)**;
-danach Protokoll Variante C (Teilmenge);
+unverzerrt; Stufe 2 entfällt (DIARY 31.10., `683429b`)**. Pfadende = Paper-2-Kandidat (CLAUDE.md `cad8482`).
+**Nächster Schritt, wenn der Nutzer so weit ist:** ein Protokoll für (1) dim 2 ohne Grenze (Pfad bis volle Basis,
+~500 Kernstunden), (2) dim 3/4 Stichprobe mit Grenze 8 oder 10 als Sensitivität (6 dort als Rechenbudget erklärt;
+ohne Grenze wären es ~17–55 k Kernstunden), (3) Variante C auf derselben Teilmenge. Noch nicht entschieden;
 Q5: 1.630/1.632, 2 Pods laufen; MATLAB ausstehend.** WISP als Paper 1 statt EvoGrow: offen, hängt an §9.4d.
 - **Portlauf:** 27.216 / 27.216 Zeilen (4.536 Zellen × 6 Konfigurationen W1/W1-cap/W2 × L-C6/L-Q5), Schlüssel
   (Zelle, Konfiguration) eindeutig, `fit_status = success` überall, 0 `fit_error`. Zusammengeführt aus 12 Shards
