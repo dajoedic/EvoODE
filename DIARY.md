@@ -7,6 +7,7 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 ## 2026-10-31
 
 ### Q5-W vorläufig geöffnet — Q5 (c) gegen veröffentlichtes WSINDy, 1.626 / 1.632 Q5-Zellen
+<!-- 7bab90d -->
 
 **Abweichung vom eingefrorenen Protokoll §7, auf Anweisung des Nutzers (31.10. morgens):** der Portlauf (27.216 / 27.216
 Zeilen, 0 Fehler, Schlüssel eindeutig; zusammengeführt nach `outputs/sideproject_q5w_wsindy/full/details.csv`) wurde
