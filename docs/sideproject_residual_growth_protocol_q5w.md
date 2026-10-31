@@ -97,6 +97,11 @@ reported on ρ = 0.5.
   if expressible) is exported and checked against the MATLAB original with the §5.5 criterion — the same gate, the same
   consequence on failure.
 - Reporting: W1 and W1-interp side by side on ρ = 0.5, neither replacing the other; Q5 receives no interpolation.
+- **Literature check, same day (`DIARY.md` 2026-10-31):** no WSINDy/WENDy paper or official code handles irregular
+  sampling within a trajectory; WENDy (§2.1) and WENDy-MLE (fn. 2, §4) name actual-grid quadrature weights as the
+  extension "in principle" — the binding W1 already uses. Interpolation onto a uniform grid has no precedent in ODE
+  discovery benchmarks (ODEFormer feeds baselines the raw irregular times) and documented bias. Hence: **W1 is the
+  primary row on ρ = 0.5, W1-interp a declared sensitivity arm.**
 
 ## 5. Acceptance before any C-6 cell is run
 

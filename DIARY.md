@@ -6,6 +6,22 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ## 2026-10-31
 
+### Literatur: WSINDy auf ungleichen Zeitabständen — Präzedenz und Konsequenz für Q5-W
+
+Recherche (Agent, Quellen gelesen, Zeilen-/Abschnittsangaben im Sitzungsprotokoll; von Claude nicht einzeln
+nachgeprüft): **Kein WSINDy-/WENDy-Paper und kein offizieller Code behandelt unregelmäßige Abtastung innerhalb einer
+Trajektorie.** WSINDy-ODE Lemma 2 (Gl. 2.8) setzt t_j = a + jΔt voraus (Trapez-Genauigkeit über Euler–Maclaurin);
+Code `dt = mean(diff(tobs))`, Faltung, FFT-Eckpunkt. WENDy (Bortz, Messenger, Dukic 2023, §2.1) und WENDy-MLE
+(arXiv 2502.08881, Fn. 2, §4 als Limitation): Erweiterung „im Prinzip“ durch Quadraturgewichte auf dem tatsächlichen
+Raster — genau unsere W1-Anbindung. Nativ nichtuniform ist nur pysindys `WeakPDELibrary` (stückweise linear, analytisch
+integriert) — erklärt, warum der feste Weak-SINDy bei ρ = 0,5 vor W1 liegt; PyWSINDy_ODE teilweise (Trapez auf dem
+Raster, Breite aus `t[1]-t[0]`). **ODEFormer und NSODE geben den Baselines die rohen unregelmäßigen Zeiten**
+(nichtuniforme Finite Differenzen, Savitzky–Golay ignoriert t), keine Interpolation, keine Weak-Form-Baseline.
+Interpolation auf ein gleichmäßiges Raster hat in der ODE-Discovery keine Präzedenz und eine dokumentierte Verzerrung
+(Rehfeld et al., NPG 18:389, 2011). **Konsequenz (Protokoll §4a ergänzt):** W1 ist die Primärzeile auf ρ = 0,5,
+W1-interp eine erklärte Sensitivitätsanalyse. Vermuteter Schwachpunkt von W1 auf ρ = 0,5: Eckpunkt-Breite und
+Glättung laufen auf den Messpunkten, als wären sie gleichmäßig (`mean(diff)` ≈ 2Δt) — nicht geprüft.
+
 ### Q5-W vorläufig geöffnet — Q5 (c) gegen veröffentlichtes WSINDy, 1.626 / 1.632 Q5-Zellen
 <!-- 7bab90d -->
 
