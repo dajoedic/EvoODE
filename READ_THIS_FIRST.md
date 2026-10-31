@@ -11,7 +11,8 @@ zweites davon. Alles Dauerhafte gehört dorthin, nach `PAPER_1.md` oder ins `DIA
 ist, ist vermutlich falsch — dann gilt `CLAUDE.md`.
 
 **Stand: 2026-10-31, Nachmittag — Q5-W vorläufig ausgewertet; W1-interp fertig und Primärzeile auf ρ = 0,5 (§4a,
-`9ffea6b`); Methode heißt WISP; Q6-Protokoll (datenbasiertes Pfadende) als ENTWURF, wartet auf Nutzerwahl A/B;
+`9ffea6b`); Methode heißt WISP; Q6-Protokoll eingefroren (`78ecd74`), **Codex arbeitet an WP-FA7 (Q6 Stufe 1)**,
+Log `outputs/codex_wp_fa7.log`; danach Volllauf durch Claude (Laptop, Minuten), dann Protokoll Variante C (Teilmenge);
 Q5: 1.630/1.632, 2 Pods laufen; MATLAB ausstehend.** WISP als Paper 1 statt EvoGrow: offen, hängt an §9.4d.
 - **Portlauf:** 27.216 / 27.216 Zeilen (4.536 Zellen × 6 Konfigurationen W1/W1-cap/W2 × L-C6/L-Q5), Schlüssel
   (Zelle, Konfiguration) eindeutig, `fit_status = success` überall, 0 `fit_error`. Zusammengeführt aus 12 Shards
