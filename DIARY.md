@@ -6,6 +6,16 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ## 2026-10-31
 
+### Q6 eingefroren; WP-FA7 an Codex; WISP als Julia-Paket vorgemerkt
+
+Nutzer, 31.10.: Q6 vor Variante C (Q6 ist das K.-o.-Kriterium); Variante C auf einer Teilmenge (Probe, dann 48 Einheiten
+× σ ∈ {0,01; 0,05} × ρ ∈ {0; 0,5}, Realisierung 1), volles Raster erst einmal mit der Endversion. Q6 festgeschrieben:
+lokale Varianzschätzung ohne Rauschmodell, primäre Rauschgrenze ohne RHS-Term, sekundäre mit; Annahme T = 0. Beim
+Festschreiben korrigiert: der WISP-Schwachraum sind Integralfenster (1–16 Punkte), keine Testfunktionen — die Grenze
+kommt aus den Fensterendpunkten. Stufe 1 baut die Pfade ohne 6-Term-Grenze neu auf (nicht rein rückwirkend aus der
+Q5-Pfaddatei, weil FoBa die Gleichungen über den Zuwachs koppelt). WISP soll später als Julia-Paket auf GitHub
+erscheinen (CLAUDE.md, „Open, not scheduled“).
+
 ### Name WISP; Entwurf Q6 (datenbasiertes Pfadende)
 <!-- 4fd4e52 -->
 

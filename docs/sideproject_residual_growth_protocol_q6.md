@@ -1,71 +1,87 @@
 # Side project "residual-guided growth" (WISP) — protocol for Q6: a data-derived path end
 
-**DRAFT 2026-10-31, not frozen, not approved.** Part 6 of the side project; Q5: `_q5.md` (`f737939`), Q5-W: `_q5w.md`.
-Method name WISP (Weak-form Incremental Structure Pursuit), user 2026-10-31.
+**Frozen 2026-10-31, approved by the user, before any Q6 number was computed.** Part 6 of the side project; Q5:
+`_q5.md` (`f737939`), Q5-W: `_q5w.md`. Method name WISP (Weak-form Incremental Structure Pursuit), user 2026-10-31.
 
-**Declared before drafting:** the Q5 results have been looked at provisionally (`DIARY.md` 2026-10-31), including D1:
-under noise every path ends at the 6-term cap. Nothing in this protocol is chosen from per-cell Q5 numbers; every
-constant below is fixed in this text before the first evaluation and is a human choice where it is one.
+**Declared:** the Q5 results have been looked at provisionally (`DIARY.md` 2026-10-31), including D1: under noise
+every path ends at the 6-term cap. Nothing here is chosen from per-cell Q5 numbers; every constant below is fixed in
+this text before the first Q6 evaluation and is a human choice where it is one. User decisions 2026-10-31: noise
+variance estimated locally without a noise model; primary floor without the right-hand-side term, the floor with it as
+a secondary rule; Q6 before variant C.
 
 ## 1. Question
 
 Can the truth-derived path end (6 terms per equation) be replaced by a stop that follows from the observed data alone,
-such that the stop **never truncates a true term** — on all exact systems and all C-6 noise levels — and, at σ = 0,
-reduces to today's numerical-zero stop?
+such that the stop **never truncates a true term** — on all Q5 cells (30 exact systems minus the bound-infeasible
+dim-3 ones, all C-6 conditions, three realizations) — and leaves the σ = 0 paths unchanged?
 
-The size choice stays with trajectory BIC (rule (c)); Q6 only decides where the candidate list ends.
+Size choice stays with trajectory BIC (rule (c)); Q6 decides only where the candidate list ends.
 
-## 2. The stop rule (fixed a priori)
+## 2. The weak space, as it is (no change)
 
-Per equation, along the existing WISP path (unchanged: FROLS step, FoBa check ν = 0.5, weak design as Q4/Q5):
+The WISP weak design (`build_design(..., 'weak', ...)`, `analysis/exploratory/term_relevance/term_relevance.py`) is an
+integral form over windows of 1, 2, 4, 8, 16 observed samples: row r has target `b_r = x(t_stop) − x(t_start)` and
+design `G_r = trapz(θ(x), t)` over the window, on the actual observed times. Growth path: `growth_path` in
+`build_sideproject_q4_paths.py` (joint over equations, FROLS step, FoBa check ν = 0.5), unchanged except for the end
+condition in §3.
 
-1. **Noise estimate from the observed data only.** Per state component, residuals of a local cubic fit over a sliding
-   window of 9 observed points (the stage-cap estimator family), degrees-of-freedom corrected. Because the C-6 noise is
-   multiplicative, the per-point variance is modelled as σ̂²_rel · x̂(t_i)², with x̂ the local fit and σ̂²_rel estimated
-   as the pooled variance of residual / x̂ — **[open choice A: relative model as stated, or a homoscedastic σ̂²_k as in
-   `docs/design_stopping_criterion.md`; the relative model uses knowledge of the C-6 noise model, which a reviewer may
-   call oracle information]**.
-2. **Propagation into the weak space** (the WENDy idea, to first order): the expected weak SSE of the true model is
-   `F_eq = Σ_rows Σ_i (w_i · φ'_row(t_i))² · σ̂²_i` with the actual quadrature weights w_i on the observed grid —
-   the derivative-of-test-function term only. **[open choice B: include the linearised right-hand-side term
-   ∂f/∂x · ε with the current path state's coefficients, as WENDy does; more faithful, but then the floor depends on
-   the candidate.]**
-3. **Stop:** the path of an equation ends at the first state whose `weak_sse ≤ c · F_eq`, with **c = 1** (expected
-   value, not tuned). If it never fires, the path runs to the full basis of that dimension (6 / 12 / 19 / 27 terms) —
-   the grammar, not the truth, is then the limit.
-4. At σ = 0, σ̂² is at round-off level and the rule reduces to the existing `normalised SSE < 1e-14` stop; checked,
-   not assumed (§5).
+## 3. The stop rule (fixed a priori)
 
-## 3. Stage 1 — retrospective, zero compute (laptop)
+1. **Local noise variance, no noise model.** Per state component j and observed point i: fit a cubic by least squares
+   to the 9 observed points centred on i (at the edges the first / last 9 points), in the actual times; take the
+   residual at i corrected by its leverage, `e_i / sqrt(1 − h_ii)`. The variance at i, σ̂²_ij, is the mean of the
+   corrected squared residuals over the 21 observed points centred on i (edges truncated). Constants 9 (inherited from
+   the stage-cap estimator) and 21 are human choices.
+2. **Primary floor (no right-hand-side term).** Target noise of row r is `ε_stop(r) − ε_start(r)` in the equation's
+   state; its covariance `C_b` follows from σ̂² (rows sharing an endpoint are correlated). For the current support S of
+   the equation, the floor is the first-order expected residual of a correct model,
+   `F(S) = trace((I − P_S) C_b)`, with `P_S` the projector onto the columns of G in S.
+3. **Secondary floor (with right-hand-side term).** As 2, but the row noise also carries the linearised design noise
+   `− Σ_i w_ri · (∂f_S/∂x)(t_i) · ε_i` over all state components, with f_S evaluated at the path state's weak
+   least-squares coefficients and w_ri the trapezoid weights. Reported only; does not decide acceptance.
+4. **End condition.** In `growth_path`, an equation stops growing when `sse(S) ≤ F(S)`, **or** its normalised SSE is
+   below 1e-14 (unchanged numerical-zero stop), **or** S equals the full basis of its dimension (6 / 12 / 19 / 27).
+   The 6-term cap is removed. If FoBa would repeat a model, the path ends at the state before (end reason `cycle`)
+   instead of raising.
 
-Input: `outputs/sideproject_q5_inputs/q5_grid_paths.json` (1,632 cells, `weak_sse` per path state and equation) plus
-the C-6 export for the noise estimate. No fit, no simulation. Per equation × cell, classify the stop position:
+## 4. Stage 1 — rebuilt paths in the weak space (laptop, no fit, no simulation)
 
-- **T truncation** — the stop fires before every true term is on the path (violation);
-- **E exact** — fires at the first state containing every true term;
-- **O overshoot** — fires later, with k − k_true extra terms;
-- **N not within the recorded path** — would continue past the 6-term cap (needs stage 2);
-- where the true support is never on the recorded path (Q5 D3), report true-term recall at the stop instead.
+Paths are rebuilt for all 1,632 Q5 cells with the §3 end condition, once with the primary and once with the secondary
+floor, and once with only the numerical-zero and full-basis stops (**reference path**, needed to tell a stop failure
+from a path failure). Truth: `studies/regression/phase_c_support.json`. Per equation × cell:
 
-Plus: the estimator check — σ̂_rel against the true σ per condition (quantiles), as Track S item 1 asked for.
+- **T truncation:** the reference path contains a state whose support holds every true term of the equation, but the
+  stopped path ends before reaching such a state — **violation**;
+- **R reached:** the stopped path contains such a state; report the number of extra terms at the path end and at the
+  first state holding the truth;
+- **P path failure:** no state of the reference path holds every true term — not counted against the stop; report
+  true-term recall at the stopped path end;
+- path length, end reason (`floor`, `sse`, `full`, `cycle`), and the number of path states above 6 terms.
 
-**Acceptance (fixed now):** T = 0 over all cells, strata and conditions. Any truncation means the rule is rejected as
-stated — no constant is adjusted afterwards; a revised rule needs a revised protocol. E, O, N are reported, not judged.
+Plus the estimator check: σ̂ per state against the true per-point noise level of the C-6 model (σ · |x_clean|),
+quantiles per condition — the Track S item 1 question.
 
-## 4. Stage 2 — only if stage 1 passes and N > 0 (Orion)
+**Acceptance (fixed now): T = 0 under the primary floor**, over all cells. Any truncation rejects the rule as stated;
+no constant is adjusted afterwards, a revised rule needs a revised protocol. R, P and the secondary floor are reported,
+not judged.
 
-Paths of the N equations are extended past the cap up to the stop (laptop, weak space only), and only the new path
-states are fitted with the unchanged Q5 fit machinery on Orion, within the free cores. Rule (c) is re-run on the full
-candidate list; reported beside Q5 with the same metrics (both always: structure and R² > 0.9), D1–D5, and cost.
-Cost projection in counts before the run, from Q5's per-candidate cost.
+## 5. Stage 2 — fits of the new path states (Orion, only after stage 1 passes and the user opens it)
 
-## 5. Controls
+Only the path states that Q5 did not fit (states beyond 6 terms, and any state that differs from Q5's) are fitted with
+the unchanged Q5 fit machinery (Julia, one fit from the weak start, bound 10, first observed sample as initial state).
+Rule (c) is re-run on the stopped candidate lists; reported beside Q5 with the Q5 metrics — structure **and** R² > 0.9,
+always both — D1–D5, and cost in counts. Cost projected in counts before the run.
 
-- σ = 0 cells: stop position identical to Q5's numerical-zero stop in every equation.
-- Determinism: the estimator and the floor are pure functions of the observed data; two runs bit-identical.
-- `observed_data_sha256` per cell equal to the Q5 records.
+## 6. Controls
 
-## 6. Not in Q6
+- **σ = ρ = 0 cells:** stopped primary path identical to the Q5 path (candidate list and weak coefficients); any
+  deviation is reported per cell and, if it truncates, counts as T.
+- **Reference path vs Q5:** on every cell, the reference path's first states up to Q5's end are identical to the Q5
+  candidate list where Q5 ended by `sse`; where Q5 ended at the cap, its prefix up to the cap is identical.
+- Determinism: two runs bit-identical; `observed_data_sha256` per cell equal to the Q5 records.
 
-Joint initial-state estimation (variant C, committed in the Q5 amendment of 2026-10-27) has its own protocol. The
-whiteness guard and the information-criterion promotion of `docs/design_stopping_criterion.md` (B), (C) are not tested.
+## 7. Not in Q6
+
+Joint initial-state estimation (variant C) has its own protocol and runs after Q6 stage 1, on the final candidate
+lists. The whiteness guard and the information-criterion promotion of `docs/design_stopping_criterion.md` (B), (C) are
+not tested.

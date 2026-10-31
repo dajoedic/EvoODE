@@ -848,6 +848,11 @@ the coupled search path 1e-6 is the cheaper, behaviour-equal tolerance; the Syst
   (`docs/design_stopping_criterion.md`). Acceptance as for the stage cap: search-free, on all exact systems and noise
   levels, **never truncates a true term**; stop only on positive evidence. Until then the cap stays, declared, and the
   WSINDy comparison gives the opponent the same cap (`docs/sideproject_residual_growth_protocol_q5w.md`).
+- **WISP as one Julia package (user, 2026-10-31), when there is buffer.** WISP (the side project's method) is split
+  today: weak-space path (FROLS + FoBa) in Python, trajectory refit + BIC in Julia (`fit_parameters`). The user wants
+  to publish it as a package on GitHub, all in Julia. Not urgent; the path costs 118 s against ~1,000 core-h of fits
+  on the Q5 grid, so the port is for usability, not speed. Acceptance when it is done: the Julia path reproduces the
+  frozen Python paths (candidate lists, weak coefficients) on the Q5 cells.
 - **Trajectory overfitting is the next methodological direction (user, 2026-09-29).** C-1 fits the
   one training trajectory far better than it identifies the mechanism (dim 2: 91.7 %
   reconstruction, 25.6 % generalization, raw structure 3 of 60 exact cells). The selection signal

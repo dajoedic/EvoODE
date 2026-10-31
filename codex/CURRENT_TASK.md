@@ -1,50 +1,54 @@
-# WP-FA6c — Q5-W: arm W1-interp (linear interpolation onto a uniform grid on ρ = 0.5 cells)
+# WP-FA7 — Q6 stage 1: data-derived path end, rebuilt WISP paths in the weak space
 **Language: Python**
 
-Stand 2026-10-31. Authority: `docs/sideproject_residual_growth_protocol_q5w.md`, new **§4a** (read it in full, plus §2,
-§3 and §5 point 5). Builds on WP-FA6/FA6b (`codex/reports/REPORT_WP_FA6.md`, `REPORT_WP_FA6B.md`, commit `8aa6eec`).
+Stand 2026-10-31. Authority: `docs/sideproject_residual_growth_protocol_q6.md` (frozen; read it in full). Builds on
+the Q5 path builder `analysis/scripts/aggregate/build_sideproject_q5_paths.py` and `build_sideproject_q4_paths.py`
+(`growth_path`), the weak design `build_design(..., 'weak', ...)` in
+`analysis/exploratory/term_relevance/term_relevance.py`, and the Q5 inputs `outputs/sideproject_q5_inputs/`
+(`q5_grid_paths.json`, 1,632 cells, the C-6 export it points to).
 
 ## Scope
 
-1. **New configurations `W1-interp:L-C6` and `W1-interp:L-Q5`** in `analysis/scripts/aggregate/run_sideproject_q5w_wsindy.py`,
-   selectable through the existing `--configurations` option, **not** added to the default `CONFIGS` tuple (the existing
-   six-configuration behaviour and outputs must stay unchanged). Per §4a: for a cell with an irregular observed grid,
-   interpolate the observed states piecewise linearly per state onto a uniform grid of M = number of observed points over
-   [first, last observed time], then call the unchanged W1 fit on that uniform grid. The interpolation is a separate,
-   named function; `wsindy_reference.py`'s algorithm is not changed. If a cell's observed grid is already uniform (ρ = 0),
-   the configuration refuses or passes it through unchanged — state which, and test that it equals W1 bit-identically on
-   such a cell.
-2. **Output rows** carry everything W1 rows carry (incl. `q5w_equations` with λ̂ grid index, support, coefficients on
-   the original scale), plus the interpolation facts: number of points, uniform `dt`, and a hash of the interpolated
-   arrays. Evaluation unchanged (§2): it never sees interpolated data.
-3. **Cell list for the full run:** a CSV of every C-6 cell with ρ = 0.5 in the same five-key format the runner's `--cells`
-   reads; state the count (expected 2,268).
-4. **MATLAB export (§4a, §5.5 extension):** extend `export_sideproject_q5w_matlab.py` with an option that exports the
-   **interpolated** uniform inputs of every ρ = 0.5 cell (same lossless format and manifest as WP-FA6b, the manifest marks
-   them as W1-interp), into a separate subfolder of `outputs/sideproject_q5w_wsindy/matlab_inputs/`. Extend
-   `compare_sideproject_q5w_matlab.py` so it can compare W1-interp rows against those MATLAB outputs with the unchanged
-   §5.5 criterion. The MATLAB driver must not need changes; if it does, say why.
-5. **Smoke:** 20 ρ = 0.5 cells (mix of dim 1/2/3, noisy and σ = 0) × the two new configurations, run twice, identical
-   output. Report technical facts and a cost projection for 2,268 × 2 rows in counts (wall-clock as context).
-6. Focused tests for the new code; run only those plus the existing Q5-W tests.
+1. **Noise estimator (§3.1)** as a named function: local leverage-corrected cubic residuals over 9 observed points,
+   per-point variance as the mean over 21 points, actual times, per state component. No noise model.
+2. **Floors (§3.2, §3.3)** as named functions: primary `F(S) = trace((I − P_S) C_b)` with `C_b` from the window
+   endpoints of every weak row (shared endpoints correlate); secondary with the linearised right-hand-side term on the
+   path state's weak least-squares coefficients and the trapezoid weights. State in the report how ∂f/∂x is obtained
+   for every basis term (incl. `sin`, `cos`, constant) and verify it against finite differences in a test. Watch memory:
+   rows are ~5 × n_observed; build `C_b` sparsely or use the row structure, do not form dense matrices you do not need.
+3. **Path with a pluggable end condition (§3.4):** a new path function that reproduces `growth_path` exactly, except
+   that the end condition per equation is a parameter (primary floor / secondary floor / reference = numerical zero and
+   full basis only) and a repeated FoBa model ends the path with reason `cycle`. `growth_path` itself and the Q4/Q5
+   builders are not changed. Each path records per equation: end reason, length, states beyond 6 terms.
+4. **Runner** over all 1,632 Q5 cells × three end conditions, writing per-cell paths (same candidate schema as
+   `q5_grid_paths.json`, so stage 2 can fit them unchanged) plus a per-equation table with the §4 classification
+   T / R / P and its fields, and the estimator-check table (σ̂ against σ · |x_clean| per point, quantiles per
+   condition). Output into `outputs/sideproject_q6_paths/` (gitignored; a later aggregation moves tables into
+   `analysis/data/sideproject_residual_growth/`). Parallel over cells allowed (processes), deterministic output order.
+5. **Controls (§6)** inside the runner, failing loudly: σ = ρ = 0 primary path vs Q5 (reported per cell, not raised —
+   the protocol counts a deviation, it does not forbid it); reference-path prefix identity against Q5 (raised); hashes
+   (raised).
+6. Focused tests: estimator on synthetic data with known heteroscedastic noise; floor against a Monte Carlo estimate on
+   a small synthetic weak problem (primary and secondary); path reproduction of `growth_path` with the reference end
+   condition plus the cap on a few Q5 cells; `cycle` handling.
+7. **Smoke:** 20 cells (dim 1/2/3_feasible/4, σ = 0 and noisy, both ρ), three end conditions, run twice, identical.
+   Report technical facts and a projection for the full run in counts (wall-clock as context).
 
 ## Verboten
 
-- Computing, printing or reporting any rate, structure hit, R² or comparison (smoke included: technical facts only).
-- The full run over 2,268 cells (Claude runs it); MATLAB or Octave; any other interpolant.
-- Changing the existing six configurations, their outputs under `outputs/sideproject_q5w_wsindy/full*`, the WSINDy
-  algorithm, the evaluation path, the frozen Q5 files, WP-N47 outputs.
-- Copying code, comments or text from `outputs/reference_wsindy_ode_72d8d6e/` into the repository.
+- Computing, printing or reporting any T/R/P count, rate, structure hit, recall, R² or estimator-quality number —
+  smoke included; technical facts only (row counts, end-reason **counts are also forbidden**, control pass/fail allowed).
+- The full run over 1,632 cells (Claude runs it); any fit, ODE simulation, Julia, cluster job.
+- Changing `growth_path`, the Q4/Q5 builders, the weak design, the Q5 inputs or records, any frozen protocol.
+- Choosing any constant other than those in the protocol.
 - Touching the uncommitted WP-N48b files: `analysis/scripts/aggregate/aggregate_c6_symbolic_baselines.py`,
   `analysis/scripts/aggregate/run_k8s_symbolic_shard.py`, `baselines/c6_shards.py`,
   `baselines/tests/test_c6_symbolic_execution.py`, `codex/reports/REPORT_WP_N48.md`, `k8s/phase_c_c6_pysr*.yaml`.
-- Git operations; cluster jobs; anything running longer than 15 minutes.
+- Git operations; anything running longer than 15 minutes; any built-in timeout in the scripts.
 
 ## Abnahme
 
-- Two new configurations, default behaviour unchanged (a test proves the default six still produce identical rows on a
-  sample cell); identity W1-interp = W1 on a uniform-grid cell, or a documented refusal.
-- ρ = 0.5 cell list written, count stated; interpolated MATLAB inputs exported, count stated; comparison extended and
-  tested on synthetic fixtures.
-- Smoke 20 × 2 deterministic, projection in counts; the exact full-run command for Claude in the report.
-- Report `codex/reports/REPORT_WP_FA6C.md`; `codex/STATUS.md` as `CODEX_PROTOCOL.md` prescribes.
+- Estimator, floors, pluggable path and runner exist; tests green (run only the new tests plus the Q4/Q5 path tests).
+- Reference end condition plus cap reproduces `growth_path` on the test cells bit-identically.
+- Smoke 20 × 3 deterministic, controls pass, projection in counts; the exact full-run command for Claude in the report.
+- Report `codex/reports/REPORT_WP_FA7.md`; `codex/STATUS.md` as `CODEX_PROTOCOL.md` prescribes.
