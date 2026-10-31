@@ -7,6 +7,7 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 ## 2026-10-31
 
 ### Q6 eingefroren; WP-FA7 an Codex; WISP als Julia-Paket vorgemerkt
+<!-- 78ecd74 -->
 
 Nutzer, 31.10.: Q6 vor Variante C (Q6 ist das K.-o.-Kriterium); Variante C auf einer Teilmenge (Probe, dann 48 Einheiten
 × σ ∈ {0,01; 0,05} × ρ ∈ {0; 0,5}, Realisierung 1), volles Raster erst einmal mit der Endversion. Q6 festgeschrieben:
