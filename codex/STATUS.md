@@ -1,4 +1,4 @@
 ﻿status: done
-task: WP-FA6c
-report: codex/reports/REPORT_WP_FA6C.md
-note: W1-interp implemented; 34 tests passed; deterministic 20x2 smoke; 2268 cells and 4536 MATLAB inputs exported.
+task: WP-FA7c
+report: codex/reports/REPORT_WP_FA7.md
+note: no_gain implemented; 28 tests passed, 1 environment skip; serial 20-cell smoke pair complete and byte-identical, all hash/Q5 controls pass; clean deviations recorded.
