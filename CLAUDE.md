@@ -840,7 +840,9 @@ the coupled search path 1e-6 is the cheaper, behaviour-equal tolerance; the Syst
   trajectory and add + refit + remove reaches it from C-1's wrong end structures (R1–R4 pass). Order (user): Q3 weak
   warm start → size selection without oracle → noise. Novelty, if any, lies in the combination of incremental growth,
   weak regression and simulation check — not in the residual ranking (that is FROLS).
-- **A data-derived path end instead of the truth-derived 6-term cap (user, 2026-10-29).** The side project's growth
+- **A data-derived path end instead of the truth-derived 6-term cap (user, 2026-10-29).** **Update 2026-10-31:** the
+  noise-floor stop failed Q6 stage 1 (T = 591 of 2,788 equations, `DIARY.md`); the user places "WISP with a
+  data-derived structure bound" as a **Paper 2 candidate**. For WISP now: path to the full basis, BIC chooses. The side project's growth
   path ends at 6 terms per equation — twice the largest true equation size, i.e. taken from the truth — and under noise
   that cap is the only path end (Q5 interim, system 61: 44/44). Wanted: a stop that follows from the data. Preferred
   candidate: a noise-floor (discrepancy) stop — estimate the noise level from the data, propagate it into the weak space
