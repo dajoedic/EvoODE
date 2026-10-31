@@ -6,6 +6,14 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ## 2026-10-31
 
+### Entscheidung: W1-interp ist die Vergleichszeile auf ρ = 0,5
+
+Nutzer, 31.10. nachmittags, nach Sicht der W1-interp-Zahlen: W1-interp wird Primärzeile auf ρ = 0,5, W1 steht daneben
+mit dem Hinweis auf die schwache native Rasteranbindung (Protokoll §4a, Nachtrag). Nachträglich, aber gegen Q5
+gerichtet: W1-interp ist auf jedem Stratum der stärkere Gegner. Folge für den Q5-Abstract: auf ρ = 0,5 dim 2
+Generalisierung 61,7 % gegen 31,9 %, Struktur 30,3 % gegen 18,9 %; dim 1 Struktur gleichauf (126 gegen 125),
+Generalisierung 68,4 % gegen 51,5 %. Alles vorläufig bis §5.5.
+
 ### W1-interp gerechnet — die Interpolation rettet WSINDy auf ρ = 0,5 weitgehend (vorläufig, wie Q5-W)
 <!-- b4bf9bc -->
 

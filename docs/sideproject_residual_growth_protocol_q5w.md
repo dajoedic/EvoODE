@@ -102,6 +102,10 @@ reported on ρ = 0.5.
   extension "in principle" — the binding W1 already uses. Interpolation onto a uniform grid has no precedent in ODE
   discovery benchmarks (ODEFormer feeds baselines the raw irregular times) and documented bias. Hence: **W1 is the
   primary row on ρ = 0.5, W1-interp a declared sensitivity arm.**
+- **Superseded the same day, after the W1-interp numbers were seen (user, 2026-10-31, `DIARY.md`):** W1-interp is the
+  **primary comparison row on ρ = 0.5**, W1 is reported beside it with the note that the native irregular-grid binding
+  is weak. Declared as a post-hoc change; its direction is against Q5 (W1-interp is the stronger opponent on every
+  stratum), which is the only reason it is admissible.
 
 ## 5. Acceptance before any C-6 cell is run
 
