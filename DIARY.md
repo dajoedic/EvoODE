@@ -6,6 +6,31 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ## 2026-10-31
 
+### Q6 Stufe 1: die Noise-Floor-Regel fällt durch (T = 591), der Schätzer selbst ist gut
+
+Lauf 1.632 Zellen, 4.896 Pfade, 8.364 Gleichungszeilen, ~8 min Laptop (10 Prozesse), WP-FA7/7b/7c `1ec8933`.
+Kontrollen: Hash 1.632/1.632, Q5-Identität (Q6-Pfadfunktion mit Kappe 6 = Q5) 1.632/1.632; saubere Identität
+der Primärregel 19/48 (29 Abweichungen, wie §6 vorsieht protokolliert). Tabellen
+`analysis/data/sideproject_residual_growth/q6_stage1/`.
+
+**Primärregel: T = 591 von 2.788 Gleichungszeilen** (dim1 197/748, dim2 200/1.360, dim3 fittbar 94/408, dim4
+100/272), R 2.181, P 16. Damit nach §4 verworfen, Stufe 2 entfällt. Die Abschneidungen treten bei jedem Rauschniveau
+auf (σ = 0,01 bis 0,05: 47 bis 67 je Bedingung von 246) und schon bei σ = 0 (3 bei ρ = 0, 15 bei ρ = 0,5; System 26,
+29, 38). Gleichzeitig laufen viele Pfade bis zur vollen Basis (Endgrund `full`: 1.294 Zeilen), und auf R-Zeilen trägt
+das Pfadende im Median 4 überzählige Terme (Q75 11). Die Regel stoppt also zugleich zu früh und zu spät. Sekundärregel
+(mit RHS-Term) schlechter: T = 706.
+
+**Der Schätzer ist nicht die Ursache:** σ̂ / σ_wahr pro Punkt Median 0,96–1,03 auf dim 1/2/4 und dim 3 bei ρ = 0
+(q10–q90 ≈ 0,73–1,37); nur dim 3 bei ρ = 0,5 mit schwerem oberen Rand (q90 bis 20). Die lokale, modellfreie
+Schätzung beantwortet damit Track-S-Punkt 1 positiv (der alte Schätzer lag ×1,3–1,77 zu hoch).
+
+**Lesart (vorläufig, gemeinsam zu besprechen):** Das Kriterium „SSE erreicht den Erwartungswert des Rauschens“
+trennt nicht: (i) kleine wahre Terme, deren Beitrag unter der Streuung der SSE liegt, sind über die SSE-Höhe nicht
+sichtbar (Abschneiden bei c = 1, wo das Kriterium etwa mit 50 % feuert); (ii) der schwache Raum trägt
+nicht-rauschartige Fehleranteile (Trapezfehler auf grobem Gitter, Modellfehler), die die SSE über der Grenze halten
+(Lauf bis `full`, auch bei σ = 0). Nach der Leitplanke (CLAUDE.md, 31.10.) bleibt die 6-Term-Grenze als erklärte
+Einschränkung; eine neue Regel nur mit eigenem Protokoll und Nutzerentscheidung.
+
 ### Q6 eingefroren; WP-FA7 an Codex; WISP als Julia-Paket vorgemerkt
 <!-- 78ecd74 -->
 
