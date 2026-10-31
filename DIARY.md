@@ -7,6 +7,7 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 ## 2026-10-31
 
 ### Name WISP; Entwurf Q6 (datenbasiertes Pfadende)
+<!-- 4fd4e52 -->
 
 Nutzer, 31.10.: die Methode des Side-Projekts heißt **WISP** (Weak-form Incremental Structure Pursuit); EvoGrow ist der
 falsche Name (keine Population, keine Evolution). Zwei Websuchen fanden keinen gleichnamigen Ansatz in
