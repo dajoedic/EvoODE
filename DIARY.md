@@ -7,6 +7,7 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 ## 2026-10-31
 
 ### Entscheidung: W1-interp ist die Vergleichszeile auf ρ = 0,5
+<!-- 9ffea6b -->
 
 Nutzer, 31.10. nachmittags, nach Sicht der W1-interp-Zahlen: W1-interp wird Primärzeile auf ρ = 0,5, W1 steht daneben
 mit dem Hinweis auf die schwache native Rasteranbindung (Protokoll §4a, Nachtrag). Nachträglich, aber gegen Q5
