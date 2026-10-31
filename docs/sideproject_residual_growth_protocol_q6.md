@@ -21,6 +21,14 @@ WP-FA7 (`codex/reports/REPORT_WP_FA7.md`) found two defects in §6, both in the 
 - **The Q5 protocol digest** recorded in `q5_grid_paths.json` is that of `f454a32`; the execution-only amendment
   `ecc8bac` changed the file afterwards. The digest is checked against the blob at `f454a32`, not the working copy.
 
+## Amendment 2 2026-10-31 (end condition, before any Q6 number was computed)
+
+WP-FA7b: without the cap, a path can reach a state where no remaining term reduces the weak SSE (first seen on
+`sys0063_ic1_s0_r0.5_n1`, 27-term basis). The frozen `growth_path` raises there because the cap always ended it
+earlier. This is the natural end of greedy forward selection, not a new rule: **when the best available gain is ≤ 0,
+the path ends; every equation still eligible gets end reason `no_gain`.** The `primary_clean_identity` control is a
+recorded deviation per §6, not an acceptance failure.
+
 ## 1. Question
 
 Can the truth-derived path end (6 terms per equation) be replaced by a stop that follows from the observed data alone,

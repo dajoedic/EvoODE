@@ -1,32 +1,30 @@
-# WP-FA7b — Q6 stage 1: resolve the two control conflicts of WP-FA7
+# WP-FA7c — Q6 stage 1: end reason `no_gain`
 **Language: Python**
 
-Stand 2026-10-31. Authority: `docs/sideproject_residual_growth_protocol_q6.md`, **new amendment at the top** (read it).
-Builds on your WP-FA7 work (`codex/reports/REPORT_WP_FA7.md`; files `build_sideproject_q6_paths.py`,
-`test_sideproject_q6.py`, uncommitted). Your diagnosis of both conflicts was right; the protocol was wrong.
+Stand 2026-10-31. Authority: `docs/sideproject_residual_growth_protocol_q6.md`, **Amendment 2** at the top. Builds on
+WP-FA7/FA7b (`codex/reports/REPORT_WP_FA7.md`, uncommitted files `build_sideproject_q6_paths.py`,
+`test_sideproject_q6.py`).
 
 ## Scope
 
-1. **Replace the reference-prefix control** by the amendment's control: a fourth end condition "Q5" (cap 6 or the
-   numerical-zero stop, i.e. the existing test hook `cap=6`) is built for every cell and must reproduce the Q5
-   candidate list and weak coefficients bit-identically (raised on failure). Its paths are a control artefact, written
-   only to `controls.csv` as pass/fail per cell — no path file, no classification. Remove the old prefix check and its
-   test; keep a test that the uncapped reference may legitimately differ from Q5 (the `sys0024` case) without raising.
-2. **Q5 protocol digest:** verify `docs/sideproject_residual_growth_protocol_q5.md` against the content at git commit
-   `f454a32` (read via `git show f454a32:<path>`, read-only git), not the working copy. The other three digests stay as
-   they are. No relaxed comparison.
-3. Run the focused tests, then the real-manifest smoke twice (`smoke_a`, `smoke_b`, serial) and verify byte-identical
-   outputs. Projection in counts (paths, equation rows, candidate states — the latter is now allowed as a technical
-   count; per-stratum totals of candidate states beyond 6 terms are **not** reported).
+1. In `growth_path_with_end` only (not in the frozen `growth_path`, and **not** in the cap=6 control path, which must
+   keep reproducing Q5 including its raise): when the best available gain is ≤ 0, end the path; every equation still
+   eligible receives end reason `no_gain`. Same handling for all three scientific end conditions.
+2. `primary_clean_identity = False` is a recorded deviation (protocol §6), not an acceptance failure; the runner already
+   records it without raising — keep it so.
+3. Test: a synthetic or real case reaching `no_gain` (the `sys0063_ic1_s0_r0.5_n1` cell is acceptable if fast).
+4. Rerun the focused tests and the real-manifest smoke pair (serial, fresh output dirs), compare bytes, report the
+   candidate-state projection in counts if the smoke completes.
 
 ## Verboten
 
-Everything under "Verboten" of WP-FA7 still applies (no T/R/P, end-reason counts, recall, R², estimator quality; no
-full run; no fits; no changes to frozen code, inputs, protocols; WP-N48b files untouched; no git operations except the
-read-only `git show` of item 2; nothing longer than 15 minutes; no built-in timeout).
+All of WP-FA7's "Verboten" applies unchanged (no T/R/P, end-reason counts, recall, R², estimator quality; no full
+run, fits, Julia, cluster; no changes to frozen code, inputs, protocols; WP-N48b files untouched; git only read-only
+`git show f454a32:…`; nothing over 15 minutes; no built-in timeout).
 
 ## Abnahme
 
-- Controls as amended; tests green; smoke 20 × (3 + control) deterministic, all controls pass.
-- The exact full-run command in the report. Report: append a section "WP-FA7b" to `codex/reports/REPORT_WP_FA7.md`;
-  `codex/STATUS.md` as `CODEX_PROTOCOL.md` prescribes.
+- `no_gain` implemented and tested; capped control unchanged; tests green.
+- Smoke pair complete, byte-identical, Q5 identity and hash controls pass on all 20 cells; clean-identity deviations
+  listed by cell ID only.
+- Full-run command; report section "WP-FA7c" appended to `codex/reports/REPORT_WP_FA7.md`; `codex/STATUS.md`.
