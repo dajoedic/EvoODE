@@ -7,6 +7,7 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 ## 2026-10-31
 
 ### W1-interp gerechnet — die Interpolation rettet WSINDy auf ρ = 0,5 weitgehend (vorläufig, wie Q5-W)
+<!-- b4bf9bc -->
 
 Lauf 4.536 / 4.536 Zeilen, 0 Fehler, Schlüssel eindeutig, nur ρ = 0,5; zusammengeführt nach
 `outputs/sideproject_q5w_wsindy/w1_interp_full/details.csv` (WP-FA6c `9439a05`, 12 Prozesse, fertig 09:39).

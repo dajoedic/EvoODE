@@ -21,7 +21,7 @@ ist, ist vermutlich falsch — dann gilt `CLAUDE.md`.
   `matlab -batch "addpath('analysis/matlab'); run_wsindy_original_q5w(pwd, 2)"` (Probe), dann ohne Limit, dann
   `python analysis/scripts/aggregate/compare_sideproject_q5w_matlab.py --port-rows outputs/sideproject_q5w_wsindy/full/details.csv`
   → bei Bestehen entsiegeln, Q5-W-Tabellen bauen, Q5 gegen W1 vergleichen.
-- **W1-interp läuft lokal (seit 31.10. Mittag, 12 Prozesse):** Protokoll §4a (Sensitivitätsarm, W1 bleibt Primärzeile auf
+- **W1-interp fertig (31.10. 09:39, 4.536/4.536, 0 Fehler, `w1_interp_full/details.csv`; Ergebnis DIARY 31.10.):** Protokoll §4a (Sensitivitätsarm, W1 bleibt Primärzeile auf
   ρ = 0,5; Literatur DIARY 31.10.), WP-FA6c `9439a05`. Shards `outputs/sideproject_q5w_wsindy/w1_interp_shards/cells_{0..11}.csv`
   → `shard_{i}/`, Logs daneben, 4.536 Zeilen erwartet. Neustart eines Teils: `python analysis/scripts/aggregate/run_sideproject_q5w_wsindy.py
   --all-cells --cells …/cells_$i.csv --configurations W1-interp:L-C6,W1-interp:L-Q5 --output-dir …/shard_$i` (setzt fort).
@@ -63,7 +63,7 @@ entfernt. Aggregiert nach `analysis/data/sideproject_residual_growth/q4_*.csv` +
 Kontrollen bestanden, `duplicates_compared = 3` bit-identisch (DIARY 21.10.). Das Skript weigert sich, vorhandene
 Tabellen zu überschreiben — ein erneuter Lauf braucht `--output-dir`.
 
-Lokal läuft W1-interp (siehe oben).
+Lokal läuft nichts.
 **Offen für den Nutzer:** sieben schreibgeschützte pytest-Ordner unter `tmp/` (Codex-Sandbox, nur mit Admin-Rechten
 löschbar) und die Annihilator-Dateien `output/pdf/` und `tmp/pdfs/` → gehören nach `..\EvoODE-next`.
 
