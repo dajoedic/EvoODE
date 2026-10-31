@@ -233,6 +233,36 @@ Written 2026-09-07 and amended since; the dated paragraphs say when. `DIARY.md` 
 measurements; this section keeps only what still constrains a decision. A consolidation of this
 file is scheduled for the status review after Phase C ends.
 
+### WISP paper — the fixed plan to 2026-12-31 (user, 2026-10-31) — TOP PRIORITY
+
+**Target: submission 31.12.2026** (a target, not a hard cut). **Work mode (user): focused execution.** No side
+discussions or new ideas unless something goes wrong; every step below is done in this order, every gate is a short
+user decision against criteria written down before the numbers. Guardrail "WISP simplicity" applies. EvoGrow C-6 runs
+on untouched (24 cores, blind rule); Paper 2 only as notes; annihilator track separate.
+
+**Cluster slot order** (EvoODE ≤ 40 cores; C-6 keeps its 24; every freed core goes to the first open item):
+1. Q7 fits (14 pods, running since 31.10.) → 2. W-2 subset + ablation → 3. W-4 final run. Freed Q5 straggler cores
+join the current item. Nothing else gets cores before 31.12.
+
+| # | Step | Who | When (target) | Gate / decision |
+|---|---|---|---|---|
+| W-0 | Q7 fits (3,070 states, ~1,100 core-h) + 2 Q5 stragglers; then official Q5 aggregation and Q7 aggregation | Orion / Claude | → ~5.11. | **G-Q7** automatic by the frozen §5 rule (Q7 replaces the 6-term cap if ≤ 5 pp worse) — Claude reports |
+| W-1 | Protocol **Q8** (subset): variant C (initial state fitted, unbounded) + coefficient bound 1000 + the **33 surrogate systems**, plus ablation arms (no FoBa; random start; simulate without refit); adoption rules written in advance. Codex: Julia variant C, surrogate paths, ablation paths. Claude: local smoke. User: GitLab push → image | Claude / Codex / user | 1.–5.11. | **G1** user approves Q8 protocol (~3.11.) |
+| W-2 | Q8 subset + ablation on Orion (dim 1/2 all 51 systems, σ ∈ {0.01, 0.05} × ρ ∈ {0, 0.5}, realization 1, + clean; small dim-3 sample incl. 52, 61, 54–59) | Orion | ~6.–13.11. | — |
+| W-3 | Evaluate Q8; MATLAB §5.5 identity check as soon as the licence is there | Claude | ~14.11. | **G2** freeze the final WISP version by the Q8 rules (C yes/no, bound 1000 yes/no, path end) — user confirms |
+| W-4 | **Final run Q9**: all 63 systems × both ICs × 11 conditions × 3 realizations + clean, one identity; 3,000–8,000 core-h | Orion | ~15.11.–~10.12. | if the projection exceeds 21 days: user decides on more cores or a smaller dim-3 scope |
+| W-5 | Writing in parallel from ~15.11.: Methods (from `docs/kochbuch/`), Related Work, Setup | Claude drafts, user owns | 15.11.–10.12. | **G3** journal choice by ~1.12. |
+| W-6 | Aggregation, cluster-robust statistics (systems as units), tables/figures, Results, Discussion, limitations | Claude / user | ~10.–24.12. | **G4** claim-tracing check: every number in the text traced to a table |
+| W-7 | Final read, submission | user | 24.–31.12. | — |
+
+**Baselines (fixed):** WSINDy (W1, W1-interp on ρ = 0.5), SINDy, Weak-SINDy, E-SINDy (WP-N47, existing). PySR and
+ODEFormer: cited from the ODEFormer paper with the caveats (bar charts, shipped trajectories); an own ODEFormer run on
+C-6 only if it fits into a freed slot without delaying W-4.
+
+**Only these deviations reopen the plan:** MATLAB check fails (fix port, rerun WSINDy locally, 1–2 days); WISP falls
+clearly behind on the surrogate systems in W-2 (user decides: narrow the claim to exact systems or not); variant C or
+bound 1000 harm (fallback: first observed sample / bound 10, declared); W-4 projection over 21 days.
+
 ### Backlog Paper 1 — the order of work (set 2026-10-01, user)
 
 **Principle: guided, not overgrown.** One system first, then the cheap ones, then one expensive one,

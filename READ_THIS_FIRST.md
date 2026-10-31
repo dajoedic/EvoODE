@@ -10,13 +10,12 @@ zweites davon. Alles Dauerhafte gehört dorthin, nach `PAPER_1.md` oder ins `DIA
 **Regeln:** wird immer **vollständig überschrieben**, nie angehängt. Was älter als ein paar Tage
 ist, ist vermutlich falsch — dann gilt `CLAUDE.md`.
 
-**Stand: 2026-10-31, Nachmittag — Q5-W vorläufig ausgewertet; W1-interp fertig und Primärzeile auf ρ = 0,5 (§4a,
-`9ffea6b`); Methode heißt WISP; **Q6 Stufe 1 gerechnet: Noise-Floor-Regel verworfen (T = 591/2.788), Schätzer
-unverzerrt; Stufe 2 entfällt (DIARY 31.10., `683429b`)**. Pfadende = Paper-2-Kandidat (CLAUDE.md `cad8482`).
-**Nächster Schritt, wenn der Nutzer so weit ist:** ein Protokoll für (1) dim 2 ohne Grenze (Pfad bis volle Basis,
-~500 Kernstunden), (2) dim 3/4 Stichprobe mit Grenze 8 oder 10 als Sensitivität (6 dort als Rechenbudget erklärt;
-ohne Grenze wären es ~17–55 k Kernstunden), (3) Variante C auf derselben Teilmenge. Noch nicht entschieden;
-Q5: 1.630/1.632, 2 Pods laufen; MATLAB ausstehend.** WISP als Paper 1 statt EvoGrow: offen, hängt an §9.4d.
+**Stand: 2026-10-31, Abend — FESTER PLAN BIS 31.12. (WISP-Paper) steht in CLAUDE.md, Abschnitt „WISP paper — the
+fixed plan to 2026-12-31“: Schritte W-0 bis W-7, Tore G-Q7, G1–G4, Cluster-Reihenfolge. Fokussiert abarbeiten.**
+- **Läuft:** Q7-Fits auf Orion seit 31.10. (Job `evoode-sideproject-q7`, 338 Zellen, 14 Pods, Image 354106398,
+  Export aus dem Q5-Ordner), 2 Q5-Nachzügler, C-6 (24 Pods). Nächster Schritt: W-1 Protokoll Q8 (Teilmenge).
+- **Kochbuch:** `docs/kochbuch/Kochbuch_WISP.pdf`, Artifact https://claude.ai/artifact/LY5ckuHGV2uJaDbr4mXjf5.
+- **Q6 verworfen, Q7 (Signifikanztest) gerechnet als Pfade, Fits laufen;** Methode heißt WISP.
 - **Portlauf:** 27.216 / 27.216 Zeilen (4.536 Zellen × 6 Konfigurationen W1/W1-cap/W2 × L-C6/L-Q5), Schlüssel
   (Zelle, Konfiguration) eindeutig, `fit_status = success` überall, 0 `fit_error`. Zusammengeführt aus 12 Shards
   (`outputs/sideproject_q5w_wsindy/full_shards/shard_*/details.csv`) nach `outputs/sideproject_q5w_wsindy/full/details.csv`.
