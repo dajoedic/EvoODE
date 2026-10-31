@@ -7,6 +7,7 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 ## 2026-10-31
 
 ### Literatur: WSINDy auf ungleichen Zeitabständen — Präzedenz und Konsequenz für Q5-W
+<!-- 875033e -->
 
 Recherche (Agent, Quellen gelesen, Zeilen-/Abschnittsangaben im Sitzungsprotokoll; von Claude nicht einzeln
 nachgeprüft): **Kein WSINDy-/WENDy-Paper und kein offizieller Code behandelt unregelmäßige Abtastung innerhalb einer
