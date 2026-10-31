@@ -6,6 +6,47 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ## 2026-10-31
 
+### Q5-W vorläufig geöffnet — Q5 (c) gegen veröffentlichtes WSINDy, 1.626 / 1.632 Q5-Zellen
+
+**Abweichung vom eingefrorenen Protokoll §7, auf Anweisung des Nutzers (31.10. morgens):** der Portlauf (27.216 / 27.216
+Zeilen, 0 Fehler, Schlüssel eindeutig; zusammengeführt nach `outputs/sideproject_q5w_wsindy/full/details.csv`) wurde
+**vor** dem MATLAB-Identitätsabgleich §5.5 ausgewertet. Alle Zahlen sind **vorläufig**, bis §5.5 besteht; fällt §5.5
+durch, gelten sie nicht. Q5 vom Orion-Pod gezogen (1.626 / 1.632 Zellen, 6 Nachzügler fehlen). Skript nur im
+Scratchpad (`q5w_analysis.py`), nichts im Repo erzeugt.
+
+**Befund 1 — W1 bricht auf dem irregulären Raster ein, nicht unter Rauschen.** W1 (L-C6), dim 1, σ = 0: ρ = 0
+Rekonstruktion R² > 0,9 138/138, ρ = 0,5 nur 49/138. ρ = 0,5 ist genau die erklärte Abweichung §3 (unsere Anbindung, kein
+Gegenstück im Original, nicht durch §5.5 gedeckt). Die ρ = 0,5-Zeilen von W1 messen daher unsere Bindung von WSINDy an
+irreguläre Raster mindestens so sehr wie WSINDy. **Fair lesbar ist nur ρ = 0.** λ̂ am Rasterrand: immer das **untere**
+Ende (Index 0, λ = 1e-4) — auf sauberen dim-1-Daten liefert genau das die wahre Struktur; unter Rauschen 24–38 % der
+Gleichungen.
+
+**Befund 2 — ρ = 0 (Zellen gezählt; pr = Struktur gepruned exakt, gen = Generalisierung R² > 0,9 varianzgewichtet):**
+
+| Stratum | n | Q5c pr | W1:L-Q5 pr | W1:L-C6 pr | W2:L-C6 pr | WSfix pr | Q5c gen | W1:L-Q5 gen | W2:L-C6 gen | WSfix gen |
+|---|---|---|---|---|---|---|---|---|---|---|
+| dim 1 | 352 | 111 | 96 | 96 | 101 | 20–101 | 228 | 158 | 179 | 105–168 |
+| dim 2 | 320 | 83 | 84 | 74 | 58 | 11–74 | 199 | 124 | 104 | 51–128 |
+| dim 3 fittbar | 63 | 18 | 33 | 32 | 30 | 1–6 | 9 | 10 | 11 | 2–9 |
+| dim 4 | 29 | 0 | 0 | 0 | 0 | 0 | 1 | 0 | 0 | 0–2 |
+
+Struktur: Q5 (c) und W1 liegen auf dim 1/2 gleichauf (dim 1 111 vs 96, dim 2 83 vs 84), **auf dim 3 gewinnt W1 klar
+(33 vs 18)**, und W1 hält dort über alle σ 6/12 je Stufe, während Q5 von 6 auf 1–3 fällt. Mit wachsendem σ fällt W1 auf
+dim 1 stärker (σ = 0,05: 7/66 vs Q5 18/66). Generalisierung: **Q5 deutlich vorn auf dim 1/2** (228 vs 158, 199 vs
+124), auf dim 3 gleich (9 vs 10). Q5 (b) ist auf dim 2 bei der Struktur fast doppelt so gut wie (c) (161 vs 83) —
+(c) bleibt die eingefrorene Primärregel. W1-cap ist strukturell identisch mit W1 (die 6-Term-Grenze greift bei W1 nicht
+in die Wahl der Struktur ein) und kostet auf dim 2 Rekonstruktion/Generalisierung.
+
+**Befund 3 — ρ = 0,5:** Q5 (c) weit vorn in allen Metriken (dim 2 Struktur 109 vs 21, Generalisierung 222 vs 52); W1
+auf dim 3 fittbar 0/72. Wegen Befund 1 kein fairer Vergleich mit dem veröffentlichten WSINDy, sondern mit unserer
+Anbindung. Auch der feste Weak-SINDy (pysindy, eigene Testfunktionen) ist bei ρ = 0,5 stärker als W1.
+
+**Alle 4.536 Zellen (Paper-1-Zeile, getrennt exakt/Surrogat) liegen im Skriptausdruck;** W2 (MSTLS auf dem pysindy-
+Design) ist dort auf dim 1/2 die stärkste WSINDy-Variante (exakt dim 1 Struktur 31,8 %, Generalisierung 52,1 %).
+
+**Nächster Schritt:** §5.5 (MATLAB) entscheidet, ob die ρ = 0-Zeilen stehen. Ob ρ = 0,5 für W1 berichtet wird oder als
+„nicht vergleichbar“ ausgewiesen, entscheidet der Nutzer.
+
 ### T2a-Führungsspur geparkt bis nach Q5-W (Nutzer)
 <!-- a6270e9 -->
 
