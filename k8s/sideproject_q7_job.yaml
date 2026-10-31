@@ -1,5 +1,5 @@
 # Q7: new states only; unchanged Q5 image, runner and resources.
-# Upload mapping: codex/reports/UPLOAD_WP_FA8.md. No deadline.
+# Inputs: q7_fit_paths.json + shard list in the Q7 input dir; data export reused read-only from the Q5 input dir (byte-identical). No deadline.
 apiVersion: batch/v1
 kind: Job
 metadata:
@@ -39,7 +39,7 @@ spec:
               exec julia --project=/opt/EvoODE
               /opt/EvoODE/studies/regression/sideproject_q5_noise_fits.jl
               --paths /outputs/sideproject_q7_354106398d5e67ffa72c237e2ba83e3feeb25b31/input/q7_fit_paths.json
-              --export-dir /outputs/sideproject_q7_354106398d5e67ffa72c237e2ba83e3feeb25b31/input/export
+              --export-dir /outputs/sideproject_q5_354106398d5e67ffa72c237e2ba83e3feeb25b31/input/export
               --unit-list /outputs/sideproject_q7_354106398d5e67ffa72c237e2ba83e3feeb25b31/input/q7_fit_paths.shards_cost_desc.txt
               --index "${JOB_COMPLETION_INDEX}"
               --output /outputs/sideproject_q7_354106398d5e67ffa72c237e2ba83e3feeb25b31/out/index_${JOB_COMPLETION_INDEX}.jsonl
