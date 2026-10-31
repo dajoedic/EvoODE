@@ -1,0 +1,223 @@
+<!doctype html><html lang="de" data-theme="light"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Kochbuch Trajektorien-Check</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;0,8..60,700;1,8..60,400&family=IBM+Plex+Sans+Condensed:wght@500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: one reading column like a recipe book page; numbered steps as cards, worked examples as tables, formulas in mono boxes. */
+:root {
+  --paper: #f7f8f4; --ink: #1d231f; --muted: #5b655e; --rule: #d5dbd2; --card: #eef1ea;
+  --herb: #3d6b47; --herb-soft: #dce8dc; --warn: #8a5a12; --warn-soft: #f3e7d0;
+  --f-body: "Source Serif 4", Georgia, "Times New Roman", serif;
+  --f-label: "IBM Plex Sans Condensed", "Arial Narrow", Arial, sans-serif;
+  --f-mono: "IBM Plex Mono", ui-monospace, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --paper: #151a17; --ink: #e4e9e3; --muted: #9ba79e; --rule: #2f3832; --card: #1d2420;
+  --herb: #8cc59a; --herb-soft: #23362a; --warn: #e2b46a; --warn-soft: #3a2f1c; color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --paper: #151a17; --ink: #e4e9e3; --muted: #9ba79e; --rule: #2f3832; --card: #1d2420;
+  --herb: #8cc59a; --herb-soft: #23362a; --warn: #e2b46a; --warn-soft: #3a2f1c; color-scheme: dark; }
+body { background: var(--paper); color: var(--ink); font-family: var(--f-body); font-size: 1.06rem; line-height: 1.6;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 2.5rem 4rem; }
+main { max-width: 44rem; margin: 0 auto; display: flex; flex-direction: column; gap: 2.6rem; }
+section { display: flex; flex-direction: column; gap: 0.9rem; min-width: 0; }
+h1, h2, h3 { text-wrap: balance; line-height: 1.2; margin: 0; }
+h1 { font-size: 2.3rem; font-weight: 700; letter-spacing: -0.01em; }
+h2 { font-size: 1.5rem; font-weight: 700; padding-top: 0.6rem; border-top: 1px solid var(--rule); }
+h3 { font-size: 1.12rem; font-weight: 600; }
+p, ul, ol { margin: 0; }
+ul, ol { padding-left: 1.3rem; display: flex; flex-direction: column; gap: 0.35rem; }
+.eyebrow { font-family: var(--f-label); text-transform: uppercase; letter-spacing: 0.08em; font-size: 0.8rem; color: var(--herb); font-weight: 600; }
+.lede { font-size: 1.18rem; }
+.muted { color: var(--muted); }
+.mono { font-family: var(--f-mono); font-size: 0.9em; }
+.box { border-radius: 6px; padding: 1rem 1.2rem; display: flex; flex-direction: column; gap: 0.4rem; }
+.box strong { font-family: var(--f-label); text-transform: uppercase; letter-spacing: 0.06em; font-size: 0.85rem; }
+.verdict { background: var(--herb-soft); } .verdict strong { color: var(--herb); }
+.caution { background: var(--warn-soft); } .caution strong { color: var(--warn); }
+.steps { list-style: none; padding: 0; counter-reset: step; gap: 0.8rem; }
+.steps > li { counter-increment: step; display: grid; grid-template-columns: 2.6rem 1fr; gap: 0.2rem 0.9rem; background: var(--card); border-radius: 6px; padding: 1rem 1.1rem; }
+.steps > li::before { content: counter(step); font-family: var(--f-label); font-weight: 600; font-size: 1.5rem; color: var(--herb); line-height: 1.1; grid-row: span 2; }
+.steps > li > h3, .steps > li > div { grid-column: 2; min-width: 0; }
+.steps > li > div { display: flex; flex-direction: column; gap: 0.5rem; }
+.tip { font-size: 0.95rem; color: var(--muted); border-left: 2px solid var(--herb); padding-left: 0.7rem; }
+.formula { font-family: var(--f-mono); font-size: 0.9rem; background: var(--paper); border: 1px solid var(--rule); border-radius: 4px; padding: 0.55rem 0.75rem; overflow-x: auto; white-space: pre; }
+.table-wrap { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; font-size: 0.95rem; font-variant-numeric: tabular-nums; }
+th { font-family: var(--f-label); font-weight: 600; text-align: left; font-size: 0.85rem; letter-spacing: 0.03em; color: var(--muted); border-bottom: 1px solid var(--ink); padding: 0.4rem 0.6rem 0.4rem 0; }
+td { border-bottom: 1px solid var(--rule); padding: 0.45rem 0.6rem 0.45rem 0; vertical-align: top; }
+td.num { font-family: var(--f-mono); font-size: 0.88rem; white-space: nowrap; }
+tr.hit td { background: var(--herb-soft); }
+.good { color: var(--herb); font-weight: 600; } .bad { color: var(--warn); font-weight: 600; }
+.caption { font-size: 0.88rem; color: var(--muted); }
+.series { font-family: var(--f-label); font-size: 0.9rem; color: var(--muted); }
+@media (max-width: 520px) { h1 { font-size: 1.8rem; } }
+</style>
+
+<main>
+  <header style="display:flex;flex-direction:column;gap:0.7rem">
+    <div class="eyebrow">Kochbuch 4 von 4 · Residual-Wachstum · Stand 27.10.2026</div>
+    <h1>Kochbuch Trajektorien-Check</h1>
+    <p class="lede">Wie aus einem Pfad voller Kandidaten am Ende genau ein Modell wird: einmal richtig fitten, simulieren und per BIC die Größe wählen.</p>
+    <p class="series">Reihe: Weak Form → FROLS → FoBa → Trajektorien-Check. Setzt voraus: Der Pfad aus FROLS und FoBa liefert eine Liste von Kandidaten, jeder mit Koeffizienten aus der schwachen Form.</p>
+  </header>
+
+  <section>
+    <h2>Warum dieser Schritt das Ergebnis trägt</h2>
+    <p>Nach FoBa haben wir pro Einheit eine Handvoll bis rund zwanzig Kandidaten, vom 1-Term-Modell bis zum Deckel. Einer davon muss gewählt werden. Das Naheliegende wäre, im schwachen Raum zu bleiben: Restfehler plus Strafe pro Term, das „schwache BIC“. Q4 hat beide Wege verglichen:</p>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Struktur exakt (geprunt)</th><th>schwaches BIC (a)</th><th>Trajektorien-BIC (c)</th></tr></thead>
+        <tbody>
+          <tr><td>dim 1 (22 Einheiten)</td><td class="num">12/22</td><td class="num good">18/22</td></tr>
+          <tr><td>dim 2 (20 Einheiten)</td><td class="num">8/20</td><td class="num good">18/20</td></tr>
+          <tr><td>dim 3 fittbar (4 Einheiten)</td><td class="num">1/4</td><td class="num good">3/4</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>Das schwache BIC wählt im Median 4 Terme zu viel. Das Trajektorien-BIC trifft die wahre Größe in 35 von 46 Einheiten exakt. <b>Die Simulation ist also keine Kosmetik. Sie ist der Teil, der aus einer guten Kandidatenliste ein richtiges Modell macht.</b></p>
+    <p class="tip">Warum der schwache Raum überanpasst, ist nicht gemessen. Die plausibelste Erklärung steht im Kochbuch Weak Form: 2.529 stark überlappende Fenster werden wie 2.529 unabhängige Beobachtungen gezählt. Dazu kommt: Ein kleiner Fehler in ẋ bleibt im schwachen Raum klein, summiert sich beim Simulieren aber über die ganze Trajektorie auf. Die Simulation bestraft genau die Terme, die nur lokal passen.</p>
+  </section>
+
+  <section>
+    <h2>Das Rezept, so wie wir es bauen</h2>
+    <ol class="steps">
+      <li>
+        <h3>Startwert aus der schwachen Form nehmen</h3>
+        <div>
+          <p>Jeder Kandidat bringt seine schwachen Koeffizienten mit (Kochbuch Weak Form, Schritt 6). Bei sauberen Daten sind sie schon sehr nah am Optimum.</p>
+          <p class="tip">Das war Q3: Auf der wahren Struktur erreicht dieser eine Start R² &gt; 0,9 in 22/22 (dim 1) und 20/20 (dim 2). Zehn Zufallsstarts schaffen auf dim 2 nur 39/60, bei rund dreihundertfach höheren Kosten.</p>
+        </div>
+      </li>
+      <li>
+        <h3>Einmal mit BFGS im Trajektorienraum fitten</h3>
+        <div>
+          <p>Verlust ist der mittlere quadratische Fehler zwischen simuliertem Modell und Messdaten:</p>
+          <div class="formula">MSE(c) = Mittel über alle Messpunkte und Variablen von (x_sim(tᵢ; c) − x_mess(tᵢ))²</div>
+          <p>Simuliert wird mit Tsit5 ab dem <b>ersten Messpunkt</b> als Anfangswert. BFGS ist derselbe Optimierer wie in EvoGrow (Optimization.jl mit Optim.jl), mit denselben Einstellungen:</p>
+          <ul>
+            <li>Gradient per <b>finiten Differenzen</b>: Jeder Gradient kostet mehrere Simulationen.</li>
+            <li>Höchstens 200 Iterationen und höchstens <b>20.000 Loss-Evaluationen</b>.</li>
+            <li>Jeder Koeffizient wird vor der Simulation auf <b>[−10, 10]</b> geklemmt.</li>
+            <li><b>Genau ein Versuch</b> (<span class="mono">max_fit_attempts = 1</span>), kein Neustart bei Misserfolg.</li>
+          </ul>
+          <p class="tip">Code: <span class="mono">q4_fit</span> in <span class="mono">studies/regression/sideproject_q4_path_fits.jl</span>. Es ruft <span class="mono">fit_parameters</span> aus <span class="mono">src/optimize/bfgs.jl</span> mit <span class="mono">build_reference_optimizer(max_fit_attempts = 1)</span> aus <span class="mono">run_regression.jl</span>.</p>
+        </div>
+      </li>
+      <li>
+        <h3>Kaputte Fits aussortieren</h3>
+        <div>
+          <p>Bricht die Simulation ab oder explodiert sie, gibt der Fit den Platzhalter-Verlust 10⁶ zurück, den „Sentinel“. Solche Kandidaten und divergierte Simulationen werden bei der Auswahl nie genommen.</p>
+        </div>
+      </li>
+      <li>
+        <h3>Trajektorien-BIC ausrechnen</h3>
+        <div>
+          <div class="formula">BIC = N · log(MSE) + k · log(N)
+
+N = Messpunkte × Dimension   (dim 1: 512,  dim 2: 1.024)
+k = Zahl der aktiven Terme über alle Gleichungen</div>
+          <p>Der erste Teil belohnt einen guten Fit, denn der Logarithmus eines kleinen MSE ist stark negativ. Der zweite bestraft jeden Term mit log(N), also etwa 6,2 Punkten (dim 1) bzw. 6,9 Punkten (dim 2). Kleiner ist besser.</p>
+          <p class="tip">Ein zusätzlicher Term lohnt sich also schon, wenn er den MSE um mehr als den Faktor exp(log(N)/N) senkt, bei dim 1 um mehr als etwa 1,2 %. Das ist eine sehr niedrige Hürde, und das wird gleich wichtig.</p>
+        </div>
+      </li>
+      <li>
+        <h3>Den Kandidaten mit dem kleinsten BIC servieren</h3>
+        <div>
+          <p>Kein Parameter, keine Schwelle. Danach wird nur noch für die Auswertung gerechnet: Pruning-Regel für den Strukturvergleich, Rekonstruktion auf der Trainingstrajektorie, Generalisierung von der anderen Anfangsbedingung aus.</p>
+          <p class="tip">Code: Auswahlregel in <span class="mono">analysis/scripts/aggregate/aggregate_sideproject_q4.py</span>.</p>
+        </div>
+      </li>
+    </ol>
+  </section>
+
+  <section>
+    <h2>Fall 1: SIR-Modell, richtig gewählt, aber knapp</h2>
+    <p>System 31, Anfangsbedingung 1. Wahrheit: ẋ = −c₀·x·y, ẏ = c₀·x·y − c₁·y. Auszug aus den echten Q4-Kandidaten:</p>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Kandidat</th><th>Gleichung 1</th><th>Gleichung 2</th><th>k</th><th>MSE</th><th>BIC</th></tr></thead>
+        <tbody>
+          <tr><td class="num">1</td><td class="mono">x·y</td><td class="mono">—</td><td class="num">1</td><td class="num">2,5</td><td class="num">952</td></tr>
+          <tr><td class="num">2</td><td class="mono">x·y</td><td class="mono">x·y</td><td class="num">2</td><td class="num">1,5</td><td class="num">434</td></tr>
+          <tr class="hit"><td class="num">3</td><td class="mono">x·y</td><td class="mono">y, x·y</td><td class="num">3</td><td class="num">1,49·10⁻¹³</td><td class="num good">−30.223</td></tr>
+          <tr><td class="num">4</td><td class="mono">x·y</td><td class="mono">y, x·y, sin x</td><td class="num">4</td><td class="num">1,54·10⁻¹³</td><td class="num">−30.180</td></tr>
+          <tr><td class="num">5</td><td class="mono">x·y, sin x</td><td class="mono">y, x·y, sin x</td><td class="num">5</td><td class="num">1,47·10⁻¹³</td><td class="num">−30.220</td></tr>
+          <tr><td class="num">12</td><td class="mono">6 Terme</td><td class="mono">6 Terme</td><td class="num">12</td><td class="num">4,2·10⁻¹⁰</td><td class="num">−22.037</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>Die Wahrheit gewinnt. Aber Kandidat 5 hat zwei überflüssige Terme und liegt nur <b>3 BIC-Punkte</b> dahinter, weil sein MSE minimal kleiner ist als der der Wahrheit. Diese Unterschiede sind kein Signal mehr, sondern die Rechengenauigkeit des Integrators. Das schwache BIC hätte übrigens Kandidat 12 genommen, das größte Modell.</p>
+  </section>
+
+  <section>
+    <h2>Fall 2: kritisches Abbremsen, Gleichstand am Boden</h2>
+    <p>System 11, Anfangsbedingung 1. Wahrheit: ẋ = −x³, ein einziger Term.</p>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Kandidat</th><th>Terme</th><th>MSE</th><th>BIC</th><th>roh exakt</th><th>geprunt exakt</th></tr></thead>
+        <tbody>
+          <tr><td class="num">1</td><td class="mono">x³</td><td class="num">4,54·10⁻¹⁵</td><td class="num">−16.903</td><td class="good">ja</td><td class="good">ja</td></tr>
+          <tr class="hit"><td class="num">2</td><td class="mono">x², x³</td><td class="num">4,28·10⁻¹⁵</td><td class="num">−16.927</td><td class="bad">nein</td><td class="good">ja</td></tr>
+          <tr><td class="num">3</td><td class="mono">x², x³, sin x</td><td class="num">4,35·10⁻¹⁵</td><td class="num">−16.913</td><td class="bad">nein</td><td class="good">ja</td></tr>
+          <tr><td class="num">7</td><td class="mono">alle 6</td><td class="num">1,1·10⁻⁹</td><td class="num">−10.517</td><td class="bad">nein</td><td class="bad">nein</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>Hier gewinnt <b>nicht</b> die Wahrheit, sondern Kandidat 2 mit einem überflüssigen x². Sein MSE ist um 6 % kleiner, mehr als die 1,2 %-Hürde. Gezählt wird der Fall trotzdem als Treffer, weil die Pruning-Regel das winzige x² wegschneidet. Roh ist er falsch.</p>
+    <p>Das ist die Warnung aus der Literaturprüfung: <b>Auf sauberen Daten ist log(MSE) vom Integrator-Boden bestimmt.</b> Alle Modelle, die den Boden erreichen, sind praktisch gleich gut, und welches gewinnt, entscheidet Rundungsrauschen. Die Strafe pro Term ist zu klein, um das zuverlässig zu trennen.</p>
+  </section>
+
+  <section>
+    <h2>Fall 3: Lotka-Volterra-Konkurrenz, die Wahrheit ist gar nicht im Topf</h2>
+    <p>System 26, Anfangsbedingung 1. Wahrheit: drei Terme pro Gleichung, in Gleichung 2 unter anderem y und y². Der Pfad hat 15 Kandidaten, aber <b>keiner davon enthält y oder y² in Gleichung 2</b>. FROLS und FoBa haben sie nie gewählt.</p>
+    <p>Der Trajektorien-Check wählt dann das Modell, das die Trainingstrajektorie am besten nachahmt: Kandidat 15 mit 12 Termen und einer Rekonstruktion von R² = 0,9999. Von der anderen Anfangsbedingung aus divergiert genau dieses Modell (Generalisierung R² = −3,8). Unterwegs gab es außerdem einen Sentinel-Fit (Verlust 10⁶, korrekt aussortiert) und vier Fits, die das Budget von 20.000 Loss-Evaluationen ausgeschöpft haben.</p>
+    <p class="tip">Lektion: Der Trajektorien-Check kann nur unter den Kandidaten wählen, die der Pfad liefert. Fehlt die Wahrheit, findet er das beste falsche Modell, und bei einer einzigen Trainingstrajektorie ist das oft eines, das nur diese Trajektorie gut kann. Es ist dasselbe Trajektorien-Overfitting, das EvoGrow in C-1 zeigt.</p>
+  </section>
+
+  <section>
+    <h2>Was es kostet</h2>
+    <p>Das Rezept braucht pro Einheit im Median 6,4 % (dim 1), 3,2 % (dim 2) und 8,8 % (dim 3 fittbar) der Loss-Evaluationen, die EvoGrow C-1 für dieselbe Einheit braucht; gepoolt etwa 4 %. Fast alles davon fällt in diesem Schritt an, die schwache Form kostet dagegen praktisch nichts. Die Kosten sammeln sich bei den großen Kandidaten am Ende des Pfads, die oft das ganze Budget ausschöpfen, obwohl sie fast nie gewählt werden.</p>
+  </section>
+
+  <section>
+    <h2>Fallstricke</h2>
+    <div class="box caution">
+      <strong>Was unter Rauschen offen ist</strong>
+      <ul>
+        <li><b>Der Boden verschwindet.</b> Unter Rauschen bestimmt das Rauschen den MSE, nicht der Integrator. Ob BIC dann noch die richtige Größe wählt oder ob jeder weitere Term ein bisschen Rauschen „erklärt“ und gewinnt, misst Q5.</li>
+        <li><b>N ist zu groß.</b> Die Abweichungen einer simulierten Trajektorie sind zeitlich stark korreliert: Liegt das Modell bei tᵢ daneben, liegt es bei tᵢ₊₁ fast genauso daneben. N = 512 × Dimension überschätzt die Zahl unabhängiger Beobachtungen, und die Strafe log(N) ist entsprechend falsch skaliert.</li>
+        <li><b>Der Anfangswert.</b> Simuliert wird ab dem ersten Messpunkt. Unter Rauschen ist der selbst verrauscht, und der ganze Fit muss diesen falschen Start ausbaden. Für die Paper-Version ist festgelegt, den Anfangswert mitzuschätzen (Variante C). Q5 misst vorher, wie viel dieser Fehler ausmacht.</li>
+        <li><b>Viele Kandidaten.</b> AIC und BIC wählen bekanntermaßen zu große Modelle, wenn es im Verhältnis zur Datenmenge viele Kandidaten gibt (Gohain &amp; Jansson 2023).</li>
+        <li><b>Chaos.</b> Bei chaotischen Systemen wie Lorenz laufen selbst richtige Modelle nach einiger Zeit auseinander. Dann misst der Trajektorien-MSE nicht mehr die Struktur. In Q5 betrifft das die ausgeschlossenen dim-3-Systeme.</li>
+        <li><b>Die Schranke.</b> Liegt ein wahrer Koeffizient außerhalb von [−10, 10], kann auch der richtige Kandidat nicht gut fitten. Darum werden die Systeme 54–59 getrennt berichtet.</li>
+      </ul>
+    </div>
+  </section>
+
+  <section>
+    <h2>Was man daraus mitnimmt</h2>
+    <div class="box verdict">
+      <strong>Kurz</strong>
+      <p>Der Trajektorien-Check macht zwei Dinge. Er bringt jeden Kandidaten vom schwachen Startwert aus mit einem einzigen BFGS-Fit in die Form, die beim Simulieren zählt. Und er wählt per BIC die Größe. Er ist der Grund, warum Q4 gegen das schwache BIC so deutlich gewinnt. Seine Grenzen: Er kann nur wählen, was der Pfad liefert; auf sauberen Daten entscheidet am Boden Rundungsrauschen; und ob die BIC-Strafe unter Rauschen richtig sitzt, ist die eigentliche offene Frage von Q5. Hier liegt nach der Literaturprüfung auch der mögliche Beitrag: Die nächsten Arbeiten wählen entweder im Regressionsraum oder simulieren ohne nichtlinearen Refit.</p>
+    </div>
+  </section>
+
+  <section>
+    <h2>Literatur</h2>
+    <p class="caption">Aus dem Gedächtnis bzw. aus <span class="mono">docs/sideproject_residual_growth_literature.md</span>, noch nicht von einem Menschen gelesen. Mit (prüfen) markiert, wo die Angaben unsicher sind.</p>
+    <ul>
+      <li>Schwarz 1978, „Estimating the dimension of a model“, Ann. Statist. 6(2). Das BIC.</li>
+      <li>Akaike 1974, „A new look at the statistical model identification“, IEEE Trans. Autom. Control 19(6). Das AIC.</li>
+      <li>Burnham &amp; Anderson 2002, Model Selection and Multimodel Inference, Springer. Standardwerk zu AIC und BIC in der Praxis.</li>
+      <li>Mangan, Kutz, Brunton &amp; Proctor 2017, „Model selection for dynamical systems via sparse regression and information criteria“, Proc. R. Soc. A 473. Der nächste Verwandte: Kandidaten simulieren, Auswahl per AIC.</li>
+      <li>Piroddi &amp; Spinelli 2003, Int. J. Control 76(17); Farina &amp; Piroddi 2010, Int. J. Control 83(7). Auswahl per Simulationsfehler in der NARX-Linie.</li>
+      <li>Gohain &amp; Jansson 2023, IEEE Trans. Signal Process. AIC und BIC wählen bei vielen Kandidaten zu große Modelle.</li>
+      <li>Bayón-Buján &amp; Merino 2024, arXiv 2403.06809 (prüfen). Weak-SINDy-Auswahl mit anschließendem Refit in Integralform, die nächste Arbeit vom Typ „schwache Auswahl plus Refit“.</li>
+    </ul>
+  </section>
+</main>
+
+</html>

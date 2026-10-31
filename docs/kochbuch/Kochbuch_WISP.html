@@ -1,0 +1,303 @@
+<!doctype html><html lang="de" data-theme="light"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Kochbuch WISP</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;0,8..60,700;1,8..60,400&family=IBM+Plex+Sans+Condensed:wght@500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: one reading column like a recipe book; one worked example (logistic growth, 3 % noise) threads through every numbered step. */
+:root {
+  --paper: #f7f8f4; --ink: #1d231f; --muted: #5b655e; --rule: #d5dbd2; --card: #eef1ea;
+  --herb: #3d6b47; --herb-soft: #dce8dc; --warn: #8a5a12; --warn-soft: #f3e7d0;
+  --f-body: "Source Serif 4", Georgia, "Times New Roman", serif;
+  --f-label: "IBM Plex Sans Condensed", "Arial Narrow", Arial, sans-serif;
+  --f-mono: "IBM Plex Mono", ui-monospace, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --paper: #151a17; --ink: #e4e9e3; --muted: #9ba79e; --rule: #2f3832; --card: #1d2420;
+  --herb: #8cc59a; --herb-soft: #23362a; --warn: #e2b46a; --warn-soft: #3a2f1c; color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --paper: #151a17; --ink: #e4e9e3; --muted: #9ba79e; --rule: #2f3832; --card: #1d2420;
+  --herb: #8cc59a; --herb-soft: #23362a; --warn: #e2b46a; --warn-soft: #3a2f1c; color-scheme: dark; }
+body { background: var(--paper); color: var(--ink); font-family: var(--f-body); font-size: 1.06rem; line-height: 1.6;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 2.5rem 4rem; }
+main { max-width: 44rem; margin: 0 auto; display: flex; flex-direction: column; gap: 2.6rem; }
+section { display: flex; flex-direction: column; gap: 0.9rem; min-width: 0; }
+h1, h2, h3 { text-wrap: balance; line-height: 1.2; margin: 0; }
+h1 { font-size: 2.3rem; font-weight: 700; letter-spacing: -0.01em; }
+h2 { font-size: 1.5rem; font-weight: 700; padding-top: 0.6rem; border-top: 1px solid var(--rule); }
+h3 { font-size: 1.12rem; font-weight: 600; }
+p, ul, ol { margin: 0; }
+ul, ol { padding-left: 1.3rem; display: flex; flex-direction: column; gap: 0.35rem; }
+.eyebrow { font-family: var(--f-label); text-transform: uppercase; letter-spacing: 0.08em; font-size: 0.8rem; color: var(--herb); font-weight: 600; }
+.lede { font-size: 1.18rem; }
+.muted { color: var(--muted); }
+.mono { font-family: var(--f-mono); font-size: 0.9em; }
+.box { border-radius: 6px; padding: 1rem 1.2rem; display: flex; flex-direction: column; gap: 0.45rem; }
+.box strong { font-family: var(--f-label); text-transform: uppercase; letter-spacing: 0.06em; font-size: 0.85rem; }
+.verdict { background: var(--herb-soft); } .verdict strong { color: var(--herb); }
+.caution { background: var(--warn-soft); } .caution strong { color: var(--warn); }
+.overview { list-style: none; padding: 0; counter-reset: ov; gap: 0.3rem; }
+.overview li { counter-increment: ov; display: grid; grid-template-columns: 2rem 1fr; }
+.overview li::before { content: counter(ov) "."; font-family: var(--f-label); font-weight: 600; color: var(--herb); }
+.steps { list-style: none; padding: 0; counter-reset: step; gap: 0.8rem; }
+.steps > li { counter-increment: step; display: grid; grid-template-columns: 2.6rem 1fr; gap: 0.2rem 0.9rem; background: var(--card); border-radius: 6px; padding: 1rem 1.1rem; }
+.steps > li::before { content: counter(step); font-family: var(--f-label); font-weight: 600; font-size: 1.5rem; color: var(--herb); line-height: 1.1; grid-row: span 2; }
+.steps > li > h3, .steps > li > div { grid-column: 2; min-width: 0; }
+.steps > li > div { display: flex; flex-direction: column; gap: 0.55rem; }
+.example { border: 1px dashed var(--herb); border-radius: 6px; padding: 0.7rem 0.9rem; display: flex; flex-direction: column; gap: 0.4rem; background: var(--paper); }
+.example > b { font-family: var(--f-label); font-size: 0.85rem; letter-spacing: 0.04em; text-transform: uppercase; color: var(--herb); }
+.tip { font-size: 0.95rem; color: var(--muted); border-left: 2px solid var(--herb); padding-left: 0.7rem; }
+.formula { font-family: var(--f-mono); font-size: 0.9rem; background: var(--paper); border: 1px solid var(--rule); border-radius: 4px; padding: 0.55rem 0.75rem; overflow-x: auto; white-space: pre; }
+.table-wrap { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; font-size: 0.93rem; font-variant-numeric: tabular-nums; }
+th { font-family: var(--f-label); font-weight: 600; text-align: left; font-size: 0.84rem; letter-spacing: 0.03em; color: var(--muted); border-bottom: 1px solid var(--ink); padding: 0.4rem 0.6rem 0.4rem 0; }
+td { border-bottom: 1px solid var(--rule); padding: 0.4rem 0.6rem 0.4rem 0; vertical-align: top; }
+td.num { font-family: var(--f-mono); font-size: 0.86rem; white-space: nowrap; }
+tr.hit td { background: var(--herb-soft); }
+.good { color: var(--herb); font-weight: 600; } .bad { color: var(--warn); font-weight: 600; }
+.caption { font-size: 0.88rem; color: var(--muted); }
+dl { display: grid; grid-template-columns: max-content 1fr; gap: 0.45rem 1rem; margin: 0; }
+dt { font-family: var(--f-label); font-weight: 600; }
+dd { margin: 0; min-width: 0; }
+@media (max-width: 520px) { h1 { font-size: 1.8rem; } dl { grid-template-columns: 1fr; gap: 0.15rem; } dd { margin-bottom: 0.5rem; } }
+@media print { h2 { break-after: avoid; } .box, .example, table { break-inside: avoid; } .formula { white-space: pre-wrap; overflow: visible; } }
+</style>
+
+<main>
+  <header style="display:flex;flex-direction:column;gap:0.7rem">
+    <div class="eyebrow">EvoODE · WISP · Gesamtkochbuch · Stand 31.10.2026</div>
+    <h1>Kochbuch WISP</h1>
+    <p class="lede">Wie WISP aus einer verrauschten Messreihe eine Differentialgleichung macht. Alle Schritte in einem Dokument, an einem einzigen echten Beispiel durchgerechnet, ohne Vorwissen.</p>
+    <p class="muted">WISP = <b>W</b>eak-form <b>I</b>ncremental <b>S</b>tructure <b>P</b>ursuit. Ersetzt die fünf Einzelkochbücher vom 27.10. (Weak Form, FROLS, FoBa, Trajektorien-Check, Residual-Wachstum).</p>
+  </header>
+
+  <section>
+    <h2>Das Gericht in einem Absatz</h2>
+    <p>WISP baut ein Modell Term für Term auf. Welcher Term als Nächstes dazukommt, entscheidet eine schnelle lineare Rechnung, die keine Ableitungen braucht (die <em>schwache Form</em>). Nach jedem neuen Term wird geprüft, ob ein alter Term dadurch überflüssig wurde, und der fliegt dann wieder raus. Jeder Zwischenstand ist ein Kandidat. Der Aufbau hört auf, wenn kein Term mehr hilft, als Rauschen es auch könnte. Dann wird jeder Kandidat einmal richtig an die Messdaten gefittet, simuliert, und ein Informationskriterium (BIC) wählt den besten.</p>
+  </section>
+
+  <section>
+    <h2>Die Schritte auf einen Blick</h2>
+    <ol class="overview">
+      <li><span><b>Zutaten bereitlegen:</b> Messreihe und Termkatalog.</span></li>
+      <li><span><b>Schwache Form:</b> aus der Messreihe ein lineares Gleichungssystem machen.</span></li>
+      <li><span><b>Wachsen (FROLS):</b> den Term nehmen, der am meisten vom Restfehler erklärt.</span></li>
+      <li><span><b>Aufräumen (FoBa):</b> Terme entfernen, die überflüssig geworden sind.</span></li>
+      <li><span><b>Aufhören:</b> wenn kein Term mehr stärker hilft als Rauschen.</span></li>
+      <li><span><b>Fitten:</b> jeden Kandidaten einmal an die Messreihe anpassen, Start aus Schritt 2.</span></li>
+      <li><span><b>Wählen (BIC):</b> den Kandidaten mit dem besten Verhältnis von Passung zu Größe nehmen.</span></li>
+      <li><span><b>Abschmecken:</b> Struktur, Rekonstruktion und Generalisierung messen.</span></li>
+    </ol>
+  </section>
+
+  <section>
+    <h2>Das Beispiel, das durch alle Schritte führt</h2>
+    <p><b>System 3, logistisches Wachstum</b> (Strogatz S. 22): Eine Population wächst, bis sie an eine Kapazitätsgrenze stößt.</p>
+    <div class="formula">ẋ = 0,79 · x · (1 − x / 74,3)   =   0,79 · x  −  0,0106 · x²</div>
+    <p>Die Wahrheit hat also zwei Terme: <span class="mono">x</span> und <span class="mono">x²</span>. WISP weiß das nicht. Es bekommt nur 512 Messpunkte zwischen t = 0 und t = 10, Startwert 7,3, und auf jedem Punkt <b>3 % Rauschen</b> (σ = 0,03, multiplikativ). Alle Zahlen unten stammen aus dem echten Lauf dieser Zelle (<span class="mono">sys0003_ic1_s0.03_r0_n1</span>), nichts ist erfunden.</p>
+  </section>
+
+  <section>
+    <h2>Das Rezept</h2>
+    <ol class="steps">
+
+      <li>
+        <h3>Zutaten bereitlegen</h3>
+        <div>
+          <p><b>Die Messreihe:</b> eine einzige Trajektorie x(t) mit einem Startwert. Eine zweite Trajektorie mit einem anderen Startwert gibt es auch, aber die bleibt im Kühlschrank: Sie ist nur für den Test am Ende (Generalisierung).</p>
+          <p><b>Der Termkatalog</b> (die „Grammatik“): <span class="mono">1, u, u², u·v, u³, sin u, cos u</span> für jede Zustandsgröße. Mit einer Zustandsgröße sind das genau sechs Terme, mit zwei sind es 12, mit drei 19, mit vier 27.</p>
+          <div class="example"><b>Im Beispiel</b><p>Eine Zustandsgröße, also sechs mögliche Terme: <span class="mono">1, x, x², x³, sin x, cos x</span>.</p></div>
+        </div>
+      </li>
+
+      <li>
+        <h3>Schwache Form: Messreihe in ein Gleichungssystem verwandeln</h3>
+        <div>
+          <p>SINDy würde die Ableitung ẋ aus den Daten schätzen. Bei Rauschen ist das gefährlich: Ableitungen verstärken Rauschen. Die schwache Form integriert stattdessen. Für jedes kurze Zeitfenster gilt immer:</p>
+          <div class="formula">x(Fensterende) − x(Fensteranfang)  =  ∫ rechte Seite dt  über das Fenster</div>
+          <p>Links steht die Differenz zweier Messwerte. Rechts steht für jeden Term sein Integral über das Fenster, mit der Trapezregel aus den Messpunkten berechnet. Fenster gibt es in fünf Längen (1, 2, 4, 8 und 16 Messpunkte), jedes Fenster ist eine Zeile. Am Ende steht ein lineares Gleichungssystem:</p>
+          <div class="formula">b  ≈  A · c       b = Differenzen,   A = Term-Integrale,   c = Koeffizienten</div>
+          <p>Für jede Auswahl von Termen löst man das per kleinster Quadrate in Millisekunden. Was übrig bleibt, ist der <b>Restfehler</b>, die Summe der quadrierten Reste (SSE).</p>
+          <div class="example"><b>Im Beispiel</b><p>512 Messpunkte ergeben 2.529 Fenster-Zeilen. Ohne jeden Term ist der Restfehler 20.320.</p></div>
+          <p class="tip">Darum ist WISP so billig im Suchen: Koeffizienten werden ausgerechnet, nicht durch Simulieren gesucht. Bei unregelmäßig abgetasteten Daten (ρ = 0,5) läuft dasselbe auf den tatsächlichen Messzeiten.</p>
+        </div>
+      </li>
+
+      <li>
+        <h3>Wachsen: den Term nehmen, der am meisten erklärt (FROLS)</h3>
+        <div>
+          <p>Für jeden noch nicht benutzten Term: probeweise hinzufügen, <b>alle</b> Koeffizienten neu ausrechnen, schauen, wie stark der Restfehler sinkt. Der Term mit dem größten Gewinn kommt dazu. Bei mehreren Gleichungen wird jeder Gewinn durch die Größe der jeweiligen linken Seite geteilt, damit keine Gleichung alle Schritte an sich zieht; pro Schritt kommt genau ein Term in genau eine Gleichung.</p>
+          <div class="example"><b>Im Beispiel, Schritt 1 und 2</b>
+            <p>Schritt 1: Der größte Gewinn kommt von der Konstante <span class="mono">1</span> (15 % des Restfehlers). Falsch! Die Wahrheit hat keine Konstante. Aber am Anfang ist eine Konstante die beste Ein-Term-Näherung an eine Kurve, die von 7 auf 74 steigt.</p>
+            <p>Schritt 2: Als Nächstes <span class="mono">x³</span> (6 %). Auch falsch. Modell jetzt: <span class="mono">1, x³</span>.</p>
+          </div>
+          <p class="tip">Das ist typisch, gerade unter Rauschen: Frühe Schritte nehmen Terme, die grob passen, nicht die richtigen. Darum braucht es Schritt 4. Das Verfahren heißt FROLS (Billings, Chen &amp; Korenberg 1989).</p>
+        </div>
+      </li>
+
+      <li>
+        <h3>Aufräumen: Überflüssiges wieder entfernen (FoBa)</h3>
+        <div>
+          <p>Nach jedem neuen Term wird jeder alte Term geprüft: Wie stark stiege der Restfehler, wenn man ihn wegließe? Ist das weniger als die Hälfte dessen, was der neue Term gerade gebracht hat, fliegt er raus. Wiederholen, bis nichts mehr rausfliegt.</p>
+          <div class="example"><b>Im Beispiel, Schritt 3 und 4</b>
+            <p>Schritt 3: <span class="mono">x</span> kommt dazu. Jetzt ist die Konstante überflüssig und <b>fliegt raus</b>. Modell: <span class="mono">x, x³</span>.</p>
+            <p>Schritt 4: <span class="mono">x²</span> kommt dazu. Jetzt ist <span class="mono">x³</span> überflüssig und <b>fliegt raus</b>. Modell: <span class="mono">x, x²</span>, genau die Wahrheit.</p>
+          </div>
+          <p class="tip">Das ist FoBa (Zhang 2011); der Faktor ½ ist der veröffentlichte Standardwert, nicht von uns eingestellt. Genau diesen Rückwärtsschritt hatte EvoGrow nicht: Dort konnte ein falscher Term nie wieder raus.</p>
+        </div>
+      </li>
+
+      <li>
+        <h3>Aufhören: wenn kein Term mehr hilft, als Rauschen es auch könnte</h3>
+        <div>
+          <p>Jeder Zwischenstand ist ein Kandidat. Aber wann hört man auf? Unter Rauschen sinkt der Restfehler nie auf null, irgendein Term „hilft“ immer ein bisschen, weil er Rauschen nachzeichnet. Die Regel (Q7):</p>
+          <div class="formula">Für jeden freien Term:  Gewinn / erwarteter Gewinn eines Rauschterms
+Bei keinem Term größer als 6,6  →  Gleichung hört auf.</div>
+          <p>Den „erwarteten Gewinn eines Rauschterms“ rechnen wir aus dem Rauschen aus, das wir vorher aus den Daten selbst schätzen: An jedem Punkt wird ein kleines kubisches Polynom durch die Nachbarpunkte gelegt; wie stark die Messwerte darum streuen, ist das Rauschen. Die 6,6 ist die übliche Signifikanzschwelle (1 %, χ²-Test), nicht eingestellt.</p>
+          <div class="example"><b>Im Beispiel</b>
+            <div class="table-wrap"><table>
+              <thead><tr><th>Modell</th><th>größtes Verhältnis Gewinn / Rauschgewinn</th><th>weiter?</th></tr></thead>
+              <tbody>
+                <tr><td class="mono">leer</td><td class="num">9.310</td><td>ja</td></tr>
+                <tr><td class="mono">1</td><td class="num">2.380</td><td>ja</td></tr>
+                <tr><td class="mono">1, x³</td><td class="num">935</td><td>ja</td></tr>
+                <tr><td class="mono">x, x³</td><td class="num">305</td><td>ja</td></tr>
+                <tr class="hit"><td class="mono">x, x²</td><td class="num">2,3 (bei sin x)</td><td class="good">nein, Stopp</td></tr>
+              </tbody>
+            </table></div>
+            <p>Bei der Wahrheit angekommen, würde der beste weitere Term (<span class="mono">sin x</span>) den Fehler nur 2,3-mal so stark senken wie ein Rauschterm. Das ist nicht signifikant: Stopp. Die Kandidatenliste hat vier Einträge.</p>
+          </div>
+          <p class="tip">Welcher Term als Nächstes tatsächlich dazukommt, entscheidet weiter FROLS (Schritt 3); der Test fragt nur, ob überhaupt noch einer signifikant hilft. Vorher stand hier eine feste Grenze von 6 Termen pro Gleichung. Die war aus der Lösung abgeleitet (doppelt so viele wie die größte wahre Gleichung) und ist damit methodisch unsauber. Mehr dazu unten unter „Was wir gelernt haben“.</p>
+        </div>
+      </li>
+
+      <li>
+        <h3>Fitten: jeden Kandidaten einmal richtig anpassen</h3>
+        <div>
+          <p>Die Koeffizienten aus der schwachen Form sind nur eine Näherung. Jetzt wird jeder Kandidat <b>simuliert</b> und an die Messreihe angepasst: Optimierer BFGS (derselbe wie in EvoGrow), Start bei den schwachen Koeffizienten, <b>genau ein Versuch</b>, Koeffizienten auf [−10, 10] begrenzt. Simuliert wird ab dem ersten Messpunkt.</p>
+          <div class="formula">MSE = Mittel über alle Messpunkte von (x_simuliert − x_gemessen)²</div>
+          <div class="example"><b>Im Beispiel, Kandidat 4 (die Wahrheit)</b><p>Schwacher Start <span class="mono">0,785·x − 0,0105·x²</span>, nach dem Fit <span class="mono">0,795·x − 0,0107·x²</span>. Wahr ist <span class="mono">0,79·x − 0,0106·x²</span>.</p></div>
+          <p class="tip">Ein einziger Fit vom schwachen Start schlägt zehn Zufallsstarts (Q3). Fast die ganze Rechenzeit von WISP steckt in diesem Schritt; deshalb ist eine kurze Kandidatenliste so wertvoll.</p>
+        </div>
+      </li>
+
+      <li>
+        <h3>Wählen: das kleinste BIC gewinnt</h3>
+        <div>
+          <div class="formula">BIC = N · log(MSE) + k · log(N)      N = Messpunkte × Dimension,  k = Zahl der Terme</div>
+          <p>Der erste Teil belohnt gute Passung, der zweite bestraft jeden Term. Kleiner ist besser. Keine Stellschraube.</p>
+          <div class="example"><b>Im Beispiel</b>
+            <div class="table-wrap"><table>
+              <thead><tr><th>Kandidat</th><th>Terme</th><th>MSE</th><th>BIC</th></tr></thead>
+              <tbody>
+                <tr><td class="num">1</td><td class="mono">1</td><td class="num">141,1</td><td class="num">2.540</td></tr>
+                <tr><td class="num">2</td><td class="mono">1, x³</td><td class="num">29,8</td><td class="num">1.751</td></tr>
+                <tr><td class="num">3</td><td class="mono">x, x³</td><td class="num">5,31</td><td class="num">868</td></tr>
+                <tr class="hit"><td class="num">4</td><td class="mono">x, x²</td><td class="num">3,04</td><td class="num good">581</td></tr>
+              </tbody>
+            </table></div>
+            <p>Die Wahrheit gewinnt deutlich. Zum Vergleich: Mit der alten 6-Term-Grenze lief der Pfad weiter bis zu Kandidat 8 mit allen sechs Termen. Der beste davon (<span class="mono">x, x², x³, sin x</span>) erreichte BIC 598, nur 17 Punkte hinter der Wahrheit. Hier hat BIC trotzdem richtig gewählt; die neue Regel erspart vier Fits.</p>
+          </div>
+          <p class="tip">Warum die Simulation nötig ist: Wählt man die Größe nur im schwachen Raum, nimmt das Verfahren im Median vier Terme zu viel (Q4). Ein kleiner Fehler in ẋ bleibt in der schwachen Form klein, summiert sich beim Simulieren aber über die ganze Kurve.</p>
+        </div>
+      </li>
+
+      <li>
+        <h3>Abschmecken: was gemessen wird</h3>
+        <div>
+          <ul>
+            <li><b>Struktur:</b> Stimmen die gewählten Terme mit der Wahrheit überein? Erst werden winzige Koeffizienten weggeschnitten (kleiner als ein Tausendstel des größten), dann wird verglichen.</li>
+            <li><b>Rekonstruktion:</b> Modell von der sauberen Trainings-Startbedingung simulieren, R² gegen die saubere Kurve. Treffer, wenn R² &gt; 0,9.</li>
+            <li><b>Generalisierung:</b> Modell von der <b>anderen</b> Startbedingung aus simulieren, die nie gesehen wurde. Treffer, wenn R² &gt; 0,9. Das ist der eigentliche Test, ob das Modell den Mechanismus verstanden hat.</li>
+          </ul>
+          <div class="example"><b>Im Beispiel</b><p>Struktur exakt richtig. Rekonstruktion R² = 1,0000, Generalisierung R² = 1,0000. Ein Lehrbuchfall.</p></div>
+          <p class="tip">Immer beide Metriken zusammen: Ein strukturell falsches Modell kann trotzdem eine perfekte Rekonstruktion haben (Kandidat 3 oben: R² = 0,996 mit dem falschen Term <span class="mono">x³</span>).</p>
+        </div>
+      </li>
+    </ol>
+  </section>
+
+  <section>
+    <h2>Was wir bisher gemessen haben</h2>
+    <h3>Ohne Rauschen (Q4)</h3>
+    <p>Struktur exakt: dim 1 82 %, dim 2 90 %, dim 3 fittbar 3 von 4. EvoGrow C-1 auf denselben Einheiten: 47 %, 37 %, 0 von 12. Bei etwa 4 % der Rechenkosten von EvoGrow.</p>
+    <h3>Mit Rauschen gegen WSINDy (Q5-W, vorläufig)</h3>
+    <p>Gegner ist das veröffentlichte WSINDy (Messenger &amp; Bortz), portiert aus dem Original-MATLAB-Code. Der Abgleich gegen MATLAB steht noch aus, deshalb sind alle Zahlen vorläufig. Gezählt sind Zellen mit Treffer.</p>
+    <div class="table-wrap"><table>
+      <thead><tr><th>verrauscht, gleichmäßig abgetastet</th><th>Struktur: WISP</th><th>WSINDy</th><th>Generalisierung: WISP</th><th>WSINDy</th></tr></thead>
+      <tbody>
+        <tr><td>dim 1 (352 Zellen)</td><td class="num">111</td><td class="num">96</td><td class="num good">228</td><td class="num">158</td></tr>
+        <tr><td>dim 2 (320 Zellen)</td><td class="num">83</td><td class="num">84</td><td class="num good">199</td><td class="num">124</td></tr>
+      </tbody>
+    </table></div>
+    <div class="table-wrap"><table>
+      <thead><tr><th>verrauscht, unregelmäßig abgetastet</th><th>Struktur: WISP</th><th>WSINDy*</th><th>Generalisierung: WISP</th><th>WSINDy*</th></tr></thead>
+      <tbody>
+        <tr><td>dim 1 (396 Zellen)</td><td class="num">126</td><td class="num">125</td><td class="num good">271</td><td class="num">204</td></tr>
+        <tr><td>dim 2 (360 Zellen)</td><td class="num good">109</td><td class="num">68</td><td class="num good">222</td><td class="num">115</td></tr>
+      </tbody>
+    </table></div>
+    <p class="caption">* WSINDy braucht gleichmäßige Zeitabstände; hier bekommt es die Daten linear auf ein gleichmäßiges Raster interpoliert, die stärkere seiner beiden Varianten. Diese Zahlen stammen noch aus dem Lauf mit der 6-Term-Grenze.</p>
+    <p><b>Lesart:</b> WISP generalisiert unter Rauschen deutlich besser als WSINDy; bei der exakten Struktur liegt es gleichauf oder vorn. Absolut trifft unter Rauschen auch WISP die exakte Struktur nur in etwa einem Viertel bis einem Drittel der Zellen. Das ist ein offenes Problem des ganzen Feldes, kein uns bekanntes erklärbares Verfahren ist da besser.</p>
+  </section>
+
+  <section>
+    <h2>Was wir über das Aufhören gelernt haben</h2>
+    <ol class="steps">
+      <li><h3>Feste Grenze 6 (bis Q5)</h3><div><p>Funktioniert, ist aber aus der Lösung abgeleitet. Und sie kappt auf dim 2 bis 4 oft, bevor alle wahren Terme auf der Liste sind.</p></div></li>
+      <li><h3>„Fehler so klein wie das Rauschen“ (Q6): durchgefallen</h3><div><p>Hört gleichzeitig zu früh und zu spät auf: In 591 von 2.788 Gleichungen wurde ein wahrer Term abgeschnitten. Grund: Ein kleiner wahrer Term ändert die <em>Höhe</em> des Fehlers weniger, als diese ohnehin schwankt. Nützliches Nebenergebnis: Die Rauschschätzung selbst ist sehr gut (geschätzt durch wahr im Median 0,96–1,03).</p></div></li>
+      <li><h3>„Hilft der nächste Term mehr als Rauschen?“ (Q7): vielversprechend</h3><div><p>Schaut auf den <em>Gewinn</em> statt auf die Höhe. Ohne jedes Wissen über die Lösung steht die exakte Wahrheit genauso oft auf der Liste wie mit der Grenze 6 (verrauscht: dim 1 49 / 50 %, dim 2 69 / 71 %, dim 3 54 / 53 %), bei halb so langer Liste. Ob das Endergebnis gleich gut bleibt, zeigt der Fit-Lauf, der gerade startet (3.070 neue Fits, ca. 1.100 Kernstunden). Vorher festgelegt: Q7 ersetzt die 6, wenn es höchstens 5 Prozentpunkte schlechter ist.</p></div></li>
+    </ol>
+  </section>
+
+  <section>
+    <h2>Was noch offen ist</h2>
+    <div class="box caution">
+      <strong>Vor dem Paper</strong>
+      <ul>
+        <li><b>MATLAB-Abgleich:</b> Unser WSINDy-Port muss gegen das Original geprüft werden (Lizenz kommt).</li>
+        <li><b>Q7-Fits:</b> laufen als Nächstes auf Orion.</li>
+        <li><b>Startwert mitschätzen (Variante C):</b> Heute startet jede Simulation vom ersten, verrauschten Messpunkt. Für die Paper-Version wird der Startwert mitgefittet. Erst auf einer Teilmenge.</li>
+        <li><b>Warum die Wahrheit unter Rauschen oft nicht auf der Liste steht:</b> In etwa der Hälfte der verrauschten Zellen fehlt sie. Das ist die eigentliche Baustelle für eine spätere Version.</li>
+        <li><b>Einfachheit:</b> Jeder Baustein muss in einem Satz erklärbar bleiben. Scheitert etwas, nehmen wir lieber eine offen benannte Einschränkung in Kauf, als Reparaturen zu stapeln.</li>
+      </ul>
+    </div>
+  </section>
+
+  <section>
+    <h2>WISP in einem Satz pro Baustein</h2>
+    <dl>
+      <dt>Schwache Form</dt><dd>Statt Ableitungen zu schätzen, vergleicht man Differenzen von Messwerten mit Integralen der Terme.</dd>
+      <dt>FROLS</dt><dd>Nimm den Term, der nach gemeinsamem Neuausrechnen den Restfehler am stärksten senkt.</dd>
+      <dt>FoBa</dt><dd>Wirf einen alten Term raus, wenn er weniger als halb so viel bringt wie der neue.</dd>
+      <dt>Stopp (Q7)</dt><dd>Ein Term kommt nur dazu, wenn er mehr bringt, als Rauschen plausibel könnte.</dd>
+      <dt>Fit</dt><dd>Ein BFGS-Fit pro Kandidat, gestartet bei den schwachen Koeffizienten.</dd>
+      <dt>BIC</dt><dd>Passung minus Strafe pro Term, das kleinste gewinnt.</dd>
+    </dl>
+  </section>
+
+  <section>
+    <h2>Kleines Glossar</h2>
+    <dl>
+      <dt>Restfehler (SSE)</dt><dd>Wie viel der Daten das aktuelle Modell noch nicht erklärt, als eine Zahl.</dd>
+      <dt>Kandidat</dt><dd>Ein Zwischenstand auf dem Pfad, also ein mögliches Modell.</dd>
+      <dt>Pfad</dt><dd>Die Folge aller Kandidaten, vom leeren Modell bis zum Stopp.</dd>
+      <dt>σ, ρ</dt><dd>Rauschstärke (bis 5 %) und Anteil weggelassener Messpunkte (0 oder 50 %).</dd>
+      <dt>dim</dt><dd>Zahl der Zustandsgrößen: dim 1 eine Gleichung, dim 2 zwei gekoppelte usw.</dd>
+      <dt>Stratum</dt><dd>Gruppe, die nie mit anderen gemittelt wird (dim 1, dim 2, dim 3 fittbar, dim 4).</dd>
+      <dt>WSINDy</dt><dd>Der wichtigste Gegner: SINDy in schwacher Form, mit automatischer Schwellenwahl.</dd>
+    </dl>
+  </section>
+
+  <section>
+    <h2>Zum Weiterlesen im Repo</h2>
+    <ul class="muted">
+      <li><span class="mono">docs/sideproject_residual_growth_protocol*.md</span>: alle eingefrorenen Protokolle (Q1–Q7, Q5-W)</li>
+      <li><span class="mono">DIARY.md</span>, Einträge 17.10. bis 31.10.: alle Zahlen</li>
+      <li><span class="mono">analysis/scripts/aggregate/build_sideproject_q7_paths.py</span>: Schritte 2–5 im Code</li>
+      <li><span class="mono">studies/regression/sideproject_q5_noise_fits.jl</span>: Schritte 6–8 im Code</li>
+    </ul>
+  </section>
+</main>
+</html>

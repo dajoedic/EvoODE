@@ -1,0 +1,183 @@
+<!doctype html><html lang="de" data-theme="light"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Kochbuch Weak Form</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;0,8..60,700;1,8..60,400&family=IBM+Plex+Sans+Condensed:wght@500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: one reading column like a recipe book page; numbered steps as cards, worked examples as tables, formulas in mono boxes. */
+:root {
+  --paper: #f7f8f4; --ink: #1d231f; --muted: #5b655e; --rule: #d5dbd2; --card: #eef1ea;
+  --herb: #3d6b47; --herb-soft: #dce8dc; --warn: #8a5a12; --warn-soft: #f3e7d0;
+  --f-body: "Source Serif 4", Georgia, "Times New Roman", serif;
+  --f-label: "IBM Plex Sans Condensed", "Arial Narrow", Arial, sans-serif;
+  --f-mono: "IBM Plex Mono", ui-monospace, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --paper: #151a17; --ink: #e4e9e3; --muted: #9ba79e; --rule: #2f3832; --card: #1d2420;
+  --herb: #8cc59a; --herb-soft: #23362a; --warn: #e2b46a; --warn-soft: #3a2f1c; color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --paper: #151a17; --ink: #e4e9e3; --muted: #9ba79e; --rule: #2f3832; --card: #1d2420;
+  --herb: #8cc59a; --herb-soft: #23362a; --warn: #e2b46a; --warn-soft: #3a2f1c; color-scheme: dark; }
+body { background: var(--paper); color: var(--ink); font-family: var(--f-body); font-size: 1.06rem; line-height: 1.6;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 2.5rem 4rem; }
+main { max-width: 44rem; margin: 0 auto; display: flex; flex-direction: column; gap: 2.6rem; }
+section { display: flex; flex-direction: column; gap: 0.9rem; min-width: 0; }
+h1, h2, h3 { text-wrap: balance; line-height: 1.2; margin: 0; }
+h1 { font-size: 2.3rem; font-weight: 700; letter-spacing: -0.01em; }
+h2 { font-size: 1.5rem; font-weight: 700; padding-top: 0.6rem; border-top: 1px solid var(--rule); }
+h3 { font-size: 1.12rem; font-weight: 600; }
+p, ul, ol { margin: 0; }
+ul, ol { padding-left: 1.3rem; display: flex; flex-direction: column; gap: 0.35rem; }
+.eyebrow { font-family: var(--f-label); text-transform: uppercase; letter-spacing: 0.08em; font-size: 0.8rem; color: var(--herb); font-weight: 600; }
+.lede { font-size: 1.18rem; }
+.muted { color: var(--muted); }
+.mono { font-family: var(--f-mono); font-size: 0.9em; }
+.box { border-radius: 6px; padding: 1rem 1.2rem; display: flex; flex-direction: column; gap: 0.4rem; }
+.box strong { font-family: var(--f-label); text-transform: uppercase; letter-spacing: 0.06em; font-size: 0.85rem; }
+.verdict { background: var(--herb-soft); } .verdict strong { color: var(--herb); }
+.caution { background: var(--warn-soft); } .caution strong { color: var(--warn); }
+.steps { list-style: none; padding: 0; counter-reset: step; gap: 0.8rem; }
+.steps > li { counter-increment: step; display: grid; grid-template-columns: 2.6rem 1fr; gap: 0.2rem 0.9rem; background: var(--card); border-radius: 6px; padding: 1rem 1.1rem; }
+.steps > li::before { content: counter(step); font-family: var(--f-label); font-weight: 600; font-size: 1.5rem; color: var(--herb); line-height: 1.1; grid-row: span 2; }
+.steps > li > h3, .steps > li > div { grid-column: 2; min-width: 0; }
+.steps > li > div { display: flex; flex-direction: column; gap: 0.5rem; }
+.tip { font-size: 0.95rem; color: var(--muted); border-left: 2px solid var(--herb); padding-left: 0.7rem; }
+.formula { font-family: var(--f-mono); font-size: 0.9rem; background: var(--paper); border: 1px solid var(--rule); border-radius: 4px; padding: 0.55rem 0.75rem; overflow-x: auto; white-space: pre; }
+.table-wrap { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; font-size: 0.95rem; font-variant-numeric: tabular-nums; }
+th { font-family: var(--f-label); font-weight: 600; text-align: left; font-size: 0.85rem; letter-spacing: 0.03em; color: var(--muted); border-bottom: 1px solid var(--ink); padding: 0.4rem 0.6rem 0.4rem 0; }
+td { border-bottom: 1px solid var(--rule); padding: 0.45rem 0.6rem 0.45rem 0; vertical-align: top; }
+td.num { font-family: var(--f-mono); font-size: 0.88rem; white-space: nowrap; }
+.good { color: var(--herb); font-weight: 600; } .bad { color: var(--warn); font-weight: 600; }
+.caption { font-size: 0.88rem; color: var(--muted); }
+.series { font-family: var(--f-label); font-size: 0.9rem; color: var(--muted); }
+@media (max-width: 520px) { h1 { font-size: 1.8rem; } }
+</style>
+
+<main>
+  <header style="display:flex;flex-direction:column;gap:0.7rem">
+    <div class="eyebrow">Kochbuch 1 von 4 · Residual-Wachstum · Stand 27.10.2026</div>
+    <h1>Kochbuch Weak Form</h1>
+    <p class="lede">Wie man die Koeffizienten einer ODE ausrechnet, ohne je eine Ableitung zu schätzen.</p>
+    <p class="series">Reihe: Weak Form → FROLS → FoBa → Trajektorien-Check. Alle Zahlen auf dieser Seite sind mit unserem echten Code gerechnet.</p>
+  </header>
+
+  <section>
+    <h2>Das Problem, das sie löst</h2>
+    <p>Wir suchen eine Gleichung ẋ = f(x), wobei f eine Summe von Termen aus dem Katalog ist, jeder mit einem Koeffizienten. Hätten wir ẋ, wäre das trivial: An jedem Messpunkt gilt ẋ(tᵢ) = c₁·θ₁(x(tᵢ)) + c₂·θ₂(x(tᵢ)) + …, das ist ein lineares Gleichungssystem in den c. Genau so macht es SINDy.</p>
+    <p>Nur haben wir ẋ nicht. Wir haben Messpunkte x(tᵢ), und ẋ muss man daraus schätzen. Eine Ableitung teilt kleine Differenzen durch kleine Zeitabstände, und dabei wird Rauschen riesig. Das haben wir auf der logistischen Gleichung gemessen:</p>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Was man aus verrauschten Daten (1 % Rauschen) ausrechnet</th><th>relatives Rauschen im Ergebnis</th></tr></thead>
+        <tbody>
+          <tr><td>Ableitung ẋ per zentraler Differenz</td><td class="num bad">133 %</td></tr>
+          <tr><td>Differenz x(Ende) − x(Anfang) über 16 Messpunkte (unsere Box-Fenster)</td><td class="num">19 %</td></tr>
+          <tr><td>Weak-Form-Zielgröße mit glatter Testfunktion über 33 Punkte</td><td class="num good">4,3 %</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="caption">Logistische Gleichung ẋ = x − x², 512 Punkte auf [0, 10], Punkt bei t ≈ 3,9, multiplikatives Gaussrauschen σ = 0,01, 2.000 Wiederholungen. Die dritte Zeile hat ein doppelt so breites Fenster und ist deshalb nur als Größenordnung vergleichbar.</p>
+    <p>Schon 1 % Messrauschen macht die geschätzte Ableitung also wertlos. Die schwache Form umgeht das.</p>
+  </section>
+
+  <section>
+    <h2>Der Trick in einer Zeile</h2>
+    <p>Integriert man beide Seiten der ODE über ein Zeitfenster [a, e], dann verschwindet die Ableitung:</p>
+    <div class="formula">∫ₐᵉ ẋ dt  =  x(e) − x(a)  =  c₁·∫ₐᵉ θ₁(x) dt + c₂·∫ₐᵉ θ₂(x) dt + …</div>
+    <p>Links stehen nur noch zwei Messwerte. Rechts stehen Integrale der Terme über Messdaten, und Integrieren mittelt Rauschen weg, statt es zu verstärken. Die Gleichung ist weiterhin <b>linear in den Koeffizienten</b>, und darauf kommt es an.</p>
+  </section>
+
+  <section>
+    <h2>Das Rezept, so wie wir es bauen</h2>
+    <ol class="steps">
+      <li>
+        <h3>Die Terme an jedem Messpunkt auswerten</h3>
+        <div>
+          <p>Für jeden Term im Katalog (1, x, x², x³, sin x, cos x, bei mehreren Variablen auch x·y usw.) den Wert an allen 512 Messpunkten ausrechnen. Ergebnis: eine Tabelle Θ mit 512 Zeilen und einer Spalte pro Term.</p>
+        </div>
+      </li>
+      <li>
+        <h3>Fenster aufschneiden</h3>
+        <div>
+          <p>Jedes Fenster beginnt bei einem Messpunkt und ist 1, 2, 4, 8 oder 16 Messpunkte lang. Jede Startposition wird genommen, die Fenster überlappen also stark. Bei 512 Punkten ergibt das 511 + 510 + 508 + 504 + 496 = <b>2.529 Fenster</b>.</p>
+        </div>
+      </li>
+      <li>
+        <h3>Pro Fenster eine Zeile bauen</h3>
+        <div>
+          <p>Linke Seite: b = x(Ende) − x(Anfang). Rechte Seite: für jeden Term sein Integral über das Fenster, berechnet mit der Trapezregel aus den Messpunkten im Fenster.</p>
+          <p class="tip">Rechenbeispiel, logistische Gleichung, Fenster von Punkt 100 bis 104 (t = 1,957 bis 2,035): b = 0,2872 − 0,2714 = <span class="mono">0,01575294</span>. Integral von x = <span class="mono">0,02185845</span>, Integral von x² = <span class="mono">0,00610561</span>. Mit den wahren Koeffizienten 1 und −1: 0,02185845 − 0,00610561 = <span class="mono">0,01575284</span>. Die Abweichung von 1,0·10⁻⁷ ist der Fehler der Trapezregel.</p>
+        </div>
+      </li>
+      <li>
+        <h3>Alle Zeilen stapeln</h3>
+        <div>
+          <p>Es entsteht ein ganz normales lineares System mit 2.529 Gleichungen:</p>
+          <div class="formula">b ≈ A · c        b: 2.529 Differenzen    A: 2.529 × (Zahl der Terme)    c: Koeffizienten</div>
+          <p>Für jede Gleichung des Systems (jede Zustandsvariable) gibt es ein eigenes b, aber dasselbe A.</p>
+        </div>
+      </li>
+      <li>
+        <h3>Spalten auf gleiche Länge bringen und komprimieren</h3>
+        <div>
+          <p>Jede Spalte von A wird auf Länge 1 skaliert, damit x³ mit großen Werten nicht neben einer kleinen Konstante numerisch dominiert. Dann kommt ein Trick: Wir machen einmal eine QR-Zerlegung der Matrix [A | b]. Danach bleiben statt 2.529 Zeilen nur noch so viele Zeilen wie Spalten übrig, und <b>für jede beliebige Teilmenge von Termen ist der Restfehler exakt derselbe wie auf dem vollen System</b>.</p>
+          <p class="tip">Das macht FROLS und FoBa billig: Jeder Probe-Fit läuft auf einer Matrix mit 7 statt 2.529 Zeilen (bei dim 1). Code: Klasse <span class="mono">WeakFit</span> in <span class="mono">analysis/scripts/aggregate/run_sideproject_residual_growth.py</span>.</p>
+        </div>
+      </li>
+      <li>
+        <h3>Für eine gewählte Termmenge lösen</h3>
+        <div>
+          <p>Kleinste Quadrate (per SVD, nie über die Normalgleichungen AᵀA, die die Kondition quadrieren würden). Ergebnis: Koeffizienten und der Restfehler SSE = ‖b − A·c‖². Danach die Skalierung aus Schritt 5 wieder herausrechnen.</p>
+          <p class="tip">Diese Koeffizienten sind der „schwache Startwert“ für den späteren BFGS-Fit. Code: <span class="mono">weak_coefficients</span> in <span class="mono">build_sideproject_q3_weak_starts.py</span>; der Aufbau der Zeilen: <span class="mono">build_design</span> in <span class="mono">analysis/exploratory/term_relevance/term_relevance.py</span>.</p>
+        </div>
+      </li>
+    </ol>
+  </section>
+
+  <section>
+    <h2>Wie es im Lehrbuch heißt: Testfunktionen</h2>
+    <p>Die allgemeine schwache Form multipliziert die ODE mit einer <b>Testfunktion</b> φ(t), die nur auf einem Fenster ungleich null ist, und integriert. Partielle Integration schiebt die Ableitung von x auf φ:</p>
+    <div class="formula">∫ φ·ẋ dt  =  [φ·x]ₐᵉ − ∫ φ'·x dt</div>
+    <p>Ist φ an den Fensterrändern null (eine glatte „Beule“), fällt der Randterm weg, und die linke Seite wird zu −∫ φ'·x dt: ein gewichtetes Mittel über <em>alle</em> Messpunkte im Fenster. Rauschen mittelt sich heraus. So macht es Weak SINDy (Messenger &amp; Bortz).</p>
+    <p>Unsere Box-Fenster sind der Sonderfall φ = 1 auf dem Fenster. Dann ist φ' innen null, und es bleibt <em>nur</em> der Randterm x(e) − x(a). Das ist die einfachste Testfunktion, aber auch die, die am wenigsten Rauschen wegmittelt: Die linke Seite hängt nur an zwei Messpunkten. Genau das zeigt die Tabelle oben, 19 % gegen 4,3 %.</p>
+    <p class="muted">In der Literatur heißt unsere Variante „integrale Form“ (Schaeffer &amp; McCalla 2017). Rechts im Integral der Terme wird dagegen in beiden Varianten über alle Punkte im Fenster gemittelt.</p>
+  </section>
+
+  <section>
+    <h2>Fallstricke</h2>
+    <div class="box caution">
+      <strong>Was unter Rauschen schiefgehen kann</strong>
+      <ul>
+        <li><b>Kurze Fenster sind fast Ableitungen.</b> Ein Fenster der Länge 1 ist die Differenz zweier Nachbarpunkte, also so verrauscht wie eine Ableitung. Von unseren 2.529 Zeilen sind 511 solche Ein-Schritt-Fenster. Unter Rauschen ist das der naheliegende Hebel: längere oder glatte Fenster.</li>
+        <li><b>Die Zeilen sind nicht unabhängig.</b> Benachbarte Fenster teilen fast alle Messpunkte. 2.529 Zeilen tun so, als wären es 2.529 unabhängige Beobachtungen, obwohl es nur 512 Messpunkte gibt. Ein Kriterium wie BIC, das die Zahl der Zeilen n benutzt, überschätzt dann, wie sicher ein Fit ist, und belohnt zusätzliche Terme. Das ist eine plausible, nicht gemessene Erklärung dafür, dass das schwache BIC in Q4 im Median 4 Terme zu viel wählte.</li>
+        <li><b>Rauschen steckt auch in den Spalten.</b> θ(x) wird aus verrauschtem x ausgewertet. Für nichtlineare Terme gibt das eine systematische Verzerrung: Bei multiplikativem Rauschen ist der Erwartungswert von x² um den Faktor (1 + σ²) zu groß. Gemessen: 1,000092 bei σ = 0,01, also winzig, bei σ = 0,05 sind es 0,25 %. In der Statistik heißt das „errors in variables“, und kleinste Quadrate korrigiert es nicht. WENDy (Bortz et al.) behandelt genau das.</li>
+        <li><b>Unregelmäßige Abtastung.</b> Die Trapezregel muss mit den echten Messzeiten rechnen, nicht mit einem festen Abstand. Für Q5 ist das so gebaut.</li>
+        <li><b>Der Trapezfehler ist ein Boden.</b> Selbst ohne Rauschen passen die wahren Koeffizienten nur bis auf etwa 10⁻⁷ pro Zeile. Darum fällt der normierte Restfehler auch bei der Wahrheit nicht auf null, und der Pfad stoppt bei 10⁻¹⁴ statt bei null.</li>
+      </ul>
+    </div>
+  </section>
+
+  <section>
+    <h2>Was man daraus mitnimmt</h2>
+    <div class="box verdict">
+      <strong>Kurz</strong>
+      <p>Die schwache Form verwandelt Strukturerkennung in lineare Algebra: Für jede Termmenge bekommt man in Mikrosekunden Koeffizienten und einen Restfehler. Darauf bauen FROLS und FoBa auf. Unsere Version ist die einfachste denkbare (Box-Fenster). Für sauberes Q4 reicht sie; unter Rauschen ist sie der erste Kandidat für eine Verbesserung.</p>
+    </div>
+  </section>
+
+  <section>
+    <h2>Literatur</h2>
+    <p class="caption">Aus dem Gedächtnis, noch nicht online geprüft. Mit (prüfen) markiert, wo die bibliografischen Angaben unsicher sind.</p>
+    <ul>
+      <li>Shinbrot 1957, „On the analysis of linear and nonlinear systems“, Trans. ASME 79. Ursprung der Modulating Functions.</li>
+      <li>Schaeffer &amp; McCalla 2017, „Sparse model selection via integral terms“, Phys. Rev. E 96, 023302. Integrale Form, am nächsten an unseren Box-Fenstern.</li>
+      <li>Messenger &amp; Bortz 2021, „Weak SINDy: Galerkin-based data-driven model selection“, Multiscale Model. Simul. 19(3). Glatte Testfunktionen, der Standard.</li>
+      <li>Messenger &amp; Bortz 2021, „Weak SINDy for partial differential equations“, J. Comput. Phys. 443.</li>
+      <li>Reinbold, Gurevich &amp; Grigoriev 2020, Phys. Rev. E 101, 010203. Schwache Form gegen Rauschen, unabhängig entwickelt.</li>
+      <li>Bortz, Messenger &amp; Dukic 2023, „WENDy“, Bull. Math. Biol. 85 (prüfen). Fehler in den Variablen, Parameterschätzung.</li>
+    </ul>
+  </section>
+</main>
+
+</html>

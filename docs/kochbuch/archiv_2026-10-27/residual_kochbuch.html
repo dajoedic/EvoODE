@@ -1,0 +1,265 @@
+<!doctype html><html lang="de" data-theme="light"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Kochbuch Residual-Wachstum</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;0,8..60,700;1,8..60,400&family=IBM+Plex+Sans+Condensed:wght@500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: one reading column like a recipe book page; steps as numbered recipe cards, results as tasting tables. */
+:root {
+  --paper: #f7f8f4;
+  --ink: #1d231f;
+  --muted: #5b655e;
+  --rule: #d5dbd2;
+  --card: #eef1ea;
+  --herb: #3d6b47;
+  --herb-soft: #dce8dc;
+  --warn: #8a5a12;
+  --warn-soft: #f3e7d0;
+  --f-body: "Source Serif 4", Georgia, "Times New Roman", serif;
+  --f-label: "IBM Plex Sans Condensed", "Arial Narrow", Arial, sans-serif;
+  --f-mono: "IBM Plex Mono", ui-monospace, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --paper: #151a17; --ink: #e4e9e3; --muted: #9ba79e; --rule: #2f3832; --card: #1d2420;
+    --herb: #8cc59a; --herb-soft: #23362a; --warn: #e2b46a; --warn-soft: #3a2f1c; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --paper: #151a17; --ink: #e4e9e3; --muted: #9ba79e; --rule: #2f3832; --card: #1d2420;
+  --herb: #8cc59a; --herb-soft: #23362a; --warn: #e2b46a; --warn-soft: #3a2f1c; color-scheme: dark;
+}
+body {
+  background: var(--paper); color: var(--ink); font-family: var(--f-body);
+  font-size: 1.06rem; line-height: 1.6;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 2.5rem 4rem;
+}
+main { max-width: 44rem; margin: 0 auto; display: flex; flex-direction: column; gap: 2.6rem; }
+section { display: flex; flex-direction: column; gap: 0.9rem; min-width: 0; }
+h1, h2, h3 { text-wrap: balance; line-height: 1.2; margin: 0; }
+h1 { font-size: 2.3rem; font-weight: 700; letter-spacing: -0.01em; }
+h2 { font-size: 1.5rem; font-weight: 700; padding-top: 0.6rem; border-top: 1px solid var(--rule); }
+h3 { font-size: 1.12rem; font-weight: 600; }
+p, ul, ol { margin: 0; }
+ul, ol { padding-left: 1.3rem; display: flex; flex-direction: column; gap: 0.35rem; }
+.eyebrow { font-family: var(--f-label); text-transform: uppercase; letter-spacing: 0.08em; font-size: 0.8rem; color: var(--herb); font-weight: 600; }
+.lede { font-size: 1.18rem; color: var(--ink); }
+.muted { color: var(--muted); }
+code, .mono { font-family: var(--f-mono); font-size: 0.9em; }
+.verdict { background: var(--herb-soft); border-radius: 6px; padding: 1rem 1.2rem; display: flex; flex-direction: column; gap: 0.4rem; }
+.verdict strong { font-family: var(--f-label); text-transform: uppercase; letter-spacing: 0.06em; font-size: 0.85rem; color: var(--herb); }
+.caution { background: var(--warn-soft); border-radius: 6px; padding: 1rem 1.2rem; display: flex; flex-direction: column; gap: 0.4rem; }
+.caution strong { font-family: var(--f-label); text-transform: uppercase; letter-spacing: 0.06em; font-size: 0.85rem; color: var(--warn); }
+.ingredients { display: grid; grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr)); gap: 0.7rem; }
+.ing { border: 1px solid var(--rule); border-radius: 6px; padding: 0.8rem 0.95rem; display: flex; flex-direction: column; gap: 0.25rem; min-width: 0; }
+.ing b { font-family: var(--f-label); font-size: 0.95rem; letter-spacing: 0.02em; }
+.ing span { font-size: 0.95rem; color: var(--muted); }
+.steps { list-style: none; padding: 0; counter-reset: step; gap: 0.8rem; }
+.steps > li { counter-increment: step; display: grid; grid-template-columns: 2.6rem 1fr; gap: 0.2rem 0.9rem; background: var(--card); border-radius: 6px; padding: 1rem 1.1rem; }
+.steps > li::before { content: counter(step); font-family: var(--f-label); font-weight: 600; font-size: 1.5rem; color: var(--herb); line-height: 1.1; grid-row: span 2; }
+.steps > li > h3, .steps > li > div { grid-column: 2; min-width: 0; }
+.steps > li > div { display: flex; flex-direction: column; gap: 0.5rem; }
+.tip { font-size: 0.95rem; color: var(--muted); border-left: 2px solid var(--herb); padding-left: 0.7rem; }
+.formula { font-family: var(--f-mono); font-size: 0.92rem; background: var(--paper); border: 1px solid var(--rule); border-radius: 4px; padding: 0.55rem 0.75rem; overflow-x: auto; white-space: pre; }
+.table-wrap { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; font-size: 0.95rem; font-variant-numeric: tabular-nums; }
+th { font-family: var(--f-label); font-weight: 600; text-align: left; font-size: 0.85rem; letter-spacing: 0.03em; color: var(--muted); border-bottom: 1px solid var(--ink); padding: 0.4rem 0.6rem 0.4rem 0; }
+td { border-bottom: 1px solid var(--rule); padding: 0.45rem 0.6rem 0.45rem 0; vertical-align: top; }
+td.num { font-family: var(--f-mono); font-size: 0.88rem; white-space: nowrap; }
+.good { color: var(--herb); font-weight: 600; }
+.bad { color: var(--warn); font-weight: 600; }
+.caption { font-size: 0.88rem; color: var(--muted); }
+dl { display: grid; grid-template-columns: max-content 1fr; gap: 0.45rem 1rem; margin: 0; }
+dt { font-family: var(--f-label); font-weight: 600; }
+dd { margin: 0; min-width: 0; }
+@media (max-width: 520px) {
+  h1 { font-size: 1.8rem; }
+  dl { grid-template-columns: 1fr; gap: 0.15rem; }
+  dd { margin-bottom: 0.5rem; }
+}
+</style>
+
+<main>
+  <header style="display:flex;flex-direction:column;gap:0.7rem">
+    <div class="eyebrow">EvoODE · Idee #3 · Nebenprojekt · Stand 27.10.2026</div>
+    <h1>Kochbuch Residual-Wachstum</h1>
+    <p class="lede">Was im Nebenprojekt „residualgesteuertes Strukturwachstum“ genau passiert, Schritt für Schritt, ohne Vorwissen.</p>
+  </header>
+
+  <section>
+    <div class="verdict">
+      <strong>Zu früh zum Lesen?</strong>
+      <p>Nein. Das Nebenprojekt hat vier abgeschlossene Teile (Q1–Q4) mit eingefrorenen Protokollen und echten Zahlen. Der fünfte Teil (Q5, Rauschen) läuft gerade als Probe. Zu früh ist es nur, das Ganze schon eine Methode oder einen Paper-Beitrag zu nennen: Bisher ist alles rauschfrei gemessen.</p>
+    </div>
+  </section>
+
+  <section>
+    <h2>Das Gericht in einem Satz</h2>
+    <p>Man fängt mit einem leeren Modell an, schaut sich an, was es noch nicht erklärt (den <em>Restfehler</em>, das Residuum), fügt den Term hinzu, der davon am meisten erklärt, wirft Terme wieder raus, die dadurch überflüssig wurden, und entscheidet am Ende per Simulation, wie groß das Modell sein soll.</p>
+    <p class="muted">Das ist der alte EvoGrow-Gedanke (klein anfangen, gezielt wachsen), nur dass das Wachsen nicht mehr durch Ausprobieren in einer Population passiert, sondern durch eine Rechnung, die direkt sagt, welcher Term fehlt.</p>
+  </section>
+
+  <section>
+    <h2>Zutaten</h2>
+    <div class="ingredients">
+      <div class="ing"><b>Eine Trajektorie</b><span>Messpunkte x(t) eines Systems, ein Anfangswert. Die zweite Anfangsbedingung bleibt für den Test unberührt.</span></div>
+      <div class="ing"><b>Der Termkatalog</b><span>Die kanonische Basis: 1, x, x², x·y, x³, sin x, cos x. Alle Terme sind sofort erlaubt, Stufen spielen keine Rolle.</span></div>
+      <div class="ing"><b>Die schwache Form</b><span>Statt Ableitungen zu schätzen, wird über kurze Zeitfenster integriert. Erklärt im nächsten Abschnitt.</span></div>
+      <div class="ing"><b>Der Optimierer</b><span>Derselbe BFGS-Fit wie in EvoGrow, Schranke 10, genau ein Versuch.</span></div>
+      <div class="ing"><b>Ein Simulator</b><span>Integriert jedes Kandidatenmodell und vergleicht es mit den Daten.</span></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Das wichtigste Küchengerät: die schwache Form</h2>
+    <p>SINDy will die Ableitung dx/dt aus den Daten schätzen und dann „Ableitung = Summe von Termen“ lösen. Ableitungen aus Messdaten sind aber empfindlich, schon kleines Rauschen macht sie unbrauchbar.</p>
+    <p>Die schwache Form dreht das um. Für ein kurzes Zeitfenster gilt immer:</p>
+    <div class="formula">x(Fensterende) − x(Fensteranfang)  =  ∫ f(x) dt  über das Fenster</div>
+    <p>Links steht eine Differenz von zwei Messwerten, keine Ableitung. Rechts steht für jeden Term im Katalog sein Integral über das Fenster, das man aus den Messpunkten mit der Trapezregel ausrechnet. Wenn das wahre Modell zum Beispiel <span class="mono">0.5·x − 0.2·x·y</span> ist, dann ist die Differenz links gleich 0.5 mal dem Integral von x plus (−0.2) mal dem Integral von x·y.</p>
+    <p>Jedes Fenster ergibt eine Zeile, und zwar in fünf Längen (1, 2, 4, 8 und 16 Messpunkte). Am Ende steht ein ganz gewöhnliches lineares Gleichungssystem:</p>
+    <div class="formula">b  ≈  A · c      b = Differenzen,  A = Integrale der Terme,  c = Koeffizienten</div>
+    <p>Das löst man mit kleinsten Quadraten in Millisekunden. Was übrig bleibt, wenn man b mit den gewählten Termen so gut wie möglich erklärt hat, ist der <b>Restfehler</b> (SSE, Summe der quadrierten Reste).</p>
+    <p class="tip">Darum ist die schwache Form so viel billiger als EvoGrow: EvoGrow muss für jeden Kandidaten Koeffizienten durch Integrieren der ODE suchen. Die schwache Form rechnet sie direkt aus.</p>
+  </section>
+
+  <section>
+    <h2>Das Rezept</h2>
+    <ol class="steps">
+      <li>
+        <h3>Leer anfangen</h3>
+        <div>
+          <p>Jede Gleichung startet ohne Terme. Der Restfehler ist dann die ganze linke Seite b.</p>
+          <p class="tip">In Q2 wurde stattdessen auch von EvoGrows tatsächlichen (falschen) Endstrukturen aus C-1 gestartet, um zu sehen, ob man sie reparieren kann.</p>
+        </div>
+      </li>
+      <li>
+        <h3>Den Term suchen, der am meisten vom Rest erklärt</h3>
+        <div>
+          <p>Für jeden noch nicht benutzten Term im Katalog: probeweise hinzufügen, <b>alle</b> Koeffizienten der Gleichung neu ausrechnen, schauen, wie stark der Restfehler sinkt. Der Term mit dem größten Gewinn kommt dazu.</p>
+          <p>Im Beispiel: Das Modell hat schon 0.5·x. Der Rest ist −0.2·x·y. Der Term x·y senkt den Restfehler auf fast null, also gewinnt er.</p>
+          <p class="tip">Wichtig ist das „alle neu ausrechnen“. Das Verfahren heißt FROLS (Billings, Chen &amp; Korenberg 1989). Die naive Variante, die nur schaut, welcher Term am stärksten mit dem Rest korreliert (OMP), findet die fehlenden Terme auf dim 2 nur in 4 von 22 Fällen, FROLS in 19 von 22.</p>
+        </div>
+      </li>
+      <li>
+        <h3>Gleichungen fair vergleichen</h3>
+        <div>
+          <p>Bei mehreren Gleichungen (dim 2 und höher) wird der Gewinn jeder Gleichung durch die Größe ihrer linken Seite geteilt. So kann eine Gleichung mit großen Zahlen nicht alle Schritte an sich ziehen. Pro Schritt kommt genau ein Term in genau eine Gleichung.</p>
+        </div>
+      </li>
+      <li>
+        <h3>Abschmecken: Überflüssiges wieder entfernen</h3>
+        <div>
+          <p>Nach jedem neuen Term wird geprüft, ob ein älterer Term dadurch überflüssig wurde. Er fliegt raus, wenn sein Entfernen den Restfehler um weniger als die Hälfte dessen erhöht, was der letzte Schritt gebracht hat. Das wird wiederholt, bis nichts mehr rausfliegt.</p>
+          <p class="tip">Das ist FoBa (Zhang 2011), und ν = 0.5 ist der veröffentlichte Standardwert, nicht von uns eingestellt. Das ist genau der Rückwärtsschritt, den EvoGrow nicht hat: Dort kann ein falscher Term eine Linie nie mehr verlassen.</p>
+        </div>
+      </li>
+      <li>
+        <h3>Jeden Zwischenstand aufheben</h3>
+        <div>
+          <p>Jedes Modell, das auf dem Weg entsteht, ist ein Kandidat: das 1-Term-Modell, das 2-Term-Modell und so weiter. Der Weg endet, wenn jede Gleichung 6 Terme hat oder ihr Restfehler praktisch null ist (unter 1e-14).</p>
+          <p class="tip">Die 6 ist doppelt so viel wie die größte wahre Gleichung unter den 30 Systemen. Das ist die einzige Stelle, an der die Wahrheit ins Verfahren einfließt, und sie ist deklariert.</p>
+        </div>
+      </li>
+      <li>
+        <h3>Jeden Kandidaten einmal richtig fitten</h3>
+        <div>
+          <p>Die Koeffizienten aus der schwachen Form sind schon fast richtig. Sie dienen als Startwert für einen einzigen BFGS-Fit im Trajektorienraum, also mit Simulation, genau wie in EvoGrow.</p>
+          <p class="tip">Das war Q3: Ein einziger Fit von diesem Startwert ist besser als zehn Zufallsstarts und kostet etwa ein Dreihundertstel der Loss-Evaluationen.</p>
+        </div>
+      </li>
+      <li>
+        <h3>Die Größe wählen: Trajektorien-BIC</h3>
+        <div>
+          <p>Jeder gefittete Kandidat wird simuliert. Die Bewertung ist der Fehler der Simulation plus eine Strafe für jeden Term:</p>
+          <div class="formula">BIC = N · log(MSE) + k · log(N)      N = Messpunkte × Dimension,  k = Zahl der Terme</div>
+          <p>Der Kandidat mit dem kleinsten BIC wird serviert. Es gibt keinen Parameter, den man einstellen müsste.</p>
+          <p class="tip">Die Simulation trägt hier das Ergebnis. Wählt man die Größe nur im schwachen Raum (schwaches BIC), nimmt das Verfahren im Median 4 Terme zu viel. Mit Simulation trifft es die wahre Größe in 35 von 46 Einheiten exakt.</p>
+        </div>
+      </li>
+    </ol>
+  </section>
+
+  <section>
+    <h2>Was schon verkostet wurde</h2>
+    <p>Alles ohne Rauschen (σ = 0), auf den 30 exakt darstellbaren Systemen. Eine Einheit ist ein System mit einer Trainings-Anfangsbedingung, getestet wird auf der anderen. Jeder Teil hatte ein vorher eingefrorenes Protokoll mit Bestehensregeln.</p>
+
+    <h3>Q1 und Q2: Ist die Information überhaupt da?</h3>
+    <p>Q1 fragt, ob die wahre Struktur im schwachen Raum die beste ist, wenn man ihre Größe kennt. Ja: in jeder Einheit auf dim 1, dim 2 und den beiden fittbaren dim-3-Systemen (52, 61). Q2 fragt, ob man von EvoGrows falschen Strukturen aus mit Hinzufügen, Refit und Entfernen zur Wahrheit kommt. Meistens ja, und von EvoGrows Strukturen aus sogar öfter als vom leeren Modell aus, weil sie schon wahre Terme tragen.</p>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Stratum</th><th>Wahrheit ist beste</th><th>Fehlende Terme gefunden</th><th>Exakt repariert vs. leer gestartet</th></tr></thead>
+        <tbody>
+          <tr><td>dim 1</td><td class="num">22/22</td><td class="num">9/9</td><td class="num">9 vs 4</td></tr>
+          <tr><td>dim 2</td><td class="num">40/40</td><td class="num">19/22</td><td class="num">19 vs 14</td></tr>
+          <tr><td>dim 3 fittbar</td><td class="num">12/12</td><td class="num">22/30</td><td class="num">22 vs 15</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="caption">Mit Orakel: Größe und Zahl der Schritte kamen aus der Wahrheit. Das ist ein Befund über die Information, noch kein Verfahren.</p>
+
+    <h3>Q3: Hilft der schwache Startwert beim Fitten?</h3>
+    <p>Auf der wahren Struktur erreicht ein einziger Fit vom schwachen Start R² &gt; 0.9 in 22/22 (dim 1), 20/20 (dim 2) und 4/4 (dim 3 fittbar). Zehn Zufallsstarts schaffen auf dim 2 nur 39 von 60. Nebenbefund: System 61, das in allen bisherigen Refits hängen blieb, wird vom schwachen Start aus perfekt gefittet, sogar unter Schranke 10. Es lag am Start, nicht an der Schranke.</p>
+
+    <h3>Q4: Das ganze Rezept ohne Orakel</h3>
+    <p>Hier lief das Rezept oben komplett, ohne Wissen über die wahre Größe (bis auf den Deckel von 6 Termen).</p>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Stratum</th><th>Struktur exakt: Rezept</th><th>EvoGrow C-1</th><th>Weak-SINDy*</th><th>Generalisierung R² &gt; 0.9: Rezept</th><th>Weak-SINDy*</th></tr></thead>
+        <tbody>
+          <tr><td>dim 1 (22)</td><td class="num good">82 %</td><td class="num">47 %</td><td class="num">68 %</td><td class="num good">100 %</td><td class="num">73 %</td></tr>
+          <tr><td>dim 2 (20)</td><td class="num">90 %</td><td class="num">37 %</td><td class="num">85 %</td><td class="num">90 %</td><td class="num">93 %</td></tr>
+          <tr><td>dim 3 fittbar (4)</td><td class="num">3/4</td><td class="num">0/12</td><td class="num">50 %</td><td class="num">4/4</td><td class="num">58 %</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="caption">* Weak-SINDy mit der Bibliothek, die unserer Basis entspricht (Polynome bis Grad 3 plus sin/cos), jeweils die bessere der beiden Schwellen, also bewusst zu seinen Gunsten. Generalisierung varianzgewichtet. Kosten des Rezepts: gepoolt etwa 4 % der Loss-Evaluationen von EvoGrow C-1.</p>
+    <p><b>Lesart:</b> Auf dim 1 ein klarer Vorsprung, auf dim 2 ein Gleichstand mit Weak-SINDy, dim 3 ist mit 4 Einheiten zu dünn. Gegen EvoGrow ist der Abstand auf allen drei Strata groß, bei einem Bruchteil der Kosten.</p>
+  </section>
+
+  <section>
+    <h2>Was noch roh ist</h2>
+    <div class="caution">
+      <strong>Bevor man es Methode nennt</strong>
+      <ul>
+        <li><b>Rauschen ist der eigentliche Test, und er läuft erst.</b> Ohne Rauschen ist die schwache Form fast exakt. Q5 rechnet dieselben Daten wie die C-6-Baselines (σ bis 0.05, unregelmäßige Abtastung). Diesmal gibt es bewusst keine Bestehensregeln: Wir lesen die Zahlen gemeinsam.</li>
+        <li><b>Der Deckel wird unter Rauschen zum einzigen Ende.</b> Mit Rauschen fällt der Restfehler nie unter 1e-14, also endet jeder Pfad bei 6 Termen (1.584 von 1.584). Ob das Ergebnis dann am Deckel hängt, misst Q5.</li>
+        <li><b>Auf sauberen Daten heißt BIC praktisch „kleinstes Modell, das den Integrator-Boden erreicht“.</b> Ob das unter Rauschen noch trägt, ist offen.</li>
+        <li><b>Der Anfangswert.</b> In Q5 startet die Simulation vom ersten verrauschten Messpunkt. Für die Paper-Version ist festgelegt, den Anfangswert mitzuschätzen (Variante C).</li>
+        <li><b>Wo es klar verliert:</b> auf den dim-3-Systemen, die unter Schranke 10 nicht erreichbar sind (2/12 gegen Weak-SINDy-Median 75 %), auf dim 4 (0/2) und auf System 26 (beide Anfangsbedingungen: zu viele Terme, Generalisierung divergiert).</li>
+        <li><b>Neuheit.</b> Das Ranking selbst ist FROLS. Der nächste Verwandte ist Mangan et al. 2017 (Modellreihe, Refit, Auswahl per Simulation). Ein Gutachter würde lesen: „Mangan 2017 mit schwacher Form und anderem Pfadgenerator.“ Antworten kann man nur mit einer Ablation: Pfadgenerator × Auswahlraum × Refit.</li>
+      </ul>
+    </div>
+    <p><b>Was die Ursprungsidee will und das Nebenprojekt noch nicht tut:</b> Idee #3 träumt davon, am Residuum zu erkennen, welche <em>Familie</em> von Operator fehlt (Sättigung, Exponential, Produkt), auch wenn sie nicht im Katalog steht. Das Nebenprojekt wählt nur unter Termen, die schon im Katalog stehen. Den Fingerabdruck-Schritt testet der dritte Kill-Test, und der ist geparkt.</p>
+  </section>
+
+  <section>
+    <h2>Kleines Glossar</h2>
+    <dl>
+      <dt>Residuum</dt><dd>Was die Daten zeigen, minus was das aktuelle Modell erklärt.</dd>
+      <dt>SSE</dt><dd>Summe der quadrierten Reste, eine Zahl für „wie viel ist noch unerklärt“.</dd>
+      <dt>Schwacher Raum</dt><dd>Das lineare Gleichungssystem aus Fenster-Differenzen und Term-Integralen.</dd>
+      <dt>Trajektorienraum</dt><dd>Modell simulieren und mit den Messpunkten vergleichen. Teuer, aber das, was am Ende zählt.</dd>
+      <dt>FROLS</dt><dd>Vorwärtsauswahl: den Term nehmen, der nach gemeinsamem Refit den Rest am stärksten senkt.</dd>
+      <dt>OMP</dt><dd>Die einfachere Variante, die nur nach Korrelation mit dem Rest auswählt. Deutlich schlechter.</dd>
+      <dt>FoBa</dt><dd>Vorwärts-Rückwärts: nach jedem Hinzufügen prüfen, ob ein alter Term raus kann.</dd>
+      <dt>BIC</dt><dd>Fehler plus Strafe pro Term. Wählt die Modellgröße ohne Stellschraube.</dd>
+      <dt>Stratum</dt><dd>Gruppe von Einheiten, die nie mit anderen gemittelt wird (dim 1, dim 2, dim 3 fittbar …).</dd>
+    </dl>
+  </section>
+
+  <section>
+    <h2>Zum Weiterlesen im Repo</h2>
+    <ul class="muted">
+      <li><span class="mono">docs/ideas/idea_03_residual_guided_evogrow.md</span>: die Ursprungsidee</li>
+      <li><span class="mono">docs/sideproject_residual_growth_concept.md</span>: das Konzept des Nebenprojekts</li>
+      <li><span class="mono">docs/sideproject_residual_growth_protocol.md</span> sowie <span class="mono">_q3</span>, <span class="mono">_q4</span>, <span class="mono">_q5</span>: die eingefrorenen Protokolle</li>
+      <li><span class="mono">docs/sideproject_residual_growth_literature.md</span>: die Einordnung in die Literatur</li>
+      <li><span class="mono">DIARY.md</span>, Einträge vom 17.10. und 27.10.: alle Zahlen</li>
+    </ul>
+  </section>
+</main>
+
+</html>

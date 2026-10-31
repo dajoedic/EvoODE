@@ -22,6 +22,7 @@ what to work on next. It is deliberately kept short. Detail lives in dedicated d
 | `docs/phd_thesis_arc.md` | **the paper roadmap** that `PAPER_1.md` hangs under — three papers plus a conference insert, their order, their dependencies and the guardrails. `PAPER_TIMELINE.md` was merged into it on 2026-09-22 and must not be recreated |
 | `docs/WP-N4.md` | the restart budget of the parameter fit, and its placement against SINDy/PySR/ODEFormer/ProGED |
 | `docs/WP-N6.md` | the first baseline: EvoODE against SINDy on identical trajectories, with the cost line and the caveats |
+| `docs/kochbuch/Kochbuch_WISP.pdf` | plain-language walkthrough of WISP (all steps, one worked example), German, for the user; HTML source beside it, superseded single cookbooks in `archiv_2026-10-27/`. Update it when a WISP step changes |
 | `READ_THIS_FIRST.md` | **volatile session handover** — what is running, what is uncommitted, what decision is pending. Overwritten wholesale, never appended; nothing durable belongs there |
 | `codex/CURRENT_TASK.md` | the one active task spec for an AI coding assistant |
 | `CHANGELOG.md` | **pipeline compliance record** — CI/CD changes, and the documented exceptions from the SCCH Pipeline Policy required by its §11.1. No scientific history |

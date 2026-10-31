@@ -1,0 +1,191 @@
+<!doctype html><html lang="de" data-theme="light"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Kochbuch FROLS</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;0,8..60,700;1,8..60,400&family=IBM+Plex+Sans+Condensed:wght@500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: one reading column like a recipe book page; numbered steps as cards, worked examples as tables, formulas in mono boxes. */
+:root {
+  --paper: #f7f8f4; --ink: #1d231f; --muted: #5b655e; --rule: #d5dbd2; --card: #eef1ea;
+  --herb: #3d6b47; --herb-soft: #dce8dc; --warn: #8a5a12; --warn-soft: #f3e7d0;
+  --f-body: "Source Serif 4", Georgia, "Times New Roman", serif;
+  --f-label: "IBM Plex Sans Condensed", "Arial Narrow", Arial, sans-serif;
+  --f-mono: "IBM Plex Mono", ui-monospace, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --paper: #151a17; --ink: #e4e9e3; --muted: #9ba79e; --rule: #2f3832; --card: #1d2420;
+  --herb: #8cc59a; --herb-soft: #23362a; --warn: #e2b46a; --warn-soft: #3a2f1c; color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --paper: #151a17; --ink: #e4e9e3; --muted: #9ba79e; --rule: #2f3832; --card: #1d2420;
+  --herb: #8cc59a; --herb-soft: #23362a; --warn: #e2b46a; --warn-soft: #3a2f1c; color-scheme: dark; }
+body { background: var(--paper); color: var(--ink); font-family: var(--f-body); font-size: 1.06rem; line-height: 1.6;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 2.5rem 4rem; }
+main { max-width: 44rem; margin: 0 auto; display: flex; flex-direction: column; gap: 2.6rem; }
+section { display: flex; flex-direction: column; gap: 0.9rem; min-width: 0; }
+h1, h2, h3 { text-wrap: balance; line-height: 1.2; margin: 0; }
+h1 { font-size: 2.3rem; font-weight: 700; letter-spacing: -0.01em; }
+h2 { font-size: 1.5rem; font-weight: 700; padding-top: 0.6rem; border-top: 1px solid var(--rule); }
+h3 { font-size: 1.12rem; font-weight: 600; }
+p, ul, ol { margin: 0; }
+ul, ol { padding-left: 1.3rem; display: flex; flex-direction: column; gap: 0.35rem; }
+.eyebrow { font-family: var(--f-label); text-transform: uppercase; letter-spacing: 0.08em; font-size: 0.8rem; color: var(--herb); font-weight: 600; }
+.lede { font-size: 1.18rem; }
+.muted { color: var(--muted); }
+.mono { font-family: var(--f-mono); font-size: 0.9em; }
+.box { border-radius: 6px; padding: 1rem 1.2rem; display: flex; flex-direction: column; gap: 0.4rem; }
+.box strong { font-family: var(--f-label); text-transform: uppercase; letter-spacing: 0.06em; font-size: 0.85rem; }
+.verdict { background: var(--herb-soft); } .verdict strong { color: var(--herb); }
+.caution { background: var(--warn-soft); } .caution strong { color: var(--warn); }
+.steps { list-style: none; padding: 0; counter-reset: step; gap: 0.8rem; }
+.steps > li { counter-increment: step; display: grid; grid-template-columns: 2.6rem 1fr; gap: 0.2rem 0.9rem; background: var(--card); border-radius: 6px; padding: 1rem 1.1rem; }
+.steps > li::before { content: counter(step); font-family: var(--f-label); font-weight: 600; font-size: 1.5rem; color: var(--herb); line-height: 1.1; grid-row: span 2; }
+.steps > li > h3, .steps > li > div { grid-column: 2; min-width: 0; }
+.steps > li > div { display: flex; flex-direction: column; gap: 0.5rem; }
+.tip { font-size: 0.95rem; color: var(--muted); border-left: 2px solid var(--herb); padding-left: 0.7rem; }
+.formula { font-family: var(--f-mono); font-size: 0.9rem; background: var(--paper); border: 1px solid var(--rule); border-radius: 4px; padding: 0.55rem 0.75rem; overflow-x: auto; white-space: pre; }
+.table-wrap { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; font-size: 0.95rem; font-variant-numeric: tabular-nums; }
+th { font-family: var(--f-label); font-weight: 600; text-align: left; font-size: 0.85rem; letter-spacing: 0.03em; color: var(--muted); border-bottom: 1px solid var(--ink); padding: 0.4rem 0.6rem 0.4rem 0; }
+td { border-bottom: 1px solid var(--rule); padding: 0.45rem 0.6rem 0.45rem 0; vertical-align: top; }
+td.num { font-family: var(--f-mono); font-size: 0.88rem; white-space: nowrap; }
+.good { color: var(--herb); font-weight: 600; } .bad { color: var(--warn); font-weight: 600; }
+.caption { font-size: 0.88rem; color: var(--muted); }
+.series { font-family: var(--f-label); font-size: 0.9rem; color: var(--muted); }
+@media (max-width: 520px) { h1 { font-size: 1.8rem; } }
+</style>
+
+<main>
+  <header style="display:flex;flex-direction:column;gap:0.7rem">
+    <div class="eyebrow">Kochbuch 2 von 4 · Residual-Wachstum · Stand 27.10.2026</div>
+    <h1>Kochbuch FROLS</h1>
+    <p class="lede">Wie man Term für Term den nimmt, der vom Restfehler am meisten erklärt, und warum „am meisten“ hier genau definiert sein muss.</p>
+    <p class="series">Reihe: Weak Form → FROLS → FoBa → Trajektorien-Check. Setzt die Weak Form voraus: ein lineares System b ≈ A·c, eine Spalte pro Term.</p>
+  </header>
+
+  <section>
+    <h2>Was der Name bedeutet</h2>
+    <p><b>F</b>orward <b>R</b>egression <b>O</b>rthogonal <b>L</b>east <b>S</b>quares. „Forward“: Man fängt leer an und fügt Terme einzeln hinzu, nie mehrere auf einmal. „Orthogonal Least Squares“: Bei jedem Schritt zählt nur der Teil eines Kandidaten, der <em>nicht</em> schon durch die gewählten Terme erklärt ist. Erfunden in der NARMAX-Systemidentifikation (Billings, Chen, Korenberg, Ende der 1980er).</p>
+  </section>
+
+  <section>
+    <h2>Die Grundfrage pro Schritt</h2>
+    <p>Gewählt sind schon die Terme S, der Restfehler ist SSE(S). Für jeden Kandidaten j fragt man:</p>
+    <div class="formula">Gewinn(j)  =  SSE(S) − SSE(S ∪ {j})        dabei werden ALLE Koeffizienten von S ∪ {j} neu gefittet</div>
+    <p>Der Kandidat mit dem größten Gewinn kommt dazu. Bei uns wird der Gewinn noch durch ‖b‖² geteilt (die gesamte „Energie“ der linken Seite). Dann ist er eine Zahl zwischen 0 und 1: der Anteil des Signals, den dieser Term zusätzlich erklärt.</p>
+    <p class="tip">Diese normierte Zahl ist genau das, was Billings die <b>Error Reduction Ratio (ERR)</b> nennt. Unser Code rechnet sie nur auf einem anderen Weg aus (siehe unten), das Ergebnis ist dasselbe.</p>
+  </section>
+
+  <section>
+    <h2>Warum „orthogonal“ den Unterschied macht</h2>
+    <p>Die naive Alternative heißt OMP (Orthogonal Matching Pursuit). Sie fragt nur: Welche Spalte zeigt am stärksten in Richtung des aktuellen Rests r?</p>
+    <div class="formula">OMP-Score(j)    = |aⱼᵀ r| / ‖aⱼ‖          aⱼ = Spalte j, so wie sie ist
+FROLS-Gewinn(j) = (wⱼᵀ r)² / ‖wⱼ‖²        wⱼ = Spalte j MINUS ihr Anteil, den S schon erklärt</div>
+    <p>Der Zähler ist bei beiden fast gleich. Der Nenner nicht: OMP teilt durch die ganze Länge der Spalte, FROLS nur durch den Teil, der wirklich neu ist. Ein Kandidat, der zu 95 % schon in S steckt und nur 5 % neue Richtung mitbringt, sieht bei OMP schwach aus, obwohl genau diese 5 % den Rest erklären könnten. FROLS erkennt das.</p>
+    <p>In unserem Katalog ist das der Normalfall: x, x², x³, sin x und cos x sind auf einer Trajektorie stark korreliert (sin x ≈ x, cos x ≈ 1 − x²/2 für kleine x).</p>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Fehlende Terme gefunden (Q2, von EvoGrows Endstrukturen aus)</th><th>OMP</th><th>FROLS</th></tr></thead>
+        <tbody>
+          <tr><td>dim 1</td><td class="num">2/9</td><td class="num good">9/9</td></tr>
+          <tr><td>dim 2</td><td class="num">4/22</td><td class="num good">19/22</td></tr>
+          <tr><td>dim 3 fittbar</td><td class="num">6/30</td><td class="num good">22/30</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section>
+    <h2>Das Rezept, so wie wir es bauen</h2>
+    <ol class="steps">
+      <li>
+        <h3>Komprimiertes System bereitlegen</h3>
+        <div>
+          <p>Aus dem Kochbuch Weak Form: Spalten auf Länge 1 skaliert, [A | b] per QR auf wenige Zeilen komprimiert. Für jede Termmenge ist SSE dann in Mikrosekunden ausgerechnet und wird zwischengespeichert.</p>
+        </div>
+      </li>
+      <li>
+        <h3>Für jede Gleichung und jeden freien Term den Gewinn ausrechnen</h3>
+        <div>
+          <p>Statt Gram-Schmidt wie im Lehrbuch machen wir es direkt: Für jeden Kandidaten j einmal kleinste Quadrate auf S ∪ {j}, SSE ablesen, Differenz bilden, durch ‖b‖² teilen. Das ist rechnerisch roher, aber mathematisch exakt dieselbe Auswahl, und numerisch robuster.</p>
+          <p class="tip">Code: Funktion <span class="mono">growth_path</span> in <span class="mono">analysis/scripts/aggregate/build_sideproject_q4_paths.py</span>, die innere Schleife über <span class="mono">eq</span> und <span class="mono">term</span>.</p>
+        </div>
+      </li>
+      <li>
+        <h3>Über alle Gleichungen hinweg den besten Gewinn nehmen</h3>
+        <div>
+          <p>Weil der Gewinn normiert ist, kann man Gleichungen fair vergleichen: 0,3 heißt in jeder Gleichung „30 % ihres Signals“. Pro Schritt kommt genau ein Term in genau eine Gleichung. Bei Gleichstand entscheidet die kleinere Gleichungs- und Termnummer, damit alles deterministisch bleibt.</p>
+        </div>
+      </li>
+      <li>
+        <h3>Hinzufügen, dann FoBa fragen</h3>
+        <div>
+          <p>Der Term kommt dazu. Danach prüft der Rückwärtsschritt, ob ein alter Term überflüssig geworden ist (Kochbuch 3). Dann zurück zu Schritt 2.</p>
+        </div>
+      </li>
+      <li>
+        <h3>Aufhören</h3>
+        <div>
+          <p>Eine Gleichung nimmt nicht mehr teil, wenn sie 6 Terme hat oder ihr normierter Restfehler unter 10⁻¹⁴ liegt. Sind alle Gleichungen fertig, endet der Pfad.</p>
+        </div>
+      </li>
+    </ol>
+  </section>
+
+  <section>
+    <h2>Durchgerechnet: die logistische Gleichung</h2>
+    <p>Wahrheit: ẋ = x − x². Katalog: 1, x, x², x³, sin x, cos x. Daten ohne Rauschen, Start bei x = 0,05. Gewinn jedes einzelnen Terms im ersten Schritt:</p>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Term</th><th>erklärt allein</th><th>wahr?</th></tr></thead>
+        <tbody>
+          <tr><td class="mono">cos x</td><td class="num bad">70,1 %</td><td>nein</td></tr>
+          <tr><td class="mono">1</td><td class="num">55,2 %</td><td>nein</td></tr>
+          <tr><td class="mono">sin x</td><td class="num">28,7 %</td><td>nein</td></tr>
+          <tr><td class="mono">x</td><td class="num">25,3 %</td><td class="good">ja</td></tr>
+          <tr><td class="mono">x²</td><td class="num">13,1 %</td><td class="good">ja</td></tr>
+          <tr><td class="mono">x³</td><td class="num">8,1 %</td><td>nein</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p><b>Der erste Schritt ist falsch.</b> Die beiden wahren Terme erklären einzeln am wenigsten, weil sie sich gegenseitig fast aufheben: x − x² ist klein, wenn x nahe 1 ist, und die Trajektorie verbringt einen großen Teil der Zeit dort. cos x dagegen ist auf dem beobachteten Bereich (x zwischen 0,05 und 1) eine glatt fallende Kurve, die den mittleren Verlauf gut nachahmt.</p>
+    <p>Das ist die klassische Schwäche jeder gierigen Vorwärtsauswahl: <b>Terme, die nur zusammen wirken, sieht sie einzeln nicht.</b> FROLS allein würde cos x behalten. Wie der Pfad trotzdem zur Wahrheit kommt, zeigt Kochbuch 3 an genau diesem Beispiel.</p>
+  </section>
+
+  <section>
+    <h2>Fallstricke</h2>
+    <div class="box caution">
+      <strong>Bekannte Schwächen</strong>
+      <ul>
+        <li><b>Gierig heißt kurzsichtig.</b> Wie oben: Gemeinsam wirkende Terme werden einzeln unterschätzt. Ohne Rückwärtsschritt bleiben frühe Fehlgriffe für immer im Modell, genau wie bei EvoGrow.</li>
+        <li><b>Der Gewinn ist kein Stoppsignal.</b> Nach der Wahrheit fallen die Gewinne bei sauberen Daten auf etwa 10⁻¹¹ (Trapezboden), aber sie bleiben positiv. Wann man aufhört, kann FROLS nicht selbst entscheiden. Darum wird bei uns jeder Zwischenstand Kandidat, und die Größe wählt später das Trajektorien-BIC.</li>
+        <li><b>Unter Rauschen wird es schlimmer.</b> Mit Rauschen erklärt jeder weitere Term ein bisschen Rauschen. Die Gewinne fallen nie unter 10⁻¹⁴, also endet jeder Pfad erst am Deckel von 6 Termen. In Q5 betrifft das 1.584 von 1.584 Pfaden.</li>
+        <li><b>Kritik aus der eigenen Schule.</b> Piroddi &amp; Spinelli 2003 zeigen, dass Auswahl nach dem Vorhersagefehler (wie ERR) bei korrelierten Termen falsche Strukturen wählt und dass man nach dem <em>Simulationsfehler</em> auswählen sollte. Genau das tut unser letzter Schritt (Trajektorien-BIC).</li>
+      </ul>
+    </div>
+  </section>
+
+  <section>
+    <h2>Was man daraus mitnimmt</h2>
+    <div class="box verdict">
+      <strong>Kurz</strong>
+      <p>FROLS ist eine Rangliste: Welcher Term erklärt den Rest am besten, wenn man alles zusammen neu fittet? Sie ist schnell und bei korrelierten Termen viel besser als reine Korrelation (OMP). Sie ist aber kurzsichtig und weiß nicht, wann sie aufhören soll. Gegen das Erste hilft FoBa, gegen das Zweite die Simulation.</p>
+    </div>
+  </section>
+
+  <section>
+    <h2>Literatur</h2>
+    <p class="caption">Aus dem Gedächtnis, noch nicht online geprüft. Mit (prüfen) markiert, wo die bibliografischen Angaben unsicher sind.</p>
+    <ul>
+      <li>Billings 2013, Nonlinear System Identification: NARMAX Methods in the Time, Frequency, and Spatio-Temporal Domains, Wiley. Der beste Einstieg.</li>
+      <li>Korenberg, Billings, Liu &amp; McIlroy 1988, Int. J. Control 48(1). Vorläufer.</li>
+      <li>Billings, Chen &amp; Korenberg 1989, Int. J. Control 49(6). Das Original, das wir zitieren.</li>
+      <li>Chen, Billings &amp; Luo 1989, „Orthogonal least squares methods and their application to non-linear system identification“, Int. J. Control 50(5).</li>
+      <li>Blumensath &amp; Davies 2007, „On the difference between Orthogonal Matching Pursuit and Orthogonal Least Squares“, technischer Bericht, Univ. Edinburgh (prüfen). Die Theorie zu OMP gegen FROLS.</li>
+      <li>Soussen, Gribonval, Idier &amp; Herzet 2013, „Joint k-step analysis of OMP and OLS“, IEEE Trans. Signal Process. 61(12). Wann OLS die wahren Terme findet.</li>
+      <li>Piroddi &amp; Spinelli 2003, Int. J. Control 76(17). Auswahl per Simulationsfehler statt Vorhersagefehler.</li>
+    </ul>
+  </section>
+</main>
+
+</html>
