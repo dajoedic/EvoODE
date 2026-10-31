@@ -6,6 +6,27 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ## 2026-10-31
 
+### W1-interp gerechnet — die Interpolation rettet WSINDy auf ρ = 0,5 weitgehend (vorläufig, wie Q5-W)
+
+Lauf 4.536 / 4.536 Zeilen, 0 Fehler, Schlüssel eindeutig, nur ρ = 0,5; zusammengeführt nach
+`outputs/sideproject_q5w_wsindy/w1_interp_full/details.csv` (WP-FA6c `9439a05`, 12 Prozesse, fertig 09:39).
+Auf den Q5-Zellen mit ρ = 0,5 (Zellen; pr = Struktur gepruned exakt, gen = Generalisierung R² > 0,9 varianzgewichtet):
+
+| Stratum | n | Q5c pr | W1 pr | W1-interp pr | Q5c gen | W1 gen | W1-interp gen |
+|---|---|---|---|---|---|---|---|
+| dim 1 | 396 | 126 | 37 | **125** | 271 | 64 | 204 |
+| dim 2 | 360 | 109 | 21 | 68 | 222 | 52 | 115 |
+| dim 3 fittbar | 72 | 8 | 0 | 1 | 7 | 0 | 0 |
+| dim 4 | 34 | 0 | 0 | 0 | 6 | 0 | 0 |
+
+(W1 und W1-interp mit L-Q5; mit L-C6 dim 2 pr 6 → 60, gen 33 → 89.) **Der Einbruch von W1 auf ρ = 0,5 war die
+Raster-Anbindung, nicht WSINDy:** mit linearer Interpolation trifft WSINDy auf dim 1 die Struktur so oft wie Q5
+(125 vs 126), auf sauberen dim-1-Daten mit ρ = 0,5 Rekonstruktion 97,1 % statt 35,5 %. Q5 bleibt vorn bei der
+Generalisierung (dim 1 271 vs 204, dim 2 222 vs 115) und auf dim 2 bei der Struktur (109 vs 68). Die Literaturwarnung
+vor Interpolationsverzerrung trifft hier empirisch nicht zu — die feste Breitenwahl auf ungleichen Punkten schadet
+offenbar mehr. **Folge für §4a:** dort ist W1 als Primärzeile auf ρ = 0,5 festgelegt, vor diesen Zahlen. Den stärkeren
+Gegner (W1-interp) als Vergleichsbasis zu nehmen wäre nachträglich, aber konservativ (gegen Q5); Nutzer entscheidet.
+
 ### Literatur: WSINDy auf ungleichen Zeitabständen — Präzedenz und Konsequenz für Q5-W
 <!-- 875033e -->
 
