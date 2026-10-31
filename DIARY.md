@@ -7,6 +7,7 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 ## 2026-10-31
 
 ### Q6 Stufe 1: die Noise-Floor-Regel fällt durch (T = 591), der Schätzer selbst ist gut
+<!-- 683429b -->
 
 Lauf 1.632 Zellen, 4.896 Pfade, 8.364 Gleichungszeilen, ~8 min Laptop (10 Prozesse), WP-FA7/7b/7c `1ec8933`.
 Kontrollen: Hash 1.632/1.632, Q5-Identität (Q6-Pfadfunktion mit Kappe 6 = Q5) 1.632/1.632; saubere Identität
