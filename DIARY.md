@@ -7,6 +7,7 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 ## 2026-10-31
 
 ### Explorativ (kein Protokoll): Signifikanztest auf den Zuwachs als Pfadende — so gut wie Grenze 6, halb so lang
+<!-- 612a0bb -->
 
 Nutzer, 31.10. abends: „Regel 1 einfach mal austesten“. Regel: eine Gleichung wächst nicht weiter, wenn kein
 verbleibender Term den schwachen Restfehler stärker senkt als χ²₁-Quantil × erwarteter Gewinn eines reinen
