@@ -15,8 +15,8 @@ ist, ist vermutlich falsch — dann gilt `CLAUDE.md`.
   (Zelle, Konfiguration) eindeutig, `fit_status = success` überall, 0 `fit_error`. Zusammengeführt aus 12 Shards
   (`outputs/sideproject_q5w_wsindy/full_shards/shard_*/details.csv`) nach `outputs/sideproject_q5w_wsindy/full/details.csv`.
   Letzte Zeile Sa 03:18; lokal läuft nichts mehr.
-- **Versiegelt:** keine Rate, keine Struktur, kein Vergleich aus dem Portlauf ansehen, bis §5.5 (Identität mit dem
-  MATLAB-Original) bestanden ist. Bisher nur technisch geprüft.
+- **Vorläufig geöffnet (Nutzer, 31.10. morgens, Abweichung von §7):** Auswertung gegen Q5 (1.626/1.632 Zellen) im
+  DIARY 31.10.; gilt erst mit bestandenem §5.5. Fair lesbar nur ρ = 0 (W1 auf ρ = 0,5 = unsere Rasteranbindung).
 - **Sobald MATLAB installiert ist (IT-Helpdesk, Lizenz ~14 Tage):** Claude startet (< 1 h-Regel)
   `matlab -batch "addpath('analysis/matlab'); run_wsindy_original_q5w(pwd, 2)"` (Probe), dann ohne Limit, dann
   `python analysis/scripts/aggregate/compare_sideproject_q5w_matlab.py --port-rows outputs/sideproject_q5w_wsindy/full/details.csv`
