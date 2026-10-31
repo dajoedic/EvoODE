@@ -6,6 +6,16 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ## 2026-10-31
 
+### Name WISP; Entwurf Q6 (datenbasiertes Pfadende)
+
+Nutzer, 31.10.: die Methode des Side-Projekts heißt **WISP** (Weak-form Incremental Structure Pursuit); EvoGrow ist der
+falsche Name (keine Population, keine Evolution). Zwei Websuchen fanden keinen gleichnamigen Ansatz in
+Systemidentifikation oder symbolischer Regression. Nutzer: Q5/WISP könnte Paper 1 werden statt EvoGrow — **nicht
+entschieden**; die Entscheidung hängt an der C-6-Öffnung (§9.4d), deren Blindregel unverändert gilt.
+Entwurf `docs/sideproject_residual_growth_protocol_q6.md`: Noise-Floor-Stopp im schwachen Raum, Stufe 1 rückwirkend auf
+den Q5-Pfaden (enthalten `weak_sse` je Pfadschritt und Gleichung, null Rechenzeit), Annahme: keine Abschneidung eines
+wahren Terms. Zwei offene Wahlen (A: relatives Rauschmodell, B: linearisierter RHS-Term) für den Nutzer.
+
 ### Entscheidung: W1-interp ist die Vergleichszeile auf ρ = 0,5
 <!-- 9ffea6b -->
 
