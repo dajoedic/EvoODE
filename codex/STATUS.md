@@ -1,4 +1,4 @@
-﻿status: done
-task: WP-FA7c
-report: codex/reports/REPORT_WP_FA7.md
-note: no_gain implemented; 28 tests passed, 1 environment skip; serial 20-cell smoke pair complete and byte-identical, all hash/Q5 controls pass; clean deviations recorded.
+status: done
+task: WP-FA8
+report: codex/reports/REPORT_WP_FA8.md
+note: 1632 cells; 3070 new states in 338 shards; 21 tests passed; all 8 artifacts byte-identical; Julia smoke command documented.
