@@ -848,6 +848,12 @@ the coupled search path 1e-6 is the cheaper, behaviour-equal tolerance; the Syst
   (`docs/design_stopping_criterion.md`). Acceptance as for the stage cap: search-free, on all exact systems and noise
   levels, **never truncates a true term**; stop only on positive evidence. Until then the cap stays, declared, and the
   WSINDy comparison gives the opponent the same cap (`docs/sideproject_residual_growth_protocol_q5w.md`).
+- **WISP simplicity guardrail (user, 2026-10-31) — binding.** EvoGrow's history was: a decent solution gets worse,
+  a mechanism is stacked on top (v2.1 → v2.2 → v3 → cap → reopen branch), constants accumulate. WISP's simplicity is
+  part of its contribution. Therefore: (1) every WISP component is describable in one sentence and has a documented
+  reason; (2) when a rule fails, keep the declared limitation (e.g. the 6-term cap) rather than stack repairs; (3) a
+  secondary rule becomes primary only if clearly better, not marginally; (4) before adding any component, ask
+  explicitly whether WISP can still be explained in one paragraph — and ask the user.
 - **WISP as one Julia package (user, 2026-10-31), when there is buffer.** WISP (the side project's method) is split
   today: weak-space path (FROLS + FoBa) in Python, trajectory refit + BIC in Julia (`fit_parameters`). The user wants
   to publish it as a package on GitHub, all in Julia. Not urgent; the path costs 118 s against ~1,000 core-h of fits
