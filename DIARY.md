@@ -6,6 +6,21 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ## 2026-10-31
 
+### Explorativ (kein Protokoll): Signifikanztest auf den Zuwachs als Pfadende — so gut wie Grenze 6, halb so lang
+
+Nutzer, 31.10. abends: „Regel 1 einfach mal austesten“. Regel: eine Gleichung wächst nicht weiter, wenn kein
+verbleibender Term den schwachen Restfehler stärker senkt als χ²₁-Quantil × erwarteter Gewinn eines reinen
+Rauschterms (aus dem Q6-Schätzer, `trace`-Formel der Q6-Maschinerie). Schwellen α = 0,01 (6,63) und 0,001 (10,83),
+beide gerechnet; Ergebnisse fast gleich. Skript und Tabelle `analysis/exploratory/sideproject_q7_gain_test/`
+(erste Auswertung hatte einen 0/1-Indexfehler, korrigiert). Nur Pfade, kein Fit.
+
+Exakte Wahrheit auf dem Pfad, verrauscht, α = 0,01 gegen Grenze 6: dim1 0,49 / 0,50, dim2 0,69 / 0,71, dim3 fittbar
+0,54 / 0,53, dim4 0,34 / 0,35. Sauber: 0,95 / 0,95, 0,98 / 0,95, 1,00 / 0,83, 0,50 / 0,50. Pfadzustände gesamt
+11.678 gegen 21.250 (−45 %); überzählige Terme am Pfadende Median 1–2 statt 4–6. Obermengen-Rate unter Rauschen
+niedriger (dim1 0,52 gegen 1,00): wo die exakte Wahrheit nicht erreicht wird, fehlt ein wahrer Term, dessen Gewinn
+nicht vom Rauschen zu unterscheiden ist. Ob das am Ende (Fit + BIC + Pruning) etwas kostet, zeigt nur ein Fit-Lauf.
+Vorläufige Lesart: ohne Wissen über die Lösung so gut wie die 6, bei halber Pfadlänge. Nicht protokollgedeckt.
+
 ### Q6 Stufe 1: die Noise-Floor-Regel fällt durch (T = 591), der Schätzer selbst ist gut
 <!-- 683429b -->
 
