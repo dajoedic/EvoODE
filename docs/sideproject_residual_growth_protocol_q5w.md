@@ -79,6 +79,25 @@ Arms:
 
 Q5 side: Q5 rule (c) as frozen; Q5 rules (a), (b) reported beside it as in Q5 §6.
 
+## 4a. Addendum 2026-10-31 — arm W1-interp (added after the provisional opening)
+
+**Declared:** drafted on 2026-10-31 **after** the user opened the Q5-W results provisionally (`DIARY.md` 2026-10-31).
+Known at drafting time: on ρ = 0.5 cells W1 falls far below W1 on ρ = 0 already at σ = 0 (dim 1 reconstruction 49/138
+against 138/138), and below the fixed-threshold Weak-SINDy. The arm is added because the irregular-grid binding of §3 is
+our own construction, not the published method; it is **not** added to improve any rate, and both W1 and W1-interp are
+reported on ρ = 0.5.
+
+- **W1-interp:** on every ρ = 0.5 cell, the observed data are interpolated **piecewise linearly, per state**, onto a
+  uniform grid of **M = number of observed points** spanning [first, last observed time]; then W1 runs unchanged (§3, the
+  uniform-grid path) on that grid, libraries L-C6 and L-Q5. Linear, because it adds no smoothing and no extrapolation of
+  its own; WSINDy's own smoothing decision then applies. No other interpolant is run.
+- On ρ = 0 cells the interpolation is the identity; W1-interp is not run there (a test shows identity on a sample).
+- Evaluation, truth and metrics exactly as §2. Interpolation never touches the evaluation data.
+- **Identity with the original (§5.5 extension):** because the interpolated input is uniform, W1-interp × L-C6 (and L-Q5
+  if expressible) is exported and checked against the MATLAB original with the §5.5 criterion — the same gate, the same
+  consequence on failure.
+- Reporting: W1 and W1-interp side by side on ρ = 0.5, neither replacing the other; Q5 receives no interpolation.
+
 ## 5. Acceptance before any C-6 cell is run
 
 1. **Published example:** the official script's own example — Lorenz (σ = 10, β = 8/3, ρ = 28), x0 = (−8, 7, 27),
