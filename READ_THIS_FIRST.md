@@ -10,72 +10,19 @@ zweites davon. Alles Dauerhafte gehört dorthin, nach `PAPER_1.md` oder ins `DIA
 **Regeln:** wird immer **vollständig überschrieben**, nie angehängt. Was älter als ein paar Tage
 ist, ist vermutlich falsch — dann gilt `CLAUDE.md`.
 
-**Stand: 2026-10-30, 23:45 — Q5-W-Portlauf umverteilt, 12 Prozesse.** 19.913 / 27.216 Zeilen, 0 Fehler. Teuer ist ρ = 0,5
-(dim-2-Systeme 37–39 je ~10 CPU-h), nicht dim 3 (~16 s/Zeile). Shards 0–2 (ρ = 0) laufen unverändert (dim 3). Shards 3–5
-(ρ = 0,5) gestoppt (CSV-Integrität geprüft, 67 Spalten in allen Zeilen) und ihr Rest auf 9 Prozesse verteilt:
-`cells_{k}_{j}.csv` für k = 3–5, j = 0–2; j = 0 schreibt weiter nach `shard_{k}/` (Log `shard_{k}_r0.log`), j = 1, 2 nach
-`shard_{k}_{j}/`. **Merge = alle `shard_*/details.csv`, Schlüssel (Zelle, Konfiguration) eindeutig prüfen.** Neustart
-eines Teils: gleiche `--cells`/`--output-dir`-Kombination. Laptop muss wach bleiben. Orion-Token abgelaufen (23:36).
-
-**Stand: 2026-10-30, 12:50 — Sitzung beendet, voller Q5-W-Portlauf rechnet weiter auf dem Laptop.**
-- **Prozesse:** 6 × `python …/run_sideproject_q5w_wsindy.py`, gestartet 10:04 (PIDs 9956, 11728, 28768, 29452, 32168,
-  48584), **15.997 / 27.216** Zeilen, 0 Fehler; dim 1 fertig, dim 2 bei Systemen 35–42, dim 3/4 (52–63, 5.184 Zeilen)
-  kommt noch. Hochrechnung: dim 2 Rest ~3 h, dim 3/4 grob 11–20+ h (Simulationsbudget-Ausreißer, 2–6 min/Zeile) →
-  fertig zwischen Freitagnacht und Wochenende (Nutzerwette: reicht nicht).
-- **Zuklappen** = Ruhezustand, Prozesse frieren ein und laufen weiter. **Falls sie tot sind** (Neustart/Update), aus dem
-  Repo-Root für i = 0…5 neu starten — setzt an den fertigen Zeilen fort:
-  `python analysis/scripts/aggregate/run_sideproject_q5w_wsindy.py --all-cells --cells outputs/sideproject_q5w_wsindy/full_shards/cells_$i.csv --output-dir outputs/sideproject_q5w_wsindy/full_shards/shard_$i`
-  (Fortschritt: `grep -c '^completed' outputs/sideproject_q5w_wsindy/full_shards/shard_*.log`).
-- **Offen beim Nutzer:** ob auf 11 Prozesse umgeshardet wird (halbiert dim 3/4); MATLAB-Lizenz (IT-Helpdesk, ~14 Tage).
-- **Danach, in dieser Reihenfolge:** Shards zu `outputs/sideproject_q5w_wsindy/full/details.csv` zusammenführen
-  (technische Prüfung: 27.216 Zeilen, 0 Fehler, Hashes) → MATLAB-Lauf (`matlab -batch "addpath('analysis/matlab');
-  run_wsindy_original_q5w(pwd, 2)"`, dann ohne Limit; < 1 h-Regel) → `compare_sideproject_q5w_matlab.py --port-rows
-  outputs/sideproject_q5w_wsindy/full/details.csv` → **erst bei bestandenem §5.5 entsiegeln** und Q5-W-Tabellen bauen.
-  **Bis dahin keine Rate, keine Struktur, kein Vergleich aus dem Portlauf ansehen.** Q5-Raster läuft auf Orion, Ende
-  ~31.10. abends.
-
-**Stand: 2026-10-30, ~11:00 — voller Q5-W-Portlauf rechnet auf dem Laptop** (6 Prozesse, Zell-Shards unter
-`outputs/sideproject_q5w_wsindy/full_shards/shard_{0..5}/`, Logs daneben; resumable — Neustart mit derselben
-`--cells`/`--output-dir`-Kombination setzt fort). Dim 1 fertig, dim 2 läuft; einzelne Auswertungen schöpfen das
-eingefrorene Simulationsbudget (1,2 Mio. RHS-Evals) aus → 2–6 min pro Zeile, Hochrechnung ≥ 10–18 h. **Nutzer: tagsüber
-laufen lassen, am Abend entscheiden** (Option: auf 11 Prozesse umshardeln, Q5-Zellen zuerst). Ergebnisse versiegelt bis
-MATLAB-Abgleich (§5.5); MATLAB-Lizenz beim IT-Helpdesk angefragt. WP-FA6b committet (`8aa6eec`).
-
-**Stand: 2026-10-30, Vormittag — Q5-W läuft weiter.** Nutzer hat entschieden: Protokoll **eingefroren** (`83139f0`),
-Abnahme 1(ii) nur berichtet; neuer Punkt 5 = **Identität mit dem Originalcode in MATLAB** (SCCH hat Lizenzen, Installation
-über IT-Helpdesk beantragt; Octave entfällt) auf allen ρ = 0-Zellen. **WP-FA6b bei Codex** (Abnahme umstellen, Smoke,
-MATLAB-Export/-Treiber/-Vergleich). Danach startet Claude den vollen Lauf; **Ergebnisse versiegelt bis Punkt 5
-bestanden**. Sobald MATLAB da ist: Claude startet den Original-Lauf (< 1 h-Regel).
-
-**Stand: 2026-10-30, ~01:30 — wartet auf den Nutzer.** Code-Audit fertig: **Nachbau = Original** auf gleichmäßigem
-Raster (DIARY 30.10., `9b49329`); 6/20 ist WSINDys eigenes Verhalten, die 15/20-Schwelle war falsch angesetzt.
-WP-FA6-Code committet. **Morgens zu entscheiden:** (1) Abnahme 1(ii) ersetzen — Treue per Audit genügt, oder zusätzlich
-Octave-Gegenlauf freigeben (Rechteregel für `docker run` mit fremdem Code); (2) Protokoll einfrieren; (3) dann
-Determinismus + Smoke (Minuten) und voller Lauf 6 × 4.536 auf dem Laptop (Hochrechnung aus dem Smoke). Q5-Raster
-(49/1.632) läuft weiter, der Q5-Vergleich braucht sein Ende (~31.10. abends).
-
-**Stand: 2026-10-30, ~01:00. WP-FA6 `blocked`, Abnahme Lorenz 1(ii) 6/20 statt ≥ 15/20.** Muster: in allen 14
-Fehlschlägen sind **alle wahren Terme da** (Koeffizientenfehler 1–3 %), dazu 1–3 kleine Störterme (|c| ≈ 0,01–0,05).
-Die 15/20 waren von Claude gesetzt, ohne veröffentlichte Vergleichszahl — **nicht nachträglich gesenkt**. Klärung, ob
-Nachbau-Fehler oder echtes Verhalten des Originals: (1) Octave-Gegenlauf des Originalcodes auf denselben Daten ist
-vorbereitet (`gnuoctave/octave:9.2.0` gezogen, Daten + Treiber im Scratchpad), aber **vom Rechteprüfer blockiert
-(„Code from External“) → Nutzerentscheidung**; (2) unabhängige Code-Prüfung Nachbau vs. Original läuft (Agent).
-Abnahme 3 (Auswertung): 36/100 bit-identisch, Rest nur R²-Gleitkomma (Laptop vs. Orion), alle Strukturfelder und
-R²>0,9-Entscheidungen gleich → benannte Ausnahme. Kein C-6-Lauf, keine Vergleichszahl. WP-FA6-Dateien uncommittet.
-
-**Stand: 2026-10-30, 00:15. Q5-W läuft (Nacht, Nutzer schläft, will morgen ein Ergebnis).** Anlass: Zwischenblick
-29.10. auf System 61 — Q5 (c) 16/44 Struktur gepruned gegen Weak-SINDy 0/44 (DIARY 29.10., `6aeb014`); Weak-SINDy verliert
-dort nur an der festen Schwelle. Daher fairer Gegner: **WSINDy wie veröffentlicht** (offizieller Code MathBioCU/WSINDy_ODE
-`72d8d6e`, lokal gitignored unter `outputs/reference_wsindy_ode_72d8d6e/`, „All Rights Reserved“ → nur nachbauen).
-Protokoll-**Entwurf** `docs/sideproject_residual_growth_protocol_q5w.md` (`374e553`; A, B und Grenzen-Arm vom Nutzer
-gebilligt, Einfrieren der Details steht aus). **Codex WP-FA6 gestartet 30.10. 00:04** (Implementierung, Abnahme gegen
-das Lorenz-Beispiel des Originalcodes, Smoke nur auf sauberen Surrogat-Zellen). Danach: Claude prüft, voller Lauf auf dem
-Laptop nur bei Hochrechnung < 1 h. Neuer offener Punkt in CLAUDE.md: datengetriebenes Pfadende statt 6-Term-Grenze.
-Chaos-Befund System 61: schon 1 % Koeffizientenfehler → R² ≈ 0,06 beim wahren Modell (Chen-Lee, chaotisch).
-
-**Stand: 2026-10-28, 17:15. Q5-Raster läuft** seit 16:19 auf Orion (`evoode-sideproject-q5`, 16 Pods, teuerste Zellen zuerst, Nachtrag `ecc8bac`; erwartet ~63 h + Nachzügler, ~1.000–1.100 Kern-h); **Belegung 40/40**. Wenn fertig: `out/index_*.jsonl` einsammeln, `aggregate_sideproject_q5.py --paths outputs/sideproject_q5_inputs/q5_grid_paths.json` (REPORT_WP_FA5). **C-6-Zwischenblick auf Nutzerwunsch** (Kriterium `4001c21`, Ergebnis `04e07eb`): kein Abbruchsignal, EvoGrow auf 18 dim-2-Systemen unter Rauschen vor der SINDy-Familie; **C-6 läuft weiter** (Nutzer). Blindheit für C-6 ist damit aufgehoben und im Paper offenzulegen. **Stand: 2026-10-28, 16:10. Q5-Probe fertig: 9/9** (Pod 7 letzter Schreibzugriff 14:48, Job per TTL entfernt), eingesammelt nach `outputs/sideproject_q5_354106398d5e67ffa72c237e2ba83e3feeb25b31/out/` (SHA-256 gleich NFS), aggregiert nach `analysis/data/sideproject_residual_growth/q5_probe/`, alle Kontrollen bestanden. **D1–D5 nicht ausgewertet** (gemeinsam). **Kostenfaktor ×3,16 gesamt** (Plan 8,9 → 28,3 Kern-h), verrauscht dim 1 ×0,74, dim 2 ×8,0, dim 3 ×4,2; Einzelzellen 0,18–19 (Tabelle DIARY 28.10.). Raster hochgerechnet ~1.100 Kern-h (~1.650 €) statt 244. **Nutzer entscheidet über das Q5-Raster.** Belegung jetzt **24/40 Kerne** (nur C-6 gekappt, 1.271/3.366 um 16:01). C-6 ungekappt (Seed 42) fertig 461/461, technisch geprüft, noch nicht lokal eingesammelt. §9.4d eingefroren (`f012fd0`). Q5 eingefroren (`f737939` + `f454a32`). Codex nur mit `-c 'windows.sandbox="unelevated"'`. WP-N48b (PySR) liegt pausiert und ungeprüft im Working Tree. Älter: Side-Projekt „Residual-Wachstum“: Q1–Q3 abgeschlossen und positiv (σ = 0); Q4
-(Modellgröße ohne Orakel) vollständig gerechnet und aggregiert — alle Kontrollen bestanden, Plattformkontrolle
-bit-identisch. R7–R9 noch nicht angesehen; Auswertung gemeinsam und in Ruhe.**
+**Stand: 2026-10-31, 03:20 — Q5-W-Portlauf fertig und zusammengeführt; wartet auf MATLAB.**
+- **Portlauf:** 27.216 / 27.216 Zeilen (4.536 Zellen × 6 Konfigurationen W1/W1-cap/W2 × L-C6/L-Q5), Schlüssel
+  (Zelle, Konfiguration) eindeutig, `fit_status = success` überall, 0 `fit_error`. Zusammengeführt aus 12 Shards
+  (`outputs/sideproject_q5w_wsindy/full_shards/shard_*/details.csv`) nach `outputs/sideproject_q5w_wsindy/full/details.csv`.
+  Letzte Zeile Sa 03:18; lokal läuft nichts mehr.
+- **Versiegelt:** keine Rate, keine Struktur, kein Vergleich aus dem Portlauf ansehen, bis §5.5 (Identität mit dem
+  MATLAB-Original) bestanden ist. Bisher nur technisch geprüft.
+- **Sobald MATLAB installiert ist (IT-Helpdesk, Lizenz ~14 Tage):** Claude startet (< 1 h-Regel)
+  `matlab -batch "addpath('analysis/matlab'); run_wsindy_original_q5w(pwd, 2)"` (Probe), dann ohne Limit, dann
+  `python analysis/scripts/aggregate/compare_sideproject_q5w_matlab.py --port-rows outputs/sideproject_q5w_wsindy/full/details.csv`
+  → bei Bestehen entsiegeln, Q5-W-Tabellen bauen, Q5 gegen W1 vergleichen.
+- **Q5-Raster auf Orion** (16 Pods): Ende ~31.10. abends erwartet; Zwischenblick 1.144 / 1.632 im DIARY 30.10.
+- **Kochbuch-PDFs** (Stand 27.10., ohne Q5) liegen nur im Sitzungs-Scratchpad; Nutzer kopiert sie.
 
 > **BLINDREGEL C-6 (Nutzer, 05.10., „Weg 2“):** Bis die Entscheidungsregel für Story-Linie (b) mit dem Nutzer
 > festgelegt und als Plan §9.4d eingefroren ist, sieht sich Claude **keine C-6-EvoGrow-Ergebnisse** an — weder
@@ -112,7 +59,7 @@ entfernt. Aggregiert nach `analysis/data/sideproject_residual_growth/q4_*.csv` +
 Kontrollen bestanden, `duplicates_compared = 3` bit-identisch (DIARY 21.10.). Das Skript weigert sich, vorhandene
 Tabellen zu überschreiben — ein erneuter Lauf braucht `--output-dir`.
 
-Lokal läuft nichts. Alles bis `a9e94ed` ist gepusht; der Commit vom 21.10. ist ungepusht (pusht der Nutzer).
+Lokal läuft nichts (Stand 31.10. 03:20).
 **Offen für den Nutzer:** sieben schreibgeschützte pytest-Ordner unter `tmp/` (Codex-Sandbox, nur mit Admin-Rechten
 löschbar) und die Annihilator-Dateien `output/pdf/` und `tmp/pdfs/` → gehören nach `..\EvoODE-next`.
 
