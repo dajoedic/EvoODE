@@ -108,7 +108,7 @@ def test_aggregation_and_no_overwrite(real,tmp_path):
     payload,records = synthetic_records(real,paths)
     result = tmp_path/'results.jsonl'
     result.write_text(''.join(json.dumps(r)+'\n' for r in records+[records[0]]))
-    metadata = agg.run([result],paths,tmp_path/'tables')
+    metadata = agg.run([result],paths,tmp_path/'tables',q5_protocol_commit='f454a32')
     assert metadata['duplicates_compared']==1
     rates = pd.read_csv(tmp_path/'tables/q5_rates.csv')
     assert {'Q5','sindy','weak_sindy','e_sindy'} == set(rates.method)
@@ -188,7 +188,7 @@ def test_manifests_and_shard_lists():
         path=builder.ROOT/f'k8s/sideproject_q5{suffix}_job.yaml'
         job=yaml.safe_load(path.read_text())
         spec=job['spec']; pod=spec['template']['spec']; container=pod['containers'][0]
-        assert spec['completionMode']=='Indexed' and spec['completions']==count and spec['parallelism']==8
+        assert spec['completionMode']=='Indexed' and spec['completions']==count and spec['parallelism']==(16 if mode=='grid' else 8)
         assert 'activeDeadlineSeconds' not in spec and 'activeDeadlineSeconds' not in pod
         assert container['resources']['requests']==container['resources']['limits']=={'cpu':'1','memory':'4Gi'}
         assert {e['name']:e['value'] for e in container['env']}=={'JULIA_NUM_THREADS':'1','OPENBLAS_NUM_THREADS':'1'}

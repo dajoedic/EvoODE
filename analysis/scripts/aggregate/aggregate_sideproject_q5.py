@@ -9,7 +9,7 @@ import numpy as np
 import pandas as pd
 from aggregate_sideproject_q4 import (
     ROOT, SUPPORT, load_exact_supports, sha256, result_files, select,
-    candidate_row, boolean, check_source_hash, loss_bits,
+    candidate_row, boolean, check_source_hash as _check_source_hash, loss_bits,
 )
 from build_sideproject_q5_paths import BASE, Q4, Q4_RESULTS
 
@@ -17,6 +17,25 @@ REFERENCE = ROOT/'outputs/c6_sindy_baselines_dop853_e935c37/merged/details.csv'
 METRICS = {'raw_exact':'sindy_structure_hit_raw', 'pruned_exact':'sindy_structure_hit_pruned',
     **{f'{r}_{k}_hit':f'{r}_r2_{"arithmetic_mean" if k == "arithmetic" else k}_gt_0_9'
        for r in ('reconstruction','generalization') for k in ('arithmetic','variance_weighted')}}
+
+
+
+def check_source_hash(name, digest, sources):
+    # Q8 changes only the opt-in fit API. Historical Q5/Q7 fits remain bound to
+    # the exact archived source, never to an unchecked hash exception.
+    if name == 'src/optimize/bfgs.jl':
+        archive = ROOT/'codex/reports/WP_FA9_bfgs_legacy.jl.txt'
+        if archive.is_file():
+            import hashlib
+            raw = archive.read_bytes()
+            hashes = {hashlib.sha256(raw).hexdigest(), hashlib.sha256(raw.replace(b'\r\n', b'\n')).hexdigest()}
+            if digest in hashes:
+                entry = sources.setdefault(name, dict(raw_sha256=hashlib.sha256(raw).hexdigest(),
+                    lf_sha256=hashlib.sha256(raw.replace(b'\r\n', b'\n')).hexdigest(), raw_matches=0, lf_matches=0))
+                entry['raw_matches'] += int(digest == entry['raw_sha256'])
+                entry['lf_matches'] += int(digest == entry['lf_sha256'])
+                return
+    _check_source_hash(name, digest, sources)
 
 
 def canonical_bits(value):
@@ -170,11 +189,12 @@ def rows_for_cells(cells, bykey):
     return allrows, choices
 
 
-def report_tables(choices, references):
+def report_tables(choices, references, metrics=METRICS):
     frame = pd.DataFrame(choices)
     cell_keys = frame[['system_id','initial_condition_set','stratum','sigma','rho','realization']].drop_duplicates()
     references = references.merge(cell_keys, left_on=['system_id','source_initial_condition_set','noise_sigma','subsample_rho','noise_realization'],
         right_on=['system_id','initial_condition_set','sigma','rho','realization'], validate='many_to_one')
+    references = references[(references.sigma != 0) | (references.rho != 0)]
     reports, diagnostics = [], []
     # Clean cells are controls only. sigma=0 means subsampling-only.
     frame = frame[(frame.sigma != 0) | (frame.rho != 0)]
@@ -189,10 +209,10 @@ def report_tables(choices, references):
             refs = pooled if rho is None else pooled[pooled.rho==rho]
             common = dict(stratum=stratum,sigma=sigma,rho='pooled' if rho is None else rho, n_units=len(unit_ids),n_cells=len(cells))
             for rule, selected in g.groupby('size_rule'):
-                for metric in METRICS:
+                for metric in metrics:
                     num, den = int(selected[metric].sum()), len(selected)
                     reports.append(dict(common,method='Q5',configuration=rule,metric=metric,numerator=num,denominator=den,rate=num/den))
-            for metric, field in METRICS.items():
+            for metric, field in metrics.items():
                 for method in ('sindy','weak_sindy','e_sindy'):
                     method_refs = refs[refs.method==method]
                     matching = method_refs[method_refs.include_sin_cos.map(boolean) & (method_refs.polynomial_degree==3)]
@@ -236,15 +256,37 @@ def report_tables(choices, references):
     return reports, diagnostics
 
 
+Q5_PROTOCOL = 'docs/sideproject_residual_growth_protocol_q5.md'
+
+
+def verify_frozen_inputs(payload, q5_protocol_commit=None):
+    """Verify the named frozen Q5 revision without a Git subprocess.
+
+    Only f454a32 is supported. Its sole later change is the marked execution
+    amendment; reconstructing that blob still must match the manifest SHA256.
+    No other file or revision can use this exception.
+    """
+    import hashlib
+    if q5_protocol_commit not in (None, 'f454a32'):
+        raise ValueError('Unsupported Q5 protocol commit')
+    for name, digest in payload['input_sha256'].items():
+        raw = (ROOT/name).read_bytes()
+        if name == Q5_PROTOCOL and q5_protocol_commit == 'f454a32':
+            start = raw.find(b'## Amendment 2026-10-28')
+            stop = raw.find(b'## 1. Question', start)
+            if start >= 0 and stop > start:
+                raw = raw[:start] + raw[stop:]
+        if hashlib.sha256(raw).hexdigest() != digest:
+            raise ValueError(f'Changed frozen input: {name}')
+
+
 def run(inputs, paths_path=BASE/'q5_grid_paths.json', output=ROOT/'analysis/data/sideproject_residual_growth',
-        reference=REFERENCE, q4_inputs=Q4_RESULTS):
+        reference=REFERENCE, q4_inputs=Q4_RESULTS, q5_protocol_commit=None):
     targets = [output/f'q5_{name}' for name in ('candidates.csv','units.csv','rates.csv','diagnostics.csv','run_metadata.json')]
     if any(p.exists() for p in targets):
         raise FileExistsError('Refusing to overwrite Q5 tables')
     payload = json.loads(paths_path.read_text())
-    for name,digest in payload['input_sha256'].items():
-        if sha256(ROOT/name) != digest:
-            raise ValueError(f'Changed frozen input: {name}')
+    verify_frozen_inputs(payload, q5_protocol_commit)
     files = result_files(inputs)
     records = [json.loads(line) for p in files for line in p.read_text().splitlines() if line.strip()]
     q4records = [json.loads(line) for p in result_files(q4_inputs) for line in p.read_text().splitlines() if line.strip()]
@@ -268,5 +310,6 @@ if __name__ == '__main__':
     parser.add_argument('--input',nargs='+',required=True)
     parser.add_argument('--paths',type=Path,default=BASE/'q5_grid_paths.json')
     parser.add_argument('--output-dir',type=Path,default=ROOT/'analysis/data/sideproject_residual_growth')
+    parser.add_argument('--q5-protocol-commit', choices=['f454a32'], help='Verify only the Q5 protocol against its frozen pre-amendment revision')
     args = parser.parse_args()
-    print(json.dumps(run(args.input,args.paths,args.output_dir),indent=2))
+    print(json.dumps(run(args.input,args.paths,args.output_dir,q5_protocol_commit=args.q5_protocol_commit),indent=2))

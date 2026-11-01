@@ -1,0 +1,8 @@
+{
+  "src/optimize/bfgs.jl": "1af2d3d8fbf569c073971b6d6a2745374c2d82aa036918f9ba3d0925b4cb3333",
+  "studies/regression/sideproject_q4_path_fits.jl": "2725a2927c9197fe103a4b21d8a9aad0dea111220ace5eaf99bbcd6ac56933e4",
+  "studies/regression/sideproject_q5_noise_fits.jl": "0d130f466450c70827e0806d4f2463685a79b66e5cd8ef39426fb1e539995694",
+  "docs/sideproject_residual_growth_protocol_q8.md": "99948b98d77ff3757043f40d12c1dc112d2678f64753488281f286280c58a384",
+  "outputs/sideproject_q8_inputs/smoke.json": "af59e05cc42cbe96387177312a95e673ab1cc3b9c8bfdd4706bf3d6ad27a863a",
+  "outputs/sideproject_q8_inputs/estimated_smoke.json": "fec55d008122a78cef7a8ac9d783b5729028cd6426b71cf82c0f2f022c204ec4"
+}

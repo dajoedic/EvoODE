@@ -167,15 +167,17 @@ function _predict_traj(f!,
                        traj::Trajectory,
                        p::Vector{Float64},
                        opt::BFGSOptimizer;
-                       stats::Union{Nothing, Dict{Symbol, Any}} = nothing)
+                       stats::Union{Nothing, Dict{Symbol, Any}} = nothing,
+                       coefficient_count::Union{Nothing, Int} = nothing)
 
     t = traj.t
     X = traj.x
-    u0 = collect(X[1, :])
+    u0 = coefficient_count === nothing ? collect(X[1, :]) : p[coefficient_count+1:end]
     tspan = (t[1], t[end])
 
     # Clamp parameters for numerical stability
-    p_clamped = Base.clamp.(p, -opt.clamp_val, opt.clamp_val)
+    p_clamped = coefficient_count === nothing ? Base.clamp.(p, -opt.clamp_val, opt.clamp_val) :
+        Base.clamp.(p[1:coefficient_count], -opt.clamp_val, opt.clamp_val)
 
     prob = ODEProblem(f!, u0, tspan, p_clamped)
 
@@ -289,7 +291,8 @@ function _fit_parameters_once(opt::BFGSOptimizer,
                               n_params::Int,
                               loss::AbstractLoss,
                               options::DiscoveryOptions;
-                              p0=nothing)
+                              p0=nothing,
+                              coefficient_count::Union{Nothing, Int}=nothing)
 
     fit_t0 = time()
     X = traj.x
@@ -343,7 +346,9 @@ function _fit_parameters_once(opt::BFGSOptimizer,
             throw(BFGSLossEvalBudgetExceeded(opt.max_loss_evals, loss_eval_count[]))
         end
         loss_eval_count[] += 1
-        predicted = _predict_traj(f!, traj, p, opt; stats = solve_stats)
+        predicted = coefficient_count === nothing ?
+            _predict_traj(f!, traj, p, opt; stats = solve_stats) :
+            _predict_traj(f!, traj, p, opt; stats = solve_stats, coefficient_count=coefficient_count)
 
         if any(isnan, predicted)
             invalid_eval_count[] += 1
@@ -351,7 +356,9 @@ function _fit_parameters_once(opt::BFGSOptimizer,
 
         loss_value = evaluate_loss(loss, predicted, X)
         if isfinite(loss_value)
-            p_evaluated = Base.clamp.(Vector{Float64}(p), -opt.clamp_val, opt.clamp_val)
+            p_evaluated = coefficient_count === nothing ?
+                Base.clamp.(Vector{Float64}(p), -opt.clamp_val, opt.clamp_val) :
+                vcat(Base.clamp.(p[1:coefficient_count], -opt.clamp_val, opt.clamp_val), p[coefficient_count+1:end])
             if best_observed_loss[] === nothing || loss_value < best_observed_loss[]
                 best_observed_p[] = p_evaluated
                 best_observed_loss[] = Float64(loss_value)
@@ -673,7 +680,8 @@ function _fit_parameters_once(opt::BFGSOptimizer,
     end
 
     # Ensure returned params match the ones actually evaluated in the loss
-    p_best = Base.clamp.(p_best, -opt.clamp_val, opt.clamp_val)
+    p_best = coefficient_count === nothing ? Base.clamp.(p_best, -opt.clamp_val, opt.clamp_val) :
+        vcat(Base.clamp.(p_best[1:coefficient_count], -opt.clamp_val, opt.clamp_val), p_best[coefficient_count+1:end])
 
     # aggregated warning only once per fit
     if options.verbose >= 2 && invalid_eval_count[] > 0
@@ -737,7 +745,26 @@ function fit_parameters(opt::BFGSOptimizer,
                         n_params::Int,
                         loss::AbstractLoss,
                         options::DiscoveryOptions;
-                        p0=nothing)
+                        p0=nothing,
+                        estimate_initial_state::Bool=false,
+                        fixed_initial_state::Bool=false)
+
+    if estimate_initial_state && !fixed_initial_state
+        # Same optimizer, objective targets and retry accounting; only the free
+        # parameter vector and ODE u0 change. No state parameter is clamped.
+        opt.max_fit_attempts == 1 || error("Estimated IC requires one fit attempt")
+        initial = collect(traj.x[1, :])
+        coefficients = p0 === nothing ? 0.1 .* randn(n_params) : Vector{Float64}(p0)
+        length(coefficients) == n_params || error("Parameter count")
+        joint, value, meta = _fit_parameters_once(opt, f!, traj, n_params + length(initial),
+            loss, options; p0=vcat(coefficients, initial), coefficient_count=n_params)
+        return joint[1:n_params], value, merge(meta, (
+            fitted_initial_state=joint[n_params+1:end],
+            fit_attempts=1, accepted_attempt=1, retry_triggered=false,
+            fit_failed=fit_attempt_failed(value, Bool(meta.result_valid)),
+            attempt_solver_retcodes=[copy(meta.solver_retcodes)],
+            attempt_optimizer_retcodes=[copy(meta.optimizer_retcodes)]))
+    end
 
     max_attempts = max(1, opt.max_fit_attempts)
     attempts = Tuple{Vector{Float64}, Float64, NamedTuple}[]

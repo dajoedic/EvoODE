@@ -1,0 +1,19 @@
+{
+  "q5_candidates.csv": {
+    "equal": true,
+    "sha256": "72491c1cd80a530ac3c3ba11f88e76f54b195ff5d6459169aa3a25f1eb953a4e"
+  },
+  "q5_diagnostics.csv": {
+    "equal": true,
+    "sha256": "86ade7697f0bfa1728aa679244fe8d3fc021ca7485415aa435eb3d577ed8ff8d"
+  },
+  "q5_rates.csv": {
+    "equal": true,
+    "sha256": "97488e8c0bdd53b6b50d7b31b81bde4f29c6cf840f268b05c5880546cfbc270c"
+  },
+  "q5_units.csv": {
+    "equal": true,
+    "sha256": "efa26c7a31a1da9fb723737eacde8d1326fd980c49d64540a0a13aaf1fe1c424"
+  },
+  "metadata_differing_fields": []
+}

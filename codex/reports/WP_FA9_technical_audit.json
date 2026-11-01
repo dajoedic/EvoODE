@@ -1,0 +1,40 @@
+{
+  "wp_n47_hash_matches": 590,
+  "arms": {
+    "A10": {
+      "cell_arms": 530,
+      "states": 4764,
+      "new_states": 3353
+    },
+    "C10": {
+      "cell_arms": 530,
+      "states": 4764,
+      "new_states": 4764
+    },
+    "A1000": {
+      "cell_arms": 590,
+      "states": 6019,
+      "new_states": 6019
+    },
+    "C1000": {
+      "cell_arms": 590,
+      "states": 6019,
+      "new_states": 6019
+    },
+    "no_foba": {
+      "cell_arms": 510,
+      "states": 3722,
+      "new_states": 3722
+    },
+    "random_start": {
+      "cell_arms": 510,
+      "states": 4451,
+      "new_states": 4451
+    },
+    "no_refit": {
+      "cell_arms": 510,
+      "states": 4451,
+      "new_states": 4451
+    }
+  }
+}
