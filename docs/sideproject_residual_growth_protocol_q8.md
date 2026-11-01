@@ -12,8 +12,8 @@ not:
    2026-10-27) keep or improve the result against variant A (fit from the first noisy observed sample)?
 2. **Bound 1000:** does the looser coefficient bound `[-1000, 1000]` (C-8 B-03: the next version's start by the frozen
    rule) keep the result on the systems feasible under bound 10, and what does it bring on 54–59?
-3. **Surrogate systems:** how does WISP do on the 33 systems the basis cannot represent exactly, against the
-   baselines, on R² alone?
+3. **Surrogate systems:** how does WISP do on the systems the basis cannot represent exactly, against the
+   baselines, on R² alone? Q8 covers the 30 surrogates of dim 1/2; the other 3 (53, 60, 62) come with Q9.
 4. **Ablations:** what each WISP component contributes (FoBa backward step, weak-form start, trajectory refit).
 
 ## 2. Path end — conditional on G-Q7
@@ -49,11 +49,13 @@ C-6 export `phase_c_c6_data_conditions_5dd1df8`, unchanged. Units (system, train
 | Block | Systems | Conditions | Arms |
 |---|---|---|---|
 | **dim 1/2** | all 51 (21 exact, 30 surrogate) | (σ, ρ) ∈ {0.01, 0.05} × {0, 0.5}, realization 1, plus (0, 0) | A10, C10, A1000, C1000 |
-| **dim 3 sample** | 52, 61 (feasible under 10); 54–59 (infeasible under 10); 53, 60 (surrogate) | same | A1000, C1000; A10 and C10 on 52, 61, 53, 60 only |
+| **dim 3 sample** | 52, 61 (feasible under 10); 54–59 (infeasible under 10) | same | A1000, C1000; A10 (reused from Q7) and C10 on 52, 61 only |
 | **ablations** | dim 1/2, all 51 | same | on C1000 (the intended final configuration) |
 
-Not in Q8: dim 4 (62, 63), realizations 2–3, σ ∈ {0.02, 0.03, 0.04} — they come with Q9.
-Cells: dim 1/2 102 units × 5 = 510 per arm; dim 3 sample 20 units × 5 = 100.
+Not in Q8: the dim-3 surrogates 53, 60 (R3 decides on dim 1/2 only; they come with Q9), dim 4 (62, 63),
+realizations 2–3, σ ∈ {0.02, 0.03, 0.04} — they come with Q9. 54–59 are kept complete: choosing only the systems the
+C-8 oracle could fit unbounded (57, 58) would be a selection on results; the probe guards the cost.
+Cells: dim 1/2 102 units × 5 = 510 per arm; dim 3 sample 16 units × 5 = 80.
 
 ## 5. Ablations (on C1000, dim 1/2)
 
@@ -63,7 +65,8 @@ Cells: dim 1/2 102 units × 5 = 510 per arm; dim 3 sample 20 units × 5 = 100.
 - **No refit:** the weak-form coefficients are simulated directly, no trajectory fit; size rule (c) on those
   trajectories.
 
-Report only, no adoption rule: an ablation explains a component, it does not decide one.
+Report only, no adoption rule: an ablation explains a component, it does not decide one. If G2 does not adopt C1000,
+the ablations are rerun on the adopted configuration (dim 1/2 only, ~10–50 core-h each).
 
 ## 6. Metrics and references
 
@@ -76,15 +79,18 @@ W1-interp on ρ = 0.5; preliminary until Q5-W §5.5 passes).
 
 ## 7. Adoption rules (fixed now, before any Q8 number)
 
-Margin as everywhere since plan §9.4d: **5 percentage points**, per stratum (dim 1, dim 2, dim 3 sample), pooled over
-the four noisy conditions; metrics pruned exact structure **and** R² > 0.9 generalization on exact systems, R² > 0.9
-generalization on surrogate systems.
+Margin as everywhere since plan §9.4d: **5 percentage points**, per stratum, pooled over the four noisy conditions;
+metrics pruned exact structure **and** R² > 0.9 generalization on exact systems, R² > 0.9 generalization on surrogate
+systems. **Decided on dim 1 and dim 2 only** (300–400 noisy cells per arm each). The dim-3 sample is reported, not
+decided on: with 32–80 noisy cells per arm, 5 pp are 2–4 cells, and a single cell would decide.
 
-- **R1 — variant C.** C is adopted (the user's commitment) unless C1000 is worse than A1000, or C10 worse than A10, by
-  more than 5 pp on any of these metrics in any stratum. Then the fallback is A, declared (CLAUDE.md plan: "variant C
-  or bound 1000 harm").
-- **R2 — bound 1000.** Adopted unless C1000 is worse than C10 by more than 5 pp on any metric in dim 1 or dim 2 or on
-  52/61. On 54–59 bound 10 is infeasible by construction, so they are reported, not decided on.
+Order: R2 first, then R1 at the adopted bound — one comparison per rule, not two.
+
+- **R2 — bound 1000.** Adopted unless C1000 is worse than C10 by more than 5 pp on any metric in dim 1 or dim 2.
+  (On 54–59 bound 10 is infeasible by construction; reported only.)
+- **R1 — variant C.** At the bound adopted by R2, C is adopted (the user's commitment of 2026-10-27; a principled
+  choice, not a performance one, hence non-inferiority) unless it is worse than A by more than 5 pp on any metric in
+  dim 1 or dim 2. Then the fallback is A, declared (CLAUDE.md plan: "variant C or bound 1000 harm").
 - **R3 — surrogates.** WISP is "clearly behind" on surrogates if, in dim 1 or dim 2, the adopted arm is more than
   5 pp below the **best** of the four references on R² > 0.9 generalization. Then the user decides whether the claim
   is narrowed to exactly representable systems (plan deviation list). Otherwise the surrogates enter Q9 as planned.
@@ -111,17 +117,19 @@ Planning from the measured Q5 fit times (solve time, wall-clock, planning only):
 | Block | Cells | Core-h (range) |
 |---|---|---|
 | dim 1/2, 4 arms | 4 × 510 | 60–300 |
-| dim 3 sample, 2 arms + 52/61/53/60 under bound 10 | 200 + 80 | 600–2,400 |
+| dim 3 sample: 52/61 under C10, A1000, C1000 (A10 reused); 54–59 under A1000, C1000 | 60 + 120 | 600–1,700 |
 | ablations, 3 × 510 | 1,530 | 30–150 |
-| **total** | | **~700–2,850 core-h ≈ 1,050–4,300 €** |
+| **total** | | **~700–2,150 core-h ≈ 1,050–3,250 €** |
 
 Orion, indexed Job, shards in descending planned cost, no deadline; a probe of one unit per block first (as Q5),
 then the user decides the grid. Implementation: Codex (Julia variant C in the Q5 runner as an option, bound as a
 setting, surrogate paths through the Q7 builder, ablation switches), Claude parses and smoke-tests on the laptop, the
 user pushes to GitLab for the image.
 
-## 10. Open for the user at G1
+## 10. Decided by the user 2026-11-02 (before G1)
 
-1. The dim-3 sample: 52, 61, 54–59, 53, 60 — or smaller (cost is almost all here).
-2. Ablations on C1000 (the intended final configuration) or on A10 (exists already for exact systems, cheaper).
-3. R1: is non-inferiority enough for C (it is the commitment), or should C have to be better?
+1. dim-3 sample: 52, 61, 54–59 complete; the surrogates 53, 60 move to Q9.
+2. Ablations on C1000; rerun on the adopted configuration if G2 does not adopt it.
+3. R1 non-inferiority; R1/R2 decided on dim 1/2 only, R2 before R1, one comparison each.
+
+Remaining for G1: the user reads the whole protocol once and approves it; then it is frozen.
