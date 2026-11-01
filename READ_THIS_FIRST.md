@@ -46,5 +46,6 @@ Orion-Login abgelaufen → `oc login --web https://api.orion.scch.at:6443`. Orio
 "Lies codex/CODEX_PROTOCOL.md und arbeite den Auftrag in codex/CURRENT_TASK.md ab." < /dev/null` (Hintergrund).
 **Uncommittet, nicht von Claude:** WP-N48b-Dateien (PySR, pausiert nach §9.4d) und `output/`.
 
-**Statusseite „EvoODE auf Orion“:** https://claude.ai/artifact/9zzJsoGCBahPsuNkaaf3DN (Version 8 vom 28.10., veraltet:
-Q5 fertig, Q7 läuft mit 16 Pods).
+**Statusseite „EvoODE auf Orion“:** https://claude.ai/artifact/9zzJsoGCBahPsuNkaaf3DN — Version 11 (02.11., 00:09).
+Lokale Quelle im Sitzungs-Scratchpad (`orion_status.html`); bei jeder Änderung per Artifact `read` holen und darauf
+aufbauen.
