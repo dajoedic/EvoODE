@@ -4,6 +4,45 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ---
 
+## 2026-11-01
+
+### Q5 grid complete and officially aggregated: WISP (c) ahead of Weak-SINDy in every noisy stratum
+<!-- COMMIT -->
+
+Orion 1,632 / 1,632 cells, 22,882 records = 21,250 path candidates + 1,632 upper subsets, exactly as planned
+(REPORT_WP_FA5); copied from NFS to `outputs/sideproject_q5_354106398…/out/`. Frozen script
+`aggregate_sideproject_q5.py`, tables `analysis/data/sideproject_residual_growth/q5_grid/`. All §8 controls pass
+(hashes, fingerprint `608ac810…` = Q4, clean Q4 bit control, no duplicates).
+
+**Two technical amendments, before any number was read (wrapper in the session scratchpad, repo script unchanged):**
+(1) the protocol hash is taken from `f454a32`, the version hashed at path build — the working tree also contains
+the 28.10 execution amendment `ecc8bac`, a pure 10-line addition; (2) the script drops the clean (0, 0) cells from
+the Q5 rows but not from the references, so the (0, 0.5) group failed the count check (the probe had no such
+condition); the wrapper drops them from the references too. Proper fix in the script: Codex.
+
+Rule (c), σ = 0.01–0.05 pooled over ρ and realizations, against the frozen reference Weak-SINDy (pysindy,
+`poly_deg3_sin_cos`, better threshold per stratum × σ × metric — in its favour); SINDy / E-SINDy same library:
+
+| Stratum | n | pruned exact c / W / S / E | raw c / W | rec. R² > 0.9 c / W | gen. R² > 0.9 c / W |
+|---|---|---|---|---|---|
+| dim 1 | 660 | **174** / 65 / 12 / 7 | 194 / 65 | **584** / 376 | **415** / 177 |
+| dim 2 | 600 | **123** / 15 / 3 / 3 | 103 / 15 | **526** / 293 | **347** / 158 |
+| dim 3 feasible | 120 | **22** / 0 / 0 / 0 | 13 / 0 | **35** / 0 | **6** / 0 |
+| dim 4 | 60 | 0 / 0 / 0 / 0 | 0 / 0 | **51** / 1 | 4 / 0 |
+
+(R² variance-weighted.) The gap grows with σ: dim 2 structure 38 vs 6 at σ = 0.01, 15 vs 0 at 0.05; dim 1
+generalization 85 vs 46 → 76 vs 27. Subsampling only (0, 0.5): dim 1 structure 45/66 vs 29, dim 2 51/60 vs 17.
+
+**Diagnostics:** D1 every noisy path ends at the 6-term cap (as declared). **D2: the chosen model is the last path
+state in only 2–4 % of dim-1/2 cells** — BIC, not the cap, sets the size, so the cap bounds candidates and cost but
+is not the de-facto brake feared in §10. D3 truth on the path falls with σ (dim 1 0.53 → 0.45, dim 2 0.66 → 0.34,
+dim 3 0.50 flat, dim 4 0); about half of the structural misses are path failures, half selection. D4 is skewed to
+too large (dim 2 at σ = 0.05: 24 exact, 2 too small, 94 too large) — BIC overfits under noise. Rule (b) is far better
+on dim-2 structure (268 vs 123) and generalization (415 vs 347); (c) stays the frozen primary rule.
+
+**Limits, unchanged:** the 6-term cap comes from the truth; the reference is the fixed Weak-SINDy, not WSINDy (Q5-W,
+sealed until §5.5 MATLAB); fit from the noisy first sample (declared handicap); not a paper claim until variant C.
+
 ## 2026-10-31
 
 ### Explorativ (kein Protokoll): Signifikanztest auf den Zuwachs als Pfadende — so gut wie Grenze 6, halb so lang
