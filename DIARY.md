@@ -7,7 +7,7 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 ## 2026-11-01
 
 ### Q7 interim look at the user's request — preliminary, deviation from Q7 §6
-<!-- COMMIT -->
+<!-- 1d28d9a -->
 
 Q7 §6 says aggregation only after every fit; the user asked for a look (Orion 27 / 338 fit shards done, 412 new
 records, copied to `outputs/sideproject_q7_…/out_sneak_2026-11-01/`). Script only in the session scratchpad
@@ -26,6 +26,12 @@ representative sample.
 
 The shorter path removes exactly the too-large candidates the BIC was choosing under noise (Q5 D4), and candidates
 drop to roughly a third. If it holds on the remaining cells, Q7 passes the §5 rule (non-inferiority) with a margin.
+
+**Same cells against the published-WSINDy port (Q5-W, still preliminary until §5.5 MATLAB; W1:L-Q5 on ρ = 0,
+W1-interp:L-Q5 on ρ = 0.5 as decided 31.10), noisy only — structure / rec. / gen. R² > 0.9:** dim 1 (660, final)
+Q7 268 / 574 / 451, Q5 174 / 584 / 415, WSINDy 162 / 470 / 290; dim 2 (431) Q7 190 / 390 / 293, Q5 98 / 381 / 249,
+WSINDy 87 / 248 / 126; dim 3 feasible (74) Q7 8 / 31 / 2, WSINDy 12 / 19 / 1 — **WSINDy keeps the dim-3 structure lead
+on ρ = 0 (12 vs 5 of 33)**, Q7 ahead everywhere else; dim 4 (41) Q7 0 / 39 / 7, WSINDy 0 / 8 / 0.
 
 ### Q5 grid complete and officially aggregated: WISP (c) ahead of Weak-SINDy in every noisy stratum
 <!-- 7f1a142 -->
