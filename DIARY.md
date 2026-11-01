@@ -4,6 +4,32 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ---
 
+## 2026-11-02
+
+### Q8 frozen (gate G1) and implemented (WP-FA9); Julia acceptance passed
+<!-- 6113547 -->
+
+Protocol `docs/sideproject_residual_growth_protocol_q8.md` frozen `d2abf7f` after the user's decisions (dim-3 sample
+52, 61, 54–59; ablations on C1000; R2 → R1 → R3 decided on dim 1/2 only, dim 3 reported). WP-FA9 (Codex) reported
+`blocked` only for the cap-fallback branch, which is needed solely if Q7 fails G-Q7; the Q7 branch is complete: 59
+tests, all input artifacts byte-identical on rebuild, Q5 tables reproduced byte-identically by the fixed aggregation
+(clean-reference filter; protocol checked at `f454a32` by an explicit option). Variant C is an opt-in keyword pair
+of `fit_parameters`; the optimizer struct and all settings/config fingerprints are unchanged (Q4/Q5 fingerprint
+still `608ac810…`).
+
+Claude's Julia acceptance: strict parse (the plain `Meta.parseall` check passed a file with a syntax error — it
+returns an error expression instead of throwing; now checked for `:error` nodes); laptop smoke on 19 candidates
+(Q5 clean dim-1 cell and noisy dim-2 cell): default path **bit-identical to the Orion Q5 records in record form**,
+C with the initial state held fixed bit-identical to the default incl. optimizer metadata; estimated-IC smoke on two
+C1000 candidates runs, resume skips finished candidates. Two technical fixes by Claude: the smoke's entry line
+(`@__FILE__ && f()` parses as a macro call), and record-form comparison in the smoke and in the runner's resume check —
+JSON stores the sentinel 1.0e6 as `1000000`, which reads back as an integer. Value comparison had already shown all
+19 candidates equal.
+
+Planning (Codex, from measured Q5 solve times, unmeasured factors ×2 for C and for 54–59): 3,540 new shards,
+~910–2,210 core-h; the upper end is slightly above the protocol's ~2,150. Probe: 75 shards, one unit per block.
+Next: user pushes → image; staging (one tarball, 720 binaries); probe when cores are free.
+
 ## 2026-11-01
 
 ### Q7 interim look at the user's request — preliminary, deviation from Q7 §6
