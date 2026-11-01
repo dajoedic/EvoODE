@@ -372,8 +372,10 @@ Der Code schlägt damit in einer Liste nach, welche Zeile des Kampagnen-Manifest
 **1**. Eine wörtliche Übersetzung überspringt die erste Zelle und liest einmal über das Listenende
 hinaus — leise, mit 755 plausibel aussehenden Ergebnissen.
 
-`parallelism` ist die Höflichkeitsschraube. Der ganze Cluster hat **96 Kerne** auf zwei Knoten, und
-die sind eigentlich dazu da, acht GPUs zu füttern. Abgesprochen sind 16.
+`parallelism` ist die Höflichkeitsschraube. Der ganze Cluster hatte bei Projektbeginn **96 Kerne** auf zwei Knoten,
+und die sind eigentlich dazu da, acht GPUs zu füttern. Abgesprochen waren 16; seit 13.10. gilt die Grenze von 40.
+*(Stand 02.11.2026: Laufende Pods aller Namespaces fordern zusammen ~119 Kerne an, der Cluster ist also inzwischen
+größer als 96. Die aktuelle Kernzahl ist mit unseren Rechten nicht abfragbar — Knoten sind gesperrt.)*
 
 ---
 

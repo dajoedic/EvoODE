@@ -16,7 +16,7 @@ derived, and where it is still blind. The mechanics of getting code onto the clu
 |---|---|
 | Campaign | `paper1_phaseB_v1` — 63 systems × 2 conditions × 3 seeds × 2 IC sets = **756 cells** |
 | Projected compute | **~3,384 core-hours** on a `pretune_on` basis — see §3 for the correction |
-| Platform | SCCH "Orion", OpenShift/Kubernetes, 96 cores across two worker nodes |
+| Platform | SCCH "Orion", OpenShift/Kubernetes, 96 cores across two worker nodes at the time of writing (2026-11-02: running pods request ~119 cores cluster-wide, so the cluster has grown; node count and size not visible with our rights) |
 | Agreed concurrency | `parallelism: 16`, raise on request |
 | Wall time at 16 | projected ~9 days; **revised to ~12 days** from the running campaign, §3b |
 | Makespan floor | projected 68 h from the pilot; **the longest finished cell is 183.6 h and one cell has been running 192 h**, §3c |
