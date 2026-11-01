@@ -6,8 +6,29 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ## 2026-11-01
 
-### Q5 grid complete and officially aggregated: WISP (c) ahead of Weak-SINDy in every noisy stratum
+### Q7 interim look at the user's request — preliminary, deviation from Q7 §6
 <!-- COMMIT -->
+
+Q7 §6 says aggregation only after every fit; the user asked for a look (Orion 27 / 338 fit shards done, 412 new
+records, copied to `outputs/sideproject_q7_…/out_sneak_2026-11-01/`). Script only in the session scratchpad
+(`q7_sneak.py`): every cell whose Q7 pool is fully available (reused Q5 records plus finished new fits) goes through
+the unchanged Q5 selection, rule (c), against the official Q5 table, noisy cells only. **dim 1 needs no new fits, so
+its numbers are already final** (660/660; the 14 empty-pool cells, all system 9 IC 2 at σ ≥ 0.03, count as misses —
+Q5 had 0 structure / 1 generalization there). The other strata are the cells that happened to be finished, not a
+representative sample.
+
+| Stratum | cells | pruned exact Q7 / Q5 | raw Q7 / Q5 | rec. Q7 / Q5 | gen. Q7 / Q5 | median k Q7 / Q5 |
+|---|---|---|---|---|---|---|
+| dim 1 (final) | 660 | **268 / 174** (+14.2 pp) | 297 / 194 | 574 / 584 | **451 / 415** (+5.5 pp) | 2 / 3 |
+| dim 2 | 431 / 600 | **190 / 98** (+21.3 pp) | 181 / 80 | 390 / 381 | **293 / 249** (+10.2 pp) | 4 / 5 |
+| dim 3 feasible | 74 / 120 | 8 / 7 | 5 / 5 | 31 / 28 | 2 / 1 | 7 / 10 |
+| dim 4 | 41 / 60 | 0 / 0 | 0 / 0 | 39 / 32 | 7 / 3 | 6 / 8 |
+
+The shorter path removes exactly the too-large candidates the BIC was choosing under noise (Q5 D4), and candidates
+drop to roughly a third. If it holds on the remaining cells, Q7 passes the §5 rule (non-inferiority) with a margin.
+
+### Q5 grid complete and officially aggregated: WISP (c) ahead of Weak-SINDy in every noisy stratum
+<!-- 7f1a142 -->
 
 Orion 1,632 / 1,632 cells, 22,882 records = 21,250 path candidates + 1,632 upper subsets, exactly as planned
 (REPORT_WP_FA5); copied from NFS to `outputs/sideproject_q5_354106398…/out/`. Frozen script
