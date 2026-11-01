@@ -1,7 +1,7 @@
 # Side project WISP — protocol for Q8: initial-state estimation, coefficient bound, surrogate systems, ablations
 
-**DRAFT 2026-11-01 — not frozen.** Gate G1 of the WISP plan (CLAUDE.md, "WISP paper — the fixed plan"): the user
-approves or changes this protocol before any Q8 number is computed. Parts before: Q5 (`_q5.md`, grid aggregated
+**Frozen 2026-11-02, approved by the user at gate G1 ("Freigegeben!"), before any Q8 number was computed.** Gate G1
+of the WISP plan (CLAUDE.md, "WISP paper — the fixed plan"); drafted 2026-11-01, user decisions §10. Parts before: Q5 (`_q5.md`, grid aggregated
 2026-11-01), Q7 (`_q7.md`, fits running; interim look 2026-11-01 in `DIARY.md`).
 
 ## 1. Question
@@ -132,4 +132,4 @@ user pushes to GitLab for the image.
 2. Ablations on C1000; rerun on the adopted configuration if G2 does not adopt it.
 3. R1 non-inferiority; R1/R2 decided on dim 1/2 only, R2 before R1, one comparison each.
 
-Remaining for G1: the user reads the whole protocol once and approves it; then it is frozen.
+G1 passed 2026-11-02: the user approved the whole protocol; frozen.
