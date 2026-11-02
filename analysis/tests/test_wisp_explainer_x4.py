@@ -26,13 +26,14 @@ def test_sections_and_reader_strings():
     pages=soup.select('main > .page')
     assert 18<=len(pages)<=22
     assert len({p['data-section'] for p in pages})==len(pages)
-    assert [p['id'] for p in pages[:3]]==['p-hook','p-solution','p-headline']
+    assert [p['id'] for p in pages[:4]]==['p-hook','p-challenge','p-solution','p-headline']
     assert all(len(p.select(':scope > .page-content'))==1 for p in pages)
     import re
     for lang in ('en','de'):
         table=json.loads((BASE/'src/i18n'/f'{lang}.json').read_text(encoding='utf8'))
         assert not any(re.search(r'sys\d{4}_',s) for s in table.values())
-    assert soup.select('#p-guess [data-guess="slowing"]')
+    assert not soup.select('#p-guess, [data-guess]')
+    assert soup.select('#p-challenge #term-cards')
     assert soup.select('dialog[data-internal-scroll]')
 
 def test_assembly_rebuild_is_byte_identical():

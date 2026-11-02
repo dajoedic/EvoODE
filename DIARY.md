@@ -6,6 +6,15 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ## 2026-11-03
 
+### WISP explorable WP-X6: the opening becomes a challenge
+
+User: the term playground is the best part — put the reader right in front of "looks logistic, but what exactly is the
+formula?". WP-X6 moved the playground to page 2 (term cards, slider + typed value + ± per term, live equation and curve
+over the real data, closeness meter as illustrative R², three-step hint ladder without numbers, "show me what WISP
+finds" carries the reader's equation to page 3 beside WISP's and the truth). Guess page removed. 35 tests pass; Claude's
+Edge check: all pages fit at 1366 × 768 and 1366 × 657 in EN/DE, navigation checks pass. Preview version 5. User's
+verdict on version 4: "technically clean, content not satisfying" — specifics pending.
+
 ### WISP explorable: 19 self-contained pages (WP-X4), visual opening and results, navigation fix (WP-X5)
 <!-- 6b08c92 -->
 

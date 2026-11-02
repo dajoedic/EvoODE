@@ -54,7 +54,7 @@
  function overviewDraw(){overviewContent.replaceChildren();overviewContent.className='overview-grid';
   const rows=resultRates.filter(r=>axesMatch(r)&&+r.sigma===+document.getElementById('result-sigma').value&&String(r.rho)===document.getElementById('result-rho').value&&r.configuration!=='all_ten');
   // Extra axes remain separate even when the filter is All.
-  const groups=new Map();for(const row of rows){const key=[row.stratum,...axes.map(a=>a.label+': '+(row[a.key]??tr('unspecified')))].join(' · ');if(!groups.has(key))groups.set(key,[]);groups.get(key).push(row);}
+  const groups=new Map();for(const row of rows){const key=[stratumLabel(row.stratum),...axes.map(a=>a.label+': '+(row[a.key]??tr('unspecified')))].join(' · ');if(!groups.has(key))groups.set(key,[]);groups.get(key).push(row);}
   for(const [key,values] of groups){const card=make('article');card.append(make('h3',key.replaceAll('_',' ')));rateChart(card,values);overviewContent.append(card);}
  }
  ['result-sigma','result-rho','result-weight',...axes.map(a=>'axis-'+a.key)].forEach(id=>document.getElementById(id).addEventListener('change',overviewDraw));overviewDraw();

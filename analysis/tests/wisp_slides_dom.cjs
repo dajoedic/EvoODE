@@ -74,14 +74,14 @@ if(fixture.language==='en')fs.writeFileSync(require('path').join(require('path')
 // Headline selection is compared to the actual exported rates, including every count.
 const expected=fixture.data.results.rates.filter(r=>['dim1','dim2'].includes(r.stratum)&&+r.sigma===.03&&r.rho!=='pooled'&&+r.rho===0&&['raw_exact','pruned_exact','generalization_arithmetic_hit','generalization_variance_weighted_hit'].includes(r.metric)&&((r.method===fixture.data.results.primary_method&&r.configuration==='c')||(['sindy','weak_sindy','e_sindy'].includes(r.method)&&r.configuration!=='all_ten')));
 assert.deepEqual(WispPage.headline,expected);
-const guess=doc.getElementById('hook-chart');assert.equal(guess.querySelectorAll('path.series-model').length,3);assert.equal(doc.querySelectorAll('#guess button').length,3);
-assert.equal(new Set(guess.querySelectorAll('path.series-model').map(p=>p.getAttribute('d'))).size,3);
+assert.deepEqual(slides.pages.slice(0,4).map(p=>p.id),['p-hook','p-challenge','p-solution','p-headline']);
+assert(!doc.getElementById('p-guess'));assert(!doc.querySelector('#p-catalogue #play-chart'));
 for(const node of doc.body.querySelectorAll('*')){if(node.closest('script,style,[data-provenance],#provenance,dialog'))continue;assert(!/sys\d{4}_/.test(node._text),'identifier in reader text: '+node.id);}
 assert.equal(new Set(slides.pages.map(p=>p.dataset.section)).size,slides.pages.length);
 global.innerWidth=1366;emit('resize',doc.body);advance();
 const more=doc.querySelector('[data-more]');more.emit('click');const modal=doc.querySelector('dialog[open]');assert(modal);const at=slides.nav.index;doc.emit('pointerdown',{target:slider});emit('wheel',modal,{deltaY:100});emit('pointerup',doc.body);emit('keydown',modal,{key:'PageDown'});assert.equal(slides.nav.index,at);modal.querySelector('[data-close]').emit('click');assert(!modal.open);
 slides.nav.go(0);advance();const y=scrollY;emit('wheel',doc.body,{deltaY:100});assert.equal(slides.nav.index,1);advance(320);assert(scrollY>y&&scrollY<innerHeight,'intermediate eased scrolling');for(let i=0;i<10;i++)emit('wheel',doc.body,{deltaY:40});assert.equal(slides.nav.index,1);advance();assert.equal(scrollY,innerHeight);
-console.log('PASS X4 headline rows/counts, three distinct curves, readable names, closed sections, modal guards, eased one-gesture scrolling');
+console.log('PASS X4 headline rows/counts, readable names, closed sections, modal guards, eased one-gesture scrolling');
 
 // Wheel hovering controls is navigation; only an active drag blocks it.
 slides.nav.go(0);advance();emit('wheel',slider,{deltaY:100});assert.equal(slides.nav.index,1);
@@ -96,3 +96,39 @@ console.log('PASS X5 chart endpoints/counts, reader metric labels, encoding, hov
 
 for(const article of doc.querySelectorAll('#featured-stories > article')){const pair=article.querySelector('.two-plots'),curves=panel=>panel.children.filter(curve=>curve.querySelector('svg.chart'));for(const panel of pair.children)assert.equal(curves(panel).filter(curve=>!curve.hidden).length,Math.min(1,curves(panel).length));const controls=article.querySelector('.component-tabs');if(controls){controls.children.at(-1).emit('click');for(const panel of pair.children){assert.equal(curves(panel).filter(curve=>!curve.hidden).length,Math.min(1,curves(panel).length));if(curves(panel).length)assert(!curves(panel).at(-1).hidden);}}}
 console.log('PASS X5 one readable component per available featured reconstruction/generalization plot');
+
+// WP-X6: execute the real challenge in each language against its exported measurements.
+const challenge=doc.getElementById('p-challenge'),cards=doc.getElementById('term-cards').children;
+assert.equal(cards.length,6);
+const snapshot=()=>({equation:doc.getElementById('play-equation').dataset.tex,curve:doc.getElementById('play-chart').querySelector('path.series-model').getAttribute('d'),score:doc.getElementById('play-status').dataset.score});
+const control=(index,type)=>cards[index].querySelectorAll('input').find(n=>n.type===type);
+let previous=snapshot();control(2,'checkbox').checked=true;control(2,'checkbox').emit('change');
+assert.notEqual(snapshot().equation,previous.equation);
+const coefficient=control(2,'number');coefficient.value='-.01';coefficient.emit('input');
+assert.notEqual(snapshot().curve,previous.curve);assert.notEqual(snapshot().score,previous.score);
+assert.equal(+control(2,'range').value,-.01);
+previous=snapshot();const linear=control(1,'range');linear.value='.6';linear.emit('input');
+assert.notEqual(snapshot().equation,previous.equation);assert.notEqual(snapshot().curve,previous.curve);assert.notEqual(snapshot().score,previous.score);
+previous=snapshot();cards[1].querySelectorAll('button').at(-1).emit('click');assert.notEqual(snapshot().equation,previous.equation);
+// Values are derived from the real exported illustration of this same logistic system.
+const [growth,capacity]=fixture.data.live.illustrations[0].constants;
+for(const [i,value] of [[1,growth],[2,-growth/capacity]]){const number=control(i,'number');assert(+number.min<=value&&+number.max>=value);number.value=String(value);number.emit('input');}
+assert(+snapshot().score>.98,'data-scale logistic answer is reachable');
+previous=snapshot();control(2,'checkbox').checked=false;control(2,'checkbox').emit('change');
+assert.notEqual(snapshot().equation,previous.equation);assert.notEqual(snapshot().curve,previous.curve);assert.notEqual(snapshot().score,previous.score);
+control(2,'checkbox').checked=true;control(2,'checkbox').emit('change');
+assert(Math.abs(+doc.getElementById('challenge-meter').value-Math.max(0,+snapshot().score))<1e-12);
+const measurements=fixture.data.live.teaching;
+assert.equal(doc.getElementById('play-chart').querySelectorAll('.measurement-dot').length,measurements.t.length);
+const expectedCurve=rk4(measurements.t,[measurements.observed[0]],x=>[WispCompute.basis(x[0]).reduce((s,v,i)=>s+(enabled[i]?v*coeff[i]:0),0)]).map(x=>x[0]);
+const mean=measurements.observed.reduce((a,b)=>a+b,0)/measurements.observed.length;
+const expectedScore=1-expectedCurve.reduce((s,v,i)=>s+(v-measurements.observed[i])**2,0)/measurements.observed.reduce((s,v)=>s+(v-mean)**2,0);
+assert(Math.abs(+snapshot().score-expectedScore)<1e-12);
+for(let n=1;n<=4;n++){doc.getElementById('challenge-hint').emit('click');assert.equal(doc.getElementById('challenge-hints').children.length,Math.min(n,3));}
+assert.deepEqual(doc.getElementById('challenge-hints').children.map(n=>n.textContent),[1,2,3].map(n=>fixture.data.live.i18n[fixture.language]['x6_hint'+n]));
+const last=snapshot().equation,link=doc.getElementById('challenge-reveal');doc.emit('click',{target:link,preventDefault(){}});advance();
+assert.equal(slides.pages[slides.nav.index].id,'p-solution');assert.equal(doc.getElementById('reader-equation').dataset.tex,last);
+doc.getElementById('play-reset').emit('click');assert.notEqual(snapshot().equation,last);
+control(1,'number').value='2';control(1,'number').emit('input');assert(+snapshot().score<0||snapshot().score==='unavailable');
+assert(doc.getElementById('play-status').textContent.length>0);
+console.log('PASS X6 bilingual challenge, toggles, slider, typed and fine coefficients, measurement R2, reachable answer, ordered hints, reveal equation and divergence');

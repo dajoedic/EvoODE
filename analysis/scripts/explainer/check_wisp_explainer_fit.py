@@ -82,7 +82,7 @@ def edge_run(edge=EDGE):
     except (ValueError,TimeoutError) as exc:
         evidence['errors'].append(str(exc));code=1
     evidence['exit']=code
-    (OUT/'wp_x5_edge_fit.json').write_text(json.dumps(evidence,ensure_ascii=False,indent=2),encoding='utf8')
+    (OUT/'wp_x6_edge_fit.json').write_text(json.dumps(evidence,ensure_ascii=False,indent=2),encoding='utf8')
     print(json.dumps(evidence if evidence['errors'] else {'exit':code,'checks':len(evidence['checks']),'screenshots':len(evidence['screenshots']),'overflow':[p for r in evidence['checks'] for p in r['pages'] if not p['ok']]},ensure_ascii=True))
     return code
 
@@ -104,7 +104,7 @@ def check_interactions(page, evidence):
             actual=page.evaluate('WispSlides.nav.index')
             if actual!=n:raise AssertionError(f'{lang}: {n} centre wheel gestures reached index {actual}')
             evidence.setdefault('wheel_checks',[]).append({'language':lang,'gestures':n,'page':actual+1})
-        page.evaluate('WispSlides.nav.go(2)')
+        page.evaluate('WispSlides.nav.link("#p-headline")')
         # Inspect before another animation frame: no entrance animation may gate content.
         visible=page.locator('#headline-panel').evaluate("e=>getComputedStyle(e).opacity==='1' && e.querySelectorAll('.rate-chart').length>0 && [...e.querySelectorAll('*')].every(n=>getComputedStyle(n).animationName==='none')")
         if not visible:raise AssertionError('Headline gated by an entrance animation')
@@ -154,7 +154,7 @@ def run(edge=EDGE):
     if code==2:
         evidence['fallback_exit']=edge_run(edge)
     evidence['exit']=code
-    (OUT/'wp_x5_fit.json').write_text(json.dumps(evidence,ensure_ascii=False,indent=2),encoding='utf8')
+    (OUT/'wp_x6_fit.json').write_text(json.dumps(evidence,ensure_ascii=False,indent=2),encoding='utf8')
     print(json.dumps({'exit':code,'checks':len(evidence['checks']),'screenshots':len(evidence['screenshots']),'errors':evidence['errors'],'overflow':[p for r in evidence['checks'] for p in r['pages'] if not p['ok']]},ensure_ascii=True))
     return code
 

@@ -47,7 +47,7 @@ function displayTruth(s){return s.replace(/(?:\d+\.\d+|\d+)(?:[eE][+-]?\d+)?/g,(
 function options(target,values,label=v=>v){target.replaceChildren(...values.map(v=>{const e=el('option',label(v));e.value=v;return e;}));}
 function chart(target,series,{title='',xLabel=tr('j157'),yLabel=tr('j158'),areas=[],highlight=null,point=null,zeroBase=false,integerX=false}={}){
   target.replaceChildren();
-  const direct=series.some(s=>s.style?.startsWith('guess-')),width=760,height=310,pad={l:76,r:direct?200:20,t:36,b:42};
+  const width=760,height=310,pad={l:76,r:20,t:36,b:42};
   const good=series.flatMap(s=>s.x.map((x,i)=>[x,s.y[i]])).filter(([x,y])=>Number.isFinite(x)&&Number.isFinite(y)&&Math.abs(y)<1e12);
   if(!good.length){target.append(el('p',tr('j159'),'notice'));return;}
   let xmin=Math.min(...good.map(p=>p[0])),xmax=Math.max(...good.map(p=>p[0])),ymin=Math.min(...good.map(p=>p[1])),ymax=Math.max(...good.map(p=>p[1]));
@@ -70,13 +70,13 @@ function chart(target,series,{title='',xLabel=tr('j157'),yLabel=tr('j158'),areas
     const v=s.y[i];if(!Number.isFinite(v)||Math.abs(v)>1e12){drawing=false;continue;}d+=`${drawing?'L':'M'}${X(s.x[i]).toFixed(3)},${Y(v).toFixed(3)}`;drawing=true;
   }if(s.x.length===1)svg.append(svgNode('circle',{cx:X(s.x[0]),cy:Y(s.y[0]),r:4,fill:'var(--residual)'}));svg.append(svgNode('path',{d,class:`series-${s.kind||'truth'} ${s.style||''}`}));
   if(s.kind==='data'&&s.style!=='dashed')s.x.forEach((x,i)=>{if(Number.isFinite(s.y[i]))svg.append(svgNode('circle',{cx:X(x),cy:Y(s.y[i]),r:2.2,class:'measurement-dot'}));});
-  if(direct&&s.kind!=='data')svg.append(svgNode('text',{x:X(s.x.at(-1))+8,y:Y(s.y.at(-1))+4,class:s.style},s.label));}
+  }
   svg.append(svgNode('text',{x:pad.l,y:17},title));
   svg.append(svgNode('text',{x:width-pad.r,y:height-4,"text-anchor":'end'},xLabel));
   svg.append(svgNode('text',{transform:`translate(14 ${(pad.t+height-pad.b)/2}) rotate(-90)`,"text-anchor":'middle'},yLabel));
   if(point)svg.append(svgNode('circle',{cx:X(point[0]),cy:Y(point[1]),r:5,fill:'var(--model)',stroke:'var(--panel)',"stroke-width":2}));
   target.append(svg);
-  const legend=el('div',undefined,'caption');legend.textContent=series.map(s=>`${s.label||s.kind} (${tr(s.style==='dashed'||s.kind==='truth'?'x5_dashed':s.kind==='data'?'x5_dots':'x5_solid')})`).join(' · ');if(!direct)target.append(legend);
+  const legend=el('div',undefined,'caption');legend.textContent=series.map(s=>`${s.label||s.kind} (${tr(s.style==='dashed'||s.kind==='truth'?'x5_dashed':s.kind==='data'?'x5_dots':'x5_solid')})`).join(' · ');target.append(legend);
   return {svg,X,xmin,xmax,width,pad};
 }
 function rk4(t,initial,rhs){let x=initial.slice();const out=[x.slice()];for(let i=1;i<t.length;i++){
@@ -91,22 +91,39 @@ const teaching=LIVE.teaching, measuredTime=teaching?.t||time, measuredTruth=teac
 const measuredNoise=s=>teaching?(s===teaching.sigma?teaching.observed:measuredTruth.map((v,i)=>v*(1+s*teaching.noise_draws[i]))):truth.map((v,i)=>v*(1+s*demo.noise_draws[i]));
 let sigma=.03,noisy=[],currentPath=null,pathError=null,selectedStratum=RESULTS.rates[0].stratum;
 const logistic=(rate,capacity)=>rk4(time,demo.initial,x=>[rate*x[0]*(1-x[0]/capacity)]).map(x=>x[0]);
-function hook(rule){const initial=measuredTruth[0],span=measuredTime.at(-1)-measuredTime[0],ceiling=Math.max(...measuredTruth),series=[{x:measuredTime,y:measuredNoise(teaching?.sigma||.03),kind:'data',style:'dots',label:tr('j163')}];
- const curves=[['linear','h016','accelerating',t=>initial+(ceiling-initial)*Math.pow(t/span,2)*1.3],['slowing','h018','slowing',t=>initial+(ceiling-initial)*Math.log1p(6*t/span)/Math.log(7)],['logistic','h017','limit',(_,i)=>measuredTruth[i]]];
- for(const [id,key,style,f] of curves)series.push({x:measuredTime,y:measuredTime.map((t,i)=>f(t-measuredTime[0],i)),kind:'model',style:'guess-'+style,label:tr(key)});
- chart($('hook-chart'),series,{title:tr('x4_guess')});}
-$('guess').addEventListener('click',e=>{if(!e.target.dataset.guess)return;const guess=e.target.dataset.guess;hook(guess);$("guess-feedback").textContent=guess==='logistic'?tr('j168'):tr('j169');[...$('guess').querySelectorAll('button')].forEach(b=>b.setAttribute("aria-pressed",String(b===e.target)));});hook();
 $('rate').value=demo.constants[0];$('capacity').value=demo.constants[1];
 function growthRule(){const rate=+$('rate').value,capacity=+$('capacity').value;$("rate-value").value=fmt(rate);$("capacity-value").value=fmt(capacity);chart($("logistic-chart"),[{x:time,y:logistic(rate,capacity),kind:'truth',label:tr('j174')}],{title:tr('j175')});}
 ['rate','capacity'].forEach(id=>$(id).addEventListener('input',growthRule));growthRule();
 math($("predator-equation"),predator.equation.map((s,i)=>`\\frac{d${i?'v':'u'}}{dt}=${s.replaceAll('x_0','u').replaceAll('x_1','v').replaceAll('*','\\,')}`).join('\\qquad '));
 function predatorDraw(){const i=+$("predator-time").value,t=predator.t.slice(0,i+1),x=predator.x.slice(0,i+1);$("predator-value").value=fmt(predator.t[i]);chart($("predator-chart"),[{x:t,y:x.map(r=>r[0]),kind:'truth',label:tr('prey')},{x:t,y:x.map(r=>r[1]),kind:'model',label:tr('predators')}],{title:tr('j180'),yLabel:tr('j181')});chart($("phase-chart"),[{x:predator.x.map(r=>r[0]),y:predator.x.map(r=>r[1]),kind:'truth',label:tr('j183')}],{title:tr('j184'),xLabel:tr('j185'),yLabel:tr('j186'),point:predator.x[i]});}
 $("predator-time").max=predator.t.length-1;$("predator-time").value=predator.t.length-1;$("predator-time").addEventListener('input',predatorDraw);predatorDraw();
-const coeff=[0,.23,-.005,0,0,0],enabled=[false,true,false,false,false,false];
-terms.forEach((name,i)=>{const card=el('div',undefined,"term-card"),label=el('label',name),check=el('input');check.type='checkbox';check.checked=enabled[i];check.setAttribute("aria-label",tr('include_term',{v0:name}));label.append(check);const range=el('input');range.type='range';range.min=i===0?'-10':i===1?'-1':i===2?'-.03':i===3?'-.001':'-2';range.max=i===0?'10':i===1?'1':i===2?'.03':i===3?'.001':'2';range.step=i===3?'.00001':i===2?'.0001':'.01';range.value=coeff[i];range.setAttribute("aria-label",tr('j188',{v0:(name)}));const out=el('output',fmt(coeff[i]));check.addEventListener('change',()=>{enabled[i]=check.checked;play();});range.addEventListener('input',()=>{coeff[i]=+range.value;out.value=fmt(coeff[i]);play();});card.append(label,range,out);$("term-cards").append(card);});
-const interactionCard=el('div',undefined,"term-card");interactionCard.append(el('label','u·v'),el('p',tr('j190'),'caption'));$("term-cards").append(interactionCard);
-function play(){const limit=2*Math.max(...truth.map(Math.abs)),indices=enabled.map((v,i)=>v?i:-1).filter(i=>i>=0),c=indices.map(i=>coeff[i]);math($("play-equation"),equation(indices,c));const curve=rk4(time,demo.initial,x=>[W.basis(x[0]).reduce((s,v,i)=>s+(enabled[i]?v*coeff[i]:0),0)]).map(x=>x[0]);chart($("play-chart"),[{x:time,y:truth,kind:'data',style:'dots',label:tr('j193')},{x:time,y:curve.map(v=>Number.isFinite(v)?Math.max(-limit,Math.min(limit,v)):NaN),kind:'model',label:tr('j194')}],{title:tr('j195')});const clipped=curve.some(v=>!Number.isFinite(v)||Math.abs(v)>limit);$("play-status").textContent=(curve.every(Number.isFinite)?tr('j197',{v0:(fmt(curve.reduce((s,v,i)=>s+(v-truth[i])**2,0)/curve.length))}):tr('j198'))+(clipped?tr('j199'):'');}
-$("play-reset").addEventListener('click',()=>{coeff.splice(0,6,0,demo.constants[0],-demo.constants[0]/demo.constants[1],0,0,0);enabled.splice(0,6,false,true,true,false,false,false);[...$("term-cards").children].slice(0,terms.length).forEach((card,i)=>{card.querySelector('[type=checkbox]').checked=enabled[i];card.querySelector('[type=range]').value=coeff[i];card.querySelector('output').value=fmt(coeff[i]);});play();});play();
+// Per-term precision makes the data-scale answer reachable without revealing it.
+const coefficientLimits=[[-10,10,.01],[-2,2,.001],[-.03,.03,.00001],[-.001,.001,.000001],[-2,2,.01],[-2,2,.01]];
+const initialCoefficients=[0,.23,0,0,0,0],coeff=initialCoefficients.slice(),enabled=[false,true,false,false,false,false],termControls=[];
+let hintCount=0;
+terms.forEach((name,i)=>{
+ const card=el('div',undefined,'term-card'),label=el('label',name),check=el('input');check.type='checkbox';check.checked=enabled[i];check.setAttribute('aria-label',tr('include_term',{v0:name}));label.append(check);
+ const controls=el('div',undefined,'coefficient-controls'),range=el('input'),typed=el('input'),[min,max,step]=coefficientLimits[i];range.type='range';typed.type='number';
+ for(const input of [range,typed]){input.min=min;input.max=max;input.step=step;input.value=coeff[i];input.setAttribute('aria-label',tr('j188',{v0:name}));}
+ const sync=(preserveTyped=false)=>{range.value=coeff[i];if(!preserveTyped)typed.value=coeff[i];controls.hidden=!enabled[i];range.disabled=typed.disabled=!enabled[i];};
+ const update=(value,preserveTyped=false)=>{if(!Number.isFinite(value))return;coeff[i]=+Math.max(min,Math.min(max,value)).toFixed(8);sync(preserveTyped&&value>=min&&value<=max);play();};
+ range.addEventListener('input',()=>update(+range.value));typed.addEventListener('input',()=>{if(typed.value.trim()!=='')update(+typed.value,true);});typed.addEventListener('change',()=>sync());
+ const minus=el('button','−'),plus=el('button','+');for(const [button,direction,key] of [[minus,-1,'x6_decrease'],[plus,1,'x6_increase']]){button.type='button';button.setAttribute('aria-label',tr(key,{term:name}));button.addEventListener('click',()=>update(coeff[i]+direction*step));}
+ check.addEventListener('change',()=>{enabled[i]=check.checked;sync();play();});controls.append(range,minus,typed,plus);card.append(label,controls);$('term-cards').append(card);termControls.push({check,sync});sync();
+});
+function play(){
+ const observations=measuredNoise(teaching?.sigma||.03),limit=2*Math.max(...observations.map(Math.abs)),indices=enabled.map((v,i)=>v?i:-1).filter(i=>i>=0),c=indices.map(i=>coeff[i]);
+ const tex=equation(indices,c);math($('play-equation'),tex);math($('reader-equation'),tex);
+ const curve=rk4(measuredTime,[observations[0]],x=>[W.basis(x[0]).reduce((s,v,i)=>s+(enabled[i]?v*coeff[i]:0),0)]).map(x=>x[0]);
+ chart($('play-chart'),[{x:measuredTime,y:observations,kind:'data',style:'dots',label:tr('j214')},{x:measuredTime,y:curve.map(v=>Number.isFinite(v)&&Math.abs(v)<=limit?v:NaN),kind:'model',label:tr('x6_yours')}]);
+ const mean=observations.reduce((s,v)=>s+v,0)/observations.length,total=observations.reduce((s,v)=>s+(v-mean)**2,0),score=1-curve.reduce((s,v,i)=>s+(v-observations[i])**2,0)/total;
+ const clipped=curve.some(v=>!Number.isFinite(v)||Math.abs(v)>limit),status=$('play-status');status.dataset.score=Number.isFinite(score)?String(score):'unavailable';
+ status.textContent=Number.isFinite(score)?tr('x6_meter',{value:fmt(score,4),grade:tr(score>=.98?'x6_veryclose':score>=.9?'x6_close':score>=.5?'x6_nearer':'x6_far')}):tr('x6_unstable');
+ $('challenge-meter').value=Number.isFinite(score)?Math.max(0,Math.min(1,score)):0;
+ if(clipped&&Number.isFinite(score))status.textContent+=' '+tr('j199');
+}
+$('challenge-hint').addEventListener('click',()=>{if(hintCount>=3)return;hintCount++;$('challenge-hints').append(el('li',tr('x6_hint'+hintCount)));$('challenge-hint').disabled=hintCount===3;});
+$('play-reset').addEventListener('click',()=>{coeff.splice(0,6,...initialCoefficients);enabled.splice(0,6,false,true,false,false,false,false);termControls.forEach(({check,sync},i)=>{check.checked=enabled[i];sync();});play();});play();
 options($('dimensions'),LIVE.catalogues.map(c=>c.dim));
 function catalogue(){const c=LIVE.catalogues.find(c=>c.dim===+$('dimensions').value);$("combination-count").textContent=tr('j202',{v0:(c.count),v1:(BigInt(c.combinations).toLocaleString(language)),v2:(c.dim),v3:(c.dim===1?'':'s')});$("catalogue-list").textContent=c.terms.join(' · ');}
 $('dimensions').addEventListener('change',catalogue);catalogue();
@@ -156,10 +173,11 @@ const axesMatch=row=>axes.every(a=>a.control.value==='all'||String(row[a.key])==
 const strata=[...new Set(resultRates.map(r=>r.stratum))];
 options($("result-sigma"),[...new Set(resultRates.map(r=>String(r.sigma)))].sort((a,b)=>+a-+b),v=>pct(v));
 options($("result-rho"),[...new Set(resultRates.map(r=>String(r.rho)))],v=>v==='pooled'?tr('j282'):fmt(v));
+function stratumLabel(stratum){return ({dim1:'1D',dim2:'2D',dim3_feasible:tr('x6_dim3'),dim4:'4D'})[stratum]||stratum.replaceAll('_',' ');}
 function conditionCells(stratum){return RESULTS.cells.filter(c=>axesMatch(c.row)&&(!RESULTS.exclude_clean_controls||+c.row.sigma!==0||+c.row.rho!==0)&&c.row.stratum===stratum&&+c.row.sigma===+$("result-sigma").value&&($("result-rho").value==='pooled'||+c.row.rho===+$("result-rho").value));}
 function metric(container,row,label,cls=''){const e=el('div',undefined,`metric ${cls}`);e.append(el('b',label));if(!row){e.append(el('small',tr('j283')));container.append(e);return;}e.append(el('div',pct(row.rate)));const meter=el('div',undefined,'meter'),fill=el('span');fill.style.width=`${Math.max(0,Math.min(100,+row.rate*100))}%`;meter.append(fill);e.append(meter);const isSummary=row.configuration==='all_ten';e.append(el('small',isSummary?tr('j284',{v0:(pct(row.min_rate)),v1:(pct(row.max_rate)),v2:(fmt(row.denominator,8))}):tr('cell_count',{v0:fmt(row.numerator,8),v1:fmt(row.denominator,8)})));if(row.method!==RESULTS.primary_method&&!isSummary){const config=el('div',row.configuration,'caption');config.style.overflowWrap='anywhere';e.append(config);}container.append(e);}
 function resultsDraw(){const weight=$("result-weight").value;$("metric-key").textContent=tr('j287',{v0:(fmt(RESULTS.score_threshold)),v1:(weightLabel(weight)),v2:(RESULTS.primary_method)});
-  $('strata').replaceChildren();for(const stratum of strata){const box=el('article',undefined,'stratum');box.append(el('h3',stratum.replaceAll('_',' ')));const cells=conditionCells(stratum),systems=new Set(cells.map(c=>c.system_id)),units=new Set(cells.map(c=>c.row.unit_id));box.append(el('p',tr('j288',{v0:(systems.size),v1:(units.size),v2:(cells.length)}),'caption'));const button=el('button',tr('inspect',{v0:stratum.replaceAll('_',' ')}));button.type='button';button.setAttribute("aria-pressed",String(stratum===selectedStratum));button.addEventListener('click',()=>{selectedStratum=stratum;resultsDraw();$("system-select").focus();});box.append(button);
+  $('strata').replaceChildren();for(const stratum of strata){const box=el('article',undefined,'stratum');box.append(el('h3',stratumLabel(stratum)));const cells=conditionCells(stratum),systems=new Set(cells.map(c=>c.system_id)),units=new Set(cells.map(c=>c.row.unit_id));box.append(el('p',tr('j288',{v0:(systems.size),v1:(units.size),v2:(cells.length)}),'caption'));const button=el('button',tr('inspect',{v0:stratumLabel(stratum)}));button.type='button';button.setAttribute("aria-pressed",String(stratum===selectedStratum));button.addEventListener('click',()=>{selectedStratum=stratum;resultsDraw();$("system-select").focus();});box.append(button);
     const rows=resultRates.filter(r=>axesMatch(r)&&r.stratum===stratum&&+r.sigma===+$("result-sigma").value&&(r.rho==='pooled'?$("result-rho").value==='pooled':$("result-rho").value!=='pooled'&&+r.rho===+$("result-rho").value)),groups=new Map();rows.forEach(r=>{const key=`${methodLabel(r.method)} / ${(RESULTS.selected_configuration_methods||[]).includes(r.method)&&r.configuration!=='all_ten'?tr('j290'):r.configuration}${axes.map(a=>` / ${a.label}: ${r[a.key]??tr('unspecified')}`).join('')}`;if(!groups.has(key))groups.set(key,{});groups.get(key)[r.metric]=r;});
     if(!groups.size)box.append(el('p',tr('j291'),'caption'));
     for(const [key,metrics] of groups){const group=el('div',undefined,"rate-row");group.append(el('div',key,"rate-name"));if(metrics.raw_exact||metrics.pruned_exact){const structure=el('div',undefined,"metric-pair");metric(structure,metrics.raw_exact,tr('j295'));metric(structure,metrics.pruned_exact,tr('j296'));group.append(structure);}const curves=el('div',undefined,"metric-pair");metric(curves,metrics[`reconstruction_${weight}_hit`],tr('j297'),'curve');metric(curves,metrics[`generalization_${weight}_hit`],tr('j298'),'curve');group.append(curves);box.append(group);}
