@@ -155,11 +155,13 @@ def wsindy_rates(cells, details):
                   r['comparison'].endswith(':L-Q5') and (representation=='exact' or r['metric'] in R2_METRICS)]
         for r in selected:
             rows.append(dict(stratum=stratum,sigma=r['sigma'],rho=r['rho'],method='wsindy_preliminary',configuration=r['comparison'],
+                             reference_coefficient_source=r['reference_coefficient_source'],
                              metric=r['metric'],numerator=r['numerator'],denominator=r['denominator'],rate=r['rate'],preliminary=True))
         frame=pd.DataFrame(selected)
         for (sigma,metric),g in frame.groupby(['sigma','metric']):
             num,den=int(g.numerator.sum()),int(g.denominator.sum())
             rows.append(dict(stratum=stratum,sigma=sigma,rho='pooled',method='wsindy_preliminary',configuration='W1/W1-interp:L-Q5',
+                reference_coefficient_source=','.join(sorted(set(g.reference_coefficient_source))),
                 metric=metric,numerator=num,denominator=den,rate=num/den,preliminary=True))
     return rows
 
@@ -298,7 +300,7 @@ def bound_controls(choices):
     return rows
 
 
-def run(inputs,q5_inputs,q7_inputs,wsindy_inputs,output,paths=builder.OUTPUT/'grid/q8_paths.json',fit_paths=builder.OUTPUT/'grid/q8_fit_paths.json',smoke_path=ROOT/'outputs/sideproject_q8_smoke/controls.json'):
+def run(inputs,q5_inputs,q7_inputs,wsindy_inputs,output,paths=builder.OUTPUT/'grid/q8_paths.json',fit_paths=builder.OUTPUT/'grid/q8_fit_paths.json',smoke_path=ROOT/'outputs/sideproject_q8_smoke/controls.json',wsindy_source='matlab',wsindy_matlab_inputs=None):
     output=Path(output)
     if output.exists():raise FileExistsError('Refusing to overwrite Q8 output')
     smoke=smoke_controls(smoke_path)
@@ -310,6 +312,8 @@ def run(inputs,q5_inputs,q7_inputs,wsindy_inputs,output,paths=builder.OUTPUT/'gr
         if q5.sha256(ROOT/name)!=digest:raise ValueError('Q8 input changed: '+name)
     if q5.canonical_bits(fit['cells'])!=q5.canonical_bits([c for c in payload['cells'] if not c['reuse_q7']]):
         raise ValueError('Q8 fit scope differs')
+    ws=pd.concat([pd.read_csv(p,low_memory=False) for p in q5.result_files(wsindy_inputs)],ignore_index=True)
+    ws=q7.select_rows(ws,wsindy_source,wsindy_matlab_inputs)
     # Reuse Q7's strict Q5 controls and manifest-bound join without evaluating
     # real-data metrics or writing any intermediate Q5/Q7 report.
     old=json.loads(builder.q6.Q5.read_bytes());oldrecords=q7.read_records(q5_inputs)
@@ -332,7 +336,6 @@ def run(inputs,q5_inputs,q7_inputs,wsindy_inputs,output,paths=builder.OUTPUT/'gr
     rates,diagnostics=report_tables(choices,refs)
     unique={c['cell_id']:c for c in payload['cells']}
     reference_hash_controls(list(unique.values()),refs)
-    ws=pd.concat([pd.read_csv(p,low_memory=False) for p in q5.result_files(wsindy_inputs)],ignore_index=True)
     wr=wsindy_rates(list(unique.values()),ws)
     decision,decision_rows=decision_rules(choices,[*rates,*wr])
     costs=[]
@@ -350,15 +353,17 @@ def run(inputs,q5_inputs,q7_inputs,wsindy_inputs,output,paths=builder.OUTPUT/'gr
     (output/'q8_run_metadata.json').write_text(json.dumps(dict(complete=True,decision=decision,
         paths_sha256=q5.sha256(paths),fit_paths_sha256=q5.sha256(fit_paths),
         controls=dict(a10_q7_support_p0=True,observed_hashes=True,fixed_ic_smoke=smoke),
-        wsindy='preliminary',selection='Q5 (c) primary; (a)/(b) reported'),indent=2)+'\n')
+        wsindy='preliminary',wsindy_source=wsindy_source,selection='Q5 (c) primary; (a)/(b) reported'),indent=2)+'\n')
     return dict(complete=True)
 
 
 if __name__=='__main__':
     p=argparse.ArgumentParser(description=__doc__)
     for key in ('input','q5-input','q7-input','wsindy-input'):p.add_argument('--'+key,nargs='+',required=True)
+    p.add_argument('--wsindy-source',choices=('matlab','port'),default='matlab')
+    p.add_argument('--wsindy-matlab-input',nargs='+')
     p.add_argument('--output-dir',type=Path,required=True)
     p.add_argument('--paths',type=Path,default=builder.OUTPUT/'grid/q8_paths.json')
     p.add_argument('--fit-paths',type=Path,default=builder.OUTPUT/'grid/q8_fit_paths.json')
     p.add_argument('--smoke-controls',type=Path,default=ROOT/'outputs/sideproject_q8_smoke/controls.json')
-    a=p.parse_args();print(json.dumps(run(a.input,a.q5_input,a.q7_input,a.wsindy_input,a.output_dir,a.paths,a.fit_paths,a.smoke_controls)))
+    a=p.parse_args();print(json.dumps(run(a.input,a.q5_input,a.q7_input,a.wsindy_input,a.output_dir,a.paths,a.fit_paths,a.smoke_controls,a.wsindy_source,a.wsindy_matlab_input)))

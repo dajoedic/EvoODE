@@ -12,6 +12,7 @@ from pathlib import Path
 import pandas as pd
 import aggregate_sideproject_q5 as q5
 import build_sideproject_q7_paths as builder
+from q5w_row_sources import select_rows, known_cost
 
 ROOT = builder.ROOT
 
@@ -194,8 +195,9 @@ def wsindy_tables(choices, details, cells):
                 rows.append(dict(stratum=stratum,sigma=sigma,rho=rho,comparison=config,method=method,metric=metric,
                                  n_units=primary.unit_id.nunique(),numerator=num,denominator=len(g),rate=num/len(g),
                                  primary_reference=config.startswith('W1-interp:') if rho==.5 else True,
-                                 reference_library_evaluations=int(g.q5w_library_evaluations.sum()),
-                                 reference_least_squares_solves=int(g.q5w_least_squares_solves.sum())))
+                                 reference_coefficient_source=','.join(sorted(set(g.get('q5w_coefficient_source',pd.Series(['port']))))),
+                                 reference_library_evaluations=known_cost(g,'q5w_library_evaluations'),
+                                 reference_least_squares_solves=known_cost(g,'q5w_least_squares_solves')))
     return rows
 
 
@@ -215,7 +217,8 @@ def cost_rows(cells, joined):
 
 def run(q5_inputs,q7_inputs,wsindy_inputs,paths=builder.OUTPUT/'validated/q7_paths.json',
         fit_paths=builder.OUTPUT/'validated/q7_fit_paths.json',output=ROOT/'analysis/data/sideproject_residual_growth',
-        q5_paths=builder.q6.Q5,reference=q5.REFERENCE,q4_inputs=q5.Q4_RESULTS):
+        q5_paths=builder.q6.Q5,reference=q5.REFERENCE,q4_inputs=q5.Q4_RESULTS,
+        wsindy_source='matlab',wsindy_matlab_inputs=None):
     paths,fit_paths,output=Path(paths),Path(fit_paths),Path(output)
     names=('candidates','units','rates','diagnostics','q5_comparison','q5_diagnostics','decision_inputs','reuse_control','q5w_comparison','cost')
     if any((output/f'q7_{n}.csv').exists() for n in names) or (output/'q7_run_metadata.json').exists():
@@ -230,6 +233,8 @@ def run(q5_inputs,q7_inputs,wsindy_inputs,paths=builder.OUTPUT/'validated/q7_pat
         for name,digest in p['input_sha256'].items():
             if name!=builder.q6.Q5_PROTOCOL and q5.sha256(ROOT/name)!=digest:
                 raise ValueError('Q7 input changed: '+name)
+    ws=pd.concat([pd.read_csv(p,low_memory=False) for p in q5.result_files(wsindy_inputs)],ignore_index=True)
+    ws=select_rows(ws,wsindy_source,wsindy_matlab_inputs)
     oldrecords=read_records(q5_inputs); records=read_records(q7_inputs)
     refs=pd.read_csv(reference,low_memory=False)
     oldmap,metadata=q5.controls(old,oldrecords,Path(q5_paths),refs,read_records(q4_inputs),json.loads(q5.Q4.read_bytes()))
@@ -240,9 +245,8 @@ def run(q5_inputs,q7_inputs,wsindy_inputs,paths=builder.OUTPUT/'validated/q7_pat
     for row in rates:
         if row['method']=='Q5': row['method']='Q7'
     oldrates,olddiag=q5.report_tables(oldchoices,refs)
-    ws=pd.concat([pd.read_csv(p,low_memory=False) for p in q5.result_files(wsindy_inputs)],ignore_index=True)
     tables=(candidates,choices,rates,diagnostics,oldrates,olddiag,decision_inputs(choices,oldchoices),reuse,wsindy_tables(choices,ws,payload['cells']),cost_rows(payload['cells'],joined))
-    metadata.update(protocol='Q7',cells=len(cells),complete=True,q7_paths_sha256=q5.sha256(paths),
+    metadata.update(protocol='Q7',cells=len(cells),complete=True,wsindy_source=wsindy_source,q7_paths_sha256=q5.sha256(paths),
                     fit_paths_sha256=q5.sha256(fit_paths),q7_protocol=payload['q7_protocol'],
                     image='registry.gitlab.scch.at:443/joedicke/evoode:354106398d5e67ffa72c237e2ba83e3feeb25b31',
                     image_provenance='Manifest declaration; runner records do not contain an image digest',
@@ -259,8 +263,11 @@ if __name__=='__main__':
     p.add_argument('--q5-input',nargs='+',required=True)
     p.add_argument('--q7-input',nargs='+',required=True)
     p.add_argument('--wsindy-input',nargs='+',required=True)
+    p.add_argument('--wsindy-source',choices=('matlab','port'),default='matlab')
+    p.add_argument('--wsindy-matlab-input',nargs='+')
     p.add_argument('--paths',type=Path,default=builder.OUTPUT/'validated/q7_paths.json')
     p.add_argument('--fit-paths',type=Path,default=builder.OUTPUT/'validated/q7_fit_paths.json')
     p.add_argument('--output-dir',type=Path,default=ROOT/'analysis/data/sideproject_residual_growth')
     a=p.parse_args()
-    print(json.dumps(run(a.q5_input,a.q7_input,a.wsindy_input,a.paths,a.fit_paths,a.output_dir)))
+    print(json.dumps(run(a.q5_input,a.q7_input,a.wsindy_input,a.paths,a.fit_paths,a.output_dir,
+                         wsindy_source=a.wsindy_source,wsindy_matlab_inputs=a.wsindy_matlab_input)))

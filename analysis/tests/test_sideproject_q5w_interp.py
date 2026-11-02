@@ -79,7 +79,11 @@ def test_default_six_rows_match_preserved_smoke():
     actual = pd.read_csv(path, float_precision='round_trip').fillna('')
     old = preserved[[runner.key(r) == runner.key(first) for _, r in preserved.iterrows()]].reset_index(drop=True)
     timing = [c for c in old if c.endswith('_elapsed_s_context')]
-    pd.testing.assert_frame_equal(actual.drop(columns=timing), old.drop(columns=timing), check_exact=True)
+    # New provenance columns are checked separately; every preserved field stays exact.
+    pd.testing.assert_frame_equal(actual[old.columns].drop(columns=timing), old.drop(columns=timing), check_exact=True)
+    assert set(actual.q5w_coefficient_source) == {'port'}
+    assert set(actual.q5w_input_time_sha256) == {row.iloc[0].time_sha256}
+    assert set(actual.q5w_input_state_sha256) == {row.iloc[0].state_sha256}
 
 
 def test_interp_comparison_cli(monkeypatch, capsys):

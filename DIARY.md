@@ -7,6 +7,7 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 ## 2026-11-02
 
 ### Q5-W §5.5: MATLAB identity check fails for the port — WSINDy rows now come from the original (user)
+<!-- e004aaa -->
 
 MATLAB R2026b installed (30-day trial, IT licence needed before W-4). The original fails without the Statistics and
 Machine Learning Toolbox (`range` in `findcornerpts.m`); the protocol's "no toolbox" was wrong, the toolbox is now
@@ -18,6 +19,21 @@ in W1: 78/756 at σ = 0, 22–25/756 at each noisy level. Same systems in both a
 suspected cause: near-singular least squares, `\` vs `gelsy`; undiagnosed. No WSINDy rate looked at.
 User decision: every uniform-grid WSINDy row (W1 on ρ = 0, W1-interp on ρ = 0.5) is taken from the original code;
 port only where no original exists. Protocol revision in Q5-W §5. Codex: WP-FA10.
+
+**WP-FA10 done (Codex `blocked` only at its own 840-s boundary; Claude resumed the evaluation to completion).**
+MATLAB-sourced rows `outputs/sideproject_q5w_wsindy/full_matlab/` and `w1_interp_full_matlab/`, 4,536 + 4,536,
+through the unchanged port evaluator (only the coefficient source differs); manifest bijection and hashes pass. Control
+on the identity-passing tasks (4,338 W1, 4,395 W1-interp) against the port's rows: support and structure booleans
+identical everywhere; **no R² > 0.9 decision flips**; precision/recall/F1 differ by ≤ 1e-16 (float rounding);
+R² differs > 1e-6 on 79 / 36 cells, all on models that already diverge (R² between −1e5 and −1e18); integration status
+differs on 4 tasks (diverged ↔ max_evals ↔ success at the stability edge: 37, 59, 49, 60), none above the threshold.
+Q7/Q8 aggregations read the MATLAB rows by default (`--wsindy-source matlab`), `port` reproduces the old source.
+Diagnosis on the **actual MATLAB G/b** (395 tasks exported by `export_wsindy_q5w_designs.m`): 197/198 and 140/141
+failing tasks have a rank-deficient design (condition up to ~1e18), passing samples 1/28 and 0/28; replacing only the
+port's `gelsy` by a pivoted-QR basic solution reproduces MATLAB on 194/198 and 140/141, `gelsy` on the exact MATLAB
+matrices on 1 each. Cause: the least-squares representative on near-dependent libraries, not a port defect in the
+weak-form construction. Five tasks (62 IC 1 σ = 0 L-Q5 ×3, 63, 52-interp) stay unexplained. Port unchanged.
+WSINDy rates still sealed.
 
 ### Q8 frozen (gate G1) and implemented (WP-FA9); Julia acceptance passed
 <!-- 6113547 -->

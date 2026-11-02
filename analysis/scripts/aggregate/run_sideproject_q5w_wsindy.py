@@ -162,14 +162,17 @@ def reference_rows():
 def run(rows, configurations=CONFIGS, output=OUTPUT/'smoke', technical_only=False):
     output.mkdir(parents=True, exist_ok=True)
     result_path = output/'details.csv'
-    reference = reference_rows().rename(columns={'source_initial_condition_set': 'initial_condition_set'}).set_index(KEYS)
-    systems, support = context()
-    clean_t = np.linspace(0, 10, 512)
     completed = set()
     if result_path.exists():
         previous = pd.read_csv(result_path)
         for _, r in previous.iterrows():
             completed.add((key(r), r.q5w_configuration))
+        provenance = {'q5w_coefficient_source','q5w_input_time_sha256','q5w_input_state_sha256'}
+        if not provenance <= set(previous) and any((key(row),config) not in completed for _,row in rows.iterrows() for config in configurations):
+            raise ValueError('Legacy CSV schema lacks provenance; choose a fresh output directory before adding rows')
+    reference = reference_rows().rename(columns={'source_initial_condition_set': 'initial_condition_set'}).set_index(KEYS)
+    systems, support = context()
+    clean_t = np.linspace(0, 10, 512)
     for _, row in rows.iterrows():
         t, x = baseline.read_index_cell(EXPORT, row)
         expected = reference.loc[key(row)]
@@ -187,6 +190,7 @@ def run(rows, configurations=CONFIGS, output=OUTPUT/'smoke', technical_only=Fals
             fit_elapsed = time.perf_counter()-started
             result = dict(zip(KEYS, key(row)), fit_status='success', observed_data_sha256=baseline.data_sha(row)) if technical_only else evaluate(StoredModel(coef, [c.name for c in columns]), systems[sid], support.loc[sid].to_dict(), row, t, x, clean_t, clean)
             result.update(method=arm, library_id=lib, method_config_id=configuration, stlsq_threshold='',
+                          q5w_coefficient_source='port',
                           source_shard='q5w_laptop',
                           weak_sindy_source_note=baseline.weak_source_note() if arm == 'W2' else 'Q5-W independent published WSINDy implementation; reference commit 72d8d6e',
                           weak_seed=baseline.weak_sindy_seed(row, CFG.library_id) if arm == 'W2' else '',
@@ -196,6 +200,9 @@ def run(rows, configurations=CONFIGS, output=OUTPUT/'smoke', technical_only=Fals
                           fit_elapsed_s_context=fit_elapsed, q5w_elapsed_s_context=time.perf_counter()-started)
             if arm == 'W1-interp':
                 result.update(interpolation_facts(*interpolate_uniform(t, x)))
+            input_t, input_x = interpolate_uniform(t, x) if arm == 'W1-interp' else (t, x)
+            result.update(q5w_input_time_sha256=hashlib.sha256(np.asarray(input_t,dtype='<f8').tobytes(order='C')).hexdigest(),
+                          q5w_input_state_sha256=hashlib.sha256(np.asarray(input_x,dtype='<f8').tobytes(order='C')).hexdigest())
             if not technical_only and not all(info['selected'] for info in metadata):
                 result['sindy_structure_hit_raw'] = False
                 result['sindy_structure_hit_pruned'] = False

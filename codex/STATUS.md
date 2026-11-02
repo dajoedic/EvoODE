@@ -1,4 +1,4 @@
-status: blocked
-task: WP-FA9
-report: codex/reports/REPORT_WP_FA9.md
-note: Q7 branch validated (59 tests, deterministic inputs, Q5 byte identity); G-Q7 unresolved and cap-fallback reference/adapter remains open; Julia acceptance reserved for Claude.
+﻿status: blocked
+task: WP-FA10
+report: codex/reports/REPORT_WP_FA10.md
+note: 840-second boundary reached: 1980/4536 W1 and 1920/4536 W1-interp rows preserved; actual MATLAB design matrices and five solver cases remain open.
