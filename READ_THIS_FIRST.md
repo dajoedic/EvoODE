@@ -10,15 +10,15 @@ zweites davon. Alles Dauerhafte gehört dorthin, nach `PAPER_1.md` oder ins `DIA
 **Regeln:** wird immer **vollständig überschrieben**, nie angehängt. Was älter als ein paar Tage
 ist, ist vermutlich falsch — dann gilt `CLAUDE.md`.
 
-**Stand: 2026-11-02, 15:30 — WISP-Plan bis 31.12. (CLAUDE.md, „WISP paper — the fixed plan“).**
+**Stand: 2026-11-02, 23:25 — WISP-Plan bis 31.12. (CLAUDE.md, „WISP paper — the fixed plan“).**
 
 ## 1. Was läuft
 
 | Lauf | Stand | Wenn fertig |
 |---|---|---|
 | **Q8-Probe** Orion (`512dd5b`, 75 Shards) | **fertig 75/75**, technisch sauber, 36 h statt geplanter 98–221 h (DIARY) | W-2 wartet auf G-Q7 und freie Kerne |
-| **Q7-Fits** Orion (338 Shards, 16 Pods) | 142/338 um 15:10, 0 Fehler; Ende ~Mi 4.11. bis Do 5.11. | einsammeln, Q7-Aggregation, **G-Q7** |
-| **C-6 gekappt** Orion (24 Pods) | 1.387/3.366 | weiterlaufen lassen; Blindregel |
+| **Q7-Fits** Orion (338 Shards, 16 Pods) | 328/338 um 23:25, 0 Fehler; 10 laufen, 4 davon seit 31.10. (Nachzügler bestimmen das Ende) | einsammeln, Q7-Aggregation, **G-Q7** |
+| **C-6 gekappt** Orion (24 Pods) | 1.405/3.366 | weiterlaufen lassen; Blindregel |
 
 Lokal läuft nichts.
 
