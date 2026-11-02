@@ -20,6 +20,7 @@ suspected cause: near-singular least squares, `\` vs `gelsy`; undiagnosed. No WS
 User decision: every uniform-grid WSINDy row (W1 on ρ = 0, W1-interp on ρ = 0.5) is taken from the original code;
 port only where no original exists. Protocol revision in Q5-W §5. Codex: WP-FA10.
 
+<!-- ad432cd -->
 **WP-FA10 done (Codex `blocked` only at its own 840-s boundary; Claude resumed the evaluation to completion).**
 MATLAB-sourced rows `outputs/sideproject_q5w_wsindy/full_matlab/` and `w1_interp_full_matlab/`, 4,536 + 4,536,
 through the unchanged port evaluator (only the coefficient source differs); manifest bijection and hashes pass. Control
