@@ -6,6 +6,19 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ## 2026-11-02
 
+### Q7 second interim look at the user's request — preliminary, deviation from Q7 §6
+
+Same scratchpad logic as 2026-11-01 (`q7_sneak2.py`; WSINDy rows now via `select_rows(..., 'matlab')`), Orion
+153/338 fit shards, 2,092 new records (`outputs/sideproject_q7_…/out_sneak_2026-11-02/`). Cells with a complete Q7
+pool: 1,434 + 14 empty-pool cells (counted as misses), 184 pending; noisy cells only, rule (c), against the official
+Q5 table. **dim 1 is final** (660/660): pruned structure Q7 268 / Q5 174 (+14.6 pp), raw 297 / 194, reconstruction
+574 / 583 (−1.4 pp), generalization 451 / 414 (+5.7 pp). dim 2 (486 of 600 cells): structure 201 / 107 (+19.3 pp),
+reconstruction +2.5 pp, generalization +10.9 pp. dim 3 feasible (102 / 132): structure 19 / 20, generalization 10 / 6.
+dim 4 (41 / 66): structure 0 / 0, reconstruction 39 / 32. Q7 needs far fewer candidates (dim 2 2,975 vs 7,229).
+Against WSINDy (W1 / W1-interp, L-Q5) on the same cells: dim 1 structure 268 vs 162, generalization 451 vs 290; dim 2
+201 vs 94, 334 vs 152; dim 3 feasible structure 19 vs 31. The pending cells are not a random sample; G-Q7 is decided
+only on the complete grid by Q7 §5.
+
 ### Q5-W opened after §5.5 (user): the MATLAB rows change no Q5-cell count; Q8 probe technically clean
 <!-- 7208765 -->
 
