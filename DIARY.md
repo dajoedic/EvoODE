@@ -4,6 +4,24 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ---
 
+## 2026-11-03
+
+### WISP explorable: 19 self-contained pages (WP-X4), visual opening and results, navigation fix (WP-X5)
+
+User feedback on version 3: real smooth scrolling; the first three pages must show problem → solution → how well, hard
+and short; ~20 pages instead of 48; one page = one closed section; visible guess curves, "grows ever more slowly"
+instead of "fades away"; readable names instead of cell ids. WP-X4 built 19 pages, smooth eased page scroll, "More"
+drawers, readable names. Claude's browser review (Playwright + Edge) found: wheel blocked while the pointer hovers a
+figure, page 3 invisible until an animation ran, results as a text dump with internal field names, an encoding slip
+(four "?" in German source strings), English system names on the German page. WP-X5 fixed all of them: wheel routing by
+active drag / scrollable room only (Edge test: N gestures from page 1 reach page 1 + N, both languages), headline and
+explorer as bar/range charts with counts and a table toggle, German names for all 24 reachable systems. **Baseline
+values in Q5:** `q5_rates.csv` carries exactly one configuration per baseline method (`…_stlsq_0.1`) plus a Weak-SINDy
+`all_ten` summary without counts; the page now says so instead of promising a range. Fit: all 19 pages fit at
+1366 × 768 (EN/DE); at 1366 × 657 `p-headline` and `p-frols-intro` still overflow slightly. 33 tests pass. Preview
+version 4. Open polish: overlapping end labels on the guess page, model curve hard to see on the solution page,
+stratum labels "dim1" in the explorer, the explorer's axis labels clipped.
+
 ## 2026-11-02
 
 ### C-6 cores move to the W series, one per finished cell (user)

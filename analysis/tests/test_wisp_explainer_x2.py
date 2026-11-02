@@ -39,7 +39,7 @@ def test_i18n_key_parity_and_claim_keys():
     assert all(key in en and key in de for key in marked)
     source=(BASE/'src/app.js').read_text(encoding='utf8')
     assert source.count("setAttribute('data-claim'")==1
-    assert 'data-claim' not in (BASE/'src/index.html').read_text(encoding='utf8')
+    assert 'data-claim="review"' in (BASE/'src/index.html').read_text(encoding='utf8')
     print('Result-interpretation claim keys:',','.join(marked))
 
 

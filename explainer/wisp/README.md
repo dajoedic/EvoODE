@@ -101,3 +101,25 @@ X2 budgets are 14,000,000 HTML bytes and 17,000,000 data bytes. Current no-Julia
 The X2 assembler interns repeated display time/target/model arrays losslessly inside the HTML only. `app.js` restores ordinary curve bundles before using them. On-disk `results.json` keeps the exact v2 contract; the transport round-trip test proves equality. This leaves headroom for Julia curves that were previously withheld, without reducing the 48-point display grid.
 
 Gate source data are maintained in src/gates.json; the exporter copies them to live.gate_status.
+
+## WP-X4 presentation and acceptance
+
+The source now contains 19 self-contained sections. The first three show measurements, the stored selected equation beside the true equation, and the fixed Q5 comparison. A 720 ms cubic eased scroll moves the document; page fades are disabled. Wheel inertia and animation locks prevent one gesture from advancing multiple pages. Native modal More dialogs bound secondary content and preserve internal wheel/key scrolling. The results explorer uses Overview / By condition / Look inside a system tabs with 14 px minimum panel/control text.
+
+Rebuild without changing scientific exports:
+
+```text
+python analysis/scripts/explainer/build_wisp_explainer_html_x2.py
+python -m pytest analysis/tests/test_wisp_explainer.py analysis/tests/test_wisp_explainer_x2.py analysis/tests/test_wisp_explainer_x3.py analysis/tests/test_wisp_explainer_x4.py -q -p no:cacheprovider
+python analysis/scripts/explainer/check_wisp_explainer_x2.py
+python analysis/scripts/explainer/check_wisp_explainer_fit.py
+```
+
+The fit checker prefers Playwright with `channel="msedge"`, exact CSS viewports, and per-page screenshots at both heights in both languages. The Edge CLI fallback calibrates its window offset using a probe, verifies the resulting viewport, and retries missing fit results up to three times. CLI screenshots are deliberately excluded because deep-linked captures can be blank; fallback-only checks cannot satisfy the complete screenshot acceptance. Evidence: `outputs/wisp_explainer_checks/wp_x4_fit.json` and `wp_x4_edge_fit.json`. Browser execution is denied in the Codex sandbox; Claude must run the final pixel acceptance.
+
+
+WP-X5 adds shared SVG rate charts (raw structure as light marks, pruned structure and both generalization weights), configuration endpoints with original counts, and a collapsible table alternative. Overview charts follow the noise, sampling and extra-axis filters, keeping strata and extra-axis groups separate. The frozen Q5 export supplies only one individually reported configuration per baseline method at the headline condition; its `all_ten` summary has no endpoint numerators and is excluded. The headline notice states this explicitly.
+
+German system labels cover all 24 exported system IDs, with the exported English description as fallback for future IDs. Featured stories use one switcher and one More drawer. Wheel routing distinguishes active dragging, an open select and actual directional scroll room from hovering.
+
+Run the complete presentation suite with `python -m pytest analysis/tests/test_wisp_explainer.py analysis/tests/test_wisp_explainer_x2.py analysis/tests/test_wisp_explainer_x3.py analysis/tests/test_wisp_explainer_x4.py analysis/tests/test_wisp_explainer_x5.py -q -p no:cacheprovider`. Run `python analysis/scripts/explainer/check_wisp_explainer_fit.py` outside the sandbox for the Edge wheel/arrival/reader-text tests and 76 screenshots. WP-X5 browser evidence is written to `outputs/wisp_explainer_checks/wp_x5_fit.json` and `wp_x5_edge_fit.json`. A blocked browser launch is not a layout pass.

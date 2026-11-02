@@ -33,17 +33,19 @@ def parse_result(dom):
     if any(not p['id'].startswith('p-') for p in result['pages']):raise ValueError('Invalid page identifier')
     return result
 
-def run(edge=EDGE):
+def edge_run(edge=EDGE):
     OUT.mkdir(parents=True,exist_ok=True);shots=OUT/'pages';shots.mkdir(exist_ok=True)
     deadline=time.monotonic()+840
     evidence={'checks':[],'screenshots':[],'errors':[]}
-    def invoke(width,height,lang,extra,hash_value=''):
+    offset=[0,0]
+    def invoke(width,height,lang,extra,hash_value='',probe=False):
         if time.monotonic()>deadline:raise TimeoutError('Fit checker exceeded its 14-minute budget')
         url=(ROOT/'explainer/wisp/dist/wisp_explainer.html').as_uri()+f'?fitcheck=1&lang={lang}'+hash_value
+        if probe:url=(OUT/'viewport_probe.html').as_uri()
         command=[str(edge),'--headless=new','--no-first-run','--no-default-browser-check',
                  '--disable-extensions','--disable-background-networking','--disable-sync',
-                 '--force-device-scale-factor=1','--hide-scrollbars',f'--window-size={width},{height}',
-                 '--user-data-dir='+str(OUT/'edge_fit_profile'),'--virtual-time-budget=7000',*extra,url]
+                 '--force-device-scale-factor=1','--hide-scrollbars',f'--window-size={width+offset[0]},{height+offset[1]}',
+                 '--user-data-dir='+str(OUT/'edge_fit_profile'),'--virtual-time-budget=20000',*extra,url]
         completed=subprocess.run(command,capture_output=True,encoding='utf8',errors='replace',timeout=min(35,max(1,deadline-time.monotonic())),creationflags=getattr(subprocess,'CREATE_NO_WINDOW',0))
         if completed.returncode:
             evidence['errors'].append({'command':command,'exit':completed.returncode,'stderr':completed.stderr[-6000:]})
@@ -51,9 +53,20 @@ def run(edge=EDGE):
         return completed.stdout
     code=0
     try:
+        (OUT/'viewport_probe.html').write_text('<pre id="probe"></pre><script>document.getElementById("probe").textContent=innerWidth+","+innerHeight</script>',encoding='utf8')
+        import re
+        probe=invoke(1366,768,'en',['--dump-dom'],probe=True)
+        measured=re.search(r'<pre id="probe">(\d+),(\d+)</pre>',probe)
+        if not measured:raise ValueError('Viewport probe did not complete')
+        offset[:]=[1366-int(measured[1]),768-int(measured[2])]
+        evidence['browser_offset']=offset[:]
         for lang in ('en','de'):
             for width,height in ((1366,768),(1366,657)):
-                dom=invoke(width,height,lang,['--dump-dom'])
+                for attempt in range(3):
+                    dom=invoke(width,height,lang,['--dump-dom'])
+                    try:result=parse_result(dom);break
+                    except ValueError:
+                        if attempt==2:raise
                 (OUT/f'fit_{lang}_{height}.html').write_text(dom,encoding='utf8')
                 result=parse_result(dom)
                 if (result['width'],result['height'])!=(width,height):
@@ -62,22 +75,87 @@ def run(edge=EDGE):
                 evidence['checks'].append(result)
         page_ids=[p['id'] for p in evidence['checks'][0]['pages']]
         if any([p['id'] for p in r['pages']]!=page_ids for r in evidence['checks']):raise ValueError('Page inventories differ')
-        for lang in ('en','de'):
-            for page_id in page_ids:
-                path=shots/f'{lang}_{page_id}.png'
-                # An old image must not make an unsuccessful capture look successful.
-                path.unlink(missing_ok=True)
-                invoke(1366,768,lang,['--screenshot='+str(path)],'#'+page_id)
-                if not path.is_file() or path.stat().st_size<100:raise ValueError(f'Missing screenshot: {path}')
-                evidence['screenshots'].append(str(path.relative_to(ROOT)))
-        code=0 if all(r['ok'] for r in evidence['checks']) else 1
+        evidence['errors'].append('Edge fallback measures fit only; per-page screenshots require Playwright (Edge --screenshot deep links are unreliable).')
+        code=1  # Playwright screenshots remain mandatory for full acceptance.
     except (OSError,subprocess.TimeoutExpired) as exc:
         evidence['errors'].append(str(exc));code=2
     except (ValueError,TimeoutError) as exc:
         evidence['errors'].append(str(exc));code=1
     evidence['exit']=code
-    (OUT/'wp_x3_fit.json').write_text(json.dumps(evidence,ensure_ascii=False,indent=2),encoding='utf8')
-    print(json.dumps(evidence if evidence['errors'] else {'exit':code,'checks':len(evidence['checks']),'screenshots':len(evidence['screenshots']),'overflow':[p for r in evidence['checks'] for p in r['pages'] if not p['ok']]},ensure_ascii=False))
+    (OUT/'wp_x5_edge_fit.json').write_text(json.dumps(evidence,ensure_ascii=False,indent=2),encoding='utf8')
+    print(json.dumps(evidence if evidence['errors'] else {'exit':code,'checks':len(evidence['checks']),'screenshots':len(evidence['screenshots']),'overflow':[p for r in evidence['checks'] for p in r['pages'] if not p['ok']]},ensure_ascii=True))
+    return code
+
+def check_interactions(page, evidence):
+    """Actual centre-pointer wheel routing, arrival visibility and reader labels."""
+    import re
+    for lang in ('en','de'):
+        url=(ROOT/'explainer/wisp/dist/wisp_explainer.html').as_uri()+f'?lang={lang}'
+        page.set_viewport_size({'width':1366,'height':768})
+        page.goto(url,wait_until='load')
+        page.wait_for_function('window.WispSlides && WispSlides.nav')
+        page.mouse.move(683,384)
+        for n in range(1,6):
+            page.evaluate('WispSlides.nav.go(0)')
+            page.wait_for_timeout(850)
+            for _ in range(n):
+                page.mouse.wheel(0,500)
+                page.wait_for_timeout(850)
+            actual=page.evaluate('WispSlides.nav.index')
+            if actual!=n:raise AssertionError(f'{lang}: {n} centre wheel gestures reached index {actual}')
+            evidence.setdefault('wheel_checks',[]).append({'language':lang,'gestures':n,'page':actual+1})
+        page.evaluate('WispSlides.nav.go(2)')
+        # Inspect before another animation frame: no entrance animation may gate content.
+        visible=page.locator('#headline-panel').evaluate("e=>getComputedStyle(e).opacity==='1' && e.querySelectorAll('.rate-chart').length>0 && [...e.querySelectorAll('*')].every(n=>getComputedStyle(n).animationName==='none')")
+        if not visible:raise AssertionError('Headline gated by an entrance animation')
+        texts=page.locator('body').evaluate("e=>{const w=document.createTreeWalker(e,NodeFilter.SHOW_TEXT);const out=[];while(w.nextNode()){const p=w.currentNode.parentElement;if(!p.closest('script,style,[data-provenance],#provenance'))out.push(w.currentNode.textContent);}return out.join(' ');}")
+        if re.search(r'raw_exact|pruned_exact|(?:generalization|reconstruction)_(?:arithmetic|variance_weighted)_hit',texts):raise AssertionError('Internal metric name in reader DOM')
+        if '\ufffd' in texts or re.search(r'[^\W\d_]\?[^\W\d_]',texts):raise AssertionError('Broken reader encoding')
+
+
+def run(edge=EDGE):
+    """Playwright supplies exact CSS viewports and reliable deep-link captures."""
+    OUT.mkdir(parents=True,exist_ok=True)
+    evidence={'checks':[],'screenshots':[],'errors':[]}
+    deadline=time.monotonic()+840
+    try:
+        from playwright.sync_api import sync_playwright
+        with sync_playwright() as pw:
+            browser=pw.chromium.launch(channel='msedge',headless=True)
+            page=browser.new_page()
+            check_interactions(page,evidence)
+            for lang in ('en','de'):
+                for width,height in ((1366,768),(1366,657)):
+                    if time.monotonic()>deadline:raise TimeoutError('14-minute budget exceeded')
+                    page.set_viewport_size({'width':width,'height':height})
+                    url=(ROOT/'explainer/wisp/dist/wisp_explainer.html').as_uri()+f'?fitcheck=1&lang={lang}'
+                    for attempt in range(3):
+                        page.goto(url,wait_until='load')
+                        try:page.wait_for_selector('#fitcheck-result',state='attached',timeout=25000);break
+                        except Exception:
+                            if attempt==2:raise
+                    result=parse_result(page.content())
+                    if (result['width'],result['height'])!=(width,height):raise ValueError('Incorrect CSS viewport')
+                    if result['language']!=lang:raise ValueError('Incorrect language')
+                    evidence['checks'].append(result)
+                    shots=OUT/'pages';shots.mkdir(exist_ok=True)
+                    for record in result['pages']:
+                        if time.monotonic()>deadline:raise TimeoutError('14-minute budget exceeded')
+                        page.evaluate('(id)=>WispSlides.nav.link("#"+id)',record['id'])
+                        path=shots/f"{lang}_{height}_{record['id']}.png"
+                        page.screenshot(path=str(path))
+                        evidence['screenshots'].append(str(path.relative_to(ROOT)))
+            browser.close()
+        code=0 if all(r['ok'] for r in evidence['checks']) else 1
+    except (ImportError,OSError) as exc:
+        evidence['errors'].append(str(exc));code=2
+    except Exception as exc:
+        evidence['errors'].append(str(exc));code=2 if not evidence['checks'] else 1
+    if code==2:
+        evidence['fallback_exit']=edge_run(edge)
+    evidence['exit']=code
+    (OUT/'wp_x5_fit.json').write_text(json.dumps(evidence,ensure_ascii=False,indent=2),encoding='utf8')
+    print(json.dumps({'exit':code,'checks':len(evidence['checks']),'screenshots':len(evidence['screenshots']),'errors':evidence['errors'],'overflow':[p for r in evidence['checks'] for p in r['pages'] if not p['ok']]},ensure_ascii=True))
     return code
 
 if __name__=='__main__':

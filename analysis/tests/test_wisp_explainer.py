@@ -177,7 +177,7 @@ if(!data.live.teaching||data.live.teaching.cell_id!==data.live.references[0].cel
 // Visible titles accompany every Cartesian SVG chart, including dynamically created plots.
 for(const svg of all.filter(e=>e.tag==='svg'&&e.attrs.class==='chart')){
  if(!svg.children.some(e=>e.tag==='text'&&e.attrs.transform?.includes('rotate(-90)')))throw Error('Missing visible y axis title');
- if(!svg.children.some(e=>e.tag==='text'&&e.attrs.y==='266'))throw Error('Missing visible x axis title');
+ if(!svg.children.some(e=>e.tag==='text'&&e.attrs.y==='306'))throw Error('Missing visible x axis title');
 }
 coeff[1]=1;enabled.splice(0,6,false,true,false,false,false,false);play();
 if(!elements['play-status'].textContent.includes('clipped at twice'))throw Error('Missing clipping notice');

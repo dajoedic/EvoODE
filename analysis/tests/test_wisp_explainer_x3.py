@@ -71,8 +71,8 @@ def test_full_presentation_dom(language):
 def test_page_structure_and_bilingual_source():
     soup=BeautifulSoup((BASE/'src/index.html').read_text(encoding='utf8'),'html.parser')
     pages=soup.select('main > .page')
-    assert 35<=len(pages)<=50
-    assert pages[-1]['id']=='p-results'
+    assert 18<=len(pages)<=22
+    assert pages[-1]['id']=='p-glossary'
     assert len({p['id'] for p in pages})==len(pages)
     assert len(soup.select('#p-overview .pipeline-map > a'))==8
     assert len(soup.select('#p-recap [data-outcome]'))==8
