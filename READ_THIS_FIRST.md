@@ -17,7 +17,7 @@ ist, ist vermutlich falsch — dann gilt `CLAUDE.md`.
 > - **C-6 NICHT „reparieren“**, auch wenn seine Parallelität < 24 ist — das ist gewollt.
 > - Erste Verschiebung geprüft 03.11. 00:07: C-6 24 → 23, Q8 6 → 7, C-6 `failed` = 0, kein Pod beendet.
 > - Braucht Laptop an + VPN + gültigen oc-Login; läuft es nicht, wird nur nichts verschoben. Neu starten:
->   `"C:\Program Files\Gitinash.exe" -c '<scratchpad>/shift_pods.sh >> <scratchpad>/shift_pods.log 2>&1'`
+>   in Git Bash: `/c/Users/joedicke/AppData/Local/Temp/claude/c--Users-joedicke-Documents-Repositories-EvoODE/f2e82da9-459f-491b-bc51-e3ea2d286f53/scratchpad/shift_pods.sh >> /c/Users/joedicke/AppData/Local/Temp/claude/c--Users-joedicke-Documents-Repositories-EvoODE/f2e82da9-459f-491b-bc51-e3ea2d286f53/scratchpad/shift_pods.log 2>&1 &` (Kopie des Skripts im Scratchpad dieser Sitzung)
 > - **Rückweg nach W-4:** C-6 wieder auf 24 (`oc patch job evoode-phase-c-c6-grid-capped -n scch-das -p '{"spec":{"parallelism":24}}'`);
 >   automatischer Rückweg als Cluster-Pod (Codex) noch zu bauen.
 
