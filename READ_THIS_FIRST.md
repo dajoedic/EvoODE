@@ -10,14 +10,14 @@ zweites davon. Alles Dauerhafte gehört dorthin, nach `PAPER_1.md` oder ins `DIA
 **Regeln:** wird immer **vollständig überschrieben**, nie angehängt. Was älter als ein paar Tage
 ist, ist vermutlich falsch — dann gilt `CLAUDE.md`.
 
-**Stand: 2026-11-02, 13:40 — WISP-Plan bis 31.12. (CLAUDE.md, „WISP paper — the fixed plan“).**
+**Stand: 2026-11-02, 15:30 — WISP-Plan bis 31.12. (CLAUDE.md, „WISP paper — the fixed plan“).**
 
 ## 1. Was läuft
 
 | Lauf | Stand | Wenn fertig |
 |---|---|---|
-| **Q8-Probe** Orion (`512dd5b`, 75 Shards) | 73/75; Shards 1 und 7 (System 58 IC 2, σ 0,05, ρ 0,5; C1000 / A1000) seit 00:05, schreiten voran | technische Prüfung, Probe-Auswertung, dann W-2 |
-| **Q7-Fits** Orion (338 Shards, 16 Pods) | 102/338 um 13:40, 0 Fehler | einsammeln, Q7-Aggregation, **G-Q7** |
+| **Q8-Probe** Orion (`512dd5b`, 75 Shards) | **fertig 75/75**, technisch sauber, 36 h statt geplanter 98–221 h (DIARY) | W-2 wartet auf G-Q7 und freie Kerne |
+| **Q7-Fits** Orion (338 Shards, 16 Pods) | 142/338 um 15:10, 0 Fehler; Ende ~Mi 4.11. bis Do 5.11. | einsammeln, Q7-Aggregation, **G-Q7** |
 | **C-6 gekappt** Orion (24 Pods) | 1.387/3.366 | weiterlaufen lassen; Blindregel |
 
 Lokal läuft nichts.
@@ -33,10 +33,11 @@ Lokal läuft nichts.
 
 ## 3. Als Nächstes
 
-1. **WSINDy-Zahlen öffnen?** Sie sind seit Q5-W versiegelt bis §5.5; mit den Original-Zeilen entfällt der Grund —
-   Öffnen ist eine Nutzerentscheidung.
-2. Q8-Probe fertig → technische Prüfung, Auswertung; W-2 starten (Nutzer `oc apply`).
-3. Q7 fertig → Aggregation (mit `--wsindy-source matlab`), G-Q7.
+1. Q7 fertig → einsammeln, Aggregation (mit `--wsindy-source matlab`), **G-Q7**.
+2. Danach W-2 (Q8-Gitter, `k8s/sideproject_q8_job.yaml`) auf die frei werdenden Q7-Kerne; Nutzer `oc apply`.
+   Bei G-Q7 nicht bestanden: Cap-Fallback-Zweig fehlt noch (WP-FA9), erst Codex.
+
+Erledigt 15:30: Q5-W geöffnet (MATLAB-Zeilen ändern keine Q5-Zählung), Q8-Probe geprüft — DIARY 02.11.
 
 > **BLINDREGEL C-6** gilt unverändert: keine C-6-EvoGrow-Ergebnisse ansehen, nur technische Prüfung.
 

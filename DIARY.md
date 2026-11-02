@@ -6,6 +6,43 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ## 2026-11-02
 
+### Q5-W opened after §5.5 (user): the MATLAB rows change no Q5-cell count; Q8 probe technically clean
+
+**Opening (user, afternoon).** Same logic as the provisional opening of 2026-10-31 (scratchpad only,
+`q5w_open.py`, nothing produced in the repo), now on the **complete** Q5 grid (1,632 cells, 1,584 noisy/subsampled)
+with the row sources of the §5 revision (`select_rows(..., 'matlab')`: 9,072 rows from the original, 22,680 port-only
+rows). **Switching port → MATLAB changes no count on the Q5 cells** (structure and generalization, every
+stratum × ρ, every W1 / W1-interp configuration). Over all 9,072 substituted rows: pruned support differs in 299
+(53 118, 57 106, 52 21, 30 18, 62 15, 63 15, 9 6), structure hit flips in 6 (53, 57), reconstruction R² > 0.9 in 59
+(53 35, 57 14, 63/62 3, 52/30 2), generalization in 11 (57) — all on systems outside the Q5 strata or cancelling to
+zero, so they touch only the all-cells Paper 1 row. λ̂ at the grid end (always the lower end) in the MATLAB rows: W1
+26.7 % (L-Q5) / 27.9 % (L-C6), W1-interp 21.8 % / 23.5 % of equations.
+
+Primary comparison, noisy/subsampled Q5 cells (pr = pruned structure, gen = generalization R² > 0.9 var.-weighted;
+W1 on ρ = 0, W1-interp on ρ = 0.5, L-Q5; WSfix = fixed-threshold Weak-SINDy, range over its 10 configurations):
+
+| Stratum | ρ | n | Q5c pr | W pr | WSfix pr | Q5c gen | W gen | WSfix gen |
+|---|---|---|---|---|---|---|---|---|
+| dim 1 | 0 | 330 | 93 | 78 | 5–89 | 206 | 138 | 92–153 |
+| dim 1 | 0.5 | 396 | 126 | 125 | 22–110 | 271 | 204 | 110–177 |
+| dim 2 | 0 | 300 | 65 | 64 | 0–62 | 181 | 104 | 40–115 |
+| dim 2 | 0.5 | 360 | 109 | 68 | 1–77 | 222 | 115 | 43–131 |
+| dim 3 feasible | 0 | 60 | 15 | 30 | 0–4 | 5 | 7 | 0–7 |
+| dim 3 feasible | 0.5 | 72 | 8 | 1 | 0 | 7 | 0 | 0 |
+| dim 4 | 0 / 0.5 | 30 / 36 | 0 / 0 | 0 / 0 | 0 | 1 / 6 | 0 / 0 | 0 |
+
+The provisional reading of 2026-10-31 stands: structure level on dim 1/2 at ρ = 0, WSINDy ahead on dim 3 at ρ = 0
+(30 vs 15), Q5 ahead on generalization on dim 1/2 throughout and on dim-2 structure at ρ = 0.5. (The 10-31 table
+included the clean (0, 0) cells; these do not.) The official tables come with the Q7 aggregation (`q7_q5w_comparison`),
+which reads the same rows.
+
+**Q8 probe complete (75/75, 820/820 records).** Technical check only: candidate count per cell as planned in all 75
+cells, no duplicate, data hash equals the path file in 820/820, one settings fingerprint per arm (7 arms), one runner
+and one paths hash; 46 fits with `fit_failed` (single attempt, as frozen). Fit time 36.3 h against a planned
+97.7–221.1 h (dim 3 54–59: 35.8 h vs 43.8–131.5 h; 52/61: 0.2 h vs 51.5–85.8 h). Records copied to
+`outputs/sideproject_q8_512dd5b…/out_probe/`. W-2 waits for free cores (C-6 24 + Q7 16 = 40) and for G-Q7, because
+Q8's path end is conditional on it (Q8 §2) and the cap-fallback branch is not implemented.
+
 ### Q5-W §5.5: MATLAB identity check fails for the port — WSINDy rows now come from the original (user)
 <!-- e004aaa -->
 
