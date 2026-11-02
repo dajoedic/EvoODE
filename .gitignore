@@ -99,3 +99,6 @@ analysis/tables/*
 /literature/
 # Obsidian vault settings of the user's editor
 /.obsidian/
+
+# WISP explorable: single-file build, reproducible from explainer/wisp/src + data
+explainer/wisp/dist/

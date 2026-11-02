@@ -1,4 +1,4 @@
-﻿status: blocked
-task: WP-FA10
-report: codex/reports/REPORT_WP_FA10.md
-note: 840-second boundary reached: 1980/4536 W1 and 1920/4536 W1-interp rows preserved; actual MATLAB design matrices and five solver cases remain open.
+status: done
+task: WP-X1c
+report: codex/reports/REPORT_WP_X1C.md
+note: HTML 11500509 bytes; data 11443805 bytes; byte-identical rebuild; 12 tests pass; strict JS check exits 0; all 565 failures classified.

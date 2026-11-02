@@ -1,61 +1,70 @@
-# WP-FA10 — Q5-W: WSINDy rows from the MATLAB original; diagnose the port's deviation
-**Language: Python**
+# WP-X1c — WISP explorable: size budget, re-simulation tolerance matched to the Q5 evaluation, first layout fixes
+**Language: Python** (data export, checks) — the page itself is static HTML, CSS and JavaScript.
 
-Stand 2026-11-02. Authority: `docs/sideproject_residual_growth_protocol_q5w.md`, in particular the new paragraph
-"Revision 2026-11-02" at the end of §5 (read the whole protocol). Builds on WP-FA6, FA6b, FA6c — read
-`codex/reports/REPORT_WP_FA6.md`, `_FA6B.md`, `_FA6C.md` first.
+Stand 2026-11-02. Follows WP-X1b (`codex/reports/REPORT_WP_X1B.md`, done). Everything WP-X1/X1b built and every rule
+they set stays; this WP changes only what is listed here.
 
-## Situation
+## Why
 
-Claude ran the unmodified original WSINDy code (commit `72d8d6e`, `outputs/reference_wsindy_ode_72d8d6e/`) in MATLAB
-R2026b through `analysis/matlab/run_wsindy_original_q5w.m` on every exported input:
-
-- `outputs/sideproject_q5w_wsindy/matlab_outputs/*.json` — 4,557 tasks (21 Lorenz + W1 × {L-C6, L-Q5} on every ρ = 0
-  C-6 cell)
-- `outputs/sideproject_q5w_wsindy/matlab_outputs/w1_interp/*.json` — 4,536 tasks (W1-interp × {L-C6, L-Q5} on every
-  ρ = 0.5 cell)
-
-The identity check against the port (`compare_sideproject_q5w_matlab.py`) failed: verdicts under
-`outputs/sideproject_q5w_wsindy/matlab_identity/` and `.../matlab_identity/w1_interp/`. The user decided that every
-uniform-grid WSINDy row is taken from the original's output; the port stays the source only for arms with no
-original counterpart.
+Claude's review of WP-X1b found three things:
+1. **Size.** `results.json` is 138.8 MB and the built page 141.6 MB. The page must be publishable as one file
+   (hard limit 16 MB) and committable to git. Almost all of it is the drill-down curve bundles.
+2. **Re-simulation failures are mostly integrator differences.** Of the 267 failed cells, 253 differ from the stored
+   R² by less than 1e-3 (median 4.4e-6); 14 differ by more. The verification integrates with DOP853 at rtol = atol =
+   1e-8, while the stored scores come from the Julia evaluation in `studies/regression/sideproject_q5_noise_fits.jl`
+   with its own solver and tolerances. Failures concentrate on systems 61, 27, 26, 52, 8, 63.
+3. **Layout** (from a headless Edge screenshot at 1280 px): see Scope 3.
 
 ## Scope
 
-1. **Rows from the original.** Produce WSINDy result rows for W1 (ρ = 0) and W1-interp (ρ = 0.5), both libraries,
-   from the MATLAB output JSON instead of the port's coefficients. The evaluation (R² reconstruction and
-   generalization, raw and pruned structure fields, every other per-row field the port's `details.csv` carries) must
-   go through **the same evaluation code path** the port's rows use — only the coefficient source changes. Output
-   files with the same schema as `outputs/sideproject_q5w_wsindy/full/details.csv` and
-   `.../w1_interp_full/details.csv`, in new folders (e.g. `full_matlab/`, `w1_interp_full_matlab/`); never overwrite
-   the port's files. Every row records its coefficient source (`matlab_original_72d8d6e` vs `port`) and the input
-   hashes from the manifest. Cost counts that only the port can supply (least-squares solves etc.) are left empty for
-   MATLAB rows and declared, not estimated.
-2. **Controls before any row is trusted:**
-   - On every task where the identity verdict passed, the MATLAB-sourced row equals the port's row in every
-     evaluation field (R², structure fields) — bit-identical, or name each exception with the reason (coefficients
-     agree only to 1e-6·max|c| by the §5.5 criterion, so tiny R² differences are possible; report their maximum).
-   - Every manifest task has exactly one MATLAB output; hashes in the output match the manifest; no task missing.
-3. **Downstream switch.** Every consumer that reads the port's W1 / W1-interp rows for the Q5-W comparison (at least
-   `aggregate_sideproject_q7.py`; search for all) gets an explicit option/default to read the MATLAB-sourced rows for
-   those arms, port rows for W1 on the native irregular grid, W1-cap and W2. Old behaviour reproducible by option.
-4. **Diagnosis of the port's deviation (report only, change nothing in the port).** On the failing tasks versus a
-   sample of passing ones: condition number / numerical rank of the weak-form design matrices the original builds
-   at the selected λ, and whether replacing the port's least-squares call by a MATLAB-backslash-equivalent choice
-   (e.g. QR with column pivoting and MATLAB's rank tolerance) would reproduce MATLAB on the failing tasks — as an
-   offline experiment in a separate script, not as a change to `wsindy_reference.py`. State the cause with evidence.
-5. Tests for 1–3 (small fixtures; no full run in tests).
+1. **Size budget.** The built `explainer/wisp/dist/wisp_explainer.html` must be **≤ 12 MB**, and
+   `explainer/wisp/data/` in total ≤ 15 MB.
+   - Displayed curves are a presentation copy: thin each curve to at most ~200 points per variable (keep the first
+     and last point; a uniform-in-time selection is fine) and store values with a fixed, documented number of
+     significant digits that is visually lossless (e.g. 5). Verification stays on the full-resolution integration —
+     thinning happens after the check.
+   - Store each cell's observed data for display thinned the same way; the live-computation reference cells
+     (sys0003_ic1_s0.03_r0_n1, sys0001_ic1_s0.01_r0_n1, sys0001_ic1_s0_r0_n1) keep their full observations, since
+     the live path must stay bit-faithful to the reference.
+   - Use a compact layout for repeated structures (e.g. a shared time axis per cell instead of per-point objects).
+   - Bump the results contract version in the README if the curve encoding changes, and keep the swap test passing.
+   - Report the sizes before and after, and confirm the strict JS check still exits 0.
+
+2. **Re-simulation matched to the evaluation that produced the stored scores.** Read
+   `studies/regression/sideproject_q5_noise_fits.jl` (and what it calls) to find the solver, tolerances, time grid and
+   initial state used for the stored reconstruction and generalization R². Reproduce those settings in Python as
+   closely as available (same tolerances and grid; the closest available explicit Runge–Kutta solver if the Julia
+   solver has no Python twin — document the substitution). Keep the pass tolerance at **1e-6 absolute on R²**; do not
+   loosen it. Then report:
+   - passed / failed / withheld per stratum, before (WP-X1b) and after;
+   - for every remaining failure: cell, system, stored vs recomputed R², and a classification into (a) integrator
+     sensitivity — the recomputed R² moves by more than the tolerance when the Python tolerance is tightened by 10×,
+     (b) stable disagreement — it does not move. Do not speculate beyond that classification.
+   Curves stay withheld for every cell that does not pass, as before. This is a technical display check; it changes
+   no scientific number.
+
+3. **Layout fixes.**
+   - The margin note beside the term cards in section 2 ("Which pieces make the rule?") runs off the right edge at
+     1280 px. Margin notes must never overflow the viewport at any width; at widths where there is no room they flow
+     inline (the existing ≤ 1150 px rule should apply wherever the margin column would not fit).
+   - The term playground starts at `du/dt = 0.5u`, whose curve shoots off to ~1,100 against data that saturates near
+     74, with "mean squared mismatch 92,800". For readers who know nothing, start from something that visibly almost
+     fits (e.g. the growth term only, at a small coefficient, so the reader sees "close, but it doesn't bend"), and
+     keep the y-range readable (clip the model curve to a sensible multiple of the data range, with a visible note
+     when it is clipped).
+   - Every chart gets axis titles (what the axis is, with the variable name, e.g. "time t", "population u", "rate of
+     change du/dt"). No unlabelled axis anywhere.
+   - In the FROLS bar chart, the term labels and the bar values must stay readable at 360 px width.
 
 ## Forbidden
 
-- **No WSINDy rate, structure rate or comparison with Q5/Q7 is computed or reported** — not in the report, not in
-  logs. Produce the rows and the controls only; opening the numbers is Claude's step with the user.
-- No edit to the original reference code, the MATLAB driver's call or settings, the port (`wsindy_reference.py`), the
-  frozen protocols, Q5/Q7 output tables, WP-N48b files.
-- No MATLAB execution (Claude does that), no cluster work, no git operations.
+Everything WP-X1 and WP-X1b forbade. In addition: no change to the pass tolerance of the re-simulation check; no change
+to any number shown in the results explorer (rates come unchanged from `q5_rates.csv`); no Julia execution.
 
 ## Acceptance
 
-Controls of scope 2 pass (or every exception named and explained); both row files complete (4,536 + 4,536 C-6 rows);
-downstream switch tested; diagnosis with evidence. Report `codex/reports/REPORT_WP_FA10.md`, status in
-`codex/STATUS.md`, exact commands Claude runs to reproduce.
+1. Built HTML ≤ 12 MB, `explainer/wisp/data/` ≤ 15 MB; rebuild byte-identical.
+2. Strict `check_wisp_explainer_js.py` exits 0 on the three reference cells.
+3. Re-simulation report as in Scope 2 with before/after counts and the per-failure classification.
+4. All tests pass (existing ten plus any you add); a test asserts the size budget.
+5. Report `codex/reports/REPORT_WP_X1C.md`.

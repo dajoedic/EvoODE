@@ -6,6 +6,27 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ## 2026-11-02
 
+### WISP explorable started (user): Distill-style, English, from zero, results explorer as a core part
+
+User decision: WISP gets an interactive explanation in the style of distill.pub (GNN intro), for readers with no
+background, started now, built by Codex; result presentation is a core part. Plan row W-X in CLAUDE.md. Three Codex
+passes today under `explainer/wisp/`:
+- **WP-X1** (blocked, spec defects): built sections 0–5 and the results explorer, but the spec pointed at the wrong
+  observation folder and wrongly claimed the Q5 baselines were MATLAB WSINDy (they are the WP-N47 pysindy rows).
+- **WP-X1b**: observations from `outputs/phase_c_c6_data_conditions_5dd1df8/` (data export only, hash-gated; blind
+  rule untouched); live JS FROLS/FoBa equals the Python reference on 3 real cells (max rel. coefficient error 5.8e-13),
+  incl. the FoBa removal at step 6 of `sys0001_ic1_s0.01_r0_n1`; baselines labelled SINDy / Weak-SINDy (pysindy) /
+  E-SINDy, WSINDy slot filled automatically by `q7_q5w_comparison` once it exists; swap test with a synthetic
+  Q9-shaped file passes without code changes.
+- **WP-X1c**: page 141.6 MB → 11.5 MB (display curves thinned to 48 points after verification); axis titles, playground
+  start, margin notes. Drill-down curves only for cells whose re-simulation reproduces the stored R² to 1e-6: 922 of
+  1,632 (Python RK45 at the evaluation's 1e-6 cannot match Julia Tsit5 to 1e-6; 554 of 565 failures move with the
+  integrator tolerance, 11 are stable). Display question only, no scientific number touched. Clean fix for WP-X2:
+  export display trajectories from the Julia evaluation path itself.
+
+Preview: https://claude.ai/artifact/XsxgvgYGZdqPkpnzVd2YMQ (private). Open for WP-X2: sections stop / fit+BIC /
+generalization+failure; `data-claim` currently marks every paragraph — narrow it to sentences that interpret results.
+
 ### Q7 second interim look at the user's request — preliminary, deviation from Q7 §6
 <!-- 0bd2116 -->
 
