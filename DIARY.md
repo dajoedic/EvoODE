@@ -7,6 +7,7 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 ## 2026-11-02
 
 ### WISP explorable started (user): Distill-style, English, from zero, results explorer as a core part
+<!-- 6a0e352 -->
 
 User decision: WISP gets an interactive explanation in the style of distill.pub (GNN intro), for readers with no
 background, started now, built by Codex; result presentation is a core part. Plan row W-X in CLAUDE.md. Three Codex
