@@ -6,6 +6,19 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ## 2026-11-02
 
+### Q5-W §5.5: MATLAB identity check fails for the port — WSINDy rows now come from the original (user)
+
+MATLAB R2026b installed (30-day trial, IT licence needed before W-4). The original fails without the Statistics and
+Machine Learning Toolbox (`range` in `findcornerpts.m`); the protocol's "no toolbox" was wrong, the toolbox is now
+installed, the original unmodified. Runtime: Lorenz ~54 s per set (10,001 points), C-6 tasks ~0.1 s; both full runs
+(W1 4,557, W1-interp 4,536 tasks) ~20 min on the laptop. Verdicts (`compare_sideproject_q5w_matlab.py`, criterion
+§5.5): Lorenz 21/21 identical; **W1 4,359/4,557** (163 support, 35 λ̂ index), **W1-interp 4,395/4,536** (113 / 28).
+Deviations per system, W1 / W1-interp out of 72: 57 69/65, 53 66/57, 52 19/9, 63 14/1, 30 12/6, 62 12/3, 9 6/0; by σ
+in W1: 78/756 at σ = 0, 22–25/756 at each noisy level. Same systems in both arms, MATLAB warns of rank deficiency —
+suspected cause: near-singular least squares, `\` vs `gelsy`; undiagnosed. No WSINDy rate looked at.
+User decision: every uniform-grid WSINDy row (W1 on ρ = 0, W1-interp on ρ = 0.5) is taken from the original code;
+port only where no original exists. Protocol revision in Q5-W §5. Codex: WP-FA10.
+
 ### Q8 frozen (gate G1) and implemented (WP-FA9); Julia acceptance passed
 <!-- 6113547 -->
 

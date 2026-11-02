@@ -135,6 +135,18 @@ terms present in all 20, 1–3 small extra terms in the 14 misses — and a line
 no deviation on uniform grids (`DIARY.md` 2026-10-30). The gate is replaced by point 5: fidelity is shown by identity
 with the original code on the same data, not by a hit rate. Point 1(ii) stays reported in full.
 
+**Revision 2026-11-02 (user), after point 5 ran and before any WSINDy rate was opened.** Point 5 was run in MATLAB
+R2026b (trial licence; the original needs `range` from the Statistics and Machine Learning Toolbox, so "base MATLAB,
+no toolbox" was wrong — the toolbox is installed, the original is unmodified). Result: Lorenz 21/21 identical; W1
+4,359/4,557 tasks identical, W1-interp 4,395/4,536; the deviations (support or λ̂ index) sit on the same seven
+systems in both arms (53, 57 almost entirely; 52, 63, 30, 62, 9 mainly at σ = 0), MATLAB emits rank-deficiency
+warnings in `sparsifyDynamics`. Point 5 is therefore **not passed** for the port. Decision: on every uniform-grid
+input — W1 on ρ = 0 and W1-interp on ρ = 0.5, i.e. every primary WSINDy row — **the rows are produced by the original
+MATLAB code itself**, evaluated through the unchanged §2 evaluation path. The port remains the only source for arms
+without an original counterpart (W1 on the native irregular grid, W1-cap, W2), declared as before; the cause of the
+port's deviation is diagnosed (suspected: least-squares choice on near-singular systems, MATLAB `\` vs SciPy `gelsy`)
+and reported, not tuned away. The MATLAB inputs, outputs and the identity verdicts are kept as provenance.
+
 ## 6. What is reported
 
 As Q5 §6, per stratum × σ (pooled over ρ and realizations, and per ρ; (0, 0.5) as its own row), unit counts beside
