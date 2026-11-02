@@ -16,8 +16,9 @@ ist, ist vermutlich falsch — dann gilt `CLAUDE.md`.
 
 | Lauf | Stand | Wenn fertig |
 |---|---|---|
-| **Q8-Probe** Orion (`512dd5b`, 75 Shards) | **fertig 75/75**, technisch sauber, 36 h statt geplanter 98–221 h (DIARY) | W-2 wartet auf G-Q7 und freie Kerne |
+| **Q8-Probe** Orion (`512dd5b`, 75 Shards) | **fertig 75/75**, technisch sauber, 36 h statt geplanter 98–221 h (DIARY) | — |
 | **Q7-Fits** Orion (338 Shards, 16 Pods) | 328/338 um 23:25, 0 Fehler; 10 laufen, 4 davon seit 31.10. (Nachzügler bestimmen das Ende) | einsammeln, Q7-Aggregation, **G-Q7** |
+| **W-2 = Q8-Gitter** Orion (`512dd5b`, 3.540 Shards) | **gestartet 02.11. 23:35 mit 6 Pods** (frei gewordene Q7-Kerne; Nutzer: Start vor G-Q7, Risiko akzeptiert) | nach Q7 auf 16 hochziehen: `oc patch job evoode-sideproject-q8 -n scch-das -p '{"spec":{"parallelism":16}}'` |
 | **C-6 gekappt** Orion (24 Pods) | 1.405/3.366 | weiterlaufen lassen; Blindregel |
 
 Lokal läuft nichts.
@@ -34,8 +35,8 @@ Lokal läuft nichts.
 ## 3. Als Nächstes
 
 1. Q7 fertig → einsammeln, Aggregation (mit `--wsindy-source matlab`), **G-Q7**.
-2. Danach W-2 (Q8-Gitter, `k8s/sideproject_q8_job.yaml`) auf die frei werdenden Q7-Kerne; Nutzer `oc apply`.
-   Bei G-Q7 nicht bestanden: Cap-Fallback-Zweig fehlt noch (WP-FA9), erst Codex.
+2. W-2 läuft; nach Q7 Parallelität 6 → 16. Hochrechnung aus den ersten Shards. Bei G-Q7 nicht bestanden (unwahrscheinlich):
+   exakte Shards neu, Cap-Fallback-Zweig (WP-FA9) erst Codex.
 
 Erledigt 15:30: Q5-W geöffnet (MATLAB-Zeilen ändern keine Q5-Zählung), Q8-Probe geprüft — DIARY 02.11.
 

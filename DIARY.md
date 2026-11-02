@@ -6,6 +6,14 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ## 2026-11-02
 
+### W-2 started before G-Q7 (user)
+
+Q7 at 328/338 left 6 of the 40 cores free; the user started the Q8 grid (`k8s/sideproject_q8_job.yaml`, 3,540
+shards, image `512dd5b`) at 23:35 with parallelism 6 instead of 16, before G-Q7. Accepted risk: if Q7 failed G-Q7, the
+exact-system shards would have run with the wrong path end (Q8 §2) and be recomputed; surrogate shards are unaffected.
+Judged unlikely from the second interim look (dim 1 final, inside the −5 pp margin on every metric). Inputs on NFS
+byte-identical to the local grid files; 6 pods running. Raise to 16 when Q7 frees its cores.
+
 ### WISP explorable as full-screen pages (WP-X3), with a pipeline map
 <!-- 574938c -->
 
