@@ -7,6 +7,7 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 ## 2026-11-02
 
 ### Q5-W opened after §5.5 (user): the MATLAB rows change no Q5-cell count; Q8 probe technically clean
+<!-- 7208765 -->
 
 **Opening (user, afternoon).** Same logic as the provisional opening of 2026-10-31 (scratchpad only,
 `q5w_open.py`, nothing produced in the repo), now on the **complete** Q5 grid (1,632 cells, 1,584 noisy/subsampled)
