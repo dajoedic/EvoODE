@@ -7,6 +7,7 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 ## 2026-11-02
 
 ### WISP explorable as full-screen pages (WP-X3), with a pipeline map
+<!-- 574938c -->
 
 User: no long scrolling page — one full-screen page per step with transitions, laptop first; and "I lost the thread
 after the start", so FROLS / FoBa / stop / fit / BIC must be unmistakable. WP-X3 (Codex): 48 pages, wheel/keys/swipe =
