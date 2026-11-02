@@ -7,6 +7,7 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 ## 2026-11-02
 
 ### W-2 started before G-Q7 (user)
+<!-- 23815e7 -->
 
 Q7 at 328/338 left 6 of the 40 cores free; the user started the Q8 grid (`k8s/sideproject_q8_job.yaml`, 3,540
 shards, image `512dd5b`) at 23:35 with parallelism 6 instead of 16, before G-Q7. Accepted risk: if Q7 failed G-Q7, the
