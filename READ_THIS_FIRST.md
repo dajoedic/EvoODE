@@ -10,7 +10,18 @@ zweites davon. Alles Dauerhafte gehört dorthin, nach `PAPER_1.md` oder ins `DIA
 **Regeln:** wird immer **vollständig überschrieben**, nie angehängt. Was älter als ein paar Tage
 ist, ist vermutlich falsch — dann gilt `CLAUDE.md`.
 
-**Stand: 2026-11-02, 23:25 — WISP-Plan bis 31.12. (CLAUDE.md, „WISP paper — the fixed plan“).**
+> ## ⚠️ ACHTUNG: C-6 WIRD LEERGEZOGEN — PODS WANDERN AUTOMATISCH ZUR W-REIHE
+> **Seit 02.11. 23:58 (Nutzer: W-Reihe hat absolute Priorität).** Das Skript `shift_pods.sh` (Scratchpad dieser Sitzung,
+> detached, Log `shift_pods.log`) senkt bei **jeder fertigen C-6-Zelle** die C-6-Parallelität um 1 und hebt W-2 (Q8)
+> auf 40 − C-6 − aktive Q7-Pods. **Ziel: C-6 auf 0, alle 40 Kerne für W-2, danach W-4.** Kein laufender Pod wird getötet.
+> - **C-6 NICHT „reparieren“**, auch wenn seine Parallelität < 24 ist — das ist gewollt.
+> - Erste Verschiebung geprüft 03.11. 00:07: C-6 24 → 23, Q8 6 → 7, C-6 `failed` = 0, kein Pod beendet.
+> - Braucht Laptop an + VPN + gültigen oc-Login; läuft es nicht, wird nur nichts verschoben. Neu starten:
+>   `"C:\Program Files\Gitinash.exe" -c '<scratchpad>/shift_pods.sh >> <scratchpad>/shift_pods.log 2>&1'`
+> - **Rückweg nach W-4:** C-6 wieder auf 24 (`oc patch job evoode-phase-c-c6-grid-capped -n scch-das -p '{"spec":{"parallelism":24}}'`);
+>   automatischer Rückweg als Cluster-Pod (Codex) noch zu bauen.
+
+**Stand: 2026-11-03, 00:15 — WISP-Plan bis 31.12. (CLAUDE.md, „WISP paper — the fixed plan“).**
 
 ## 1. Was läuft
 
