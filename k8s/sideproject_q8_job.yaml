@@ -60,6 +60,11 @@ spec:
             - name: evoode-bigdata
               mountPath: /outputs
               subPath: data-science/joedicke
+            # The image has no docs/; the runner checks the frozen Q8 protocol's hash at this path.
+            - name: evoode-bigdata
+              mountPath: /opt/EvoODE/docs
+              subPath: data-science/joedicke/sideproject_q8_512dd5bd534530327b1f5fed3e7892a1e0950016/input/docs
+              readOnly: true
       volumes:
         - name: evoode-bigdata
           nfs:

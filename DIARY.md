@@ -30,6 +30,13 @@ Planning (Codex, from measured Q5 solve times, unmeasured factors ×2 for C and 
 ~910–2,210 core-h; the upper end is slightly above the protocol's ~2,150. Probe: 75 shards, one unit per block.
 Next: user pushes → image; staging (one tarball, 720 binaries); probe when cores are free.
 
+**Probe started 02.11. ~01:20** (user: pushed by Claude with permission; option (b), 8 pods temporarily above the
+40-core limit). Image `512dd5b`, inputs on NFS hash-checked. First start failed in every pod before any fit: the
+runner checks the Q8 protocol's hash under `/opt/EvoODE/docs/`, and the image has no `docs/` (Dockerfile copies
+`src`, `studies`, `benchmarks` only). Fix without a rebuild: the protocol, byte-identical (`99948b98…`), on NFS under
+`input/docs/`, mounted read-only at `/opt/EvoODE/docs` in both Q8 manifests; the hash check stays in force. Second
+start runs. Cluster size: running pods of all namespaces request ~119 cores, so the documented 96 is outdated.
+
 ## 2026-11-01
 
 ### Q7 interim look at the user's request — preliminary, deviation from Q7 §6
