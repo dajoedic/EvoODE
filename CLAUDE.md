@@ -253,6 +253,7 @@ join the current item. Nothing else gets cores before 31.12.
 | W-4 | **Final run Q9**: all 63 systems × both ICs × 11 conditions × 3 realizations + clean, one identity; 3,000–8,000 core-h | Orion | ~15.11.–~10.12. | if the projection exceeds 21 days: user decides on more cores or a smaller dim-3 scope |
 | W-5 | Writing in parallel from ~15.11.: Methods (from `docs/kochbuch/`), Related Work, Setup | Claude drafts, user owns | 15.11.–10.12. | **G3** journal choice by ~1.12. |
 | W-6 | Aggregation, cluster-robust statistics (systems as units), tables/figures, Results, Discussion, limitations | Claude / user | ~10.–24.12. | **G4** claim-tracing check: every number in the text traced to a table |
+| W-6b | Re-run every MATLAB WSINDy row (~20 min, laptop) under a proper licence (user: JKU, requested when needed) into a fresh output folder; must match the trial-licence rows of 2026-11-02 | Claude / user | before W-7 | rows differ → report, do not submit on trial rows |
 | W-7 | Final read, submission | user | 24.–31.12. | — |
 
 **Baselines (fixed):** WSINDy (W1, W1-interp on ρ = 0.5), SINDy, Weak-SINDy, E-SINDy (WP-N47, existing). PySR and
