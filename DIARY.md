@@ -7,6 +7,7 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 ## 2026-11-02
 
 ### C-6 cores move to the W series, one per finished cell (user)
+<!-- 1d21ed1 -->
 
 User, 23:50: the W series has absolute priority; all 24 C-6 cores move over, starting now, and come back after W-4.
 Mechanism (laptop watcher `shift_pods.sh`, scratchpad, started 23:58): on every C-6 completion C-6 parallelism drops
