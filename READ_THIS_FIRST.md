@@ -19,9 +19,12 @@ ist, ist vermutlich falsch — dann gilt `CLAUDE.md`.
 | **Q8-Probe** Orion (`512dd5b`, 75 Shards) | **fertig 75/75**, technisch sauber, 36 h statt geplanter 98–221 h (DIARY) | — |
 | **Q7-Fits** Orion (338 Shards, 16 Pods) | 328/338 um 23:25, 0 Fehler; 10 laufen, 4 davon seit 31.10. (Nachzügler bestimmen das Ende) | einsammeln, Q7-Aggregation, **G-Q7** |
 | **W-2 = Q8-Gitter** Orion (`512dd5b`, 3.540 Shards) | **gestartet 02.11. 23:35 mit 6 Pods** (frei gewordene Q7-Kerne; Nutzer: Start vor G-Q7, Risiko akzeptiert) | nach Q7 auf 16 hochziehen: `oc patch job evoode-sideproject-q8 -n scch-das -p '{"spec":{"parallelism":16}}'` |
-| **C-6 gekappt** Orion (24 Pods) | 1.405/3.366 | weiterlaufen lassen; Blindregel |
+| **C-6 gekappt** Orion | 1.411/3.366; **wird seit 02.11. 23:58 leergezogen** (Nutzer: W-Reihe hat Vorrang) | nach W-4 Parallelität zurück auf 24 |
 
-Lokal läuft nichts.
+**Lokal läuft:** `shift_pods.sh` (Scratchpad, detached, Log `shift_pods.log`): pro fertiger C-6-Zelle C-6-Parallelität −1,
+Q8-Parallelität = 40 − C-6 − aktive Q7-Pods (nur steigend); stoppt, wenn C-6 `failed` sich ändert. Braucht Laptop an,
+VPN, gültigen oc-Login; fällt es aus, passiert nichts Schlimmes, es wird nur nichts mehr verschoben. Rückweg nach W-4
+noch zu bauen (Cluster-Pod, Codex).
 
 ## 2. Heute erledigt
 

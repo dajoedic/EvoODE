@@ -6,6 +6,16 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ## 2026-11-02
 
+### C-6 cores move to the W series, one per finished cell (user)
+
+User, 23:50: the W series has absolute priority; all 24 C-6 cores move over, starting now, and come back after W-4.
+Mechanism (laptop watcher `shift_pods.sh`, scratchpad, started 23:58): on every C-6 completion C-6 parallelism drops
+by the number of completions — the Job controller then starts no replacement, or removes its youngest pod (the
+seconds-old replacement), so no running cell is killed; Q8 parallelism is set to 40 − C-6 parallelism − active Q7
+pods and only ever raised, which also hands Q7's freed cores to W-2. Safety stop: any change in C-6 `status.failed`
+(a removed pod must not count as failed; backoffLimit 50). Expected: ~2 C-6 completions per hour, so most cores move
+within ~12 h, the last ones with C-6's longest cells. Kubernetes 1.30. Reverse direction after W-4 still to build.
+
 ### W-2 started before G-Q7 (user)
 <!-- 23815e7 -->
 

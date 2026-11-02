@@ -237,10 +237,11 @@ file is scheduled for the status review after Phase C ends.
 
 **Target: submission 31.12.2026** (a target, not a hard cut). **Work mode (user): focused execution.** No side
 discussions or new ideas unless something goes wrong; every step below is done in this order, every gate is a short
-user decision against criteria written down before the numbers. Guardrail "WISP simplicity" applies. EvoGrow C-6 runs
-on untouched (24 cores, blind rule); Paper 2 only as notes; annihilator track separate.
+user decision against criteria written down before the numbers. Guardrail "WISP simplicity" applies. EvoGrow C-6
+(blind rule) **gives its cores to the W series from 2026-11-02 (user: absolute priority)**, one per finished cell, and
+gets them back when W-4 is done; Paper 2 only as notes; annihilator track separate.
 
-**Cluster slot order** (EvoODE ≤ 40 cores; C-6 keeps its 24; every freed core goes to the first open item):
+**Cluster slot order** (EvoODE ≤ 40 cores; C-6 drained to 0 by completions, never by killing a pod; every freed core goes to the first open item):
 1. Q7 fits (14 pods, running since 31.10.) → 2. W-2 subset + ablation → 3. W-4 final run. Freed Q5 straggler cores
 join the current item. Nothing else gets cores before 31.12.
 
