@@ -7,6 +7,7 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 ## 2026-11-03
 
 ### WISP explorable: 19 self-contained pages (WP-X4), visual opening and results, navigation fix (WP-X5)
+<!-- 6b08c92 -->
 
 User feedback on version 3: real smooth scrolling; the first three pages must show problem → solution → how well, hard
 and short; ~20 pages instead of 48; one page = one closed section; visible guess curves, "grows ever more slowly"
