@@ -1,126 +1,106 @@
-# WP-X2 — WISP explorable: complete the story (stop, fit + BIC, generalization, failure), German + English, curves from the Julia evaluation
-**Language: Python** (data export, build, checks) and **Julia** (one display-trajectory export script, executed by Claude)
-— the page itself is static HTML, CSS and JavaScript.
+# WP-X3 — WISP explorable: full-screen pages with transitions, a visible pipeline map, final polish
+**Language: Python** (build, checks) — the page itself is static HTML, CSS and JavaScript.
 
-Stand 2026-11-02. Follows WP-X1/X1b/X1c (reports in `codex/reports/REPORT_WP_X1*.md`; commit `6a0e352`). Preview of the
-current state: the user likes it ("schaut schon ganz cool aus") and wants it **complete**, in **German and English**.
-Every rule from WP-X1/X1b/X1c stays in force (whitelist, blind rule, no Q7/Q8 *results*, no hand-typed result numbers,
-both metrics side by side, strata never pooled, exact/surrogate never mixed in a structure metric, byte-identical
-rebuild, results contract and swap test).
+Stand 2026-11-02. Follows WP-X2 (`codex/reports/REPORT_WP_X2.md`, commit `3e151f3`). Every rule from WP-X1/X1b/X1c/X2
+stays in force (whitelist, blind rule, no Q7/Q8 results, no hand-typed result numbers, both metrics side by side,
+strata never pooled, exact/surrogate never mixed in a structure metric, i18n key parity EN/DE, byte-identical rebuild,
+results contract, swap test, size budget ≤ 14 MB). **No numerical code and no data change in this WP** — `compute.js`,
+the exporters' numbers and the Julia import stay as they are; only structure, layout, text and presentation change.
 
-## Read first
+## User feedback driving this WP (2026-11-02)
 
-- `docs/kochbuch/Kochbuch_WISP.html` — German plain-language walkthrough; its sections "Aufhören", "Fitten",
-  "Wählen (BIC)", "Abschmecken", "Drittes Beispiel: wenn es schiefgeht" and "Was wir über das Aufhören gelernt haben"
-  are the content source for the new sections (content only — the German text is a translation of the English page,
-  not cookbook-style prose).
-- `docs/sideproject_residual_growth_protocol_q5.md` §3 (pipeline, size rule (c) trajectory BIC primary) and
-  `docs/sideproject_residual_growth_protocol_q7.md` (the significance stop rule) and `_q8.md` §2–3 (variant C, bound).
-- `analysis/scripts/aggregate/build_sideproject_q7_paths.py` — reference implementation of the Q7 stop rule.
-- `studies/regression/sideproject_q5_noise_fits.jl`, `studies/regression/sideproject_q4_path_fits.jl`
-  (`q4_evaluate`) and `src/simulate/solve.jl` — the evaluation path that produced the stored R².
+1. The user loves sites where you **don't scroll a long page**: scrolling (wheel, arrow/PageDown key, swipe) brings in
+   the **next full-screen page with a dynamic transition**. Step by step. The art is to split the content so that each
+   step fits on one screen. Target: **laptop, 1366 × 768 CSS px viewport** (browser chrome already subtracted —
+   design for a usable viewport of 1366 × 657 as well, see Acceptance).
+2. "The beginning was good, then I **lost the thread**." It must be **unmistakably clear which part is the weak form,
+   which part FROLS, which part FoBa, which part the stop rule, which part the fit, which part BIC**, and which part
+   the test.
+3. Polish found in review: the curve panels in the "second starting point" section are far too small; the legend says
+   "Julia-Auswertung"/"Julia evaluation" where a reader needs "model"; the BIC chart's x-axis shows non-integer term
+   counts (2.25); the zero-residual stop is printed as 0,00000000000001 (use scientific notation, e.g. 10⁻¹⁴).
 
 ## Scope
 
-### 1. Bilingual: one page, German and English
+### 1. Full-screen pages ("slides") with transitions
 
-- One built file with a visible language switch (EN | DE) in the masthead. Initial language: a `lang` URL parameter or
-  hash if present, else the browser language (German if it starts with `de`, else English); the choice is remembered
-  in `localStorage` wrapped in try/catch (the page must work when storage is unavailable).
-- All user-visible text lives in two string tables (`explainer/wisp/src/i18n/en.json`, `de.json`) with identical keys;
-  the HTML template and `app.js` contain no prose. Math, data and numbers are shared. Number formatting follows the
-  language (German decimal comma, thousands separator).
-- **The German version is a faithful, understandable translation of the English text** (user correction 2026-11-02:
-  "Deutsch darf ruhig auch technisch sein — einfach übersetzen, dass es verständlich ist"). Same content and structure
-  as English, no separate rewrite and no simplified tone; technical terms are fine. Correct, natural German grammar
-  (no word-by-word calques), established terms where they exist (Differentialgleichung, Rauschen, schwache Form,
-  Restfehler, Kandidat, Rekonstruktion, Generalisierung). Method names stay as they are (FROLS, FoBa, BIC, SINDy,
-  Weak-SINDy, E-SINDy, WSINDy).
-- Tests: key parity between the two tables; no untranslated key at runtime in either language (Node DOM harness renders
-  both languages and checks that no key name or empty string reaches the DOM); the `<html lang>` attribute switches.
+- Restructure the page into a sequence of full-viewport pages. Each page: **one idea, at most one main figure**, a
+  short text. Expect roughly 35–50 pages; splitting long sections into several pages is the main work.
+- Navigation: mouse wheel / trackpad, ↓ ↑ PageDown PageUp Space, touch swipe, and a dot/progress navigation at the side
+  that shows the current page and its section on hover. One gesture = one page (debounce trackpad inertia so one swipe
+  never skips several pages). Each page has a deep link (`#p-<id>`), browser back/forward works, the URL keeps the
+  `lang` parameter.
+- Transitions: a calm, fast entrance (≈ 400–600 ms: fade + slight slide or a shared-element move where a figure
+  continues from one page to the next). No gimmicks. Figures animate in when their page becomes active.
+- **Interactions must never trigger a page change**: while dragging a slider, the weak-form window, or scrolling inside
+  an element that scrolls internally (tables, the results explorer), wheel/touch go to that element. Keyboard focus
+  inside a control keeps arrow keys for the control.
+- Prefer native CSS scroll snapping plus a small amount of JS over a library; if a library is used, it must be pinned,
+  from cdnjs/jsdelivr, and justified in the report.
+- **Fallbacks:** viewports narrower than 760 px or lower than 560 px, and `prefers-reduced-motion: reduce`, get the
+  normal continuous scrolling page (no snapping, no transitions) with the same content order. Print view: continuous.
+- **The results explorer is the last part and is a full-screen app**: it fills the viewport and organises itself
+  internally (tabs or a filter bar plus panels; internal scrolling only inside clearly bounded panels). The drill-down
+  is part of that app.
 
-### 2. Display trajectories from the Julia evaluation itself (replaces the Python re-simulation for display)
+### 2. The thread: a pipeline map that is always visible
 
-WP-X1c showed that a Python integrator cannot reproduce the stored R² (Julia `Tsit5`, abstol = reltol = 1e-6) to 1e-6:
-only 922 of 1,632 cells got curves. Fix by construction:
-- Write `studies/explainer/export_wisp_display_trajectories.jl`. It reuses the **exact** Q5 evaluation code path
-  (`q4_evaluate` and what it calls — same simulate call, same optimizer settings, same clean reconstruction and
-  opposite-IC generalization targets as `sideproject_q5_noise_fits.jl`), for: (a) the chosen candidate (rule (c)) of
-  every Q5 cell, and (b) **every** candidate of the featured cells listed in Scope 3. It writes the predicted
-  trajectories on the full target grid plus the recomputed R² (arithmetic and variance-weighted, reconstruction and
-  generalization) to `outputs/wisp_explainer_julia/` (one compact file, e.g. JSON lines or a binary with an index;
-  document the format). It must not fit anything — parameters come from `q5_units.csv` / `q5_candidates.csv`.
-- Pass gate: recomputed R² equals the stored value to **1e-12** absolute in all four scores (same code, same inputs —
-  anything else is a defect to report, not to tolerate). Cells that fail or whose stored score is empty keep curves
-  withheld, as now; the report lists them with the reason.
-- Codex cannot run Julia here (`codex/CODEX_PROTOCOL.md`). Write the script, verify it by reading, and add a
-  **written expected runtime** to the report (estimate from counts: cells × candidates × solves). Claude runs it. The
-  Python data export reads the Julia output when present; when absent it keeps today's WP-X1c behaviour, so the build
-  never breaks. Keep the WP-X1c Python check as a secondary diagnostic only.
-- Display thinning (48 points, 5 significant digits) stays.
+- Introduce, right after the problem has been motivated (after the noise page), **one overview page "WISP in one
+  picture"**: the pipeline as a diagram — data → weak form → FROLS (grow) → FoBa (clean up) → stop → fit every
+  candidate → BIC (choose) → test on a second starting point — with **one sentence per box** (the existing
+  one-sentence-per-component texts from the cookbook's "WISP in einem Satz pro Baustein", translated).
+- From then on a **compact pipeline bar** stays visible on every method page (top or side), with the current step
+  highlighted, so the reader always knows "I am in FROLS now" / "this is FoBa" / "this is BIC". Clicking a step jumps
+  to its first page.
+- Each method step's first page starts with a short title card: the step's name, what goes in, what comes out
+  (e.g. FROLS: in = the weak linear system, out = a growing list of terms). Use one colour per step consistently in the
+  bar, the title card and that step's figures.
+- Where FROLS and FoBa happen in the same figure (the step-through), mark each event visibly as "FROLS: added …" or
+  "FoBa: removed …".
+- Before the results explorer: a recap page — the same pipeline picture, now with the running example's actual
+  outcome written under each box (from the data, no typed numbers).
 
-### 3. The missing sections (replace the three placeholders)
+### 3. Polish (from the review)
 
-Choose **featured cells** from the Q5 grid and record the choice and the reason in the manifest. At least: the
-running example `sys0003_ic1_s0.03_r0_n1`; one dim-2 cell (predator–prey or another readable dim-2 system) where the
-chosen structure is exact; one cell where the **truth is not on the path** (`truth_on_path = False`) for the failure
-story; one cell where reconstruction is good but **generalization fails** (high reconstruction R², low generalization
-R²). Pick them by a rule written in the report before looking at which systems come out (e.g. the lowest system id
-satisfying the condition at a stated σ), not by taste.
+- Section "second starting point": curve panels at a readable size (each featured cell gets its own page with the
+  reconstruction and generalization curves large).
+- Legend labels: "model" / "Modell" (and "clean target" / "saubere Referenz", "measurements" / "Messwerte"); no
+  implementation names (Julia, Python) in reader-facing labels — they may appear in the provenance details only.
+- BIC chart: integer ticks for the number of terms.
+- Very small/large numbers in prose and captions in scientific notation with superscript exponents, locale-aware.
+- German text: keep the WP-X2 approach (faithful, understandable translation; technical terms are fine). New strings
+  get both languages; key parity test stays.
 
-6. **Where to stop.** Why a path has to end (each extra term always lowers the training error a bit → overfitting).
-   Interactive: on the live path, show the remaining weak error per step against the noise level the data can explain.
-   Present **both** path ends that exist in the project and say plainly which is the current state:
-   - the interim 6-term cap (Q5) — honestly described as taken from the truth (twice the largest true equation size),
-     a declared limitation;
-   - the Q7 significance test ("a term only joins if it brings more than noise plausibly could") — implemented live in
-     JS for the featured dim-1 cells, reproducing `build_sideproject_q7_paths.py` on them (same check style as WP-X1b:
-     identical stop step, exit non-zero on mismatch), **but no Q7 result rate anywhere**.
-   - A data-driven status line: "Which rule WISP uses is decided at gate G-Q7" — driven by a field in the data so that
-     after the decision only data changes.
-7. **Fit every candidate, then choose (BIC).** Every path state is a candidate; each gets one trajectory fit started
-   from its weak coefficients. Interactive: a candidate scrubber over the featured cell's path — for each candidate its
-   equation (formatted, with coefficients), its simulated trajectory over the data (from the Julia export), its fit
-   error and its BIC; a chart BIC vs number of terms with the chosen one marked; a clear explanation of the trade-off
-   (fit vs size, the penalty per term) for laypeople. Mention initial-state estimation (variant C) and the coefficient
-   bound only as "decided at gate G2", data-driven like the stop status.
-8. **The real test: a second starting point — and what failure looks like.** The cookbook's "fridge" idea: the second
-   trajectory is never used for training. Show reconstruction vs generalization for the featured cells side by side
-   (trajectory over clean data from the other initial condition). Then the two failure stories with their real cells:
-   (a) truth not on the path (show the path's terms vs the true terms), (b) fits the training curve, fails the second
-   starting point. End with an honest "what WISP cannot do yet" paragraph from the cookbook's open points.
+### 4. Fit check — every page must fit one screen
 
-### 4. Results explorer and claim markers
-
-- Keep the explorer as is (contract version bump only if needed). In the drill-down, curves now come from the Julia
-  export.
-- **Narrow `data-claim`:** today every paragraph carries it, which defeats its purpose. Mark only sentences (in both
-  languages, by string key) that **interpret a result or a comparison**; explanations of the method carry no marker. A
-  test lists the marked keys and fails if a marked key exists in one language only.
-
-### 5. Polish
-
-- Section 5 residual chart: at step 0 it shows an empty plot with a negative y-axis; show a sensible state (the
-  starting point at 100 %, y-axis from 0).
-- Re-check every figure in both languages at 360 px and 1280 px for overflow (long German words!). Use hyphenation
-  (`hyphens: auto` with the correct `lang`) where needed.
-- Size budget: built HTML ≤ 14 MB (hard publish limit 16 MB), `explainer/wisp/data/` ≤ 17 MB.
+- Add a built-in check mode: when the page is opened with `?fitcheck=1`, it lays out every page in the snapped mode
+  at the current viewport, measures whether any page's content overflows the viewport (content box, all figures and
+  controls, in the current language), and writes the result as JSON into a `<pre id="fitcheck-result">` element
+  (list of page ids with their content height vs viewport height, and `ok: true/false`).
+- Add `analysis/scripts/explainer/check_wisp_explainer_fit.py`, which runs headless Microsoft Edge
+  (`C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe --headless=new --dump-dom`) on the built file with
+  `?fitcheck=1&lang=en` and `&lang=de` at window sizes **1366×768** and **1366×657**, parses the JSON and exits
+  non-zero if any page overflows. Headless Edge may be blocked in your sandbox (WP-X2 report) — then write and
+  review the script; **Claude runs it** and will send overflow findings back.
+- Also have the script save one screenshot per page per language at 1366×768 into `outputs/wisp_explainer_checks/
+  pages/` (Edge `--screenshot` with the deep link), so the pages can be reviewed visually.
 
 ## Forbidden
 
-Everything WP-X1/X1b/X1c forbade. In particular: no C-6 EvoGrow result; **no Q7 or Q8 result rate or result file**
-(implementing the Q7 stop *rule* live on featured cells is allowed and required); no fitting in the Julia script; no
-change under `src/`, to `sideproject_q4_path_fits.jl`, `sideproject_q5_noise_fits.jl`, or any existing analysis script
-or output; no git operations; nothing running longer than 15 minutes in your session.
+Everything WP-X1/X1b/X1c/X2 forbade. In addition: no change to `compute.js` behaviour, to any number in the data files,
+to the Julia script or its output, or to the featured-cell selection; no hand-typed numbers in new texts; no library
+that is not pinned and justified.
 
 ## Acceptance
 
-1. Data export and assembly exit 0; rebuild byte-identical; size budget met (test).
-2. Strict JS checks exit 0: WP-X1b FROLS/FoBa reference cells, plus the Q7 stop step on the featured dim-1 cells.
-3. Julia script present, reviewed, expected runtime written; Python export consumes its output when present and is
-   unchanged in behaviour when absent (test with a small fixture written to a temp dir).
-4. Featured-cell selection rule written in the report and reproduced by a test from `q5_units.csv`.
-5. i18n tests (key parity, no raw keys, `lang` switch) and narrowed claim-marker test pass; all earlier tests pass.
-6. Report `codex/reports/REPORT_WP_X2.md`: what was built, featured cells and rule, Julia script format and expected
-   runtime, all check results, open points. Status `blocked` is correct **only** for "Julia not executable here —
-   environment, not the task"; say so in `note` if that is the only open item.
+1. Data export (`--extend-only` is fine, since no data changes) and assembly exit 0; rebuild byte-identical; size
+   budget met.
+2. All existing tests pass (WP-X1..X2, 21) plus new ones: navigation logic (next/previous page, deep link, no page
+   change while a slider or the drag window is active — Node DOM harness), pipeline bar highlights the right step on
+   every method page, fallback mode below 760 px / reduced motion, i18n parity for new keys.
+3. Strict numerical checks (`check_wisp_explainer_js.py`, `check_wisp_explainer_x2.py`) still exit 0.
+4. `check_wisp_explainer_fit.py` written; either run with exit 0 (all pages fit in both languages at both window
+   sizes) or, if Edge is blocked here, status `blocked` with note "Edge headless not runnable here — environment,
+   not the task" and everything else done.
+5. Report `codex/reports/REPORT_WP_X3.md`: the page list (id, section, pipeline step, one-line content), navigation
+   design, fallback rules, what was split how, check results.

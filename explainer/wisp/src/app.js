@@ -14,7 +14,7 @@ function initialLanguage(){
  return ['de','en'].includes(preferred)?preferred:((window.navigator?.language||'en').startsWith('de')?'de':'en');
 }
 let language=initialLanguage();
-function tr(key,values={}){const text=tables?.[language]?.[key];if(typeof text!=='string'||!text)throw Error('Missing translation: '+key);return text.replace(/\{(\w+)\}/g,(_,k)=>{if(!(k in values))throw Error('Missing translation argument: '+key);return typeof values[k]==='number'?values[k].toLocaleString(language,{maximumSignificantDigits:8}):values[k];});}
+function tr(key,values={}){const text=tables?.[language]?.[key];if(typeof text!=='string'||!text)throw Error('Missing translation: '+key);return text.replace(/\{(\w+)\}/g,(_,k)=>{if(!(k in values))throw Error('Missing translation argument: '+key);return typeof values[k]==='number'?numberText(values[k],8):values[k];});}
 const truthLabel=value=>value==='True'?tr('yes'):value==='False'?tr('no'):tr('j153');
 const weightLabel=value=>tr(value==='arithmetic'?'h111':'h110');
 function applyLanguage(lang,navigate=false){
@@ -29,7 +29,9 @@ applyLanguage(language);
 for(const lang of ['en','de'])document.getElementById('language-'+lang).addEventListener('click',()=>applyLanguage(lang,true));
 const $=id=>document.getElementById(id);
 const el=(tag,text,cls)=>{const e=document.createElement(tag);if(text!==undefined)e.textContent=text;if(cls)e.className=cls;return e;};
-const fmt=(x,d=3)=>x!==''&&x!==null&&x!==undefined&&Number.isFinite(+x)?Number(x).toLocaleString(language,{maximumSignificantDigits:d}):tr('j153');
+const superscript=x=>String(x).replace(/[-+0-9]/g,c=>({'-':'⁻','+':'','0':'⁰','1':'¹','2':'²','3':'³','4':'⁴','5':'⁵','6':'⁶','7':'⁷','8':'⁸','9':'⁹'}[c]));
+function numberText(x,d=3){const n=Number(x);if(n!==0&&(Math.abs(n)<1e-4||Math.abs(n)>=1e7)){const [m,e]=n.toExponential(d-1).split('e');return Number(m).toLocaleString(language,{maximumSignificantDigits:d})+' × 10'+superscript(Number(e));}return n.toLocaleString(language,{maximumSignificantDigits:d});}
+const fmt=(x,d=3)=>x!==''&&x!==null&&x!==undefined&&Number.isFinite(+x)?numberText(x,d):tr('j153');
 const pct=x=>Number.isFinite(+x)&&x!==''?`${fmt(+x*100)}%`:tr('j153');
 const terms=['1','u','u²','u³',tr('j154'),tr('j155')];
 const texTerms=['1','u','u^{2}','u^{3}','\\sin u','\\cos u'];
@@ -39,7 +41,7 @@ window.typesetAll=()=>{if(!window.katex)return;document.querySelectorAll("[data-
 function math(target,tex){target.dataset.tex=tex;target.textContent=tex;if(window.katex)window.katex.render(tex,target,{throwOnError:false,output:'mathml',displayMode:!target.classList.contains('inline')});}
 function equation(support,coefficients){return '\\frac{du}{dt}='+ (support.length?support.map((j,i)=>`${i&&coefficients[i]>=0?'+':''}${fmt(coefficients[i],5)}\\,${texTerms[j]}`).join(' '):'0');}
 function options(target,values,label=v=>v){target.replaceChildren(...values.map(v=>{const e=el('option',label(v));e.value=v;return e;}));}
-function chart(target,series,{title='',xLabel=tr('j157'),yLabel=tr('j158'),areas=[],highlight=null,point=null,zeroBase=false}={}){
+function chart(target,series,{title='',xLabel=tr('j157'),yLabel=tr('j158'),areas=[],highlight=null,point=null,zeroBase=false,integerX=false}={}){
   target.replaceChildren();
   const width=560,height=270,pad={l:76,r:16,t:36,b:42};
   const good=series.flatMap(s=>s.x.map((x,i)=>[x,s.y[i]])).filter(([x,y])=>Number.isFinite(x)&&Number.isFinite(y)&&Math.abs(y)<1e12);
@@ -55,8 +57,9 @@ function chart(target,series,{title='',xLabel=tr('j157'),yLabel=tr('j158'),areas
     const y=ymin+(ymax-ymin)*i/4,x=xmin+(xmax-xmin)*i/4;
     svg.append(svgNode('line',{x1:pad.l,x2:width-pad.r,y1:Y(y),y2:Y(y),class:'grid'}));
     svg.append(svgNode('text',{x:pad.l-8,y:Y(y)+4,"text-anchor":'end'},fmt(y)));
-    svg.append(svgNode('text',{x:X(x),y:height-23,"text-anchor":'middle'},fmt(x)));
+    if(!integerX)svg.append(svgNode('text',{x:X(x),y:height-23,"text-anchor":'middle'},fmt(x)));
   }
+  if(integerX){const stride=Math.max(1,Math.ceil((xmax-xmin)/8));for(let x=Math.ceil(xmin);x<=xmax;x+=stride)svg.append(svgNode('text',{x:X(x),y:height-23,'text-anchor':'middle'},fmt(x)));}
   if(highlight)svg.append(svgNode('rect',{x:X(highlight[0]),y:pad.t,width:Math.max(1,X(highlight[1])-X(highlight[0])),height:height-pad.b-pad.t,fill:'var(--model)',opacity:'.12'}));
   for(const a of areas){const pts=a.x.map((x,i)=>`${X(x)},${Y(a.y[i])}`).join(' ');svg.append(svgNode('polygon',{points:`${X(a.x[0])},${Y(0)} ${pts} ${X(a.x.at(-1))},${Y(0)}`,fill:'var(--data)',opacity:'.18'}));}
   for(const s of series){let d='',drawing=false;for(let i=0;i<s.x.length;i++){
@@ -188,7 +191,7 @@ function fitDraw(reset=false){const feature=featured.find(f=>f.cell_id===$("fit-
  $("fit-index").value=`${index+1} / ${feature.candidates.length}`;math($("fit-equation"),storedEquation({...feature,row,terms:RESULTS.cells.find(c=>c.row.cell_id===feature.cell_id).terms}).join('\\qquad '));
  $("fit-summary").textContent=tr('j330',{v0:(row.candidate_id),v1:(fmt(row.mse,7)),v2:(fmt(candidate.bic,7)),v3:(fmt(candidate.penalty,7)),v4:(row.candidate_id===feature.chosen?tr('j328'):tr('j329'))});
  const valid=feature.candidates.filter(c=>Number.isFinite(c.bic)),chosen=feature.candidates.find(c=>c.row.candidate_id===feature.chosen);
- chart($("bic-chart"),[{x:valid.map(c=>+c.row.k),y:valid.map(c=>c.bic),kind:'model',label:tr('j332')}],{title:tr('j333'),xLabel:tr('j334'),yLabel:'BIC',point:chosen?[+chosen.row.k,chosen.bic]:null});
+ chart($("bic-chart"),[{x:valid.map(c=>+c.row.k),y:valid.map(c=>c.bic),kind:'model',label:tr('j332')}],{title:tr('j333'),xLabel:tr('j334'),yLabel:'BIC',integerX:true,point:chosen?[+chosen.row.k,chosen.bic]:null});
  $("fit-curves").replaceChildren();plotBundle($("fit-curves"),candidate.curves,RESULTS.cells.find(c=>c.row.cell_id===feature.cell_id)?.observed,tr('j297'));
 }
 $("fit-example").addEventListener('change',()=>fitDraw(true));$("fit-candidate").addEventListener('input',()=>fitDraw());fitDraw();

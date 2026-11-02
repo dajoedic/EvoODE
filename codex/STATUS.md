@@ -1,4 +1,4 @@
 status: blocked
-task: WP-X2
-report: codex/reports/REPORT_WP_X2.md
-note: Julia hier nicht ausführbar - Umgebung, nicht Sache; Browser-Sichtprüfung ebenfalls umgebungsbedingt offen.
+task: WP-X3
+report: codex/reports/REPORT_WP_X3.md
+note: Edge headless not runnable here ? environment, not the task

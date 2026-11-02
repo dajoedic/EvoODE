@@ -26,10 +26,13 @@ def transport(data):
 def build(base=BASE):
     src=base/'src'
     data={n:json.loads((base/'data'/f'{n}.json').read_text(encoding='utf8')) for n in ('live','results','manifest')}
+    # Presentation strings are assembled from source without rewriting scientific data.
+    data['live']['i18n']={lang:json.loads((src/'i18n'/f'{lang}.json').read_text(encoding='utf8')) for lang in ('en','de')}
     page=(src/'index.html').read_text(encoding='utf8')
-    values={'STYLE':(src/'style.css').read_text(encoding='utf8'),
+    values={'STYLE':(src/'style.css').read_text(encoding='utf8')+'\n'+(src/'pages.css').read_text(encoding='utf8'),
             'DATA':json.dumps(transport(data),ensure_ascii=False,separators=(',',':'),sort_keys=True).replace('<','\\u003c'),
-            'COMPUTE':(src/'compute.js').read_text(encoding='utf8'),'APP':(src/'app.js').read_text(encoding='utf8')}
+            'COMPUTE':(src/'compute.js').read_text(encoding='utf8'),'APP':(src/'app.js').read_text(encoding='utf8'),
+            'PAGES':(src/'pages.js').read_text(encoding='utf8')}
     for key,value in values.items():page=page.replace('<!--'+key+'-->',value)
     encoded=page.encode('utf8')
     if len(encoded)>14_000_000:raise ValueError(f'HTML size budget exceeded: {len(encoded)}')

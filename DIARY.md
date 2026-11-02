@@ -6,6 +6,17 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ## 2026-11-02
 
+### WISP explorable as full-screen pages (WP-X3), with a pipeline map
+
+User: no long scrolling page — one full-screen page per step with transitions, laptop first; and "I lost the thread
+after the start", so FROLS / FoBa / stop / fit / BIC must be unmistakable. WP-X3 (Codex): 48 pages, wheel/keys/swipe =
+one page, deep links, continuous fallback below 760 × 560 px and for reduced motion; an overview page "WISP in one
+picture" after the noise page and a pipeline bar on every method page with the current step highlighted, title cards
+with input → output, one colour per step. No numerical code or data changed; 26 tests pass. Claude's checks (Codex
+cannot run a browser here): fit check at 1366 × 768 all 48 pages fit (DE); at 1366 × 657 `p-guess` and `p-play`
+overflow in both languages; headless Edge `--screenshot` renders deep-linked pages blank (tool artefact — Playwright
+with Edge renders them correctly, one wheel step = one page, no console errors). Preview version 3.
+
 ### WISP explorable complete (WP-X2): German + English, all sections, drill-down curves from the Julia evaluation
 <!-- 3e151f3 -->
 
