@@ -1,77 +1,87 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="description" content="Learn how equations can be discovered from measurements, then explore the interim WISP results.">
-<title>WISP: equations behind the data</title>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1" name="viewport"/>
+<meta content="" data-i18n-content="h147" name="description"/>
+<title data-i18n="h002"></title>
 <style><!--STYLE--></style>
-<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js" onload="window.typesetAll?.()"></script>
+<script defer="" onload="window.typesetAll?.()" src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
 </head>
 <body>
-<a class="skip" href="#hook">Skip to the story</a>
-<header class="masthead"><a href="#hook" aria-label="WISP home">WISP<span class="mark"> / </span>an explorable explanation</a><a href="#results">Explore the evidence ↗</a></header>
+<a class="skip" data-i18n="h003" href="#hook"></a>
+<header class="masthead"><nav aria-label="" data-i18n-aria-label="h148"><button data-i18n="h004" id="language-en" type="button"></button><span> | </span><button data-i18n="h005" id="language-de" type="button"></button></nav><a aria-label="" data-i18n-aria-label="h149" href="#hook"> <span data-i18n="h006"></span> <span class="mark"> / </span> <span data-i18n="h007"></span> </a><a data-i18n="h008" href="#results"></a></header>
 <main>
-<section id="hook" class="hero">
-<div class="eyebrow">From measurements to meaning</div>
-<h1>Equations behind<br>the data.</h1>
-<p data-claim="review" class="deck">Some law of nature produced this. Can you find it?</p>
-<figure class="wide panel"><div class="figure-head"><span class="data-text">● Measurements</span><span>Try a rule before we explain one.</span></div><div id="hook-chart"></div>
-<fieldset id="guess"><legend>What happens as the population gets larger?</legend><button type="button" data-guess="linear">It keeps accelerating</button><button type="button" data-guess="logistic">It approaches a limit</button><button type="button" data-guess="decay">It fades away</button></fieldset><p data-claim="review" id="guess-feedback" role="status">Choose a prediction. Watch its curve meet the measurements.</p></figure>
-<p data-claim="review">A curve tells us what happened. An equation tries to tell us why. WISP builds possible equations a piece at a time, then asks whether they reproduce the behaviour we measured.</p>
-<nav aria-label="Contents" class="toc"><a href="#equation">A rule for change</a><a href="#catalogue">Build a rule</a><a href="#noise">Meet noise</a><a href="#weak">Add up change</a><a href="#growth">Grow &amp; remove</a><a href="#results">Explore results</a></nav>
+<section class="hero" id="hook">
+<div class="eyebrow" data-i18n="h009"></div>
+<h1> <span data-i18n="h010"></span> <br/> <span data-i18n="h011"></span> </h1>
+<p class="deck" data-i18n="h012"></p>
+<figure class="wide panel"><div class="figure-head"><span class="data-text" data-i18n="h013"></span> <span data-i18n="h014"></span> </div><div id="hook-chart"></div>
+<fieldset id="guess"><legend data-i18n="h015"></legend><button data-guess="linear" data-i18n="h016" type="button"></button><button data-guess="logistic" data-i18n="h017" type="button"></button><button data-guess="decay" data-i18n="h018" type="button"></button></fieldset><p data-i18n="h019" id="guess-feedback" role="status"></p></figure>
+<p data-i18n="h020"></p>
+<nav aria-label="" class="toc" data-i18n-aria-label="h150"><a data-i18n="h021" href="#equation"></a><a data-i18n="h022" href="#catalogue"></a><a data-i18n="h023" href="#noise"></a><a data-i18n="h024" href="#weak"></a><a data-i18n="h025" href="#growth"></a><a data-i18n="h026" href="#results"></a></nav>
 </section>
 <section id="equation">
-<div class="eyebrow">The forward direction</div><h2>A rule for right now</h2>
-<p data-claim="review">Imagine a population. Its size is called <i>u</i>. A differential equation tells us how quickly that size changes at this moment. To draw a curve, take a small step in time, update the size using the rule, and repeat.</p>
+<div class="eyebrow" data-i18n="h027"></div><h2 data-i18n="h028"></h2>
+<p> <span data-i18n="h029"></span> <i data-i18n="h030"></i> <span data-i18n="h031"></span> </p>
 <div class="math" data-tex="\frac{du}{dt}=r u\left(1-\frac{u}{K}\right)"></div>
-<p data-claim="review">The symbol on the left means “change in population per unit of time.” On the right, <i>r</i> controls growth and <i>K</i> is the capacity. Near capacity, growth slows. Move either slider to see a rule become a curve.</p>
-<figure class="panel"><div class="controls"><label>Growth rate <input id="rate" type="range" min="0.1" max="1.5" step="0.01"><output id="rate-value"></output></label><label>Capacity <input id="capacity" type="range" min="25" max="120" step="1"><output id="capacity-value"></output></label></div><div id="logistic-chart"></div><figcaption data-claim="review">Illustration. The starting population stays fixed; each point follows from the previous point and the rule.</figcaption></figure>
-<h3>When things change together</h3>
-<p data-claim="review">Prey feed predators; predators eat prey. We need a rule for each population. The time plot shows when each rises and falls. The phase plane plots prey against predators: time is now the journey around the loop.</p>
-<div id="predator-equation" class="math"></div>
-<figure class="wide panel"><label>Follow time <input id="predator-time" type="range" min="0" max="159" step="1" value="159"><output id="predator-value"></output></label><div class="two-plots"><div id="predator-chart"></div><div id="phase-chart"></div></div><figcaption data-claim="review">Illustration of the cookbook’s predator–prey system. The marked point is the same moment in both views. Dashed line: predators; solid line: prey.</figcaption></figure>
+<p> <span data-i18n="h032"></span> <i data-i18n="h033"></i> <span data-i18n="h034"></span> <i data-i18n="h035"></i> <span data-i18n="h036"></span> </p>
+<figure class="panel"><div class="controls"><label> <span data-i18n="h037"></span> <input id="rate" max="1.5" min="0.1" step="0.01" type="range"/><output id="rate-value"></output></label><label> <span data-i18n="h038"></span> <input id="capacity" max="120" min="25" step="1" type="range"/><output id="capacity-value"></output></label></div><div id="logistic-chart"></div><figcaption data-i18n="h039"></figcaption></figure>
+<h3 data-i18n="h040"></h3>
+<p data-i18n="h041"></p>
+<div class="math" id="predator-equation"></div>
+<figure class="wide panel"><label> <span data-i18n="h042"></span> <input id="predator-time" max="159" min="0" step="1" type="range" value="159"/><output id="predator-value"></output></label><div class="two-plots"><div id="predator-chart"></div><div id="phase-chart"></div></div><figcaption data-i18n="h043"></figcaption></figure>
 </section>
-<section id="catalogue"><div class="eyebrow">The inverse direction</div><h2>Which pieces make the rule?</h2>
-<p data-claim="review">Now reverse the question. We have measurements, but we do not know the rule. Start with a catalogue of building blocks, called <em>terms</em>. A coefficient tells us how strongly each term acts. Switching on a term chooses a piece of the equation.</p>
-<aside data-claim="review">Structure means <em>which terms</em> are present. Parameters are their coefficients. A curve can look right even when its structure is wrong.</aside>
-<figure class="wide panel"><div id="term-cards" class="term-cards"></div><p data-claim="review">A product such as <span class="math inline" data-tex="u\,v"></span> describes interaction between variables; it appears when we have more than one variable.</p><div id="play-equation" class="math"></div><div id="play-chart"></div><p data-claim="review" id="play-status" role="status"></p><button id="play-reset" type="button">Try the logistic terms</button><figcaption data-claim="review">Illustration. Coefficients you set are simulated directly; this playground does not fit a model.</figcaption></figure>
-<p data-claim="review">Trying every combination gets expensive quickly. Choose how many variables a system has. Each equation can use any subset of its catalogue; the total counts below include all equations and the empty subset.</p>
-<figure class="panel"><label>Variables <select id="dimensions"></select></label><div id="combination-count" class="stat"></div><div id="catalogue-list" class="code-list"></div></figure>
+<section id="catalogue"><div class="eyebrow" data-i18n="h044"></div><h2 data-i18n="h045"></h2>
+<p> <span data-i18n="h046"></span> <em data-i18n="h047"></em> <span data-i18n="h048"></span> </p>
+<aside> <span data-i18n="h049"></span> <em data-i18n="h050"></em> <span data-i18n="h051"></span> </aside>
+<figure class="wide panel"><div class="term-cards" id="term-cards"></div><p> <span data-i18n="h052"></span> <span class="math inline" data-tex="u\,v"></span> <span data-i18n="h053"></span> </p><div class="math" id="play-equation"></div><div id="play-chart"></div><p id="play-status" role="status"></p><button data-i18n="h054" id="play-reset" type="button"></button><figcaption data-i18n="h055"></figcaption></figure>
+<p data-i18n="h056"></p>
+<figure class="panel"><label> <span data-i18n="h057"></span> <select id="dimensions"></select></label><div class="stat" id="combination-count"></div><div class="code-list" id="catalogue-list"></div></figure>
 </section>
-<section id="noise"><div class="eyebrow">A small disturbance, a big problem</div><h2>Noise hides in the slope</h2>
-<p data-claim="review">A measurement is never perfect. Here each value is multiplied by a small random disturbance. The same disturbances are reused as you move the noise slider, so you see only the effect of their size.</p>
-<p data-claim="review">A slope estimate subtracts neighbouring measurements and divides by their time gap. When the gap is small, a tiny measurement error becomes a large slope error. Compare the nearly smooth measurements with the jagged derivative estimate.</p>
-<figure class="wide panel"><label>Noise σ <input id="noise-level" type="range" min="0" max="0.05" step="0.001" value="0.03"><output id="noise-value"></output></label><p data-claim="review" id="noise-provenance" class="caption"></p><div class="two-plots"><div id="noise-chart"></div><div id="derivative-chart"></div></div><figcaption data-claim="review">Real Q5 observations at the recorded noise level; rescaled noise is an illustration. Solid truth curve; dotted noisy estimate. This slider also updates the weak-form and growth figures below.</figcaption></figure>
+<section id="noise"><div class="eyebrow" data-i18n="h058"></div><h2 data-i18n="h059"></h2>
+<p data-i18n="h060"></p>
+<p data-i18n="h061"></p>
+<figure class="wide panel"><label> <span data-i18n="h062"></span> <input id="noise-level" max="0.05" min="0" step="0.001" type="range" value="0.03"/><output id="noise-value"></output></label><p class="caption" id="noise-provenance"></p><div class="two-plots"><div id="noise-chart"></div><div id="derivative-chart"></div></div><figcaption data-i18n="h063"></figcaption></figure>
 </section>
-<section id="weak"><div class="eyebrow">Replace a slope with a total</div><h2>Add up the change</h2>
-<p data-claim="review">Instead of asking how fast the population changed at a single moment, ask how much it changed across a window. The left side is the last measurement minus the first. The right side adds up the rule over the same window. “Integral” is the mathematical name for that total.</p>
+<section id="weak"><div class="eyebrow" data-i18n="h064"></div><h2 data-i18n="h065"></h2>
+<p data-i18n="h066"></p>
 <div class="math" data-tex="u(t_b)-u(t_a)=\sum_j c_j\int_{t_a}^{t_b}\phi_j(u(t))\,dt"></div>
-<p data-claim="review">Each shaded area below is a candidate term’s integral. Multiply the areas by coefficients and add them: the result should match the measured change. Integration accumulates nearby values instead of dividing their differences by a small time gap. It helps with noise; it does not make noise disappear.</p>
-<figure class="wide panel"><div class="controls"><label>Window starts at sample <input id="window-start" type="range" min="0" max="143" step="1" value="30"><output id="window-start-value"></output></label><label>Window length <select id="window-length"></select></label></div><p data-claim="review" class="caption">Drag across the main curve to move the window, or use the keyboard controls above.</p><div id="window-chart"></div><div id="window-summary" class="stat"></div><div id="integral-plots" class="integral-grid"></div><figcaption data-claim="review">Dashed: clean integrals. Solid: integrals of noisy measurements. The trapezoidal rule joins adjacent measurements with straight lines and adds their areas.</figcaption></figure>
-<h3>A window becomes a row</h3><p data-claim="review">Repeat this for overlapping windows of several lengths. Every row below is one window; every column is one candidate term. We now seek coefficients that make the weighted columns match the change column. This is linear regression: the terms may be curved, but their coefficients enter as a weighted sum.</p>
-<figure class="wide panel"><div id="matrix" class="matrix"></div><p data-claim="review" id="matrix-size" class="caption"></p><figcaption data-claim="review">A preview of the stacked system. Select a row to inspect its window. Remaining rows use the same construction. The target column comes from measurements, never the true equation.</figcaption></figure>
+<p data-i18n="h067"></p>
+<figure class="wide panel"><div class="controls"><label> <span data-i18n="h068"></span> <input id="window-start" max="143" min="0" step="1" type="range" value="30"/><output id="window-start-value"></output></label><label> <span data-i18n="h069"></span> <select id="window-length"></select></label></div><p class="caption" data-i18n="h070"></p><div id="window-chart"></div><div class="stat" id="window-summary"></div><div class="integral-grid" id="integral-plots"></div><figcaption data-i18n="h071"></figcaption></figure>
+<h3 data-i18n="h072"></h3><p data-i18n="h073"></p>
+<figure class="wide panel"><div class="matrix" id="matrix"></div><p class="caption" id="matrix-size"></p><figcaption data-i18n="h074"></figcaption></figure>
 </section>
-<section id="growth"><div class="eyebrow">A short list, one decision at a time</div><h2>Grow. Refit. Clean up.</h2>
-<p data-claim="review">WISP starts with no terms. FROLS tries each unused term, refits all current coefficients, and chooses the largest reduction in remaining squared error. A large bar means useful <em>extra</em> information given what is already selected, rather than a good match in isolation.</p>
-<p data-claim="review">FoBa then asks whether an older term has become redundant. It removes the cheapest term when its removal costs less than the permitted fraction of the latest forward gain. That lets an early guess leave when a better explanation arrives.</p>
-<figure class="wide panel"><label>Example <select id="path-example"></select></label><p data-claim="review" id="path-provenance" class="notice"></p><div class="controls"><button id="next-step" type="button">Next step →</button><label>Step <input id="path-step" type="range" min="0" max="6" step="1" value="0"><output id="step-value"></output></label></div><div id="gain-chart"></div><div id="path-equation" class="math"></div><p data-claim="review" id="path-event" role="status"></p><div id="residual-chart"></div><p data-claim="review" id="residual-value" class="stat"></p><figcaption data-claim="review">Forward gains are measured before the addition. The equation and residual show the joint refit after backward removals. Squared error refers to the stacked weak system, not trajectory quality.</figcaption></figure>
-<details><summary>A removal recorded in Q5</summary><div id="recorded-foba"></div></details>
-<p data-claim="review">The live example follows the frozen interim growth policy. Its cap and near-zero residual stop are displayed beside the path. This is an interim policy, not a claim that model size has been solved.</p>
+<section id="growth"><div class="eyebrow" data-i18n="h075"></div><h2 data-i18n="h076"></h2>
+<p> <span data-i18n="h077"></span> <em data-i18n="h078"></em> <span data-i18n="h079"></span> </p>
+<p data-i18n="h080"></p>
+<figure class="wide panel"><label> <span data-i18n="h081"></span> <select id="path-example"></select></label><p class="notice" id="path-provenance"></p><div class="controls"><button data-i18n="h082" id="next-step" type="button"></button><label> <span data-i18n="h083"></span> <input id="path-step" max="6" min="0" step="1" type="range" value="0"/><output id="step-value"></output></label></div><div id="gain-chart"></div><div class="math" id="path-equation"></div><p id="path-event" role="status"></p><div id="residual-chart"></div><p class="stat" id="residual-value"></p><figcaption data-i18n="h084"></figcaption></figure>
+<details><summary data-i18n="h085"></summary><div id="recorded-foba"></div></details>
+<p data-i18n="h086"></p>
 </section>
-<section id="stopping" class="placeholder"><h2>Where to stop</h2><p data-claim="review">Coming in the next version.</p></section>
-<section id="selection" class="placeholder"><h2>Fit candidates and choose</h2><p data-claim="review">Coming in the next version.</p></section>
-<section id="generalization" class="placeholder"><h2>A second starting point</h2><p data-claim="review">Coming in the next version: generalization and what failure looks like.</p></section>
-<section id="results" class="results-section"><div class="eyebrow">The evidence, with its limits</div><h2>Does the equation hold up?</h2><p data-claim="review" id="provenance-banner" class="notice"></p><details><summary>Data provenance</summary><dl id="provenance"></dl></details>
-<p data-claim="review">Recovering the exact terms and drawing the right curve are different achievements. Both stay visible below. Reconstruction starts from the clean training initial condition; generalization starts from the other initial condition. The curve metric asks how often the model explains enough variation to cross the displayed threshold.</p>
-<p data-claim="review">Only exact systems enter these structure rates. Strata stay separate. Counts are cells; repeated initial conditions and noise draws do not create independent systems. No uncertainty interval or significance claim is inferred from the cell count.</p>
-<div class="panel"><div class="controls"><label>Noise σ <select id="result-sigma"></select></label><label>Subsampling ρ <select id="result-rho"></select></label><label>Curve-score weighting <select id="result-weight"><option value="variance_weighted">Variance weighted</option><option value="arithmetic">Arithmetic</option></select></label></div><div id="result-axes" class="controls"></div><div data-claim="review" id="metric-key" class="caption"></div><p data-claim="review" class="caption">Rates are rounded for display; their exported values and counts retain the aggregation’s precision.</p></div>
-<p data-claim="review" id="comparison-status"></p><div id="strata" class="strata"></div>
-<div class="panel drill"><h3>Look inside a condition</h3><p data-claim="review">Choose a stratum above, then a system and a cell. The equations come from the stored trajectory-BIC choice. Curves appear only after their re-simulation passes the recorded-score check.</p><div class="controls"><label>System <select id="system-select"></select></label><label>Cell <select id="cell-select"></select></label></div><div id="cell-detail" aria-live="polite"></div></div>
+<section id="stopping"><div class="eyebrow" data-i18n="h087"></div><h2 data-i18n="h088"></h2>
+<p data-i18n="h089"></p>
+<p data-i18n="h090"></p>
+<p class="notice" id="stop-gate"></p><figure class="wide panel"><label> <span data-i18n="h091"></span> <select id="stop-example"></select></label><div id="stop-chart"></div><p id="stop-summary"></p><figcaption data-i18n="h092"></figcaption></figure></section>
+<section id="selection"><div class="eyebrow" data-i18n="h093"></div><h2 data-i18n="h094"></h2>
+<p data-i18n="h095"></p>
+<p data-i18n="h096"></p>
+<div class="math" data-tex="\mathrm{BIC}=N\log(\mathrm{MSE})+k\log N"></div><p class="notice" id="fit-gate"></p>
+<figure class="wide panel"><label> <span data-i18n="h091"></span> <select id="fit-example"></select></label><label> <span data-i18n="h097"></span> <input id="fit-candidate" max="0" min="0" step="1" type="range" value="0"/><output id="fit-index"></output></label><div class="math" id="fit-equation"></div><p id="fit-summary"></p><div id="bic-chart"></div><div id="fit-curves"></div></figure></section>
+<section id="generalization"><div class="eyebrow" data-i18n="h098"></div><h2 data-i18n="h099"></h2>
+<p data-i18n="h100"></p>
+<div id="featured-stories"></div>
+<h3 data-i18n="h101"></h3><p data-i18n="h102"></p></section>
+<section class="results-section" id="results"><div class="eyebrow" data-i18n="h103"></div><h2 data-i18n="h104"></h2><p class="notice" id="provenance-banner"></p><details><summary data-i18n="h105"></summary><dl id="provenance"></dl></details>
+<p data-i18n="h106"></p>
+<p data-i18n="h107"></p>
+<div class="panel"><div class="controls"><label> <span data-i18n="h062"></span> <select id="result-sigma"></select></label><label> <span data-i18n="h108"></span> <select id="result-rho"></select></label><label> <span data-i18n="h109"></span> <select id="result-weight"><option data-i18n="h110" value="variance_weighted"></option><option data-i18n="h111" value="arithmetic"></option></select></label></div><div class="controls" id="result-axes"></div><div class="caption" id="metric-key"></div><p class="caption" data-i18n="h112"></p></div>
+<p id="comparison-status"></p><div class="strata" id="strata"></div>
+<div class="panel drill"><h3 data-i18n="h113"></h3><p data-i18n="h114"></p><div class="controls"><label> <span data-i18n="h115"></span> <select id="system-select"></select></label><label> <span data-i18n="h116"></span> <select id="cell-select"></select></label></div><div aria-live="polite" id="cell-detail"></div></div>
 </section>
-<section id="glossary"><div class="eyebrow">Keep these nearby</div><h2>A small glossary</h2><dl><dt>Differential equation</dt><dd>A rule for the rate of change at the current state.</dd><dt>Trajectory</dt><dd>The curve produced by following a rule from a starting state.</dd><dt>Term / coefficient</dt><dd>A building block of a rule / the number multiplying that block.</dd><dt>Weak form</dt><dd>The equation integrated across windows, replacing local derivatives with accumulated change.</dd><dt>Residual</dt><dd>The difference between a measured target and the model’s prediction for it.</dd><dt>Structure</dt><dd>The set of terms present in the equation. Raw uses every stored term; pruned removes small coefficients using the frozen evaluation rule.</dd><dt>R²</dt><dd>A score comparing prediction error with variation around the data’s mean. A perfect prediction reaches unity; a score below zero is worse than predicting the mean.</dd><dt>Stratum / cell / system</dt><dd>A separate group of systems / a particular initial condition, noise and sampling draw / an underlying equation.</dd><dt>BIC</dt><dd>An information criterion trading fit against model size. Its role is explained in the next version.</dd></dl>
-<h2>Where the pieces come from</h2><p data-claim="review">WISP combines established pieces. The weak form makes the search less sensitive to numerical derivatives; incremental growth keeps a short candidate list; backward removal lets early guesses leave; simulation and refitting test behaviour over time.</p><ul class="credits"><li>Sparse term catalogues: SINDy — Brunton, Proctor &amp; Kutz.</li><li>Integral discovery: Schaeffer &amp; McCalla; weak-form discovery: WSINDy — Messenger &amp; Bortz.</li><li>Forward orthogonal least squares: FROLS — Billings, Chen &amp; Korenberg.</li><li>Forward–backward greedy selection: FoBa — Tong Zhang.</li><li>Simulation and information criteria: Mangan, Kutz, Brunton &amp; Proctor.</li></ul><p data-claim="review">The ideas and worked systems follow the repository’s WISP cookbook. The frozen protocol and manifest identify the numerical evidence; illustrative controls are labelled separately.</p></section>
-</main><footer>WISP · Weak-form Incremental Structure Pursuit <a href="#hook">Back to the beginning ↑</a></footer>
+<section id="glossary"><div class="eyebrow" data-i18n="h117"></div><h2 data-i18n="h118"></h2><dl><dt data-i18n="h119"></dt><dd data-i18n="h120"></dd><dt data-i18n="h121"></dt><dd data-i18n="h122"></dd><dt data-i18n="h123"></dt><dd data-i18n="h124"></dd><dt data-i18n="h125"></dt><dd data-i18n="h126"></dd><dt data-i18n="h127"></dt><dd data-i18n="h128"></dd><dt data-i18n="h129"></dt><dd data-i18n="h130"></dd><dt data-i18n="h131"></dt><dd data-i18n="h132"></dd><dt data-i18n="h133"></dt><dd data-i18n="h134"></dd><dt data-i18n="h135"></dt><dd data-i18n="h136"></dd></dl>
+<h2 data-i18n="h137"></h2><p data-i18n="h138"></p><ul class="credits"><li data-i18n="h139"></li><li data-i18n="h140"></li><li data-i18n="h141"></li><li data-i18n="h142"></li><li data-i18n="h143"></li></ul><p data-i18n="h144"></p></section>
+</main><footer> <span data-i18n="h145"></span> <a data-i18n="h146" href="#hook"></a></footer>
 <script id="wisp-data" type="application/json"><!--DATA--></script>
 <script><!--COMPUTE--></script><script><!--APP--></script>
 </body></html>

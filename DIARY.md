@@ -6,6 +6,20 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ## 2026-11-02
 
+### WISP explorable complete (WP-X2): German + English, all sections, drill-down curves from the Julia evaluation
+
+User: German **and** English, the German a plain understandable translation (technical is fine). WP-X2 (Codex) added
+stop / fit + BIC / generalization + failure, one page with an EN|DE switch (293 keys each), gate statuses (G-Q7, G2)
+as data in `src/gates.json`, `data-claim` narrowed to 4 result-interpreting keys. Featured cells by a rule fixed
+before querying (σ = 0.03, ρ = 0, realization 1, lowest system id): 3/ic1 running example, 28/ic1 dim-2 exact,
+1/ic2 truth not on path, 6/ic2 good reconstruction / failed generalization. Live Q7 stop rule in JS equals
+`build_sideproject_q7_paths.py` on the featured dim-1 cells (stop steps 4/3/2); no Q7 result rate is shown.
+Display curves now come from `studies/explainer/export_wisp_display_trajectories.jl` (same `q4_evaluate` path as the
+stored scores; run by Claude on the laptop, 1,663 records, ~3 min): **1,514 pass at R² error 0.0, 149 withheld, all
+for a missing stored score, 0 numerical mismatches** — WP-X1c's 922 were an integrator artefact, as suspected. 21
+tests pass; page 11.3 MB. Preview version 2 at the same URL. Polish left: tiny two-up charts in section 8, legend
+label "Julia-Auswertung" is jargon, non-integer ticks on the BIC axis, the zero-stop shown as 0,00000000000001.
+
 ### WISP explorable started (user): Distill-style, English, from zero, results explorer as a core part
 <!-- 6a0e352 -->
 

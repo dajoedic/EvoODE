@@ -61,3 +61,43 @@ The swap test derives its cell field inventory from a real exported record, then
 Version 2 explicitly permits presentation-only sampled/rounded arrays in the existing compact `{t, x}` and `{t, truth, model}` bundles: one time vector shared across all variables, with time-by-dimension matrices. Curves and ordinary observations retain at most 48 uniformly spaced sample indices, including both endpoints; each value has five significant decimal digits. The 48-sample cap keeps the complete page below 12,000,000 bytes and the data directory below 15,000,000 bytes. Five-digit rounding has relative error at most 5e-5 for nonzero values. Full-resolution float64 integrations and targets determine verification before sampling; rates, CSV rows and scores are never rounded. The three reference cells retain full observations in both results and live data; all live inputs remain unchanged. Sampling can omit details between samples; it is exclusively a display copy.
 
 Margin notes flow inline up to 1450 px, accounting for the wide figures. Every SVG chart has visible x/y titles; the FROLS bars use native HTML text and a shrinking middle column to preserve term/value readability at 360 px. The initial scalar playground uses only `0.23u`; its model display is capped at twice the target's maximum absolute population, with a visible clipping notice and unmodified mismatch computation. Browser layout review remains with Claude.
+# WP-X2 additions
+
+Use the presentation extension without changing the frozen scientific exporters:
+
+```text
+python analysis/scripts/explainer/build_wisp_explainer_x2.py
+python analysis/scripts/explainer/build_wisp_explainer_html_x2.py
+python analysis/scripts/explainer/check_wisp_explainer_x2.py
+python -m pytest analysis/tests/test_wisp_explainer.py analysis/tests/test_wisp_explainer_x2.py -q -p no:cacheprovider
+python analysis/scripts/explainer/check_wisp_explainer_layout_x2.py
+```
+
+The X2 exporter first calls the unchanged X1c exporter, then adds deterministic featured-cell selection, Q7 rule references calculated from Q5 observations only, both string tables, gate status, and the Julia import. `--extend-only` is useful after editing strings; a full reproducibility check uses the command without that flag. All existing scientific scripts and outputs stay unchanged.
+
+One HTML contains both languages. `?lang=de`, `?lang=en`, `#lang=de`, `#de` and their English equivalents select a language. Otherwise the remembered choice or browser language applies. The masthead switch reloads the same file with the selected language parameter. Both storage operations tolerate unavailable localStorage. All authored prose and accessibility labels are in `src/i18n/en.json` and `de.json`; terms, identifiers, mathematical expressions and source metadata are shared data. Numerical formatting follows the active locale.
+
+Only result interpretations carry claim markers. The four keys `j336`, `j337`, `j338`, `j339` identify the featured result sentences in both tables. Search `document.querySelectorAll('[data-claim]')` after replacing evidence. Method explanations carry no marker. This supersedes the broad X1 claim policy above.
+
+`live.gate_status` uses `stop: pending|cap|significance`, `initial_state: pending|estimated|observed`, `coefficient_bound: pending|10|1000`. Each status maps to a translated string. A gate decision changes data; no new renderer code is needed.
+
+## Julia display format
+
+`studies/explainer/export_wisp_display_trajectories.jl` is evaluation only; include the Q5 runner at top level, reuse `q4_evaluate`, then repeat that same simulate call to obtain its prediction. No optimizer is run. Julia 1.12.6 is mandatory.
+
+The default file `outputs/wisp_explainer_julia/trajectories.jsonl` contains one JSON object per `(cell_id,candidate_id)`: source CSV hashes, `passed`, `reason`, `max_r2_error`, and `reconstruction` / `generalization`. Each target bundle has the full `t` vector, full time-by-dimension `truth` and `model` arrays, and `scores: {arithmetic, variance_weighted}`. JSON null represents missing/nonfinite values. The script checks every stored score to 1e-12; Python repeats that gate and checks the target grid/arrays before display thinning to 48 points and five significant digits. The Python R2 calculation is secondary, not a solver substitute.
+
+With no Julia file, results curves retain X1c behavior. When the file exists, only verified Julia records supply results curves; missing or failed records withhold them. Featured candidate curves await Julia. Failures and missing scores are enumerated in `manifest.julia_display.checks`. No Q7/Q8 result file is consumed. The prior Python diagnostics remain under `manifest.resimulation`.
+
+```text
+julia --project=. studies/explainer/export_wisp_display_trajectories.jl --limit 3 --output outputs/wisp_explainer_julia/smoke.jsonl
+julia --project=. studies/explainer/export_wisp_display_trajectories.jl
+```
+
+The limited output is deliberately named separately: it cannot accidentally replace the complete display file. After the full Julia run, repeat the Python export and assembly.
+
+X2 budgets are 14,000,000 HTML bytes and 17,000,000 data bytes. Current no-Julia output also fits the stricter X1c budgets. Schema version 2 of results is unchanged. Featured narratives are presentation data in `live.json`, independent of the results swap contract. A synthetic results swap simply leaves absent featured result cells undisplayed.
+
+The X2 assembler interns repeated display time/target/model arrays losslessly inside the HTML only. `app.js` restores ordinary curve bundles before using them. On-disk `results.json` keeps the exact v2 contract; the transport round-trip test proves equality. This leaves headroom for Julia curves that were previously withheld, without reducing the 48-point display grid.
+
+Gate source data are maintained in src/gates.json; the exporter copies them to live.gate_status.

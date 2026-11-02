@@ -5,3 +5,5 @@ select{max-width:100%;min-width:0}.controls>label{max-width:100%}.math{max-width
 
 /* HTML bars keep labels at native font size even on narrow phones. */
 .gain-bars{font:14px/1.5 system-ui,sans-serif;margin:20px 0}.gain-axis{font-size:13px;margin-bottom:14px;overflow-wrap:anywhere}.gain-row{display:grid;grid-template-columns:45px minmax(0,1fr) 90px;gap:8px;align-items:center;margin:12px 0}.gain-track{height:18px;background:var(--wash)}.gain-track span{display:block;height:100%}.gain-value{text-align:right;font-variant-numeric:tabular-nums}aside{max-width:100%;overflow-wrap:anywhere}
+
+body{hyphens:auto} .masthead{flex-wrap:wrap} .masthead nav{display:flex;align-items:center;gap:5px} .panel,.two-plots>div{min-width:0} .panel h3,.panel p{overflow-wrap:anywhere} .chart text{font-size:10px} @media(max-width:600px){.panel{padding:14px}.two-plots{grid-template-columns:1fr}}

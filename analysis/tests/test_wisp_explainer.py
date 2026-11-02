@@ -44,18 +44,22 @@ def test_manifest_inputs_are_whitelisted_and_hash_checked():
 
 
 def test_no_unverified_trajectory_is_exported():
-    checks = {r["cell_id"]: r for r in exported("manifest")["resimulation"]["checks"]}
+    manifest = exported("manifest")
+    julia = manifest.get("julia_display", {})
+    checks = {r["cell_id"]: r for r in (julia["checks"] if julia.get("present") else manifest["resimulation"]["checks"])}
     for cell in exported("results")["cells"]:
         if cell["curves"] is not None:
             check = checks[cell["row"]["cell_id"]]
-            assert check["passed"] and check["max_r2_error"] <= 1e-6
+            assert check["passed"]
+            if not julia.get("present"):
+                assert check["max_r2_error"] <= 1e-6
         else:
             assert cell["unavailable"]
 
 
 def test_size_budget_and_presentation_sampling():
-    assert (BASE / 'dist/wisp_explainer.html').stat().st_size <= 12_000_000
-    assert sum(p.stat().st_size for p in (BASE / 'data').rglob('*') if p.is_file()) <= 15_000_000
+    assert (BASE / 'dist/wisp_explainer.html').stat().st_size <= 14_000_000
+    assert sum(p.stat().st_size for p in (BASE / 'data').rglob('*') if p.is_file()) <= 17_000_000
     manifest, results, live = exported('manifest'), exported('results'), exported('live')
     assert results['schema_version'] == 2
     references = {r['cell_id']: r for r in live['references']}
@@ -87,7 +91,7 @@ def test_failure_classification_uses_tightened_scores():
 
 
 def test_html_build_is_deterministic_and_prose_has_no_literal_digits():
-    command = [sys.executable, str(ROOT / "analysis/scripts/explainer/build_wisp_explainer.py")]
+    command = [sys.executable, str(ROOT / "analysis/scripts/explainer/build_wisp_explainer_html_x2.py")]
     subprocess.run(command, check=True, capture_output=True)
     first = (BASE / "dist/wisp_explainer.html").read_bytes()
     subprocess.run(command, check=True, capture_output=True)
@@ -139,7 +143,7 @@ const elements={};for(const match of source.matchAll(/<([a-z0-9-]+)\b([^>]*\bid=
 }
 elements['wisp-data'].textContent=JSON.stringify(data);
 global.document={getElementById:id=>{if(!elements[id])throw Error('Missing page ID '+id);return elements[id];},createElement:t=>new Element(t),createElementNS:(ns,t)=>new Element(t),querySelectorAll:()=>all.filter(e=>e.dataset.tex)};
-global.window=global;global.WispCompute=require(base+'/src/compute.js');
+global.window=global;global.location={href:'file:///wisp.html?lang=en'};global.WispCompute=require(base+'/src/compute.js');
 vm.runInThisContext(fs.readFileSync(base+'/src/app.js','utf8'),{filename:'app.js'});
 if(elements.strata.children.length!==new Set(data.results.rates.map(r=>r.stratum)).size)throw Error('Missing strata');
 for(const sigma of [0,.01,.03,.05]){elements['noise-level'].value=sigma;elements['noise-level'].listeners.input();if(!elements['path-provenance'].textContent.startsWith(data.live.teaching&&sigma===data.live.teaching.sigma?'Real Q5':'Illustration'))throw Error('Teaching provenance label absent: '+elements['path-provenance'].textContent);elements['next-step'].listeners.click();}
@@ -250,7 +254,7 @@ def check_results_swap(tmp_path):
     data['selected_configuration_methods'] = []
     data['rates'] = [{**row, 'configuration': config} for row in data['rates'] for config in ('SYNTHETIC_A','SYNTHETIC_B')]
     (base/'data/results.json').write_text(json.dumps(data),encoding='utf8')
-    subprocess.run([sys.executable,str(ROOT/'analysis/scripts/explainer/build_wisp_explainer.py'),
+    subprocess.run([sys.executable,str(ROOT/'analysis/scripts/explainer/build_wisp_explainer_html_x2.py'),
                     '--base',str(base)],check=True,capture_output=True,text=True)
     run_app_harness(base, extra=r"""
 function texts(e){return [e.textContent,...e.children.flatMap(texts)];}

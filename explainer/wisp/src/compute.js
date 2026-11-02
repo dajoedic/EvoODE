@@ -67,7 +67,12 @@
       const gains=Array.from({length:6},(_,i)=>i).filter(i=>!active.includes(i)).map(i=>({term:i,gain:(fit(active).sse-fit([...active,i].sort((a,b)=>a-b)).sse)/norm}));
       gains.sort((a,b)=>b.gain-a.gain||a.term-b.term);
       if(!gains.length) break;
-      const winner=gains[0]; if(winner.gain<=0) throw Error('No positive gain before protocol stop');
+      if(config.significance){
+        const base=noiseFloor(D,active,config.variance);
+        const significant=gains.some(g=>{const noise=base-noiseFloor(D,[...active,g.term].sort((a,b)=>a-b),config.variance);return noise<=0||g.gain*norm/noise>=config.threshold;});
+        if(!significant)break;
+      }
+      const winner=gains[0]; if(winner.gain<=0){if(config.significance)break;throw Error('No positive gain before protocol stop');}
       active=[...active,winner.term].sort((a,b)=>a-b);
       const removed=[];
       while(true) {
@@ -75,11 +80,35 @@
         if(!costs.length) break;
         removed.push(costs[0].term); active=active.filter(i=>i!==costs[0].term);
       }
-      const key=active.join(','); if(seen.has(key)) throw Error('Repeated FoBa model'); seen.add(key);
+      const key=active.join(','); if(seen.has(key)){if(config.significance)break;throw Error('Repeated FoBa model');} seen.add(key);
       steps.push({support:active.slice(),addition:winner.term,removed,gains,coefficients:fit(active).coefficients,sse:fit(active).sse,remaining:fit(active).sse/norm});
     }
     return {steps,design:D};
   }
-  root.WispCompute={basis,design,path,leastSquares};
+  function orthogonal(columns){
+    const Q=[];
+    for(const col of columns){let v=col.slice(),norm=Math.sqrt(dot(v,v));if(!norm)continue;v=v.map(x=>x/norm);
+      for(let pass=0;pass<2;pass++)for(const q of Q){const d=dot(q,v);v=v.map((x,i)=>x-d*q[i]);}
+      const length=Math.sqrt(dot(v,v));if(length>Number.EPSILON*col.length*4)Q.push(v.map(x=>x/length));
+    }return Q;
+  }
+  function noiseVariance(t,x){
+    const squares=t.map((_,i)=>{
+      const start=Math.min(Math.max(i-4,0),t.length-9),z=t.slice(start,start+9).map(v=>v-t[i]),scale=Math.max(...z.map(Math.abs));
+      const Q=orthogonal([0,1,2,3].map(p=>z.map(v=>(v/scale)**p))),local=x.slice(start,start+9),j=i-start;
+      const prediction=Q.reduce((sum,q)=>sum+q[j]*dot(q,local),0),h=Q.reduce((sum,q)=>sum+q[j]**2,0);
+      return (x[i]-prediction)**2/(1-h);
+    });
+    const prefix=[0];squares.forEach(v=>prefix.push(prefix.at(-1)+v));
+    return t.map((_,i)=>{const lo=Math.max(i-10,0),hi=Math.min(i+11,t.length);return (prefix[hi]-prefix[lo])/(hi-lo);});
+  }
+  function noiseFloor(D,support,variance){
+    let total=D.windows.reduce((sum,[a,b])=>sum+variance[a]+variance[b],0);
+    const Q=orthogonal(support.map(j=>D.A.map(row=>row[j])));
+    for(const q of Q){const projected=variance.map(()=>0);D.windows.forEach(([a,b],i)=>{projected[a]-=q[i];projected[b]+=q[i];});total-=projected.reduce((sum,v,i)=>sum+v*v*variance[i],0);}
+    return Math.max(0,total);
+  }
+  function significancePath(t,x,threshold=6.635){const variance=noiseVariance(t,x);return {...path(t,x,{significance:true,variance,threshold}),variance};}
+  root.WispCompute={basis,design,path,leastSquares,noiseVariance,noiseFloor,significancePath};
   if(typeof module!=='undefined') module.exports=root.WispCompute;
 })(typeof globalThis==='undefined'?window:globalThis);

@@ -254,7 +254,7 @@ join the current item. Nothing else gets cores before 31.12.
 | W-5 | Writing in parallel from ~15.11.: Methods (from `docs/kochbuch/`), Related Work, Setup | Claude drafts, user owns | 15.11.–10.12. | **G3** journal choice by ~1.12. |
 | W-6 | Aggregation, cluster-robust statistics (systems as units), tables/figures, Results, Discussion, limitations | Claude / user | ~10.–24.12. | **G4** claim-tracing check: every number in the text traced to a table |
 | W-6b | Re-run every MATLAB WSINDy row (~20 min, laptop) under a proper licence (user: JKU, requested when needed) into a fresh output folder; must match the trial-licence rows of 2026-11-02 | Claude / user | before W-7 | rows differ → report, do not submit on trial rows |
-| W-X | **WISP explorable** (user, 2026-11-02): Distill-style interactive page, English, from zero, results explorer as a core part, no cores needed. `explainer/wisp/`; WP-X1 (foundation, sections 0–5, results on interim Q5 data) started 2026-11-02, WP-X2 (stop, fit/BIC, generalization, failure) after; results swapped to Q9 after W-4 | Codex / Claude | from 2.11. | — |
+| W-X | **WISP explorable** (user, 2026-11-02): Distill-style interactive page, **German and English** (one page, language switch; user 2026-11-02 evening), from zero, results explorer as a core part, no cores needed. `explainer/wisp/`; WP-X1 (foundation, sections 0–5, results on interim Q5 data) started 2026-11-02, WP-X2 (stop, fit/BIC, generalization, failure) after; results swapped to Q9 after W-4 | Codex / Claude | from 2.11. | — |
 | W-7 | Final read, submission | user | 24.–31.12. | — |
 
 **Baselines (fixed):** WSINDy (W1, W1-interp on ρ = 0.5), SINDy, Weak-SINDy, E-SINDy (WP-N47, existing). PySR and
