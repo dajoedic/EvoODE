@@ -7,6 +7,7 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 ## 2026-11-02
 
 ### Q7 second interim look at the user's request — preliminary, deviation from Q7 §6
+<!-- 0bd2116 -->
 
 Same scratchpad logic as 2026-11-01 (`q7_sneak2.py`; WSINDy rows now via `select_rows(..., 'matlab')`), Orion
 153/338 fit shards, 2,092 new records (`outputs/sideproject_q7_…/out_sneak_2026-11-02/`). Cells with a complete Q7
