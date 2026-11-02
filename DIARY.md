@@ -7,6 +7,7 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 ## 2026-11-02
 
 ### WISP explorable complete (WP-X2): German + English, all sections, drill-down curves from the Julia evaluation
+<!-- 3e151f3 -->
 
 User: German **and** English, the German a plain understandable translation (technical is fine). WP-X2 (Codex) added
 stop / fit + BIC / generalization + failure, one page with an EN|DE switch (293 keys each), gate statuses (G-Q7, G2)
