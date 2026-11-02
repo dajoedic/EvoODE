@@ -7,6 +7,7 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 ## 2026-11-03
 
 ### WISP explorable WP-X6: the opening becomes a challenge
+<!-- 0eee9c8 -->
 
 User: the term playground is the best part — put the reader right in front of "looks logistic, but what exactly is the
 formula?". WP-X6 moved the playground to page 2 (term cards, slider + typed value + ± per term, live equation and curve
