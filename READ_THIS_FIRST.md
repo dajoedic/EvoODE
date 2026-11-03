@@ -10,6 +10,13 @@ zweites davon. Alles Dauerhafte gehört dorthin, nach `PAPER_1.md` oder ins `DIA
 **Regeln:** wird immer **vollständig überschrieben**, nie angehängt. Was älter als ein paar Tage
 ist, ist vermutlich falsch — dann gilt `CLAUDE.md`.
 
+> ## WISP-Explorable, Stand 03.11. 21:00
+> Preview https://claude.ai/artifact/XsxgvgYGZdqPkpnzVd2YMQ Version 12 (`010a550`): Seiten 1–2 + „Ein Baustein allein“.
+> **WP-X10 halb fertig, uncommittet** (Kapitel × Unterschritte, Kapitel 1 in 7 Schritten, alles danach ausgeblendet;
+> Spec `codex/CURRENT_TASK.md`). Codex-Nutzungslimit erreicht, wieder frei ab 22:34 → Codex mit „setze WP-X10 fort, der
+> Working Tree enthält die Teilumsetzung“ neu starten. Nutzer geht WISP Kapitel für Kapitel durch; nächstes Kapitel erst
+> nach seiner Freigabe.
+
 > ## ⚠️ ACHTUNG: C-6 WIRD LEERGEZOGEN — PODS WANDERN AUTOMATISCH ZUR W-REIHE
 > **Seit 02.11. 23:58 (Nutzer: W-Reihe hat absolute Priorität).** Das Skript `shift_pods.sh` (Scratchpad dieser Sitzung,
 > detached, Log `shift_pods.log`) senkt bei **jeder fertigen C-6-Zelle** die C-6-Parallelität um 1 und hebt W-2 (Q8)
