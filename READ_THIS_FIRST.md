@@ -10,59 +10,45 @@ zweites davon. Alles Dauerhafte gehört dorthin, nach `PAPER_1.md` oder ins `DIA
 **Regeln:** wird immer **vollständig überschrieben**, nie angehängt. Was älter als ein paar Tage
 ist, ist vermutlich falsch — dann gilt `CLAUDE.md`.
 
-> ## WISP-Explorable, Stand 04.11. 00:50
-> Preview https://claude.ai/artifact/XsxgvgYGZdqPkpnzVd2YMQ Version 16: Einführung + Kapitel 1 als Scroll-Geschichte in
-> 12 Schritten (eine animierte Grafik, nur Scrollen; Kapitelanzeige in der Kopfzeile). Später Kapitel ausgeblendet.
-> Offen: Aufteilung „Rauschen / vom Baustein erklärt / noch erklärbar“ (Schritt 11) mit dem Nutzer besprechen; Kapitel 2
-> erst nach Freigabe. Build: `build_wisp_explainer_html_x2.py`; Bildkontrolle per Edge-Headless-Frames (Scratchpad).
+**Stand: 2026-11-04, 00:45 — WISP-Plan bis 31.12. (CLAUDE.md, „WISP paper — the fixed plan“).**
 
-> ## ⚠️ ACHTUNG: C-6 WIRD LEERGEZOGEN — PODS WANDERN AUTOMATISCH ZUR W-REIHE
-> **Seit 02.11. 23:58 (Nutzer: W-Reihe hat absolute Priorität).** Das Skript `shift_pods.sh` (Scratchpad dieser Sitzung,
-> detached, Log `shift_pods.log`) senkt bei **jeder fertigen C-6-Zelle** die C-6-Parallelität um 1 und hebt W-2 (Q8)
-> auf 40 − C-6 − aktive Q7-Pods. **Ziel: C-6 auf 0, alle 40 Kerne für W-2, danach W-4.** Kein laufender Pod wird getötet.
-> - **C-6 NICHT „reparieren“**, auch wenn seine Parallelität < 24 ist — das ist gewollt.
-> - Erste Verschiebung geprüft 03.11. 00:07: C-6 24 → 23, Q8 6 → 7, C-6 `failed` = 0, kein Pod beendet.
-> - **Vorfall 03.11. 11:48:** nach Token-Ausfall (06:37–11:48) holte das alte Skript 8 verpasste Fertigmeldungen auf
->   einmal nach (C-6 9 → 1); der Controller hatte nachgefüllt, also wurden **8 laufende Pods gelöscht**, 6 davon 55–73 h alt
->   (~390 Kern-h). DIARY 03.11. **Neue Version mit Schutzregel** (nie unter die Zahl der > 10 min laufenden Pods).
->   Stand danach: C-6 1 (Zelle 1361, seit 31.10.), Q7 7, Q8 32.
-> - Braucht Laptop an + VPN + gültigen oc-Login; läuft es nicht, wird nur nichts verschoben. Neu starten
->   (nur die neue Version!) in Git Bash: `/c/Users/joedicke/AppData/Local/Temp/claude/c--Users-joedicke-Documents-Repositories-EvoODE/9f46954f-0bf8-4401-ad3b-884a094e8a73/scratchpad/shift_pods.sh >> /c/Users/joedicke/AppData/Local/Temp/claude/c--Users-joedicke-Documents-Repositories-EvoODE/9f46954f-0bf8-4401-ad3b-884a094e8a73/scratchpad/shift_pods.log 2>&1 &`
-> - **Rückweg nach W-4:** C-6 wieder auf 24 (`oc patch job evoode-phase-c-c6-grid-capped -n scch-das -p '{"spec":{"parallelism":24}}'`);
->   automatischer Rückweg als Cluster-Pod (Codex) noch zu bauen.
-
-**Stand: 2026-11-03, 00:15 — WISP-Plan bis 31.12. (CLAUDE.md, „WISP paper — the fixed plan“).**
-
-## 1. Was läuft
+## 1. Was läuft (Orion, Stand 04.11. 00:44)
 
 | Lauf | Stand | Wenn fertig |
 |---|---|---|
-| **Q8-Probe** Orion (`512dd5b`, 75 Shards) | **fertig 75/75**, technisch sauber, 36 h statt geplanter 98–221 h (DIARY) | — |
-| **Q7-Fits** Orion (338 Shards, 16 Pods) | 328/338 um 23:25, 0 Fehler; 10 laufen, 4 davon seit 31.10. (Nachzügler bestimmen das Ende) | einsammeln, Q7-Aggregation, **G-Q7** |
-| **W-2 = Q8-Gitter** Orion (`512dd5b`, 3.540 Shards) | **gestartet 02.11. 23:35 mit 6 Pods** (frei gewordene Q7-Kerne; Nutzer: Start vor G-Q7, Risiko akzeptiert) | nach Q7 auf 16 hochziehen: `oc patch job evoode-sideproject-q8 -n scch-das -p '{"spec":{"parallelism":16}}'` |
-| **C-6 gekappt** Orion | 1.411/3.366; **wird seit 02.11. 23:58 leergezogen** (Nutzer: W-Reihe hat Vorrang) | nach W-4 Parallelität zurück auf 24 |
+| **Q7-Fits** (338 Shards) | **335/338**, 0 Fehler; 3 Nachzügler laufen (einer seit 31.10.) | einsammeln, Q7-Aggregation (`--wsindy-source matlab`), **G-Q7** |
+| **W-2 = Q8-Gitter** (`512dd5b`, 3.540 Shards) | 91/3.540, 0 Fehler, **36 Pods** | Hochrechnung, sobald die langen Shards durch sind (frühestens 04.11.) |
+| **C-6 gekappt** | 1.434/3.366, Parallelität 1 (Zelle 1361, seit 31.10.); **wird leergezogen** (W-Reihe hat Vorrang) | nach W-4 zurück auf 24 |
 
-**Lokal läuft:** `shift_pods.sh` (Scratchpad, detached, Log `shift_pods.log`): pro fertiger C-6-Zelle C-6-Parallelität −1,
-Q8-Parallelität = 40 − C-6 − aktive Q7-Pods (nur steigend); stoppt, wenn C-6 `failed` sich ändert. Braucht Laptop an,
-VPN, gültigen oc-Login; fällt es aus, wird nichts verschoben; die alte Version hat beim Wiederanlauf laufende Pods gelöscht (Vorfall 03.11.), die neue nicht mehr. Rückweg nach W-4
-noch zu bauen (Cluster-Pod, Codex).
+Kerne: 1 + 3 + 36 = 40, voll belegt. Q8-Probe (75/75) fertig.
 
-## 2. Heute erledigt
+**Lokal läuft `shift_pods.sh`** (Scratchpad der Sitzung `9f46954f…`, detached, Log `shift_pods.log`, neue Version mit
+Schutzregel): pro fertiger C-6-Zelle C-6-Parallelität −1; Q8 = 40 − C-6 − aktive Q7-Pods (nur steigend); stoppt, wenn
+C-6 `failed` sich ändert. Zuletzt: 03.11. 21:51 Q8 35 → 36. Braucht Laptop an + VPN + gültigen oc-Login (VPN-Ausfall
+03.11. 16:58–21:04: nichts verschoben, nichts gelöscht). **C-6 NICHT „reparieren“.** Neu starten (nur diese Version), Git Bash:
+`/c/Users/joedicke/AppData/Local/Temp/claude/c--Users-joedicke-Documents-Repositories-EvoODE/9f46954f-0bf8-4401-ad3b-884a094e8a73/scratchpad/shift_pods.sh >> /c/Users/joedicke/AppData/Local/Temp/claude/c--Users-joedicke-Documents-Repositories-EvoODE/9f46954f-0bf8-4401-ad3b-884a094e8a73/scratchpad/shift_pods.log 2>&1 &`
+**Rückweg nach W-4:** `oc patch job evoode-phase-c-c6-grid-capped -n scch-das -p '{"spec":{"parallelism":24}}'`;
+automatischer Rückweg als Cluster-Pod noch zu bauen.
 
-- **§5.5 MATLAB** (R2026b, 30-Tage-Testlizenz + Statistics Toolbox): Port nicht identisch (W1 4.359/4.557, W1-interp
-  4.395/4.536). Nutzerentscheidung: WSINDy-Zeilen auf gleichmäßigem Gitter **aus dem Original** (`e004aaa`).
-- **WP-FA10** (`ad432cd`): MATLAB-Zeilen komplett (4.536 + 4.536), Kontrollen bestanden (keine Schwellenkippung),
-  Q7/Q8-Aggregation liest sie per Default. Ursache der Port-Abweichung: Lösungswahl bei rangdefekten Matrizen
-  (`gelsy` vs QR), 5 Fälle offen. DIARY 02.11.
-- **W-6b** im Plan (`13bb3c0`): vor Einreichung alle MATLAB-Zeilen mit echter Lizenz (JKU) nachrechnen.
+## 2. WISP-Explorable (W-X)
+
+- Preview https://claude.ai/artifact/XsxgvgYGZdqPkpnzVd2YMQ **Version 16** (`344c52f`): Einführung (2 Seiten) +
+  **Kapitel 1 „Ein Baustein allein“ als Scroll-Geschichte in 12 Schritten** — eine persistente, animierte Grafik, nur
+  Scrollen (Messwerte → Rauschen → Steigung → Steigung aus zwei Punkten → längere Abschnitte → Fehler ohne Baustein →
+  Fit mit Sweep → alle Bausteine → warum Rauschen → Rauschschätzung mit Summe → Prozent → erste Lösung).
+- Alle späteren Seiten sind **ausgeblendet** (eine Liste im Quelltext, `pages.js`), nicht gelöscht.
+- **Offen:** Nutzer will die Aufteilung „Rauschen / vom Baustein erklärt / noch erklärbar“ (Schritt 11) genauer
+  besprechen. Danach Kapitel 2 („noch einer dazu“), erst nach seiner Freigabe von Kapitel 1.
+- Arbeitsweise: Nutzer geht Kapitel für Kapitel durch; Claude prüft jeden Schritt per Edge-Headless-Frames zu mehreren
+  Zeitpunkten und behebt eigene Funde vor dem Veröffentlichen. Build: `build_wisp_explainer_html_x2.py`; Tests
+  `python -m pytest analysis/tests/ -q -p no:cacheprovider -k wisp` (51); Fit `check_wisp_explainer_fit.py`.
+- Codex-Pakete WP-X7 … WP-X12d committet; `codex/CURRENT_TASK.md` = WP-X12d (erledigt).
 
 ## 3. Als Nächstes
 
-1. Q7 fertig → einsammeln, Aggregation (mit `--wsindy-source matlab`), **G-Q7**.
-2. W-2 läuft; nach Q7 Parallelität 6 → 16. Hochrechnung aus den ersten Shards. Bei G-Q7 nicht bestanden (unwahrscheinlich):
-   exakte Shards neu, Cap-Fallback-Zweig (WP-FA9) erst Codex.
-
-Erledigt 15:30: Q5-W geöffnet (MATLAB-Zeilen ändern keine Q5-Zählung), Q8-Probe geprüft — DIARY 02.11.
+1. Q7 fertig → einsammeln, Aggregation, **G-Q7** (automatisch nach §5-Regel, Claude berichtet).
+2. W-2 läuft; Hochrechnung aus den ersten langen Shards.
+3. Explorable: Schritt 11 mit dem Nutzer besprechen, dann Kapitel 2.
 
 > **BLINDREGEL C-6** gilt unverändert: keine C-6-EvoGrow-Ergebnisse ansehen, nur technische Prüfung.
 
@@ -70,7 +56,9 @@ Erledigt 15:30: Q5-W geöffnet (MATLAB-Zeilen ändern keine Q5-Zählung), Q8-Pro
 MATLAB nur MATLAB (kein Octave): `C:\Program Files\MATLAB\R2026b\bin\matlab.exe`. Orion-Login abgelaufen →
 `oc login --web https://api.orion.scch.at:6443`. Orion-Ergebnisse unter `S:\BigDataOrion\data-science\joedicke\` (VPN).
 Codex: `codex exec -s workspace-write -c 'windows.sandbox="unelevated"' "Lies codex/CODEX_PROTOCOL.md und arbeite den
-Auftrag in codex/CURRENT_TASK.md ab." < /dev/null` (Hintergrund).
+Auftrag in codex/CURRENT_TASK.md ab." < /dev/null` (Hintergrund); ein per TaskStop angehaltener Lauf kann als
+verwaister Prozess weiterlaufen — prüfen und dessen halbe Änderungen zurücksetzen. Nutzer erlaubt Claude auch, selbst zu
+implementieren (03.11.).
 **Uncommittet, nicht von Claude:** WP-N48b-Dateien (PySR, pausiert nach §9.4d) und `output/`.
 
 **Statusseite „EvoODE auf Orion“:** https://claude.ai/artifact/9zzJsoGCBahPsuNkaaf3DN — Version 11 (02.11., 00:09).
