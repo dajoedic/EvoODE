@@ -277,3 +277,30 @@ dialog{max-width:min(1050px,90vw);max-height:80dvh;overflow:auto;overscroll-beha
 #c1-noise-result:not([hidden]){animation:story-result-in .4s ease-out}
 @keyframes story-result-in{from{opacity:0}to{opacity:1}}
 @media(prefers-reduced-motion:reduce){#c1-noise-result:not([hidden]){animation:none}}
+
+/* WP-X12c: quiet chapter identity and a single full-width progress line. */
+#chapter-progress{position:fixed;top:42px;left:0;right:0;height:3px;background:var(--line);z-index:11}
+#chapter-progress span{display:block;height:100%;background:var(--accent);transition:width .6s ease}
+.masthead .chapter-indicator{font:12px system-ui;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.story-svg .story-slope{fill:var(--model)}
+.story-svg .story-clipped{fill:var(--model)}
+.story-svg .story-long-slope{fill:var(--data)}
+.story-svg .story-long-triangle{stroke:var(--data)}
+.story-svg .story-long-label{fill:var(--data)}
+.story-svg .story-neighbour-label{fill:var(--model)}
+.story-zoom-box{fill:none;stroke:var(--model);stroke-width:2.5}
+.story-svg .story-optimum{stroke:var(--truth);stroke-width:1.2}
+.story-svg .story-optimum-dot{fill:var(--truth)}
+.story-svg .story-optimum-label{fill:var(--truth)}
+.story-svg .story-contribution{fill:var(--model)}
+.story-svg[data-state="noise-estimate"] .story-part-0{fill:var(--line)}
+.story-svg[data-state="noise-estimate"] .story-part-0,.story-svg[data-state="noise-estimate"] .story-contribution{clip-path:none}
+.story-svg[data-state="secants"] .story-length,.story-svg[data-state="windows"] .story-length,
+.story-svg[data-state="secants"] .story-delta,.story-svg[data-state="windows"] .story-delta{font-size:12px}
+@media(prefers-reduced-motion:reduce){#chapter-progress span{transition:none}}
+@media print{#chapter-progress{display:none}}
+
+.story-svg .story-construction-readout{font-size:12px}
+
+.masthead{position:relative}
+#masthead-title{position:absolute;left:50%;transform:translateX(-50%);white-space:nowrap}

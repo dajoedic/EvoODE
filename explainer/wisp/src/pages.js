@@ -80,9 +80,8 @@
   test:result?['arithmetic','variance_weighted'].map(w=>tr('curve_scores',{v0:weightLabel(w),v1:fmt(result.row['reconstruction_r2_'+w],7),v2:fmt(result.row['generalization_r2_'+w],7)})).join(' · '):tr('j153')};
  // The long support path has a dedicated bounded detail, not tiny recap text.
  document.querySelectorAll('[data-outcome]').forEach(e=>{e.textContent=outcomes[e.dataset.outcome]||tr('j153');e.tabIndex=0;e.dataset.internalScroll='true';});
- const bar=document.getElementById('pipeline-bar');bar.setAttribute('aria-label','WISP');
- const chapters=[...new Set(pages.map(p=>p.dataset.chapter))];
- chapters.forEach(chapter=>{const page=pages.find(p=>p.dataset.chapter===chapter),key=chapter==='intro'?'x10_chapter_intro':chapter==='one'?'x10_chapter_one':null,a=make('a',page.dataset.chapterTitle||(key?tr(key):page.querySelector('h1,h2,h3').textContent));a.href='#'+page.id;a.dataset.chapter=chapter;bar.append(a);});
+ const progress=document.getElementById('chapter-progress'),title=document.getElementById('masthead-title');
+ const introTitle=title.textContent;
  const dots=make('nav',null,'page-dots');dots.setAttribute('aria-label',tr('h150'));document.body.append(dots);
  const dotButtons=pages.map((page,i)=>{const a=make('a');a.href='#'+page.id;a.title=(page.dataset.step?translate(page.dataset.step)+' · ':'')+page.querySelector('h1,h2,h3').textContent;a.setAttribute('aria-label',a.title);dots.append(a);return a;});
  const reduced=window.matchMedia('(prefers-reduced-motion: reduce)');
@@ -97,7 +96,13 @@
  }
  function show(i,push,scroll=true){const page=pages[i];pages.forEach((p,j)=>p.classList.toggle('active',j===i));dotButtons.forEach((a,j)=>{if(j===i)a.setAttribute('aria-current','page');else a.removeAttribute('aria-current');});
   dotButtons.forEach((a,j)=>a.hidden=pages[j].dataset.chapter!==page.dataset.chapter);
-  bar.hidden=false;bar.querySelectorAll('a').forEach(a=>{const active=a.dataset.chapter===page.dataset.chapter;a.classList.toggle('current',active);if(active)a.setAttribute('aria-current','step');else a.removeAttribute('aria-current');});
+  const chapterPages=pages.filter(p=>p.dataset.chapter===page.dataset.chapter),position=chapterPages.indexOf(page)+1;
+  title.textContent=page.dataset.chapter==='one'?tr('x12c_chapter'):introTitle;
+  title.href='#'+chapterPages[0].id;title.classList.toggle('chapter-indicator',page.dataset.chapter==='one');
+  title.setAttribute('aria-label',title.textContent);
+  progress.setAttribute('aria-valuenow',position);progress.setAttribute('aria-valuemax',chapterPages.length);
+  progress.setAttribute('aria-label',tr('x10_eye',{i:position,n:chapterPages.length}));
+  progress.querySelector('span').style.width=(100*position/chapterPages.length)+'%';
   if(push&&location.hash!=='#'+page.id){const url=new URL(location.href);url.hash=page.id;history.pushState(null,'',url);}
   window.WispChapterStory?.enter(page.dataset.stage);
   if(scroll){if(snapped&&!fitcheck&&initialized&&!reduced.matches)smoothTo(page.offsetTop);else page.scrollIntoView({behavior:'instant',block:'start'});}
@@ -155,19 +160,30 @@
    if(page.id==='p-challenge')for(const shown of [false,true]){toggleSolution(shown);variants.push({...readPage(page),solutionShown:shown});}
    if(page.id==='p-solution'){for(const block of window.WispSolo.model.blocks){window.WispSolo.select(block.term);variants.push({...readPage(page),soloTerm:block.term});}window.WispSolo.select(window.WispSolo.model.winner);}
    if(page.dataset.stage){
-    window.WispChapterStory.enter(page.dataset.stage);window.WispChapterStory.finish();
+    function inspectStage(sample){
     const stage=document.getElementById('c1-stage'),r=stage.getBoundingClientRect();
     const stageOk=r.left>=0&&r.right<=innerWidth&&r.bottom<=innerHeight-12;
     // Real SVG text bounds: the synthetic DOM intentionally cannot supply layout.
     const labels=[...stage.querySelectorAll('svg text')].filter(e=>+getComputedStyle(e).opacity>.01&&e.textContent.trim()).map(e=>({text:e.textContent,rect:e.getBoundingClientRect()}));
     const labelOverlaps=[];
-    if(['noise-visible','slope','secants','windows','error-empty','fit','every','noise-estimate'].includes(page.dataset.stage)){
+    if(['noise-visible','slope','secants','windows','error-empty','fit','every','noise-why','noise-estimate'].includes(page.dataset.stage)){
      labels.forEach((a,i)=>labels.slice(i+1).forEach(b=>{if(Math.min(a.rect.right,b.rect.right)>Math.max(a.rect.left,b.rect.left)&&Math.min(a.rect.bottom,b.rect.bottom)>Math.max(a.rect.top,b.rect.top))labelOverlaps.push([a.text,b.text]);}));
     }
     const box=stage.querySelector('.story-deviations').getBoundingClientRect(),plot=stage.querySelector('#story-top-clip rect');
     const matrix=stage.querySelector('svg').getScreenCTM(),plotRight=matrix.a*(+plot.getAttribute('x') + +plot.getAttribute('width'))+matrix.e;
     const deviationsOutside=page.dataset.stage!=='noise-estimate'||box.left>plotRight;
-    variants.push({...readPage(page),stageOk,labelOverlaps,deviationsOutside,ok:readPage(page).ok&&stageOk&&labelOverlaps.length===0&&deviationsOutside});
+    const dataLabels=[];
+    const annotationSelector='.story-construction-readout,.story-long-label,.story-neighbour-label,.story-optimum-label,.story-noise-readout';
+    const annotationLabels=[...stage.querySelectorAll(annotationSelector)].filter(e=>+getComputedStyle(e).opacity>.01);
+    if(['secants','windows'].includes(page.dataset.stage))annotationLabels.push(...stage.querySelectorAll('.story-delta,.story-length'));
+    const dots=[...stage.querySelectorAll('.measurement-dot,.story-slope,.story-long-slope')].filter(e=>+getComputedStyle(e).opacity>.01).map(e=>e.getBoundingClientRect());
+    annotationLabels.filter(e=>+getComputedStyle(e).opacity>.01).forEach(e=>{const a=e.getBoundingClientRect();if(dots.some(b=>Math.min(a.right,b.right)>Math.max(a.left,b.left)&&Math.min(a.bottom,b.bottom)>Math.max(a.top,b.top)))dataLabels.push(e.textContent);});
+    variants.push({...readPage(page),sample,stageOk,labelOverlaps,dataLabels,deviationsOutside,ok:readPage(page).ok&&stageOk&&labelOverlaps.length===0&&dataLabels.length===0&&deviationsOutside});
+    }
+    const story=window.WispChapterStory;story.enter(page.dataset.stage);
+    const samples={secants:[1100,2000,3000,...Array.from({length:8},(_,j)=>3900+j*1200),13200],windows:[2050,3250,4450,5650,6500],fit:[2899,2900,4900],every:Array.from({length:6},(_,j)=>2900+j*2500),'noise-why':[900],'noise-estimate':[2500,5200,7100,8350,9600,10600,11600]};
+    for(const sample of samples[page.dataset.stage]||[]){story.seek(sample);inspectStage(sample);}
+    story.finish();inspectStage(story.durations[page.dataset.stage]);
     if(page.dataset.stage==='fit'){
      const slider=document.getElementById('c1-c'),saved=slider.value;
      for(const value of [slider.min,slider.max]){slider.value=value;slider.dispatchEvent(new Event('input'));variants.push({...readPage(page),sliderValue:value});}

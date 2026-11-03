@@ -440,7 +440,7 @@
   "x10_text_6": "The {winner} explains the most — {meaning}. That is a useful first approximation. WISP takes it as its first block:",
   "x10_chapter_intro": "Introduction",
   "x10_chapter_one": "One block on its own",
-  "x10_eye": "Chapter 1 · One block on its own · {i} of {n}",
+  "x10_eye": "Step {i} of {n}",
   "x10_window": "Length of the time interval",
   "x10_length": "{samples} sample intervals · {duration} time units",
   "x10_caption": "Shown: intervals that do not overlap. WISP computes with all intervals of all lengths. All errors, percentages and block coefficients here use that full computation.",
@@ -493,5 +493,17 @@
   "x12_axis_slope": "Slope (change per unit of time)",
   "x12_clipped": "{n} values outside",
   "x12_length": "Length {n}",
-  "x12_noise_result": "Estimated noise: {est}; actually added: {true}. Noise at both endpoints adds up over all windows to {floor} of the error without a block. No block can explain this part."
+  "x12_noise_result": "Estimated noise: {est}; actually added: {true}. Noise at both endpoints adds up over all windows to {floor} of the error without a block. No block can explain this part.",
+  "x12c_chapter": "Chapter 1 · One block on its own",
+  "x12c_noise_title": "Why WISP needs to know the noise",
+  "x12c_noise_text": "Even the best block leaves a large error. Part of it is measurement noise — no equation can explain that. To avoid trying to explain noise, WISP needs to know how large that part is.",
+  "x12c_question": "How much of this is just noise?",
+  "x12c_slope": "Slope = Δu / Δt = {value}",
+  "x12c_best": "best c = {c}",
+  "x12c_neighbours": "neighbouring points",
+  "x12c_long": "longer windows",
+  "x12c_points": "Points: {k} of {n}",
+  "x12c_sum_1": "Noise at the start + end of each window,",
+  "x12c_sum_2": "added up over all windows",
+  "x12c_floor": "{floor} of the error without a block"
 }

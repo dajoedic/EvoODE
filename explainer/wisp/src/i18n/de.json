@@ -440,7 +440,7 @@
   "x10_text_6": "Am meisten erklärt die {winner} — {meaning}. Als grobe erste Näherung ist das nicht schlecht. WISP nimmt sie als ersten Baustein:",
   "x10_chapter_intro": "Einführung",
   "x10_chapter_one": "Ein Baustein allein",
-  "x10_eye": "Kapitel 1 · Ein Baustein allein · {i} von {n}",
+  "x10_eye": "Schritt {i} von {n}",
   "x10_window": "Länge des Zeitabschnitts",
   "x10_length": "{samples} Messabstände · {duration} Zeiteinheiten",
   "x10_caption": "Gezeigt: Abschnitte, die sich nicht überlappen. WISP rechnet mit allen Abschnitten aller Längen. Alle Fehler, Prozentwerte und Zahlen der Bausteine hier verwenden diese vollständige Rechnung.",
@@ -493,5 +493,17 @@
   "x12_axis_slope": "Steigung (Änderung pro Zeiteinheit)",
   "x12_clipped": "{n} Werte außerhalb",
   "x12_length": "Länge {n}",
-  "x12_noise_result": "Geschätzt: {est} Rauschen, tatsächlich aufgeprägt: {true}. Das Rauschen beider Endpunkte summiert sich über alle Abschnitte zu {floor} des Fehlers ohne Baustein. Diesen Anteil kann kein Baustein erklären."
+  "x12_noise_result": "Geschätzt: {est} Rauschen, tatsächlich aufgeprägt: {true}. Das Rauschen beider Endpunkte summiert sich über alle Abschnitte zu {floor} des Fehlers ohne Baustein. Diesen Anteil kann kein Baustein erklären.",
+  "x12c_chapter": "Kapitel 1 · Ein Baustein allein",
+  "x12c_noise_title": "Warum WISP das Rauschen kennen muss",
+  "x12c_noise_text": "Selbst der beste Baustein lässt einen großen Fehler übrig. Ein Teil davon ist Messrauschen — den kann keine Gleichung erklären. Damit WISP nicht versucht, Rauschen zu erklären, muss es wissen, wie groß dieser Teil ist.",
+  "x12c_question": "Wie viel davon ist nur Rauschen?",
+  "x12c_slope": "Steigung = Δu / Δt = {value}",
+  "x12c_best": "bestes c = {c}",
+  "x12c_neighbours": "Nachbarpunkte",
+  "x12c_long": "längere Abschnitte",
+  "x12c_points": "Punkte: {k} von {n}",
+  "x12c_sum_1": "Rauschen am Anfang + am Ende jedes Abschnitts,",
+  "x12c_sum_2": "über alle Abschnitte zusammengezählt",
+  "x12c_floor": "{floor} des Fehlers ohne Baustein"
 }

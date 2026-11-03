@@ -11,7 +11,7 @@ BASE = ROOT / 'explainer/wisp'
 def test_challenge_is_second_in_both_languages_and_catalogue_refers_back():
     soup = BeautifulSoup((BASE / 'src/index.html').read_text(encoding='utf8'), 'html.parser')
     pages = soup.select('main > .page')
-    assert len(pages) == 30
+    assert len(pages) == 31
     assert pages[1]['id'] == 'p-challenge'
     assert pages[2]['id'] == 'p-c1-data'
     for lang in ('en', 'de'):
