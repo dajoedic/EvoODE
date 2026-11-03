@@ -304,3 +304,8 @@ dialog{max-width:min(1050px,90vw);max-height:80dvh;overflow:auto;overscroll-beha
 
 .masthead{position:relative}
 #masthead-title{position:absolute;left:50%;transform:translateX(-50%);white-space:nowrap}
+
+.story-svg[data-state="secants"] .story-triangle{stroke-width:3;vector-effect:non-scaling-stroke}
+.story-svg .story-leg-label{font-size:12px;fill:var(--model);paint-order:stroke;stroke:var(--panel);stroke-width:3px}
+.story-svg .story-stack-legend{font-size:11px}
+.story-zoom-box{fill:none;stroke:var(--model);stroke-width:3}

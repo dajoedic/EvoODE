@@ -505,5 +505,6 @@
   "x12c_points": "Punkte: {k} von {n}",
   "x12c_sum_1": "Rauschen am Anfang + am Ende jedes Abschnitts,",
   "x12c_sum_2": "über alle Abschnitte zusammengezählt",
-  "x12c_floor": "{floor} des Fehlers ohne Baustein"
+  "x12c_floor": "{floor} des Fehlers ohne Baustein",
+  "x12d_error_axis": "Fehler in %"
 }

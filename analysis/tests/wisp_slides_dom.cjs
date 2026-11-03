@@ -111,7 +111,8 @@ if(fixture.configuration==='delivered'){
    const noise=x.map((v,j)=>v-truth[j]),actual=m.D.windows.reduce((s,[a,b])=>s+(noise[b]-noise[a])**2,0)/m.D.b.reduce((s,v)=>s+v*v,0);close(story.actual,actual);
    for(const reference of fixture.cubic){const local=story.local(reference.center);assert.equal(local.start,reference.start);reference.t.forEach((tt,j)=>close(local.value(tt),reference.y[j]));}
    const bandNumbers=doc.querySelector('.story-band').getAttribute('d').match(/[-+]?(?:[0-9]*[.])?[0-9]+(?:e[-+]?[0-9]+)?/gi).map(Number);assert.equal(bandNumbers.length,4*t.length);
-   t.forEach((tt,j)=>{const fitted=story.local(j).value(tt),lo=Math.min(...x)*.95,hi=Math.max(...x)*1.05;close(story.smooth[j],fitted);close(bandNumbers[2*j+1],392-(fitted+Math.sqrt(story.variance[j])-lo)/(hi-lo)*350);close(bandNumbers[2*(2*t.length-1-j)+1],392-(fitted-Math.sqrt(story.variance[j])-lo)/(hi-lo)*350);});
+   t.forEach((tt,j)=>{const fitted=story.local(j).value(tt),lo=Math.min(...x)*.95,hi=Math.max(...x)*1.05;close(story.smooth[j],fitted);close(bandNumbers[2*j+1],302-(fitted+Math.sqrt(story.variance[j])-lo)/(hi-lo)*260);close(bandNumbers[2*(2*t.length-1-j)+1],302-(fitted-Math.sqrt(story.variance[j])-lo)/(hi-lo)*260);});
+   assert.equal(dots.filter(d=>+d.style.opacity===1).length,512);assert.equal(+doc.querySelector('.story-band').style.opacity,1);assert(+doc.querySelector('.story-part-0').getAttribute('y')>302);
    assert.equal(story.examples.length,5);story.examples.forEach((ex,j)=>{assert.equal(ex.center,Math.round(t.length/3)+j);close(ex.deviation,x[ex.center]-ex.value(t[ex.center]));assert(doc.querySelector('#c1-stage').textContent.includes(fmt(ex.deviation)));});
    const pct=v=>(100*v).toLocaleString(fixture.language,{minimumFractionDigits:1,maximumFractionDigits:1})+' %';
    for(const v of [story.relative,fixture.data.live.teaching.sigma,m.floor,actual])assert(doc.getElementById('c1-noise-result').textContent.includes(pct(v)));
@@ -128,10 +129,11 @@ if(fixture.configuration==='delivered'){
  story.states.forEach((state,i)=>{story.enter(state);assert.equal(svg.dataset.complete,'true');svg.children.forEach((e,j)=>assert.deepEqual({...e.attrs,opacity:e.style.opacity},saved[i][j],story.states[i]+' node '+j));});
  global.matchMedia=()=>({matches:false,addEventListener(){}});
  // Time-resolved checks of the actual SVG, driven by the injected clock.
- story.enter('secants');advance(1100);assert.equal(svg.dataset.phase,'highlight');assert(+doc.querySelector('.story-zoom-box').getAttribute('width')>0);
+ story.enter('slope');story.finish();story.enter('secants');advance(300);assert.equal(+doc.querySelectorAll('.story-axis')[12].style.opacity,0);assert.equal(+doc.querySelector('.story-clean-slope').style.opacity,0);advance(300);assert.equal(+doc.querySelectorAll('.story-axis')[12].style.opacity,0);advance(500);assert.equal(svg.dataset.phase,'highlight');assert(+doc.querySelector('.story-zoom-box').getAttribute('width')>0);
  advance(300);assert.equal(svg.dataset.phase,'hold');advance(1000);assert.equal(svg.dataset.phase,'zoom-in');
  for(let j=0;j<8;j++){
   story.enter('secants');advance(3900+j*1200);assert.equal(svg.dataset.phase,'zoomed');assert.equal(+svg.dataset.pairStart,t.findIndex(v=>v>=2)+j);
+  const leg=doc.querySelector('.story-triangle');assert(+leg.getAttribute('x2')-+leg.getAttribute('x1')>=80);assert.equal(+doc.querySelector('#c1-stage .measurement-dot').getAttribute('r'),8);assert.equal(doc.querySelectorAll('.story-leg-label').filter(e=>+e.style.opacity===1).length,2);
   assert.equal(doc.querySelectorAll('.story-delta').filter(e=>+e.style.opacity===1).length,2);
   assert.equal(doc.querySelector('.story-length').textContent,tr('x12_length',{n:1}));const a=t.findIndex(v=>v>=2)+j;assert.equal(doc.querySelector('.story-construction-readout').textContent,tr('x12c_slope',{value:fmt((x[a+1]-x[a])/(t[a+1]-t[a]))}));
   advance(350);assert.equal(+doc.querySelectorAll('.story-slope')[j].style.opacity+(+doc.querySelectorAll('.story-clipped')[j].style.opacity),1);

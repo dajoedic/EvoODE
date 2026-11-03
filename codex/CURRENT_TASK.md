@@ -1,54 +1,30 @@
-# WP-X12b — WISP explorable: scroll story readability fixes from Claude's frame-by-frame review
+# WP-X12d — WISP explorable: fixes from Claude's frame review of WP-X12c
 **Language: Python** (build, tests) — the page itself is static HTML, CSS and JavaScript.
 
-Stand 2026-11-03 23:15. Follows WP-X12 (`codex/reports/REPORT_WP_X12.md`, uncommitted, accepted as base). All rules
-from WP-X12 stay in force (vertical scroll only, one persistent stage, autoplay sequences, injectable clock, reduced
-motion, no `compute.js`/data change, fit at 1366 × 657 / 768, byte-identical rebuild). Scope: chapter-1 stage only.
+Stand 2026-11-04 00:25. Follows WP-X12c (`codex/reports/REPORT_WP_X12C.md`, uncommitted, accepted as base). All rules
+stay in force. Scope: chapter-1 stage only. Claude captured frames at 1366 × 768 (Edge headless) and found:
 
-Claude captured every step at several times (Edge headless, 1366 × 768). The story works; these defects make it hard
-to read. Fix all of them:
+1. **S4 neighbour triangles are tiny.** In the 8-pair phase the zoom shows ~15 points, so a neighbour triangle is a few
+   pixels. Zoom deeper for this phase: about 6–8 points across the plot width (so one Δt is ≥ 60 px), dots ≥ 7 px
+   radius, triangle 3 px stroke with Δt/Δu labels on its legs; move the window along with the 8 pairs (pan) if needed.
+   Keep the later zoom-out and sweep.
+2. **Scene transition S3 → S4 overlaps two layouts** (at ≈ 300 ms the old single panel and the new two panels are drawn
+   on top of each other: lower-panel tick labels "58,7 / 0" sit inside the upper panel, the masthead area flickers).
+   Sequence it: first the single panel shrinks to the upper panel's frame, then the lower panel fades/grows in below;
+   the lower panel's axes appear only after it has its final position.
+3. **S10 end state is empty**: after the sum animation the data and the noise band disappear and only the list, the
+   counter and the bar remain. The end state must keep the full-view data with the estimated noise band, with the sum
+   bar below the plot (and the deviation list beside it).
+4. **S11 labels overlap the share list**: the stacked-bar legend lines ("Rauschen — nicht erklärbar: …", "vom Baustein
+   erklärt: …", "noch erklärbar: …") are drawn over the six share rows. Lay out S11 as: stacked bar on top across the
+   stage width with its three labels directly under their segments (or one legend line), then the six share rows
+   below with enough spacing; nothing overlaps.
+5. **S7 error-over-c curve is too small** and has no axes: make it a real small chart (≈ 280 × 140 px) with an x-axis
+   "c" (0 … 2·c*) and a y-axis "Fehler in %", the moving orange marker and the green optimum marker on it; place it
+   where it does not cover the residual plot (e.g. right of the error bar or above the plot with its own space).
 
-1. **S2 noise sticks are invisible** (thin, same tone as the curve). Draw them in the model/accent-contrast colour
-   (`--model`), ≈ 1.5 px, 70 % opacity; the clean curve 2.5 px in `--truth`. The curve label must not overlap the top
-   tick label.
-2. **S3 tangent is invisible.** Draw the tangent as a long (≈ 25 % of the plot width) 2.5 px line in `--model` through
-   the travelling marker, plus a small slope triangle (Δt, Δu) on it; readout "Steigung du/dt = {value}" next to the
-   marker (follows it), not under the plot.
-3. **S4 does not show what a slope from two points is.** Restructure into two phases:
-   (a) **zoomed first**: start zoomed on a short stretch (~12 neighbouring points, large dots); for 3 consecutive
-   neighbour pairs draw the triangle (Δt, Δu) large and labelled, and drop the resulting slope dot into the bottom
-   panel with a short connecting animation; (b) then zoom out and run the fast sweep over all pairs (triangles only
-   every k-th pair). The bottom panel needs its own **y-axis with ticks and a label "Steigung (Änderung pro
-   Zeiteinheit)"**, a zero line, and a **robust fixed scale**: ± 4 × max |true slope|; slopes outside are drawn at the
-   edge as small triangles (▲/▼) and counted in a caption "{n} Werte außerhalb". The true slope from the clean curve is
-   a 2.5 px `--truth` line, visible as the hump (max ≈ 14.6). Dots must never fly in from outside the panel: they
-   appear at their final position (fade/scale in) or travel from the triangle on the top panel straight down.
-   The Δt/Δu readout belongs next to the current triangle, not below the stage.
-4. **S5**: use the same bottom-panel scale as S4 (so the reader sees the long-window slopes land on the hump);
-   triangles for lengths 2–16 drawn clearly (2 px, labelled with the length); after zooming out the 31 long-window
-   slope dots appear on the same axis.
-5. **S6–S8: the error bar overlaps the x-axis label "Zeit t".** Place the error bar (and its "Fehler: …" label) clearly
-   below the plot with its own spacing, or to the right of the plot; no overlap at 768 and 657.
-6. **S9 is cluttered.** (a) The local cubic must be clearly visible: 3 px `--model` line across the whole 9-point
-   window, drawn before the ring/stick appear; the deviation stick 3 px. (b) The list "Abweichungen" goes into its own
-   box outside the plot area (right of the plot or below it), one line per example point with its value, never over
-   data. (c) The final overview: draw the estimated noise as a smooth translucent band (filled area between
-   u_smooth ± sqrt(variance), where u_smooth is the local-cubic prediction at each point) instead of two jagged lines;
-   legend "geschätztes Rauschen (± eine Standardabweichung)". (d) Split the long text: the step text keeps the method
-   (first paragraph); the result (est vs true, floor, actual) appears as a second paragraph only after the sequence
-   has finished (fade in), in the same step.
-7. **The caption "Gezeigt: Abschnitte, die sich nicht überlappen …"** may appear only on steps that show windowed
-   changes (S5–S8), not on S9–S11.
-8. **Top-panel tick labels** ("6,61" at the bottom left) overlap the x-axis zero label: start the y ticks one tick
-   above the axis or offset the first tick label.
+Add a DOM/layout check (bounding boxes) for S10 end (data dots present, ≥ 500 visible) and S11 (no text box overlaps
+a share row), and for S4 (neighbour Δt ≥ 60 px in the 8-pair phase).
 
-## Acceptance
-
-1. Build exit 0, byte-identical rebuild, size budget; all tests passing plus: S4 phase (a) shows 3 labelled triangles
-   in a zoomed view before the sweep; bottom-panel scale = ± 4 × max |true slope| with clipped-count caption; S9 list
-   element outside the plot's bounding box; S9 result paragraph hidden until the sequence ends; caption only on S5–S8;
-   DOM check that no two text labels' bounding boxes overlap on S2–S9 final states (Claude checks pixels).
-2. Strict numerical checks exit 0.
-3. `check_wisp_explainer_fit.py`: if blocked in your sandbox, status `blocked` with "browser not runnable here —
-   environment, not the task"; Claude runs it.
-4. Short report `codex/reports/REPORT_WP_X12B.md`.
+Acceptance: build exit 0, byte-identical rebuild; all tests passing; strict checks exit 0; fit checker as usual
+(blocked → Claude runs it). Short report `codex/reports/REPORT_WP_X12D.md`.

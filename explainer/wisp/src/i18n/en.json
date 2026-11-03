@@ -505,5 +505,6 @@
   "x12c_points": "Points: {k} of {n}",
   "x12c_sum_1": "Noise at the start + end of each window,",
   "x12c_sum_2": "added up over all windows",
-  "x12c_floor": "{floor} of the error without a block"
+  "x12c_floor": "{floor} of the error without a block",
+  "x12d_error_axis": "Error in %"
 }

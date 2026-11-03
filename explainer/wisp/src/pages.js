@@ -164,9 +164,9 @@
     const stage=document.getElementById('c1-stage'),r=stage.getBoundingClientRect();
     const stageOk=r.left>=0&&r.right<=innerWidth&&r.bottom<=innerHeight-12;
     // Real SVG text bounds: the synthetic DOM intentionally cannot supply layout.
-    const labels=[...stage.querySelectorAll('svg text')].filter(e=>+getComputedStyle(e).opacity>.01&&e.textContent.trim()).map(e=>({text:e.textContent,rect:e.getBoundingClientRect()}));
+    const labels=[...stage.querySelectorAll('svg text')].filter(e=>+getComputedStyle(e).opacity>.01&&e.textContent.trim()).map(e=>({text:e.textContent,row:e.dataset.shareRow,rect:e.getBoundingClientRect()}));
     const labelOverlaps=[];
-    if(['noise-visible','slope','secants','windows','error-empty','fit','every','noise-why','noise-estimate'].includes(page.dataset.stage)){
+    if(['noise-visible','slope','secants','windows','error-empty','fit','every','noise-why','noise-estimate','percent'].includes(page.dataset.stage)){
      labels.forEach((a,i)=>labels.slice(i+1).forEach(b=>{if(Math.min(a.rect.right,b.rect.right)>Math.max(a.rect.left,b.rect.left)&&Math.min(a.rect.bottom,b.rect.bottom)>Math.max(a.rect.top,b.rect.top))labelOverlaps.push([a.text,b.text]);}));
     }
     const box=stage.querySelector('.story-deviations').getBoundingClientRect(),plot=stage.querySelector('#story-top-clip rect');
@@ -178,10 +178,20 @@
     if(['secants','windows'].includes(page.dataset.stage))annotationLabels.push(...stage.querySelectorAll('.story-delta,.story-length'));
     const dots=[...stage.querySelectorAll('.measurement-dot,.story-slope,.story-long-slope')].filter(e=>+getComputedStyle(e).opacity>.01).map(e=>e.getBoundingClientRect());
     annotationLabels.filter(e=>+getComputedStyle(e).opacity>.01).forEach(e=>{const a=e.getBoundingClientRect();if(dots.some(b=>Math.min(a.right,b.right)>Math.max(a.left,b.left)&&Math.min(a.bottom,b.bottom)>Math.max(a.top,b.top)))dataLabels.push(e.textContent);});
-    variants.push({...readPage(page),sample,stageOk,labelOverlaps,dataLabels,deviationsOutside,ok:readPage(page).ok&&stageOk&&labelOverlaps.length===0&&dataLabels.length===0&&deviationsOutside});
+    const intersects=(a,b)=>Math.min(a.right,b.right)>Math.max(a.left,b.left)&&Math.min(a.bottom,b.bottom)>Math.max(a.top,b.top);
+    const visible=e=>+getComputedStyle(e).opacity>.99;
+    // Clip-path geometry lives in defs; map its SVG coordinates to screen space.
+    const plotBox={left:matrix.a*(+plot.getAttribute('x'))+matrix.e,right:plotRight,top:matrix.d*(+plot.getAttribute('y'))+matrix.f,bottom:matrix.d*(+plot.getAttribute('y') + +plot.getAttribute('height'))+matrix.f};
+    const visibleData=[...stage.querySelectorAll('.measurement-dot')].filter(e=>visible(e)&&intersects(e.getBoundingClientRect(),plotBox)).length;
+    const noiseEndOk=page.dataset.stage!=='noise-estimate'||sample<story.durations['noise-estimate']||(visibleData>=500&&visible(stage.querySelector('.story-band')));
+    const shareRows=[...stage.querySelectorAll('.story-slot')].map((e,j)=>{const boxes=[e.getBoundingClientRect(),...labels.filter(a=>a.row===String(j)).map(a=>a.rect)];return {left:Math.min(...boxes.map(b=>b.left)),right:Math.max(...boxes.map(b=>b.right)),top:Math.min(...boxes.map(b=>b.top)),bottom:Math.max(...boxes.map(b=>b.bottom))};});
+    const shareOverlaps=page.dataset.stage==='percent'?labels.flatMap(a=>shareRows.filter((b,j)=>a.row!==String(j)&&intersects(a.rect,b)).map(()=>a.text)):[];
+    const leg=stage.querySelector('.story-triangle'),neighbourDt=leg.getBoundingClientRect().width;
+    const neighbourOk=page.dataset.stage!=='secants'||stage.querySelector('svg').dataset.phase!=='zoomed'||neighbourDt>=60;
+    variants.push({...readPage(page),sample,stageOk,labelOverlaps,dataLabels,deviationsOutside,visibleData,noiseEndOk,shareOverlaps,neighbourDt,neighbourOk,ok:readPage(page).ok&&stageOk&&labelOverlaps.length===0&&dataLabels.length===0&&deviationsOutside&&noiseEndOk&&shareOverlaps.length===0&&neighbourOk});
     }
     const story=window.WispChapterStory;story.enter(page.dataset.stage);
-    const samples={secants:[1100,2000,3000,...Array.from({length:8},(_,j)=>3900+j*1200),13200],windows:[2050,3250,4450,5650,6500],fit:[2899,2900,4900],every:Array.from({length:6},(_,j)=>2900+j*2500),'noise-why':[900],'noise-estimate':[2500,5200,7100,8350,9600,10600,11600]};
+    const samples={secants:[0,300,600,899,900,1100,2000,3000,...Array.from({length:8},(_,j)=>3900+j*1200),13200],windows:[2050,3250,4450,5650,6500],fit:[2899,2900,4900],every:Array.from({length:6},(_,j)=>2900+j*2500),'noise-why':[900],'noise-estimate':[2500,5200,7100,8350,9600,10600,11600]};
     for(const sample of samples[page.dataset.stage]||[]){story.seek(sample);inspectStage(sample);}
     story.finish();inspectStage(story.durations[page.dataset.stage]);
     if(page.dataset.stage==='fit'){
