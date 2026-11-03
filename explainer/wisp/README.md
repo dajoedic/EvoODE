@@ -137,3 +137,19 @@ WP-X7b enlarges the opening illustration and repeats its 6 s growth / 1.5 s hold
 The solution chart reuses the reader's current RK4 output (including the initial challenge state and display clipping). Its three browser-computed measurement-fit R? values use the playground formula, before display clipping. Exported truth/model curves are linearly interpolated from their display grid onto observation times; out-of-range or invalid grids report unavailable fit. These presentation fits differ from the stored reconstruction/generalization metrics. `outputs/wisp_x7b/validate.py` runs the 41-test presentation suite, strict numerical checks and two identical builds; the browser fit checker remains a separate required acceptance.
 
 WP-X7c gives the solution a large left chart and a single right key for measurements, the reader equation, WISP and truth, including matching line swatches and unchanged measurement-fit R² computations. Truth is painted last as a thin orange dashed line. WP-X7d removes the hook media placeholder and its translations. Its full-width illustration uses a 1020 ? 260 desktop viewBox and 310 px height (210 px at short desktop heights), with the caption directly underneath and the time label contained. The dish diameter is configured as approximately 251 px at 1366 ? 768; browser fit still requires verification. The challenge punchline now sits below its controls; coarse button steps are 0.1 for 1/u/sin/cos, 0.001 for u² and 0.0001 for u³. Sliders retain their fine precision, and typed fields accept any finite value. Reproduce non-browser acceptance with `python outputs/wisp_x7c/validate.py`; pixel acceptance still requires the fit checker outside the sandbox.
+
+## WP-X12 scroll story
+
+The delivered inventory is introduction pages 1–2 followed by eleven chapter-one steps,
+`data` through `solution`. All navigation moves vertically; left/right arrows have no
+page-navigation action. The single `#c1-stage` SVG persists across chapter steps. Its
+fixed topology interpolates geometry with requestAnimationFrame; timed sequences replay
+on entry, finish when interrupted, and jump to their end under reduced motion.
+`window.WispStoryClock` can inject `now`, `request` and `cancel` before initialization.
+The only chapter control is the optional coefficient slider revealed after S7.
+
+Run the existing presentation suite and strict checkers using the commands above.
+The real-record DOM harness checks the eleven bilingual states, numerical geometry,
+reverse/reduced motion and keyboard-only progression. Pixel acceptance still requires
+`check_wisp_explainer_fit.py`; WP-X12 evidence is named `wp_x12_fit.json` and
+`wp_x12_edge_fit.json` under `outputs/wisp_explainer_checks/`.

@@ -90,7 +90,7 @@ def edge_run(edge=EDGE):
     except (ValueError,TimeoutError) as exc:
         evidence['errors'].append(str(exc));code=1
     evidence['exit']=code
-    (OUT/'wp_x6_edge_fit.json').write_text(json.dumps(evidence,ensure_ascii=False,indent=2),encoding='utf8')
+    (OUT/'wp_x12_edge_fit.json').write_text(json.dumps(evidence,ensure_ascii=False,indent=2),encoding='utf8')
     print(json.dumps(evidence if evidence['errors'] else {'exit':code,'checks':len(evidence['checks']),'screenshots':len(evidence['screenshots']),'overflow':[p for r in evidence['checks'] for p in r['pages'] if not p['ok']]},ensure_ascii=True))
     return code
 
@@ -145,42 +145,33 @@ def check_interactions(page, evidence):
 
 
 def check_chapter_interactions(page,evidence):
-    """Delivered configuration: hidden pages, chapter keys, all block choices and sliders."""
+    """Keyboard-only story, vertical navigation, persistent SVG and optional fit."""
     for lang in ('en','de'):
         page.set_viewport_size({'width':1366,'height':657})
         page.goto((ROOT/'explainer/wisp/dist/wisp_explainer.html').as_uri()+f'?lang={lang}',wait_until='load')
-        page.wait_for_function('window.WispChapterOne && window.WispSlides?.nav')
+        page.wait_for_function('window.WispChapterStory && window.WispSlides?.nav')
+        expected=['p-hook','p-challenge','p-c1-data','p-c1-noise-visible','p-c1-slope','p-c1-secants','p-c1-changes','p-c1-error-empty','p-c1-fit','p-c1-every','p-c1-noise','p-c1-percent','p-c1-solution']
         ids=page.evaluate('WispSlides.pages.map(p=>p.id)')
-        expected=['p-hook','p-challenge','p-c1-data','p-c1-changes','p-c1-error-empty','p-c1-fit','p-c1-every','p-c1-noise','p-c1-percent','p-c1-solution']
         if ids!=expected:raise AssertionError(f'Incorrect delivered inventory: {ids}')
-        for id in ('p-solution','p-headline','p-results','p-glossary'):
-            page.evaluate('(id)=>WispSlides.nav.link("#"+id)',id)
-            if page.evaluate('WispSlides.nav.index')!=0:raise AssertionError('Hidden link reachable')
-        page.keyboard.press('ArrowRight');page.wait_for_timeout(850)
-        if page.evaluate('WispSlides.nav.index')!=1:raise AssertionError('Right must advance one page')
-        page.keyboard.press('ArrowRight');page.wait_for_timeout(850)
-        if page.evaluate('WispSlides.nav.index')!=2:raise AssertionError('Right must cross into chapter one')
-        if page.locator('.page-dots a:visible').count()!=8:raise AssertionError('Wrong sub-step dots')
-        page.keyboard.press('ArrowRight');page.wait_for_timeout(850)
-        page.locator('#c1-window').focus();page.keyboard.press('ArrowLeft')
-        if page.evaluate('WispSlides.nav.index')!=3:raise AssertionError('Slider lost its arrow key')
-        for id in expected[2:]:
-            page.evaluate('(id)=>WispSlides.nav.link("#"+id)',id);page.wait_for_timeout(850)
-            page.locator('body').click(position={'x':5,'y':5})
-            page.keyboard.press('ArrowUp');page.wait_for_timeout(850)
-            if page.evaluate('WispSlides.nav.index')!=0:raise AssertionError('Up must reach the intro chapter')
-        page.keyboard.press('ArrowDown');page.wait_for_timeout(850)
-        if page.evaluate('WispSlides.nav.index')!=2:raise AssertionError('Down must reach chapter one')
-        for id in ('p-c1-every','p-c1-noise','p-c1-percent'):
-            page.evaluate('(id)=>WispSlides.nav.link("#"+id)',id);page.wait_for_timeout(850)
-            selector='#c1-visual-4 button' if id=='p-c1-every' else '.c1-chips button'
-            for button in page.locator(selector).all():
-                button.click()
-                if button.get_attribute('aria-pressed')!='true':raise AssertionError('Block selection failed')
-                if id=='p-c1-percent':
-                    parts=page.locator('.c1-stack').evaluate('e=>JSON.parse(e.dataset.parts)')
-                    if abs(sum(parts)-1)>1e-12:raise AssertionError('Stack does not sum to 100%')
-        evidence.setdefault('chapter_checks',[]).append({'language':lang,'pages':ids,'block_choices':12})
+        for key in ('ArrowLeft','ArrowRight'):
+            page.keyboard.press(key)
+            if page.evaluate('WispSlides.nav.index')!=0:raise AssertionError('Horizontal key changed page')
+        for i in range(1,len(expected)):
+            page.keyboard.press(('ArrowDown','PageDown','Space')[i%3]);page.wait_for_timeout(850)
+            if page.evaluate('WispSlides.nav.index')!=i:raise AssertionError('Vertical keyboard walk failed')
+            page.evaluate('WispChapterStory.finish()')
+            if i>=2 and page.locator('#c1-stage svg').get_attribute('data-state')!=page.locator('#'+expected[i]).get_attribute('data-stage'):raise AssertionError('Stage differs from page')
+        if page.locator('.page-dots a:visible').count()!=11:raise AssertionError('Wrong sub-step dots')
+        page.keyboard.press('ArrowUp');page.wait_for_timeout(850)
+        if page.evaluate('WispSlides.nav.index')!=len(expected)-2:raise AssertionError('Up did not return one step')
+        page.evaluate('WispSlides.nav.link("#p-c1-fit");WispChapterStory.finish()');page.wait_for_timeout(850)
+        page.locator('#c1-c').focus();page.keyboard.press('ArrowLeft')
+        if page.evaluate('WispSlides.pages[WispSlides.nav.index].id')!='p-c1-fit':raise AssertionError('Optional slider lost arrow key')
+        page.set_viewport_size({'width':390,'height':844})
+        page.evaluate('WispSlides.nav.link("#p-c1-data");WispChapterStory.finish()');page.wait_for_timeout(850)
+        fits=page.locator('#c1-stage').evaluate('e=>{const r=e.getBoundingClientRect();return r.left>=0&&r.right<=innerWidth&&r.bottom<=innerHeight;}')
+        if not fits:raise AssertionError('Phone stage does not fit')
+        evidence.setdefault('chapter_checks',[]).append({'language':lang,'pages':ids,'keyboard_only':True,'phone_stage':fits})
 
 
 def run(edge=EDGE):
@@ -214,7 +205,7 @@ def run(edge=EDGE):
                     shots=OUT/'pages';shots.mkdir(exist_ok=True)
                     for record in result['pages']:
                         if time.monotonic()>deadline:raise TimeoutError('14-minute budget exceeded')
-                        page.evaluate('(id)=>WispSlides.nav.link("#"+id)',record['id'])
+                        page.evaluate('(id)=>{WispSlides.nav.link("#"+id);window.WispChapterStory?.finish();}',record['id'])
                         path=shots/f"{lang}_{height}_{record['id']}.png"
                         page.screenshot(path=str(path))
                         evidence['screenshots'].append(str(path.relative_to(ROOT)))
@@ -227,7 +218,7 @@ def run(edge=EDGE):
     if code==2:
         evidence['fallback_exit']=edge_run(edge)
     evidence['exit']=code
-    (OUT/'wp_x6_fit.json').write_text(json.dumps(evidence,ensure_ascii=False,indent=2),encoding='utf8')
+    (OUT/'wp_x12_fit.json').write_text(json.dumps(evidence,ensure_ascii=False,indent=2),encoding='utf8')
     print(json.dumps({'exit':code,'checks':len(evidence['checks']),'screenshots':len(evidence['screenshots']),'errors':evidence['errors'],'overflow':[p for r in evidence['checks'] for p in r['pages'] if not p['ok']]},ensure_ascii=True))
     return code
 

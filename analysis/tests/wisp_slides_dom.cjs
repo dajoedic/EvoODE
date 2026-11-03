@@ -50,95 +50,83 @@ global.document=doc;global.window=global;global.innerWidth=1366;global.innerHeig
 global.location={href:'file:///wisp.html?lang='+fixture.language,get hash(){return new URL(this.href).hash;},assign(url){this.href=String(url);}};
 global.history={pushState(_,__,url){location.href=String(url);},replaceState(_,__,url){location.href=String(url);}};
 global.localStorage={getItem(){return null;},setItem(){}};global.matchMedia=()=>({matches:false,addEventListener(){}});
-let now=0,frameId=0;const frames=new Map();global.performance={now:()=>now};global.scrollY=0;global.scrollTo=(_,y)=>{global.scrollY=y;};global.requestAnimationFrame=fn=>{frames.set(++frameId,fn);return frameId;};global.cancelAnimationFrame=id=>frames.delete(id);function advance(ms=800){const end=now+ms;while(now<end){now+=16;const queue=[...frames.values()];frames.clear();queue.forEach(fn=>fn(now));}}
+let now=0,frameId=0;const frames=new Map();global.performance={now:()=>now};global.scrollY=0;global.scrollTo=(_,y)=>{global.scrollY=y;};global.requestAnimationFrame=fn=>{frames.set(++frameId,fn);return frameId;};global.cancelAnimationFrame=id=>frames.delete(id);function advance(ms=800,stride=16){const end=now+ms;while(now<end){now+=Math.min(stride,end-now);const queue=[...frames.values()];frames.clear();queue.forEach(fn=>fn(now));}}
+global.WispStoryClock={now:()=>now,request:fn=>requestAnimationFrame(fn),cancel:id=>cancelAnimationFrame(id)};
 const events={};global.addEventListener=(k,fn)=>(events[k]??=[]).push(fn);global.WispCompute=require(base+'/src/compute.js');
 let dishVisible;global.IntersectionObserver=class{constructor(fn){dishVisible=fn;}observe(){}disconnect(){}};
 vm.runInThisContext(fs.readFileSync(base+'/src/app.js','utf8'),{filename:'app.js'});
 vm.runInThisContext(fs.readFileSync(base+'/src/pages.js','utf8'),{filename:'pages.js'});
-// Exercise the shipped morph with deterministic animation frames and actual clicks.
-if(fixture.configuration==='morph'){
- const teaching=fixture.data.live.teaching,morph=WispChapterMorph,table=fixture.data.live.i18n[fixture.language];
- const close=(a,b)=>assert(Math.abs(a-b)<1e-9,`${a} != ${b}`);
- const dots=doc.querySelectorAll('#c1-visual-0 .measurement-dot');
- assert.equal(dots.length,512);
- function verify(state){
-  const [lo,hi]=morph.states[state].range,t=teaching.t,x=teaching.observed;
-  dots.forEach((dot,i)=>{
-   const expected=state==='u'?x[i]:i<x.length-1?x[i+1]-x[i]:0;
-   close(+dot.getAttribute('cy'),228-(expected-lo)/(hi-lo)*198);
-   const time=state==='u'||i===t.length-1?t[i]:(t[i]+t[i+1])/2;
-   close(+dot.getAttribute('cx'),76+(time-t[0])/(t.at(-1)-t[0])*664);
-  });
-  assert.equal(+dots.at(-1).style.opacity,state==='diff'?0:1);
-  assert.equal(morph.current(),state);
-  for(const name of ['u','diff'])assert.equal(doc.getElementById('c1-show-'+name).getAttribute('aria-pressed'),String(state===name));
-  assert.equal(doc.getElementById('c1-morph-note').textContent,table['x11_note_'+state]);
-  assert.equal(doc.querySelector('#c1-visual-0 svg').getAttribute('aria-label'),state==='u'?'u':table.x11_axis_diff);
- }
- const initial=dots[0].getAttribute('cy');
- doc.getElementById('c1-show-diff').emit('click');
- assert.equal(doc.getElementById('c1-show-diff').getAttribute('aria-pressed'),'true');
- assert.equal(doc.getElementById('c1-morph-note').textContent,table.x11_note_diff);
- advance(450);assert.notEqual(dots[0].getAttribute('cy'),initial);
- advance(500);verify('diff');
- doc.getElementById('c1-show-u').emit('click');advance(950);verify('u');
- global.matchMedia=()=>({matches:true,addEventListener(){}});
- doc.getElementById('c1-show-diff').emit('click');verify('diff');
- doc.getElementById('c1-show-u').emit('click');verify('u');
- console.log('PASS X11 morph: 512 dots, midpoint differences, both directions, buttons, notes, axes, reduced motion');
- process.exit(0);
-}
-if(fixture.configuration==='noise'){
- const teaching=fixture.data.live.teaching,noise=WispChapterNoise,n=teaching.t.length;
- const close=(a,b)=>assert(Math.abs(a-b)<=1e-10*Math.max(1,Math.abs(b)),`${a} != ${b}`);
- assert.deepEqual(noise.variance,WispCompute.noiseVariance(teaching.t,teaching.observed));
- const relative=noise.variance.reduce((s,v,i)=>s+Math.sqrt(v)/Math.abs(teaching.observed[i]),0)/n;
- close(noise.relative,relative);
- const percent=v=>(100*v).toLocaleString(fixture.language,{minimumFractionDigits:1,maximumFractionDigits:1})+' %';
- const result=doc.getElementById('c1-noise-result').textContent,floor=percent(WispChapterOne.model.floor);
- for(const value of [percent(relative),percent(teaching.sigma),floor])assert(result.includes(value));
- assert(doc.getElementById('c1-text-5').textContent.includes(floor));
- for(const reference of fixture.cubic){
-  const local=noise.local(reference.center);assert.equal(local.start,reference.start);
-  assert.deepEqual(local.ts,teaching.t.slice(reference.start,reference.start+9));
-  assert.deepEqual(local.xs,teaching.observed.slice(reference.start,reference.start+9));
-  reference.t.forEach((t,i)=>close(local.value(t),reference.y[i]));
- }
- assert.equal(doc.querySelectorAll('#c1-visual-noise .c1-noise-in').length,9);
- assert(doc.querySelector('#c1-visual-noise .c1-noise-stick'));
- const slider=doc.getElementById('c1-noise-center'),before=doc.querySelector('#c1-visual-noise path').getAttribute('d');
- slider.value=200;slider.emit('input');assert.notEqual(doc.querySelector('#c1-visual-noise path').getAttribute('d'),before);
- console.log('PASS X11 noise: full variance, mean relative noise, result/floor, independent NumPy cubics, slider');
- process.exit(0);
-}
-// Delivered configuration executes the actual app, DOM and event routing.
+// WP-X12: drive the shipped persistent stage with the injected frame clock.
 if(fixture.configuration==='delivered'){
- const slides=WispSlides,one=WispChapterOne,m=one.model;
- const ids=['p-hook','p-challenge','p-c1-data','p-c1-changes','p-c1-error-empty','p-c1-fit','p-c1-every','p-c1-noise','p-c1-percent','p-c1-solution'];
+ const story=WispChapterStory,slides=WispSlides,m=WispChapterOne.model,t=fixture.data.live.teaching.t,x=fixture.data.live.teaching.observed,truth=fixture.data.live.teaching.truth;
+ const close=(a,b)=>assert(Math.abs(a-b)<=1e-9*Math.max(1,Math.abs(b)),`${a} != ${b}`);
+ const ids=['p-hook','p-challenge','p-c1-data','p-c1-noise-visible','p-c1-slope','p-c1-secants','p-c1-changes','p-c1-error-empty','p-c1-fit','p-c1-every','p-c1-noise','p-c1-percent','p-c1-solution'];
  assert.deepEqual(slides.pages.map(p=>p.id),ids);
+ assert.deepEqual(slides.pages.slice(2).map(p=>p.dataset.stage),story.states);
+ assert.equal(doc.querySelectorAll('#c1-stage svg').length,1);
  assert(doc.getElementById('p-results').hidden);assert(doc.getElementById('p-solution').hidden);
  for(const id of ['p-results','p-headline','p-solution','p-glossary']){slides.nav.go(0);slides.nav.link('#'+id);assert.equal(slides.nav.index,0);}
  function event(key,target=doc.body){let prevented=false;for(const fn of events.keydown||[])fn({type:'keydown',key,target,preventDefault(){prevented=true;}});advance();return prevented;}
- slides.nav.go(0);advance();event('ArrowRight');assert.equal(slides.nav.index,1);
- event('ArrowRight');assert.equal(slides.pages[slides.nav.index].id,'p-c1-data');
- assert.equal(doc.querySelectorAll('.page-dots a').filter(a=>!a.hidden).length,8);
- event('ArrowLeft');assert.equal(slides.nav.index,1);
- slides.nav.go(0);advance();event('ArrowDown');assert.equal(slides.nav.index,2);
- for(let i=2;i<ids.length;i++){slides.nav.go(i);advance();event('ArrowUp');assert.equal(slides.pages[slides.nav.index].id,'p-hook');}
- event('PageDown');event('PageDown');assert.equal(slides.nav.index,2);
- for(const id of ['c1-c','c1-window','c1-noise-center'])for(const key of ['ArrowLeft','ArrowRight','ArrowUp','ArrowDown']){assert(!event(key,doc.getElementById(id)));assert.equal(slides.nav.index,2);}
- for(const key of ['c1-window','c1-c']){const slider=doc.getElementById(key),before=doc.getElementById(key==='c1-window'?'c1-visual-1':'c1-visual-3').querySelector('path').getAttribute('d');slider.value=key==='c1-window'?slider.max:(slider.min||0);slider.emit('input');assert.notEqual(doc.getElementById(key==='c1-window'?'c1-visual-1':'c1-visual-3').querySelector('path').getAttribute('d'),before);}
- const close=(a,b)=>assert(Math.abs(a-b)<1e-10,`${a} != ${b}`),constant=m.blocks.find(b=>b.term===0);
- close(one.error(m,0,constant.coefficient),1-constant.gain);
- for(const delta of [-1,1])assert(one.error(m,0,constant.coefficient+delta)>one.error(m,0,constant.coefficient));
- for(const b of m.blocks){one.chooseEvery(b.term);one.choosePercent(b.term);const parts=JSON.parse(doc.querySelector('.c1-stack').dataset.parts);close(parts.reduce((a,b)=>a+b,0),1);close(parts[0],m.floor);close(parts[1],b.gain);close(parts[2],m.explainable-b.gain);assert.equal(doc.querySelectorAll('#c1-visual-4 button[aria-pressed="true"]').length,1);}
+ slides.nav.go(0);advance();assert(!event('ArrowRight'));assert.equal(slides.nav.index,0);assert(!event('ArrowLeft'));assert.equal(slides.nav.index,0);
+ assert.strictEqual(story.clock,global.WispStoryClock);
+ const svg=story.svg,original=svg;
+ for(let i=1;i<ids.length;i++){event(i%3===0?'PageDown':i%3===1?'ArrowDown':' ');assert.equal(slides.nav.index,i);advance(8000,160);if(i>=2){assert.equal(svg.dataset.state,story.states[i-2]);assert.equal(svg.dataset.complete,'true');assert.strictEqual(doc.querySelector('#c1-stage svg'),original);}}
+ event('PageDown');assert.equal(slides.nav.index,ids.length-1);event('ArrowUp');assert.equal(slides.nav.index,ids.length-2);
+ assert.equal(doc.querySelectorAll('.page-dots a').filter(a=>!a.hidden).length,11);
+ assert.equal(doc.querySelectorAll('.c1-page input').length,1);
+ const saved=[];
+ for(const [i,state] of story.states.entries()){
+  slides.nav.go(i+2);advance(8000,160);assert.equal(svg.dataset.state,state);assert.equal(svg.dataset.complete,'true');
+  const dots=doc.querySelectorAll('#c1-stage .measurement-dot'),sticks=doc.querySelectorAll('#c1-stage .story-residual'),rates=doc.querySelectorAll('#c1-stage .story-slope');
+  if(state==='data')assert.equal(dots.filter(d=>+d.style.opacity===1).length,t.length);
+  if(state==='noise-visible')sticks.forEach((d,j)=>{close(+d.dataset.value,Math.abs(x[j]-truth[j]));assert.equal(+d.style.opacity,1);const lo=Math.min(...x)*.95,hi=Math.max(...x)*1.05;close(+d.getAttribute('y1'),392-(x[j]-lo)/(hi-lo)*350);close(+d.getAttribute('y2'),392-(truth[j]-lo)/(hi-lo)*350);});
+  if(state==='secants'){
+   assert.equal(rates.filter(d=>+d.style.opacity===1).length,t.length-1);
+   rates.forEach((d,j)=>close(+d.dataset.value,(x[j+1]-x[j])/(t[j+1]-t[j])));
+   // Verify the actual rendered y coordinates independently of scene metadata.
+   const bound=Math.max(...x.slice(1).map((v,j)=>Math.abs((v-x[j])/(t[j+1]-t[j]))))*1.06;
+   rates.forEach(d=>close(+d.getAttribute('cy'),392-(+d.dataset.value+bound)/(2*bound)*122));
+  }
+  if(state==='windows'){
+   const length=Math.max(...fixture.data.live.windows),visible=rates.filter(d=>+d.style.opacity===1);
+   assert.equal(visible.length,Math.floor((t.length-1)/length));const bound=4*Math.max(...story.longRows.map(r=>Math.abs(r.clean)));visible.forEach(d=>close(+d.getAttribute('cy'),392-(+d.dataset.value+bound)/(2*bound)*122));visible.forEach((d,j)=>close(+d.dataset.value,(x[(j+1)*length]-x[j*length])/(t[(j+1)*length]-t[j*length])));
+  }
+  if(state==='error-empty'){close(+doc.querySelector('.story-error').getAttribute('width'),708);close(+svg.dataset.error,1);assert(doc.querySelector('#c1-stage').textContent.includes('100,0 %')||doc.querySelector('#c1-stage').textContent.includes('100.0 %'));}
+  if(state==='fit'){
+   const block=m.blocks.find(b=>b.term===0);close(+svg.dataset.coefficient,block.coefficient);close(+svg.dataset.error,1-block.gain);assert(!doc.getElementById('c1-play').hidden);
+   const slider=doc.getElementById('c1-c');assert(!event('ArrowDown',slider));slider.value=+slider.max;slider.emit('input');assert(+svg.dataset.error>1-block.gain);story.finish();
+  }
+  if(state==='every'){
+   const slots=doc.querySelectorAll('#c1-stage .story-slot');assert.equal(slots.length,6);
+   const sorted=slots.slice().sort((a,b)=>+a.getAttribute('y')-+b.getAttribute('y'));
+   sorted.forEach((d,j)=>{const b=m.blocks.find(b=>b.term===+d.dataset.term);close(+d.dataset.value,1-b.gain);assert.equal(+d.dataset.rank,j);if(j)assert(+d.dataset.value>=+sorted[j-1].dataset.value);});
+   assert.equal(+sorted[0].dataset.term,fixture.data.live.featured[0].path[0].active_idxs[0][0]-1);
+   assert.equal(+svg.dataset.term,m.winner);
+  }
+  if(state==='noise-estimate'){
+   assert.deepEqual(story.variance,WispCompute.noiseVariance(t,x));close(story.relative,story.variance.reduce((s,v,j)=>s+Math.sqrt(v)/Math.abs(x[j]),0)/x.length);
+   const noise=x.map((v,j)=>v-truth[j]),actual=m.D.windows.reduce((s,[a,b])=>s+(noise[b]-noise[a])**2,0)/m.D.b.reduce((s,v)=>s+v*v,0);close(story.actual,actual);
+   for(const reference of fixture.cubic){const local=story.local(reference.center);assert.equal(local.start,reference.start);reference.t.forEach((tt,j)=>close(local.value(tt),reference.y[j]));}
+   assert.equal(story.examples.length,5);story.examples.forEach((ex,j)=>{assert.equal(ex.center,Math.round(t.length/3)+j);close(ex.deviation,x[ex.center]-ex.value(t[ex.center]));assert(doc.querySelector('#c1-stage').textContent.includes(fmt(ex.deviation)));});
+   const pct=v=>(100*v).toLocaleString(fixture.language,{minimumFractionDigits:1,maximumFractionDigits:1})+' %';
+   for(const v of [story.relative,fixture.data.live.teaching.sigma,m.floor,actual])assert(doc.getElementById('c1-story-text-8').textContent.includes(pct(v)));
+   if(fixture.language==='en')console.log(JSON.stringify({estimate:story.relative,added:fixture.data.live.teaching.sigma,floor:m.floor,actual,examples:story.examples.map(e=>({center:e.center,deviation:e.deviation}))}));
+  }
+  if(state==='percent')close(WispChapterOne.parts(m,m.blocks.find(b=>b.term===m.winner)).reduce((a,b)=>a+b),1);
+  if(state==='solution'){assert.equal(+svg.dataset.term,m.winner);assert(doc.querySelector('.story-equation').textContent.includes('du/dt'));}
+  // Record full geometry and compare it after a backwards entry and under reduced motion.
+  story.enter(state);advance(8000,160);saved[i]=svg.children.map(e=>({...e.attrs,opacity:e.style.opacity}));
+ }
+ for(let i=story.states.length-1;i>=0;i--){story.enter(story.states[i]);advance(8000,160);svg.children.forEach((e,j)=>assert.deepEqual({...e.attrs,opacity:e.style.opacity},saved[i][j],story.states[i]+' node '+j));}
+ global.matchMedia=()=>({matches:true,addEventListener(){}});
+ story.states.forEach((state,i)=>{story.enter(state);assert.equal(svg.dataset.complete,'true');svg.children.forEach((e,j)=>assert.deepEqual({...e.attrs,opacity:e.style.opacity},saved[i][j],story.states[i]+' node '+j));});
+ global.matchMedia=()=>({matches:false,addEventListener(){}});
+ story.enter('secants');advance(1200);assert.equal(svg.dataset.complete,'false');story.enter('fit');assert.equal(svg.dataset.state,'fit');advance(8000,160);close(+svg.dataset.coefficient,m.blocks.find(b=>b.term===0).coefficient);
+ story.enter('windows');advance(4400,160);assert.equal(+svg.dataset.windowLength,16);assert.equal(doc.querySelectorAll('#c1-stage .story-slope').filter(d=>+d.style.opacity===1).length,5);
+ story.enter('slope');advance(1200);const before=doc.querySelector('.story-marker').getAttribute('cx');advance(1000);assert.notEqual(doc.querySelector('.story-marker').getAttribute('cx'),before);
  slides.nav.go(1);advance();for(const fn of events.wheel||[])fn({type:'wheel',target:doc.body,deltaY:500,preventDefault(){}});advance();assert.equal(slides.nav.index,2);
- slides.nav.go(9);advance();event('PageDown');assert.equal(slides.nav.index,9);
- const sorted=doc.querySelectorAll('#c1-visual-4 button').map(b=>+b.dataset.error);assert(sorted.every((v,i)=>!i||v>=sorted[i-1]));
- assert.equal(doc.querySelectorAll('#c1-visual-0 .measurement-dot').length,fixture.data.live.teaching.t.length);
- for(const p of slides.pages.slice(2)){const prose=p.querySelectorAll('p,figcaption,footer');assert(prose.every(n=>n.dataset.claim==='review'));assert.equal(p.querySelector('.eyebrow').textContent,tr('x10_eye',{i:p.querySelector('.eyebrow').dataset.c1Eye,n:8}));const ordinary=p.querySelectorAll('p,h2').map(n=>n.textContent).join(' ');assert(!/FROLS|Weak Form|Least Squares|SSE|BIC|Rauschschätzung|noise estimation/.test(ordinary));}
- console.log('PASS X11 delivered chapters, eight bilingual steps, hidden targets, actual arrow/input events, sliders, error minimum and noise partitions');
- process.exit(0);
+ for(const p of slides.pages.slice(2)){assert(p.querySelectorAll('p').every(n=>n.dataset.claim==='review'));assert.equal(p.querySelector('.eyebrow').textContent,tr('x10_eye',{i:p.querySelector('.eyebrow').dataset.c1Eye,n:11}));}
+ console.log('PASS X12: 11 bilingual states, real numeric geometry, keyboard-only walk, vertical wheel/keys, persistent SVG, sequence interruption/replay, reverse and reduced motion');process.exit(0);
 }
 // Execute the animation lifecycle, including delayed visibility and reduced motion.
 const dish=doc.getElementById('dish-illustration');
@@ -199,15 +187,11 @@ assert.equal(new Set(slides.pages.map(p=>p.dataset.section)).size,slides.pages.l
 global.innerWidth=1366;emit('resize',doc.body);advance();
 const more=doc.querySelector('[data-more]');more.emit('click');const modal=doc.querySelector('dialog[open]');assert(modal);const at=slides.nav.index;doc.emit('pointerdown',{target:slider});emit('wheel',modal,{deltaY:100});emit('pointerup',doc.body);emit('keydown',modal,{key:'PageDown'});assert.equal(slides.nav.index,at);modal.querySelector('[data-close]').emit('click');assert(!modal.open);
 slides.nav.go(0);advance();emit('wheel',doc.body,{deltaY:100});assert.equal(slides.nav.index,1);
-const content=slides.pages[1].querySelector('.page-content');
-assert.deepEqual(content.lastAnimation.keyframes,[{transform:'translateX(100vw)'},{transform:'translateX(0)'}]);
-assert.equal(content.lastAnimation.options.duration,720);
 advance(320);for(let i=0;i<10;i++)emit('wheel',doc.body,{deltaY:40});assert.equal(slides.nav.index,1);advance();assert.equal(scrollY,innerHeight);
-emit('keydown',doc.body,{key:'ArrowLeft'});assert.equal(slides.pages[0].querySelector('.page-content').lastAnimation.keyframes[0].transform,'translateX(-100vw)');advance();
-// Crossing from the intro to the retained later chapter uses eased vertical scroll.
-slides.nav.go(1);advance();const y=scrollY;emit('keydown',doc.body,{key:'ArrowRight'});advance(320);
-assert(scrollY>y&&scrollY<slides.pages[2].offsetTop,'intermediate chapter scrolling');advance();assert.equal(scrollY,slides.pages[2].offsetTop);
-console.log('PASS X4 headline rows/counts, readable names, closed sections, modal guards, horizontal sub-steps, eased chapter scrolling, one-gesture lock');
+emit('keydown',doc.body,{key:'ArrowUp'});advance();assert.equal(scrollY,0);
+slides.nav.go(1);advance();const y=scrollY;emit('keydown',doc.body,{key:'ArrowDown'});advance(320);
+assert(scrollY>y&&scrollY<slides.pages[2].offsetTop,'intermediate vertical scrolling');advance();assert.equal(scrollY,slides.pages[2].offsetTop);
+console.log('PASS X4 headline rows/counts, readable names, closed sections, modal guards, vertical steps, eased scrolling, one-gesture lock');
 
 // Wheel hovering controls is navigation; only an active drag blocks it.
 slides.nav.go(0);advance();emit('wheel',slider,{deltaY:100});assert.equal(slides.nav.index,1);

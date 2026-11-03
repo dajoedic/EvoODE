@@ -220,27 +220,43 @@ dialog{max-width:min(1050px,90vw);max-height:80dvh;overflow:auto;overscroll-beha
 /* Keep the first-step eyebrow visible in the snapped layout. */
 .snapped #p-solution .page-content>.eyebrow{display:block}
 #p-solution .measurement-dot{opacity:1}
-/* Chapters share one linear reading order; only the transition axis changes. */
-.c1-page .page-content>.eyebrow,.snapped .c1-page .page-content>.eyebrow{display:block;font-size:13px;color:var(--muted);margin:0 0 6px}
-.c1-page h2{font-size:30px}.c1-page .page-content>p{max-width:1100px;font-size:17px;line-height:1.4}
-.c1-visual{margin:14px 0 8px;min-width:0}.c1-visual .chart{width:100%;height:235px}.c1-visual .measurement-dot{opacity:.85}
-.c1-residual{stroke:var(--muted);stroke-width:1.5;opacity:.65}#c1-visual-1 .series-truth{stroke-width:3;stroke-dasharray:none}
-.c1-page input[type=range]{width:300px;max-width:100%;vertical-align:middle}.c1-page output{margin:0 12px;font-size:14px}
-#c1-visual-2,#c1-visual-3,#c1-visual-4{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);gap:24px;align-items:center}
-.c1-empty-bar{background:var(--muted);color:var(--bg);padding:16px;text-align:center}
-.c1-chips{display:flex;gap:8px;margin-bottom:12px}.c1-chips [aria-pressed=true]{background:var(--accent);color:var(--bg)}
-.c1-stack{display:flex;height:42px;width:100%;overflow:hidden}.c1-stack>span{display:flex;align-items:center;justify-content:center;font-size:14px;white-space:nowrap}
-.c1-part-0{background:var(--line)}.c1-part-1{background:var(--accent);color:var(--bg)}.c1-part-2{background:var(--wash)}
-#c1-visual-5 .solo-bar{margin:0;padding:3px 0;font-size:14px}#c1-visual-5 .solo-track{height:10px}
-.c1-page .caption,.c1-page .page-content>p.caption{font-size:13px;line-height:1.35}.c1-page .jargon{border-top:1px solid var(--line);padding-top:6px}
-#p-c1-solution .solo-equation{font-size:32px;margin:4px 0}.c1-page .solo-legend{position:static}
-@media(min-width:760px) and (max-height:700px){.c1-visual .chart{height:165px}#c1-visual-1 .chart{height:150px}#c1-visual-5>div:last-child{display:grid;grid-template-columns:1fr 1fr;column-gap:28px}#c1-visual-5 .solo-bar{padding:1px 0;font-size:13px}#c1-visual-5 .solo-track{height:8px}.c1-stack{height:34px}#p-c1-solution .solo-equation{font-size:26px}.c1-page .page-content>p{font-size:16px}.c1-page h2{font-size:28px}.c1-visual{margin-top:10px}}
-@media(max-width:759px){#c1-visual-2,#c1-visual-3,#c1-visual-4{grid-template-columns:1fr}.c1-page .chart{height:auto}.c1-stack>span{font-size:11px}.c1-page h2{font-size:26px}}
+/* WP-X12: text scrolls vertically alongside one persistent chapter stage. */
+.c1-page .page-content{width:38%;padding-right:18px}
+.c1-page .eyebrow,.snapped .c1-page .page-content>.eyebrow{display:block;font:13px system-ui;color:var(--muted);margin-bottom:14px}
+.c1-page h2,.snapped .c1-page h2{font-size:29px;line-height:1.18;margin:0 0 22px}
+.c1-page p,.snapped .c1-page .page-content>p{font-size:17px;line-height:1.5;margin:0 0 18px}
+#c1-stage{position:fixed;left:40%;right:44px;top:112px;bottom:40px;margin:0;z-index:3;pointer-events:none;display:flex;align-items:center}
+.story-svg{display:block;width:100%;max-height:100%;overflow:hidden}
+.story-svg text{font:14px system-ui;fill:var(--ink)}
+.story-svg .story-axis{font-size:12px;fill:var(--muted)}
+.story-svg .story-equation{font:26px Georgia,serif}
+.story-grid{stroke:var(--line);stroke-width:1}
+.story-svg path{fill:none;stroke-width:2}
+.story-truth{stroke:var(--truth)}.story-prediction,.story-triangle{stroke:var(--model)}
+.story-residual{stroke:var(--muted);stroke-width:1.2}
+.story-slope{fill:var(--data)}.story-marker{fill:var(--model)}
+.story-ring{fill:none;stroke:var(--model);stroke-width:2}
+.story-window{fill:var(--accent)}
+.story-band{stroke:var(--muted);stroke-width:1!important}
+.story-slot,.story-error{fill:var(--muted)}.story-slot.winner{fill:var(--accent)}
+.story-part-0{fill:var(--line)}.story-part-1{fill:var(--accent)}.story-part-2{fill:var(--wash)}
+#c1-play{display:block;font:14px system-ui;line-height:1.5}#c1-play input{display:block;width:100%;margin:14px 0}
+.snapped .page-dots{top:50%;bottom:auto;left:auto;right:14px;transform:translateY(-50%);flex-direction:column;gap:10px}
+.page-dots a:hover:after,.page-dots a:focus:after{left:auto;right:18px;bottom:auto;transform:none}
 #pipeline-bar a{color:var(--ink)}#pipeline-bar a.current{border-bottom-color:var(--accent)}
-/* WP-X11: sub-steps run left to right, so their dots sit in a row at the bottom; chapters stack top to bottom. */
-.snapped .page-dots{top:auto;bottom:12px;left:50%;right:auto;transform:translateX(-50%);flex-direction:row;gap:9px}
-.snapped .page-dots a{position:relative}.page-dots a:hover:after,.page-dots a:focus:after{right:auto;left:50%;bottom:16px;transform:translateX(-50%)}
-.c1-toggle{display:flex;gap:8px;margin:6px 0 2px}.c1-toggle button[aria-pressed=true]{background:var(--accent);color:var(--bg);border-color:var(--accent)}
-#p-c1-noise .page-content>p{font-size:16px}
-.c1-noise-band{fill:var(--wash)}.c1-noise-curve{stroke-width:3}.c1-noise-in{fill:var(--data)}.c1-noise-out{fill:var(--data);opacity:.35}
-.c1-noise-center{fill:none;stroke:var(--model);stroke-width:2.5}.c1-noise-stick{stroke:var(--model);stroke-width:4;stroke-linecap:round}
+@media(min-width:760px) and (max-height:700px){.c1-page h2,.snapped .c1-page h2{font-size:26px;margin-bottom:16px}.c1-page p,.snapped .c1-page .page-content>p{font-size:16px;line-height:1.42}}
+@media(max-width:759px){
+ .c1-page{min-height:100vh;padding-bottom:58vh}
+ .c1-page .page-content{width:100%;padding-right:0}
+ .c1-page h2,.snapped .c1-page h2{font-size:25px}
+ .c1-page p,.snapped .c1-page .page-content>p{font-size:15px}
+ #c1-stage{left:8px;right:18px;top:auto;bottom:12px;height:47vh;background:var(--bg)}
+}
+@media print{#c1-stage{position:relative;left:auto;right:auto;top:auto;bottom:auto}.c1-page .page-content{width:100%}}
+.snapped .c1-page .page-content{margin-left:0;margin-right:auto}
+#c1-stage{display:grid;grid-template-rows:minmax(0,1fr) auto;align-items:center}
+#c1-stage .story-svg{height:100%;min-height:0}
+.story-caption{font:12px/1.35 system-ui;color:var(--muted);margin:6px 0 0}
+.c1-page .jargon{font:12px/1.35 system-ui;color:var(--muted);border-top:1px solid var(--line);padding-top:8px}
+.c1-page .jargon{display:block;margin:12px 0 0;padding:8px 0 0}
+@media(max-width:759px){.story-svg text{font-size:23px}.story-svg .story-axis{font-size:20px}.story-svg .story-equation{font-size:32px}.story-caption{font-size:11px}}

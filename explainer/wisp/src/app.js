@@ -385,119 +385,215 @@ document.querySelectorAll('[data-close]').forEach(button=>button.addEventListene
 function chapterError(model,term,c){return model.D.b.reduce((sum,b,i)=>sum+(b-c*model.D.A[i][term])**2,0)/soloDot(model.D.b,model.D.b);}
 function chapterParts(model,block){const floor=model.normalized?model.floor:0;return [floor,block.gain,1-floor-block.gain];}
 function chapterWindows(length){const t=measuredTime,x=teaching.observed,out=[];for(let a=0;a+length<t.length;a+=length){const b=a+length;out.push({time:(t[a]+t[b])/2,rate:(x[b]-x[a])/(t[b]-t[a]),clean:(teaching.truth[b]-teaching.truth[a])/(t[b]-t[a])});}return out;}
-// 1a: the measured dots move to their change-to-the-next-point, so the reader sees where the differences come from.
-function initChapterMorph(){
- const t=measuredTime,x=teaching.observed,n=t.length,width=760,height=270,pad={l:76,r:20,t:30,b:42},duration=900;
- const states={u:{x:t,y:x,axis:'u'},diff:{x:t.map((v,i)=>i<n-1?(v+t[i+1])/2:v),y:x.map((v,i)=>i<n-1?x[i+1]-v:0),axis:tr('x11_axis_diff')}};
- const range=y=>{const lo=Math.min(...y),hi=Math.max(...y),pad=(hi-lo)*.06||1;return [lo-pad,hi+pad];};
- states.u.range=range(states.u.y);const d=Math.max(...states.diff.y.slice(0,-1).map(Math.abs))*1.06;states.diff.range=[-d,d];
- const svg=svgNode('svg',{viewBox:`0 0 ${width} ${height}`,class:'chart c1-morph',role:'img'}),grid=svgNode('g'),label=svgNode('text',{x:pad.l,y:17});
- const X=v=>pad.l+(v-t[0])/(t[n-1]-t[0])*(width-pad.l-pad.r);
- const dots=t.map(()=>svgNode('circle',{r:2.6,class:'measurement-dot'}));svg.append(grid,label,...dots);
- $('c1-visual-0').replaceChildren(svg);
- let current='u',frame=0;
- function draw(from,to,s){
-  const lo=from.range[0]+(to.range[0]-from.range[0])*s,hi=from.range[1]+(to.range[1]-from.range[1])*s,Y=v=>height-pad.b-(v-lo)/(hi-lo)*(height-pad.t-pad.b);
-  grid.replaceChildren();
-  for(let i=0;i<=4;i++){const raw=lo+(hi-lo)*i/4,v=Math.abs(raw)<1e-9*(hi-lo)?0:raw,tt=t[0]+(t[n-1]-t[0])*i/4;grid.append(svgNode('line',{x1:pad.l,x2:width-pad.r,y1:Y(v),y2:Y(v),class:'grid'}),svgNode('text',{x:pad.l-8,y:Y(v)+4,'text-anchor':'end'},fmt(v)),svgNode('text',{x:X(tt),y:height-22,'text-anchor':'middle'},fmt(tt)));}
-  grid.append(svgNode('text',{x:width-pad.r,y:height-3,'text-anchor':'end'},tr('j157')));
-  label.textContent=s<.5?from.axis:to.axis;
-  dots.forEach((dot,i)=>{dot.setAttribute('cx',X(from.x[i]+(to.x[i]-from.x[i])*s));dot.setAttribute('cy',Y(from.y[i]+(to.y[i]-from.y[i])*s));dot.style.opacity=i===n-1?String(to===states.diff?1-s:from===states.diff?s:1):'';});
- }
- function show(target){
-  if(target===current)return;const from=states[current],to=states[target];current=target;cancelAnimationFrame(frame);
-  $('c1-show-u').setAttribute('aria-pressed',String(target==='u'));$('c1-show-diff').setAttribute('aria-pressed',String(target==='diff'));
-  $('c1-morph-note').textContent=tr(target==='u'?'x11_note_u':'x11_note_diff');svg.setAttribute('aria-label',to.axis);
-  if(window.matchMedia('(prefers-reduced-motion: reduce)').matches){draw(from,to,1);return;}
-  const start=performance.now(),ease=s=>s<.5?4*s*s*s:1-(-2*s+2)**3/2;
-  const step=now=>{const s=Math.min(1,(now-start)/duration);draw(from,to,ease(s));if(s<1)frame=requestAnimationFrame(step);};frame=requestAnimationFrame(step);
- }
- $('c1-show-u').addEventListener('click',()=>show('u'));$('c1-show-diff').addEventListener('click',()=>show('diff'));
- draw(states.u,states.u,0);$('c1-morph-note').textContent=tr('x11_note_u');svg.setAttribute('aria-label','u');
- window.WispChapterMorph={states,show,current:()=>current};
-}
-// Noise page: the frozen noiseVariance fits a cubic through 9 neighbours of each point; show one such fit.
-function initChapterNoise(m){
- const t=measuredTime,x=teaching.observed,n=t.length,k=9,variance=WispCompute.noiseVariance(t,x);
- const slider=$('c1-noise-center');slider.max=n-5;slider.value=Math.round(n/3);
- const percent=v=>(100*v).toLocaleString(language,{minimumFractionDigits:1,maximumFractionDigits:1})+' %';
- const relative=variance.reduce((s,v,i)=>s+Math.sqrt(v)/Math.abs(x[i]),0)/n;
- $('c1-noise-text').textContent=tr('x11_noise_text',{k});
- $('c1-noise-result').textContent=tr('x11_noise_result',{est:percent(relative),true:percent(teaching.sigma),floor:percent(m.floor)});
- function local(i){
-  const start=Math.min(Math.max(i-4,0),n-k),ts=t.slice(start,start+k),xs=x.slice(start,start+k),scale=Math.max(...ts.map(v=>Math.abs(v-t[i])));
-  const fit=WispCompute.leastSquares(ts.map(v=>[0,1,2,3].map(p=>((v-t[i])/scale)**p)),xs).coefficients;
-  const value=v=>fit.reduce((s,c,p)=>s+c*((v-t[i])/scale)**p,0);
-  return {start,ts,xs,value};
- }
- function draw(){
-  const i=+slider.value,{start,ts,xs,value}=local(i),lo=Math.max(0,start-12),hi=Math.min(n,start+k+12);
-  const fine=Array.from({length:61},(_,j)=>ts[0]+(ts[k-1]-ts[0])*j/60),curve=fine.map(value);
-  const width=760,height=250,pad={l:64,r:20,t:24,b:40},ys=[...x.slice(lo,hi),...curve],ymin=Math.min(...ys),ymax=Math.max(...ys),span=(ymax-ymin)*.08||1;
-  const X=v=>pad.l+(v-t[lo])/(t[hi-1]-t[lo])*(width-pad.l-pad.r),Y=v=>height-pad.b-(v-ymin+span)/(ymax-ymin+2*span)*(height-pad.t-pad.b);
-  const svg=svgNode('svg',{viewBox:`0 0 ${width} ${height}`,class:'chart c1-noise-chart',role:'img','aria-label':tr('x11_local',{k})});
-  for(let g=0;g<=4;g++){const v=ymin-span+(ymax-ymin+2*span)*g/4,tt=t[lo]+(t[hi-1]-t[lo])*g/4;svg.append(svgNode('line',{x1:pad.l,x2:width-pad.r,y1:Y(v),y2:Y(v),class:'grid'}),svgNode('text',{x:pad.l-8,y:Y(v)+4,'text-anchor':'end'},fmt(v)),svgNode('text',{x:X(tt),y:height-20,'text-anchor':'middle'},fmt(tt)));}
-  svg.append(svgNode('text',{x:pad.l,y:14},'u'),svgNode('text',{x:width-pad.r,y:height-2,'text-anchor':'end'},tr('j157')));
-  svg.append(svgNode('rect',{x:X(ts[0])-6,y:pad.t,width:X(ts[k-1])-X(ts[0])+12,height:height-pad.t-pad.b,class:'c1-noise-band'}));
-  svg.append(svgNode('path',{d:fine.map((v,j)=>(j?'L':'M')+X(v)+','+Y(curve[j])).join(''),class:'series-model c1-noise-curve'}));
-  svg.append(svgNode('line',{x1:X(t[i]),x2:X(t[i]),y1:Y(x[i]),y2:Y(value(t[i])),class:'c1-noise-stick'}));
-  for(let j=lo;j<hi;j++){const inside=j>=start&&j<start+k;svg.append(svgNode('circle',{cx:X(t[j]),cy:Y(x[j]),r:inside?5:3,class:inside?'c1-noise-in':'c1-noise-out'}));}
-  svg.append(svgNode('circle',{cx:X(t[i]),cy:Y(x[i]),r:10,class:'c1-noise-center'}));
-  const figure=$('c1-visual-noise');figure.replaceChildren(svg);
-  const legend=el('figcaption',tr('x11_points')+' · '+tr('x11_local',{k})+' · '+tr('x11_deviation'),'caption');legend.dataset.claim='review';figure.append(legend);
-  $('c1-noise-value').textContent=tr('x11_noise_value',{i:i+1,d:fmt(x[i]-value(t[i]))});
- }
- slider.addEventListener('input',draw);draw();
- window.WispChapterNoise={variance,relative,local,draw};
-}
+// One persistent SVG. Scene arrays have a fixed topology so axes, points, lines and
+// labels interpolate through every transition, including interrupted/reverse ones.
 function initChapterOne(){
  if(!$('p-c1-data'))return;
- const m=window.WispSolo.model,constant=m.blocks.find(b=>b.term===0),winner=m.blocks.find(b=>b.term===m.winner),norm=soloDot(m.D.b,m.D.b);
- const percent=x=>(100*x).toLocaleString(language,{minimumFractionDigits:1,maximumFractionDigits:1})+' %';
- const args={n:measuredTime.length,t0:fmt(measuredTime[0]),t1:fmt(measuredTime.at(-1)),noise:percent(teaching.sigma),floor:percent(m.floor),explainable:percent(m.explainable),winner:terms[m.winner],meaning:tr(m.winner===0?'x10_constant':'x10_other')};
- for(let i=0;i<7;i++)$('c1-text-'+i).textContent=tr('x10_text_'+i,args);
- if(!m.normalized){$('c1-text-5').textContent=tr('x10_fallback');document.querySelector('[data-i18n="x10_r2"]').textContent=tr('x10_fallback');}
- const eyes=document.querySelectorAll('[data-c1-eye]');eyes.forEach(e=>e.textContent=tr('x10_eye',{i:e.dataset.c1Eye,n:eyes.length}));
- initChapterMorph();
- initChapterNoise(m);
- // The 1b axis follows the noise-free rate, so long windows stay readable; noisier rates are clipped to its edge.
- const rateMax=4*Math.max(...LIVE.windows.flatMap(chapterWindows).map(w=>Math.abs(w.clean)));
- // Shared SVG plot supplies a fixed rate axis for 1b and explicit residual sticks elsewhere.
- function plot(target,x,observed,predicted,{rate=false,clean=false,label=''}={}){
-  target.replaceChildren();const width=760,height=270,pad={l:76,r:20,t:30,b:42};
-  const bound=rate?rateMax:Math.max(1,...observed.map(Math.abs),...predicted.map(Math.abs))*1.08;
-  const clipped=observed.filter(v=>Math.abs(v)>bound).length;observed=observed.map(v=>Math.max(-bound,Math.min(bound,v)));
-  const X=v=>pad.l+(v-measuredTime[0])/(measuredTime.at(-1)-measuredTime[0])*(width-pad.l-pad.r),Y=v=>height-pad.b-(v+bound)/(2*bound)*(height-pad.t-pad.b);
-  const svg=svgNode('svg',{viewBox:`0 0 ${width} ${height}`,class:'chart',role:'img','aria-label':tr(rate?'x10_rate':'x9_change')});target.append(svg);
-  for(let i=0;i<=4;i++){const v=bound*(i/2-1);svg.append(svgNode('line',{x1:pad.l,x2:width-pad.r,y1:Y(v),y2:Y(v),class:'grid'}),svgNode('text',{x:pad.l-8,y:Y(v)+4,'text-anchor':'end'},fmt(v)));const t=measuredTime[0]+(measuredTime.at(-1)-measuredTime[0])*i/4;svg.append(svgNode('text',{x:X(t),y:height-22,'text-anchor':'middle'},fmt(t)));}
-  svg.append(svgNode('text',{x:pad.l,y:17},tr(rate?'x10_rate':'x9_change')),svgNode('text',{x:width-pad.r,y:height-3,'text-anchor':'end'},tr('j157')));
-  if(!clean)x.forEach((v,i)=>svg.append(svgNode('line',{x1:X(v),x2:X(v),y1:Y(observed[i]),y2:Y(predicted[i]),class:'c1-residual'})));
-  svg.append(svgNode('path',{d:x.map((v,i)=>(i?'L':'M')+X(v)+','+Y(predicted[i])).join(''),class:clean?'series-truth':'series-model'}));
-  x.forEach((v,i)=>svg.append(svgNode('circle',{cx:X(v),cy:Y(observed[i]),r:4,class:'measurement-dot'})));
-  const legend=el('figcaption',tr('x9_measured')+' · '+(clean?tr('x10_clean'):label)+(clipped?' · '+tr('x10_clipped',{n:clipped}):''),'caption');legend.dataset.claim='review';target.append(legend);
+ const m=window.WispSolo.model,t=measuredTime,x=teaching.observed,clean=teaching.truth,n=t.length;
+ const states=['data','noise-visible','slope','secants','windows','error-empty','fit','every','noise-estimate','percent','solution'];
+ const constant=m.blocks.find(b=>b.term===0),winner=m.blocks.find(b=>b.term===m.winner),norm=soloDot(m.D.b,m.D.b);
+ const pct=v=>(100*v).toLocaleString(language,{minimumFractionDigits:1,maximumFractionDigits:1})+' %';
+ const variance=W.noiseVariance(t,x),relative=variance.reduce((s,v,i)=>s+Math.sqrt(v)/Math.abs(x[i]),0)/n;
+ const noise=x.map((v,i)=>v-clean[i]),actual=m.D.windows.reduce((s,[a,b])=>s+(noise[b]-noise[a])**2,0)/norm;
+ // The same scaled cubic basis as noiseVariance; only its fitted values are
+ // needed for the illustration (variance still comes from the frozen function).
+ function local(i){const start=Math.min(Math.max(i-4,0),n-9),ts=t.slice(start,start+9),xs=x.slice(start,start+9),scale=Math.max(...ts.map(v=>Math.abs(v-t[i])));
+  const coefficients=W.leastSquares(ts.map(v=>[0,1,2,3].map(p=>((v-t[i])/scale)**p)),xs).coefficients;
+  const value=v=>coefficients.reduce((s,c,p)=>s+c*((v-t[i])/scale)**p,0);
+  return {center:i,start,ts,xs,value,deviation:x[i]-value(t[i])};}
+ const examples=Array.from({length:5},(_,j)=>local(Math.round(n/3)+j));
+ const longerLengths=LIVE.windows.filter(length=>length>1);
+ const args={n,t0:fmt(t[0]),t1:fmt(t.at(-1)),noise:pct(teaching.sigma),lengths:longerLengths.join(', '),floor:pct(m.floor),explainable:pct(m.explainable),winner:terms[m.winner],meaning:tr(m.winner===0?'x10_constant':'x10_other')};
+ const textKeys=['x12_text_0','x12_text_1','x12_text_2','x12_text_3','x12_text_4','x10_text_2','x10_text_3','x10_text_4','x12_text_8','x10_text_5','x10_text_6'];
+ textKeys.forEach((key,i)=>{$('c1-story-text-'+i).textContent=tr(key,args);});
+ $('c1-story-text-6').textContent+=' '+tr('x10_direct');
+ $('c1-story-text-8').textContent+=' '+tr('x11_noise_result',{est:pct(relative),true:pct(teaching.sigma),floor:pct(m.floor)})+' '+tr('x12_actual',{actual:pct(actual)});
+ $('c1-story-text-9').textContent+=' '+tr(m.normalized?'x10_r2':'x10_fallback');
+ $('c1-story-text-10').textContent+=' '+tr('x10_next');
+ document.querySelectorAll('[data-c1-eye]').forEach(e=>e.textContent=tr('x10_eye',{i:e.dataset.c1Eye,n:states.length}));
+ const host=$('c1-stage'),svg=svgNode('svg',{viewBox:'0 0 800 480',role:'img',class:'story-svg'});host.append(svg);const caption=el('figcaption',tr('x10_caption'),'story-caption');caption.dataset.claim='review';host.append(caption);
+ const clock=window.WispStoryClock||{now:()=>performance.now(),request:fn=>requestAnimationFrame(fn),cancel:id=>cancelAnimationFrame(id)};
+ const clamp=v=>Math.max(0,Math.min(1,v)),ease=v=>{v=clamp(v);return v*v*(3-2*v);},mix=(a,b,s)=>a+(b-a)*s;
+ // Scene record: [x,y,...,opacity]; all paths retain the same number of vertices.
+ const nodes=[],blank=[];
+ function node(tag,attrs,geometry,initial){const e=svgNode(tag,attrs);svg.append(e);nodes.push({e,geometry});blank.push(initial);return nodes.length-1;}
+ const points=(count)=>Array.from({length:count},()=>[64,400]).flat();
+ const path=(cls,count=n)=>node('path',{class:cls},'path',[...points(count),0]);
+ const line=cls=>node('line',{class:cls},'line',[64,400,64,400,0]);
+ const dot=(cls,r=2.5)=>node('circle',{class:cls,r},'dot',[64,400,0]);
+ const label=(cls='')=>node('text',{class:cls,'data-claim':'review'},'text',[64,20,0]);
+ const axisLines=Array.from({length:12},()=>line('story-grid'));
+ const axisLabels=Array.from({length:14},()=>label('story-axis'));
+ const data=t.map(()=>dot('measurement-dot')),slopeDots=Array.from({length:n-1},()=>dot('story-slope',2.8));
+ const truthPath=path('story-truth'),predictionPath=path('story-prediction'),bandTop=path('story-band'),bandBottom=path('story-band');
+ const sticks=t.map(()=>line('story-residual')),triangle=Array.from({length:3},()=>line('story-triangle'));
+ const marker=dot('story-marker',6),ring=dot('story-ring',10),tangent=line('story-prediction'),localPath=path('story-prediction',61);
+ const windowBox=node('rect',{class:'story-window'},'rect',[64,40,0,0,0]);
+ const readout=label(),truthLabel=label(),equation=label('story-equation'),errorLabel=label(),noiseLabel=label();
+ const errorBar=node('rect',{class:'story-error'},'rect',[64,426,0,14,0]);
+ const curvePath=path('story-prediction',81),curveMarker=dot('story-marker',5),curveLabel=label();
+ const slots=m.blocks.map(()=>({bar:node('rect',{class:'story-slot'},'rect',[64,70,0,15,0]),text:label(),value:label()}));
+ const deviationLabels=examples.map(()=>label());
+ const stack=[0,1,2].map(i=>({bar:node('rect',{class:'story-part-'+i},'rect',[64,70,0,42,0]),text:label()}));
+ const longest=Math.max(...LIVE.windows),longRows=chapterWindows(longest);
+ const rates=chapterWindows(1),trueRates=t.map((v,i)=>{const a=Math.max(0,i-1),b=Math.min(n-1,i+1);return (clean[b]-clean[a])/(t[b]-t[a]);});
+ const uRange=[Math.min(...x)*.95,Math.max(...x)*1.05],rateBound=Math.max(...rates.map(r=>Math.abs(r.rate)))*1.06;
+ const changeBound=Math.max(...m.rows.map(({i})=>Math.abs(m.D.b[i])))*1.15||1;
+ const span=Math.max(Math.abs(constant.coefficient),1),slider=$('c1-c');slider.min=constant.coefficient-span;slider.max=constant.coefficient+span;
+ const errors=new Map(m.blocks.map(b=>[b.term,chapterError(m,b.term,b.coefficient)]));
+ const curveValues=Array.from({length:81},(_,i)=>+slider.min+(+slider.max-slider.min)*i/80),curveErrors=curveValues.map(v=>chapterError(m,0,v)),curveMaximum=Math.max(...curveErrors);
+ const durations={data:900,'noise-visible':2300,slope:3800,secants:3900,windows:6100,'error-empty':2900,fit:3400,every:6500,'noise-estimate':7300,percent:900,solution:900};
+ let current=null,frame=0,last=blank.map(a=>a.slice()),elapsed=0,manual=null;
+ function scene(state,ms){
+  const s=blank.map(a=>a.slice()),step=states.indexOf(state),seq=Math.max(0,ms-900),final=ms>=durations[state];
+  caption.style.visibility=step>=4?'visible':'hidden';
+  const put=(id,a)=>{s[id]=a;},text=(id,value,xx,yy,opacity=1)=>{nodes[id].e.textContent=value;put(id,[xx,yy,opacity]);};
+  const split=step===3||step===4,changes=step>=5&&step<=7||step===10;
+  let domain=[t[0],t.at(-1)],top=42,bottom=392,range=uRange;
+  if(split)bottom=210;
+  // Window zoom has an explicit zoom in, four secants, then zoom out.
+  let zoom=0,windowLength=1;
+  const start=t.findIndex(v=>v>=2),zoomEnd=t[Math.min(n-1,start+Math.max(48,longest*2))];
+  if(state==='windows'){
+   zoom=seq<700?ease(seq/700):seq<3900?1:1-ease((seq-3900)/800);
+   domain=[mix(t[0],t[start],zoom),mix(t.at(-1),zoomEnd,zoom)];
+   range=[mix(uRange[0],Math.min(...x.slice(start,start+49))*.96,zoom),mix(uRange[1],Math.max(...x.slice(start,start+49))*1.04,zoom)];
+   windowLength=seq<1100?1:longerLengths[Math.min(longerLengths.length-1,Math.floor((seq-1100)/700))];
+  }
+  let noiseZoom=0;
+  if(state==='noise-estimate'){
+   noiseZoom=seq<700?ease(seq/700):seq<5200?1:1-ease((seq-5200)/1000);
+   const a=examples[0].start-6,b=examples.at(-1).start+15;
+   domain=[mix(t[0],t[a],noiseZoom),mix(t.at(-1),t[b],noiseZoom)];
+   range=[mix(uRange[0],Math.min(...x.slice(a,b+1))*.98,noiseZoom),mix(uRange[1],Math.max(...x.slice(a,b+1))*1.02,noiseZoom)];
+  }
+  if(changes)range=[-changeBound,changeBound];
+  const list=state==='every'||state==='percent',left=list?284:64,right=772;
+  const X=v=>left+(v-domain[0])/(domain[1]-domain[0])*(right-left),Y=v=>bottom-(v-range[0])/(range[1]-range[0])*(bottom-top);
+  const inside=v=>v>=domain[0]&&v<=domain[1];
+  const lowerTop=270,lowerBottom=392;
+  const lowerBound=state==='windows'?mix(rateBound,4*Math.max(...longRows.map(r=>Math.abs(r.clean))),ease((seq-3900)/800)):rateBound;
+  const R=v=>lowerBottom-(v+lowerBound)/(2*lowerBound)*(lowerBottom-lowerTop);
+  for(let j=0;j<5;j++){
+   const v=mix(range[0],range[1],j/4),tt=mix(domain[0],domain[1],j/4);
+   put(axisLines[j],[left,Y(v),right,Y(v),1]);text(axisLabels[j],fmt(v),left-8,Y(v)+4);
+   text(axisLabels[j+5],fmt(tt),X(tt),split?235:416);
+  }
+  put(axisLines[5],[left,bottom,right,bottom,1]);text(axisLabels[10],changes?tr('x9_change'):'u',left,24);text(axisLabels[11],tr('j157'),right-90,split?252:440);
+  if(split){put(axisLines[6],[left,R(0),right,R(0),1]);text(axisLabels[12],tr('x12_axis_slope'),left,lowerTop-15);text(axisLabels[13],tr('j157'),right-90,440);}
+  if(state==='percent')for(const id of [...axisLines,...axisLabels])s[id][s[id].length-1]=0;
+  const plotU=!changes&&state!=='percent';
+  data.forEach((id,i)=>put(id,[X(t[i]),Y(x[i]),plotU&&inside(t[i])?1:0]));
+  const curveOpacity=state==='noise-visible'||state==='slope'||split?1:0;
+  const reveal=state==='noise-visible'?clamp(seq/900):1;
+  put(truthPath,[...t.flatMap((v,i)=>[X(v),Y(clean[i])]),curveOpacity]);
+  nodes[truthPath].e.style.strokeDasharray=state==='noise-visible'?'1 1':'';
+  nodes[truthPath].e.setAttribute('pathLength','1');nodes[truthPath].e.style.strokeDashoffset=String(1-reveal);
+  text(truthLabel,tr('x12_truth'),left+10,top+20,curveOpacity);
+  // All scientific values are attached unscaled for the numerical DOM assertions.
+  if(state==='noise-visible')sticks.forEach((id,i)=>{put(id,[X(t[i]),Y(x[i]),X(t[i]),Y(clean[i]),inside(t[i])?clamp((seq-900)/500):0]);nodes[id].e.dataset.value=String(Math.abs(x[i]-clean[i]));});
+  if(state==='slope'){
+   const i=Math.min(n-2,Math.floor(clamp(seq/2900)*(n-2))),slope=trueRates[i],dt=(t.at(-1)-t[0])*.045;
+   put(marker,[X(t[i]),Y(clean[i]),1]);put(tangent,[X(t[i]-dt),Y(clean[i]-dt*slope),X(t[i]+dt),Y(clean[i]+dt*slope),1]);text(readout,tr('x12_slope',{value:fmt(slope)}),left+10,466);
+  }
+  if(split){
+   const long=state==='windows'&&seq>=3900,rows=long?longRows:rates;
+   const count=state==='secants'?Math.floor(clamp(seq/2800)*rows.length):rows.length;
+   slopeDots.forEach((id,i)=>{const row=rows[i],visible=!!row&&i<count&&inside(row.time);const fall=state==='secants'&&!final?ease((seq-2800*i/(rows.length-1))/200):1;put(id,[X(row?.time??t[0]),mix(bottom,R(row?.rate??0),fall),visible?1:0]);nodes[id].e.dataset.value=String(row?.rate??0);});
+   put(predictionPath,[...t.flatMap((v,i)=>[X(v),R(trueRates[i])]),1]);
+   let a=state==='secants'?Math.min(n-2,Math.floor(clamp(seq/3000)*(n-2)/8)*8):start,b=Math.min(n-1,a+(state==='windows'?windowLength:1));
+   const opacity=state==='secants'?(!final?1:0):seq<3900?1:0;
+   put(triangle[0],[X(t[a]),Y(x[a]),X(t[b]),Y(x[a]),opacity]);put(triangle[1],[X(t[b]),Y(x[a]),X(t[b]),Y(x[b]),opacity]);put(triangle[2],[X(t[a]),Y(x[a]),X(t[b]),Y(x[b]),opacity]);
+   text(readout,tr('x12_dt')+' = '+fmt(t[b]-t[a])+'   '+tr('x12_du')+' = '+fmt(x[b]-x[a]),left+5,466,opacity);
+   if(state==='windows'&&seq<3900){
+    const lengths=[1,...longerLengths],done=lengths.filter(l=>l<=windowLength);
+    slopeDots.forEach((id,i)=>{const length=done[i],b=a+(length||1),mid=(t[a]+t[b])/2,rate=(x[b]-x[a])/(t[b]-t[a]);put(id,[X(mid),R(rate),length?1:0]);});
+   }
+  }
+  let block=constant,c=0,error=1;
+  if(changes){
+   if(state==='fit')c=manual??constant.coefficient*(1-Math.exp(-6*clamp(seq/2500)))/(1-Math.exp(-6));
+   if(state==='every'){
+    const index=Math.min(m.blocks.length-1,Math.floor(seq/800));block=m.blocks.slice().sort((a,b)=>a.term-b.term)[index];
+    c=block.coefficient*ease((seq-index*800)/650);
+    if(seq>=4800){block=winner;c=winner.coefficient;}
+   }
+   if(state==='solution'){block=winner;c=winner.coefficient;}
+   let previous=null,transition=1;
+   if(state==='every'){
+    const ordered=m.blocks.slice().sort((a,b)=>a.term-b.term),index=Math.min(ordered.length-1,Math.floor(seq/800));
+    if(seq<4800&&index>0){previous=ordered[index-1];transition=ease((seq-index*800)/160);}
+    if(seq>=4800){previous=ordered.at(-1);transition=ease((seq-4800)/800);}
+   }
+   const predict=i=>c*m.D.A[i][block.term]*transition+(previous?previous.coefficient*m.D.A[i][previous.term]*(1-transition):0);
+   error=previous?m.D.b.reduce((sum,b,i)=>sum+(b-predict(i))**2,0)/norm:chapterError(m,block.term,c);
+   const predictions=m.rows.map(({i})=>predict(i));
+   // Keep n vertices while drawing the sparse displayed design windows.
+   put(predictionPath,[...t.map((_,j)=>Math.min(m.rows.length-1,Math.floor(j*m.rows.length/n))).flatMap(i=>[X(m.x[i]),Y(predictions[i])]),state==='error-empty'?0:1]);
+   data.forEach((id,j)=>{const row=m.rows[j];put(id,[X(m.x[j]??t[0]),Y(row?m.D.b[row.i]:0),row?1:0]);});
+   sticks.forEach((id,j)=>{const row=m.rows[j],v=row?m.D.b[row.i]:0,p=predictions[j]??0,progress=state==='error-empty'?clamp(seq/2000*m.rows.length-j):1;
+    put(id,[X(m.x[j]??t[0]),Y(v),X(m.x[j]??t[0]),Y(mix(v,p,progress)),row?progress:0]);nodes[id].e.dataset.value=String(v-p);});
+   put(axisLines[6],[left,Y(0),right,Y(0),1]);
+   const progress=state==='error-empty'?clamp(seq/2000):1;
+   put(errorBar,[left,426,(right-left)*clamp(error)*progress,14,1]);text(errorLabel,tr('x10_error',{p:pct(error*progress)}),left,466);
+   text(equation,state==='error-empty'?tr('x10_none'):soloEquation({...block,coefficient:c}),left+20,top+20,state==='solution'?1:0);
+   if(state==='fit'){
+    const lo=+slider.min,hi=+slider.max,values=curveValues,maxError=curveMaximum;
+    const CX=v=>right-180+180*(v-lo)/(hi-lo),CY=v=>80-45*v/maxError;
+    put(curvePath,[...values.flatMap((v,i)=>[CX(v),CY(curveErrors[i])]),1]);nodes[curvePath].e.setAttribute('pathLength','1');nodes[curvePath].e.style.strokeDasharray='1 1';nodes[curvePath].e.style.strokeDashoffset=String(1-clamp(seq/2500));put(curveMarker,[CX(c),CY(error),1]);text(curveLabel,tr('x10_minimum',{c:soloNumber(constant.coefficient)}),left,top+20);
+    slider.value=c;$('c1-c-value').textContent=soloNumber(c);$('c1-play').hidden=!final;
+   }
+  }
+  if(list){
+   const ordered=m.blocks.slice().sort((a,b)=>a.term-b.term),ranked=ordered.slice().sort((a,b)=>errors.get(a.term)-errors.get(b.term));
+   slots.forEach((slot,j)=>{const b=ordered[j],rank=ranked.indexOf(b),sort=state==='percent'?0:ease((seq-4800)/800),yy=62+mix(j,rank,sort)*48;
+    const visible=state==='percent'?1:clamp((seq-j*800-650)/150),err=errors.get(b.term),value=state==='percent'?b.share:err;
+    // New values travel from the prediction plot into their catalogue slot.
+    const flight=state==='percent'?1:ease((seq-j*800-650)/150),xx=mix(left+30,12,flight);
+    put(slot.bar,[xx,yy+8,204*clamp(value),12,visible]);text(slot.text,terms[b.term],xx,yy,visible);text(slot.value,pct(value),xx+140,yy,visible);
+    nodes[slot.bar].e.dataset.term=String(b.term);nodes[slot.bar].e.dataset.value=String(value);nodes[slot.bar].e.dataset.rank=String(rank);nodes[slot.bar].e.classList.toggle('winner',b.term===m.winner);
+   });
+  }
+  if(state==='percent'){
+   const parts=chapterParts(m,winner);let xx=left;
+   parts.forEach((v,i)=>{put(stack[i].bar,[xx,100,(right-left)*v,42,1]);text(stack[i].text,pct(v),xx+4,126,1);text(axisLabels[i],tr(['x10_floor','x10_reduced','x10_remaining'][i])+': '+pct(v),left,200+i*35);xx+=(right-left)*v;});
+   if(!m.normalized)text(errorLabel,tr('x10_fallback'),left,350);
+  }
+  if(state==='noise-estimate'){
+   const idx=Math.min(4,Math.max(0,Math.floor((seq-700)/900))),example=examples[idx],{start,ts,value,center}=example;
+   const progress=clamp((seq-700-idx*900)/550),show=seq>=700&&seq<5200?1:0;
+   put(windowBox,[X(ts[0]),top,X(ts.at(-1))-X(ts[0]),bottom-top,show*.25]);
+   const fine=Array.from({length:61},(_,j)=>mix(ts[0],ts.at(-1),j/60));put(localPath,[...fine.flatMap(v=>[X(v),Y(value(v))]),show*progress]);
+   nodes[localPath].e.setAttribute('pathLength','1');nodes[localPath].e.style.strokeDasharray='1 1';nodes[localPath].e.style.strokeDashoffset=String(1-progress);put(ring,[X(t[center]),Y(x[center]),show]);put(sticks[center],[X(t[center]),Y(x[center]),X(t[center]),Y(mix(x[center],value(t[center]),progress)),show]);
+   examples.forEach((ex,j)=>text(deviationLabels[j],fmt(ex.deviation),right-115,80+j*22,seq>=700+(j+1)*900||final?1:0));text(noiseLabel,tr('x12_deviations'),right-135,52);
+   const band=clamp((seq-5200)/1200);
+   put(bandTop,[...t.flatMap((v,i)=>[X(v),Y(x[i]+Math.sqrt(variance[i]))]),band]);put(bandBottom,[...t.flatMap((v,i)=>[X(v),Y(x[i]-Math.sqrt(variance[i]))]),band]);
+   text(readout,tr('x12_band'),left,466,band);
+   data.forEach((id,i)=>nodes[id].e.setAttribute('r',i>=start&&i<start+9&&show?4:2.5));
+  }else data.forEach(id=>nodes[id].e.setAttribute('r',2.5));
+  svg.dataset.windowLength=String(windowLength);svg.dataset.state=state;svg.dataset.coefficient=String(c);svg.dataset.error=String(error);svg.dataset.term=String(block.term);svg.dataset.complete=String(final);
+  return s;
  }
- const windowSlider=$('c1-window');windowSlider.max=LIVE.windows.length-1;windowSlider.value=0;
- function changes(){const length=LIVE.windows[+windowSlider.value],rows=chapterWindows(length);$('c1-window-value').textContent=tr('x10_length',{samples:length,duration:fmt(measuredTime[length]-measuredTime[0])});plot($('c1-visual-1'),rows.map(w=>w.time),rows.map(w=>w.rate),rows.map(w=>w.clean),{rate:true,clean:true});}
- windowSlider.addEventListener('input',changes);changes();
- const y=m.rows.map(({i})=>m.D.b[i]),prediction=block=>m.rows.map(({i})=>block.coefficient*m.D.A[i][block.term]);
- const emptyPlot=el('div'),emptyBar=el('div');$('c1-visual-2').append(emptyPlot,emptyBar);plot(emptyPlot,m.x,y,y.map(()=>0),{label:tr('x10_none')});
- emptyBar.className='c1-empty-bar';emptyBar.textContent=tr('x10_error',{p:percent(norm/norm)});
- const fitPlot=el('div'),curve=el('div');$('c1-visual-3').append(fitPlot,curve);
- const cSlider=$('c1-c'),span=Math.max(Math.abs(constant.coefficient),1);cSlider.min=constant.coefficient-span;cSlider.max=constant.coefficient+span;cSlider.value=constant.coefficient;
- function fit(){const c=+cSlider.value;$('c1-c-value').textContent=soloNumber(c);plot(fitPlot,m.x,y,m.rows.map(({i})=>c*m.D.A[i][0]),{label:tr('x9_prediction',{block:terms[0]})});
-  const cs=Array.from({length:81},(_,i)=>+cSlider.min+(+cSlider.max-cSlider.min)*i/80);cs.push(constant.coefficient);cs.sort((a,b)=>a-b);
-  chart(curve,[{x:cs,y:cs.map(v=>100*chapterError(m,0,v)),kind:'model'},{x:[constant.coefficient],y:[100*chapterError(m,0,constant.coefficient)],kind:'truth'}],{legend:false,xLabel:'c',yLabel:tr('x10_error_axis'),point:[c,100*chapterError(m,0,c)]});
-  const caption=el('figcaption',tr('x10_minimum',{c:soloNumber(constant.coefficient)}),'caption');caption.dataset.claim='review';curve.append(caption);
-  const svg=curve.querySelectorAll('svg')[0];svg.append(svgNode('text',{x:380,y:30,'text-anchor':'middle'},'◆ c* = '+soloNumber(constant.coefficient)));
+ function render(s){
+  s.forEach((a,i)=>{const {e,geometry}=nodes[i],opacity=a.at(-1);e.style.opacity=String(opacity);
+   if(geometry==='path')e.setAttribute('d',a.slice(0,-1).reduce((out,v,j)=>out+(j%2?',':j?' L':'M')+v,''));
+   if(geometry==='line')for(const [j,key] of ['x1','y1','x2','y2'].entries())e.setAttribute(key,a[j]);
+   if(geometry==='dot'||geometry==='text'){e.setAttribute(geometry==='dot'?'cx':'x',a[0]);e.setAttribute(geometry==='dot'?'cy':'y',a[1]);}
+   if(geometry==='rect')for(const [j,key] of ['x','y','width','height'].entries())e.setAttribute(key,a[j]);
+  });last=s;
  }
- cSlider.addEventListener('input',fit);fit();
- const everyBars=el('div'),everyPrediction=el('div'),everyChart=el('div'),everyEquation=el('div',undefined,'solo-equation');everyPrediction.append(everyChart,everyEquation);$('c1-visual-4').append(everyBars,everyPrediction);
- function chooseEvery(term){const block=m.blocks.find(b=>b.term===term);everyBars.querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',String(+b.dataset.term===term)));plot(everyChart,m.x,y,prediction(block),{label:tr('x9_prediction',{block:terms[term]})});everyEquation.textContent=soloEquation(block);}
- m.blocks.slice().sort((a,b)=>chapterError(m,a.term,a.coefficient)-chapterError(m,b.term,b.coefficient)).forEach(block=>{const error=chapterError(m,block.term,block.coefficient),button=el('button',undefined,'solo-bar'+(block.term===m.winner?' winner':'')),track=el('span',undefined,'solo-track'),fill=el('span');button.dataset.term=block.term;button.dataset.error=error;fill.style.width=100*error+'%';track.append(fill);button.append(el('span',terms[block.term]),track,el('span',percent(error)));button.addEventListener('click',()=>chooseEvery(block.term));everyBars.append(button);});chooseEvery(m.winner);
- const chips=el('nav',undefined,'c1-chips'),stack=el('div',undefined,'c1-stack'),shares=el('div'),stackLegend=el('figcaption',undefined,'caption');stackLegend.dataset.claim='review';$('c1-visual-5').append(chips,stack,stackLegend,shares);
- function choosePercent(term){const block=m.blocks.find(b=>b.term===term),parts=chapterParts(m,block);stack.replaceChildren();parts.forEach((part,i)=>{const node=el('span',percent(part),'c1-part-'+i);node.style.width=100*part+'%';stack.append(node);});stack.dataset.parts=JSON.stringify(parts);stackLegend.textContent=['floor','reduced','remaining'].map((key,i)=>tr('x10_'+key)+': '+percent(parts[i])).join(' · ');if(!m.normalized)stackLegend.textContent=tr('x10_fallback');chips.querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',String(+b.dataset.term===term)));}
- m.blocks.forEach(block=>{const chip=el('button',terms[block.term]);chip.dataset.term=block.term;chip.addEventListener('click',()=>choosePercent(block.term));chips.append(chip);const row=el('div',undefined,'solo-bar'),track=el('span',undefined,'solo-track'),fill=el('span');fill.style.width=100*block.share+'%';track.append(fill);row.append(el('span',terms[block.term]),track,el('span',percent(block.share)));shares.append(row);});choosePercent(m.winner);
- const solutionEquation=el('div',soloEquation(winner),'solo-equation');$('c1-visual-6').append(solutionEquation);const solutionChart=el('div');$('c1-visual-6').append(solutionChart);plot(solutionChart,m.x,y,prediction(winner),{label:tr('x9_prediction',{block:terms[m.winner]})});
- window.WispChapterOne={model:m,chooseEvery,choosePercent,error:chapterError,parts:chapterParts};
+ function finish(){if(current){clock.cancel(frame);elapsed=durations[current];render(scene(current,elapsed));}}
+ function enter(state){
+  finish();host.hidden=!states.includes(state);$('c1-play').hidden=true;
+  if(host.hidden){current=null;return;}
+  const from=last.map(a=>a.slice());current=state;manual=null;elapsed=0;
+  svg.setAttribute('aria-label',tr('x12_title_'+states.indexOf(state)));
+  const start=clock.now();
+  function tick(now){elapsed=Math.min(durations[state],now-start);const target=scene(state,elapsed),blend=ease(elapsed/900);render(blend===1?target:target.map((a,i)=>a.map((v,j)=>mix(from[i][j],v,blend))));if(elapsed<durations[state])frame=clock.request(tick);}
+  if(window.matchMedia('(prefers-reduced-motion: reduce)').matches)finish();else {tick(start);}
+ }
+ slider.addEventListener('input',()=>{if(current!=='fit')return;clock.cancel(frame);manual=+slider.value;elapsed=durations.fit;render(scene('fit',elapsed));});
+ window.WispChapterOne={model:m,error:chapterError,parts:chapterParts};
+ window.WispChapterStory={states,durations,enter,finish,local,examples,variance,relative,actual,longRows,rates,trueRates,clock,svg,current:()=>current,elapsed:()=>elapsed};
 }
 initChapterOne();

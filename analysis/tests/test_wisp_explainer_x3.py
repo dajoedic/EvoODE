@@ -54,7 +54,7 @@ console.log('PASS actual-page navigation, controls, drag, inertia, every method 
     run=subprocess.run(['node','-e',script,str(BASE/'src/pages.js'),json.dumps(pages)],capture_output=True,text=True,timeout=30)
     assert run.returncode==0,run.stdout+run.stderr
 
-@pytest.mark.parametrize('configuration',['legacy','delivered','morph','noise'])
+@pytest.mark.parametrize('configuration',['legacy','delivered'])
 @pytest.mark.parametrize('language',['en','de'])
 def test_full_presentation_dom(language,configuration):
     soup=BeautifulSoup((BASE/'dist/wisp_explainer.html').read_text(encoding='utf8'),'html.parser')
@@ -64,7 +64,7 @@ def test_full_presentation_dom(language,configuration):
     teaching = data['live']['teaching']
     t, x = np.asarray(teaching['t']), np.asarray(teaching['observed'])
     cubic = []
-    for center in (0, 171, len(t)-1):
+    for center in (0, *range(round(len(t)/3),round(len(t)/3)+5), len(t)-1):
         start = min(max(center-4, 0), len(t)-9)
         ts = t[start:start+9]
         scale = max(abs(ts-t[center]))
@@ -84,9 +84,9 @@ def test_full_presentation_dom(language,configuration):
 def test_page_structure_and_bilingual_source():
     soup=BeautifulSoup((BASE/'src/index.html').read_text(encoding='utf8'),'html.parser')
     pages=soup.select('main > .page')
-    assert len(pages)==27
-    assert [p['id'] for p in pages[:10]] == [
-        'p-hook', 'p-challenge', 'p-c1-data', 'p-c1-changes',
+    assert len(pages)==30
+    assert [p['id'] for p in pages[:13]] == [
+        'p-hook', 'p-challenge', 'p-c1-data', 'p-c1-noise-visible', 'p-c1-slope', 'p-c1-secants', 'p-c1-changes',
         'p-c1-error-empty', 'p-c1-fit', 'p-c1-every', 'p-c1-noise',
         'p-c1-percent', 'p-c1-solution',
     ]
