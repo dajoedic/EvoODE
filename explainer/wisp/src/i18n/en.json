@@ -379,7 +379,6 @@
   "x6_hint3": "The u² coefficient is small and negative.",
   "x6_illustration": "Illustration: simple browser simulation from the first measurement, not WISP. R² compares your curve with the measurements; it can be negative.",
   "x6_punchline": "Even knowing the shape, finding the exact terms and coefficients by hand is hard. With interacting quantities, unknown shapes and more noise, it becomes unmanageable — this is the job WISP does.",
-  "x6_reveal": "Show me what WISP finds",
   "x6_yours": "Your last equation",
   "x6_catalogue": "These are the building blocks you used on page 2. More variables add powers and interactions; the number of possible combinations explodes.",
   "x6_back": "Back to the challenge",
@@ -397,7 +396,6 @@
   "x7_headline": "Nature describes itself in rates of change",
   "x7_deck": "How fast does a bacterial culture grow? How fast does a coffee cool? How fast does a flu spread? A differential equation does not say where something is, but how fast it is changing right now. That one rule produces the whole course: it explains why something happens, predicts what comes next, and can be tested against new measurements.",
   "x7_caption": "Bacteria in a dish: at first they double at fixed intervals, then space runs short and growth slows until the dish is full. Behind this S-shaped course sits a simple rule. Illustration, not measured data.",
-  "x7_replay": "Play again",
   "x7_history": "From measurements to equations",
   "x7_station1": "Kepler reads fixed patterns from Tycho Brahe's planetary observations; Newton turns them into a rule for how motion changes — Kepler's laws follow from it.",
   "x7_station2": "Verhulst derives the rule for slowing growth from census data — the same one as in the dish above.",
@@ -405,7 +403,6 @@
   "x7_station4": "Hodgkin and Huxley build the equations of the nerve impulse from measurements on a squid's nerve fibre (Nobel Prize 1963).",
   "x7_station5": "Data come in floods, time for handwork does not. Methods such as SINDy (2016) search for the equation automatically — WISP is one of them.",
   "x7_today": "today",
-  "x7_bridge": "For centuries this was done by hand. Try it yourself.",
   "x7_challenge_start": "These are real measurements of such growth, with {noise} noise. An equation has two parts: the ",
   "x7_structure": "structure",
   "x7_challenge_middle": " — which building blocks appear — and the ",
@@ -414,5 +411,7 @@
   "x7_structure_label": "Structure: block on/off",
   "x7_parameter_label": "Parameter: weight",
   "x7_time": "Time",
-  "x7_cells": "Cell count"
+  "x7_cells": "Cell count",
+  "x7b_fit": "Fit to the measurements (R², computed in the browser)",
+  "x7b_time_unavailable": "Time bases cannot be compared: fit unavailable."
 }

@@ -134,6 +134,7 @@ class Element {
  set value(v){this._value=String(v);}
  addEventListener(event,fn){this.listeners[event]=fn;}
  querySelector(selector){if(selector==='output')return this.children.find(c=>c.tag==='output');const type=selector.includes('checkbox')?'checkbox':'range';return this.children.flatMap(c=>[c,...c.children]).find(c=>c.type===type);}
+ querySelectorAll(selector){return this.children.flatMap(c=>[c,...c.querySelectorAll('*')]).filter(c=>selector==='*'||c.tag===selector);}
  focus(){}
 }
 const elements={};for(const match of source.matchAll(/<([a-z0-9-]+)\b([^>]*\bid="([^"]+)"[^>]*)>/g)){
@@ -143,6 +144,7 @@ const elements={};for(const match of source.matchAll(/<([a-z0-9-]+)\b([^>]*\bid=
 }
 elements['wisp-data'].textContent=JSON.stringify(data);
 global.document={getElementById:id=>{if(!elements[id])throw Error('Missing page ID '+id);return elements[id];},createElement:t=>new Element(t),createElementNS:(ns,t)=>new Element(t),querySelectorAll:()=>all.filter(e=>e.dataset.tex)};
+global.innerWidth=1366;global.innerHeight=768;global.addEventListener=()=>{};document.addEventListener=()=>{};global.IntersectionObserver=class{observe(){}};
 global.window=global;global.location={href:'file:///wisp.html?lang=en'};global.WispCompute=require(base+'/src/compute.js');
 global.matchMedia=()=>({matches:true,addEventListener(){}});global.cancelAnimationFrame=()=>{};
 vm.runInThisContext(fs.readFileSync(base+'/src/app.js','utf8'),{filename:'app.js'});

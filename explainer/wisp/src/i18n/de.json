@@ -379,7 +379,6 @@
   "x6_hint3": "Der Koeffizient von u² ist klein und negativ.",
   "x6_illustration": "Illustration: einfache Browser-Simulation ab dem ersten Messwert, kein WISP. R² vergleicht deine Kurve mit den Messwerten; es kann negativ sein.",
   "x6_punchline": "Selbst wenn du die Form kennst, sind die genauen Terme und Koeffizienten von Hand schwer zu finden. Mit wechselwirkenden Größen, unbekannten Formen und mehr Rauschen wird es unüberschaubar — diese Arbeit übernimmt WISP.",
-  "x6_reveal": "Zeig mir, was WISP findet",
   "x6_yours": "Deine letzte Gleichung",
   "x6_catalogue": "Das sind die Bausteine, die du auf Seite 2 verwendet hast. Weitere Größen bringen Potenzen und Wechselwirkungen hinzu; die Zahl möglicher Kombinationen explodiert.",
   "x6_back": "Zurück zur Herausforderung",
@@ -397,7 +396,6 @@
   "x7_headline": "Die Natur beschreibt sich in Änderungsraten",
   "x7_deck": "Wie schnell wächst eine Bakterienkultur? Wie schnell kühlt ein Kaffee ab? Wie schnell breitet sich eine Grippe aus? Eine Differentialgleichung sagt nicht, wo etwas gerade ist, sondern wie schnell es sich gerade ändert. Aus dieser einen Regel folgt der ganze Verlauf: Sie erklärt, warum etwas passiert, sagt voraus, was als Nächstes kommt, und lässt sich an neuen Messungen prüfen.",
   "x7_caption": "Bakterien in einer Schale: Anfangs verdoppeln sie sich in festen Abständen, dann wird der Platz knapp und das Wachstum bremst, bis die Schale voll ist. Hinter diesem S-förmigen Verlauf steckt eine einfache Regel. Illustration, keine Messdaten.",
-  "x7_replay": "Nochmal abspielen",
   "x7_history": "Aus Messungen werden Gleichungen",
   "x7_station1": "Kepler liest aus Tycho Brahes Planetenbeobachtungen feste Muster ab; Newton fasst sie als Regel für die Änderung der Bewegung — Keplers Gesetze folgen daraus.",
   "x7_station2": "Verhulst gewinnt aus Volkszählungen die Regel für gebremstes Wachstum — dieselbe wie in der Schale oben.",
@@ -405,7 +403,6 @@
   "x7_station4": "Hodgkin und Huxley bauen aus Messungen an der Nervenfaser eines Tintenfischs die Gleichungen des Nervenimpulses (Nobelpreis 1963).",
   "x7_station5": "Messdaten gibt es in Massen, Zeit für Handarbeit nicht. Verfahren wie SINDy (2016) suchen die Gleichung automatisch — WISP ist eines davon.",
   "x7_today": "heute",
-  "x7_bridge": "Jahrhundertelang war das Handarbeit. Probier es selbst.",
   "x7_challenge_start": "Das sind echte Messwerte eines solchen Wachstums, mit {noise} Rauschen. Eine Gleichung besteht aus zwei Teilen: der ",
   "x7_structure": "Struktur",
   "x7_challenge_middle": " — welche Bausteine vorkommen — und den ",
@@ -414,5 +411,7 @@
   "x7_structure_label": "Struktur: Baustein an/aus",
   "x7_parameter_label": "Parameter: Gewicht",
   "x7_time": "Zeit",
-  "x7_cells": "Zellzahl"
+  "x7_cells": "Zellzahl",
+  "x7b_fit": "Passung zu den Messwerten (R², im Browser berechnet)",
+  "x7b_time_unavailable": "Zeitachsen nicht vergleichbar: keine Passung berechnet."
 }

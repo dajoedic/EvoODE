@@ -21,7 +21,7 @@ function applyLanguage(lang,navigate=false){
  language=lang;document.documentElement?.setAttribute('lang',lang);
  try{window.localStorage?.setItem('wisp-language',lang);}catch{}
  document.querySelectorAll('[data-i18n]').forEach(e=>{if(e.dataset.i18n)e.textContent=tr(e.dataset.i18n);});
- for(const attr of ['aria-label','content'])document.querySelectorAll('[data-i18n-'+attr+']').forEach(e=>{const key=e.getAttribute?.('data-i18n-'+attr);if(key)e.setAttribute(attr,tr(key));});
+ for(const attr of ['aria-label','content','title'])document.querySelectorAll('[data-i18n-'+attr+']').forEach(e=>{const key=e.getAttribute?.('data-i18n-'+attr);if(key)e.setAttribute(attr,tr(key));});
  for(const choice of ['en','de'])document.getElementById('language-'+choice)?.setAttribute('aria-pressed',String(choice===lang));
  if(navigate){const url=new URL(window.location.href);url.searchParams.set('lang',lang);window.location.assign(url.href);}
 }
@@ -39,17 +39,20 @@ const NS='http://www.w3.org/2000/svg';
 function svgNode(tag,attrs={},text){const e=document.createElementNS(NS,tag);Object.entries(attrs).forEach(([k,v])=>e.setAttribute(k,v));if(text!==undefined)e.textContent=text;return e;}
 // Illustration only: no scientific data or WISP computation enters this scene.
 function initDish(){
- const target=$('dish-illustration'),svg=svgNode('svg',{viewBox:'0 0 780 180',role:'img','aria-labelledby':'dish-title dish-description'});
+ const target=$('dish-illustration'),svg=svgNode('svg',{viewBox:'0 0 780 240',role:'img','aria-labelledby':'dish-title dish-description'});
  svg.append(svgNode('title',{id:'dish-title'},tr('x7_history')),svgNode('desc',{id:'dish-description'},tr('x7_caption')));
- svg.append(svgNode('circle',{cx:105,cy:88,r:79,class:'dish-rim'}));
- const cells=svgNode('g');svg.append(cells);
+ const dishGroup=svgNode('g',{transform:'scale(1.35)'});svg.append(dishGroup);dishGroup.append(svgNode('circle',{cx:105,cy:88,r:79,class:'dish-rim'}));
+ const cells=svgNode('g');dishGroup.append(cells);
  // LCG seed 731; stratified positions fill the disk without overlaps.
  let seed=731;const random=()=>{seed=(Math.imul(1664525,seed)+1013904223)>>>0;return seed/4294967296;};
  const positions=[];for(let y=-68;y<=68;y+=9)for(let x=-68;x<=68;x+=9){const px=x+(random()-.5)*3,py=y+(random()-.5)*3;if(px*px+py*py<72*72)positions.push([105+px,88+py]);}
  for(let i=positions.length-1;i>0;i--){const j=Math.floor(random()*(i+1));[positions[i],positions[j]]=[positions[j],positions[i]];}
  const dots=positions.map(([cx,cy])=>{const dot=svgNode('circle',{cx,cy,r:2.9,class:'dish-cell'});cells.append(dot);return dot;});
- svg.append(svgNode('path',{d:'M280 14V151H752',class:'dish-axis'}),svgNode('text',{x:288,y:17},tr('x7_cells')),svgNode('text',{x:752,y:174,'text-anchor':'end'},tr('x7_time')));
- const curve=svgNode('path',{class:'dish-curve'}),head=svgNode('circle',{r:4,class:'dish-cell'});svg.append(curve,head);target.append(svg);
+ const curveGroup=svgNode('g',{transform:'translate(0 12) scale(1 1.35)'});svg.append(curveGroup);curveGroup.append(svgNode('path',{d:'M280 14V151H752',class:'dish-axis'}),svgNode('text',{x:288,y:17},tr('x7_cells')),svgNode('text',{x:752,y:174,'text-anchor':'end'},tr('x7_time')));
+ const curve=svgNode('path',{class:'dish-curve'}),head=svgNode('circle',{r:4,class:'dish-cell'});curveGroup.append(curve,head);target.append(svg);
+ // Stack the two scenes in the same accessible illustration on small screens.
+ function geometry(){const narrow=innerWidth<760;svg.setAttribute('viewBox',narrow?'0 0 400 480':'0 0 780 240');dishGroup.setAttribute('transform',narrow?'translate(58 0) scale(1.35)':'scale(1.35)');curveGroup.setAttribute('transform',narrow?'translate(-120 250) scale(.65 1.15)':'translate(0 12) scale(1 1.35)');}
+ geometry();window.addEventListener('resize',geometry);
  // K=1 (normalised occupancy), n0=.012, r=10, t in [0,1], 6000 ms.
  const occupancy=t=>1/(1+(1/.012-1)*Math.exp(-10*t));
  function draw(progress){const count=Math.round(occupancy(progress)*dots.length);dots.forEach((dot,i)=>dot.setAttribute('visibility',i<count?'visible':'hidden'));
@@ -57,12 +60,17 @@ function initDish(){
   for(const t of points)d+=(d?'L':'M')+(280+472*t).toFixed(2)+','+(151-130*occupancy(t)).toFixed(2);
   curve.setAttribute('d',d);head.setAttribute('cx',280+472*progress);head.setAttribute('cy',151-130*occupancy(progress));target.dataset.progress=String(progress);
  }
- const reduced=window.matchMedia('(prefers-reduced-motion: reduce)');let frame=0,started=false;
- function replay(){cancelAnimationFrame(frame);started=true;if(reduced.matches){draw(1);return;}draw(0);const start=performance.now();const tick=now=>{const progress=Math.min(1,(now-start)/6000);draw(progress);if(progress<1)frame=requestAnimationFrame(tick);};frame=requestAnimationFrame(tick);}
- $('dish-replay').addEventListener('click',replay);
- reduced.addEventListener?.('change',()=>{if(reduced.matches){cancelAnimationFrame(frame);draw(1);}});
- if(reduced.matches)draw(1);else draw(0);
- if(typeof IntersectionObserver==='function'){const observer=new IntersectionObserver(entries=>{if(!started&&entries.some(e=>e.isIntersecting)){replay();observer.disconnect();}},{threshold:.1});observer.observe(target);}else replay();
+ const reduced=window.matchMedia('(prefers-reduced-motion: reduce)');
+ let frame=0,visible=typeof IntersectionObserver!=='function',elapsed=0,last=0;
+ function tick(now){elapsed=(elapsed+now-last)%7500;last=now;draw(Math.min(1,elapsed/6000));frame=requestAnimationFrame(tick);}
+ function update(){cancelAnimationFrame(frame);frame=0;
+  if(reduced.matches){draw(1);return;}
+  if(visible&&!document.hidden){last=performance.now();frame=requestAnimationFrame(tick);}
+ }
+ reduced.addEventListener?.('change',()=>{draw(reduced.matches?1:Math.min(1,elapsed/6000));update();});
+ document.addEventListener('visibilitychange',update);
+ draw(reduced.matches?1:0);
+ if(typeof IntersectionObserver==='function'){const observer=new IntersectionObserver(entries=>{visible=entries.some(e=>e.isIntersecting);update();},{threshold:.1});observer.observe(target);}else{const visibility=()=>{const r=target.getBoundingClientRect();visible=r.bottom>0&&r.top<innerHeight;update();};window.addEventListener('scroll',visibility,{passive:true});window.addEventListener('resize',visibility);visibility();}
 }
 initDish();
 window.typesetAll=()=>{if(!window.katex)return;document.querySelectorAll("[data-tex]").forEach(e=>window.katex.render(e.dataset.tex,e,{throwOnError:false,output:'mathml',displayMode:!e.classList.contains('inline')}));};
@@ -134,22 +142,50 @@ terms.forEach((name,i)=>{
  const card=el('div',undefined,'term-card'),label=el('label',name),check=el('input');check.type='checkbox';check.checked=enabled[i];check.setAttribute('aria-label',tr('include_term',{v0:name}));label.append(check);
  const controls=el('div',undefined,'coefficient-controls'),range=el('input'),typed=el('input'),[min,max,step]=coefficientLimits[i];range.type='range';typed.type='number';
  for(const input of [range,typed]){input.min=min;input.max=max;input.step=step;input.value=coeff[i];input.setAttribute('aria-label',tr('j188',{v0:name}));}
- const sync=(preserveTyped=false)=>{range.value=coeff[i];if(!preserveTyped)typed.value=coeff[i];controls.hidden=!enabled[i];range.disabled=typed.disabled=!enabled[i];};
+ const sync=(preserveTyped=false)=>{range.value=coeff[i];if(!preserveTyped)typed.value=coeff[i];controls.dataset.disabled=String(!enabled[i]);for(const input of [range,typed,...controls.querySelectorAll('button')])input.disabled=!enabled[i];};
  const update=(value,preserveTyped=false)=>{if(!Number.isFinite(value))return;coeff[i]=+Math.max(min,Math.min(max,value)).toFixed(8);sync(preserveTyped&&value>=min&&value<=max);play();};
  range.addEventListener('input',()=>update(+range.value));typed.addEventListener('input',()=>{if(typed.value.trim()!=='')update(+typed.value,true);});typed.addEventListener('change',()=>sync());
  const minus=el('button','−'),plus=el('button','+');for(const [button,direction,key] of [[minus,-1,'x6_decrease'],[plus,1,'x6_increase']]){button.type='button';button.setAttribute('aria-label',tr(key,{term:name}));button.addEventListener('click',()=>update(coeff[i]+direction*step));}
- check.addEventListener('change',()=>{enabled[i]=check.checked;sync();play();});controls.append(el('small',tr('x7_parameter_label'),'part-label'),range,minus,typed,plus);card.append(el('small',tr('x7_structure_label'),'part-label'),label,controls);$('term-cards').append(card);termControls.push({check,sync});sync();
+ check.addEventListener('change',()=>{enabled[i]=check.checked;sync();play();});controls.append(range,minus,typed,plus);card.append(label,controls);$('term-cards').append(card);termControls.push({check,sync});sync();
 });
+function observationR2(curve,observations){
+ const mean=observations.reduce((s,v)=>s+v,0)/observations.length,total=observations.reduce((s,v)=>s+(v-mean)**2,0);
+ return 1-curve.reduce((s,v,i)=>s+(v-observations[i])**2,0)/total;
+}
+function interpolateCurve(t,y,at){
+ if(!t||!y||t.length!==y.length||t.length<2||t.some((v,i)=>!Number.isFinite(v)||(i&&v<=t[i-1]))||at.some(v=>!Number.isFinite(v)||v<t[0]||v>t.at(-1)))return null;
+ let j=0;return at.map(v=>{while(j<t.length-2&&t[j+1]<v)j++;const left=Number.isFinite(y[j])?y[j]:NaN,right=Number.isFinite(y[j+1])?y[j+1]:NaN;return v===t[j]?left:v===t[j+1]?right:left+(right-left)*(v-t[j])/(t[j+1]-t[j]);});
+}
+let readerState=null,solutionCell=null;
+function drawSolution(){
+ if(!solutionCell||!readerState)return;
+ const bundle=solutionCell.curves,observed=solutionCell.observed,series=[
+  {x:readerState.t,y:readerState.clipped,kind:'reader',style:'dashed',label:tr('x6_yours')},
+  {x:observed.t,y:observed.x.map(r=>r[0]),kind:'data',style:'dots',label:tr('j214')}
+ ];
+ if(bundle)series.push({x:bundle.t,y:bundle.truth.map(r=>r[0]),kind:'truth',style:'dashed',label:tr('j306')},{x:bundle.t,y:bundle.model.map(r=>r[0]),kind:'model',label:tr('j323')});
+ chart($('solution-chart'),series,{title:cellName(solutionCell.row.cell_id)});
+ const fits=el('div',undefined,'solution-fits'),label=el('p',tr('x7b_fit'),'caption');label.dataset.claim='review';fits.append(label);
+ for(const curve of series.filter(s=>s.kind!=='data')){
+  // Score the full simulated curve, as the playground does, before display clipping.
+  const values=curve.kind==='reader'?readerState.curve:curve.y;
+  const sampled=interpolateCurve(curve.x,values,observed.t),score=sampled?observationR2(sampled,observed.x.map(r=>r[0])):NaN;
+  const item=el('span',curve.label+': '+(sampled?fmt(score,4):tr('x7b_time_unavailable')));item.dataset.curve=curve.kind;item.dataset.score=Number.isFinite(score)?String(score):'unavailable';fits.append(item);
+ }
+ $('solution-chart').append(fits);
+}
 function play(){
  const observations=measuredNoise(teaching?.sigma||.03),limit=2*Math.max(...observations.map(Math.abs)),indices=enabled.map((v,i)=>v?i:-1).filter(i=>i>=0),c=indices.map(i=>coeff[i]);
  const tex=equation(indices,c);math($('play-equation'),tex);math($('reader-equation'),tex);
  const curve=rk4(measuredTime,[observations[0]],x=>[W.basis(x[0]).reduce((s,v,i)=>s+(enabled[i]?v*coeff[i]:0),0)]).map(x=>x[0]);
- chart($('play-chart'),[{x:measuredTime,y:observations,kind:'data',style:'dots',label:tr('j214')},{x:measuredTime,y:curve.map(v=>Number.isFinite(v)&&Math.abs(v)<=limit?v:NaN),kind:'model',label:tr('x6_yours')}]);
- const mean=observations.reduce((s,v)=>s+v,0)/observations.length,total=observations.reduce((s,v)=>s+(v-mean)**2,0),score=1-curve.reduce((s,v,i)=>s+(v-observations[i])**2,0)/total;
+ readerState={t:measuredTime,curve,clipped:curve.map(v=>Number.isFinite(v)&&Math.abs(v)<=limit?v:NaN)};
+ chart($('play-chart'),[{x:measuredTime,y:observations,kind:'data',style:'dots',label:tr('j214')},{x:measuredTime,y:readerState.clipped,kind:'model',label:tr('x6_yours')}]);
+ const score=observationR2(curve,observations);
  const clipped=curve.some(v=>!Number.isFinite(v)||Math.abs(v)>limit),status=$('play-status');status.dataset.score=Number.isFinite(score)?String(score):'unavailable';
  status.textContent=Number.isFinite(score)?tr('x6_meter',{value:fmt(score,4),grade:tr(score>=.98?'x6_veryclose':score>=.9?'x6_close':score>=.5?'x6_nearer':'x6_far')}):tr('x6_unstable');
  $('challenge-meter').value=Number.isFinite(score)?Math.max(0,Math.min(1,score)):0;
  if(clipped&&Number.isFinite(score))status.textContent+=' '+tr('j199');
+ drawSolution();
 }
 $('challenge-hint').addEventListener('click',()=>{if(hintCount>=3)return;hintCount++;$('challenge-hints').append(el('li',tr('x6_hint'+hintCount)));$('challenge-hint').disabled=hintCount===3;});
 $('play-reset').addEventListener('click',()=>{coeff.splice(0,6,...initialCoefficients);enabled.splice(0,6,false,true,false,false,false,false);termControls.forEach(({check,sync},i)=>{check.checked=enabled[i];sync();});play();});play();
@@ -296,7 +332,7 @@ function rateChart(target,rows){
 function headlineDraw(){const panel=$('headline-panel');panel.replaceChildren();for(const stratum of ['dim1','dim2']){const box=el('div',undefined,'headline-stratum');box.append(el('h3',stratum==='dim1'?'1D':'2D'));rateChart(box,headline.filter(r=>r.stratum===stratum));panel.append(box);}}
 headlineDraw();
 const runningFeature=featured.find(f=>f.roles.includes('running')),runningCell=RESULTS.cells.find(c=>c.row.cell_id===runningFeature?.cell_id);
-if(runningCell){for(const [title,equations] of [[tr('j304'),storedEquation(runningCell)],[tr('j302'),runningCell.truth.map(displayTruth)]]){const box=el('div');box.append(el('h3',title));for(const tex of equations){const node=el('div',undefined,'math');math(node,tex);box.append(node);}$('solution-equations').append(box);}plotBundle($('solution-chart'),runningCell.curves,runningCell.observed,cellName(runningCell.row.cell_id));}
+if(runningCell){for(const [title,equations] of [[tr('j304'),storedEquation(runningCell)],[tr('j302'),runningCell.truth.map(displayTruth)]]){const box=el('div');box.append(el('h3',title));for(const tex of equations){const node=el('div',undefined,'math');math(node,tex);box.append(node);}$('solution-equations').append(box);}solutionCell=runningCell;drawSolution();}
 $('data-summary').textContent=$('combination-count').textContent;
 // One native modal per section: focus is trapped by the browser and scrolling stays inside.
 document.querySelectorAll('[data-more]').forEach(button=>button.addEventListener('click',()=>button.parentElement.querySelector('dialog').showModal()));

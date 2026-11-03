@@ -14,7 +14,7 @@ def test_hook_bilingual_history_and_illustration_only():
     assert [n.text for n in hook.select('.history-timeline small')[:4]] == ['1609–1687', '1838', '1925–26', '1952']
     assert not hook.select('[data-tex], .math, #problem-chart')
     assert hook.select_one('#dish-illustration')
-    assert hook.select_one('a[href="#p-challenge"]')
+    assert not hook.select_one('a[href="#p-challenge"]')
     for lang in ('de', 'en'):
         table = json.loads((BASE / f'src/i18n/{lang}.json').read_text(encoding='utf8'))
         assert not {'x4_problem', 'x4_why'} & table.keys()
@@ -30,4 +30,4 @@ def test_challenge_framing_has_emphasis_and_dynamic_noise():
     app = (BASE / 'src/app.js').read_text(encoding='utf8')
     assert "tr('x7_challenge_start',{noise:pct(teaching.sigma)})" in app
     for key in ('x7_structure_label', 'x7_parameter_label'):
-        assert f"tr('{key}')" in app
+        assert soup.select_one(f'[data-i18n="{key}"]')

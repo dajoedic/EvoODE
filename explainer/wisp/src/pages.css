@@ -38,7 +38,7 @@ dialog{max-width:min(1050px,90vw);max-height:80dvh;overflow:auto;overscroll-beha
 .snapped #p-solution .chart{height:290px}.snapped #p-solution .math{font-size:22px;line-height:1.4}
 .chart .series-data{stroke:none}.measurement-dot{fill:var(--data);opacity:.55}.chart .series-truth{stroke-width:1.4;stroke-dasharray:5 4}.chart .series-model{stroke-width:4;stroke:var(--step,var(--accent))}
 #headline-panel{display:grid;gap:10px}.rate-plots{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}.rate-plot{min-width:0}.rate-plot h4{font:14px/1.25 system-ui;margin:4px 0;min-height:36px}.rate-chart{display:block;width:100%;height:auto}.rate-chart text{font:19px system-ui;fill:var(--ink)}.rate-chart g:focus{outline:2px solid var(--accent)}
-.headline-stratum{min-width:0}.headline-stratum h3{font:18px system-ui}.headline-stratum details{position:relative;padding:2px 0}.headline-stratum details[open]{max-height:180px;overflow:auto}.headline-stratum td{font-size:14px}
+.headline-stratum{min-width:0}.headline-stratum h3{font:18px system-ui}.headline-stratum details{position:relative;padding:2px 0}.headline-stratum details[open]{max-height:320px;overflow:auto}.headline-stratum td{font-size:14px}
 .overview-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px}.overview-grid .rate-plots{display:block}.overview-grid .rate-chart text{font-size:15px}.overview-grid article{min-width:0}
 .snapped #featured-stories{display:block}.snapped #featured-stories>article{margin:4px 0;padding:8px 12px}.snapped #featured-stories .two-plots{display:grid;grid-template-columns:1fr 1fr}.snapped #featured-stories .chart{height:260px}.snapped #featured-stories .caption{font-size:14px}.snapped #featured-stories h3{margin:2px 0}.snapped #featured-stories p{margin:4px 0;font-size:14px}.story-tabs{display:flex;gap:8px}.story-tabs button{flex:1;padding:5px 8px;font-size:14px;line-height:1.3}.story-tabs [aria-selected=true]{border-color:var(--accent);background:var(--wash)}
 .snapped #p-catalogue .page-content{grid-template-columns:1fr 1.8fr;gap:4px 18px}.snapped #p-catalogue .term-card p{margin:2px 0}.snapped #p-catalogue figure>p{margin:2px 0}.snapped #p-catalogue .term-card{padding:4px}.snapped #p-catalogue .math{padding:0;line-height:1.3}.snapped #p-catalogue figcaption{font-size:14px;line-height:1.25}
@@ -66,7 +66,7 @@ dialog{max-width:min(1050px,90vw);max-height:80dvh;overflow:auto;overscroll-beha
 #p-challenge .term-card{padding:7px}#p-challenge .term-card label{font-size:16px}
 .coefficient-controls{display:grid;grid-template-columns:28px minmax(0,1fr) 28px;gap:3px;align-items:center}
 .coefficient-controls input[type=range]{grid-column:1/-1;width:100%;margin:3px 0}.coefficient-controls input[type=number]{width:100%;min-width:0;font:14px system-ui;padding:3px;color:var(--ink);background:var(--panel);border:1px solid var(--line)}
-.coefficient-controls button{padding:2px}.coefficient-controls[hidden]{display:none}
+.coefficient-controls button{padding:2px}.coefficient-controls[data-disabled=true]{opacity:.4}
 #challenge-hints{font:14px/1.4 system-ui;padding-left:22px;min-height:60px;margin:6px 0}
 #p-challenge .panel{margin:0}#p-challenge .math{font-size:20px;line-height:1.3;padding:3px 0}
 #p-challenge #play-status{font:15px/1.3 system-ui;margin:4px 0}#p-challenge .caption{font-size:13px;line-height:1.3;margin:4px 0}
@@ -88,27 +88,27 @@ dialog{max-width:min(1050px,90vw);max-height:80dvh;overflow:auto;overscroll-beha
 /* WP-X7: the opening illustration and history share a single short screen. */
 #p-hook .deck{max-width:none;font-size:18px;line-height:1.4}
 .dish-figure{margin:10px 0;position:relative}
-#dish-illustration{max-width:800px;margin:auto}
-#dish-illustration svg{display:block;width:100%;height:auto;max-height:180px}
+#dish-illustration{width:100%;max-width:1060px;margin:auto}
+#dish-illustration svg{display:block;width:100%;height:auto;max-height:320px}
 #dish-illustration text{font:13px system-ui;fill:var(--muted)}
 .dish-rim{fill:var(--wash);stroke:var(--accent);stroke-width:3}
 .dish-cell{fill:var(--accent)}.dish-axis{fill:none;stroke:var(--muted);stroke-width:1}
 .dish-curve{fill:none;stroke:var(--accent);stroke-width:3}
-#p-hook figcaption{font-size:12px;line-height:1.35;margin:4px 135px 0 0}
-#dish-replay{position:absolute;right:0;bottom:0;font-size:12px;padding:5px 8px}
+#p-hook figcaption{font-size:12px;line-height:1.35;margin:4px 0 0}
+
 .history-timeline{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:16px;list-style:none;padding:0;margin:6px 0 12px}
 .history-timeline li{min-width:0;border-top:2px solid var(--line);padding-top:4px}
 .history-timeline small{font:600 12px system-ui;color:var(--accent)}
 #p-hook .history-timeline p{font:12px/1.35 system-ui;margin:4px 0}
 #p-hook .history-title{font-size:19px;margin:8px 0 4px}
-.hook-bridge{font-size:15px}
+
 .snapped #p-hook h1{font-size:36px;margin:3px 0 7px;max-width:none}
 .snapped #p-hook .deck{font-size:16px;line-height:1.35;margin:4px 0}
-.snapped #p-hook .dish-figure{display:grid;grid-template-columns:minmax(0,2fr) minmax(0,1fr);grid-template-rows:1fr auto;gap:6px 20px;margin:6px 0}
-.snapped #dish-illustration{grid-row:1/3;width:100%}
-.snapped #dish-illustration svg{max-height:140px}
-.snapped #p-hook figcaption{margin:0;align-self:end}
-.snapped #dish-replay{position:static;grid-column:2;justify-self:start;align-self:start}
+.snapped #p-hook .dish-figure{margin:14px 0 12px}
+.snapped #dish-illustration{width:100%}
+.snapped #dish-illustration svg{height:280px;max-height:none}
+.snapped #p-hook figcaption{margin:4px 0 0;text-align:center}
+
 .snapped #p-hook .history-title{font-size:19px;margin:6px 0 2px}
 .part-label{display:block;font:10px/1.3 system-ui;color:var(--muted);grid-column:1/-1}
 #p-challenge .term-card>.part-label{margin-bottom:2px}
@@ -120,5 +120,34 @@ dialog{max-width:min(1050px,90vw);max-height:80dvh;overflow:auto;overscroll-beha
  .history-timeline li{margin:12px 0;padding-top:8px}
  #p-hook .history-timeline p{font-size:14px}
  #p-hook figcaption{margin-right:0;font-size:13px}
- #dish-replay{position:static;margin-top:6px}
+
+}
+
+/* WP-X7b: stable controls and adjacent evidence on the opening pages. */
+.term-legend{display:flex;justify-content:space-between;gap:12px;font:11px/1.4 system-ui;color:var(--muted);margin-bottom:8px}
+#p-challenge .term-cards{gap:12px;grid-auto-rows:1fr}
+#p-challenge .term-card{padding:10px;display:grid;grid-template-rows:auto 1fr;gap:8px;min-width:0}
+#p-challenge .term-card label{display:flex;align-items:center;justify-content:space-between}
+#p-challenge .challenge-grid{gap:32px;margin-top:18px}
+.icon-button{width:30px;height:30px;border-radius:50%;padding:5px;margin:8px 6px 0 0;color:var(--muted);background:transparent}
+.icon-button svg{width:100%;height:100%;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.icon-button:disabled{opacity:.35}
+#p-solution .series-reader{fill:none;stroke:#9863ad;stroke-width:2.2;stroke-dasharray:7 3}
+.solution-fits{font:13px/1.4 system-ui}.solution-fits p{margin:4px 0}.solution-fits span{display:inline-block;margin-right:22px}
+@media(min-width:760px) and (max-height:700px){
+ .snapped #p-hook .dish-figure{margin:8px 0}
+ .snapped #dish-illustration svg{height:260px}
+ .snapped #p-challenge .challenge-grid{margin-top:14px;gap:28px}
+ .snapped #p-challenge .term-card{padding:8px 10px;gap:6px}
+}
+@media(max-width:759px){
+ #dish-illustration svg{aspect-ratio:auto;height:auto;max-height:none}
+ #dish-illustration{overflow:hidden}
+ .term-legend{flex-wrap:wrap}
+}
+@media(max-width:759px){#dish-illustration svg{height:auto;max-height:540px}}
+
+@media(min-width:760px){
+ #p-challenge .challenge-grid{grid-template-columns:minmax(0,1.25fr) minmax(0,1.6fr)}
+ #p-challenge .term-cards{grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
 }

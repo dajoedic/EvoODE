@@ -19,7 +19,7 @@ def test_challenge_is_second_in_both_languages_and_catalogue_refers_back():
         assert table[pages[1].select_one('h2')['data-i18n']]
         assert all(table[f'x6_hint{n}'] for n in range(1, 4))
         assert table['x6_catalogue']
-    assert soup.select_one('#challenge-reveal')['href'] == '#p-solution'
+    assert not soup.select_one('#challenge-reveal')
     assert soup.select_one('#p-solution #reader-equation')
     assert soup.select_one('#p-catalogue a[href="#p-challenge"]')
     assert not soup.select('#p-guess, [data-guess], #p-catalogue #term-cards, #p-catalogue #play-chart')

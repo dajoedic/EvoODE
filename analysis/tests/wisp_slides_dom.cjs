@@ -61,14 +61,28 @@ const dots=()=>dish.querySelectorAll('.dish-cell').filter(n=>n.getAttribute('vis
 const middleDots=dots();advance(3100);assert.equal(dish.dataset.progress,'1');assert(dots()>middleDots);
 const finalCurve=dish.querySelector('.dish-curve').getAttribute('d');
 const positions=()=>dish.querySelectorAll('.dish-cell').map(n=>[n.getAttribute('cx'),n.getAttribute('cy')]);
-const finalPositions=positions();doc.getElementById('dish-replay').emit('click');advance(6100);
-assert.equal(dish.querySelector('.dish-curve').getAttribute('d'),finalCurve);assert.deepEqual(positions(),finalPositions);
+const finalPositions=positions();advance(1600);assert(+dish.dataset.progress<.06,'loop clears and restarts after hold');
+dishVisible([{isIntersecting:false}]);const paused=dish.dataset.progress;advance(10000);assert.equal(dish.dataset.progress,paused);
+dishVisible([{isIntersecting:true}]);advance(1000);assert(+dish.dataset.progress>+paused);
+doc.hidden=true;doc.emit('visibilitychange');const hiddenProgress=dish.dataset.progress;advance(10000);assert.equal(dish.dataset.progress,hiddenProgress);
+doc.hidden=false;doc.emit('visibilitychange');advance(1000);assert(+dish.dataset.progress>+hiddenProgress);
+assert(!doc.getElementById('dish-replay'));assert(!doc.querySelector('.hook-bridge'));
 const media=global.matchMedia;global.matchMedia=()=>({matches:true,addEventListener(){}});dish.replaceChildren();initDish();
 assert.equal(dish.dataset.progress,'1');assert.equal(dish.querySelector('.dish-curve').getAttribute('d'),finalCurve);assert.deepEqual(positions(),finalPositions);global.matchMedia=media;
+// Tear down frames from the preceding isolated initializations.
+frames.clear();
+// Native-scroll fallback also pauses if IntersectionObserver is unavailable.
+const savedObserver=global.IntersectionObserver;global.IntersectionObserver=undefined;
+let fallbackTop=2000;dish.getBoundingClientRect=()=>({top:fallbackTop,bottom:fallbackTop+260});dish.replaceChildren();initDish();
+assert.equal(dish.dataset.progress,'0');advance(1000);assert.equal(dish.dataset.progress,'0');
+fallbackTop=0;events.scroll.forEach(fn=>fn());advance(1000);assert(+dish.dataset.progress>0);
+fallbackTop=2000;events.scroll.forEach(fn=>fn());const fallbackPaused=dish.dataset.progress;advance(1000);assert.equal(dish.dataset.progress,fallbackPaused);
+global.IntersectionObserver=savedObserver;
 const table=fixture.data.live.i18n[fixture.language];
 assert.equal(doc.getElementById('challenge-deck-start').textContent,table.x7_challenge_start.replace('{noise}',pct(fixture.data.live.teaching.sigma)));
-for(const card of doc.getElementById('term-cards').children){assert.equal(card.querySelector('.part-label').textContent,table.x7_structure_label);assert.equal(card.querySelector('.coefficient-controls .part-label').textContent,table.x7_parameter_label);}
-console.log('PASS X7 delayed visibility, six-second animation, replay determinism, reduced-motion final state, data-derived noise and labels');
+for(const key of ['x7_structure_label','x7_parameter_label'])assert.equal(doc.querySelectorAll('[data-i18n="'+key+'"]').length,1);
+for(const [id,key] of [['play-reset','x6_reset'],['challenge-hint','x6_hint']]){const button=doc.getElementById(id);assert.equal(button.getAttribute('aria-label'),table[key]);assert.equal(button.getAttribute('title'),table[key]);assert(button.querySelector('svg'));}
+console.log('PASS X7b delayed visibility, six-second growth, hold and restart, page/tab pause, deterministic reduced-motion state, translated icon labels');
 const slides=global.WispSlides;
 assert.equal(slides.pages.length,19);assert.equal(slides.pages.at(-1).id,'p-glossary');
 assert.equal(doc.querySelectorAll('#featured-stories > article').length,fixture.data.live.featured.length);
@@ -117,6 +131,11 @@ console.log('PASS X5 one readable component per available featured reconstructio
 // WP-X6: execute the real challenge in each language against its exported measurements.
 const challenge=doc.getElementById('p-challenge'),cards=doc.getElementById('term-cards').children;
 assert.equal(cards.length,6);
+const layout=()=>cards.map(c=>[c.className,c.children.map(n=>n.className),c.querySelectorAll('input').length]);
+const originalLayout=layout();
+for(const card of cards){const check=card.querySelector('input');check.checked=!check.checked;check.emit('change');assert.deepEqual(layout(),originalLayout);const controls=card.querySelector('.coefficient-controls');assert(!controls.hidden);assert(controls.querySelectorAll('input,button').every(n=>n.disabled===!check.checked));check.checked=!check.checked;check.emit('change');}
+function assertSolution(){const scores=doc.querySelectorAll('#solution-chart [data-curve]');assert.equal(scores.length,3);const reader=scores.find(n=>n.dataset.curve==='reader');assert.equal(reader.dataset.score,doc.getElementById('play-status').dataset.score);assert(doc.querySelector('#solution-chart path.series-reader'));}
+assertSolution();
 const snapshot=()=>({equation:doc.getElementById('play-equation').dataset.tex,curve:doc.getElementById('play-chart').querySelector('path.series-model').getAttribute('d'),score:doc.getElementById('play-status').dataset.score});
 const control=(index,type)=>cards[index].querySelectorAll('input').find(n=>n.type===type);
 let previous=snapshot();control(2,'checkbox').checked=true;control(2,'checkbox').emit('change');
@@ -140,12 +159,15 @@ assert.equal(doc.getElementById('play-chart').querySelectorAll('.measurement-dot
 const expectedCurve=rk4(measurements.t,[measurements.observed[0]],x=>[WispCompute.basis(x[0]).reduce((s,v,i)=>s+(enabled[i]?v*coeff[i]:0),0)]).map(x=>x[0]);
 const mean=measurements.observed.reduce((a,b)=>a+b,0)/measurements.observed.length;
 const expectedScore=1-expectedCurve.reduce((s,v,i)=>s+(v-measurements.observed[i])**2,0)/measurements.observed.reduce((s,v)=>s+(v-mean)**2,0);
-assert(Math.abs(+snapshot().score-expectedScore)<1e-12);
+assert(Math.abs(+snapshot().score-expectedScore)<1e-12);assertSolution();
+for(const kind of ['truth','model']){const b=solutionCell.curves;const sampled=interpolateCurve(b.t,b[kind].map(r=>r[0]),measurements.t);assert(sampled);const score=observationR2(sampled,measurements.observed);assert.equal(+doc.querySelectorAll('#solution-chart [data-curve]').find(n=>n.dataset.curve===kind).dataset.score,score);}
+assert.deepEqual(interpolateCurve([0,2,4],[1,5,9],[0,1,4]),[1,3,9]);assert.equal(interpolateCurve([0,2],[1,5],[-1]),null);
+
 for(let n=1;n<=4;n++){doc.getElementById('challenge-hint').emit('click');assert.equal(doc.getElementById('challenge-hints').children.length,Math.min(n,3));}
 assert.deepEqual(doc.getElementById('challenge-hints').children.map(n=>n.textContent),[1,2,3].map(n=>fixture.data.live.i18n[fixture.language]['x6_hint'+n]));
-const last=snapshot().equation,link=doc.getElementById('challenge-reveal');doc.emit('click',{target:link,preventDefault(){}});advance();
+const last=snapshot().equation;assert(!doc.getElementById('challenge-reveal'));slides.nav.go(1);advance();emit('wheel',doc.body,{deltaY:500});advance();
 assert.equal(slides.pages[slides.nav.index].id,'p-solution');assert.equal(doc.getElementById('reader-equation').dataset.tex,last);
 doc.getElementById('play-reset').emit('click');assert.notEqual(snapshot().equation,last);
 control(1,'number').value='2';control(1,'number').emit('input');assert(+snapshot().score<0||snapshot().score==='unavailable');
 assert(doc.getElementById('play-status').textContent.length>0);
-console.log('PASS X6 bilingual challenge, toggles, slider, typed and fine coefficients, measurement R2, reachable answer, ordered hints, reveal equation and divergence');
+console.log('PASS X6 bilingual challenge, toggles, slider, typed and fine coefficients, measurement R2, reachable answer, ordered hints, scroll-preserved equation and divergence');
