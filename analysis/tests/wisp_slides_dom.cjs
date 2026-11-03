@@ -81,15 +81,17 @@ if(fixture.configuration==='delivered'){
   if(state==='data')assert.equal(dots.filter(d=>+d.style.opacity===1).length,t.length);
   if(state==='noise-visible')sticks.forEach((d,j)=>{close(+d.dataset.value,Math.abs(x[j]-truth[j]));assert.equal(+d.style.opacity,1);const lo=Math.min(...x)*.95,hi=Math.max(...x)*1.05;close(+d.getAttribute('y1'),392-(x[j]-lo)/(hi-lo)*350);close(+d.getAttribute('y2'),392-(truth[j]-lo)/(hi-lo)*350);});
   if(state==='secants'){
-   assert.equal(rates.filter(d=>+d.style.opacity===1).length,t.length-1);
+   assert.equal(rates.filter(d=>+d.style.opacity===1).length,story.rates.filter(r=>Math.abs(r.rate)<=story.rateBound).length);
    rates.forEach((d,j)=>close(+d.dataset.value,(x[j+1]-x[j])/(t[j+1]-t[j])));
    // Verify the actual rendered y coordinates independently of scene metadata.
-   const bound=Math.max(...x.slice(1).map((v,j)=>Math.abs((v-x[j])/(t[j+1]-t[j]))))*1.06;
-   rates.forEach(d=>close(+d.getAttribute('cy'),392-(+d.dataset.value+bound)/(2*bound)*122));
+   const bound=4*Math.max(...story.trueRates.map(Math.abs));
+   close(+svg.dataset.slopeBound,bound);
+   assert.equal(doc.querySelectorAll('.story-clipped').filter(d=>+d.style.opacity===1).length,story.rates.filter(r=>Math.abs(r.rate)>bound).length);
+   rates.forEach(d=>close(+d.getAttribute('cy'),392-(Math.max(-bound,Math.min(bound,+d.dataset.value))+bound)/(2*bound)*122));
   }
   if(state==='windows'){
    const length=Math.max(...fixture.data.live.windows),visible=rates.filter(d=>+d.style.opacity===1);
-   assert.equal(visible.length,Math.floor((t.length-1)/length));const bound=4*Math.max(...story.longRows.map(r=>Math.abs(r.clean)));visible.forEach(d=>close(+d.getAttribute('cy'),392-(+d.dataset.value+bound)/(2*bound)*122));visible.forEach((d,j)=>close(+d.dataset.value,(x[(j+1)*length]-x[j*length])/(t[(j+1)*length]-t[j*length])));
+   assert.equal(visible.length,Math.floor((t.length-1)/length));const bound=story.rateBound;visible.forEach(d=>close(+d.getAttribute('cy'),392-(Math.max(-bound,Math.min(bound,+d.dataset.value))+bound)/(2*bound)*122));visible.forEach((d,j)=>close(+d.dataset.value,(x[(j+1)*length]-x[j*length])/(t[(j+1)*length]-t[j*length])));
   }
   if(state==='error-empty'){close(+doc.querySelector('.story-error').getAttribute('width'),708);close(+svg.dataset.error,1);assert(doc.querySelector('#c1-stage').textContent.includes('100,0 %')||doc.querySelector('#c1-stage').textContent.includes('100.0 %'));}
   if(state==='fit'){
@@ -107,11 +109,14 @@ if(fixture.configuration==='delivered'){
    assert.deepEqual(story.variance,WispCompute.noiseVariance(t,x));close(story.relative,story.variance.reduce((s,v,j)=>s+Math.sqrt(v)/Math.abs(x[j]),0)/x.length);
    const noise=x.map((v,j)=>v-truth[j]),actual=m.D.windows.reduce((s,[a,b])=>s+(noise[b]-noise[a])**2,0)/m.D.b.reduce((s,v)=>s+v*v,0);close(story.actual,actual);
    for(const reference of fixture.cubic){const local=story.local(reference.center);assert.equal(local.start,reference.start);reference.t.forEach((tt,j)=>close(local.value(tt),reference.y[j]));}
+   const bandNumbers=doc.querySelector('.story-band').getAttribute('d').match(/[-+]?(?:[0-9]*[.])?[0-9]+(?:e[-+]?[0-9]+)?/gi).map(Number);assert.equal(bandNumbers.length,4*t.length);
+   t.forEach((tt,j)=>{const fitted=story.local(j).value(tt),lo=Math.min(...x)*.95,hi=Math.max(...x)*1.05;close(story.smooth[j],fitted);close(bandNumbers[2*j+1],392-(fitted+Math.sqrt(story.variance[j])-lo)/(hi-lo)*350);close(bandNumbers[2*(2*t.length-1-j)+1],392-(fitted-Math.sqrt(story.variance[j])-lo)/(hi-lo)*350);});
    assert.equal(story.examples.length,5);story.examples.forEach((ex,j)=>{assert.equal(ex.center,Math.round(t.length/3)+j);close(ex.deviation,x[ex.center]-ex.value(t[ex.center]));assert(doc.querySelector('#c1-stage').textContent.includes(fmt(ex.deviation)));});
    const pct=v=>(100*v).toLocaleString(fixture.language,{minimumFractionDigits:1,maximumFractionDigits:1})+' %';
-   for(const v of [story.relative,fixture.data.live.teaching.sigma,m.floor,actual])assert(doc.getElementById('c1-story-text-8').textContent.includes(pct(v)));
+   for(const v of [story.relative,fixture.data.live.teaching.sigma,m.floor,actual])assert(doc.getElementById('c1-noise-result').textContent.includes(pct(v)));
    if(fixture.language==='en')console.log(JSON.stringify({estimate:story.relative,added:fixture.data.live.teaching.sigma,floor:m.floor,actual,examples:story.examples.map(e=>({center:e.center,deviation:e.deviation}))}));
   }
+  assert.equal(doc.querySelector('.story-caption').style.visibility,i>=4&&i<=7?'visible':'hidden');
   if(state==='percent')close(WispChapterOne.parts(m,m.blocks.find(b=>b.term===m.winner)).reduce((a,b)=>a+b),1);
   if(state==='solution'){assert.equal(+svg.dataset.term,m.winner);assert(doc.querySelector('.story-equation').textContent.includes('du/dt'));}
   // Record full geometry and compare it after a backwards entry and under reduced motion.
@@ -121,6 +126,8 @@ if(fixture.configuration==='delivered'){
  global.matchMedia=()=>({matches:true,addEventListener(){}});
  story.states.forEach((state,i)=>{story.enter(state);assert.equal(svg.dataset.complete,'true');svg.children.forEach((e,j)=>assert.deepEqual({...e.attrs,opacity:e.style.opacity},saved[i][j],story.states[i]+' node '+j));});
  global.matchMedia=()=>({matches:false,addEventListener(){}});
+ for(let j=0;j<3;j++){story.enter('secants');advance(1700+j*1100);assert.equal(svg.dataset.phase,'zoomed');assert.equal(+svg.dataset.pairStart,t.findIndex(v=>v>=2)+j);assert.equal(doc.querySelectorAll('.story-delta').filter(e=>+e.style.opacity===1).length,2);assert.equal(doc.querySelector('.story-length').textContent,tr('x12_length',{n:1}));assert.equal(+doc.querySelector('#c1-stage .measurement-dot').getAttribute('r'),5);}
+ story.enter('noise-estimate');assert(doc.getElementById('c1-noise-result').hidden);advance(1800);assert.equal(+doc.querySelector('.story-cubic').style.opacity,1);assert.equal(+doc.querySelector('.story-ring').style.opacity,0);advance(5200,160);assert(doc.getElementById('c1-noise-result').hidden);advance(500);assert(!doc.getElementById('c1-noise-result').hidden);
  story.enter('secants');advance(1200);assert.equal(svg.dataset.complete,'false');story.enter('fit');assert.equal(svg.dataset.state,'fit');advance(8000,160);close(+svg.dataset.coefficient,m.blocks.find(b=>b.term===0).coefficient);
  story.enter('windows');advance(4400,160);assert.equal(+svg.dataset.windowLength,16);assert.equal(doc.querySelectorAll('#c1-stage .story-slope').filter(d=>+d.style.opacity===1).length,5);
  story.enter('slope');advance(1200);const before=doc.querySelector('.story-marker').getAttribute('cx');advance(1000);assert.notEqual(doc.querySelector('.story-marker').getAttribute('cx'),before);

@@ -485,10 +485,13 @@
   "x12_truth": "wahre Kurve (WISP unbekannt)",
   "x12_slope": "Steigung du/dt = {value}",
   "x12_deviations": "Abweichungen",
-  "x12_band": "geschätztes Rauschen: ± √Varianz",
+  "x12_band": "geschätztes Rauschen (± eine Standardabweichung)",
   "x12_dt": "Δt",
   "x12_du": "Δu",
   "x12_title_9": "Was die Prozent bedeuten",
   "x12_title_10": "Die erste Lösung",
-  "x12_axis_slope": "Steigung"
+  "x12_axis_slope": "Steigung (Änderung pro Zeiteinheit)",
+  "x12_clipped": "{n} Werte außerhalb",
+  "x12_length": "Länge {n}",
+  "x12_noise_result": "Geschätzt: {est} Rauschen, tatsächlich aufgeprägt: {true}. Das Rauschen beider Endpunkte summiert sich über alle Abschnitte zu {floor} des Fehlers ohne Baustein. Diesen Anteil kann kein Baustein erklären."
 }

@@ -485,10 +485,13 @@
   "x12_truth": "true curve (unknown to WISP)",
   "x12_slope": "Slope du/dt = {value}",
   "x12_deviations": "Deviations",
-  "x12_band": "estimated noise: ± √variance",
+  "x12_band": "estimated noise (± one standard deviation)",
   "x12_dt": "Δt",
   "x12_du": "Δu",
   "x12_title_9": "What the percentages mean",
   "x12_title_10": "The first solution",
-  "x12_axis_slope": "Slope"
+  "x12_axis_slope": "Slope (change per unit of time)",
+  "x12_clipped": "{n} values outside",
+  "x12_length": "Length {n}",
+  "x12_noise_result": "Estimated noise: {est}; actually added: {true}. Noise at both endpoints adds up over all windows to {floor} of the error without a block. No block can explain this part."
 }

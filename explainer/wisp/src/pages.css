@@ -260,3 +260,20 @@ dialog{max-width:min(1050px,90vw);max-height:80dvh;overflow:auto;overscroll-beha
 .c1-page .jargon{font:12px/1.35 system-ui;color:var(--muted);border-top:1px solid var(--line);padding-top:8px}
 .c1-page .jargon{display:block;margin:12px 0 0;padding:8px 0 0}
 @media(max-width:759px){.story-svg text{font-size:23px}.story-svg .story-axis{font-size:20px}.story-svg .story-equation{font-size:32px}.story-caption{font-size:11px}}
+
+/* WP-X12b: contrast, independent slope scale, and reserved annotation space. */
+.story-svg .story-truth,.story-svg .story-clean-slope{stroke:var(--truth);stroke-width:2.5}
+.story-svg .story-residual{stroke:var(--model);stroke-width:1.5;stroke-opacity:.7}
+.story-svg[data-state="noise-estimate"] .story-residual{stroke-width:3;stroke-opacity:1}
+.story-tangent{stroke:var(--model);stroke-width:2.5}
+.story-triangle{stroke-width:2}
+.story-svg .story-cubic{stroke:var(--model);stroke-width:3}
+.story-svg .story-band{fill:var(--model);fill-opacity:.18;stroke:none}
+.story-svg .story-clipped{fill:var(--data);stroke:none}
+.story-deviations{fill:var(--panel);stroke:var(--line)}
+#c1-noise-result{transition:opacity .4s}
+#c1-noise-result[hidden]{display:none}
+
+#c1-noise-result:not([hidden]){animation:story-result-in .4s ease-out}
+@keyframes story-result-in{from{opacity:0}to{opacity:1}}
+@media(prefers-reduced-motion:reduce){#c1-noise-result:not([hidden]){animation:none}}

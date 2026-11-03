@@ -158,7 +158,16 @@
     window.WispChapterStory.enter(page.dataset.stage);window.WispChapterStory.finish();
     const stage=document.getElementById('c1-stage'),r=stage.getBoundingClientRect();
     const stageOk=r.left>=0&&r.right<=innerWidth&&r.bottom<=innerHeight-12;
-    variants.push({...readPage(page),stageOk,ok:readPage(page).ok&&stageOk});
+    // Real SVG text bounds: the synthetic DOM intentionally cannot supply layout.
+    const labels=[...stage.querySelectorAll('svg text')].filter(e=>+getComputedStyle(e).opacity>.01&&e.textContent.trim()).map(e=>({text:e.textContent,rect:e.getBoundingClientRect()}));
+    const labelOverlaps=[];
+    if(['noise-visible','slope','secants','windows','error-empty','fit','every','noise-estimate'].includes(page.dataset.stage)){
+     labels.forEach((a,i)=>labels.slice(i+1).forEach(b=>{if(Math.min(a.rect.right,b.rect.right)>Math.max(a.rect.left,b.rect.left)&&Math.min(a.rect.bottom,b.rect.bottom)>Math.max(a.rect.top,b.rect.top))labelOverlaps.push([a.text,b.text]);}));
+    }
+    const box=stage.querySelector('.story-deviations').getBoundingClientRect(),plot=stage.querySelector('#story-top-clip rect');
+    const matrix=stage.querySelector('svg').getScreenCTM(),plotRight=matrix.a*(+plot.getAttribute('x') + +plot.getAttribute('width'))+matrix.e;
+    const deviationsOutside=page.dataset.stage!=='noise-estimate'||box.left>plotRight;
+    variants.push({...readPage(page),stageOk,labelOverlaps,deviationsOutside,ok:readPage(page).ok&&stageOk&&labelOverlaps.length===0&&deviationsOutside});
     if(page.dataset.stage==='fit'){
      const slider=document.getElementById('c1-c'),saved=slider.value;
      for(const value of [slider.min,slider.max]){slider.value=value;slider.dispatchEvent(new Event('input'));variants.push({...readPage(page),sliderValue:value});}

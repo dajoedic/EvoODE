@@ -1,51 +1,54 @@
-# WP-X11 — WISP explorable: adapt tests and checker to Claude's chapter-1 rework (no design changes)
-**Language: Python** (tests, checker) — the page itself is static HTML, CSS and JavaScript.
+# WP-X12b — WISP explorable: scroll story readability fixes from Claude's frame-by-frame review
+**Language: Python** (build, tests) — the page itself is static HTML, CSS and JavaScript.
 
-Stand 2026-11-03, late. Follows WP-X10 (commit `5d11df7`, preview version 13). **Claude has already implemented the
-following in the working tree (uncommitted) after the user's review — treat it as the specification, do not redesign
-it:**
+Stand 2026-11-03 23:15. Follows WP-X12 (`codex/reports/REPORT_WP_X12.md`, uncommitted, accepted as base). All rules
+from WP-X12 stay in force (vertical scroll only, one persistent stage, autoplay sequences, injectable clock, reduced
+motion, no `compute.js`/data change, fit at 1366 × 657 / 768, byte-identical rebuild). Scope: chapter-1 stage only.
 
-1. **Navigation directions swapped** (`explainer/wisp/src/pages.js`): chapters stack top to bottom, sub-steps of a
-   chapter run left to right. `←`/`→` = previous/next page (linear, crossing chapter ends); `↑`/`↓` = previous/next
-   chapter (`chapterTarget`); `PageDown`/`PageUp`/`Space`/wheel = linear next/previous page (unchanged). A change
-   inside a chapter slides horizontally (translateX with the sign of the index delta); a chapter change scrolls
-   vertically (`smoothTo`). Sub-step dots sit in a horizontal row at the bottom (`pages.css`).
-2. **1a morph** (`app.js` `initChapterMorph`, `index.html` `#c1-show-u` / `#c1-show-diff` / `#c1-morph-note`): two
-   toggle buttons; the 512 measured dots animate (900 ms, reduced motion: instant) from u(t) to the change to the next
-   point, u(i+1) − u(i), at the midpoint time; the axis range and label morph with them. `window.WispChapterMorph`
-   exposes `states`, `show`, `current`.
-3. **New sub-step `p-c1-noise`** (6 of 8, between `p-c1-every` and `p-c1-percent`; `app.js` `initChapterNoise`):
-   explains the noise estimate of `compute.js` `noiseVariance` (cubic through 9 neighbours, leverage correction,
-   neighbourhood average). Slider `#c1-noise-center`; chart shows the 9 points, the local cubic, the centre point and
-   its deviation; result line compares the estimated mean relative noise with `teaching.sigma` and states the floor.
-   `window.WispChapterNoise` exposes `variance`, `relative`, `local`, `draw`. Eyebrows now read "{i} von {n}" with
-   n = 8.
-4. New i18n keys `x11_*` (DE/EN), `x10_eye` and `x10_text_5` changed; CSS additions at the end of `pages.css`.
+Claude captured every step at several times (Edge headless, 1366 × 768). The story works; these defects make it hard
+to read. Fix all of them:
 
-Claude's browser checks pass for this state: no console errors; keys behave as in 1; fit at 1366 × 657 / 768 has no
-overflow (the fit checker only fails on its hard-coded delivered inventory, see below).
-
-## Scope — tests and checker only
-
-- Adapt every test and the fit checker to the new state: delivered inventory includes `p-c1-noise` (10 visible pages,
-  27 sections in total); section-order assertions; the old `←→` = chapter / `↑↓` = sub-step key tests become the new
-  mapping; chapter-1 eyebrow totals (8); any test that reads `x10_eye` / `x10_text_5` or the old 1a chart
-  (`chart(...)` on `#c1-visual-0`); `test_hook_bilingual_history_and_illustration_only` and the other 8 currently
-  failing tests (`python -m pytest analysis/tests/ -q -p no:cacheprovider -k wisp`).
-- Add tests: (a) morph — clicking `#c1-show-diff` sets `aria-pressed`, the note text and, after the animation (fake
-  timers / rAF stub), each dot's y equals the neighbour difference of the data (last dot hidden), and back to u(t);
-  reduced motion jumps directly; (b) noise page — `WispChapterNoise.variance` equals `WispCompute.noiseVariance` on the
-  teaching data; `relative` equals the mean of sqrt(variance)/|u|; the result line contains that value, `teaching.sigma`
-  and the 1f floor (identical to the 1f number); the local cubic for a fixed centre equals a least-squares cubic through
-  the same 9 points; (c) keys — `→` from the last intro page reaches `p-c1-data`, `↓` from `p-hook` reaches `p-c1-data`,
-  `↑` from any chapter-1 page reaches `p-hook`; inputs keep their arrow keys.
-- **Do not change** `src/` files except to fix a genuine bug you find (report it); no change to `compute.js` or data.
-- Build with `python analysis/scripts/explainer/build_wisp_explainer_html_x2.py` (the README's builder), byte-identical
-  rebuild, size budget, strict numerical checks.
+1. **S2 noise sticks are invisible** (thin, same tone as the curve). Draw them in the model/accent-contrast colour
+   (`--model`), ≈ 1.5 px, 70 % opacity; the clean curve 2.5 px in `--truth`. The curve label must not overlap the top
+   tick label.
+2. **S3 tangent is invisible.** Draw the tangent as a long (≈ 25 % of the plot width) 2.5 px line in `--model` through
+   the travelling marker, plus a small slope triangle (Δt, Δu) on it; readout "Steigung du/dt = {value}" next to the
+   marker (follows it), not under the plot.
+3. **S4 does not show what a slope from two points is.** Restructure into two phases:
+   (a) **zoomed first**: start zoomed on a short stretch (~12 neighbouring points, large dots); for 3 consecutive
+   neighbour pairs draw the triangle (Δt, Δu) large and labelled, and drop the resulting slope dot into the bottom
+   panel with a short connecting animation; (b) then zoom out and run the fast sweep over all pairs (triangles only
+   every k-th pair). The bottom panel needs its own **y-axis with ticks and a label "Steigung (Änderung pro
+   Zeiteinheit)"**, a zero line, and a **robust fixed scale**: ± 4 × max |true slope|; slopes outside are drawn at the
+   edge as small triangles (▲/▼) and counted in a caption "{n} Werte außerhalb". The true slope from the clean curve is
+   a 2.5 px `--truth` line, visible as the hump (max ≈ 14.6). Dots must never fly in from outside the panel: they
+   appear at their final position (fade/scale in) or travel from the triangle on the top panel straight down.
+   The Δt/Δu readout belongs next to the current triangle, not below the stage.
+4. **S5**: use the same bottom-panel scale as S4 (so the reader sees the long-window slopes land on the hump);
+   triangles for lengths 2–16 drawn clearly (2 px, labelled with the length); after zooming out the 31 long-window
+   slope dots appear on the same axis.
+5. **S6–S8: the error bar overlaps the x-axis label "Zeit t".** Place the error bar (and its "Fehler: …" label) clearly
+   below the plot with its own spacing, or to the right of the plot; no overlap at 768 and 657.
+6. **S9 is cluttered.** (a) The local cubic must be clearly visible: 3 px `--model` line across the whole 9-point
+   window, drawn before the ring/stick appear; the deviation stick 3 px. (b) The list "Abweichungen" goes into its own
+   box outside the plot area (right of the plot or below it), one line per example point with its value, never over
+   data. (c) The final overview: draw the estimated noise as a smooth translucent band (filled area between
+   u_smooth ± sqrt(variance), where u_smooth is the local-cubic prediction at each point) instead of two jagged lines;
+   legend "geschätztes Rauschen (± eine Standardabweichung)". (d) Split the long text: the step text keeps the method
+   (first paragraph); the result (est vs true, floor, actual) appears as a second paragraph only after the sequence
+   has finished (fade in), in the same step.
+7. **The caption "Gezeigt: Abschnitte, die sich nicht überlappen …"** may appear only on steps that show windowed
+   changes (S5–S8), not on S9–S11.
+8. **Top-panel tick labels** ("6,61" at the bottom left) overlap the x-axis zero label: start the y ticks one tick
+   above the axis or offset the first tick label.
 
 ## Acceptance
 
-1. All explainer tests pass (report the count), plus the new tests; strict checks exit 0; byte-identical rebuild.
-2. `check_wisp_explainer_fit.py`: delivered inventory updated; if the browser is blocked in your sandbox, status
-   `blocked` with "browser not runnable here — environment, not the task"; Claude runs it.
-3. Short report `codex/reports/REPORT_WP_X11.md`.
+1. Build exit 0, byte-identical rebuild, size budget; all tests passing plus: S4 phase (a) shows 3 labelled triangles
+   in a zoomed view before the sweep; bottom-panel scale = ± 4 × max |true slope| with clipped-count caption; S9 list
+   element outside the plot's bounding box; S9 result paragraph hidden until the sequence ends; caption only on S5–S8;
+   DOM check that no two text labels' bounding boxes overlap on S2–S9 final states (Claude checks pixels).
+2. Strict numerical checks exit 0.
+3. `check_wisp_explainer_fit.py`: if blocked in your sandbox, status `blocked` with "browser not runnable here —
+   environment, not the task"; Claude runs it.
+4. Short report `codex/reports/REPORT_WP_X12B.md`.
