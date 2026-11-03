@@ -1,79 +1,100 @@
-# WP-X7e — WISP explorable: page 2 start state and column balance, page 3 term-comparison layout
+# WP-X8 — WISP explorable: page 3 rebuilt from zero as "WISP at work", page 2 gets "show solution"
 **Language: Python** (build, checks) — the page itself is static HTML, CSS and JavaScript.
 
-Stand 2026-11-03. Follows WP-X7d (commit `393152a`, preview version 8). All rules from WP-X1..X7d stay in force
+Stand 2026-11-03. Follows WP-X7e (commit `93b5532`, preview version 9). All rules from WP-X1..X7e stay in force
 (whitelist, blind rule, no Q7/Q8 results, no hand-typed result numbers, both metrics, i18n parity, byte-identical
 rebuild, swap test, size ≤ 14 MB, fallbacks, wheel routing, `data-claim="review"` on prose, no next-page-only links,
-endless dish loop, fit at 1366 × 657 and 1366 × 768). No change to `compute.js` or any data file. Scope: pages 2 and 3.
-Page 1 stays as it is (a real video is postponed; do not add anything for it).
+endless dish loop, page-2 flush columns, fit at 1366 × 657 and 1366 × 768). No change to `compute.js` or any data
+file. Scope: pages 2 and 3 only.
 
-## User feedback (2026-11-03, version 8)
+## User decision (2026-11-03, version 9)
 
-"Page 2: at the start no term should be selected. The sizes still don't match — the left side with the controls and the
-text below is less tall than the right side; I'm picky about that. Page 3: below the chart a legend in a box saying
-which line means what. The actual equations to the right of it, but presented in a cool way." Claude proposed a term
-comparison table; the user agreed ("mach mal").
+"Page 3 looks terrible, completely overloaded. Rebuild it from zero. Show the process — how WISP finds it, how it
+builds it up, how it throws things out. Then forget the comparison with the reader's own solution; page 2 instead
+needs a way to show the solution. Page 3 is WISP in action, step by step."
 
 ## Scope
 
-### 1. Page 2 (`p-challenge`)
+### 1. Page 2 (`p-challenge`): "show solution"
 
-- **Start state: no term selected.** All six checkboxes off, all controls disabled, the equation reads `du/dt = 0`,
-  the curve is the constant first measurement, the meter shows the resulting R². "Neu anfangen" returns to this
-  state. The page-3 reader equation for an untouched playground is this empty equation.
-- **Remove the native number-input spinners** (the small up/down arrows inside the typed field) in all browsers
-  (`appearance: textfield` / `-moz-appearance` / `::-webkit-inner-spin-button` etc.). Only the ± buttons remain; arrow
-  keys in the field may keep working.
-- **Columns flush.** The left column (legend line, card grid, icon buttons, punchline) and the right chart panel must
-  start and end at the same height: top edges and bottom edges equal within 2 px at 1366 × 768 and 1366 × 657, EN and
-  DE. Achieve it by layout (e.g. grid with stretched rows, the card grid growing to fill, the punchline anchored to the
-  bottom of the left column), not by fixed pixel heights tuned to one language. Add this measurement to
-  `check_wisp_explainer_fit.py` (both columns' bounding rects) so Claude's browser run checks it.
+- A third small round icon button next to reset (circular arrow) and hint (bulb): an **eye** icon, tooltip and
+  `aria-label` DE "Lösung zeigen" / EN "Show solution", toggles to "Lösung ausblenden" / "Hide solution".
+- On: the true equation's curve is drawn in the chart as a thin dashed line in the truth colour (above the data, below
+  the reader's curve), and the true equation appears as a formula (`du/dt = …`, stored truth form) directly under the
+  reader's live equation, labelled "Wahre Gleichung" / "True equation". The reader's cards and values are not changed.
+  Off: both disappear. Reset also hides the solution.
+- The truth curve comes from existing exported data (the running cell's clean/truth curve); if it is only available
+  on a different time grid, draw it on its own grid. No hand-typed coefficients.
+- Flush columns (±2 px, measured by the fit checker) must still hold with the solution shown.
+- The reader's equation no longer needs to be carried to page 3; remove that hand-over and its tests.
 
-### 2. Page 3 (`p-solution`) — new layout
+### 2. Page 3 (`p-solution`): delete everything, rebuild as "WISP at work"
 
-Top: headline and idea text unchanged. Below, two columns:
+Remove the current content (equation boxes, term-comparison table, legend box, reader curve, R² key, keys
+`x4_solution`, `x4_idea`, `x6_yours` and all WP-X7b/X7c/X7e page-3 keys). Keep the section id `p-solution`.
 
-- **Left: the chart** (as large as fits), and **directly beneath it a legend box** (a bordered box): one row per line
-  style with an exact swatch — Messwerte / Measurements (dots), Deine Gleichung / Your equation, WISP, Wahre Gleichung
-  / True equation. Legend only; no formulas, no numbers in the box.
-- **Right: the term comparison.** A small table:
-  - Columns: the six catalogue blocks `1, u, u², u³, sin u, cos u` in the same order and notation as the page-2 cards
-    (header row), plus a final column R².
-  - Rows, top to bottom: **Wahr / True**, **WISP**, **Du / You**. Each row label carries a short line swatch matching
-    its chart line.
-  - Each cell shows the coefficient of that block in that equation (3 significant digits, locale decimal separator),
-    or stays empty. Cell styling by comparison with the true support: block present and in the truth → filled green
-    chip with a ✓; block present but not in the truth → red/orange chip with a ✗ ("überflüssig" / "extra" in its
-    tooltip); block in the truth but missing in this row → empty dashed outline ("fehlt" / "missing" in its tooltip).
-    The True row uses neutral chips. Colour must not be the only signal (✓/✗/dashed outline), and both themes must
-    keep sufficient contrast.
-  - R² column: the WP-X7b/X7c browser R² to the measurements (same values), as a number plus a small bar (0–1,
-    negative values shown at 0 with the number still negative).
-  - Below the table, small: the three equations as normal formulas (`du/dt = …`), the true one in its stored form
-    as today.
-  - One short caption under the table: DE "Grün: Baustein steckt auch in der wahren Gleichung. ✗: überflüssig.
-    Gestrichelt: fehlt. R² zu den Messwerten, im Browser berechnet." / EN "Green: block is also in the true equation.
-    ✗: extra. Dashed: missing. R² to the measurements, computed in the browser."
-- **Where the true coefficients per block come from.** The table needs the truth as block coefficients (the stored
-  truth string is in product form, `0.79u(1-0.01346u)`). Use, in this order: (a) structured true terms/coefficients
-  already present in the exported data or the benchmark file the exporter already reads; (b) otherwise expand the
-  stored truth string with a small, tested expander restricted to polynomials in the state (sums/products/powers of
-  `u` with numeric constants); (c) if neither works for a cell, show the True row with the stored formula only and no
-  chips, and mark WISP/You cells without ✓/✗. Report which path the running cell uses. No hand-typed coefficients.
-- WISP and reader coefficients come from the same sources as today (stored WISP equation, page-2 state).
-- At phone width: chart, legend box, then the table (horizontally scrollable inside its own box if needed, never the
-  page).
+**Data: the recorded WISP run of the running cell** (`live.featured[0]`, cell `sys0003_ic1_s0.03_r0_n1`, the same
+measurements as page 2): `path` (8 steps with `origin`, `active_idxs`, `term_names`, weak coefficients), `candidates`
+(fitted trajectory candidates with `curves`, `bic`, `params`) and `chosen` (`path_004`). Use these fields only; nothing
+is recomputed except presentation (e.g. support diffs between consecutive steps). Recorded run, as found by Claude:
+
+| step | origin | support |
+|---|---|---|
+| 1 | addition | 1 |
+| 2 | addition | 1, u³ |
+| 3 | removal | u, u³ |
+| 4 | removal | u, u² |
+| 5 | addition | u, u², sin u |
+| 6 | addition | u, u², u³, sin u |
+| 7 | addition | 1, u, u², u³, sin u |
+| 8 | addition | 1, u, u², u³, sin u, cos u |
+
+BIC chooses `path_004` = the true support. A "removal" step with unchanged size is a swap: derive from the support
+diff which block left and which entered, and narrate both.
+
+**Layout (one screen, 1366 × 657 and 768):**
+
+- Headline DE "WISP bei der Arbeit" / EN "WISP at work". One deck sentence DE "Dieselben Messwerte, dieselben sechs
+  Bausteine wie eben — so geht WISP vor." / EN "The same measurements, the same six building blocks as before — this is
+  how WISP proceeds."
+- **Left: the six building blocks** as cards in the page-2 look (same order and notation, same size), but without
+  sliders — display only. Per step: a block that enters lights up (accent fill, short grow animation), a block that
+  leaves is struck through and fades back to neutral, unchanged active blocks stay lit. Under the cards the current
+  equation of this step as a formula with its weak coefficients (3 significant digits).
+- **Right: the chart** — the measurements (dots) plus the current step's simulated candidate curve (thick accent line)
+  from `candidates[...].curves` (reconstruction curve of that candidate). Previous step's curve may fade out briefly.
+- **Below: the narration line and the step track.** A row of 8 small step dots (current one highlighted; dots of
+  addition vs removal/swap steps distinguishable by shape, not only colour) and one plain-language sentence per step:
+  - addition: DE "Schritt {k}: WISP nimmt {block} dazu — den Baustein, der vom noch Unerklärten am meisten erklärt." /
+    EN "Step {k}: WISP adds {block} — the block that explains most of what is still unexplained."
+  - swap: DE "Schritt {k}: WISP tauscht {out} gegen {in} — so passt es besser, mit genauso vielen Bausteinen." / EN
+    "Step {k}: WISP swaps {out} for {in} — a better fit with the same number of blocks."
+  - pure removal (if a path ever has one): DE "Schritt {k}: WISP wirft {block} wieder raus — ohne ihn wird es kaum
+    schlechter." / EN "Step {k}: WISP throws {block} out again — without it the fit barely gets worse."
+  - after the last path step, one **choice step**: all candidates' curves briefly shown thin, then the chosen one
+    highlighted; DE "Zum Schluss: Jede Stufe wurde simuliert und mit den Messwerten verglichen. WISP wählt die, die mit
+    möglichst wenigen Bausteinen am besten passt — Schritt {k*}: {equation}." / EN "Finally: every stage was simulated
+    and compared with the measurements. WISP picks the one that fits best with as few blocks as possible — step
+    {k*}: {equation}." The chosen step's cards light up again; under the equation one small line DE "Die wahre
+    Gleichung: {truth}" / EN "The true equation: {truth}" (stored truth form).
+- **Controls**: small round icon buttons play/pause, next step, restart (inline SVG, tooltips, `aria-label`s DE/EN).
+  Autoplay starts when the page becomes visible, ~2.5 s per step, ~6 s on the choice step, then loops from step 1.
+  Pauses when the page is not visible; any manual step pauses autoplay. With `prefers-reduced-motion: reduce`: no
+  autoplay, the final choice step is shown, controls work.
+- No jargon on this page (no "FROLS", "FoBa", "BIC", "weak form" — those come on the later pages). A small
+  `data-claim="review"` caption may say DE "Aufgezeichneter WISP-Lauf auf genau diesen Messwerten." / EN "Recorded WISP
+  run on exactly these measurements."
+- Phone width: cards, chart, narration stacked; no horizontal page scroll.
 
 ## Acceptance
 
-1. Build exit 0, byte-identical rebuild, size budget; all 45 tests adapted and passing, plus new tests: page 2 starts
-   with no term enabled and `du/dt = 0`, reset returns there, no native spinners (CSS present), column measurement
-   added to the fit checker; page 3 legend box has four rows without numbers, the table has the six block columns in
-   catalogue order plus R², three rows in the order True/WISP/You, chip classes follow the support comparison (test
-   with a reader equation containing one correct, one extra and one missing block), the true coefficients equal the
-   expansion of the stored truth to 1e-12, R² equal to the page-2 meter for the same state.
+1. Build exit 0, byte-identical rebuild, size budget; tests adapted (remove page-3 comparison/table/reader tests,
+   remove the page-2 → page-3 hand-over tests) and passing, plus new tests: page 2 eye button toggles truth curve and
+   formula, reset hides it, cards unchanged; page 3 has 8 path steps + 1 choice step in recorded order, the narration of
+   each step matches the support diff (steps 3 and 4 are swaps: 1→u, u³→u²), the choice step highlights `path_004`,
+   candidate curves are the exported ones, autoplay loops and pauses off-page, reduced motion shows the choice step,
+   no jargon words on page 3 (both languages).
 2. Strict numerical checks exit 0.
 3. `check_wisp_explainer_fit.py`: if blocked in your sandbox, status `blocked` with "browser not runnable here —
-   environment, not the task"; Claude runs it (including the new column check).
-4. Report `codex/reports/REPORT_WP_X7E.md`: what changed, the truth-coefficient path, and the test count.
+   environment, not the task"; Claude runs it.
+4. Report `codex/reports/REPORT_WP_X8.md`: what changed, which fields feed each step, the timing, the test count.

@@ -155,92 +155,84 @@ function observationR2(curve,observations){
  const mean=observations.reduce((s,v)=>s+v,0)/observations.length,total=observations.reduce((s,v)=>s+(v-mean)**2,0);
  return 1-curve.reduce((s,v,i)=>s+(v-observations[i])**2,0)/total;
 }
-function interpolateCurve(t,y,at){
- if(!t||!y||t.length!==y.length||t.length<2||t.some((v,i)=>!Number.isFinite(v)||(i&&v<=t[i-1]))||at.some(v=>!Number.isFinite(v)||v<t[0]||v>t.at(-1)))return null;
- let j=0;return at.map(v=>{while(j<t.length-2&&t[j+1]<v)j++;const left=Number.isFinite(y[j])?y[j]:NaN,right=Number.isFinite(y[j+1])?y[j+1]:NaN;return v===t[j]?left:v===t[j+1]?right:left+(right-left)*(v-t[j])/(t[j+1]-t[j]);});
+let solutionShown=false;
+function toggleSolution(show){
+ solutionShown=show;
+ const key=show?'x8_hide':'x8_show',button=$('challenge-solution');
+ button.setAttribute('aria-label',tr(key));button.setAttribute('title',tr(key));button.setAttribute('aria-pressed',String(show));
+ $('challenge-truth').hidden=!show;play();
 }
-// Restricted polynomial parser: no evaluation of executable strings. The benchmark
-// exports substituted expressions, but no structured true term coefficients.
-function expandTruthPolynomial(source){
- try{
-  const text=source.replaceAll('x_0','u').replaceAll('**','^').replace(/\s+/g,'');
-  const tokens=text.match(/(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?|u|[()+*^\-]/g)||[];
-  if(tokens.join('')!==text||tokens.length>256)throw Error('Unsupported polynomial');
-  let pos=0;
-  const add=(a,b,sign=1)=>Array.from({length:Math.max(a.length,b.length)},(_,i)=>(a[i]||0)+sign*(b[i]||0));
-  const multiply=(a,b)=>{if(a.length+b.length>34)throw Error('Degree limit');const out=Array(a.length+b.length-1).fill(0);a.forEach((v,i)=>b.forEach((w,j)=>out[i+j]+=v*w));return out;};
-  function atom(){const token=tokens[pos++];if(token==='u')return [0,1];if(token==='('){const a=sum();if(tokens[pos++]!==')')throw Error('Parenthesis');return a;}if(!token||!/^\d|^\./.test(token))throw Error('Constant');return [Number(token)];}
-  function power(){let a=atom();if(tokens[pos]==='^'){pos++;const n=Number(tokens[pos++]);if(!Number.isInteger(n)||n<0||n>32)throw Error('Power');const base=a;a=[1];for(let i=0;i<n;i++)a=multiply(a,base);}return a;}
-  function signed(){if(tokens[pos]==='+'){pos++;return signed();}if(tokens[pos]==='-'){pos++;return signed().map(v=>-v);}return power();}
-  function product(){let a=signed();while(tokens[pos]==='*'){pos++;a=multiply(a,signed());}return a;}
-  function sum(){let a=product();while(tokens[pos]==='+'||tokens[pos]==='-'){const sign=tokens[pos++]==='+'?1:-1;a=add(a,product(),sign);}return a;}
-  const polynomial=sum();if(pos!==tokens.length||polynomial.some(v=>!Number.isFinite(v))||polynomial.slice(4).some(v=>v!==0))return null;
-  return Array.from({length:6},(_,i)=>polynomial[i]||0);
- }catch{return null;}
+$('challenge-solution').addEventListener('click',()=>toggleSolution(!solutionShown));
+// Presentation of the recorded run; no search, fitting or integration here.
+function workSteps(feature){
+ return feature.path.map((step,i)=>{
+  const active=step.active_idxs[0],previous=feature.path[i-1]?.active_idxs[0]||[];
+  const entered=active.filter(k=>!previous.includes(k)),left=previous.filter(k=>!active.includes(k));
+  return {step,active,entered,left,kind:left.length?(entered.length?'swap':'remove'):'add',candidate:feature.candidates.find(c=>c.row.candidate_id===step.candidate_id)};
+ });
 }
-function storedBlockCoefficients(cell){
- try{
-  const active=JSON.parse(cell.row.active_idxs),params=JSON.parse(cell.row.params),out=Array(6).fill(0);
-  const catalogue=['1','u1','u1^2','u1^3','sin(u1)','cos(u1)'];
-  if(active.length!==1||active[0].length!==params.length)return null;
-  for(const [j,index] of active[0].entries()){const block=catalogue.indexOf(cell.terms[index-1]);if(block<0||!Number.isFinite(+params[j]))return null;out[block]+=+params[j];}
-  return out;
- }catch{return null;}
-}
-function supportChip(value,truthValue,known,isTruth=false){
- const present=value!==0;
- if(!known)return {className:present?'term-chip neutral':'',text:present?fmt(value,3):'',title:''};
- if(isTruth)return {className:present?'term-chip neutral':'',text:present?fmt(value,3):'',title:''};
- if(present){const correct=truthValue!==0;return {className:'term-chip '+(correct?'correct':'extra'),text:fmt(value,3)+' '+(correct?'✓':'✗'),title:tr(correct?'x7e_correct':'x7e_extra')};}
- return {className:truthValue!==0?'term-chip missing':'',text:'',title:truthValue!==0?tr('x7e_missing'):''};
-}
-function drawTermComparison(){
- const truthCoefficients=solutionCell.truth.length===1?expandTruthPolynomial(solutionCell.truth[0]):null;
- $('solution-comparison').dataset.truthPath=truthCoefficients?'stored-polynomial-expansion':'stored-formula-only';
- const values={truth:truthCoefficients,model:storedBlockCoefficients(solutionCell),reader:coeff.map((v,i)=>enabled[i]?v:0)};
- for(const row of $('solution-comparison').querySelectorAll('tbody tr')){
-  const kind=row.dataset.entry;
-  row.querySelectorAll('[data-block]').forEach((cell,i)=>{
-   cell.replaceChildren();if(!values[kind])return;
-   const chip=supportChip(values[kind][i],truthCoefficients?.[i],!!truthCoefficients,kind==='truth');
-   if(chip.className){const span=el('span',chip.text,chip.className);if(chip.title){span.setAttribute('title',chip.title);span.setAttribute('aria-label',chip.title);}cell.append(span);}
-  });
+function initWork(){
+ const feature=LIVE.featured[0],records=workSteps(feature),chosen=records.findIndex(r=>r.step.candidate_id===feature.chosen);
+ const page=$('p-solution'),media=window.matchMedia('(prefers-reduced-motion: reduce)');
+ const cards=terms.map(name=>{const card=el('div',name,'term-card');$('work-cards').append(card);return card;});
+ function sizeCards(){const source=$('term-cards').querySelector('.term-card');if(source?.getBoundingClientRect){const {height}=source.getBoundingClientRect();cards.forEach(card=>card.style.height=height+'px');}}
+ if(typeof ResizeObserver==='function')new ResizeObserver(sizeCards).observe($('term-cards'));
+ document.fonts?.ready.then(sizeCards);window.addEventListener('resize',sizeCards);sizeCards();
+ let index=media.matches?records.length:0,playing=!media.matches,visible=false,elapsed=0,last=0,frame=0;
+ const buttons=Array.from({length:records.length+1},(_,i)=>{const b=el('button',undefined,'work-dot');b.type='button';b.dataset.kind=i===records.length?'choice':records[i].kind;b.setAttribute('aria-label',i===records.length?tr('x8_final'):tr('x8_step',{k:i+1}));b.setAttribute('title',b.getAttribute('aria-label'));b.addEventListener('click',()=>go(i));$('work-track').append(b);return b;});
+ function draw(){
+  const choice=index===records.length,r=records[choice?chosen:index];
+  page.dataset.workStep=String(index);page.dataset.candidate=r.step.candidate_id;
+  cards.forEach((card,i)=>{card.className='term-card'+(r.active.includes(i+1)?' lit':'')+(!choice&&r.entered.includes(i+1)?' entering':'')+(!choice&&r.left.includes(i+1)?' leaving':'');});
+  const eq=r.step.equations[0];
+  const tex='\\frac{du}{dt}='+eq.basis_indices.map((k,j)=>`${j&&eq.coefficients[j]>=0?'+':''}${fmt(eq.coefficients[j],3)}\\,${texTerms[k-1]}`).join(' ');
+  math($('work-equation'),tex);
+  const names=indices=>indices.map(k=>terms[k-1]).join(', ');
+  $('work-narration').textContent=choice?tr('x8_choice',{k:chosen+1}):tr('x8_'+r.kind,{k:index+1,block:names(r.kind==='remove'?r.left:r.entered),out:names(r.left),in:names(r.entered)});
+  if(choice){const formula=el('span',undefined,'math inline');math(formula,tex);$('work-narration').append(formula);}
+  $('work-truth').hidden=!choice;
+  if(choice){$('work-truth').textContent=tr('x8_true')+': ';const formula=el('span',undefined,'math inline');math(formula,runningCell?.truth.map(displayTruth).join(' / ').replaceAll('u_{1}','u')||tr('j153'));$('work-truth').append(formula);}
+  const series=[{x:measuredTime,y:teaching.observed,kind:'data',style:'dots'}];
+  const preview=choice&&elapsed<900&&!media.matches;
+  if(preview)for(const c of feature.candidates){if(c.curves)series.push({x:c.curves.t,y:c.curves.model.map(row=>row[0]),kind:'candidate'});}
+  if(!preview&&r.candidate?.curves)series.push({x:r.candidate.curves.t,y:r.candidate.curves.model.map(row=>row[0]),kind:'model'});
+  chart($('work-chart'),series,{legend:false});
+  buttons.forEach((b,i)=>b.setAttribute('aria-current',i===index?'step':'false'));
+  const key=playing?'x8_pause':'x8_play',play=$('work-play');play.setAttribute('aria-label',tr(key));play.setAttribute('title',tr(key));play.setAttribute('aria-pressed',String(playing));
+  play.querySelector('path').setAttribute('d',playing?'M8 5V19 M16 5V19':'M7 4L20 12 7 20Z');
  }
-}
-let readerState=null,solutionCell=null;
-function drawSolution(){
- if(!solutionCell||!readerState)return;
- const bundle=solutionCell.curves,observed=solutionCell.observed,series=[
-  {x:readerState.t,y:readerState.clipped,kind:'reader',style:'dashed',label:tr('x7c_yours')},
-  {x:observed.t,y:observed.x.map(r=>r[0]),kind:'data',style:'dots',label:tr('x7c_measurements')}
- ];
- if(bundle)series.push({x:bundle.t,y:bundle.truth.map(r=>r[0]),kind:'truth',style:'dashed',label:tr('x7c_truth')},{x:bundle.t,y:bundle.model.map(r=>r[0]),kind:'model',label:tr('x7c_wisp')});
- chart($('solution-chart'),series,{title:cellName(solutionCell.row.cell_id),legend:false,truthOnTop:true});
- drawTermComparison();
- $('solution-noise').textContent=tr('x7c_noise',{noise:pct(teaching.sigma)});
- for(const curve of series.filter(s=>s.kind!=='data')){
-  // Score the full simulated curve, as the playground does, before display clipping.
-  const values=curve.kind==='reader'?readerState.curve:curve.y;
-  const sampled=interpolateCurve(curve.x,values,observed.t),score=sampled?observationR2(sampled,observed.x.map(r=>r[0])):NaN;
-  const item=$('solution-fit-'+curve.kind);item.textContent=(sampled?fmt(score,4):tr('x7b_time_unavailable'));item.dataset.curve=curve.kind;item.dataset.score=Number.isFinite(score)?String(score):'unavailable';
-  $('solution-bar-'+curve.kind).value=Number.isFinite(score)?Math.max(0,Math.min(1,score)):0;
+ function tick(now){const before=elapsed;elapsed+=now-last;last=now;
+  if(playing&&elapsed>=(index===records.length?6000:2500)){index=(index+1)%(records.length+1);elapsed=0;draw();}
+  else if(index===records.length&&before<900&&elapsed>=900)draw();
+  if(playing||index===records.length&&elapsed<900)frame=requestAnimationFrame(tick);
  }
+ function update(){cancelAnimationFrame(frame);frame=0;if(visible&&!document.hidden&&(playing||index===records.length&&elapsed<900&&!media.matches)){last=performance.now();frame=requestAnimationFrame(tick);}}
+ function go(i){index=i;elapsed=0;playing=false;draw();update();}
+ $('work-next').addEventListener('click',()=>go((index+1)%(records.length+1)));
+ $('work-restart').addEventListener('click',()=>go(0));
+ $('work-play').addEventListener('click',()=>{playing=!playing;draw();update();});
+ document.addEventListener('visibilitychange',update);
+ media.addEventListener?.('change',()=>{if(media.matches){index=records.length;elapsed=0;playing=false;}draw();update();});
+ window.WispWork={visible(value){visible=value;update();},get index(){return index;},get playing(){return playing;},records};
+ draw();
 }
 function play(){
  const observations=measuredNoise(teaching?.sigma||.03),limit=2*Math.max(...observations.map(Math.abs)),indices=enabled.map((v,i)=>v?i:-1).filter(i=>i>=0),c=indices.map(i=>coeff[i]);
- const tex=equation(indices,c);math($('play-equation'),tex);math($('reader-equation'),tex);
+ const tex=equation(indices,c);math($('play-equation'),tex);
  const curve=rk4(measuredTime,[observations[0]],x=>[W.basis(x[0]).reduce((s,v,i)=>s+(enabled[i]?v*coeff[i]:0),0)]).map(x=>x[0]);
- readerState={t:measuredTime,curve,clipped:curve.map(v=>Number.isFinite(v)&&Math.abs(v)<=limit?v:NaN)};
- chart($('play-chart'),[{x:measuredTime,y:observations,kind:'data',style:'dots',label:tr('j214')},{x:measuredTime,y:readerState.clipped,kind:'model',label:tr('x6_yours')}]);
+ const readerState={t:measuredTime,curve,clipped:curve.map(v=>Number.isFinite(v)&&Math.abs(v)<=limit?v:NaN)};
+ const series=[{x:measuredTime,y:observations,kind:'data',style:'dots',label:tr('j214')},{x:measuredTime,y:readerState.clipped,kind:'model',label:tr('x8_true')}];
+ if(solutionShown)series.push({x:measuredTime,y:measuredTruth,kind:'truth',style:'dashed'});
+ chart($('play-chart'),series,{legend:false});
  const score=observationR2(curve,observations);
  const clipped=curve.some(v=>!Number.isFinite(v)||Math.abs(v)>limit),status=$('play-status');status.dataset.score=Number.isFinite(score)?String(score):'unavailable';
  status.textContent=Number.isFinite(score)?tr('x6_meter',{value:fmt(score,4),grade:tr(score>=.98?'x6_veryclose':score>=.9?'x6_close':score>=.5?'x6_nearer':'x6_far')}):tr('x6_unstable');
  $('challenge-meter').value=Number.isFinite(score)?Math.max(0,Math.min(1,score)):0;
  if(clipped&&Number.isFinite(score))status.textContent+=' '+tr('j199');
- drawSolution();
+
 }
 $('challenge-hint').addEventListener('click',()=>{if(hintCount>=3)return;hintCount++;$('challenge-hints').append(el('li',tr('x6_hint'+hintCount)));$('challenge-hint').disabled=hintCount===3;});
-$('play-reset').addEventListener('click',()=>{coeff.splice(0,6,...initialCoefficients);enabled.splice(0,6,...Array(6).fill(false));termControls.forEach(({check,sync},i)=>{check.checked=enabled[i];sync();});play();});play();
+$('play-reset').addEventListener('click',()=>{toggleSolution(false);coeff.splice(0,6,...initialCoefficients);enabled.splice(0,6,...Array(6).fill(false));termControls.forEach(({check,sync},i)=>{check.checked=enabled[i];sync();});play();});play();
 options($('dimensions'),LIVE.catalogues.map(c=>c.dim));
 function catalogue(){const c=LIVE.catalogues.find(c=>c.dim===+$('dimensions').value);$("combination-count").textContent=tr('j202',{v0:(c.count),v1:(BigInt(c.combinations).toLocaleString(language)),v2:(c.dim),v3:(c.dim===1?'':'s')});$("catalogue-list").textContent=c.terms.join(' · ');}
 $('dimensions').addEventListener('change',catalogue);catalogue();
@@ -328,7 +320,7 @@ $("stop-example").addEventListener('change',stopDraw);stopDraw();
 options($("fit-example"),featured.map(f=>f.cell_id),cellName);
 function plotBundle(root,bundle,observed,title){
  if(!bundle){root.append(el('p',tr('j322'),'notice'));if(observed){const plot=el('div');root.append(plot);chart(plot,[{x:observed.t,y:observed.x.map(r=>r[0]),kind:'data',style:'dots',label:tr('j214')}],{title});}return;}
- bundle.truth[0].forEach((_,j)=>{const plot=el('div');root.append(plot);const series=[{x:bundle.t,y:bundle.truth.map(r=>r[j]),kind:'truth',style:'dashed',label:tr('x7c_truth')},{x:bundle.t,y:bundle.model.map(r=>r[j]),kind:'model',label:tr('j323')}];if(observed)series.push({x:observed.t,y:observed.x.map(r=>r[j]),kind:'data',style:'dots',label:tr('j214')});chart(plot,series,{title:`${title} · u${j+1}`,yLabel:`u${j+1}`});});
+ bundle.truth[0].forEach((_,j)=>{const plot=el('div');root.append(plot);const series=[{x:bundle.t,y:bundle.truth.map(r=>r[j]),kind:'truth',style:'dashed',label:tr('x8_true')},{x:bundle.t,y:bundle.model.map(r=>r[j]),kind:'model',label:tr('j323')}];if(observed)series.push({x:observed.t,y:observed.x.map(r=>r[j]),kind:'data',style:'dots',label:tr('j214')});chart(plot,series,{title:`${title} · u${j+1}`,yLabel:`u${j+1}`});});
 }
 function fitDraw(reset=false){const feature=featured.find(f=>f.cell_id===$("fit-example").value);if(!feature||!RESULTS.cells.some(c=>c.row.cell_id===feature.cell_id))return;
  $("fit-candidate").max=feature.candidates.length-1;if(reset)$("fit-candidate").value=0;const index=Math.min(+$("fit-candidate").value,feature.candidates.length-1),candidate=feature.candidates[index],row=candidate.row;
@@ -384,7 +376,8 @@ function rateChart(target,rows){
 function headlineDraw(){const panel=$('headline-panel');panel.replaceChildren();for(const stratum of ['dim1','dim2']){const box=el('div',undefined,'headline-stratum');box.append(el('h3',stratum==='dim1'?'1D':'2D'));rateChart(box,headline.filter(r=>r.stratum===stratum));panel.append(box);}}
 headlineDraw();
 const runningFeature=featured.find(f=>f.roles.includes('running')),runningCell=RESULTS.cells.find(c=>c.row.cell_id===runningFeature?.cell_id);
-if(runningCell){math($('solution-model-equation'),storedEquation(runningCell).join('\\qquad ').replaceAll('u_{1}','u'));math($('solution-truth-equation'),'\\frac{du}{dt}='+runningCell.truth.map(displayTruth).join('\\qquad ').replaceAll('u_{1}','u'));solutionCell=runningCell;drawSolution();}
+if(runningCell)math($('challenge-truth-equation'),'\\frac{du}{dt}='+runningCell.truth.map(displayTruth).join('\\qquad ').replaceAll('u_{1}','u'));
+initWork();
 $('data-summary').textContent=$('combination-count').textContent;
 // One native modal per section: focus is trapped by the browser and scrolling stays inside.
 document.querySelectorAll('[data-more]').forEach(button=>button.addEventListener('click',()=>button.parentElement.querySelector('dialog').showModal()));

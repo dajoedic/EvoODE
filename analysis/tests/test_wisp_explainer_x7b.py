@@ -14,7 +14,6 @@ def test_hook_and_removed_keys():
     for lang in ('de', 'en'):
         table = json.loads((BASE / f'src/i18n/{lang}.json').read_text(encoding='utf8'))
         assert not {'x7_replay', 'x7_bridge', 'x6_reveal'} & table.keys()
-        assert table['x7b_fit']
 
 
 def test_navigation_keeps_only_nonsequential_links_and_pipeline_map():
@@ -38,21 +37,3 @@ def test_icon_labels_and_single_grid_legend():
         assert button.select_one('svg[aria-hidden="true"] path')
 
 
-def test_fit_rejects_uncomparable_grids_and_preserves_meter_definition():
-    app = (BASE / 'src/app.js').read_text(encoding='utf8')
-    functions = app[app.index('function observationR2('):app.index('let readerState=')]
-    script = functions + r'''
-const assert = require('assert');
-assert.equal(observationR2([1,2,3],[1,2,3]),1);
-assert.equal(observationR2([2,2,2],[1,2,3]),0);
-assert.equal(observationR2([3,2,1],[1,2,3]),-3);
-assert(Number.isNaN(observationR2([1,NaN,3],[1,2,3])));
-assert.deepEqual(interpolateCurve([0,2,4],[1,5,9],[0,1,2,4]),[1,3,5,9]);
-for(const t of [[0,0,4],[0,4,2],[0,NaN,4]])assert.equal(interpolateCurve(t,[1,5,9],[1]),null);
-assert.equal(interpolateCurve([0,2],[1],[1]),null);
-assert.equal(interpolateCurve([0,2],[1,5],[3]),null);
-assert.equal(interpolateCurve([0,2],[1,5],[NaN]),null);
-assert(Number.isNaN(interpolateCurve([0,2],[null,5],[1])[0]));
-'''
-    run = subprocess.run(['node', '-e', script], capture_output=True, text=True, timeout=20)
-    assert run.returncode == 0, run.stdout + run.stderr

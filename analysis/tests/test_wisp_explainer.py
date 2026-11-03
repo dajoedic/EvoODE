@@ -130,10 +130,11 @@ class Element {
  append(...children){this.children.push(...children);if(this.tag==='select'&&this._value===''&&this.children.length)this._value=this.children[0].value;}
  replaceChildren(...children){this.children=[];this._value='';this.append(...children);}
  setAttribute(k,v){this.attrs[k]=String(v);}
+ getAttribute(k){return this.attrs[k];}
  get value(){return this._value;}
  set value(v){this._value=String(v);}
  addEventListener(event,fn){this.listeners[event]=fn;}
- querySelector(selector){if(selector==='output')return this.children.find(c=>c.tag==='output');const type=selector.includes('checkbox')?'checkbox':'range';return this.children.flatMap(c=>[c,...c.children]).find(c=>c.type===type);}
+ querySelector(selector){if(selector==='output')return this.children.find(c=>c.tag==='output');if(selector==='path')return this.querySelectorAll('path')[0];const type=selector.includes('checkbox')?'checkbox':'range';return this.children.flatMap(c=>[c,...c.children]).find(c=>c.type===type);}
  querySelectorAll(selector){return this.children.flatMap(c=>[c,...c.querySelectorAll('*')]).filter(c=>selector==='*'||c.tag===selector);}
  focus(){}
 }
@@ -143,6 +144,9 @@ const elements={};for(const match of source.matchAll(/<([a-z0-9-]+)\b([^>]*\bid=
  if(match[1]==='select'){const body=source.slice(match.index).split('</select>')[0],opt=body.match(/<option value="([^"]+)"/);if(opt)e.value=opt[1];}
 }
 elements['wisp-data'].textContent=JSON.stringify(data);
+// Mount the actual inline play icon, which is updated by the recorded-run controls.
+const playMarkup=source.match(/<button[^>]*id="work-play"[^>]*>(.*?)<\/button>/s)[1];
+const playPath=new Element('path');playPath.setAttribute('d',playMarkup.match(/<path d="([^"]+)"/)[1]);elements['work-play'].append(playPath);
 global.document={getElementById:id=>{if(!elements[id])throw Error('Missing page ID '+id);return elements[id];},createElement:t=>new Element(t),createElementNS:(ns,t)=>new Element(t),querySelectorAll:()=>all.filter(e=>e.dataset.tex)};
 global.innerWidth=1366;global.innerHeight=768;global.addEventListener=()=>{};document.addEventListener=()=>{};global.IntersectionObserver=class{observe(){}};
 global.window=global;global.location={href:'file:///wisp.html?lang=en'};global.WispCompute=require(base+'/src/compute.js');

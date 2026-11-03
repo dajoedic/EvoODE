@@ -1,4 +1,4 @@
-/* Minimal DOM for executing both shipped presentation scripts against real HTML.
+﻿/* Minimal DOM for executing both shipped presentation scripts against real HTML.
  * It deliberately supplies no layout: Edge is responsible for pixel acceptance. */
 const fs=require('fs'),vm=require('vm'),assert=require('assert');
 const base=process.argv[2],fixture=JSON.parse(fs.readFileSync(process.argv[3],'utf8'));
@@ -135,10 +135,8 @@ const layout=()=>cards.map(c=>[c.className,c.children.map(n=>n.className),c.quer
 const originalLayout=layout();
 assert(cards.every(c=>!c.querySelector('input').checked));
 assert.equal(doc.getElementById('play-equation').dataset.tex,'\\frac{du}{dt}=0');
-assert(readerState.curve.every(v=>v===fixture.data.live.teaching.observed[0]));
+
 for(const card of cards){const check=card.querySelector('input');check.checked=!check.checked;check.emit('change');assert.deepEqual(layout(),originalLayout);const controls=card.querySelector('.coefficient-controls');assert(!controls.hidden);assert(controls.querySelectorAll('input,button').every(n=>n.disabled===!check.checked));check.checked=!check.checked;check.emit('change');}
-function assertSolution(){const scores=doc.querySelectorAll('#solution-comparison [data-curve]');assert.equal(scores.length,3);const reader=scores.find(n=>n.dataset.curve==='reader');assert.equal(reader.dataset.score,doc.getElementById('play-status').dataset.score);assert(doc.querySelector('#solution-chart path.series-reader'));}
-assertSolution();
 const snapshot=()=>({equation:doc.getElementById('play-equation').dataset.tex,curve:doc.getElementById('play-chart').querySelector('path.series-model').getAttribute('d'),score:doc.getElementById('play-status').dataset.score});
 const control=(index,type)=>cards[index].querySelectorAll('input').find(n=>n.type===type);
 // WP-X7c: each coarse button uses its term scale; typed values retain fine precision.
@@ -154,9 +152,6 @@ control(0,'number').value='0.300000123456';control(0,'number').emit('input');
 assert.equal(coeff[0],0.300000123456);
 control(0,'number').value='12.345678901';control(0,'number').emit('input');assert.equal(coeff[0],12.345678901);
 doc.getElementById('play-reset').emit('click');
-assert(doc.getElementById('solution-truth-equation').dataset.tex.startsWith('\\frac{du}{dt}='));
-assert.equal(doc.querySelectorAll('#solution-chart path').at(-1).getAttribute('class').split(' ')[0],'series-truth');
-assert(!doc.querySelector('#solution-chart .caption'));
 let previous=snapshot();control(2,'checkbox').checked=true;control(2,'checkbox').emit('change');
 assert.notEqual(snapshot().equation,previous.equation);
 const coefficient=control(2,'number');coefficient.value='-.01';coefficient.emit('input');
@@ -179,41 +174,67 @@ assert.equal(doc.getElementById('play-chart').querySelectorAll('.measurement-dot
 const expectedCurve=rk4(measurements.t,[measurements.observed[0]],x=>[WispCompute.basis(x[0]).reduce((s,v,i)=>s+(enabled[i]?v*coeff[i]:0),0)]).map(x=>x[0]);
 const mean=measurements.observed.reduce((a,b)=>a+b,0)/measurements.observed.length;
 const expectedScore=1-expectedCurve.reduce((s,v,i)=>s+(v-measurements.observed[i])**2,0)/measurements.observed.reduce((s,v)=>s+(v-mean)**2,0);
-assert(Math.abs(+snapshot().score-expectedScore)<1e-12);assertSolution();
-for(const kind of ['truth','model']){const b=solutionCell.curves;const sampled=interpolateCurve(b.t,b[kind].map(r=>r[0]),measurements.t);assert(sampled);const score=observationR2(sampled,measurements.observed);assert.equal(+doc.querySelectorAll('#solution-comparison [data-curve]').find(n=>n.dataset.curve===kind).dataset.score,score);}
-assert.deepEqual(interpolateCurve([0,2,4],[1,5,9],[0,1,4]),[1,3,9]);assert.equal(interpolateCurve([0,2],[1,5],[-1]),null);
-
+assert(Math.abs(+snapshot().score-expectedScore)<1e-12);
 for(let n=1;n<=4;n++){doc.getElementById('challenge-hint').emit('click');assert.equal(doc.getElementById('challenge-hints').children.length,Math.min(n,3));}
 assert.deepEqual(doc.getElementById('challenge-hints').children.map(n=>n.textContent),[1,2,3].map(n=>fixture.data.live.i18n[fixture.language]['x6_hint'+n]));
 const last=snapshot().equation;assert(!doc.getElementById('challenge-reveal'));slides.nav.go(1);advance();emit('wheel',doc.body,{deltaY:500});advance();
-assert.equal(slides.pages[slides.nav.index].id,'p-solution');assert.equal(doc.getElementById('reader-equation').dataset.tex,last);
+assert.equal(slides.pages[slides.nav.index].id,'p-solution');
 doc.getElementById('play-reset').emit('click');assert.notEqual(snapshot().equation,last);
 assert(cards.every(c=>!c.querySelector('input').checked));assert.equal(doc.getElementById('play-equation').dataset.tex,'\\frac{du}{dt}=0');
 control(1,'checkbox').checked=true;control(1,'checkbox').emit('change');control(1,'number').value='2';control(1,'number').emit('input');assert(+snapshot().score<0||snapshot().score==='unavailable');
 assert(doc.getElementById('play-status').textContent.length>0);
-console.log('PASS X6 bilingual challenge, toggles, slider, typed and fine coefficients, measurement R2, reachable answer, ordered hints, scroll-preserved equation and divergence');
+console.log('PASS X6 bilingual challenge, toggles, slider, typed and fine coefficients, measurement R2, reachable answer, ordered hints and divergence');
 
-// WP-X7e: real stored truth expands into catalogue order; support includes all cases.
-assert.equal(doc.getElementById('solution-comparison').dataset.truthPath,'stored-polynomial-expansion');
-const trueCoefficients=expandTruthPolynomial(solutionCell.truth[0]);
-assert(Math.abs(trueCoefficients[1]-growth)<1e-12);
-assert(Math.abs(trueCoefficients[2]+growth/capacity)<1e-12);
-assert.deepEqual(doc.querySelectorAll('#solution-comparison tbody tr').map(r=>r.dataset.entry),['truth','model','reader']);
-assert.deepEqual(doc.querySelectorAll('#solution-comparison thead th').map(r=>r.textContent),['','1','u','u²','u³','sin u','cos u','R²']);
-assert.equal(doc.querySelectorAll('#solution-legend li').length,4);
-assert(!/[0-9]/.test(doc.getElementById('solution-legend').textContent));
-enabled.splice(0,6,true,true,false,false,false,false);coeff[0]=0.5;coeff[1]=growth;play();
-const comparison=doc.querySelector('#solution-comparison tr[data-entry="reader"]').querySelectorAll('[data-block]');
-assert(comparison[0].querySelector('.extra').textContent.endsWith('✗'));
-assert(comparison[1].querySelector('.correct').textContent.endsWith('✓'));
-assert(comparison[2].querySelector('.missing'));
-assert.equal(comparison[0].querySelector('span').getAttribute('title'),table.x7e_extra);
-assert.equal(comparison[2].querySelector('span').getAttribute('title'),table.x7e_missing);
-assert.equal(comparison[1].querySelector('span').textContent,fmt(growth,3)+' ✓');
-assertSolution();
-for(const kind of ['truth','model','reader']){const score=+doc.getElementById('solution-fit-'+kind).dataset.score;assert.equal(+doc.getElementById('solution-bar-'+kind).value,Math.max(0,Math.min(1,score)));}
-const savedTruth=solutionCell.truth;solutionCell.truth=['sin(x_0)'];drawSolution();
-assert.equal(doc.getElementById('solution-comparison').dataset.truthPath,'stored-formula-only');
-assert(!doc.querySelector('#solution-comparison .correct'));assert(!doc.querySelector('#solution-comparison .extra'));assert(!doc.querySelector('#solution-comparison .missing'));
-solutionCell.truth=savedTruth;drawSolution();
-console.log('PASS X7e empty start/reset, real truth expansion, catalogue order, support chips, fallback and score bars');
+// WP-X8: the eye changes only the overlay; reset hides it.
+doc.getElementById('play-reset').emit('click');
+const beforeEye=snapshot(),beforeValues=coeff.slice(),beforeEnabled=enabled.slice();
+const eye=doc.getElementById('challenge-solution');eye.emit('click');
+assert.equal(eye.getAttribute('aria-label'),table.x8_hide);
+assert(!doc.getElementById('challenge-truth').hidden);
+assert(doc.querySelector('#play-chart .series-truth'));
+assert(doc.getElementById('challenge-truth-equation').dataset.tex.includes(displayTruth(runningCell.truth[0]).replaceAll('u_{1}','u')));
+assert.deepEqual(snapshot(),beforeEye);assert.deepEqual(coeff,beforeValues);assert.deepEqual(enabled,beforeEnabled);
+assert.equal(doc.querySelectorAll('#play-chart path').at(-1).getAttribute('class').split(' ')[0],'series-model');
+eye.emit('click');assert(!doc.querySelector('#play-chart .series-truth'));assert(doc.getElementById('challenge-truth').hidden);
+eye.emit('click');doc.getElementById('play-reset').emit('click');assert(!doc.querySelector('#play-chart .series-truth'));assert.equal(eye.getAttribute('aria-label'),table.x8_show);
+
+const run=fixture.data.live.featured[0],work=global.WispWork,track=doc.getElementById('work-track').children;
+assert.equal(track.length,9);assert.equal(work.records.length,8);
+assert.deepEqual(work.records.map(r=>r.step.candidate_id),run.path.map(p=>p.candidate_id));
+assert.deepEqual(work.records.slice(2,4).map(r=>[r.kind,r.left,r.entered]),[['swap',[1],[2]],['swap',[4],[3]]]);
+const savedChart=chart;let captured;
+chart=function(target,series,options){if(target.id==='work-chart')captured=series;return savedChart(target,series,options);};
+const savedChallenge=snapshot();
+work.visible(true);
+for(let i=0;i<9;i++){
+ track[i].emit('click');assert.equal(work.index,i);assert(!work.playing);
+ if(i===8){assert.equal(captured.filter(s=>s.kind==='candidate').length,8);assert(!captured.find(s=>s.kind==='model'));advance(950);}
+ const r=work.records[i===8?3:i],narration=doc.getElementById('work-narration').textContent;
+ const names=idx=>idx.map(k=>terms[k-1]).join(', ');
+ if(i<8)assert.equal(narration,tr('x8_'+r.kind,{k:i+1,block:names(r.kind==='remove'?r.left:r.entered),out:names(r.left),in:names(r.entered)}));
+ assert.equal(doc.getElementById('p-solution').dataset.candidate,r.step.candidate_id);
+ const model=captured.find(s=>s.kind==='model');assert.deepEqual(model.x,r.candidate.curves.t);assert.deepEqual(model.y,r.candidate.curves.model.map(row=>row[0]));
+ assert.equal(doc.getElementById('work-cards').children.filter(c=>c.classList.contains('lit')).length,r.active.length);
+ const expected='\\frac{du}{dt}='+r.step.equations[0].basis_indices.map((k,j)=>`${j&&r.step.equations[0].coefficients[j]>=0?'+':''}${fmt(r.step.equations[0].coefficients[j],3)}\\,${texTerms[k-1]}`).join(' ');
+ assert.equal(doc.getElementById('work-equation').dataset.tex,expected);
+ assert(!/FROLS|FoBa|BIC|weak form|schwache Form/i.test(doc.getElementById('p-solution').textContent));
+}
+assert.equal(doc.getElementById('p-solution').dataset.candidate,run.chosen);assert(!doc.getElementById('work-truth').hidden);
+assert.equal(captured.filter(s=>s.kind==='candidate').length,0);
+assert.deepEqual(snapshot(),savedChallenge);
+work.visible(true);doc.getElementById('work-play').emit('click');advance(6100);assert.equal(work.index,0);advance(2550);assert.equal(work.index,1);
+work.visible(false);advance(10000);assert.equal(work.index,1);
+work.visible(true);advance(2550);assert.equal(work.index,2);
+doc.hidden=true;doc.emit('visibilitychange');advance(10000);assert.equal(work.index,2);
+doc.hidden=false;doc.emit('visibilitychange');
+doc.getElementById('work-next').emit('click');assert.equal(work.index,3);assert(!work.playing);advance(10000);assert.equal(work.index,3);
+doc.getElementById('work-restart').emit('click');assert.equal(work.index,0);assert(!work.playing);
+const synthetic=JSON.parse(JSON.stringify(run));synthetic.path=synthetic.path.slice(0,2);synthetic.path[1].active_idxs=[[1]];synthetic.path[0].active_idxs=[[1,4]];assert.equal(workSteps(synthetic)[1].kind,'remove');
+// Isolated reduced-motion initialization must show the final choice without autoplay.
+global.matchMedia=()=>({matches:true,addEventListener(){}});doc.getElementById('work-cards').replaceChildren();doc.getElementById('work-track').replaceChildren();initWork();
+assert.equal(global.WispWork.index,8);assert(!global.WispWork.playing);global.WispWork.visible(true);advance(10000);assert.equal(global.WispWork.index,8);
+doc.getElementById('work-next').emit('click');assert.equal(global.WispWork.index,0);
+global.matchMedia=media;chart=savedChart;
+console.log('PASS X8 bilingual eye/reset, unchanged cards, nine recorded steps, support-diff narration, exported curves, chosen support, loop, page/tab pause and reduced motion');
+
+
