@@ -19,6 +19,7 @@ class Node {
  setAttribute(k,v){this.attrs[k]=String(v);}getAttribute(k){return this.attrs[k];}removeAttribute(k){delete this.attrs[k];}
  addEventListener(k,fn){(this.listeners[k]??=[]).push(fn);}emit(k,e={}){for(const fn of this.listeners[k]||[])fn({target:this,type:k,...e});}
  get offsetTop(){return Math.max(0,doc.querySelectorAll('main > .page').indexOf(this))*innerHeight;}
+ animate(keyframes,options){this.lastAnimation={keyframes,options};}
  scrollIntoView(){global.lastScrolled=this.id;global.scrollY=this.offsetTop;}focus(){}
  showModal(){this.open=true;this.setAttribute('open','');}close(){this.open=false;this.removeAttribute('open');}
  matches(selector){return selector.split(',').some(raw=>{let s=raw.trim();if(s.includes(':not([open])')){if(this.open)return false;s=s.replace(':not([open])','');}
@@ -44,7 +45,7 @@ class Node {
 function inflate(record){const n=new Node(record.tag,record.attrs,record.text);for(const c of record.children)n.append(inflate(c));return n;}
 const html=inflate(fixture.tree),doc=new Node('document');doc.append(html);doc.documentElement=html;doc.body=doc.querySelector('body');doc.fonts={ready:Promise.resolve()};const idIndex=new Map(doc.querySelectorAll('[id]').map(e=>[e.id,e]));doc.getElementById=id=>{if(!idIndex.has(id)){const found=doc.querySelector('#'+id);if(found)idIndex.set(id,found);}return idIndex.get(id)||null;};doc.createElement=t=>new Node(t);doc.createElementNS=(_,t)=>new Node(t);
 doc.getElementById('wisp-data').textContent=JSON.stringify(fixture.data);
-if(fixture.configuration!=='delivered')global.WispVisibleChapters=['intro','later'];
+if(fixture.configuration==='legacy')global.WispVisibleChapters=['intro','later'];
 global.document=doc;global.window=global;global.innerWidth=1366;global.innerHeight=657;
 global.location={href:'file:///wisp.html?lang='+fixture.language,get hash(){return new URL(this.href).hash;},assign(url){this.href=String(url);}};
 global.history={pushState(_,__,url){location.href=String(url);},replaceState(_,__,url){location.href=String(url);}};
@@ -54,31 +55,89 @@ const events={};global.addEventListener=(k,fn)=>(events[k]??=[]).push(fn);global
 let dishVisible;global.IntersectionObserver=class{constructor(fn){dishVisible=fn;}observe(){}disconnect(){}};
 vm.runInThisContext(fs.readFileSync(base+'/src/app.js','utf8'),{filename:'app.js'});
 vm.runInThisContext(fs.readFileSync(base+'/src/pages.js','utf8'),{filename:'pages.js'});
+// Exercise the shipped morph with deterministic animation frames and actual clicks.
+if(fixture.configuration==='morph'){
+ const teaching=fixture.data.live.teaching,morph=WispChapterMorph,table=fixture.data.live.i18n[fixture.language];
+ const close=(a,b)=>assert(Math.abs(a-b)<1e-9,`${a} != ${b}`);
+ const dots=doc.querySelectorAll('#c1-visual-0 .measurement-dot');
+ assert.equal(dots.length,512);
+ function verify(state){
+  const [lo,hi]=morph.states[state].range,t=teaching.t,x=teaching.observed;
+  dots.forEach((dot,i)=>{
+   const expected=state==='u'?x[i]:i<x.length-1?x[i+1]-x[i]:0;
+   close(+dot.getAttribute('cy'),228-(expected-lo)/(hi-lo)*198);
+   const time=state==='u'||i===t.length-1?t[i]:(t[i]+t[i+1])/2;
+   close(+dot.getAttribute('cx'),76+(time-t[0])/(t.at(-1)-t[0])*664);
+  });
+  assert.equal(+dots.at(-1).style.opacity,state==='diff'?0:1);
+  assert.equal(morph.current(),state);
+  for(const name of ['u','diff'])assert.equal(doc.getElementById('c1-show-'+name).getAttribute('aria-pressed'),String(state===name));
+  assert.equal(doc.getElementById('c1-morph-note').textContent,table['x11_note_'+state]);
+  assert.equal(doc.querySelector('#c1-visual-0 svg').getAttribute('aria-label'),state==='u'?'u':table.x11_axis_diff);
+ }
+ const initial=dots[0].getAttribute('cy');
+ doc.getElementById('c1-show-diff').emit('click');
+ assert.equal(doc.getElementById('c1-show-diff').getAttribute('aria-pressed'),'true');
+ assert.equal(doc.getElementById('c1-morph-note').textContent,table.x11_note_diff);
+ advance(450);assert.notEqual(dots[0].getAttribute('cy'),initial);
+ advance(500);verify('diff');
+ doc.getElementById('c1-show-u').emit('click');advance(950);verify('u');
+ global.matchMedia=()=>({matches:true,addEventListener(){}});
+ doc.getElementById('c1-show-diff').emit('click');verify('diff');
+ doc.getElementById('c1-show-u').emit('click');verify('u');
+ console.log('PASS X11 morph: 512 dots, midpoint differences, both directions, buttons, notes, axes, reduced motion');
+ process.exit(0);
+}
+if(fixture.configuration==='noise'){
+ const teaching=fixture.data.live.teaching,noise=WispChapterNoise,n=teaching.t.length;
+ const close=(a,b)=>assert(Math.abs(a-b)<=1e-10*Math.max(1,Math.abs(b)),`${a} != ${b}`);
+ assert.deepEqual(noise.variance,WispCompute.noiseVariance(teaching.t,teaching.observed));
+ const relative=noise.variance.reduce((s,v,i)=>s+Math.sqrt(v)/Math.abs(teaching.observed[i]),0)/n;
+ close(noise.relative,relative);
+ const percent=v=>(100*v).toLocaleString(fixture.language,{minimumFractionDigits:1,maximumFractionDigits:1})+' %';
+ const result=doc.getElementById('c1-noise-result').textContent,floor=percent(WispChapterOne.model.floor);
+ for(const value of [percent(relative),percent(teaching.sigma),floor])assert(result.includes(value));
+ assert(doc.getElementById('c1-text-5').textContent.includes(floor));
+ for(const reference of fixture.cubic){
+  const local=noise.local(reference.center);assert.equal(local.start,reference.start);
+  assert.deepEqual(local.ts,teaching.t.slice(reference.start,reference.start+9));
+  assert.deepEqual(local.xs,teaching.observed.slice(reference.start,reference.start+9));
+  reference.t.forEach((t,i)=>close(local.value(t),reference.y[i]));
+ }
+ assert.equal(doc.querySelectorAll('#c1-visual-noise .c1-noise-in').length,9);
+ assert(doc.querySelector('#c1-visual-noise .c1-noise-stick'));
+ const slider=doc.getElementById('c1-noise-center'),before=doc.querySelector('#c1-visual-noise path').getAttribute('d');
+ slider.value=200;slider.emit('input');assert.notEqual(doc.querySelector('#c1-visual-noise path').getAttribute('d'),before);
+ console.log('PASS X11 noise: full variance, mean relative noise, result/floor, independent NumPy cubics, slider');
+ process.exit(0);
+}
 // Delivered configuration executes the actual app, DOM and event routing.
 if(fixture.configuration==='delivered'){
  const slides=WispSlides,one=WispChapterOne,m=one.model;
- const ids=['p-hook','p-challenge','p-c1-data','p-c1-changes','p-c1-error-empty','p-c1-fit','p-c1-every','p-c1-percent','p-c1-solution'];
+ const ids=['p-hook','p-challenge','p-c1-data','p-c1-changes','p-c1-error-empty','p-c1-fit','p-c1-every','p-c1-noise','p-c1-percent','p-c1-solution'];
  assert.deepEqual(slides.pages.map(p=>p.id),ids);
  assert(doc.getElementById('p-results').hidden);assert(doc.getElementById('p-solution').hidden);
  for(const id of ['p-results','p-headline','p-solution','p-glossary']){slides.nav.go(0);slides.nav.link('#'+id);assert.equal(slides.nav.index,0);}
  function event(key,target=doc.body){let prevented=false;for(const fn of events.keydown||[])fn({type:'keydown',key,target,preventDefault(){prevented=true;}});advance();return prevented;}
- slides.nav.go(0);advance();event('ArrowRight');assert.equal(slides.nav.index,2);
- assert.equal(doc.querySelectorAll('.page-dots a').filter(a=>!a.hidden).length,7);
- event('ArrowDown');assert.equal(slides.nav.index,3);event('ArrowUp');assert.equal(slides.nav.index,2);
- event('ArrowLeft');assert.equal(slides.nav.index,0);
+ slides.nav.go(0);advance();event('ArrowRight');assert.equal(slides.nav.index,1);
+ event('ArrowRight');assert.equal(slides.pages[slides.nav.index].id,'p-c1-data');
+ assert.equal(doc.querySelectorAll('.page-dots a').filter(a=>!a.hidden).length,8);
+ event('ArrowLeft');assert.equal(slides.nav.index,1);
+ slides.nav.go(0);advance();event('ArrowDown');assert.equal(slides.nav.index,2);
+ for(let i=2;i<ids.length;i++){slides.nav.go(i);advance();event('ArrowUp');assert.equal(slides.pages[slides.nav.index].id,'p-hook');}
  event('PageDown');event('PageDown');assert.equal(slides.nav.index,2);
- for(const key of ['ArrowLeft','ArrowRight','ArrowUp','ArrowDown']){assert(!event(key,doc.getElementById('c1-c')));assert.equal(slides.nav.index,2);}
+ for(const id of ['c1-c','c1-window','c1-noise-center'])for(const key of ['ArrowLeft','ArrowRight','ArrowUp','ArrowDown']){assert(!event(key,doc.getElementById(id)));assert.equal(slides.nav.index,2);}
  for(const key of ['c1-window','c1-c']){const slider=doc.getElementById(key),before=doc.getElementById(key==='c1-window'?'c1-visual-1':'c1-visual-3').querySelector('path').getAttribute('d');slider.value=key==='c1-window'?slider.max:(slider.min||0);slider.emit('input');assert.notEqual(doc.getElementById(key==='c1-window'?'c1-visual-1':'c1-visual-3').querySelector('path').getAttribute('d'),before);}
  const close=(a,b)=>assert(Math.abs(a-b)<1e-10,`${a} != ${b}`),constant=m.blocks.find(b=>b.term===0);
  close(one.error(m,0,constant.coefficient),1-constant.gain);
  for(const delta of [-1,1])assert(one.error(m,0,constant.coefficient+delta)>one.error(m,0,constant.coefficient));
  for(const b of m.blocks){one.chooseEvery(b.term);one.choosePercent(b.term);const parts=JSON.parse(doc.querySelector('.c1-stack').dataset.parts);close(parts.reduce((a,b)=>a+b,0),1);close(parts[0],m.floor);close(parts[1],b.gain);close(parts[2],m.explainable-b.gain);assert.equal(doc.querySelectorAll('#c1-visual-4 button[aria-pressed="true"]').length,1);}
  slides.nav.go(1);advance();for(const fn of events.wheel||[])fn({type:'wheel',target:doc.body,deltaY:500,preventDefault(){}});advance();assert.equal(slides.nav.index,2);
- slides.nav.go(8);advance();event('PageDown');assert.equal(slides.nav.index,8);
+ slides.nav.go(9);advance();event('PageDown');assert.equal(slides.nav.index,9);
  const sorted=doc.querySelectorAll('#c1-visual-4 button').map(b=>+b.dataset.error);assert(sorted.every((v,i)=>!i||v>=sorted[i-1]));
  assert.equal(doc.querySelectorAll('#c1-visual-0 .measurement-dot').length,fixture.data.live.teaching.t.length);
- for(const p of slides.pages.slice(2)){const prose=p.querySelectorAll('p,figcaption,footer');assert(prose.every(n=>n.dataset.claim==='review'));assert(p.querySelector('.eyebrow').textContent.includes('7'));const ordinary=p.querySelectorAll('p,h2').map(n=>n.textContent).join(' ');assert(!/FROLS|Weak Form|Least Squares|SSE|BIC|Rauschschätzung|noise estimation/.test(ordinary));}
- console.log('PASS X10 delivered chapters, seven bilingual steps, hidden targets, actual arrow/input events, sliders, error minimum and noise partitions');
+ for(const p of slides.pages.slice(2)){const prose=p.querySelectorAll('p,figcaption,footer');assert(prose.every(n=>n.dataset.claim==='review'));assert.equal(p.querySelector('.eyebrow').textContent,tr('x10_eye',{i:p.querySelector('.eyebrow').dataset.c1Eye,n:8}));const ordinary=p.querySelectorAll('p,h2').map(n=>n.textContent).join(' ');assert(!/FROLS|Weak Form|Least Squares|SSE|BIC|Rauschschätzung|noise estimation/.test(ordinary));}
+ console.log('PASS X11 delivered chapters, eight bilingual steps, hidden targets, actual arrow/input events, sliders, error minimum and noise partitions');
  process.exit(0);
 }
 // Execute the animation lifecycle, including delayed visibility and reduced motion.
@@ -139,8 +198,16 @@ for(const node of doc.body.querySelectorAll('*')){if(node.closest('script,style,
 assert.equal(new Set(slides.pages.map(p=>p.dataset.section)).size,slides.pages.length);
 global.innerWidth=1366;emit('resize',doc.body);advance();
 const more=doc.querySelector('[data-more]');more.emit('click');const modal=doc.querySelector('dialog[open]');assert(modal);const at=slides.nav.index;doc.emit('pointerdown',{target:slider});emit('wheel',modal,{deltaY:100});emit('pointerup',doc.body);emit('keydown',modal,{key:'PageDown'});assert.equal(slides.nav.index,at);modal.querySelector('[data-close]').emit('click');assert(!modal.open);
-slides.nav.go(0);advance();const y=scrollY;emit('wheel',doc.body,{deltaY:100});assert.equal(slides.nav.index,1);advance(320);assert(scrollY>y&&scrollY<innerHeight,'intermediate eased scrolling');for(let i=0;i<10;i++)emit('wheel',doc.body,{deltaY:40});assert.equal(slides.nav.index,1);advance();assert.equal(scrollY,innerHeight);
-console.log('PASS X4 headline rows/counts, readable names, closed sections, modal guards, eased one-gesture scrolling');
+slides.nav.go(0);advance();emit('wheel',doc.body,{deltaY:100});assert.equal(slides.nav.index,1);
+const content=slides.pages[1].querySelector('.page-content');
+assert.deepEqual(content.lastAnimation.keyframes,[{transform:'translateX(100vw)'},{transform:'translateX(0)'}]);
+assert.equal(content.lastAnimation.options.duration,720);
+advance(320);for(let i=0;i<10;i++)emit('wheel',doc.body,{deltaY:40});assert.equal(slides.nav.index,1);advance();assert.equal(scrollY,innerHeight);
+emit('keydown',doc.body,{key:'ArrowLeft'});assert.equal(slides.pages[0].querySelector('.page-content').lastAnimation.keyframes[0].transform,'translateX(-100vw)');advance();
+// Crossing from the intro to the retained later chapter uses eased vertical scroll.
+slides.nav.go(1);advance();const y=scrollY;emit('keydown',doc.body,{key:'ArrowRight'});advance(320);
+assert(scrollY>y&&scrollY<slides.pages[2].offsetTop,'intermediate chapter scrolling');advance();assert.equal(scrollY,slides.pages[2].offsetTop);
+console.log('PASS X4 headline rows/counts, readable names, closed sections, modal guards, horizontal sub-steps, eased chapter scrolling, one-gesture lock');
 
 // Wheel hovering controls is navigation; only an active drag blocks it.
 slides.nav.go(0);advance();emit('wheel',slider,{deltaY:100});assert.equal(slides.nav.index,1);

@@ -385,6 +385,71 @@ document.querySelectorAll('[data-close]').forEach(button=>button.addEventListene
 function chapterError(model,term,c){return model.D.b.reduce((sum,b,i)=>sum+(b-c*model.D.A[i][term])**2,0)/soloDot(model.D.b,model.D.b);}
 function chapterParts(model,block){const floor=model.normalized?model.floor:0;return [floor,block.gain,1-floor-block.gain];}
 function chapterWindows(length){const t=measuredTime,x=teaching.observed,out=[];for(let a=0;a+length<t.length;a+=length){const b=a+length;out.push({time:(t[a]+t[b])/2,rate:(x[b]-x[a])/(t[b]-t[a]),clean:(teaching.truth[b]-teaching.truth[a])/(t[b]-t[a])});}return out;}
+// 1a: the measured dots move to their change-to-the-next-point, so the reader sees where the differences come from.
+function initChapterMorph(){
+ const t=measuredTime,x=teaching.observed,n=t.length,width=760,height=270,pad={l:76,r:20,t:30,b:42},duration=900;
+ const states={u:{x:t,y:x,axis:'u'},diff:{x:t.map((v,i)=>i<n-1?(v+t[i+1])/2:v),y:x.map((v,i)=>i<n-1?x[i+1]-v:0),axis:tr('x11_axis_diff')}};
+ const range=y=>{const lo=Math.min(...y),hi=Math.max(...y),pad=(hi-lo)*.06||1;return [lo-pad,hi+pad];};
+ states.u.range=range(states.u.y);const d=Math.max(...states.diff.y.slice(0,-1).map(Math.abs))*1.06;states.diff.range=[-d,d];
+ const svg=svgNode('svg',{viewBox:`0 0 ${width} ${height}`,class:'chart c1-morph',role:'img'}),grid=svgNode('g'),label=svgNode('text',{x:pad.l,y:17});
+ const X=v=>pad.l+(v-t[0])/(t[n-1]-t[0])*(width-pad.l-pad.r);
+ const dots=t.map(()=>svgNode('circle',{r:2.6,class:'measurement-dot'}));svg.append(grid,label,...dots);
+ $('c1-visual-0').replaceChildren(svg);
+ let current='u',frame=0;
+ function draw(from,to,s){
+  const lo=from.range[0]+(to.range[0]-from.range[0])*s,hi=from.range[1]+(to.range[1]-from.range[1])*s,Y=v=>height-pad.b-(v-lo)/(hi-lo)*(height-pad.t-pad.b);
+  grid.replaceChildren();
+  for(let i=0;i<=4;i++){const raw=lo+(hi-lo)*i/4,v=Math.abs(raw)<1e-9*(hi-lo)?0:raw,tt=t[0]+(t[n-1]-t[0])*i/4;grid.append(svgNode('line',{x1:pad.l,x2:width-pad.r,y1:Y(v),y2:Y(v),class:'grid'}),svgNode('text',{x:pad.l-8,y:Y(v)+4,'text-anchor':'end'},fmt(v)),svgNode('text',{x:X(tt),y:height-22,'text-anchor':'middle'},fmt(tt)));}
+  grid.append(svgNode('text',{x:width-pad.r,y:height-3,'text-anchor':'end'},tr('j157')));
+  label.textContent=s<.5?from.axis:to.axis;
+  dots.forEach((dot,i)=>{dot.setAttribute('cx',X(from.x[i]+(to.x[i]-from.x[i])*s));dot.setAttribute('cy',Y(from.y[i]+(to.y[i]-from.y[i])*s));dot.style.opacity=i===n-1?String(to===states.diff?1-s:from===states.diff?s:1):'';});
+ }
+ function show(target){
+  if(target===current)return;const from=states[current],to=states[target];current=target;cancelAnimationFrame(frame);
+  $('c1-show-u').setAttribute('aria-pressed',String(target==='u'));$('c1-show-diff').setAttribute('aria-pressed',String(target==='diff'));
+  $('c1-morph-note').textContent=tr(target==='u'?'x11_note_u':'x11_note_diff');svg.setAttribute('aria-label',to.axis);
+  if(window.matchMedia('(prefers-reduced-motion: reduce)').matches){draw(from,to,1);return;}
+  const start=performance.now(),ease=s=>s<.5?4*s*s*s:1-(-2*s+2)**3/2;
+  const step=now=>{const s=Math.min(1,(now-start)/duration);draw(from,to,ease(s));if(s<1)frame=requestAnimationFrame(step);};frame=requestAnimationFrame(step);
+ }
+ $('c1-show-u').addEventListener('click',()=>show('u'));$('c1-show-diff').addEventListener('click',()=>show('diff'));
+ draw(states.u,states.u,0);$('c1-morph-note').textContent=tr('x11_note_u');svg.setAttribute('aria-label','u');
+ window.WispChapterMorph={states,show,current:()=>current};
+}
+// Noise page: the frozen noiseVariance fits a cubic through 9 neighbours of each point; show one such fit.
+function initChapterNoise(m){
+ const t=measuredTime,x=teaching.observed,n=t.length,k=9,variance=WispCompute.noiseVariance(t,x);
+ const slider=$('c1-noise-center');slider.max=n-5;slider.value=Math.round(n/3);
+ const percent=v=>(100*v).toLocaleString(language,{minimumFractionDigits:1,maximumFractionDigits:1})+' %';
+ const relative=variance.reduce((s,v,i)=>s+Math.sqrt(v)/Math.abs(x[i]),0)/n;
+ $('c1-noise-text').textContent=tr('x11_noise_text',{k});
+ $('c1-noise-result').textContent=tr('x11_noise_result',{est:percent(relative),true:percent(teaching.sigma),floor:percent(m.floor)});
+ function local(i){
+  const start=Math.min(Math.max(i-4,0),n-k),ts=t.slice(start,start+k),xs=x.slice(start,start+k),scale=Math.max(...ts.map(v=>Math.abs(v-t[i])));
+  const fit=WispCompute.leastSquares(ts.map(v=>[0,1,2,3].map(p=>((v-t[i])/scale)**p)),xs).coefficients;
+  const value=v=>fit.reduce((s,c,p)=>s+c*((v-t[i])/scale)**p,0);
+  return {start,ts,xs,value};
+ }
+ function draw(){
+  const i=+slider.value,{start,ts,xs,value}=local(i),lo=Math.max(0,start-12),hi=Math.min(n,start+k+12);
+  const fine=Array.from({length:61},(_,j)=>ts[0]+(ts[k-1]-ts[0])*j/60),curve=fine.map(value);
+  const width=760,height=250,pad={l:64,r:20,t:24,b:40},ys=[...x.slice(lo,hi),...curve],ymin=Math.min(...ys),ymax=Math.max(...ys),span=(ymax-ymin)*.08||1;
+  const X=v=>pad.l+(v-t[lo])/(t[hi-1]-t[lo])*(width-pad.l-pad.r),Y=v=>height-pad.b-(v-ymin+span)/(ymax-ymin+2*span)*(height-pad.t-pad.b);
+  const svg=svgNode('svg',{viewBox:`0 0 ${width} ${height}`,class:'chart c1-noise-chart',role:'img','aria-label':tr('x11_local',{k})});
+  for(let g=0;g<=4;g++){const v=ymin-span+(ymax-ymin+2*span)*g/4,tt=t[lo]+(t[hi-1]-t[lo])*g/4;svg.append(svgNode('line',{x1:pad.l,x2:width-pad.r,y1:Y(v),y2:Y(v),class:'grid'}),svgNode('text',{x:pad.l-8,y:Y(v)+4,'text-anchor':'end'},fmt(v)),svgNode('text',{x:X(tt),y:height-20,'text-anchor':'middle'},fmt(tt)));}
+  svg.append(svgNode('text',{x:pad.l,y:14},'u'),svgNode('text',{x:width-pad.r,y:height-2,'text-anchor':'end'},tr('j157')));
+  svg.append(svgNode('rect',{x:X(ts[0])-6,y:pad.t,width:X(ts[k-1])-X(ts[0])+12,height:height-pad.t-pad.b,class:'c1-noise-band'}));
+  svg.append(svgNode('path',{d:fine.map((v,j)=>(j?'L':'M')+X(v)+','+Y(curve[j])).join(''),class:'series-model c1-noise-curve'}));
+  svg.append(svgNode('line',{x1:X(t[i]),x2:X(t[i]),y1:Y(x[i]),y2:Y(value(t[i])),class:'c1-noise-stick'}));
+  for(let j=lo;j<hi;j++){const inside=j>=start&&j<start+k;svg.append(svgNode('circle',{cx:X(t[j]),cy:Y(x[j]),r:inside?5:3,class:inside?'c1-noise-in':'c1-noise-out'}));}
+  svg.append(svgNode('circle',{cx:X(t[i]),cy:Y(x[i]),r:10,class:'c1-noise-center'}));
+  const figure=$('c1-visual-noise');figure.replaceChildren(svg);
+  const legend=el('figcaption',tr('x11_points')+' · '+tr('x11_local',{k})+' · '+tr('x11_deviation'),'caption');legend.dataset.claim='review';figure.append(legend);
+  $('c1-noise-value').textContent=tr('x11_noise_value',{i:i+1,d:fmt(x[i]-value(t[i]))});
+ }
+ slider.addEventListener('input',draw);draw();
+ window.WispChapterNoise={variance,relative,local,draw};
+}
 function initChapterOne(){
  if(!$('p-c1-data'))return;
  const m=window.WispSolo.model,constant=m.blocks.find(b=>b.term===0),winner=m.blocks.find(b=>b.term===m.winner),norm=soloDot(m.D.b,m.D.b);
@@ -392,8 +457,9 @@ function initChapterOne(){
  const args={n:measuredTime.length,t0:fmt(measuredTime[0]),t1:fmt(measuredTime.at(-1)),noise:percent(teaching.sigma),floor:percent(m.floor),explainable:percent(m.explainable),winner:terms[m.winner],meaning:tr(m.winner===0?'x10_constant':'x10_other')};
  for(let i=0;i<7;i++)$('c1-text-'+i).textContent=tr('x10_text_'+i,args);
  if(!m.normalized){$('c1-text-5').textContent=tr('x10_fallback');document.querySelector('[data-i18n="x10_r2"]').textContent=tr('x10_fallback');}
- document.querySelectorAll('[data-c1-eye]').forEach(e=>e.textContent=tr('x10_eye',{i:e.dataset.c1Eye}));
- chart($('c1-visual-0'),[{x:measuredTime,y:teaching.observed,kind:'data',label:tr('x9_measured')}],{legend:false,yLabel:'u'});
+ const eyes=document.querySelectorAll('[data-c1-eye]');eyes.forEach(e=>e.textContent=tr('x10_eye',{i:e.dataset.c1Eye,n:eyes.length}));
+ initChapterMorph();
+ initChapterNoise(m);
  // The 1b axis follows the noise-free rate, so long windows stay readable; noisier rates are clipped to its edge.
  const rateMax=4*Math.max(...LIVE.windows.flatMap(chapterWindows).map(w=>Math.abs(w.clean)));
  // Shared SVG plot supplies a fixed rate axis for 1b and explicit residual sticks elsewhere.

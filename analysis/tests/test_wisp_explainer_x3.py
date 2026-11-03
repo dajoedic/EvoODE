@@ -54,25 +54,42 @@ console.log('PASS actual-page navigation, controls, drag, inertia, every method 
     run=subprocess.run(['node','-e',script,str(BASE/'src/pages.js'),json.dumps(pages)],capture_output=True,text=True,timeout=30)
     assert run.returncode==0,run.stdout+run.stderr
 
-@pytest.mark.parametrize('configuration',['legacy','delivered'])
+@pytest.mark.parametrize('configuration',['legacy','delivered','morph','noise'])
 @pytest.mark.parametrize('language',['en','de'])
 def test_full_presentation_dom(language,configuration):
     soup=BeautifulSoup((BASE/'dist/wisp_explainer.html').read_text(encoding='utf8'),'html.parser')
     data=json.loads(soup.select_one('#wisp-data').string)
+    # Independent cubic reference from the real teaching record, including edges.
+    import numpy as np
+    teaching = data['live']['teaching']
+    t, x = np.asarray(teaching['t']), np.asarray(teaching['observed'])
+    cubic = []
+    for center in (0, 171, len(t)-1):
+        start = min(max(center-4, 0), len(t)-9)
+        ts = t[start:start+9]
+        scale = max(abs(ts-t[center]))
+        coefficients = np.linalg.lstsq(np.vander((ts-t[center])/scale, 4, increasing=True), x[start:start+9], rcond=None)[0]
+        probe = np.linspace(ts[0], ts[-1], 17)
+        cubic.append(dict(center=center, start=start, t=probe.tolist(), y=(np.vander((probe-t[center])/scale, 4, increasing=True) @ coefficients).tolist()))
     def node(tag):
         return {'tag':tag.name,'attrs':{k:' '.join(v) if isinstance(v,list) else v for k,v in tag.attrs.items()},
                 'text':''.join(str(c) for c in tag.children if not getattr(c,'name',None)) if tag.name not in ('script','style') else '',
                 'children':[node(c) for c in tag.children if getattr(c,'name',None)] if tag.name not in ('script','style') else []}
     fixture=ROOT/'outputs/wisp_explainer_checks/x3_dom_fixture.json'
     fixture.parent.mkdir(parents=True,exist_ok=True)
-    fixture.write_text(json.dumps({'tree':node(soup.html),'data':data,'language':language,'configuration':configuration}),encoding='utf8')
+    fixture.write_text(json.dumps({'tree':node(soup.html),'data':data,'language':language,'configuration':configuration,'cubic':cubic}),encoding='utf8')
     run=subprocess.run(['node',str(ROOT/'analysis/tests/wisp_slides_dom.cjs'),str(BASE),str(fixture)],capture_output=True,text=True,timeout=60)
     assert run.returncode==0,run.stdout+run.stderr
 
 def test_page_structure_and_bilingual_source():
     soup=BeautifulSoup((BASE/'src/index.html').read_text(encoding='utf8'),'html.parser')
     pages=soup.select('main > .page')
-    assert len(pages)==26
+    assert len(pages)==27
+    assert [p['id'] for p in pages[:10]] == [
+        'p-hook', 'p-challenge', 'p-c1-data', 'p-c1-changes',
+        'p-c1-error-empty', 'p-c1-fit', 'p-c1-every', 'p-c1-noise',
+        'p-c1-percent', 'p-c1-solution',
+    ]
     assert pages[-1]['id']=='p-glossary'
     assert len({p['id'] for p in pages})==len(pages)
     assert len(soup.select('#p-overview .pipeline-map > a'))==8

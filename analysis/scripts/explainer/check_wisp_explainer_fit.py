@@ -151,18 +151,27 @@ def check_chapter_interactions(page,evidence):
         page.goto((ROOT/'explainer/wisp/dist/wisp_explainer.html').as_uri()+f'?lang={lang}',wait_until='load')
         page.wait_for_function('window.WispChapterOne && window.WispSlides?.nav')
         ids=page.evaluate('WispSlides.pages.map(p=>p.id)')
-        expected=['p-hook','p-challenge','p-c1-data','p-c1-changes','p-c1-error-empty','p-c1-fit','p-c1-every','p-c1-percent','p-c1-solution']
+        expected=['p-hook','p-challenge','p-c1-data','p-c1-changes','p-c1-error-empty','p-c1-fit','p-c1-every','p-c1-noise','p-c1-percent','p-c1-solution']
         if ids!=expected:raise AssertionError(f'Incorrect delivered inventory: {ids}')
         for id in ('p-solution','p-headline','p-results','p-glossary'):
             page.evaluate('(id)=>WispSlides.nav.link("#"+id)',id)
             if page.evaluate('WispSlides.nav.index')!=0:raise AssertionError('Hidden link reachable')
         page.keyboard.press('ArrowRight');page.wait_for_timeout(850)
-        if page.evaluate('WispSlides.nav.index')!=2:raise AssertionError('Right must jump to chapter one')
-        if page.locator('.page-dots a:visible').count()!=7:raise AssertionError('Wrong sub-step dots')
-        page.keyboard.press('ArrowDown');page.wait_for_timeout(850)
+        if page.evaluate('WispSlides.nav.index')!=1:raise AssertionError('Right must advance one page')
+        page.keyboard.press('ArrowRight');page.wait_for_timeout(850)
+        if page.evaluate('WispSlides.nav.index')!=2:raise AssertionError('Right must cross into chapter one')
+        if page.locator('.page-dots a:visible').count()!=8:raise AssertionError('Wrong sub-step dots')
+        page.keyboard.press('ArrowRight');page.wait_for_timeout(850)
         page.locator('#c1-window').focus();page.keyboard.press('ArrowLeft')
         if page.evaluate('WispSlides.nav.index')!=3:raise AssertionError('Slider lost its arrow key')
-        for id in ('p-c1-every','p-c1-percent'):
+        for id in expected[2:]:
+            page.evaluate('(id)=>WispSlides.nav.link("#"+id)',id);page.wait_for_timeout(850)
+            page.locator('body').click(position={'x':5,'y':5})
+            page.keyboard.press('ArrowUp');page.wait_for_timeout(850)
+            if page.evaluate('WispSlides.nav.index')!=0:raise AssertionError('Up must reach the intro chapter')
+        page.keyboard.press('ArrowDown');page.wait_for_timeout(850)
+        if page.evaluate('WispSlides.nav.index')!=2:raise AssertionError('Down must reach chapter one')
+        for id in ('p-c1-every','p-c1-noise','p-c1-percent'):
             page.evaluate('(id)=>WispSlides.nav.link("#"+id)',id);page.wait_for_timeout(850)
             selector='#c1-visual-4 button' if id=='p-c1-every' else '.c1-chips button'
             for button in page.locator(selector).all():

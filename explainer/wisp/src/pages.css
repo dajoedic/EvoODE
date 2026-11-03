@@ -237,3 +237,10 @@ dialog{max-width:min(1050px,90vw);max-height:80dvh;overflow:auto;overscroll-beha
 @media(min-width:760px) and (max-height:700px){.c1-visual .chart{height:165px}#c1-visual-1 .chart{height:150px}#c1-visual-5>div:last-child{display:grid;grid-template-columns:1fr 1fr;column-gap:28px}#c1-visual-5 .solo-bar{padding:1px 0;font-size:13px}#c1-visual-5 .solo-track{height:8px}.c1-stack{height:34px}#p-c1-solution .solo-equation{font-size:26px}.c1-page .page-content>p{font-size:16px}.c1-page h2{font-size:28px}.c1-visual{margin-top:10px}}
 @media(max-width:759px){#c1-visual-2,#c1-visual-3,#c1-visual-4{grid-template-columns:1fr}.c1-page .chart{height:auto}.c1-stack>span{font-size:11px}.c1-page h2{font-size:26px}}
 #pipeline-bar a{color:var(--ink)}#pipeline-bar a.current{border-bottom-color:var(--accent)}
+/* WP-X11: sub-steps run left to right, so their dots sit in a row at the bottom; chapters stack top to bottom. */
+.snapped .page-dots{top:auto;bottom:12px;left:50%;right:auto;transform:translateX(-50%);flex-direction:row;gap:9px}
+.snapped .page-dots a{position:relative}.page-dots a:hover:after,.page-dots a:focus:after{right:auto;left:50%;bottom:16px;transform:translateX(-50%)}
+.c1-toggle{display:flex;gap:8px;margin:6px 0 2px}.c1-toggle button[aria-pressed=true]{background:var(--accent);color:var(--bg);border-color:var(--accent)}
+#p-c1-noise .page-content>p{font-size:16px}
+.c1-noise-band{fill:var(--wash)}.c1-noise-curve{stroke-width:3}.c1-noise-in{fill:var(--data)}.c1-noise-out{fill:var(--data);opacity:.35}
+.c1-noise-center{fill:none;stroke:var(--model);stroke-width:2.5}.c1-noise-stick{stroke:var(--model);stroke-width:4;stroke-linecap:round}
