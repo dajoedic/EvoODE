@@ -10,11 +10,11 @@ zweites davon. Alles Dauerhafte gehört dorthin, nach `PAPER_1.md` oder ins `DIA
 **Regeln:** wird immer **vollständig überschrieben**, nie angehängt. Was älter als ein paar Tage
 ist, ist vermutlich falsch — dann gilt `CLAUDE.md`.
 
-> ## WISP-Explorable, Stand 03.11. 23:45
-> Preview https://claude.ai/artifact/XsxgvgYGZdqPkpnzVd2YMQ Version 15 (`281d67b`): Einführung (2 Seiten) + Kapitel 1 als
-> Scroll-Geschichte (11 Schritte, eine animierte Grafik, nur Scrollen). Später Kapitel ausgeblendet (eine Liste im
-> Quelltext). Offen: Nutzer will die Aufteilung „Rauschen / vom Baustein erklärt / noch erklärbar“ (S10) noch genauer
-> besprechen; Kapitel 2 („noch einer dazu“) erst nach seiner Freigabe. Build: `build_wisp_explainer_html_x2.py`.
+> ## WISP-Explorable, Stand 04.11. 00:50
+> Preview https://claude.ai/artifact/XsxgvgYGZdqPkpnzVd2YMQ Version 16: Einführung + Kapitel 1 als Scroll-Geschichte in
+> 12 Schritten (eine animierte Grafik, nur Scrollen; Kapitelanzeige in der Kopfzeile). Später Kapitel ausgeblendet.
+> Offen: Aufteilung „Rauschen / vom Baustein erklärt / noch erklärbar“ (Schritt 11) mit dem Nutzer besprechen; Kapitel 2
+> erst nach Freigabe. Build: `build_wisp_explainer_html_x2.py`; Bildkontrolle per Edge-Headless-Frames (Scratchpad).
 
 > ## ⚠️ ACHTUNG: C-6 WIRD LEERGEZOGEN — PODS WANDERN AUTOMATISCH ZUR W-REIHE
 > **Seit 02.11. 23:58 (Nutzer: W-Reihe hat absolute Priorität).** Das Skript `shift_pods.sh` (Scratchpad dieser Sitzung,
