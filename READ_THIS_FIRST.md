@@ -10,11 +10,11 @@ zweites davon. Alles Dauerhafte gehört dorthin, nach `PAPER_1.md` oder ins `DIA
 **Regeln:** wird immer **vollständig überschrieben**, nie angehängt. Was älter als ein paar Tage
 ist, ist vermutlich falsch — dann gilt `CLAUDE.md`.
 
-> ## WISP-Explorable, Stand 03.11. 21:00
-> Preview https://claude.ai/artifact/XsxgvgYGZdqPkpnzVd2YMQ Version 13 (`5d11df7`): Einführung (2 Seiten) + Kapitel 1
-> „Ein Baustein allein“ in 7 Unterschritten; alles danach ausgeblendet (eine Liste im Quelltext). WP-X10 von Claude
-> fertiggestellt (Codex-Limit; Nutzer erlaubt direktes Implementieren). Nutzer geht WISP Kapitel für Kapitel durch;
-> Kapitel 2 („noch einer dazu“) erst nach seiner Freigabe von Kapitel 1. Build: `build_wisp_explainer_html_x2.py`.
+> ## WISP-Explorable, Stand 03.11. 23:45
+> Preview https://claude.ai/artifact/XsxgvgYGZdqPkpnzVd2YMQ Version 15 (`281d67b`): Einführung (2 Seiten) + Kapitel 1 als
+> Scroll-Geschichte (11 Schritte, eine animierte Grafik, nur Scrollen). Später Kapitel ausgeblendet (eine Liste im
+> Quelltext). Offen: Nutzer will die Aufteilung „Rauschen / vom Baustein erklärt / noch erklärbar“ (S10) noch genauer
+> besprechen; Kapitel 2 („noch einer dazu“) erst nach seiner Freigabe. Build: `build_wisp_explainer_html_x2.py`.
 
 > ## ⚠️ ACHTUNG: C-6 WIRD LEERGEZOGEN — PODS WANDERN AUTOMATISCH ZUR W-REIHE
 > **Seit 02.11. 23:58 (Nutzer: W-Reihe hat absolute Priorität).** Das Skript `shift_pods.sh` (Scratchpad dieser Sitzung,
