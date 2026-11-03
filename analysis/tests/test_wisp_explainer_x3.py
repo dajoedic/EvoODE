@@ -54,8 +54,9 @@ console.log('PASS actual-page navigation, controls, drag, inertia, every method 
     run=subprocess.run(['node','-e',script,str(BASE/'src/pages.js'),json.dumps(pages)],capture_output=True,text=True,timeout=30)
     assert run.returncode==0,run.stdout+run.stderr
 
+@pytest.mark.parametrize('configuration',['legacy','delivered'])
 @pytest.mark.parametrize('language',['en','de'])
-def test_full_presentation_dom(language):
+def test_full_presentation_dom(language,configuration):
     soup=BeautifulSoup((BASE/'dist/wisp_explainer.html').read_text(encoding='utf8'),'html.parser')
     data=json.loads(soup.select_one('#wisp-data').string)
     def node(tag):
@@ -64,14 +65,14 @@ def test_full_presentation_dom(language):
                 'children':[node(c) for c in tag.children if getattr(c,'name',None)] if tag.name not in ('script','style') else []}
     fixture=ROOT/'outputs/wisp_explainer_checks/x3_dom_fixture.json'
     fixture.parent.mkdir(parents=True,exist_ok=True)
-    fixture.write_text(json.dumps({'tree':node(soup.html),'data':data,'language':language}),encoding='utf8')
+    fixture.write_text(json.dumps({'tree':node(soup.html),'data':data,'language':language,'configuration':configuration}),encoding='utf8')
     run=subprocess.run(['node',str(ROOT/'analysis/tests/wisp_slides_dom.cjs'),str(BASE),str(fixture)],capture_output=True,text=True,timeout=60)
     assert run.returncode==0,run.stdout+run.stderr
 
 def test_page_structure_and_bilingual_source():
     soup=BeautifulSoup((BASE/'src/index.html').read_text(encoding='utf8'),'html.parser')
     pages=soup.select('main > .page')
-    assert 18<=len(pages)<=22
+    assert len(pages)==26
     assert pages[-1]['id']=='p-glossary'
     assert len({p['id'] for p in pages})==len(pages)
     assert len(soup.select('#p-overview .pipeline-map > a'))==8

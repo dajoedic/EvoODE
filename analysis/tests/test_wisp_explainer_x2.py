@@ -67,7 +67,7 @@ for(const e of all.filter(e=>e.dataset.i18n))if(!e.textContent||e.textContent!==
 const keys=new Set(Object.keys(data.live.i18n.en));
 for(const e of all)if(keys.has(e.textContent)&&!['WISP','BIC','u','r','K'].includes(e.textContent))throw Error('Raw translation key in DOM: '+e.textContent);
 const claims=all.filter(e=>e.attrs['data-claim']);
-if(claims.length!==4||claims.some(e=>!keys.has(e.attrs['data-claim'])))throw Error('Claim marker key mismatch');
+if(claims.filter(e=>e.attrs['data-claim']!=='review').length!==4||claims.some(e=>e.attrs['data-claim']!=='review'&&!keys.has(e.attrs['data-claim'])))throw Error('Claim marker key mismatch');
 for(const feature of data.live.featured){elements['fit-example'].value=feature.cell_id;elements['fit-example'].listeners.change();for(let i=0;i<feature.candidates.length;i++){elements['fit-candidate'].value=i;elements['fit-candidate'].listeners.input();}}
 for(const feature of data.live.featured.filter(f=>f.stop_reference)){elements['stop-example'].value=feature.cell_id;elements['stop-example'].listeners.change();}
 const other=lang==='de'?'en':'de';elements['language-'+other].listeners.click();

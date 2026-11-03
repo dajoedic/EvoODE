@@ -134,7 +134,7 @@ class Element {
  get value(){return this._value;}
  set value(v){this._value=String(v);}
  addEventListener(event,fn){this.listeners[event]=fn;}
- querySelector(selector){if(selector.startsWith('.'))return this.querySelectorAll('*').find(c=>(c.className||'').split(' ').includes(selector.slice(1)));if(selector==='output')return this.children.find(c=>c.tag==='output');if(selector==='path')return this.querySelectorAll('path')[0];const type=selector.includes('checkbox')?'checkbox':'range';return this.children.flatMap(c=>[c,...c.children]).find(c=>c.type===type);}
+ querySelector(selector){if(selector.startsWith('.'))return this.querySelectorAll('*').find(c=>(c.className||'').split(' ').includes(selector.slice(1)));if(selector==='output')return this.children.find(c=>c.tag==='output');if(selector==='svg')return this.querySelectorAll('svg')[0];if(selector==='path')return this.querySelectorAll('path')[0];const type=selector.includes('checkbox')?'checkbox':'range';return this.children.flatMap(c=>[c,...c.children]).find(c=>c.type===type);}
  querySelectorAll(selector){return this.children.flatMap(c=>[c,...c.querySelectorAll('*')]).filter(c=>selector==='*'||c.tag===selector);}
  focus(){}
 }
@@ -180,9 +180,9 @@ if(!elements['path-event'].textContent.includes('FoBa'))throw Error('Live FoBa f
 if(!data.live.teaching||data.live.teaching.cell_id!==data.live.references[0].cell_id)throw Error('Missing real teaching cell');
 // Visible titles accompany every Cartesian SVG chart, including dynamically created plots.
 for(const svg of all.filter(e=>e.tag==='svg'&&e.attrs.class==='chart')){
- const horizontalSolo=svg.children.some(e=>e.tag==='text'&&e.textContent===tr('x9_change')&&e.attrs.y==='17'&&!e.attrs.transform);
+ const horizontalSolo=svg.children.some(e=>e.tag==='text'&&[tr('x9_change'),tr('x10_rate')].includes(e.textContent)&&e.attrs.y==='17'&&!e.attrs.transform);
  if(!horizontalSolo&&!svg.children.some(e=>e.tag==='text'&&e.attrs.transform?.includes('rotate(-90)')))throw Error('Missing visible y axis title');
- if(!svg.children.some(e=>e.tag==='text'&&e.attrs.y==='306'))throw Error('Missing visible x axis title');
+ if(!svg.children.some(e=>e.tag==='text'&&['306','267'].includes(e.attrs.y)))throw Error('Missing visible x axis title');
 }
 coeff[1]=1;enabled.splice(0,6,false,true,false,false,false,false);play();
 if(!elements['play-status'].textContent.includes('clipped at twice'))throw Error('Missing clipping notice');

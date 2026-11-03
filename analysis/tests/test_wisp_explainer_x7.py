@@ -9,7 +9,7 @@ BASE = Path(__file__).resolve().parents[2] / 'explainer/wisp'
 def test_hook_bilingual_history_and_illustration_only():
     soup = BeautifulSoup((BASE / 'src/index.html').read_text(encoding='utf8'), 'html.parser')
     hook = soup.select_one('#p-hook')
-    assert len(soup.select('main > .page')) == 19
+    assert len(soup.select('main > .page')) == 26
     assert len(hook.select('.history-timeline > li')) == 5
     assert [n.text for n in hook.select('.history-timeline small')[:4]] == ['1609–1687', '1838', '1925–26', '1952']
     assert not hook.select('[data-tex], .math, #problem-chart')

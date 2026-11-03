@@ -1,4 +1,4 @@
-﻿/* Presentation adapters: all evidence and result prose bind to exported data. */
+/* Presentation adapters: all evidence and result prose bind to exported data. */
 "use strict";
 const DATA=JSON.parse(document.getElementById("wisp-data").textContent);
 // Restore the unchanged results contract from losslessly interned transport arrays.
@@ -381,3 +381,57 @@ $('data-summary').textContent=$('combination-count').textContent;
 // One native modal per section: focus is trapped by the browser and scrolling stays inside.
 document.querySelectorAll('[data-more]').forEach(button=>button.addEventListener('click',()=>button.parentElement.querySelector('dialog').showModal()));
 document.querySelectorAll('[data-close]').forEach(button=>button.addEventListener('click',()=>button.closest('dialog').close()));
+// Chapter one uses the same full design and frozen first-step fit as the retained page.
+function chapterError(model,term,c){return model.D.b.reduce((sum,b,i)=>sum+(b-c*model.D.A[i][term])**2,0)/soloDot(model.D.b,model.D.b);}
+function chapterParts(model,block){const floor=model.normalized?model.floor:0;return [floor,block.gain,1-floor-block.gain];}
+function chapterWindows(length){const t=measuredTime,x=teaching.observed,out=[];for(let a=0;a+length<t.length;a+=length){const b=a+length;out.push({time:(t[a]+t[b])/2,rate:(x[b]-x[a])/(t[b]-t[a]),clean:(teaching.truth[b]-teaching.truth[a])/(t[b]-t[a])});}return out;}
+function initChapterOne(){
+ if(!$('p-c1-data'))return;
+ const m=window.WispSolo.model,constant=m.blocks.find(b=>b.term===0),winner=m.blocks.find(b=>b.term===m.winner),norm=soloDot(m.D.b,m.D.b);
+ const percent=x=>(100*x).toLocaleString(language,{minimumFractionDigits:1,maximumFractionDigits:1})+' %';
+ const args={n:measuredTime.length,t0:fmt(measuredTime[0]),t1:fmt(measuredTime.at(-1)),noise:percent(teaching.sigma),floor:percent(m.floor),explainable:percent(m.explainable),winner:terms[m.winner],meaning:tr(m.winner===0?'x10_constant':'x10_other')};
+ for(let i=0;i<7;i++)$('c1-text-'+i).textContent=tr('x10_text_'+i,args);
+ if(!m.normalized){$('c1-text-5').textContent=tr('x10_fallback');document.querySelector('[data-i18n="x10_r2"]').textContent=tr('x10_fallback');}
+ document.querySelectorAll('[data-c1-eye]').forEach(e=>e.textContent=tr('x10_eye',{i:e.dataset.c1Eye}));
+ chart($('c1-visual-0'),[{x:measuredTime,y:teaching.observed,kind:'data',label:tr('x9_measured')}],{legend:false,yLabel:'u'});
+ // The 1b axis follows the noise-free rate, so long windows stay readable; noisier rates are clipped to its edge.
+ const rateMax=4*Math.max(...LIVE.windows.flatMap(chapterWindows).map(w=>Math.abs(w.clean)));
+ // Shared SVG plot supplies a fixed rate axis for 1b and explicit residual sticks elsewhere.
+ function plot(target,x,observed,predicted,{rate=false,clean=false,label=''}={}){
+  target.replaceChildren();const width=760,height=270,pad={l:76,r:20,t:30,b:42};
+  const bound=rate?rateMax:Math.max(1,...observed.map(Math.abs),...predicted.map(Math.abs))*1.08;
+  const clipped=observed.filter(v=>Math.abs(v)>bound).length;observed=observed.map(v=>Math.max(-bound,Math.min(bound,v)));
+  const X=v=>pad.l+(v-measuredTime[0])/(measuredTime.at(-1)-measuredTime[0])*(width-pad.l-pad.r),Y=v=>height-pad.b-(v+bound)/(2*bound)*(height-pad.t-pad.b);
+  const svg=svgNode('svg',{viewBox:`0 0 ${width} ${height}`,class:'chart',role:'img','aria-label':tr(rate?'x10_rate':'x9_change')});target.append(svg);
+  for(let i=0;i<=4;i++){const v=bound*(i/2-1);svg.append(svgNode('line',{x1:pad.l,x2:width-pad.r,y1:Y(v),y2:Y(v),class:'grid'}),svgNode('text',{x:pad.l-8,y:Y(v)+4,'text-anchor':'end'},fmt(v)));const t=measuredTime[0]+(measuredTime.at(-1)-measuredTime[0])*i/4;svg.append(svgNode('text',{x:X(t),y:height-22,'text-anchor':'middle'},fmt(t)));}
+  svg.append(svgNode('text',{x:pad.l,y:17},tr(rate?'x10_rate':'x9_change')),svgNode('text',{x:width-pad.r,y:height-3,'text-anchor':'end'},tr('j157')));
+  if(!clean)x.forEach((v,i)=>svg.append(svgNode('line',{x1:X(v),x2:X(v),y1:Y(observed[i]),y2:Y(predicted[i]),class:'c1-residual'})));
+  svg.append(svgNode('path',{d:x.map((v,i)=>(i?'L':'M')+X(v)+','+Y(predicted[i])).join(''),class:clean?'series-truth':'series-model'}));
+  x.forEach((v,i)=>svg.append(svgNode('circle',{cx:X(v),cy:Y(observed[i]),r:4,class:'measurement-dot'})));
+  const legend=el('figcaption',tr('x9_measured')+' · '+(clean?tr('x10_clean'):label)+(clipped?' · '+tr('x10_clipped',{n:clipped}):''),'caption');legend.dataset.claim='review';target.append(legend);
+ }
+ const windowSlider=$('c1-window');windowSlider.max=LIVE.windows.length-1;windowSlider.value=0;
+ function changes(){const length=LIVE.windows[+windowSlider.value],rows=chapterWindows(length);$('c1-window-value').textContent=tr('x10_length',{samples:length,duration:fmt(measuredTime[length]-measuredTime[0])});plot($('c1-visual-1'),rows.map(w=>w.time),rows.map(w=>w.rate),rows.map(w=>w.clean),{rate:true,clean:true});}
+ windowSlider.addEventListener('input',changes);changes();
+ const y=m.rows.map(({i})=>m.D.b[i]),prediction=block=>m.rows.map(({i})=>block.coefficient*m.D.A[i][block.term]);
+ const emptyPlot=el('div'),emptyBar=el('div');$('c1-visual-2').append(emptyPlot,emptyBar);plot(emptyPlot,m.x,y,y.map(()=>0),{label:tr('x10_none')});
+ emptyBar.className='c1-empty-bar';emptyBar.textContent=tr('x10_error',{p:percent(norm/norm)});
+ const fitPlot=el('div'),curve=el('div');$('c1-visual-3').append(fitPlot,curve);
+ const cSlider=$('c1-c'),span=Math.max(Math.abs(constant.coefficient),1);cSlider.min=constant.coefficient-span;cSlider.max=constant.coefficient+span;cSlider.value=constant.coefficient;
+ function fit(){const c=+cSlider.value;$('c1-c-value').textContent=soloNumber(c);plot(fitPlot,m.x,y,m.rows.map(({i})=>c*m.D.A[i][0]),{label:tr('x9_prediction',{block:terms[0]})});
+  const cs=Array.from({length:81},(_,i)=>+cSlider.min+(+cSlider.max-cSlider.min)*i/80);cs.push(constant.coefficient);cs.sort((a,b)=>a-b);
+  chart(curve,[{x:cs,y:cs.map(v=>100*chapterError(m,0,v)),kind:'model'},{x:[constant.coefficient],y:[100*chapterError(m,0,constant.coefficient)],kind:'truth'}],{legend:false,xLabel:'c',yLabel:tr('x10_error_axis'),point:[c,100*chapterError(m,0,c)]});
+  const caption=el('figcaption',tr('x10_minimum',{c:soloNumber(constant.coefficient)}),'caption');caption.dataset.claim='review';curve.append(caption);
+  const svg=curve.querySelectorAll('svg')[0];svg.append(svgNode('text',{x:380,y:30,'text-anchor':'middle'},'◆ c* = '+soloNumber(constant.coefficient)));
+ }
+ cSlider.addEventListener('input',fit);fit();
+ const everyBars=el('div'),everyPrediction=el('div'),everyChart=el('div'),everyEquation=el('div',undefined,'solo-equation');everyPrediction.append(everyChart,everyEquation);$('c1-visual-4').append(everyBars,everyPrediction);
+ function chooseEvery(term){const block=m.blocks.find(b=>b.term===term);everyBars.querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',String(+b.dataset.term===term)));plot(everyChart,m.x,y,prediction(block),{label:tr('x9_prediction',{block:terms[term]})});everyEquation.textContent=soloEquation(block);}
+ m.blocks.slice().sort((a,b)=>chapterError(m,a.term,a.coefficient)-chapterError(m,b.term,b.coefficient)).forEach(block=>{const error=chapterError(m,block.term,block.coefficient),button=el('button',undefined,'solo-bar'+(block.term===m.winner?' winner':'')),track=el('span',undefined,'solo-track'),fill=el('span');button.dataset.term=block.term;button.dataset.error=error;fill.style.width=100*error+'%';track.append(fill);button.append(el('span',terms[block.term]),track,el('span',percent(error)));button.addEventListener('click',()=>chooseEvery(block.term));everyBars.append(button);});chooseEvery(m.winner);
+ const chips=el('nav',undefined,'c1-chips'),stack=el('div',undefined,'c1-stack'),shares=el('div'),stackLegend=el('figcaption',undefined,'caption');stackLegend.dataset.claim='review';$('c1-visual-5').append(chips,stack,stackLegend,shares);
+ function choosePercent(term){const block=m.blocks.find(b=>b.term===term),parts=chapterParts(m,block);stack.replaceChildren();parts.forEach((part,i)=>{const node=el('span',percent(part),'c1-part-'+i);node.style.width=100*part+'%';stack.append(node);});stack.dataset.parts=JSON.stringify(parts);stackLegend.textContent=['floor','reduced','remaining'].map((key,i)=>tr('x10_'+key)+': '+percent(parts[i])).join(' · ');if(!m.normalized)stackLegend.textContent=tr('x10_fallback');chips.querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',String(+b.dataset.term===term)));}
+ m.blocks.forEach(block=>{const chip=el('button',terms[block.term]);chip.dataset.term=block.term;chip.addEventListener('click',()=>choosePercent(block.term));chips.append(chip);const row=el('div',undefined,'solo-bar'),track=el('span',undefined,'solo-track'),fill=el('span');fill.style.width=100*block.share+'%';track.append(fill);row.append(el('span',terms[block.term]),track,el('span',percent(block.share)));shares.append(row);});choosePercent(m.winner);
+ const solutionEquation=el('div',soloEquation(winner),'solo-equation');$('c1-visual-6').append(solutionEquation);const solutionChart=el('div');$('c1-visual-6').append(solutionChart);plot(solutionChart,m.x,y,prediction(winner),{label:tr('x9_prediction',{block:terms[m.winner]})});
+ window.WispChapterOne={model:m,chooseEvery,choosePercent,error:chapterError,parts:chapterParts};
+}
+initChapterOne();

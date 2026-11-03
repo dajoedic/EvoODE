@@ -44,6 +44,7 @@ class Node {
 function inflate(record){const n=new Node(record.tag,record.attrs,record.text);for(const c of record.children)n.append(inflate(c));return n;}
 const html=inflate(fixture.tree),doc=new Node('document');doc.append(html);doc.documentElement=html;doc.body=doc.querySelector('body');doc.fonts={ready:Promise.resolve()};const idIndex=new Map(doc.querySelectorAll('[id]').map(e=>[e.id,e]));doc.getElementById=id=>{if(!idIndex.has(id)){const found=doc.querySelector('#'+id);if(found)idIndex.set(id,found);}return idIndex.get(id)||null;};doc.createElement=t=>new Node(t);doc.createElementNS=(_,t)=>new Node(t);
 doc.getElementById('wisp-data').textContent=JSON.stringify(fixture.data);
+if(fixture.configuration!=='delivered')global.WispVisibleChapters=['intro','later'];
 global.document=doc;global.window=global;global.innerWidth=1366;global.innerHeight=657;
 global.location={href:'file:///wisp.html?lang='+fixture.language,get hash(){return new URL(this.href).hash;},assign(url){this.href=String(url);}};
 global.history={pushState(_,__,url){location.href=String(url);},replaceState(_,__,url){location.href=String(url);}};
@@ -53,6 +54,33 @@ const events={};global.addEventListener=(k,fn)=>(events[k]??=[]).push(fn);global
 let dishVisible;global.IntersectionObserver=class{constructor(fn){dishVisible=fn;}observe(){}disconnect(){}};
 vm.runInThisContext(fs.readFileSync(base+'/src/app.js','utf8'),{filename:'app.js'});
 vm.runInThisContext(fs.readFileSync(base+'/src/pages.js','utf8'),{filename:'pages.js'});
+// Delivered configuration executes the actual app, DOM and event routing.
+if(fixture.configuration==='delivered'){
+ const slides=WispSlides,one=WispChapterOne,m=one.model;
+ const ids=['p-hook','p-challenge','p-c1-data','p-c1-changes','p-c1-error-empty','p-c1-fit','p-c1-every','p-c1-percent','p-c1-solution'];
+ assert.deepEqual(slides.pages.map(p=>p.id),ids);
+ assert(doc.getElementById('p-results').hidden);assert(doc.getElementById('p-solution').hidden);
+ for(const id of ['p-results','p-headline','p-solution','p-glossary']){slides.nav.go(0);slides.nav.link('#'+id);assert.equal(slides.nav.index,0);}
+ function event(key,target=doc.body){let prevented=false;for(const fn of events.keydown||[])fn({type:'keydown',key,target,preventDefault(){prevented=true;}});advance();return prevented;}
+ slides.nav.go(0);advance();event('ArrowRight');assert.equal(slides.nav.index,2);
+ assert.equal(doc.querySelectorAll('.page-dots a').filter(a=>!a.hidden).length,7);
+ event('ArrowDown');assert.equal(slides.nav.index,3);event('ArrowUp');assert.equal(slides.nav.index,2);
+ event('ArrowLeft');assert.equal(slides.nav.index,0);
+ event('PageDown');event('PageDown');assert.equal(slides.nav.index,2);
+ for(const key of ['ArrowLeft','ArrowRight','ArrowUp','ArrowDown']){assert(!event(key,doc.getElementById('c1-c')));assert.equal(slides.nav.index,2);}
+ for(const key of ['c1-window','c1-c']){const slider=doc.getElementById(key),before=doc.getElementById(key==='c1-window'?'c1-visual-1':'c1-visual-3').querySelector('path').getAttribute('d');slider.value=key==='c1-window'?slider.max:(slider.min||0);slider.emit('input');assert.notEqual(doc.getElementById(key==='c1-window'?'c1-visual-1':'c1-visual-3').querySelector('path').getAttribute('d'),before);}
+ const close=(a,b)=>assert(Math.abs(a-b)<1e-10,`${a} != ${b}`),constant=m.blocks.find(b=>b.term===0);
+ close(one.error(m,0,constant.coefficient),1-constant.gain);
+ for(const delta of [-1,1])assert(one.error(m,0,constant.coefficient+delta)>one.error(m,0,constant.coefficient));
+ for(const b of m.blocks){one.chooseEvery(b.term);one.choosePercent(b.term);const parts=JSON.parse(doc.querySelector('.c1-stack').dataset.parts);close(parts.reduce((a,b)=>a+b,0),1);close(parts[0],m.floor);close(parts[1],b.gain);close(parts[2],m.explainable-b.gain);assert.equal(doc.querySelectorAll('#c1-visual-4 button[aria-pressed="true"]').length,1);}
+ slides.nav.go(1);advance();for(const fn of events.wheel||[])fn({type:'wheel',target:doc.body,deltaY:500,preventDefault(){}});advance();assert.equal(slides.nav.index,2);
+ slides.nav.go(8);advance();event('PageDown');assert.equal(slides.nav.index,8);
+ const sorted=doc.querySelectorAll('#c1-visual-4 button').map(b=>+b.dataset.error);assert(sorted.every((v,i)=>!i||v>=sorted[i-1]));
+ assert.equal(doc.querySelectorAll('#c1-visual-0 .measurement-dot').length,fixture.data.live.teaching.t.length);
+ for(const p of slides.pages.slice(2)){const prose=p.querySelectorAll('p,figcaption,footer');assert(prose.every(n=>n.dataset.claim==='review'));assert(p.querySelector('.eyebrow').textContent.includes('7'));const ordinary=p.querySelectorAll('p,h2').map(n=>n.textContent).join(' ');assert(!/FROLS|Weak Form|Least Squares|SSE|BIC|Rauschschätzung|noise estimation/.test(ordinary));}
+ console.log('PASS X10 delivered chapters, seven bilingual steps, hidden targets, actual arrow/input events, sliders, error minimum and noise partitions');
+ process.exit(0);
+}
 // Execute the animation lifecycle, including delayed visibility and reduced motion.
 const dish=doc.getElementById('dish-illustration');
 assert.equal(dish.dataset.progress,'0');advance(1000);assert.equal(dish.dataset.progress,'0');
@@ -94,8 +122,8 @@ emit('keydown',slider,{key:'ArrowDown'});doc.emit('pointerdown',{target:slider})
 advance();const weak=doc.getElementById('window-chart');doc.emit('pointerdown',{target:weak});emit('keydown',doc.body,{key:'PageDown'});assert.equal(slides.nav.index,before);emit('pointerup',doc.body);advance();
 emit('keydown',doc.body,{key:'PageDown'});assert.equal(slides.nav.index,before+1);
 for(let i=0;i<slides.pages.length;i++){
- slides.nav.go(i);const active=doc.querySelectorAll('#pipeline-bar .current');const step=slides.pages[i].dataset.step;
- assert.deepEqual(active.map(a=>a.dataset.step),step?[step]:[]);
+ slides.nav.go(i);const active=doc.querySelectorAll('#pipeline-bar .current');const chapter=slides.pages[i].dataset.chapter;
+ assert.deepEqual(active.map(a=>a.dataset.chapter),[chapter]);
 }
 location.href='file:///wisp.html?lang=en#p-weak-intro';emit('popstate',doc.body);assert.equal(slides.pages[slides.nav.index].id,'p-weak-intro');
 global.innerWidth=759;emit('resize',doc.body);assert(!html.classList.contains('snapped'));

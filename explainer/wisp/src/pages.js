@@ -1,6 +1,10 @@
 /* Full-screen presentation only. No numerical search or result contract changes. */
 (function(root){
  'use strict';
+ // Delivered chapter configuration. Tests may override it before initialization.
+ const visibleChapters=['intro','one'];
+ function visiblePages(pages,configuration=visibleChapters){return pages.filter(p=>configuration.includes(p.dataset.chapter));}
+ function chapterTarget(pages,index,direction){const chapters=[...new Set(pages.map(p=>p.dataset.chapter))],current=chapters.indexOf(pages[index].dataset.chapter),next=Math.max(0,Math.min(chapters.length-1,current+direction));return pages.findIndex(p=>p.dataset.chapter===chapters[next]);}
  const steps=['data','weak','frols','foba','stop','fit','bic','test'];
  function fallback(width,height,reduced){return width<760||height<560||reduced;}
  function controller(ids,initial,show){
@@ -15,7 +19,7 @@
  }
  function wheelGate(){let last=-Infinity,locked=0;return (now,delta)=>{const quiet=now-last>220;last=now;if(quiet&&now>=locked&&Math.abs(delta)>2){locked=now+650;return Math.sign(delta);}return 0;};}
  function stepState(pages,index){return steps.map(step=>({step,active:pages[index].dataset.step===step}));}
- const api={steps,fallback,controller,protectedTarget,inputAction,wheelGate,stepState};
+ const api={visibleChapters,visiblePages,chapterTarget,steps,fallback,controller,protectedTarget,inputAction,wheelGate,stepState};
  if(typeof module!=='undefined')module.exports=api;
  root.WispSlides=api;
  if(typeof document==='undefined')return;
@@ -41,7 +45,10 @@
  });articles.forEach((a,i)=>a.hidden=i!==0);storyTabs.children[0]?.setAttribute('aria-selected','true');
  // Secondary explanations remain available in the single More drawer.
  for(const [id,selector] of [['p-test-intro','[data-i18n="x3_test_sentence"]'],['p-weak-intro','figure > .caption,figure > figcaption'],['p-frols-intro','[data-i18n="x3_frols_sentence"]']]){const page=document.getElementById(id),drawer=page.querySelector('dialog');page.querySelectorAll(selector).forEach(node=>drawer.append(node));}
- const pages=[...main.querySelectorAll(':scope > .page')];
+ const allPages=[...main.querySelectorAll(':scope > .page')];
+ const configuration=root.WispVisibleChapters||visibleChapters;
+ const pages=visiblePages(allPages,configuration);allPages.forEach(p=>p.hidden=!pages.includes(p));
+ document.querySelectorAll('a[href^="#p-"]').forEach(a=>{a.hidden=!pages.some(p=>a.hash==='#'+p.id);});
  pages.forEach(page=>{if(!page.querySelector('h1,h2,h3'))page.querySelector('.page-content').prepend(make('h2',page.dataset.step?translate(page.dataset.step):document.querySelector('#p-'+page.dataset.section+' h2')?.textContent||tr('h006')));});
  const app=document.querySelector('#p-results .page-content');
  const filters=make('div',null,'results-filters'),panels=make('div',null,'results-panels');
@@ -74,7 +81,8 @@
  // The long support path has a dedicated bounded detail, not tiny recap text.
  document.querySelectorAll('[data-outcome]').forEach(e=>{e.textContent=outcomes[e.dataset.outcome]||tr('j153');e.tabIndex=0;e.dataset.internalScroll='true';});
  const bar=document.getElementById('pipeline-bar');bar.setAttribute('aria-label','WISP');
- steps.forEach(step=>{const a=make('a',translate(step));a.href='#p-'+step+'-intro';a.dataset.step=step;bar.append(a);});
+ const chapters=[...new Set(pages.map(p=>p.dataset.chapter))];
+ chapters.forEach(chapter=>{const page=pages.find(p=>p.dataset.chapter===chapter),key=chapter==='intro'?'x10_chapter_intro':chapter==='one'?'x10_chapter_one':null,a=make('a',page.dataset.chapterTitle||(key?tr(key):page.querySelector('h1,h2,h3').textContent));a.href='#'+page.id;a.dataset.chapter=chapter;bar.append(a);});
  const dots=make('nav',null,'page-dots');dots.setAttribute('aria-label',tr('h150'));document.body.append(dots);
  const dotButtons=pages.map((page,i)=>{const a=make('a');a.href='#'+page.id;a.title=(page.dataset.step?translate(page.dataset.step)+' · ':'')+page.querySelector('h1,h2,h3').textContent;a.setAttribute('aria-label',a.title);dots.append(a);return a;});
  const reduced=window.matchMedia('(prefers-reduced-motion: reduce)');
@@ -87,13 +95,15 @@
   function frame(now){const t=Math.min(1,(now-start)/720),ease=t<.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2;window.scrollTo(0,from+(target-from)*ease);if(t<1)animation=requestAnimationFrame(frame);}
   animation=requestAnimationFrame(frame);
  }
- function show(i,push,scroll=true){const page=pages[i];pages.forEach((p,j)=>p.classList.toggle('active',j===i));dotButtons.forEach((a,j)=>{if(j===i)a.setAttribute('aria-current','page');else a.removeAttribute('aria-current');});
-  bar.hidden=!page.dataset.step;const state=stepState(pages,i);bar.querySelectorAll('a').forEach(a=>{const active=state.find(s=>s.step===a.dataset.step).active;a.classList.toggle('current',active);if(active)a.setAttribute('aria-current','step');else a.removeAttribute('aria-current');});
+ let previousChapter=null;
+ function show(i,push,scroll=true){const page=pages[i],changed=previousChapter!==null&&previousChapter!==page.dataset.chapter,direction=chapters.indexOf(page.dataset.chapter)-chapters.indexOf(previousChapter);previousChapter=page.dataset.chapter;pages.forEach((p,j)=>p.classList.toggle('active',j===i));dotButtons.forEach((a,j)=>{if(j===i)a.setAttribute('aria-current','page');else a.removeAttribute('aria-current');});
+  dotButtons.forEach((a,j)=>a.hidden=pages[j].dataset.chapter!==page.dataset.chapter);
+  bar.hidden=false;bar.querySelectorAll('a').forEach(a=>{const active=a.dataset.chapter===page.dataset.chapter;a.classList.toggle('current',active);if(active)a.setAttribute('aria-current','step');else a.removeAttribute('aria-current');});
   if(push&&location.hash!=='#'+page.id){const url=new URL(location.href);url.hash=page.id;history.pushState(null,'',url);}
-  if(scroll){if(snapped&&!fitcheck&&initialized&&!reduced.matches)smoothTo(page.offsetTop);else page.scrollIntoView({behavior:'instant',block:'start'});}
+  if(scroll){if(changed&&snapped&&!fitcheck&&initialized&&!reduced.matches){cancelAnimationFrame(animation);page.scrollIntoView({behavior:'instant',block:'start'});animatingUntil=performance.now()+720;page.querySelector('.page-content').animate?.([{transform:`translateX(${Math.sign(direction)*100}vw)`},{transform:'translateX(0)'}],{duration:720,easing:'cubic-bezier(.65,0,.35,1)'});}else if(snapped&&!fitcheck&&initialized&&!reduced.matches)smoothTo(page.offsetTop);else page.scrollIntoView({behavior:'instant',block:'start'});}
  }
  const nav=controller(pages.map(p=>p.id),location.hash.slice(1),show);api.nav=nav;api.pages=pages;
- function link(event){const a=event.target.closest('a[href^="#p-"]');if(!a)return;const i=pages.findIndex(p=>p.id===a.hash.slice(1));if(i<0)return;event.preventDefault();nav.go(i);}
+ function link(event){const a=event.target.closest('a[href^="#p-"]');if(!a)return;const i=pages.findIndex(p=>p.id===a.hash.slice(1));event.preventDefault();if(i<0)return;nav.go(i);}
  document.addEventListener('click',link);
  window.addEventListener('popstate',()=>nav.link(location.hash));window.addEventListener('hashchange',()=>nav.link(location.hash));
  window.addEventListener('resize',()=>{updateMode();nav.go(nav.index,false);});reduced.addEventListener('change',updateMode);
@@ -104,7 +114,7 @@
  function scrollRoom(target,delta){for(let node=target;node&&node!==document.body;node=node.parentElement){const overflow=typeof getComputedStyle==='function'?getComputedStyle(node).overflowY:'';if(/auto|scroll/.test(overflow)&&node.scrollHeight>node.clientHeight+1&&((delta>0&&node.scrollTop+node.clientHeight<node.scrollHeight-1)||(delta<0&&node.scrollTop>0)))return true;}return false;}
 
  window.addEventListener('pointerup',()=>{dragging=false;});window.addEventListener('pointercancel',()=>{dragging=false;});
- window.addEventListener('keydown',e=>{if(document.querySelector('dialog[open]'))return;const direction=inputAction(e,{active:snapped,dragging});if(direction){e.preventDefault();if(performance.now()<animatingUntil)return;if(!e.repeat)nav.go(nav.index+direction);}});
+ window.addEventListener('keydown',e=>{if(document.querySelector('dialog[open]'))return;if(['ArrowLeft','ArrowRight'].includes(e.key)&&!protectedTarget(e.target)&&!dragging){e.preventDefault();if(!e.repeat&&performance.now()>=animatingUntil)nav.go(chapterTarget(pages,nav.index,e.key==='ArrowRight'?1:-1));return;}const direction=inputAction(e,{active:snapped,dragging});if(direction){e.preventDefault();if(performance.now()<animatingUntil)return;if(!e.repeat)nav.go(nav.index+direction);}});
  window.addEventListener('wheel',e=>{if(!snapped)return;if(dragging||selectOpen){e.preventDefault();return;}if(scrollRoom(e.target,e.deltaY))return;e.preventDefault();const direction=wheel(performance.now(),e.deltaY);if(direction&&performance.now()>=animatingUntil)nav.go(nav.index+direction);
  },{passive:false});
  window.addEventListener('touchstart',e=>{touch=snapped&&!document.querySelector('dialog[open]')&&!protectedTarget(e.target)&&!dragging?{y:e.touches[0].clientY,x:e.touches[0].clientX}:null;},{passive:true});
@@ -112,7 +122,7 @@
  window.addEventListener('touchend',e=>{if(touch&&performance.now()>=animatingUntil){const dy=touch.y-e.changedTouches[0].clientY,dx=touch.x-e.changedTouches[0].clientX;if(Math.abs(dy)>60&&Math.abs(dy)>Math.abs(dx))nav.go(nav.index+Math.sign(dy));touch=null;}});
  // Native scrolling in continuous mode updates the visible step and deep link.
  window.addEventListener('scroll',()=>{if(snapped)return;clearTimeout(scrollTimer);scrollTimer=setTimeout(()=>{const nearest=pages.reduce((best,p,i)=>Math.abs(p.getBoundingClientRect().top)<Math.abs(pages[best].getBoundingClientRect().top)?i:best,0);if(nearest!==nav.index){nav.observe(nearest);const url=new URL(location.href);url.hash=pages[nearest].id;history.replaceState(null,'',url);}},120);},{passive:true});
- nav.go(nav.index,false);initialized=true;
+ nav.go(nav.index,false);if(location.hash.startsWith('#p-')&&!pages.some(p=>'#'+p.id===location.hash)){const url=new URL(location.href);url.hash=pages[0].id;history.replaceState(null,'',url);}initialized=true;
  async function measure(){
   document.documentElement.classList.add('fit-measuring');
   await document.fonts.ready;
@@ -144,6 +154,14 @@
    const variants=[];
    if(page.id==='p-challenge')for(const shown of [false,true]){toggleSolution(shown);variants.push({...readPage(page),solutionShown:shown});}
    if(page.id==='p-solution'){for(const block of window.WispSolo.model.blocks){window.WispSolo.select(block.term);variants.push({...readPage(page),soloTerm:block.term});}window.WispSolo.select(window.WispSolo.model.winner);}
+   if(['p-c1-every','p-c1-percent'].includes(page.id)){
+    const select=page.id==='p-c1-every'?window.WispChapterOne.chooseEvery:window.WispChapterOne.choosePercent;
+    for(const block of window.WispChapterOne.model.blocks){select(block.term);variants.push({...readPage(page),soloTerm:block.term});}select(window.WispChapterOne.model.winner);
+   }
+   if(['p-c1-changes','p-c1-fit'].includes(page.id)){
+    const slider=document.getElementById(page.id==='p-c1-fit'?'c1-c':'c1-window'),saved=slider.value;
+    for(const value of [slider.min,slider.max]){slider.value=value;slider.dispatchEvent(new Event('input'));variants.push({...readPage(page),sliderValue:value});}slider.value=saved;slider.dispatchEvent(new Event('input'));
+   }
    const record=readPage(page);
    return variants.length?{...record,variants,ok:variants.every(v=>v.ok),overflow:[...new Set(variants.flatMap(v=>v.overflow))],contentHeight:Math.max(...variants.map(v=>v.contentHeight))}:record;
   });

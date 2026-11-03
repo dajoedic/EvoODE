@@ -5,11 +5,18 @@ Open `dist/wisp_explainer.html` directly. CSS, application code and evidence are
 From the repository root:
 
 ```text
-python analysis/scripts/explainer/build_wisp_explainer_data.py
-python analysis/scripts/explainer/build_wisp_explainer.py
+python analysis/scripts/explainer/build_wisp_explainer_html_x2.py
 python analysis/scripts/explainer/check_wisp_explainer_js.py
-python -m pytest analysis/tests/test_wisp_explainer.py -q -p no:cacheprovider
+python -m pytest analysis/tests/ -q -p no:cacheprovider -k wisp
+python analysis/scripts/explainer/check_wisp_explainer_fit.py
 ```
+
+`build_wisp_explainer_html_x2.py` is the page builder; it injects `src/i18n/*.json`. The older
+`build_wisp_explainer.py` does not, and its output fails with "Missing translation". The data exporters
+(`build_wisp_explainer_data.py`, `build_wisp_explainer_x2.py`) are only needed when `data/` changes.
+
+Visible pages are set by one list in the source (chapter "Einführung" and chapter 1 since WP-X10); every later
+section stays in the file, hidden, until it is switched back on.
 
 The exporter reads Q5 rates, selected units, run metadata, paths and benchmark equations/ICs. Observations come only from `outputs/phase_c_c6_data_conditions_5dd1df8/`, resolving `export.cell_dir` plus `time_path`/`state_path` for cells named by Q5 paths. Every binary must match the recorded SHA-256 before use. There is no directory scan or hash-based substitute. Clean reconstruction and opposite-IC generalization targets are the clean cells from that same export, exactly as loaded by `sideproject_q5_noise_fits.jl` and reported by the Q5 aggregation. Benchmark stored solutions are never evaluation targets.
 
