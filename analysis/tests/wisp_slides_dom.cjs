@@ -50,8 +50,25 @@ global.history={pushState(_,__,url){location.href=String(url);},replaceState(_,_
 global.localStorage={getItem(){return null;},setItem(){}};global.matchMedia=()=>({matches:false,addEventListener(){}});
 let now=0,frameId=0;const frames=new Map();global.performance={now:()=>now};global.scrollY=0;global.scrollTo=(_,y)=>{global.scrollY=y;};global.requestAnimationFrame=fn=>{frames.set(++frameId,fn);return frameId;};global.cancelAnimationFrame=id=>frames.delete(id);function advance(ms=800){const end=now+ms;while(now<end){now+=16;const queue=[...frames.values()];frames.clear();queue.forEach(fn=>fn(now));}}
 const events={};global.addEventListener=(k,fn)=>(events[k]??=[]).push(fn);global.WispCompute=require(base+'/src/compute.js');
+let dishVisible;global.IntersectionObserver=class{constructor(fn){dishVisible=fn;}observe(){}disconnect(){}};
 vm.runInThisContext(fs.readFileSync(base+'/src/app.js','utf8'),{filename:'app.js'});
 vm.runInThisContext(fs.readFileSync(base+'/src/pages.js','utf8'),{filename:'pages.js'});
+// Execute the animation lifecycle, including delayed visibility and reduced motion.
+const dish=doc.getElementById('dish-illustration');
+assert.equal(dish.dataset.progress,'0');advance(1000);assert.equal(dish.dataset.progress,'0');
+dishVisible([{isIntersecting:true}]);advance(3000);assert(+dish.dataset.progress>.49&&+dish.dataset.progress<.51);
+const dots=()=>dish.querySelectorAll('.dish-cell').filter(n=>n.getAttribute('visibility')==='visible').length;
+const middleDots=dots();advance(3100);assert.equal(dish.dataset.progress,'1');assert(dots()>middleDots);
+const finalCurve=dish.querySelector('.dish-curve').getAttribute('d');
+const positions=()=>dish.querySelectorAll('.dish-cell').map(n=>[n.getAttribute('cx'),n.getAttribute('cy')]);
+const finalPositions=positions();doc.getElementById('dish-replay').emit('click');advance(6100);
+assert.equal(dish.querySelector('.dish-curve').getAttribute('d'),finalCurve);assert.deepEqual(positions(),finalPositions);
+const media=global.matchMedia;global.matchMedia=()=>({matches:true,addEventListener(){}});dish.replaceChildren();initDish();
+assert.equal(dish.dataset.progress,'1');assert.equal(dish.querySelector('.dish-curve').getAttribute('d'),finalCurve);assert.deepEqual(positions(),finalPositions);global.matchMedia=media;
+const table=fixture.data.live.i18n[fixture.language];
+assert.equal(doc.getElementById('challenge-deck-start').textContent,table.x7_challenge_start.replace('{noise}',pct(fixture.data.live.teaching.sigma)));
+for(const card of doc.getElementById('term-cards').children){assert.equal(card.querySelector('.part-label').textContent,table.x7_structure_label);assert.equal(card.querySelector('.coefficient-controls .part-label').textContent,table.x7_parameter_label);}
+console.log('PASS X7 delayed visibility, six-second animation, replay determinism, reduced-motion final state, data-derived noise and labels');
 const slides=global.WispSlides;
 assert.equal(slides.pages.length,19);assert.equal(slides.pages.at(-1).id,'p-glossary');
 assert.equal(doc.querySelectorAll('#featured-stories > article').length,fixture.data.live.featured.length);

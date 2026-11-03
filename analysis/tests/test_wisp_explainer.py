@@ -144,6 +144,7 @@ const elements={};for(const match of source.matchAll(/<([a-z0-9-]+)\b([^>]*\bid=
 elements['wisp-data'].textContent=JSON.stringify(data);
 global.document={getElementById:id=>{if(!elements[id])throw Error('Missing page ID '+id);return elements[id];},createElement:t=>new Element(t),createElementNS:(ns,t)=>new Element(t),querySelectorAll:()=>all.filter(e=>e.dataset.tex)};
 global.window=global;global.location={href:'file:///wisp.html?lang=en'};global.WispCompute=require(base+'/src/compute.js');
+global.matchMedia=()=>({matches:true,addEventListener(){}});global.cancelAnimationFrame=()=>{};
 vm.runInThisContext(fs.readFileSync(base+'/src/app.js','utf8'),{filename:'app.js'});
 if(elements.strata.children.length!==new Set(data.results.rates.map(r=>r.stratum)).size)throw Error('Missing strata');
 for(const sigma of [0,.01,.03,.05]){elements['noise-level'].value=sigma;elements['noise-level'].listeners.input();if(!elements['path-provenance'].textContent.startsWith(data.live.teaching&&sigma===data.live.teaching.sigma?'Real Q5':'Illustration'))throw Error('Teaching provenance label absent: '+elements['path-provenance'].textContent);elements['next-step'].listeners.click();}
