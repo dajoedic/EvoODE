@@ -7,6 +7,7 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 ## 2026-11-03
 
 ### Core shift script deleted eight running C-6 pods
+<!-- 44f598b -->
 
 The `oc` token expired at 06:37; `shift_pods.sh` could not read and retried. Meanwhile eight C-6 cells finished and the
 Job controller backfilled each one (indices 1435–1442, parallelism stayed 9). After the login at 11:48 the script saw
