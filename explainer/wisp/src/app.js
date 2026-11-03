@@ -39,7 +39,7 @@ const NS='http://www.w3.org/2000/svg';
 function svgNode(tag,attrs={},text){const e=document.createElementNS(NS,tag);Object.entries(attrs).forEach(([k,v])=>e.setAttribute(k,v));if(text!==undefined)e.textContent=text;return e;}
 // Illustration only: no scientific data or WISP computation enters this scene.
 function initDish(){
- const target=$('dish-illustration'),svg=svgNode('svg',{viewBox:'0 0 780 240',role:'img','aria-labelledby':'dish-title dish-description'});
+ const target=$('dish-illustration'),svg=svgNode('svg',{viewBox:'0 0 1020 260',role:'img','aria-labelledby':'dish-title dish-description'});
  svg.append(svgNode('title',{id:'dish-title'},tr('x7_history')),svgNode('desc',{id:'dish-description'},tr('x7_caption')));
  const dishGroup=svgNode('g',{transform:'scale(1.35)'});svg.append(dishGroup);dishGroup.append(svgNode('circle',{cx:105,cy:88,r:79,class:'dish-rim'}));
  const cells=svgNode('g');dishGroup.append(cells);
@@ -48,10 +48,10 @@ function initDish(){
  const positions=[];for(let y=-68;y<=68;y+=9)for(let x=-68;x<=68;x+=9){const px=x+(random()-.5)*3,py=y+(random()-.5)*3;if(px*px+py*py<72*72)positions.push([105+px,88+py]);}
  for(let i=positions.length-1;i>0;i--){const j=Math.floor(random()*(i+1));[positions[i],positions[j]]=[positions[j],positions[i]];}
  const dots=positions.map(([cx,cy])=>{const dot=svgNode('circle',{cx,cy,r:2.9,class:'dish-cell'});cells.append(dot);return dot;});
- const curveGroup=svgNode('g',{transform:'translate(0 12) scale(1 1.35)'});svg.append(curveGroup);curveGroup.append(svgNode('path',{d:'M280 14V151H752',class:'dish-axis'}),svgNode('text',{x:288,y:17},tr('x7_cells')),svgNode('text',{x:752,y:174,'text-anchor':'end'},tr('x7_time')));
+ const curveGroup=svgNode('g',{transform:'translate(-140 12) scale(1.5 1.35)'});svg.append(curveGroup);curveGroup.append(svgNode('path',{d:'M280 14V151H752',class:'dish-axis'}),svgNode('text',{x:288,y:17},tr('x7_cells')),svgNode('text',{x:752,y:174,'text-anchor':'end'},tr('x7_time')));
  const curve=svgNode('path',{class:'dish-curve'}),head=svgNode('circle',{r:4,class:'dish-cell'});curveGroup.append(curve,head);target.append(svg);
  // Stack the two scenes in the same accessible illustration on small screens.
- function geometry(){const narrow=innerWidth<760;svg.setAttribute('viewBox',narrow?'0 0 400 480':'0 0 780 240');dishGroup.setAttribute('transform',narrow?'translate(58 0) scale(1.35)':'scale(1.35)');curveGroup.setAttribute('transform',narrow?'translate(-120 250) scale(.65 1.15)':'translate(0 12) scale(1 1.35)');}
+ function geometry(){const narrow=innerWidth<760;svg.setAttribute('viewBox',narrow?'0 0 400 480':'0 0 1020 260');dishGroup.setAttribute('transform',narrow?'translate(58 0) scale(1.35)':'scale(1.35)');curveGroup.setAttribute('transform',narrow?'translate(-120 250) scale(.65 1.15)':'translate(-140 12) scale(1.5 1.35)');}
  geometry();window.addEventListener('resize',geometry);
  // K=1 (normalised occupancy), n0=.012, r=10, t in [0,1], 6000 ms.
  const occupancy=t=>1/(1+(1/.012-1)*Math.exp(-10*t));
@@ -81,7 +81,7 @@ function systemName(c){return tables[language]['system_'+c.system_id]||c.descrip
 function cellName(id){const c=RESULTS.cells.find(c=>c.row.cell_id===id);if(!c)return tr('j153');const start=String(id).match(/_ic(\d+)/)?.[1],parts=[systemName(c)];if(+c.row.sigma)parts.push(tr('x4_noise',{v0:fmt(+c.row.sigma*100)}));if(+c.row.rho)parts.push(+c.row.rho===.5?tr('x5_half'):tr('x4_missing',{v0:fmt(+c.row.rho*100)}));if(start&&+start>1)parts.push(+start===2?tr('x5_second'):tr('x4_start',{v0:start}));return parts.join(' · ');}
 function displayTruth(s){return s.replace(/(?:\d+\.\d+|\d+)(?:[eE][+-]?\d+)?/g,(n,offset,text)=>/[A-Za-z_]/.test(text[offset-1]||'')?n:fmt(+n,4)).replaceAll('**','^').replaceAll('x_0','u_{1}').replaceAll('x_1','u_{2}').replaceAll('x_2','u_{3}').replaceAll('x_3','u_{4}').replaceAll('*','\\,');}
 function options(target,values,label=v=>v){target.replaceChildren(...values.map(v=>{const e=el('option',label(v));e.value=v;return e;}));}
-function chart(target,series,{title='',xLabel=tr('j157'),yLabel=tr('j158'),areas=[],highlight=null,point=null,zeroBase=false,integerX=false}={}){
+function chart(target,series,{title='',xLabel=tr('j157'),yLabel=tr('j158'),areas=[],highlight=null,point=null,zeroBase=false,integerX=false,legend:showLegend=true,truthOnTop=false}={}){
   target.replaceChildren();
   const width=760,height=310,pad={l:76,r:20,t:36,b:42};
   const good=series.flatMap(s=>s.x.map((x,i)=>[x,s.y[i]])).filter(([x,y])=>Number.isFinite(x)&&Number.isFinite(y)&&Math.abs(y)<1e12);
@@ -102,7 +102,7 @@ function chart(target,series,{title='',xLabel=tr('j157'),yLabel=tr('j158'),areas
   if(integerX){const stride=Math.max(1,Math.ceil((xmax-xmin)/8));for(let x=Math.ceil(xmin);x<=xmax;x+=stride)svg.append(svgNode('text',{x:X(x),y:height-23,'text-anchor':'middle'},fmt(x)));}
   if(highlight)svg.append(svgNode('rect',{x:X(highlight[0]),y:pad.t,width:Math.max(1,X(highlight[1])-X(highlight[0])),height:height-pad.b-pad.t,fill:'var(--model)',opacity:'.12'}));
   for(const a of areas){const pts=a.x.map((x,i)=>`${X(x)},${Y(a.y[i])}`).join(' ');svg.append(svgNode('polygon',{points:`${X(a.x[0])},${Y(0)} ${pts} ${X(a.x.at(-1))},${Y(0)}`,fill:'var(--data)',opacity:'.18'}));}
-  for(const s of series.slice().sort((a,b)=>(a.kind==='data'?0:a.kind==='model'?2:1)-(b.kind==='data'?0:b.kind==='model'?2:1))){let d='',drawing=false;for(let i=0;i<s.x.length;i++){
+  for(const s of series.slice().sort((a,b)=>(truthOnTop&&a.kind==='truth'?3:a.kind==='data'?0:a.kind==='model'?2:1)-(truthOnTop&&b.kind==='truth'?3:b.kind==='data'?0:b.kind==='model'?2:1))){let d='',drawing=false;for(let i=0;i<s.x.length;i++){
     const v=s.y[i];if(!Number.isFinite(v)||Math.abs(v)>1e12){drawing=false;continue;}d+=`${drawing?'L':'M'}${X(s.x[i]).toFixed(3)},${Y(v).toFixed(3)}`;drawing=true;
   }if(s.x.length===1)svg.append(svgNode('circle',{cx:X(s.x[0]),cy:Y(s.y[0]),r:4,fill:'var(--residual)'}));svg.append(svgNode('path',{d,class:`series-${s.kind||'truth'} ${s.style||''}`}));
   if(s.kind==='data'&&s.style!=='dashed')s.x.forEach((x,i)=>{if(Number.isFinite(s.y[i]))svg.append(svgNode('circle',{cx:X(x),cy:Y(s.y[i]),r:2.2,class:'measurement-dot'}));});
@@ -112,7 +112,7 @@ function chart(target,series,{title='',xLabel=tr('j157'),yLabel=tr('j158'),areas
   svg.append(svgNode('text',{transform:`translate(14 ${(pad.t+height-pad.b)/2}) rotate(-90)`,"text-anchor":'middle'},yLabel));
   if(point)svg.append(svgNode('circle',{cx:X(point[0]),cy:Y(point[1]),r:5,fill:'var(--model)',stroke:'var(--panel)',"stroke-width":2}));
   target.append(svg);
-  const legend=el('div',undefined,'caption');legend.textContent=series.map(s=>`${s.label||s.kind} (${tr(s.style==='dashed'||s.kind==='truth'?'x5_dashed':s.kind==='data'?'x5_dots':'x5_solid')})`).join(' · ');target.append(legend);
+  const legend=el('div',undefined,'caption');legend.textContent=series.map(s=>`${s.label||s.kind} (${tr(s.style==='dashed'||s.kind==='truth'?'x5_dashed':s.kind==='data'?'x5_dots':'x5_solid')})`).join(' · ');if(showLegend)target.append(legend);
   return {svg,X,xmin,xmax,width,pad};
 }
 function rk4(t,initial,rhs){let x=initial.slice();const out=[x.slice()];for(let i=1;i<t.length;i++){
@@ -135,17 +135,20 @@ function predatorDraw(){const i=+$("predator-time").value,t=predator.t.slice(0,i
 $("predator-time").max=predator.t.length-1;$("predator-time").value=predator.t.length-1;$("predator-time").addEventListener('input',predatorDraw);predatorDraw();
 // Per-term precision makes the data-scale answer reachable without revealing it.
 const coefficientLimits=[[-10,10,.01],[-2,2,.001],[-.03,.03,.00001],[-.001,.001,.000001],[-2,2,.01],[-2,2,.01]];
+const coefficientButtonSteps=[.1,.1,.001,.0001,.1,.1];
 const initialCoefficients=[0,.23,0,0,0,0],coeff=initialCoefficients.slice(),enabled=[false,true,false,false,false,false],termControls=[];
 $('challenge-deck-start').textContent=tr('x7_challenge_start',{noise:pct(teaching.sigma)});
 let hintCount=0;
 terms.forEach((name,i)=>{
  const card=el('div',undefined,'term-card'),label=el('label',name),check=el('input');check.type='checkbox';check.checked=enabled[i];check.setAttribute('aria-label',tr('include_term',{v0:name}));label.append(check);
  const controls=el('div',undefined,'coefficient-controls'),range=el('input'),typed=el('input'),[min,max,step]=coefficientLimits[i];range.type='range';typed.type='number';
- for(const input of [range,typed]){input.min=min;input.max=max;input.step=step;input.value=coeff[i];input.setAttribute('aria-label',tr('j188',{v0:name}));}
+ range.min=min;range.max=max;range.step=step;
+ for(const input of [range,typed]){input.value=coeff[i];input.setAttribute('aria-label',tr('j188',{v0:name}));}
+ typed.step='any';
  const sync=(preserveTyped=false)=>{range.value=coeff[i];if(!preserveTyped)typed.value=coeff[i];controls.dataset.disabled=String(!enabled[i]);for(const input of [range,typed,...controls.querySelectorAll('button')])input.disabled=!enabled[i];};
- const update=(value,preserveTyped=false)=>{if(!Number.isFinite(value))return;coeff[i]=+Math.max(min,Math.min(max,value)).toFixed(8);sync(preserveTyped&&value>=min&&value<=max);play();};
+ const update=(value,preserveTyped=false)=>{if(!Number.isFinite(value))return;coeff[i]=preserveTyped?value:+Math.max(min,Math.min(max,value)).toFixed(8);sync(preserveTyped);play();};
  range.addEventListener('input',()=>update(+range.value));typed.addEventListener('input',()=>{if(typed.value.trim()!=='')update(+typed.value,true);});typed.addEventListener('change',()=>sync());
- const minus=el('button','−'),plus=el('button','+');for(const [button,direction,key] of [[minus,-1,'x6_decrease'],[plus,1,'x6_increase']]){button.type='button';button.setAttribute('aria-label',tr(key,{term:name}));button.addEventListener('click',()=>update(coeff[i]+direction*step));}
+ const minus=el('button','−'),plus=el('button','+');for(const [button,direction,key] of [[minus,-1,'x6_decrease'],[plus,1,'x6_increase']]){button.type='button';button.setAttribute('aria-label',tr(key,{term:name}));button.addEventListener('click',()=>update(coeff[i]+direction*coefficientButtonSteps[i]));}
  check.addEventListener('change',()=>{enabled[i]=check.checked;sync();play();});controls.append(range,minus,typed,plus);card.append(label,controls);$('term-cards').append(card);termControls.push({check,sync});sync();
 });
 function observationR2(curve,observations){
@@ -160,19 +163,18 @@ let readerState=null,solutionCell=null;
 function drawSolution(){
  if(!solutionCell||!readerState)return;
  const bundle=solutionCell.curves,observed=solutionCell.observed,series=[
-  {x:readerState.t,y:readerState.clipped,kind:'reader',style:'dashed',label:tr('x6_yours')},
-  {x:observed.t,y:observed.x.map(r=>r[0]),kind:'data',style:'dots',label:tr('j214')}
+  {x:readerState.t,y:readerState.clipped,kind:'reader',style:'dashed',label:tr('x7c_yours')},
+  {x:observed.t,y:observed.x.map(r=>r[0]),kind:'data',style:'dots',label:tr('x7c_measurements')}
  ];
- if(bundle)series.push({x:bundle.t,y:bundle.truth.map(r=>r[0]),kind:'truth',style:'dashed',label:tr('j306')},{x:bundle.t,y:bundle.model.map(r=>r[0]),kind:'model',label:tr('j323')});
- chart($('solution-chart'),series,{title:cellName(solutionCell.row.cell_id)});
- const fits=el('div',undefined,'solution-fits'),label=el('p',tr('x7b_fit'),'caption');label.dataset.claim='review';fits.append(label);
+ if(bundle)series.push({x:bundle.t,y:bundle.truth.map(r=>r[0]),kind:'truth',style:'dashed',label:tr('x7c_truth')},{x:bundle.t,y:bundle.model.map(r=>r[0]),kind:'model',label:tr('x7c_wisp')});
+ chart($('solution-chart'),series,{title:cellName(solutionCell.row.cell_id),legend:false,truthOnTop:true});
+ $('solution-noise').textContent=tr('x7c_noise',{noise:pct(teaching.sigma)});
  for(const curve of series.filter(s=>s.kind!=='data')){
   // Score the full simulated curve, as the playground does, before display clipping.
   const values=curve.kind==='reader'?readerState.curve:curve.y;
   const sampled=interpolateCurve(curve.x,values,observed.t),score=sampled?observationR2(sampled,observed.x.map(r=>r[0])):NaN;
-  const item=el('span',curve.label+': '+(sampled?fmt(score,4):tr('x7b_time_unavailable')));item.dataset.curve=curve.kind;item.dataset.score=Number.isFinite(score)?String(score):'unavailable';fits.append(item);
+  const item=$('solution-fit-'+curve.kind);item.textContent='R² = '+(sampled?fmt(score,4):tr('x7b_time_unavailable'));item.dataset.curve=curve.kind;item.dataset.score=Number.isFinite(score)?String(score):'unavailable';
  }
- $('solution-chart').append(fits);
 }
 function play(){
  const observations=measuredNoise(teaching?.sigma||.03),limit=2*Math.max(...observations.map(Math.abs)),indices=enabled.map((v,i)=>v?i:-1).filter(i=>i>=0),c=indices.map(i=>coeff[i]);
@@ -276,7 +278,7 @@ $("stop-example").addEventListener('change',stopDraw);stopDraw();
 options($("fit-example"),featured.map(f=>f.cell_id),cellName);
 function plotBundle(root,bundle,observed,title){
  if(!bundle){root.append(el('p',tr('j322'),'notice'));if(observed){const plot=el('div');root.append(plot);chart(plot,[{x:observed.t,y:observed.x.map(r=>r[0]),kind:'data',style:'dots',label:tr('j214')}],{title});}return;}
- bundle.truth[0].forEach((_,j)=>{const plot=el('div');root.append(plot);const series=[{x:bundle.t,y:bundle.truth.map(r=>r[j]),kind:'truth',style:'dashed',label:tr('j306')},{x:bundle.t,y:bundle.model.map(r=>r[j]),kind:'model',label:tr('j323')}];if(observed)series.push({x:observed.t,y:observed.x.map(r=>r[j]),kind:'data',style:'dots',label:tr('j214')});chart(plot,series,{title:`${title} · u${j+1}`,yLabel:`u${j+1}`});});
+ bundle.truth[0].forEach((_,j)=>{const plot=el('div');root.append(plot);const series=[{x:bundle.t,y:bundle.truth.map(r=>r[j]),kind:'truth',style:'dashed',label:tr('x7c_truth')},{x:bundle.t,y:bundle.model.map(r=>r[j]),kind:'model',label:tr('j323')}];if(observed)series.push({x:observed.t,y:observed.x.map(r=>r[j]),kind:'data',style:'dots',label:tr('j214')});chart(plot,series,{title:`${title} · u${j+1}`,yLabel:`u${j+1}`});});
 }
 function fitDraw(reset=false){const feature=featured.find(f=>f.cell_id===$("fit-example").value);if(!feature||!RESULTS.cells.some(c=>c.row.cell_id===feature.cell_id))return;
  $("fit-candidate").max=feature.candidates.length-1;if(reset)$("fit-candidate").value=0;const index=Math.min(+$("fit-candidate").value,feature.candidates.length-1),candidate=feature.candidates[index],row=candidate.row;
@@ -332,7 +334,7 @@ function rateChart(target,rows){
 function headlineDraw(){const panel=$('headline-panel');panel.replaceChildren();for(const stratum of ['dim1','dim2']){const box=el('div',undefined,'headline-stratum');box.append(el('h3',stratum==='dim1'?'1D':'2D'));rateChart(box,headline.filter(r=>r.stratum===stratum));panel.append(box);}}
 headlineDraw();
 const runningFeature=featured.find(f=>f.roles.includes('running')),runningCell=RESULTS.cells.find(c=>c.row.cell_id===runningFeature?.cell_id);
-if(runningCell){for(const [title,equations] of [[tr('j304'),storedEquation(runningCell)],[tr('j302'),runningCell.truth.map(displayTruth)]]){const box=el('div');box.append(el('h3',title));for(const tex of equations){const node=el('div',undefined,'math');math(node,tex);box.append(node);}$('solution-equations').append(box);}solutionCell=runningCell;drawSolution();}
+if(runningCell){math($('solution-model-equation'),storedEquation(runningCell).join('\\qquad ').replaceAll('u_{1}','u'));math($('solution-truth-equation'),'\\frac{du}{dt}='+runningCell.truth.map(displayTruth).join('\\qquad ').replaceAll('u_{1}','u'));solutionCell=runningCell;drawSolution();}
 $('data-summary').textContent=$('combination-count').textContent;
 // One native modal per section: focus is trapped by the browser and scrolling stays inside.
 document.querySelectorAll('[data-more]').forEach(button=>button.addEventListener('click',()=>button.parentElement.querySelector('dialog').showModal()));

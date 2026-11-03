@@ -413,5 +413,11 @@
   "x7_time": "Time",
   "x7_cells": "Cell count",
   "x7b_fit": "Fit to the measurements (R², computed in the browser)",
-  "x7b_time_unavailable": "Time bases cannot be compared: fit unavailable."
+  "x7b_time_unavailable": "Time bases cannot be compared: fit unavailable.",
+  "x7c_measurements": "Measurements",
+  "x7c_yours": "Your equation",
+  "x7c_wisp": "WISP",
+  "x7c_truth": "True equation",
+  "x7c_noise": "real data with {noise} noise",
+  "x7c_fit_note": "R² to the measurements, computed in the browser"
 }

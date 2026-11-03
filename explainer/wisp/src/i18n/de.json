@@ -413,5 +413,11 @@
   "x7_time": "Zeit",
   "x7_cells": "Zellzahl",
   "x7b_fit": "Passung zu den Messwerten (R², im Browser berechnet)",
-  "x7b_time_unavailable": "Zeitachsen nicht vergleichbar: keine Passung berechnet."
+  "x7b_time_unavailable": "Zeitachsen nicht vergleichbar: keine Passung berechnet.",
+  "x7c_measurements": "Messwerte",
+  "x7c_yours": "Deine Gleichung",
+  "x7c_wisp": "WISP",
+  "x7c_truth": "Wahre Gleichung",
+  "x7c_noise": "echte Daten mit {noise} Rauschen",
+  "x7c_fit_note": "R² zu den Messwerten, im Browser berechnet"
 }

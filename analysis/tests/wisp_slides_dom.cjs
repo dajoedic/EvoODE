@@ -134,10 +134,26 @@ assert.equal(cards.length,6);
 const layout=()=>cards.map(c=>[c.className,c.children.map(n=>n.className),c.querySelectorAll('input').length]);
 const originalLayout=layout();
 for(const card of cards){const check=card.querySelector('input');check.checked=!check.checked;check.emit('change');assert.deepEqual(layout(),originalLayout);const controls=card.querySelector('.coefficient-controls');assert(!controls.hidden);assert(controls.querySelectorAll('input,button').every(n=>n.disabled===!check.checked));check.checked=!check.checked;check.emit('change');}
-function assertSolution(){const scores=doc.querySelectorAll('#solution-chart [data-curve]');assert.equal(scores.length,3);const reader=scores.find(n=>n.dataset.curve==='reader');assert.equal(reader.dataset.score,doc.getElementById('play-status').dataset.score);assert(doc.querySelector('#solution-chart path.series-reader'));}
+function assertSolution(){const scores=doc.querySelectorAll('#solution-equations [data-curve]');assert.equal(scores.length,3);const reader=scores.find(n=>n.dataset.curve==='reader');assert.equal(reader.dataset.score,doc.getElementById('play-status').dataset.score);assert(doc.querySelector('#solution-chart path.series-reader'));}
 assertSolution();
 const snapshot=()=>({equation:doc.getElementById('play-equation').dataset.tex,curve:doc.getElementById('play-chart').querySelector('path.series-model').getAttribute('d'),score:doc.getElementById('play-status').dataset.score});
 const control=(index,type)=>cards[index].querySelectorAll('input').find(n=>n.type===type);
+// WP-X7c: each coarse button uses its term scale; typed values retain fine precision.
+for(const [i,step] of [0.1,0.1,0.001,0.0001,0.1,0.1].entries()){
+ const check=control(i,'checkbox');check.checked=true;check.emit('change');
+ const field=control(i,'number');field.value='0';field.emit('input');
+ const buttons=cards[i].querySelectorAll('button');
+ buttons.at(-1).emit('click');assert.equal(+field.value,step);assert.equal(String(field.value),String(step));
+ buttons[0].emit('click');assert.equal(+field.value,0);
+ for(let n=0;n<3;n++)buttons.at(-1).emit('click');assert.equal(String(field.value),String(+(3*step).toFixed(8)));
+}
+control(0,'number').value='0.300000123456';control(0,'number').emit('input');
+assert.equal(coeff[0],0.300000123456);
+control(0,'number').value='12.345678901';control(0,'number').emit('input');assert.equal(coeff[0],12.345678901);
+doc.getElementById('play-reset').emit('click');
+assert(doc.getElementById('solution-truth-equation').dataset.tex.startsWith('\\frac{du}{dt}='));
+assert.equal(doc.querySelectorAll('#solution-chart path').at(-1).getAttribute('class').split(' ')[0],'series-truth');
+assert(!doc.querySelector('#solution-chart .caption'));
 let previous=snapshot();control(2,'checkbox').checked=true;control(2,'checkbox').emit('change');
 assert.notEqual(snapshot().equation,previous.equation);
 const coefficient=control(2,'number');coefficient.value='-.01';coefficient.emit('input');
@@ -148,7 +164,7 @@ assert.notEqual(snapshot().equation,previous.equation);assert.notEqual(snapshot(
 previous=snapshot();cards[1].querySelectorAll('button').at(-1).emit('click');assert.notEqual(snapshot().equation,previous.equation);
 // Values are derived from the real exported illustration of this same logistic system.
 const [growth,capacity]=fixture.data.live.illustrations[0].constants;
-for(const [i,value] of [[1,growth],[2,-growth/capacity]]){const number=control(i,'number');assert(+number.min<=value&&+number.max>=value);number.value=String(value);number.emit('input');}
+for(const [i,value] of [[1,growth],[2,-growth/capacity]]){const number=control(i,'number');assert.equal(number.step,'any');number.value=String(value);number.emit('input');}
 assert(+snapshot().score>.98,'data-scale logistic answer is reachable');
 previous=snapshot();control(2,'checkbox').checked=false;control(2,'checkbox').emit('change');
 assert.notEqual(snapshot().equation,previous.equation);assert.notEqual(snapshot().curve,previous.curve);assert.notEqual(snapshot().score,previous.score);
@@ -160,7 +176,7 @@ const expectedCurve=rk4(measurements.t,[measurements.observed[0]],x=>[WispComput
 const mean=measurements.observed.reduce((a,b)=>a+b,0)/measurements.observed.length;
 const expectedScore=1-expectedCurve.reduce((s,v,i)=>s+(v-measurements.observed[i])**2,0)/measurements.observed.reduce((s,v)=>s+(v-mean)**2,0);
 assert(Math.abs(+snapshot().score-expectedScore)<1e-12);assertSolution();
-for(const kind of ['truth','model']){const b=solutionCell.curves;const sampled=interpolateCurve(b.t,b[kind].map(r=>r[0]),measurements.t);assert(sampled);const score=observationR2(sampled,measurements.observed);assert.equal(+doc.querySelectorAll('#solution-chart [data-curve]').find(n=>n.dataset.curve===kind).dataset.score,score);}
+for(const kind of ['truth','model']){const b=solutionCell.curves;const sampled=interpolateCurve(b.t,b[kind].map(r=>r[0]),measurements.t);assert(sampled);const score=observationR2(sampled,measurements.observed);assert.equal(+doc.querySelectorAll('#solution-equations [data-curve]').find(n=>n.dataset.curve===kind).dataset.score,score);}
 assert.deepEqual(interpolateCurve([0,2,4],[1,5,9],[0,1,4]),[1,3,9]);assert.equal(interpolateCurve([0,2],[1,5],[-1]),null);
 
 for(let n=1;n<=4;n++){doc.getElementById('challenge-hint').emit('click');assert.equal(doc.getElementById('challenge-hints').children.length,Math.min(n,3));}
