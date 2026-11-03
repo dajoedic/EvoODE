@@ -31,6 +31,14 @@ def parse_result(dom):
     result=json.loads(''.join(parser.parts))
     if not result.get('pages'):raise ValueError('Fit check returned no pages')
     if any(not p['id'].startswith('p-') for p in result['pages']):raise ValueError('Invalid page identifier')
+    for page in result['pages']:
+        if page['id']=='p-challenge':
+            columns=page.get('columns')
+            if not columns:raise ValueError('Missing challenge column bounding rects')
+            aligned=all(abs(columns['left'][edge]-columns['right'][edge])<=2 for edge in ('top','bottom'))
+            columns['ok']=aligned
+            page['ok']=page['ok'] and aligned
+    result['ok']=all(page['ok'] for page in result['pages'])
     return result
 
 def edge_run(edge=EDGE):

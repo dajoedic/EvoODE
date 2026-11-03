@@ -196,3 +196,38 @@ dialog{max-width:min(1050px,90vw);max-height:80dvh;overflow:auto;overscroll-beha
  #p-challenge .challenge-grid,.solution-layout{display:block}
  .solution-key{margin-top:20px}
 }
+/* WP-X7e: both challenge columns share the grid's stretched row. */
+#p-challenge .challenge-grid{align-items:stretch}
+.challenge-parameters{display:grid;grid-template-rows:auto minmax(0,1fr) auto auto auto;min-width:0}
+#p-challenge .term-legend{align-self:start}
+#p-challenge .term-cards{align-self:stretch}
+#p-challenge .challenge-punchline{align-self:end}
+#p-challenge .challenge-grid>.panel{align-self:stretch;display:flex;flex-direction:column}
+#p-challenge .challenge-grid>.panel>.caption{margin-top:auto}
+.coefficient-controls input[type=number]{appearance:textfield;-moz-appearance:textfield}
+.coefficient-controls input[type=number]::-webkit-inner-spin-button,.coefficient-controls input[type=number]::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
+/* Chart and its key stay together; comparison scrolls inside its own box. */
+#p-solution .solution-layout{grid-template-columns:minmax(0,1fr) minmax(0,1.15fr);align-items:start;gap:24px}
+.solution-visual,.solution-key{min-width:0}
+#solution-legend{list-style:none;padding:10px 14px;margin:10px 0 0;border:1px solid var(--line);border-radius:10px;display:grid;grid-template-columns:1fr 1fr;gap:6px 12px;font:13px/1.4 system-ui}
+#solution-legend li{display:flex;gap:8px;align-items:center}
+#solution-legend .curve-swatch{width:38px}
+.term-comparison{max-width:100%;overflow-x:auto;overscroll-behavior:contain;border:1px solid var(--line);border-radius:12px;padding:8px}
+#solution-comparison{width:100%;border-collapse:collapse;font:12px/1.4 system-ui;white-space:nowrap}
+#solution-comparison th,#solution-comparison td{padding:8px 3px;text-align:center;border-bottom:1px solid var(--line)}
+#solution-comparison th:first-child{text-align:left}
+#solution-comparison th .curve-swatch{display:block;width:34px;margin-bottom:3px}
+#solution-comparison meter{display:block;width:55px;height:7px;accent-color:var(--accent)}
+.term-chip{display:inline-block;min-width:30px;min-height:24px;padding:3px 5px;border-radius:6px;box-sizing:border-box;border:1px solid transparent;font-variant-numeric:tabular-nums}
+.term-chip.correct{background:#d9f2df;color:#14532b;border-color:#47845b}
+.term-chip.extra{background:#ffe5d6;color:#843214;border-color:#b45f37}
+.term-chip.neutral{background:var(--wash);color:var(--ink);border-color:var(--line)}
+.term-chip.missing{border:1px dashed var(--muted)}
+#p-solution #solution-equations{gap:6px;margin-top:12px}
+#p-solution #solution-equations li{font:12px/1.3 system-ui;padding-bottom:4px}
+#p-solution #solution-equations .math{font-size:15px;overflow-wrap:anywhere}
+#p-solution .solution-key>.caption{font-size:12px;line-height:1.4}
+.snapped #p-solution .chart{height:280px}
+@media(prefers-color-scheme:dark){.term-chip.correct{background:#204d32;color:#d9fbe2;border-color:#7bc493}.term-chip.extra{background:#66351e;color:#ffe9d5;border-color:#edab7d}}
+@media(min-width:760px) and (max-height:700px){.snapped #p-solution .chart{height:240px}#solution-comparison th,#solution-comparison td{padding:6px 3px}}
+@media(max-width:759px){#p-solution .solution-layout{display:block}#solution-legend{grid-template-columns:1fr}.challenge-parameters{display:block}#p-challenge .challenge-grid>.panel{margin-top:16px}}

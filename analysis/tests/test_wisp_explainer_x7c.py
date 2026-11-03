@@ -12,18 +12,18 @@ def test_punchline_is_below_controls_in_left_column():
     assert left.select_one('.term-cards')
     assert len(left.select('.icon-button')) == 2
     punchline = left.select_one('[data-i18n="x6_punchline"]')
-    assert punchline and punchline.find_previous_sibling()['id'] == 'challenge-hint'
+    assert punchline and punchline.find_previous_sibling().get('class') == ['challenge-actions']
     assert len(soup.select('[data-i18n="x6_punchline"]')) == 1
 
 
 def test_solution_key_names_order_and_swatches():
     soup = BeautifulSoup((BASE / 'src/index.html').read_text(encoding='utf8'), 'html.parser')
-    entries = soup.select('#solution-equations > li')
+    entries = soup.select('#solution-legend > li')
     assert [e['data-entry'] for e in entries] == ['data', 'reader', 'model', 'truth']
     assert len(entries[0].select('.measurement-dot')) == 3
     for entry in entries[1:]:
         assert entry.select_one('.curve-swatch .series-' + entry['data-entry'])
-        assert entry.select_one('#solution-fit-' + entry['data-entry'])
+        assert soup.select_one('#solution-fit-' + entry['data-entry'])
     for lang, names in [('de', ['Messwerte', 'Deine Gleichung', 'WISP', 'Wahre Gleichung']), ('en', ['Measurements', 'Your equation', 'WISP', 'True equation'])]:
         table = json.loads((BASE / f'src/i18n/{lang}.json').read_text(encoding='utf8'))
         assert [table[e.select_one('[data-i18n]')['data-i18n']] for e in entries] == names

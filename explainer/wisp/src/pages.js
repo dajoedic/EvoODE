@@ -123,7 +123,12 @@
   const records=pages.map(page=>{const content=page.querySelector('.page-content'),rect=content.getBoundingClientRect(),bounds=page.getBoundingClientRect();
    const overflow=[];
    content.querySelectorAll('*').forEach(e=>{if(e.closest('dialog:not([open]),[hidden]')||e.parentElement?.closest('[data-internal-scroll],details:not([open])'))return;const r=e.getBoundingClientRect();if(r.width&&r.height&&(r.bottom>bounds.bottom-12||r.right>innerWidth-24||r.left<0))overflow.push(e.id||e.tagName);});
-   return {id:page.id,section:page.dataset.section,step:page.dataset.step,contentHeight:Math.ceil(Math.max(content.scrollHeight,rect.height)),availableHeight:Math.floor(innerHeight-112),viewportHeight:innerHeight,overflow,ok:content.scrollHeight<=innerHeight-112&&overflow.length===0};
+   let columns=null;
+   if(page.id==='p-challenge'){
+    const left=page.querySelector('.challenge-parameters').getBoundingClientRect(),right=page.querySelector('.challenge-grid > .panel').getBoundingClientRect();
+    columns={left:{top:left.top,bottom:left.bottom,height:left.height},right:{top:right.top,bottom:right.bottom,height:right.height},ok:Math.abs(left.top-right.top)<=2&&Math.abs(left.bottom-right.bottom)<=2};
+   }
+   return {id:page.id,section:page.dataset.section,step:page.dataset.step,columns,contentHeight:Math.ceil(Math.max(content.scrollHeight,rect.height)),availableHeight:Math.floor(innerHeight-112),viewportHeight:innerHeight,overflow,ok:content.scrollHeight<=innerHeight-112&&overflow.length===0&&(!columns||columns.ok)};
   });
   const pre=make('pre',JSON.stringify({ok:records.every(r=>r.ok),language:document.documentElement.lang,width:innerWidth,height:innerHeight,pages:records}));pre.id='fitcheck-result';document.body.append(pre);
  }

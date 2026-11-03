@@ -419,5 +419,11 @@
   "x7c_wisp": "WISP",
   "x7c_truth": "True equation",
   "x7c_noise": "real data with {noise} noise",
-  "x7c_fit_note": "R² to the measurements, computed in the browser"
+  "x7c_fit_note": "R² to the measurements, computed in the browser",
+  "x7e_true": "True",
+  "x7e_you": "You",
+  "x7e_extra": "extra",
+  "x7e_missing": "missing",
+  "x7e_correct": "also in the true equation",
+  "x7e_caption": "Green: block is also in the true equation. ✗: extra. Dashed: missing. R² to the measurements, computed in the browser."
 }

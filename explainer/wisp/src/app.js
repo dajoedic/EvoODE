@@ -136,7 +136,7 @@ $("predator-time").max=predator.t.length-1;$("predator-time").value=predator.t.l
 // Per-term precision makes the data-scale answer reachable without revealing it.
 const coefficientLimits=[[-10,10,.01],[-2,2,.001],[-.03,.03,.00001],[-.001,.001,.000001],[-2,2,.01],[-2,2,.01]];
 const coefficientButtonSteps=[.1,.1,.001,.0001,.1,.1];
-const initialCoefficients=[0,.23,0,0,0,0],coeff=initialCoefficients.slice(),enabled=[false,true,false,false,false,false],termControls=[];
+const initialCoefficients=[0,.23,0,0,0,0],coeff=initialCoefficients.slice(),enabled=Array(6).fill(false),termControls=[];
 $('challenge-deck-start').textContent=tr('x7_challenge_start',{noise:pct(teaching.sigma)});
 let hintCount=0;
 terms.forEach((name,i)=>{
@@ -159,6 +159,54 @@ function interpolateCurve(t,y,at){
  if(!t||!y||t.length!==y.length||t.length<2||t.some((v,i)=>!Number.isFinite(v)||(i&&v<=t[i-1]))||at.some(v=>!Number.isFinite(v)||v<t[0]||v>t.at(-1)))return null;
  let j=0;return at.map(v=>{while(j<t.length-2&&t[j+1]<v)j++;const left=Number.isFinite(y[j])?y[j]:NaN,right=Number.isFinite(y[j+1])?y[j+1]:NaN;return v===t[j]?left:v===t[j+1]?right:left+(right-left)*(v-t[j])/(t[j+1]-t[j]);});
 }
+// Restricted polynomial parser: no evaluation of executable strings. The benchmark
+// exports substituted expressions, but no structured true term coefficients.
+function expandTruthPolynomial(source){
+ try{
+  const text=source.replaceAll('x_0','u').replaceAll('**','^').replace(/\s+/g,'');
+  const tokens=text.match(/(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?|u|[()+*^\-]/g)||[];
+  if(tokens.join('')!==text||tokens.length>256)throw Error('Unsupported polynomial');
+  let pos=0;
+  const add=(a,b,sign=1)=>Array.from({length:Math.max(a.length,b.length)},(_,i)=>(a[i]||0)+sign*(b[i]||0));
+  const multiply=(a,b)=>{if(a.length+b.length>34)throw Error('Degree limit');const out=Array(a.length+b.length-1).fill(0);a.forEach((v,i)=>b.forEach((w,j)=>out[i+j]+=v*w));return out;};
+  function atom(){const token=tokens[pos++];if(token==='u')return [0,1];if(token==='('){const a=sum();if(tokens[pos++]!==')')throw Error('Parenthesis');return a;}if(!token||!/^\d|^\./.test(token))throw Error('Constant');return [Number(token)];}
+  function power(){let a=atom();if(tokens[pos]==='^'){pos++;const n=Number(tokens[pos++]);if(!Number.isInteger(n)||n<0||n>32)throw Error('Power');const base=a;a=[1];for(let i=0;i<n;i++)a=multiply(a,base);}return a;}
+  function signed(){if(tokens[pos]==='+'){pos++;return signed();}if(tokens[pos]==='-'){pos++;return signed().map(v=>-v);}return power();}
+  function product(){let a=signed();while(tokens[pos]==='*'){pos++;a=multiply(a,signed());}return a;}
+  function sum(){let a=product();while(tokens[pos]==='+'||tokens[pos]==='-'){const sign=tokens[pos++]==='+'?1:-1;a=add(a,product(),sign);}return a;}
+  const polynomial=sum();if(pos!==tokens.length||polynomial.some(v=>!Number.isFinite(v))||polynomial.slice(4).some(v=>v!==0))return null;
+  return Array.from({length:6},(_,i)=>polynomial[i]||0);
+ }catch{return null;}
+}
+function storedBlockCoefficients(cell){
+ try{
+  const active=JSON.parse(cell.row.active_idxs),params=JSON.parse(cell.row.params),out=Array(6).fill(0);
+  const catalogue=['1','u1','u1^2','u1^3','sin(u1)','cos(u1)'];
+  if(active.length!==1||active[0].length!==params.length)return null;
+  for(const [j,index] of active[0].entries()){const block=catalogue.indexOf(cell.terms[index-1]);if(block<0||!Number.isFinite(+params[j]))return null;out[block]+=+params[j];}
+  return out;
+ }catch{return null;}
+}
+function supportChip(value,truthValue,known,isTruth=false){
+ const present=value!==0;
+ if(!known)return {className:present?'term-chip neutral':'',text:present?fmt(value,3):'',title:''};
+ if(isTruth)return {className:present?'term-chip neutral':'',text:present?fmt(value,3):'',title:''};
+ if(present){const correct=truthValue!==0;return {className:'term-chip '+(correct?'correct':'extra'),text:fmt(value,3)+' '+(correct?'✓':'✗'),title:tr(correct?'x7e_correct':'x7e_extra')};}
+ return {className:truthValue!==0?'term-chip missing':'',text:'',title:truthValue!==0?tr('x7e_missing'):''};
+}
+function drawTermComparison(){
+ const truthCoefficients=solutionCell.truth.length===1?expandTruthPolynomial(solutionCell.truth[0]):null;
+ $('solution-comparison').dataset.truthPath=truthCoefficients?'stored-polynomial-expansion':'stored-formula-only';
+ const values={truth:truthCoefficients,model:storedBlockCoefficients(solutionCell),reader:coeff.map((v,i)=>enabled[i]?v:0)};
+ for(const row of $('solution-comparison').querySelectorAll('tbody tr')){
+  const kind=row.dataset.entry;
+  row.querySelectorAll('[data-block]').forEach((cell,i)=>{
+   cell.replaceChildren();if(!values[kind])return;
+   const chip=supportChip(values[kind][i],truthCoefficients?.[i],!!truthCoefficients,kind==='truth');
+   if(chip.className){const span=el('span',chip.text,chip.className);if(chip.title){span.setAttribute('title',chip.title);span.setAttribute('aria-label',chip.title);}cell.append(span);}
+  });
+ }
+}
 let readerState=null,solutionCell=null;
 function drawSolution(){
  if(!solutionCell||!readerState)return;
@@ -168,12 +216,14 @@ function drawSolution(){
  ];
  if(bundle)series.push({x:bundle.t,y:bundle.truth.map(r=>r[0]),kind:'truth',style:'dashed',label:tr('x7c_truth')},{x:bundle.t,y:bundle.model.map(r=>r[0]),kind:'model',label:tr('x7c_wisp')});
  chart($('solution-chart'),series,{title:cellName(solutionCell.row.cell_id),legend:false,truthOnTop:true});
+ drawTermComparison();
  $('solution-noise').textContent=tr('x7c_noise',{noise:pct(teaching.sigma)});
  for(const curve of series.filter(s=>s.kind!=='data')){
   // Score the full simulated curve, as the playground does, before display clipping.
   const values=curve.kind==='reader'?readerState.curve:curve.y;
   const sampled=interpolateCurve(curve.x,values,observed.t),score=sampled?observationR2(sampled,observed.x.map(r=>r[0])):NaN;
-  const item=$('solution-fit-'+curve.kind);item.textContent='R² = '+(sampled?fmt(score,4):tr('x7b_time_unavailable'));item.dataset.curve=curve.kind;item.dataset.score=Number.isFinite(score)?String(score):'unavailable';
+  const item=$('solution-fit-'+curve.kind);item.textContent=(sampled?fmt(score,4):tr('x7b_time_unavailable'));item.dataset.curve=curve.kind;item.dataset.score=Number.isFinite(score)?String(score):'unavailable';
+  $('solution-bar-'+curve.kind).value=Number.isFinite(score)?Math.max(0,Math.min(1,score)):0;
  }
 }
 function play(){
@@ -190,7 +240,7 @@ function play(){
  drawSolution();
 }
 $('challenge-hint').addEventListener('click',()=>{if(hintCount>=3)return;hintCount++;$('challenge-hints').append(el('li',tr('x6_hint'+hintCount)));$('challenge-hint').disabled=hintCount===3;});
-$('play-reset').addEventListener('click',()=>{coeff.splice(0,6,...initialCoefficients);enabled.splice(0,6,false,true,false,false,false,false);termControls.forEach(({check,sync},i)=>{check.checked=enabled[i];sync();});play();});play();
+$('play-reset').addEventListener('click',()=>{coeff.splice(0,6,...initialCoefficients);enabled.splice(0,6,...Array(6).fill(false));termControls.forEach(({check,sync},i)=>{check.checked=enabled[i];sync();});play();});play();
 options($('dimensions'),LIVE.catalogues.map(c=>c.dim));
 function catalogue(){const c=LIVE.catalogues.find(c=>c.dim===+$('dimensions').value);$("combination-count").textContent=tr('j202',{v0:(c.count),v1:(BigInt(c.combinations).toLocaleString(language)),v2:(c.dim),v3:(c.dim===1?'':'s')});$("catalogue-list").textContent=c.terms.join(' · ');}
 $('dimensions').addEventListener('change',catalogue);catalogue();

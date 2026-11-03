@@ -419,5 +419,11 @@
   "x7c_wisp": "WISP",
   "x7c_truth": "Wahre Gleichung",
   "x7c_noise": "echte Daten mit {noise} Rauschen",
-  "x7c_fit_note": "R² zu den Messwerten, im Browser berechnet"
+  "x7c_fit_note": "R² zu den Messwerten, im Browser berechnet",
+  "x7e_true": "Wahr",
+  "x7e_you": "Du",
+  "x7e_extra": "überflüssig",
+  "x7e_missing": "fehlt",
+  "x7e_correct": "auch in der wahren Gleichung",
+  "x7e_caption": "Grün: Baustein steckt auch in der wahren Gleichung. ✗: überflüssig. Gestrichelt: fehlt. R² zu den Messwerten, im Browser berechnet."
 }
