@@ -144,9 +144,6 @@ const elements={};for(const match of source.matchAll(/<([a-z0-9-]+)\b([^>]*\bid=
  if(match[1]==='select'){const body=source.slice(match.index).split('</select>')[0],opt=body.match(/<option value="([^"]+)"/);if(opt)e.value=opt[1];}
 }
 elements['wisp-data'].textContent=JSON.stringify(data);
-// Mount the actual inline play icon, which is updated by the recorded-run controls.
-const playMarkup=source.match(/<button[^>]*id="work-play"[^>]*>(.*?)<\/button>/s)[1];
-const playPath=new Element('path');playPath.setAttribute('d',playMarkup.match(/<path d="([^"]+)"/)[1]);elements['work-play'].append(playPath);
 global.document={getElementById:id=>{if(!elements[id])throw Error('Missing page ID '+id);return elements[id];},createElement:t=>new Element(t),createElementNS:(ns,t)=>new Element(t),querySelectorAll:()=>all.filter(e=>e.dataset.tex)};
 global.innerWidth=1366;global.innerHeight=768;global.addEventListener=()=>{};document.addEventListener=()=>{};global.IntersectionObserver=class{observe(){}};
 global.window=global;global.location={href:'file:///wisp.html?lang=en'};global.WispCompute=require(base+'/src/compute.js');
@@ -183,7 +180,8 @@ if(!elements['path-event'].textContent.includes('FoBa'))throw Error('Live FoBa f
 if(!data.live.teaching||data.live.teaching.cell_id!==data.live.references[0].cell_id)throw Error('Missing real teaching cell');
 // Visible titles accompany every Cartesian SVG chart, including dynamically created plots.
 for(const svg of all.filter(e=>e.tag==='svg'&&e.attrs.class==='chart')){
- if(!svg.children.some(e=>e.tag==='text'&&e.attrs.transform?.includes('rotate(-90)')))throw Error('Missing visible y axis title');
+ const horizontalSolo=svg.children.some(e=>e.tag==='text'&&e.textContent===tr('x9_change')&&e.attrs.y==='17'&&!e.attrs.transform);
+ if(!horizontalSolo&&!svg.children.some(e=>e.tag==='text'&&e.attrs.transform?.includes('rotate(-90)')))throw Error('Missing visible y axis title');
  if(!svg.children.some(e=>e.tag==='text'&&e.attrs.y==='306'))throw Error('Missing visible x axis title');
 }
 coeff[1]=1;enabled.splice(0,6,false,true,false,false,false,false);play();

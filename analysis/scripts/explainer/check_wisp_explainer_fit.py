@@ -121,6 +121,28 @@ def check_interactions(page, evidence):
         if '\ufffd' in texts or re.search(r'[^\W\d_]\?[^\W\d_]',texts):raise AssertionError('Broken reader encoding')
 
 
+        page.evaluate('WispSlides.nav.link("#p-solution")')
+        page.wait_for_timeout(850)
+        bars=page.locator('#solo-bars button')
+        if bars.count()!=6:raise AssertionError('Expected six single-block buttons')
+        equations,lines=set(),set()
+        for i in range(6):
+            bars.nth(i).click()
+            if bars.nth(i).get_attribute('aria-pressed')!='true':raise AssertionError('Selected block is not pressed')
+            if page.locator('#solo-bars button[aria-pressed=true]').count()!=1:raise AssertionError('Selection is not unique')
+            equations.add(page.locator('#solo-equation').inner_text())
+            lines.add(page.locator('#solo-chart .series-model').get_attribute('d'))
+        if len(equations)!=6 or len(lines)!=6:raise AssertionError('Block selection did not switch every equation and line')
+        page.locator('#solo-bars button[data-term="0"]').click()
+        constant=page.locator('#solo-equation').inner_text()
+        if not re.fullmatch(r'du/dt = [\u2212-]?[0-9]+(?:[.,][0-9]+)?',constant):raise AssertionError('Constant equation has a trailing block')
+        page.set_viewport_size({'width':390,'height':844})
+        page.wait_for_timeout(300)
+        fits=page.locator('#p-solution').evaluate("e=>document.documentElement.scrollWidth<=innerWidth && [...e.querySelectorAll('*')].filter(n=>!n.closest('[hidden]')).every(n=>{const r=n.getBoundingClientRect();return !r.width || (r.left>=0 && r.right<=innerWidth+1);})")
+        if not fits:raise AssertionError('Phone page 3 has horizontal overflow')
+        evidence.setdefault('single_block_checks',[]).append({'language':lang,'bars':6,'equations':len(equations),'lines':len(lines),'phone_width':390,'phone_ok':fits})
+
+
 def run(edge=EDGE):
     """Playwright supplies exact CSS viewports and reliable deep-link captures."""
     OUT.mkdir(parents=True,exist_ok=True)
