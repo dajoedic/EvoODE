@@ -38,7 +38,7 @@ ist, ist vermutlich falsch — dann gilt `CLAUDE.md`.
 
 **Lokal läuft:** `shift_pods.sh` (Scratchpad, detached, Log `shift_pods.log`): pro fertiger C-6-Zelle C-6-Parallelität −1,
 Q8-Parallelität = 40 − C-6 − aktive Q7-Pods (nur steigend); stoppt, wenn C-6 `failed` sich ändert. Braucht Laptop an,
-VPN, gültigen oc-Login; fällt es aus, passiert nichts Schlimmes, es wird nur nichts mehr verschoben. Rückweg nach W-4
+VPN, gültigen oc-Login; fällt es aus, wird nichts verschoben; die alte Version hat beim Wiederanlauf laufende Pods gelöscht (Vorfall 03.11.), die neue nicht mehr. Rückweg nach W-4
 noch zu bauen (Cluster-Pod, Codex).
 
 ## 2. Heute erledigt
