@@ -198,43 +198,113 @@ assert.equal(doc.querySelectorAll('#play-chart path').at(-1).getAttribute('class
 eye.emit('click');assert(!doc.querySelector('#play-chart .series-truth'));assert(doc.getElementById('challenge-truth').hidden);
 eye.emit('click');doc.getElementById('play-reset').emit('click');assert(!doc.querySelector('#play-chart .series-truth'));assert.equal(eye.getAttribute('aria-label'),table.x8_show);
 
-const run=fixture.data.live.featured[0],work=global.WispWork,track=doc.getElementById('work-track').children;
-assert.equal(track.length,9);assert.equal(work.records.length,8);
-assert.deepEqual(work.records.map(r=>r.step.candidate_id),run.path.map(p=>p.candidate_id));
-assert.deepEqual(work.records.slice(2,4).map(r=>[r.kind,r.left,r.entered]),[['swap',[1],[2]],['swap',[4],[3]]]);
+
+const run=fixture.data.live.featured[0],work=global.WispWork;
+assert.equal(work.records.length,8);assert.equal(work.frames.length,31);
 const savedChart=chart;let captured;
 chart=function(target,series,options){if(target.id==='work-chart')captured=series;return savedChart(target,series,options);};
-const savedChallenge=snapshot();
-work.visible(true);
-for(let i=0;i<9;i++){
- track[i].emit('click');assert.equal(work.index,i);assert(!work.playing);
- if(i===8){assert.equal(captured.filter(s=>s.kind==='candidate').length,8);assert(!captured.find(s=>s.kind==='model'));advance(950);}
- const r=work.records[i===8?3:i],narration=doc.getElementById('work-narration').textContent;
- const names=idx=>idx.map(k=>terms[k-1]).join(', ');
- if(i<8)assert.equal(narration,tr('x8_'+r.kind,{k:i+1,block:names(r.kind==='remove'?r.left:r.entered),out:names(r.left),in:names(r.entered)}));
- assert.equal(doc.getElementById('p-solution').dataset.candidate,r.step.candidate_id);
- const model=captured.find(s=>s.kind==='model');assert.deepEqual(model.x,r.candidate.curves.t);assert.deepEqual(model.y,r.candidate.curves.model.map(row=>row[0]));
- assert.equal(doc.getElementById('work-cards').children.filter(c=>c.classList.contains('lit')).length,r.active.length);
- const expected='\\frac{du}{dt}='+r.step.equations[0].basis_indices.map((k,j)=>`${j&&r.step.equations[0].coefficients[j]>=0?'+':''}${fmt(r.step.equations[0].coefficients[j],3)}\\,${texTerms[k-1]}`).join(' ');
- assert.equal(doc.getElementById('work-equation').dataset.tex,expected);
- assert(!/FROLS|FoBa|BIC|weak form|schwache Form/i.test(doc.getElementById('p-solution').textContent));
+const savedChallenge=snapshot();work.visible(true);
+const close=(a,b)=>assert(Math.abs(+a-b)<1e-12,`${a} != ${b}`);
+for(let i=0;i<work.frames.length;i++){
+ work.go(i);assert.equal(work.index,i);assert(!work.playing);
+ const f=work.frames[i],r=work.records[f.stage],phase=f.phase==='combined'?'test':f.phase;
+ const support=['rest','test'].includes(phase)?r.previous:phase==='add'?r.added:phase==='remove'?r.checks[f.check||0].support:r.step.support;
+ assert.deepEqual(doc.getElementById('work-cards').children.map((c,j)=>c.classList.contains('lit')?j:-1).filter(j=>j>=0),support);
+ const formula=doc.getElementById('work-equation');
+ assert(!/×\s*10|\\times|[0-9]e[-+][0-9]/i.test(formula.dataset.tex));
+ assert.equal(formula.children.filter(c=>c.classList.contains('work-equation-term')).length,Math.max(1,support.length));
+ if(support.includes(0)){
+  const coef=['rest','test'].includes(phase)?r.before.coefficients:phase==='add'?r.after.coefficients:phase==='remove'?r.checks[f.check||0].coefficients:JSON.parse(r.candidate.row.params);
+  const constant=formula.children.find(c=>c.classList.contains('work-equation-term')).textContent;
+  assert.equal(constant,'du/dt = '+workNumber(coef[support.indexOf(0)]));
+ }
+ const marker=doc.querySelector('#work-chart .work-noise-marker');
+ if(phase==='rest'||phase==='add'){
+  const D=WispCompute.design(measuredTime,teaching.observed,LIVE.windows),variance=WispCompute.noiseVariance(measuredTime,teaching.observed);
+  const floor=WispCompute.noiseFloor(D,support,variance)/D.b.reduce((s,v)=>s+v*v,0);
+  close(marker.dataset.floor,floor);close(parseFloat(marker.style.left),floor*100);
+  assert(doc.querySelector('#work-chart .work-noise-label').textContent===table.x8d_noise);
+ }
+ if(phase==='test')for(const row of doc.querySelectorAll('#work-chart .gain-row')){
+  const gain=r.step.gains.find(g=>g.term===+row.dataset.term).gain;
+  assert.equal(row.querySelector('.gain-value').textContent,tr('x8d_gain',{gain:(gain*100).toLocaleString(language,{minimumFractionDigits:1,maximumFractionDigits:1}),share:(gain/(r.remainingBefore-r.floorBefore)*100).toLocaleString(language,{minimumFractionDigits:1,maximumFractionDigits:1})}));
+ }
+ const page=doc.getElementById('p-solution');assert(!/FROLS|FoBa|BIC|weak form|least squares|\bSSE\b|schwache Form|kleinste Quadrate/i.test(page.textContent));
+ assert.equal(page.dataset.candidate,run.path[f.stage].candidate_id);
+ if(phase==='rest'){
+  close(doc.querySelector('#work-chart .work-rest').dataset.remaining,r.remainingBefore);
+  const D=WispCompute.design(measuredTime,teaching.observed,LIVE.windows),longest=Math.max(...D.windows.map(([a,b])=>b-a));
+  assert.equal(doc.querySelectorAll('#work-chart .measurement-dot').length,D.windows.filter(([a,b])=>b-a===longest).length);
+ }
+ if(phase==='test'||phase==='remove'){
+  const check=r.checks[f.check||0],values=phase==='test'?r.step.gains:check.costs,key=phase==='test'?'gain':'cost';
+  const rows=doc.querySelectorAll('#work-chart .gain-row');assert.equal(rows.length,values.length);
+  for(const row of rows)close(row.dataset.value,values.find(g=>g.term===+row.dataset.term)[key]);
+  if(phase==='remove'){
+   close(doc.querySelector('#work-chart .work-bars').dataset.threshold,r.threshold);
+   assert.deepEqual(rows.filter(row=>row.classList.contains('leaving')).map(row=>+row.dataset.term),check.out===null?[]:[check.out]);
+   assert.deepEqual(doc.querySelectorAll('#work-cards .leaving').map(c=>doc.getElementById('work-cards').children.indexOf(c)),check.out===null?[]:[check.out]);
+  }
+ }
+ if(phase==='add')close(doc.querySelector('#work-chart .work-rest').dataset.remaining,r.remainingAdded);
+ if(['simulate','choose'].includes(phase)){
+  const c=r.candidate.curves,model=captured.find(s=>s.kind==='model');assert.deepEqual(model.x,c.t);assert.deepEqual(model.y,c.model.map(row=>row[0]));
+  assert.equal(doc.getElementById('work-equation').dataset.tex,workEquation(r.step.support,JSON.parse(r.candidate.row.params)));
+  const columns=doc.querySelectorAll('#work-strip .work-stage');assert.equal(columns.length,8);
+  columns.forEach((col,j)=>{
+   close(parseFloat(col.querySelector('.work-fit-bar').style.height),Math.max(0,Math.min(1,work.scores[j]))*100);
+   assert.equal(col.getAttribute('aria-label'),tr(j===0?'x8d_stage_one':'x8c_stage',{k:j+1,n:work.records[j].step.support.length}));
+   close(col.dataset.score,workCurveR2(work.records[j].candidate.curves));assert.equal(col.hidden,phase==='simulate'&&j>f.stage);});
+  if(phase==='choose'){
+   assert.equal(columns.filter(b=>b.classList.contains('chosen')).length,1);assert(columns[work.chosen].classList.contains('chosen'));
+   assert.equal(captured.filter(s=>s.kind==='candidate').length,8);assert(doc.querySelector('.work-legend').textContent.includes(tr('x8d_chosen_curve',{k:work.chosen+1})));
+   const tex=doc.getElementById('work-equation').dataset.tex;
+   assert.equal(page.querySelectorAll('[data-tex]').filter(e=>e.dataset.tex===tex).length,1);
+   assert(doc.querySelector('#work-truth .work-true-equation').dataset.tex.startsWith('du/dt = '));
+  }
+ }else{
+  assert.equal(doc.getElementById('work-estimate').textContent,table.x8c_estimate);
+  if(phase==='rest'||phase==='test')assert.equal(doc.getElementById('work-equation').dataset.tex,workEquation(r.previous,r.before.coefficients));
+  if(phase==='add')assert.equal(doc.getElementById('work-equation').dataset.tex,workEquation(r.added,r.after.coefficients));
+ }
 }
-assert.equal(doc.getElementById('p-solution').dataset.candidate,run.chosen);assert(!doc.getElementById('work-truth').hidden);
-assert.equal(captured.filter(s=>s.kind==='candidate').length,0);
 assert.deepEqual(snapshot(),savedChallenge);
-work.visible(true);doc.getElementById('work-play').emit('click');advance(6100);assert.equal(work.index,0);advance(2550);assert.equal(work.index,1);
-work.visible(false);advance(10000);assert.equal(work.index,1);
-work.visible(true);advance(2550);assert.equal(work.index,2);
-doc.hidden=true;doc.emit('visibilitychange');advance(10000);assert.equal(work.index,2);
-doc.hidden=false;doc.emit('visibilitychange');
+assert.equal(workEquation([0,3],[10,-1.32e-5]),'du/dt = 10 − '+workNumber(.0000132)+' u³');
+assert.equal(workNumber(-.0000275),language==='de'?'−0,0000275':'−0.0000275');
+// A late CDN load must preserve the wrapping decimal presentation on page 3.
+const previousKatex=global.katex;
+global.katex={render(tex,target){assert(!target.closest('#p-solution'),'late typesetting replaced a wrapping equation');}};
+global.typesetAll();global.katex=previousKatex;
+const floorClose=Math.abs(work.records[3].step.remaining-work.records[3].floorAfter)/work.records[3].floorAfter<=.1;
+for(let i=0;i<work.frames.length;i++){work.go(i);const f=work.frames[i],r=work.records[f.stage];assert.equal(doc.getElementById('work-narration').textContent.includes(table.x8d_almost_noise),f.phase==='rest'&&floorClose&&Math.abs(r.remainingBefore-r.floorBefore)/r.floorBefore<=.1);}
+
+// Check all three timed subviews of every combined late-stage frame.
+for(const [i,f] of work.frames.entries())if(f.phase==='combined'){
+ work.go(i);const r=work.records[f.stage];doc.getElementById('work-play').emit('click');advance(1250);
+ assert.deepEqual(doc.getElementById('work-cards').children.map((c,j)=>c.classList.contains('lit')?j:-1).filter(j=>j>=0),r.added);
+ assert.equal(doc.getElementById('work-equation').dataset.tex,workEquation(r.added,r.after.coefficients));
+ close(doc.querySelector('#work-chart .work-rest').dataset.remaining,r.remainingAdded);
+ advance(1100);const check=r.checks[0];
+ assert.deepEqual(doc.getElementById('work-cards').children.map((c,j)=>c.classList.contains('lit')?j:-1).filter(j=>j>=0),check.support);
+ for(const row of doc.querySelectorAll('#work-chart .gain-row'))close(row.dataset.value,check.costs.find(c=>c.term===+row.dataset.term).cost);
+ close(doc.querySelector('#work-chart .work-bars').dataset.threshold,r.threshold);
+ assert.equal(doc.querySelectorAll('#work-cards .leaving').length,0);
+}
+// Loop, timing, page and document visibility, manual pause and strip selection.
+work.go(work.frames.length-1);doc.getElementById('work-play').emit('click');advance(8100);assert.equal(work.index,0);advance(3550);assert.equal(work.index,1);
+work.visible(false);advance(10000);assert.equal(work.index,1);work.visible(true);advance(3550);assert.equal(work.index,2);
+doc.hidden=true;doc.emit('visibilitychange');advance(10000);assert.equal(work.index,2);doc.hidden=false;doc.emit('visibilitychange');
 doc.getElementById('work-next').emit('click');assert.equal(work.index,3);assert(!work.playing);advance(10000);assert.equal(work.index,3);
+doc.getElementById('work-back').emit('click');assert.equal(work.index,2);
 doc.getElementById('work-restart').emit('click');assert.equal(work.index,0);assert(!work.playing);
-const synthetic=JSON.parse(JSON.stringify(run));synthetic.path=synthetic.path.slice(0,2);synthetic.path[1].active_idxs=[[1]];synthetic.path[0].active_idxs=[[1,4]];assert.equal(workSteps(synthetic)[1].kind,'remove');
-// Isolated reduced-motion initialization must show the final choice without autoplay.
-global.matchMedia=()=>({matches:true,addEventListener(){}});doc.getElementById('work-cards').replaceChildren();doc.getElementById('work-track').replaceChildren();initWork();
-assert.equal(global.WispWork.index,8);assert(!global.WispWork.playing);global.WispWork.visible(true);advance(10000);assert.equal(global.WispWork.index,8);
-doc.getElementById('work-next').emit('click');assert.equal(global.WispWork.index,0);
+work.go(work.frames.findIndex(f=>f.phase==='simulate'));doc.getElementById('work-play').emit('click');advance(1550);assert.equal(work.frames[work.index].stage,1);
+doc.querySelectorAll('#work-strip .work-stage')[3].emit('click');assert.equal(work.frames[work.index].stage,3);assert(!work.playing);
+work.go(work.frames.findIndex(f=>f.phase==='combined'));doc.getElementById('work-play').emit('click');advance(1250);assert(doc.querySelector('#work-chart .work-rest'));advance(1100);assert(doc.querySelector('#work-chart .work-bars').dataset.kind==='cost');
+// Path mismatch must stop, even if the scientific export has been replaced.
+const changed=JSON.parse(JSON.stringify(run));changed.path[0].active_idxs=[[2]];
+assert.throws(()=>workTrace(changed,teaching.observed,measuredTime,LIVE),/differs from recorded/);
+// Reduced motion starts at the choice and still permits manual navigation.
+global.matchMedia=()=>({matches:true,addEventListener(){}});doc.getElementById('work-cards').replaceChildren();doc.getElementById('work-strip').replaceChildren();initWork();
+const reduced=global.WispWork;assert.equal(reduced.index,reduced.frames.length-1);assert(!reduced.playing);reduced.visible(true);advance(10000);assert.equal(reduced.index,reduced.frames.length-1);reduced.go(0);assert.equal(reduced.index,0);
 global.matchMedia=media;chart=savedChart;
-console.log('PASS X8 bilingual eye/reset, unchanged cards, nine recorded steps, support-diff narration, exported curves, chosen support, loop, page/tab pause and reduced motion');
-
-
+console.log('PASS X8c every bilingual frame: support, gains, removal costs/threshold/strike, remaining, R², unique fitted choice, derivative truth, no jargon, timing, controls, pause, loop and reduced motion');

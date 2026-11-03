@@ -126,7 +126,7 @@ const fs=require('fs'),vm=require('vm'),base=process.argv[1];
 const source=fs.readFileSync(base+'/dist/wisp_explainer.html','utf8'), data=JSON.parse(source.match(/<script id="wisp-data" type="application\/json">(.*?)<\/script>/s)[1]);
 let all=[];
 class Element {
- constructor(tag){this.tag=tag;this.children=[];this.dataset={};this.style={};this.listeners={};this.attrs={};this._value='';this.textContent='';all.push(this);}
+ constructor(tag){this.tag=tag;this.children=[];this.dataset={};this.style={};this.listeners={};this.attrs={};this._value='';this.textContent='';this.classList={toggle:(name,on)=>{const classes=(this.className||'').split(' ').filter(c=>c&&c!==name);if(on)classes.push(name);this.className=classes.join(' ');}};all.push(this);}
  append(...children){this.children.push(...children);if(this.tag==='select'&&this._value===''&&this.children.length)this._value=this.children[0].value;}
  replaceChildren(...children){this.children=[];this._value='';this.append(...children);}
  setAttribute(k,v){this.attrs[k]=String(v);}
@@ -134,7 +134,7 @@ class Element {
  get value(){return this._value;}
  set value(v){this._value=String(v);}
  addEventListener(event,fn){this.listeners[event]=fn;}
- querySelector(selector){if(selector==='output')return this.children.find(c=>c.tag==='output');if(selector==='path')return this.querySelectorAll('path')[0];const type=selector.includes('checkbox')?'checkbox':'range';return this.children.flatMap(c=>[c,...c.children]).find(c=>c.type===type);}
+ querySelector(selector){if(selector.startsWith('.'))return this.querySelectorAll('*').find(c=>(c.className||'').split(' ').includes(selector.slice(1)));if(selector==='output')return this.children.find(c=>c.tag==='output');if(selector==='path')return this.querySelectorAll('path')[0];const type=selector.includes('checkbox')?'checkbox':'range';return this.children.flatMap(c=>[c,...c.children]).find(c=>c.type===type);}
  querySelectorAll(selector){return this.children.flatMap(c=>[c,...c.querySelectorAll('*')]).filter(c=>selector==='*'||c.tag===selector);}
  focus(){}
 }

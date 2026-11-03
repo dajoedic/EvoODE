@@ -73,7 +73,7 @@ function initDish(){
  if(typeof IntersectionObserver==='function'){const observer=new IntersectionObserver(entries=>{visible=entries.some(e=>e.isIntersecting);update();},{threshold:.1});observer.observe(target);}else{const visibility=()=>{const r=target.getBoundingClientRect();visible=r.bottom>0&&r.top<innerHeight;update();};window.addEventListener('scroll',visibility,{passive:true});window.addEventListener('resize',visibility);visibility();}
 }
 initDish();
-window.typesetAll=()=>{if(!window.katex)return;document.querySelectorAll("[data-tex]").forEach(e=>window.katex.render(e.dataset.tex,e,{throwOnError:false,output:'mathml',displayMode:!e.classList.contains('inline')}));};
+window.typesetAll=()=>{if(!window.katex)return;document.querySelectorAll("[data-tex]").forEach(e=>{if(e.dataset.plainEquation)return;window.katex.render(e.dataset.tex,e,{throwOnError:false,output:'mathml',displayMode:!e.classList.contains('inline')});});};
 function math(target,tex){target.dataset.tex=tex;target.textContent=tex;if(window.katex)window.katex.render(tex,target,{throwOnError:false,output:'mathml',displayMode:!target.classList.contains('inline')});}
 function equation(support,coefficients){return '\\frac{du}{dt}='+ (support.length?support.map((j,i)=>`${i&&coefficients[i]>=0?'+':''}${fmt(coefficients[i],4)}\\,${texTerms[j]}`).join(' '):'0');}
 // Names and conditions are presentation labels; identifiers remain option values.
@@ -163,58 +163,145 @@ function toggleSolution(show){
  $('challenge-truth').hidden=!show;play();
 }
 $('challenge-solution').addEventListener('click',()=>toggleSolution(!solutionShown));
-// Presentation of the recorded run; no search, fitting or integration here.
-function workSteps(feature){
- return feature.path.map((step,i)=>{
-  const active=step.active_idxs[0],previous=feature.path[i-1]?.active_idxs[0]||[];
-  const entered=active.filter(k=>!previous.includes(k)),left=previous.filter(k=>!active.includes(k));
-  return {step,active,entered,left,kind:left.length?(entered.length?'swap':'remove'):'add',candidate:feature.candidates.find(c=>c.row.candidate_id===step.candidate_id)};
+// Presentation diagnostics reuse the frozen solver and its exact QR compression.
+// Compression is private in compute.js; this adapter is checked verbatim against it.
+const workDot=(a,b)=>a.reduce((s,v,i)=>s+v*b[i],0);
+  function workCompress(A,b) {
+    const p=A[0].length, norms=Array.from({length:p},(_,j)=>Math.sqrt(workDot(A.map(r=>r[j]),A.map(r=>r[j]))));
+    const M=A.map((r,i)=>[...r.map((v,j)=>v/(norms[j]||1)),b[i]]);
+    // Householder augmented QR avoids subtracting nearly equal residual norms.
+    for(let k=0;k<Math.min(M.length,p+1);k++) {
+      const v=M.slice(k).map(r=>r[k]), n=Math.sqrt(workDot(v,v));
+      if(!n) continue;
+      v[0]+=(v[0]>=0?1:-1)*n;
+      const vv=workDot(v,v);
+      for(let j=k;j<=p;j++) {
+        let s=0; for(let i=0;i<v.length;i++) s+=v[i]*M[i+k][j];
+        s=2*s/vv; for(let i=0;i<v.length;i++) M[i+k][j]-=s*v[i];
+      }
+    }
+    return {A:M.slice(0,p+1).map(r=>r.slice(0,p)),b:M.slice(0,p+1).map(r=>r[p]),norms};
+  }
+
+// Page 3 uses decimal coefficients and independently wrapping terms.
+function workNumber(value){return Number(value).toLocaleString(language,{maximumSignificantDigits:3,useGrouping:false}).replaceAll('-', '−');}
+function workEquation(support,coefficients){return 'du/dt = '+(support.length?support.map((j,i)=>
+ (coefficients[i]<0?'−':i?'+':'')+(i?' ':'')+workNumber(Math.abs(coefficients[i]))+(j?' '+terms[j]:'' )).join(' '):'0');}
+function workMath(target,text){
+ target.dataset.tex=text;target.dataset.plainEquation='true';target.replaceChildren();
+ const prefix=text.startsWith('du/dt = ')?'du/dt = ':'';
+ text.slice(prefix.length).split(/\s(?=[+−])/).forEach((part,i)=>{if(i)target.append(el('span',' '));target.append(el('span',(i?'':prefix)+part,'work-equation-term'));});
+}
+function workTruth(text){return 'du/dt = '+text.replace(/(?:\d+\.\d+|\d+)(?:[eE][+-]?\d+)?/g,(n,offset,s)=>/[A-Za-z_]/.test(s[offset-1]||'')?n:workNumber(+n)).replaceAll('x_0','u').replaceAll('**','^').replaceAll('*',' · ').replaceAll('-', '−');}
+function workTrace(feature, observations, times, config){
+ const result=W.path(times,observations,config),D=result.design,C=workCompress(D.A,D.b),norm=workDot(D.b,D.b);
+ const fit=s=>{const f=W.leastSquares(C.A.map(row=>s.map(j=>row[j])),C.b);return {sse:f.sse,coefficients:f.coefficients.map((v,i)=>v/(C.norms[s[i]]||1))};};
+ if(JSON.stringify(result.steps.map(s=>s.support))!==JSON.stringify(feature.path.map(s=>s.active_idxs[0].map(i=>i-1))))throw Error('Teaching path differs from recorded supports');
+ const variance=W.noiseVariance(times,observations);
+ const floor=s=>{const value=W.noiseFloor(D,s,variance)/norm;return Number.isFinite(value)?value:null;};
+ let previous=[];
+ return result.steps.map((step,i)=>{
+  const before=fit(previous),added=[...previous,step.addition].sort((a,b)=>a-b),after=fit(added),checks=[],removed=[];
+  let active=added.slice();const threshold=(config.backward_fraction||.5)*step.gains[0].gain;
+  while(true){const costs=active.map(term=>({term,cost:(fit(active.filter(j=>j!==term)).sse-fit(active).sse)/norm}));
+   const out=costs.filter(c=>c.cost<threshold).sort((a,b)=>a.cost-b.cost||a.term-b.term)[0];
+   checks.push({support:active.slice(),coefficients:fit(active).coefficients,costs,out:out?.term??null});if(!out)break;
+   removed.push(out.term);active=active.filter(j=>j!==out.term);
+  }
+  if(JSON.stringify(removed)!==JSON.stringify(step.removed)||JSON.stringify(active)!==JSON.stringify(step.support))throw Error('Removal replay differs from recorded path');
+  const record={step,previous:previous.slice(),before,added,after,checks,threshold,floorBefore:floor(previous),floorAdded:floor(added),floorAfter:floor(step.support),remainingBefore:before.sse/norm,remainingAdded:after.sse/norm,
+   candidate:feature.candidates.find(c=>c.row.candidate_id===feature.path[i].candidate_id)};
+  previous=step.support.slice();return record;
  });
 }
+function workCurveR2(bundle){
+ if(!bundle)return null;
+ const t=bundle.t,y=bundle.model.map(row=>row[0]);let k=0;
+ if(t.length<2||measuredTime[0]<t[0]||measuredTime.at(-1)>t.at(-1)||t.some((v,i)=>i&&v<=t[i-1]))return null;
+ const curve=measuredTime.map(v=>{while(k<t.length-2&&t[k+1]<v)k++;return y[k]+(y[k+1]-y[k])*(v-t[k])/(t[k+1]-t[k]);});
+ const score=observationR2(curve,teaching.observed);return Number.isFinite(score)?score:null;
+}
 function initWork(){
- const feature=LIVE.featured[0],records=workSteps(feature),chosen=records.findIndex(r=>r.step.candidate_id===feature.chosen);
- const page=$('p-solution'),media=window.matchMedia('(prefers-reduced-motion: reduce)');
- const cards=terms.map(name=>{const card=el('div',name,'term-card');$('work-cards').append(card);return card;});
- function sizeCards(){const source=$('term-cards').querySelector('.term-card');if(source?.getBoundingClientRect){const {height}=source.getBoundingClientRect();cards.forEach(card=>card.style.height=height+'px');}}
- if(typeof ResizeObserver==='function')new ResizeObserver(sizeCards).observe($('term-cards'));
- document.fonts?.ready.then(sizeCards);window.addEventListener('resize',sizeCards);sizeCards();
- let index=media.matches?records.length:0,playing=!media.matches,visible=false,elapsed=0,last=0,frame=0;
- const buttons=Array.from({length:records.length+1},(_,i)=>{const b=el('button',undefined,'work-dot');b.type='button';b.dataset.kind=i===records.length?'choice':records[i].kind;b.setAttribute('aria-label',i===records.length?tr('x8_final'):tr('x8_step',{k:i+1}));b.setAttribute('title',b.getAttribute('aria-label'));b.addEventListener('click',()=>go(i));$('work-track').append(b);return b;});
+ const feature=LIVE.featured[0],records=workTrace(feature,teaching.observed,measuredTime,LIVE),chosen=feature.path.findIndex(s=>s.candidate_id===feature.chosen);
+ const scores=records.map(r=>workCurveR2(r.candidate?.curves)),page=$('p-solution'),media=window.matchMedia('(prefers-reduced-motion: reduce)');
+ const frames=[];records.forEach((r,i)=>{if(i<4){for(const phase of ['rest','test','add'])frames.push({stage:i,phase});r.checks.forEach((_,check)=>frames.push({stage:i,phase:'remove',check}));}else frames.push({stage:i,phase:'combined'});});
+ records.forEach((_,stage)=>frames.push({stage,phase:'simulate'}));frames.push({stage:chosen,phase:'choose'});
+ const cards=terms.map(name=>{const card=el('div',name,'work-chip');$('work-cards').append(card);return card;});
+ let index=media.matches?frames.length-1:0,playing=!media.matches,visible=false,elapsed=0,last=0,animation=0,subview='';
+ const percent=v=>(v*100).toLocaleString(language,{minimumFractionDigits:1,maximumFractionDigits:1});
+ const fraction=()=>LIVE.backward_fraction===.5?tr('x8c_half'):tr('x8c_fraction',{value:numberText(LIVE.backward_fraction)});
+ const caption=(text,cls='caption')=>{const p=el('p',text,cls);p.dataset.claim='review';return p;};
+ const nearFloor=(remaining,floor)=>floor!==null&&floor>0&&Math.abs(remaining-floor)/floor<=.1;
+ const showNoiseSentence=nearFloor(records[3].step.remaining,records[3].floorAfter);
+ const stageLabel=(i,n)=>tr(n===1?'x8d_stage_one':'x8c_stage',{k:i+1,n});
+ function meter(target,value,previous,floor){const wrap=el('div',undefined,'work-rest');wrap.dataset.remaining=String(value);
+  const track=el('div',undefined,'work-rest-track'),ghost=el('span',undefined,'work-rest-previous'),bar=el('span',undefined,'work-rest-current');
+  ghost.style.width=Math.max(0,previous*100)+'%';bar.style.width=Math.max(0,value*100)+'%';track.append(ghost,bar);wrap.append(caption(tr('x8c_remaining',{r:percent(value)})),track);
+  if(floor!==null){const marker=el('span',undefined,'work-noise-marker');marker.dataset.floor=String(floor);marker.style.left=floor*100+'%';marker.setAttribute('aria-label',tr('x8d_noise'));track.append(marker);wrap.append(caption(tr('x8d_noise'),'caption work-noise-label'));}target.append(wrap);
+ }
+ function barView(target,values,key,winner,threshold=null,out=null){
+  const plot=el('div',undefined,'work-bars'),max=Math.max(...values.map(g=>g[key]),threshold||0,1e-30);plot.dataset.kind=key;
+  plot.append(caption(tr(key==='gain'?'x8c_gain_scale':'x8c_cost_scale',{max:percent(max)})));
+  values.forEach((g,i)=>{const row=el('div',undefined,'gain-row'+(g.term===out?' leaving':'')),track=el('div',undefined,'gain-track'),bar=el('span');row.dataset.term=String(g.term);row.dataset.value=String(g[key]);
+   bar.style.width=Math.max(0,g[key]/max*100)+'%';bar.style.background=g.term===winner?'var(--model)':'var(--data)';track.append(bar);
+   if(threshold!==null){const line=el('span',undefined,'work-threshold');line.style.left=threshold/max*100+'%';track.append(line);}
+   const r=records[frames[index].stage],explainable=r.remainingBefore-r.floorBefore;
+   const label=key==='gain'&&r.floorBefore!==null&&explainable>0?tr('x8d_gain',{gain:percent(g[key]),share:percent(g[key]/explainable)}):percent(g[key])+' %';
+   row.append(el('span',terms[g.term]),track,el('span',label,'gain-value'));if(key==='gain'&&!media.matches){row.classList.add('work-reveal');row.style.animationDelay=i*.3+'s';}plot.append(row);
+  });target.append(plot);if(threshold!==null){plot.dataset.threshold=String(threshold);target.append(caption(tr('x8c_threshold',{fraction:fraction(),winner:terms[winner],value:percent(threshold)})));}
+ }
  function draw(){
-  const choice=index===records.length,r=records[choice?chosen:index];
-  page.dataset.workStep=String(index);page.dataset.candidate=r.step.candidate_id;
-  cards.forEach((card,i)=>{card.className='term-card'+(r.active.includes(i+1)?' lit':'')+(!choice&&r.entered.includes(i+1)?' entering':'')+(!choice&&r.left.includes(i+1)?' leaving':'');});
-  const eq=r.step.equations[0];
-  const tex='\\frac{du}{dt}='+eq.basis_indices.map((k,j)=>`${j&&eq.coefficients[j]>=0?'+':''}${fmt(eq.coefficients[j],3)}\\,${texTerms[k-1]}`).join(' ');
-  math($('work-equation'),tex);
-  const names=indices=>indices.map(k=>terms[k-1]).join(', ');
-  $('work-narration').textContent=choice?tr('x8_choice',{k:chosen+1}):tr('x8_'+r.kind,{k:index+1,block:names(r.kind==='remove'?r.left:r.entered),out:names(r.left),in:names(r.entered)});
-  if(choice){const formula=el('span',undefined,'math inline');math(formula,tex);$('work-narration').append(formula);}
-  $('work-truth').hidden=!choice;
-  if(choice){$('work-truth').textContent=tr('x8_true')+': ';const formula=el('span',undefined,'math inline');math(formula,runningCell?.truth.map(displayTruth).join(' / ').replaceAll('u_{1}','u')||tr('j153'));$('work-truth').append(formula);}
-  const series=[{x:measuredTime,y:teaching.observed,kind:'data',style:'dots'}];
-  const preview=choice&&elapsed<900&&!media.matches;
-  if(preview)for(const c of feature.candidates){if(c.curves)series.push({x:c.curves.t,y:c.curves.model.map(row=>row[0]),kind:'candidate'});}
-  if(!preview&&r.candidate?.curves)series.push({x:r.candidate.curves.t,y:r.candidate.curves.model.map(row=>row[0]),kind:'model'});
-  chart($('work-chart'),series,{legend:false});
-  buttons.forEach((b,i)=>b.setAttribute('aria-current',i===index?'step':'false'));
-  const key=playing?'x8_pause':'x8_play',play=$('work-play');play.setAttribute('aria-label',tr(key));play.setAttribute('title',tr(key));play.setAttribute('aria-pressed',String(playing));
-  play.querySelector('path').setAttribute('d',playing?'M8 5V19 M16 5V19':'M7 4L20 12 7 20Z');
+  const f=frames[index],r=records[f.stage],final=['simulate','choose'].includes(f.phase);
+  let phase=f.phase;if(phase==='combined')phase=elapsed<1200?'test':elapsed<2300?'add':'remove';
+  subview=phase;const check=r.checks[f.check??0];
+  const support=final?r.step.support:phase==='rest'||phase==='test'?r.previous:phase==='add'?r.added:check.support;
+  const equationCoefs=final?JSON.parse(r.candidate.row.params):phase==='rest'||phase==='test'?r.before.coefficients:phase==='add'?r.after.coefficients:check.coefficients;
+  page.dataset.workStep=String(index);page.dataset.phase=f.phase;page.dataset.candidate=feature.path[f.stage].candidate_id;
+  cards.forEach((card,i)=>card.className='work-chip'+(support.includes(i)?' lit':'')+(phase==='add'&&i===r.step.addition?' entering':'')+(phase==='remove'&&check.out===i?' leaving':''));
+  workMath($('work-equation'),workEquation(support,equationCoefs));$('work-estimate').textContent=tr(final?'x8c_fitted':'x8c_estimate');
+  const phaseKeys={rest:'x8c_phase1',test:'x8c_phase2',add:'x8c_phase3',remove:'x8c_phase4',simulate:'x8c_phase5',choose:'x8c_phase6'};
+  $('work-phase').textContent=(final?'':tr('x8_step',{k:f.stage+1})+' · ')+tr(phaseKeys[phase]);
+  let text;
+  if(f.phase==='combined'&&f.stage===4)text=tr('x8c_continue');
+  else if(phase==='rest')text=f.stage===0?tr('x8c_start'):tr('x8c_rest',{r:percent(r.remainingBefore)});
+  else if(phase==='test')text=tr('x8c_test',{best:terms[r.step.addition],g:percent(r.step.gains[0].gain)});
+  else if(phase==='add')text=tr('x8c_add',{best:terms[r.step.addition]});
+  else if(phase==='remove')text=check.out===null?tr('x8c_stay'):tr('x8c_remove',{out:terms[check.out],best:terms[r.step.addition],fraction:fraction()});
+  else if(phase==='simulate')text=tr('x8c_simulate');
+  else text=tr(scores[chosen]!==null&&Math.max(...scores.filter(v=>v!==null))-scores[chosen]<=.001?'x8c_choose_plateau':'x8c_choose',{k:chosen+1});
+  if(phase==='rest'&&showNoiseSentence&&nearFloor(r.remainingBefore,r.floorBefore))text+=' '+tr('x8d_almost_noise');
+  $('work-narration').textContent=text;$('work-truth').hidden=phase!=='choose';
+  if(phase==='choose'){$('work-truth').textContent=tr('x8_true')+': ';const formula=el('span',undefined,'work-true-equation');workMath(formula,runningCell?.truth.map(workTruth).join(' / ')||tr('j153'));$('work-truth').append(formula);}
+  const target=$('work-chart');target.replaceChildren();
+  if(phase==='rest'){
+   meter(target,r.remainingBefore,f.stage>1?records[f.stage-2].step.remaining:1,r.floorBefore);
+   const D=W.design(measuredTime,teaching.observed,LIVE.windows),longest=Math.max(...D.windows.map(([a,b])=>b-a)),rows=D.windows.map((w,i)=>({w,i})).filter(({w})=>w[1]-w[0]===longest),plot=el('div');target.append(plot);
+   chart(plot,[{x:rows.map(({w})=>measuredTime[w[1]]),y:rows.map(({i})=>D.b[i]),kind:'data',style:'dots',label:tr('j214')},{x:rows.map(({w})=>measuredTime[w[1]]),y:rows.map(({i})=>r.previous.reduce((sum,j,k)=>sum+D.A[i][j]*r.before.coefficients[k],0)),kind:'model',label:tr('x8c_explained')}],{legend:false,yLabel:'Δu'});target.append(caption(tr('x8c_changes')));
+  }else if(phase==='test')barView(target,r.step.gains,'gain',r.step.addition);
+  else if(phase==='add'){
+   meter(target,r.remainingAdded,r.remainingBefore,r.floorAdded);const changes=el('div',undefined,'work-coefficients');changes.append(caption(tr('x8c_before_after')));
+   r.previous.forEach((j,k)=>changes.append(el('div',terms[j]+': '+workNumber(r.before.coefficients[k])+' → '+workNumber(r.after.coefficients[r.added.indexOf(j)]))));target.append(changes);
+  }else if(phase==='remove')barView(target,check.costs,'cost',r.step.addition,r.threshold,check.out);
+  else{
+   const series=[{x:measuredTime,y:teaching.observed,kind:'data',style:'dots',label:tr('j214')}];
+   if(phase==='choose')records.forEach(q=>{if(q.candidate?.curves)series.push({x:q.candidate.curves.t,y:q.candidate.curves.model.map(row=>row[0]),kind:'candidate',label:''});});
+   if(r.candidate?.curves)series.push({x:r.candidate.curves.t,y:r.candidate.curves.model.map(row=>row[0]),kind:'model',label:tr('x8c_curve',{k:f.stage+1})});
+   chart(target,series,{legend:false});const legend=el('div',undefined,'work-legend');legend.dataset.claim='review';legend.append(el('span','● '+tr('j214')),el('span','━ '+tr(phase==='choose'?'x8d_chosen_curve':'x8c_curve',{k:f.stage+1})));target.append(legend);
+  }
+  $('work-fit-label').hidden=!final;$('work-strip').hidden=!final;strip.forEach((b,i)=>{b.hidden=phase==='simulate'&&i>f.stage;b.classList.toggle('chosen',phase==='choose'&&i===chosen);b.setAttribute('aria-current',i===f.stage?'step':'false');b.querySelector('.work-choice').textContent=phase==='choose'&&i===chosen?tr('x8c_chosen'):'';});
+  const key=playing?'x8_pause':'x8_play',play=$('work-play');play.setAttribute('aria-label',tr(key));play.setAttribute('title',tr(key));play.setAttribute('aria-pressed',String(playing));play.querySelector('path').setAttribute('d',playing?'M8 5V19 M16 5V19':'M7 4L20 12 7 20Z');
  }
- function tick(now){const before=elapsed;elapsed+=now-last;last=now;
-  if(playing&&elapsed>=(index===records.length?6000:2500)){index=(index+1)%(records.length+1);elapsed=0;draw();}
-  else if(index===records.length&&before<900&&elapsed>=900)draw();
-  if(playing||index===records.length&&elapsed<900)frame=requestAnimationFrame(tick);
- }
- function update(){cancelAnimationFrame(frame);frame=0;if(visible&&!document.hidden&&(playing||index===records.length&&elapsed<900&&!media.matches)){last=performance.now();frame=requestAnimationFrame(tick);}}
- function go(i){index=i;elapsed=0;playing=false;draw();update();}
- $('work-next').addEventListener('click',()=>go((index+1)%(records.length+1)));
- $('work-restart').addEventListener('click',()=>go(0));
- $('work-play').addEventListener('click',()=>{playing=!playing;draw();update();});
- document.addEventListener('visibilitychange',update);
- media.addEventListener?.('change',()=>{if(media.matches){index=records.length;elapsed=0;playing=false;}draw();update();});
- window.WispWork={visible(value){visible=value;update();},get index(){return index;},get playing(){return playing;},records};
- draw();
+ const strip=records.map((r,i)=>{const b=el('button',undefined,'work-stage');b.type='button';b.dataset.score=String(scores[i]);b.setAttribute('aria-label',stageLabel(i,r.step.support.length));
+  const track=el('span',undefined,'work-fit-track'),bar=el('span',undefined,'work-fit-bar');bar.style.height=(scores[i]===null?0:Math.max(0,Math.min(1,scores[i]))*100)+'%';track.append(bar);
+  b.append(el('span',scores[i]===null?tr('j153'):scores[i].toLocaleString(language,{minimumFractionDigits:3,maximumFractionDigits:3})),track,el('span',stageLabel(i,r.step.support.length)),el('span','','work-choice'));
+  b.addEventListener('click',()=>go(frames.findIndex(f=>f.phase==='simulate'&&f.stage===i)));$('work-strip').append(b);return b;});
+ const duration=()=>frames[index].phase==='choose'?8000:frames[index].phase==='simulate'?1500:3500;
+ function tick(now){elapsed+=now-last;last=now;if(elapsed>=duration()){index=(index+1)%frames.length;elapsed=0;draw();}else if(frames[index].phase==='combined'&&subview!==(elapsed<1200?'test':elapsed<2300?'add':'remove'))draw();animation=requestAnimationFrame(tick);}
+ function update(){cancelAnimationFrame(animation);animation=0;if(visible&&!document.hidden&&playing){last=performance.now();animation=requestAnimationFrame(tick);}}
+ function go(i){index=(i+frames.length)%frames.length;elapsed=0;playing=false;draw();update();}
+ $('work-back').addEventListener('click',()=>go(index-1));$('work-next').addEventListener('click',()=>go(index+1));$('work-restart').addEventListener('click',()=>go(0));$('work-play').addEventListener('click',()=>{playing=!playing;draw();update();});
+ document.addEventListener('visibilitychange',update);media.addEventListener?.('change',()=>{if(media.matches){index=frames.length-1;elapsed=0;playing=false;}draw();update();});
+ window.WispWork={visible(value){visible=value;update();},go,get index(){return index;},get playing(){return playing;},records,frames,scores,chosen};draw();
 }
 function play(){
  const observations=measuredNoise(teaching?.sigma||.03),limit=2*Math.max(...observations.map(Math.abs)),indices=enabled.map((v,i)=>v?i:-1).filter(i=>i>=0),c=indices.map(i=>coeff[i]);

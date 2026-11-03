@@ -181,45 +181,63 @@ dialog{max-width:min(1050px,90vw);max-height:80dvh;overflow:auto;overscroll-beha
 #p-challenge .challenge-punchline{align-self:end}
 #p-challenge .challenge-grid>.panel{align-self:stretch;display:flex;flex-direction:column}
 #p-challenge .challenge-grid>.panel>.caption{margin-top:auto}
-/* WP-X8: recorded run, with the same six display cards as the challenge. */
-.work-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:28px;align-items:center;margin-top:14px}
+/* WP-X8c: compact, phase-specific recorded decision walkthrough. */
+.work-phase-line{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:4px 0}
+.snapped #p-solution h2{margin:0 0 6px}
+#work-phase{font-size:15px;margin:0;font-weight:600}
+.work-controls{display:flex;gap:6px;flex-shrink:0}
+.work-grid{display:grid;grid-template-columns:minmax(0,2fr) minmax(0,3fr);gap:28px;align-items:start}
 .work-blocks,#work-chart{min-width:0}
-#work-cards{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;grid-auto-rows:1fr}
-#work-cards .term-card{padding:8px;min-height:64px;display:flex;align-items:center;font-size:16px;transition:background .35s,opacity .6s}
-#work-cards .lit{background:var(--accent);color:var(--bg)}
-#work-cards .entering{animation:work-grow .4s ease-out}
-#work-cards .leaving{text-decoration:line-through;animation:work-leave 1s ease-out}
-@keyframes work-grow{from{transform:scale(.93)}to{transform:scale(1)}}
-@keyframes work-leave{from{opacity:.3;background:var(--accent)}to{opacity:1}}
-#p-solution #work-equation{font-size:18px;line-height:1.4;min-height:54px;overflow-wrap:anywhere}
-#p-solution .chart{height:270px}
-#p-solution .work-deck{font-size:17px;margin:8px 0}
-#work-narration{font-size:16px;line-height:1.4;min-height:70px;margin:10px 0}
-#work-narration .math{font-size:16px;display:inline;padding-left:6px}
-.work-controls{display:flex;align-items:center;gap:10px}
-#work-track{display:flex;gap:13px;margin-right:auto;align-items:center}
-.work-dot{width:13px;height:13px;min-height:0;padding:0;border:2px solid var(--muted);border-radius:50%;background:transparent}
-.work-dot[data-kind=swap],.work-dot[data-kind=remove]{border-radius:0;transform:rotate(45deg)}
-.work-dot[data-kind=choice]{border-radius:2px;width:18px;height:18px}
-.work-dot[aria-current=step]{background:var(--accent);border-color:var(--accent)}
+#work-cards{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:5px;margin:4px 0 8px}
+.work-chip{border:1px solid var(--muted);border-radius:6px;padding:4px 7px;text-align:center;font-size:15px;line-height:1.2;white-space:nowrap;min-width:0}
+.work-chip.lit{background:var(--accent);color:var(--bg)}
+.work-chip.entering{outline:2px solid var(--model);outline-offset:2px}
+.work-chip.leaving,.gain-row.leaving{text-decoration:line-through;opacity:.6}
+#p-solution #work-equation{font-size:18px;line-height:1.35;min-height:42px;padding:2px 0;overflow:visible;white-space:normal}
+#p-solution .work-equation-term{display:inline-block;white-space:nowrap;max-width:100%;overflow-wrap:anywhere}
+#p-solution .work-true-equation{display:block;font:18px/1.35 Georgia,'Times New Roman',serif;white-space:normal}
+#p-solution .work-deck{font-size:17px;line-height:1.3;margin:4px 0}
+#work-narration{font-size:16px;line-height:1.4;margin:8px 0 0}
+#p-solution .caption{font-size:12px;line-height:1.3;margin:3px 0}
+#work-truth .math{font:inherit;display:inline}
+#p-solution .chart,.snapped #p-solution .chart{height:225px;width:100%}
+#p-solution[data-phase=rest] .chart,.snapped #p-solution[data-phase=rest] .chart{height:170px}
+#work-chart{position:relative;min-height:245px}
+.work-legend{position:absolute;right:5px;top:2px;display:flex;gap:12px;background:var(--bg);font-size:12px}
+.work-legend span:last-child{color:var(--model)}
 #p-solution .series-candidate{stroke:var(--muted);stroke-width:1;fill:none;opacity:.4}
-#p-challenge .series-truth{stroke:#bd692c;stroke-width:1.4;stroke-dasharray:5 4}
+#p-solution .series-model{stroke:var(--model);stroke-width:3}
+.work-rest-track{height:18px;background:var(--panel);position:relative;border:1px solid var(--muted);border-radius:3px;overflow:hidden}
+.work-rest-track span{position:absolute;height:100%;left:0;top:0}
+.work-rest-previous{background:var(--muted);opacity:.3}
+.work-rest-current{background:var(--model)}
+.work-rest-track .work-noise-marker{left:auto;width:0;border-left:2px dashed var(--ink);z-index:1}
+.work-noise-label{color:var(--ink)}
+.work-bars{padding:8px 0}
+.work-bars .gain-row{margin:7px 0;grid-template-columns:48px minmax(0,1fr) 250px;font-size:14px;min-height:23px}
+.work-bars .gain-value{font-size:12px;white-space:normal;text-align:right}
+.work-bars .gain-track{position:relative;overflow:visible}
+.work-threshold{position:absolute!important;top:-5px;height:calc(100% + 10px)!important;width:0!important;border-left:2px dashed var(--ink);background:none!important}
+.work-coefficients{font-size:14px;margin-top:16px}
+.work-reveal{animation:work-reveal .25s both}
+@keyframes work-reveal{from{opacity:0}to{opacity:1}}
+#work-strip{display:grid;grid-template-columns:repeat(8,minmax(0,1fr));gap:6px;margin-top:8px}
+#work-strip[hidden],#work-strip button[hidden],#challenge-truth[hidden],#work-truth[hidden]{display:none}
+.work-stage{display:flex;flex-direction:column;align-items:center;justify-content:end;min-width:0;min-height:92px;padding:4px 2px;font-size:11px;line-height:1.25;background:transparent}
+.work-stage.chosen{border:2px solid var(--model)}
+.work-fit-track{display:flex;align-items:flex-end;justify-content:center;width:100%;height:110px;flex:none;border-bottom:1px solid var(--muted);margin:3px 0}
+.work-fit-bar{display:block;width:65%;background:var(--model);flex:none}
+.work-choice{height:14px;font-weight:700}
+#p-challenge .series-truth{stroke:var(--truth);stroke-width:2.5;stroke-dasharray:5 4}
 #challenge-truth{font-size:12px;line-height:1.2}
+#challenge-truth small.caption{font-family:system-ui,sans-serif;font-size:13px;color:var(--muted);font-weight:400}
 #p-challenge #challenge-truth-equation{font-size:16px;padding:0;line-height:1.2}
-#challenge-truth[hidden],#work-truth[hidden]{display:none}
-#p-solution .caption{font-size:12px;line-height:1.3;margin:6px 0}
-#work-truth .math{font-size:13px;display:inline}
-@media(min-width:760px) and (max-height:700px){#p-solution .chart{height:230px}#work-cards .term-card{min-height:54px}#work-narration{min-height:65px}.snapped #p-challenge .chart{height:205px}}
-@media(max-width:759px){.work-grid{display:block}#p-solution .chart{height:auto}#work-track{gap:10px}.work-controls{flex-wrap:wrap}#work-narration{min-height:0}}
-@media(prefers-reduced-motion:reduce){#work-cards .term-card{animation:none;transition:none}}
+@media(min-width:760px) and (max-height:700px){.snapped #p-challenge .chart{height:205px}#work-chart{min-height:228px}#p-solution .chart,.snapped #p-solution .chart{height:210px}.work-stage{min-height:82px}.work-fit-track{height:80px}#p-solution #work-equation,#p-solution .work-true-equation{font-size:17px}}
+@media(max-width:759px){.work-grid{display:block}.work-phase-line{align-items:start}#work-phase{font-size:13px}#work-chart{margin-top:12px;min-height:0}#work-strip{grid-template-columns:repeat(4,minmax(0,1fr))}.work-legend{position:static;flex-wrap:wrap}.work-controls{gap:2px}#work-narration{margin-bottom:12px}}
+@media(prefers-reduced-motion:reduce){.work-reveal{animation:none}}
 .coefficient-controls input[type=number]{appearance:textfield;-moz-appearance:textfield}
 .coefficient-controls input[type=number]::-webkit-inner-spin-button,.coefficient-controls input[type=number]::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
 @media(prefers-color-scheme:dark){}
 @media(min-width:760px) and (max-height:700px){}
 @media(max-width:759px){.challenge-parameters{display:block}#p-challenge .challenge-grid>.panel{margin-top:16px}}
 
-/* Shared card geometry matches the challenge, including its stretched height. */
-#work-cards .term-card{box-sizing:border-box;min-height:0}
-@media(min-width:760px){#work-cards{grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}}
-.snapped #p-solution .chart{height:270px}
-@media(min-width:760px) and (max-height:700px){.snapped #p-solution .chart{height:230px}}

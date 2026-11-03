@@ -20,7 +20,7 @@ def test_recorded_run_and_bilingual_work_page():
     page = soup.select_one('#p-solution')
     assert not soup.select('#solution-comparison, #solution-legend, #reader-equation')
     assert page.select_one('#work-cards') and page.select_one('#work-chart')
-    assert len(page.select('button.icon-button')) == 3
+    assert len(page.select('button.icon-button')) == 4
     eye = soup.select_one('#challenge-solution')
     assert eye['data-i18n-aria-label'] == eye['data-i18n-title'] == 'x8_show'
     assert soup.select_one('#challenge-truth').has_attr('hidden')

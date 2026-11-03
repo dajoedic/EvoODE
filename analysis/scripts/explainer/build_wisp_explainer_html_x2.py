@@ -3,6 +3,7 @@ from pathlib import Path
 import argparse
 import copy
 import json
+import subprocess
 from build_wisp_explainer import BASE
 
 def transport(data):
@@ -25,6 +26,9 @@ def transport(data):
 
 def build(base=BASE):
     src=base/'src'
+    # Refuse to publish a teaching narrative that differs from the recorded run.
+    subprocess.run(['node', str(Path(__file__).with_name('check_wisp_work.cjs')),
+                    str(base)], check=True, timeout=30)
     data={n:json.loads((base/'data'/f'{n}.json').read_text(encoding='utf8')) for n in ('live','results','manifest')}
     # Presentation strings are assembled from source without rewriting scientific data.
     data['live']['i18n']={lang:json.loads((src/'i18n'/f'{lang}.json').read_text(encoding='utf8')) for lang in ('en','de')}
