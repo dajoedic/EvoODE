@@ -16,8 +16,12 @@ ist, ist vermutlich falsch — dann gilt `CLAUDE.md`.
 > auf 40 − C-6 − aktive Q7-Pods. **Ziel: C-6 auf 0, alle 40 Kerne für W-2, danach W-4.** Kein laufender Pod wird getötet.
 > - **C-6 NICHT „reparieren“**, auch wenn seine Parallelität < 24 ist — das ist gewollt.
 > - Erste Verschiebung geprüft 03.11. 00:07: C-6 24 → 23, Q8 6 → 7, C-6 `failed` = 0, kein Pod beendet.
-> - Braucht Laptop an + VPN + gültigen oc-Login; läuft es nicht, wird nur nichts verschoben. Neu starten:
->   in Git Bash: `/c/Users/joedicke/AppData/Local/Temp/claude/c--Users-joedicke-Documents-Repositories-EvoODE/f2e82da9-459f-491b-bc51-e3ea2d286f53/scratchpad/shift_pods.sh >> /c/Users/joedicke/AppData/Local/Temp/claude/c--Users-joedicke-Documents-Repositories-EvoODE/f2e82da9-459f-491b-bc51-e3ea2d286f53/scratchpad/shift_pods.log 2>&1 &` (Kopie des Skripts im Scratchpad dieser Sitzung)
+> - **Vorfall 03.11. 11:48:** nach Token-Ausfall (06:37–11:48) holte das alte Skript 8 verpasste Fertigmeldungen auf
+>   einmal nach (C-6 9 → 1); der Controller hatte nachgefüllt, also wurden **8 laufende Pods gelöscht**, 6 davon 55–73 h alt
+>   (~390 Kern-h). DIARY 03.11. **Neue Version mit Schutzregel** (nie unter die Zahl der > 10 min laufenden Pods).
+>   Stand danach: C-6 1 (Zelle 1361, seit 31.10.), Q7 7, Q8 32.
+> - Braucht Laptop an + VPN + gültigen oc-Login; läuft es nicht, wird nur nichts verschoben. Neu starten
+>   (nur die neue Version!) in Git Bash: `/c/Users/joedicke/AppData/Local/Temp/claude/c--Users-joedicke-Documents-Repositories-EvoODE/9f46954f-0bf8-4401-ad3b-884a094e8a73/scratchpad/shift_pods.sh >> /c/Users/joedicke/AppData/Local/Temp/claude/c--Users-joedicke-Documents-Repositories-EvoODE/9f46954f-0bf8-4401-ad3b-884a094e8a73/scratchpad/shift_pods.log 2>&1 &`
 > - **Rückweg nach W-4:** C-6 wieder auf 24 (`oc patch job evoode-phase-c-c6-grid-capped -n scch-das -p '{"spec":{"parallelism":24}}'`);
 >   automatischer Rückweg als Cluster-Pod (Codex) noch zu bauen.
 

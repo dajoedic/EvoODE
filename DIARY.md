@@ -6,6 +6,21 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ## 2026-11-03
 
+### Core shift script deleted eight running C-6 pods
+
+The `oc` token expired at 06:37; `shift_pods.sh` could not read and retried. Meanwhile eight C-6 cells finished and the
+Job controller backfilled each one (indices 1435–1442, parallelism stayed 9). After the login at 11:48 the script saw
+succeeded 1426 → 1434 and patched parallelism 9 → 1 in one step. The controller then deleted eight **running** pods —
+not the youngest: indices 1362, 1366, 1369, 1370, 1376, 1377 (started 31.10. ~09:30 to 01.11. ~03:30, i.e. 55–73 h
+of work each) plus 1441/1442 (2–3 h). Estimated loss **~390 core-h (~590 €)**, from the start times of the neighbouring
+indices; the pods themselves are gone. `failed` stayed 0, so the cells are not lost from the grid — they run again
+from scratch when C-6 gets cores back after W-4, and they are among the long ones.
+
+Cause: the script assumed that every completion is seen within 30 s, before the controller backfills. That violated
+the rule "never shrink a running Job" the moment polling stopped. Fix (scratchpad of this session): parallelism never
+drops below the number of C-6 pods running longer than 600 s; old version stopped. State after: C-6 1 (cell 1361,
+running since 31.10.), Q7 7 active (331/338), Q8 32 (21/3,540) = 40 cores.
+
 ### WISP explorable WP-X6: the opening becomes a challenge
 <!-- 0eee9c8 -->
 
