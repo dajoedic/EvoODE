@@ -60,11 +60,11 @@ vm.runInThisContext(fs.readFileSync(base+'/src/pages.js','utf8'),{filename:'page
 if(fixture.configuration==='delivered'){
  const story=WispChapterStory,slides=WispSlides,m=WispChapterOne.model,t=fixture.data.live.teaching.t,x=fixture.data.live.teaching.observed,truth=fixture.data.live.teaching.truth;
  const close=(a,b)=>assert(Math.abs(a-b)<=1e-9*Math.max(1,Math.abs(b)),`${a} != ${b}`);
- const ids=['p-hook','p-challenge','p-c1-data','p-c1-noise-visible','p-c1-slope','p-c1-secants','p-c1-changes','p-c1-error-empty','p-c1-fit','p-c1-every','p-c1-noise-why','p-c1-noise','p-c1-percent','p-c1-solution'];
- const twoIds=['standing','residual','joint','every','error','solution'].map(s=>'p-c2-'+s);
+ const ids=['p-hook','p-challenge','p-c1-data','p-c1-slope','p-c1-noise-visible','p-c1-secants','p-c1-changes','p-c1-error-empty','p-c1-fit','p-c1-every','p-c1-noise','p-c1-percent','p-c1-solution'];
+ const twoIds=['standing','residual','joint','error','solution'].map(s=>'p-c2-'+s);
  assert.deepEqual(slides.pages.map(p=>p.id),ids.concat(twoIds));
- slides.nav.go(2);assert.equal(doc.getElementById('masthead-title').textContent,tr('x12c_chapter'));assert.equal(doc.getElementById('chapter-progress').getAttribute('aria-valuemax'),'12');
- assert.deepEqual(slides.pages.slice(2,14).map(p=>p.dataset.stage),story.states);
+ slides.nav.go(2);assert.equal(doc.getElementById('masthead-title').textContent,tr('x12c_chapter'));assert.equal(doc.getElementById('chapter-progress').getAttribute('aria-valuemax'),'11');
+ assert.deepEqual(slides.pages.slice(2,13).map(p=>p.dataset.stage),story.states);
  assert.equal(doc.querySelectorAll('#c1-stage svg').length,1);
  assert(doc.getElementById('p-results').hidden);assert(doc.getElementById('p-solution').hidden);
  for(const id of ['p-results','p-headline','p-solution','p-glossary']){slides.nav.go(0);slides.nav.link('#'+id);assert.equal(slides.nav.index,0);}
@@ -72,13 +72,13 @@ if(fixture.configuration==='delivered'){
  slides.nav.go(0);advance();assert(!event('ArrowRight'));assert.equal(slides.nav.index,0);assert(!event('ArrowLeft'));assert.equal(slides.nav.index,0);
  assert.strictEqual(story.clock,global.WispStoryClock);
  const svg=story.svg,original=svg;
- for(let i=1;i<ids.length;i++){event(i%3===0?'PageDown':i%3===1?'ArrowDown':' ');assert.equal(slides.nav.index,i);advance(18000,1000);if(i>=2){assert.equal(svg.dataset.state,story.states[i-2]);assert.equal(svg.dataset.complete,'true');assert.strictEqual(doc.querySelector('#c1-stage svg'),original);}}
+ for(let i=1;i<ids.length;i++){event(i%3===0?'PageDown':i%3===1?'ArrowDown':' ');assert.equal(slides.nav.index,i);advance(18000,1000);story.finish();if(i>=2){assert.equal(svg.dataset.state,story.states[i-2]);assert.equal(svg.dataset.complete,'true');assert.strictEqual(doc.querySelector('#c1-stage svg'),original);}}
  event('PageDown');assert.equal(slides.nav.index,ids.length);event('ArrowUp');assert.equal(slides.nav.index,ids.length-1);
- assert.equal(doc.querySelectorAll('.page-dots a').filter(a=>!a.hidden).length,12);
+ assert.equal(doc.querySelectorAll('.page-dots a').filter(a=>!a.hidden).length,11);
  assert.equal(doc.querySelectorAll('.c1-page input').length,1);
  const saved=[];
  for(const [i,state] of story.states.entries()){
-  slides.nav.go(i+2);advance(18000,1000);assert.equal(svg.dataset.state,state);assert.equal(svg.dataset.complete,'true');
+  slides.nav.go(i+2);advance(18000,1000);story.finish();assert.equal(svg.dataset.state,state);assert.equal(svg.dataset.complete,'true');
   const dots=doc.querySelectorAll('#c1-stage .measurement-dot'),sticks=doc.querySelectorAll('#c1-stage .story-residual'),rates=doc.querySelectorAll('#c1-stage .story-slope');
   if(state==='data')assert.equal(dots.filter(d=>+d.style.opacity===1).length,t.length);
   if(state==='noise-visible')sticks.forEach((d,j)=>{close(+d.dataset.value,Math.abs(x[j]-truth[j]));assert.equal(+d.style.opacity,1);const lo=Math.min(...x)*.95,hi=Math.max(...x)*1.05;close(+d.getAttribute('y1'),392-(x[j]-lo)/(hi-lo)*350);close(+d.getAttribute('y2'),392-(truth[j]-lo)/(hi-lo)*350);});
@@ -92,8 +92,13 @@ if(fixture.configuration==='delivered'){
    rates.forEach(d=>close(+d.getAttribute('cy'),392-(Math.max(-bound,Math.min(bound,+d.dataset.value))+bound)/(2*bound)*122));
   }
   if(state==='windows'){
-   const length=Math.max(...fixture.data.live.windows),visible=doc.querySelectorAll('.story-long-slope').filter(d=>+d.style.opacity===1);
-   assert.equal(visible.length,Math.floor((t.length-1)/length));const bound=story.rateBound;visible.forEach(d=>close(+d.getAttribute('cy'),392-(Math.max(-bound,Math.min(bound,+d.dataset.value))+bound)/(2*bound)*122));visible.forEach((d,j)=>close(+d.dataset.value,(x[(j+1)*length]-x[j*length])/(t[(j+1)*length]-t[j*length])));
+   story.lengthClouds.forEach(cloud=>{
+    // Earlier lengths stay visible, dimmed, once the next length is drawn.
+    const visible=cloud.dots.map(id=>svg.children[id]).filter(d=>+d.style.opacity>0);
+    assert.equal(visible.length,cloud.rows.length);
+    visible.forEach((d,j)=>{close(+d.dataset.value,cloud.rows[j].rate);close(+d.getAttribute('cy'),392-(Math.max(-story.rateBound,Math.min(story.rateBound,cloud.rows[j].rate))+story.rateBound)/(2*story.rateBound)*122);});
+   });
+   assert.equal(new Set(story.lengthClouds.map(c=>svg.children[c.dots[0]].style.fill)).size,story.longerLengths.length);
   }
   if(state==='error-empty'){close(+doc.querySelector('.story-error').getAttribute('width'),708);close(+svg.dataset.error,1);assert(doc.querySelector('#c1-stage').textContent.includes('100,0 %')||doc.querySelector('#c1-stage').textContent.includes('100.0 %'));}
   if(state==='fit'){
@@ -103,7 +108,7 @@ if(fixture.configuration==='delivered'){
   if(state==='every'){
    const slots=doc.querySelectorAll('#c1-stage .story-slot');assert.equal(slots.length,6);
    const sorted=slots.slice().sort((a,b)=>+a.getAttribute('y')-+b.getAttribute('y'));
-   sorted.forEach((d,j)=>{const b=m.blocks.find(b=>b.term===+d.dataset.term);close(+d.dataset.value,1-b.gain);assert.equal(+d.dataset.rank,j);if(j)assert(+d.dataset.value>=+sorted[j-1].dataset.value);});
+   sorted.forEach((d,j)=>{const b=m.blocks.find(b=>b.term===+d.dataset.term);close(+d.dataset.value,b.share);assert.equal(+d.dataset.rank,j);if(j)assert(+d.dataset.value<=+sorted[j-1].dataset.value);});
    assert.equal(+sorted[0].dataset.term,fixture.data.live.featured[0].path[0].active_idxs[0][0]-1);
    assert.equal(+svg.dataset.term,m.winner);
   }
@@ -114,7 +119,7 @@ if(fixture.configuration==='delivered'){
    const bandNumbers=doc.querySelector('.story-band').getAttribute('d').match(/[-+]?(?:[0-9]*[.])?[0-9]+(?:e[-+]?[0-9]+)?/gi).map(Number);assert.equal(bandNumbers.length,4*t.length);
    t.forEach((tt,j)=>{const fitted=story.local(j).value(tt),lo=Math.min(...x)*.95,hi=Math.max(...x)*1.05;close(story.smooth[j],fitted);close(bandNumbers[2*j+1],302-(fitted+Math.sqrt(story.variance[j])-lo)/(hi-lo)*260);close(bandNumbers[2*(2*t.length-1-j)+1],302-(fitted-Math.sqrt(story.variance[j])-lo)/(hi-lo)*260);});
    assert.equal(dots.filter(d=>+d.style.opacity===1).length,512);assert.equal(+doc.querySelector('.story-band').style.opacity,1);assert(+doc.querySelector('.story-part-0').getAttribute('y')>302);
-   assert.equal(story.examples.length,5);story.examples.forEach((ex,j)=>{assert.equal(ex.center,Math.round(t.length/3)+j);close(ex.deviation,x[ex.center]-ex.value(t[ex.center]));assert(doc.querySelector('#c1-stage').textContent.includes(fmt(ex.deviation)));});
+   assert.equal(story.examples.length,5);story.examples.forEach((ex,j)=>{assert.equal(ex.center,Math.round(t.length/3)+j);close(ex.deviation,x[ex.center]-ex.value(t[ex.center]));});
    const pct=v=>(100*v).toLocaleString(fixture.language,{minimumFractionDigits:1,maximumFractionDigits:1})+' %';
    for(const v of [story.relative,fixture.data.live.teaching.sigma,m.floor,actual])assert(doc.getElementById('c1-noise-result').textContent.includes(pct(v)));
    if(fixture.language==='en')console.log(JSON.stringify({estimate:story.relative,added:fixture.data.live.teaching.sigma,floor:m.floor,actual,examples:story.examples.map(e=>({center:e.center,deviation:e.deviation}))}));
@@ -123,9 +128,9 @@ if(fixture.configuration==='delivered'){
   if(state==='percent')close(WispChapterOne.parts(m,m.blocks.find(b=>b.term===m.winner)).reduce((a,b)=>a+b),1);
   if(state==='solution'){assert.equal(+svg.dataset.term,m.winner);assert(doc.querySelector('.story-equation').textContent.includes('du/dt'));}
   // Record full geometry and compare it after a backwards entry and under reduced motion.
-  story.enter(state);advance(18000,1000);saved[i]=svg.children.map(e=>({...e.attrs,opacity:e.style.opacity}));
+  story.enter(state);advance(18000,1000);story.finish();saved[i]=svg.children.map(e=>({...e.attrs,opacity:e.style.opacity}));
  }
- for(let i=story.states.length-1;i>=0;i--){story.enter(story.states[i]);advance(18000,1000);svg.children.forEach((e,j)=>assert.deepEqual({...e.attrs,opacity:e.style.opacity},saved[i][j],story.states[i]+' node '+j));}
+ for(let i=story.states.length-1;i>=0;i--){story.enter(story.states[i]);advance(18000,1000);story.finish();svg.children.forEach((e,j)=>assert.deepEqual({...e.attrs,opacity:e.style.opacity},saved[i][j],story.states[i]+' node '+j));}
  global.matchMedia=()=>({matches:true,addEventListener(){}});
  story.states.forEach((state,i)=>{story.enter(state);assert.equal(svg.dataset.complete,'true');svg.children.forEach((e,j)=>assert.deepEqual({...e.attrs,opacity:e.style.opacity},saved[i][j],story.states[i]+' node '+j));});
  global.matchMedia=()=>({matches:false,addEventListener(){}});
@@ -139,37 +144,41 @@ if(fixture.configuration==='delivered'){
   assert.equal(doc.querySelector('.story-length').textContent,tr('x12_length',{n:1}));const a=t.findIndex(v=>v>=2)+j;assert.equal(doc.querySelector('.story-construction-readout').textContent,tr('x12c_slope',{value:fmt((x[a+1]-x[a])/(t[a+1]-t[a]))}));
   advance(350);assert.equal(+doc.querySelectorAll('.story-slope')[j].style.opacity+(+doc.querySelectorAll('.story-clipped')[j].style.opacity),1);
  }
- story.enter('slope');advance(800);assert.equal(svg.dataset.phase,'zoom-in');advance(3100);assert.equal(svg.dataset.state,'slope');
- for(const [j,length] of [2,4,8,16].entries()){
-  story.enter('windows');advance(2050+j*1200);assert.equal(+svg.dataset.windowLength,length);
-  assert(doc.querySelectorAll('.story-long-slope').some(d=>+d.style.opacity===1));assert.equal(doc.querySelectorAll('.story-long-triangle').length,3);const a=t.findIndex(v=>v>=2);close(+doc.querySelectorAll('.story-long-slope')[j].dataset.value,(x[a+length]-x[a])/(t[a+length]-t[a]));
-  assert.equal(doc.querySelectorAll('.story-history').filter(d=>+d.style.opacity===.22).length,24);
+ story.enter('noise-visible');advance(800);assert.equal(svg.dataset.phase,'zoom-in');advance(3100);assert.equal(svg.dataset.state,'noise-visible');
+ for(const [j,length] of story.longerLengths.entries()){
+  story.enter('windows');story.seek(3000+j*2400);assert.equal(+svg.dataset.windowLength,length);
+  for(let k=0;k<=j;k++)assert(story.lengthClouds[k].dots.some(id=>+svg.children[id].style.opacity>0));
  }
  const optimum=m.D.A.reduce((sum,row,i)=>sum+row[0]*m.D.b[i],0)/m.D.A.reduce((sum,row)=>sum+row[0]**2,0);close(optimum,m.blocks.find(b=>b.term===0).coefficient);
  story.enter('fit');advance(2899);assert.equal(+doc.querySelector('.story-optimum-dot').style.opacity,0);
  advance(1);close(+svg.dataset.coefficient,optimum);close(+doc.querySelector('.story-optimum-dot').dataset.value,optimum);assert.equal(+doc.querySelector('.story-optimum-dot').style.opacity,1);
  advance(2000);close(+svg.dataset.coefficient,2*optimum);assert.equal(+doc.querySelector('.story-optimum').style.opacity,1);
  const optimumGeometry=doc.querySelector('.story-optimum').getAttribute('d');doc.getElementById('c1-c').value=0;doc.getElementById('c1-c').emit('input');assert.equal(doc.querySelector('.story-optimum').getAttribute('d'),optimumGeometry);
- story.enter('noise-why');story.finish();close(+svg.dataset.error,1-m.blocks.find(b=>b.term===m.winner).gain);assert(doc.querySelector('#c1-stage').textContent.includes('?'));
- story.enter('noise-estimate');assert(doc.getElementById('c1-noise-result').hidden);advance(1800);assert.equal(+doc.querySelector('.story-cubic').style.opacity,1);assert.equal(+doc.querySelector('.story-ring').style.opacity,0);
- advance(5300);close(+svg.dataset.pointCount,0);advance(2500);close(+svg.dataset.pointCount,t.length);assert(doc.getElementById('c1-noise-result').hidden);
- advance(1000);const contributions=m.D.windows.map(([a,b])=>(story.variance[a]+story.variance[b])/m.D.b.reduce((sum,v)=>sum+v*v,0)),mid=contributions.length/2,k=Math.floor(mid);close(+svg.dataset.noiseSum,contributions.slice(0,k).reduce((sum,v)=>sum+v,0)+(mid-k)*contributions[k]);advance(1000);close(+svg.dataset.noiseSum,m.floor);const sumWidth=+doc.querySelector('.story-part-0').getAttribute('width');
+ story.enter('noise-estimate');story.seek(4000);close(+svg.dataset.error,1-m.blocks.find(b=>b.term===m.winner).gain);assert(doc.getElementById('c1-noise-result').hidden);assert.equal(doc.getElementById('c1-story-text-8').style.opacity,'.22');
+ story.seek(story.noisePause+1800);assert.equal(+doc.querySelector('.story-cubic').style.opacity,1);assert.equal(doc.getElementById('c1-story-text-8').style.opacity,'1');
+ for(const sample of [story.noisePause+2100,story.noisePause+2350,story.noisePause+7100]){
+  story.seek(sample);assert(doc.querySelectorAll('.story-deviation').filter(e=>+e.style.opacity>0).length<=1);
+ }
+ story.seek(story.noisePause+1800);const dotBefore=+doc.querySelectorAll('.story-contribution').at(-1).getAttribute('cy');
+ story.seek(story.noisePause+2300);assert(+doc.querySelectorAll('.story-contribution').at(-1).getAttribute('cy')>dotBefore);
+ story.seek(story.noisePause+8000);assert(+svg.dataset.noiseSum>0&&+svg.dataset.noiseSum<m.floor);
+ story.finish();close(+svg.dataset.noiseSum,m.floor);const sumWidth=+doc.querySelector('.story-part-0').getAttribute('width');
  story.enter('percent');story.finish();close(+doc.querySelector('.story-part-0').getAttribute('width'),sumWidth);
  story.enter('every');advance(2000);assert.equal(+doc.querySelector('.story-optimum-dot').style.opacity,1);advance(14000);assert.equal(svg.dataset.complete,'false');advance(900);assert.equal(svg.dataset.complete,'true');
  story.enter('slope');advance(1200);const before=doc.querySelector('.story-marker').getAttribute('cx');advance(1000);assert.notEqual(doc.querySelector('.story-marker').getAttribute('cx'),before);
  slides.nav.go(1);advance();for(const fn of events.wheel||[])fn({type:'wheel',target:doc.body,deltaY:500,preventDefault(){}});advance();assert.equal(slides.nav.index,2);
- for(const p of slides.pages.slice(2,14)){assert(p.querySelectorAll('p').every(n=>n.dataset.claim==='review'));assert.equal(p.querySelector('.eyebrow').textContent,tr('x10_eye',{i:p.querySelector('.eyebrow').dataset.c1Eye,n:12}));}
- // Chapter two: the same physical SVG continues into six independent pages.
+ for(const p of slides.pages.slice(2,13)){assert(p.querySelectorAll('p').every(n=>n.dataset.claim==='review'));assert.equal(p.querySelector('.eyebrow').textContent,tr('x10_eye',{i:p.querySelector('.eyebrow').dataset.c1Eye,n:11}));}
+ // Chapter two: the same physical SVG continues into five pages.
  const two=WispChapterTwo,wm=two.model,constant=m.blocks.find(b=>b.term===0),joint=wm.blocks.find(b=>b.term===1),win=wm.blocks.find(b=>b.term===wm.winner);
- slides.nav.go(13);story.finish();const end=svg.children.map(e=>({...e.attrs,opacity:e.style.opacity}));
- slides.nav.go(14);assert.equal(doc.getElementById('masthead-title').textContent,tr('x13_chapter'));assert.equal(doc.getElementById('chapter-progress').getAttribute('aria-valuemax'),'6');
+ slides.nav.go(12);story.finish();const end=svg.children.map(e=>({...e.attrs,opacity:e.style.opacity}));
+ slides.nav.go(13);assert.equal(doc.getElementById('masthead-title').textContent,tr('x13_chapter'));assert.equal(doc.getElementById('chapter-progress').getAttribute('aria-valuemax'),'5');
  // The first frame has exactly the preceding scene's geometry.
  svg.children.forEach((e,j)=>{for(const k of ['d','x','y','cx','cy','x1','y1','x2','y2','width','height'])if(end[j][k]!==undefined)assert.equal(e.attrs[k],end[j][k]);});
  const twoSaved=[];
  two.states.forEach((state,i)=>{
-  slides.nav.go(14+i);story.finish();assert.strictEqual(story.svg,original);assert.equal(svg.dataset.state,state);assert.equal(svg.dataset.complete,'true');
-  assert.equal(doc.querySelectorAll('.page-dots a').filter(a=>!a.hidden).length,6);
-  assert.equal(slides.pages[14+i].querySelector('.eyebrow').textContent,tr('x10_eye',{i:i+1,n:6}));
+  slides.nav.go(13+i);story.finish();assert.strictEqual(story.svg,original);assert.equal(svg.dataset.state,state);assert.equal(svg.dataset.complete,'true');
+  assert.equal(doc.querySelectorAll('.page-dots a').filter(a=>!a.hidden).length,5);
+  assert.equal(slides.pages[13+i].querySelector('.eyebrow').textContent,tr('x10_eye',{i:i+1,n:5}));
   const coords=doc.querySelector('#c1-stage .story-prediction').getAttribute('d').match(/[-+]?(?:[0-9]*[.])?[0-9]+(?:e[-+]?[0-9]+)?/gi).map(Number);
   assert(coords.every(Number.isFinite));
   const shown=doc.querySelectorAll('#c1-stage .measurement-dot').filter(e=>+e.style.opacity===1);assert.equal(shown.length,m.rows.length);
@@ -181,21 +190,25 @@ if(fixture.configuration==='delivered'){
    const r=two.slopeRows[0],w=m.rows[0].w;close(r.sd,Math.sqrt(story.variance[w[0]]+story.variance[w[1]])/(t[w[1]]-t[w[0]]));
    const scale=(+shown[1].getAttribute('cy')- +shown[0].getAttribute('cy'))/(two.slopeRows[1].rate-r.rate);close(b[1],+shown[0].getAttribute('cy')-scale*(r.rate-constant.coefficient-r.sd));
   }
-  if(i===2){JSON.parse(svg.dataset.coefficients).forEach((c,j)=>close(c,joint.coefficients[j]));assert.notEqual(joint.coefficients[0],constant.coefficient);close(+svg.dataset.error,joint.remaining);}
-  if(i===3){const bars=doc.querySelectorAll('#c1-stage .c2-slot').filter(e=>+e.style.opacity===1);assert.equal(bars.length,5);bars.forEach((e,j)=>{assert.equal(+e.dataset.term,wm.blocks[j].term);close(+e.dataset.value,wm.blocks[j].share);assert.equal(e.classList.contains('winner'),wm.blocks[j].term===wm.winner);});}
-  if(i>=4){close(+svg.dataset.error,win.remaining);close(+doc.querySelector('.story-part-0').getAttribute('width'),708*m.floor);}
-  if(i===5){const eq=doc.querySelector('.story-equation').textContent;for(const c of wm.record.equations[0].coefficients)assert(eq.includes(secondNumber(Math.abs(c))));assert(!eq.includes('e-'));}
+  if(i===2){close(+svg.dataset.error,win.remaining);}
+  if(i===2){const bars=doc.querySelectorAll('#c1-stage .c2-slot').filter(e=>+e.style.opacity===1);assert.equal(bars.length,5);bars.forEach((e,j)=>{assert.equal(+e.dataset.term,wm.blocks[j].term);close(+e.dataset.value,wm.blocks[j].share);assert.equal(e.classList.contains('winner'),wm.blocks[j].term===wm.winner);});}
+  if(i>=3){close(+svg.dataset.error,win.remaining);close(+doc.querySelector('.story-part-0').getAttribute('width'),708*m.floor);}
+  if(i===4){const eq=doc.querySelector('.story-equation').textContent;for(const c of wm.record.equations[0].coefficients)assert(eq.includes(secondNumber(Math.abs(c))));assert(!eq.includes('e-'));}
   twoSaved[i]=svg.children.map(e=>({...e.attrs,opacity:e.style.opacity}));
  });
  // Interrupted animations, catalogue order and both moving coefficients.
  story.enter('c2-joint');story.seek(2400);const midway=JSON.parse(svg.dataset.coefficients);midway.forEach((c,j)=>assert(c!==joint.coefficients[j]));assert(midway[0]!==constant.coefficient);
- story.enter('c2-every');wm.blocks.forEach((b,j)=>{story.seek(2900+j*2500);assert.equal(+svg.dataset.term,b.term);});
- for(let i=5;i>=0;i--){story.enter(two.states[i]);story.finish();svg.children.forEach((e,j)=>assert.deepEqual({...e.attrs,opacity:e.style.opacity},twoSaved[i][j]));}
+ story.seek(3900);JSON.parse(svg.dataset.coefficients).forEach((c,j)=>close(c,joint.coefficients[j]));story.seek(7899);assert.equal(+svg.dataset.term,joint.term);assert.equal(doc.getElementById('c2-text-3').style.opacity,'.22');
+ story.seek(9500);assert.equal(doc.getElementById('c2-text-3').style.opacity,'1');
+ story.remainingBlocks.forEach((b,j)=>{story.seek(story.jointPause+2900+j*2500);assert.equal(+svg.dataset.term,b.term);});
+ story.seek(story.jointPause+story.sortAt-1);const catalogue=doc.querySelectorAll('.c2-slot').slice().sort((a,b)=>+a.getAttribute('y')-+b.getAttribute('y'));assert.deepEqual(catalogue.map(b=>+b.dataset.term),wm.blocks.map(b=>b.term));
+ story.finish();const ranked=doc.querySelectorAll('.c2-slot').slice().sort((a,b)=>+a.getAttribute('y')-+b.getAttribute('y'));ranked.forEach((b,j)=>{if(j)assert(+b.dataset.value<=+ranked[j-1].dataset.value);});assert(ranked[0].classList.contains('winner'));
+ for(let i=4;i>=0;i--){story.enter(two.states[i]);story.finish();svg.children.forEach((e,j)=>assert.deepEqual({...e.attrs,opacity:e.style.opacity},twoSaved[i][j]));}
  global.matchMedia=()=>({matches:true,addEventListener(){}});two.states.forEach((state,i)=>{story.enter(state);assert.equal(svg.dataset.complete,'true');svg.children.forEach((e,j)=>assert.deepEqual({...e.attrs,opacity:e.style.opacity},twoSaved[i][j]));});
  global.matchMedia=()=>({matches:false,addEventListener(){}});
- console.log('PASS X13: six bilingual pages, persistent SVG, joint coefficients, candidate order/shares, slope noise band, recorded equation, replay and reduced motion');
+ console.log('PASS X13: five bilingual pages, persistent SVG, joint coefficients, candidate order/shares, slope noise band, recorded equation, replay and reduced motion');
  if(fixture.language==='en')fs.writeFileSync(require('path').join(require('path').dirname(process.argv[3]),'x12c_story_numbers.json'),JSON.stringify({durations:story.durations,n:t.length,neighbourPairs:8,longDots:story.longRows.length,coefficient:optimum,rangeEnd:2*optimum,winnerError:1-m.blocks.find(b=>b.term===m.winner).gain,floor:m.floor,designWindows:m.D.windows.length},null,2));
- console.log('PASS X12: 12 bilingual states, real numeric geometry, keyboard-only walk, vertical wheel/keys, persistent SVG, sequence interruption/replay, reverse and reduced motion');process.exit(0);
+ console.log('PASS X12: 11 bilingual states, real numeric geometry, keyboard-only walk, vertical wheel/keys, persistent SVG, sequence interruption/replay, reverse and reduced motion');process.exit(0);
 }
 // Execute the animation lifecycle, including delayed visibility and reduced motion.
 const dish=doc.getElementById('dish-illustration');
@@ -264,7 +277,7 @@ console.log('PASS X4 headline rows/counts, readable names, closed sections, moda
 
 // Wheel hovering controls is navigation; only an active drag blocks it.
 slides.nav.go(0);advance();emit('wheel',slider,{deltaY:100});assert.equal(slides.nav.index,1);
-for(const node of doc.body.querySelectorAll('*')){if(node.closest('script,style,[data-provenance],#provenance'))continue;assert(!/raw_exact|pruned_exact|generalization_(?:arithmetic|variance_weighted)_hit|reconstruction_(?:arithmetic|variance_weighted)_hit/.test(node._text),'internal metric in reader text');assert(!/\uFFFD|[a-zA-ZäöüÄÖÜ]\?[a-zA-ZäöüÄÖÜ]/.test(node._text),'broken encoding in reader text');}
+for(const node of doc.body.querySelectorAll('*')){if(node.closest('script,style,[data-provenance],#provenance'))continue;assert(!/raw_exact|pruned_exact|generalization_(?:arithmetic|variance_weighted)_hit|reconstruction_(?:arithmetic|variance_weighted)_hit/.test(node._text),'internal metric in reader text');assert(!/\uFFFD|[a-zA-ZäöüÄÖÜ]\?[a-zA-ZäöüÄÖÜ]/.test(node._text),'broken encoding in reader text: '+node._text);}
 assert(doc.querySelectorAll('#headline-panel .rate-chart').length>=2);
 assert.equal(doc.querySelectorAll('#p-test-intro [data-more]').length,1);
 assert.equal(doc.querySelectorAll('#featured-stories > article').filter(a=>!a.hidden).length,1);

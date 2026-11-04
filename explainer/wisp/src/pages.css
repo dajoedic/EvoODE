@@ -310,3 +310,8 @@ dialog{max-width:min(1050px,90vw);max-height:80dvh;overflow:auto;overscroll-beha
 .story-svg .story-leg-label{font-size:12px;fill:var(--model);paint-order:stroke;stroke:var(--panel);stroke-width:3px}
 .story-svg .story-stack-legend{font-size:11px}
 .story-zoom-box{fill:none;stroke:var(--model);stroke-width:3}
+
+/* Reserved reference/length legend, outside both data panels. */
+.story-svg .story-reference-label{fill:var(--truth);font-size:12px}
+.story-svg .story-length-key{font-size:12px}
+#c1-story-text-8,#c2-text-3{transition:opacity .5s}

@@ -435,7 +435,7 @@
   "x10_text_1": "A differential equation says how u changes. So we extract exactly that from the measurements: how much u changes over a time interval. Between two adjacent points, noise almost drowns out the signal — longer intervals reveal the pattern.",
   "x10_text_2": "An empty equation says: u never changes. Every measured change is then an error. We square each discrepancy and add them all up — this is the error without a block. We set it to 100%.",
   "x10_text_3": "Take block 1: du/dt = c. The equation predicts a change of c × length for each interval. Which c is best? The one that makes the error smallest.",
-  "x10_text_4": "WISP does the same for all six blocks — each gets its best number. Then it compares: which leaves the smallest error?",
+  "x10_text_4": "WISP does the same for all six blocks — each gets its best number. Then it compares: which leaves the smallest error? During the trials, bars stay in catalogue order. At the end they are sorted by explained share, largest on top: this ranking determines WISP’s choice.",
   "x10_text_5": "Part of every measured change is measurement noise. No block can explain it — whichever. As just seen, WISP estimates this part from the data: {floor} of the error. So only {explainable} is explainable.",
   "x10_text_6": "The {winner} explains the most — {meaning}. That is a useful first approximation. WISP takes it as its first block:",
   "x10_chapter_intro": "Introduction",
@@ -477,8 +477,8 @@
   "x12_text_0": "u was measured at {n} times between t = {t0} and t = {t1}. That is all WISP has.",
   "x12_text_1": "Each point is a little way off the true curve: that is measurement noise, here {noise}. WISP does not know the true curve — we show it only to make the noise visible.",
   "x12_text_2": "A differential equation says how steep the curve is at each point — how fast u is changing right now. That is exactly what WISP wants to find out from the measurements.",
-  "x12_text_3": "Two neighbouring points give an estimate of the slope: the change in u divided by the time between them. Because both points carry noise and are close together, the result is almost all noise.",
-  "x12_text_4": "Over a longer window, the noise at its two endpoints matters much less. WISP therefore uses windows of {lengths} measurement intervals, throughout the series.",
+  "x12_text_3": "Two neighbouring points give an estimate of the slope: the change in u divided by the time between them. Because both points carry noise and are close together, the result is almost all noise. The green line shows the true slope: how fast u is changing right now. WISP tries to recover this change per unit of time; the secants estimate it. WISP does not know this reference line.",
+  "x12_text_4": "Longer sections spread the effect of noisy endpoints over more time. We cycle through lengths from the sections WISP actually uses: {lengths} sampling intervals. Each colour stays visible; the green true slope remains the reference.",
   "x12_text_8": "Over a short stretch, the real curve is smooth. WISP fits a smooth curve (a cubic polynomial) through each set of 9 neighbouring measurements. The distance of the centre point from it is almost all noise. WISP does this for every point.",
   "x12_actual": "Recalculating with the true curve would give {actual}. (Calculation for this presentation.)",
   "x12_play": "Try it yourself",
@@ -517,7 +517,7 @@
   "x13_text_0": "Chapter one ended with one block: du/dt = {c}, a constant slope. It explains {before} of what can be explained at all — a little over half. The points are again the slopes from long sections; the line is the prediction.",
   "x13_text_1": "The vertical strokes show what the prediction misses. If this were only noise, the points would lie randomly above and below the line, mostly within the band — that is how far noise typically spreads. Instead they follow a pattern: in the first half almost all lie above the line, in the second half almost all below. A pattern is not chance, so more can be explained.",
   "x13_text_2": "Let us try u as a second block. Important: WISP does not keep the first number. Both numbers are determined anew together, so that the total error becomes as small as possible — the constant moves away from {c}. The line may now slope.",
-  "x13_text_3": "In the same way WISP tries every remaining block as a partner of the constant, each time with newly determined numbers. Each bar shows how much of the explainable part the pair then explains. WISP takes the block with the highest value: {term}.",
+  "x13_text_3": "In the same way WISP tries every remaining block as a partner of the constant, each time with newly determined numbers. Each bar shows how much of the explainable part the pair then explains. WISP takes the block with the highest value: {term}. During the trials the bars stay in catalogue order. Afterwards they are sorted by explained share, largest on top; this ranking determines WISP’s choice.",
   "x13_text_4": "With {term} as the second block, the explained share rises from {before} to {after}. So the error sinks. The noise part stays as it is — no block can make it smaller.",
   "x13_text_5": "This is the equation after the second step. The number in front of {term} looks tiny, but {term} grows to about {maximum} in these data — tiny times large gives a noticeable contribution to the slope.",
   "x13_closing": "Whether this is already the right equation — and what WISP does next — is the next chapter.",
@@ -526,5 +526,8 @@
   "x13_share": "{p} of the explainable part",
   "x13_before_after": "explained: {before} → {after}",
   "x13_error": "Remaining error: {p}",
-  "x13_legend": "Noise — not explainable: {floor} · explained by the blocks: {explained} · still explainable: {remaining}"
+  "x13_legend": "Noise — not explainable: {floor} · explained by the blocks: {explained} · still explainable: {remaining}",
+  "x14_noise_title": "How do we know how much noise there is?",
+  "x14_true_slope": "True slope",
+  "x14_length": "Length {k} sampling intervals"
 }

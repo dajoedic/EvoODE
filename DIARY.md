@@ -6,6 +6,19 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ## 2026-11-04
 
+### WISP explorable WP-X14: user review of chapters 1 and 2
+<!-- HASH -->
+
+User review of version 17: chapter 1 now shows the slope before the measurement noise, labels the green line as the
+true slope, cycles the section lengths WISP uses (1, 2, 8, 16 sampling intervals; up to four evenly spaced from
+`LIVE.windows`) in colour with the earlier ones dimmed, and merges "why the noise" and "how it is measured" into one
+step with a reading pause, the box showing one deviation at a time that drops into the sum. Chapter 2 merges the joint
+example and the remaining candidates into one step with a pause; bars re-sort by explained share at the end (chapter
+1's "every" step too). Chapter 1 has 11 steps, chapter 2 five. Codex built it; Claude fixed the fit-check inventory,
+an axis-label/bar overlap during the phase change, the empty deviation box in the end state. Preview version 18.
+Test policy from now on: fast presentation tests while iterating, the full suite (export + re-integration, ~30 min)
+only when data or exporters change.
+
 ### WISP explorable WP-X13: chapter 2 "Noch ein Baustein dazu"
 <!-- db98fda -->
 

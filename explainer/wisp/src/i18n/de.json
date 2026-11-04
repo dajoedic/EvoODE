@@ -435,7 +435,7 @@
   "x10_text_1": "Eine Differentialgleichung sagt, wie sich u ändert. Also holen wir genau das aus den Messwerten: um wie viel sich u in einem Zeitabschnitt verändert. Aus zwei benachbarten Punkten bleibt dabei fast nur Rauschen übrig — über längere Abschnitte kommt der Verlauf zum Vorschein.",
   "x10_text_2": "Eine leere Gleichung sagt: u ändert sich nie. Jede gemessene Änderung ist dann ein Fehler. Wir quadrieren jede Abweichung und zählen alles zusammen — das ist der Fehler ohne Baustein. Wir setzen ihn auf 100 %.",
   "x10_text_3": "Nehmen wir den Baustein 1: du/dt = c. Dann sagt die Gleichung für jeden Abschnitt eine Änderung von c × Länge voraus. Welches c ist am besten? Das, bei dem der Fehler am kleinsten wird.",
-  "x10_text_4": "Dasselbe macht WISP für jeden der sechs Bausteine — jeder bekommt seine beste Zahl. Dann vergleicht es: Bei welchem bleibt der kleinste Fehler übrig?",
+  "x10_text_4": "Dasselbe macht WISP für jeden der sechs Bausteine — jeder bekommt seine beste Zahl. Dann vergleicht es: Bei welchem bleibt der kleinste Fehler übrig? Während des Probierens bleiben die Balken in Katalogreihenfolge. Am Ende werden sie nach erklärtem Anteil sortiert, der größte oben: Diese Rangfolge entscheidet WISPs Wahl.",
   "x10_text_5": "Ein Teil jeder gemessenen Änderung ist Messrauschen. Das kann kein Baustein erklären — egal welcher. Wie eben gesehen, schätzt WISP diesen Teil aus den Daten: {floor} des Fehlers. Erklärbar sind also nur {explainable}.",
   "x10_text_6": "Am meisten erklärt die {winner} — {meaning}. Als grobe erste Näherung ist das nicht schlecht. WISP nimmt sie als ersten Baustein:",
   "x10_chapter_intro": "Einführung",
@@ -477,8 +477,8 @@
   "x12_text_0": "Gemessen wurde u zu {n} Zeitpunkten zwischen t = {t0} und t = {t1}. Mehr hat WISP nicht.",
   "x12_text_1": "Jeder Punkt liegt ein Stück neben der wahren Kurve: Das ist Messrauschen, hier {noise}. WISP kennt die wahre Kurve nicht — wir zeigen sie nur, damit man das Rauschen sieht.",
   "x12_text_2": "Eine Differentialgleichung sagt, wie steil die Kurve an jeder Stelle ist — wie schnell sich u gerade ändert. Genau das will WISP aus den Messwerten herausfinden.",
-  "x12_text_3": "Aus zwei benachbarten Punkten lässt sich die Steigung schätzen: Änderung von u geteilt durch die Zeit dazwischen. Weil beide Punkte Rauschen tragen und dicht beieinander liegen, kommt fast nur Rauschen heraus.",
-  "x12_text_4": "Über einen längeren Abschnitt fällt das Rauschen der beiden Endpunkte kaum ins Gewicht. WISP rechnet deshalb mit Abschnitten von {lengths} Messabständen, überall in der Messreihe.",
+  "x12_text_3": "Aus zwei benachbarten Punkten lässt sich die Steigung schätzen: Änderung von u geteilt durch die Zeit dazwischen. Weil beide Punkte Rauschen tragen und dicht beieinander liegen, kommt fast nur Rauschen heraus. Die grüne Linie zeigt die wahre Steigung: wie schnell sich u gerade ändert. Diese Änderung pro Zeiteinheit will WISP zurückgewinnen; die Sekanten schätzen sie. WISP kennt diese Referenzlinie nicht.",
+  "x12_text_4": "Längere Abschnitte verteilen den Einfluss der verrauschten Endpunkte auf mehr Zeit. Wir zeigen nacheinander Längen aus WISPs tatsächlichen Abschnitten: {lengths} Messabstände. Jede Farbe bleibt stehen; die grüne wahre Steigung dient als Referenz.",
   "x12_text_8": "Auf einem kurzen Stück ist die echte Kurve glatt. WISP legt durch je 9 benachbarte Messpunkte eine glatte Kurve (ein Polynom dritten Grades). Wie weit der mittlere Punkt davon abweicht, ist fast nur Rauschen. Das macht WISP für jeden Punkt.",
   "x12_actual": "Mit der wahren Kurve nachgerechnet wären es {actual}. (Berechnung für diese Darstellung.)",
   "x12_play": "Selbst probieren",
@@ -517,7 +517,7 @@
   "x13_text_0": "Kapitel eins endete mit einem Baustein: du/dt = {c}, eine gleichbleibende Steigung. Sie erklärt {before} von dem, was überhaupt erklärbar ist — gut die Hälfte. Die Punkte sind wieder die Steigungen aus langen Abschnitten, die Linie ist die Vorhersage.",
   "x13_text_1": "Die senkrechten Striche zeigen, was die Vorhersage verfehlt. Wäre das nur Rauschen, lägen die Punkte zufällig mal über, mal unter der Linie, meist innerhalb des Bands — so weit streut Rauschen typischerweise. Stattdessen folgen sie einem Muster: In der ersten Hälfte liegen sie fast alle über der Linie, in der zweiten fast alle darunter. Ein Muster ist kein Zufall, also lässt sich noch mehr erklären.",
   "x13_text_2": "Probieren wir als zweiten Baustein u dazu. Wichtig: WISP lässt die erste Zahl nicht stehen. Beide Zahlen werden zusammen neu bestimmt, so dass der Fehler insgesamt am kleinsten wird — die Konstante wandert dabei weg von {c}. Die Linie darf jetzt schräg verlaufen.",
-  "x13_text_3": "Genauso probiert WISP jeden übrigen Baustein als Partner der Konstante aus, jedes Mal mit neu bestimmten Zahlen. Jeder Balken zeigt, wie viel vom Erklärbaren das Paar dann erklärt. Den Baustein mit dem höchsten Wert nimmt WISP: {term}.",
+  "x13_text_3": "Genauso probiert WISP jeden übrigen Baustein als Partner der Konstante aus, jedes Mal mit neu bestimmten Zahlen. Jeder Balken zeigt, wie viel vom Erklärbaren das Paar dann erklärt. Den Baustein mit dem höchsten Wert nimmt WISP: {term}. Beim Probieren bleiben die Balken in Katalogreihenfolge. Danach werden sie nach erklärtem Anteil sortiert, der größte oben; diese Rangfolge entscheidet WISPs Wahl.",
   "x13_text_4": "Mit {term} als zweitem Baustein steigt der erklärte Anteil von {before} auf {after}. Der Fehler sinkt also. Der Rauschanteil bleibt, wie er ist — den kann kein Baustein verkleinern.",
   "x13_text_5": "Das ist die Gleichung nach dem zweiten Schritt. Die Zahl vor {term} wirkt winzig, aber {term} wird in diesen Daten bis etwa {maximum} groß — winzig mal groß ergibt einen spürbaren Beitrag zur Steigung.",
   "x13_closing": "Ob das schon die richtige Gleichung ist — und was WISP als Nächstes tut — zeigt das nächste Kapitel.",
@@ -526,5 +526,8 @@
   "x13_share": "{p} des erklärbaren Anteils",
   "x13_before_after": "erklärt: {before} → {after}",
   "x13_error": "Verbleibender Fehler: {p}",
-  "x13_legend": "Rauschen — nicht erklärbar: {floor} · von den Bausteinen erklärt: {explained} · noch erklärbar: {remaining}"
+  "x13_legend": "Rauschen — nicht erklärbar: {floor} · von den Bausteinen erklärt: {explained} · noch erklärbar: {remaining}",
+  "x14_noise_title": "Woher wissen wir, wie viel Rauschen drin ist?",
+  "x14_true_slope": "Wahre Steigung",
+  "x14_length": "Länge {k} Messabstände"
 }

@@ -171,12 +171,12 @@
     }
     const box=stage.querySelector('.story-deviations').getBoundingClientRect(),plot=stage.querySelector('#story-top-clip rect');
     const matrix=stage.querySelector('svg').getScreenCTM(),plotRight=matrix.a*(+plot.getAttribute('x') + +plot.getAttribute('width'))+matrix.e;
-    const deviationsOutside=page.dataset.stage!=='noise-estimate'||box.left>plotRight;
+    const deviationsOutside=page.dataset.stage!=='noise-estimate'||+getComputedStyle(stage.querySelector('.story-deviations')).opacity<=.01||box.left>plotRight;
     const dataLabels=[];
-    const annotationSelector=page.dataset.chapter==='two'?'svg text':'.story-construction-readout,.story-long-label,.story-neighbour-label,.story-optimum-label,.story-noise-readout';
+    const annotationSelector=page.dataset.chapter==='two'?'svg text':'.story-construction-readout,.story-long-label,.story-neighbour-label,.story-optimum-label,.story-noise-readout,.story-reference-label,.story-length-key';
     const annotationLabels=[...stage.querySelectorAll(annotationSelector)].filter(e=>+getComputedStyle(e).opacity>.01);
     if(['secants','windows'].includes(page.dataset.stage))annotationLabels.push(...stage.querySelectorAll('.story-delta,.story-length'));
-    const dots=[...stage.querySelectorAll('.measurement-dot,.story-slope,.story-long-slope')].filter(e=>+getComputedStyle(e).opacity>.01).map(e=>e.getBoundingClientRect());
+    const dots=[...stage.querySelectorAll('.measurement-dot,.story-slope,.story-long-slope,.story-length-slope')].filter(e=>+getComputedStyle(e).opacity>.01).map(e=>e.getBoundingClientRect());
     annotationLabels.filter(e=>+getComputedStyle(e).opacity>.01).forEach(e=>{const a=e.getBoundingClientRect();if(dots.some(b=>Math.min(a.right,b.right)>Math.max(a.left,b.left)&&Math.min(a.bottom,b.bottom)>Math.max(a.top,b.top)))dataLabels.push(e.textContent);});
     const intersects=(a,b)=>Math.min(a.right,b.right)>Math.max(a.left,b.left)&&Math.min(a.bottom,b.bottom)>Math.max(a.top,b.top);
     const visible=e=>+getComputedStyle(e).opacity>.99;
@@ -185,13 +185,13 @@
     const visibleData=[...stage.querySelectorAll('.measurement-dot')].filter(e=>visible(e)&&intersects(e.getBoundingClientRect(),plotBox)).length;
     const noiseEndOk=page.dataset.stage!=='noise-estimate'||sample<story.durations['noise-estimate']||(visibleData>=500&&visible(stage.querySelector('.story-band')));
     const shareRows=[...stage.querySelectorAll(page.dataset.chapter==='two'?'.c2-slot':'.story-slot')].map((e,j)=>{const boxes=[e.getBoundingClientRect(),...labels.filter(a=>a.row===String(j)).map(a=>a.rect)];return {left:Math.min(...boxes.map(b=>b.left)),right:Math.max(...boxes.map(b=>b.right)),top:Math.min(...boxes.map(b=>b.top)),bottom:Math.max(...boxes.map(b=>b.bottom))};});
-    const shareOverlaps=['percent','c2-every'].includes(page.dataset.stage)?labels.flatMap(a=>shareRows.filter((b,j)=>a.row!==String(j)&&intersects(a.rect,b)).map(()=>a.text)):[];
+    const shareOverlaps=['percent','c2-joint'].includes(page.dataset.stage)?labels.flatMap(a=>shareRows.filter((b,j)=>a.row!==String(j)&&intersects(a.rect,b)).map(()=>a.text)):[];
     const leg=stage.querySelector('.story-triangle'),neighbourDt=leg.getBoundingClientRect().width;
     const neighbourOk=page.dataset.stage!=='secants'||stage.querySelector('svg').dataset.phase!=='zoomed'||neighbourDt>=60;
     variants.push({...readPage(page),sample,stageOk,labelOverlaps,dataLabels,deviationsOutside,visibleData,noiseEndOk,shareOverlaps,neighbourDt,neighbourOk,ok:readPage(page).ok&&stageOk&&labelOverlaps.length===0&&dataLabels.length===0&&deviationsOutside&&noiseEndOk&&shareOverlaps.length===0&&neighbourOk});
     }
     const story=window.WispChapterStory;story.enter(page.dataset.stage);
-    const samples={secants:[0,300,600,899,900,1100,2000,3000,...Array.from({length:8},(_,j)=>3900+j*1200),13200],windows:[2050,3250,4450,5650,6500],fit:[2899,2900,4900],every:Array.from({length:6},(_,j)=>2900+j*2500),'noise-why':[900],'noise-estimate':[2500,5200,7100,8350,9600,10600,11600], 'c2-standing':[0,300,600,900],'c2-residual':[900,1500,2100,2600,3100], 'c2-joint':[900,1650,2400,3150,3900], 'c2-every':Array.from({length:5},(_,j)=>[900+j*2500,1600+j*2500,2900+j*2500]).flat().concat([13400,14000]), 'c2-error':[900,1500,2000,2600,3100], 'c2-solution':[0,450,900]};
+    const samples={secants:[0,300,600,899,900,1100,2000,3000,...Array.from({length:8},(_,j)=>3900+j*1200),13200],windows:story.longerLengths.flatMap((_,j)=>[900+j*2400,1600+j*2400,3000+j*2400]).concat([12900]),fit:[2899,2900,4900],every:Array.from({length:6},(_,j)=>2900+j*2500).concat([15900,16400,16900]),'noise-estimate':[900,4000,4899,4900,5350,6700,7100,10100,12000,14500,16500], 'c2-standing':[0,300,600,900],'c2-residual':[900,1500,2100,2600,3100], 'c2-joint':[900,1650,2400,3900,4900,7899,7900,8350,...Array.from({length:story.remainingBlocks.length},(_,j)=>[8800+j*2500,9500+j*2500,10800+j*2500]).flat(),story.jointPause+story.sortAt+1400,story.jointPause+story.sortAt+1900,story.durations['c2-joint']], 'c2-every':Array.from({length:5},(_,j)=>[900+j*2500,1600+j*2500,2900+j*2500]).flat().concat([13400,14000]), 'c2-error':[900,1500,2000,2600,3100], 'c2-solution':[0,450,900]};
     for(const sample of samples[page.dataset.stage]||[]){story.seek(sample);inspectStage(sample);}
     story.finish();inspectStage(story.durations[page.dataset.stage]);
     if(page.dataset.stage==='fit'){

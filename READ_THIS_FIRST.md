@@ -32,22 +32,24 @@ automatischer Rückweg als Cluster-Pod noch zu bauen.
 
 ## 2. WISP-Explorable (W-X)
 
-- Preview https://claude.ai/artifact/XsxgvgYGZdqPkpnzVd2YMQ **Version 17**: Einführung + Kapitel 1 (12 Schritte) +
-  **Kapitel 2 „Noch ein Baustein dazu“ (6 Schritte, WP-X13)**: Wo wir stehen (Konstante, 52,9 % des Erklärbaren) →
-  Was noch fehlt (Rest mit Muster vs. Rauschband) → zwei Bausteine gemeinsam neu bestimmt (Beispiel u) → jeden zweiten
-  Baustein ausprobieren (u³ 74,2 % knapp vor u² 71,3 %) → der Fehler sinkt → zweite Lösung du/dt = 12,8 − 0,0000275·u³.
-- **Nutzerentscheidung 04.11.:** Kapitel 2 zeigt nur „Baustein dazu, Fehler sinkt“ — kein Urteil, keine wahre
-  Gleichung. **Den Fehlgriff (u³ statt u², Konstante überflüssig) löst Kapitel 3 auf** (FoBa: Pfad 1 → 1,u³ → u,u³ →
-  u,u² = Wahrheit). Test `test_wisp_explainer_x13.py` sichert die Neutralität.
-- **Offen:** Nutzer prüft Kapitel 2; Schritt 11 (Aufteilung Rauschen/erklärt/noch erklärbar) „später“. Danach Kapitel 3.
-- Arbeitsweise wie gehabt: Claude prüft per `check_wisp_explainer_fit.py` (Playwright-Screenshots unter
-  `outputs/wisp_explainer_checks/pages/`), behebt eigene Funde. Tests `-k wisp` (54) brauchen ~30 min.
+- Preview https://claude.ai/artifact/XsxgvgYGZdqPkpnzVd2YMQ **Version 18** (WP-X14): Einführung + Kapitel 1
+  (11 Schritte) + Kapitel 2 „Noch ein Baustein dazu“ (5 Schritte).
+- WP-X14 nach Nutzer-Review: Kap. 1 Steigung vor Rauschen; grüne Linie = wahre Steigung beschriftet; Schritt
+  „Längere Abschnitte“ spielt die Längen 1, 2, 8, 16 nacheinander farbig durch (frühere gedimmt); Rauschen-Warum und
+  -Wie in einem Schritt mit Lesepause, Kasten zeigt je eine Abweichung, die in die Summe fällt. Kap. 2: Beispiel u +
+  Pause + übrige Bausteine in einem Schritt, Balken am Ende nach Anteil sortiert (auch Kap. 1).
+- **Nutzerentscheidung 04.11.:** Kapitel 2 bleibt neutral; **den Fehlgriff (u³ statt u², Konstante überflüssig) löst
+  Kapitel 3 auf** (FoBa: 1 → 1,u³ → u,u³ → u,u² = Wahrheit).
+- **Offen:** Nutzer prüft Version 18; Schritt 11 (Aufteilung Rauschen/erklärt/noch erklärbar) „später“. Danach Kapitel 3.
+- **Tests (Nutzer fragte 04.11. nach der Dauer):** im Iterieren nur die schnellen Darstellungstests
+  (`test_wisp_explainer_x*.py` ohne `_x2`, ~2 min) + `check_wisp_explainer_fit.py`; die volle `-k wisp`-Sammlung (~30 min,
+  Export + Neu-Integration) nur bei Daten-/Exportänderungen, spätestens beim Q9-Tausch. So auch in Codex-Aufträge schreiben.
 
 ## 3. Als Nächstes
 
 1. Q7 fertig → einsammeln, Aggregation, **G-Q7** (automatisch nach §5-Regel, Claude berichtet).
 2. W-2 läuft; Hochrechnung aus den ersten langen Shards.
-3. Explorable: Nutzer-Feedback zu Kapitel 2, dann Kapitel 3 (Aufräumen/FoBa); Schritt 11 später.
+3. Explorable: Nutzer-Feedback zu Version 18, dann Kapitel 3 (Aufräumen/FoBa); Schritt 11 später.
 
 > **BLINDREGEL C-6** gilt unverändert: keine C-6-EvoGrow-Ergebnisse ansehen, nur technische Prüfung.
 
