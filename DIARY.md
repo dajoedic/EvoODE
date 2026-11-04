@@ -7,7 +7,7 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 ## 2026-11-04
 
 ### WISP explorable WP-X15: second user review
-<!-- HASH -->
+<!-- 798e1a5 -->
 
 Every chapter-1/2 animation now loops (3 s end hold), the hands-on slider is gone. Section lengths are shown one at a
 time with persistent RMS bars against the true slope (124 → 64.1 → 14.1 → 6.62 for lengths 1, 2, 8, 16; illustration
