@@ -4,6 +4,20 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ---
 
+## 2026-11-04
+
+### WISP explorable WP-X13: chapter 2 "Noch ein Baustein dazu"
+<!-- db98fda -->
+
+Six scroll steps on the running example (system 3, IC 1, sigma 0.03): where we stand (constant, 52.9 % of the
+explainable part) → residual pattern against the noise band (first half above, second half below the line: 12/15 and
+13/16 windows) → joint refit of two blocks (example u, the constant leaves 6.85) → every second block (u³ 74.2 %,
+u² 71.3 %, u 66.6 %, sin/cos ~53 %) → error sinks → second solution du/dt = 12.8 − 0.0000275·u³. **User decision:**
+chapter 2 stays neutral ("one more block, the error sinks"); the greedy misstep (u³ instead of u², superfluous constant)
+is resolved in chapter 3 (FoBa path 1 → 1,u³ → u,u³ → u,u² = truth, chosen by BIC). Codex built it; Claude fixed the
+frame-review findings (error bar over the equation, legend aligned with chapter 1, a wrong pattern sentence, jargon
+wording). Preview version 17.
+
 ## 2026-11-03
 
 ### Core shift script deleted eight running C-6 pods
