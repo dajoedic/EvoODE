@@ -7,7 +7,7 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 ## 2026-11-04
 
 ### WISP explorable WP-X14: user review of chapters 1 and 2
-<!-- HASH -->
+<!-- 11949a1 -->
 
 User review of version 17: chapter 1 now shows the slope before the measurement noise, labels the green line as the
 true slope, cycles the section lengths WISP uses (1, 2, 8, 16 sampling intervals; up to four evenly spaced from
