@@ -32,7 +32,7 @@ automatischer Rückweg als Cluster-Pod noch zu bauen.
 
 ## 2. WISP-Explorable (W-X)
 
-- Preview https://claude.ai/artifact/XsxgvgYGZdqPkpnzVd2YMQ **Version 18** (WP-X14): Einführung + Kapitel 1
+- Preview https://claude.ai/artifact/XsxgvgYGZdqPkpnzVd2YMQ **Version 19** (WP-X15): Einführung + Kapitel 1
   (11 Schritte) + Kapitel 2 „Noch ein Baustein dazu“ (5 Schritte).
 - WP-X14 nach Nutzer-Review: Kap. 1 Steigung vor Rauschen; grüne Linie = wahre Steigung beschriftet; Schritt
   „Längere Abschnitte“ spielt die Längen 1, 2, 8, 16 nacheinander farbig durch (frühere gedimmt); Rauschen-Warum und
@@ -40,7 +40,10 @@ automatischer Rückweg als Cluster-Pod noch zu bauen.
   Pause + übrige Bausteine in einem Schritt, Balken am Ende nach Anteil sortiert (auch Kap. 1).
 - **Nutzerentscheidung 04.11.:** Kapitel 2 bleibt neutral; **den Fehlgriff (u³ statt u², Konstante überflüssig) löst
   Kapitel 3 auf** (FoBa: 1 → 1,u³ → u,u³ → u,u² = Wahrheit).
-- **Offen:** Nutzer prüft Version 18; Schritt 11 (Aufteilung Rauschen/erklärt/noch erklärbar) „später“. Danach Kapitel 3.
+- WP-X15: alle Animationen laufen in Dauerschleife (3 s Pause), Regler raus; Kap. 1 Schritt 5 = eine Länge zur Zeit +
+  RMS-Balken je Länge; Schritt 8 = Gleichung oben mit live gefitteter Zahl, Sortierung nach jedem Baustein (auch Kap. 2);
+  Rauschschritt in drei Rechenschritten (Σd² → /n → √ → korrigiert ≈ 2,9 % → 71,6 % Boden), beide Texte sofort.
+- **Offen:** Nutzer prüft Version 19; Schritt 11 (Aufteilung Rauschen/erklärt/noch erklärbar) „später“. Danach Kapitel 3.
 - **Tests (Nutzer fragte 04.11. nach der Dauer):** im Iterieren nur die schnellen Darstellungstests
   (`test_wisp_explainer_x*.py` ohne `_x2`, ~2 min) + `check_wisp_explainer_fit.py`; die volle `-k wisp`-Sammlung (~30 min,
   Export + Neu-Integration) nur bei Daten-/Exportänderungen, spätestens beim Q9-Tausch. So auch in Codex-Aufträge schreiben.
@@ -49,7 +52,7 @@ automatischer Rückweg als Cluster-Pod noch zu bauen.
 
 1. Q7 fertig → einsammeln, Aggregation, **G-Q7** (automatisch nach §5-Regel, Claude berichtet).
 2. W-2 läuft; Hochrechnung aus den ersten langen Shards.
-3. Explorable: Nutzer-Feedback zu Version 18, dann Kapitel 3 (Aufräumen/FoBa); Schritt 11 später.
+3. Explorable: Nutzer-Feedback zu Version 19, dann Kapitel 3 (Aufräumen/FoBa); Schritt 11 später.
 
 > **BLINDREGEL C-6** gilt unverändert: keine C-6-EvoGrow-Ergebnisse ansehen, nur technische Prüfung.
 

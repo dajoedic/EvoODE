@@ -1,63 +1,72 @@
-# WP-X14 — WISP explorable: user review of chapters 1 and 2
+# WP-X15 — WISP explorable: second user review (looping, live fits, clearer lengths and noise sum)
 **Language: Python** (build, tests) — the page itself is static HTML, CSS and JavaScript.
 
-Stand 2026-11-04. Follows WP-X13 (`db98fda`, plus Claude's fixes in the same commit). All earlier explorable rules stay
-in force (German + English via `src/i18n/*.json`, every prose node `data-claim="review"`, no scientific number as an
-editorial literal, results contract untouched, byte-identical rebuild, fixed-topology interpolation on the persistent
-stage, labels never overlap). The user reviewed version 17 and asked for the following. Step numbers refer to the
-current page.
+Stand 2026-11-04 evening. Follows WP-X14 (`11949a1`). All earlier explorable rules stay in force (German + English,
+`data-claim="review"`, no scientific number as an editorial literal, results contract untouched, byte-identical
+rebuild, fixed-topology interpolation, no overlapping labels). The user reviewed version 18.
 
-## Chapter 1 ("Ein Baustein allein")
+**Test policy (new, binding):** while working run only the fast presentation tests
+`python -m pytest analysis/tests/test_wisp_explainer_x*.py -q -p no:cacheprovider` **excluding**
+`test_wisp_explainer_x2.py` (~2 min), plus `check_wisp_explainer_js.py`, plus the fit checker. Do **not** run the full
+`-k wisp` suite (it re-runs export and re-integration, ~30 min) — data and exporters do not change in this WP.
+Update the fit checker's hard-coded page inventory / dot counts / sample tables yourself when page counts change.
 
-1. **Swap steps 2 and 3.** New order: data → *slope* ("Was eine Differentialgleichung beschreibt: die Steigung") →
-   *noise visible* ("In jedem Messwert steckt ein Fehler") → secants → … Adjust the texts where they refer to each
-   other (the slope step must not presuppose the noise step; the noise step may now refer back to the slope). The
-   stage transitions must stay smooth in both scroll directions.
-2. **Step 4 (secants): explain the green line.** It is the true slope (derivative of the noise-free curve, unknown
-   to WISP). Give it a visible label on the stage and one sentence in the text: this line is the true change per unit
-   of time that WISP tries to recover — the thing the secants estimate. Use the same wording as the slope step
-   (“Steigung = wie schnell sich u gerade ändert”).
-3. **Step 5 (longer sections): play through several section lengths.** Instead of one length, cycle through the
-   section lengths WISP actually uses (`LIVE.windows`, read live; if there are many, use a representative subset of
-   3–4 lengths from short to long, chosen by a rule stated in a code comment, never hand-typed values). Per length:
-   draw its secant slopes, hold, then keep them on the stage in a **distinct colour per length** (with a small colour
-   legend "Länge k Messabstände") while the next length is drawn, so the reader sees the estimates get calmer as the
-   sections get longer. The green true slope stays visible as the reference. End state: all shown lengths visible,
-   colour-coded. Loop like the other sequences.
-4. **Merge steps 9 and 10** into one step (title: “Woher wissen wir, wie viel Rauschen drin ist?” or similar, user
-   wording welcome): first the *why* text/visual (“Selbst der beste Baustein lässt einen großen Fehler übrig … muss
-   wissen, wie groß dieser Teil ist”), then **after a long enough pause to read it** (≥ 4 s), the *how* part (local
-   cubic through 9 points, deviation of the middle point) starts on the same page. The text column shows both
-   paragraphs; the second paragraph appears/emphasises when its animation starts.
-5. **The box during the noise estimate: one point at a time, not a list.** In the deviations box, always show only the
-   **current** deviation as a single dot/value; then animate that dot moving **down into the sum** (the sum bar/counter
-   below grows), then the next deviation appears in the box, drops into the sum, and so on (start slowly for the
-   first few, then speed up, as now). No growing list of rows. End state as required by WP-X12d (full-view data with
-   the estimated noise band, the sum below).
+## Global
 
-Chapter 1 thus has 11 steps instead of 12; update eyebrows ("Schritt i von n"), dots, progress, ids/anchors, and the
-fit-check sample tables accordingly.
+1. **Every animation loops forever.** At the end of a step's sequence: hold the end state ~3 s, then restart from the
+   beginning; repeat while the step is shown. Applies to every animated step in chapters 1 and 2 (including the ones
+   that loop today with other timing). Reduced motion: show the end state, no loop. The fit checker samples must
+   still be able to seek deterministic times (seek within one cycle).
+2. **Remove the hands-on slider** in chapter 1's fit step ("Selbst probieren", `#c1-play` / `#c1-c`) from the page
+   for now (keep no dead code paths that the tests still reference; adjust tests).
 
-## Chapter 2 ("Noch ein Baustein dazu")
+## Chapter 1
 
-6. **Merge steps 3 and 4.** One step: first explain joint refitting with the single example `u` (as now: both numbers
-   move, the constant leaves its chapter-1 value), **pause long enough to understand it** (≥ 4 s hold on the finished
-   example, text paragraph 1), then the remaining candidates follow automatically in the same step (text paragraph 2
-   appears), each with its joint prediction curve and its bar, exactly like chapter 1's "every" step does it.
-7. **Sorting.** While trying, bars stay in catalogue order (that is the order WISP tries them). After the last
-   candidate, animate the bars re-sorting by explained share (largest on top) and highlight the winner — that ranking
-   is what WISP decides on. Say so in one sentence. Apply the same final re-sort to chapter 1's "every" step for
-   consistency.
+3. **Step 5 "Längere Abschnitte" is cluttered — redesign.** Overlaid clouds of four lengths are unreadable. New design:
+   - The slope panel shows **one length at a time** (replacing the previous one, not accumulating), with the green true
+     slope as reference, same y-axis for all lengths so they are comparable.
+   - Beside the panel, a small persistent **bar chart "typische Abweichung von der wahren Steigung"**, one bar per
+     length (1, 2, 8, 16 — selected as now from `LIVE.windows`), in that length's colour. When a length has been
+     drawn, its bar grows to the root-mean-square difference between its section slopes and the true slope over the
+     same sections, and stays. Result: the bars shrink visibly from short to long sections. Mark it as an
+     illustration that uses the true curve (one short line like the existing "(Berechnung für diese Darstellung)").
+   - Text: shorter sections → slope estimates scatter widely; longer → close to the true slope; the bars show by how
+     much. Remove the colour legend under the panel if the bar labels make it redundant.
+4. **Step 8 "Jeden Baustein ausprobieren": live fit per block.** Show the current equation **on top of the stage**
+   (large, like the solution equation), and fit each block one after another as a small animation in the style of the
+   fit step: for block `1`: equation `du/dt = c · 1`, c sweeps to its optimum while the **number in the equation updates
+   live** and the prediction/residuals update as now; when it settles, the block's bar gets its value; then `du/dt =
+   c · u`, same animation; and so on through the catalogue. Coefficients come from the existing single-block fits (live
+   computed, as now).
+5. **Sort after every block** (good → bad): after each block's bar is set, the bars re-sort by explained share,
+   animated, best on top. The winner is highlighted at the end. Same rule in chapter 2 (item 7).
+6. **Merged noise step (step 9): show both text paragraphs at once** (no staged emphasis, no reading pause); the
+   animation starts directly.
+7. **The summation is still unclear — new attempt.** Make the two sums explicit and visibly arithmetic:
+   - Phase A, per point: the box shows the current deviation d (one value, as now). It turns into its **square d²**
+     (show "d²" with the value), drawn as a small block that **drops onto a stacked bar** labelled "Summe der
+     quadrierten Abweichungen"; a running counter next to the bar shows the current sum and the number of points
+     ("… aus k von n Punkten"). First few points slowly, then fast, as now.
+   - Phase B: the sum is divided by the number of points → one number "typisches Rauschen ≈ …" (the existing estimate,
+     `relative`, as a percentage of u), and the band appears around the data.
+   - Phase C: connect to the error without a block: "Jeder Abschnitt hat zwei Endpunkte mit Rauschen → über alle
+     Abschnitte zusammengezählt: {floor} des Fehlers ohne Baustein" — the existing floor bar fills to that value.
+   Each phase's label appears when it starts; the final state shows all three results. Numbers are live from the
+   existing functions; if the displayed arithmetic of phase A/B cannot reproduce `W.noiseVariance` exactly (it uses a
+   local cubic per point and may weight differently), label phase A/B honestly as what it is (e.g. "Summe ... /
+   Anzahl" only if that is what is computed) and say in the report what the frozen function computes; do not change the
+   frozen function.
 
-Chapter 2 thus has 5 steps instead of 6; update everything as above. Keep the neutral-claims test of WP-X13 passing.
+## Chapter 2
 
-## Checks
+8. **Merged step 3 ("Zwei Bausteine gemeinsam"): show both text paragraphs at once** and start the animation directly
+   (no reading pause, no staged emphasis); the example `u` is still shown first, then the remaining candidates.
+9. **Sort after every candidate** (good → bad), animated, as in item 5; winner highlighted at the end.
 
-Extend the in-page fit check to the new sequences (several sample times for step 5's length cycle, the merged noise
-step before/after the pause and during the drop-into-sum animation, chapter 2's merged step before/after the pause and
-after the re-sort): stage inside the viewport, no SVG text overlaps, no annotation over a data dot. Update the tests
-for the new page counts and order.
+## Acceptance
 
-Acceptance: build exit 0 and byte-identical rebuild; all `-k wisp` tests passing; `check_wisp_explainer_js.py` exit 0;
-fit checker exit 0 (if the browser cannot start in your sandbox, report `blocked` for that part only — Claude runs it).
-Short report `codex/reports/REPORT_WP_X14.md`. Do not commit.
+Build exit 0 and byte-identical rebuild; fast presentation tests passing (see policy); `check_wisp_explainer_js.py`
+exit 0; fit checker exit 0 incl. samples for the new step-5 sequence (each length, final bars), step 8 mid-sweep and
+mid-sort, step 9 in phases A/B/C, chapter 2 mid-sort, and one sample in the loop's restart. If the browser cannot start
+in your sandbox, report `blocked` for that part only — Claude runs it. Short report `codex/reports/REPORT_WP_X15.md`.
+Do not commit.

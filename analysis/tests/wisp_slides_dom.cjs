@@ -75,7 +75,7 @@ if(fixture.configuration==='delivered'){
  for(let i=1;i<ids.length;i++){event(i%3===0?'PageDown':i%3===1?'ArrowDown':' ');assert.equal(slides.nav.index,i);advance(18000,1000);story.finish();if(i>=2){assert.equal(svg.dataset.state,story.states[i-2]);assert.equal(svg.dataset.complete,'true');assert.strictEqual(doc.querySelector('#c1-stage svg'),original);}}
  event('PageDown');assert.equal(slides.nav.index,ids.length);event('ArrowUp');assert.equal(slides.nav.index,ids.length-1);
  assert.equal(doc.querySelectorAll('.page-dots a').filter(a=>!a.hidden).length,11);
- assert.equal(doc.querySelectorAll('.c1-page input').length,1);
+ assert.equal(doc.querySelectorAll('.c1-page input').length,0);
  const saved=[];
  for(const [i,state] of story.states.entries()){
   slides.nav.go(i+2);advance(18000,1000);story.finish();assert.equal(svg.dataset.state,state);assert.equal(svg.dataset.complete,'true');
@@ -93,17 +93,17 @@ if(fixture.configuration==='delivered'){
   }
   if(state==='windows'){
    story.lengthClouds.forEach(cloud=>{
-    // Earlier lengths stay visible, dimmed, once the next length is drawn.
+    // Only the active length remains visible; every completed RMS bar persists.
     const visible=cloud.dots.map(id=>svg.children[id]).filter(d=>+d.style.opacity>0);
-    assert.equal(visible.length,cloud.rows.length);
+    assert.equal(visible.length,cloud===story.lengthClouds.at(-1)?cloud.rows.length:0);
     visible.forEach((d,j)=>{close(+d.dataset.value,cloud.rows[j].rate);close(+d.getAttribute('cy'),392-(Math.max(-story.rateBound,Math.min(story.rateBound,cloud.rows[j].rate))+story.rateBound)/(2*story.rateBound)*122);});
    });
    assert.equal(new Set(story.lengthClouds.map(c=>svg.children[c.dots[0]].style.fill)).size,story.longerLengths.length);
   }
   if(state==='error-empty'){close(+doc.querySelector('.story-error').getAttribute('width'),708);close(+svg.dataset.error,1);assert(doc.querySelector('#c1-stage').textContent.includes('100,0 %')||doc.querySelector('#c1-stage').textContent.includes('100.0 %'));}
   if(state==='fit'){
-   const block=m.blocks.find(b=>b.term===0);close(+svg.dataset.coefficient,2*block.coefficient);close(+svg.dataset.error,WispChapterOne.error(m,0,2*block.coefficient));assert(!doc.getElementById('c1-play').hidden);
-   const slider=doc.getElementById('c1-c');assert(!event('ArrowDown',slider));slider.value=+slider.max;slider.emit('input');assert(+svg.dataset.error>1-block.gain);story.finish();
+   const block=m.blocks.find(b=>b.term===0);close(+svg.dataset.coefficient,2*block.coefficient);close(+svg.dataset.error,WispChapterOne.error(m,0,2*block.coefficient));assert(!doc.getElementById('c1-play'));
+
   }
   if(state==='every'){
    const slots=doc.querySelectorAll('#c1-stage .story-slot');assert.equal(slots.length,6);
@@ -147,24 +147,41 @@ if(fixture.configuration==='delivered'){
  story.enter('noise-visible');advance(800);assert.equal(svg.dataset.phase,'zoom-in');advance(3100);assert.equal(svg.dataset.state,'noise-visible');
  for(const [j,length] of story.longerLengths.entries()){
   story.enter('windows');story.seek(3000+j*2400);assert.equal(+svg.dataset.windowLength,length);
-  for(let k=0;k<=j;k++)assert(story.lengthClouds[k].dots.some(id=>+svg.children[id].style.opacity>0));
+  story.lengthClouds.forEach((c,k)=>assert.equal(c.dots.some(id=>+svg.children[id].style.opacity>0),k===j));
+  story.lengthClouds.slice(0,j+1).forEach((c,k)=>close(+svg.children[c.bar].dataset.value,story.lengthRms[k]));
  }
+ // Independent RMS values use the true change across exactly the same sections.
+ story.lengthClouds.forEach((cloud,j)=>{
+  let sum=0,count=0;for(let a=0;a+cloud.length<t.length;a+=cloud.length){const b=a+cloud.length;sum+=((x[b]-x[a]-truth[b]+truth[a])/(t[b]-t[a]))**2;count++;}
+  close(story.lengthRms[j],Math.sqrt(sum/count));if(j)assert(story.lengthRms[j]<story.lengthRms[j-1]);
+ });
+ // Equation and prediction follow the fitted coefficient; each newly set bar reorders.
+ const ordered=m.blocks.slice().sort((a,b)=>a.term-b.term);
+ ordered.forEach((b,j)=>{
+  story.enter('every');story.seek(2000+j*2500);const c=+svg.dataset.coefficient;assert(c!==b.coefficient);assert(doc.querySelector('.story-equation').textContent.includes(soloNumber(c)));assert(doc.querySelector('.story-equation').textContent.includes(terms[b.term]));
+  story.seek(2900+j*2500);close(+svg.dataset.coefficient,b.coefficient);
+  story.seek(3150+j*2500);const moving=doc.querySelectorAll('.story-slot').some(e=>Math.abs((+e.getAttribute('y')-70)/48-Math.round((+e.getAttribute('y')-70)/48))>.01);if(j&&b.share>ordered[j-1].share)assert(moving);
+  story.seek(3400+j*2500);const known=ordered.slice(0,j+1),bars=doc.querySelectorAll('.story-slot').filter(e=>known.some(b=>b.term===+e.dataset.term)).sort((a,b)=>+a.getAttribute('y')-+b.getAttribute('y'));bars.forEach((b,k)=>{if(k)assert(+b.dataset.value<=+bars[k-1].dataset.value);});
+ });
  const optimum=m.D.A.reduce((sum,row,i)=>sum+row[0]*m.D.b[i],0)/m.D.A.reduce((sum,row)=>sum+row[0]**2,0);close(optimum,m.blocks.find(b=>b.term===0).coefficient);
  story.enter('fit');advance(2899);assert.equal(+doc.querySelector('.story-optimum-dot').style.opacity,0);
  advance(1);close(+svg.dataset.coefficient,optimum);close(+doc.querySelector('.story-optimum-dot').dataset.value,optimum);assert.equal(+doc.querySelector('.story-optimum-dot').style.opacity,1);
  advance(2000);close(+svg.dataset.coefficient,2*optimum);assert.equal(+doc.querySelector('.story-optimum').style.opacity,1);
- const optimumGeometry=doc.querySelector('.story-optimum').getAttribute('d');doc.getElementById('c1-c').value=0;doc.getElementById('c1-c').emit('input');assert.equal(doc.querySelector('.story-optimum').getAttribute('d'),optimumGeometry);
- story.enter('noise-estimate');story.seek(4000);close(+svg.dataset.error,1-m.blocks.find(b=>b.term===m.winner).gain);assert(doc.getElementById('c1-noise-result').hidden);assert.equal(doc.getElementById('c1-story-text-8').style.opacity,'.22');
- story.seek(story.noisePause+1800);assert.equal(+doc.querySelector('.story-cubic').style.opacity,1);assert.equal(doc.getElementById('c1-story-text-8').style.opacity,'1');
- for(const sample of [story.noisePause+2100,story.noisePause+2350,story.noisePause+7100]){
-  story.seek(sample);assert(doc.querySelectorAll('.story-deviation').filter(e=>+e.style.opacity>0).length<=1);
- }
- story.seek(story.noisePause+1800);const dotBefore=+doc.querySelectorAll('.story-contribution').at(-1).getAttribute('cy');
- story.seek(story.noisePause+2300);assert(+doc.querySelectorAll('.story-contribution').at(-1).getAttribute('cy')>dotBefore);
- story.seek(story.noisePause+8000);assert(+svg.dataset.noiseSum>0&&+svg.dataset.noiseSum<m.floor);
+ // Independent raw arithmetic from the real record; corrected noise remains frozen.
+ story.enter('noise-estimate');story.seek(400);assert.equal(svg.dataset.noisePhase,'A');assert.equal(doc.getElementById('c1-story-text-8').style.opacity,'1');
+ story.seek(1800);assert.equal(+doc.querySelector('.story-cubic').style.opacity,1);
+ const dropBefore=+doc.querySelector('.story-contribution').getAttribute('y');story.seek(1900);assert(+doc.querySelector('.story-contribution').getAttribute('y')>dropBefore);
+ story.seek(6200);const count=+svg.dataset.pointCount;close(+svg.dataset.squaredSum,t.slice(0,count).reduce((sum,tt,i)=>sum+(x[i]-story.local(i).value(tt))**2,0));
+ story.seek(8000);assert.equal(svg.dataset.noisePhase,'B');assert.equal(+svg.dataset.pointCount,t.length);close(+svg.dataset.squaredSum,story.squarePrefix.at(-1));
+ story.seek(11000);assert.equal(svg.dataset.noisePhase,'C');assert(+svg.dataset.noiseSum>0&&+svg.dataset.noiseSum<m.floor);
  story.finish();close(+svg.dataset.noiseSum,m.floor);const sumWidth=+doc.querySelector('.story-part-0').getAttribute('width');
  story.enter('percent');story.finish();close(+doc.querySelector('.story-part-0').getAttribute('width'),sumWidth);
- story.enter('every');advance(2000);assert.equal(+doc.querySelector('.story-optimum-dot').style.opacity,1);advance(14000);assert.equal(svg.dataset.complete,'false');advance(900);assert.equal(svg.dataset.complete,'true');
+ // Every step repeats after a three-second hold; reduced motion never schedules a replay.
+ for(const state of [...story.states,...WispChapterTwo.states]){
+  story.enter(state);advance(story.durations[state]);assert.equal(svg.dataset.complete,'true');advance(2999);assert.equal(svg.dataset.complete,'true');advance(2);assert.equal(svg.dataset.complete,'false');assert(story.elapsed()<10);story.finish();
+  story.seek(story.durations[state]+3300);close(story.elapsed(),300);
+ }
+ story.enter('every');advance(2000);assert.equal(+doc.querySelector('.story-optimum-dot').style.opacity,0);assert.equal(+doc.querySelector('.story-optimum-label').style.opacity,1);advance(14000);assert.equal(svg.dataset.complete,'false');advance(900);assert.equal(svg.dataset.complete,'true');
  story.enter('slope');advance(1200);const before=doc.querySelector('.story-marker').getAttribute('cx');advance(1000);assert.notEqual(doc.querySelector('.story-marker').getAttribute('cx'),before);
  slides.nav.go(1);advance();for(const fn of events.wheel||[])fn({type:'wheel',target:doc.body,deltaY:500,preventDefault(){}});advance();assert.equal(slides.nav.index,2);
  for(const p of slides.pages.slice(2,13)){assert(p.querySelectorAll('p').every(n=>n.dataset.claim==='review'));assert.equal(p.querySelector('.eyebrow').textContent,tr('x10_eye',{i:p.querySelector('.eyebrow').dataset.c1Eye,n:11}));}
@@ -198,10 +215,15 @@ if(fixture.configuration==='delivered'){
  });
  // Interrupted animations, catalogue order and both moving coefficients.
  story.enter('c2-joint');story.seek(2400);const midway=JSON.parse(svg.dataset.coefficients);midway.forEach((c,j)=>assert(c!==joint.coefficients[j]));assert(midway[0]!==constant.coefficient);
- story.seek(3900);JSON.parse(svg.dataset.coefficients).forEach((c,j)=>close(c,joint.coefficients[j]));story.seek(7899);assert.equal(+svg.dataset.term,joint.term);assert.equal(doc.getElementById('c2-text-3').style.opacity,'.22');
+ story.seek(3900);JSON.parse(svg.dataset.coefficients).forEach((c,j)=>close(c,joint.coefficients[j]));story.seek(3899);assert.equal(+svg.dataset.term,joint.term);assert.equal(doc.getElementById('c2-text-3').style.opacity,'1');
  story.seek(9500);assert.equal(doc.getElementById('c2-text-3').style.opacity,'1');
  story.remainingBlocks.forEach((b,j)=>{story.seek(story.jointPause+2900+j*2500);assert.equal(+svg.dataset.term,b.term);});
- story.seek(story.jointPause+story.sortAt-1);const catalogue=doc.querySelectorAll('.c2-slot').slice().sort((a,b)=>+a.getAttribute('y')-+b.getAttribute('y'));assert.deepEqual(catalogue.map(b=>+b.dataset.term),wm.blocks.map(b=>b.term));
+ // After each completed candidate, all known values rank best first.
+ story.remainingBlocks.forEach((block,j)=>{
+  story.seek(story.jointPause+3399+j*2500);
+  const known=[joint,...story.remainingBlocks.slice(0,j+1)],bars=doc.querySelectorAll('.c2-slot').filter(e=>known.some(b=>b.term===+e.dataset.term)).sort((a,b)=>+a.getAttribute('y')-+b.getAttribute('y'));
+  bars.forEach((b,k)=>{if(k)assert(+b.dataset.value<=+bars[k-1].dataset.value);});
+ });
  story.finish();const ranked=doc.querySelectorAll('.c2-slot').slice().sort((a,b)=>+a.getAttribute('y')-+b.getAttribute('y'));ranked.forEach((b,j)=>{if(j)assert(+b.dataset.value<=+ranked[j-1].dataset.value);});assert(ranked[0].classList.contains('winner'));
  for(let i=4;i>=0;i--){story.enter(two.states[i]);story.finish();svg.children.forEach((e,j)=>assert.deepEqual({...e.attrs,opacity:e.style.opacity},twoSaved[i][j]));}
  global.matchMedia=()=>({matches:true,addEventListener(){}});two.states.forEach((state,i)=>{story.enter(state);assert.equal(svg.dataset.complete,'true');svg.children.forEach((e,j)=>assert.deepEqual({...e.attrs,opacity:e.style.opacity},twoSaved[i][j]));});

@@ -6,6 +6,17 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ## 2026-11-04
 
+### WISP explorable WP-X15: second user review
+<!-- HASH -->
+
+Every chapter-1/2 animation now loops (3 s end hold), the hands-on slider is gone. Section lengths are shown one at a
+time with persistent RMS bars against the true slope (124 → 64.1 → 14.1 → 6.62 for lengths 1, 2, 8, 16; illustration
+using the true curve). "Every block" shows the equation on top with the coefficient counting live during each fit,
+bars re-sort after each block (chapter 2 likewise). The noise step shows its arithmetic: Σd² over 512 local-cubic
+deviations = 1,090, /512 = 2.13, √ ≈ 1.46, then WISP's leverage correction and neighbour averaging give 2.9 % of u,
+then the 71.6 % floor. Claude fixed: bar title over an axis tick, an axis-less error mini-curve left in "every",
+labels hidden during sorts that moved nothing, and the missing square-root line. Preview version 19.
+
 ### WISP explorable WP-X14: user review of chapters 1 and 2
 <!-- 11949a1 -->
 

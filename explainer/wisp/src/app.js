@@ -454,7 +454,9 @@ function initChapterOne(){
  const truthPath=path('story-truth'),predictionPath=path('story-prediction'),bandTop=path('story-band',2*n),bandBottom=path('story-band-unused');
  const sticks=t.map(()=>line('story-residual')),triangle=Array.from({length:3},()=>line('story-triangle'));
  const lengthColours=['#3369c7','#ab4d9a','#b86a12','#008b91'];
- const lengthClouds=longerLengths.map((length,j)=>({length,rows:chapterWindows(length),dots:Array.from({length:n-1},()=>{const id=dot('story-length-slope',3);nodes[id].e.style.fill=lengthColours[j];return id;}),label:label('story-length-key')}));
+ const lengthClouds=longerLengths.map((length,j)=>({length,rows:chapterWindows(length),dots:Array.from({length:n-1},()=>{const id=dot('story-length-slope',3);nodes[id].e.style.fill=lengthColours[j];return id;}),label:label('story-length-key'),bar:node('rect',{class:'story-length-rms'},'rect',[0,0,0,0,0]),value:label('story-length-key')}));
+ const lengthTitle=[label('story-length-key'),label('story-length-key'),label('story-length-key')];
+ const lengthRms=lengthClouds.map(c=>Math.sqrt(c.rows.reduce((sum,r)=>sum+(r.rate-r.clean)**2,0)/c.rows.length)),rmsMax=Math.max(...lengthRms);
  const historyTriangles=Array.from({length:8},()=>Array.from({length:3},()=>line('story-triangle story-history')));
  const zoomBox=node('rect',{class:'story-zoom-box'},'rect',[64,42,0,0,0]);
  const legend=[label('story-neighbour-label'),label('story-long-label')];
@@ -472,8 +474,11 @@ function initChapterOne(){
  const slots=m.blocks.map(()=>({bar:node('rect',{class:'story-slot'},'rect',[64,70,0,15,0]),text:label(),value:label()}));
  const twoSlots=two.blocks.map(()=>({bar:node('rect',{class:'c2-slot'},'rect',[64,70,0,15,0]),text:label(),value:label()}));
  const deviationBox=node('rect',{class:'story-deviations'},'rect',[590,42,195,180,0]);
- const deviationLabels=[label('story-deviation')],deviationDot=dot('story-contribution',5);
- const smooth=t.map((v,i)=>local(i).value(v));
+ const deviationLabels=[label('story-deviation')],deviationDot=node('rect',{class:'story-contribution'},'rect',[0,0,10,10,0]);
+ const squareBars=t.map(()=>node('rect',{class:'story-square'},'rect',[0,0,0,0,0]));
+ const arithmeticLabels=Array.from({length:6},()=>label('story-arithmetic'));
+ const smooth=t.map((v,i)=>local(i).value(v)),deviations=x.map((v,i)=>v-smooth[i]);
+ const squarePrefix=[0];deviations.forEach(v=>squarePrefix.push(squarePrefix.at(-1)+v*v));
  const defs=svgNode('defs',{}),clip=svgNode('clipPath',{id:'story-top-clip'}),clipRect=svgNode('rect',{});clip.append(clipRect);defs.append(clip);svg.append(defs);
  // Lines of the lower panel span the full series; keep them inside the plot's horizontal extent when zoomed.
  const xClip=svgNode('clipPath',{id:'story-x-clip'}),xClipRect=svgNode('rect',{});xClip.append(xClipRect);defs.append(xClip);nodes[predictionPath].e.setAttribute('clip-path','url(#story-x-clip)');
@@ -483,14 +488,11 @@ function initChapterOne(){
  const rates=chapterWindows(1),trueRates=t.map((v,i)=>{const a=Math.max(0,i-1),b=Math.min(n-1,i+1);return (clean[b]-clean[a])/(t[b]-t[a]);});
  const uRange=[Math.min(...x)*.95,Math.max(...x)*1.05],rateBound=4*Math.max(...trueRates.map(Math.abs));
  const changeBound=Math.max(...m.rows.map(({i})=>Math.abs(m.D.b[i])))*1.15||1;
- const slider=$('c1-c');slider.min=0;slider.max=2*constant.coefficient;
- const floorContributions=m.D.windows.map(([a,b])=>(variance[a]+variance[b])/norm);
- const floorPrefix=[0];floorContributions.forEach(v=>floorPrefix.push(floorPrefix.at(-1)+v));
+ const fitMin=0,fitMax=2*constant.coefficient;
  const blockCurves=new Map(m.blocks.map(block=>{const values=Array.from({length:81},(_,i)=>2*block.coefficient*i/80),errs=values.map(v=>chapterError(m,block.term,v));return [block.term,{values,errs,maximum:Math.max(...errs)}];}));
- const errors=new Map(m.blocks.map(b=>[b.term,chapterError(m,b.term,b.coefficient)]));
- const curveValues=Array.from({length:81},(_,i)=>+slider.min+(+slider.max-slider.min)*i/80),curveErrors=curveValues.map(v=>chapterError(m,0,v)),curveMaximum=Math.max(...curveErrors);
- const noisePause=4900,jointPause=7900;
- const durations={data:900,'noise-visible':2300,slope:3800,secants:16100,windows:12900,'error-empty':2900,fit:4900,every:16900,'noise-why':900,'noise-estimate':16500,percent:900,solution:900};
+ const curveValues=Array.from({length:81},(_,i)=>fitMin+(fitMax-fitMin)*i/80),curveErrors=curveValues.map(v=>chapterError(m,0,v)),curveMaximum=Math.max(...curveErrors);
+ const noisePause=0,jointPause=4000;
+ const durations={data:900,'noise-visible':2300,slope:3800,secants:16100,windows:12900,'error-empty':2900,fit:4900,every:16900,'noise-why':900,'noise-estimate':12500,percent:900,solution:900};
  Object.assign(durations,{'c2-standing':900,'c2-residual':3900,'c2-joint':jointPause+sortAt+1900,'c2-every':sortAt+1900,'c2-error':3900,'c2-solution':900});
  // Chapter two shares the persistent topology, renderer, axes, windows and clock.
  // Divide weak changes and design rows by each displayed window's duration to
@@ -498,6 +500,13 @@ function initChapterOne(){
  const slopeRows=m.rows.map(({w,i})=>({i,time:(t[w[0]]+t[w[1]])/2,dt:t[w[1]]-t[w[0]],rate:m.D.b[i]/(t[w[1]]-t[w[0]]),sd:Math.sqrt(variance[w[0]]+variance[w[1]])/(t[w[1]]-t[w[0]])}));
  const predict=(block,row)=>block.support.reduce((sum,j,k)=>sum+block.coefficients[k]*m.D.A[row.i][j]/row.dt,0);
  const slopeExtent=Math.max(...slopeRows.flatMap(r=>[Math.abs(r.rate),...two.blocks.map(b=>Math.abs(predict(b,r))),Math.abs(constant.coefficient)+r.sd]))*1.15;
+ function ranking(ordered,completed,phase,initial=[]){
+  const count=Math.min(ordered.length,Math.max(0,Math.floor(completed))),before=initial.concat(ordered.slice(0,count)),after=initial.concat(ordered.slice(0,Math.min(ordered.length,count+1)));
+  const order=known=>known.slice().sort((a,b)=>b.share-a.share).concat(ordered.filter(b=>!known.includes(b)));
+  const from=order(before),to=order(after),blend=ease((phase-2000)/500);
+  const moves=from.some((b,i)=>to[i]!==b);
+  return {position:b=>mix(from.indexOf(b),to.indexOf(b),blend),sorting:moves&&blend>0&&blend<1};
+ }
  function secondScene(state,ms){
   const s=blank.map(a=>a.slice()),put=(id,a)=>{s[id]=a;},text=(id,value,xx,yy,opacity=1)=>{nodes[id].e.textContent=value;put(id,[xx,yy,opacity]);};
   const seq=Math.max(0,ms-900),list=state==='c2-every',left=list?284:64,right=772,top=140,bottom=392;
@@ -550,9 +559,9 @@ function initChapterOne(){
   }else if(state==='c2-solution')text(equation,secondEquation(two.record.active_idxs[0].map(j=>j-1),two.record.equations[0].coefficients),left,470);
   else if(!list)text(equation,blend===0?soloEquation(constant):secondEquation(block.support,coefficients),left,470);
   if(list)two.blocks.forEach((b,j)=>{
-   const ranked=two.blocks.slice().sort((a,b)=>b.share-a.share),sort=ease((seq-sortAt)/1000);
-   const yy=150+mix(j,ranked.indexOf(b),sort)*52,progress=b.term===joint.term?1:ease((seq-remainingBlocks.indexOf(b)*2500-1000)/1000),slot=twoSlots[j];
-   put(slot.bar,[12,yy+10,204*clamp(b.share)*progress,12,1]);const labels=seq>sortAt&&seq<sortAt+1000?0:1;
+   const ordering=ranking(remainingBlocks,Math.floor(seq/2500),seq%2500,[joint]);
+   const yy=150+ordering.position(b)*52,progress=b.term===joint.term?1:ease((seq-remainingBlocks.indexOf(b)*2500-1800)/200),slot=twoSlots[j];
+   put(slot.bar,[12,yy+10,204*clamp(b.share)*progress,12,1]);const labels=ordering.sorting?0:1;
    text(slot.text,terms[b.term],12,yy,labels);text(slot.value,pct(b.share),135,yy,progress*labels);
    nodes[slot.bar].e.dataset.term=String(b.term);nodes[slot.bar].e.dataset.value=String(b.share);nodes[slot.bar].e.classList.toggle('winner',seq>=sortAt+1000&&b.term===two.winner);
    nodes[slot.text].e.dataset.shareRow=String(j);nodes[slot.value].e.dataset.shareRow=String(j);
@@ -560,23 +569,19 @@ function initChapterOne(){
   svg.dataset.state=state;svg.dataset.term=String(block.term);svg.dataset.error=String(1-gain);svg.dataset.coefficients=JSON.stringify(coefficients);svg.dataset.complete=String(ms>=durations[state]);
   return s;
  }
- let current=null,frame=0,last=blank.map(a=>a.slice()),elapsed=0,manual=null,reverseZoom=false;
+ let current=null,frame=0,last=blank.map(a=>a.slice()),elapsed=0,reverseZoom=false;
  function scene(state,ms){
   const requested=state,elapsedMs=ms;
-  const how=state==='noise-estimate'&&ms>=noisePause;
-  $('c1-story-text-8').style.opacity=how?'1':'.22';
-  $('c2-text-3').style.opacity=state==='c2-joint'&&ms>=jointPause?'1':'.22';
-  if(state==='noise-estimate'){
-   state=how?'noise-estimate':'noise-why';ms=how?ms-noisePause:Math.min(ms,900);
-  }
+  $('c1-story-text-8').style.opacity='1';
+  $('c2-text-3').style.opacity='1';
   if(state==='c2-joint'){
    state=ms>=jointPause?'c2-every':'c2-joint';ms=state==='c2-every'?ms-jointPause:Math.min(ms,4900);
   }
   const geometry=baseScene(state,ms);
   // The phase change interpolates the same mounted vertices in either direction.
-  const boundary=requested==='noise-estimate'?noisePause:requested==='c2-joint'?jointPause:0;
+  const boundary=requested==='c2-joint'?jointPause:0;
   if(boundary&&elapsedMs>=boundary&&elapsedMs<boundary+900){
-   const previous=baseScene(requested==='noise-estimate'?'noise-why':'c2-joint',requested==='noise-estimate'?900:4900),blend=ease((elapsedMs-boundary)/900);
+   const previous=baseScene('c2-joint',4900),blend=ease((elapsedMs-boundary)/900);
    baseScene(state,ms); // Restore label/style side effects from the active phase.
    // Axis tick labels would fly across the candidate bars; they fade in at their new place instead.
    const fadeOnly=requested==='c2-joint'?new Set(axisLabels):new Set();
@@ -599,7 +604,7 @@ function initChapterOne(){
   nodes[readout].e.classList.remove('story-construction-readout');nodes[readout].e.classList.remove('story-long-label');
   triangle.forEach(id=>nodes[id].e.classList.toggle('story-long-triangle',state==='windows'));
   triangleLabels.forEach(id=>nodes[id].e.classList.toggle('story-long-label',state==='windows'));
-  const s=blank.map(a=>a.slice()),step=legacyStates.indexOf(state),seq=Math.max(0,ms-900),final=ms>=durations[state];
+  const s=blank.map(a=>a.slice()),step=legacyStates.indexOf(state),seq=Math.max(0,ms-(state==='noise-estimate'?0:900)),final=ms>=durations[state];
   caption.style.visibility=step>=4&&step<=7?'visible':'hidden';
   result.hidden=state!=='noise-estimate'||!final;result.style.opacity=result.hidden?'0':'1';
   const put=(id,a)=>{s[id]=a;},text=(id,value,xx,yy,opacity=1)=>{nodes[id].e.textContent=value;put(id,[xx,yy,opacity]);};
@@ -611,7 +616,7 @@ function initChapterOne(){
   let zoom=0,windowLength=1;
   const start=t.findIndex(v=>v>=2),constructionLengths=longerLengths;
   const pairBegin=2200,pairEnd=11800,pairOut=12600;
-  const windowEnd=longerLengths.length*2400,windowOut=windowEnd+800;
+  const windowEnd=longerLengths.length*2400;
   if(state==='secants'||state==='windows'){
    zoom=state==='secants'?(seq<600?0:seq<2200?ease((seq-600)/1600):seq<pairEnd?1:1-ease((seq-pairEnd)/800)):(seq<windowEnd?1:1-ease((seq-windowEnd)/800));
    const pan=Math.min(7,Math.max(0,Math.floor((seq-pairBegin)/1200)))+ (seq<pairEnd-1200?ease(((seq-pairBegin)%1200-1000)/200):0);
@@ -623,13 +628,6 @@ function initChapterOne(){
    domain=[mix(t[0],at(begin),zoom),mix(t.at(-1),at(end),zoom)];
    range=[mix(uRange[0],lo,zoom),mix(uRange[1],hi,zoom)];
    windowLength=state==='windows'?constructionLengths[Math.min(constructionLengths.length-1,Math.floor(seq/2400))]:1;
-  }
-  let noiseZoom=0;
-  if(state==='noise-estimate'){
-   noiseZoom=seq<700?ease(seq/700):seq<5200?1:1-ease((seq-5200)/1000);
-   const a=examples[0].start-6,b=examples.at(-1).start+15;
-   domain=[mix(t[0],t[a],noiseZoom),mix(t.at(-1),t[b],noiseZoom)];
-   range=[mix(uRange[0],Math.min(...x.slice(a,b+1))*.98,noiseZoom),mix(uRange[1],Math.max(...x.slice(a,b+1))*1.02,noiseZoom)];
   }
   if(changes){range=[-changeBound,changeBound];top=state==='fit'?240:140;}
   nodes[predictionPath].e.setAttribute('clip-path',changes?'url(#story-top-clip)':'url(#story-x-clip)');nodes[optimumPath].e.setAttribute('clip-path','url(#story-top-clip)');
@@ -648,7 +646,7 @@ function initChapterOne(){
    put(axisLines[j],[left,Y(v),right,Y(v),1]);text(axisLabels[j],fmt(v),left-10,Y(v)+4,j===0?0:1);nodes[axisLabels[j]].e.setAttribute('text-anchor','end');
    text(axisLabels[j+5],fmt(tt),X(tt),split?bottom+25:state==='noise-estimate'?326:416);
   }
-  put(axisLines[5],[left,bottom,right,bottom,1]);text(axisLabels[10],changes?tr('x9_change'):'u',left,24);text(axisLabels[11],tr('j157'),right-90,split?bottom+42:state==='noise-estimate'?350:440);
+  put(axisLines[5],[left,bottom,right,bottom,1]);text(axisLabels[10],changes?tr('x9_change'):'u',left,state==='every'?120:24);text(axisLabels[11],tr('j157'),right-90,split?bottom+42:state==='noise-estimate'?350:440);
   if(split){put(axisLines[6],[left,R(0),right,R(0),1]);text(axisLabels[12],tr('x12_axis_slope'),left,lowerTop-15);text(axisLabels[13],tr('j157'),right-90,440);
    [-lowerBound,0,lowerBound].forEach((v,j)=>{text(axisLabels[14+j],fmt(v),left-10,R(v)+4);nodes[axisLabels[14+j]].e.setAttribute('text-anchor','end');});
    put(axisLines[7],[left,lowerTop,left,lowerBottom,1]);}
@@ -661,7 +659,7 @@ function initChapterOne(){
   put(truthPath,[...t.flatMap((v,i)=>[X(v),Y(clean[i])]),curveOpacity]);
   nodes[truthPath].e.style.strokeDasharray=state==='noise-visible'?'1 1':'';
   nodes[truthPath].e.setAttribute('pathLength','1');nodes[truthPath].e.style.strokeDashoffset=String(1-reveal);
-  text(truthLabel,split?tr('x14_true_slope'):tr('x12_truth'),split?590:left+10,split?260:top+20,curveOpacity);nodes[truthLabel].e.classList.toggle('story-reference-label',split);
+  text(truthLabel,split?tr('x14_true_slope'):tr('x12_truth'),split?590:left+10,split?(state==='windows'?190:260):top+20,curveOpacity);nodes[truthLabel].e.classList.toggle('story-reference-label',split);
   // All scientific values are attached unscaled for the numerical DOM assertions.
   if(state==='noise-visible')sticks.forEach((id,i)=>{put(id,[X(t[i]),Y(x[i]),X(t[i]),Y(clean[i]),inside(t[i])?clamp((seq-900)/500):0]);nodes[id].e.dataset.value=String(Math.abs(x[i]-clean[i]));});
   if(state==='slope'){
@@ -685,17 +683,17 @@ function initChapterOne(){
     nodes[zoomBox].e.setAttribute('pathLength','1');nodes[zoomBox].e.style.strokeDasharray='1 1';nodes[zoomBox].e.style.strokeDashoffset=String(1-clamp(seq/400));
    }
    put(predictionPath,[...t.flatMap((v,i)=>[X(v),R(trueRates[i])]),lowerReveal]);
-   // Retain S4's orange cloud and all eight triangles while S5 extends the window.
+   // The neighbour cloud belongs only to the neighbour construction.
    slopeDots.forEach((id,i)=>{
     const j=intro?start+i:i,row=rates[j],v=row?.rate??0,outside=Math.abs(v)>lowerBound;
     const completed=intro?seq>=pairBegin+i*1200+750&&i<8:!neighbour&&seq<windowEnd?i>=start&&i<start+8:i<Math.floor((neighbour?sweep:1)*rates.length);
     const flight=intro&&i===pair?drop:1,xx=X(row?.time??t[0]),yy=mix(Y(x[j]??x[0]),R(Math.max(-lowerBound,Math.min(lowerBound,v))),flight);
-    const opacity=completed&&inside(row?.time)?(neighbour?flight:.22):0,dir=v>0?1:-1;
+    const opacity=completed&&inside(row?.time)?(neighbour?flight:0):0,dir=v>0?1:-1;
     put(id,[xx,yy,outside?0:opacity]);nodes[id].e.dataset.value=String(v);
     put(clipped[i],[xx,yy,xx-3,yy+dir*6,xx+3,yy+dir*6,outside?opacity:0]);
    });
    historyTriangles.forEach((ids,j)=>{
-    const aa=start+j,bb=aa+1,visible=!neighbour&&seq<windowOut?.22:0;
+    const aa=start+j,bb=aa+1,visible=0;
     put(ids[0],[X(t[aa]),Y(x[aa]),X(t[bb]),Y(x[aa]),visible]);
     put(ids[1],[X(t[bb]),Y(x[aa]),X(t[bb]),Y(x[bb]),visible]);
     put(ids[2],[X(t[aa]),Y(x[aa]),X(t[bb]),Y(x[bb]),visible]);
@@ -703,10 +701,14 @@ function initChapterOne(){
    if(!neighbour)lengthClouds.forEach((cloud,j)=>{
     const progress=clamp((seq-j*2400)/1400);
     cloud.dots.forEach((id,i)=>{const row=cloud.rows[i],v=row?.rate??0;
-     put(id,[X(row?.time??t[0]),R(Math.max(-lowerBound,Math.min(lowerBound,v))),row&&inside(row.time)&&i<Math.floor(progress*cloud.rows.length)?(j<lengthClouds.length-1&&seq>=(j+1)*2400?.28:1):0]);
+     put(id,[X(row?.time??t[0]),R(Math.max(-lowerBound,Math.min(lowerBound,v))),row&&inside(row.time)&&i<Math.floor(progress*cloud.rows.length)?(j===Math.min(lengthClouds.length-1,Math.floor(seq/2400))?1:0):0]);
      nodes[id].e.dataset.value=String(v);nodes[id].e.dataset.length=String(cloud.length);
     });
-    text(cloud.label,tr('x14_length',{k:cloud.length}),590,335+j*27,seq>=j*2400?1:0);nodes[cloud.label].e.style.fill=lengthColours[j];
+    text(cloud.label,tr('x14_length',{k:cloud.length}),590,298+j*34);nodes[cloud.label].e.style.fill=lengthColours[j];
+    const barProgress=clamp((seq-j*2400-1400)/600);
+    put(cloud.bar,[590,306+j*34,135*lengthRms[j]/rmsMax*barProgress,8,1]);nodes[cloud.bar].e.style.fill=lengthColours[j];nodes[cloud.bar].e.dataset.value=String(lengthRms[j]*barProgress);
+    text(cloud.value,fmt(lengthRms[j]*barProgress),745,314+j*34,barProgress>0?1:0);
+    text(lengthTitle[0],tr('x15_rms_title'),600,226);text(lengthTitle[1],tr('x15_rms_subtitle'),600,244);text(lengthTitle[2],tr('x15_true_used'),600,265);
    });
    const opacity=active?1:0,xx=X(t[a]),yy=Y(x[a]),xb=X(t[b]),yb=Y(x[b]);
    put(triangle[0],[xx,yy,mix(xx,xb,draw),yy,opacity]);put(triangle[1],[xb,yy,xb,mix(yy,yb,draw),opacity]);put(triangle[2],[xx,yy,mix(xx,xb,draw),mix(yy,yb,draw),opacity]);
@@ -717,17 +719,17 @@ function initChapterOne(){
    text(triangleLabels[2],tr('x12_length',{n:b-a}),590,64,opacity);
    text(readout,tr('x12c_slope',{value:fmt((x[b]-x[a])/(t[b]-t[a]))}),590,150,opacity*written);
    nodes[readout].e.classList.add('story-construction-readout');nodes[readout].e.classList.toggle('story-long-label',!neighbour);
-   // Length colours have their own reserved legend to the right of the plots.
+   // Length colours are identified directly by the RMS bars.
    text(clippedLabel,tr('x12_clipped',{n:rates.filter(r=>Math.abs(r.rate)>lowerBound).length}),590,300,neighbour&&!intro?1:0);
    svg.dataset.pairStart=String(a);
    data.forEach(id=>nodes[id].e.setAttribute('r',zoom>.9?(neighbour?8:5):2.5));
   }
   let block=constant,c=0,error=1;
   if(changes){
-   if(state==='fit')c=manual??2*constant.coefficient*clamp(seq/4000);
+   if(state==='fit')c=2*constant.coefficient*clamp(seq/4000);
    if(state==='every'){
     const index=Math.min(m.blocks.length-1,Math.floor(seq/2500));block=m.blocks.slice().sort((a,b)=>a.term-b.term)[index];
-    const phase=seq-index*2500;c=phase>=1800?block.coefficient:2*block.coefficient*clamp((phase-400)/1400);
+    const phase=seq-index*2500;c=phase>=1800?block.coefficient:block.coefficient*clamp((phase-400)/1400);
     if(seq>=15000){block=winner;c=winner.coefficient;}
    }
    if(state==='solution'||state==='noise-why'){block=winner;c=winner.coefficient;}
@@ -749,41 +751,40 @@ function initChapterOne(){
    const progress=state==='error-empty'?clamp(seq/2000):1;
    if(state==='noise-why')text(noiseLabel,'? '+tr('x12c_question'),left+20,64);
    put(errorBar,[left,447,(right-left)*clamp(error)*progress,14,1]);text(errorLabel,tr('x10_error',{p:pct(error*progress)}),left,477);
-   text(equation,state==='error-empty'?tr('x10_none'):soloEquation({...block,coefficient:c}),left+20,64,state==='solution'?1:0);
+   text(equation,state==='error-empty'?tr('x10_none'):state==='every'?'du/dt = '+soloNumber(c)+' · '+terms[block.term]:soloEquation({...block,coefficient:c}),left,24,['every','solution'].includes(state)?1:0);
    if(state==='fit'){
-    const lo=+slider.min,hi=+slider.max,values=curveValues,maxError=curveMaximum;
+    const lo=fitMin,hi=fitMax,values=curveValues,maxError=curveMaximum;
     const CX=v=>470+280*(v-lo)/(hi-lo),CY=v=>180-140*v/maxError;
     put(curveAxes[0],[470,180,750,180,1]);put(curveAxes[1],[470,40,470,180,1]);
     text(curveTicks[0],tr('x12d_error_axis'),470,24);text(curveTicks[1],'c',766,184);
     ['0','c*','2\u00b7c*'].forEach((v,j)=>text(curveTicks[j+2],v,470+j*140,201));
     [0,maxError].forEach((v,j)=>{text(curveTicks[j+5],String(Math.round(v*100)),460,CY(v)+4);nodes[curveTicks[j+5]].e.setAttribute('text-anchor','end');});
     put(curvePath,[...values.flatMap((v,i)=>[CX(v),CY(curveErrors[i])]),1]);nodes[curvePath].e.setAttribute('pathLength','1');nodes[curvePath].e.style.strokeDasharray='1 1';nodes[curvePath].e.style.strokeDashoffset=String(1-clamp(seq/4000));put(curveMarker,[CX(c),CY(error),1]);text(curveLabel,'c = '+soloNumber(c),left,64);
-    const passed=seq>=2000||manual!==null;
+    const passed=seq>=2000;
     nodes[optimumMarker].e.dataset.value=String(constant.coefficient);
     put(optimumMarker,[CX(constant.coefficient),CY(chapterError(m,0,constant.coefficient)),passed?1:0]);
     text(optimumLabel,tr('x12c_best',{c:soloNumber(constant.coefficient)}),left,104,passed?1:0);
-    slider.value=c;$('c1-c-value').textContent=soloNumber(c);$('c1-play').hidden=!final;
    }
-   const blockTime=seq%2500,passed=state==='fit'?seq>=2000||manual!==null:state==='every'&&(seq>=15000||blockTime>=1100);
+   const blockTime=seq%2500,passed=state==='fit'?seq>=2000:state==='every'&&(seq>=15000||blockTime>=1100);
    put(optimumPath,[...t.map((_,j)=>Math.min(m.rows.length-1,Math.floor(j*m.rows.length/n))).flatMap(i=>[X(m.x[i]),Y(block.coefficient*m.D.A[m.rows[i].i][block.term])]),passed?1:0]);
    if(state==='every'){
     nodes[optimumMarker].e.dataset.value=String(block.coefficient);
     const {values,errs,maximum}=blockCurves.get(block.term);
-    const CX=v=>right-180+180*v/(2*block.coefficient),CY=v=>80-45*v/maximum;
-    put(curvePath,[...values.flatMap((v,i)=>[CX(v),CY(errs[i])]),seq<15000?clamp(blockTime/400):1]);
+    const CX=v=>right-180+180*v/(2*block.coefficient),CY=v=>100-45*v/maximum;
+    put(curvePath,[...values.flatMap((v,i)=>[CX(v),CY(errs[i])]),0]);
     nodes[curvePath].e.setAttribute('pathLength','1');nodes[curvePath].e.style.strokeDasharray='1 1';nodes[curvePath].e.style.strokeDashoffset=String(1-clamp((blockTime-400)/1400));
-    put(curveMarker,[CX(c),CY(error),1]);put(optimumMarker,[CX(block.coefficient),CY(chapterError(m,block.term,block.coefficient)),passed?1:0]);
-    text(optimumLabel,tr('x12c_best',{c:soloNumber(block.coefficient)}),right-185,104,passed?1:0);
+    put(curveMarker,[CX(c),CY(error),0]);put(optimumMarker,[CX(block.coefficient),CY(chapterError(m,block.term,block.coefficient)),0]);
+    text(optimumLabel,tr('x12c_best',{c:soloNumber(block.coefficient)}),right-185,128,passed?1:0);
    }
 
   }
   if(list){
-   const ordered=m.blocks.slice().sort((a,b)=>a.term-b.term),ranked=ordered.slice().sort((a,b)=>errors.get(a.term)-errors.get(b.term));
-   slots.forEach((slot,j)=>{const b=ordered[j],rank=ranked.indexOf(b),sort=state==='percent'?0:ease((seq-15000)/1000),yy=(state==='percent'?155:62)+mix(j,rank,sort)*48;
-    const visible=state==='percent'?1:clamp((seq-j*2500-1800)/700),err=errors.get(b.term),value=b.share;
+   const ordered=m.blocks.slice().sort((a,b)=>a.term-b.term),ranked=ordered.slice().sort((a,b)=>b.share-a.share),ordering=ranking(ordered,Math.floor(seq/2500),seq%2500);
+   slots.forEach((slot,j)=>{const b=ordered[j],rank=ranked.indexOf(b),yy=(state==='percent'?155:62)+(state==='percent'?j:ordering.position(b))*48;
+    const visible=state==='percent'?1:clamp((seq-j*2500-1800)/200),value=b.share;
     // New values travel from the prediction plot into their catalogue slot.
-    const flight=state==='percent'?1:ease((seq-j*2500-1800)/700),xx=mix(left+30,12,clamp(flight/.6)),flightY=mix(110,yy,clamp((flight-.6)/.4));
-    put(slot.bar,[xx,flightY+8,204*clamp(value),12,visible]);const labels=state==='every'&&seq>15000&&seq<16000?0:visible;
+    const flight=state==='percent'?1:ease((seq-j*2500-1800)/200),xx=mix(left+30,12,clamp(flight/.6)),flightY=mix(110,yy,clamp((flight-.6)/.4));
+    put(slot.bar,[xx,flightY+8,204*clamp(value),12,visible]);const labels=state==='every'&&ordering.sorting?0:visible;
     text(slot.text,terms[b.term],xx,flightY,labels);text(slot.value,pct(value),xx+140,flightY,labels);
     nodes[slot.text].e.dataset.shareRow=String(j);nodes[slot.value].e.dataset.shareRow=String(j);
     nodes[slot.bar].e.dataset.term=String(b.term);nodes[slot.bar].e.dataset.value=String(value);nodes[slot.bar].e.dataset.rank=String(rank);nodes[slot.bar].e.classList.toggle('winner',b.term===m.winner&&(state==='percent'||seq>=16000));
@@ -797,33 +798,32 @@ function initChapterOne(){
    if(!m.normalized)text(errorLabel,tr('x10_fallback'),left,350);
   }
   if(state==='noise-estimate'){
-   const idx=Math.min(4,Math.max(0,Math.floor((seq-700)/900))),example=examples[idx],{start,ts,value,center}=example;
-   const progress=clamp((seq-700-idx*900)/550),show=seq>=700&&seq<5200?1:0;
-   put(windowBox,[X(ts[0]),top,X(ts.at(-1))-X(ts[0]),bottom-top,show*.25]);
-   const fine=Array.from({length:61},(_,j)=>mix(ts[0],ts.at(-1),j/60));put(localPath,[...fine.flatMap(v=>[X(v),Y(value(v))]),show]);
-   nodes[localPath].e.setAttribute('pathLength','1');nodes[localPath].e.style.strokeDasharray='1 1';nodes[localPath].e.style.strokeDashoffset='0';put(ring,[X(t[center]),Y(x[center]),show*(progress>.55?1:0)]);put(sticks[center],[X(t[center]),Y(x[center]),X(t[center]),Y(value(t[center])),show*(progress>.55?1:0)]);
-   put(deviationBox,[590,42,195,180,seq>=700&&seq<8700?1:0]);
-   const fast=seq>=6200,currentIndex=fast?Math.min(n-1,Math.floor(clamp((seq-6200)/2500)*n)):examples[idx].center;
-   const currentDeviation=fast?local(currentIndex).deviation:example.deviation;
-   const cycle=fast?((seq-6200)/2500*n)%1:clamp((seq-700-idx*900)/900),drop=ease((cycle-.55)/.4);
-   const dropping=seq>=700&&seq<8700;
-   text(deviationLabels[0],fmt(currentDeviation),625,112,dropping?1-drop:0);text(noiseLabel,tr('x12_deviations'),605,66,seq>=700&&seq<8700?1:0);
-   const sweep=clamp((seq-6200)/2500),pointCount=Math.floor(sweep*n);
-   const band=seq<6200?0:1;
-   put(bandTop,[...t.flatMap((v,i)=>[X(v),Y(i<pointCount?smooth[i]+Math.sqrt(variance[i]):smooth[i])]),...t.slice().reverse().flatMap((v,j)=>{const i=n-1-j;return [X(v),Y(i<pointCount?smooth[i]-Math.sqrt(variance[i]):smooth[i])];}),band]);
-   text(readout,tr('x12c_points',{k:pointCount,n}),605,244,seq>=6200?1:0);
-   if(seq>=6200&&seq<8700){const center=Math.min(n-1,pointCount),a=Math.min(Math.max(center-4,0),n-9);put(windowBox,[X(t[a]),top,X(t[a+8])-X(t[a]),bottom-top,.25]);}
-   const sumProgress=seq<6200?Math.min(5,Math.max(0,Math.floor((seq-700)/900)))/floorContributions.length:mix(5/floorContributions.length,1,clamp((seq-6200)/2500)),k=sumProgress*floorContributions.length,index=Math.min(floorContributions.length-1,Math.floor(k)),fraction=k-index;
-   const total=sumProgress===1?m.floor:floorPrefix[index]+fraction*floorContributions[index];
-   const barWidth=772-64;
-   put(deviationDot,[mix(610,64+barWidth*total,drop),mix(108,426,drop),dropping?1:0]);
-   put(stack[0].bar,[64,415,barWidth*total,22,seq>=700?1:0]);
-   nodes[stack[0].bar].e.dataset.value=String(total);
-   text(sumLabels[0],tr('x12c_sum_1'),64,378,seq>=700?1:0);text(sumLabels[1],tr('x12c_sum_2'),64,400,seq>=700?1:0);
-   text(sumLabels[2],tr('x12c_floor',{floor:pct(total)}),64,466,seq>=700?1:0);
-   svg.dataset.pointCount=String(pointCount);svg.dataset.noiseSum=String(total);
-
-   data.forEach((id,i)=>nodes[id].e.setAttribute('r',i>=start&&i<start+9&&show?4:2.5));
+   const aEnd=7500,bStart=aEnd,cStart=10000;
+   const continuous=seq<5000?seq/1000:5+clamp((seq-5000)/2500)*(n-5),count=Math.min(n,Math.floor(continuous)),i=Math.min(n-1,count),cycle=continuous-count,drop=ease((cycle-.55)/.4),example=local(i);
+   const total=squarePrefix[count],square=deviations[i]**2,all=squarePrefix[n],stackHeight=110,stackBottom=340;
+   const phaseA=seq<aEnd,phaseB=seq>=bStart,phaseC=seq>=cStart;
+   const draw=phaseA?1:0,dd=deviations[i];
+   put(deviationBox,[590,42,195,145,draw]);
+   text(noiseLabel,tr('x12_deviations'),605,66,draw);
+   text(deviationLabels[0],cycle<.35?'d = '+fmt(dd):'d² = '+fmt(square),605,112,draw*(1-drop));
+   const fine=Array.from({length:61},(_,j)=>mix(example.ts[0],example.ts.at(-1),j/60));
+   put(localPath,[...fine.flatMap(v=>[X(v),Y(example.value(v))]),draw]);
+   put(windowBox,[X(example.ts[0]),top,X(example.ts.at(-1))-X(example.ts[0]),bottom-top,draw*.25]);
+   put(ring,[X(t[i]),Y(x[i]),draw]);put(sticks[i],[X(t[i]),Y(x[i]),X(t[i]),Y(example.value(t[i])),draw]);
+   squareBars.forEach((id,j)=>{const h=stackHeight*(squarePrefix[j+1]-squarePrefix[j])/all;put(id,[590,stackBottom-stackHeight*squarePrefix[j+1]/all,30,h,j<count?1:0]);nodes[id].e.dataset.value=String(deviations[j]**2);});
+   put(deviationDot,[mix(620,590,drop),mix(125,stackBottom-stackHeight*(total+square)/all,drop),mix(10,30,drop),mix(10,stackHeight*square/all,drop),draw&&cycle>=.35?1:0]);
+   text(sumLabels[0],tr('x15_sum_title'),590,208);text(sumLabels[1],tr('x15_sum_subtitle'),590,226);
+   text(arithmeticLabels[0],'Σ d² = '+fmt(total),635,270);text(arithmeticLabels[1],tr('x15_points',{k:count,n}),635,292);
+   text(arithmeticLabels[2],tr('x15_mean',{sum:fmt(all),n,mean:fmt(all/n)}),64,378,phaseB?1:0);
+   text(arithmeticLabels[3],tr('x15_root',{mean:fmt(all/n),root:fmt(Math.sqrt(all/n))}),64,400,phaseB?1:0);
+   text(arithmeticLabels[4],tr('x15_corrected')+' '+tr('x15_noise',{noise:pct(relative)}),64,422,phaseB?1:0);
+   const band=phaseB?ease((seq-bStart)/900):0;
+   put(bandTop,[...t.flatMap((v,j)=>[X(v),Y(smooth[j]+Math.sqrt(variance[j]))]),...t.slice().reverse().flatMap((v,k)=>{const j=n-1-k;return [X(v),Y(smooth[j]-Math.sqrt(variance[j]))];}),band]);
+   text(arithmeticLabels[5],tr('x15_endpoints')+' '+tr('x12c_floor',{floor:pct(m.floor)}),64,444,phaseC?1:0);
+   const floor=m.floor*ease((seq-cStart)/1500);
+   put(stack[0].bar,[64,460,708*floor,12,phaseC?1:0]);
+   svg.dataset.pointCount=String(count);svg.dataset.squaredSum=String(total);svg.dataset.noiseSum=String(floor);svg.dataset.noisePhase=phaseC?'C':phaseB?'B':'A';
+   data.forEach(id=>nodes[id].e.setAttribute('r',2.5));
   }else if(state!=='secants')data.forEach(id=>nodes[id].e.setAttribute('r',2.5));
   nodes[predictionPath].e.classList.toggle('story-clean-slope',split);
   svg.dataset.windowLength=String(windowLength);svg.dataset.state=state;svg.dataset.coefficient=String(c);svg.dataset.error=String(error);svg.dataset.term=String(block.term);svg.dataset.complete=String(final);
@@ -837,33 +837,32 @@ function initChapterOne(){
    if(geometry==='rect')for(const [j,key] of ['x','y','width','height'].entries())e.setAttribute(key,a[j]);
   });last=s;
  }
- function seek(ms){if(current){clock.cancel(frame);elapsed=Math.max(0,Math.min(durations[current],ms));render(scene(current,elapsed));}}
+ function seek(ms){if(current){clock.cancel(frame);elapsed=Math.max(0,Math.min(durations[current],ms%(durations[current]+3000)));render(scene(current,elapsed));}}
  function finish(){if(current){clock.cancel(frame);elapsed=durations[current];render(scene(current,elapsed));}}
- function enter(state){
+ function enter(state,restart=false){
   reverseZoom=current==='secants'&&state==='noise-visible';
-  finish();host.hidden=![...states,...twoStates].includes(state);$('c1-play').hidden=true;
+  finish();host.hidden=![...states,...twoStates].includes(state);
   if(host.hidden){current=null;return;}
-  const from=last.map(a=>a.slice());current=state;manual=null;elapsed=0;
+  const from=last.map(a=>a.slice());current=state;elapsed=0;
   svg.setAttribute('aria-label',document.querySelector('[data-stage="'+state+'"] h2')?.textContent||state);
   const start=clock.now();
   function tick(now){
    elapsed=Math.min(durations[state],now-start);
-   const target=reverseZoom&&elapsed<2200?scene('secants',900+2200-elapsed):scene(state,elapsed),blend=reverseZoom||state==='secants'?1:ease(elapsed/900);
+   const target=reverseZoom&&elapsed<2200?scene('secants',900+2200-elapsed):scene(state,elapsed),blend=restart||reverseZoom||state==='secants'?1:ease(elapsed/900);
    render(blend===1?target:target.map((a,i)=>a.map((v,j)=>nodes[i].e.classList.contains('story-slope')&&j<2?v:mix(from[i][j],v,blend))));
    if(elapsed<durations[state])frame=clock.request(tick);
-   else if(!document.hidden&&!new URL(location.href).searchParams.has('fitcheck')&&['windows','noise-estimate','c2-joint'].includes(state)){
+   else if(!document.hidden&&!new URL(location.href).searchParams.has('fitcheck')){
     // Leave the complete comparison readable before replaying the sequence.
     frame=clock.request(function hold(now){
-     if(now-start<durations[state]+2500)frame=clock.request(hold);
-     else if(!document.hidden)enter(state);
+     if(now-start<durations[state]+3000)frame=clock.request(hold);
+     else if(!document.hidden)enter(state,true);
     });
    }
   }
   if(window.matchMedia('(prefers-reduced-motion: reduce)').matches)finish();else {tick(start);}
  }
- slider.addEventListener('input',()=>{if(current!=='fit')return;clock.cancel(frame);manual=+slider.value;elapsed=durations.fit;render(scene('fit',elapsed));});
  window.WispChapterOne={model:m,error:chapterError,parts:chapterParts};
  window.WispChapterTwo={model:two,states:twoStates,slopeRows,predict};
- window.WispChapterStory={states,durations,enter,finish,seek,local,examples,variance,relative,actual,longRows,lengthClouds,longerLengths,remainingBlocks,sortAt,noisePause,jointPause,rates,trueRates,smooth,rateBound,clock,svg,current:()=>current,elapsed:()=>elapsed};
+ window.WispChapterStory={states,durations,enter,finish,seek,local,examples,variance,relative,actual,longRows,lengthClouds,longerLengths,remainingBlocks,sortAt,noisePause,jointPause,squarePrefix,deviations,lengthRms,rates,trueRates,smooth,rateBound,clock,svg,current:()=>current,elapsed:()=>elapsed};
 }
 initChapterOne();
