@@ -61,9 +61,10 @@ if(fixture.configuration==='delivered'){
  const story=WispChapterStory,slides=WispSlides,m=WispChapterOne.model,t=fixture.data.live.teaching.t,x=fixture.data.live.teaching.observed,truth=fixture.data.live.teaching.truth;
  const close=(a,b)=>assert(Math.abs(a-b)<=1e-9*Math.max(1,Math.abs(b)),`${a} != ${b}`);
  const ids=['p-hook','p-challenge','p-c1-data','p-c1-noise-visible','p-c1-slope','p-c1-secants','p-c1-changes','p-c1-error-empty','p-c1-fit','p-c1-every','p-c1-noise-why','p-c1-noise','p-c1-percent','p-c1-solution'];
- assert.deepEqual(slides.pages.map(p=>p.id),ids);
+ const twoIds=['standing','residual','joint','every','error','solution'].map(s=>'p-c2-'+s);
+ assert.deepEqual(slides.pages.map(p=>p.id),ids.concat(twoIds));
  slides.nav.go(2);assert.equal(doc.getElementById('masthead-title').textContent,tr('x12c_chapter'));assert.equal(doc.getElementById('chapter-progress').getAttribute('aria-valuemax'),'12');
- assert.deepEqual(slides.pages.slice(2).map(p=>p.dataset.stage),story.states);
+ assert.deepEqual(slides.pages.slice(2,14).map(p=>p.dataset.stage),story.states);
  assert.equal(doc.querySelectorAll('#c1-stage svg').length,1);
  assert(doc.getElementById('p-results').hidden);assert(doc.getElementById('p-solution').hidden);
  for(const id of ['p-results','p-headline','p-solution','p-glossary']){slides.nav.go(0);slides.nav.link('#'+id);assert.equal(slides.nav.index,0);}
@@ -72,7 +73,7 @@ if(fixture.configuration==='delivered'){
  assert.strictEqual(story.clock,global.WispStoryClock);
  const svg=story.svg,original=svg;
  for(let i=1;i<ids.length;i++){event(i%3===0?'PageDown':i%3===1?'ArrowDown':' ');assert.equal(slides.nav.index,i);advance(18000,1000);if(i>=2){assert.equal(svg.dataset.state,story.states[i-2]);assert.equal(svg.dataset.complete,'true');assert.strictEqual(doc.querySelector('#c1-stage svg'),original);}}
- event('PageDown');assert.equal(slides.nav.index,ids.length-1);event('ArrowUp');assert.equal(slides.nav.index,ids.length-2);
+ event('PageDown');assert.equal(slides.nav.index,ids.length);event('ArrowUp');assert.equal(slides.nav.index,ids.length-1);
  assert.equal(doc.querySelectorAll('.page-dots a').filter(a=>!a.hidden).length,12);
  assert.equal(doc.querySelectorAll('.c1-page input').length,1);
  const saved=[];
@@ -157,7 +158,42 @@ if(fixture.configuration==='delivered'){
  story.enter('every');advance(2000);assert.equal(+doc.querySelector('.story-optimum-dot').style.opacity,1);advance(14000);assert.equal(svg.dataset.complete,'false');advance(900);assert.equal(svg.dataset.complete,'true');
  story.enter('slope');advance(1200);const before=doc.querySelector('.story-marker').getAttribute('cx');advance(1000);assert.notEqual(doc.querySelector('.story-marker').getAttribute('cx'),before);
  slides.nav.go(1);advance();for(const fn of events.wheel||[])fn({type:'wheel',target:doc.body,deltaY:500,preventDefault(){}});advance();assert.equal(slides.nav.index,2);
- for(const p of slides.pages.slice(2)){assert(p.querySelectorAll('p').every(n=>n.dataset.claim==='review'));assert.equal(p.querySelector('.eyebrow').textContent,tr('x10_eye',{i:p.querySelector('.eyebrow').dataset.c1Eye,n:12}));}
+ for(const p of slides.pages.slice(2,14)){assert(p.querySelectorAll('p').every(n=>n.dataset.claim==='review'));assert.equal(p.querySelector('.eyebrow').textContent,tr('x10_eye',{i:p.querySelector('.eyebrow').dataset.c1Eye,n:12}));}
+ // Chapter two: the same physical SVG continues into six independent pages.
+ const two=WispChapterTwo,wm=two.model,constant=m.blocks.find(b=>b.term===0),joint=wm.blocks.find(b=>b.term===1),win=wm.blocks.find(b=>b.term===wm.winner);
+ slides.nav.go(13);story.finish();const end=svg.children.map(e=>({...e.attrs,opacity:e.style.opacity}));
+ slides.nav.go(14);assert.equal(doc.getElementById('masthead-title').textContent,tr('x13_chapter'));assert.equal(doc.getElementById('chapter-progress').getAttribute('aria-valuemax'),'6');
+ // The first frame has exactly the preceding scene's geometry.
+ svg.children.forEach((e,j)=>{for(const k of ['d','x','y','cx','cy','x1','y1','x2','y2','width','height'])if(end[j][k]!==undefined)assert.equal(e.attrs[k],end[j][k]);});
+ const twoSaved=[];
+ two.states.forEach((state,i)=>{
+  slides.nav.go(14+i);story.finish();assert.strictEqual(story.svg,original);assert.equal(svg.dataset.state,state);assert.equal(svg.dataset.complete,'true');
+  assert.equal(doc.querySelectorAll('.page-dots a').filter(a=>!a.hidden).length,6);
+  assert.equal(slides.pages[14+i].querySelector('.eyebrow').textContent,tr('x10_eye',{i:i+1,n:6}));
+  const coords=doc.querySelector('#c1-stage .story-prediction').getAttribute('d').match(/[-+]?(?:[0-9]*[.])?[0-9]+(?:e[-+]?[0-9]+)?/gi).map(Number);
+  assert(coords.every(Number.isFinite));
+  const shown=doc.querySelectorAll('#c1-stage .measurement-dot').filter(e=>+e.style.opacity===1);assert.equal(shown.length,m.rows.length);
+  if(i===1){
+   const sticks=doc.querySelectorAll('#c1-stage .story-residual').filter(e=>+e.style.opacity===1);assert.equal(sticks.length,two.slopeRows.length);
+   sticks.forEach((e,j)=>close(+e.dataset.value,two.slopeRows[j].rate-constant.coefficient));
+   const band=doc.querySelector('#c1-stage .story-band');assert.equal(+band.style.opacity,1);
+   const b=band.getAttribute('d').match(/[-+]?(?:[0-9]*[.])?[0-9]+(?:e[-+]?[0-9]+)?/gi).map(Number);
+   const r=two.slopeRows[0],w=m.rows[0].w;close(r.sd,Math.sqrt(story.variance[w[0]]+story.variance[w[1]])/(t[w[1]]-t[w[0]]));
+   const scale=(+shown[1].getAttribute('cy')- +shown[0].getAttribute('cy'))/(two.slopeRows[1].rate-r.rate);close(b[1],+shown[0].getAttribute('cy')-scale*(r.rate-constant.coefficient-r.sd));
+  }
+  if(i===2){JSON.parse(svg.dataset.coefficients).forEach((c,j)=>close(c,joint.coefficients[j]));assert.notEqual(joint.coefficients[0],constant.coefficient);close(+svg.dataset.error,joint.remaining);}
+  if(i===3){const bars=doc.querySelectorAll('#c1-stage .c2-slot').filter(e=>+e.style.opacity===1);assert.equal(bars.length,5);bars.forEach((e,j)=>{assert.equal(+e.dataset.term,wm.blocks[j].term);close(+e.dataset.value,wm.blocks[j].share);assert.equal(e.classList.contains('winner'),wm.blocks[j].term===wm.winner);});}
+  if(i>=4){close(+svg.dataset.error,win.remaining);close(+doc.querySelector('.story-part-0').getAttribute('width'),708*m.floor);}
+  if(i===5){const eq=doc.querySelector('.story-equation').textContent;for(const c of wm.record.equations[0].coefficients)assert(eq.includes(secondNumber(Math.abs(c))));assert(!eq.includes('e-'));}
+  twoSaved[i]=svg.children.map(e=>({...e.attrs,opacity:e.style.opacity}));
+ });
+ // Interrupted animations, catalogue order and both moving coefficients.
+ story.enter('c2-joint');story.seek(2400);const midway=JSON.parse(svg.dataset.coefficients);midway.forEach((c,j)=>assert(c!==joint.coefficients[j]));assert(midway[0]!==constant.coefficient);
+ story.enter('c2-every');wm.blocks.forEach((b,j)=>{story.seek(2900+j*2500);assert.equal(+svg.dataset.term,b.term);});
+ for(let i=5;i>=0;i--){story.enter(two.states[i]);story.finish();svg.children.forEach((e,j)=>assert.deepEqual({...e.attrs,opacity:e.style.opacity},twoSaved[i][j]));}
+ global.matchMedia=()=>({matches:true,addEventListener(){}});two.states.forEach((state,i)=>{story.enter(state);assert.equal(svg.dataset.complete,'true');svg.children.forEach((e,j)=>assert.deepEqual({...e.attrs,opacity:e.style.opacity},twoSaved[i][j]));});
+ global.matchMedia=()=>({matches:false,addEventListener(){}});
+ console.log('PASS X13: six bilingual pages, persistent SVG, joint coefficients, candidate order/shares, slope noise band, recorded equation, replay and reduced motion');
  if(fixture.language==='en')fs.writeFileSync(require('path').join(require('path').dirname(process.argv[3]),'x12c_story_numbers.json'),JSON.stringify({durations:story.durations,n:t.length,neighbourPairs:8,longDots:story.longRows.length,coefficient:optimum,rangeEnd:2*optimum,winnerError:1-m.blocks.find(b=>b.term===m.winner).gain,floor:m.floor,designWindows:m.D.windows.length},null,2));
  console.log('PASS X12: 12 bilingual states, real numeric geometry, keyboard-only walk, vertical wheel/keys, persistent SVG, sequence interruption/replay, reverse and reduced motion');process.exit(0);
 }

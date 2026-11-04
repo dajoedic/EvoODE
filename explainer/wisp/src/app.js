@@ -387,11 +387,25 @@ function chapterParts(model,block){const floor=model.normalized?model.floor:0;re
 function chapterWindows(length){const t=measuredTime,x=teaching.observed,out=[];for(let a=0;a+length<t.length;a+=length){const b=a+length;out.push({time:(t[a]+t[b])/2,rate:(x[b]-x[a])/(t[b]-t[a]),clean:(teaching.truth[b]-teaching.truth[a])/(t[b]-t[a])});}return out;}
 // One persistent SVG. Scene arrays have a fixed topology so axes, points, lines and
 // labels interpolate through every transition, including interrupted/reverse ones.
+function secondModel(model,t,x,config,feature){
+ const live=W.path(t,x,config),step=live.steps[1],record=feature.path[1];
+ if(!step||JSON.stringify(step.support)!==JSON.stringify(record.active_idxs[0].map(j=>j-1)))throw Error('Teaching step-2 path differs from recorded supports');
+ const first=live.steps[0],C=soloCompress(model.D.A,model.D.b);
+ const blocks=step.gains.slice().sort((a,b)=>a.term-b.term).map(g=>{
+  const support=[...first.support,g.term].sort((a,b)=>a-b),fit=W.leastSquares(C.A.map(row=>support.map(j=>row[j])),C.b);
+  return {...g,support,coefficients:fit.coefficients.map((v,i)=>v/(C.norms[support[i]]||1)),share:(1-first.remaining+g.gain)/model.explainable,remaining:fit.sse/soloDot(model.D.b,model.D.b)};
+ });
+ return {blocks,winner:step.addition,record,step,constant:model.blocks.find(b=>b.term===first.addition)};
+}
+function secondNumber(value){return Number(value).toLocaleString(language,{maximumSignificantDigits:3,maximumFractionDigits:12,useGrouping:false}).replaceAll('-','−');}
+function secondEquation(support,coefficients){return 'du/dt = '+coefficients.map((c,i)=>(i?(c<0?' − ':' + '):c<0?'−':'')+secondNumber(Math.abs(c))+(support[i]?'·'+terms[support[i]]:'')).join('');}
 function initChapterOne(){
  if(!$('p-c1-data'))return;
  const m=window.WispSolo.model,t=measuredTime,x=teaching.observed,clean=teaching.truth,n=t.length;
  const states=['data','noise-visible','slope','secants','windows','error-empty','fit','every','noise-why','noise-estimate','percent','solution'];
  const constant=m.blocks.find(b=>b.term===0),winner=m.blocks.find(b=>b.term===m.winner),norm=soloDot(m.D.b,m.D.b);
+ const two=secondModel(m,t,x,LIVE,LIVE.featured[0]),twoStates=['c2-standing','c2-residual','c2-joint','c2-every','c2-error','c2-solution'];
+ const twoWinner=two.blocks.find(b=>b.term===two.winner),joint=two.blocks.find(b=>b.term===1);
  const pct=v=>(100*v).toLocaleString(language,{minimumFractionDigits:1,maximumFractionDigits:1})+' %';
  const variance=W.noiseVariance(t,x),relative=variance.reduce((s,v,i)=>s+Math.sqrt(v)/Math.abs(x[i]),0)/n;
  const noise=x.map((v,i)=>v-clean[i]),actual=m.D.windows.reduce((s,[a,b])=>s+(noise[b]-noise[a])**2,0)/norm;
@@ -412,6 +426,12 @@ function initChapterOne(){
  $('c1-story-text-9').textContent+=' '+tr(m.normalized?'x10_r2':'x10_fallback');
  $('c1-story-text-10').textContent+=' '+tr('x10_next');
  document.querySelectorAll('[data-c1-eye]').forEach(e=>e.textContent=tr('x10_eye',{i:e.dataset.c1Eye,n:states.length}));
+ const twoArgs={before:pct(constant.share),after:pct(twoWinner.share),maximum:Math.max(...x.map(v=>W.basis(v)[two.winner])).toLocaleString(language,{maximumSignificantDigits:2}),term:terms[two.winner],c:soloNumber(constant.coefficient)};
+ twoStates.forEach((state,i)=>{
+  $('c2-text-'+i).textContent=tr('x13_text_'+i,twoArgs);
+ });
+ document.querySelectorAll('[data-c2-eye]').forEach(e=>e.textContent=tr('x10_eye',{i:e.dataset.c2Eye,n:twoStates.length}));
+ $('c2-closing').textContent=tr('x13_closing');
  const host=$('c1-stage'),svg=svgNode('svg',{viewBox:'0 0 800 480',role:'img',class:'story-svg'});host.append(svg);const caption=el('figcaption',tr('x10_caption'),'story-caption');caption.dataset.claim='review';host.append(caption);
  const clock=window.WispStoryClock||{now:()=>performance.now(),request:fn=>requestAnimationFrame(fn),cancel:id=>cancelAnimationFrame(id)};
  const clamp=v=>Math.max(0,Math.min(1,v)),ease=v=>{v=clamp(v);return v*v*(3-2*v);},mix=(a,b,s)=>a+(b-a)*s;
@@ -445,6 +465,7 @@ function initChapterOne(){
  const errorBar=node('rect',{class:'story-error'},'rect',[64,426,0,14,0]);
  const curvePath=path('story-prediction',81),curveMarker=dot('story-marker',5),curveLabel=label();
  const slots=m.blocks.map(()=>({bar:node('rect',{class:'story-slot'},'rect',[64,70,0,15,0]),text:label(),value:label()}));
+ const twoSlots=two.blocks.map(()=>({bar:node('rect',{class:'c2-slot'},'rect',[64,70,0,15,0]),text:label(),value:label()}));
  const deviationBox=node('rect',{class:'story-deviations'},'rect',[590,42,195,180,0]);
  const deviationLabels=examples.map(()=>label('story-deviation'));
  const smooth=t.map((v,i)=>local(i).value(v));
@@ -464,8 +485,77 @@ function initChapterOne(){
  const errors=new Map(m.blocks.map(b=>[b.term,chapterError(m,b.term,b.coefficient)]));
  const curveValues=Array.from({length:81},(_,i)=>+slider.min+(+slider.max-slider.min)*i/80),curveErrors=curveValues.map(v=>chapterError(m,0,v)),curveMaximum=Math.max(...curveErrors);
  const durations={data:900,'noise-visible':2300,slope:3800,secants:16100,windows:9100,'error-empty':2900,fit:4900,every:16900,'noise-why':900,'noise-estimate':11600,percent:900,solution:900};
+ Object.assign(durations,{'c2-standing':900,'c2-residual':3900,'c2-joint':4900,'c2-every':14400,'c2-error':3900,'c2-solution':900});
+ // Chapter two shares the persistent topology, renderer, axes, windows and clock.
+ // Divide weak changes and design rows by each displayed window's duration to
+ // show slopes; fitting still uses ALL original windows in unscaled weak units.
+ const slopeRows=m.rows.map(({w,i})=>({i,time:(t[w[0]]+t[w[1]])/2,dt:t[w[1]]-t[w[0]],rate:m.D.b[i]/(t[w[1]]-t[w[0]]),sd:Math.sqrt(variance[w[0]]+variance[w[1]])/(t[w[1]]-t[w[0]])}));
+ const predict=(block,row)=>block.support.reduce((sum,j,k)=>sum+block.coefficients[k]*m.D.A[row.i][j]/row.dt,0);
+ const slopeExtent=Math.max(...slopeRows.flatMap(r=>[Math.abs(r.rate),...two.blocks.map(b=>Math.abs(predict(b,r))),Math.abs(constant.coefficient)+r.sd]))*1.15;
+ function secondScene(state,ms){
+  const s=blank.map(a=>a.slice()),put=(id,a)=>{s[id]=a;},text=(id,value,xx,yy,opacity=1)=>{nodes[id].e.textContent=value;put(id,[xx,yy,opacity]);};
+  const seq=Math.max(0,ms-900),list=state==='c2-every',left=list?284:64,right=772,top=140,bottom=392;
+  nodes[predictionPath].e.classList.remove('story-clean-slope');
+  nodes[readout].e.classList.remove('story-construction-readout');nodes[readout].e.classList.remove('story-long-label');
+  nodes[axisLabels[0]].e.classList.remove('story-stack-legend');
+  twoSlots.forEach((slot,j)=>{nodes[slot.bar].e.classList.remove('winner');nodes[slot.bar].e.dataset.term=String(two.blocks[j].term);nodes[slot.bar].e.dataset.value=String(two.blocks[j].share);});
+  const X=v=>left+(v-t[0])/(t.at(-1)-t[0])*(right-left),Y=v=>bottom-(v+slopeExtent)/(2*slopeExtent)*(bottom-top);
+  const at=seq<two.blocks.length*2500?Math.min(two.blocks.length-1,Math.floor(seq/2500)):two.blocks.findIndex(b=>b.term===two.winner);
+  const block=state==='c2-joint'?joint:list?two.blocks[at]:twoWinner;
+  let blend=['c2-standing','c2-residual'].includes(state)?0:state==='c2-joint'?ease(seq/3000):1;
+  let coefficients=block.support.map((j,k)=>mix(j===0?constant.coefficient:0,block.coefficients[k],blend));
+  // Candidate-to-candidate interpolation keeps every prediction vertex in place.
+  let previous=null,flight=1;
+  if(list){previous=seq>=12500?two.blocks.at(-1):at>0?two.blocks[at-1]:null;flight=ease((seq>=12500?seq-12500:seq%2500)/700);}
+  const prediction=slopeRows.map(r=>list?mix(previous?predict(previous,r):constant.coefficient,predict(block,r),flight):predict({...block,coefficients},r));
+  const residualOn=state==='c2-residual'?ease(seq/1200):0;
+  const bandOn=state==='c2-residual'?ease((seq-1200)/1000):0;
+  caption.style.visibility='visible';caption.textContent=tr('x13_caption');
+  nodes[predictionPath].e.setAttribute('clip-path','url(#story-top-clip)');
+  for(const [key,v] of Object.entries({x:left,y:top,width:right-left,height:bottom-top}))clipRect.setAttribute(key,v);
+  for(let j=0;j<5;j++){
+   const v=mix(-slopeExtent,slopeExtent,j/4),tt=mix(t[0],t.at(-1),j/4);
+   put(axisLines[j],[left,Y(v),right,Y(v),1]);text(axisLabels[j],fmt(v),left-10,Y(v)+4,j===0?0:1);nodes[axisLabels[j]].e.setAttribute('text-anchor','end');
+   text(axisLabels[j+5],fmt(tt),X(tt),416);
+  }
+  put(axisLines[5],[left,bottom,right,bottom,1]);text(axisLabels[10],tr('x12_axis_slope'),left,120);text(axisLabels[11],tr('j157'),right-90,440);
+  data.forEach((id,j)=>{const r=slopeRows[j];put(id,[r?X(r.time):left,r?Y(r.rate):bottom,r?1:0]);nodes[id].e.setAttribute('r',2.5);});
+  sticks.forEach((id,j)=>{const r=slopeRows[j];put(id,[r?X(r.time):left,r?Y(prediction[j]):bottom,r?X(r.time):left,r?Y(r.rate):bottom,r?residualOn:0]);if(r)nodes[id].e.dataset.value=String(r.rate-prediction[j]);});
+  const expanded=Array.from({length:n},(_,j)=>Math.min(slopeRows.length-1,Math.floor(j*slopeRows.length/n)));
+  put(predictionPath,[...expanded.flatMap(i=>[X(slopeRows[i].time),Y(prediction[i])]),1]);
+  put(bandTop,[...expanded.flatMap(i=>[X(slopeRows[i].time),Y(constant.coefficient+slopeRows[i].sd)]),...expanded.slice().reverse().flatMap(i=>[X(slopeRows[i].time),Y(constant.coefficient-slopeRows[i].sd)]),bandOn]);
+  let gain=constant.gain;
+  if(state==='c2-joint')gain=1-m.D.b.reduce((sum,b,i)=>sum+(b-block.support.reduce((v,j,k)=>v+coefficients[k]*m.D.A[i][j],0))**2,0)/norm;
+  if(list)gain=mix(previous?1-previous.remaining:constant.gain,1-block.remaining,flight);
+  if(state==='c2-error')gain=mix(constant.gain,1-twoWinner.remaining,ease(seq/2200));
+  if(state==='c2-solution')gain=1-twoWinner.remaining;
+  // Three segments retain chapter one's labels and its frozen noise fraction.
+  let xx=left;
+  chapterParts(m,{gain}).forEach((v,i)=>{put(stack[i].bar,[xx,20,(right-left)*v,16,1]);xx+=(right-left)*v;});
+  // One legend line with all three values, as in chapter one's percent step.
+  const parts=chapterParts(m,{gain});
+  text(stack[0].text,tr('x13_legend',{floor:pct(parts[0]),explained:pct(parts[1]),remaining:pct(parts[2])}),left,56,list?0:1);
+  [1,2].forEach(i=>text(stack[i].text,'',left,56,0));
+  text(readout,tr('x13_share',{p:pct(gain/m.explainable)}),left,80);
+  if(state==='c2-error')text(noiseLabel,tr('x13_before_after',{before:pct(constant.share),after:pct(twoWinner.share)}),left,120);
+  if(state==='c2-error')s[axisLabels[10]][2]=0;
+  if(state==='c2-joint'){
+   text(equation,secondEquation(block.support,coefficients),left,470);
+  }else if(state==='c2-solution')text(equation,secondEquation(two.record.active_idxs[0].map(j=>j-1),two.record.equations[0].coefficients),left,470);
+  else if(!list)text(equation,blend===0?soloEquation(constant):secondEquation(block.support,coefficients),left,470);
+  if(list)two.blocks.forEach((b,j)=>{
+   const yy=150+j*52,progress=ease((seq-j*2500-1000)/1000),slot=twoSlots[j];
+   put(slot.bar,[12,yy+10,204*clamp(b.share)*progress,12,1]);text(slot.text,terms[b.term],12,yy);text(slot.value,pct(b.share),135,yy,progress);
+   nodes[slot.bar].e.dataset.term=String(b.term);nodes[slot.bar].e.dataset.value=String(b.share);nodes[slot.bar].e.classList.toggle('winner',seq>=12500&&b.term===two.winner);
+   nodes[slot.text].e.dataset.shareRow=String(j);nodes[slot.value].e.dataset.shareRow=String(j);
+  });
+  svg.dataset.state=state;svg.dataset.term=String(block.term);svg.dataset.error=String(1-gain);svg.dataset.coefficients=JSON.stringify(coefficients);svg.dataset.complete=String(ms>=durations[state]);
+  return s;
+ }
  let current=null,frame=0,last=blank.map(a=>a.slice()),elapsed=0,manual=null,reverseZoom=false;
  function scene(state,ms){
+  if(twoStates.includes(state))return secondScene(state,ms);
+  caption.textContent=tr('x10_caption');
   nodes[axisLabels[0]].e.classList.remove('story-stack-legend');nodes[axisLabels[0]].e.setAttribute('text-anchor','end');
   nodes[readout].e.classList.remove('story-construction-readout');nodes[readout].e.classList.remove('story-long-label');
   triangle.forEach(id=>nodes[id].e.classList.toggle('story-long-triangle',state==='windows'));
@@ -704,16 +794,17 @@ function initChapterOne(){
  function finish(){if(current){clock.cancel(frame);elapsed=durations[current];render(scene(current,elapsed));}}
  function enter(state){
   reverseZoom=current==='secants'&&state==='slope';
-  finish();host.hidden=!states.includes(state);$('c1-play').hidden=true;
+  finish();host.hidden=![...states,...twoStates].includes(state);$('c1-play').hidden=true;
   if(host.hidden){current=null;return;}
   const from=last.map(a=>a.slice());current=state;manual=null;elapsed=0;
-  svg.setAttribute('aria-label',tr(state==='noise-why'?'x12c_noise_title':'x12_title_'+(states.indexOf(state)-(states.indexOf(state)>8?1:0))));
+  svg.setAttribute('aria-label',tr(twoStates.includes(state)?'x13_title_'+twoStates.indexOf(state):state==='noise-why'?'x12c_noise_title':'x12_title_'+(states.indexOf(state)-(states.indexOf(state)>8?1:0))));
   const start=clock.now();
   function tick(now){elapsed=Math.min(durations[state],now-start);const target=reverseZoom&&elapsed<2200?scene('secants',900+2200-elapsed):scene(state,elapsed),blend=reverseZoom||state==='secants'?1:ease(elapsed/900);render(blend===1?target:target.map((a,i)=>a.map((v,j)=>nodes[i].e.classList.contains('story-slope')&&j<2?v:mix(from[i][j],v,blend))));if(elapsed<durations[state])frame=clock.request(tick);}
   if(window.matchMedia('(prefers-reduced-motion: reduce)').matches)finish();else {tick(start);}
  }
  slider.addEventListener('input',()=>{if(current!=='fit')return;clock.cancel(frame);manual=+slider.value;elapsed=durations.fit;render(scene('fit',elapsed));});
  window.WispChapterOne={model:m,error:chapterError,parts:chapterParts};
+ window.WispChapterTwo={model:two,states:twoStates,slopeRows,predict};
  window.WispChapterStory={states,durations,enter,finish,seek,local,examples,variance,relative,actual,longRows,rates,trueRates,smooth,rateBound,clock,svg,current:()=>current,elapsed:()=>elapsed};
 }
 initChapterOne();

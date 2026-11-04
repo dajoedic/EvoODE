@@ -24,7 +24,7 @@ def test_headline_selected_rows_match_original_csv():
 def test_sections_and_reader_strings():
     soup=BeautifulSoup((BASE/'src/index.html').read_text(encoding='utf8'),'html.parser')
     pages=soup.select('main > .page')
-    assert len(pages)==31
+    assert len(pages)==37
     assert len({p['data-section'] for p in pages})==len(pages)
     assert [p['id'] for p in pages[:4]]==['p-hook','p-challenge','p-c1-data','p-c1-noise-visible']
     assert all(len(p.select(':scope > .page-content'))==1 for p in pages)

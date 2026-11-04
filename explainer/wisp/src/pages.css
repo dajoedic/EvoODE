@@ -239,6 +239,7 @@ dialog{max-width:min(1050px,90vw);max-height:80dvh;overflow:auto;overscroll-beha
 .story-window{fill:var(--accent)}
 .story-band{stroke:var(--muted);stroke-width:1!important}
 .story-slot,.story-error{fill:var(--muted)}.story-slot.winner{fill:var(--accent)}
+.c2-slot{fill:var(--muted)}.c2-slot.winner{fill:var(--accent)}
 .story-part-0{fill:var(--line)}.story-part-1{fill:var(--accent)}.story-part-2{fill:var(--wash)}
 #c1-play{display:block;font:14px system-ui;line-height:1.5}#c1-play input{display:block;width:100%;margin:14px 0}
 .snapped .page-dots{top:50%;bottom:auto;left:auto;right:14px;transform:translateY(-50%);flex-direction:column;gap:10px}

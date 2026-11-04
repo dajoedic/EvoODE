@@ -19,6 +19,18 @@ for(const block of model.blocks){
  close(block.share,block.gain/model.explainable);
 }
 close(model.floor,W.noiseFloor(D,[],W.noiseVariance(live.teaching.t,live.teaching.observed))/norm);
-const report={winner:model.winner,coefficient:model.blocks[0].coefficient,floor:model.floor,normalized:model.normalized,blocks:model.blocks,windows:model.rows.length};
+vm.runInContext(source.slice(source.indexOf('function secondModel('),source.indexOf('function secondNumber('))+'\nthis.second=secondModel;',context);
+const second=context.second(model,live.teaching.t,live.teaching.observed,live,live.featured[0]);
+assert.equal(second.blocks.length,5);
+for(const block of second.blocks){
+ const fit=W.leastSquares(D.A.map(row=>block.support.map(j=>row[j])),D.b);
+ block.coefficients.forEach((v,j)=>close(v,fit.coefficients[j]));
+ close(block.remaining,fit.sse/norm);close(block.gain,1-model.blocks.find(b=>b.term===0).gain-fit.sse/norm);
+ close(block.share,(1-fit.sse/norm)/model.explainable);
+}
+const changed=JSON.parse(JSON.stringify(live.featured[0]));changed.path[1].active_idxs[0]=[1,2];
+assert.throws(()=>context.second(model,live.teaching.t,live.teaching.observed,live,changed),/step-2/);
+const report={winner:model.winner,coefficient:model.blocks[0].coefficient,floor:model.floor,normalized:model.normalized,blocks:model.blocks,windows:model.rows.length,second};
 if(process.argv[3])fs.writeFileSync(process.argv[3],JSON.stringify(report,null,2)+'\n');
 console.log('PASS six single-block fits, full-design gains/coefficients, noise floor and recorded first support');
+console.log('PASS five joint refits, full-design gains/shares/coefficients and step-2 support guard');

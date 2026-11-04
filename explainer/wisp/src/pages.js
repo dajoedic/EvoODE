@@ -2,7 +2,7 @@
 (function(root){
  'use strict';
  // Delivered chapter configuration. Tests may override it before initialization.
- const visibleChapters=['intro','one'];
+ const visibleChapters=['intro','one','two'];
  function visiblePages(pages,configuration=visibleChapters){return pages.filter(p=>configuration.includes(p.dataset.chapter));}
  function chapterTarget(pages,index,direction){const chapters=[...new Set(pages.map(p=>p.dataset.chapter))],current=chapters.indexOf(pages[index].dataset.chapter),next=Math.max(0,Math.min(chapters.length-1,current+direction));return pages.findIndex(p=>p.dataset.chapter===chapters[next]);}
  const steps=['data','weak','frols','foba','stop','fit','bic','test'];
@@ -97,8 +97,8 @@
  function show(i,push,scroll=true){const page=pages[i];pages.forEach((p,j)=>p.classList.toggle('active',j===i));dotButtons.forEach((a,j)=>{if(j===i)a.setAttribute('aria-current','page');else a.removeAttribute('aria-current');});
   dotButtons.forEach((a,j)=>a.hidden=pages[j].dataset.chapter!==page.dataset.chapter);
   const chapterPages=pages.filter(p=>p.dataset.chapter===page.dataset.chapter),position=chapterPages.indexOf(page)+1;
-  title.textContent=page.dataset.chapter==='one'?tr('x12c_chapter'):introTitle;
-  title.href='#'+chapterPages[0].id;title.classList.toggle('chapter-indicator',page.dataset.chapter==='one');
+  title.textContent=page.dataset.chapter==='two'?tr('x13_chapter'):page.dataset.chapter==='one'?tr('x12c_chapter'):introTitle;
+  title.href='#'+chapterPages[0].id;title.classList.toggle('chapter-indicator',['one','two'].includes(page.dataset.chapter));
   title.setAttribute('aria-label',title.textContent);
   progress.setAttribute('aria-valuenow',position);progress.setAttribute('aria-valuemax',chapterPages.length);
   progress.setAttribute('aria-label',tr('x10_eye',{i:position,n:chapterPages.length}));
@@ -162,18 +162,18 @@
    if(page.dataset.stage){
     function inspectStage(sample){
     const stage=document.getElementById('c1-stage'),r=stage.getBoundingClientRect();
-    const stageOk=r.left>=0&&r.right<=innerWidth&&r.bottom<=innerHeight-12;
+    const stageOk=r.left>=0&&r.top>=0&&r.right<=innerWidth&&r.bottom<=innerHeight-12;
     // Real SVG text bounds: the synthetic DOM intentionally cannot supply layout.
     const labels=[...stage.querySelectorAll('svg text')].filter(e=>+getComputedStyle(e).opacity>.01&&e.textContent.trim()).map(e=>({text:e.textContent,row:e.dataset.shareRow,rect:e.getBoundingClientRect()}));
     const labelOverlaps=[];
-    if(['noise-visible','slope','secants','windows','error-empty','fit','every','noise-why','noise-estimate','percent'].includes(page.dataset.stage)){
+    if(page.dataset.chapter==='two'||['noise-visible','slope','secants','windows','error-empty','fit','every','noise-why','noise-estimate','percent'].includes(page.dataset.stage)){
      labels.forEach((a,i)=>labels.slice(i+1).forEach(b=>{if(Math.min(a.rect.right,b.rect.right)>Math.max(a.rect.left,b.rect.left)&&Math.min(a.rect.bottom,b.rect.bottom)>Math.max(a.rect.top,b.rect.top))labelOverlaps.push([a.text,b.text]);}));
     }
     const box=stage.querySelector('.story-deviations').getBoundingClientRect(),plot=stage.querySelector('#story-top-clip rect');
     const matrix=stage.querySelector('svg').getScreenCTM(),plotRight=matrix.a*(+plot.getAttribute('x') + +plot.getAttribute('width'))+matrix.e;
     const deviationsOutside=page.dataset.stage!=='noise-estimate'||box.left>plotRight;
     const dataLabels=[];
-    const annotationSelector='.story-construction-readout,.story-long-label,.story-neighbour-label,.story-optimum-label,.story-noise-readout';
+    const annotationSelector=page.dataset.chapter==='two'?'svg text':'.story-construction-readout,.story-long-label,.story-neighbour-label,.story-optimum-label,.story-noise-readout';
     const annotationLabels=[...stage.querySelectorAll(annotationSelector)].filter(e=>+getComputedStyle(e).opacity>.01);
     if(['secants','windows'].includes(page.dataset.stage))annotationLabels.push(...stage.querySelectorAll('.story-delta,.story-length'));
     const dots=[...stage.querySelectorAll('.measurement-dot,.story-slope,.story-long-slope')].filter(e=>+getComputedStyle(e).opacity>.01).map(e=>e.getBoundingClientRect());
@@ -184,14 +184,14 @@
     const plotBox={left:matrix.a*(+plot.getAttribute('x'))+matrix.e,right:plotRight,top:matrix.d*(+plot.getAttribute('y'))+matrix.f,bottom:matrix.d*(+plot.getAttribute('y') + +plot.getAttribute('height'))+matrix.f};
     const visibleData=[...stage.querySelectorAll('.measurement-dot')].filter(e=>visible(e)&&intersects(e.getBoundingClientRect(),plotBox)).length;
     const noiseEndOk=page.dataset.stage!=='noise-estimate'||sample<story.durations['noise-estimate']||(visibleData>=500&&visible(stage.querySelector('.story-band')));
-    const shareRows=[...stage.querySelectorAll('.story-slot')].map((e,j)=>{const boxes=[e.getBoundingClientRect(),...labels.filter(a=>a.row===String(j)).map(a=>a.rect)];return {left:Math.min(...boxes.map(b=>b.left)),right:Math.max(...boxes.map(b=>b.right)),top:Math.min(...boxes.map(b=>b.top)),bottom:Math.max(...boxes.map(b=>b.bottom))};});
-    const shareOverlaps=page.dataset.stage==='percent'?labels.flatMap(a=>shareRows.filter((b,j)=>a.row!==String(j)&&intersects(a.rect,b)).map(()=>a.text)):[];
+    const shareRows=[...stage.querySelectorAll(page.dataset.chapter==='two'?'.c2-slot':'.story-slot')].map((e,j)=>{const boxes=[e.getBoundingClientRect(),...labels.filter(a=>a.row===String(j)).map(a=>a.rect)];return {left:Math.min(...boxes.map(b=>b.left)),right:Math.max(...boxes.map(b=>b.right)),top:Math.min(...boxes.map(b=>b.top)),bottom:Math.max(...boxes.map(b=>b.bottom))};});
+    const shareOverlaps=['percent','c2-every'].includes(page.dataset.stage)?labels.flatMap(a=>shareRows.filter((b,j)=>a.row!==String(j)&&intersects(a.rect,b)).map(()=>a.text)):[];
     const leg=stage.querySelector('.story-triangle'),neighbourDt=leg.getBoundingClientRect().width;
     const neighbourOk=page.dataset.stage!=='secants'||stage.querySelector('svg').dataset.phase!=='zoomed'||neighbourDt>=60;
     variants.push({...readPage(page),sample,stageOk,labelOverlaps,dataLabels,deviationsOutside,visibleData,noiseEndOk,shareOverlaps,neighbourDt,neighbourOk,ok:readPage(page).ok&&stageOk&&labelOverlaps.length===0&&dataLabels.length===0&&deviationsOutside&&noiseEndOk&&shareOverlaps.length===0&&neighbourOk});
     }
     const story=window.WispChapterStory;story.enter(page.dataset.stage);
-    const samples={secants:[0,300,600,899,900,1100,2000,3000,...Array.from({length:8},(_,j)=>3900+j*1200),13200],windows:[2050,3250,4450,5650,6500],fit:[2899,2900,4900],every:Array.from({length:6},(_,j)=>2900+j*2500),'noise-why':[900],'noise-estimate':[2500,5200,7100,8350,9600,10600,11600]};
+    const samples={secants:[0,300,600,899,900,1100,2000,3000,...Array.from({length:8},(_,j)=>3900+j*1200),13200],windows:[2050,3250,4450,5650,6500],fit:[2899,2900,4900],every:Array.from({length:6},(_,j)=>2900+j*2500),'noise-why':[900],'noise-estimate':[2500,5200,7100,8350,9600,10600,11600], 'c2-standing':[0,300,600,900],'c2-residual':[900,1500,2100,2600,3100], 'c2-joint':[900,1650,2400,3150,3900], 'c2-every':Array.from({length:5},(_,j)=>[900+j*2500,1600+j*2500,2900+j*2500]).flat().concat([13400,14000]), 'c2-error':[900,1500,2000,2600,3100], 'c2-solution':[0,450,900]};
     for(const sample of samples[page.dataset.stage]||[]){story.seek(sample);inspectStage(sample);}
     story.finish();inspectStage(story.durations[page.dataset.stage]);
     if(page.dataset.stage==='fit'){

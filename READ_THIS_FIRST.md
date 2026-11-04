@@ -10,7 +10,7 @@ zweites davon. Alles Dauerhafte gehört dorthin, nach `PAPER_1.md` oder ins `DIA
 **Regeln:** wird immer **vollständig überschrieben**, nie angehängt. Was älter als ein paar Tage
 ist, ist vermutlich falsch — dann gilt `CLAUDE.md`.
 
-**Stand: 2026-11-04, 00:45 — WISP-Plan bis 31.12. (CLAUDE.md, „WISP paper — the fixed plan“).**
+**Stand: 2026-11-04, 11:30 (Explorable), Cluster-Teil 00:45 — WISP-Plan bis 31.12. (CLAUDE.md, „WISP paper — the fixed plan“).**
 
 ## 1. Was läuft (Orion, Stand 04.11. 00:44)
 
@@ -32,23 +32,22 @@ automatischer Rückweg als Cluster-Pod noch zu bauen.
 
 ## 2. WISP-Explorable (W-X)
 
-- Preview https://claude.ai/artifact/XsxgvgYGZdqPkpnzVd2YMQ **Version 16** (`344c52f`): Einführung (2 Seiten) +
-  **Kapitel 1 „Ein Baustein allein“ als Scroll-Geschichte in 12 Schritten** — eine persistente, animierte Grafik, nur
-  Scrollen (Messwerte → Rauschen → Steigung → Steigung aus zwei Punkten → längere Abschnitte → Fehler ohne Baustein →
-  Fit mit Sweep → alle Bausteine → warum Rauschen → Rauschschätzung mit Summe → Prozent → erste Lösung).
-- Alle späteren Seiten sind **ausgeblendet** (eine Liste im Quelltext, `pages.js`), nicht gelöscht.
-- **Offen:** Nutzer will die Aufteilung „Rauschen / vom Baustein erklärt / noch erklärbar“ (Schritt 11) genauer
-  besprechen. Danach Kapitel 2 („noch einer dazu“), erst nach seiner Freigabe von Kapitel 1.
-- Arbeitsweise: Nutzer geht Kapitel für Kapitel durch; Claude prüft jeden Schritt per Edge-Headless-Frames zu mehreren
-  Zeitpunkten und behebt eigene Funde vor dem Veröffentlichen. Build: `build_wisp_explainer_html_x2.py`; Tests
-  `python -m pytest analysis/tests/ -q -p no:cacheprovider -k wisp` (51); Fit `check_wisp_explainer_fit.py`.
-- Codex-Pakete WP-X7 … WP-X12d committet; `codex/CURRENT_TASK.md` = WP-X12d (erledigt).
+- Preview https://claude.ai/artifact/XsxgvgYGZdqPkpnzVd2YMQ **Version 17**: Einführung + Kapitel 1 (12 Schritte) +
+  **Kapitel 2 „Noch ein Baustein dazu“ (6 Schritte, WP-X13)**: Wo wir stehen (Konstante, 52,9 % des Erklärbaren) →
+  Was noch fehlt (Rest mit Muster vs. Rauschband) → zwei Bausteine gemeinsam neu bestimmt (Beispiel u) → jeden zweiten
+  Baustein ausprobieren (u³ 74,2 % knapp vor u² 71,3 %) → der Fehler sinkt → zweite Lösung du/dt = 12,8 − 0,0000275·u³.
+- **Nutzerentscheidung 04.11.:** Kapitel 2 zeigt nur „Baustein dazu, Fehler sinkt“ — kein Urteil, keine wahre
+  Gleichung. **Den Fehlgriff (u³ statt u², Konstante überflüssig) löst Kapitel 3 auf** (FoBa: Pfad 1 → 1,u³ → u,u³ →
+  u,u² = Wahrheit). Test `test_wisp_explainer_x13.py` sichert die Neutralität.
+- **Offen:** Nutzer prüft Kapitel 2; Schritt 11 (Aufteilung Rauschen/erklärt/noch erklärbar) „später“. Danach Kapitel 3.
+- Arbeitsweise wie gehabt: Claude prüft per `check_wisp_explainer_fit.py` (Playwright-Screenshots unter
+  `outputs/wisp_explainer_checks/pages/`), behebt eigene Funde. Tests `-k wisp` (54) brauchen ~30 min.
 
 ## 3. Als Nächstes
 
 1. Q7 fertig → einsammeln, Aggregation, **G-Q7** (automatisch nach §5-Regel, Claude berichtet).
 2. W-2 läuft; Hochrechnung aus den ersten langen Shards.
-3. Explorable: Schritt 11 mit dem Nutzer besprechen, dann Kapitel 2.
+3. Explorable: Nutzer-Feedback zu Kapitel 2, dann Kapitel 3 (Aufräumen/FoBa); Schritt 11 später.
 
 > **BLINDREGEL C-6** gilt unverändert: keine C-6-EvoGrow-Ergebnisse ansehen, nur technische Prüfung.
 
