@@ -6,6 +6,22 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ## 2026-11-05
 
+### Q8 (W-2) interim look at the user's request — preliminary, decides nothing
+Orion 490 / 3,540 shards done; records fetched as one tarball through a pod (S: was unreachable) into
+`outputs/sideproject_q8_512dd5b…/out_sneak_2026-11-05/` (12,477 records, 0 unparsable). Scratchpad script
+`q8_sneak.py`: every (cell, arm) with a complete candidate pool through the frozen Q8 `rows_for_cells`, rule (c);
+A10 on exact cells = official Q7 units; all comparisons paired on cells complete in both arms, noisy cells only.
+**496 of 3,540 (cell, arm) complete. Shards run in descending cost, so this is the dim-3 sample (almost complete) and
+the most expensive dim-2 surrogates; dim 1/2 exact has 1 cell — R1/R2 cannot be read yet.**
+dim-2 surrogates, 36 paired noisy cells: C1000 vs C10 generalization 7 / 7, reconstruction 23 / 18. Same 37 cells
+against the matching-library references (better threshold per σ): generalization C1000 21.6 %, Weak-SINDy 18.9 %,
+SINDy 8.1 %, E-SINDy 2.7 % (WSINDy not in this look). dim-3 (reported only, Q8 §7): C1000 vs A1000 on 61 paired noisy
+cells pruned structure 17 / 11, reconstruction 34 / 27, generalization 18 / 15; 54–59 under bound 1000 reach the
+pruned structure in 13 of 47 noisy C1000 cells (54: 3, 55: 1, 56: 1, 58: 5, 59: 3, 57: 0) — infeasible under bound 10.
+52/61, 15 paired: C1000 vs Q7 structure 4 / 1, generalization 3 / 2. Ablations so far on dim-2 surrogates only:
+random start reconstruction 9 / 20 of 31, no FoBa 9 / 12 of 16, generalization unchanged in both; no-refit not run
+yet. Not a random sample; small n (one dim-3 cell = 6.7 pp).
+
 ### W-6b done: MATLAB WSINDy rows re-run under the JKU licence, byte-identical
 <!-- a91148e -->
 
