@@ -319,3 +319,4 @@ dialog{max-width:min(1050px,90vw);max-height:80dvh;overflow:auto;overscroll-beha
 .story-svg .story-arithmetic,.story-svg .story-noise-readout{font-size:12px}
 .story-square{fill:var(--model);stroke:var(--panel);stroke-width:.2}
 .story-length-rms{stroke:none}
+.story-svg .story-equation.story-equation-long{font-size:16px}@media(max-width:759px){.story-svg .story-equation.story-equation-long{font-size:19px}}

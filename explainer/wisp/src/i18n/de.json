@@ -539,5 +539,12 @@
   "x15_noise": "typisches Rauschen ≈ {noise} von u",
   "x15_endpoints": "Zwei verrauschte Endpunkte je Abschnitt → insgesamt:",
   "x15_points": "aus {k} von {n} Punkten",
-  "x15_root": "√{mean} ≈ {root}: typischer Abstand eines Messpunkts zur glatten Kurve"
+  "x15_root": "√{mean} ≈ {root}: typischer Abstand eines Messpunkts zur glatten Kurve",
+  "x16_title": "Und so weiter, bis alle Bausteine drin sind",
+  "x16_text_0": "Das Prinzip ist jetzt klar, und WISP wiederholt es Runde für Runde: jeden noch offenen Baustein dazunehmen, alle Zahlen gemeinsam neu bestimmen, nach erklärtem Anteil sortieren, den besten behalten. Mit jeder Runde ist ein Baustein weniger zur Auswahl, bis alle {count} in der Gleichung stehen.",
+  "x16_text_1": "Der erklärte Anteil steigt mit jedem Baustein, aber immer weniger: von {second} nach dem zweiten Schritt auf {third} nach dem dritten und schließlich {last} mit allen Bausteinen. Links unten steht der ganze Weg.",
+  "x16_jargon": "Hier sind nur die Hinzunahmen gezeigt. WISP prüft nach jeder Runde zusätzlich, ob ein Baustein wieder weg kann; das zeigt das nächste Kapitel.",
+  "x16_round": "Runde {round} · {open} offen",
+  "x16_done": "Alle Bausteine sind drin",
+  "x16_path": "Weg (erklärter Anteil)"
 }

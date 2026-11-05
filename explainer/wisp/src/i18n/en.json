@@ -539,5 +539,12 @@
   "x15_noise": "typical noise ≈ {noise} of u",
   "x15_endpoints": "Two noisy endpoints per section → added across sections:",
   "x15_points": "from {k} of {n} points",
-  "x15_root": "√{mean} ≈ {root}: typical distance of a measurement from the smooth curve"
+  "x15_root": "√{mean} ≈ {root}: typical distance of a measurement from the smooth curve",
+  "x16_title": "And so on, until every block is in",
+  "x16_text_0": "The principle is clear now, and WISP repeats it round after round: add each block that is still open, refit all numbers together, sort by the share explained, keep the best. Each round has one block fewer to choose from, until all {count} are in the equation.",
+  "x16_text_1": "The explained share grows with every block, but by less and less: from {second} after the second step to {third} after the third, and finally {last} with every block. The whole path is listed at the bottom left.",
+  "x16_jargon": "Only the additions are shown here. After each round WISP also checks whether a block can go again; the next chapter shows that.",
+  "x16_round": "Round {round} · {open} open",
+  "x16_done": "Every block is in",
+  "x16_path": "Path (share explained)"
 }

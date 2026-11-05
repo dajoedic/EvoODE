@@ -4,6 +4,18 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ---
 
+## 2026-11-05
+
+### WISP explorable: noise zoom and the forward rounds (version 20)
+
+User review of version 19: in the noise step nothing could be seen happening — the 9-point local window is ~9 px wide
+on the full series. The step now zooms onto the window (both axes), shows six points slowly, follows the accelerating
+sweep and zooms out before the arithmetic. New chapter-2 step 6 "and so on": the round (try every open block, refit
+jointly, sort, keep the best) repeated until all six blocks are in, 750 ms per trial. Additions only — computed with
+the same joint least squares and checked against `W.path` with the backward step switched off; the jargon line says
+WISP's cleanup comes next chapter. Forward path of the teaching cell: 1 → +u³ → +u → +u² → +sin u → +cos u, explained
+share 52.9 → 74.2 → 80.6 → 81.1 → 81.4 → 81.5 %. Fit checker in-page timeout raised 25 → 60 s (measurement now ~30 s).
+
 ## 2026-11-04
 
 ### WISP explorable WP-X15: second user review

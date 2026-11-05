@@ -14,17 +14,17 @@ def test_wisp_two_pages_and_bilingual_claims():
     soup = BeautifulSoup((BASE/'src/index.html').read_text(encoding='utf8'), 'html.parser')
     pages = soup.select('main > .page')
     two = soup.select('[data-chapter="two"]')
-    names = ['standing', 'residual', 'joint', 'error', 'solution']
+    names = ['standing', 'residual', 'joint', 'error', 'solution', 'all']
     assert [p['id'] for p in two] == ['p-c2-'+s for s in names]
     start = next(i for i, p in enumerate(pages) if p['id'] == 'p-c1-solution')+1
-    assert pages[start:start+5] == two
+    assert pages[start:start+6] == two
     assert [p['data-stage'] for p in two] == ['c2-'+s for s in names]
     assert "visibleChapters=['intro','one','two']" in (BASE/'src/pages.js').read_text(encoding='utf8')
     for page in two:
         assert all(n.get('data-claim') == 'review' for n in page.select('h2,p,footer,.eyebrow'))
     tables = [json.loads((BASE/f'src/i18n/{lang}.json').read_text(encoding='utf8')) for lang in ['de', 'en']]
-    keys = {k for k in tables[0] if k.startswith('x13_')}
-    assert keys == {k for k in tables[1] if k.startswith('x13_')}
+    keys = {k for k in tables[0] if k.startswith(('x13_', 'x16_'))}
+    assert keys == {k for k in tables[1] if k.startswith(('x13_', 'x16_'))}
     for table in tables:
         assert all(table[k] for k in keys)
         assert all(n['data-i18n'] in keys for page in two for n in page.select('[data-i18n]'))
@@ -58,7 +58,7 @@ def test_wisp_two_real_record_and_guard():
 
 def test_wisp_two_fit_sampling():
     source = (BASE/'src/pages.js').read_text(encoding='utf8')
-    for name in ['standing', 'residual', 'joint', 'error', 'solution']:
+    for name in ['standing', 'residual', 'joint', 'error', 'solution', 'all']:
         assert "'c2-"+name+"':" in source
     assert "page.dataset.chapter==='two'||" in source
-    assert "['percent','c2-joint'].includes(page.dataset.stage)" in source
+    assert "['percent','c2-joint','c2-all'].includes(page.dataset.stage)" in source

@@ -32,8 +32,8 @@ automatischer Rückweg als Cluster-Pod noch zu bauen.
 
 ## 2. WISP-Explorable (W-X)
 
-- Preview https://claude.ai/artifact/XsxgvgYGZdqPkpnzVd2YMQ **Version 19** (WP-X15): Einführung + Kapitel 1
-  (11 Schritte) + Kapitel 2 „Noch ein Baustein dazu“ (5 Schritte).
+- Preview https://claude.ai/artifact/XsxgvgYGZdqPkpnzVd2YMQ **Version 20** (05.11.): Einführung + Kapitel 1
+  (11 Schritte) + Kapitel 2 „Noch ein Baustein dazu“ (6 Schritte).
 - WP-X14 nach Nutzer-Review: Kap. 1 Steigung vor Rauschen; grüne Linie = wahre Steigung beschriftet; Schritt
   „Längere Abschnitte“ spielt die Längen 1, 2, 8, 16 nacheinander farbig durch (frühere gedimmt); Rauschen-Warum und
   -Wie in einem Schritt mit Lesepause, Kasten zeigt je eine Abweichung, die in die Summe fällt. Kap. 2: Beispiel u +
@@ -43,7 +43,10 @@ automatischer Rückweg als Cluster-Pod noch zu bauen.
 - WP-X15: alle Animationen laufen in Dauerschleife (3 s Pause), Regler raus; Kap. 1 Schritt 5 = eine Länge zur Zeit +
   RMS-Balken je Länge; Schritt 8 = Gleichung oben mit live gefitteter Zahl, Sortierung nach jedem Baustein (auch Kap. 2);
   Rauschschritt in drei Rechenschritten (Σd² → /n → √ → korrigiert ≈ 2,9 % → 71,6 % Boden), beide Texte sofort.
-- **Offen:** Nutzer prüft Version 19; Schritt 11 (Aufteilung Rauschen/erklärt/noch erklärbar) „später“. Danach Kapitel 3.
+- 05.11. (Claude selbst): Rauschschritt zoomt auf das 9-Punkte-Fenster (vorher ~9 px breit, unsichtbar), folgt dem
+  Durchlauf und zoomt dann heraus. Kap. 2 neu Schritt 6 „Und so weiter“: Runde für Runde jeder offene Baustein
+  (reine Hinzunahmen, gleich `W.path` mit abgeschaltetem Rückschritt), Weg 52,9 → 74,2 → 80,6 → 81,1 → 81,4 → 81,5 %.
+- **Offen:** Nutzer prüft Version 20; Schritt 11 (Aufteilung Rauschen/erklärt/noch erklärbar) „später“. Danach Kapitel 3.
 - **Tests (Nutzer fragte 04.11. nach der Dauer):** im Iterieren nur die schnellen Darstellungstests
   (`test_wisp_explainer_x*.py` ohne `_x2`, ~2 min) + `check_wisp_explainer_fit.py`; die volle `-k wisp`-Sammlung (~30 min,
   Export + Neu-Integration) nur bei Daten-/Exportänderungen, spätestens beim Q9-Tausch. So auch in Codex-Aufträge schreiben.
@@ -52,7 +55,7 @@ automatischer Rückweg als Cluster-Pod noch zu bauen.
 
 1. Q7 fertig → einsammeln, Aggregation, **G-Q7** (automatisch nach §5-Regel, Claude berichtet).
 2. W-2 läuft; Hochrechnung aus den ersten langen Shards.
-3. Explorable: Nutzer-Feedback zu Version 19, dann Kapitel 3 (Aufräumen/FoBa); Schritt 11 später.
+3. Explorable: Nutzer-Feedback zu Version 20, dann Kapitel 3 (Aufräumen/FoBa); Schritt 11 später.
 
 > **BLINDREGEL C-6** gilt unverändert: keine C-6-EvoGrow-Ergebnisse ansehen, nur technische Prüfung.
 

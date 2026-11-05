@@ -61,7 +61,7 @@ if(fixture.configuration==='delivered'){
  const story=WispChapterStory,slides=WispSlides,m=WispChapterOne.model,t=fixture.data.live.teaching.t,x=fixture.data.live.teaching.observed,truth=fixture.data.live.teaching.truth;
  const close=(a,b)=>assert(Math.abs(a-b)<=1e-9*Math.max(1,Math.abs(b)),`${a} != ${b}`);
  const ids=['p-hook','p-challenge','p-c1-data','p-c1-slope','p-c1-noise-visible','p-c1-secants','p-c1-changes','p-c1-error-empty','p-c1-fit','p-c1-every','p-c1-noise','p-c1-percent','p-c1-solution'];
- const twoIds=['standing','residual','joint','error','solution'].map(s=>'p-c2-'+s);
+ const twoIds=['standing','residual','joint','error','solution','all'].map(s=>'p-c2-'+s);
  assert.deepEqual(slides.pages.map(p=>p.id),ids.concat(twoIds));
  slides.nav.go(2);assert.equal(doc.getElementById('masthead-title').textContent,tr('x12c_chapter'));assert.equal(doc.getElementById('chapter-progress').getAttribute('aria-valuemax'),'11');
  assert.deepEqual(slides.pages.slice(2,13).map(p=>p.dataset.stage),story.states);
@@ -168,12 +168,12 @@ if(fixture.configuration==='delivered'){
  advance(1);close(+svg.dataset.coefficient,optimum);close(+doc.querySelector('.story-optimum-dot').dataset.value,optimum);assert.equal(+doc.querySelector('.story-optimum-dot').style.opacity,1);
  advance(2000);close(+svg.dataset.coefficient,2*optimum);assert.equal(+doc.querySelector('.story-optimum').style.opacity,1);
  // Independent raw arithmetic from the real record; corrected noise remains frozen.
- story.enter('noise-estimate');story.seek(400);assert.equal(svg.dataset.noisePhase,'A');assert.equal(doc.getElementById('c1-story-text-8').style.opacity,'1');
+ story.enter('noise-estimate');story.seek(400);assert(+svg.dataset.noiseZoom>0&&+svg.dataset.noiseZoom<1);story.seek(3000);assert.equal(+svg.dataset.noiseZoom,1);assert.equal(svg.dataset.noisePhase,'A');assert.equal(doc.getElementById('c1-story-text-8').style.opacity,'1');
  story.seek(1800);assert.equal(+doc.querySelector('.story-cubic').style.opacity,1);
- const dropBefore=+doc.querySelector('.story-contribution').getAttribute('y');story.seek(1900);assert(+doc.querySelector('.story-contribution').getAttribute('y')>dropBefore);
+ story.seek(2450);const dropBefore=+doc.querySelector('.story-contribution').getAttribute('y');story.seek(2550);assert(+doc.querySelector('.story-contribution').getAttribute('y')>dropBefore);
  story.seek(6200);const count=+svg.dataset.pointCount;close(+svg.dataset.squaredSum,t.slice(0,count).reduce((sum,tt,i)=>sum+(x[i]-story.local(i).value(tt))**2,0));
- story.seek(8000);assert.equal(svg.dataset.noisePhase,'B');assert.equal(+svg.dataset.pointCount,t.length);close(+svg.dataset.squaredSum,story.squarePrefix.at(-1));
- story.seek(11000);assert.equal(svg.dataset.noisePhase,'C');assert(+svg.dataset.noiseSum>0&&+svg.dataset.noiseSum<m.floor);
+ story.seek(10500);assert.equal(+svg.dataset.noiseZoom,0);assert.equal(svg.dataset.noisePhase,'B');assert.equal(+svg.dataset.pointCount,t.length);close(+svg.dataset.squaredSum,story.squarePrefix.at(-1));
+ story.seek(13000);assert.equal(svg.dataset.noisePhase,'C');assert(+svg.dataset.noiseSum>0&&+svg.dataset.noiseSum<m.floor);
  story.finish();close(+svg.dataset.noiseSum,m.floor);const sumWidth=+doc.querySelector('.story-part-0').getAttribute('width');
  story.enter('percent');story.finish();close(+doc.querySelector('.story-part-0').getAttribute('width'),sumWidth);
  // Every step repeats after a three-second hold; reduced motion never schedules a replay.
@@ -188,14 +188,14 @@ if(fixture.configuration==='delivered'){
  // Chapter two: the same physical SVG continues into five pages.
  const two=WispChapterTwo,wm=two.model,constant=m.blocks.find(b=>b.term===0),joint=wm.blocks.find(b=>b.term===1),win=wm.blocks.find(b=>b.term===wm.winner);
  slides.nav.go(12);story.finish();const end=svg.children.map(e=>({...e.attrs,opacity:e.style.opacity}));
- slides.nav.go(13);assert.equal(doc.getElementById('masthead-title').textContent,tr('x13_chapter'));assert.equal(doc.getElementById('chapter-progress').getAttribute('aria-valuemax'),'5');
+ slides.nav.go(13);assert.equal(doc.getElementById('masthead-title').textContent,tr('x13_chapter'));assert.equal(doc.getElementById('chapter-progress').getAttribute('aria-valuemax'),String(WispChapterTwo.states.length));
  // The first frame has exactly the preceding scene's geometry.
  svg.children.forEach((e,j)=>{for(const k of ['d','x','y','cx','cy','x1','y1','x2','y2','width','height'])if(end[j][k]!==undefined)assert.equal(e.attrs[k],end[j][k]);});
  const twoSaved=[];
  two.states.forEach((state,i)=>{
   slides.nav.go(13+i);story.finish();assert.strictEqual(story.svg,original);assert.equal(svg.dataset.state,state);assert.equal(svg.dataset.complete,'true');
-  assert.equal(doc.querySelectorAll('.page-dots a').filter(a=>!a.hidden).length,5);
-  assert.equal(slides.pages[13+i].querySelector('.eyebrow').textContent,tr('x10_eye',{i:i+1,n:5}));
+  assert.equal(doc.querySelectorAll('.page-dots a').filter(a=>!a.hidden).length,two.states.length);
+  assert.equal(slides.pages[13+i].querySelector('.eyebrow').textContent,tr('x10_eye',{i:i+1,n:two.states.length}));
   const coords=doc.querySelector('#c1-stage .story-prediction').getAttribute('d').match(/[-+]?(?:[0-9]*[.])?[0-9]+(?:e[-+]?[0-9]+)?/gi).map(Number);
   assert(coords.every(Number.isFinite));
   const shown=doc.querySelectorAll('#c1-stage .measurement-dot').filter(e=>+e.style.opacity===1);assert.equal(shown.length,m.rows.length);
@@ -209,7 +209,11 @@ if(fixture.configuration==='delivered'){
   }
   if(i===2){close(+svg.dataset.error,win.remaining);}
   if(i===2){const bars=doc.querySelectorAll('#c1-stage .c2-slot').filter(e=>+e.style.opacity===1);assert.equal(bars.length,5);bars.forEach((e,j)=>{assert.equal(+e.dataset.term,wm.blocks[j].term);close(+e.dataset.value,wm.blocks[j].share);assert.equal(e.classList.contains('winner'),wm.blocks[j].term===wm.winner);});}
-  if(i>=3){close(+svg.dataset.error,win.remaining);close(+doc.querySelector('.story-part-0').getAttribute('width'),708*m.floor);}
+  if(i===5){const R=story.rounds,last=R.at(-1).winner;close(+svg.dataset.error,last.remaining);assert.deepEqual(JSON.parse(svg.dataset.support),[0,1,2,3,4,5]);
+   const forward=WispCompute.path(t,x,{windows:fixture.data.live.windows,cap:6,sse_stop:fixture.data.live.sse_stop,backward_fraction:1e-300}).steps;assert.equal(forward.length,2+R.length);
+   R.forEach((Q,k)=>{assert.deepEqual(Q.winner.support,forward[k+2].support);close(Q.winner.remaining,forward[k+2].remaining);assert(Q.candidates.every(c=>c.remaining>=Q.winner.remaining));});
+   assert.equal(doc.querySelectorAll('#c1-stage .c2-slot').filter(e=>+e.style.opacity>0).length,0);assert(doc.querySelector('.story-equation').classList.contains('story-equation-long'));}
+  if(i===3||i===4){close(+svg.dataset.error,win.remaining);close(+doc.querySelector('.story-part-0').getAttribute('width'),708*m.floor);}
   if(i===4){const eq=doc.querySelector('.story-equation').textContent;for(const c of wm.record.equations[0].coefficients)assert(eq.includes(secondNumber(Math.abs(c))));assert(!eq.includes('e-'));}
   twoSaved[i]=svg.children.map(e=>({...e.attrs,opacity:e.style.opacity}));
  });

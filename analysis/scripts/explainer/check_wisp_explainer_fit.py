@@ -151,7 +151,7 @@ def check_chapter_interactions(page,evidence):
         page.goto((ROOT/'explainer/wisp/dist/wisp_explainer.html').as_uri()+f'?lang={lang}',wait_until='load')
         page.wait_for_function('window.WispChapterStory && window.WispSlides?.nav')
         expected=['p-hook','p-challenge','p-c1-data','p-c1-slope','p-c1-noise-visible','p-c1-secants','p-c1-changes','p-c1-error-empty','p-c1-fit','p-c1-every','p-c1-noise','p-c1-percent','p-c1-solution']
-        expected += ['p-c2-'+s for s in ('standing','residual','joint','error','solution')]
+        expected += ['p-c2-'+s for s in ('standing','residual','joint','error','solution','all')]
         ids=page.evaluate('WispSlides.pages.map(p=>p.id)')
         if ids!=expected:raise AssertionError(f'Incorrect delivered inventory: {ids}')
         for key in ('ArrowLeft','ArrowRight'):
@@ -162,7 +162,7 @@ def check_chapter_interactions(page,evidence):
             if page.evaluate('WispSlides.nav.index')!=i:raise AssertionError('Vertical keyboard walk failed')
             page.evaluate('WispChapterStory.finish()')
             if i>=2 and page.locator('#c1-stage svg').get_attribute('data-state')!=page.locator('#'+expected[i]).get_attribute('data-stage'):raise AssertionError('Stage differs from page')
-        if page.locator('.page-dots a:visible').count()!=5:raise AssertionError('Wrong chapter-two sub-step dots')
+        if page.locator('.page-dots a:visible').count()!=6:raise AssertionError('Wrong chapter-two sub-step dots')
         if page.locator('#masthead-title').text_content()!=page.evaluate('tr("x13_chapter")'):raise AssertionError('Wrong chapter-two masthead')
         page.keyboard.press('ArrowUp');page.wait_for_timeout(850)
         if page.evaluate('WispSlides.nav.index')!=len(expected)-2:raise AssertionError('Up did not return one step')
@@ -198,7 +198,7 @@ def run(edge=EDGE):
                     url=(ROOT/'explainer/wisp/dist/wisp_explainer.html').as_uri()+f'?fitcheck=1&lang={lang}'
                     for attempt in range(3):
                         page.goto(url,wait_until='load')
-                        try:page.wait_for_selector('#fitcheck-result',state='attached',timeout=25000);break
+                        try:page.wait_for_selector('#fitcheck-result',state='attached',timeout=60000);break
                         except Exception:
                             if attempt==2:raise
                     result=parse_result(page.content())
