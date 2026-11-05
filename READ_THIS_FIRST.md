@@ -20,7 +20,7 @@ ist, ist vermutlich falsch — dann gilt `CLAUDE.md`.
 | **W-2 = Q8-Gitter** (`512dd5b`, 3.540 Shards) | **338/3.540** (05.11. ~08:00), 0 Fehler, **40 Pods** (seit 05.11. 07:56) | Hochrechnung, sobald die langen Shards durch sind; linear grob ~22 Tage — gegen Plan W-2 bis ~13.11. beobachten |
 | **C-6 gekappt** | 1.435/3.366, **Parallelität 0 seit 04.11. 10:26** (leergezogen, kein Pod getötet) | nach W-4 zurück auf 24 |
 
-Kerne: Q8 40, Q7 0, C-6 0 = 40, voll belegt. C-6-Job pausiert, nicht gefährdet (TTL greift erst nach Abschluss, keine Deadline, Datensätze auf NFS). Q8-Probe (75/75) fertig. Statusseite „EvoODE auf Orion“ Version 12 (05.11. 01:15).
+Kerne: Q8 40, Q7 0, C-6 0 = 40, voll belegt. C-6-Job pausiert, nicht gefährdet (TTL greift erst nach Abschluss, keine Deadline, Datensätze auf NFS). Q8-Probe (75/75) fertig. Statusseite „EvoODE auf Orion“ Version 13 (05.11. ~10:00).
 oc-Token war 05.11. ~01:07 abgelaufen, Nutzer hat sich neu eingeloggt; in der Lücke hat `shift_pods.sh` nur Lesefehler
 geloggt und nichts verändert.
 
@@ -68,4 +68,4 @@ verwaister Prozess weiterlaufen — prüfen und dessen halbe Änderungen zurück
 implementieren (03.11.).
 **Uncommittet, nicht von Claude:** WP-N48b-Dateien (PySR, pausiert nach §9.4d) und `output/`.
 
-**Statusseite „EvoODE auf Orion“:** https://claude.ai/artifact/9zzJsoGCBahPsuNkaaf3DN — Version 12 (05.11., 01:15).
+**Statusseite „EvoODE auf Orion“:** https://claude.ai/artifact/9zzJsoGCBahPsuNkaaf3DN — Version 13 (05.11., ~10:00).
