@@ -34,17 +34,17 @@ automatischer Rückweg als Cluster-Pod noch zu bauen.
 
 ## 2. WISP-Explorable (W-X)
 
-- Preview https://claude.ai/artifact/XsxgvgYGZdqPkpnzVd2YMQ **Version 21** (05.11., `46ffca5`): Einführung +
-  Kap. 1 (11 Schritte) + Kap. 2 (6) + **Kap. 3 „Aufräumen“ (FoBa, 7 Schritte)**: Kostenbalken mit Messlatte ½ Gewinn,
-  Lupe, wahre Gleichung erstmals gezeigt, Gewinn je Runde. `gates.json` stop = significance (G-Q7).
-- **Nutzerauftrag 05.11.: „alles fertig“, in der echten WISP-Reihenfolge** (Runde = Test Q7 → Hinzufügen → Aufräumen;
-  Fit + BIC erst am Ende). Reihe: **X17 läuft** (Kap. 2 Schritt 6 raus – zeigte einen Pfad, den WISP nie geht; Kap. 4
-  Aufhören/Q7 mit Rundenübersicht) → X18 Kap. 5 Fitten + Wählen → X19 Kap. 1 Schritt 11, Zwei-Gleichungs-Beispiel,
-  Fehlschlag, Generalisierung → X20 Ergebnis-Explorer. Danach: Nutzer-Idee zur Visualisierung der Spiegelung
-  Hinzufügen/Aufräumen (bis dahin schlicht gebaut). Kap. 5 hängt an G2 (Variante C, Grenze 1000), Ergebnisse an Q9.
-- **Tests:** im Iterieren nur die schnellen Darstellungstests (`test_wisp_explainer_x*.py` ohne `_x2`, ~2 min) +
-  `check_wisp_explainer_js.py`; Browser-Check `check_wisp_explainer_fit.py` startet Claude (Codex-Sandbox kann es nicht).
-  Zwischenzeit-Screenshots: Playwright-Skript mit Wartezeit nach `WispSlides.nav.link`.
+- Preview https://claude.ai/artifact/XsxgvgYGZdqPkpnzVd2YMQ **Version 24** (05.11. abends, `3da07fb`): Einführung +
+  Kap. 1 (11) · 2 Hinzufügen (5) · 3 Aufräumen/FoBa (7) · 4 Aufhören/Q7 (5, Runden in echter Reihenfolge Test →
+  Hinzufügen → Aufräumen) · 5 Fitten + Wählen/BIC (6, inkl. „WISP auf einen Blick“) · 6 Zwei Gleichungen (System 27,
+  Q7) · 7 Wenn es schiefgeht (System 3 ab 21) · 8 Gegenprobe/Generalisierung. Browser-Check und volle `-k wisp`-Sammlung
+  (71) grün.
+- **X20 läuft:** Ergebnisse von Q5 auf Q7 umstellen, WSINDy-Vergleich (`q7_q5w_comparison.csv`, JKU-bestätigt) einhängen,
+  Kapitel 9 „Wie oft klappt das?“ + Explorer. Braucht einen Julia-Display-Export der Q7-Gewinnermodelle (Claude führt
+  aus, Kommandos im Report). Danach: Nutzer-Idee zur Visualisierung Hinzufügen/Aufräumen; Q9-Tausch nach W-4.
+- **Tests:** schnelle Darstellungstests (`test_wisp_explainer_x*.py` ohne `_x2`) + `check_wisp_explainer_js.py` beim
+  Iterieren; volle `-k wisp` (~5 min) bei Daten-/Exportänderung; Browser-Check `check_wisp_explainer_fit.py` startet
+  Claude. In dessen JSON sind `exponent`/`rawNames` Fehler-Flags (`false` = in Ordnung).
 
 ## 3. Als Nächstes
 
