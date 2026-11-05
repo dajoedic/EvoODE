@@ -7,6 +7,7 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 ## 2026-11-05
 
 ### Q8 (W-2) interim look at the user's request — preliminary, decides nothing
+<!-- 010cbd0 -->
 Orion 490 / 3,540 shards done; records fetched as one tarball through a pod (S: was unreachable) into
 `outputs/sideproject_q8_512dd5b…/out_sneak_2026-11-05/` (12,477 records, 0 unparsable). Scratchpad script
 `q8_sneak.py`: every (cell, arm) with a complete candidate pool through the frozen Q8 `rows_for_cells`, rule (c);
