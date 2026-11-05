@@ -7,6 +7,7 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 ## 2026-11-05
 
 ### Q7 complete and officially aggregated: G-Q7 passes, the data-derived stop replaces the 6-term cap
+<!-- aeeaf4b -->
 
 Orion 338 / 338 fit shards (job finished 05.11. 06:58, 0 failures), **3,070 records = the planned 3,070 states**;
 copied from NFS to `outputs/sideproject_q7_354106398…/out/`, md5 identical 338/338. Frozen script
