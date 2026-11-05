@@ -34,17 +34,18 @@ automatischer Rückweg als Cluster-Pod noch zu bauen.
 
 ## 2. WISP-Explorable (W-X)
 
-- Preview https://claude.ai/artifact/XsxgvgYGZdqPkpnzVd2YMQ **Version 24** (05.11. abends, `3da07fb`): Einführung +
-  Kap. 1 (11) · 2 Hinzufügen (5) · 3 Aufräumen/FoBa (7) · 4 Aufhören/Q7 (5, Runden in echter Reihenfolge Test →
-  Hinzufügen → Aufräumen) · 5 Fitten + Wählen/BIC (6, inkl. „WISP auf einen Blick“) · 6 Zwei Gleichungen (System 27,
-  Q7) · 7 Wenn es schiefgeht (System 3 ab 21) · 8 Gegenprobe/Generalisierung. Browser-Check und volle `-k wisp`-Sammlung
-  (71) grün.
-- **X20 läuft:** Ergebnisse von Q5 auf Q7 umstellen, WSINDy-Vergleich (`q7_q5w_comparison.csv`, JKU-bestätigt) einhängen,
-  Kapitel 9 „Wie oft klappt das?“ + Explorer. Braucht einen Julia-Display-Export der Q7-Gewinnermodelle (Claude führt
-  aus, Kommandos im Report). Danach: Nutzer-Idee zur Visualisierung Hinzufügen/Aufräumen; Q9-Tausch nach W-4.
+- Preview https://claude.ai/artifact/XsxgvgYGZdqPkpnzVd2YMQ **Version 26** (05.11. nachts, `a7cd868`) — **inhaltlich
+  vollständig**: Einführung + Kap. 1 (11) · 2 Hinzufügen (5) · 3 Aufräumen/FoBa (7) · 4 Aufhören/Q7 (5) · 5 Fitten +
+  Wählen/BIC (6) · 6 Zwei Gleichungen (System 27) · 7 Wenn es schiefgeht (System 3 ab 21) · 8 Gegenprobe · 9 Wie oft
+  klappt das? (Q7-Ergebnisse vorläufig, SINDy/Weak-SINDy/E-SINDy, MATLAB-WSINDy JKU-bestätigt, Explorer, Glossar).
+  Browser-Check und volle `-k wisp`-Sammlung (77) grün.
+- **Offen:** (1) Nutzer-Idee zur Darstellung der Spiegelung Hinzufügen/Aufräumen (bis dahin schlicht gebaut, Kap. 3/4);
+  (2) Nutzer-Review der neuen Kapitel 5–9; (3) nach G2: Fit-Einstellungen in Kap. 5 über `gates.json`; (4) nach W-4:
+  Datentausch auf Q9 (`results.json`, Julia-Display-Export, `data-claim`-Sätze nachlesen).
 - **Tests:** schnelle Darstellungstests (`test_wisp_explainer_x*.py` ohne `_x2`) + `check_wisp_explainer_js.py` beim
-  Iterieren; volle `-k wisp` (~5 min) bei Daten-/Exportänderung; Browser-Check `check_wisp_explainer_fit.py` startet
-  Claude. In dessen JSON sind `exponent`/`rawNames` Fehler-Flags (`false` = in Ordnung).
+  Iterieren; volle `-k wisp` (~3–5 min) bei Daten-/Exportänderung; Browser-Check `check_wisp_explainer_fit.py` startet
+  Claude (Codex-Sandbox kann keinen Browser). Im Fit-JSON sind `exponent`/`rawNames` Fehler-Flags (`false` = ok).
+  Julia-Display-Export der Ergebnisse: `--q7-results` (~3 min, 814 Auswertungen).
 
 ## 3. Als Nächstes
 
