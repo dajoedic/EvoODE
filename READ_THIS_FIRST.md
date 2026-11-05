@@ -26,7 +26,7 @@ geloggt und nichts verändert.
 
 **Lokal läuft `shift_pods.sh`** (Scratchpad der Sitzung `9f46954f…`, detached, Log `shift_pods.log`, neue Version mit
 Schutzregel): pro fertiger C-6-Zelle C-6-Parallelität −1; Q8 = 40 − C-6 − aktive Q7-Pods (nur steigend); stoppt, wenn
-C-6 `failed` sich ändert. Zuletzt: 03.11. 21:51 Q8 35 → 36. Braucht Laptop an + VPN + gültigen oc-Login (VPN-Ausfall
+C-6 `failed` sich ändert. Zuletzt: 04.11. 10:26 C-6 1 → 0, 17:40 Q8 38 → 39. Braucht Laptop an + VPN + gültigen oc-Login (VPN-Ausfall
 03.11. 16:58–21:04: nichts verschoben, nichts gelöscht). **C-6 NICHT „reparieren“.** Neu starten (nur diese Version), Git Bash:
 `/c/Users/joedicke/AppData/Local/Temp/claude/c--Users-joedicke-Documents-Repositories-EvoODE/9f46954f-0bf8-4401-ad3b-884a094e8a73/scratchpad/shift_pods.sh >> /c/Users/joedicke/AppData/Local/Temp/claude/c--Users-joedicke-Documents-Repositories-EvoODE/9f46954f-0bf8-4401-ad3b-884a094e8a73/scratchpad/shift_pods.log 2>&1 &`
 **Rückweg nach W-4:** `oc patch job evoode-phase-c-c6-grid-capped -n scch-das -p '{"spec":{"parallelism":24}}'`;
