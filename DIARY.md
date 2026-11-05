@@ -16,6 +16,7 @@ Toolbox checked out). Re-run of the unmodified original (`run_wsindy_original_q5
 `outputs/sideproject_q5w_wsindy/matlab_outputs_jku/` (W1 4,557 tasks, W1-interp 4,536): **byte-identical to the trial
 outputs of 2026-11-02 in 4,557 / 4,557 and 4,536 / 4,536 files**, no file missing or extra. The rows the Q7/Q8
 aggregations read (`full_matlab/`, `w1_interp_full_matlab/`) are derived from these outputs and therefore unchanged.
+<!-- dccb6ae -->
 Clean-up the same day (user): the diagnostic design export (`export_wsindy_q5w_designs.m`, 395 tasks) re-run under
 the JKU licence, **content-identical 395 / 395** (`.mat` headers carry a timestamp, so compared by variable). The
 trial-produced raw folders were then deleted and the JKU outputs moved into the standard path
