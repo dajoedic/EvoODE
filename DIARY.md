@@ -16,8 +16,12 @@ Toolbox checked out). Re-run of the unmodified original (`run_wsindy_original_q5
 `outputs/sideproject_q5w_wsindy/matlab_outputs_jku/` (W1 4,557 tasks, W1-interp 4,536): **byte-identical to the trial
 outputs of 2026-11-02 in 4,557 / 4,557 and 4,536 / 4,536 files**, no file missing or extra. The rows the Q7/Q8
 aggregations read (`full_matlab/`, `w1_interp_full_matlab/`) are derived from these outputs and therefore unchanged.
-Still open from the trial period: the trial-produced raw files (`matlab_outputs/`, the diagnostic `matlab_designs/`)
-must be removed before the trial ends (~2026-12-02); WSINDy rows for Q9 are computed under the JKU licence.
+Clean-up the same day (user): the diagnostic design export (`export_wsindy_q5w_designs.m`, 395 tasks) re-run under
+the JKU licence, **content-identical 395 / 395** (`.mat` headers carry a timestamp, so compared by variable). The
+trial-produced raw folders were then deleted and the JKU outputs moved into the standard path
+`outputs/sideproject_q5w_wsindy/matlab_outputs/` (4,557 + 4,536 files), so every script keeps its default. No MATLAB
+result produced under the trial remains; everything downstream is Python derived from byte-identical inputs. WSINDy
+rows for Q9 are computed under the JKU licence.
 
 ### Q7 complete and officially aggregated: G-Q7 passes, the data-derived stop replaces the 6-term cap
 <!-- aeeaf4b -->
