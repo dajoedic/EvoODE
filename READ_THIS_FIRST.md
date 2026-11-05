@@ -10,9 +10,9 @@ zweites davon. Alles Dauerhafte gehört dorthin, nach `PAPER_1.md` oder ins `DIA
 **Regeln:** wird immer **vollständig überschrieben**, nie angehängt. Was älter als ein paar Tage
 ist, ist vermutlich falsch — dann gilt `CLAUDE.md`.
 
-**Stand: 2026-11-04, 11:30 (Explorable), Cluster-Teil 00:45 — WISP-Plan bis 31.12. (CLAUDE.md, „WISP paper — the fixed plan“).**
+**Stand: 2026-11-05, 01:10 (Explorable); Cluster-Teil 04.11. 00:44, seitdem ungeprüft — WISP-Plan bis 31.12. (CLAUDE.md, „WISP paper — the fixed plan“).**
 
-## 1. Was läuft (Orion, Stand 04.11. 00:44)
+## 1. Was läuft (Orion, letzter geprüfter Stand 04.11. 00:44)
 
 | Lauf | Stand | Wenn fertig |
 |---|---|---|
@@ -21,6 +21,10 @@ ist, ist vermutlich falsch — dann gilt `CLAUDE.md`.
 | **C-6 gekappt** | 1.434/3.366, Parallelität 1 (Zelle 1361, seit 31.10.); **wird leergezogen** (W-Reihe hat Vorrang) | nach W-4 zurück auf 24 |
 
 Kerne: 1 + 3 + 36 = 40, voll belegt. Q8-Probe (75/75) fertig.
+
+**05.11. 01:09: oc-Token abgelaufen** — Stand seit 04.11. 00:44 nicht geprüft, und `shift_pods.sh` kann ohne
+gültigen Login nichts verschieben. Login (Nutzer): `oc login --web https://api.orion.scch.at:6443`, danach Stand
+holen, Tabelle und Statusseite nachziehen.
 
 **Lokal läuft `shift_pods.sh`** (Scratchpad der Sitzung `9f46954f…`, detached, Log `shift_pods.log`, neue Version mit
 Schutzregel): pro fertiger C-6-Zelle C-6-Parallelität −1; Q8 = 40 − C-6 − aktive Q7-Pods (nur steigend); stoppt, wenn
@@ -32,30 +36,29 @@ automatischer Rückweg als Cluster-Pod noch zu bauen.
 
 ## 2. WISP-Explorable (W-X)
 
-- Preview https://claude.ai/artifact/XsxgvgYGZdqPkpnzVd2YMQ **Version 20** (05.11.): Einführung + Kapitel 1
-  (11 Schritte) + Kapitel 2 „Noch ein Baustein dazu“ (6 Schritte).
-- WP-X14 nach Nutzer-Review: Kap. 1 Steigung vor Rauschen; grüne Linie = wahre Steigung beschriftet; Schritt
-  „Längere Abschnitte“ spielt die Längen 1, 2, 8, 16 nacheinander farbig durch (frühere gedimmt); Rauschen-Warum und
-  -Wie in einem Schritt mit Lesepause, Kasten zeigt je eine Abweichung, die in die Summe fällt. Kap. 2: Beispiel u +
-  Pause + übrige Bausteine in einem Schritt, Balken am Ende nach Anteil sortiert (auch Kap. 1).
-- **Nutzerentscheidung 04.11.:** Kapitel 2 bleibt neutral; **den Fehlgriff (u³ statt u², Konstante überflüssig) löst
-  Kapitel 3 auf** (FoBa: 1 → 1,u³ → u,u³ → u,u² = Wahrheit).
-- WP-X15: alle Animationen laufen in Dauerschleife (3 s Pause), Regler raus; Kap. 1 Schritt 5 = eine Länge zur Zeit +
-  RMS-Balken je Länge; Schritt 8 = Gleichung oben mit live gefitteter Zahl, Sortierung nach jedem Baustein (auch Kap. 2);
-  Rauschschritt in drei Rechenschritten (Σd² → /n → √ → korrigiert ≈ 2,9 % → 71,6 % Boden), beide Texte sofort.
-- 05.11. (Claude selbst): Rauschschritt zoomt auf das 9-Punkte-Fenster (vorher ~9 px breit, unsichtbar), folgt dem
-  Durchlauf und zoomt dann heraus. Kap. 2 neu Schritt 6 „Und so weiter“: Runde für Runde jeder offene Baustein
-  (reine Hinzunahmen, gleich `W.path` mit abgeschaltetem Rückschritt), Weg 52,9 → 74,2 → 80,6 → 81,1 → 81,4 → 81,5 %.
-- **Offen:** Nutzer prüft Version 20; Schritt 11 (Aufteilung Rauschen/erklärt/noch erklärbar) „später“. Danach Kapitel 3.
-- **Tests (Nutzer fragte 04.11. nach der Dauer):** im Iterieren nur die schnellen Darstellungstests
-  (`test_wisp_explainer_x*.py` ohne `_x2`, ~2 min) + `check_wisp_explainer_fit.py`; die volle `-k wisp`-Sammlung (~30 min,
-  Export + Neu-Integration) nur bei Daten-/Exportänderungen, spätestens beim Q9-Tausch. So auch in Codex-Aufträge schreiben.
+- Preview https://claude.ai/artifact/XsxgvgYGZdqPkpnzVd2YMQ **Version 20** (05.11., `411573c`): Einführung +
+  Kapitel 1 „Ein Baustein allein“ (11 Schritte) + Kapitel 2 „Noch ein Baustein dazu“ (6 Schritte). Alle Animationen
+  laufen in Dauerschleife (3 s Pause); kein Regler.
+- **Stand Kapitel 1:** Nutzer findet es „erstmal verständlich“. Schritt 9 (Rauschen) zoomt seit Version 20 auf das
+  9-Punkte-Fenster, folgt dem Durchlauf, zoomt heraus, dann die Rechnung Σd² → /n → √ → korrigiert ≈ 2,9 % → 71,6 % Boden.
+- **Stand Kapitel 2:** neutral, kein Urteil, keine wahre Gleichung. Schritt 6 (neu, 05.11.) „Und so weiter, bis alle
+  Bausteine drin sind“: Runde für Runde jeder offene Baustein, nur Hinzunahmen (geprüft gegen `W.path` mit
+  abgeschaltetem Rückschritt), Weg 1 → +u³ → +u → +u² → +sin u → +cos u, erklärter Anteil 52,9 → 74,2 → 80,6 → 81,1 →
+  81,4 → 81,5 %. Annahme: „für alle offenen Bausteine“ = Runden nach dem zweiten Baustein — Nutzer hat das noch nicht
+  bestätigt.
+- **Nutzerentscheidung 04.11.:** den Fehlgriff (u³ statt u², Konstante überflüssig) löst **Kapitel 3** auf (Aufräumen/FoBa:
+  1 → 1,u³ → u,u³ → u,u² = Wahrheit, BIC wählt `path_004`).
+- **Offen:** Nutzer prüft Version 20; Schritt 11 von Kap. 1 (Aufteilung Rauschen/erklärt/noch erklärbar) „später“.
+- **Tests:** im Iterieren nur die schnellen Darstellungstests (`test_wisp_explainer_x*.py` ohne `_x2`, ~2 min) +
+  `check_wisp_explainer_js.py` + `check_wisp_explainer_fit.py` (Edge, Claude startet; In-Page-Timeout seit 05.11. 60 s);
+  die volle `-k wisp`-Sammlung (~30 min) nur bei Daten-/Exportänderungen, spätestens beim Q9-Tausch. So auch in Codex-Aufträge.
 
 ## 3. Als Nächstes
 
-1. Q7 fertig → einsammeln, Aggregation, **G-Q7** (automatisch nach §5-Regel, Claude berichtet).
-2. W-2 läuft; Hochrechnung aus den ersten langen Shards.
-3. Explorable: Nutzer-Feedback zu Version 20, dann Kapitel 3 (Aufräumen/FoBa); Schritt 11 später.
+1. Nutzer: `oc login`; dann Cluster-Stand holen (Q7-Nachzügler, W-2-Fortschritt, C-6-Drain), Statusseite nachziehen.
+2. Q7 fertig → einsammeln, Aggregation, **G-Q7** (automatisch nach §5-Regel, Claude berichtet).
+3. W-2 läuft; Hochrechnung aus den ersten langen Shards.
+4. Explorable: Nutzer-Feedback zu Version 20, dann Kapitel 3 (Aufräumen/FoBa); Schritt 11 später.
 
 > **BLINDREGEL C-6** gilt unverändert: keine C-6-EvoGrow-Ergebnisse ansehen, nur technische Prüfung.
 
