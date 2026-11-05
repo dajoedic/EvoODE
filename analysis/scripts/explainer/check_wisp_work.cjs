@@ -34,3 +34,13 @@ const report={winner:model.winner,coefficient:model.blocks[0].coefficient,floor:
 if(process.argv[3])fs.writeFileSync(process.argv[3],JSON.stringify(report,null,2)+'\n');
 console.log('PASS six single-block fits, full-design gains/coefficients, noise floor and recorded first support');
 console.log('PASS five joint refits, full-design gains/shares/coefficients and step-2 support guard');
+
+vm.runInContext(source.slice(source.indexOf('function thirdModel('),source.indexOf('function secondNumber('))+'\nthis.third=thirdModel;',context);
+const third=context.third(model,live.teaching.t,live.teaching.observed,live,live.featured[0]);
+assert.deepEqual(Array.from(third.truth),live.featured[0].truth_support[0].map(j=>j-1));
+const broken=JSON.parse(JSON.stringify(live.featured[0]));broken.path[2].active_idxs[0]=[1,2];
+assert.throws(()=>context.third(model,live.teaching.t,live.teaching.observed,live,broken),/FoBa path/);
+const wrongTruth=JSON.parse(JSON.stringify(live.featured[0]));wrongTruth.truth_support=[[1]];
+assert.throws(()=>context.third(model,live.teaching.t,live.teaching.observed,live,wrongTruth),/FoBa truth/);
+console.log('PASS four live FoBa supports, repeated removal probes and truth guard');
+if(process.argv[3])fs.writeFileSync(process.argv[3],JSON.stringify({...report,third},null,2)+'\n');

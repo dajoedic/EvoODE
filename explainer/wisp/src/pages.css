@@ -320,3 +320,17 @@ dialog{max-width:min(1050px,90vw);max-height:80dvh;overflow:auto;overscroll-beha
 .story-square{fill:var(--model);stroke:var(--panel);stroke-width:.2}
 .story-length-rms{stroke:none}
 .story-svg .story-equation.story-equation-long{font-size:16px}@media(max-width:759px){.story-svg .story-equation.story-equation-long{font-size:19px}}
+
+/* Chapter three keeps chips, cost annotations and the live refit in separate lanes. */
+.c3-chip,.c3-candidate{fill:var(--wash);stroke:var(--line)}
+.c3-cost{fill:var(--accent)}.c3-cost.goes{fill:var(--residual)}
+.c3-threshold{stroke:var(--ink);stroke-dasharray:6 5;stroke-width:1.5}
+.story-svg .c3-threshold-label{font-size:13px}
+.story-svg[data-state^="c3-"] text{font-size:14px}
+.story-svg[data-state^="c3-"] .c3-chip-label{font-size:19px}
+
+.c3-new-gain{fill:var(--model)}
+
+.c3-zoom-bar,.c3-round-gain{fill:#187b83}
+.c3-round-gain.not-taken{fill:none;stroke:#187b83;stroke-width:2}
+.c3-cut{stroke:#fff;stroke-width:3}

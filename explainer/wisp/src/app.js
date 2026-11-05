@@ -397,6 +397,30 @@ function secondModel(model,t,x,config,feature){
  });
  return {blocks,winner:step.addition,record,step,constant:model.blocks.find(b=>b.term===first.addition)};
 }
+// Presentation audit of every removal pass; the numerical search remains W.path.
+function thirdModel(model,t,x,config,feature){
+ const live=W.path(t,x,config),C=soloCompress(model.D.A,model.D.b),norm=soloDot(model.D.b,model.D.b);
+ const fit=support=>{const f=W.leastSquares(C.A.map(row=>support.map(j=>row[j])),C.b);return {support:support.slice(),coefficients:f.coefficients.map((v,i)=>v/(C.norms[support[i]]||1)),sse:f.sse,remaining:f.sse/norm,share:(1-f.sse/norm)/model.explainable};};
+ const rounds=live.steps.slice(0,4).map((step,i)=>{
+  const record=feature.path[i];
+  if(!record||JSON.stringify(step.support)!==JSON.stringify(record.active_idxs[0].map(j=>j-1)))throw Error('Teaching FoBa path differs from recorded supports');
+  const before=fit(i?live.steps[i-1].support:[]),added=fit([...before.support,step.addition].sort((a,b)=>a-b));
+  const gain=step.gains.find(g=>g.term===step.addition).gain/model.explainable,threshold=config.backward_fraction*gain,probes=[];
+  let current=added;
+  for(const removed of [...step.removed,null]){
+   const costs=current.support.map(term=>({term,fit:fit(current.support.filter(j=>j!==term))})).map(c=>({...c,cost:(c.fit.sse-current.sse)/norm/model.explainable}));
+   const eligible=costs.filter(c=>c.cost<threshold).sort((a,b)=>a.cost-b.cost||a.term-b.term);
+   if((eligible[0]?.term??null)!==removed)throw Error('Teaching removal audit differs from live path');
+   probes.push({model:current,costs,removed});if(removed!==null)current=costs.find(c=>c.term===removed).fit;
+  }
+  return {before,added,after:fit(step.support),addition:step.addition,removed:step.removed,gain,threshold,probes};
+ });
+ const truth=feature.truth_support[0].map(j=>j-1);
+ if(JSON.stringify(rounds.at(-1).after.support)!==JSON.stringify(truth))throw Error('Teaching FoBa truth differs from recorded support');
+ const last=rounds.at(-1).after;
+ const next=Array.from({length:model.D.A[0].length},(_,term)=>term).filter(j=>!last.support.includes(j)).map(term=>({term,gain:(last.sse-fit([...last.support,term].sort((a,b)=>a-b)).sse)/norm/model.explainable})).sort((a,b)=>b.gain-a.gain||a.term-b.term)[0];
+ return {rounds,truth,next,fit};
+}
 function secondNumber(value){return Number(value).toLocaleString(language,{maximumSignificantDigits:3,maximumFractionDigits:12,useGrouping:false}).replaceAll('-','−');}
 function secondEquation(support,coefficients){return 'du/dt = '+coefficients.map((c,i)=>(i?(c<0?' − ':' + '):c<0?'−':'')+secondNumber(Math.abs(c))+(support[i]?'·'+terms[support[i]]:'')).join('');}
 function initChapterOne(){
@@ -406,6 +430,7 @@ function initChapterOne(){
  const states=['data','slope','noise-visible','secants','windows','error-empty','fit','every','noise-estimate','percent','solution'];
  const constant=m.blocks.find(b=>b.term===0),winner=m.blocks.find(b=>b.term===m.winner),norm=soloDot(m.D.b,m.D.b);
  const two=secondModel(m,t,x,LIVE,LIVE.featured[0]),twoStates=['c2-standing','c2-residual','c2-joint','c2-error','c2-solution','c2-all'];
+ const three=thirdModel(m,t,x,LIVE,LIVE.featured[0]),threeStates=['c3-standing','c3-probe','c3-threshold','c3-linear','c3-quadratic','c3-compare','c3-next'];
  const twoWinner=two.blocks.find(b=>b.term===two.winner),joint=two.blocks.find(b=>b.term===1);
  const remainingBlocks=two.blocks.filter(b=>b.term!==joint.term),sortAt=remainingBlocks.length*2500;
  // Last step of chapter two: the same round (try every open block, refit jointly, keep the best)
@@ -455,6 +480,12 @@ function initChapterOne(){
  $('c2-closing').textContent=tr('x13_closing');
  const allArgs={count:terms.length,second:pct(twoWinner.share),third:pct(rounds[0].winner.share),last:pct(rounds.at(-1).winner.share)};
  [0,1].forEach(i=>{$('c2-all-text-'+i).textContent=tr('x16_text_'+i,allArgs);});
+ document.querySelectorAll('[data-c3-eye]').forEach(e=>e.textContent=tr('x10_eye',{i:e.dataset.c3Eye,n:threeStates.length}));
+ const threeArgs={share:pct(three.rounds[1].after.share),linear:terms[three.rounds[2].addition],quadratic:terms[three.rounds[3].addition],constant:terms[three.rounds[2].removed[0]],cubic:terms[three.rounds[3].removed[0]],roundLinear:three.rounds.indexOf(three.rounds[2])+1,roundQuadratic:three.rounds.indexOf(three.rounds[3])+1,fraction:secondNumber(LIVE.backward_fraction),next:terms[three.next.term],gain:secondNumber(100*three.next.gain)+' %'};
+ threeStates.forEach((_,i)=>{ $('c3-title-'+i).textContent=tr('x17_title_'+i,threeArgs);$('c3-text-'+i).textContent=tr('x17_text_'+i,threeArgs);});
+ const teachingCell=RESULTS.cells.find(c=>c.row.cell_id===teaching.cell_id),truthDemo=LIVE.illustrations.find(d=>d.system_id===teachingCell.system_id);
+ // The teaching system's stored logistic constants, not fitted result-row params.
+ const truthCoefficients=[truthDemo.constants[0],-truthDemo.constants[0]/truthDemo.constants[1]];
  const host=$('c1-stage'),svg=svgNode('svg',{viewBox:'0 0 800 480',role:'img',class:'story-svg'});host.append(svg);const caption=el('figcaption',tr('x10_caption'),'story-caption');caption.dataset.claim='review';host.append(caption);
  const clock=window.WispStoryClock||{now:()=>performance.now(),request:fn=>requestAnimationFrame(fn),cancel:id=>cancelAnimationFrame(id)};
  const clamp=v=>Math.max(0,Math.min(1,v)),ease=v=>{v=clamp(v);return v*v*(3-2*v);},mix=(a,b,s)=>a+(b-a)*s;
@@ -516,6 +547,19 @@ function initChapterOne(){
  const noiseCount=seq=>seq<noiseIn?0:seq<noiseSlowEnd?(seq-noiseIn)/1000:noiseSlow+(n-noiseSlow)*clamp((seq-noiseSlowEnd)/3000)**2;
  const durations={data:900,'noise-visible':2300,slope:3800,secants:16100,windows:12900,'error-empty':2900,fit:4900,every:16900,'noise-why':900,'noise-estimate':noiseFastEnd+4700,percent:900,solution:900};
  Object.assign(durations,{'c2-standing':900,'c2-residual':3900,'c2-joint':jointPause+sortAt+1900,'c2-every':sortAt+1900,'c2-error':3900,'c2-solution':900,'c2-all':900+roundStart.at(-1)+1200});
+ Object.assign(durations,{'c3-standing':1200,'c3-probe':3600,'c3-threshold':3600,'c3-linear':16000,'c3-quadratic':16000,'c3-compare':4200,'c3-next':4200});
+ const c3Chips=terms.map(()=>({box:node('rect',{class:'c3-chip',rx:6},'rect',[0,0,0,0,0]),text:label('c3-chip-label')}));
+ const c3Bars=terms.map(()=>({bar:node('rect',{class:'c3-cost'},'rect',[0,0,0,0,0]),name:label(),value:label(),status:label()}));
+ const c3GainBar=node('rect',{class:'c3-new-gain'},'rect',[0,0,0,0,0]),c3GainName=label(),c3GainValue=label();
+ const c3Line=line('c3-threshold'),c3Threshold=label('c3-threshold-label'),c3Status=label(),c3Share=label(),c3Gain=label(),c3Axis=label(),c3Zero=label(),c3Max=label();
+ const c3Paths=Array.from({length:8},()=>({box:node('rect',{class:'c3-candidate',rx:6},'rect',[0,0,0,0,0]),text:label()}));
+ const c3Headers=[label(),label()],c3Truth=label(),c3Weak=label(),c3Coefficients=three.truth.map(()=>label());
+ const c3Zoom={title:label('c3-zoom-title'),y:label(),value:label(),max:label(),zero:label(),axis:line('story-grid'),base:line('story-grid'),threshold:line('c3-threshold c3-zoom-threshold'),x:label(),bars:terms.map(()=>({bar:node('rect',{class:'c3-zoom-bar'},'rect',[0,0,0,0,0]),cut:line('c3-cut'),name:label()}))};
+ const c3RoundBars=Array.from({length:5},(_,j)=>({bar:node('rect',{class:'c3-round-gain'+(j===4?' not-taken':'')},'rect',[0,0,0,0,0]),name:label(),value:label(),round:label()}));
+ const c3CostX=label();
+ const c3RoundAxes=[line('story-grid'),line('story-grid')],c3RoundX=label(),c3RoundY=label(),c3NotTaken=label();
+
+ nodes[c3NotTaken].e.setAttribute('text-anchor','end');
  // Chapter two shares the persistent topology, renderer, axes, windows and clock.
  // Divide weak changes and design rows by each displayed window's duration to
  // show slopes; fitting still uses ALL original windows in unscaled weak units.
@@ -612,8 +656,139 @@ function initChapterOne(){
   svg.dataset.state=state;svg.dataset.term=String(block.term);svg.dataset.error=String(1-gain);svg.dataset.coefficients=JSON.stringify(coefficients);svg.dataset.complete=String(ms>=durations[state]);
   return s;
  }
+ // All chapter-three nodes are mounted once; removal/refit only changes geometry.
+ function thirdScene(state,ms){
+  const costPct=value=>secondNumber(100*value)+' %';
+  const s=blank.map(a=>a.slice()),put=(id,a)=>{s[id]=a;},text=(id,value,x,y,opacity=1)=>{nodes[id].e.textContent=value;put(id,[x,y,opacity]);};
+  svg.dataset.magnified='false';
+  nodes[equation].e.classList.remove('story-equation-long');
+  twoSlots.forEach(slot=>nodes[slot.bar].e.classList.remove('winner'));
+  c3Bars.forEach((slot,j)=>{nodes[slot.bar].e.dataset.term=String(j);nodes[slot.bar].e.dataset.value='';nodes[slot.bar].e.classList.remove('goes');});nodes[c3Line].e.dataset.value='';nodes[c3GainBar].e.dataset.value='';
+  const compare=state==='c3-compare',next=state==='c3-next',audit=['c3-probe','c3-threshold','c3-linear','c3-quadratic'].includes(state),repair=['c3-linear','c3-quadratic'].includes(state);
+  const R=three.rounds[state==='c3-quadratic'?3:state==='c3-linear'?2:1];
+  const start=repair?1800:0,firstEnd=start+R.probes[0].costs.length*1800,removeEnd=firstEnd+3200,compactEnd=firstEnd+1200;
+  const pass=repair&&ms>=removeEnd?1:0,probe=R.probes[pass]||R.probes[0],local=ms-(pass?removeEnd:start);
+  const index=Math.min(probe.costs.length-1,Math.max(0,Math.floor(local/1800))),trial=probe.costs[index];
+  const testing=audit&&ms>=start&&local<probe.costs.length*1800;
+  const phase=testing?ease((local%1800)/1200):0;
+  let from=R.after,to=R.after,blend=1;
+  if(repair&&ms<start){from=R.before;to=R.added;blend=ease(ms/start);}
+  else if(testing){from=probe.model;to=trial.fit;blend=phase<.5?phase*2:(1-phase)*2;}
+  else if(repair&&ms<removeEnd){from=R.added;to=R.after;blend=ease((ms-firstEnd)/1200);}
+  const current=repair&&ms<start?R.added:repair&&ms>=compactEnd?R.after:probe.model;
+  const support=compare||next?three.rounds.at(-1).after.support:current.support;
+  svg.dataset.support=JSON.stringify(support);svg.dataset.probeSupport=JSON.stringify(probe.model.support);svg.dataset.probe=String(pass);svg.dataset.testedTerm=testing?String(trial.term):'';
+  caption.style.visibility='visible';caption.textContent=tr('x17_caption');
+  if(compare||next){
+   const fade=ease(ms/1200);
+   const forward=[three.rounds[0].after,three.rounds[1].after,rounds[0].winner,rounds[1].winner];
+   text(c3Headers[0],tr(compare?'x17_forward':'x17_candidates'),48,30);
+   if(compare)text(c3Headers[1],tr('x17_foba'),432,30);
+   c3Paths.forEach((slot,j)=>{
+    const col=Math.floor(j/4),row=j%4,entry=compare?(col?three.rounds[row].after:forward[row]):col?null:three.rounds[row].after;
+    if(!entry)return;
+    const xx=48+col*384,yy=54+row*64;
+    put(slot.box,[xx,yy,316,44,fade]);text(slot.text,entry.support.map(j=>terms[j]).join(',  '),xx+16,yy+28,fade);
+   });
+   if(compare){
+    const reveal=ease((ms-1800)/1500);
+    text(c3Truth,tr('x17_truth')+'  '+secondEquation(three.truth,truthCoefficients),48,354,reveal);
+    text(c3Weak,tr('x17_weak')+'  '+secondEquation(three.rounds.at(-1).after.support,three.rounds.at(-1).after.coefficients),48,390,reveal);
+    three.truth.forEach((term,j)=>text(c3Coefficients[j],tr('x17_coefficient',{term:terms[term],fit:secondNumber(three.rounds.at(-1).after.coefficients[j]),truth:secondNumber(truthCoefficients[j])}),48,430+j*28,reveal));
+   }else{
+    const gains=three.rounds.map(r=>({term:r.addition,gain:r.gain})).concat([three.next]);
+    const maximum=Math.max(...gains.map(g=>g.gain)),top=152,bottom=340,left=448,right=776;
+    const Y=v=>bottom-(bottom-top)*v/maximum;
+    text(c3Axis,tr('x17_round_gain'),432,80);text(c3RoundY,tr('x17_explained_scale'),432,110);
+    text(c3Max,costPct(maximum),400,140);text(c3Zero,pct(0),400,346);
+    put(c3RoundAxes[0],[432,top,432,bottom,1]);put(c3RoundAxes[1],[432,bottom,right,bottom,1]);
+    text(c3RoundX,tr('x17_round_axis'),690,470);
+    gains.forEach((g,j)=>{
+     const slot=c3RoundBars[j],xx=left+j*64,h=(bottom-Y(g.gain))*fade;
+     nodes[slot.bar].e.dataset.term=String(g.term);nodes[slot.bar].e.dataset.value=String(g.gain);
+     put(slot.bar,[xx,bottom-h,32,h,1]);text(slot.value,costPct(g.gain),xx-8,370,fade);
+     text(slot.name,terms[g.term],xx,394);text(slot.round,String(j+1),xx,418);
+    });
+    nodes[c3NotTaken].e.setAttribute('text-anchor','end');text(c3NotTaken,tr('x17_not_taken'),772,444);
+    text(c3Status,tr('x17_question'),48,458,ease((ms-2200)/1200));
+   }
+   return s;
+  }
+  // Model chips always keep catalogue order; an omitted block fades during its probe.
+  support.forEach((term,j)=>{let xx=48+j*112;const grey=testing&&trial.term===term;
+   if(repair&&ms<start&&!R.before.support.includes(term))xx=48+j*112;
+   else if(repair&&ms<start)xx=mix(48+R.before.support.indexOf(term)*112,xx,ease(ms/(start/2)));
+   else if(repair&&ms>=firstEnd&&ms<removeEnd&&!R.removed.includes(term))xx=mix(xx,48+R.after.support.indexOf(term)*112,ease((ms-firstEnd-600)/600));
+   const leaving=repair&&ms>=firstEnd&&ms<removeEnd&&R.removed.includes(term);
+   const opacity=leaving?1-ease((ms-firstEnd)/600):repair&&ms<start&&term===R.addition?ease((ms-start/2)/(start/2)):grey?.25:1,chip=c3Chips[term];
+   const yy=leaving?14-12*ease((ms-firstEnd)/600):14;
+   put(chip.box,[xx,yy,96,36,opacity]);text(chip.text,terms[term],xx+14,yy+24,opacity);
+  });
+  const visibleShare=(1-mix(from.remaining,to.remaining,blend))/m.explainable;
+  text(c3Share,tr('x17_share',{share:pct(visibleShare)}),48,80);
+  if(repair)text(c3Gain,tr('x17_gain',{term:terms[R.addition],gain:costPct(R.gain)}),48,110);
+  if(audit){
+   // One fixed axis for both passes of this round, including the newcomer's gain.
+   const maximum=Math.max(R.gain,R.threshold,...R.probes.flatMap(p=>p.costs.map(c=>c.cost)))*1.18;
+   const top=196,bottom=368,Y=v=>bottom-(bottom-top)*v/maximum;
+   text(c3Axis,tr('x17_cost_axis'),48,172);text(c3CostX,tr('x17_block_axis'),350,462);text(c3Max,pct(maximum),4,190);text(c3Zero,pct(0),4,380);
+   put(c3Line,[48,Y(R.threshold),444,Y(R.threshold),state==='c3-probe'?0:1]);
+   text(c3Threshold,tr('x17_threshold',{value:costPct(R.threshold)}),48,142,state==='c3-probe'?0:1);
+   nodes[c3Line].e.dataset.value=String(R.threshold);
+   if(repair){const h=(bottom-Y(R.gain))*ease(ms/start);put(c3GainBar,[394,bottom-h,44,h,1]);text(c3GainName,'+'+terms[R.addition],394,395);text(c3GainValue,costPct(R.gain),394,418);nodes[c3GainBar].e.dataset.value=String(R.gain);}
+
+   probe.costs.forEach((c,j)=>{
+    const slot=c3Bars[c.term],xx=60+j*108,done=local>=j*1800,progress=clamp((local-j*1800)/1200),h=(bottom-Y(c.cost))*ease(progress);
+    const goes=state!=='c3-probe'&&c.cost<R.threshold;
+    nodes[slot.bar].e.classList.toggle('goes',goes);nodes[slot.bar].e.dataset.term=String(c.term);nodes[slot.bar].e.dataset.value=String(c.cost);
+    put(slot.bar,[xx,bottom-h,58,h,done?1:0]);
+    text(slot.name,terms[c.term],xx,395);
+    // Numeric annotations stay in separate rows, clear of bars and the threshold.
+    text(slot.value,costPct(c.cost),xx,418,done?1:0);
+    text(slot.status,tr(goes?'x17_goes':'x17_stays'),xx,440,done&&state!=='c3-probe'&&(!goes||!repair||ms>=firstEnd)?1:0);
+   });
+   text(c3Status,tr(testing?'x17_omit':repair&&pass?'x17_repeat':repair&&ms>=firstEnd?'x17_removed':'x17_all_stay',{term:testing?terms[trial.term]:''}),48,472);
+   // Keep the common full-scale axis fixed across both probes; magnify the
+   // decisive low costs without a discontinuous rescale or hiding large bars.
+   const magnified=state!=='c3-probe'&&ms>=start&&R.threshold<.1*maximum;
+   svg.dataset.magnified=String(magnified);svg.dataset.costMaximum=String(maximum);
+   nodes[c3Zoom.threshold].e.dataset.value=String(R.threshold);
+   if(magnified){
+    const limit=2.5*R.threshold,top=64,bottom=124,Y=v=>bottom-(bottom-top)*Math.min(v,limit)/limit;
+    const closest=probe.costs.reduce((a,b)=>Math.abs(a.cost-R.threshold)<Math.abs(b.cost-R.threshold)?a:b);
+    text(c3Zoom.title,tr('x17_magnified'),480,20);text(c3Zoom.y,tr('x17_cost_axis'),590,20);
+    text(c3Zoom.value,terms[closest.term]+': '+costPct(closest.cost),480,42);
+    text(c3Zoom.max,costPct(limit),480,62);text(c3Zoom.zero,pct(0),480,128);text(c3Zoom.x,tr('x17_block_axis'),480,150);
+    put(c3Zoom.axis,[538,top,538,bottom,1]);put(c3Zoom.base,[538,bottom,772,bottom,1]);
+    put(c3Zoom.threshold,[538,Y(R.threshold),772,Y(R.threshold),1]);
+    probe.costs.forEach((c,j)=>{
+     const slot=c3Zoom.bars[c.term],xx=550+j*72,done=local>=j*1800,progress=ease(clamp((local-j*1800)/1200));
+     const h=bottom-Y(c.cost*progress);
+     put(slot.bar,[xx,bottom-h,40,h,done?1:0]);
+     nodes[slot.bar].e.dataset.value=String(c.cost);nodes[slot.bar].e.dataset.term=String(c.term);
+     nodes[slot.bar].e.dataset.limit=String(limit);
+     put(slot.cut,[xx-2,top+5,xx+42,top-5,done&&c.cost*progress>limit?1:0]);
+     text(slot.name,terms[c.term],xx,150);
+    });
+   }
+
+  }
+  // Reuse chapter two's weak-rate rows and fixed prediction vertices for every refit.
+  const left=480,right=772,top=210,bottom=368,X=v=>left+(v-t[0])/(t.at(-1)-t[0])*(right-left),Y=v=>bottom-(v+slopeExtent)/(2*slopeExtent)*(bottom-top);
+  text(c3Headers[0],tr('x17_live_fit'),480,172);
+  text(axisLabels[10],tr('x12_axis_slope'),480,194);text(axisLabels[11],tr('j157'),680,395);
+  for(const [key,v] of Object.entries({x:left,y:top,width:right-left,height:bottom-top}))clipRect.setAttribute(key,v);
+  nodes[predictionPath].e.setAttribute('clip-path','url(#story-top-clip)');nodes[predictionPath].e.classList.remove('story-clean-slope');
+  put(axisLines[0],[left,bottom,right,bottom,1]);
+  data.forEach((id,j)=>{const r=slopeRows[j];put(id,[r?X(r.time):left,r?Y(r.rate):bottom,r?1:0]);});
+  const expanded=Array.from({length:n},(_,j)=>Math.min(slopeRows.length-1,Math.floor(j*slopeRows.length/n)));
+  put(predictionPath,[...expanded.flatMap(i=>{const r=slopeRows[i];return [X(r.time),Y(mix(predict(from,r),predict(to,r),blend))];}),1]);
+  text(c3Weak,secondEquation(current.support,current.coefficients),480,418);
+  return s;
+ }
  let current=null,frame=0,last=blank.map(a=>a.slice()),elapsed=0,reverseZoom=false;
  function scene(state,ms){
+  if(state?.startsWith('c3-')){const s=thirdScene(state,ms);svg.dataset.state=state;svg.dataset.complete=String(ms>=durations[state]);result.hidden=true;return s;}
   const requested=state,elapsedMs=ms;
   $('c1-story-text-8').style.opacity='1';
   $('c2-text-3').style.opacity='1';
@@ -643,6 +818,7 @@ function initChapterOne(){
  function baseScene(state,ms){
   if(state.startsWith('c2-'))return secondScene(state,ms);
   nodes[equation].e.classList.remove('story-equation-long');
+  twoSlots.forEach(slot=>nodes[slot.bar].e.classList.remove('winner'));
   caption.textContent=tr('x10_caption');
   nodes[axisLabels[0]].e.classList.remove('story-stack-legend');nodes[axisLabels[0]].e.setAttribute('text-anchor','end');
   nodes[readout].e.classList.remove('story-construction-readout');nodes[readout].e.classList.remove('story-long-label');
@@ -894,7 +1070,7 @@ function initChapterOne(){
  function finish(){if(current){clock.cancel(frame);elapsed=durations[current];render(scene(current,elapsed));}}
  function enter(state,restart=false){
   reverseZoom=current==='secants'&&state==='noise-visible';
-  finish();host.hidden=![...states,...twoStates].includes(state);
+  finish();host.hidden=![...states,...twoStates,...threeStates].includes(state);
   if(host.hidden){current=null;return;}
   const from=last.map(a=>a.slice());current=state;elapsed=0;
   svg.setAttribute('aria-label',document.querySelector('[data-stage="'+state+'"] h2')?.textContent||state);
@@ -915,6 +1091,7 @@ function initChapterOne(){
   if(window.matchMedia('(prefers-reduced-motion: reduce)').matches)finish();else {tick(start);}
  }
  window.WispChapterOne={model:m,error:chapterError,parts:chapterParts};
+ window.WispChapterThree={model:three,states:threeStates,truthCoefficients};
  window.WispChapterTwo={model:two,states:twoStates,slopeRows,predict};
  window.WispChapterStory={states,durations,rounds,roundStart,trialMs,tailMs,enter,finish,seek,local,examples,variance,relative,actual,longRows,lengthClouds,longerLengths,remainingBlocks,sortAt,noisePause,jointPause,squarePrefix,deviations,lengthRms,rates,trueRates,smooth,rateBound,clock,svg,current:()=>current,elapsed:()=>elapsed};
 }

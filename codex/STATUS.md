@@ -1,4 +1,4 @@
-﻿status: blocked
-task: WP-X15
-report: codex/reports/REPORT_WP_X15.md
-note: Umsetzung, 33 schnelle Tests, JS-Check und byte-identischer Build fertig; nur Browserabnahme blockiert (Access is denied) — Umgebung, nicht Sache.
+status: blocked
+task: WP-X16b
+report: codex/reports/REPORT_WP_X16B.md
+note: Umgebung, nicht Sache: Umsetzung, 35 Tests und identischer Rebuild fertig; Browser-Abnahme blockiert durch Playwright WinError 5 und fehlgeschlagenen Edge-Start.

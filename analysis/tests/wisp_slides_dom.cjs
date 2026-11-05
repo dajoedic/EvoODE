@@ -62,7 +62,7 @@ if(fixture.configuration==='delivered'){
  const close=(a,b)=>assert(Math.abs(a-b)<=1e-9*Math.max(1,Math.abs(b)),`${a} != ${b}`);
  const ids=['p-hook','p-challenge','p-c1-data','p-c1-slope','p-c1-noise-visible','p-c1-secants','p-c1-changes','p-c1-error-empty','p-c1-fit','p-c1-every','p-c1-noise','p-c1-percent','p-c1-solution'];
  const twoIds=['standing','residual','joint','error','solution','all'].map(s=>'p-c2-'+s);
- assert.deepEqual(slides.pages.map(p=>p.id),ids.concat(twoIds));
+ assert.deepEqual(slides.pages.map(p=>p.id),ids.concat(twoIds,WispChapterThree.states.map(s=>'p-'+s)));
  slides.nav.go(2);assert.equal(doc.getElementById('masthead-title').textContent,tr('x12c_chapter'));assert.equal(doc.getElementById('chapter-progress').getAttribute('aria-valuemax'),'11');
  assert.deepEqual(slides.pages.slice(2,13).map(p=>p.dataset.stage),story.states);
  assert.equal(doc.querySelectorAll('#c1-stage svg').length,1);
@@ -233,6 +233,81 @@ if(fixture.configuration==='delivered'){
  global.matchMedia=()=>({matches:true,addEventListener(){}});two.states.forEach((state,i)=>{story.enter(state);assert.equal(svg.dataset.complete,'true');svg.children.forEach((e,j)=>assert.deepEqual({...e.attrs,opacity:e.style.opacity},twoSaved[i][j]));});
  global.matchMedia=()=>({matches:false,addEventListener(){}});
  console.log('PASS X13: five bilingual pages, persistent SVG, joint coefficients, candidate order/shares, slope noise band, recorded equation, replay and reduced motion');
+
+ const three=WispChapterThree, snapshot=()=>svg.children.map(e=>({...e.attrs,opacity:e.style.opacity}));
+ slides.nav.link('#p-c3-standing');assert.equal(doc.getElementById('masthead-title').textContent,tr('x17_chapter'));
+ assert.equal(doc.querySelectorAll('.page-dots a').filter(a=>!a.hidden).length,7);
+ const trueCell=fixture.data.results.cells.find(c=>c.row.cell_id===fixture.data.live.teaching.cell_id),trueDemo=fixture.data.live.illustrations.find(d=>d.system_id===trueCell.system_id);
+ close(three.truthCoefficients[0],trueDemo.constants[0]);close(three.truthCoefficients[1],-trueDemo.constants[0]/trueDemo.constants[1]);
+ const threeSaved=[];
+ three.states.forEach((state,i)=>{
+  story.enter(state);story.finish();threeSaved.push(snapshot());
+  assert.deepEqual(JSON.parse(svg.dataset.support),three.model.rounds[i<3?1:i===3?2:3].after.support);
+  assert.equal(svg.dataset.complete,'true');assert.strictEqual(story.svg,original);
+  // Every animation restarts after the common hold; seek uses that same cycle.
+  story.seek(400);const early=snapshot();story.seek(story.durations[state]+3400);assert.deepEqual(snapshot(),early);
+  story.enter(state);advance(story.durations[state]+3600,100);assert(story.elapsed()<1000,'animation did not replay: '+state);
+  story.finish();assert.deepEqual(snapshot(),threeSaved[i]);
+ });
+ for(const [state,round] of [['c3-linear',three.model.rounds[2]],['c3-quadratic',three.model.rounds[3]]]){
+  story.enter(state);story.seek(6900);
+  const bars=doc.querySelectorAll('.c3-cost').filter(e=>+e.style.opacity>0);
+  assert.equal(bars.length,round.added.support.length);
+  round.probes[0].costs.forEach(c=>{const bar=bars.find(e=>+e.dataset.term===c.term);close(+bar.dataset.value,c.cost);assert.equal(bar.classList.contains('goes'),c.cost<round.threshold);});
+  close(+doc.querySelector('.c3-threshold').dataset.value,round.threshold);
+  story.finish();assert.equal(svg.dataset.probe,'1');
+  assert.deepEqual(JSON.parse(svg.dataset.probeSupport),round.after.support);
+ }
+
+ // X16b: exercise the actual scene with the real export, including both probes,
+ // the entire removal hold, low-threshold zoom and live round gains.
+ for(const [state,round] of [['c3-linear',three.model.rounds[2]],['c3-quadratic',three.model.rounds[3]]]){
+  story.enter(state);
+  const firstEnd=1800+round.probes[0].costs.length*1800,repeat=firstEnd+3200;
+  for(const time of [0,1799,1800,6900,firstEnd,firstEnd+600,firstEnd+1200,repeat-1,repeat,repeat+1800,14000,15300,16000]){
+   story.seek(time);
+   assert.equal(svg.dataset.probe,time<repeat?'0':'1');
+   const expected=time>=1800&&round.threshold<.1*(+svg.dataset.costMaximum);
+   assert.equal(svg.dataset.magnified,String(expected));
+   assert.equal(+doc.querySelector('.c3-zoom-title').style.opacity>0,expected);
+   if(expected){
+    const probe=round.probes[time<repeat?0:1];
+    const allZoom=doc.querySelectorAll('.c3-zoom-bar');
+    probe.costs.forEach(c=>{const bar=allZoom.find(b=>+b.dataset.term===c.term);close(+bar.dataset.value,c.cost);close(+bar.dataset.limit,2.5*round.threshold);assert(+bar.getAttribute('height')<=60+1e-10);});
+    close(+doc.querySelector('.c3-zoom-threshold').dataset.value,round.threshold);
+   }
+   if(time>=firstEnd+600&&time<repeat){
+    round.removed.forEach(term=>assert.equal(+doc.querySelectorAll('.c3-chip-label')[term].style.opacity,0));
+    assert(doc.querySelectorAll('.c3-cost.goes').some(b=>+b.style.opacity===1));
+   }
+  }
+  // Leaving labels vanish before compaction; surviving label boxes stay disjoint.
+  for(const time of [...Array.from({length:37},(_,j)=>j*50),...Array.from({length:65},(_,j)=>firstEnd+j*50)]){
+   story.seek(time);const labels=doc.querySelectorAll('.c3-chip-label').filter(e=>+e.style.opacity>.01).sort((a,b)=>+a.getAttribute('x')-+b.getAttribute('x'));
+   labels.forEach((e,j)=>{if(j)assert(+e.getAttribute('x')- +labels[j-1].getAttribute('x')>=96);});
+  }
+ }
+ for(const state of ['c3-standing','c3-probe','c3-threshold','c3-compare','c3-next']){
+  story.enter(state);story.finish();assert.equal(svg.dataset.magnified,'false');
+ }
+ for(const state of ['c3-compare','c3-next']){
+  story.enter(state);story.finish();
+  doc.querySelectorAll('.c3-candidate').forEach(box=>{const text=svg.children[svg.children.indexOf(box)+1];assert(!text.textContent.includes('·'));});
+ }
+ story.enter('c3-next');story.finish();
+ const roundGains=doc.querySelectorAll('.c3-round-gain');
+ assert.equal(roundGains.length,5);
+ const gains=three.model.rounds.map(r=>({term:r.addition,gain:r.gain})).concat([three.model.next]);
+ gains.forEach((g,j)=>{close(+roundGains[j].dataset.value,g.gain);assert.equal(+roundGains[j].dataset.term,g.term);close(+roundGains[j].getAttribute('height'),188*g.gain/Math.max(...gains.map(g=>g.gain)));assert.equal(roundGains[j].classList.contains('not-taken'),j===4);});
+ doc.querySelectorAll('.c3-threshold').forEach(e=>assert.equal(+e.style.opacity,0));
+ for(const state of ['c2-joint','c3-linear']){
+  story.enter(state);story.finish();const texts=svg.children.filter(e=>e.tagName==='TEXT'&&+e.style.opacity>0).map(e=>e.textContent);
+  assert(texts.includes(tr('x12_axis_slope')));assert(texts.includes(tr('j157')));
+ }
+ console.log('PASS X16b: inset condition and live costs, clipped bars, removal hold, non-overlapping chip positions, model separators, five live gains and common fit axis titles');
+ three.states.forEach((state,i)=>{global.matchMedia=()=>({matches:true,addEventListener(){}});story.enter(state);assert.equal(svg.dataset.complete,'true');snapshot().forEach((node,j)=>assert.deepEqual(node,threeSaved[i][j],state+' node '+j));});
+ global.matchMedia=()=>({matches:false,addEventListener(){}});
+ console.log('PASS X16: seven bilingual scenes, live supports/costs/thresholds, repeated probes, persistent topology, replay, deterministic seek and reduced motion');
  if(fixture.language==='en')fs.writeFileSync(require('path').join(require('path').dirname(process.argv[3]),'x12c_story_numbers.json'),JSON.stringify({durations:story.durations,n:t.length,neighbourPairs:8,longDots:story.longRows.length,coefficient:optimum,rangeEnd:2*optimum,winnerError:1-m.blocks.find(b=>b.term===m.winner).gain,floor:m.floor,designWindows:m.D.windows.length},null,2));
  console.log('PASS X12: 11 bilingual states, real numeric geometry, keyboard-only walk, vertical wheel/keys, persistent SVG, sequence interruption/replay, reverse and reduced motion');process.exit(0);
 }
