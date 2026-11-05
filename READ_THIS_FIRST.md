@@ -51,6 +51,11 @@ automatischer Rückweg als Cluster-Pod noch zu bauen.
 1. ~~Q7 einsammeln, G-Q7~~ erledigt 05.11.: Q7 ersetzt die 6-Term-Grenze in WISP (`DIARY.md`).
 2. W-2 läuft; Hochrechnung aus den ersten langen Shards.
 3. Explorable: Nutzer-Feedback zu Version 20, dann Kapitel 3 (Aufräumen/FoBa); Schritt 11 später.
+4. **Termin mit dem Professor Di 10.11., 30 min.** Folien https://claude.ai/artifact/Fi25YcnmvhWFo4yRC7yc1i (privat):
+   Folien „von nichts zu WISP“ → **WISP live im Explorable (Kern, ~12 min)** → Folien „von WISP zum PhD“ (Plan, Journal,
+   Promotion, drei Entscheidungen); Methoden-/Ergebnisfolien als Reserve am Ende. Explorable bis Dienstag: Kapitel 3
+   Aufräumen, 4 Aufhören, 5 Fitten/Wählen, 6 Ergebnisse — Nutzer kümmert sich. Lücke Folie „Weg zur Promotion“:
+   Vorgabe Doktoratsstudium und Zielzeitpunkt.
 
 > **BLINDREGEL C-6** gilt unverändert: keine C-6-EvoGrow-Ergebnisse ansehen, nur technische Prüfung.
 
