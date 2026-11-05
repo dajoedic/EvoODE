@@ -6,6 +6,20 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ## 2026-11-05
 
+### WISP explorable: content complete (versions 21–26)
+
+User asked for "alles fertig, in der richtigen Reihenfolge". Chapters 3–9 built in one evening through Codex
+(WP-X16 to X20b) with Claude's browser review after every package. Order principle made binding: one WISP round is
+test (Q7) → add → clean-up (FoBa), trajectory fit and BIC only after the path ended; chapter 2's forward-only walk to
+all six blocks was removed because WISP never takes that path (kept only as a labelled counterfactual in chapter 3).
+Chapter 4's replay first showed the post-addition model during the test phase and the clean-up probes during the
+addition — both order violations, both fixed. Results switched from Q5 to Q7 (interim), WSINDy comparison rows from
+`q7_grid/q7_q5w_comparison.csv` (JKU re-run). Q7 display curves Julia-verified: 804 reused from Q5, 814 evaluated,
+14 cells without a chosen model, 77 withheld for missing/nonfinite stored scores. The exporter now stamps source
+provenance instead of the repository HEAD, so a re-export with unchanged inputs is byte-identical. Kochbuch numbers
+for System 27 and System 3 (start 21) verified against the Q7 records — all agree.
+<!-- commits: 46ffca5 3edcc5c b9222c5 3da07fb 995791d a7cd868 -->
+
 ### Q8 (W-2) interim look at the user's request — preliminary, decides nothing
 <!-- 010cbd0 -->
 Orion 490 / 3,540 shards done; records fetched as one tarball through a pod (S: was unreachable) into
