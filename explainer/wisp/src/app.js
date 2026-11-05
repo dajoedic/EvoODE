@@ -440,6 +440,37 @@ function fourthModel(model,t,x,config,feature,third){
 }
 function secondNumber(value){return numberText(value).replaceAll('-','−');}
 function thresholdNumber(value){return numberText(value,15);}
+// Presentation protocol data, distinct from the unchanged scientific result contract.
+function fifthModel(live,protocol){
+ const feature=live.featured[0],observation=live.teaching;
+ if(feature.cell_id!==observation.cell_id)throw Error('Chapter-five teaching cell mismatch');
+ const canonical=s=>JSON.stringify(s.slice().sort((a,b)=>a-b));
+ const candidates=feature.stop_reference.supports.map(support=>{
+  const matches=feature.candidates.filter(c=>canonical(JSON.parse(c.row.active_idxs)[0].map(j=>j-1))===canonical(support));
+  if(matches.length!==1)throw Error('Chapter-five support must identify one candidate');
+  const stored=matches[0],start=feature.path.find(p=>p.candidate_id===stored.row.candidate_id);
+  if(!start||canonical(start.active_idxs[0].map(j=>j-1))!==canonical(support))throw Error('Chapter-five weak start mismatch');
+  return {...stored,support:support.slice(),p0:start.p0.slice(),params:JSON.parse(stored.row.params),N:+stored.row.n_samples,k:+stored.row.k,mse:+stored.row.mse};
+ });
+ const gate=live.gate_status,bound=gate.coefficient_bound==='pending'?protocol.coefficient_bound:+gate.coefficient_bound;
+ if(!Number.isFinite(bound)||bound<=0)throw Error('Invalid coefficient bound gate');
+ candidates.forEach(c=>c.atBound=c.params.map(p=>Math.abs(p)===bound));
+ const winner=candidates.reduce((a,b)=>b.bic<a.bic?b:a);
+ const weak=candidates.find(c=>canonical(c.support)===canonical(feature.truth_support[0].map(j=>j-1)));
+ if(!weak)throw Error('Chapter-five truth-support candidate is missing');
+ // Only this stored weak start is simulated here. Fitted predictions are verified display curves.
+ const weakCurve=rk4(observation.t,[observation.observed[0]],state=>[weak.p0.reduce((sum,p,i)=>sum+p*W.basis(state[0])[weak.support[i]],0)]).map(row=>row[0]);
+ const legacy=feature.candidates.filter(c=>!candidates.some(p=>p.row.candidate_id===c.row.candidate_id));
+ return {candidates,winner,weak,weakCurve,bound,initial:gate.initial_state==='pending'?protocol.initial_state:gate.initial_state,
+  provisional:gate.initial_state==='pending'||gate.coefficient_bound==='pending',
+  share:1-Math.exp(-Math.log(winner.N)/winner.N),legacy:legacy.length?legacy.reduce((a,b)=>b.bic<a.bic?b:a):null};
+}
+function fifthAt(curve,time){
+ if(!curve||time<curve.t[0]||time>curve.t.at(-1))return NaN;
+ let j=1;while(j<curve.t.length-1&&curve.t[j]<time)j++;
+ const a=curve.model[j-1][0],b=curve.model[j][0];return a+(b-a)*(time-curve.t[j-1])/(curve.t[j]-curve.t[j-1]);
+}
+function fifthSettings(model){return tr('x19_settings',{bound:fmt(model.bound),initial:tr(model.initial==='estimated'?'gate_initial_estimated':'x19_first')})+(model.provisional?' '+tr('x19_provisional',{gate:'G2'}):'');}
 function secondEquation(support,coefficients){return 'du/dt = '+coefficients.map((c,i)=>(i?(c<0?' − ':' + '):c<0?'−':'')+secondNumber(Math.abs(c))+(support[i]?'·'+terms[support[i]]:'')).join('');}
 function initChapterOne(){
  if(!$('p-c1-data'))return;
@@ -450,6 +481,14 @@ function initChapterOne(){
  const two=secondModel(m,t,x,LIVE,LIVE.featured[0]),twoStates=['c2-standing','c2-residual','c2-joint','c2-error','c2-solution'];
  const three=thirdModel(m,t,x,LIVE,LIVE.featured[0]),threeStates=['c3-standing','c3-probe','c3-threshold','c3-linear','c3-quadratic','c3-compare','c3-next'];
  const four=fourthModel(m,t,x,LIVE,LIVE.featured[0],three),fourStates=['c4-question','c4-noise','c4-threshold','c4-replay','c4-path'];
+ const five=fifthModel(LIVE,LIVE.fit_protocol),fiveStates=['c5-weak','c5-fit','c5-each','c5-bic','c5-winner','c5-recap'];
+ fiveStates.forEach((_,i)=>{$('c5-title-'+i).textContent=tr('x19_title_'+i);$('c5-text-'+i).textContent=tr('x19_text_'+i,{share:fmt(100*five.share,4)+' %'});});
+ document.querySelectorAll('[data-c5-eye]').forEach(e=>e.textContent=tr('x10_eye',{i:e.dataset.c5Eye,n:fiveStates.length}));
+ $('c5-settings').textContent=fifthSettings(five);
+ document.querySelectorAll('.c5-recap-description').forEach(e=>e.style.opacity=1);
+ $('c5-settings-visible').textContent=$('c5-settings').textContent;
+ $('c5-bic-more').textContent=tr('x19_bic_more',{year:String(LIVE.fit_protocol.bic_reference_year)});
+ if(five.legacy){const old=five.legacy;$('c5-legacy').textContent=tr('x19_legacy',{cap:terms.length,count:LIVE.featured[0].candidates.length,support:JSON.parse(old.row.active_idxs)[0].map(j=>terms[j-1]).join(', '),bic:fmt(old.bic,8)});}
  const twoWinner=two.blocks.find(b=>b.term===two.winner),joint=two.blocks.find(b=>b.term===1);
  const remainingBlocks=two.blocks.filter(b=>b.term!==joint.term),sortAt=remainingBlocks.length*2500;
  // Counterfactual used only by the explicitly labelled comparison in chapter three.
@@ -495,7 +534,12 @@ function initChapterOne(){
  const fourArgs={support:lastRound.support.map(j=>terms[j]).join(', '),threshold:thresholdNumber(four.threshold),best:terms[bestRatio.term],ratio:secondNumber(bestRatio.ratio),percent:secondNumber(99),df:secondNumber(1),one:secondNumber(1),hundred:secondNumber(100)};
  fourStates.forEach((_,i)=>{$('c4-title-'+i).textContent=tr('x18_title_'+i,fourArgs);$('c4-text-'+i).textContent=tr('x18_text_'+i,fourArgs);});
  document.querySelectorAll('[data-c4-eye]').forEach(e=>e.textContent=tr('x10_eye',{i:e.dataset.c4Eye,n:fourStates.length}));
- const teachingCell=RESULTS.cells.find(c=>c.row.cell_id===teaching.cell_id),truthDemo=LIVE.illustrations.find(d=>d.system_id===teachingCell.system_id);
+ const teachingCell=RESULTS.cells.find(c=>c.row.cell_id===teaching.cell_id);
+ // The results contract permits replacing every result cell. The live teaching
+ // record still identifies its own system independently of that replacement.
+ const teachingSystem=teachingCell?.system_id??+LIVE.featured[0].candidates[0].row.system_id;
+ const truthDemo=LIVE.illustrations.find(d=>d.system_id===teachingSystem);
+ if(!truthDemo)throw Error('Missing teaching-system truth illustration');
  // The teaching system's stored logistic constants, not fitted result-row params.
  const truthCoefficients=[truthDemo.constants[0],-truthDemo.constants[0]/truthDemo.constants[1]];
  const host=$('c1-stage'),svg=svgNode('svg',{viewBox:'0 0 800 480',role:'img',class:'story-svg'});host.append(svg);const caption=el('figcaption',tr('x10_caption'),'story-caption');caption.dataset.claim='review';host.append(caption);
@@ -509,6 +553,13 @@ function initChapterOne(){
  const line=cls=>node('line',{class:cls},'line',[64,400,64,400,0]);
  const dot=(cls,r=2.5)=>node('circle',{class:cls,r},'dot',[64,400,0]);
  const label=(cls='')=>node('text',{class:cls,'data-claim':'review'},'text',[64,20,0]);
+ // Backgrounds must precede observations, chips and text in SVG paint order.
+ const c5Loop=node('rect',{class:'c5-loop',rx:9},'rect',[0,0,0,0,0]);
+ const c5Recap=Array.from({length:8},()=>node('rect',{class:'c5-recap-box',rx:7},'rect',[0,0,0,0,0]));
+ const c5SupportGroups=five.candidates.map(()=>node('rect',{class:'c5-support-group',rx:5},'rect',[0,0,0,0,0]));
+ const c5Panels=five.candidates.map(()=>({readout:node('rect',{class:'c5-readout',rx:5},'rect',[0,0,0,0,0]),curve:path('c5-fit-curve'),data:t.map(()=>dot('c5-observation',1.5)),axes:[line('story-grid'),line('story-grid')],bars:[node('rect',{class:'c5-fit-bar'},'rect',[0,0,0,0,0]),node('rect',{class:'c5-price-bar'},'rect',[0,0,0,0,0])],chips:terms.map(()=>({box:node('rect',{class:'c5-chip',rx:5},'rect',[0,0,0,0,0]),text:label('c5-chip-label')}))}));
+ const c5Labels=Array.from({length:80},()=>label('c5-label'));
+ const c5RecapText=Array.from({length:8},()=>['name','result'].map(role=>label('c5-recap-'+role)));
  const axisLines=Array.from({length:12},()=>line('story-grid'));
  const axisLabels=Array.from({length:18},()=>label('story-axis'));
  const data=t.map(()=>dot('measurement-dot')),slopeDots=Array.from({length:n-1},()=>dot('story-slope',2.8));
@@ -877,8 +928,108 @@ function initChapterOne(){
   text(c3Weak,secondEquation(current.support,current.coefficients),480,418);
   return s;
  }
+ Object.assign(durations,{'c5-weak':3000,'c5-fit':6000,'c5-each':3000,'c5-bic':3000,'c5-winner':3000,'c5-recap':16000});
+ function fifthScene(state,ms){
+  const s=blank.map(a=>a.slice()),put=(id,a)=>{s[id]=a;};let labelIndex=0;
+  // All mounted labels are reset, so reverse navigation and seek are deterministic.
+  c5Labels.forEach(id=>{nodes[id].e.textContent='';});
+  c5Panels.forEach(panel=>panel.chips.forEach(chip=>nodes[chip.box].e.classList.toggle('winner',false)));
+  c5Recap.forEach(id=>nodes[id].e.classList.toggle('highlight',false));
+  const text=(value,xx,yy)=>{const id=c5Labels[labelIndex++];nodes[id].e.textContent=value;put(id,[xx,yy,1]);};
+  const chips=(candidate,slot,xx,yy)=>candidate.support.forEach((term,j)=>{const chip=slot.chips[term];nodes[chip.box].e.classList.toggle('winner',candidate===five.winner&&state==='c5-winner');put(chip.box,[xx+j*62,yy,54,25,1]);nodes[chip.text].e.textContent=terms[term];put(chip.text,[xx+8+j*62,yy+18,1]);});
+  const scores=c=>tr('x19_scores',{mse:fmt(c.mse,5),r:fmt(c.row.reconstruction_r2_arithmetic,5)});
+  const bounds=c=>c.atBound.some(Boolean)?tr('x19_bound',{terms:c.support.filter((_,j)=>c.atBound[j]).map(j=>terms[j]).join(', ')}):'';
+  const values=[...x,...five.weakCurve.filter(Number.isFinite),...five.candidates.flatMap(c=>c.curves?c.curves.model.map(row=>row[0]):[])];
+  const lo=Math.min(...values),hi=Math.max(...values),span=hi-lo||1,ymin=lo-span*.06,ymax=hi+span*.06;
+  function plot(c,slot,left,top,width,height,blend=1){
+   const X=v=>left+width*(v-t[0])/(t.at(-1)-t[0]),Y=v=>top+height-height*(v-ymin)/(ymax-ymin);
+   slot.axes.forEach((id,i)=>put(id,i?[left,top+height,left+width,top+height,1]:[left,top,left,top+height,1]));
+   text(tr('j157'),left+width*.7,top+height+31);text('u',left+8,top+14);
+   text(fmt(t[0]),left,top+height+15);text(fmt(t.at(-1)),left+width-24,top+height+15);
+   text(fmt(ymin),left-37,top+height);text(fmt(ymax),left-37,top+4);
+   slot.data.forEach((id,j)=>put(id,[X(t[j]),Y(x[j]),1]));
+   if(blend===0||c.curves){
+    const ys=t.map((time,j)=>blend===0?five.weakCurve[j]:blend===1?fifthAt(c.curves,time):mix(five.weakCurve[j],fifthAt(c.curves,time),blend));
+    if(ys.every(Number.isFinite))put(slot.curve,[...ys.flatMap((v,j)=>[X(t[j]),Y(v)]),1]);
+    else text(tr('j153'),left,top+25);
+   }else text(c.unavailable||tr('j153'),left+10,top+25);
+  }
+  svg.dataset.state=state;svg.dataset.complete=String(ms>=durations[state]);result.hidden=true;
+  svg.dataset.candidate=five.winner.row.candidate_id;svg.dataset.bicOrigin='';
+  caption.style.visibility='visible';caption.textContent=tr(state==='c5-weak'?'x19_browser':state==='c5-fit'?'x19_schematic':'x19_stored');
+  if(state==='c5-weak'||state==='c5-fit'){
+   const c=five.weak,blend=state==='c5-weak'?0:ease(ms/4200);
+   chips(c,c5Panels[0],65,12);
+   text(secondEquation(c.support,c.p0.map((p,j)=>mix(p,c.params[j],blend))),65,65);
+   plot(c,c5Panels[0],65,100,660,255,blend);
+   if(state==='c5-fit')text(scores(c),65,419);
+   text(tr('x19_observations'),65,459);
+  }else if(state==='c5-each'){
+   five.candidates.forEach((c,i)=>{
+    const left=60+(i%2)*390,top=40+Math.floor(i/2)*225;
+    chips(c,c5Panels[i],left,top-35);plot(c,c5Panels[i],left,top,290,110);
+    put(c5Panels[i].readout,[left-4,top+143,338,42,1]);
+    text(scores(c),left,top+159);text(bounds(c),left,top+178);
+   });
+  }else if(state==='c5-bic'){
+   const fits=five.candidates.map(c=>c.N*Math.log(c.mse)),max=Math.max(...five.candidates.map(c=>c.bic)),min=Math.min(...fits),origin=min-(max-min)*.06;
+   const X=v=>170+(v-origin)/(max-origin)*490;
+   svg.dataset.bicOrigin=String(origin);
+   text(tr('x19_candidate_axis'),25,24);text(tr('x19_fit_term'),170,24);text(tr('x19_price'),430,24);
+   five.candidates.forEach((c,i)=>{
+    const yy=75+i*87,fit=fits[i];chips(c,c5Panels[i],25,yy);
+    put(c5Panels[i].bars[0],[170,yy,X(fit)-170,22,1]);put(c5Panels[i].bars[1],[X(fit),yy,X(c.bic)-X(fit),22,1]);
+    text(fmt(fit,7)+' + '+fmt(c.penalty,5)+' = '+fmt(c.bic,7),170,yy+44);
+    text('⌁',153,yy+17);
+   });
+   text(tr('x19_bic_axis',{origin:fmt(origin,6)}),170,437);
+   text(tr('x19_n_definition',{samples:t.length,dimension:five.winner.N/t.length,total:five.winner.N}),25,408);
+   const c=five.winner;text('BIC = '+fmt(c.N)+' × log('+fmt(c.mse,6)+') + '+fmt(c.k)+' × log('+fmt(c.N)+')',25,472);
+  }else if(state==='c5-winner'){
+   const c=five.winner;chips(c,c5Panels[0],60,15);
+   text(tr('x19_selected',{bic:fmt(c.bic,8)}),60,75);
+   [[tr('x19_fitted'),c.params],[tr('x19_truth'),truthCoefficients],[tr('x19_weak'),c.p0]].forEach(([title,coefficients],i)=>{
+    const left=18+i*262;text(title,left,145);
+    text(secondEquation(c.support,coefficients),left,192);
+   });
+   text(bounds(c),60,435);
+  }else if(state==='c5-recap'){
+   const stages=[
+    tr('x19_data_result',{n:fmt(t.length)}),
+    tr('x19_weak_result',{windows:fmt(LIVE.featured[0].path[0].equations[0].n_rows,String(LIVE.featured[0].path[0].equations[0].n_rows).length),terms:fmt(terms.length)}),
+    tr('x19_recap_tests',{passed:fmt(four.rounds.filter(r=>r.passes).length),failed:fmt(four.rounds.findIndex(r=>!r.passes)+1)}),
+    three.rounds.map(r=>terms[r.addition]).join(' → '),
+    tr('x19_recap_removed',{terms:three.rounds.flatMap(r=>r.removed).map(j=>terms[j]).join(', ')||tr('j262')}),
+    tr('x19_each_result',{count:fmt(five.candidates.length)}),
+    five.candidates.map(c=>'['+c.support.map(j=>terms[j]).join(', ')+']: '+fmt(c.row.reconstruction_r2_arithmetic,5)).join(' · '),
+    '['+five.winner.support.map(j=>terms[j]).join(', ')+'] · '+tr('x19_selected',{bic:fmt(five.winner.bic,7)})
+   ];
+   const active=Math.min(stages.length-1,Math.floor(ms/2000));
+   put(c5Loop,[17,116,772,182,1]);text('↻ '+tr('x19_recap_loop'),40,134);
+   stages.forEach((value,i)=>{
+    const yy=[4,58,140,192,244,306,360,414][i];
+    nodes[c5Recap[i]].e.classList.toggle('highlight',i===active);put(c5Recap[i],[24,yy,758,50,1]);
+    [(i+1)+'. '+tr('x19_recap_name_'+i),value].forEach((value,j)=>{
+     const id=c5RecapText[i][j];nodes[id].e.textContent=value;put(id,[40,yy+19+j*23,1]);
+    });
+    if(i===5){
+     // Real support chips occupy the result line, after the localized count.
+     five.candidates.forEach((c,j)=>{
+      put(c5SupportGroups[j],[236+j*132,yy+23,8+c.support.length*38,27,1]);
+      c.support.forEach((term,k)=>{
+      const chip=c5Panels[j].chips[term],xx=240+j*132+k*38;
+      put(chip.box,[xx,yy+25,34,23,1]);nodes[chip.text].e.textContent=terms[term];put(chip.text,[xx+5,yy+42,1]);
+      });
+     });
+    }
+   });
+   caption.textContent=tr('x19_recap_caption');
+  }
+  return s;
+ }
  let current=null,frame=0,last=blank.map(a=>a.slice()),elapsed=0,reverseZoom=false;
  function scene(state,ms){
+  if(state?.startsWith('c5-'))return fifthScene(state,ms);
   if(state?.startsWith('c4-'))return fourthScene(state,ms);
   if(state?.startsWith('c3-')){const s=thirdScene(state,ms);svg.dataset.state=state;svg.dataset.complete=String(ms>=durations[state]);result.hidden=true;return s;}
   const requested=state,elapsedMs=ms;
@@ -1162,14 +1313,14 @@ function initChapterOne(){
  function finish(){if(current){clock.cancel(frame);elapsed=durations[current];render(scene(current,elapsed));}}
  function enter(state,restart=false){
   reverseZoom=current==='secants'&&state==='noise-visible';
-  finish();host.hidden=![...states,...twoStates,...threeStates,...fourStates].includes(state);
+  finish();host.hidden=![...states,...twoStates,...threeStates,...fourStates,...fiveStates].includes(state);
   if(host.hidden){current=null;return;}
   const from=last.map(a=>a.slice());current=state;elapsed=0;
   svg.setAttribute('aria-label',document.querySelector('[data-stage="'+state+'"] h2')?.textContent||state);
   const start=clock.now();
   function tick(now){
    elapsed=Math.min(durations[state],now-start);
-   const target=reverseZoom&&elapsed<2200?scene('secants',900+2200-elapsed):scene(state,elapsed),blend=restart||reverseZoom||state==='secants'?1:ease(elapsed/900);
+   const target=reverseZoom&&elapsed<2200?scene('secants',900+2200-elapsed):scene(state,elapsed),blend=restart||reverseZoom||state==='secants'||state==='c5-recap'?1:ease(elapsed/900);
    render(blend===1?target:target.map((a,i)=>a.map((v,j)=>nodes[i].e.classList.contains('story-slope')&&j<2?v:mix(from[i][j],v,blend))));
    if(elapsed<durations[state])frame=clock.request(tick);
    else if(!document.hidden&&!new URL(location.href).searchParams.has('fitcheck')){
@@ -1184,6 +1335,7 @@ function initChapterOne(){
  }
  window.WispChapterOne={model:m,error:chapterError,parts:chapterParts};
  window.WispChapterFour={model:four,states:fourStates};
+ window.WispChapterFive={model:five,states:fiveStates};
  window.WispChapterThree={model:three,states:threeStates,truthCoefficients};
  window.WispChapterTwo={model:two,states:twoStates,slopeRows,predict};
  window.WispChapterStory={states,durations,enter,finish,seek,local,examples,variance,relative,actual,longRows,lengthClouds,longerLengths,remainingBlocks,sortAt,noisePause,jointPause,squarePrefix,deviations,lengthRms,rates,trueRates,smooth,rateBound,clock,svg,current:()=>current,elapsed:()=>elapsed};

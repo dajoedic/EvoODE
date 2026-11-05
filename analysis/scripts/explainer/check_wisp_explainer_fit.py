@@ -155,6 +155,7 @@ def check_chapter_interactions(page,evidence):
         ids=page.evaluate('WispSlides.pages.map(p=>p.id)')
         expected += ['p-c3-'+s for s in ('standing','probe','threshold','linear','quadratic','compare','next')]
         expected += ['p-c4-'+s for s in ('question','noise','threshold','replay','path')]
+        expected += ['p-c5-'+s for s in ('weak','fit','each','bic','winner','recap')]
         if ids!=expected:raise AssertionError(f'Incorrect delivered inventory: {ids}')
         for key in ('ArrowLeft','ArrowRight'):
             page.keyboard.press(key)
@@ -164,8 +165,8 @@ def check_chapter_interactions(page,evidence):
             if page.evaluate('WispSlides.nav.index')!=i:raise AssertionError('Vertical keyboard walk failed')
             page.evaluate('WispChapterStory.finish()')
             if i>=2 and page.locator('#c1-stage svg').get_attribute('data-state')!=page.locator('#'+expected[i]).get_attribute('data-stage'):raise AssertionError('Stage differs from page')
-        if page.locator('.page-dots a:visible').count()!=5:raise AssertionError('Wrong chapter-four sub-step dots')
-        if page.locator('#masthead-title').text_content()!=page.evaluate('tr("x18_chapter")'):raise AssertionError('Wrong chapter-four masthead')
+        if page.locator('.page-dots a:visible').count()!=6:raise AssertionError('Wrong chapter-five sub-step dots')
+        if page.locator('#masthead-title').text_content()!=page.evaluate('tr("x19_chapter")'):raise AssertionError('Wrong chapter-five masthead')
         page.keyboard.press('ArrowUp');page.wait_for_timeout(850)
         if page.evaluate('WispSlides.nav.index')!=len(expected)-2:raise AssertionError('Up did not return one step')
         page.evaluate('WispSlides.nav.link("#p-c1-solution");WispChapterStory.finish()')

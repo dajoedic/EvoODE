@@ -2,7 +2,7 @@
 (function(root){
  'use strict';
  // Delivered chapter configuration. Tests may override it before initialization.
- const visibleChapters=['intro','one','two','three','four'];
+ const visibleChapters=['intro','one','two','three','four','five'];
  function visiblePages(pages,configuration=visibleChapters){return pages.filter(p=>configuration.includes(p.dataset.chapter));}
  function chapterTarget(pages,index,direction){const chapters=[...new Set(pages.map(p=>p.dataset.chapter))],current=chapters.indexOf(pages[index].dataset.chapter),next=Math.max(0,Math.min(chapters.length-1,current+direction));return pages.findIndex(p=>p.dataset.chapter===chapters[next]);}
  const steps=['data','weak','frols','foba','stop','fit','bic','test'];
@@ -97,8 +97,8 @@
  function show(i,push,scroll=true){const page=pages[i];pages.forEach((p,j)=>p.classList.toggle('active',j===i));dotButtons.forEach((a,j)=>{if(j===i)a.setAttribute('aria-current','page');else a.removeAttribute('aria-current');});
   dotButtons.forEach((a,j)=>a.hidden=pages[j].dataset.chapter!==page.dataset.chapter);
   const chapterPages=pages.filter(p=>p.dataset.chapter===page.dataset.chapter),position=chapterPages.indexOf(page)+1;
-  title.textContent=page.dataset.chapter==='four'?tr('x18_chapter'):page.dataset.chapter==='three'?tr('x17_chapter'):page.dataset.chapter==='two'?tr('x13_chapter'):page.dataset.chapter==='one'?tr('x12c_chapter'):introTitle;
-  title.href='#'+chapterPages[0].id;title.classList.toggle('chapter-indicator',['one','two','three','four'].includes(page.dataset.chapter));
+  title.textContent=page.dataset.chapter==='five'?tr('x19_chapter'):page.dataset.chapter==='four'?tr('x18_chapter'):page.dataset.chapter==='three'?tr('x17_chapter'):page.dataset.chapter==='two'?tr('x13_chapter'):page.dataset.chapter==='one'?tr('x12c_chapter'):introTitle;
+  title.href='#'+chapterPages[0].id;title.classList.toggle('chapter-indicator',['one','two','three','four','five'].includes(page.dataset.chapter));
   title.setAttribute('aria-label',title.textContent);
   progress.setAttribute('aria-valuenow',position);progress.setAttribute('aria-valuemax',chapterPages.length);
   progress.setAttribute('aria-label',tr('x10_eye',{i:position,n:chapterPages.length}));
@@ -165,6 +165,7 @@
     const stageOk=r.left>=0&&r.top>=0&&r.right<=innerWidth&&r.bottom<=innerHeight-12;
     // Real SVG text bounds: the synthetic DOM intentionally cannot supply layout.
     const labels=[...stage.querySelectorAll('svg text')].filter(e=>+getComputedStyle(e).opacity>.01&&e.textContent.trim()).map(e=>({node:e,text:e.textContent,row:e.dataset.shareRow,rect:e.getBoundingClientRect()}));
+    if(page.dataset.stage==='c5-recap')labels.push(...[...page.querySelectorAll('.c5-recap-description')].map(e=>({node:e,text:e.textContent,rect:e.getBoundingClientRect()})));
     const labelOverlaps=[];
     const chipLabelOverlaps=[];
     if(page.dataset.chapter==='four'){
@@ -197,7 +198,40 @@
 
      }
     }
-    if(page.dataset.chapter==='two'||page.dataset.chapter==='three'||page.dataset.chapter==='four'||['noise-visible','slope','secants','windows','error-empty','fit','every','noise-why','noise-estimate','percent'].includes(page.dataset.stage)){
+    let chapterFiveOk=true;
+    if(page.dataset.chapter==='five'){
+     const svg=stage.querySelector('svg'),model=window.WispChapterFive.model,state=page.dataset.stage;
+     chapterFiveOk=svg.dataset.state===state&&svg.dataset.candidate===model.winner.row.candidate_id&&!labels.some(l=>/\d(?:[.,]\d+)?e[+-]?\d/i.test(l.text));
+     if(state==='c5-each'){
+      chapterFiveOk&&=[...stage.querySelectorAll('.c5-fit-curve')].filter(e=>+getComputedStyle(e).opacity>.01).length===model.candidates.filter(c=>c.curves).length;
+      const readouts=[...stage.querySelectorAll('.c5-readout')].map(e=>e.getBoundingClientRect());
+      chapterFiveOk&&=labels.filter(l=>l.text.includes(tr('x19_bound',{terms:''}).trim())).every(l=>readouts.some(b=>l.rect.left>=b.left&&l.rect.right<=b.right&&l.rect.top>=b.top&&l.rect.bottom<=b.bottom));
+     }
+     if(state==='c5-bic')chapterFiveOk&&=Number.isFinite(+svg.dataset.bicOrigin)&&labels.some(l=>l.text===tr('x19_candidate_axis'))&&labels.some(l=>l.text===tr('x19_bic_axis',{origin:fmt(+svg.dataset.bicOrigin,6)}));
+     if(state==='c5-winner'){
+      const equations=labels.filter(l=>l.text.startsWith('du/dt = '));
+      chapterFiveOk&&=equations.length===3&&equations.every(l=>Math.abs(l.rect.top-equations[0].rect.top)<1);
+     }
+     if(state==='c5-recap'){
+      chapterFiveOk&&=[...stage.querySelectorAll('.c5-recap-box.highlight')].filter(e=>+getComputedStyle(e).opacity>.01).length===1;
+      for(const role of ['name','description','result']){
+       const texts=[...(role==='description'?page:stage).querySelectorAll('.c5-recap-'+role)];
+       chapterFiveOk&&=texts.length===8&&texts.every(e=>e.textContent.trim()&&+getComputedStyle(e).opacity>.01&&parseFloat(getComputedStyle(e).fontSize)*(e.closest('svg')?svg.getScreenCTM().a:1)>=14);
+      }
+      chapterFiveOk&&=labels.some(l=>l.text==='↻ '+tr('x19_recap_loop'));
+      chapterFiveOk&&=labels.every(l=>parseFloat(getComputedStyle(l.node).fontSize)*(l.node.closest('svg')?svg.getScreenCTM().a:1)>=14);
+      const boxes=[...stage.querySelectorAll('.c5-recap-box')].map(e=>e.getBoundingClientRect());
+      for(const role of ['name','result'])chapterFiveOk&&=[...stage.querySelectorAll('.c5-recap-'+role)].every((e,i)=>{
+       const a=e.getBoundingClientRect(),b=boxes[i];return a.left>=b.left&&a.right<=b.right&&a.top>=b.top&&a.bottom<=b.bottom;
+      });
+      const groups=[...stage.querySelectorAll('.c5-support-group')].filter(e=>+getComputedStyle(e).opacity>.01).map(e=>e.getBoundingClientRect());
+      chapterFiveOk&&=groups.length===model.candidates.length&&groups.every((b,i)=>{
+       const chips=[...stage.querySelectorAll('.c5-chip')].filter(e=>+getComputedStyle(e).opacity>.01).map(e=>e.getBoundingClientRect());
+       return chips.filter(a=>a.left>=b.left&&a.right<=b.right&&a.top>=b.top&&a.bottom<=b.bottom).length===model.candidates[i].support.length;
+      });
+     }
+    }
+    if(page.dataset.chapter==='two'||page.dataset.chapter==='three'||page.dataset.chapter==='four'||page.dataset.chapter==='five'||['noise-visible','slope','secants','windows','error-empty','fit','every','noise-why','noise-estimate','percent'].includes(page.dataset.stage)){
      labels.forEach((a,i)=>labels.slice(i+1).forEach(b=>{if(Math.min(a.rect.right,b.rect.right)>Math.max(a.rect.left,b.rect.left)&&Math.min(a.rect.bottom,b.rect.bottom)>Math.max(a.rect.top,b.rect.top))labelOverlaps.push([a.text,b.text]);}));
     }
     const box=stage.querySelector('.story-deviations').getBoundingClientRect(),plot=stage.querySelector('#story-top-clip rect');
@@ -244,10 +278,10 @@
      }
      if(['c3-compare','c3-next'].includes(state))chapterThreeOk&&=[...stage.querySelectorAll('.c3-candidate')].every(box=>!box.nextElementSibling.textContent.includes('·'));
     }
-    variants.push({...readPage(page),sample,stageOk,chapterThreeOk,chapterFourOk,chipLabelOverlaps,labelOverlaps,dataLabels,deviationsOutside,visibleData,noiseEndOk,shareOverlaps,neighbourDt,neighbourOk,ok:readPage(page).ok&&stageOk&&chapterThreeOk&&chapterFourOk&&chipLabelOverlaps.length===0&&labelOverlaps.length===0&&dataLabels.length===0&&deviationsOutside&&noiseEndOk&&shareOverlaps.length===0&&neighbourOk});
+    variants.push({...readPage(page),sample,stageOk,chapterThreeOk,chapterFourOk,chapterFiveOk,chipLabelOverlaps,labelOverlaps,dataLabels,deviationsOutside,visibleData,noiseEndOk,shareOverlaps,neighbourDt,neighbourOk,ok:readPage(page).ok&&stageOk&&chapterThreeOk&&chapterFourOk&&chapterFiveOk&&chipLabelOverlaps.length===0&&labelOverlaps.length===0&&dataLabels.length===0&&deviationsOutside&&noiseEndOk&&shareOverlaps.length===0&&neighbourOk});
     }
     const story=window.WispChapterStory;story.enter(page.dataset.stage);
-    const samples={'c4-question':[0,600,1200,2400,4200],'c4-noise':[0,600,1200,3000],'c4-threshold':[0,600,1200,3000],'c4-replay':Array.from({length:5},(_,j)=>[0,600,1500,2999,3000,4000,4999,5000,7000,8499,8500,11499,11500,11999].map(t=>j*12000+t)).flat().concat([60000]),'c4-path':[0,700,1400,2100,2800,4200],secants:[0,300,600,899,900,1100,2000,3000,...Array.from({length:8},(_,j)=>3900+j*1200),13200],windows:story.longerLengths.flatMap((_,j)=>[900+j*2400,1600+j*2400,3000+j*2400]).concat([12900]),fit:[2899,2900,4900],every:Array.from({length:6},(_,j)=>[2000+j*2500,3150+j*2500,3399+j*2500]).flat().concat([16900]),'noise-estimate':[0,400,800,1500,2450,2550,4000,6800,7500,8500,9799,9800,10500,12300,13500,story.durations['noise-estimate']], 'c3-standing':[0,600,1200], 'c3-probe':[0,600,1200,1800,2400,3600,5200], 'c3-threshold':[0,1200,2400,3600,5200], 'c3-linear':[0,300,600,899,900,1100,1500,1800,3000,3600,4800,5400,6600,7200,7500,7799,7800,8100,8400,9400,10399,10400,11000,11600,12200,14000,15300,16000,19300], 'c3-quadratic':[0,300,600,899,900,1100,1500,1800,3000,3600,4800,5400,6600,7200,7500,7799,7800,8100,8400,9400,10399,10400,11000,11600,12200,14000,15300,16000,19300], 'c3-compare':[0,1200,2400,3300,4200], 'c3-next':[0,1200,2400,4200], 'c2-standing':[0,300,600,900],'c2-residual':[900,1500,2100,2600,3100], 'c2-joint':[0,900,1650,2400,3900,...Array.from({length:story.remainingBlocks.length},(_,j)=>[story.jointPause+1600+j*2500,story.jointPause+3150+j*2500,story.jointPause+3399+j*2500]).flat(),story.durations['c2-joint']], 'c2-every':[900,1600,3150], 'c2-error':[900,1500,2000,2600,3100], 'c2-solution':[0,450,900]};
+    const samples={'c5-weak':[0,300,900,1500,3000,4200,6000,9000,16000],'c5-fit':[0,300,900,1500,3000,4200,6000,9000,16000],'c5-each':[0,300,900,1500,3000,4200,6000,9000,16000],'c5-bic':[0,300,900,1500,3000,4200,6000,9000,16000],'c5-winner':[0,300,900,1500,3000,4200,6000,9000,16000],'c5-recap':[0,1999,2000,3999,4000,5999,6000,7999,8000,9999,10000,11999,12000,13999,14000,16000,19001],'c4-question':[0,600,1200,2400,4200],'c4-noise':[0,600,1200,3000],'c4-threshold':[0,600,1200,3000],'c4-replay':Array.from({length:5},(_,j)=>[0,600,1500,2999,3000,4000,4999,5000,7000,8499,8500,11499,11500,11999].map(t=>j*12000+t)).flat().concat([60000]),'c4-path':[0,700,1400,2100,2800,4200],secants:[0,300,600,899,900,1100,2000,3000,...Array.from({length:8},(_,j)=>3900+j*1200),13200],windows:story.longerLengths.flatMap((_,j)=>[900+j*2400,1600+j*2400,3000+j*2400]).concat([12900]),fit:[2899,2900,4900],every:Array.from({length:6},(_,j)=>[2000+j*2500,3150+j*2500,3399+j*2500]).flat().concat([16900]),'noise-estimate':[0,400,800,1500,2450,2550,4000,6800,7500,8500,9799,9800,10500,12300,13500,story.durations['noise-estimate']], 'c3-standing':[0,600,1200], 'c3-probe':[0,600,1200,1800,2400,3600,5200], 'c3-threshold':[0,1200,2400,3600,5200], 'c3-linear':[0,300,600,899,900,1100,1500,1800,3000,3600,4800,5400,6600,7200,7500,7799,7800,8100,8400,9400,10399,10400,11000,11600,12200,14000,15300,16000,19300], 'c3-quadratic':[0,300,600,899,900,1100,1500,1800,3000,3600,4800,5400,6600,7200,7500,7799,7800,8100,8400,9400,10399,10400,11000,11600,12200,14000,15300,16000,19300], 'c3-compare':[0,1200,2400,3300,4200], 'c3-next':[0,1200,2400,4200], 'c2-standing':[0,300,600,900],'c2-residual':[900,1500,2100,2600,3100], 'c2-joint':[0,900,1650,2400,3900,...Array.from({length:story.remainingBlocks.length},(_,j)=>[story.jointPause+1600+j*2500,story.jointPause+3150+j*2500,story.jointPause+3399+j*2500]).flat(),story.durations['c2-joint']], 'c2-every':[900,1600,3150], 'c2-error':[900,1500,2000,2600,3100], 'c2-solution':[0,450,900]};
     for(const sample of samples[page.dataset.stage]||[]){story.seek(sample);inspectStage(sample);}
     story.finish();inspectStage(story.durations[page.dataset.stage]);
     // Exercise the same deterministic cycle offset used by the live replay.

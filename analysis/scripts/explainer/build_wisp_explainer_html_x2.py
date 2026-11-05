@@ -32,6 +32,7 @@ def build(base=BASE):
     data={n:json.loads((base/'data'/f'{n}.json').read_text(encoding='utf8')) for n in ('live','results','manifest')}
     # Presentation strings are assembled from source without rewriting scientific data.
     data['live']['i18n']={lang:json.loads((src/'i18n'/f'{lang}.json').read_text(encoding='utf8')) for lang in ('en','de')}
+    data['live']['fit_protocol']=json.loads((src/'fit_protocol.json').read_text(encoding='utf8'))
     page=(src/'index.html').read_text(encoding='utf8')
     values={'STYLE':(src/'style.css').read_text(encoding='utf8')+'\n'+(src/'pages.css').read_text(encoding='utf8'),
             'DATA':json.dumps(transport(data),ensure_ascii=False,separators=(',',':'),sort_keys=True).replace('<','\\u003c'),

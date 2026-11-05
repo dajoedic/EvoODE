@@ -22,7 +22,7 @@ def test_stopping_story_and_counterfactual_both_languages():
     app = (BASE/'src/app.js').read_text(encoding='utf8')
     pages = (BASE/'src/pages.js').read_text(encoding='utf8')
     assert 'c2-all' not in app+pages
-    assert "visibleChapters=['intro','one','two','three','four']" in pages
+    assert "visibleChapters=['intro','one','two','three','four','five']" in pages
     assert "tr('x18_chapter')" in pages
     assert "'c4-replay':Array.from" in pages
     assert not any(not p.has_attr('hidden') for p in soup.select('[data-chapter="later"]'))

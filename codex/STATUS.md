@@ -1,4 +1,4 @@
 ﻿status: blocked
-task: WP-X17b
-report: codex/reports/REPORT_WP_X17B.md
-note: Umsetzung fertig, 38 Tests bestanden; Browserabnahme blockiert durch Access is denied (Umgebung, nicht Sache).
+task: WP-X18c
+report: codex/reports/REPORT_WP_X18C.md
+note: Umgebung, nicht Sache: Umsetzung und 53 Präsentationstests fertig; Browser-Abnahme durch Access denied beim Start von Playwright und Edge blockiert.

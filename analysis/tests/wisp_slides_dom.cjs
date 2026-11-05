@@ -62,7 +62,7 @@ if(fixture.configuration==='delivered'){
  const close=(a,b)=>assert(Math.abs(a-b)<=1e-9*Math.max(1,Math.abs(b)),`${a} != ${b}`);
  const ids=['p-hook','p-challenge','p-c1-data','p-c1-slope','p-c1-noise-visible','p-c1-secants','p-c1-changes','p-c1-error-empty','p-c1-fit','p-c1-every','p-c1-noise','p-c1-percent','p-c1-solution'];
  const twoIds=['standing','residual','joint','error','solution'].map(s=>'p-c2-'+s);
- assert.deepEqual(slides.pages.map(p=>p.id),ids.concat(twoIds,WispChapterThree.states.map(s=>'p-'+s),WispChapterFour.states.map(s=>'p-'+s)));
+ assert.deepEqual(slides.pages.map(p=>p.id),ids.concat(twoIds,WispChapterThree.states.map(s=>'p-'+s),WispChapterFour.states.map(s=>'p-'+s),WispChapterFive.states.map(s=>'p-'+s)));
  slides.nav.go(2);assert.equal(doc.getElementById('masthead-title').textContent,tr('x12c_chapter'));assert.equal(doc.getElementById('chapter-progress').getAttribute('aria-valuemax'),'11');
  assert.deepEqual(slides.pages.slice(2,13).map(p=>p.dataset.stage),story.states);
  assert.equal(doc.querySelectorAll('#c1-stage svg').length,1);
@@ -350,6 +350,76 @@ if(fixture.configuration==='delivered'){
  assert.equal(numberText(9311,15),fixture.language==='de'?'9 311':'9,311');
  console.log('PASS X17b: visible pre-round model chips, exact shared threshold, probes in every passing round, standard locale formatting across all scenes');
  console.log('PASS X17: five bilingual scenes, masthead/dots, persistent SVG, looping with end hold, deterministic seek, reduced motion and real round order');
+ const five=WispChapterFive;
+ slides.nav.link('#p-c5-weak');
+ assert.equal(doc.getElementById('masthead-title').textContent,tr('x19_chapter'));
+ assert.equal(doc.querySelectorAll('.page-dots a').filter(a=>!a.hidden).length,6);
+ assert.equal(five.model.candidates.length,fixture.data.live.featured[0].stop_reference.supports.length);
+ assert.equal(five.model.weakCurve[0],x[0]);
+ assert.equal(five.model.winner.bic,Math.min(...five.model.candidates.map(c=>c.bic)));
+ assert.equal(five.model.candidates[0].atBound[0],true);
+ assert(doc.getElementById('c5-settings-visible').textContent.includes(tr('x19_provisional',{gate:'G2'})));
+ const gateSwap=JSON.parse(JSON.stringify(LIVE));gateSwap.gate_status={...gateSwap.gate_status,initial_state:'observed',coefficient_bound:'10'};
+ const decidedSettings=fifthSettings(fifthModel(gateSwap,LIVE.fit_protocol));
+ assert(!decidedSettings.includes(tr('x19_provisional',{gate:'G2'})));
+ assert(decidedSettings.includes(fmt(+gateSwap.gate_status.coefficient_bound)));
+ five.states.forEach(state=>{
+  story.enter(state);story.finish();const end=snapshot();
+  assert.strictEqual(story.svg,original);assert.equal(svg.dataset.state,state);
+  assert(!visibleText().some(text=>/\d(?:[.,]\d+)?e[+-]?\d/i.test(text)));
+  story.seek(1500);const early=snapshot();story.seek(0);story.seek(1500);assert.deepEqual(snapshot(),early);
+  story.seek(story.durations[state]+4500);assert.deepEqual(snapshot(),early);
+  story.enter(state);advance(story.durations[state]);advance(2999);assert.equal(svg.dataset.complete,'true');advance(2);assert.equal(svg.dataset.complete,'false');
+  global.matchMedia=()=>({matches:true,addEventListener(){}});story.enter(state);assert.equal(svg.dataset.complete,'true');snapshot().forEach((n,j)=>assert.deepEqual(n,end[j],state+' reduced node '+j));
+  global.matchMedia=()=>({matches:false,addEventListener(){}});
+ });
+ story.enter('c5-each');story.finish();
+ assert(visibleText().includes(tr('x19_bound',{terms:terms[0]})));
+ const curvePaths=doc.querySelectorAll('.c5-fit-curve');
+ assert.equal(curvePaths.filter(p=>+p.style.opacity>.01).length,five.model.candidates.length);
+ // A missing verified curve must show its stored reason, without a fitted substitute.
+ const first=five.model.candidates[0],savedCurve=first.curves,savedReason=first.unavailable;
+ first.curves=null;first.unavailable='withheld-by-test';story.finish();
+ assert.equal(+curvePaths[0].style.opacity,0);assert(visibleText().includes('withheld-by-test'));
+ first.curves=savedCurve;first.unavailable=savedReason;
+ story.enter('c5-recap');story.finish();
+ for(const role of ['name','description','result']){
+  const labels=doc.querySelectorAll('.c5-recap-'+role);
+  assert.equal(labels.length,8);
+  labels.forEach((label,i)=>{assert(label.textContent.trim(),role+' '+i);assert.equal(+label.style.opacity,1);});
+ }
+ assert(visibleText().includes('↻ '+tr('x19_recap_loop')));
+ const recapResults=doc.querySelectorAll('.c5-recap-result');
+ assert(recapResults[0].textContent.includes(fmt(t.length)));
+ assert(recapResults[1].textContent.includes(fmt(fixture.data.live.featured[0].path[0].equations[0].n_rows,String(fixture.data.live.featured[0].path[0].equations[0].n_rows).length)));
+ const integerSections=Number(fixture.data.live.featured[0].path[0].equations[0].n_rows).toLocaleString('en-US',{maximumFractionDigits:0});
+ assert(recapResults[1].textContent.includes(fixture.language==='de'?integerSections.replaceAll(',',' '):integerSections));
+ five.model.candidates.forEach(c=>assert(recapResults[6].textContent.includes(fmt(c.row.reconstruction_r2_arithmetic,5))));
+ assert(recapResults[7].textContent.includes(fmt(five.model.winner.bic,7)));
+ assert(visibleText().includes(tr('x19_recap_tests',{passed:fmt(five.model.candidates.length),failed:fmt(five.model.candidates.length+1)})));
+ const svgChildren=svg.children;
+ assert(svgChildren.indexOf(doc.querySelectorAll('.c5-recap-box')[7])<svgChildren.indexOf(doc.querySelectorAll('.c5-recap-name')[0]),'recap text paints above backgrounds');
+ assert.equal(doc.querySelectorAll('.c5-chip').filter(n=>+n.style.opacity>.01).length,five.model.candidates.reduce((sum,c)=>sum+c.support.length,0));
+ const descriptions=doc.querySelectorAll('#p-c5-recap .c5-recap-description');
+ descriptions.forEach((label,i)=>assert.equal(label.textContent,tr('x19_recap_desc_'+i)));
+ const groups=doc.querySelectorAll('.c5-support-group');
+ assert.equal(groups.length,five.model.candidates.length);
+ groups.forEach((group,i)=>{
+  assert.equal(+group.style.opacity,1);
+  const left=+group.getAttribute('x'),right=left+(+group.getAttribute('width'));
+  const chips=doc.querySelectorAll('.c5-chip').filter(chip=>+chip.style.opacity>.01&&+chip.getAttribute('x')>=left&&+chip.getAttribute('x')<right);
+  assert.equal(chips.length,five.model.candidates[i].support.length);
+ });
+ for(let i=0;i<8;i++){
+  story.seek(i*2000);
+  const highlighted=doc.querySelectorAll('.c5-recap-box.highlight');
+  assert.equal(highlighted.length,1);
+  assert.strictEqual(highlighted[0],doc.querySelectorAll('.c5-recap-box')[i]);
+ }
+ story.enter('c5-winner');story.finish();
+ assert.equal(visibleText().filter(text=>text.startsWith('du/dt = ')).length,3);
+ assert.equal(tr('x19_chapter'),fixture.language==='de'?'Kapitel 5 · Fitten und Wählen':'Chapter 5 · Fit and choose');
+ console.log('PASS X18: bilingual six-step fit/BIC story, true inventory, bound marks, verified curves/withholding, loop hold, deterministic seek and reduced motion');
  if(fixture.language==='en')fs.writeFileSync(require('path').join(require('path').dirname(process.argv[3]),'x12c_story_numbers.json'),JSON.stringify({durations:story.durations,n:t.length,neighbourPairs:8,longDots:story.longRows.length,coefficient:optimum,rangeEnd:2*optimum,winnerError:1-m.blocks.find(b=>b.term===m.winner).gain,floor:m.floor,designWindows:m.D.windows.length},null,2));
  console.log('PASS X12: 11 bilingual states, real numeric geometry, keyboard-only walk, vertical wheel/keys, persistent SVG, sequence interruption/replay, reverse and reduced motion');process.exit(0);
 }
@@ -546,3 +616,4 @@ assert(!/\b(?:FoBa|FROLS|BIC|SSE|residual|Residual|Koeffizient|coefficient|least
 const changed=JSON.parse(JSON.stringify(fixture.data.live.featured[0]));changed.path[0].active_idxs=[[2]];
 assert.throws(()=>soloModel(teaching.observed,measuredTime,LIVE,changed),/differs from recorded/);
 console.log('PASS X9a bilingual six bars, shares/order, all chart/equation switches, centres, constant, no jargon and frozen first support');
+
