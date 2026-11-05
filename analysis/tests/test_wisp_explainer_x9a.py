@@ -62,12 +62,12 @@ const base=process.argv[1],W=require(path.resolve(base,'src/compute.js'));
 const source=fs.readFileSync(base+'/src/app.js','utf8'),live=JSON.parse(fs.readFileSync(base+'/data/live.json','utf8'));
 for(const language of ['de','en']){
  const c={W,language,terms:['1','u','u²','u³','sin u','cos u']};vm.createContext(c);
- vm.runInContext(source.slice(source.indexOf('const soloDot='),source.indexOf('function initSolo(')),c);
+ vm.runInContext(source.slice(source.indexOf('function numberText('),source.indexOf('const fmt='))+source.slice(source.indexOf('const soloDot='),source.indexOf('function initSolo(')),c);
  assert.equal(c.soloEquation({term:0,coefficient:10}),'du/dt = 10');
  assert.equal(c.soloEquation({term:0,coefficient:-10}),'du/dt = −10');
  for(const v of [-.0000275123,1.234567e-12,123456789,0]){
   const formatted=c.soloNumber(v);assert(!/[eE×]/.test(formatted));
-  assert.equal(Number(formatted.replace('−','-').replace(',','.')),Number(v.toPrecision(3)));
+  assert.equal(Number(language==='de'?formatted.replace('−','-').replaceAll(' ','').replace(',','.'):formatted.replace('−','-').replaceAll(',','')),Number(v.toPrecision(3)));
  }
  for(const floor of [NaN,1,1.2]){
   const D=W.design(live.teaching.t,live.teaching.observed,live.windows),norm=D.b.reduce((s,v)=>s+v*v,0);

@@ -334,3 +334,10 @@ dialog{max-width:min(1050px,90vw);max-height:80dvh;overflow:auto;overscroll-beha
 .c3-zoom-bar,.c3-round-gain{fill:#187b83}
 .c3-round-gain.not-taken{fill:none;stroke:#187b83;stroke-width:2}
 .c3-cut{stroke:#fff;stroke-width:3}
+
+/* Stopping: matched forward/backward plots, with explicit small-value insets. */
+.story-svg .c4-text{font:14px system-ui;fill:var(--ink)}
+.story-svg .c4-tick{font:11px system-ui;fill:var(--muted)}
+.c4-bar{fill:#267e89}.c4-noise{fill:#adcbd0}.c4-limit{stroke:#b85a36;stroke-width:1.5;stroke-dasharray:5 4}
+.story-svg .c4-gain-key{fill:#267e89}.story-svg .c4-noise-key{fill:#668f96}
+.c4-chip{fill:#e6f0ef;stroke:#8bb5b6}

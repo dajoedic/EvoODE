@@ -29,8 +29,7 @@ applyLanguage(language);
 for(const lang of ['en','de'])document.getElementById('language-'+lang).addEventListener('click',()=>applyLanguage(lang,true));
 const $=id=>document.getElementById(id);
 const el=(tag,text,cls)=>{const e=document.createElement(tag);if(text!==undefined)e.textContent=text;if(cls)e.className=cls;return e;};
-const superscript=x=>String(x).replace(/[-+0-9]/g,c=>({'-':'⁻','+':'','0':'⁰','1':'¹','2':'²','3':'³','4':'⁴','5':'⁵','6':'⁶','7':'⁷','8':'⁸','9':'⁹'}[c]));
-function numberText(x,d=3){const n=Number(x);if(n!==0&&(Math.abs(n)<1e-4||Math.abs(n)>=1e7)){const [m,e]=n.toExponential(d-1).split('e');return Number(m).toLocaleString(language,{maximumSignificantDigits:d})+' × 10'+superscript(Number(e));}return n.toLocaleString(language,{maximumSignificantDigits:d});}
+function numberText(x,d=3){const text=Number(x).toLocaleString(language,{notation:'standard',maximumSignificantDigits:d});return language==='de'?text.replaceAll('.',' '):text;}
 const fmt=(x,d=3)=>x!==''&&x!==null&&x!==undefined&&Number.isFinite(+x)?numberText(x,d):tr('j153');
 const pct=x=>Number.isFinite(+x)&&x!==''?`${fmt(+x*100)}%`:tr('j153');
 const terms=['1','u','u²','u³',tr('j154'),tr('j155')];
@@ -194,7 +193,7 @@ function soloModel(observations,times,config,feature){
  const longest=Math.max(...D.windows.map(([a,b])=>b-a)),rows=D.windows.map((w,i)=>({w,i})).filter(({w})=>w[1]-w[0]===longest&&w[0]%longest===0);
  return {blocks,winner:first.addition,floor,explainable,normalized:floor!==null&&1-floor>0,D,rows,x:rows.map(({w})=>(times[w[0]]+times[w[1]])/2)};
 }
-function soloNumber(value){return Number(value).toLocaleString(language,{maximumSignificantDigits:3,useGrouping:false}).replaceAll('-','−');}
+function soloNumber(value){return numberText(value).replaceAll('-','−');}
 function soloEquation(block){return 'du/dt = '+soloNumber(block.coefficient)+(block.term?' '+terms[block.term]:'');}
 function initSolo(){
  const model=soloModel(teaching.observed,measuredTime,LIVE,LIVE.featured[0]),buttons=[];
@@ -421,7 +420,26 @@ function thirdModel(model,t,x,config,feature){
  const next=Array.from({length:model.D.A[0].length},(_,term)=>term).filter(j=>!last.support.includes(j)).map(term=>({term,gain:(last.sse-fit([...last.support,term].sort((a,b)=>a-b)).sse)/norm/model.explainable})).sort((a,b)=>b.gain-a.gain||a.term-b.term)[0];
  return {rounds,truth,next,fit};
 }
-function secondNumber(value){return Number(value).toLocaleString(language,{maximumSignificantDigits:3,maximumFractionDigits:12,useGrouping:false}).replaceAll('-','−');}
+// Audit the real stopping path without modifying the numerical core.
+function fourthModel(model,t,x,config,feature,third){
+ const threshold=feature.stop_reference.threshold,live=W.significancePath(t,x,threshold);
+ const supports=live.steps.map(s=>s.support),reference=feature.stop_reference;
+ if(JSON.stringify(supports)!==JSON.stringify(reference.supports)||live.steps.length!==reference.stop_step)throw Error('Teaching significance path differs from stop reference');
+ if(JSON.stringify(supports.slice(0,4))!==JSON.stringify(third.rounds.map(r=>r.after.support)))throw Error('Teaching significance path differs from FoBa supports');
+ const D=live.design,norm=soloDot(D.b,D.b);
+ const rounds=[[],...supports].map((support,i)=>{
+  const base=W.noiseFloor(D,support,live.variance),before=third.fit(support);
+  const blocks=Array.from({length:D.A[0].length},(_,term)=>term).filter(term=>!support.includes(term)).map(term=>{
+   const next=[...support,term].sort((a,b)=>a-b),gain=before.sse-third.fit(next).sse;
+   const noise=base-W.noiseFloor(D,next,live.variance),ratio=noise<=0?Infinity:gain/noise;
+   return {term,gain,noise,ratio,passes:noise<=0||ratio>=threshold};
+  });
+  return {support,blocks,passes:blocks.some(b=>b.passes),step:live.steps[i]||null,cleanup:third.rounds[i]||null};
+ });
+ return {threshold,supports,rounds,variance:live.variance,norm};
+}
+function secondNumber(value){return numberText(value).replaceAll('-','−');}
+function thresholdNumber(value){return numberText(value,15);}
 function secondEquation(support,coefficients){return 'du/dt = '+coefficients.map((c,i)=>(i?(c<0?' − ':' + '):c<0?'−':'')+secondNumber(Math.abs(c))+(support[i]?'·'+terms[support[i]]:'')).join('');}
 function initChapterOne(){
  if(!$('p-c1-data'))return;
@@ -429,26 +447,18 @@ function initChapterOne(){
  const legacyStates=['data','noise-visible','slope','secants','windows','error-empty','fit','every','noise-why','noise-estimate','percent','solution'];
  const states=['data','slope','noise-visible','secants','windows','error-empty','fit','every','noise-estimate','percent','solution'];
  const constant=m.blocks.find(b=>b.term===0),winner=m.blocks.find(b=>b.term===m.winner),norm=soloDot(m.D.b,m.D.b);
- const two=secondModel(m,t,x,LIVE,LIVE.featured[0]),twoStates=['c2-standing','c2-residual','c2-joint','c2-error','c2-solution','c2-all'];
+ const two=secondModel(m,t,x,LIVE,LIVE.featured[0]),twoStates=['c2-standing','c2-residual','c2-joint','c2-error','c2-solution'];
  const three=thirdModel(m,t,x,LIVE,LIVE.featured[0]),threeStates=['c3-standing','c3-probe','c3-threshold','c3-linear','c3-quadratic','c3-compare','c3-next'];
+ const four=fourthModel(m,t,x,LIVE,LIVE.featured[0],three),fourStates=['c4-question','c4-noise','c4-threshold','c4-replay','c4-path'];
  const twoWinner=two.blocks.find(b=>b.term===two.winner),joint=two.blocks.find(b=>b.term===1);
  const remainingBlocks=two.blocks.filter(b=>b.term!==joint.term),sortAt=remainingBlocks.length*2500;
- // Last step of chapter two: the same round (try every open block, refit jointly, keep the best)
- // repeated until every block is in. Additions only; the cleanup step is chapter three's subject.
- const twoC=soloCompress(m.D.A,m.D.b),fitSupport=support=>{const f=W.leastSquares(twoC.A.map(row=>support.map(j=>row[j])),twoC.b);return {support,coefficients:f.coefficients.map((v,i)=>v/(twoC.norms[support[i]]||1)),remaining:f.sse/norm};};
- const rounds=[];
- for(let base={support:twoWinner.support,coefficients:twoWinner.coefficients,remaining:twoWinner.remaining,term:two.winner,share:twoWinner.share};base.support.length<terms.length;){
-  const candidates=terms.map((_,j)=>j).filter(j=>!base.support.includes(j)).map(j=>{const f=fitSupport([...base.support,j].sort((a,b)=>a-b));return {...f,term:j,share:(1-f.remaining)/m.explainable};});
-  const best=candidates.reduce((a,b)=>b.remaining<a.remaining?b:a);rounds.push({base,candidates,winner:best});base=best;
+ // Counterfactual used only by the explicitly labelled comparison in chapter three.
+ const counterfactual=[];
+ for(let base=three.rounds[1].after;base.support.length<4;){
+  const candidates=terms.map((_,j)=>j).filter(j=>!base.support.includes(j)).map(j=>thirdModelFit([...base.support,j].sort((a,b)=>a-b)));
+  const winner=candidates.reduce((a,b)=>b.sse<a.sse?b:a);counterfactual.push(winner);base=winner;
  }
- const trialMs=750,tailMs=1300,roundStart=[0];rounds.forEach(R=>roundStart.push(roundStart.at(-1)+R.candidates.length*trialMs+tailMs));
- function allFrame(seq){
-  const r=rounds.findIndex((_,k)=>seq<roundStart[k+1]);
-  if(r<0){const R=rounds.at(-1);return {r:rounds.length-1,R,done:true,j:R.candidates.length,tl:tailMs,tail:true,from:R.winner,to:R.winner,morph:1,join:1,fade:0};}
-  const R=rounds[r],local=seq-roundStart[r],k=R.candidates.length,fade=clamp(local/300);
-  if(local<k*trialMs){const j=Math.floor(local/trialMs),tl=local%trialMs;return {r,R,j,tl,tail:false,from:j?R.candidates[j-1]:R.base,to:R.candidates[j],morph:ease(tl/300),join:0,fade};}
-  const tl=local-k*trialMs;return {r,R,j:k,tl,tail:true,from:R.candidates[k-1],to:R.winner,morph:ease(tl/400),join:ease((tl-500)/800),fade};
- }
+ function thirdModelFit(support){return three.fit(support);}
  const pct=v=>(100*v).toLocaleString(language,{minimumFractionDigits:1,maximumFractionDigits:1})+' %';
  const variance=W.noiseVariance(t,x),relative=variance.reduce((s,v,i)=>s+Math.sqrt(v)/Math.abs(x[i]),0)/n;
  const noise=x.map((v,i)=>v-clean[i]),actual=m.D.windows.reduce((s,[a,b])=>s+(noise[b]-noise[a])**2,0)/norm;
@@ -478,11 +488,13 @@ function initChapterOne(){
  });
  document.querySelectorAll('[data-c2-eye]').forEach(e=>e.textContent=tr('x10_eye',{i:e.dataset.c2Eye,n:twoStates.length}));
  $('c2-closing').textContent=tr('x13_closing');
- const allArgs={count:terms.length,second:pct(twoWinner.share),third:pct(rounds[0].winner.share),last:pct(rounds.at(-1).winner.share)};
- [0,1].forEach(i=>{$('c2-all-text-'+i).textContent=tr('x16_text_'+i,allArgs);});
  document.querySelectorAll('[data-c3-eye]').forEach(e=>e.textContent=tr('x10_eye',{i:e.dataset.c3Eye,n:threeStates.length}));
  const threeArgs={share:pct(three.rounds[1].after.share),linear:terms[three.rounds[2].addition],quadratic:terms[three.rounds[3].addition],constant:terms[three.rounds[2].removed[0]],cubic:terms[three.rounds[3].removed[0]],roundLinear:three.rounds.indexOf(three.rounds[2])+1,roundQuadratic:three.rounds.indexOf(three.rounds[3])+1,fraction:secondNumber(LIVE.backward_fraction),next:terms[three.next.term],gain:secondNumber(100*three.next.gain)+' %'};
  threeStates.forEach((_,i)=>{ $('c3-title-'+i).textContent=tr('x17_title_'+i,threeArgs);$('c3-text-'+i).textContent=tr('x17_text_'+i,threeArgs);});
+ const lastRound=four.rounds.at(-1),bestRatio=lastRound.blocks.reduce((a,b)=>b.ratio>a.ratio?b:a);
+ const fourArgs={support:lastRound.support.map(j=>terms[j]).join(', '),threshold:thresholdNumber(four.threshold),best:terms[bestRatio.term],ratio:secondNumber(bestRatio.ratio),percent:secondNumber(99),df:secondNumber(1),one:secondNumber(1),hundred:secondNumber(100)};
+ fourStates.forEach((_,i)=>{$('c4-title-'+i).textContent=tr('x18_title_'+i,fourArgs);$('c4-text-'+i).textContent=tr('x18_text_'+i,fourArgs);});
+ document.querySelectorAll('[data-c4-eye]').forEach(e=>e.textContent=tr('x10_eye',{i:e.dataset.c4Eye,n:fourStates.length}));
  const teachingCell=RESULTS.cells.find(c=>c.row.cell_id===teaching.cell_id),truthDemo=LIVE.illustrations.find(d=>d.system_id===teachingCell.system_id);
  // The teaching system's stored logistic constants, not fitted result-row params.
  const truthCoefficients=[truthDemo.constants[0],-truthDemo.constants[0]/truthDemo.constants[1]];
@@ -522,7 +534,6 @@ function initChapterOne(){
  const curvePath=path('story-prediction',81),curveMarker=dot('story-marker',5),curveLabel=label();
  const slots=m.blocks.map(()=>({bar:node('rect',{class:'story-slot'},'rect',[64,70,0,15,0]),text:label(),value:label()}));
  const twoSlots=two.blocks.map(()=>({bar:node('rect',{class:'c2-slot'},'rect',[64,70,0,15,0]),text:label(),value:label()}));
- const pathTitle=label('story-arithmetic'),pathLabels=terms.map(()=>[label('story-arithmetic'),label('story-arithmetic')]);
  const deviationBox=node('rect',{class:'story-deviations'},'rect',[590,42,195,180,0]);
  const deviationLabels=[label('story-deviation')],deviationDot=node('rect',{class:'story-contribution'},'rect',[0,0,10,10,0]);
  const squareBars=t.map(()=>node('rect',{class:'story-square'},'rect',[0,0,0,0,0]));
@@ -546,7 +557,7 @@ function initChapterOne(){
  const noiseIn=800,noiseSlow=6,noiseSlowEnd=noiseIn+noiseSlow*1000,noiseFastEnd=noiseSlowEnd+3000;
  const noiseCount=seq=>seq<noiseIn?0:seq<noiseSlowEnd?(seq-noiseIn)/1000:noiseSlow+(n-noiseSlow)*clamp((seq-noiseSlowEnd)/3000)**2;
  const durations={data:900,'noise-visible':2300,slope:3800,secants:16100,windows:12900,'error-empty':2900,fit:4900,every:16900,'noise-why':900,'noise-estimate':noiseFastEnd+4700,percent:900,solution:900};
- Object.assign(durations,{'c2-standing':900,'c2-residual':3900,'c2-joint':jointPause+sortAt+1900,'c2-every':sortAt+1900,'c2-error':3900,'c2-solution':900,'c2-all':900+roundStart.at(-1)+1200});
+ Object.assign(durations,{'c2-standing':900,'c2-residual':3900,'c2-joint':jointPause+sortAt+1900,'c2-every':sortAt+1900,'c2-error':3900,'c2-solution':900});
  Object.assign(durations,{'c3-standing':1200,'c3-probe':3600,'c3-threshold':3600,'c3-linear':16000,'c3-quadratic':16000,'c3-compare':4200,'c3-next':4200});
  const c3Chips=terms.map(()=>({box:node('rect',{class:'c3-chip',rx:6},'rect',[0,0,0,0,0]),text:label('c3-chip-label')}));
  const c3Bars=terms.map(()=>({bar:node('rect',{class:'c3-cost'},'rect',[0,0,0,0,0]),name:label(),value:label(),status:label()}));
@@ -560,6 +571,107 @@ function initChapterOne(){
  const c3RoundAxes=[line('story-grid'),line('story-grid')],c3RoundX=label(),c3RoundY=label(),c3NotTaken=label();
 
  nodes[c3NotTaken].e.setAttribute('text-anchor','end');
+ // Chapter four uses the same mounted nodes and deterministic story clock.
+ Object.assign(durations,{'c4-question':4200,'c4-noise':3000,'c4-threshold':3000,'c4-replay':60000,'c4-path':4200});
+ const c4Text=Array.from({length:20},()=>label('c4-text'));
+ const c4Band=node('rect',{class:'story-band'},'rect',[0,0,0,0,0]);
+ const c4Chips=Array.from({length:4},()=>terms.map(()=>({box:node('rect',{class:'c3-chip c4-chip',rx:5},'rect',[0,0,0,0,0]),text:label('c4-text')})));
+ function c4PlotNodes(){return {
+  axes:[line('story-grid'),line('story-grid')],title:label('c4-text'),x:label('c4-text'),zero:label('c4-tick'),max:label('c4-tick'),
+  limit:line('c4-limit'),limitText:label('c4-text'),
+  ticks:Array.from({length:12},()=>({line:line('story-grid c4-log-tick'),text:label('c4-tick c4-log-label')})),
+  bars:terms.map(()=>({bar:node('rect',{class:'c4-bar'},'rect',[0,0,0,0,0]),noise:node('rect',{class:'c4-noise'},'rect',[0,0,0,0,0]),name:label('c4-tick'),value:label('c4-tick'),noiseValue:label('c4-tick c4-noise-key')})),
+  zoom:{title:label('c4-tick'),axis:line('story-grid'),base:line('story-grid'),limit:line('c4-limit'),max:label('c4-tick'),zero:label('c4-tick'),
+   bars:terms.map(()=>({bar:node('rect',{class:'c4-bar c4-zoom'},'rect',[0,0,0,0,0]),noise:node('rect',{class:'c4-noise c4-zoom'},'rect',[0,0,0,0,0]),cut:line('c3-cut'),name:label('c4-tick')}))}
+ };}
+ const c4Plots=[c4PlotNodes(),c4PlotNodes()];
+ const ratioValues=four.rounds.flatMap(r=>r.blocks.map(b=>b.ratio)).filter(v=>v>0&&Number.isFinite(v));
+ const ratioMin=Math.floor(Math.log10(Math.min(...ratioValues,four.threshold))),ratioMax=Math.ceil(Math.log10(Math.max(...ratioValues,four.threshold)));
+ c4Plots.forEach(p=>p.ticks.forEach(t=>nodes[t.text].e.setAttribute('text-anchor','end')));
+ // Initialize even unused labels so replay cannot change hidden-node attributes.
+ c4Plots.forEach(plot=>[plot.x,...plot.bars.flatMap(b=>[b.name,b.value,b.noiseValue]),...plot.zoom.bars.map(b=>b.name)].forEach(id=>nodes[id].e.setAttribute('text-anchor','middle')));
+ function fourthScene(state,ms){
+  const s=blank.map(a=>a.slice()),put=(id,a)=>{s[id]=a;},text=(id,value,xx,yy,opacity=1)=>{nodes[id].e.textContent=value;put(id,[xx,yy,opacity]);};
+  const number=v=>numberText(v,Math.max(3,Math.floor(Math.log10(Math.abs(v)||1))+1));
+  const chips=(support,row,xx,yy,opacity=1)=>support.forEach((term,j)=>{const slot=c4Chips[row][term];put(slot.box,[xx+j*64,yy,56,30,opacity]);text(slot.text,terms[term],xx+8+j*64,yy+20,opacity);});
+  // Main plots and magnifiers have fixed topology and identical dimensions in replay.
+  function plot(slot,entries,left,width,title,xTitle,limit=null,pairs=false,opacity=1,roundLabels=false,logarithmic=false){
+   const top=180,bottom=278,height=bottom-top,maximum=Math.max(limit||0,...entries.flatMap(e=>[e.value,pairs?e.noise:0]),Number.EPSILON)*1.2;
+   const Y=v=>logarithmic?bottom-height*(Math.log10(Math.max(10**ratioMin,v))-ratioMin)/(ratioMax-ratioMin):bottom-height*Math.max(0,v)/maximum,step=width/Math.max(1,entries.length),bw=Math.min(28,step*(pairs?.28:.48));
+   put(slot.axes[0],[left,top,left,bottom,opacity]);put(slot.axes[1],[left,bottom,left+width,bottom,opacity]);
+   text(slot.title,title,left,155,opacity);text(slot.x,xTitle,left+width/2,352,opacity);nodes[slot.x].e.setAttribute('text-anchor','middle');
+   nodes[slot.axes[0]].e.dataset.scale=logarithmic?'log10':'linear';
+   text(slot.max,number(maximum),left,173,entries.length&&!logarithmic?opacity:0);text(slot.zero,number(0),left-14,bottom+4,entries.length&&!logarithmic?opacity:0);
+   if(logarithmic)for(let exponent=ratioMin;exponent<=ratioMax;exponent++){const tick=slot.ticks[exponent-ratioMin],value=10**exponent,yy=Y(value);put(tick.line,[left,yy,left+width,yy,opacity*.35]);text(tick.text,numberText(value,15),left-8,yy+4,opacity);nodes[tick.line].e.dataset.value=String(value);}
+   if(limit!==null){put(slot.limit,[left,Y(limit),left+width,Y(limit),opacity]);text(slot.limitText,tr(title===tr('x18_cost')?'x18_half':'x18_limit',{value:title===tr('x18_cost')?number(limit):thresholdNumber(limit)}),left,132,opacity);nodes[slot.limit].e.dataset.value=String(limit);}
+   entries.forEach((e,j)=>{const item=slot.bars[j],xx=left+step*(j+.5),progress=ease(ms/1000),h=(bottom-Y(e.value))*progress;
+    put(item.bar,[xx-(pairs?bw: bw/2),bottom-h,bw,h,opacity]);
+    if(pairs){const nh=(bottom-Y(e.noise))*progress;put(item.noise,[xx,bottom-nh,bw,nh,opacity]);}
+    text(item.name,roundLabels?String(j+1)+' / '+terms[e.term]:terms[e.term],xx,pairs?336:322,opacity);text(item.value,number(e.value),xx,302,opacity);
+    if(pairs)text(item.noiseValue,number(e.noise),xx,318,opacity);
+    for(const id of [item.name,item.value,item.noiseValue])nodes[id].e.setAttribute('text-anchor','middle');
+    nodes[item.bar].e.dataset.value=String(e.value);nodes[item.bar].e.dataset.term=String(e.term);nodes[item.noise].e.dataset.value=String(e.noise??0);
+   });
+   // Keep a small decisive threshold or noise bar readable instead of pinning it to zero.
+   const reference=limit!==null?limit:pairs?Math.max(...entries.map(e=>e.noise)):roundLabels?entries.at(-1).value:null;
+   const magnified=!logarithmic&&entries.length>0&&reference>0&&reference<.1*maximum;
+   nodes[slot.zoom.axis].e.dataset.magnified=String(magnified);
+   if(magnified){
+    const z=slot.zoom,zmax=reference*2.5,ztop=398,zbottom=446,ZY=v=>zbottom-48*Math.min(zmax,Math.max(0,v))/zmax;
+    text(z.title,tr('x18_zoom')+' · '+title,left,374,opacity);text(z.max,number(zmax),left,392,opacity);text(z.zero,number(0),left-14,zbottom+4,opacity);
+    put(z.axis,[left,ztop,left,zbottom,opacity]);put(z.base,[left,zbottom,left+width,zbottom,opacity]);
+    if(limit!==null)put(z.limit,[left,ZY(limit),left+width,ZY(limit),opacity]);
+    entries.forEach((e,j)=>{const item=z.bars[j],xx=left+step*(j+.5);put(item.bar,[xx-(pairs?bw:bw/2),ZY(e.value),bw,zbottom-ZY(e.value),opacity]);
+     if(pairs)put(item.noise,[xx,ZY(e.noise),bw,zbottom-ZY(e.noise),opacity]);
+     if(e.value>zmax)put(item.cut,[xx-bw,ztop+4,xx+bw,ztop-2,opacity]);
+     text(item.name,terms[e.term],xx,465,opacity);nodes[item.name].e.setAttribute('text-anchor','middle');
+     nodes[item.bar].e.dataset.value=String(e.value);nodes[item.bar].e.dataset.limit=String(zmax);nodes[item.bar].e.dataset.term=String(e.term);
+    });
+   }
+  }
+  c4Text.forEach((id,j)=>{nodes[id].e.classList.toggle('c4-gain-key',state==='c4-noise'&&j===0);nodes[id].e.classList.toggle('c4-noise-key',state==='c4-noise'&&j===1);});
+  caption.style.visibility='visible';caption.textContent=tr('x18_caption');
+  const last=four.rounds.at(-1);
+  let round=last,index=four.rounds.length-1,phase=0;
+  svg.dataset.state=state;svg.dataset.complete=String(ms>=durations[state]);
+  if(state==='c4-question'){
+   const gains=three.rounds.map(r=>({term:r.addition,value:r.gain})).concat([{term:three.next.term,value:three.next.gain}]);
+   plot(c4Plots[0],gains,70,660,tr('x17_explained_scale'),tr('x17_round_axis'),null,false,1,true);
+   const sd=Math.sqrt(four.variance.reduce((a,b)=>a+b,0)/four.variance.length);
+   put(c4Band,[70,46,660,28,1]);text(c4Text[0],tr('x18_band',{value:number(sd)}),70,94);
+   text(c4Text[1],tr('x17_not_taken'),570,30);
+  }else if(state==='c4-noise'){
+   plot(c4Plots[0],last.blocks.map(b=>({...b,value:b.gain})),70,660,tr('x18_residual'),tr('x18_blocks'),null,true);
+   text(c4Text[0],tr('x18_gain'),70,32);text(c4Text[1],tr('x18_noise'),350,32);
+   chips(last.support,0,70,60);
+  }else if(state==='c4-threshold'){
+   plot(c4Plots[0],last.blocks.map(b=>({...b,value:b.ratio})),70,660,tr('x18_ratio'),tr('x18_blocks'),four.threshold,false,1,false,true);
+   text(c4Text[2],tr('x18_fail'),70,32);chips(last.support,0,70,60);
+  }else if(state==='c4-replay'){
+   index=Math.min(four.rounds.length-1,Math.floor(ms/12000));phase=Math.min(12000,ms-index*12000);round=four.rounds[index];
+   const added=round.passes&&phase>=3000,cleaning=round.passes&&phase>=5000;
+   text(c4Text[2],tr('x18_round',{round:index+1,count:four.rounds.length}),48,24);
+   text(c4Text[3],tr('x18_test'),48,52);text(c4Text[4],'→ '+tr('x18_add'),352,52,round.passes?1:.25);text(c4Text[5],'→ '+tr('x18_clean'),560,52,round.passes?1:.25);
+   text(c4Text[6],tr(round.passes?'x18_pass':'x18_fail'),380,24);
+   plot(c4Plots[0],round.blocks.map(b=>({...b,value:b.ratio})),48,300,tr('x18_ratio'),tr('x18_blocks'),four.threshold,false,1,false,true);
+   let probe=null;
+   if(cleaning){const local=Math.max(0,phase-5000),probes=round.cleanup.probes;probe=probes[Math.min(probes.length-1,Math.floor(local/3500))];}
+   plot(c4Plots[1],probe?probe.costs.map(c=>({term:c.term,value:c.cost*four.norm*m.explainable})):[],450,300,tr('x18_cost'),tr('x18_model_blocks'),probe?round.cleanup.threshold*four.norm*m.explainable:null,false,probe?1:.2);
+   if(!round.passes){text(c4Text[7],tr('x18_end'),368,112,.4);text(c4Text[8],tr('x18_end'),560,112,.4);}
+   else if(!cleaning)text(c4Text[8],tr('x18_pending'),560,112,.4);
+   if(probe&&cleaning){const removed=probe.removed; text(c4Text[8],removed===null?tr('x18_kept'):tr('x18_removed',{terms:terms[removed]}),450,100);}else if(cleaning)text(c4Text[8],'',450,100);
+   const support=!added?round.support:!cleaning?round.cleanup.added.support:phase>=11500?round.step.support:probe.model.support;
+   chips(support,1,48,78);if(!support.length)text(c4Text[9],tr('x18_empty'),48,98);svg.dataset.support=JSON.stringify(support);svg.dataset.probeSupport=JSON.stringify(probe?.model.support||[]);
+   svg.dataset.phase=!round.passes?'end':cleaning?'cleanup':added?'add':'test';
+  }else if(state==='c4-path'){
+   four.rounds.filter(r=>r.step).forEach((r,j)=>{const yy=35+j*106,opacity=ease((ms-j*700)/700);chips(r.step.support,j,70,yy,opacity);
+    text(c4Text[j+10],tr(r.step.removed.length?'x18_origin_removed':'x18_origin',{added:terms[r.step.addition],removed:r.step.removed.map(j=>terms[j]).join(', ')}),70,yy+57,opacity);
+   });
+  }
+  svg.dataset.round=String(index+1);svg.dataset.testPass=String(round.passes);
+  return s;
+ }
+
  // Chapter two shares the persistent topology, renderer, axes, windows and clock.
  // Divide weak changes and design rows by each displayed window's duration to
  // show slopes; fitting still uses ALL original windows in unscaled weak units.
@@ -575,10 +687,10 @@ function initChapterOne(){
  }
  function secondScene(state,ms){
   const s=blank.map(a=>a.slice()),put=(id,a)=>{s[id]=a;},text=(id,value,xx,yy,opacity=1)=>{nodes[id].e.textContent=value;put(id,[xx,yy,opacity]);};
-  const seq=Math.max(0,ms-900),list=state==='c2-every',all=state==='c2-all',tour=all?allFrame(seq):null,left=list||all?284:64,right=772,top=140,bottom=392;
+  const seq=Math.max(0,ms-900),list=state==='c2-every',left=list?284:64,right=772,top=140,bottom=392;
   nodes[predictionPath].e.classList.remove('story-clean-slope');
   nodes[readout].e.classList.remove('story-construction-readout');nodes[readout].e.classList.remove('story-long-label');
-  nodes[axisLabels[0]].e.classList.remove('story-stack-legend');nodes[equation].e.classList.toggle('story-equation-long',all);
+  nodes[axisLabels[0]].e.classList.remove('story-stack-legend');nodes[equation].e.classList.remove('story-equation-long');
   twoSlots.forEach((slot,j)=>{nodes[slot.bar].e.classList.remove('winner');nodes[slot.bar].e.dataset.term=String(two.blocks[j].term);nodes[slot.bar].e.dataset.value=String(two.blocks[j].share);});
   const X=v=>left+(v-t[0])/(t.at(-1)-t[0])*(right-left),Y=v=>bottom-(v+slopeExtent)/(2*slopeExtent)*(bottom-top);
   const at=seq<sortAt?Math.min(remainingBlocks.length-1,Math.floor(seq/2500)):remainingBlocks.findIndex(b=>b.term===two.winner);
@@ -588,7 +700,7 @@ function initChapterOne(){
   // Candidate-to-candidate interpolation keeps every prediction vertex in place.
   let previous=null,flight=1;
   if(list){previous=seq>=sortAt?remainingBlocks.at(-1):at>0?remainingBlocks[at-1]:joint;flight=ease((seq>=sortAt?seq-sortAt:seq%2500)/700);}
-  const prediction=slopeRows.map(r=>tour?mix(predict(tour.from,r),predict(tour.to,r),tour.morph):list?mix(previous?predict(previous,r):constant.coefficient,predict(block,r),flight):predict({...block,coefficients},r));
+  const prediction=slopeRows.map(r=>list?mix(previous?predict(previous,r):constant.coefficient,predict(block,r),flight):predict({...block,coefficients},r));
   const residualOn=state==='c2-residual'?ease(seq/1200):0;
   const bandOn=state==='c2-residual'?ease((seq-1200)/1000):0;
   caption.style.visibility='visible';caption.textContent=tr('x13_caption');
@@ -610,13 +722,12 @@ function initChapterOne(){
   if(list)gain=mix(previous?1-previous.remaining:constant.gain,1-block.remaining,flight);
   if(state==='c2-error')gain=mix(constant.gain,1-twoWinner.remaining,ease(seq/2200));
   if(state==='c2-solution')gain=1-twoWinner.remaining;
-  if(all)gain=mix(1-tour.R.base.remaining,1-tour.R.winner.remaining,tour.join);
   // Three segments retain chapter one's labels and its frozen noise fraction.
   let xx=left;
   chapterParts(m,{gain}).forEach((v,i)=>{put(stack[i].bar,[xx,20,(right-left)*v,16,1]);xx+=(right-left)*v;});
   // One legend line with all three values, as in chapter one's percent step.
   const parts=chapterParts(m,{gain});
-  text(stack[0].text,tr('x13_legend',{floor:pct(parts[0]),explained:pct(parts[1]),remaining:pct(parts[2])}),left,56,list||all?0:1);
+  text(stack[0].text,tr('x13_legend',{floor:pct(parts[0]),explained:pct(parts[1]),remaining:pct(parts[2])}),left,56,list?0:1);
   [1,2].forEach(i=>text(stack[i].text,'',left,56,0));
   text(readout,tr('x13_share',{p:pct(gain/m.explainable)}),left,80);
   if(state==='c2-error')text(noiseLabel,tr('x13_before_after',{before:pct(constant.share),after:pct(twoWinner.share)}),left,120);
@@ -624,7 +735,6 @@ function initChapterOne(){
   if(state==='c2-joint'){
    text(equation,secondEquation(block.support,coefficients),left,470);
   }else if(state==='c2-solution')text(equation,secondEquation(two.record.active_idxs[0].map(j=>j-1),two.record.equations[0].coefficients),left,470);
-  else if(all){const e=tour.join<.5?tour.R.base:tour.R.winner;text(equation,secondEquation(e.support,e.coefficients),12,470,tour.join>0&&tour.join<1?Math.abs(1-2*tour.join):1);svg.dataset.support=JSON.stringify(e.support);svg.dataset.round=String(tour.r);}
   else if(!list)text(equation,blend===0?soloEquation(constant):secondEquation(block.support,coefficients),left,470);
   if(list)two.blocks.forEach((b,j)=>{
    const ordering=ranking(remainingBlocks,Math.floor(seq/2500),seq%2500,[joint]);
@@ -634,25 +744,6 @@ function initChapterOne(){
    nodes[slot.bar].e.dataset.term=String(b.term);nodes[slot.bar].e.dataset.value=String(b.share);nodes[slot.bar].e.classList.toggle('winner',seq>=sortAt+1000&&b.term===two.winner);
    nodes[slot.text].e.dataset.shareRow=String(j);nodes[slot.value].e.dataset.shareRow=String(j);
   });
-  if(all){
-   const {R,j,tl,tail,join,fade,done}=tour,k=R.candidates.length,ordering=ranking(R.candidates,j,tail?2500:2000+(tl-450)*2);
-   two.blocks.forEach((b,s)=>{
-    const slot=twoSlots[s],c=R.candidates.find(c=>c.term===b.term),ci=R.candidates.indexOf(c);
-    if(!c||done){put(slot.bar,[12,150,0,12,0]);text(slot.text,'',12,150,0);text(slot.value,'',135,150,0);return;}
-    const yy=150+ordering.position(c)*52,progress=tail||ci<j?1:ci===j?ease((tl-300)/150):0,shown=fade*(1-join),labels=ordering.sorting?0:shown;
-    put(slot.bar,[12,yy+10,204*clamp(c.share)*progress,12,shown]);
-    text(slot.text,terms[c.term],12,yy,labels);text(slot.value,pct(c.share),135,yy,progress>0?labels:0);
-    nodes[slot.bar].e.dataset.term=String(c.term);nodes[slot.bar].e.dataset.value=String(c.share);nodes[slot.bar].e.classList.toggle('winner',tail&&c===R.winner);
-    nodes[slot.text].e.dataset.shareRow=String(s);nodes[slot.value].e.dataset.shareRow=String(s);
-   });
-   text(errorLabel,done?tr('x16_done'):tr('x16_round',{round:tour.r+3,open:k}),12,128,done?1:fade);
-   // The path so far: steps one and two from before, then one line per finished round.
-   text(pathTitle,tr('x16_path'),12,350);
-   [{term:0,share:constant.share},{term:two.winner,share:twoWinner.share},...rounds.map(Q=>Q.winner)].forEach((e,q)=>{
-    const on=q<2||q-2<tour.r?1:q-2===tour.r?clamp(2*join-1):0;
-    const col=Math.floor(q/3),yy=374+(q%3)*22;text(pathLabels[q][0],(q?'+ ':'')+terms[e.term],12+col*124,yy,on);text(pathLabels[q][1],pct(e.share),66+col*124,yy,on);
-   });
-  }
   svg.dataset.state=state;svg.dataset.term=String(block.term);svg.dataset.error=String(1-gain);svg.dataset.coefficients=JSON.stringify(coefficients);svg.dataset.complete=String(ms>=durations[state]);
   return s;
  }
@@ -681,7 +772,7 @@ function initChapterOne(){
   caption.style.visibility='visible';caption.textContent=tr('x17_caption');
   if(compare||next){
    const fade=ease(ms/1200);
-   const forward=[three.rounds[0].after,three.rounds[1].after,rounds[0].winner,rounds[1].winner];
+   const forward=[three.rounds[0].after,three.rounds[1].after,counterfactual[0],counterfactual[1]];
    text(c3Headers[0],tr(compare?'x17_forward':'x17_candidates'),48,30);
    if(compare)text(c3Headers[1],tr('x17_foba'),432,30);
    c3Paths.forEach((slot,j)=>{
@@ -788,6 +879,7 @@ function initChapterOne(){
  }
  let current=null,frame=0,last=blank.map(a=>a.slice()),elapsed=0,reverseZoom=false;
  function scene(state,ms){
+  if(state?.startsWith('c4-'))return fourthScene(state,ms);
   if(state?.startsWith('c3-')){const s=thirdScene(state,ms);svg.dataset.state=state;svg.dataset.complete=String(ms>=durations[state]);result.hidden=true;return s;}
   const requested=state,elapsedMs=ms;
   $('c1-story-text-8').style.opacity='1';
@@ -1070,7 +1162,7 @@ function initChapterOne(){
  function finish(){if(current){clock.cancel(frame);elapsed=durations[current];render(scene(current,elapsed));}}
  function enter(state,restart=false){
   reverseZoom=current==='secants'&&state==='noise-visible';
-  finish();host.hidden=![...states,...twoStates,...threeStates].includes(state);
+  finish();host.hidden=![...states,...twoStates,...threeStates,...fourStates].includes(state);
   if(host.hidden){current=null;return;}
   const from=last.map(a=>a.slice());current=state;elapsed=0;
   svg.setAttribute('aria-label',document.querySelector('[data-stage="'+state+'"] h2')?.textContent||state);
@@ -1091,8 +1183,9 @@ function initChapterOne(){
   if(window.matchMedia('(prefers-reduced-motion: reduce)').matches)finish();else {tick(start);}
  }
  window.WispChapterOne={model:m,error:chapterError,parts:chapterParts};
+ window.WispChapterFour={model:four,states:fourStates};
  window.WispChapterThree={model:three,states:threeStates,truthCoefficients};
  window.WispChapterTwo={model:two,states:twoStates,slopeRows,predict};
- window.WispChapterStory={states,durations,rounds,roundStart,trialMs,tailMs,enter,finish,seek,local,examples,variance,relative,actual,longRows,lengthClouds,longerLengths,remainingBlocks,sortAt,noisePause,jointPause,squarePrefix,deviations,lengthRms,rates,trueRates,smooth,rateBound,clock,svg,current:()=>current,elapsed:()=>elapsed};
+ window.WispChapterStory={states,durations,enter,finish,seek,local,examples,variance,relative,actual,longRows,lengthClouds,longerLengths,remainingBlocks,sortAt,noisePause,jointPause,squarePrefix,deviations,lengthRms,rates,trueRates,smooth,rateBound,clock,svg,current:()=>current,elapsed:()=>elapsed};
 }
 initChapterOne();

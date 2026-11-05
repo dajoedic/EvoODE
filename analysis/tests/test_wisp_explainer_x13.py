@@ -14,12 +14,12 @@ def test_wisp_two_pages_and_bilingual_claims():
     soup = BeautifulSoup((BASE/'src/index.html').read_text(encoding='utf8'), 'html.parser')
     pages = soup.select('main > .page')
     two = soup.select('[data-chapter="two"]')
-    names = ['standing', 'residual', 'joint', 'error', 'solution', 'all']
+    names = ['standing', 'residual', 'joint', 'error', 'solution']
     assert [p['id'] for p in two] == ['p-c2-'+s for s in names]
     start = next(i for i, p in enumerate(pages) if p['id'] == 'p-c1-solution')+1
-    assert pages[start:start+6] == two
+    assert pages[start:start+5] == two
     assert [p['data-stage'] for p in two] == ['c2-'+s for s in names]
-    assert "visibleChapters=['intro','one','two','three']" in (BASE/'src/pages.js').read_text(encoding='utf8')
+    assert "visibleChapters=['intro','one','two','three','four']" in (BASE/'src/pages.js').read_text(encoding='utf8')
     for page in two:
         assert all(n.get('data-claim') == 'review' for n in page.select('h2,p,footer,.eyebrow'))
     tables = [json.loads((BASE/f'src/i18n/{lang}.json').read_text(encoding='utf8')) for lang in ['de', 'en']]
@@ -58,7 +58,7 @@ def test_wisp_two_real_record_and_guard():
 
 def test_wisp_two_fit_sampling():
     source = (BASE/'src/pages.js').read_text(encoding='utf8')
-    for name in ['standing', 'residual', 'joint', 'error', 'solution', 'all']:
+    for name in ['standing', 'residual', 'joint', 'error', 'solution']:
         assert "'c2-"+name+"':" in source
     assert "page.dataset.chapter==='two'||" in source
-    assert "['percent','c2-joint','c2-all'].includes(page.dataset.stage)" in source
+    assert "['percent','c2-joint'].includes(page.dataset.stage)" in source

@@ -151,9 +151,10 @@ def check_chapter_interactions(page,evidence):
         page.goto((ROOT/'explainer/wisp/dist/wisp_explainer.html').as_uri()+f'?lang={lang}',wait_until='load')
         page.wait_for_function('window.WispChapterStory && window.WispSlides?.nav')
         expected=['p-hook','p-challenge','p-c1-data','p-c1-slope','p-c1-noise-visible','p-c1-secants','p-c1-changes','p-c1-error-empty','p-c1-fit','p-c1-every','p-c1-noise','p-c1-percent','p-c1-solution']
-        expected += ['p-c2-'+s for s in ('standing','residual','joint','error','solution','all')]
+        expected += ['p-c2-'+s for s in ('standing','residual','joint','error','solution')]
         ids=page.evaluate('WispSlides.pages.map(p=>p.id)')
         expected += ['p-c3-'+s for s in ('standing','probe','threshold','linear','quadratic','compare','next')]
+        expected += ['p-c4-'+s for s in ('question','noise','threshold','replay','path')]
         if ids!=expected:raise AssertionError(f'Incorrect delivered inventory: {ids}')
         for key in ('ArrowLeft','ArrowRight'):
             page.keyboard.press(key)
@@ -163,8 +164,8 @@ def check_chapter_interactions(page,evidence):
             if page.evaluate('WispSlides.nav.index')!=i:raise AssertionError('Vertical keyboard walk failed')
             page.evaluate('WispChapterStory.finish()')
             if i>=2 and page.locator('#c1-stage svg').get_attribute('data-state')!=page.locator('#'+expected[i]).get_attribute('data-stage'):raise AssertionError('Stage differs from page')
-        if page.locator('.page-dots a:visible').count()!=7:raise AssertionError('Wrong chapter-three sub-step dots')
-        if page.locator('#masthead-title').text_content()!=page.evaluate('tr("x17_chapter")'):raise AssertionError('Wrong chapter-three masthead')
+        if page.locator('.page-dots a:visible').count()!=5:raise AssertionError('Wrong chapter-four sub-step dots')
+        if page.locator('#masthead-title').text_content()!=page.evaluate('tr("x18_chapter")'):raise AssertionError('Wrong chapter-four masthead')
         page.keyboard.press('ArrowUp');page.wait_for_timeout(850)
         if page.evaluate('WispSlides.nav.index')!=len(expected)-2:raise AssertionError('Up did not return one step')
         page.evaluate('WispSlides.nav.link("#p-c1-solution");WispChapterStory.finish()')

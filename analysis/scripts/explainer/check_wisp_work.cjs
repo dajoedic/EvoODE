@@ -2,8 +2,8 @@
 const fs=require('fs'),vm=require('vm'),assert=require('assert'),path=require('path');
 const base=path.resolve(process.argv[2]||'explainer/wisp');
 const W=require(path.join(base,'src/compute.js'));
-const source=fs.readFileSync(path.join(base,'src/app.js'),'utf8');
-const core=fs.readFileSync(path.join(base,'src/compute.js'),'utf8');
+const source=fs.readFileSync(path.join(base,'src/app.js'),'utf8').replaceAll('\r\n','\n');
+const core=fs.readFileSync(path.join(base,'src/compute.js'),'utf8').replaceAll('\r\n','\n');
 const live=JSON.parse(fs.readFileSync(path.join(base,'data/live.json'),'utf8'));
 const compression=core.slice(core.indexOf('  function compress('),core.indexOf('  function leastSquares(')).replace('function compress(','function soloCompress(').replaceAll('dot(','soloDot(');
 assert(source.includes(compression),'Adapter compression must equal frozen compute.js');
@@ -44,3 +44,12 @@ const wrongTruth=JSON.parse(JSON.stringify(live.featured[0]));wrongTruth.truth_s
 assert.throws(()=>context.third(model,live.teaching.t,live.teaching.observed,live,wrongTruth),/FoBa truth/);
 console.log('PASS four live FoBa supports, repeated removal probes and truth guard');
 if(process.argv[3])fs.writeFileSync(process.argv[3],JSON.stringify({...report,third},null,2)+'\n');
+
+vm.runInContext(source.slice(source.indexOf('function fourthModel('),source.indexOf('function secondNumber('))+'\nthis.fourth=fourthModel;',context);
+const fourth=context.fourth(model,live.teaching.t,live.teaching.observed,live,live.featured[0],third);
+assert.deepEqual(JSON.parse(JSON.stringify(fourth.supports)),live.featured[0].stop_reference.supports);
+assert.deepEqual(Array.from(fourth.rounds,r=>r.passes),[true,true,true,true,false]);
+const wrongStop=JSON.parse(JSON.stringify(live.featured[0]));wrongStop.stop_reference.stop_step++;
+assert.throws(()=>context.fourth(model,live.teaching.t,live.teaching.observed,live,wrongStop,third),/stop reference/);
+console.log('PASS live significance supports, stop count, first four FoBa supports and fifth-round failure');
+if(process.argv[3])fs.writeFileSync(process.argv[3],JSON.stringify({...report,third,fourth},null,2)+'\n');

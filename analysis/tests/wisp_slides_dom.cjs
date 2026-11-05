@@ -61,8 +61,8 @@ if(fixture.configuration==='delivered'){
  const story=WispChapterStory,slides=WispSlides,m=WispChapterOne.model,t=fixture.data.live.teaching.t,x=fixture.data.live.teaching.observed,truth=fixture.data.live.teaching.truth;
  const close=(a,b)=>assert(Math.abs(a-b)<=1e-9*Math.max(1,Math.abs(b)),`${a} != ${b}`);
  const ids=['p-hook','p-challenge','p-c1-data','p-c1-slope','p-c1-noise-visible','p-c1-secants','p-c1-changes','p-c1-error-empty','p-c1-fit','p-c1-every','p-c1-noise','p-c1-percent','p-c1-solution'];
- const twoIds=['standing','residual','joint','error','solution','all'].map(s=>'p-c2-'+s);
- assert.deepEqual(slides.pages.map(p=>p.id),ids.concat(twoIds,WispChapterThree.states.map(s=>'p-'+s)));
+ const twoIds=['standing','residual','joint','error','solution'].map(s=>'p-c2-'+s);
+ assert.deepEqual(slides.pages.map(p=>p.id),ids.concat(twoIds,WispChapterThree.states.map(s=>'p-'+s),WispChapterFour.states.map(s=>'p-'+s)));
  slides.nav.go(2);assert.equal(doc.getElementById('masthead-title').textContent,tr('x12c_chapter'));assert.equal(doc.getElementById('chapter-progress').getAttribute('aria-valuemax'),'11');
  assert.deepEqual(slides.pages.slice(2,13).map(p=>p.dataset.stage),story.states);
  assert.equal(doc.querySelectorAll('#c1-stage svg').length,1);
@@ -209,10 +209,6 @@ if(fixture.configuration==='delivered'){
   }
   if(i===2){close(+svg.dataset.error,win.remaining);}
   if(i===2){const bars=doc.querySelectorAll('#c1-stage .c2-slot').filter(e=>+e.style.opacity===1);assert.equal(bars.length,5);bars.forEach((e,j)=>{assert.equal(+e.dataset.term,wm.blocks[j].term);close(+e.dataset.value,wm.blocks[j].share);assert.equal(e.classList.contains('winner'),wm.blocks[j].term===wm.winner);});}
-  if(i===5){const R=story.rounds,last=R.at(-1).winner;close(+svg.dataset.error,last.remaining);assert.deepEqual(JSON.parse(svg.dataset.support),[0,1,2,3,4,5]);
-   const forward=WispCompute.path(t,x,{windows:fixture.data.live.windows,cap:6,sse_stop:fixture.data.live.sse_stop,backward_fraction:1e-300}).steps;assert.equal(forward.length,2+R.length);
-   R.forEach((Q,k)=>{assert.deepEqual(Q.winner.support,forward[k+2].support);close(Q.winner.remaining,forward[k+2].remaining);assert(Q.candidates.every(c=>c.remaining>=Q.winner.remaining));});
-   assert.equal(doc.querySelectorAll('#c1-stage .c2-slot').filter(e=>+e.style.opacity>0).length,0);assert(doc.querySelector('.story-equation').classList.contains('story-equation-long'));}
   if(i===3||i===4){close(+svg.dataset.error,win.remaining);close(+doc.querySelector('.story-part-0').getAttribute('width'),708*m.floor);}
   if(i===4){const eq=doc.querySelector('.story-equation').textContent;for(const c of wm.record.equations[0].coefficients)assert(eq.includes(secondNumber(Math.abs(c))));assert(!eq.includes('e-'));}
   twoSaved[i]=svg.children.map(e=>({...e.attrs,opacity:e.style.opacity}));
@@ -308,6 +304,52 @@ if(fixture.configuration==='delivered'){
  three.states.forEach((state,i)=>{global.matchMedia=()=>({matches:true,addEventListener(){}});story.enter(state);assert.equal(svg.dataset.complete,'true');snapshot().forEach((node,j)=>assert.deepEqual(node,threeSaved[i][j],state+' node '+j));});
  global.matchMedia=()=>({matches:false,addEventListener(){}});
  console.log('PASS X16: seven bilingual scenes, live supports/costs/thresholds, repeated probes, persistent topology, replay, deterministic seek and reduced motion');
+
+ const four=WispChapterFour;
+ slides.nav.link('#p-c4-question');
+ assert.equal(doc.getElementById('masthead-title').textContent,tr('x18_chapter'));
+ assert.equal(doc.querySelectorAll('.page-dots a').filter(a=>!a.hidden).length,5);
+ four.states.forEach(state=>{
+  story.enter(state);story.finish();const end=snapshot();
+  assert.strictEqual(story.svg,original);assert.equal(svg.dataset.state,state);assert.equal(svg.dataset.complete,'true');
+  story.seek(600);const early=snapshot();story.seek(story.durations[state]+3600);assert.deepEqual(snapshot(),early);
+  story.enter(state);advance(story.durations[state]);assert.equal(svg.dataset.complete,'true');advance(2999);assert.equal(svg.dataset.complete,'true');advance(2);assert.equal(svg.dataset.complete,'false');
+  global.matchMedia=()=>({matches:true,addEventListener(){}});story.enter(state);assert.equal(svg.dataset.complete,'true');snapshot().forEach((n,j)=>assert.deepEqual(n,end[j],state+' reduced node '+j));
+  global.matchMedia=()=>({matches:false,addEventListener(){}});
+ });
+ story.enter('c4-replay');
+ for(let r=0;r<5;r++)for(const phase of [0,2999,3000,4999,5000,8500,11500]){
+  story.seek(r*12000+phase);assert.equal(svg.dataset.round,String(r+1));assert.equal(svg.dataset.testPass,String(r<4));
+  assert.equal(svg.dataset.phase,r===4?'end':phase<3000?'test':phase<5000?'add':'cleanup');
+ }
+ // Review fixes: inspect the actual mounted reader nodes in both languages.
+ const visibleText=()=>svg.children.filter(e=>e.tagName==='TEXT'&&+e.style.opacity>.01).map(e=>e.textContent);
+ const chipTerms=()=>doc.querySelectorAll('.c4-chip').filter(e=>+e.style.opacity>.01).map(box=>svg.children[svg.children.indexOf(box)+1].textContent);
+ for(let r=0;r<5;r++){
+  for(const phase of [0,600,1500,2999]){
+   story.seek(r*12000+phase);
+   assert.deepEqual(chipTerms(),four.model.rounds[r].support.map(j=>terms[j]));
+   if(!r)assert(visibleText().includes(tr('x18_empty')));
+   assert(visibleText().includes(tr('x18_limit',{value:thresholdNumber(four.model.threshold)})));
+  }
+  if(r<4)for(const phase of [3000,4999,5000,7000,8500,11500]){
+   story.seek(r*12000+phase);
+   // The half-gain line appears only once clean-up starts (true round order).
+   assert.equal(doc.querySelectorAll('.c4-limit').filter(e=>+e.style.opacity>.01&&+e.getAttribute('y1')>=180&&+e.getAttribute('y1')<=278).length,phase<5000?1:2);
+  }
+ }
+ for(const state of four.states){
+  story.enter(state);story.finish();
+  assert(!visibleText().some(text=>/\d(?:[.,]\d+)?e[+-]?\d/i.test(text)));
+ }
+ assert(!doc.querySelectorAll('svg text').some(e=>/\d(?:[.,]\d+)?e[+-]?\d/i.test(e.textContent)));
+ const thresholdText=thresholdNumber(four.model.threshold);
+ assert.equal(thresholdText,fixture.language==='de'?'6,635':'6.635');
+ assert(doc.getElementById('c4-text-2').textContent.includes(thresholdText));
+ for(const value of [9311,2932,.703,1e-12,1e12])assert(!/[eE]|×/.test(numberText(value,15)));
+ assert.equal(numberText(9311,15),fixture.language==='de'?'9 311':'9,311');
+ console.log('PASS X17b: visible pre-round model chips, exact shared threshold, probes in every passing round, standard locale formatting across all scenes');
+ console.log('PASS X17: five bilingual scenes, masthead/dots, persistent SVG, looping with end hold, deterministic seek, reduced motion and real round order');
  if(fixture.language==='en')fs.writeFileSync(require('path').join(require('path').dirname(process.argv[3]),'x12c_story_numbers.json'),JSON.stringify({durations:story.durations,n:t.length,neighbourPairs:8,longDots:story.longRows.length,coefficient:optimum,rangeEnd:2*optimum,winnerError:1-m.blocks.find(b=>b.term===m.winner).gain,floor:m.floor,designWindows:m.D.windows.length},null,2));
  console.log('PASS X12: 11 bilingual states, real numeric geometry, keyboard-only walk, vertical wheel/keys, persistent SVG, sequence interruption/replay, reverse and reduced motion');process.exit(0);
 }
