@@ -136,6 +136,44 @@ function checkExamples(){
  console.log('PASS X19: bilingual chapters, live failure and LV replay, test/add/cleanup supports, loop hold, deterministic seek, reduced motion, residual split, observed shading, G2 and comparison');
 }
 if(fixture.configuration==='examples'){checkExamples();process.exit(0);}
+if(fixture.configuration==='chapter9'){
+ const results=fixture.data.results;
+ function verifyTable(root,rows){
+  const metrics=['raw_exact','reconstruction_variance_weighted_hit','generalization_variance_weighted_hit'];
+  rows=rows.filter(r=>metrics.includes(r.metric));
+  if(!rows.length){assert.equal(root.querySelectorAll('table').length,0);assert(root.textContent.includes(tr('j283')));return;}
+  assert.equal(root.querySelectorAll('table').length,1);
+  const expectedMethods=[...new Set(rows.map(r=>r.method))];
+  const rendered=root.querySelectorAll('table tr').slice(1);
+  assert.equal(rendered.length,expectedMethods.length);
+  rendered.forEach((tr,i)=>{
+   const method=expectedMethods[i],expected=metrics.flatMap(metric=>rows.filter(r=>r.method===method&&r.metric===metric));
+   assert.deepEqual(tr.querySelectorAll('[data-rate]').map(e=>e.dataset.rate),expected.map(r=>r.rate));
+   assert.deepEqual(tr.querySelectorAll('.c9-configuration').map(e=>e.textContent),method===results.primary_method?[]:expected.map(r=>r.configuration||r.comparison));
+  });
+ }
+ const clean=doc.getElementById('c9-clean'),cleanGroup=clean.querySelector('select');
+ assert.equal(clean.querySelectorAll('select').length,1); // The only rho is prose, not a dropdown.
+ for(const group of cleanGroup.children){cleanGroup.value=group.value;cleanGroup.emit('change');verifyTable(clean,WispResultsChapter.rows(results.rates,{sigma:0,rho:.5}).filter(r=>r.stratum===group.value));}
+ const noise=doc.getElementById('c9-noise'),[noiseGroup,rho]=noise.querySelectorAll('select');
+ for(const group of noiseGroup.children)for(const thinning of rho.children){
+  noiseGroup.value=group.value;rho.value=thinning.value;rho.emit('change');
+  assert.equal(noise.querySelectorAll('.c9-legend').length,1);assert.equal(noise.querySelectorAll('.c9-plots svg').length,3);
+  const rows=WispResultsChapter.rows(results.rates,{rho:+thinning.value}).filter(r=>r.stratum===group.value);
+  assert.equal(noise.querySelectorAll('.c9-legend span').length,new Set(rows.map(r=>r.method)).size);
+  const configurations=noise.querySelector('dialog').textContent;
+  for(const row of rows.filter(r=>r.method!==results.primary_method))assert(configurations.includes(row.configuration));
+  for(const text of noise.querySelectorAll('svg title'))assert(!text.textContent.endsWith(' · c'));
+ }
+ const more=noise.querySelector('[data-more]'),dialog=noise.querySelector('dialog');more.emit('click');assert(dialog.open);dialog.querySelector('[data-close]').emit('click');assert(!dialog.open);
+ const original=doc.getElementById('c9-original'),[config,condition,group]=original.querySelectorAll('select');
+ for(const g of group.children)for(const c of config.children)for(const r of condition.children){
+  group.value=g.value;config.value=c.value;condition.value=r.value;condition.emit('change');
+  const [sigma,rho]=r.value.split(' / ').map(Number);
+  verifyTable(original,WispResultsChapter.rows(results.comparison.rates,{comparison:c.value,sigma,rho}).filter(row=>row.stratum===g.value));
+ }
+ console.log('PASS chapter 9: real rates/configurations, all groups and conditions, shared legend and disclosure');process.exit(0);
+}
 // WP-X12: drive the shipped persistent stage with the injected frame clock.
 if(fixture.configuration==='delivered'){
  const story=WispChapterStory,slides=WispSlides,m=WispChapterOne.model,t=fixture.data.live.teaching.t,x=fixture.data.live.teaching.observed,truth=fixture.data.live.teaching.truth;

@@ -41,6 +41,15 @@ so there are no full-sampling clean-control rates to display. Sigma and rho stay
 
 ## Results schema contract (version 2)
 
+WP-X20b gives the chapter-nine story pages step eyebrows and leads. Clean and original
+tables, and the noise charts, show one selectable system group at a time without
+scrolling essential content inside the desktop stage. WISP has no per-value internal
+configuration label; baseline table values retain their exact names. The noise charts
+share one method legend, with exact baseline configurations per metric and sigma in
+the Configurations dialog. The sole clean rho is stated in the lead. The fit checker
+samples every group/condition combination, checks SVG label overlaps and detects
+clipped essential containers even if an internal scroll marker is accidentally restored.
+
 A replacement `data/results.json` requires no presentation-code change. Run the assembler after replacement. JSON numbers or numeric CSV strings are accepted for numbers; unknown extension fields are retained. All scientific values come from aggregation, never editorial literals.
 
 Required top-level fields:

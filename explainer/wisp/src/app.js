@@ -1519,52 +1519,61 @@ function initResultsChapter(){
  const sigmas=[...new Set(RESULTS.rates.map(r=>r.sigma))].sort((a,b)=>+a-+b),rhos=[...new Set(RESULTS.rates.filter(r=>r.rho!=='pooled').map(r=>r.rho))].sort((a,b)=>+a-+b);
  count.append(el('p',tr('x22_conditions',{sigma:sigmas.map(v=>fmt(v)).join(', '),rho:rhos.map(v=>fmt(v)).join(', ')})));
  const population=el('ul');for(const s of strata)population.append(el('li',stratumLabel(s)));count.append(population);
+ const groupControl=(root,draw)=>{const box=el('label',tr('x22_group')+' '),select=el('select');options(select,strata,stratumLabel);box.append(select);root.append(box);select.addEventListener('change',draw);return select;};
  const controls=(root,values,draw)=>{const box=el('label','ρ '),select=el('select');options(select,values,v=>fmt(v));box.append(select);root.append(box);select.addEventListener('change',()=>draw(+select.value));return select;};
  function table(root,rows){
+  if(!rows.length){root.append(el('p',tr('j283')));return;}
   for(const stratum of [...new Set(rows.map(r=>r.stratum))]){
-   const article=el('article');article.append(el('h3',stratumLabel(stratum)));const t=el('table'),head=el('tr');
+   const article=el('article');const t=el('table'),head=el('tr');
    for(const text of ['',...metrics.map(label)])head.append(el('th',text));t.append(head);
    // Configurations may differ between metrics. Keep each exact name below its value.
    for(const method of [...new Set(rows.filter(r=>r.stratum===stratum).map(r=>r.method))]){
     const trr=el('tr');trr.append(el('th',methodLabel(method)));
     for(const metric of metrics){const td=el('td'),matches=rows.filter(r=>r.stratum===stratum&&r.method===method&&r.metric===metric);
-     for(const row of matches){const value=el('div',pct(row.rate));value.dataset.rate=row.rate;td.append(value,el('small',fmt(row.numerator,8)+' / '+fmt(row.denominator,8)),el('small',row.configuration||row.comparison));}
+     for(const row of matches){const value=el('div',pct(row.rate));value.dataset.rate=row.rate;td.append(value,el('small',fmt(row.numerator,8)+' / '+fmt(row.denominator,8),'c9-counts'));if(method!==RESULTS.primary_method)td.append(el('small',row.configuration||row.comparison,'c9-configuration'));}
      if(!matches.length)td.append(el('span',tr('j283')));trr.append(td);
     }t.append(trr);
    }article.append(t);root.append(article);
   }
  }
  const clean=$('c9-clean'),cleanBody=el('div'),cleanRhos=[...new Set(chapterNineRows(RESULTS.rates,{sigma:0}).map(r=>r.rho))];
- clean.append(el('p',tr('x22_clean_controls')));
- const cleanDraw=rho=>{cleanBody.replaceChildren();table(cleanBody,chapterNineRows(RESULTS.rates,{sigma:0,rho}));};
- if(cleanRhos.length){const choice=controls(clean,cleanRhos,cleanDraw);clean.append(cleanBody);cleanDraw(+choice.value);}
+ const cleanGroup=groupControl(clean,()=>{});
+ const cleanDraw=rho=>{cleanBody.replaceChildren();table(cleanBody,chapterNineRows(RESULTS.rates,{sigma:0,rho}).filter(r=>r.stratum===cleanGroup.value));};
+ if(cleanRhos.length){let choice;if(cleanRhos.length>1)choice=controls(clean,cleanRhos,cleanDraw);clean.append(cleanBody);cleanDraw(+(choice?.value??cleanRhos[0]));cleanGroup.addEventListener('change',()=>cleanDraw(+(choice?.value??cleanRhos[0])));}
  const noise=$('c9-noise'),noiseBody=el('div');
- function noiseDraw(rho){noiseBody.replaceChildren();const rows=chapterNineRows(RESULTS.rates,{rho});
-  for(const stratum of strata){const card=el('article');card.append(el('h3',stratumLabel(stratum)));const panels=el('div',undefined,'c9-plots');card.append(panels);
+ const noiseGroup=groupControl(noise,()=>noiseDraw(+rho.value));
+ const configButton=el('button',tr('x22_configurations'));configButton.dataset.more='';configButton.type='button';
+ const configDialog=el('dialog'),close=el('button',tr('x4_close'));close.dataset.close='';close.type='button';configDialog.dataset.internalScroll='true';
+ const configBody=el('div');configDialog.append(close,el('h3',tr('x22_configurations')),configBody);
+ configButton.addEventListener('click',()=>configDialog.showModal());close.addEventListener('click',()=>configDialog.close());
+ function noiseDraw(rho){noiseBody.replaceChildren();configBody.replaceChildren();const rows=chapterNineRows(RESULTS.rates,{rho});
+  for(const stratum of strata.filter(s=>s===noiseGroup.value)){const card=el('article');const panels=el('div',undefined,'c9-plots');card.append(panels);
+   const methods=[...new Set(rows.filter(r=>r.stratum===stratum).map(r=>r.method))],colours=['#386649','#3078b7','#98567f','#8c6224'];
+   const legend=el('div',undefined,'c9-legend');methods.forEach((method,i)=>{const name=el('span',methodLabel(method));name.style.color=colours[i%colours.length];legend.append(name);});
    for(const metric of metrics){const panel=el('div');panel.append(el('h4',label(metric)));const svg=svgNode('svg',{viewBox:'0 0 330 235',role:'img','aria-label':stratumLabel(stratum)+' · '+label(metric)});panel.append(svg);panels.append(panel);
     const X=v=>62+230*v/Math.max(...sigmas.map(Number)),Y=v=>170-130*v;
     svg.append(svgNode('path',{d:'M62 40V170H292',fill:'none',stroke:'currentColor'}));
     for(const v of [0,.5,1])svg.append(svgNode('text',{x:55,y:Y(v)+5,'text-anchor':'end'},pct(v)));
     for(const v of sigmas)svg.append(svgNode('text',{x:X(+v),y:194,'text-anchor':'middle'},fmt(v)));
     svg.append(svgNode('text',{x:177,y:222,'text-anchor':'middle'},tr('x22_noise_axis')),svgNode('text',{x:62,y:22},tr('x22_share')));
-    const legend=el('div',undefined,'c9-legend');panel.append(legend);
-    const methods=[...new Set(rows.filter(r=>r.stratum===stratum).map(r=>r.method))],colours=['#386649','#3078b7','#98567f','#8c6224'];
+    const configSection=el('article');configSection.append(el('h4',label(metric)));configBody.append(configSection);
     methods.forEach((method,i)=>{const selected=rows.filter(r=>r.stratum===stratum&&r.method===method&&r.metric===metric).sort((a,b)=>+a.sigma-+b.sigma),colour=colours[i%colours.length];
      const path=svgNode('path',{d:selected.map((r,j)=>(j?'L':'M')+X(+r.sigma)+' '+Y(+r.rate)).join(' '),fill:'none',stroke:colour,'stroke-width':2});svg.append(path);
-     for(const row of selected){const dot=svgNode('circle',{cx:X(+row.sigma),cy:Y(+row.rate),r:4,fill:colour,'data-rate':row.rate});dot.append(svgNode('title',{},methodLabel(method)+' · σ '+fmt(row.sigma)+': '+pct(row.rate)+' · '+row.configuration));svg.append(dot);}
-     const name=el('p',methodLabel(method));name.style.color=colour;legend.append(name,el('small',[...new Set(selected.map(r=>r.configuration))].join(' / ')));
+     for(const row of selected){const dot=svgNode('circle',{cx:X(+row.sigma),cy:Y(+row.rate),r:4,fill:colour,'data-rate':row.rate});dot.append(svgNode('title',{},methodLabel(method)+' · σ '+fmt(row.sigma)+': '+pct(row.rate)+(method===RESULTS.primary_method?'':' · '+row.configuration)));svg.append(dot);}
+     if(method!==RESULTS.primary_method){configSection.append(el('h4',methodLabel(method)));for(const row of selected)configSection.append(el('p','σ '+fmt(row.sigma)+': '+row.configuration));}
     });
-   }noiseBody.append(card);
+   }card.append(legend);noiseBody.append(card);
   }
  }
- const rho=controls(noise,rhos,noiseDraw);noise.append(noiseBody);noiseDraw(+rho.value);
- const original=$('c9-original');original.append(el('p',tr('x22_original_note')),el('p',tr('x22_source')+': '+comparison.source));
+ const rho=controls(noise,rhos,noiseDraw);noise.append(noiseBody,configButton,configDialog);noiseDraw(+rho.value);
+ const original=$('c9-original'),source=el('details');source.append(el('summary',tr('x22_source')),el('p',tr('x22_original_note')),el('p',comparison.source));original.append(source);
  if(comparison.status!=='available')original.append(el('p',tr('x22_missing')));
  else{
   const select=el('select'),condition=el('select'),body=el('div'),configs=[...new Set(comparison.rates.map(r=>r.comparison))];
   const configLabel=el('label',tr('x22_configuration')+' ');options(select,configs,v=>v);configLabel.append(select);original.append(configLabel);
-  const conditions=[...new Set(comparison.rates.map(r=>r.sigma+' / '+r.rho))];options(condition,conditions,v=>'σ / ρ: '+v);original.append(condition,body);
-  const draw=()=>{body.replaceChildren();const [sigma,rho]=condition.value.split(' / ').map(Number);table(body,chapterNineRows(comparison.rates,{comparison:select.value,sigma,rho}));};
+  const conditions=[...new Set(comparison.rates.map(r=>r.sigma+' / '+r.rho))];options(condition,conditions,v=>'σ / ρ: '+v);original.append(condition);
+  const originalGroup=groupControl(original,()=>draw());original.append(body);
+  const draw=()=>{body.replaceChildren();const [sigma,rho]=condition.value.split(' / ').map(Number);table(body,chapterNineRows(comparison.rates,{comparison:select.value,sigma,rho}).filter(r=>r.stratum===originalGroup.value));};
   select.addEventListener('change',draw);condition.addEventListener('change',draw);draw();
  }
  window.WispResultsChapter={rows:chapterNineRows};

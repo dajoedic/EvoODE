@@ -23,7 +23,8 @@
  function exampleLabels(page,panel){return [...page.querySelectorAll('p'),...(panel||page).querySelectorAll('p,td,th,.x20-chip,svg text')].filter(e=>!e.children.length&&e.textContent.trim()&&!e.closest('[hidden]'));}
  function exampleTextIssues(labels){return {rawNames:labels.some(e=>/u[12]\^|u1\*u2|q7_0/.test(e.textContent)),exponent:labels.some(e=>/\d[.,\d]*e[+-]?\d/i.test(e.textContent))};}
  function exampleSamples(state,duration){return state.endsWith('rounds')?Array.from({length:Math.floor(duration/9000)},(_,j)=>[0,600,1500,2999,3000,3800,5999,6000,7500,8999].map(t=>j*9000+t)).flat().concat([duration,duration+2999,duration+3300]):[0,duration,duration+2999,duration+3300];}
- const api={visibleChapters,visiblePages,chapterTarget,steps,fallback,controller,protectedTarget,inputAction,wheelGate,stepState,exampleLabels,exampleTextIssues,exampleSamples};
+ function contentOutside(r,bounds,width){return !!(r.width&&r.height&&(r.bottom>bounds.bottom-12||r.top<bounds.top||r.right>width-24||r.left<0));}
+ const api={visibleChapters,visiblePages,chapterTarget,steps,fallback,controller,protectedTarget,inputAction,wheelGate,stepState,exampleLabels,exampleTextIssues,exampleSamples,contentOutside};
  if(typeof module!=='undefined')module.exports=api;
  root.WispSlides=api;
  if(typeof document==='undefined')return;
@@ -141,7 +142,18 @@
   window.typesetAll?.();await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
   function readPage(page){const content=page.querySelector('.page-content'),rect=content.getBoundingClientRect(),bounds=page.getBoundingClientRect();
    const overflow=[];
-   content.querySelectorAll('*').forEach(e=>{if(e.closest('dialog:not([open]),[hidden]')||e.parentElement?.closest('[data-internal-scroll],details:not([open])'))return;const r=e.getBoundingClientRect();if(r.width&&r.height&&(r.bottom>bounds.bottom-12||r.right>innerWidth-24||r.left<0))overflow.push(e.id||e.tagName);});
+   const chapterNine=page.classList.contains('c9-page');
+   content.querySelectorAll('*').forEach(e=>{if(e.closest('dialog:not([open]),[hidden]')||e.parentElement?.closest('details:not([open])')||(!chapterNine&&e.parentElement?.closest('[data-internal-scroll]')))return;const r=e.getBoundingClientRect();if(contentOutside(r,bounds,innerWidth))overflow.push(e.id||e.tagName);});
+   const labelOverlaps=[];
+   if(chapterNine)for(const svg of page.querySelectorAll('.c9-plots svg')){
+    const labels=[...svg.querySelectorAll('text')];
+    for(let i=0;i<labels.length;i++)for(let j=i+1;j<labels.length;j++){
+     const a=labels[i].getBoundingClientRect(),b=labels[j].getBoundingClientRect();
+     if(Math.min(a.right,b.right)-Math.max(a.left,b.left)>1&&Math.min(a.bottom,b.bottom)-Math.max(a.top,b.top)>1)labelOverlaps.push([labels[i].textContent,labels[j].textContent]);
+    }
+   }
+   // Essential story content must fit even if an accidental scroll container hides it.
+   const clippedContent=chapterNine?[...page.querySelectorAll('.c9-content,.c9-legend')].filter(e=>e.scrollHeight>e.clientHeight+1||e.scrollWidth>e.clientWidth+1).map(e=>e.id||e.className):[];
    let columns=null,solutionStyle=null,soloEquations=null;
    if(page.id==='p-solution'){
     soloEquations=[...page.querySelectorAll('#solo-equation')].map(e=>{
@@ -157,7 +169,7 @@
     solutionStyle.ok=solutionStyle.fontEqual&&(!truth||solutionStyle.truthStroke>=2.5);
     columns={left:{top:left.top,bottom:left.bottom,height:left.height},right:{top:right.top,bottom:right.bottom,height:right.height},ok:Math.abs(left.top-right.top)<=2&&Math.abs(left.bottom-right.bottom)<=2};
    }
-   return {id:page.id,section:page.dataset.section,step:page.dataset.step,columns,solutionStyle,soloEquations,contentHeight:Math.ceil(Math.max(content.scrollHeight,rect.height)),availableHeight:Math.floor(innerHeight-112),viewportHeight:innerHeight,overflow,ok:content.scrollHeight<=innerHeight-112&&overflow.length===0&&(!columns||columns.ok)&&(!solutionStyle||solutionStyle.ok)&&(!soloEquations||soloEquations.every(e=>e.ok))};
+   return {id:page.id,section:page.dataset.section,step:page.dataset.step,labelOverlaps,clippedContent,columns,solutionStyle,soloEquations,contentHeight:Math.ceil(Math.max(content.scrollHeight,rect.height)),availableHeight:Math.floor(innerHeight-112),viewportHeight:innerHeight,overflow,ok:content.scrollHeight<=innerHeight-112&&overflow.length===0&&labelOverlaps.length===0&&clippedContent.length===0&&(!columns||columns.ok)&&(!solutionStyle||solutionStyle.ok)&&(!soloEquations||soloEquations.every(e=>e.ok))};
   }
   const records=pages.map(page=>{
    const variants=[];
@@ -309,6 +321,14 @@
     // Exercise the same deterministic cycle offset used by the live replay.
     story.seek(story.durations[page.dataset.stage]+3000+300);inspectStage(story.durations[page.dataset.stage]+3300);
     story.finish();
+   }
+   if(page.classList.contains('c9-page')){
+    const selects=[...page.querySelectorAll('select')],saved=selects.map(e=>e.value);
+    function sample(index){
+     if(index===selects.length){variants.push({...readPage(page),selection:selects.map(e=>e.value)});return;}
+     const select=selects[index];for(const option of select.options){select.value=option.value;select.dispatchEvent(new Event('change'));sample(index+1);}
+    }
+    sample(0);selects.forEach((e,i)=>{e.value=saved[i];e.dispatchEvent(new Event('change'));});
    }
    const record=readPage(page);
    return variants.length?{...record,variants,ok:variants.every(v=>v.ok),overflow:[...new Set(variants.flatMap(v=>v.overflow))],contentHeight:Math.max(...variants.map(v=>v.contentHeight))}:record;

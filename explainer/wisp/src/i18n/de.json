@@ -810,5 +810,18 @@
   "x22_weak": "Schwache Form",
   "x22_weak_definition": "Integralgleichungen verbinden gemessene Änderungen mit integrierten Kandidatenfunktionen.",
   "x22_no_model": "Für diese Zelle wurde kein Kandidat ausgewählt.",
-  "x22_clean_controls": "Die Aggregation schließt saubere Kontrollzellen aus; gezeigt werden die vorhandenen Bedingungen ohne Rauschen."
+  "x22_clean_controls": "Die Aggregation schließt saubere Kontrollzellen aus; gezeigt werden die vorhandenen Bedingungen ohne Rauschen.",
+  "x22_step_1": "Schritt 1 von 6",
+  "x22_step_2": "Schritt 2 von 6",
+  "x22_step_3": "Schritt 3 von 6",
+  "x22_step_4": "Schritt 4 von 6",
+  "x22_step_5": "Schritt 5 von 6",
+  "x22_step_6": "Schritt 6 von 6",
+  "x22_lead_count": "Struktur und Vorhersage beantworten verschiedene Fragen. Wir zeigen beide, für jede Systemgruppe getrennt.",
+  "x22_lead_clean": "σ = 0 mit Ausdünnung ρ = 0,5 (die vollständig sauberen Zellen sind Kontrollen und zählen nicht).",
+  "x22_lead_noise": "Wie ändern sich die Trefferanteile mit dem Rauschen? Wähle eine Systemgruppe und eine Ausdünnung; die Farben gelten für alle drei Diagramme.",
+  "x22_lead_original": "Hier vergleichen wir WISP mit dem MATLAB-Original von WSINDy unter derselben Bedingung.",
+  "x22_lead_glossary": "Die wichtigsten Begriffe aus Methode und Vergleich zum Nachschlagen.",
+  "x22_configurations": "Konfigurationen",
+  "x22_group": "Systemgruppe"
 }

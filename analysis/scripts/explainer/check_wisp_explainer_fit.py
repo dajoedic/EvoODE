@@ -32,6 +32,15 @@ def parse_result(dom):
     if not result.get('pages'):raise ValueError('Fit check returned no pages')
     if any(not p['id'].startswith('p-') for p in result['pages']):raise ValueError('Invalid page identifier')
     for page in result['pages']:
+        if page['id'].startswith('p-c9-'):
+            samples = page.get('variants', [])
+            if not samples:
+                raise ValueError('Missing chapter-nine condition samples')
+            for sample in samples:
+                if any(key not in sample for key in ('selection', 'labelOverlaps', 'clippedContent')):
+                    raise ValueError('Missing chapter-nine clipping/overlap evidence')
+                sample['ok'] = sample['ok'] and not sample['labelOverlaps'] and not sample['clippedContent'] and not sample['overflow']
+            page['ok'] = page['ok'] and all(sample['ok'] for sample in samples)
         if page['id']=='p-challenge':
             columns=page.get('columns')
             if not columns:raise ValueError('Missing challenge column bounding rects')

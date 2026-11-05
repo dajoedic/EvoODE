@@ -810,5 +810,18 @@
   "x22_weak": "Weak form",
   "x22_weak_definition": "Integral equations relate measured changes to integrated candidate functions.",
   "x22_no_model": "No candidate selected for this cell.",
-  "x22_clean_controls": "The aggregation excludes clean controls; only available noise-free conditions are shown."
+  "x22_clean_controls": "The aggregation excludes clean controls; only available noise-free conditions are shown.",
+  "x22_step_1": "Step 1 of 6",
+  "x22_step_2": "Step 2 of 6",
+  "x22_step_3": "Step 3 of 6",
+  "x22_step_4": "Step 4 of 6",
+  "x22_step_5": "Step 5 of 6",
+  "x22_step_6": "Step 6 of 6",
+  "x22_lead_count": "Structure and prediction answer different questions. We show both, separately for each system group.",
+  "x22_lead_clean": "σ = 0 with thinning ρ = 0.5 (fully clean cells are controls and do not count).",
+  "x22_lead_noise": "How do hit rates change with noise? Choose a system group and thinning level; the colours apply to all three charts.",
+  "x22_lead_original": "Here we compare WISP with the MATLAB original of WSINDy under the same condition.",
+  "x22_lead_glossary": "Key terms from the method and comparison for reference.",
+  "x22_configurations": "Configurations",
+  "x22_group": "System group"
 }
