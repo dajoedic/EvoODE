@@ -7,6 +7,7 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 ## 2026-11-05
 
 ### WISP explorable: noise zoom and the forward rounds (version 20)
+<!-- 411573c -->
 
 User review of version 19: in the noise step nothing could be seen happening — the 9-point local window is ~9 px wide
 on the full series. The step now zooms onto the window (both axes), shows six points slowly, follows the accelerating
