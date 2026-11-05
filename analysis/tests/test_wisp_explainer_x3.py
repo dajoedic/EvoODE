@@ -78,13 +78,13 @@ def test_full_presentation_dom(language,configuration):
     fixture=ROOT/'outputs/wisp_explainer_checks/x3_dom_fixture.json'
     fixture.parent.mkdir(parents=True,exist_ok=True)
     fixture.write_text(json.dumps({'tree':node(soup.html),'data':data,'language':language,'configuration':configuration,'cubic':cubic}),encoding='utf8')
-    run=subprocess.run(['node',str(ROOT/'analysis/tests/wisp_slides_dom.cjs'),str(BASE),str(fixture)],capture_output=True,text=True,timeout=60)
+    run=subprocess.run(['node',str(ROOT/'analysis/tests/wisp_slides_dom.cjs'),str(BASE),str(fixture)],capture_output=True,text=True,timeout=180)
     assert run.returncode==0,run.stdout+run.stderr
 
 def test_page_structure_and_bilingual_source():
     soup=BeautifulSoup((BASE/'src/index.html').read_text(encoding='utf8'),'html.parser')
     pages=soup.select('main > .page')
-    assert len(pages)==53
+    assert len(pages)==69
     assert [p['id'] for p in pages[:13]] == [
         'p-hook', 'p-challenge', 'p-c1-data', 'p-c1-slope', 'p-c1-noise-visible', 'p-c1-secants', 'p-c1-changes',
         'p-c1-error-empty', 'p-c1-fit', 'p-c1-every', 'p-c1-noise',

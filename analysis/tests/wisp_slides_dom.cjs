@@ -6,6 +6,7 @@ class Node {
  constructor(tag,attrs={},text=''){this.tagName=tag.toUpperCase();this.attrs={...attrs};this.children=[];this.parentElement=null;this.style={};this.listeners={};this._text=text;this._value=attrs.value||'';this.dataset={};for(const [k,v] of Object.entries(attrs))if(k.startsWith('data-'))this.dataset[k.slice(5).replace(/-([a-z])/g,(_,c)=>c.toUpperCase())]=v;this.open='open' in attrs;
   this.classList={contains:c=>this.className.split(' ').includes(c),add:c=>{if(!this.classList.contains(c))this.className=(this.className+' '+c).trim();},remove:c=>{this.className=this.className.split(' ').filter(x=>x!==c).join(' ');},toggle:(c,on)=>{if(on===undefined)on=!this.classList.contains(c);this.classList[on?'add':'remove'](c);return on;}};
  }
+ get hidden(){return 'hidden' in this.attrs;}set hidden(v){if(v)this.attrs.hidden='';else delete this.attrs.hidden;}
  get id(){return this.attrs.id||'';}set id(v){this.attrs.id=v;}
  get className(){return this.attrs.class||'';}set className(v){this.attrs.class=v;}
  get textContent(){return this._text+this.children.map(c=>c.textContent).join('');}set textContent(v){this._text=String(v);this.children=[];}
@@ -56,13 +57,92 @@ const events={};global.addEventListener=(k,fn)=>(events[k]??=[]).push(fn);global
 let dishVisible;global.IntersectionObserver=class{constructor(fn){dishVisible=fn;}observe(){}disconnect(){}};
 vm.runInThisContext(fs.readFileSync(base+'/src/app.js','utf8'),{filename:'app.js'});
 vm.runInThisContext(fs.readFileSync(base+'/src/pages.js','utf8'),{filename:'pages.js'});
+function checkExamples(){
+ const story=WispChapterStory,slides=WispSlides,m=WispChapterOne.model,close=(a,b)=>assert(Math.abs(a-b)<1e-9);
+ // X19 drives the real mounted new pages, using the same injected frame clock.
+ const examples=WispExamples;
+ for(const [chapter,count,title] of [['six',6,'x20_chapter6'],['seven',5,'x20_chapter7'],['eight',4,'x20_chapter8']]){
+  const first=slides.pages.find(p=>p.dataset.chapter===chapter);slides.nav.link('#'+first.id);
+  assert.equal(doc.getElementById('masthead-title').textContent,tr(title));
+  assert.equal(doc.querySelectorAll('.page-dots a').filter(a=>!a.hidden).length,count);
+ }
+ for(const prefix of ['c6','c7']){
+  const model=prefix==='c6'?examples.lv:examples.failure,host=doc.getElementById(prefix+'-replay'),state=prefix+'-rounds';
+  const signature=()=>({support:host.dataset.support,phase:host.dataset.phase,round:host.dataset.round,text:host.textContent});
+  story.enter(state);story.seek(600);const early=signature();story.seek(story.durations[state]+3600);assert.deepEqual(signature(),early);
+  for(let i=0;i<model.rounds.length;i++)for(const phase of [0,2999,3000,5999,6000,8999]){
+   story.seek(i*9000+phase);const round=model.rounds[i],added=round.before.map(eq=>eq.slice());added[round.addition.equation-1].push(round.addition.basis_index);
+   assert.equal(host.dataset.support,JSON.stringify(phase<3000?round.before:phase<6000?added:round.support));
+   assert(!/u1\^|u2\^|u1\*u2|q7_0/.test(host.textContent));
+   assert.equal(host.querySelectorAll('.x21-truth-block').length,0);
+   if(phase>=6000)assert(host.querySelector('.x21-limit'));
+   if(phase>=3000&&phase<6000)assert.equal(host.querySelectorAll('.x21-error-row').length,model.example.dim);
+  }
+  if(prefix==='c7'){story.finish();assert(host.querySelectorAll('.x21-truth-block').length>0);}
+  for(let i=0;i<model.rounds.length;i++)close(model.rounds[i].addition.gain,model.example.path[i].addition.gain);
+  story.finish();const end=signature();story.enter(state);advance(story.durations[state]);assert.deepEqual(signature(),end);advance(2999);assert.deepEqual(signature(),end);advance(2);assert.notDeepEqual(signature(),end);
+  global.matchMedia=()=>({matches:true,addEventListener(){}});story.enter(state);assert.deepEqual(signature(),end);global.matchMedia=()=>({matches:false,addEventListener(){}});
+ }
+ // Run the exact fit-check predicates and sample schedule on every mounted scene.
+ let textSamples=0;const acceptancePages=slides.pages.filter(p=>['six','seven','eight'].includes(p.dataset.chapter));
+ assert.equal(acceptancePages.length,15);
+ for(const page of acceptancePages){
+  const state=page.dataset.exampleStage;slides.nav.link('#'+page.id);
+  const panel=examples.panels[state];assert(panel&&!panel.hidden);
+  for(const sample of slides.exampleSamples(state,story.durations[state])){
+   examples.seek(sample);
+   const labels=slides.exampleLabels(page,panel),issues=slides.exampleTextIssues(labels);
+   assert(labels.length>0);assert.deepEqual(issues,{rawNames:false,exponent:false},`${page.id} @ ${sample}`);textSamples++;
+   // Threshold captions must use chapter four's formatter, even at phase boundaries.
+   for(const svg of panel.querySelectorAll('.x21-ratios')){
+    const labels=svg.querySelectorAll('text'),title=labels[0],footer=+svg.getAttribute('viewBox').split(' ')[3]-15;
+    const ticks=labels.filter(n=>n.getAttribute('text-anchor')==='middle');
+    ticks.forEach(t=>assert(+t.getAttribute('y')- +title.getAttribute('y')>=1.4*17));
+    // Check every bar's row pitch, separately for each equation column.
+    const rows=labels.filter(n=>[10,160,410].includes(+n.getAttribute('x'))&&+n.getAttribute('y')>78&&+n.getAttribute('y')<footer);
+    for(const x of new Set(rows.map(n=>n.getAttribute('x')))){
+     const ys=rows.filter(n=>n.getAttribute('x')===x).map(n=>+n.getAttribute('y')).sort((a,b)=>a-b);
+     ys.slice(1).forEach((y,i)=>assert(y-ys[i]>=1.4*17));
+     if(ys.length)assert(footer-ys.at(-1)>=1.4*17);
+    }
+   }
+   const threshold=tr('x21_threshold',{n:thresholdNumber(examples.lv.example.stop.threshold)});
+   for(const label of panel.querySelectorAll('.x21-ratios text'))if(label.textContent.startsWith(threshold.split('=')[0]))assert.equal(label.textContent,threshold);
+  }
+ }
+ // Positive controls protect against inverted flags and a predicate that never matches.
+ const page=acceptancePages[0],panel=examples.panels[page.dataset.exampleStage];slides.nav.link('#'+page.id);
+ const probe=new Node('p',{},'1.2e-7 u1^2 q7_001');panel.append(probe);
+ assert.deepEqual(slides.exampleTextIssues(slides.exampleLabels(page,panel)),{rawNames:true,exponent:true});
+ const hidden=new Node('div',{hidden:''});panel.append(hidden);hidden.append(probe);
+ assert.deepEqual(slides.exampleTextIssues(slides.exampleLabels(page,panel)),{rawNames:false,exponent:false});hidden.remove();
+ assert.deepEqual(slides.exampleTextIssues([new Node('p',{},'x\u00b7y 6,635 10 000 6.635')]),{rawNames:false,exponent:false});
+ console.log(`PASS X19c: ${acceptancePages.length} mounted scenes, ${textSamples} text samples, exact shared predicates, threshold format and positive/hidden controls (${fixture.language})`);
+ const parts=JSON.parse(doc.getElementById('x20-stack').dataset.parts);close(parts.reduce((a,b)=>a+b),1);close(parts[0],m.floor);
+ assert.equal(doc.getElementById('c7-rhs').dataset.seenRange,JSON.stringify(examples.failure.example.seen_range));
+ close(+doc.getElementById('c7-range').dataset.start,fixture.data.live.teaching.truth[0]);
+ const rhs=examples.failure.example,initial=fixture.data.live.teaching.truth[0];close(+doc.getElementById('c7-range').dataset.truth,rhs.truth.constants[0]*initial*(1-initial/rhs.truth.constants[1]));
+ assert(doc.getElementById('c6-gate').textContent.includes('G2'));
+ assert(doc.getElementById('c6-coefficients').textContent.includes('ẋ = '));
+ assert(doc.getElementById('c6-coefficients').textContent.includes('ẏ = '));
+ assert.equal(doc.getElementById('c8-comparison').querySelectorAll('tr').length,4);
+ const featured=fixture.data.live.featured.find(e=>e.roles.includes('running')),selected=featured.candidates.find(c=>c.row.candidate_id===featured.chosen);
+ assert.equal(doc.querySelector('#panel-c8-measured .x21-verdict').textContent[0],selected.row.raw_exact==='True'?'✓':'✗');
+ assert.equal(doc.querySelectorAll('#panel-c8-measured .x20-chip').length,JSON.parse(selected.row.active_idxs)[0].length);
+ const comparisonRows=doc.getElementById('c8-comparison').querySelectorAll('tr').slice(1);
+ [selected,examples.lv.winner,examples.failure.winner].forEach((c,i)=>assert.equal(comparisonRows[i].children[1].textContent,c.row.raw_exact==='True'?'✓':'✗'));
+ for(const panel of Object.values(examples.panels))assert(!/u1\^|u2\^|u1\*u2|q7_0/.test(panel.textContent));
+ assert(doc.getElementById('p-results').hidden);
+ console.log('PASS X19: bilingual chapters, live failure and LV replay, test/add/cleanup supports, loop hold, deterministic seek, reduced motion, residual split, observed shading, G2 and comparison');
+}
+if(fixture.configuration==='examples'){checkExamples();process.exit(0);}
 // WP-X12: drive the shipped persistent stage with the injected frame clock.
 if(fixture.configuration==='delivered'){
  const story=WispChapterStory,slides=WispSlides,m=WispChapterOne.model,t=fixture.data.live.teaching.t,x=fixture.data.live.teaching.observed,truth=fixture.data.live.teaching.truth;
  const close=(a,b)=>assert(Math.abs(a-b)<=1e-9*Math.max(1,Math.abs(b)),`${a} != ${b}`);
  const ids=['p-hook','p-challenge','p-c1-data','p-c1-slope','p-c1-noise-visible','p-c1-secants','p-c1-changes','p-c1-error-empty','p-c1-fit','p-c1-every','p-c1-noise','p-c1-percent','p-c1-solution'];
  const twoIds=['standing','residual','joint','error','solution'].map(s=>'p-c2-'+s);
- assert.deepEqual(slides.pages.map(p=>p.id),ids.concat(twoIds,WispChapterThree.states.map(s=>'p-'+s),WispChapterFour.states.map(s=>'p-'+s),WispChapterFive.states.map(s=>'p-'+s)));
+ assert.deepEqual(slides.pages.map(p=>p.id),ids.concat(twoIds,WispChapterThree.states.map(s=>'p-'+s),WispChapterFour.states.map(s=>'p-'+s),['p-c4-remains'],WispChapterFive.states.map(s=>'p-'+s),WispExamples.states.filter(s=>s!=='c4-remains').map(s=>'p-'+s)));
  slides.nav.go(2);assert.equal(doc.getElementById('masthead-title').textContent,tr('x12c_chapter'));assert.equal(doc.getElementById('chapter-progress').getAttribute('aria-valuemax'),'11');
  assert.deepEqual(slides.pages.slice(2,13).map(p=>p.dataset.stage),story.states);
  assert.equal(doc.querySelectorAll('#c1-stage svg').length,1);
@@ -308,7 +388,7 @@ if(fixture.configuration==='delivered'){
  const four=WispChapterFour;
  slides.nav.link('#p-c4-question');
  assert.equal(doc.getElementById('masthead-title').textContent,tr('x18_chapter'));
- assert.equal(doc.querySelectorAll('.page-dots a').filter(a=>!a.hidden).length,5);
+ assert.equal(doc.querySelectorAll('.page-dots a').filter(a=>!a.hidden).length,6);
  four.states.forEach(state=>{
   story.enter(state);story.finish();const end=snapshot();
   assert.strictEqual(story.svg,original);assert.equal(svg.dataset.state,state);assert.equal(svg.dataset.complete,'true');
@@ -420,6 +500,7 @@ if(fixture.configuration==='delivered'){
  assert.equal(visibleText().filter(text=>text.startsWith('du/dt = ')).length,3);
  assert.equal(tr('x19_chapter'),fixture.language==='de'?'Kapitel 5 · Fitten und Wählen':'Chapter 5 · Fit and choose');
  console.log('PASS X18: bilingual six-step fit/BIC story, true inventory, bound marks, verified curves/withholding, loop hold, deterministic seek and reduced motion');
+ checkExamples();
  if(fixture.language==='en')fs.writeFileSync(require('path').join(require('path').dirname(process.argv[3]),'x12c_story_numbers.json'),JSON.stringify({durations:story.durations,n:t.length,neighbourPairs:8,longDots:story.longRows.length,coefficient:optimum,rangeEnd:2*optimum,winnerError:1-m.blocks.find(b=>b.term===m.winner).gain,floor:m.floor,designWindows:m.D.windows.length},null,2));
  console.log('PASS X12: 11 bilingual states, real numeric geometry, keyboard-only walk, vertical wheel/keys, persistent SVG, sequence interruption/replay, reverse and reduced motion');process.exit(0);
 }

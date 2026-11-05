@@ -80,9 +80,9 @@ function systemName(c){return tables[language]['system_'+c.system_id]||c.descrip
 function cellName(id){const c=RESULTS.cells.find(c=>c.row.cell_id===id);if(!c)return tr('j153');const start=String(id).match(/_ic(\d+)/)?.[1],parts=[systemName(c)];if(+c.row.sigma)parts.push(tr('x4_noise',{v0:fmt(+c.row.sigma*100)}));if(+c.row.rho)parts.push(+c.row.rho===.5?tr('x5_half'):tr('x4_missing',{v0:fmt(+c.row.rho*100)}));if(start&&+start>1)parts.push(+start===2?tr('x5_second'):tr('x4_start',{v0:start}));return parts.join(' · ');}
 function displayTruth(s){return s.replace(/(?:\d+\.\d+|\d+)(?:[eE][+-]?\d+)?/g,(n,offset,text)=>/[A-Za-z_]/.test(text[offset-1]||'')?n:fmt(+n,4)).replaceAll('**','^').replaceAll('x_0','u_{1}').replaceAll('x_1','u_{2}').replaceAll('x_2','u_{3}').replaceAll('x_3','u_{4}').replaceAll('*','\\,');}
 function options(target,values,label=v=>v){target.replaceChildren(...values.map(v=>{const e=el('option',label(v));e.value=v;return e;}));}
-function chart(target,series,{title='',xLabel=tr('j157'),yLabel=tr('j158'),areas=[],highlight=null,point=null,zeroBase=false,integerX=false,legend:showLegend=true,truthOnTop=false,xDomain=null,horizontalYLabel=false,dotRadius=2.2}={}){
+function chart(target,series,{title='',xLabel=tr('j157'),yLabel=tr('j158'),areas=[],highlight=null,point=null,zeroBase=false,integerX=false,legend:showLegend=true,truthOnTop=false,xDomain=null,horizontalYLabel=false,dotRadius=2.2,wideLabels=false,niceTicks=false,xTicks=null,highlightLabel=null}={}){
   target.replaceChildren();
-  const width=760,height=310,pad={l:76,r:20,t:36,b:42};
+  const width=760,height=wideLabels?360:310,pad=wideLabels?{l:140,r:20,t:50,b:85}:{l:76,r:20,t:36,b:42};
   const good=series.flatMap(s=>s.x.map((x,i)=>[x,s.y[i]])).filter(([x,y])=>Number.isFinite(x)&&Number.isFinite(y)&&Math.abs(y)<1e12);
   if(!good.length){target.append(el('p',tr('j159'),'notice'));return;}
   let xmin=Math.min(...good.map(p=>p[0])),xmax=Math.max(...good.map(p=>p[0])),ymin=Math.min(...good.map(p=>p[1])),ymax=Math.max(...good.map(p=>p[1]));
@@ -90,6 +90,7 @@ function chart(target,series,{title='',xLabel=tr('j157'),yLabel=tr('j158'),areas
   if(areas.length||zeroBase){ymin=zeroBase?0:Math.min(ymin,0);ymax=Math.max(ymax,zeroBase?1:0);}
   if(ymax===ymin){ymax+=1;ymin-=1;}if(xmax===xmin)xmax+=1;
   const margin=(ymax-ymin)*.08;ymin=zeroBase?0:ymin-margin;ymax+=margin;
+  if(niceTicks){const step=(ymax-ymin)/4,power=10**Math.floor(Math.log10(step)),nice=[1,2,5,10].find(v=>v*power>=step)*power;ymin=Math.floor(ymin/nice)*nice;ymax=ymin+nice*Math.ceil((ymax-ymin)/nice);if(xTicks){xmin=xTicks[0];xmax=xTicks.at(-1);}}
   const X=x=>pad.l+(x-xmin)/(xmax-xmin)*(width-pad.l-pad.r),Y=y=>height-pad.b-(y-ymin)/(ymax-ymin)*(height-pad.t-pad.b);
   const svg=svgNode('svg',{viewBox:`0 0 ${width} ${height}`,class:'chart',role:'img',"aria-label":tr('axis_description',{v0:title,v1:yLabel,v2:xLabel})});
   svg.append(svgNode('title',{},title));
@@ -97,10 +98,12 @@ function chart(target,series,{title='',xLabel=tr('j157'),yLabel=tr('j158'),areas
     const y=ymin+(ymax-ymin)*i/4,x=xmin+(xmax-xmin)*i/4;
     svg.append(svgNode('line',{x1:pad.l,x2:width-pad.r,y1:Y(y),y2:Y(y),class:'grid'}));
     svg.append(svgNode('text',{x:pad.l-8,y:Y(y)+4,"text-anchor":'end'},fmt(y)));
-    if(!integerX)svg.append(svgNode('text',{x:X(x),y:height-23,"text-anchor":'middle'},fmt(x)));
+    if(!integerX&&!xTicks)svg.append(svgNode('text',{x:X(x),y:height-(wideLabels?50:23),"text-anchor":'middle'},fmt(x)));
   }
-  if(integerX){const stride=Math.max(1,Math.ceil((xmax-xmin)/8));for(let x=Math.ceil(xmin);x<=xmax;x+=stride)svg.append(svgNode('text',{x:X(x),y:height-23,'text-anchor':'middle'},fmt(x)));}
+  if(xTicks)xTicks.forEach(x=>svg.append(svgNode('text',{x:X(x),y:height-(wideLabels?50:23),'text-anchor':'middle'},fmt(x))));
+  if(integerX){const stride=Math.max(1,Math.ceil((xmax-xmin)/8));for(let x=Math.ceil(xmin);x<=xmax;x+=stride)svg.append(svgNode('text',{x:X(x),y:height-(wideLabels?50:23),'text-anchor':'middle'},fmt(x)));}
   if(highlight)svg.append(svgNode('rect',{x:X(highlight[0]),y:pad.t,width:Math.max(1,X(highlight[1])-X(highlight[0])),height:height-pad.b-pad.t,fill:'var(--model)',opacity:'.12'}));
+  if(highlightLabel)svg.append(svgNode('text',{x:pad.l+12,y:pad.t+26},highlightLabel));
   for(const a of areas){const pts=a.x.map((x,i)=>`${X(x)},${Y(a.y[i])}`).join(' ');svg.append(svgNode('polygon',{points:`${X(a.x[0])},${Y(0)} ${pts} ${X(a.x.at(-1))},${Y(0)}`,fill:'var(--data)',opacity:'.18'}));}
   for(const s of series.slice().sort((a,b)=>(truthOnTop&&a.kind==='truth'?3:a.kind==='data'?0:a.kind==='model'?2:1)-(truthOnTop&&b.kind==='truth'?3:b.kind==='data'?0:b.kind==='model'?2:1))){let d='',drawing=false;for(let i=0;i<s.x.length;i++){
     const v=s.y[i];if(!Number.isFinite(v)||Math.abs(v)>1e12){drawing=false;continue;}d+=`${drawing?'L':'M'}${X(s.x[i]).toFixed(3)},${Y(v).toFixed(3)}`;drawing=true;
@@ -110,11 +113,11 @@ function chart(target,series,{title='',xLabel=tr('j157'),yLabel=tr('j158'),areas
   svg.append(svgNode('text',{x:pad.l,y:17},title));
   svg.append(svgNode('text',{x:width-pad.r,y:height-4,"text-anchor":'end'},xLabel));
   if(horizontalYLabel)svg.append(svgNode('text',{x:pad.l,y:17},yLabel));
-  else svg.append(svgNode('text',{transform:`translate(14 ${(pad.t+height-pad.b)/2}) rotate(-90)`,"text-anchor":'middle'},yLabel));
+  else svg.append(svgNode('text',{transform:`translate(${wideLabels?48:14} ${(pad.t+height-pad.b)/2}) rotate(-90)`,"text-anchor":'middle'},yLabel));
   if(point)svg.append(svgNode('circle',{cx:X(point[0]),cy:Y(point[1]),r:5,fill:'var(--model)',stroke:'var(--panel)',"stroke-width":2}));
   target.append(svg);
   const legend=el('div',undefined,'caption');legend.textContent=series.map(s=>`${s.label||s.kind} (${tr(s.style==='dashed'||s.kind==='truth'?'x5_dashed':s.kind==='data'?'x5_dots':'x5_solid')})`).join(' · ');if(showLegend)target.append(legend);
-  return {svg,X,xmin,xmax,width,pad};
+  return {svg,X,Y,xmin,xmax,width,pad};
 }
 function rk4(t,initial,rhs){let x=initial.slice();const out=[x.slice()];for(let i=1;i<t.length;i++){
   const dt=t[i]-t[i-1],n=Math.max(1,Math.ceil(dt/.015)),h=dt/n;
@@ -1341,3 +1344,159 @@ function initChapterOne(){
  window.WispChapterStory={states,durations,enter,finish,seek,local,examples,variance,relative,actual,longRows,lengthClouds,longerLengths,remainingBlocks,sortAt,noisePause,jointPause,squarePrefix,deviations,lengthRms,rates,trueRates,smooth,rateBound,clock,svg,current:()=>current,elapsed:()=>elapsed};
 }
 initChapterOne();
+
+// Named Q7 examples. All fitted curves are authoritative Julia evaluations.
+function exampleModel(example){
+ if(!example)throw Error('Missing Q7 example');
+ const winner=example.candidates.reduce((a,b)=>b.bic<a.bic?b:a);
+ if(winner.row.candidate_id!==example.chosen)throw Error('Q7 winner differs from argmin BIC');
+ if(example.dim===1){
+  const p=W.significancePath(example.observed.t,example.observed.x.map(r=>r[0]),example.stop.threshold);
+  if(JSON.stringify(p.steps.map(s=>[s.support.map(j=>j+1)]))!==JSON.stringify(example.path.map(s=>s.support)))throw Error('Live failure path differs from Q7 supports');
+  const D=p.design,norm=soloDot(D.b,D.b),fit=s=>W.leastSquares(D.A.map(row=>s.map(j=>row[j])),D.b);
+  function tests(support){const base=W.noiseFloor(D,support,p.variance),before=fit(support).sse;
+   const blocks=example.terms.map((_,term)=>term).filter(j=>!support.includes(j)).map(term=>{
+    const next=[...support,term].sort((a,b)=>a-b),noise=base-W.noiseFloor(D,next,p.variance),gain=before-fit(next).sse;
+    return {term:term+1,gain:gain/norm,noise:noise/norm,ratio:noise>0?gain/noise:null,passes:noise<=0||gain/noise>=example.stop.threshold};
+   });return [{equation:1,blocks,stopped:!blocks.some(b=>b.passes)}];
+  }
+  const rounds=p.steps.map((s,i)=>({step:i+1,before:[(p.steps[i-1]?.support||[]).map(j=>j+1)],support:[s.support.map(j=>j+1)],
+   addition:{equation:1,basis_index:s.addition+1,gain:s.gains.find(g=>g.term===s.addition).gain},tests:tests(p.steps[i-1]?.support||[]),
+   backward_checks:example.path[i].backward_checks}));
+  return {example,winner,live:p,rounds,stopTests:tests(p.steps.at(-1).support)};
+ }
+ const supports=example.path.map(p=>p.support);
+ if(JSON.stringify(supports)!==JSON.stringify(example.candidates.map(c=>c.active_idxs)))throw Error('LV rounds differ from Q7 candidates');
+ return {example,winner,rounds:example.path,stopTests:example.stop.equations};
+}
+function initExamples(){
+ if(!LIVE.examples||!$('p-c6-system'))return;
+ const lv=exampleModel(LIVE.examples[0]),failure=exampleModel(LIVE.examples[1]);
+ const stage=$('x21-stage'),panels={};
+ document.querySelectorAll('.x21-panel').forEach(panel=>{panels[panel.dataset.panel]=panel;stage.append(panel);panel.hidden=true;});
+ document.querySelectorAll('[data-example-eye]').forEach(eye=>{eye.textContent=tr('x21_step',{n:eye.dataset.exampleEye,m:eye.dataset.exampleCount});});
+ const name=(e,j)=>e.terms[j-1].replaceAll('u1',e.dim===2?'x':'u').replaceAll('u2','y').replaceAll('^2','²').replaceAll('^3','³').replaceAll('*','·').replace(/(sin|cos)\((.*?)\)/g,'$1 $2');
+ const derivative=(e,eq)=>e.dim===2?['ẋ','ẏ'][eq]:'du/dt';
+ function chips(target,support,e){target.replaceChildren();support.forEach((eq,i)=>{const row=el('div',undefined,'x20-equation');row.append(el('span',derivative(e,i)+' ='));eq.forEach(j=>row.append(el('span',name(e,j),'x20-chip')));if(!eq.length)row.append(el('span','0'));target.append(row);});}
+ function formula(e,support,params){let offset=0;return support.map((eq,i)=>derivative(e,i)+' = '+eq.map((j,k)=>{const value=params[offset++];return (value<0?' − ':k?' + ':'')+fmt(Math.abs(value),4)+(j===1?'':' '+name(e,j));}).join(''));}
+ function truthParams(e){return e.truth.support.flatMap((eq,i)=>eq.map(j=>e.truth.coefficients[i][e.terms[j-1]]));}
+ function text(id,key,args={}){$(id).textContent=tr('x20_'+key,args);}
+ function score(row,kind){return fmt(row[kind+'_r2_variance_weighted'],4);}
+ function exampleChart(target,series,options){return chart(target,series,{...options,wideLabels:true,niceTicks:true});}
+ function curve(target,bundle,component=0,observed=null,reason=null,title=null){
+  target.replaceChildren();if(!bundle){target.append(el('p',tr('x20_pending')+(reason?' '+reason:''),'notice'));return;}
+  const series=[{x:bundle.t,y:bundle.truth.map(r=>r[component]),kind:'truth',label:tr('x8_true')},{x:bundle.t,y:bundle.model.map(r=>r[component]),kind:'model',label:tr('j323')}];
+  if(observed)series.push({x:observed.t,y:observed.x.map(r=>r[component]),kind:'data',style:'dots',label:tr('j214')});
+  const plot=el('div');if(title)target.append(el('h4',title));target.append(plot);exampleChart(plot,series,{title:'',xLabel:tr('j157'),yLabel:component===0&&bundle.truth[0].length===2?tr('x21_prey'):'u'});
+ }
+ const m=window.WispSolo.model,D=m.D,norm=soloDot(D.b,D.b),path=W.significancePath(teaching.t,teaching.observed,LIVE.featured[0].stop_reference.threshold),support=path.steps.at(-1).support;
+ const floor=m.floor,remaining=path.steps.at(-1).remaining,explained=1-remaining,still=remaining-floor;
+ if(still < -1e-10)throw Error('Residual below estimated noise floor');
+ const stack=$('x20-stack'),segments=[['noise',floor],['explained',explained],['still',Math.max(0,still)]];
+ segments.forEach(([key,value])=>{const segment=el('span');segment.style.width=(100*value)+'%';segment.className='x20-'+key;stack.append(segment);$('x20-stack-labels').append(el('p',tr('x20_'+key)+': '+pct(value)));});
+ stack.dataset.norm=String(norm);stack.dataset.support=JSON.stringify(support);stack.dataset.parts=JSON.stringify(segments.map(s=>s[1]));
+ function candidateScene(target,model){
+  const e=model.example,rows=el('div',undefined,'x21-candidates');
+  e.candidates.forEach((c,i)=>{const row=el('div',undefined,'x21-candidate');row.classList.toggle('winner',c===model.winner);row.append(el('strong',String(i+1)+(c===model.winner?' ✓':'')));const blocks=el('div');chips(blocks,c.active_idxs,e);row.append(blocks);rows.append(row);});
+  target.replaceChildren(rows);
+  // Split the BIC into a shifted fit term and the unshifted block price, as in chapter five.
+  const fit=e.candidates.map(c=>c.N*Math.log(c.mse)),origin=Math.floor(Math.min(...fit)/100)*100;
+  const max=Math.max(...e.candidates.map((c,i)=>fit[i]-origin+c.penalty)),svg=svgNode('svg',{viewBox:'0 0 800 160',class:'x21-bic',role:'img','aria-label':tr('x21_bic')});
+  const X=v=>125+535*v/max;
+  e.candidates.forEach((c,i)=>{const y=18+i*27,width=535*(fit[i]-origin)/max;svg.append(svgNode('text',{x:5,y:y+16},String(i+1)),svgNode('text',{x:78,y:y+16},'//'),svgNode('rect',{x:125,y,width,height:19,fill:'var(--data)'}),svgNode('rect',{x:125+width,y,width:535*c.penalty/max,height:19,fill:'var(--model)'}),svgNode('text',{x:X(c.bic-origin)+8,y:y+16},fmt(c.bic,5)));});
+  svg.append(svgNode('text',{x:5,y:151},tr('x21_bic_origin',{n:fmt(origin,5)})));target.append(svg);
+  target.append(el('div',tr('x21_bic'),'caption'));
+ }
+ for(const [prefix,model] of [['c6',lv],['c7',failure]]){
+  const e=model.example,w=model.winner;
+  text(prefix+'-system','system',{equation:formula(e,e.truth.support,truthParams(e)).join(' ; '),start:e.truth.initial.map(v=>fmt(v)).join(' ; '),sigma:pct(e.sigma),blocks:e.terms.length});
+  chips($(prefix+'-catalogue'),[e.terms.map((_,i)=>i+1)],e);
+  for(let component=0;component<e.dim;component++){const plot=el('div');$(prefix+'-data').append(plot);exampleChart(plot,[{x:e.observed.t,y:e.observed.x.map(r=>r[component]),kind:'data',style:'dots',label:tr('j214')}],{title:e.dim===2?['x','y'][component]:'u',xLabel:tr('j157'),yLabel:e.dim===2?['x','y'][component]:'u'});}
+  candidateScene($(prefix+'-candidates'),model);
+  $(prefix+'-winner').textContent=tr('x21_selected',{n:e.candidates.indexOf(w)+1});
+  const equations=prefix==='c6'?$('c6-coefficients'):el('div');equations.replaceChildren();equations.className='x21-equations';
+  for(const [key,eqs] of [['x21_fitted',formula(e,w.active_idxs,w.params)],['x8_true',formula(e,e.truth.support,truthParams(e))]])eqs.forEach(eq=>equations.append(el('p',tr(key)+': '+eq)));
+  if(prefix==='c7')panels['c7-candidates'].append(equations);
+ }
+ text('c7-start','start',{here:fmt(failure.example.truth.initial[0]),other:fmt(failure.example.truth.other_initial[0]),sigma:pct(failure.example.sigma)});
+ curve($('c6-noisy'),lv.winner.curves?.training,0,lv.example.observed,lv.winner.unavailable,tr('x21_noisy_start'));
+ curve($('c6-true'),lv.winner.true_initial,0,null,lv.winner.unavailable,tr('x21_true_start'));
+ const errors=lv.winner.curve_errors;
+ if(errors){const host=$('c6-errors');host.replaceChildren(el('p',tr('x21_error_zoom')));const max=Math.max(errors.noisy_initial_training_mse,errors.true_initial_training_mse);for(const [key,label] of [['noisy_initial_training_mse','x21_noisy_short'],['true_initial_training_mse','x21_true_short']]){const row=el('div',undefined,'x21-error-row'),track=el('span',undefined,'x20-track'),bar=el('i');bar.style.width=(100*errors[key]/max)+'%';track.append(bar);row.append(el('span',tr(label)),track,el('span',fmt(errors[key],5)));host.append(row);}}
+ text('c6-gate',LIVE.gate_status.initial_state==='pending'?'gate_pending':'gate_set',{value:gateText('initial_state',tr('x20_gate_pending'))});
+ // Evaluate the RHS algebraically, never a replacement trajectory simulation.
+ const e=failure.example,grid=Array.from({length:161},(_,i)=>80*i/160),constants=e.truth.constants;
+ const trueRhs=u=>constants[0]*u*(1-u/constants[1]),modelRhs=u=>failure.winner.params.reduce((s,p,i)=>s+p*W.basis(u)[failure.winner.active_idxs[0][i]-1],0);
+ function rhsScene(target){const view=exampleChart(target,[{x:grid,y:grid.map(trueRhs),kind:'truth',label:tr('x8_true')},{x:grid,y:grid.map(modelRhs),kind:'model',label:tr('j323')}],{title:'',xLabel:'u',yLabel:tr('x21_rhs_axis'),highlight:e.seen_range,highlightLabel:tr('x21_seen'),xTicks:[0,20,40,60,80]});const start=teaching.truth[0];view.svg.append(svgNode('line',{x1:view.X(start),x2:view.X(start),y1:view.Y(trueRhs(start)),y2:view.Y(modelRhs(start)),class:'x21-limit'}));for(const [value,color] of [[trueRhs(start),'var(--data)'],[modelRhs(start),'var(--model)']])view.svg.append(svgNode('circle',{cx:view.X(start),cy:view.Y(value),r:5,fill:color}));}
+ rhsScene($('c7-rhs'));$('c7-rhs').dataset.seenRange=JSON.stringify(e.seen_range);
+ $('c7-range').textContent=tr('x21_range',{lo:fmt(e.seen_range[0],3),hi:fmt(e.seen_range[1],3),u:fmt(teaching.truth[0]),truth:fmt(trueRhs(teaching.truth[0]),4),model:fmt(modelRhs(teaching.truth[0]),4)});
+ $('c7-range').textContent+=' ('+tr('x20_example_0')+')';
+ $('c7-range').dataset.start=String(teaching.truth[0]);$('c7-range').dataset.truth=String(trueRhs(teaching.truth[0]));$('c7-range').dataset.model=String(modelRhs(teaching.truth[0]));
+ const teachingFeature=LIVE.featured.find(f=>f.roles.includes('running')),teachingWinner=teachingFeature.candidates.find(c=>c.row.candidate_id===teachingFeature.chosen);
+ curve($('c8-generalization'),teachingWinner.curves?.generalization);
+ text('c8-scores','scores',{rec:score(teachingWinner.row,'reconstruction'),gen:score(teachingWinner.row,'generalization')});
+ function matrix(target){const table=el('table'),header=el('tr');['example','structure','reconstruction','generalization'].forEach(k=>header.append(el('th',tr('x20_'+k))));table.append(header);
+  [teachingWinner,lv.winner,failure.winner].forEach((c,i)=>{const row=el('tr');row.append(el('th',tr('x20_example_'+i)),el('td',c.row.raw_exact==='True'?'✓':'✗'));for(const kind of ['reconstruction','generalization']){const cell=el('td',score(c.row,kind)+' '+(+c.row[kind+'_r2_variance_weighted']>RESULTS.score_threshold?'●':'○'));cell.dataset.hit=String(+c.row[kind+'_r2_variance_weighted']>RESULTS.score_threshold);row.append(cell);}table.append(row);});target.replaceChildren(table);target.append(el('p',tr('x21_marker',{n:fmt(RESULTS.score_threshold)}),'caption'));}
+ matrix($('c8-comparison'));text('c8-metric','metric',{threshold:fmt(RESULTS.score_threshold)});
+ const close=el('div');matrix(close);panels['c8-close'].append(close);
+ const measured=el('div');chips(measured,JSON.parse(teachingWinner.row.active_idxs),{...failure.example,terms:LIVE.catalogues[0].terms});measured.append(el('p',(teachingWinner.row.raw_exact==='True'?'✓':'✗')+'   '+tr('x21_structure'),'x21-verdict'));panels['c8-measured'].append(measured);const measuredPlot=el('div');panels['c8-measured'].append(measuredPlot);curve(measuredPlot,teachingWinner.curves);
+ const lesson=el('div');chips(lesson,lv.winner.active_idxs,lv.example);lesson.append(el('p',(lv.winner.row.raw_exact==='True'?'✓':'✗')+'   '+tr('x21_structure'),'x21-verdict'));for(const kind of ['reconstruction','generalization']){lesson.append(el('p',tr('x20_'+kind)+' R² = '+score(lv.winner.row,kind)));const meter=el('meter');meter.min=0;meter.max=1;meter.value=Math.max(0,+lv.winner.row[kind+'_r2_variance_weighted']);lesson.append(meter);}panels['c6-lesson'].append(lesson);
+ const rhsLesson=el('div');rhsScene(rhsLesson);panels['c7-lesson'].append(rhsLesson);const rhsEquations=el('div',undefined,'x21-equations');[...formula(e,e.truth.support,truthParams(e)),...formula(e,failure.winner.active_idxs,failure.winner.params)].forEach((eq,i)=>rhsEquations.append(el('p',tr(i?'x21_fitted':'x8_true')+': '+eq)));panels['c7-lesson'].append(rhsEquations);
+ const replays={};
+ for(const [prefix,model] of [['c6',lv],['c7',failure]]){const host=$(prefix+'-replay'),status=el('p',undefined,'x21-status'),equations=el('div'),plot=el('div');host.append(status,equations,plot);replays[prefix]={model,host,status,equations,plot};}
+ function ratioPlot(target,model,tests,phase,round){
+  const e=model.example,pitch=25,cleanup=phase===2&&!!round;
+  const columns=tests.map((eq,i)=>cleanup?round.backward_checks.flatMap(c=>c.checks).filter(c=>c.equation===i+1).map(c=>({term:c.basis_index,ratio:c.cost,cost:true})):eq.blocks);
+  // Keep the row pitch fixed, but give short clean-up lists only the height they need.
+  const height=120+Math.max(1,...columns.map(rows=>rows.length))*pitch;
+  const svg=svgNode('svg',{viewBox:`0 0 800 ${height}`,class:'x21-ratios',role:'img','aria-label':tr('x21_ratio_axis')});target.replaceChildren(svg);
+  svg.append(svgNode('text',{x:10,y:24},cleanup?tr('x21_cost'):tr('x21_ratio_axis')));
+  columns.forEach((rows,i)=>{const offset=e.dim===2?i*400:150;
+   const cap=cleanup?round.addition.gain*.5:e.stop.threshold;
+   const upper=cleanup?Math.max(cap,...rows.map(b=>b.ratio||0))*1.2:Math.max(10000,...rows.map(b=>b.ratio||0));
+   const scale=cleanup?v=>Math.max(0,Math.min(1,v/upper)):v=>Math.max(0,Math.min(1,(Math.log10(Math.max(.01,v))+2)/(Math.log10(upper)+2)));
+   const X=v=>offset+90+210*scale(v),y0=78;
+   svg.append(svgNode('text',{x:offset+10,y:60},derivative(e,i)));
+   const ticks=cleanup?[0,upper]:[.01,1,100,upper];ticks.forEach(v=>svg.append(svgNode('text',{x:X(v),y:60,'text-anchor':'middle'},fmt(v,2))));
+   svg.append(svgNode('line',{x1:X(cap),x2:X(cap),y1:y0,y2:y0+Math.max(1,rows.length)*pitch,class:'x21-limit'}));
+   rows.forEach((b,k)=>{const y=y0+k*pitch,value=b.ratio??upper,truthBlock=!round&&e.dim===1&&b.term===3;
+    svg.append(svgNode('text',{x:offset+10,y:y+15,class:truthBlock?'x21-truth-block':''},name(e,b.term)),svgNode('rect',{x:offset+90,y:y+3,width:210*scale(value),height:12,fill:cleanup?'var(--residual)':b.passes?'var(--model)':'var(--data)'}),svgNode('text',{x:offset+315,y:y+15},fmt(value,3)));
+   });
+   svg.append(svgNode('text',{x:offset+10,y:height-15},tr(cleanup?'x21_half_gain':'x21_threshold',{n:cleanup?fmt(cap,3):thresholdNumber(cap)})));
+  });
+ }
+ function competition(target,model,round){
+  const best=round.tests.map(eq=>(eq.stopped?[]:eq.blocks).reduce((a,b)=>!a||b.gain>a.gain?b:a,null)),max=Math.max(...best.map(b=>b?.gain||0));
+  target.replaceChildren(el('p',tr('x21_competition')));
+  best.forEach((block,i)=>{const row=el('div',undefined,'x21-error-row'),track=el('span',undefined,'x20-track'),bar=el('i');bar.style.width=(max?100*(block?.gain||0)/max:0)+'%';track.append(bar);row.append(el('span',derivative(model.example,i)+' : '+(block?name(model.example,block.term):'—')),track,el('span',fmt(block?.gain||0,5)));target.append(row);});target.append(el('p',tr('x21_gain_zoom'),'caption'));
+ }
+ ratioPlot($('c6-stops'),lv,lv.stopTests,0,null);
+ const original=window.WispChapterStory,states=['c4-remains',...Object.keys(panels)];
+ let current=null,frame=0,start=0,elapsed=0,lastKey=null;const clock=original.clock;
+ function duration(state){const replay=replays[state?.slice(0,2)];return state?.endsWith('rounds')?(replay.model.rounds.length+1)*9000:6000;}
+ function draw(ms){
+  elapsed=Math.min(duration(current),Math.max(0,ms));
+  const panel=panels[current];if(panel&&!current.endsWith('rounds')){const progress=Math.min(1,elapsed/4000);panel.dataset.progress=String(progress);panel.querySelectorAll('.series-model,.series-truth').forEach(line=>{line.style.clipPath='inset(0 '+(100*(1-progress))+'% 0 0)';});panel.querySelectorAll('.x21-candidate').forEach((row,i)=>row.classList.toggle('x21-current',i===Math.min(panel.querySelectorAll('.x21-candidate').length-1,Math.floor(progress*4))));}
+  const replay=replays[current?.slice(0,2)];if(!replay||!current.endsWith('rounds'))return;
+  const {model,host,status,equations,plot}=replay,e=model.example,index=Math.min(model.rounds.length,Math.floor(elapsed/9000)),round=model.rounds[index],phase=Math.min(2,Math.floor(elapsed%9000/3000));
+  const before=round?.before||e.path.at(-1).support,after=round?.support||before,added=before.map(s=>s.slice());if(round)added[round.addition.equation-1].push(round.addition.basis_index);
+  const support=phase===0||!round?before:phase===1?added:after,key=current+':'+index+':'+phase;
+  if(lastKey!==key){chips(equations,support,e);if(round&&phase===1){const row=equations.children[round.addition.equation-1];row.children[row.children.length-1].classList.add('x21-flying');}
+   if(round&&phase===1)competition(plot,model,round);else ratioPlot(plot,model,round?.tests||model.stopTests,phase,round);
+   if(round&&phase===2)plot.append(el('p',tr('x21_nothing_leaves'),'caption'));
+   if(!round&&e.dim===1)plot.append(el('p',tr('x21_truth_after_stop',{ratio:fmt(model.stopTests[0].blocks.find(b=>b.term===3).ratio,4)}),'x21-truth-block'));
+   lastKey=key;
+  }
+  status.textContent=tr('x20_round',{round:index+1,phase:tr('x20_'+(!round?'stopped':['test','add','cleanup'][phase])),threshold:thresholdNumber(e.stop.threshold)});
+  host.dataset.round=String(index);host.dataset.phase=String(phase);host.dataset.support=JSON.stringify(support);
+ }
+ function finish(){if(current){clock.cancel(frame);draw(duration(current));}else original.finish();}
+ function seek(ms){if(current){clock.cancel(frame);draw(ms%(duration(current)+3000));}else original.seek(ms);}
+ function enter(state){clock.cancel(frame);original.enter(state);current=states.includes(state)?state:null;stage.hidden=!panels[state];Object.entries(panels).forEach(([key,panel])=>{panel.hidden=key!==state;});if(!current)return;start=clock.now();lastKey=null;
+  if(window.matchMedia('(prefers-reduced-motion: reduce)').matches){finish();return;}
+  const tick=now=>{draw((now-start)%(duration(current)+3000));if(!document.hidden)frame=clock.request(tick);};tick(start);
+ }
+ window.WispExamples={lv,failure,states,panels,name,formula,finish,seek,enter};
+ window.WispChapterStory={...original,enter,finish,seek,durations:{...original.durations,...Object.fromEntries(states.map(s=>[s,duration(s)]))}};
+}
+initExamples();

@@ -155,7 +155,11 @@ def check_chapter_interactions(page,evidence):
         ids=page.evaluate('WispSlides.pages.map(p=>p.id)')
         expected += ['p-c3-'+s for s in ('standing','probe','threshold','linear','quadratic','compare','next')]
         expected += ['p-c4-'+s for s in ('question','noise','threshold','replay','path')]
+        expected += ['p-c4-remains']
         expected += ['p-c5-'+s for s in ('weak','fit','each','bic','winner','recap')]
+        expected += ['p-c6-'+s for s in ('system','rounds','stop','candidates','orbit','lesson')]
+        expected += ['p-c7-'+s for s in ('system','rounds','candidates','rhs','lesson')]
+        expected += ['p-c8-'+s for s in ('measured','trajectory','comparison','close')]
         if ids!=expected:raise AssertionError(f'Incorrect delivered inventory: {ids}')
         for key in ('ArrowLeft','ArrowRight'):
             page.keyboard.press(key)
@@ -164,9 +168,9 @@ def check_chapter_interactions(page,evidence):
             page.keyboard.press(('ArrowDown','PageDown','Space')[i%3]);page.wait_for_timeout(850)
             if page.evaluate('WispSlides.nav.index')!=i:raise AssertionError('Vertical keyboard walk failed')
             page.evaluate('WispChapterStory.finish()')
-            if i>=2 and page.locator('#c1-stage svg').get_attribute('data-state')!=page.locator('#'+expected[i]).get_attribute('data-stage'):raise AssertionError('Stage differs from page')
-        if page.locator('.page-dots a:visible').count()!=6:raise AssertionError('Wrong chapter-five sub-step dots')
-        if page.locator('#masthead-title').text_content()!=page.evaluate('tr("x19_chapter")'):raise AssertionError('Wrong chapter-five masthead')
+            if i>=2 and page.locator('#'+expected[i]).get_attribute('data-stage') and page.locator('#c1-stage svg').get_attribute('data-state')!=page.locator('#'+expected[i]).get_attribute('data-stage'):raise AssertionError('Stage differs from page')
+        if page.locator('.page-dots a:visible').count()!=4:raise AssertionError('Wrong chapter-eight sub-step dots')
+        if page.locator('#masthead-title').text_content()!=page.evaluate('tr("x20_chapter8")'):raise AssertionError('Wrong chapter-eight masthead')
         page.keyboard.press('ArrowUp');page.wait_for_timeout(850)
         if page.evaluate('WispSlides.nav.index')!=len(expected)-2:raise AssertionError('Up did not return one step')
         page.evaluate('WispSlides.nav.link("#p-c1-solution");WispChapterStory.finish()')

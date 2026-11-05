@@ -33,27 +33,36 @@ end
 function display_main(args=ARGS)
     VERSION == v"1.12.6" || error("Display evaluation requires Julia 1.12.6")
     root = Q3_ROOT
-    grid = joinpath(root,"analysis/data/sideproject_residual_growth/q5_grid")
+    q7 = "--q7-examples" in args
+    prefix = q7 ? "q7" : "q5"
+    grid = joinpath(root,"analysis/data/sideproject_residual_growth/"*prefix*"_grid")
     directory = joinpath(root,"outputs/phase_c_c6_data_conditions_5dd1df8")
     payload = JSON3.read(read(joinpath(root,"outputs/sideproject_q5_inputs/q5_grid_paths.json"),String))
     index_path = joinpath(directory,"index.csv")
     q3_hash(index_path) == String(payload["input_sha256"]["outputs/phase_c_c6_data_conditions_5dd1df8/index.csv"]) || error("Export index changed")
     index = q5_index(index_path)
-    units = filter(r->r["size_rule"]=="c",display_csv(joinpath(grid,"q5_units.csv")))
-    candidates = display_csv(joinpath(grid,"q5_candidates.csv"))
+    units = filter(r->r["size_rule"]=="c",display_csv(joinpath(grid,prefix*"_units.csv")))
+    candidates = display_csv(joinpath(grid,prefix*"_candidates.csv"))
+    if q7
+        requested = split(_arg_value(args,"--cells","sys0027_ic1_s0.03_r0_n1,sys0003_ic2_s0.03_r0_n1"),',')
+        length(Set(requested)) == length(requested) || error("Duplicate named cell")
+        available = Set(r["cell_id"] for r in units)
+        all(cid->cid in available,requested) || error("Unknown named Q7 cell")
+        units = [only(filter(r->r["cell_id"]==cid,units)) for cid in requested]
+    end
     manifest = JSON3.read(read(joinpath(root,"explainer/wisp/data/manifest.json"),String))
     featured = Set(String(v) for v in values(manifest["featured_selection"]["cells"]))
     cells = Dict(String(c["cell_id"])=>c for c in payload["cells"])
     systems = wp_n25_phase_c_systems_by_id()
     limit = wp_n25_parse_limit(args,length(units))
-    output = abspath(_arg_value(args,"--output",joinpath(root,"outputs/wisp_explainer_julia/trajectories.jsonl")))
+    output = abspath(_arg_value(args,"--output",joinpath(root,"outputs/wisp_explainer_julia/"*(q7 ? "q7_examples.jsonl" : "trajectories.jsonl"))))
     allowed = abspath(joinpath(root,"outputs/wisp_explainer_julia"))
     relative = relpath(output,allowed)
     (relative == ".." || startswith(relative,"../") || startswith(relative,"..\\") || isabspath(relative)) && error("Output outside display directory")
     mkpath(dirname(output))
     optimizer, options = build_reference_optimizer(max_fit_attempts=1), build_options(Q3_SEED)
-    source_units_hash = q3_hash(joinpath(grid,"q5_units.csv"))
-    source_candidates_hash = q3_hash(joinpath(grid,"q5_candidates.csv"))
+    source_units_hash = q3_hash(joinpath(grid,prefix*"_units.csv"))
+    source_candidates_hash = q3_hash(joinpath(grid,prefix*"_candidates.csv"))
     target_cache = Dict{Tuple{Int,Int},Trajectory}()
     function clean_target(sid, ic)
         return get!(target_cache, (sid, ic)) do
@@ -69,7 +78,8 @@ function display_main(args=ARGS)
             cell = cells[cid]
             sid, ic = Int(cell["system_id"]), Int(cell["initial_condition_set"])
             path_ids = Set(String(k["candidate_id"]) for k in cell["candidates"])
-            pool = cid in featured ? filter(r->r["cell_id"]==cid && r["candidate_id"] in path_ids,candidates) : [chosen]
+            pool = q7 ? sort(filter(r->r["cell_id"]==cid && startswith(r["candidate_id"],"q7_"),candidates),by=r->parse(Int,r["step"])) :
+                cid in featured ? filter(r->r["cell_id"]==cid && r["candidate_id"] in path_ids,candidates) : [chosen]
             # Stored Q5 clean reconstruction and opposite-IC targets, verified as in q5_main.
             clean, test = clean_target(sid,ic), clean_target(sid,3-ic)
             for row in pool
@@ -91,6 +101,13 @@ function display_main(args=ARGS)
                             stored !== nothing && value !== nothing && isfinite(value) || error("Missing/nonfinite score")
                             push!(errors,abs(value-stored))
                         end
+                    end
+                    if q7
+                        # Q5/Q7 reconstruction uses the clean start. Training uses
+                        # the noisy first observation; preserve both meanings.
+                        observed, _ = q5_read_cell(directory,index[(sid,ic,Float64(cell["sigma"]),Float64(cell["rho"]),Int(cell["realization"]))])
+                        record["training"] = display_target(f!,params,observed,optimizer,options)
+                        record["true_initial"] = record["reconstruction"]
                     end
                     record["max_r2_error"] = maximum(errors)
                     record["passed"] = maximum(errors) <= 1e-12

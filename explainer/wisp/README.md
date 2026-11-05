@@ -70,6 +70,19 @@ Version 2 explicitly permits presentation-only sampled/rounded arrays in the exi
 Margin notes flow inline up to 1450 px, accounting for the wide figures. Every SVG chart has visible x/y titles; the FROLS bars use native HTML text and a shrinking middle column to preserve term/value readability at 360 px. The initial scalar playground uses only `0.23u`; its model display is capped at twice the target's maximum absolute population, with a visible clipping notice and unmodified mismatch computation. Browser layout review remains with Claude.
 # WP-X2 additions
 
+WP-X18 enables chapter five with six steps after the stopped candidate path: stored
+weak start, one trajectory fit, the candidate panels, BIC, the computed winner and
+the method recap. The presentation-only `src/fit_protocol.json` supplies current
+protocol values while G2 is pending; the assembler embeds it into `live.fit_protocol`
+without changing the on-disk scientific data. Decided gate strings override these
+defaults. Fitted trajectories always use verified stored curves; only the weak
+start is simulated by browser RK4. The BIC comparison uses a common axis break.
+`test_wisp_explainer_x18.py` and the bilingual presentation DOM harness cover this
+chapter; the fit checker includes its six pages, sampling, labels and masthead.
+Run the fast presentation tests excluding `test_wisp_explainer_x2.py`, plus
+`analysis/scripts/explainer/check_wisp_explainer_js.py`. Browser layout acceptance
+remains a separate Claude check.
+
 Use the presentation extension without changing the frozen scientific exporters:
 
 ```text

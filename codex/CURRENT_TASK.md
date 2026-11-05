@@ -1,33 +1,38 @@
-# WP-X18c — WISP explorable: chapter 5 recap layout
+# WP-X19c — WISP explorable: chapters 6–8 browser acceptance fixes
 **Language: Python** (build, tests) — the page itself is static HTML, CSS and JavaScript.
 
-Stand 2026-11-05. Follows WP-X18b (uncommitted). Claude made small edits after X18b in `explainer/wisp/src/app.js`
-and `pages.css` (recap section count now from the record field `live.featured[0].path[0].equations[0].n_rows` with
-integer formatting — keep that; recap y-positions, loop label position, chip grouping and font size were tried and
-are free to be replaced). All explorable rules and the test policy stay in force.
+Stand 2026-11-05 evening. Follows WP-X19b (uncommitted, report `codex/reports/REPORT_WP_X19B.md`). The redesign is
+good. Claude ran the browser fit checker (`python analysis/scripts/explainer/check_wisp_explainer_fit.py`, evidence
+`outputs/wisp_explainer_checks/wp_x12_fit.json`, screenshots `outputs/wisp_explainer_checks/pages/*_p-c6-*`, `*_p-c7-*`,
+`*_p-c8-*`); it fails on these pages and checks (variants = samples × 2 languages × 2 viewports):
 
-## Problem
+| page | failing checks |
+|---|---|
+| p-c6-rounds (164 variants) | `exponent`, `rawNames`, `labelOverlaps` |
+| p-c7-rounds (136) | `exponent`, `rawNames`, `labelOverlaps` |
+| p-c6-stop (16) | `exponent`, `rawNames`, `labelOverlaps` |
+| p-c6-system, p-c6-orbit, p-c8-comparison, p-c8-close (16 each) | `exponent`, `rawNames` |
 
-`c5-recap` still fails the browser fit checker: adjacent text lines overlap (bounding boxes of name / description /
-result touch), and the in-page check requires every recap text at ≥ 14 px *rendered* size. Eight boxes with three
-lines each do not fit into the 800×480 stage viewBox with ≥ 14 px rendered text and non-overlapping line boxes
-(system-ui line boxes are ~1.33 em high; the stage is scaled ~0.92 at 1366 px width).
+1. **`exponent` / `rawNames` fail on every chapter 6–8 page, including pages whose visible text has neither** (e.g.
+   c6-orbit). Find out whether visible text really contains exponent notation or raw catalogue names (check hidden
+   but opacity > 0 nodes, `aria-label`s, `<title>` elements, data labels of other scenes left mounted on the shared
+   stage) or whether the in-page check (`pages.js`) is wrong (inverted flag, scanning hidden nodes, regex matching `x·y`
+   or a locale string). Fix the cause, not the check, unless the check is demonstrably wrong; report which.
+2. **`labelOverlaps` in the bar lists** (c6-rounds, c6-stop, c7-rounds): rows are ~19 px apart with 14 px text whose
+   line box is ~18.6 px, and the axis title „Gewinn / Rauschgewinn · logarithmisch“ collides with the tick labels
+   (`0,01`, `1`, `100`, `10 000`). Give the rows enough pitch (≥ 1.4 em) or fewer rows per panel, and put the axis
+   title above the ticks with clear spacing. Must fit at 1366×768 and 1366×657.
+3. **One threshold format.** c6-rounds shows „Testschwelle 6,635“ at the top and „Schwelle = 6,64“ under each panel.
+   Use the single threshold formatter of chapter 4 everywhere (6,635 / 6.635).
+4. You cannot start a browser in your sandbox. To make the in-page check testable without one, reuse the existing
+   Node DOM harness (`analysis/tests/wisp_slides_dom.cjs`) to evaluate the same `exponent` / `rawNames` predicates over
+   the mounted text of every chapter 6–8 scene at its sample times, and assert them in a fast test. The geometric
+   overlap check needs the browser — Claude reruns it.
 
-## Task
-
-Make the recap fit without overlaps at both viewport heights (768 and 657) and both languages, keeping its content
-(stage name, one-line description, live result; loop grouping of test / add / clean-up with the „Runde, bis der
-Test scheitert“ label; the four candidate supports as chips, visibly grouped per candidate; one walking highlight).
-You may choose the means, for example: render the recap as an HTML grid layered over the stage instead of SVG text;
-or two columns of boxes; or move the descriptions into the page's left text column as a numbered list and keep
-name + result in the boxes. Do not shrink text below 14 px rendered, do not drop the live results. Keep the
-mini-graphics only if they still fit.
-
-Tests: the fit checker reports zero overlaps and `chapterFiveOk` for every sample of `c5-recap`; the existing recap
-tests still hold (non-empty texts, section count = record `n_rows` formatted as an integer — 2 529 / 2,529 —, one
-highlight, loop label).
+Test policy: fast presentation tests while iterating; the full `-k wisp` suite once at the end (~5 min); no Julia,
+no exporter changes unless item 1 traces into the data.
 
 ## Deliverables
 
-Source changes, rebuilt `explainer/wisp/dist/wisp_explainer.html`, tests; `codex/reports/REPORT_WP_X18C.md`;
-`codex/STATUS.md` entry. Do not commit. No exports, no Julia, no cluster jobs.
+Source changes, rebuilt HTML, tests; `codex/reports/REPORT_WP_X19C.md` (cause of item 1, what changed, test results);
+`codex/STATUS.md`. Do not commit.

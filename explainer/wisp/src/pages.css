@@ -365,3 +365,85 @@ dialog{max-width:min(1050px,90vw);max-height:80dvh;overflow:auto;overscroll-beha
 .c5-recap-descriptions{font:14px/1.4 system-ui;margin:0;padding-left:24px}
 .c5-recap-descriptions li{padding-left:3px;margin:0 0 9px}
 .story-svg .c5-support-group{fill:var(--wash);stroke:var(--model)}
+/* Named examples retain readable labels at both desktop presentation heights. */
+.x20-page .page-content{max-width:1120px;width:calc(100% - 64px);font-size:16px}
+.x20-page .page-content>p{max-width:100%;font-size:18px;line-height:1.35;margin:10px 0}
+.x20-page h2{margin-bottom:14px}
+.x20-equation{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:10px 0;font-size:16px}
+.x20-chip{display:inline-block;border:1px solid var(--model,#bc6c42);border-radius:6px;padding:3px 9px;background:#fff8ed;font-size:16px;color:#392f27}
+.x20-plots{display:grid;grid-template-columns:1fr 1fr;gap:24px}
+.x20-page svg.chart{max-height:260px;width:100%}
+.x20-page table{width:100%;border-collapse:collapse;font-size:16px}
+.x20-page th,.x20-page td{text-align:left;padding:9px;border-bottom:1px solid #cfc5b6}
+.x20-page tr.winner{background:#e8eedb}
+.x20-gains{display:grid;grid-template-columns:1fr 1fr;gap:5px 24px}
+.x20-gain{display:grid;grid-template-columns:130px 1fr 135px;align-items:center;gap:8px;font-size:14px;min-height:20px}
+.x20-track{height:8px;background:#e8e1d6;display:block}
+.x20-track i{display:block;height:100%;background:#bd7750}
+.x20-gain.winner{font-weight:700}
+.x20-stack{display:flex;height:64px;width:100%;margin:50px 0 24px;background:#ece5d8}
+.x20-noise{background:#b3a79a}.x20-explained{background:#6b9178}.x20-still{background:#d99858}
+.x20-stack-labels{display:flex;justify-content:space-between;gap:24px;font-size:18px}
+@media(max-width:759px){.x20-plots,.x20-gains{grid-template-columns:1fr}.x20-page .page-content{width:calc(100% - 32px)}.x20-page table{font-size:14px}.x20-page th,.x20-page td{padding:4px}.x20-stack-labels{flex-direction:column;gap:0}}
+
+.x20-page svg.chart text{font-size:24px}
+.x20-page .caption{font-size:14px}
+#c6-data svg.chart{max-height:180px}
+#c6-data svg.chart text{font-size:28px}
+
+.x20-zoom{display:flex;align-items:center;gap:12px;font-size:14px}.x20-zoom-track{display:inline-block;width:100px;height:10px;background:#eee}.x20-zoom-track i{display:block;height:100%;background:#bd7750}
+@media(max-width:759px){.x20-page svg.chart text,#c6-data svg.chart text{font-size:38px}}
+/* Chapters six to eight share a persistent stage and the earlier chapters' text geometry. */
+.x21-page .page-content{width:34%;max-width:none;margin-left:44px;margin-right:0;font-size:17px}
+.x21-page .page-content>p{font-size:18px;line-height:1.45;max-width:100%}
+.x21-page h2{font-size:clamp(25px,2.6vw,38px)}
+#x21-stage{position:fixed;left:40%;right:44px;top:112px;bottom:40px;z-index:3;display:flex;align-items:center;pointer-events:none}
+#x21-stage[hidden],.x21-panel[hidden]{display:none!important}
+.x21-panel{width:100%;max-height:100%;font-size:17px}
+.x21-panel p{margin:8px 0;line-height:1.35}
+.x21-panel .caption{font-size:14px}
+.x21-panel .x20-equation{margin:5px 0;gap:6px;font-size:17px}
+.x21-panel .x20-chip{font-size:16px;padding:2px 7px}
+.x21-panel .x20-plots{gap:16px}
+.x21-panel svg.chart{width:100%;max-height:280px;display:block}
+.x21-panel svg.chart text{font-size:24px}
+#c6-data svg.chart{max-height:185px}
+#c6-data svg.chart text,#panel-c6-orbit svg.chart text{font-size:34px}
+#panel-c6-orbit .caption{font-size:14px;line-height:1.4}
+#panel-c6-orbit .x20-plots{grid-template-columns:1fr 1fr}
+.x21-bic,.x21-ratios{display:block;width:100%;max-height:330px;overflow:visible}
+.x21-bic text{font-size:18px;fill:var(--ink)}
+.x21-ratios{max-height:none}
+.x21-ratios text{font-size:17px;fill:var(--ink)}
+.x21-limit{stroke:var(--model);stroke-width:2;stroke-dasharray:4 3}
+.x21-candidates{display:grid;gap:4px}
+.x21-candidate{display:grid;grid-template-columns:32px 1fr;border-radius:8px;padding:2px 8px;border:1px solid transparent}
+.x21-candidate.winner{background:#e8eedb;border-color:var(--data)}
+.x21-candidate .x20-equation{margin:2px 0;font-size:15px}
+.x21-candidate .x20-chip{font-size:15px}
+.x21-equations p{font-size:16px;white-space:nowrap;margin:3px 0}
+.x21-error-row{display:grid;grid-template-columns:170px 1fr 110px;gap:12px;align-items:center;margin:12px 0;font-size:16px}
+.x21-error-row .x20-track{height:18px}
+.x21-error-row .x20-track i{display:block;height:100%;background:var(--model)}
+.x21-verdict{font-size:32px;color:var(--model)}
+.x21-panel meter{width:100%;height:28px;accent-color:var(--data)}
+.x21-panel table{width:100%;border-collapse:collapse;font-size:17px}
+.x21-panel th,.x21-panel td{font-size:17px;padding:15px 8px;border-bottom:1px solid #cfc5b6;text-align:left}
+.x21-panel th{font-weight:500}
+.x21-panel td[data-hit=true]{color:#386649}
+.x21-truth-block{font-weight:700;fill:var(--model)!important;color:var(--model)}
+@keyframes x21-fly{from{transform:translate(120px,70px);opacity:0}to{transform:translate(0,0);opacity:1}}
+.x21-flying{animation:x21-fly .8s ease-out both}
+@media(prefers-reduced-motion:reduce){.x21-flying{animation:none}}
+@media(max-width:759px){.x21-page .page-content{width:calc(100% - 36px);margin-left:18px;padding-bottom:50vh}.x21-page .page-content>p{font-size:16px}#x21-stage{left:18px;right:18px;top:auto;bottom:12px;height:46vh;background:var(--bg)}.x21-panel{font-size:14px}.x21-equations p{font-size:12px}.x21-panel .x20-chip{font-size:12px}.x21-panel th,.x21-panel td{padding:5px;font-size:13px}}
+.snapped .x21-page .page-content{width:38%;margin-left:0;margin-right:auto;padding-right:18px}
+.snapped .x21-page .page-content>.eyebrow{display:block;font:13px system-ui;color:var(--muted);margin-bottom:14px}
+.snapped .x21-page h2{font-size:29px;line-height:1.18;margin:0 0 22px}
+#x21-stage{margin:0}
+#x21-stage h4{font:16px system-ui;line-height:1.4;margin:4px 0 8px}
+@media(min-width:760px) and (max-height:700px){.snapped .x21-page h2{font-size:26px;margin-bottom:16px}.snapped .x21-page .page-content>p{font-size:16px;line-height:1.42}}
+@media(max-width:759px){.snapped .x21-page .page-content{width:100%;padding-right:0}}
+.x21-candidate.x21-current{outline:2px solid var(--model)}
+.x21-candidate>div{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+
+@media(min-width:760px) and (max-height:700px){#x21-stage{top:92px;bottom:20px}}

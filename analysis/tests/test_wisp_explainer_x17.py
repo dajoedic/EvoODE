@@ -16,13 +16,13 @@ def test_stopping_story_and_counterfactual_both_languages():
     soup = BeautifulSoup((BASE/'src/index.html').read_text(encoding='utf8'), 'html.parser')
     assert len(soup.select('[data-chapter="two"]')) == 5
     assert not soup.select('#p-c2-all')
-    four = soup.select('[data-chapter="four"]')
+    four = soup.select('[data-chapter="four"][data-stage]')
     assert [p['data-stage'] for p in four] == ['c4-'+n for n in ('question','noise','threshold','replay','path')]
     assert all(n.get('data-claim') == 'review' for p in four for n in p.select('h2,p,.eyebrow'))
     app = (BASE/'src/app.js').read_text(encoding='utf8')
     pages = (BASE/'src/pages.js').read_text(encoding='utf8')
     assert 'c2-all' not in app+pages
-    assert "visibleChapters=['intro','one','two','three','four','five']" in pages
+    assert "visibleChapters=['intro','one','two','three','four','five','six','seven','eight']" in pages
     assert "tr('x18_chapter')" in pages
     assert "'c4-replay':Array.from" in pages
     assert not any(not p.has_attr('hidden') for p in soup.select('[data-chapter="later"]'))

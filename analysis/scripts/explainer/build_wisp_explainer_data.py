@@ -62,21 +62,22 @@ def read_observations(cell, used):
     return tuple(arrays)
 
 
-def head_hash():
-    """Read repository identity without invoking any Git operation."""
-    git = ROOT / ".git"
-    if git.is_file():
-        git = (ROOT / git.read_text().strip().split(": ", 1)[1]).resolve()
-    head = (git / "HEAD").read_text().strip()
-    if not head.startswith("ref: "):
-        return head
-    ref = head[5:]
-    if (git / ref).exists():
-        return (git / ref).read_text().strip()
-    for line in (git / "packed-refs").read_text().splitlines():
-        if line.endswith(" " + ref):
-            return line.split()[0]
-    raise ValueError("Cannot resolve repository HEAD")
+def source_identity(metadata):
+    """Identify the campaign from its declared run files, never the checkout HEAD.
+
+    Q5 metadata has no git_hash field. Its canonical result directory embeds
+    the full campaign commit; require every declared file to agree.
+    """
+    import re
+    hashes = set()
+    for name in metadata["result_files"]:
+        match = re.search(r"sideproject_q5_([0-9a-f]{40})[/\\]", name)
+        if match is None:
+            raise ValueError("Missing campaign commit in Q5 run metadata")
+        hashes.add(match.group(1))
+    if len(hashes) != 1:
+        raise ValueError("Q5 run metadata has conflicting campaign commits")
+    return hashes.pop()
 
 
 def write_json(path, value):
@@ -297,7 +298,7 @@ def build(destination=DEST):
         if len(details) % 100 == 0:
             print(f"Re-simulation checked {len(details)} cells", flush=True)
 
-    identity = head_hash()
+    identity = source_identity(metadata)
     provenance = dict(protocol="Q5", protocol_commit=metadata["protocol_commit"], git_hash=identity,
                       campaign=CAMPAIGN.name, status="interim", structure_population="exact systems only",
                       baseline_reference_sha256=metadata["reference_sha256"],

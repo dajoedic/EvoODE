@@ -86,6 +86,8 @@ def _julia_bundle(record, row, targets):
 def extend(base=BASE, julia_path=ROOT/'outputs/wisp_explainer_julia/trajectories.jsonl'):
     data = {n: json.loads((base/'data'/f'{n}.json').read_text(encoding='utf8')) for n in ('live','manifest','results')}
     live, manifest, results = (data[n] for n in ('live','manifest','results'))
+    metadata = json.loads((legacy.GRID/'q5_run_metadata.json').read_text(encoding='utf8'))
+    manifest['git_hash'] = legacy.source_identity(metadata)
     units, candidates = rows('q5_units.csv'), rows('q5_candidates.csv')
     selected = select_featured(units)
     payload = json.loads((legacy.INPUTS/'q5_grid_paths.json').read_text(encoding='utf8'))
@@ -139,6 +141,8 @@ def extend(base=BASE, julia_path=ROOT/'outputs/wisp_explainer_julia/trajectories
         featured.append(feature)
     live.update(featured=featured, gate_status=json.loads((base/'src/gates.json').read_text(encoding='utf-8-sig')),
                 i18n={lang:json.loads((base/'src/i18n'/f'{lang}.json').read_text(encoding='utf8')) for lang in ('en','de')})
+    from wisp_examples_x19 import export_examples
+    export_examples(live, manifest, byid, read_julia, julia_bundle)
     manifest['inputs'][(legacy.GRID/'q5_candidates.csv').relative_to(ROOT).as_posix()]=legacy.digest(legacy.GRID/'q5_candidates.csv')
     manifest['x2_sources']={str(path.relative_to(ROOT)).replace('\\','/'):legacy.digest(path) for path in [Path(__file__),ROOT/'studies/explainer/export_wisp_display_trajectories.jl',ROOT/'analysis/scripts/aggregate/build_sideproject_q7_paths.py',ROOT/'analysis/scripts/aggregate/build_sideproject_q6_paths.py',BASE/'src/i18n/en.json',BASE/'src/i18n/de.json',BASE/'src/gates.json']}
     manifest.update(featured_selection=dict(rule=RULE,cells=selected), julia_display=dict(present=julia_path.is_file(),

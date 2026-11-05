@@ -143,6 +143,7 @@ const elements={};for(const match of source.matchAll(/<([a-z0-9-]+)\b([^>]*\bid=
  const v=match[2].match(/\bvalue="([^"]*)"/);if(v)e.value=v[1];
  if(match[1]==='select'){const body=source.slice(match.index).split('</select>')[0],opt=body.match(/<option value="([^"]+)"/);if(opt)e.value=opt[1];}
 }
+data.live.examples=null; // Mounted chapter stages are covered by wisp_slides_dom.cjs.
 elements['wisp-data'].textContent=JSON.stringify(data);
 global.document={getElementById:id=>{if(!elements[id])throw Error('Missing page ID '+id);return elements[id];},createElement:t=>new Element(t),createElementNS:(ns,t)=>new Element(t),querySelectorAll:()=>all.filter(e=>e.dataset.tex)};
 global.innerWidth=1366;global.innerHeight=768;global.addEventListener=()=>{};document.addEventListener=()=>{};global.IntersectionObserver=class{observe(){}};
@@ -178,11 +179,12 @@ elements['path-example'].value=removal.cell_id;elements['path-example'].listener
 elements['path-step'].value=removal.path.length;elements['path-step'].listeners.input();
 if(!elements['path-event'].textContent.includes('FoBa'))throw Error('Live FoBa failed');
 if(!data.live.teaching||data.live.teaching.cell_id!==data.live.references[0].cell_id)throw Error('Missing real teaching cell');
-// Visible titles accompany every Cartesian SVG chart, including dynamically created plots.
+// Visible titles accompany every Cartesian SVG chart. X19's wide-label charts
+// use a 360 px viewBox; derive the baseline instead of assuming 310 px.
 for(const svg of all.filter(e=>e.tag==='svg'&&e.attrs.class==='chart')){
  const horizontalSolo=svg.children.some(e=>e.tag==='text'&&[tr('x9_change'),tr('x10_rate')].includes(e.textContent)&&e.attrs.y==='17'&&!e.attrs.transform);
  if(!horizontalSolo&&!svg.children.some(e=>e.tag==='text'&&e.attrs.transform?.includes('rotate(-90)')))throw Error('Missing visible y axis title');
- if(!svg.children.some(e=>e.tag==='text'&&['306','267'].includes(e.attrs.y)))throw Error('Missing visible x axis title');
+ if(!svg.children.some(e=>e.tag==='text'&&[String(+svg.attrs.viewBox.split(' ')[3]-4),'267'].includes(e.attrs.y)))throw Error('Missing visible x axis title');
 }
 coeff[1]=1;enabled.splice(0,6,false,true,false,false,false,false);play();
 if(!elements['play-status'].textContent.includes('clipped at twice'))throw Error('Missing clipping notice');

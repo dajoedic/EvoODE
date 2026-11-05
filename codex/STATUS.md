@@ -1,4 +1,4 @@
-﻿status: blocked
-task: WP-X18c
-report: codex/reports/REPORT_WP_X18C.md
-note: Umgebung, nicht Sache: Umsetzung und 53 Präsentationstests fertig; Browser-Abnahme durch Access denied beim Start von Playwright und Edge blockiert.
+status: done
+task: WP-X19c
+report: codex/reports/REPORT_WP_X19C.md
+note: Presentation fixes and rebuilt HTML complete; 71 tests passed; geometric browser check handed to Claude as requested.
