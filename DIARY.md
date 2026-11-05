@@ -6,6 +6,18 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ## 2026-11-05
 
+### W-6b done: MATLAB WSINDy rows re-run under the JKU licence, byte-identical
+
+The user checked whether the 30-day trial suffices: no — the installed R2026b `license_agreement.txt` §4 limits trial
+use to evaluation for purchase, "to conduct no business with it", and requires removing the program and all result
+files at the end of the trial. The user activated the JKU licence (licence 41119129, Statistics and Machine Learning
+Toolbox checked out). Re-run of the unmodified original (`run_wsindy_original_q5w.m`, same inputs) into
+`outputs/sideproject_q5w_wsindy/matlab_outputs_jku/` (W1 4,557 tasks, W1-interp 4,536): **byte-identical to the trial
+outputs of 2026-11-02 in 4,557 / 4,557 and 4,536 / 4,536 files**, no file missing or extra. The rows the Q7/Q8
+aggregations read (`full_matlab/`, `w1_interp_full_matlab/`) are derived from these outputs and therefore unchanged.
+Still open from the trial period: the trial-produced raw files (`matlab_outputs/`, the diagnostic `matlab_designs/`)
+must be removed before the trial ends (~2026-12-02); WSINDy rows for Q9 are computed under the JKU licence.
+
 ### Q7 complete and officially aggregated: G-Q7 passes, the data-derived stop replaces the 6-term cap
 <!-- aeeaf4b -->
 
