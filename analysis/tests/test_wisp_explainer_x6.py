@@ -11,7 +11,7 @@ BASE = ROOT / 'explainer/wisp'
 def test_challenge_is_second_in_both_languages_and_catalogue_refers_back():
     soup = BeautifulSoup((BASE / 'src/index.html').read_text(encoding='utf8'), 'html.parser')
     pages = soup.select('main > .page')
-    assert len(pages) == 69
+    assert len(pages) == 73
     assert pages[1]['id'] == 'p-challenge'
     assert pages[2]['id'] == 'p-c1-data'
     for lang in ('en', 'de'):
@@ -34,4 +34,4 @@ def test_challenge_uses_the_running_measurements_and_keeps_numerical_inputs_froz
     assert live['teaching']['sigma'] == .03
     import hashlib
     expected = json.loads((ROOT / 'outputs/wisp_x4/input_hashes.json').read_text(encoding='utf8'))
-    assert all(hashlib.sha256((ROOT / path).read_bytes()).hexdigest() == sha for path, sha in expected.items() if Path(path).name not in {"live.json", "manifest.json"})
+    assert all(hashlib.sha256((ROOT / path).read_bytes()).hexdigest() == sha for path, sha in expected.items() if Path(path).name not in {"live.json", "manifest.json", "results.json"})

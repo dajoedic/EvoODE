@@ -15,16 +15,29 @@ python analysis/scripts/explainer/check_wisp_explainer_fit.py
 `build_wisp_explainer.py` does not, and its output fails with "Missing translation". The data exporters
 (`build_wisp_explainer_data.py`, `build_wisp_explainer_x2.py`) are only needed when `data/` changes.
 
-Visible pages are set by one list in the source (chapter "Einführung" and chapter 1 since WP-X10); every later
-section stays in the file, hidden, until it is switched back on.
+Visible pages are set by one list in `src/pages.js`: introduction and chapters 1 through 9. Older teaching pages remain hidden; the results explorer and glossary conclude chapter 9.
 
-The exporter reads Q5 rates, selected units, run metadata, paths and benchmark equations/ICs. Observations come only from `outputs/phase_c_c6_data_conditions_5dd1df8/`, resolving `export.cell_dir` plus `time_path`/`state_path` for cells named by Q5 paths. Every binary must match the recorded SHA-256 before use. There is no directory scan or hash-based substitute. Clean reconstruction and opposite-IC generalization targets are the clean cells from that same export, exactly as loaded by `sideproject_q5_noise_fits.jl` and reported by the Q5 aggregation. Benchmark stored solutions are never evaluation targets.
+The legacy exporter reads Q5 teaching evidence. The X20 extension replaces the results with verbatim Q7 rates and chosen units from `q7_grid`, plus Q7 metadata and candidate hashes; it preserves Q5 featured narratives and their original `result_row`. The named chapter 6-8 examples keep their verified Q7 sources. Observations come only from `outputs/phase_c_c6_data_conditions_5dd1df8/`, resolving `export.cell_dir` plus `time_path`/`state_path` for cells named by Q5 paths. Every binary must match the recorded SHA-256 before use. There is no directory scan or hash-based substitute. Clean reconstruction and opposite-IC generalization targets are the clean cells from that same export, exactly as loaded by `sideproject_q5_noise_fits.jl` and reported by the Q5 aggregation. Benchmark stored solutions are never evaluation targets.
 
 Both arithmetic and variance-weighted R? must reproduce both stored reconstruction and generalization scores within absolute 1e-6. Missing scores/inputs are withheld; nonfinite integrations or score mismatches fail. Only a cell passing all four comparisons exports curves. `manifest.json` records one check per cell, counts, reasons, recomputed scores, input hashes and reference cells. `results.json` keeps the complete chosen CSV row unchanged. Re-simulation evaluates stored coefficients and does not fit models. Verification follows Q5's `q4_evaluate` / `simulate`: rtol=atol=1e-6, the complete clean binary time grid, its first state as initial condition, and coefficients clamped to [-10,10]. Julia uses Tsit5; SciPy RK45 (Dormand-Prince 5(4)) substitutes the available explicit fifth-order embedded Runge-Kutta method, with its own error controller and dense interpolation. It is not numerically identical. The existing deterministic ceiling of 50,000 RHS evaluations per target remains (Julia allows 1,000,000 steps). Every failed cell is reintegrated with rtol=atol=1e-7: a movement above 1e-6 in any of the four R2 values is classified as integrator sensitivity, otherwise stable disagreement. No tightened solution replaces the primary check. The JS playground uses RK4. `compute.js` is shared by page and strict Node checker (unit scaling, Householder QR and Jacobi SVD, actual-time trapezoidal windows, frozen growth and FoBa policy).
 
 The hook is a browser-generated logistic illustration, not measured data. The challenge, noise and weak-form figures use the real System 3 cell in `live.teaching`. At its recorded ? the original observations are used exactly. Other ? settings rescale those same disturbances and are explicitly labelled illustrations. The separate logistic and predator?prey playgrounds remain illustrations. The real FoBa removal case can be selected for a live replay from its original samples.
 
-Q5 baseline labels are SINDy, Weak-SINDy (pysindy, fixed threshold), and E-SINDy, with exact configuration names. Their source is WP-N47, `outputs/c6_sindy_baselines_dop853_e935c37/merged/details.csv`; this file is identified, never opened by this exporter. Original MATLAB WSINDy is separate. `comparison` reserves its result slot. When the single authorized future file `analysis/data/sideproject_residual_growth/q7_q5w_comparison.csv` exists, the exporter copies its rows without calculating rates. Until then the page shows the pending-comparison sentence. No other Q7/Q8 source is read.
+Q5 baseline labels are SINDy, Weak-SINDy (pysindy, fixed threshold), and E-SINDy, with exact configuration names. Their source is WP-N47, `outputs/c6_sindy_baselines_dop853_e935c37/merged/details.csv`; this file is identified, never opened by this exporter. Original MATLAB WSINDy is separate. `comparison` reserves its result slot. When the single authorized future file `analysis/data/sideproject_residual_growth/q7_grid/q7_q5w_comparison.csv` exists, the exporter copies its rows without calculating rates. Until then the page shows the pending-comparison sentence. The Q7 result source is `analysis/data/sideproject_residual_growth/q7_grid/`; no Q8 source is read.
+
+
+## WP-X20 results refresh
+
+After Claude runs Julia 1.12.6 with `--q7-results`, run
+`python analysis/scripts/explainer/build_wisp_explainer_x2.py --extend-only`, then the HTML builder.
+The Julia result file is `outputs/wisp_explainer_julia/q7_results.jsonl`.
+Result curves are withheld until this file passes source-hash, target/grid and stored-score checks.
+The Julia exporter reuses a verified Q5 display record only for the same cell, support, parameters
+and stored scores. Cells without a chosen candidate remain explicit failures and need no model solve.
+Q7 is interim; final results come from Q9 after W-4. The WSINDy comparison is copied only from
+`q7_q5w_comparison.csv`; an absent file remains pending. No rates are calculated by the page.
+The noise-free chapter view uses the available aggregation conditions: clean controls are excluded,
+so there are no full-sampling clean-control rates to display. Sigma and rho stay explicit.
 
 ## Results schema contract (version 2)
 
@@ -36,7 +49,7 @@ Required top-level fields:
 | --- | --- |
 | `schema_version` | Integer `2`. |
 | `provenance` | Object requiring string `protocol` and `status`; status is `interim`, `final`, or `synthetic` (test only). Additional source paths, SHA-256, commit, campaign, baseline and population notes appear verbatim in the provenance panel. |
-| `primary_method` | Method identifier for WISP (currently `Q5`); arbitrary nonempty string. |
+| `primary_method` | Method identifier for WISP (currently `Q7`); arbitrary nonempty string. |
 | `score_threshold` | Finite numeric threshold for curve-hit metrics. |
 | `exclude_clean_controls` | Boolean; excludes cells with ?=?=0 from drill-down rate populations. |
 | `rates` | Array of rate rows described below. |

@@ -19,7 +19,7 @@ def test_wisp_two_pages_and_bilingual_claims():
     start = next(i for i, p in enumerate(pages) if p['id'] == 'p-c1-solution')+1
     assert pages[start:start+5] == two
     assert [p['data-stage'] for p in two] == ['c2-'+s for s in names]
-    assert "visibleChapters=['intro','one','two','three','four','five','six','seven','eight']" in (BASE/'src/pages.js').read_text(encoding='utf8')
+    assert "visibleChapters=['intro','one','two','three','four','five','six','seven','eight','nine']" in (BASE/'src/pages.js').read_text(encoding='utf8')
     for page in two:
         assert all(n.get('data-claim') == 'review' for n in page.select('h2,p,footer,.eyebrow'))
     tables = [json.loads((BASE/f'src/i18n/{lang}.json').read_text(encoding='utf8')) for lang in ['de', 'en']]

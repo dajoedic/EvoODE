@@ -84,7 +84,7 @@ def test_full_presentation_dom(language,configuration):
 def test_page_structure_and_bilingual_source():
     soup=BeautifulSoup((BASE/'src/index.html').read_text(encoding='utf8'),'html.parser')
     pages=soup.select('main > .page')
-    assert len(pages)==69
+    assert len(pages)==73
     assert [p['id'] for p in pages[:13]] == [
         'p-hook', 'p-challenge', 'p-c1-data', 'p-c1-slope', 'p-c1-noise-visible', 'p-c1-secants', 'p-c1-changes',
         'p-c1-error-empty', 'p-c1-fit', 'p-c1-every', 'p-c1-noise',

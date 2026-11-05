@@ -1,4 +1,4 @@
-﻿"""WP-X4 source and headline contract against the unchanged Q5 CSV."""
+﻿"""WP-X4 source and headline contract against the Q7 CSV."""
 import csv
 import hashlib
 import json
@@ -16,15 +16,15 @@ def test_headline_selected_rows_match_original_csv():
     results=json.loads((BASE/'data/results.json').read_text(encoding='utf8'))
     script="const fs=require('fs'),RESULTS=JSON.parse(fs.readFileSync(0,'utf8'));"+function+"process.stdout.write(JSON.stringify(headlineRows(RESULTS.rates)));"
     run=subprocess.run(['node','-e',script],input=json.dumps(results),capture_output=True,text=True,check=True,timeout=30)
-    with (ROOT/'analysis/data/sideproject_residual_growth/q5_grid/q5_rates.csv').open(encoding='utf8',newline='') as file:
-        expected=[r for r in csv.DictReader(file) if r['stratum'] in ('dim1','dim2') and float(r['sigma'])==.03 and r['rho']!='pooled' and float(r['rho'])==0 and r['metric'] in ('raw_exact','pruned_exact','generalization_arithmetic_hit','generalization_variance_weighted_hit') and ((r['method']=='Q5' and r['configuration']=='c') or (r['method'] in ('sindy','weak_sindy','e_sindy') and r['configuration']!='all_ten'))]
+    with (ROOT/'analysis/data/sideproject_residual_growth/q7_grid/q7_rates.csv').open(encoding='utf8',newline='') as file:
+        expected=[r for r in csv.DictReader(file) if r['stratum'] in ('dim1','dim2') and float(r['sigma'])==.03 and r['rho']!='pooled' and float(r['rho'])==0 and r['metric'] in ('raw_exact','pruned_exact','generalization_arithmetic_hit','generalization_variance_weighted_hit') and ((r['method']=='Q7' and r['configuration']=='c') or (r['method'] in ('sindy','weak_sindy','e_sindy') and r['configuration']!='all_ten'))]
     assert json.loads(run.stdout)==expected
     assert {r['stratum'] for r in expected}=={'dim1','dim2'}
 
 def test_sections_and_reader_strings():
     soup=BeautifulSoup((BASE/'src/index.html').read_text(encoding='utf8'),'html.parser')
     pages=soup.select('main > .page')
-    assert len(pages)==69
+    assert len(pages)==73
     assert len({p['data-section'] for p in pages})==len(pages)
     assert [p['id'] for p in pages[:4]]==['p-hook','p-challenge','p-c1-data','p-c1-slope']
     assert all(len(p.select(':scope > .page-content'))==1 for p in pages)

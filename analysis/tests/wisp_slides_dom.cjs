@@ -46,7 +46,7 @@ class Node {
 function inflate(record){const n=new Node(record.tag,record.attrs,record.text);for(const c of record.children)n.append(inflate(c));return n;}
 const html=inflate(fixture.tree),doc=new Node('document');doc.append(html);doc.documentElement=html;doc.body=doc.querySelector('body');doc.fonts={ready:Promise.resolve()};const idIndex=new Map(doc.querySelectorAll('[id]').map(e=>[e.id,e]));doc.getElementById=id=>{if(!idIndex.has(id)){const found=doc.querySelector('#'+id);if(found)idIndex.set(id,found);}return idIndex.get(id)||null;};doc.createElement=t=>new Node(t);doc.createElementNS=(_,t)=>new Node(t);
 doc.getElementById('wisp-data').textContent=JSON.stringify(fixture.data);
-if(fixture.configuration==='legacy')global.WispVisibleChapters=['intro','later'];
+if(fixture.configuration==='legacy')global.WispVisibleChapters=['intro','later','nine'];
 global.document=doc;global.window=global;global.innerWidth=1366;global.innerHeight=657;
 global.location={href:'file:///wisp.html?lang='+fixture.language,get hash(){return new URL(this.href).hash;},assign(url){this.href=String(url);}};
 global.history={pushState(_,__,url){location.href=String(url);},replaceState(_,__,url){location.href=String(url);}};
@@ -132,7 +132,7 @@ function checkExamples(){
  const comparisonRows=doc.getElementById('c8-comparison').querySelectorAll('tr').slice(1);
  [selected,examples.lv.winner,examples.failure.winner].forEach((c,i)=>assert.equal(comparisonRows[i].children[1].textContent,c.row.raw_exact==='True'?'✓':'✗'));
  for(const panel of Object.values(examples.panels))assert(!/u1\^|u2\^|u1\*u2|q7_0/.test(panel.textContent));
- assert(doc.getElementById('p-results').hidden);
+ assert(!doc.getElementById('p-results').hidden);
  console.log('PASS X19: bilingual chapters, live failure and LV replay, test/add/cleanup supports, loop hold, deterministic seek, reduced motion, residual split, observed shading, G2 and comparison');
 }
 if(fixture.configuration==='examples'){checkExamples();process.exit(0);}
@@ -142,12 +142,14 @@ if(fixture.configuration==='delivered'){
  const close=(a,b)=>assert(Math.abs(a-b)<=1e-9*Math.max(1,Math.abs(b)),`${a} != ${b}`);
  const ids=['p-hook','p-challenge','p-c1-data','p-c1-slope','p-c1-noise-visible','p-c1-secants','p-c1-changes','p-c1-error-empty','p-c1-fit','p-c1-every','p-c1-noise','p-c1-percent','p-c1-solution'];
  const twoIds=['standing','residual','joint','error','solution'].map(s=>'p-c2-'+s);
- assert.deepEqual(slides.pages.map(p=>p.id),ids.concat(twoIds,WispChapterThree.states.map(s=>'p-'+s),WispChapterFour.states.map(s=>'p-'+s),['p-c4-remains'],WispChapterFive.states.map(s=>'p-'+s),WispExamples.states.filter(s=>s!=='c4-remains').map(s=>'p-'+s)));
+ assert.deepEqual(slides.pages.map(p=>p.id),ids.concat(twoIds,WispChapterThree.states.map(s=>'p-'+s),WispChapterFour.states.map(s=>'p-'+s),['p-c4-remains'],WispChapterFive.states.map(s=>'p-'+s),WispExamples.states.filter(s=>s!=='c4-remains').map(s=>'p-'+s),['p-c9-count','p-c9-clean','p-c9-noise','p-c9-original','p-results','p-glossary']));
  slides.nav.go(2);assert.equal(doc.getElementById('masthead-title').textContent,tr('x12c_chapter'));assert.equal(doc.getElementById('chapter-progress').getAttribute('aria-valuemax'),'11');
  assert.deepEqual(slides.pages.slice(2,13).map(p=>p.dataset.stage),story.states);
  assert.equal(doc.querySelectorAll('#c1-stage svg').length,1);
- assert(doc.getElementById('p-results').hidden);assert(doc.getElementById('p-solution').hidden);
- for(const id of ['p-results','p-headline','p-solution','p-glossary']){slides.nav.go(0);slides.nav.link('#'+id);assert.equal(slides.nav.index,0);}
+ assert(!doc.getElementById('p-results').hidden);assert(doc.getElementById('p-solution').hidden);
+ slides.nav.link('#p-c9-count');assert.equal(doc.getElementById('masthead-title').textContent,tr('x22_chapter'));assert.equal(doc.querySelectorAll('.page-dots a').filter(a=>!a.hidden).length,6);
+ for(const cell of fixture.data.results.cells.filter(c=>!c.row.candidate_id)){document.getElementById('cell-select').value=cell.row.cell_id;cellDraw();assert(doc.getElementById('cell-detail').textContent);}
+ for(const id of ['p-headline','p-solution']){slides.nav.go(0);slides.nav.link('#'+id);assert.equal(slides.nav.index,0);}
  function event(key,target=doc.body){let prevented=false;for(const fn of events.keydown||[])fn({type:'keydown',key,target,preventDefault(){prevented=true;}});advance();return prevented;}
  slides.nav.go(0);advance();assert(!event('ArrowRight'));assert.equal(slides.nav.index,0);assert(!event('ArrowLeft'));assert.equal(slides.nav.index,0);
  assert.strictEqual(story.clock,global.WispStoryClock);
@@ -535,7 +537,7 @@ for(const key of ['x7_structure_label','x7_parameter_label'])assert.equal(doc.qu
 for(const [id,key] of [['play-reset','x6_reset'],['challenge-hint','x6_hint']]){const button=doc.getElementById(id);assert.equal(button.getAttribute('aria-label'),table[key]);assert.equal(button.getAttribute('title'),table[key]);assert(button.querySelector('svg'));}
 console.log('PASS X7b delayed visibility, six-second growth, hold and restart, page/tab pause, deterministic reduced-motion state, translated icon labels');
 const slides=global.WispSlides;
-assert.equal(slides.pages.length,19);assert.equal(slides.pages.at(-1).id,'p-glossary');
+assert.equal(slides.pages.length,23);assert.equal(slides.pages.at(-1).id,'p-glossary');
 assert.equal(doc.querySelectorAll('#featured-stories > article').length,fixture.data.live.featured.length);
 assert(doc.querySelectorAll('[data-claim]').length>=4);
 function emit(type,target,extra={}){const event={type,target,preventDefault(){this.prevented=true;},...extra};for(const fn of events[type]||[])fn(event);return event;}

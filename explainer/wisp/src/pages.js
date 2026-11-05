@@ -2,7 +2,7 @@
 (function(root){
  'use strict';
  // Delivered chapter configuration. Tests may override it before initialization.
- const visibleChapters=['intro','one','two','three','four','five','six','seven','eight'];
+ const visibleChapters=['intro','one','two','three','four','five','six','seven','eight','nine'];
  function visiblePages(pages,configuration=visibleChapters){return pages.filter(p=>configuration.includes(p.dataset.chapter));}
  function chapterTarget(pages,index,direction){const chapters=[...new Set(pages.map(p=>p.dataset.chapter))],current=chapters.indexOf(pages[index].dataset.chapter),next=Math.max(0,Math.min(chapters.length-1,current+direction));return pages.findIndex(p=>p.dataset.chapter===chapters[next]);}
  const steps=['data','weak','frols','foba','stop','fit','bic','test'];
@@ -34,7 +34,7 @@
  const stories=document.getElementById('featured-stories'),storyParent=stories.parentElement;
  const storyTabs=make('nav',null,'story-tabs');storyTabs.setAttribute('role','tablist');stories.before(storyTabs);
  const articles=[...stories.children],drawer=storyParent.querySelector('dialog');
- articles.forEach((article,i)=>{const button=make('button',systemName(RESULTS.cells.find(c=>c.row.cell_id===featured[i].cell_id)));button.setAttribute('role','tab');storyTabs.append(button);
+ articles.forEach((article,i)=>{const button=make('button',systemName(featuredCell(featured[i].cell_id)));button.setAttribute('role','tab');storyTabs.append(button);
   const plot=article.querySelector('.two-plots');
   const componentPlots=panel=>[...panel.children].filter(curve=>curve.querySelector('svg.chart'));
   const components=Math.max(...[...plot.children].map(panel=>componentPlots(panel).length));
@@ -43,7 +43,7 @@
    [...plot.children].forEach(panel=>componentPlots(panel).forEach((curve,j)=>curve.hidden=j!==0));controls.children[0].setAttribute('aria-selected','true');
   }
   const detail=make('div');[...article.children].filter(e=>e!==plot&&!e.classList.contains('component-tabs')&&e.tagName!=='H3').forEach(e=>detail.append(e));drawer.append(detail);
-  const scores=make('p');const cell=RESULTS.cells.find(c=>c.row.cell_id===featured[i].cell_id);scores.textContent=['arithmetic','variance_weighted'].map(w=>weightLabel(w)+': R² '+fmt(cell.row['generalization_r2_'+w],4)).join(' · ');article.append(scores);
+  const scores=make('p');const cell=featuredCell(featured[i].cell_id);scores.textContent=['arithmetic','variance_weighted'].map(w=>weightLabel(w)+': R² '+fmt(cell.row['generalization_r2_'+w],4)).join(' · ');article.append(scores);
   if(['arithmetic','variance_weighted'].some(w=>+cell.row['generalization_r2_'+w]<0)){const explanation=make('p',tr('x5_negative'));explanation.dataset.claim='review';article.append(explanation);}
   const select=()=>{articles.forEach((a,j)=>a.hidden=j!==i);[...storyTabs.children].forEach((b,j)=>b.setAttribute('aria-selected',String(j===i)));};button.addEventListener('click',select);
  });articles.forEach((a,i)=>a.hidden=i!==0);storyTabs.children[0]?.setAttribute('aria-selected','true');
@@ -75,7 +75,7 @@
  // Recap is tied only to the stored running example and the existing live path.
  const example=featured.find(f=>f.roles.includes('running'))||featured[0];
  const candidate=example?.candidates.find(c=>c.row.candidate_id===example.chosen);
- const result=RESULTS.cells.find(c=>c.row.cell_id===example?.cell_id);
+ const result=featuredCell(example?.cell_id);
  const outcomes={data:cellName(example?.cell_id),weak:document.getElementById('matrix-size').textContent,
   frols:example?.path.map(p=>p.active_idxs.map(eq=>eq.map(i=>result?.terms[i-1]).join(', ')).join(' / ')).join(' → '),
   foba:example?.path.map((p,i)=>{const previous=example.path[i-1];return previous?previous.active_idxs.flatMap((eq,j)=>eq.filter(k=>!p.active_idxs[j].includes(k)).map(k=>result?.terms[k-1])):[];}).flat().join(', ')||tr('j262'),
@@ -101,8 +101,8 @@
  function show(i,push,scroll=true){const page=pages[i];pages.forEach((p,j)=>p.classList.toggle('active',j===i));dotButtons.forEach((a,j)=>{if(j===i)a.setAttribute('aria-current','page');else a.removeAttribute('aria-current');});
   dotButtons.forEach((a,j)=>a.hidden=pages[j].dataset.chapter!==page.dataset.chapter);
   const chapterPages=pages.filter(p=>p.dataset.chapter===page.dataset.chapter),position=chapterPages.indexOf(page)+1;
-  title.textContent=page.dataset.chapter==='eight'?tr('x20_chapter8'):page.dataset.chapter==='seven'?tr('x20_chapter7'):page.dataset.chapter==='six'?tr('x20_chapter6'):page.dataset.chapter==='five'?tr('x19_chapter'):page.dataset.chapter==='four'?tr('x18_chapter'):page.dataset.chapter==='three'?tr('x17_chapter'):page.dataset.chapter==='two'?tr('x13_chapter'):page.dataset.chapter==='one'?tr('x12c_chapter'):introTitle;
-  title.href='#'+chapterPages[0].id;title.classList.toggle('chapter-indicator',['one','two','three','four','five','six','seven','eight'].includes(page.dataset.chapter));
+  title.textContent=page.dataset.chapter==='nine'?tr('x22_chapter'):page.dataset.chapter==='eight'?tr('x20_chapter8'):page.dataset.chapter==='seven'?tr('x20_chapter7'):page.dataset.chapter==='six'?tr('x20_chapter6'):page.dataset.chapter==='five'?tr('x19_chapter'):page.dataset.chapter==='four'?tr('x18_chapter'):page.dataset.chapter==='three'?tr('x17_chapter'):page.dataset.chapter==='two'?tr('x13_chapter'):page.dataset.chapter==='one'?tr('x12c_chapter'):introTitle;
+  title.href='#'+chapterPages[0].id;title.classList.toggle('chapter-indicator',['one','two','three','four','five','six','seven','eight','nine'].includes(page.dataset.chapter));
   title.setAttribute('aria-label',title.textContent);
   progress.setAttribute('aria-valuenow',position);progress.setAttribute('aria-valuemax',chapterPages.length);
   progress.setAttribute('aria-label',tr('x10_eye',{i:position,n:chapterPages.length}));

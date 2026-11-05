@@ -83,7 +83,7 @@ def _julia_bundle(record, row, targets):
     return {**bundles['reconstruction'], 'generalization': bundles['generalization']}, None
 
 
-def extend(base=BASE, julia_path=ROOT/'outputs/wisp_explainer_julia/trajectories.jsonl'):
+def extend(base=BASE, julia_path=ROOT/'outputs/wisp_explainer_julia/trajectories.jsonl', export_q7=True):
     data = {n: json.loads((base/'data'/f'{n}.json').read_text(encoding='utf8')) for n in ('live','manifest','results')}
     live, manifest, results = (data[n] for n in ('live','manifest','results'))
     metadata = json.loads((legacy.GRID/'q5_run_metadata.json').read_text(encoding='utf8'))
@@ -111,6 +111,8 @@ def extend(base=BASE, julia_path=ROOT/'outputs/wisp_explainer_julia/trajectories
     if julia_path.is_file():
         for entry in results['cells']:
             row, cid = entry['row'], entry['row']['cell_id']
+            if export_q7:
+                row = next(r for r in units if r['cell_id']==cid and r['size_rule']=='c')
             record = records.get((cid, row['candidate_id']))
             bundle, reason = consume(record, row, byid[cid])
             entry.update(curves=bundle, unavailable=reason)
@@ -120,8 +122,9 @@ def extend(base=BASE, julia_path=ROOT/'outputs/wisp_explainer_julia/trajectories
         c, detail = byid[cid], details[cid]
         pool = [r for r in candidates if r['cell_id'] == cid and r['candidate_id'] in {k['candidate_id'] for k in c['candidates']}]
         true = next(json.loads(r['active_idxs']) for r in candidates if r['system_id'] == str(c['system_id']) and r['raw_exact'] == 'True')
-        feature = dict(cell_id=cid, roles=[k for k,v in selected.items() if v==cid], chosen=detail['row']['candidate_id'],
+        feature = dict(cell_id=cid, roles=[k for k,v in selected.items() if v==cid], chosen=next(r['candidate_id'] for r in units if r['cell_id']==cid and r['size_rule']=='c'),
                        truth_support=true, path=c['candidates'], candidates=[], detail=detail)
+        feature['result_row'] = next(r for r in units if r['cell_id']==cid and r['size_rule']=='c')
         for row in pool:
             n, k, mse = int(row['n_samples']), int(row['k']), float(row['mse'])
             bic = n*math.log(mse)+k*math.log(n) if mse>0 else None
@@ -144,12 +147,15 @@ def extend(base=BASE, julia_path=ROOT/'outputs/wisp_explainer_julia/trajectories
     from wisp_examples_x19 import export_examples
     export_examples(live, manifest, byid, read_julia, julia_bundle)
     manifest['inputs'][(legacy.GRID/'q5_candidates.csv').relative_to(ROOT).as_posix()]=legacy.digest(legacy.GRID/'q5_candidates.csv')
-    manifest['x2_sources']={str(path.relative_to(ROOT)).replace('\\','/'):legacy.digest(path) for path in [Path(__file__),ROOT/'studies/explainer/export_wisp_display_trajectories.jl',ROOT/'analysis/scripts/aggregate/build_sideproject_q7_paths.py',ROOT/'analysis/scripts/aggregate/build_sideproject_q6_paths.py',BASE/'src/i18n/en.json',BASE/'src/i18n/de.json',BASE/'src/gates.json']}
+    manifest['x2_sources']={str(path.relative_to(ROOT)).replace('\\','/'):legacy.digest(path) for path in [Path(__file__),Path(__file__).with_name('wisp_results_x20.py'),ROOT/'studies/explainer/export_wisp_display_trajectories.jl',ROOT/'analysis/scripts/aggregate/build_sideproject_q7_paths.py',ROOT/'analysis/scripts/aggregate/build_sideproject_q6_paths.py',BASE/'src/i18n/en.json',BASE/'src/i18n/de.json',BASE/'src/gates.json']}
     manifest.update(featured_selection=dict(rule=RULE,cells=selected), julia_display=dict(present=julia_path.is_file(),
         sha256=legacy.digest(julia_path) if julia_path.is_file() else None, tolerance=1e-12, checks=checks))
     # Detailed feature references are already in live; avoid duplicating their detail object.
     for feature in live['featured']:
         feature.pop('detail')
+    from wisp_results_x20 import export_results
+    if export_q7:
+        export_results(data, byid, read_julia, consume, records)
     for name, value in data.items():
         legacy.write_json(base/'data'/f'{name}.json',value)
     print(json.dumps({'featured':selected,'julia_records':len(records),'display_checks':len(checks)}))

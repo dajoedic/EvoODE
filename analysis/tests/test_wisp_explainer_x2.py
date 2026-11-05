@@ -133,13 +133,13 @@ def test_absent_julia_preserves_results_and_present_file_is_consumed():
         subset['cells']=[c for c in subset['cells'] if c['row']['cell_id'] in ids]
         for name,value in [('live',data('live')),('manifest',data('manifest')),('results',subset)]:
             x2.legacy.write_json(folder/'data'/f'{name}.json',value)
-        x2.extend(folder,folder/'absent.jsonl')
+        x2.extend(folder,folder/'absent.jsonl',export_q7=False)
         assert json.loads((folder/'data/results.json').read_text(encoding='utf8'))==subset
         # A supplied failed Julia record must supersede any earlier Python curve.
         cell=subset['cells'][0]
         failed=dict(cell_id=cell['row']['cell_id'],candidate_id=cell['row']['candidate_id'],passed=False,reason='Intentional fixture failure')
         x2.legacy.write_json(folder/'failed.jsonl',failed)
-        x2.extend(folder,folder/'failed.jsonl')
+        x2.extend(folder,folder/'failed.jsonl',export_q7=False)
         current=json.loads((folder/'data/results.json').read_text(encoding='utf8'))
         assert all(c['curves'] is None for c in current['cells'])
         assert next(c for c in current['cells'] if c['row']['cell_id']==failed['cell_id'])['unavailable']=='Intentional fixture failure'

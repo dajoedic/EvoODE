@@ -16,14 +16,14 @@ def exported(name):
 
 
 def test_every_rate_field_matches_csv():
-    with (ROOT / "analysis/data/sideproject_residual_growth/q5_grid/q5_rates.csv").open(newline="", encoding="utf8") as f:
+    with (ROOT / "analysis/data/sideproject_residual_growth/q7_grid/q7_rates.csv").open(newline="", encoding="utf8") as f:
         source = list(csv.DictReader(f))
     assert exported("results")["rates"] == source
     assert len(source) == 3672
 
 
 def test_cell_counts_and_scores_match_real_records():
-    with (ROOT / "analysis/data/sideproject_residual_growth/q5_grid/q5_units.csv").open(newline="", encoding="utf8") as f:
+    with (ROOT / "analysis/data/sideproject_residual_growth/q7_grid/q7_units.csv").open(newline="", encoding="utf8") as f:
         source = [r for r in csv.DictReader(f) if r["size_rule"] == "c"]
     data = exported("results")
     assert [c["row"] for c in data["cells"]] == source
@@ -45,7 +45,7 @@ def test_manifest_inputs_are_whitelisted_and_hash_checked():
 
 def test_no_unverified_trajectory_is_exported():
     manifest = exported("manifest")
-    julia = manifest.get("julia_display", {})
+    julia = manifest.get("x20_display") or manifest.get("julia_display", {})
     checks = {r["cell_id"]: r for r in (julia["checks"] if julia.get("present") else manifest["resimulation"]["checks"])}
     for cell in exported("results")["cells"]:
         if cell["curves"] is not None:
@@ -53,6 +53,7 @@ def test_no_unverified_trajectory_is_exported():
             assert check["passed"]
             if not julia.get("present"):
                 assert check["max_r2_error"] <= 1e-6
+            assert check.get("candidate_id", cell["row"].get("candidate_id")) == cell["row"].get("candidate_id")
         else:
             assert cell["unavailable"]
 
@@ -166,7 +167,7 @@ console.log('Application initialized; noise, path, step, result filters, reset a
 
 
 def test_app_initialization_and_controls_without_a_browser():
-    if not (ROOT / 'analysis/data/sideproject_residual_growth/q7_q5w_comparison.csv').is_file():
+    if not (ROOT / 'analysis/data/sideproject_residual_growth/q7_grid/q7_q5w_comparison.csv').is_file():
         assert exported('results')['comparison']['status'] == 'pending'
     run_app_harness(extra=r"""
 function texts(e){return [e.textContent,...e.children.flatMap(texts)];}

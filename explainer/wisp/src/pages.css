@@ -446,4 +446,28 @@ dialog{max-width:min(1050px,90vw);max-height:80dvh;overflow:auto;overscroll-beha
 .x21-candidate.x21-current{outline:2px solid var(--model)}
 .x21-candidate>div{display:grid;grid-template-columns:1fr 1fr;gap:16px}
 
+/* Chapter nine keeps each stratum and both metric families visible together. */
+.c9-content{overflow:auto;overscroll-behavior:contain;min-height:0}
+.c9-content article{border-top:1px solid var(--line);padding:8px 0 18px}
+.c9-content table{width:100%;table-layout:fixed;border-collapse:collapse}
+.c9-content td,.c9-content th{padding:10px 8px;text-align:left;vertical-align:top;border-bottom:1px solid var(--line);font:16px/1.4 system-ui;overflow-wrap:anywhere}
+.c9-content small{display:block;font:14px/1.4 system-ui;overflow-wrap:anywhere}
+.snapped .c9-glossary{max-height:calc(100dvh - 250px);overflow:auto;overscroll-behavior:contain}
+.c9-content td>div{font-size:23px;color:var(--model)}
+.c9-plots{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px}
+.c9-plots svg{width:100%;height:auto;display:block}
+.c9-plots svg text{font:16px system-ui;fill:var(--ink)}
+.c9-plots h4{min-height:48px;font-size:16px!important}
+.c9-legend p{font:16px system-ui;margin:8px 0 2px}
+.snapped .c9-page>.page-content{height:100%;display:flex;flex-direction:column}
+.snapped .c9-content{flex:1}
+.snapped #p-results .results-filters,.snapped #p-results label,.snapped #p-results select,.snapped #p-results .caption,.snapped #p-results .notice,.snapped #p-results small{font-size:14px;line-height:1.4}
+.snapped #p-results .results-filters>p:not(#provenance-banner):not(#comparison-status){display:none}
+.snapped #p-results .results-panels{display:block;overflow:auto}
+.snapped #p-results .results-panels>div{height:100%}
+.snapped #p-results .rate-chart{min-width:420px!important}
+.snapped #p-results .rate-chart text{font-size:19px}
+.snapped #p-glossary>.page-content{max-height:100%;overflow:auto;overscroll-behavior:contain}
+@media(max-width:759px){.c9-plots{display:block}.c9-plots svg{max-width:420px}.c9-content table{min-width:650px}.c9-content{max-height:75vh}.c9-content p{font-size:16px}}
+
 @media(min-width:760px) and (max-height:700px){#x21-stage{top:92px;bottom:20px}}

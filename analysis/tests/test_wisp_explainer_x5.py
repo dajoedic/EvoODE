@@ -26,7 +26,7 @@ def test_system_translation_coverage_and_frozen_inputs():
         assert all(table.get('system_' + str(c['system_id'])) for c in records)
     previous = json.loads((ROOT / 'outputs/wisp_x4/input_hashes.json').read_text(encoding='utf8'))
     for file, expected in previous.items():
-        if Path(file).name in {"live.json", "manifest.json"}:
+        if Path(file).name in {"live.json", "manifest.json", "results.json"}:
             continue  # X19 extends Q7 evidence/provenance; their hashes have separate coverage.
         assert hashlib.sha256((ROOT / file).read_bytes()).hexdigest() == expected, file
 

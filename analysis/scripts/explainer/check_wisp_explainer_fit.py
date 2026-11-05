@@ -160,6 +160,7 @@ def check_chapter_interactions(page,evidence):
         expected += ['p-c6-'+s for s in ('system','rounds','stop','candidates','orbit','lesson')]
         expected += ['p-c7-'+s for s in ('system','rounds','candidates','rhs','lesson')]
         expected += ['p-c8-'+s for s in ('measured','trajectory','comparison','close')]
+        expected += ['p-c9-'+s for s in ('count','clean','noise','original')]+['p-results','p-glossary']
         if ids!=expected:raise AssertionError(f'Incorrect delivered inventory: {ids}')
         for key in ('ArrowLeft','ArrowRight'):
             page.keyboard.press(key)
@@ -169,8 +170,10 @@ def check_chapter_interactions(page,evidence):
             if page.evaluate('WispSlides.nav.index')!=i:raise AssertionError('Vertical keyboard walk failed')
             page.evaluate('WispChapterStory.finish()')
             if i>=2 and page.locator('#'+expected[i]).get_attribute('data-stage') and page.locator('#c1-stage svg').get_attribute('data-state')!=page.locator('#'+expected[i]).get_attribute('data-stage'):raise AssertionError('Stage differs from page')
-        if page.locator('.page-dots a:visible').count()!=4:raise AssertionError('Wrong chapter-eight sub-step dots')
-        if page.locator('#masthead-title').text_content()!=page.evaluate('tr("x20_chapter8")'):raise AssertionError('Wrong chapter-eight masthead')
+        # Since WP-X20 the walk ends in the last delivered chapter; it must show one dot per page of that chapter.
+        last_chapter=page.locator('#'+expected[-1]).get_attribute('data-chapter')
+        if page.locator('.page-dots a:visible').count()!=page.locator(f'main > .page[data-chapter="{last_chapter}"]').count():raise AssertionError('Wrong last-chapter sub-step dots')
+        if page.locator('#masthead-title').text_content()!=page.evaluate('tr("x22_chapter")'):raise AssertionError('Wrong last-chapter masthead')
         page.keyboard.press('ArrowUp');page.wait_for_timeout(850)
         if page.evaluate('WispSlides.nav.index')!=len(expected)-2:raise AssertionError('Up did not return one step')
         page.evaluate('WispSlides.nav.link("#p-c1-solution");WispChapterStory.finish()')
