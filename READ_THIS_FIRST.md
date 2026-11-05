@@ -10,21 +10,19 @@ zweites davon. Alles Dauerhafte gehört dorthin, nach `PAPER_1.md` oder ins `DIA
 **Regeln:** wird immer **vollständig überschrieben**, nie angehängt. Was älter als ein paar Tage
 ist, ist vermutlich falsch — dann gilt `CLAUDE.md`.
 
-**Stand: 2026-11-05, 01:10 (Explorable); Cluster-Teil 04.11. 00:44, seitdem ungeprüft — WISP-Plan bis 31.12. (CLAUDE.md, „WISP paper — the fixed plan“).**
+**Stand: 2026-11-05, 01:15 (Explorable und Cluster) — WISP-Plan bis 31.12. (CLAUDE.md, „WISP paper — the fixed plan“).**
 
-## 1. Was läuft (Orion, letzter geprüfter Stand 04.11. 00:44)
+## 1. Was läuft (Orion, Stand 05.11. 01:15)
 
 | Lauf | Stand | Wenn fertig |
 |---|---|---|
-| **Q7-Fits** (338 Shards) | **335/338**, 0 Fehler; 3 Nachzügler laufen (einer seit 31.10.) | einsammeln, Q7-Aggregation (`--wsindy-source matlab`), **G-Q7** |
-| **W-2 = Q8-Gitter** (`512dd5b`, 3.540 Shards) | 91/3.540, 0 Fehler, **36 Pods** | Hochrechnung, sobald die langen Shards durch sind (frühestens 04.11.) |
-| **C-6 gekappt** | 1.434/3.366, Parallelität 1 (Zelle 1361, seit 31.10.); **wird leergezogen** (W-Reihe hat Vorrang) | nach W-4 zurück auf 24 |
+| **Q7-Fits** (338 Shards, `3541063`) | **337/338**, 0 Fehler; 1 Nachzügler läuft | einsammeln, Q7-Aggregation (`--wsindy-source matlab`), **G-Q7** |
+| **W-2 = Q8-Gitter** (`512dd5b`, 3.540 Shards) | **265/3.540**, 0 Fehler, **39 Pods** (seit 02.11. 23:41) | Hochrechnung, sobald die langen Shards durch sind |
+| **C-6 gekappt** | 1.435/3.366, **Parallelität 0 seit 04.11. 10:26** (leergezogen, kein Pod getötet) | nach W-4 zurück auf 24 |
 
-Kerne: 1 + 3 + 36 = 40, voll belegt. Q8-Probe (75/75) fertig.
-
-**05.11. 01:09: oc-Token abgelaufen** — Stand seit 04.11. 00:44 nicht geprüft, und `shift_pods.sh` kann ohne
-gültigen Login nichts verschieben. Login (Nutzer): `oc login --web https://api.orion.scch.at:6443`, danach Stand
-holen, Tabelle und Statusseite nachziehen.
+Kerne: 39 + 1 + 0 = 40, voll belegt. Q8-Probe (75/75) fertig. Statusseite „EvoODE auf Orion“ Version 12 (05.11. 01:15).
+oc-Token war 05.11. ~01:07 abgelaufen, Nutzer hat sich neu eingeloggt; in der Lücke hat `shift_pods.sh` nur Lesefehler
+geloggt und nichts verändert.
 
 **Lokal läuft `shift_pods.sh`** (Scratchpad der Sitzung `9f46954f…`, detached, Log `shift_pods.log`, neue Version mit
 Schutzregel): pro fertiger C-6-Zelle C-6-Parallelität −1; Q8 = 40 − C-6 − aktive Q7-Pods (nur steigend); stoppt, wenn
@@ -55,10 +53,9 @@ automatischer Rückweg als Cluster-Pod noch zu bauen.
 
 ## 3. Als Nächstes
 
-1. Nutzer: `oc login`; dann Cluster-Stand holen (Q7-Nachzügler, W-2-Fortschritt, C-6-Drain), Statusseite nachziehen.
-2. Q7 fertig → einsammeln, Aggregation, **G-Q7** (automatisch nach §5-Regel, Claude berichtet).
-3. W-2 läuft; Hochrechnung aus den ersten langen Shards.
-4. Explorable: Nutzer-Feedback zu Version 20, dann Kapitel 3 (Aufräumen/FoBa); Schritt 11 später.
+1. Q7 fertig → einsammeln, Aggregation, **G-Q7** (automatisch nach §5-Regel, Claude berichtet).
+2. W-2 läuft; Hochrechnung aus den ersten langen Shards.
+3. Explorable: Nutzer-Feedback zu Version 20, dann Kapitel 3 (Aufräumen/FoBa); Schritt 11 später.
 
 > **BLINDREGEL C-6** gilt unverändert: keine C-6-EvoGrow-Ergebnisse ansehen, nur technische Prüfung.
 
@@ -71,4 +68,4 @@ verwaister Prozess weiterlaufen — prüfen und dessen halbe Änderungen zurück
 implementieren (03.11.).
 **Uncommittet, nicht von Claude:** WP-N48b-Dateien (PySR, pausiert nach §9.4d) und `output/`.
 
-**Statusseite „EvoODE auf Orion“:** https://claude.ai/artifact/9zzJsoGCBahPsuNkaaf3DN — Version 11 (02.11., 00:09).
+**Statusseite „EvoODE auf Orion“:** https://claude.ai/artifact/9zzJsoGCBahPsuNkaaf3DN — Version 12 (05.11., 01:15).
