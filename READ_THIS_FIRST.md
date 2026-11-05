@@ -10,21 +10,21 @@ zweites davon. Alles Dauerhafte gehört dorthin, nach `PAPER_1.md` oder ins `DIA
 **Regeln:** wird immer **vollständig überschrieben**, nie angehängt. Was älter als ein paar Tage
 ist, ist vermutlich falsch — dann gilt `CLAUDE.md`.
 
-**Stand: 2026-11-05, 01:15 (Explorable und Cluster) — WISP-Plan bis 31.12. (CLAUDE.md, „WISP paper — the fixed plan“).**
+**Stand: 2026-11-05, ~10:00 (Q7 eingesammelt, G-Q7 bestanden) — WISP-Plan bis 31.12. (CLAUDE.md, „WISP paper — the fixed plan“).**
 
-## 1. Was läuft (Orion, Stand 05.11. 01:15)
+## 1. Was läuft (Orion, Stand 05.11. ~08:00)
 
 | Lauf | Stand | Wenn fertig |
 |---|---|---|
-| **Q7-Fits** (338 Shards, `3541063`) | **337/338**, 0 Fehler; 1 Nachzügler läuft | einsammeln, Q7-Aggregation (`--wsindy-source matlab`), **G-Q7** |
-| **W-2 = Q8-Gitter** (`512dd5b`, 3.540 Shards) | **265/3.540**, 0 Fehler, **39 Pods** (seit 02.11. 23:41) | Hochrechnung, sobald die langen Shards durch sind |
+| **Q7-Fits** (338 Shards, `3541063`) | **fertig 338/338** (05.11. 06:58), eingesammelt, aggregiert (`q7_grid/`); **G-Q7 bestanden** | — |
+| **W-2 = Q8-Gitter** (`512dd5b`, 3.540 Shards) | **338/3.540** (05.11. ~08:00), 0 Fehler, **40 Pods** (seit 05.11. 07:56) | Hochrechnung, sobald die langen Shards durch sind; linear grob ~22 Tage — gegen Plan W-2 bis ~13.11. beobachten |
 | **C-6 gekappt** | 1.435/3.366, **Parallelität 0 seit 04.11. 10:26** (leergezogen, kein Pod getötet) | nach W-4 zurück auf 24 |
 
-Kerne: 39 + 1 + 0 = 40, voll belegt. Q8-Probe (75/75) fertig. Statusseite „EvoODE auf Orion“ Version 12 (05.11. 01:15).
+Kerne: Q8 40, Q7 0, C-6 0 = 40, voll belegt. C-6-Job pausiert, nicht gefährdet (TTL greift erst nach Abschluss, keine Deadline, Datensätze auf NFS). Q8-Probe (75/75) fertig. Statusseite „EvoODE auf Orion“ Version 12 (05.11. 01:15).
 oc-Token war 05.11. ~01:07 abgelaufen, Nutzer hat sich neu eingeloggt; in der Lücke hat `shift_pods.sh` nur Lesefehler
 geloggt und nichts verändert.
 
-**Lokal läuft `shift_pods.sh`** (Scratchpad der Sitzung `9f46954f…`, detached, Log `shift_pods.log`, neue Version mit
+**`shift_pods.sh` hat sich 05.11. 07:56 beendet** („all 40 cores on Q8: done“); frühere Beschreibung: lokal lief `shift_pods.sh` (Scratchpad der Sitzung `9f46954f…`, detached, Log `shift_pods.log`, neue Version mit
 Schutzregel): pro fertiger C-6-Zelle C-6-Parallelität −1; Q8 = 40 − C-6 − aktive Q7-Pods (nur steigend); stoppt, wenn
 C-6 `failed` sich ändert. Zuletzt: 04.11. 10:26 C-6 1 → 0, 17:40 Q8 38 → 39. Braucht Laptop an + VPN + gültigen oc-Login (VPN-Ausfall
 03.11. 16:58–21:04: nichts verschoben, nichts gelöscht). **C-6 NICHT „reparieren“.** Neu starten (nur diese Version), Git Bash:
@@ -53,7 +53,7 @@ automatischer Rückweg als Cluster-Pod noch zu bauen.
 
 ## 3. Als Nächstes
 
-1. Q7 fertig → einsammeln, Aggregation, **G-Q7** (automatisch nach §5-Regel, Claude berichtet).
+1. ~~Q7 einsammeln, G-Q7~~ erledigt 05.11.: Q7 ersetzt die 6-Term-Grenze in WISP (`DIARY.md`).
 2. W-2 läuft; Hochrechnung aus den ersten langen Shards.
 3. Explorable: Nutzer-Feedback zu Version 20, dann Kapitel 3 (Aufräumen/FoBa); Schritt 11 später.
 

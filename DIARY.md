@@ -6,6 +6,32 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ## 2026-11-05
 
+### Q7 complete and officially aggregated: G-Q7 passes, the data-derived stop replaces the 6-term cap
+
+Orion 338 / 338 fit shards (job finished 05.11. 06:58, 0 failures), **3,070 records = the planned 3,070 states**;
+copied from NFS to `outputs/sideproject_q7_354106398…/out/`, md5 identical 338/338. Frozen script
+`aggregate_sideproject_q7.py --wsindy-source matlab`, tables `analysis/data/sideproject_residual_growth/q7_grid/`
+(1,632 cells, complete). Controls (Q7 §6): Q5 reuse support and `p0` equal **8,608 / 8,608**, settings fingerprint
+`608ac810…` = Q5, image `3541063`, protocol sha `b6b261af…`.
+
+**G-Q7 by the frozen §5 rule (non-inferiority −5 pp vs Q5, pooled over noisy conditions):**
+
+| Stratum | pruned exact Q7 / Q5 | Δ pp | generalization (var.-weighted) Q7 / Q5 | Δ pp |
+|---|---|---|---|---|
+| dim 1 (660 cells) | 268 / 174 | +14.2 | 451 / 415 | +5.5 |
+| dim 2 (600) | 224 / 123 | +16.8 | 405 / 347 | +9.7 |
+| dim 3 feasible (120) | 20 / 22 | −1.7 | 10 / 6 | +3.3 |
+| dim 4 (60, reported only) | 0 / 0 | 0 | 9 / 4 | +8.3 |
+
+Non-inferior in all three decided strata → **Q7 replaces the 6-term cap in WISP.** Against the primary WSINDy
+reference (MATLAB rows; W1 on ρ = 0, W1-interp on ρ = 0.5), pruned exact / generalization: dim 1 ρ=0 43.6 / 68.5 vs
+23.6 / 41.8 %, ρ=0.5 37.6 / 68.2 vs 25.5 / 46.1 %; dim 2 ρ=0 40.3 / 69.7 vs 21.3 / 34.7 %, ρ=0.5 34.3 / 65.3 vs
+13.0 / 26.7 %; dim 3 feasible ρ=0 **23.3 vs 50.0 % structure** (WSINDy keeps the dim-3 structure lead seen in the
+interim looks), generalization 15.0 vs 11.7 %; ρ=0.5 10.0 / 1.7 vs 1.7 / 0.0 %.
+
+Two hung `pytest` processes of another project (since 31.10., ~85 CPU-h each) were stopped at the user's request
+during the aggregation.
+
 ### WISP explorable: noise zoom and the forward rounds (version 20)
 <!-- 411573c -->
 

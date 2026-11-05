@@ -247,7 +247,7 @@ join the current item. Nothing else gets cores before 31.12.
 
 | # | Step | Who | When (target) | Gate / decision |
 |---|---|---|---|---|
-| W-0 | Q7 fits (3,070 states, ~1,100 core-h) + 2 Q5 stragglers; then official Q5 aggregation and Q7 aggregation | Orion / Claude | → ~5.11. | **G-Q7** automatic by the frozen §5 rule (Q7 replaces the 6-term cap if ≤ 5 pp worse) — Claude reports |
+| W-0 | Q7 fits (3,070 states, ~1,100 core-h) + 2 Q5 stragglers; then official Q5 aggregation and Q7 aggregation | Orion / Claude | → ~5.11. | **G-Q7** automatic by the frozen §5 rule (Q7 replaces the 6-term cap if ≤ 5 pp worse) — Claude reports. **Q7 done 2026-11-05 (338/338, 3,070 records); G-Q7 passes in all decided strata, Q7 replaces the cap (`DIARY.md`)** |
 | W-1 | Protocol **Q8** (subset): variant C (initial state fitted, unbounded) + coefficient bound 1000 + the **33 surrogate systems**, plus ablation arms (no FoBa; random start; simulate without refit); adoption rules written in advance. Codex: Julia variant C, surrogate paths, ablation paths. Claude: local smoke. User: GitLab push → image | Claude / Codex / user | 1.–5.11. | **G1** user approves Q8 protocol (~3.11.) |
 | W-2 | Q8 subset + ablation on Orion (dim 1/2 all 51 systems, σ ∈ {0.01, 0.05} × ρ ∈ {0, 0.5}, realization 1, + clean; small dim-3 sample incl. 52, 61, 54–59) | Orion | ~6.–13.11. | — |
 | W-3 | Evaluate Q8; MATLAB §5.5 identity check as soon as the licence is there | Claude | ~14.11. | **G2** freeze the final WISP version by the Q8 rules (C yes/no, bound 1000 yes/no, path end) — user confirms |
