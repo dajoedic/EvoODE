@@ -34,22 +34,17 @@ automatischer Rückweg als Cluster-Pod noch zu bauen.
 
 ## 2. WISP-Explorable (W-X)
 
-- Preview https://claude.ai/artifact/XsxgvgYGZdqPkpnzVd2YMQ **Version 20** (05.11., `411573c`): Einführung +
-  Kapitel 1 „Ein Baustein allein“ (11 Schritte) + Kapitel 2 „Noch ein Baustein dazu“ (6 Schritte). Alle Animationen
-  laufen in Dauerschleife (3 s Pause); kein Regler.
-- **Stand Kapitel 1:** Nutzer findet es „erstmal verständlich“. Schritt 9 (Rauschen) zoomt seit Version 20 auf das
-  9-Punkte-Fenster, folgt dem Durchlauf, zoomt heraus, dann die Rechnung Σd² → /n → √ → korrigiert ≈ 2,9 % → 71,6 % Boden.
-- **Stand Kapitel 2:** neutral, kein Urteil, keine wahre Gleichung. Schritt 6 (neu, 05.11.) „Und so weiter, bis alle
-  Bausteine drin sind“: Runde für Runde jeder offene Baustein, nur Hinzunahmen (geprüft gegen `W.path` mit
-  abgeschaltetem Rückschritt), Weg 1 → +u³ → +u → +u² → +sin u → +cos u, erklärter Anteil 52,9 → 74,2 → 80,6 → 81,1 →
-  81,4 → 81,5 %. Annahme: „für alle offenen Bausteine“ = Runden nach dem zweiten Baustein — Nutzer hat das noch nicht
-  bestätigt.
-- **Nutzerentscheidung 04.11.:** den Fehlgriff (u³ statt u², Konstante überflüssig) löst **Kapitel 3** auf (Aufräumen/FoBa:
-  1 → 1,u³ → u,u³ → u,u² = Wahrheit, BIC wählt `path_004`).
-- **Offen:** Nutzer prüft Version 20; Schritt 11 von Kap. 1 (Aufteilung Rauschen/erklärt/noch erklärbar) „später“.
+- Preview https://claude.ai/artifact/XsxgvgYGZdqPkpnzVd2YMQ **Version 21** (05.11., `46ffca5`): Einführung +
+  Kap. 1 (11 Schritte) + Kap. 2 (6) + **Kap. 3 „Aufräumen“ (FoBa, 7 Schritte)**: Kostenbalken mit Messlatte ½ Gewinn,
+  Lupe, wahre Gleichung erstmals gezeigt, Gewinn je Runde. `gates.json` stop = significance (G-Q7).
+- **Nutzerauftrag 05.11.: „alles fertig“, in der echten WISP-Reihenfolge** (Runde = Test Q7 → Hinzufügen → Aufräumen;
+  Fit + BIC erst am Ende). Reihe: **X17 läuft** (Kap. 2 Schritt 6 raus – zeigte einen Pfad, den WISP nie geht; Kap. 4
+  Aufhören/Q7 mit Rundenübersicht) → X18 Kap. 5 Fitten + Wählen → X19 Kap. 1 Schritt 11, Zwei-Gleichungs-Beispiel,
+  Fehlschlag, Generalisierung → X20 Ergebnis-Explorer. Danach: Nutzer-Idee zur Visualisierung der Spiegelung
+  Hinzufügen/Aufräumen (bis dahin schlicht gebaut). Kap. 5 hängt an G2 (Variante C, Grenze 1000), Ergebnisse an Q9.
 - **Tests:** im Iterieren nur die schnellen Darstellungstests (`test_wisp_explainer_x*.py` ohne `_x2`, ~2 min) +
-  `check_wisp_explainer_js.py` + `check_wisp_explainer_fit.py` (Edge, Claude startet; In-Page-Timeout seit 05.11. 60 s);
-  die volle `-k wisp`-Sammlung (~30 min) nur bei Daten-/Exportänderungen, spätestens beim Q9-Tausch. So auch in Codex-Aufträge.
+  `check_wisp_explainer_js.py`; Browser-Check `check_wisp_explainer_fit.py` startet Claude (Codex-Sandbox kann es nicht).
+  Zwischenzeit-Screenshots: Playwright-Skript mit Wartezeit nach `WispSlides.nav.link`.
 
 ## 3. Als Nächstes
 
