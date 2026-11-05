@@ -7,6 +7,7 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 ## 2026-11-05
 
 ### W-6b done: MATLAB WSINDy rows re-run under the JKU licence, byte-identical
+<!-- a91148e -->
 
 The user checked whether the 30-day trial suffices: no — the installed R2026b `license_agreement.txt` §4 limits trial
 use to evaluation for purchase, "to conduct no business with it", and requires removing the program and all result
