@@ -497,3 +497,9 @@ dialog{max-width:min(1050px,90vw);max-height:80dvh;overflow:auto;overscroll-beha
 /* Chapter 6/7 data panels were capped at 180px; scale with the stage like the other chapter 6-8 charts. */
 .snapped #c6-data svg.chart,.snapped #c7-data svg.chart,#c6-data svg.chart,#c7-data svg.chart{height:auto;max-height:min(52vh,460px)}
 #c6-data svg.chart text,#c7-data svg.chart text{font-size:24px}
+
+/* #x21-stage is an <aside>; the legacy margin-note rule (aside{width:180px} above 1450px) collapsed it on wide screens. */
+#x21-stage{width:auto;max-width:none;font:16px/1.5 system-ui,sans-serif;color:var(--ink)}
+
+.x21-panel svg.chart{max-width:720px}
+.x21-panel .x20-plots svg.chart{max-width:560px}

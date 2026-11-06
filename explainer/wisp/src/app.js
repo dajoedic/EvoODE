@@ -82,7 +82,7 @@ function displayTruth(s){return s.replace(/(?:\d+\.\d+|\d+)(?:[eE][+-]?\d+)?/g,(
 function options(target,values,label=v=>v){target.replaceChildren(...values.map(v=>{const e=el('option',label(v));e.value=v;return e;}));}
 function chart(target,series,{title='',xLabel=tr('j157'),yLabel=tr('j158'),areas=[],highlight=null,point=null,zeroBase=false,integerX=false,legend:showLegend=true,truthOnTop=false,xDomain=null,horizontalYLabel=false,dotRadius=2.2,wideLabels=false,niceTicks=false,xTicks=null,highlightLabel=null}={}){
   target.replaceChildren();
-  const width=wideLabels?560:760,height=wideLabels?440:310,pad=wideLabels?{l:132,r:24,t:50,b:85}:{l:76,r:20,t:36,b:42};
+  const width=wideLabels?560:760,height=wideLabels?470:310,pad=wideLabels?{l:132,r:24,t:50,b:118}:{l:76,r:20,t:36,b:42};
   const good=series.flatMap(s=>s.x.map((x,i)=>[x,s.y[i]])).filter(([x,y])=>Number.isFinite(x)&&Number.isFinite(y)&&Math.abs(y)<1e12);
   if(!good.length){target.append(el('p',tr('j159'),'notice'));return;}
   let xmin=Math.min(...good.map(p=>p[0])),xmax=Math.max(...good.map(p=>p[0])),ymin=Math.min(...good.map(p=>p[1])),ymax=Math.max(...good.map(p=>p[1]));
@@ -98,10 +98,10 @@ function chart(target,series,{title='',xLabel=tr('j157'),yLabel=tr('j158'),areas
     const y=ymin+(ymax-ymin)*i/4,x=xmin+(xmax-xmin)*i/4;
     svg.append(svgNode('line',{x1:pad.l,x2:width-pad.r,y1:Y(y),y2:Y(y),class:'grid'}));
     svg.append(svgNode('text',{x:pad.l-8,y:Y(y)+4,"text-anchor":'end'},fmt(y)));
-    if(!integerX&&!xTicks)svg.append(svgNode('text',{x:X(x),y:height-(wideLabels?50:23),"text-anchor":'middle'},fmt(x)));
+    if(!integerX&&!xTicks)svg.append(svgNode('text',{x:X(x),y:height-(wideLabels?66:23),"text-anchor":'middle'},fmt(x)));
   }
-  if(xTicks)xTicks.forEach(x=>svg.append(svgNode('text',{x:X(x),y:height-(wideLabels?50:23),'text-anchor':'middle'},fmt(x))));
-  if(integerX){const stride=Math.max(1,Math.ceil((xmax-xmin)/8));for(let x=Math.ceil(xmin);x<=xmax;x+=stride)svg.append(svgNode('text',{x:X(x),y:height-(wideLabels?50:23),'text-anchor':'middle'},fmt(x)));}
+  if(xTicks)xTicks.forEach(x=>svg.append(svgNode('text',{x:X(x),y:height-(wideLabels?66:23),'text-anchor':'middle'},fmt(x))));
+  if(integerX){const stride=Math.max(1,Math.ceil((xmax-xmin)/8));for(let x=Math.ceil(xmin);x<=xmax;x+=stride)svg.append(svgNode('text',{x:X(x),y:height-(wideLabels?66:23),'text-anchor':'middle'},fmt(x)));}
   if(highlight)svg.append(svgNode('rect',{x:X(highlight[0]),y:pad.t,width:Math.max(1,X(highlight[1])-X(highlight[0])),height:height-pad.b-pad.t,fill:'var(--model)',opacity:'.12'}));
   if(highlightLabel)svg.append(svgNode('text',{x:pad.l+12,y:pad.t+26},highlightLabel));
   for(const a of areas){const pts=a.x.map((x,i)=>`${X(x)},${Y(a.y[i])}`).join(' ');svg.append(svgNode('polygon',{points:`${X(a.x[0])},${Y(0)} ${pts} ${X(a.x.at(-1))},${Y(0)}`,fill:'var(--data)',opacity:'.18'}));}

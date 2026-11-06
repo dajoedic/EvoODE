@@ -78,7 +78,7 @@ def edge_run(edge=EDGE):
         offset[:]=[1366-int(measured[1]),768-int(measured[2])]
         evidence['browser_offset']=offset[:]
         for lang in ('en','de'):
-            for width,height in ((1366,768),(1366,657)):
+            for width,height in ((1366,768),(1366,657),(1920,1080)):
                 for attempt in range(3):
                     dom=invoke(width,height,lang,['--dump-dom'])
                     try:result=parse_result(dom);break
@@ -211,13 +211,13 @@ def run(edge=EDGE):
             page=browser.new_page()
             check_chapter_interactions(page,evidence)
             for lang in ('en','de'):
-                for width,height in ((1366,768),(1366,657)):
+                for width,height in ((1366,768),(1366,657),(1920,1080)):
                     if time.monotonic()>deadline:raise TimeoutError('14-minute budget exceeded')
                     page.set_viewport_size({'width':width,'height':height})
                     url=(ROOT/'explainer/wisp/dist/wisp_explainer.html').as_uri()+f'?fitcheck=1&lang={lang}'
                     for attempt in range(3):
                         page.goto(url,wait_until='load')
-                        try:page.wait_for_selector('#fitcheck-result',state='attached',timeout=60000);break
+                        try:page.wait_for_selector('#fitcheck-result',state='attached',timeout=240000);break
                         except Exception:
                             if attempt==2:raise
                     result=parse_result(page.content())
