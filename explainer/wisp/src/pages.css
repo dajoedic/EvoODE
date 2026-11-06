@@ -405,7 +405,7 @@ dialog{max-width:min(1050px,90vw);max-height:80dvh;overflow:auto;overscroll-beha
 .x21-panel .x20-equation{margin:5px 0;gap:6px;font-size:17px}
 .x21-panel .x20-chip{font-size:16px;padding:2px 7px}
 .x21-panel .x20-plots{gap:16px}
-.x21-panel svg.chart{width:100%;max-height:280px;display:block}
+.x21-panel svg.chart{width:100%;max-height:min(60vh,520px);display:block;margin:0 auto}
 .x21-panel svg.chart text{font-size:24px}
 #c6-data svg.chart{max-height:185px}
 #c6-data svg.chart text,#panel-c6-orbit svg.chart text{font-size:34px}
@@ -490,3 +490,10 @@ dialog{max-width:min(1050px,90vw);max-height:80dvh;overflow:auto;overscroll-beha
 /* Glossary: two columns so the page fits one screen; a term never splits from its definition. */
 .c9-glossary{columns:2;column-gap:48px}.c9-glossary dt{break-after:avoid;margin-top:10px}.c9-glossary dd{break-before:avoid;margin:2px 0 6px}
 @media(max-width:759px){.c9-glossary{columns:1}}
+
+/* Chapters 6-8: the global snapped-chart height (230px) left these charts as thin strips; let them scale with the stage. */
+.snapped .x21-panel svg.chart,.snapped .x21-panel .x20-plots svg.chart{height:auto;max-height:min(58vh,500px)}
+
+/* Chapter 6/7 data panels were capped at 180px; scale with the stage like the other chapter 6-8 charts. */
+.snapped #c6-data svg.chart,.snapped #c7-data svg.chart,#c6-data svg.chart,#c7-data svg.chart{height:auto;max-height:min(52vh,460px)}
+#c6-data svg.chart text,#c7-data svg.chart text{font-size:24px}

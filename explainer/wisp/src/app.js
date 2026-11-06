@@ -82,7 +82,7 @@ function displayTruth(s){return s.replace(/(?:\d+\.\d+|\d+)(?:[eE][+-]?\d+)?/g,(
 function options(target,values,label=v=>v){target.replaceChildren(...values.map(v=>{const e=el('option',label(v));e.value=v;return e;}));}
 function chart(target,series,{title='',xLabel=tr('j157'),yLabel=tr('j158'),areas=[],highlight=null,point=null,zeroBase=false,integerX=false,legend:showLegend=true,truthOnTop=false,xDomain=null,horizontalYLabel=false,dotRadius=2.2,wideLabels=false,niceTicks=false,xTicks=null,highlightLabel=null}={}){
   target.replaceChildren();
-  const width=760,height=wideLabels?360:310,pad=wideLabels?{l:140,r:20,t:50,b:85}:{l:76,r:20,t:36,b:42};
+  const width=wideLabels?560:760,height=wideLabels?440:310,pad=wideLabels?{l:132,r:24,t:50,b:85}:{l:76,r:20,t:36,b:42};
   const good=series.flatMap(s=>s.x.map((x,i)=>[x,s.y[i]])).filter(([x,y])=>Number.isFinite(x)&&Number.isFinite(y)&&Math.abs(y)<1e12);
   if(!good.length){target.append(el('p',tr('j159'),'notice'));return;}
   let xmin=Math.min(...good.map(p=>p[0])),xmax=Math.max(...good.map(p=>p[0])),ymin=Math.min(...good.map(p=>p[1])),ymax=Math.max(...good.map(p=>p[1]));
