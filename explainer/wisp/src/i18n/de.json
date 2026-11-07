@@ -836,5 +836,5 @@
   "lv_hares_short": "Hasen",
   "lv_foxes_short": "Füchse",
   "x21_other_start": "anderer Startwert desselben Systems",
-  "x7_formula_note": "<b class=\"grow\">Wachstum</b>: je mehr Bakterien, desto mehr Nachwuchs · <b class=\"brake\">Bremse</b>: je voller die Schale, desto weniger Platz"
+  "x7_formula_note": "<b class=\"grow\">Wachstum</b>: je mehr Bakterien, desto mehr Nachwuchs<br><b class=\"brake\">Bremse</b>: je voller die Schale, desto weniger Platz"
 }

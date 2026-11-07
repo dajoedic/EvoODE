@@ -81,7 +81,7 @@ function initDish(){
  const curve=svgNode('path',{class:'dish-curve'}),head=svgNode('circle',{r:0,class:'dish-cell'});curveGroup.append(curve,head);target.append(svg);
  const law=LIVE.illustrations.find(d=>d.system_id===3)?.constants||[.79,74.3],dec=v=>numberText(v,3).replace(',','{,}');
  const formula=el('div',undefined,'dish-formula'),formulaTex=el('div',undefined,'dish-formula-tex'),formulaNote=el('div',undefined,'dish-formula-note');formula.append(formulaTex,formulaNote);target.append(formula);
- function setFormula(){math(formulaTex,`\\frac{du}{dt}\\;=\\;{\\color{#2f8f6f}${dec(law[0])}\\,u}\\;\\cdot\\;{\\color{#c0683a}\\left(1-\\frac{u}{${dec(law[1])}}\\right)}`);formulaNote.innerHTML=tr('x7_formula_note');}
+ function setFormula(){math(formulaTex,`\\frac{du}{dt}\\;=\\;{\\color{#2f8f6f}${dec(law[0])}\\,u}\\;{\\color{#c0683a}-\\,${dec(law[0]/law[1])}\\,u^{2}}`);formulaNote.innerHTML=tr('x7_formula_note');}
  setFormula();['language-de','language-en'].forEach(id=>$(id)?.addEventListener('click',()=>setTimeout(setFormula,0)));
  // 40 counts of the dish with a little counting noise (fixed seed): they appear as the dish grows
  let mseed=2026;const mrand=()=>{mseed=(Math.imul(1664525,mseed)+1013904223)>>>0;return mseed/4294967296;};

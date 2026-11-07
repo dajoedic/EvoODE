@@ -30,6 +30,14 @@ gültigen oc-Login; fällt es aus, verschenkt Q9 nur Kerne, nichts geht kaputt. 
 
 ## 2. WISP-Explorable (W-X)
 
+- **Stand 08.11. nachts (Nutzer: Tag war 4/10, „wir hängen noch am Anfang“).** Seite 1 überarbeitet: Petrischale
+  (2 glatte Kolonien als eine Fläche, Agar-/Kolonienfarben), alle 512 Messwerte aus Schritt 1, Kurve am Ende, Formel
+  du/dt = 0,79u − 0,0106u² unten rechts, spielt einmal + Wiederholen-Knopf, Punkte fliegen beim Weiterblättern in
+  Schritt 1. Seite 2 („Bau selbst“) ausgeblendet (`data-chapter="later"`). Kap. 1: Schritt 2 Tempo, Schritt 4 fester
+  15-Punkte-Ausschnitt mit 10 Deltas, Schritt 5 sechs Deltas je Länge fallen farbig nach unten, Schritt 8 grüne Linie
+  erst bei Erreichen, Schritt 9 Start Kurvenmitte, Schritt 11 Beschriftung. Kap. 2 Schritt 3 Balken/Kurve synchron.
+  **Nächstes Mal: Kap. 1–3 fertig machen** (Nutzer findet Kap. 3 ff. unverständlich); keine automatischen
+  Wiederholungen irgendwo. Vorschau-Version 12.
 - **AKTUELL (07.11. spät): Version 26 weitergeführt**, Vorschau https://claude.ai/artifact/SiqLBbf49hUy9fHSFWSFte
   (`c305a3a`). Kap. 1–5 Bakterien (C1000-Neufit `data/logistic_c1000_refit_*.jsonl`), Kap. 6 = „Und wenn es mehrere
   Gleichungen gibt?“ mit LV `sys0027_ic2_s0.03_r0_n2` (C1000). Daten: v26-`live.json` + `build_wisp_lv_running.py`
