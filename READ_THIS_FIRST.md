@@ -10,27 +10,18 @@ zweites davon. Alles Dauerhafte gehört dorthin, nach `PAPER_1.md` oder ins `DIA
 **Regeln:** wird immer **vollständig überschrieben**, nie angehängt. Was älter als ein paar Tage
 ist, ist vermutlich falsch — dann gilt `CLAUDE.md`.
 
-**Stand: 2026-11-05, ~10:00 (Q7 eingesammelt, G-Q7 bestanden) — WISP-Plan bis 31.12. (CLAUDE.md, „WISP paper — the fixed plan“).**
+**Stand: 2026-11-07, ~01:30 (G2 entschieden: WISP = C1000, erklärte Abweichung von R2) — WISP-Plan bis 31.12. (CLAUDE.md, „WISP paper — the fixed plan“).**
 
-## 1. Was läuft (Orion, Stand 05.11. ~08:00)
+## 1. Was läuft (Orion, Stand 07.11. ~01:20)
 
 | Lauf | Stand | Wenn fertig |
 |---|---|---|
-| **Q7-Fits** (338 Shards, `3541063`) | **fertig 338/338** (05.11. 06:58), eingesammelt, aggregiert (`q7_grid/`); **G-Q7 bestanden** | — |
-| **W-2 = Q8-Gitter** (`512dd5b`, 3.540 Shards) | **338/3.540** (05.11. ~08:00), 0 Fehler, **40 Pods** (seit 05.11. 07:56) | Hochrechnung, sobald die langen Shards durch sind; linear grob ~22 Tage — gegen Plan W-2 bis ~13.11. beobachten |
-| **C-6 gekappt** | 1.435/3.366, **Parallelität 0 seit 04.11. 10:26** (leergezogen, kein Pod getötet) | nach W-4 zurück auf 24 |
+| **W-2 = Q8-Gitter** (`512dd5b`, 3.540 Shards) | **3.533/3.540**, 0 Fehler, 7 Nachzügler (Lorenz 55 A/C1000 ~10 Fits zu 3–9 h → 1,5–4 Tage; 61 IC 2 ×3; 40/48 A1000; 48 Zufallsstart sauber) | offizielle Aggregation `aggregate_sideproject_q8.py` (braucht 3.540/3.540; kann keine Regel mehr kippen) |
+| **C-6 gekappt** | 1.435/3.366, **Parallelität 0** (leergezogen, kein Pod getötet) | nach W-4 zurück auf 24 |
 
-Kerne: Q8 40, Q7 0, C-6 0 = 40, voll belegt. C-6-Job pausiert, nicht gefährdet (TTL greift erst nach Abschluss, keine Deadline, Datensätze auf NFS). Q8-Probe (75/75) fertig. Statusseite „EvoODE auf Orion“ Version 13 (05.11. ~10:00).
-oc-Token war 05.11. ~01:07 abgelaufen, Nutzer hat sich neu eingeloggt; in der Lücke hat `shift_pods.sh` nur Lesefehler
-geloggt und nichts verändert.
-
-**`shift_pods.sh` hat sich 05.11. 07:56 beendet** („all 40 cores on Q8: done“); frühere Beschreibung: lokal lief `shift_pods.sh` (Scratchpad der Sitzung `9f46954f…`, detached, Log `shift_pods.log`, neue Version mit
-Schutzregel): pro fertiger C-6-Zelle C-6-Parallelität −1; Q8 = 40 − C-6 − aktive Q7-Pods (nur steigend); stoppt, wenn
-C-6 `failed` sich ändert. Zuletzt: 04.11. 10:26 C-6 1 → 0, 17:40 Q8 38 → 39. Braucht Laptop an + VPN + gültigen oc-Login (VPN-Ausfall
-03.11. 16:58–21:04: nichts verschoben, nichts gelöscht). **C-6 NICHT „reparieren“.** Neu starten (nur diese Version), Git Bash:
-`/c/Users/joedicke/AppData/Local/Temp/claude/c--Users-joedicke-Documents-Repositories-EvoODE/9f46954f-0bf8-4401-ad3b-884a094e8a73/scratchpad/shift_pods.sh >> /c/Users/joedicke/AppData/Local/Temp/claude/c--Users-joedicke-Documents-Repositories-EvoODE/9f46954f-0bf8-4401-ad3b-884a094e8a73/scratchpad/shift_pods.log 2>&1 &`
-**Rückweg nach W-4:** `oc patch job evoode-phase-c-c6-grid-capped -n scch-das -p '{"spec":{"parallelism":24}}'`;
-automatischer Rückweg als Cluster-Pod noch zu bauen.
+**Kerne: ~32 von 40 frei seit 06.11. ~17 Uhr** (Q8-Parallelität 40, nur 7 aktiv). Nutzer-Entscheidung offen: leer lassen bis Q9 oder C-6 vorübergehend hoch.
+**NFS-Zugriff:** S: hing 07.11. (Semaphore-Timeout). Schnellweg: `MSYS_NO_PATHCONV=1 oc exec <laufender-q8-pod> -- tar czf - -C /outputs/sideproject_q8_512dd5bd534530327b1f5fed3e7892a1e0950016 out > ….tgz` (12,7 MB, 7 s; unkomprimiert bricht der Strom bei ~250 MB ab).
+**Rückweg C-6 nach W-4:** `oc patch job evoode-phase-c-c6-grid-capped -n scch-das -p '{"spec":{"parallelism":24}}'`.
 
 ## 2. WISP-Explorable (W-X)
 
@@ -49,9 +40,12 @@ automatischer Rückweg als Cluster-Pod noch zu bauen.
 
 ## 3. Als Nächstes
 
-1. ~~Q7 einsammeln, G-Q7~~ erledigt 05.11.: Q7 ersetzt die 6-Term-Grenze in WISP (`DIARY.md`).
-2. W-2 läuft; Hochrechnung aus den ersten langen Shards.
-3. Explorable: Nutzer-Feedback zu Version 20, dann Kapitel 3 (Aufräumen/FoBa); Schritt 11 später.
+1. ~~Q7 / G-Q7~~ erledigt 05.11. ~~G2~~ **entschieden 07.11.: C1000 + Q7-Stopp** (`DIARY.md` 07.11., CLAUDE.md W-3).
+   Zwischenauswertung: Scratchpad-Skripte `q8_sneak.py`/`q8_decide.py` der Sitzung `74de8444…`, Daten
+   `outputs/sideproject_q8_512dd5b…/out_sneak_2026-11-07/`.
+2. **W-4 / Q9 vorbereiten:** Q9-Protokoll (C1000, alle 63 Systeme, 11 Bedingungen × 3 Realisierungen), **Laufzeit-
+   Hochrechnung mit 54–59 unter 1000 gegen die 21-Tage-Grenze vor dem Start**, Image (Nutzer pusht).
+3. Offizielle Q8-Aggregation, sobald 3.540/3.540.
 4. **Termin mit dem Professor Di 10.11., 30 min.** Folien https://claude.ai/artifact/Fi25YcnmvhWFo4yRC7yc1i (privat):
    Folien „von nichts zu WISP“ → **WISP live im Explorable (Kern, ~12 min)** → Folien „von WISP zum PhD“ (Plan, Journal,
    Promotion, drei Entscheidungen); Methoden-/Ergebnisfolien als Reserve am Ende. Explorable bis Dienstag: Kapitel 3

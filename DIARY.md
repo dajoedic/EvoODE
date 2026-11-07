@@ -4,6 +4,63 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ---
 
+## 2026-11-07
+
+### Gate G2: WISP final configuration C1000 — declared deviation from the frozen R2 (user)
+
+**Data state.** Orion Q8 3,533 / 3,540 shards (0 failed); S: hung (semaphore timeout), records fetched as one gzip
+tarball through a running Q8 pod into `outputs/sideproject_q8_512dd5b…/out_sneak_2026-11-07/` (32,746 records,
+0 unparsable). Scratchpad scripts `q8_sneak.py` + `q8_decide.py`: every (cell, arm) with a complete pool through the
+frozen Q8 `rows_for_cells`, rule (c), noisy cells, A10 on exact cells = official Q7 units. **All arms that enter
+R1/R2/R3 are complete on dim 1/2** (only A1000 and random_start miss one dim-2 surrogate cell each, systems 40/48;
+the 7 stragglers are those two, Lorenz 55 ×2, 61 ×3 under 10/1000, and the sys-48 clean random-start ablation).
+The official `aggregate_sideproject_q8.py` runs when 3,540/3,540; it cannot change a rule outcome.
+
+**Frozen rules (Q8 §7), margin 5 pp, noisy pooled, dim 1/2:**
+
+| Rule | Stratum | Metric | left / right (n) | Δ pp |
+|---|---|---|---|---|
+| R2 C1000 vs C10 | dim1 exact | pruned structure | 40 / 40 (88) | 0 |
+| | dim1 exact | generalization | **57 / 62 (88)** | **−5.7 ✗** |
+| | dim1 surrogate | generalization | 49 / 51 (96) | −2.1 |
+| | dim2 exact | structure / gen. | 36 / 36, 57 / 57 (80) | 0 / 0 |
+| | dim2 surrogate | generalization | 46 / 46 (144) | 0 |
+| R1 C10 vs A10 | dim1 exact | structure / gen. | 40 / 40, 62 / 60 | 0 / +2.3 |
+| | dim1 surrogate | generalization | 51 / 50 | +1.0 |
+| | dim2 exact | structure / gen. | **36 / 28**, 57 / 56 | **+10.0** / +1.2 |
+| | dim2 surrogate | generalization | 46 / 47 | −0.7 |
+
+By the letter: R2 fails by one cell (5 > 4.4) in one of six comparisons → bound 10; R1 passes → **C10**. R3 at C10:
+dim1 surrogate 51/96 vs best reference MATLAB-WSINDy 37/96 (+14.6 pp), dim2 surrogate 46/144 vs Weak-SINDy 26/144
+(+13.9 pp) — not "clearly behind"; surrogates stay in Q9. (R1 at bound 1000, C1000 vs A1000, also passes; R3 at
+C1000 identical on generalization.)
+
+**Mechanism of the R2 miss.** The 5 discordant cells are systems 3, 12, 17 at σ = 0.05, all with the **wrong**
+structure under both bounds (same support in 4 of 5). Under bound 10 one coefficient sits at exactly 10.0: worse
+reconstruction (R² 0.50–0.79) but a luckier extrapolation; under 1000 the same wrong model fits the training
+trajectory (R² ≈ 0.99) and generalizes worse. Structure hits are identical in all four strata. Three systems as
+clusters.
+
+**User decision (G2): C1000**, as a declared deviation: identical structure everywhere, the miss is one cell on three
+systems and comes from the bound acting as an accidental regularizer on wrong models, bound 10 was never justified
+(Known Gap since Phase 1) and excludes 54–59 by construction, and C-8 B-03 had already named `[-1000, 1000]` as the
+next version's start. The paper states the frozen rule's outcome and the deviation in one sentence and reports both
+arms (Q8 table). Costs accepted: dim-1 exact generalization 70.5 → 64.8 %; loss evaluations on dim 1/2 +2 % to
++44 % (dim-2 surrogates); 54–59 under 1000 are the slow cells (Lorenz shards ~4 days) — Q9 projection must be checked
+against the 21-day limit before the start.
+
+**Overview at C1000 vs references, noisy, % (structure / rec. R² > 0.9 / gen. R² > 0.9, var.-weighted):** dim1 exact
+45.5 / 94.3 / 64.8, MATLAB-WSINDy 22.7 / 69.3 / 45.5, best of SINDy/Weak-SINDy/E-SINDy 11.4 / 63.6 / 28.4; dim1
+surrogate – / 99.0 / 51.0 vs 82.3 / 38.5 and 78.1 / 31.2; dim2 exact 45.0 / 93.8 / 71.2 vs 23.8 / 58.8 / 38.8 and
+5.0 / 51.2 / 28.7; dim2 surrogate – / 78.5 / 31.9 vs 36.8 / 13.2 and 35.4 / 18.1; dim3 (52, 61, 54–59, 62 cells)
+27.4 / 54.8 / 29.0 vs WSINDy 17.7 / 19.4 / 19.4. Per system on dim 3 (C1000, 8 cells each, structure): 54 3, 55 1,
+56 1, 57 0, 58 5, 59 3, 61 4, 52 0. **Ablations on C1000** (dim1 exact / dim2 exact, structure and gen.): random
+start 31.8 / 53.4 and 21.2 / 28.7 (largest loss); no FoBa 33.0 / 63.6 and 28.7 / 65.0 (reconstruction rises —
+larger models); no refit 43.2 / 62.5 and 36.2 / 67.5.
+
+Port vs MATLAB WSINDy re-checked on the Q8 cells (L-Q5, 310 noisy cells of 06.11.): 1 reconstruction flip, 0
+structure/generalization flips.
+
 ## 2026-11-05
 
 ### WISP explorable: content complete (versions 21–26)
