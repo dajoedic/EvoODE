@@ -7,6 +7,7 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 ## 2026-11-07
 
 ### Gate G2: WISP final configuration C1000 — declared deviation from the frozen R2 (user)
+<!-- 4c48816 -->
 
 **Data state.** Orion Q8 3,533 / 3,540 shards (0 failed); S: hung (semaphore timeout), records fetched as one gzip
 tarball through a running Q8 pod into `outputs/sideproject_q8_512dd5b…/out_sneak_2026-11-07/` (32,746 records,
