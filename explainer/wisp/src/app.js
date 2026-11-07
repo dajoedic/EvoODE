@@ -409,7 +409,7 @@ document.querySelectorAll('[data-close]').forEach(button=>button.addEventListene
 // Chapter one uses the same full design and frozen first-step fit as the retained page.
 function chapterError(model,term,c){return model.D.b.reduce((sum,b,i)=>sum+(b-c*model.D.A[i][term])**2,0)/soloDot(model.D.b,model.D.b);}
 function chapterParts(model,block){const floor=model.normalized?model.floor:0;return [floor,block.gain,1-floor-block.gain];}
-function chapterWindows(length){const t=measuredTime,x=teaching.observed,out=[];for(let a=0;a+length<t.length;a+=length){const b=a+length;out.push({time:(t[a]+t[b])/2,rate:(x[b]-x[a])/(t[b]-t[a]),clean:(teaching.truth[b]-teaching.truth[a])/(t[b]-t[a])});}return out;}
+function chapterWindows(length,offset=0){const t=measuredTime,x=teaching.observed,out=[];for(let a=offset;a+length<t.length;a+=length){const b=a+length;out.push({time:(t[a]+t[b])/2,rate:(x[b]-x[a])/(t[b]-t[a]),clean:(teaching.truth[b]-teaching.truth[a])/(t[b]-t[a])});}return out;}
 // One persistent SVG. Scene arrays have a fixed topology so axes, points, lines and
 // labels interpolate through every transition, including interrupted/reverse ones.
 function secondModel(model,t,x,config,feature){
@@ -593,7 +593,8 @@ function initChapterOne(){
  const truthPath=path('story-truth'),predictionPath=path('story-prediction'),bandTop=path('story-band',2*n),bandBottom=path('story-band-unused');
  const sticks=t.map(()=>line('story-residual')),triangle=Array.from({length:3},()=>line('story-triangle'));
  const lengthColours=['#3369c7','#ab4d9a','#b86a12','#008b91'];
- const lengthClouds=longerLengths.map((length,j)=>({length,rows:chapterWindows(length),dots:Array.from({length:n-1},()=>{const id=dot('story-length-slope',3);nodes[id].e.style.fill=lengthColours[j];return id;}),label:label('story-length-key'),bar:node('rect',{class:'story-length-rms'},'rect',[0,0,0,0,0]),value:label('story-length-key')}));
+ const windowStart=t.findIndex(v=>v>=2);
+ const lengthClouds=longerLengths.map((length,j)=>({length,offset:windowStart%length,first:Math.floor(windowStart/length),rows:chapterWindows(length,windowStart%length),dots:Array.from({length:n-1},()=>{const id=dot('story-length-slope',3);nodes[id].e.style.fill=lengthColours[j];return id;}),label:label('story-length-key'),bar:node('rect',{class:'story-length-rms'},'rect',[0,0,0,0,0]),value:label('story-length-key')}));
  const lengthTitle=[label('story-length-key'),label('story-length-key'),label('story-length-key')];
  const lengthRms=lengthClouds.map(c=>Math.sqrt(c.rows.reduce((sum,r)=>sum+(r.rate-r.clean)**2,0)/c.rows.length)),rmsMax=Math.max(...lengthRms);
  const historyTriangles=Array.from({length:8},()=>Array.from({length:3},()=>line('story-triangle story-history')));
@@ -617,7 +618,8 @@ function initChapterOne(){
  const squareBars=t.map(()=>node('rect',{class:'story-square'},'rect',[0,0,0,0,0]));
  const arithmeticLabels=Array.from({length:6},()=>label('story-arithmetic'));
  const smooth=t.map((v,i)=>local(i).value(v)),deviations=x.map((v,i)=>v-smooth[i]);
- const squarePrefix=[0];deviations.forEach(v=>squarePrefix.push(squarePrefix.at(-1)+v*v));
+ const noiseStart=Math.round(n*.42),noiseOrder=Array.from({length:n},(_,k)=>(noiseStart+k)%n);
+ const squarePrefix=[0];noiseOrder.forEach(i=>squarePrefix.push(squarePrefix.at(-1)+deviations[i]**2));
  const defs=svgNode('defs',{}),clip=svgNode('clipPath',{id:'story-top-clip'}),clipRect=svgNode('rect',{});clip.append(clipRect);defs.append(clip);svg.append(defs);
  // Lines of the lower panel span the full series; keep them inside the plot's horizontal extent when zoomed.
  const xClip=svgNode('clipPath',{id:'story-x-clip'}),xClipRect=svgNode('rect',{});xClip.append(xClipRect);defs.append(xClip);nodes[predictionPath].e.setAttribute('clip-path','url(#story-x-clip)');
@@ -634,7 +636,7 @@ function initChapterOne(){
  // Noise sweep: zoom in, six points slowly, then an accelerating sweep over all points.
  const noiseIn=800,noiseSlow=6,noiseSlowEnd=noiseIn+noiseSlow*1000,noiseFastEnd=noiseSlowEnd+3000;
  const noiseCount=seq=>seq<noiseIn?0:seq<noiseSlowEnd?(seq-noiseIn)/1000:noiseSlow+(n-noiseSlow)*clamp((seq-noiseSlowEnd)/3000)**2;
- const WINDOW_PHASE=4200,durations={data:900,'noise-visible':6000,slope:10500,secants:16100,windows:longerLengths.length*WINDOW_PHASE+3300,'error-empty':2900,fit:4900,every:16900,'noise-why':900,'noise-estimate':noiseFastEnd+4700,percent:900,solution:900};
+ const TRIANGLE_STEP=650,SIX_END=700+6*TRIANGLE_STEP,WINDOW_PHASE=SIX_END+1500,durations={data:900,'noise-visible':6000,slope:10500,secants:16100,windows:longerLengths.length*WINDOW_PHASE+3300,'error-empty':2900,fit:4900,every:16900,'noise-why':900,'noise-estimate':noiseFastEnd+4700,percent:900,solution:900};
  Object.assign(durations,{'c2-standing':900,'c2-residual':3900,'c2-joint':jointPause+sortAt+1900,'c2-every':sortAt+1900,'c2-error':3900,'c2-solution':900});
  Object.assign(durations,{'c3-standing':1200,'c3-probe':3600,'c3-threshold':3600,'c3-linear':16000,'c3-quadratic':16000,'c3-compare':4200,'c3-next':4200});
  const c3Chips=terms.map(()=>({box:node('rect',{class:'c3-chip',rx:6},'rect',[0,0,0,0,0]),text:label('c3-chip-label')}));
@@ -816,8 +818,8 @@ function initChapterOne(){
   }else if(state==='c2-solution')text(equation,secondEquation(two.record.active_idxs[0].map(j=>j-1),two.record.equations[0].coefficients),left,470);
   else if(!list)text(equation,blend===0?soloEquation(two.constant):secondEquation(block.support,coefficients),left,470);
   if(list)two.blocks.forEach((b,j)=>{
-   const ordering=ranking(remainingBlocks,Math.floor(seq/2500),seq%2500,[joint]);
-   const yy=(two.blocks.length>8?128:150)+ordering.position(b)*(two.blocks.length>8?31:52),progress=b.term===joint.term?1:ease((seq-remainingBlocks.indexOf(b)*2500-1800)/200),slot=twoSlots[j];
+   const ordering=ranking(remainingBlocks,Math.floor(seq/2500),Math.min(2500,seq%2500+1200),[joint]);
+   const yy=(two.blocks.length>8?128:150)+ordering.position(b)*(two.blocks.length>8?31:52),progress=b.term===joint.term?1:ease((seq-remainingBlocks.indexOf(b)*2500)/700),slot=twoSlots[j];
    put(slot.bar,[12,yy+10,204*clamp(b.share)*progress,12,1]);const labels=ordering.sorting?0:1;
    text(slot.text,terms[b.term],12,yy,labels);text(slot.value,pct(b.share),135,yy,progress*labels);
    nodes[slot.bar].e.dataset.term=String(b.term);nodes[slot.bar].e.dataset.value=String(b.share);nodes[slot.bar].e.classList.toggle('winner',seq>=sortAt+1000&&b.term===two.winner);
@@ -1110,7 +1112,7 @@ function initChapterOne(){
    bottom=302;
    // A 9-point window is ~9 px wide on the full series: zoom onto it, follow the sweep, then zoom out.
    const z=seq<noiseIn?ease(seq/noiseIn):seq<noiseSlowEnd?1:1-ease((seq-noiseSlowEnd)/2000),half=8;
-   const centre=mix((n-1)/2,Math.max(half,Math.min(n-1-half,noiseCount(seq))),z),width=mix((n-1)/2,half,z);
+   const centre=mix((n-1)/2,Math.max(half,Math.min(n-1-half,noiseStart+Math.min(noiseSlow,noiseCount(seq)))),z),width=mix((n-1)/2,half,z);
    const a=Math.max(0,centre-width),b=Math.min(n-1,a+2*width),tAt=k=>t[0]+(t.at(-1)-t[0])*k/(n-1);
    const visible=x.slice(Math.floor(a),Math.ceil(b)+1),lo=Math.min(...visible),hi=Math.max(...visible),margin=(hi-lo)*.25||1;
    domain=[tAt(a),tAt(b)];range=[mix(uRange[0],lo-margin,z),mix(uRange[1],hi+margin,z)];
@@ -1152,7 +1154,7 @@ function initChapterOne(){
    put(axisLines[j],[left,Y(v),right,Y(v),1]);text(axisLabels[j],fmt(v),left-10,Y(v)+4,j===0?0:1);nodes[axisLabels[j]].e.setAttribute('text-anchor','end');
    text(axisLabels[j+5],fmt(tt),X(tt),split?bottom+25:state==='noise-estimate'?326:416);
   }
-  put(axisLines[5],[left,bottom,right,bottom,1]);text(axisLabels[10],changes?tr('x9_change'):'u',left,state==='every'?120:24);text(axisLabels[11],tr('j157'),right-90,split?bottom+42:state==='noise-estimate'?350:440);
+  put(axisLines[5],[left,bottom,right,bottom,1]);text(axisLabels[10],changes?tr('x9_change'):'u',left,state==='every'||state==='solution'?120:24);text(axisLabels[11],tr('j157'),right-90,split?bottom+42:state==='noise-estimate'?350:440);
   if(split){put(axisLines[6],[left,R(0),right,R(0),1]);text(axisLabels[12],tr('x12_axis_slope'),left,lowerTop-15);text(axisLabels[13],tr('j157'),right-90,440);
    [-lowerBound,0,lowerBound].forEach((v,j)=>{text(axisLabels[14+j],fmt(v),left-10,R(v)+4);nodes[axisLabels[14+j]].e.setAttribute('text-anchor','end');});
    put(axisLines[7],[left,lowerTop,left,lowerBottom,1]);}
@@ -1201,21 +1203,24 @@ function initChapterOne(){
    historyTriangles.forEach((ids,j)=>{
     // Step 5: six consecutive deltas of the current window length, drawn one after another.
     const six=!neighbour&&seq<windowEnd&&j<6,aa=six?start+j*windowLength:start+j,bb=Math.min(n-1,aa+(six?windowLength:1));
-    const grow=six?ease((localTime-700-j*450)/350):0,visible=six&&localTime>=700+j*450?1:0;
+    const t0=700+j*TRIANGLE_STEP,grow=six?ease((localTime-t0)/300):0,fall=six?ease((localTime-t0-400)/250):0,visible=six&&localTime>=t0&&fall<1?1:0;
+    const px=X((t[aa]+t[bb])/2),py=R(Math.max(-lowerBound,Math.min(lowerBound,(x[bb]-x[aa])/(t[bb]-t[aa])))),phaseColour=lengthColours[Math.min(lengthColours.length-1,Math.floor(seq/WINDOW_PHASE))];
     const xb=six?mix(X(t[aa]),X(t[bb]),grow):X(t[bb]),ybb=six?mix(Y(x[aa]),Y(x[bb]),grow):Y(x[bb]);
-    put(ids[0],[X(t[aa]),Y(x[aa]),xb,Y(x[aa]),visible]);
-    put(ids[1],[xb,Y(x[aa]),xb,ybb,visible]);
-    put(ids[2],[X(t[aa]),Y(x[aa]),xb,ybb,visible]);
-    ids.forEach(id=>nodes[id].e.classList.toggle('story-long-triangle',six));
+    const fx=v=>mix(v,px,fall),fy=v=>mix(v,py,fall),ax=X(t[aa]),ay=Y(x[aa]);
+    put(ids[0],[fx(ax),fy(ay),fx(xb),fy(ay),visible]);
+    put(ids[1],[fx(xb),fy(ay),fx(xb),fy(ybb),visible]);
+    put(ids[2],[fx(ax),fy(ay),fx(xb),fy(ybb),visible]);
+    ids.forEach(id=>{nodes[id].e.classList.toggle('story-long-triangle',six);nodes[id].e.style.stroke=six?phaseColour:'';});
    });
    if(!neighbour)lengthClouds.forEach((cloud,j)=>{
-    const progress=clamp((seq-j*WINDOW_PHASE-700)/3200);
-    cloud.dots.forEach((id,i)=>{const row=cloud.rows[i],v=row?.rate??0;
-     put(id,[X(row?.time??t[0]),R(Math.max(-lowerBound,Math.min(lowerBound,v))),row&&inside(row.time)&&i<Math.floor(progress*cloud.rows.length)?(j===Math.min(lengthClouds.length-1,Math.floor(seq/WINDOW_PHASE))?1:0):0]);
+    const phaseTime=seq-j*WINDOW_PHASE,rest=clamp((phaseTime-SIX_END)/900),current=j===Math.min(lengthClouds.length-1,Math.floor(seq/WINDOW_PHASE));
+    cloud.dots.forEach((id,i)=>{const row=cloud.rows[i],v=row?.rate??0,k=i-cloud.first;
+     const landed=k>=0&&k<6&&phaseTime>=700+k*TRIANGLE_STEP+650,shown=landed||(phaseTime>=SIX_END&&i<Math.floor(rest*cloud.rows.length));
+     put(id,[X(row?.time??t[0]),R(Math.max(-lowerBound,Math.min(lowerBound,v))),row&&inside(row.time)&&shown&&current?1:0]);
      nodes[id].e.dataset.value=String(v);nodes[id].e.dataset.length=String(cloud.length);
     });
     text(cloud.label,tr('x14_length',{k:cloud.length}),590,298+j*34);nodes[cloud.label].e.style.fill=lengthColours[j];
-    const barProgress=clamp((seq-j*WINDOW_PHASE-3500)/600);
+    const barProgress=clamp((seq-j*WINDOW_PHASE-SIX_END-900)/600);
     put(cloud.bar,[590,306+j*34,135*lengthRms[j]/rmsMax*barProgress,8,1]);nodes[cloud.bar].e.style.fill=lengthColours[j];nodes[cloud.bar].e.dataset.value=String(lengthRms[j]*barProgress);
     text(cloud.value,fmt(lengthRms[j]*barProgress),745,314+j*34,barProgress>0?1:0);
     text(lengthTitle[0],tr('x15_rms_title'),600,226);text(lengthTitle[1],tr('x15_rms_subtitle'),600,244);text(lengthTitle[2],tr('x15_true_used'),600,265);
@@ -1276,7 +1281,7 @@ function initChapterOne(){
     put(optimumMarker,[CX(constant.coefficient),CY(chapterError(m,0,constant.coefficient)),passed?1:0]);
     text(optimumLabel,tr('x12c_best',{c:soloNumber(constant.coefficient)}),left,104,passed?1:0);
    }
-   const blockTime=seq%2500,passed=state==='fit'?seq>=2000:state==='every'&&(seq>=15000||blockTime>=1100);
+   const blockTime=seq%2500,passed=state==='fit'?seq>=2000:state==='every'&&(seq>=15000||blockTime>=1800);
    put(optimumPath,[...t.map((_,j)=>Math.min(m.rows.length-1,Math.floor(j*m.rows.length/n))).flatMap(i=>[X(m.x[i]),Y(block.coefficient*m.D.A[m.rows[i].i][block.term])]),passed?1:0]);
    if(state==='every'){
     nodes[optimumMarker].e.dataset.value=String(block.coefficient);
@@ -1310,7 +1315,7 @@ function initChapterOne(){
   }
   if(state==='noise-estimate'){
    const aEnd=noiseFastEnd,bStart=aEnd,cStart=noiseFastEnd+2500;
-   const continuous=noiseCount(seq),count=Math.min(n,Math.floor(continuous)),i=Math.min(n-1,count),cycle=continuous-count,drop=ease((cycle-.55)/.4),example=local(i);
+   const continuous=noiseCount(seq),count=Math.min(n,Math.floor(continuous)),i=noiseOrder[Math.min(n-1,count)],cycle=continuous-count,drop=ease((cycle-.55)/.4),example=local(i);
    const total=squarePrefix[count],square=deviations[i]**2,all=squarePrefix[n],stackHeight=110,stackBottom=340;
    const phaseA=seq<aEnd,phaseB=seq>=bStart,phaseC=seq>=cStart;
    const draw=phaseA?1:0,dd=deviations[i];
@@ -1321,7 +1326,7 @@ function initChapterOne(){
    put(localPath,[...fine.flatMap(v=>[X(v),Y(example.value(v))]),draw]);
    put(windowBox,[X(example.ts[0]),top,X(example.ts.at(-1))-X(example.ts[0]),bottom-top,draw*(.25-.15*(+svg.dataset.noiseZoom||0))]);
    put(ring,[X(t[i]),Y(x[i]),draw]);put(sticks[i],[X(t[i]),Y(x[i]),X(t[i]),Y(example.value(t[i])),draw]);
-   squareBars.forEach((id,j)=>{const h=stackHeight*(squarePrefix[j+1]-squarePrefix[j])/all;put(id,[590,stackBottom-stackHeight*squarePrefix[j+1]/all,30,h,j<count?1:0]);nodes[id].e.dataset.value=String(deviations[j]**2);});
+   squareBars.forEach((id,j)=>{const h=stackHeight*(squarePrefix[j+1]-squarePrefix[j])/all;put(id,[590,stackBottom-stackHeight*squarePrefix[j+1]/all,30,h,j<count?1:0]);nodes[id].e.dataset.value=String(deviations[noiseOrder[j]]**2);});
    put(deviationDot,[mix(620,590,drop),mix(125,stackBottom-stackHeight*(total+square)/all,drop),mix(10,30,drop),mix(10,stackHeight*square/all,drop),draw&&cycle>=.35?1:0]);
    text(sumLabels[0],tr('x15_sum_title'),590,208);text(sumLabels[1],tr('x15_sum_subtitle'),590,226);
    text(arithmeticLabels[0],'Σ d² = '+fmt(total),635,270);text(arithmeticLabels[1],tr('x15_points',{k:count,n}),635,292);
