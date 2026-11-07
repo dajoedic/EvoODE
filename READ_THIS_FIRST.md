@@ -30,7 +30,13 @@ gültigen oc-Login; fällt es aus, verschenkt Q9 nur Kerne, nichts geht kaputt. 
 
 ## 2. WISP-Explorable (W-X)
 
-- Preview https://claude.ai/artifact/XsxgvgYGZdqPkpnzVd2YMQ **Version 26** (05.11. nachts, `a7cd868`) — **inhaltlich
+- **NEU 07.11. abends: Neustart als LV-Geschichte nach Konzept** `explainer/wisp/CONCEPT.md` (vom Nutzer abgenommen).
+  Quelle `explainer/wisp/story/`, Build `python analysis/scripts/explainer/build_wisp_story.py` → `dist/wisp_story.html`,
+  Vorschau https://claude.ai/artifact/M7vvNRbcV1LA344CrmS82u (Version 1, `01a750c`). 15 Seiten A/B/C, DE/EN, hell/dunkel,
+  Screenshots Desktop+Handy geprüft (Scratchpad-Skript `shoot.py`, Playwright mit `channel='msedge'`). Ziel Di 10.11.;
+  **Mo abends Entscheidung**: steht's, sonst Version 26. Offen: Nutzer-Review; Explorer (Konzept C2) fehlt noch.
+  Claude baut selbst; die Codex-Fassung `src/lv/` und die alten Kapitel unten sind Altbestand.
+- Alt: Preview https://claude.ai/artifact/XsxgvgYGZdqPkpnzVd2YMQ **Version 26** (05.11. nachts, `a7cd868`) — **inhaltlich
   vollständig**: Einführung + Kap. 1 (11) · 2 Hinzufügen (5) · 3 Aufräumen/FoBa (7) · 4 Aufhören/Q7 (5) · 5 Fitten +
   Wählen/BIC (6) · 6 Zwei Gleichungen (System 27) · 7 Wenn es schiefgeht (System 3 ab 21) · 8 Gegenprobe · 9 Wie oft
   klappt das? (Q7-Ergebnisse vorläufig, SINDy/Weak-SINDy/E-SINDy, MATLAB-WSINDy JKU-bestätigt, Explorer, Glossar).
