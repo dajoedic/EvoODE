@@ -531,3 +531,5 @@ dialog{max-width:min(1050px,90vw);max-height:80dvh;overflow:auto;overscroll-beha
 .meadow-rim{fill:none;stroke:var(--accent);stroke-width:3}
 .dish-rim.dish-outline{fill:none}
 .dish-measure{fill:var(--data);opacity:.85}
+.dish-colony{fill:var(--accent);stroke:none}
+.dish-growth{opacity:.78}

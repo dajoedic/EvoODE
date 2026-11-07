@@ -45,8 +45,9 @@ function initDish(){
  svg.append(svgNode('title',{id:'dish-title'},tr('x7_history')),svgNode('desc',{id:'dish-description'},tr('x7_caption')));
  const dishGroup=svgNode('g',{transform:'scale(1.35)'});svg.append(dishGroup);
  const G=150,R=G/2-1,canvas=document.createElement('canvas');canvas.width=canvas.height=G;const ctx=canvas.getContext('2d');
- const image=svgNode('image',{x:105-75,y:88-75,width:150,height:150,preserveAspectRatio:'none'});
- dishGroup.append(svgNode('circle',{cx:105,cy:88,r:79,class:'dish-rim dish-fill'}),image,svgNode('circle',{cx:105,cy:88,r:79,class:'dish-rim dish-outline'}));
+ const clip=svgNode('clipPath',{id:'dish-clip'});clip.append(svgNode('circle',{cx:105,cy:88,r:77}));svg.append(clip);
+ const growth=svgNode('g',{'clip-path':'url(#dish-clip)',class:'dish-growth'}),shapes=[svgNode('path',{class:'dish-colony'}),svgNode('path',{class:'dish-colony'})];growth.append(...shapes);
+ dishGroup.append(svgNode('circle',{cx:105,cy:88,r:79,class:'dish-rim dish-fill'}),growth,svgNode('circle',{cx:105,cy:88,r:79,class:'dish-rim dish-outline'}));
  let seed=731;const random=()=>{seed=(Math.imul(1664525,seed)+1013904223)>>>0;return seed/4294967296;};
  const colonies=[[.33,.40],[.67,.63]].map(([fx,fy])=>({x:fx*G,y:fy*G,phase:[random()*6.3,random()*6.3,random()*6.3]}));
  // arrival time of every cell: distance to the nearest colony, stretched by a smooth wobble of the rim and a little grain
@@ -55,7 +56,7 @@ function initDish(){
   let arrive=Infinity;for(const c of colonies){const dx=x-c.x,dy=y-c.y,angle=Math.atan2(dy,dx),d=Math.hypot(dx,dy);
    const wobble=1+.025*Math.sin(2*angle+c.phase[0])+.015*Math.sin(3*angle+c.phase[1]);
    arrive=Math.min(arrive,d*wobble);}
-  cells.push({x,y,arrive:arrive+9*random()**1.5});}
+  cells.push({x,y,arrive});}
  cells.sort((a,b)=>a.arrive-b.arrive);
  const tMax=cells.at(-1).arrive,total=cells.length;
  const accent=getComputedStyle(document.documentElement).getPropertyValue('--accent').trim()||'#257363';
@@ -66,7 +67,7 @@ function initDish(){
  // 40 counts of the dish with a little counting noise (fixed seed): they appear as the dish grows
  let mseed=2026;const mrand=()=>{mseed=(Math.imul(1664525,mseed)+1013904223)>>>0;return mseed/4294967296;};
  const gauss=()=>{const u=Math.max(1e-9,mrand()),v=mrand();return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v);};
- const samples=Array.from({length:40},(_,k)=>{const t=(k+.5)/40;return {t,value:Math.max(0,share(t)+.035*gauss()),dot:svgNode('circle',{r:2.4,class:'dish-cell dish-measure',cx:280+472*t,cy:151-130*Math.max(0,share(t)+.035*gauss())})};});
+ let floorValue=0;const samples=Array.from({length:40},(_,k)=>{const t=(k+.5)/40,value=Math.max(floorValue,Math.min(1,share(t)*(1+.03*gauss())));floorValue=value;return {t,value,dot:svgNode('circle',{r:2.4,class:'dish-cell dish-measure',cx:280+472*t,cy:151-130*value})};});
  samples.forEach(m=>{m.dot.setAttribute('cy',151-130*m.value);curveGroup.append(m.dot);});
  const fullCurve=Array.from({length:161},(_,i)=>(i?'L':'M')+(280+472*i/160).toFixed(2)+','+(151-130*share(i/160)).toFixed(2)).join('');
  function geometry(){const narrow=innerWidth<760;svg.setAttribute('viewBox',narrow?'0 0 400 480':'0 0 1020 260');dishGroup.setAttribute('transform',narrow?'translate(58 0) scale(1.35)':'scale(1.35)');curveGroup.setAttribute('transform',narrow?'translate(-120 250) scale(.65 1.15)':'translate(-140 12) scale(1.5 1.35)');}
@@ -75,9 +76,9 @@ function initDish(){
  let lineProgress=0;
  function draw(progress,now=0){
   const goal=Math.round(share(progress)*total);
-  if(goal<drawn){ctx.clearRect(0,0,G,G);drawn=0;seed=977;}
-  for(;drawn<goal;drawn++){const c=cells[drawn];ctx.fillStyle=accent;ctx.globalAlpha=.6+.4*random();ctx.fillRect(c.x,c.y,1,1);}
-  if(now-lastPaint>45||progress>=1||progress===0){image.setAttribute('href',canvas.toDataURL());lastPaint=now;}
+  // each colony's rim: distance r/wobble(angle) from its centre, in dish coordinates (grid cell = 1 unit)
+  const r=progress*tMax;colonies.forEach((c,k)=>{let d='';for(let j=0;j<=120;j++){const a=2*Math.PI*j/120,w=1+.025*Math.sin(2*a+c.phase[0])+.015*Math.sin(3*a+c.phase[1]),rr=r/w;
+   d+=(j?'L':'M')+(30+c.x+.5+rr*Math.cos(a)).toFixed(2)+','+(13+c.y+.5+rr*Math.sin(a)).toFixed(2);}shapes[k].setAttribute('d',r>0?d+'Z':'');});
   samples.forEach(m=>m.dot.setAttribute('visibility',m.t<=progress?'visible':'hidden'));
   // after the run the true curve is drawn through the measurements
   const line=Math.max(0,Math.min(1,lineProgress));curve.setAttribute('d',fullCurve);curve.setAttribute('pathLength','1');curve.style.strokeDasharray='1 1';curve.style.strokeDashoffset=String(1-line);
