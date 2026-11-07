@@ -1254,3 +1254,23 @@ julia --project=. studies/regression/wp_t1f_warm_neighbourhood.jl \
   --aggregate-only \
   --input-dir outputs/wp_t1d_neighbourhood/orion_5a87efb
 ```
+
+## 9. WISP final run Q9 (W-4)
+
+Protocol `docs/sideproject_residual_growth_protocol_q9.md`. Arm C1000 only, all 63 systems, 4,284 cells.
+
+```bash
+# Paths (Python, ~30-60 min; reads Q8 C1000 timings from outputs/sideproject_q8_512dd5b…/out_sneak_2026-11-07/)
+cd analysis/scripts/aggregate
+python build_sideproject_q9_paths.py --output ../../../outputs/sideproject_q9_inputs/grid --workers 8
+# Tests (scope + bit-identity of the paths with Q8 C1000, ~30 s)
+python -m pytest -q analysis/tests/test_sideproject_q9.py
+# Local smoke, one cheap shard
+julia --project=. studies/regression/sideproject_q9_fits.jl --paths outputs/sideproject_q9_inputs/grid/q9_paths.json \
+  --unit-list <file with one shard id> --index 0 --output outputs/sideproject_q9_smoke/smoke.jsonl
+```
+
+Orion: the image is the commit that added the runner; inputs go to `/outputs/sideproject_q9_<sha>/input/`
+(`q9_paths.json`, `q9_probe_paths.json`, both shard lists, `docs/sideproject_residual_growth_protocol_q9.md`).
+Manifests `k8s/sideproject_q9_probe_job.yaml` (one shard per block) and `k8s/sideproject_q9_job.yaml`. The export is
+read in place from `/outputs/phase_c_c6_data_conditions_5dd1df8…` (no staging).

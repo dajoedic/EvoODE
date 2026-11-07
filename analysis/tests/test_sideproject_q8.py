@@ -1,5 +1,6 @@
 """Q8 synthetic aggregation fixtures derive their field inventory from a real Q5 row."""
 import copy
+import re
 import hashlib
 import json
 import sys
@@ -243,10 +244,12 @@ def test_q8_manifests_and_descending_shards():
     for kind,filename in [('grid','sideproject_q8_job.yaml'),('probe','sideproject_q8_probe_job.yaml')]:
         job=yaml.safe_load((b.ROOT/'k8s'/filename).read_text())
         spec=job['spec'];container=spec['template']['spec']['containers'][0]
-        assert spec['parallelism']==16 and spec['completionMode']=='Indexed'
+        # Probe ran at 8 pods (user decision 2026-11-02), the grid manifest at 16.
+        assert spec['parallelism']==(16 if kind=='grid' else 8) and spec['completionMode']=='Indexed'
         assert 'activeDeadlineSeconds' not in spec
         assert spec['completions']==summary['shards' if kind=='grid' else 'probe_shards']
-        assert container['image'].endswith(':<COMMIT_SHA>')
+        # Template placeholder before the launch, the real 40-hex image commit after it.
+        assert re.fullmatch(r'.*:(<COMMIT_SHA>|[0-9a-f]{40})',container['image'])
         assert 'fallback-export-dir' in container['command'][-1]
         assert container['resources']['limits']=={'cpu':'1','memory':'4Gi'}
     fits=json.loads((b.OUTPUT/'grid/q8_fit_paths.json').read_bytes())['cells']
