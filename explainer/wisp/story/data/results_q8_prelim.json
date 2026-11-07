@@ -1,0 +1,330 @@
+{
+ "meta": {
+  "source": "Q8 interim evaluation 2026-11-07, arm C1000, size rule c, noisy cells pooled over rho",
+  "eval_dir": "C:\\Users\\joedicke\\AppData\\Local\\Temp\\claude\\4da8ff96f3389fae\\74de8444-749b-46d9-b373-f84449c9b174\\scratchpad\\q8_eval_1107",
+  "n_systems_dim12": 51,
+  "status": "preliminary"
+ },
+ "strata": {
+  "dim1_exact": {
+   "wisp": {
+    "structure": [
+     40,
+     88
+    ],
+    "reconstruction": [
+     83,
+     88
+    ],
+    "generalization": [
+     57,
+     88
+    ]
+   },
+   "sindy": {
+    "structure": [
+     3,
+     88
+    ],
+    "reconstruction": [
+     37,
+     88
+    ],
+    "generalization": [
+     12,
+     88
+    ]
+   },
+   "weak_sindy": {
+    "structure": [
+     10,
+     88
+    ],
+    "reconstruction": [
+     56,
+     88
+    ],
+    "generalization": [
+     25,
+     88
+    ]
+   },
+   "e_sindy": {
+    "structure": [
+     2,
+     88
+    ],
+    "reconstruction": [
+     23,
+     88
+    ],
+    "generalization": [
+     7,
+     88
+    ]
+   },
+   "wsindy": {
+    "structure": [
+     20,
+     88
+    ],
+    "reconstruction": [
+     61,
+     88
+    ],
+    "generalization": [
+     40,
+     88
+    ]
+   }
+  },
+  "dim1_surrogate": {
+   "wisp": {
+    "reconstruction": [
+     95,
+     96
+    ],
+    "generalization": [
+     49,
+     96
+    ]
+   },
+   "sindy": {
+    "reconstruction": [
+     41,
+     96
+    ],
+    "generalization": [
+     17,
+     96
+    ]
+   },
+   "weak_sindy": {
+    "reconstruction": [
+     75,
+     96
+    ],
+    "generalization": [
+     30,
+     96
+    ]
+   },
+   "e_sindy": {
+    "reconstruction": [
+     15,
+     96
+    ],
+    "generalization": [
+     7,
+     96
+    ]
+   },
+   "wsindy": {
+    "reconstruction": [
+     79,
+     96
+    ],
+    "generalization": [
+     37,
+     96
+    ]
+   }
+  },
+  "dim2_exact": {
+   "wisp": {
+    "structure": [
+     36,
+     80
+    ],
+    "reconstruction": [
+     75,
+     80
+    ],
+    "generalization": [
+     57,
+     80
+    ]
+   },
+   "sindy": {
+    "structure": [
+     1,
+     80
+    ],
+    "reconstruction": [
+     25,
+     80
+    ],
+    "generalization": [
+     9,
+     80
+    ]
+   },
+   "weak_sindy": {
+    "structure": [
+     4,
+     80
+    ],
+    "reconstruction": [
+     41,
+     80
+    ],
+    "generalization": [
+     23,
+     80
+    ]
+   },
+   "e_sindy": {
+    "structure": [
+     1,
+     80
+    ],
+    "reconstruction": [
+     5,
+     80
+    ],
+    "generalization": [
+     2,
+     80
+    ]
+   },
+   "wsindy": {
+    "structure": [
+     19,
+     80
+    ],
+    "reconstruction": [
+     47,
+     80
+    ],
+    "generalization": [
+     31,
+     80
+    ]
+   }
+  },
+  "dim2_surrogate": {
+   "wisp": {
+    "reconstruction": [
+     113,
+     144
+    ],
+    "generalization": [
+     46,
+     144
+    ]
+   },
+   "sindy": {
+    "reconstruction": [
+     40,
+     144
+    ],
+    "generalization": [
+     14,
+     144
+    ]
+   },
+   "weak_sindy": {
+    "reconstruction": [
+     51,
+     144
+    ],
+    "generalization": [
+     26,
+     144
+    ]
+   },
+   "e_sindy": {
+    "reconstruction": [
+     5,
+     144
+    ],
+    "generalization": [
+     5,
+     144
+    ]
+   },
+   "wsindy": {
+    "reconstruction": [
+     53,
+     144
+    ],
+    "generalization": [
+     19,
+     144
+    ]
+   }
+  },
+  "dim3_exact": {
+   "wisp": {
+    "structure": [
+     17,
+     62
+    ],
+    "reconstruction": [
+     34,
+     62
+    ],
+    "generalization": [
+     18,
+     62
+    ]
+   },
+   "sindy": {
+    "structure": [
+     0,
+     62
+    ],
+    "reconstruction": [
+     5,
+     62
+    ],
+    "generalization": [
+     3,
+     62
+    ]
+   },
+   "weak_sindy": {
+    "structure": [
+     0,
+     62
+    ],
+    "reconstruction": [
+     7,
+     62
+    ],
+    "generalization": [
+     4,
+     62
+    ]
+   },
+   "e_sindy": {
+    "structure": [
+     0,
+     62
+    ],
+    "reconstruction": [
+     0,
+     62
+    ],
+    "generalization": [
+     1,
+     62
+    ]
+   },
+   "wsindy": {
+    "structure": [
+     11,
+     62
+    ],
+    "reconstruction": [
+     12,
+     62
+    ],
+    "generalization": [
+     12,
+     62
+    ]
+   }
+  }
+ }
+}

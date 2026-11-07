@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>WISP erklärt</title>
+<meta name="description" content="Wie WISP aus verrauschten Messungen die Gleichung hinter Hasen und Füchsen findet.">
+<style><!--STYLE--></style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
+</head>
+<body>
+<header>
+  <div class="brand">WISP<span> / </span></div>
+  <div class="part" id="part-label"></div>
+  <nav aria-label="Sprache / language">
+    <button type="button" id="lang-de" aria-pressed="true">DE</button>
+    <button type="button" id="lang-en" aria-pressed="false">EN</button>
+  </nav>
+</header>
+<div id="progress"></div>
+<div id="pages"><div id="track"></div></div>
+<nav id="dots" aria-label="Seiten"></nav>
+<div id="stage" class="stage">
+  <div class="layer" id="layer-lv">
+    <div id="lv-top">
+      <div class="sub" id="sub-meadow"><div class="box" id="meadow"></div><div class="counts" id="counts"></div></div>
+      <div class="sub" id="sub-phase"><div class="panel-title" id="phase-title"></div><div class="box" id="phase"></div></div>
+      <div class="sub" id="sub-equation"><div class="eq-card" id="eq-card"></div><div class="eq-caption" id="eq-caption"></div>
+        <div class="controls" id="eq-controls"></div></div>
+      <div class="sub" id="sub-slope"><div class="panel-title" id="slope-title"></div><div class="legend" id="slope-legend"></div><div class="box" id="slope"></div></div>
+    </div>
+    <div id="lv-bottom"><div class="legend" id="series-legend"></div><div class="box" id="series"></div>
+      <div class="controls" id="series-controls"></div></div>
+  </div>
+  <div class="layer" id="layer-wisp">
+    <div id="wisp-eq"></div>
+    <div id="wisp-body">
+      <div class="sub" id="w-blocks"></div>
+      <div class="sub" id="w-weak"></div>
+      <div class="sub" id="w-grow"></div>
+      <div class="sub" id="w-prune"></div>
+      <div class="sub" id="w-stop"></div>
+      <div class="sub" id="w-fit"></div>
+      <div class="sub" id="w-bic"></div>
+      <div class="sub" id="w-test"></div>
+      <div class="sub" id="w-why"></div>
+    </div>
+  </div>
+  <div class="layer" id="layer-results">
+    <div class="sub on" id="r-rates" style="display:flex;flex-direction:column;flex:1;min-height:0"></div>
+  </div>
+</div>
+<script><!--TEXT--></script>
+<script>window.DATA=<!--DATA-->;</script>
+<script><!--APP--></script>
+</body>
+</html>

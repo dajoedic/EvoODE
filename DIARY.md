@@ -6,6 +6,27 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ## 2026-11-07
 
+### WISP explorable restarted as one Lotka–Volterra story (W-X), concept first
+
+User (evening): the Codex iterations on the explorable (`src/lv/`, meadow + scroll rework) went sideways; build a
+concept first. Concept agreed the same evening (`explainer/wisp/CONCEPT.md`): reader = smart, no background; part A
+why dynamical systems/ODEs, part B WISP in action on one recorded LV run, part C results; target Tuesday 10.11.,
+fallback version 26. Claude builds it directly (browser checks possible), new source `explainer/wisp/story/`, builder
+`analysis/scripts/explainer/build_wisp_story.py`, output `dist/wisp_story.html` (176 KB vs 13.7 MB). Codex' meadow
+idea kept; Codex' `src/lv/` not used.
+
+**The recorded LV example did not show the final method.** Cell `sys0027_ic1_s0.03_r0_n1` (path 4 steps, exact
+support at step 4) was fitted under Q7 settings (observed start, bound 10): reconstruction R² 0.52. Refitted locally
+with the frozen Q9 runner (C1000, laptop, ~7 min, index 1871 of the Q9 shard list): winner unchanged (q7_004 =
+truth), coefficients 1.8427 / −1.4534 / −3.0001 / 1.6213 (true 1.84 / −1.45 / −3.0 / 1.62), fitted start
+8.302 / 3.408, reconstruction R² 0.9999, generalization 0.9997. Record tracked under `explainer/wisp/story/data/`.
+
+**Part C numbers** (`extract_wisp_story_results.py` → `story/data/results_q8_prelim.json`): Q8 interim evaluation,
+C1000, rule c, noisy cells pooled; SINDy family at the better of two thresholds (frozen Q5 report rule), WSINDy
+MATLAB L-Q5 on the same cells. Found on the way: the scratchpad table `rates_pooled_noisy.csv` doubles the Weak-SINDy
+denominator (the `all_ten` row was pooled in) and halves its rate; the new extraction excludes it and matches the
+G2 `overview.csv` columns. Labelled preliminary on the page; replaced by Q9.
+
 ### Q9 (W-4) built, probe clean, grid running — autonomously on the user's instruction
 <!-- cdfaa7d 90ee2d7 -->
 
