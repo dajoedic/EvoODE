@@ -38,35 +38,53 @@ const NS='http://www.w3.org/2000/svg';
 function svgNode(tag,attrs={},text){const e=document.createElementNS(NS,tag);Object.entries(attrs).forEach(([k,v])=>e.setAttribute(k,v));if(text!==undefined)e.textContent=text;return e;}
 // Illustration only: no scientific data or WISP computation enters this scene.
 function initDish(){
+ // Two colonies grow on a fine grid until the dish is full. Each new cell is placed at the colony edge, preferring
+ // spots with few occupied neighbours, which makes the fronts fibrous. How many cells exist at a time follows
+ // logistic growth, so the curve on the right is the dish's actual occupancy. Illustration, not measured data.
  const target=$('dish-illustration'),svg=svgNode('svg',{viewBox:'0 0 1020 260',role:'img','aria-labelledby':'dish-title dish-description'});
  svg.append(svgNode('title',{id:'dish-title'},tr('x7_history')),svgNode('desc',{id:'dish-description'},tr('x7_caption')));
- const dishGroup=svgNode('g',{transform:'scale(1.35)'});svg.append(dishGroup);dishGroup.append(svgNode('circle',{cx:105,cy:88,r:79,class:'dish-rim'}));
- const cells=svgNode('g');dishGroup.append(cells);
- // LCG seed 731; stratified positions fill the disk without overlaps.
+ const dishGroup=svgNode('g',{transform:'scale(1.35)'});svg.append(dishGroup);
+ const G=150,R=G/2-1,canvas=document.createElement('canvas');canvas.width=canvas.height=G;const ctx=canvas.getContext('2d');
+ const image=svgNode('image',{x:105-75,y:88-75,width:150,height:150,preserveAspectRatio:'none'});image.style.imageRendering='auto';
+ dishGroup.append(svgNode('circle',{cx:105,cy:88,r:79,class:'dish-rim dish-fill'}),image,svgNode('circle',{cx:105,cy:88,r:79,class:'dish-rim dish-outline'}));
+ const inside=[];for(let y=0;y<G;y++)for(let x=0;x<G;x++)if((x-R)**2+(y-R)**2<=R*R)inside.push(y*G+x);
+ const total=inside.length,valid=new Uint8Array(G*G);inside.forEach(i=>valid[i]=1);
  let seed=731;const random=()=>{seed=(Math.imul(1664525,seed)+1013904223)>>>0;return seed/4294967296;};
- const positions=[];for(let y=-68;y<=68;y+=9)for(let x=-68;x<=68;x+=9){const px=x+(random()-.5)*3,py=y+(random()-.5)*3;if(px*px+py*py<72*72)positions.push([105+px,88+py]);}
- for(let i=positions.length-1;i>0;i--){const j=Math.floor(random()*(i+1));[positions[i],positions[j]]=[positions[j],positions[i]];}
- const dots=positions.map(([cx,cy])=>{const dot=svgNode('circle',{cx,cy,r:2.9,class:'dish-cell'});cells.append(dot);return dot;});
+ let occupied,frontier,where,count,born;
+ const accent=getComputedStyle(document.documentElement).getPropertyValue('--accent').trim()||'#257363';
+ function neighbours(i){const x=i%G,y=(i-x)/G,out=[];for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++){if(!dx&&!dy)continue;const xx=x+dx,yy=y+dy;if(xx>=0&&yy>=0&&xx<G&&yy<G&&valid[yy*G+xx])out.push(yy*G+xx);}return out;}
+ function addFrontier(i){if(occupied[i]||where[i]>=0)return;where[i]=frontier.length;frontier.push(i);}
+ function removeFrontier(i){const k=where[i];if(k<0)return;const last=frontier.pop();if(last!==i){frontier[k]=last;where[last]=k;}where[i]=-1;}
+ function occupy(i){occupied[i]=1;removeFrontier(i);count++;born[i]=count;neighbours(i).forEach(addFrontier);
+  const x=i%G,y=(i-x)/G;ctx.fillStyle=accent;ctx.globalAlpha=.55+.45*random();ctx.fillRect(x,y,1,1);}
+ function reset(){occupied=new Uint8Array(G*G);where=new Int32Array(G*G).fill(-1);frontier=[];count=0;born=new Int32Array(G*G);ctx.clearRect(0,0,G,G);seed=731;
+  // two seed colonies, apart from each other
+  [[.32,.40],[.66,.64]].forEach(([fx,fy])=>{const i=Math.round(fy*G)*G+Math.round(fx*G);if(valid[i])occupy(i);});}
+ function grow(){let best=-1,bestN=9;for(let k=0;k<14&&frontier.length;k++){const c=frontier[Math.floor(random()*frontier.length)],n=neighbours(c).reduce((s,j)=>s+occupied[j],0);if(n<bestN){bestN=n;best=c;}}if(best>=0)occupy(best);}
+ // logistic occupancy from two cells to a full dish
+ const n0=2/total,rate=13.5,occupancy=t=>1/(1+(1/n0-1)*Math.exp(-rate*t));
  const curveGroup=svgNode('g',{transform:'translate(-140 12) scale(1.5 1.35)'});svg.append(curveGroup);curveGroup.append(svgNode('path',{d:'M280 14V151H752',class:'dish-axis'}),svgNode('text',{x:288,y:17},tr('x7_cells')),svgNode('text',{x:752,y:174,'text-anchor':'end'},tr('x7_time')));
  const curve=svgNode('path',{class:'dish-curve'}),head=svgNode('circle',{r:4,class:'dish-cell'});curveGroup.append(curve,head);target.append(svg);
- // Stack the two scenes in the same accessible illustration on small screens.
  function geometry(){const narrow=innerWidth<760;svg.setAttribute('viewBox',narrow?'0 0 400 480':'0 0 1020 260');dishGroup.setAttribute('transform',narrow?'translate(58 0) scale(1.35)':'scale(1.35)');curveGroup.setAttribute('transform',narrow?'translate(-120 250) scale(.65 1.15)':'translate(-140 12) scale(1.5 1.35)');}
  geometry();window.addEventListener('resize',geometry);
- // K=1 (normalised occupancy), n0=.012, r=10, t in [0,1], 6000 ms.
- const occupancy=t=>1/(1+(1/.012-1)*Math.exp(-10*t));
- function draw(progress){const count=Math.round(occupancy(progress)*dots.length);dots.forEach((dot,i)=>dot.setAttribute('visibility',i<count?'visible':'hidden'));
-  const points=Array.from({length:Math.ceil(progress*160)+1},(_,i)=>Math.min(i/160,progress));let d='';
-  for(const t of points)d+=(d?'L':'M')+(280+472*t).toFixed(2)+','+(151-130*occupancy(t)).toFixed(2);
-  curve.setAttribute('d',d);head.setAttribute('cx',280+472*progress);head.setAttribute('cy',151-130*occupancy(progress));target.dataset.progress=String(progress);
+ let lastProgress=-1,lastPaint=0;
+ function draw(progress,now=0){
+  if(progress<lastProgress||!occupied)reset();lastProgress=progress;
+  const goal=Math.min(total,Math.round(occupancy(progress)*total));while(count<goal&&frontier.length)grow();
+  if(now-lastPaint>45||progress>=1){image.setAttribute('href',canvas.toDataURL());lastPaint=now;}
+  const share=count/total,points=Math.ceil(progress*160)+1;let d='';
+  for(let i=0;i<points;i++){const t=Math.min(i/160,progress);d+=(d?'L':'M')+(280+472*t).toFixed(2)+','+(151-130*occupancy(t)).toFixed(2);}
+  curve.setAttribute('d',d);head.setAttribute('cx',280+472*progress);head.setAttribute('cy',151-130*share);target.dataset.progress=String(progress);target.dataset.occupancy=String(share);
  }
  const reduced=window.matchMedia('(prefers-reduced-motion: reduce)');
+ const GROW=9000,LOOP=11500;
  let frame=0,visible=typeof IntersectionObserver!=='function',elapsed=0,last=0;
- function tick(now){elapsed=(elapsed+now-last)%7500;last=now;draw(Math.min(1,elapsed/6000));frame=requestAnimationFrame(tick);}
+ function tick(now){elapsed=(elapsed+Math.max(0,now-last))%LOOP;last=now;draw(Math.min(1,elapsed/GROW),now);frame=requestAnimationFrame(tick);}
  function update(){cancelAnimationFrame(frame);frame=0;
   if(reduced.matches){draw(1);return;}
   if(visible&&!document.hidden){last=performance.now();frame=requestAnimationFrame(tick);}
  }
- reduced.addEventListener?.('change',()=>{draw(reduced.matches?1:Math.min(1,elapsed/6000));update();});
+ reduced.addEventListener?.('change',()=>{draw(reduced.matches?1:Math.min(1,elapsed/GROW));update();});
  document.addEventListener('visibilitychange',update);
  draw(reduced.matches?1:0);
  if(typeof IntersectionObserver==='function'){const observer=new IntersectionObserver(entries=>{visible=entries.some(e=>e.isIntersecting);update();},{threshold:.1});observer.observe(target);}else{const visibility=()=>{const r=target.getBoundingClientRect();visible=r.bottom>0&&r.top<innerHeight;update();};window.addEventListener('scroll',visibility,{passive:true});window.addEventListener('resize',visibility);visibility();}

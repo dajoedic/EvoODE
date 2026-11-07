@@ -514,15 +514,6 @@ dialog{max-width:min(1050px,90vw);max-height:80dvh;overflow:auto;overscroll-beha
 .term-group{grid-column:1/-1;font:600 12px system-ui,sans-serif;letter-spacing:.08em;text-transform:uppercase;margin:8px 0 -2px}
 .term-group.hare{color:var(--data)}.term-group.fox{color:var(--fox)}
 .term-card.fox{border-color:color-mix(in srgb,var(--fox) 35%,var(--line))}
-#p-challenge .measurement-dot.fox{fill:var(--fox)}
-/* LV challenge: hares | foxes side by side, one compact row per block. */
-#p-challenge .term-cards{grid-template-columns:repeat(2,minmax(0,1fr))!important;grid-auto-flow:column;grid-template-rows:repeat(7,auto);grid-auto-rows:auto!important;gap:5px 16px!important}
-#p-challenge .term-group{grid-column:auto;margin:0;align-self:end}
-#p-challenge .term-card{grid-template-rows:none!important;grid-template-columns:58px minmax(0,1fr);align-items:center;padding:3px 8px!important;gap:8px!important}
-#p-challenge .term-card label{font-size:15px}
-#p-challenge .coefficient-controls{grid-template-columns:minmax(0,1fr) 22px 58px 22px}
-#p-challenge .coefficient-controls input[type=range]{grid-column:auto;margin:0}
-#p-challenge .coefficient-controls input[type=number]{font-size:13px;padding:2px}
 
 .c5-chip.fox{stroke:var(--fox)}.c5-chip-label.fox{fill:var(--fox)}
 
@@ -538,3 +529,4 @@ dialog{max-width:min(1050px,90vw);max-height:80dvh;overflow:auto;overscroll-beha
 .x21-candidates .x20-chip{padding:0 5px;font-size:12px}
 .x21-candidates{gap:2px}
 .meadow-rim{fill:none;stroke:var(--accent);stroke-width:3}
+.dish-rim.dish-outline{fill:none}
