@@ -835,5 +835,6 @@
   "x19_each_best": "{count} fits; the best reconstructs with R² {r}",
   "lv_hares_short": "hares",
   "lv_foxes_short": "foxes",
-  "x21_other_start": "other start of the same system"
+  "x21_other_start": "other start of the same system",
+  "x7_formula_note": "<b class=\"grow\">growth</b>: the more bacteria, the more offspring · <b class=\"brake\">brake</b>: the fuller the dish, the less room"
 }

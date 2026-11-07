@@ -73,10 +73,14 @@ function initDish(){
  // occupancy over time (time = edge distance / tMax), for the curve
  const T=LIVE.teaching,tt=T.t,K=Math.max(...T.truth),span=tt.at(-1)-tt[0];
  const level=p=>{const x=tt[0]+Math.max(0,Math.min(1,p))*span;let j=1;while(j<tt.length-1&&tt[j]<x)j++;const a=tt[j-1],b=tt[j],w=b>a?(x-a)/(b-a):0;return (T.truth[j-1]+(T.truth[j]-T.truth[j-1])*w)/K;};
- const radius=p=>cells[Math.min(total-1,Math.max(0,Math.floor(level(p)*total)))].arrive;
+ const radius=p=>{const l=level(p);return cells[Math.min(total-1,Math.max(0,Math.floor(l*total)))].arrive+12*Math.max(0,l-.97)/.03;};
  const share=level;
  const curveGroup=svgNode('g',{transform:'translate(-140 12) scale(1.5 1.35)'});svg.append(curveGroup);curveGroup.append(svgNode('path',{d:'M280 14V151H752',class:'dish-axis'}),svgNode('text',{x:288,y:17},tr('x7_cells')),svgNode('text',{x:752,y:174,'text-anchor':'end'},tr('x7_time')));
  const curve=svgNode('path',{class:'dish-curve'}),head=svgNode('circle',{r:0,class:'dish-cell'});curveGroup.append(curve,head);target.append(svg);
+ const law=LIVE.illustrations.find(d=>d.system_id===3)?.constants||[.79,74.3],dec=v=>numberText(v,3).replace(',','{,}');
+ const formula=el('div',undefined,'dish-formula'),formulaTex=el('div',undefined,'dish-formula-tex'),formulaNote=el('div',undefined,'dish-formula-note');formula.append(formulaTex,formulaNote);target.append(formula);
+ function setFormula(){math(formulaTex,`\\frac{du}{dt}\\;=\\;{\\color{#2f8f6f}${dec(law[0])}\\,u}\\;\\cdot\\;{\\color{#c0683a}\\left(1-\\frac{u}{${dec(law[1])}}\\right)}`);formulaNote.innerHTML=tr('x7_formula_note');}
+ setFormula();['language-de','language-en'].forEach(id=>$(id)?.addEventListener('click',()=>setTimeout(setFormula,0)));
  // 40 counts of the dish with a little counting noise (fixed seed): they appear as the dish grows
  let mseed=2026;const mrand=()=>{mseed=(Math.imul(1664525,mseed)+1013904223)>>>0;return mseed/4294967296;};
  const gauss=()=>{const u=Math.max(1e-9,mrand()),v=mrand();return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v);};
@@ -94,6 +98,7 @@ function initDish(){
   samples.forEach(m=>m.dot.setAttribute('visibility',m.t<=progress?'visible':'hidden'));
   // after the run the true curve is drawn through the measurements
   const line=Math.max(0,Math.min(1,lineProgress));curve.setAttribute('d',fullCurve);curve.setAttribute('pathLength','1');curve.style.strokeDasharray='1 1';curve.style.strokeDashoffset=String(1-line);
+  const shown=Math.max(0,Math.min(1,(lineProgress-1)*2.5));formula.style.opacity=String(shown);formula.style.transform=`translateY(${(1-shown)*14}px)`;
   target.dataset.progress=String(progress);target.dataset.occupancy=String(level(progress));
  }
  const reduced=window.matchMedia('(prefers-reduced-motion: reduce)');
@@ -1639,3 +1644,32 @@ function initResultsChapter(){
  window.WispResultsChapter={rows:chapterNineRows};
 }
 initResultsChapter();
+
+// Hook -> step 1: the 512 measurements fly from the dish chart onto their places in step 1.
+(function hookFlight(){
+ const story=window.WispChapterStory;if(!story||!story.enter)return;
+ const enter=story.enter;let previous=null,seenHook=false;
+ story.enter=function(stage,...rest){
+  const from=previous;previous=stage||null;if(!stage)seenHook=true;
+  if(stage==='data'&&!from&&seenHook&&!window.matchMedia('(prefers-reduced-motion: reduce)').matches)fly();
+  return enter.call(this,stage,...rest);
+ };
+ function fly(){
+  const sources=[...document.querySelectorAll('#dish-illustration .dish-measure')];const stage=document.getElementById('c1-stage');
+  if(!sources.length||!stage)return;
+  const start=sources.map(d=>{const r=d.getBoundingClientRect();return [r.left+r.width/2,r.top+r.height/2,d.getAttribute('visibility')!=='hidden'];});
+  const overlay=svgNode('svg',{class:'flight-overlay',width:innerWidth,height:innerHeight});document.body.append(overlay);
+  const dots=start.map(()=>{const c=svgNode('circle',{r:2.2,class:'flight-dot'});overlay.append(c);return c;});
+  stage.classList.add('c1-arriving');const t0=performance.now(),D=1500;
+  function frame(now){
+   const targets=[...stage.querySelectorAll('.measurement-dot')];
+   const k=Math.min(1,(now-t0)/D);
+   dots.forEach((c,i)=>{const delay=.25*i/dots.length,q=Math.max(0,Math.min(1,(k-delay)/(1-.25))),e=q<.5?4*q*q*q:1-Math.pow(-2*q+2,3)/2;
+    const r=targets[i]?.getBoundingClientRect(),tx=r?r.left+r.width/2:start[i][0],ty=r?r.top+r.height/2:start[i][1];
+    c.setAttribute('cx',start[i][0]+(tx-start[i][0])*e);c.setAttribute('cy',start[i][1]+(ty-start[i][1])*e);c.style.opacity=start[i][2]||q>0?'1':'0';});
+   if(k<1)requestAnimationFrame(frame);else{overlay.remove();stage.classList.remove('c1-arriving');}
+  }
+  requestAnimationFrame(frame);
+ }
+})();
+
