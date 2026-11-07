@@ -117,6 +117,56 @@ def two_equation_example(live, cell, t, x, clean, other, joint, refit):
                 fit_settings=dict(arm='C1000', initial_state='estimated', coefficient_bound=1000))
 
 
+LOGISTIC = 'sys0003_ic1_s0.03_r0_n1'
+LOGISTIC_REFIT = ROOT / 'explainer/wisp/data/logistic_c1000_refit_sys0003_ic1_s0.03_r0_n1.jsonl'
+
+
+def logistic_c1000(live, cells, used):
+    """Chapters 1-5 (logistic teaching cell): replace the Q5/Q7 fits by the frozen Q9 runner's C1000 refit.
+
+    The path (weak space) is arm-independent and stays; the candidates become the Q7-rule path states, refitted
+    with the estimated initial state and bound 1000. Older cap-era candidates beyond the stop are dropped.
+    """
+    feature = next(f for f in live['featured'] if 'running' in f.get('roles', []))
+    assert feature['cell_id'] == LOGISTIC
+    cell = cells[LOGISTIC]
+    t, x = read_observations(cell, used)
+    _, clean = read_observations(cells['sys0003_ic1_s0_r0_n1'], used)
+    _, other = read_observations(cells['sys0003_ic2_s0_r0_n1'], used)
+    refit = {r['candidate_id']: r for r in map(json.loads, LOGISTIC_REFIT.read_text(encoding='utf8').splitlines()) if r}
+    stop = [[j + 1 for j in s] for s in feature['stop_reference']['supports']]
+    funcs = [lambda u: 1.0, lambda u: u, lambda u: u * u, lambda u: u ** 3, math.sin, math.cos]
+
+    def sim(support, params, x0):
+        sol = solve_ivp(lambda _, u: [sum(c * funcs[j - 1](u[0]) for j, c in zip(support, params))], (t[0], t[-1]), [x0],
+                        t_eval=t, rtol=1e-10, atol=1e-10, method='DOP853')
+        y = np.full((len(t), 1), np.nan); y[:sol.y.shape[1], 0] = sol.y[0]
+        return y
+    out = []
+    for c in cell['candidates']:
+        sup = c['active_idxs'][0]
+        old = next(o for o in feature['candidates'] if json.loads(o['row']['active_idxs'])[0] == sup)
+        r = refit[c['candidate_id']]
+        assert r['arm'] == 'C1000' and len(r['params']) == len(sup)
+        k, mse, N = len(sup), r['estimated_ic_training_mse'], x.size
+        row = dict(old['row'], params=json.dumps(r['params']), mse=repr(mse), observed_start_mse=repr(mse),
+                   fitted_initial_state=json.dumps(r['fitted_initial_state']), arm='C1000',
+                   **{f'{kind}_r2_{w}': repr(r[kind][f'r2_{w}']) for kind in ('reconstruction', 'generalization')
+                      for w in ('arithmetic', 'variance_weighted')})
+        for kind in ('reconstruction', 'generalization'):
+            v = r[kind]['r2_variance_weighted']
+            row[f'{kind}_variance_weighted_hit'] = row[f'{kind}_arithmetic_hit'] = str(v is not None and v > .9)
+        out.append(dict(old, row=row, bic=N * math.log(mse) + k * math.log(N), penalty=k * math.log(N),
+                        curves=dict(**display_arrays(t, truth=clean, model=sim(sup, r['params'], clean[0, 0])),
+                                    generalization=display_arrays(t, truth=other, model=sim(sup, r['params'], other[0, 0])))))
+    assert [json.loads(o['row']['active_idxs'])[0] for o in out] == stop, 'Q9 path differs from the stop reference'
+    feature['candidates'] = out
+    win = min(out, key=lambda o: o['bic'])
+    feature['chosen'] = win['row']['candidate_id']
+    feature['result_row'] = win['row']
+    print('logistic C1000:', [(o['row']['candidate_id'], round(o['bic'], 1)) for o in out], 'winner', feature['chosen'])
+
+
 def build(live_path=LIVE):
     used = set()
     cells = {c['cell_id']: c for c in json.loads(PATHS.read_bytes())['cells']}
@@ -180,12 +230,8 @@ def build(live_path=LIVE):
     live = json.loads(live_path.read_text(encoding='utf8'))
     example = two_equation_example(live, cell, t, x, clean, other, joint, refit)
     live['examples'] = [example] + [e for e in live['examples'] if e['system_id'] != 27]
-    live['teaching'] = dict(cell_id=CELL, sigma=sigma, t=t.tolist(), observed=x[:, 0].tolist(), truth=clean[:, 0].tolist(),
-                            noise_draws=((x[:, 0] / clean[:, 0] - 1) / sigma).tolist(),
-                            states=x.tolist(), states_truth=clean.tolist(), target=0, state_names=['H', 'F'])
     live['gate_status'] = json.loads((ROOT / 'explainer/wisp/src/gates.json').read_text(encoding='utf-8-sig'))  # G2 decided: C1000
-    roles = [f for f in live['featured'] if 'running' not in f.get('roles', [])]
-    live['featured'] = [running] + roles
+    logistic_c1000(live, cells, used)
     live['lv_running'] = dict(source=dict(paths=str(PATHS.relative_to(ROOT)), refit=str(REFIT.relative_to(ROOT)),
                                           observations=sorted(str(p.relative_to(ROOT)) for p in used)))
     def finite(o):  # diverged display curves carry NaN; JSON gets null

@@ -32,57 +32,41 @@ const el=(tag,text,cls)=>{const e=document.createElement(tag);if(text!==undefine
 function numberText(x,d=3){const text=Number(x).toLocaleString(language,{notation:'standard',maximumSignificantDigits:d});return language==='de'?text.replaceAll('.',' '):text;}
 const fmt=(x,d=3)=>x!==''&&x!==null&&x!==undefined&&Number.isFinite(+x)?numberText(x,d):tr('j153');
 const pct=x=>x!==''&&x!==null&&x!==undefined&&Number.isFinite(+x)?`${fmt(+x*100)}%`:tr('j153');
-const terms=['1','H','F','H²','F²','H·F','H³','F³','sin H','cos H','sin F','cos F'];
-const texTerms=['1','H','F','H^{2}','F^{2}','H\\,F','H^{3}','F^{3}','\\sin H','\\cos H','\\sin F','\\cos F'];
+const terms=['1','u','u²','u³',tr('j154'),tr('j155')];
+const texTerms=['1','u','u^{2}','u^{3}','\\sin u','\\cos u'];
 const NS='http://www.w3.org/2000/svg';
 function svgNode(tag,attrs={},text){const e=document.createElementNS(NS,tag);Object.entries(attrs).forEach(([k,v])=>e.setAttribute(k,v));if(text!==undefined)e.textContent=text;return e;}
 // Illustration only: no scientific data or WISP computation enters this scene.
 function initDish(){
- // Hook: a meadow with hares and foxes. Counts follow the benchmark Lotka-Volterra equation (system 27) from a
- // calm illustrative start; animals are symbols for the counts, not a separate simulation. Illustration, not data.
  const target=$('dish-illustration'),svg=svgNode('svg',{viewBox:'0 0 1020 260',role:'img','aria-labelledby':'dish-title dish-description'});
  svg.append(svgNode('title',{id:'dish-title'},tr('x7_history')),svgNode('desc',{id:'dish-description'},tr('x7_caption')));
- const P=LIVE.illustrations.find(d=>d.system_id===27)?.constants||[1.84,1.45,3,1.62];
- const rhs=([h,f])=>[P[0]*h-P[1]*h*f,-P[2]*f+P[3]*h*f];
- const dt=.01,steps=1000,traj=[[1,.6]];for(let i=0;i<steps;i++){let x=traj.at(-1);const a=rhs(x),b=rhs(x.map((v,j)=>v+dt*a[j]/2)),c=rhs(x.map((v,j)=>v+dt*b[j]/2)),d=rhs(x.map((v,j)=>v+dt*c[j]));traj.push(x.map((v,j)=>v+dt*(a[j]+2*b[j]+2*c[j]+d[j])/6));}
- const meadow=svgNode('g',{transform:'scale(1.35)'});svg.append(meadow);
- const clip=svgNode('clipPath',{id:'meadow-clip'});clip.append(svgNode('rect',{x:8,y:8,width:200,height:160,rx:14}));svg.append(clip);
- const scene=svgNode('g',{'clip-path':'url(#meadow-clip)'});meadow.append(scene);
- scene.append(svgNode('rect',{x:8,y:8,width:200,height:160,class:'meadow-sky'}),svgNode('circle',{cx:176,cy:34,r:12,class:'meadow-sun'}),
-  svgNode('path',{d:'M8,82 C50,58 90,64 120,74 C150,84 180,62 208,70 L208,168 L8,168Z',class:'meadow-hill'}),
-  svgNode('path',{d:'M8,98 C60,88 120,96 208,92 L208,168 L8,168Z',class:'meadow-grass'}));
- [[30,92,.55],[58,88,.45],[150,86,.5]].forEach(([x,y,k])=>{const g=svgNode('g',{transform:`translate(${x},${y}) scale(${k})`});g.append(svgNode('rect',{x:-3,y:-6,width:6,height:22,class:'meadow-trunk'}),svgNode('circle',{cy:-16,r:15,class:'meadow-tree'}),svgNode('circle',{cx:-9,cy:-7,r:10,class:'meadow-tree'}),svgNode('circle',{cx:9,cy:-8,r:11,class:'meadow-tree'}));scene.append(g);});
- meadow.append(svgNode('rect',{x:8,y:8,width:200,height:160,rx:14,class:'meadow-rim'}));
- const herd=svgNode('g');scene.append(herd);
- const HARE='M-8,-6a8,5.5 0 1,0 16,0a8,5.5 0 1,0 -16,0M3.5,-11a3.6,3.6 0 1,0 7.2,0a3.6,3.6 0 1,0 -7.2,0M5,-13c-1.6,-5 -1,-9 0.6,-9.4c1.3,0.2 1,4.5 0.4,9.6zM7.6,-13c0.2,-5.2 1.6,-8.6 3,-8.6c1.2,0.6 -0.2,4.6 -1.8,8.8z';
- const FOX='M-10,-7a10,4.6 0 1,0 20,0a10,4.6 0 1,0 -20,0M7,-10l10,2.6l-9,3.4zM8,-10l1.4,-5l2.6,4.4zM11,-9.4l2.2,-4.4l1.4,4.6zM-9,-8c-6,-3 -12,-2 -16,1c5,2.4 11,2.6 16,0.6z';
- const animals=[];let seed=731;const random=()=>{seed=(Math.imul(1664525,seed)+1013904223)>>>0;return seed/4294967296;};
- function spawn(kind){const e=svgNode('path',{d:kind==='hare'?HARE:FOX,class:'meadow-'+kind});herd.append(e);const a={kind,e,x:20+random()*176,y:104+random()*58,vx:(random()-.5)*20,vy:(random()-.5)*4,phase:random()*6};animals.push(a);return a;}
- function sync(h,f){for(const [kind,count] of [['hare',Math.round(h*7)],['fox',Math.round(f*7)]]){const own=animals.filter(a=>a.kind===kind);
-  for(let i=own.length;i<count;i++)spawn(kind);for(let i=count;i<own.length;i++){own[i].e.remove();animals.splice(animals.indexOf(own[i]),1);}}}
- function move(dtSec){for(const a of animals){a.vx=Math.max(-24,Math.min(24,a.vx*.96+(random()-.5)*30*dtSec*10));a.vy=Math.max(-5,Math.min(5,a.vy*.95+(random()-.5)*8*dtSec*10));
-  for(const b of animals){if(b===a)continue;const dx=a.x-b.x,dy=(a.y-b.y)*2,d=Math.hypot(dx,dy);if(d<14&&d>.01){a.x+=dx/d*(14-d)*.2;a.y+=dy/d*(14-d)*.05;}}
-  a.x+=a.vx*dtSec;a.y+=a.vy*dtSec;if(a.x<16||a.x>200)a.vx=-a.vx;if(a.y<102||a.y>164)a.vy=-a.vy;a.x=Math.max(16,Math.min(200,a.x));a.y=Math.max(102,Math.min(164,a.y));a.phase+=dtSec*(a.kind==='hare'?9:6);
-  const hop=a.kind==='hare'?-Math.abs(Math.sin(a.phase))*2:0,k=.62*(.8+(a.y-102)/62*.4);a.e.setAttribute('transform',`translate(${a.x.toFixed(1)},${(a.y+hop).toFixed(1)}) scale(${(a.vx<0?-k:k).toFixed(3)},${k.toFixed(3)})`);}}
+ const dishGroup=svgNode('g',{transform:'scale(1.35)'});svg.append(dishGroup);dishGroup.append(svgNode('circle',{cx:105,cy:88,r:79,class:'dish-rim'}));
+ const cells=svgNode('g');dishGroup.append(cells);
+ // LCG seed 731; stratified positions fill the disk without overlaps.
+ let seed=731;const random=()=>{seed=(Math.imul(1664525,seed)+1013904223)>>>0;return seed/4294967296;};
+ const positions=[];for(let y=-68;y<=68;y+=9)for(let x=-68;x<=68;x+=9){const px=x+(random()-.5)*3,py=y+(random()-.5)*3;if(px*px+py*py<72*72)positions.push([105+px,88+py]);}
+ for(let i=positions.length-1;i>0;i--){const j=Math.floor(random()*(i+1));[positions[i],positions[j]]=[positions[j],positions[i]];}
+ const dots=positions.map(([cx,cy])=>{const dot=svgNode('circle',{cx,cy,r:2.9,class:'dish-cell'});cells.append(dot);return dot;});
  const curveGroup=svgNode('g',{transform:'translate(-140 12) scale(1.5 1.35)'});svg.append(curveGroup);curveGroup.append(svgNode('path',{d:'M280 14V151H752',class:'dish-axis'}),svgNode('text',{x:288,y:17},tr('x7_cells')),svgNode('text',{x:752,y:174,'text-anchor':'end'},tr('x7_time')));
- const hareCurve=svgNode('path',{class:'dish-curve hare'}),foxCurve=svgNode('path',{class:'dish-curve fox'}),hareHead=svgNode('circle',{r:4,class:'meadow-hare'}),foxHead=svgNode('circle',{r:4,class:'meadow-fox'});
- const hareTag=svgNode('text',{class:'meadow-tag hare'},tr('lv_hares_short')),foxTag=svgNode('text',{class:'meadow-tag fox'},tr('lv_foxes_short'));
- curveGroup.append(hareCurve,foxCurve,hareHead,foxHead,hareTag,foxTag);target.append(svg);
- function geometry(){const narrow=innerWidth<760;svg.setAttribute('viewBox',narrow?'0 0 400 480':'0 0 1020 260');meadow.setAttribute('transform',narrow?'translate(58 0) scale(1.35)':'scale(1.35)');curveGroup.setAttribute('transform',narrow?'translate(-120 250) scale(.65 1.15)':'translate(-140 12) scale(1.5 1.35)');}
+ const curve=svgNode('path',{class:'dish-curve'}),head=svgNode('circle',{r:4,class:'dish-cell'});curveGroup.append(curve,head);target.append(svg);
+ // Stack the two scenes in the same accessible illustration on small screens.
+ function geometry(){const narrow=innerWidth<760;svg.setAttribute('viewBox',narrow?'0 0 400 480':'0 0 1020 260');dishGroup.setAttribute('transform',narrow?'translate(58 0) scale(1.35)':'scale(1.35)');curveGroup.setAttribute('transform',narrow?'translate(-120 250) scale(.65 1.15)':'translate(-140 12) scale(1.5 1.35)');}
  geometry();window.addEventListener('resize',geometry);
- const Y=v=>151-130*v/4,X=t=>280+472*t;
- function draw(progress,dtSec=0){if(!Number.isFinite(progress))progress=0;if(!Number.isFinite(dtSec))dtSec=0;const i=Math.max(0,Math.min(steps,Math.round(progress*steps))),[h,f]=traj[i];sync(h,f);move(dtSec);
-  for(const [path,head,tag,j] of [[hareCurve,hareHead,hareTag,0],[foxCurve,foxHead,foxTag,1]]){let d='';for(let k=0;k<=i;k+=5)d+=(d?'L':'M')+X(k/steps).toFixed(2)+','+Y(traj[k][j]).toFixed(2);
-   path.setAttribute('d',d);head.setAttribute('cx',X(i/steps));head.setAttribute('cy',Y(traj[i][j]));tag.setAttribute('x',X(i/steps)+8);tag.setAttribute('y',Y(traj[i][j])+4);}
-  target.dataset.progress=String(progress);}
+ // K=1 (normalised occupancy), n0=.012, r=10, t in [0,1], 6000 ms.
+ const occupancy=t=>1/(1+(1/.012-1)*Math.exp(-10*t));
+ function draw(progress){const count=Math.round(occupancy(progress)*dots.length);dots.forEach((dot,i)=>dot.setAttribute('visibility',i<count?'visible':'hidden'));
+  const points=Array.from({length:Math.ceil(progress*160)+1},(_,i)=>Math.min(i/160,progress));let d='';
+  for(const t of points)d+=(d?'L':'M')+(280+472*t).toFixed(2)+','+(151-130*occupancy(t)).toFixed(2);
+  curve.setAttribute('d',d);head.setAttribute('cx',280+472*progress);head.setAttribute('cy',151-130*occupancy(progress));target.dataset.progress=String(progress);
+ }
  const reduced=window.matchMedia('(prefers-reduced-motion: reduce)');
  let frame=0,visible=typeof IntersectionObserver!=='function',elapsed=0,last=0;
- function tick(now){const step=Math.max(0,Math.min(50,now-last));elapsed=(elapsed+Math.max(0,now-last))%26000;last=now;draw(Math.min(1,elapsed/24000),step/1000);frame=requestAnimationFrame(tick);}
+ function tick(now){elapsed=(elapsed+now-last)%7500;last=now;draw(Math.min(1,elapsed/6000));frame=requestAnimationFrame(tick);}
  function update(){cancelAnimationFrame(frame);frame=0;
   if(reduced.matches){draw(1);return;}
   if(visible&&!document.hidden){last=performance.now();frame=requestAnimationFrame(tick);}
  }
- reduced.addEventListener?.('change',()=>{draw(reduced.matches?1:Math.min(1,elapsed/24000));update();});
+ reduced.addEventListener?.('change',()=>{draw(reduced.matches?1:Math.min(1,elapsed/6000));update();});
  document.addEventListener('visibilitychange',update);
  draw(reduced.matches?1:0);
  if(typeof IntersectionObserver==='function'){const observer=new IntersectionObserver(entries=>{visible=entries.some(e=>e.isIntersecting);update();},{threshold:.1});observer.observe(target);}else{const visibility=()=>{const r=target.getBoundingClientRect();visible=r.bottom>0&&r.top<innerHeight;update();};window.addEventListener('scroll',visibility,{passive:true});window.addEventListener('resize',visibility);visibility();}
@@ -155,16 +139,14 @@ function growthRule(){const rate=+$('rate').value,capacity=+$('capacity').value;
 math($("predator-equation"),predator.equation.map((s,i)=>`\\frac{d${i?'v':'u'}}{dt}=${s.replaceAll('x_0','u').replaceAll('x_1','v').replaceAll('*','\\,')}`).join('\\qquad '));
 function predatorDraw(){const i=+$("predator-time").value,t=predator.t.slice(0,i+1),x=predator.x.slice(0,i+1);$("predator-value").value=fmt(predator.t[i]);chart($("predator-chart"),[{x:t,y:x.map(r=>r[0]),kind:'truth',label:tr('prey')},{x:t,y:x.map(r=>r[1]),kind:'model',label:tr('predators')}],{title:tr('j180'),yLabel:tr('j181')});chart($("phase-chart"),[{x:predator.x.map(r=>r[0]),y:predator.x.map(r=>r[1]),kind:'truth',label:tr('j183')}],{title:tr('j184'),xLabel:tr('j185'),yLabel:tr('j186'),point:predator.x[i]});}
 $("predator-time").max=predator.t.length-1;$("predator-time").value=predator.t.length-1;$("predator-time").addEventListener('input',predatorDraw);predatorDraw();
-// Two equations (hares, foxes), six blocks each; indices point into the two-state catalogue.
-const playBlocks=[0,1,2,3,4,5],playCards=[];[0,1].forEach(e=>playBlocks.forEach(j=>playCards.push({e,j})));
-const coefficientLimits=playCards.map(()=>[-5,5,.01]),coefficientButtonSteps=playCards.map(()=>.1);
-const initialCoefficients=playCards.map(()=>0),coeff=initialCoefficients.slice(),enabled=playCards.map(()=>false),termControls=[];
+// Per-term precision makes the data-scale answer reachable without revealing it.
+const coefficientLimits=[[-10,10,.01],[-2,2,.001],[-.03,.03,.00001],[-.001,.001,.000001],[-2,2,.01],[-2,2,.01]];
+const coefficientButtonSteps=[.1,.1,.001,.0001,.1,.1];
+const initialCoefficients=[0,.23,0,0,0,0],coeff=initialCoefficients.slice(),enabled=Array(6).fill(false),termControls=[];
 $('challenge-deck-start').textContent=tr('x7_challenge_start',{noise:pct(teaching.sigma)});
 let hintCount=0;
-playCards.forEach(({e,j},i)=>{
- if(j===playBlocks[0]){const head=el('div',tr(e?'lv_eq_fox':'lv_eq_hare'),'term-group '+(e?'fox':'hare'));$('term-cards').append(head);}
- const name=terms[j];
- const card=el('div',undefined,'term-card '+(e?'fox':'hare')),label=el('label',name),check=el('input');check.type='checkbox';check.checked=enabled[i];check.setAttribute('aria-label',tr('include_term',{v0:(e?'dF/dt: ':'dH/dt: ')+name}));label.append(check);
+terms.forEach((name,i)=>{
+ const card=el('div',undefined,'term-card'),label=el('label',name),check=el('input');check.type='checkbox';check.checked=enabled[i];check.setAttribute('aria-label',tr('include_term',{v0:name}));label.append(check);
  const controls=el('div',undefined,'coefficient-controls'),range=el('input'),typed=el('input'),[min,max,step]=coefficientLimits[i];range.type='range';typed.type='number';
  range.min=min;range.max=max;range.step=step;
  for(const input of [range,typed]){input.value=coeff[i];input.setAttribute('aria-label',tr('j188',{v0:name}));}
@@ -217,7 +199,7 @@ function soloModel(observations,times,config,feature){
  return {blocks,winner:first.addition,floor,explainable,normalized:floor!==null&&1-floor>0,D,rows,x:rows.map(({w})=>(times[w[0]]+times[w[1]])/2)};
 }
 function soloNumber(value){return numberText(value).replaceAll('-','−');}
-function soloEquation(block){return 'dH/dt = '+soloNumber(block.coefficient)+(block.term?' '+terms[block.term]:'');}
+function soloEquation(block){return 'du/dt = '+soloNumber(block.coefficient)+(block.term?' '+terms[block.term]:'');}
 function initSolo(){
  const model=soloModel(teaching.observed,measuredTime,LVC,LIVE.featured[0]),buttons=[];
  const percent=value=>(value*100).toLocaleString(language,{minimumFractionDigits:1,maximumFractionDigits:1})+' %';
@@ -237,25 +219,23 @@ function initSolo(){
  $('solo-result').textContent=tr('x9_result',{winner:terms[model.winner],explain_constant:model.winner===0?tr('x9_constant'):''});
  window.WispSolo={model,select};select(model.winner);
 }
-function lvEquationTex(rows){return '\\begin{aligned}'+rows.map(([lhs,support,c])=>lhs+'&='+(support.length?support.map((j,i)=>`${i&&c[i]>=0?'+':''}${fmt(c[i],4)}\\,${texTerms[j]}`).join(' '):'0')).join('\\\\')+'\\end{aligned}';}
 function play(){
- const states=teaching.states,observations=states.flat(),limit=2*Math.max(...observations.map(Math.abs));
- const active=[0,1].map(e=>playCards.map((c,i)=>({...c,i})).filter(c=>c.e===e&&enabled[c.i]));
- math($('play-equation'),lvEquationTex([['\\frac{dH}{dt}',active[0].map(c=>c.j),active[0].map(c=>coeff[c.i])],['\\frac{dF}{dt}',active[1].map(c=>c.j),active[1].map(c=>coeff[c.i])]]));
- const curve=rk4(measuredTime,states[0].slice(),x=>{const phi=W.basis2(x);return active.map(eq=>eq.reduce((s,c)=>s+coeff[c.i]*phi[c.j],0));});
- const clip=v=>Number.isFinite(v)&&Math.abs(v)<=limit?v:NaN;
- const series=[{x:measuredTime,y:states.map(r=>r[0]),kind:'data',style:'dots',label:tr('lv_hares')},{x:measuredTime,y:states.map(r=>r[1]),kind:'fox-data',style:'dots',label:tr('lv_foxes')},
-  {x:measuredTime,y:curve.map(r=>clip(r[0])),kind:'hare-model',label:tr('lv_model_hares')},{x:measuredTime,y:curve.map(r=>clip(r[1])),kind:'fox-model',label:tr('lv_model_foxes')}];
- if(solutionShown)series.push({x:measuredTime,y:teaching.states_truth.map(r=>r[0]),kind:'truth',style:'dashed'},{x:measuredTime,y:teaching.states_truth.map(r=>r[1]),kind:'truth',style:'dashed'});
- chart($('play-chart'),series,{legend:false,yLabel:tr('lv_count')});
- const flat=curve.flat(),score=observationR2(flat,observations);
- const clipped=flat.some(v=>!Number.isFinite(v)||Math.abs(v)>limit),status=$('play-status');status.dataset.score=Number.isFinite(score)?String(score):'unavailable';
+ const observations=measuredNoise(teaching?.sigma||.03),limit=2*Math.max(...observations.map(Math.abs)),indices=enabled.map((v,i)=>v?i:-1).filter(i=>i>=0),c=indices.map(i=>coeff[i]);
+ const tex=equation(indices,c);math($('play-equation'),tex);
+ const curve=rk4(measuredTime,[observations[0]],x=>[W.basis(x[0]).reduce((s,v,i)=>s+(enabled[i]?v*coeff[i]:0),0)]).map(x=>x[0]);
+ const readerState={t:measuredTime,curve,clipped:curve.map(v=>Number.isFinite(v)&&Math.abs(v)<=limit?v:NaN)};
+ const series=[{x:measuredTime,y:observations,kind:'data',style:'dots',label:tr('j214')},{x:measuredTime,y:readerState.clipped,kind:'model',label:tr('x8_true')}];
+ if(solutionShown)series.push({x:measuredTime,y:measuredTruth,kind:'truth',style:'dashed'});
+ chart($('play-chart'),series,{legend:false});
+ const score=observationR2(curve,observations);
+ const clipped=curve.some(v=>!Number.isFinite(v)||Math.abs(v)>limit),status=$('play-status');status.dataset.score=Number.isFinite(score)?String(score):'unavailable';
  status.textContent=Number.isFinite(score)?tr('x6_meter',{value:fmt(score,4),grade:tr(score>=.98?'x6_veryclose':score>=.9?'x6_close':score>=.5?'x6_nearer':'x6_far')}):tr('x6_unstable');
  $('challenge-meter').value=Number.isFinite(score)?Math.max(0,Math.min(1,score)):0;
  if(clipped&&Number.isFinite(score))status.textContent+=' '+tr('j199');
+
 }
 $('challenge-hint').addEventListener('click',()=>{if(hintCount>=3)return;hintCount++;$('challenge-hints').append(el('li',tr('x6_hint'+hintCount)));$('challenge-hint').disabled=hintCount===3;});
-$('play-reset').addEventListener('click',()=>{toggleSolution(false);coeff.splice(0,coeff.length,...initialCoefficients);enabled.splice(0,enabled.length,...enabled.map(()=>false));termControls.forEach(({check,sync},i)=>{check.checked=enabled[i];sync();});play();});play();
+$('play-reset').addEventListener('click',()=>{toggleSolution(false);coeff.splice(0,6,...initialCoefficients);enabled.splice(0,6,...Array(6).fill(false));termControls.forEach(({check,sync},i)=>{check.checked=enabled[i];sync();});play();});play();
 options($('dimensions'),LIVE.catalogues.map(c=>c.dim));
 function catalogue(){const c=LIVE.catalogues.find(c=>c.dim===+$('dimensions').value);$("combination-count").textContent=tr('j202',{v0:(c.count),v1:(BigInt(c.combinations).toLocaleString(language)),v2:(c.dim),v3:(c.dim===1?'':'s')});$("catalogue-list").textContent=c.terms.join(' · ');}
 $('dimensions').addEventListener('change',catalogue);catalogue();
@@ -470,28 +450,28 @@ function secondNumber(value){return numberText(value).replaceAll('-','−');}
 function thresholdNumber(value){return numberText(value,15);}
 // Presentation protocol data, distinct from the unchanged scientific result contract.
 function fifthModel(live,protocol){
- // Lotka-Volterra: every candidate is a joint state of both equations, fitted together (C1000 refit records).
  const feature=live.featured[0],observation=live.teaching;
  if(feature.cell_id!==observation.cell_id)throw Error('Chapter-five teaching cell mismatch');
- const joint=new Map(feature.joint_path.map(p=>[p.candidate_id,p]));
- const candidates=feature.candidates.map(stored=>{
-  const start=joint.get(stored.row.candidate_id),all=JSON.parse(stored.row.active_idxs);
-  if(!start||JSON.stringify(start.active_idxs)!==JSON.stringify(all))throw Error('Chapter-five weak start mismatch');
-  const params=JSON.parse(stored.row.params),hare=all[0].length;
-  return {...stored,support:all[0].map(j=>j-1),fox:all[1].map(j=>j-1),joint:all.map(eq=>eq.map(j=>j-1)),p0:start.p0.slice(0,hare),p0All:start.p0.slice(),
-   params:params.slice(0,hare),paramsAll:params,start:JSON.parse(stored.row.fitted_initial_state),N:+stored.row.n_samples,k:+stored.row.k,mse:+stored.row.mse};
+ const canonical=s=>JSON.stringify(s.slice().sort((a,b)=>a-b));
+ const candidates=feature.stop_reference.supports.map(support=>{
+  const matches=feature.candidates.filter(c=>canonical(JSON.parse(c.row.active_idxs)[0].map(j=>j-1))===canonical(support));
+  if(matches.length!==1)throw Error('Chapter-five support must identify one candidate');
+  const stored=matches[0],start=feature.path.find(p=>p.candidate_id===stored.row.candidate_id);
+  if(!start||canonical(start.active_idxs[0].map(j=>j-1))!==canonical(support))throw Error('Chapter-five weak start mismatch');
+  return {...stored,support:support.slice(),p0:start.p0.slice(),params:JSON.parse(stored.row.params),N:+stored.row.n_samples,k:+stored.row.k,mse:+stored.row.mse};
  });
- const bound=+protocol.coefficient_bound_final||1000;
+ const gate=live.gate_status,bound=gate.coefficient_bound==='pending'?protocol.coefficient_bound:+gate.coefficient_bound;
+ if(!Number.isFinite(bound)||bound<=0)throw Error('Invalid coefficient bound gate');
  candidates.forEach(c=>c.atBound=c.params.map(p=>Math.abs(p)===bound));
  const winner=candidates.reduce((a,b)=>b.bic<a.bic?b:a);
- const truth=JSON.stringify(feature.truth_support.map(eq=>eq.map(j=>j-1)));
- const weak=candidates.find(c=>JSON.stringify(c.joint)===truth);
+ const weak=candidates.find(c=>canonical(c.support)===canonical(feature.truth_support[0].map(j=>j-1)));
  if(!weak)throw Error('Chapter-five truth-support candidate is missing');
- // Only this stored weak start is simulated here (both equations, from the first measurement).
- const rhs=(c,coef)=>state=>{const phi=W.basis2(state);let i=0;return c.joint.map(eq=>eq.reduce((s,j)=>s+coef[i++]*phi[j],0));};
- const weakCurve=rk4(observation.t,observation.states[0].slice(),rhs(weak,weak.p0All)).map(row=>row[0]);
- return {candidates,winner,weak,weakCurve,bound,initial:'estimated',provisional:false,
-  share:1-Math.exp(-Math.log(winner.N)/winner.N),legacy:null};
+ // Only this stored weak start is simulated here. Fitted predictions are verified display curves.
+ const weakCurve=rk4(observation.t,[observation.observed[0]],state=>[weak.p0.reduce((sum,p,i)=>sum+p*W.basis(state[0])[weak.support[i]],0)]).map(row=>row[0]);
+ const legacy=feature.candidates.filter(c=>!candidates.some(p=>p.row.candidate_id===c.row.candidate_id));
+ return {candidates,winner,weak,weakCurve,bound,initial:gate.initial_state==='pending'?protocol.initial_state:gate.initial_state,
+  provisional:gate.initial_state==='pending'||gate.coefficient_bound==='pending',
+  share:1-Math.exp(-Math.log(winner.N)/winner.N),legacy:legacy.length?legacy.reduce((a,b)=>b.bic<a.bic?b:a):null};
 }
 function fifthAt(curve,time){
  if(!curve||time<curve.t[0]||time>curve.t.at(-1))return NaN;
@@ -499,7 +479,7 @@ function fifthAt(curve,time){
  const a=curve.model[j-1][0],b=curve.model[j][0];return a+(b-a)*(time-curve.t[j-1])/(curve.t[j]-curve.t[j-1]);
 }
 function fifthSettings(model){return tr('x19_settings',{bound:fmt(model.bound),initial:tr(model.initial==='estimated'?'gate_initial_estimated':'x19_first')})+(model.provisional?' '+tr('x19_provisional',{gate:'G2'}):'');}
-function secondEquation(support,coefficients){return 'dH/dt = '+coefficients.map((c,i)=>(i?(c<0?' − ':' + '):c<0?'−':'')+secondNumber(Math.abs(c))+(support[i]?'·'+terms[support[i]]:'')).join('');}
+function secondEquation(support,coefficients){return 'du/dt = '+coefficients.map((c,i)=>(i?(c<0?' − ':' + '):c<0?'−':'')+secondNumber(Math.abs(c))+(support[i]?'·'+terms[support[i]]:'')).join('');}
 function initChapterOne(){
  if(!$('p-c1-data'))return;
  const m=window.WispSolo.model,t=measuredTime,x=teaching.observed,clean=teaching.truth,n=t.length;
@@ -550,7 +530,7 @@ function initChapterOne(){
  $('c1-story-text-10').textContent+=' '+tr('x10_next');
  document.querySelectorAll('[data-c1-eye]').forEach(e=>e.textContent=tr('x10_eye',{i:e.dataset.c1Eye,n:states.length}));
  const first=two.constant;
- const twoArgs={before:pct(first.share),after:pct(twoWinner.share),maximum:Math.max(...teaching.states.map(r=>Math.abs(W.basis2(r)[two.winner]))).toLocaleString(language,{maximumSignificantDigits:2}),term:terms[two.winner],first:terms[first.term],eq:soloEquation(first),c:soloNumber(first.coefficient)};
+ const twoArgs={before:pct(first.share),after:pct(twoWinner.share),maximum:(teaching.states?Math.max(...teaching.states.map(r=>Math.abs(W.basis2(r)[two.winner]))):Math.max(...x.map(v=>W.basis(v)[two.winner]))).toLocaleString(language,{maximumSignificantDigits:2}),term:terms[two.winner],first:terms[first.term],eq:soloEquation(first),c:soloNumber(first.coefficient)};
  Array.from({length:6},(_,i)=>i).forEach(i=>{
   $('c2-text-'+i).textContent=tr('x13_text_'+i,twoArgs);
  });
@@ -636,7 +616,7 @@ function initChapterOne(){
  // Noise sweep: zoom in, six points slowly, then an accelerating sweep over all points.
  const noiseIn=800,noiseSlow=6,noiseSlowEnd=noiseIn+noiseSlow*1000,noiseFastEnd=noiseSlowEnd+3000;
  const noiseCount=seq=>seq<noiseIn?0:seq<noiseSlowEnd?(seq-noiseIn)/1000:noiseSlow+(n-noiseSlow)*clamp((seq-noiseSlowEnd)/3000)**2;
- const durations={data:900,'noise-visible':2300,slope:3800,secants:16100,windows:12900,'error-empty':2900,fit:4900,every:16900,'noise-why':900,'noise-estimate':noiseFastEnd+4700,percent:900,solution:900};
+ const WINDOW_PHASE=4200,durations={data:900,'noise-visible':6000,slope:10500,secants:16100,windows:longerLengths.length*WINDOW_PHASE+3300,'error-empty':2900,fit:4900,every:16900,'noise-why':900,'noise-estimate':noiseFastEnd+4700,percent:900,solution:900};
  Object.assign(durations,{'c2-standing':900,'c2-residual':3900,'c2-joint':jointPause+sortAt+1900,'c2-every':sortAt+1900,'c2-error':3900,'c2-solution':900});
  Object.assign(durations,{'c3-standing':1200,'c3-probe':3600,'c3-threshold':3600,'c3-linear':16000,'c3-quadratic':16000,'c3-compare':4200,'c3-next':4200});
  const c3Chips=terms.map(()=>({box:node('rect',{class:'c3-chip',rx:6},'rect',[0,0,0,0,0]),text:label('c3-chip-label')}));
@@ -967,7 +947,7 @@ function initChapterOne(){
   c5Recap.forEach(id=>nodes[id].e.classList.toggle('highlight',false));
   const text=(value,xx,yy)=>{const id=c5Labels[labelIndex++];nodes[id].e.textContent=value;put(id,[xx,yy,1]);};
   const chips=(candidate,slot,xx,yy,compact=false)=>{const h=compact?19:25,gap=compact?10:18;let cx=xx;
-   [[candidate.support,slot.chips],[candidate.fox,slot.foxChips]].forEach(([support,pool],e)=>{if(e)cx+=gap;support.forEach(term=>{const chip=pool[term],w=compact?Math.max(26,7*terms[term].length+8):54;nodes[chip.box].e.classList.toggle('winner',candidate===five.winner&&state==='c5-winner');
+   [[candidate.support,slot.chips],[candidate.fox||[],slot.foxChips]].forEach(([support,pool],e)=>{if(e)cx+=gap;support.forEach(term=>{const chip=pool[term],w=compact?Math.max(26,7*terms[term].length+8):54;nodes[chip.box].e.classList.toggle('winner',candidate===five.winner&&state==='c5-winner');
     put(chip.box,[cx,yy,w,h,1]);nodes[chip.text].e.textContent=terms[term];put(chip.text,[cx+(compact?4:8),yy+(compact?14:18),1]);cx+=w+(compact?3:8);});if(!support.length)cx+=compact?10:20;});};
   const scores=c=>tr('x19_scores',{mse:fmt(c.mse,5),r:fmt(c.row.reconstruction_r2_arithmetic,5)});
   const bounds=c=>c.atBound.some(Boolean)?tr('x19_bound',{terms:c.support.filter((_,j)=>c.atBound[j]).map(j=>terms[j]).join(', ')}):'';
@@ -976,7 +956,7 @@ function initChapterOne(){
   function plot(c,slot,left,top,width,height,blend=1){
    const X=v=>left+width*(v-t[0])/(t.at(-1)-t[0]),Y=v=>top+height-height*(v-ymin)/(ymax-ymin);
    slot.axes.forEach((id,i)=>put(id,i?[left,top+height,left+width,top+height,1]:[left,top,left,top+height,1]));
-   if(height>=100)text(tr('j157'),left+width*.7,top+height+31);text('H',left+8,top+14);
+   if(height>=100)text(tr('j157'),left+width*.7,top+height+31);text('u',left+8,top+14);
    text(fmt(t[0]),left,top+height+15);text(fmt(t.at(-1)),left+width-24,top+height+15);
    text(fmt(ymin),left-37,top+height);text(fmt(ymax),left-37,top+4);
    slot.data.forEach((id,j)=>put(id,[X(t[j]),Y(x[j]),1]));
@@ -1035,8 +1015,8 @@ function initChapterOne(){
     three.rounds.map(r=>terms[r.addition]).join(' → '),
     tr('x19_recap_removed',{terms:three.rounds.flatMap(r=>r.removed).map(j=>terms[j]).join(', ')||tr('j262')}),
     tr('x19_each_result',{count:fmt(five.candidates.length)}),
-    tr('x19_each_best',{count:fmt(five.candidates.length),r:fmt(five.winner.row.reconstruction_r2_arithmetic,5)}),
-    'H: '+five.winner.support.map(j=>terms[j]).join(', ')+' · F: '+five.winner.fox.map(j=>terms[j]).join(', ')+' · '+tr('x19_selected',{bic:fmt(five.winner.bic,7)})
+    five.candidates.map(c=>'['+c.support.map(j=>terms[j]).join(', ')+']: '+fmt(c.row.reconstruction_r2_arithmetic,5)).join(' · '),
+    '['+five.winner.support.map(j=>terms[j]).join(', ')+'] · '+tr('x19_selected',{bic:fmt(five.winner.bic,7)})
    ];
    const active=Math.min(stages.length-1,Math.floor(ms/2000));
    put(c5Loop,[17,116,772,182,1]);text('↻ '+tr('x19_recap_loop'),40,134);
@@ -1122,18 +1102,20 @@ function initChapterOne(){
   let zoom=0,windowLength=1;
   const start=t.findIndex(v=>v>=2),constructionLengths=longerLengths;
   const pairBegin=2200,pairEnd=11800,pairOut=12600;
-  const windowEnd=longerLengths.length*2400;
+  const windowEnd=longerLengths.length*WINDOW_PHASE;
   if(state==='secants'||state==='windows'){
    zoom=state==='secants'?(seq<600?0:seq<2200?ease((seq-600)/1600):seq<pairEnd?1:1-ease((seq-pairEnd)/800)):(seq<windowEnd?1:1-ease((seq-windowEnd)/800));
    const pan=Math.min(7,Math.max(0,Math.floor((seq-pairBegin)/1200)))+ (seq<pairEnd-1200?ease(((seq-pairBegin)%1200-1000)/200):0);
-   const begin=state==='secants'?start+pan-2:start,end=state==='secants'?begin+6:start+18;
+   const phaseIndex=Math.min(longerLengths.length-1,Math.floor(seq/WINDOW_PHASE)),phaseLength=longerLengths[phaseIndex],previousLength=phaseIndex?longerLengths[phaseIndex-1]:3;
+   const span=mix(6*previousLength,6*phaseLength,ease((seq%WINDOW_PHASE)/700));
+   const begin=state==='secants'?start+pan-2:start,end=state==='secants'?begin+6:Math.min(n-1,start+span);
    // The pair phase zooms in height as well, so a neighbour triangle has a visible rise.
-   const visible=state==='secants'?x.slice(Math.max(0,Math.floor(begin)),Math.min(n,Math.ceil(end)+1)):x.slice(start-2,start+19);
+   const visible=state==='secants'?x.slice(Math.max(0,Math.floor(begin)),Math.min(n,Math.ceil(end)+1)):x.slice(start-2,Math.min(n,Math.ceil(end)+2));
    const vlo=Math.min(...visible),vhi=Math.max(...visible),margin=(vhi-vlo)*(state==='secants'?.25:.1)||1,lo=vlo-margin,hi=vhi+margin;
    const at=i=>t[Math.floor(i)]+(i%1)*(t[Math.floor(i)+1]-t[Math.floor(i)]);
    domain=[mix(t[0],at(begin),zoom),mix(t.at(-1),at(end),zoom)];
    range=[mix(uRange[0],lo,zoom),mix(uRange[1],hi,zoom)];
-   windowLength=state==='windows'?constructionLengths[Math.min(constructionLengths.length-1,Math.floor(seq/2400))]:1;
+   windowLength=state==='windows'?constructionLengths[Math.min(constructionLengths.length-1,Math.floor(seq/WINDOW_PHASE))]:1;
   }
   if(changes){range=[-changeBound,changeBound];top=state==='fit'?240:140;}
   nodes[predictionPath].e.setAttribute('clip-path',changes?'url(#story-top-clip)':'url(#story-x-clip)');nodes[optimumPath].e.setAttribute('clip-path','url(#story-top-clip)');
@@ -1152,7 +1134,7 @@ function initChapterOne(){
    put(axisLines[j],[left,Y(v),right,Y(v),1]);text(axisLabels[j],fmt(v),left-10,Y(v)+4,j===0?0:1);nodes[axisLabels[j]].e.setAttribute('text-anchor','end');
    text(axisLabels[j+5],fmt(tt),X(tt),split?bottom+25:state==='noise-estimate'?326:416);
   }
-  put(axisLines[5],[left,bottom,right,bottom,1]);text(axisLabels[10],changes?tr('x9_change'):'H',left,state==='every'?120:24);text(axisLabels[11],tr('j157'),right-90,split?bottom+42:state==='noise-estimate'?350:440);
+  put(axisLines[5],[left,bottom,right,bottom,1]);text(axisLabels[10],changes?tr('x9_change'):'u',left,state==='every'?120:24);text(axisLabels[11],tr('j157'),right-90,split?bottom+42:state==='noise-estimate'?350:440);
   if(split){put(axisLines[6],[left,R(0),right,R(0),1]);text(axisLabels[12],tr('x12_axis_slope'),left,lowerTop-15);text(axisLabels[13],tr('j157'),right-90,440);
    [-lowerBound,0,lowerBound].forEach((v,j)=>{text(axisLabels[14+j],fmt(v),left-10,R(v)+4);nodes[axisLabels[14+j]].e.setAttribute('text-anchor','end');});
    put(axisLines[7],[left,lowerTop,left,lowerBottom,1]);}
@@ -1161,15 +1143,15 @@ function initChapterOne(){
   const plotU=!changes&&state!=='percent';
   data.forEach((id,i)=>put(id,[X(t[i]),Y(x[i]),plotU&&inside(t[i])?1:0]));
   const curveOpacity=state==='noise-visible'||state==='slope'||split?1:0;
-  const reveal=state==='noise-visible'?clamp(seq/900):1;
+  const reveal=state==='noise-visible'?clamp(seq/2600):1;
   put(truthPath,[...t.flatMap((v,i)=>[X(v),Y(clean[i])]),curveOpacity]);
   nodes[truthPath].e.style.strokeDasharray=state==='noise-visible'?'1 1':'';
   nodes[truthPath].e.setAttribute('pathLength','1');nodes[truthPath].e.style.strokeDashoffset=String(1-reveal);
   text(truthLabel,split?tr('x14_true_slope'):tr('x12_truth'),split?590:left+10,split?(state==='windows'?190:260):top+20,curveOpacity);nodes[truthLabel].e.classList.toggle('story-reference-label',split);
   // All scientific values are attached unscaled for the numerical DOM assertions.
-  if(state==='noise-visible')sticks.forEach((id,i)=>{put(id,[X(t[i]),Y(x[i]),X(t[i]),Y(clean[i]),inside(t[i])?clamp((seq-900)/500):0]);nodes[id].e.dataset.value=String(Math.abs(x[i]-clean[i]));});
+  if(state==='noise-visible')sticks.forEach((id,i)=>{put(id,[X(t[i]),Y(x[i]),X(t[i]),Y(clean[i]),inside(t[i])?clamp((seq-2600)/1600):0]);nodes[id].e.dataset.value=String(Math.abs(x[i]-clean[i]));});
   if(state==='slope'){
-   const i=Math.min(n-2,Math.floor(clamp(seq/2900)*(n-2))),slope=trueRates[i],dt=(t.at(-1)-t[0])*.25,ta=Math.max(t[0],Math.min(t.at(-1)-dt,t[i]-dt/2)),tb=ta+dt;
+   const i=Math.min(n-2,Math.floor(clamp(seq/9500)*(n-2))),slope=trueRates[i],dt=(t.at(-1)-t[0])*.25,ta=Math.max(t[0],Math.min(t.at(-1)-dt,t[i]-dt/2)),tb=ta+dt;
    put(marker,[X(t[i]),Y(clean[i]),1]);put(tangent,[X(ta),Y(clean[i]+(ta-t[i])*slope),X(tb),Y(clean[i]+(tb-t[i])*slope),1]);text(readout,tr('x12_slope',{value:fmt(slope)}),Math.max(left+15,Math.min(right-230,X(t[i])+15)),Math.max(top+45,Y(clean[i])-35));
    const xx=X(t[i]),yy=Y(clean[i]),dx=(right-left)*.08*(X(t[i])>right-100?-1:1),dy=Y(clean[i]+slope*(domain[1]-domain[0])*.08*(dx<0?-1:1));
    put(triangle[0],[xx,yy,xx+dx,yy,1]);put(triangle[1],[xx+dx,yy,xx+dx,dy,1]);
@@ -1179,7 +1161,7 @@ function initChapterOne(){
    const neighbour=state==='secants',intro=neighbour&&seq<pairOut;
    const sweep=clamp((seq-pairOut)/2600),pair=Math.min(7,Math.max(0,Math.floor((seq-pairBegin)/1200)));
    const active=neighbour?seq>=pairBegin&&seq<pairEnd:seq<windowEnd;
-   const localTime=neighbour?seq-pairBegin-pair*1200:seq%2400;
+   const localTime=neighbour?seq-pairBegin-pair*1200:seq%WINDOW_PHASE;
    const a=neighbour?start+pair:start,b=a+windowLength;
    const draw=ease(localTime/350),labels=clamp((localTime-350)/150),written=clamp((localTime-500)/150),drop=ease((localTime-750)/400);
    if(neighbour&&seq<pairBegin){
@@ -1199,25 +1181,30 @@ function initChapterOne(){
     put(clipped[i],[xx,yy,xx-3,yy+dir*6,xx+3,yy+dir*6,outside?opacity:0]);
    });
    historyTriangles.forEach((ids,j)=>{
-    const aa=start+j,bb=aa+1,visible=0;
-    put(ids[0],[X(t[aa]),Y(x[aa]),X(t[bb]),Y(x[aa]),visible]);
-    put(ids[1],[X(t[bb]),Y(x[aa]),X(t[bb]),Y(x[bb]),visible]);
-    put(ids[2],[X(t[aa]),Y(x[aa]),X(t[bb]),Y(x[bb]),visible]);
+    // Step 5: six consecutive deltas of the current window length, drawn one after another.
+    const six=!neighbour&&seq<windowEnd&&j<6,aa=six?start+j*windowLength:start+j,bb=Math.min(n-1,aa+(six?windowLength:1));
+    const grow=six?ease((localTime-700-j*450)/350):0,visible=six&&localTime>=700+j*450?1:0;
+    const xb=six?mix(X(t[aa]),X(t[bb]),grow):X(t[bb]),ybb=six?mix(Y(x[aa]),Y(x[bb]),grow):Y(x[bb]);
+    put(ids[0],[X(t[aa]),Y(x[aa]),xb,Y(x[aa]),visible]);
+    put(ids[1],[xb,Y(x[aa]),xb,ybb,visible]);
+    put(ids[2],[X(t[aa]),Y(x[aa]),xb,ybb,visible]);
+    ids.forEach(id=>nodes[id].e.classList.toggle('story-long-triangle',six));
    });
    if(!neighbour)lengthClouds.forEach((cloud,j)=>{
-    const progress=clamp((seq-j*2400)/1400);
+    const progress=clamp((seq-j*WINDOW_PHASE-700)/3200);
     cloud.dots.forEach((id,i)=>{const row=cloud.rows[i],v=row?.rate??0;
-     put(id,[X(row?.time??t[0]),R(Math.max(-lowerBound,Math.min(lowerBound,v))),row&&inside(row.time)&&i<Math.floor(progress*cloud.rows.length)?(j===Math.min(lengthClouds.length-1,Math.floor(seq/2400))?1:0):0]);
+     put(id,[X(row?.time??t[0]),R(Math.max(-lowerBound,Math.min(lowerBound,v))),row&&inside(row.time)&&i<Math.floor(progress*cloud.rows.length)?(j===Math.min(lengthClouds.length-1,Math.floor(seq/WINDOW_PHASE))?1:0):0]);
      nodes[id].e.dataset.value=String(v);nodes[id].e.dataset.length=String(cloud.length);
     });
     text(cloud.label,tr('x14_length',{k:cloud.length}),590,298+j*34);nodes[cloud.label].e.style.fill=lengthColours[j];
-    const barProgress=clamp((seq-j*2400-1400)/600);
+    const barProgress=clamp((seq-j*WINDOW_PHASE-3500)/600);
     put(cloud.bar,[590,306+j*34,135*lengthRms[j]/rmsMax*barProgress,8,1]);nodes[cloud.bar].e.style.fill=lengthColours[j];nodes[cloud.bar].e.dataset.value=String(lengthRms[j]*barProgress);
     text(cloud.value,fmt(lengthRms[j]*barProgress),745,314+j*34,barProgress>0?1:0);
     text(lengthTitle[0],tr('x15_rms_title'),600,226);text(lengthTitle[1],tr('x15_rms_subtitle'),600,244);text(lengthTitle[2],tr('x15_true_used'),600,265);
    });
    const opacity=active?1:0,xx=X(t[a]),yy=Y(x[a]),xb=X(t[b]),yb=Y(x[b]);
-   put(triangle[0],[xx,yy,mix(xx,xb,draw),yy,opacity]);put(triangle[1],[xb,yy,xb,mix(yy,yb,draw),opacity]);put(triangle[2],[xx,yy,mix(xx,xb,draw),mix(yy,yb,draw),opacity]);
+   const triOpacity=neighbour?opacity:0;
+   put(triangle[0],[xx,yy,mix(xx,xb,draw),yy,triOpacity]);put(triangle[1],[xb,yy,xb,mix(yy,yb,draw),triOpacity]);put(triangle[2],[xx,yy,mix(xx,xb,draw),mix(yy,yb,draw),triOpacity]);
    triangle.forEach(id=>nodes[id].e.classList.toggle('story-long-triangle',!neighbour));
    text(triangleLabels[0],tr('x12_dt')+' = '+fmt(t[b]-t[a]),590,90,opacity*labels);
    text(triangleLabels[1],tr('x12_du')+' = '+fmt(x[b]-x[a]),590,116,opacity*labels);
@@ -1228,7 +1215,7 @@ function initChapterOne(){
    // Length colours are identified directly by the RMS bars.
    text(clippedLabel,tr('x12_clipped',{n:rates.filter(r=>Math.abs(r.rate)>lowerBound).length}),590,300,neighbour&&!intro?1:0);
    svg.dataset.pairStart=String(a);
-   data.forEach(id=>nodes[id].e.setAttribute('r',zoom>.9?(neighbour?8:5):2.5));
+   data.forEach(id=>nodes[id].e.setAttribute('r',zoom>.9?(neighbour?8:windowLength>4?3:5):2.5));
   }
   let block=constant,c=0,error=1;
   if(changes){
@@ -1443,7 +1430,7 @@ function initExamples(){
   const e=model.example,w=model.winner;
   text(prefix+'-system','system',{equation:formula(e,e.truth.support,truthParams(e)).join(' ; '),start:e.truth.initial.map(v=>fmt(v)).join(' ; '),sigma:pct(e.sigma),blocks:e.terms.length});
   chips($(prefix+'-catalogue'),[e.terms.map((_,i)=>i+1)],e);
-  for(let component=0;component<e.dim;component++){const plot=el('div');$(prefix+'-data').append(plot);exampleChart(plot,[{x:e.observed.t,y:e.observed.x.map(r=>r[component]),kind:'data',style:'dots',label:tr('j214')}],{title:e.dim===2?['x','y'][component]:'u',xLabel:tr('j157'),yLabel:e.dim===2?['x','y'][component]:'u'});}
+  for(let component=0;component<e.dim;component++){const plot=el('div');$(prefix+'-data').append(plot);exampleChart(plot,[{x:e.observed.t,y:e.observed.x.map(r=>r[component]),kind:'data',style:'dots',label:tr('j214')}],{title:e.dim===2?(e.system_id===27?['H','F']:['x','y'])[component]:'u',xLabel:tr('j157'),yLabel:e.dim===2?(e.system_id===27?['H','F']:['x','y'])[component]:'u'});}
   candidateScene($(prefix+'-candidates'),model);
   $(prefix+'-winner').textContent=tr('x21_selected',{n:e.candidates.indexOf(w)+1});
   const equations=prefix==='c6'?$('c6-coefficients'):el('div');equations.replaceChildren();equations.className='x21-equations';
@@ -1463,16 +1450,16 @@ function initExamples(){
  function rhsScene(target){const view=exampleChart(target,[{x:grid,y:grid.map(trueRhs),kind:'truth',label:tr('x8_true')},{x:grid,y:grid.map(modelRhs),kind:'model',label:tr('j323')}],{title:'',xLabel:'u',yLabel:tr('x21_rhs_axis'),highlight:e.seen_range,highlightLabel:tr('x21_seen'),xTicks:[0,20,40,60,80]});const start=otherStart;view.svg.append(svgNode('line',{x1:view.X(start),x2:view.X(start),y1:view.Y(trueRhs(start)),y2:view.Y(modelRhs(start)),class:'x21-limit'}));for(const [value,color] of [[trueRhs(start),'var(--data)'],[modelRhs(start),'var(--model)']])view.svg.append(svgNode('circle',{cx:view.X(start),cy:view.Y(value),r:5,fill:color}));}
  rhsScene($('c7-rhs'));$('c7-rhs').dataset.seenRange=JSON.stringify(e.seen_range);
  $('c7-range').textContent=tr('x21_range',{lo:fmt(e.seen_range[0],3),hi:fmt(e.seen_range[1],3),u:fmt(otherStart),truth:fmt(trueRhs(otherStart),4),model:fmt(modelRhs(otherStart),4)});
- $('c7-range').textContent+=' ('+tr('x21_other_start')+')';
+ $('c7-range').textContent+=' ('+tr('x20_example_0')+')';
  $('c7-range').dataset.start=String(otherStart);$('c7-range').dataset.truth=String(trueRhs(otherStart));$('c7-range').dataset.model=String(modelRhs(otherStart));
  const teachingFeature=LIVE.featured.find(f=>f.roles.includes('running')),teachingWinner=teachingFeature.candidates.find(c=>c.row.candidate_id===teachingFeature.chosen);
  curve($('c8-generalization'),teachingWinner.curves?.generalization);
  text('c8-scores','scores',{rec:score(teachingWinner.row,'reconstruction'),gen:score(teachingWinner.row,'generalization')});
  function matrix(target){const table=el('table'),header=el('tr');['example','structure','reconstruction','generalization'].forEach(k=>header.append(el('th',tr('x20_'+k))));table.append(header);
-  [[lv.winner,1],[failure.winner,2]].forEach(([c,i])=>{const row=el('tr');row.append(el('th',tr('x20_example_'+i)),el('td',c.row.raw_exact==='True'?'✓':'✗'));for(const kind of ['reconstruction','generalization']){const cell=el('td',score(c.row,kind)+' '+(+c.row[kind+'_r2_variance_weighted']>RESULTS.score_threshold?'●':'○'));cell.dataset.hit=String(+c.row[kind+'_r2_variance_weighted']>RESULTS.score_threshold);row.append(cell);}table.append(row);});target.replaceChildren(table);target.append(el('p',tr('x21_marker',{n:fmt(RESULTS.score_threshold)}),'caption'));}
+  [teachingWinner,lv.winner,failure.winner].forEach((c,i)=>{const row=el('tr');row.append(el('th',tr('x20_example_'+i)),el('td',c.row.raw_exact==='True'?'✓':'✗'));for(const kind of ['reconstruction','generalization']){const cell=el('td',score(c.row,kind)+' '+(+c.row[kind+'_r2_variance_weighted']>RESULTS.score_threshold?'●':'○'));cell.dataset.hit=String(+c.row[kind+'_r2_variance_weighted']>RESULTS.score_threshold);row.append(cell);}table.append(row);});target.replaceChildren(table);target.append(el('p',tr('x21_marker',{n:fmt(RESULTS.score_threshold)}),'caption'));}
  matrix($('c8-comparison'));text('c8-metric','metric',{threshold:fmt(RESULTS.score_threshold)});
  const close=el('div');matrix(close);panels['c8-close'].append(close);
- const measured=el('div');chips(measured,JSON.parse(teachingWinner.row.active_idxs),lv.example);measured.append(el('p',(teachingWinner.row.raw_exact==='True'?'✓':'✗')+'   '+tr('x21_structure'),'x21-verdict'));panels['c8-measured'].append(measured);const measuredPlot=el('div');panels['c8-measured'].append(measuredPlot);curve(measuredPlot,teachingWinner.curves);
+ const measured=el('div');chips(measured,JSON.parse(teachingWinner.row.active_idxs),{...failure.example,terms:LIVE.catalogues[0].terms});measured.append(el('p',(teachingWinner.row.raw_exact==='True'?'✓':'✗')+'   '+tr('x21_structure'),'x21-verdict'));panels['c8-measured'].append(measured);const measuredPlot=el('div');panels['c8-measured'].append(measuredPlot);curve(measuredPlot,teachingWinner.curves);
  const lesson=el('div');chips(lesson,lv.winner.active_idxs,lv.example);lesson.append(el('p',(lv.winner.row.raw_exact==='True'?'✓':'✗')+'   '+tr('x21_structure'),'x21-verdict'));for(const kind of ['reconstruction','generalization']){lesson.append(el('p',tr('x20_'+kind)+' R² = '+score(lv.winner.row,kind)));const meter=el('meter');meter.min=0;meter.max=1;meter.value=Math.max(0,+lv.winner.row[kind+'_r2_variance_weighted']);lesson.append(meter);}panels['c6-lesson'].append(lesson);
  const rhsLesson=el('div');rhsScene(rhsLesson);panels['c7-lesson'].append(rhsLesson);const rhsEquations=el('div',undefined,'x21-equations');[...formula(e,e.truth.support,truthParams(e)),...formula(e,failure.winner.active_idxs,failure.winner.params)].forEach((eq,i)=>rhsEquations.append(el('p',tr(i?'x21_fitted':'x8_true')+': '+eq)));panels['c7-lesson'].append(rhsEquations);
  const replays={};
