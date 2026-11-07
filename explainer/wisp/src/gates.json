@@ -1,1 +1,1 @@
-{"stop":"significance","initial_state":"pending","coefficient_bound":"pending"}
+{"stop": "significance", "initial_state": "estimated", "coefficient_bound": "1000"}

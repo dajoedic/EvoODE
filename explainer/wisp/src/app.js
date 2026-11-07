@@ -31,42 +31,58 @@ const $=id=>document.getElementById(id);
 const el=(tag,text,cls)=>{const e=document.createElement(tag);if(text!==undefined)e.textContent=text;if(cls)e.className=cls;return e;};
 function numberText(x,d=3){const text=Number(x).toLocaleString(language,{notation:'standard',maximumSignificantDigits:d});return language==='de'?text.replaceAll('.',' '):text;}
 const fmt=(x,d=3)=>x!==''&&x!==null&&x!==undefined&&Number.isFinite(+x)?numberText(x,d):tr('j153');
-const pct=x=>Number.isFinite(+x)&&x!==''?`${fmt(+x*100)}%`:tr('j153');
-const terms=['1','u','u²','u³',tr('j154'),tr('j155')];
-const texTerms=['1','u','u^{2}','u^{3}','\\sin u','\\cos u'];
+const pct=x=>x!==''&&x!==null&&x!==undefined&&Number.isFinite(+x)?`${fmt(+x*100)}%`:tr('j153');
+const terms=['1','H','F','H²','F²','H·F','H³','F³','sin H','cos H','sin F','cos F'];
+const texTerms=['1','H','F','H^{2}','F^{2}','H\\,F','H^{3}','F^{3}','\\sin H','\\cos H','\\sin F','\\cos F'];
 const NS='http://www.w3.org/2000/svg';
 function svgNode(tag,attrs={},text){const e=document.createElementNS(NS,tag);Object.entries(attrs).forEach(([k,v])=>e.setAttribute(k,v));if(text!==undefined)e.textContent=text;return e;}
 // Illustration only: no scientific data or WISP computation enters this scene.
 function initDish(){
+ // Hook: a meadow with hares and foxes. Counts follow the benchmark Lotka-Volterra equation (system 27) from a
+ // calm illustrative start; animals are symbols for the counts, not a separate simulation. Illustration, not data.
  const target=$('dish-illustration'),svg=svgNode('svg',{viewBox:'0 0 1020 260',role:'img','aria-labelledby':'dish-title dish-description'});
  svg.append(svgNode('title',{id:'dish-title'},tr('x7_history')),svgNode('desc',{id:'dish-description'},tr('x7_caption')));
- const dishGroup=svgNode('g',{transform:'scale(1.35)'});svg.append(dishGroup);dishGroup.append(svgNode('circle',{cx:105,cy:88,r:79,class:'dish-rim'}));
- const cells=svgNode('g');dishGroup.append(cells);
- // LCG seed 731; stratified positions fill the disk without overlaps.
- let seed=731;const random=()=>{seed=(Math.imul(1664525,seed)+1013904223)>>>0;return seed/4294967296;};
- const positions=[];for(let y=-68;y<=68;y+=9)for(let x=-68;x<=68;x+=9){const px=x+(random()-.5)*3,py=y+(random()-.5)*3;if(px*px+py*py<72*72)positions.push([105+px,88+py]);}
- for(let i=positions.length-1;i>0;i--){const j=Math.floor(random()*(i+1));[positions[i],positions[j]]=[positions[j],positions[i]];}
- const dots=positions.map(([cx,cy])=>{const dot=svgNode('circle',{cx,cy,r:2.9,class:'dish-cell'});cells.append(dot);return dot;});
+ const P=LIVE.illustrations.find(d=>d.system_id===27)?.constants||[1.84,1.45,3,1.62];
+ const rhs=([h,f])=>[P[0]*h-P[1]*h*f,-P[2]*f+P[3]*h*f];
+ const dt=.01,steps=1000,traj=[[1,.6]];for(let i=0;i<steps;i++){let x=traj.at(-1);const a=rhs(x),b=rhs(x.map((v,j)=>v+dt*a[j]/2)),c=rhs(x.map((v,j)=>v+dt*b[j]/2)),d=rhs(x.map((v,j)=>v+dt*c[j]));traj.push(x.map((v,j)=>v+dt*(a[j]+2*b[j]+2*c[j]+d[j])/6));}
+ const meadow=svgNode('g',{transform:'scale(1.35)'});svg.append(meadow);
+ const clip=svgNode('clipPath',{id:'meadow-clip'});clip.append(svgNode('rect',{x:8,y:8,width:200,height:160,rx:14}));svg.append(clip);
+ const scene=svgNode('g',{'clip-path':'url(#meadow-clip)'});meadow.append(scene);
+ scene.append(svgNode('rect',{x:8,y:8,width:200,height:160,class:'meadow-sky'}),svgNode('circle',{cx:176,cy:34,r:12,class:'meadow-sun'}),
+  svgNode('path',{d:'M8,82 C50,58 90,64 120,74 C150,84 180,62 208,70 L208,168 L8,168Z',class:'meadow-hill'}),
+  svgNode('path',{d:'M8,98 C60,88 120,96 208,92 L208,168 L8,168Z',class:'meadow-grass'}));
+ [[30,92,.55],[58,88,.45],[150,86,.5]].forEach(([x,y,k])=>{const g=svgNode('g',{transform:`translate(${x},${y}) scale(${k})`});g.append(svgNode('rect',{x:-3,y:-6,width:6,height:22,class:'meadow-trunk'}),svgNode('circle',{cy:-16,r:15,class:'meadow-tree'}),svgNode('circle',{cx:-9,cy:-7,r:10,class:'meadow-tree'}),svgNode('circle',{cx:9,cy:-8,r:11,class:'meadow-tree'}));scene.append(g);});
+ meadow.append(svgNode('rect',{x:8,y:8,width:200,height:160,rx:14,class:'meadow-rim'}));
+ const herd=svgNode('g');scene.append(herd);
+ const HARE='M-8,-6a8,5.5 0 1,0 16,0a8,5.5 0 1,0 -16,0M3.5,-11a3.6,3.6 0 1,0 7.2,0a3.6,3.6 0 1,0 -7.2,0M5,-13c-1.6,-5 -1,-9 0.6,-9.4c1.3,0.2 1,4.5 0.4,9.6zM7.6,-13c0.2,-5.2 1.6,-8.6 3,-8.6c1.2,0.6 -0.2,4.6 -1.8,8.8z';
+ const FOX='M-10,-7a10,4.6 0 1,0 20,0a10,4.6 0 1,0 -20,0M7,-10l10,2.6l-9,3.4zM8,-10l1.4,-5l2.6,4.4zM11,-9.4l2.2,-4.4l1.4,4.6zM-9,-8c-6,-3 -12,-2 -16,1c5,2.4 11,2.6 16,0.6z';
+ const animals=[];let seed=731;const random=()=>{seed=(Math.imul(1664525,seed)+1013904223)>>>0;return seed/4294967296;};
+ function spawn(kind){const e=svgNode('path',{d:kind==='hare'?HARE:FOX,class:'meadow-'+kind});herd.append(e);const a={kind,e,x:20+random()*176,y:104+random()*58,vx:(random()-.5)*20,vy:(random()-.5)*4,phase:random()*6};animals.push(a);return a;}
+ function sync(h,f){for(const [kind,count] of [['hare',Math.round(h*7)],['fox',Math.round(f*7)]]){const own=animals.filter(a=>a.kind===kind);
+  for(let i=own.length;i<count;i++)spawn(kind);for(let i=count;i<own.length;i++){own[i].e.remove();animals.splice(animals.indexOf(own[i]),1);}}}
+ function move(dtSec){for(const a of animals){a.vx=Math.max(-24,Math.min(24,a.vx*.96+(random()-.5)*30*dtSec*10));a.vy=Math.max(-5,Math.min(5,a.vy*.95+(random()-.5)*8*dtSec*10));
+  for(const b of animals){if(b===a)continue;const dx=a.x-b.x,dy=(a.y-b.y)*2,d=Math.hypot(dx,dy);if(d<14&&d>.01){a.x+=dx/d*(14-d)*.2;a.y+=dy/d*(14-d)*.05;}}
+  a.x+=a.vx*dtSec;a.y+=a.vy*dtSec;if(a.x<16||a.x>200)a.vx=-a.vx;if(a.y<102||a.y>164)a.vy=-a.vy;a.x=Math.max(16,Math.min(200,a.x));a.y=Math.max(102,Math.min(164,a.y));a.phase+=dtSec*(a.kind==='hare'?9:6);
+  const hop=a.kind==='hare'?-Math.abs(Math.sin(a.phase))*2:0,k=.62*(.8+(a.y-102)/62*.4);a.e.setAttribute('transform',`translate(${a.x.toFixed(1)},${(a.y+hop).toFixed(1)}) scale(${(a.vx<0?-k:k).toFixed(3)},${k.toFixed(3)})`);}}
  const curveGroup=svgNode('g',{transform:'translate(-140 12) scale(1.5 1.35)'});svg.append(curveGroup);curveGroup.append(svgNode('path',{d:'M280 14V151H752',class:'dish-axis'}),svgNode('text',{x:288,y:17},tr('x7_cells')),svgNode('text',{x:752,y:174,'text-anchor':'end'},tr('x7_time')));
- const curve=svgNode('path',{class:'dish-curve'}),head=svgNode('circle',{r:4,class:'dish-cell'});curveGroup.append(curve,head);target.append(svg);
- // Stack the two scenes in the same accessible illustration on small screens.
- function geometry(){const narrow=innerWidth<760;svg.setAttribute('viewBox',narrow?'0 0 400 480':'0 0 1020 260');dishGroup.setAttribute('transform',narrow?'translate(58 0) scale(1.35)':'scale(1.35)');curveGroup.setAttribute('transform',narrow?'translate(-120 250) scale(.65 1.15)':'translate(-140 12) scale(1.5 1.35)');}
+ const hareCurve=svgNode('path',{class:'dish-curve hare'}),foxCurve=svgNode('path',{class:'dish-curve fox'}),hareHead=svgNode('circle',{r:4,class:'meadow-hare'}),foxHead=svgNode('circle',{r:4,class:'meadow-fox'});
+ const hareTag=svgNode('text',{class:'meadow-tag hare'},tr('lv_hares_short')),foxTag=svgNode('text',{class:'meadow-tag fox'},tr('lv_foxes_short'));
+ curveGroup.append(hareCurve,foxCurve,hareHead,foxHead,hareTag,foxTag);target.append(svg);
+ function geometry(){const narrow=innerWidth<760;svg.setAttribute('viewBox',narrow?'0 0 400 480':'0 0 1020 260');meadow.setAttribute('transform',narrow?'translate(58 0) scale(1.35)':'scale(1.35)');curveGroup.setAttribute('transform',narrow?'translate(-120 250) scale(.65 1.15)':'translate(-140 12) scale(1.5 1.35)');}
  geometry();window.addEventListener('resize',geometry);
- // K=1 (normalised occupancy), n0=.012, r=10, t in [0,1], 6000 ms.
- const occupancy=t=>1/(1+(1/.012-1)*Math.exp(-10*t));
- function draw(progress){const count=Math.round(occupancy(progress)*dots.length);dots.forEach((dot,i)=>dot.setAttribute('visibility',i<count?'visible':'hidden'));
-  const points=Array.from({length:Math.ceil(progress*160)+1},(_,i)=>Math.min(i/160,progress));let d='';
-  for(const t of points)d+=(d?'L':'M')+(280+472*t).toFixed(2)+','+(151-130*occupancy(t)).toFixed(2);
-  curve.setAttribute('d',d);head.setAttribute('cx',280+472*progress);head.setAttribute('cy',151-130*occupancy(progress));target.dataset.progress=String(progress);
- }
+ const Y=v=>151-130*v/4,X=t=>280+472*t;
+ function draw(progress,dtSec=0){if(!Number.isFinite(progress))progress=0;if(!Number.isFinite(dtSec))dtSec=0;const i=Math.max(0,Math.min(steps,Math.round(progress*steps))),[h,f]=traj[i];sync(h,f);move(dtSec);
+  for(const [path,head,tag,j] of [[hareCurve,hareHead,hareTag,0],[foxCurve,foxHead,foxTag,1]]){let d='';for(let k=0;k<=i;k+=5)d+=(d?'L':'M')+X(k/steps).toFixed(2)+','+Y(traj[k][j]).toFixed(2);
+   path.setAttribute('d',d);head.setAttribute('cx',X(i/steps));head.setAttribute('cy',Y(traj[i][j]));tag.setAttribute('x',X(i/steps)+8);tag.setAttribute('y',Y(traj[i][j])+4);}
+  target.dataset.progress=String(progress);}
  const reduced=window.matchMedia('(prefers-reduced-motion: reduce)');
  let frame=0,visible=typeof IntersectionObserver!=='function',elapsed=0,last=0;
- function tick(now){elapsed=(elapsed+now-last)%7500;last=now;draw(Math.min(1,elapsed/6000));frame=requestAnimationFrame(tick);}
+ function tick(now){const step=Math.max(0,Math.min(50,now-last));elapsed=(elapsed+Math.max(0,now-last))%26000;last=now;draw(Math.min(1,elapsed/24000),step/1000);frame=requestAnimationFrame(tick);}
  function update(){cancelAnimationFrame(frame);frame=0;
   if(reduced.matches){draw(1);return;}
   if(visible&&!document.hidden){last=performance.now();frame=requestAnimationFrame(tick);}
  }
- reduced.addEventListener?.('change',()=>{draw(reduced.matches?1:Math.min(1,elapsed/6000));update();});
+ reduced.addEventListener?.('change',()=>{draw(reduced.matches?1:Math.min(1,elapsed/24000));update();});
  document.addEventListener('visibilitychange',update);
  draw(reduced.matches?1:0);
  if(typeof IntersectionObserver==='function'){const observer=new IntersectionObserver(entries=>{visible=entries.some(e=>e.isIntersecting);update();},{threshold:.1});observer.observe(target);}else{const visibility=()=>{const r=target.getBoundingClientRect();visible=r.bottom>0&&r.top<innerHeight;update();};window.addEventListener('scroll',visibility,{passive:true});window.addEventListener('resize',visibility);visibility();}
@@ -105,10 +121,10 @@ function chart(target,series,{title='',xLabel=tr('j157'),yLabel=tr('j158'),areas
   if(highlight)svg.append(svgNode('rect',{x:X(highlight[0]),y:pad.t,width:Math.max(1,X(highlight[1])-X(highlight[0])),height:height-pad.b-pad.t,fill:'var(--model)',opacity:'.12'}));
   if(highlightLabel)svg.append(svgNode('text',{x:pad.l+12,y:pad.t+26},highlightLabel));
   for(const a of areas){const pts=a.x.map((x,i)=>`${X(x)},${Y(a.y[i])}`).join(' ');svg.append(svgNode('polygon',{points:`${X(a.x[0])},${Y(0)} ${pts} ${X(a.x.at(-1))},${Y(0)}`,fill:'var(--data)',opacity:'.18'}));}
-  for(const s of series.slice().sort((a,b)=>(truthOnTop&&a.kind==='truth'?3:a.kind==='data'?0:a.kind==='model'?2:1)-(truthOnTop&&b.kind==='truth'?3:b.kind==='data'?0:b.kind==='model'?2:1))){let d='',drawing=false;for(let i=0;i<s.x.length;i++){
+  for(const s of series.slice().sort((a,b)=>(truthOnTop&&a.kind==='truth'?3:/data$/.test(a.kind)?0:/model$/.test(a.kind)?2:1)-(truthOnTop&&b.kind==='truth'?3:/data$/.test(b.kind)?0:/model$/.test(b.kind)?2:1))){let d='',drawing=false;for(let i=0;i<s.x.length;i++){
     const v=s.y[i];if(!Number.isFinite(v)||Math.abs(v)>1e12){drawing=false;continue;}d+=`${drawing?'L':'M'}${X(s.x[i]).toFixed(3)},${Y(v).toFixed(3)}`;drawing=true;
   }if(s.x.length===1)svg.append(svgNode('circle',{cx:X(s.x[0]),cy:Y(s.y[0]),r:4,fill:'var(--residual)'}));svg.append(svgNode('path',{d,class:`series-${s.kind||'truth'} ${s.style||''}`}));
-  if(s.kind==='data'&&s.style!=='dashed')s.x.forEach((x,i)=>{if(Number.isFinite(s.y[i]))svg.append(svgNode('circle',{cx:X(x),cy:Y(s.y[i]),r:dotRadius,class:'measurement-dot'}));});
+  if((s.kind==='data'||s.kind==='fox-data')&&s.style!=='dashed')s.x.forEach((x,i)=>{if(Number.isFinite(s.y[i]))svg.append(svgNode('circle',{cx:X(x),cy:Y(s.y[i]),r:dotRadius,class:'measurement-dot'+(s.kind==='fox-data'?' fox':'')}));});
   }
   svg.append(svgNode('text',{x:pad.l,y:17},title));
   svg.append(svgNode('text',{x:width-pad.r,y:height-4,"text-anchor":'end'},xLabel));
@@ -128,6 +144,8 @@ function rk4(t,initial,rhs){let x=initial.slice();const out=[x.slice()];for(let 
   }out.push(x.slice());}return out;}
 const demo=LIVE.illustrations[0], predator=LIVE.illustrations[1], time=demo.t, truth=demo.x.map(r=>r[0]);
 const teaching=LIVE.teaching, measuredTime=teaching?.t||time, measuredTruth=teaching?.truth||truth;
+// The running example's blocks are built from both measured states (hares H, foxes F); the target is H.
+const LVC={...LIVE,states:teaching?.states||null};
 const measuredNoise=s=>teaching?(s===teaching.sigma?teaching.observed:measuredTruth.map((v,i)=>v*(1+s*teaching.noise_draws[i]))):truth.map((v,i)=>v*(1+s*demo.noise_draws[i]));
 let sigma=.03,noisy=[],currentPath=null,pathError=null,selectedStratum=RESULTS.rates[0].stratum;
 const logistic=(rate,capacity)=>rk4(time,demo.initial,x=>[rate*x[0]*(1-x[0]/capacity)]).map(x=>x[0]);
@@ -137,14 +155,16 @@ function growthRule(){const rate=+$('rate').value,capacity=+$('capacity').value;
 math($("predator-equation"),predator.equation.map((s,i)=>`\\frac{d${i?'v':'u'}}{dt}=${s.replaceAll('x_0','u').replaceAll('x_1','v').replaceAll('*','\\,')}`).join('\\qquad '));
 function predatorDraw(){const i=+$("predator-time").value,t=predator.t.slice(0,i+1),x=predator.x.slice(0,i+1);$("predator-value").value=fmt(predator.t[i]);chart($("predator-chart"),[{x:t,y:x.map(r=>r[0]),kind:'truth',label:tr('prey')},{x:t,y:x.map(r=>r[1]),kind:'model',label:tr('predators')}],{title:tr('j180'),yLabel:tr('j181')});chart($("phase-chart"),[{x:predator.x.map(r=>r[0]),y:predator.x.map(r=>r[1]),kind:'truth',label:tr('j183')}],{title:tr('j184'),xLabel:tr('j185'),yLabel:tr('j186'),point:predator.x[i]});}
 $("predator-time").max=predator.t.length-1;$("predator-time").value=predator.t.length-1;$("predator-time").addEventListener('input',predatorDraw);predatorDraw();
-// Per-term precision makes the data-scale answer reachable without revealing it.
-const coefficientLimits=[[-10,10,.01],[-2,2,.001],[-.03,.03,.00001],[-.001,.001,.000001],[-2,2,.01],[-2,2,.01]];
-const coefficientButtonSteps=[.1,.1,.001,.0001,.1,.1];
-const initialCoefficients=[0,.23,0,0,0,0],coeff=initialCoefficients.slice(),enabled=Array(6).fill(false),termControls=[];
+// Two equations (hares, foxes), six blocks each; indices point into the two-state catalogue.
+const playBlocks=[0,1,2,3,4,5],playCards=[];[0,1].forEach(e=>playBlocks.forEach(j=>playCards.push({e,j})));
+const coefficientLimits=playCards.map(()=>[-5,5,.01]),coefficientButtonSteps=playCards.map(()=>.1);
+const initialCoefficients=playCards.map(()=>0),coeff=initialCoefficients.slice(),enabled=playCards.map(()=>false),termControls=[];
 $('challenge-deck-start').textContent=tr('x7_challenge_start',{noise:pct(teaching.sigma)});
 let hintCount=0;
-terms.forEach((name,i)=>{
- const card=el('div',undefined,'term-card'),label=el('label',name),check=el('input');check.type='checkbox';check.checked=enabled[i];check.setAttribute('aria-label',tr('include_term',{v0:name}));label.append(check);
+playCards.forEach(({e,j},i)=>{
+ if(j===playBlocks[0]){const head=el('div',tr(e?'lv_eq_fox':'lv_eq_hare'),'term-group '+(e?'fox':'hare'));$('term-cards').append(head);}
+ const name=terms[j];
+ const card=el('div',undefined,'term-card '+(e?'fox':'hare')),label=el('label',name),check=el('input');check.type='checkbox';check.checked=enabled[i];check.setAttribute('aria-label',tr('include_term',{v0:(e?'dF/dt: ':'dH/dt: ')+name}));label.append(check);
  const controls=el('div',undefined,'coefficient-controls'),range=el('input'),typed=el('input'),[min,max,step]=coefficientLimits[i];range.type='range';typed.type='number';
  range.min=min;range.max=max;range.step=step;
  for(const input of [range,typed]){input.value=coeff[i];input.setAttribute('aria-label',tr('j188',{v0:name}));}
@@ -197,9 +217,9 @@ function soloModel(observations,times,config,feature){
  return {blocks,winner:first.addition,floor,explainable,normalized:floor!==null&&1-floor>0,D,rows,x:rows.map(({w})=>(times[w[0]]+times[w[1]])/2)};
 }
 function soloNumber(value){return numberText(value).replaceAll('-','−');}
-function soloEquation(block){return 'du/dt = '+soloNumber(block.coefficient)+(block.term?' '+terms[block.term]:'');}
+function soloEquation(block){return 'dH/dt = '+soloNumber(block.coefficient)+(block.term?' '+terms[block.term]:'');}
 function initSolo(){
- const model=soloModel(teaching.observed,measuredTime,LIVE,LIVE.featured[0]),buttons=[];
+ const model=soloModel(teaching.observed,measuredTime,LVC,LIVE.featured[0]),buttons=[];
  const percent=value=>(value*100).toLocaleString(language,{minimumFractionDigits:1,maximumFractionDigits:1})+' %';
  function select(term){
   const block=model.blocks.find(b=>b.term===term);buttons.forEach(b=>b.setAttribute('aria-pressed',String(+b.dataset.term===term)));
@@ -217,23 +237,25 @@ function initSolo(){
  $('solo-result').textContent=tr('x9_result',{winner:terms[model.winner],explain_constant:model.winner===0?tr('x9_constant'):''});
  window.WispSolo={model,select};select(model.winner);
 }
+function lvEquationTex(rows){return '\\begin{aligned}'+rows.map(([lhs,support,c])=>lhs+'&='+(support.length?support.map((j,i)=>`${i&&c[i]>=0?'+':''}${fmt(c[i],4)}\\,${texTerms[j]}`).join(' '):'0')).join('\\\\')+'\\end{aligned}';}
 function play(){
- const observations=measuredNoise(teaching?.sigma||.03),limit=2*Math.max(...observations.map(Math.abs)),indices=enabled.map((v,i)=>v?i:-1).filter(i=>i>=0),c=indices.map(i=>coeff[i]);
- const tex=equation(indices,c);math($('play-equation'),tex);
- const curve=rk4(measuredTime,[observations[0]],x=>[W.basis(x[0]).reduce((s,v,i)=>s+(enabled[i]?v*coeff[i]:0),0)]).map(x=>x[0]);
- const readerState={t:measuredTime,curve,clipped:curve.map(v=>Number.isFinite(v)&&Math.abs(v)<=limit?v:NaN)};
- const series=[{x:measuredTime,y:observations,kind:'data',style:'dots',label:tr('j214')},{x:measuredTime,y:readerState.clipped,kind:'model',label:tr('x8_true')}];
- if(solutionShown)series.push({x:measuredTime,y:measuredTruth,kind:'truth',style:'dashed'});
- chart($('play-chart'),series,{legend:false});
- const score=observationR2(curve,observations);
- const clipped=curve.some(v=>!Number.isFinite(v)||Math.abs(v)>limit),status=$('play-status');status.dataset.score=Number.isFinite(score)?String(score):'unavailable';
+ const states=teaching.states,observations=states.flat(),limit=2*Math.max(...observations.map(Math.abs));
+ const active=[0,1].map(e=>playCards.map((c,i)=>({...c,i})).filter(c=>c.e===e&&enabled[c.i]));
+ math($('play-equation'),lvEquationTex([['\\frac{dH}{dt}',active[0].map(c=>c.j),active[0].map(c=>coeff[c.i])],['\\frac{dF}{dt}',active[1].map(c=>c.j),active[1].map(c=>coeff[c.i])]]));
+ const curve=rk4(measuredTime,states[0].slice(),x=>{const phi=W.basis2(x);return active.map(eq=>eq.reduce((s,c)=>s+coeff[c.i]*phi[c.j],0));});
+ const clip=v=>Number.isFinite(v)&&Math.abs(v)<=limit?v:NaN;
+ const series=[{x:measuredTime,y:states.map(r=>r[0]),kind:'data',style:'dots',label:tr('lv_hares')},{x:measuredTime,y:states.map(r=>r[1]),kind:'fox-data',style:'dots',label:tr('lv_foxes')},
+  {x:measuredTime,y:curve.map(r=>clip(r[0])),kind:'hare-model',label:tr('lv_model_hares')},{x:measuredTime,y:curve.map(r=>clip(r[1])),kind:'fox-model',label:tr('lv_model_foxes')}];
+ if(solutionShown)series.push({x:measuredTime,y:teaching.states_truth.map(r=>r[0]),kind:'truth',style:'dashed'},{x:measuredTime,y:teaching.states_truth.map(r=>r[1]),kind:'truth',style:'dashed'});
+ chart($('play-chart'),series,{legend:false,yLabel:tr('lv_count')});
+ const flat=curve.flat(),score=observationR2(flat,observations);
+ const clipped=flat.some(v=>!Number.isFinite(v)||Math.abs(v)>limit),status=$('play-status');status.dataset.score=Number.isFinite(score)?String(score):'unavailable';
  status.textContent=Number.isFinite(score)?tr('x6_meter',{value:fmt(score,4),grade:tr(score>=.98?'x6_veryclose':score>=.9?'x6_close':score>=.5?'x6_nearer':'x6_far')}):tr('x6_unstable');
  $('challenge-meter').value=Number.isFinite(score)?Math.max(0,Math.min(1,score)):0;
  if(clipped&&Number.isFinite(score))status.textContent+=' '+tr('j199');
-
 }
 $('challenge-hint').addEventListener('click',()=>{if(hintCount>=3)return;hintCount++;$('challenge-hints').append(el('li',tr('x6_hint'+hintCount)));$('challenge-hint').disabled=hintCount===3;});
-$('play-reset').addEventListener('click',()=>{toggleSolution(false);coeff.splice(0,6,...initialCoefficients);enabled.splice(0,6,...Array(6).fill(false));termControls.forEach(({check,sync},i)=>{check.checked=enabled[i];sync();});play();});play();
+$('play-reset').addEventListener('click',()=>{toggleSolution(false);coeff.splice(0,coeff.length,...initialCoefficients);enabled.splice(0,enabled.length,...enabled.map(()=>false));termControls.forEach(({check,sync},i)=>{check.checked=enabled[i];sync();});play();});play();
 options($('dimensions'),LIVE.catalogues.map(c=>c.dim));
 function catalogue(){const c=LIVE.catalogues.find(c=>c.dim===+$('dimensions').value);$("combination-count").textContent=tr('j202',{v0:(c.count),v1:(BigInt(c.combinations).toLocaleString(language)),v2:(c.dim),v3:(c.dim===1?'':'s')});$("catalogue-list").textContent=c.terms.join(' · ');}
 $('dimensions').addEventListener('change',catalogue);catalogue();
@@ -313,7 +335,7 @@ function featuredCell(id){const cell=RESULTS.cells.find(c=>c.row.cell_id===id),f
 function gateText(key,pending){const value=LIVE.gate_status?.[key]||"pending";return value==="pending"?pending:tr('gate_'+({initial_state:'initial',coefficient_bound:'bound'}[key]||key)+'_'+value);}
 $("stop-gate").textContent=gateText('stop',tr('j311'));
 $("fit-gate").textContent=gateText('initial_state',tr('j313'))+' '+gateText('coefficient_bound',tr('j314'));
-const stopFeatures=featured.filter(f=>f.stop_reference);
+const stopFeatures=featured.filter(f=>f.stop_reference?.t);
 options($("stop-example"),stopFeatures.map(f=>f.cell_id),cellName);
 function stopDraw(){const feature=stopFeatures.find(f=>f.cell_id===$("stop-example").value);if(!feature)return;
  const r=feature.stop_reference,p=W.significancePath(r.t,r.x,r.threshold),D=p.design,norm=D.b.reduce((s,v)=>s+v*v,0),supports=[[],...p.steps.map(s=>s.support)],steps=supports.map((_,i)=>i);
@@ -428,7 +450,7 @@ function thirdModel(model,t,x,config,feature){
 }
 // Audit the real stopping path without modifying the numerical core.
 function fourthModel(model,t,x,config,feature,third){
- const threshold=feature.stop_reference.threshold,live=W.significancePath(t,x,threshold);
+ const threshold=feature.stop_reference.threshold,live=W.significancePath(t,x,threshold,config.states||null);
  const supports=live.steps.map(s=>s.support),reference=feature.stop_reference;
  if(JSON.stringify(supports)!==JSON.stringify(reference.supports)||live.steps.length!==reference.stop_step)throw Error('Teaching significance path differs from stop reference');
  if(JSON.stringify(supports.slice(0,4))!==JSON.stringify(third.rounds.map(r=>r.after.support)))throw Error('Teaching significance path differs from FoBa supports');
@@ -448,28 +470,28 @@ function secondNumber(value){return numberText(value).replaceAll('-','−');}
 function thresholdNumber(value){return numberText(value,15);}
 // Presentation protocol data, distinct from the unchanged scientific result contract.
 function fifthModel(live,protocol){
+ // Lotka-Volterra: every candidate is a joint state of both equations, fitted together (C1000 refit records).
  const feature=live.featured[0],observation=live.teaching;
  if(feature.cell_id!==observation.cell_id)throw Error('Chapter-five teaching cell mismatch');
- const canonical=s=>JSON.stringify(s.slice().sort((a,b)=>a-b));
- const candidates=feature.stop_reference.supports.map(support=>{
-  const matches=feature.candidates.filter(c=>canonical(JSON.parse(c.row.active_idxs)[0].map(j=>j-1))===canonical(support));
-  if(matches.length!==1)throw Error('Chapter-five support must identify one candidate');
-  const stored=matches[0],start=feature.path.find(p=>p.candidate_id===stored.row.candidate_id);
-  if(!start||canonical(start.active_idxs[0].map(j=>j-1))!==canonical(support))throw Error('Chapter-five weak start mismatch');
-  return {...stored,support:support.slice(),p0:start.p0.slice(),params:JSON.parse(stored.row.params),N:+stored.row.n_samples,k:+stored.row.k,mse:+stored.row.mse};
+ const joint=new Map(feature.joint_path.map(p=>[p.candidate_id,p]));
+ const candidates=feature.candidates.map(stored=>{
+  const start=joint.get(stored.row.candidate_id),all=JSON.parse(stored.row.active_idxs);
+  if(!start||JSON.stringify(start.active_idxs)!==JSON.stringify(all))throw Error('Chapter-five weak start mismatch');
+  const params=JSON.parse(stored.row.params),hare=all[0].length;
+  return {...stored,support:all[0].map(j=>j-1),fox:all[1].map(j=>j-1),joint:all.map(eq=>eq.map(j=>j-1)),p0:start.p0.slice(0,hare),p0All:start.p0.slice(),
+   params:params.slice(0,hare),paramsAll:params,start:JSON.parse(stored.row.fitted_initial_state),N:+stored.row.n_samples,k:+stored.row.k,mse:+stored.row.mse};
  });
- const gate=live.gate_status,bound=gate.coefficient_bound==='pending'?protocol.coefficient_bound:+gate.coefficient_bound;
- if(!Number.isFinite(bound)||bound<=0)throw Error('Invalid coefficient bound gate');
+ const bound=+protocol.coefficient_bound_final||1000;
  candidates.forEach(c=>c.atBound=c.params.map(p=>Math.abs(p)===bound));
  const winner=candidates.reduce((a,b)=>b.bic<a.bic?b:a);
- const weak=candidates.find(c=>canonical(c.support)===canonical(feature.truth_support[0].map(j=>j-1)));
+ const truth=JSON.stringify(feature.truth_support.map(eq=>eq.map(j=>j-1)));
+ const weak=candidates.find(c=>JSON.stringify(c.joint)===truth);
  if(!weak)throw Error('Chapter-five truth-support candidate is missing');
- // Only this stored weak start is simulated here. Fitted predictions are verified display curves.
- const weakCurve=rk4(observation.t,[observation.observed[0]],state=>[weak.p0.reduce((sum,p,i)=>sum+p*W.basis(state[0])[weak.support[i]],0)]).map(row=>row[0]);
- const legacy=feature.candidates.filter(c=>!candidates.some(p=>p.row.candidate_id===c.row.candidate_id));
- return {candidates,winner,weak,weakCurve,bound,initial:gate.initial_state==='pending'?protocol.initial_state:gate.initial_state,
-  provisional:gate.initial_state==='pending'||gate.coefficient_bound==='pending',
-  share:1-Math.exp(-Math.log(winner.N)/winner.N),legacy:legacy.length?legacy.reduce((a,b)=>b.bic<a.bic?b:a):null};
+ // Only this stored weak start is simulated here (both equations, from the first measurement).
+ const rhs=(c,coef)=>state=>{const phi=W.basis2(state);let i=0;return c.joint.map(eq=>eq.reduce((s,j)=>s+coef[i++]*phi[j],0));};
+ const weakCurve=rk4(observation.t,observation.states[0].slice(),rhs(weak,weak.p0All)).map(row=>row[0]);
+ return {candidates,winner,weak,weakCurve,bound,initial:'estimated',provisional:false,
+  share:1-Math.exp(-Math.log(winner.N)/winner.N),legacy:null};
 }
 function fifthAt(curve,time){
  if(!curve||time<curve.t[0]||time>curve.t.at(-1))return NaN;
@@ -477,16 +499,16 @@ function fifthAt(curve,time){
  const a=curve.model[j-1][0],b=curve.model[j][0];return a+(b-a)*(time-curve.t[j-1])/(curve.t[j]-curve.t[j-1]);
 }
 function fifthSettings(model){return tr('x19_settings',{bound:fmt(model.bound),initial:tr(model.initial==='estimated'?'gate_initial_estimated':'x19_first')})+(model.provisional?' '+tr('x19_provisional',{gate:'G2'}):'');}
-function secondEquation(support,coefficients){return 'du/dt = '+coefficients.map((c,i)=>(i?(c<0?' − ':' + '):c<0?'−':'')+secondNumber(Math.abs(c))+(support[i]?'·'+terms[support[i]]:'')).join('');}
+function secondEquation(support,coefficients){return 'dH/dt = '+coefficients.map((c,i)=>(i?(c<0?' − ':' + '):c<0?'−':'')+secondNumber(Math.abs(c))+(support[i]?'·'+terms[support[i]]:'')).join('');}
 function initChapterOne(){
  if(!$('p-c1-data'))return;
  const m=window.WispSolo.model,t=measuredTime,x=teaching.observed,clean=teaching.truth,n=t.length;
  const legacyStates=['data','noise-visible','slope','secants','windows','error-empty','fit','every','noise-why','noise-estimate','percent','solution'];
  const states=['data','slope','noise-visible','secants','windows','error-empty','fit','every','noise-estimate','percent','solution'];
  const constant=m.blocks.find(b=>b.term===0),winner=m.blocks.find(b=>b.term===m.winner),norm=soloDot(m.D.b,m.D.b);
- const two=secondModel(m,t,x,LIVE,LIVE.featured[0]),twoStates=['c2-standing','c2-residual','c2-joint','c2-error','c2-solution'];
- const three=thirdModel(m,t,x,LIVE,LIVE.featured[0]),threeStates=['c3-standing','c3-probe','c3-threshold','c3-linear','c3-quadratic','c3-compare','c3-next'];
- const four=fourthModel(m,t,x,LIVE,LIVE.featured[0],three),fourStates=['c4-question','c4-noise','c4-threshold','c4-replay','c4-path'];
+ const two=secondModel(m,t,x,LVC,LIVE.featured[0]),twoStates=['c2-standing','c2-residual','c2-joint','c2-error','c2-solution'];
+ const three=thirdModel(m,t,x,LVC,LIVE.featured[0]),threeStates=['c3-standing','c3-probe','c3-threshold','c3-linear','c3-quadratic','c3-compare','c3-next'];
+ const four=fourthModel(m,t,x,LVC,LIVE.featured[0],three),fourStates=['c4-question','c4-noise','c4-threshold','c4-replay','c4-path'];
  const five=fifthModel(LIVE,LIVE.fit_protocol),fiveStates=['c5-weak','c5-fit','c5-each','c5-bic','c5-winner','c5-recap'];
  fiveStates.forEach((_,i)=>{$('c5-title-'+i).textContent=tr('x19_title_'+i);$('c5-text-'+i).textContent=tr('x19_text_'+i,{share:fmt(100*five.share,4)+' %'});});
  document.querySelectorAll('[data-c5-eye]').forEach(e=>e.textContent=tr('x10_eye',{i:e.dataset.c5Eye,n:fiveStates.length}));
@@ -527,7 +549,8 @@ function initChapterOne(){
  $('c1-story-text-9').textContent+=' '+tr(m.normalized?'x10_r2':'x10_fallback');
  $('c1-story-text-10').textContent+=' '+tr('x10_next');
  document.querySelectorAll('[data-c1-eye]').forEach(e=>e.textContent=tr('x10_eye',{i:e.dataset.c1Eye,n:states.length}));
- const twoArgs={before:pct(constant.share),after:pct(twoWinner.share),maximum:Math.max(...x.map(v=>W.basis(v)[two.winner])).toLocaleString(language,{maximumSignificantDigits:2}),term:terms[two.winner],c:soloNumber(constant.coefficient)};
+ const first=two.constant;
+ const twoArgs={before:pct(first.share),after:pct(twoWinner.share),maximum:Math.max(...teaching.states.map(r=>Math.abs(W.basis2(r)[two.winner]))).toLocaleString(language,{maximumSignificantDigits:2}),term:terms[two.winner],first:terms[first.term],eq:soloEquation(first),c:soloNumber(first.coefficient)};
  Array.from({length:6},(_,i)=>i).forEach(i=>{
   $('c2-text-'+i).textContent=tr('x13_text_'+i,twoArgs);
  });
@@ -547,7 +570,7 @@ function initChapterOne(){
  const truthDemo=LIVE.illustrations.find(d=>d.system_id===teachingSystem);
  if(!truthDemo)throw Error('Missing teaching-system truth illustration');
  // The teaching system's stored logistic constants, not fitted result-row params.
- const truthCoefficients=[truthDemo.constants[0],-truthDemo.constants[0]/truthDemo.constants[1]];
+ const truthCoefficients=teachingSystem===27?[truthDemo.constants[0],-truthDemo.constants[1]]:[truthDemo.constants[0],-truthDemo.constants[0]/truthDemo.constants[1]];
  const host=$('c1-stage'),svg=svgNode('svg',{viewBox:'0 0 800 480',role:'img',class:'story-svg'});host.append(svg);const caption=el('figcaption',tr('x10_caption'),'story-caption');caption.dataset.claim='review';host.append(caption);
  const clock=window.WispStoryClock||{now:()=>performance.now(),request:fn=>requestAnimationFrame(fn),cancel:id=>cancelAnimationFrame(id)};
  const clamp=v=>Math.max(0,Math.min(1,v)),ease=v=>{v=clamp(v);return v*v*(3-2*v);},mix=(a,b,s)=>a+(b-a)*s;
@@ -563,7 +586,7 @@ function initChapterOne(){
  const c5Loop=node('rect',{class:'c5-loop',rx:9},'rect',[0,0,0,0,0]);
  const c5Recap=Array.from({length:8},()=>node('rect',{class:'c5-recap-box',rx:7},'rect',[0,0,0,0,0]));
  const c5SupportGroups=five.candidates.map(()=>node('rect',{class:'c5-support-group',rx:5},'rect',[0,0,0,0,0]));
- const c5Panels=five.candidates.map(()=>({readout:node('rect',{class:'c5-readout',rx:5},'rect',[0,0,0,0,0]),curve:path('c5-fit-curve'),data:t.map(()=>dot('c5-observation',1.5)),axes:[line('story-grid'),line('story-grid')],bars:[node('rect',{class:'c5-fit-bar'},'rect',[0,0,0,0,0]),node('rect',{class:'c5-price-bar'},'rect',[0,0,0,0,0])],chips:terms.map(()=>({box:node('rect',{class:'c5-chip',rx:5},'rect',[0,0,0,0,0]),text:label('c5-chip-label')}))}));
+ const c5Panels=five.candidates.map(()=>({readout:node('rect',{class:'c5-readout',rx:5},'rect',[0,0,0,0,0]),curve:path('c5-fit-curve'),data:t.map(()=>dot('c5-observation',1.5)),axes:[line('story-grid'),line('story-grid')],bars:[node('rect',{class:'c5-fit-bar'},'rect',[0,0,0,0,0]),node('rect',{class:'c5-price-bar'},'rect',[0,0,0,0,0])],chips:terms.map(()=>({box:node('rect',{class:'c5-chip',rx:5},'rect',[0,0,0,0,0]),text:label('c5-chip-label')})),foxChips:terms.map(()=>({box:node('rect',{class:'c5-chip fox',rx:5},'rect',[0,0,0,0,0]),text:label('c5-chip-label fox')}))}));
  const c5Labels=Array.from({length:80},()=>label('c5-label'));
  const c5RecapText=Array.from({length:8},()=>['name','result'].map(role=>label('c5-recap-'+role)));
  const axisLines=Array.from({length:12},()=>line('story-grid'));
@@ -734,7 +757,8 @@ function initChapterOne(){
  // show slopes; fitting still uses ALL original windows in unscaled weak units.
  const slopeRows=m.rows.map(({w,i})=>({i,time:(t[w[0]]+t[w[1]])/2,dt:t[w[1]]-t[w[0]],rate:m.D.b[i]/(t[w[1]]-t[w[0]]),sd:Math.sqrt(variance[w[0]]+variance[w[1]])/(t[w[1]]-t[w[0]])}));
  const predict=(block,row)=>block.support.reduce((sum,j,k)=>sum+block.coefficients[k]*m.D.A[row.i][j]/row.dt,0);
- const slopeExtent=Math.max(...slopeRows.flatMap(r=>[Math.abs(r.rate),...two.blocks.map(b=>Math.abs(predict(b,r))),Math.abs(constant.coefficient)+r.sd]))*1.15;
+ const firstPredict=row=>two.constant.coefficient*m.D.A[row.i][two.constant.term]/row.dt;
+ const slopeExtent=Math.max(...slopeRows.flatMap(r=>[Math.abs(r.rate),...two.blocks.map(b=>Math.abs(predict(b,r))),Math.abs(firstPredict(r))+r.sd]))*1.15;
  function ranking(ordered,completed,phase,initial=[]){
   const count=Math.min(ordered.length,Math.max(0,Math.floor(completed))),before=initial.concat(ordered.slice(0,count)),after=initial.concat(ordered.slice(0,Math.min(ordered.length,count+1)));
   const order=known=>known.slice().sort((a,b)=>b.share-a.share).concat(ordered.filter(b=>!known.includes(b)));
@@ -753,11 +777,11 @@ function initChapterOne(){
   const at=seq<sortAt?Math.min(remainingBlocks.length-1,Math.floor(seq/2500)):remainingBlocks.findIndex(b=>b.term===two.winner);
   const block=state==='c2-joint'?joint:list?(remainingBlocks[at]||twoWinner):twoWinner;
   let blend=['c2-standing','c2-residual'].includes(state)?0:state==='c2-joint'?ease(seq/3000):1;
-  let coefficients=block.support.map((j,k)=>mix(j===0?constant.coefficient:0,block.coefficients[k],blend));
+  let coefficients=block.support.map((j,k)=>mix(j===two.constant.term?two.constant.coefficient:0,block.coefficients[k],blend));
   // Candidate-to-candidate interpolation keeps every prediction vertex in place.
   let previous=null,flight=1;
   if(list){previous=seq>=sortAt?remainingBlocks.at(-1):at>0?remainingBlocks[at-1]:joint;flight=ease((seq>=sortAt?seq-sortAt:seq%2500)/700);}
-  const prediction=slopeRows.map(r=>list?mix(previous?predict(previous,r):constant.coefficient,predict(block,r),flight):predict({...block,coefficients},r));
+  const prediction=slopeRows.map(r=>list?mix(previous?predict(previous,r):firstPredict(r),predict(block,r),flight):predict({...block,coefficients},r));
   const residualOn=state==='c2-residual'?ease(seq/1200):0;
   const bandOn=state==='c2-residual'?ease((seq-1200)/1000):0;
   caption.style.visibility='visible';caption.textContent=tr('x13_caption');
@@ -773,11 +797,11 @@ function initChapterOne(){
   sticks.forEach((id,j)=>{const r=slopeRows[j];put(id,[r?X(r.time):left,r?Y(prediction[j]):bottom,r?X(r.time):left,r?Y(r.rate):bottom,r?residualOn:0]);if(r)nodes[id].e.dataset.value=String(r.rate-prediction[j]);});
   const expanded=Array.from({length:n},(_,j)=>Math.min(slopeRows.length-1,Math.floor(j*slopeRows.length/n)));
   put(predictionPath,[...expanded.flatMap(i=>[X(slopeRows[i].time),Y(prediction[i])]),1]);
-  put(bandTop,[...expanded.flatMap(i=>[X(slopeRows[i].time),Y(constant.coefficient+slopeRows[i].sd)]),...expanded.slice().reverse().flatMap(i=>[X(slopeRows[i].time),Y(constant.coefficient-slopeRows[i].sd)]),bandOn]);
-  let gain=constant.gain;
+  put(bandTop,[...expanded.flatMap(i=>[X(slopeRows[i].time),Y(firstPredict(slopeRows[i])+slopeRows[i].sd)]),...expanded.slice().reverse().flatMap(i=>[X(slopeRows[i].time),Y(firstPredict(slopeRows[i])-slopeRows[i].sd)]),bandOn]);
+  let gain=two.constant.gain;
   if(state==='c2-joint')gain=1-m.D.b.reduce((sum,b,i)=>sum+(b-block.support.reduce((v,j,k)=>v+coefficients[k]*m.D.A[i][j],0))**2,0)/norm;
-  if(list)gain=mix(previous?1-previous.remaining:constant.gain,1-block.remaining,flight);
-  if(state==='c2-error')gain=mix(constant.gain,1-twoWinner.remaining,ease(seq/2200));
+  if(list)gain=mix(previous?1-previous.remaining:two.constant.gain,1-block.remaining,flight);
+  if(state==='c2-error')gain=mix(two.constant.gain,1-twoWinner.remaining,ease(seq/2200));
   if(state==='c2-solution')gain=1-twoWinner.remaining;
   // Three segments retain chapter one's labels and its frozen noise fraction.
   let xx=left;
@@ -787,15 +811,15 @@ function initChapterOne(){
   text(stack[0].text,tr('x13_legend',{floor:pct(parts[0]),explained:pct(parts[1]),remaining:pct(parts[2])}),left,56,list?0:1);
   [1,2].forEach(i=>text(stack[i].text,'',left,56,0));
   text(readout,tr('x13_share',{p:pct(gain/m.explainable)}),left,80);
-  if(state==='c2-error')text(noiseLabel,tr('x13_before_after',{before:pct(constant.share),after:pct(twoWinner.share)}),left,120);
+  if(state==='c2-error')text(noiseLabel,tr('x13_before_after',{before:pct(two.constant.share),after:pct(twoWinner.share)}),left,120);
   if(state==='c2-error')s[axisLabels[10]][2]=0;
   if(state==='c2-joint'){
    text(equation,secondEquation(block.support,coefficients),left,470);
   }else if(state==='c2-solution')text(equation,secondEquation(two.record.active_idxs[0].map(j=>j-1),two.record.equations[0].coefficients),left,470);
-  else if(!list)text(equation,blend===0?soloEquation(constant):secondEquation(block.support,coefficients),left,470);
+  else if(!list)text(equation,blend===0?soloEquation(two.constant):secondEquation(block.support,coefficients),left,470);
   if(list)two.blocks.forEach((b,j)=>{
    const ordering=ranking(remainingBlocks,Math.floor(seq/2500),seq%2500,[joint]);
-   const yy=150+ordering.position(b)*52,progress=b.term===joint.term?1:ease((seq-remainingBlocks.indexOf(b)*2500-1800)/200),slot=twoSlots[j];
+   const yy=(two.blocks.length>8?128:150)+ordering.position(b)*(two.blocks.length>8?31:52),progress=b.term===joint.term?1:ease((seq-remainingBlocks.indexOf(b)*2500-1800)/200),slot=twoSlots[j];
    put(slot.bar,[12,yy+10,204*clamp(b.share)*progress,12,1]);const labels=ordering.sorting?0:1;
    text(slot.text,terms[b.term],12,yy,labels);text(slot.value,pct(b.share),135,yy,progress*labels);
    nodes[slot.bar].e.dataset.term=String(b.term);nodes[slot.bar].e.dataset.value=String(b.share);nodes[slot.bar].e.classList.toggle('winner',seq>=sortAt+1000&&b.term===two.winner);
@@ -939,10 +963,12 @@ function initChapterOne(){
   const s=blank.map(a=>a.slice()),put=(id,a)=>{s[id]=a;};let labelIndex=0;
   // All mounted labels are reset, so reverse navigation and seek are deterministic.
   c5Labels.forEach(id=>{nodes[id].e.textContent='';});
-  c5Panels.forEach(panel=>panel.chips.forEach(chip=>nodes[chip.box].e.classList.toggle('winner',false)));
+  c5Panels.forEach(panel=>[...panel.chips,...panel.foxChips].forEach(chip=>nodes[chip.box].e.classList.toggle('winner',false)));
   c5Recap.forEach(id=>nodes[id].e.classList.toggle('highlight',false));
   const text=(value,xx,yy)=>{const id=c5Labels[labelIndex++];nodes[id].e.textContent=value;put(id,[xx,yy,1]);};
-  const chips=(candidate,slot,xx,yy)=>candidate.support.forEach((term,j)=>{const chip=slot.chips[term];nodes[chip.box].e.classList.toggle('winner',candidate===five.winner&&state==='c5-winner');put(chip.box,[xx+j*62,yy,54,25,1]);nodes[chip.text].e.textContent=terms[term];put(chip.text,[xx+8+j*62,yy+18,1]);});
+  const chips=(candidate,slot,xx,yy,compact=false)=>{const h=compact?19:25,gap=compact?10:18;let cx=xx;
+   [[candidate.support,slot.chips],[candidate.fox,slot.foxChips]].forEach(([support,pool],e)=>{if(e)cx+=gap;support.forEach(term=>{const chip=pool[term],w=compact?Math.max(26,7*terms[term].length+8):54;nodes[chip.box].e.classList.toggle('winner',candidate===five.winner&&state==='c5-winner');
+    put(chip.box,[cx,yy,w,h,1]);nodes[chip.text].e.textContent=terms[term];put(chip.text,[cx+(compact?4:8),yy+(compact?14:18),1]);cx+=w+(compact?3:8);});if(!support.length)cx+=compact?10:20;});};
   const scores=c=>tr('x19_scores',{mse:fmt(c.mse,5),r:fmt(c.row.reconstruction_r2_arithmetic,5)});
   const bounds=c=>c.atBound.some(Boolean)?tr('x19_bound',{terms:c.support.filter((_,j)=>c.atBound[j]).map(j=>terms[j]).join(', ')}):'';
   const values=[...x,...five.weakCurve.filter(Number.isFinite),...five.candidates.flatMap(c=>c.curves?c.curves.model.map(row=>row[0]):[])];
@@ -950,7 +976,7 @@ function initChapterOne(){
   function plot(c,slot,left,top,width,height,blend=1){
    const X=v=>left+width*(v-t[0])/(t.at(-1)-t[0]),Y=v=>top+height-height*(v-ymin)/(ymax-ymin);
    slot.axes.forEach((id,i)=>put(id,i?[left,top+height,left+width,top+height,1]:[left,top,left,top+height,1]));
-   text(tr('j157'),left+width*.7,top+height+31);text('u',left+8,top+14);
+   if(height>=100)text(tr('j157'),left+width*.7,top+height+31);text('H',left+8,top+14);
    text(fmt(t[0]),left,top+height+15);text(fmt(t.at(-1)),left+width-24,top+height+15);
    text(fmt(ymin),left-37,top+height);text(fmt(ymax),left-37,top+4);
    slot.data.forEach((id,j)=>put(id,[X(t[j]),Y(x[j]),1]));
@@ -971,26 +997,28 @@ function initChapterOne(){
    if(state==='c5-fit')text(scores(c),65,419);
    text(tr('x19_observations'),65,459);
   }else if(state==='c5-each'){
+   const grid=five.candidates.length>4;
    five.candidates.forEach((c,i)=>{
-    const left=60+(i%2)*390,top=40+Math.floor(i/2)*225;
-    chips(c,c5Panels[i],left,top-35);plot(c,c5Panels[i],left,top,290,110);
-    put(c5Panels[i].readout,[left-4,top+143,338,42,1]);
-    text(scores(c),left,top+159);text(bounds(c),left,top+178);
+    const left=grid?40+(i%3)*262:60+(i%2)*390,top=grid?38+Math.floor(i/3)*150:40+Math.floor(i/2)*225;
+    chips(c,c5Panels[i],left,top-30,grid);plot(c,c5Panels[i],left,top,grid?215:290,grid?72:110);
+    if(grid){put(c5Panels[i].readout,[0,0,0,0,0]);text(tr('x19_r2_short',{r:fmt(c.row.reconstruction_r2_arithmetic,3)}),left,top+102);}
+    else{put(c5Panels[i].readout,[left-4,top+143,338,42,1]);text(scores(c),left,top+159);text(bounds(c),left,top+178);}
    });
   }else if(state==='c5-bic'){
    const fits=five.candidates.map(c=>c.N*Math.log(c.mse)),max=Math.max(...five.candidates.map(c=>c.bic)),min=Math.min(...fits),origin=min-(max-min)*.06;
-   const X=v=>170+(v-origin)/(max-origin)*490;
+   const many=five.candidates.length>4,x0=many?262:170,x1=many?640:660;
+   const X=v=>x0+(v-origin)/(max-origin)*(x1-x0);
    svg.dataset.bicOrigin=String(origin);
-   text(tr('x19_candidate_axis'),25,24);text(tr('x19_fit_term'),170,24);text(tr('x19_price'),430,24);
+   text(tr('x19_candidate_axis'),25,24);text(tr('x19_fit_term'),x0,24);text(tr('x19_price'),many?470:430,24);
    five.candidates.forEach((c,i)=>{
-    const yy=75+i*87,fit=fits[i];chips(c,c5Panels[i],25,yy);
-    put(c5Panels[i].bars[0],[170,yy,X(fit)-170,22,1]);put(c5Panels[i].bars[1],[X(fit),yy,X(c.bic)-X(fit),22,1]);
-    text(fmt(fit,7)+' + '+fmt(c.penalty,5)+' = '+fmt(c.bic,7),170,yy+44);
-    text('⌁',153,yy+17);
+    const yy=many?44+i*38:75+i*87,fit=fits[i];chips(c,c5Panels[i],25,yy,many);
+    put(c5Panels[i].bars[0],[x0,yy,X(fit)-x0,many?17:22,1]);put(c5Panels[i].bars[1],[X(fit),yy,X(c.bic)-X(fit),many?17:22,1]);
+    if(many)text(fmt(c.bic,6),X(c.bic)+8,yy+13);else text(fmt(fit,7)+' + '+fmt(c.penalty,5)+' = '+fmt(c.bic,7),170,yy+44);
+    text('⌁',x0-17,yy+(many?13:17));
    });
-   text(tr('x19_bic_axis',{origin:fmt(origin,6)}),170,437);
-   text(tr('x19_n_definition',{samples:t.length,dimension:five.winner.N/t.length,total:five.winner.N}),25,408);
-   const c=five.winner;text('BIC = '+fmt(c.N)+' × log('+fmt(c.mse,6)+') + '+fmt(c.k)+' × log('+fmt(c.N)+')',25,472);
+   text(tr('x19_bic_axis',{origin:fmt(origin,6)}),x0,many?400:437);
+   text(tr('x19_n_definition',{samples:t.length,dimension:five.winner.N/t.length,total:fmt(five.winner.N,6)}),25,many?424:408);
+   const c=five.winner;text('BIC = '+fmt(c.N,6)+' × log('+fmt(c.mse,6)+') + '+fmt(c.k)+' × log('+fmt(c.N,6)+')',25,many?450:472);
   }else if(state==='c5-winner'){
    const c=five.winner;chips(c,c5Panels[0],60,15);
    text(tr('x19_selected',{bic:fmt(c.bic,8)}),60,75);
@@ -1007,8 +1035,8 @@ function initChapterOne(){
     three.rounds.map(r=>terms[r.addition]).join(' → '),
     tr('x19_recap_removed',{terms:three.rounds.flatMap(r=>r.removed).map(j=>terms[j]).join(', ')||tr('j262')}),
     tr('x19_each_result',{count:fmt(five.candidates.length)}),
-    five.candidates.map(c=>'['+c.support.map(j=>terms[j]).join(', ')+']: '+fmt(c.row.reconstruction_r2_arithmetic,5)).join(' · '),
-    '['+five.winner.support.map(j=>terms[j]).join(', ')+'] · '+tr('x19_selected',{bic:fmt(five.winner.bic,7)})
+    tr('x19_each_best',{count:fmt(five.candidates.length),r:fmt(five.winner.row.reconstruction_r2_arithmetic,5)}),
+    'H: '+five.winner.support.map(j=>terms[j]).join(', ')+' · F: '+five.winner.fox.map(j=>terms[j]).join(', ')+' · '+tr('x19_selected',{bic:fmt(five.winner.bic,7)})
    ];
    const active=Math.min(stages.length-1,Math.floor(ms/2000));
    put(c5Loop,[17,116,772,182,1]);text('↻ '+tr('x19_recap_loop'),40,134);
@@ -1020,7 +1048,7 @@ function initChapterOne(){
     });
     if(i===5){
      // Real support chips occupy the result line, after the localized count.
-     five.candidates.forEach((c,j)=>{
+     if(five.candidates.length<=4)five.candidates.forEach((c,j)=>{
       put(c5SupportGroups[j],[236+j*132,yy+23,8+c.support.length*38,27,1]);
       c.support.forEach((term,k)=>{
       const chip=c5Panels[j].chips[term],xx=240+j*132+k*38;
@@ -1124,7 +1152,7 @@ function initChapterOne(){
    put(axisLines[j],[left,Y(v),right,Y(v),1]);text(axisLabels[j],fmt(v),left-10,Y(v)+4,j===0?0:1);nodes[axisLabels[j]].e.setAttribute('text-anchor','end');
    text(axisLabels[j+5],fmt(tt),X(tt),split?bottom+25:state==='noise-estimate'?326:416);
   }
-  put(axisLines[5],[left,bottom,right,bottom,1]);text(axisLabels[10],changes?tr('x9_change'):'u',left,state==='every'?120:24);text(axisLabels[11],tr('j157'),right-90,split?bottom+42:state==='noise-estimate'?350:440);
+  put(axisLines[5],[left,bottom,right,bottom,1]);text(axisLabels[10],changes?tr('x9_change'):'H',left,state==='every'?120:24);text(axisLabels[11],tr('j157'),right-90,split?bottom+42:state==='noise-estimate'?350:440);
   if(split){put(axisLines[6],[left,R(0),right,R(0),1]);text(axisLabels[12],tr('x12_axis_slope'),left,lowerTop-15);text(axisLabels[13],tr('j157'),right-90,440);
    [-lowerBound,0,lowerBound].forEach((v,j)=>{text(axisLabels[14+j],fmt(v),left-10,R(v)+4);nodes[axisLabels[14+j]].e.setAttribute('text-anchor','end');});
    put(axisLines[7],[left,lowerTop,left,lowerBottom,1]);}
@@ -1258,12 +1286,12 @@ function initChapterOne(){
   }
   if(list){
    const ordered=m.blocks.slice().sort((a,b)=>a.term-b.term),ranked=ordered.slice().sort((a,b)=>b.share-a.share),ordering=ranking(ordered,Math.floor(seq/2500),seq%2500);
-   slots.forEach((slot,j)=>{const b=ordered[j],rank=ranked.indexOf(b),yy=(state==='percent'?155:62)+(state==='percent'?j:ordering.position(b))*48;
+   slots.forEach((slot,j)=>{const b=ordered[j],rank=ranked.indexOf(b),rowH=ordered.length>8?(state==='percent'?28:34):48,yy=(state==='percent'?(ordered.length>8?136:155):62)+(state==='percent'?j:ordering.position(b))*rowH;
     const visible=state==='percent'?1:clamp((seq-j*2500-1800)/200),value=b.share;
     // New values travel from the prediction plot into their catalogue slot.
     const flight=state==='percent'?1:ease((seq-j*2500-1800)/200),xx=mix(left+30,12,clamp(flight/.6)),flightY=mix(110,yy,clamp((flight-.6)/.4));
-    put(slot.bar,[xx,flightY+8,204*clamp(value),12,visible]);const labels=state==='every'&&ordering.sorting?0:visible;
-    text(slot.text,terms[b.term],xx,flightY,labels);text(slot.value,pct(value),xx+140,flightY,labels);
+    const compact=ordered.length>8;put(slot.bar,compact?[xx+56,flightY-10,180*clamp(value),11,visible]:[xx,flightY+8,204*clamp(value),12,visible]);const labels=state==='every'&&ordering.sorting?0:visible;
+    text(slot.text,terms[b.term],xx,flightY,labels);text(slot.value,pct(value),compact?xx+56+186:xx+140,flightY,labels);
     nodes[slot.text].e.dataset.shareRow=String(j);nodes[slot.value].e.dataset.shareRow=String(j);
     nodes[slot.bar].e.dataset.term=String(b.term);nodes[slot.bar].e.dataset.value=String(value);nodes[slot.bar].e.dataset.rank=String(rank);nodes[slot.bar].e.classList.toggle('winner',b.term===m.winner&&(state==='percent'||seq>=16000));
    });
@@ -1378,8 +1406,8 @@ function initExamples(){
  const stage=$('x21-stage'),panels={};
  document.querySelectorAll('.x21-panel').forEach(panel=>{panels[panel.dataset.panel]=panel;stage.append(panel);panel.hidden=true;});
  document.querySelectorAll('[data-example-eye]').forEach(eye=>{eye.textContent=tr('x21_step',{n:eye.dataset.exampleEye,m:eye.dataset.exampleCount});});
- const name=(e,j)=>e.terms[j-1].replaceAll('u1',e.dim===2?'x':'u').replaceAll('u2','y').replaceAll('^2','²').replaceAll('^3','³').replaceAll('*','·').replace(/(sin|cos)\((.*?)\)/g,'$1 $2');
- const derivative=(e,eq)=>e.dim===2?['ẋ','ẏ'][eq]:'du/dt';
+ const name=(e,j)=>e.terms[j-1].replaceAll('u1',e.system_id===27?'H':e.dim===2?'x':'u').replaceAll('u2',e.system_id===27?'F':'y').replaceAll('^2','²').replaceAll('^3','³').replaceAll('*','·').replace(/(sin|cos)\((.*?)\)/g,'$1 $2');
+ const derivative=(e,eq)=>e.system_id===27?['dH/dt','dF/dt'][eq]:e.dim===2?['ẋ','ẏ'][eq]:'du/dt';
  function chips(target,support,e){target.replaceChildren();support.forEach((eq,i)=>{const row=el('div',undefined,'x20-equation');row.append(el('span',derivative(e,i)+' ='));eq.forEach(j=>row.append(el('span',name(e,j),'x20-chip')));if(!eq.length)row.append(el('span','0'));target.append(row);});}
  function formula(e,support,params){let offset=0;return support.map((eq,i)=>derivative(e,i)+' = '+eq.map((j,k)=>{const value=params[offset++];return (value<0?' − ':k?' + ':'')+fmt(Math.abs(value),4)+(j===1?'':' '+name(e,j));}).join(''));}
  function truthParams(e){return e.truth.support.flatMap((eq,i)=>eq.map(j=>e.truth.coefficients[i][e.terms[j-1]]));}
@@ -1390,12 +1418,12 @@ function initExamples(){
   target.replaceChildren();if(!bundle){target.append(el('p',tr('x20_pending')+(reason?' '+reason:''),'notice'));return;}
   const series=[{x:bundle.t,y:bundle.truth.map(r=>r[component]),kind:'truth',label:tr('x8_true')},{x:bundle.t,y:bundle.model.map(r=>r[component]),kind:'model',label:tr('j323')}];
   if(observed)series.push({x:observed.t,y:observed.x.map(r=>r[component]),kind:'data',style:'dots',label:tr('j214')});
-  const plot=el('div');if(title)target.append(el('h4',title));target.append(plot);exampleChart(plot,series,{title:'',xLabel:tr('j157'),yLabel:component===0&&bundle.truth[0].length===2?tr('x21_prey'):'u'});
+  const plot=el('div');if(title)target.append(el('h4',title));target.append(plot);exampleChart(plot,series,{title:'',xLabel:tr('j157'),yLabel:bundle.truth[0].length===2?tr(component?'lv_foxes_short':'lv_hares_short')+(component?' F':' H'):'u'});
  }
- const m=window.WispSolo.model,D=m.D,norm=soloDot(D.b,D.b),path=W.significancePath(teaching.t,teaching.observed,LIVE.featured[0].stop_reference.threshold),support=path.steps.at(-1).support;
+ const m=window.WispSolo.model,D=m.D,norm=soloDot(D.b,D.b),path=W.significancePath(teaching.t,teaching.observed,LIVE.featured[0].stop_reference.threshold,teaching.states),support=path.steps.at(-1).support;
  const floor=m.floor,remaining=path.steps.at(-1).remaining,explained=1-remaining,still=remaining-floor;
- if(still < -1e-10)throw Error('Residual below estimated noise floor');
- const stack=$('x20-stack'),segments=[['noise',floor],['explained',explained],['still',Math.max(0,still)]];
+ // The noise estimate can sit slightly above what is left (LV hares): show the residual as all noise then.
+ const stack=$('x20-stack'),segments=[['noise',Math.min(floor,remaining)],['explained',explained],['still',Math.max(0,still)]];
  segments.forEach(([key,value])=>{const segment=el('span');segment.style.width=(100*value)+'%';segment.className='x20-'+key;stack.append(segment);$('x20-stack-labels').append(el('p',tr('x20_'+key)+': '+pct(value)));});
  stack.dataset.norm=String(norm);stack.dataset.support=JSON.stringify(support);stack.dataset.parts=JSON.stringify(segments.map(s=>s[1]));
  function candidateScene(target,model){
@@ -1404,10 +1432,11 @@ function initExamples(){
   target.replaceChildren(rows);
   // Split the BIC into a shifted fit term and the unshifted block price, as in chapter five.
   const fit=e.candidates.map(c=>c.N*Math.log(c.mse)),origin=Math.floor(Math.min(...fit)/100)*100;
-  const max=Math.max(...e.candidates.map((c,i)=>fit[i]-origin+c.penalty)),svg=svgNode('svg',{viewBox:'0 0 800 160',class:'x21-bic',role:'img','aria-label':tr('x21_bic')});
+  const max=Math.max(...e.candidates.map((c,i)=>fit[i]-origin+c.penalty)),rowsH=e.candidates.length*(e.candidates.length>5?19:27),svg=svgNode('svg',{viewBox:`0 0 800 ${rowsH+52}`,class:'x21-bic',role:'img','aria-label':tr('x21_bic')});
   const X=v=>125+535*v/max;
-  e.candidates.forEach((c,i)=>{const y=18+i*27,width=535*(fit[i]-origin)/max;svg.append(svgNode('text',{x:5,y:y+16},String(i+1)),svgNode('text',{x:78,y:y+16},'//'),svgNode('rect',{x:125,y,width,height:19,fill:'var(--data)'}),svgNode('rect',{x:125+width,y,width:535*c.penalty/max,height:19,fill:'var(--model)'}),svgNode('text',{x:X(c.bic-origin)+8,y:y+16},fmt(c.bic,5)));});
-  svg.append(svgNode('text',{x:5,y:151},tr('x21_bic_origin',{n:fmt(origin,5)})));target.append(svg);
+  const rowStep=e.candidates.length>5?19:27,barH=e.candidates.length>5?14:19;
+  e.candidates.forEach((c,i)=>{const y=18+i*rowStep,width=535*(fit[i]-origin)/max;svg.append(svgNode('text',{x:5,y:y+16},String(i+1)),svgNode('text',{x:78,y:y+16},'//'),svgNode('rect',{x:125,y,width,height:barH,fill:'var(--data)'}),svgNode('rect',{x:125+width,y,width:535*c.penalty/max,height:barH,fill:'var(--model)'}),svgNode('text',{x:X(c.bic-origin)+8,y:y+barH-3},fmt(c.bic,5)));});
+  svg.append(svgNode('text',{x:5,y:rowsH+44},tr('x21_bic_origin',{n:fmt(origin,5)})));target.append(svg);
   target.append(el('div',tr('x21_bic'),'caption'));
  }
  for(const [prefix,model] of [['c6',lv],['c7',failure]]){
@@ -1430,19 +1459,20 @@ function initExamples(){
  // Evaluate the RHS algebraically, never a replacement trajectory simulation.
  const e=failure.example,grid=Array.from({length:161},(_,i)=>80*i/160),constants=e.truth.constants;
  const trueRhs=u=>constants[0]*u*(1-u/constants[1]),modelRhs=u=>failure.winner.params.reduce((s,p,i)=>s+p*W.basis(u)[failure.winner.active_idxs[0][i]-1],0);
- function rhsScene(target){const view=exampleChart(target,[{x:grid,y:grid.map(trueRhs),kind:'truth',label:tr('x8_true')},{x:grid,y:grid.map(modelRhs),kind:'model',label:tr('j323')}],{title:'',xLabel:'u',yLabel:tr('x21_rhs_axis'),highlight:e.seen_range,highlightLabel:tr('x21_seen'),xTicks:[0,20,40,60,80]});const start=teaching.truth[0];view.svg.append(svgNode('line',{x1:view.X(start),x2:view.X(start),y1:view.Y(trueRhs(start)),y2:view.Y(modelRhs(start)),class:'x21-limit'}));for(const [value,color] of [[trueRhs(start),'var(--data)'],[modelRhs(start),'var(--model)']])view.svg.append(svgNode('circle',{cx:view.X(start),cy:view.Y(value),r:5,fill:color}));}
+ const otherStart=e.truth.other_initial[0];
+ function rhsScene(target){const view=exampleChart(target,[{x:grid,y:grid.map(trueRhs),kind:'truth',label:tr('x8_true')},{x:grid,y:grid.map(modelRhs),kind:'model',label:tr('j323')}],{title:'',xLabel:'u',yLabel:tr('x21_rhs_axis'),highlight:e.seen_range,highlightLabel:tr('x21_seen'),xTicks:[0,20,40,60,80]});const start=otherStart;view.svg.append(svgNode('line',{x1:view.X(start),x2:view.X(start),y1:view.Y(trueRhs(start)),y2:view.Y(modelRhs(start)),class:'x21-limit'}));for(const [value,color] of [[trueRhs(start),'var(--data)'],[modelRhs(start),'var(--model)']])view.svg.append(svgNode('circle',{cx:view.X(start),cy:view.Y(value),r:5,fill:color}));}
  rhsScene($('c7-rhs'));$('c7-rhs').dataset.seenRange=JSON.stringify(e.seen_range);
- $('c7-range').textContent=tr('x21_range',{lo:fmt(e.seen_range[0],3),hi:fmt(e.seen_range[1],3),u:fmt(teaching.truth[0]),truth:fmt(trueRhs(teaching.truth[0]),4),model:fmt(modelRhs(teaching.truth[0]),4)});
- $('c7-range').textContent+=' ('+tr('x20_example_0')+')';
- $('c7-range').dataset.start=String(teaching.truth[0]);$('c7-range').dataset.truth=String(trueRhs(teaching.truth[0]));$('c7-range').dataset.model=String(modelRhs(teaching.truth[0]));
+ $('c7-range').textContent=tr('x21_range',{lo:fmt(e.seen_range[0],3),hi:fmt(e.seen_range[1],3),u:fmt(otherStart),truth:fmt(trueRhs(otherStart),4),model:fmt(modelRhs(otherStart),4)});
+ $('c7-range').textContent+=' ('+tr('x21_other_start')+')';
+ $('c7-range').dataset.start=String(otherStart);$('c7-range').dataset.truth=String(trueRhs(otherStart));$('c7-range').dataset.model=String(modelRhs(otherStart));
  const teachingFeature=LIVE.featured.find(f=>f.roles.includes('running')),teachingWinner=teachingFeature.candidates.find(c=>c.row.candidate_id===teachingFeature.chosen);
  curve($('c8-generalization'),teachingWinner.curves?.generalization);
  text('c8-scores','scores',{rec:score(teachingWinner.row,'reconstruction'),gen:score(teachingWinner.row,'generalization')});
  function matrix(target){const table=el('table'),header=el('tr');['example','structure','reconstruction','generalization'].forEach(k=>header.append(el('th',tr('x20_'+k))));table.append(header);
-  [teachingWinner,lv.winner,failure.winner].forEach((c,i)=>{const row=el('tr');row.append(el('th',tr('x20_example_'+i)),el('td',c.row.raw_exact==='True'?'✓':'✗'));for(const kind of ['reconstruction','generalization']){const cell=el('td',score(c.row,kind)+' '+(+c.row[kind+'_r2_variance_weighted']>RESULTS.score_threshold?'●':'○'));cell.dataset.hit=String(+c.row[kind+'_r2_variance_weighted']>RESULTS.score_threshold);row.append(cell);}table.append(row);});target.replaceChildren(table);target.append(el('p',tr('x21_marker',{n:fmt(RESULTS.score_threshold)}),'caption'));}
+  [[lv.winner,1],[failure.winner,2]].forEach(([c,i])=>{const row=el('tr');row.append(el('th',tr('x20_example_'+i)),el('td',c.row.raw_exact==='True'?'✓':'✗'));for(const kind of ['reconstruction','generalization']){const cell=el('td',score(c.row,kind)+' '+(+c.row[kind+'_r2_variance_weighted']>RESULTS.score_threshold?'●':'○'));cell.dataset.hit=String(+c.row[kind+'_r2_variance_weighted']>RESULTS.score_threshold);row.append(cell);}table.append(row);});target.replaceChildren(table);target.append(el('p',tr('x21_marker',{n:fmt(RESULTS.score_threshold)}),'caption'));}
  matrix($('c8-comparison'));text('c8-metric','metric',{threshold:fmt(RESULTS.score_threshold)});
  const close=el('div');matrix(close);panels['c8-close'].append(close);
- const measured=el('div');chips(measured,JSON.parse(teachingWinner.row.active_idxs),{...failure.example,terms:LIVE.catalogues[0].terms});measured.append(el('p',(teachingWinner.row.raw_exact==='True'?'✓':'✗')+'   '+tr('x21_structure'),'x21-verdict'));panels['c8-measured'].append(measured);const measuredPlot=el('div');panels['c8-measured'].append(measuredPlot);curve(measuredPlot,teachingWinner.curves);
+ const measured=el('div');chips(measured,JSON.parse(teachingWinner.row.active_idxs),lv.example);measured.append(el('p',(teachingWinner.row.raw_exact==='True'?'✓':'✗')+'   '+tr('x21_structure'),'x21-verdict'));panels['c8-measured'].append(measured);const measuredPlot=el('div');panels['c8-measured'].append(measuredPlot);curve(measuredPlot,teachingWinner.curves);
  const lesson=el('div');chips(lesson,lv.winner.active_idxs,lv.example);lesson.append(el('p',(lv.winner.row.raw_exact==='True'?'✓':'✗')+'   '+tr('x21_structure'),'x21-verdict'));for(const kind of ['reconstruction','generalization']){lesson.append(el('p',tr('x20_'+kind)+' R² = '+score(lv.winner.row,kind)));const meter=el('meter');meter.min=0;meter.max=1;meter.value=Math.max(0,+lv.winner.row[kind+'_r2_variance_weighted']);lesson.append(meter);}panels['c6-lesson'].append(lesson);
  const rhsLesson=el('div');rhsScene(rhsLesson);panels['c7-lesson'].append(rhsLesson);const rhsEquations=el('div',undefined,'x21-equations');[...formula(e,e.truth.support,truthParams(e)),...formula(e,failure.winner.active_idxs,failure.winner.params)].forEach((eq,i)=>rhsEquations.append(el('p',tr(i?'x21_fitted':'x8_true')+': '+eq)));panels['c7-lesson'].append(rhsEquations);
  const replays={};

@@ -3,11 +3,14 @@
   'use strict';
   const dot = (a,b) => a.reduce((s,v,i)=>s+v*b[i],0);
   const basis = x => [1,x,x*x,x*x*x,Math.sin(x),Math.cos(x)];
-  function design(t,x,lengths=[1,2,4,8,16]) {
-    const phi=x.map(basis), A=[], b=[], windows=[];
+  // Two-state catalogue in the canonical Julia order (phasec_basis(2)): 1, u1, u2, u1², u2², u1·u2, u1³, u2³, sin, cos.
+  const basis2 = ([h,f]) => [1,h,f,h*h,f*f,h*f,h*h*h,f*f*f,Math.sin(h),Math.cos(h),Math.sin(f),Math.cos(f)];
+  // x is the target series (left-hand side); states, when given, are the rows [u1,u2] the blocks are built from.
+  function design(t,x,lengths=[1,2,4,8,16],states=null) {
+    const phi=states?states.map(basis2):x.map(basis), p=phi[0].length, A=[], b=[], windows=[];
     for (const length of lengths) for(let start=0;start<t.length-length;start++) {
-      const end=start+length, row=Array(6).fill(0);
-      for(let k=start;k<end;k++) for(let j=0;j<6;j++)
+      const end=start+length, row=Array(p).fill(0);
+      for(let k=start;k<end;k++) for(let j=0;j<p;j++)
         row[j]+=(t[k+1]-t[k])*(phi[k][j]+phi[k+1][j])/2;
       A.push(row); b.push(x[end]-x[start]); windows.push([start,end]);
     }
@@ -57,14 +60,14 @@
     return {coefficients,sse:dot(residual,residual)};
   }
   function path(t,x,config={}) {
-    const D=design(t,x,config.windows), C=compress(D.A,D.b), norm=dot(D.b,D.b), cache=new Map();
+    const D=design(t,x,config.windows,config.states||null), C=compress(D.A,D.b), norm=dot(D.b,D.b), cache=new Map(), P=D.A[0].length;
     const fit=s=>{const key=s.join(','); if(!cache.has(key)) {
       const f=leastSquares(C.A.map(r=>s.map(j=>r[j])),C.b);
       cache.set(key,{sse:f.sse,coefficients:f.coefficients.map((v,i)=>v/(C.norms[s[i]]||1))});
     } return cache.get(key);};
     let active=[]; const steps=[],seen=new Set();
     while(active.length<(config.cap||6) && norm && fit(active).sse/norm>=(config.sse_stop||1e-14)) {
-      const gains=Array.from({length:6},(_,i)=>i).filter(i=>!active.includes(i)).map(i=>({term:i,gain:(fit(active).sse-fit([...active,i].sort((a,b)=>a-b)).sse)/norm}));
+      const gains=Array.from({length:P},(_,i)=>i).filter(i=>!active.includes(i)).map(i=>({term:i,gain:(fit(active).sse-fit([...active,i].sort((a,b)=>a-b)).sse)/norm}));
       gains.sort((a,b)=>b.gain-a.gain||a.term-b.term);
       if(!gains.length) break;
       if(config.significance){
@@ -108,7 +111,7 @@
     for(const q of Q){const projected=variance.map(()=>0);D.windows.forEach(([a,b],i)=>{projected[a]-=q[i];projected[b]+=q[i];});total-=projected.reduce((sum,v,i)=>sum+v*v*variance[i],0);}
     return Math.max(0,total);
   }
-  function significancePath(t,x,threshold=6.635){const variance=noiseVariance(t,x);return {...path(t,x,{significance:true,variance,threshold}),variance};}
-  root.WispCompute={basis,design,path,leastSquares,noiseVariance,noiseFloor,significancePath};
+  function significancePath(t,x,threshold=6.635,states=null){const variance=noiseVariance(t,x);return {...path(t,x,{significance:true,variance,threshold,states}),variance};}
+  root.WispCompute={basis,basis2,design,path,leastSquares,noiseVariance,noiseFloor,significancePath};
   if(typeof module!=='undefined') module.exports=root.WispCompute;
 })(typeof globalThis==='undefined'?window:globalThis);
