@@ -73,7 +73,9 @@ function initDish(){
  // occupancy over time (time = edge distance / tMax), for the curve
  const T=LIVE.teaching,tt=T.t,K=Math.max(...T.truth),span=tt.at(-1)-tt[0];
  const level=p=>{const x=tt[0]+Math.max(0,Math.min(1,p))*span;let j=1;while(j<tt.length-1&&tt[j]<x)j++;const a=tt[j-1],b=tt[j],w=b>a?(x-a)/(b-a):0;return (T.truth[j-1]+(T.truth[j]-T.truth[j-1])*w)/K;};
- const radius=p=>{const l=level(p);return cells[Math.min(total-1,Math.max(0,Math.floor(l*total)))].arrive+12*Math.max(0,l-.97)/.03;};
+ const l0=level(0),cover=p=>Math.max(0,Math.min(1,(level(p)-l0)/(level(1)-l0)));
+ // area covered rises with the measured curve and closes the dish exactly at the last measurement
+ const radius=p=>{const c=Math.min(1,.04+.96*cover(p));return cells[Math.min(total-1,Math.max(0,Math.floor(c*total)))].arrive+14*Math.max(0,(p-.85)/.15)**2;};
  const share=level;
  const curveGroup=svgNode('g',{transform:'translate(-140 12) scale(1.5 1.35)'});svg.append(curveGroup);curveGroup.append(svgNode('path',{d:'M280 14V151H752',class:'dish-axis'}),svgNode('text',{x:288,y:17},tr('x7_cells')),svgNode('text',{x:752,y:174,'text-anchor':'end'},tr('x7_time')));
  const curve=svgNode('path',{class:'dish-curve'}),head=svgNode('circle',{r:0,class:'dish-cell'});curveGroup.append(curve,head);target.append(svg);
@@ -102,12 +104,17 @@ function initDish(){
   target.dataset.progress=String(progress);target.dataset.occupancy=String(level(progress));
  }
  const reduced=window.matchMedia('(prefers-reduced-motion: reduce)');
- const GROW=9000,LINE=1800,LOOP=GROW+LINE+2200;
+ const GROW=9000,LINE=1800,END=GROW+300+LINE+900;
  let frame=0,visible=typeof IntersectionObserver!=='function',elapsed=0,last=0;
- function tick(now){elapsed=(elapsed+Math.max(0,now-last))%LOOP;last=now;lineProgress=(elapsed-GROW-300)/LINE;draw(Math.min(1,elapsed/GROW),now);frame=requestAnimationFrame(tick);}
+ const replay=el('button',undefined,'dish-replay');replay.type='button';replay.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 7v5h-5 M20 12a8 8 0 1 0-2 5"/></svg>';
+ const label=()=>{replay.setAttribute('aria-label',tr('x6_reset'));replay.title=tr('x6_reset');};label();['language-de','language-en'].forEach(id=>$(id)?.addEventListener('click',()=>setTimeout(label,0)));
+ target.append(replay);replay.addEventListener('click',()=>{elapsed=0;replay.classList.remove('ready');update();});
+ // plays once; the circle button replays it
+ function tick(now){elapsed=Math.min(END,elapsed+Math.max(0,now-last));last=now;lineProgress=(elapsed-GROW-300)/LINE;draw(Math.min(1,elapsed/GROW),now);
+  if(elapsed<END)frame=requestAnimationFrame(tick);else{frame=0;replay.classList.add('ready');}}
  function update(){cancelAnimationFrame(frame);frame=0;
   if(reduced.matches){lineProgress=1;draw(1);return;}
-  if(visible&&!document.hidden){last=performance.now();frame=requestAnimationFrame(tick);}
+  if(visible&&!document.hidden&&elapsed<END){last=performance.now();frame=requestAnimationFrame(tick);}
  }
  reduced.addEventListener?.('change',()=>{draw(reduced.matches?1:Math.min(1,elapsed/GROW));update();});
  document.addEventListener('visibilitychange',update);
@@ -661,7 +668,7 @@ function initChapterOne(){
  // Noise sweep: zoom in, six points slowly, then an accelerating sweep over all points.
  const noiseIn=800,noiseSlow=6,noiseSlowEnd=noiseIn+noiseSlow*1000,noiseFastEnd=noiseSlowEnd+3000;
  const noiseCount=seq=>seq<noiseIn?0:seq<noiseSlowEnd?(seq-noiseIn)/1000:noiseSlow+(n-noiseSlow)*clamp((seq-noiseSlowEnd)/3000)**2;
- const TRIANGLE_STEP=650,SIX_END=700+6*TRIANGLE_STEP,WINDOW_PHASE=SIX_END+1500,durations={data:900,'noise-visible':6000,slope:10500,secants:16100,windows:longerLengths.length*WINDOW_PHASE+3300,'error-empty':2900,fit:4900,every:16900,'noise-why':900,'noise-estimate':noiseFastEnd+4700,percent:900,solution:900};
+ const PAIRS=10,PAIR_STEP=1100,PAIR_OUT=2200+PAIRS*PAIR_STEP+800,TRIANGLE_STEP=650,SIX_END=700+6*TRIANGLE_STEP,WINDOW_PHASE=SIX_END+1500,durations={data:900,'noise-visible':6000,slope:8200,secants:PAIR_OUT+3500,windows:longerLengths.length*WINDOW_PHASE+3300,'error-empty':2900,fit:4900,every:16900,'noise-why':900,'noise-estimate':noiseFastEnd+4700,percent:900,solution:900};
  Object.assign(durations,{'c2-standing':900,'c2-residual':3900,'c2-joint':jointPause+sortAt+1900,'c2-every':sortAt+1900,'c2-error':3900,'c2-solution':900});
  Object.assign(durations,{'c3-standing':1200,'c3-probe':3600,'c3-threshold':3600,'c3-linear':16000,'c3-quadratic':16000,'c3-compare':4200,'c3-next':4200});
  const c3Chips=terms.map(()=>({box:node('rect',{class:'c3-chip',rx:6},'rect',[0,0,0,0,0]),text:label('c3-chip-label')}));
@@ -1146,17 +1153,16 @@ function initChapterOne(){
   // S4: draw the target, hold, zoom, then eight complete pair constructions.
   let zoom=0,windowLength=1;
   const start=t.findIndex(v=>v>=2),constructionLengths=longerLengths;
-  const pairBegin=2200,pairEnd=11800,pairOut=12600;
+  const pairBegin=2200,pairEnd=pairBegin+PAIRS*PAIR_STEP,pairOut=pairEnd+800;
   const windowEnd=longerLengths.length*WINDOW_PHASE;
   if(state==='secants'||state==='windows'){
    zoom=state==='secants'?(seq<600?0:seq<2200?ease((seq-600)/1600):seq<pairEnd?1:1-ease((seq-pairEnd)/800)):(seq<windowEnd?1:1-ease((seq-windowEnd)/800));
-   const pan=Math.min(7,Math.max(0,Math.floor((seq-pairBegin)/1200)))+ (seq<pairEnd-1200?ease(((seq-pairBegin)%1200-1000)/200):0);
    const phaseIndex=Math.min(longerLengths.length-1,Math.floor(seq/WINDOW_PHASE)),phaseLength=longerLengths[phaseIndex],previousLength=phaseIndex?longerLengths[phaseIndex-1]:3;
    const span=mix(6*previousLength,6*phaseLength,ease((seq%WINDOW_PHASE)/700));
-   const begin=state==='secants'?start+pan-2:start,end=state==='secants'?begin+6:Math.min(n-1,start+span);
+   const begin=state==='secants'?start-2:start,end=state==='secants'?start+13:Math.min(n-1,start+span);
    // The pair phase zooms in height as well, so a neighbour triangle has a visible rise.
    const visible=state==='secants'?x.slice(Math.max(0,Math.floor(begin)),Math.min(n,Math.ceil(end)+1)):x.slice(start-2,Math.min(n,Math.ceil(end)+2));
-   const vlo=Math.min(...visible),vhi=Math.max(...visible),margin=(vhi-vlo)*(state==='secants'?.25:.1)||1,lo=vlo-margin,hi=vhi+margin;
+   const vlo=Math.min(...visible),vhi=Math.max(...visible),margin=(vhi-vlo)*(state==='secants'?.15:.1)||1,lo=vlo-margin,hi=vhi+margin;
    const at=i=>t[Math.floor(i)]+(i%1)*(t[Math.floor(i)+1]-t[Math.floor(i)]);
    domain=[mix(t[0],at(begin),zoom),mix(t.at(-1),at(end),zoom)];
    range=[mix(uRange[0],lo,zoom),mix(uRange[1],hi,zoom)];
@@ -1196,7 +1202,7 @@ function initChapterOne(){
   // All scientific values are attached unscaled for the numerical DOM assertions.
   if(state==='noise-visible')sticks.forEach((id,i)=>{put(id,[X(t[i]),Y(x[i]),X(t[i]),Y(clean[i]),inside(t[i])?clamp((seq-2600)/1600):0]);nodes[id].e.dataset.value=String(Math.abs(x[i]-clean[i]));});
   if(state==='slope'){
-   const i=Math.min(n-2,Math.floor(clamp(seq/9500)*(n-2))),slope=trueRates[i],dt=(t.at(-1)-t[0])*.25,ta=Math.max(t[0],Math.min(t.at(-1)-dt,t[i]-dt/2)),tb=ta+dt;
+   const i=Math.min(n-2,Math.floor(clamp(seq/7200)*(n-2))),slope=trueRates[i],dt=(t.at(-1)-t[0])*.25,ta=Math.max(t[0],Math.min(t.at(-1)-dt,t[i]-dt/2)),tb=ta+dt;
    put(marker,[X(t[i]),Y(clean[i]),1]);put(tangent,[X(ta),Y(clean[i]+(ta-t[i])*slope),X(tb),Y(clean[i]+(tb-t[i])*slope),1]);text(readout,tr('x12_slope',{value:fmt(slope)}),Math.max(left+15,Math.min(right-230,X(t[i])+15)),Math.max(top+45,Y(clean[i])-35));
    const xx=X(t[i]),yy=Y(clean[i]),dx=(right-left)*.08*(X(t[i])>right-100?-1:1),dy=Y(clean[i]+slope*(domain[1]-domain[0])*.08*(dx<0?-1:1));
    put(triangle[0],[xx,yy,xx+dx,yy,1]);put(triangle[1],[xx+dx,yy,xx+dx,dy,1]);
@@ -1204,23 +1210,24 @@ function initChapterOne(){
   }
   if(split){
    const neighbour=state==='secants',intro=neighbour&&seq<pairOut;
-   const sweep=clamp((seq-pairOut)/2600),pair=Math.min(7,Math.max(0,Math.floor((seq-pairBegin)/1200)));
+   const sweep=clamp((seq-pairOut)/2600),pair=Math.min(PAIRS-1,Math.max(0,Math.floor((seq-pairBegin)/PAIR_STEP)));
    const active=neighbour?seq>=pairBegin&&seq<pairEnd:seq<windowEnd;
-   const localTime=neighbour?seq-pairBegin-pair*1200:seq%WINDOW_PHASE;
+   const localTime=neighbour?seq-pairBegin-pair*PAIR_STEP:seq%WINDOW_PHASE;
    const a=neighbour?start+pair:start,b=a+windowLength;
    const draw=ease(localTime/350),labels=clamp((localTime-350)/150),written=clamp((localTime-500)/150),drop=ease((localTime-750)/400);
    if(neighbour&&seq<pairBegin){
     const xx=X(t[start]);
-    const lo=Math.min(...x.slice(start,start+19))*.98,hi=Math.max(...x.slice(start,start+19))*1.02;
-    const w=X(t[start+18])-xx,h=Y(lo)-Y(hi),bw=Math.max(48,w),bh=Math.max(48,h);put(zoomBox,[xx+w/2-bw/2,Y(hi)+h/2-bh/2,bw,bh,1]);
+    const lo=Math.min(...x.slice(start-2,start+14))*.98,hi=Math.max(...x.slice(start-2,start+14))*1.02;
+    const w=X(t[start+13])-X(t[start-2]),h=Y(lo)-Y(hi),bw=Math.max(48,w),bh=Math.max(48,h);put(zoomBox,[X(t[start-2])+w/2-bw/2,Y(hi)+h/2-bh/2,bw,bh,1]);
     nodes[zoomBox].e.setAttribute('pathLength','1');nodes[zoomBox].e.style.strokeDasharray='1 1';nodes[zoomBox].e.style.strokeDashoffset=String(1-clamp(seq/400));
    }
    put(predictionPath,[...t.flatMap((v,i)=>[X(v),R(trueRates[i])]),lowerReveal]);
    // The neighbour cloud belongs only to the neighbour construction.
    slopeDots.forEach((id,i)=>{
-    const j=intro?start+i:i,row=rates[j],v=row?.rate??0,outside=Math.abs(v)>lowerBound;
-    const completed=intro?seq>=pairBegin+i*1200+750&&i<8:!neighbour&&seq<windowEnd?i>=start&&i<start+8:i<Math.floor((neighbour?sweep:1)*rates.length);
-    const flight=intro&&i===pair?drop:1,xx=X(row?.time??t[0]),yy=mix(Y(x[j]??x[0]),R(Math.max(-lowerBound,Math.min(lowerBound,v))),flight);
+    const j=i,row=rates[j],v=row?.rate??0,outside=Math.abs(v)>lowerBound,k=i-start,first=k>=0&&k<PAIRS;
+    const landed=first&&seq>=pairBegin+k*PAIR_STEP+750;
+    const completed=neighbour?(landed||(!intro&&i<Math.floor(sweep*rates.length))):!neighbour&&seq<windowEnd?i>=start&&i<start+8:true;
+    const flight=intro&&k===pair?drop:1,xx=X(row?.time??t[0]),yy=mix(Y(x[j]??x[0]),R(Math.max(-lowerBound,Math.min(lowerBound,v))),flight);
     const opacity=completed&&inside(row?.time)?(neighbour?flight:0):0,dir=v>0?1:-1;
     put(id,[xx,yy,outside?0:opacity]);nodes[id].e.dataset.value=String(v);
     put(clipped[i],[xx,yy,xx-3,yy+dir*6,xx+3,yy+dir*6,outside?opacity:0]);
@@ -1263,7 +1270,7 @@ function initChapterOne(){
    // Length colours are identified directly by the RMS bars.
    text(clippedLabel,tr('x12_clipped',{n:rates.filter(r=>Math.abs(r.rate)>lowerBound).length}),590,300,neighbour&&!intro?1:0);
    svg.dataset.pairStart=String(a);
-   data.forEach(id=>nodes[id].e.setAttribute('r',zoom>.9?(neighbour?8:windowLength>4?3:5):2.5));
+   data.forEach(id=>nodes[id].e.setAttribute('r',zoom>.9?(neighbour?6:windowLength>4?3:5):2.5));
   }
   let block=constant,c=0,error=1;
   if(changes){

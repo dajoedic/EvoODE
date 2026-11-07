@@ -540,12 +540,16 @@ dialog{max-width:min(1050px,90vw);max-height:80dvh;overflow:auto;overscroll-beha
 
 /* hook: the equation behind the curve */
 #dish-illustration{position:relative}
-.dish-formula{position:absolute;right:2%;bottom:15%;max-width:400px;opacity:0;pointer-events:none;transition:none;background:color-mix(in srgb,var(--bg) 82%,transparent);border:1px solid var(--line);border-radius:12px;padding:10px 22px 12px;box-shadow:0 6px 24px rgba(0,0,0,.08)}
-.dish-formula-tex{font-size:24px;line-height:1.2}
-.dish-formula-note{font:12px/1.4 system-ui,sans-serif;color:var(--muted);margin-top:6px}
+.dish-formula{position:absolute;right:2%;bottom:15%;max-width:330px;padding:7px 16px 9px!important;opacity:0;pointer-events:none;transition:none;background:color-mix(in srgb,var(--bg) 82%,transparent);border:1px solid var(--line);border-radius:12px;padding:10px 22px 12px;box-shadow:0 6px 24px rgba(0,0,0,.08)}
+.dish-formula-tex{font-size:18px;line-height:1.15}
+.dish-formula-note{font:11px/1.35 system-ui,sans-serif;color:var(--muted);margin-top:6px}
 .dish-formula-note b.grow{color:#2f8f6f}.dish-formula-note b.brake{color:#c0683a}
 @media(max-width:760px){.dish-formula{right:4%;bottom:3%}.dish-formula-tex{font-size:22px}}
 /* hook -> step 1 flight */
 .flight-overlay{position:fixed;inset:0;pointer-events:none;z-index:50}
 .flight-dot{fill:var(--data)}
 .c1-arriving .measurement-dot{opacity:0!important}
+.dish-replay{position:absolute;left:2%;bottom:4%;width:34px;height:34px;border-radius:50%;padding:6px;opacity:0;pointer-events:none;transition:opacity .4s}
+.dish-replay.ready{opacity:1;pointer-events:auto}
+.dish-replay svg{width:100%;height:100%;fill:none;stroke:currentColor;stroke-width:2}
+#dish-illustration .dish-replay svg{width:20px;height:20px;max-height:none;display:block;margin:auto}
