@@ -530,3 +530,4 @@ dialog{max-width:min(1050px,90vw);max-height:80dvh;overflow:auto;overscroll-beha
 .x21-candidates{gap:2px}
 .meadow-rim{fill:none;stroke:var(--accent);stroke-width:3}
 .dish-rim.dish-outline{fill:none}
+.dish-measure{fill:var(--data);opacity:.85}

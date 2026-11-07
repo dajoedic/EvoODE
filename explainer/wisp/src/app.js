@@ -53,34 +53,42 @@ function initDish(){
  const cells=[];
  for(let y=0;y<G;y++)for(let x=0;x<G;x++){if((x-R)**2+(y-R)**2>R*R)continue;
   let arrive=Infinity;for(const c of colonies){const dx=x-c.x,dy=y-c.y,angle=Math.atan2(dy,dx),d=Math.hypot(dx,dy);
-   const wobble=1+.035*Math.sin(3*angle+c.phase[0])+.025*Math.sin(5*angle+c.phase[1])+.02*Math.sin(9*angle+c.phase[2]);
+   const wobble=1+.025*Math.sin(2*angle+c.phase[0])+.015*Math.sin(3*angle+c.phase[1]);
    arrive=Math.min(arrive,d*wobble);}
-  cells.push({x,y,arrive:arrive+3*random()});}
+  cells.push({x,y,arrive:arrive+9*random()**1.5});}
  cells.sort((a,b)=>a.arrive-b.arrive);
  const tMax=cells.at(-1).arrive,total=cells.length;
  const accent=getComputedStyle(document.documentElement).getPropertyValue('--accent').trim()||'#257363';
  // occupancy over time (time = edge distance / tMax), for the curve
  const share=p=>{const limit=p*tMax;let lo=0,hi=total;while(lo<hi){const mid=(lo+hi)>>1;if(cells[mid].arrive<=limit)lo=mid+1;else hi=mid;}return lo/total;};
  const curveGroup=svgNode('g',{transform:'translate(-140 12) scale(1.5 1.35)'});svg.append(curveGroup);curveGroup.append(svgNode('path',{d:'M280 14V151H752',class:'dish-axis'}),svgNode('text',{x:288,y:17},tr('x7_cells')),svgNode('text',{x:752,y:174,'text-anchor':'end'},tr('x7_time')));
- const curve=svgNode('path',{class:'dish-curve'}),head=svgNode('circle',{r:4,class:'dish-cell'});curveGroup.append(curve,head);target.append(svg);
+ const curve=svgNode('path',{class:'dish-curve'}),head=svgNode('circle',{r:0,class:'dish-cell'});curveGroup.append(curve,head);target.append(svg);
+ // 40 counts of the dish with a little counting noise (fixed seed): they appear as the dish grows
+ let mseed=2026;const mrand=()=>{mseed=(Math.imul(1664525,mseed)+1013904223)>>>0;return mseed/4294967296;};
+ const gauss=()=>{const u=Math.max(1e-9,mrand()),v=mrand();return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v);};
+ const samples=Array.from({length:40},(_,k)=>{const t=(k+.5)/40;return {t,value:Math.max(0,share(t)+.035*gauss()),dot:svgNode('circle',{r:2.4,class:'dish-cell dish-measure',cx:280+472*t,cy:151-130*Math.max(0,share(t)+.035*gauss())})};});
+ samples.forEach(m=>{m.dot.setAttribute('cy',151-130*m.value);curveGroup.append(m.dot);});
+ const fullCurve=Array.from({length:161},(_,i)=>(i?'L':'M')+(280+472*i/160).toFixed(2)+','+(151-130*share(i/160)).toFixed(2)).join('');
  function geometry(){const narrow=innerWidth<760;svg.setAttribute('viewBox',narrow?'0 0 400 480':'0 0 1020 260');dishGroup.setAttribute('transform',narrow?'translate(58 0) scale(1.35)':'scale(1.35)');curveGroup.setAttribute('transform',narrow?'translate(-120 250) scale(.65 1.15)':'translate(-140 12) scale(1.5 1.35)');}
  geometry();window.addEventListener('resize',geometry);
  let drawn=0,lastPaint=-1;
+ let lineProgress=0;
  function draw(progress,now=0){
   const goal=Math.round(share(progress)*total);
   if(goal<drawn){ctx.clearRect(0,0,G,G);drawn=0;seed=977;}
   for(;drawn<goal;drawn++){const c=cells[drawn];ctx.fillStyle=accent;ctx.globalAlpha=.6+.4*random();ctx.fillRect(c.x,c.y,1,1);}
   if(now-lastPaint>45||progress>=1||progress===0){image.setAttribute('href',canvas.toDataURL());lastPaint=now;}
-  const points=Math.ceil(progress*160)+1;let d='';
-  for(let i=0;i<points;i++){const t=Math.min(i/160,progress);d+=(d?'L':'M')+(280+472*t).toFixed(2)+','+(151-130*share(t)).toFixed(2);}
-  curve.setAttribute('d',d);head.setAttribute('cx',280+472*progress);head.setAttribute('cy',151-130*share(progress));target.dataset.progress=String(progress);target.dataset.occupancy=String(goal/total);
+  samples.forEach(m=>m.dot.setAttribute('visibility',m.t<=progress?'visible':'hidden'));
+  // after the run the true curve is drawn through the measurements
+  const line=Math.max(0,Math.min(1,lineProgress));curve.setAttribute('d',fullCurve);curve.setAttribute('pathLength','1');curve.style.strokeDasharray='1 1';curve.style.strokeDashoffset=String(1-line);
+  target.dataset.progress=String(progress);target.dataset.occupancy=String(goal/total);
  }
  const reduced=window.matchMedia('(prefers-reduced-motion: reduce)');
- const GROW=9000,LOOP=11500;
+ const GROW=9000,LINE=1800,LOOP=GROW+LINE+2200;
  let frame=0,visible=typeof IntersectionObserver!=='function',elapsed=0,last=0;
- function tick(now){elapsed=(elapsed+Math.max(0,now-last))%LOOP;last=now;draw(Math.min(1,elapsed/GROW),now);frame=requestAnimationFrame(tick);}
+ function tick(now){elapsed=(elapsed+Math.max(0,now-last))%LOOP;last=now;lineProgress=(elapsed-GROW-300)/LINE;draw(Math.min(1,elapsed/GROW),now);frame=requestAnimationFrame(tick);}
  function update(){cancelAnimationFrame(frame);frame=0;
-  if(reduced.matches){draw(1);return;}
+  if(reduced.matches){lineProgress=1;draw(1);return;}
   if(visible&&!document.hidden){last=performance.now();frame=requestAnimationFrame(tick);}
  }
  reduced.addEventListener?.('change',()=>{draw(reduced.matches?1:Math.min(1,elapsed/GROW));update();});
