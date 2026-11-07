@@ -7,6 +7,7 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 ## 2026-11-07
 
 ### WISP explorable restarted as one Lotka–Volterra story (W-X), concept first
+<!-- 01a750c -->
 
 User (evening): the Codex iterations on the explorable (`src/lv/`, meadow + scroll rework) went sideways; build a
 concept first. Concept agreed the same evening (`explainer/wisp/CONCEPT.md`): reader = smart, no background; part A
