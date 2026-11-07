@@ -46,7 +46,17 @@ function initDish(){
  const dishGroup=svgNode('g',{transform:'scale(1.35)'});svg.append(dishGroup);
  const G=150,R=G/2-1,canvas=document.createElement('canvas');canvas.width=canvas.height=G;const ctx=canvas.getContext('2d');
  const clip=svgNode('clipPath',{id:'dish-clip'});clip.append(svgNode('circle',{cx:105,cy:88,r:77}));svg.append(clip);
- const growth=svgNode('g',{'clip-path':'url(#dish-clip)',class:'dish-growth'}),shapes=[svgNode('path',{class:'dish-colony'}),svgNode('path',{class:'dish-colony'})];growth.append(...shapes);
+ // colony look: creamy, a little darker (older) in the middle, fuzzy rim and fine grain, like a culture on agar
+ const defs=svgNode('defs');svg.append(defs);
+ const grad=svgNode('radialGradient',{id:'dish-colony-grad'});[[0,'var(--colony-core)'],[.65,'var(--colony-mid)'],[1,'var(--colony-rim)']].forEach(([o,c])=>{const st=svgNode('stop',{offset:o});st.style.stopColor=c;grad.append(st);});defs.append(grad);
+ const mold=svgNode('filter',{id:'dish-mold',x:'-10%',y:'-10%',width:'120%',height:'120%'});
+ mold.append(svgNode('feTurbulence',{type:'fractalNoise',baseFrequency:'.9',numOctaves:'2',seed:'7',result:'grain'}),
+  svgNode('feDisplacementMap',{in:'SourceGraphic',in2:'grain',scale:'2.2',xChannelSelector:'R',yChannelSelector:'G',result:'fuzzy'}),
+  svgNode('feColorMatrix',{in:'grain',type:'matrix',values:'0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 .35 -.12',result:'speckle'}),
+  svgNode('feComposite',{in:'speckle',in2:'fuzzy',operator:'in',result:'dots'}),
+  svgNode('feMerge',{}));
+ const merge=mold.lastChild;merge.append(svgNode('feMergeNode',{in:'fuzzy'}),svgNode('feMergeNode',{in:'dots'}));defs.append(mold);
+ const growth=svgNode('g',{'clip-path':'url(#dish-clip)',class:'dish-growth',filter:'url(#dish-mold)'}),shapes=[svgNode('path',{class:'dish-colony'}),svgNode('path',{class:'dish-colony'})];growth.append(...shapes);
  dishGroup.append(svgNode('circle',{cx:105,cy:88,r:79,class:'dish-rim dish-fill'}),growth,svgNode('circle',{cx:105,cy:88,r:79,class:'dish-rim dish-outline'}));
  let seed=731;const random=()=>{seed=(Math.imul(1664525,seed)+1013904223)>>>0;return seed/4294967296;};
  const colonies=[[.33,.40],[.67,.63]].map(([fx,fy])=>({x:fx*G,y:fy*G,phase:[random()*6.3,random()*6.3,random()*6.3]}));
@@ -61,13 +71,16 @@ function initDish(){
  const tMax=cells.at(-1).arrive,total=cells.length;
  const accent=getComputedStyle(document.documentElement).getPropertyValue('--accent').trim()||'#257363';
  // occupancy over time (time = edge distance / tMax), for the curve
- const share=p=>{const limit=p*tMax;let lo=0,hi=total;while(lo<hi){const mid=(lo+hi)>>1;if(cells[mid].arrive<=limit)lo=mid+1;else hi=mid;}return lo/total;};
+ const T=LIVE.teaching,tt=T.t,K=Math.max(...T.truth),span=tt.at(-1)-tt[0];
+ const level=p=>{const x=tt[0]+Math.max(0,Math.min(1,p))*span;let j=1;while(j<tt.length-1&&tt[j]<x)j++;const a=tt[j-1],b=tt[j],w=b>a?(x-a)/(b-a):0;return (T.truth[j-1]+(T.truth[j]-T.truth[j-1])*w)/K;};
+ const radius=p=>cells[Math.min(total-1,Math.max(0,Math.floor(level(p)*total)))].arrive;
+ const share=level;
  const curveGroup=svgNode('g',{transform:'translate(-140 12) scale(1.5 1.35)'});svg.append(curveGroup);curveGroup.append(svgNode('path',{d:'M280 14V151H752',class:'dish-axis'}),svgNode('text',{x:288,y:17},tr('x7_cells')),svgNode('text',{x:752,y:174,'text-anchor':'end'},tr('x7_time')));
  const curve=svgNode('path',{class:'dish-curve'}),head=svgNode('circle',{r:0,class:'dish-cell'});curveGroup.append(curve,head);target.append(svg);
  // 40 counts of the dish with a little counting noise (fixed seed): they appear as the dish grows
  let mseed=2026;const mrand=()=>{mseed=(Math.imul(1664525,mseed)+1013904223)>>>0;return mseed/4294967296;};
  const gauss=()=>{const u=Math.max(1e-9,mrand()),v=mrand();return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v);};
- let floorValue=0;const samples=Array.from({length:40},(_,k)=>{const t=(k+.5)/40,value=Math.max(floorValue,Math.min(1,share(t)*(1+.03*gauss())));floorValue=value;return {t,value,dot:svgNode('circle',{r:2.4,class:'dish-cell dish-measure',cx:280+472*t,cy:151-130*value})};});
+ const samples=T.observed.map((v,i)=>({i,v})).filter(({i})=>i%8===0).map(({i,v})=>{const t=(tt[i]-tt[0])/span,value=v/K;return {t,value,dot:svgNode('circle',{r:2.1,class:'dish-cell dish-measure',cx:280+472*t,cy:151-130*value})};});
  samples.forEach(m=>{m.dot.setAttribute('cy',151-130*m.value);curveGroup.append(m.dot);});
  const fullCurve=Array.from({length:161},(_,i)=>(i?'L':'M')+(280+472*i/160).toFixed(2)+','+(151-130*share(i/160)).toFixed(2)).join('');
  function geometry(){const narrow=innerWidth<760;svg.setAttribute('viewBox',narrow?'0 0 400 480':'0 0 1020 260');dishGroup.setAttribute('transform',narrow?'translate(58 0) scale(1.35)':'scale(1.35)');curveGroup.setAttribute('transform',narrow?'translate(-120 250) scale(.65 1.15)':'translate(-140 12) scale(1.5 1.35)');}
@@ -75,14 +88,13 @@ function initDish(){
  let drawn=0,lastPaint=-1;
  let lineProgress=0;
  function draw(progress,now=0){
-  const goal=Math.round(share(progress)*total);
   // each colony's rim: distance r/wobble(angle) from its centre, in dish coordinates (grid cell = 1 unit)
-  const r=progress*tMax;colonies.forEach((c,k)=>{let d='';for(let j=0;j<=120;j++){const a=2*Math.PI*j/120,w=1+.025*Math.sin(2*a+c.phase[0])+.015*Math.sin(3*a+c.phase[1]),rr=r/w;
+  const r=radius(progress);colonies.forEach((c,k)=>{let d='';for(let j=0;j<=120;j++){const a=2*Math.PI*j/120,w=1+.025*Math.sin(2*a+c.phase[0])+.015*Math.sin(3*a+c.phase[1]),rr=r/w;
    d+=(j?'L':'M')+(30+c.x+.5+rr*Math.cos(a)).toFixed(2)+','+(13+c.y+.5+rr*Math.sin(a)).toFixed(2);}shapes[k].setAttribute('d',r>0?d+'Z':'');});
   samples.forEach(m=>m.dot.setAttribute('visibility',m.t<=progress?'visible':'hidden'));
   // after the run the true curve is drawn through the measurements
   const line=Math.max(0,Math.min(1,lineProgress));curve.setAttribute('d',fullCurve);curve.setAttribute('pathLength','1');curve.style.strokeDasharray='1 1';curve.style.strokeDashoffset=String(1-line);
-  target.dataset.progress=String(progress);target.dataset.occupancy=String(goal/total);
+  target.dataset.progress=String(progress);target.dataset.occupancy=String(level(progress));
  }
  const reduced=window.matchMedia('(prefers-reduced-motion: reduce)');
  const GROW=9000,LINE=1800,LOOP=GROW+LINE+2200;

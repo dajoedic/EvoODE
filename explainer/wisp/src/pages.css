@@ -531,5 +531,9 @@ dialog{max-width:min(1050px,90vw);max-height:80dvh;overflow:auto;overscroll-beha
 .meadow-rim{fill:none;stroke:var(--accent);stroke-width:3}
 .dish-rim.dish-outline{fill:none}
 .dish-measure{fill:var(--data);opacity:.85}
-.dish-colony{fill:var(--accent);stroke:none}
-.dish-growth{opacity:.78}
+:root{--agar:#e6c06a;--colony-core:#efe2b4;--colony-mid:#fbf5e2;--colony-rim:#fffdf6;--glass:#aab6b2}
+@media(prefers-color-scheme:dark){:root{--agar:#5a4a26;--colony-core:#c9b97f;--colony-mid:#ddd2a6;--colony-rim:#ece4c4;--glass:#8a9a94}}
+#dish-illustration .dish-rim.dish-fill{fill:var(--agar);stroke:none}
+#dish-illustration .dish-rim.dish-outline{fill:none;stroke:var(--glass)}
+.dish-colony{fill:url(#dish-colony-grad);stroke:none}
+.dish-growth{opacity:.95}
