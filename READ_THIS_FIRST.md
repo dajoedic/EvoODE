@@ -30,7 +30,13 @@ gültigen oc-Login; fällt es aus, verschenkt Q9 nur Kerne, nichts geht kaputt. 
 
 ## 2. WISP-Explorable (W-X)
 
-- **NEU 07.11. abends: Neustart als LV-Geschichte nach Konzept** `explainer/wisp/CONCEPT.md` (vom Nutzer abgenommen).
+- **AKTUELL (07.11. spät): Version 26 weitergeführt**, Vorschau https://claude.ai/artifact/SiqLBbf49hUy9fHSFWSFte
+  (`c305a3a`). Kap. 1–5 Bakterien (C1000-Neufit `data/logistic_c1000_refit_*.jsonl`), Kap. 6 = „Und wenn es mehrere
+  Gleichungen gibt?“ mit LV `sys0027_ic2_s0.03_r0_n2` (C1000). Daten: v26-`live.json` + `build_wisp_lv_running.py`
+  (ersetzt nur examples[0], gate_status, Bakterien-Fits). Petrischale simuliert (2 Kolonien, faserig). Nutzer:
+  **Kap. 1–3 müssen sitzen**, ab Kap. 3 wird es unverständlich → als Nächstes Kap. 3 überarbeiten. Alte Darstellungstests
+  `test_wisp_explainer_x*` nicht nachgezogen. Der LV-Neubau unten (`story/`) ist verworfen.
+- Verworfen: Neustart als LV-Geschichte nach Konzept `explainer/wisp/CONCEPT.md` (vom Nutzer abgenommen).
   Quelle `explainer/wisp/story/`, Build `python analysis/scripts/explainer/build_wisp_story.py` → `dist/wisp_story.html`,
   Vorschau https://claude.ai/artifact/M7vvNRbcV1LA344CrmS82u (Version 1, `01a750c`). 15 Seiten A/B/C, DE/EN, hell/dunkel,
   Screenshots Desktop+Handy geprüft (Scratchpad-Skript `shoot.py`, Playwright mit `channel='msedge'`). Ziel Di 10.11.;
