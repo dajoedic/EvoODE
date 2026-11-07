@@ -6,6 +6,34 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ## 2026-11-07
 
+### Q9 (W-4) built, probe clean, grid running — autonomously on the user's instruction
+
+User (01:40): "Bau dann Q9, commite selber, starte die Tests, pushe zu gitlab, starte den job, alles selbstständig";
+answers before sleeping: start despite the cost above the plan range, probe first then grid automatically, push to
+GitLab **and** GitHub. Free cores stay free otherwise (C-6 at 0).
+
+**Build.** Protocol `docs/sideproject_residual_growth_protocol_q9.md` (frozen before any Q9 number): WISP = Q8 arm
+C1000 + Q7 stop, all 63 systems × both ICs × 11 noisy/subsampled conditions × 3 realizations + clean once
+(realizations 2/3 of the clean cell are byte-identical) = **4,284 cells, 45,785 candidate states, 14 empty paths**.
+`build_sideproject_q9_paths.py` calls the frozen Q8 `build_path` unchanged; `sideproject_q9_fits.jl` calls `q8_fit`
+unchanged (only protocol label/hash, source inventory, single export dir). The full C-6 export is read in place on
+the NFS (index sha `ce20350b…` identical to the local copy), no staging. Controls: **Q9 paths bit-identical to Q8
+C1000 on all 590 Q8 cells** (candidates, supports, p0, weak BIC, path ends); laptop smoke on 2 shards (10 fits)
+**bit-identical to the Orion Q8 C1000 records** (params and evaluation), settings fingerprint equal; Python tests
+28/28 (Q8 + Q9; two stale Q8 manifest assertions fixed — placeholder SHA and the probe's 8 pods). Commit `cdfaa7d`,
+pushed to GitLab (image `cdfaa7d`) and GitHub.
+
+**Planning cost** (Q8 C1000 solve s/candidate per system; planning only): 14,092 core-h, of which 7,383 measured-rate
+and 6,709 a deliberately high proxy for 53, 60, 62, 63 (dimension maximum so they start first); ≈ 14.7 days at 40
+cores worst case, inside the 21-day rule. The probe already shows 60, 62, 63 far faster than the proxy.
+
+**Probe** (9 shards, one per block, 02:11): technically clean at 02:28 — 9/9 started, 5/9 complete, one settings
+fingerprint (= Q8 C1000), one runner hash, identities and data hashes equal, 0 failed. No metric looked at.
+Technical amendment (declared, not a content change): the grid started once every probe shard had written clean
+records instead of waiting for the slowest probe shards (61 clean, 58, 60, 62), which only re-check the same code
+path. **Grid started 02:29**, `k8s/sideproject_q9_job.yaml`, 31 pods, raised by a detached scratchpad script
+(`q9_shift.sh`, session `74de8444…`) to 40 minus active Q8 and probe pods, never lowering.
+
 ### Gate G2: WISP final configuration C1000 — declared deviation from the frozen R2 (user)
 <!-- 4c48816 -->
 

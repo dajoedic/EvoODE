@@ -14,8 +14,8 @@ metadata:
 spec:
   ttlSecondsAfterFinished: 3600
   completionMode: Indexed
-  completions: __COMPLETIONS__
-  parallelism: __PAR__
+  completions: 9
+  parallelism: 9
   backoffLimit: 10
   template:
     metadata:
@@ -30,7 +30,7 @@ spec:
         - name: evoode-gitlab-pull
       containers:
         - name: shard
-          image: registry.gitlab.scch.at:443/joedicke/evoode:__SHA__
+          image: registry.gitlab.scch.at:443/joedicke/evoode:cdfaa7d6218c56a0ec63ea9e794f6f35e46792c1
           imagePullPolicy: IfNotPresent
           command:
             - sh
@@ -38,11 +38,11 @@ spec:
             - >-
               exec julia --project=/opt/EvoODE
               /opt/EvoODE/studies/regression/sideproject_q9_fits.jl
-              --paths /outputs/sideproject_q9___SHA__/input/q9_probe_paths.json
+              --paths /outputs/sideproject_q9_cdfaa7d6218c56a0ec63ea9e794f6f35e46792c1/input/q9_probe_paths.json
               --export-dir /outputs/phase_c_c6_data_conditions_5dd1df839f8ece98f2bb3bbff78d15d8c433d9d3
-              --unit-list /outputs/sideproject_q9___SHA__/input/q9_probe.shards_cost_desc.txt
+              --unit-list /outputs/sideproject_q9_cdfaa7d6218c56a0ec63ea9e794f6f35e46792c1/input/q9_probe.shards_cost_desc.txt
               --index "${JOB_COMPLETION_INDEX}"
-              --output /outputs/sideproject_q9___SHA__/out/probe_index_${JOB_COMPLETION_INDEX}.jsonl
+              --output /outputs/sideproject_q9_cdfaa7d6218c56a0ec63ea9e794f6f35e46792c1/out/probe_index_${JOB_COMPLETION_INDEX}.jsonl
           env:
             - name: JULIA_NUM_THREADS
               value: "1"
@@ -62,7 +62,7 @@ spec:
             # The image has no docs/; the runner checks the frozen Q9 protocol's hash at this path.
             - name: evoode-bigdata
               mountPath: /opt/EvoODE/docs
-              subPath: data-science/joedicke/sideproject_q9___SHA__/input/docs
+              subPath: data-science/joedicke/sideproject_q9_cdfaa7d6218c56a0ec63ea9e794f6f35e46792c1/input/docs
               readOnly: true
       volumes:
         - name: evoode-bigdata
