@@ -392,7 +392,7 @@
   "x7_eyebrow": "Worum es geht",
   "x7_headline": "Die Natur beschreibt sich in Änderungsraten",
   "x7_deck": "Wie schnell wächst eine Bakterienkultur? Wie schnell kühlt ein Kaffee ab? Wie schnell breitet sich eine Grippe aus? Eine Differentialgleichung sagt nicht, wo etwas gerade ist, sondern wie schnell es sich gerade ändert. Aus dieser einen Regel folgt der ganze Verlauf: Sie erklärt, warum etwas passiert, sagt voraus, was als Nächstes kommt, und lässt sich an neuen Messungen prüfen.",
-  "x7_caption": "Bakterien in einer Schale: Anfangs verdoppeln sie sich in festen Abständen, dann wird der Platz knapp und das Wachstum bremst, bis die Schale voll ist. Hinter diesem S-förmigen Verlauf steckt eine einfache Regel. Illustration, keine Messdaten.",
+  "x7_caption": "Bakterien in einer Schale: Zwei Kolonien wachsen am Rand gleichmäßig nach außen. Je größer sie werden, desto länger ist ihr Rand und desto mehr Zellen kommen gleichzeitig dazu. Wird der Platz knapp, bremst das Wachstum, bis die Schale voll ist. Hinter diesem S-förmigen Verlauf steckt eine einfache Regel. Illustration, keine Messdaten.",
   "x7_history": "Aus Messungen werden Gleichungen",
   "x7_station1": "Kepler liest aus Tycho Brahes Planetenbeobachtungen feste Muster ab; Newton fasst sie als Regel für die Änderung der Bewegung — Keplers Gesetze folgen daraus.",
   "x7_station2": "Verhulst gewinnt aus Volkszählungen die Regel für gebremstes Wachstum — dieselbe wie in der Schale oben.",

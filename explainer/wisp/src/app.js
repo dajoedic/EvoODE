@@ -38,43 +38,42 @@ const NS='http://www.w3.org/2000/svg';
 function svgNode(tag,attrs={},text){const e=document.createElementNS(NS,tag);Object.entries(attrs).forEach(([k,v])=>e.setAttribute(k,v));if(text!==undefined)e.textContent=text;return e;}
 // Illustration only: no scientific data or WISP computation enters this scene.
 function initDish(){
- // Two colonies grow on a fine grid until the dish is full. Each new cell is placed at the colony edge, preferring
- // spots with few occupied neighbours, which makes the fronts fibrous. How many cells exist at a time follows
- // logistic growth, so the curve on the right is the dish's actual occupancy. Illustration, not measured data.
+ // Two colonies grow outward as roughly circular rings at a constant edge speed, with a slightly irregular,
+ // grainy rim. Nothing speeds up: the rim simply gets longer, so more cells are added at once, until the colonies
+ // meet each other and the dish wall. The curve is the dish's actual occupancy. Illustration, not measured data.
  const target=$('dish-illustration'),svg=svgNode('svg',{viewBox:'0 0 1020 260',role:'img','aria-labelledby':'dish-title dish-description'});
  svg.append(svgNode('title',{id:'dish-title'},tr('x7_history')),svgNode('desc',{id:'dish-description'},tr('x7_caption')));
  const dishGroup=svgNode('g',{transform:'scale(1.35)'});svg.append(dishGroup);
  const G=150,R=G/2-1,canvas=document.createElement('canvas');canvas.width=canvas.height=G;const ctx=canvas.getContext('2d');
- const image=svgNode('image',{x:105-75,y:88-75,width:150,height:150,preserveAspectRatio:'none'});image.style.imageRendering='auto';
+ const image=svgNode('image',{x:105-75,y:88-75,width:150,height:150,preserveAspectRatio:'none'});
  dishGroup.append(svgNode('circle',{cx:105,cy:88,r:79,class:'dish-rim dish-fill'}),image,svgNode('circle',{cx:105,cy:88,r:79,class:'dish-rim dish-outline'}));
- const inside=[];for(let y=0;y<G;y++)for(let x=0;x<G;x++)if((x-R)**2+(y-R)**2<=R*R)inside.push(y*G+x);
- const total=inside.length,valid=new Uint8Array(G*G);inside.forEach(i=>valid[i]=1);
  let seed=731;const random=()=>{seed=(Math.imul(1664525,seed)+1013904223)>>>0;return seed/4294967296;};
- let occupied,frontier,where,count,born;
+ const colonies=[[.33,.40],[.67,.63]].map(([fx,fy])=>({x:fx*G,y:fy*G,phase:[random()*6.3,random()*6.3,random()*6.3]}));
+ // arrival time of every cell: distance to the nearest colony, stretched by a smooth wobble of the rim and a little grain
+ const cells=[];
+ for(let y=0;y<G;y++)for(let x=0;x<G;x++){if((x-R)**2+(y-R)**2>R*R)continue;
+  let arrive=Infinity;for(const c of colonies){const dx=x-c.x,dy=y-c.y,angle=Math.atan2(dy,dx),d=Math.hypot(dx,dy);
+   const wobble=1+.035*Math.sin(3*angle+c.phase[0])+.025*Math.sin(5*angle+c.phase[1])+.02*Math.sin(9*angle+c.phase[2]);
+   arrive=Math.min(arrive,d*wobble);}
+  cells.push({x,y,arrive:arrive+3*random()});}
+ cells.sort((a,b)=>a.arrive-b.arrive);
+ const tMax=cells.at(-1).arrive,total=cells.length;
  const accent=getComputedStyle(document.documentElement).getPropertyValue('--accent').trim()||'#257363';
- function neighbours(i){const x=i%G,y=(i-x)/G,out=[];for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++){if(!dx&&!dy)continue;const xx=x+dx,yy=y+dy;if(xx>=0&&yy>=0&&xx<G&&yy<G&&valid[yy*G+xx])out.push(yy*G+xx);}return out;}
- function addFrontier(i){if(occupied[i]||where[i]>=0)return;where[i]=frontier.length;frontier.push(i);}
- function removeFrontier(i){const k=where[i];if(k<0)return;const last=frontier.pop();if(last!==i){frontier[k]=last;where[last]=k;}where[i]=-1;}
- function occupy(i){occupied[i]=1;removeFrontier(i);count++;born[i]=count;neighbours(i).forEach(addFrontier);
-  const x=i%G,y=(i-x)/G;ctx.fillStyle=accent;ctx.globalAlpha=.55+.45*random();ctx.fillRect(x,y,1,1);}
- function reset(){occupied=new Uint8Array(G*G);where=new Int32Array(G*G).fill(-1);frontier=[];count=0;born=new Int32Array(G*G);ctx.clearRect(0,0,G,G);seed=731;
-  // two seed colonies, apart from each other
-  [[.32,.40],[.66,.64]].forEach(([fx,fy])=>{const i=Math.round(fy*G)*G+Math.round(fx*G);if(valid[i])occupy(i);});}
- function grow(){let best=-1,bestN=9;for(let k=0;k<14&&frontier.length;k++){const c=frontier[Math.floor(random()*frontier.length)],n=neighbours(c).reduce((s,j)=>s+occupied[j],0);if(n<bestN){bestN=n;best=c;}}if(best>=0)occupy(best);}
- // logistic occupancy from two cells to a full dish
- const n0=2/total,rate=13.5,occupancy=t=>1/(1+(1/n0-1)*Math.exp(-rate*t));
+ // occupancy over time (time = edge distance / tMax), for the curve
+ const share=p=>{const limit=p*tMax;let lo=0,hi=total;while(lo<hi){const mid=(lo+hi)>>1;if(cells[mid].arrive<=limit)lo=mid+1;else hi=mid;}return lo/total;};
  const curveGroup=svgNode('g',{transform:'translate(-140 12) scale(1.5 1.35)'});svg.append(curveGroup);curveGroup.append(svgNode('path',{d:'M280 14V151H752',class:'dish-axis'}),svgNode('text',{x:288,y:17},tr('x7_cells')),svgNode('text',{x:752,y:174,'text-anchor':'end'},tr('x7_time')));
  const curve=svgNode('path',{class:'dish-curve'}),head=svgNode('circle',{r:4,class:'dish-cell'});curveGroup.append(curve,head);target.append(svg);
  function geometry(){const narrow=innerWidth<760;svg.setAttribute('viewBox',narrow?'0 0 400 480':'0 0 1020 260');dishGroup.setAttribute('transform',narrow?'translate(58 0) scale(1.35)':'scale(1.35)');curveGroup.setAttribute('transform',narrow?'translate(-120 250) scale(.65 1.15)':'translate(-140 12) scale(1.5 1.35)');}
  geometry();window.addEventListener('resize',geometry);
- let lastProgress=-1,lastPaint=0;
+ let drawn=0,lastPaint=-1;
  function draw(progress,now=0){
-  if(progress<lastProgress||!occupied)reset();lastProgress=progress;
-  const goal=Math.min(total,Math.round(occupancy(progress)*total));while(count<goal&&frontier.length)grow();
-  if(now-lastPaint>45||progress>=1){image.setAttribute('href',canvas.toDataURL());lastPaint=now;}
-  const share=count/total,points=Math.ceil(progress*160)+1;let d='';
-  for(let i=0;i<points;i++){const t=Math.min(i/160,progress);d+=(d?'L':'M')+(280+472*t).toFixed(2)+','+(151-130*occupancy(t)).toFixed(2);}
-  curve.setAttribute('d',d);head.setAttribute('cx',280+472*progress);head.setAttribute('cy',151-130*share);target.dataset.progress=String(progress);target.dataset.occupancy=String(share);
+  const goal=Math.round(share(progress)*total);
+  if(goal<drawn){ctx.clearRect(0,0,G,G);drawn=0;seed=977;}
+  for(;drawn<goal;drawn++){const c=cells[drawn];ctx.fillStyle=accent;ctx.globalAlpha=.6+.4*random();ctx.fillRect(c.x,c.y,1,1);}
+  if(now-lastPaint>45||progress>=1||progress===0){image.setAttribute('href',canvas.toDataURL());lastPaint=now;}
+  const points=Math.ceil(progress*160)+1;let d='';
+  for(let i=0;i<points;i++){const t=Math.min(i/160,progress);d+=(d?'L':'M')+(280+472*t).toFixed(2)+','+(151-130*share(t)).toFixed(2);}
+  curve.setAttribute('d',d);head.setAttribute('cx',280+472*progress);head.setAttribute('cy',151-130*share(progress));target.dataset.progress=String(progress);target.dataset.occupancy=String(goal/total);
  }
  const reduced=window.matchMedia('(prefers-reduced-motion: reduce)');
  const GROW=9000,LOOP=11500;

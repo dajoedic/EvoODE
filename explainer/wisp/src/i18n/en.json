@@ -392,7 +392,7 @@
   "x7_eyebrow": "What this is about",
   "x7_headline": "Nature describes itself in rates of change",
   "x7_deck": "How fast does a bacterial culture grow? How fast does a coffee cool? How fast does a flu spread? A differential equation does not say where something is, but how fast it is changing right now. That one rule produces the whole course: it explains why something happens, predicts what comes next, and can be tested against new measurements.",
-  "x7_caption": "Bacteria in a dish: at first they double at fixed intervals, then space runs short and growth slows until the dish is full. Behind this S-shaped course sits a simple rule. Illustration, not measured data.",
+  "x7_caption": "Bacteria in a dish: two colonies grow steadily outward at their rim. The bigger they get, the longer their rim and the more cells are added at once. When space runs short, growth slows until the dish is full. Behind this S-shaped course sits a simple rule. Illustration, not measured data.",
   "x7_history": "From measurements to equations",
   "x7_station1": "Kepler reads fixed patterns from Tycho Brahe's planetary observations; Newton turns them into a rule for how motion changes — Kepler's laws follow from it.",
   "x7_station2": "Verhulst derives the rule for slowing growth from census data — the same one as in the dish above.",
