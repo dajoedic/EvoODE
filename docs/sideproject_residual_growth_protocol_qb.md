@@ -63,6 +63,12 @@ run is a random draw. Gate as applied: noise-free (`sigma_SNR = 0`) exact recove
 noise, 20 independent draws — **16 exact** (tpr = ppv = 1), 4 with one wrong or missing term; the 2D linear example
 exact. On our data WeakIdent adds no noise and runs deterministically.
 
+**Technical amendment 3 2026-11-08 (scope of B2, before any Q-B number on our data).** The unmodified WeakIdent
+dictionary construction supports at most three state variables; dimension 4 raises an `IndexError` in the authors'
+code. B2a and B2b therefore run on dimensions 1–3 (4,148 of 4,284 Q9 cells); the 136 dimension-4 cells (systems 62,
+63) are reported as "not supported by the reference implementation", never as misses. No extension of the authors'
+code is made for this.
+
 - B1: at λ ∈ {0.01, 0.1} with the WP-N47 library the harness reproduces WP-N47 rows bit-identically on one cell per
   stratum (same code path, only library and λ list change).
 - B2: WeakIdent reproduces one of the authors' published ODE examples from their repository before it touches our data.
