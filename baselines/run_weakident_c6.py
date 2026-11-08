@@ -146,17 +146,20 @@ def validate_interpolated(t, x, entry):
         raise ValueError("q5w_interpolated_sha256 mismatch")
 
 
+INTERP_FIELDS = ("q5w_interpolated_sha256", "q5w_interpolation_points", "q5w_interpolation_dt")
+
+
 def read_inputs(export_root, row, interp_root, entries):
     # This verifies actual observed bytes, not just index strings.
     t, x = baseline.read_index_cell(export_root, row)
     if float(row.subsample_rho) == 0:
-        return t, x, {}
+        # Always emit the same columns so appended shard CSVs keep one header.
+        return t, x, {k: "" for k in INTERP_FIELDS}
     entry = entries[cell_key(row)]
     payload = loadmat(interp_root / entry["input_file"])
     t, x = payload["tobs"].reshape(-1), payload["xobs"]
     validate_interpolated(t, x, entry)
-    return t, x, {k: entry[k] for k in
-                  ("q5w_interpolated_sha256", "q5w_interpolation_points", "q5w_interpolation_dt")}
+    return t, x, {k: entry[k] for k in INTERP_FIELDS}
 
 
 def evaluate(method, system, support, row, t, x, clean_t, clean, disable_trig=False):
@@ -285,7 +288,7 @@ def main():
                                   fit_status=result["fit_status"], fit_error=result["fit_error"],
                                   fit_wall_s=result["fit_elapsed_s_context"],
                                   cell_wall_s=time.perf_counter() - started,
-                                  observed_hash_checked=True, interpolated_hash_checked=bool(hashes),
+                                  observed_hash_checked=True, interpolated_hash_checked=bool(hashes["q5w_interpolated_sha256"]),
                                   role="planning_context_not_evidence"))
             if args.mode == "probe":
                 native = results[METHODS[0]]

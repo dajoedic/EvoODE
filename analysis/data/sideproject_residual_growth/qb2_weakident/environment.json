@@ -1,0 +1,34 @@
+{
+  "weakident_native": {
+    "python": "3.12.10 (tags/v3.12.10:0cc8128, Apr  8 2025, 12:21:36) [MSC v.1943 64 bit (AMD64)]",
+    "platform": "Windows-11-10.0.26100-SP0",
+    "packages": {
+      "numpy": "2.2.6",
+      "scipy": "1.13.1",
+      "pandas": "2.2.2",
+      "pysindy": "2.1.0",
+      "scikit-learn": "1.5.1",
+      "sympy": "1.13.1",
+      "threadpoolctl": "3.5.0"
+    },
+    "numpy_indexed": "0.3.7 (vendored source)",
+    "threads": 1,
+    "reference_commit": "be14358b38f9cdb40ce1a0aeb127039f91d1410e"
+  },
+  "weakident_trig": {
+    "python": "3.12.10 (tags/v3.12.10:0cc8128, Apr  8 2025, 12:21:36) [MSC v.1943 64 bit (AMD64)]",
+    "platform": "Windows-11-10.0.26100-SP0",
+    "packages": {
+      "numpy": "2.2.6",
+      "scipy": "1.13.1",
+      "pandas": "2.2.2",
+      "pysindy": "2.1.0",
+      "scikit-learn": "1.5.1",
+      "sympy": "1.13.1",
+      "threadpoolctl": "3.5.0"
+    },
+    "numpy_indexed": "0.3.7 (vendored source)",
+    "threads": 1,
+    "reference_commit": "be14358b38f9cdb40ce1a0aeb127039f91d1410e"
+  }
+}

@@ -126,3 +126,14 @@ def test_dimension4_marker_never_fits():
     assert result["structure_status"] == adapter.UNSUPPORTED
     assert result["sindy_structure_hit_raw"] == ""
     assert result["reconstruction_r2_variance_weighted_gt_0_9"] == ""
+
+
+def test_uniform_and_interpolated_rows_share_columns():
+    """Rows of both rho values must carry the same keys, so appended shard CSVs keep one header."""
+    q9 = ROOT / "outputs/sideproject_q9_inputs/grid/q9_paths.json"
+    record = next(c for c in json.loads(q9.read_text())["cells"] if float(c["export"]["subsample_rho"]) == 0)
+    row = pd.DataFrame([record["export"]]).iloc[0]
+    root = ROOT / "outputs/phase_c_c6_data_conditions_5dd1df8"
+    _, _, fields = adapter.read_inputs(root, row, None, {})
+    assert tuple(fields) == adapter.INTERP_FIELDS
+    assert all(value == "" for value in fields.values())
