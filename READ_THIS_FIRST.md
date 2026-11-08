@@ -26,7 +26,10 @@ gültigen oc-Login; fällt es aus, verschenkt Q9 nur Kerne, nichts geht kaputt. 
 `/c/Users/joedicke/AppData/Local/Temp/claude/4da8ff96f3389fae/74de8444-749b-46d9-b373-f84449c9b174/scratchpad/q9_shift.sh >> …/q9_shift.log 2>&1 & disown`
 **NFS-Zugriff:** S: hing 07.11. Schnellweg: `MSYS_NO_PATHCONV=1 oc exec <laufender-pod> -- tar czf - -C /outputs/<lauf> out > ….tgz`
 (komprimiert; unkomprimiert bricht der Strom bei ~250 MB ab). Technische Probe-Prüfung: Scratchpad `q9_probe_check.py`.
-**Rückweg C-6 nach W-4:** `oc patch job evoode-phase-c-c6-grid-capped -n scch-das -p '{"spec":{"parallelism":24}}'`.
+**Rückweg C-6 nach W-4:** `oc patch job evoode-phase-c-c6-grid-capped -n scch-das -p '{"spec":{"parallelism":24}}'`
+(Git Bash; in PowerShell 5.1 die inneren Anführungszeichen escapen: `-p '{\"spec\":{\"parallelism\":24}}'`).
+**08.11. 10:00:** `q9_shift.sh` meldet seit Stunden nur „q9 job not readable“ (Log-Zeilen doppelt → zwei Instanzen?);
+Q9 von Hand auf 37 gesetzt (36 + 3 Q8-Nachzügler = 40). Je fertigem Q8-Nachzügler +1 von Hand, bis 40.
 
 ## 2. WISP-Explorable (W-X)
 
