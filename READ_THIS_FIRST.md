@@ -68,6 +68,14 @@ Q9 von Hand auf 37 gesetzt (36 + 3 Q8-Nachzügler = 40). Je fertigem Q8-Nachzüg
 
 ## 3. Als Nächstes
 
+0. **Neu 08.11.:** Paperentwurf `paper/wisp/wisp.pdf` (Q8-Stand, uncommittet; `make_data.py` liest Q8 aus einem
+   Scratchpad). Externes Review eingearbeitet; **Q-Cal** fertig (`826a127`: χ²-Stopp liberal, hohe Trennschärfe, im
+   Paper als Limitation und nächster Schritt). **Q-B** eingefroren (`4309870`): SINDy-Familie mit WISP-Bibliothek und
+   13-λ-Raster, WeakIdent nativ + mit sin/cos, ODEFormer (WP-N48-Harness, ~150–180 Kern-h). Stand: **B1 gebaut und
+   kontrolliert** (`a68968c`, ~43 Kern-h, braucht Image-Neubau → Nutzer pusht, Orion nach Q9); **WeakIdent komplett auf
+   dem Laptop** (`65b467f`, 2 × 4.148 Fits dim 1–3, 0 Fehler, dim 4 vom Original nicht unterstützt); **ODEFormer** Orion
+   nach Q9. Keine Q-B-Kennzahl angesehen — Aggregation, wenn B1 und B3 da sind.
+
 1. ~~G2~~ **entschieden 07.11.: C1000 + Q7-Stopp** (`DIARY.md`). ~~Q9 bauen und starten~~ **läuft seit 07.11. 02:29.**
 2. Q9 beobachten: Hochrechnung aus den ersten langen Shards; >21 Tage → Nutzer entscheidet (Plan W-4).
 3. Offizielle Q8-Aggregation, sobald 3.540/3.540.
