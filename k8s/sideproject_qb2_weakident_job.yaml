@@ -1,0 +1,62 @@
+# Preparation only: blocked on the Q-B2 random-seed decision/control acceptance.
+# Do not apply or build as part of WP-QB2. W-4 retains capacity priority.
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: evoode-sideproject-qb2-weakident
+  namespace: scch-das
+  labels:
+    app.kubernetes.io/name: evoode
+    app.kubernetes.io/part-of: evoode-phase-c
+    app.kubernetes.io/component: qb2-weakident
+    hpc.scch.at/service: evoode-sideproject-qb2-weakident
+    hpc.scch.at/responsibility: joedicke
+spec:
+  ttlSecondsAfterFinished: 3600
+  completionMode: Indexed
+  completions: 240
+  parallelism: 8
+  backoffLimit: 50
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: evoode
+        app.kubernetes.io/part-of: evoode-phase-c
+        app.kubernetes.io/component: qb2-weakident
+        hpc.scch.at/service: evoode-sideproject-qb2-weakident
+        hpc.scch.at/responsibility: joedicke
+    spec:
+      restartPolicy: Never
+      imagePullSecrets:
+        - name: evoode-gitlab-pull
+      containers:
+        - name: cell
+          image: registry.gitlab.scch.at:443/joedicke/evoode/weakident:<QB2_REBUILT_IMAGE_TAG>
+          imagePullPolicy: IfNotPresent
+          args:
+            - --export-dir
+            - /outputs/phase_c_c6_data_conditions_5dd1df839f8ece98f2bb3bbff78d15d8c433d9d3
+            - --q9-paths
+            - /outputs/sideproject_q9_inputs/grid/q9_paths.json
+            - --interp-dir
+            - /outputs/sideproject_q5w_wsindy/matlab_inputs/w1_interp
+            - --output-dir
+            - /outputs/sideproject_qb2_weakident_<QB2_REBUILT_IMAGE_TAG>
+            - --n-shards
+            - "240"
+          resources:
+            requests:
+              cpu: "1"
+              memory: 2Gi
+            limits:
+              cpu: "1"
+              memory: 2Gi
+          volumeMounts:
+            - name: evoode-bigdata
+              mountPath: /outputs
+              subPath: data-science/joedicke
+      volumes:
+        - name: evoode-bigdata
+          nfs:
+            server: nfs.orion.scch.at
+            path: /bigdata

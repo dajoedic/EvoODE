@@ -69,6 +69,13 @@ code. B2a and B2b therefore run on dimensions 1–3 (4,148 of 4,284 Q9 cells); t
 63) are reported as "not supported by the reference implementation", never as misses. No extension of the authors'
 code is made for this.
 
+**Technical amendment 4 2026-11-08 (determinism, before any Q-B number on our data).** The authors' cross-validation
+draws `np.random.permutation` from the global RNG (`utils/calculations.py:290`), so repeated fits of one cell differed
+(14 fields on the dim-2 probe cell). The global RNG is seeded before every fit with a per-cell seed, derived exactly as
+the project derives the E-SINDy/Weak-SINDy seeds (SHA-256 of the cell key, `method = weakident`), identical for both
+arms, recorded per row (`weakident_cv_seed`). After the change: repeat control 0 differences, B2b-without-trig = B2a 0
+differences, on all three probe cells; probe 0 fit failures; projection 0.3 core-h (laptop).
+
 - B1: at λ ∈ {0.01, 0.1} with the WP-N47 library the harness reproduces WP-N47 rows bit-identically on one cell per
   stratum (same code path, only library and λ list change).
 - B2: WeakIdent reproduces one of the authors' published ODE examples from their repository before it touches our data.
