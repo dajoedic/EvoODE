@@ -57,6 +57,12 @@ hit or R² > 0.9 decision differs; `ensemble_seed` differs only in serialization
 pinned at `be14358` (`baselines/third_party/weakident/PROVENANCE.md`); the authors' ODE configs agree on all
 settings (τ = 0.05), so no choice is needed.
 
+**Technical amendment 2 2026-11-08 (gate definition only, before any Q-B number on our data).** The authors'
+Lotka–Volterra example adds its own noise with an unseeded `np.random.normal` (`utils/data.py: add_noise`), so a single
+run is a random draw. Gate as applied: noise-free (`sigma_SNR = 0`) exact recovery — **passed**; with the authors' 10 %
+noise, 20 independent draws — **16 exact** (tpr = ppv = 1), 4 with one wrong or missing term; the 2D linear example
+exact. On our data WeakIdent adds no noise and runs deterministically.
+
 - B1: at λ ∈ {0.01, 0.1} with the WP-N47 library the harness reproduces WP-N47 rows bit-identically on one cell per
   stratum (same code path, only library and λ list change).
 - B2: WeakIdent reproduces one of the authors' published ODE examples from their repository before it touches our data.
