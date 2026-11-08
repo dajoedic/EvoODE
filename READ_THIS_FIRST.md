@@ -74,7 +74,10 @@ Q9 von Hand auf 37 gesetzt (36 + 3 Q8-Nachzügler = 40). Je fertigem Q8-Nachzüg
    13-λ-Raster, WeakIdent nativ + mit sin/cos, ODEFormer (WP-N48-Harness, ~150–180 Kern-h). Stand: **B1 gebaut und
    kontrolliert** (`a68968c`, ~43 Kern-h, braucht Image-Neubau → Nutzer pusht, Orion nach Q9); **WeakIdent komplett auf
    dem Laptop** (`65b467f`, 2 × 4.148 Fits dim 1–3, 0 Fehler, dim 4 vom Original nicht unterstützt); **ODEFormer** Orion
-   nach Q9. Keine Q-B-Kennzahl angesehen — Aggregation, wenn B1 und B3 da sind.
+   nach Q9. Erster Blick auf WeakIdent (τ = 0,05) im DIARY. **τ-Raster (Nachtrag 5, `4b1b388`) läuft seit 08.11.
+   21:10 abgekoppelt auf dem Laptop** (Nutzer-OK als Ausnahme von der 1-h-Regel, erwartet 2,5–3,5 h, 10 Prozesse,
+   Adapter `09491e3`): `outputs/sideproject_qb2_weakident_tau/`, fertig wenn `finished.txt` existiert. Danach:
+   technische Prüfung (7 × 8.568 Zeilen, τ = 0,05 identisch zum ersten Lauf), committen, auswerten.
 
 1. ~~G2~~ **entschieden 07.11.: C1000 + Q7-Stopp** (`DIARY.md`). ~~Q9 bauen und starten~~ **läuft seit 07.11. 02:29.**
 2. Q9 beobachten: Hochrechnung aus den ersten langen Shards; >21 Tage → Nutzer entscheidet (Plan W-4).
