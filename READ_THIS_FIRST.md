@@ -10,9 +10,17 @@ zweites davon. Alles Dauerhafte gehört dorthin, nach `PAPER_1.md` oder ins `DIA
 **Regeln:** wird immer **vollständig überschrieben**, nie angehängt. Was älter als ein paar Tage
 ist, ist vermutlich falsch — dann gilt `CLAUDE.md`.
 
-**Stand: 2026-11-07, ~02:40 (Q9 läuft; G2 = C1000) — WISP-Plan bis 31.12. (CLAUDE.md, „WISP paper — the fixed plan“).**
+**Stand: 2026-11-08, ~23:15 (Q9 läuft auf Orion; WeakIdent-τ-Raster läuft auf dem Laptop) — WISP-Plan bis 31.12. (CLAUDE.md, „WISP paper — the fixed plan“).**
 
-## 1. Was läuft (Orion, Stand 07.11. ~02:30)
+## 1. Was läuft
+
+**Wer aufpasst (08.11. 23:15):** auf Orion **niemand automatisch** — `q9_shift.sh` läuft nicht mehr (letzte Logzeile
+08.11. 09:49), und seit dem Abend ist das VPN weg (`oc`: „no such host“), Orion also nicht geprüft seit 08.11. ~10:00.
+Q9 steht von Hand auf Parallelität 37; fertige Q8-Nachzügler geben ihre Kerne erst frei, wenn jemand Q9 von Hand
+anhebt (verschenkt Kerne, kaputt geht nichts). Auf dem Laptop wacht ein Hintergrund-Watcher der Claude-Sitzung über das
+τ-Raster (nur Meldung, kein Eingriff); endet die Sitzung, läuft das Raster abgekoppelt weiter.
+
+**Orion, letzter geprüfter Stand 07.11. ~02:30 (Q9-Parallelität 08.11. 10:00 auf 37):**
 
 | Lauf | Stand | Wenn fertig |
 |---|---|---|
