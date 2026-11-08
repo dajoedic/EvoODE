@@ -76,6 +76,16 @@ the project derives the E-SINDy/Weak-SINDy seeds (SHA-256 of the cell key, `meth
 arms, recorded per row (`weakident_cv_seed`). After the change: repeat control 0 differences, B2b-without-trig = B2a 0
 differences, on all three probe cells; probe 0 fit failures; projection 0.3 core-h (laptop).
 
+**Amendment 5 2026-11-08 (content, user-approved: "Ja das passt doch gut"; written after a first look at the B2
+results at the authors' τ = 0.05, declared as such).** The other references get their best threshold or variant per
+stratum × σ × metric; B2 had one setting. WeakIdent's only user-set parameter is the trimming threshold τ (test
+functions and sparsity limit are derived from the data by the code). B2a and B2b are therefore run on the frozen grid
+**τ ∈ {0, 0.005, 0.01, 0.02, 0.05, 0.1, 0.2}** (0.05 = the run already done, reused unchanged), same cells, same
+per-cell CV seed, nothing else changed. Reported like B1: the best τ per stratum × σ × metric, chosen after the results
+in WeakIdent's favour, the single best τ per stratum over all conditions, the authors' τ = 0.05, and the whole τ curve.
+The question it answers: were the authors' settings already at the optimum on these data? No WISP change. The
+interpolation needed on ρ = 0.5 is a property of the method (uniform grid), not a setting, and is not addressed.
+
 - B1: at λ ∈ {0.01, 0.1} with the WP-N47 library the harness reproduces WP-N47 rows bit-identically on one cell per
   stratum (same code path, only library and λ list change).
 - B2: WeakIdent reproduces one of the authors' published ODE examples from their repository before it touches our data.
