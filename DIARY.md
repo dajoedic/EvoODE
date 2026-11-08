@@ -7,6 +7,7 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 ## 2026-11-08
 
 ### WISP manuscript draft, external review, and Q-Cal: the χ² stop is liberal, not calibrated
+<!-- 4412dd7 826a127 -->
 
 **Draft.** On the user's request ("so, als wäre es JETZT fertig") a complete manuscript draft was written under
 `paper/wisp/` (`wisp.tex`, `wisp.pdf`, 7 pages, 8 figures, 2 tables; scripts `make_data.py`, `make_example.py`,
@@ -43,6 +44,26 @@ sharper stop is a Paper-2 question. Into the paper as Fig. 8 and a results parag
 **Runtime context** (Q8 C1000 records, Orion, 1 core per cell, not evidence): median solve time per noisy cell 2.4 s
 (dim 1 exact), 6.1 s (dim 2 exact), 15.7 s (dim 2 surrogate); q90 142 s, 2.3 h, and 31 h on 54–59. pySINDy fits
 0.01–0.1 s.
+
+### Q-B: extended baselines — B1 built, WeakIdent (B2a/B2b) run complete, ODEFormer waits for Orion
+<!-- 4309870 989452f a68968c a673600 d1b3782 2229d59 8d2ccb5 65b467f -->
+
+Protocol `docs/sideproject_residual_growth_protocol_qb.md`, frozen `4309870` before any Q-B number, after review point 2
+and the user's decision ("Das mit den Vergleichen klingt super. Machen wir."; WeakIdent in both library variants;
+laptop now, Orion after W-4). The stop's miscalibration goes into the paper as a known limitation to be addressed.
+
+- **B1** (SINDy/Weak-SINDy/E-SINDy, exactly the WISP library, 13 λ = 10^(−3+k/4)): built by Codex (WP-QB1), committed
+  `a68968c`. Control redefined as same-platform (amendment 1): 0 of 1,424 fields differ; laptop vs WP-N47 Orion max
+  relative R² difference 6e-11, no decision field flips. Cost ≈ 43 core-h → **Orion after Q9**, needs an image rebuild
+  (`baselines/Dockerfile.qb1-sindy`, user pushes).
+- **B2 WeakIdent** (Tang et al. 2023, official code vendored unchanged at `be14358`, `numpy_indexed` 0.3.7 vendored):
+  authors' example gate passed (amendment 2: noise-free exact, 16/20 draws exact with their unseeded noise); dimension 4
+  unsupported by the reference code → dims 1–3 only (amendment 3); unseeded CV permutation → per-cell seed (amendment 4).
+  Adapter `8d2ccb5`. **Full laptop run complete** (`65b467f`): 8,568 rows, 4,148 fits per arm, **0 failures**, 136 dim-4
+  cells per arm marked unsupported, hashes checked on every cell, one environment. A shard-writer header defect (three
+  interpolation columns only on ρ = 0.5 rows) was repaired losslessly at the merge and in the adapter. **No metric looked
+  at yet** — opened together with B1 and B3 at the Q-B aggregation.
+- **B3 ODEFormer**: WP-N48 harness and manifest exist, ~140–180 core-h → Orion after Q9.
 
 ## 2026-11-07
 
