@@ -72,6 +72,12 @@ laptop now, Orion after W-4). The stop's miscalibration goes into the paper as a
   fine (dim 1 R² > 0.9 93 %), already σ = 0.01 halves it; on exact systems WeakIdent's support is a median one term too
   small; Lotka–Volterra (the authors' own example) exact under noise — no adapter defect found. WeakIdent is ahead of
   WSINDy on dim-2 structure, behind it on dim-1 R².
+  Follow-up: when WeakIdent hits the structure, R² > 0.9 follows (noisy hits: dim 1 119/119, dim 2 186/187; dim 3 20/40,
+  all on system 61, coefficients within ~1 % but the trajectory is sensitive) — the R² gap comes from the misses (too
+  small supports) and the surrogates, where WISP's refitted supersets still fit the trajectory and WeakIdent's sparse
+  models do not. Noise (dim 1+2, all Q9 cells, rec/gen/structure): clean 82/64/81 %, σ = 0.01 50/31/42 %, then a plateau
+  to σ = 0.05 43/22/30 %; ρ = 0.5 already at σ = 0 37/15/26 % (uniform-grid interpolation as for WSINDy). A cliff at the
+  first noise level rather than a slope — mechanism not checked.
 
 ## 2026-11-07
 
