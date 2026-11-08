@@ -48,6 +48,15 @@ and the reference configuration. Structure via the WP-N40 recompute.
 
 ## 4. Controls
 
+**Technical amendment 2026-11-08 (before any Q-B number; control definition only, declared).** The B1 control as
+first written compares laptop rows with the WP-N47 Orion rows, which are not bit-identical by platform (OpenBLAS
+kernel, `DIARY.md` 2026-10-16). Replaced by: the extended runner reproduces the **unmodified runner at the same commit
+on the same machine** bit-identically on the four control cells (24 fits) — **passed, 0 of 1,424 fields differ**.
+Reported beside it: laptop vs WP-N47 Orion on the same 24 fits, max relative R² difference 6·10⁻¹¹, no term, structure
+hit or R² > 0.9 decision differs; `ensemble_seed` differs only in serialization (`…645` vs `…645.0`). WeakIdent source
+pinned at `be14358` (`baselines/third_party/weakident/PROVENANCE.md`); the authors' ODE configs agree on all
+settings (τ = 0.05), so no choice is needed.
+
 - B1: at λ ∈ {0.01, 0.1} with the WP-N47 library the harness reproduces WP-N47 rows bit-identically on one cell per
   stratum (same code path, only library and λ list change).
 - B2: WeakIdent reproduces one of the authors' published ODE examples from their repository before it touches our data.
