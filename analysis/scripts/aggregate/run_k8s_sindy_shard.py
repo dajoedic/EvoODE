@@ -60,6 +60,10 @@ def build_shard_index(export_dir: Path, output_dir: Path, index: int, n_shards: 
     if not source_index.is_file():
         fail(f"export index does not exist: {source_index}")
     frame = pd.read_csv(source_index)
+    q9_path = os.environ.get("EVO_SINDY_Q9_PATHS", "").strip()
+    if q9_path:
+        from scripts.aggregate.qb1_wisp_library import select_q9
+        frame = select_q9(frame, Path(q9_path), require_all=True)
     filter_query = os.environ.get("EVO_SINDY_FILTER_QUERY", "").strip()
     if filter_query:
         frame = frame.query(filter_query).reset_index(drop=True)

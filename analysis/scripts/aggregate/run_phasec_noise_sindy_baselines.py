@@ -5,6 +5,7 @@ import glob
 import hashlib
 import json
 import math
+import os
 import sys
 import time
 from pathlib import Path
@@ -366,6 +367,9 @@ def run_one_model(
     coefficients = np.empty((dim, 0))
     if model is not None:
         feature_names = model.get_feature_names()
+        if cfg.library_id.startswith("qb1_wisp_v1_stlsq_"):
+            from scripts.aggregate.qb1_wisp_library import legacy_term
+            feature_names = [legacy_term(name) for name in feature_names]
         coefficients = model.coefficients()
         raw_terms = active_terms_by_equation(coefficients, feature_names)
         pruned_terms = raw_terms
@@ -582,6 +586,10 @@ def run_baselines(
     support = load_phase_c_support(resolve_path(config.get("phase_c_support_path", "../studies/regression/phase_c_support.json"), config_path))
     support_by_id = support.set_index("system_id")
     index = read_export_index(export_index_path)
+    if config.get("q9_paths"):
+        from scripts.aggregate.qb1_wisp_library import select_q9
+        q9_path = os.environ.get("EVO_SINDY_Q9_PATHS") or config["q9_paths"]
+        index = select_q9(index, resolve_path(q9_path, config_path))
     export_root = export_index_path.parent
     clean_t = np.linspace(float(config.get("t_start", 0.0)), float(config.get("t_end", 10.0)), int(config.get("time_points", 512)))
     configs = library_grid(config)

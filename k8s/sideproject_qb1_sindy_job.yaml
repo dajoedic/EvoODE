@@ -1,0 +1,69 @@
+# Preparation only; do not apply before W-4 capacity approval.
+# Rebuild with baselines/Dockerfile.qb1-sindy; replace the image tag.
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: evoode-sideproject-qb1-sindy
+  namespace: scch-das
+  labels:
+    app.kubernetes.io/name: evoode
+    app.kubernetes.io/part-of: evoode-phase-c
+    app.kubernetes.io/component: qb1-sindy
+    app.kubernetes.io/managed-by: kubectl
+    hpc.scch.at/service: evoode-sideproject-qb1-sindy
+    hpc.scch.at/responsibility: joedicke
+spec:
+  ttlSecondsAfterFinished: 3600
+  completionMode: Indexed
+  completions: 240
+  parallelism: 8
+  backoffLimit: 50
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: evoode
+        app.kubernetes.io/part-of: evoode-phase-c
+        app.kubernetes.io/component: qb1-sindy
+        hpc.scch.at/service: evoode-sideproject-qb1-sindy
+        hpc.scch.at/responsibility: joedicke
+    spec:
+      restartPolicy: Never
+      imagePullSecrets:
+        - name: evoode-gitlab-pull
+      containers:
+        - name: cell
+          image: registry.gitlab.scch.at:443/joedicke/evoode/sindy-baselines:<QB1_REBUILT_IMAGE_TAG>
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: EVO_SINDY_EXPORT_DIR
+              value: /outputs/phase_c_c6_data_conditions_5dd1df839f8ece98f2bb3bbff78d15d8c433d9d3
+            - name: EVO_SINDY_OUTPUT_DIR
+              value: /outputs/sideproject_qb1_sindy_<QB1_REBUILT_IMAGE_TAG>
+            - name: EVO_SINDY_CONFIG
+              value: /workspace/EvoODE/analysis/configs/sideproject_qb1_sindy.json
+            - name: EVO_SINDY_Q9_PATHS
+              value: /outputs/sideproject_q9_inputs/grid/q9_paths.json
+            - name: EVO_SINDY_N_SHARDS
+              value: "240"
+            - name: OMP_NUM_THREADS
+              value: "1"
+            - name: OPENBLAS_NUM_THREADS
+              value: "1"
+            - name: MKL_NUM_THREADS
+              value: "1"
+          resources:
+            requests:
+              cpu: "1"
+              memory: 2Gi
+            limits:
+              cpu: "1"
+              memory: 2Gi
+          volumeMounts:
+            - name: evoode-bigdata
+              mountPath: /outputs
+              subPath: data-science/joedicke
+      volumes:
+        - name: evoode-bigdata
+          nfs:
+            server: nfs.orion.scch.at
+            path: /bigdata

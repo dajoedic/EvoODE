@@ -1,0 +1,183 @@
+# WP-QB1 - implementation and blocked acceptance
+
+Date: 2026-11-08. Authority read: `docs/sideproject_residual_growth_protocol_qb.md` (frozen 2026-11-08).
+
+## Disposition
+
+B1 is implemented and the original-library control was run. **Acceptance is blocked**: the literal bit-identical control fails, and the environment prevents downloading the official WeakIdent source. No B2 settings were guessed and no B2 benchmark data were processed. No full grid, cluster job, image build, Git operation, or shared-package upgrade was performed.
+
+The task explicitly requests preparation of a manifest whereas the standing protocol forbids campaign manifests. The specific current task was followed for the single B1 manifest; it was not applied. The frozen Q-B protocol was not changed.
+
+## Source changes
+
+- `analysis/scripts/aggregate/qb1_wisp_library.py`: pySINDy CustomLibrary using exactly `phasec_basis`; 6/12/19/27 terms for dimensions 1/2/3/4, canonical WISP names and order. Functions accept the whole state so CustomLibrary creates exactly one column per basis term. Q9 cell selection and metadata/hash comparison are shared here.
+- `analysis/configs/sideproject_qb1_sindy.json`: opt-in `qb1_wisp_v1` family; exactly 13 thresholds `10**(-3+k/4)`, k=0..12. Library IDs include a reserved family prefix and 17 significant digits.
+- `analysis/scripts/aggregate/run_wp_n6_sindy_baseline.py`: opt-in library/grid dispatch; original branches and defaults retained.
+- `analysis/scripts/aggregate/run_phasec_noise_sindy_baselines.py`: opt-in Q9 hash validation and translation of WISP feature names into the existing evaluator/scorer vocabulary. All three methods use the existing fit, seed, pruning, integration, and serialization implementations. The cluster path can be supplied by `EVO_SINDY_Q9_PATHS`.
+- `analysis/scripts/aggregate/run_k8s_sindy_shard.py`: optional Q9 selection before the existing `frame.iloc[index::n_shards]` slicing, requiring all 4,284 cells before sharding.
+- `analysis/scripts/aggregate/check_qb1_baselines.py`: bounded-size controls and cost-only probe, `--limit 1..4` selects how many dimension strata to check. Cost mode neither inspects nor serializes benchmark quality values.
+- `analysis/tests/test_qb1_wisp_library.py`: names/order/numerical columns, threshold IDs, all exact support mappings, Q9 metadata hashes, corrupted raw bytes, and shard coverage, using real data/schema as the starting point.
+- `k8s/sideproject_qb1_sindy_job.yaml`: Indexed Job, 240 slices, parallelism 8, 1 CPU per pod, no active deadline. Image tag deliberately remains a rebuild placeholder.
+- `baselines/Dockerfile.qb1-sindy`, its Dockerfile-specific `.dockerignore`, and `baselines/requirements-qb1-sindy.txt`: existing dependency pins plus matplotlib 3.9.1, required by importing the canonical basis module. Existing Dockerfile and requirements remain unchanged. Rebuild the image with the new sources; it cannot use the already built WP-N47 image unchanged. No Docker build was attempted.
+
+No WISP source, Q9 input/output, running jobs, WP-N48b PySR files, manuscript, or explainer was edited. Files remain uncommitted.
+
+## Field and term provenance
+
+The real `q9_paths.json` contains 4,284 distinct `cells` records, with dimension counts 1: 1,564; 2: 1,904; 3: 680; 4: 136. Cell keys come from the embedded `export` fields `system_id`, `initial_condition_set`, `noise_sigma`, `subsample_rho`, `noise_realization`. `observed_data_sha256` is a JSON object encoded as a string containing `time_sha256` and `state_sha256`; it is not a hash of a combined file. Both embedded hashes are checked against the export index before the existing binary byte/hash checks. `dimension`, `n_observed_points`, and `data_condition_fingerprint` are also compared with Q9. No new record field is assumed.
+
+The library names are `u1`, `u1*u2`, `sin(u1)`, etc. The existing WP-N47 evaluator expects `x0`, `x0 x1`, `sin(1 x0)`; its serializers/scorer normalize spaces to `*`. Translation occurs only for the new library. `outputs/sideproject_qb1_checks/support_mapping.json` records every exact system and each equation's source/mapped terms. All 30 exact/ok systems map identically to the existing `library_true_terms`; no alternative pruning rule was introduced. Output rows keep the WP-N47 schema and legacy coefficient vocabulary.
+
+## B1 control - literal field comparison
+
+Four named controls: systems 1, 24, 52, 63 (dimensions 1, 2, 3, 4), IC 1, sigma 0.05, rho 0.5, realization 1. Original WP-N47 `poly_deg3_sin_cos` library, thresholds 0.01 and 0.1, SINDy / Weak-SINDy / E-SINDy: **24 fits, 0 fit failures**. Reference: `outputs/c6_sindy_baselines_dop853_e935c37/merged/details.csv`.
+
+CSV strings were compared exactly, without rounding, tolerance, dropping runtime, or normalizing seed representations. There are 1,488 comparisons: **1,228 equal; 260 different**. Literal bit-identical reproduction is therefore **not passed**. `source_shard` is added by the merger and is not generated by `run_one_model`; that missing field is recorded as different. Runtime is measured anew. Floating values and coefficient JSON also differ, so dropping runtime alone would not establish identity. No causal claim about these numerical differences is made. Old control rows were read only for these four cells; cost-mode quality was not inspected.
+
+The full per-row/per-field comparison is `outputs/sideproject_qb1_checks/control_fields.csv`. Exact equal counts below (24 comparisons per field):
+
+| Field | Equal | Compared |
+|---|---:|---:|
+| `active_terms_pruned` | 24 | 24 |
+| `active_terms_raw` | 24 | 24 |
+| `data_condition_fingerprint` | 24 | 24 |
+| `dimension` | 24 | 24 |
+| `elapsed_s_evidence_role` | 24 | 24 |
+| `ensemble_optimizer_metadata` | 24 | 24 |
+| `ensemble_seed` | 16 | 24 |
+| `fit_elapsed_s_context` | 0 | 24 |
+| `fit_error` | 24 | 24 |
+| `fit_status` | 24 | 24 |
+| `generalization_diverged_or_nonfinite` | 24 | 24 |
+| `generalization_initial_condition_set` | 24 | 24 |
+| `generalization_integration_status` | 24 | 24 |
+| `generalization_r2_arithmetic_mean` | 0 | 24 |
+| `generalization_r2_arithmetic_mean_gt_0_9` | 24 | 24 |
+| `generalization_r2_by_dim` | 14 | 24 |
+| `generalization_r2_variance_weighted` | 0 | 24 |
+| `generalization_r2_variance_weighted_gt_0_9` | 24 | 24 |
+| `include_sin_cos` | 24 | 24 |
+| `integrator` | 24 | 24 |
+| `library_id` | 24 | 24 |
+| `method` | 24 | 24 |
+| `method_config_id` | 24 | 24 |
+| `n_library_terms` | 24 | 24 |
+| `n_observed_points` | 24 | 24 |
+| `n_target_regressions` | 24 | 24 |
+| `noise_realization` | 24 | 24 |
+| `noise_sigma` | 24 | 24 |
+| `observed_data_sha256` | 24 | 24 |
+| `phasec_basis_name` | 24 | 24 |
+| `phasec_representability` | 24 | 24 |
+| `phasec_representability_threeway` | 24 | 24 |
+| `phasec_support_status` | 24 | 24 |
+| `polynomial_degree` | 24 | 24 |
+| `reconstruction_diverged_or_nonfinite` | 24 | 24 |
+| `reconstruction_initial_condition_set` | 24 | 24 |
+| `reconstruction_integration_status` | 24 | 24 |
+| `reconstruction_r2_arithmetic_mean` | 0 | 24 |
+| `reconstruction_r2_arithmetic_mean_gt_0_9` | 24 | 24 |
+| `reconstruction_r2_by_dim` | 13 | 24 |
+| `reconstruction_r2_variance_weighted` | 0 | 24 |
+| `reconstruction_r2_variance_weighted_gt_0_9` | 24 | 24 |
+| `sindy_coefficients_active` | 0 | 24 |
+| `sindy_coefficients_full` | 0 | 24 |
+| `sindy_structure_f1_pruned` | 8 | 24 |
+| `sindy_structure_hit_pruned` | 24 | 24 |
+| `sindy_structure_hit_raw` | 24 | 24 |
+| `sindy_structure_metrics_exact_system` | 24 | 24 |
+| `sindy_structure_precision_pruned` | 9 | 24 |
+| `sindy_structure_recall_pruned` | 24 | 24 |
+| `source_initial_condition_set` | 24 | 24 |
+| `source_shard` | 0 | 24 |
+| `state_sha256` | 24 | 24 |
+| `stlsq_threshold` | 24 | 24 |
+| `subsample_rho` | 24 | 24 |
+| `system_id` | 24 | 24 |
+| `system_name` | 24 | 24 |
+| `target_initial_condition_set` | 24 | 24 |
+| `time_sha256` | 24 | 24 |
+| `true_terms` | 24 | 24 |
+| `weak_seed` | 16 | 24 |
+| `weak_sindy_source_note` | 24 | 24 |
+
+## B2 and authors' example - blocked before our data
+
+Direct HTTPS download using Python `urllib.request.urlopen` failed with `URLError`, `ConnectionRefusedError: [WinError 10061]`. Read-only web access could view the [official repository](https://github.com/sunghakang/WeakIdent) and only two ODE config files. API access to determine a pinned commit and attempts to read the other four ODE configs through GitHub/raw URLs failed. Consequently no complete, pinned source, licence copy, dataset, or environment file could be obtained. No purported vendored copy or substitute algorithm was created.
+
+The repository README identifies configs 8-13 as the ODE examples. Retrieved settings:
+
+| Source | max_poly | max_dt | max_dx | use_cross_der | sigma_SNR | stride_x | stride_t | Tau |
+|---|---:|---:|---:|---|---:|---:|---:|---:|
+| [config_9.yaml](https://github.com/sunghakang/WeakIdent/blob/main/WeakIdent-Python/configs/config_9.yaml), VanderPol.npy | 5 | 1 | 0 | False | 0.1 | 15 | 15 | 0.05 |
+| [config_12.yaml](https://github.com/sunghakang/WeakIdent/blob/main/WeakIdent-Python/configs/config_12.yaml), Lorenz.npy | 3 | 1 | 0 | False | 0.1 | 15 | 15 | 0.05 |
+
+These are partial observations from `main`, **not pinned provenance and not a selected configuration**. The task explicitly fixes max_poly=3, superseding that option's example-dependent value. It is unknown whether the remaining ODE configs agree on the other settings. Test-function parameters and environment pins were not available. No decision was made from these two examples alone. A suitable isolated environment cannot be pinned until the official environment file is obtained; shared packages were not modified.
+
+Authors' example reproduction: **not run**. B2 adapter, trig modification, term mapping tests, no-trig identity control (all fields), W1-interp manifest/hash integration, B2 Dockerfile/manifest, cost and projection: **not implemented/not run** because the required official source and authors'-example gate are unavailable. No B2 quality or runtime result is asserted.
+
+## Tests
+
+Initial pytest attempts encountered Windows `PermissionError` creating/scanning temporary directories. Python 3.12's `mkdir(mode=0o700)` produces inaccessible directories in this sandbox. The successful test process replaced only `os.mkdir`'s requested mode with 0o777, and used a new workspace basetemp with pytest cache disabled; no production/test assertions or shared packages were altered. The final combined suite completed with **137 passed, 5 skipped, 14 warnings in 85.40 s**. The 5 skips are existing optional baseline tests. Artifact: `outputs/sideproject_qb1_tests/final_results.xml`. A subsequent stricter duplicate-Q9 validation change was checked with the entire new unit-test module: **9 passed in 28.78 s**. The runner's default fit path was not changed by that validation change.
+
+Successful combined-suite command (PowerShell; environment workaround applies only to this process):
+
+```powershell
+$env:OPENBLAS_NUM_THREADS='1'
+$env:OMP_NUM_THREADS='1'
+python -c "import os,pytest; original=os.mkdir; os.mkdir=lambda path,mode=0o777,*,dir_fd=None: original(path,0o777,dir_fd=dir_fd); raise SystemExit(pytest.main(['analysis/tests/test_qb1_wisp_library.py','analysis/tests/test_phasec_noise_sindy_baselines.py','analysis/tests/test_phasec_sindy_baseline.py','baselines/tests','-q','--basetemp','outputs/sideproject_qb1_tests/review_tmp','-p','no:cacheprovider','--junitxml','outputs/sideproject_qb1_tests/final_results.xml']))"
+```
+
+For another invocation choose a fresh basetemp directory. The probe script now checkpoints completed fits separately as `<mode>_fits.json` to retain their counts and times if a later fit exceeds the external time limit. The first four-stratum probe predates that checkpoint improvement; its group checkpoints remain the cost evidence for that run. The updated checkpoint path was executed independently with `cost --limit 1 --output-dir outputs/sideproject_qb1_checkpoint_smoke`: 39 fits, 0 fit failures, and 39 per-fit records with no quality fields. Its timings are separate and are not substituted into the original four-stratum sample.
+
+## Cost probe
+
+**Complete four-stratum B1 sample: 156 top-level fits, 0 fit failures**, with 13 thresholds - 3 methods - 4 cells. All selected cells use sigma 0.05, rho 0.5, realization 1, IC 1; first exact systems per dimension: 1, 24, 52, 63. The process finished normally before its 840-second external timeout. The sample uses the same DOP853 evaluation as the baseline runner. No benchmark quality was inspected or stored in the timing artifacts.
+
+Wall-clock timing, **planning context only, not evidence**. `Cell wall` includes all 13 fits plus DOP853 evaluation; `mean fit only` and the individual fit timings in the JSON exclude integration. Timing overlapped the local test suite and the small control/checkpoint checks during part of the sample; these are loaded-laptop planning measurements, not an isolated performance experiment. The long dimension-4 Weak-SINDy cell includes evaluation time; no cause is inferred from timing alone.
+
+| Dimension | System | Method | Fits | Fit failures | Cell wall (s) | Mean fit + evaluation (s) | Mean fit only (s) |
+|---:|---:|---|---:|---:|---:|---:|---:|
+| 1 | 1 | sindy | 13 | 0 | 0.963528 | 0.074118 | 0.010215 |
+| 1 | 1 | weak_sindy | 13 | 0 | 2.300439 | 0.176957 | 0.136676 |
+| 1 | 1 | e_sindy | 13 | 0 | 1.818676 | 0.139898 | 0.069698 |
+| 2 | 24 | sindy | 13 | 0 | 3.258964 | 0.250690 | 0.011170 |
+| 2 | 24 | weak_sindy | 13 | 0 | 5.505424 | 0.423494 | 0.177493 |
+| 2 | 24 | e_sindy | 13 | 0 | 9.814616 | 0.754970 | 0.120810 |
+| 3 | 52 | sindy | 13 | 0 | 3.666966 | 0.282074 | 0.014024 |
+| 3 | 52 | weak_sindy | 13 | 0 | 19.587779 | 1.506752 | 0.153779 |
+| 3 | 52 | e_sindy | 13 | 0 | 9.632878 | 0.740991 | 0.127059 |
+| 4 | 63 | sindy | 13 | 0 | 4.779868 | 0.367682 | 0.021246 |
+| 4 | 63 | weak_sindy | 13 | 0 | 648.718929 | 49.901456 | 0.140978 |
+| 4 | 63 | e_sindy | 13 | 0 | 11.799009 | 0.907616 | 0.196497 |
+
+Completed group wall times sum to 721.847076 s. Per-fit fit-only wall times are in `outputs/sideproject_qb1_checks/cost_cost.json`. Environment fingerprint: `outputs/sideproject_qb1_checks/environment.json` (Python 3.12.10, pySINDy 2.1.0; dependency pins match the SINDy image requirements).
+
+Projection: sum each dimension/method's sampled cell wall time times the Q9 dimension count, divided by 3,600. With counts 1: 1,564; 2: 1,904; 3: 680; 4: 136, the projected B1 total is **43.379934 core-hours** for **167,076 top-level fits** (4,284 x 39). E-SINDy retains 20 ensemble members per top-level fit; the total includes those members' measured time. This is a projection from one exact-system proxy per dimension across all systems/conditions, with no uncertainty estimate. On the single-worker laptop execution measured here, **B1 does not finish in < 1 hour**. A multicore laptop wall-time estimate was not measured.
+
+B2: 0 fits; runtime/core-hour projection and < 1 hour feasibility **unknown**, because the authors'-example gate was not executable. No B2 timing is inferred from B1.
+
+Raw artifacts: `cost_cost.json`, `projection.json`, and `environment.json` under `outputs/sideproject_qb1_checks/`. The later checkpoint smoke is separate and is not mixed into this projection. "Fit failures" counts exceptions/status failures of the fitting step; integration outcomes are quality information and were not inspected for this cost probe.
+
+
+## Commands for review and continuation
+
+Set `OPENBLAS_NUM_THREADS=1`, `OMP_NUM_THREADS=1`, `MKL_NUM_THREADS=1` before timing.
+
+```powershell
+# Small checks (one dimension stratum):
+python analysis/scripts/aggregate/check_qb1_baselines.py control --limit 1
+python analysis/scripts/aggregate/check_qb1_baselines.py cost --limit 1
+# Four-stratum controls / cost sample only, not full runs:
+python analysis/scripts/aggregate/check_qb1_baselines.py control
+python analysis/scripts/aggregate/check_qb1_baselines.py cost
+```
+
+Each sample process must be externally limited to below 15 minutes, as done in this session with `subprocess.run(..., timeout=840, check=True)`. Do not launch the full grid from this task. A future B1 full run uses the existing shard entrypoint and prepared manifest only after capacity authorization and rebuilding the image; no deployment was performed here.
+
+## Open acceptance points
+
+1. Obtain a pinned official WeakIdent Python tree, Apache-2.0 licence, examples/data, and environment file through an environment with network access. Compare every ODE config; if non-overridden settings disagree, stop for Claude/user choice before any benchmark fit.
+2. Reproduce an authors' ODE example, then implement B2a/B2b with the unchanged algorithm and explicitly localized dictionary extension. Perform the no-trig identity and W1-interp hash checks before the B2 cost sample.
+3. Resolve the failed literal B1 bit-identical acceptance; do not silently replace it with tolerance-based comparison or remove runtime/source fields.
+4. B1 cost assessment is complete (43.379934 core-hours projected); it does not meet the single-worker laptop < 1 hour criterion. Full runs remain deferred. B2 cost assessment remains blocked by the source/example gate.

@@ -1,0 +1,33 @@
+{
+  "benchmark_path": "../benchmarks/data/strogatz_extended.json",
+  "phase_c_support_path": "../studies/regression/phase_c_support.json",
+  "output_data_dir": "../outputs/sideproject_qb1_sindy/data",
+  "output_table_dir": "../outputs/sideproject_qb1_sindy/tables",
+  "time_points": 512,
+  "t_start": 0.0,
+  "t_end": 10.0,
+  "polynomial_degrees": [
+    2,
+    3,
+    4,
+    5
+  ],
+  "trig_polynomial_degree": 3,
+  "thresholds": [
+    0.001,
+    0.0017782794100389228,
+    0.0031622776601683794,
+    0.005623413251903491,
+    0.01,
+    0.01778279410038923,
+    0.03162277660168379,
+    0.05623413251903491,
+    0.1,
+    0.1778279410038923,
+    0.31622776601683794,
+    0.5623413251903491,
+    1.0
+  ],
+  "library_family": "qb1_wisp_v1",
+  "q9_paths": "../outputs/sideproject_q9_inputs/grid/q9_paths.json"
+}

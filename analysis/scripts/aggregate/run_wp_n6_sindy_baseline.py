@@ -171,6 +171,9 @@ def validate_phase_b_inputs(benchmark: list[dict[str, Any]], config: dict[str, A
 
 
 def build_library(config: LibraryConfig):
+    if config.library_id.startswith("qb1_wisp_v1_stlsq_"):
+        from scripts.aggregate.qb1_wisp_library import WispLibrary
+        return WispLibrary()
     poly = ps.PolynomialLibrary(degree=config.polynomial_degree, include_bias=True)
     if not config.include_trig:
         return poly
@@ -179,6 +182,9 @@ def build_library(config: LibraryConfig):
 
 
 def library_grid(config: dict[str, Any]) -> list[LibraryConfig]:
+    if config.get("library_family") == "qb1_wisp_v1":
+        return [LibraryConfig(f"qb1_wisp_v1_stlsq_{float(t):.17g}", 3, True, float(t))
+                for t in config["thresholds"]]
     degrees = [int(value) for value in config.get("polynomial_degrees", [2, 3, 4, 5])]
     thresholds = [float(value) for value in config.get("thresholds", [0.01, 0.1])]
     rows = [
