@@ -64,6 +64,14 @@ laptop now, Orion after W-4). The stop's miscalibration goes into the paper as a
   interpolation columns only on ρ = 0.5 rows) was repaired losslessly at the merge and in the adapter. **No metric looked
   at yet** — opened together with B1 and B3 at the Q-B aggregation.
 - **B3 ODEFormer**: WP-N48 harness and manifest exist, ~140–180 core-h → Orion after Q9.
+- **First look at WeakIdent (user asked, 2026-11-08)** on the 588 Q8 cells, noisy, pooled cell shares (not yet the
+  cluster statistic): R² > 0.9 reconstruction / generalization, WISP C1000 vs WeakIdent native — dim 1 exact 94/65 vs
+  44/20 %, dim 1 surrogate 99/51 vs 43/11, dim 2 exact 94/71 vs 45/31, dim 2 surrogate 78/32 vs 33/19, dim 3 53–60 vs
+  2–7 %. Pruned structure on identical scorable cells: dim 1 44 vs 21 %, **dim 2 38 vs 38 % (tie, 8 systems)**, dim 3
+  feasible 27 vs 27 % (2 systems), infeasible 28 vs 4 %. The sin/cos arm never helps (dim-2 structure 19 %). Clean data
+  fine (dim 1 R² > 0.9 93 %), already σ = 0.01 halves it; on exact systems WeakIdent's support is a median one term too
+  small; Lotka–Volterra (the authors' own example) exact under noise — no adapter defect found. WeakIdent is ahead of
+  WSINDy on dim-2 structure, behind it on dim-1 R².
 
 ## 2026-11-07
 
