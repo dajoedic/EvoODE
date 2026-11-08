@@ -116,19 +116,48 @@ class StoredModel:
         return self.names
 
 
-def fit(t, x, include_trig=False):
+AUTHORS_TAU = .05
+# Protocol Q-B amendment 5: the frozen trimming-threshold grid.
+TAU_GRID = (0., .005, .01, .02, .05, .1, .2)
+
+
+def tau_tag(tau):
+    """Library-id suffix; 0.05 -> 'tau005' as in the first run, values stay distinct."""
+    return "tau" + f"{tau:g}".replace(".", "")
+
+
+def fit_path(t, x, include_trig=False, taus=(AUTHORS_TAU,), cv_seed=None):
+    """Build the weak dictionary once and identify at every trimming threshold.
+
+    tau enters only diff_eqn_identification; the dictionary does not draw random
+    numbers, so re-seeding before each identification reproduces a single fit at
+    that tau exactly. Inputs are copied per tau so no call can see another's state.
+    Returns a list of (StoredModel, seconds) in the order of ``taus``.
+    """
     if x.shape[1] not in (1, 2, 3):
         raise ValueError(UNSUPPORTED)
     if not np.allclose(np.diff(t), np.diff(t)[0], rtol=1e-10, atol=1e-14):
         raise ValueError("WeakIdent requires uniform times")
     u = x.T[:, None, :]
     xs = np.asarray(t).reshape(1, 1, -1)
+    models = []
     # Suppress reference progress, never its errors. No noise injection is called.
     with contextlib.redirect_stdout(io.StringIO()):
+        started = time.perf_counter()
         lhs, rhs, w, scales, region, names = build_dictionary(u, xs, include_trig)
-        _, _, coefficients = reference.diff_eqn_identification(
-            .05, len(u), 1, True, lhs, rhs, w, scales, region)
-    return StoredModel(coefficients.T, names)
+        shared = (time.perf_counter() - started) / len(taus)
+        for tau in taus:
+            started = time.perf_counter()
+            if cv_seed is not None:
+                np.random.seed(cv_seed)
+            _, _, coefficients = reference.diff_eqn_identification(
+                tau, len(u), 1, True, lhs.copy(), rhs.copy(), w.copy(), scales.copy(), np.copy(region))
+            models.append((StoredModel(coefficients.T, names), shared + time.perf_counter() - started))
+    return models
+
+
+def fit(t, x, include_trig=False, tau=AUTHORS_TAU):
+    return fit_path(t, x, include_trig, (tau,))[0][0]
 
 
 def array_hash(array):
@@ -162,28 +191,38 @@ def read_inputs(export_root, row, interp_root, entries):
     return t, x, {k: entry[k] for k in INTERP_FIELDS}
 
 
-def evaluate(method, system, support, row, t, x, clean_t, clean, disable_trig=False):
+def cell_cv_seed(row):
+    key = baseline.sindy_seed_key(row, "qb2_weakident_v1_poly3_native_tau005")
+    key["method"] = "weakident"
+    return baseline.hash_seed(key)
+
+
+def evaluate(method, system, support, row, t, x, clean_t, clean, disable_trig=False,
+             tau=AUTHORS_TAU, model=None, fit_seconds=None):
+    """One evaluated row. With ``model`` given (tau path), that fit is evaluated instead of refitting."""
     trig = method == "weakident_trig" and not disable_trig
-    cfg = LibraryConfig(f"qb2_weakident_v1_poly3_{'trig' if trig else 'native'}_tau005", 3, trig, .05)
+    cfg = LibraryConfig(f"qb2_weakident_v1_poly3_{'trig' if trig else 'native'}_{tau_tag(tau)}", 3, trig, .05)
     unsupported = int(system["dim"]) == 4
     # The authors' cross-validation draws np.random.permutation from the global RNG
     # (utils/calculations.py:290). Seed it per cell, as the project seeds E-SINDy and
     # Weak-SINDy: hash of the cell key; identical for both arms so that B2b with the
     # extension disabled reproduces B2a (protocol Q-B, technical amendment 4).
-    key = baseline.sindy_seed_key(row, "qb2_weakident_v1_poly3_native_tau005")
-    key["method"] = "weakident"
-    cv_seed = baseline.hash_seed(key)
+    cv_seed = cell_cv_seed(row)
     def fitting(*args, **kwargs):
         if unsupported:
             raise ValueError(UNSUPPORTED)
+        if model is not None:
+            return model
         np.random.seed(cv_seed)
-        return fit(t, x, trig)
+        return fit(t, x, trig, tau)
     # Reuse the entire B1 evaluator, including its failure rows and pruning rule.
     with patch.object(baseline, "fit_sindy", side_effect=fitting):
         result = baseline.run_one_model("sindy", cfg, system, support, row, t, x, clean_t, clean)
     result.update(method=method, method_config_id=f"{method}_{cfg.library_id}",
-                  stlsq_threshold="", weakident_tau=.05, weakident_max_dt=1, weakident_cv_seed=cv_seed,
+                  stlsq_threshold="", weakident_tau=tau, weakident_max_dt=1, weakident_cv_seed=cv_seed,
                   weakident_source_commit="be14358b38f9cdb40ce1a0aeb127039f91d1410e")
+    if model is not None and fit_seconds is not None and result["fit_status"] == "success":
+        result["fit_elapsed_s_context"] = fit_seconds
     exact = support.get("phasec_representability") == "exact"
     has_trig = any("sin(" in term or "cos(" in term
                    for eq in baseline.library_true_terms(system) for term in eq)
@@ -226,7 +265,12 @@ def main():
     parser.add_argument("--output-dir", type=Path, default=ROOT / "outputs/sideproject_qb2_checks")
     parser.add_argument("--shard-index", type=int, default=int(os.environ.get("JOB_COMPLETION_INDEX", 0)))
     parser.add_argument("--n-shards", type=int, default=240)
+    parser.add_argument("--taus", default=str(AUTHORS_TAU),
+                        help="comma-separated trimming thresholds (shard mode); 'grid' = protocol amendment 5")
     args = parser.parse_args()
+    taus = TAU_GRID if args.taus == "grid" else tuple(float(v) for v in args.taus.split(","))
+    if args.mode == "probe" and taus != (AUTHORS_TAU,):
+        parser.error("the probe runs at the authors' tau only")
     if not 0 <= args.shard_index < args.n_shards:
         parser.error("invalid shard index/count")
     args.output_dir.mkdir(parents=True, exist_ok=True)
@@ -259,14 +303,16 @@ def main():
     details_path = args.output_dir / f"details_{args.shard_index:04d}.csv"
     completed = set()
     if args.mode == "shard" and details_path.exists():
-        fields = ["method", "system_id", "source_initial_condition_set", "noise_sigma", "subsample_rho", "noise_realization"]
+        fields = ["method", "system_id", "source_initial_condition_set", "noise_sigma", "subsample_rho",
+                  "noise_realization", "weakident_tau"]
         for _, previous in pd.read_csv(details_path, usecols=fields).iterrows():
             key_row = previous.rename({"source_initial_condition_set": "initial_condition_set"})
-            completed.add((previous["method"], cell_key(key_row)))
+            completed.add((previous["method"], float(previous["weakident_tau"]), cell_key(key_row)))
     started_all = time.perf_counter()
     with threadpool_limits(limits=1):
         for row in selected:
-            if args.mode == "shard" and all((method, cell_key(row)) in completed for method in METHODS):
+            if args.mode == "shard" and all((method, tau, cell_key(row)) in completed
+                                            for method in METHODS for tau in taus):
                 continue
             if time.perf_counter() - started_all > 840 and args.mode == "probe":
                 raise TimeoutError("probe exceeded 14 minutes")
@@ -275,18 +321,44 @@ def main():
             clean_t = np.linspace(0, 10, 512)
             clean = {ic: baseline.integrate_truth(system, ic - 1, clean_t)[0] for ic in (1, 2)}
             results = {}
+            sys_support = support.loc[int(row.system_id)].to_dict()
             for method in METHODS:
-                if args.mode == "shard" and (method, cell_key(row)) in completed:
+                todo = [tau for tau in taus if not (args.mode == "shard" and (method, tau, cell_key(row)) in completed)]
+                if not todo:
                     continue
                 started = time.perf_counter()
-                result = evaluate(method, system, support.loc[int(row.system_id)].to_dict(), row, t, x, clean_t, clean)
-                result.update(hashes)
-                results[method] = result
+                path = None
+                if args.mode == "shard" and int(system["dim"]) != 4:
+                    try:
+                        path = fit_path(t, x, method == "weakident_trig", tuple(todo), cell_cv_seed(row))
+                    except Exception:
+                        path = None  # fall back to per-tau evaluation, which records the failure row
+                rows_out, cache = [], {}
+                for i, tau in enumerate(todo):
+                    model, seconds = path[i] if path else (None, None)
+                    key = None if model is None else (np.asarray(model.coef).tobytes(), tuple(model.names))
+                    if key is not None and key in cache:
+                        # Identical fitted model: identical evaluation; only tau-dependent ids differ.
+                        result = dict(cache[key])
+                        trig = method == "weakident_trig"
+                        library_id = f"qb2_weakident_v1_poly3_{'trig' if trig else 'native'}_{tau_tag(tau)}"
+                        result.update(library_id=library_id, method_config_id=f"{method}_{library_id}",
+                                      weakident_tau=tau, fit_elapsed_s_context=seconds,
+                                      weakident_evaluation_reused_from_tau=cache[key]["weakident_tau"])
+                    else:
+                        result = evaluate(method, system, sys_support, row, t, x, clean_t, clean,
+                                          tau=tau, model=model, fit_seconds=seconds)
+                        result.update(hashes)
+                        result["weakident_evaluation_reused_from_tau"] = ""
+                        if key is not None:
+                            cache[key] = result
+                    rows_out.append(result)
+                results[method] = rows_out[0]
                 if args.mode == "shard":
-                    baseline.append_csv_rows(details_path, [result])
+                    baseline.append_csv_rows(details_path, rows_out)
                 costs.append(dict(system_id=int(row.system_id), dimension=int(row.dimension), method=method,
-                                  fit_status=result["fit_status"], fit_error=result["fit_error"],
-                                  fit_wall_s=result["fit_elapsed_s_context"],
+                                  fit_status=rows_out[0]["fit_status"], fit_error=rows_out[0]["fit_error"],
+                                  fit_wall_s=rows_out[0]["fit_elapsed_s_context"],
                                   cell_wall_s=time.perf_counter() - started,
                                   observed_hash_checked=True, interpolated_hash_checked=bool(hashes["q5w_interpolated_sha256"]),
                                   role="planning_context_not_evidence"))

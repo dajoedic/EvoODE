@@ -137,3 +137,10 @@ def test_uniform_and_interpolated_rows_share_columns():
     _, _, fields = adapter.read_inputs(root, row, None, {})
     assert tuple(fields) == adapter.INTERP_FIELDS
     assert all(value == "" for value in fields.values())
+
+
+def test_tau_grid_ids_are_distinct_and_keep_the_first_run_id():
+    tags = [adapter.tau_tag(tau) for tau in adapter.TAU_GRID]
+    assert len(set(tags)) == len(tags)
+    assert adapter.tau_tag(adapter.AUTHORS_TAU) == "tau005"
+    assert adapter.TAU_GRID == (0., .005, .01, .02, .05, .1, .2)
