@@ -4,6 +4,46 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ---
 
+## 2026-11-08
+
+### WISP manuscript draft, external review, and Q-Cal: the χ² stop is liberal, not calibrated
+
+**Draft.** On the user's request ("so, als wäre es JETZT fertig") a complete manuscript draft was written under
+`paper/wisp/` (`wisp.tex`, `wisp.pdf`, 7 pages, 8 figures, 2 tables; scripts `make_data.py`, `make_example.py`,
+`make_figures.py`, `make_runtime.py`). Evidence state: **Q8 C1000** (official G2 overview of 07.11., reproduced
+exactly; dim-3 sample 62 of 64 noisy cells, two stragglers). References on identical cells: SINDy, Weak-SINDy, E-SINDy
+(WP-N47, better threshold per stratum × σ × metric) and MATLAB WSINDy (L-Q5). Systems as clusters (cluster bootstrap,
+sign-flip permutation). Worked example `sys0027_ic2_s0.05_r0.5_n1`: the path wanders through u2³/cos u2/constant,
+FoBa removes them, state 11 is the exact Lotka–Volterra support, both stop statistics below 6.635 (3.4 / 1.2); the
+trajectory BIC picks it, coefficients within 1.3 %, generalization R² 0.989; WSINDy 14 terms, R² −5.0 / −11.3. Two
+descriptive findings for the paper: when the truth is on the path, rule (c) picks it in 79 of 82 noisy dim-1/2 cells
+(dim 1 44/44); a weak-space BIC (a) over-sizes 49 % of dim-2 models against 20 % for (c). `make_data.py` still reads
+the Q8 evaluation from a session scratchpad; switch to Q9 after W-4.
+
+**External review (pasted by the user)** — main points: (1) the stop needs a stronger justification, (2) baselines:
+coarse λ grid {0.01, 0.1}, superset library, WeakIdent missing, (3) one realization, (4) "no tuned threshold" too
+strong, (5) "fully pre-registered" too strong, protocols must be accessible, (6) cost needs runtimes; target JCP,
+alternative Chaos. Text fixes done without asking (4, 5, wording, 59 vs 63, WeakIdent/Mangan delimitation in the
+introduction, path-vs-selection in the discussion). User decisions: Q-Cal yes; runtimes as context beside counts;
+repository for the reviewers at submission; baselines: wants to test, WeakIdent to be explained first. Point 3 is
+covered by Q9 (3 realizations, all five σ).
+
+**Q-Cal** (protocol `docs/sideproject_residual_growth_protocol_qcal.md`, frozen `4412dd7` before any number; script
+`analysis/scripts/aggregate/calibrate_sideproject_stop.py`; data `analysis/data/sideproject_residual_growth/stop_calibration/`).
+1,800 noisy cells of the 30 exact systems (Q9 data, hashes checked), 45,120 null pairs, 7,080 true-term pairs, laptop,
+minutes. At the true support a spurious term exceeds 6.635 in **5.2 % (dim 1), 13.1 % (dim 2), 23.4 % (dim 3 52/61),
+29.4 % (dim 3 54–59), 2.6 % (dim 4)** instead of 1 %; ρ = 0.5 roughly doubles it (all strata 12.0 → 26.1 %), σ barely
+moves it (18.7 → 20.2 %), and the **true noise variance does not help** (all 25.4 % vs 19.1 % with σ̂). Reading by the
+frozen §4: the first-order model is liberal; the excess is deterministic (quadrature on coarse/irregular grids, noise in
+G), not the estimator. Power is high: a missing true term passes in 82 % (dim 1) to 95–100 %. The stop at the exact
+truth fires in 91 % (dim 1), 63 % (dim 2), 26–52 % (dim 3) of equations. Consequence: the stop lengthens the path past
+the truth and the trajectory BIC cuts back — costs fits, not correctness. Not repaired (simplicity guardrail); a
+sharper stop is a Paper-2 question. Into the paper as Fig. 8 and a results paragraph.
+
+**Runtime context** (Q8 C1000 records, Orion, 1 core per cell, not evidence): median solve time per noisy cell 2.4 s
+(dim 1 exact), 6.1 s (dim 2 exact), 15.7 s (dim 2 surrogate); q90 142 s, 2.3 h, and 31 h on 54–59. pySINDy fits
+0.01–0.1 s.
+
 ## 2026-11-07
 
 ### WISP explorable restarted as one Lotka–Volterra story (W-X), concept first
