@@ -41,6 +41,13 @@ Q9 von Hand auf 37 gesetzt (36 + 3 Q8-Nachzügler = 40). Je fertigem Q8-Nachzüg
 
 ## 2. WISP-Explorable (W-X)
 
+- **NEU 09.11.: Prozessseite nach dem Briefing des Nutzers** (`WISP_Visualisierungsbriefing_Prozess.md`, Repo-Wurzel,
+  uncommittet, gehört dem Nutzer): 21 Szenen + Teil C (LV), DE/EN, alle Zahlen echt (System 3 IC1 σ 0,03 Weak-Pfad mit
+  den Q6/Q7-Funktionen; Refit/BIC aus den Q9-C1000-Records; LV System 27). Vorschau
+  https://claude.ai/artifact/Rp4K8dBdWCFzzwQ44Tnfnk. Quelle `explainer/wisp/process/`, Daten
+  `python analysis/scripts/explainer/build_wisp_process_data.py`, Seite `python analysis/scripts/explainer/build_wisp_process.py`
+  → `explainer/wisp/dist/wisp_process.html`, Prüfung `node explainer/wisp/process/check_core.cjs`. Für den Termin Di 10.11.
+  gedacht; Version 26 bleibt unangetastet. Offen: Nutzer-Review.
 - **Stand 08.11. nachts (Nutzer: Tag war 4/10, „wir hängen noch am Anfang“).** Seite 1 überarbeitet: Petrischale
   (2 glatte Kolonien als eine Fläche, Agar-/Kolonienfarben), alle 512 Messwerte aus Schritt 1, Kurve am Ende, Formel
   du/dt = 0,79u − 0,0106u² unten rechts, spielt einmal + Wiederholen-Knopf, Punkte fliegen beim Weiterblättern in
