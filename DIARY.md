@@ -46,7 +46,7 @@ sharper stop is a Paper-2 question. Into the paper as Fig. 8 and a results parag
 0.01–0.1 s.
 
 ### Q-B: extended baselines — B1 built, WeakIdent (B2a/B2b) run complete, ODEFormer waits for Orion
-<!-- 4309870 989452f a68968c a673600 d1b3782 2229d59 8d2ccb5 65b467f -->
+<!-- 4309870 989452f a68968c a673600 d1b3782 2229d59 8d2ccb5 65b467f c18f144 d9ee540 573d432 4b1b388 09491e3 a41f2bd 0f2f4ee -->
 
 Protocol `docs/sideproject_residual_growth_protocol_qb.md`, frozen `4309870` before any Q-B number, after review point 2
 and the user's decision ("Das mit den Vergleichen klingt super. Machen wir."; WeakIdent in both library variants;
