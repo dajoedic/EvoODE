@@ -1,4 +1,4 @@
-/* WISP process page: 21 scenes + coupled part, following WISP_Visualisierungsbriefing_Prozess.md.
+/* WISP process page: 21 scenes + coupled part + results slide, following WISP_Visualisierungsbriefing_Prozess.md.
    Every number shown is either read from data.json (computed by build_wisp_process_data.py with the frozen
    Q6/Q7 functions and the Q9 C1000 refit records) or computed here by core.js, which the Node check
    verifies against those numbers. Hand-made numbers appear only in scenes 05 and 20b, labelled as such. */
@@ -624,6 +624,68 @@
       }
     }, steps: 4 });
 
+  // R results: the paper's main comparison (Q8 evidence, manuscript draft of 7 November 2026)
+  const RS = window.WISP_RESULTS;
+  const RM = { C1000: ['WISP', 'var(--traj)'], wsindy: ['WSINDy (MATLAB)', 'var(--data)'], weak_sindy: ['Weak-SINDy', 'var(--lib)'], sindy: ['SINDy', 'var(--noise)'], e_sindy: ['E-SINDy', 'var(--muted)'] };
+  const RSL = { dim1_exact: ['Dim 1|exakt', 'dim 1|exact'], dim2_exact: ['Dim 2|exakt', 'dim 2|exact'], dim1_surrogate: ['Dim 1|Surrogat', 'dim 1|surrogate'], dim2_surrogate: ['Dim 2|Surrogat', 'dim 2|surrogate'] };
+  const rate = (m, st, me) => { const v = RS.rates[`${m}|${st}|${me}`]; return v ? v[0] : null; };
+  const rp = v => (v == null ? '–' : Math.round(100 * v) + ' %');
+  const refs = RS.methods.slice(1);
+  const bestRef = (st, me) => Math.max(...refs.map(m => rate(m, st, me) ?? 0));
+  const nCells = RS.strata.reduce((a, s) => a + RS.cells[s], 0), nSys = RS.strata.reduce((a, s) => a + RS.systems[s], 0);
+  const nExactSys = RS.systems.dim1_exact + RS.systems.dim2_exact;
+  const TW = RS.tally_gen.wsindy, TK = RS.tally_gen.weak_sindy;
+  function resChart(fig, me) {
+    const svg = svgBox(fig, 520, 300);
+    const F = frame(svg, { w: 520, h: 300, x0: 0, x1: 4, y0: 0, y1: 100, noX: true, yticks: [0, 25, 50, 75, 100], yfmt: v => v + ' %', m: { l: 46, r: 6, t: 22, b: 48 } });
+    RS.strata.forEach((st, j) => {
+      const cx = F.X(j + 0.5), bw = 15, gap = 3;
+      RS.methods.forEach((m, i) => {
+        const v = rate(m, st, me), val = v == null ? 0 : 100 * v, x = cx + (i - 2) * (bw + gap) - bw / 2;
+        S('rect', { x, y: F.Y(val), width: bw, height: F.Y(0) - F.Y(val), fill: RM[m][1], 'fill-opacity': m === 'C1000' ? 1 : 0.7, 'data-k': `rb:${m}:${st}` }, F.g);
+        if (m === 'C1000' && v != null) TX(F.g, x + bw / 2, F.Y(val) - 6, String(Math.round(val)), { 'text-anchor': 'middle', 'font-size': 13, 'font-weight': 700, fill: 'var(--traj)', 'data-k': `rv:${st}` });
+      });
+      if (rate('C1000', st, me) == null) TX(F.g, cx, F.Y(50), tr('kein exaktes', 'no exact'), { 'text-anchor': 'middle', 'font-size': 12, class: 'muted', 'data-k': `na:${st}` }), TX(F.g, cx, F.Y(50) + 15, tr('Gesetz in der Bibliothek', 'law in the library'), { 'text-anchor': 'middle', 'font-size': 12, class: 'muted', 'data-k': `na2:${st}` });
+      const [a, b] = RSL[st][lang === 'de' ? 0 : 1].split('|');
+      TX(F.g, cx, 300 - 28, a, { 'text-anchor': 'middle', 'font-size': 13, 'font-weight': 600, 'data-k': `gl:${st}` });
+      TX(F.g, cx, 300 - 12, `${b} · ${RS.systems[st]} ${tr('Sys.', 'sys.')}`, { 'text-anchor': 'middle', 'font-size': 12, class: 'muted', 'data-k': `gl2:${st}` });
+    });
+    fig.appendChild(el('div', 'legend', RS.methods.map(m => `<span><i style="background:${RM[m][1]};height:10px;width:10px"></i>${RM[m][0]}</span>`).join('')));
+  }
+  scene({ id: 'r1', part: 'results', num: 'R', title: ['Die Ergebnisse', 'The results'],
+    core: ['Auf verrauschten Daten findet WISP das richtige Gesetz etwa doppelt so oft wie WSINDy und sagt neue Verläufe deutlich besser vorher.', 'On noisy data WISP finds the correct law about twice as often as WSINDy and predicts new trajectories markedly better.'],
+    text: [
+      () => tr(`<p><b>Der Test.</b> ${nCells} verrauschte Datensätze aus ${nSys} ODEBench-Systemen der Dimension 1 und 2: Rauschen 1 % und 5 %, einmal mit allen Messpunkten, einmal mit der zufälligen Hälfte, beide Anfangswerte. Je Datensatz eine einzige Messreihe, wie in den Szenen davor.</p><p><b>Die Gegner.</b> WSINDy im Original-MATLAB-Code sowie SINDy, Weak-SINDy und E-SINDy aus pySINDy, diese jeweils mit ihrem besseren Schwellenwert.</p>`,
+        `<p><b>The test.</b> ${nCells} noisy data sets from ${nSys} ODEBench systems of dimension 1 and 2: noise 1 % and 5 %, once with all samples and once with a random half, both initial conditions. One single time series per data set, as in the scenes before.</p><p><b>The opponents.</b> WSINDy in the original MATLAB code, plus SINDy, Weak-SINDy and E-SINDy from pySINDy, each at its better threshold.</p>`),
+      () => tr(`<p><b>Exakte Struktur</b>: Das gefundene Modell enthält genau die wahren Bausteine. Messbar nur auf den ${nExactSys} Systemen, deren Gesetz in der Bibliothek darstellbar ist.</p><p>WISP: ${rp(rate('C1000', 'dim1_exact', 'structure'))} und ${rp(rate('C1000', 'dim2_exact', 'structure'))}. WSINDy: ${rp(rate('wsindy', 'dim1_exact', 'structure'))} und ${rp(rate('wsindy', 'dim2_exact', 'structure'))}. Die pySINDy-Methoden bleiben bei höchstens ${rp(Math.max(...['weak_sindy', 'sindy', 'e_sindy'].flatMap(m => ['dim1_exact', 'dim2_exact'].map(s => rate(m, s, 'structure')))))}.</p>`,
+        `<p><b>Exact structure</b>: the model found contains exactly the true blocks. Measurable only on the ${nExactSys} systems whose law the library can represent.</p><p>WISP: ${rp(rate('C1000', 'dim1_exact', 'structure'))} and ${rp(rate('C1000', 'dim2_exact', 'structure'))}. WSINDy: ${rp(rate('wsindy', 'dim1_exact', 'structure'))} and ${rp(rate('wsindy', 'dim2_exact', 'structure'))}. The pySINDy methods stay at ${rp(Math.max(...['weak_sindy', 'sindy', 'e_sindy'].flatMap(m => ['dim1_exact', 'dim2_exact'].map(s => rate(m, s, 'structure')))))} at most.</p>`),
+      () => tr(`<p><b>Rekonstruktion</b>: Anteil der Datensätze, auf denen das Modell die Trainingskurve nachbildet, gemessen gegen die wahre, rauschfreie Kurve mit <span class="math">R² > 0,9</span>. Das ist die Kennzahl der Literatur (ODEBench).</p><p>WISP liegt in jeder Gruppe vorn, auch auf den Surrogat-Systemen, die kein exaktes Gesetz in der Bibliothek haben: ${rp(rate('C1000', 'dim1_surrogate', 'rec'))} und ${rp(rate('C1000', 'dim2_surrogate', 'rec'))}.</p>`,
+        `<p><b>Reconstruction</b>: share of data sets on which the model reproduces the training trajectory, measured against the true, noise-free curve with <span class="math">R² > 0.9</span>. This is the literature's metric (ODEBench).</p><p>WISP leads in every group, including the surrogate systems that have no exact law in the library: ${rp(rate('C1000', 'dim1_surrogate', 'rec'))} and ${rp(rate('C1000', 'dim2_surrogate', 'rec'))}.</p>`),
+      () => tr(`<p><b>Generalisierung</b>: dasselbe, aber vom <b>anderen</b>, nie gesehenen Anfangswert. Das ist die härtere Probe, ob das Gesetz stimmt und nicht nur die Kurve.</p><p>Exakte Systeme: WISP ${rp(rate('C1000', 'dim1_exact', 'gen'))} und ${rp(rate('C1000', 'dim2_exact', 'gen'))}, der beste Gegner ${rp(bestRef('dim1_exact', 'gen'))} und ${rp(bestRef('dim2_exact', 'gen'))}.</p><p>Je System als eine Einheit gezählt, über alle ${TW.ahead + TW.behind + TW.tied} verrauschten Systeme einschließlich Dimension 3: WISP vorn auf ${TW.ahead}, hinten auf ${TW.behind}, gleich auf ${TW.tied} (gegen WSINDy; gegen Weak-SINDy ${TK.ahead} zu ${TK.behind}).</p>`,
+        `<p><b>Generalization</b>: the same, but from the <b>other</b>, never-seen initial state. This is the harder test of whether the law is right and not only the curve.</p><p>Exact systems: WISP ${rp(rate('C1000', 'dim1_exact', 'gen'))} and ${rp(rate('C1000', 'dim2_exact', 'gen'))}, the best opponent ${rp(bestRef('dim1_exact', 'gen'))} and ${rp(bestRef('dim2_exact', 'gen'))}.</p><p>Counting each system as one unit, over all ${TW.ahead + TW.behind + TW.tied} noisy systems including dimension 3: WISP ahead on ${TW.ahead}, behind on ${TW.behind}, tied on ${TW.tied} (against WSINDy; against Weak-SINDy ${TK.ahead} to ${TK.behind}).</p>`),
+      () => tr(`<p><b>Wo die Fehler sitzen.</b> Liegt das wahre Gesetz auf dem Pfad, wählt das BIC es in 79 von 82 Fällen. Die Auswahl ist damit praktisch gelöst; was fehlt, ist der Kandidatengenerator: In etwa der Hälfte der Datensätze kommt die Wahrheit gar nicht auf den Pfad.</p><p class="note">Stand: Manuskriptentwurf vom 7. November, Protokoll Q8. Der finale Lauf Q9 (alle 63 Systeme, 3 Rauschrealisierungen) läuft auf Orion; seine Zahlen ersetzen diese.</p>`,
+        `<p><b>Where the errors sit.</b> When the true law is on the path, the BIC picks it in 79 of 82 cases. Selection is thus essentially solved; what is missing is the candidate generator: in about half of the data sets the truth never enters the path.</p><p class="note">Status: manuscript draft of 7 November, protocol Q8. The final run Q9 (all 63 systems, 3 noise realizations) is running on Orion; its numbers replace these.</p>`)],
+    draw(fig, k) {
+      if (k === 0 || k === 4) {
+        const g = el('div', 'kpis');
+        const K = (cls, big, vs, lab) => `<div class="kpi ${cls}"><div class="kpi-big">${big}</div><div class="kpi-vs">${vs}</div><div class="kpi-lab">${lab}</div></div>`;
+        const items = [
+          K('', `${rp(rate('C1000', 'dim1_exact', 'structure'))} · ${rp(rate('C1000', 'dim2_exact', 'structure'))}`, `WSINDy ${rp(rate('wsindy', 'dim1_exact', 'structure'))} · ${rp(rate('wsindy', 'dim2_exact', 'structure'))}`, tr('exakte Struktur, Dim 1 · Dim 2', 'exact structure, dim 1 · dim 2')),
+          K('', `${rp(rate('C1000', 'dim1_exact', 'gen'))} · ${rp(rate('C1000', 'dim2_exact', 'gen'))}`, `${tr('bester Gegner', 'best opponent')} ${rp(bestRef('dim1_exact', 'gen'))} · ${rp(bestRef('dim2_exact', 'gen'))}`, tr('Vorhersage vom neuen Anfangswert (R² > 0,9)', 'prediction from the new initial state (R² > 0.9)')),
+          K('', `${TW.ahead} : ${TW.behind}`, tr(`${TW.tied} Systeme gleich`, `${TW.tied} systems tied`), tr(`Systeme (von ${TW.ahead + TW.behind + TW.tied}), auf denen WISP bei der Generalisierung vor / hinter WSINDy liegt`, `systems (of ${TW.ahead + TW.behind + TW.tied}) where WISP generalizes better / worse than WSINDy`)),
+          K('', '79 / 82', tr('wenn die Wahrheit auf dem Pfad liegt', 'when the truth is on the path'), tr('richtige Wahl durch das BIC', 'correct choice by the BIC')),
+          K('cost', '2–10', tr('je ~3.300 ODE-Lösungen', '~3,300 ODE solves each'), tr('Trajektorien-Fits je Datensatz (Median, Dim 1–2)', 'trajectory fits per data set (median, dim 1–2)')),
+          K('lim', rp(rate('C1000', 'dim2_surrogate', 'gen')), tr('auch bei allen Gegnern niedrig', 'low for every opponent too'), tr('Generalisierung, Dim-2-Surrogate: die offene Baustelle', 'generalization, dim-2 surrogates: the open problem'))];
+        g.innerHTML = items.join('');
+        [...g.children].forEach((c, i) => { c.dataset.k = 'kpi:' + i; });
+        fig.appendChild(g);
+        fig.appendChild(el('div', 'note', tr(`${nCells} verrauschte Datensätze, ${nSys} Systeme der Dimension 1 und 2; Quelle: Manuskriptentwurf vom 7. November 2026 (Protokoll Q8).`, `${nCells} noisy data sets, ${nSys} systems of dimension 1 and 2; source: manuscript draft of 7 November 2026 (protocol Q8).`)));
+        return;
+      }
+      resChart(fig, ['structure', 'rec', 'gen'][k - 1]);
+      fig.appendChild(el('div', 'note', tr('Anteil der verrauschten Datensätze je Gruppe. Zahl über dem Balken: WISP. 95-%-Intervalle (Cluster-Bootstrap über Systeme) im Manuskript.', 'Share of noisy data sets per group. Number above the bar: WISP. 95 % intervals (cluster bootstrap over systems) in the manuscript.')));
+    }, steps: 5 });
+
   /* ---------- morph: animate a figure from its previous state to the new one ----------
      Elements are paired by an explicit data-k key (data points, bars, cards) or, inside one scene, by their
      structural position. Paired SVG elements tween geometry and path data, paired HTML elements transition
@@ -748,7 +810,7 @@
   /* ---------- page assembly ---------- */
   const OVER = {
     weak: [['01', 's01'], ['02', 's02'], ['03', 's03'], ['04', 's04'], ['05', 's05'], ['06', 's06'], ['07', 's07'], ['08', 's08'], ['09', 's09'], ['10', 's10'], ['11', 's11'], ['12', 's12'], ['13', 's13'], ['14', 's14'], ['15', 's15'], ['16', 's16'], ['17', 's17'], ['18', 's18']],
-    traj: [['19', 's19'], ['20', 's20'], ['21', 's21'], ['C', 'c1']] };
+    traj: [['19', 's19'], ['20', 's20'], ['21', 's21'], ['C', 'c1']], res: [['R', 'r1']] };
   const titleOf = sc => sc.title[lang === 'de' ? 0 : 1];
   const where = document.getElementById('where');
   let deck = false, pageIdx = 0, pages = [], rail = null;
@@ -760,14 +822,15 @@
     const ov = document.getElementById('overview'); ov.innerHTML = '';
     const z1 = el('div', 'zone weak', `<h2>${tr('Weak-Form-Raum', 'Weak-form space')}</h2><p>${tr('Lineare Regression auf Fenster-Integralen. Schnelle Strukturvorschläge, keine Ableitung der Messwerte, keine Simulation je Test.', 'Linear regression on window integrals. Fast structure proposals, no differentiation of the data, no simulation per test.')}</p>`);
     const z2 = el('div', 'zone traj', `<h2>${tr('Trajektorienraum', 'Trajectory space')}</h2><p>${tr('Echte ODE-Simulation, nichtlineare Anpassung, Auswahl nach Fehler und Komplexität.', 'Actual ODE simulation, nonlinear fitting, selection by error and complexity.')}</p>`);
-    [[z1, OVER.weak], [z2, OVER.traj]].forEach(([z, list]) => { const ch = el('div', 'chips'); list.forEach(([n, id]) => { const sc = SC.find(s => s.id === id); const a = el('a', '', `<span>${n}</span>${esc(titleOf(sc))}`); a.href = '#' + id; ch.appendChild(a); }); z.appendChild(ch); });
-    ov.append(z1, z2, el('div', 'flowline', tr('<b>Merksatz:</b> Die Weak Form erzeugt und ordnet plausible Strukturen. Die Simulation prüft ihre tatsächliche Dynamik. Das BIC entscheidet zwischen den refitteten Kandidaten.', '<b>In one line:</b> the weak form proposes and ranks plausible structures. Simulation tests their actual dynamics. The BIC decides between the refitted candidates.')));
+    const z3 = el('div', 'zone res', `<h2>${tr('Ergebnisse', 'Results')}</h2><p>${tr('WISP gegen WSINDy und die SINDy-Familie auf verrauschten Benchmark-Daten.', 'WISP against WSINDy and the SINDy family on noisy benchmark data.')}</p>`);
+    [[z1, OVER.weak], [z2, OVER.traj], [z3, OVER.res]].forEach(([z, list]) => { const ch = el('div', 'chips'); list.forEach(([n, id]) => { const sc = SC.find(s => s.id === id); const a = el('a', '', `<span>${n}</span>${esc(titleOf(sc))}`); a.href = '#' + id; ch.appendChild(a); }); z.appendChild(ch); });
+    ov.append(z1, z2, z3, el('div', 'flowline', tr('<b>Merksatz:</b> Die Weak Form erzeugt und ordnet plausible Strukturen. Die Simulation prüft ihre tatsächliche Dynamik. Das BIC entscheidet zwischen den refitteten Kandidaten.', '<b>In one line:</b> the weak form proposes and ranks plausible structures. Simulation tests their actual dynamics. The BIC decides between the refitted candidates.')));
     const host = document.getElementById('scenes'); host.innerHTML = '';
     SC.forEach((sc, i) => {
       sc.k = sc.k || 0;
       const sec = el('section', 'scene page'); sec.id = sc.id; sec.dataset.part = sc.part;
       const n = sc.num || String(i + 1).padStart(2, '0');
-      const text = el('div', 'text', `<div class="snum">${n} · ${sc.part === 'weak' ? tr('Weak-Form-Raum', 'Weak-form space') : sc.part === 'traj' ? tr('Trajektorienraum', 'Trajectory space') : tr('Gekoppelte Systeme', 'Coupled systems')}</div><h3>${esc(titleOf(sc))}</h3><p class="core">${sc.core[lang === 'de' ? 0 : 1]}</p>`);
+      const text = el('div', 'text', `<div class="snum">${n} · ${sc.part === 'weak' ? tr('Weak-Form-Raum', 'Weak-form space') : sc.part === 'traj' ? tr('Trajektorienraum', 'Trajectory space') : sc.part === 'results' ? tr('Ergebnisse', 'Results') : tr('Gekoppelte Systeme', 'Coupled systems')}</div><h3>${esc(titleOf(sc))}</h3><p class="core">${sc.core[lang === 'de' ? 0 : 1]}</p>`);
       text.dataset.scroll = '1';
       const st = el('div', 'steptext'); text.appendChild(st);
       const figWrap = el('div', 'figure'), fig = el('div', 'figbody'), ctr = el('div', 'controls');
@@ -909,11 +972,11 @@
 
   const I18N = {
     de: { eyebrow: 'WISP · Weak-form incremental structure pursuit', title: 'WISP Schritt für Schritt', motto: '„In der Weak Form die Struktur suchen; mit der simulierten Trajektorie entscheiden.“',
-      lede: 'Wie WISP aus einer einzigen verrauschten Messreihe eine Differentialgleichung gewinnt, in 21 Szenen und einem Teil über gekoppelte Systeme. Jede Szene zeigt eine neue Operation und wird Schritt für Schritt aufgebaut. Alle Zahlen sind echte Rechnungen auf Benchmark-Daten (logistisches Wachstum, System 3, 3 % Rauschen), außer in den zwei als konstruiert markierten Lehrbeispielen.',
+      lede: 'Wie WISP aus einer einzigen verrauschten Messreihe eine Differentialgleichung gewinnt, in 21 Szenen, einem Teil über gekoppelte Systeme und einer Übersicht der Ergebnisse. Jede Szene zeigt eine neue Operation und wird Schritt für Schritt aufgebaut. Alle Zahlen sind echte Rechnungen auf Benchmark-Daten (logistisches Wachstum, System 3, 3 % Rauschen), außer in den zwei als konstruiert markierten Lehrbeispielen. Die Ergebnisfolie am Ende zeigt den Benchmark-Vergleich aus dem Manuskript.',
       hint: 'Weiter mit Mausrad, Pfeiltasten, Leertaste oder Wischen: ein Schritt pro Geste. Die Punkte rechts springen zu jeder Szene.',
       foot: 'Grundlage: Manuskriptentwurf vom 7. November 2026 und das Visualisierungsbriefing zum Prozess. Weak-Form-Pfad, Rauschschätzung und Stopp sind mit den eingefrorenen Q6/Q7-Funktionen gerechnet und im Browser nachgerechnet; Refit-Werte stammen aus den Q9-Läufen (Koeffizientengrenze 1000, Anfangswert mitgeschätzt). Kurven zur Darstellung sind mit SciPy (DOP853, 10⁻¹⁰) aus den gespeicherten Koeffizienten neu integriert.', where: 'WISP Schritt für Schritt' },
     en: { eyebrow: 'WISP · Weak-form incremental structure pursuit', title: 'WISP step by step', motto: '“Search for the structure in the weak form; decide with the simulated trajectory.”',
-      lede: 'How WISP turns a single noisy time series into a differential equation, in 21 scenes and a part on coupled systems. Each scene introduces one new operation and is built up step by step. All numbers are real computations on benchmark data (logistic growth, system 3, 3 % noise), except in the two teaching examples marked as constructed.',
+      lede: 'How WISP turns a single noisy time series into a differential equation, in 21 scenes, a part on coupled systems and an overview of the results. Each scene introduces one new operation and is built up step by step. All numbers are real computations on benchmark data (logistic growth, system 3, 3 % noise), except in the two teaching examples marked as constructed. The results slide at the end shows the benchmark comparison from the manuscript.',
       hint: 'Advance with the mouse wheel, arrow keys, space bar or a swipe: one step per gesture. The dots on the right jump to any scene.',
       foot: 'Basis: manuscript draft of 7 November 2026 and the process visualization briefing. The weak-form path, noise estimate and stop are computed with the frozen Q6/Q7 functions and recomputed in the browser; refit values come from the Q9 runs (coefficient bound 1000, initial state estimated). Display curves are re-integrated with SciPy (DOP853, 10⁻¹⁰) from the stored coefficients.', where: 'WISP step by step' } };
   document.querySelectorAll('.lang button').forEach(b => b.addEventListener('click', () => {
