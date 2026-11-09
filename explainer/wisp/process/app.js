@@ -69,7 +69,7 @@
     return { X, Y, g, m, W: Wd, H, top };
   }
   const pathD = pts => pts.filter(p => p && isFinite(p[0]) && isFinite(p[1])).map((p, i) => (i ? 'L' : 'M') + p[0].toFixed(2) + ' ' + p[1].toFixed(2)).join('');
-  function dots(g, P, xs, ys, attrs) { for (let i = 0; i < xs.length; i++) if (ys[i] != null) S('circle', Object.assign({ cx: P.X(xs[i]), cy: P.Y(ys[i]), r: 1.8, fill: 'var(--data)', 'fill-opacity': .75 }, attrs || {}), g); }
+  function dots(g, P, xs, ys, attrs, kp = 'y', off = 0) { for (let i = 0; i < xs.length; i++) if (ys[i] != null) S('circle', Object.assign({ cx: P.X(xs[i]), cy: P.Y(ys[i]), r: 1.8, fill: 'var(--data)', 'fill-opacity': .75, 'data-k': kp + (i + off) }, attrs || {}), g); }
   function curve(g, P, xs, ys, attrs) { return S('path', Object.assign({ d: pathD(xs.map((x, i) => (ys[i] == null ? null : [P.X(x), P.Y(ys[i])]))), fill: 'none', stroke: 'var(--traj)', 'stroke-width': 2 }, attrs || {}), g); }
   // Horizontal bar chart on a log scale with an optional threshold line.
   function hbars(svg, rows, o) {
@@ -85,9 +85,9 @@
     if (o.axis) TX(svg, w - 4, top + rows.length * rowH + 28, o.axis, { 'text-anchor': 'end', 'font-size': 11.5, class: 'muted' });
     rows.forEach((r, i) => {
       const yy = top + i * rowH;
-      TX(svg, left - 8, yy + rowH / 2 + 5, r.label, { 'text-anchor': 'end', 'font-size': 13.5, class: 'mono' });
-      S('rect', { x: left, y: yy + 4, width: Math.max(1.5, X(r.v) - left), height: rowH - 9, rx: 2, fill: r.color || 'var(--lib)', 'fill-opacity': r.dim ? .35 : .9 }, svg);
-      TX(svg, w - right + 10, yy + rowH / 2 + 5, r.text || fmt(r.v, 3), { 'font-size': 12.5, class: r.dim ? 'muted' : '' });
+      TX(svg, left - 8, yy + rowH / 2 + 5, r.label, { 'text-anchor': 'end', 'font-size': 13.5, class: 'mono', 'data-k': 'bl:' + r.label });
+      S('rect', { x: left, y: yy + 4, width: Math.max(1.5, X(r.v) - left), height: rowH - 9, rx: 2, fill: r.color || 'var(--lib)', 'fill-opacity': r.dim ? .35 : .9, 'data-k': 'bar:' + r.label }, svg);
+      TX(svg, w - right + 10, yy + rowH / 2 + 5, r.text || fmt(r.v, 3), { 'font-size': 12.5, class: r.dim ? 'muted' : '', 'data-k': 'bv:' + r.label });
     });
     if (o.threshold != null) {
       S('line', { x1: X(o.threshold), x2: X(o.threshold), y1: top - 12, y2: top + rows.length * rowH, stroke: o.thColor || 'var(--ink)', 'stroke-width': 1.6, 'stroke-dasharray': '5 3' }, svg);
@@ -151,7 +151,7 @@
     draw(fig, k) {
       fig.appendChild(el('div', 'shelf-label', tr('Bibliothek Θ', 'Library Θ')));
       const cards = el('div', 'cards');
-      names.forEach(n => { const c = el('div', 'card lib' + (k >= 1 && (n === 'u' || n === 'u²') ? ' on' : ''), esc(n)); if (k >= 1 && (n === 'u' || n === 'u²')) c.appendChild(el('small', '', n === 'u' ? 'a' : 'b')); cards.appendChild(c); });
+      names.forEach(n => { const c = el('div', 'card lib' + (k >= 1 && (n === 'u' || n === 'u²') ? ' on' : ''), esc(n)); c.dataset.k = 'card:' + n; if (k >= 1 && (n === 'u' || n === 'u²')) c.appendChild(el('small', '', n === 'u' ? 'a' : 'b')); cards.appendChild(c); });
       fig.appendChild(cards);
       if (k >= 1) fig.appendChild(el('div', 'formula', 'du/dt = <span class="k-foba">a</span>·u + <span class="k-foba">b</span>·u²'));
       if (k >= 2) {
@@ -198,7 +198,7 @@
       const ts = t.slice(WS - 30, WE + 31), ys = y.slice(WS - 30, WE + 31);
       const A = frame(svg, { w: 520, h: 230, x0: ts[0], x1: ts[ts.length - 1], y0: 20, y1: 60, ylabel: 'u', xlabel: 't' });
       S('rect', { x: A.X(t[WS]), y: A.m.t, width: A.X(t[WE]) - A.X(t[WS]), height: 230 - A.m.t - A.m.b, fill: 'var(--data-soft)' }, A.g);
-      dots(A.g, A, ts, ys, { r: 2.6 });
+      dots(A.g, A, ts, ys, { r: 2.6 }, 'y', WS - 30);
       for (const i of [WS, WE]) S('circle', { cx: A.X(t[i]), cy: A.Y(y[i]), r: 5, fill: 'none', stroke: 'var(--data)', 'stroke-width': 2 }, A.g);
       const xa = A.X(t[WE]) + 16;
       S('line', { x1: A.X(t[WS]), x2: xa, y1: A.Y(y[WS]), y2: A.Y(y[WS]), stroke: 'var(--data)', 'stroke-dasharray': '3 3' }, A.g);
@@ -295,7 +295,7 @@
     draw(fig, k, redraw) {
       const cards = el('div', 'cards');
       names.forEach((n, j) => {
-        const c = el('button', 'card toggle' + (ls.on.has(j) ? ' on' : ''), esc(n));
+        const c = el('button', 'card toggle' + (ls.on.has(j) ? ' on' : ''), esc(n)); c.dataset.k = 'card:' + n;
         c.type = 'button'; c.setAttribute('aria-pressed', ls.on.has(j));
         c.onclick = () => { ls.on.has(j) ? ls.on.delete(j) : ls.on.add(j); redraw(); };
         cards.appendChild(c);
@@ -596,8 +596,8 @@
       const lt = LV.t;
       if (k === 0) {
         const svg = svgBox(fig, 520, 260), F = frame(svg, { w: 520, h: 260, x0: 0, x1: 10, y0: 0, y1: 10, xlabel: 't', ylabel: 'x, y' });
-        dots(F.g, F, lt, LV.y.map(r => r[0]), { fill: 'var(--data)' });
-        dots(F.g, F, lt, LV.y.map(r => r[1]), { fill: 'var(--foba)' });
+        dots(F.g, F, lt, LV.y.map(r => r[0]), { fill: 'var(--data)' }, 'lx');
+        dots(F.g, F, lt, LV.y.map(r => r[1]), { fill: 'var(--foba)' }, 'ly');
         fig.appendChild(el('div', 'legend', `<span><i style="background:var(--data)"></i>${tr('Beute x', 'prey x')}</span><span><i style="background:var(--foba)"></i>${tr('Räuber y', 'predator y')}</span>`));
         const sp = el('div', 'tablewrap');
         sp.innerHTML = `<table class="ntab split"><tr><th>${tr('Eine Zustandsgröße', 'One state variable')}</th><th style="text-align:left">${tr('Zwei gekoppelte', 'Two coupled')}</th></tr>${[[tr('ein b-Vektor', 'one b vector'), 'b_x, b_y'], [tr('eine Struktur', 'one structure'), tr('eine Struktur je Gleichung', 'one structure per equation')], [tr('Bausteine in u', 'blocks in u'), tr('Bausteine in x, y und x·y', 'blocks in x, y and x·y')], [tr('eine ODE', 'one ODE'), tr('gemeinsam simuliertes System', 'jointly simulated system')], [tr('ein Anfangswert', 'one initial state'), tr('zwei Anfangswerte', 'two initial states')]].map(r => `<tr><td style="font-family:var(--f-body)">${r[0]}</td><td style="text-align:left;font-family:var(--f-body)">${r[1]}</td></tr>`).join('')}</table>`;
@@ -621,10 +621,135 @@
       }
     }, steps: 4 });
 
+  /* ---------- morph: animate a figure from its previous state to the new one ----------
+     Elements are paired by an explicit data-k key (data points, bars, cards) or, inside one scene, by their
+     structural position. Paired SVG elements tween geometry and path data, paired HTML elements transition
+     their class; new elements fade in, vanished ones fade out as ghosts. */
+  const reduced = window.matchMedia('(prefers-reduced-motion: reduce)');
+  const NUM = ['x', 'y', 'width', 'height', 'cx', 'cy', 'r', 'x1', 'x2', 'y1', 'y2', 'rx', 'opacity', 'fill-opacity', 'stroke-opacity', 'stroke-width'];
+  const UNIT = new Set(['opacity', 'fill-opacity', 'stroke-opacity']);
+  const NUMRE = /-?(?:\d+\.?\d*|\.\d+)(?:e[-+]?\d+)?/gi;
+  const ease = p => (p < .5 ? 4 * p * p * p : 1 - Math.pow(-2 * p + 2, 3) / 2);
+  function walk(root, fn) {
+    const rec = (node, pk, ctx) => {
+      const counts = {};
+      for (const c of [...node.children]) {
+        if (c.dataset && c.dataset.ghost) continue;
+        const tag = c.tagName.toLowerCase(); counts[tag] = (counts[tag] || 0) + 1;
+        const sk = pk + '/' + tag + counts[tag];
+        rec(c, sk, fn(c, sk, c.getAttribute('data-k'), ctx));
+      }
+    };
+    rec(root, '', true);
+  }
+  function snapshot(fig) {
+    const S = new Map(), E = new Map(), base = fig.getBoundingClientRect();
+    walk(fig, (c, sk, ek) => {
+      const r = { el: c, tag: c.tagName.toLowerCase(), svg: c instanceof SVGElement, attrs: {}, cls: c.getAttribute('class') || '', text: c.children.length ? null : c.textContent, sk, ek };
+      for (const a of c.attributes) r.attrs[a.name] = a.value;
+      if (!r.svg && ek) { const b = c.getBoundingClientRect(); r.rect = [b.left - base.left, b.top - base.top]; }
+      S.set(sk, r); if (ek) E.set(ek, r);
+      return true;
+    });
+    return { S, E };
+  }
+  function pathTween(el, a, b) {
+    if (a.replace(NUMRE, '#') !== b.replace(NUMRE, '#')) return null;
+    const A = (a.match(NUMRE) || []).map(Number), B = (b.match(NUMRE) || []).map(Number), parts = b.split(NUMRE);
+    return e => { let s = parts[0]; for (let i = 0; i < A.length; i++) s += (A[i] + (B[i] - A[i]) * e).toFixed(2) + parts[i + 1]; el.setAttribute('d', s); };
+  }
+  function morph(fig, snap, o = {}) {
+    if (!snap || reduced.matches) return 0;
+    const dur = o.dur || 700, delay = o.delay || 0, cross = !!o.cross;
+    const sets = [], swaps = [], fades = [], flips = [], ghosts = [], newS = new Map(), newE = new Set(), oldGone = [];
+    let paired = 0;
+    const base = fig.getBoundingClientRect();
+    walk(fig, (c, sk, ek, parentOk) => {
+      const tag = c.tagName.toLowerCase(), isSvg = c instanceof SVGElement;
+      newS.set(sk, c); if (ek) newE.add(ek);
+      const old = ek ? snap.E.get(ek) : (cross ? null : snap.S.get(sk));
+      if (!old || old.tag !== tag || (!ek && old.ek)) {
+        // Across scenes only keyed elements pair; plain containers stay put so their keyed children can move.
+        if (cross && !ek && (tag === 'svg' || tag === 'g' || tag === 'div')) return true;
+        if (parentOk) fades.push(c);
+        return false;
+      }
+      paired++;
+      if (isSvg) {
+        if (tag === 'svg' && old.attrs.viewBox && old.attrs.viewBox !== c.getAttribute('viewBox')) {
+          const A = old.attrs.viewBox.split(/\s+/).map(Number), B = c.getAttribute('viewBox').split(/\s+/).map(Number);
+          c.style.overflow = 'hidden';
+          sets.push(e => { c.setAttribute('viewBox', A.map((v, i) => v + (B[i] - v) * e).join(' ')); if (e >= 1) c.style.overflow = ''; });
+        }
+        for (const a of NUM) {
+          let nv = c.getAttribute(a), ov = old.attrs[a];
+          if (nv == null && ov == null) continue;
+          if (UNIT.has(a)) { nv = nv ?? '1'; ov = ov ?? '1'; } else if (nv == null || ov == null) continue;
+          const A = parseFloat(ov), B = parseFloat(nv);
+          if (A !== B && isFinite(A) && isFinite(B)) sets.push(e => c.setAttribute(a, A + (B - A) * e));
+        }
+        const od = old.attrs.d, nd = c.getAttribute('d');
+        if (od != null && nd != null && od !== nd) {
+          const f = pathTween(c, od, nd);
+          if (f) sets.push(f); else { fades.push(c); if (!cross) oldGone.push(old); }
+        }
+        for (const a of ['fill', 'stroke']) {
+          const nv = c.getAttribute(a), ov = old.attrs[a];
+          if (nv && ov && nv !== ov) { c.setAttribute(a, ov); c.style.transition = `${a} ${dur}ms`; swaps.push(() => c.setAttribute(a, nv)); }
+        }
+      } else {
+        const ncls = c.getAttribute('class') || '';
+        if (ncls !== old.cls) { c.setAttribute('class', old.cls); swaps.push(() => c.setAttribute('class', ncls)); }
+        if (cross && old.rect) flips.push([c, old.rect]);
+      }
+      if (old.text != null && !c.children.length && c.textContent !== old.text) fades.push(c);
+      return true;
+    });
+    if (cross && paired < 3) return 0;
+    // Old SVG elements without a partner fade out in place (same scene only), when their parent survived.
+    if (!cross) {
+      for (const [sk, r] of snap.S) {
+        const kept = r.ek ? newE.has(r.ek) : (newS.has(sk) && newS.get(sk).tagName.toLowerCase() === r.tag && !newS.get(sk).getAttribute('data-k'));
+        if (!kept) oldGone.push(r);
+      }
+      const goneKeys = new Set(oldGone.map(r => r.sk));
+      for (const r of oldGone) {
+        if (!r.svg) continue;
+        const pk = r.sk.slice(0, r.sk.lastIndexOf('/'));
+        if (!pk || goneKeys.has(pk)) continue;
+        const host = newS.get(pk);
+        if (!host || !(host instanceof SVGElement)) continue;
+        const g = r.el.cloneNode(true); g.setAttribute('data-ghost', '1'); g.style.pointerEvents = 'none';
+        host.appendChild(g); ghosts.push(g);
+      }
+    }
+    if (fig._raf) cancelAnimationFrame(fig._raf);
+    sets.forEach(f => f(0));
+    const flipped = flips.map(([c, r]) => { const b = c.getBoundingClientRect(); return [c, r[0] - (b.left - base.left), r[1] - (b.top - base.top)]; });
+    const opt = { duration: dur, delay, easing: 'cubic-bezier(.65,0,.35,1)', fill: 'backwards' };
+    flipped.forEach(([c, dx, dy]) => { if (Math.abs(dx) + Math.abs(dy) > .5) c.animate([{ transform: `translate(${dx}px, ${dy}px)` }, { transform: 'none' }], opt); });
+    fades.forEach(c => c.animate([{ opacity: 0, offset: 0 }], { duration: dur * .6, delay: delay + dur * .4, easing: 'ease-out', fill: 'backwards' }));
+    ghosts.forEach(g => { const a = g.animate([{ opacity: 1 }, { opacity: 0 }], { duration: dur * .45, delay, fill: 'forwards' }); a.onfinish = () => g.remove(); });
+    const t0 = performance.now() + delay;
+    let swapped = false;
+    const tick = now => {
+      if (!swapped && now >= t0) { swapped = true; swaps.forEach(f => f()); }
+      const p = Math.max(0, Math.min(1, (now - t0) / dur)), e = ease(p);
+      sets.forEach(f => f(e));
+      fig._raf = p < 1 ? requestAnimationFrame(tick) : 0;
+    };
+    fig._raf = requestAnimationFrame(tick);
+    return paired;
+  }
+
   /* ---------- page assembly ---------- */
   const OVER = {
     weak: [['01', 's01'], ['02', 's02'], ['03', 's03'], ['04', 's04'], ['05', 's05'], ['06', 's06'], ['07', 's07'], ['08', 's08'], ['09', 's09'], ['10', 's10'], ['11', 's11'], ['12', 's12'], ['13', 's13'], ['14', 's14'], ['15', 's15'], ['16', 's16'], ['17', 's17'], ['18', 's18']],
     traj: [['19', 's19'], ['20', 's20'], ['21', 's21'], ['C', 'c1']] };
+  const titleOf = sc => sc.title[lang === 'de' ? 0 : 1];
+  const where = document.getElementById('where');
+  let deck = false, pageIdx = 0, pages = [], rail = null;
+  const sceneOf = p => (p ? SC.find(s => s.sec === p) : null);
   function render() {
     document.documentElement.lang = lang;
     document.querySelectorAll('[data-i18n]').forEach(e => { e.innerHTML = I18N[lang][e.dataset.i18n]; });
@@ -632,51 +757,169 @@
     const ov = document.getElementById('overview'); ov.innerHTML = '';
     const z1 = el('div', 'zone weak', `<h2>${tr('Weak-Form-Raum', 'Weak-form space')}</h2><p>${tr('Lineare Regression auf Fenster-Integralen. Schnelle Strukturvorschläge, keine Ableitung der Messwerte, keine Simulation je Test.', 'Linear regression on window integrals. Fast structure proposals, no differentiation of the data, no simulation per test.')}</p>`);
     const z2 = el('div', 'zone traj', `<h2>${tr('Trajektorienraum', 'Trajectory space')}</h2><p>${tr('Echte ODE-Simulation, nichtlineare Anpassung, Auswahl nach Fehler und Komplexität.', 'Actual ODE simulation, nonlinear fitting, selection by error and complexity.')}</p>`);
-    [[z1, OVER.weak], [z2, OVER.traj]].forEach(([z, list]) => { const ch = el('div', 'chips'); list.forEach(([n, id]) => { const sc = SC.find(s => s.id === id); const a = el('a', '', `<span>${n}</span>${esc(sc.title[lang === 'de' ? 0 : 1])}`); a.href = '#' + id; ch.appendChild(a); }); z.appendChild(ch); });
+    [[z1, OVER.weak], [z2, OVER.traj]].forEach(([z, list]) => { const ch = el('div', 'chips'); list.forEach(([n, id]) => { const sc = SC.find(s => s.id === id); const a = el('a', '', `<span>${n}</span>${esc(titleOf(sc))}`); a.href = '#' + id; ch.appendChild(a); }); z.appendChild(ch); });
     ov.append(z1, z2, el('div', 'flowline', tr('<b>Merksatz:</b> Die Weak Form erzeugt und ordnet plausible Strukturen. Die Simulation prüft ihre tatsächliche Dynamik. Das BIC entscheidet zwischen den refitteten Kandidaten.', '<b>In one line:</b> the weak form proposes and ranks plausible structures. Simulation tests their actual dynamics. The BIC decides between the refitted candidates.')));
     const host = document.getElementById('scenes'); host.innerHTML = '';
     SC.forEach((sc, i) => {
       sc.k = sc.k || 0;
-      const sec = el('section', 'scene'); sec.id = sc.id; sec.dataset.part = sc.part;
+      const sec = el('section', 'scene page'); sec.id = sc.id; sec.dataset.part = sc.part;
       const n = sc.num || String(i + 1).padStart(2, '0');
-      const text = el('div', 'text', `<div class="snum">${n} · ${sc.part === 'weak' ? tr('Weak-Form-Raum', 'Weak-form space') : sc.part === 'traj' ? tr('Trajektorienraum', 'Trajectory space') : tr('Gekoppelte Systeme', 'Coupled systems')}</div><h3>${esc(sc.title[lang === 'de' ? 0 : 1])}</h3><p class="core">${sc.core[lang === 'de' ? 0 : 1]}</p>`);
+      const text = el('div', 'text', `<div class="snum">${n} · ${sc.part === 'weak' ? tr('Weak-Form-Raum', 'Weak-form space') : sc.part === 'traj' ? tr('Trajektorienraum', 'Trajectory space') : tr('Gekoppelte Systeme', 'Coupled systems')}</div><h3>${esc(titleOf(sc))}</h3><p class="core">${sc.core[lang === 'de' ? 0 : 1]}</p>`);
+      text.dataset.scroll = '1';
       const st = el('div', 'steptext'); text.appendChild(st);
-      const figWrap = el('div', 'figure'), fig = el('div', ''), ctr = el('div', 'controls');
+      const figWrap = el('div', 'figure'), fig = el('div', 'figbody'), ctr = el('div', 'controls');
+      figWrap.dataset.scroll = '1';
       figWrap.append(fig, ctr);
       const prev = el('button', '', '← ' + tr('Zurück', 'Back')), next = el('button', '', tr('Weiter', 'Next') + ' →'), dts = el('div', 'dots'), lab = el('span', 'steplabel');
       prev.type = next.type = 'button';
       ctr.append(prev, next, dts, lab);
-      const show = () => {
+      // o.anim: morph from the current drawing; o.dir: +1/-1 slides the step text in; o.from: figure of the neighbouring scene.
+      const show = (o = {}) => {
+        const snap = o.from ? snapshot(o.from) : (o.anim ? snapshot(fig) : null);
         fig.innerHTML = '';
         const tx = sc.text[sc.k] || sc.text[sc.text.length - 1];
         st.innerHTML = typeof tx === 'function' ? tx() : tx;
-        sc.draw(fig, sc.k, show);
+        sc.draw(fig, sc.k, () => show({ anim: true }));
+        if (snap) morph(fig, snap, { cross: !!o.from, delay: o.delay || 0, dur: o.from ? 900 : 700 });
+        if (o.dir && !reduced.matches) st.animate([{ opacity: 0, transform: `translateY(${o.dir * 28}px)` }, { opacity: 1, transform: 'none' }], { duration: 520, easing: 'cubic-bezier(.2,.7,.2,1)' });
         prev.disabled = sc.k === 0; next.disabled = sc.k >= sc.steps - 1;
         dts.innerHTML = sc.steps > 1 ? Array.from({ length: sc.steps }, (_, j) => `<i class="${j === sc.k ? 'on' : ''}"></i>`).join('') : '';
         lab.textContent = sc.steps > 1 ? tr(`Schritt ${sc.k + 1} von ${sc.steps}`, `Step ${sc.k + 1} of ${sc.steps}`) : '';
         ctr.hidden = sc.steps <= 1;
+        if (pages[pageIdx] === sec) chrome();
       };
-      const go = d => { const k = Math.max(0, Math.min(sc.steps - 1, sc.k + d)); if (k === sc.k) return; sc.k = k; if (sc.enter) sc.enter(k); show(); };
-      prev.onclick = () => go(-1); next.onclick = () => go(1);
-      sec.addEventListener('keydown', e => { if (e.target.closest('input,details')) return; if (e.key === 'ArrowRight') { go(1); e.preventDefault(); } if (e.key === 'ArrowLeft') { go(-1); e.preventDefault(); } });
+      sc.fig = fig; sc.sec = sec;
+      sc.setK = (k, o = {}) => { sc.k = Math.max(0, Math.min(sc.steps - 1, k)); if (sc.enter) sc.enter(sc.k); show(o); };
+      sc.go = d => { const k = Math.max(0, Math.min(sc.steps - 1, sc.k + d)); if (k === sc.k) return false; sc.setK(k, { anim: true, dir: d }); return true; };
+      prev.onclick = () => sc.go(-1); next.onclick = () => sc.go(1);
+      sec.addEventListener('keydown', e => { if (deck || e.target.closest('input,details')) return; if (e.key === 'ArrowRight') { sc.go(1); e.preventDefault(); } if (e.key === 'ArrowLeft') { sc.go(-1); e.preventDefault(); } });
       sec.append(text, figWrap); host.appendChild(sec);
       show();
     });
+    pages = [...document.querySelectorAll('.page')];
+    buildRail();
   }
+
+  /* ---------- deck: one full-screen page per scene, its steps inside, eased slides between pages ---------- */
+  function buildRail() {
+    if (rail) rail.remove();
+    rail = el('nav', 'rail'); rail.setAttribute('aria-label', tr('Seiten', 'Pages'));
+    pages.forEach((p, i) => {
+      const a = el('a'); a.href = '#' + p.id;
+      const sc = sceneOf(p);
+      a.title = sc ? (sc.num || String(SC.indexOf(sc) + 1).padStart(2, '0')) + ' · ' + titleOf(sc) : ({ start: tr('Titel', 'Title'), 'overview-page': tr('Übersicht', 'Overview'), basis: tr('Grundlage', 'Basis') })[p.id];
+      a.setAttribute('aria-label', a.title);
+      a.addEventListener('click', e => { e.preventDefault(); goPage(i, 1); });
+      rail.appendChild(a);
+    });
+    document.body.appendChild(rail);
+  }
+  function chrome() {
+    const sc = sceneOf(pages[pageIdx]);
+    where.innerHTML = I18N[lang].where + (sc ? ` · <b>${esc(titleOf(sc))}</b>` + (sc.steps > 1 ? ` <span class="pos">${sc.k + 1}/${sc.steps}</span>` : '') : '');
+    if (rail) [...rail.children].forEach((a, i) => { if (i === pageIdx) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current'); });
+  }
+  const pageTop = p => p.getBoundingClientRect().top + window.scrollY;
+  let anim = 0, busyUntil = 0;
+  function slideTo(target, ms = 760) {
+    cancelAnimationFrame(anim);
+    const from = window.scrollY, start = performance.now(); busyUntil = start + ms;
+    const frameFn = now => { const p = Math.min(1, (now - start) / ms); window.scrollTo(0, from + (target - from) * ease(p)); if (p < 1) anim = requestAnimationFrame(frameFn); };
+    anim = requestAnimationFrame(frameFn);
+  }
+  function goPage(i, dir = 1, instant = false) {
+    i = Math.max(0, Math.min(pages.length - 1, i));
+    const from = pageIdx, tgt = pages[i], sc = sceneOf(tgt), before = sceneOf(pages[from]);
+    if (sc && !instant && i !== from) {
+      const neighbour = Math.abs(i - from) === 1 && before ? before.fig : null;
+      sc.setK(dir > 0 ? 0 : sc.steps - 1, neighbour ? { from: neighbour, delay: 420 } : {});
+    }
+    pageIdx = i; chrome();
+    try { history.replaceState(null, '', '#' + tgt.id); } catch (e) { /* sandboxed */ }
+    if (deck) { if (instant || reduced.matches) { cancelAnimationFrame(anim); window.scrollTo(0, pageTop(tgt)); } else slideTo(pageTop(tgt)); }
+    else if (!instant) tgt.scrollIntoView({ behavior: reduced.matches ? 'auto' : 'smooth' });
+    else if (i > 0) tgt.scrollIntoView();
+  }
+  function step(d) {
+    const sc = sceneOf(pages[pageIdx]);
+    if (sc && sc.go(d)) return;
+    if (pageIdx + d >= 0 && pageIdx + d < pages.length) goPage(pageIdx + d, d);
+  }
+  function setMode() {
+    deck = window.innerWidth >= 860 && window.innerHeight >= 560 && !reduced.matches;
+    document.documentElement.classList.toggle('deck', deck);
+  }
+  // Wheel and touch: one gesture, one step; a text or figure box that can still scroll scrolls first.
+  function canScroll(target, d) {
+    for (let n = target; n && n !== document.body; n = n.parentElement) {
+      if (n.dataset && n.dataset.scroll && n.scrollHeight > n.clientHeight + 1 && ((d > 0 && n.scrollTop + n.clientHeight < n.scrollHeight - 1) || (d < 0 && n.scrollTop > 0))) return true;
+      if (n.classList && n.classList.contains('tablewrap') && n.scrollWidth > n.clientWidth + 1 && d === 0) return true;
+    }
+    return false;
+  }
+  let lastWheel = -Infinity, wheelLock = 0;
+  window.addEventListener('wheel', e => {
+    if (!deck || e.ctrlKey) return;
+    const raw = Math.abs(e.deltaY) >= Math.abs(e.deltaX) ? e.deltaY : 0;
+    if (!raw) return; // horizontal wheel: leave to wide tables
+    const d = Math.sign(raw);
+    if (canScroll(e.target, d)) return;
+    e.preventDefault();
+    const now = performance.now(), quiet = now - lastWheel > 220; lastWheel = now;
+    if (quiet && now >= wheelLock && now >= busyUntil && Math.abs(raw) > 2) { wheelLock = now + 650; step(d); }
+  }, { passive: false });
+  let touch = null;
+  window.addEventListener('touchstart', e => { touch = deck && e.touches.length === 1 ? { x: e.touches[0].clientX, y: e.touches[0].clientY, t: e.target } : null; }, { passive: true });
+  window.addEventListener('touchmove', e => { if (touch && !canScroll(touch.t, Math.sign(touch.y - e.touches[0].clientY))) e.preventDefault(); }, { passive: false });
+  window.addEventListener('touchend', e => {
+    if (!touch) return;
+    const dy = touch.y - e.changedTouches[0].clientY, dx = touch.x - e.changedTouches[0].clientX;
+    if (Math.abs(dy) > 60 && Math.abs(dy) > Math.abs(dx) && performance.now() >= busyUntil) step(Math.sign(dy));
+    touch = null;
+  });
+  window.addEventListener('keydown', e => {
+    if (!deck || e.altKey || e.ctrlKey || e.metaKey || e.target.closest('input,textarea,select')) return;
+    const onButton = e.target.closest('button,summary,a');
+    let d = 0;
+    if (['ArrowDown', 'PageDown', 'ArrowRight'].includes(e.key) || (e.key === ' ' && !onButton && !e.shiftKey)) d = 1;
+    if (['ArrowUp', 'PageUp', 'ArrowLeft'].includes(e.key) || (e.key === ' ' && !onButton && e.shiftKey)) d = -1;
+    if (e.key === 'Home') { e.preventDefault(); goPage(0, 1); return; }
+    if (e.key === 'End') { e.preventDefault(); goPage(pages.length - 1, 1); return; }
+    if (!d) return;
+    e.preventDefault();
+    if (!e.repeat && performance.now() >= busyUntil) step(d);
+  });
+  document.addEventListener('click', e => {
+    const a = e.target.closest('.chips a');
+    if (!a) return;
+    const i = pages.findIndex(p => '#' + p.id === a.getAttribute('href'));
+    if (i < 0) return;
+    e.preventDefault(); goPage(i, 1);
+  });
+  // Continuous mode (phones, short windows, reduced motion): native scrolling names the page in view.
+  const obs = new IntersectionObserver(es => { if (deck) return; es.forEach(e => { if (e.isIntersecting) { const i = pages.indexOf(e.target); if (i >= 0) { pageIdx = i; chrome(); } } }); }, { rootMargin: '-45% 0px -50% 0px' });
+  const watch = () => { obs.disconnect(); pages.forEach(p => obs.observe(p)); };
+  window.addEventListener('hashchange', () => { const i = pages.findIndex(p => '#' + p.id === location.hash); if (i >= 0 && i !== pageIdx) goPage(i, 1); });
+  let resizeT = 0;
+  window.addEventListener('resize', () => { clearTimeout(resizeT); resizeT = setTimeout(() => { setMode(); goPage(pageIdx, 1, true); }, 120); });
+  reduced.addEventListener('change', () => { setMode(); goPage(pageIdx, 1, true); });
+
   const I18N = {
     de: { eyebrow: 'WISP · Weak-form incremental structure pursuit', title: 'WISP Schritt für Schritt', motto: '„In der Weak Form die Struktur suchen; mit der simulierten Trajektorie entscheiden.“',
-      lede: 'Wie WISP aus einer einzigen verrauschten Messreihe eine Differentialgleichung gewinnt, in 21 Szenen und einem Teil über gekoppelte Systeme. Jede Szene zeigt eine neue Operation; mit „Weiter“ geht es Schritt für Schritt durch sie hindurch. Alle Zahlen sind echte Rechnungen auf Benchmark-Daten (logistisches Wachstum, System 3, 3 % Rauschen), außer in den zwei als konstruiert markierten Lehrbeispielen.',
+      lede: 'Wie WISP aus einer einzigen verrauschten Messreihe eine Differentialgleichung gewinnt, in 21 Szenen und einem Teil über gekoppelte Systeme. Jede Szene zeigt eine neue Operation und wird Schritt für Schritt aufgebaut. Alle Zahlen sind echte Rechnungen auf Benchmark-Daten (logistisches Wachstum, System 3, 3 % Rauschen), außer in den zwei als konstruiert markierten Lehrbeispielen.',
+      hint: 'Weiter mit Mausrad, Pfeiltasten, Leertaste oder Wischen: ein Schritt pro Geste. Die Punkte rechts springen zu jeder Szene.',
       foot: 'Grundlage: Manuskriptentwurf vom 7. November 2026 und das Visualisierungsbriefing zum Prozess. Weak-Form-Pfad, Rauschschätzung und Stopp sind mit den eingefrorenen Q6/Q7-Funktionen gerechnet und im Browser nachgerechnet; Refit-Werte stammen aus den Q9-Läufen (Koeffizientengrenze 1000, Anfangswert mitgeschätzt). Kurven zur Darstellung sind mit SciPy (DOP853, 10⁻¹⁰) aus den gespeicherten Koeffizienten neu integriert.', where: 'WISP Schritt für Schritt' },
     en: { eyebrow: 'WISP · Weak-form incremental structure pursuit', title: 'WISP step by step', motto: '“Search for the structure in the weak form; decide with the simulated trajectory.”',
-      lede: 'How WISP turns a single noisy time series into a differential equation, in 21 scenes and a part on coupled systems. Each scene introduces one new operation; “Next” walks through it step by step. All numbers are real computations on benchmark data (logistic growth, system 3, 3 % noise), except in the two teaching examples marked as constructed.',
+      lede: 'How WISP turns a single noisy time series into a differential equation, in 21 scenes and a part on coupled systems. Each scene introduces one new operation and is built up step by step. All numbers are real computations on benchmark data (logistic growth, system 3, 3 % noise), except in the two teaching examples marked as constructed.',
+      hint: 'Advance with the mouse wheel, arrow keys, space bar or a swipe: one step per gesture. The dots on the right jump to any scene.',
       foot: 'Basis: manuscript draft of 7 November 2026 and the process visualization briefing. The weak-form path, noise estimate and stop are computed with the frozen Q6/Q7 functions and recomputed in the browser; refit values come from the Q9 runs (coefficient bound 1000, initial state estimated). Display curves are re-integrated with SciPy (DOP853, 10⁻¹⁰) from the stored coefficients.', where: 'WISP step by step' } };
-  document.querySelectorAll('.lang button').forEach(b => b.addEventListener('click', () => { lang = b.dataset.lang; try { localStorage.setItem('wisp-process-lang', lang); } catch (e) { /* ignore */ } render(); }));
-  render();
-  // Sticky bar: name the scene in view.
-  const where = document.getElementById('where');
-  const obs = new IntersectionObserver(es => { es.forEach(e => { if (e.isIntersecting) { const sc = SC.find(s => s.id === e.target.id); if (sc) where.innerHTML = `${I18N[lang].where} · <b>${esc(sc.title[lang === 'de' ? 0 : 1])}</b>`; } }); }, { rootMargin: '-45% 0px -50% 0px' });
-  const watch = () => document.querySelectorAll('.scene').forEach(s => obs.observe(s));
-  watch();
-  document.querySelectorAll('.lang button').forEach(b => b.addEventListener('click', () => { obs.disconnect(); watch(); }));
-  if (location.hash) { const tgt = document.getElementById(location.hash.slice(1)); if (tgt) tgt.scrollIntoView(); }
+  document.querySelectorAll('.lang button').forEach(b => b.addEventListener('click', () => {
+    lang = b.dataset.lang; try { localStorage.setItem('wisp-process-lang', lang); } catch (e) { /* ignore */ }
+    render(); watch(); goPage(pageIdx, 1, true);
+  }));
+  setMode();
+  render(); watch();
+  const startAt = location.hash ? pages.findIndex(p => '#' + p.id === location.hash) : 0;
+  goPage(Math.max(0, startAt), 1, true);
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => goPage(pageIdx, 1, true));
 })();

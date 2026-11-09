@@ -124,6 +124,36 @@ table.ntab td.b { color: var(--data); } table.ntab td.g { color: var(--lib); }
 .split { width: 100%; }
 footer { border-top: 1px solid var(--rule); padding-block: 26px 40px; color: var(--muted); font-size: 14px; }
 footer p { max-width: 80ch; }
+/* deck: full-screen pages, eased slides (deck mode is set by app.js on wide, tall screens without reduced motion) */
+:root { --barh: 42px; }
+.hint { display: none; font-size: 14px; color: var(--muted); margin: 14px 0 0; }
+.figbody { min-width: 0; }
+.bar .pos { font: 600 12px var(--f-mono); color: var(--muted); margin-left: 6px; letter-spacing: 0; }
+.rail { display: none; }
+html.deck { overflow: hidden; }
+html.deck .bar { height: var(--barh); padding-block: 0; }
+html.deck .hint { display: block; }
+html.deck body { font-size: clamp(16px, min(1.1vw, 2.35vh), 21px); }
+html.deck .wrap { max-width: min(1600px, 100%); }
+html.deck .scene h3 { font-size: 1.5em; }
+html.deck .scene { gap: clamp(28px, 3vw, 56px); }
+html.deck .steptext p { max-width: 64ch; }
+html.deck .page { height: 100vh; height: 100dvh; padding-block: calc(var(--barh) + 18px) 22px; overflow: hidden; }
+html.deck .intro, html.deck .overview-page { display: flex; flex-direction: column; justify-content: safe center; overflow-y: auto; }
+html.deck .intro .hero { padding-block: 0; max-width: 820px; }
+html.deck .intro h1 { font-size: clamp(40px, 6vw, 68px); }
+html.deck .overview-page .overview { margin-block: 0; }
+.page:focus, [data-scroll]:focus { outline: none; }
+html.deck .scene { border-top: 0; align-items: center; align-content: center; scroll-margin-top: 0; }
+html.deck .scene .text { max-height: calc(100dvh - var(--barh) - 44px); overflow-y: auto; padding-right: 4px; }
+html.deck .figure { max-height: calc(100dvh - var(--barh) - 44px); overflow-y: auto; align-self: center; }
+html.deck .figure svg { max-height: calc(100dvh - var(--barh) - 170px); }
+html.deck footer.page { display: flex; align-items: center; border-top: 0; font-size: 15px; }
+html.deck .rail { display: flex; position: fixed; right: max(4px, env(safe-area-inset-right, 0px)); top: 50%; transform: translateY(-50%); flex-direction: column; gap: 7px; z-index: 6; padding: 6px 3px; }
+.rail a { display: block; width: 7px; height: 7px; border-radius: 50%; background: var(--muted); opacity: .35; position: relative; }
+.rail a:hover, .rail a:focus-visible { opacity: .8; outline: none; }
+.rail a[aria-current] { background: var(--ink); opacity: 1; transform: scale(1.35); }
+.rail a:hover::after, .rail a:focus-visible::after { content: attr(aria-label); position: absolute; right: 16px; top: 50%; transform: translateY(-50%); white-space: nowrap; background: var(--panel); color: var(--ink); border: 1px solid var(--rule); border-radius: 6px; padding: 4px 8px; font: 13px var(--f-body); }
 @media (max-width: 860px) {
   .scene { grid-template-columns: minmax(0, 1fr); gap: 14px; padding-block: 26px; }
   .overview { grid-template-columns: minmax(0, 1fr); }

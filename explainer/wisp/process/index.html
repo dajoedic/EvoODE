@@ -6,15 +6,20 @@
 <div class="bar"><div class="where" id="where" data-i18n="where">WISP Schritt für Schritt</div>
   <div class="lang" role="group" aria-label="Sprache / language"><button type="button" data-lang="de" aria-pressed="true">DE</button><button type="button" data-lang="en" aria-pressed="false">EN</button></div></div>
 <div class="wrap">
-  <header class="hero">
-    <div class="eyebrow" data-i18n="eyebrow"></div>
-    <h1 data-i18n="title"></h1>
-    <p class="motto" data-i18n="motto"></p>
-    <p class="lede" data-i18n="lede"></p>
-  </header>
-  <div class="overview" id="overview"></div>
+  <section class="page intro" id="start" data-scroll="1">
+    <header class="hero">
+      <div class="eyebrow" data-i18n="eyebrow"></div>
+      <h1 data-i18n="title"></h1>
+      <p class="motto" data-i18n="motto"></p>
+      <p class="lede" data-i18n="lede"></p>
+      <p class="hint" data-i18n="hint"></p>
+    </header>
+  </section>
+  <section class="page overview-page" id="overview-page" data-scroll="1">
+    <div class="overview" id="overview"></div>
+  </section>
   <main id="scenes"></main>
-  <footer><p data-i18n="foot"></p></footer>
+  <footer class="page" id="basis"><p data-i18n="foot"></p></footer>
 </div>
 <script>window.WISP_DATA=/*DATA*/;</script>
 <script>/*CORE*/</script>
