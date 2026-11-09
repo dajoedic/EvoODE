@@ -223,7 +223,7 @@
     text: L.lengths.map((Lw, r) => () => {
       const intro = tr(`<p>WISP bildet Fenster der Längen <span class="math">L = ${L.lengths.join(', ')}</span>, gezählt in Messabständen. Für jede Länge beginnt an jedem möglichen Startpunkt ein Fenster, solange der Endpunkt noch existiert.</p>`,
         `<p>WISP forms windows of length <span class="math">L = ${L.lengths.join(', ')}</span>, counted in sampling steps. For each length a window starts at every possible index, as long as its endpoint exists.</p>`);
-      const now = tr(`<p><b>L = ${Lw}</b>: jedes Fenster reicht von einer Messung bis zur ${Lw === 1 ? 'nächsten' : Lw + '.\u00a0danach'}. Bei ${L.n} Messungen sind das <b>${counts[r]}</b> Fenster.</p>`,
+      const now = tr(`<p><b>L = ${Lw}</b>: jedes Fenster reicht von Messung <span class="math">i</span> bis Messung <span class="math">i + ${Lw}</span>. Bei ${L.n} Messungen sind das <b>${counts[r]}</b> Fenster.</p>`,
         `<p><b>L = ${Lw}</b>: each window runs from measurement <span class="math">i</span> to measurement <span class="math">i + ${Lw}</span>. With ${L.n} measurements that makes <b>${counts[r]}</b> windows.</p>`);
       if (r < L.lengths.length - 1) return intro + now;
       return intro + now + tr(`<p>Zusammen <span class="math">${counts.join(' + ')} = ${L.windows}</span> Fenster. Sie überlappen stark: Derselbe Messpunkt steckt in vielen Fenstern. Kurze Fenster sehen schnelle Änderungen, lange sind robuster gegen Rauschen.</p><p>Die Integrale rechnet WISP mit der Trapezregel und mit den <b>wirklichen</b> Zeitabständen.</p>`,
