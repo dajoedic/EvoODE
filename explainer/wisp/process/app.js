@@ -551,35 +551,34 @@
       if (k >= 1) fig.appendChild(el('div', 'note', tr(`${c.loss_evals} Auswertungen der Verlustfunktion, jede mit einer ODE-Lösung.`, `${c.loss_evals} loss evaluations, each with one ODE solve.`)));
     }, steps: 2 });
 
-  // 20 BIC
+  // 20 BIC as stacked bars: fit part and penalty part of one formula
   const lnN = Math.log(L.N);
+  function bicBars(fig, rows, o) {
+    const svg = svgBox(fig, 520, 40 + rows.length * 40), left = o.left || 120, right = 70, mx = Math.max(...rows.map(r => r.fit + r.pen)) * 1.02;
+    const X = v => left + v / mx * (520 - left - right);
+    rows.forEach((r, i) => {
+      const y = 10 + i * 40;
+      TX(svg, left - 8, y + 19, r.label, { 'text-anchor': 'end', 'font-size': 13, class: 'mono', 'font-weight': r.win ? 700 : 400, 'data-k': 'bb-l' + i });
+      S('rect', { x: X(0), y: y + 4, width: X(r.fit) - X(0), height: 22, fill: 'var(--data)', 'fill-opacity': r.win ? 1 : .55, 'data-k': 'bb-f' + i }, svg);
+      S('rect', { x: X(r.fit), y: y + 4, width: Math.max(2, X(r.fit + r.pen) - X(r.fit)), height: 22, fill: 'var(--foba)', 'fill-opacity': r.win ? 1 : .7, 'data-k': 'bb-p' + i }, svg);
+      if (r.win) S('rect', { x: X(0), y: y + 4, width: X(r.fit + r.pen) - X(0), height: 22, fill: 'none', stroke: 'var(--ink)', 'stroke-width': 2, 'data-k': 'bb-w' + i }, svg);
+      TX(svg, X(r.fit + r.pen) + 6, y + 20, fx(r.fit + r.pen, o.d ?? 0), { 'font-size': 12.5, 'font-weight': r.win ? 700 : 400, 'data-k': 'bb-v' + i });
+    });
+    fig.appendChild(el('div', 'legend', `<span><i style="background:var(--data);height:10px;width:10px"></i>${tr('Fehlerteil N·ln(L)', 'error part N·ln(L)')}</span><span><i style="background:var(--foba);height:10px;width:10px"></i>${tr('Strafteil (|S| + d)·ln(N)', 'penalty part (|S| + d)·ln(N)')}</span>`));
+  }
+  const TOY = [['M1', 1, 2.0], ['M2', 2, 1.2], ['M3', 3, 1.18]].map(([m, s, l]) => ({ m, s, l, fit: 20 * Math.log(l), pen: (s + 1) * Math.log(20) }));
+  const toyWin = TOY.reduce((a, b) => (b.fit + b.pen < a.fit + a.pen ? b : a));
   scene({ id: 's20', part: 'traj', title: ['BIC: Genauigkeit gegen Komplexität', 'BIC: accuracy against complexity'],
-    core: ['Die am besten passende Kurve ist nicht automatisch das beste Modell. Zusätzliche Bausteine können Rauschen nachzeichnen.', 'The best-fitting curve is not automatically the best model. Extra blocks can trace noise.'],
+    core: ['BIC = Fehlerteil + Strafteil. Der Kandidat mit der kleinsten Summe gewinnt.', 'BIC = error part + penalty part. The candidate with the smallest sum wins.'],
     text: [
-      () => tr(`<p><span class="math">BIC(S) = N·ln(L_S) + (|S| + d)·ln(N)</span>. <span class="math">L_S</span> ist der Trajektorienfehler nach dem Refit, <span class="math">|S|</span> die Zahl der Koeffizienten, <span class="math">d = ${L.dim}</span> die Zahl der mitgeschätzten Anfangswerte, <span class="math">N = ${L.N}</span>. Kleiner ist besser.</p><p>Erst der Passungsteil <span class="math">N·ln(L_S)</span>:</p>`,
-        `<p><span class="math">BIC(S) = N·ln(L_S) + (|S| + d)·ln(N)</span>. <span class="math">L_S</span> is the trajectory error after the refit, <span class="math">|S|</span> the number of coefficients, <span class="math">d = ${L.dim}</span> the number of estimated initial states, <span class="math">N = ${L.N}</span>. Smaller is better.</p><p>First the fit part <span class="math">N·ln(L_S)</span>:</p>`),
-      () => tr(`<p>Dann der Strafteil: je Parameter <span class="math">ln(${L.N}) = ${fmt(lnN, 4)}</span>.</p>`, `<p>Then the penalty: <span class="math">ln(${L.N}) = ${fmt(lnN, 4)}</span> per parameter.</p>`),
-      () => tr(`<p>Die Summe entscheidet: <b>${setText(winner.support[0])}</b> hat das kleinste BIC. In diesem Beispiel ist das der letzte Kandidat des Pfads; das ist nicht garantiert. BIC wählt nur unter den erzeugten Kandidaten. Liegt die wahre Struktur nicht auf dem Pfad, kann BIC sie nicht erfinden.</p>`,
-        `<p>The sum decides: <b>${setText(winner.support[0])}</b> has the smallest BIC. In this example it is the last candidate on the path; that is not guaranteed. BIC only chooses among the candidates produced. If the true structure is not on the path, BIC cannot invent it.</p>`),
-      () => tr(`<p><b>Konstruiertes Rechenbeispiel</b> (nicht aus den Daten), wann der kleinere Kandidat gewinnt: <span class="math">N = 20, d = 1</span>. M3 passt etwas besser als M2 (SSE 11,8 statt 12,0), aber die winzige Verbesserung rechtfertigt den zusätzlichen Parameter nicht. M2 gewinnt.</p>`,
-        `<p><b>Constructed example</b> (not from the data) of when the smaller candidate wins: <span class="math">N = 20, d = 1</span>. M3 fits slightly better than M2 (SSE 11.8 instead of 12.0), but the tiny improvement does not justify the extra parameter. M2 wins.</p>`)],
+      () => tr(`<p><span class="math">BIC(S) = N·ln(L_S) + (|S| + d)·ln(N)</span>. Blau: wie schlecht die simulierte Kurve passt (<span class="math">L_S</span> nach dem Refit, <span class="math">N = ${L.N}</span>). Orange: ${fmt(lnN, 3)} Strafe je Parameter, also je Koeffizient und je Anfangswert (<span class="math">d = ${L.dim}</span>).</p><p>Die kleinste Summe hat <b>${setText(winner.support[0])}</b>. Hier entscheidet fast nur der Fehlerteil. BIC wählt nur unter den Kandidaten des Pfads; fehlt die Wahrheit dort, kann es sie nicht finden.</p>`,
+        `<p><span class="math">BIC(S) = N·ln(L_S) + (|S| + d)·ln(N)</span>. Blue: how badly the simulated curve fits (<span class="math">L_S</span> after the refit, <span class="math">N = ${L.N}</span>). Orange: ${fmt(lnN, 3)} penalty per parameter, i.e. per coefficient and per initial state (<span class="math">d = ${L.dim}</span>).</p><p>The smallest sum belongs to <b>${setText(winner.support[0])}</b>. Here the error part decides almost alone. BIC only chooses among the path's candidates; if the truth is missing there, it cannot find it.</p>`),
+      () => tr(`<p><b>Konstruiertes Beispiel</b> (nicht aus den Daten), <span class="math">N = 20</span>: Wann entscheidet die Strafe? Wenn ein weiterer Baustein die Passung kaum noch verbessert. M3 passt minimal besser als M2 (<span class="math">L</span> = 1,18 statt 1,20), zahlt aber einen Parameter mehr. ${toyWin.m} gewinnt.</p>`,
+        `<p><b>Constructed example</b> (not from the data), <span class="math">N = 20</span>: when does the penalty decide? When a further block barely improves the fit. M3 fits marginally better than M2 (<span class="math">L</span> = 1.18 instead of 1.20) but pays one parameter more. ${toyWin.m} wins.</p>`)],
     draw(fig, k) {
-      const tb = el('div', 'tablewrap');
-      if (k < 3) {
-        tb.innerHTML = `<table class="ntab"><tr><th>${tr('Kandidat', 'Candidate')}</th><th>|S|</th><th>L_S</th><th>N·ln L</th>${k >= 1 ? '<th>(|S|+d)·ln N</th>' : ''}${k >= 2 ? '<th>BIC</th>' : ''}</tr>${L.candidates.map((c, i) => `<tr class="${k >= 2 && c.id === L.winner ? 'win' : ''}"><td>S${i + 1} ${esc(setText(c.support[0]))}</td><td>${c.k}</td><td>${fmt(c.mse, 4)}</td><td>${fx(c.fit_term, 1)}</td>${k >= 1 ? `<td>${fx(c.penalty, 1)}</td>` : ''}${k >= 2 ? `<td>${fx(c.bic, 1)}</td>` : ''}</tr>`).join('')}</table>`;
-        fig.appendChild(tb);
-        if (k >= 2) {
-          const svg = svgBox(fig, 520, 170);
-          hbars(svg, L.candidates.map((c, i) => ({ label: 'S' + (i + 1), v: c.bic, color: c.id === L.winner ? 'var(--traj)' : 'var(--bic)', dim: c.id !== L.winner, text: fx(c.bic, 1) })), { lo: 100, hi: 1e4, left: 40, axis: 'BIC (log)' });
-        }
-      } else {
-        const toy = [['M1', 1, 20.0], ['M2', 2, 12.0], ['M3', 3, 11.8]].map(([m, s, sse]) => ({ m, s, sse, bic: 20 * Math.log(sse / 20) + (s + 1) * Math.log(20) }));
-        const best = toy.reduce((a, b) => (b.bic < a.bic ? b : a));
-        tb.innerHTML = `<table class="ntab"><tr><th>${tr('Modell', 'Model')}</th><th>|S|</th><th>SSE</th><th>|S|+1</th><th>BIC</th></tr>${toy.map(r => `<tr class="${r === best ? 'win' : ''}"><td>${r.m}</td><td>${r.s}</td><td>${fx(r.sse, 1)}</td><td>${r.s + 1}</td><td>${fx(r.bic, 2)}</td></tr>`).join('')}</table>`;
-        fig.appendChild(tb);
-        fig.appendChild(el('div', 'formula', `M2: 20·ln(12/20) + 3·ln(20) ≈ ${fx(toy[1].bic, 2)}`));
-      }
-    }, steps: 4 });
+      if (k === 0) bicBars(fig, L.candidates.map((c, i) => ({ label: `S${i + 1} ${setText(c.support[0])}`, fit: c.fit_term, pen: c.penalty, win: c.id === L.winner })), { left: 130 });
+      else bicBars(fig, TOY.map(r => ({ label: `${r.m}, |S| = ${r.s}`, fit: r.fit, pen: r.pen, win: r === toyWin })), { left: 130, d: 1 });
+    }, steps: 2 });
 
   // 21 result
   scene({ id: 's21', part: 'traj', title: ['Das Ergebnis', 'The result'],
@@ -647,76 +646,77 @@
 
   // R results: the paper's main comparison (Q8 evidence, manuscript draft of 7 November 2026), all strata incl. dimension 3
   const RS = window.WISP_RESULTS;
-  const RM = { C1000: ['WISP', 'var(--traj)'], wsindy: ['WSINDy (Original, MATLAB)', 'var(--data)'], weak_sindy: ['Weak-SINDy (pySINDy)', 'var(--lib)'], sindy: ['SINDy', 'var(--noise)'], e_sindy: ['E-SINDy', 'var(--muted)'] };
+  const RM = { C1000: ['WISP', 'var(--traj)'], wsindy: ['WSINDy (Original, MATLAB)', 'var(--data)'], weakident: ['WeakIdent', 'var(--lib)'], sindy: ['SINDy', 'var(--noise)'], e_sindy: ['E-SINDy', 'var(--muted)'] };
   const RSL = { dim1_exact: ['Dim 1|exakt', 'dim 1|exact'], dim2_exact: ['Dim 2|exakt', 'dim 2|exact'], dim1_surrogate: ['Dim 1|Surrogat', 'dim 1|surrogate'], dim2_surrogate: ['Dim 2|Surrogat', 'dim 2|surrogate'],
     dim3_feasible: ['Dim 3|52, 61', 'dim 3|52, 61'], dim3_infeasible: ['Dim 3|54–59', 'dim 3|54–59'] };
   const rate = (m, st, me) => { const v = RS.rates[`${m}|${st}|${me}`]; return v ? v[0] : null; };
   const rp = v => (v == null ? '–' : Math.round(100 * v) + ' %');
   const D12 = ['dim1_exact', 'dim2_exact', 'dim1_surrogate', 'dim2_surrogate'], D3 = ['dim3_feasible', 'dim3_infeasible'];
   const sumC = a => a.reduce((s, x) => s + RS.cells[x], 0), sumS = a => a.reduce((s, x) => s + RS.systems[x], 0);
-  const TW = RS.tally_gen.wsindy, TK = RS.tally_gen.weak_sindy;
+  const TW = RS.tally_gen.wsindy;
   // Pooled over every exactly representable stratum (dims 1-3): hits = rate x data sets per stratum, summed.
   const EX = ['dim1_exact', 'dim2_exact', 'dim3_feasible', 'dim3_infeasible'], nEx = sumC(EX), nExSys = sumS(EX);
-  const pooled = (m, me) => EX.reduce((a, s) => a + rate(m, s, me) * RS.cells[s], 0) / nEx;
+  const nOf = (m, s, me) => RS.n[`${m}|${s}|${me}`] ?? RS.cells[s];
+  const pooled = (m, me) => EX.reduce((a, s) => a + rate(m, s, me) * nOf(m, s, me), 0) / EX.reduce((a, s) => a + nOf(m, s, me), 0);
   function resOverview(fig) {
-    const py = ['weak_sindy', 'sindy', 'e_sindy'];
+    const py = ['sindy', 'e_sindy'];
     const rows = [['structure', tr('Richtiges Gesetz gefunden', 'Correct law found'), tr('genau die wahren Bausteine', 'exactly the true blocks')],
       ['rec', tr('Messkurve nachgebildet', 'Measured curve reproduced'), tr('R² > 0,9 auf der Trainingskurve', 'R² > 0.9 on the training curve')],
       ['gen', tr('Neuen Verlauf vorhergesagt', 'New trajectory predicted'), tr('R² > 0,9 vom nie gesehenen Anfangswert', 'R² > 0.9 from the never-seen initial state')]];
-    const svg = svgBox(fig, 520, 346), L0 = 196, R0 = 470, X = v => L0 + v * (R0 - L0), bh = 17;
+    const svg = svgBox(fig, 520, 346), L0 = 196, R0 = 470, X = v => L0 + v * (R0 - L0), bh = 13;
     [0, 0.25, 0.5, 0.75, 1].forEach(v => { S('line', { x1: X(v), x2: X(v), y1: 6, y2: 320, class: 'grid' }, svg); TX(svg, X(v), 338, Math.round(100 * v) + ' %', { 'text-anchor': 'middle', 'font-size': 11.5, class: 'muted' }); });
     rows.forEach(([me, lab, sub], r) => {
       const top = 6 + r * 104, bestPy = py.reduce((a, m) => (pooled(m, me) > pooled(a, me) ? m : a));
       TX(svg, 0, top + 14, lab, { 'font-size': 14.5, 'font-weight': 700, 'data-k': 'ol:' + me });
       TX(svg, 0, top + 31, sub, { 'font-size': 11.5, class: 'muted', 'data-k': 'os:' + me });
-      [['C1000', 'WISP'], ['wsindy', RM.wsindy[0]], [bestPy, RM[bestPy][0]]].forEach(([m, name], i) => {
-        const v = pooled(m, me), yy = top + 40 + i * (bh + 5);
-        TX(svg, L0 - 8, yy + 13, name, { 'text-anchor': 'end', 'font-size': 12.5, 'font-weight': m === 'C1000' ? 700 : 400, 'data-k': `on:${me}:${i}` });
+      [['C1000', 'WISP'], ['wsindy', RM.wsindy[0]], ['weakident', RM.weakident[0]], [bestPy, RM[bestPy][0]]].forEach(([m, name], i) => {
+        const v = pooled(m, me), yy = top + 38 + i * (bh + 3);
+        TX(svg, L0 - 8, yy + 11, name, { 'text-anchor': 'end', 'font-size': 12, 'font-weight': m === 'C1000' ? 700 : 400, 'data-k': `on:${me}:${i}` });
         S('rect', { x: L0, y: yy, width: Math.max(1.5, X(v) - L0), height: bh, rx: 2, fill: RM[m][1], 'fill-opacity': m === 'C1000' ? 1 : 0.7, 'data-k': `ob:${me}:${i}` }, svg);
-        TX(svg, X(v) + 6, yy + 13, Math.round(100 * v) + ' %', { 'font-size': 13, 'font-weight': m === 'C1000' ? 700 : 400, fill: m === 'C1000' ? 'var(--traj)' : 'var(--ink)', 'data-k': `ov:${me}:${i}` });
+        TX(svg, X(v) + 6, yy + 11, Math.round(100 * v) + ' %', { 'font-size': 13, 'font-weight': m === 'C1000' ? 700 : 400, fill: m === 'C1000' ? 'var(--traj)' : 'var(--ink)', 'data-k': `ov:${me}:${i}` });
       });
     });
-    fig.appendChild(el('div', 'note', tr(`Alle ${nEx} verrauschten Datensätze der ${nExSys} Systeme, deren Gesetz in der Bibliothek darstellbar ist (Dimension 1, 2 und 3 zusammen). Dritter Balken: die jeweils beste der drei pySINDy-Methoden. Quelle: Manuskriptentwurf vom 7. November 2026 (Protokoll Q8).`,
-      `All ${nEx} noisy data sets of the ${nExSys} systems whose law the library can represent (dimensions 1, 2 and 3 together). Third bar: the best of the three pySINDy methods in each row. Source: manuscript draft of 7 November 2026 (protocol Q8).`)));
+    fig.appendChild(el('div', 'note', tr(`Alle ${nEx} verrauschten Datensätze der ${nExSys} Systeme, deren Gesetz in der Bibliothek darstellbar ist (Dimension 1, 2 und 3 zusammen). Vierter Balken: das jeweils bessere von SINDy und E-SINDy. WeakIdent: Struktur nur auf den Datensätzen, deren Gesetz seine Bibliothek enthält. Quelle: Manuskriptentwurf vom 7. November 2026 (Protokoll Q8).`,
+      `All ${nEx} noisy data sets of the ${nExSys} systems whose law the library can represent (dimensions 1, 2 and 3 together). Fourth bar: the better of SINDy and E-SINDy in each row. WeakIdent: structure only on the data sets whose law its library contains. Source: manuscript draft of 7 November 2026 (protocol Q8).`)));
   }
   function resChart(fig, me) {
-    const G = RS.strata, svg = svgBox(fig, 520, 300);
+    const G = me === 'structure' ? RS.strata.filter(s => !s.includes('surrogate')) : RS.strata, svg = svgBox(fig, 520, 300);
     const F = frame(svg, { w: 520, h: 300, x0: 0, x1: G.length, y0: 0, y1: 100, noX: true, yticks: [0, 25, 50, 75, 100], yfmt: v => v + ' %', m: { l: 42, r: 4, t: 22, b: 48 } });
-    S('line', { x1: F.X(4), x2: F.X(4), y1: 18, y2: 300 - 6, stroke: 'var(--rule)', 'stroke-dasharray': '3 3' }, F.g);
+    const d3 = G.indexOf('dim3_feasible');
+    S('line', { x1: F.X(d3), x2: F.X(d3), y1: 18, y2: 300 - 6, stroke: 'var(--rule)', 'stroke-dasharray': '3 3' }, F.g);
     G.forEach((st, j) => {
-      const cx = F.X(j + 0.5), bw = 11, gap = 2;
+      const cx = F.X(j + 0.5), bw = G.length > 4 ? 11 : 15, gap = 2;
       RS.methods.forEach((m, i) => {
         const v = rate(m, st, me), val = v == null ? 0 : 100 * v, x = cx + (i - 2) * (bw + gap) - bw / 2;
         S('rect', { x, y: F.Y(val), width: bw, height: F.Y(0) - F.Y(val), fill: RM[m][1], 'fill-opacity': m === 'C1000' ? 1 : 0.7, 'data-k': `rb:${m}:${st}` }, F.g);
-        if (m === 'C1000' && v != null) TX(F.g, x + bw / 2, F.Y(val) - 6, String(Math.round(val)), { 'text-anchor': 'middle', 'font-size': 12.5, 'font-weight': 700, fill: 'var(--traj)', 'data-k': `rv:${st}` });
       });
-      if (rate('C1000', st, me) == null) TX(F.g, cx, F.Y(50), tr('kein exaktes', 'no exact'), { 'text-anchor': 'middle', 'font-size': 11.5, class: 'muted', 'data-k': `na:${st}` }), TX(F.g, cx, F.Y(50) + 14, tr('Gesetz', 'law'), { 'text-anchor': 'middle', 'font-size': 11.5, class: 'muted', 'data-k': `na2:${st}` });
       const [a, b] = RSL[st][lang === 'de' ? 0 : 1].split('|');
       TX(F.g, cx, 300 - 28, a, { 'text-anchor': 'middle', 'font-size': 12.5, 'font-weight': 600, 'data-k': `gl:${st}` });
       TX(F.g, cx, 300 - 12, D3.includes(st) ? `${tr('Sys.', 'sys.')} ${b}` : `${b} · ${RS.systems[st]}`, { 'text-anchor': 'middle', 'font-size': 11.5, class: 'muted', 'data-k': `gl2:${st}` });
     });
     fig.appendChild(el('div', 'legend', RS.methods.map(m => `<span><i style="background:${RM[m][1]};height:10px;width:10px"></i>${RM[m][0]}</span>`).join('')));
   }
-  const pyMax = (strata, me) => Math.max(...['weak_sindy', 'sindy', 'e_sindy'].flatMap(m => strata.map(s => rate(m, s, me))));
+  const pyMax = (strata, me) => Math.max(...['sindy', 'e_sindy'].flatMap(m => strata.map(s => rate(m, s, me))));
+  const WSc = RS.wisp_on_weakident_scored;
   scene({ id: 'r1', part: 'results', num: 'R', title: ['Die Ergebnisse', 'The results'],
     core: ['Auf verrauschten Daten findet WISP das richtige Gesetz etwa doppelt so oft wie WSINDy und sagt neue Verläufe deutlich besser vorher. In Dimension 3 bleibt es schwer, für alle Methoden.', 'On noisy data WISP finds the correct law about twice as often as WSINDy and predicts new trajectories markedly better. Dimension 3 stays hard, for every method.'],
     text: [
       () => tr(`<p><b>Der Test.</b> ${sumC(D12)} verrauschte Datensätze aus allen ${sumS(D12)} ODEBench-Systemen der Dimension 1 und 2, dazu ${sumC(D3)} aus den ${sumS(D3)} Systemen der Dimension 3, deren Gesetz in der Bibliothek darstellbar ist. Rauschen 1 % und 5 %, einmal mit allen Messpunkten, einmal mit der zufälligen Hälfte. Je Datensatz eine einzige Messreihe.</p>
-        <p><b>Die Gegner.</b> <b>WSINDy</b> ist der Original-Code der Erfinder der Weak-Form-Regression (Messenger und Bortz, MATLAB), mit genau WISPs Bibliothek. <b>Weak-SINDy</b> ist dieselbe Idee, aber die Umsetzung in der Python-Bibliothek pySINDy: andere Testfunktionen, eine größere Bibliothek, ein fester Schwellenwert. Die Ergebnisse unterscheiden sich deutlich, deshalb stehen beide drin. <b>SINDy</b> ist die klassische Variante mit numerischen Ableitungen, <b>E-SINDy</b> SINDy mit Bagging über 20 Modelle. Für die drei pySINDy-Methoden zeigen wir je Gruppe den besseren von zwei Schwellenwerten, also zu ihren Gunsten.</p>`,
+        <p><b>Die Gegner.</b> <b>WSINDy</b>: der Original-MATLAB-Code der Erfinder der Weak-Form-Regression (Messenger und Bortz), mit genau WISPs Bibliothek. <b>WeakIdent</b> (Tang et al. 2023), Original-Code: ebenfalls Weak Form und ebenfalls schrittweise Termauswahl, entscheidet aber im Regressionsraum, ohne Simulation; noch nicht im Manuskript. <b>SINDy</b>: klassisch mit numerischen Ableitungen, <b>E-SINDy</b>: SINDy mit Bagging über 20 Modelle; für beide je Gruppe der bessere von zwei Schwellenwerten, also zu ihren Gunsten.</p>`,
         `<p><b>The test.</b> ${sumC(D12)} noisy data sets from all ${sumS(D12)} ODEBench systems of dimension 1 and 2, plus ${sumC(D3)} from the ${sumS(D3)} systems of dimension 3 whose law the library can represent. Noise 1 % and 5 %, once with all samples and once with a random half. One single time series per data set.</p>
-        <p><b>The opponents.</b> <b>WSINDy</b> is the original code of the inventors of weak-form regression (Messenger and Bortz, MATLAB), with exactly WISP's library. <b>Weak-SINDy</b> is the same idea, but the implementation in the Python library pySINDy: other test functions, a larger library, a fixed threshold. Their results differ clearly, so both are included. <b>SINDy</b> is the classic variant with numerical derivatives, <b>E-SINDy</b> is SINDy with bagging over 20 models. For the three pySINDy methods we show the better of two thresholds per group, i.e. in their favour.</p>`),
-      () => tr(`<p><b>Exakte Struktur</b>: Das gefundene Modell enthält genau die wahren Bausteine. Messbar nur auf den Systemen, deren Gesetz in der Bibliothek darstellbar ist.</p><p>Dimension 1 und 2: WISP ${rp(rate('C1000', 'dim1_exact', 'structure'))} und ${rp(rate('C1000', 'dim2_exact', 'structure'))}, WSINDy ${rp(rate('wsindy', 'dim1_exact', 'structure'))} und ${rp(rate('wsindy', 'dim2_exact', 'structure'))}, die pySINDy-Methoden höchstens ${rp(pyMax(['dim1_exact', 'dim2_exact'], 'structure'))}.</p><p>Dimension 3: WISP ${rp(rate('C1000', 'dim3_feasible', 'structure'))} und ${rp(rate('C1000', 'dim3_infeasible', 'structure'))}, WSINDy ${rp(rate('wsindy', 'dim3_feasible', 'structure'))} und ${rp(rate('wsindy', 'dim3_infeasible', 'structure'))}: Auf den Systemen 52 und 61 gleichauf, auf 54–59 (darunter Lorenz, Koeffizienten bis etwa 100) vorn. pySINDy findet in Dimension 3 kein einziges Gesetz.</p>`,
-        `<p><b>Exact structure</b>: the model found contains exactly the true blocks. Measurable only on the systems whose law the library can represent.</p><p>Dimensions 1 and 2: WISP ${rp(rate('C1000', 'dim1_exact', 'structure'))} and ${rp(rate('C1000', 'dim2_exact', 'structure'))}, WSINDy ${rp(rate('wsindy', 'dim1_exact', 'structure'))} and ${rp(rate('wsindy', 'dim2_exact', 'structure'))}, the pySINDy methods ${rp(pyMax(['dim1_exact', 'dim2_exact'], 'structure'))} at most.</p><p>Dimension 3: WISP ${rp(rate('C1000', 'dim3_feasible', 'structure'))} and ${rp(rate('C1000', 'dim3_infeasible', 'structure'))}, WSINDy ${rp(rate('wsindy', 'dim3_feasible', 'structure'))} and ${rp(rate('wsindy', 'dim3_infeasible', 'structure'))}: level on systems 52 and 61, ahead on 54–59 (Lorenz among them, coefficients up to about 100). pySINDy finds no law at all in dimension 3.</p>`),
+        <p><b>The opponents.</b> <b>WSINDy</b>: the original MATLAB code of the inventors of weak-form regression (Messenger and Bortz), with exactly WISP's library. <b>WeakIdent</b> (Tang et al. 2023), original code: also weak form and also stepwise term selection, but it decides in regression space, without simulation; not yet in the manuscript. <b>SINDy</b>: classic with numerical derivatives, <b>E-SINDy</b>: SINDy with bagging over 20 models; for both the better of two thresholds per group, i.e. in their favour.</p>`),
+      () => tr(`<p><b>Exakte Struktur</b>: Das gefundene Modell enthält genau die wahren Bausteine. Messbar nur auf den Systemen, deren Gesetz in der Bibliothek darstellbar ist.</p><p>Dimension 1 und 2: WISP ${rp(rate('C1000', 'dim1_exact', 'structure'))} und ${rp(rate('C1000', 'dim2_exact', 'structure'))}, WSINDy ${rp(rate('wsindy', 'dim1_exact', 'structure'))} und ${rp(rate('wsindy', 'dim2_exact', 'structure'))}, SINDy und E-SINDy höchstens ${rp(pyMax(['dim1_exact', 'dim2_exact'], 'structure'))}. WeakIdent, auf denselben Datensätzen gezählt, die es darstellen kann: Dimension 1 WISP ${rp(WSc.dim1_exact[0])} gegen ${rp(WSc.dim1_exact[1])}, Dimension 2 <b>${rp(WSc.dim2_exact[0])} gegen ${rp(WSc.dim2_exact[1])}, gleichauf</b>.</p><p>Dimension 3: WISP ${rp(rate('C1000', 'dim3_feasible', 'structure'))} und ${rp(rate('C1000', 'dim3_infeasible', 'structure'))}, WSINDy ${rp(rate('wsindy', 'dim3_feasible', 'structure'))} und ${rp(rate('wsindy', 'dim3_infeasible', 'structure'))}: Auf den Systemen 52 und 61 gleichauf, auf 54–59 (darunter Lorenz, Koeffizienten bis etwa 100) vorn. SINDy und E-SINDy finden in Dimension 3 kein einziges Gesetz.</p>`,
+        `<p><b>Exact structure</b>: the model found contains exactly the true blocks. Measurable only on the systems whose law the library can represent.</p><p>Dimensions 1 and 2: WISP ${rp(rate('C1000', 'dim1_exact', 'structure'))} and ${rp(rate('C1000', 'dim2_exact', 'structure'))}, WSINDy ${rp(rate('wsindy', 'dim1_exact', 'structure'))} and ${rp(rate('wsindy', 'dim2_exact', 'structure'))}, SINDy and E-SINDy ${rp(pyMax(['dim1_exact', 'dim2_exact'], 'structure'))} at most. WeakIdent, counted on the same data sets it can represent: dimension 1 WISP ${rp(WSc.dim1_exact[0])} against ${rp(WSc.dim1_exact[1])}, dimension 2 <b>${rp(WSc.dim2_exact[0])} against ${rp(WSc.dim2_exact[1])}, a tie</b>.</p><p>Dimension 3: WISP ${rp(rate('C1000', 'dim3_feasible', 'structure'))} and ${rp(rate('C1000', 'dim3_infeasible', 'structure'))}, WSINDy ${rp(rate('wsindy', 'dim3_feasible', 'structure'))} and ${rp(rate('wsindy', 'dim3_infeasible', 'structure'))}: level on systems 52 and 61, ahead on 54–59 (Lorenz among them, coefficients up to about 100). SINDy and E-SINDy find no law at all in dimension 3.</p>`),
       () => tr(`<p><b>Rekonstruktion</b>: Anteil der Datensätze, auf denen das Modell die Trainingskurve nachbildet, gemessen gegen die wahre, rauschfreie Kurve mit <span class="math">R² > 0,9</span>. Das ist die Kennzahl der Literatur (ODEBench).</p><p>WISP liegt in jeder Gruppe vorn, auch auf den Surrogat-Systemen ohne exaktes Gesetz (${rp(rate('C1000', 'dim1_surrogate', 'rec'))} und ${rp(rate('C1000', 'dim2_surrogate', 'rec'))}). In Dimension 3 schafft es ${rp(rate('C1000', 'dim3_feasible', 'rec'))} und ${rp(rate('C1000', 'dim3_infeasible', 'rec'))}, die Gegner höchstens ${rp(Math.max(...RS.methods.slice(1).flatMap(m => D3.map(s => rate(m, s, 'rec')))))}.</p>`,
         `<p><b>Reconstruction</b>: share of data sets on which the model reproduces the training trajectory, measured against the true, noise-free curve with <span class="math">R² > 0.9</span>. This is the literature's metric (ODEBench).</p><p>WISP leads in every group, including the surrogate systems without an exact law (${rp(rate('C1000', 'dim1_surrogate', 'rec'))} and ${rp(rate('C1000', 'dim2_surrogate', 'rec'))}). In dimension 3 it reaches ${rp(rate('C1000', 'dim3_feasible', 'rec'))} and ${rp(rate('C1000', 'dim3_infeasible', 'rec'))}, the opponents ${rp(Math.max(...RS.methods.slice(1).flatMap(m => D3.map(s => rate(m, s, 'rec')))))} at most.</p>`),
-      () => tr(`<p><b>Generalisierung</b>: dasselbe, aber vom <b>anderen</b>, nie gesehenen Anfangswert. Das ist die härtere Probe, ob das Gesetz stimmt und nicht nur die Kurve.</p><p>Exakte Systeme der Dimension 1 und 2: WISP ${rp(rate('C1000', 'dim1_exact', 'gen'))} und ${rp(rate('C1000', 'dim2_exact', 'gen'))}, WSINDy ${rp(rate('wsindy', 'dim1_exact', 'gen'))} und ${rp(rate('wsindy', 'dim2_exact', 'gen'))}. Dimension 3: WISP ${rp(rate('C1000', 'dim3_feasible', 'gen'))} und ${rp(rate('C1000', 'dim3_infeasible', 'gen'))}, WSINDy ${rp(rate('wsindy', 'dim3_feasible', 'gen'))} und ${rp(rate('wsindy', 'dim3_infeasible', 'gen'))}. Schwach bleibt Dimension 2 ohne exaktes Gesetz: ${rp(rate('C1000', 'dim2_surrogate', 'gen'))}, bei allen Gegnern noch weniger.</p><p>Je System als eine Einheit gezählt, über alle ${TW.ahead + TW.behind + TW.tied} Systeme: WISP vorn auf ${TW.ahead}, hinten auf ${TW.behind}, gleich auf ${TW.tied} (gegen WSINDy; gegen Weak-SINDy ${TK.ahead} zu ${TK.behind}).</p>`,
-        `<p><b>Generalization</b>: the same, but from the <b>other</b>, never-seen initial state. This is the harder test of whether the law is right and not only the curve.</p><p>Exact systems of dimension 1 and 2: WISP ${rp(rate('C1000', 'dim1_exact', 'gen'))} and ${rp(rate('C1000', 'dim2_exact', 'gen'))}, WSINDy ${rp(rate('wsindy', 'dim1_exact', 'gen'))} and ${rp(rate('wsindy', 'dim2_exact', 'gen'))}. Dimension 3: WISP ${rp(rate('C1000', 'dim3_feasible', 'gen'))} and ${rp(rate('C1000', 'dim3_infeasible', 'gen'))}, WSINDy ${rp(rate('wsindy', 'dim3_feasible', 'gen'))} and ${rp(rate('wsindy', 'dim3_infeasible', 'gen'))}. The weak spot is dimension 2 without an exact law: ${rp(rate('C1000', 'dim2_surrogate', 'gen'))}, every opponent lower still.</p><p>Counting each system as one unit, over all ${TW.ahead + TW.behind + TW.tied} systems: WISP ahead on ${TW.ahead}, behind on ${TW.behind}, tied on ${TW.tied} (against WSINDy; against Weak-SINDy ${TK.ahead} to ${TK.behind}).</p>`),
+      () => tr(`<p><b>Generalisierung</b>: dasselbe, aber vom <b>anderen</b>, nie gesehenen Anfangswert. Das ist die härtere Probe, ob das Gesetz stimmt und nicht nur die Kurve.</p><p>Exakte Systeme der Dimension 1 und 2: WISP ${rp(rate('C1000', 'dim1_exact', 'gen'))} und ${rp(rate('C1000', 'dim2_exact', 'gen'))}, WSINDy ${rp(rate('wsindy', 'dim1_exact', 'gen'))} und ${rp(rate('wsindy', 'dim2_exact', 'gen'))}. Dimension 3: WISP ${rp(rate('C1000', 'dim3_feasible', 'gen'))} und ${rp(rate('C1000', 'dim3_infeasible', 'gen'))}, WSINDy ${rp(rate('wsindy', 'dim3_feasible', 'gen'))} und ${rp(rate('wsindy', 'dim3_infeasible', 'gen'))}. Schwach bleibt Dimension 2 ohne exaktes Gesetz: ${rp(rate('C1000', 'dim2_surrogate', 'gen'))}, bei allen Gegnern noch weniger.</p><p>Je System als eine Einheit gezählt, über alle ${TW.ahead + TW.behind + TW.tied} Systeme: WISP vorn auf ${TW.ahead}, hinten auf ${TW.behind}, gleich auf ${TW.tied} (gegen WSINDy).</p>`,
+        `<p><b>Generalization</b>: the same, but from the <b>other</b>, never-seen initial state. This is the harder test of whether the law is right and not only the curve.</p><p>Exact systems of dimension 1 and 2: WISP ${rp(rate('C1000', 'dim1_exact', 'gen'))} and ${rp(rate('C1000', 'dim2_exact', 'gen'))}, WSINDy ${rp(rate('wsindy', 'dim1_exact', 'gen'))} and ${rp(rate('wsindy', 'dim2_exact', 'gen'))}. Dimension 3: WISP ${rp(rate('C1000', 'dim3_feasible', 'gen'))} and ${rp(rate('C1000', 'dim3_infeasible', 'gen'))}, WSINDy ${rp(rate('wsindy', 'dim3_feasible', 'gen'))} and ${rp(rate('wsindy', 'dim3_infeasible', 'gen'))}. The weak spot is dimension 2 without an exact law: ${rp(rate('C1000', 'dim2_surrogate', 'gen'))}, every opponent lower still.</p><p>Counting each system as one unit, over all ${TW.ahead + TW.behind + TW.tied} systems: WISP ahead on ${TW.ahead}, behind on ${TW.behind}, tied on ${TW.tied} (against WSINDy).</p>`),
       () => tr(`<p><b>Wo die Fehler sitzen.</b> Liegt das wahre Gesetz auf dem Pfad, wählt das BIC es in 79 von 82 Fällen (Dimension 1 und 2). Die Auswahl ist damit praktisch gelöst; was fehlt, ist der Kandidatengenerator: In etwa der Hälfte der Datensätze kommt die Wahrheit gar nicht auf den Pfad.</p><p>Dimension 3 ruht auf nur ${sumS(D3)} Systemen und ${sumC(D3)} Datensätzen; die Intervalle sind dort breit.</p><p class="note">Stand: Manuskriptentwurf vom 7. November, Protokoll Q8. Der finale Lauf Q9 (alle 63 Systeme, 3 Rauschrealisierungen) läuft auf Orion; seine Zahlen ersetzen diese.</p>`,
         `<p><b>Where the errors sit.</b> When the true law is on the path, the BIC picks it in 79 of 82 cases (dimensions 1 and 2). Selection is thus essentially solved; what is missing is the candidate generator: in about half of the data sets the truth never enters the path.</p><p>Dimension 3 rests on only ${sumS(D3)} systems and ${sumC(D3)} data sets; the intervals there are wide.</p><p class="note">Status: manuscript draft of 7 November, protocol Q8. The final run Q9 (all 63 systems, 3 noise realizations) is running on Orion; its numbers replace these.</p>`)],
     draw(fig, k) {
       if (k === 0 || k === 4) { resOverview(fig); return; }
       resChart(fig, ['structure', 'rec', 'gen'][k - 1]);
-      fig.appendChild(el('div', 'note', tr('Anteil der verrauschten Datensätze je Gruppe; unter der Gruppe die Zahl der Systeme. Zahl über dem Balken: WISP. 95-%-Intervalle (Cluster-Bootstrap über Systeme) im Manuskript.', 'Share of noisy data sets per group; below each group the number of systems. Number above the bar: WISP. 95 % intervals (cluster bootstrap over systems) in the manuscript.')));
+      fig.appendChild(el('div', 'note', tr('Anteil der verrauschten Datensätze je Gruppe; unter der Gruppe die Zahl der Systeme. 95-%-Intervalle (Cluster-Bootstrap über Systeme) im Manuskript.', 'Share of noisy data sets per group; below each group the number of systems. 95 % intervals (cluster bootstrap over systems) in the manuscript.')));
     }, steps: 5 });
 
   /* ---------- morph: animate a figure from its previous state to the new one ----------
