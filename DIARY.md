@@ -4,6 +4,19 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ---
 
+## 2026-11-09
+
+### WISP process page for the meeting of 10.11.
+<!-- 69795d2 f079794 -->
+
+New page `explainer/wisp/process/` (built to `explainer/wisp/dist/wisp_process.html`) following the user's process
+briefing: 21 scenes plus a coupled part, real numbers from system 3 / system 27 (weak-space path recomputed with the
+frozen Q6/Q7 functions and checked against the recorded Q9 path; refit and BIC from the Q9 C1000 records), browser core
+checked against Python (`check_core.cjs`). Two teaching examples are constructed and labelled. On the user's request
+the page then became a full-screen deck as in explorable version 26: one gesture per step, eased slides between scenes,
+figures morph between steps, and keyed data points carry over between neighbouring scenes (03 → 04). Version 26 is
+untouched.
+
 ## 2026-11-08
 
 ### WISP manuscript draft, external review, and Q-Cal: the χ² stop is liberal, not calibrated
