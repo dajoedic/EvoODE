@@ -117,7 +117,10 @@ table.ntab td.b { color: var(--data); } table.ntab td.g { color: var(--lib); }
 .arch .op { font: 13px var(--f-body); color: var(--muted); text-align: right; }
 .arch.off { opacity: .18; }
 .arch.cur { border-color: var(--foba); }
-.chainarrow { text-align: center; color: var(--muted); line-height: 1; margin: -4px 0; }
+.arch.later { opacity: .5; }
+.chain .arch { grid-template-columns: 54px 1fr 44px; }
+.chain small { color: var(--muted); font-size: .9em; }
+.chain .arch.cur small { color: var(--ink); }
 .eqline { font: 15px var(--f-mono); overflow-x: auto; white-space: nowrap; }
 .tabs { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 8px; }
 .tabs button { font: 600 13px var(--f-mono); border: 1px solid var(--rule); background: var(--bg); color: var(--muted); border-radius: 6px; padding: 4px 9px; cursor: pointer; }
