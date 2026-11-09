@@ -21,5 +21,14 @@ D.path.steps.forEach((step, i) => {
   const before = D.path.states[i][0].map(idx);
   step.gains.forEach(g => check(`step ${step.step} gain ${g.term}`, (fit.sse(before) - fit.sse([...before, idx(g.term)])) / fit.bnorm2, g.gain, 1e-6));
 });
+const { win } = C.design(t, y);
+D.path.stops.forEach((st, i) => {
+  const S = D.path.states[i][0].map(idx);
+  st[0].rows.forEach(r => {
+    const nt = C.noiseTest(A, b, win, D.noise.variance, S, idx(r.term));
+    check(`stop ${i} ${r.term} actual`, nt.actual, r.actual, 1e-6);
+    check(`stop ${i} ${r.term} noise`, nt.noise, r.noise, 1e-6);
+  });
+});
 console.log(bad ? `${bad} mismatches` : 'core reproduces Python weak space: OK');
 process.exit(bad ? 1 : 0);
