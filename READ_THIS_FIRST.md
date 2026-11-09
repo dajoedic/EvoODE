@@ -10,34 +10,27 @@ zweites davon. Alles Dauerhafte gehört dorthin, nach `PAPER_1.md` oder ins `DIA
 **Regeln:** wird immer **vollständig überschrieben**, nie angehängt. Was älter als ein paar Tage
 ist, ist vermutlich falsch — dann gilt `CLAUDE.md`.
 
-**Stand: 2026-11-09, ~07:00 (Q9 läuft auf Orion; WeakIdent-τ-Raster fertig) — WISP-Plan bis 31.12. (CLAUDE.md, „WISP paper — the fixed plan“).**
+**Stand: 2026-11-09, ~23:40 (Q9 läuft auf Orion mit 39 Pods; Q8 1 Nachzügler) — WISP-Plan bis 31.12. (CLAUDE.md, „WISP paper — the fixed plan“).**
 
 ## 1. Was läuft
 
-**Wer aufpasst (08.11. 23:15):** auf Orion **niemand automatisch** — `q9_shift.sh` läuft nicht mehr (letzte Logzeile
-08.11. 09:49), und seit dem Abend ist das VPN weg (`oc`: „no such host“), Orion also nicht geprüft seit 08.11. ~10:00.
-Q9 steht von Hand auf Parallelität 37; fertige Q8-Nachzügler geben ihre Kerne erst frei, wenn jemand Q9 von Hand
-anhebt (verschenkt Kerne, kaputt geht nichts). Auf dem Laptop läuft nichts mehr. 08.11. ~23:30 geprüft: Q9 37 Pods + 3 Q8-Nachzügler = 40; Q9 nach
-Planstunden ~2.700 von 14.100 fertig, Hochrechnung Ende ~19.–20.11. Je fertigem Q8-Nachzügler Q9 von Hand +1.
-
-**Orion, letzter geprüfter Stand 07.11. ~02:30 (Q9-Parallelität 08.11. 10:00 auf 37):**
+**Orion, geprüft 09.11. ~23:35** (Statusseite https://claude.ai/artifact/9zzJsoGCBahPsuNkaaf3DN, Version 15):
 
 | Lauf | Stand | Wenn fertig |
 |---|---|---|
-| **W-4 = Q9-Gitter** (`cdfaa7d`, 4.284 Shards, C1000) | **gestartet 02:29**, 31→32 Pods; Probe (9 Shards) technisch sauber, Rest der Probe läuft aus | Hochrechnung aus den ersten langen Shards (Lorenz 55/56, 61); 21-Tage-Regel |
-| **W-2 = Q8-Gitter** (`512dd5b`) | 3.533/3.540, 6 Nachzügler (Lorenz 55 ×2, 61 ×3, 48-Ablation) | offizielle Aggregation `aggregate_sideproject_q8.py` bei 3.540/3.540 |
+| **W-4 = Q9-Gitter** (`cdfaa7d`, 4.284 Shards, C1000) | 66/4.284, 0 Fehler, **Parallelität 39** (09.11. 23:35 von Hand 37 → 39); teuerste Shards zuerst, daher anfangs wenige fertige | letzte Hochrechnung (08.11.) Ende ~19.–20.11.; 21-Tage-Regel |
+| **W-2 = Q8-Gitter** (`512dd5b`) | 3.539/3.540, 1 Nachzügler (Index 0, läuft seit ~7 Tagen) | Q9 von Hand auf 40; offizielle Aggregation `aggregate_sideproject_q8.py` |
 | **C-6 gekappt** | 1.435/3.366, **Parallelität 0** | nach W-4 zurück auf 24 |
 
-**Kerne:** Q9 = 40 − aktive Q8- und Probe-Pods. Lokal läuft `q9_shift.sh` (Scratchpad der Sitzung `74de8444…`, detached,
-Log `q9_shift.log` daneben): alle 10 min Q9-Parallelität anheben, nie senken, endet bei 40. Braucht Laptop + VPN +
-gültigen oc-Login; fällt es aus, verschenkt Q9 nur Kerne, nichts geht kaputt. Neu starten (Git Bash):
-`/c/Users/joedicke/AppData/Local/Temp/claude/4da8ff96f3389fae/74de8444-749b-46d9-b373-f84449c9b174/scratchpad/q9_shift.sh >> …/q9_shift.log 2>&1 & disown`
+**Kerne:** 39 Q9 + 1 Q8 = 40. `q9_shift.sh` läuft **nicht** mehr (letzte Logzeile 08.11. 09:49); Anheben geht von Hand.
+Der Auto-Modus-Klassifizierer blockiert `oc patch` aus Claude heraus → der Nutzer führt den Patch aus.
+**PowerShell 5.1 (bestätigt 09.11.):** `oc patch job evoode-sideproject-q9 -n scch-das -p '{\"spec\":{\"parallelism\":40}}'`
+(ohne die Backslashes: „invalid character 's'“). Git Bash: `-p '{"spec":{"parallelism":40}}'`.
 **NFS-Zugriff:** S: hing 07.11. Schnellweg: `MSYS_NO_PATHCONV=1 oc exec <laufender-pod> -- tar czf - -C /outputs/<lauf> out > ….tgz`
-(komprimiert; unkomprimiert bricht der Strom bei ~250 MB ab). Technische Probe-Prüfung: Scratchpad `q9_probe_check.py`.
-**Rückweg C-6 nach W-4:** `oc patch job evoode-phase-c-c6-grid-capped -n scch-das -p '{"spec":{"parallelism":24}}'`
-(Git Bash; in PowerShell 5.1 die inneren Anführungszeichen escapen: `-p '{\"spec\":{\"parallelism\":24}}'`).
-**08.11. 10:00:** `q9_shift.sh` meldet seit Stunden nur „q9 job not readable“ (Log-Zeilen doppelt → zwei Instanzen?);
-Q9 von Hand auf 37 gesetzt (36 + 3 Q8-Nachzügler = 40). Je fertigem Q8-Nachzügler +1 von Hand, bis 40.
+(komprimiert; unkomprimiert bricht der Strom bei ~250 MB ab).
+**Rückweg C-6 nach W-4:** `oc patch job evoode-phase-c-c6-grid-capped -n scch-das -p '{"spec":{"parallelism":24}}'` (Git Bash).
+Shard-Liste ohne Plankosten (`outputs/sideproject_q9_inputs/grid/q9_grid.shards_cost_desc.txt`) → für eine neue Hochrechnung
+braucht es die Kostentabelle der Planung, nicht nur die Reihenfolge.
 
 ## 2. WISP-Explorable (W-X)
 
