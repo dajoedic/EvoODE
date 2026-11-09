@@ -10,15 +10,15 @@ zweites davon. Alles Dauerhafte gehört dorthin, nach `PAPER_1.md` oder ins `DIA
 **Regeln:** wird immer **vollständig überschrieben**, nie angehängt. Was älter als ein paar Tage
 ist, ist vermutlich falsch — dann gilt `CLAUDE.md`.
 
-**Stand: 2026-11-08, ~23:15 (Q9 läuft auf Orion; WeakIdent-τ-Raster läuft auf dem Laptop) — WISP-Plan bis 31.12. (CLAUDE.md, „WISP paper — the fixed plan“).**
+**Stand: 2026-11-09, ~07:00 (Q9 läuft auf Orion; WeakIdent-τ-Raster fertig) — WISP-Plan bis 31.12. (CLAUDE.md, „WISP paper — the fixed plan“).**
 
 ## 1. Was läuft
 
 **Wer aufpasst (08.11. 23:15):** auf Orion **niemand automatisch** — `q9_shift.sh` läuft nicht mehr (letzte Logzeile
 08.11. 09:49), und seit dem Abend ist das VPN weg (`oc`: „no such host“), Orion also nicht geprüft seit 08.11. ~10:00.
 Q9 steht von Hand auf Parallelität 37; fertige Q8-Nachzügler geben ihre Kerne erst frei, wenn jemand Q9 von Hand
-anhebt (verschenkt Kerne, kaputt geht nichts). Auf dem Laptop wacht ein Hintergrund-Watcher der Claude-Sitzung über das
-τ-Raster (nur Meldung, kein Eingriff); endet die Sitzung, läuft das Raster abgekoppelt weiter.
+anhebt (verschenkt Kerne, kaputt geht nichts). Auf dem Laptop läuft nichts mehr. 08.11. ~23:30 geprüft: Q9 37 Pods + 3 Q8-Nachzügler = 40; Q9 nach
+Planstunden ~2.700 von 14.100 fertig, Hochrechnung Ende ~19.–20.11. Je fertigem Q8-Nachzügler Q9 von Hand +1.
 
 **Orion, letzter geprüfter Stand 07.11. ~02:30 (Q9-Parallelität 08.11. 10:00 auf 37):**
 
@@ -82,10 +82,7 @@ Q9 von Hand auf 37 gesetzt (36 + 3 Q8-Nachzügler = 40). Je fertigem Q8-Nachzüg
    13-λ-Raster, WeakIdent nativ + mit sin/cos, ODEFormer (WP-N48-Harness, ~150–180 Kern-h). Stand: **B1 gebaut und
    kontrolliert** (`a68968c`, ~43 Kern-h, braucht Image-Neubau → Nutzer pusht, Orion nach Q9); **WeakIdent komplett auf
    dem Laptop** (`65b467f`, 2 × 4.148 Fits dim 1–3, 0 Fehler, dim 4 vom Original nicht unterstützt); **ODEFormer** Orion
-   nach Q9. Erster Blick auf WeakIdent (τ = 0,05) im DIARY. **τ-Raster (Nachtrag 5, `4b1b388`) läuft seit 08.11.
-   21:10 abgekoppelt auf dem Laptop** (Nutzer-OK als Ausnahme von der 1-h-Regel, erwartet 2,5–3,5 h, 10 Prozesse,
-   Adapter `09491e3`): `outputs/sideproject_qb2_weakident_tau/`, fertig wenn `finished.txt` existiert. Danach:
-   technische Prüfung (7 × 8.568 Zeilen, τ = 0,05 identisch zum ersten Lauf), committen, auswerten.
+   nach Q9. Erster Blick auf WeakIdent (τ = 0,05) im DIARY. **τ-Raster (Nachtrag 5) fertig 09.11. 03:09**, technisch sauber, τ = 0,05 identisch zum ersten Lauf (8.568/8.568), Daten `a41f2bd`. Ergebnis (DIARY 08.11.): die Autoren lagen schon am Optimum, Oracle-τ bringt im Mittel ≤ 1,5 pp — keine Schlussfolgerung ändert sich.
 
 1. ~~G2~~ **entschieden 07.11.: C1000 + Q7-Stopp** (`DIARY.md`). ~~Q9 bauen und starten~~ **läuft seit 07.11. 02:29.**
 2. Q9 beobachten: Hochrechnung aus den ersten langen Shards; >21 Tage → Nutzer entscheidet (Plan W-4).

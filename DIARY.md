@@ -78,6 +78,19 @@ laptop now, Orion after W-4). The stop's miscalibration goes into the paper as a
   models do not. Noise (dim 1+2, all Q9 cells, rec/gen/structure): clean 82/64/81 %, σ = 0.01 50/31/42 %, then a plateau
   to σ = 0.05 43/22/30 %; ρ = 0.5 already at σ = 0 37/15/26 % (uniform-grid interpolation as for WSINDy). A cliff at the
   first noise level rather than a slope — mechanism not checked.
+- **WeakIdent τ grid (amendment 5) complete, 2026-11-09 03:09** (laptop, 6 h wall, 10 processes): 59,976 rows =
+  4,284 Q9 cells × 2 arms × τ ∈ {0, 0.005, 0.01, 0.02, 0.05, 0.1, 0.2}, 0 failures, one environment; **control: τ = 0.05
+  equals the first run in all 8,568 rows** (every field except timing and the two new τ columns). 41,698 rows reuse an
+  earlier τ's evaluation because the identified model is identical — τ often changes nothing. Data
+  `analysis/data/sideproject_residual_growth/qb2_weakident_tau/` (`a41f2bd`).
+  **Answer to the user's question: the authors were already at the optimum.** Noisy Q9 cells pooled, native arm,
+  R² > 0.9 rec/gen and pruned structure: τ = 0.05 is the best single τ on dim 2 and dim 3 in every metric; on dim 1 the
+  best τ (0 or 0.2) gains ≤ 1.5 pp. Oracle choice per stratum × σ × metric (in WeakIdent's favour, after the results):
+  mean gain over τ = 0.05 0.2–1.5 pp, maximum 2.9 pp (native) / 5.2 pp (sin/cos arm, dim-3 structure, one σ); the
+  winning τ jumps between σ levels without pattern, i.e. the gains are selection on noise. Smaller τ monotonically lowers
+  dim-2 structure (39 → 27 % at τ = 0); larger τ (0.2) breaks dim 3 (R² rec 13 → 6.5 %). Against the gaps to WISP in the
+  first-look entry above (20–50 pp on R², dim-2 structure a tie) the τ grid changes no conclusion. Reported in the paper
+  as planned: authors' τ, oracle τ per stratum × σ × metric, the τ curve.
 
 ## 2026-11-07
 
