@@ -454,7 +454,7 @@
     if (k >= 2) {
       const tx = F.X(Math.log10(th));
       S('line', { x1: tx, x2: tx, y1: F.Y(0), y2: F.Y(1), stroke: 'var(--ink)', 'stroke-width': 1.6, 'stroke-dasharray': '5 3', 'data-k': 'th' }, F.g);
-      TX(F.g, tx + 5, F.Y(1) + 10, tr(`Schwelle ${fmt(L.threshold, 3)} × ${fmt(nt.noise, 3)} = ${fmt(th, 3)}`, `threshold ${fmt(L.threshold, 3)} × ${fmt(nt.noise, 3)} = ${fmt(th, 3)}`), { 'font-size': 12, 'font-weight': 600, 'data-k': 'th-l' });
+      TX(F.g, tx > 330 ? tx - 5 : tx + 5, F.Y(0.8), tr(`Schwelle ${fmt(th, 3)}`, `threshold ${fmt(th, 3)}`), { 'text-anchor': tx > 330 ? 'end' : 'start', 'font-size': 12.5, 'font-weight': 700, stroke: 'var(--panel)', 'stroke-width': 4, 'paint-order': 'stroke', 'data-k': 'th-l' });
       const ax = F.X(Math.log10(nt.actual));
       S('line', { x1: ax, x2: ax, y1: F.Y(0), y2: F.Y(0.6), stroke: 'var(--foba)', 'stroke-width': 3.5, 'data-k': 'act' }, F.g);
       TX(F.g, ax + (ax > 420 ? -6 : 6), F.Y(0.6) - 6, `${lab}: ${fmt(nt.actual, 3)}`, { 'text-anchor': ax > 420 ? 'end' : 'start', 'font-size': 13, fill: 'var(--foba)', 'font-weight': 700, 'data-k': 'act-l' });
@@ -507,7 +507,7 @@
       fig.appendChild(el('div', 'eqline', 'S = ' + setText(states[k]) + (st.stops ? tr('  →  Stopp', '  →  stop') : '')));
       const svg = svgBox(fig, 520, 200);
       const pick = !st.stops && steps[k] ? steps[k].added.term : null;
-      const HX = hbars(svg, st.rows.map(r => ({ label: r.term, v: r.ratio ?? 1e5, color: r.passes ? 'var(--foba)' : 'var(--noise)', text: 'ρ = ' + fmt(r.ratio, 3) + (r.term === pick ? tr('  ← gewählt', '  ← chosen') : '') })), { right: 150, lo: 0.01, hi: 1e5, threshold: L.threshold, thLabel: fmt(L.threshold, 4), axis: tr('ρ = Δ_actual / Δ_noise (log)', 'ρ = Δ_actual / Δ_noise (log)') });
+      const HX = hbars(svg, st.rows.map(r => ({ label: r.term, v: r.ratio ?? 1e5, color: r.passes ? 'var(--foba)' : 'var(--noise)', text: 'ρ = ' + fmt(r.ratio, 3) })), { lo: 0.01, hi: 1e5, threshold: L.threshold, thLabel: fmt(L.threshold, 4), axis: tr('ρ = Δ_actual / Δ_noise (log)', 'ρ = Δ_actual / Δ_noise (log)') });
       const zone = S('rect', { x: HX(0.01), y: 20, width: HX(L.threshold) - HX(0.01), height: st.rows.length * 26 + 6, fill: 'var(--noise-soft)', 'data-k': 'zone' });
       svg.insertBefore(zone, svg.firstChild);
       if (pick) { for (const key of ['bl:', 'bv:']) { const e = svg.querySelector(`[data-k="${key}${pick}"]`); if (e) e.setAttribute('font-weight', '700'); } const b = svg.querySelector(`[data-k="bar:${pick}"]`); if (b) { b.setAttribute('stroke', 'var(--ink)'); b.setAttribute('stroke-width', '2'); } }
@@ -543,7 +543,7 @@
       dots(F.g, F, t, y, { 'fill-opacity': .35 });
       curve(F.g, F, t, c.start_curve.map(r => (r[0] == null ? null : Math.max(-5, Math.min(95, r[0])))), { stroke: 'var(--traj)', 'stroke-dasharray': '6 4', 'stroke-width': 1.8, 'stroke-opacity': k >= 1 ? .5 : 1 });
       if (k >= 1) curve(F.g, F, t, c.fit_curve.map(r => r[0]), { stroke: 'var(--traj)', 'stroke-width': 2.6 });
-      const lg = el('div', 'legend', `<span><i style="background:var(--data)"></i>${tr('Messungen', 'measurements')}</span><span><i style="background:var(--traj);opacity:.6"></i>${tr('Start (Weak Form, x₀ = erste Messung)', 'start (weak form, x₀ = first measurement)')}</span>${k >= 1 ? `<span><i style="background:var(--traj)"></i>${tr('nach Refit', 'after refit')}</span>` : ''}`);
+      const lg = el('div', 'legend', `<span><i style="background:var(--data)"></i>${tr('Messungen', 'measurements')}</span><span><i style="background:repeating-linear-gradient(90deg, var(--traj) 0 5px, transparent 5px 8px);opacity:.7"></i>${tr('Start (Weak Form, x₀ = erste Messung)', 'start (weak form, x₀ = first measurement)')}</span>${k >= 1 ? `<span><i style="background:var(--traj)"></i>${tr('nach Refit', 'after refit')}</span>` : ''}`);
       fig.appendChild(lg);
       const tb = el('div', 'tablewrap');
       tb.innerHTML = `<table class="ntab"><tr><th></th><th>Start</th>${k >= 1 ? '<th>Refit</th>' : ''}</tr>${terms.map((n, i) => `<tr><td>${tr('Koeff.', 'coef.')} ${esc(n)}</td><td>${fmt(c.weak[i], 4)}</td>${k >= 1 ? `<td>${fmt(c.params[i], 4)}</td>` : ''}</tr>`).join('')}<tr><td>x₀</td><td>${fmt(c.observed_x0[0], 4)}</td>${k >= 1 ? `<td>${fmt(c.x0[0], 4)}</td>` : ''}</tr><tr><td>${tr('mittl. quadr. Fehler L', 'mean squared error L')}</td><td>${fmt(c.start_mse, 4)}</td>${k >= 1 ? `<td>${fmt(c.mse, 4)}</td>` : ''}</tr></table>`;
@@ -598,7 +598,7 @@
         curve(F.g, F, t, L.clean.map(r => r[0]), { stroke: 'var(--muted)', 'stroke-width': 6, 'stroke-opacity': .35 });
         curve(F.g, F, t, winner.recon_curve.map(r => r[0]), { stroke: 'var(--traj)' });
         if (k >= 2) { curve(F.g, F, t, L.other.map(r => r[0]), { stroke: 'var(--muted)', 'stroke-width': 6, 'stroke-opacity': .35 }); curve(F.g, F, t, winner.gen_curve.map(r => r[0]), { stroke: 'var(--traj)', 'stroke-dasharray': '6 3' }); }
-        fig.appendChild(el('div', 'legend', `<span><i style="background:var(--muted);opacity:.5"></i>${tr('wahre Kurve', 'true curve')}</span><span><i style="background:var(--traj)"></i>${tr('WISP-Modell', 'WISP model')}</span>${k >= 2 ? `<span><i style="background:var(--traj)"></i>${tr('gestrichelt: neuer Anfangswert', 'dashed: new initial state')}</span>` : ''}`));
+        fig.appendChild(el('div', 'legend', `<span><i style="background:var(--muted);opacity:.5"></i>${tr('wahre Kurve', 'true curve')}</span><span><i style="background:var(--traj)"></i>${tr('WISP-Modell', 'WISP model')}</span>${k >= 2 ? `<span><i style="background:repeating-linear-gradient(90deg, var(--traj) 0 5px, transparent 5px 8px)"></i>${tr('WISP-Modell vom neuen Anfangswert', 'WISP model from the new initial state')}</span>` : ''}`));
       }
     }, steps: 3 });
 
