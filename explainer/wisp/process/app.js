@@ -1,7 +1,7 @@
-/* WISP process page: 21 scenes + coupled part + results slide, following WISP_Visualisierungsbriefing_Prozess.md.
+/* WISP process page: 20 scenes + coupled part + results slide (the briefing's scene 05, a hand-made mini example, was dropped on request), following WISP_Visualisierungsbriefing_Prozess.md.
    Every number shown is either read from data.json (computed by build_wisp_process_data.py with the frozen
    Q6/Q7 functions and the Q9 C1000 refit records) or computed here by core.js, which the Node check
-   verifies against those numbers. Hand-made numbers appear only in scenes 05 and 20b, labelled as such. */
+   verifies against those numbers. Hand-made numbers appear only in scene 20b, labelled as such. */
 (function () {
   'use strict';
   const D = window.WISP_DATA, C = window.WispCore;
@@ -118,6 +118,8 @@
   /* ---------- scenes ---------- */
   const SC = [];
   const scene = d => SC.push(d);
+  // Current number of a scene by id, so cross references survive added or removed scenes.
+  const sn = id => { const i = SC.findIndex(s => s.id === id); return SC[i].num || String(i + 1).padStart(2, '0'); };
 
   // 01
   scene({ id: 's01', part: 'weak', title: ['Die Ausgangsfrage', 'The starting question'],
@@ -191,8 +193,8 @@
         `<p>Take a time window <span class="math">[tₐ, t_b]</span>, here from measurement ${WS} to ${WE}. On the left is the <b class="k-data">measured change</b> <span class="math">y(t_b) − y(tₐ) = ${fmt(dU, 4)}</span>. It needs only the two endpoints, no derivative.</p>`),
       () => tr(`<p>Rechts steht, was eine vorgeschlagene Gleichung über dasselbe Fenster vorhersagt. Für <span class="math">f(u) = a·u + b·u²</span> ist das <span class="math">a·∫u dt + b·∫u² dt</span>. Die Integrale sind <b class="k-lib">Flächen</b> unter den Bausteinen, berechnet aus den Messwerten mit der Trapezregel: <span class="math">∫u dt = ${fmt(I1, 4)}</span>, <span class="math">∫u² dt = ${fmt(I2, 4)}</span>.</p>`,
         `<p>On the right is what a proposed equation predicts over the same window. For <span class="math">f(u) = a·u + b·u²</span> that is <span class="math">a·∫u dt + b·∫u² dt</span>. The integrals are <b class="k-lib">areas</b> under the blocks, computed from the measurements with the trapezoid rule: <span class="math">∫u dt = ${fmt(I1, 4)}</span>, <span class="math">∫u² dt = ${fmt(I2, 4)}</span>.</p>`),
-      () => tr(`<p>Mit den Koeffizienten, die WISP am Ende in der Weak Form findet (<span class="math">a = ${fmt(wFinal.coefficients[0], 4)}</span>, <span class="math">b = ${fmt(wFinal.coefficients[1], 4)}</span>), ergibt die rechte Seite ${fmt(wFinal.coefficients[0] * I1 + wFinal.coefficients[1] * I2, 4)}, gemessen wurde ${fmt(dU, 4)}. Das <span class="math">≈</span> steht für Messrauschen und Quadraturfehler. Allein das Rauschen der beiden Endpunkte hat hier eine Standardabweichung von etwa ${fmt(Math.sqrt(L.noise.variance[WS] + L.noise.variance[WE]), 2)} (Szene 15). Deshalb nutzt WISP nicht ein Fenster, sondern Tausende.</p><p>Wichtig: Das Integral über <span class="math">f(u(t))</span> beschreibt die <b>gesamte Änderung</b> im Fenster, nicht den Zustand selbst.</p>`,
-        `<p>With the coefficients WISP finally finds in the weak form (<span class="math">a = ${fmt(wFinal.coefficients[0], 4)}</span>, <span class="math">b = ${fmt(wFinal.coefficients[1], 4)}</span>) the right-hand side gives ${fmt(wFinal.coefficients[0] * I1 + wFinal.coefficients[1] * I2, 4)}; the measurement says ${fmt(dU, 4)}. The <span class="math">≈</span> stands for measurement noise and quadrature error. The noise of the two endpoints alone has a standard deviation of about ${fmt(Math.sqrt(L.noise.variance[WS] + L.noise.variance[WE]), 2)} here (scene 15). That is why WISP uses thousands of windows, not one.</p><p>Note: the integral of <span class="math">f(u(t))</span> describes the <b>total change</b> within the window, not the state itself.</p>`)],
+      () => tr(`<p>Mit den Koeffizienten, die WISP am Ende in der Weak Form findet (<span class="math">a = ${fmt(wFinal.coefficients[0], 4)}</span>, <span class="math">b = ${fmt(wFinal.coefficients[1], 4)}</span>), ergibt die rechte Seite ${fmt(wFinal.coefficients[0] * I1 + wFinal.coefficients[1] * I2, 4)}, gemessen wurde ${fmt(dU, 4)}. Das <span class="math">≈</span> steht für Messrauschen und Quadraturfehler. Allein das Rauschen der beiden Endpunkte hat hier eine Standardabweichung von etwa ${fmt(Math.sqrt(L.noise.variance[WS] + L.noise.variance[WE]), 2)} (Szene ${sn('s15')}). Deshalb nutzt WISP nicht ein Fenster, sondern Tausende.</p><p>Wichtig: Das Integral über <span class="math">f(u(t))</span> beschreibt die <b>gesamte Änderung</b> im Fenster, nicht den Zustand selbst.</p>`,
+        `<p>With the coefficients WISP finally finds in the weak form (<span class="math">a = ${fmt(wFinal.coefficients[0], 4)}</span>, <span class="math">b = ${fmt(wFinal.coefficients[1], 4)}</span>) the right-hand side gives ${fmt(wFinal.coefficients[0] * I1 + wFinal.coefficients[1] * I2, 4)}; the measurement says ${fmt(dU, 4)}. The <span class="math">≈</span> stands for measurement noise and quadrature error. The noise of the two endpoints alone has a standard deviation of about ${fmt(Math.sqrt(L.noise.variance[WS] + L.noise.variance[WE]), 2)} here (scene ${sn('s15')}). That is why WISP uses thousands of windows, not one.</p><p>Note: the integral of <span class="math">f(u(t))</span> describes the <b>total change</b> within the window, not the state itself.</p>`)],
     draw(fig, k) {
       const svg = svgBox(fig, 520, k >= 1 ? 420 : 240);
       const ts = t.slice(WS - 30, WE + 31), ys = y.slice(WS - 30, WE + 31);
@@ -213,33 +215,6 @@
       }
       if (k >= 2) fig.appendChild(el('div', 'formula', `<span class="k-data">${fmt(dU, 4)}</span> ≈ ${fmt(wFinal.coefficients[0], 4)} · <span class="k-lib">${fmt(I1, 4)}</span> ${wFinal.coefficients[1] < 0 ? '−' : '+'} ${fmt(Math.abs(wFinal.coefficients[1]), 4)} · <span class="k-lib">${fmt(I2, 4)}</span> = ${fmt(wFinal.coefficients[0] * I1 + wFinal.coefficients[1] * I2, 4)}`));
     }, steps: 3 });
-
-  // 05 (hand-made teaching example)
-  const MINI = { t: [0, 1, 2, 3], x: [10, 12, 14, 16], win: [[0, 1], [1, 2], [0, 2]] };
-  scene({ id: 's05', part: 'weak', title: ['Ein Mini-Beispiel zum Nachrechnen', 'A small example to check by hand'],
-    core: ['Bevor eine Matrix kommt: woher die Zahlen stammen.', 'Before any matrix: where the numbers come from.'],
-    text: [
-      () => tr(`<p><b>Konstruiertes, rauschfreies Lehrbeispiel</b>, nicht aus den Bakteriendaten: vier Messwerte 10, 12, 14, 16 zu den Zeiten 0, 1, 2, 3. Vermuteter Baustein ist die Konstante: <span class="math">du/dt = c</span>.</p>`,
-        `<p><b>Constructed, noise-free teaching example</b>, not from the bacteria data: four values 10, 12, 14, 16 at times 0, 1, 2, 3. The guessed block is the constant: <span class="math">du/dt = c</span>.</p>`),
-      () => tr(`<p>Fenster [0, 1]: gemessene Änderung 12 − 10 = 2. Das Integral von 1 über die Länge 1 ist 1. Also <span class="math">2 ≈ c · 1</span>.</p>`, `<p>Window [0, 1]: measured change 12 − 10 = 2. The integral of 1 over length 1 is 1. So <span class="math">2 ≈ c · 1</span>.</p>`),
-      () => tr(`<p>Fenster [1, 2]: wieder 14 − 12 = 2 und wieder <span class="math">2 ≈ c · 1</span>.</p>`, `<p>Window [1, 2]: again 14 − 12 = 2, again <span class="math">2 ≈ c · 1</span>.</p>`),
-      () => tr(`<p>Fenster [0, 2]: 14 − 10 = 4, das Integral von 1 über die Länge 2 ist 2, also <span class="math">4 ≈ c · 2</span>. Alle drei Fenster sprechen für <b>c = 2</b>.</p>`, `<p>Window [0, 2]: 14 − 10 = 4, the integral of 1 over length 2 is 2, so <span class="math">4 ≈ c · 2</span>. All three windows point to <b>c = 2</b>.</p>`)],
-    draw(fig, k) {
-      const svg = svgBox(fig, 520, 250), F = frame(svg, { w: 520, h: 250, x0: -0.2, x1: 3.2, y0: 8, y1: 18, xticks: [0, 1, 2, 3], yticks: [10, 12, 14, 16], xlabel: 't', ylabel: 'x' });
-      MINI.win.forEach((w, i) => {
-        if (k < i + 1) return;
-        const yy = F.Y(17.4) + i * 9 - 18;
-        const on = k === i + 1;
-        S('rect', { x: F.X(w[0]), y: F.m.t, width: F.X(w[1]) - F.X(w[0]), height: 250 - F.m.t - F.m.b, fill: on ? 'var(--data-soft)' : 'none' }, F.g);
-        S('line', { x1: F.X(w[0]), x2: F.X(w[1]), y1: yy + 40, y2: yy + 40, stroke: 'var(--data)', 'stroke-width': on ? 3 : 1.5 }, F.g);
-      });
-      MINI.t.forEach((x, i) => { S('circle', { cx: F.X(x), cy: F.Y(MINI.x[i]), r: 5, fill: 'var(--data)' }, F.g); TX(F.g, F.X(x) + 8, F.Y(MINI.x[i]) + 4, MINI.x[i], { 'font-size': 13 }); });
-      if (k >= 1) {
-        const tb = el('div', 'tablewrap'), rows = MINI.win.slice(0, k).map(w => `<tr><td>[${w[0]}, ${w[1]}]</td><td class="b">${MINI.x[w[1]] - MINI.x[w[0]]}</td><td class="g">${w[1] - w[0]}</td><td>${(MINI.x[w[1]] - MINI.x[w[0]]) / (w[1] - w[0])}</td></tr>`).join('');
-        tb.innerHTML = `<table class="ntab"><tr><th>${tr('Fenster', 'Window')}</th><th>Δx</th><th>∫1 dt</th><th>c = Δx / ∫1 dt</th></tr>${rows}</table>`;
-        fig.appendChild(tb);
-      }
-    }, steps: 4 });
 
   // 06
   const counts = L.lengths.map(Lw => L.n - Lw);
@@ -268,13 +243,13 @@
   scene({ id: 's07', part: 'weak', title: ['Die Matrix G und der Vektor b', 'The matrix G and the vector b'],
     core: ['Die Tausenden Integrale werden zu einem linearen Regressionsproblem.', 'The thousands of integrals become one linear regression problem.'],
     text: [
-      () => tr(`<p>Ordnet man die Fenster untereinander, entsteht <span class="math">b = G·ξ + ε</span>. <b class="k-data">b</b> enthält eine gemessene Änderung je Fenster. In <b class="k-lib">G</b> ist jede Zeile ein Fenster und jede Spalte ein Baustein; die Zelle enthält das Integral dieses Bausteins über dieses Fenster. <span class="math">ξ</span> sind die Koeffizienten, <span class="math">ε</span> die Abweichung.</p><p>Im Mini-Beispiel: <span class="math">b = [2, 2, 4]ᵀ</span>, <span class="math">G = [1, 1, 2]ᵀ</span>, <span class="math">ξ = [c]</span> mit <span class="math">c = 2</span>.</p>`,
-        `<p>Stacking the windows gives <span class="math">b = G·ξ + ε</span>. <b class="k-data">b</b> holds one measured change per window. In <b class="k-lib">G</b> every row is a window and every column a block; each cell holds the integral of that block over that window. <span class="math">ξ</span> are the coefficients, <span class="math">ε</span> the deviation.</p><p>In the small example: <span class="math">b = [2, 2, 4]ᵀ</span>, <span class="math">G = [1, 1, 2]ᵀ</span>, <span class="math">ξ = [c]</span> with <span class="math">c = 2</span>.</p>`),
+      () => tr(`<p>Ordnet man die Fenster untereinander, entsteht <span class="math">b = G·ξ + ε</span>. <b class="k-data">b</b> enthält eine gemessene Änderung je Fenster. In <b class="k-lib">G</b> ist jede Zeile ein Fenster und jede Spalte ein Baustein; die Zelle enthält das Integral dieses Bausteins über dieses Fenster. <span class="math">ξ</span> sind die Koeffizienten, <span class="math">ε</span> die Abweichung.</p>`,
+        `<p>Stacking the windows gives <span class="math">b = G·ξ + ε</span>. <b class="k-data">b</b> holds one measured change per window. In <b class="k-lib">G</b> every row is a window and every column a block; each cell holds the integral of that block over that window. <span class="math">ξ</span> are the coefficients, <span class="math">ε</span> the deviation.</p>`),
       () => tr(`<p>Für die Bakteriendaten hat G ${L.windows} Zeilen und ${names.length} Spalten. Rechts die ersten drei Fenster jeder Länge. Bei kurzen Fenstern ist die gemessene Änderung klein und vom Rauschen geprägt; ein Fenster der Länge 1 kann sogar eine Abnahme zeigen, obwohl die Kultur wächst.</p>`,
         `<p>For the bacteria data G has ${L.windows} rows and ${names.length} columns. On the right, the first three windows of each length. In short windows the measured change is small and dominated by noise; a window of length 1 can even show a decrease although the culture grows.</p>`)],
     draw(fig, k) {
       const tb = el('div', 'tablewrap');
-      if (k === 0) tb.innerHTML = `<table class="ntab"><tr><th>${tr('Fenster', 'Window')}</th><th>b = Δx</th><th>G: 1</th></tr><tr><td>[0, 1]</td><td class="b">2</td><td class="g">1</td></tr><tr><td>[1, 2]</td><td class="b">2</td><td class="g">1</td></tr><tr><td>[0, 2]</td><td class="b">4</td><td class="g">2</td></tr></table>`;
+      if (false) tb.innerHTML = `<table class="ntab"><tr><th>${tr('Fenster', 'Window')}</th><th>b = Δx</th><th>G: 1</th></tr><tr><td>[0, 1]</td><td class="b">2</td><td class="g">1</td></tr><tr><td>[1, 2]</td><td class="b">2</td><td class="g">1</td></tr><tr><td>[0, 2]</td><td class="b">4</td><td class="g">2</td></tr></table>`;
       else tb.innerHTML = `<table class="ntab"><tr><th>L</th><th>${tr('Fenster', 'Window')}</th><th>b</th>${names.map(n => `<th>∫${esc(n)} dt</th>`).join('')}</tr>${L.window_rows.map(r => `<tr><td>${r.L}</td><td>[${r.start}, ${r.end}]</td><td class="b">${fmt(r.b, 3)}</td>${r.G.map(v => `<td class="g">${fmt(v, 3)}</td>`).join('')}</tr>`).join('')}<tr><td colspan="${3 + names.length}" style="text-align:center;color:var(--muted)">… ${tr('insgesamt', 'in total')} ${L.windows} ${tr('Zeilen', 'rows')}</td></tr></table>`;
       fig.appendChild(tb);
     }, steps: 2 });
@@ -289,8 +264,8 @@
       () => tr(`<p><span class="math">ξ̂_S = argmin ‖b − G_S ξ‖²</span>. <span class="math">G_S</span> enthält nur die Spalten der gewählten Bausteine. Mit nur <span class="math">u</span> gibt es einen Koeffizienten.</p><p>Die Grafik zeigt die Fenster der Länge 16: gemessene Änderung gegen Vorhersage <span class="math">G_S ξ̂</span>. Je näher die Punkte an der Diagonale liegen, desto besser.</p>`,
         `<p><span class="math">ξ̂_S = argmin ‖b − G_S ξ‖²</span>. <span class="math">G_S</span> holds only the columns of the chosen blocks. With <span class="math">u</span> alone there is one coefficient.</p><p>The plot shows the length-16 windows: measured change against prediction <span class="math">G_S ξ̂</span>. The closer the dots to the diagonal, the better.</p>`),
       () => tr(`<p>Kommt <span class="math">u²</span> dazu, werden <b>beide</b> Koeffizienten neu bestimmt. Der Koeffizient von <span class="math">u</span> bleibt nicht stehen, er ändert sich.</p>`, `<p>Adding <span class="math">u²</span> re-estimates <b>both</b> coefficients. The coefficient of <span class="math">u</span> does not stay put; it changes.</p>`),
-      () => tr(`<p>Nimmt man <span class="math">u</span> wieder heraus, wird der Koeffizient von <span class="math">u²</span> erneut optimiert. Jede Änderung der Menge heißt: neu fitten.</p><p>Probieren Sie es selbst: Ein Klick auf einen Baustein schaltet ihn ein oder aus.</p><p class="note">„Erklärter Anteil“ ist <span class="math">1 − SSE/‖b‖²</span>. Er bleibt klein, weil die kurzen Fenster vor allem Rauschen messen: Nach der Rauschschätzung aus Szene 16 sind ${pct(noiseShare, 0)} von <span class="math">‖b‖²</span> Rauschen, das kein Baustein erklären kann.</p>`,
-        `<p>Taking <span class="math">u</span> out again re-optimizes the coefficient of <span class="math">u²</span>. Every change of the set means: fit again.</p><p>Try it: clicking a block switches it on or off.</p><p class="note">“Explained share” is <span class="math">1 − SSE/‖b‖²</span>. It stays small because the short windows measure mostly noise: by the noise estimate of scene 16, ${pct(noiseShare, 0)} of <span class="math">‖b‖²</span> is noise that no block can explain.</p>`)],
+      () => tr(`<p>Nimmt man <span class="math">u</span> wieder heraus, wird der Koeffizient von <span class="math">u²</span> erneut optimiert. Jede Änderung der Menge heißt: neu fitten.</p><p>Probieren Sie es selbst: Ein Klick auf einen Baustein schaltet ihn ein oder aus.</p><p class="note">„Erklärter Anteil“ ist <span class="math">1 − SSE/‖b‖²</span>. Er bleibt klein, weil die kurzen Fenster vor allem Rauschen messen: Nach der Rauschschätzung aus Szene ${sn('s16')} sind ${pct(noiseShare, 0)} von <span class="math">‖b‖²</span> Rauschen, das kein Baustein erklären kann.</p>`,
+        `<p>Taking <span class="math">u</span> out again re-optimizes the coefficient of <span class="math">u²</span>. Every change of the set means: fit again.</p><p>Try it: clicking a block switches it on or off.</p><p class="note">“Explained share” is <span class="math">1 − SSE/‖b‖²</span>. It stays small because the short windows measure mostly noise: by the noise estimate of scene ${sn('s16')}, ${pct(noiseShare, 0)} of <span class="math">‖b‖²</span> is noise that no block can explain.</p>`)],
     enter(k) { ls.on = new Set(PRESET[k].map(idx)); },
     draw(fig, k, redraw) {
       const cards = el('div', 'cards');
@@ -351,7 +326,7 @@
     core: ['Nach jeder vollständigen Forward-Backward-Runde wird der Stand des Modells festgehalten.', 'After every complete forward-backward round the model state is recorded.'],
     text: [
       () => tr(`<p>Jeder abgeschlossene Schritt hinterlässt einen Kandidaten: die Struktur nach Hinzufügen und Aufräumen, mit ihren Weak-Form-Koeffizienten. Zwischenzustände, die nur kurz getestet wurden, werden nicht gespeichert.</p>`, `<p>Every completed step leaves one candidate: the structure after adding and cleaning up, with its weak-form coefficients. States that were only tested briefly are not stored.</p>`),
-      () => tr(`<p>Für die Bakteriendaten entstehen vier Kandidaten. Zweimal hat der Rückwärtsschritt aufgeräumt.</p><p>Der letzte Kandidat ist <b>nicht automatisch</b> der beste. Welcher gewinnt, entscheidet erst der Trajektorienraum (Szenen 19 und 20).</p>`, `<p>The bacteria data produce four candidates. Twice the backward step cleaned up.</p><p>The last candidate is <b>not automatically</b> the best. Which one wins is decided only in trajectory space (scenes 19 and 20).</p>`)],
+      () => tr(`<p>Für die Bakteriendaten entstehen vier Kandidaten. Zweimal hat der Rückwärtsschritt aufgeräumt.</p><p>Der letzte Kandidat ist <b>nicht automatisch</b> der beste. Welcher gewinnt, entscheidet erst der Trajektorienraum (Szenen ${sn('s19')} und ${sn('s20')}).</p>`, `<p>The bacteria data produce four candidates. Twice the backward step cleaned up.</p><p>The last candidate is <b>not automatically</b> the best. Which one wins is decided only in trajectory space (scenes ${sn('s19')} and ${sn('s20')}).</p>`)],
     draw(fig, k) {
       const a = el('div', 'archive');
       steps.forEach((s, i) => {
@@ -434,13 +409,28 @@
   // 15 window noise
   const wn = L.window_noise;
   scene({ id: 's15', part: 'weak', title: ['Vom Punkt-Rauschen zum Fenster-Rauschen', 'From point noise to window noise'],
-    core: ['Das Rauschen der Messwerte landet in b, denn b besteht aus Endpunktdifferenzen.', 'The noise of the measurements ends up in b, because b consists of endpoint differences.'],
+    core: ['Für den Stopp muss WISP wissen, wie stark das Rauschen die gemessenen Änderungen b verwackelt. Diese Szene rechnet das Rauschen der Punkte in das Rauschen von b um.', 'For the stop, WISP must know how much the noise shakes the measured changes b. This scene converts the noise of the points into the noise of b.'],
     text: [
+      () => tr(`<p><b>Warum dieser Schritt?</b> Jeder zusätzliche Baustein senkt den Fehler in der Weak Form ein wenig, auch ein falscher, denn er kann einen Teil des Rauschens nachzeichnen. WISP soll aber nur weitermachen, wenn ein Baustein <b>mehr</b> erklärt, als Rauschen allein hergäbe.</p><p>Dazu braucht es einen Maßstab: Wie stark schwanken die Zielwerte <span class="math">b</span>, die gemessenen Änderungen je Fenster, allein durch Rauschen? Die Szenen ${sn('s12')} bis ${sn('s14')} lieferten nur das Rauschen <b>je Messpunkt</b>. WISP rechnet aber mit <span class="math">b</span>. Diese Szene schlägt die Brücke; Szene ${sn('s16')} macht daraus den Maßstab, Szene ${sn('s17')} den Stopp-Test.</p>`,
+        `<p><b>Why this step?</b> Every extra block lowers the weak-form error a little, even a wrong one, because it can trace part of the noise. But WISP should only continue if a block explains <b>more</b> than noise alone would.</p><p>That needs a yardstick: how much do the targets <span class="math">b</span>, the measured changes per window, fluctuate from noise alone? Scenes ${sn('s12')} to ${sn('s14')} gave only the noise <b>per measurement</b>. But WISP computes with <span class="math">b</span>. This scene builds the bridge; scene ${sn('s16')} turns it into the yardstick, scene ${sn('s17')} into the stopping test.</p>`),
       () => tr(`<p>Das Fenster [${wn.start}, ${wn.end}] hat die gemessene Änderung <span class="math">y${sub(wn.end)} − y${sub(wn.start)}</span>. Beide Endpunkte tragen Rauschen mit den geschätzten Varianzen ${fmt(wn.var_start, 3)} und ${fmt(wn.var_end, 3)}.</p><p>Sind die beiden Fehler unabhängig, addieren sich die Varianzen: <span class="math">Var(b) = ${fmt(wn.var_start, 3)} + ${fmt(wn.var_end, 3)} = ${fmt(wn.var_b, 3)}</span>.</p>`,
         `<p>Window [${wn.start}, ${wn.end}] has the measured change <span class="math">y${sub(wn.end)} − y${sub(wn.start)}</span>. Both endpoints carry noise with estimated variances ${fmt(wn.var_start, 3)} and ${fmt(wn.var_end, 3)}.</p><p>If the two errors are independent, the variances add: <span class="math">Var(b) = ${fmt(wn.var_start, 3)} + ${fmt(wn.var_end, 3)} = ${fmt(wn.var_b, 3)}</span>.</p>`),
       () => tr(`<p>Aber Messung ${wn.end} ist zugleich Startpunkt des nächsten Fensters [${wn.end}, ${2 * wn.end - wn.start}]. Ihr Fehler steckt in beiden Differenzen, einmal mit Plus, einmal mit Minus. Die Fehler überlappender Fenster sind deshalb <b>korreliert</b>.</p><p>WISP fasst das in der Kovarianzmatrix <span class="math">C = D Σ Dᵀ</span> zusammen. <span class="math">Σ</span> enthält die Punktvarianzen, <span class="math">D</span> bildet Messwerte auf Endpunktdifferenzen ab. <span class="math">C</span> ist die Kovarianz der Zielwerte <span class="math">b</span>, nicht die ursprüngliche Punktvarianz.</p>`,
         `<p>But measurement ${wn.end} is also the start of the next window [${wn.end}, ${2 * wn.end - wn.start}]. Its error sits in both differences, once with a plus, once with a minus. The errors of overlapping windows are therefore <b>correlated</b>.</p><p>WISP collects this in the covariance matrix <span class="math">C = D Σ Dᵀ</span>. <span class="math">Σ</span> holds the point variances, <span class="math">D</span> maps measurements to endpoint differences. <span class="math">C</span> is the covariance of the targets <span class="math">b</span>, not the original point variance.</p>`)],
     draw(fig, k) {
+      if (k === 0) {
+        const a = el('div', 'archive');
+        [[`${sn('s12')}–${sn('s14')}`, tr('Rauschen je Messpunkt, σ̂ᵢ²', 'noise per measurement, σ̂ᵢ²'), tr('geschätzt', 'estimated'), ''],
+         [sn('s15'), tr('Rauschen der Zielwerte b: Kovarianz C', 'noise of the targets b: covariance C'), tr('diese Szene', 'this scene'), 'cur'],
+         [sn('s16'), tr('Gewinn, den Rauschen allein brächte: Δ_noise', 'gain noise alone would bring: Δ_noise'), tr('Maßstab', 'yardstick'), ''],
+         [sn('s17'), tr('Stopp-Test: ρ = Δ_actual / Δ_noise', 'stopping test: ρ = Δ_actual / Δ_noise'), tr('Entscheidung', 'decision'), '']].forEach(([n, l, o, c], i2) => {
+          const r = el('div', 'arch ' + c, `<span class="id">${n}</span><span>${l}</span><span class="op">${o}</span>`); r.dataset.k = 'chain:' + i2; a.appendChild(r);
+          if (i2 < 3) a.appendChild(el('div', 'chainarrow', '↓'));
+        });
+        fig.appendChild(a);
+        return;
+      }
+      k -= 1;
       const svg = svgBox(fig, 520, 200), a = wn.start, e2 = 2 * wn.end - wn.start, X = i => 40 + (i - a + 1) * 440 / (e2 - a + 2);
       for (let i = a - 1; i <= e2 + 1; i++) { S('circle', { cx: X(i), cy: 110, r: i === a || i === wn.end || (k >= 1 && i === e2) ? 6 : 3, fill: 'var(--data)' }, svg); TX(svg, X(i), 136, i, { 'text-anchor': 'middle', 'font-size': 11, class: 'muted' }); }
       const arc = (i, j, yy, col, lab) => { S('path', { d: `M${X(i)} 100 C${X(i)} ${yy} ${X(j)} ${yy} ${X(j)} 100`, fill: 'none', stroke: col, 'stroke-width': 2.5 }, svg); TX(svg, (X(i) + X(j)) / 2, yy + 14, lab, { 'text-anchor': 'middle', 'font-size': 12.5, fill: col, 'font-weight': 600 }); };
@@ -448,7 +438,7 @@
       if (k >= 1) { arc(wn.end, e2, 30, 'var(--lib)', 'b₂ = y' + sub(e2) + ' − y' + sub(wn.end)); TX(svg, X(wn.end), 170, tr('gemeinsamer Punkt → b₁, b₂ korreliert', 'shared point → b₁, b₂ correlated'), { 'text-anchor': 'middle', 'font-size': 12.5, fill: 'var(--noise)', 'font-weight': 600 }); }
       TX(svg, X(a), 160, 'σ̂² = ' + fmt(wn.var_start, 3), { 'text-anchor': 'middle', 'font-size': 11.5, fill: 'var(--noise)' });
       if (k < 1) TX(svg, X(wn.end), 160, 'σ̂² = ' + fmt(wn.var_end, 3), { 'text-anchor': 'middle', 'font-size': 11.5, fill: 'var(--noise)' });
-    }, steps: 2 });
+    }, steps: 3 });
   function sub(n) { return String(n).split('').map(c => '₀₁₂₃₄₅₆₇₈₉'[+c]).join(''); }
 
   // 16 expected noise gain
@@ -479,10 +469,10 @@
       const head = tr(`<p>Für jeden freien Baustein: <span class="math">ρ = Δ_actual / Δ_noise</span>. Die Schwelle ist <span class="math">χ²₁;₀,₉₉ ≈ ${fmt(L.threshold, 4)}</span>. Die Gleichung stoppt, wenn <b>kein</b> freier Baustein sie erreicht.</p>`,
         `<p>For each free block: <span class="math">ρ = Δ_actual / Δ_noise</span>. The threshold is <span class="math">χ²₁;₀.₉₉ ≈ ${fmt(L.threshold, 4)}</span>. The equation stops when <b>no</b> free block reaches it.</p>`);
       const freed = st.rows.map(r => r.term).filter(tm => !states[i].includes(tm) && states.slice(0, i).some(s => s.includes(tm)));
-      const back = freed.length ? tr(`<p class="note">${freed.map(esc).join(' und ')} ${freed.length > 1 ? 'sind' : 'ist'} wieder frei: Der Backward-Schritt hat ${freed.length > 1 ? 'sie' : 'ihn'} entfernt (Szene 10). Entfernte Bausteine dürfen später wieder hinzukommen und werden deshalb erneut geprüft.</p>`,
-        `<p class="note">${freed.map(esc).join(' and ')} ${freed.length > 1 ? 'are' : 'is'} free again: the backward step removed ${freed.length > 1 ? 'them' : 'it'} (scene 10). Removed blocks may come back later, so they are tested again.</p>`) : '';
-      if (!st.stops) return head + back + tr(`<p>Stand <span class="math">${setText(states[i])}</span>: ${esc(best.term)} erreicht ρ = ${fmt(best.ratio, 3)}. Es geht weiter. Welcher Baustein dann genommen wird, entscheidet weiter der Gewinn aus Szene 9, nicht ρ.</p>`,
-        `<p>State <span class="math">${setText(states[i])}</span>: ${esc(best.term)} reaches ρ = ${fmt(best.ratio, 3)}. The path continues. Which block is then taken is still decided by the gain of scene 9, not by ρ.</p>`);
+      const back = freed.length ? tr(`<p class="note">${freed.map(esc).join(' und ')} ${freed.length > 1 ? 'sind' : 'ist'} wieder frei: Der Backward-Schritt hat ${freed.length > 1 ? 'sie' : 'ihn'} entfernt (Szene ${sn('s10')}). Entfernte Bausteine dürfen später wieder hinzukommen und werden deshalb erneut geprüft.</p>`,
+        `<p class="note">${freed.map(esc).join(' and ')} ${freed.length > 1 ? 'are' : 'is'} free again: the backward step removed ${freed.length > 1 ? 'them' : 'it'} (scene ${sn('s10')}). Removed blocks may come back later, so they are tested again.</p>`) : '';
+      if (!st.stops) return head + back + tr(`<p>Stand <span class="math">${setText(states[i])}</span>: ${esc(best.term)} erreicht ρ = ${fmt(best.ratio, 3)}. Es geht weiter. Welcher Baustein dann genommen wird, entscheidet weiter der Gewinn aus Szene ${sn('s09')}, nicht ρ.</p>`,
+        `<p>State <span class="math">${setText(states[i])}</span>: ${esc(best.term)} reaches ρ = ${fmt(best.ratio, 3)}. The path continues. Which block is then taken is still decided by the gain of scene ${sn('s09')}, not by ρ.</p>`);
       return head + back + tr(`<p>Stand <span class="math">${setText(states[i])}</span>: Der beste freie Baustein, ${esc(best.term)}, erreicht nur ρ = ${fmt(best.ratio, 3)}. <b>Die Gleichung stoppt.</b></p><p class="note">Der Test ist eine Heuristik, keine exakt kalibrierte Signifikanzprüfung: Er berücksichtigt das Rauschen in b, nicht vollständig das in G, und die Fenster überlappen. Daneben gibt es technische Abbrüche (Fehler praktisch null, Bibliothek erschöpft, kein positiver Gewinn). Nach Backward-Schritten wird der Stopp neu geprüft.</p>`,
         `<p>State <span class="math">${setText(states[i])}</span>: the best free block, ${esc(best.term)}, reaches only ρ = ${fmt(best.ratio, 3)}. <b>The equation stops.</b></p><p class="note">The test is a heuristic, not an exactly calibrated significance test: it accounts for the noise in b but not fully for that in G, and the windows overlap. There are also technical ends (error practically zero, library exhausted, no positive gain). After backward steps the stop is re-checked.</p>`);
     }),
@@ -635,6 +625,30 @@
   const nCells = RS.strata.reduce((a, s) => a + RS.cells[s], 0), nSys = RS.strata.reduce((a, s) => a + RS.systems[s], 0);
   const nExactSys = RS.systems.dim1_exact + RS.systems.dim2_exact;
   const TW = RS.tally_gen.wsindy, TK = RS.tally_gen.weak_sindy;
+  // Pooled over the exact dim-1 and dim-2 data sets: hits = rate x cells per stratum, summed.
+  const EX = ['dim1_exact', 'dim2_exact'], nEx = EX.reduce((a, s) => a + RS.cells[s], 0);
+  const pooled = (m, me) => EX.reduce((a, s) => a + rate(m, s, me) * RS.cells[s], 0) / nEx;
+  function resOverview(fig) {
+    const py = ['weak_sindy', 'sindy', 'e_sindy'];
+    const rows = [['structure', tr('Richtiges Gesetz gefunden', 'Correct law found'), tr('genau die wahren Bausteine', 'exactly the true blocks')],
+      ['rec', tr('Messkurve nachgebildet', 'Measured curve reproduced'), tr('R² > 0,9 auf der Trainingskurve', 'R² > 0.9 on the training curve')],
+      ['gen', tr('Neuen Verlauf vorhergesagt', 'New trajectory predicted'), tr('R² > 0,9 vom nie gesehenen Anfangswert', 'R² > 0.9 from the never-seen initial state')]];
+    const svg = svgBox(fig, 520, 372), L0 = 150, R0 = 470, X = v => L0 + v * (R0 - L0), bh = 17;
+    [0, 0.25, 0.5, 0.75, 1].forEach(v => { S('line', { x1: X(v), x2: X(v), y1: 6, y2: 344, class: 'grid' }, svg); TX(svg, X(v), 362, Math.round(100 * v) + '\u00a0%', { 'text-anchor': 'middle', 'font-size': 11.5, class: 'muted' }); });
+    rows.forEach(([me, lab, sub], r) => {
+      const top = 10 + r * 112, bestPy = py.reduce((a, m) => (pooled(m, me) > pooled(a, me) ? m : a));
+      TX(svg, 0, top + 14, lab, { 'font-size': 14.5, 'font-weight': 700, 'data-k': 'ol:' + me });
+      TX(svg, 0, top + 31, sub, { 'font-size': 11.5, class: 'muted', 'data-k': 'os:' + me });
+      [['C1000', 'WISP'], ['wsindy', 'WSINDy'], [bestPy, RM[bestPy][0]]].forEach(([m, name], i) => {
+        const v = pooled(m, me), yy = top + 40 + i * (bh + 5);
+        TX(svg, L0 - 8, yy + 13, name, { 'text-anchor': 'end', 'font-size': 12.5, 'font-weight': m === 'C1000' ? 700 : 400, 'data-k': `on:${me}:${i}` });
+        S('rect', { x: L0, y: yy, width: Math.max(1.5, X(v) - L0), height: bh, rx: 2, fill: RM[m][1], 'fill-opacity': m === 'C1000' ? 1 : 0.7, 'data-k': `ob:${me}:${i}` }, svg);
+        TX(svg, X(v) + 6, yy + 13, Math.round(100 * v) + '\u00a0%', { 'font-size': 13, 'font-weight': m === 'C1000' ? 700 : 400, fill: m === 'C1000' ? 'var(--traj)' : 'var(--ink)', 'data-k': `ov:${me}:${i}` });
+      });
+    });
+    fig.appendChild(el('div', 'note', tr(`Alle ${nEx} verrauschten Datensätze der ${nExactSys} Systeme, deren Gesetz in der Bibliothek darstellbar ist (Dimension 1 und 2 zusammen). Dritter Balken: die jeweils beste der drei pySINDy-Methoden. Quelle: Manuskriptentwurf vom 7. November 2026 (Protokoll Q8).`,
+      `All ${nEx} noisy data sets of the ${nExactSys} systems whose law the library can represent (dimensions 1 and 2 together). Third bar: the best of the three pySINDy methods in each row. Source: manuscript draft of 7 November 2026 (protocol Q8).`)));
+  }
   function resChart(fig, me) {
     const svg = svgBox(fig, 520, 300);
     const F = frame(svg, { w: 520, h: 300, x0: 0, x1: 4, y0: 0, y1: 100, noX: true, yticks: [0, 25, 50, 75, 100], yfmt: v => v + ' %', m: { l: 46, r: 6, t: 22, b: 48 } });
@@ -655,8 +669,8 @@
   scene({ id: 'r1', part: 'results', num: 'R', title: ['Die Ergebnisse', 'The results'],
     core: ['Auf verrauschten Daten findet WISP das richtige Gesetz etwa doppelt so oft wie WSINDy und sagt neue Verläufe deutlich besser vorher.', 'On noisy data WISP finds the correct law about twice as often as WSINDy and predicts new trajectories markedly better.'],
     text: [
-      () => tr(`<p><b>Der Test.</b> ${nCells} verrauschte Datensätze aus ${nSys} ODEBench-Systemen der Dimension 1 und 2: Rauschen 1 % und 5 %, einmal mit allen Messpunkten, einmal mit der zufälligen Hälfte, beide Anfangswerte. Je Datensatz eine einzige Messreihe, wie in den Szenen davor.</p><p><b>Die Gegner.</b> WSINDy im Original-MATLAB-Code sowie SINDy, Weak-SINDy und E-SINDy aus pySINDy, diese jeweils mit ihrem besseren Schwellenwert.</p>`,
-        `<p><b>The test.</b> ${nCells} noisy data sets from ${nSys} ODEBench systems of dimension 1 and 2: noise 1 % and 5 %, once with all samples and once with a random half, both initial conditions. One single time series per data set, as in the scenes before.</p><p><b>The opponents.</b> WSINDy in the original MATLAB code, plus SINDy, Weak-SINDy and E-SINDy from pySINDy, each at its better threshold.</p>`),
+      () => tr(`<p><b>Der Test.</b> ${nCells} verrauschte Datensätze aus ${nSys} ODEBench-Systemen der Dimension 1 und 2: Rauschen 1 % und 5 %, einmal mit allen Messpunkten, einmal mit der zufälligen Hälfte, beide Anfangswerte. Je Datensatz eine einzige Messreihe, wie in den Szenen davor.</p><p><b>Die Gegner.</b> WSINDy im Original-MATLAB-Code sowie SINDy, Weak-SINDy und E-SINDy aus pySINDy, diese jeweils mit ihrem besseren Schwellenwert.</p><p><b>Rechts</b> die drei Fragen, auf den Systemen mit bekanntem Gesetz: Wird das richtige Gesetz gefunden? Passt die Kurve? Stimmt die Vorhersage für einen neuen Anfangswert? Die nächsten Schritte zeigen jede Frage einzeln, auch für die Systeme ohne exaktes Gesetz.</p>`,
+        `<p><b>The test.</b> ${nCells} noisy data sets from ${nSys} ODEBench systems of dimension 1 and 2: noise 1 % and 5 %, once with all samples and once with a random half, both initial conditions. One single time series per data set, as in the scenes before.</p><p><b>The opponents.</b> WSINDy in the original MATLAB code, plus SINDy, Weak-SINDy and E-SINDy from pySINDy, each at its better threshold.</p><p><b>On the right</b> the three questions, on the systems with a known law: is the correct law found? Does the curve fit? Is the prediction from a new initial state right? The next steps show each question separately, including the systems without an exact law.</p>`),
       () => tr(`<p><b>Exakte Struktur</b>: Das gefundene Modell enthält genau die wahren Bausteine. Messbar nur auf den ${nExactSys} Systemen, deren Gesetz in der Bibliothek darstellbar ist.</p><p>WISP: ${rp(rate('C1000', 'dim1_exact', 'structure'))} und ${rp(rate('C1000', 'dim2_exact', 'structure'))}. WSINDy: ${rp(rate('wsindy', 'dim1_exact', 'structure'))} und ${rp(rate('wsindy', 'dim2_exact', 'structure'))}. Die pySINDy-Methoden bleiben bei höchstens ${rp(Math.max(...['weak_sindy', 'sindy', 'e_sindy'].flatMap(m => ['dim1_exact', 'dim2_exact'].map(s => rate(m, s, 'structure')))))}.</p>`,
         `<p><b>Exact structure</b>: the model found contains exactly the true blocks. Measurable only on the ${nExactSys} systems whose law the library can represent.</p><p>WISP: ${rp(rate('C1000', 'dim1_exact', 'structure'))} and ${rp(rate('C1000', 'dim2_exact', 'structure'))}. WSINDy: ${rp(rate('wsindy', 'dim1_exact', 'structure'))} and ${rp(rate('wsindy', 'dim2_exact', 'structure'))}. The pySINDy methods stay at ${rp(Math.max(...['weak_sindy', 'sindy', 'e_sindy'].flatMap(m => ['dim1_exact', 'dim2_exact'].map(s => rate(m, s, 'structure')))))} at most.</p>`),
       () => tr(`<p><b>Rekonstruktion</b>: Anteil der Datensätze, auf denen das Modell die Trainingskurve nachbildet, gemessen gegen die wahre, rauschfreie Kurve mit <span class="math">R² > 0,9</span>. Das ist die Kennzahl der Literatur (ODEBench).</p><p>WISP liegt in jeder Gruppe vorn, auch auf den Surrogat-Systemen, die kein exaktes Gesetz in der Bibliothek haben: ${rp(rate('C1000', 'dim1_surrogate', 'rec'))} und ${rp(rate('C1000', 'dim2_surrogate', 'rec'))}.</p>`,
@@ -666,22 +680,7 @@
       () => tr(`<p><b>Wo die Fehler sitzen.</b> Liegt das wahre Gesetz auf dem Pfad, wählt das BIC es in 79 von 82 Fällen. Die Auswahl ist damit praktisch gelöst; was fehlt, ist der Kandidatengenerator: In etwa der Hälfte der Datensätze kommt die Wahrheit gar nicht auf den Pfad.</p><p class="note">Stand: Manuskriptentwurf vom 7. November, Protokoll Q8. Der finale Lauf Q9 (alle 63 Systeme, 3 Rauschrealisierungen) läuft auf Orion; seine Zahlen ersetzen diese.</p>`,
         `<p><b>Where the errors sit.</b> When the true law is on the path, the BIC picks it in 79 of 82 cases. Selection is thus essentially solved; what is missing is the candidate generator: in about half of the data sets the truth never enters the path.</p><p class="note">Status: manuscript draft of 7 November, protocol Q8. The final run Q9 (all 63 systems, 3 noise realizations) is running on Orion; its numbers replace these.</p>`)],
     draw(fig, k) {
-      if (k === 0 || k === 4) {
-        const g = el('div', 'kpis');
-        const K = (cls, big, vs, lab) => `<div class="kpi ${cls}"><div class="kpi-big">${big}</div><div class="kpi-vs">${vs}</div><div class="kpi-lab">${lab}</div></div>`;
-        const items = [
-          K('', `${rp(rate('C1000', 'dim1_exact', 'structure'))} · ${rp(rate('C1000', 'dim2_exact', 'structure'))}`, `WSINDy ${rp(rate('wsindy', 'dim1_exact', 'structure'))} · ${rp(rate('wsindy', 'dim2_exact', 'structure'))}`, tr('exakte Struktur, Dim 1 · Dim 2', 'exact structure, dim 1 · dim 2')),
-          K('', `${rp(rate('C1000', 'dim1_exact', 'gen'))} · ${rp(rate('C1000', 'dim2_exact', 'gen'))}`, `${tr('bester Gegner', 'best opponent')} ${rp(bestRef('dim1_exact', 'gen'))} · ${rp(bestRef('dim2_exact', 'gen'))}`, tr('Vorhersage vom neuen Anfangswert (R² > 0,9)', 'prediction from the new initial state (R² > 0.9)')),
-          K('', `${TW.ahead} : ${TW.behind}`, tr(`${TW.tied} Systeme gleich`, `${TW.tied} systems tied`), tr(`Systeme (von ${TW.ahead + TW.behind + TW.tied}), auf denen WISP bei der Generalisierung vor / hinter WSINDy liegt`, `systems (of ${TW.ahead + TW.behind + TW.tied}) where WISP generalizes better / worse than WSINDy`)),
-          K('', '79 / 82', tr('wenn die Wahrheit auf dem Pfad liegt', 'when the truth is on the path'), tr('richtige Wahl durch das BIC', 'correct choice by the BIC')),
-          K('cost', '2–10', tr('je ~3.300 ODE-Lösungen', '~3,300 ODE solves each'), tr('Trajektorien-Fits je Datensatz (Median, Dim 1–2)', 'trajectory fits per data set (median, dim 1–2)')),
-          K('lim', rp(rate('C1000', 'dim2_surrogate', 'gen')), tr('auch bei allen Gegnern niedrig', 'low for every opponent too'), tr('Generalisierung, Dim-2-Surrogate: die offene Baustelle', 'generalization, dim-2 surrogates: the open problem'))];
-        g.innerHTML = items.join('');
-        [...g.children].forEach((c, i) => { c.dataset.k = 'kpi:' + i; });
-        fig.appendChild(g);
-        fig.appendChild(el('div', 'note', tr(`${nCells} verrauschte Datensätze, ${nSys} Systeme der Dimension 1 und 2; Quelle: Manuskriptentwurf vom 7. November 2026 (Protokoll Q8).`, `${nCells} noisy data sets, ${nSys} systems of dimension 1 and 2; source: manuscript draft of 7 November 2026 (protocol Q8).`)));
-        return;
-      }
+      if (k === 0 || k === 4) { resOverview(fig); return; }
       resChart(fig, ['structure', 'rec', 'gen'][k - 1]);
       fig.appendChild(el('div', 'note', tr('Anteil der verrauschten Datensätze je Gruppe. Zahl über dem Balken: WISP. 95-%-Intervalle (Cluster-Bootstrap über Systeme) im Manuskript.', 'Share of noisy data sets per group. Number above the bar: WISP. 95 % intervals (cluster bootstrap over systems) in the manuscript.')));
     }, steps: 5 });
@@ -808,9 +807,7 @@
   }
 
   /* ---------- page assembly ---------- */
-  const OVER = {
-    weak: [['01', 's01'], ['02', 's02'], ['03', 's03'], ['04', 's04'], ['05', 's05'], ['06', 's06'], ['07', 's07'], ['08', 's08'], ['09', 's09'], ['10', 's10'], ['11', 's11'], ['12', 's12'], ['13', 's13'], ['14', 's14'], ['15', 's15'], ['16', 's16'], ['17', 's17'], ['18', 's18']],
-    traj: [['19', 's19'], ['20', 's20'], ['21', 's21'], ['C', 'c1']], res: [['R', 'r1']] };
+  const OVER = { weak: () => SC.filter(s => s.part === 'weak'), traj: () => SC.filter(s => s.part === 'traj' || s.part === 'coupled'), res: () => SC.filter(s => s.part === 'results') };
   const titleOf = sc => sc.title[lang === 'de' ? 0 : 1];
   const where = document.getElementById('where');
   let deck = false, pageIdx = 0, pages = [], rail = null;
@@ -823,7 +820,7 @@
     const z1 = el('div', 'zone weak', `<h2>${tr('Weak-Form-Raum', 'Weak-form space')}</h2><p>${tr('Lineare Regression auf Fenster-Integralen. Schnelle Strukturvorschläge, keine Ableitung der Messwerte, keine Simulation je Test.', 'Linear regression on window integrals. Fast structure proposals, no differentiation of the data, no simulation per test.')}</p>`);
     const z2 = el('div', 'zone traj', `<h2>${tr('Trajektorienraum', 'Trajectory space')}</h2><p>${tr('Echte ODE-Simulation, nichtlineare Anpassung, Auswahl nach Fehler und Komplexität.', 'Actual ODE simulation, nonlinear fitting, selection by error and complexity.')}</p>`);
     const z3 = el('div', 'zone res', `<h2>${tr('Ergebnisse', 'Results')}</h2><p>${tr('WISP gegen WSINDy und die SINDy-Familie auf verrauschten Benchmark-Daten.', 'WISP against WSINDy and the SINDy family on noisy benchmark data.')}</p>`);
-    [[z1, OVER.weak], [z2, OVER.traj], [z3, OVER.res]].forEach(([z, list]) => { const ch = el('div', 'chips'); list.forEach(([n, id]) => { const sc = SC.find(s => s.id === id); const a = el('a', '', `<span>${n}</span>${esc(titleOf(sc))}`); a.href = '#' + id; ch.appendChild(a); }); z.appendChild(ch); });
+    [[z1, OVER.weak()], [z2, OVER.traj()], [z3, OVER.res()]].forEach(([z, list]) => { const ch = el('div', 'chips'); list.forEach(sc => { const a = el('a', '', `<span>${sn(sc.id)}</span>${esc(titleOf(sc))}`); a.href = '#' + sc.id; ch.appendChild(a); }); z.appendChild(ch); });
     ov.append(z1, z2, z3, el('div', 'flowline', tr('<b>Merksatz:</b> Die Weak Form erzeugt und ordnet plausible Strukturen. Die Simulation prüft ihre tatsächliche Dynamik. Das BIC entscheidet zwischen den refitteten Kandidaten.', '<b>In one line:</b> the weak form proposes and ranks plausible structures. Simulation tests their actual dynamics. The BIC decides between the refitted candidates.')));
     const host = document.getElementById('scenes'); host.innerHTML = '';
     SC.forEach((sc, i) => {
@@ -972,11 +969,11 @@
 
   const I18N = {
     de: { eyebrow: 'WISP · Weak-form incremental structure pursuit', title: 'WISP Schritt für Schritt', motto: '„In der Weak Form die Struktur suchen; mit der simulierten Trajektorie entscheiden.“',
-      lede: 'Wie WISP aus einer einzigen verrauschten Messreihe eine Differentialgleichung gewinnt, in 21 Szenen, einem Teil über gekoppelte Systeme und einer Übersicht der Ergebnisse. Jede Szene zeigt eine neue Operation und wird Schritt für Schritt aufgebaut. Alle Zahlen sind echte Rechnungen auf Benchmark-Daten (logistisches Wachstum, System 3, 3 % Rauschen), außer in den zwei als konstruiert markierten Lehrbeispielen. Die Ergebnisfolie am Ende zeigt den Benchmark-Vergleich aus dem Manuskript.',
+      lede: 'Wie WISP aus einer einzigen verrauschten Messreihe eine Differentialgleichung gewinnt, in 20 Szenen, einem Teil über gekoppelte Systeme und einer Übersicht der Ergebnisse. Jede Szene zeigt eine neue Operation und wird Schritt für Schritt aufgebaut. Alle Zahlen sind echte Rechnungen auf Benchmark-Daten (logistisches Wachstum, System 3, 3 % Rauschen), außer im als konstruiert markierten Lehrbeispiel. Die Ergebnisfolie am Ende zeigt den Benchmark-Vergleich aus dem Manuskript.',
       hint: 'Weiter mit Mausrad, Pfeiltasten, Leertaste oder Wischen: ein Schritt pro Geste. Die Punkte rechts springen zu jeder Szene.',
       foot: 'Grundlage: Manuskriptentwurf vom 7. November 2026 und das Visualisierungsbriefing zum Prozess. Weak-Form-Pfad, Rauschschätzung und Stopp sind mit den eingefrorenen Q6/Q7-Funktionen gerechnet und im Browser nachgerechnet; Refit-Werte stammen aus den Q9-Läufen (Koeffizientengrenze 1000, Anfangswert mitgeschätzt). Kurven zur Darstellung sind mit SciPy (DOP853, 10⁻¹⁰) aus den gespeicherten Koeffizienten neu integriert.', where: 'WISP Schritt für Schritt' },
     en: { eyebrow: 'WISP · Weak-form incremental structure pursuit', title: 'WISP step by step', motto: '“Search for the structure in the weak form; decide with the simulated trajectory.”',
-      lede: 'How WISP turns a single noisy time series into a differential equation, in 21 scenes, a part on coupled systems and an overview of the results. Each scene introduces one new operation and is built up step by step. All numbers are real computations on benchmark data (logistic growth, system 3, 3 % noise), except in the two teaching examples marked as constructed. The results slide at the end shows the benchmark comparison from the manuscript.',
+      lede: 'How WISP turns a single noisy time series into a differential equation, in 20 scenes, a part on coupled systems and an overview of the results. Each scene introduces one new operation and is built up step by step. All numbers are real computations on benchmark data (logistic growth, system 3, 3 % noise), except in the one teaching example marked as constructed. The results slide at the end shows the benchmark comparison from the manuscript.',
       hint: 'Advance with the mouse wheel, arrow keys, space bar or a swipe: one step per gesture. The dots on the right jump to any scene.',
       foot: 'Basis: manuscript draft of 7 November 2026 and the process visualization briefing. The weak-form path, noise estimate and stop are computed with the frozen Q6/Q7 functions and recomputed in the browser; refit values come from the Q9 runs (coefficient bound 1000, initial state estimated). Display curves are re-integrated with SciPy (DOP853, 10⁻¹⁰) from the stored coefficients.', where: 'WISP step by step' } };
   document.querySelectorAll('.lang button').forEach(b => b.addEventListener('click', () => {
