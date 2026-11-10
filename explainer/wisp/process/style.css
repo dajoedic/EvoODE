@@ -102,12 +102,16 @@ details.deep p { font-size: 14.5px; }
 .note { font-size: 13.5px; color: var(--muted); margin-top: 8px; }
 /* cards (library terms) */
 .cards { display: flex; flex-wrap: wrap; gap: 8px; }
-.card { font: 600 16px var(--f-mono); border: 1.5px solid var(--rule); border-radius: 6px; padding: 8px 12px; min-width: 64px; text-align: center; background: var(--bg); color: var(--muted); transition: border-color .25s, background .25s, color .25s; }
+.card { font: 600 16px var(--f-mono); border: 1.5px solid var(--rule); border-radius: 6px; padding: 8px 12px; min-width: 64px; text-align: center; background: var(--bg); color: var(--muted); transition: border-color .6s, background .6s, color .6s; }
 .card small { display: block; font: 500 12px var(--f-body); color: var(--muted); margin-top: 2px; }
 .card.on { border-color: var(--foba); background: var(--foba-soft); color: var(--ink); }
 .card.lib { border-color: var(--lib); color: var(--ink); }
 .toggle { cursor: pointer; }
 .shelf-label { font: 600 12px var(--f-body); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin: 0 0 6px; }
+.blk, .card small.coef { transition: opacity .6s ease, transform .6s cubic-bezier(.2,.7,.2,1); }
+.blk.later { opacity: 0; transform: translateY(10px); }
+.card small.coef.later { opacity: 0; }
+.figure .replay { font-size: 13px; padding: 3px 10px; }
 /* tables */
 .tablewrap { overflow-x: auto; }
 table.ntab { border-collapse: collapse; font: 13.5px var(--f-mono); font-variant-numeric: tabular-nums; width: 100%; }

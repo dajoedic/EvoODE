@@ -248,19 +248,120 @@
       () => tr(`<p>Nicht verwechseln: Zwei Bausteine in <b>einer</b> Gleichung sind etwas anderes als <b>zwei gekoppelte</b> Gleichungen. Gekoppelte Systeme kommen in Teil C. Bis dahin gibt es eine Zustandsgröße und eine Gleichung.</p>`,
         `<p>Do not confuse: two blocks in <b>one</b> equation are not the same as <b>two coupled</b> equations. Coupled systems come in part C. Until then there is one state variable and one equation.</p>`)],
     draw(fig, k) {
+      // Fixed layout: every block exists in every step and only fades in, so nothing jumps between steps.
       fig.appendChild(el('div', 'shelf-label', tr('Bibliothek Θ', 'Library Θ')));
       const cards = el('div', 'cards');
-      names.forEach(n => { const c = el('div', 'card lib' + (k >= 1 && (n === 'u' || n === 'u²') ? ' on' : ''), esc(n)); c.dataset.k = 'card:' + n; if (k >= 1 && (n === 'u' || n === 'u²')) c.appendChild(el('small', '', n === 'u' ? 'a' : 'b')); cards.appendChild(c); });
+      names.forEach(n => {
+        const pick = n === 'u' || n === 'u²', on = k >= 1 && pick;
+        const c = el('div', 'card lib' + (on ? ' on' : ''), esc(n)); c.dataset.k = 'card:' + n;
+        const lab = el('small', 'coef' + (on ? '' : ' later'), pick ? (n === 'u' ? 'a' : 'b') : '&nbsp;'); lab.dataset.k = 'coef:' + n;
+        c.appendChild(lab); cards.appendChild(c);
+      });
       fig.appendChild(cards);
-      if (k >= 1) fig.appendChild(el('div', 'formula', 'du/dt = <span class="k-foba">a</span>·u + <span class="k-foba">b</span>·u²'));
-      if (k >= 2) {
-        fig.appendChild(el('div', 'formula wrap', tr('Eine Gleichung, zwei Bausteine:<br>du/dt = a·u + b·u²', 'One equation, two blocks:<br>du/dt = a·u + b·u²')));
-        fig.appendChild(el('div', 'formula wrap', tr('Zwei gekoppelte Gleichungen (Teil C):<br>dx/dt = a·x − b·x·y<br>dy/dt = −c·y + d·x·y', 'Two coupled equations (part C):<br>dx/dt = a·x − b·x·y<br>dy/dt = −c·y + d·x·y')));
-      }
+      const blk = (cls, html, from, key) => { const b = el('div', cls + ' blk' + (k >= from ? '' : ' later'), html); b.dataset.k = key; fig.appendChild(b); };
+      blk('formula', 'du/dt = <span class="k-foba">a</span>·u + <span class="k-foba">b</span>·u²', 1, 'f02a');
+      blk('formula wrap', tr('Eine Gleichung, zwei Bausteine:<br>du/dt = a·u + b·u²', 'One equation, two blocks:<br>du/dt = a·u + b·u²'), 2, 'f02b');
+      blk('formula wrap', tr('Zwei gekoppelte Gleichungen (Teil C):<br>dx/dt = a·x − b·x·y<br>dy/dt = −c·y + d·x·y', 'Two coupled equations (part C):<br>dx/dt = a·x − b·x·y<br>dy/dt = −c·y + d·x·y'), 2, 'f02c');
     }, steps: 3 });
 
   // 03
   const d1 = C.differences(t, y, 1);
+  // 03 animation: zoom onto a few neighbouring measurements, build Δt, Δy and Δy/Δt for eight pairs (each
+  // quotient drops into the lower panel), zoom out, then sweep once over the whole series. Step 1 shows the
+  // data alone in the same layout, so the step change itself does not move anything.
+  let s03Last = -1;
+  function slopeZoom(fig, svg, k, play) {
+    const run = (fig._zoomRun = (fig._zoomRun || 0) + 1);
+    const n = t.length, start = t.findIndex(v => v >= 2), PAIRS = 8, PAIR = 900;
+    const L0 = 52, R0 = 506, T1 = 14, B1 = 154, T2 = 210, B2 = 364, lo2 = -150, hi2 = 150;
+    const Z_IN = 800, Z_FULL = 2000, P_END = Z_FULL + PAIRS * PAIR, Z_OUT = P_END + 1000, END = Z_OUT + 2800;
+    const tgtDom = [t[start - 2], t[start + 13]], vis = y.slice(start - 2, start + 14);
+    const vlo = Math.min(...vis), vhi = Math.max(...vis), mg = (vhi - vlo) * .15, tgtRng = [vlo - mg, vhi + mg];
+    const mix = (a, b, e) => a + (b - a) * e, cl = v => Math.max(0, Math.min(1, v));
+    const clampD = v => Math.max(lo2, Math.min(hi2, v));
+    const uid = 'z' + Math.random().toString(36).slice(2, 8);
+    const defs = S('defs', {}, svg);
+    S('rect', { x: L0, y: T1 - 4, width: R0 - L0, height: B1 - T1 + 8 }, S('clipPath', { id: uid + 't' }, defs));
+    S('rect', { x: L0, y: T2 - 4, width: R0 - L0, height: B2 - T2 + 8 }, S('clipPath', { id: uid + 'b' }, defs));
+    const axT = S('g', { class: 'axis' }, svg), axB = S('g', { class: 'axis' }, svg);
+    const gT = S('g', { 'clip-path': `url(#${uid}t)` }, svg), gB = S('g', { 'clip-path': `url(#${uid}b)` }, svg);
+    const dotEls = y.map((v, i) => S('circle', { r: 1.8, fill: 'var(--data)', 'fill-opacity': .75, 'data-k': 'y' + i }, gT));
+    const box = S('rect', { fill: 'none', stroke: 'var(--foba)', 'stroke-width': 1.6, rx: 3, pathLength: 1, 'stroke-dasharray': '1 1', opacity: 0 }, svg);
+    const hl = [0, 1].map(() => S('circle', { r: 4.5, fill: 'none', stroke: 'var(--foba)', 'stroke-width': 1.8, opacity: 0 }, gT));
+    const lDt = S('line', { stroke: 'var(--foba)', 'stroke-width': 2, opacity: 0 }, gT), lDy = S('line', { stroke: 'var(--foba)', 'stroke-width': 2, opacity: 0 }, gT);
+    const tDt = TX(svg, 0, 0, 'Δt', { 'font-size': 12.5, 'text-anchor': 'middle', fill: 'var(--foba)', opacity: 0 });
+    const tDy = TX(svg, 0, 0, 'Δy', { 'font-size': 12.5, fill: 'var(--foba)', opacity: 0 });
+    const tVal = TX(svg, 0, 0, '', { 'font-size': 13, class: 'mono', 'font-weight': 600, opacity: 0 });
+    [tDt, tDy].forEach(e => { e.style.fill = 'var(--foba)'; });
+    const line2 = S('path', { fill: 'none', stroke: 'var(--bad)', 'stroke-width': 1 }, gB);
+    const landed = Array.from({ length: PAIRS }, () => S('circle', { r: 3, fill: 'var(--bad)', opacity: 0 }, gB));
+    const flyer = S('circle', { r: 3.5, fill: 'var(--bad)', opacity: 0 }, svg);
+    const cursor = S('line', { stroke: 'var(--muted)', 'stroke-width': 1, 'stroke-dasharray': '3 3', opacity: 0 }, svg);
+
+    function axes(g, dom, rng, top, bot, ylab, ny, xlab, showX) {
+      g.innerHTML = '';
+      const X = v => L0 + (v - dom[0]) / (dom[1] - dom[0]) * (R0 - L0), Y = v => bot - (v - rng[0]) / (rng[1] - rng[0]) * (bot - top);
+      for (const v of niceTicks(rng[0], rng[1], ny)) {
+        S('line', { x1: L0, x2: R0, y1: Y(v), y2: Y(v), class: 'grid' }, g);
+        TX(g, L0 - 6, Y(v) + 4, fmt(v, 3), { 'text-anchor': 'end', 'font-size': 11.5, class: 'muted' });
+      }
+      if (showX) for (const v of niceTicks(dom[0], dom[1], 5)) {
+        S('line', { x1: X(v), x2: X(v), y1: bot, y2: bot + 4, stroke: 'var(--muted)' }, g);
+        TX(g, X(v), bot + 17, fmt(v, 3), { 'text-anchor': 'middle', 'font-size': 11.5, class: 'muted' });
+      }
+      S('line', { x1: L0, x2: R0, y1: bot, y2: bot, stroke: 'var(--muted)', 'stroke-width': .8 }, g);
+      TX(g, L0 - 44, top - 4, ylab, { 'font-size': 12, class: 'muted' });
+      if (xlab) TX(g, R0, bot + 32, xlab, { 'text-anchor': 'end', 'font-size': 12, class: 'muted' });
+    }
+    const set = (e, a) => { for (const key in a) e.setAttribute(key, a[key]); };
+
+    function draw(ms) {
+      const z = ms < Z_IN ? 0 : ms < Z_FULL ? ease((ms - Z_IN) / (Z_FULL - Z_IN)) : ms < P_END ? 1 : ms < Z_OUT ? 1 - ease((ms - P_END) / (Z_OUT - P_END)) : 0;
+      const dom = [mix(0, tgtDom[0], z), mix(10, tgtDom[1], z)], rng = [mix(0, tgtRng[0], z), mix(80, tgtRng[1], z)];
+      const X = v => L0 + (v - dom[0]) / (dom[1] - dom[0]) * (R0 - L0);
+      const Y1 = v => B1 - (v - rng[0]) / (rng[1] - rng[0]) * (B1 - T1), Y2 = v => B2 - (v - lo2) / (hi2 - lo2) * (B2 - T2);
+      const lower = k === 0 ? 0 : cl((ms - Z_IN) / 800);
+      axes(axT, dom, rng, T1, B1, 'u', 4, null, true);
+      axes(axB, dom, [lo2, hi2], T2, B2, 'Δy/Δt', 4, 't', true);
+      axB.setAttribute('opacity', lower);
+      dotEls.forEach((c, i) => { c.setAttribute('cx', X(t[i])); c.setAttribute('cy', Y1(y[i])); c.setAttribute('r', mix(1.8, 3.2, z)); });
+      // zoom box: drawn around the fifteen points, grows with the zoom, gone once the zoom is complete
+      const bx0 = X(tgtDom[0]), bx1 = X(tgtDom[1]), by0 = Y1(tgtRng[1]), by1 = Y1(tgtRng[0]);
+      set(box, { x: bx0, y: by0, width: bx1 - bx0, height: by1 - by0, 'stroke-dashoffset': 1 - cl(ms / Z_IN), opacity: k === 1 && ms < Z_FULL ? 1 - cl((ms - Z_FULL + 300) / 300) : 0 });
+      // the eight neighbour pairs
+      const inPairs = k === 1 && ms >= Z_FULL && ms < P_END, p = Math.min(PAIRS - 1, Math.floor((ms - Z_FULL) / PAIR)), loc = (ms - Z_FULL) - p * PAIR;
+      const a = start + p, b = a + 1, ya = y[a], yb = y[b], d = d1[a].d;
+      [hl[0], hl[1]].forEach((h, j) => set(h, { cx: X(t[a + j]), cy: Y1(y[a + j]), opacity: inPairs ? 1 : 0 }));
+      const gdt = inPairs ? ease(cl(loc / 220)) : 0, gdy = inPairs ? ease(cl((loc - 220) / 200)) : 0;
+      set(lDt, { x1: X(t[a]), y1: Y1(ya), x2: mix(X(t[a]), X(t[b]), gdt), y2: Y1(ya), opacity: inPairs ? 1 : 0 });
+      set(lDy, { x1: X(t[b]), y1: Y1(ya), x2: X(t[b]), y2: mix(Y1(ya), Y1(yb), gdy), opacity: inPairs && loc > 220 ? 1 : 0 });
+      set(tDt, { x: (X(t[a]) + X(t[b])) / 2, y: Y1(ya) + (yb > ya ? 16 : -8), opacity: inPairs && p < 2 ? gdt : 0 });
+      set(tDy, { x: X(t[b]) + 6, y: (Y1(ya) + Y1(yb)) / 2 + 4, opacity: inPairs && p < 2 ? gdy : 0 });
+      tVal.textContent = 'Δy/Δt = ' + fmt(d, 3);
+      const vx = Math.min(R0 - 120, X(t[b]) + 12);
+      set(tVal, { x: vx, y: Math.max(T1 + 14, Math.min(B1 - 6, Y1(Math.max(ya, yb)) - 14)), opacity: inPairs ? cl((loc - 420) / 120) : 0 });
+      const fly = inPairs ? ease(cl((loc - 560) / 300)) : 0, mx = X(d1[a].t);
+      set(flyer, { cx: mx, cy: mix(Y1((ya + yb) / 2), Y2(clampD(d)), fly), opacity: inPairs && loc > 560 && loc < PAIR - 10 ? 1 : 0 });
+      landed.forEach((c, j) => {
+        const done = k === 1 && ms >= Z_FULL + j * PAIR + 860;
+        set(c, { cx: X(d1[start + j].t), cy: Y2(clampD(d1[start + j].d)), opacity: done ? 1 - cl((ms - Z_OUT) / 1200) : 0 });
+      });
+      // the sweep over the whole series
+      const sw = k === 1 ? (ms < Z_OUT ? 0 : ms >= END ? 1 : Math.pow(cl((ms - Z_OUT) / (END - Z_OUT)), 1.6)) : 0, cut = Math.round(sw * (d1.length - 1));
+      line2.setAttribute('d', sw > 0 ? pathD(d1.slice(0, cut + 1).map(q => [X(q.t), Y2(clampD(q.d))])) : '');
+      set(cursor, { x1: X(d1[cut].t), x2: X(d1[cut].t), y1: T1, y2: B2, opacity: sw > 0 && sw < 1 ? .8 : 0 });
+    }
+    if (k === 0 || !play || reduced.matches) { draw(k === 0 ? 0 : END); return; }
+    const t0 = performance.now() + 150;
+    draw(0);
+    const tick = now => {
+      if (fig._zoomRun !== run || !svg.isConnected) return;
+      const ms = Math.max(0, now - t0);
+      draw(ms);
+      if (ms < END) requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+  }
   scene({ id: 's03', part: 'weak', title: ['Warum nicht einfach ableiten?', 'Why not simply differentiate?'],
     core: ['Differenzenquotienten verstärken das Messrauschen.', 'Difference quotients amplify measurement noise.'],
     text: [
@@ -270,12 +371,13 @@
         `<p>The result below is jagged: the ${d1.length} difference quotients of our series. The curve above is smooth, yet its slopes jump between ${fmt(Math.min(...d1.map(p => p.d)), 2)} and ${fmt(Math.max(...d1.map(p => p.d)), 2)}. Searching for an equation with these slopes means explaining noise.</p><p>WISP avoids the derivative altogether. It uses an integral relation: the weak form.</p>`)],
     draw(fig, k) {
       const svg = svgBox(fig, 520, 400);
-      const A = frame(svg, { w: 520, h: 190, x0: 0, x1: 10, y0: 0, y1: 80, ylabel: 'u', noX: false });
-      dots(A.g, A, t, y);
-      if (k >= 1) {
-        const lo = -150, hi = 150;
-        const B = frame(svg, { w: 520, h: 200, top: 196, x0: 0, x1: 10, y0: lo, y1: hi, xlabel: 't', ylabel: 'Δy/Δt', ny: 4 });
-        S('path', { d: pathD(d1.map(p => [B.X(p.t), B.Y(Math.max(lo, Math.min(hi, p.d)))])), fill: 'none', stroke: 'var(--bad)', 'stroke-width': 1 }, B.g);
+      // Animate only when coming forward from step 1; arriving from scene 04 shows the finished picture.
+      const play = k === 1 && s03Last === 0; s03Last = k;
+      slopeZoom(fig, svg, k, play);
+      if (k === 1) {
+        const ctr = el('div', 'controls'), again = el('button', 'replay', '↻ ' + tr('Nochmal', 'Again'));
+        again.type = 'button'; again.onclick = () => { fig.innerHTML = ''; slopeZoom(fig, svgBox(fig, 520, 400), 1, true); fig.appendChild(ctr); };
+        ctr.appendChild(again); fig.appendChild(ctr);
       }
     }, steps: 2 });
 
