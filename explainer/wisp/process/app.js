@@ -117,56 +117,43 @@
   const truth = L.truth[0];
 
   /* ---------- title page: a quiet teaser on the real path of system 3 ----------
-     Only the data, one curve and the current set of blocks: the curve morphs from candidate to candidate
-     (each simulated from its weak-form coefficients), then into the refitted winner, and finally the true
-     curve appears underneath. Plays once when the title page is shown; a small button replays it. */
+     The label starts as "?". At every step each free block takes the place of the "?" in orange and its curve
+     (weak-form fit, simulated) is drawn bold; the block WISP takes turns green in the label and the plot; a block
+     the backward step removes is struck through in red. At the stop every free block is tried and none is taken.
+     Then the refit and the true curve. Plays once when the title page is shown; a small button replays it. */
   let introRun = 0;
   function introAnim(host) {
     const run = ++introRun;
     host.innerHTML = '';
-    const Wd = 560, H = 360, ml = 6, mr = 6, mt = 46, mb = 14, cands = L.candidates;
-    const svg = S('svg', { viewBox: `0 0 ${Wd} ${H}`, role: 'img', 'aria-label': tr('Animation: die Modellkurve nähert sich Schritt für Schritt den Messdaten', 'Animation: the model curve approaches the data step by step') }, host);
+    const Wd = 560, H = 360, ml = 6, mr = 6, mt = 50, mb = 14, cands = L.candidates;
+    const svg = S('svg', { viewBox: `0 0 ${Wd} ${H}`, role: 'img', 'aria-label': tr('Animation: WISP probiert Baustein für Baustein und nähert sich den Messdaten', 'Animation: WISP tries block after block and approaches the data') }, host);
     const X = v => ml + v / 10 * (Wd - ml - mr), Y = v => mt + (1 - v / 90) * (H - mt - mb);
     const cid = 'iclip' + run;
     S('rect', { x: 0, y: mt - 6, width: Wd, height: H - mt - mb + 12 }, S('clipPath', { id: cid }, S('defs', {}, svg)));
-    const label = TX(svg, Wd / 2, 26, '', { 'text-anchor': 'middle', 'font-size': 20, class: 'mono' });
-    label.style.transition = 'opacity .15s, fill .8s'; label.style.fill = 'var(--foba)';
+    const label = TX(svg, Wd / 2, 28, '', { 'text-anchor': 'middle', 'font-size': 22, class: 'mono' });
     const truthP = S('path', { fill: 'none', stroke: 'var(--muted)', 'stroke-width': 9, 'stroke-opacity': 0, 'stroke-linecap': 'round', 'clip-path': `url(#${cid})` }, svg);
-    truthP.style.transition = 'stroke-opacity 1.2s';
+    truthP.style.transition = 'stroke-opacity 1.4s';
     const dotG = S('g', { opacity: 0 }, svg);
     dotG.style.transition = 'opacity 1.2s';
     t.forEach((tt, i) => S('circle', { cx: X(tt), cy: Y(y[i]), r: 2, fill: 'var(--data)', 'fill-opacity': .55 }, dotG));
-    const curveP = S('path', { fill: 'none', stroke: 'var(--foba)', 'stroke-width': 3, 'stroke-linecap': 'round', 'clip-path': `url(#${cid})` }, svg);
-    curveP.style.transition = 'stroke .8s';
+    const curveG = S('g', { 'clip-path': `url(#${cid})` }, svg);
     const ctr = el('div', 'controls'), again = el('button', 'replay', '↻');
     again.type = 'button'; again.title = again.ariaLabel = tr('Nochmal abspielen', 'Play again');
     again.onclick = () => introAnim(host); ctr.appendChild(again); host.appendChild(ctr);
 
-    const ys = c => c.map(r => (r[0] == null ? 120 : Math.max(-30, Math.min(120, r[0]))));
-    const dOf = v => pathD(t.map((tt, i) => [X(tt), Y(v[i])]));
-    truthP.setAttribute('d', dOf(L.clean.map(r => r[0])));
-    const alive = () => run === introRun && host.isConnected;
-    const wait = ms => new Promise(res => setTimeout(res, reduced.matches ? 0 : ms));
-    let cur = null;
-    const morphTo = (v, ms) => new Promise(res => {
-      if (!cur || reduced.matches) { cur = v; curveP.setAttribute('d', dOf(v)); return res(); }
-      const a = cur, t0 = performance.now();
-      const f = now => {
-        if (!alive()) return res();
-        const p = Math.min(1, (now - t0) / ms), e = ease(p);
-        cur = a.map((x, i) => x + (v[i] - x) * e);
-        curveP.setAttribute('d', dOf(cur));
-        if (p < 1) requestAnimationFrame(f); else res();
-      };
-      requestAnimationFrame(f);
-    });
-    const say = async txt => { label.style.opacity = 0; await wait(150); label.textContent = txt; label.style.opacity = 1; };
-    const setOf = c => c.support[0].join(' + ');
-
-    // Alternatives tried at each step: every free block added to the current set, weak-form fit (core.js),
-    // simulated from the first measurement with RK4 (matches the stored candidate curves to 5e-5).
-    const simulate = (S, coef) => {
-      const f = u => S.reduce((acc, j, k) => acc + coef[k] * C.LIB1[j](u), 0);
+    const COL = { base: 'var(--ink)', trial: 'var(--foba)', pick: 'var(--traj)', drop: 'var(--bad)', sep: 'var(--muted)' };
+    // parts: [[term, role]]; role base | trial | pick | drop; '?' is a trial placeholder.
+    const setLabel = parts => {
+      label.innerHTML = '';
+      parts.forEach(([txt, role], i) => {
+        if (i) { const sp = S('tspan', {}, label); sp.textContent = ' + '; sp.style.fill = COL.sep; }
+        const sp = S('tspan', {}, label); sp.textContent = txt; sp.style.fill = COL[role];
+        if (role === 'drop') sp.style.textDecoration = 'line-through';
+        if (role !== 'base') sp.style.fontWeight = 600;
+      });
+    };
+    const simulate = (S0, coef) => {
+      const f = u => S0.reduce((acc, j, q) => acc + coef[q] * C.LIB1[j](u), 0);
       let u = y[0]; const out = [u];
       for (let i = 0; i + 1 < t.length; i++) {
         const h = (t[i + 1] - t[i]) / 4;
@@ -176,33 +163,84 @@
       }
       return out;
     };
-    const trialCurve = set => { const S = set.map(idx).sort((p, q) => p - q); return simulate(S, FIT.solve(S).coef); };
-    const ghosts = S('g', { 'clip-path': `url(#${cid})` }, svg);
-    svg.insertBefore(ghosts, curveP);
-    ghosts.style.transition = 'opacity .5s';
-    const ghost = (v, color) => S('path', { d: dOf(ys(v.map(x => [x]))), fill: 'none', stroke: color, 'stroke-width': 1.8, 'stroke-opacity': .45 }, ghosts);
-    const clearGhosts = async () => { ghosts.style.opacity = 0; await wait(500); ghosts.innerHTML = ''; ghosts.style.opacity = 1; };
+    // Weak-form fit of a block set, simulated from the first measurement (matches the stored candidate curves to 5e-5).
+    const trialCurve = set => { const S0 = set.map(idx).sort((p, q) => p - q); return simulate(S0, FIT.solve(S0).coef); };
+    const clampV = v => v.map(x => Math.max(-30, Math.min(120, x)));
+    const dOf = v => pathD(t.map((tt, i) => [X(tt), Y(v[i])]));
+    const alive = () => run === introRun && host.isConnected;
+    const wait = ms => new Promise(res => setTimeout(res, reduced.matches ? 0 : ms));
+    const path = (v, color, w) => {
+      const p = S('path', { d: dOf(clampV(v)), fill: 'none', stroke: color, 'stroke-width': w, 'stroke-linecap': 'round' }, curveG);
+      p.style.transition = 'stroke .5s, stroke-width .5s, stroke-opacity .5s, opacity .6s';
+      return p;
+    };
+    const drawIn = (p, ms) => { if (!reduced.matches) { p.setAttribute('pathLength', 1); p.animate([{ strokeDasharray: '1 1', strokeDashoffset: 1 }, { strokeDasharray: '1 1', strokeDashoffset: 0 }], { duration: ms, easing: 'ease-out' }); } };
+    const morphPath = (p, a, b, ms) => new Promise(res => {
+      if (reduced.matches) { p.setAttribute('d', dOf(clampV(b))); return res(); }
+      const t0 = performance.now(), A = clampV(a), B = clampV(b);
+      const f = now => {
+        if (!alive()) return res();
+        const e = ease(Math.min(1, (now - t0) / ms));
+        p.setAttribute('d', dOf(A.map((x, i) => x + (B[i] - x) * e)));
+        if (e < 1) requestAnimationFrame(f); else res();
+      };
+      requestAnimationFrame(f);
+    });
+    const fadeOut = async ps => { ps.forEach(p => p.setAttribute('opacity', 0)); await wait(600); ps.forEach(p => p.remove()); };
 
     (async () => {
-      await wait(150); dotG.setAttribute('opacity', 1); await wait(900);
-      cur = t.map(() => y[0]); curveP.setAttribute('d', dOf(cur));
-      for (const [i, c] of cands.entries()) {
+      setLabel([['?', 'trial']]);
+      await wait(200); dotG.setAttribute('opacity', 1); await wait(1200);
+      let base = [], baseCurve = null, basePath = null;
+      for (let i = 0; i <= steps.length; i++) {
         if (!alive()) return;
-        const base = states[i], free = names.filter(n => !base.includes(n));
-        say(base.length ? base.join(' + ') + ' + ?' : '?');
-        for (const n of free) { if (!alive()) return; ghost(trialCurve([...base, n]), 'var(--foba)'); await wait(140); }
-        await wait(200);
-        say(setOf(c));
-        clearGhosts();
-        await morphTo(ys(c.start_curve), 750); await wait(250);
+        const free = names.filter(n => !base.includes(n)), stp = steps[i];
+        if (basePath) { basePath.setAttribute('stroke', 'var(--muted)'); basePath.setAttribute('stroke-width', 2); basePath.setAttribute('stroke-opacity', .5); }
+        setLabel([...base.map(n => [n, 'base']), ['?', 'trial']]);
+        await wait(700);
+        const tried = [];
+        let prev = null;
+        for (const n of free) {
+          if (!alive()) return;
+          if (prev) { prev.setAttribute('stroke-width', 1.4); prev.setAttribute('stroke-opacity', .35); }
+          setLabel([...base.map(m => [m, 'base']), [n, 'trial']]);
+          const v = trialCurve([...base, n]), p = path(v, 'var(--foba)', 3);
+          drawIn(p, 380); tried.push({ n, v, p }); prev = p;
+          await wait(620);
+        }
+        if (prev) { prev.setAttribute('stroke-width', 1.4); prev.setAttribute('stroke-opacity', .35); }
+        if (!stp) {
+          // stop: no block beats the noise, nothing is taken
+          setLabel(base.map(m => [m, 'base']));
+          await fadeOut(tried.map(x => x.p));
+          if (basePath) { basePath.setAttribute('stroke', 'var(--traj)'); basePath.setAttribute('stroke-width', 3); basePath.setAttribute('stroke-opacity', 1); }
+          break;
+        }
+        const pick = tried.find(x => x.n === stp.added.term);
+        setLabel([...base.map(m => [m, 'base']), [pick.n, 'pick']]);
+        pick.p.setAttribute('stroke', 'var(--traj)'); pick.p.setAttribute('stroke-width', 3.2); pick.p.setAttribute('stroke-opacity', 1);
+        curveG.appendChild(pick.p);
+        await fadeOut([...tried.filter(x => x !== pick).map(x => x.p), ...(basePath ? [basePath] : [])]);
+        await wait(500);
+        let state = [...base, pick.n], curve = pick.v;
+        const rem = (stp.backward.find(b => b.removed) || {}).removed;
+        if (rem) {
+          setLabel(state.map(m => [m, m === rem.term ? 'drop' : m === pick.n ? 'pick' : 'base']));
+          await wait(900);
+          state = state.filter(m => m !== rem.term);
+          const after = cands[i].start_curve.map(r => r[0]);
+          setLabel(state.map(m => [m, m === pick.n ? 'pick' : 'base']));
+          await morphPath(pick.p, curve, after, 900);
+          curve = after;
+          await wait(400);
+        }
+        base = state.slice().sort((a, b) => idx(a) - idx(b)); baseCurve = curve; basePath = pick.p;
       }
       if (!alive()) return;
-      curveP.setAttribute('stroke', 'var(--traj)'); label.style.fill = 'var(--traj)';
-      for (const c of cands) { if (!alive()) return; ghost(c.fit_curve.map(r => r[0]), 'var(--traj)'); await wait(160); }
-      await wait(200);
-      say(setOf(winner));
-      clearGhosts();
-      await morphTo(ys(winner.fit_curve), 900); await wait(500);
+      // trajectory refit of the winner, then the true curve underneath
+      setLabel(winner.support[0].map(m => [m, 'pick']));
+      await morphPath(basePath, baseCurve, winner.fit_curve.map(r => r[0]), 1000);
+      await wait(600);
       if (!alive()) return;
       truthP.setAttribute('stroke-opacity', .35); dotG.setAttribute('opacity', .3);
     })();
