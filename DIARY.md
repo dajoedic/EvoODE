@@ -21,6 +21,27 @@ Nonlinear Dynamics on rejection. Mechanical Systems and Signal Processing (~9) n
 **Decision (user):** the venue is not fixed now; at the end the user makes a proposal to the co-authors. The text is
 written so that it carries for the ladder (concept first, benchmark behind it).
 
+### Q9-A analysis code built and dry-run on Q8 (Q9 still unopened)
+
+`analysis/scripts/aggregate/build_wisp_paper_cells.py` (per-cell tables: WISP via the frozen Q8 conversion, size rules
+a/b/c; WP-N47, MATLAB WSINDy and WeakIdent B2 at every configuration; missing WISP cell = miss) and
+`q9a_claims.py` (claims C1–C9, primary family with Holm, secondary tests, robustness checks, descriptive tables,
+LaTeX macros), tests `analysis/tests/test_q9a_claims.py` (6 passed: exact sign-flip against brute force, Holm,
+in-favour choice per metric, missing = miss and monotone, macro names).
+
+**Control on Q8 C1000 (590 cells, 588 complete; the 2 Lorenz cells missing as in the draft):** the per-cell table
+equals the draft's Q8 evaluation on every cell and field (structure raw and pruned, reconstruction, generalization;
+k, size error, truth on path, candidates, loss evaluations for all three size rules; WSINDy rows). The claims script
+reproduces the draft's numbers (structure 45.5 / 45.0 % vs WSINDy 22.7 / 23.8 %; generalization 64.8 / 71.2 % vs
+45.5 / 38.8 %; selection 79 / 82; over-sizing 49 % vs 20 %; surrogate rates); p-values are now exact
+(0.0156 / 0.0078 / 0.0195 / 0.0156). A second run is identical (fixed seed). No Q9 file was read.
+
+**Heads-up from the dry run, not a result:** on the Q8 subset (σ ∈ {0.01, 0.05}, realization 1) C3 fails for
+WeakIdent on structure — native dim 2: 37.5 vs 39.1 % on the 64 cells scored for its library; extended (with sin/cos)
+dim 2: 45.0 vs 27.5 %, p = 0.17; dim 1 native p = 0.06. Generalization is far ahead against WeakIdent (p ≤ 0.016).
+On Q8, C9 fails on dim 1 surrogate generalization (p = 0.062, as in the draft). Q9 decides; the fallback wording of
+Q9-A §4 is ready for both. B1 and B3 are reported as pending until they have run.
+
 ### Protocol Q9-A frozen: the paper's claims before any Q9 number
 <!-- b7bb398 -->
 

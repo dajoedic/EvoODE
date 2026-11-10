@@ -1281,3 +1281,23 @@ the cell's system to its dimension; `--json` also writes `outputs/q9_progress/q9
 ```bash
 python analysis/scripts/aggregate/q9_progress.py --json
 ```
+
+### Paper analysis (protocol Q9-A, `docs/sideproject_residual_growth_protocol_q9_claims.md`)
+
+Two steps. The first builds per-cell tables (WISP choices for size rules a/b/c, every reference configuration on the
+same cells; a WISP cell without complete records is `missing` = miss); the second evaluates the frozen claims.
+Both refuse to overwrite their output directory.
+
+```bash
+cd analysis/scripts/aggregate
+# 1. per-cell tables (~1-3 min; Q9 records collected from Orion into outputs/sideproject_q9_<sha>/out/)
+python build_wisp_paper_cells.py --protocol Q9 --paths ../../../outputs/sideproject_q9_inputs/grid/q9_paths.json \
+  --input '../../../outputs/sideproject_q9_cdfaa7d6218c56a0ec63ea9e794f6f35e46792c1/out/index_*.jsonl' \
+  [--reference B1=<dir with details*.csv>] [--reference B3=<dir>] --output-dir <cells dir>
+# 2. claims, tests, robustness, descriptive tables, LaTeX macros (~20 s)
+python q9a_claims.py --input-dir <cells dir> --output-dir <claims dir> --strict
+# Dry run required by Q9-A §1.3 (Q8 C1000 cells, no --strict); tests of the statistics:
+python build_wisp_paper_cells.py --protocol Q8 --paths ../../../outputs/sideproject_q8_inputs/grid/q8_paths.json \
+  --input '../../../outputs/sideproject_q8_512dd5b…/out_sneak_2026-11-07/index_*.jsonl' --output-dir <dir>
+python -m pytest -q analysis/tests/test_q9a_claims.py
+```

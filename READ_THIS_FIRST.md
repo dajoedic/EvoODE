@@ -34,7 +34,7 @@ Lokale Quelle der Statusseite: Scratchpad dieser Sitzung `evoode_orion.html` (ge
 Git Bash: `-p '{"spec":{"parallelism":40}}'`.
 **NFS-Zugriff:** `MSYS_NO_PATHCONV=1 oc exec <laufender-pod> -- tar czf - -C /outputs/<lauf> out > ….tgz` (komprimiert).
 **Rückweg C-6 nach W-4:** `oc patch job evoode-phase-c-c6-grid-capped -n scch-das -p '{"spec":{"parallelism":24}}'` (Git Bash).
-Für eine neue Q9-Hochrechnung braucht es die Kostentabelle der Planung, die Shard-Liste hat nur die Reihenfolge.
+Für eine neue Q9-Hochrechnung: die Plankosten je Zelle stehen in `q9_paths.json` (`planned_seconds`), nicht in der Shard-Liste.
 
 ## 2. WISP-Prozessseite (W-X) — für den Termin am 10.11. fertig
 
