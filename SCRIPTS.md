@@ -1274,3 +1274,10 @@ Orion: the image is the commit that added the runner; inputs go to `/outputs/sid
 (`q9_paths.json`, `q9_probe_paths.json`, both shard lists, `docs/sideproject_residual_growth_protocol_q9.md`).
 Manifests `k8s/sideproject_q9_probe_job.yaml` (one shard per block) and `k8s/sideproject_q9_job.yaml`. The export is
 read in place from `/outputs/phase_c_c6_data_conditions_5dd1df8…` (no staging).
+
+Progress per dimension (read-only `oc`, needs a valid login; ~5 s). Maps each pod's completion index to the shard list,
+the cell's system to its dimension; `--json` also writes `outputs/q9_progress/q9_progress.json` for the status page.
+
+```bash
+python analysis/scripts/aggregate/q9_progress.py --json
+```
