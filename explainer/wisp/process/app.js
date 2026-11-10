@@ -115,6 +115,110 @@
   const winner = L.candidates.find(c => c.id === L.winner);
   const truth = L.truth[0];
 
+  /* ---------- title page: the whole procedure as one animation, on the real path of system 3 ----------
+     Data, then per path step: noise test (real gain against chance gain), add (and backward removal), weak fit
+     (the candidate simulated from its weak-form coefficients, x0 = first measurement); then the stop, the
+     trajectory refit of every candidate, the BIC choice and the comparison with the true equation. Plays once
+     when the title page is shown; a button replays it. */
+  let introRun = 0;
+  function introAnim(host) {
+    const run = ++introRun;
+    host.innerHTML = '';
+    const Wd = 560, H = 430, cands = L.candidates, th = L.threshold;
+    const svg = S('svg', { viewBox: `0 0 ${Wd} ${H}`, role: 'img', 'aria-label': tr('Animation: der gesamte WISP-Ablauf auf den Bakteriendaten', 'Animation: the whole WISP procedure on the bacteria data') }, host);
+    const cap = TX(svg, 0, 17, '', { 'font-size': 16, 'font-weight': 600 });
+    const chipW = 78, chipGap = (Wd - names.length * chipW) / (names.length - 1), chip = {};
+    names.forEach((n, i) => {
+      const g = S('g', { class: 'ichip', transform: `translate(${i * (chipW + chipGap)},30)` }, svg);
+      S('rect', { width: chipW, height: 28, rx: 6 }, g);
+      TX(g, chipW / 2, 19, n, { 'text-anchor': 'middle', 'font-size': 14, class: 'mono' });
+      S('line', { x1: 10, y1: 14, x2: chipW - 10, y2: 14, class: 'strike' }, g);
+      chip[n] = g;
+    });
+    const PH = 262;
+    const F = frame(svg, { w: Wd, h: PH, top: 70, x0: 0, x1: 10, y0: 0, y1: 90, xlabel: 't', ylabel: 'u', m: { l: 44, r: 8, t: 10, b: 30 } });
+    const cid = 'iclip' + run;
+    S('rect', { x: F.m.l, y: F.top + F.m.t, width: Wd - F.m.l - F.m.r, height: PH - F.m.t - F.m.b }, S('clipPath', { id: cid }, S('defs', {}, svg)));
+    const truthG = S('g', { class: 'fade', opacity: 0, 'clip-path': `url(#${cid})` }, F.g);
+    curve(truthG, F, t, L.clean.map(r => r[0]), { stroke: 'var(--muted)', 'stroke-width': 7, 'stroke-opacity': .4 });
+    const dotG = S('g', { class: 'fade', opacity: 0 }, F.g);
+    dots(dotG, F, t, y, { 'fill-opacity': .5, 'data-k': null });
+    const curveG = S('g', { 'clip-path': `url(#${cid})` }, F.g);
+    const ln = [0, 1, 2].map(i => TX(svg, 0, 362 + i * 26, '', { 'font-size': i === 1 ? 18 : 13.5, class: i === 1 ? 'mono' : 'muted' }));
+    const ctr = el('div', 'controls'), again = el('button', '', '↻ ' + tr('Nochmal abspielen', 'Play again'));
+    again.type = 'button'; again.onclick = () => introAnim(host); ctr.appendChild(again); host.appendChild(ctr);
+
+    const clampU = c => c.map(r => (r[0] == null ? null : Math.max(-20, Math.min(120, r[0]))));
+    const draw = (data, attrs, ms) => {
+      const p = curve(curveG, F, t, clampU(data), attrs);
+      if (ms && !reduced.matches) { p.setAttribute('pathLength', 1); p.animate([{ strokeDasharray: '1 1', strokeDashoffset: 1 }, { strokeDasharray: '1 1', strokeDashoffset: 0 }], { duration: ms, easing: 'ease-in-out' }); }
+      return p;
+    };
+    const lines = (a, b, c) => [a, b, c].forEach((v, i) => { ln[i].innerHTML = v || ''; });
+    const span = (txt, color, extra) => `<tspan fill="${color}"${extra || ''}>${esc(txt)}</tspan>`;
+    const testLines = (row, best) => {
+      const go = row.ratio >= th;
+      lines(tr(best ? `Rauschtest, stärkster freier Baustein ${row.term}:` : `Rauschtest für ${row.term}: echter Gewinn gegen reinen Zufall`, best ? `Noise test, strongest free block ${row.term}:` : `Noise test for ${row.term}: real gain against pure chance`),
+        span(fmt(row.actual, 4), 'var(--ink)') + span('  vs.  ', 'var(--muted)') + span(fmt(row.noise, 2), 'var(--noise)') + span(go ? tr('   → weiter', '   → go on') : tr('   → Stopp', '   → stop'), go ? 'var(--good)' : 'var(--bad)', ' font-weight="700"'),
+        tr(`${fmt(row.ratio, 3)}-fach, nötig mindestens ${fmt(th, 2)}-fach`, `${fmt(row.ratio, 3)} times, at least ${fmt(th, 2)} times needed`));
+    };
+    const wait = ms => new Promise(res => setTimeout(res, reduced.matches ? 0 : ms));
+    const alive = () => run === introRun && host.isConnected;
+
+    const beats = [];
+    beats.push(async () => { cap.textContent = tr(`Messdaten: ${L.n} verrauschte Zählungen`, `Data: ${L.n} noisy counts`); dotG.setAttribute('opacity', 1); lines(); await wait(1600); });
+    let model = null;
+    steps.forEach((stp, i) => {
+      const row = stops[i].rows.find(r => r.term === stp.added.term), rem = (stp.backward.find(b => b.removed) || {}).removed;
+      beats.push(async () => { cap.textContent = tr(`Schritt ${i + 1}: lohnt sich ${stp.added.term}?`, `Step ${i + 1}: is ${stp.added.term} worth it?`); testLines(row); await wait(2300); });
+      beats.push(async () => { cap.textContent = `+ ${stp.added.term}`; chip[stp.added.term].classList.add('on'); await wait(900); });
+      if (rem) beats.push(async () => {
+        cap.textContent = tr(`− ${rem.term}: jetzt überflüssig`, `− ${rem.term}: now redundant`);
+        chip[rem.term].classList.add('out'); await wait(1100);
+        if (!alive()) return;
+        chip[rem.term].classList.remove('on', 'out'); await wait(300);
+      });
+      beats.push(async () => {
+        const c = cands[i];
+        cap.textContent = tr('Weak-Form-Fit', 'Weak-form fit');
+        if (model) model.setAttribute('stroke-opacity', .18);
+        model = draw(c.start_curve, { stroke: 'var(--foba)', 'stroke-width': 2.2 }, 1100);
+        lines(tr('Koeffizienten aus der Weak Form, simuliert:', 'Coefficients from the weak form, simulated:'), esc(eqText(c.support[0], c.weak, 'du/dt', 3)), '');
+        await wait(1700);
+      });
+    });
+    beats.push(async () => {
+      const last = stops[steps.length], best = last.rows.reduce((a, b) => (b.ratio > a.ratio ? b : a));
+      cap.textContent = tr('Kein Baustein schlägt mehr das Rauschen', 'No block beats the noise any more');
+      testLines(best, true); await wait(2800);
+    });
+    beats.push(async () => {
+      cap.textContent = tr(`Pfad fertig: ${cands.length} Kandidaten werden echt simuliert und nachgefittet`, `Path done: ${cands.length} candidates are simulated and refitted`);
+      curveG.innerHTML = ''; model = null;
+      lines(tr('Trajektorien-Refit: Koeffizienten und Startwert gegen die Messungen', 'Trajectory refit: coefficients and initial state against the measurements'), esc(cands.map((c, i) => `S${i + 1} ${setText(c.support[0])}`).join('  ')), '');
+      for (const c of cands) { if (!alive()) return; draw(c.fit_curve, { stroke: 'var(--traj)', 'stroke-width': 1.6, 'stroke-opacity': .45 }, 700); await wait(800); }
+      await wait(600);
+    });
+    beats.push(async () => {
+      cap.textContent = tr('BIC: Fehler plus Strafe je Parameter, kleinste Summe gewinnt', 'BIC: error plus a penalty per parameter, smallest sum wins');
+      const wi = cands.findIndex(c => c.id === L.winner);
+      lines('BIC', cands.map((c, i) => span(`S${i + 1} ${fx(c.bic, 0)}`, i === wi ? 'var(--traj)' : 'var(--muted)', i === wi ? ' font-weight="700"' : '')).join(span('   ', 'var(--muted)')), tr(`Gewählt: ${setText(winner.support[0])}`, `Chosen: ${setText(winner.support[0])}`));
+      curveG.innerHTML = '';
+      draw(winner.fit_curve, { stroke: 'var(--traj)', 'stroke-width': 2.6 }, 900);
+      await wait(2600);
+    });
+    beats.push(async () => {
+      cap.textContent = tr('Und die wahre Gleichung? WISP hat sie nie gesehen', 'And the true equation? WISP never saw it');
+      truthG.setAttribute('opacity', 1); dotG.setAttribute('opacity', .25);
+      const terms = winner.support[0];
+      lines(tr('grau: wahre Kurve, grün: WISP', 'grey: true curve, green: WISP'),
+        span('WISP  ', 'var(--traj)') + esc(eqText(terms, winner.params, 'du/dt', 4)),
+        span(tr('wahr  ', 'true  '), 'var(--muted)') + esc(eqText(terms, terms.map(n => truth[n]), 'du/dt', 4)));
+      ln[2].setAttribute('class', 'mono'); ln[2].setAttribute('font-size', 18);
+    });
+    (async () => { for (const b of beats) { if (!alive()) return; await b(); } })();
+  }
+
   /* ---------- scenes ---------- */
   const SC = [];
   const scene = d => SC.push(d);
@@ -134,9 +238,14 @@
       dots(F.g, F, t, y);
       if (k >= 1) {
         const b = S('g', {}, F.g);
-        S('rect', { x: 250, y: 150, width: 200, height: 54, rx: 6, fill: 'var(--panel)', stroke: 'var(--rule)' }, b);
-        TX(b, 350, 174, 'du/dt = f(u) = ?', { 'text-anchor': 'middle', 'font-size': 17, class: 'mono', 'font-weight': 600 });
-        TX(b, 350, 194, tr('gesucht', 'wanted'), { 'text-anchor': 'middle', 'font-size': 12, class: 'muted' });
+        S('rect', { x: 250, y: 138, width: 200, height: 86, rx: 6, fill: 'var(--panel)', stroke: 'var(--rule)' }, b);
+        // du/dt set as a stacked fraction, as it is written by hand
+        const fa = { 'text-anchor': 'middle', 'font-size': 17, class: 'mono', 'font-weight': 600 };
+        TX(b, 294, 170, 'du', fa);
+        S('line', { x1: 279, x2: 309, y1: 177, y2: 177, stroke: 'var(--ink)', 'stroke-width': 1.4 }, b);
+        TX(b, 294, 195, 'dt', fa);
+        TX(b, 318, 183, '= f(u) = ?', Object.assign({}, fa, { 'text-anchor': 'start' }));
+        TX(b, 350, 215, tr('gesucht', 'wanted'), { 'text-anchor': 'middle', 'font-size': 12, class: 'muted' });
       }
     }, steps: 2 });
 
@@ -850,6 +959,7 @@
     document.documentElement.lang = lang;
     document.querySelectorAll('[data-i18n]').forEach(e => { e.innerHTML = I18N[lang][e.dataset.i18n]; });
     document.querySelectorAll('.lang button').forEach(b => b.setAttribute('aria-pressed', b.dataset.lang === lang));
+    introAnim(document.getElementById('intro-anim'));
     const ov = document.getElementById('overview'); ov.innerHTML = '';
     const z1 = el('div', 'zone weak', `<h2>${tr('Weak-Form-Raum', 'Weak-form space')}</h2><p>${tr('Lineare Regression auf Fenster-Integralen. Schnelle Strukturvorschläge, keine Ableitung der Messwerte, keine Simulation je Test.', 'Linear regression on window integrals. Fast structure proposals, no differentiation of the data, no simulation per test.')}</p>`);
     const z2 = el('div', 'zone traj', `<h2>${tr('Trajektorienraum', 'Trajectory space')}</h2><p>${tr('Echte ODE-Simulation, nichtlineare Anpassung, Auswahl nach Fehler und Komplexität.', 'Actual ODE simulation, nonlinear fitting, selection by error and complexity.')}</p>`);
@@ -931,6 +1041,7 @@
       const neighbour = Math.abs(i - from) === 1 && before ? before.fig : null;
       sc.setK(dir > 0 ? 0 : sc.steps - 1, neighbour ? { from: neighbour, delay: 420 } : {});
     }
+    if (i === 0 && from !== 0 && !instant) introAnim(document.getElementById('intro-anim'));
     pageIdx = i; chrome();
     try { history.replaceState(null, '', '#' + tgt.id); } catch (e) { /* sandboxed */ }
     if (deck) { if (instant || reduced.matches) { cancelAnimationFrame(anim); window.scrollTo(0, pageTop(tgt)); } else slideTo(pageTop(tgt)); }

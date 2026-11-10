@@ -46,6 +46,18 @@ h1 { font: 600 clamp(32px, 5vw, 50px)/1.08 var(--f-display); margin: 8px 0 14px;
 .motto { font: italic 400 21px/1.4 var(--f-display); margin: 0 0 12px; }
 .motto em { font-style: normal; }
 .lede { color: var(--muted); max-width: 64ch; margin: 0; }
+/* title page: the whole procedure as one animation */
+.intro-grid { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 6fr); gap: clamp(24px, 3vw, 56px); align-items: center; }
+.intro-anim { align-self: center; }
+.intro-anim .ichip rect { fill: var(--bg); stroke: var(--rule); stroke-width: 1.5; transition: fill .35s, stroke .35s; }
+.intro-anim .ichip text { fill: var(--muted); transition: fill .35s; }
+.intro-anim .ichip.on rect { fill: var(--foba-soft); stroke: var(--foba); }
+.intro-anim .ichip.on text { fill: var(--ink); font-weight: 600; }
+.intro-anim .ichip.out rect { stroke: var(--bad); }
+.intro-anim .ichip .strike { stroke: var(--bad); stroke-width: 2; opacity: 0; transition: opacity .3s; }
+.intro-anim .ichip.out .strike { opacity: 1; }
+.intro-anim .fade { transition: opacity .6s; }
+.intro-anim .controls { margin-top: 6px; }
 /* overview */
 .overview { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-block: 18px 28px; }
 .zone { background: var(--panel); border: 1px solid var(--rule); border-radius: 8px; padding: 14px 16px; min-width: 0; }
@@ -147,7 +159,7 @@ html.deck .steptext p { max-width: 64ch; }
 html.deck .page { height: 100vh; height: 100dvh; padding-block: calc(var(--barh) + 18px) 22px; overflow: hidden; }
 html.deck .intro, html.deck .overview-page { display: flex; flex-direction: column; justify-content: safe center; overflow-y: auto; }
 html.deck .intro .hero { padding-block: 0; max-width: 820px; }
-html.deck .intro h1 { font-size: clamp(40px, 6vw, 68px); }
+html.deck .intro h1 { font-size: clamp(40px, 4.6vw, 68px); }
 html.deck .overview-page .overview { margin-block: 0; }
 .page:focus, [data-scroll]:focus { outline: none; }
 html.deck .scene { border-top: 0; align-items: center; align-content: center; scroll-margin-top: 0; }
@@ -163,6 +175,7 @@ html.deck .rail { display: flex; position: fixed; right: max(4px, env(safe-area-
 @media (max-width: 860px) {
   .scene { grid-template-columns: minmax(0, 1fr); gap: 14px; padding-block: 26px; }
   .overview { grid-template-columns: minmax(0, 1fr); }
+  .intro-grid { grid-template-columns: minmax(0, 1fr); }
   .steptext { min-height: 0; }
   .math { white-space: normal; }
 }
