@@ -21,6 +21,19 @@ Nonlinear Dynamics on rejection. Mechanical Systems and Signal Processing (~9) n
 **Decision (user):** the venue is not fixed now; at the end the user makes a proposal to the co-authors. The text is
 written so that it carries for the ladder (concept first, benchmark behind it).
 
+### Protocol Q9-A frozen: the paper's claims before any Q9 number
+<!-- b7bb398 -->
+
+`docs/sideproject_residual_growth_protocol_q9_claims.md`, frozen with the user's decisions while Q9 stood at 69 / 4,284
+shards, none collected. Nine claims with criterion and fallback wording; primary family (Holm, α = 0.05): WISP vs
+WSINDy (MATLAB original) on structure and generalization, dim 1 and 2 exact, noisy population = the 10 conditions
+σ 1–5 % × ρ ∈ {0, 0.5}, 3 realizations, both ICs (60 cells per system). Systems as units, sign-flip test exact,
+cluster bootstrap 10,000. A WISP cell without a record counts as a miss (user: acceptable because later cells can only
+raise the numbers; re-runs on more cells are allowed). Ablations stay Q8 evidence. Wording rules govern content only;
+the user writes the text. Coverage checked: Q9 grid has exactly this population; WSINDy (both variants) and WP-N47 rows
+exist for all C-6 cells, WeakIdent for all but dimension 4; B1 and B3 run on the same 4,284 cells after Q9.
+Next: the aggregation script, tested on Q8 C1000 cells before Q9 is opened.
+
 ### WISP process page for the meeting of 10.11.
 <!-- 69795d2 f079794 -->
 
