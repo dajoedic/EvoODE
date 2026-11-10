@@ -48,16 +48,10 @@ h1 { font: 600 clamp(32px, 5vw, 50px)/1.08 var(--f-display); margin: 8px 0 14px;
 .lede { color: var(--muted); max-width: 64ch; margin: 0; }
 /* title page: the whole procedure as one animation */
 .intro-grid { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 6fr); gap: clamp(24px, 3vw, 56px); align-items: center; }
-.intro-anim { align-self: center; }
-.intro-anim .ichip rect { fill: var(--bg); stroke: var(--rule); stroke-width: 1.5; transition: fill .35s, stroke .35s; }
-.intro-anim .ichip text { fill: var(--muted); transition: fill .35s; }
-.intro-anim .ichip.on rect { fill: var(--foba-soft); stroke: var(--foba); }
-.intro-anim .ichip.on text { fill: var(--ink); font-weight: 600; }
-.intro-anim .ichip.out rect { stroke: var(--bad); }
-.intro-anim .ichip .strike { stroke: var(--bad); stroke-width: 2; opacity: 0; transition: opacity .3s; }
-.intro-anim .ichip.out .strike { opacity: 1; }
-.intro-anim .fade { transition: opacity .6s; }
-.intro-anim .controls { margin-top: 6px; }
+.figure.intro-anim { align-self: center; background: none; border: 0; padding: 0; }
+.intro-anim .controls { justify-content: flex-end; }
+.intro-anim .replay { font-size: 16px; padding: 2px 9px; opacity: .55; border-color: transparent; background: none; }
+.intro-anim .replay:hover { opacity: 1; }
 /* overview */
 .overview { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-block: 18px 28px; }
 .zone { background: var(--panel); border: 1px solid var(--rule); border-radius: 8px; padding: 14px 16px; min-width: 0; }
