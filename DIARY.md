@@ -7,6 +7,7 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 ## 2026-11-10
 
 ### WISP paper: venue requirement, co-authors, journal shortlist
+<!-- 4c836b0 -->
 
 Meeting with the professor (10.11.): the process page was well received; the paper is to "aim high". Requirements
 recorded by the user: **impact factor ≥ 5 as the minimum**; co-authors Stephan Winkler and Michael Affenzeller, possibly
