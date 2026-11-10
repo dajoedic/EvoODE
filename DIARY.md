@@ -4,7 +4,21 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ---
 
-## 2026-11-09
+## 2026-11-10
+
+### WISP paper: venue requirement, co-authors, journal shortlist
+
+Meeting with the professor (10.11.): the process page was well received; the paper is to "aim high". Requirements
+recorded by the user: **impact factor ≥ 5 as the minimum**; co-authors Stephan Winkler and Michael Affenzeller, possibly
+Florian Bachinger; 31.12. stays the user's own target. A real-world application is **Paper 2**, not part of this paper.
+
+Consequence: the earlier G3 candidates fail the bar (J. Comput. Phys. ~3.8–3.9, the home of WSINDy and WeakIdent;
+Chaos ~2.7). Shortlist from aggregator sites (not yet checked in Clarivate JCR): **Communications Physics** (~5.8,
+Nature portfolio, concept framing, desk-rejection risk), **Nonlinear Dynamics** (5.2 → ~5.7–6.0, best topical fit,
+benchmark paper acceptable), **CMAME** (~7–8, scope risk: mechanics). Suggested ladder: Communications Physics first,
+Nonlinear Dynamics on rejection. Mechanical Systems and Signal Processing (~9) noted as a Paper 2 candidate.
+**Decision (user):** the venue is not fixed now; at the end the user makes a proposal to the co-authors. The text is
+written so that it carries for the ladder (concept first, benchmark behind it).
 
 ### WISP process page for the meeting of 10.11.
 <!-- 69795d2 f079794 -->
