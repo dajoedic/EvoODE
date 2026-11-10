@@ -1091,8 +1091,17 @@
       prev.onclick = () => sc.go(-1); next.onclick = () => sc.go(1);
       sec.addEventListener('keydown', e => { if (deck || e.target.closest('input,details')) return; if (e.key === 'ArrowRight') { sc.go(1); e.preventDefault(); } if (e.key === 'ArrowLeft') { sc.go(-1); e.preventDefault(); } });
       sec.append(text, figWrap); host.appendChild(sec);
+      // One figure height per scene: draw every step once, keep the tallest, so steps never resize the figure.
+      sc.equalize = () => {
+        fig.style.minHeight = '';
+        let h = 0;
+        for (let j = 0; j < sc.steps; j++) { fig.innerHTML = ''; sc.draw(fig, j, () => {}); h = Math.max(h, fig.offsetHeight); }
+        fig.style.minHeight = h + 'px';
+        show();
+      };
       show();
     });
+    SC.forEach(sc => sc.equalize());
     pages = [...document.querySelectorAll('.page')];
     buildRail();
   }
@@ -1199,7 +1208,7 @@
   const watch = () => { obs.disconnect(); pages.forEach(p => obs.observe(p)); };
   window.addEventListener('hashchange', () => { const i = pages.findIndex(p => '#' + p.id === location.hash); if (i >= 0 && i !== pageIdx) goPage(i, 1); });
   let resizeT = 0;
-  window.addEventListener('resize', () => { clearTimeout(resizeT); resizeT = setTimeout(() => { setMode(); goPage(pageIdx, 1, true); }, 120); });
+  window.addEventListener('resize', () => { clearTimeout(resizeT); resizeT = setTimeout(() => { setMode(); SC.forEach(sc => sc.equalize && sc.equalize()); goPage(pageIdx, 1, true); }, 120); });
   reduced.addEventListener('change', () => { setMode(); goPage(pageIdx, 1, true); });
 
   const I18N = {
@@ -1219,5 +1228,5 @@
   render(); watch();
   const startAt = location.hash ? pages.findIndex(p => '#' + p.id === location.hash) : 0;
   goPage(Math.max(0, startAt), 1, true);
-  if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => goPage(pageIdx, 1, true));
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { SC.forEach(sc => sc.equalize()); goPage(pageIdx, 1, true); });
 })();

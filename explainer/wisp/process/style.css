@@ -143,7 +143,7 @@ footer p { max-width: 80ch; }
 /* deck: full-screen pages, eased slides (deck mode is set by app.js on wide, tall screens without reduced motion) */
 :root { --barh: 42px; }
 .hint { display: none; font-size: 14px; color: var(--muted); margin: 14px 0 0; }
-.figbody { min-width: 0; }
+.figbody { min-width: 0; display: flow-root; }
 .bar .pos { font: 600 12px var(--f-mono); color: var(--muted); margin-left: 6px; letter-spacing: 0; }
 .rail { display: none; }
 html.deck { overflow: hidden; }
@@ -162,7 +162,7 @@ html.deck .overview-page .overview { margin-block: 0; }
 .page:focus, [data-scroll]:focus { outline: none; }
 html.deck .scene { border-top: 0; align-items: center; align-content: center; scroll-margin-top: 0; }
 html.deck .scene .text { max-height: calc(100dvh - var(--barh) - 44px); overflow-y: auto; padding-right: 4px; }
-html.deck .figure { max-height: calc(100dvh - var(--barh) - 44px); overflow-y: auto; align-self: center; }
+html.deck .figure { max-height: calc(100dvh - var(--barh) - 44px); overflow-y: auto; overflow-x: hidden; align-self: center; }
 html.deck .figure svg { max-height: calc(100dvh - var(--barh) - 170px); }
 html.deck footer.page { display: flex; align-items: center; border-top: 0; font-size: 15px; }
 html.deck .rail { display: flex; position: fixed; right: max(4px, env(safe-area-inset-right, 0px)); top: 50%; transform: translateY(-50%); flex-direction: column; gap: 7px; z-index: 6; padding: 6px 3px; }
