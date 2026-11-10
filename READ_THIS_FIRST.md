@@ -10,98 +10,61 @@ zweites davon. Alles Dauerhafte gehört dorthin, nach `PAPER_1.md` oder ins `DIA
 **Regeln:** wird immer **vollständig überschrieben**, nie angehängt. Was älter als ein paar Tage
 ist, ist vermutlich falsch — dann gilt `CLAUDE.md`.
 
-**Stand: 2026-11-09, ~23:40 (Q9 läuft auf Orion mit 39 Pods; Q8 1 Nachzügler) — WISP-Plan bis 31.12. (CLAUDE.md, „WISP paper — the fixed plan“).**
+**Stand: 2026-11-10, ~13:15 (Q9 läuft mit 39 Pods, Q8 1 Nachzügler; Termin mit dem Professor gelaufen, Prozessseite kam
+„MEGA gut“ an) — WISP-Plan bis 31.12. (CLAUDE.md, „WISP paper — the fixed plan“).**
 
 ## 1. Was läuft
 
-**Orion, geprüft 09.11. ~23:35** (Statusseite https://claude.ai/artifact/9zzJsoGCBahPsuNkaaf3DN, Version 15):
+**Orion, geprüft 10.11. ~13:00** (Statusseite https://claude.ai/artifact/9zzJsoGCBahPsuNkaaf3DN, Version 16, mit neuem
+Abschnitt „Q9 nach Dimension“):
 
 | Lauf | Stand | Wenn fertig |
 |---|---|---|
-| **W-4 = Q9-Gitter** (`cdfaa7d`, 4.284 Shards, C1000) | 66/4.284, 0 Fehler, **Parallelität 39** (09.11. 23:35 von Hand 37 → 39); teuerste Shards zuerst, daher anfangs wenige fertige | letzte Hochrechnung (08.11.) Ende ~19.–20.11.; 21-Tage-Regel |
-| **W-2 = Q8-Gitter** (`512dd5b`) | 3.539/3.540, 1 Nachzügler (Index 0, läuft seit ~7 Tagen) | Q9 von Hand auf 40; offizielle Aggregation `aggregate_sideproject_q8.py` |
-| **C-6 gekappt** | 1.435/3.366, **Parallelität 0** | nach W-4 zurück auf 24 |
+| **W-4 = Q9-Gitter** (`cdfaa7d`, 4.284 Shards, C1000) | 69/4.284, 0 Fehler, Parallelität 39 | letzte Hochrechnung (08.11.) Ende ~19.–20.11.; 21-Tage-Regel |
+| **W-2 = Q8-Gitter** (`512dd5b`) | 3.539/3.540, 1 Nachzügler (Index 0, seit 7 Tagen 13 Stunden) | Q9 von Hand auf 40; offizielle Aggregation `aggregate_sideproject_q8.py` |
+| **C-6 gekappt** | 1.435/3.366, Parallelität 0 | nach W-4 zurück auf 24 |
 
-**Kerne:** 39 Q9 + 1 Q8 = 40. `q9_shift.sh` läuft **nicht** mehr (letzte Logzeile 08.11. 09:49); Anheben geht von Hand.
-Der Auto-Modus-Klassifizierer blockiert `oc patch` aus Claude heraus → der Nutzer führt den Patch aus.
-**PowerShell 5.1 (bestätigt 09.11.):** `oc patch job evoode-sideproject-q9 -n scch-das -p '{\"spec\":{\"parallelism\":40}}'`
-(ohne die Backslashes: „invalid character 's'“). Git Bash: `-p '{"spec":{"parallelism":40}}'`.
-**NFS-Zugriff:** S: hing 07.11. Schnellweg: `MSYS_NO_PATHCONV=1 oc exec <laufender-pod> -- tar czf - -C /outputs/<lauf> out > ….tgz`
-(komprimiert; unkomprimiert bricht der Strom bei ~250 MB ab).
+**Q9 je Dimension (10.11. 13:02):** dim 1 0/1.564 · dim 2 0/1.904 · dim 3 58/680 (35 laufend) · dim 4 11/136 (4 laufend).
+Teuerste Shards zuerst; die laufenden dim-3/4-Pods rechnen seit dem Start am 07.11. (~83 h). Bei jedem Cluster-Check:
+`python analysis/scripts/aggregate/q9_progress.py --json` → Tabelle im Chat und Abschnitt auf der Statusseite nachziehen.
+Lokale Quelle der Statusseite: Scratchpad dieser Sitzung `evoode_orion.html` (geht verloren → vorher Artifact `read`).
+
+**Kerne:** 39 Q9 + 1 Q8 = 40. Anheben geht von Hand, der Nutzer führt `oc patch` aus (Auto-Modus blockiert es für Claude).
+**PowerShell 5.1:** `oc patch job evoode-sideproject-q9 -n scch-das -p '{\"spec\":{\"parallelism\":40}}'`.
+Git Bash: `-p '{"spec":{"parallelism":40}}'`.
+**NFS-Zugriff:** `MSYS_NO_PATHCONV=1 oc exec <laufender-pod> -- tar czf - -C /outputs/<lauf> out > ….tgz` (komprimiert).
 **Rückweg C-6 nach W-4:** `oc patch job evoode-phase-c-c6-grid-capped -n scch-das -p '{"spec":{"parallelism":24}}'` (Git Bash).
-Shard-Liste ohne Plankosten (`outputs/sideproject_q9_inputs/grid/q9_grid.shards_cost_desc.txt`) → für eine neue Hochrechnung
-braucht es die Kostentabelle der Planung, nicht nur die Reihenfolge.
+Für eine neue Q9-Hochrechnung braucht es die Kostentabelle der Planung, die Shard-Liste hat nur die Reihenfolge.
 
-## 2. WISP-Explorable (W-X)
+## 2. WISP-Prozessseite (W-X) — für den Termin am 10.11. fertig
 
-- **NEU 09.11.: Prozessseite nach dem Briefing des Nutzers** (`WISP_Visualisierungsbriefing_Prozess.md`, Repo-Wurzel,
-  uncommittet, gehört dem Nutzer): 21 Szenen + Teil C (LV), DE/EN, alle Zahlen echt (System 3 IC1 σ 0,03 Weak-Pfad mit
-  den Q6/Q7-Funktionen; Refit/BIC aus den Q9-C1000-Records; LV System 27). Vorschau
-  https://claude.ai/artifact/Rp4K8dBdWCFzzwQ44Tnfnk. Quelle `explainer/wisp/process/`, Daten
-  `python analysis/scripts/explainer/build_wisp_process_data.py`, Seite `python analysis/scripts/explainer/build_wisp_process.py`
-  → `explainer/wisp/dist/wisp_process.html`, Prüfung `node explainer/wisp/process/check_core.cjs`. Für den Termin Di 10.11.
-  gedacht; Version 26 bleibt unangetastet. Offen: Nutzer-Review.
-- **Stand 08.11. nachts (Nutzer: Tag war 4/10, „wir hängen noch am Anfang“).** Seite 1 überarbeitet: Petrischale
-  (2 glatte Kolonien als eine Fläche, Agar-/Kolonienfarben), alle 512 Messwerte aus Schritt 1, Kurve am Ende, Formel
-  du/dt = 0,79u − 0,0106u² unten rechts, spielt einmal + Wiederholen-Knopf, Punkte fliegen beim Weiterblättern in
-  Schritt 1. Seite 2 („Bau selbst“) ausgeblendet (`data-chapter="later"`). Kap. 1: Schritt 2 Tempo, Schritt 4 fester
-  15-Punkte-Ausschnitt mit 10 Deltas, Schritt 5 sechs Deltas je Länge fallen farbig nach unten, Schritt 8 grüne Linie
-  erst bei Erreichen, Schritt 9 Start Kurvenmitte, Schritt 11 Beschriftung. Kap. 2 Schritt 3 Balken/Kurve synchron.
-  **Nächstes Mal: Kap. 1–3 fertig machen** (Nutzer findet Kap. 3 ff. unverständlich); keine automatischen
-  Wiederholungen irgendwo. Vorschau-Version 12.
-- **AKTUELL (07.11. spät): Version 26 weitergeführt**, Vorschau https://claude.ai/artifact/SiqLBbf49hUy9fHSFWSFte
-  (`c305a3a`). Kap. 1–5 Bakterien (C1000-Neufit `data/logistic_c1000_refit_*.jsonl`), Kap. 6 = „Und wenn es mehrere
-  Gleichungen gibt?“ mit LV `sys0027_ic2_s0.03_r0_n2` (C1000). Daten: v26-`live.json` + `build_wisp_lv_running.py`
-  (ersetzt nur examples[0], gate_status, Bakterien-Fits). Petrischale simuliert (2 Kolonien, faserig). Nutzer:
-  **Kap. 1–3 müssen sitzen**, ab Kap. 3 wird es unverständlich → als Nächstes Kap. 3 überarbeiten. Alte Darstellungstests
-  `test_wisp_explainer_x*` nicht nachgezogen. Der LV-Neubau unten (`story/`) ist verworfen.
-- Verworfen: Neustart als LV-Geschichte nach Konzept `explainer/wisp/CONCEPT.md` (vom Nutzer abgenommen).
-  Quelle `explainer/wisp/story/`, Build `python analysis/scripts/explainer/build_wisp_story.py` → `dist/wisp_story.html`,
-  Vorschau https://claude.ai/artifact/M7vvNRbcV1LA344CrmS82u (Version 1, `01a750c`). 15 Seiten A/B/C, DE/EN, hell/dunkel,
-  Screenshots Desktop+Handy geprüft (Scratchpad-Skript `shoot.py`, Playwright mit `channel='msedge'`). Ziel Di 10.11.;
-  **Mo abends Entscheidung**: steht's, sonst Version 26. Offen: Nutzer-Review; Explorer (Konzept C2) fehlt noch.
-  Claude baut selbst; die Codex-Fassung `src/lv/` und die alten Kapitel unten sind Altbestand.
-- Alt: Preview https://claude.ai/artifact/XsxgvgYGZdqPkpnzVd2YMQ **Version 26** (05.11. nachts, `a7cd868`) — **inhaltlich
-  vollständig**: Einführung + Kap. 1 (11) · 2 Hinzufügen (5) · 3 Aufräumen/FoBa (7) · 4 Aufhören/Q7 (5) · 5 Fitten +
-  Wählen/BIC (6) · 6 Zwei Gleichungen (System 27) · 7 Wenn es schiefgeht (System 3 ab 21) · 8 Gegenprobe · 9 Wie oft
-  klappt das? (Q7-Ergebnisse vorläufig, SINDy/Weak-SINDy/E-SINDy, MATLAB-WSINDy JKU-bestätigt, Explorer, Glossar).
-  Browser-Check und volle `-k wisp`-Sammlung (77) grün.
-- **Offen:** (1) Nutzer-Idee zur Darstellung der Spiegelung Hinzufügen/Aufräumen (bis dahin schlicht gebaut, Kap. 3/4);
-  (2) Nutzer-Review der neuen Kapitel 5–9; (3) nach G2: Fit-Einstellungen in Kap. 5 über `gates.json`; (4) nach W-4:
-  Datentausch auf Q9 (`results.json`, Julia-Display-Export, `data-claim`-Sätze nachlesen).
-- **Tests:** schnelle Darstellungstests (`test_wisp_explainer_x*.py` ohne `_x2`) + `check_wisp_explainer_js.py` beim
-  Iterieren; volle `-k wisp` (~3–5 min) bei Daten-/Exportänderung; Browser-Check `check_wisp_explainer_fit.py` startet
-  Claude (Codex-Sandbox kann keinen Browser). Im Fit-JSON sind `exponent`/`rawNames` Fehler-Flags (`false` = ok).
-  Julia-Display-Export der Ergebnisse: `--q7-results` (~3 min, 814 Auswertungen).
+Vorschau https://claude.ai/artifact/Rp4K8dBdWCFzzwQ44Tnfnk **Version 22** (letzter Commit `d041885`). Quelle
+`explainer/wisp/process/`, Build `python analysis/scripts/explainer/build_wisp_process.py` → `explainer/wisp/dist/wisp_process.html`,
+Kern-Prüfung `node explainer/wisp/process/check_core.cjs`. Stand 10.11.:
+- Titelseite: Teaser-Animation rechts (echter Pfad System 3: „?“ → jeder freie Term orange mit fetter Kurve, gewählter
+  grün, Entfernen rot durchgestrichen, Stopp, Refit, wahre Kurve). Alternativen im Browser gerechnet (RK4 trifft die
+  gespeicherten Kandidatenkurven auf 5·10⁻⁵).
+- Szene 01 du/dt als Bruch; 02 festes Layout mit Einblenden; 03 Zoom auf 8 Nachbarpaare + Lauf über die ganze Reihe
+  (1,6× Tempo); 09 Backward-Balken ausgerichtet.
+- Jede Szene hat feste Grafik- und Schritttexthöhe (alle Schritte einmal vermessen) → nichts springt; für alle 21 Szenen
+  im Browser nachgemessen.
+- Version 26 des alten Explorables (https://claude.ai/artifact/XsxgvgYGZdqPkpnzVd2YMQ) und `story/` unangetastet bzw. verworfen.
+- Offen: weitere Nutzer-Wünsche; nach W-4 Datentausch auf Q9.
 
 ## 3. Als Nächstes
 
-0. **Neu 08.11.:** Paperentwurf `paper/wisp/wisp.pdf` (Q8-Stand, uncommittet; `make_data.py` liest Q8 aus einem
-   Scratchpad). Externes Review eingearbeitet; **Q-Cal** fertig (`826a127`: χ²-Stopp liberal, hohe Trennschärfe, im
-   Paper als Limitation und nächster Schritt). **Q-B** eingefroren (`4309870`): SINDy-Familie mit WISP-Bibliothek und
-   13-λ-Raster, WeakIdent nativ + mit sin/cos, ODEFormer (WP-N48-Harness, ~150–180 Kern-h). Stand: **B1 gebaut und
-   kontrolliert** (`a68968c`, ~43 Kern-h, braucht Image-Neubau → Nutzer pusht, Orion nach Q9); **WeakIdent komplett auf
-   dem Laptop** (`65b467f`, 2 × 4.148 Fits dim 1–3, 0 Fehler, dim 4 vom Original nicht unterstützt); **ODEFormer** Orion
-   nach Q9. Erster Blick auf WeakIdent (τ = 0,05) im DIARY. **τ-Raster (Nachtrag 5) fertig 09.11. 03:09**, technisch sauber, τ = 0,05 identisch zum ersten Lauf (8.568/8.568), Daten `a41f2bd`. Ergebnis (DIARY 08.11.): die Autoren lagen schon am Optimum, Oracle-τ bringt im Mittel ≤ 1,5 pp — keine Schlussfolgerung ändert sich.
-
-1. ~~G2~~ **entschieden 07.11.: C1000 + Q7-Stopp** (`DIARY.md`). ~~Q9 bauen und starten~~ **läuft seit 07.11. 02:29.**
-2. Q9 beobachten: Hochrechnung aus den ersten langen Shards; >21 Tage → Nutzer entscheidet (Plan W-4).
-3. Offizielle Q8-Aggregation, sobald 3.540/3.540.
-4. **Termin mit dem Professor Di 10.11., 30 min.** Folien https://claude.ai/artifact/Fi25YcnmvhWFo4yRC7yc1i (privat):
-   Folien „von nichts zu WISP“ → **WISP live im Explorable (Kern, ~12 min)** → Folien „von WISP zum PhD“ (Plan, Journal,
-   Promotion, drei Entscheidungen); Methoden-/Ergebnisfolien als Reserve am Ende. Explorable bis Dienstag: Kapitel 3
-   Aufräumen, 4 Aufhören, 5 Fitten/Wählen, 6 Ergebnisse — Nutzer kümmert sich. Lücke Folie „Weg zur Promotion“:
-   Vorgabe Doktoratsstudium und Zielzeitpunkt.
+1. Q9 beobachten (je Dimension, s. o.): Hochrechnung, sobald die erste dim-3/4-Welle durch ist; >21 Tage → Nutzer entscheidet.
+2. Q8-Nachzügler fertig → Nutzer hebt Q9 auf 40; offizielle Q8-Aggregation.
+3. Q-B: B1 (SINDy-Familie, WISP-Bibliothek, `a68968c`) braucht Image-Neubau (Nutzer pusht), Orion nach Q9; ODEFormer nach Q9.
+   WeakIdent fertig (`65b467f`, τ-Raster `a41f2bd`).
+4. Paperentwurf `paper/wisp/` (uncommittet, Q8-Stand) → nach W-4 `make_data.py` auf Q9 umstellen und committen.
+5. Termin-Ergebnisse vom 10.11. (Professor) nachtragen, sobald der Nutzer berichtet.
 
 > **BLINDREGEL C-6** gilt unverändert: keine C-6-EvoGrow-Ergebnisse ansehen, nur technische Prüfung.
 
 **Feste Regeln:** Claude pusht nie nach GitLab, nach GitHub nur mit ausdrücklicher Erlaubnis. Keine harten Zeit-Cuts.
-MATLAB nur MATLAB (kein Octave): `C:\Program Files\MATLAB\R2026b\bin\matlab.exe`. Orion-Login abgelaufen →
-`oc login --web https://api.orion.scch.at:6443`. Orion-Ergebnisse unter `S:\BigDataOrion\data-science\joedicke\` (VPN).
+MATLAB nur MATLAB (kein Octave). Orion-Login abgelaufen → `oc login --web https://api.orion.scch.at:6443`.
 Codex: `codex exec -s workspace-write -c 'windows.sandbox="unelevated"' "Lies codex/CODEX_PROTOCOL.md und arbeite den
-Auftrag in codex/CURRENT_TASK.md ab." < /dev/null` (Hintergrund); ein per TaskStop angehaltener Lauf kann als
-verwaister Prozess weiterlaufen — prüfen und dessen halbe Änderungen zurücksetzen. Nutzer erlaubt Claude auch, selbst zu
-implementieren (03.11.).
-**Uncommittet, nicht von Claude:** WP-N48b-Dateien (PySR, pausiert nach §9.4d) und `output/`.
-
-**Statusseite „EvoODE auf Orion“:** https://claude.ai/artifact/9zzJsoGCBahPsuNkaaf3DN — Version 13 (05.11., ~10:00).
+Auftrag in codex/CURRENT_TASK.md ab." < /dev/null` (Hintergrund). Claude darf auch selbst implementieren (03.11.).
+**Uncommittet, nicht von Claude:** WP-N48b-Dateien (PySR, pausiert nach §9.4d), `codex/`-Dateien, `explainer/wisp/src/lv/`,
+LV-/Intro-Tests und -Berichte, `WISP_Visualisierungsbriefing_Prozess.md` (gehört dem Nutzer), `paper/wisp/`, `output/`.
