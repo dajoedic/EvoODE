@@ -395,8 +395,8 @@
     draw(0);
     const tick = now => {
       if (fig._zoomRun !== run || !svg.isConnected) return;
-      const ms = Math.max(0, now - t0);
-      draw(ms);
+      const ms = Math.max(0, now - t0) * 1.6; // playback speed
+      draw(Math.min(ms, END));
       if (ms < END) requestAnimationFrame(tick);
     };
     requestAnimationFrame(tick);
