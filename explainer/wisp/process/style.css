@@ -72,7 +72,7 @@ h1 { font: 600 clamp(32px, 5vw, 50px)/1.08 var(--f-display); margin: 8px 0 14px;
 .scene .snum { font: 600 13px var(--f-mono); color: var(--muted); }
 .scene h3 { font: 600 25px/1.2 var(--f-display); margin: 4px 0 10px; text-wrap: balance; }
 .core { font-weight: 600; margin: 0 0 10px; }
-.steptext { min-height: 7.5em; }
+.steptext { min-height: 7.5em; display: flow-root; }
 .steptext p { margin: 0 0 10px; max-width: 62ch; }
 .scene[data-part="weak"] .snum { color: var(--lib); } .scene[data-part="traj"] .snum { color: var(--traj); }
 .scene[data-part="coupled"] .snum { color: var(--foba); }

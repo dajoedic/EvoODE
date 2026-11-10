@@ -85,9 +85,10 @@
     if (o.axis) TX(svg, w - 4, top + rows.length * rowH + 28, o.axis, { 'text-anchor': 'end', 'font-size': 11.5, class: 'muted' });
     rows.forEach((r, i) => {
       const yy = top + i * rowH;
-      TX(svg, left - 8, yy + rowH / 2 + 5, r.label, { 'text-anchor': 'end', 'font-size': 13.5, class: 'mono', 'data-k': 'bl:' + r.label });
+      TX(svg, o.labelStart ? 4 : left - 8, yy + rowH / 2 + 5, r.label, { 'text-anchor': o.labelStart ? 'start' : 'end', 'font-size': 13.5, class: 'mono', 'data-k': 'bl:' + r.label });
       S('rect', { x: left, y: yy + 4, width: Math.max(1.5, X(r.v) - left), height: rowH - 9, rx: 2, fill: r.color || 'var(--lib)', 'fill-opacity': r.dim ? .35 : .9, 'data-k': 'bar:' + r.label }, svg);
       TX(svg, w - right + 10, yy + rowH / 2 + 5, r.text || fmt(r.v, 3), { 'font-size': 12.5, class: r.dim ? 'muted' : '', 'data-k': 'bv:' + r.label });
+      if (r.tail) TX(svg, w - right + 10 + (o.tailX || 56), yy + rowH / 2 + 5, r.tail, { 'font-size': 12.5, 'data-k': 'bt:' + r.label });
     });
     if (o.threshold != null) {
       S('line', { x1: X(o.threshold), x2: X(o.threshold), y1: top - 12, y2: top + rows.length * rowH, stroke: o.thColor || 'var(--ink)', 'stroke-width': 1.6, 'stroke-dasharray': '5 3' }, svg);
@@ -514,7 +515,7 @@
       const { s, c } = BW[k], st = steps[s], chk = st.backward[c], th = L.nu * st.added.gain;
       fig.appendChild(el('div', 'eqline', `+ ${st.added.term}  ·  ${tr('Gewinn', 'gain')} ${fmt(st.added.gain, 3)}  ·  ν·g = ${fmt(th, 3)}`));
       const svg = svgBox(fig, 520, 160);
-      hbars(svg, chk.checks.map(x => ({ label: tr('ohne ', 'without ') + x.term, v: x.cost, color: x.qualifies ? 'var(--bad)' : 'var(--foba)', text: fmt(x.cost, 3) + (chk.removed && chk.removed.term === x.term ? tr(' → raus', ' → out') : tr(' → bleibt', ' → stays')) })), { lo: 1e-5, hi: 1, left: 100, threshold: th, thLabel: 'ν·g = ' + fmt(th, 3), axis: tr('Fehleranstieg beim Weglassen (log)', 'error rise when left out (log)') });
+      hbars(svg, chk.checks.map(x => ({ label: tr('ohne ', 'without ') + x.term, v: x.cost, color: x.qualifies ? 'var(--bad)' : 'var(--foba)', text: fmt(x.cost, 3), tail: chk.removed && chk.removed.term === x.term ? tr('→ raus', '→ out') : tr('→ bleibt', '→ stays') })), { lo: 1e-5, hi: 1, left: 100, labelStart: true, right: 130, threshold: th, thLabel: 'ν·g = ' + fmt(th, 3), axis: tr('Fehleranstieg beim Weglassen (log)', 'error rise when left out (log)') });
     }, steps: 4 });
 
   // 11 archive
@@ -1093,6 +1094,11 @@
       sec.append(text, figWrap); host.appendChild(sec);
       // One figure height per scene: draw every step once, keep the tallest, so steps never resize the figure.
       sc.equalize = () => {
+        // The step text gets the same treatment, so title and core sentence never move between steps.
+        st.style.minHeight = '';
+        let th = 0;
+        for (let j = 0; j < sc.steps; j++) { const tx = sc.text[j] || sc.text[sc.text.length - 1]; st.innerHTML = typeof tx === 'function' ? tx() : tx; th = Math.max(th, st.offsetHeight); }
+        st.style.minHeight = th + 'px';
         fig.style.minHeight = '';
         let h = 0;
         for (let j = 0; j < sc.steps; j++) { fig.innerHTML = ''; sc.draw(fig, j, () => {}); h = Math.max(h, fig.offsetHeight); }
