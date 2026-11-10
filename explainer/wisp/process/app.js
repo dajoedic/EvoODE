@@ -129,7 +129,7 @@
     const cid = 'iclip' + run;
     S('rect', { x: 0, y: mt - 6, width: Wd, height: H - mt - mb + 12 }, S('clipPath', { id: cid }, S('defs', {}, svg)));
     const label = TX(svg, Wd / 2, 26, '', { 'text-anchor': 'middle', 'font-size': 20, class: 'mono' });
-    label.style.transition = 'opacity .4s, fill .8s'; label.style.fill = 'var(--foba)';
+    label.style.transition = 'opacity .15s, fill .8s'; label.style.fill = 'var(--foba)';
     const truthP = S('path', { fill: 'none', stroke: 'var(--muted)', 'stroke-width': 9, 'stroke-opacity': 0, 'stroke-linecap': 'round', 'clip-path': `url(#${cid})` }, svg);
     truthP.style.transition = 'stroke-opacity 1.2s';
     const dotG = S('g', { opacity: 0 }, svg);
@@ -159,21 +159,49 @@
       };
       requestAnimationFrame(f);
     });
-    const say = async txt => { label.style.opacity = 0; await wait(250); label.textContent = txt; label.style.opacity = 1; };
+    const say = async txt => { label.style.opacity = 0; await wait(150); label.textContent = txt; label.style.opacity = 1; };
     const setOf = c => c.support[0].join(' + ');
 
+    // Alternatives tried at each step: every free block added to the current set, weak-form fit (core.js),
+    // simulated from the first measurement with RK4 (matches the stored candidate curves to 5e-5).
+    const simulate = (S, coef) => {
+      const f = u => S.reduce((acc, j, k) => acc + coef[k] * C.LIB1[j](u), 0);
+      let u = y[0]; const out = [u];
+      for (let i = 0; i + 1 < t.length; i++) {
+        const h = (t[i + 1] - t[i]) / 4;
+        for (let q = 0; q < 4; q++) { const k1 = f(u), k2 = f(u + h / 2 * k1), k3 = f(u + h / 2 * k2), k4 = f(u + h * k3); u += h / 6 * (k1 + 2 * k2 + 2 * k3 + k4); }
+        if (!isFinite(u) || Math.abs(u) > 1e4) { while (out.length < t.length) out.push(1e4); return out; }
+        out.push(u);
+      }
+      return out;
+    };
+    const trialCurve = set => { const S = set.map(idx).sort((p, q) => p - q); return simulate(S, FIT.solve(S).coef); };
+    const ghosts = S('g', { 'clip-path': `url(#${cid})` }, svg);
+    svg.insertBefore(ghosts, curveP);
+    ghosts.style.transition = 'opacity .5s';
+    const ghost = (v, color) => S('path', { d: dOf(ys(v.map(x => [x]))), fill: 'none', stroke: color, 'stroke-width': 1.8, 'stroke-opacity': .45 }, ghosts);
+    const clearGhosts = async () => { ghosts.style.opacity = 0; await wait(500); ghosts.innerHTML = ''; ghosts.style.opacity = 1; };
+
     (async () => {
-      await wait(200); dotG.setAttribute('opacity', 1); await wait(1400);
+      await wait(150); dotG.setAttribute('opacity', 1); await wait(900);
+      cur = t.map(() => y[0]); curveP.setAttribute('d', dOf(cur));
       for (const [i, c] of cands.entries()) {
         if (!alive()) return;
+        const base = states[i], free = names.filter(n => !base.includes(n));
+        say(base.length ? base.join(' + ') + ' + ?' : '?');
+        for (const n of free) { if (!alive()) return; ghost(trialCurve([...base, n]), 'var(--foba)'); await wait(140); }
+        await wait(200);
         say(setOf(c));
-        if (i === 0) { cur = ys(c.start_curve).map(() => y[0]); curveP.setAttribute('d', dOf(cur)); }
-        await morphTo(ys(c.start_curve), 1400); await wait(900);
+        clearGhosts();
+        await morphTo(ys(c.start_curve), 750); await wait(250);
       }
       if (!alive()) return;
       curveP.setAttribute('stroke', 'var(--traj)'); label.style.fill = 'var(--traj)';
+      for (const c of cands) { if (!alive()) return; ghost(c.fit_curve.map(r => r[0]), 'var(--traj)'); await wait(160); }
+      await wait(200);
       say(setOf(winner));
-      await morphTo(ys(winner.fit_curve), 1600); await wait(900);
+      clearGhosts();
+      await morphTo(ys(winner.fit_curve), 900); await wait(500);
       if (!alive()) return;
       truthP.setAttribute('stroke-opacity', .35); dotG.setAttribute('opacity', .3);
     })();
