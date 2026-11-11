@@ -7,6 +7,7 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 ## 2026-11-11
 
 ### WISP paper draft v0 for the co-authors (preliminary results, Q9 unopened)
+<!-- b35b863 -->
 
 User: the professors want a first paper soon. Split decided: everything independent of Q9 (introduction, method,
 example, benchmark protocol, statistics, pre-registration, ablations, stop calibration, limitations) is written to final
