@@ -248,7 +248,8 @@ def evaluate(cells, choices, refs, allm, rng):
     ratios = prim[prim.metric == 'structure'].set_index('stratum').ratio
     rows.append(dict(claim='wording: roughly doubles (structure)', verdict=bool((ratios >= 1.8).all()),
                      detail='; '.join(f'{k} ratio {v:.2f}' for k, v in ratios.items())))
-    return pd.DataFrame(rows), prim, sec, dict(C5=c5, C6=dict(share=share, lo=lo, hi=hi, num=num, den=den), C8=c8)
+    return pd.DataFrame(rows), prim, sec, dict(C5=c5, C6=dict(share=share, lo=lo, hi=hi, num=num, den=den), C8=c8,
+                                               C7=dict(num=int(path_fail.sum()), den=int(len(miss))))
 
 
 def robustness(cells, choices, refs, rng):
@@ -311,7 +312,7 @@ WORD = {'dim1_exact': 'DimOneExact', 'dim2_exact': 'DimTwoExact', 'dim1_surrogat
         'weakident_native': 'WeakIdentNative', 'weakident_trig': 'WeakIdentTrig'}
 
 
-def macros(rates, prim, extra):
+def macros(rates, prim, extra, sec=None, claims=None):
     out = []
     def add(name, value, source):
         out.append(dict(macro=name, value=value, source=source))
@@ -336,6 +337,34 @@ def macros(rates, prim, extra):
     add('SelectionOnPathShare', f"{100 * extra['C6']['share']:.1f}", 'claims.csv C6')
     add('OversizeWeakDimTwo', f"{100 * extra['C8']['oversize_weak']:.1f}", 'claims.csv C8')
     add('OversizeTrajDimTwo', f"{100 * extra['C8']['oversize_traj']:.1f}", 'claims.csv C8')
+    if 'lo' in extra['C6']:
+        add('SelectionOnPathLo', f"{100 * extra['C6']['lo']:.1f}", 'claims.csv C6')
+    if 'lo' in extra['C8']:
+        add('OversizeDiffLo', f"{100 * extra['C8']['lo']:.1f}", 'claims.csv C8')
+        add('OversizeDiffHi', f"{100 * extra['C8']['hi']:.1f}", 'claims.csv C8')
+    if 'C5' in extra:
+        for k, n in (('gap_005', 'GapHighNoise'), ('gap_clean', 'GapClean'), ('diff', 'GapOpens'), ('lo', 'GapOpensLo'),
+                     ('hi', 'GapOpensHi')):
+            add(n, f"{100 * extra['C5'][k]:.1f}", 'claims.csv C5')
+    if 'C7' in extra:
+        add('PathFailNum', str(extra['C7']['num']), 'claims.csv C7')
+        add('PathFailDen', str(extra['C7']['den']), 'claims.csv C7')
+    # secondary tests (unadjusted p) and per-system counts; names Vs<Reference><Stratum><Metric>...
+    for x in ([] if sec is None else sec.itertuples()):
+        ref = x.reference.split(':')[0] if x.reference not in WORD else x.reference
+        if ref not in WORD or x.stratum not in WORD:
+            continue
+        base = f'Vs{WORD[ref]}{WORD[x.stratum]}{WORD[x.metric]}'
+        add(base + 'Diff', f'{100 * x.diff:.1f}', 'secondary.csv')
+        add(base + 'P', f'{x.p:.2g}', 'secondary.csv')
+        add(base + 'Ahead', str(x.systems_ahead), 'secondary.csv')
+        add(base + 'Tied', str(x.systems_tied), 'secondary.csv')
+        add(base + 'Behind', str(x.systems_behind), 'secondary.csv')
+    words = {'C1': 'One', 'C2': 'Two', 'C3': 'Three', 'C4': 'Four', 'C5': 'Five', 'C6': 'Six', 'C7': 'Seven',
+             'C8': 'Eight', 'C9': 'Nine'}
+    for x in ([] if claims is None else claims.itertuples()):
+        if x.claim in words:
+            add('Claim' + words[x.claim], 'holds' if x.verdict else 'fails', 'claims.csv')
     frame = pd.DataFrame(out)
     if frame.macro.duplicated().any() or not frame.macro.str.fullmatch('[A-Za-z]+').all():
         raise ValueError('Macro names must be unique and alphabetic')
@@ -361,7 +390,7 @@ def run(args):
     base_sign = prim.set_index('test')['diff'].gt(0)
     rob['sign_flip'] = [bool((r['diff'] > 0) != base_sign[r.test]) for _, r in rob.iterrows()]
     rates, bycond, persys, d34, cost, missing = descriptive(allm, choices, cells, rng)
-    mac, tex = macros(rates, prim, extra)
+    mac, tex = macros(rates, prim, extra, sec, claims)
     out.mkdir(parents=True)
     for name, f in dict(claims=claims, primary=prim, secondary=sec, robustness=rob, rates=rates, by_condition=bycond,
                         per_system=persys, dim34=d34, cost=cost, missing=missing, macros=mac).items():

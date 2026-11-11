@@ -1,0 +1,801 @@
+\documentclass[9pt,twocolumn]{extarticle}
+% Evidence state: \preliminarytrue = draft on the Q8 subset; \preliminaryfalse after the Q9 data freeze.
+\newif\ifpreliminary \preliminarytrue
+\usepackage[a4paper,top=17mm,bottom=19mm,left=15mm,right=15mm,columnsep=6mm]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{newtxtext,newtxmath}
+\usepackage[scaled=0.92]{helvet}
+\usepackage{microtype}
+\usepackage{amsmath,bm}
+\usepackage{graphicx}
+\usepackage{booktabs,multirow,tabularx,array}
+\usepackage{xcolor}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta,positioning,calc,fit,backgrounds,shapes.misc}
+\usepackage[font={footnotesize,sf},labelfont=bf,labelsep=period,justification=justified,singlelinecheck=false]{caption}
+\usepackage{titlesec}
+\usepackage{enumitem}
+\usepackage{fancyhdr}
+\usepackage{lastpage}
+\usepackage[hidelinks]{hyperref}
+\usepackage{cite}
+\usepackage{dblfloatfix}
+\usepackage{algorithm}
+\usepackage[noend]{algpseudocode}
+\algrenewcommand\algorithmicrequire{\textbf{Input:}}
+\algrenewcommand\algorithmicensure{\textbf{Output:}}
+
+\definecolor{wisp}{HTML}{2A78D6}
+\definecolor{weakbg}{HTML}{E8F1FC}
+\definecolor{trajbg}{HTML}{FDEEE6}
+\definecolor{traj}{HTML}{D95926}
+\definecolor{ink2}{HTML}{52514E}
+\definecolor{rule}{HTML}{C9C8C3}
+
+\titleformat{\section}{\sffamily\bfseries\normalsize\color{wisp}}{}{0pt}{}
+\titlespacing*{\section}{0pt}{1.6ex plus .4ex}{0.6ex}
+\titleformat{\subsection}{\sffamily\bfseries\small}{}{0pt}{}
+\titlespacing*{\subsection}{0pt}{1.2ex plus .3ex}{0.4ex}
+\titleformat{\paragraph}[runin]{\sffamily\bfseries\small}{}{0pt}{}[.]
+\titlespacing*{\paragraph}{0pt}{0.8ex}{0.6em}
+\setlength{\parindent}{1em}
+\setlength{\parskip}{0pt}
+\setlist{nosep,leftmargin=1.2em}
+
+\pagestyle{fancy}
+\fancyhf{}
+\renewcommand{\headrulewidth}{0pt}
+\fancyfoot[L]{\sffamily\scriptsize\color{ink2} Jödicke et al. \quad\textbar\quad Weak-form incremental structure pursuit}
+\fancyfoot[R]{\sffamily\scriptsize\color{ink2} \thepage\ of \pageref{LastPage}}
+\ifpreliminary
+\fancyhead[C]{\sffamily\scriptsize\bfseries\color{prelim} PRELIMINARY RESULTS \textmd{--- draft v0, numbers in red from a subset (Q8) and replaced by the final run (Q9); not for circulation}}
+\fi
+
+\setcounter{dbltopnumber}{3}
+\renewcommand{\dbltopfraction}{0.88}
+\renewcommand{\dblfloatpagefraction}{0.8}
+% ---------------------------------------------------------------- evidence state
+% \preliminarytrue: numbers from the Q8 subset (via the frozen Q9-A code), red watermark, red numbers, claim tags.
+% \preliminaryfalse: after the Q9 data freeze, with data/results_macros.tex replaced by the Q9 output.
+\definecolor{prelim}{HTML}{C62828}
+\ifpreliminary
+  \usepackage{draftwatermark}
+  \DraftwatermarkOptions{text={\sffamily\bfseries PRELIMINARY RESULTS}, color={red!20}, fontsize=2.4cm, angle=55, scale=1}
+  \newcommand{\pv}[1]{\textcolor{prelim}{#1}}
+  \newcommand{\claimtag}[1]{\textsuperscript{\textcolor{prelim}{\sffamily\tiny[#1]}}}
+\else
+  \newcommand{\pv}[1]{#1}
+  \newcommand{\claimtag}[1]{}
+\fi
+\newcommand{\todo}[1]{\textcolor{prelim}{\sffamily\footnotesize[#1]}}
+\input{data/results_macros.tex}
+\newcommand{\m}[1]{\pv{\csname #1\endcsname}}            % generated number
+\newcommand{\ci}[1]{\pv{[\csname #1Lo\endcsname,\,\csname #1Hi\endcsname]}} % its 95 % interval
+% ----------------------------------------------------------------
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\SSE}{\operatorname{SSE}}
+\newcommand{\tr}{\operatorname{tr}}
+\newcommand{\BIC}{\operatorname{BIC}}
+
+\begin{document}
+
+\twocolumn[{%
+\begin{@twocolumnfalse}
+\vspace*{-4mm}
+{\sffamily\scriptsize\color{wisp}\textbf{RESEARCH ARTICLE}\hfill\color{ink2} Manuscript draft v0, 11 November 2026\ifpreliminary\ --- \textcolor{prelim}{\textbf{preliminary results}}\fi}\\[-1mm]
+{\color{rule}\rule{\textwidth}{0.4pt}}\\[3mm]
+{\sffamily\bfseries\fontsize{18}{21}\selectfont Growing governing equations from noisy data, one term at a time\par}
+\vspace{1.5mm}
+{\sffamily\fontsize{12.5}{15}\selectfont\color{wisp} Weak-form incremental structure pursuit (WISP)\par}
+\vspace{3mm}
+{\sffamily\normalsize David Jödicke$^{1}$, Stephan M.\ Winkler$^{2}$, Michael Affenzeller$^{2}$\par}
+% further co-author (open): Florian Bachinger
+\vspace{1mm}
+{\sffamily\scriptsize\color{ink2} $^1$Software Competence Center Hagenberg (SCCH), Softwarepark 32a, 4232 Hagenberg, Austria \quad\textbullet\quad david.joedicke@scch.at\\
+$^2$\todo{affiliations of the co-authors to be confirmed by them}\par}
+\vspace{4mm}
+\noindent\colorbox{weakbg}{\parbox{\dimexpr\textwidth-2\fboxsep}{\vspace{2mm}%
+\begin{minipage}[t]{0.655\textwidth}
+\sffamily\small\textbf{Abstract.}\enspace
+Identifying an interpretable differential equation from one measured trajectory is easy when the data are clean and
+hard when they are noisy and irregularly sampled: sparse regression on estimated derivatives breaks down, and
+searching structures directly against the trajectory is expensive and poorly conditioned. We introduce weak-form
+incremental structure pursuit (WISP), which assigns each of the two spaces the task it is good at. In the weak
+(integral) form the regression is linear and needs no derivatives, so WISP grows a model there, one candidate term at a
+time, with a forward--backward greedy path that stops when no remaining term reduces the residual by more than the
+measurement noise plausibly could. Every model on that short path is then refitted once against the trajectory, starting
+from its weak-form coefficients and estimating the initial state jointly, and a trajectory Bayesian information
+criterion picks the size. The weak form thus ranks terms, and the trajectory decides. On the 63 systems of the
+ODEBench benchmark, under multiplicative noise of 1--5\,\% with and without random loss of half the samples (three
+noise realizations each), this division of labour roughly doubles exact structure recovery on one- and two-dimensional
+systems compared with the original weak SINDy (WSINDy) implementation (\m{WispDimOneExactStructNoisy}\,\% and
+\m{WispDimTwoExactStructNoisy}\,\% vs \m{WsindyDimOneExactStructNoisy}\,\% and \m{WsindyDimTwoExactStructNoisy}\,\%)
+and raises prediction from an unseen initial condition from \m{WsindyDimOneExactGenNoisy}\,\% and
+\m{WsindyDimTwoExactGenNoisy}\,\% to \m{WispDimOneExactGenNoisy}\,\% and \m{WispDimTwoExactGenNoisy}\,\%; with systems
+as the unit of inference, all four pre-registered primary comparisons are significant after correction for multiple
+testing.\claimtag{C1, C2} When the true law appears on the growth path, the trajectory criterion selects it in
+\m{SelectionOnPathNum} of \m{SelectionOnPathDen} cases.\claimtag{C6} WISP has no benchmark-tuned sparsity threshold and
+needs a median of \pv{2--10} trajectory fits per data set in dimensions 1--2, each an iterated ODE solve; its design
+decisions, claims and analysis were fixed in written protocols before the numbers they govern were computed, with one
+declared deviation.
+\end{minipage}\hfill
+\begin{minipage}[t]{0.315\textwidth}
+\sffamily\small\textbf{Significance.}\enspace
+Equations, not black boxes, are what science keeps from data. Sparse identification of nonlinear dynamics made equation
+discovery a regression problem, but its accuracy collapses once measurements become noisy and gappy. We show that a
+deliberately simple method---grow in the derivative-free weak form, decide against the trajectory---roughly doubles the
+rate at which the correct law is recovered from such data and markedly improves prediction from unseen starting
+points\claimtag{C1, C2}, at the price of a handful of trajectory fits per data set---far more compute than one sparse regression. Its design decisions were registered in written
+protocols before the corresponding results were computed.
+\end{minipage}\vspace{2mm}}}
+\vspace{2mm}
+{\sffamily\scriptsize\color{ink2}\textbf{Keywords:} system identification \textbullet\ sparse regression \textbullet\ weak formulation \textbullet\ symbolic regression \textbullet\ model selection \textbullet\ ordinary differential equations}
+\vspace{5mm}
+\end{@twocolumnfalse}
+}]
+
+\section{Introduction}
+
+Many of the laws of physics, chemistry and biology were found by inspecting data and guessing a
+compact equation that explains them. Data-driven equation discovery automates this step. Symbolic regression by genetic
+programming searches an open space of expressions against the data \cite{bongard2007,schmidt2009,cranmer2023}; sparse
+identification of nonlinear dynamics (SINDy) \cite{brunton2016} instead fixes a library of candidate functions and
+selects a sparse subset by linear regression on estimated time derivatives. SINDy's reduction to a linear problem made
+equation discovery fast and widely applicable \cite{rudy2017,champion2019,kaheman2020,desilva2020,kaptanoglu2022}, but
+it inherits the weakness of numerical differentiation: a few per cent of measurement noise corrupts the derivative
+estimate, and with it the selected structure. Two lines of work address this. Ensemble SINDy \cite{fasel2022}
+stabilizes selection by bagging, and the weak formulation \cite{schaeffer2017,reinbold2020,messenger2021mms,messenger2021jcp}
+replaces derivatives by integrals against test functions, which turns differentiation of the data into integration of
+the library. Weak SINDy (WSINDy) is today the strongest member of the family under noise.
+
+Both lines keep SINDy's selection mechanism: the whole library is exposed at once and a sparsity threshold
+decides which coefficients survive. Two difficulties remain. The threshold has to be chosen, and the right choice depends
+on the noise level and the scale of the system. More fundamentally, a small residual in regression space does not
+guarantee a model that reproduces the data when integrated: two structures with nearly equal regression residual can
+produce very different trajectories, and the residual in the weak form says nothing about the initial-value problem
+that the model has to solve. Greedy support growth in the weak form exists (WeakIdent \cite{tang2023}), but it selects the
+model by a regression-space criterion and so inherits this blind spot. Simulation-based selection addresses it
+\cite{mangan2017,piroddi2003}. Applied to SINDy candidates it relies on many validation trajectories
+\cite{mangan2017}, and searching structures directly against the trajectory is expensive and poorly
+conditioned---every candidate needs a nonlinear fit through an ODE solver, and random starts frequently land in poor
+local minima. What is missing is a method that generates a short list of candidates in the weak form and decides
+between them on the one training trajectory, at the cost of only a few fits.
+
+Here we show that the two spaces are complementary and that a simple method which uses each for what it does best
+outperforms the established weak-form and sparse-regression methods under noise.\claimtag{C1--C3} WISP (weak-form incremental structure pursuit) grows
+a model in the weak form, one term at a time, using a forward--backward greedy path \cite{billings1989,zhang2011} that
+needs no benchmark-tuned sparsity threshold: it stops when no remaining term lowers the weak residual by more than noise could. The path is short,
+typically \pv{2--10} models, and each of them is refitted once against the trajectory from its weak-form coefficients---a
+start so good that one optimizer run suffices. A trajectory information criterion \cite{schwarz1978} then decides
+between them (Fig.~\ref{fig:concept}).
+
+We evaluate WISP on ODEBench \cite{dascoli2024}, the 63-system benchmark of one- to four-dimensional ODEs used for the
+transformer-based ODEFormer, under the noise and irregular-subsampling protocol of that work, against SINDy, Weak-SINDy and
+Ensemble-SINDy (pySINDy \cite{kaptanoglu2022}), the original MATLAB implementation of WSINDy
+\cite{messenger2021mms} and the reference code of WeakIdent \cite{tang2023}, all on identical data, and with every
+reference that has a sparsity parameter granted its best value per stratum, noise level and metric, chosen after the
+results. \todo{v1: add the SINDy family with exactly WISP's library (13 thresholds) and ODEFormer on the same data, Q-B B1/B3, after Q9.}
+We report both structure recovery and the literature's prediction metric, the share of models
+with $R^2>0.9$ \cite{dascoli2024}, on the training and on an unseen initial condition, and we treat systems, not data
+sets, as the unit of inference.
+
+\begin{figure*}[t]
+\centering
+\begin{tikzpicture}[
+  font=\sffamily\scriptsize,
+  node distance=3mm,
+  box/.style={draw=#1, line width=0.7pt, rounded corners=2.5pt, align=center, inner sep=2pt, fill=white, minimum height=23mm},
+  arr/.style={-{Stealth[length=2mm]}, line width=0.8pt, color=ink2},
+  num/.style={circle, fill=#1, text=white, font=\sffamily\bfseries\scriptsize, inner sep=0.8pt, minimum size=3.6mm}]
+\node[box=ink2, text width=18mm] (d) {\textbf{Data}\\[2pt] one trajectory\\ $\bm y(t_i)$: noisy,\\ irregular times\\ \rule{0pt}{10mm}};
+\node[box=wisp, text width=24mm, right=of d] (w) {\textbf{Weak form}\\[2pt] windows $[t_a,t_b]$:\\[1pt] $x_k(t_b)-x_k(t_a)$\\ $=\sum_j c_{kj}\!\int_{t_a}^{t_b}\!\theta_j\,dt$\\[3pt] $\bm b_k = G\,\bm\xi_k + \bm\varepsilon_k$\\ no derivatives};
+\node[box=wisp, text width=29mm, right=of w] (p) {\textbf{Growth path}\\[2pt] \textcolor{wisp}{\textbf{+}} add the term with the\\ largest normalized gain\\[2pt] \textcolor{traj}{\textbf{--}} drop terms now worth\\ less than $\tfrac12$ of that gain\\[2pt] \textbf{stop} when no gain\\ exceeds $6.635\times$ noise gain};
+\node[box=wisp, text width=17mm, right=of p] (c) {\textbf{Candidates}\\[2pt] every path state\\ $S_1,\dots,S_m$\\ (median \pv{2--19})\\ with weak\\ coefficients $\hat{\bm\xi}$};
+\node[box=traj, text width=24mm, right=of c] (f) {\textbf{Trajectory refit}\\[2pt] one BFGS run per $S_i$\\[1pt] start: $\hat{\bm\xi}$ (weak LS)\\[1pt] initial state $\hat{\bm x}_0$\\ estimated jointly};
+\node[box=traj, text width=21mm, right=of f] (s) {\textbf{Select size}\\[2pt] trajectory BIC\\[1pt] $N\log\mathrm{MSE}_i$\\ $+(|S_i|+d)\log N$\\[1pt] smallest wins};
+\node[box=ink2, text width=13mm, right=of s] (m) {\textbf{Model}\\[2pt] sparse ODE\\[2pt] $\dot{\bm x}=\hat f(\bm x)$};
+\foreach \t/\v in {0/5,3/7,5/10,8/14,10/17,13/19,17/16,19/12,22/9,25/7,28/7,31/9,34/13,38/17,40/18}{
+  \fill[wisp] ($(d.south)+(-8mm,2.5mm)+(\t*0.4mm,\v*0.33mm)$) circle (0.32mm);}
+\foreach \a/\b in {d/w,w/p,p/c,c/f,f/s,s/m}{\draw[arr] (\a) -- (\b);}
+\begin{scope}[on background layer]
+\node[fill=weakbg, rounded corners=4pt, inner xsep=1.2mm, fit=(w)(p)(c), yshift=2mm, inner ysep=4mm] (wb) {};
+\node[fill=trajbg, rounded corners=4pt, inner xsep=1.2mm, fit=(f)(s), yshift=2mm, inner ysep=4mm] (tb) {};
+\end{scope}
+\node[anchor=north west, font=\sffamily\bfseries\scriptsize, color=wisp, inner sep=1.5pt] at (wb.north west) {WEAK FORM --- linear, derivative-free: \emph{rank terms}};
+\node[anchor=north west, font=\sffamily\bfseries\scriptsize, color=traj, inner sep=1.5pt] at (tb.north west) {TRAJECTORY --- integrated ODE: \emph{decide}};
+\node[num=ink2] at (d.north west) {1};
+\node[num=wisp] at (w.north west) {2};
+\node[num=wisp] at (p.north west) {3};
+\node[num=traj] at (f.north west) {4};
+\node[num=traj] at (s.north west) {5};
+\node[anchor=north west, align=left, text width=81mm, inner sep=0pt] (r1) at ($(wb.south west)+(0,-2.5mm)$) {\textbf{Instead of:} SINDy, Weak-SINDy and WSINDy expose the whole library at once, select by one sparse regression in derivative or weak space with a threshold $\lambda$, and never simulate.};
+\node[anchor=north west, align=left, text width=62mm, inner sep=0pt] at ($(tb.south west)+(0,-2.5mm)$) {\textbf{Instead of:} trajectory-space search (genetic programming, population methods) fits many structures through an ODE solver from random starts---hundreds of nonlinear fits per data set.};
+\end{tikzpicture}
+\caption{\textbf{WISP in five steps.} The library $\Theta=(\theta_1,\dots,\theta_p)$ is fixed ($p=6,12,19$ for
+dimension $d=1,2,3$). Steps 2--3 operate in the weak form, where regression is linear and derivatives are never
+estimated; they produce a short list of nested candidate structures. Steps 4--5 operate on the trajectory, where each
+candidate is fitted once by integrating the ODE and the size is chosen by a trajectory Bayesian information criterion.
+No constant was tuned on the benchmark. The fixed choices are the library, the window lengths, $\nu=\tfrac12$ (the published FoBa default \cite{zhang2011}) and $6.635$, the
+$99\,\%$ quantile of $\chi^2_1$.}
+\label{fig:concept}
+\end{figure*}
+
+\section{Weak-form incremental structure pursuit}
+
+\paragraph{Step 1: data and library} We observe one trajectory $\bm y_i = \bm x(t_i)\odot(\bm 1+\sigma\bm\eta_i)$,
+$\bm\eta_i\sim\mathcal N(0,I)$, of an autonomous system $\dot{\bm x}=f(\bm x)$, $\bm x\in\R^d$, at possibly irregular
+times $t_1<\dots<t_n$, and seek a sparse representation $f_k(\bm x)=\sum_{j\in S_k}c_{kj}\theta_j(\bm x)$ in a fixed
+library. We use $\Theta=\{1,\,x_i,\,x_i^2,\,x_ix_j,\,x_i^3,\,\sin x_i,\,\cos x_i\}$, which represents 30 of the 63
+ODEBench systems exactly; the others are approximated (``surrogate'' systems).
+
+\paragraph{Step 2: weak form} Integrating $\dot x_k=f_k(\bm x)$ over a window $[t_a,t_b]$ gives
+\begin{equation}
+x_k(t_b)-x_k(t_a)=\sum_j c_{kj}\int_{t_a}^{t_b}\theta_j(\bm x(t))\,dt .
+\label{eq:weak}
+\end{equation}
+With windows of $L\in\{1,2,4,8,16\}$ consecutive observations starting at every sample and trapezoidal quadrature on the
+observed times, Eq.~\ref{eq:weak} becomes a linear system $\bm b_k=G\bm\xi_k+\bm\varepsilon_k$ with $\approx5n$ rows.
+This is a box-test-function weak form; it requires neither derivatives nor a uniform grid. $\SSE_k(S)$ denotes the
+least-squares residual of $\bm b_k$ on the columns $S$ of $G$.
+
+\paragraph{Step 3: growth path} The path is built jointly for all equations (Algorithm~\ref{alg:path}). Starting
+from the empty model, each forward step adds, among the equations that have not stopped, the single (equation, term)
+pair with the largest normalized gain
+\begin{equation}
+g_k(j\mid S)=\frac{\SSE_k(S_k)-\SSE_k(S_k\cup\{j\})}{\lVert\bm b_k\rVert^2},
+\end{equation}
+which is the orthogonal forward regression step of Billings and co-workers \cite{billings1989,chen1989}, made comparable
+across equations by the normalization. After every addition, a backward step in the style of adaptive forward--backward
+greedy selection (FoBa) \cite{zhang2011} considers every active term of every equation and removes the one whose
+removal raises its equation's normalized residual least, provided that increase is below $\nu=\tfrac12$ times the gain of
+the last addition; this is repeated until no term qualifies. Backward steps let the path
+discard terms that were useful early but became redundant---which, as the example below shows, is frequent.
+
+The path for equation $k$ stops when no remaining term is significant against noise. For a support $S$, the residual a
+correct model would leave is, to first order, $F_k(S)=\tr\big((I-P_S)C_k\big)$, where $P_S$ projects onto the columns
+$S$ of $G$ and $C_k=D\Sigma_kD^\top$ is the covariance of the weak target induced by measurement noise ($D$ maps samples
+to window end-point differences, rows sharing an endpoint are correlated). Hence $F_k(S)-F_k(S\cup\{j\})$ is the gain a
+pure-noise column would be expected to produce. The equation stops growing when
+\begin{equation}
+\frac{\SSE_k(S)-\SSE_k(S\cup\{j\})}{F_k(S)-F_k(S\cup\{j\})}<\chi^2_{1,0.99}=6.635\quad\forall j\notin S_k .
+\label{eq:stop}
+\end{equation}
+In words: \emph{an equation keeps growing only while some term would lower its weak residual by more than noise
+plausibly could}; the term actually added is still the one with the largest gain. The test is first order,
+and counting only the noise in the targets $\bm b_k$, not the noise that enters the design matrix $G$ through the
+library evaluated on noisy data. It is therefore a heuristic, not an exact significance test, and we measure its
+calibration in the Results. The noise
+variance $\Sigma_k=\mathrm{diag}(\hat\sigma^2_{k,i})$ is estimated from the data alone, by leverage-corrected residuals of
+local cubic fits (9 points) averaged over 21 points; no noise model is assumed. On noise-free data the test never stops
+early and the path ends when the weak residual reaches numerical zero. The stop is re-evaluated after every backward
+step, so an equation whose term was removed can resume growing. The joint model after every forward--backward step is a
+candidate.
+
+\paragraph{Step 4: trajectory refit} Each candidate $S$ is fitted by minimizing the trajectory loss
+\begin{equation}
+\mathcal L(\bm c,\hat{\bm x}_0)=\frac1N\sum_i\big\lVert \bm x(t_i;\bm c,\hat{\bm x}_0)-\bm y_i\big\rVert^2,\qquad N=nd,
+\end{equation}
+over the coefficients $\bm c\in[-10^3,10^3]^{|S|}$ and the initial state $\hat{\bm x}_0$ jointly, where
+$\bm x(\cdot;\bm c,\hat{\bm x}_0)$ is the numerical solution of the candidate ODE. The start is the weak least-squares
+solution $\hat{\bm\xi}$ for the coefficients and the first observation for the initial state, and a single BFGS run is
+made. Estimating $\hat{\bm x}_0$ matters because the first observation is as noisy as every other.
+
+\paragraph{Step 5: size selection} The candidate with the smallest trajectory information criterion
+\begin{equation}
+\BIC(S)=N\log\mathcal L\big(\hat{\bm c}_S,\hat{\bm x}_{0,S}\big)+(|S|+d)\log N
+\end{equation}
+is returned. The penalty counts the $d$ initial-state parameters, which are common to all candidates and do not affect
+the ranking.
+
+\paragraph{Why the split works} Ranking terms is a question about directions in function space; the weak form answers
+it linearly and without differentiating noise. Choosing the model size and the coefficient scale is a question about the
+initial-value problem; only the trajectory answers it. The weak coefficients are already close to the trajectory
+optimum, which removes the main failure mode of trajectory fitting---poor local minima from random starts---and keeps
+the cost at one fit per candidate.
+
+\section{An example}
+
+Figure~\ref{fig:example} follows WISP through one data set: the Lotka--Volterra predator--prey system
+$\dot x_0=1.84x_0-1.45x_0x_1$, $\dot x_1=-3.0x_1+1.62x_0x_1$, observed at 256 randomly retained of 512 times with
+5\,\% multiplicative noise. The first forward steps choose the wrong terms: cubic terms ($x_1^3$, $x_0^3$) and a
+constant mimic the strongly peaked oscillation in the weak residual. The true bilinear term $x_0x_1$ enters the prey
+equation at state 6 and the predator equation at state 10, and backward steps remove the terms it renders redundant (crosses in
+Fig.~\ref{fig:example}B). At state 11 the model is exactly the true structure, and the stop statistic falls below the
+$\chi^2$ threshold in both equations (3.4 and 1.2). Among the eleven fitted candidates, the trajectory BIC selects
+state 11 by a margin of more than 1,600 units. The fitted coefficients deviate by at most 1.3\,\% from the true ones, and
+the model reproduces the dynamics from an initial condition it has never seen ($R^2=0.989$). On the same data, the
+original WSINDy implementation returns 14 terms whose trajectory diverges from the truth ($R^2=-5.0$ on the training
+initial condition).
+
+\begin{figure*}[t]
+\centering
+\includegraphics[width=\textwidth]{figures/fig2_example.pdf}
+\caption{\textbf{WISP on noisy, irregularly sampled Lotka--Volterra data.} (\textbf{A}) Training data: 256 of 512 samples
+retained at random, 5\,\% multiplicative noise; faint lines show the clean trajectory, never seen by any method.
+(\textbf{B}) The growth path. Bottom: active terms per equation after each forward--backward step (dark: true terms,
+light: spurious, crosses: removed by a backward step). Top: the stop statistic of Eq.~\ref{eq:stop}, the largest
+gain-to-noise ratio over the terms not yet in the model; the path ends when both equations fall below $\chi^2_{1,0.99}$.
+(\textbf{C}) Size selection among the eleven candidates, each refitted against the trajectory; differences to the
+minimum (triangle). Trajectory and weak BIC agree here; they do not in general (Fig.~\ref{fig:selection}A).
+(\textbf{D}) Prediction from the unseen initial condition. (\textbf{E}) True and identified equations.}
+\label{fig:example}
+\end{figure*}
+
+\section{Benchmark and protocol}
+
+\paragraph{Systems and data} ODEBench \cite{dascoli2024} collects 63 ODE systems from Strogatz's textbook
+\cite{strogatz2015} and the literature, each with two initial conditions. Following ref.~\cite{dascoli2024}, each
+trajectory has 512 samples on $t\in[0,10]$; we integrate them ourselves at tolerance $10^{-9}$. Each initial condition
+serves once as training trajectory, and the \emph{other} initial condition is the test trajectory for generalization,
+never used for any choice. We evaluate all 63 systems: 51 of dimension 1 and 2 (21 exactly representable, 30
+surrogate), which carry every claim, and twelve of dimension 3 and 4, reported descriptively. Each training trajectory
+is corrupted by multiplicative Gaussian noise $\sigma\in\{1,2,3,4,5\}\,\%$, with either all samples kept ($\rho=0$) or
+half of them removed at random ($\rho=0.5$), the protocol of ref.~\cite{dascoli2024}, in three independent noise
+realizations. The headline population is these ten noisy conditions: 60 data sets per system (10 conditions $\times$ 3
+realizations $\times$ 2 training trajectories). Clean data and noise-free subsampled data are reported separately and
+never pooled with it. In total WISP is run on 4,284 data sets.
+
+\paragraph{Metrics} A model is \emph{structurally exact} if, after removing coefficients below
+$\max(10^{-6},10^{-3}\max_j|c_{kj}|)$ in each equation, its support equals the true support; we report this only on
+exactly representable systems and also report the raw support without pruning. \emph{Reconstruction} and
+\emph{generalization} hits are $R^2>0.9$ (variance-weighted over components, without divergence) of the model
+integrated from the clean training and the clean test initial condition, respectively, against the clean trajectory.
+The $R^2>0.9$ rate is the metric reported for ODEBench \cite{dascoli2024}.
+
+\paragraph{References} SINDy, Weak-SINDy and Ensemble-SINDy (pySINDy, sequentially thresholded least squares, bagging
+with 20 models for E-SINDy) use a degree-3 polynomial plus $\sin/\cos$ library, a superset of $\Theta$, with thresholds
+$\lambda\in\{0.01,0.1\}$. WeakIdent \cite{tang2023}, the closest relative of WISP (greedy support search in the weak
+form, selection in regression space), is run as the authors' reference code in two arms: with its native polynomial
+dictionary of degree 3 and with that dictionary extended by $\sin x_i,\cos x_i$, the only change; its one user-set
+parameter, the trimming threshold, is varied over $\tau\in\{0,0.005,0.01,0.02,0.05,0.1,0.2\}$ (authors' value 0.05).
+The code does not support four-dimensional systems. For every stratum, noise level and metric separately we report
+each method's \emph{best} threshold, an after-the-fact choice in its favour: an \emph{oracle-tuned} reference, which no
+user could select without knowing the truth. WSINDy is run as the unmodified original MATLAB code
+\cite{messenger2021mms} with WISP's library; on $\rho=0.5$ the data are interpolated to the uniform grid it requires,
+which we found to improve its results substantially. All reference models are evaluated exactly like WISP's.
+\todo{v1: SINDy, Weak-SINDy, E-SINDy with exactly WISP's library and $\lambda\in\{10^{-3},\dots,1\}$ (13 values), and
+ODEFormer (four configurations), both on the same 4,284 data sets.}
+
+\paragraph{Statistics} Data sets of one system are not independent. We therefore treat systems as clusters: a
+stratum's rate is the mean of its systems' rates, intervals are 95\,\% percentile cluster-bootstrap intervals over
+systems \cite{field2007} (10,000 resamples, fixed seed), and paired comparisons use a two-sided sign-flip permutation
+test on per-system rate differences, enumerated exactly. The primary family consists of four tests, WISP against
+WSINDy on exact structure and on generalization, each in dimension 1 and 2 (exactly representable systems, noisy
+population), Holm-adjusted at $\alpha=0.05$. WSINDy is the primary comparator because it is the strongest reference
+under noise and the unmodified code of the inventors of weak-form regression; a comparison with ``the best reference
+per data set'' was rejected because that comparator chooses its method after seeing the result. Every other test is
+secondary, reported with its unadjusted $p$, and never described as significant.
+
+\paragraph{Pre-registration} WISP was developed in a sequence of written protocols, each frozen before any number
+it governs was computed. We distinguish three kinds of statement. \emph{Pre-registered decisions:} adoption rules with a non-inferiority margin of 5 percentage points decided the stop rule
+(Eq.~\ref{eq:stop} replaced a truth-derived cap of six terms per equation, being non-inferior in every decided stratum
+and better by 14--17 points on structure), joint initial-state estimation, and the coefficient bound. The threshold
+of the stop rule was fixed before its paths were computed; the paths were inspected for whether they contain the truth
+before any fit was run, which the protocol records. \emph{A declared deviation:} the rule for the bound selected $[-10,10]$ over $[-10^3,10^3]$ because dimension-1 generalization was
+5.7 points lower under the wider bound, one cell beyond the margin, on three systems whose selected models were wrong under
+both bounds and where the narrow bound acted as an accidental regulariser. Structure recovery was identical under both
+bounds in every decided stratum, and the narrow bound makes six of the eight three-dimensional systems infeasible by
+construction; we adopted $[-10^3,10^3]$ and report both (Fig.~\ref{fig:ablation}). \emph{Descriptive analyses:}
+the breakdown by condition, the per-system comparison, the size-error and path-versus-selection diagnostics and the cost
+figures were not governed by any rule and are reported as description. \emph{Claims:} the final run and, before any
+of its numbers was computed, the paper's nine claims with their criteria, statistics and the wording to be used if a
+criterion fails were frozen in two further protocols; the analysis code was tested on the subset run before the final
+data were opened. A data set without a WISP result counts as a miss on every metric. \todo{data freeze: date, number of
+finished data sets}
+
+\section{Results}
+
+\ifpreliminary
+\noindent\fcolorbox{prelim}{white}{\parbox{\dimexpr\columnwidth-2\fboxsep-2\fboxrule}{\sffamily\scriptsize
+\textcolor{prelim}{\textbf{Preliminary results.}} Numbers and figures in this section come from a subset run (Q8:
+dimensions 1--3, $\sigma\in\{1,5\}\,\%$, $\rho\in\{0,0.5\}$, one noise realization, 590 data sets), evaluated with the
+frozen analysis code of the final run. Red numbers are generated and will be replaced automatically by the final run
+(Q9: all 63 systems, $\sigma\in\{1,\dots,5\}\,\%$, three realizations, 4,284 data sets); black numbers are final.
+Tags [C1]--[C9] mark sentences whose wording depends on a pre-registered claim; on the subset, C3 (structure against
+WeakIdent) and C9 (one-dimensional surrogate generalization) fail and are worded accordingly. The ablations
+(Fig.~\ref{fig:ablation}) and the stop calibration (Fig.~\ref{fig:calibration}) are final.}}
+\vspace{1mm}
+\fi
+
+\begin{figure*}[t]
+\centering
+\includegraphics[width=\textwidth]{figures/fig3_main.pdf}
+\caption{\textbf{Main comparison on noisy data, dimensions 1 and 2.} Share of the noisy data sets on which each method
+recovers the exact structure (\textbf{A}, exactly representable systems only), reconstructs the training trajectory
+(\textbf{B}) and predicts the trajectory from the unseen initial condition (\textbf{C}). Whiskers: 95\,\%
+cluster-bootstrap intervals over systems (11, 10, 12 and 18 systems per group). References are shown at their best
+threshold per group, noise level and metric. \pv{Preliminary: Q8 subset, 408 data sets; WeakIdent not yet shown.}}
+\label{fig:main}
+\end{figure*}
+
+\paragraph{WISP recovers more correct laws and predicts better under noise} On noisy data of exactly representable
+one- and two-dimensional systems, WISP recovers the exact structure in \m{WispDimOneExactStructNoisy}\,\% and
+\m{WispDimTwoExactStructNoisy}\,\% of data sets (Fig.~\ref{fig:main}A and Table~\ref{tab:main}). The original WSINDy
+reaches \m{WsindyDimOneExactStructNoisy}\,\% and \m{WsindyDimTwoExactStructNoisy}\,\% (ratio \m{PrimaryOneRatio} and
+\m{PrimaryTwoRatio}; Holm-adjusted $p=\m{PrimaryOnePHolm}$ and $\m{PrimaryTwoPHolm}$), Weak-SINDy
+\m{WeakSindyDimOneExactStructNoisy}\,\% and \m{WeakSindyDimTwoExactStructNoisy}\,\%, and SINDy and E-SINDy stay below
+\pv{4}\,\%.\claimtag{C1} The same ordering holds for prediction from the unseen initial condition:
+\m{WispDimOneExactGenNoisy}\,\% and \m{WispDimTwoExactGenNoisy}\,\% for WISP against \m{WsindyDimOneExactGenNoisy}\,\%
+and \m{WsindyDimTwoExactGenNoisy}\,\% for WSINDy (Holm-adjusted $p=\m{PrimaryThreePHolm}$ and $\m{PrimaryFourPHolm}$)
+and at most \pv{28.7}\,\% for the pySINDy methods (Fig.~\ref{fig:main}C).\claimtag{C2}
+
+WeakIdent, which also grows supports in the weak form but selects in regression space, is the strongest reference
+on structure. Its predictions from the unseen initial condition stay far behind WISP's (dimension 2:
+\m{WeakIdentTrigDimTwoExactGenNoisy}\,\% with $\sin/\cos$, \m{WeakIdentNativeDimTwoExactGenNoisy}\,\% native, against
+\m{WispDimTwoExactGenNoisy}\,\%; secondary $p\le\pv{0.016}$ in both dimensions and arms), but on two-dimensional
+structure the two methods are not separated: \m{WispDimTwoExactStructNoisy}\,\% against
+\m{WeakIdentTrigDimTwoExactStructNoisy}\,\% for the extended arm ($p=\m{VsWeakIdentTrigDimTwoExactStructP}$; WISP ahead
+on \m{VsWeakIdentTrigDimTwoExactStructAhead}, tied on \m{VsWeakIdentTrigDimTwoExactStructTied}, behind on
+\m{VsWeakIdentTrigDimTwoExactStructBehind} systems), and a difference of \m{VsWeakIdentNativeDimTwoExactStructDiff}
+points for the native arm on the systems its dictionary can express ($p=\m{VsWeakIdentNativeDimTwoExactStructP}$). In
+dimension 1, WISP leads the native arm by \m{VsWeakIdentNativeDimOneExactStructDiff} points (ahead on
+\m{VsWeakIdentNativeDimOneExactStructAhead}, behind on \m{VsWeakIdentNativeDimOneExactStructBehind} systems,
+$p=\m{VsWeakIdentNativeDimOneExactStructP}$). WISP
+is therefore ahead of every reference on generalization, and on structure ahead of every reference except
+WeakIdent.\claimtag{C3}
+
+On surrogate systems, where no exact law exists in the library, WISP's models still reconstruct the training
+trajectory in \m{WispDimOneSurrRecNoisy}\,\% and \m{WispDimTwoSurrRecNoisy}\,\% of data sets and generalize in
+\m{WispDimOneSurrGenNoisy}\,\% and \m{WispDimTwoSurrGenNoisy}\,\%, ahead of WSINDy in three of the four comparisons;
+one-dimensional generalization is not separated (\m{WispDimOneSurrGenNoisy}\,\% vs \m{WsindyDimOneSurrGenNoisy}\,\%,
+$p=\m{VsWsindyDimOneSurrGenP}$).\claimtag{C9}
+
+The advantage over WSINDy is not carried by a few systems. Counting each system once, WISP is ahead on exact structure
+on \m{PrimaryOneSystemsAhead} of 11 one-dimensional and \m{PrimaryTwoSystemsAhead} of 10 two-dimensional systems and
+behind on \m{PrimaryOneSystemsBehind} and \m{PrimaryTwoSystemsBehind}; on generalization it is ahead on
+\m{PrimaryThreeSystemsAhead} and \m{PrimaryFourSystemsAhead} and behind on \m{PrimaryThreeSystemsBehind} and
+\m{PrimaryFourSystemsBehind} (Fig.~\ref{fig:systems}).\claimtag{C4}
+
+\begin{table*}[t]
+\centering\sffamily\scriptsize
+\caption{\textbf{Noisy data sets, dimensions 1--2.} Rates in \%, for WISP with the 95\,\% cluster-bootstrap interval
+over systems. References at their best threshold per stratum, noise level and metric. WeakIdent: native dictionary /
+extended by $\sin/\cos$; native structure is scored only on systems its dictionary can express. $p$: paired sign-flip
+test over systems, WISP vs WSINDy; $^\dagger$ primary test, Holm-adjusted; otherwise secondary, unadjusted.
+\pv{Preliminary: Q8 subset.}}
+\label{tab:main}
+\setlength{\tabcolsep}{3.2pt}
+\begin{tabular}{@{}llrrrrrrr@{}}
+\toprule
+ & & \textbf{WISP} & WSINDy & SINDy & Weak-SINDy & E-SINDy & WeakIdent & $p$ \\
+ & & & (MATLAB) & & & & native / $+\sin\!/\!\cos$ & \\
+\midrule
+\multirow{3}{*}{\shortstack[l]{dim 1\\exact}} & structure & \textbf{\m{WispDimOneExactStructNoisy}} \ci{WispDimOneExactStructNoisy} & \m{WsindyDimOneExactStructNoisy} & \m{SindyDimOneExactStructNoisy} & \m{WeakSindyDimOneExactStructNoisy} & \m{EsindyDimOneExactStructNoisy} & \m{WeakIdentNativeDimOneExactStructNoisy} / \m{WeakIdentTrigDimOneExactStructNoisy} & \m{PrimaryOnePHolm}$^\dagger$\\
+ & reconstruction & \textbf{\m{WispDimOneExactRecNoisy}} \ci{WispDimOneExactRecNoisy} & \m{WsindyDimOneExactRecNoisy} & \m{SindyDimOneExactRecNoisy} & \m{WeakSindyDimOneExactRecNoisy} & \m{EsindyDimOneExactRecNoisy} & \m{WeakIdentNativeDimOneExactRecNoisy} / \m{WeakIdentTrigDimOneExactRecNoisy} & \m{VsWsindyDimOneExactRecP}\\
+ & generalization & \textbf{\m{WispDimOneExactGenNoisy}} \ci{WispDimOneExactGenNoisy} & \m{WsindyDimOneExactGenNoisy} & \m{SindyDimOneExactGenNoisy} & \m{WeakSindyDimOneExactGenNoisy} & \m{EsindyDimOneExactGenNoisy} & \m{WeakIdentNativeDimOneExactGenNoisy} / \m{WeakIdentTrigDimOneExactGenNoisy} & \m{PrimaryThreePHolm}$^\dagger$\\
+\midrule
+\multirow{3}{*}{\shortstack[l]{dim 2\\exact}} & structure & \textbf{\m{WispDimTwoExactStructNoisy}} \ci{WispDimTwoExactStructNoisy} & \m{WsindyDimTwoExactStructNoisy} & \m{SindyDimTwoExactStructNoisy} & \m{WeakSindyDimTwoExactStructNoisy} & \m{EsindyDimTwoExactStructNoisy} & \m{WeakIdentNativeDimTwoExactStructNoisy} / \m{WeakIdentTrigDimTwoExactStructNoisy} & \m{PrimaryTwoPHolm}$^\dagger$\\
+ & reconstruction & \textbf{\m{WispDimTwoExactRecNoisy}} \ci{WispDimTwoExactRecNoisy} & \m{WsindyDimTwoExactRecNoisy} & \m{SindyDimTwoExactRecNoisy} & \m{WeakSindyDimTwoExactRecNoisy} & \m{EsindyDimTwoExactRecNoisy} & \m{WeakIdentNativeDimTwoExactRecNoisy} / \m{WeakIdentTrigDimTwoExactRecNoisy} & \m{VsWsindyDimTwoExactRecP}\\
+ & generalization & \textbf{\m{WispDimTwoExactGenNoisy}} \ci{WispDimTwoExactGenNoisy} & \m{WsindyDimTwoExactGenNoisy} & \m{SindyDimTwoExactGenNoisy} & \m{WeakSindyDimTwoExactGenNoisy} & \m{EsindyDimTwoExactGenNoisy} & \m{WeakIdentNativeDimTwoExactGenNoisy} / \m{WeakIdentTrigDimTwoExactGenNoisy} & \m{PrimaryFourPHolm}$^\dagger$\\
+\midrule
+\multirow{2}{*}{\shortstack[l]{dim 1\\surrogate}} & reconstruction & \textbf{\m{WispDimOneSurrRecNoisy}} \ci{WispDimOneSurrRecNoisy} & \m{WsindyDimOneSurrRecNoisy} & \m{SindyDimOneSurrRecNoisy} & \m{WeakSindyDimOneSurrRecNoisy} & \m{EsindyDimOneSurrRecNoisy} & \m{WeakIdentNativeDimOneSurrRecNoisy} / \m{WeakIdentTrigDimOneSurrRecNoisy} & \m{VsWsindyDimOneSurrRecP}\\
+ & generalization & \textbf{\m{WispDimOneSurrGenNoisy}} \ci{WispDimOneSurrGenNoisy} & \m{WsindyDimOneSurrGenNoisy} & \m{SindyDimOneSurrGenNoisy} & \m{WeakSindyDimOneSurrGenNoisy} & \m{EsindyDimOneSurrGenNoisy} & \m{WeakIdentNativeDimOneSurrGenNoisy} / \m{WeakIdentTrigDimOneSurrGenNoisy} & \m{VsWsindyDimOneSurrGenP}\\
+\midrule
+\multirow{2}{*}{\shortstack[l]{dim 2\\surrogate}} & reconstruction & \textbf{\m{WispDimTwoSurrRecNoisy}} \ci{WispDimTwoSurrRecNoisy} & \m{WsindyDimTwoSurrRecNoisy} & \m{SindyDimTwoSurrRecNoisy} & \m{WeakSindyDimTwoSurrRecNoisy} & \m{EsindyDimTwoSurrRecNoisy} & \m{WeakIdentNativeDimTwoSurrRecNoisy} / \m{WeakIdentTrigDimTwoSurrRecNoisy} & \m{VsWsindyDimTwoSurrRecP}\\
+ & generalization & \textbf{\m{WispDimTwoSurrGenNoisy}} \ci{WispDimTwoSurrGenNoisy} & \m{WsindyDimTwoSurrGenNoisy} & \m{SindyDimTwoSurrGenNoisy} & \m{WeakSindyDimTwoSurrGenNoisy} & \m{EsindyDimTwoSurrGenNoisy} & \m{WeakIdentNativeDimTwoSurrGenNoisy} / \m{WeakIdentTrigDimTwoSurrGenNoisy} & \m{VsWsindyDimTwoSurrGenP}\\
+\bottomrule
+\end{tabular}
+\end{table*}
+
+\begin{figure*}[t]
+\centering
+\includegraphics[width=\textwidth]{figures/fig4_conditions.pdf}
+\caption{\textbf{Where the advantage comes from.} Exact structure (\textbf{A}) and generalization (\textbf{B}) per data
+condition. On clean data (left of each panel) WISP and WSINDy are level on exactly representable systems; the gap opens
+with noise and with missing samples. \pv{Preliminary: Q8 subset, two noise levels, one realization; each point rests on
+20--36 data sets.}}
+\label{fig:conditions}
+\end{figure*}
+
+\paragraph{The gap opens with noise} On clean data WISP and WSINDy are level on exactly representable systems
+(structure \pv{81.8}\,\% vs \pv{81.8}\,\% in dimension 1, \pv{95.0}\,\% vs \pv{100}\,\% in dimension 2;
+Fig.~\ref{fig:conditions}). Pooled over the exactly representable one- and two-dimensional systems, WISP's structure
+advantage over WSINDy is \m{GapClean} points on clean data and \m{GapHighNoise} points at $\sigma=5\,\%$, an opening of
+\m{GapOpens} points (95\,\% interval \pv{[\GapOpensLo, \GapOpensHi]}).\claimtag{C5} With 1\,\% noise WSINDy loses
+about half of its structure hits, while WISP retains \pv{55--60}\,\%. At 5\,\% noise with half of the samples missing,
+the hardest condition, WISP still identifies the exact law in \pv{41}\,\% (dimension 1) and \pv{20}\,\% (dimension 2) of
+data sets, against \pv{18}\,\% and \pv{10}\,\% for WSINDy and close to zero for the pySINDy methods. On clean
+two-dimensional surrogate systems, Weak-SINDy generalizes better than WISP (\pv{55.6}\,\% vs \pv{33.3}\,\%), a reminder
+that the advantage is specific to the noisy regime.
+
+\begin{figure*}[t]
+\centering
+\includegraphics[width=0.82\textwidth]{figures/fig5_systems.pdf}
+\caption{\textbf{Per-system comparison of generalization on noisy data.} Each marker is one system (rate over its
+noisy data sets); filled markers: exactly representable, open: surrogate. Points above the diagonal favour WISP.
+Small jitter added for visibility. \pv{Preliminary: Q8 subset, eight noisy data sets per system (Q9: 60).}}
+\label{fig:systems}
+\end{figure*}
+
+\paragraph{Each component matters, and the weak-form start most of all} Figure~\ref{fig:ablation} removes one component
+at a time. The ablations were run once, on the subset of the protocol that fixed the design ($\sigma\in\{1,5\}\,\%$,
+$\rho\in\{0,0.5\}$, one realization, dimensions 1--2), and are not repeated on the full grid; all numbers in this
+paragraph refer to that subset. Replacing the weak-form start by the random start customary in trajectory fitting costs most: structure
+recovery falls from 45.0\,\% to 21.2\,\% and generalization from 71.2\,\% to 28.7\,\% on two-dimensional systems, at the
+same single optimizer run per candidate. Without backward steps, the forward path accumulates spurious terms that later
+steps cannot remove; structure falls by 12--16 points while reconstruction even rises slightly, the signature of
+over-complete models. Selecting among weak-form coefficients without the trajectory refit costs 2--9 points of structure.
+The coefficient bound and the joint estimation of the initial state change little on dimension 1; on dimension 2,
+estimating the initial state raises structure recovery from 35.0\,\% to 45.0\,\%.
+
+\begin{figure*}[t]
+\centering
+\includegraphics[width=\textwidth]{figures/fig6_ablation.pdf}
+\caption{\textbf{Ablations and design alternatives on noisy data} (dimensions 1--2; subset run: $\sigma\in\{1,5\}\,\%$,
+$\rho\in\{0,0.5\}$, one realization). Red: one component removed; grey:
+the two alternatives decided by pre-registered rules. The vertical line marks the final WISP configuration. Intervals:
+95\,\% cluster bootstrap over systems.}
+\label{fig:ablation}
+\end{figure*}
+
+\paragraph{The trajectory chooses the size reliably; the remaining failures lie in the path} The weak form is a good place to rank
+terms but a poor place to stop choosing. Choosing the size by a BIC computed on the weak residual instead of the
+trajectory over-sizes \m{OversizeWeakDimTwo}\,\% of two-dimensional models (trajectory BIC: \m{OversizeTrajDimTwo}\,\%;
+difference interval \pv{[\OversizeDiffLo, \OversizeDiffHi]} points)\claimtag{C8} and lowers structure recovery from
+\pv{45.0}\,\% to \pv{32.5}\,\% (Fig.~\ref{fig:selection}A): the weak residuals are serially correlated, so every
+additional term looks significant to a criterion that treats them as independent. On the trajectory, the decision is
+reliable: whenever the truth appears on the path, it is chosen in \m{SelectionOnPathNum} of \m{SelectionOnPathDen}
+noisy data sets (\m{SelectionOnPathShare}\,\%; dimension 1: \pv{44 of 44}, dimension 2: \pv{35 of 38};
+Fig.~\ref{fig:selection}B).\claimtag{C6} The remaining failures are path failures: in \m{PathFailNum} of the
+\m{PathFailDen} data sets whose structure is missed, the truth never appears among the candidates.\claimtag{C7} This
+locates the room for improvement precisely.
+
+\begin{figure*}[t]
+\centering
+\includegraphics[width=\textwidth]{figures/fig7_selection_cost.pdf}
+\caption{\textbf{Selection and cost.} (\textbf{A}) Chosen minus true model size on two-dimensional exactly representable
+systems: a BIC on the weak residual over-sizes, the trajectory BIC rarely does. (\textbf{B}) Share of noisy data sets in
+which the true structure appears on the growth path, and in which it is chosen. (\textbf{C}) Number of candidates per
+noisy data set, which equals the number of trajectory fits; bars mark the median. \pv{Preliminary: Q8 subset.}}
+\label{fig:selection}
+\end{figure*}
+
+\paragraph{Cost} Because the path stops on its own, the candidate list is short: a median of \pv{2, 3, 6 and 9.5}
+candidates for one- and two-dimensional exact and surrogate systems, \pv{12 and 19} on dimension 3
+(Fig.~\ref{fig:selection}C). Each candidate costs one trajectory fit, a median of about \pv{3,300} loss evaluations,
+each of which is one ODE solve. Per noisy data set this adds up to a median of \pv{4,600} ODE solves on one-dimensional
+and \pv{14,000} on two-dimensional exactly representable systems, \pv{39,000} on two-dimensional surrogates and
+\pv{49,000--158,000} on dimension 3. That is substantial:
+WISP is orders of magnitude more expensive than a single sparse regression, which needs no ODE solve for selection at
+all. Against searching structures directly on the trajectory it is cheaper: a population-based search on the same
+benchmark, our earlier EvoGrow method, ran a median of 410 nonlinear fits per data set even on clean data. Counts are
+our measure of cost. As context only, since wall-clock time on a shared cluster depends on the node and its load: with
+one CPU core per data set, the recorded solver time per noisy data set has a median of \pv{2.4}\,s (dimension 1,
+exact), \pv{6.1}\,s (dimension 2, exact) and \pv{15.7}\,s (dimension 2, surrogate), but a heavy tail---the 90th
+percentile is \pv{142}\,s, \pv{2.3}\,h and, on the Lorenz and R\"ossler systems, \pv{31}\,h---driven by stiff or
+divergent candidates. A
+pySINDy fit takes 0.01--0.1\,s per data set on the same cluster.
+
+\paragraph{The stop is liberal, and the trajectory compensates} We probed the $\chi^2$ stop directly, at the true
+support and without any path (Fig.~\ref{fig:calibration}; separate protocol, 1,800 noisy data sets of the 30 exactly
+representable systems, three noise realizations each). It is not calibrated as a significance test. A spurious term
+passes the 1\,\% threshold in 5\,\% of cases on dimension 1, 13\,\% on dimension 2 and 23--29\,\% on dimension 3. The
+excess hardly depends on the noise level, roughly doubles when half of the samples are missing, and does not shrink when
+the true noise variance replaces the estimate. This points to a deterministic error of the weak form---quadrature on
+coarse or irregular grids and noise entering through the library---rather than to the noise estimator. At the same
+time the test has high power: a missing true term is detected in 82--100\,\% of cases. The stop therefore errs on the
+side of letting the path run past the truth, and the trajectory BIC then cuts it back---which is the division of labour
+WISP is built on. A sharper stop would shorten paths and lower cost; in our data the excess false alarms were largely absorbed by the
+trajectory selection, but we have not shown that better calibration would leave correctness unchanged.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\columnwidth]{figures/fig8_calibration.pdf}
+\caption{\textbf{Calibration of the $\chi^2$ stop at the true support} (1,800 noisy data sets, 30 exactly representable
+systems, $\sigma\in\{1,\dots,5\}\,\%$, three realizations). (\textbf{A}) Share of spurious terms whose gain-to-noise
+ratio exceeds $\chi^2_{1,0.99}$; bars with the estimated noise variance, ticks with the true one. (\textbf{B}) Share of
+true terms that pass the test when they are the only one missing.}
+\label{fig:calibration}
+\end{figure}
+
+\paragraph{Three- and four-dimensional systems} Table~\ref{tab:dim3} reports the eight exactly representable
+three-dimensional systems, \pv{62} noisy data sets. WISP recovers the exact structure in \pv{17 of 62} (WSINDy \pv{11},
+all pySINDy methods \pv{0}) and reconstructs the trajectory in \pv{34} (WSINDy \pv{12}). The chaotic and
+complex-periodic Lorenz regimes (55, 56) are hard for every method: trajectory losses lose their meaning beyond a few
+Lyapunov times. On Maxwell--Bloch (52), WISP reconstructs the trajectory in \pv{7 of 8} data sets but never isolates
+the exact law. On clean data WSINDy recovers more three-dimensional structures than WISP (\pv{11 of 12 vs 9 of 12} on
+systems 54--59). These counts rest on eight systems and are reported, not used for any claim. \todo{Q9: add the two
+three-dimensional surrogate and the two four-dimensional systems; Maxwell--Bloch and Chen--Lee reported apart from the
+Lorenz and R\"ossler regimes.}
+
+\begin{table}[t]
+\centering\sffamily\scriptsize
+\caption{\textbf{Three-dimensional systems, noisy data.} Hits out of $n$ noisy data sets for structure / reconstruction /
+generalization. Weak-SINDy reached 0 structure hits on every system. \pv{Preliminary: Q8 subset, eight noisy data
+sets per system (Q9: 60).}}
+\label{tab:dim3}
+\setlength{\tabcolsep}{3pt}
+\ifpreliminary\color{prelim}\fi
+\begin{tabular}{@{}rlccc@{}}
+\toprule
+ & system & $n$ & \textbf{WISP} & WSINDy \\
+\midrule
+52 & Maxwell--Bloch & 8 & 0 / \textbf{7} / 0 & 0 / 2 / 0\\
+54 & Lorenz, periodic & 8 & \textbf{3} / \textbf{7} / \textbf{4} & 2 / 3 / 2\\
+55 & Lorenz, complex periodic & 7 & 1 / 0 / 0 & \textbf{2} / 0 / 0\\
+56 & Lorenz, chaotic & 8 & 1 / 0 / 0 & \textbf{2} / 0 / 0\\
+57 & R\"ossler, fixed point & 8 & 0 / \textbf{4} / 0 & 0 / 0 / \textbf{2}\\
+58 & R\"ossler, periodic & 8 & \textbf{5} / \textbf{7} / \textbf{6} & 0 / 5 / 4\\
+59 & R\"ossler, chaotic & 8 & \textbf{3} / \textbf{7} / \textbf{5} & 1 / 1 / 3\\
+61 & Chen--Lee & 7 & 4 / \textbf{2} / \textbf{3} & 4 / 1 / 1\\
+\midrule
+ & total & 62 & \textbf{17} / \textbf{34} / \textbf{18} & 11 / 12 / 12\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{Discussion}
+
+WISP rests on one observation: ranking candidate terms and deciding on a model are different problems, and they are
+best solved in different spaces. In the weak form, the question ``which term explains most of what is left?'' has a
+linear, derivative-free answer, and the question ``is that more than noise?'' has a closed-form reference value. On the
+trajectory, the question ``does this model, integrated, reproduce the data?'' is answered directly, and the weak
+coefficients keep that answer to one fit per candidate. Neither half is new on its own---orthogonal forward regression
+\cite{billings1989}, FoBa \cite{zhang2011}, weak formulations \cite{schaeffer2017,messenger2021mms},
+simulation-based model selection \cite{mangan2017,piroddi2003} and weak-form starting values for trajectory fits
+\cite{bortz2023} are all established---but their combination behaves very differently from each component. Selection
+in the weak form alone over-sizes (Fig.~\ref{fig:selection}A), and trajectory search from random starts fails to find
+even known structures (Fig.~\ref{fig:ablation}); together they roughly double structure recovery under noise
+compared with WSINDy.\claimtag{C1} The closest relatives are WeakIdent \cite{tang2023}, which also grows supports in the
+weak form but selects by a regression-space criterion, and the information-criterion selection of Mangan et al.\
+\cite{mangan2017}, which simulates SINDy candidates but needs many validation trajectories; WISP uses only the training
+trajectory. The comparison with WeakIdent isolates what the trajectory adds: both methods find exact two-dimensional
+structures at comparable rates, but WISP's models predict from an unseen initial condition far more often
+(\m{WispDimTwoExactGenNoisy}\,\% vs at most \m{WeakIdentTrigDimTwoExactGenNoisy}\,\%).\claimtag{C3} A growth path in
+the weak form is thus enough to find the terms; deciding the model on the trajectory is what makes it predict.
+
+The most useful finding for future work may be where the remaining errors sit. When the true law is among WISP's
+candidates, the trajectory criterion picks it in \m{SelectionOnPathNum} of \m{SelectionOnPathDen} noisy data sets on
+one- and two-dimensional systems (Fig.~\ref{fig:selection}B).\claimtag{C6} Under noise, selection is therefore
+essentially solved for these systems, and recovery is bounded by the candidate generator: in about \pv{half} of the
+data sets the truth never appears on the path.\claimtag{C7} This turns the question of how to improve equation discovery from noisy data into a sharper one:
+how to generate a short candidate list that contains the truth more often.
+
+A second contribution is the stop. Sparse regression needs a threshold, and the right threshold depends on noise and
+scale; in our comparison the references were oracle-tuned---granted their best threshold \emph{after} seeing the
+results---and still fell behind on generalization.\claimtag{C3} WISP's path ends where its gain becomes indistinguishable from noise, with noise estimated from the data.
+Replacing a truth-derived cap by this rule shortened the paths by half and improved structure recovery by 14--17 points.
+
+\paragraph{Limitations} The library is fixed and polynomial-trigonometric; 33 of 63 ODEBench systems have no exact
+representation in it, and WISP's generalization on two-dimensional surrogate systems (\m{WispDimTwoSurrGenNoisy}\,\%)
+remains low in absolute
+terms, as for every method we tested. All evidence comes from one training trajectory per data set, the setting of
+ODEBench; on chaotic systems this caps what any trajectory-based criterion can do. The $\chi^2$ stop is a first-order
+approximation that ignores noise in the library columns and quadrature error; it is liberal by a factor of 5--30
+(Fig.~\ref{fig:calibration}); in our data this cost fits rather than correctness, because the trajectory selection
+absorbed most of the excess. We therefore do not call it a significance test
+but a heuristic that errs in the safe direction. We did not raise the threshold to match the observed false-alarm rate,
+because that would tune a constant on the benchmark; on one-dimensional systems, where 18\,\% of missing true terms
+stay below the threshold, the opposite error also occurs. The remaining failures concentrate where the truth
+never enters the path (Fig.~\ref{fig:selection}B). A size rule based on
+the trajectory loss plus an absolute complexity penalty recovered slightly more two-dimensional structures than the BIC
+(\pv{47.5}\,\% vs \pv{45.0}\,\%); it was not adopted because the protocol fixed the BIC beforehand. The ablations rest
+on a subset of two noise levels and one realization, and dimensions 3 and 4 on twelve systems. Finally, our comparison
+covers the SINDy family and WeakIdent \todo{v1: and ODEFormer, run on the same data}; genetic-programming PySR
+\cite{cranmer2023} reports generalization rates on ODEBench of the same order as the references here, but on different
+data, and we do not compare against it numerically.
+
+\paragraph{Outlook} The results suggest that the limiting factor under noise is no longer the selection step but the path:
+when the true law appears among the candidates, the trajectory criterion nearly always picks it. The first step we
+will take is a calibrated stop: a noise floor that includes the quadrature error of the weak form and the noise
+propagated through the library, derived from the data rather than fitted to the benchmark, so that the 1\,\% threshold
+means what it says. Beyond that, better paths---beam variants that keep more than one support alive, or several
+trajectories at once---are the natural next steps, and they can be added without giving up the property that makes WISP easy to use:
+every component can be stated in one sentence and none was tuned on the benchmark.
+
+\section{Materials and methods}
+
+\paragraph{Weak design} For $L\in\{1,2,4,8,16\}$ and every start index $a$, row $(L,a)$ has target
+$x_k(t_{a+L})-x_k(t_a)$ and design $\int_{t_a}^{t_{a+L}}\theta_j\,dt$ by the trapezoidal rule on the observed times
+(about $2{,}530$ rows for 512 samples). Columns are not centred; the constant is an ordinary column. Least squares uses an
+orthogonal factorization on unit-norm columns; $\SSE$ is scale invariant.
+
+\paragraph{Noise estimate and stop} For each component and observed point $i$, a cubic is fitted by least squares to the
+nine observed points centred on $i$ (shifted at the edges); its residual at $i$ is divided by $\sqrt{1-h_{ii}}$ with
+leverage $h_{ii}$, squared, and averaged over the 21 points centred on $i$. $C_k=D\,\mathrm{diag}(\hat\sigma^2_{k,\cdot})D^\top$
+with the end-point incidence matrix $D$; $F_k(S)$ is computed through a thin SVD of the unit-normalized columns $S$
+without forming $C_k$. A non-positive expected noise gain counts as significant. The path also ends when the best
+available gain is non-positive, when a backward step would revisit a model, or when the full library is active.
+Algorithm~\ref{alg:path} summarizes the whole procedure.
+\begin{algorithm}[tb]
+\caption{WISP. $\SSE_k$ is the weak least-squares residual of equation $k$ (Step 2), $g$ the normalized gain of
+Step 3, $\rho_k(j\mid S)$ the gain-to-noise ratio of Eq.~\ref{eq:stop}. Ties are broken by the smallest equation index,
+then the smallest term index.}
+\label{alg:path}
+\footnotesize
+\begin{algorithmic}[1]
+\Require samples $(t_i,\bm y_i)$, library $\Theta$ with $p$ terms
+\Ensure model $(S,\hat{\bm c},\hat{\bm x}_0)$
+\State build $G,\bm b_k$ (weak design), $\hat\sigma^2_{k,i}$ (noise estimate); $S_k\gets\emptyset$ for all $k$; $\mathcal C\gets\emptyset$
+\Function{Stopped}{$k$}
+  \State \Return $\SSE_k(S_k)<10^{-14}\lVert\bm b_k\rVert^2$ \textbf{or} $|S_k|=p$
+  \State \hphantom{\Return} \textbf{or} $\max_{j\notin S_k}\rho_k(j\mid S_k)<6.635$
+\EndFunction
+\Loop
+  \State $(k,j)\gets\arg\max\{g_k(j\mid S_k):\ \neg\Call{Stopped}{k},\ j\notin S_k\}$; \textbf{break} if none
+  \State \textbf{break} if $g_k(j\mid S_k)\le0$
+  \State $\gamma\gets g_k(j\mid S_k)$;\quad $S_k\gets S_k\cup\{j\}$ \Comment{forward}
+  \Repeat \Comment{backward, across all equations}
+    \State $(l,m)\gets\arg\min_{l,\,m\in S_l}\big(\SSE_l(S_l\setminus\{m\})-\SSE_l(S_l)\big)/\lVert\bm b_l\rVert^2$
+    \State \textbf{if} that increase $<\gamma/2$ \textbf{then} $S_l\gets S_l\setminus\{m\}$
+  \Until{no term was removed}
+  \State \textbf{if} $S\in\mathcal C$ \textbf{then} undo this step; \textbf{break} \Comment{state revisited}
+  \State $\mathcal C\gets\mathcal C\cup\{S\}$
+\EndLoop
+\For{$S\in\mathcal C$} \Comment{trajectory refit, one BFGS run each}
+  \State start at weak LS coefficients on $S$ and $\bm y_1$; minimize $\mathcal L(\bm c,\hat{\bm x}_0)$
+\EndFor
+\State \Return the candidate with the smallest $\BIC$; failed or divergent fits are never selected
+\end{algorithmic}
+\end{algorithm}
+
+
+\paragraph{Trajectory fit} ODEs are integrated with Tsitouras' 5(4) Runge--Kutta pair \cite{tsitouras2011}
+(DifferentialEquations.jl \cite{rackauckas2017}, absolute and relative tolerance $10^{-6}$); the loss is minimized by
+BFGS (Optim.jl \cite{mogensen2018}, via Optimization.jl) with at most 200 iterations and 20,000 loss evaluations, one attempt. BFGS itself is
+unconstrained; the coefficients enter the ODE clipped to $[-10^3,10^3]$, the initial state unclipped. Failed or divergent fits are never selected.
+
+\paragraph{Evaluation} Models are integrated from the clean initial conditions on the clean 512-point grid. $R^2$ is
+variance weighted over components; a divergent integration counts as a miss. Reference models are integrated with
+DOP853 at the same evaluation settings. Each reference row was matched to WISP's row by a hash of the observed data.
+
+\paragraph{Reference implementations} SINDy: pySINDy, second-order finite differences. Weak-SINDy: pySINDy weak library.
+E-SINDy: pySINDy ensemble optimizer, bagging, 20 models, median aggregation. WSINDy: original MATLAB code
+(version used in ref.~\cite{messenger2021mms}), library identical to $\Theta$; MATLAB R2026b. WeakIdent: authors'
+reference code, ODE mode, polynomial dictionary of degree 3, in a second arm extended by $\sin x_i,\cos x_i$ (the arm
+without them reproduces the native arm bit-identically); test functions and sparsity limit are derived from the data
+by the code. For every reference with a threshold we evaluated all values and report, per stratum $\times$ noise level
+$\times$ metric, the best one; the single best value per stratum and the whole threshold curve are given in the
+supplement \todo{supplement}.
+
+\paragraph{Calibration of the stop} For every noisy data set of the 30 exactly representable systems (both training
+initial conditions, $\sigma\in\{0.01,\dots,0.05\}$, $\rho\in\{0,0.5\}$, three realizations) and every equation, the
+gain-to-noise ratio of Eq.~\ref{eq:stop} was computed at the true support $S^*$ for every $j\notin S^*$ (false alarms)
+and for every true term $i$ added to $S^*\setminus\{i\}$ (power), once with the estimated and once with the true
+per-point noise variance $(\sigma x_{\mathrm{clean}}(t_i))^2$. No path, fit or simulation is involved. The protocol was
+frozen before the first number; the analysis is descriptive and changed nothing in WISP.
+
+\paragraph{Pre-registered protocols} The protocols, the adoption rules and the decision records are part
+of the code repository; each records its freeze date before the governed computation. All runs execute in one container
+image per protocol on a Kubernetes cluster; every record carries a settings fingerprint and the hash of its input data.
+
+\paragraph{Data and code availability} The WISP implementation, all protocols, the per-cell results of WISP and every
+reference, the version history of the protocols, and the scripts that produce every number and figure in this article
+are provided to the reviewers in a repository at submission and will be released publicly upon publication.
+
+\paragraph{Acknowledgments} Computations were performed on the Orion cluster of SCCH.
+
+\scriptsize
+\begin{thebibliography}{99}\setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}
+\bibitem{bongard2007} Bongard J, Lipson H (2007) Automated reverse engineering of nonlinear dynamical systems. \emph{Proc Natl Acad Sci USA} 104(24):9943--9948.
+\bibitem{schmidt2009} Schmidt M, Lipson H (2009) Distilling free-form natural laws from experimental data. \emph{Science} 324(5923):81--85.
+\bibitem{cranmer2023} Cranmer M (2023) Interpretable machine learning for science with PySR and SymbolicRegression.jl. arXiv:2305.01582.
+\bibitem{brunton2016} Brunton SL, Proctor JL, Kutz JN (2016) Discovering governing equations from data by sparse identification of nonlinear dynamical systems. \emph{Proc Natl Acad Sci USA} 113(15):3932--3937.
+\bibitem{rudy2017} Rudy SH, Brunton SL, Proctor JL, Kutz JN (2017) Data-driven discovery of partial differential equations. \emph{Sci Adv} 3(4):e1602614.
+\bibitem{champion2019} Champion K, Lusch B, Kutz JN, Brunton SL (2019) Data-driven discovery of coordinates and governing equations. \emph{Proc Natl Acad Sci USA} 116(45):22445--22451.
+\bibitem{kaheman2020} Kaheman K, Kutz JN, Brunton SL (2020) SINDy-PI: a robust algorithm for parallel implicit sparse identification of nonlinear dynamics. \emph{Proc R Soc A} 476(2242):20200279.
+\bibitem{desilva2020} de Silva BM, Champion K, Quade M, Loiseau JC, Kutz JN, Brunton SL (2020) PySINDy: a Python package for the sparse identification of nonlinear dynamical systems from data. \emph{J Open Source Softw} 5(49):2104.
+\bibitem{kaptanoglu2022} Kaptanoglu AA, et al.\ (2022) PySINDy: a comprehensive Python package for robust sparse system identification. \emph{J Open Source Softw} 7(69):3994.
+\bibitem{fasel2022} Fasel U, Kutz JN, Brunton BW, Brunton SL (2022) Ensemble-SINDy: robust sparse model discovery in the low-data, high-noise limit, with active learning and control. \emph{Proc R Soc A} 478(2260):20210904.
+\bibitem{schaeffer2017} Schaeffer H, McCalla SG (2017) Sparse model selection via integral terms. \emph{Phys Rev E} 96(2):023302.
+\bibitem{reinbold2020} Reinbold PAK, Gurevich DR, Grigoriev RO (2020) Using noisy or incomplete data to discover models of spatiotemporal dynamics. \emph{Phys Rev E} 101(1):010203.
+\bibitem{messenger2021mms} Messenger DA, Bortz DM (2021) Weak SINDy: Galerkin-based data-driven model selection. \emph{Multiscale Model Simul} 19(3):1474--1497.
+\bibitem{messenger2021jcp} Messenger DA, Bortz DM (2021) Weak SINDy for partial differential equations. \emph{J Comput Phys} 443:110525.
+\bibitem{mangan2017} Mangan NM, Kutz JN, Brunton SL, Proctor JL (2017) Model selection for dynamical systems via sparse regression and information criteria. \emph{Proc R Soc A} 473(2204):20170009.
+\bibitem{piroddi2003} Piroddi L, Spinelli W (2003) An identification algorithm for polynomial NARX models based on simulation error minimization. \emph{Int J Control} 76(17):1767--1781.
+\bibitem{billings1989} Billings SA, Chen S, Korenberg MJ (1989) Identification of MIMO non-linear systems using a forward-regression orthogonal estimator. \emph{Int J Control} 49(6):2157--2189.
+\bibitem{chen1989} Chen S, Billings SA, Luo W (1989) Orthogonal least squares methods and their application to non-linear system identification. \emph{Int J Control} 50(5):1873--1896.
+\bibitem{zhang2011} Zhang T (2011) Adaptive forward-backward greedy algorithm for learning sparse representations. \emph{IEEE Trans Inf Theory} 57(7):4689--4708.
+\bibitem{schwarz1978} Schwarz G (1978) Estimating the dimension of a model. \emph{Ann Stat} 6(2):461--464.
+\bibitem{dascoli2024} d'Ascoli S, Becker S, Mathis A, Schwaller P, Kilbertus N (2024) ODEFormer: symbolic regression of dynamical systems with transformers. \emph{International Conference on Learning Representations (ICLR)}.
+\bibitem{strogatz2015} Strogatz SH (2015) \emph{Nonlinear Dynamics and Chaos}, 2nd ed.\ (Westview Press, Boulder).
+\bibitem{field2007} Field CA, Welsh AH (2007) Bootstrapping clustered data. \emph{J R Stat Soc B} 69(3):369--390.
+\bibitem{bortz2023} Bortz DM, Messenger DA, Dukic V (2023) Direct estimation of parameters in ODE models using WENDy: weak-form estimation of nonlinear dynamics. \emph{Bull Math Biol} 85:110.
+\bibitem{tang2023} Tang M, Liao W, Kuske R, Kang SH (2023) WeakIdent: weak formulation for identifying differential equation using narrow-fit and trimming. \emph{J Comput Phys} 483:112069.
+\bibitem{tsitouras2011} Tsitouras Ch (2011) Runge--Kutta pairs of order 5(4) satisfying only the first column simplifying assumption. \emph{Comput Math Appl} 62(2):770--775.
+\bibitem{rackauckas2017} Rackauckas C, Nie Q (2017) DifferentialEquations.jl -- a performant and feature-rich ecosystem for solving differential equations in Julia. \emph{J Open Res Softw} 5(1):15.
+\bibitem{mogensen2018} Mogensen PK, Riseth AN (2018) Optim: a mathematical optimization package for Julia. \emph{J Open Source Softw} 3(24):615.
+\end{thebibliography}
+
+\end{document}

@@ -4,6 +4,28 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ---
 
+## 2026-11-11
+
+### WISP paper draft v0 for the co-authors (preliminary results, Q9 unopened)
+
+User: the professors want a first paper soon. Split decided: everything independent of Q9 (introduction, method,
+example, benchmark protocol, statistics, pre-registration, ablations, stop calibration, limitations) is written to final
+quality now; results come from the Q8 C1000 subset through the frozen Q9-A code and are marked as preliminary.
+
+`paper/wisp/wisp.tex`, switch `\ifpreliminary`: red "PRELIMINARY RESULTS" watermark and header on every page; every
+generated or subset number in red (`\pv`, `\m{<macro>}`); sentences whose wording depends on a Q9-A claim carry a tag
+[C1]–[C9]; open items as red `\todo`. Numbers come from `paper/wisp/data/results_macros.tex` (dry-run output of
+`q9a_claims.py` on Q8); at the Q9 freeze the file is replaced by the Q9 output and `\preliminaryfalse` is set. Text
+now follows Q9/Q9-A: all 63 systems, σ 1–5 %, three realizations, 60 noisy data sets per system, primary family with
+Holm, bootstrap 10,000, WeakIdent as a reference (native and +sin/cos, best τ), B1/B3 as pending. Main table now has
+every reference. C3 and C9 fail on the subset and are worded with the Q9-A fallback ("ahead of every reference except
+WeakIdent" on structure; dimension-1 surrogate generalization not separated). Authors: Jödicke, Winkler, Affenzeller;
+co-author affiliations marked for confirmation, Bachinger open.
+
+`q9a_claims.py` (before any Q9 run, so not a deviation): the macro output also writes the secondary tests (difference,
+unadjusted p, systems ahead/tied/behind), C5 gap, C6/C8 interval bounds, C7 counts and the claim verdicts. Dry run
+repeated: every CSV identical to the previous run, macros only added; tests 6 passed.
+
 ## 2026-11-10
 
 ### WISP paper: venue requirement, co-authors, journal shortlist
