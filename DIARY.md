@@ -6,6 +6,23 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ## 2026-11-11
 
+### WISP paper draft v1.1: default configuration named, constants justified, references verified
+
+From a colleague's review of the process presentation: (1) "define the standard configuration", (2) "why are the
+constants as they are", (3) "where does the 2000 come from". (3) is the number of Monte-Carlo noise draws in scene 16 of
+the process page — display only; WISP computes the expected noise gain in closed form (Σ wᵢ²σ̂ᵢ²), never by sampling, and
+it is unrelated to the number of training points. Paper changes: Table 2 is now "the default configuration", used
+unchanged everywhere; every "fixed choice / standard settings" origin replaced by its actual provenance (dyadic windows
+fixed in the first noise-free protocol; 9-point smoother inherited from the stage-cap derivative estimator, 21 a human
+choice, both fixed before any stop was evaluated (Q6 §3); BFGS 200 / 20,000 and solver tolerance taken over from
+`studies/regression/run_regression.jl`). New paragraph in Method: four kinds of constants and why none was tuned — tuning
+them would reintroduce the benchmark-tuned threshold the paper argues against. Limitations: sensitivity to the constants
+not measured (user: a Paper 2 topic, together with the data-derived structure bound). Conclusions: future work stated
+generically (calibrated stop, paths that contain the truth), the concrete remedies held back for Paper 2. The eight
+references added in v1 verified against Crossref/JSTOR: all correct (Holm 1979 has no resolvable DOI). Still 17 pages.
+User decision noted for later: WISP is the core algorithm, EvoGrow will not be continued; repo name stays, WISP
+becomes its own package — CLAUDE.md / thesis arc not yet changed (pending user confirmation).
+
 ### WISP paper draft v1: restructured for Nonlinear Dynamics (~15 pages)
 <!-- e18e636 -->
 

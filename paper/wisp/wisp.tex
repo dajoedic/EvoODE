@@ -409,6 +409,17 @@ $\approx5n$ rows, plus the stop statistic; for $n=512$ this is negligible. The r
 per candidate, each costing a few thousand ODE solves (Sect.~\ref{sec:cost}). WISP therefore costs as many trajectory
 fits as the path has states, which the stop keeps small: the path stops on its own instead of running to a fixed size.
 
+\paragraph{One default configuration, and why its constants were not tuned}
+WISP runs in a single default configuration (Table~\ref{tab:settings}); apart from the library, a user sets nothing.
+Its constants are of four kinds: published defaults (the FoBa fraction $\nu$), statistical conventions (the 99\,\%
+quantile of $\chi^2_1$, the BIC penalty), choices that assume no scale of the system (the dyadic window ladder), and
+settings taken over from earlier code (noise smoother, optimizer, ODE solver). We deliberately did not tune any of them
+on the benchmark. The argument of this article is that WISP removes the benchmark-tuned sparsity threshold of sparse
+regression; tuning WISP's own constants would reintroduce exactly that, and would grant WISP an advantage that the
+references receive only through oracle tuning (Sect.~\ref{sec:protocol}). The reported numbers are therefore what a user
+obtains without adjustment. Other values may perform better on particular systems; we have not studied this
+(Sect.~\ref{sec:limitations}).
+
 \begin{algorithm}[t]
 \caption{WISP. $\SSE_k$ is the weak least-squares residual of equation $k$, $g$ the normalized gain of
 Eq.~\eqref{eq:gain}, $\rho_k(j\mid S)$ the gain-to-noise ratio of Eq.~\eqref{eq:stop}. Ties are broken by the smallest
@@ -442,8 +453,9 @@ equation index, then the smallest term index.}
 
 \begin{table}[t]
 \centering\small
-\caption{Every fixed setting of WISP and where it comes from. None was chosen by its effect on benchmark results; the
-two settings decided by pre-registered adoption rules (Sect.~\ref{sec:protocol}) are marked $^\ddagger$.}
+\caption{The default configuration of WISP: every fixed setting and where it comes from. Every result in this article
+uses it unchanged, on every system, dimension and noise level. No setting was chosen by its effect on benchmark
+results; the two settings decided by pre-registered adoption rules (Sect.~\ref{sec:protocol}) are marked $^\ddagger$.}
 \label{tab:settings}
 \setlength{\tabcolsep}{4pt}
 \begin{tabularx}{\textwidth}{@{}lp{40mm}X@{}}
@@ -451,15 +463,18 @@ two settings decided by pre-registered adoption rules (Sect.~\ref{sec:protocol})
 Setting & Value & Origin \\
 \midrule
 Library $\Theta$ & $1,x_i,x_i^2,x_ix_j,x_i^3,\sin x_i,\cos x_i$ & polynomial--trigonometric basis, fixed before WISP was developed \\
-Window lengths & $L\in\{1,2,4,8,16\}$ samples & dyadic, fixed choice \\
+Window lengths & $L\in\{1,2,4,8,16\}$ samples & dyadic ladder from the shortest window to one that averages noise;
+assumes no time scale of the system; fixed in the first, noise-free protocol, before any noisy run of WISP \\
 Quadrature & trapezoidal on observed times & standard; no uniform grid required \\
 Backward fraction & $\nu=\tfrac12$ & published FoBa default \cite{zhang2011} \\
 Stop threshold & $6.635=\chi^2_{1,0.99}$ & 99\,\% quantile, fixed before paths were computed$^\ddagger$ \\
-Noise estimate & cubic fits on 9 points, averaged over 21 & local polynomial smoother, fixed choice \\
+Noise estimate & cubic fits on 9 points, averaged over 21 & local polynomial smoother; 9 points taken over from the
+authors' earlier derivative estimator, 21 for a stable local average; fixed before any stop was evaluated \\
 Coefficient bound & $[-10^3,10^3]$ & declared deviation from the adoption rule$^\ddagger$ (Sect.~\ref{sec:protocol}) \\
 Initial state & estimated jointly & adopted by a pre-registered rule \\
-Optimizer & BFGS, one run, $\le200$ iterations, $\le20{,}000$ loss evaluations & standard settings \\
-ODE solver & Tsitouras 5(4), tolerance $10^{-6}$ & standard settings \\
+Optimizer & BFGS, one run, $\le200$ iterations, $\le20{,}000$ loss evaluations & taken over unchanged from the
+authors' earlier trajectory-fitting code, which predates WISP \\
+ODE solver & Tsitouras 5(4), tolerance $10^{-6}$ & as the optimizer \\
 Size criterion & BIC on the trajectory, Eq.~\eqref{eq:bic} & fixed before the subset run \\
 \bottomrule
 \end{tabularx}
@@ -912,7 +927,7 @@ sampling is too coarse for that, the estimate, and with it the stop, degrades. F
 systems with more than a handful of states, the cost of the trajectory fits and the reach of the trajectory criterion on
 chaotic dynamics are the limiting factors (Sect.~\ref{sec:dim3}).
 
-\subsection{Limitations}
+\subsection{Limitations}\label{sec:limitations}
 The library is fixed and polynomial-trigonometric; 33 of 63 ODEBench systems have no exact representation in it, and
 WISP's generalization on two-dimensional surrogate systems (\m{WispDimTwoSurrGenNoisy}\,\%) remains low in absolute
 terms, as for every method we tested. All evidence comes from one training trajectory per data set, the setting of
@@ -924,7 +939,8 @@ direction. We did not raise the threshold to match the observed false-alarm rate
 the benchmark; on one-dimensional systems, where 18\,\% of missing true terms stay below the threshold, the opposite
 error also occurs. A size rule based on the trajectory loss plus an absolute complexity penalty recovered slightly more
 two-dimensional structures than the BIC (\pv{47.5}\,\% vs \pv{45.0}\,\%); it was not adopted because the protocol fixed
-the BIC beforehand. The ablations rest on a subset of two noise levels and one realization, and dimensions 3 and 4 on
+the BIC beforehand. All results use the default configuration; we did not measure how sensitive they are to its
+constants (window lengths, smoother widths, $\nu$, threshold). The ablations rest on a subset of two noise levels and one realization, and dimensions 3 and 4 on
 twelve systems. The cost has a heavy tail driven by stiff candidates. Finally, our comparison covers the SINDy family
 and WeakIdent \todo{v1 data: and ODEFormer, run on the same data}; genetic-programming PySR \cite{cranmer2023} reports
 generalization rates on ODEBench of the same order as the references here, but on different data, and we do not compare
@@ -939,10 +955,9 @@ on one- and two-dimensional systems compared with WSINDy and predicts from unsee
 than every reference, each granted its best threshold after the fact.\claimtag{C1--C3} Its components are established;
 what is new is the division of labour between the two spaces, a stop referenced to the noise instead of a sparsity
 threshold, and the evidence that, once the truth is on the path, the trajectory criterion nearly always finds it. The
-next steps follow from where the errors sit: a calibrated stop whose noise floor includes the quadrature error and the
-noise propagated through the library, and better paths---beam variants that keep more than one support alive, or
-several trajectories at once. Both can be added without giving up the property that makes WISP easy to use: every
-component can be stated in one sentence, and none was tuned on the benchmark.
+next steps follow from where the errors sit: a better calibrated stop, and paths that contain the truth more often.
+Both can be pursued without giving up the property that makes WISP easy to use: it runs in one default configuration,
+every component can be stated in one sentence, and none was tuned on the benchmark.
 
 % ================================================================
 \section*{Declarations}
