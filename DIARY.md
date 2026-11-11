@@ -6,6 +6,21 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ## 2026-11-11
 
+### WISP paper draft v1: restructured for Nonlinear Dynamics (~15 pages)
+
+Winkler suggested that 15 pages are fine; the user chose to write for **Nonlinear Dynamics** (G3 shortlist, IF ≥ 5 to
+be confirmed in JCR); a later move to Communications Physics would shorten the main text into Methods/Supplement.
+`paper/wisp/wisp.tex` rebuilt as a single-column Springer-like article (10 pt; `sn-jnl.cls` is not in MiKTeX, the user
+fetches the template; only preamble and title block change then). New: numbered sections, a Related-work section with a
+positioning table (where each method ranks terms and where it decides), the method expanded into subsections with a
+cost paragraph and a table of every fixed setting and its origin, contributions list, results in subsections, raw
+structure rows in the main table (pruned and raw side by side), a practical-guidance subsection, Conclusions, Springer
+Declarations (funding, competing interests, CRediT as red todos), appendices (implementation, calibration, protocols).
+Seven references added (lasso, SR3, Bertsimas–Gurnee in Nonlinear Dyn, Billings 2013, OMP, Burnham–Anderson, Ramsay et
+al., Holm) — to be verified against the publisher records before submission. No number changed; preliminary marking
+unchanged. Result: 17 pages, main text to the Conclusions ends on page 14, appendices and references pages 15–17. Bachinger
+stays off the author list (user). v0 two-column file kept in the scratchpad only.
+
 ### WISP paper draft v0 for the co-authors (preliminary results, Q9 unopened)
 <!-- b35b863 -->
 
