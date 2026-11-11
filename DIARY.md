@@ -7,6 +7,7 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 ## 2026-11-11
 
 ### WISP paper draft v1.1: default configuration named, constants justified, references verified
+<!-- 3835b4e -->
 
 From a colleague's review of the process presentation: (1) "define the standard configuration", (2) "why are the
 constants as they are", (3) "where does the 2000 come from". (3) is the number of Monte-Carlo noise draws in scene 16 of
