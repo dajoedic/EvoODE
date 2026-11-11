@@ -7,6 +7,7 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 ## 2026-11-11
 
 ### WISP paper draft v1: restructured for Nonlinear Dynamics (~15 pages)
+<!-- e18e636 -->
 
 Winkler suggested that 15 pages are fine; the user chose to write for **Nonlinear Dynamics** (G3 shortlist, IF ≥ 5 to
 be confirmed in JCR); a later move to Communications Physics would shorten the main text into Methods/Supplement.
