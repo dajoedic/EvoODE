@@ -1,0 +1,5 @@
+cell_id,variant,support_equal,bound1000_coefficients_within10,required_to_equal
+sys0009_ic2_s0_r0_n1,A,True,True,False
+sys0009_ic2_s0_r0_n1,C,True,True,False
+sys0025_ic1_s0.05_r0_n1,A,True,True,False
+sys0025_ic1_s0.05_r0_n1,C,True,True,False

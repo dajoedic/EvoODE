@@ -192,6 +192,12 @@ def settings_fingerprint(settings):
 def validate_records(cells, records, fit_path, base_settings):
     expected={(c['cell_id'],c['arm'],k['candidate_id']):c for c in cells for k in c['candidates']}
     bykey={}; fingerprints={}; inventories={}
+    # File digests are loop-invariant; compute them once (performance only, same checks).
+    if records:
+        fit_path_sha=q5.sha256(fit_path); index_sha=q5.sha256(builder.EXPORT/'index.csv')
+        runner_hashes=source_hashes(ROOT/'studies/regression/sideproject_q8_fits.jl')
+        inventory=set(base_settings_source())|{'studies/regression/sideproject_q8_fits.jl'}
+        current={name:source_hashes(ROOT/name) for name in inventory}
     for r in records:
         key=r['cell_id'],r['arm'],r['candidate_id']
         if key not in expected:raise ValueError('Unexpected Q8 candidate')
@@ -199,20 +205,20 @@ def validate_records(cells, records, fit_path, base_settings):
         c=expected[key];settings=dict(base_settings,clamp_val=float(c['coefficient_bound']),
             **{k:c[k] for k in ('arm','ic_mode','coefficient_bound','start','refit')},fixed_initial_state_control=False)
         p=r['provenance']
-        if r['optimizer_settings']!=settings or p['paths_sha256']!=q5.sha256(fit_path) or p['protocol']!='Q8':
+        if r['optimizer_settings']!=settings or p['paths_sha256']!=fit_path_sha or p['protocol']!='Q8':
             raise ValueError('Q8 provenance/settings mismatch')
-        if p['runner_sha256'] not in source_hashes(ROOT/'studies/regression/sideproject_q8_fits.jl'):
+        if p['runner_sha256'] not in runner_hashes:
             raise ValueError('Q8 runner mismatch')
-        if p['index_sha256']!=q5.sha256(builder.EXPORT/'index.csv') or not all(r['trajectory_control'].values()):
+        if p['index_sha256']!=index_sha or not all(r['trajectory_control'].values()):
             raise ValueError('Q8 data control failed')
         if p['settings_fingerprint']!=settings_fingerprint(settings):raise ValueError('Settings fingerprint mismatch')
         previous=fingerprints.setdefault(c['arm'],p['settings_fingerprint'])
         if previous!=p['settings_fingerprint']:raise ValueError('Arm settings fingerprint differs')
-        if set(p['source_sha256'])!=set(base_settings_source())|{'studies/regression/sideproject_q8_fits.jl'}:
+        if set(p['source_sha256'])!=inventory:
             raise ValueError('Q8 source inventory mismatch')
         for name,digest in p['source_sha256'].items():
             # New fits must use CURRENT source, never the legacy exception.
-            if digest not in source_hashes(ROOT/name):raise ValueError('Q8 source changed: '+name)
+            if digest not in current[name]:raise ValueError('Q8 source changed: '+name)
         for name in ('unit_id','sigma','rho','realization','observed_data_sha256','ic_mode','coefficient_bound','start','refit'):
             if r[name]!=c[name]:raise ValueError('Q8 record identity mismatch')
         if len(r['fitted_initial_state'])!=c['dim']:raise ValueError('Fitted IC dimension')

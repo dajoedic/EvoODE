@@ -1,0 +1,15 @@
+rule,stratum,metric,left,right,numerator_left,numerator_right,denominator,margin_pp,noninferior,decision_scope,clearly_behind,preliminary
+R2,dim1_exact,pruned_exact,C1000,C10,40,40,88,5,True,dim12,,
+R2,dim1_exact,generalization_variance_weighted_hit,C1000,C10,57,62,88,5,False,dim12,,
+R2,dim1_surrogate,generalization_variance_weighted_hit,C1000,C10,49,51,96,5,True,dim12,,
+R2,dim2_exact,pruned_exact,C1000,C10,36,36,80,5,True,dim12,,
+R2,dim2_exact,generalization_variance_weighted_hit,C1000,C10,57,57,80,5,True,dim12,,
+R2,dim2_surrogate,generalization_variance_weighted_hit,C1000,C10,46,46,144,5,True,dim12,,
+R1,dim1_exact,pruned_exact,C10,A10,40,40,88,5,True,dim12,,
+R1,dim1_exact,generalization_variance_weighted_hit,C10,A10,62,60,88,5,True,dim12,,
+R1,dim1_surrogate,generalization_variance_weighted_hit,C10,A10,51,50,96,5,True,dim12,,
+R1,dim2_exact,pruned_exact,C10,A10,36,28,80,5,True,dim12,,
+R1,dim2_exact,generalization_variance_weighted_hit,C10,A10,57,56,80,5,True,dim12,,
+R1,dim2_surrogate,generalization_variance_weighted_hit,C10,A10,46,47,144,5,True,dim12,,
+R3,dim1_surrogate,generalization_variance_weighted_hit,C10,wsindy_preliminary,51,37,96,5,,dim12,False,True
+R3,dim2_surrogate,generalization_variance_weighted_hit,C10,weak_sindy,46,26,144,5,,dim12,False,True

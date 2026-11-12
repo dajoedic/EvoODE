@@ -6,6 +6,33 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ## 2026-11-12
 
+### Q8 (W-2) complete and officially aggregated: every number of the 07.11. interim unchanged
+
+Orion Q8 job finished (straggler index 0 done 11.11. 10:00; the job object is gone from the namespace). 3,534 output
+files for 3,540 shards: the six without a file are the six arms of one cell (`sys0009_ic2_s0.05_r0.5_n1`) whose path
+ends at the floor with zero terms, so there is nothing to fit (`q8_paths.json`, `candidates: []`). Fetched as one
+tarball through a Q9 pod into `outputs/sideproject_q8_512dd5b…/out_final/`. Official
+`aggregate_sideproject_q8.py` → `analysis/data/sideproject_residual_growth/q8_grid/`, all controls passed
+(A10 = Q7 supports and `p0`, observed hashes, fixed-IC smoke).
+
+**Result:** the frozen rule table is identical to the interim of 07.11. (R2 misses once, dim-1 exact
+generalization 57 vs 62 of 88; R1 passes with dim-2 structure 36 vs 28 of 80; R3 not clearly behind), so the
+metadata decision is `C10` by the letter and G2 (C1000) stays the declared deviation. All dim-1/2 rates, the
+reference rows (best configuration per σ and metric) and the ablations are unchanged. dim 3 now has 64 of 64 noisy
+cells (was 62): C1000 structure / rec. / gen. 26.6 / 53.1 / 28.1 % (was 27.4 / 54.8 / 29.0); the two added Lorenz
+cells have no structure hit; per system unchanged (52: 0, 54: 3, 55: 1, 56: 1, 57: 0, 58: 5, 59: 3, 61: 4 of 8).
+Clean cells (C1000, 118): structure dim 1 82 %, dim 2 95 %, dim 3 81 %.
+
+**Technical fix (performance only):** the first two aggregation attempts ran > 1 h. `validate_records` (Q8) and
+`join_records` (Q7) hashed the 30–50 MB path files and re-read the source files once per record (~40,000 records).
+The digests are now computed once before the loop; checks unchanged. A global sha256 cache was tried and reverted
+(it broke 15 Q4 tests that modify files and expect a new hash). Side-project tests 121/121 pass; a second run with the
+final code is byte-identical to the official output in all 11 files. Run time ~9 min.
+
+Methods section rewritten as the style sample (work order item 2), not committed until the user approves the tone.
+Correction found on the way: the old text said the stop "never stops early" on noise-free data; on the σ = 0 Q9
+paths the floor ends 509 of 936 equations (`end_reason == 'floor'`), because the local-fit noise estimate is not zero.
+
 ### WISP.jl: standalone package with Python wrapper, accepted against the frozen study
 <!-- 5cc6ef9 -->
 

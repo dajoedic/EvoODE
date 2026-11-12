@@ -62,9 +62,10 @@ def join_records(q7_payload, fit_payload, old_payload, old_records, new_records,
     runner_hashes = {hashlib.sha256(raw).hexdigest(),hashlib.sha256(raw.replace(b'\r\n',b'\n')).hexdigest()}
     inventories = {}
     for records, path in ((old,old_path),(new,fit_path)):
+        path_sha = q5.sha256(path) if records else None  # loop-invariant; hashed once per file
         for r in records.values():
             p = r['provenance']
-            if (p['paths_sha256'] != q5.sha256(path) or p['protocol_commit'] != 'f737939'
+            if (p['paths_sha256'] != path_sha or p['protocol_commit'] != 'f737939'
                 or p['index_sha256'] != fit_payload['input_sha256']['outputs/phase_c_c6_data_conditions_5dd1df8/index.csv']
                 or p['runner_sha256'] not in runner_hashes
                 or p['settings_fingerprint'] != reference['provenance']['settings_fingerprint']
