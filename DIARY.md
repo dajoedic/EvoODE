@@ -7,6 +7,7 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 ## 2026-11-12
 
 ### Q8 (W-2) complete and officially aggregated: every number of the 07.11. interim unchanged
+<!-- 231d59c -->
 
 Orion Q8 job finished (straggler index 0 done 11.11. 10:00; the job object is gone from the namespace). 3,534 output
 files for 3,540 shards: the six without a file are the six arms of one cell (`sys0009_ic2_s0.05_r0.5_n1`) whose path
