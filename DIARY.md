@@ -7,6 +7,7 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 ## 2026-11-12
 
 ### WISP.jl: standalone package with Python wrapper, accepted against the frozen study
+<!-- 5cc6ef9 -->
 
 The user pulled item 3 of the work order (package) forward. Decisions (user): one repository
 `github.com/dajoedic/WISP.jl`, private, MIT, Python wrapper `wisp-ode` under `python/` via `juliacall`; Claude
