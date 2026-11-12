@@ -265,7 +265,8 @@ C-6 only if it fits into a freed slot without delaying W-4.
 
 **Work order while Q9 runs (user, 2026-11-12) — done strictly one after another:**
 1. **Q8 evaluation** — official aggregation of the complete Q8 grid (3,540/3,540) and the report of its numbers
-   (rule arms, ablations, references); cannot change G2.
+   (rule arms, ablations, references); cannot change G2. **Done 2026-11-12 (`231d59c`):** rule table identical to
+   the 07.11. interim, dim 3 complete (C1000 26.6 / 53.1 / 28.1 %), `analysis/data/sideproject_residual_growth/q8_grid/`.
 2. **Paper: Methods section rewritten as a style sample.** Claude writes prose, but in the register of a human
    author in the field (no dash insertions, no "X rather than Y" contrasts, no reflexive triads, no summarising
    closers, numbers instead of judgements); the user reads the sample and approves the tone before the rest of
