@@ -4,6 +4,31 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ---
 
+## 2026-11-12
+
+### WISP.jl: standalone package with Python wrapper, accepted against the frozen study
+
+The user pulled item 3 of the work order (package) forward. Decisions (user): one repository
+`github.com/dajoedic/WISP.jl`, private, MIT, Python wrapper `wisp-ode` under `python/` via `juliacall`; Claude
+implements and may push there. Spec `docs/wisp_package_spec.md`, written from the inventory and the frozen code path
+(q6/q7/q8 builders, `sideproject_q8_fits.jl`, `src/optimize/bfgs.jl`, rule c in `aggregate_sideproject_q4.py`).
+The package has no EvoODE dependency; it re-implements the library, weak form, weak solver (LAPACK `geqrf` + `gelsd`
+with numpy's cutoff, sequential sums as in `np.trapz`), noise estimator and floor, growth path with FoBa and the χ²
+stop, the estimated-IC BFGS refit with its budget and Nelder–Mead fallback, and BIC selection. Powers are written as
+products (`x^3` for a runtime integer is compensated in Julia and can differ from `x*x*x`).
+
+Acceptance, all seven criteria met: path structure identical in 4,264 of 4,284 Q9 cells (dim 1 all 1,564); the 20
+others are σ = 0 cells of systems 30, 53 and 63 where two gains tie to a few ulp (system 30, step 1:
+0.9669016319478188 vs …186) and NumPy/Julia LAPACK round the tie differently — declared, not repaired. `p0` within
+1e-8 in 4,231 cells, larger differences only at σ = 0 on near-collinear supports. Refit from the fixture `p0`
+bit-identical in 57 of 57 candidates (15 cells, dim 1–3, coefficients, u0, MSE, evaluation count); from the port's own
+`p0` 37/57, the others move the MSE by ~1e-11. Rule-c selection end to end from raw data identical 15/15. Python
+wrapper bit-identical on a dim-1 and a dim-2 cell. Julia lower bound set to 1.10 because `juliacall` caps Julia at
+1.11 under Python's OpenSSL 3.0; the validation environment stays pinned to Julia 1.12.6. Path comparison: 15 min on
+10 threads for all cells.
+
+---
+
 ## 2026-11-11
 
 ### WISP paper draft v1.1: default configuration named, constants justified, references verified

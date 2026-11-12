@@ -272,6 +272,10 @@ C-6 only if it fits into a freed slot without delaying W-4.
    `paper/wisp/` is rewritten. The user revises the final text step by step.
 3. **WISP package spec**: `WISP.jl` (GitHub, private until submission, MIT) plus a Python wrapper via
    `juliacall`; acceptance against the frozen Q9 paths per quantity. Basis: `docs/wisp_package_inventory.md`.
+   **Pulled forward by the user and done 2026-11-12:** spec `docs/wisp_package_spec.md`; package
+   `github.com/dajoedic/WISP.jl` (private, local `..\WISP.jl`, `72e84ad`), all acceptance criteria A1–A7 met (path
+   identical in 4,264/4,284 cells, the rest σ = 0 ulp ties; refit bit-identical 57/57 from the fixture start;
+   selection 15/15; Python bit-identical). Open: tag `v0.1.0`, name check before registration.
 4. **Process page / animation polish** (`explainer/wisp/process/`) — the user presents it often, it must shine.
 Paper 2 extensions (data-derived structure bound, constant sensitivity, calibrated stop) are collected as notes in
 `docs/phd_thesis_arc.md` alongside, without compute.
