@@ -263,6 +263,19 @@ user 2026-11-08). Freed Q5 straggler cores join the current item. Nothing else g
 ODEFormer: cited from the ODEFormer paper with the caveats (bar charts, shipped trajectories); an own ODEFormer run on
 C-6 only if it fits into a freed slot without delaying W-4.
 
+**Work order while Q9 runs (user, 2026-11-12) — done strictly one after another:**
+1. **Q8 evaluation** — official aggregation of the complete Q8 grid (3,540/3,540) and the report of its numbers
+   (rule arms, ablations, references); cannot change G2.
+2. **Paper: Methods section rewritten as a style sample.** Claude writes prose, but in the register of a human
+   author in the field (no dash insertions, no "X rather than Y" contrasts, no reflexive triads, no summarising
+   closers, numbers instead of judgements); the user reads the sample and approves the tone before the rest of
+   `paper/wisp/` is rewritten. The user revises the final text step by step.
+3. **WISP package spec**: `WISP.jl` (GitHub, private until submission, MIT) plus a Python wrapper via
+   `juliacall`; acceptance against the frozen Q9 paths per quantity. Basis: `docs/wisp_package_inventory.md`.
+4. **Process page / animation polish** (`explainer/wisp/process/`) — the user presents it often, it must shine.
+Paper 2 extensions (data-derived structure bound, constant sensitivity, calibrated stop) are collected as notes in
+`docs/phd_thesis_arc.md` alongside, without compute.
+
 **Only these deviations reopen the plan:** MATLAB check fails (fix port, rerun WSINDy locally, 1–2 days); WISP falls
 clearly behind on the surrogate systems in W-2 (user decides: narrow the claim to exact systems or not); variant C or
 bound 1000 harm (fallback: first observed sample / bound 10, declared); W-4 projection over 21 days.
