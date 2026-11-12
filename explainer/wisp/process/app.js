@@ -37,7 +37,36 @@
     if (parent) parent.appendChild(e);
     return e;
   }
-  function TX(parent, x, y0, text, attrs) { const e = S('text', Object.assign({ x, y: y0 }, attrs || {}), parent); e.textContent = text; return e; }
+  // Typeset notation at render time: "G_S" -> G with subscript S, "ξ̂" -> ξ with a hat placed over it.
+  // Only a whitelist of index names is touched, so code-like strings in the text stay as they are.
+  const RICH = /([A-Za-zΔΣεξσ]̂?)_(noise|actual|sim|S|x|y|w|k|i)(?![A-Za-z0-9])|([ξσx])̂/g;
+  function richSVG(e, text) {
+    const s = String(text); RICH.lastIndex = 0;
+    if (!RICH.test(s)) { e.textContent = s; return; }
+    const put = (t, a) => { const sp = S('tspan', a || {}, e); sp.textContent = t; return sp; };
+    const base = b => { const m = /^(.)̂$/.exec(b); if (!m) { put(b); return; } put(m[1]); put('^', { dx: '-0.52em', dy: '-0.42em', 'font-size': '0.75em' }); put('​', { dy: '0.315em' }); };
+    let last = 0; RICH.lastIndex = 0;
+    for (const m of s.matchAll(RICH)) {
+      if (m.index > last) put(s.slice(last, m.index));
+      if (m[3]) base(m[3] + '̂'); else { base(m[1]); put(m[2], { 'baseline-shift': '-0.22em', 'font-size': '0.72em' }); }
+      last = m.index + m[0].length;
+    }
+    if (last < s.length) put(s.slice(last));
+  }
+  function richHTML(root) {
+    const w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, { acceptNode: n => (n.parentNode.closest('svg') || !/_|̂/.test(n.nodeValue)) ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT });
+    const nodes = []; while (w.nextNode()) nodes.push(w.currentNode);
+    nodes.forEach(n => {
+      RICH.lastIndex = 0;
+      const html = esc(n.nodeValue).replace(RICH, (_, b, sub, h) => {
+        const hat = c => `<span class="hat">${c}</span>`, bb = b ? b.replace(/^(.)̂$/, (_, c) => hat(c)) : '';
+        return h ? hat(h) : `${bb}<sub>${sub}</sub>`;
+      });
+      if (html === esc(n.nodeValue)) return;
+      const t = document.createElement('template'); t.innerHTML = html; n.replaceWith(t.content);
+    });
+  }
+  function TX(parent, x, y0, text, attrs) { const e = S('text', Object.assign({ x, y: y0 }, attrs || {}), parent); richSVG(e, text); return e; }
   function niceTicks(a, b, n = 5) {
     const span = b - a, raw = span / n, p = 10 ** Math.floor(Math.log10(raw)), f = raw / p;
     const step = (f < 1.5 ? 1 : f < 3 ? 2 : f < 7 ? 5 : 10) * p, out = [];
@@ -588,15 +617,18 @@
     draw(fig, k) {
       if (k === 0) {
         const s = weak.map(w => w.sse), n = s.length, svg = svgBox(fig, 520, 300);
-        const F = frame(svg, { w: 520, h: 300, x0: 0.4, x1: n + 0.6, y0: 0, y1: s[0] * 1.12, yticks: [0, 5000, 10000, 15000, 20000], xticks: s.map((_, i) => i + 1), xfmt: v => setText(states[v - 1]), ylabel: 'SSE', ny: 4, m: { l: 58, r: 12, t: 16, b: 40 } });
+        // Extra room right of the last bar holds the "base from noise" label, clear of every bar.
+        const XR = n + 1.75;
+        const F = frame(svg, { w: 520, h: 300, x0: 0.4, x1: XR, y0: 0, y1: s[0] * 1.12, yticks: [0, 5000, 10000, 15000, 20000], xticks: s.map((_, i) => i + 1), xfmt: v => setText(states[v - 1]), ylabel: 'SSE', ny: 4, m: { l: 58, r: 12, t: 16, b: 40 } });
         s.forEach((v, i) => {
           S('rect', { x: F.X(i + 1) - 26, y: F.Y(v), width: 52, height: F.Y(0) - F.Y(v), fill: 'var(--lib)', 'fill-opacity': .8, class: 'stagger', style: `animation-delay:${(0.2 + 0.45 * i).toFixed(2)}s` }, F.g);
           TX(F.g, F.X(i + 1), F.Y(v) - 6, fx(v, 0), { 'text-anchor': 'middle', 'font-size': 12, class: 'stagger', style: `animation-delay:${(0.2 + 0.45 * i).toFixed(2)}s` });
         });
         const fl = stops[stops.length - 1].floor, g = S('g', { class: 'stagger', style: `animation-delay:${(0.4 + 0.45 * n).toFixed(2)}s` }, F.g);
-        S('rect', { x: F.X(0.4), y: F.Y(fl), width: F.X(n + 0.6) - F.X(0.4), height: F.Y(0) - F.Y(fl), fill: 'var(--noise-soft)' }, g);
-        S('line', { x1: F.X(0.4), x2: F.X(n + 0.6), y1: F.Y(fl), y2: F.Y(fl), stroke: 'var(--noise)', 'stroke-width': 2, 'stroke-dasharray': '6 4' }, g);
-        TX(g, F.X(n + 0.6) - 6, F.Y(fl) + 18, tr('Sockel aus Rauschen', 'base from noise'), { 'text-anchor': 'end', 'font-size': 13, fill: 'var(--noise)', 'font-weight': 600, stroke: 'var(--panel)', 'stroke-width': 5, 'paint-order': 'stroke' });
+        S('rect', { x: F.X(0.4), y: F.Y(fl), width: F.X(XR) - F.X(0.4), height: F.Y(0) - F.Y(fl), fill: 'var(--noise-soft)' }, g);
+        S('line', { x1: F.X(0.4), x2: F.X(XR), y1: F.Y(fl), y2: F.Y(fl), stroke: 'var(--noise)', 'stroke-width': 2, 'stroke-dasharray': '6 4' }, g);
+        const lx = F.X(n) + 34, la = { 'font-size': 13, fill: 'var(--noise)', 'font-weight': 600 };
+        tr(['Sockel aus', 'Rauschen'], ['base from', 'noise']).forEach((w, i) => TX(g, lx, F.Y(fl) - 24 + 15 * i, w, la));
         fig.appendChild(el('div', 'note', tr('Violett: der Fehleranteil, den das Rauschen allein erzeugt, so wie WISP ihn in den nächsten Szenen schätzt.', 'Purple: the share of the error produced by noise alone, as WISP estimates it in the next scenes.')));
         return;
       }
@@ -623,17 +655,20 @@
       () => tr(`<p>WISP verwendet das korrigierte Residuum <span class="math">rᵢ / √(1 − hᵢᵢ) = ${fmt(fo.r, 3)} / √(1 − ${fmt(fo.h, 3)}) = ${fmt(fo.corrected, 3)}</span>. Es hat im Mittel die Varianz des Messrauschens.</p><p>Weder der Messpunkt noch das Polynom werden dabei verschoben. Es wird nur gerechnet. Nicht verwechseln mit dem Leave-one-out-Residuum <span class="math">rᵢ/(1 − hᵢᵢ)</span>.</p>`,
         `<p>WISP uses the corrected residual <span class="math">rᵢ / √(1 − hᵢᵢ) = ${fmt(fo.r, 3)} / √(1 − ${fmt(fo.h, 3)}) = ${fmt(fo.corrected, 3)}</span>. On average it has the variance of the measurement noise.</p><p>Neither the point nor the polynomial is moved. It is arithmetic only. Not to be confused with the leave-one-out residual <span class="math">rᵢ/(1 − hᵢᵢ)</span>.</p>`)],
     draw(fig, k) {
-      const svg = svgBox(fig, 520, 190), X0 = 160, sc = 160;
-      const rows = [{ l: 'rᵢ', v: fo.r }, { l: 'rᵢ / √(1 − hᵢᵢ)', v: fo.corrected }];
-      S('line', { x1: X0, x2: X0, y1: 20, y2: 150, stroke: 'var(--muted)' }, svg);
+      // Bars grow from a zero axis in the middle; the name sits on the side opposite the bar, the value at the bar's end.
+      const svg = svgBox(fig, 520, 170), X0 = 300, sc = 200, neg = fo.r < 0;
+      const rows = [{ l: 'rᵢ', v: fo.r, note: tr('Restfehler am Punkt', 'residual at the point') },
+        { l: 'rᵢ / √(1 − hᵢᵢ)', v: fo.corrected, note: tr(`korrigiert, hᵢᵢ = ${fmt(fo.h, 3)}`, `corrected, hᵢᵢ = ${fmt(fo.h, 3)}`) }];
+      S('line', { x1: X0, x2: X0, y1: 22, y2: 150, stroke: 'var(--muted)' }, svg);
+      TX(svg, X0, 16, '0', { 'text-anchor': 'middle', 'font-size': 12, fill: 'var(--muted)' });
       rows.forEach((r, i) => {
         if (i === 1 && k < 1) return;
-        const yy = 40 + i * 60, w = Math.abs(r.v) * sc;
-        TX(svg, X0 - 10, yy + 18, r.l, { 'text-anchor': 'end', 'font-size': 14, class: 'mono' });
-        S('rect', { x: r.v < 0 ? X0 - w : X0, y: yy, width: w, height: 28, fill: 'var(--noise)', 'fill-opacity': i ? .9 : .5 }, svg);
-        TX(svg, X0 + 8 + (r.v > 0 ? w : 0), yy + 19, fmt(r.v, 3), { 'font-size': 13.5 });
+        const yy = 36 + i * 62, w = Math.abs(r.v) * sc;
+        TX(svg, neg ? X0 + 14 : X0 - 14, yy + 13, r.l, { 'text-anchor': neg ? 'start' : 'end', 'font-size': 15, class: 'mono', 'font-weight': 600 });
+        TX(svg, neg ? X0 + 14 : X0 - 14, yy + 31, r.note, { 'text-anchor': neg ? 'start' : 'end', 'font-size': 12, fill: 'var(--muted)' });
+        S('rect', { x: r.v < 0 ? X0 - w : X0, y: yy, width: w, height: 30, rx: 2, fill: 'var(--noise)', 'fill-opacity': i ? .9 : .5 }, svg);
+        TX(svg, r.v < 0 ? X0 - w - 8 : X0 + w + 8, yy + 20, fmt(r.v, 3), { 'text-anchor': r.v < 0 ? 'end' : 'start', 'font-size': 14, 'font-weight': 600 });
       });
-      TX(svg, 510, 180, 'hᵢᵢ = ' + fmt(fo.h, 3), { 'text-anchor': 'end', 'font-size': 13, class: 'mono' });
     }, steps: 2 });
 
   // 14 9 then 21
@@ -688,14 +723,19 @@
     cnt.forEach((c, b) => { const x0 = F.X(lo + b * (hi - lo) / nb), x1 = F.X(lo + (b + 1) * (hi - lo) / nb); S('rect', { x: x0 + 0.5, y: F.Y(0.82 * c / cm), width: x1 - x0 - 1, height: F.Y(0) - F.Y(0.82 * c / cm), fill: 'var(--noise)', 'fill-opacity': .55, 'data-k': 'h' + b }, F.g); });
     const th = L.threshold * nt.noise, mx = F.X(Math.log10(nt.noise));
     S('line', { x1: mx, x2: mx, y1: F.Y(0), y2: F.Y(0.95), stroke: 'var(--noise)', 'stroke-width': 2.5, 'data-k': 'mean' }, F.g);
-    TX(F.g, mx - 6, F.Y(0.95) + 2, tr(`Mittelwert ${fmt(nt.noise, 3)} = Δ_noise`, `mean ${fmt(nt.noise, 3)} = Δ_noise`), { 'text-anchor': 'end', 'font-size': 12.5, fill: 'var(--noise)', 'font-weight': 700, 'data-k': 'mean-l' });
+    // Labels carry a halo in the panel colour, so a line running behind one is interrupted, never struck through.
+    const halo = { stroke: 'var(--panel)', 'stroke-width': 4, 'paint-order': 'stroke' };
+    TX(F.g, mx - 6, F.Y(0.95) + 2, tr(`Mittelwert ${fmt(nt.noise, 3)} = Δ_noise`, `mean ${fmt(nt.noise, 3)} = Δ_noise`), Object.assign({ 'text-anchor': 'end', 'font-size': 12.5, fill: 'var(--noise)', 'font-weight': 700, 'data-k': 'mean-l' }, halo));
     if (k >= 2) {
-      const tx = F.X(Math.log10(th));
+      const tx = F.X(Math.log10(th)), ax = F.X(Math.log10(nt.actual));
       S('line', { x1: tx, x2: tx, y1: F.Y(0), y2: F.Y(1), stroke: 'var(--ink)', 'stroke-width': 1.6, 'stroke-dasharray': '5 3', 'data-k': 'th' }, F.g);
-      TX(F.g, tx > 330 ? tx - 5 : tx + 5, F.Y(0.8), tr(`Schwelle ${fmt(th, 3)}`, `threshold ${fmt(th, 3)}`), { 'text-anchor': tx > 330 ? 'end' : 'start', 'font-size': 12.5, 'font-weight': 700, stroke: 'var(--panel)', 'stroke-width': 4, 'paint-order': 'stroke', 'data-k': 'th-l' });
-      const ax = F.X(Math.log10(nt.actual));
+      // Threshold label to the right of its line while it fits (one row higher than the gain label, so the two never meet);
+      // the gain label stays right of its line, over the empty tail, unless the plot edge is near.
+      const thRight = tx < 420;
+      TX(F.g, thRight ? tx + 5 : tx - 5, F.Y(0.8), tr(`Schwelle ${fmt(th, 3)}`, `threshold ${fmt(th, 3)}`), Object.assign({ 'text-anchor': thRight ? 'start' : 'end', 'font-size': 12.5, 'font-weight': 700, 'data-k': 'th-l' }, halo));
       S('line', { x1: ax, x2: ax, y1: F.Y(0), y2: F.Y(0.6), stroke: 'var(--foba)', 'stroke-width': 3.5, 'data-k': 'act' }, F.g);
-      TX(F.g, ax + (ax > 420 ? -6 : 6), F.Y(0.6) - 6, `${lab}: ${fmt(nt.actual, 3)}`, { 'text-anchor': ax > 420 ? 'end' : 'start', 'font-size': 13, fill: 'var(--foba)', 'font-weight': 700, 'data-k': 'act-l' });
+      const actLeft = ax > 420;
+      TX(F.g, ax + (actLeft ? -6 : 6), F.Y(0.6) - 6, `${lab}: ${fmt(nt.actual, 3)}`, Object.assign({ 'text-anchor': actLeft ? 'end' : 'start', 'font-size': 13, fill: 'var(--foba)', 'font-weight': 700, 'data-k': 'act-l' }, halo, { 'stroke-width': 7 }));
     }
   }
   scene({ id: 's16', part: 'weak', title: ['Was Rauschen allein an Gewinn bringen würde', 'What noise alone would gain'],
@@ -1114,8 +1154,8 @@
         const snap = o.from ? snapshot(o.from) : (o.anim ? snapshot(fig) : null);
         fig.innerHTML = '';
         const tx = sc.text[sc.k] || sc.text[sc.text.length - 1];
-        st.innerHTML = typeof tx === 'function' ? tx() : tx;
-        sc.draw(fig, sc.k, () => show({ anim: true }));
+        st.innerHTML = typeof tx === 'function' ? tx() : tx; richHTML(st);
+        sc.draw(fig, sc.k, () => show({ anim: true })); richHTML(fig);
         if (snap) morph(fig, snap, { cross: !!o.from, delay: o.delay || 0, dur: o.from ? 900 : 700 });
         if (o.dir && !reduced.matches) st.animate([{ opacity: 0, transform: `translateY(${o.dir * 28}px)` }, { opacity: 1, transform: 'none' }], { duration: 520, easing: 'cubic-bezier(.2,.7,.2,1)' });
         prev.disabled = sc.k === 0; next.disabled = sc.k >= sc.steps - 1;
@@ -1135,11 +1175,11 @@
         // The step text gets the same treatment, so title and core sentence never move between steps.
         st.style.minHeight = '';
         let th = 0;
-        for (let j = 0; j < sc.steps; j++) { const tx = sc.text[j] || sc.text[sc.text.length - 1]; st.innerHTML = typeof tx === 'function' ? tx() : tx; th = Math.max(th, st.offsetHeight); }
+        for (let j = 0; j < sc.steps; j++) { const tx = sc.text[j] || sc.text[sc.text.length - 1]; st.innerHTML = typeof tx === 'function' ? tx() : tx; richHTML(st); th = Math.max(th, st.offsetHeight); }
         st.style.minHeight = th + 'px';
         fig.style.minHeight = '';
         let h = 0;
-        for (let j = 0; j < sc.steps; j++) { fig.innerHTML = ''; sc.draw(fig, j, () => {}); h = Math.max(h, fig.offsetHeight); }
+        for (let j = 0; j < sc.steps; j++) { fig.innerHTML = ''; sc.draw(fig, j, () => {}); richHTML(fig); h = Math.max(h, fig.offsetHeight); }
         fig.style.minHeight = h + 'px';
         show();
       };

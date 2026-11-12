@@ -92,6 +92,9 @@ h1 { font: 600 clamp(32px, 5vw, 50px)/1.08 var(--f-display); margin: 8px 0 14px;
 .dots i.on { background: var(--ink); }
 .steplabel { font: 13px var(--f-body); color: var(--muted); }
 .math { font-family: var(--f-mono); font-size: .93em; white-space: nowrap; }
+sub { font-size: .72em; vertical-align: -.28em; line-height: 0; }
+.hat { position: relative; display: inline-block; }
+.hat::after { content: '^'; position: absolute; left: 0; right: 0; top: -.36em; text-align: center; font-size: .72em; }
 .formula { font: 15px/1.6 var(--f-mono); background: var(--bg); border: 1px solid var(--rule); border-radius: 6px; padding: 8px 10px; overflow-x: auto; margin: 8px 0; white-space: nowrap; }
 .formula.wrap { white-space: normal; }
 .k-data { color: var(--data); } .k-lib { color: var(--lib); } .k-foba { color: var(--foba); } .k-noise { color: var(--noise); }
