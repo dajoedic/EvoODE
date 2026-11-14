@@ -10,31 +10,30 @@ zweites davon. Alles Dauerhafte gehört dorthin, nach `PAPER_1.md` oder ins `DIA
 **Regeln:** wird immer **vollständig überschrieben**, nie angehängt. Was älter als ein paar Tage
 ist, ist vermutlich falsch — dann gilt `CLAUDE.md`.
 
-**Stand: 2026-11-10, ~13:15 (Q9 läuft mit 39 Pods, Q8 1 Nachzügler; Termin mit dem Professor gelaufen, Prozessseite kam
-„MEGA gut“ an) — WISP-Plan bis 31.12. (CLAUDE.md, „WISP paper — the fixed plan“).**
+**Stand: 2026-11-14, ~12:40 (Q9 läuft mit 40 Pods, Q8 fertig und offiziell aggregiert `231d59c`) — WISP-Plan bis 31.12.
+(CLAUDE.md, „WISP paper — the fixed plan“; Arbeitsreihenfolge vom 12.11. dort).**
 
 ## 1. Was läuft
 
-**Orion, geprüft 10.11. ~13:00** (Statusseite https://claude.ai/artifact/9zzJsoGCBahPsuNkaaf3DN, Version 16, mit neuem
-Abschnitt „Q9 nach Dimension“):
+**Orion, geprüft 14.11. ~12:40** (Statusseite https://claude.ai/artifact/9zzJsoGCBahPsuNkaaf3DN, Version 18):
 
 | Lauf | Stand | Wenn fertig |
 |---|---|---|
-| **W-4 = Q9-Gitter** (`cdfaa7d`, 4.284 Shards, C1000) | 69/4.284, 0 Fehler, Parallelität 39 | letzte Hochrechnung (08.11.) Ende ~19.–20.11.; 21-Tage-Regel |
-| **W-2 = Q8-Gitter** (`512dd5b`) | 3.539/3.540, 1 Nachzügler (Index 0, seit 7 Tagen 13 Stunden) | Q9 von Hand auf 40; offizielle Aggregation `aggregate_sideproject_q8.py` |
+| **W-4 = Q9-Gitter** (`cdfaa7d`, 4.284 Shards, C1000) | 481/4.284, 0 Fehler, Parallelität 40; **82,3 % der Plan-Kosten** | offene Shards ≈ 1 Tag; Ende bestimmen dim-3-Nachzügler; 21-Tage-Regel endet 28.11. |
+| **W-2 = Q8-Gitter** (`512dd5b`) | 3.540/3.540, Job entfernt, aggregiert 12.11. | — |
 | **C-6 gekappt** | 1.435/3.366, Parallelität 0 | nach W-4 zurück auf 24 |
 
-**Q9 je Dimension (10.11. 13:02):** dim 1 0/1.564 · dim 2 0/1.904 · dim 3 58/680 (35 laufend) · dim 4 11/136 (4 laufend).
-Teuerste Shards zuerst; die laufenden dim-3/4-Pods rechnen seit dem Start am 07.11. (~83 h). Bei jedem Cluster-Check:
-`python analysis/scripts/aggregate/q9_progress.py --json` → Tabelle im Chat und Abschnitt auf der Statusseite nachziehen.
-Lokale Quelle der Statusseite: Scratchpad dieser Sitzung `evoode_orion.html` (geht verloren → vorher Artifact `read`).
+**Q9 je Dimension (14.11. 11:40 UTC):** dim 1 0/1.564 · dim 2 21/1.904 (22 laufend) · dim 3 327/680 (17 laufend) ·
+dim 4 133/136 (1 laufend). Fertige Shards brauchten Ist/Plan 0,49 (5.739 statt 11.603 Kern-h). **Nachzügler über Plan:**
+sys 62 IC1 σ0 ρ0.5 n1 178 h (Plan 91 h), sys 55 zweimal 170–178 h (Plan 41–49 h), sys 61 101 h (Plan 32 h),
+sys 56 74–86 h (Plan 28–29 h). Bei jedem Cluster-Check: `python analysis/scripts/aggregate/q9_progress.py --json` →
+Tabelle im Chat und Abschnitt auf der Statusseite nachziehen. Lokale Quelle der Statusseite: Scratchpad der Sitzung
+`evoode_orion.html` (geht verloren → vorher Artifact `read`).
 
-**Kerne:** 39 Q9 + 1 Q8 = 40. Anheben geht von Hand, der Nutzer führt `oc patch` aus (Auto-Modus blockiert es für Claude).
-**PowerShell 5.1:** `oc patch job evoode-sideproject-q9 -n scch-das -p '{\"spec\":{\"parallelism\":40}}'`.
-Git Bash: `-p '{"spec":{"parallelism":40}}'`.
+**Kerne:** 40 Q9 = 40. Änderungen an der Parallelität führt der Nutzer aus (`oc patch`, Auto-Modus blockiert es für Claude).
 **NFS-Zugriff:** `MSYS_NO_PATHCONV=1 oc exec <laufender-pod> -- tar czf - -C /outputs/<lauf> out > ….tgz` (komprimiert).
 **Rückweg C-6 nach W-4:** `oc patch job evoode-phase-c-c6-grid-capped -n scch-das -p '{"spec":{"parallelism":24}}'` (Git Bash).
-Für eine neue Q9-Hochrechnung: die Plankosten je Zelle stehen in `q9_paths.json` (`planned_seconds`), nicht in der Shard-Liste.
+Für eine neue Q9-Hochrechnung: Plankosten je Zelle in `q9_paths.json` (`planned_seconds`, Schlüssel `shard_id`).
 
 ## 2. WISP-Prozessseite (W-X) — für den Termin am 10.11. fertig
 
@@ -54,7 +53,7 @@ Kern-Prüfung `node explainer/wisp/process/check_core.cjs`. Stand 10.11.:
 ## 3. Als Nächstes
 
 1. Q9 beobachten (je Dimension, s. o.): Hochrechnung, sobald die erste dim-3/4-Welle durch ist; >21 Tage → Nutzer entscheidet.
-2. Q8-Nachzügler fertig → Nutzer hebt Q9 auf 40; offizielle Q8-Aggregation.
+2. ~~Q8-Nachzügler, Q9 auf 40, offizielle Q8-Aggregation~~ erledigt (11./12.11., `231d59c`).
 3. Q-B: B1 (SINDy-Familie, WISP-Bibliothek, `a68968c`) braucht Image-Neubau (Nutzer pusht), Orion nach Q9; ODEFormer nach Q9.
    WeakIdent fertig (`65b467f`, τ-Raster `a41f2bd`).
 4. Paperentwurf `paper/wisp/` (uncommittet, Q8-Stand) → nach W-4 `make_data.py` auf Q9 umstellen und committen.
