@@ -300,7 +300,7 @@ Mark items done here with date and commit; never delete them.
 
 **Decision rule frozen 2026-10-28 as plan §9.4d (user):** non-inferiority (−5 pp) against SINDy, Weak-SINDy and E-SINDy at one clean-chosen configuration each, in ≥ 4 of the 6 conditions σ ≥ 0.03 → story (b); ODEFormer/PySR run on C-6 only on (b), WP-N48b paused. The numbers are opened once the capped grid is complete.
 
-**Pause and blind rule (user, 2026-10-05).** Paper 1 work pauses until every Orion run has finished. Until the
+**Pause and blind rule (user, 2026-10-05) — LIFTED 2026-11-17 by the user (Paper 1 done; C-6 vs WISP comparison in `DIARY.md` 2026-11-17).** Paper 1 work pauses until every Orion run has finished. Until the
 decision rule for story line (b) is fixed with the user and frozen as plan §9.4d, **no C-6 EvoGrow result is
 looked at** (no R², no structure, no comparison with the baselines) — only collection and technical checks (cell
 count, errors, fingerprint, data hashes). Draft rule: `DIARY.md` 2026-10-05.

@@ -4,6 +4,44 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ---
 
+## 2026-11-17
+
+### C-6 blind rule lifted (user: Paper 1 is done); EvoGrow C-6 against WISP Q9 on 1,433 identical cells
+
+**Decision (user, 17.11.):** Paper 1 with EvoGrow is finished, so the C-6 blind rule and the §9.4d opening condition
+(capped grid complete) no longer protect anything. The rule is lifted; the C-6 numbers below were opened on a partial
+grid (1,435 / 3,366), knowingly.
+
+**Data.** C-6 capped records collected from the NFS (1,435, image `5dd1df8`), clean evaluation through
+`wp_n5_ic_generalization.jl --campaign paper1_phaseC_v1 --clean-eval` per condition (11 conditions, 1,435 rows,
+reconstruction probe 0 failures). WISP: Q9 records (4,275 / 4,284 complete cells) through `build_wisp_paper_cells.py
+--protocol Q9`, size rule c. Paired on system × IC × σ × ρ × realization: **1,433 pairs, observed-data hashes identical
+in 1,433 / 1,433** (state and time). Because C-6 runs cost-descending, the paired set is **22 dim-2 systems only**
+(exact 24–29, 31, 32, 38, 43; surrogate 30, 33–37, 39–42, 44, 45), each complete over all 11 conditions; dim 1 and
+46–51 are missing. Systems as units. Script `analysis/scripts/aggregate/compare_c6_evogrow_vs_wisp_q9.py`, tables
+`analysis/data/paper1_phaseC_v1/c6_vs_wisp_2026-11-17/`.
+
+| stratum | metric | EvoGrow | WISP | Δ pp | systems W / E better |
+|---|---|---:|---:|---:|---|
+| dim 2 exact (10) | structure (pruned) | 9.9 | 48.3 | +38.4 | 8 / 1 |
+| | structure (raw) | 3.9 | 45.1 | +41.1 | 8 / 1 |
+| | reconstruction R² > 0.9 | 88.8 | 94.7 | +5.9 | 4 / 2 |
+| | generalization R² > 0.9 | 38.2 | 73.6 | +35.4 | 9 / 1 |
+| dim 2 surrogate (12) | reconstruction | 85.5 | 73.0 | −12.5 | 6 / 5 |
+| | generalization | 26.6 | 41.6 | +15.0 | 6 / 1 |
+
+Noisy conditions alone (σ > 0) give the same picture (exact: structure 7.3 vs 44.7, generalization 37.5 vs 71.3;
+surrogate: reconstruction 84.4 vs 72.9, generalization 27.0 vs 41.9). Per condition, pooled over the 22 systems,
+WISP generalizes in every one of the 11 conditions better (51–65 % vs 29–35 %) and reconstructs in every one slightly
+worse (78–86 % vs 81–96 %). Cost: EvoGrow needs per cell median ×139 (exact) and ×48 (surrogate) the loss evaluations
+of WISP, pooled ×40 (counts, not wall-clock).
+
+Reading: EvoGrow fits the training trajectory, WISP identifies the mechanism — the trajectory-overfitting gap of
+2026-09-29 again, now on identical noisy data. The one place EvoGrow is ahead is surrogate reconstruction, carried by
+a few systems where WISP's model fails outright (40: 100 → 0 %, 35: 100 → 64 %, 37: 86 → 35 %). Caveats: partial
+grid, dim 2 only; EvoGrow runs under the clamp 10, WISP under bound 1000 (on these systems relevant for 41); the
+EvoGrow arm is the frozen Paper 1 variant, not a tuned one.
+
 ## 2026-11-12
 
 ### Q8 (W-2) complete and officially aggregated: every number of the 07.11. interim unchanged

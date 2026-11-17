@@ -64,7 +64,7 @@ Kern-Prüfung `node explainer/wisp/process/check_core.cjs`. Stand 10.11.:
    `aggregate_sideproject_q8.py` — nicht von dieser Sitzung, vermutlich die Q8-Auswertung.
 5. Termin-Ergebnisse vom 10.11. (Professor) nachtragen, sobald der Nutzer berichtet.
 
-> **BLINDREGEL C-6** gilt unverändert: keine C-6-EvoGrow-Ergebnisse ansehen, nur technische Prüfung.
+> **Blindregel C-6 aufgehoben (17.11., Nutzer: Paper 1 erledigt).** Vergleich C-6 vs WISP Q9: `DIARY.md` 2026-11-17.
 
 **Feste Regeln:** Claude pusht nie nach GitLab, nach GitHub nur mit ausdrücklicher Erlaubnis. Keine harten Zeit-Cuts.
 MATLAB nur MATLAB (kein Octave). Orion-Login abgelaufen → `oc login --web https://api.orion.scch.at:6443`.

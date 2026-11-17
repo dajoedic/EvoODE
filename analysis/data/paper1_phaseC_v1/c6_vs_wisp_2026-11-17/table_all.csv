@@ -1,0 +1,7 @@
+stratum,metric,systems,cells,EvoGrow,WISP,diff_pp,sys_WISP_better,sys_EvoGrow_better
+dim2_exact,structure,10,658,9.9,48.3,38.4,8,1
+dim2_exact,raw,10,658,3.9,45.1,41.1,8,1
+dim2_exact,rec,10,658,88.8,94.7,5.9,4,2
+dim2_exact,gen,10,658,38.2,73.6,35.4,9,1
+dim2_surrogate,rec,12,775,85.5,73.0,-12.5,6,5
+dim2_surrogate,gen,12,775,26.6,41.6,15.0,6,1
