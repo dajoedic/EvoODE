@@ -21,6 +21,7 @@ as in Q8** (WeakIdent native, dim-2 exact structure, 36.0 vs 40.0 % on 8 systems
 frozen fallback "ahead of every reference except WeakIdent on dim-2 structure"; **C9 fails on one cell** (dim-1
 surrogate generalization vs WSINDy +11.8 pp, p 0.055) → name it, no pooled statement; **"roughly doubles" is out**
 (dim-1 ratio 1.65 < 1.8). All robustness variants keep the sign of P1–P4; IC 2 alone weakens P1 (+5.5 pp, p 0.34).
+<!-- 4d69937 -->
 
 ### Q-B B1 and B3 started on Orion
 
