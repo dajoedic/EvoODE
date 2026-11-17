@@ -6,6 +6,26 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ## 2026-11-17
 
+### WISP Q9 cost anatomy: where the core hours go
+
+`diagnose_wisp_q9_cost.py` over all 45,652 Q9 candidate fits (counts are the evidence; seconds context only).
+9,265 fit core-h, 3.47e8 loss evaluations. The cost is extremely concentrated: the top 1 % of fits by time hold 48 %
+of the time but 2.4 % of the loss evaluations; the top 5 % hold 84 %. Fits with at least one ODE solve that hits the
+solver step limit (`maxiters_solve = 10^6` Tsit5 steps) are 18.6 % of fits and **94.8 % of the time**; a loss
+evaluation in such a fit costs ~272 ms against ~7.5 ms otherwise. Step-limited solves are failed trial points of the
+optimizer (stiff or exploding parameter guesses during line search), not the final model: they also occur in 557 of
+4,261 chosen fits, 117 of them structurally correct. Further: 97 % of fit time goes to candidates that are not chosen,
+73 % to candidates larger than the chosen one; dim-3 54–59 alone is 57 %. The gradient is finite-difference
+(`AutoFiniteDiff`), so each gradient costs n_params + 1 solves; median loss evaluations per fit rise from 571 (1
+parameter) to 9,031 (10) and hit the 20,000 budget from 15 parameters on.
+
+Levers, ordered by expected safety: (1) a smaller step limit per solve — a step-limited solve is a failure either way,
+so the limit only sets how long the failure takes; behaviour-neutral iff no solve that now succeeds needs more steps
+than the new limit, testable bit-for-bit on the laptop; (2) forward-mode AD instead of finite differences — fewer
+solves per gradient, but changes the numerics, so a new method version with re-validation; (3) a sharper stop
+(Q-Cal: the χ² stop is liberal) — shortens paths, Paper 2. Not proposed: skipping candidates before their fit (no
+safe bound on a candidate's final loss).
+
 ### WISP Q9: path-failure anatomy, the systems behind WSINDy, the ablation subset
 
 `diagnose_wisp_q9_path_and_behind.py` (read-only; `analysis/data/sideproject_residual_growth/q9_failure_anatomy/`).
