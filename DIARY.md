@@ -43,6 +43,30 @@ a few systems where WISP's model fails outright (40: 100 → 0 %, 35: 100 → 64
 grid, dim 2 only; EvoGrow runs under the clamp 10, WISP under bound 1000 (on these systems relevant for 41); the
 EvoGrow arm is the frozen Paper 1 variant, not a tuned one.
 
+### Where WISP fails to reconstruct and EvoGrow does not: mostly a selection on a drifted initial state
+
+Read-only diagnosis on the 1,433 C-6 / Q9 pairs (`analysis/scripts/aggregate/diagnose_wisp_surrogate_reconstruction_failures.py`,
+tables in `analysis/data/paper1_phaseC_v1/c6_vs_wisp_2026-11-17/`). **183 cells** have EvoGrow reconstruction
+R²_vw > 0.9 and WISP's rule-c choice ≤ 0.9, on 10 systems. Classified by WISP's own path:
+
+- **selection, 101 cells** (35: 24, 37: 38, 26: 11, 30: 8, 45: 8, 40: 5, 42: 4, 33: 2, 41: 1): a candidate on the path
+  reconstructs (median best R² 0.95–0.999), rule c chose a larger one (median k 8–13 against 4–6.5).
+- **path, 82 cells** (40: 61, 26: 12, 41: 4, 30: 3, 29: 2): no candidate reconstructs; on 40 the best one reaches
+  median R² 0.87 — a near miss of the basis, not of the search.
+
+In **all 183 cells the chosen candidate fits the observed training data better** (training loss lower than the best
+reconstructing candidate's; training R²_vw > 0.9 in 183 / 183) and fails only from the clean initial state. Across all
+dim-1/2 WISP choices in Q9 the fitted initial state of such "fits training, misses reconstruction" choices lies about
+ten times further from the clean one than for reconstruction hits (median distance 0.16–0.33 against 0.01–0.03 per
+stratum; q90 0.37–0.93 against 0.30–0.45). The pattern is concentrated on dim-2 surrogates: **21.4 %** of their
+choices, against 1.4–5.2 % in the other three dim-1/2 strata. Reading: with the initial state fitted (variant C, G2),
+a larger wrong model can buy its training fit with a drifted start; EvoGrow fixes the start to the first observed
+sample and cannot. This is the price side of the R1 trade-off adopted at G2 (dim-2 structure +10 pp), associative,
+no fit run. The alternative candidates would rarely help where it matters: the best reconstructing candidate
+generalizes in 15 % of the 183 cells, the chosen one in 6 %. Consequence for the paper: a declared limitation with these
+numbers; no WISP change (simplicity guardrail). A data-side warning (fitted start far from the first observation) is a
+Paper 2 note, not a component.
+
 ## 2026-11-12
 
 ### Q8 (W-2) complete and officially aggregated: every number of the 07.11. interim unchanged
