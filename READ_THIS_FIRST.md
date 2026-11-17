@@ -51,10 +51,16 @@ Kern-Prüfung `node explainer/wisp/process/check_core.cjs`. Stand 10.11.:
 
 ## 3. Als Nächstes
 
-1. Q9 beobachten (je Dimension, s. o.): Hochrechnung, sobald die erste dim-3/4-Welle durch ist; >21 Tage → Nutzer entscheidet.
+1. Q9 beobachten: nur noch 9 Nachzügler (17.11.); danach einsammeln und offizielle Q9-Aggregation.
 2. ~~Q8-Nachzügler, Q9 auf 40, offizielle Q8-Aggregation~~ erledigt (11./12.11., `231d59c`).
-3. Q-B: B1 (SINDy-Familie, WISP-Bibliothek, `a68968c`) braucht Image-Neubau (Nutzer pusht), Orion nach Q9; ODEFormer nach Q9.
-   WeakIdent fertig (`65b467f`, τ-Raster `a41f2bd`).
+3. **Q-B START, sobald der Nutzer am Laptop ist (vereinbart 17.11.):** GitLab-Push `ca849b4` ist durch, Pipeline laut
+   Mail erfolgreich; Images `qb1-sindy` und `odeformer-reference` zu `ca849b4e3cf961532c425f31e7d78f693b9e359e` noch
+   **nicht geprüft** (Orion-Login abgelaufen). Ablauf: (1) Nutzer `oc login --web …`; (2) Claude prüft beide Images mit
+   dem Pull-Secret `evoode-gitlab-pull` (`oc image info -a …`); (3) `oc apply` **B1** (`qb1_sindy_job.yaml`, 240 Shards,
+   8 Pods, ~43 Kern-h) und **B3-Smoke** (`odeformer_smoke_job.yaml`, 2 Pods); (4) volles **B3 ODEFormer** erst nach
+   bestandenen Smoke-Vergleichen (`odeformer_job.yaml`, 1.512 Shards, **23 Pods — Nutzer 17.11.**, 326–349 Kern-h
+   ≈ 500 €, ~15 h). Kerne: 9 Q9 + 8 B1 + 23 B3 = 40. Fertig gerenderte Manifeste: `outputs/qb_manifests_ca849b4/`.
+   C-6 bekommt keine Kerne (Paper 1 erledigt). B2 WeakIdent fertig (`65b467f`, τ-Raster `a41f2bd`).
 4. Paperentwurf `paper/wisp/` (uncommittet, Q8-Stand) → nach W-4 `make_data.py` auf Q9 umstellen und committen.
 4b. **WISP.jl (12.11., vom Nutzer vorgezogen):** Paket steht, privat auf `github.com/dajoedic/WISP.jl`, lokal
    `..\WISP.jl` (`72e84ad`); Abnahme A1–A7 erfüllt (`docs/wisp_package_spec.md`). Claude darf in dieses Repo pushen.
