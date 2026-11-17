@@ -25,6 +25,7 @@ than the new limit, testable bit-for-bit on the laptop; (2) forward-mode AD inst
 solves per gradient, but changes the numerics, so a new method version with re-validation; (3) a sharper stop
 (Q-Cal: the χ² stop is liberal) — shortens paths, Paper 2. Not proposed: skipping candidates before their fit (no
 safe bound on a candidate's final loss).
+<!-- 02cd011 -->
 
 ### WISP Q9: path-failure anatomy, the systems behind WSINDy, the ablation subset
 
