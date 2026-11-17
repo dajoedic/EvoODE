@@ -15,15 +15,17 @@ ist, ist vermutlich falsch — dann gilt `CLAUDE.md`.
 
 ## 1. Was läuft
 
-**Orion, geprüft 17.11. ~12:20** (Statusseite https://claude.ai/artifact/9zzJsoGCBahPsuNkaaf3DN, Version 22):
+**Orion, geprüft 17.11. ~19:00** (Statusseite https://claude.ai/artifact/9zzJsoGCBahPsuNkaaf3DN, Version 23):
 
 | Lauf | Stand | Wenn fertig |
 |---|---|---|
-| **W-4 = Q9-Gitter** (`cdfaa7d`, 4.284 Shards, C1000) | 4.275/4.284, 0 Fehler, keine offenen Shards, 9 Pods laufen | Ende bestimmen Nachzügler; dann einsammeln + offizielle Q9-Aggregation |
+| **W-4 = Q9-Gitter** (`cdfaa7d`, 4.284 Shards, C1000) | 4.276/4.284, 0 Fehler, keine offenen Shards, 8 Pods laufen | Ende bestimmen Nachzügler; dann einsammeln + offizielle Q9-Aggregation |
 | **W-2 = Q8-Gitter** (`512dd5b`) | 3.540/3.540, Job entfernt, aggregiert 12.11. | — |
-| **C-6 gekappt** | 1.435/3.366, Parallelität 0 | nach W-4 zurück auf 24 (Nutzer entscheidet, ob schon jetzt mit den 31 freien Kernen) |
+| **Q-B B1** SINDy/Weak-SINDy/E-SINDy (`qb1-sindy:ca849b4`, Job `evoode-sideproject-qb1-sindy`) | 0/240, 8 Pods, gestartet 17.11. 18:52 | ~43 Kern-h (~5–6 h); einsammeln, dann Q-B-Aggregation |
+| **Q-B B3** ODEFormer (`odeformer-reference:ca849b4`, Job `evoode-phase-c-c6-odeformer`) | 0/1.512, 23 Pods, gestartet 17.11. ~19:00; Smoke 2/2 PASS (sauber, verrauscht, Vollständigkeit) | 326–349 Kern-h (~15 h); NFS-Dateien wie `plan.json` sind 0600 root → per `oc exec … tar` über einen Pod holen, nicht über S: |
+| **C-6 gekappt** | 1.435/3.366, Parallelität 0 | bekommt keine Kerne mehr (Paper 1 erledigt) |
 
-**Q9 je Dimension (17.11. 11:21 UTC):** dim 1 1.564/1.564 · dim 2 1.901/1.904 (3 laufend) · dim 3 674/680 (6 laufend) ·
+**Kerne 39/40:** 8 Q9 + 8 B1 + 23 B3. **Q9 je Dimension (17.11. 17:59 UTC):** dim 1 1.564/1.564 · dim 2 1.901/1.904 (3 laufend) · dim 3 675/680 (5 laufend) ·
 dim 4 136/136. Ist/Plan der fertigen Shards 0,65 (9.154 statt 14.080 Kern-h). **Nachzügler:** sys 58 (dim 3) 78 h (Plan 8 h),
 sys 51 46 h (Plan 3 h), sys 59 26 h, vier Shards von sys 52 und einer von sys 28 je 14–15 h (Plan < 1 h); 62 und 56 fertig.
 Bei jedem Cluster-Check: `python analysis/scripts/aggregate/q9_progress.py --json` → Tabelle im Chat und Abschnitt auf der Statusseite nachziehen. Lokale Quelle der Statusseite: Scratchpad der Sitzung
@@ -53,14 +55,12 @@ Kern-Prüfung `node explainer/wisp/process/check_core.cjs`. Stand 10.11.:
 
 1. Q9 beobachten: nur noch 9 Nachzügler (17.11.); danach einsammeln und offizielle Q9-Aggregation.
 2. ~~Q8-Nachzügler, Q9 auf 40, offizielle Q8-Aggregation~~ erledigt (11./12.11., `231d59c`).
-3. **Q-B START, sobald der Nutzer am Laptop ist (vereinbart 17.11.):** GitLab-Push `ca849b4` ist durch, Pipeline laut
-   Mail erfolgreich; Images `qb1-sindy` und `odeformer-reference` zu `ca849b4e3cf961532c425f31e7d78f693b9e359e` noch
-   **nicht geprüft** (Orion-Login abgelaufen). Ablauf: (1) Nutzer `oc login --web …`; (2) Claude prüft beide Images mit
-   dem Pull-Secret `evoode-gitlab-pull` (`oc image info -a …`); (3) `oc apply` **B1** (`qb1_sindy_job.yaml`, 240 Shards,
-   8 Pods, ~43 Kern-h) und **B3-Smoke** (`odeformer_smoke_job.yaml`, 2 Pods); (4) volles **B3 ODEFormer** erst nach
-   bestandenen Smoke-Vergleichen (`odeformer_job.yaml`, 1.512 Shards, **23 Pods — Nutzer 17.11.**, 326–349 Kern-h
-   ≈ 500 €, ~15 h). Kerne: 9 Q9 + 8 B1 + 23 B3 = 40. Fertig gerenderte Manifeste: `outputs/qb_manifests_ca849b4/`.
-   C-6 bekommt keine Kerne (Paper 1 erledigt). B2 WeakIdent fertig (`65b467f`, τ-Raster `a41f2bd`).
+3. **Q-B läuft seit 17.11. abends:** Images geprüft (`qb1-sindy` `sha256:4777784f…`, `odeformer-reference`
+   `sha256:42995f4f…`, beide `ca849b4`). B1 8 Pods, B3 23 Pods nach bestandenem Smoke (Ausgabe lokal
+   `outputs/qb_b3_smoke_ca849b4…/`). Nach Ende: B1 und B3 einsammeln, B3-Merge mit
+   `aggregate_c6_symbolic_baselines --method odeformer --n-shards 1512` (REPORT_WP_N48 Schritt 5), dann Q-B-Aggregation
+   (bestes λ / beste Konfiguration je Stratum × σ × Metrik zugunsten der Referenz) ins Paper. B2 WeakIdent fertig
+   (`65b467f`, τ-Raster `a41f2bd`). C-6 bekommt keine Kerne.
 4. Paperentwurf `paper/wisp/` (uncommittet, Q8-Stand) → nach W-4 `make_data.py` auf Q9 umstellen und committen.
 4b. **WISP.jl (12.11., vom Nutzer vorgezogen):** Paket steht, privat auf `github.com/dajoedic/WISP.jl`, lokal
    `..\WISP.jl` (`72e84ad`); Abnahme A1–A7 erfüllt (`docs/wisp_package_spec.md`). Claude darf in dieses Repo pushen.

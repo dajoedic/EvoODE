@@ -6,6 +6,19 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ## 2026-11-17
 
+### Q-B B1 and B3 started on Orion
+
+Images built by the GitLab push `ca849b4` and checked against the registry with the cluster pull secret:
+`qb1-sindy` `sha256:4777784f17b9…`, `odeformer-reference` `sha256:42995f4f17…`, both tagged with the full SHA. B1
+(SINDy / Weak-SINDy / E-SINDy, WISP library, 13 λ; 240 shards, 8 pods) and the B3 smoke (2 shards) started 18:52. The
+smoke passed all three WP-N48 controls: clean against the Orion reference `55e9c75` and the WP-N38 control (model,
+state/time hashes, four R² fields), noisy against the WP-N38 stage cells, completeness 2/2. B3 (ODEFormer on the C-6
+grid, 1,512 shards, 23 pods, planned 326–349 core-h) started right after. Cores: 8 Q9 + 8 B1 + 23 B3 = 39.
+
+Technical: the job writes `plan.json`, `index.csv` and `assignment.csv` with mode 0600 as root, so they are not
+readable through the S: mount; the smoke was copied with `oc exec … tar` through a running pod and merged locally
+(`outputs/qb_b3_smoke_ca849b4…/smoke_merged/`). The full collection takes the same route.
+
 ### C-6 blind rule lifted (user: Paper 1 is done); EvoGrow C-6 against WISP Q9 on 1,433 identical cells
 <!-- ebafa48 -->
 
