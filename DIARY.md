@@ -6,6 +6,22 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ## 2026-11-17
 
+### Q9 first look: Q9-A claims on the interim population (4,275 / 4,284)
+
+`q9a_claims.py` without `--strict` on the cells built this morning for the C-6 comparison
+(`outputs/q9a_interim_2026-11-17/`). The 9 missing cells are all σ = 0, ρ = 0.5, outside the ten noisy conditions the
+claims use, so the script reports the noisy population as complete and these numbers will not move when the stragglers
+land (only the subsampling-only rows will). Primary family P1–P4 (WISP vs WSINDy, noisy, systems as units, Holm) all
+pass: dim-1 exact structure 40.6 vs 24.5 % (×1.65, p_Holm 0.035, 7 ahead / 2 tied / 2 behind), dim-2 exact structure
+44.7 vs 17.2 % (×2.60, 0.012), dim-1 exact generalization 61.8 vs 43.9 % (×1.41, 0.016), dim-2 exact generalization
+71.3 vs 30.7 % (×2.33, 0.008). Against the Q8 dry run (σ ∈ {0.01, 0.05} only): WISP's own rates within −5 to +0.4 pp,
+WSINDy lower on dim 2 (structure 23.8 → 17.2 %, generalization 38.8 → 30.7 %), so the dim-2 gaps widen and the dim-1
+structure gap narrows (22.7 → 16.1 pp, two systems now behind). Claims: C1, C2, C4–C8 pass; **C3 fails on one cell
+as in Q8** (WeakIdent native, dim-2 exact structure, 36.0 vs 40.0 % on 8 systems, p 0.80; B1 and B3 still pending) →
+frozen fallback "ahead of every reference except WeakIdent on dim-2 structure"; **C9 fails on one cell** (dim-1
+surrogate generalization vs WSINDy +11.8 pp, p 0.055) → name it, no pooled statement; **"roughly doubles" is out**
+(dim-1 ratio 1.65 < 1.8). All robustness variants keep the sign of P1–P4; IC 2 alone weakens P1 (+5.5 pp, p 0.34).
+
 ### Q-B B1 and B3 started on Orion
 
 Images built by the GitLab push `ca849b4` and checked against the registry with the cluster pull secret:
