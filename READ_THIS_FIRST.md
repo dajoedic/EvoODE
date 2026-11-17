@@ -21,11 +21,12 @@ ist, ist vermutlich falsch — dann gilt `CLAUDE.md`.
 |---|---|---|
 | **W-4 = Q9-Gitter** (`cdfaa7d`, 4.284 Shards, C1000) | 4.276/4.284, 0 Fehler, keine offenen Shards, 8 Pods laufen | Ende bestimmen Nachzügler; dann einsammeln + offizielle Q9-Aggregation |
 | **W-2 = Q8-Gitter** (`512dd5b`) | 3.540/3.540, Job entfernt, aggregiert 12.11. | — |
-| **Q-B B1** SINDy/Weak-SINDy/E-SINDy (`qb1-sindy:ca849b4`, Job `evoode-sideproject-qb1-sindy`) | 0/240, 8 Pods, gestartet 17.11. 18:52 | ~43 Kern-h (~5–6 h); einsammeln, dann Q-B-Aggregation |
-| **Q-B B3** ODEFormer (`odeformer-reference:ca849b4`, Job `evoode-phase-c-c6-odeformer`) | 0/1.512, 23 Pods, gestartet 17.11. ~19:00; Smoke 2/2 PASS (sauber, verrauscht, Vollständigkeit) | 326–349 Kern-h (~15 h); NFS-Dateien wie `plan.json` sind 0600 root → per `oc exec … tar` über einen Pod holen, nicht über S: |
+| **Q-B B1** SINDy/Weak-SINDy/E-SINDy (`qb1-sindy:ca849b4`, Job `evoode-sideproject-qb1-sindy`) | 89/240 (18.11. 00:30), 8 Pods, gestartet 17.11. 18:52 | real ~15 h statt 5–6 h, Ende ~18.11. vormittags; einsammeln, dann Q-B-Aggregation |
+| **Q-B B3** ODEFormer (`odeformer-reference:ca849b4`, Job `evoode-phase-c-c6-odeformer`) | **Erster Start 17.11. abgebrochen** (18:05 UTC, backoffLimit 50 erschöpft: Shards mit 512 Punkten brauchen 4,4–5,0 GiB > Limit 4 GiB → OOM-Neustarts; Job per TTL gelöscht). **Neustart 18.11. ~00:40 mit 8 GiB** (`outputs/qb_manifests_ca849b4/odeformer_job_8gi.yaml`, sonst identisch, setzt auf vorhandenen Einheiten fort; 12 fertige Shards übernommen); 21/1.512 um 00:48, keine Neustarts. Lehre: Smoke muss einen vollen Shard rechnen | 326–349 Kern-h (~15 h); NFS-Dateien wie `plan.json` sind 0600 root → per `oc exec … tar` über einen Pod holen, nicht über S: |
+| **W-4c Q9-ABL** (`evoode:885da53`, Job `evoode-sideproject-q9abl`, 3.060 Shards) | gestartet 18.11. ~00:43 mit 1 Pod | Planung ~6.100 Kern-h; Parallelität hochziehen, sobald B1/B3 Kerne freigeben (≤ 40 gesamt); danach Q8-Identitätsprüfung `check_q9abl_q8_identity.py` |
 | **C-6 gekappt** | 1.435/3.366, Parallelität 0 | bekommt keine Kerne mehr (Paper 1 erledigt) |
 
-**Kerne 39/40:** 8 Q9 + 8 B1 + 23 B3. **Q9 je Dimension (17.11. 17:59 UTC):** dim 1 1.564/1.564 · dim 2 1.901/1.904 (3 laufend) · dim 3 675/680 (5 laufend) ·
+**Kerne 40/40:** 8 Q9 + 8 B1 + 23 B3 + 1 Q9-ABL. **Q9 je Dimension (17.11. 17:59 UTC):** dim 1 1.564/1.564 · dim 2 1.901/1.904 (3 laufend) · dim 3 675/680 (5 laufend) ·
 dim 4 136/136. Ist/Plan der fertigen Shards 0,65 (9.154 statt 14.080 Kern-h). **Nachzügler:** sys 58 (dim 3) 78 h (Plan 8 h),
 sys 51 46 h (Plan 3 h), sys 59 26 h, vier Shards von sys 52 und einer von sys 28 je 14–15 h (Plan < 1 h); 62 und 56 fertig.
 Bei jedem Cluster-Check: `python analysis/scripts/aggregate/q9_progress.py --json` → Tabelle im Chat und Abschnitt auf der Statusseite nachziehen. Lokale Quelle der Statusseite: Scratchpad der Sitzung
