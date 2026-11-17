@@ -26,6 +26,7 @@ Ablation subset: the Q8 C1000 choices equal the Q9 choices on all 588 overlappin
 gen, candidate count, loss evaluations), so the ablations stand on a strict subset of the final data with the final
 method. Cost of repeating the three ablation arms on the full dim-1/2 Q9 grid, from Q8 fit times: ~3,500 core-h
 (no FoBa ~1,500, random start ~2,000, no refit ~0). Text in `wisp.tex` updated for all three.
+<!-- 8425b32 -->
 
 ### Paper switched to Q9 (interim) for proofreading
 
