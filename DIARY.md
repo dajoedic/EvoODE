@@ -6,6 +6,17 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ## 2026-11-17
 
+### Q9-ABL prepared: paths built, laptop identity against Q8 passes
+
+User decision: Figure 6 must rest on the final data ("Das MUSS rein"), all five arms (protocol Q9-ABL, frozen
+`93ba79d`). Paths (`build_sideproject_q9_ablation_paths.py`): 3,060 noisy dim-1/2 data sets × 5 arms = 15,300
+cell-arms in 3,060 shards; Q9 paths rebuilt 20/20, every arm's candidate list identical to Q8 on the 408 shared data
+sets (2,040/2,040); 14 empty no-FoBa paths. Planning 6,128 core-h (A1000 944, C10 1,304, no FoBa 1,562, random start
+2,317, no refit 0; planning only), longest shard ~43 h. Runner `sideproject_q9_ablation_fits.jl` (Q8 fit function
+unchanged). Laptop smoke on four shared shards: 35/35 records bit-identical to Q8 (parameters, training,
+reconstruction and generalization loss, loss evaluations, ODE solves) in every arm (`check_q9abl_q8_identity.py`).
+Next: GitLab push for the image, staging, start after Q-B on freed cores.
+
 ### WISP Q9 cost anatomy: where the core hours go
 
 `diagnose_wisp_q9_cost.py` over all 45,652 Q9 candidate fits (counts are the evidence; seconds context only).
