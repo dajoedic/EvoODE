@@ -42,7 +42,7 @@ spec:
             - name: EVO_SINDY_CONFIG
               value: /workspace/EvoODE/analysis/configs/sideproject_qb1_sindy.json
             - name: EVO_SINDY_Q9_PATHS
-              value: /outputs/sideproject_q9_inputs/grid/q9_paths.json
+              value: /outputs/sideproject_q9_cdfaa7d6218c56a0ec63ea9e794f6f35e46792c1/input/q9_paths.json
             - name: EVO_SINDY_N_SHARDS
               value: "240"
             - name: OMP_NUM_THREADS
