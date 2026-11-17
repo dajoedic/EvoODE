@@ -1,5 +1,5 @@
 # Preparation only; do not apply before W-4 capacity approval.
-# Rebuild with baselines/Dockerfile.qb1-sindy; replace the image tag.
+# Image built by the CI job build_qb1_sindy_image (baselines/Dockerfile.qb1-sindy); replace the image tag.
 apiVersion: batch/v1
 kind: Job
 metadata:
@@ -32,7 +32,7 @@ spec:
         - name: evoode-gitlab-pull
       containers:
         - name: cell
-          image: registry.gitlab.scch.at:443/joedicke/evoode/sindy-baselines:<QB1_REBUILT_IMAGE_TAG>
+          image: registry.gitlab.scch.at:443/joedicke/evoode/qb1-sindy:<QB1_REBUILT_IMAGE_TAG>
           imagePullPolicy: IfNotPresent
           env:
             - name: EVO_SINDY_EXPORT_DIR

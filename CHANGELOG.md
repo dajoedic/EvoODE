@@ -10,6 +10,18 @@ project**. Scientific history belongs in `DIARY.md`, not here.
 
 ## [Unreleased]
 
+### Added - 2026-11-17
+
+- `build_qb1_sindy_image` builds `qb1-sindy:$CI_COMMIT_SHA` and `qb1-sindy:$CI_COMMIT_REF_SLUG` from
+  `baselines/Dockerfile.qb1-sindy` (WISP Q-B arm B1: SINDy family with the WISP library). Same pinned
+  Docker-in-Docker digest, disabled provenance/SBOM attestations and three-hour budget as
+  `build_sindy_baselines_image`; automatic on `main` when the B1 Dockerfile, its ignore file or its
+  requirements change, otherwise an optional manual job. Package versions are the existing
+  `requirements-sindy-baselines.txt` pins plus `matplotlib==3.9.1`.
+- `trivy-qb1-sindy-image` scans the SHA-tagged image for HIGH/CRITICAL findings through the pinned
+  Trivy v3.2.0 component with `allow-failure: true` and a build dependency. Findings not yet measured;
+  no new vulnerability exception is asserted (§11.1).
+
 ### Added - 2026-10-21
 
 - `build_pysr_legacy_image` builds `pysr-legacy:$CI_COMMIT_SHA` and

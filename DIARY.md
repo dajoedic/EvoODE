@@ -44,6 +44,7 @@ grid, dim 2 only; EvoGrow runs under the clamp 10, WISP under bound 1000 (on the
 EvoGrow arm is the frozen Paper 1 variant, not a tuned one.
 
 ### Where WISP fails to reconstruct and EvoGrow does not: mostly a selection on a drifted initial state
+<!-- 5b3fcf8 -->
 
 Read-only diagnosis on the 1,433 C-6 / Q9 pairs (`analysis/scripts/aggregate/diagnose_wisp_surrogate_reconstruction_failures.py`,
 tables in `analysis/data/paper1_phaseC_v1/c6_vs_wisp_2026-11-17/`). **183 cells** have EvoGrow reconstruction
