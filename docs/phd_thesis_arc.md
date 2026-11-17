@@ -633,3 +633,31 @@ not a claim.
    only to *score* a predictor, never inside it.
 4. **Whether the conference insert is written before or after Paper 1 is submitted.** Its data
    largely exists; its dependency runs to Paper 2, not to Paper 1.
+
+---
+
+## 12. WISP follow-ups — notes for the next paper (no compute before 31.12.)
+
+Collected while the WISP paper is written (CLAUDE.md, "Work order while Q9 runs": Paper 2 extensions as notes only).
+None of these changes WISP 1; the simplicity guardrail holds for WISP 1.
+
+1. **A data-derived structure bound** instead of no bound (the 6-term cap failed as a stop, Q6; `DIARY.md` 2026-10-31).
+2. **Constant sensitivity** of the default configuration (window lengths, smoother widths, ν, threshold) — the paper
+   declares it unmeasured.
+3. **A calibrated stop** — the χ² stop is liberal by 5–30× (Q-Cal); a sharper stop would shorten paths.
+4. **Substitution on the growth path (2026-11-17, Q9 failure anatomy).** WISP's largest remaining error is a path
+   error, not a selection error: when the truth is on the path it is chosen in 559 of 590 noisy dim-1/2 data sets,
+   but in 669 data sets it never appears. In 601 of these a true term enters no candidate at all, and in 499 of those
+   601 the path grows to at least the true size — a correlated wrong term takes the true term's place, the true term
+   then lowers the weak residual by less than the χ² floor, and the path stops. Missing terms are low-order (u1, u1²,
+   u2, the constant). This is the known weakness of greedy forward selection under correlated columns; FoBa's
+   backward step removes a term only when its removal costs little, which a substituted term does not.
+   **Candidate repair: an exchange step** — after the forward/backward loop, try replacing each active term by each
+   inactive one in the weak space and accept the best exchange that lowers the residual (stepwise regression with
+   exchange; the same move as Paper 3's *replace* operator, §7, here in a linear space where it costs one regression
+   per pair). Alternative: branch the path at the first steps (a small beam) and let the trajectory BIC choose, since
+   selection is already reliable. Evidence that exchange moves do not leave the truth once found: WP-T1f, 0 of 2,479
+   same-size swaps beat the true support (§5, step 3).
+   **Cheap pilot, weak space only, no fits:** on the 601 never-entered data sets, does one best exchange from the
+   largest path candidate reach the true support? An upper bound on what the repair can buy, computed in minutes.
+   Must be weighed against the guardrail: one more component, describable in one sentence.
