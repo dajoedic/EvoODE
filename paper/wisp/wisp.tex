@@ -720,7 +720,15 @@ two-dimensional systems and behind on \m{PrimaryOneSystemsBehind} and \m{Primary
 is ahead on \m{PrimaryThreeSystemsAhead} and \m{PrimaryFourSystemsAhead} and behind on \m{PrimaryThreeSystemsBehind} and
 \m{PrimaryFourSystemsBehind} (Fig.~\ref{fig:systems}).\claimtag{C4} The systems on which WISP is behind are all
 one-dimensional and the margins are small: on structure system 1 (\pv{48.3} vs \pv{55.0}\,\%) and system 17
-(\pv{0} vs \pv{3.3}\,\%), on generalization system 12 (\pv{50.0} vs \pv{55.0}\,\%). \todo{say why, per system}
+(\pv{0} vs \pv{3.3}\,\%), on generalization system 12 (\pv{50.0} vs \pv{55.0}\,\%). On systems 1 and 12 both methods
+depend almost entirely on the initial condition. For system 12, logistic growth towards $x^*=16.3$, WISP recovers the
+structure on \pv{93}\,\% of the data sets from $x_0=1.3$ and on none from $x_0=11$ (WSINDy: \pv{50} and
+\pv{0}\,\%); from $x_0=11$ the trajectory is within 1\,\% of the equilibrium after about two of its ten time units,
+so most samples carry no information about the growth law. For system 1, a linear relaxation to $x^*=0.84$, the
+pattern is reversed between the two initial conditions (WISP \pv{97} and \pv{0}\,\%, WSINDy \pv{93} and
+\pv{17}\,\%); from $x_0=3.54$ the transient is a third as large as from $x_0=10$, and WISP replaces the constant and the
+linear term by polynomial or trigonometric approximations. System 17 is missed by both methods (WSINDy finds it in 2 of 60
+data sets); WISP's models nevertheless predict from the unseen initial condition in \pv{67}\,\% of data sets.
 
 \begin{figure}[t]
 \centering
@@ -779,7 +787,9 @@ bootstrap over systems.}
 
 Figure~\ref{fig:ablation} removes one component at a time. The ablations were run once, on the subset of the protocol
 that fixed the design ($\sigma\in\{1,5\}\,\%$, $\rho\in\{0,0.5\}$, one realization, dimensions 1--2), and are not
-repeated on the full grid; all numbers in this subsection refer to that subset.
+repeated on the full grid; all numbers in this subsection refer to that subset. The subset is part of the final run's
+data: on its 588 data sets the final configuration chose the same model, with the same number of loss evaluations, in
+both runs.
 
 \emph{Weak-form start.} Replacing the weak-form start by the random start customary in trajectory fitting costs most:
 structure recovery falls from 45.0\,\% to 21.2\,\% and generalization from 71.2\,\% to 28.7\,\% on two-dimensional
@@ -820,8 +830,15 @@ as independent. On the trajectory, the decision is reliable: whenever the truth 
 
 The remaining failures are path failures: in \m{PathFailNum} of the \m{PathFailDen} data sets whose structure is
 missed, the truth never appears among the candidates.\claimtag{C7} This locates the room for improvement precisely. A
-better selection rule cannot recover these data sets; only a path that visits the true support can. \todo{Q9: describe
-the typical path failure---a spurious term that is never removed, or a true term that never enters---by system class.}
+better selection rule cannot recover these data sets; only a path that visits the true support can. The typical path
+failure is a true term that never enters. In \pv{601} of the \pv{669} path failures at least one true term appears in no
+candidate at all; a superset of the truth that is never pruned back accounts for \pv{38}, and true terms that enter but
+never all at once for \pv{30} (\pv{19} of them on system 17). The missing terms are mostly low-order ($x_1$ in
+\pv{312}, $x_1^2$ in \pv{235}, $x_2$ in \pv{132} and the constant in \pv{110} of the \pv{601} data sets). The path is
+rarely too short: its largest model has at least as many terms as the truth in \pv{499} of the \pv{601} cases, so a
+correlated wrong term takes the place of the true one and the stop then ends the path. Stopping too early accounts for
+\pv{28}\,\% of these failures on dimension 1 and \pv{4}\,\% on dimension 2. Every path in this group ends at the
+noise-referenced stop, none at a size limit.
 
 \subsection{Cost}\label{sec:cost}
 

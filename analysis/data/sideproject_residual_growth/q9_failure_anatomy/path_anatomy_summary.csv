@@ -1,0 +1,9 @@
+stratum,kind,cells
+dim1_exact,never_entered,329
+dim1_exact,never_together,19
+dim1_exact,selection,37
+dim1_exact,superset_only,7
+dim2_exact,never_entered,272
+dim2_exact,never_together,11
+dim2_exact,selection,18
+dim2_exact,superset_only,31

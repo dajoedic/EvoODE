@@ -6,6 +6,27 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ## 2026-11-17
 
+### WISP Q9: path-failure anatomy, the systems behind WSINDy, the ablation subset
+
+`diagnose_wisp_q9_path_and_behind.py` (read-only; `analysis/data/sideproject_residual_growth/q9_failure_anatomy/`).
+Of the 724 noisy exact dim-1/2 data sets whose structure WISP misses, 55 are selection failures and 669 path failures:
+601 have a true term that enters no candidate, 38 a superset that is never pruned back, 30 true terms that enter but
+never together (19 on system 17). Missing terms are low-order (u1 312, u1² 235, u2 132, constant 110 of 601). The
+path is rarely too short: its largest model has at least the true size in 499 of 601, so a correlated wrong term takes
+the true one's place and the χ² stop ends the path (every path ends at the floor, none at a cap); stopping too early is
+28 % of these on dim 1, 4 % on dim 2.
+
+Systems behind WSINDy: 1 and 12 are initial-condition effects shared by both methods. System 12 (logistic, x* = 16.3):
+WISP 93 % structure from x0 = 1.3, 0 % from x0 = 11 (WSINDy 50 / 0 %); from 11 the trajectory is within 1 % of x*
+after ~2 of 10 time units. System 1 (relaxation to 0.84): WISP 97 / 0 %, WSINDy 93 / 17 % for x0 = 10 / 3.54; WISP
+replaces 1 + u1 by polynomial or trigonometric approximations on the smaller transient. System 17: both miss it (WSINDy
+2 of 60), WISP still generalizes in 67 %.
+
+Ablation subset: the Q8 C1000 choices equal the Q9 choices on all 588 overlapping data sets (k, structure, raw, rec,
+gen, candidate count, loss evaluations), so the ablations stand on a strict subset of the final data with the final
+method. Cost of repeating the three ablation arms on the full dim-1/2 Q9 grid, from Q8 fit times: ~3,500 core-h
+(no FoBa ~1,500, random start ~2,000, no refit ~0). Text in `wisp.tex` updated for all three.
+
 ### Paper switched to Q9 (interim) for proofreading
 
 User asked to switch now rather than after W-4. `paper/wisp/data/results_macros.tex` is the `q9a_claims.py` output of
