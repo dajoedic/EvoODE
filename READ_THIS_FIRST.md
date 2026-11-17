@@ -10,24 +10,23 @@ zweites davon. Alles Dauerhafte gehört dorthin, nach `PAPER_1.md` oder ins `DIA
 **Regeln:** wird immer **vollständig überschrieben**, nie angehängt. Was älter als ein paar Tage
 ist, ist vermutlich falsch — dann gilt `CLAUDE.md`.
 
-**Stand: 2026-11-16, ~13:30 (Q9 läuft mit 40 Pods, 97,7 % der Plan-Kosten durch; Q8 fertig und offiziell aggregiert `231d59c`) — WISP-Plan bis 31.12.
+**Stand: 2026-11-17, ~12:20 (Q9 4.275/4.284, nur noch 9 Nachzügler, 31 Kerne frei; Q8 fertig und offiziell aggregiert `231d59c`) — WISP-Plan bis 31.12.
 (CLAUDE.md, „WISP paper — the fixed plan“; Arbeitsreihenfolge vom 12.11. dort).**
 
 ## 1. Was läuft
 
-**Orion, geprüft 16.11. ~13:30** (Statusseite https://claude.ai/artifact/9zzJsoGCBahPsuNkaaf3DN, Version 20):
+**Orion, geprüft 17.11. ~12:20** (Statusseite https://claude.ai/artifact/9zzJsoGCBahPsuNkaaf3DN, Version 22):
 
 | Lauf | Stand | Wenn fertig |
 |---|---|---|
-| **W-4 = Q9-Gitter** (`cdfaa7d`, 4.284 Shards, C1000) | 1.176/4.284, 0 Fehler, Parallelität 40; **97,7 % der Plan-Kosten** | 3.068 offene Shards mit nur 148 Plan-Kern-h (Median 5 s) ≈ 1 Tag; Ende bestimmen Nachzügler; 21-Tage-Regel endet 28.11. |
+| **W-4 = Q9-Gitter** (`cdfaa7d`, 4.284 Shards, C1000) | 4.275/4.284, 0 Fehler, keine offenen Shards, 9 Pods laufen | Ende bestimmen Nachzügler; dann einsammeln + offizielle Q9-Aggregation |
 | **W-2 = Q8-Gitter** (`512dd5b`) | 3.540/3.540, Job entfernt, aggregiert 12.11. | — |
-| **C-6 gekappt** | 1.435/3.366, Parallelität 0 | nach W-4 zurück auf 24 |
+| **C-6 gekappt** | 1.435/3.366, Parallelität 0 | nach W-4 zurück auf 24 (Nutzer entscheidet, ob schon jetzt mit den 31 freien Kernen) |
 
-**Q9 je Dimension (16.11. 12:30 UTC):** dim 1 0/1.564 · dim 2 553/1.904 (16 laufend) · dim 3 488/680 (23 laufend) ·
-dim 4 135/136 (1 laufend). Fertige Shards brauchten Ist/Plan 0,59 (8.153 statt 13.767 Kern-h); kleine Shards liegen weit
-unter Plan (Pod-Minimum ~40–60 s). **Nachzügler über Plan:** sys 62 (dim 4) IC1 σ0 ρ0.5 n1 227 h (Plan 91 h), sys 56 (dim 3)
-135 h (Plan 29 h), sys 37 57 h (Plan 10 h), sys 58 55 h (Plan 8 h); sys-55-Nachzügler fertig. Bei jedem Cluster-Check:
-`python analysis/scripts/aggregate/q9_progress.py --json` → Tabelle im Chat und Abschnitt auf der Statusseite nachziehen. Lokale Quelle der Statusseite: Scratchpad der Sitzung
+**Q9 je Dimension (17.11. 11:21 UTC):** dim 1 1.564/1.564 · dim 2 1.901/1.904 (3 laufend) · dim 3 674/680 (6 laufend) ·
+dim 4 136/136. Ist/Plan der fertigen Shards 0,65 (9.154 statt 14.080 Kern-h). **Nachzügler:** sys 58 (dim 3) 78 h (Plan 8 h),
+sys 51 46 h (Plan 3 h), sys 59 26 h, vier Shards von sys 52 und einer von sys 28 je 14–15 h (Plan < 1 h); 62 und 56 fertig.
+Bei jedem Cluster-Check: `python analysis/scripts/aggregate/q9_progress.py --json` → Tabelle im Chat und Abschnitt auf der Statusseite nachziehen. Lokale Quelle der Statusseite: Scratchpad der Sitzung
 `evoode_orion.html` (geht verloren → vorher Artifact `read`).
 
 **Kerne:** 40 Q9 = 40. Änderungen an der Parallelität führt der Nutzer aus (`oc patch`, Auto-Modus blockiert es für Claude).
