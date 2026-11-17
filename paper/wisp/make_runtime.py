@@ -1,4 +1,4 @@
-"""Runtime context (not evidence) for the WISP draft: Orion solve seconds of the Q8 C1000 fits.
+"""Runtime context (not evidence) for the WISP draft: Orion solve seconds of the Q9 C1000 fits.
 
 Sums the recorded per-fit solve time over the candidates of each noisy cell (one core per cell on
 the Orion cluster) and reports medians per stratum; adds the recorded SINDy-family fit times
@@ -11,11 +11,11 @@ from pathlib import Path
 import pandas as pd
 
 ROOT = Path(__file__).resolve().parents[2]
-REC = ROOT / 'outputs/sideproject_q8_512dd5bd534530327b1f5fed3e7892a1e0950016/out_sneak_2026-11-07'
+REC = ROOT / 'outputs/c6_vs_wisp_2026-11-17/out'  # Q9 records, image cdfaa7d (collected 17.11.)
 D = Path(__file__).resolve().parent / 'data'
 pat = re.compile(r"'solve_time_s': ([0-9.eE+-]+)")
 rows = []
-for fn in REC.glob('*.jsonl'):
+for fn in REC.glob('index_*.jsonl'):
     for line in fn.open():
         if '"C1000"' not in line:
             continue

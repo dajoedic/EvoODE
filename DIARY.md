@@ -6,6 +6,19 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ## 2026-11-17
 
+### Paper switched to Q9 (interim) for proofreading
+
+User asked to switch now rather than after W-4. `paper/wisp/data/results_macros.tex` is the `q9a_claims.py` output of
+the first look; `make_data.py` now reads the per-cell tables of `build_wisp_paper_cells.py` and picks reference
+configurations with `q9a_claims.in_favour` (identical rates to the macros); `make_runtime.py` reads the Q9 records;
+figures add both WeakIdent arms and show σ = 1–5 % (ρ pooled). `arms_noisy.csv` (ablations) stays Q8, as the text says.
+Text: "roughly doubles" replaced by the ratios (frozen wording rule, dim-1 ratio 1.65); C3 now fails only on native
+WeakIdent dim-2 structure (the extended arm is beaten, p 0.031); the σ trend and the ρ effect written out; systems
+behind WSINDy named (1 and 17 on structure, 12 on generalization; reason still a todo); dim-3/4 table extended to all
+twelve systems with a WeakIdent column (52 and 63: reconstruct but never the law). Hand-typed numbers recomputed from the
+Q9 tables. Open todos: why systems 1/12/17 are behind; path-failure anatomy by system class; data-freeze date. The
+commit also carries the earlier uncommitted Methods rewrite in `wisp.tex` (style sample, tone not yet approved).
+
 ### Q9 first look: Q9-A claims on the interim population (4,275 / 4,284)
 
 `q9a_claims.py` without `--strict` on the cells built this morning for the C-6 comparison

@@ -23,9 +23,11 @@ mpl.rcParams.update({
     'axes.titlelocation': 'left', 'legend.frameon': False,
 })
 INK, INK2, MUTED, GRID = '#0b0b0b', '#52514e', '#8a8984', '#e4e3df'
-COL = {'C1000': '#2a78d6', 'wsindy': '#eb6834', 'weak_sindy': '#1baf7a', 'sindy': '#eda100', 'e_sindy': '#e87ba4'}
-LAB = {'C1000': 'WISP', 'wsindy': 'WSINDy (MATLAB)', 'weak_sindy': 'Weak-SINDy', 'sindy': 'SINDy', 'e_sindy': 'E-SINDy'}
-METHODS = ['C1000', 'wsindy', 'weak_sindy', 'sindy', 'e_sindy']
+COL = {'C1000': '#2a78d6', 'wsindy': '#eb6834', 'weakident_native': '#7a5195', 'weakident_trig': '#b48ac9',
+       'weak_sindy': '#1baf7a', 'sindy': '#eda100', 'e_sindy': '#e87ba4'}
+LAB = {'C1000': 'WISP', 'wsindy': 'WSINDy (MATLAB)', 'weakident_native': 'WeakIdent',
+       'weakident_trig': 'WeakIdent + sin/cos', 'weak_sindy': 'Weak-SINDy', 'sindy': 'SINDy', 'e_sindy': 'E-SINDy'}
+METHODS = ['C1000', 'wsindy', 'weakident_native', 'weakident_trig', 'weak_sindy', 'sindy', 'e_sindy']
 STRATA = ['dim1_exact', 'dim2_exact', 'dim1_surrogate', 'dim2_surrogate']
 SLAB = {'dim1_exact': 'dim 1\nexact', 'dim2_exact': 'dim 2\nexact', 'dim1_surrogate': 'dim 1\nsurrogate',
         'dim2_surrogate': 'dim 2\nsurrogate', 'dim3_feasible': 'dim 3\n52, 61', 'dim3_infeasible': 'dim 3\n54–59'}
@@ -207,12 +209,12 @@ def fig_main():
     specs = [('structure', 'Exact structure', ['dim1_exact', 'dim2_exact']),
              ('rec', 'Reconstruction ($R^2>0.9$)', STRATA),
              ('gen', 'Generalization ($R^2>0.9$)', STRATA)]
-    w = 0.16
+    w = 0.12
     for ax, (m, title, strata), lab in zip(axes, specs, 'ABC'):
         for i, meth in enumerate(METHODS):
             for j, st in enumerate(strata):
                 r = s[(s.method == meth) & (s.stratum == st) & (s.metric == m)].iloc[0]
-                xpos = j + (i - 2) * w
+                xpos = j + (i - (len(METHODS) - 1) / 2) * w
                 ax.bar(xpos, 100 * r.rate, width=w * 0.86, color=COL[meth], lw=0)
                 ax.plot([xpos, xpos], [100 * r.lo, 100 * r.hi], color=INK, lw=0.5)
                 if meth == 'C1000':
@@ -226,8 +228,8 @@ def fig_main():
         panel_label(ax, lab, x=-0.2 if m == 'structure' else -0.1)
     axes[0].set_ylabel('share of noisy cells (%)')
     h = [Rectangle((0, 0), 1, 1, color=COL[m]) for m in METHODS]
-    fig.legend(h, [LAB[m] for m in METHODS], loc='upper center', ncol=5, bbox_to_anchor=(0.5, 1.09),
-               handlelength=1.0, columnspacing=1.6)
+    fig.legend(h, [LAB[m] for m in METHODS], loc='upper center', ncol=7, bbox_to_anchor=(0.5, 1.09),
+               handlelength=1.0, columnspacing=1.2)
     save(fig, 'fig3_main')
 
 
@@ -236,8 +238,8 @@ def fig_main():
 # ---------------------------------------------------------------------------
 def fig_conditions():
     b = pd.read_csv(D / 'by_condition.csv')
-    conds = ['clean', 's0.01_r0.0', 's0.01_r0.5', 's0.05_r0.0', 's0.05_r0.5']
-    clab = ['clean', '1 %', '1 %\n½ gone', '5 %', '5 %\n½ gone']
+    conds = ['clean', 's0.01', 's0.02', 's0.03', 's0.04', 's0.05']
+    clab = ['clean', '1 %', '2 %', '3 %', '4 %', '5 %']
     fig, axes = plt.subplots(2, 4, figsize=(FULL, 3.2), sharey=True, gridspec_kw=dict(hspace=0.5, wspace=0.12))
     for col, st in enumerate(STRATA):
         for row, m in enumerate(['structure', 'gen']):
@@ -252,13 +254,13 @@ def fig_conditions():
                 continue
             for meth in METHODS[::-1]:
                 g = b[(b.method == meth) & (b.stratum == st) & (b.metric == m)].set_index('condition').reindex(conds)
-                ax.plot(range(5), 100 * g.rate, '-o', color=COL[meth], lw=1.6 if meth == 'C1000' else 1.0,
+                ax.plot(range(len(conds)), 100 * g.rate, '-o', color=COL[meth], lw=1.6 if meth == 'C1000' else 1.0,
                         ms=3.6 if meth == 'C1000' else 2.6, mew=0, zorder=3 if meth == 'C1000' else 2)
-            ax.set_xticks(range(5))
+            ax.set_xticks(range(len(conds)))
             ax.set_xticklabels(clab, fontsize=5.8)
             ax.set_ylim(-3, 103)
             ygrid(ax)
-            ax.axvspan(0.5, 4.5, color='#f3f2ef', zorder=0, lw=0)
+            ax.axvspan(0.5, len(conds) - 0.5, color='#f3f2ef', zorder=0, lw=0)
             if row == 0:
                 ax.set_title(SLAB[st].replace('\n', ' '))
         axes[0, 0].set_ylabel('exact structure (%)')
@@ -268,9 +270,9 @@ def fig_conditions():
     panel_label(axes[0, 0], 'A', x=-0.3)
     panel_label(axes[1, 0], 'B', x=-0.3)
     h = [Line2D([], [], color=COL[m], marker='o', ms=3, lw=1.2, mew=0) for m in METHODS]
-    fig.legend(h, [LAB[m] for m in METHODS], loc='upper center', ncol=5, bbox_to_anchor=(0.5, 1.03),
-               columnspacing=1.6)
-    fig.text(0.5, -0.03, 'noise level σ and missing samples (shaded: noisy conditions that enter the pooled rates)',
+    fig.legend(h, [LAB[m] for m in METHODS], loc='upper center', ncol=7, bbox_to_anchor=(0.5, 1.03),
+               columnspacing=1.2)
+    fig.text(0.5, -0.03, 'noise level σ; regular and half-subsampled data pooled (shaded: conditions that enter the pooled rates)',
              ha='center', fontsize=6.3, color=INK2)
     save(fig, 'fig4_conditions')
 
