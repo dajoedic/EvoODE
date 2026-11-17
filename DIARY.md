@@ -7,6 +7,7 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 ## 2026-11-17
 
 ### C-6 blind rule lifted (user: Paper 1 is done); EvoGrow C-6 against WISP Q9 on 1,433 identical cells
+<!-- ebafa48 -->
 
 **Decision (user, 17.11.):** Paper 1 with EvoGrow is finished, so the C-6 blind rule and the §9.4d opening condition
 (capped grid complete) no longer protect anything. The rule is lifted; the C-6 numbers below were opened on a partial
