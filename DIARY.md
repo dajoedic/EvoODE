@@ -18,6 +18,7 @@ grid, 1,512 shards, 23 pods, planned 326–349 core-h) started right after. Core
 Technical: the job writes `plan.json`, `index.csv` and `assignment.csv` with mode 0600 as root, so they are not
 readable through the S: mount; the smoke was copied with `oc exec … tar` through a running pod and merged locally
 (`outputs/qb_b3_smoke_ca849b4…/smoke_merged/`). The full collection takes the same route.
+<!-- 0fa4af8 -->
 
 ### C-6 blind rule lifted (user: Paper 1 is done); EvoGrow C-6 against WISP Q9 on 1,433 identical cells
 <!-- ebafa48 -->
