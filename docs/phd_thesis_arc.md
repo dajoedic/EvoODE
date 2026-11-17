@@ -661,3 +661,5 @@ None of these changes WISP 1; the simplicity guardrail holds for WISP 1.
    **Cheap pilot, weak space only, no fits:** on the 601 never-entered data sets, does one best exchange from the
    largest path candidate reach the true support? An upper bound on what the repair can buy, computed in minutes.
    Must be weighed against the guardrail: one more component, describable in one sentence.
+   **Full note with verified prior work: `docs/wisp_paper2_note_exchange_step.md`** — the exchange step itself is
+   not new (sequential replacement, SWAP, OMPR, Li–Peng–Bai 2006); the comparison must include MIOSR best subset.

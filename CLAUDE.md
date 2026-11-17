@@ -885,7 +885,7 @@ the coupled search path 1e-6 is the cheaper, behaviour-equal tolerance; the Syst
   compute (C-1 objective vs the P-04 truth objective at k = 3 and k = 10). Discussion paper:
   `docs/diskussion_warum_scheitert_die_suche.md`. Waiting for the user's return from the discussion.
 - **Keep: term-wise fitting on the residual (user idea, 2026-10-17).** FROLS family (Billings, Chen & Korenberg 1989;
-  Piroddi & Lovera 2008). Sound in derivative/weak-form space (linear in coefficients, residual additive), not in
+  Piroddi & Spinelli 2003; "Piroddi & Lovera 2008" cited here until 2026-11-17 is about error filtering). Sound in derivative/weak-form space (linear in coefficients, residual additive), not in
   trajectory space; refit all coefficients jointly after each term, prune backwards against correlated candidates.
   Whether to pursue depends on the failure anatomy: class B favours it, class D does not. `DIARY.md` 2026-10-17.
   **Side project started 2026-10-17** (protocols `docs/sideproject_residual_growth_protocol.md` and `_q3.md`, data
