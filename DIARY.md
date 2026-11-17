@@ -16,6 +16,7 @@ sets (2,040/2,040); 14 empty no-FoBa paths. Planning 6,128 core-h (A1000 944, C1
 unchanged). Laptop smoke on four shared shards: 35/35 records bit-identical to Q8 (parameters, training,
 reconstruction and generalization loss, loss evaluations, ODE solves) in every arm (`check_q9abl_q8_identity.py`).
 Next: GitLab push for the image, staging, start after Q-B on freed cores.
+<!-- 4f08ead -->
 
 ### WISP Q9 cost anatomy: where the core hours go
 
