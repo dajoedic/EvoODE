@@ -18,6 +18,7 @@ behind WSINDy named (1 and 17 on structure, 12 on generalization; reason still a
 twelve systems with a WeakIdent column (52 and 63: reconstruct but never the law). Hand-typed numbers recomputed from the
 Q9 tables. Open todos: why systems 1/12/17 are behind; path-failure anatomy by system class; data-freeze date. The
 commit also carries the earlier uncommitted Methods rewrite in `wisp.tex` (style sample, tone not yet approved).
+<!-- bbe24a3 -->
 
 ### Q9 first look: Q9-A claims on the interim population (4,275 / 4,284)
 
