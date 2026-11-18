@@ -24,10 +24,11 @@ mpl.rcParams.update({
 })
 INK, INK2, MUTED, GRID = '#0b0b0b', '#52514e', '#8a8984', '#e4e3df'
 COL = {'C1000': '#2a78d6', 'wsindy': '#eb6834', 'weakident_native': '#7a5195', 'weakident_trig': '#b48ac9',
-       'weak_sindy': '#1baf7a', 'sindy': '#eda100', 'e_sindy': '#e87ba4'}
+       'weak_sindy': '#1baf7a', 'sindy': '#eda100', 'e_sindy': '#e87ba4', 'odeformer': '#4a4a4a'}
 LAB = {'C1000': 'WISP', 'wsindy': 'WSINDy (MATLAB)', 'weakident_native': 'WeakIdent',
-       'weakident_trig': 'WeakIdent + sin/cos', 'weak_sindy': 'Weak-SINDy', 'sindy': 'SINDy', 'e_sindy': 'E-SINDy'}
-METHODS = ['C1000', 'wsindy', 'weakident_native', 'weakident_trig', 'weak_sindy', 'sindy', 'e_sindy']
+       'weakident_trig': 'WeakIdent + sin/cos', 'weak_sindy': 'Weak-SINDy', 'sindy': 'SINDy', 'e_sindy': 'E-SINDy',
+       'odeformer': 'ODEFormer'}
+METHODS = ['C1000', 'wsindy', 'odeformer', 'weakident_native', 'weakident_trig', 'weak_sindy', 'sindy', 'e_sindy']
 STRATA = ['dim1_exact', 'dim2_exact', 'dim1_surrogate', 'dim2_surrogate']
 SLAB = {'dim1_exact': 'dim 1\nexact', 'dim2_exact': 'dim 2\nexact', 'dim1_surrogate': 'dim 1\nsurrogate',
         'dim2_surrogate': 'dim 2\nsurrogate', 'dim3_feasible': 'dim 3\n52, 61', 'dim3_infeasible': 'dim 3\n54–59'}
@@ -209,7 +210,7 @@ def fig_main():
     specs = [('structure', 'Exact structure', ['dim1_exact', 'dim2_exact']),
              ('rec', 'Reconstruction ($R^2>0.9$)', STRATA),
              ('gen', 'Generalization ($R^2>0.9$)', STRATA)]
-    w = 0.12
+    w = 0.105
     for ax, (m, title, strata), lab in zip(axes, specs, 'ABC'):
         for i, meth in enumerate(METHODS):
             for j, st in enumerate(strata):
@@ -228,7 +229,7 @@ def fig_main():
         panel_label(ax, lab, x=-0.2 if m == 'structure' else -0.1)
     axes[0].set_ylabel('share of noisy cells (%)')
     h = [Rectangle((0, 0), 1, 1, color=COL[m]) for m in METHODS]
-    fig.legend(h, [LAB[m] for m in METHODS], loc='upper center', ncol=7, bbox_to_anchor=(0.5, 1.09),
+    fig.legend(h, [LAB[m] for m in METHODS], loc='upper center', ncol=8, bbox_to_anchor=(0.5, 1.09),
                handlelength=1.0, columnspacing=1.2)
     save(fig, 'fig3_main')
 
@@ -270,7 +271,7 @@ def fig_conditions():
     panel_label(axes[0, 0], 'A', x=-0.3)
     panel_label(axes[1, 0], 'B', x=-0.3)
     h = [Line2D([], [], color=COL[m], marker='o', ms=3, lw=1.2, mew=0) for m in METHODS]
-    fig.legend(h, [LAB[m] for m in METHODS], loc='upper center', ncol=7, bbox_to_anchor=(0.5, 1.03),
+    fig.legend(h, [LAB[m] for m in METHODS], loc='upper center', ncol=8, bbox_to_anchor=(0.5, 1.03),
                columnspacing=1.2)
     fig.text(0.5, -0.03, 'noise level σ; regular and half-subsampled data pooled (shaded: conditions that enter the pooled rates)',
              ha='center', fontsize=6.3, color=INK2)

@@ -53,9 +53,9 @@
 \fancyfoot[L]{\footnotesize\color{ink2} Jödicke et al.\quad\textbar\quad Growing governing equations from noisy data}
 \fancyfoot[R]{\footnotesize\color{ink2} \thepage\ of \pageref{LastPage}}
 \fancypagestyle{plain}{\fancyhf{}\fancyfoot[R]{\footnotesize\color{ink2} \thepage\ of \pageref{LastPage}}%
-  \ifpreliminary\fancyhead[C]{\sffamily\scriptsize\bfseries\color{prelim} PRELIMINARY RESULTS \textmd{--- draft v1, numbers in red from the final run (Q9) before the data freeze; references B1/B3 pending; not for circulation}}\fi}
+  \ifpreliminary\fancyhead[C]{\sffamily\scriptsize\bfseries\color{prelim} PRELIMINARY RESULTS \textmd{--- draft v1, numbers in red from the final run (Q9) before the data freeze; ODEFormer on dimensions 3/4 still running; not for circulation}}\fi}
 \ifpreliminary
-\fancyhead[C]{\sffamily\scriptsize\bfseries\color{prelim} PRELIMINARY RESULTS \textmd{--- draft v1, numbers in red from the final run (Q9) before the data freeze; references B1/B3 pending; not for circulation}}
+\fancyhead[C]{\sffamily\scriptsize\bfseries\color{prelim} PRELIMINARY RESULTS \textmd{--- draft v1, numbers in red from the final run (Q9) before the data freeze; ODEFormer on dimensions 3/4 still running; not for circulation}}
 \fi
 \renewcommand{\topfraction}{0.9}
 \renewcommand{\floatpagefraction}{0.75}
@@ -75,6 +75,7 @@
 \fi
 \newcommand{\todo}[1]{\textcolor{prelim}{\sffamily\footnotesize[#1]}}
 \input{data/results_macros.tex}
+\input{data/display_macros.tex}
 \newcommand{\m}[1]{\pv{\csname #1\endcsname}}            % generated number
 \newcommand{\ci}[1]{\pv{[\csname #1Lo\endcsname,\,\csname #1Hi\endcsname]}} % its 95 % interval
 % ----------------------------------------------------------------
@@ -115,7 +116,9 @@ half the samples, WISP raises exact structure recovery on one- and two-dimension
 \m{WsindyDimOneExactStructNoisy}\,\% and \m{WsindyDimTwoExactStructNoisy}\,\%) and raises the share of accurate
 predictions from an unseen initial condition from \m{WsindyDimOneExactGenNoisy}\,\% and \m{WsindyDimTwoExactGenNoisy}\,\%
 to \m{WispDimOneExactGenNoisy}\,\% and \m{WispDimTwoExactGenNoisy}\,\%; with systems as the unit of inference, all four
-pre-registered primary comparisons are significant.\claimtag{C1, C2} When the true law appears on the growth path,
+pre-registered primary comparisons are significant.\claimtag{C1, C2} Against the pretrained transformer ODEFormer,
+which is trained on exactly this noise model, WISP is level on one-dimensional systems and far ahead on
+two-dimensional ones (exact structure \m{WispDimTwoExactStructNoisy}\,\% vs \m{OdeformerDimTwoExactStructNoisy}\,\%).\claimtag{C3} When the true law appears on the growth path,
 the trajectory criterion selects it in \m{SelectionOnPathNum} of \m{SelectionOnPathDen} cases.\claimtag{C6} WISP has no
 benchmark-tuned sparsity threshold; it costs a median of \pv{2--10} trajectory fits per data set in dimensions 1--2.
 
@@ -165,11 +168,10 @@ trajectory information criterion \cite{schwarz1978} then decides between them (F
 
 We evaluate WISP on ODEBench \cite{dascoli2024}, the 63-system benchmark of one- to four-dimensional ODEs introduced
 with the transformer-based ODEFormer, under the noise and irregular-subsampling protocol of that work. The references
-are SINDy, Weak-SINDy and Ensemble-SINDy (pySINDy \cite{kaptanoglu2022}), the original MATLAB implementation of WSINDy
-\cite{messenger2021mms} and the reference code of WeakIdent \cite{tang2023}, all on identical data, and every reference
-with a sparsity parameter is granted its best value per stratum, noise level and metric, chosen after the results.
-\todo{v1 data: add the SINDy family with exactly WISP's library (13 thresholds) and ODEFormer on the same data, Q-B
-B1/B3, after Q9.} We report structure recovery together with the literature's prediction metric, the share of models
+are SINDy, Weak-SINDy and Ensemble-SINDy (pySINDy \cite{kaptanoglu2022}, with their earlier library and with exactly
+WISP's library), the original MATLAB implementation of WSINDy \cite{messenger2021mms}, the reference code of WeakIdent
+\cite{tang2023} and ODEFormer \cite{dascoli2024} itself, all on identical data, and every reference with a sparsity
+parameter or configuration is granted its best value per stratum, noise level and metric, chosen after the results. We report structure recovery together with the literature's prediction metric, the share of models
 with $R^2>0.9$ \cite{dascoli2024}, on the training and on an unseen initial condition, and we treat systems, not data
 sets, as the unit of inference. The contributions are:
 \begin{enumerate}
@@ -178,8 +180,9 @@ on the model (trajectory, one fit per candidate), with a noise-referenced stop i
 (Sect.~\ref{sec:method}). Every component can be stated in one sentence, and none was tuned on the benchmark.
 \item \emph{A pre-registered comparison.} On noisy data WISP recovers the exact structure \m{PrimaryOneRatio} and
 \m{PrimaryTwoRatio} times as often as WSINDy (dimensions 1 and 2) and
-predicts from unseen initial conditions markedly more often than every reference, each of which is granted its best
-threshold after the fact (Sect.~\ref{sec:results}).\claimtag{C1--C3}
+predicts from unseen initial conditions markedly more often than every reference except ODEFormer on one-dimensional
+systems, where the two are level; each reference is granted its best threshold after the fact
+(Sect.~\ref{sec:results}).\claimtag{C1--C3}
 \item \emph{A failure anatomy.} When the truth is on the path, the trajectory criterion nearly always selects it; the
 remaining errors are path errors. This turns ``how to improve equation discovery under noise'' into the sharper
 question of how to generate a short candidate list that contains the truth (Sect.~\ref{sec:selection}).\claimtag{C6, C7}
@@ -245,6 +248,7 @@ E-SINDy \cite{fasel2022} & derivative space & bagging + inclusion probability & 
 Weak-SINDy / WSINDy \cite{messenger2021mms} & weak form & (modified) sequential thresholding & $\lambda$ (auto in WSINDy) & no \\
 WeakIdent \cite{tang2023} & weak form, greedy & regression-space criterion & trimming $\tau$ & no \\
 SINDy + IC \cite{mangan2017} & derivative space & information criterion on simulations & $\lambda$ sweep & yes, many trajectories \\
+ODEFormer \cite{dascoli2024} & pretrained transformer & beam search, ranked by trajectory fit & beam size & yes, beam candidates \\
 \textbf{WISP} & \textbf{weak form, greedy} & \textbf{trajectory BIC} & \textbf{none tuned} & \textbf{one fit per candidate} \\
 \bottomrule
 \end{tabularx}
@@ -564,19 +568,24 @@ training trajectory well, and a structurally correct one with poor coefficients 
 
 \subsection{References}
 SINDy, Weak-SINDy and Ensemble-SINDy (pySINDy, sequentially thresholded least squares, bagging with 20 models for
-E-SINDy) use a degree-3 polynomial plus $\sin/\cos$ library, a superset of $\Theta$, with thresholds
-$\lambda\in\{0.01,0.1\}$. WeakIdent \cite{tang2023} is run as the authors' reference code in two arms: with its native
+E-SINDy) are run with two libraries: a degree-3 polynomial plus $\sin/\cos$ library, a superset of $\Theta$, with
+thresholds $\lambda\in\{0.01,0.1\}$, and exactly WISP's library $\Theta$ with 13 thresholds
+$\lambda=10^{-3+k/4}$, $k=0,\dots,12$; each method is reported at its best library and threshold. The comparison
+with $\Theta$ removes the objection that the SINDy family was given a different search space. WeakIdent \cite{tang2023} is run as the authors' reference code in two arms: with its native
 polynomial dictionary of degree 3, and with that dictionary extended by $\sin x_i,\cos x_i$, the only change; its one
 user-set parameter, the trimming threshold, is varied over $\tau\in\{0,0.005,0.01,0.02,0.05,0.1,0.2\}$ (authors'
 value 0.05). The code does not support four-dimensional systems. WSINDy is run as the unmodified original MATLAB code
 \cite{messenger2021mms} with WISP's library; on $\rho=0.5$ the data are interpolated to the uniform grid it requires,
-which we found to improve its results substantially.
+which we found to improve its results substantially. ODEFormer \cite{dascoli2024} is run with the authors' code and
+pretrained weights in four configurations (beam size 10 and 50, each with and without its constant optimization), three
+repetitions each; a data set's rate is the mean over the repetitions. ODEFormer was pretrained on trajectories with
+multiplicative Gaussian noise of up to 10\,\% and up to half of the samples removed, so all our conditions lie inside
+its training distribution.
 
 For every stratum, noise level and metric separately we report each method's \emph{best} threshold, an after-the-fact
 choice in its favour: an \emph{oracle-tuned} reference, which no user could select without knowing the truth. WISP
 receives no such choice. All reference models are evaluated exactly like WISP's, and every reference result was matched
-to WISP's by a hash of the observed data. \todo{v1 data: SINDy, Weak-SINDy, E-SINDy with exactly WISP's library and
-$\lambda\in\{10^{-3},\dots,1\}$ (13 values), and ODEFormer (four configurations), both on the same 4,284 data sets.}
+to WISP's by a hash of the observed data.
 
 \subsection{Statistics}
 Data sets of one system are not independent. We therefore treat systems as clusters: a stratum's rate is the mean of its
@@ -622,10 +631,10 @@ metric. \todo{data freeze: date, number of finished data sets}
 \textcolor{prelim}{\textbf{Preliminary results.}} Numbers and figures in this section come from the final run (Q9)
 at 4,275 of 4,284 data sets, evaluated with the frozen analysis code. The nine missing data sets are noise-free and
 subsampled ($\sigma=0$, $\rho=0.5$); they do not enter any noisy rate or claim, so the noisy numbers are final unless
-a check at the data freeze fails. Still missing: the SINDy family with exactly WISP's library and ODEFormer (Q-B, running).
+a check at the data freeze fails. ODEFormer is complete on dimensions 1 and 2 and still running on dimensions 3 and 4.
 Red numbers are generated; black numbers are final. Tags [C1]--[C9] mark sentences whose wording depends on a
-pre-registered claim; C3 (two-dimensional structure against native WeakIdent) and C9 (one-dimensional surrogate
-generalization) fail and are worded accordingly. The ablations (Fig.~\ref{fig:ablation}) come from the subset run Q8
+pre-registered claim; C3 (two-dimensional structure against native WeakIdent; one-dimensional structure and
+generalization against ODEFormer) and C9 (one-dimensional surrogate generalization) fail and are worded accordingly. The ablations (Fig.~\ref{fig:ablation}) come from the subset run Q8
 and the stop calibration (Fig.~\ref{fig:calibration}) from its own protocol; both are final.}}
 \vspace{2mm}
 \fi
@@ -639,8 +648,8 @@ and the stop calibration (Fig.~\ref{fig:calibration}) from its own protocol; bot
 recovers the exact structure (\textbf{A}, exactly representable systems only), reconstructs the training trajectory
 (\textbf{B}) and predicts the trajectory from the unseen initial condition (\textbf{C}). Whiskers: 95\,\%
 cluster-bootstrap intervals over systems (11, 10, 12 and 18 systems per group). References are shown at their best
-threshold per group, noise level and metric. WeakIdent: native dictionary and extended by $\sin/\cos$.
-\pv{Preliminary: Q9 at 4,275 of 4,284 data sets; SINDy family with WISP's library and ODEFormer pending.}}
+threshold or configuration per group, noise level and metric; SINDy family at its better library. WeakIdent: native
+dictionary and extended by $\sin/\cos$. \pv{Preliminary: Q9 at 4,275 of 4,284 data sets.}}
 \label{fig:main}
 \end{figure*}
 
@@ -648,14 +657,16 @@ threshold per group, noise level and metric. WeakIdent: native dictionary and ex
 two-dimensional systems, WISP recovers the exact structure in \m{WispDimOneExactStructNoisy}\,\% and
 \m{WispDimTwoExactStructNoisy}\,\% of data sets (Fig.~\ref{fig:main}A and Table~\ref{tab:main}). The original WSINDy
 reaches \m{WsindyDimOneExactStructNoisy}\,\% and \m{WsindyDimTwoExactStructNoisy}\,\% (ratio \m{PrimaryOneRatio} and
-\m{PrimaryTwoRatio}; Holm-adjusted $p=\m{PrimaryOnePHolm}$ and $\m{PrimaryTwoPHolm}$), Weak-SINDy
-\m{WeakSindyDimOneExactStructNoisy}\,\% and \m{WeakSindyDimTwoExactStructNoisy}\,\%, and SINDy and E-SINDy stay below
-\pv{2}\,\%.\claimtag{C1} Without pruning, WISP's raw structure rate is \m{WispDimOneExactRawNoisy}\,\% and
+\m{PrimaryTwoRatio}; Holm-adjusted $p=\m{PrimaryOnePHolm}$ and $\m{PrimaryTwoPHolm}$), Weak-SINDy at its best library
+\m{WeakSindyBestDimOneExactStructNoisy}\,\% and \m{WeakSindyBestDimTwoExactStructNoisy}\,\%, and SINDy and E-SINDy
+stay below \pv{6}\,\%.\claimtag{C1} Without pruning, WISP's raw structure rate is \m{WispDimOneExactRawNoisy}\,\% and
 \m{WispDimTwoExactRawNoisy}\,\%. The raw rate is even higher than the pruned one in dimension 1 and one point lower
 in dimension 2, so WISP's hits are not produced by the pruning rule cleaning up supersets. The same ordering holds for prediction from the unseen initial condition:
 \m{WispDimOneExactGenNoisy}\,\% and \m{WispDimTwoExactGenNoisy}\,\% for WISP against \m{WsindyDimOneExactGenNoisy}\,\%
 and \m{WsindyDimTwoExactGenNoisy}\,\% for WSINDy (Holm-adjusted $p=\m{PrimaryThreePHolm}$ and $\m{PrimaryFourPHolm}$)
-and at most \pv{26.8}\,\% for the pySINDy methods (Fig.~\ref{fig:main}C).\claimtag{C2}
+and at most \m{WeakSindyBestDimOneExactGenNoisy}\,\% for the pySINDy methods (Fig.~\ref{fig:main}C).\claimtag{C2}
+With exactly WISP's library and 13 thresholds the SINDy family gains a few points on exactly representable systems and
+none of the gap closes; on two-dimensional surrogate systems its earlier, larger library is the better one.
 
 \paragraph{WeakIdent} WeakIdent, which also grows supports in the weak form but selects in regression space, is the
 strongest reference on structure. Its predictions from the unseen initial condition stay far behind WISP's
@@ -668,9 +679,19 @@ two-dimensional structure WISP is ahead of the extended arm, \m{WispDimTwoExactS
 express: a difference of \m{VsWeakIdentNativeDimTwoExactStructDiff} points ($p=\m{VsWeakIdentNativeDimTwoExactStructP}$,
 eight systems). In dimension 1, WISP leads the native arm by
 \m{VsWeakIdentNativeDimOneExactStructDiff} points (ahead on \m{VsWeakIdentNativeDimOneExactStructAhead}, behind on
-\m{VsWeakIdentNativeDimOneExactStructBehind} systems, $p=\m{VsWeakIdentNativeDimOneExactStructP}$). WISP is therefore
-ahead of every reference on generalization, and on structure ahead of every reference except native WeakIdent in
-dimension 2.\claimtag{C3}
+\m{VsWeakIdentNativeDimOneExactStructBehind} systems, $p=\m{VsWeakIdentNativeDimOneExactStructP}$).
+
+\paragraph{ODEFormer} ODEFormer, which predicts the equation with a pretrained transformer, is level with WISP on
+one-dimensional systems and far behind on two-dimensional ones. In dimension 1 it recovers the exact structure in
+\m{OdeformerDimOneExactStructNoisy}\,\% and generalizes in \m{OdeformerDimOneExactGenNoisy}\,\% of noisy data sets
+(WISP \m{WispDimOneExactStructNoisy} and \m{WispDimOneExactGenNoisy}\,\%; $p=\m{VsOdeformerDimOneExactStructP}$ and
+$\m{VsOdeformerDimOneExactGenP}$, neither ahead). In dimension 2 it reaches \m{OdeformerDimTwoExactStructNoisy}\,\% and
+\m{OdeformerDimTwoExactGenNoisy}\,\% against WISP's \m{WispDimTwoExactStructNoisy} and \m{WispDimTwoExactGenNoisy}\,\%
+($p=\m{VsOdeformerDimTwoExactStructP}$ and $\m{VsOdeformerDimTwoExactGenP}$; WISP ahead on
+\m{VsOdeformerDimTwoExactStructAhead} of 10 systems on structure). WISP is therefore ahead of every reference on
+generalization except ODEFormer in dimension 1, and on structure ahead of every reference except native WeakIdent in
+dimension 2 and ODEFormer in dimension 1.\claimtag{C3} Section~\ref{sec:conditions} shows why the one-dimensional
+comparison is level.
 
 \paragraph{Surrogate systems} On surrogate systems, where no exact law exists in the library, WISP's models still
 reconstruct the training trajectory in \m{WispDimOneSurrRecNoisy}\,\% and \m{WispDimTwoSurrRecNoisy}\,\% of data sets
@@ -683,33 +704,34 @@ regresses best.
 \begin{table*}[t]
 \centering\small
 \caption{\textbf{Noisy data sets, dimensions 1--2.} Rates in \%, for WISP with the 95\,\% cluster-bootstrap interval
-over systems. References at their best threshold per stratum, noise level and metric. WeakIdent: native dictionary /
+over systems. References at their best threshold or configuration per stratum, noise level and metric; SINDy family at
+its better library (degree-3 polynomials with $\sin/\cos$, or $\Theta$). WeakIdent: native dictionary /
 extended by $\sin/\cos$; native structure is scored only on systems its dictionary can express. Structure (raw): exact
 support without the pruning rule. $p$: paired sign-flip test over systems, WISP vs WSINDy; $^\dagger$ primary test,
 Holm-adjusted; otherwise secondary, unadjusted. \pv{Preliminary: Q9 at 4,275 of 4,284 data sets.}}
 \label{tab:main}
 \resizebox{\textwidth}{!}{%
 \setlength{\tabcolsep}{3.5pt}
-\begin{tabular}{@{}llrrrrrrr@{}}
+\begin{tabular}{@{}llrrrrrrrr@{}}
 \toprule
- & & \textbf{WISP} & WSINDy & SINDy & Weak-SINDy & E-SINDy & WeakIdent & $p$ \\
- & & & (MATLAB) & & & & native / $+\sin\!/\!\cos$ & \\
+ & & \textbf{WISP} & WSINDy & ODEFormer & SINDy & Weak-SINDy & E-SINDy & WeakIdent & $p$ \\
+ & & & (MATLAB) & & & & & native / $+\sin\!/\!\cos$ & \\
 \midrule
-\multirow{4}{*}{\shortstack[l]{dim 1\\exact}} & structure & \textbf{\m{WispDimOneExactStructNoisy}} \ci{WispDimOneExactStructNoisy} & \m{WsindyDimOneExactStructNoisy} & \m{SindyDimOneExactStructNoisy} & \m{WeakSindyDimOneExactStructNoisy} & \m{EsindyDimOneExactStructNoisy} & \m{WeakIdentNativeDimOneExactStructNoisy} / \m{WeakIdentTrigDimOneExactStructNoisy} & \m{PrimaryOnePHolm}$^\dagger$\\
- & structure (raw) & \textbf{\m{WispDimOneExactRawNoisy}} \ci{WispDimOneExactRawNoisy} & \m{WsindyDimOneExactRawNoisy} & \m{SindyDimOneExactRawNoisy} & \m{WeakSindyDimOneExactRawNoisy} & \m{EsindyDimOneExactRawNoisy} & \m{WeakIdentNativeDimOneExactRawNoisy} / \m{WeakIdentTrigDimOneExactRawNoisy} & \\
- & reconstruction & \textbf{\m{WispDimOneExactRecNoisy}} \ci{WispDimOneExactRecNoisy} & \m{WsindyDimOneExactRecNoisy} & \m{SindyDimOneExactRecNoisy} & \m{WeakSindyDimOneExactRecNoisy} & \m{EsindyDimOneExactRecNoisy} & \m{WeakIdentNativeDimOneExactRecNoisy} / \m{WeakIdentTrigDimOneExactRecNoisy} & \m{VsWsindyDimOneExactRecP}\\
- & generalization & \textbf{\m{WispDimOneExactGenNoisy}} \ci{WispDimOneExactGenNoisy} & \m{WsindyDimOneExactGenNoisy} & \m{SindyDimOneExactGenNoisy} & \m{WeakSindyDimOneExactGenNoisy} & \m{EsindyDimOneExactGenNoisy} & \m{WeakIdentNativeDimOneExactGenNoisy} / \m{WeakIdentTrigDimOneExactGenNoisy} & \m{PrimaryThreePHolm}$^\dagger$\\
+\multirow{4}{*}{\shortstack[l]{dim 1\\exact}} & structure & \textbf{\m{WispDimOneExactStructNoisy}} \ci{WispDimOneExactStructNoisy} & \m{WsindyDimOneExactStructNoisy} & \m{OdeformerDimOneExactStructNoisy} & \m{SindyBestDimOneExactStructNoisy} & \m{WeakSindyBestDimOneExactStructNoisy} & \m{EsindyBestDimOneExactStructNoisy} & \m{WeakIdentNativeDimOneExactStructNoisy} / \m{WeakIdentTrigDimOneExactStructNoisy} & \m{PrimaryOnePHolm}$^\dagger$\\
+ & structure (raw) & \textbf{\m{WispDimOneExactRawNoisy}} \ci{WispDimOneExactRawNoisy} & \m{WsindyDimOneExactRawNoisy} & \m{OdeformerDimOneExactRawNoisy} & \m{SindyBestDimOneExactRawNoisy} & \m{WeakSindyBestDimOneExactRawNoisy} & \m{EsindyBestDimOneExactRawNoisy} & \m{WeakIdentNativeDimOneExactRawNoisy} / \m{WeakIdentTrigDimOneExactRawNoisy} & \\
+ & reconstruction & \textbf{\m{WispDimOneExactRecNoisy}} \ci{WispDimOneExactRecNoisy} & \m{WsindyDimOneExactRecNoisy} & \m{OdeformerDimOneExactRecNoisy} & \m{SindyBestDimOneExactRecNoisy} & \m{WeakSindyBestDimOneExactRecNoisy} & \m{EsindyBestDimOneExactRecNoisy} & \m{WeakIdentNativeDimOneExactRecNoisy} / \m{WeakIdentTrigDimOneExactRecNoisy} & \m{VsWsindyDimOneExactRecP}\\
+ & generalization & \textbf{\m{WispDimOneExactGenNoisy}} \ci{WispDimOneExactGenNoisy} & \m{WsindyDimOneExactGenNoisy} & \m{OdeformerDimOneExactGenNoisy} & \m{SindyBestDimOneExactGenNoisy} & \m{WeakSindyBestDimOneExactGenNoisy} & \m{EsindyBestDimOneExactGenNoisy} & \m{WeakIdentNativeDimOneExactGenNoisy} / \m{WeakIdentTrigDimOneExactGenNoisy} & \m{PrimaryThreePHolm}$^\dagger$\\
 \midrule
-\multirow{4}{*}{\shortstack[l]{dim 2\\exact}} & structure & \textbf{\m{WispDimTwoExactStructNoisy}} \ci{WispDimTwoExactStructNoisy} & \m{WsindyDimTwoExactStructNoisy} & \m{SindyDimTwoExactStructNoisy} & \m{WeakSindyDimTwoExactStructNoisy} & \m{EsindyDimTwoExactStructNoisy} & \m{WeakIdentNativeDimTwoExactStructNoisy} / \m{WeakIdentTrigDimTwoExactStructNoisy} & \m{PrimaryTwoPHolm}$^\dagger$\\
- & structure (raw) & \textbf{\m{WispDimTwoExactRawNoisy}} \ci{WispDimTwoExactRawNoisy} & \m{WsindyDimTwoExactRawNoisy} & \m{SindyDimTwoExactRawNoisy} & \m{WeakSindyDimTwoExactRawNoisy} & \m{EsindyDimTwoExactRawNoisy} & \m{WeakIdentNativeDimTwoExactRawNoisy} / \m{WeakIdentTrigDimTwoExactRawNoisy} & \\
- & reconstruction & \textbf{\m{WispDimTwoExactRecNoisy}} \ci{WispDimTwoExactRecNoisy} & \m{WsindyDimTwoExactRecNoisy} & \m{SindyDimTwoExactRecNoisy} & \m{WeakSindyDimTwoExactRecNoisy} & \m{EsindyDimTwoExactRecNoisy} & \m{WeakIdentNativeDimTwoExactRecNoisy} / \m{WeakIdentTrigDimTwoExactRecNoisy} & \m{VsWsindyDimTwoExactRecP}\\
- & generalization & \textbf{\m{WispDimTwoExactGenNoisy}} \ci{WispDimTwoExactGenNoisy} & \m{WsindyDimTwoExactGenNoisy} & \m{SindyDimTwoExactGenNoisy} & \m{WeakSindyDimTwoExactGenNoisy} & \m{EsindyDimTwoExactGenNoisy} & \m{WeakIdentNativeDimTwoExactGenNoisy} / \m{WeakIdentTrigDimTwoExactGenNoisy} & \m{PrimaryFourPHolm}$^\dagger$\\
+\multirow{4}{*}{\shortstack[l]{dim 2\\exact}} & structure & \textbf{\m{WispDimTwoExactStructNoisy}} \ci{WispDimTwoExactStructNoisy} & \m{WsindyDimTwoExactStructNoisy} & \m{OdeformerDimTwoExactStructNoisy} & \m{SindyBestDimTwoExactStructNoisy} & \m{WeakSindyBestDimTwoExactStructNoisy} & \m{EsindyBestDimTwoExactStructNoisy} & \m{WeakIdentNativeDimTwoExactStructNoisy} / \m{WeakIdentTrigDimTwoExactStructNoisy} & \m{PrimaryTwoPHolm}$^\dagger$\\
+ & structure (raw) & \textbf{\m{WispDimTwoExactRawNoisy}} \ci{WispDimTwoExactRawNoisy} & \m{WsindyDimTwoExactRawNoisy} & \m{OdeformerDimTwoExactRawNoisy} & \m{SindyBestDimTwoExactRawNoisy} & \m{WeakSindyBestDimTwoExactRawNoisy} & \m{EsindyBestDimTwoExactRawNoisy} & \m{WeakIdentNativeDimTwoExactRawNoisy} / \m{WeakIdentTrigDimTwoExactRawNoisy} & \\
+ & reconstruction & \textbf{\m{WispDimTwoExactRecNoisy}} \ci{WispDimTwoExactRecNoisy} & \m{WsindyDimTwoExactRecNoisy} & \m{OdeformerDimTwoExactRecNoisy} & \m{SindyBestDimTwoExactRecNoisy} & \m{WeakSindyBestDimTwoExactRecNoisy} & \m{EsindyBestDimTwoExactRecNoisy} & \m{WeakIdentNativeDimTwoExactRecNoisy} / \m{WeakIdentTrigDimTwoExactRecNoisy} & \m{VsWsindyDimTwoExactRecP}\\
+ & generalization & \textbf{\m{WispDimTwoExactGenNoisy}} \ci{WispDimTwoExactGenNoisy} & \m{WsindyDimTwoExactGenNoisy} & \m{OdeformerDimTwoExactGenNoisy} & \m{SindyBestDimTwoExactGenNoisy} & \m{WeakSindyBestDimTwoExactGenNoisy} & \m{EsindyBestDimTwoExactGenNoisy} & \m{WeakIdentNativeDimTwoExactGenNoisy} / \m{WeakIdentTrigDimTwoExactGenNoisy} & \m{PrimaryFourPHolm}$^\dagger$\\
 \midrule
-\multirow{2}{*}{\shortstack[l]{dim 1\\surrogate}} & reconstruction & \textbf{\m{WispDimOneSurrRecNoisy}} \ci{WispDimOneSurrRecNoisy} & \m{WsindyDimOneSurrRecNoisy} & \m{SindyDimOneSurrRecNoisy} & \m{WeakSindyDimOneSurrRecNoisy} & \m{EsindyDimOneSurrRecNoisy} & \m{WeakIdentNativeDimOneSurrRecNoisy} / \m{WeakIdentTrigDimOneSurrRecNoisy} & \m{VsWsindyDimOneSurrRecP}\\
- & generalization & \textbf{\m{WispDimOneSurrGenNoisy}} \ci{WispDimOneSurrGenNoisy} & \m{WsindyDimOneSurrGenNoisy} & \m{SindyDimOneSurrGenNoisy} & \m{WeakSindyDimOneSurrGenNoisy} & \m{EsindyDimOneSurrGenNoisy} & \m{WeakIdentNativeDimOneSurrGenNoisy} / \m{WeakIdentTrigDimOneSurrGenNoisy} & \m{VsWsindyDimOneSurrGenP}\\
+\multirow{2}{*}{\shortstack[l]{dim 1\\surrogate}} & reconstruction & \textbf{\m{WispDimOneSurrRecNoisy}} \ci{WispDimOneSurrRecNoisy} & \m{WsindyDimOneSurrRecNoisy} & \m{OdeformerDimOneSurrRecNoisy} & \m{SindyBestDimOneSurrRecNoisy} & \m{WeakSindyBestDimOneSurrRecNoisy} & \m{EsindyBestDimOneSurrRecNoisy} & \m{WeakIdentNativeDimOneSurrRecNoisy} / \m{WeakIdentTrigDimOneSurrRecNoisy} & \m{VsWsindyDimOneSurrRecP}\\
+ & generalization & \textbf{\m{WispDimOneSurrGenNoisy}} \ci{WispDimOneSurrGenNoisy} & \m{WsindyDimOneSurrGenNoisy} & \m{OdeformerDimOneSurrGenNoisy} & \m{SindyBestDimOneSurrGenNoisy} & \m{WeakSindyBestDimOneSurrGenNoisy} & \m{EsindyBestDimOneSurrGenNoisy} & \m{WeakIdentNativeDimOneSurrGenNoisy} / \m{WeakIdentTrigDimOneSurrGenNoisy} & \m{VsWsindyDimOneSurrGenP}\\
 \midrule
-\multirow{2}{*}{\shortstack[l]{dim 2\\surrogate}} & reconstruction & \textbf{\m{WispDimTwoSurrRecNoisy}} \ci{WispDimTwoSurrRecNoisy} & \m{WsindyDimTwoSurrRecNoisy} & \m{SindyDimTwoSurrRecNoisy} & \m{WeakSindyDimTwoSurrRecNoisy} & \m{EsindyDimTwoSurrRecNoisy} & \m{WeakIdentNativeDimTwoSurrRecNoisy} / \m{WeakIdentTrigDimTwoSurrRecNoisy} & \m{VsWsindyDimTwoSurrRecP}\\
- & generalization & \textbf{\m{WispDimTwoSurrGenNoisy}} \ci{WispDimTwoSurrGenNoisy} & \m{WsindyDimTwoSurrGenNoisy} & \m{SindyDimTwoSurrGenNoisy} & \m{WeakSindyDimTwoSurrGenNoisy} & \m{EsindyDimTwoSurrGenNoisy} & \m{WeakIdentNativeDimTwoSurrGenNoisy} / \m{WeakIdentTrigDimTwoSurrGenNoisy} & \m{VsWsindyDimTwoSurrGenP}\\
+\multirow{2}{*}{\shortstack[l]{dim 2\\surrogate}} & reconstruction & \textbf{\m{WispDimTwoSurrRecNoisy}} \ci{WispDimTwoSurrRecNoisy} & \m{WsindyDimTwoSurrRecNoisy} & \m{OdeformerDimTwoSurrRecNoisy} & \m{SindyBestDimTwoSurrRecNoisy} & \m{WeakSindyBestDimTwoSurrRecNoisy} & \m{EsindyBestDimTwoSurrRecNoisy} & \m{WeakIdentNativeDimTwoSurrRecNoisy} / \m{WeakIdentTrigDimTwoSurrRecNoisy} & \m{VsWsindyDimTwoSurrRecP}\\
+ & generalization & \textbf{\m{WispDimTwoSurrGenNoisy}} \ci{WispDimTwoSurrGenNoisy} & \m{WsindyDimTwoSurrGenNoisy} & \m{OdeformerDimTwoSurrGenNoisy} & \m{SindyBestDimTwoSurrGenNoisy} & \m{WeakSindyBestDimTwoSurrGenNoisy} & \m{EsindyBestDimTwoSurrGenNoisy} & \m{WeakIdentNativeDimTwoSurrGenNoisy} / \m{WeakIdentTrigDimTwoSurrGenNoisy} & \m{VsWsindyDimTwoSurrGenP}\\
 \bottomrule
 \end{tabular}}
 \end{table*}
@@ -758,7 +780,7 @@ data and \m{GapHighNoise} points at $\sigma=5\,\%$, an opening of \m{GapOpens} p
 \pv{[\GapOpensLo, \GapOpensHi]}).\claimtag{C5} At 1\,\% noise WSINDy keeps \pv{35} and \pv{28}\,\% structure
 recovery (dimensions 1 and 2), WISP \pv{47} and \pv{62}\,\%. From there both decline with the noise level, WSINDy
 faster on dimension 2: at 5\,\% noise WISP still identifies the exact law in \pv{38} and \pv{33}\,\% of data sets,
-WSINDy in \pv{17} and \pv{8}\,\%, and the pySINDy methods in at most \pv{6}\,\%. Generalization follows the same
+WSINDy in \pv{17} and \pv{8}\,\%, and the pySINDy methods in at most \pv{8}\,\%. Generalization follows the same
 pattern (WISP \pv{71}\,$\to$\,\pv{53}\,\% and \pv{83}\,$\to$\,\pv{65}\,\% from 1 to 5\,\% noise, WSINDy
 \pv{55}\,$\to$\,\pv{39}\,\% and \pv{44}\,$\to$\,\pv{24}\,\%). Losing half of the samples costs WISP \pv{5--6} points of
 structure (\pv{43} vs \pv{38}\,\% and \pv{48} vs \pv{42}\,\%); WSINDy loses \pv{8} points on dimension 2 and none on
@@ -772,6 +794,21 @@ Two mechanisms plausibly contribute; we did not isolate them experimentally. WSI
 magnitudes, which noise perturbs in every term at once; WISP's stop acts on residual gains referenced to the estimated
 noise, so its decision scales with the noise level by construction. And under subsampling, WISP's box test functions
 work on the observed times directly, whereas WSINDy needs the data on a uniform grid.
+
+ODEFormer behaves differently from every other method: its rates hardly depend on the noise level. On
+one-dimensional systems it recovers the exact structure in \pv{41}\,\% of clean and \pv{42}\,\% of $\sigma=5\,\%$ data
+sets, on two-dimensional ones in \pv{10}\,\% at both ends. WISP starts far higher on clean data (\pv{82} and
+\pv{95}\,\%) and declines with noise, so on one-dimensional systems the two curves cross near $\sigma=3\,\%$: WISP is
+ahead below, ODEFormer slightly ahead above (Fig.~\ref{fig:conditions}). This explains the level pooled comparison in
+Sect.~\ref{sec:main}. Two facts account for the flat curve. ODEFormer was pretrained on the same multiplicative noise
+model at levels up to 10\,\%, so our conditions are in its training distribution, and it reads the trajectory directly
+instead of regressing on it. The one-dimensional systems on which it overtakes WISP at high noise (1, 3, 6, 9, 12) are
+exactly those on which a low-order true term ($1$, $u_1$ or $u_1^2$) never enters WISP's path, the failure analysed in
+Sect.~\ref{sec:selection}. In dimension 2 ODEFormer fails for a different reason. Per equation it is about as accurate
+as in dimension 1 (one of the two equations is right in \pv{37}\,\% of cases), but both have to be right at once, and
+\pv{$0.37^2\approx14\,\%$} is close to its joint rate; one wrong equation also spoils the predicted trajectory. WISP
+regresses each equation separately in the weak form, where a coupling term is one more column, so its error does not
+compound in the same way.
 
 \subsection{Ablations: each component matters, the weak-form start most}\label{sec:ablation}
 
@@ -959,6 +996,14 @@ path in the weak form is thus enough to find the terms; deciding the model and i
 what makes it predict. For a dynamical model, the second property matters at least as much as the first: a model is
 used by integrating it.
 
+The comparison with ODEFormer separates two kinds of robustness. A pretrained model that has seen the noise during
+training is insensitive to it but limited by what it learned: it finds \pv{41}\,\% of one-dimensional structures on
+clean data and no more under noise, and it loses multiplicatively when two equations have to be right together. WISP
+is limited by noise instead, through correlated low-order terms that displace a true term early on the path, and it
+scales with the number of equations because each equation is a separate linear problem. The one-dimensional systems
+on which ODEFormer is ahead at high noise are therefore a direct target for a better candidate generator
+(Sect.~\ref{sec:selection}); no part of WISP was tuned on them.
+
 \subsection{Where the remaining errors sit}
 The most useful finding for future work may be where the remaining errors sit. When the true law is among WISP's
 candidates, the trajectory criterion picks it in \m{SelectionOnPathNum} of \m{SelectionOnPathDen} noisy data sets on
@@ -970,8 +1015,8 @@ answer does not need to change the selection step at all.
 
 \subsection{A threshold that follows the noise}
 Sparse regression needs a threshold, and the right threshold depends on noise and scale; in our comparison the
-references were oracle-tuned---granted their best threshold \emph{after} seeing the results---and still fell behind on
-generalization.\claimtag{C3} WISP's path ends where its gain becomes indistinguishable from noise, with noise estimated
+sparse-regression references were oracle-tuned---granted their best threshold \emph{after} seeing the results---and
+still fell behind on generalization.\claimtag{C3} WISP's path ends where its gain becomes indistinguishable from noise, with noise estimated
 from the data. Replacing a truth-derived cap by this rule shortened the paths by half and improved structure recovery by
 14--17 points. The calibration shows that this stop is liberal, but in a two-stage method a liberal stop is the safe
 error: a path that runs past the truth costs fits, a path that stops before it costs the result.
@@ -1000,8 +1045,9 @@ error also occurs. A size rule based on the trajectory loss plus an absolute com
 two-dimensional structures than the BIC (\pv{47.3}\,\% vs \pv{44.7}\,\%); it was not adopted because the protocol fixed
 the BIC beforehand. All results use the default configuration; we did not measure how sensitive they are to its
 constants (window lengths, smoother widths, $\nu$, threshold). The ablations rest on a subset of two noise levels and one realization, and dimensions 3 and 4 on
-twelve systems. The cost has a heavy tail driven by stiff candidates. Finally, our comparison covers the SINDy family
-and WeakIdent \todo{v1 data: and ODEFormer, run on the same data}; genetic-programming PySR \cite{cranmer2023} reports
+twelve systems. The cost has a heavy tail driven by stiff candidates. Our noise model, multiplicative Gaussian noise
+following ref.~\cite{dascoli2024}, is the one ODEFormer was trained on, which favours it; we did not test other noise
+models. Finally, our comparison covers the SINDy family, WeakIdent and ODEFormer; genetic-programming PySR \cite{cranmer2023} reports
 generalization rates on ODEBench of the same order as the references here, but on different data, and we do not compare
 against it numerically.
 
@@ -1011,7 +1057,8 @@ against it numerically.
 WISP identifies sparse ODEs from one noisy, possibly irregularly sampled trajectory by growing the model in the weak form
 and deciding on it against the trajectory. On ODEBench under 1--5\,\% noise it recovers the exact structure
 \m{PrimaryOneRatio} and \m{PrimaryTwoRatio} times as often as WSINDy on one- and two-dimensional systems and predicts from unseen initial conditions markedly more often
-than every reference, each granted its best threshold after the fact.\claimtag{C1--C3} Its components are established;
+than every sparse-regression reference, each granted its best threshold after the fact; the pretrained ODEFormer is
+level with it on one-dimensional systems and far behind on two-dimensional ones.\claimtag{C1--C3} Its components are established;
 what is new is the division of labour between the two spaces, a stop referenced to the noise instead of a sparsity
 threshold, and the evidence that, once the truth is on the path, the trajectory criterion nearly always finds it. The
 next steps follow from where the errors sit: a better calibrated stop, and paths that contain the truth more often.
@@ -1071,6 +1118,12 @@ E-SINDy: pySINDy ensemble optimizer, bagging, 20 models, median aggregation. WSI
 in ref.~\cite{messenger2021mms}), library identical to $\Theta$; MATLAB R2026b. WeakIdent: authors' reference code, ODE
 mode, polynomial dictionary of degree 3, in a second arm extended by $\sin x_i,\cos x_i$ (the arm without them
 reproduces the native arm bit-identically); test functions and sparsity limit are derived from the data by the code.
+The pySINDy methods are run with two libraries, a degree-3 polynomial plus $\sin/\cos$ library with
+$\lambda\in\{0.01,0.1\}$ and exactly $\Theta$ (columns and names identical to WISP's) with $\lambda=10^{-3+k/4}$,
+$k=0,\dots,12$; at $\lambda\in\{0.01,0.1\}$ and the first library the harness reproduces the earlier rows. ODEFormer:
+authors' code and released weights, beam size 10 and 50, each with and without constant optimization, three
+repetitions; the authors' per-call time limit is kept, and a data set's rate is the mean over repetitions. An
+expression containing a term outside $\Theta$ is scored as structurally wrong.
 For every reference with a threshold we evaluated all values and report, per stratum $\times$ noise level $\times$
 metric, the best one; the single best value per stratum and the whole threshold curve are given in the supplement
 \todo{supplement}.

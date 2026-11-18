@@ -150,7 +150,35 @@ def reference_rows(frame, cells, method_of, config_of, source):
     return out
 
 
-def references(cells, extra):
+def odeformer_rows(path, cells):
+    """Q-B B3 (WP-N48 harness): one row per cell x configuration, hit = share of the three repetitions.
+
+    Structure fields come from the harness (`structure_hit_*` is False when the expression holds a term outside the
+    basis, although `active_terms_*` lists only in-basis terms). Shards still running are simply absent.
+    """
+    files = [p for p in sorted(Path(path).glob('**/details.csv')) if 'smoke' not in p.parts]
+    f = pd.concat([pd.read_csv(p, low_memory=False) for p in files], ignore_index=True)
+    if not f.status.eq('success').all():
+        raise ValueError('B3: non-success records')
+    f = f.rename(columns=REF_KEY).merge(cells[KEY + ['cell_id', 'representability', 'observed_data_sha256']],
+                                        on=KEY, suffixes=('', '_cell'), validate='many_to_one')
+    if (f.observed_data_sha256 != f.observed_data_sha256_cell).any():
+        raise ValueError('B3: observed data hash differs')
+    for m, field in (('structure', 'structure_hit_pruned'), ('raw', 'structure_hit_raw'),
+                     ('rec', 'reconstruction_r2_variance_weighted_gt_0_9'),
+                     ('gen', 'generalization_r2_variance_weighted_gt_0_9')):
+        f[m] = f[field].map(boolean).astype(float)
+    g = f.groupby(['cell_id', 'odeformer_config_id'])
+    if not g.size().eq(3).all():
+        raise ValueError('B3: expected three repetitions per cell and configuration')
+    out = g[['structure', 'raw', 'rec', 'gen']].mean().reset_index().rename(columns={'odeformer_config_id': 'config'})
+    exact = out.cell_id.map(cells.set_index('cell_id').representability).eq('exact')
+    out.loc[~exact, ['structure', 'raw']] = np.nan
+    out['method'], out['source'] = 'B3:odeformer', 'Q-B B3'
+    return out[['cell_id', 'method', 'config', 'source', 'structure', 'raw', 'rec', 'gen']]
+
+
+def references(cells, extra, b3=None):
     parts = []
     n47 = pd.read_csv(N47, low_memory=False)
     n47 = n47[n47.method.isin(['sindy', 'weak_sindy', 'e_sindy']) & n47.include_sin_cos.map(boolean)
@@ -164,6 +192,8 @@ def references(cells, extra):
         wi = pd.read_csv(WEAKIDENT, low_memory=False)
         wi = wi[wi.dimension.lt(4)]  # dimension 4 is not supported by the reference code: dropped pairwise
         parts.append(reference_rows(wi, cells, lambda f: f.method, lambda f: f.method_config_id, 'Q-B B2'))
+    if b3 is not None:
+        parts.append(odeformer_rows(b3, cells))
     for spec in extra:
         name, path = spec.split('=', 1)
         f = pd.concat([pd.read_csv(p, low_memory=False) for p in sorted(Path(path).glob('**/details*.csv*'))],
@@ -180,7 +210,7 @@ def run(args):
     records, fingerprints = load_records(args.input, cells, args.protocol, sha256(args.paths))
     choices = wisp_choices(cells, records)
     ct = cell_table(cells)
-    refs = references(ct, args.reference or [])
+    refs = references(ct, args.reference or [], args.b3)
     out.mkdir(parents=True)
     ct.to_csv(out / 'cells.csv', index=False)
     choices.to_csv(out / 'wisp_choices.csv', index=False)
@@ -191,7 +221,7 @@ def run(args):
                 reference_rows=refs.groupby('method').size().to_dict(),
                 reference_sources={'WP-N47': str(N47), 'WSINDy': [str(p) for p in WSINDY],
                                    'WeakIdent': str(WEAKIDENT) if WEAKIDENT.exists() else None,
-                                   'extra': args.reference or []})
+                                   'extra': args.reference or [], 'B3': str(args.b3) if args.b3 else None})
     (out / 'build_metadata.json').write_text(json.dumps(meta, indent=1) + '\n', encoding='utf8')
     return meta
 
@@ -203,5 +233,6 @@ if __name__ == '__main__':
     p.add_argument('--protocol', choices=('Q8', 'Q9'), required=True)
     p.add_argument('--input', nargs='+', required=True, help='record files or directories')
     p.add_argument('--reference', action='append', help='NAME=dir with details*.csv in the WP-N47 schema (B1, B3)')
+    p.add_argument('--b3', type=Path, help='Q-B B3 ODEFormer output dir (shard_*/details.csv)')
     p.add_argument('--output-dir', type=Path, required=True)
     print(json.dumps(run(p.parse_args()), indent=1))

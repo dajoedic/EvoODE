@@ -309,7 +309,10 @@ def descriptive(allm, choices, cells, rng):
 WORD = {'dim1_exact': 'DimOneExact', 'dim2_exact': 'DimTwoExact', 'dim1_surrogate': 'DimOneSurr',
         'dim2_surrogate': 'DimTwoSurr', 'structure': 'Struct', 'raw': 'Raw', 'rec': 'Rec', 'gen': 'Gen',
         'WISP': 'Wisp', 'wsindy': 'Wsindy', 'sindy': 'Sindy', 'weak_sindy': 'WeakSindy', 'e_sindy': 'Esindy',
-        'weakident_native': 'WeakIdentNative', 'weakident_trig': 'WeakIdentTrig'}
+        'weakident_native': 'WeakIdentNative', 'weakident_trig': 'WeakIdentTrig',
+        # Q-B extra references (macro names only; added 2026-11-18)
+        'B1:sindy': 'BOneSindy', 'B1:weak_sindy': 'BOneWeakSindy', 'B1:e_sindy': 'BOneEsindy',
+        'B3:odeformer': 'Odeformer'}
 
 
 def macros(rates, prim, extra, sec=None, claims=None):
