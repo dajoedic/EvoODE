@@ -36,6 +36,7 @@ close the gap. C3 overall still fails only on native WeakIdent dim-2 structure; 
 <!-- eb51a1b -->
 **Q9-ABL** started 18.11. ~00:43 with 1 pod (image `885da53`, `sha256:d30bedd...`), raised to 12 at noon.
 
+<!-- c1875ac -->
 ### Why ODEFormer ties WISP on dim 1 and collapses on dim 2 (B3 peek, three checks)
 
 1. **dim 1, per system.** At sigma 0.03-0.05 ODEFormer wins on 1, 3, 6, 9, 12 (structure 86-100 % vs WISP 0-47 %),
