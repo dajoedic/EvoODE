@@ -4,6 +4,37 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ---
 
+## 2026-11-18
+
+### Q-B: B3 restart after OOM, B1 complete and evaluated, Q9-ABL running
+
+**B3 (ODEFormer) failed on its first start (17.11., 18:05 UTC).** Twelve odd shards (rho = 0.5, 256 points) finished;
+every even shard (rho = 0, 512 points) restarted repeatedly (`plan.json` newer than its first units) until the Job's
+`backoffLimit` of 50 was spent, then the TTL removed the Job and its pod states. The smoke ran one unit per process and
+could not see it; a full shard runs 36 units in one process. Measured after the restart: the 512-point pods sit at
+4.4-5.0 GiB, above the old 4 GiB limit. Restarted 18.11. ~00:40 with 8 GiB, otherwise identical
+(`outputs/qb_manifests_ca849b4/odeformer_job_8gi.yaml`); memory is not in the shard context, so it resumed on the
+stored units. No restart since; 1,298/1,512 at 11:54 UTC. Lesson: a smoke must run one full shard.
+
+**B1 (SINDy family, WISP library, 13 lambda) complete** 08:17 UTC, 240/240 shards, collected via pod tar:
+167,076 rows = 4,284 cells x 3 methods x 13 lambda, every fit `success`. Evaluated through the frozen path
+(`build_wisp_paper_cells.py --reference B1=...`, then `q9a_claims.py`, not strict; Q9 records as of 17.11.,
+`outputs/qb_b1_eval_2026-11-18/`). Data hashes match on every row. In-favour lambda per stratum x sigma x metric.
+Noisy population, WISP vs best B1 arm (Weak-SINDy in every row):
+
+| stratum | metric | WISP | B1 SINDy | B1 Weak-SINDy | B1 E-SINDy |
+|---|---|---|---|---|---|
+| dim 1 exact | structure | 40.6 % | 2.1 % | 12.1 % | 2.0 % |
+| dim 1 exact | R2 > 0.9 gen | 61.8 % | 14.2 % | 33.5 % | 7.4 % |
+| dim 2 exact | structure | 44.7 % | 4.7 % | 8.7 % | 5.7 % |
+| dim 2 exact | R2 > 0.9 gen | 71.3 % | 15.7 % | 32.7 % | 3.7 % |
+
+C3 passes against all three B1 arms in all 12 tests (p <= 0.008, systems as clusters). B1 sits slightly above the
+WP-N47 rows (degree-3 library with sin/cos, 2 lambda), as expected from the finer grid; the library change did not
+close the gap. C3 overall still fails only on native WeakIdent dim-2 structure; B3 pending.
+
+**Q9-ABL** started 18.11. ~00:43 with 1 pod (image `885da53`, `sha256:d30bedd...`), raised to 12 at noon.
+
 ## 2026-11-17
 
 ### Q9-ABL prepared: paths built, laptop identity against Q8 passes
