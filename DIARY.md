@@ -37,6 +37,7 @@ close the gap. C3 overall still fails only on native WeakIdent dim-2 structure; 
 **Q9-ABL** started 18.11. ~00:43 with 1 pod (image `885da53`, `sha256:d30bedd...`), raised to 12 at noon.
 
 ### B3 peek on the dim-1/2 part (not final)
+<!-- 53137cf -->
 
 User asked for a look before B3 ends. 1,333 of 1,512 shards collected without unit files (`outputs/qb_b3_peek_2026-11-18/`);
 dim 1/2 complete (3,777 cells incl. 5 dim-3 systems), all 47,988 records `success`, structure fields populated, data
