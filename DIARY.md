@@ -36,6 +36,28 @@ close the gap. C3 overall still fails only on native WeakIdent dim-2 structure; 
 <!-- eb51a1b -->
 **Q9-ABL** started 18.11. ~00:43 with 1 pod (image `885da53`, `sha256:d30bedd...`), raised to 12 at noon.
 
+### Why ODEFormer ties WISP on dim 1 and collapses on dim 2 (B3 peek, three checks)
+
+1. **dim 1, per system.** At sigma 0.03-0.05 ODEFormer wins on 1, 3, 6, 9, 12 (structure 86-100 % vs WISP 0-47 %),
+   WISP on 2, 8, 11, 23 (ODEFormer 0-11 %). On exactly ODEFormer's systems WISP's path never lets in a low-order true
+   term: 1 `{1, u1}`, 3 `u1^2`, 6 `{u1, u1^2}`, 9 `{1, u1}`, 12 `u1^2` (failure anatomy, `never_entered`). That is the
+   correlated-low-order-term failure of the FoBaEx note: on a positive trajectory 1, u1, u1^2 are nearly collinear in
+   the weak space and noise makes the wrong one win. ODEFormer's learned prior knows these polynomial shapes. Clean data
+   show the opposite ranking (WISP 100 % on 2, 11, 17, 23; ODEFormer 0-25 %).
+2. **dim 2, per equation** (exact systems, all four configurations): 0 / 1 / 2 equations right in 41 / 43-45 / 14-17 %,
+   clean and noisy alike. One equation right in ~37 %, close to its dim-1 rate; 0.37^2 = 13.7 % matches the joint rate.
+   ODEFormer does not get worse per equation in dim 2 - the joint requirement multiplies its per-equation error, and one
+   wrong equation spoils the trajectory (gen 29 %). WISP's per-equation regression does not compound that way.
+3. **Scoring check.** The 54 clean dim-2 misses with reconstruction R2 > 0.999 are genuinely wrong structures (sin(u1)
+   replaced by u1; a missing u1^2; an extra u1). 372 rows list the true in-basis terms but are scored a miss: their
+   expressions contain an out-of-basis term (e.g. system 24: `x_1*(0.99 - 53.1*x_0**3)`, the x0^3 x1 term is not in the
+   basis), so the miss is correct; `active_terms_*` only shows in-basis terms. No scoring bias against ODEFormer found.
+4. **Training distribution** (`outputs/third_party/odeformer`, `envs/environment.py:535,557`, `scripts/run.py:38-39`,
+   released checkpoint `exp_train_noise_gamma_0.1_train_subsample_ratio_0.5`): ODEFormer is pretrained with
+   multiplicative Gaussian noise, gamma drawn from {0, 0.025, 0.05, 0.075, 0.1}, and random removal of up to 50 % of
+   the points - the same noise model as C-6/Q9 (which was adopted from ODEFormer), and our sigma <= 0.05, rho = 0.5 lie
+   inside its training range. Its flat noise curve is therefore expected; the paper must say so.
+
 ### B3 peek on the dim-1/2 part (not final)
 <!-- 53137cf -->
 
