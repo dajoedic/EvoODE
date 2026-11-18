@@ -33,6 +33,7 @@ C3 passes against all three B1 arms in all 12 tests (p <= 0.008, systems as clus
 WP-N47 rows (degree-3 library with sin/cos, 2 lambda), as expected from the finer grid; the library change did not
 close the gap. C3 overall still fails only on native WeakIdent dim-2 structure; B3 pending.
 
+<!-- eb51a1b -->
 **Q9-ABL** started 18.11. ~00:43 with 1 pod (image `885da53`, `sha256:d30bedd...`), raised to 12 at noon.
 
 ## 2026-11-17
