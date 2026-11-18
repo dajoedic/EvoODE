@@ -37,6 +37,18 @@ close the gap. C3 overall still fails only on native WeakIdent dim-2 structure; 
 **Q9-ABL** started 18.11. ~00:43 with 1 pod (image `885da53`, `sha256:d30bedd...`), raised to 12 at noon.
 
 <!-- c1875ac -->
+### Paper switched to include B1 and B3
+<!-- 6d1c566 -->
+
+`build_wisp_paper_cells.py --b3` reads the ODEFormer shards (mean over the three repetitions per cell and configuration);
+`q9a_claims.py` got macro names for B1 and B3 (names only). Build `outputs/qb_paper_2026-11-18/` (B3 at 1,354/1,512
+shards, dims 1-2 complete). Claims unchanged except C3's failing list: native WeakIdent dim-2 structure, ODEFormer
+dim-1 structure and generalization. Display (not claims): each SINDy-family method at its better library, WP-N47 or B1
+(`data/display_macros.tex`); ODEFormer column in Table 3, Figs. 3/4. Text: abstract sentence on ODEFormer, references
+in intro/setup/appendix, ODEFormer paragraph in 6.1, noise-curve explanation in 6.2 (crossing near sigma 3 %, systems
+1/3/6/9/12 = never-entered low-order term; dim 2 per-equation multiplication), discussion paragraph, limitation (noise
+model is ODEFormer's training model), conclusion. Dim-3/4 table still without ODEFormer until B3 completes.
+
 ### Why ODEFormer ties WISP on dim 1 and collapses on dim 2 (B3 peek, three checks)
 
 1. **dim 1, per system.** At sigma 0.03-0.05 ODEFormer wins on 1, 3, 6, 9, 12 (structure 86-100 % vs WISP 0-47 %),
