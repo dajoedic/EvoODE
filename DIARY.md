@@ -36,6 +36,26 @@ close the gap. C3 overall still fails only on native WeakIdent dim-2 structure; 
 <!-- eb51a1b -->
 **Q9-ABL** started 18.11. ~00:43 with 1 pod (image `885da53`, `sha256:d30bedd...`), raised to 12 at noon.
 
+### B3 peek on the dim-1/2 part (not final)
+
+User asked for a look before B3 ends. 1,333 of 1,512 shards collected without unit files (`outputs/qb_b3_peek_2026-11-18/`);
+dim 1/2 complete (3,777 cells incl. 5 dim-3 systems), all 47,988 records `success`, structure fields populated, data
+hashes match. Per cell and configuration the three repetitions are averaged; best configuration per stratum x sigma x
+metric in ODEFormer's favour; `q9a_claims.py` not strict. Noisy population:
+
+| stratum | metric | WISP | ODEFormer (best config) | p |
+|---|---|---|---|---|
+| dim 1 exact | structure | 40.6 % | 41.7 % | 0.94 |
+| dim 1 exact | R2 > 0.9 gen | 61.8 % | 63.2 % | 0.92 |
+| dim 2 exact | structure | 44.7 % | 11.5 % | 0.020 |
+| dim 2 exact | R2 > 0.9 gen | 71.3 % | 28.8 % | 0.020 |
+
+So C3 fails on two more rows: ODEFormer ties WISP on dim 1 (neither ahead; systems 4 ahead / 5-6 behind). The sigma
+breakdown explains it: ODEFormer's dim-1 structure rate is flat in sigma (44 % clean, 39-42 % at sigma 0.01-0.05),
+WISP falls from 72 % to 36-38 %; they cross near sigma 0.03, WISP ahead below, ODEFormer slightly ahead above (gen
+alike: 97.7 vs 69.3 clean, 53.0 vs 59.8 at 0.05). In dim 2 WISP is ahead at every sigma (structure 85 vs 14 clean,
+33 vs 10 at 0.05). The paper's C3 sentence needs ODEFormer as a second exception; final numbers after the full run.
+
 ## 2026-11-17
 
 ### Q9-ABL prepared: paths built, laptop identity against Q8 passes
