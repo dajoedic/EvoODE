@@ -10,7 +10,7 @@ zweites davon. Alles Dauerhafte gehört dorthin, nach `PAPER_1.md` oder ins `DIA
 **Regeln:** wird immer **vollständig überschrieben**, nie angehängt. Was älter als ein paar Tage
 ist, ist vermutlich falsch — dann gilt `CLAUDE.md`.
 
-**Stand: 2026-11-19, ~14:30 (Q9 4.280/4.284, nur noch 4 claimfreie Nachzügler; B1 und B3 fertig; Q9-ABL auf 36 Pods, 40 Kerne belegt) — WISP-Plan bis 31.12.
+**Stand: 2026-11-19, ~14:30 (Q9 4.280/4.284, nur noch 4 claimfreie Nachzügler; B1 und B3 fertig und im Paper; Q9-ABL auf 36 Pods, 40 Kerne belegt) — WISP-Plan bis 31.12.
 (CLAUDE.md, „WISP paper — the fixed plan“; Arbeitsreihenfolge vom 12.11. dort).**
 
 ## 1. Was läuft
@@ -22,7 +22,7 @@ ist, ist vermutlich falsch — dann gilt `CLAUDE.md`.
 | **W-4 = Q9-Gitter** (`cdfaa7d`, 4.284 Shards, C1000) | 4.280/4.284, 0 Fehler, 4 Pods: sys 58 IC2 n1 (128 h, Plan 8 h) und drei Shards sys 52 (64 h, Plan < 0,1 h), alle σ = 0 / ρ = 0,5, rechnen noch Kandidaten, gehen in keinen Claim ein | einsammeln + offizielle Q9-Aggregation |
 | **W-2 = Q8-Gitter** (`512dd5b`) | 3.540/3.540, Job entfernt, aggregiert 12.11. | — |
 | **Q-B B1** SINDy/Weak-SINDy/E-SINDy (`qb1-sindy:ca849b4`, Job `evoode-sideproject-qb1-sindy`) | **fertig 18.11. 08:17 UTC**, 240/240, Job per TTL entfernt; eingesammelt nach `outputs/sideproject_qb1_sindy_ca849b4…/` (`merged_details.csv.gz`: 167.076 Zeilen = 4.284 × 3 Methoden × 13 λ, alle `success`) | Q-B-Aggregation, sobald B3 fertig |
-| **Q-B B3** ODEFormer (`odeformer-reference:ca849b4`, Job `evoode-phase-c-c6-odeformer`) | **fertig 18.11. 16:47**, 1.512/1.512 Shards mit `summary.csv` auf dem NFS (`/outputs/c6_odeformer_ca849b4e3cf961532c425f31e7d78f693b9e359e`), Job per TTL entfernt; **noch nicht eingesammelt** (Teilstand 1.354 in `outputs/qb_b3_peek_2026-11-18/`). Erster Start 17.11. OOM bei 4 GiB, Neustart mit 8 GiB. Lehre: Smoke muss einen vollen Shard rechnen | einsammeln (per `oc exec … tar` über einen Pod, Dateien 0600 root), Merge, Q-B-Aggregation |
+| **Q-B B3** ODEFormer (`odeformer-reference:ca849b4`, Job `evoode-phase-c-c6-odeformer`) | **fertig 18.11. 16:47**, 1.512/1.512 Shards mit `summary.csv` auf dem NFS (`/outputs/c6_odeformer_ca849b4e3cf961532c425f31e7d78f693b9e359e`), Job per TTL entfernt; **eingesammelt 19.11.** nach `outputs/qb_b3_final_ca849b4/` (Merge 54.432/54.432, alle `success`, Hashes 4.536/4.536); Paper neu gebaut `outputs/qb_paper_2026-11-19/`, Commit `735d34c`. Erster Start 17.11. OOM bei 4 GiB, Neustart mit 8 GiB. Lehre: Smoke muss einen vollen Shard rechnen | erledigt; Q-B im Paper |
 | **W-4c Q9-ABL** (`evoode:885da53`, Job `evoode-sideproject-q9abl`, 3.060 Shards) | 27/3.060 (19.11. 14:45), **36 Pods seit 19.11. ~14:40**, 0 Fehler, teuerste zuerst | danach Q8-Identitätsprüfung `check_q9abl_q8_identity.py` |
 | **C-6 gekappt** | 1.435/3.366, Parallelität 0 | bekommt keine Kerne mehr (Paper 1 erledigt) |
 
