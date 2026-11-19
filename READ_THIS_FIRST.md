@@ -10,23 +10,23 @@ zweites davon. Alles Dauerhafte gehört dorthin, nach `PAPER_1.md` oder ins `DIA
 **Regeln:** wird immer **vollständig überschrieben**, nie angehängt. Was älter als ein paar Tage
 ist, ist vermutlich falsch — dann gilt `CLAUDE.md`.
 
-**Stand: 2026-11-17, ~12:20 (Q9 4.275/4.284, nur noch 9 Nachzügler, 31 Kerne frei; Q8 fertig und offiziell aggregiert `231d59c`) — WISP-Plan bis 31.12.
+**Stand: 2026-11-19, ~14:30 (Q9 4.280/4.284, nur noch 4 claimfreie Nachzügler; B1 und B3 fertig; Q9-ABL 26/3.060 auf 12 Pods, 24 Kerne frei) — WISP-Plan bis 31.12.
 (CLAUDE.md, „WISP paper — the fixed plan“; Arbeitsreihenfolge vom 12.11. dort).**
 
 ## 1. Was läuft
 
-**Orion, geprüft 17.11. ~19:00** (Statusseite https://claude.ai/artifact/9zzJsoGCBahPsuNkaaf3DN, Version 23):
+**Orion, geprüft 19.11. ~14:25** (Statusseite https://claude.ai/artifact/9zzJsoGCBahPsuNkaaf3DN, Version 26):
 
 | Lauf | Stand | Wenn fertig |
 |---|---|---|
-| **W-4 = Q9-Gitter** (`cdfaa7d`, 4.284 Shards, C1000) | 4.276/4.284, 0 Fehler, keine offenen Shards, 8 Pods laufen | Ende bestimmen Nachzügler; dann einsammeln + offizielle Q9-Aggregation |
+| **W-4 = Q9-Gitter** (`cdfaa7d`, 4.284 Shards, C1000) | 4.280/4.284, 0 Fehler, 4 Pods: sys 58 IC2 n1 (128 h, Plan 8 h) und drei Shards sys 52 (64 h, Plan < 0,1 h), alle σ = 0 / ρ = 0,5, rechnen noch Kandidaten, gehen in keinen Claim ein | einsammeln + offizielle Q9-Aggregation |
 | **W-2 = Q8-Gitter** (`512dd5b`) | 3.540/3.540, Job entfernt, aggregiert 12.11. | — |
 | **Q-B B1** SINDy/Weak-SINDy/E-SINDy (`qb1-sindy:ca849b4`, Job `evoode-sideproject-qb1-sindy`) | **fertig 18.11. 08:17 UTC**, 240/240, Job per TTL entfernt; eingesammelt nach `outputs/sideproject_qb1_sindy_ca849b4…/` (`merged_details.csv.gz`: 167.076 Zeilen = 4.284 × 3 Methoden × 13 λ, alle `success`) | Q-B-Aggregation, sobald B3 fertig |
-| **Q-B B3** ODEFormer (`odeformer-reference:ca849b4`, Job `evoode-phase-c-c6-odeformer`) | **Erster Start 17.11. abgebrochen** (18:05 UTC, backoffLimit 50 erschöpft: Shards mit 512 Punkten brauchen 4,4–5,0 GiB > Limit 4 GiB → OOM-Neustarts; Job per TTL gelöscht). **Neustart 18.11. ~00:40 mit 8 GiB** (`outputs/qb_manifests_ca849b4/odeformer_job_8gi.yaml`, sonst identisch, setzt auf vorhandenen Einheiten fort; 12 fertige Shards übernommen); 1.298/1.512 um 11:54 UTC, keine Neustarts. Lehre: Smoke muss einen vollen Shard rechnen | 326–349 Kern-h (~15 h); NFS-Dateien wie `plan.json` sind 0600 root → per `oc exec … tar` über einen Pod holen, nicht über S: |
-| **W-4c Q9-ABL** (`evoode:885da53`, Job `evoode-sideproject-q9abl`, 3.060 Shards) | gestartet 18.11. ~00:43 mit 1 Pod | Planung ~6.100 Kern-h; Parallelität hochziehen, sobald B1/B3 Kerne freigeben (≤ 40 gesamt); danach Q8-Identitätsprüfung `check_q9abl_q8_identity.py` |
+| **Q-B B3** ODEFormer (`odeformer-reference:ca849b4`, Job `evoode-phase-c-c6-odeformer`) | **fertig 18.11. 16:47**, 1.512/1.512 Shards mit `summary.csv` auf dem NFS (`/outputs/c6_odeformer_ca849b4e3cf961532c425f31e7d78f693b9e359e`), Job per TTL entfernt; **noch nicht eingesammelt** (Teilstand 1.354 in `outputs/qb_b3_peek_2026-11-18/`). Erster Start 17.11. OOM bei 4 GiB, Neustart mit 8 GiB. Lehre: Smoke muss einen vollen Shard rechnen | einsammeln (per `oc exec … tar` über einen Pod, Dateien 0600 root), Merge, Q-B-Aggregation |
+| **W-4c Q9-ABL** (`evoode:885da53`, Job `evoode-sideproject-q9abl`, 3.060 Shards) | 26/3.060 (19.11. 14:25), 12 Pods, 0 Fehler, teuerste zuerst | **auf 36 hochziehen** (Nutzer, `oc patch`); danach Q8-Identitätsprüfung `check_q9abl_q8_identity.py` |
 | **C-6 gekappt** | 1.435/3.366, Parallelität 0 | bekommt keine Kerne mehr (Paper 1 erledigt) |
 
-**Kerne (18.11. 11:54 UTC):** 5 Q9 + 23 B3 + Q9-ABL (auf 12 hochgezogen) = 40. **Q9 je Dimension (17.11. 17:59 UTC):** dim 1 1.564/1.564 · dim 2 1.901/1.904 (3 laufend) · dim 3 675/680 (5 laufend) ·
+**Kerne (19.11. 14:25):** 4 Q9 + 12 Q9-ABL = 16, **24 frei**. Q9 je Dimension: dim 1 1.564/1.564 · dim 2 1.904/1.904 · dim 3 676/680 (4 laufend) · dim 4 136/136.
 dim 4 136/136. Ist/Plan der fertigen Shards 0,65 (9.154 statt 14.080 Kern-h). **Nachzügler:** sys 58 (dim 3) 78 h (Plan 8 h),
 sys 51 46 h (Plan 3 h), sys 59 26 h, vier Shards von sys 52 und einer von sys 28 je 14–15 h (Plan < 1 h); 62 und 56 fertig.
 Bei jedem Cluster-Check: `python analysis/scripts/aggregate/q9_progress.py --json` → Tabelle im Chat und Abschnitt auf der Statusseite nachziehen. Lokale Quelle der Statusseite: Scratchpad der Sitzung
