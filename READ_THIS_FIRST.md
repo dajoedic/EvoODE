@@ -27,8 +27,6 @@ ist, ist vermutlich falsch — dann gilt `CLAUDE.md`.
 | **C-6 gekappt** | 1.435/3.366, Parallelität 0 | bekommt keine Kerne mehr (Paper 1 erledigt) |
 
 **Kerne (19.11. 14:25):** 4 Q9 + 12 Q9-ABL = 16, **24 frei**. Q9 je Dimension: dim 1 1.564/1.564 · dim 2 1.904/1.904 · dim 3 676/680 (4 laufend) · dim 4 136/136.
-dim 4 136/136. Ist/Plan der fertigen Shards 0,65 (9.154 statt 14.080 Kern-h). **Nachzügler:** sys 58 (dim 3) 78 h (Plan 8 h),
-sys 51 46 h (Plan 3 h), sys 59 26 h, vier Shards von sys 52 und einer von sys 28 je 14–15 h (Plan < 1 h); 62 und 56 fertig.
 Bei jedem Cluster-Check: `python analysis/scripts/aggregate/q9_progress.py --json` → Tabelle im Chat und Abschnitt auf der Statusseite nachziehen. Lokale Quelle der Statusseite: Scratchpad der Sitzung
 `evoode_orion.html` (geht verloren → vorher Artifact `read`).
 
