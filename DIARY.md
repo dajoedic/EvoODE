@@ -28,6 +28,24 @@ vs WISP 34 / 10), on surrogate 53 (reconstruction 60 vs 41) and on system 63 (re
 19 vs 11); everywhere else it is behind WISP. The "still running" notes were removed from the header and the
 preliminary box.
 
+### WISP.jl: example notebooks, threaded refits
+<!-- WISP.jl 78d7c51, 5c8e260 -->
+
+User request: example notebooks in the WISP.jl repo, in the style of PySINDy. `examples/` holds four executed Python
+notebooks (Lotka–Volterra getting started; pendulum at σ 0–0.10 plus noise estimate and irregular sampling; growth
+path, refits and BIC selection; gallery with Duffing, Lorenz and Van der Pol outside the library). All data are
+synthetic (SciPy, multiplicative noise as in ODEBench), no study data. What they show, as it came out: LV (1 %) and
+Lorenz (2 %) exact; pendulum exact at every σ; Duffing at 2 % picks `sin(u1) + u1^3` (nearly the same function on
+the observed range); half-sampled pendulum gets one small extra term (−0.0024 u1*u2); Van der Pol fits the training
+trajectory (R² 0.94/0.96) and fails from a new IC (0.01). With `chi2_threshold = 1.0` the LV path runs three states
+past the truth and BIC still selects the truth.
+
+**Package changes.** `wisp()` runs the refits on all Julia threads (`Threads.@threads :dynamic`); checked
+bit-identical against one thread on a noisy LV case (all refits: MSE, coefficients, u0, evaluation counts). The
+Python `Refit` now carries `r2`, `n_params` and `model`; the wrapper starts Julia with `PYTHON_JULIACALL_THREADS=auto`
+unless set. pytest runs without faulthandler (Julia's threaded GC triggers spurious "access violation" reports).
+Julia tests 23/23, Python tests 3/3. Not pushed. Notebook 4 needs ~15 min each for Lorenz and Van der Pol.
+
 ## 2026-11-18
 
 ### Q-B: B3 restart after OOM, B1 complete and evaluated, Q9-ABL running
