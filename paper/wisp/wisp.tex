@@ -53,9 +53,9 @@
 \fancyfoot[L]{\footnotesize\color{ink2} Jödicke et al.\quad\textbar\quad Growing governing equations from noisy data}
 \fancyfoot[R]{\footnotesize\color{ink2} \thepage\ of \pageref{LastPage}}
 \fancypagestyle{plain}{\fancyhf{}\fancyfoot[R]{\footnotesize\color{ink2} \thepage\ of \pageref{LastPage}}%
-  \ifpreliminary\fancyhead[C]{\sffamily\scriptsize\bfseries\color{prelim} PRELIMINARY RESULTS \textmd{--- draft v1, numbers in red from the final run (Q9) before the data freeze; ODEFormer on dimensions 3/4 still running; not for circulation}}\fi}
+  \ifpreliminary\fancyhead[C]{\sffamily\scriptsize\bfseries\color{prelim} PRELIMINARY RESULTS \textmd{--- draft v1, numbers in red from the final run (Q9) before the data freeze; not for circulation}}\fi}
 \ifpreliminary
-\fancyhead[C]{\sffamily\scriptsize\bfseries\color{prelim} PRELIMINARY RESULTS \textmd{--- draft v1, numbers in red from the final run (Q9) before the data freeze; ODEFormer on dimensions 3/4 still running; not for circulation}}
+\fancyhead[C]{\sffamily\scriptsize\bfseries\color{prelim} PRELIMINARY RESULTS \textmd{--- draft v1, numbers in red from the final run (Q9) before the data freeze; not for circulation}}
 \fi
 \renewcommand{\topfraction}{0.9}
 \renewcommand{\floatpagefraction}{0.75}
@@ -629,9 +629,9 @@ metric. \todo{data freeze: date, number of finished data sets}
 \ifpreliminary
 \noindent\fcolorbox{prelim}{white}{\parbox{\dimexpr\textwidth-2\fboxsep-2\fboxrule}{\sffamily\footnotesize
 \textcolor{prelim}{\textbf{Preliminary results.}} Numbers and figures in this section come from the final run (Q9)
-at 4,275 of 4,284 data sets, evaluated with the frozen analysis code. The nine missing data sets are noise-free and
+at 4,280 of 4,284 data sets, evaluated with the frozen analysis code. The four missing data sets are noise-free and
 subsampled ($\sigma=0$, $\rho=0.5$); they do not enter any noisy rate or claim, so the noisy numbers are final unless
-a check at the data freeze fails. ODEFormer is complete on dimensions 1 and 2 and still running on dimensions 3 and 4.
+a check at the data freeze fails. All references, ODEFormer included, are complete.
 Red numbers are generated; black numbers are final. Tags [C1]--[C9] mark sentences whose wording depends on a
 pre-registered claim; C3 (two-dimensional structure against native WeakIdent; one-dimensional structure and
 generalization against ODEFormer) and C9 (one-dimensional surrogate generalization) fail and are worded accordingly. The ablations (Fig.~\ref{fig:ablation}) come from the subset run Q8
@@ -927,33 +927,34 @@ calibration would leave correctness unchanged.
 \centering\small
 \caption{\textbf{Three- and four-dimensional systems, noisy data.} Hits out of $n$ noisy data sets for
 structure / reconstruction / generalization; surrogate systems have no structure score (--). WeakIdent: the better of its
-two arms per entry (not run on dimension 4). SINDy, Weak-SINDy and E-SINDy reach at most 1 structure hit per system.}
+two arms per entry (not run on dimension 4). ODEFormer: the best of its four configurations per entry, each data set
+scored as the mean over three repetitions. SINDy, Weak-SINDy and E-SINDy reach at most 1 structure hit per system.}
 \label{tab:dim3}
 \setlength{\tabcolsep}{5pt}
 \ifpreliminary\color{prelim}\fi
-\begin{tabular}{@{}rlcccc@{}}
+\begin{tabular}{@{}rlccccc@{}}
 \toprule
- & system & $n$ & \textbf{WISP} & WSINDy & WeakIdent \\
+ & system & $n$ & \textbf{WISP} & WSINDy & WeakIdent & ODEFormer \\
 \midrule
-\multicolumn{6}{@{}l}{\emph{dimension 3, exactly representable}}\\
-52 & Maxwell--Bloch & 60 & 0 / \textbf{54} / 0 & 0 / 19 / 0 & 0 / 1 / 0\\
-54 & Lorenz, periodic & 60 & \textbf{19} / \textbf{47} / \textbf{30} & 18 / 22 / 20 & 2 / 4 / 3\\
-55 & Lorenz, complex periodic & 60 & 5 / 0 / 0 & \textbf{9} / 0 / 0 & 8 / 0 / 0\\
-56 & Lorenz, chaotic & 60 & 5 / 0 / 0 & \textbf{20} / 0 / 0 & 0 / 0 / 0\\
-57 & R\"ossler, fixed point & 60 & 0 / \textbf{34} / \textbf{10} & 0 / 6 / 8 & 0 / 9 / \textbf{10}\\
-58 & R\"ossler, periodic & 60 & \textbf{31} / \textbf{58} / \textbf{57} & 0 / 29 / 26 & 7 / 8 / 9\\
-59 & R\"ossler, chaotic & 60 & \textbf{19} / \textbf{46} / \textbf{41} & 8 / 14 / 15 & 0 / 1 / 0\\
-61 & Chen--Lee & 60 & 26 / 10 / 13 & 31 / 9 / 7 & \textbf{37} / \textbf{12} / \textbf{14}\\
+\multicolumn{7}{@{}l}{\emph{dimension 3, exactly representable}}\\
+52 & Maxwell--Bloch & 60 & 0 / \textbf{54} / 0 & 0 / 19 / 0 & 0 / 1 / 0 & 0 / 28 / 0\\
+54 & Lorenz, periodic & 60 & \textbf{19} / \textbf{47} / \textbf{30} & 18 / 22 / 20 & 2 / 4 / 3 & 0 / 1 / 1\\
+55 & Lorenz, complex periodic & 60 & 5 / 0 / 0 & \textbf{9} / 0 / 0 & 8 / 0 / 0 & 0 / 0 / 0\\
+56 & Lorenz, chaotic & 60 & 5 / 0 / 0 & \textbf{20} / 0 / 0 & 0 / 0 / 0 & 0 / 0 / 0\\
+57 & R\"ossler, fixed point & 60 & 0 / 34 / 10 & 0 / 6 / 8 & 0 / 9 / 10 & 0 / \textbf{60} / \textbf{45}\\
+58 & R\"ossler, periodic & 60 & \textbf{31} / \textbf{58} / \textbf{57} & 0 / 29 / 26 & 7 / 8 / 9 & 0 / 9 / 3\\
+59 & R\"ossler, chaotic & 60 & \textbf{19} / \textbf{46} / \textbf{41} & 8 / 14 / 15 & 0 / 1 / 0 & 0 / 0 / 0\\
+61 & Chen--Lee & 60 & 26 / 10 / 13 & 31 / 9 / 7 & \textbf{37} / \textbf{12} / \textbf{14} & 0 / 0 / 0\\
 \midrule
- & total & 480 & \textbf{105} / \textbf{249} / \textbf{151} & 86 / 99 / 76 & \\
+ & total & 480 & \textbf{105} / \textbf{249} / \textbf{151} & 86 / 99 / 76 & & 0 / 98 / 49\\
 \midrule
-\multicolumn{6}{@{}l}{\emph{dimension 3, surrogate}}\\
-53 & & 60 & -- / \textbf{41} / 0 & -- / 27 / 0 & -- / 34 / 0\\
-60 & & 60 & -- / \textbf{60} / \textbf{36} & -- / 25 / 17 & -- / 30 / 30\\
+\multicolumn{7}{@{}l}{\emph{dimension 3, surrogate}}\\
+53 & & 60 & -- / 41 / 0 & -- / 27 / 0 & -- / 34 / 0 & -- / \textbf{60} / 0\\
+60 & & 60 & -- / \textbf{60} / \textbf{36} & -- / 25 / 17 & -- / 30 / 30 & -- / 2 / 0\\
 \midrule
-\multicolumn{6}{@{}l}{\emph{dimension 4}}\\
-62 & surrogate & 60 & -- / \textbf{58} / 0 & -- / 5 / 0 & \\
-63 & exact & 60 & 0 / \textbf{59} / \textbf{11} & 0 / 13 / 0 & \\
+\multicolumn{7}{@{}l}{\emph{dimension 4}}\\
+62 & surrogate & 60 & -- / \textbf{58} / 0 & -- / 5 / 0 & & -- / 56 / \textbf{1}\\
+63 & exact & 60 & 0 / 59 / 11 & 0 / 13 / 0 & & 0 / \textbf{60} / \textbf{19}\\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -961,7 +962,10 @@ two arms per entry (not run on dimension 4). SINDy, Weak-SINDy and E-SINDy reach
 Table~\ref{tab:dim3} reports the twelve three- and four-dimensional systems, 60 noisy data sets each. On the eight
 exactly representable three-dimensional systems WISP recovers the exact structure in \pv{105 of 480} data sets (WSINDy
 \pv{86}, the pySINDy methods at most \pv{1}), reconstructs the trajectory in \pv{249} (WSINDy \pv{99}) and
-generalizes in \pv{151} (WSINDy \pv{76}). The gain comes from the periodic Lorenz regime and the R\"ossler systems
+generalizes in \pv{151} (WSINDy \pv{76}). ODEFormer, at its best configuration per entry, recovers no exact
+three-dimensional structure, reconstructs \pv{98} and generalizes \pv{49} of the 480 data sets; most of these come from
+the R\"ossler fixed point (57), where it reconstructs all 60 data sets and generalizes \pv{45} (WISP \pv{34} and
+\pv{10}). The gain of WISP comes from the periodic Lorenz regime and the R\"ossler systems
 (54, 58, 59). The chaotic and complex-periodic Lorenz regimes (55, 56) are hard for every method: no method reconstructs
 them, and WSINDy finds their structure more often than WISP (\pv{29} vs \pv{10} of 120). Trajectory losses lose their
 meaning beyond a few Lyapunov times, so a trajectory criterion cannot reward the correct model over a wrong one once
@@ -969,7 +973,8 @@ both have decorrelated from the data. On Chen--Lee (61) WeakIdent and WSINDy fin
 (\pv{37} and \pv{31} vs \pv{26} of 60). On Maxwell--Bloch (52) and on the four-dimensional system 63, WISP
 reconstructs the training trajectory in almost every data set (\pv{54} and \pv{59} of 60) but never isolates the exact
 law, and its models fail from the unseen initial condition (\pv{0} and \pv{11} of 60): one trajectory does not pin
-down the equation there, and the chosen model reproduces the curve rather than the mechanism. On clean data WSINDy
+down the equation there, and the chosen model reproduces the curve rather than the mechanism. ODEFormer reconstructs
+system 63 in all 60 data sets and generalizes in \pv{19}, but it does not find the exact structure either. On clean data WSINDy
 recovers more three-dimensional structures than WISP (\pv{11 of 12 vs 9 of 12} on systems 54--59). These counts rest on
 twelve systems and are reported, not used for any claim.
 

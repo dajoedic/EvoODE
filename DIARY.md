@@ -4,6 +4,29 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ---
 
+## 2026-11-19
+
+### Q-B B3 complete; paper rebuilt with ODEFormer on all dimensions
+
+**Orion.** B3 (ODEFormer, `odeformer-reference:ca849b4`) finished 18.11. 16:47: 1,512 / 1,512 shards with `summary.csv`
+on the NFS, job removed by TTL. Collected as one tarball (833 MB, unit files included) to
+`outputs/qb_b3_final_ca849b4/`. Official merge (`aggregate_c6_symbolic_baselines --method odeformer --n-shards 1512`, not
+incomplete): expected = present = 54,432 records (4,536 C-6 cells x 4 configurations x 3 repetitions), 0 missing, all
+`success`, export hashes verified 4,536 / 4,536; `outputs/qb_b3_final_ca849b4/merged/`. Q9 at 4,280 / 4,284; the four stragglers (system 58 IC 2 n1, three shards of system 52)
+are all sigma = 0 / rho = 0.5 and enter no claim. Q9-ABL raised from 12 to 36 pods (user), 40 cores in use.
+
+**Paper build** `outputs/qb_paper_2026-11-19/` (`build_wisp_paper_cells.py` with Q9 records from the share, B1, full
+B3; `q9a_claims.py`, not strict because of the four stragglers). B3 rows 17,136 = 4,284 cells x 4 configurations.
+Against the 18.11. build (B3 at 1,354 shards, dims 1-2 complete): **all claim verdicts identical** (C3 and C9 fail as
+before), **no point estimate changed**; 29 of 670 macros differ, all bootstrap interval bounds by 1 pp.
+
+**Dimension 3/4 (Table 4, ODEFormer column, best of four configurations per entry, three repetitions averaged).** On
+the eight exact dim-3 systems ODEFormer recovers no structure and reaches 0 / 98 / 49 of 480 (structure /
+reconstruction / generalization) against WISP 105 / 249 / 151. It leads on the Roessler fixed point 57 (60 / 45 of 60
+vs WISP 34 / 10), on surrogate 53 (reconstruction 60 vs 41) and on system 63 (reconstruction 60 vs 59, generalization
+19 vs 11); everywhere else it is behind WISP. The "still running" notes were removed from the header and the
+preliminary box.
+
 ## 2026-11-18
 
 ### Q-B: B3 restart after OOM, B1 complete and evaluated, Q9-ABL running

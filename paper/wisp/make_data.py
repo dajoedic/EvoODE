@@ -21,7 +21,7 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / 'analysis/scripts/aggregate'))
 import q9a_claims as qa  # noqa: E402
 
-CELLS = Path(sys.argv[1]) if len(sys.argv) > 1 else ROOT / 'outputs/qb_paper_2026-11-18/q9_cells'
+CELLS = Path(sys.argv[1]) if len(sys.argv) > 1 else ROOT / 'outputs/qb_paper_2026-11-19/q9_cells'
 OUT = Path(__file__).resolve().parent / 'data'
 OUT.mkdir(exist_ok=True)
 DIM3 = {'dim3_exact_5261': 'dim3_feasible', 'dim3_exact_5459': 'dim3_infeasible'}
