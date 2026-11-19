@@ -7,6 +7,7 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 ## 2026-11-19
 
 ### Q-B B3 complete; paper rebuilt with ODEFormer on all dimensions
+<!-- 735d34c -->
 
 **Orion.** B3 (ODEFormer, `odeformer-reference:ca849b4`) finished 18.11. 16:47: 1,512 / 1,512 shards with `summary.csv`
 on the NFS, job removed by TTL. Collected as one tarball (833 MB, unit files included) to
