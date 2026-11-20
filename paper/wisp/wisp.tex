@@ -269,7 +269,7 @@ ODEFormer \cite{dascoli2024} & pretrained transformer & beam search, ranked by t
 \node[box=ink2, text width=18mm] (d) {\textbf{Data}\\[2pt] one trajectory\\ $\bm y(t_i)$: noisy,\\ irregular times\\ \rule{0pt}{10mm}};
 \node[box=wisp, text width=24mm, right=of d] (w) {\textbf{Weak form}\\[2pt] windows $[t_a,t_b]$:\\[1pt] $x_k(t_b)-x_k(t_a)$\\ $=\sum_j c_{kj}\!\int_{t_a}^{t_b}\!\theta_j\,dt$\\[3pt] $\bm b_k = G\,\bm\xi_k + \bm\varepsilon_k$\\ no derivatives};
 \node[box=wisp, text width=29mm, right=of w] (p) {\textbf{Growth path}\\[2pt] \textcolor{wisp}{\textbf{+}} add the term with the\\ largest normalized gain\\[2pt] \textcolor{traj}{\textbf{--}} drop terms now worth\\ less than $\tfrac12$ of that gain\\[2pt] \textbf{stop} when no gain\\ exceeds $6.635\times$ noise gain};
-\node[box=wisp, text width=17mm, right=of p] (c) {\textbf{Candidates}\\[2pt] every path state\\ $S_1,\dots,S_m$\\ (median \pv{2--19})\\ with weak\\ coefficients $\hat{\bm\xi}$};
+\node[box=wisp, text width=17mm, right=of p] (c) {\textbf{Candidates}\\[2pt] every path state\\ $S_1,\dots,S_m$\\ (median \pv{2--18.5})\\ with weak\\ coefficients $\hat{\bm\xi}$};
 \node[box=traj, text width=24mm, right=of c] (f) {\textbf{Trajectory refit}\\[2pt] one BFGS run per $S_i$\\[1pt] start: $\hat{\bm\xi}$ (weak LS)\\[1pt] initial state $\hat{\bm x}_0$\\ estimated jointly};
 \node[box=traj, text width=21mm, right=of f] (s) {\textbf{Select size}\\[2pt] trajectory BIC\\[1pt] $N\log\mathrm{MSE}_i$\\ $+(|S_i|+d)\log N$\\[1pt] smallest wins};
 \node[box=ink2, text width=13mm, right=of s] (m) {\textbf{Model}\\[2pt] sparse ODE\\[2pt] $\dot{\bm x}=\hat f(\bm x)$};
@@ -649,7 +649,7 @@ recovers the exact structure (\textbf{A}, exactly representable systems only), r
 (\textbf{B}) and predicts the trajectory from the unseen initial condition (\textbf{C}). Whiskers: 95\,\%
 cluster-bootstrap intervals over systems (11, 10, 12 and 18 systems per group). References are shown at their best
 threshold or configuration per group, noise level and metric; SINDy family at its better library. WeakIdent: native
-dictionary and extended by $\sin/\cos$. \pv{Preliminary: Q9 at 4,275 of 4,284 data sets.}}
+dictionary and extended by $\sin/\cos$. \pv{Preliminary: Q9 at 4,280 of 4,284 data sets.}}
 \label{fig:main}
 \end{figure*}
 
@@ -708,7 +708,7 @@ over systems. References at their best threshold or configuration per stratum, n
 its better library (degree-3 polynomials with $\sin/\cos$, or $\Theta$). WeakIdent: native dictionary /
 extended by $\sin/\cos$; native structure is scored only on systems its dictionary can express. Structure (raw): exact
 support without the pruning rule. $p$: paired sign-flip test over systems, WISP vs WSINDy; $^\dagger$ primary test,
-Holm-adjusted; otherwise secondary, unadjusted. \pv{Preliminary: Q9 at 4,275 of 4,284 data sets.}}
+Holm-adjusted; otherwise secondary, unadjusted. \pv{Preliminary: Q9 at 4,280 of 4,284 data sets.}}
 \label{tab:main}
 \resizebox{\textwidth}{!}{%
 \setlength{\tabcolsep}{3.5pt}
@@ -802,11 +802,12 @@ sets, on two-dimensional ones in \pv{10}\,\% at both ends. WISP starts far highe
 ahead below, ODEFormer slightly ahead above (Fig.~\ref{fig:conditions}). This explains the level pooled comparison in
 Sect.~\ref{sec:main}. Two facts account for the flat curve. ODEFormer was pretrained on the same multiplicative noise
 model at levels up to 10\,\%, so our conditions are in its training distribution, and it reads the trajectory directly
-instead of regressing on it. The one-dimensional systems on which it overtakes WISP at high noise (1, 3, 6, 9, 12) are
-exactly those on which a low-order true term ($1$, $u_1$ or $u_1^2$) never enters WISP's path, the failure analysed in
-Sect.~\ref{sec:selection}. In dimension 2 ODEFormer fails for a different reason. Per equation it is about as accurate
-as in dimension 1 (one of the two equations is right in \pv{37}\,\% of cases), but both have to be right at once, and
-\pv{$0.37^2\approx14\,\%$} is close to its joint rate; one wrong equation also spoils the predicted trajectory. WISP
+instead of regressing on it. On each of the one-dimensional systems on which it overtakes WISP at high noise (1, 3, 6, 9, 12), a low-order true
+term ($1$, $u_1$ or $u_1^2$) never enters WISP's path in \pv{24 to 60} of the 60 noisy data sets, the failure analysed in
+Sect.~\ref{sec:selection}; the same failure is frequent on systems 5, 8 and 17, where ODEFormer does not overtake. In dimension 2 ODEFormer fails for a different reason. Per equation it is about as accurate
+as in dimension 1 (an equation is right in \pv{37}\,\% of cases), but both have to be right at once; if the two were
+independent this would give \pv{$0.37^2\approx14\,\%$}, and its structure rate is \pv{9--12.5}\,\% over its four
+configurations; one wrong equation also spoils the predicted trajectory. WISP
 regresses each equation separately in the weak form, where a coupling term is one more column, so its error does not
 compound in the same way.
 
@@ -825,17 +826,17 @@ bootstrap over systems.}
 Figure~\ref{fig:ablation} removes one component at a time. The ablations were run once, on the subset of the protocol
 that fixed the design ($\sigma\in\{1,5\}\,\%$, $\rho\in\{0,0.5\}$, one realization, dimensions 1--2), and are not
 repeated on the full grid; all numbers in this subsection refer to that subset. The subset is part of the final run's
-data: on its 588 data sets the final configuration chose the same model, with the same number of loss evaluations, in
+data: on all 588 data sets the two runs share, the 408 of this subset among them, the final configuration chose the same model, with the same number of loss evaluations, in
 both runs.
 
 \emph{Weak-form start.} Replacing the weak-form start by the random start customary in trajectory fitting costs most:
-structure recovery falls from 45.0\,\% to 21.2\,\% and generalization from 71.2\,\% to 28.7\,\% on two-dimensional
+structure recovery falls from 45.0\,\% to 21.3\,\% and generalization from 71.3\,\% to 28.8\,\% on two-dimensional
 systems, at the same single optimizer run per candidate. The candidate list is unchanged in this ablation, so the loss
 is entirely one of fitting: from a random start, a single optimizer run often does not reach the coefficients that
 make a candidate fit, so the BIC compares poorly fitted candidates and can prefer a wrong one.
 
 \emph{Backward steps.} Without backward steps, the forward path accumulates spurious terms that later steps cannot
-remove; structure falls by 12--16 points while reconstruction even rises slightly, the signature of over-complete
+remove; structure falls by 13--16 points while reconstruction on exactly representable systems stays level (dimension~1) or even rises slightly (dimension~2), the signature of over-complete
 models that fit the training trajectory but are not the law.
 
 \emph{Trajectory refit.} Selecting among weak-form coefficients without the trajectory refit costs 2--9 points of
@@ -881,7 +882,7 @@ noise-referenced stop, none at a size limit.
 
 Because the path stops on its own, the candidate list is short: a median of \pv{2, 3, 6 and 10} candidates for one-
 and two-dimensional exact and surrogate systems, \pv{12 and 18.5} on dimension 3 (Fig.~\ref{fig:selection}C). Each
-candidate costs one trajectory fit, a median of about \pv{3,300} loss evaluations, each of which is one ODE solve. Per
+candidate costs one trajectory fit, a median of about \pv{4,900} loss evaluations, each of which is one ODE solve. Per
 noisy data set this adds up to a median of \pv{4,100} ODE solves on one-dimensional and \pv{14,000} on two-dimensional
 exactly representable systems, \pv{41,000} on two-dimensional surrogates and \pv{68,000--165,000} on dimension 3. That
 is substantial: WISP is orders of magnitude more expensive than a single sparse regression, which needs no ODE solve for
@@ -891,7 +892,8 @@ the same benchmark, our earlier EvoGrow method, ran a median of 410 nonlinear fi
 Counts are our measure of cost. As context only, since wall-clock time on a shared cluster depends on the node and its
 load: with one CPU core per data set, the recorded solver time per noisy data set has a median of \pv{2.5}\,s
 (dimension 1, exact), \pv{7.1}\,s (dimension 2, exact) and \pv{23}\,s (dimension 2, surrogate), but a heavy
-tail---the 90th percentile is \pv{164}\,s, \pv{2.3}\,h and, on the Lorenz and R\"ossler systems, \pv{30}\,h---driven by
+tail---the 90th percentile is \pv{4.8}\,s, \pv{164}\,s and \pv{2.3}\,h in the same three groups and \pv{30}\,h on
+the three-dimensional systems 54--59, which include the Lorenz and R\"ossler systems---driven by
 stiff or divergent candidates. A pySINDy fit takes 0.01--0.1\,s per data set on the same cluster. The tail is a
 practical limitation: a single candidate whose integration becomes stiff can dominate the cost of a data set.
 
@@ -928,7 +930,7 @@ calibration would leave correctness unchanged.
 \caption{\textbf{Three- and four-dimensional systems, noisy data.} Hits out of $n$ noisy data sets for
 structure / reconstruction / generalization; surrogate systems have no structure score (--). WeakIdent: the better of its
 two arms per entry (not run on dimension 4). ODEFormer: the best of its four configurations per entry, each data set
-scored as the mean over three repetitions. SINDy, Weak-SINDy and E-SINDy reach at most 1 structure hit per system.}
+scored as the mean over three repetitions. SINDy, Weak-SINDy and E-SINDy reach at most \pv{8} structure hits per system.}
 \label{tab:dim3}
 \setlength{\tabcolsep}{5pt}
 \ifpreliminary\color{prelim}\fi
@@ -961,13 +963,13 @@ scored as the mean over three repetitions. SINDy, Weak-SINDy and E-SINDy reach a
 
 Table~\ref{tab:dim3} reports the twelve three- and four-dimensional systems, 60 noisy data sets each. On the eight
 exactly representable three-dimensional systems WISP recovers the exact structure in \pv{105 of 480} data sets (WSINDy
-\pv{86}, the pySINDy methods at most \pv{1}), reconstructs the trajectory in \pv{249} (WSINDy \pv{99}) and
+\pv{86}, the pySINDy methods at most \pv{13}), reconstructs the trajectory in \pv{249} (WSINDy \pv{99}) and
 generalizes in \pv{151} (WSINDy \pv{76}). ODEFormer, at its best configuration per entry, recovers no exact
 three-dimensional structure, reconstructs \pv{98} and generalizes \pv{49} of the 480 data sets; most of these come from
 the R\"ossler fixed point (57), where it reconstructs all 60 data sets and generalizes \pv{45} (WISP \pv{34} and
 \pv{10}). The gain of WISP comes from the periodic Lorenz regime and the R\"ossler systems
-(54, 58, 59). The chaotic and complex-periodic Lorenz regimes (55, 56) are hard for every method: no method reconstructs
-them, and WSINDy finds their structure more often than WISP (\pv{29} vs \pv{10} of 120). Trajectory losses lose their
+(54, 58, 59). The chaotic and complex-periodic Lorenz regimes (55, 56) are hard for every method: apart from a single
+Weak-SINDy data set on system 56, no method reconstructs them, and WSINDy finds their structure more often than WISP (\pv{29} vs \pv{10} of 120). Trajectory losses lose their
 meaning beyond a few Lyapunov times, so a trajectory criterion cannot reward the correct model over a wrong one once
 both have decorrelated from the data. On Chen--Lee (61) WeakIdent and WSINDy find the structure more often than WISP
 (\pv{37} and \pv{31} vs \pv{26} of 60). On Maxwell--Bloch (52) and on the four-dimensional system 63, WISP
@@ -1022,7 +1024,8 @@ answer does not need to change the selection step at all.
 Sparse regression needs a threshold, and the right threshold depends on noise and scale; in our comparison the
 sparse-regression references were oracle-tuned---granted their best threshold \emph{after} seeing the results---and
 still fell behind on generalization.\claimtag{C3} WISP's path ends where its gain becomes indistinguishable from noise, with noise estimated
-from the data. Replacing a truth-derived cap by this rule shortened the paths by half and improved structure recovery by
+from the data. Replacing a truth-derived cap by this rule shortened the paths by more than half (median 2 instead of 8 candidates
+on dimension 1, 6 instead of 15 on dimension 2) and improved structure recovery by
 14--17 points. The calibration shows that this stop is liberal, but in a two-stage method a liberal stop is the safe
 error: a path that runs past the truth costs fits, a path that stops before it costs the result.
 
@@ -1041,7 +1044,7 @@ The library is fixed and polynomial-trigonometric; 33 of 63 ODEBench systems hav
 WISP's generalization on two-dimensional surrogate systems (\m{WispDimTwoSurrGenNoisy}\,\%) remains low in absolute
 terms, as for every method we tested. All evidence comes from one training trajectory per data set, the setting of
 ODEBench; on chaotic systems this caps what any trajectory-based criterion can do. The $\chi^2$ stop is a first-order
-approximation that ignores noise in the library columns and quadrature error; it is liberal by a factor of 5--30
+approximation that ignores noise in the library columns and quadrature error; it is liberal by a factor of 5--29 on dimensions 1--3 (2.6 on system 63)
 (Fig.~\ref{fig:calibration}); in our data this cost fits rather than correctness, because the trajectory selection
 absorbed most of the excess. We therefore do not call it a significance test but a heuristic that errs in the safe
 direction. We did not raise the threshold to match the observed false-alarm rate, because that would tune a constant on

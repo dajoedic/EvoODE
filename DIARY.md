@@ -4,6 +4,36 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ---
 
+## 2026-11-20
+
+### G4 pre-pass: every hand-typed number in the WISP paper traced
+
+Three read-only passes (front + discussion, lines 642-846, lines 847-983) recomputed every hand-typed number (`\pv{}`
+and plain prose numbers) in `paper/wisp/wisp.tex` from the 2026-11-19 build (`outputs/qb_paper_2026-11-19/`,
+`paper/wisp/data/`, `analysis/data/sideproject_residual_growth/`). Tables per row, with source and verdict:
+`analysis/data/sideproject_residual_growth/g4_prepass_2026-11-20/`. About 160 rows checked in all; 0 untraceable.
+Every non-match was re-checked against the data before the text was changed. Fixed:
+
+- Fig. 3 / Table 3 notes: Q9 at 4,280 (not 4,275) of 4,284 in the build.
+- Ablation subset: "its 588 data sets" was the whole Q8/Q9 overlap; the subset has 408 (noisy, dim 1/2).
+- Half-up rounding of exact halves (17/80 etc.): 21.3 / 71.3 / 28.8 %, no-backward drop 13-16 points; the
+  "reconstruction rises" statement limited to exact systems (level on dim 1, +2.5 pp on dim 2).
+- ODEFormer dim-1 overtaking (1, 3, 6, 9, 12): "exactly those" with a never-entered low-order term was too strong;
+  systems 5, 8, 17 have the same failure without ODEFormer overtaking. Dim-2 per-equation sentence reworded (37 % per
+  equation, 0.37^2 = 14 % as the independence figure, structure rate 9-12.5 %).
+- Cost: median loss evaluations per candidate 4,900 (4,921 over noisy candidates); the 3,300 was the per-cell mean
+  per candidate. Wall-clock 90th percentiles were assigned to the wrong groups (dim 1 exact 4.8 s, dim 2 exact 164 s,
+  dim 2 surrogate 2.3 h, dim 3 54-59 30 h).
+- Dim 3/4: written before B1; the SINDy family with the WISP library reaches up to 8 structure hits per system and
+  13 of 480 in total (Weak-SINDy), not 1; one Weak-SINDy reconstruction on system 56.
+- Fig. 1 box median candidates 2-18.5; Q7 shortened the paths by more than half (median 8 -> 2 on dim 1, 15 -> 6 on
+  dim 2), not "by half"; the stop is liberal by x5-29 on dims 1-3 and x2.6 on system 63, not "5-30".
+
+Left as is (documented, not data): ODEFormer's three repetitions and training noise (from its paper and the B3 merge),
+the six-term cap, EvoGrow's 410 fits. Open for the freeze: Table 4's ODEFormer column picks the configuration per
+system and metric (as its caption says), `claims/dim34.csv` per stratum x sigma; both consistent with their own
+definition, but the paper should cite one.
+
 ## 2026-11-19
 
 ### Q-B B3 complete; paper rebuilt with ODEFormer on all dimensions
