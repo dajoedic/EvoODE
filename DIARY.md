@@ -7,6 +7,7 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 ## 2026-11-20
 
 ### G4 pre-pass: every hand-typed number in the WISP paper traced
+<!-- cb1d61a -->
 
 Three read-only passes (front + discussion, lines 642-846, lines 847-983) recomputed every hand-typed number (`\pv{}`
 and plain prose numbers) in `paper/wisp/wisp.tex` from the 2026-11-19 build (`outputs/qb_paper_2026-11-19/`,
