@@ -61,7 +61,7 @@ comparison" -> "pre-registered evaluation" led by absolute rates; the failure an
 Sect. 6.1 and Fig. 3 renamed "Recovery on noisy data". Related work: D-CODE (Qian et al., ICLR 2022; variational
 fitness for gplearn-based GP, checked on the ICLR abstract and the code) and DDOT (Chang et al., PAKDD 2025, LNCS
 pp 434-445, Crossref-checked; +4.6/+1.6 pp over ODEFormer on ODEBench, recomputed from its Table 1) added, one sentence
-each. No new references in tables, no new runs.
+each. No new references in tables, no new runs. <!-- 7cb3c6d; SRBench a1254f1 -->
 
 ### Q9 complete and evaluated strictly (data freeze of the WISP main run)
 <!-- 0a0227f -->
