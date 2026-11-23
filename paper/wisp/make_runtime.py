@@ -11,7 +11,7 @@ from pathlib import Path
 import pandas as pd
 
 ROOT = Path(__file__).resolve().parents[2]
-REC = ROOT / 'outputs/c6_vs_wisp_2026-11-17/out'  # Q9 records, image cdfaa7d (collected 17.11.)
+REC = ROOT / 'outputs/sideproject_q9_cdfaa7d6218c56a0ec63ea9e794f6f35e46792c1/final_2026-11-23/out'  # Q9 records, image cdfaa7d (final, collected 23.11.)
 D = Path(__file__).resolve().parent / 'data'
 pat = re.compile(r"'solve_time_s': ([0-9.eE+-]+)")
 rows = []

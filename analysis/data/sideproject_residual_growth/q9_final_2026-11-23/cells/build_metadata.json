@@ -1,0 +1,35 @@
+{
+ "protocol": "Q9",
+ "arm": "C1000",
+ "paths": "..\\..\\..\\outputs\\sideproject_q9_inputs\\grid\\q9_paths.json",
+ "paths_sha256": "1335dd0fb6cecc1eceb6c0b036ac02f66da46cbb6880f5fc4138ed62b2d75363",
+ "cells": 4284,
+ "complete_cells": 4284,
+ "settings_fingerprints": [
+  "fe090095f499ec0b146d4666b46fa6dc8fe724307c03b5ed8bfa6ae1f4732d6d"
+ ],
+ "reference_rows": {
+  "B1:e_sindy": 55692,
+  "B1:sindy": 55692,
+  "B1:weak_sindy": 55692,
+  "B3:odeformer": 17136,
+  "e_sindy": 8568,
+  "sindy": 8568,
+  "weak_sindy": 8568,
+  "weakident_native": 29036,
+  "weakident_trig": 29036,
+  "wsindy": 4284
+ },
+ "reference_sources": {
+  "WP-N47": "C:\\Users\\joedicke\\Documents\\Repositories\\EvoODE\\outputs\\c6_sindy_baselines_dop853_e935c37\\merged\\details.csv",
+  "WSINDy": [
+   "C:\\Users\\joedicke\\Documents\\Repositories\\EvoODE\\outputs\\sideproject_q5w_wsindy\\full_matlab\\details.csv",
+   "C:\\Users\\joedicke\\Documents\\Repositories\\EvoODE\\outputs\\sideproject_q5w_wsindy\\w1_interp_full_matlab\\details.csv"
+  ],
+  "WeakIdent": "C:\\Users\\joedicke\\Documents\\Repositories\\EvoODE\\analysis\\data\\sideproject_residual_growth\\qb2_weakident_tau\\details.csv.gz",
+  "extra": [
+   "B1=../../../outputs/sideproject_qb1_sindy_ca849b4e3cf961532c425f31e7d78f693b9e359e/sideproject_qb1_sindy_ca849b4e3cf961532c425f31e7d78f693b9e359e"
+  ],
+  "B3": "..\\..\\..\\outputs\\qb_b3_final_ca849b4\\c6_odeformer_ca849b4e3cf961532c425f31e7d78f693b9e359e"
+ }
+}

@@ -629,9 +629,9 @@ metric. \todo{data freeze: date, number of finished data sets}
 \ifpreliminary
 \noindent\fcolorbox{prelim}{white}{\parbox{\dimexpr\textwidth-2\fboxsep-2\fboxrule}{\sffamily\footnotesize
 \textcolor{prelim}{\textbf{Preliminary results.}} Numbers and figures in this section come from the final run (Q9)
-at 4,280 of 4,284 data sets, evaluated with the frozen analysis code. The four missing data sets are noise-free and
-subsampled ($\sigma=0$, $\rho=0.5$); they do not enter any noisy rate or claim, so the noisy numbers are final unless
-a check at the data freeze fails. All references, ODEFormer included, are complete.
+at 4,284 of 4,284 data sets (complete since 22.11.), evaluated with the frozen analysis code in strict mode; the
+last four data sets (noise-free, subsampled) moved no claim and no generated number. All references, ODEFormer
+included, are complete.
 Red numbers are generated; black numbers are final. Tags [C1]--[C9] mark sentences whose wording depends on a
 pre-registered claim; C3 (two-dimensional structure against native WeakIdent; one-dimensional structure and
 generalization against ODEFormer) and C9 (one-dimensional surrogate generalization) fail and are worded accordingly. The ablations (Fig.~\ref{fig:ablation}) come from the subset run Q8
@@ -649,7 +649,7 @@ recovers the exact structure (\textbf{A}, exactly representable systems only), r
 (\textbf{B}) and predicts the trajectory from the unseen initial condition (\textbf{C}). Whiskers: 95\,\%
 cluster-bootstrap intervals over systems (11, 10, 12 and 18 systems per group). References are shown at their best
 threshold or configuration per group, noise level and metric; SINDy family at its better library. WeakIdent: native
-dictionary and extended by $\sin/\cos$. \pv{Preliminary: Q9 at 4,280 of 4,284 data sets.}}
+dictionary and extended by $\sin/\cos$. \pv{Preliminary: Q9 complete, 4,284 of 4,284 data sets.}}
 \label{fig:main}
 \end{figure*}
 
@@ -708,7 +708,7 @@ over systems. References at their best threshold or configuration per stratum, n
 its better library (degree-3 polynomials with $\sin/\cos$, or $\Theta$). WeakIdent: native dictionary /
 extended by $\sin/\cos$; native structure is scored only on systems its dictionary can express. Structure (raw): exact
 support without the pruning rule. $p$: paired sign-flip test over systems, WISP vs WSINDy; $^\dagger$ primary test,
-Holm-adjusted; otherwise secondary, unadjusted. \pv{Preliminary: Q9 at 4,280 of 4,284 data sets.}}
+Holm-adjusted; otherwise secondary, unadjusted. \pv{Preliminary: Q9 complete, 4,284 of 4,284 data sets.}}
 \label{tab:main}
 \resizebox{\textwidth}{!}{%
 \setlength{\tabcolsep}{3.5pt}

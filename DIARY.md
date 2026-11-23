@@ -4,6 +4,30 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ---
 
+## 2026-11-23
+
+### Q9 complete and evaluated strictly (data freeze of the WISP main run)
+
+**Orion.** The last Q9 straggler (index 1807, system 52) finished 22.11. 07:02; the job was removed by TTL. The NFS
+holds 4,270 record files, index and `cell_id` match in 4,270 / 4,270; the other 14 cells are the known empty-pool cells
+(system 9 IC 2, sigma >= 0.03, nothing to fit, misses as in Q7/Q8). Inputs on the NFS hash-identical to the local
+`q9_paths.json` / shard list. Collected as one tarball (25 MB) to
+`outputs/sideproject_q9_cdfaa7d…/q9_final_2026-11-23.tgz`, unpacked beside it. The three freed cores went to Q9-ABL
+(user, 40 pods; 1,365 / 3,060 at 09:00).
+
+**Evaluation** (`outputs/q9_final_2026-11-23/`, tracked copy `analysis/data/sideproject_residual_growth/q9_final_2026-11-23/`):
+`build_wisp_paper_cells.py --protocol Q9` with B1 and B3 as on 19.11. gives `complete_cells = 4284`, one settings
+fingerprint; `q9a_claims.py --strict` passes. **Claim verdicts unchanged** (C1, C2, C4-C8 hold; C3, C9 fail; the
+"roughly doubles" wording not licensed). Against the 19.11. build: **all 670 macros identical**; primary, secondary,
+robustness, per-system and dim-3/4 tables byte-identical. What moves: the dim-3 feasible (52/61) sigma = 0 / rho = 0.5
+subgroup, WISP rec and gen 0.25 -> 0.5 (2 units), and the noise-free dim-3 cost quantiles (52/61: median candidates
+31 -> 38, loss evaluations 353k -> 444k). None of it enters a claim.
+
+**Paper.** `make_data.py` and `make_runtime.py` now default to the final build / final records; `make_figures.py` and
+LaTeX rebuilt (19 pages). Data tables differ from the 19.11. state only in the four straggler cells (plus int/float
+formatting once no NaN is left). The preliminary box and two `\pv` notes said "4,280 of 4,284" and now say complete.
+`\preliminary` stays on: Fig. 6 / Sect. 6.3 switch to Q9-ABL when that run ends (W-4c), which is the user's call.
+
 ## 2026-11-20
 
 ### G4 pre-pass: every hand-typed number in the WISP paper traced

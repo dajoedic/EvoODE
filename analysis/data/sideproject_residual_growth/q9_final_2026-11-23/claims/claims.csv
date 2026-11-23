@@ -1,0 +1,11 @@
+claim,verdict,detail
+C1,True,"P1, P2 after Holm"
+C2,True,"P3, P4 after Holm"
+C3,False,"failing: ['B3:odeformer/dim1_exact/gen', 'B3:odeformer/dim1_exact/structure', 'weakident_native/dim2_exact/structure']; pending references: none"
+C4,True,dim1_exact/structure 7/2/2; dim1_exact/rec 10/1/0; dim1_exact/gen 9/1/1; dim2_exact/structure 9/1/0; dim2_exact/rec 9/1/0; dim2_exact/gen 10/0/0
+C5,True,"{""gap_005"": 0.2222, ""gap_clean"": -0.0238, ""diff"": 0.246, ""lo"": 0.1627, ""hi"": 0.3333, ""n_systems"": 21.0}"
+C6,True,"559/590 = 0.947 [0.922, 0.972]"
+C7,True,669/724 misses without the truth on the path (missing cells count as path failures: 0)
+C8,True,"{""oversize_weak"": 0.485, ""oversize_traj"": 0.2617, ""diff"": 0.2233, ""lo"": 0.1217, ""hi"": 0.3483, ""n_cells"": 600.0}"
+C9,False,dim1_surrogate/rec diff +0.139 p 0.0234; dim1_surrogate/gen diff +0.118 p 0.0547; dim2_surrogate/rec diff +0.415 p 1.53e-05; dim2_surrogate/gen diff +0.218 p 0.000977
+wording: roughly doubles (structure),False,dim1_exact ratio 1.65; dim2_exact ratio 2.60
