@@ -7,6 +7,7 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 ## 2026-11-23
 
 ### WISP paper: language pass and source audit
+<!-- cad0fae -->
 
 User request: polish the manuscript, check it against AI-typical style, make every source right. Numbers and macros
 untouched; every changed sentence keeps its traced value.
