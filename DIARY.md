@@ -45,6 +45,10 @@ with SINDy, and the primary-comparator rationale no longer claims "strongest". O
 Strogatz models and other well-known systems; 512 samples attributed to the released data. All 39 entries cited, all
 citations resolved; 20 pages.
 
+Follow-up the same day (user): Florian Bachinger added as co-author (order Jödicke, Bachinger, Affenzeller,
+Winkler); both EvoGrow mentions removed, since EvoGrow is unpublished and uncited (related work: genetic programming
+only; cost paragraph: the 410-fits comparison dropped). <!-- 41f41e9 -->
+
 ### Q9 complete and evaluated strictly (data freeze of the WISP main run)
 <!-- 0a0227f -->
 
