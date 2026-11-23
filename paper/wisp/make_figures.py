@@ -69,7 +69,7 @@ def fig_example():
     # (a) data
     ax = fig.add_subplot(gs[0, 0])
     cx = ['#2a78d6', '#eb6834']
-    for j, lab in enumerate(['$x_0$ (prey)', '$x_1$ (predator)']):
+    for j, lab in enumerate(['$x_1$ (prey)', '$x_2$ (predator)']):
         ax.plot(tt, tr[:, j], color=cx[j], lw=0.8, alpha=0.35)
         ax.plot(t, x[:, j], 'o', ms=1.6, color=cx[j], mew=0, label=lab)
     ax.set_xlabel('time $t$')
@@ -89,7 +89,7 @@ def fig_example():
     xs = np.arange(n)
     for e, c in enumerate(cx):
         r = np.array([s['eq'][e]['max_ratio'] for s in steps])
-        axs.plot(xs, r, '-o', color=c, ms=2.8, lw=1.0, mew=0, label=f'eq. $\\dot x_{e}$')
+        axs.plot(xs, r, '-o', color=c, ms=2.8, lw=1.0, mew=0, label=f'eq. $\\dot x_{e + 1}$')
     axs.axhline(6.635, color=INK, lw=0.7, ls=(0, (3, 2)))
     axs.text(n - 0.6, 6.635 * 1.25, r'$\chi^2_{1,0.99}=6.635$', ha='right', va='bottom', fontsize=6)
     axs.set_yscale('log')
@@ -114,16 +114,16 @@ def fig_example():
                                         alpha=1.0 if (e, i) in truth else 0.45, lw=0))
             elif prev:
                 axm.plot(s_i, y, marker='x', color=INK2, ms=3.6, mew=0.9)
-        lab = (names[i].replace('u1', 'x_0').replace('u2', 'x_1').replace('*', r'\,')
+        lab = (names[i].replace('u1', 'x_1').replace('u2', 'x_2').replace('*', r'\,')
                .replace('cos', r'\cos').replace('sin', r'\sin'))
         axm.text(-0.75, y, f'${lab}$', ha='right', va='center', fontsize=6.3,
                  fontweight='bold' if (e, i) in truth else 'normal',
                  color=INK if (e, i) in truth else INK2)
     split = len(rows) - len(used[0]) - 0.5
     axm.axhline(split, color=INK2, lw=0.5)
-    axm.text(-0.4, len(rows) - 1, r'equation $\dot x_0$', ha='left', va='center', fontsize=6.5, color=cx[0],
+    axm.text(-0.4, len(rows) - 1, r'equation $\dot x_1$', ha='left', va='center', fontsize=6.5, color=cx[0],
              fontweight='bold')
-    axm.text(-0.4, len(rows) - len(used[0]) - 2, r'equation $\dot x_1$', ha='left', va='center', fontsize=6.5,
+    axm.text(-0.4, len(rows) - len(used[0]) - 2, r'equation $\dot x_2$', ha='left', va='center', fontsize=6.5,
              color=cx[1], fontweight='bold')
     axm.set_ylim(-0.7, len(rows) - 0.3)
     axm.set_xlim(-0.6, n - 0.4)
@@ -182,11 +182,11 @@ def fig_example():
     p = c['params']
     lines = [
         (r'$\bf{True\ system}$', INK),
-        (r'$\dot x_0 = 1.840\,x_0 - 1.450\,x_0x_1$', INK),
-        (r'$\dot x_1 = -3.000\,x_1 + 1.620\,x_0x_1$', INK),
+        (r'$\dot x_1 = 1.840\,x_1 - 1.450\,x_1x_2$', INK),
+        (r'$\dot x_2 = -3.000\,x_2 + 1.620\,x_1x_2$', INK),
         (r'$\bf{WISP}$ (4 terms, chosen by trajectory BIC)', COL['C1000']),
-        (rf'$\dot x_0 = {p[0]:.3f}\,x_0 {p[1]:+.3f}\,x_0x_1$', INK),
-        (rf'$\dot x_1 = {p[2]:.3f}\,x_1 {p[3]:+.3f}\,x_0x_1$', INK),
+        (rf'$\dot x_1 = {p[0]:.3f}\,x_1 {p[1]:+.3f}\,x_1x_2$', INK),
+        (rf'$\dot x_2 = {p[2]:.3f}\,x_2 {p[3]:+.3f}\,x_1x_2$', INK),
         (r'$\bf{WSINDy}$ (MATLAB original, same data)', COL['wsindy']),
         (rf'{sum(len(e) for e in ex["ws_coef"])} terms; reconstruction $R^2$ = {ex["ws_rec"]:.1f},', INK),
         (rf'generalization $R^2$ = {ex["ws_gen"]:.1f}', INK),

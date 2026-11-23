@@ -6,6 +6,44 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 
 ## 2026-11-23
 
+### WISP paper: language pass and source audit
+
+User request: polish the manuscript, check it against AI-typical style, make every source right. Numbers and macros
+untouched; every changed sentence keeps its traced value.
+
+**Language.** Abstract, introduction, contributions, related work, example, results, discussion, limitations and
+conclusions rewritten in the register agreed on 2026-11-12. Em dashes in running text 17 -> 0 (three remain in the
+running head, Fig. 1 and the CRediT placeholder), "rather than" 4 -> 0, "therefore" 7 -> 2, prose semicolons 128 -> 76
+(the rest sit in number brackets and captions). Removed: the opening aphorism, summarising paragraph closers (worked
+example, "a reminder that ...", "locates the room for improvement precisely"), the repeated "one sentence / none tuned"
+triad in the conclusions, "selection is essentially solved" (now "rarely the limiting step"). Section headings made
+descriptive (Dependence on noise and subsampling; Ablations; Size selection and path failures; Rationale and cost).
+Methods (the approved style sample) only lightly touched.
+
+**Factual fixes found on the way.** "Inventors of weak-form regression" for the WSINDy authors (Schaeffer and McCalla
+2017 precede them). System 1/12 paragraph: which rate belongs to which initial condition is now explicit (system 1:
+97 % from x(0)=10, 0 % from 3.54; checked against `per_cell_all_methods.csv`); initial values written x(0).
+State indices: the worked example and Fig. 2 counted from 0 while the rest of the paper counts from 1 and x_0 also
+denoted an initial value; example text and `make_figures.py` now use x_1 (prey), x_2 (predator). ODEFormer paragraph:
+u_1 -> x_1. The data-freeze todo replaced by the fact (all 4,284 data sets finished).
+
+**Source audit** (subagent against Crossref, arXiv, OpenReview and the full texts; key points re-checked here).
+Bibliography: ODEFormer ICLR author order (Schwaller before Mathis), full PySINDy 2022 author list, WENDy issue 85(11),
+Strogatz subtitle; DOIs added to every entry (Holm: JSTOR URL). New entries: Korenberg et al. 1988 (origin of ERR
+forward regression), the ODEFormer arXiv v1 (the only source of its training noise and subsampling ranges, which the
+ICLR version drops), Hairer/Norsett/Wanner 1993 for DOP853. Content: (1) automatic threshold (MSTLS) is in the WSINDy
+PDE paper and the current code, not the 2021 ODE paper; text, Table 1 and the appendix now say so, the appendix names
+the code commit (72d8d6e) and its default 100-value lambda grid, which our harness uses unchanged
+(`analysis/matlab/run_wsindy_original_q5w.m`). (2) WENDy is a solver-free IRLS estimator; the warm start for a
+trajectory fit is a side experiment. (3) WeakIdent does not grow supports term by term: subspace pursuit per sparsity
+level, trimming tau (default 0.05 confirmed), cross-validation on the weak system. (4) FoBa nu = 1/2 is the value in
+Zhang's algorithm, any nu in (0,1) admissible. (5) ODEFormer uses beam sampling, constant optimisation optional.
+(6) PySR's ODEBench numbers come from the ODEFormer paper, not from the PySR paper. (7) "WSINDy is the strongest member
+under noise" was uncited and contradicted by the WeakIdent paper; now attributed to WSINDy's authors' own comparison
+with SINDy, and the primary-comparator rationale no longer claims "strongest". ODEBench described as curated from
+Strogatz models and other well-known systems; 512 samples attributed to the released data. All 39 entries cited, all
+citations resolved; 20 pages.
+
 ### Q9 complete and evaluated strictly (data freeze of the WISP main run)
 <!-- 0a0227f -->
 
