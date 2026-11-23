@@ -10,23 +10,23 @@ zweites davon. Alles Dauerhafte gehört dorthin, nach `PAPER_1.md` oder ins `DIA
 **Regeln:** wird immer **vollständig überschrieben**, nie angehängt. Was älter als ein paar Tage
 ist, ist vermutlich falsch — dann gilt `CLAUDE.md`.
 
-**Stand: 2026-11-20, ~08:45 (Q9 4.281/4.284, nur noch 3 claimfreie Nachzügler; B1 und B3 fertig und im Paper; Q9-ABL 92/3.060 auf 37 Pods, 40 Kerne belegt) — WISP-Plan bis 31.12.
+**Stand: 2026-11-23, ~08:40 (Q9 fertig 4.284/4.284, noch nicht eingesammelt; Q9-ABL 1.307/3.060 auf 37 Pods, 3 Kerne frei) — WISP-Plan bis 31.12.
 (CLAUDE.md, „WISP paper — the fixed plan“; Arbeitsreihenfolge vom 12.11. dort).**
 
 ## 1. Was läuft
 
-**Orion, geprüft 20.11. ~08:45** (Statusseite https://claude.ai/artifact/9zzJsoGCBahPsuNkaaf3DN, Version 29):
+**Orion, geprüft 23.11. ~08:40** (Statusseite https://claude.ai/artifact/9zzJsoGCBahPsuNkaaf3DN, Version 31):
 
 | Lauf | Stand | Wenn fertig |
 |---|---|---|
-| **W-4 = Q9-Gitter** (`cdfaa7d`, 4.284 Shards, C1000) | 4.281/4.284, 0 Fehler, 3 Pods: sys 58 IC2 n1 (146 h, Plan 8 h, Index 457) und zwei Shards sys 52 (83 h, Plan < 0,1 h, Index 1786/1807), alle σ = 0 / ρ = 0,5, rechnen noch Kandidaten, gehen in keinen Claim ein | einsammeln + offizielle Q9-Aggregation |
+| **W-4 = Q9-Gitter** (`cdfaa7d`, 4.284 Shards, C1000) | **fertig 22.11. 07:02**, Job per TTL entfernt. NFS: 4.270 Dateien, Index ↔ `cell_id` 4.270/4.270 passend; die 14 ohne Datei sind die Zellen mit leerem Pool (System 9 IC 2, σ ≥ 0,03, nichts zu fitten, zählen als Fehlschlag, wie in Q7/Q8) | einsammeln (ein Tarball über einen Q9-ABL-Pod) + Datenfreeze + offizielle Q9-Aggregation, `q9a_claims.py --strict` |
 | **W-2 = Q8-Gitter** (`512dd5b`) | 3.540/3.540, Job entfernt, aggregiert 12.11. | — |
 | **Q-B B1** SINDy/Weak-SINDy/E-SINDy (`qb1-sindy:ca849b4`, Job `evoode-sideproject-qb1-sindy`) | **fertig 18.11. 08:17 UTC**, 240/240, Job per TTL entfernt; eingesammelt nach `outputs/sideproject_qb1_sindy_ca849b4…/` (`merged_details.csv.gz`: 167.076 Zeilen = 4.284 × 3 Methoden × 13 λ, alle `success`) | Q-B-Aggregation, sobald B3 fertig |
 | **Q-B B3** ODEFormer (`odeformer-reference:ca849b4`, Job `evoode-phase-c-c6-odeformer`) | **fertig 18.11. 16:47**, 1.512/1.512 Shards mit `summary.csv` auf dem NFS (`/outputs/c6_odeformer_ca849b4e3cf961532c425f31e7d78f693b9e359e`), Job per TTL entfernt; **eingesammelt 19.11.** nach `outputs/qb_b3_final_ca849b4/` (Merge 54.432/54.432, alle `success`, Hashes 4.536/4.536); Paper neu gebaut `outputs/qb_paper_2026-11-19/`, Commit `735d34c`. Erster Start 17.11. OOM bei 4 GiB, Neustart mit 8 GiB. Lehre: Smoke muss einen vollen Shard rechnen | erledigt; Q-B im Paper |
-| **W-4c Q9-ABL** (`evoode:885da53`, Job `evoode-sideproject-q9abl`, 3.060 Shards) | 92/3.060 (20.11. 08:45), **37 Pods seit 20.11. ~09:00**, 0 Fehler, teuerste zuerst | danach Q8-Identitätsprüfung `check_q9abl_q8_identity.py` |
+| **W-4c Q9-ABL** (`evoode:885da53`, Job `evoode-sideproject-q9abl`, 3.060 Shards) | 1.307/3.060 (23.11. 08:40), 37 Pods, 0 Fehler, teuerste zuerst; ~1.200 Shards in den letzten ~72 h | danach Q8-Identitätsprüfung `check_q9abl_q8_identity.py` |
 | **C-6 gekappt** | 1.435/3.366, Parallelität 0 | bekommt keine Kerne mehr (Paper 1 erledigt) |
 
-**Kerne (20.11. 08:45):** 3 Q9 + 37 Q9-ABL = 40. Q9 je Dimension: dim 1 1.564/1.564 · dim 2 1.904/1.904 · dim 3 677/680 (3 laufend) · dim 4 136/136.
+**Kerne (23.11. 08:40):** 37 Q9-ABL, 3 frei (Q9 fertig). Q9-ABL auf 40 hochsetzen macht der Nutzer (`oc patch job evoode-sideproject-q9abl -n scch-das -p '{"spec":{"parallelism":40}}'`).
 Bei jedem Cluster-Check: `python analysis/scripts/aggregate/q9_progress.py --json` → Tabelle im Chat und Abschnitt auf der Statusseite nachziehen. Lokale Quelle der Statusseite: Scratchpad der Sitzung
 `evoode_orion.html` (geht verloren → vorher Artifact `read`).
 
@@ -52,7 +52,7 @@ Kern-Prüfung `node explainer/wisp/process/check_core.cjs`. Stand 10.11.:
 
 ## 3. Als Nächstes
 
-1. Q9 beobachten: nur noch 9 Nachzügler (17.11.); danach einsammeln und offizielle Q9-Aggregation.
+1. Q9 fertig (22.11.): einsammeln, Datenfreeze, offizielle Q9-Aggregation; Paper `make_data.py`/`make_figures.py` neu.
 2. ~~Q8-Nachzügler, Q9 auf 40, offizielle Q8-Aggregation~~ erledigt (11./12.11., `231d59c`).
 3. **Q-B läuft seit 17.11. abends:** Images geprüft (`qb1-sindy` `sha256:4777784f…`, `odeformer-reference`
    `sha256:42995f4f…`, beide `ca849b4`). B1 8 Pods, B3 23 Pods nach bestandenem Smoke (Ausgabe lokal
