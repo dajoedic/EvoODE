@@ -547,7 +547,9 @@ equations.}
 \subsection{Systems and data}
 ODEBench \cite{dascoli2024} collects 63 ODE systems, curated from models used in Strogatz's textbook
 \cite{strogatz2015} and from other well-known systems, each with two initial conditions. It spans relaxation, oscillators, bifurcation normal forms, population and epidemic
-models, and chaotic three-dimensional flows such as the Lorenz and R\"ossler systems. As in the released ODEBench
+models, and chaotic three-dimensional flows such as the Lorenz and R\"ossler systems. It extends the ODE-Strogatz set
+of the symbolic regression benchmark SRBench \cite{lacava2021}, which holds seven two-dimensional systems and poses each
+equation as a static regression of the derivative on the state. As in the released ODEBench
 data, each trajectory has 512 samples on $t\in[0,10]$. We integrate the trajectories ourselves at
 tolerance $10^{-9}$. Each initial condition serves once as training trajectory, and the \emph{other} initial condition is the
 test trajectory for generalization, never used for any choice. We evaluate all 63 systems: 51 of dimension 1 and 2 (21
@@ -1197,6 +1199,7 @@ freeze dates and the decision each governed.}
 \bibitem{ramsay2007} Ramsay JO, Hooker G, Campbell D, Cao J (2007) Parameter estimation for differential equations: a generalized smoothing approach. J R Stat Soc B 69(5):741--796. \url{https://doi.org/10.1111/j.1467-9868.2007.00610.x}
 \bibitem{dascoli2024} d'Ascoli S, Becker S, Schwaller P, Mathis A, Kilbertus N (2024) ODEFormer: symbolic regression of dynamical systems with transformers. In: The Twelfth International Conference on Learning Representations (ICLR 2024). \url{https://openreview.net/forum?id=TzoHLiGVMo}
 \bibitem{dascoli2023arxiv} d'Ascoli S, Becker S, Mathis A, Schwaller P, Kilbertus N (2023) ODEFormer: symbolic regression of dynamical systems with transformers. arXiv:2310.05573v1. \url{https://doi.org/10.48550/arXiv.2310.05573}
+\bibitem{lacava2021} La Cava W, Orzechowski P, Burlacu B, de Fran{\c c}a FO, Virgolin M, Jin Y, Kommenda M, Moore JH (2021) Contemporary symbolic regression methods and their relative performance. In: Proceedings of the Neural Information Processing Systems Track on Datasets and Benchmarks 1 (NeurIPS 2021). \url{https://openreview.net/forum?id=xVQMrDLyGst}
 \bibitem{strogatz2015} Strogatz SH (2015) Nonlinear dynamics and chaos: with applications to physics, biology, chemistry, and engineering, 2nd edn. Westview Press, Boulder
 \bibitem{field2007} Field CA, Welsh AH (2007) Bootstrapping clustered data. J R Stat Soc B 69(3):369--390. \url{https://doi.org/10.1111/j.1467-9868.2007.00593.x}
 \bibitem{holm1979} Holm S (1979) A simple sequentially rejective multiple test procedure. Scand J Stat 6(2):65--70. \url{https://www.jstor.org/stable/4615733}

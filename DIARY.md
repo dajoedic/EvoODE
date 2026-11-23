@@ -48,6 +48,9 @@ citations resolved; 20 pages.
 Follow-up the same day (user): Florian Bachinger added as co-author (order Jödicke, Bachinger, Affenzeller,
 Winkler); both EvoGrow mentions removed, since EvoGrow is unpublished and uncited (related work: genetic programming
 only; cost paragraph: the 410-fits comparison dropped). <!-- 41f41e9 -->
+SRBench (La Cava et al. 2021) added to the benchmark section: ODEBench extends its ODE-Strogatz set (seven 2D systems,
+each equation posed as static regression of the derivative on the state; checked in both full texts, SRBench §4.2 and
+ODEFormer v1 §6).
 
 ### Q9 complete and evaluated strictly (data freeze of the WISP main run)
 <!-- 0a0227f -->
