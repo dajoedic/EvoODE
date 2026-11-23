@@ -102,26 +102,23 @@ $^*$Corresponding author: david.joedicke@scch.at\par}
 {\color{rule}\hrule}
 \vspace{3mm}
 \noindent\textbf{Abstract}\enspace
-Sparse regression identifies interpretable ordinary differential equations reliably from clean data, but noise and
-irregular sampling corrupt the derivative estimates it depends on, and fitting candidate structures directly to the
-trajectory is expensive and poorly conditioned. We propose weak-form incremental structure pursuit (WISP). WISP builds
-the model in the weak (integral) form, where the regression is linear and needs no derivatives, and adds one library
-term at a time along a forward--backward greedy path. An equation stops growing when no remaining term lowers the weak
-residual by more than the propagated measurement noise would. Each model on the resulting short path is refitted once
-to the trajectory, starting from its weak-form coefficients and with the initial state estimated jointly, and a
-Bayesian information criterion on the trajectory selects the model size. On the 63 systems of ODEBench with
-1--5\,\% multiplicative noise, with all samples or a random half of them, WISP recovers the exact structure of one-
-and two-dimensional systems \m{PrimaryOneRatio} and \m{PrimaryTwoRatio} times as often as the original weak SINDy
-implementation (\m{WispDimOneExactStructNoisy}\,\% and \m{WispDimTwoExactStructNoisy}\,\% vs
-\m{WsindyDimOneExactStructNoisy}\,\% and \m{WsindyDimTwoExactStructNoisy}\,\%). The share of accurate predictions from
-an unseen initial condition rises from \m{WsindyDimOneExactGenNoisy}\,\% and \m{WsindyDimTwoExactGenNoisy}\,\% to
-\m{WispDimOneExactGenNoisy}\,\% and \m{WispDimTwoExactGenNoisy}\,\%. With systems as the unit of inference, all four
-pre-registered primary comparisons are significant.\claimtag{C1, C2} The pretrained transformer ODEFormer, whose
-training data contain this noise model, is level with WISP on one-dimensional systems and recovers far fewer
-two-dimensional structures (\m{OdeformerDimTwoExactStructNoisy}\,\% vs \m{WispDimTwoExactStructNoisy}\,\%).\claimtag{C3}
-Whenever the true law lies on the growth path, the trajectory criterion selects it in \m{SelectionOnPathNum} of
-\m{SelectionOnPathDen} cases.\claimtag{C6} WISP uses no benchmark-tuned sparsity threshold and needs a median of
-\pv{2--10} trajectory fits per data set in dimensions 1 and 2.
+Sparse regression identifies ordinary differential equations reliably from clean data, but noise corrupts the
+derivative estimates it depends on, and fitting structures to the trajectory directly is costly and ill-conditioned. We
+propose weak-form incremental structure pursuit (WISP), which ranks terms in the weak form and decides on the model
+against the trajectory. Along a forward--backward greedy path in the linear, derivative-free weak form, WISP adds one
+term at a time until no remaining term lowers the weak residual by more than the propagated noise would. Each model on
+this short path is refitted once to the trajectory from its weak-form coefficients, and a trajectory Bayesian
+information criterion selects the size. On the 63 ODEBench systems with 1--5\,\% noise and random subsampling, WISP
+recovers the exact structure in \m{WispDimOneExactStructNoisy}\,\% and \m{WispDimTwoExactStructNoisy}\,\% of data sets
+of exactly representable one- and two-dimensional systems and predicts from an unseen initial condition with
+$R^2>0.9$ in \m{WispDimOneExactGenNoisy}\,\% and \m{WispDimTwoExactGenNoisy}\,\%. If the true law is on the path, this
+criterion selects it in \m{SelectionOnPathNum} of \m{SelectionOnPathDen} cases.\claimtag{C6} A random start for the
+refit more than halves both rates in two dimensions. WISP needs no benchmark-tuned sparsity threshold and a median of
+\pv{2--10} trajectory fits per data set. Its structure recovery is \m{PrimaryOneRatio} and \m{PrimaryTwoRatio} times
+that of the original weak SINDy code (all four pre-registered primary tests significant, systems as
+units).\claimtag{C1, C2} The pretrained transformer ODEFormer, whose training data contain this noise model, is level
+with WISP on one-dimensional systems and recovers far fewer two-dimensional structures
+(\m{OdeformerDimTwoExactStructNoisy}\,\% vs \m{WispDimTwoExactStructNoisy}\,\%).\claimtag{C3}
 
 \vspace{3mm}
 \noindent\textbf{Keywords}\enspace system identification $\cdot$ sparse regression $\cdot$ weak formulation $\cdot$
@@ -164,8 +161,9 @@ grows a model in the weak form, one term at a time, along a forward--backward gr
 lowers the weak residual by more than noise could. It is short, typically \pv{2--10} models, and each model is refitted
 once against the trajectory from its weak-form coefficients. This start is close enough to the optimum for a single
 optimizer run. A trajectory information criterion \cite{schwarz1978} then decides between the candidates
-(Fig.~\ref{fig:concept}). Under noise, this simple combination outperforms the established weak-form and
-sparse-regression methods.\claimtag{C1--C3}
+(Fig.~\ref{fig:concept}). Each space does what the other does badly: the weak residual ranks terms reliably but
+over-sizes the model, and the trajectory chooses the size reliably but is expensive and poorly conditioned as a search
+space.
 
 We evaluate WISP on ODEBench \cite{dascoli2024}, the 63-system benchmark of one- to four-dimensional ODEs introduced
 with the transformer-based ODEFormer, under the noise and irregular-subsampling protocol of that work. The references
@@ -181,12 +179,16 @@ sets, are the unit of inference. The article makes four contributions.
 and decides on the model against the trajectory with one fit per candidate. A noise-referenced stop takes the place of
 a sparsity threshold (Sect.~\ref{sec:method}). Each component can be stated in one sentence, and none was tuned on the
 benchmark.
-\item \emph{A pre-registered comparison.} On noisy data WISP recovers the exact structure \m{PrimaryOneRatio} and
-\m{PrimaryTwoRatio} times as often as WSINDy (dimensions 1 and 2). It predicts from unseen initial conditions more
+\item \emph{A pre-registered evaluation.} On noisy one- and two-dimensional data WISP recovers the exact structure in
+\m{WispDimOneExactStructNoisy}\,\% and \m{WispDimTwoExactStructNoisy}\,\% of data sets and predicts from the unseen
+initial condition in \m{WispDimOneExactGenNoisy}\,\% and \m{WispDimTwoExactGenNoisy}\,\%. Structure recovery is
+\m{PrimaryOneRatio} and \m{PrimaryTwoRatio} times that of WSINDy, and WISP predicts from unseen initial conditions more
 often than every reference except ODEFormer on one-dimensional systems, where the two are level, although each
 reference is granted its best threshold after the fact (Sect.~\ref{sec:results}).\claimtag{C1--C3}
-\item \emph{A failure anatomy.} When the truth is on the path, the trajectory criterion selects it in almost every
-case, and the remaining errors arise in the path (Sect.~\ref{sec:selection}).\claimtag{C6, C7}
+\item \emph{An account of why it works and where it fails.} Ablations show that the weak-form start carries the
+trajectory refit and the backward steps keep the path clean. When the truth is on the path, the trajectory criterion
+selects it in almost every case, and the remaining errors arise in the path (Sects.~\ref{sec:ablation}
+and~\ref{sec:selection}).\claimtag{C6, C7}
 \item \emph{A calibration of the stop.} Measured at the true support, the noise-referenced stop admits too many terms
 but rarely misses a true one. For a two-stage method this is the less harmful direction (Sect.~\ref{sec:calibration}).
 \end{enumerate}
@@ -213,7 +215,9 @@ is a good initial guess for a nonlinear least-squares fit to the trajectory. Wea
 relative of WISP. For each sparsity level it finds a support in the weak form by subspace pursuit, trims terms whose
 contribution falls below a threshold $\tau$, and chooses the sparsity level by a cross-validation error on the weak
 linear system. WISP also selects terms in the weak form, but it grows a single path of models, ends it at a
-noise-referenced stop, and decides the model on the trajectory.
+noise-referenced stop, and decides the model on the trajectory. D-CODE \cite{qian2022} carries the variational
+formulation over to symbolic regression and uses it as the fitness of a genetic-programming search, so that
+closed-form equations are found without derivative estimates.
 
 \paragraph{Greedy support pursuit} Forward selection of regressors has a long history in nonlinear system
 identification. Orthogonal forward regression ranks candidate terms by their error-reduction ratio
@@ -232,7 +236,8 @@ smoothing-based approaches \cite{ramsay2007} and weak-form starts \cite{bortz202
 structure. Genetic programming \cite{bongard2007,schmidt2009,cranmer2023} searches structures against the trajectory
 and fits the constants of every candidate it examines. The transformer ODEFormer \cite{dascoli2024} amortizes the search by pretraining. It generates candidate
 equations from a trajectory by beam sampling, keeps the one with the best reconstruction $R^2$, and can refine its
-constants by an optional BFGS step.
+constants by an optional BFGS step. DDOT \cite{chang2025} adds a second decoder that predicts the derivative as an
+auxiliary task and reports $R^2>0.9$ rates on ODEBench a few points above ODEFormer's.
 
 Table~\ref{tab:positioning} places WISP among these methods along the two questions it separates: where terms are
 ranked, and where the model is decided.
@@ -643,12 +648,12 @@ and the stop calibration (Fig.~\ref{fig:calibration}) from its own protocol; bot
 \vspace{2mm}
 \fi
 
-\subsection{Main comparison on noisy data}\label{sec:main}
+\subsection{Recovery on noisy data}\label{sec:main}
 
 \begin{figure*}[t]
 \centering
 \includegraphics[width=\textwidth]{figures/fig3_main.pdf}
-\caption{\textbf{Main comparison on noisy data, dimensions 1 and 2.} Share of the noisy data sets on which each method
+\caption{\textbf{Recovery on noisy data, dimensions 1 and 2.} Share of the noisy data sets on which each method
 recovers the exact structure (\textbf{A}, exactly representable systems only), reconstructs the training trajectory
 (\textbf{B}) and predicts the trajectory from the unseen initial condition (\textbf{C}). Whiskers: 95\,\%
 cluster-bootstrap intervals over systems (11, 10, 12 and 18 systems per group). References are shown at their best
@@ -1186,6 +1191,7 @@ freeze dates and the decision each governed.}
 \bibitem{messenger2021jcp} Messenger DA, Bortz DM (2021) Weak SINDy for partial differential equations. J Comput Phys 443:110525. \url{https://doi.org/10.1016/j.jcp.2021.110525}
 \bibitem{bortz2023} Bortz DM, Messenger DA, Dukic V (2023) Direct estimation of parameters in ODE models using WENDy: weak-form estimation of nonlinear dynamics. Bull Math Biol 85(11):110. \url{https://doi.org/10.1007/s11538-023-01208-6}
 \bibitem{tang2023} Tang M, Liao W, Kuske R, Kang SH (2023) WeakIdent: weak formulation for identifying differential equation using narrow-fit and trimming. J Comput Phys 483:112069. \url{https://doi.org/10.1016/j.jcp.2023.112069}
+\bibitem{qian2022} Qian Z, Kacprzyk K, van der Schaar M (2022) D-CODE: discovering closed-form ODEs from observed trajectories. In: The Tenth International Conference on Learning Representations (ICLR 2022). \url{https://openreview.net/forum?id=wENMvIsxNN}
 \bibitem{korenberg1988} Korenberg M, Billings SA, Liu YP, McIlroy PJ (1988) Orthogonal parameter estimation algorithm for non-linear stochastic systems. Int J Control 48(1):193--210. \url{https://doi.org/10.1080/00207178808906169}
 \bibitem{billings1989} Billings SA, Chen S, Korenberg MJ (1989) Identification of MIMO non-linear systems using a forward-regression orthogonal estimator. Int J Control 49(6):2157--2189. \url{https://doi.org/10.1080/00207178908559767}
 \bibitem{chen1989} Chen S, Billings SA, Luo W (1989) Orthogonal least squares methods and their application to non-linear system identification. Int J Control 50(5):1873--1896. \url{https://doi.org/10.1080/00207178908953472}
@@ -1200,6 +1206,7 @@ freeze dates and the decision each governed.}
 \bibitem{dascoli2024} d'Ascoli S, Becker S, Schwaller P, Mathis A, Kilbertus N (2024) ODEFormer: symbolic regression of dynamical systems with transformers. In: The Twelfth International Conference on Learning Representations (ICLR 2024). \url{https://openreview.net/forum?id=TzoHLiGVMo}
 \bibitem{dascoli2023arxiv} d'Ascoli S, Becker S, Mathis A, Schwaller P, Kilbertus N (2023) ODEFormer: symbolic regression of dynamical systems with transformers. arXiv:2310.05573v1. \url{https://doi.org/10.48550/arXiv.2310.05573}
 \bibitem{lacava2021} La Cava W, Orzechowski P, Burlacu B, de Fran{\c c}a FO, Virgolin M, Jin Y, Kommenda M, Moore JH (2021) Contemporary symbolic regression methods and their relative performance. In: Proceedings of the Neural Information Processing Systems Track on Datasets and Benchmarks 1 (NeurIPS 2021). \url{https://openreview.net/forum?id=xVQMrDLyGst}
+\bibitem{chang2025} Chang Y, Wang KD, Hsieh PC, Lin CK, Peng WC (2025) DDOT: a derivative-directed dual-decoder ordinary differential equation transformer for dynamic system modeling. In: Advances in Knowledge Discovery and Data Mining (PAKDD 2025), Lecture Notes in Computer Science. Springer, Singapore, pp 434--445. \url{https://doi.org/10.1007/978-981-96-8180-8_34}
 \bibitem{strogatz2015} Strogatz SH (2015) Nonlinear dynamics and chaos: with applications to physics, biology, chemistry, and engineering, 2nd edn. Westview Press, Boulder
 \bibitem{field2007} Field CA, Welsh AH (2007) Bootstrapping clustered data. J R Stat Soc B 69(3):369--390. \url{https://doi.org/10.1111/j.1467-9868.2007.00593.x}
 \bibitem{holm1979} Holm S (1979) A simple sequentially rejective multiple test procedure. Scand J Stat 6(2):65--70. \url{https://www.jstor.org/stable/4615733}

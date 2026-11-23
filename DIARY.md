@@ -52,6 +52,17 @@ SRBench (La Cava et al. 2021) added to the benchmark section: ODEBench extends i
 each equation posed as static regression of the derivative on the state; checked in both full texts, SRBench §4.2 and
 ODEFormer v1 §6).
 
+WISP-centred framing (user: "it must not become a comparison paper"; numbers and claim verdicts untouched).
+Abstract rewritten and cut to ~250 words (Nonlinear Dynamics limit 150-250; the old one had ~300): method, then WISP's
+own rates, the on-path selection (C6) and the weak-start ablation, then WSINDy (C1, C2) and ODEFormer (C3) as context.
+Introduction: the uncited "outperforms the established methods" sentence replaced by the division-of-labour argument
+(weak residual ranks but over-sizes, C8; trajectory sizes but is a poor search space). Contributions: "pre-registered
+comparison" -> "pre-registered evaluation" led by absolute rates; the failure anatomy now also names the ablations.
+Sect. 6.1 and Fig. 3 renamed "Recovery on noisy data". Related work: D-CODE (Qian et al., ICLR 2022; variational
+fitness for gplearn-based GP, checked on the ICLR abstract and the code) and DDOT (Chang et al., PAKDD 2025, LNCS
+pp 434-445, Crossref-checked; +4.6/+1.6 pp over ODEFormer on ODEBench, recomputed from its Table 1) added, one sentence
+each. No new references in tables, no new runs.
+
 ### Q9 complete and evaluated strictly (data freeze of the WISP main run)
 <!-- 0a0227f -->
 
