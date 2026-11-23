@@ -7,6 +7,7 @@ Neueste Einträge zuerst. Aktueller Projektzustand: siehe `CLAUDE.md`.
 ## 2026-11-23
 
 ### Q9 complete and evaluated strictly (data freeze of the WISP main run)
+<!-- 0a0227f -->
 
 **Orion.** The last Q9 straggler (index 1807, system 52) finished 22.11. 07:02; the job was removed by TTL. The NFS
 holds 4,270 record files, index and `cell_id` match in 4,270 / 4,270; the other 14 cells are the known empty-pool cells
