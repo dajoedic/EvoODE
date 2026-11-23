@@ -92,7 +92,7 @@
 {\small\color{ink2} Manuscript draft v1, \today\ --- prepared for \emph{Nonlinear Dynamics}\ifpreliminary\ --- \textcolor{prelim}{\textbf{preliminary results}}\fi}\\[5mm]
 {\LARGE\bfseries Growing governing equations from noisy data, one term at a time: weak-form incremental structure pursuit\par}
 \vspace{5mm}
-{\large David Jödicke$^{1*}$, Stephan M.\ Winkler$^{2}$, Michael Affenzeller$^{2}$\par}
+{\large David Jödicke$^{1*}$, Florian Bachinger$^{2}$, Michael Affenzeller$^{2}$, Stephan M.\ Winkler$^{2}$\par}
 \vspace{3mm}
 {\small $^1$Software Competence Center Hagenberg (SCCH), Softwarepark 32a, 4232 Hagenberg, Austria\\
 $^2$\todo{affiliations of the co-authors to be confirmed by them}\\[1mm]
@@ -229,9 +229,8 @@ prediction errors for NARX structures \cite{piroddi2003}, and Mangan et al.\ \ci
 candidates by information criteria computed from simulated trajectories, using many validation trajectories.
 Fitting ODE parameters to trajectories is a nonlinear, frequently ill-conditioned problem with many local minima;
 smoothing-based approaches \cite{ramsay2007} and weak-form starts \cite{bortz2023} reduce that difficulty for a known
-structure. Population-based methods, such as genetic programming \cite{bongard2007,schmidt2009,cranmer2023} or our
-earlier staged-growth method EvoGrow, search structures against the trajectory and need hundreds of nonlinear fits per
-data set. The transformer ODEFormer \cite{dascoli2024} amortizes the search by pretraining. It generates candidate
+structure. Genetic programming \cite{bongard2007,schmidt2009,cranmer2023} searches structures against the trajectory
+and fits the constants of every candidate it examines. The transformer ODEFormer \cite{dascoli2024} amortizes the search by pretraining. It generates candidate
 equations from a trajectory by beam sampling, keeps the one with the best reconstruction $R^2$, and can refine its
 constants by an optional BFGS step.
 
@@ -892,8 +891,7 @@ candidate costs one trajectory fit, a median of about \pv{4,900} loss evaluation
 noisy data set this adds up to a median of \pv{4,100} ODE solves on one-dimensional and \pv{14,000} on two-dimensional
 exactly representable systems, \pv{41,000} on two-dimensional surrogates and \pv{68,000--165,000} on dimension 3.
 This makes WISP orders of magnitude more expensive than a single sparse regression, which needs no ODE solve for
-selection at all. It is cheaper than a structure search on the trajectory. A population-based search on the
-same benchmark, our earlier EvoGrow method, ran a median of 410 nonlinear fits per data set even on clean data.
+selection at all.
 
 Counts are our measure of cost. Wall-clock time on a shared cluster depends on the node and its load, and we give it as
 context only. With one CPU core per data set, the recorded solver time per noisy data set has a median of \pv{2.5}\,s
