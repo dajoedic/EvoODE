@@ -10,7 +10,7 @@ zweites davon. Alles Dauerhafte gehört dorthin, nach `PAPER_1.md` oder ins `DIA
 **Regeln:** wird immer **vollständig überschrieben**, nie angehängt. Was älter als ein paar Tage
 ist, ist vermutlich falsch — dann gilt `CLAUDE.md`.
 
-**Stand: 2026-11-23, ~08:40 (Q9 fertig 4.284/4.284, noch nicht eingesammelt; Q9-ABL 1.307/3.060 auf 37 Pods, 3 Kerne frei) — WISP-Plan bis 31.12.
+**Stand: 2026-11-23, ~08:40 (Q9 fertig 4.284/4.284, noch nicht eingesammelt; Q9-ABL 1.365/3.060 auf 40 Pods) — WISP-Plan bis 31.12.
 (CLAUDE.md, „WISP paper — the fixed plan“; Arbeitsreihenfolge vom 12.11. dort).**
 
 ## 1. Was läuft
@@ -23,10 +23,10 @@ ist, ist vermutlich falsch — dann gilt `CLAUDE.md`.
 | **W-2 = Q8-Gitter** (`512dd5b`) | 3.540/3.540, Job entfernt, aggregiert 12.11. | — |
 | **Q-B B1** SINDy/Weak-SINDy/E-SINDy (`qb1-sindy:ca849b4`, Job `evoode-sideproject-qb1-sindy`) | **fertig 18.11. 08:17 UTC**, 240/240, Job per TTL entfernt; eingesammelt nach `outputs/sideproject_qb1_sindy_ca849b4…/` (`merged_details.csv.gz`: 167.076 Zeilen = 4.284 × 3 Methoden × 13 λ, alle `success`) | Q-B-Aggregation, sobald B3 fertig |
 | **Q-B B3** ODEFormer (`odeformer-reference:ca849b4`, Job `evoode-phase-c-c6-odeformer`) | **fertig 18.11. 16:47**, 1.512/1.512 Shards mit `summary.csv` auf dem NFS (`/outputs/c6_odeformer_ca849b4e3cf961532c425f31e7d78f693b9e359e`), Job per TTL entfernt; **eingesammelt 19.11.** nach `outputs/qb_b3_final_ca849b4/` (Merge 54.432/54.432, alle `success`, Hashes 4.536/4.536); Paper neu gebaut `outputs/qb_paper_2026-11-19/`, Commit `735d34c`. Erster Start 17.11. OOM bei 4 GiB, Neustart mit 8 GiB. Lehre: Smoke muss einen vollen Shard rechnen | erledigt; Q-B im Paper |
-| **W-4c Q9-ABL** (`evoode:885da53`, Job `evoode-sideproject-q9abl`, 3.060 Shards) | 1.307/3.060 (23.11. 08:40), 37 Pods, 0 Fehler, teuerste zuerst; ~1.200 Shards in den letzten ~72 h | danach Q8-Identitätsprüfung `check_q9abl_q8_identity.py` |
+| **W-4c Q9-ABL** (`evoode:885da53`, Job `evoode-sideproject-q9abl`, 3.060 Shards) | 1.307/3.060 (23.11. 08:40), 40 Pods seit 23.11. ~09:00 (1.365/3.060), 0 Fehler, teuerste zuerst; ~1.200 Shards in den letzten ~72 h | danach Q8-Identitätsprüfung `check_q9abl_q8_identity.py` |
 | **C-6 gekappt** | 1.435/3.366, Parallelität 0 | bekommt keine Kerne mehr (Paper 1 erledigt) |
 
-**Kerne (23.11. 08:40):** 37 Q9-ABL, 3 frei (Q9 fertig). Q9-ABL auf 40 hochsetzen macht der Nutzer (`oc patch job evoode-sideproject-q9abl -n scch-das -p '{"spec":{"parallelism":40}}'`).
+**Kerne (23.11. 09:00):** 40 Q9-ABL = 40 (Q9 fertig).
 Bei jedem Cluster-Check: `python analysis/scripts/aggregate/q9_progress.py --json` → Tabelle im Chat und Abschnitt auf der Statusseite nachziehen. Lokale Quelle der Statusseite: Scratchpad der Sitzung
 `evoode_orion.html` (geht verloren → vorher Artifact `read`).
 
